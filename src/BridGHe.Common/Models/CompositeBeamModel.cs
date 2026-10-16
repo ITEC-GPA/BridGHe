@@ -225,7 +225,11 @@ namespace BridGHe.Common.Models
         public override void CreateShapes()
         {
             if (_startBeamProperty == null || _endBeamProperty == null)
+            {
+                _shapes = new List<Brep>();
                 return;
+            }
+            var shapes = new List<Brep>();
             List<Brep> surfSteel = new List<Brep>();
             List<Brep> surfConcrete = new List<Brep>();
             double tol = 0.001;
@@ -238,7 +242,7 @@ namespace BridGHe.Common.Models
 
             if (surfSteel.Count > 0)
             {
-                AddBrep(surfSteel);
+                AddBrep(surfSteel, shapes);
             }
 
             SetSurfaceConcrete(_startBeamProperty, c, ref surfConcrete, tol);
@@ -246,8 +250,9 @@ namespace BridGHe.Common.Models
 
             if (surfConcrete.Count > 0)
             {
-                AddBrep(surfConcrete);
+                AddBrep(surfConcrete, shapes);
             }
+            _shapes = shapes;
         }
 
         public void GetLocalAxes(out Vector3d axes1, out Vector3d axes2, out Vector3d axes3, out Transform toGlobal)
@@ -335,7 +340,7 @@ namespace BridGHe.Common.Models
                 main_surfaces.Add(breps[0]);
         }
 
-        private void AddBrep(List<Brep> surf)
+        private void AddBrep(List<Brep> surf, List<Brep> shapes)
         {
             Brep main_from_surface = surf[0].DuplicateBrep();
             main_from_surface.MakeDeformable();
@@ -368,7 +373,7 @@ namespace BridGHe.Common.Models
             surfaces.Add(main_to_surface);
 
             Brep[] join = Brep.JoinBreps(surfaces, 0.001);
-            _shapes.Add(join[0]);
+            shapes.Add(join[0]);
         }
     }
 }
