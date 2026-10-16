@@ -94,6 +94,8 @@ namespace BridGHe.Common.Models
 
         public Brep[] Shapes => _shapes.ToArray();
 
+        public long GeometryRevision { get; private set; }
+
         public bool IsValid
         {
             get
@@ -243,6 +245,7 @@ namespace BridGHe.Common.Models
 
         public override void CreateShapes()
         {
+            GeometryRevision++;
             _shapes = new List<Brep>();
             if (_beamProperty?.Section == null || !_pointFrom.IsValid || !_pointTo.IsValid || Length <= 0)
                 return;

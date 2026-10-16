@@ -16,6 +16,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
     {
         protected Guid _guid;
         BoundingBox _boundingBox;
+        BeamModel _boundedModel;
+        long _boundedRevision = -1;
 
         #region Properties
 
@@ -43,11 +45,15 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             get
             {
-                if (m_value != null && !_boundingBox.IsValid)
+                if (m_value == null) return BoundingBox.Empty;
+                if (!ReferenceEquals(_boundedModel, m_value) || _boundedRevision != m_value.GeometryRevision)
                 {
-                    _boundingBox = new BoundingBox(new[] { m_value.PointFrom, m_value.PointTo });
-                    foreach (Brep shape in m_value.Shapes)
-                        _boundingBox.Union(shape.GetBoundingBox(true));
+                    _boundingBox = BoundingBox.Empty;
+                    if (m_value.PointFrom.IsValid) _boundingBox.Union(m_value.PointFrom);
+                    if (m_value.PointTo.IsValid) _boundingBox.Union(m_value.PointTo);
+                    foreach (Brep shape in m_value.Shapes) _boundingBox.Union(shape.GetBoundingBox(true));
+                    _boundedModel = m_value;
+                    _boundedRevision = m_value.GeometryRevision;
                 }
                 return _boundingBox;
             }

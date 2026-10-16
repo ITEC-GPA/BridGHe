@@ -82,6 +82,8 @@ namespace BridGHe.Common.Models
 
         public Brep[] Shapes => _shapes.ToArray();
 
+        public long GeometryRevision { get; private set; }
+
         public bool IsValid
         {
             get
@@ -225,6 +227,7 @@ namespace BridGHe.Common.Models
 
         public override void CreateShapes()
         {
+            GeometryRevision++;
             if (_startBeamProperty == null || _endBeamProperty == null)
             {
                 _shapes = new List<Brep>();

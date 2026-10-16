@@ -28,7 +28,8 @@ internal static class RegressionTests
             ["node-index"] = NodeIndex,
             ["archived-attribute-updates"] = ArchivedAttributeUpdates,
             ["plate-point-updates"] = PlatePointUpdates,
-            ["incomplete-beam-preview"] = IncompleteBeamPreview
+            ["incomplete-beam-preview"] = IncompleteBeamPreview,
+            ["preview-bounds"] = PreviewBounds
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -170,6 +171,24 @@ internal static class RegressionTests
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
         return System.Reflection.Assembly.LoadFrom(System.IO.Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha"));
+    }
+
+    private static void PreviewBounds()
+    {
+        var assembly = Plugin();
+        var composite = CompositeBeam();
+        dynamic goo = Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.DataTypes.GH_CompositeBeam", true), composite, null);
+        BoundingBox first = goo.Boundingbox;
+        composite.PointTo = new Point3d(6000, 0, 0);
+        BoundingBox changed = goo.Boundingbox;
+        Require(changed.Max.X > first.Max.X && changed.Contains(composite.PointTo), "composite bounds follow geometry revisions");
+        var native = new BeamModel(new Point3d(100, 0, 0), new Point3d(10, 0, 0), new BeamPropertyModel("P") { Section = new SectionModel { NativeSection = new BridGHe.Common.Straus.StrausSection { Key = "TriangleSolid", Dimensions = new[] { 20.0, 30.0 } } } });
+        dynamic nativeGoo = Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Beam", true), native, null);
+        BoundingBox before = nativeGoo.Boundingbox;
+        Require(before.Min.X == 10 && before.Max.X == 100, "bounds handle reversed beam orientation without including global origin");
+        native.PointTo = new Point3d(200, 0, 0);
+        BoundingBox after = nativeGoo.Boundingbox;
+        Require(after.Max.X == 200, "native beam bounds follow endpoint changes");
     }
 
     private static void IncompleteBeamPreview()
