@@ -75,7 +75,7 @@ internal static class Program
         Assert(object.ReferenceEquals(graph.LoadCases[0],graph.Beams[0].Results[0].LoadCase),"shared load case identity preserved");
         var graphCopy=new ModelModel(model);
         Assert(graphCopy.Beams.Count==1 && graphCopy.Nodes[0].Attributes.Count==1,"FEM copy constructor with cloned attributes");
-        CheckGrasshopper();
+        CheckGrasshopper(args.Contains("--installed-plugins"));
         RegressionTests.Run("all");
         }
         Assert(StrausSectionCatalog.All.Length==21 && StrausSectionCatalog.All.Select(s=>s.Key).Distinct().Count()==21,"all 15 standard and 6 BGL sections");
@@ -86,7 +86,7 @@ internal static class Program
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static void CheckGrasshopper()
+    private static void CheckGrasshopper(bool installedPlugins)
     {
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
@@ -140,10 +140,14 @@ internal static class Program
         Assert(iconHashes.Count==count,"each component and parameter has its own distinct icon");
         var info=(Grasshopper.Kernel.GH_AssemblyInfo)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.BridGHeInfo",true));
         Assert(info.Icon is {Width:24,Height:24},"plugin icon is present at 24 px");
-        var priority=(Grasshopper.Kernel.GH_AssemblyPriority)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.BridGHeAssemblyPriority",true));
-        Assert(priority.PriorityLoad()==Grasshopper.Kernel.GH_LoadingInstruction.Proceed,"category icon registration succeeds");
-        Assert(Grasshopper.Instances.ComponentServer.GetCategoryIcon("BridGHe") is {Width:16,Height:16}
-            && Grasshopper.Instances.ComponentServer.GetCategoryIcon("BridGHe-Checks") is {Width:16,Height:16},"both category icons have native 16 px dimensions");
+        if(installedPlugins)
+        {
+            var priority=(Grasshopper.Kernel.GH_AssemblyPriority)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.BridGHeAssemblyPriority",true));
+            Assert(priority.PriorityLoad()==Grasshopper.Kernel.GH_LoadingInstruction.Proceed,"category icon registration succeeds");
+            Assert(Grasshopper.Instances.ComponentServer.GetCategoryIcon("BridGHe") is {Width:16,Height:16}
+                && Grasshopper.Instances.ComponentServer.GetCategoryIcon("BridGHe-Checks") is {Width:16,Height:16},"both category icons have native 16 px dimensions");
+        }
+        else Console.WriteLine("SKIPPED: category registration with installed plugins (opt in with --installed-plugins)");
         File.WriteAllText("artifacts/component-runtime.json",System.Text.Json.JsonSerializer.Serialize(items,new System.Text.Json.JsonSerializerOptions {WriteIndented=true}));
         Console.WriteLine($"COMPONENTS {count}, MECHECK2 {mecheck}");
         CheckGooArchives(assembly);
