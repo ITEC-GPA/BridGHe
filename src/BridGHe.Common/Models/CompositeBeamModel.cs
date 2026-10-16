@@ -168,6 +168,7 @@ namespace BridGHe.Common.Models
             _pointTo = (Point3d)info.GetValue("PointTo", typeof(Point3d));
             _startBeamProperty = (CompositeBeamPropertyModel)info.GetValue("_startBeamProperty", typeof(CompositeBeamPropertyModel));
             _endBeamProperty = (CompositeBeamPropertyModel)info.GetValue("_endBeamProperty", typeof(CompositeBeamPropertyModel));
+            _shapes = new List<Brep>();
             CreateShapes();
         }
 

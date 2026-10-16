@@ -28,6 +28,8 @@ internal static class Program
     {
         // --pure does not start Rhino, useful for CI and unlicensed environments.
         using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},WindowStyle.NoWindow);
+        if(args.Contains("--regression"))
+            return RegressionTests.Run(args.SkipWhile(a=>a!="--regression").Skip(1).FirstOrDefault()??"all");
         var model=new ModelModel(ModelModel.ModelUnits.Nmm);
         model.Name="Roundtrip";
         var section=new SectionModel { SectionType=SectionModel.SectionTypes.SolidCircle,D=20 };
@@ -74,6 +76,7 @@ internal static class Program
         var graphCopy=new ModelModel(model);
         Assert(graphCopy.Beams.Count==1 && graphCopy.Nodes[0].Attributes.Count==1,"FEM copy constructor with cloned attributes");
         CheckGrasshopper();
+        RegressionTests.Run("all");
         }
         Assert(StrausSectionCatalog.All.Length==21 && StrausSectionCatalog.All.Select(s=>s.Key).Distinct().Count()==21,"all 15 standard and 6 BGL sections");
         bool invalid=false;try {new MovingPointForce { Mobility=2 }.Validate();}catch(ArgumentException){invalid=true;}
