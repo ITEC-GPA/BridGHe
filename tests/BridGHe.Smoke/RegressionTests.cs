@@ -18,7 +18,8 @@ internal static class RegressionTests
             ["merge-node-data"] = MergeNodeData,
             ["merge-mesh"] = MergeMesh,
             ["beam-property-validity"] = BeamPropertyValidity,
-            ["native-beam-validity"] = NativeBeamValidity
+            ["native-beam-validity"] = NativeBeamValidity,
+            ["model-guids"] = ModelGuids
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -160,6 +161,28 @@ internal static class RegressionTests
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
         return System.Reflection.Assembly.LoadFrom(System.IO.Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha"));
+    }
+
+    private static void ModelGuids()
+    {
+        var model = new ModelModel(ModelModel.ModelUnits.Nmm);
+        model.AddElements(new[] { new NodeModel("1", Point3d.Origin), new NodeModel("2", new Point3d(1, 0, 0)) });
+        var type = Plugin().GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model", true);
+        dynamic goo = Activator.CreateInstance(type); goo.Value = model;
+        Guid first = goo.GetGuid(model.Nodes[0]);
+        dynamic copy = goo.Duplicate();
+        Require(copy.Guids.Count == 2 && copy.GetGuid(copy.Value.Nodes[0]) == first, "result models duplicate with complete GUID maps");
+        dynamic derived = type.GetMethod("FromModel").Invoke(null, new object[] { ModelArchive.Clone(model), goo });
+        derived.SynchronizeGuids(goo); derived.SynchronizeGuids(goo);
+        Require(derived.GetGuid(derived.Value.Nodes[0]) == first, "GUID restoration is idempotent");
+        var chunk = new GH_IO.Serialization.GH_LooseChunk("model");
+        Require(goo.Write(chunk), "write model and GUID map");
+        var loadedChunk = new GH_IO.Serialization.GH_LooseChunk("loaded");
+        loadedChunk.Deserialize_Binary(chunk.Serialize_Binary());
+        dynamic loaded = Activator.CreateInstance(type);
+        Require(loaded.Read(loadedChunk) && loaded.GetGuid(loaded.Value.Nodes[0]) == first, "GUIDs survive GH archive round trip");
+        var legacy = new GH_IO.Serialization.GH_LooseChunk("legacy"); legacy.SetByteArray("Data", ModelArchive.Write(model));
+        Require(loaded.Read(legacy) && loaded.Guids.Count == 2, "legacy archives regenerate complete maps");
     }
 
     private static void NativeBeamValidity()

@@ -21,7 +21,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
             {
                 var model = StrausAnalysis.Run(input.Value, path, 0, Array.Empty<string>(), Settings.Instance.Tolerance, true, out var warnings);
                 foreach (string warning in warnings) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
-                da.SetData(0, new GH_Model { Value = model }); da.SetDataList(1, model.GeneratedMovingCases.Values);
+                da.SetData(0, GH_Model.FromModel(model, input)); da.SetDataList(1, model.GeneratedMovingCases.Values);
             }
             catch (Exception ex) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message); }
         }

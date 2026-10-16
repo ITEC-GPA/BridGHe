@@ -21,6 +21,59 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public Dictionary<ElementModel, Guid> Guids => _guids;
 
+        public override ModelModel Value
+        {
+            get => base.Value;
+            set { base.Value = value; SynchronizeGuids(); }
+        }
+
+        public static GH_Model FromModel(ModelModel value, GH_Model source = null)
+        {
+            var result = new GH_Model { Value = value };
+            result.SynchronizeGuids(source);
+            return result;
+        }
+
+        private static string Identity(ElementModel element) => element switch
+        {
+            NodeModel node => "N:" + node.NodeId,
+            BeamModel beam => "B:" + beam.BeamId,
+            PlateModel plate => "P:" + plate.PlateId,
+            _ => null
+        };
+
+        public Guid GetGuid(ElementModel element)
+        {
+            if (!_guids.TryGetValue(element, out Guid guid)) _guids[element] = guid = Guid.NewGuid();
+            return guid;
+        }
+
+        public void SynchronizeGuids(GH_Model source = null)
+        {
+            _guids ??= new Dictionary<ElementModel, Guid>();
+            var previous = _guids;
+            var identities = new Dictionary<string, Guid>(StringComparer.Ordinal);
+            if (source?.Value != null)
+                foreach (var element in source.Value.Elements)
+                {
+                    string key = Identity(element);
+                    if (key != null && key.Length > 2) identities.TryAdd(key, source.GetGuid(element));
+                }
+            _guids = new Dictionary<ElementModel, Guid>();
+            if (Value == null) return;
+            for (int i = 0; i < Value.Elements.Count; i++)
+            {
+                var element = Value.Elements[i];
+                string key = Identity(element);
+                Guid guid;
+                if (key != null && identities.TryGetValue(key, out guid)) { }
+                else if (source?.Value != null && key?.Length == 2 && i < source.Value.Elements.Count && Identity(source.Value.Elements[i]) == key)
+                    guid = source.GetGuid(source.Value.Elements[i]);
+                else if (!previous.TryGetValue(element, out guid)) guid = Guid.NewGuid();
+                _guids[element] = guid;
+            }
+        }
+
         public override bool IsValid => Value != null && Value.Elements != null && Value.Elements.Count() > 0;
 
         public override string TypeName => "FEM Model";
@@ -77,81 +130,43 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             Value.AddStagedConstructions(stages.Select(s => s.Value));
         }
 
-        public GH_Model(GH_Model model)
-            : this()
+        public GH_Model(GH_Model model) : this()
         {
             Value = model.Value;
-            _guids = model.Guids;
+            SynchronizeGuids(model);
         }
 
-        /// <summary>
-        /// Make a complete duplicate of this instance. No shallow copies.
-        /// </summary>
-        /// <returns>The deep copy of the model</returns>
-        public override IGH_Goo Duplicate()
-        {
-            GH_Model copy = new GH_Model { Value = new ModelModel(Value) };
-
-            // Rebuild the Guids association
-            foreach (ElementModel copy_element in copy.Value.Elements)
-            {
-                ElementModel element;
-                if (copy_element is NodeModel node)
-                {
-                    try
-                    {
-                        element = Value.GetNode(node.NodeId);
-                    }
-                    catch (Exception)
-                    {
-                        continue;
-                    }
-                }
-                else if (copy_element is BeamModel beam)
-                {
-                    try
-                    {
-                        element = Value.GetBeam(beam.BeamId);
-                    }
-                    catch (Exception)
-                    {
-                        continue;
-                    }
-                }
-                else if (copy_element is PlateModel plate)
-                {
-                    try
-                    {
-                        element = Value.GetPlate(plate.PlateId);
-                    }
-                    catch (Exception)
-                    {
-                        continue;
-                    }
-                }
-                else
-                    continue;
-
-                copy.Guids.Add(copy_element, Guids[element]);
-            }
-
-            return copy;
-        }
+        public override IGH_Goo Duplicate() => FromModel(Value == null ? null : new ModelModel(Value), this);
 
         public void AddGuid(ElementModel elementModel, Guid guid)
         {
-            _guids.Add(elementModel, guid);
+            _guids[elementModel] = guid;
         }
 
         public override bool Write(GH_IWriter writer)
         {
-            try { writer.SetByteArray("Data", Common.Helpers.ModelArchive.Write(Value)); return true; }
+            try
+            {
+                writer.SetByteArray("Data", Common.Helpers.ModelArchive.Write(Value));
+                writer.SetString("ElementGuids", JsonSerializer.Serialize(Value?.Elements.Select(GetGuid).ToArray() ?? Array.Empty<Guid>()));
+                return true;
+            }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
         }
 
         public override bool Read(GH_IReader reader)
         {
-            try { Value = Common.Helpers.ModelArchive.Read<ModelModel>(reader.GetByteArray("Data")); return true; }
+            try
+            {
+                Value = Common.Helpers.ModelArchive.Read<ModelModel>(reader.GetByteArray("Data"));
+                if (reader.ItemExists("ElementGuids"))
+                {
+                    var guids = JsonSerializer.Deserialize<Guid[]>(reader.GetString("ElementGuids"));
+                    if (guids == null || guids.Length != (Value?.Elements.Count ?? 0)) return false;
+                    for (int i = 0; i < guids.Length; i++) _guids[Value.Elements[i]] = guids[i];
+                }
+                return true;
+            }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
         }
 

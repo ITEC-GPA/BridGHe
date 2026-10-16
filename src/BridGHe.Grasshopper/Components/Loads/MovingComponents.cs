@@ -168,7 +168,7 @@ namespace BridGHe.Grasshopper.Components.Loads
             {
                 var model = MovingModelBuilder.ReplacePaths(input.Value,
                     paths.Select(goo => goo.Value as MovingPath ?? throw new ArgumentException("Atteso Moving Load Path.")));
-                da.SetData(0, new GH_Model { Value = model });
+                da.SetData(0, GH_Model.FromModel(model, input));
             }
             catch (Exception ex) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message); }
         }

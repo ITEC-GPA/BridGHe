@@ -119,7 +119,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
                 try
                 {
                     var result = Common.Straus.StrausAnalysis.Run(model.Value, outputPath, solver, requested, Settings.Instance.Tolerance, false, out var warnings);
-                    _model = new GH_Model { Value = result };
+                    _model = GH_Model.FromModel(result, model);
                     foreach (string warning in warnings) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
                     Message = "Done";
                 }

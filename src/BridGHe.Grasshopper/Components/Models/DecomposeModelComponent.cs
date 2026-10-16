@@ -55,11 +55,11 @@ namespace BridGHe.Grasshopper.Components.Models
             try
             {
                 foreach (NodeModel node in model.Value.Nodes)
-                    nodes.Add(new GH_Node(node, model.Guids[node]));
+                    nodes.Add(new GH_Node(node, model.GetGuid(node)));
                 foreach (BeamModel beam in model.Value.Beams)
-                    beams.Add(new GH_Beam(beam, model.Guids[beam]));
+                    beams.Add(new GH_Beam(beam, model.GetGuid(beam)));
                 foreach (PlateModel plate in model.Value.Plates)
-                    plates.Add(new GH_Plate(plate, model.Guids[plate]));
+                    plates.Add(new GH_Plate(plate, model.GetGuid(plate)));
             }
             catch (Exception e)
             {

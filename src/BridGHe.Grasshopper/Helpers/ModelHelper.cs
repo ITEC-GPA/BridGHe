@@ -321,30 +321,7 @@ namespace BridGHe.Grasshopper.Helpers
         /// <param name="model">The model where to restore the Guids</param>
         public static void RestoreModelGuids(GH_Model input_model, ref GH_Model model)
         {
-            if (input_model != null && input_model.IsValid && model != null && model.Value != null)
-            {
-                foreach (KeyValuePair<ElementModel, Guid> item in input_model.Guids)
-                {
-                    if (item.Key is NodeModel input_node)
-                    {
-                        NodeModel node = model.Value.GetNode(input_node.NodeId);
-                        if (node != null)
-                            model.Guids.Add(node, item.Value);
-                    }
-                    else if (item.Key is BeamModel input_beam)
-                    {
-                        BeamModel beam = model.Value.GetBeam(input_beam.BeamId);
-                        if (beam != null)
-                            model.Guids.Add(beam, item.Value);
-                    }
-                    else if (item.Key is PlateModel input_plate)
-                    {
-                        PlateModel plate = model.Value.GetPlate(input_plate.PlateId);
-                        if (plate != null)
-                            model.Guids.Add(plate, item.Value);
-                    }
-                }
-            }
+            model?.SynchronizeGuids(input_model);
         }
     }
 }
