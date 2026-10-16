@@ -203,37 +203,9 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                             }
                         }
 
-                        HashSet<double> normStationsSet = new HashSet<double>();
-                        for (int c = 0; c < model.Value.LoadCombinations.Count; c++)
-                        {
-                            LoadCombinationModel combo = model.Value.LoadCombinations[c];
-                            foreach (KeyValuePair<LoadCaseModel, double> kvp in combo.Values)
-                            {
-                                LoadCaseModel loadCase = kvp.Key;
-                                double coeff = kvp.Value;
-
-                                List<BeamForceResultModel> considerStationResult = new List<BeamForceResultModel>();
-                                for (int ll = 0; ll < beam.Value.Results.Count; ll++)
-                                {
-                                    BeamForceResultModel beamForceResultModel = beam.Value.Results[ll] as BeamForceResultModel;
-                                    if (beamForceResultModel != null)
-                                    {
-                                        double dist = 0;
-                                        if (beamForceResultModel.NormalizedLength)
-                                            dist = beamForceResultModel.Station;
-                                        else
-                                            dist = beamForceResultModel.Station / beam.Value.Length;
-
-                                        if (dist < 0)
-                                            dist = 0;
-                                        if (dist > 1.0)
-                                            dist = 1.0;
-
-                                        normStationsSet.Add(dist);
-                                    }
-                                }
-                            }
-                        }
+                        var normStationsSet = beam.Value.Results.OfType<BeamForceResultModel>()
+                            .Select(result => Math.Clamp(result.NormalizedLength ? result.Station : result.Station / beam.Value.Length, 0, 1))
+                            .ToHashSet();
 
                         List<double> stations = normStationsSet.OrderBy(value => value).ToList();
 
@@ -383,6 +355,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                                 forcesForOutput[i] = new (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant)[station.Count];
                                 strains[i] = new (double[] StrainInfiniteTime, double[] StrainIstantTime)[station.Count];
 
+                                var phaseIndex = Common.Checks.BridgePhaseAssembler.CreateIndex(considerBeam, beam.Value.Length, GeometryBase.Tolerance);
                                 for (int k = 0; k < station.Count; k++)
                                 {
                                     double consideredStation = station[k];
@@ -401,8 +374,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                                     {
                                         LoadCombinationModel combo = model.Value.LoadCombinations[c];
 
-                                        var actions = Common.Checks.BridgePhaseAssembler.Assemble(considerBeam, beam.Value.Length,
-                                            consideredStation, combo, cs, GeometryBase.Tolerance);
+                                        var actions = phaseIndex.Assemble(consideredStation, combo, cs);
                                         resultBeamForcesOnlySteels[c] = resultBeamForcesOnlySteelsForOutput[c] = actions.Steel;
                                         resultBeamForcesInfinites[c] = resultBeamForcesInfinitesForOutput[c] = actions.Infinite;
                                         resultBeamForcesInstants[c] = resultBeamForcesInstantsForOutput[c] = actions.Instant;

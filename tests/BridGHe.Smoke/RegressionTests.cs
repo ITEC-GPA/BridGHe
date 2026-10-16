@@ -23,7 +23,8 @@ internal static class RegressionTests
             ["deep-copies"] = DeepCopies,
             ["staged-load-cases"] = StagedLoadCases,
             ["staged-selection"] = StagedSelection,
-            ["merge-plate-connectivity"] = MergePlateConnectivity
+            ["merge-plate-connectivity"] = MergePlateConnectivity,
+            ["indexed-phases"] = IndexedPhases
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -165,6 +166,47 @@ internal static class RegressionTests
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
         return System.Reflection.Assembly.LoadFrom(System.IO.Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha"));
+    }
+
+    private static void IndexedPhases()
+    {
+        var q = new LoadCaseModel("1", "Q"); q.Stages.Add(new LoadCaseModel.Stage("S") { BridgePhase = LoadCaseModel.Stage.BridgePhases.NInstant });
+        var combination = new LoadCombinationModel("C"); combination.Values.Add(q, -2);
+        var beam = new ElementModel();
+        beam.Results.Add(new BeamForceResultModel(q, 0.5, 0, "") { NormalizedLength = true, AxialForce = 12, Mx = 5, My = 7 });
+        beam.Results.Add(new BeamForceResultModel(q, 20, 0, "") { AxialForce = 30 });
+        var index = BridGHe.Common.Checks.BridgePhaseAssembler.CreateIndex(beam, 100, 0.125);
+        var result = index.Assemble(50.125, combination, GPC.Geometry.CoordinateSystem.Global);
+        Require(result.Instant.N == -24 && result.Instant.M1 == -14 && result.Instant.M2 == 10, "indexed phases preserve coefficients, moment conversion, normalized stations and tolerance boundary");
+        Require(index.Assemble(20, combination, GPC.Geometry.CoordinateSystem.Global).Instant.N == -60, "absolute stations use the same index");
+        bool missing = false;
+        try { index.Assemble(50.25, combination, GPC.Geometry.CoordinateSystem.Global); } catch (InvalidOperationException) { missing = true; }
+        Require(missing, "outside-tolerance results rejected");
+        beam.Results.Add(new BeamForceResultModel(q, 50, 0, ""));
+        index = BridGHe.Common.Checks.BridgePhaseAssembler.CreateIndex(beam, 100, 0.125);
+        bool duplicate = false;
+        try { index.Assemble(50, combination, GPC.Geometry.CoordinateSystem.Global); } catch (InvalidOperationException) { duplicate = true; }
+        Require(duplicate, "duplicate station/case results remain an error");
+        foreach (int stations in new[] { 100, 400, 800 })
+        {
+            var many = new ElementModel(); var combo = new LoadCombinationModel("Benchmark");
+            for (int c = 0; c < 8; c++)
+            {
+                var load = new LoadCaseModel(c.ToString(), "L" + c); load.Stages.Add(new LoadCaseModel.Stage("S") { BridgePhase = LoadCaseModel.Stage.BridgePhases.NInstant });
+                combo.Values.Add(load, 1);
+                for (int i = 0; i < stations; i++) many.Results.Add(new BeamForceResultModel(load, i, 0, "") { AxialForce = c + 1 });
+            }
+            var times = new List<double>(); long bytes = 0;
+            for (int repeat = 0; repeat < 4; repeat++)
+            {
+                long before = GC.GetAllocatedBytesForCurrentThread(); var watch = System.Diagnostics.Stopwatch.StartNew();
+                var lookup = BridGHe.Common.Checks.BridgePhaseAssembler.CreateIndex(many, stations, 1e-6); double sum = 0;
+                for (int c = 0; c < 10; c++) for (int i = 0; i < stations; i++) sum += lookup.Assemble(i, combo, GPC.Geometry.CoordinateSystem.Global).Instant.N;
+                watch.Stop(); if (repeat > 0) times.Add(watch.Elapsed.TotalMilliseconds); bytes = GC.GetAllocatedBytesForCurrentThread() - before;
+                Require(sum == stations * 10 * 36, "indexed benchmark analytical checksum");
+            }
+            times.Sort(); Console.WriteLine($"PHASE INDEX {stations} stations: {times[1]:F1} ms, {bytes / 1048576.0:F1} MiB (includes index construction)");
+        }
     }
 
     private static void MergePlateConnectivity()
