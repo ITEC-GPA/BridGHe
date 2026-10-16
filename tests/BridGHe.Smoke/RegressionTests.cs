@@ -22,7 +22,8 @@ internal static class RegressionTests
             ["model-guids"] = ModelGuids,
             ["deep-copies"] = DeepCopies,
             ["staged-load-cases"] = StagedLoadCases,
-            ["staged-selection"] = StagedSelection
+            ["staged-selection"] = StagedSelection,
+            ["merge-plate-connectivity"] = MergePlateConnectivity
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -166,6 +167,20 @@ internal static class RegressionTests
         return System.Reflection.Assembly.LoadFrom(System.IO.Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha"));
     }
 
+    private static void MergePlateConnectivity()
+    {
+        var property = new PlatePropertyModel("P") { MembraneThickness = 1, PropertyType = PlatePropertyType.ShellThin };
+        var plate = new PlateModel("8", new[] { Point3d.Origin, new Point3d(10, 0, 0), new Point3d(10, 10, 0), new Point3d(0, 10, 0) }, property);
+        var nodes = new List<NodeModel> { new NodeModel("1", new Point3d(0.0001, 0, 0)) };
+        var beams = new List<BeamModel>(); var plates = new List<PlateModel> { plate };
+        ModelHelper.MergeModel(ref nodes, ref beams, ref plates, 0.001);
+        Require(plates.Count == 1 && plates[0].Points.Count == 4 && nodes.Count == 4, "plate merge uses FEM nodes, not solid preview vertices");
+        Require(plates[0].Points[0] == nodes[0].Position && plate.Points[0] == Point3d.Origin, "plate connectivity snaps without mutating input");
+        Require(plates[0].PlateId == "8" && plates[0].Points[2] == plate.Points[2], "plate ID and node order preserved");
+        var archive = ModelArchive.Clone(plates[0]);
+        Require(archive.Points[0] == nodes[0].Position && archive.Shape.IsValid, "snapped FEM connectivity survives serialization");
+    }
+
     private static void StagedSelection()
     {
         var q = new LoadCaseModel("", "Q");
@@ -279,3 +294,4 @@ internal static class RegressionTests
         Require(!beam.IsValid, "zero-length native beam is invalid");
     }
 }
+

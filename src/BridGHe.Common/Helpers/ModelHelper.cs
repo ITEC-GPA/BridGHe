@@ -186,8 +186,11 @@ namespace BridGHe.Common.Helpers
         public static void MergeModel(ref List<NodeModel> nodes, ref List<BeamModel> beams, ref List<PlateModel> plates, double tolerance)
         {
             if (!double.IsFinite(tolerance) || tolerance < 0) throw new ArgumentOutOfRangeException(nameof(tolerance));
-            // Clone the node graph once: shared load cases stay shared inside the result.
-            var sourceNodes = ModelArchive.Clone(nodes);
+            // Clone the entire graph once to isolate inputs and preserve shared load cases.
+            var graph = ModelArchive.Clone(nodes.Cast<ElementModel>().Concat(beams).Concat(plates).ToList());
+            var sourceNodes = graph.Take(nodes.Count).Cast<NodeModel>().ToList();
+            var sourceBeams = graph.Skip(nodes.Count).Take(beams.Count).Cast<BeamModel>().ToList();
+            var sourcePlates = graph.Skip(nodes.Count + beams.Count).Cast<PlateModel>().ToList();
             List<NodeModel> orderedNodeList = new List<NodeModel>();
             using RTree rTree = new RTree();
 
@@ -223,94 +226,44 @@ namespace BridGHe.Common.Helpers
                 }
             }
 
-            for (int i = 0; i < beams.Count; i++)
+            Point3d ResolvePoint(Point3d point)
             {
-                var cv = beams[i];
-
-                Point3d startPt = cv.PointFrom;
-                Point3d endPt = cv.PointTo;
-
-                bool found = false;
-                int foundId = -1;
-                rTree.Search(new Sphere(startPt, tolerance), new EventHandler<RTreeEventArgs>((sender, e) => { found = true; foundId = e.Id; }));
-
-                if (found && foundId != -1)
+                int found = -1;
+                double nearest = double.PositiveInfinity;
+                rTree.Search(new Sphere(point, tolerance), (sender, e) =>
                 {
-                    cv.PointFrom = orderedNodeList[foundId].Position;
-                }
-                else
-                {
-                    orderedNodeList.Add(new NodeModel(startPt));
-                    rTree.Insert(startPt, orderedNodeList.Count - 1);
-                }
-
-                found = false;
-                foundId = -1;
-                rTree.Search(new Sphere(endPt, tolerance), new EventHandler<RTreeEventArgs>((sender, e) => { found = true; foundId = e.Id; }));
-
-                if (found && foundId != -1)
-                {
-                    cv.PointTo = orderedNodeList[foundId].Position;
-                }
-                else
-                {
-                    orderedNodeList.Add(new NodeModel(endPt));
-                    rTree.Insert(endPt, orderedNodeList.Count - 1);
-                }
-
-                if (cv.PointFrom == cv.PointTo)
-                {
-                    beams.RemoveAt(i);
-                    i--;
-                }
+                    double distance = orderedNodeList[e.Id].Position.DistanceToSquared(point);
+                    if (distance < nearest || (distance == nearest && e.Id < found))
+                    { found = e.Id; nearest = distance; }
+                });
+                if (found >= 0) return orderedNodeList[found].Position;
+                orderedNodeList.Add(new NodeModel(point));
+                rTree.Insert(point, orderedNodeList.Count - 1);
+                return point;
             }
 
-            for (int i = 0; i < plates.Count; i++)
+            foreach (var beam in sourceBeams)
             {
-                PlateModel brep = plates[i];
-
-                HashSet<Point3f> newVertices = new HashSet<Point3f>();
-                for (int j = 0; j < brep.Shape.Vertices.Count; j++)
-                {
-                    BrepVertex vertice = brep.Shape.Vertices[j];
-
-                    bool found = false;
-                    int foundId = -1;
-                    rTree.Search(new Sphere(vertice.Location, tolerance), new EventHandler<RTreeEventArgs>((sender, e) => { found = true; foundId = e.Id; }));
-
-                    if (found && foundId != -1)
-                    {
-                        newVertices.Add((Point3f)orderedNodeList[foundId].Position);
-                    }
-                    else
-                    {
-                        newVertices.Add((Point3f)vertice.Location);
-                        orderedNodeList.Add(new NodeModel(new Point3d(vertice.Location)));
-                        rTree.Insert(vertice.Location, orderedNodeList.Count - 1);
-                    }
-                }
-
-                if (newVertices.Count > 2)
-                {
-                    for (int j = 0; j < newVertices.Count; j++)
-                    {
-                        brep.Shape.Vertices[j].Location = newVertices.ElementAt(j);
-                    }
-                    if (brep.Shape.Vertices.Count > newVertices.Count)
-                    {
-                        for (int j = newVertices.Count; j < newVertices.Count; j++)
-                        {
-                            brep.Shape.Vertices[j].Location = newVertices.Last();
-                        }
-                    }
-                    brep.Shape.CullUnusedVertices();
-                }
-                else
-                {
-                    plates.RemoveAt(i);
-                    i--;
-                }
+                beam.PointFrom = ResolvePoint(beam.PointFrom);
+                beam.PointTo = ResolvePoint(beam.PointTo);
             }
+            sourceBeams.RemoveAll(beam => beam.PointFrom == beam.PointTo);
+
+            var mergedPlates = new List<PlateModel>();
+            foreach (var plate in sourcePlates)
+            {
+                // FEM connectivity comes from Points, never from the extruded preview vertices.
+                var points = plate.Points.Select(ResolvePoint).ToList();
+                var distinct = points.Distinct().ToList();
+                if (distinct.Count < 3) continue;
+                if (distinct.Count != points.Count && points.Count > 4)
+                    throw new InvalidOperationException("Il merge fa coincidere nodi di una piastra di ordine superiore: ridurre la tolleranza.");
+                plate.Points = new System.Collections.ObjectModel.ObservableCollection<Point3d>(distinct);
+                plate.CreateShapes();
+                mergedPlates.Add(plate);
+            }
+            beams = sourceBeams;
+            plates = mergedPlates;
 
             // Returns the new lists
             nodes = orderedNodeList;
