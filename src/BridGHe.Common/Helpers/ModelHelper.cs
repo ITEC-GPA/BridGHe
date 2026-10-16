@@ -298,23 +298,40 @@ namespace BridGHe.Common.Helpers
         /// <param name="meshes">The plates list</param>
         public static void MergeModel(ref List<NodeModel> nodes, ref List<BeamModel> beams, ref List<PlateModel> plates, double tolerance)
         {
+            if (!double.IsFinite(tolerance) || tolerance < 0) throw new ArgumentOutOfRangeException(nameof(tolerance));
+            // Clone the node graph once: shared load cases stay shared inside the result.
+            var sourceNodes = ModelArchive.Clone(nodes);
             List<NodeModel> orderedNodeList = new List<NodeModel>();
-            RTree rTree = new RTree();
+            using RTree rTree = new RTree();
 
-            for (int i = 0; i < nodes.Count; i++)
+            for (int i = 0; i < sourceNodes.Count; i++)
             {
-                Point3d pt = nodes[i].Position;
+                Point3d pt = sourceNodes[i].Position;
                 bool found = false;
                 int foundId = -1;
-                rTree.Search(new Sphere(pt, tolerance), new EventHandler<RTreeEventArgs>((sender, e) => { found = true; foundId = e.Id; }));
+                double nearest = double.PositiveInfinity;
+                rTree.Search(new Sphere(pt, tolerance), (sender, e) =>
+                {
+                    double distance = orderedNodeList[e.Id].Position.DistanceToSquared(pt);
+                    if (distance < nearest || (distance == nearest && e.Id < foundId))
+                    { found = true; foundId = e.Id; nearest = distance; }
+                });
 
                 if (found)
                 {
-                    nodes[i].Position = orderedNodeList[foundId].Position;
+                    var target = orderedNodeList[foundId];
+                    var source = sourceNodes[i];
+                    foreach (var group in source.Groups) if (!target.Groups.Contains(group)) target.Groups.Add(group);
+                    // Equal-valued loads on distinct nodes are additive; only the same object is deduplicated.
+                    foreach (var load in source.Loads) if (!target.Loads.Any(l => ReferenceEquals(l, load))) target.Loads.Add(load);
+                    foreach (var attribute in source.Attributes)
+                        if (!target.Attributes.Contains(attribute) && !(attribute is ElementIdAttributeModel && target.HasAttribute(typeof(ElementIdAttributeModel))))
+                            target.Attributes.Add(attribute);
+                    foreach (var result in source.Results) if (!target.Results.Contains(result)) target.Results.Add(result);
                 }
                 if (!found)
                 {
-                    orderedNodeList.Add(new NodeModel(nodes[i].Position));
+                    orderedNodeList.Add(sourceNodes[i]);
                     rTree.Insert(pt, orderedNodeList.Count - 1);
                 }
             }

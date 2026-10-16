@@ -14,7 +14,8 @@ internal static class RegressionTests
             ["composite-archive"] = CompositeArchive,
             ["composite-preview"] = CompositePreview,
             ["nodal-actions"] = NodalActions,
-            ["load-case-identity"] = LoadCaseIdentity
+            ["load-case-identity"] = LoadCaseIdentity,
+            ["merge-node-data"] = MergeNodeData
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -95,5 +96,26 @@ internal static class RegressionTests
         bool rejected = false;
         try { ModelHelper.GetLoadCases(model, out _); } catch (ArgumentException) { rejected = true; }
         Require(rejected, "conflicting definitions with the same name must be rejected");
+    }
+
+    private static void MergeNodeData()
+    {
+        var q = new LoadCaseModel("", "Q");
+        var first = new NodeModel("7", Point3d.Origin);
+        first.Loads.Add(new NodeForceLoadModel(q, new Vector3d(0, 0, -100)));
+        first.Attributes.Add(new NodeRestraintAttributeModel(true, false, false, false, false, false));
+        first.Groups.Add(new GroupModel("G"));
+        var second = new NodeModel("8", new Point3d(0.0001, 0, 0));
+        second.Loads.Add(new NodeForceLoadModel(q, new Vector3d(0, 0, -100)));
+        second.Attributes.Add(new NodeRestraintAttributeModel(false, true, false, false, false, false));
+        var nodes = new List<NodeModel> { first, second };
+        var beams = new List<BeamModel>(); var plates = new List<PlateModel>();
+        ModelHelper.MergeModel(ref nodes, ref beams, ref plates, 0.001);
+        Require(nodes.Count == 1 && nodes[0].NodeId == "7" && nodes[0].Groups.Count == 1, "merge preserves first node identity and groups");
+        Require(nodes[0].Attributes.Count == 2 && nodes[0].Loads.Count == 2, "merge retains restraints and equal-valued independent loads");
+        Require(BridGHe.Common.Straus.NodalLoadAccumulator.Sum(nodes[0].Loads)["Q"].Force.Z == -200, "coincident node loads add");
+        ((NodeForceLoadModel)nodes[0].Loads[0]).Value = Vector3d.Zero;
+        Require(first.Loads.Count == 1 && ((NodeForceLoadModel)first.Loads[0]).Value.Z == -100, "node merge isolates its inputs");
+        Require(ReferenceEquals(nodes[0].Loads[0].LoadCase, nodes[0].Loads[1].LoadCase), "node merge keeps shared case identity");
     }
 }
