@@ -16,7 +16,8 @@ internal static class RegressionTests
             ["nodal-actions"] = NodalActions,
             ["load-case-identity"] = LoadCaseIdentity,
             ["merge-node-data"] = MergeNodeData,
-            ["merge-mesh"] = MergeMesh
+            ["merge-mesh"] = MergeMesh,
+            ["beam-property-validity"] = BeamPropertyValidity
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -138,5 +139,18 @@ internal static class RegressionTests
         nodes = new List<Point3d>(); meshes = new List<Mesh> { collapsed };
         ModelHelper.MergeGeometry(ref nodes, ref beams, ref meshes, 0.001);
         Require(meshes[0].Faces.Count == 0, "only genuinely collapsed faces are removed");
+    }
+
+    private static void BeamPropertyValidity()
+    {
+        var p = new BeamPropertyModel("P") { Material = new MaterialModel("S"),
+            Section = new SectionModel { SectionType = SectionModel.SectionTypes.Generic }, PropertyType = BeamPropertyType.Beam };
+        Require(p.IsValid && ((BeamPropertyBaseModel)p).IsValid, "normal beam does not require cutoff settings");
+        p.PropertyType = BeamPropertyType.CutoffBar;
+        Require(!p.IsValid, "cutoff bar requires a cutoff law");
+        p.CutoffType = CutoffType.Brittle;
+        Require(p.IsValid, "valid cutoff bar is accepted");
+        p.Section = null;
+        Require(!p.IsValid && !((BeamPropertyBaseModel)p).IsValid, "missing section rejected through base and derived types");
     }
 }

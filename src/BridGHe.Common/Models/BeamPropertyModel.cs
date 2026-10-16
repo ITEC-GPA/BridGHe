@@ -121,17 +121,18 @@ namespace BridGHe.Common.Models
         #endregion
 
         public string SectionCode => _section.Code;
-        public new bool IsValid
+        public override bool IsValid
         {
             get
             {
                 if (_material == null)
                     return false;
-                if (!_section.IsValid)
+                if (_section == null || !_section.IsValid)
                     return false;
-                if (_cutoffType == CutoffType.Undefined)
+                if (_beamPropertyType == BeamPropertyType.Undefined || !Enum.IsDefined(_beamPropertyType))
                     return false;
-                if (_beamPropertyType == BeamPropertyType.CutoffBar)
+                if (_beamPropertyType == BeamPropertyType.CutoffBar &&
+                    (_cutoffType == CutoffType.Undefined || !Enum.IsDefined(_cutoffType)))
                     return false;
                 return true;
             }
