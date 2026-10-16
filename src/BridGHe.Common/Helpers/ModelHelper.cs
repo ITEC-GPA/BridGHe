@@ -133,159 +133,45 @@ namespace BridGHe.Common.Helpers
         /// <param name="meshes">The plates list</param>
         public static void MergeGeometry(ref List<Point3d> inputNodes, ref List<Curve> inputBeams, ref List<Mesh> inputMeshes, double tolerance)
         {
-            List<Point3d> orderedNodeList = new List<Point3d>();
-            List<Point3d> nodes = new List<Point3d>();
-            List<Curve> beams = new List<Curve>();
-            List<Mesh> meshes = new List<Mesh>();
-
-            for (int i = 0; i < inputNodes.Count; i++)
-                nodes.Add(new Point3d(inputNodes[i]));
-            for (int i = 0; i < inputBeams.Count; i++)
-                beams.Add(inputBeams[i].DuplicateCurve());
-            for (int i = 0; i < inputMeshes.Count; i++)
-                meshes.Add(inputMeshes[i].DuplicateMesh());
-
-            RTree rTree = new RTree();
-
-            for (int i = 0; i < nodes.Count; i++)
+            if (!double.IsFinite(tolerance) || tolerance < 0) throw new ArgumentOutOfRangeException(nameof(tolerance));
+            var points = new List<Point3d>();
+            using var tree = new RTree();
+            Point3d Resolve(Point3d point)
             {
-                Point3d pt = nodes[i];
-                bool found = false;
-                rTree.Search(new Sphere(pt, tolerance), new EventHandler<RTreeEventArgs>((sender, e) => { found = true; }));
-
-                if (!found)
+                int index = -1;
+                double nearest = double.PositiveInfinity;
+                tree.Search(new Sphere(point, tolerance), (sender, e) =>
                 {
-                    orderedNodeList.Add(new Point3d(nodes[i]));
-                    rTree.Insert(pt, orderedNodeList.Count - 1);
-                }
+                    double distance = points[e.Id].DistanceToSquared(point);
+                    if (distance < nearest || (distance == nearest && e.Id < index))
+                    { index = e.Id; nearest = distance; }
+                });
+                if (index >= 0) return points[index];
+                tree.Insert(point, points.Count);
+                points.Add(point);
+                return point;
             }
-
-            for (int i = 0; i < beams.Count; i++)
+            foreach (var point in inputNodes) Resolve(point);
+            var beams = inputBeams.Select(c => c.DuplicateCurve()).ToList();
+            foreach (var beam in beams)
             {
-                var cv = beams[i];
-
-                Point3d startPt = cv.PointAtStart;
-                Point3d endPt = cv.PointAtEnd;
-
-                bool found = false;
-                int foundId = -1;
-                rTree.Search(new Sphere(startPt, tolerance), new EventHandler<RTreeEventArgs>((sender, e) => { found = true; foundId = e.Id; }));
-
-                if (found && foundId != -1)
-                {
-                    cv.SetStartPoint(orderedNodeList[foundId]);
-                }
-                else
-                {
-                    orderedNodeList.Add(new Point3d(startPt));
-                    rTree.Insert(startPt, orderedNodeList.Count - 1);
-                }
-
-                found = false;
-                foundId = -1;
-                rTree.Search(new Sphere(endPt, tolerance), new EventHandler<RTreeEventArgs>((sender, e) => { found = true; foundId = e.Id; }));
-
-                if (found && foundId != -1)
-                {
-                    cv.SetEndPoint(orderedNodeList[foundId]);
-                }
-                else
-                {
-                    orderedNodeList.Add(new Point3d(endPt));
-                    rTree.Insert(endPt, orderedNodeList.Count - 1);
-                }
+                beam.SetStartPoint(Resolve(beam.PointAtStart));
+                beam.SetEndPoint(Resolve(beam.PointAtEnd));
             }
-
-            for (int i = 0; i < meshes.Count; i++)
+            var meshes = inputMeshes.Select(m => m.DuplicateMesh()).ToList();
+            foreach (var mesh in meshes)
             {
-                Mesh mesh = meshes[i];
-
-                for (int j = 0; j < mesh.Faces.Count; j++)
-                {
-                    HashSet<Point3f> newVertices = new HashSet<Point3f>();
-                    Point3d ptA = mesh.Vertices[mesh.Faces[j].A];
-                    Point3d ptB = mesh.Vertices[mesh.Faces[j].B];
-                    Point3d ptC = mesh.Vertices[mesh.Faces[j].C];
-                    Point3d ptD = Point3d.Unset;
-                    if (mesh.Faces[j].IsQuad)
-                        ptD = mesh.Vertices[mesh.Faces[j].D];
-
-                    bool found = false;
-                    int foundId = -1;
-                    rTree.Search(new Sphere(ptA, tolerance), new EventHandler<RTreeEventArgs>((sender, e) => { found = true; foundId = e.Id; }));
-
-                    if (found && foundId != -1)
-                    {
-                        newVertices.Add((Point3f)orderedNodeList[foundId]);
-                    }
-                    else
-                    {
-                        newVertices.Add((Point3f)ptA);
-                        orderedNodeList.Add(new Point3d(ptA));
-                        rTree.Insert(ptA, orderedNodeList.Count - 1);
-                    }
-
-                    rTree.Search(new Sphere(ptB, tolerance), new EventHandler<RTreeEventArgs>((sender, e) => { found = true; foundId = e.Id; }));
-
-                    if (found && foundId != -1)
-                    {
-                        newVertices.Add((Point3f)orderedNodeList[foundId]);
-                    }
-                    else
-                    {
-                        newVertices.Add((Point3f)ptB);
-                        orderedNodeList.Add(new Point3d(ptB));
-                        rTree.Insert(ptB, orderedNodeList.Count - 1);
-                    }
-
-                    rTree.Search(new Sphere(ptC, tolerance), new EventHandler<RTreeEventArgs>((sender, e) => { found = true; foundId = e.Id; }));
-
-                    if (found && foundId != -1)
-                    {
-                        newVertices.Add((Point3f)orderedNodeList[foundId]);
-                    }
-                    else
-                    {
-                        newVertices.Add((Point3f)ptC);
-                        orderedNodeList.Add(new Point3d(ptC));
-                        rTree.Insert(ptC, orderedNodeList.Count - 1);
-                    }
-
-                    if (mesh.Faces[j].IsQuad)
-                    {
-                        rTree.Search(new Sphere(ptD, tolerance), new EventHandler<RTreeEventArgs>((sender, e) => { found = true; foundId = e.Id; }));
-
-                        if (found && foundId != -1)
-                        {
-                            newVertices.Add((Point3f)orderedNodeList[foundId]);
-                        }
-                        else
-                        {
-                            newVertices.Add((Point3f)ptD);
-                            orderedNodeList.Add(new Point3d(ptD));
-                            rTree.Insert(ptD, orderedNodeList.Count - 1);
-                        }
-                    }
-
-                    if (newVertices.Count > 2)
-                    {
-                        mesh.Vertices.Clear();
-                        mesh.Vertices[mesh.Faces[j].A] = newVertices.ElementAt(0);
-                        mesh.Vertices[mesh.Faces[j].B] = newVertices.ElementAt(1);
-                        mesh.Vertices[mesh.Faces[j].C] = newVertices.ElementAt(2);
-                        if (newVertices.Count > 3)
-                            mesh.Vertices[mesh.Faces[j].D] = newVertices.ElementAt(3);
-                    }
-                    else
-                    {
-                        mesh.Faces.RemoveAt(j);
-                        j--;
-                    }
-                }
+                mesh.Vertices.UseDoublePrecisionVertices = true;
+                // Remap all vertices before changing topology, preserving every face's winding.
+                for (int i = 0; i < mesh.Vertices.Count; i++)
+                    mesh.Vertices.SetVertex(i, Resolve(mesh.Vertices.Point3dAt(i)));
+                mesh.Vertices.CombineIdentical(true, true);
+                mesh.Faces.CullDegenerateFaces();
+                mesh.Vertices.CullUnused();
+                mesh.Normals.ComputeNormals();
+                mesh.Compact();
             }
-
-            // Returns the new lists
-            inputNodes = orderedNodeList;
+            inputNodes = points;
             inputBeams = beams;
             inputMeshes = meshes;
         }
