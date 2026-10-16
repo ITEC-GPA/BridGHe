@@ -133,7 +133,7 @@ namespace BridGHe.Common.Helpers
                             {
                                 if (HandleError(St7.St7NewChildGroup(modelId, parent_id, parent.Name, ref parent_id)))
                                 {
-                                    warnings.Add(string.Format("Failed to create parent group {0}", parent.Name));
+                                    errors.Add(string.Format("Failed to create parent group {0}", parent.Name));
                                     continue;
                                 }
                             }
@@ -142,7 +142,7 @@ namespace BridGHe.Common.Helpers
                     int group_id = 0;
                     if (HandleError(St7.St7NewChildGroup(modelId, parent_id, group.Name, ref group_id)))
                     {
-                        warnings.Add(string.Format("Failed to create group {0}", group.Name));
+                        errors.Add(string.Format("Failed to create group {0}", group.Name));
                         continue;
                     }
                     groups_ids.Add(group, group_id);
@@ -181,7 +181,7 @@ namespace BridGHe.Common.Helpers
 
                     if (HandleError(St7.St7NewBeamProperty(modelId, id, beamType, bp.Name)))
                     {
-                        warnings.Add(string.Format("Failed to create beam property {0}\r\n", bp.Name));
+                        errors.Add(string.Format("Failed to create beam property {0}\r\n", bp.Name));
                         continue;
                     }
                     // CutoffBar specific properties
@@ -285,7 +285,7 @@ namespace BridGHe.Common.Helpers
                                 case SectionModel.SectionTypes.Generic:
                                     break;
                                 default:
-                                    warnings.Add(string.Format("Unable to det the section geometry {0} of the beam property {1}",
+                                    errors.Add(string.Format("Unable to det the section geometry {0} of the beam property {1}",
                                         bp.SectionType, bp.Id));
                                     break;
                             }
@@ -418,7 +418,7 @@ namespace BridGHe.Common.Helpers
 
                     if (HandleError(St7.St7NewPlateProperty(modelId, id, plateType, materialType, pp.Name)))
                     {
-                        warnings.Add(string.Format("Failed to create beam property {0}\r\n", pp.Name));
+                        errors.Add(string.Format("Failed to create beam property {0}\r\n", pp.Name));
                         continue;
                     }
 
@@ -554,12 +554,12 @@ namespace BridGHe.Common.Helpers
                     if (loadCase.Name == LoadCaseModel.Dead.Name)
                     {
                         if (HandleError(St7.St7SetLoadCaseName(modelId, id, loadCase.Name)))
-                            warnings.Add(string.Format("Failed to rename the default load case in {0}", loadCase.Name));
+                            errors.Add(string.Format("Failed to rename the default load case in {0}", loadCase.Name));
                     }
                     else
                     {
                         if (HandleError(St7.St7NewLoadCase(modelId, loadCase.Name)))
-                            warnings.Add(string.Format("Failed to define the load case {0}", loadCase.Name));
+                            errors.Add(string.Format("Failed to define the load case {0}", loadCase.Name));
                     }
 
                     int caseType = St7.lcNoInertia;
@@ -568,18 +568,18 @@ namespace BridGHe.Common.Helpers
                         caseType = St7.lcGravity;
 
                     if (HandleError(St7.St7SetLoadCaseType(modelId, id, caseType)))
-                        warnings.Add(string.Format("Failed to set load case type of the load case {0}", loadCase.Name));
+                        errors.Add(string.Format("Failed to set load case type of the load case {0}", loadCase.Name));
 
                     if (HandleError(St7.St7SetLoadCaseGravityDir(modelId, id, (int)loadCase.GravityDirection + 1)))
-                        warnings.Add(string.Format("Failed to set gravity direction of the load case {0}", loadCase.Name));
+                        errors.Add(string.Format("Failed to set gravity direction of the load case {0}", loadCase.Name));
 
                     if (HandleError(St7.St7SetLoadCaseMassOption(modelId, id, Convert.ToByte(loadCase.StructuralMassAcceleration),
                         Convert.ToByte(loadCase.NonStructuralMassAcceleration))))
-                        warnings.Add(string.Format("Failed to set the mass options of the {0} load case", loadCase.Name));
+                        errors.Add(string.Format("Failed to set the mass options of the {0} load case", loadCase.Name));
 
                     if (HandleError(St7.St7SetLoadCaseDefaults(modelId, id, new[] { 0, 0, 0, 0, 0, 0,
                         UnitsConvert.ConvertFromDefaultUnits(loadCase.GravityValue, lengthUnits, 1), 0, 0, 0, 0, 0, 0 })))
-                        warnings.Add(string.Format("Failed to set the gravity value of the {0} load case", loadCase.Name));
+                        errors.Add(string.Format("Failed to set the gravity value of the {0} load case", loadCase.Name));
                     id++;
                 }
 
@@ -612,8 +612,7 @@ namespace BridGHe.Common.Helpers
                                 {
                                     if (displLoadCase.Name != dl.LoadCase.Name)
                                     {
-                                        warningPreprocessingList.Add($"Only one displacement load case admitted. All displacement load will be applied considering {dl.LoadCase.Name}");
-                                        break;
+                                        throw new NotSupportedException("Only one displacement load case is supported; multiple cases cannot be exported without changing the model.");
                                     }
                                 }
                             }
@@ -655,10 +654,11 @@ namespace BridGHe.Common.Helpers
                 }
                 catch (Exception ex)
                 {
-                    warnings.Add(string.Format($"Failed to preprocess the model. {ex.Message}"));
+                    errors.Add(string.Format($"Failed to preprocess the model. {ex.Message}"));
                 }
 
                 warnings.AddRange(warningPreprocessingList);
+                if (errors.Count > 0) throw new InvalidOperationException("Preprocessing incompleto: esportazione interrotta.");
 
                 #endregion
 
@@ -671,7 +671,7 @@ namespace BridGHe.Common.Helpers
                     // For linear static analysis
                     if (HandleError(St7.St7AddLSACombination(modelId, combo.Name)))
                     {
-                        warnings.Add($"Failed to add the LSA combination: {combo.Name}");
+                        errors.Add($"Failed to add the LSA combination: {combo.Name}");
                     }
                     else
                     {
@@ -679,14 +679,14 @@ namespace BridGHe.Common.Helpers
                         {
                             int lc = loadCaseNameIdMap[item.Key.Name];
                             if (HandleError(St7.St7SetLSACombinationFactor(modelId, St7.ltLoadCase, comboNumber, lc, 1, item.Value)))
-                                warnings.Add($"Failed to set the LSA combination factor: {combo.Name}");
+                                errors.Add($"Failed to set the LSA combination factor: {combo.Name}");
                         }
                     }
 
                     // For nonlinear static analysis
                     if (HandleError(St7.St7AddNLAIncrement(modelId, 0, combo.Name)))
                     {
-                        warnings.Add($"Failed to add the NLA increment: {combo.Name}");
+                        errors.Add($"Failed to add the NLA increment: {combo.Name}");
                     }
                     else
                     {
@@ -694,12 +694,12 @@ namespace BridGHe.Common.Helpers
                         {
                             //int lc = Convert.ToInt32(loadCases.Single(l => l.Name == item.Key.Name).Id);
                             if (HandleError(St7.St7SetNLALoadIncrementFactor(modelId, 0, comboNumber, loadCaseNameIdMap[item.Key.Name], item.Value)))
-                                warnings.Add($"Failed to set the NLA increment factor: {combo.Name}");
+                                errors.Add($"Failed to set the NLA increment factor: {combo.Name}");
                             if (displLoadCase != null && displLoadCase.Name == item.Key.Name)
                             {
                                 if (HandleError(St7.St7SetNLAFreedomIncrementFactor(modelId, 0, comboNumber, 1, item.Value)))
                                 {
-                                    warnings.Add($"Failed to set the NLA freedom case factor: {combo.Name}");
+                                    errors.Add($"Failed to set the NLA freedom case factor: {combo.Name}");
                                 }
                             }
                         }
@@ -763,7 +763,7 @@ namespace BridGHe.Common.Helpers
                             }
                             catch (Exception ex)
                             {
-                                warnings.Add(string.Format($"Failed to set Node Restraint on {node.NodeId}. {ex.Message}"));
+                                errors.Add(string.Format($"Failed to set Node Restraint on {node.NodeId}. {ex.Message}"));
                                 continue;
                             }
                         }
@@ -779,12 +779,12 @@ namespace BridGHe.Common.Helpers
                             }
                             catch (Exception ex)
                             {
-                                warnings.Add(string.Format($"Failed to set node stiffness on node {node.NodeId}. {ex.Message}"));
+                                errors.Add(string.Format($"Failed to set node stiffness on node {node.NodeId}. {ex.Message}"));
                                 continue;
                             }
                         }
 
-                        if (GetElementID(node, ref warnings, out int elementId))
+                        if (GetElementID(node, ref errors, out int elementId))
                         {
                             StrausRuntime.Check(St7.St7SetNodeID(modelId, nodeNumber, elementId), "St7SetNodeID");
                         }
@@ -810,7 +810,7 @@ namespace BridGHe.Common.Helpers
                     }
                     catch (Exception ex)
                     {
-                        warnings.Add(string.Format($"Failed to create node {node.NodeId}. {ex.Message}"));
+                        errors.Add(string.Format($"Failed to create node {node.NodeId}. {ex.Message}"));
                         continue;
                     }
                 }
@@ -855,12 +855,12 @@ namespace BridGHe.Common.Helpers
                                 if (beam.Groups.Count > 0)
                                 {
                                     if (HandleError(St7.St7SetEntityGroup(modelId, St7.tyBEAM, beamNumber, groups_ids[beam.Groups[0]])))
-                                        warnings.Add(string.Format("Failed to set the group {0} to the beam {1}\r\n", beam.Groups[0], id));
+                                        errors.Add(string.Format("Failed to set the group {0} to the beam {1}\r\n", beam.Groups[0], id));
                                     if (beam.Groups.Count > 1)
                                         warnings.Add(string.Format("Straus7 allows assigning only one single group to the beam {0}\r\n", id));
                                 }
 
-                                if (GetElementID(beam, ref warnings, out int elementId))
+                                if (GetElementID(beam, ref errors, out int elementId))
                                 {
                                     StrausRuntime.Check(St7.St7SetBeamID(modelId, beamNumber, elementId), "St7SetBeamID");
                                 }
@@ -882,7 +882,7 @@ namespace BridGHe.Common.Helpers
                             }
                             catch (Exception ex)
                             {
-                                warnings.Add(string.Format($"Failed to create geometry of beam {beam.BeamId}. {ex.Message}"));
+                                errors.Add(string.Format($"Failed to create geometry of beam {beam.BeamId}. {ex.Message}"));
                                 continue;
                             }
                         }
@@ -894,7 +894,7 @@ namespace BridGHe.Common.Helpers
                             {
                                 if (beam.Attributes.Where(x => x is BeamReleasesAttributeModel).Count() > 1)
                                 {
-                                    warnings.Add($"Cannot assign more than 1 set of releases for beam {beamNumber}");
+                                    errors.Add($"Cannot assign more than 1 set of releases for beam {beamNumber}");
                                 }
                                 BeamReleasesAttributeModel.AttributeData rel = BeamReleasesAttributeModel.GetRelease(beam);
                                 if (rel.TransNode1.Count(b => b == true) > 0)
@@ -944,7 +944,7 @@ namespace BridGHe.Common.Helpers
                             }
                             catch (Exception ex)
                             {
-                                warnings.Add(string.Format($"Failed to set release to beam {beam.BeamId}. {ex.Message}"));
+                                errors.Add(string.Format($"Failed to set release to beam {beam.BeamId}. {ex.Message}"));
                                 continue;
                             }
                         }
@@ -1020,19 +1020,19 @@ namespace BridGHe.Common.Helpers
                                             }
                                             else
                                             {
-                                                warnings.Add($"Only simple spring type is supported for beam support attribute. Beam {beamNumber}");
+                                                errors.Add($"Only simple spring type is supported for beam support attribute. Beam {beamNumber}");
                                             }
                                         }
                                         else
                                         {
-                                            warnings.Add($"Only local axis spring direction is supported for beam support attribute. Beam {beamNumber}");
+                                            errors.Add($"Only local axis spring direction is supported for beam support attribute. Beam {beamNumber}");
                                         }
                                     }
                                 }
 
                                 if (compressionOnly.Distinct().Count() > 1)
                                 {
-                                    warnings.Add($"Compression only flag must be the equal for all supports attribute directions. Beam {beamNumber}");
+                                    errors.Add($"Compression only flag must be the equal for all supports attribute directions. Beam {beamNumber}");
                                 }
                                 else
                                 {
@@ -1044,7 +1044,7 @@ namespace BridGHe.Common.Helpers
                             }
                             catch (Exception ex)
                             {
-                                warnings.Add(string.Format($"Failed to set support attribute to beam {beam.BeamId}. {ex.Message}"));
+                                errors.Add(string.Format($"Failed to set support attribute to beam {beam.BeamId}. {ex.Message}"));
                                 continue;
                             }
                         }
@@ -1096,7 +1096,7 @@ namespace BridGHe.Common.Helpers
                             }
                             catch (Exception ex)
                             {
-                                warnings.Add(string.Format($"Failed to set taper attribute to beam {beam.BeamId}. {ex.Message}"));
+                                errors.Add(string.Format($"Failed to set taper attribute to beam {beam.BeamId}. {ex.Message}"));
                                 continue;
                             }
                         }
@@ -1123,7 +1123,7 @@ namespace BridGHe.Common.Helpers
                                     StrausRuntime.Check(St7.St7SetBeamPreLoad1(modelId, beamNumber, lc, type, new double[] { pl.Value }), "St7SetBeamPreLoad1");
                                     if (preLoadLC.Contains(lc))
                                     {
-                                        warnings.Add("Beam " + beamNumber + " has multiple prestrain in loadcase " + load.LoadCase.Name);
+                                        errors.Add("Beam " + beamNumber + " has multiple prestrain in loadcase " + load.LoadCase.Name);
                                     }
                                     else
                                     {
@@ -1313,14 +1313,14 @@ namespace BridGHe.Common.Helpers
                                     }
                                     catch (Exception ex)
                                     {
-                                        warnings.Add(string.Format($"Failed to set string group to beam {beam.BeamId}. {ex.Message}"));
+                                        errors.Add(string.Format($"Failed to set string group to beam {beam.BeamId}. {ex.Message}"));
                                         continue;
                                     }
                                 }
                             }
                             catch (Exception ex)
                             {
-                                warnings.Add(string.Format($"Failed to set load case {load.LoadCase.Id} to beam {beam.BeamId}. {ex.Message}"));
+                                errors.Add(string.Format($"Failed to set load case {load.LoadCase.Id} to beam {beam.BeamId}. {ex.Message}"));
                                 continue;
                             }
                         }
@@ -1335,7 +1335,7 @@ namespace BridGHe.Common.Helpers
                     }
                     catch (Exception ex)
                     {
-                        warnings.Add(string.Format($"Failed to create beam {beam.BeamId}. {ex.Message}"));
+                        errors.Add(string.Format($"Failed to create beam {beam.BeamId}. {ex.Message}"));
                         continue;
                     }
                 }
@@ -1360,13 +1360,13 @@ namespace BridGHe.Common.Helpers
                                 int propId = plateProperties[plate.PlateProperty.Name];
                                 if (HandleError(St7.St7SetElementConnection(modelId, St7.tyPLATE, plateId, propId, plateNodeNumberMap[k])))
                                 {
-                                    warnings.Add($"Failed to define the plate {id}");
+                                    errors.Add($"Failed to define the plate {id}");
                                     continue;
                                 }
                                 if (plate.Groups.Count > 0) // We consider only the first group as Straus7 allows
                                 {
                                     if (HandleError(St7.St7SetEntityGroup(modelId, St7.tyPLATE, plateId, groups_ids[plate.Groups[0]])))
-                                        warnings.Add($"Failed to set the group {plate.Groups[0]} to the plate {id}");
+                                        errors.Add($"Failed to set the group {plate.Groups[0]} to the plate {id}");
                                     if (plate.Groups.Count > 1)
                                         warnings.Add($"Straus7 allows assigning only one single group to the beam {id}");
                                 }
@@ -1377,10 +1377,10 @@ namespace BridGHe.Common.Helpers
                                 if (plate.Offset != 0)
                                 {
                                     if (HandleError(St7.St7SetPlateOffset1(modelId, plateId, new double[] { plate.Offset })))
-                                        warnings.Add($"Failed to set the offset to the plate {id}");
+                                        errors.Add($"Failed to set the offset to the plate {id}");
                                 }
 
-                                if (GetElementID(plate, ref warnings, out int elementId))
+                                if (GetElementID(plate, ref errors, out int elementId))
                                 {
                                     StrausRuntime.Check(St7.St7SetPlateID(modelId, plateId, elementId), "St7SetPlateID");
                                 }
@@ -1389,7 +1389,7 @@ namespace BridGHe.Common.Helpers
                             }
                             catch (Exception ex)
                             {
-                                warnings.Add(string.Format($"Failed to create geometry of plate {plate.PlateId}. {ex.Message}"));
+                                errors.Add(string.Format($"Failed to create geometry of plate {plate.PlateId}. {ex.Message}"));
                                 continue;
                             }
                         }
@@ -1439,7 +1439,7 @@ namespace BridGHe.Common.Helpers
                                 }
                                 catch (Exception ex)
                                 {
-                                    warnings.Add(string.Format($"Failed to set load patch {lp.Value.PatchType} on plate {plate.PlateId}. {ex.Message}"));
+                                    errors.Add(string.Format($"Failed to set load patch {lp.Value.PatchType} on plate {plate.PlateId}. {ex.Message}"));
                                     continue;
                                 }
                             }
@@ -1465,7 +1465,7 @@ namespace BridGHe.Common.Helpers
                                 }
                                 catch (Exception ex)
                                 {
-                                    warnings.Add(string.Format($"Failed to set support on plate {plate.PlateId}. {ex.Message}"));
+                                    errors.Add(string.Format($"Failed to set support on plate {plate.PlateId}. {ex.Message}"));
                                     continue;
                                 }
                             }
@@ -1494,7 +1494,7 @@ namespace BridGHe.Common.Helpers
                                     }
                                     catch (Exception ex)
                                     {
-                                        warnings.Add(string.Format($"Failed to set load case {lc} on plate {plate.PlateId}. {ex.Message}"));
+                                        errors.Add(string.Format($"Failed to set load case {lc} on plate {plate.PlateId}. {ex.Message}"));
                                         continue;
                                     }
                                 }
@@ -1506,7 +1506,7 @@ namespace BridGHe.Common.Helpers
                                     }
                                     catch (Exception ex)
                                     {
-                                        warnings.Add(string.Format($"Failed to set load patch {lc} on plate {plate.PlateId}. {ex.Message}"));
+                                        errors.Add(string.Format($"Failed to set load patch {lc} on plate {plate.PlateId}. {ex.Message}"));
                                         continue;
                                     }
                                 }
@@ -1518,7 +1518,7 @@ namespace BridGHe.Common.Helpers
                                     }
                                     catch (Exception ex)
                                     {
-                                        warnings.Add(string.Format($"Failed to set load patch {lc} on plate {plate.PlateId}. {ex.Message}"));
+                                        errors.Add(string.Format($"Failed to set load patch {lc} on plate {plate.PlateId}. {ex.Message}"));
                                         continue;
                                     }
                                 }
@@ -1527,7 +1527,7 @@ namespace BridGHe.Common.Helpers
                     }
                     catch (Exception ex)
                     {
-                        warnings.Add(string.Format($"Failed to create plate {plate.PlateId}. {ex.Message}"));
+                        errors.Add(string.Format($"Failed to create plate {plate.PlateId}. {ex.Message}"));
                         continue;
                     }
                 }
@@ -1587,7 +1587,7 @@ namespace BridGHe.Common.Helpers
                                 LoadCombinationModel combo = stageConArray[kk];
                                 if (HandleError(St7.St7AddNLAIncrement(modelId, stage, combo.Name)))
                                 {
-                                    warnings.Add($"Failed to add the NLA increment {combo.Name}");
+                                    errors.Add($"Failed to add the NLA increment {combo.Name}");
                                 }
                                 else
                                 {
@@ -1596,13 +1596,13 @@ namespace BridGHe.Common.Helpers
                                         //int lc = Convert.ToInt32(loadCases.Single(l => l.Name == item.Key.Name).Id);
 
                                         if (HandleError(St7.St7SetNLALoadIncrementFactor(modelId, stage, comboNumber, loadCaseNameIdMap[item.Key.Name], item.Value)))
-                                            warnings.Add($"Failed to set the NLA increment factor {combo.Name}");
+                                            errors.Add($"Failed to set the NLA increment factor {combo.Name}");
 
                                         if (displLoadCase != null && displLoadCase.Name == item.Key.Name)
                                         {
                                             if (HandleError(St7.St7SetNLAFreedomIncrementFactor(modelId, stage, comboNumber, 1, item.Value)))
                                             {
-                                                warnings.Add($"Failed to set the NLA freedom case factor {combo.Name}");
+                                                errors.Add($"Failed to set the NLA freedom case factor {combo.Name}");
                                             }
                                         }
                                     }
@@ -1614,14 +1614,14 @@ namespace BridGHe.Common.Helpers
                         }
                         catch (Exception ex)
                         {
-                            warnings.Add(string.Format($"Failed to create stage {stagedConstArr[i].Name}. {ex.Message}"));
+                            errors.Add(string.Format($"Failed to create stage {stagedConstArr[i].Name}. {ex.Message}"));
                             continue;
                         }
                     }
                 }
 
                 model.GeneratedMovingCases = new Dictionary<int, string>(MovingLoadExporter.Write(modelId, model.MovingPaths, loadCaseNameIdMap));
-                if (warnings.Any(w => w.StartsWith("Failed", StringComparison.OrdinalIgnoreCase) || w.StartsWith("Unable", StringComparison.OrdinalIgnoreCase)))
+                if (errors.Count > 0)
                     throw new InvalidOperationException("Esportazione incompleta: correggere gli errori riportati prima dell'analisi.");
                 StrausRuntime.Check(St7.St7SaveFile(modelId), "St7SaveFile");
                 return true;
@@ -1678,7 +1678,7 @@ namespace BridGHe.Common.Helpers
             return beam.BeamProperty.AngleX1Rad < -0.000001;
         }
 
-        private static bool GetElementID(ElementModel el, ref List<string> warnings, out int eId)
+        private static bool GetElementID(ElementModel el, ref List<string> errors, out int eId)
         {
             ElementIdAttributeModel id = (ElementIdAttributeModel)el.Attributes.FirstOrDefault(at => at is ElementIdAttributeModel);
             eId = 0;
@@ -1690,7 +1690,7 @@ namespace BridGHe.Common.Helpers
                 }
                 else
                 {
-                    warnings.Add("Unable to assign id " + id.Value + ". Id for st7 must be an integer value");
+                    errors.Add("Unable to assign id " + id.Value + ". Id for st7 must be an integer value");
                 }
             }
             return false;
