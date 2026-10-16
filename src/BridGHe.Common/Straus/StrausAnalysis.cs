@@ -15,6 +15,7 @@ namespace BridGHe.Common.Straus
         {
             if (solver < 0 || solver > 2) throw new ArgumentOutOfRangeException(nameof(solver));
             if (!string.Equals(Path.GetExtension(outputPath), ".st7", StringComparison.OrdinalIgnoreCase)) throw new ArgumentException("Estensione richiesta: .st7");
+            if (movingOnly && solver != 0) throw new ArgumentException("Moving Static Analysis richiede il solutore lineare.");
             if (movingOnly && !input.MovingPaths.Any(p => p.ConvertToStaticCases)) throw new ArgumentException("Nessun percorso configurato per generare casi statici.");
             if (movingOnly && input.MovingPaths.Any(p => p.Template.Vehicles.Any(v => v.Loads.Any(l => l is MovingLoads.MovingHeatSource))))
                 throw new NotSupportedException("Moving Static Analysis è strutturale. Le sorgenti termiche vanno esportate e risolte con il solutore termico Straus.");
@@ -23,11 +24,10 @@ namespace BridGHe.Common.Straus
             model.LoadCases.RemoveAll(c => oldMovingNames.Contains(c.Name));
             foreach (var element in model.Elements) element.Results.Clear();
             ModelHelper.GetLoadCases(model, out var cases);
-            var names = new HashSet<string>(requested ?? Array.Empty<string>(), StringComparer.Ordinal);
-            if (!movingOnly && names.Count == 0) throw new ArgumentException("Selezionare almeno un caso o combinazione in Analysis Results.");
-            var selectedCases = cases.Where(c => names.Contains(c.Name)).ToList();
-            var selectedCombinations = model.LoadCombinations.Where(c => names.Contains(c.Name)).ToList();
-            if (!movingOnly && names.Any(n => !cases.Any(c => c.Name == n) && !model.LoadCombinations.Any(c => c.Name == n))) throw new ArgumentException("Caso o combinazione richiesto assente dal modello.");
+            var selection = movingOnly ? Array.Empty<StrausResultSelection.Entry>() : StrausResultSelection.Select(model, solver, requested);
+            var names = new HashSet<string>(selection.Select(e => e.Case.Name), StringComparer.Ordinal);
+            var selectedCases = selection.Select(e => e.Case).OfType<LoadCaseModel>().ToList();
+            var selectedCombinations = selection.Select(e => e.Case).OfType<LoadCombinationModel>().ToList();
             var enabled = new HashSet<string>(selectedCases.Select(c => c.Name));
             foreach (var combination in selectedCombinations)
                 foreach (var item in combination.Values) if (item.Value != 0) enabled.Add(item.Key.Name);
@@ -60,19 +60,12 @@ namespace BridGHe.Common.Straus
                     }
                     else if (solver == 1)
                     {
-                        for (int i = 0; i < model.LoadCombinations.Count; i++) if (names.Contains(model.LoadCombinations[i].Name)) read.Add((i + 1, model.LoadCombinations[i]));
-                        if (selectedCases.Count > 0) throw new NotSupportedException("Il solutore non lineare usa gli incrementi definiti dalle combinazioni: selezionare combinazioni.");
+                        read.AddRange(selection.Select(e => (e.Increment, e.Case)));
                     }
                     else
                     {
                         Check(St7.St7SetNLAStagedAnalysis(uid, St7.btTrue), "St7SetNLAStagedAnalysis");
-                        int index = 0;
-                        foreach (var stage in model.StagedConstruction)
-                            foreach (var combination in stage.LoadCombinations)
-                            {
-                                var resultCase = new LoadCombinationModel(combination) { Name = combination.Name + " [" + stage.Name + "]" };
-                                read.Add((++index, resultCase));
-                            }
+                        read.AddRange(selection.Select(e => (e.Increment, e.Case)));
                     }
                     if (read.Count == 0) throw new InvalidOperationException("Nessun caso di risultato da leggere.");
                     Check(St7.St7SaveFile(uid), "St7SaveFile");

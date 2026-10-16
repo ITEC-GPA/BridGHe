@@ -21,7 +21,8 @@ internal static class RegressionTests
             ["native-beam-validity"] = NativeBeamValidity,
             ["model-guids"] = ModelGuids,
             ["deep-copies"] = DeepCopies,
-            ["staged-load-cases"] = StagedLoadCases
+            ["staged-load-cases"] = StagedLoadCases,
+            ["staged-selection"] = StagedSelection
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -163,6 +164,32 @@ internal static class RegressionTests
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
         return System.Reflection.Assembly.LoadFrom(System.IO.Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha"));
+    }
+
+    private static void StagedSelection()
+    {
+        var q = new LoadCaseModel("", "Q");
+        var combination = new LoadCombinationModel("C"); combination.Values.Add(q, 1);
+        var model = new ModelModel(ModelModel.ModelUnits.Nmm);
+        foreach (string name in new[] { "Phase 1", "Phase 2" })
+        {
+            var stage = new StagedConstructionModel(name); stage.AddLoadCombinations(new[] { combination });
+            model.AddStagedConstructions(new[] { stage });
+        }
+        var selected = BridGHe.Common.Straus.StrausResultSelection.Select(model, 2, new[] { "C [Phase 2]" });
+        Require(selected.Count == 1 && selected[0].Increment == 2 && selected[0].Case.Name == "C [Phase 2]", "staged selection preserves original result index");
+        Require(combination.Name == "C", "catalog must not rename input combinations");
+        foreach (string invalid in new[] { "Q", "C", "missing" })
+        {
+            bool rejected = false;
+            try { BridGHe.Common.Straus.StrausResultSelection.Select(model, 2, new[] { invalid }); } catch (ArgumentException) { rejected = true; }
+            Require(rejected, "staged selection rejects unavailable or ambiguous names");
+        }
+        model.AddLoadCombinations(new[] { combination });
+        Require(BridGHe.Common.Straus.StrausResultSelection.Select(model, 1, new[] { "C" })[0].Increment == 1, "nonlinear catalog uses combination increments");
+        bool caseRejected = false;
+        try { BridGHe.Common.Straus.StrausResultSelection.Select(model, 1, new[] { "Q" }); } catch (ArgumentException) { caseRejected = true; }
+        Require(caseRejected, "ordinary cases rejected for nonlinear analysis before native export");
     }
 
     private static void StagedLoadCases()

@@ -94,8 +94,9 @@ namespace BridGHe.Grasshopper.Components.Analysis
                 return;
             }
 
-            // Retrieve all te load cases used in the model
-            Common.Helpers.ModelHelper.GetLoadCases(model.Value, out List<LoadCaseModel> loadCases);
+            List<string> names;
+            try { names = Common.Straus.StrausResultSelection.Catalog(model.Value, solver).Select(e => e.Case.Name).ToList(); }
+            catch (Exception ex) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message); return; }
 
             // Connect the ValueList component on the analysis results input item
             IEnumerable<IGH_Param> keys_analysisResultLists = Params.Input[2].Sources.
@@ -105,8 +106,6 @@ namespace BridGHe.Grasshopper.Components.Analysis
                 if (vallist.ListMode != GH_ValueListMode.CheckList)
                     vallist.ListMode = GH_ValueListMode.CheckList;
 
-                List<string> names = loadCases.Select(lc => lc.Name).Distinct().ToList();
-                names.AddRange(model.Value.LoadCombinations.Select(c => c.Name));
                 ComponentsHelper.SetValueList(vallist, names);
                 vallist.NickName = "Results";
             }
