@@ -25,7 +25,8 @@ internal static class RegressionTests
             ["staged-selection"] = StagedSelection,
             ["merge-plate-connectivity"] = MergePlateConnectivity,
             ["indexed-phases"] = IndexedPhases,
-            ["node-index"] = NodeIndex
+            ["node-index"] = NodeIndex,
+            ["archived-attribute-updates"] = ArchivedAttributeUpdates
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -167,6 +168,19 @@ internal static class RegressionTests
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
         return System.Reflection.Assembly.LoadFrom(System.IO.Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha"));
+    }
+
+    private static void ArchivedAttributeUpdates()
+    {
+        var property = new BeamPropertyModel("P") { Section = new SectionModel { SectionType = SectionModel.SectionTypes.SolidRectangle, B = 20, D = 40 }, Material = new MaterialModel("S"), PropertyType = BeamPropertyType.Beam };
+        var original = new BeamModel(Point3d.Origin, new Point3d(0, 0, 1000), property);
+        var beam = ModelArchive.Clone(original);
+        double width = beam.Shapes[0].GetBoundingBox(true).Diagonal.Y;
+        beam.Attributes.Add(new BeamTaperAttributeModel(new BeamTaperAttributeModel.AttributeData { NFromX = 2, NToX = 2 }));
+        Require(Math.Abs(beam.Shapes[0].GetBoundingBox(true).Diagonal.Y - 2 * width) < 1e-6, "attributes added after archive regenerate preview");
+        Require(Math.Abs(original.Shapes[0].GetBoundingBox(true).Diagonal.Y - width) < 1e-6, "archive callbacks do not alter the source");
+        beam.Attributes.Clear();
+        Require(Math.Abs(beam.Shapes[0].GetBoundingBox(true).Diagonal.Y - width) < 1e-6, "removing taper restores current geometry");
     }
 
     private static void NodeIndex()

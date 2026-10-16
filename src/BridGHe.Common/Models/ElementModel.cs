@@ -43,6 +43,7 @@ namespace BridGHe.Common.Models
                 foreach (AttributeModel attribute in e.NewItems)
                     attribute.UpdateElement(this);
             }
+            else CreateShapes();
         }
 
         public ElementModel(ElementModel element)
@@ -51,6 +52,7 @@ namespace BridGHe.Common.Models
             var data = new ElementModel { _groups = element._groups, _loads = element._loads,
                 _attributes = element._attributes, _results = element._results };
             var copy = Helpers.ModelArchive.Clone(data);
+            copy._attributes.CollectionChanged -= copy.Attributes_CollectionChanged;
             _groups = copy._groups;
             _loads = copy._loads;
             _attributes = copy._attributes;
@@ -90,6 +92,13 @@ namespace BridGHe.Common.Models
         }
 
         #endregion
+
+        [OnDeserialized]
+        private void RestoreAttributeUpdates(StreamingContext context)
+        {
+            _attributes.CollectionChanged -= Attributes_CollectionChanged;
+            _attributes.CollectionChanged += Attributes_CollectionChanged;
+        }
 
         public bool HasAttribute(Type type)
         {
