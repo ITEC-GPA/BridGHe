@@ -116,7 +116,7 @@ namespace BridGHe.Common.Models
         public BeamModel(string beamId = "", Point3d? pointFrom = null, Point3d? pointTo = null, BeamPropertyModel bp = null, GroupModel[] groups = null)
             : base()
         {
-            _attributes.Add(new ElementIdAttributeModel(beamId));
+            if (!string.IsNullOrEmpty(beamId)) _attributes.Add(new ElementIdAttributeModel(beamId));
             _beamId = "";
             _pointFrom = pointFrom ?? Point3d.Unset;
             _pointTo = pointTo ?? Point3d.Unset;
@@ -243,7 +243,8 @@ namespace BridGHe.Common.Models
 
         public override void CreateShapes()
         {
-            if (_beamProperty == null)
+            _shapes = new List<Brep>();
+            if (_beamProperty?.Section == null || !_pointFrom.IsValid || !_pointTo.IsValid || Length <= 0)
                 return;
             if (_beamProperty.Section.NativeSection != null) { _shapes = new List<Brep>(); return; }
             List<Brep> main_surfaces = new List<Brep>();

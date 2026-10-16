@@ -27,7 +27,8 @@ internal static class RegressionTests
             ["indexed-phases"] = IndexedPhases,
             ["node-index"] = NodeIndex,
             ["archived-attribute-updates"] = ArchivedAttributeUpdates,
-            ["plate-point-updates"] = PlatePointUpdates
+            ["plate-point-updates"] = PlatePointUpdates,
+            ["incomplete-beam-preview"] = IncompleteBeamPreview
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -169,6 +170,19 @@ internal static class RegressionTests
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
         return System.Reflection.Assembly.LoadFrom(System.IO.Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha"));
+    }
+
+    private static void IncompleteBeamPreview()
+    {
+        var empty = new BeamModel();
+        Require(!empty.IsValid && empty.Shapes.Length == 0, "default beam remains safely inspectable");
+        var property = new BeamPropertyModel("P") { Section = new SectionModel { SectionType = SectionModel.SectionTypes.SolidRectangle, B = 20, D = 40 }, Material = new MaterialModel("S"), PropertyType = BeamPropertyType.Beam };
+        var beam = new BeamModel(Point3d.Origin, new Point3d(1000, 0, 0), property);
+        Require(beam.Shapes.Length > 0, "valid beam has a solid preview");
+        beam.BeamProperty = null;
+        Require(!beam.IsValid && beam.Shapes.Length == 0, "removing beam property clears stale preview");
+        property.Section = null; beam.BeamProperty = property;
+        Require(!beam.IsValid && beam.Shapes.Length == 0, "missing section does not crash preview creation");
     }
 
     private static void PlatePointUpdates()
