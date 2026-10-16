@@ -98,8 +98,8 @@ namespace BridGHe.Common.Models
         {
             get
             {
-                return _pointFrom != Point3d.Unset && _pointTo != Point3d.Unset &&
-                    _pointFrom.DistanceTo(_pointTo) > 0.0 && _shapes != null && _shapes.Count > 0;
+                return _pointFrom.IsValid && _pointTo.IsValid &&
+                    _pointFrom.DistanceTo(_pointTo) > 0.0 && _beamProperty?.IsValid == true;
             }
         }
 

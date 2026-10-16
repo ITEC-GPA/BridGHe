@@ -29,7 +29,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             {
                 if (Value == null)
                     return "No internal BeamModel instance";
-                if (!Value.IsValid)
+                if (Value.IsValid)
                     return string.Empty;
                 return "Invalid BeamModel instance";
             }
@@ -45,7 +45,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             {
                 if (m_value != null && !_boundingBox.IsValid)
                 {
-                    _boundingBox = new BoundingBox();
+                    _boundingBox = new BoundingBox(new[] { m_value.PointFrom, m_value.PointTo });
                     foreach (Brep shape in m_value.Shapes)
                         _boundingBox.Union(shape.GetBoundingBox(true));
                 }

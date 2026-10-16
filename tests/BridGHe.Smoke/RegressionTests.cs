@@ -17,7 +17,8 @@ internal static class RegressionTests
             ["load-case-identity"] = LoadCaseIdentity,
             ["merge-node-data"] = MergeNodeData,
             ["merge-mesh"] = MergeMesh,
-            ["beam-property-validity"] = BeamPropertyValidity
+            ["beam-property-validity"] = BeamPropertyValidity,
+            ["native-beam-validity"] = NativeBeamValidity
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -152,5 +153,31 @@ internal static class RegressionTests
         Require(p.IsValid, "valid cutoff bar is accepted");
         p.Section = null;
         Require(!p.IsValid && !((BeamPropertyBaseModel)p).IsValid, "missing section rejected through base and derived types");
+    }
+
+    private static System.Reflection.Assembly Plugin()
+    {
+        System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
+        System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
+        return System.Reflection.Assembly.LoadFrom(System.IO.Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha"));
+    }
+
+    private static void NativeBeamValidity()
+    {
+        var section = new SectionModel { SectionType = SectionModel.SectionTypes.Generic, SectionArea = 300,
+            NativeSection = new BridGHe.Common.Straus.StrausSection { Key = "TriangleSolid", Dimensions = new[] { 20.0, 30.0 } } };
+        var property = new BeamPropertyModel("P") { Section = section, Material = new MaterialModel("S"), PropertyType = BeamPropertyType.Beam };
+        var beam = new BeamModel(Point3d.Origin, new Point3d(1000, 0, 0), property);
+        Require(beam.IsValid && beam.Shapes.Length == 0, "native beam validity does not depend on a solid preview");
+        var assembly = Plugin();
+        var type = assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Beam", true);
+        var goo = (Grasshopper.Kernel.Types.IGH_GeometricGoo)Activator.CreateInstance(type, beam, null);
+        Require(goo.IsValid && goo.Boundingbox.Contains(beam.PointTo), "native beam Goo remains valid and visible");
+        var resultType = assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_BeamResults", true);
+        object[] arguments = { null };
+        bool converted = (bool)type.GetMethod("CastTo").MakeGenericMethod(resultType).Invoke(goo, arguments);
+        Require(converted, "native beam supports result conversion");
+        beam.PointTo = beam.PointFrom;
+        Require(!beam.IsValid, "zero-length native beam is invalid");
     }
 }
