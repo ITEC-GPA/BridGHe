@@ -31,7 +31,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             {
                 if (Value == null)
                     return "No internal PlateModel instance";
-                if (!Value.IsValid)
+                if (Value.IsValid)
                     return string.Empty;
                 return "Invalid PlateModel instance";
             }

@@ -31,7 +31,7 @@ namespace BridGHe.Grasshopper.DataTypes
             {
                 if (Value == null)
                     return "No internal BeamModel instance";
-                if (!Value.IsValid)
+                if (Value.IsValid)
                     return string.Empty;
                 return "Invalid BeamModel instance";
             }
