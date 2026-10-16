@@ -24,7 +24,8 @@ internal static class RegressionTests
             ["staged-load-cases"] = StagedLoadCases,
             ["staged-selection"] = StagedSelection,
             ["merge-plate-connectivity"] = MergePlateConnectivity,
-            ["indexed-phases"] = IndexedPhases
+            ["indexed-phases"] = IndexedPhases,
+            ["node-index"] = NodeIndex
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -166,6 +167,28 @@ internal static class RegressionTests
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
         return System.Reflection.Assembly.LoadFrom(System.IO.Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha"));
+    }
+
+    private static void NodeIndex()
+    {
+        var nodes = new List<NodeModel>(); var random = new Random(717);
+        for (int i = 0; i < 100; i++) nodes.Add(new NodeModel(i.ToString(), new Point3d(random.NextDouble(), random.NextDouble(), random.NextDouble())));
+        nodes.Add(new NodeModel("duplicate", nodes[0].Position));
+        using var index = new BridGHe.Common.Straus.StrausNodeIndex(nodes, 0.4);
+        foreach (var node in nodes)
+        {
+            var expected = nodes.Select((n, i) => (Node: n, Number: i + 1)).Where(n => n.Node.Position.DistanceTo(node.Position) < 0.4)
+                .OrderBy(n => n.Node.Position.X).ThenBy(n => n.Node.Position.Y).ThenBy(n => n.Node.Position.Z).ThenBy(n => n.Number).ToArray();
+            var actual = index.Find(node.Position);
+            Require(actual.Number == expected[0].Number && actual.Matches == expected.Length, "spatial index agrees with brute force and stable coordinate ordering");
+        }
+        bool missing = false;
+        try { index.Find(new Point3d(10, 10, 10)); } catch (InvalidOperationException) { missing = true; }
+        Require(missing, "unconnected elements fail explicitly");
+        using var boundary = new BridGHe.Common.Straus.StrausNodeIndex(new[] { new NodeModel("1", Point3d.Origin) }, 1);
+        missing = false;
+        try { boundary.Find(new Point3d(1, 0, 0)); } catch (InvalidOperationException) { missing = true; }
+        Require(missing, "export preserves strict less-than tolerance");
     }
 
     private static void IndexedPhases()

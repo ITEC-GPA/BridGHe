@@ -592,13 +592,12 @@ namespace BridGHe.Common.Helpers
                 Dictionary<int, int[]> beamsNodeNumberMap = new Dictionary<int, int[]>();
                 Dictionary<int, int[]> plateNodeNumberMap = new Dictionary<int, int[]>();
                 List<string> warningPreprocessingList = new List<string>();
-                Dictionary<NodeModel, int> nodePositionMap = new Dictionary<NodeModel, int>();
+                using var nodeIndex = new StrausNodeIndex(model.Nodes, tolerance);
 
                 try
                 {
                     for (int j = 0; j < model.Nodes.Count; j++)
                     {
-                        nodePositionMap.Add(model.Nodes[j], j + 1);
                         var node = model.Nodes[j];
                         for (int i = 0; i < node.Loads.Count; i++)
                         {
@@ -625,29 +624,14 @@ namespace BridGHe.Common.Helpers
                     {
                         BeamModel beam = model.Beams[i];
 
-                        List<NodeModel> fromNodes = model.Nodes.Where(n => n.Position.DistanceTo(beam.PointFrom) < tolerance).ToList();
-                        List<NodeModel> toNodes = model.Nodes.Where(n => n.Position.DistanceTo(beam.PointTo) < tolerance).ToList();
-
-                        if (fromNodes.Count() > 1)
-                            warningPreprocessingList.Add(string.Format($"Collapsing {fromNodes.Count()} nodes at coordinates {beam.PointFrom}", beam.PointFrom));
-                        if (toNodes.Count() > 1)
-                            warningPreprocessingList.Add(string.Format($"Collapsing {toNodes.Count()} nodes at coordinates {beam.PointTo}"));
-
-                        fromNodes.Sort(NodeModel.Comparer);
-                        toNodes.Sort(NodeModel.Comparer);
-                        NodeModel node1 = fromNodes.FirstOrDefault();
-                        NodeModel node2 = toNodes.FirstOrDefault();
-
-                        if (node1 == null || node2 == null)
-                        {
-                            warnings.Add($"Unreconized node(s) at coordinates {beam.PointFrom} and / or {beam.PointTo}");
-                            continue;
-                        }
-
+                        var from = nodeIndex.Find(beam.PointFrom);
+                        var to = nodeIndex.Find(beam.PointTo);
+                        if (from.Matches > 1) warningPreprocessingList.Add($"Collapsing {from.Matches} nodes at coordinates {beam.PointFrom}");
+                        if (to.Matches > 1) warningPreprocessingList.Add($"Collapsing {to.Matches} nodes at coordinates {beam.PointTo}");
                         int[] connections = new int[St7.kMaxElementNode + 1];
                         connections[0] = 2;
-                        connections[1] = Convert.ToInt32(nodePositionMap[node1]);
-                        connections[2] = Convert.ToInt32(nodePositionMap[node2]);
+                        connections[1] = from.Number;
+                        connections[2] = to.Number;
 
                         beamsNodeNumberMap[i] = connections;
                     }
@@ -661,12 +645,9 @@ namespace BridGHe.Common.Helpers
 
                         for (int i = 0; i < plate.Points.Count; i++)
                         {
-                            List<NodeModel> nodes = model.Nodes.Where(n => n.Position.DistanceTo(plate.Points[i]) < tolerance).ToList();
-                            if (nodes.Count() > 1)
-                                warningPreprocessingList.Add(string.Format($"Collapsing {nodes.Count()} nodes at coordinates {nodes.FirstOrDefault().Position}"));
-
-                            nodes.Sort(NodeModel.Comparer);
-                            connections[i + 1] = Convert.ToInt32(nodePositionMap[nodes.FirstOrDefault()]);
+                            var match = nodeIndex.Find(plate.Points[i]);
+                            if (match.Matches > 1) warningPreprocessingList.Add($"Collapsing {match.Matches} nodes at coordinates {plate.Points[i]}");
+                            connections[i + 1] = match.Number;
                         }
 
                         plateNodeNumberMap[j] = connections;
