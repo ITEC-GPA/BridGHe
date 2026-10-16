@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetExt>.gha</TargetExt>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  <Import Project="..\..\build\GpcReferences.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\BridGHe.Common\BridGHe.Common.csproj" />
+    <PackageReference Include="Grasshopper" Version="$(RhinoVersion)" ExcludeAssets="runtime" />
+    <PackageReference Include="RhinoCommon" Version="$(RhinoVersion)" ExcludeAssets="runtime" />
+    <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
+    <EmbeddedResource Include="Resources\*.png" />
+    <EmbeddedResource Include="Resources\Icons\*.png" />
+  </ItemGroup>
+</Project>

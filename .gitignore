@@ -1,0 +1,9 @@
+**/bin/
+**/obj/
+.vs/
+*.user
+artifacts/
+*.st7
+*.LSA
+*.NLA
+*.log

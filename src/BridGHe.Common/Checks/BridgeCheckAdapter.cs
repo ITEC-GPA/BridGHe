@@ -1,0 +1,176 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using GPC.Checkers.CompositeBridge;
+using GPC.Checkers.Concrete.Attributes;
+using GPC.Checkers.Concrete.SectionSolvers;
+using GPC.Geometry;
+using GPC.Model.Materials;
+using GPC.Model.Results;
+using GPC.Model.Sections;
+using GPC.Model.Sections.Concrete;
+using GPC.Model.Standards;
+
+namespace BridGHe.Common.Checks
+{
+    /// <summary>Boundary between the unchanged MeCheck2 ports and the current gPC bridge engine.
+    /// Geometry is in mm; actions are N and Nmm in the supplied reference system.</summary>
+    public sealed class BridgeCheckAdapter
+    {
+        private readonly ReinforcedConcreteSection section;
+        private readonly SectionOptionsModelCode2010 options;
+
+        public sealed class SectionOptionsModelCode2010
+        {
+            public CoordinateSystem CoordinateSystem { get; }
+            public bool EffectiveEpsilon { get; }
+            public bool WebBuckling { get; set; } = true;
+            public bool TopFlangeBuckling { get; set; } = true;
+            public bool BottomFlangeBuckling { get; set; } = true;
+            public SectionOptionsModelCode2010(CoordinateSystem cs, SectionSolver.FailureAnalysisTypes failure,
+                SectionSolver.FailureDomainTypes domain, SectionSolver.StressAnalysisTypes analysis,
+                double phi, double psiTendon, bool tension, int discretization, bool effectiveEpsilon)
+            { CoordinateSystem = cs; EffectiveEpsilon = effectiveEpsilon; }
+        }
+
+        public BridgeCheckAdapter(SectionCheckerAttribute attribute, SectionOptionsModelCode2010 options,
+            StandardEN1992p11 concreteStandard, bool tensileConcrete, int id, StandardEN1993p11 steelStandard)
+        {
+            section = attribute.Section as ReinforcedConcreteSection ?? throw new NotSupportedException("È richiesta una sezione composta gPC.");
+            this.options = options;
+        }
+
+        private HBridgeInput Input(bool concrete, bool rebars, bool buckling)
+        {
+            if (section.SteelSections.Count != 1 || !(section.SteelSections[0].Section.SectionShape is SectionH h))
+                throw new NotSupportedException("L'adattatore MeCheck2 supporta una singola sezione ad H con soletta rettangolare.");
+            var positioned = section.SteelSections[0];
+            if (Math.Abs(positioned.Rotation) > 1e-10 || Math.Abs(section.Jxy) > 1e-10 * (section.Jxx + section.Jyy))
+                throw new NotSupportedException("Sezione ruotata o non simmetrica: adattamento del verificatore da completare.");
+            if (buckling && options.EffectiveEpsilon)
+                throw new NotSupportedException("Effective Epsilon non ha un equivalente nell'API gPC corrente. Impostare false per il metodo attuale a larghezze efficaci.");
+            var rows = section.Rebars.GroupBy(b => Math.Round(b.Position.Y, 8)).OrderByDescending(g => g.Key).ToArray();
+            if (rows.Length > 2) throw new NotSupportedException("Sono supportate al massimo due file di armatura.");
+            BridgeRebarRow Row(int index)
+            {
+                if (!rebars || index >= rows.Length) return new BridgeRebarRow();
+                var bars = rows[index].ToArray();
+                if (bars.Any(b => Math.Abs(b.RebarSection.Diameter - bars[0].RebarSection.Diameter) > 1e-8))
+                    throw new NotSupportedException("Diametri diversi nella stessa fila non supportati dall'adattatore.");
+                return new BridgeRebarRow
+                {
+                    Enabled = true,
+                    Diameter = bars[0].RebarSection.Diameter,
+                    Pitch = section.Width / bars.Length,
+                    AxisDistance = index == 0 ? section.Height - bars[0].Position.Y : bars[0].Position.Y
+                };
+            }
+            var steel = positioned.Section.SteelMaterial;
+            var rebar = section.Rebars.FirstOrDefault()?.RebarSection.RebarMaterial ?? steel;
+            return new HBridgeInput
+            {
+                Materials = new BridgeMaterialSet((ConcreteMaterialEN1992)section.ConcreteMaterial, steel, rebar),
+                Geometry = new HSectionDimensions
+                {
+                    SlabWidth = section.Width,
+                    SlabHeight = section.Height,
+                    WebHeight = h.HeightWeb,
+                    WebThickness = h.ThicknessWeb,
+                    TopWidth = h.LenghtTopFlange,
+                    TopThickness = h.ThicknessTopFlange,
+                    BottomWidth = h.LenghtBottomFlange,
+                    BottomThickness = h.ThicknessBottomFlange
+                },
+                TopRebars = Row(0),
+                BottomRebars = Row(1),
+                Options = new BridgeAnalysisOptions
+                {
+                    Standard = BridgeStandard.Eurocode4,
+                    LimitState = BridgeLimitState.Rare,
+                    Class4 = buckling,
+                    WebBuckling = options.WebBuckling,
+                    TopFlangeBuckling = options.TopFlangeBuckling,
+                    BottomFlangeBuckling = options.BottomFlangeBuckling,
+                    CommonLoadY = options.CoordinateSystem.Origin.Y
+                }
+            };
+        }
+
+        private BridgePhase Phase(ResultBeamForces forces, BridgePhaseKind kind, double phi, string name)
+        {
+            if (forces == null) throw new ArgumentNullException(nameof(forces));
+            // Respect the supplied local axes; no discarded components are allowed.
+            var global = forces.ToGlobalCoordinateSystem();
+            if (Math.Abs(global.M2) > 1e-7 || Math.Abs(global.T) > 1e-7 || Math.Abs(global.V1) > 1e-7)
+                throw new NotSupportedException("Il motore gPC adottato copre N–Mx–Vy. Flessione deviata, taglio trasversale e torsione richiedono un verificatore dedicato.");
+            if (phi < 0 || !double.IsFinite(phi)) throw new ArgumentOutOfRangeException(nameof(phi), "Il rapporto modulare deve dare phi >= 0.");
+            return new BridgePhase
+            {
+                Name = name,
+                Kind = kind,
+                ForceKN = global.N / 1000,
+                MomentKNm = global.M1 / 1e6,
+                ShearKN = global.V2 / 1000,
+                Phi = phi,
+                // Straus end forces are about the gross centroid of each phase section.
+                // The bridge engine transports them to the effective centroid if required.
+                Reference = BridgeLoadReference.GrossCentroid
+            };
+        }
+
+        public bool GetLinearAnalysisResultByStages(out BridgeStressResult steelResult, out BridgeStressResult infiniteResult,
+            out BridgeStressResult result, out double tauB, double phiInfinite, double phiInstant,
+            ResultBeamForces steel, ResultBeamForces infinite, ResultBeamForces instant, bool concrete)
+        {
+            var analysis = Analyze(phiInfinite, phiInstant, steel, infinite, instant, concrete, true, 0, 0);
+            steelResult = new BridgeStressResult(analysis, 0);
+            infiniteResult = new BridgeStressResult(analysis, 1);
+            result = new BridgeStressResult(analysis, analysis.Stages.Count - 1);
+            tauB = double.NaN;
+            return true;
+        }
+
+        public bool GetLinearAnalysisResultByStages(out BridgeStressResult[] results, out double[] tauB,
+            double phiInfinite, double phiInstant, ResultBeamForces[] steel, ResultBeamForces[] infinite,
+            ResultBeamForces[] instant, bool concrete, double[] strainInfinite, double[] strainInstant, bool rebars)
+        {
+            int count = steel.Length;
+            if (infinite.Length != count || instant.Length != count || strainInfinite.Length != count || strainInstant.Length != count)
+                throw new ArgumentException("Le serie di fasi e deformazioni devono avere la stessa lunghezza.");
+            results = new BridgeStressResult[count]; tauB = new double[count];
+            for (int i = 0; i < count; i++)
+            {
+                var analysis = Analyze(phiInfinite, phiInstant, steel[i], infinite[i], instant[i], concrete, rebars, strainInfinite[i], strainInstant[i]);
+                results[i] = new BridgeStressResult(analysis, analysis.Stages.Count - 1);
+                tauB[i] = double.NaN;
+            }
+            return true;
+        }
+
+        private HBridgeAnalysisResult Analyze(double phiInfinite, double phiInstant, ResultBeamForces steel,
+            ResultBeamForces infinite, ResultBeamForces instant, bool concrete, bool rebars, double strainInfinite, double strainInstant)
+        {
+            var data = Input(concrete, rebars, true);
+            var kind = concrete ? BridgePhaseKind.Composite : BridgePhaseKind.ConcreteExcluded;
+            var phases = new List<BridgePhase> { Phase(steel, BridgePhaseKind.SteelOnly, 0, "Only Steel"),
+                Phase(infinite, kind, phiInfinite, "Infinite Time"), Phase(instant, kind, phiInstant, "Instant Time") };
+            if (!concrete && (strainInfinite != 0 || strainInstant != 0)) throw new NotSupportedException("Ritiro con soletta esclusa: definire prima la sequenza fisica delle fasi.");
+            if (strainInfinite != 0) phases.Add(new BridgePhase { Name = "Strain Infinite", Kind = BridgePhaseKind.Shrinkage, Phi = phiInfinite, ShrinkageMicrostrain = strainInfinite * 1e6 });
+            if (strainInstant != 0) phases.Add(new BridgePhase { Name = "Strain Instant", Kind = BridgePhaseKind.Shrinkage, Phi = phiInstant, ShrinkageMicrostrain = strainInstant * 1e6 });
+            return HBridgeSection.Calculate(data with { Phases = phases.ToArray() });
+        }
+
+        public BridgeStressResult GetSelfTension(double strain, double phi)
+        {
+            var data = Input(true, true, false) with
+            {
+                Phases = new[] { new BridgePhase {
+                Name = "Self tension", Kind = BridgePhaseKind.Shrinkage, Phi = phi, ShrinkageMicrostrain = strain * 1e6 } }
+            };
+            return new BridgeStressResult(HBridgeSection.Calculate(data), 0);
+        }
+
+        public static ResultBeamForces Scale(ResultBeamForces f, double factor) => new ResultBeamForces(
+            f.N * factor, f.V1 * factor, f.V2 * factor, f.T * factor, f.M1 * factor, f.M2 * factor, f.CoordinateSystem, f.Id, f.Name);
+    }
+}

@@ -1,0 +1,195 @@
+using BridGHe.Common.Models;
+using BridGHe.Grasshopper.DataTypes;
+using BridGHe.Grasshopper.DataTypes.Fem;
+using Grasshopper.Kernel;
+using Grasshopper.Kernel.Types;
+using Rhino.Geometry;
+using System;
+
+namespace BridGHe.Grasshopper.Components.MeCheck2
+{
+    public class BeamPropertyCompositeComponent : GH_Component
+    {
+        /// <summary>
+        /// Initializes a new instance of the CompositeSectionComponent class.
+        /// </summary>
+        public BeamPropertyCompositeComponent()
+          : base("Composite Beam Property", "CS", "Define a composite section composed by two base sections and 2 materials", Helpers.CategoryNameConstants.CATEGORY_CHECKS, Helpers.CategoryNameConstants.SUBCATEGORY_MECHECK2)
+        {
+        }
+
+        /// <summary>
+        /// Registers all the input parameters for this component.
+        /// </summary>
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
+        {
+            pManager.AddTextParameter("Name", "N", "The name of the section", GH_ParamAccess.item, "");
+            pManager.AddGenericParameter("Concrete Slab Section", "CSS", "Concrete slab geometry", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Steel Section", "SS", "I section geometry", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Concrete Material", "CM", "Material of the concrete slab", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Steel Material", "SM", "Material of the steel section profile", GH_ParamAccess.item);
+            int i = pManager.AddGenericParameter("Reinforcement Material", "RM", "Material of the rebars", GH_ParamAccess.item);
+            pManager[i].Optional = true;
+            pManager.AddNumberParameter("Concrete Offset", "CO", "The distance between top flange and concrete slab", GH_ParamAccess.item, 0);
+            pManager.AddNumberParameter("n0", "n0", "Homogenization coefficient for instant time loads", GH_ParamAccess.item, 6);
+            pManager.AddNumberParameter("n ∞", "n ∞", "Homogenization coefficient for infinite time loads", GH_ParamAccess.item, 18);
+            pManager.AddBooleanParameter("Consider Concrete", "CC", "If true, consider concrete in the n0 and n ∞ phases", GH_ParamAccess.item, true);
+            pManager.AddBooleanParameter("Consider Rebars", "CR", "If true, consider rebars in the n0 and n ∞ phases", GH_ParamAccess.item, true);
+        }
+
+        /// <summary>
+        /// Registers all the output parameters for this component.
+        /// </summary>
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
+        {
+            pManager.AddGenericParameter("Composite Section", "CS", "The composite section for MeCheck2.0 analysis", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Only Steel Property", "CS", "The steel section", GH_ParamAccess.item);
+            pManager.AddGenericParameter("n0 Beam Section", "CS", "The homogenized beam section with n0 coefficient", GH_ParamAccess.item);
+            pManager.AddGenericParameter("n ∞ Beam Section", "CS", "The homogenized beam section with n ∞ coefficient", GH_ParamAccess.item);
+        }
+
+        /// <summary>
+        /// This is the method that actually does the work.
+        /// </summary>
+        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess DA)
+        {
+            string name = "";
+            object concreteSection = null;
+            GH_BeamSection steelSection = null;
+            DataTypes.Fem.GH_Material concreteMaterial = null;
+            DataTypes.Fem.GH_Material steelMaterial = null;
+            DataTypes.Fem.GH_Material rebarMaterial = null;
+            double concreteOffset = 0;
+            double n0 = 0;
+            double ninf = 0;
+            bool considerConcrete = false;
+            bool considerRebars = false;
+
+            if (!DA.GetData(0, ref name))
+                return;
+            if (!DA.GetData(1, ref concreteSection))
+                return;
+            if (!DA.GetData(2, ref steelSection))
+                return;
+            if (!DA.GetData(3, ref concreteMaterial))
+                return;
+            if (!DA.GetData(4, ref steelMaterial))
+                return;
+            if (!DA.GetData(5, ref rebarMaterial))
+                return;
+            DA.GetData(6, ref concreteOffset);
+            if (!DA.GetData(7, ref n0))
+                return;
+            if (!DA.GetData(8, ref ninf))
+                return;
+            if (!DA.GetData(9, ref considerConcrete))
+                return;
+            if (!DA.GetData(10, ref considerRebars))
+                return;
+
+            CompositeBeamPropertyModel compositeBeamPropertyModel = new CompositeBeamPropertyModel()
+            {
+                Name = name,
+                ConcreteSection = (concreteSection as GH_Goo<object>).Value as SectionConcreteSlabModel,
+                SteelSection = steelSection.Value,
+                SteelMaterial = steelMaterial.Value,
+                ConcreteMaterial = concreteMaterial.Value,
+                RebarMaterial = rebarMaterial.Value,
+                VerticalOffset = concreteOffset,
+                NInstant = n0,
+                NInfinite = ninf,
+                ConsiderConcrete = considerConcrete,
+                ConsiderRebar = considerRebars,
+            };
+            GH_CompositeBeamProperty section = new GH_CompositeBeamProperty(compositeBeamPropertyModel);
+
+            SectionModel steelSectionModel = new SectionModel()
+            {
+                SectionType = SectionModel.SectionTypes.I,
+                D = steelSection.Value.D,
+                B1 = steelSection.Value.B1,
+                B2 = steelSection.Value.B2,
+                T1 = steelSection.Value.T1,
+                T2 = steelSection.Value.T2,
+                T3 = steelSection.Value.T3,
+            };
+            steelSectionModel.CalculateSection();
+            BeamPropertyModel onlySteelBeamPropModel = new BeamPropertyModel()
+            {
+                Material = steelMaterial.Value,
+                Section = steelSectionModel,
+                PropertyType = BeamPropertyType.Beam,
+                Name = name + "OnlySteel",
+            };
+            GH_BeamProperty steelSectionProp = new GH_BeamProperty(onlySteelBeamPropModel);
+
+            if (!considerConcrete && !considerRebars)
+            {
+                DA.SetData(0, section);
+                DA.SetData(1, steelSectionProp);
+                DA.SetData(2, steelSectionProp);
+                DA.SetData(3, steelSectionProp);
+                return;
+            }
+
+            var propOS = compositeBeamPropertyModel.GetOnlySteelMechanicalProperties();
+            var propN0 = compositeBeamPropertyModel.GetHomogeneizedMechanicalProperties(n0, considerConcrete, considerRebars, true);
+            var propN1 = compositeBeamPropertyModel.GetHomogeneizedMechanicalProperties(ninf, considerConcrete, considerRebars, true);
+
+            SectionModel f0SectionModel = new SectionModel()
+            {
+                SectionType = SectionModel.SectionTypes.Composite,
+                SectionArea = propN0.areaH / n0,
+                I11 = propN0.J11H / n0,
+                I22 = propN0.J22H / n0,
+                J = propOS.Jt,
+                Centroid = new Point2d(propN0.centroidH.X, propN0.centroidH.Y),
+                AngleX1Rad = 0,
+            };
+            BeamPropertyModel f0BeamPropModel = new BeamPropertyModel()
+            {
+                Material = steelMaterial.Value,
+                Section = f0SectionModel,
+                PropertyType = BeamPropertyType.Beam,
+                Name = name + "_N0_istant",
+            };
+            GH_BeamProperty f0BeamProp = new GH_BeamProperty(f0BeamPropModel);
+
+            SectionModel f1SectionModel = new SectionModel()
+            {
+                SectionType = SectionModel.SectionTypes.Composite,
+                SectionArea = propN1.areaH / ninf,
+                I11 = propN1.J11H / ninf,
+                I22 = propN1.J22H / ninf,
+                J = propOS.Jt,
+                Centroid = new Point2d(propN1.centroidH.X, propN1.centroidH.Y),
+                AngleX1Rad = 0
+            };
+            BeamPropertyModel f1BeamPropModel = new BeamPropertyModel()
+            {
+                Material = steelMaterial.Value,
+                Section = f1SectionModel,
+                PropertyType = BeamPropertyType.Beam,
+                Name = name + "_N_infinite",
+            };
+            GH_BeamProperty f1BeamProp = new GH_BeamProperty(f1BeamPropModel);
+
+
+            DA.SetData(0, section);
+            DA.SetData(1, steelSectionProp);
+            DA.SetData(2, f0BeamProp);
+            DA.SetData(3, f1BeamProp);
+        }
+
+        /// <summary>
+        /// Provides an Icon for the component.
+        /// </summary>
+        protected override System.Drawing.Bitmap Icon => Properties.ComponentIcons.For(GetType());
+
+        /// <summary>
+        /// Gets the unique ID for this component. Do not change this ID after release.
+        /// </summary>
+        public override Guid ComponentGuid => new Guid("f87c7066-e509-4646-9ef5-79691675cbf4");
+    }
+}

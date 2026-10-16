@@ -1,0 +1,14 @@
+<Project>
+  <ItemGroup>
+    <Reference Include="GPCUtilities"><HintPath>$(RepositoryRoot)Utilities\GPCUtilities\bin\Release\netstandard2.0\GPCUtilities.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCGeometry"><HintPath>$(RepositoryRoot)Geometry\GPCGeometry\bin\Release\netstandard2.0\GPCGeometry.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="DelaunayMesh"><HintPath>$(RepositoryRoot)Geometry\DelaunayMesh\bin\Release\netstandard2.0\DelaunayMesh.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCModel"><HintPath>$(RepositoryRoot)Model\Model\bin\Release\netstandard2.0\GPCModel.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCChecker.Concrete"><HintPath>$(RepositoryRoot)Checker\GPCChecker.Concrete\bin\Release\netstandard2.0\GPCChecker.Concrete.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCChecker.Steel"><HintPath>$(RepositoryRoot)Checker\GPCChecker.Steel\bin\Release\netstandard2.0\GPCChecker.Steel.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCChecker.CompositeBridge"><HintPath>$(RepositoryRoot)Checker\GPCChecker.CompositeBridge\bin\Release\netstandard2.0\GPCChecker.CompositeBridge.dll</HintPath><Private>true</Private></Reference>
+  </ItemGroup>
+  <Target Name="CheckGpcLibraries" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition="!Exists('%(Reference.HintPath)') and '%(Reference.HintPath)' != ''" Text="Libreria locale mancante: %(Reference.HintPath). Compilare la libreria gPC corrispondente o impostare RepositoryRoot." />
+  </Target>
+</Project>

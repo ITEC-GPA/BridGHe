@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies></PropertyGroup>
+  <Import Project="../../build/GpcReferences.props" />
+  <ItemGroup>
+    <ProjectReference Include="../../src/BridGHe.Common/BridGHe.Common.csproj" />
+    <PackageReference Include="Rhino.Inside" Version="8.0.7-beta" />
+    <PackageReference Include="RhinoCommon" Version="$(RhinoVersion)" ExcludeAssets="runtime" />
+    <PackageReference Include="Grasshopper" Version="$(RhinoVersion)" ExcludeAssets="runtime" />
+  </ItemGroup>
+</Project>

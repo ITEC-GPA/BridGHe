@@ -1,0 +1,489 @@
+[
+  {
+    "key": "CircularSolid",
+    "name": "Circular Solid",
+    "nativeId": 1,
+    "bgl": false,
+    "dimensions": [
+      "D"
+    ],
+    "slots": [
+      0
+    ],
+    "guid": "91092dc4-a478-5bae-b104-6d9b79acfa48"
+  },
+  {
+    "key": "CircularHollow",
+    "name": "Circular Hollow",
+    "nativeId": 2,
+    "bgl": false,
+    "dimensions": [
+      "D",
+      "T"
+    ],
+    "slots": [
+      0,
+      3
+    ],
+    "guid": "52dfbc6c-40ee-5ecc-8de7-a0252a1aa3ca"
+  },
+  {
+    "key": "RectangleSolid",
+    "name": "Rectangle Solid",
+    "nativeId": 3,
+    "bgl": false,
+    "dimensions": [
+      "B",
+      "D"
+    ],
+    "slots": [
+      0,
+      1
+    ],
+    "guid": "0d17a80e-109b-5a2b-a68c-f0cbacf6f453"
+  },
+  {
+    "key": "RectangleHollow",
+    "name": "Rectangle Hollow",
+    "nativeId": 4,
+    "bgl": false,
+    "dimensions": [
+      "B",
+      "D",
+      "T1",
+      "T2"
+    ],
+    "slots": [
+      0,
+      1,
+      3,
+      4
+    ],
+    "guid": "5fba2a07-4ad4-54ca-9fe2-8a8350e7e912"
+  },
+  {
+    "key": "LipChannel",
+    "name": "Lipped Channel",
+    "nativeId": 5,
+    "bgl": false,
+    "dimensions": [
+      "B",
+      "D",
+      "L",
+      "T1",
+      "T2",
+      "T3"
+    ],
+    "slots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "guid": "0fda128e-507c-5de0-81c5-b10ff3c4d34e"
+  },
+  {
+    "key": "TopHat",
+    "name": "Top Hat",
+    "nativeId": 6,
+    "bgl": false,
+    "dimensions": [
+      "B",
+      "D",
+      "L",
+      "T1",
+      "T2",
+      "T3"
+    ],
+    "slots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "guid": "6c788ba2-2787-5147-a865-e74c3d4ed5cc"
+  },
+  {
+    "key": "I",
+    "name": "I",
+    "nativeId": 7,
+    "bgl": false,
+    "dimensions": [
+      "B1",
+      "B2",
+      "D",
+      "T1",
+      "T2",
+      "T3"
+    ],
+    "slots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "guid": "6ce96dfc-2dda-53ea-9740-b0e2535cd7ad"
+  },
+  {
+    "key": "T",
+    "name": "T",
+    "nativeId": 8,
+    "bgl": false,
+    "dimensions": [
+      "B",
+      "D",
+      "L",
+      "T1",
+      "T2",
+      "T3"
+    ],
+    "slots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "guid": "5c8a2a20-382c-5006-b890-b14c3082f7bc"
+  },
+  {
+    "key": "Angle",
+    "name": "Angle",
+    "nativeId": 9,
+    "bgl": false,
+    "dimensions": [
+      "B",
+      "D",
+      "T1",
+      "T2"
+    ],
+    "slots": [
+      0,
+      1,
+      3,
+      4
+    ],
+    "guid": "e970edd5-6cd6-5658-9411-4702026137b2"
+  },
+  {
+    "key": "Z",
+    "name": "Z",
+    "nativeId": 10,
+    "bgl": false,
+    "dimensions": [
+      "B1",
+      "B2",
+      "D",
+      "T1",
+      "T2",
+      "T3"
+    ],
+    "slots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "guid": "8c774db6-43d1-5fab-ac8c-549cf8210962"
+  },
+  {
+    "key": "TrapezoidSolid",
+    "name": "Trapezoid Solid",
+    "nativeId": 12,
+    "bgl": false,
+    "dimensions": [
+      "B1",
+      "B2",
+      "D"
+    ],
+    "slots": [
+      0,
+      1,
+      2
+    ],
+    "guid": "5b2d5d96-8222-56fd-adfe-826b63b78311"
+  },
+  {
+    "key": "TrapezoidHollow",
+    "name": "Trapezoid Hollow",
+    "nativeId": 13,
+    "bgl": false,
+    "dimensions": [
+      "B1",
+      "B2",
+      "D",
+      "T1",
+      "T2"
+    ],
+    "slots": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "guid": "4feecffd-8cbb-5053-b52f-34da648bd1ad"
+  },
+  {
+    "key": "TriangleSolid",
+    "name": "Triangle Solid",
+    "nativeId": 14,
+    "bgl": false,
+    "dimensions": [
+      "B",
+      "D"
+    ],
+    "slots": [
+      0,
+      1
+    ],
+    "guid": "8f7b51fa-7018-5d1c-82f6-b5332a639cb6"
+  },
+  {
+    "key": "TriangleHollow",
+    "name": "Triangle Hollow",
+    "nativeId": 15,
+    "bgl": false,
+    "dimensions": [
+      "B",
+      "D",
+      "T1",
+      "T2"
+    ],
+    "slots": [
+      0,
+      1,
+      3,
+      4
+    ],
+    "guid": "48a915d4-85f6-5c47-bc49-4c81adf4f1e3"
+  },
+  {
+    "key": "Cruciform",
+    "name": "Cruciform",
+    "nativeId": 16,
+    "bgl": false,
+    "dimensions": [
+      "B",
+      "D",
+      "T1",
+      "T2"
+    ],
+    "slots": [
+      0,
+      1,
+      3,
+      4
+    ],
+    "guid": "20f6dc79-24d0-5c9e-a68d-1eed14630ac1"
+  },
+  {
+    "key": "BglRectangle",
+    "name": "BGL Hollow Rectangle",
+    "nativeId": 1,
+    "bgl": true,
+    "dimensions": [
+      "D",
+      "B",
+      "tw",
+      "tf",
+      "Ri",
+      "Ro"
+    ],
+    "slots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "guid": "8910273b-e5fb-50bd-942c-ece70d0d06dc"
+  },
+  {
+    "key": "BglI",
+    "name": "BGL I",
+    "nativeId": 2,
+    "bgl": true,
+    "dimensions": [
+      "D",
+      "B1",
+      "B2",
+      "tw",
+      "tf1",
+      "tf2",
+      "Rr1",
+      "Rr2",
+      "Rt1",
+      "Rt2",
+      "Rt3",
+      "Rt4",
+      "alpha1",
+      "alpha2"
+    ],
+    "slots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+    ],
+    "guid": "19dd18cb-893d-550f-9e2d-65666acb157c"
+  },
+  {
+    "key": "BglChannel",
+    "name": "BGL Channel",
+    "nativeId": 3,
+    "bgl": true,
+    "dimensions": [
+      "D",
+      "B1",
+      "B2",
+      "tw",
+      "tf1",
+      "tf2",
+      "Rr1",
+      "Rr2",
+      "Rh1",
+      "Rh2",
+      "Rt1",
+      "Rt2",
+      "Rt3",
+      "Rt4",
+      "alpha1",
+      "alpha2"
+    ],
+    "slots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "guid": "79a61eb7-de96-518c-bee7-61fb5ddb2c94"
+  },
+  {
+    "key": "BglT",
+    "name": "BGL T",
+    "nativeId": 4,
+    "bgl": true,
+    "dimensions": [
+      "D",
+      "B",
+      "tw",
+      "tf",
+      "Rr",
+      "Rt1",
+      "Rt2",
+      "Rt3",
+      "alpha1",
+      "alpha2"
+    ],
+    "slots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "guid": "2d9d3954-4d07-5ebb-bbbb-1848890b83ee"
+  },
+  {
+    "key": "BglAngle",
+    "name": "BGL Angle",
+    "nativeId": 5,
+    "bgl": true,
+    "dimensions": [
+      "D",
+      "B",
+      "tw",
+      "tf",
+      "Rr",
+      "Rh",
+      "Rt1",
+      "Rt2",
+      "Rt3",
+      "Rt4",
+      "alpha1",
+      "alpha2"
+    ],
+    "slots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "guid": "5e172bd8-5f4a-500c-a71b-80c01f48ed2a"
+  },
+  {
+    "key": "BglBulb",
+    "name": "BGL Bulb Flat",
+    "nativeId": 6,
+    "bgl": true,
+    "dimensions": [
+      "D",
+      "B",
+      "t",
+      "Rr",
+      "Rh",
+      "Rt1",
+      "Rt2",
+      "Rt3",
+      "alpha"
+    ],
+    "slots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "guid": "7b1bdf19-31c2-5b53-9b1b-43ede1385c70"
+  }
+]

@@ -1,0 +1,390 @@
+[
+  {
+    "path": "Components/Analysis/FormFindComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Analysis/SapAnalysisComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Analysis/StrausAnalysisComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Checks/AISC360BeamDesignOverrideComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Checks/AISC360_10SteelPrefsComponent .cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Checks/AS4100SteelPrefsComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Checks/AutoTensionComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Checks/BeamAISC360_10SteelComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Checks/BeamAS4100SteelComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Checks/BeamDesignOverrideComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Checks/BeamEC3SteelComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Checks/BeamSteelDesignResultsComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Checks/EC3SteelPrefsComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Checks/SteelPrefsComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Export/BiMMExportComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Export/EtabsExportComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Export/Fem2BimComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Export/SapExportComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Export/StrausExportComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/BakeEtabsModelComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/BakeSap2000ModelComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/BakeSap2000ModelToGrasshopperComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/BakeStrausModelComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/BakeStrausR2ModelComponenty.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/ETABSApplyEditedTableComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/ETABSChangeElementLabel.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/ETABSGetEditingTableComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/ETABSGetEditingTableNameComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/ETABSSelectElementsComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/ETABSSelectElementsListComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/ETABSSetEditingTableComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/ETABSSetGroupComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/F2RModelHelper.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/InteractiveAddAreaComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/InteractiveAddFrameComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/InteractiveAddJointComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/InteractiveEtabs2RhinoComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/InteractiveGrasshopper2SapComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/InteractiveRhino2EtabsComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/InteractiveRhino2SapComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/InteractiveSap2GrasshopperComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/InteractiveSap2RhinoComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/InteractiveUpdateAreaComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/InteractiveUpdateFrameComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/SAPApplyEditedTableComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/SAPChangeElementLabel.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/SAPGetDisplayTableComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/SAPGetEditingTableComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/SAPGetEditingTableNameComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/SAPSelectElementsComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/SAPSelectElementsListComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/SAPSetEditingTableComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/SAPSetGroupComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/SAPSplitBeamComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/F2R/SAPSplitBeamListComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/MeCheck/MixedSectionBeamCheckComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/MeCheck/MixedSectionBeamComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/MeCheck/MixedSectionComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/MeCheck/SuperElementCheckComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/BordersComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/CableNetComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/CableNetRadialComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/CompensationComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/CompoundNetComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/DecompensationComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/DecompensationDescriptorComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/DecompensationDescriptorExtComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/DeformArapComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/FlatteningArapComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/FlatteningComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/GeodesicOffsetsComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/LineUpComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/MeshCleanComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/MeshDivideComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/MeshGeodesicComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/MeshPipeComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/MeshRemapComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/OrderBordersComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/SplitMeshOnCurvesComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/SubdivideMeshComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Patterning/UnweldMeshComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/SAPExtra/ExtraSapHelper.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/SAPExtra/SAPAddLoadCase.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/SAPExtra/SAPAreaLoaderComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/SAPExtra/SAPBeamLoaderComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/SAPExtra/SAPBeamResultFilterComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/SAPExtra/SAPBeamsLoaderResultsComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/SAPExtra/SAPGetDesignFrameForceComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/SAPExtra/SAPGetFrameForceComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/SAPExtra/SAPGetFrameJointForceComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/SAPExtra/SAPGetJointDisplacementComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/SAPExtra/SAPGetWorstComboComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/SAPExtra/SAPNodeLoaderComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/SAPExtra/SAPSetDesignTargetDisplacementComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/SAPExtra/SAPSetWorstDesignComboComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/SAPExtra/SAPStartDesignComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  },
+  {
+    "path": "Components/Tools/CurveToMeshComponent.cs",
+    "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
+  }
+]

@@ -1,0 +1,1267 @@
+{
+  "grid": 24,
+  "palette": {
+    "model": [
+      "#137f86",
+      "#e8f5f4"
+    ],
+    "section": [
+      "#316ca8",
+      "#edf3fa"
+    ],
+    "material": [
+      "#526778",
+      "#eff3f5"
+    ],
+    "load": [
+      "#bd5b19",
+      "#fff2e5"
+    ],
+    "moving": [
+      "#ba6120",
+      "#fff2e5"
+    ],
+    "solver": [
+      "#6751ad",
+      "#f1edfa"
+    ],
+    "check": [
+      "#27734b",
+      "#eaf6ee"
+    ],
+    "result": [
+      "#7e55a2",
+      "#f5eff8"
+    ],
+    "tool": [
+      "#536977",
+      "#eff3f5"
+    ]
+  },
+  "icons": [
+    {
+      "key": "AlignBeamAxesComponent",
+      "type": "BridGHe.Grasshopper.Components.AlignBeamAxesComponent",
+      "guid": "28bac788-3e40-4658-b60d-f2be5183eb23",
+      "name": "Align beam axes",
+      "family": "model",
+      "glyph": "beam",
+      "badge": "axes"
+    },
+    {
+      "key": "AlignPlateAxesComponent",
+      "type": "BridGHe.Grasshopper.Components.AlignPlateAxesComponent",
+      "guid": "376c9d2a-b211-458a-9592-3669a14192ed",
+      "name": "Align plate axes",
+      "family": "model",
+      "glyph": "plate",
+      "badge": "axes"
+    },
+    {
+      "key": "BeamFilterComponent",
+      "type": "BridGHe.Grasshopper.Components.BeamFilterComponent",
+      "guid": "7bdf1a95-62ad-45a7-8768-e1fd7fdc69a8",
+      "name": "Beam Filter",
+      "family": "tool",
+      "glyph": "beam",
+      "badge": "filter"
+    },
+    {
+      "key": "BeamOverrideComponent",
+      "type": "BridGHe.Grasshopper.Components.BeamOverrideComponent",
+      "guid": "6962f28d-7b4a-4e37-bf9b-ea7f1f197e04",
+      "name": "Beam Override",
+      "family": "tool",
+      "glyph": "beam",
+      "badge": "edit"
+    },
+    {
+      "key": "ElementFilterComponent",
+      "type": "BridGHe.Grasshopper.Components.Tools.ElementFilterComponent",
+      "guid": "c52e4345-36fa-4944-9ee5-99ed74034221",
+      "name": "Elements Filter",
+      "family": "tool",
+      "glyph": "model",
+      "badge": "filter"
+    },
+    {
+      "key": "NodeFilterComponent",
+      "type": "BridGHe.Grasshopper.Components.Tools.NodeFilterComponent",
+      "guid": "35d4ffef-5073-4ead-a931-83a0febedb69",
+      "name": "Node Filter",
+      "family": "tool",
+      "glyph": "node",
+      "badge": "filter"
+    },
+    {
+      "key": "PlateFilterComponent",
+      "type": "BridGHe.Grasshopper.Components.Tools.PlateFilterComponent",
+      "guid": "65613b73-39f2-4a8f-8212-96c44a775516",
+      "name": "Plate Filter",
+      "family": "tool",
+      "glyph": "plate",
+      "badge": "filter"
+    },
+    {
+      "key": "RemeshComponent",
+      "type": "BridGHe.Grasshopper.Components.Tools.RemeshComponent",
+      "guid": "c338c62b-28d4-473f-94cc-e9c1c8c4cda7",
+      "name": "Remesh",
+      "family": "tool",
+      "glyph": "mesh",
+      "badge": "edit"
+    },
+    {
+      "key": "SurfaceSplitterComponent",
+      "type": "BridGHe.Grasshopper.Components.Tools.SurfaceSplitterComponent",
+      "guid": "97bab293-1482-420d-913e-fdf7b9204cae",
+      "name": "Surface splitter curves",
+      "family": "tool",
+      "glyph": "split",
+      "badge": ""
+    },
+    {
+      "key": "BeamSectionAngleComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.BeamSectionAngleComponent",
+      "guid": "733f76d9-09fa-470d-8a0b-0a6ebccfea9a",
+      "name": "Angle Section",
+      "family": "section",
+      "glyph": "section:Angle",
+      "badge": ""
+    },
+    {
+      "key": "BeamSectionBrepComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.BeamSectionBrepComponent",
+      "guid": "b64697c6-7726-4626-9a05-43652bd8f26f",
+      "name": "Brep Section",
+      "family": "section",
+      "glyph": "section:Brep",
+      "badge": ""
+    },
+    {
+      "key": "BeamSectionCComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.BeamSectionCComponent",
+      "guid": "052db5a7-11f9-4fec-b230-3e6a25f30fa8",
+      "name": "C Section",
+      "family": "section",
+      "glyph": "section:Channel",
+      "badge": ""
+    },
+    {
+      "key": "BeamSectionGenericComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.BeamSectionGenericComponent",
+      "guid": "a7d89862-b835-4023-af6f-1fed05965136",
+      "name": "Generic Section",
+      "family": "section",
+      "glyph": "section:Generic",
+      "badge": "data"
+    },
+    {
+      "key": "BeamSectionHollowCircleComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.BeamSectionHollowCircleComponent",
+      "guid": "cd443ccf-2cff-4255-9787-54a0693f0805",
+      "name": "Hollow Circle",
+      "family": "section",
+      "glyph": "section:CircularHollow",
+      "badge": ""
+    },
+    {
+      "key": "BeamSectionHollowRectComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.BeamSectionHollowRectComponent",
+      "guid": "327c1358-f0a6-4ebc-b500-b7e989b3e1cc",
+      "name": "Hollow Rect",
+      "family": "section",
+      "glyph": "section:RectangleHollow",
+      "badge": ""
+    },
+    {
+      "key": "BeamSectionIComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.BeamSectionIComponent",
+      "guid": "7a5fa90e-77d2-4eb7-904e-320f03fd790c",
+      "name": "I Section",
+      "family": "section",
+      "glyph": "section:I",
+      "badge": ""
+    },
+    {
+      "key": "BeamSectionSolidCircleComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.BeamSectionSolidCircleComponent",
+      "guid": "115f748b-b187-41e0-b59e-b4a2ac0b3716",
+      "name": "Solid Circle",
+      "family": "section",
+      "glyph": "section:CircularSolid",
+      "badge": ""
+    },
+    {
+      "key": "BeamSectionSolidRectComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.BeamSectionSolidRectComponent",
+      "guid": "3d33df9e-3af5-498a-a95f-ebe0d8ecf940",
+      "name": "Solid Rect",
+      "family": "section",
+      "glyph": "section:RectangleSolid",
+      "badge": ""
+    },
+    {
+      "key": "BeamSectionTComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.BeamSectionTComponent",
+      "guid": "55b57ea9-40e9-485d-bc51-54eb38275147",
+      "name": "T Section",
+      "family": "section",
+      "glyph": "section:T",
+      "badge": ""
+    },
+    {
+      "key": "SectionGeometricComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.SectionGeometricComponent",
+      "guid": "8f7e3520-a83a-4b14-ac34-6b5a48ccaf84",
+      "name": "Section Geometry",
+      "family": "section",
+      "glyph": "section:Brep",
+      "badge": "shape"
+    },
+    {
+      "key": "SectionGeometricPropertyComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.SectionGeometricPropertyComponent",
+      "guid": "b6603b65-7e0b-4662-919d-213d12874c4a",
+      "name": "Section Geometric Property",
+      "family": "section",
+      "glyph": "section:Generic",
+      "badge": "measure"
+    },
+    {
+      "key": "StrausBxsSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausBxsSectionComponent",
+      "guid": "ce4934d8-7d81-4b8e-b04d-5b765c9af5a1",
+      "name": "Straus BXS Section",
+      "family": "section",
+      "glyph": "section:Brep",
+      "badge": "native"
+    },
+    {
+      "key": "StrausLibrarySectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausLibrarySectionComponent",
+      "guid": "31a5ba10-c508-4de9-8704-d311243bb845",
+      "name": "Straus Library Section",
+      "family": "section",
+      "glyph": "library",
+      "badge": "native"
+    },
+    {
+      "key": "StrausCircularSolidSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausCircularSolidSectionComponent",
+      "guid": "91092dc4-a478-5bae-b104-6d9b79acfa48",
+      "name": "Straus Circular Solid Section",
+      "family": "section",
+      "glyph": "section:CircularSolid",
+      "badge": "native"
+    },
+    {
+      "key": "StrausCircularHollowSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausCircularHollowSectionComponent",
+      "guid": "52dfbc6c-40ee-5ecc-8de7-a0252a1aa3ca",
+      "name": "Straus Circular Hollow Section",
+      "family": "section",
+      "glyph": "section:CircularHollow",
+      "badge": "native"
+    },
+    {
+      "key": "StrausRectangleSolidSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausRectangleSolidSectionComponent",
+      "guid": "0d17a80e-109b-5a2b-a68c-f0cbacf6f453",
+      "name": "Straus Rectangle Solid Section",
+      "family": "section",
+      "glyph": "section:RectangleSolid",
+      "badge": "native"
+    },
+    {
+      "key": "StrausRectangleHollowSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausRectangleHollowSectionComponent",
+      "guid": "5fba2a07-4ad4-54ca-9fe2-8a8350e7e912",
+      "name": "Straus Rectangle Hollow Section",
+      "family": "section",
+      "glyph": "section:RectangleHollow",
+      "badge": "native"
+    },
+    {
+      "key": "StrausLipChannelSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausLipChannelSectionComponent",
+      "guid": "0fda128e-507c-5de0-81c5-b10ff3c4d34e",
+      "name": "Straus Lipped Channel Section",
+      "family": "section",
+      "glyph": "section:LipChannel",
+      "badge": "native"
+    },
+    {
+      "key": "StrausTopHatSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausTopHatSectionComponent",
+      "guid": "6c788ba2-2787-5147-a865-e74c3d4ed5cc",
+      "name": "Straus Top Hat Section",
+      "family": "section",
+      "glyph": "section:TopHat",
+      "badge": "native"
+    },
+    {
+      "key": "StrausISectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausISectionComponent",
+      "guid": "6ce96dfc-2dda-53ea-9740-b0e2535cd7ad",
+      "name": "Straus I Section",
+      "family": "section",
+      "glyph": "section:I",
+      "badge": "native"
+    },
+    {
+      "key": "StrausTSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausTSectionComponent",
+      "guid": "5c8a2a20-382c-5006-b890-b14c3082f7bc",
+      "name": "Straus T Section",
+      "family": "section",
+      "glyph": "section:T",
+      "badge": "native"
+    },
+    {
+      "key": "StrausAngleSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausAngleSectionComponent",
+      "guid": "e970edd5-6cd6-5658-9411-4702026137b2",
+      "name": "Straus Angle Section",
+      "family": "section",
+      "glyph": "section:Angle",
+      "badge": "native"
+    },
+    {
+      "key": "StrausZSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausZSectionComponent",
+      "guid": "8c774db6-43d1-5fab-ac8c-549cf8210962",
+      "name": "Straus Z Section",
+      "family": "section",
+      "glyph": "section:Z",
+      "badge": "native"
+    },
+    {
+      "key": "StrausTrapezoidSolidSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausTrapezoidSolidSectionComponent",
+      "guid": "5b2d5d96-8222-56fd-adfe-826b63b78311",
+      "name": "Straus Trapezoid Solid Section",
+      "family": "section",
+      "glyph": "section:TrapezoidSolid",
+      "badge": "native"
+    },
+    {
+      "key": "StrausTrapezoidHollowSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausTrapezoidHollowSectionComponent",
+      "guid": "4feecffd-8cbb-5053-b52f-34da648bd1ad",
+      "name": "Straus Trapezoid Hollow Section",
+      "family": "section",
+      "glyph": "section:TrapezoidHollow",
+      "badge": "native"
+    },
+    {
+      "key": "StrausTriangleSolidSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausTriangleSolidSectionComponent",
+      "guid": "8f7b51fa-7018-5d1c-82f6-b5332a639cb6",
+      "name": "Straus Triangle Solid Section",
+      "family": "section",
+      "glyph": "section:TriangleSolid",
+      "badge": "native"
+    },
+    {
+      "key": "StrausTriangleHollowSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausTriangleHollowSectionComponent",
+      "guid": "48a915d4-85f6-5c47-bc49-4c81adf4f1e3",
+      "name": "Straus Triangle Hollow Section",
+      "family": "section",
+      "glyph": "section:TriangleHollow",
+      "badge": "native"
+    },
+    {
+      "key": "StrausCruciformSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausCruciformSectionComponent",
+      "guid": "20f6dc79-24d0-5c9e-a68d-1eed14630ac1",
+      "name": "Straus Cruciform Section",
+      "family": "section",
+      "glyph": "section:Cruciform",
+      "badge": "native"
+    },
+    {
+      "key": "StrausBglRectangleSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausBglRectangleSectionComponent",
+      "guid": "8910273b-e5fb-50bd-942c-ece70d0d06dc",
+      "name": "Straus BGL Hollow Rectangle Section",
+      "family": "section",
+      "glyph": "bgl:RectangleHollow",
+      "badge": "radii"
+    },
+    {
+      "key": "StrausBglISectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausBglISectionComponent",
+      "guid": "19dd18cb-893d-550f-9e2d-65666acb157c",
+      "name": "Straus BGL I Section",
+      "family": "section",
+      "glyph": "bgl:I",
+      "badge": "radii"
+    },
+    {
+      "key": "StrausBglChannelSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausBglChannelSectionComponent",
+      "guid": "79a61eb7-de96-518c-bee7-61fb5ddb2c94",
+      "name": "Straus BGL Channel Section",
+      "family": "section",
+      "glyph": "bgl:Channel",
+      "badge": "radii"
+    },
+    {
+      "key": "StrausBglTSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausBglTSectionComponent",
+      "guid": "2d9d3954-4d07-5ebb-bbbb-1848890b83ee",
+      "name": "Straus BGL T Section",
+      "family": "section",
+      "glyph": "bgl:T",
+      "badge": "radii"
+    },
+    {
+      "key": "StrausBglAngleSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausBglAngleSectionComponent",
+      "guid": "5e172bd8-5f4a-500c-a71b-80c01f48ed2a",
+      "name": "Straus BGL Angle Section",
+      "family": "section",
+      "glyph": "bgl:Angle",
+      "badge": "radii"
+    },
+    {
+      "key": "StrausBglBulbSectionComponent",
+      "type": "BridGHe.Grasshopper.Components.Sections.StrausBglBulbSectionComponent",
+      "guid": "7b1bdf19-31c2-5b53-9b1b-43ede1385c70",
+      "name": "Straus BGL Bulb Flat Section",
+      "family": "section",
+      "glyph": "bgl:Bulb",
+      "badge": "radii"
+    },
+    {
+      "key": "BeamResultsComponent",
+      "type": "BridGHe.Grasshopper.Components.Results.BeamResultsComponent",
+      "guid": "3a6035ca-82e4-42c6-8fe2-9e6cb39270e4",
+      "name": "Beam Results",
+      "family": "result",
+      "glyph": "beam",
+      "badge": "data"
+    },
+    {
+      "key": "NodeResultsComponent",
+      "type": "BridGHe.Grasshopper.Components.Results.NodeResultsComponent",
+      "guid": "b34af03b-9b25-4e88-8e5c-a90e8a52f830",
+      "name": "Node Results",
+      "family": "result",
+      "glyph": "node",
+      "badge": "data"
+    },
+    {
+      "key": "PlateResultsComponent",
+      "type": "BridGHe.Grasshopper.Components.Results.PlateResultsComponent",
+      "guid": "12f10928-8575-4e6e-a16a-e299fd7f5b39",
+      "name": "Plate Results",
+      "family": "result",
+      "glyph": "plate",
+      "badge": "data"
+    },
+    {
+      "key": "BeamParam",
+      "type": "BridGHe.Grasshopper.Components.Parameters.BeamParam",
+      "guid": "dd6f2aa8-5224-45e3-9616-f9b8e0f0274b",
+      "name": "Beam",
+      "family": "model",
+      "glyph": "beam",
+      "badge": "parameter"
+    },
+    {
+      "key": "BeamSectionParam",
+      "type": "BridGHe.Grasshopper.Components.Parameters.BeamSectionParam",
+      "guid": "0f79b0ba-a920-405a-9cb4-309c1160633a",
+      "name": "Section",
+      "family": "section",
+      "glyph": "section:I",
+      "badge": "parameter"
+    },
+    {
+      "key": "CoordinateSystemParam",
+      "type": "BridGHe.Grasshopper.Components.Parameters.CoordinateSystemParam",
+      "guid": "35436342-56df-40a6-ad21-0f02449ecb3e",
+      "name": "CoordinateSystem",
+      "family": "model",
+      "glyph": "axes",
+      "badge": "parameter"
+    },
+    {
+      "key": "GroupParam",
+      "type": "BridGHe.Grasshopper.Components.Parameters.GroupParam",
+      "guid": "8e3d57e8-79d2-4f5f-9153-bd7e25a9f39c",
+      "name": "Group",
+      "family": "model",
+      "glyph": "group",
+      "badge": "parameter"
+    },
+    {
+      "key": "LoadCombinationsParam",
+      "type": "BridGHe.Grasshopper.Components.Parameters.LoadCombinationsParam",
+      "guid": "9bfe3964-9ec3-4a9f-a757-487de39c661d",
+      "name": "Load Combinations",
+      "family": "load",
+      "glyph": "case",
+      "badge": "parameter"
+    },
+    {
+      "key": "MaterialParam",
+      "type": "BridGHe.Grasshopper.Components.Parameters.MaterialParam",
+      "guid": "b2a70c33-31f5-463e-87a5-968c112dd4bb",
+      "name": "Material",
+      "family": "material",
+      "glyph": "material",
+      "badge": "parameter"
+    },
+    {
+      "key": "NodeParam",
+      "type": "BridGHe.Grasshopper.Components.Parameters.NodeParam",
+      "guid": "cf0fe79e-b493-49ed-b094-dadab15e1eae",
+      "name": "Node",
+      "family": "model",
+      "glyph": "node",
+      "badge": "parameter"
+    },
+    {
+      "key": "PlateParam",
+      "type": "BridGHe.Grasshopper.Components.Parameters.PlateParam",
+      "guid": "5483bff2-64ab-40d7-a5de-1af1e6f9bd12",
+      "name": "Plate",
+      "family": "model",
+      "glyph": "plate",
+      "badge": "parameter"
+    },
+    {
+      "key": "VersionParam",
+      "type": "BridGHe.Grasshopper.Components.Parameters.VersionParam",
+      "guid": "98efbea2-2189-43fa-8b2e-a9fb6736e306",
+      "name": "Version controller",
+      "family": "tool",
+      "glyph": "id",
+      "badge": "parameter"
+    },
+    {
+      "key": "BeamComponent",
+      "type": "BridGHe.Grasshopper.Components.Models.BeamComponent",
+      "guid": "ecb9c513-6bb3-46ac-9430-a79ba43b0451",
+      "name": "Beam",
+      "family": "model",
+      "glyph": "beam",
+      "badge": ""
+    },
+    {
+      "key": "BuildModelComponent",
+      "type": "BridGHe.Grasshopper.Components.Models.BuildModelComponent",
+      "guid": "d99dbb1b-13c4-4398-902e-ce66e5076ff4",
+      "name": "Build Model",
+      "family": "model",
+      "glyph": "model",
+      "badge": "add"
+    },
+    {
+      "key": "DecomposeModelComponent",
+      "type": "BridGHe.Grasshopper.Components.Models.DecomposeModelComponent",
+      "guid": "e39b6cad-cf34-4766-a8b5-fa3fe2effeb9",
+      "name": "Decompose Model",
+      "family": "model",
+      "glyph": "decompose",
+      "badge": ""
+    },
+    {
+      "key": "MergeModelComponent",
+      "type": "BridGHe.Grasshopper.Components.Models.MergeModelComponent",
+      "guid": "e6896f43-2dff-40a5-b679-9ac79a30cbe6",
+      "name": "Merge Model",
+      "family": "model",
+      "glyph": "model",
+      "badge": "link"
+    },
+    {
+      "key": "NodeComponent",
+      "type": "BridGHe.Grasshopper.Components.Models.NodeComponent",
+      "guid": "9abf8116-70e5-4061-b0f6-b1934a306f07",
+      "name": "Node",
+      "family": "model",
+      "glyph": "node",
+      "badge": ""
+    },
+    {
+      "key": "PlateComponent",
+      "type": "BridGHe.Grasshopper.Components.Models.PlateComponent",
+      "guid": "886746b3-f39f-4efb-95d8-a7101caa7bf2",
+      "name": "Plate",
+      "family": "model",
+      "glyph": "plate",
+      "badge": ""
+    },
+    {
+      "key": "MergeGeometryComponent",
+      "type": "BridGHe.Grasshopper.Components.Models.MergeGeometryComponent",
+      "guid": "8e321fc4-9fa5-4583-b80c-7bbcf9b3ad3c",
+      "name": "Merge Geometry",
+      "family": "tool",
+      "glyph": "merge",
+      "badge": ""
+    },
+    {
+      "key": "BeamPropertyCompositeComponent",
+      "type": "BridGHe.Grasshopper.Components.MeCheck2.BeamPropertyCompositeComponent",
+      "guid": "f87c7066-e509-4646-9ef5-79691675cbf4",
+      "name": "Composite Beam Property",
+      "family": "check",
+      "glyph": "composite",
+      "badge": "data"
+    },
+    {
+      "key": "BeamSectionConcreteSlabComponent",
+      "type": "BridGHe.Grasshopper.Components.MeCheck2.BeamSectionConcreteSlabComponent",
+      "guid": "1a539226-24ae-4d3f-8075-4f54cd1b9f68",
+      "name": "Concrete Slab Section",
+      "family": "check",
+      "glyph": "slab",
+      "badge": ""
+    },
+    {
+      "key": "BeamSectionHPropertyComponent",
+      "type": "BridGHe.Grasshopper.Components.MeCheck2.BeamSectionHPropertyComponent",
+      "guid": "3ee2c935-dd7b-44b8-9bc2-c705ecd78052",
+      "name": "Section H Beam Property",
+      "family": "check",
+      "glyph": "section:I",
+      "badge": "data"
+    },
+    {
+      "key": "BuildMeCheckModel",
+      "type": "BridGHe.Grasshopper.Components.MeCheck2.BuildMeCheckModel",
+      "guid": "16695837-3f63-4305-a1ff-4491826dc3fe",
+      "name": "Build MeCheck Model",
+      "family": "check",
+      "glyph": "model",
+      "badge": "check"
+    },
+    {
+      "key": "CompositeBeamComponent",
+      "type": "BridGHe.Grasshopper.Components.MeCheck2.CompositeBeamComponent",
+      "guid": "07260514-76e4-4a8d-8b1e-69288e348b6f",
+      "name": "Composite beam",
+      "family": "check",
+      "glyph": "bridge",
+      "badge": "shape"
+    },
+    {
+      "key": "CompositeBeamLinearTensionAnalysisComponent_OBSOLETE",
+      "type": "BridGHe.Grasshopper.Components.MeCheck2.CompositeBeamLinearTensionAnalysisComponent_OBSOLETE",
+      "guid": "a487d0e7-bb07-4049-90a5-8cd2aa40b183",
+      "name": "Composite Section Linear Tension Analysis",
+      "family": "check",
+      "glyph": "composite",
+      "badge": "play"
+    },
+    {
+      "key": "CompositeBeamSelfTensionComponent",
+      "type": "BridGHe.Grasshopper.Components.MeCheck2.CompositeBeamSelfTensionComponent",
+      "guid": "e7cea623-0b51-485d-ab60-6ef6850945a6",
+      "name": "Composite Section Self Tension",
+      "family": "check",
+      "glyph": "composite",
+      "badge": "heat"
+    },
+    {
+      "key": "CompositeBeamSlabStrainComponent",
+      "type": "BridGHe.Grasshopper.Components.MeCheck2.CompositeBeamSlabStrainComponent",
+      "guid": "adf0a668-9fee-4d5d-8665-57aa769319b0",
+      "name": "Composite Beam Strain",
+      "family": "check",
+      "glyph": "strain",
+      "badge": ""
+    },
+    {
+      "key": "CompositeBeamTensionResultComponent",
+      "type": "BridGHe.Grasshopper.Components.MeCheck2.CompositeBeamTensionResultComponent",
+      "guid": "ac8892ff-18d2-4fe4-a8f5-d91053702b6d",
+      "name": "Composite Section Linear Tension Results",
+      "family": "check",
+      "glyph": "stress",
+      "badge": "data"
+    },
+    {
+      "key": "CompositeSectionComponent_OBSOLETE",
+      "type": "BridGHe.Grasshopper.Components.MeCheck2.CompositeSectionComponent_OBSOLETE",
+      "guid": "ee8b7912-f07c-4a17-8a26-e75959ed080f",
+      "name": "Composite Beam Property",
+      "family": "check",
+      "glyph": "composite",
+      "badge": "add"
+    },
+    {
+      "key": "CompositeSectionGeometricPropertyComponent",
+      "type": "BridGHe.Grasshopper.Components.MeCheck2.CompositeSectionGeometricPropertyComponent",
+      "guid": "2515010a-be42-4530-aa44-5a21b0c0c8dc",
+      "name": "Composite Geometric Property",
+      "family": "check",
+      "glyph": "composite",
+      "badge": "measure"
+    },
+    {
+      "key": "CreepAndShrinkageConcreteComponent",
+      "type": "BridGHe.Grasshopper.Components.MeCheck2.CreepAndShrinkageConcreteComponent",
+      "guid": "69fc44cb-48cd-4b15-af60-b025bd59bad5",
+      "name": "Creep And Shrinkage Concrete",
+      "family": "check",
+      "glyph": "slab",
+      "badge": "clock"
+    },
+    {
+      "key": "PrintCheckImageMeCheckForceComponent",
+      "type": "BridGHe.Grasshopper.Components.MeCheck2.PrintCheckImageMeCheckForceComponent",
+      "guid": "77e9f533-e4e8-41de-baaf-6bfece84def9",
+      "name": "Print MeCheck Forces",
+      "family": "check",
+      "glyph": "printer",
+      "badge": "force"
+    },
+    {
+      "key": "PrintCheckImageMeCheckResultComponent",
+      "type": "BridGHe.Grasshopper.Components.MeCheck2.PrintCheckImageMeCheckResultComponent",
+      "guid": "8f53f404-9446-4b47-90e3-d514f9c547c9",
+      "name": "Print MeCheck Results",
+      "family": "check",
+      "glyph": "printer",
+      "badge": "stress"
+    },
+    {
+      "key": "SuperElementCheckComponent",
+      "type": "BridGHe.Grasshopper.Components.MeCheck2.SuperElementCheckComponent",
+      "guid": "94839122-32f0-4f3e-a30f-979a53c3eca8",
+      "name": "Super Element Check",
+      "family": "check",
+      "glyph": "bridge",
+      "badge": "check"
+    },
+    {
+      "key": "SuperElementFilterComponent",
+      "type": "BridGHe.Grasshopper.Components.MeCheck2.SuperElementFilterComponent",
+      "guid": "850d46e5-0410-408f-aef0-16a6a202e1a4",
+      "name": "Super Element Filter",
+      "family": "check",
+      "glyph": "bridge",
+      "badge": "filter"
+    },
+    {
+      "key": "MaterialAluminiumComponent",
+      "type": "BridGHe.Grasshopper.Components.Materials.MaterialAluminiumComponent",
+      "guid": "876df96b-8734-4247-be25-e84a8f302d68",
+      "name": "Aluminium",
+      "family": "material",
+      "glyph": "aluminium",
+      "badge": ""
+    },
+    {
+      "key": "MaterialConcreteComponent",
+      "type": "BridGHe.Grasshopper.Components.Materials.MaterialConcreteComponent",
+      "guid": "c1dfa83d-e67e-4957-a375-da114a455158",
+      "name": "Concrete",
+      "family": "material",
+      "glyph": "concrete",
+      "badge": ""
+    },
+    {
+      "key": "MaterialCustomComponent",
+      "type": "BridGHe.Grasshopper.Components.Materials.MaterialCustomComponent",
+      "guid": "9404d0c7-cca7-4f29-b7f5-baf001386675",
+      "name": "Custom Material",
+      "family": "material",
+      "glyph": "material",
+      "badge": "edit"
+    },
+    {
+      "key": "MaterialSteelComponent",
+      "type": "BridGHe.Grasshopper.Components.Materials.MaterialSteelComponent",
+      "guid": "5b123f35-7685-415b-9028-5b0fd4d67626",
+      "name": "Steel",
+      "family": "material",
+      "glyph": "steel",
+      "badge": ""
+    },
+    {
+      "key": "MaterialTableComponent",
+      "type": "BridGHe.Grasshopper.Components.Materials.MaterialTableComponent",
+      "guid": "a0d75180-0aa3-445c-8faf-f0a00974f3d0",
+      "name": "Table Material",
+      "family": "material",
+      "glyph": "table",
+      "badge": ""
+    },
+    {
+      "key": "BeamDistributedLoadComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.BeamDistributedLoadComponent",
+      "guid": "517beddc-0100-4a8f-ab0c-90e17fe2791f",
+      "name": "Beam Distributed Load",
+      "family": "load",
+      "glyph": "distributed",
+      "badge": ""
+    },
+    {
+      "key": "BeamDistributedMomentComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.BeamDistributedMomentComponent",
+      "guid": "fee217c4-8b33-4c74-8f3a-743818d6c78c",
+      "name": "Beam Distributed Moment",
+      "family": "load",
+      "glyph": "moment",
+      "badge": "stages"
+    },
+    {
+      "key": "BeamGradientLoadComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.BeamGradientLoadComponent",
+      "guid": "461ba509-c137-468a-bb8b-5a5d3666039e",
+      "name": "Beam Gradient Load",
+      "family": "load",
+      "glyph": "gradient",
+      "badge": ""
+    },
+    {
+      "key": "BeamPointLoadComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.BeamPointLoadComponent",
+      "guid": "6558c246-9759-4d6f-adcf-ae0979c1158e",
+      "name": "Beam Point Load",
+      "family": "load",
+      "glyph": "point",
+      "badge": ""
+    },
+    {
+      "key": "BeamPointMomentComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.BeamPointMomentComponent",
+      "guid": "2ec48e35-f612-4d14-895a-0179c6a7a8c0",
+      "name": "Beam Point Moment",
+      "family": "load",
+      "glyph": "moment",
+      "badge": ""
+    },
+    {
+      "key": "BeamPreLoadComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.BeamPreLoadComponent",
+      "guid": "584fa650-0996-4bf8-9825-aa8639444507",
+      "name": "Beam PreLoad",
+      "family": "load",
+      "glyph": "preload",
+      "badge": ""
+    },
+    {
+      "key": "MovingPointComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.MovingPointComponent",
+      "guid": "f41f7887-84b9-4f35-8dd1-23469be692d1",
+      "name": "Moving Point Force",
+      "family": "moving",
+      "glyph": "point",
+      "badge": "arrow"
+    },
+    {
+      "key": "MovingDistributedComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.MovingDistributedComponent",
+      "guid": "fd54ae98-983c-4d01-ae72-ac562343f240",
+      "name": "Moving Distributed Force",
+      "family": "moving",
+      "glyph": "distributed",
+      "badge": "arrow"
+    },
+    {
+      "key": "MovingHeatComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.MovingHeatComponent",
+      "guid": "ef7ed232-36a2-4fef-b665-5f764fe506e1",
+      "name": "Moving Heat Source",
+      "family": "moving",
+      "glyph": "temperature",
+      "badge": "arrow"
+    },
+    {
+      "key": "MovingVehicleComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.MovingVehicleComponent",
+      "guid": "6d5252f0-2acb-4887-b041-1912319ace92",
+      "name": "Moving Vehicle",
+      "family": "moving",
+      "glyph": "vehicle",
+      "badge": ""
+    },
+    {
+      "key": "MovingCentrifugalComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.MovingCentrifugalComponent",
+      "guid": "039847dc-4d0d-4a6f-97b8-a152a8478811",
+      "name": "Moving Centrifugal Data",
+      "family": "moving",
+      "glyph": "centrifugal",
+      "badge": ""
+    },
+    {
+      "key": "MovingTemplateComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.MovingTemplateComponent",
+      "guid": "0bcd0f19-d708-4120-bda0-818b1ecdf41d",
+      "name": "Moving Load Template",
+      "family": "moving",
+      "glyph": "template",
+      "badge": ""
+    },
+    {
+      "key": "MovingLibraryTemplateComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.MovingLibraryTemplateComponent",
+      "guid": "ac0ed843-691a-4eb6-9089-66d134936be6",
+      "name": "Moving Library Template",
+      "family": "moving",
+      "glyph": "template",
+      "badge": "library"
+    },
+    {
+      "key": "MovingPathComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.MovingPathComponent",
+      "guid": "5adbf6aa-3fe8-4802-b60e-2c5a31e7adf3",
+      "name": "Moving Load Path",
+      "family": "moving",
+      "glyph": "route",
+      "badge": ""
+    },
+    {
+      "key": "AttachMovingPathsComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.AttachMovingPathsComponent",
+      "guid": "db563562-6690-4024-9fc1-9860dc8223ca",
+      "name": "Attach Moving Paths",
+      "family": "moving",
+      "glyph": "model",
+      "badge": "link"
+    },
+    {
+      "key": "NodeDisplacementLoadComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.NodeDisplacementLoadComponent",
+      "guid": "ee96d3ac-9028-4ddd-a4a9-3e49333fc283",
+      "name": "Node Displacement",
+      "family": "load",
+      "glyph": "node",
+      "badge": "arrow"
+    },
+    {
+      "key": "NodeLoadComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.NodeLoadComponent",
+      "guid": "d30a7ae4-15af-49e2-a12c-a9efebc96d03",
+      "name": "Node Load",
+      "family": "load",
+      "glyph": "node",
+      "badge": "force"
+    },
+    {
+      "key": "NodeMomentComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.NodeMomentComponent",
+      "guid": "fcbadad8-e4a9-447a-bc4c-c4cd6fce479a",
+      "name": "Node Moment",
+      "family": "load",
+      "glyph": "moment",
+      "badge": "parameter"
+    },
+    {
+      "key": "NodeTemperatureComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.NodeTemperatureComponent",
+      "guid": "65b74dea-1358-43a8-9fe4-571ab8ac7f11",
+      "name": "Node Temperature",
+      "family": "load",
+      "glyph": "temperature",
+      "badge": "parameter"
+    },
+    {
+      "key": "PlateNSMassComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.PlateNSMassComponent",
+      "guid": "ca774fef-a0a3-4df4-97be-51ba543c6d05",
+      "name": "Plate non structural Mass",
+      "family": "load",
+      "glyph": "mass",
+      "badge": "shape"
+    },
+    {
+      "key": "PlatePressureComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.PlatePressureComponent",
+      "guid": "8e75d7d6-5661-4311-8919-2d64561bc085",
+      "name": "Plate Pressure",
+      "family": "load",
+      "glyph": "pressure",
+      "badge": ""
+    },
+    {
+      "key": "PlatePreStressComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.PlatePreStressComponent",
+      "guid": "9d0160c6-e491-4a12-a289-a4b3c4cc6811",
+      "name": "Plate PreStress",
+      "family": "load",
+      "glyph": "plate",
+      "badge": "stress"
+    },
+    {
+      "key": "StrausR3ExportComponent",
+      "type": "BridGHe.Grasshopper.Components.Export.StrausR3ExportComponent",
+      "guid": "fa0981e2-710c-41ed-9a60-98bc102def94",
+      "name": "Straus7 R3 Export",
+      "family": "solver",
+      "glyph": "case",
+      "badge": "arrow"
+    },
+    {
+      "key": "BeamGeometricPropertyComponent",
+      "type": "BridGHe.Grasshopper.Components.ElementProperties.BeamGeometricPropertyComponent",
+      "guid": "8969e7d9-57da-478e-818c-949f6e93c883",
+      "name": "Beam Geometric Property",
+      "family": "section",
+      "glyph": "beam",
+      "badge": "measure"
+    },
+    {
+      "key": "BeamPropertyComponent",
+      "type": "BridGHe.Grasshopper.Components.ElementProperties.BeamPropertyComponent",
+      "guid": "4dd0c4e3-9c82-4284-b177-b3d8c25390bf",
+      "name": "Beam Property",
+      "family": "section",
+      "glyph": "beam",
+      "badge": "data"
+    },
+    {
+      "key": "PlatePropertyComponent",
+      "type": "BridGHe.Grasshopper.Components.ElementProperties.PlatePropertyComponent",
+      "guid": "20915977-5436-4dcb-b091-1250312caa11",
+      "name": "Plate Property",
+      "family": "section",
+      "glyph": "plate",
+      "badge": "data"
+    },
+    {
+      "key": "GroupComponent",
+      "type": "BridGHe.Grasshopper.Components.Definitions.GroupComponent",
+      "guid": "58972cd5-d1a4-47fb-a890-98dd16cb87f5",
+      "name": "Group",
+      "family": "model",
+      "glyph": "group",
+      "badge": ""
+    },
+    {
+      "key": "LoadCaseComponent",
+      "type": "BridGHe.Grasshopper.Components.Definitions.LoadCaseComponent",
+      "guid": "977e4b26-8094-4d71-b165-f0f73b2282cd",
+      "name": "Load Case",
+      "family": "load",
+      "glyph": "case",
+      "badge": ""
+    },
+    {
+      "key": "LoadCaseStageComponent",
+      "type": "BridGHe.Grasshopper.Components.Definitions.LoadCaseStageComponent",
+      "guid": "5698330d-d3b6-4c35-bbd8-096aee7dfbb3",
+      "name": "Load Case Stage",
+      "family": "load",
+      "glyph": "case",
+      "badge": "stages"
+    },
+    {
+      "key": "LoadCaseStageOperationComponent",
+      "type": "BridGHe.Grasshopper.Components.Definitions.LoadCaseStageOperationComponent",
+      "guid": "785fff3f-6d81-4e5d-bf4d-cba31acedc58",
+      "name": "Load Case Stage Op",
+      "family": "load",
+      "glyph": "stages",
+      "badge": "edit"
+    },
+    {
+      "key": "LoadCombinationComponent",
+      "type": "BridGHe.Grasshopper.Components.Definitions.LoadCombinationComponent",
+      "guid": "bc427929-4998-48b4-821b-16d92af627cf",
+      "name": "Load Combination",
+      "family": "load",
+      "glyph": "case",
+      "badge": "add"
+    },
+    {
+      "key": "StagedConstructionComponent",
+      "type": "BridGHe.Grasshopper.Components.Definitions.StagedConstructionComponent",
+      "guid": "0d40d9ed-b87d-402b-bf96-e34ec04826a4",
+      "name": "Staged Construction ",
+      "family": "model",
+      "glyph": "stages",
+      "badge": ""
+    },
+    {
+      "key": "ForceComponent",
+      "type": "BridGHe.Grasshopper.Components.Checks.ForceComponent",
+      "guid": "bc2cde43-3af2-4685-8ce7-63e3586edeb5",
+      "name": "Force component",
+      "family": "load",
+      "glyph": "axes",
+      "badge": "force"
+    },
+    {
+      "key": "MixedSectionShearCheckComponent",
+      "type": "BridGHe.Grasshopper.Components.Checks.MixedSectionShearCheckComponent",
+      "guid": "b3669fd3-ab2d-462b-a378-c9e6a5578b59",
+      "name": "Composite Section Shear Check",
+      "family": "check",
+      "glyph": "composite",
+      "badge": "force"
+    },
+    {
+      "key": "MixedSectionTensionCheckComponent",
+      "type": "BridGHe.Grasshopper.Components.Checks.MixedSectionTensionCheckComponent",
+      "guid": "d370d023-bccf-4292-bed6-61858bcf71d8",
+      "name": "Composite Section Tension Check",
+      "family": "check",
+      "glyph": "composite",
+      "badge": "stress"
+    },
+    {
+      "key": "RCFrameAsComponent",
+      "type": "BridGHe.Grasshopper.Components.Checks.RCFrameAsComponent",
+      "guid": "31e3225e-3154-4726-9e6b-67539de1b524",
+      "name": "RC frames As",
+      "family": "check",
+      "glyph": "bars",
+      "badge": "add"
+    },
+    {
+      "key": "RCFrameChecksComponent",
+      "type": "BridGHe.Grasshopper.Components.Checks.RCFrameChecksComponent",
+      "guid": "fe7f2ad0-e6db-488c-befd-6077043c839d",
+      "name": "RC frame checks",
+      "family": "check",
+      "glyph": "bars",
+      "badge": "check"
+    },
+    {
+      "key": "SteelFrameChecksComponent",
+      "type": "BridGHe.Grasshopper.Components.Checks.SteelFrameChecksComponent",
+      "guid": "c42d7f54-7567-4f8a-8835-887f27af69eb",
+      "name": "Steel frame checks",
+      "family": "check",
+      "glyph": "section:I",
+      "badge": "check"
+    },
+    {
+      "key": "BeamOutputStationsComponent",
+      "type": "BridGHe.Grasshopper.Components.Attributes.BeamOutputStationsComponent",
+      "guid": "72860a35-4af0-41c0-9e26-79a3db608d5f",
+      "name": "Beam Output Stations",
+      "family": "model",
+      "glyph": "stations",
+      "badge": ""
+    },
+    {
+      "key": "BeamReleasesComponent",
+      "type": "BridGHe.Grasshopper.Components.Attributes.BeamReleasesComponent",
+      "guid": "e3b6b459-dfcf-4a1a-b31f-3f7536b7bfa9",
+      "name": "Beam Releases",
+      "family": "model",
+      "glyph": "release",
+      "badge": ""
+    },
+    {
+      "key": "BeamReleasesNamedSetComponent",
+      "type": "BridGHe.Grasshopper.Components.Attributes.BeamReleasesNamedSetComponent",
+      "guid": "5f7c35bc-b5c4-4ca0-9d0a-d6ad3523cdef",
+      "name": "Named Beam Releases",
+      "family": "model",
+      "glyph": "release",
+      "badge": "library"
+    },
+    {
+      "key": "BeamStringGroupComponent",
+      "type": "BridGHe.Grasshopper.Components.Attributes.BeamStringGroupComponent",
+      "guid": "a8cfb01f-5fac-41dc-b757-4d01d6103c15",
+      "name": "String Group",
+      "family": "model",
+      "glyph": "beam",
+      "badge": "link"
+    },
+    {
+      "key": "BeamSupportComponent",
+      "type": "BridGHe.Grasshopper.Components.Attributes.BeamSupportComponent",
+      "guid": "ed5438f5-aa16-4bcb-a5c9-a31bc27d4745",
+      "name": "Beam Support",
+      "family": "model",
+      "glyph": "beam",
+      "badge": "support"
+    },
+    {
+      "key": "BeamTaperComponent",
+      "type": "BridGHe.Grasshopper.Components.Attributes.BeamTaperComponent",
+      "guid": "5010971e-bdee-44d6-9edc-9d6beb8ad165",
+      "name": "Beam Taper",
+      "family": "model",
+      "glyph": "taper",
+      "badge": ""
+    },
+    {
+      "key": "ElementIdComponent",
+      "type": "BridGHe.Grasshopper.Components.Attributes.ElementIdComponent",
+      "guid": "3467176f-73ce-4557-b60b-961f5841f7a6",
+      "name": "Element Id",
+      "family": "model",
+      "glyph": "id",
+      "badge": ""
+    },
+    {
+      "key": "LoadPatchTypeComponent",
+      "type": "BridGHe.Grasshopper.Components.Attributes.LoadPatchTypeComponent",
+      "guid": "1dcb6c8b-8bd7-4e5b-a6a1-76c68a8f729b",
+      "name": "Load Patch Type",
+      "family": "load",
+      "glyph": "patch",
+      "badge": ""
+    },
+    {
+      "key": "NodeRestraintsComponent",
+      "type": "BridGHe.Grasshopper.Components.Attributes.NodeRestraintsComponent",
+      "guid": "59ef0220-f913-42ef-88cf-f0f32a9ae608",
+      "name": "Restraints",
+      "family": "model",
+      "glyph": "support",
+      "badge": ""
+    },
+    {
+      "key": "NodeStiffnessComponent",
+      "type": "BridGHe.Grasshopper.Components.Attributes.NodeStiffnessComponent",
+      "guid": "90a26129-a25e-4396-b677-b661d86246c2",
+      "name": "Stiffness",
+      "family": "model",
+      "glyph": "spring",
+      "badge": ""
+    },
+    {
+      "key": "PlateSupportComponent",
+      "type": "BridGHe.Grasshopper.Components.Attributes.PlateSupportComponent",
+      "guid": "7489fa91-6962-46b7-95b7-cfdeddc411f2",
+      "name": "Plate Support",
+      "family": "model",
+      "glyph": "plate",
+      "badge": "support"
+    },
+    {
+      "key": "SuperElementComponent",
+      "type": "BridGHe.Grasshopper.Components.Attributes.SuperElementComponent",
+      "guid": "2d01d2b5-9b10-402e-aee3-672cfc4a659b",
+      "name": "Super Element",
+      "family": "model",
+      "glyph": "bridge",
+      "badge": "link"
+    },
+    {
+      "key": "MovingStaticAnalysisComponent",
+      "type": "BridGHe.Grasshopper.Components.Analysis.MovingStaticAnalysisComponent",
+      "guid": "b6edaa43-c87c-40b4-8ce7-03260a524fd4",
+      "name": "Moving Static Analysis",
+      "family": "solver",
+      "glyph": "vehicle",
+      "badge": "play"
+    },
+    {
+      "key": "StrausR3AnalysisComponent",
+      "type": "BridGHe.Grasshopper.Components.Analysis.StrausR3AnalysisComponent",
+      "guid": "c9985217-7bc3-4eb0-a8a1-d251e17c8140",
+      "name": "Straus R3 Analysis",
+      "family": "solver",
+      "glyph": "solver",
+      "badge": "play"
+    }
+  ]
+}
