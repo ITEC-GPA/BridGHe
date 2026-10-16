@@ -99,7 +99,7 @@ namespace BridGHe.Grasshopper.DataTypes
         /// NOTE: It keeps the Guid original value
         /// </summary>
         /// <param name="beam">The beam to duplicate</param>
-        public GH_CompositeBeam(GH_CompositeBeam beam)
+        public GH_CompositeBeam(GH_CompositeBeam beam) : this()
         {
             _guid = beam._guid;
             //_beamProperty = beam._beamProperty;
@@ -180,7 +180,7 @@ namespace BridGHe.Grasshopper.DataTypes
             GH_CompositeBeam copy = new GH_CompositeBeam
             {
                 _guid = this._guid,
-                Value = this.Value
+                Value = Common.Helpers.ModelArchive.Clone(Value)
             };
             return copy;
         }

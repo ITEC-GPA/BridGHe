@@ -45,24 +45,8 @@ namespace BridGHe.Common.Models
         public NodeModel(NodeModel node)
             : base(node)
         {
-            _nodeId = (string)node._nodeId.Clone();
+            _nodeId = node._nodeId;
             _position = node._position;
-
-            _attributes = new System.Collections.ObjectModel.ObservableCollection<AttributeModel>();
-            for (int i = 0; i < node._attributes.Count; i++)
-                _attributes.Add(node._attributes[i]);
-
-            _groups = new System.Collections.ObjectModel.ObservableCollection<GroupModel>();
-            for (int i = 0; i < node._groups.Count; i++)
-                _groups.Add(node._groups[i]);
-
-            _loads = new System.Collections.ObjectModel.ObservableCollection<LoadModel>();
-            for (int i = 0; i < node._loads.Count; i++)
-                _loads.Add(node._loads[i]);
-
-            _results = new System.Collections.ObjectModel.ObservableCollection<ResultModel>();
-            for (int i = 0; i < node._results.Count; i++)
-                _results.Add(node._results[i]);
         }
 
         #region Serialization

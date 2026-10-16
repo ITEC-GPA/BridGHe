@@ -47,11 +47,15 @@ namespace BridGHe.Common.Models
 
         public ElementModel(ElementModel element)
         {
-            _groups = new ObservableCollection<GroupModel>(element._groups);
-            _loads = new ObservableCollection<LoadModel>(element._loads);
-            _attributes = new ObservableCollection<AttributeModel>(element._attributes);
+            // Copy the collections as one graph so shared cases remain shared within the copy.
+            var data = new ElementModel { _groups = element._groups, _loads = element._loads,
+                _attributes = element._attributes, _results = element._results };
+            var copy = Helpers.ModelArchive.Clone(data);
+            _groups = copy._groups;
+            _loads = copy._loads;
+            _attributes = copy._attributes;
             _attributes.CollectionChanged += Attributes_CollectionChanged;
-            _results = new ObservableCollection<ResultModel>(element._results);
+            _results = copy._results;
         }
 
         #region Serialization

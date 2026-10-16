@@ -83,7 +83,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         /// NOTE: It keeps the Guid original value
         /// </summary>
         /// <param name="node">The node to duplicate</param>
-        public GH_Node(GH_Node node)
+        public GH_Node(GH_Node node) : this()
         {
             _guid = node.Guid;
             Value = new NodeModel(node.Value);
@@ -204,7 +204,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             GH_Node copy = new GH_Node
             {
                 _guid = _guid,
-                Value = Value
+                Value = Common.Helpers.ModelArchive.Clone(Value)
             };
             return copy;
         }

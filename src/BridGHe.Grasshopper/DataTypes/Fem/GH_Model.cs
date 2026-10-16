@@ -132,7 +132,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public GH_Model(GH_Model model) : this()
         {
-            Value = model.Value;
+            Value = Common.Helpers.ModelArchive.Clone(model.Value);
             SynchronizeGuids(model);
         }
 

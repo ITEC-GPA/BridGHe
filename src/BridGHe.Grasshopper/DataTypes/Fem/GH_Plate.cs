@@ -100,11 +100,11 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         /// NOTE: It keeps the Guid original value
         /// </summary>
         /// <param name="plate">The plate to duplicate</param>
-        public GH_Plate(GH_Plate plate)
+        public GH_Plate(GH_Plate plate) : this()
         {
             _guid = plate._guid;
-            _plateProperty = plate._plateProperty;
-            _groups = plate._groups;
+            _plateProperty = plate._plateProperty == null ? null : (GH_PlateProperty)plate._plateProperty.Duplicate();
+            _groups = plate._groups.ConvertAll(g => (GH_Group)g.Duplicate());
             Value = new PlateModel(plate.Value);
         }
 
@@ -208,14 +208,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override IGH_GeometricGoo DuplicateGeometry()
         {
-            GH_Plate copy = new GH_Plate
-            {
-                _guid = _guid,
-                _plateProperty = _plateProperty,
-                _groups = _groups,
-                Value = Value
-            };
-            return copy;
+            return new GH_Plate(this);
         }
 
         public override BoundingBox GetBoundingBox(Transform xform)

@@ -40,7 +40,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             return new GH_PlateResults
             {
-                Value = new List<ResultModel>(Value)
+                Value = Common.Helpers.ModelArchive.Clone(Value)
             };
         }
 

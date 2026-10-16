@@ -153,9 +153,8 @@ namespace BridGHe.Common.Models
             _pointTo = beam._pointTo;
             _angleDeg = beam._angleDeg;
             _offset = beam._offset;
-            _beamProperty = beam._beamProperty;
-            if (beam._shapes != null)
-                _shapes = new List<Brep>(beam._shapes);
+            _beamProperty = ModelArchive.Clone(beam._beamProperty);
+            CreateShapes();
         }
 
         #region Serialization

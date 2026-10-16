@@ -91,68 +91,23 @@ namespace BridGHe.Common.Models
 
         public ModelModel(ModelModel model)
         {
-            MovingPaths = model.MovingPaths.Select(p => (MovingLoads.MovingPath)p.Clone()).ToList();
-            GeneratedMovingCases = new Dictionary<int, string>(model.GeneratedMovingCases);
-            _name = model._name;
-            _units = model._units;
-            _elements = new List<ElementModel>();
-            _nodes = new List<NodeModel>();
-            _beams = new List<BeamModel>();
-            _plates = new List<PlateModel>();
-            _loadCases = new List<LoadCaseModel>();
-            _loadCombinations = new List<LoadCombinationModel>();
-            _nodesIndexes = new Dictionary<string, int>();
-            _beamsIndexes = new Dictionary<string, int>();
-            _platesIndexes = new Dictionary<string, int>();
-            _namedSetsModels = new List<NamedSetsModel>();
-            _stagedConstruction = new List<StagedConstructionModel>();
-            _functionModels = new List<FunctionModel>();
-
-            for (int i = 0; i < model._elements.Count; i++)
-            {
-                ElementModel element = model._elements[i];
-                ElementModel copy_element;
-                if (element is NodeModel node)
-                    copy_element = new NodeModel(node);
-                else if (element is BeamModel beam)
-                    copy_element = new BeamModel(beam);
-                else if (element is PlateModel plate)
-                    copy_element = new PlateModel(plate);
-                else
-                    continue;
-                _elements.Add(copy_element);
-            }
-            Sync(0);
-
-            for (int i = 0; i < model._loadCases.Count; i++)
-            {
-                LoadCaseModel lc = model._loadCases[i];
-                _loadCases.Add(new LoadCaseModel(lc));
-            }
-
-            for (int i = 0; i < model._loadCombinations.Count; i++)
-            {
-                LoadCombinationModel combo = model._loadCombinations[i];
-                _loadCombinations.Add(new LoadCombinationModel(combo));
-            }
-
-            for (int i = 0; i < model._namedSetsModels.Count; i++)
-            {
-                NamedSetsModel nsm = model._namedSetsModels[i];
-                _namedSetsModels.Add(nsm.Clone());
-            }
-
-            for (int i = 0; i < model._stagedConstruction.Count; i++)
-            {
-                StagedConstructionModel scm = model._stagedConstruction[i];
-                _stagedConstruction.Add(new StagedConstructionModel(scm));
-            }
-
-            for (int i = 0; i < model._functionModels.Count; i++)
-            {
-                FunctionModel scm = model._functionModels[i];
-                _functionModels.Add(new FunctionModel(scm));
-            }
+            var copy = ModelArchive.Clone(model ?? throw new ArgumentNullException(nameof(model)));
+            _name = copy._name;
+            _units = copy._units;
+            _elements = copy._elements;
+            _nodes = copy._nodes;
+            _beams = copy._beams;
+            _plates = copy._plates;
+            _loadCases = copy._loadCases;
+            _loadCombinations = copy._loadCombinations;
+            _nodesIndexes = copy._nodesIndexes;
+            _beamsIndexes = copy._beamsIndexes;
+            _platesIndexes = copy._platesIndexes;
+            _namedSetsModels = copy._namedSetsModels;
+            _stagedConstruction = copy._stagedConstruction;
+            _functionModels = copy._functionModels;
+            MovingPaths = copy.MovingPaths;
+            GeneratedMovingCases = copy.GeneratedMovingCases;
         }
 
         #region Serialization

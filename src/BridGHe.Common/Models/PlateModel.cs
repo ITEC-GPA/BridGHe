@@ -149,7 +149,7 @@ namespace BridGHe.Common.Models
             _points.CollectionChanged += (s, e) => CreateShapes();
             _angleDeg = plate._angleDeg;
             _offset = plate._offset;
-            _property = plate._property;
+            _property = ModelArchive.Clone(plate._property);
             _angleDeg = plate._angleDeg;
             CreateShapes();
         }

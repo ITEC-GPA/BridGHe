@@ -19,7 +19,8 @@ internal static class RegressionTests
             ["merge-mesh"] = MergeMesh,
             ["beam-property-validity"] = BeamPropertyValidity,
             ["native-beam-validity"] = NativeBeamValidity,
-            ["model-guids"] = ModelGuids
+            ["model-guids"] = ModelGuids,
+            ["deep-copies"] = DeepCopies
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -161,6 +162,41 @@ internal static class RegressionTests
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
         return System.Reflection.Assembly.LoadFrom(System.IO.Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha"));
+    }
+
+    private static void DeepCopies()
+    {
+        var q = new LoadCaseModel("1", "Q");
+        var node = new NodeModel("1", Point3d.Origin);
+        node.Loads.Add(new NodeForceLoadModel(q, new Vector3d(0, 0, -100)));
+        node.Attributes.Add(new ElementIdAttributeModel("original"));
+        var beam = new BeamModel(Point3d.Origin, new Point3d(1000, 0, 0), new BeamPropertyModel("P") {
+            Material = new MaterialModel("S"), Section = new SectionModel { SectionType = SectionModel.SectionTypes.Generic }, PropertyType = BeamPropertyType.Beam });
+        beam.BeamId = "1";
+        beam.Results.Add(new BeamForceResultModel(q, 0, 0, "") { AxialForce = 100 });
+        var combination = new LoadCombinationModel("C"); combination.Values.Add(q, 1.5);
+        var model = new ModelModel(ModelModel.ModelUnits.Nmm);
+        model.AddElements(new ElementModel[] { node, beam }); model.AddLoadCases(new[] { q }); model.AddLoadCombinations(new[] { combination });
+        var copy = new ModelModel(model);
+        Require(ReferenceEquals(copy.Nodes[0].Loads[0].LoadCase, copy.LoadCases[0]) && ReferenceEquals(copy.LoadCombinations[0].Values.Keys.Single(), copy.LoadCases[0]), "model copy preserves internal case references");
+        ((NodeForceLoadModel)copy.Nodes[0].Loads[0]).Value = Vector3d.Zero;
+        copy.Beams[0].BeamProperty.Section.SectionArea = 456;
+        ((BeamForceResultModel)copy.Beams[0].Results[0]).AxialForce = 200;
+        ((ElementIdAttributeModel)copy.Nodes[0].Attributes[0]).Value = "copy";
+        Require(((NodeForceLoadModel)node.Loads[0]).Value.Z == -100 && beam.BeamProperty.Section.SectionArea != 456 && ((BeamForceResultModel)beam.Results[0]).AxialForce == 100 && ((ElementIdAttributeModel)node.Attributes[0]).Value == "original", "model copy owns loads, properties, attributes and results");
+        var nodeCopy = new NodeModel(node); ((NodeForceLoadModel)nodeCopy.Loads[0]).Value = Vector3d.Zero;
+        var beamCopy = new BeamModel(beam); beamCopy.BeamProperty.Material.Modulus = 123;
+        Require(((NodeForceLoadModel)node.Loads[0]).Value.Z == -100 && beam.BeamProperty.Material.Modulus != 123, "element copy constructors isolate mutable data");
+        var composite = CompositeBeam(); var compositeCopy = new CompositeBeamModel(composite);
+        Require(!ReferenceEquals(composite.StartBeamProperty, compositeCopy.StartBeamProperty) && ReferenceEquals(compositeCopy.StartBeamProperty, compositeCopy.EndBeamProperty), "composite copy isolates shared sections");
+        var assembly = Plugin();
+        var plate = new PlateModel(new[] { Point3d.Origin, new Point3d(1000, 0, 0), new Point3d(0, 1000, 0) }, new PlatePropertyModel("P"));
+        foreach (var entry in new[] { ("Node", (ElementModel)node), ("Beam", (ElementModel)beam), ("Plate", (ElementModel)plate) })
+        {
+            dynamic goo = Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_" + entry.Item1, true), entry.Item2, null);
+            dynamic duplicated = goo.DuplicateGeometry();
+            Require(!ReferenceEquals(duplicated.Value, goo.Value) && duplicated.Guid == goo.Guid, "Goo geometry copy owns data and keeps identity");
+        }
     }
 
     private static void ModelGuids()

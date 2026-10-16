@@ -140,10 +140,11 @@ namespace BridGHe.Common.Models
             _beamId = beam._beamId;
             _pointFrom = beam._pointFrom;
             _pointTo = beam._pointTo;
-            _startBeamProperty = beam._startBeamProperty;
-            _endBeamProperty = beam._endBeamProperty;
-            if (beam._shapes != null)
-                _shapes = new List<Brep>(beam._shapes);
+            var properties = Helpers.ModelArchive.Clone(new[] { beam._startBeamProperty, beam._endBeamProperty });
+            _startBeamProperty = properties[0];
+            _endBeamProperty = properties[1];
+            _shapes = new List<Brep>();
+            CreateShapes();
         }
 
         #region Serialization
