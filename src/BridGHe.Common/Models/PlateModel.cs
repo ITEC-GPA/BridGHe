@@ -50,7 +50,19 @@ namespace BridGHe.Common.Models
             set => _plateId = value;
         }
 
-        public ObservableCollection<Point3d> Points { get => _points; set => _points = value; }
+        public ObservableCollection<Point3d> Points
+        {
+            get => _points;
+            set
+            {
+                if (_points != null) _points.CollectionChanged -= PointsChanged;
+                _points = new ObservableCollection<Point3d>(value ?? new ObservableCollection<Point3d>());
+                _points.CollectionChanged += PointsChanged;
+                CreateShapes();
+            }
+        }
+
+        private void PointsChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) => CreateShapes();
 
         public double AngleDeg
         {
@@ -115,7 +127,7 @@ namespace BridGHe.Common.Models
                 _points = new ObservableCollection<Point3d>(points);
             else
                 _points = new ObservableCollection<Point3d>();
-            _points.CollectionChanged += (s, e) => CreateShapes();
+            _points.CollectionChanged += PointsChanged;
             _angleDeg = 0;
             _offset = 0;
             _property = pp;
@@ -132,7 +144,7 @@ namespace BridGHe.Common.Models
         {
             _plateId = "";
             _points = new ObservableCollection<Point3d>(points);
-            _points.CollectionChanged += (s, e) => CreateShapes();
+            _points.CollectionChanged += PointsChanged;
             _angleDeg = 0;
             _offset = 0;
             _property = pp;
@@ -146,7 +158,7 @@ namespace BridGHe.Common.Models
         {
             _plateId = plate._plateId;
             _points = new ObservableCollection<Point3d>(plate._points);
-            _points.CollectionChanged += (s, e) => CreateShapes();
+            _points.CollectionChanged += PointsChanged;
             _angleDeg = plate._angleDeg;
             _offset = plate._offset;
             _property = ModelArchive.Clone(plate._property);
@@ -176,7 +188,7 @@ namespace BridGHe.Common.Models
             int n_points = info.GetInt32("NPoints");
             for (int i = 0; i < n_points; i++)
                 _points.Add((Point3d)info.GetValue($"Point{i}", typeof(Point3d)));
-            _points.CollectionChanged += (s, e) => CreateShapes();
+            _points.CollectionChanged += PointsChanged;
             _angleDeg = info.GetDouble("Angle");
             _offset = info.GetDouble("Offset");
             _property = (PlatePropertyModel)info.GetValue("PlateProperty", typeof(PlatePropertyModel));
@@ -238,7 +250,8 @@ namespace BridGHe.Common.Models
 
         public override void CreateShapes()
         {
-            if (_property == null || Type == PlateType.Invalid)
+            _shape = null;
+            if (_property == null || _points.Count < 3 || _points.Any(p => !p.IsValid))
                 return;
 
             Brep brep;
@@ -247,12 +260,14 @@ namespace BridGHe.Common.Models
             if (Type == PlateType.Tri3)
             {
                 NurbsSurface surface = NurbsSurface.CreateFromCorners(_points[0], _points[1], _points[2]);
+                if (surface == null) return;
                 v = surface.NormalAt(0.5, 0.5);
                 brep = surface.ToBrep();
             }
             else if (Type == PlateType.Quad4)
             {
                 NurbsSurface surface = NurbsSurface.CreateFromCorners(_points[0], _points[1], _points[2], _points[3]);
+                if (surface == null) return;
                 v = surface.NormalAt(0.5, 0.5);
                 brep = surface.ToBrep();
             }
@@ -263,8 +278,9 @@ namespace BridGHe.Common.Models
                 if (!poly.IsClosed)
                     poly.Add(_points[0]);
                 var pp = poly.ToPolylineCurve();
-                brep = Brep.CreatePlanarBreps(pp, 0.001).FirstOrDefault();
-                v = brep.Surfaces.FirstOrDefault().NormalAt(0.5, 0.5);
+                brep = Brep.CreatePlanarBreps(pp, 0.001)?.FirstOrDefault();
+                if (brep == null) return;
+                v = brep.Surfaces.First().NormalAt(0.5, 0.5);
             }
 
             v.Unitize();

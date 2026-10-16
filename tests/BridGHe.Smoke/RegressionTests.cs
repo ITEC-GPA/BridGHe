@@ -26,7 +26,8 @@ internal static class RegressionTests
             ["merge-plate-connectivity"] = MergePlateConnectivity,
             ["indexed-phases"] = IndexedPhases,
             ["node-index"] = NodeIndex,
-            ["archived-attribute-updates"] = ArchivedAttributeUpdates
+            ["archived-attribute-updates"] = ArchivedAttributeUpdates,
+            ["plate-point-updates"] = PlatePointUpdates
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -168,6 +169,19 @@ internal static class RegressionTests
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
         return System.Reflection.Assembly.LoadFrom(System.IO.Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha"));
+    }
+
+    private static void PlatePointUpdates()
+    {
+        var plate = new PlateModel(new[] { Point3d.Origin, new Point3d(10, 0, 0), new Point3d(0, 10, 0) }, new PlatePropertyModel("P") { PropertyType = PlatePropertyType.LoadPatch });
+        plate.Points = new System.Collections.ObjectModel.ObservableCollection<Point3d>(new[] { Point3d.Origin, new Point3d(20, 0, 0), new Point3d(0, 10, 0) });
+        Require(plate.Shape.GetBoundingBox(true).Max.X == 20, "replacing plate points updates preview");
+        plate.Points[1] = new Point3d(30, 0, 0);
+        Require(plate.Shape.GetBoundingBox(true).Max.X == 30, "replacement point collection remains observable");
+        plate.Points.Clear();
+        Require(!plate.IsValid && plate.Shape == null, "empty point collection clears obsolete preview safely");
+        plate.Points.Add(Point3d.Origin); plate.Points.Add(new Point3d(10, 0, 0)); plate.Points.Add(new Point3d(0, 10, 0));
+        Require(plate.IsValid && plate.Shape.GetBoundingBox(true).Max.X == 10, "plate can be rebuilt incrementally");
     }
 
     private static void ArchivedAttributeUpdates()

@@ -259,7 +259,6 @@ namespace BridGHe.Common.Helpers
                 if (distinct.Count != points.Count && points.Count > 4)
                     throw new InvalidOperationException("Il merge fa coincidere nodi di una piastra di ordine superiore: ridurre la tolleranza.");
                 plate.Points = new System.Collections.ObjectModel.ObservableCollection<Point3d>(distinct);
-                plate.CreateShapes();
                 mergedPlates.Add(plate);
             }
             beams = sourceBeams;
