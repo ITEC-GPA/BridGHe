@@ -10,6 +10,14 @@
 
 Il verificatore adottato assume le azioni al **baricentro lordo della sezione della rispettiva fase**. Il motore gPC effettua il trasporto al baricentro efficace se necessario. Un modello con azioni riferite ad altri punti richiede un adattamento esplicito prima della verifica.
 
+## Selezione dei risultati
+
+`Linear Static` propone casi ordinari e combinazioni globali. `Nonlinear Static` propone solo le combinazioni che definiscono gli incrementi. `Staged analysis` propone le combinazioni delle fasi nel formato `Combinazione [Fase]`; selezionare il nome completo. Un nome inesistente o ambiguo viene rifiutato prima dell'esportazione. La selezione filtra i risultati letti senza rinumerare gli incrementi del modello.
+
+I casi presenti solo nelle combinazioni di fase vengono inclusi nel catalogo di esportazione. I carichi usano una numerazione locale per nome: gli `Id` dei casi del modello non sono modificati. Definizioni fisiche incompatibili con lo stesso nome generano errore. La corrispondenza degli indici dei risultati con una soluzione nativa staged resta da collaudare come descritto in VERIFICHE.
+
+Gli errori di esportazione impediscono l'avvio dell'analisi. Configurazioni attualmente non rappresentabili, come più casi di cedimenti imposti, rilasci multipli o supporti non gestiti, non vengono accettate come una soluzione parziale.
+
 ## Sezioni native Straus
 
 I nuovi componenti hanno input dimensionali distinti, un output `Section` compatibile con `Beam Property`, e calcolano le proprietà tramite API R3. Richiedono la licenza API già al calcolo della sezione. Le dimensioni hanno le unità di lunghezza del modello; le aree sono L², le inerzie e J sono L⁴. Gli angoli BGL sono in gradi.

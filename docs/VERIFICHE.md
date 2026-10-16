@@ -7,14 +7,44 @@ Ambiente: Windows x64, Rhino 8 avviato senza finestra mediante Rhino.Inside, run
 - Build Release: **0 errori, 0 avvisi**.
 - Audit delle porte: **103 componenti/parametri mantenuti**, inclusi **16 MeCheck2**, nessuna differenza non ammessa.
 - **137 GUID distinti** contando plugin e oggetti Grasshopper; nessuna collisione con i GUID della base.
-- Smoke test: **179 controlli superati**, inclusa l'istanziazione di tutti i **136 componenti/parametri registrabili** nel runtime Rhino 8.
-- Icone: tutte le 136 risorse presenti, distinte e associate al proprio oggetto a 24×24 px; logo plugin a 24 px; registrazione delle due categorie riuscita con icone a 16 px. Confronto dei pixel opachi e alpha esatto, tolleranza di due livelli su 255 sui canali premoltiplicati dei bordi semitrasparenti per gli arrotondamenti GDI+.
+- Smoke test isolato dopo le correzioni: **177 controlli superati e 19 gruppi di regressione superati**, inclusa l'istanziazione di tutti i **136 componenti/parametri registrabili** nel runtime Rhino 8.
+- Icone: tutte le 136 risorse presenti, distinte e associate al proprio oggetto a 24×24 px; logo plugin a 24 px; registrazione delle due categorie con icone a 16 px verificata nella sessione precedente; il controllo corrente sul profilo completo è rimasto bloccato durante il caricamento dei plugin installati. Confronto dei pixel opachi e alpha esatto, tolleranza di due livelli su 255 sui canali premoltiplicati dei bordi semitrasparenti per gli arrotondamenti GDI+.
 - Prove analitiche: area/inerzia del cerchio, sezione omogeneizzata di solo acciaio, tensione N/A, flessione con segno dei lembi, taglio VQ/(It).
 - Fasi: azioni istantanee e a lungo termine distinte, accumulo delle deformazioni imposte, errore esplicito per risultati mancanti alla stazione.
 - Persistenza: archivio del modello con nodi, beam, attributi e risultati; identità condivisa dei casi di carico; archivio Grasshopper di sezioni, proprietà e proprietà composte; dati e copia profonda dei carichi mobili.
 - Input non supportati: rifiuto di torsione nel percorso MeCheck2 adottato, offset verticale non reinterpretato, mobilità dei carichi non valida.
 
-Log e inventari della sessione sono in `artifacts/final-validation.log`, `artifacts/icon-validation.log`, `artifacts/contract-audit.json`, `artifacts/component-runtime.json`. Gli artefatti sono esclusi dal controllo versione; il rapporto presente è il riepilogo persistente. Durante il test delle categorie, Grasshopper ha caricato anche plugin installati nel profilo: il log riporta eccezioni di connessione Tekla relative a `System.Runtime.Remoting`; i controlli BridGHe sono terminati con `PASS TOTAL 179` e codice di uscita zero.
+Il log corrente è `artifacts/bugfix-validation.log`; audit e inventario sono in `artifacts/contract-audit.json` e `artifacts/component-runtime.json`. Gli artefatti sono esclusi da Git. La suite isolata termina con `PASS TOTAL 177`, `REGRESSION TOTAL 19` e codice zero.
+
+Il precedente totale 179 includeva due controlli di registrazione delle categorie. Ora sono opzionali perché `Grasshopper.Instances.ComponentServer` carica anche i plugin del profilo: il tentativo corrente è rimasto bloccato dopo il controllo delle icone del plugin ed è stato interrotto. Il precedente log riportava inoltre errori di plugin Tekla estranei a BridGHe. Per eseguire quei due controlli d'integrazione: `dotnet run --project tests/BridGHe.Smoke -c Release -- --installed-plugins`. Non sono conteggiati come superati nella validazione corrente.
+
+## Regressioni della revisione correttiva
+
+Sono coperti i difetti R1–R9 della revisione e i problemi aggiuntivi emersi durante le correzioni. Ogni fix ha un commit distinto; elenco in [MIGRAZIONE](MIGRAZIONE.md#revisione-correttiva).
+
+- Somma di forze e momenti nodali, identità dei casi omonimi, rifiuto delle definizioni incompatibili.
+- Merge dei dati nodali, topologia delle mesh multifaccia, connettività FEM delle piastre e indipendenza degli input.
+- GUID degli elementi attraverso output, duplicazione e archivio GH; copie indipendenti con riferimenti condivisi conservati all'interno della copia.
+- Ripristino delle travi composte, sostituzione dei solidi obsoleti, validità di sezioni native e proprietà cutoff.
+- Casi esclusivi delle fasi, selezione qualificata `Combinazione [Fase]`, conservazione degli indici di incremento e rifiuto dei casi incompatibili con il solutore.
+- Indici dei risultati e dei nodi confrontati con somme analitiche e ricerca esaustiva; coefficienti negativi, conversione dei momenti, stazioni normalizzate, soglie di tolleranza, risultati mancanti/duplicati.
+- Aggiornamento degli attributi dopo archivio, sostituzione/svuotamento dei punti delle piastre, travi incomplete e invalidazione della cache delle bounding box.
+
+La separazione fra errori bloccanti e avvisi nell'esportatore e le descrizioni di validità dei Goo sono state controllate sul codice e compilate. Il comportamento delle chiamate native nei percorsi di errore non è attestato senza una prova API.
+
+### Microbenchmark MeCheck2
+
+Un elemento, 8 casi, 10 combinazioni, mediana di tre esecuzioni dopo riscaldamento. L'indice viene ricostruito una volta per esecuzione e il suo costo è incluso. Checksum analitico delle azioni verificato in ogni esecuzione.
+
+| Stazioni | Revisione iniziale | Suite corrente | Allocazioni correnti |
+|---|---:|---:|---:|
+| 100 | 64,6 ms | 7,6 ms | 10,3 MiB |
+| 400 | 482,3 ms | 19,9 ms | 41,2 MiB |
+| 800 | 1059,5 ms | 40,1 ms | 82,4 MiB |
+
+La regressione mirata precedente aveva misurato 37,6 ms a 800 stazioni. I tempi dipendono dalla sessione e non rappresentano il tempo di verifica di un ponte completo. L'allocazione resta rilevante per gli oggetti delle azioni gPC. La ricerca nodale usa un RTree riutilizzato e conserva la selezione per ordine delle coordinate e la soglia stretta `< tolerance`; è verificata contro ricerca esaustiva, senza attribuirle un'accelerazione numerica non misurata.
+
+Restano da profilare copie su modelli completi, risultati e anteprime. Le copie profonde usano l'archivio già presente per garantire l'isolamento; non viene dichiarata una riduzione dei loro costi. L'esecuzione del solutore resta sincrona e serializzata dal gate API.
 
 ## Prova nativa non eseguita
 
