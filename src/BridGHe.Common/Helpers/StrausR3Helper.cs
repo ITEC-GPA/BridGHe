@@ -811,27 +811,19 @@ namespace BridGHe.Common.Helpers
                             StrausRuntime.Check(St7.St7SetNodeID(modelId, nodeNumber, elementId), "St7SetNodeID");
                         }
 
+                        foreach (var action in NodalLoadAccumulator.Sum(node.Loads))
+                        {
+                            int lc = loadCaseNameIdMap[action.Key];
+                            var f = action.Value.Force;
+                            var m = action.Value.Moment;
+                            StrausRuntime.Check(St7.St7SetNodeForce3(modelId, nodeNumber, lc, new[] { f.X, f.Y, f.Z }), "St7SetNodeForce3");
+                            StrausRuntime.Check(St7.St7SetNodeMoment3(modelId, nodeNumber, lc, new[] { m.X, m.Y, m.Z }), "St7SetNodeMoment3");
+                        }
                         for (int j = 0; j < node.Loads.Count; j++)
                         {
                             LoadModel load = node.Loads[j];
                             int lc = loadCaseNameIdMap[load.LoadCase.Name];
-                            if (load.GetType() == typeof(NodeForceLoadModel))
-                            {
-                                NodeForceLoadModel f = (NodeForceLoadModel)load;
-                                if (f.Value.Length != 0)
-                                {
-                                    double fx = 0, fy = 0, fz = 0;
-                                    StrausRuntime.Check(St7.St7GetNodeForce3(modelId, nodeNumber, lc, new double[] { fx, fy, fz }), "St7GetNodeForce3");
-                                    StrausRuntime.Check(St7.St7SetNodeForce3(modelId, nodeNumber, lc, new double[] { f.Value.X + fx, f.Value.Y + fy, f.Value.Z + fz }), "St7SetNodeForce3");
-                                }
-                            }
-                            else if (load.GetType() == typeof(NodeMomentLoadModel))
-                            {
-                                NodeMomentLoadModel m = (NodeMomentLoadModel)load;
-                                if (m.Value.Length != 0)
-                                    StrausRuntime.Check(St7.St7SetNodeMoment3(modelId, nodeNumber, lc, new double[] { m.Value.X, m.Value.Y, m.Value.Z }), "St7SetNodeMoment3");
-                            }
-                            else if (load.GetType() == typeof(NodeTemperatureLoadModel))
+                            if (load.GetType() == typeof(NodeTemperatureLoadModel))
                             {
                                 NodeTemperatureLoadModel t = (NodeTemperatureLoadModel)load;
                                 StrausRuntime.Check(St7.St7SetNodeTemperature1(modelId, nodeNumber, lc, new double[] { t.Value }), "St7SetNodeTemperature1");

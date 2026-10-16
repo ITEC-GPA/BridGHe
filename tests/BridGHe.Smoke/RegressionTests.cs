@@ -12,7 +12,8 @@ internal static class RegressionTests
         var tests = new Dictionary<string, Action>
         {
             ["composite-archive"] = CompositeArchive,
-            ["composite-preview"] = CompositePreview
+            ["composite-preview"] = CompositePreview,
+            ["nodal-actions"] = NodalActions
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -61,5 +62,20 @@ internal static class RegressionTests
         }
         beam.EndBeamProperty = null;
         Require(!beam.IsValid && beam.Shapes.Length == 0, "missing section clears obsolete preview");
+    }
+
+    private static void NodalActions()
+    {
+        var q = new LoadCaseModel("", "Q");
+        var loads = new LoadModel[] {
+            new NodeForceLoadModel(q, new Vector3d(10, 0, -100)),
+            new NodeForceLoadModel(new LoadCaseModel("", "Q"), new Vector3d(-10, 0, -200)),
+            new NodeMomentLoadModel(q, new Vector3d(0, 30, 0)),
+            new NodeMomentLoadModel(q, new Vector3d(0, -10, 0)),
+            new NodeForceLoadModel(new LoadCaseModel("", "R"), new Vector3d(0, 0, 999)) };
+        var sum = BridGHe.Common.Straus.NodalLoadAccumulator.Sum(loads);
+        Require(sum.Count == 2 && sum["Q"].Force == new Vector3d(0, 0, -300), "sum forces and cancellation in the same case");
+        Require(sum["Q"].Moment == new Vector3d(0, 20, 0) && sum["R"].Force.Z == 999, "sum moments without mixing cases");
+        Require(((NodeForceLoadModel)loads[0]).Value.Z == -100, "aggregation leaves inputs unchanged");
     }
 }
