@@ -20,7 +20,8 @@ internal static class RegressionTests
             ["beam-property-validity"] = BeamPropertyValidity,
             ["native-beam-validity"] = NativeBeamValidity,
             ["model-guids"] = ModelGuids,
-            ["deep-copies"] = DeepCopies
+            ["deep-copies"] = DeepCopies,
+            ["staged-load-cases"] = StagedLoadCases
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -162,6 +163,17 @@ internal static class RegressionTests
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
         return System.Reflection.Assembly.LoadFrom(System.IO.Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha"));
+    }
+
+    private static void StagedLoadCases()
+    {
+        var q = new LoadCaseModel("", "StageOnly");
+        var combination = new LoadCombinationModel("Increment"); combination.Values.Add(q, 1.0);
+        var stage = new StagedConstructionModel("Phase"); stage.AddLoadCombinations(new[] { combination });
+        var model = new ModelModel(ModelModel.ModelUnits.Nmm); model.AddStagedConstructions(new[] { stage });
+        ModelHelper.GetLoadCases(model, out var cases);
+        Require(cases.Count == 2 && cases.Contains(q), "staged-only loads belong to the export case catalog");
+        Require(ModelHelper.GetLoadCaseNumbers(cases)[q.Name] > 0, "staged cases have an export number");
     }
 
     private static void DeepCopies()

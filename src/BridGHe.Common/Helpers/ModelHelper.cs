@@ -67,7 +67,8 @@ namespace BridGHe.Common.Helpers
             var generatedNames = new HashSet<string>(model.GeneratedMovingCases.Values);
             var candidates = model.LoadCases.Where(c => !generatedNames.Contains(c.Name))
                 .Concat(model.Elements.SelectMany(e => e.Loads).Select(l => l.LoadCase))
-                .Concat(model.LoadCombinations.SelectMany(c => c.Values.Keys)).ToList();
+                .Concat(model.LoadCombinations.SelectMany(c => c.Values.Keys))
+                .Concat(model.StagedConstruction.SelectMany(s => s.LoadCombinations).SelectMany(c => c.Values.Keys)).ToList();
             foreach (var candidate in candidates)
                 if (candidate == null || string.IsNullOrWhiteSpace(candidate.Name))
                     throw new ArgumentException("Caso di carico nullo o senza nome.");
