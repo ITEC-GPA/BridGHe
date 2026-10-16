@@ -13,7 +13,8 @@ internal static class RegressionTests
         {
             ["composite-archive"] = CompositeArchive,
             ["composite-preview"] = CompositePreview,
-            ["nodal-actions"] = NodalActions
+            ["nodal-actions"] = NodalActions,
+            ["load-case-identity"] = LoadCaseIdentity
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -77,5 +78,22 @@ internal static class RegressionTests
         Require(sum.Count == 2 && sum["Q"].Force == new Vector3d(0, 0, -300), "sum forces and cancellation in the same case");
         Require(sum["Q"].Moment == new Vector3d(0, 20, 0) && sum["R"].Force.Z == 999, "sum moments without mixing cases");
         Require(((NodeForceLoadModel)loads[0]).Value.Z == -100, "aggregation leaves inputs unchanged");
+    }
+
+    private static void LoadCaseIdentity()
+    {
+        var a = new LoadCaseModel("", "Q"); var b = new LoadCaseModel("99", "Q");
+        var node = new NodeModel("1", Point3d.Origin);
+        node.Loads.Add(new NodeForceLoadModel(a, Vector3d.ZAxis));
+        node.Loads.Add(new NodeForceLoadModel(b, Vector3d.XAxis));
+        var model = new ModelModel(ModelModel.ModelUnits.Nmm); model.AddElements(new[] { node });
+        ModelHelper.GetLoadCases(model, out var cases);
+        var numbers = ModelHelper.GetLoadCaseNumbers(cases);
+        Require(cases.Count == 2 && numbers[a.Name] == 2 && numbers[b.Name] == 2, "same name uses one canonical export number");
+        Require(a.Id == "" && b.Id == "99", "export numbering must not mutate model IDs");
+        b.GravityValue = 123;
+        bool rejected = false;
+        try { ModelHelper.GetLoadCases(model, out _); } catch (ArgumentException) { rejected = true; }
+        Require(rejected, "conflicting definitions with the same name must be rejected");
     }
 }

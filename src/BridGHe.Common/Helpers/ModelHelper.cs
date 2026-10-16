@@ -65,16 +65,34 @@ namespace BridGHe.Common.Helpers
         {
             loadCases = new List<LoadCaseModel>();// { LoadCaseModel.Dead };
             var generatedNames = new HashSet<string>(model.GeneratedMovingCases.Values);
-            loadCases.AddRange(model.LoadCases.Where(c => !generatedNames.Contains(c.Name))
+            var candidates = model.LoadCases.Where(c => !generatedNames.Contains(c.Name))
                 .Concat(model.Elements.SelectMany(e => e.Loads).Select(l => l.LoadCase))
-                .Concat(model.LoadCombinations.SelectMany(c => c.Values.Keys))
-                .Distinct(new LoadCaseModelsEqualityComparer()));
+                .Concat(model.LoadCombinations.SelectMany(c => c.Values.Keys)).ToList();
+            foreach (var candidate in candidates)
+                if (candidate == null || string.IsNullOrWhiteSpace(candidate.Name))
+                    throw new ArgumentException("Caso di carico nullo o senza nome.");
+            foreach (var group in candidates.GroupBy(c => c.Name, StringComparer.Ordinal))
+            {
+                var first = group.First();
+                if (group.Any(c => !SameLoadDefinition(first, c)))
+                    throw new ArgumentException("Definizioni incompatibili per il caso di carico " + group.Key);
+                loadCases.Add(first);
+            }
             foreach (var path in model.MovingPaths)
                 if (!loadCases.Any(c => c.Name == path.LoadCaseName))
                     loadCases.Add(new LoadCaseModel("", path.LoadCaseName));
             AddDeadLoadCase(ref loadCases);
             loadCases.Sort();
         }
+
+        public static Dictionary<string, int> GetLoadCaseNumbers(IReadOnlyList<LoadCaseModel> cases) =>
+            cases.Select((c, i) => (c.Name, Number: i + 1)).ToDictionary(c => c.Name, c => c.Number, StringComparer.Ordinal);
+
+        private static bool SameLoadDefinition(LoadCaseModel a, LoadCaseModel b) =>
+            a.Temperature == b.Temperature && a.StructuralMassAcceleration == b.StructuralMassAcceleration &&
+            a.NonStructuralMassAcceleration == b.NonStructuralMassAcceleration && a.GlobalInertiaLoad == b.GlobalInertiaLoad &&
+            a.GravityDirection == b.GravityDirection && a.GravityValue == b.GravityValue &&
+            a.A == b.A && a.V == b.V && a.W == b.W && a.Origin == b.Origin;
 
         public static void AddDeadLoadCase(ref List<LoadCaseModel> loadCases)
         {

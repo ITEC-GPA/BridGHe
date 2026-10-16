@@ -545,7 +545,7 @@ namespace BridGHe.Common.Helpers
 
                 // Load cases
                 ModelHelper.GetLoadCases(model, out List<LoadCaseModel> loadCases);
-                Dictionary<string, int> loadCaseNameIdMap = new Dictionary<string, int>();
+                Dictionary<string, int> loadCaseNameIdMap = ModelHelper.GetLoadCaseNumbers(loadCases);
 
                 id = 1;
                 for (int i = 0; i < loadCases.Count; i++)
@@ -562,25 +562,22 @@ namespace BridGHe.Common.Helpers
                             warnings.Add(string.Format("Failed to define the load case {0}", loadCase.Name));
                     }
 
-                    loadCase.Id = id.ToString();
-                    loadCaseNameIdMap[loadCase.Name] = id;
-
                     int caseType = St7.lcNoInertia;
 
                     if (loadCase.GlobalInertiaLoad == LoadCaseModel.GlobalInertiaLoads.Gravity)
                         caseType = St7.lcGravity;
 
-                    if (HandleError(St7.St7SetLoadCaseType(modelId, Convert.ToInt32(loadCase.Id), caseType)))
+                    if (HandleError(St7.St7SetLoadCaseType(modelId, id, caseType)))
                         warnings.Add(string.Format("Failed to set load case type of the load case {0}", loadCase.Name));
 
-                    if (HandleError(St7.St7SetLoadCaseGravityDir(modelId, Convert.ToInt32(loadCase.Id), (int)loadCase.GravityDirection + 1)))
+                    if (HandleError(St7.St7SetLoadCaseGravityDir(modelId, id, (int)loadCase.GravityDirection + 1)))
                         warnings.Add(string.Format("Failed to set gravity direction of the load case {0}", loadCase.Name));
 
-                    if (HandleError(St7.St7SetLoadCaseMassOption(modelId, Convert.ToInt32(loadCase.Id), Convert.ToByte(loadCase.StructuralMassAcceleration),
+                    if (HandleError(St7.St7SetLoadCaseMassOption(modelId, id, Convert.ToByte(loadCase.StructuralMassAcceleration),
                         Convert.ToByte(loadCase.NonStructuralMassAcceleration))))
                         warnings.Add(string.Format("Failed to set the mass options of the {0} load case", loadCase.Name));
 
-                    if (HandleError(St7.St7SetLoadCaseDefaults(modelId, Convert.ToInt32(loadCase.Id), new[] { 0, 0, 0, 0, 0, 0,
+                    if (HandleError(St7.St7SetLoadCaseDefaults(modelId, id, new[] { 0, 0, 0, 0, 0, 0,
                         UnitsConvert.ConvertFromDefaultUnits(loadCase.GravityValue, lengthUnits, 1), 0, 0, 0, 0, 0, 0 })))
                         warnings.Add(string.Format("Failed to set the gravity value of the {0} load case", loadCase.Name));
                     id++;
@@ -699,7 +696,7 @@ namespace BridGHe.Common.Helpers
                     {
                         foreach (KeyValuePair<LoadCaseModel, double> item in combo.Values)
                         {
-                            int lc = Convert.ToInt32(loadCases.Single(l => l.Name == item.Key.Name).Id);
+                            int lc = loadCaseNameIdMap[item.Key.Name];
                             if (HandleError(St7.St7SetLSACombinationFactor(modelId, St7.ltLoadCase, comboNumber, lc, 1, item.Value)))
                                 warnings.Add($"Failed to set the LSA combination factor: {combo.Name}");
                         }
@@ -1060,7 +1057,7 @@ namespace BridGHe.Common.Helpers
                                 {
                                     //TODO: implementare
                                     for (int i = 0; i < loadCases.Count; i++)
-                                        StrausRuntime.Check(St7.St7SetBeamSupport2(modelId, beamNumber, directionIndex, Convert.ToInt32(loadCases[i].Id),
+                                        StrausRuntime.Check(St7.St7SetBeamSupport2(modelId, beamNumber, directionIndex, loadCaseNameIdMap[loadCases[i].Name],
                                             compressionOnly.First() ? St7.btTrue : St7.btFalse, new double[] { supportStiffness[0], supportStiffness[1] }), "St7SetBeamSupport2");
                                 }
                             }
@@ -1137,16 +1134,7 @@ namespace BridGHe.Common.Helpers
                             LoadModel load = beam.Loads[j];
                             try
                             {
-                                int lc = 0;
-                                try
-                                {
-                                    lc = Convert.ToInt32(load.LoadCase.Id);
-                                }
-                                catch (Exception)
-                                {
-                                    warnings.Add($"Load case {load.LoadCase.Name} has no ID");
-                                    continue;
-                                }
+                                int lc = loadCaseNameIdMap[load.LoadCase.Name];
                                 if (load.GetType() == typeof(BeamPreLoadModel))
                                 {
                                     BeamPreLoadModel pl = (BeamPreLoadModel)load;
@@ -1490,7 +1478,7 @@ namespace BridGHe.Common.Helpers
                                     }
                                     for (int i = 0; i < loadCases.Count; i++)
                                     {
-                                        StrausRuntime.Check(St7.St7SetPlateFaceSupport4(modelId, plateId, St7.psPlateMinusZ, Convert.ToInt32(loadCases[i].Id),
+                                        StrausRuntime.Check(St7.St7SetPlateFaceSupport4(modelId, plateId, St7.psPlateMinusZ, loadCaseNameIdMap[loadCases[i].Name],
                                             new int[] { cOnly, St7.btFalse }, new double[] { support.Value.Stiffness, 0, 0, 0 }), "St7SetPlateFaceSupport4");
                                     }
                                 }
@@ -1506,19 +1494,8 @@ namespace BridGHe.Common.Helpers
                         for (int i = 0; i < plate.Loads.Count; i++)
                         {
                             LoadModel load = plate.Loads[i];
-                            if (load.LoadCase.Id != "")
                             {
-                                int lc = 0;
-
-                                try
-                                {
-                                    lc = Convert.ToInt32(load.LoadCase.Id);
-                                }
-                                catch (Exception)
-                                {
-                                    warnings.Add($"Load case {load.LoadCase.Name} has no ID");
-                                    continue;
-                                }
+                                int lc = loadCaseNameIdMap[load.LoadCase.Name];
                                 if (load is PlatePressureModel pp)
                                 {
                                     try
