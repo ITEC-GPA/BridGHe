@@ -29,7 +29,8 @@ internal static class RegressionTests
             ["archived-attribute-updates"] = ArchivedAttributeUpdates,
             ["plate-point-updates"] = PlatePointUpdates,
             ["incomplete-beam-preview"] = IncompleteBeamPreview,
-            ["preview-bounds"] = PreviewBounds
+            ["preview-bounds"] = PreviewBounds,
+            ["bridge-planar-noise"] = BridgePlanarNoise
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -44,6 +45,33 @@ internal static class RegressionTests
     private static void Require(bool condition, string message)
     {
         if (!condition) throw new InvalidOperationException("REGRESSION FAILED: " + message);
+    }
+
+    private static void BridgePlanarNoise()
+    {
+        var concrete = new GPC.Model.Materials.ConcreteMaterialEN1992("C30",30,GPC.Model.Materials.ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle);
+        var steel = new GPC.Model.Materials.SteelMaterialEN1992("S355",210000,355,510,.1,GPC.Model.Materials.SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic,GPC.Model.Materials.SteelMaterial.SteelTypes.Structural);
+        var section = BridGHe.Common.Checks.CompositeSectionFactory.Create(1000,200,concrete,null,100,40,null,100,new GPC.Model.Sections.SectionH(300,10,200,20,200,20,"H"),steel,40,0,"Test");
+        var options = new BridGHe.Common.Checks.BridgeCheckAdapter.SectionOptionsModelCode2010(GPC.Geometry.CoordinateSystem.Global,
+            GPC.Checkers.Concrete.SectionSolvers.SectionSolver.FailureAnalysisTypes.ConstantN,
+            GPC.Checkers.Concrete.SectionSolvers.SectionSolver.FailureDomainTypes.Elastic,
+            GPC.Checkers.Concrete.SectionSolvers.SectionSolver.StressAnalysisTypes.Linear,0,0,false,64,false);
+        var checker = new BridGHe.Common.Checks.BridgeCheckAdapter(new GPC.Checkers.Concrete.Attributes.SectionCheckerAttribute(section,null,null),options,new GPC.Model.Standards.StandardEN1992p11(),false,1,new GPC.Model.Standards.StandardEN1993p11());
+        double Analyze(double torque, double lateral=0, double minor=0)
+        {
+            var force = new GPC.Model.Results.ResultBeamForces(0,lateral,1000,torque,1e6,minor,GPC.Geometry.CoordinateSystem.Global);
+            checker.GetLinearAnalysisResultByStages(out var _,out var _,out var result,out _,0,0,force,force,force,true);
+            return result.Point8_SteelSigma;
+        }
+        double baseline=Analyze(0);
+        Require(Math.Abs(Analyze(1e-5,1e-8,-1e-5)-baseline)<1e-10,"symmetric native roundoff does not reject or change planar stresses");
+        foreach(var values in new[]{(T:.01,V:0.0,M:0.0),(T:0.0,V:.0001,M:0.0),(T:0.0,V:0.0,M:.01)})
+        {
+            bool rejected=false;try{Analyze(values.T,values.V,values.M);}catch(NotSupportedException){rejected=true;}
+            Require(rejected,"real unsupported action remains rejected");
+        }
+        bool nonfinite=false;try{Analyze(double.NaN);}catch(ArgumentException){nonfinite=true;}
+        Require(nonfinite,"nonfinite unsupported component cannot silently pass the domain guard");
     }
 
     private static CompositeBeamModel CompositeBeam()

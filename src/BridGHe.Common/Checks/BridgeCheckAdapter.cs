@@ -99,10 +99,16 @@ namespace BridGHe.Common.Checks
         private BridgePhase Phase(ResultBeamForces forces, BridgePhaseKind kind, double phi, string name)
         {
             if (forces == null) throw new ArgumentNullException(nameof(forces));
-            // Respect the supplied local axes; no discarded components are allowed.
+            // Respect the supplied local axes. Native symmetric grillages retain
+            // round-off torsion (~1e-6 N mm); use dimensional tolerances, not the
+            // same near-machine-zero number for both forces and moments.
             var global = forces.ToGlobalCoordinateSystem();
-            if (Math.Abs(global.M2) > 1e-7 || Math.Abs(global.T) > 1e-7 || Math.Abs(global.V1) > 1e-7)
-                throw new NotSupportedException("Il motore gPC adottato copre N–Mx–Vy. Flessione deviata, taglio trasversale e torsione richiedono un verificatore dedicato.");
+            if (new[] { global.N, global.V1, global.V2, global.T, global.M1, global.M2 }.Any(value => !double.IsFinite(value)))
+                throw new ArgumentException("Azioni di sezione non finite.", nameof(forces));
+            const double forceNoiseN = 1e-6, momentNoiseNmm = 1e-3;
+            if (Math.Abs(global.M2) > momentNoiseNmm || Math.Abs(global.T) > momentNoiseNmm || Math.Abs(global.V1) > forceNoiseN)
+                throw new NotSupportedException($"Il motore gPC adottato copre N–Mx–Vy. Flessione deviata, taglio trasversale e torsione richiedono un verificatore dedicato. " +
+                    $"M2={global.M2:G6}, T={global.T:G6} N mm (tolleranza numerica {momentNoiseNmm:G}); V1={global.V1:G6} N (tolleranza {forceNoiseN:G}).");
             if (phi < 0 || !double.IsFinite(phi)) throw new ArgumentOutOfRangeException(nameof(phi), "Il rapporto modulare deve dare phi >= 0.");
             return new BridgePhase
             {
