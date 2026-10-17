@@ -75,7 +75,7 @@ internal static class NativeExamples
         {
             const double length=6000,q=1;var m=Beam(4,length,true);var p=Load("q");m.LoadCases.Add(p);
             foreach(var b in m.Beams)b.Loads.Add(new BeamDistributedLoadModel(p,new(){LoadSchema=BeamDistributedLoadModel.LoadSchema.Uniform,CoordinateSystem=CoordinateSystemModel.Global,
-                LoadDirection=BeamDistributedLoadModel.LoadDirection.Z,P1=-q,P2=-q},BeamDistributedLoadModel.LoadType.Force));
+                LoadDirection=BeamDistributedLoadModel.LoadDirection.Z,PA=-q,PB=-q},BeamDistributedLoadModel.LoadType.Force));
             yield return new("02-simply-supported","Trave appoggiata con carico uniforme",0,false,m,new[]{"q"},(x,r)=>{
                 r.Near("Uz midspan [mm]",Displ(x,2,"q").Displacement.Z,-5*q*Math.Pow(length,4)/(384*E*I));
                 r.Near("Rz left [N]",Reaction(x,0,"q").Force.Z,q*length/2);r.Near("Rz right [N]",Reaction(x,4,"q").Force.Z,q*length/2);
@@ -102,14 +102,16 @@ internal static class NativeExamples
         }
         {
             const double length=6000;var m=Beam(12,length,true);
-            m.MovingPaths.Add(new MovingPath{LoadCaseName="Traffic",Divisions=12,Target=2,Coordinates=new double[]{0,-500,0,length,-500,0,0,500,0},ConvertToStaticCases=true,
+            m.MovingPaths.Add(new MovingPath{LoadCaseName="Traffic",Divisions=13,Target=2,Coordinates=new double[]{0,0,0,length,0,0,0,1000,0},ConvertToStaticCases=true,
                 Template=new MovingTemplate{Name="Single axle",Vehicles=new[]{new MovingVehicle{Name="1000 N",Loads=new MovingObject[]{new MovingPointForce{Force=new double[]{0,0,-P}}}}}}});
             yield return new("04-moving-load","Asse mobile su trave appoggiata",0,true,m,Array.Empty<string>(),(x,r)=>{
                 r.Near("Generated load positions",x.GeneratedMovingCases.Count,13,0,0);
+                int step=0;
                 foreach(string name in x.GeneratedMovingCases.Values){
                     double left=Reaction(x,0,name).Force.Z,right=Reaction(x,12,name).Force.Z;
                     r.Near(name+" / equilibrium [N]",left+right,P);
-                    double position=right*length/P;
+                    double position=(++step-.5)*length/13;
+                    r.Near(name+" / right reaction [N]",right,P*position/length);
                     double moment=x.Beams.SelectMany(b=>b.Results.OfType<BeamForceResultModel>()).Where(f=>f.LoadCase.Name==name).Max(f=>Math.Abs(f.My));
                     r.Near(name+" / max moment [N mm]",moment,P*position*(length-position)/length,1e-5,1e-5);
                 }
@@ -143,7 +145,9 @@ internal static class NativeExamples
                     r.Near("Reinforced Ux [mm]",Displ(x,1,"Step [Reinforced]").Displacement.X,1.5*d,1e-5);
                     r.Near("Original member N after addition [N]",Force(x,0,"Step [Reinforced]").AxialForce,1.5*P);
                     r.Near("Added member N [N]",Force(x,1,"Step [Reinforced]").AxialForce,.5*P);
-                    if(remove){r.Near("After removal Ux [mm]",Displ(x,1,"Step [Removed]").Displacement.X,2*d);r.Near("Remaining member N [N]",Force(x,0,"Step [Removed]").AxialForce,2*P);}
+                    r.Near("No results before activation",x.Beams[1].Results.Count(f=>f.LoadCase.Name=="Step [Original]"),0,0,0);
+                    if(remove){r.Near("After removal Ux [mm]",Displ(x,1,"Step [Removed]").Displacement.X,2*d);r.Near("Remaining member N [N]",Force(x,0,"Step [Removed]").AxialForce,2*P);
+                        r.Near("No results after removal",x.Beams[1].Results.Count(f=>f.LoadCase.Name=="Step [Removed]"),0,0,0);}
                 });
         }
         {

@@ -103,6 +103,8 @@ namespace St7API
         public const int mtNull = 0;
         public const int mtIsotropic = 1;
         public const int mtOrthotropic = 2;
+        public const int ipResStateActive = 0;
+        public const int ipResStateResults = 1;
         public const int rtNodeDisp = 1;
         public const int rtNodeReact = 5;
         public const int rtBeamForce = 1;
@@ -419,6 +421,8 @@ namespace St7API
         public static extern int St7SetNLAFreedomIncrementFactor(int uID, int Stage, int Increment, int CaseNum, double Factor);
         [DllImport("St7API.dll")]
         public static extern int St7RunSolver(int uID, int Solver, int Mode, int Wait);
+        [DllImport("St7API.dll")]
+        public static extern int St7GetElementResultState(int uID, int Entity, int EntityNum, int ResultCase, int[] State);
         [DllImport("St7API.dll")]
         public static extern int St7GetNodeResult(int uID, int ResultType, int NodeNum, int ResultCase, double[] NodeResult);
         [DllImport("St7API.dll")]

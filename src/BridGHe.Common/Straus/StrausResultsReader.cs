@@ -9,6 +9,17 @@ namespace BridGHe.Common.Straus
     public static class StrausResultsReader
     {
         private static bool Success(int code) { StrausRuntime.Check(code, "Read element results"); return true; }
+        private static bool IsActive(int modelId, int entity, int number, int resultCase)
+        {
+            var state = new int[3];
+            StrausRuntime.Check(St7.St7GetElementResultState(modelId, entity, number, resultCase, state), "St7GetElementResultState");
+            // An element before birth or after removal has no force result. Preserve
+            // absence instead of manufacturing a zero or masking an unrelated API error.
+            if (state[St7.ipResStateActive] == St7.btFalse) return false;
+            if (state[St7.ipResStateResults] == St7.btFalse)
+                throw new InvalidOperationException($"Risultati assenti per elemento attivo {entity}:{number}, caso {resultCase}.");
+            return true;
+        }
         public static void Read(int modelId, int resultCase, CaseModel caseModel, ModelModel model)
         {
             for (int i = 0; i < model.Nodes.Count; i++)
@@ -38,6 +49,7 @@ namespace BridGHe.Common.Straus
 
             for (int i = 0; i < model.Beams.Count; i++)
             {
+                if (!IsActive(modelId, St7.tyBEAM, i + 1, resultCase)) continue;
                 BeamModel beam = model.Beams[i];
                 int ns = 0, nc = 0;
                 double[] pos = new double[St7.kMaxBeamResult];
@@ -87,6 +99,7 @@ namespace BridGHe.Common.Straus
 
             for (int j = 0; j < model.Plates.Count; j++)
             {
+                if (!IsActive(modelId, St7.tyPLATE, j + 1, resultCase)) continue;
                 PlateModel plate = model.Plates[j];
                 int numPoints = 0;
                 int numColumns = 0;
