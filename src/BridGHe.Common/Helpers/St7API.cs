@@ -264,8 +264,6 @@ namespace St7API
         [DllImport("St7API.dll")]
         public static extern int St7SetNodeKRotation3F(int uID, int NodeNum, int CaseNum, int UCSId, double[] Doubles);
         [DllImport("St7API.dll")]
-        public static extern int St7GetNodeForce3(int uID, int NodeNum, int CaseNum, double[] Doubles);
-        [DllImport("St7API.dll")]
         public static extern int St7SetBeamID(int uID, int BeamNum, int BeamID);
         [DllImport("St7API.dll")]
         public static extern int St7SetBeamReferenceAngle1(int uID, int BeamNum, double[] Doubles);
@@ -411,6 +409,8 @@ namespace St7API
         public static extern int St7DisableLSALoadCase(int uID, int LoadCaseNum, int FreedomCaseNum);
         [DllImport("St7API.dll")]
         public static extern int St7SetNLAStagedAnalysis(int uID, byte StagedAnalysis);
+        [DllImport("St7API.dll")]
+        public static extern int St7EnableNLAStage(int uID, int Stage);
         [DllImport("St7API.dll")]
         public static extern int St7AddNLAIncrement(int uID, int Stage, string IncName);
         [DllImport("St7API.dll")]

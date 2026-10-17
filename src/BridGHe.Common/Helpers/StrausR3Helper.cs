@@ -1570,6 +1570,7 @@ namespace BridGHe.Common.Helpers
                             stagedConstruction.Rotate ? St7.btTrue : St7.btFalse
                         };
                             StrausRuntime.Check(St7.St7AddStage(modelId, stagedConstruction.Name, integers), "St7AddStage");
+                            StrausRuntime.Check(St7.St7EnableNLAStage(modelId, stage), "St7EnableNLAStage");
 
                             for (int k = 0; k < groups.Length; k++)
                             {
