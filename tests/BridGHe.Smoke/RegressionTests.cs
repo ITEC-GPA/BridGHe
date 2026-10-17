@@ -30,7 +30,8 @@ internal static class RegressionTests
             ["plate-point-updates"] = PlatePointUpdates,
             ["incomplete-beam-preview"] = IncompleteBeamPreview,
             ["preview-bounds"] = PreviewBounds,
-            ["bridge-planar-noise"] = BridgePlanarNoise
+            ["bridge-planar-noise"] = BridgePlanarNoise,
+            ["bridge-instant-modulus"] = BridgeInstantModulus
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -45,6 +46,18 @@ internal static class RegressionTests
     private static void Require(bool condition, string message)
     {
         if (!condition) throw new InvalidOperationException("REGRESSION FAILED: " + message);
+    }
+
+    private static void BridgeInstantModulus()
+    {
+        const double es=210000,ec=32836.56803133079;
+        Require(BridGHe.Common.Checks.BridgeCreepCoefficient.FromModularRatio(es/ec,es,ec)==0,"instantaneous modular ratio must yield exactly zero creep");
+        Require(Math.Abs(BridGHe.Common.Checks.BridgeCreepCoefficient.FromModularRatio(3*es/ec,es,ec)-2)<1e-12,"long-term ratio yields phi=2");
+        foreach(double n in new[]{.99*es/ec,0,-1,double.NaN,double.PositiveInfinity})
+        {
+            bool rejected=false;try{BridGHe.Common.Checks.BridgeCreepCoefficient.FromModularRatio(n,es,ec);}catch(ArgumentOutOfRangeException){rejected=true;}
+            Require(rejected,"invalid physical modular ratio remains rejected");
+        }
     }
 
     private static void BridgePlanarNoise()

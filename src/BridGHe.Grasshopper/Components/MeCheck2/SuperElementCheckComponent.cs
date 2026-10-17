@@ -479,7 +479,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
 
         protected double CalculateHomogenizedFactorPhi(double n, SteelMaterial steelMaterial, ConcreteMaterial concreteMaterial)
         {
-            return concreteMaterial.ElasticModulusCompression / steelMaterial.ElasticModulusTension * n - 1;
+            return Common.Checks.BridgeCreepCoefficient.FromModularRatio(n, steelMaterial.ElasticModulusTension, concreteMaterial.ElasticModulusCompression);
         }
 
         protected CoordinateSystem GetCoordinateSystem(ReinforcedConcreteSection reinforcedConcreteSection)
