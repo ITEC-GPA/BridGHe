@@ -1,5 +1,7 @@
 # Dieci esempi verificati con Straus7 R3
 
+È disponibile anche l'[esempio 11: ponte misto a graticcio](bridge-grillage/README.md), con un canvas costruito da componenti per geometria, vincoli, carichi, analisi e MeCheck2, 357 controlli e tavole PDF. I dieci benchmark qui sotto restano casi elementari separati.
+
 Aprire i file della cartella [grasshopper](grasshopper) in Rhino 8 con BridGHe installato. Ogni definizione contiene un modello FEM incorporato, il componente di analisi, `Decompose Model` e i componenti di lettura di spostamenti e sollecitazioni. Impostare il pannello del percorso `.st7` in una cartella esistente; premere **Run** sul componente di analisi. Nel caso mobile impostare il toggle **Run=true**, poi riportarlo a false.
 
 Le definizioni partono con l'analisi automatica disattivata. Geometria, proprietà, carichi e sequenze sono incorporati nel parametro `Modello`; le ricette modificabili sono in [NativeExamples.cs](../tests/BridGHe.Smoke/NativeExamples.cs). Questi sono esempi della catena FEM e della gestione delle fasi: il modello iniziale è internalizzato, non costruito da una rete di slider. Per sostituirlo con una propria costruzione parametrica, collegare l'uscita di `Build Model` all'ingresso `Model`.

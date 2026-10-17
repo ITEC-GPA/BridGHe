@@ -31,7 +31,8 @@ internal static class RegressionTests
             ["incomplete-beam-preview"] = IncompleteBeamPreview,
             ["preview-bounds"] = PreviewBounds,
             ["bridge-planar-noise"] = BridgePlanarNoise,
-            ["bridge-instant-modulus"] = BridgeInstantModulus
+            ["bridge-instant-modulus"] = BridgeInstantModulus,
+            ["bridge-example-parameters"] = BridgeExampleParameters
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -46,6 +47,18 @@ internal static class RegressionTests
     private static void Require(bool condition, string message)
     {
         if (!condition) throw new InvalidOperationException("REGRESSION FAILED: " + message);
+    }
+
+    private static void BridgeExampleParameters()
+    {
+        new BridgeGrillageExample.Parameters().Validate();
+        new BridgeGrillageExample.Parameters{Panels=24}.Validate();
+        new BridgeGrillageExample.Parameters{Panels=96}.Validate(refined:true);
+        foreach(var p in new[]{new BridgeGrillageExample.Parameters{Panels=48},new BridgeGrillageExample.Parameters{Panels=13},new BridgeGrillageExample.Parameters{AxleSpacing=30000},new BridgeGrillageExample.Parameters{SlabThickness=double.NaN}})
+        {
+            bool rejected=false;try{p.Validate();}catch(ArgumentException){rejected=true;}
+            Require(rejected,"invalid bridge recipe rejected before native execution");
+        }
     }
 
     private static void BridgeInstantModulus()

@@ -1,0 +1,2598 @@
+{
+  "Date": "2026-10-17T20:05:57.1092494+02:00",
+  "Parameters": {
+    "Span": 30000,
+    "Width": 10000,
+    "Panels": 12,
+    "SlabThickness": 250,
+    "SteelHeight": 1600,
+    "FlangeWidth": 600,
+    "FlangeThickness": 40,
+    "WebThickness": 16,
+    "PermanentPressure": 0.0025,
+    "TrafficPressure": 0.0025,
+    "VehicleWeight": 300000,
+    "AxleSpacing": 3000,
+    "MovingPositions": 21,
+    "PhiLong": 2,
+    "ShrinkageLong": -0.0001,
+    "ShrinkageInstant": -5E-05
+  },
+  "Ec": 32836.56803133079,
+  "SteelArea": 72320,
+  "LineG1": 22.027459999999998,
+  "Nodes": 52,
+  "Beams": 87,
+  "StageMethod": "Independent linear stiffness states; native wet-concrete stages are a separate benchmark, not summed into MeCheck2.",
+  "Scope": "SLS normal/shear stresses only for symmetric combination. Eccentric traffic torsion preserved; full mixed-action design NOT verified.",
+  "MidspanSteel": -32.460269173240626,
+  "MidspanLong": -5.858865191659179,
+  "MidspanLive": -4.461645445333416,
+  "Mesh": [
+    {
+      "Panels": 12,
+      "Uz": -5.791944287268135
+    },
+    {
+      "Panels": 24,
+      "Uz": -5.836661726320716
+    },
+    {
+      "Panels": 48,
+      "Uz": -5.841939572584592
+    }
+  ],
+  "TorsionSensitivity": [
+    {
+      "GJFactor": 0.5,
+      "Uz": -5.964285477334013
+    },
+    {
+      "GJFactor": 2,
+      "Uz": -5.501111942103739
+    }
+  ],
+  "Stresses": {
+    "Location": "G1, midspan, right-hand element end 1",
+    "Combination": "G1 \u002B G2 \u002B Q_UDL \u002B shrinkage long \u002B imposed strain instant (unit factors)",
+    "Rows": [
+      {
+        "Phase": 1,
+        "TopConcrete": 0,
+        "BottomConcrete": 0,
+        "TopSteel": -58.49376773475138,
+        "BottomSteel": 58.49376773475138
+      },
+      {
+        "Phase": 2,
+        "TopConcrete": -0.5247168421883059,
+        "BottomConcrete": -0.3527319141744712,
+        "TopSteel": -65.26125652096943,
+        "BottomSteel": 72.84429679650508
+      },
+      {
+        "Phase": 3,
+        "TopConcrete": -1.3394241548446746,
+        "BottomConcrete": -0.7745403829075285,
+        "TopSteel": -67.95885202941064,
+        "BottomSteel": 86.22804224090308
+      },
+      {
+        "Phase": 4,
+        "TopConcrete": -0.910365012046736,
+        "BottomConcrete": -0.23876862610097582,
+        "TopSteel": -78.67957416864058,
+        "BottomSteel": 88.6105548633631
+      },
+      {
+        "Phase": 5,
+        "TopConcrete": -0.679849928872435,
+        "BottomConcrete": 0.2173183158366685,
+        "TopSteel": -86.26275723102643,
+        "BottomSteel": 90.26002296868356
+      }
+    ],
+    "MaxTrafficTorqueNmm": 7164714.747743153
+  },
+  "Checks": [
+    {
+      "Name": "G1_GETTO equilibrio Fz",
+      "Actual": 5.820766091346741E-11,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.02643295199999998,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO equilibrio My",
+      "Actual": -0.000225067138671875,
+      "Expected": 0,
+      "AbsoluteTolerance": 396.49428,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO equilibrio Mx",
+      "Actual": 6.198883056640625E-06,
+      "Expected": 0,
+      "AbsoluteTolerance": 66.08237999999999,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO G1 freccia analitica [mm]",
+      "Actual": -32.460269173240626,
+      "Expected": -32.460269173245266,
+      "AbsoluteTolerance": 3.2460269173245263E-06,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO G2 freccia analitica [mm]",
+      "Actual": -32.460269173240775,
+      "Expected": -32.460269173245266,
+      "AbsoluteTolerance": 3.2460269173245263E-06,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO G3 freccia analitica [mm]",
+      "Actual": -32.46026917324076,
+      "Expected": -32.460269173245266,
+      "AbsoluteTolerance": 3.2460269173245263E-06,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO G4 freccia analitica [mm]",
+      "Actual": -32.46026917324058,
+      "Expected": -32.460269173245266,
+      "AbsoluteTolerance": 3.2460269173245263E-06,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI equilibrio Fz",
+      "Actual": 1.4551915228366852E-11,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.007500000000000001,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI equilibrio My",
+      "Actual": 5.054473876953125E-05,
+      "Expected": 0,
+      "AbsoluteTolerance": 112.5,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI equilibrio Mx",
+      "Actual": -1.6689300537109375E-06,
+      "Expected": 0,
+      "AbsoluteTolerance": 18.75,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI G1 freccia analitica [mm]",
+      "Actual": -5.858865191659179,
+      "Expected": -5.858865191661623,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI G2 freccia analitica [mm]",
+      "Actual": -5.858865191659045,
+      "Expected": -5.858865191661623,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI G3 freccia analitica [mm]",
+      "Actual": -5.858865191659129,
+      "Expected": -5.858865191661623,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI G4 freccia analitica [mm]",
+      "Actual": -5.85886519165938,
+      "Expected": -5.858865191661623,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Q_UDL equilibrio Fz",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.007500000000000001,
+      "Passed": true
+    },
+    {
+      "Name": "Q_UDL equilibrio My",
+      "Actual": 5.245208740234375E-05,
+      "Expected": 0,
+      "AbsoluteTolerance": 112.5,
+      "Passed": true
+    },
+    {
+      "Name": "Q_UDL equilibrio Mx",
+      "Actual": -5.960464477539062E-07,
+      "Expected": 0,
+      "AbsoluteTolerance": 18.75,
+      "Passed": true
+    },
+    {
+      "Name": "Q_ECC equilibrio Fz",
+      "Actual": -1.4551915228366852E-11,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.003,
+      "Passed": true
+    },
+    {
+      "Name": "Q_ECC equilibrio My",
+      "Actual": -3.5762786865234375E-05,
+      "Expected": 0,
+      "AbsoluteTolerance": 45,
+      "Passed": true
+    },
+    {
+      "Name": "Q_ECC equilibrio Mx",
+      "Actual": -1.6093254089355469E-06,
+      "Expected": 0,
+      "AbsoluteTolerance": 7.499999999999999,
+      "Passed": true
+    },
+    {
+      "Name": "Q_MIRROR equilibrio Fz",
+      "Actual": -2.9103830456733704E-11,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.003,
+      "Passed": true
+    },
+    {
+      "Name": "Q_MIRROR equilibrio My",
+      "Actual": -2.980232238769531E-07,
+      "Expected": 0,
+      "AbsoluteTolerance": 45,
+      "Passed": true
+    },
+    {
+      "Name": "Q_MIRROR equilibrio Mx",
+      "Actual": -3.5762786865234375E-07,
+      "Expected": 0,
+      "AbsoluteTolerance": 7.5,
+      "Passed": true
+    },
+    {
+      "Name": "Q_UDL G1 freccia analitica [mm]",
+      "Actual": -4.461645445333416,
+      "Expected": -4.461645445332711,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Q_UDL G2 freccia analitica [mm]",
+      "Actual": -4.4616454453327306,
+      "Expected": -4.461645445332711,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Q_UDL G3 freccia analitica [mm]",
+      "Actual": -4.461645445332176,
+      "Expected": -4.461645445332711,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Q_UDL G4 freccia analitica [mm]",
+      "Actual": -4.461645445331765,
+      "Expected": -4.461645445332711,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 0/0",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 0/1",
+      "Actual": 0.045166069677239594,
+      "Expected": 0.04516606967732267,
+      "AbsoluteTolerance": 1E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 0/2",
+      "Actual": 0.08815048395004678,
+      "Expected": 0.08815048395020633,
+      "AbsoluteTolerance": 1E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 0/3",
+      "Actual": 0.126515404727793,
+      "Expected": 0.12651540472801653,
+      "AbsoluteTolerance": 1.2651540472801653E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 0/4",
+      "Actual": 0.15737897198503087,
+      "Expected": 0.15737897198530224,
+      "AbsoluteTolerance": 1.5737897198530223E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 0/5",
+      "Actual": 0.1775107883059866,
+      "Expected": 0.177510788306287,
+      "AbsoluteTolerance": 1.77510788306287E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 0/6",
+      "Actual": 0.18472775440840278,
+      "Expected": 0.18472775440871192,
+      "AbsoluteTolerance": 1.8472775440871192E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 0/7",
+      "Actual": 0.1775107883059811,
+      "Expected": 0.17751078830627806,
+      "AbsoluteTolerance": 1.7751078830627804E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 0/8",
+      "Actual": 0.15737897198502143,
+      "Expected": 0.15737897198528655,
+      "AbsoluteTolerance": 1.5737897198528654E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 0/9",
+      "Actual": 0.12651540472778233,
+      "Expected": 0.1265154047279982,
+      "AbsoluteTolerance": 1.265154047279982E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 0/10",
+      "Actual": 0.08815048395003768,
+      "Expected": 0.0881504839501902,
+      "AbsoluteTolerance": 1E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 0/11",
+      "Actual": 0.04516606967723439,
+      "Expected": 0.045166069677313306,
+      "AbsoluteTolerance": 1E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 0/12",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 1/0",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 1/1",
+      "Actual": -0.45040638574232156,
+      "Expected": -0.45040638574239933,
+      "AbsoluteTolerance": 4.504063857423993E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 1/2",
+      "Actual": -0.8733425472508938,
+      "Expected": -0.873342547251045,
+      "AbsoluteTolerance": 8.733425472510449E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 1/3",
+      "Actual": -1.2416179523067712,
+      "Expected": -1.2416179523069868,
+      "AbsoluteTolerance": 1.2416179523069868E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 1/4",
+      "Actual": -1.5291789598072059,
+      "Expected": -1.529178959807472,
+      "AbsoluteTolerance": 1.529178959807472E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 1/5",
+      "Actual": -1.7124970665379662,
+      "Expected": -1.712497066538265,
+      "AbsoluteTolerance": 1.712497066538265E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 1/6",
+      "Actual": -1.776183589674468,
+      "Expected": -1.7761835896747782,
+      "AbsoluteTolerance": 1.7761835896747781E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 1/7",
+      "Actual": -1.7124970665379677,
+      "Expected": -1.7124970665382664,
+      "AbsoluteTolerance": 1.7124970665382662E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 1/8",
+      "Actual": -1.5291789598072085,
+      "Expected": -1.529178959807475,
+      "AbsoluteTolerance": 1.529178959807475E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 1/9",
+      "Actual": -1.2416179523067739,
+      "Expected": -1.241617952306992,
+      "AbsoluteTolerance": 1.2416179523069919E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 1/10",
+      "Actual": -0.8733425472508956,
+      "Expected": -0.8733425472510503,
+      "AbsoluteTolerance": 8.733425472510502E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 1/11",
+      "Actual": -0.45040638574232195,
+      "Expected": -0.4504063857424025,
+      "AbsoluteTolerance": 4.504063857424025E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 1/12",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 2/0",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 2/1",
+      "Actual": -0.9480743616660026,
+      "Expected": -0.9480743616662827,
+      "AbsoluteTolerance": 9.480743616662826E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 2/2",
+      "Actual": -1.8438576882078657,
+      "Expected": -1.8438576882084017,
+      "AbsoluteTolerance": 1.8438576882084015E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 2/3",
+      "Actual": -2.6347792524866476,
+      "Expected": -2.6347792524873928,
+      "AbsoluteTolerance": 2.634779252487393E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 2/4",
+      "Actual": -3.2671314362472064,
+      "Expected": -3.2671314362481008,
+      "AbsoluteTolerance": 3.2671314362481007E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 2/5",
+      "Actual": -3.6846814833458796,
+      "Expected": -3.684681483346857,
+      "AbsoluteTolerance": 3.684681483346857E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 2/6",
+      "Actual": -3.831032943185153,
+      "Expected": -3.8310329431861474,
+      "AbsoluteTolerance": 3.831032943186147E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 2/7",
+      "Actual": -3.6846814833458743,
+      "Expected": -3.684681483346823,
+      "AbsoluteTolerance": 3.6846814833468226E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 2/8",
+      "Actual": -3.2671314362471984,
+      "Expected": -3.2671314362480404,
+      "AbsoluteTolerance": 3.26713143624804E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 2/9",
+      "Actual": -2.6347792524866427,
+      "Expected": -2.63477925248732,
+      "AbsoluteTolerance": 2.63477925248732E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 2/10",
+      "Actual": -1.8438576882078634,
+      "Expected": -1.8438576882083353,
+      "AbsoluteTolerance": 1.8438576882083352E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 2/11",
+      "Actual": -0.9480743616660015,
+      "Expected": -0.9480743616662427,
+      "AbsoluteTolerance": 9.480743616662427E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 2/12",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 3/0",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 3/1",
+      "Actual": -1.4436468170855918,
+      "Expected": -1.4436468170860948,
+      "AbsoluteTolerance": 1.4436468170860947E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 3/2",
+      "Actual": -2.8053507194088576,
+      "Expected": -2.8053507194098213,
+      "AbsoluteTolerance": 2.805350719409821E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 3/3",
+      "Actual": -4.002912609521279,
+      "Expected": -4.00291260952262,
+      "AbsoluteTolerance": 4.00291260952262E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 3/4",
+      "Actual": -4.953689368039524,
+      "Expected": -4.953689368041129,
+      "AbsoluteTolerance": 4.953689368041129E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 3/5",
+      "Actual": -5.574689338189935,
+      "Expected": -5.574689338191665,
+      "AbsoluteTolerance": 5.574689338191665E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 3/6",
+      "Actual": -5.791944287268135,
+      "Expected": -5.791944287269866,
+      "AbsoluteTolerance": 5.791944287269865E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 3/7",
+      "Actual": -5.574689338189924,
+      "Expected": -5.574689338191545,
+      "AbsoluteTolerance": 5.574689338191545E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 3/8",
+      "Actual": -4.953689368039504,
+      "Expected": -4.9536893680409175,
+      "AbsoluteTolerance": 4.953689368040918E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 3/9",
+      "Actual": -4.002912609521254,
+      "Expected": -4.00291260952237,
+      "AbsoluteTolerance": 4.002912609522369E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 3/10",
+      "Actual": -2.805350719408836,
+      "Expected": -2.805350719409597,
+      "AbsoluteTolerance": 2.805350719409597E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 3/11",
+      "Actual": -1.4436468170855792,
+      "Expected": -1.4436468170859638,
+      "AbsoluteTolerance": 1.4436468170859636E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Specularita veicolo nodo 3/12",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Reciprocita Maxwell-Betti [N mm]",
+      "Actual": 1311823.4625017967,
+      "Expected": 1311823.462501797,
+      "AbsoluteTolerance": 0.013118234625017969,
+      "Passed": true
+    },
+    {
+      "Name": "Posizioni veicolo generate (inclusi ingresso/uscita)",
+      "Actual": 23,
+      "Expected": 23,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 1 somma Rz [N]",
+      "Actual": 150000,
+      "Expected": 150000,
+      "AbsoluteTolerance": 0.015,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 1 momento globale Y [N mm]",
+      "Actual": 107142857.1428562,
+      "Expected": 107142857.14285715,
+      "AbsoluteTolerance": 10.714285714285715,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 1 momento globale X [N mm]",
+      "Actual": 375000000.0000001,
+      "Expected": 375000000,
+      "AbsoluteTolerance": 37.5,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 2 somma Rz [N]",
+      "Actual": 150000,
+      "Expected": 150000,
+      "AbsoluteTolerance": 0.015,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 2 momento globale Y [N mm]",
+      "Actual": 321428571.4285705,
+      "Expected": 321428571.4285714,
+      "AbsoluteTolerance": 32.14285714285714,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 2 momento globale X [N mm]",
+      "Actual": 374999999.9999997,
+      "Expected": 375000000,
+      "AbsoluteTolerance": 37.5,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 3 somma Rz [N]",
+      "Actual": 300000.00000000006,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 3 momento globale Y [N mm]",
+      "Actual": 621428571.4285706,
+      "Expected": 621428571.4285715,
+      "AbsoluteTolerance": 62.142857142857146,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 3 momento globale X [N mm]",
+      "Actual": 749999999.9999996,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 4 somma Rz [N]",
+      "Actual": 300000,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 4 momento globale Y [N mm]",
+      "Actual": 1050000000.0000049,
+      "Expected": 1050000000,
+      "AbsoluteTolerance": 105,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 4 momento globale X [N mm]",
+      "Actual": 750000000.0000005,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 5 somma Rz [N]",
+      "Actual": 299999.99999999994,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 5 momento globale Y [N mm]",
+      "Actual": 1478571428.5714536,
+      "Expected": 1478571428.5714285,
+      "AbsoluteTolerance": 147.85714285714286,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 5 momento globale X [N mm]",
+      "Actual": 750000000,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 6 somma Rz [N]",
+      "Actual": 300000.0000000001,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 6 momento globale Y [N mm]",
+      "Actual": 1907142857.142844,
+      "Expected": 1907142857.142857,
+      "AbsoluteTolerance": 190.7142857142857,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 6 momento globale X [N mm]",
+      "Actual": 749999999.9999994,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 7 somma Rz [N]",
+      "Actual": 300000,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 7 momento globale Y [N mm]",
+      "Actual": 2335714285.7142544,
+      "Expected": 2335714285.714286,
+      "AbsoluteTolerance": 233.57142857142858,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 7 momento globale X [N mm]",
+      "Actual": 750000000,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 8 somma Rz [N]",
+      "Actual": 300000,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 8 momento globale Y [N mm]",
+      "Actual": 2764285714.285754,
+      "Expected": 2764285714.285714,
+      "AbsoluteTolerance": 276.4285714285714,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 8 momento globale X [N mm]",
+      "Actual": 749999999.9999981,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 9 somma Rz [N]",
+      "Actual": 300000.0000000001,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 9 momento globale Y [N mm]",
+      "Actual": 3192857142.857146,
+      "Expected": 3192857142.857143,
+      "AbsoluteTolerance": 319.2857142857143,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 9 momento globale X [N mm]",
+      "Actual": 749999999.9999995,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 10 somma Rz [N]",
+      "Actual": 299999.99999999994,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 10 momento globale Y [N mm]",
+      "Actual": 3621428571.4285374,
+      "Expected": 3621428571.428571,
+      "AbsoluteTolerance": 362.1428571428571,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 10 momento globale X [N mm]",
+      "Actual": 749999999.9999982,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 11 somma Rz [N]",
+      "Actual": 300000.0000000001,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 11 momento globale Y [N mm]",
+      "Actual": 4049999999.999996,
+      "Expected": 4050000000,
+      "AbsoluteTolerance": 405,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 11 momento globale X [N mm]",
+      "Actual": 749999999.9999995,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 12 somma Rz [N]",
+      "Actual": 300000.00000000006,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 12 momento globale Y [N mm]",
+      "Actual": 4478571428.571412,
+      "Expected": 4478571428.571428,
+      "AbsoluteTolerance": 447.85714285714283,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 12 momento globale X [N mm]",
+      "Actual": 750000000.0000001,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 13 somma Rz [N]",
+      "Actual": 300000.0000000001,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 13 momento globale Y [N mm]",
+      "Actual": 4907142857.142888,
+      "Expected": 4907142857.142858,
+      "AbsoluteTolerance": 490.7142857142857,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 13 momento globale X [N mm]",
+      "Actual": 749999999.9999979,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 14 somma Rz [N]",
+      "Actual": 300000,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 14 momento globale Y [N mm]",
+      "Actual": 5335714285.714229,
+      "Expected": 5335714285.714286,
+      "AbsoluteTolerance": 533.5714285714286,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 14 momento globale X [N mm]",
+      "Actual": 749999999.999999,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 15 somma Rz [N]",
+      "Actual": 300000,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 15 momento globale Y [N mm]",
+      "Actual": 5764285714.285728,
+      "Expected": 5764285714.285714,
+      "AbsoluteTolerance": 576.4285714285714,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 15 momento globale X [N mm]",
+      "Actual": 750000000.0000004,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 16 somma Rz [N]",
+      "Actual": 300000,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 16 momento globale Y [N mm]",
+      "Actual": 6192857142.857127,
+      "Expected": 6192857142.857142,
+      "AbsoluteTolerance": 619.2857142857142,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 16 momento globale X [N mm]",
+      "Actual": 750000000,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 17 somma Rz [N]",
+      "Actual": 299999.99999999994,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 17 momento globale Y [N mm]",
+      "Actual": 6621428571.428538,
+      "Expected": 6621428571.428572,
+      "AbsoluteTolerance": 662.1428571428571,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 17 momento globale X [N mm]",
+      "Actual": 749999999.9999995,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 18 somma Rz [N]",
+      "Actual": 300000,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 18 momento globale Y [N mm]",
+      "Actual": 7050000000.000005,
+      "Expected": 7050000000,
+      "AbsoluteTolerance": 705,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 18 momento globale X [N mm]",
+      "Actual": 749999999.9999995,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 19 somma Rz [N]",
+      "Actual": 300000,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 19 momento globale Y [N mm]",
+      "Actual": 7478571428.571413,
+      "Expected": 7478571428.571428,
+      "AbsoluteTolerance": 747.8571428571428,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 19 momento globale X [N mm]",
+      "Actual": 750000000.0000002,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 20 somma Rz [N]",
+      "Actual": 300000,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 20 momento globale Y [N mm]",
+      "Actual": 7907142857.1428585,
+      "Expected": 7907142857.142858,
+      "AbsoluteTolerance": 790.7142857142857,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 20 momento globale X [N mm]",
+      "Actual": 749999999.9999999,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 21 somma Rz [N]",
+      "Actual": 300000,
+      "Expected": 300000,
+      "AbsoluteTolerance": 0.03,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 21 momento globale Y [N mm]",
+      "Actual": 8335714285.714285,
+      "Expected": 8335714285.714286,
+      "AbsoluteTolerance": 833.5714285714286,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 21 momento globale X [N mm]",
+      "Actual": 750000000.0000001,
+      "Expected": 750000000,
+      "AbsoluteTolerance": 75,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 22 somma Rz [N]",
+      "Actual": 150000.00000000003,
+      "Expected": 150000,
+      "AbsoluteTolerance": 0.015,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 22 momento globale Y [N mm]",
+      "Actual": 4157142857.1428494,
+      "Expected": 4157142857.142857,
+      "AbsoluteTolerance": 415.71428571428567,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 22 momento globale X [N mm]",
+      "Actual": 375000000.0000002,
+      "Expected": 375000000,
+      "AbsoluteTolerance": 37.5,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 23 somma Rz [N]",
+      "Actual": 150000,
+      "Expected": 150000,
+      "AbsoluteTolerance": 0.015,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 23 momento globale Y [N mm]",
+      "Actual": 4371428571.428574,
+      "Expected": 4371428571.428571,
+      "AbsoluteTolerance": 437.14285714285705,
+      "Passed": true
+    },
+    {
+      "Name": "Path 1 Vehicle 1 Lane 1 Position 23 momento globale X [N mm]",
+      "Actual": 375000000.0000001,
+      "Expected": 375000000,
+      "AbsoluteTolerance": 37.5,
+      "Passed": true
+    },
+    {
+      "Name": "GETTO_1 [GETTO_1] freccia progressiva [mm]",
+      "Actual": -6.4920523425712355,
+      "Expected": -6.492053834649053,
+      "AbsoluteTolerance": 6.492053834649054E-05,
+      "Passed": true
+    },
+    {
+      "Name": "GETTO_1 [GETTO_1] equilibrio verticale [N]",
+      "Actual": 528659.0400000002,
+      "Expected": 528659.0399999999,
+      "AbsoluteTolerance": 0.5286590399999999,
+      "Passed": true
+    },
+    {
+      "Name": "GETTO_2 [GETTO_2] freccia progressiva [mm]",
+      "Actual": -12.98409573269143,
+      "Expected": -12.984107669298107,
+      "AbsoluteTolerance": 0.00012984107669298107,
+      "Passed": true
+    },
+    {
+      "Name": "GETTO_2 [GETTO_2] equilibrio verticale [N]",
+      "Actual": 1057318.0800000003,
+      "Expected": 1057318.0799999998,
+      "AbsoluteTolerance": 1.0573180799999997,
+      "Passed": true
+    },
+    {
+      "Name": "GETTO_3 [GETTO_3] freccia progressiva [mm]",
+      "Actual": -19.47612121798775,
+      "Expected": -19.47616150394716,
+      "AbsoluteTolerance": 0.0001947616150394716,
+      "Passed": true
+    },
+    {
+      "Name": "GETTO_3 [GETTO_3] equilibrio verticale [N]",
+      "Actual": 1585977.12,
+      "Expected": 1585977.1199999999,
+      "AbsoluteTolerance": 1.58597712,
+      "Passed": true
+    },
+    {
+      "Name": "GETTO_4 [GETTO_4] freccia progressiva [mm]",
+      "Actual": -25.968119846244374,
+      "Expected": -25.968215338596213,
+      "AbsoluteTolerance": 0.00025968215338596215,
+      "Passed": true
+    },
+    {
+      "Name": "GETTO_4 [GETTO_4] equilibrio verticale [N]",
+      "Actual": 2114636.1600000006,
+      "Expected": 2114636.1599999997,
+      "AbsoluteTolerance": 2.1146361599999994,
+      "Passed": true
+    },
+    {
+      "Name": "GETTO_5 [GETTO_5] freccia progressiva [mm]",
+      "Actual": -32.46008266548066,
+      "Expected": -32.460269173245266,
+      "AbsoluteTolerance": 0.0003246026917324527,
+      "Passed": true
+    },
+    {
+      "Name": "GETTO_5 [GETTO_5] equilibrio verticale [N]",
+      "Actual": 2643295.1999999997,
+      "Expected": 2643295.1999999997,
+      "AbsoluteTolerance": 2.6432951999999994,
+      "Passed": true
+    },
+    {
+      "Name": "Convergenza mesh 24 Uz [mm]",
+      "Actual": -5.791944287268135,
+      "Expected": -5.836661726320716,
+      "AbsoluteTolerance": 0.11673323452641432,
+      "Passed": true
+    },
+    {
+      "Name": "Convergenza mesh 48 Uz [mm]",
+      "Actual": -5.836661726320716,
+      "Expected": -5.841939572584592,
+      "AbsoluteTolerance": 0.11683879145169185,
+      "Passed": true
+    },
+    {
+      "Name": "Q_ECC equilibrio Fz",
+      "Actual": -1.4551915228366852E-11,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.003,
+      "Passed": true
+    },
+    {
+      "Name": "Q_ECC equilibrio My",
+      "Actual": 4.5299530029296875E-05,
+      "Expected": 0,
+      "AbsoluteTolerance": 45,
+      "Passed": true
+    },
+    {
+      "Name": "Q_ECC equilibrio Mx",
+      "Actual": 2.980232238769531E-07,
+      "Expected": 0,
+      "AbsoluteTolerance": 7.499999999999999,
+      "Passed": true
+    },
+    {
+      "Name": "Q_ECC equilibrio Fz",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.003,
+      "Passed": true
+    },
+    {
+      "Name": "Q_ECC equilibrio My",
+      "Actual": 4.8160552978515625E-05,
+      "Expected": 0,
+      "AbsoluteTolerance": 45,
+      "Passed": true
+    },
+    {
+      "Name": "Q_ECC equilibrio Mx",
+      "Actual": 5.960464477539062E-07,
+      "Expected": 0,
+      "AbsoluteTolerance": 7.499999999999999,
+      "Passed": true
+    },
+    {
+      "Name": "MeCheck2 cinque fasi accumulate",
+      "Actual": 5,
+      "Expected": 5,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 1 sigma punto 1 [MPa]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 1 sigma punto 2 [MPa]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 1 sigma punto 3 [MPa]",
+      "Actual": -58.49376773475138,
+      "Expected": -58.49376773475138,
+      "AbsoluteTolerance": 5.849376773475138E-05,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 1 sigma punto 4 [MPa]",
+      "Actual": 58.49376773475138,
+      "Expected": 58.49376773475138,
+      "AbsoluteTolerance": 5.849376773475138E-05,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 2 sigma punto 1 [MPa]",
+      "Actual": -0.5247168421883059,
+      "Expected": -0.5247168421883067,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 2 sigma punto 2 [MPa]",
+      "Actual": -0.3527319141744712,
+      "Expected": -0.352731914174472,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 2 sigma punto 3 [MPa]",
+      "Actual": -65.26125652096943,
+      "Expected": -65.26125652096944,
+      "AbsoluteTolerance": 6.526125652096943E-05,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 2 sigma punto 4 [MPa]",
+      "Actual": 72.84429679650508,
+      "Expected": 72.84429679650506,
+      "AbsoluteTolerance": 7.284429679650507E-05,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 3 sigma punto 1 [MPa]",
+      "Actual": -1.3394241548446746,
+      "Expected": -1.339424154844677,
+      "AbsoluteTolerance": 1.339424154844677E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 3 sigma punto 2 [MPa]",
+      "Actual": -0.7745403829075285,
+      "Expected": -0.774540382907531,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 3 sigma punto 3 [MPa]",
+      "Actual": -67.95885202941064,
+      "Expected": -67.95885202941065,
+      "AbsoluteTolerance": 6.795885202941065E-05,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 3 sigma punto 4 [MPa]",
+      "Actual": 86.22804224090308,
+      "Expected": 86.22804224090305,
+      "AbsoluteTolerance": 8.622804224090305E-05,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 4 sigma punto 1 [MPa]",
+      "Actual": -0.910365012046736,
+      "Expected": -0.9103650120467415,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 4 sigma punto 2 [MPa]",
+      "Actual": -0.23876862610097582,
+      "Expected": -0.23876862610098104,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 4 sigma punto 3 [MPa]",
+      "Actual": -78.67957416864058,
+      "Expected": -78.67957416864066,
+      "AbsoluteTolerance": 7.867957416864065E-05,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 4 sigma punto 4 [MPa]",
+      "Actual": 88.6105548633631,
+      "Expected": 88.61055486336309,
+      "AbsoluteTolerance": 8.86105548633631E-05,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 5 sigma punto 1 [MPa]",
+      "Actual": -0.679849928872435,
+      "Expected": -0.6798499288724382,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 5 sigma punto 2 [MPa]",
+      "Actual": 0.2173183158366685,
+      "Expected": 0.21731831583666505,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 5 sigma punto 3 [MPa]",
+      "Actual": -86.26275723102643,
+      "Expected": -86.26275723102648,
+      "AbsoluteTolerance": 8.626275723102648E-05,
+      "Passed": true
+    },
+    {
+      "Name": "Fase 5 sigma punto 4 [MPa]",
+      "Actual": 90.26002296868356,
+      "Expected": 90.26002296868354,
+      "AbsoluteTolerance": 9.026002296868353E-05,
+      "Passed": true
+    },
+    {
+      "Name": "MeCheck2 rifiuta correttamente torsione non supportata",
+      "Actual": 1,
+      "Expected": 1,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 beam count",
+      "Actual": 69,
+      "Expected": 69,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 1",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 2",
+      "Actual": -8.533162007989343,
+      "Expected": -8.53316200798713,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 3",
+      "Actual": -16.42155144394642,
+      "Expected": -16.42155144394216,
+      "AbsoluteTolerance": 1.642155144394216E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 4",
+      "Actual": -23.121141450219007,
+      "Expected": -23.12114145021303,
+      "AbsoluteTolerance": 2.312114145021303E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 5",
+      "Actual": -28.208800026410938,
+      "Expected": -28.208800026403736,
+      "AbsoluteTolerance": 2.8208800026403735E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 6",
+      "Actual": -31.38229002938209,
+      "Expected": -31.382290029374296,
+      "AbsoluteTolerance": 3.1382290029374294E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 7",
+      "Actual": -32.460269173248406,
+      "Expected": -32.460269173240626,
+      "AbsoluteTolerance": 3.2460269173240626E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 8",
+      "Actual": -31.38229002938191,
+      "Expected": -31.382290029374655,
+      "AbsoluteTolerance": 3.1382290029374654E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 9",
+      "Actual": -28.20880002641065,
+      "Expected": -28.208800026404347,
+      "AbsoluteTolerance": 2.8208800026404345E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 10",
+      "Actual": -23.12114145021871,
+      "Expected": -23.121141450213695,
+      "AbsoluteTolerance": 2.3121141450213696E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 11",
+      "Actual": -16.421551443946186,
+      "Expected": -16.421551443942704,
+      "AbsoluteTolerance": 1.6421551443942704E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 12",
+      "Actual": -8.533162007989214,
+      "Expected": -8.53316200798743,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 13",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 14",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 15",
+      "Actual": -8.533162007988713,
+      "Expected": -8.53316200798723,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 16",
+      "Actual": -16.42155144394519,
+      "Expected": -16.42155144394235,
+      "AbsoluteTolerance": 1.6421551443942348E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 17",
+      "Actual": -23.121141450217248,
+      "Expected": -23.121141450213287,
+      "AbsoluteTolerance": 2.3121141450213285E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 18",
+      "Actual": -28.208800026408756,
+      "Expected": -28.208800026404013,
+      "AbsoluteTolerance": 2.820880002640401E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 19",
+      "Actual": -31.38229002937963,
+      "Expected": -31.38229002937452,
+      "AbsoluteTolerance": 3.138229002937452E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 20",
+      "Actual": -32.46026917324586,
+      "Expected": -32.460269173240775,
+      "AbsoluteTolerance": 3.2460269173240774E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 21",
+      "Actual": -31.38229002937949,
+      "Expected": -31.382290029374747,
+      "AbsoluteTolerance": 3.1382290029374747E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 22",
+      "Actual": -28.208800026408525,
+      "Expected": -28.208800026404404,
+      "AbsoluteTolerance": 2.8208800026404404E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 23",
+      "Actual": -23.12114145021701,
+      "Expected": -23.12114145021373,
+      "AbsoluteTolerance": 2.312114145021373E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 24",
+      "Actual": -16.421551443945,
+      "Expected": -16.42155144394273,
+      "AbsoluteTolerance": 1.6421551443942727E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 25",
+      "Actual": -8.533162007988606,
+      "Expected": -8.533162007987446,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 26",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 27",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 28",
+      "Actual": -8.533162007987997,
+      "Expected": -8.533162007987235,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 29",
+      "Actual": -16.421551443943823,
+      "Expected": -16.42155144394239,
+      "AbsoluteTolerance": 1.642155144394239E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 30",
+      "Actual": -23.121141450215337,
+      "Expected": -23.1211414502134,
+      "AbsoluteTolerance": 2.31211414502134E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 31",
+      "Actual": -28.208800026406433,
+      "Expected": -28.208800026404166,
+      "AbsoluteTolerance": 2.8208800026404167E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 32",
+      "Actual": -31.382290029377042,
+      "Expected": -31.382290029374616,
+      "AbsoluteTolerance": 3.1382290029374616E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 33",
+      "Actual": -32.46026917324318,
+      "Expected": -32.46026917324076,
+      "AbsoluteTolerance": 3.246026917324076E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 34",
+      "Actual": -31.3822900293769,
+      "Expected": -31.382290029374648,
+      "AbsoluteTolerance": 3.1382290029374646E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 35",
+      "Actual": -28.20880002640621,
+      "Expected": -28.20880002640425,
+      "AbsoluteTolerance": 2.820880002640425E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 36",
+      "Actual": -23.121141450215124,
+      "Expected": -23.121141450213564,
+      "AbsoluteTolerance": 2.3121141450213565E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 37",
+      "Actual": -16.42155144394367,
+      "Expected": -16.42155144394259,
+      "AbsoluteTolerance": 1.642155144394259E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 38",
+      "Actual": -8.533162007987922,
+      "Expected": -8.533162007987368,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 39",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 40",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 41",
+      "Actual": -8.533162007987245,
+      "Expected": -8.533162007987283,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 42",
+      "Actual": -16.421551443942363,
+      "Expected": -16.421551443942437,
+      "AbsoluteTolerance": 1.6421551443942437E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 43",
+      "Actual": -23.121141450213266,
+      "Expected": -23.12114145021338,
+      "AbsoluteTolerance": 2.312114145021338E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 44",
+      "Actual": -28.208800026403917,
+      "Expected": -28.208800026404074,
+      "AbsoluteTolerance": 2.8208800026404074E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 45",
+      "Actual": -31.382290029374303,
+      "Expected": -31.382290029374488,
+      "AbsoluteTolerance": 3.1382290029374485E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 46",
+      "Actual": -32.46026917324038,
+      "Expected": -32.46026917324058,
+      "AbsoluteTolerance": 3.2460269173240583E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 47",
+      "Actual": -31.38229002937416,
+      "Expected": -31.382290029374357,
+      "AbsoluteTolerance": 3.1382290029374353E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 48",
+      "Actual": -28.208800026403697,
+      "Expected": -28.208800026403875,
+      "AbsoluteTolerance": 2.8208800026403875E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 49",
+      "Actual": -23.121141450213045,
+      "Expected": -23.121141450213198,
+      "AbsoluteTolerance": 2.3121141450213196E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 50",
+      "Actual": -16.421551443942196,
+      "Expected": -16.421551443942306,
+      "AbsoluteTolerance": 1.6421551443942306E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 51",
+      "Actual": -8.533162007987155,
+      "Expected": -8.533162007987212,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 52",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 beam count",
+      "Actual": 87,
+      "Expected": 87,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 1",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 2",
+      "Actual": -1.5401796453554706,
+      "Expected": -1.5401796453555074,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 3",
+      "Actual": -2.9639820802000085,
+      "Expected": -2.9639820802000805,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 4",
+      "Actual": -4.173214033165015,
+      "Expected": -4.173214033165123,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 5",
+      "Actual": -5.091502959852702,
+      "Expected": -5.091502959852846,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 6",
+      "Actual": -5.664297042836079,
+      "Expected": -5.664297042836259,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 7",
+      "Actual": -5.858865191658971,
+      "Expected": -5.858865191659179,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 8",
+      "Actual": -5.664297042835996,
+      "Expected": -5.664297042836217,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 9",
+      "Actual": -5.091502959852558,
+      "Expected": -5.091502959852774,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 10",
+      "Actual": -4.173214033164852,
+      "Expected": -4.173214033165042,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 11",
+      "Actual": -2.963982080199868,
+      "Expected": -2.9639820802000107,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 12",
+      "Actual": -1.5401796453553906,
+      "Expected": -1.540179645355468,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 13",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 14",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 15",
+      "Actual": -1.5401796453554335,
+      "Expected": -1.5401796453554684,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 16",
+      "Actual": -2.9639820801999375,
+      "Expected": -2.9639820802000036,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 17",
+      "Actual": -4.173214033164921,
+      "Expected": -4.173214033165014,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 18",
+      "Actual": -5.091502959852598,
+      "Expected": -5.091502959852709,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 19",
+      "Actual": -5.664297042835988,
+      "Expected": -5.664297042836115,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 20",
+      "Actual": -5.858865191658909,
+      "Expected": -5.858865191659045,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 21",
+      "Actual": -5.664297042835966,
+      "Expected": -5.664297042836105,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 22",
+      "Actual": -5.09150295985256,
+      "Expected": -5.091502959852692,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 23",
+      "Actual": -4.173214033164884,
+      "Expected": -4.173214033164995,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 24",
+      "Actual": -2.963982080199909,
+      "Expected": -2.9639820801999894,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 25",
+      "Actual": -1.5401796453554188,
+      "Expected": -1.5401796453554608,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 26",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 27",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 28",
+      "Actual": -1.5401796453554355,
+      "Expected": -1.5401796453554595,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 29",
+      "Actual": -2.963982080199952,
+      "Expected": -2.9639820801999957,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 30",
+      "Actual": -4.173214033164962,
+      "Expected": -4.17321403316502,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 31",
+      "Actual": -5.091502959852676,
+      "Expected": -5.091502959852742,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 32",
+      "Actual": -5.664297042836105,
+      "Expected": -5.664297042836177,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 33",
+      "Actual": -5.858865191659057,
+      "Expected": -5.858865191659129,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 34",
+      "Actual": -5.664297042836138,
+      "Expected": -5.6642970428362025,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 35",
+      "Actual": -5.091502959852733,
+      "Expected": -5.09150295985279,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 36",
+      "Actual": -4.1732140331650305,
+      "Expected": -4.173214033165078,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 37",
+      "Actual": -2.963982080200015,
+      "Expected": -2.963982080200049,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 38",
+      "Actual": -1.5401796453554748,
+      "Expected": -1.540179645355492,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 39",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 40",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 41",
+      "Actual": -1.5401796453554906,
+      "Expected": -1.5401796453554943,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 42",
+      "Actual": -2.9639820802000645,
+      "Expected": -2.963982080200071,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 43",
+      "Actual": -4.173214033165137,
+      "Expected": -4.173214033165146,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 44",
+      "Actual": -5.091502959852914,
+      "Expected": -5.091502959852924,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 45",
+      "Actual": -5.664297042836393,
+      "Expected": -5.6642970428364015,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 46",
+      "Actual": -5.858865191659373,
+      "Expected": -5.85886519165938,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 47",
+      "Actual": -5.664297042836453,
+      "Expected": -5.664297042836457,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 48",
+      "Actual": -5.091502959853022,
+      "Expected": -5.091502959853023,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 49",
+      "Actual": -4.173214033165265,
+      "Expected": -4.173214033165264,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 50",
+      "Actual": -2.9639820802001773,
+      "Expected": -2.9639820802001755,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 51",
+      "Actual": -1.5401796453555556,
+      "Expected": -1.5401796453555545,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 52",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 beam count",
+      "Actual": 87,
+      "Expected": 87,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 1",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 2",
+      "Actual": -1.1728782409054483,
+      "Expected": -1.1728782409055112,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 3",
+      "Actual": -2.2571328603021055,
+      "Expected": -2.2571328603022143,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 4",
+      "Actual": -3.177987677541927,
+      "Expected": -3.177987677542052,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 5",
+      "Actual": -3.8772834410097596,
+      "Expected": -3.877283441009878,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 6",
+      "Actual": -4.313477828123348,
+      "Expected": -4.313477828123446,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 7",
+      "Actual": -4.461645445333343,
+      "Expected": -4.461645445333416,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 8",
+      "Actual": -4.313477828123301,
+      "Expected": -4.313477828123351,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 9",
+      "Actual": -3.8772834410096793,
+      "Expected": -3.8772834410097112,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 10",
+      "Actual": -3.177987677541834,
+      "Expected": -3.177987677541855,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 11",
+      "Actual": -2.257132860302025,
+      "Expected": -2.257132860302037,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 12",
+      "Actual": -1.1728782409054026,
+      "Expected": -1.1728782409054077,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 13",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 14",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 15",
+      "Actual": -1.1728782409052856,
+      "Expected": -1.172878240905308,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 16",
+      "Actual": -2.2571328603017964,
+      "Expected": -2.257132860301826,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 17",
+      "Actual": -3.177987677541498,
+      "Expected": -3.1779876775415143,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 18",
+      "Actual": -3.877283441009247,
+      "Expected": -3.8772834410092365,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 19",
+      "Actual": -4.313477828122798,
+      "Expected": -4.313477828122753,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 20",
+      "Actual": -4.461645445332796,
+      "Expected": -4.4616454453327306,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 21",
+      "Actual": -4.313477828122792,
+      "Expected": -4.313477828122726,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 22",
+      "Actual": -3.8772834410092436,
+      "Expected": -3.87728344100919,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 23",
+      "Actual": -3.1779876775414992,
+      "Expected": -3.177987677541457,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 24",
+      "Actual": -2.2571328603018013,
+      "Expected": -2.2571328603017715,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 25",
+      "Actual": -1.1728782409052894,
+      "Expected": -1.1728782409052743,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 26",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 27",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 28",
+      "Actual": -1.1728782409051608,
+      "Expected": -1.1728782409051435,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 29",
+      "Actual": -2.2571328603015512,
+      "Expected": -2.257132860301514,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 30",
+      "Actual": -3.177987677541146,
+      "Expected": -3.177987677541086,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 31",
+      "Actual": -3.8772834410088115,
+      "Expected": -3.877283441008728,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 32",
+      "Actual": -4.313477828122306,
+      "Expected": -4.3134778281222035,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 33",
+      "Actual": -4.461645445332288,
+      "Expected": -4.461645445332176,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 34",
+      "Actual": -4.313477828122309,
+      "Expected": -4.313477828122199,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 35",
+      "Actual": -3.8772834410088213,
+      "Expected": -3.877283441008723,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 36",
+      "Actual": -3.1779876775411644,
+      "Expected": -3.177987677541085,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 37",
+      "Actual": -2.2571328603015717,
+      "Expected": -2.257132860301516,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 38",
+      "Actual": -1.1728782409051737,
+      "Expected": -1.1728782409051453,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 39",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 40",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 41",
+      "Actual": -1.1728782409050738,
+      "Expected": -1.1728782409050362,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 42",
+      "Actual": -2.2571328603013754,
+      "Expected": -2.2571328603013034,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 43",
+      "Actual": -3.177987677540884,
+      "Expected": -3.177987677540784,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 44",
+      "Actual": -3.877283441008479,
+      "Expected": -3.8772834410083576,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 45",
+      "Actual": -4.3134778281219335,
+      "Expected": -4.3134778281218,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 46",
+      "Actual": -4.461645445331901,
+      "Expected": -4.461645445331765,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 47",
+      "Actual": -4.313477828121928,
+      "Expected": -4.313477828121798,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 48",
+      "Actual": -3.8772834410084696,
+      "Expected": -3.877283441008352,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 49",
+      "Actual": -3.1779876775408726,
+      "Expected": -3.1779876775407767,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 50",
+      "Actual": -2.2571328603013647,
+      "Expected": -2.2571328603012972,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 51",
+      "Actual": -1.1728782409050675,
+      "Expected": -1.1728782409050327,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 52",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH casi mobili",
+      "Actual": 23,
+      "Expected": 23,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH MeCheck2 stazioni elaborate",
+      "Actual": 240,
+      "Expected": 240,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH MeCheck2 cinque contributi",
+      "Actual": 5,
+      "Expected": 5,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH sigma cls superiore mezzeria [MPa]",
+      "Actual": -0.6798499288724142,
+      "Expected": -0.679849928872435,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH sigma cls inferiore mezzeria [MPa]",
+      "Actual": 0.21731831583668215,
+      "Expected": 0.2173183158366685,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH sigma acciaio superiore mezzeria [MPa]",
+      "Actual": -86.2627572310402,
+      "Expected": -86.26275723102643,
+      "AbsoluteTolerance": 8.626275723102643E-05,
+      "Passed": true
+    },
+    {
+      "Name": "GH sigma acciaio inferiore mezzeria [MPa]",
+      "Actual": 90.26002296869707,
+      "Expected": 90.26002296868356,
+      "AbsoluteTolerance": 9.026002296868355E-05,
+      "Passed": true
+    },
+    {
+      "Name": "GH estrazione tensioni acciaio",
+      "Actual": 240,
+      "Expected": 240,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    }
+  ]
+}

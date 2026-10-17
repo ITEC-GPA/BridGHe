@@ -1,0 +1,8 @@
+# Preserve byte offsets in generated PDFs (Git may otherwise treat ASCII PDFs as text).
+*.pdf binary
+*.png binary
+# Grasshopper archives contain generated component descriptions with intentional whitespace.
+*.ghx -text whitespace=-blank-at-eol linguist-generated=true
+examples/bridge-grillage/*.csv linguist-generated=true
+examples/bridge-grillage/validation.json linguist-generated=true
+examples/bridge-grillage/grasshopper-stresses.json linguist-generated=true

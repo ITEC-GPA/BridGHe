@@ -1,0 +1,1442 @@
+[
+  {
+    "Point1_ConcreteSigma": 0.6595742259722395,
+    "Point4_ConcreteSigma": 0.9918586987441969,
+    "Point5_SteelSigma": -18.303905201615883,
+    "Point8_SteelSigma": 4.031980727780571
+  },
+  {
+    "Point1_ConcreteSigma": 0.5572571030327108,
+    "Point4_ConcreteSigma": 0.9326924194943127,
+    "Point5_SteelSigma": -23.495206398308117,
+    "Point8_SteelSigma": 10.618845065628552
+  },
+  {
+    "Point1_ConcreteSigma": 0.4549399800931804,
+    "Point4_ConcreteSigma": 0.8735261402444275,
+    "Point5_SteelSigma": -28.686507595000364,
+    "Point8_SteelSigma": 17.205709403476572
+  },
+  {
+    "Point1_ConcreteSigma": 0.3526228571536499,
+    "Point4_ConcreteSigma": 0.8143598609945423,
+    "Point5_SteelSigma": -33.877808791692615,
+    "Point8_SteelSigma": 23.79257374132459
+  },
+  {
+    "Point1_ConcreteSigma": 0.2503057342141306,
+    "Point4_ConcreteSigma": 0.7551935817446637,
+    "Point5_SteelSigma": -39.06910998838531,
+    "Point8_SteelSigma": 30.3794380791729
+  },
+  {
+    "Point1_ConcreteSigma": 0.25030573421414215,
+    "Point4_ConcreteSigma": 0.7551935817446703,
+    "Point5_SteelSigma": -39.06910998838528,
+    "Point8_SteelSigma": 30.37943807917272
+  },
+  {
+    "Point1_ConcreteSigma": 0.16659172453634563,
+    "Point4_ConcreteSigma": 0.7067848078129466,
+    "Point5_SteelSigma": -43.316538240224375,
+    "Point8_SteelSigma": 35.768690719230165
+  },
+  {
+    "Point1_ConcreteSigma": 0.08287771485854922,
+    "Point4_ConcreteSigma": 0.6583760338812231,
+    "Point5_SteelSigma": -47.56396649206347,
+    "Point8_SteelSigma": 41.15794335928761
+  },
+  {
+    "Point1_ConcreteSigma": -0.0008362948192470743,
+    "Point4_ConcreteSigma": 0.6099672599494995,
+    "Point5_SteelSigma": -51.81139474390257,
+    "Point8_SteelSigma": 46.54719599934504
+  },
+  {
+    "Point1_ConcreteSigma": -0.08455030449704193,
+    "Point4_ConcreteSigma": 0.5615584860177771,
+    "Point5_SteelSigma": -56.05882299574175,
+    "Point8_SteelSigma": 51.93644863940254
+  },
+  {
+    "Point1_ConcreteSigma": -0.08455030449705059,
+    "Point4_ConcreteSigma": 0.5615584860177723,
+    "Point5_SteelSigma": -56.05882299574266,
+    "Point8_SteelSigma": 51.93644863940357
+  },
+  {
+    "Point1_ConcreteSigma": -0.14966120091310997,
+    "Point4_ConcreteSigma": 0.5239072174042124,
+    "Point5_SteelSigma": -59.362378302728416,
+    "Point8_SteelSigma": 56.1280895816702
+  },
+  {
+    "Point1_ConcreteSigma": -0.21477209732917024,
+    "Point4_ConcreteSigma": 0.4862559487906519,
+    "Point5_SteelSigma": -62.6659336097142,
+    "Point8_SteelSigma": 60.31973052393685
+  },
+  {
+    "Point1_ConcreteSigma": -0.2798829937452294,
+    "Point4_ConcreteSigma": 0.4486046801770922,
+    "Point5_SteelSigma": -65.96948891669996,
+    "Point8_SteelSigma": 64.51137146620347
+  },
+  {
+    "Point1_ConcreteSigma": -0.34499389016129034,
+    "Point4_ConcreteSigma": 0.4109534115635336,
+    "Point5_SteelSigma": -69.27304422368536,
+    "Point8_SteelSigma": 68.70301240846976
+  },
+  {
+    "Point1_ConcreteSigma": -0.3449938901612972,
+    "Point4_ConcreteSigma": 0.41095341156353027,
+    "Point5_SteelSigma": -69.27304422368577,
+    "Point8_SteelSigma": 68.70301240847026
+  },
+  {
+    "Point1_ConcreteSigma": -0.391501673315636,
+    "Point4_ConcreteSigma": 0.3840596482681248,
+    "Point5_SteelSigma": -71.63272658581872,
+    "Point8_SteelSigma": 71.69704165294682
+  },
+  {
+    "Point1_ConcreteSigma": -0.43800945646997413,
+    "Point4_ConcreteSigma": 0.3571658849727195,
+    "Point5_SteelSigma": -73.99240894795167,
+    "Point8_SteelSigma": 74.69107089742337
+  },
+  {
+    "Point1_ConcreteSigma": -0.48451723962431226,
+    "Point4_ConcreteSigma": 0.33027212167731423,
+    "Point5_SteelSigma": -76.35209131008462,
+    "Point8_SteelSigma": 77.68510014189994
+  },
+  {
+    "Point1_ConcreteSigma": -0.5310250227786582,
+    "Point4_ConcreteSigma": 0.30337835838190363,
+    "Point5_SteelSigma": -78.71177367221696,
+    "Point8_SteelSigma": 80.679129386376
+  },
+  {
+    "Point1_ConcreteSigma": -0.5310250227786353,
+    "Point4_ConcreteSigma": 0.30337835838191585,
+    "Point5_SteelSigma": -78.71177367221767,
+    "Point8_SteelSigma": 80.67912938637642
+  },
+  {
+    "Point1_ConcreteSigma": -0.558929692671223,
+    "Point4_ConcreteSigma": 0.28724210040468234,
+    "Point5_SteelSigma": -80.12758308949722,
+    "Point8_SteelSigma": 82.47554693306192
+  },
+  {
+    "Point1_ConcreteSigma": -0.5868343625638117,
+    "Point4_ConcreteSigma": 0.2711058424274482,
+    "Point5_SteelSigma": -81.54339250677675,
+    "Point8_SteelSigma": 84.27196447974741
+  },
+  {
+    "Point1_ConcreteSigma": -0.6147390324563988,
+    "Point4_ConcreteSigma": 0.2549695844502149,
+    "Point5_SteelSigma": -82.95920192405629,
+    "Point8_SteelSigma": 86.0683820264329
+  },
+  {
+    "Point1_ConcreteSigma": -0.642643702349005,
+    "Point4_ConcreteSigma": 0.23883332647297206,
+    "Point5_SteelSigma": -84.37501134133562,
+    "Point8_SteelSigma": 87.86479957311842
+  },
+  {
+    "Point1_ConcreteSigma": -0.6426437023490139,
+    "Point4_ConcreteSigma": 0.2388333264729664,
+    "Point5_SteelSigma": -84.37501134133579,
+    "Point8_SteelSigma": 87.86479957311872
+  },
+  {
+    "Point1_ConcreteSigma": -0.651945258979868,
+    "Point4_ConcreteSigma": 0.2334545738138929,
+    "Point5_SteelSigma": -84.84694781376167,
+    "Point8_SteelSigma": 88.46360542201312
+  },
+  {
+    "Point1_ConcreteSigma": -0.6612468156107221,
+    "Point4_ConcreteSigma": 0.22807582115482006,
+    "Point5_SteelSigma": -85.31888428618753,
+    "Point8_SteelSigma": 89.0624112709075
+  },
+  {
+    "Point1_ConcreteSigma": -0.6705483722415757,
+    "Point4_ConcreteSigma": 0.22269706849574722,
+    "Point5_SteelSigma": -85.79082075861338,
+    "Point8_SteelSigma": 89.66121711980192
+  },
+  {
+    "Point1_ConcreteSigma": -0.6798499288724142,
+    "Point4_ConcreteSigma": 0.21731831583668215,
+    "Point5_SteelSigma": -86.2627572310402,
+    "Point8_SteelSigma": 90.26002296869707
+  },
+  {
+    "Point1_ConcreteSigma": -0.6798499288724267,
+    "Point4_ConcreteSigma": 0.21731831583667738,
+    "Point5_SteelSigma": -86.26275723103916,
+    "Point8_SteelSigma": 90.26002296869616
+  },
+  {
+    "Point1_ConcreteSigma": -0.6705483722415551,
+    "Point4_ConcreteSigma": 0.22269706849575976,
+    "Point5_SteelSigma": -85.79082075861258,
+    "Point8_SteelSigma": 89.66121711980081
+  },
+  {
+    "Point1_ConcreteSigma": -0.6612468156106832,
+    "Point4_ConcreteSigma": 0.2280758211548427,
+    "Point5_SteelSigma": -85.31888428618598,
+    "Point8_SteelSigma": 89.06241127090544
+  },
+  {
+    "Point1_ConcreteSigma": -0.651945258979812,
+    "Point4_ConcreteSigma": 0.23345457381392487,
+    "Point5_SteelSigma": -84.8469478137594,
+    "Point8_SteelSigma": 88.4636054220101
+  },
+  {
+    "Point1_ConcreteSigma": -0.6426437023489382,
+    "Point4_ConcreteSigma": 0.2388333264730096,
+    "Point5_SteelSigma": -84.37501134133277,
+    "Point8_SteelSigma": 87.86479957311465
+  },
+  {
+    "Point1_ConcreteSigma": -0.6426437023489366,
+    "Point4_ConcreteSigma": 0.2388333264730106,
+    "Point5_SteelSigma": -84.37501134133382,
+    "Point8_SteelSigma": 87.86479957311569
+  },
+  {
+    "Point1_ConcreteSigma": -0.6147390324563349,
+    "Point4_ConcreteSigma": 0.2549695844502533,
+    "Point5_SteelSigma": -82.95920192405352,
+    "Point8_SteelSigma": 86.06838202642923
+  },
+  {
+    "Point1_ConcreteSigma": -0.586834362563732,
+    "Point4_ConcreteSigma": 0.271105842427497,
+    "Point5_SteelSigma": -81.54339250677323,
+    "Point8_SteelSigma": 84.27196447974279
+  },
+  {
+    "Point1_ConcreteSigma": -0.55892969267113,
+    "Point4_ConcreteSigma": 0.28724210040473996,
+    "Point5_SteelSigma": -80.12758308949294,
+    "Point8_SteelSigma": 82.47554693305634
+  },
+  {
+    "Point1_ConcreteSigma": -0.5310250227785149,
+    "Point4_ConcreteSigma": 0.3033783583819889,
+    "Point5_SteelSigma": -78.71177367221274,
+    "Point8_SteelSigma": 80.6791293863698
+  },
+  {
+    "Point1_ConcreteSigma": -0.5310250227785154,
+    "Point4_ConcreteSigma": 0.3033783583819887,
+    "Point5_SteelSigma": -78.71177367221347,
+    "Point8_SteelSigma": 80.67912938637052
+  },
+  {
+    "Point1_ConcreteSigma": -0.48451723962417304,
+    "Point4_ConcreteSigma": 0.33027212167739606,
+    "Point5_SteelSigma": -76.35209131008057,
+    "Point8_SteelSigma": 77.68510014189395
+  },
+  {
+    "Point1_ConcreteSigma": -0.4380094564698309,
+    "Point4_ConcreteSigma": 0.35716588497280366,
+    "Point5_SteelSigma": -73.99240894794764,
+    "Point8_SteelSigma": 74.69107089741739
+  },
+  {
+    "Point1_ConcreteSigma": -0.39150167331548924,
+    "Point4_ConcreteSigma": 0.3840596482682104,
+    "Point5_SteelSigma": -71.63272658581474,
+    "Point8_SteelSigma": 71.69704165294081
+  },
+  {
+    "Point1_ConcreteSigma": -0.34499389016117576,
+    "Point4_ConcreteSigma": 0.41095341156360043,
+    "Point5_SteelSigma": -69.27304422368263,
+    "Point8_SteelSigma": 68.70301240846545
+  },
+  {
+    "Point1_ConcreteSigma": -0.3449938901611713,
+    "Point4_ConcreteSigma": 0.4109534115636029,
+    "Point5_SteelSigma": -69.2730442236825,
+    "Point8_SteelSigma": 68.70301240846528
+  },
+  {
+    "Point1_ConcreteSigma": -0.27988299374510595,
+    "Point4_ConcreteSigma": 0.4486046801771655,
+    "Point5_SteelSigma": -65.9694889166971,
+    "Point8_SteelSigma": 64.51137146619892
+  },
+  {
+    "Point1_ConcreteSigma": -0.21477209732904057,
+    "Point4_ConcreteSigma": 0.4862559487907281,
+    "Point5_SteelSigma": -62.6659336097117,
+    "Point8_SteelSigma": 60.319730523932584
+  },
+  {
+    "Point1_ConcreteSigma": -0.1496612009129754,
+    "Point4_ConcreteSigma": 0.5239072174042906,
+    "Point5_SteelSigma": -59.3623783027263,
+    "Point8_SteelSigma": 56.12808958166623
+  },
+  {
+    "Point1_ConcreteSigma": -0.08455030449692114,
+    "Point4_ConcreteSigma": 0.5615584860178481,
+    "Point5_SteelSigma": -56.05882299574074,
+    "Point8_SteelSigma": 51.93644863939988
+  },
+  {
+    "Point1_ConcreteSigma": -0.0845503044969318,
+    "Point4_ConcreteSigma": 0.5615584860178418,
+    "Point5_SteelSigma": -56.058822995740286,
+    "Point8_SteelSigma": 51.936448639399565
+  },
+  {
+    "Point1_ConcreteSigma": -0.0008362948191498187,
+    "Point4_ConcreteSigma": 0.6099672599495569,
+    "Point5_SteelSigma": -51.811394743901346,
+    "Point8_SteelSigma": 46.54719599934248
+  },
+  {
+    "Point1_ConcreteSigma": 0.08287771485863238,
+    "Point4_ConcreteSigma": 0.6583760338812724,
+    "Point5_SteelSigma": -47.563966492062406,
+    "Point8_SteelSigma": 41.1579433592854
+  },
+  {
+    "Point1_ConcreteSigma": 0.16659172453641424,
+    "Point4_ConcreteSigma": 0.7067848078129875,
+    "Point5_SteelSigma": -43.31653824022348,
+    "Point8_SteelSigma": 35.76869071922831
+  },
+  {
+    "Point1_ConcreteSigma": 0.25030573421419466,
+    "Point4_ConcreteSigma": 0.7551935817447013,
+    "Point5_SteelSigma": -39.06910998838392,
+    "Point8_SteelSigma": 30.379438079170637
+  },
+  {
+    "Point1_ConcreteSigma": 0.2503057342141903,
+    "Point4_ConcreteSigma": 0.7551935817446986,
+    "Point5_SteelSigma": -39.069109988383865,
+    "Point8_SteelSigma": 30.37943807917064
+  },
+  {
+    "Point1_ConcreteSigma": 0.352622857153703,
+    "Point4_ConcreteSigma": 0.8143598609945737,
+    "Point5_SteelSigma": -33.87780879169196,
+    "Point8_SteelSigma": 23.79257374132321
+  },
+  {
+    "Point1_ConcreteSigma": 0.4549399800932158,
+    "Point4_ConcreteSigma": 0.8735261402444486,
+    "Point5_SteelSigma": -28.68650759500006,
+    "Point8_SteelSigma": 17.205709403475776
+  },
+  {
+    "Point1_ConcreteSigma": 0.5572571030327285,
+    "Point4_ConcreteSigma": 0.9326924194943236,
+    "Point5_SteelSigma": -23.495206398308156,
+    "Point8_SteelSigma": 10.618845065628346
+  },
+  {
+    "Point1_ConcreteSigma": 0.6595742259722395,
+    "Point4_ConcreteSigma": 0.9918586987441969,
+    "Point5_SteelSigma": -18.30390520161633,
+    "Point8_SteelSigma": 4.03198072778102
+  },
+  {
+    "Point1_ConcreteSigma": 0.6595742259722395,
+    "Point4_ConcreteSigma": 0.9918586987441969,
+    "Point5_SteelSigma": -18.30390520161606,
+    "Point8_SteelSigma": 4.03198072778075
+  },
+  {
+    "Point1_ConcreteSigma": 0.5572571030327256,
+    "Point4_ConcreteSigma": 0.93269241949432,
+    "Point5_SteelSigma": -23.495206398308046,
+    "Point8_SteelSigma": 10.618845065628289
+  },
+  {
+    "Point1_ConcreteSigma": 0.4549399800932119,
+    "Point4_ConcreteSigma": 0.873526140244444,
+    "Point5_SteelSigma": -28.68650759499999,
+    "Point8_SteelSigma": 17.205709403475783
+  },
+  {
+    "Point1_ConcreteSigma": 0.3526228571536981,
+    "Point4_ConcreteSigma": 0.8143598609945678,
+    "Point5_SteelSigma": -33.87780879169194,
+    "Point8_SteelSigma": 23.79257374132328
+  },
+  {
+    "Point1_ConcreteSigma": 0.25030573421419017,
+    "Point4_ConcreteSigma": 0.7551935817446959,
+    "Point5_SteelSigma": -39.06910998838395,
+    "Point8_SteelSigma": 30.37943807917075
+  },
+  {
+    "Point1_ConcreteSigma": 0.2503057342141801,
+    "Point4_ConcreteSigma": 0.7551935817446899,
+    "Point5_SteelSigma": -39.06910998838475,
+    "Point8_SteelSigma": 30.379438079171695
+  },
+  {
+    "Point1_ConcreteSigma": 0.1665917245363958,
+    "Point4_ConcreteSigma": 0.7067848078129727,
+    "Point5_SteelSigma": -43.316538240223466,
+    "Point8_SteelSigma": 35.7686907192286
+  },
+  {
+    "Point1_ConcreteSigma": 0.0828777148586114,
+    "Point4_ConcreteSigma": 0.6583760338812555,
+    "Point5_SteelSigma": -47.56396649206218,
+    "Point8_SteelSigma": 41.15794335928549
+  },
+  {
+    "Point1_ConcreteSigma": -0.0008362948191729114,
+    "Point4_ConcreteSigma": 0.6099672599495385,
+    "Point5_SteelSigma": -51.81139474390089,
+    "Point8_SteelSigma": 46.547195999342385
+  },
+  {
+    "Point1_ConcreteSigma": -0.08455030449695156,
+    "Point4_ConcreteSigma": 0.5615584860178259,
+    "Point5_SteelSigma": -56.05882299573925,
+    "Point8_SteelSigma": 51.93644863939884
+  },
+  {
+    "Point1_ConcreteSigma": -0.08455030449695533,
+    "Point4_ConcreteSigma": 0.5615584860178244,
+    "Point5_SteelSigma": -56.05882299573993,
+    "Point8_SteelSigma": 51.936448639399565
+  },
+  {
+    "Point1_ConcreteSigma": -0.14966120091301705,
+    "Point4_ConcreteSigma": 0.5239072174042632,
+    "Point5_SteelSigma": -59.36237830272543,
+    "Point8_SteelSigma": 56.128089581665954
+  },
+  {
+    "Point1_ConcreteSigma": -0.21477209732907832,
+    "Point4_ConcreteSigma": 0.4862559487907022,
+    "Point5_SteelSigma": -62.66593360971092,
+    "Point8_SteelSigma": 60.31973052393234
+  },
+  {
+    "Point1_ConcreteSigma": -0.2798829937451399,
+    "Point4_ConcreteSigma": 0.44860468017714117,
+    "Point5_SteelSigma": -65.96948891669642,
+    "Point8_SteelSigma": 64.51137146619874
+  },
+  {
+    "Point1_ConcreteSigma": -0.3449938901611873,
+    "Point4_ConcreteSigma": 0.4109534115635882,
+    "Point5_SteelSigma": -69.27304422368225,
+    "Point8_SteelSigma": 68.70301240846527
+  },
+  {
+    "Point1_ConcreteSigma": -0.34499389016118576,
+    "Point4_ConcreteSigma": 0.41095341156359066,
+    "Point5_SteelSigma": -69.27304422368255,
+    "Point8_SteelSigma": 68.70301240846554
+  },
+  {
+    "Point1_ConcreteSigma": -0.3915016733155072,
+    "Point4_ConcreteSigma": 0.3840596482681944,
+    "Point5_SteelSigma": -71.63272658581535,
+    "Point8_SteelSigma": 71.69704165294173
+  },
+  {
+    "Point1_ConcreteSigma": -0.4380094564698285,
+    "Point4_ConcreteSigma": 0.35716588497279844,
+    "Point5_SteelSigma": -73.99240894794816,
+    "Point8_SteelSigma": 74.69107089741792
+  },
+  {
+    "Point1_ConcreteSigma": -0.4845172396241497,
+    "Point4_ConcreteSigma": 0.3302721216774023,
+    "Point5_SteelSigma": -76.35209131008098,
+    "Point8_SteelSigma": 77.68510014189411
+  },
+  {
+    "Point1_ConcreteSigma": -0.5310250227784976,
+    "Point4_ConcreteSigma": 0.30337835838199023,
+    "Point5_SteelSigma": -78.71177367221297,
+    "Point8_SteelSigma": 80.67912938636988
+  },
+  {
+    "Point1_ConcreteSigma": -0.531025022778461,
+    "Point4_ConcreteSigma": 0.30337835838201466,
+    "Point5_SteelSigma": -78.71177367221198,
+    "Point8_SteelSigma": 80.67912938636834
+  },
+  {
+    "Point1_ConcreteSigma": -0.5589296926710632,
+    "Point4_ConcreteSigma": 0.2872421004047718,
+    "Point5_SteelSigma": -80.12758308949151,
+    "Point8_SteelSigma": 82.47554693305405
+  },
+  {
+    "Point1_ConcreteSigma": -0.5868343625636652,
+    "Point4_ConcreteSigma": 0.2711058424275292,
+    "Point5_SteelSigma": -81.54339250677107,
+    "Point8_SteelSigma": 84.27196447973975
+  },
+  {
+    "Point1_ConcreteSigma": -0.6147390324562683,
+    "Point4_ConcreteSigma": 0.25496958445028595,
+    "Point5_SteelSigma": -82.9592019240506,
+    "Point8_SteelSigma": 86.06838202642545
+  },
+  {
+    "Point1_ConcreteSigma": -0.6426437023488665,
+    "Point4_ConcreteSigma": 0.238833326473046,
+    "Point5_SteelSigma": -84.37501134132982,
+    "Point8_SteelSigma": 87.86479957311079
+  },
+  {
+    "Point1_ConcreteSigma": -0.6426437023488762,
+    "Point4_ConcreteSigma": 0.23883332647304067,
+    "Point5_SteelSigma": -84.37501134132953,
+    "Point8_SteelSigma": 87.8647995731106
+  },
+  {
+    "Point1_ConcreteSigma": -0.6519452589797476,
+    "Point4_ConcreteSigma": 0.23345457381395796,
+    "Point5_SteelSigma": -84.8469478137556,
+    "Point8_SteelSigma": 88.46360542200546
+  },
+  {
+    "Point1_ConcreteSigma": -0.6612468156106195,
+    "Point4_ConcreteSigma": 0.228075821154875,
+    "Point5_SteelSigma": -85.31888428618169,
+    "Point8_SteelSigma": 89.06241127090031
+  },
+  {
+    "Point1_ConcreteSigma": -0.6705483722414911,
+    "Point4_ConcreteSigma": 0.2226970684957923,
+    "Point5_SteelSigma": -85.79082075860777,
+    "Point8_SteelSigma": 89.66121711979517
+  },
+  {
+    "Point1_ConcreteSigma": -0.6798499288723352,
+    "Point4_ConcreteSigma": 0.21731831583672379,
+    "Point5_SteelSigma": -86.26275723103308,
+    "Point8_SteelSigma": 90.26002296868892
+  },
+  {
+    "Point1_ConcreteSigma": -0.6798499288723086,
+    "Point4_ConcreteSigma": 0.21731831583673755,
+    "Point5_SteelSigma": -86.26275723103387,
+    "Point8_SteelSigma": 90.26002296868934
+  },
+  {
+    "Point1_ConcreteSigma": -0.6705483722414385,
+    "Point4_ConcreteSigma": 0.22269706849582005,
+    "Point5_SteelSigma": -85.7908207586069,
+    "Point8_SteelSigma": 89.6612171197936
+  },
+  {
+    "Point1_ConcreteSigma": -0.661246815610568,
+    "Point4_ConcreteSigma": 0.22807582115490288,
+    "Point5_SteelSigma": -85.31888428617988,
+    "Point8_SteelSigma": 89.06241127089784
+  },
+  {
+    "Point1_ConcreteSigma": -0.6519452589796983,
+    "Point4_ConcreteSigma": 0.23345457381398504,
+    "Point5_SteelSigma": -84.8469478137529,
+    "Point8_SteelSigma": 88.4636054220021
+  },
+  {
+    "Point1_ConcreteSigma": -0.6426437023488576,
+    "Point4_ConcreteSigma": 0.2388333264730511,
+    "Point5_SteelSigma": -84.37501134132796,
+    "Point8_SteelSigma": 87.8647995731088
+  },
+  {
+    "Point1_ConcreteSigma": -0.6426437023488292,
+    "Point4_ConcreteSigma": 0.238833326473066,
+    "Point5_SteelSigma": -84.37501134132798,
+    "Point8_SteelSigma": 87.86479957310844
+  },
+  {
+    "Point1_ConcreteSigma": -0.6147390324562372,
+    "Point4_ConcreteSigma": 0.25496958445030393,
+    "Point5_SteelSigma": -82.95920192404833,
+    "Point8_SteelSigma": 86.06838202642277
+  },
+  {
+    "Point1_ConcreteSigma": -0.5868343625636459,
+    "Point4_ConcreteSigma": 0.2711058424275412,
+    "Point5_SteelSigma": -81.54339250676868,
+    "Point8_SteelSigma": 84.27196447973711
+  },
+  {
+    "Point1_ConcreteSigma": -0.5589296926710543,
+    "Point4_ConcreteSigma": 0.2872421004047787,
+    "Point5_SteelSigma": -80.12758308948906,
+    "Point8_SteelSigma": 82.47554693305146
+  },
+  {
+    "Point1_ConcreteSigma": -0.5310250227784417,
+    "Point4_ConcreteSigma": 0.30337835838202787,
+    "Point5_SteelSigma": -78.711773672209,
+    "Point8_SteelSigma": 80.67912938636509
+  },
+  {
+    "Point1_ConcreteSigma": -0.5310250227784479,
+    "Point4_ConcreteSigma": 0.3033783583820229,
+    "Point5_SteelSigma": -78.71177367220976,
+    "Point8_SteelSigma": 80.67912938636593
+  },
+  {
+    "Point1_ConcreteSigma": -0.4845172396241304,
+    "Point4_ConcreteSigma": 0.33027212167741604,
+    "Point5_SteelSigma": -76.3520913100781,
+    "Point8_SteelSigma": 77.68510014189094
+  },
+  {
+    "Point1_ConcreteSigma": -0.4380094564698125,
+    "Point4_ConcreteSigma": 0.357165884972809,
+    "Point5_SteelSigma": -73.9924089479464,
+    "Point8_SteelSigma": 74.69107089741594
+  },
+  {
+    "Point1_ConcreteSigma": -0.391501673315495,
+    "Point4_ConcreteSigma": 0.38405964826820194,
+    "Point5_SteelSigma": -71.63272658581474,
+    "Point8_SteelSigma": 71.69704165294094
+  },
+  {
+    "Point1_ConcreteSigma": -0.3449938901611731,
+    "Point4_ConcreteSigma": 0.41095341156359666,
+    "Point5_SteelSigma": -69.27304422368131,
+    "Point8_SteelSigma": 68.70301240846412
+  },
+  {
+    "Point1_ConcreteSigma": -0.3449938901611931,
+    "Point4_ConcreteSigma": 0.41095341156358645,
+    "Point5_SteelSigma": -69.273044223681,
+    "Point8_SteelSigma": 68.70301240846409
+  },
+  {
+    "Point1_ConcreteSigma": -0.2798829937451306,
+    "Point4_ConcreteSigma": 0.4486046801771483,
+    "Point5_SteelSigma": -65.96948891669562,
+    "Point8_SteelSigma": 64.51137146619782
+  },
+  {
+    "Point1_ConcreteSigma": -0.214772097329068,
+    "Point4_ConcreteSigma": 0.4862559487907101,
+    "Point5_SteelSigma": -62.66593360971025,
+    "Point8_SteelSigma": 60.31973052393152
+  },
+  {
+    "Point1_ConcreteSigma": -0.14966120091300517,
+    "Point4_ConcreteSigma": 0.523907217404272,
+    "Point5_SteelSigma": -59.36237830272488,
+    "Point8_SteelSigma": 56.12808958166522
+  },
+  {
+    "Point1_ConcreteSigma": -0.08455030449695722,
+    "Point4_ConcreteSigma": 0.5615584860178259,
+    "Point5_SteelSigma": -56.05882299573838,
+    "Point8_SteelSigma": 51.936448639398016
+  },
+  {
+    "Point1_ConcreteSigma": -0.08455030449695711,
+    "Point4_ConcreteSigma": 0.5615584860178238,
+    "Point5_SteelSigma": -56.05882299573861,
+    "Point8_SteelSigma": 51.936448639398265
+  },
+  {
+    "Point1_ConcreteSigma": -0.0008362948191718012,
+    "Point4_ConcreteSigma": 0.6099672599495412,
+    "Point5_SteelSigma": -51.81139474389991,
+    "Point8_SteelSigma": 46.547195999341376
+  },
+  {
+    "Point1_ConcreteSigma": 0.0828777148586134,
+    "Point4_ConcreteSigma": 0.6583760338812584,
+    "Point5_SteelSigma": -47.56396649206121,
+    "Point8_SteelSigma": 41.15794335928448
+  },
+  {
+    "Point1_ConcreteSigma": 0.1665917245363988,
+    "Point4_ConcreteSigma": 0.7067848078129758,
+    "Point5_SteelSigma": -43.31653824022251,
+    "Point8_SteelSigma": 35.768690719227585
+  },
+  {
+    "Point1_ConcreteSigma": 0.25030573421417857,
+    "Point4_ConcreteSigma": 0.7551935817446895,
+    "Point5_SteelSigma": -39.06910998838365,
+    "Point8_SteelSigma": 30.379438079170612
+  },
+  {
+    "Point1_ConcreteSigma": 0.2503057342141767,
+    "Point4_ConcreteSigma": 0.7551935817446884,
+    "Point5_SteelSigma": -39.06910998838348,
+    "Point8_SteelSigma": 30.37943807917047
+  },
+  {
+    "Point1_ConcreteSigma": 0.35262285715369374,
+    "Point4_ConcreteSigma": 0.8143598609945665,
+    "Point5_SteelSigma": -33.87780879169162,
+    "Point8_SteelSigma": 23.79257374132301
+  },
+  {
+    "Point1_ConcreteSigma": 0.45493998009321074,
+    "Point4_ConcreteSigma": 0.8735261402444445,
+    "Point5_SteelSigma": -28.686507594999764,
+    "Point8_SteelSigma": 17.20570940347556
+  },
+  {
+    "Point1_ConcreteSigma": 0.5572571030327278,
+    "Point4_ConcreteSigma": 0.9326924194943225,
+    "Point5_SteelSigma": -23.495206398307904,
+    "Point8_SteelSigma": 10.618845065628108
+  },
+  {
+    "Point1_ConcreteSigma": 0.6595742259722395,
+    "Point4_ConcreteSigma": 0.9918586987441969,
+    "Point5_SteelSigma": -18.303905201616153,
+    "Point8_SteelSigma": 4.031980727780841
+  },
+  {
+    "Point1_ConcreteSigma": 0.6595742259722395,
+    "Point4_ConcreteSigma": 0.9918586987441969,
+    "Point5_SteelSigma": -18.303905201616423,
+    "Point8_SteelSigma": 4.031980727781111
+  },
+  {
+    "Point1_ConcreteSigma": 0.5572571030327325,
+    "Point4_ConcreteSigma": 0.9326924194943249,
+    "Point5_SteelSigma": -23.495206398307758,
+    "Point8_SteelSigma": 10.618845065627898
+  },
+  {
+    "Point1_ConcreteSigma": 0.45493998009322234,
+    "Point4_ConcreteSigma": 0.873526140244451,
+    "Point5_SteelSigma": -28.68650759499912,
+    "Point8_SteelSigma": 17.205709403474764
+  },
+  {
+    "Point1_ConcreteSigma": 0.3526228571537122,
+    "Point4_ConcreteSigma": 0.814359860994577,
+    "Point5_SteelSigma": -33.87780879169049,
+    "Point8_SteelSigma": 23.79257374132163
+  },
+  {
+    "Point1_ConcreteSigma": 0.25030573421421026,
+    "Point4_ConcreteSigma": 0.755193581744708,
+    "Point5_SteelSigma": -39.06910998838197,
+    "Point8_SteelSigma": 30.379438079168494
+  },
+  {
+    "Point1_ConcreteSigma": 0.25030573421421254,
+    "Point4_ConcreteSigma": 0.7551935817447084,
+    "Point5_SteelSigma": -39.06910998838211,
+    "Point8_SteelSigma": 30.379438079168608
+  },
+  {
+    "Point1_ConcreteSigma": 0.16659172453643167,
+    "Point4_ConcreteSigma": 0.7067848078129936,
+    "Point5_SteelSigma": -43.316538240220666,
+    "Point8_SteelSigma": 35.7686907192253
+  },
+  {
+    "Point1_ConcreteSigma": 0.08287771485865103,
+    "Point4_ConcreteSigma": 0.6583760338812792,
+    "Point5_SteelSigma": -47.56396649205921,
+    "Point8_SteelSigma": 41.15794335928197
+  },
+  {
+    "Point1_ConcreteSigma": -0.0008362948191296127,
+    "Point4_ConcreteSigma": 0.6099672599495647,
+    "Point5_SteelSigma": -51.81139474389775,
+    "Point8_SteelSigma": 46.54719599933865
+  },
+  {
+    "Point1_ConcreteSigma": -0.08455030449689871,
+    "Point4_ConcreteSigma": 0.5615584860178576,
+    "Point5_SteelSigma": -56.05882299573612,
+    "Point8_SteelSigma": 51.936448639394975
+  },
+  {
+    "Point1_ConcreteSigma": -0.08455030449691292,
+    "Point4_ConcreteSigma": 0.5615584860178483,
+    "Point5_SteelSigma": -56.05882299573696,
+    "Point8_SteelSigma": 51.93644863939602
+  },
+  {
+    "Point1_ConcreteSigma": -0.14966120091295676,
+    "Point4_ConcreteSigma": 0.5239072174042969,
+    "Point5_SteelSigma": -59.36237830272212,
+    "Point8_SteelSigma": 56.12808958166184
+  },
+  {
+    "Point1_ConcreteSigma": -0.21477209732899993,
+    "Point4_ConcreteSigma": 0.48625594879074574,
+    "Point5_SteelSigma": -62.665933609707295,
+    "Point8_SteelSigma": 60.31973052392767
+  },
+  {
+    "Point1_ConcreteSigma": -0.27988299374504355,
+    "Point4_ConcreteSigma": 0.44860468017719457,
+    "Point5_SteelSigma": -65.96948891669246,
+    "Point8_SteelSigma": 64.51137146619348
+  },
+  {
+    "Point1_ConcreteSigma": -0.34499389016108006,
+    "Point4_ConcreteSigma": 0.41095341156364773,
+    "Point5_SteelSigma": -69.27304422367767,
+    "Point8_SteelSigma": 68.70301240845926
+  },
+  {
+    "Point1_ConcreteSigma": -0.34499389016113535,
+    "Point4_ConcreteSigma": 0.4109534115636164,
+    "Point5_SteelSigma": -69.27304422367862,
+    "Point8_SteelSigma": 68.70301240846095
+  },
+  {
+    "Point1_ConcreteSigma": -0.39150167331545815,
+    "Point4_ConcreteSigma": 0.3840596482682195,
+    "Point5_SteelSigma": -71.63272658581099,
+    "Point8_SteelSigma": 71.69704165293673
+  },
+  {
+    "Point1_ConcreteSigma": -0.4380094564697805,
+    "Point4_ConcreteSigma": 0.35716588497282276,
+    "Point5_SteelSigma": -73.99240894794337,
+    "Point8_SteelSigma": 74.6910708974125
+  },
+  {
+    "Point1_ConcreteSigma": -0.48451723962410287,
+    "Point4_ConcreteSigma": 0.33027212167742626,
+    "Point5_SteelSigma": -76.35209131007574,
+    "Point8_SteelSigma": 77.68510014188828
+  },
+  {
+    "Point1_ConcreteSigma": -0.5310250227784081,
+    "Point4_ConcreteSigma": 0.30337835838204086,
+    "Point5_SteelSigma": -78.71177367220774,
+    "Point8_SteelSigma": 80.67912938636341
+  },
+  {
+    "Point1_ConcreteSigma": -0.531025022778393,
+    "Point4_ConcreteSigma": 0.30337835838204785,
+    "Point5_SteelSigma": -78.71177367220847,
+    "Point8_SteelSigma": 80.67912938636395
+  },
+  {
+    "Point1_ConcreteSigma": -0.558929692670983,
+    "Point4_ConcreteSigma": 0.287242100404812,
+    "Point5_SteelSigma": -80.12758308948743,
+    "Point8_SteelSigma": 82.47554693304893
+  },
+  {
+    "Point1_ConcreteSigma": -0.5868343625635741,
+    "Point4_ConcreteSigma": 0.2711058424275754,
+    "Point5_SteelSigma": -81.54339250676642,
+    "Point8_SteelSigma": 84.27196447973392
+  },
+  {
+    "Point1_ConcreteSigma": -0.6147390324561637,
+    "Point4_ConcreteSigma": 0.2549695844503398,
+    "Point5_SteelSigma": -82.9592019240454,
+    "Point8_SteelSigma": 86.0683820264189
+  },
+  {
+    "Point1_ConcreteSigma": -0.6426437023487617,
+    "Point4_ConcreteSigma": 0.23883332647309907,
+    "Point5_SteelSigma": -84.37501134132557,
+    "Point8_SteelSigma": 87.86479957310516
+  },
+  {
+    "Point1_ConcreteSigma": -0.6426437023487785,
+    "Point4_ConcreteSigma": 0.23883332647308864,
+    "Point5_SteelSigma": -84.37501134132495,
+    "Point8_SteelSigma": 87.86479957310478
+  },
+  {
+    "Point1_ConcreteSigma": -0.6519452589796451,
+    "Point4_ConcreteSigma": 0.23345457381400858,
+    "Point5_SteelSigma": -84.84694781375065,
+    "Point8_SteelSigma": 88.46360542199919
+  },
+  {
+    "Point1_ConcreteSigma": -0.6612468156105118,
+    "Point4_ConcreteSigma": 0.2280758211549283,
+    "Point5_SteelSigma": -85.31888428617634,
+    "Point8_SteelSigma": 89.06241127089359
+  },
+  {
+    "Point1_ConcreteSigma": -0.6705483722413785,
+    "Point4_ConcreteSigma": 0.22269706849584803,
+    "Point5_SteelSigma": -85.79082075860204,
+    "Point8_SteelSigma": 89.66121711978799
+  },
+  {
+    "Point1_ConcreteSigma": -0.6798499288722113,
+    "Point4_ConcreteSigma": 0.21731831583678807,
+    "Point5_SteelSigma": -86.26275723102712,
+    "Point8_SteelSigma": 90.2600229686813
+  },
+  {
+    "Point1_ConcreteSigma": -0.6798499288722188,
+    "Point4_ConcreteSigma": 0.21731831583678374,
+    "Point5_SteelSigma": -86.26275723102756,
+    "Point8_SteelSigma": 90.26002296868185
+  },
+  {
+    "Point1_ConcreteSigma": -0.6705483722413557,
+    "Point4_ConcreteSigma": 0.2226970684958618,
+    "Point5_SteelSigma": -85.79082075860165,
+    "Point8_SteelSigma": 89.6612171197873
+  },
+  {
+    "Point1_ConcreteSigma": -0.6612468156104938,
+    "Point4_ConcreteSigma": 0.22807582115493874,
+    "Point5_SteelSigma": -85.31888428617575,
+    "Point8_SteelSigma": 89.06241127089274
+  },
+  {
+    "Point1_ConcreteSigma": -0.6519452589796311,
+    "Point4_ConcreteSigma": 0.23345457381401613,
+    "Point5_SteelSigma": -84.84694781374985,
+    "Point8_SteelSigma": 88.4636054219982
+  },
+  {
+    "Point1_ConcreteSigma": -0.6426437023487719,
+    "Point4_ConcreteSigma": 0.2388333264730904,
+    "Point5_SteelSigma": -84.37501134132349,
+    "Point8_SteelSigma": 87.86479957310323
+  },
+  {
+    "Point1_ConcreteSigma": -0.642643702348771,
+    "Point4_ConcreteSigma": 0.2388333264730914,
+    "Point5_SteelSigma": -84.37501134132344,
+    "Point8_SteelSigma": 87.86479957310317
+  },
+  {
+    "Point1_ConcreteSigma": -0.6147390324561757,
+    "Point4_ConcreteSigma": 0.2549695844503306,
+    "Point5_SteelSigma": -82.95920192404435,
+    "Point8_SteelSigma": 86.06838202641802
+  },
+  {
+    "Point1_ConcreteSigma": -0.5868343625635803,
+    "Point4_ConcreteSigma": 0.2711058424275704,
+    "Point5_SteelSigma": -81.5433925067653,
+    "Point8_SteelSigma": 84.2719644797329
+  },
+  {
+    "Point1_ConcreteSigma": -0.5589296926709848,
+    "Point4_ConcreteSigma": 0.2872421004048096,
+    "Point5_SteelSigma": -80.12758308948622,
+    "Point8_SteelSigma": 82.47554693304774
+  },
+  {
+    "Point1_ConcreteSigma": -0.5310250227784092,
+    "Point4_ConcreteSigma": 0.3033783583820375,
+    "Point5_SteelSigma": -78.71177367220567,
+    "Point8_SteelSigma": 80.67912938636141
+  },
+  {
+    "Point1_ConcreteSigma": -0.5310250227784163,
+    "Point4_ConcreteSigma": 0.30337835838203253,
+    "Point5_SteelSigma": -78.71177367220628,
+    "Point8_SteelSigma": 80.67912938636212
+  },
+  {
+    "Point1_ConcreteSigma": -0.48451723962410154,
+    "Point4_ConcreteSigma": 0.33027212167742537,
+    "Point5_SteelSigma": -76.35209131007392,
+    "Point8_SteelSigma": 77.68510014188645
+  },
+  {
+    "Point1_ConcreteSigma": -0.4380094564697865,
+    "Point4_ConcreteSigma": 0.3571658849728181,
+    "Point5_SteelSigma": -73.99240894794156,
+    "Point8_SteelSigma": 74.6910708974108
+  },
+  {
+    "Point1_ConcreteSigma": -0.3915016733154715,
+    "Point4_ConcreteSigma": 0.3840596482682108,
+    "Point5_SteelSigma": -71.63272658580921,
+    "Point8_SteelSigma": 71.69704165293513
+  },
+  {
+    "Point1_ConcreteSigma": -0.34499389016115223,
+    "Point4_ConcreteSigma": 0.41095341156360576,
+    "Point5_SteelSigma": -69.27304422367676,
+    "Point8_SteelSigma": 68.70301240845933
+  },
+  {
+    "Point1_ConcreteSigma": -0.34499389016114956,
+    "Point4_ConcreteSigma": 0.4109534115636071,
+    "Point5_SteelSigma": -69.27304422367756,
+    "Point8_SteelSigma": 68.70301240846011
+  },
+  {
+    "Point1_ConcreteSigma": -0.27988299374509795,
+    "Point4_ConcreteSigma": 0.4486046801771628,
+    "Point5_SteelSigma": -65.96948891669224,
+    "Point8_SteelSigma": 64.51137146619403
+  },
+  {
+    "Point1_ConcreteSigma": -0.21477209732904634,
+    "Point4_ConcreteSigma": 0.48625594879071843,
+    "Point5_SteelSigma": -62.66593360970694,
+    "Point8_SteelSigma": 60.31973052392796
+  },
+  {
+    "Point1_ConcreteSigma": -0.14966120091299495,
+    "Point4_ConcreteSigma": 0.5239072174042739,
+    "Point5_SteelSigma": -59.36237830272162,
+    "Point8_SteelSigma": 56.128089581661875
+  },
+  {
+    "Point1_ConcreteSigma": -0.08455030449695577,
+    "Point4_ConcreteSigma": 0.561558486017823,
+    "Point5_SteelSigma": -56.058822995736435,
+    "Point8_SteelSigma": 51.93644863939608
+  },
+  {
+    "Point1_ConcreteSigma": -0.08455030449695289,
+    "Point4_ConcreteSigma": 0.5615584860178249,
+    "Point5_SteelSigma": -56.05882299573585,
+    "Point8_SteelSigma": 51.936448639395465
+  },
+  {
+    "Point1_ConcreteSigma": -0.000836294819171246,
+    "Point4_ConcreteSigma": 0.6099672599495403,
+    "Point5_SteelSigma": -51.81139474389779,
+    "Point8_SteelSigma": 46.54719599933926
+  },
+  {
+    "Point1_ConcreteSigma": 0.08287771485861017,
+    "Point4_ConcreteSigma": 0.6583760338812553,
+    "Point5_SteelSigma": -47.56396649205973,
+    "Point8_SteelSigma": 41.15794335928305
+  },
+  {
+    "Point1_ConcreteSigma": 0.16659172453639154,
+    "Point4_ConcreteSigma": 0.7067848078129704,
+    "Point5_SteelSigma": -43.31653824022166,
+    "Point8_SteelSigma": 35.76869071922684
+  },
+  {
+    "Point1_ConcreteSigma": 0.25030573421417224,
+    "Point4_ConcreteSigma": 0.7551935817446842,
+    "Point5_SteelSigma": -39.06910998838325,
+    "Point8_SteelSigma": 30.379438079170313
+  },
+  {
+    "Point1_ConcreteSigma": 0.2503057342141751,
+    "Point4_ConcreteSigma": 0.755193581744686,
+    "Point5_SteelSigma": -39.06910998838249,
+    "Point8_SteelSigma": 30.379438079169514
+  },
+  {
+    "Point1_ConcreteSigma": 0.3526228571536934,
+    "Point4_ConcreteSigma": 0.8143598609945653,
+    "Point5_SteelSigma": -33.877808791690995,
+    "Point8_SteelSigma": 23.792573741322396
+  },
+  {
+    "Point1_ConcreteSigma": 0.4549399800932117,
+    "Point4_ConcreteSigma": 0.8735261402444443,
+    "Point5_SteelSigma": -28.686507594999487,
+    "Point8_SteelSigma": 17.205709403475275
+  },
+  {
+    "Point1_ConcreteSigma": 0.55725710303273,
+    "Point4_ConcreteSigma": 0.9326924194943235,
+    "Point5_SteelSigma": -23.49520639830798,
+    "Point8_SteelSigma": 10.618845065628157
+  },
+  {
+    "Point1_ConcreteSigma": 0.6595742259722395,
+    "Point4_ConcreteSigma": 0.9918586987441969,
+    "Point5_SteelSigma": -18.30390520161633,
+    "Point8_SteelSigma": 4.03198072778102
+  },
+  {
+    "Point1_ConcreteSigma": 0.6595742259722395,
+    "Point4_ConcreteSigma": 0.9918586987441969,
+    "Point5_SteelSigma": -18.30390520161606,
+    "Point8_SteelSigma": 4.03198072778075
+  },
+  {
+    "Point1_ConcreteSigma": 0.5572571030327287,
+    "Point4_ConcreteSigma": 0.9326924194943227,
+    "Point5_SteelSigma": -23.495206398307257,
+    "Point8_SteelSigma": 10.61884506562745
+  },
+  {
+    "Point1_ConcreteSigma": 0.45493998009322,
+    "Point4_ConcreteSigma": 0.8735261402444496,
+    "Point5_SteelSigma": -28.686507594998442,
+    "Point8_SteelSigma": 17.205709403474113
+  },
+  {
+    "Point1_ConcreteSigma": 0.3526228571537114,
+    "Point4_ConcreteSigma": 0.8143598609945766,
+    "Point5_SteelSigma": -33.87780879168963,
+    "Point8_SteelSigma": 23.79257374132078
+  },
+  {
+    "Point1_ConcreteSigma": 0.25030573421420954,
+    "Point4_ConcreteSigma": 0.7551935817447079,
+    "Point5_SteelSigma": -39.06910998838106,
+    "Point8_SteelSigma": 30.37943807916759
+  },
+  {
+    "Point1_ConcreteSigma": 0.25030573421420843,
+    "Point4_ConcreteSigma": 0.755193581744708,
+    "Point5_SteelSigma": -39.06910998838075,
+    "Point8_SteelSigma": 30.379438079167294
+  },
+  {
+    "Point1_ConcreteSigma": 0.166591724536434,
+    "Point4_ConcreteSigma": 0.7067848078129966,
+    "Point5_SteelSigma": -43.316538240218904,
+    "Point8_SteelSigma": 35.76869071922349
+  },
+  {
+    "Point1_ConcreteSigma": 0.08287771485865958,
+    "Point4_ConcreteSigma": 0.6583760338812852,
+    "Point5_SteelSigma": -47.56396649205705,
+    "Point8_SteelSigma": 41.157943359279685
+  },
+  {
+    "Point1_ConcreteSigma": -0.0008362948191147357,
+    "Point4_ConcreteSigma": 0.609967259949574,
+    "Point5_SteelSigma": -51.81139474389519,
+    "Point8_SteelSigma": 46.54719599933588
+  },
+  {
+    "Point1_ConcreteSigma": -0.08455030449689005,
+    "Point4_ConcreteSigma": 0.5615584860178621,
+    "Point5_SteelSigma": -56.058822995733564,
+    "Point8_SteelSigma": 51.936448639392296
+  },
+  {
+    "Point1_ConcreteSigma": -0.08455030449688783,
+    "Point4_ConcreteSigma": 0.561558486017863,
+    "Point5_SteelSigma": -56.05882299573429,
+    "Point8_SteelSigma": 51.93644863939301
+  },
+  {
+    "Point1_ConcreteSigma": -0.14966120091293633,
+    "Point4_ConcreteSigma": 0.5239072174043085,
+    "Point5_SteelSigma": -59.362378302719165,
+    "Point8_SteelSigma": 56.12808958165861
+  },
+  {
+    "Point1_ConcreteSigma": -0.21477209732898483,
+    "Point4_ConcreteSigma": 0.48625594879075373,
+    "Point5_SteelSigma": -62.66593360970404,
+    "Point8_SteelSigma": 60.31973052392422
+  },
+  {
+    "Point1_ConcreteSigma": -0.27988299374503334,
+    "Point4_ConcreteSigma": 0.4486046801771988,
+    "Point5_SteelSigma": -65.96948891668892,
+    "Point8_SteelSigma": 64.51137146618983
+  },
+  {
+    "Point1_ConcreteSigma": -0.34499389016106363,
+    "Point4_ConcreteSigma": 0.4109534115636563,
+    "Point5_SteelSigma": -69.27304422367357,
+    "Point8_SteelSigma": 68.70301240845494
+  },
+  {
+    "Point1_ConcreteSigma": -0.34499389016106696,
+    "Point4_ConcreteSigma": 0.4109534115636535,
+    "Point5_SteelSigma": -69.27304422367432,
+    "Point8_SteelSigma": 68.70301240845573
+  },
+  {
+    "Point1_ConcreteSigma": -0.39150167331538577,
+    "Point4_ConcreteSigma": 0.3840596482682579,
+    "Point5_SteelSigma": -71.63272658580588,
+    "Point8_SteelSigma": 71.69704165293066
+  },
+  {
+    "Point1_ConcreteSigma": -0.4380094564697039,
+    "Point4_ConcreteSigma": 0.3571658849728624,
+    "Point5_SteelSigma": -73.99240894793745,
+    "Point8_SteelSigma": 74.6910708974056
+  },
+  {
+    "Point1_ConcreteSigma": -0.4845172396240225,
+    "Point4_ConcreteSigma": 0.3302721216774668,
+    "Point5_SteelSigma": -76.35209131006901,
+    "Point8_SteelSigma": 77.68510014188051
+  },
+  {
+    "Point1_ConcreteSigma": -0.5310250227783289,
+    "Point4_ConcreteSigma": 0.3033783583820775,
+    "Point5_SteelSigma": -78.71177367220126,
+    "Point8_SteelSigma": 80.67912938635595
+  },
+  {
+    "Point1_ConcreteSigma": -0.5310250227783144,
+    "Point4_ConcreteSigma": 0.30337835838208627,
+    "Point5_SteelSigma": -78.71177367220226,
+    "Point8_SteelSigma": 80.67912938635675
+  },
+  {
+    "Point1_ConcreteSigma": -0.5589296926709195,
+    "Point4_ConcreteSigma": 0.2872421004048413,
+    "Point5_SteelSigma": -80.12758308948204,
+    "Point8_SteelSigma": 82.47554693304272
+  },
+  {
+    "Point1_ConcreteSigma": -0.586834362563524,
+    "Point4_ConcreteSigma": 0.27110584242759683,
+    "Point5_SteelSigma": -81.54339250676183,
+    "Point8_SteelSigma": 84.27196447972872
+  },
+  {
+    "Point1_ConcreteSigma": -0.6147390324561293,
+    "Point4_ConcreteSigma": 0.2549695844503518,
+    "Point5_SteelSigma": -82.95920192404162,
+    "Point8_SteelSigma": 86.06838202641471
+  },
+  {
+    "Point1_ConcreteSigma": -0.6426437023487399,
+    "Point4_ConcreteSigma": 0.23883332647310418,
+    "Point5_SteelSigma": -84.37501134132076,
+    "Point8_SteelSigma": 87.86479957310011
+  },
+  {
+    "Point1_ConcreteSigma": -0.6426437023487308,
+    "Point4_ConcreteSigma": 0.23883332647310906,
+    "Point5_SteelSigma": -84.37501134132103,
+    "Point8_SteelSigma": 87.86479957310026
+  },
+  {
+    "Point1_ConcreteSigma": -0.6519452589795967,
+    "Point4_ConcreteSigma": 0.23345457381402956,
+    "Point5_SteelSigma": -84.84694781374746,
+    "Point8_SteelSigma": 88.4636054219954
+  },
+  {
+    "Point1_ConcreteSigma": -0.6612468156104627,
+    "Point4_ConcreteSigma": 0.22807582115494962,
+    "Point5_SteelSigma": -85.31888428617393,
+    "Point8_SteelSigma": 89.06241127089055
+  },
+  {
+    "Point1_ConcreteSigma": -0.6705483722413288,
+    "Point4_ConcreteSigma": 0.22269706849587,
+    "Point5_SteelSigma": -85.79082075860036,
+    "Point8_SteelSigma": 89.66121711978568
+  },
+  {
+    "Point1_ConcreteSigma": -0.6798499288722011,
+    "Point4_ConcreteSigma": 0.21731831583678662,
+    "Point5_SteelSigma": -86.26275723102474,
+    "Point8_SteelSigma": 90.26002296867885
+  },
+  {
+    "Point1_ConcreteSigma": -0.6798499288722157,
+    "Point4_ConcreteSigma": 0.2173183158367783,
+    "Point5_SteelSigma": -86.26275723102474,
+    "Point8_SteelSigma": 90.26002296867907
+  },
+  {
+    "Point1_ConcreteSigma": -0.6705483722413492,
+    "Point4_ConcreteSigma": 0.2226970684958578,
+    "Point5_SteelSigma": -85.790820758598,
+    "Point8_SteelSigma": 89.6612171197836
+  },
+  {
+    "Point1_ConcreteSigma": -0.6612468156104823,
+    "Point4_ConcreteSigma": 0.2280758211549374,
+    "Point5_SteelSigma": -85.31888428617124,
+    "Point8_SteelSigma": 89.06241127088816
+  },
+  {
+    "Point1_ConcreteSigma": -0.6519452589796153,
+    "Point4_ConcreteSigma": 0.23345457381401724,
+    "Point5_SteelSigma": -84.8469478137445,
+    "Point8_SteelSigma": 88.46360542199271
+  },
+  {
+    "Point1_ConcreteSigma": -0.6426437023487281,
+    "Point4_ConcreteSigma": 0.23883332647310918,
+    "Point5_SteelSigma": -84.37501134131931,
+    "Point8_SteelSigma": 87.86479957309851
+  },
+  {
+    "Point1_ConcreteSigma": -0.6426437023487432,
+    "Point4_ConcreteSigma": 0.23883332647310063,
+    "Point5_SteelSigma": -84.37501134131898,
+    "Point8_SteelSigma": 87.8647995730984
+  },
+  {
+    "Point1_ConcreteSigma": -0.6147390324561419,
+    "Point4_ConcreteSigma": 0.2549695844503421,
+    "Point5_SteelSigma": -82.95920192403902,
+    "Point8_SteelSigma": 86.0683820264123
+  },
+  {
+    "Point1_ConcreteSigma": -0.5868343625635404,
+    "Point4_ConcreteSigma": 0.27110584242758407,
+    "Point5_SteelSigma": -81.54339250675905,
+    "Point8_SteelSigma": 84.2719644797262
+  },
+  {
+    "Point1_ConcreteSigma": -0.5589296926709393,
+    "Point4_ConcreteSigma": 0.28724210040482556,
+    "Point5_SteelSigma": -80.12758308947906,
+    "Point8_SteelSigma": 82.47554693304008
+  },
+  {
+    "Point1_ConcreteSigma": -0.5310250227783735,
+    "Point4_ConcreteSigma": 0.30337835838204796,
+    "Point5_SteelSigma": -78.71177367219956,
+    "Point8_SteelSigma": 80.67912938635489
+  },
+  {
+    "Point1_ConcreteSigma": -0.5310250227783468,
+    "Point4_ConcreteSigma": 0.3033783583820633,
+    "Point5_SteelSigma": -78.71177367220015,
+    "Point8_SteelSigma": 80.67912938635513
+  },
+  {
+    "Point1_ConcreteSigma": -0.484517239624046,
+    "Point4_ConcreteSigma": 0.3302721216774487,
+    "Point5_SteelSigma": -76.35209131006859,
+    "Point8_SteelSigma": 77.68510014188044
+  },
+  {
+    "Point1_ConcreteSigma": -0.4380094564697443,
+    "Point4_ConcreteSigma": 0.3571658849728344,
+    "Point5_SteelSigma": -73.99240894793702,
+    "Point8_SteelSigma": 74.69107089740575
+  },
+  {
+    "Point1_ConcreteSigma": -0.39150167331544217,
+    "Point4_ConcreteSigma": 0.3840596482682207,
+    "Point5_SteelSigma": -71.63272658580546,
+    "Point8_SteelSigma": 71.69704165293105
+  },
+  {
+    "Point1_ConcreteSigma": -0.34499389016112203,
+    "Point4_ConcreteSigma": 0.4109534115636171,
+    "Point5_SteelSigma": -69.2730442236728,
+    "Point8_SteelSigma": 68.70301240845501
+  },
+  {
+    "Point1_ConcreteSigma": -0.34499389016110626,
+    "Point4_ConcreteSigma": 0.41095341156362664,
+    "Point5_SteelSigma": -69.2730442236726,
+    "Point8_SteelSigma": 68.7030124084546
+  },
+  {
+    "Point1_ConcreteSigma": -0.2798829937450582,
+    "Point4_ConcreteSigma": 0.448604680177181,
+    "Point5_SteelSigma": -65.96948891668792,
+    "Point8_SteelSigma": 64.51137146618919
+  },
+  {
+    "Point1_ConcreteSigma": -0.21477209732900981,
+    "Point4_ConcreteSigma": 0.4862559487907355,
+    "Point5_SteelSigma": -62.665933609703245,
+    "Point8_SteelSigma": 60.3197305239238
+  },
+  {
+    "Point1_ConcreteSigma": -0.14966120091296176,
+    "Point4_ConcreteSigma": 0.5239072174042898,
+    "Point5_SteelSigma": -59.36237830271857,
+    "Point8_SteelSigma": 56.128089581658394
+  },
+  {
+    "Point1_ConcreteSigma": -0.08455030449692169,
+    "Point4_ConcreteSigma": 0.5615584860178384,
+    "Point5_SteelSigma": -56.05882299573422,
+    "Point8_SteelSigma": 51.936448639393426
+  },
+  {
+    "Point1_ConcreteSigma": -0.08455030449692358,
+    "Point4_ConcreteSigma": 0.5615584860178384,
+    "Point5_SteelSigma": -56.05882299573325,
+    "Point8_SteelSigma": 51.93644863939249
+  },
+  {
+    "Point1_ConcreteSigma": -0.0008362948191427133,
+    "Point4_ConcreteSigma": 0.6099672599495541,
+    "Point5_SteelSigma": -51.81139474389515,
+    "Point8_SteelSigma": 46.547195999336246
+  },
+  {
+    "Point1_ConcreteSigma": 0.08287771485863737,
+    "Point4_ConcreteSigma": 0.6583760338812693,
+    "Point5_SteelSigma": -47.56396649205702,
+    "Point8_SteelSigma": 41.15794335927999
+  },
+  {
+    "Point1_ConcreteSigma": 0.1665917245364179,
+    "Point4_ConcreteSigma": 0.7067848078129848,
+    "Point5_SteelSigma": -43.316538240218904,
+    "Point8_SteelSigma": 35.768690719223734
+  },
+  {
+    "Point1_ConcreteSigma": 0.2503057342141927,
+    "Point4_ConcreteSigma": 0.755193581744696,
+    "Point5_SteelSigma": -39.06910998838096,
+    "Point8_SteelSigma": 30.37943807916774
+  },
+  {
+    "Point1_ConcreteSigma": 0.25030573421419094,
+    "Point4_ConcreteSigma": 0.7551935817446949,
+    "Point5_SteelSigma": -39.06910998838079,
+    "Point8_SteelSigma": 30.379438079167596
+  },
+  {
+    "Point1_ConcreteSigma": 0.3526228571537051,
+    "Point4_ConcreteSigma": 0.8143598609945717,
+    "Point5_SteelSigma": -33.87780879168975,
+    "Point8_SteelSigma": 23.792573741320997
+  },
+  {
+    "Point1_ConcreteSigma": 0.45493998009321945,
+    "Point4_ConcreteSigma": 0.8735261402444485,
+    "Point5_SteelSigma": -28.68650759499871,
+    "Point8_SteelSigma": 17.205709403474398
+  },
+  {
+    "Point1_ConcreteSigma": 0.5572571030327338,
+    "Point4_ConcreteSigma": 0.9326924194943254,
+    "Point5_SteelSigma": -23.49520639830767,
+    "Point8_SteelSigma": 10.618845065627799
+  },
+  {
+    "Point1_ConcreteSigma": 0.6595742259722395,
+    "Point4_ConcreteSigma": 0.9918586987441969,
+    "Point5_SteelSigma": -18.303905201616153,
+    "Point8_SteelSigma": 4.031980727780841
+  }
+]

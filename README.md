@@ -2,6 +2,8 @@
 
 Plugin Grasshopper per Rhino 8: modello parametrico → Straus7 R3 → risultati negli elementi → MeCheck2 con librerie gPC.
 
+**Nuovo esempio completo:** [ponte misto a graticcio](examples/bridge-grillage/README.md), luce 30 m, quattro travi, soletta, tre rigidezze, veicolo mobile e cinque contributi MeCheck2. Definizione GHX costruita con componenti e risolta realmente: **357 controlli superati**, 240 sezioni elaborate; incluse cinque fasi native di getto separate. [Tavole PDF](examples/bridge-grillage/ponte-graticcio.pdf). La verifica torsionale del traffico eccentrico resta da implementare.
+
 La versione 0.1.0 è stata collaudata con Rhino 8 e la licenza API Straus7 R3: **10 esempi numerici**, inclusi **5 di costruzione per fasi**, e **21 famiglie di sezioni parametriche**. I dieci file Grasshopper sono stati salvati, riaperti e risolti tramite i componenti reali. Un confronto aggiuntivo verifica cinque contributi di fase MeCheck2, compresi ritiri imposti. Copertura e limiti sono in [VERIFICHE](docs/VERIFICHE.md).
 
 ## Contenuto

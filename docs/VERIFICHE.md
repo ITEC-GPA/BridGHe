@@ -1,5 +1,13 @@
 # Verifiche della versione 0.1.0
 
+## Ponte misto a graticcio — esempio 11
+
+Esecuzione del 17 ottobre 2026: **357 misure superate**, nessun fallimento, tramite `--bridge-grillage --gh`. La definizione GHX è stata riaperta e risolta con i componenti di costruzione, analisi, merge e MeCheck2; 240 sezioni hanno attraversato cinque contributi di fase. Riferimenti, unità e tolleranze: [guida del ponte](../examples/bridge-grillage/README.md); dati grezzi: [validation.json](../examples/bridge-grillage/validation.json).
+
+Copertura aggiuntiva: tre rigidezze del graticcio, equilibrio e risposta analitica simmetrica, reciprocità, veicolo eccentrico e speculare, 23 posizioni mobili, cinque incrementi nativi di getto, mesh 12/24/48, sensibilità GJ. Il traffico eccentrico produce torsione e viene correttamente rifiutato dal verificatore N–M–V. La combinazione simmetrica è controllata elasticamente a sezione lorda, senza instabilità locale o certificazione normativa.
+
+Dopo i fix è stata rieseguita la suite generale: **202 controlli smoke/nativi e 21 gruppi di regressione** superati. Il successivo controllo isolato `bridge-example-parameters` verifica i limiti della ricetta prima dell'analisi; non altera il modello di default. Porte e GUID: audit invariato, 16 componenti MeCheck2 e 137 GUID complessivi.
+
 ## Risultati effettivamente ottenuti
 
 Ambiente: Windows x64, Rhino 8 avviato senza finestra mediante Rhino.Inside, runtime .NET 8, compilazione con SDK 9.0.319. Ultimo collaudo nativo: 17 ottobre 2026. Grasshopper installato 8.35.26251.13001; riferimenti di compilazione 8.27.26019.16021. Straus7 R3.1.5 x64 con licenza API disponibile.

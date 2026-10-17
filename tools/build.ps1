@@ -3,6 +3,7 @@ param(
     [switch]$Smoke,
     [switch]$Native,
     [switch]$Examples,
+    [switch]$BridgeGrillage,
     [switch]$Package
 )
 $ErrorActionPreference = 'Stop'
@@ -40,6 +41,14 @@ try {
         $nativeZip = Join-Path $projectRoot 'artifacts\BridGHe-native-examples.zip'
         Compress-Archive -Path (Join-Path $nativeRun '*') -DestinationPath $nativeZip -Force
         Write-Host "Esempi nativi: $nativeZip"
+    }
+    if ($BridgeGrillage) {
+        if ($Configuration -ne 'Release') { throw 'Il ponte a graticcio richiede Release.' }
+        & dotnet build tests/BridGHe.Smoke/BridGHe.Smoke.csproj -c Release
+        if ($LASTEXITCODE -ne 0) { throw 'Compilazione del ponte non riuscita.' }
+        & dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --bridge-grillage --gh
+        if ($LASTEXITCODE -ne 0) { throw 'Verifica del ponte a graticcio non riuscita.' }
+        Compress-Archive -Path (Join-Path $projectRoot 'artifacts\bridge-grillage\*') -DestinationPath (Join-Path $projectRoot 'artifacts\BridGHe-ponte-graticcio-native.zip') -Force
     }
     if ($Package) {
         $compiled = Join-Path $projectRoot "src\BridGHe.Grasshopper\bin\$Configuration\net8.0-windows"

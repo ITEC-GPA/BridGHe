@@ -1,5 +1,15 @@
 # Trasposizione e refactoring — 16 ottobre 2026
 
+## Correzioni emerse dal ponte a graticcio — 17 ottobre 2026
+
+| Commit | Metodo | Correzione |
+|---|---|---|
+| `0c96b97` | `BridgeCheckAdapter.Phase` | Rifiuto dei dati non finiti; tolleranze dimensionali di 10⁻⁶ N e 10⁻³ Nmm sulle componenti fuori piano, per non rifiutare il rumore numerico di un graticcio simmetrico. Le azioni maggiori restano bloccanti e sono riportate nell'errore. |
+| `09ce512` | `CalculateHomogenizedFactorPhi` nei tre componenti MeCheck2 che lo usano | Nuovo helper `BridgeCreepCoefficient.FromModularRatio`: il rapporto istantaneo Es/Ec non produce più φ = −1,11·10⁻¹⁶. Solo valori in [−10⁻¹², 0) vengono ricondotti a zero; rapporti fisicamente non validi sono rifiutati. |
+| `eb79d8a` | `BuildMeCheckModel.SolveInstance` | Le combinazioni riutilizzano i casi canonici del modello con la fase assegnata, invece di creare copie contenenti solo il nome. Il flusso completo ora giunge alle tensioni. |
+
+Ogni fix ha un commit distinto. Nessuna modifica a porte, GUID, DLL gPC o chiamate Straus in questa attività. L'esempio 11 è generato da codice di test, non aggiunge componenti al plugin. Le ipotesi e i limiti numerici sono nella [guida](../examples/bridge-grillage/README.md).
+
 ## Passaggi eseguiti
 
 1. Creata una soluzione autonoma `BridGHe.sln`, con progetti Common e Grasshopper, target Windows x64 / .NET 8. La base FeMM è stata letta senza modificarla.
