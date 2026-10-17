@@ -538,7 +538,9 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                                 IEnumerable<double> incrms = row.Cast<GH_String>().Where(c => double.TryParse(c.Value, out double d)).Select(c => Convert.ToDouble(c.Value));
                                 LoadCombinationModel loadCombinationModel = new LoadCombinationModel(name);
                                 for (int j = 0; j < incrms.Count(); j++)
-                                    loadCombinationModel.Values.Add(new LoadCaseModel(cnames[j], cnames[j]), incrms.ElementAt(j));
+                                    // Reuse the canonical case carrying the assigned
+                                    // MeCheck2 phase. A fresh name-only case loses it.
+                                    loadCombinationModel.Values.Add(newModel.LoadCases.Single(c => c.Name == cnames[j]), incrms.ElementAt(j));
 
                                 newModel.LoadCombinations.Add(loadCombinationModel);
                             }
