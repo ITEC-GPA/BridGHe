@@ -2,6 +2,7 @@ param(
     [ValidateSet('Debug','Release')][string]$Configuration = 'Release',
     [switch]$Smoke,
     [switch]$Native,
+    [switch]$Examples,
     [switch]$Package
 )
 $ErrorActionPreference = 'Stop'
@@ -18,6 +19,28 @@ try {
         else { & dotnet run --project tests/BridGHe.Smoke -c Release }
         if ($LASTEXITCODE -ne 0) { throw 'Smoke test non riusciti.' }
     }
+    if ($Examples) {
+        if ($Configuration -ne 'Release') { throw 'Gli esempi richiedono Release.' }
+        & dotnet build tests/BridGHe.Smoke/BridGHe.Smoke.csproj -c Release
+        if ($LASTEXITCODE -ne 0) { throw 'Compilazione degli esempi non riuscita.' }
+        foreach ($mode in @('--examples','--bridge-native','--gh-examples')) {
+            & dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- $mode
+            if ($LASTEXITCODE -ne 0) { throw "Esempi non riusciti: $mode" }
+        }
+        $validationRoot = Join-Path $projectRoot 'examples\validation'
+        New-Item -ItemType Directory -Path $validationRoot -Force | Out-Null
+        $nativeRun = Get-Content -LiteralPath (Join-Path $projectRoot 'artifacts\examples\latest-passed.txt') -Raw
+        Copy-Item -LiteralPath (Join-Path $nativeRun 'report.json') -Destination (Join-Path $validationRoot 'native.json')
+        Copy-Item -LiteralPath (Join-Path $projectRoot 'artifacts\native-bridge-phases\report.json') -Destination (Join-Path $validationRoot 'mecheck2.json')
+        $ghReports = Get-ChildItem -LiteralPath (Join-Path $projectRoot 'artifacts\gh-examples') -Directory | ForEach-Object {
+            [pscustomobject]@{example=$_.Name;measurements=(Get-Content -LiteralPath (Join-Path $_.FullName 'report.json') -Raw | ConvertFrom-Json)}
+        }
+        $ghReports | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $validationRoot 'grasshopper.json') -Encoding utf8
+        # Native files remain generated artifacts; definitions, recipes and reports are versioned.
+        $nativeZip = Join-Path $projectRoot 'artifacts\BridGHe-native-examples.zip'
+        Compress-Archive -Path (Join-Path $nativeRun '*') -DestinationPath $nativeZip -Force
+        Write-Host "Esempi nativi: $nativeZip"
+    }
     if ($Package) {
         $compiled = Join-Path $projectRoot "src\BridGHe.Grasshopper\bin\$Configuration\net8.0-windows"
         $packageRoot = Join-Path $projectRoot ('artifacts\packages\BridGHe-0.1.0-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
@@ -29,6 +52,7 @@ try {
         Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination $packageRoot
         Copy-Item -LiteralPath (Join-Path $projectRoot 'docs') -Destination $packageRoot -Recurse
         Copy-Item -LiteralPath (Join-Path $projectRoot 'migration') -Destination $packageRoot -Recurse
+        Copy-Item -LiteralPath (Join-Path $projectRoot 'examples') -Destination $packageRoot -Recurse
         $packageAssets = Join-Path $packageRoot 'assets'
         New-Item -ItemType Directory -Path $packageAssets -Force | Out-Null
         Copy-Item -LiteralPath (Join-Path $projectRoot 'assets\icons') -Destination $packageAssets -Recurse

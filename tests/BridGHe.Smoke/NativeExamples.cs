@@ -180,6 +180,7 @@ internal static class NativeExamples
             File.WriteAllText(Path.Combine(folder,"report.json"),JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true}));
         }
         File.WriteAllText(Path.Combine(root,"report.json"),JsonSerializer.Serialize(new{Date=DateTimeOffset.Now,Count=count,Failures=failures,Examples=reports},new JsonSerializerOptions{WriteIndented=true}));
+        if(selected=="all"&&count==10&&failures==0)File.WriteAllText("artifacts/examples/latest-passed.txt",root);
         Console.WriteLine($"EXAMPLES {count}, FAILURES {failures}; report: {root}");return count>0&&failures==0?0:1;
     }
 }

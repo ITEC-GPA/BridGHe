@@ -1,0 +1,958 @@
+{
+  "Date": "2026-10-17T14:32:18.4352547+02:00",
+  "Count": 10,
+  "Failures": 0,
+  "Examples": [
+    {
+      "Id": "01-cantilever",
+      "Title": "Mensola: somma carichi nodali e combinazione",
+      "Solver": 0,
+      "Passed": true,
+      "Warnings": [],
+      "Error": null,
+      "Measurements": [
+        {
+          "Name": "P / Uz [mm]",
+          "Actual": -0.09523809523809523,
+          "Expected": -0.09523809523809523,
+          "AbsoluteTolerance": 9.523809523809525E-07,
+          "Passed": true
+        },
+        {
+          "Name": "P / Rz [N]",
+          "Actual": 1000,
+          "Expected": 1000,
+          "AbsoluteTolerance": 0.01,
+          "Passed": true
+        },
+        {
+          "Name": "P / My reaction [N mm]",
+          "Actual": -3000000,
+          "Expected": -3000000,
+          "AbsoluteTolerance": 30.000000000000004,
+          "Passed": true
+        },
+        {
+          "Name": "P / beam |My| [N mm]",
+          "Actual": 3000000,
+          "Expected": 3000000,
+          "AbsoluteTolerance": 30.000000000000004,
+          "Passed": true
+        },
+        {
+          "Name": "1.5P / Uz [mm]",
+          "Actual": -0.14285714285714285,
+          "Expected": -0.14285714285714285,
+          "AbsoluteTolerance": 1.4285714285714286E-06,
+          "Passed": true
+        },
+        {
+          "Name": "1.5P / Rz [N]",
+          "Actual": 1500,
+          "Expected": 1500,
+          "AbsoluteTolerance": 0.015000000000000001,
+          "Passed": true
+        },
+        {
+          "Name": "1.5P / My reaction [N mm]",
+          "Actual": -4500000,
+          "Expected": -4500000,
+          "AbsoluteTolerance": 45.00000000000001,
+          "Passed": true
+        },
+        {
+          "Name": "1.5P / beam |My| [N mm]",
+          "Actual": 4500000,
+          "Expected": 4500000,
+          "AbsoluteTolerance": 45.00000000000001,
+          "Passed": true
+        },
+        {
+          "Name": "Input remains without results",
+          "Actual": 0,
+          "Expected": 0,
+          "AbsoluteTolerance": 0,
+          "Passed": true
+        }
+      ]
+    },
+    {
+      "Id": "02-simply-supported",
+      "Title": "Trave appoggiata con carico uniforme",
+      "Solver": 0,
+      "Passed": true,
+      "Warnings": [],
+      "Error": null,
+      "Measurements": [
+        {
+          "Name": "Uz midspan [mm]",
+          "Actual": -0.17857142857142777,
+          "Expected": -0.17857142857142858,
+          "AbsoluteTolerance": 1.7857142857142859E-06,
+          "Passed": true
+        },
+        {
+          "Name": "Rz left [N]",
+          "Actual": 2999.9999999999854,
+          "Expected": 3000,
+          "AbsoluteTolerance": 0.030000000000000002,
+          "Passed": true
+        },
+        {
+          "Name": "Rz right [N]",
+          "Actual": 2999.9999999999964,
+          "Expected": 3000,
+          "AbsoluteTolerance": 0.030000000000000002,
+          "Passed": true
+        },
+        {
+          "Name": "Max |My| [N mm]",
+          "Actual": 4499999.999999988,
+          "Expected": 4500000,
+          "AbsoluteTolerance": 45.00000000000001,
+          "Passed": true
+        },
+        {
+          "Name": "Input remains without results",
+          "Actual": 0,
+          "Expected": 0,
+          "AbsoluteTolerance": 0,
+          "Passed": true
+        }
+      ]
+    },
+    {
+      "Id": "03-plate-patch",
+      "Title": "Patch test membranale di una piastra shell",
+      "Solver": 0,
+      "Passed": true,
+      "Warnings": [],
+      "Error": null,
+      "Measurements": [
+        {
+          "Name": "Ux right [mm]",
+          "Actual": 0.0019047619047619041,
+          "Expected": 0.0019047619047619048,
+          "AbsoluteTolerance": 1.9047619047619048E-08,
+          "Passed": true
+        },
+        {
+          "Name": "Poisson Uy [mm]",
+          "Actual": -0.0002857142857142863,
+          "Expected": -0.00028571428571428574,
+          "AbsoluteTolerance": 1E-08,
+          "Passed": true
+        },
+        {
+          "Name": "Sum Rx [N]",
+          "Actual": -2000,
+          "Expected": -2000,
+          "AbsoluteTolerance": 0.02,
+          "Passed": true
+        },
+        {
+          "Name": "Plate Nxx [N/mm]",
+          "Actual": 3.9999999999999982,
+          "Expected": 4,
+          "AbsoluteTolerance": 4E-05,
+          "Passed": true
+        },
+        {
+          "Name": "Plate Nxx [N/mm]",
+          "Actual": 3.9999999999999982,
+          "Expected": 4,
+          "AbsoluteTolerance": 4E-05,
+          "Passed": true
+        },
+        {
+          "Name": "Plate Nxx [N/mm]",
+          "Actual": 4,
+          "Expected": 4,
+          "AbsoluteTolerance": 4E-05,
+          "Passed": true
+        },
+        {
+          "Name": "Plate Nxx [N/mm]",
+          "Actual": 4,
+          "Expected": 4,
+          "AbsoluteTolerance": 4E-05,
+          "Passed": true
+        },
+        {
+          "Name": "Plate result nodes",
+          "Actual": 4,
+          "Expected": 4,
+          "AbsoluteTolerance": 0,
+          "Passed": true
+        },
+        {
+          "Name": "Input remains without results",
+          "Actual": 0,
+          "Expected": 0,
+          "AbsoluteTolerance": 0,
+          "Passed": true
+        }
+      ]
+    },
+    {
+      "Id": "04-moving-load",
+      "Title": "Asse mobile su trave appoggiata",
+      "Solver": 0,
+      "Passed": true,
+      "Warnings": [],
+      "Error": null,
+      "Measurements": [
+        {
+          "Name": "Generated load positions",
+          "Actual": 13,
+          "Expected": 13,
+          "AbsoluteTolerance": 0,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 1 / equilibrium [N]",
+          "Actual": 1000.0000000000168,
+          "Expected": 1000,
+          "AbsoluteTolerance": 0.01,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 1 / right reaction [N]",
+          "Actual": 38.46153846154266,
+          "Expected": 38.46153846153846,
+          "AbsoluteTolerance": 0.0003846153846153846,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 1 / max moment [N mm]",
+          "Actual": 221893.47189349425,
+          "Expected": 221893.49112426038,
+          "AbsoluteTolerance": 2.218934911242604,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 2 / equilibrium [N]",
+          "Actual": 1000.00000000004,
+          "Expected": 1000,
+          "AbsoluteTolerance": 0.01,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 2 / right reaction [N]",
+          "Actual": 115.38461538462434,
+          "Expected": 115.38461538461537,
+          "AbsoluteTolerance": 0.0011538461538461537,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 2 / max moment [N mm]",
+          "Actual": 612425.9778106742,
+          "Expected": 612426.0355029586,
+          "AbsoluteTolerance": 6.124260355029587,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 3 / equilibrium [N]",
+          "Actual": 1000.0000000000546,
+          "Expected": 1000,
+          "AbsoluteTolerance": 0.01,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 3 / right reaction [N]",
+          "Actual": 192.30769230770602,
+          "Expected": 192.3076923076923,
+          "AbsoluteTolerance": 0.0019230769230769232,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 3 / max moment [N mm]",
+          "Actual": 931952.5665681083,
+          "Expected": 931952.6627218933,
+          "AbsoluteTolerance": 9.319526627218934,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 4 / equilibrium [N]",
+          "Actual": 1000.0000000001019,
+          "Expected": 1000,
+          "AbsoluteTolerance": 0.01,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 4 / right reaction [N]",
+          "Actual": 269.230769230795,
+          "Expected": 269.2307692307692,
+          "AbsoluteTolerance": 0.0026923076923076926,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 4 / max moment [N mm]",
+          "Actual": 1180473.238165808,
+          "Expected": 1180473.372781065,
+          "AbsoluteTolerance": 11.804733727810651,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 5 / equilibrium [N]",
+          "Actual": 1000.0000000001237,
+          "Expected": 1000,
+          "AbsoluteTolerance": 0.01,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 5 / right reaction [N]",
+          "Actual": 346.153846153873,
+          "Expected": 346.1538461538462,
+          "AbsoluteTolerance": 0.003461538461538462,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 5 / max moment [N mm]",
+          "Actual": 1357987.9926037,
+          "Expected": 1357988.1656804734,
+          "AbsoluteTolerance": 13.579881656804735,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 6 / equilibrium [N]",
+          "Actual": 1000.0000000001091,
+          "Expected": 1000,
+          "AbsoluteTolerance": 0.01,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 6 / right reaction [N]",
+          "Actual": 423.07692307695834,
+          "Expected": 423.0769230769231,
+          "AbsoluteTolerance": 0.0042307692307692315,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 6 / max moment [N mm]",
+          "Actual": 1464496.829881801,
+          "Expected": 1464497.0414201184,
+          "AbsoluteTolerance": 14.644970414201186,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 7 / equilibrium [N]",
+          "Actual": 1000.0000000001019,
+          "Expected": 1000,
+          "AbsoluteTolerance": 0.01,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 7 / right reaction [N]",
+          "Actual": 500.0000000000291,
+          "Expected": 500,
+          "AbsoluteTolerance": 0.005,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 7 / max moment [N mm]",
+          "Actual": 1500000.0000001353,
+          "Expected": 1500000,
+          "AbsoluteTolerance": 15.000000000000002,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 8 / equilibrium [N]",
+          "Actual": 1000.0000000000728,
+          "Expected": 1000,
+          "AbsoluteTolerance": 0.01,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 8 / right reaction [N]",
+          "Actual": 576.923076923078,
+          "Expected": 576.9230769230769,
+          "AbsoluteTolerance": 0.0057692307692307696,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 8 / max moment [N mm]",
+          "Actual": 1464496.8298817663,
+          "Expected": 1464497.0414201184,
+          "AbsoluteTolerance": 14.644970414201186,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 9 / equilibrium [N]",
+          "Actual": 1000.00000000008,
+          "Expected": 1000,
+          "AbsoluteTolerance": 0.01,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 9 / right reaction [N]",
+          "Actual": 653.8461538461561,
+          "Expected": 653.8461538461538,
+          "AbsoluteTolerance": 0.006538461538461539,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 9 / max moment [N mm]",
+          "Actual": 1357987.9926036089,
+          "Expected": 1357988.1656804734,
+          "AbsoluteTolerance": 13.579881656804735,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 10 / equilibrium [N]",
+          "Actual": 1000.00000000008,
+          "Expected": 1000,
+          "AbsoluteTolerance": 0.01,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 10 / right reaction [N]",
+          "Actual": 730.7692307692414,
+          "Expected": 730.7692307692308,
+          "AbsoluteTolerance": 0.007307692307692309,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 10 / max moment [N mm]",
+          "Actual": 1180473.2381656838,
+          "Expected": 1180473.372781065,
+          "AbsoluteTolerance": 11.804733727810651,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 11 / equilibrium [N]",
+          "Actual": 1000.0000000000691,
+          "Expected": 1000,
+          "AbsoluteTolerance": 0.01,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 11 / right reaction [N]",
+          "Actual": 807.6923076923267,
+          "Expected": 807.6923076923076,
+          "AbsoluteTolerance": 0.008076923076923077,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 11 / max moment [N mm]",
+          "Actual": 931952.5665680404,
+          "Expected": 931952.6627218938,
+          "AbsoluteTolerance": 9.319526627218938,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 12 / equilibrium [N]",
+          "Actual": 1000.0000000000309,
+          "Expected": 1000,
+          "AbsoluteTolerance": 0.01,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 12 / right reaction [N]",
+          "Actual": 884.6153846153902,
+          "Expected": 884.6153846153846,
+          "AbsoluteTolerance": 0.008846153846153847,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 12 / max moment [N mm]",
+          "Actual": 612425.9778106528,
+          "Expected": 612426.0355029587,
+          "AbsoluteTolerance": 6.1242603550295875,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 13 / equilibrium [N]",
+          "Actual": 1000.0000000000152,
+          "Expected": 1000,
+          "AbsoluteTolerance": 0.01,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 13 / right reaction [N]",
+          "Actual": 961.538461538468,
+          "Expected": 961.5384615384617,
+          "AbsoluteTolerance": 0.009615384615384618,
+          "Passed": true
+        },
+        {
+          "Name": "Path 1 Vehicle 1 Lane 1 Position 13 / max moment [N mm]",
+          "Actual": 221893.47189349064,
+          "Expected": 221893.4911242601,
+          "AbsoluteTolerance": 2.2189349112426013,
+          "Passed": true
+        },
+        {
+          "Name": "Envelope max |My| [N mm]",
+          "Actual": 1500000.0000001353,
+          "Expected": 1500000,
+          "AbsoluteTolerance": 15.000000000000002,
+          "Passed": true
+        },
+        {
+          "Name": "Input remains without results",
+          "Actual": 0,
+          "Expected": 0,
+          "AbsoluteTolerance": 0,
+          "Passed": true
+        }
+      ]
+    },
+    {
+      "Id": "05-nonlinear-increments",
+      "Title": "Incrementi del solutore non lineare in campo elastico",
+      "Solver": 1,
+      "Passed": true,
+      "Warnings": [],
+      "Error": null,
+      "Measurements": [
+        {
+          "Name": "Half / Uz [mm]",
+          "Actual": -0.04761904761107912,
+          "Expected": -0.047619047619047616,
+          "AbsoluteTolerance": 4.7619047619047623E-07,
+          "Passed": true
+        },
+        {
+          "Name": "Half / Rz [N]",
+          "Actual": 500.00000000000097,
+          "Expected": 500,
+          "AbsoluteTolerance": 0.005,
+          "Passed": true
+        },
+        {
+          "Name": "Half / My reaction [N mm]",
+          "Actual": -1499999.999811036,
+          "Expected": -1500000,
+          "AbsoluteTolerance": 15.000000000000002,
+          "Passed": true
+        },
+        {
+          "Name": "Half / beam |My| [N mm]",
+          "Actual": 1499999.999811036,
+          "Expected": 1500000,
+          "AbsoluteTolerance": 15.000000000000002,
+          "Passed": true
+        },
+        {
+          "Name": "Double / Uz [mm]",
+          "Actual": -0.19047618996620638,
+          "Expected": -0.19047619047619047,
+          "AbsoluteTolerance": 1.904761904761905E-06,
+          "Passed": true
+        },
+        {
+          "Name": "Double / Rz [N]",
+          "Actual": 2000.0000000000382,
+          "Expected": 2000,
+          "AbsoluteTolerance": 0.02,
+          "Passed": true
+        },
+        {
+          "Name": "Double / My reaction [N mm]",
+          "Actual": -5999999.987906276,
+          "Expected": -6000000,
+          "AbsoluteTolerance": 60.00000000000001,
+          "Passed": true
+        },
+        {
+          "Name": "Double / beam |My| [N mm]",
+          "Actual": 5999999.987906276,
+          "Expected": 6000000,
+          "AbsoluteTolerance": 60.00000000000001,
+          "Passed": true
+        },
+        {
+          "Name": "Input remains without results",
+          "Actual": 0,
+          "Expected": 0,
+          "AbsoluteTolerance": 0,
+          "Passed": true
+        }
+      ]
+    },
+    {
+      "Id": "06-stage-loading",
+      "Title": "Fasi: aumento del carico permanente",
+      "Solver": 2,
+      "Passed": true,
+      "Warnings": [],
+      "Error": null,
+      "Measurements": [
+        {
+          "Name": "Load [Steel] / Uz [mm]",
+          "Actual": -0.09523809517434723,
+          "Expected": -0.09523809523809523,
+          "AbsoluteTolerance": 9.523809523809525E-07,
+          "Passed": true
+        },
+        {
+          "Name": "Load [Steel] / Rz [N]",
+          "Actual": 1000.0000000000043,
+          "Expected": 1000,
+          "AbsoluteTolerance": 0.01,
+          "Passed": true
+        },
+        {
+          "Name": "Load [Steel] / My reaction [N mm]",
+          "Actual": -2999999.9984882833,
+          "Expected": -3000000,
+          "AbsoluteTolerance": 30.000000000000004,
+          "Passed": true
+        },
+        {
+          "Name": "Load [Steel] / beam |My| [N mm]",
+          "Actual": 2999999.9984882833,
+          "Expected": 3000000,
+          "AbsoluteTolerance": 30.000000000000004,
+          "Passed": true
+        },
+        {
+          "Name": "Load [Deck] / Uz [mm]",
+          "Actual": -0.14285714264199328,
+          "Expected": -0.14285714285714285,
+          "AbsoluteTolerance": 1.4285714285714286E-06,
+          "Passed": true
+        },
+        {
+          "Name": "Load [Deck] / Rz [N]",
+          "Actual": 1500.0000000000155,
+          "Expected": 1500,
+          "AbsoluteTolerance": 0.015000000000000001,
+          "Passed": true
+        },
+        {
+          "Name": "Load [Deck] / My reaction [N mm]",
+          "Actual": -4499999.994897959,
+          "Expected": -4500000,
+          "AbsoluteTolerance": 45.00000000000001,
+          "Passed": true
+        },
+        {
+          "Name": "Load [Deck] / beam |My| [N mm]",
+          "Actual": 4499999.994897959,
+          "Expected": 4500000,
+          "AbsoluteTolerance": 45.00000000000001,
+          "Passed": true
+        },
+        {
+          "Name": "Input remains without results",
+          "Actual": 0,
+          "Expected": 0,
+          "AbsoluteTolerance": 0,
+          "Passed": true
+        }
+      ]
+    },
+    {
+      "Id": "07-stage-unloading",
+      "Title": "Fasi: scarico e ricarico elastico",
+      "Solver": 2,
+      "Passed": true,
+      "Warnings": [],
+      "Error": null,
+      "Measurements": [
+        {
+          "Name": "Step [Loading] / Uz [mm]",
+          "Actual": -0.09523809517434723,
+          "Expected": -0.09523809523809523,
+          "AbsoluteTolerance": 9.523809523809525E-07,
+          "Passed": true
+        },
+        {
+          "Name": "Step [Loading] / Rz [N]",
+          "Actual": 1000.0000000000043,
+          "Expected": 1000,
+          "AbsoluteTolerance": 0.01,
+          "Passed": true
+        },
+        {
+          "Name": "Step [Loading] / My reaction [N mm]",
+          "Actual": -2999999.9984882833,
+          "Expected": -3000000,
+          "AbsoluteTolerance": 30.000000000000004,
+          "Passed": true
+        },
+        {
+          "Name": "Step [Loading] / beam |My| [N mm]",
+          "Actual": 2999999.9984882833,
+          "Expected": 3000000,
+          "AbsoluteTolerance": 30.000000000000004,
+          "Passed": true
+        },
+        {
+          "Name": "Step [Unloading] / Uz [mm]",
+          "Actual": -1.279763239825371E-10,
+          "Expected": -0,
+          "AbsoluteTolerance": 1E-08,
+          "Passed": true
+        },
+        {
+          "Name": "Step [Unloading] / Rz [N]",
+          "Actual": 0,
+          "Expected": 0,
+          "AbsoluteTolerance": 1E-08,
+          "Passed": true
+        },
+        {
+          "Name": "Step [Unloading] / My reaction [N mm]",
+          "Actual": 0,
+          "Expected": -0,
+          "AbsoluteTolerance": 1E-08,
+          "Passed": true
+        },
+        {
+          "Name": "Step [Unloading] / beam |My| [N mm]",
+          "Actual": 0,
+          "Expected": 0,
+          "AbsoluteTolerance": 1E-08,
+          "Passed": true
+        },
+        {
+          "Name": "Step [Reloading] / Uz [mm]",
+          "Actual": -0.04761904761107912,
+          "Expected": -0.047619047619047616,
+          "AbsoluteTolerance": 4.7619047619047623E-07,
+          "Passed": true
+        },
+        {
+          "Name": "Step [Reloading] / Rz [N]",
+          "Actual": 500.000000000021,
+          "Expected": 500,
+          "AbsoluteTolerance": 0.005,
+          "Passed": true
+        },
+        {
+          "Name": "Step [Reloading] / My reaction [N mm]",
+          "Actual": -1499999.999811035,
+          "Expected": -1500000,
+          "AbsoluteTolerance": 15.000000000000002,
+          "Passed": true
+        },
+        {
+          "Name": "Step [Reloading] / beam |My| [N mm]",
+          "Actual": 1499999.999811035,
+          "Expected": 1500000,
+          "AbsoluteTolerance": 15.000000000000002,
+          "Passed": true
+        },
+        {
+          "Name": "Input remains without results",
+          "Actual": 0,
+          "Expected": 0,
+          "AbsoluteTolerance": 0,
+          "Passed": true
+        }
+      ]
+    },
+    {
+      "Id": "08-stage-activation",
+      "Title": "Fasi: aggiunta di un elemento senza tensioni iniziali",
+      "Solver": 2,
+      "Passed": true,
+      "Warnings": [
+        "The beam property Elastic beam already exists"
+      ],
+      "Error": null,
+      "Measurements": [
+        {
+          "Name": "Original Ux [mm]",
+          "Actual": 0.00023809523781892494,
+          "Expected": 0.0002380952380952381,
+          "AbsoluteTolerance": 1E-08,
+          "Passed": true
+        },
+        {
+          "Name": "Reinforced Ux [mm]",
+          "Actual": 0.0003571428615032346,
+          "Expected": 0.00035714285714285714,
+          "AbsoluteTolerance": 1E-08,
+          "Passed": true
+        },
+        {
+          "Name": "Original member N after addition [N]",
+          "Actual": 1500.0000181889086,
+          "Expected": 1500,
+          "AbsoluteTolerance": 0.015000000000000001,
+          "Passed": true
+        },
+        {
+          "Name": "Added member N [N]",
+          "Actual": 499.9999800046845,
+          "Expected": 500,
+          "AbsoluteTolerance": 0.005,
+          "Passed": true
+        },
+        {
+          "Name": "No results before activation",
+          "Actual": 0,
+          "Expected": 0,
+          "AbsoluteTolerance": 0,
+          "Passed": true
+        },
+        {
+          "Name": "Input remains without results",
+          "Actual": 0,
+          "Expected": 0,
+          "AbsoluteTolerance": 0,
+          "Passed": true
+        }
+      ]
+    },
+    {
+      "Id": "09-stage-removal",
+      "Title": "Fasi: rimozione di un elemento provvisorio",
+      "Solver": 2,
+      "Passed": true,
+      "Warnings": [
+        "The beam property Elastic beam already exists"
+      ],
+      "Error": null,
+      "Measurements": [
+        {
+          "Name": "Original Ux [mm]",
+          "Actual": 0.00023809523781892494,
+          "Expected": 0.0002380952380952381,
+          "AbsoluteTolerance": 1E-08,
+          "Passed": true
+        },
+        {
+          "Name": "Reinforced Ux [mm]",
+          "Actual": 0.0003571428615032346,
+          "Expected": 0.00035714285714285714,
+          "AbsoluteTolerance": 1E-08,
+          "Passed": true
+        },
+        {
+          "Name": "Original member N after addition [N]",
+          "Actual": 1500.0000181889086,
+          "Expected": 1500,
+          "AbsoluteTolerance": 0.015000000000000001,
+          "Passed": true
+        },
+        {
+          "Name": "Added member N [N]",
+          "Actual": 499.9999800046845,
+          "Expected": 500,
+          "AbsoluteTolerance": 0.005,
+          "Passed": true
+        },
+        {
+          "Name": "No results before activation",
+          "Actual": 0,
+          "Expected": 0,
+          "AbsoluteTolerance": 0,
+          "Passed": true
+        },
+        {
+          "Name": "After removal Ux [mm]",
+          "Actual": 0.00047619047609259724,
+          "Expected": 0.0004761904761904762,
+          "AbsoluteTolerance": 1E-08,
+          "Passed": true
+        },
+        {
+          "Name": "Remaining member N [N]",
+          "Actual": 1999.9999997809432,
+          "Expected": 2000,
+          "AbsoluteTolerance": 0.02,
+          "Passed": true
+        },
+        {
+          "Name": "No results after removal",
+          "Actual": 0,
+          "Expected": 0,
+          "AbsoluteTolerance": 0,
+          "Passed": true
+        },
+        {
+          "Name": "Input remains without results",
+          "Actual": 0,
+          "Expected": 0,
+          "AbsoluteTolerance": 0,
+          "Passed": true
+        }
+      ]
+    },
+    {
+      "Id": "10-stage-selection",
+      "Title": "Fasi: piu incrementi, casi diversi e selezione parziale",
+      "Solver": 2,
+      "Passed": true,
+      "Warnings": [],
+      "Error": null,
+      "Measurements": [
+        {
+          "Name": "Full [Construction] / Uz [mm]",
+          "Actual": -0.09523809517434723,
+          "Expected": -0.09523809523809523,
+          "AbsoluteTolerance": 9.523809523809525E-07,
+          "Passed": true
+        },
+        {
+          "Name": "Full [Construction] / Rz [N]",
+          "Actual": 1000.0000000000043,
+          "Expected": 1000,
+          "AbsoluteTolerance": 0.01,
+          "Passed": true
+        },
+        {
+          "Name": "Full [Construction] / My reaction [N mm]",
+          "Actual": -2999999.9984882833,
+          "Expected": -3000000,
+          "AbsoluteTolerance": 30.000000000000004,
+          "Passed": true
+        },
+        {
+          "Name": "Full [Construction] / beam |My| [N mm]",
+          "Actual": 2999999.9984882833,
+          "Expected": 3000000,
+          "AbsoluteTolerance": 30.000000000000004,
+          "Passed": true
+        },
+        {
+          "Name": "ULS [Service] / Uz [mm]",
+          "Actual": -0.2714285699528607,
+          "Expected": -0.2714285714285714,
+          "AbsoluteTolerance": 2.7142857142857144E-06,
+          "Passed": true
+        },
+        {
+          "Name": "ULS [Service] / Rz [N]",
+          "Actual": 2849.9999999999177,
+          "Expected": 2850,
+          "AbsoluteTolerance": 0.0285,
+          "Passed": true
+        },
+        {
+          "Name": "ULS [Service] / My reaction [N mm]",
+          "Actual": -8549999.965005103,
+          "Expected": -8550000,
+          "AbsoluteTolerance": 85.5,
+          "Passed": true
+        },
+        {
+          "Name": "ULS [Service] / beam |My| [N mm]",
+          "Actual": 8549999.965005103,
+          "Expected": 8550000,
+          "AbsoluteTolerance": 85.5,
+          "Passed": true
+        },
+        {
+          "Name": "Only requested cases",
+          "Actual": 2,
+          "Expected": 2,
+          "AbsoluteTolerance": 0,
+          "Passed": true
+        },
+        {
+          "Name": "Input remains without results",
+          "Actual": 0,
+          "Expected": 0,
+          "AbsoluteTolerance": 0,
+          "Passed": true
+        }
+      ]
+    }
+  ]
+}

@@ -31,6 +31,7 @@ internal static class Program
         if(args.Contains("--sections-only")) { CheckNativeSections();return 0; }
         if(args.Contains("--examples")) return NativeExamples.Run(args.SkipWhile(a=>a!="--examples").Skip(1).FirstOrDefault()??"all");
         if(args.Contains("--bridge-native")) return NativeBridgePhases.Run();
+        if(args.Contains("--gh-examples")) return GrasshopperExamples.Run(args.SkipWhile(a=>a!="--gh-examples").Skip(1).FirstOrDefault()??"all");
         if(args.Contains("--regression"))
             return RegressionTests.Run(args.SkipWhile(a=>a!="--regression").Skip(1).FirstOrDefault()??"all");
         var model=new ModelModel(ModelModel.ModelUnits.Nmm);
