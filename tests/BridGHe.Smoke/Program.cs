@@ -30,6 +30,7 @@ internal static class Program
         using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},WindowStyle.NoWindow);
         if(args.Contains("--sections-only")) { CheckNativeSections();return 0; }
         if(args.Contains("--examples")) return NativeExamples.Run(args.SkipWhile(a=>a!="--examples").Skip(1).FirstOrDefault()??"all");
+        if(args.Contains("--bridge-native")) return NativeBridgePhases.Run();
         if(args.Contains("--regression"))
             return RegressionTests.Run(args.SkipWhile(a=>a!="--regression").Skip(1).FirstOrDefault()??"all");
         var model=new ModelModel(ModelModel.ModelUnits.Nmm);
@@ -251,9 +252,9 @@ internal static class Program
         rejected=false;try {checker.GetLinearAnalysisResultByStages(out _,out _,out _,out _,0,0,invalidForce,zero,zero,true);}catch(NotSupportedException){rejected=true;}
         Assert(rejected,"unsupported torsion rejected, not discarded");
         var exportedAxes = new GPC.Geometry.CoordinateSystem(GPC.Geometry.Point3d.Origin, new GPC.Geometry.Vector3d(-1,0,0), new GPC.Geometry.Vector3d(0,-1,0));
-        var diagram = new BeamForceResultModel(new LoadCaseModel("Bending"),0,0,"") { My=-1e6 };
+        var diagram = new BeamForceResultModel(new LoadCaseModel("Bending"),0,0,"") { My=1e6 };
         var converted = BridGHe.Common.Checks.BridgeForceConvention.FromStraus(diagram,exportedAxes);
-        Assert(converted.ToGlobalCoordinateSystem().M1==1e6,"Straus plane-2 moment converted to gPC axis-1 with exported axes");
+        Assert(converted.ToGlobalCoordinateSystem().M1==1e6 && converted.M1==-1e6,"Straus plane-2 moment rotated into checker destination axes");
         checker.GetLinearAnalysisResultByStages(out var bending,out _,out _,out _,0,0,converted,zero,zero,true);
         Assert(Math.Abs(bending.Point5_SteelSigma+1e6*150/h.Jxx)<1e-8 && Math.Abs(bending.Point8_SteelSigma-1e6*150/h.Jxx)<1e-8,"positive sagging moment compresses top and tensions bottom");
     }

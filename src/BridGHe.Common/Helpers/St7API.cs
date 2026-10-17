@@ -210,6 +210,8 @@ namespace St7API
         [DllImport("St7API.dll")]
         public static extern int St7SetEntitySelectState(int uID, int Entity, int EntityNum, int EndEdgeFace, byte Selected);
         [DllImport("St7API.dll")]
+        public static extern int St7GetBeamAxisSystemInitial(int uID, int BeamNum, double[] Doubles);
+        [DllImport("St7API.dll")]
         public static extern int St7GenerateBXS(int uID, string BXSName, double[] Doubles);
         [DllImport("St7API.dll")]
         public static extern int St7NewLoadCase(int uID, string CaseName);
