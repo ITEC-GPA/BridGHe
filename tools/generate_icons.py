@@ -67,6 +67,10 @@ def profile(kind, accent, rounded=False):
     return path(d, accent, 1 if rounded else 0, accent, fill_rule='evenodd')
 
 def glyph(name, a):
+    if name == 'studs':
+        return rect(3,17,18,4,INK) + path('M7 17V7M17 17V7M4 6H10M14 6H20',a,2.5)
+    if name == 'stiffener':
+        return path('M4 4H20M4 20H20M12 4V20',INK,2) + path('M7 6V18M17 6V18M7 12H17',a,2)
     if name.startswith('section:'): return profile(name.split(':')[1], a)
     if name.startswith('bgl:'): return profile(name.split(':')[1], a, True)
     if name == 'beam':
@@ -247,6 +251,10 @@ MaterialCustomComponent|material|edit|material
 MaterialSteelComponent|steel||material
 MaterialTableComponent|table||material
 BeamPropertyCompositeComponent|composite|data|check
+BridgeStudsComponent|studs||check
+BridgeIntermediateStiffenerComponent|stiffener||check
+BridgeSupportStiffenerComponent|stiffener|force|check
+BridgeDetailCheckComponent|studs|check|check
 BeamSectionConcreteSlabComponent|slab||check
 BeamSectionHPropertyComponent|section:I|data|check
 BuildMeCheckModel|model|check|check

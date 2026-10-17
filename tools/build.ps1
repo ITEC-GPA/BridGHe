@@ -4,6 +4,7 @@ param(
     [switch]$Native,
     [switch]$Examples,
     [switch]$BridgeGrillage,
+    [switch]$BridgeSuite,
     [switch]$Package
 )
 $ErrorActionPreference = 'Stop'
@@ -49,6 +50,15 @@ try {
         & dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --bridge-grillage --gh
         if ($LASTEXITCODE -ne 0) { throw 'Verifica del ponte a graticcio non riuscita.' }
         Compress-Archive -Path (Join-Path $projectRoot 'artifacts\bridge-grillage\*') -DestinationPath (Join-Path $projectRoot 'artifacts\BridGHe-ponte-graticcio-native.zip') -Force
+    }
+    if ($BridgeSuite) {
+        if ($Configuration -ne 'Release') { throw 'I quattro ponti richiedono Release.' }
+        & dotnet build tests/BridGHe.Smoke/BridGHe.Smoke.csproj -c Release
+        if ($LASTEXITCODE -ne 0) { throw 'Compilazione della suite ponti non riuscita.' }
+        & dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --bridge-suite --gh
+        if ($LASTEXITCODE -ne 0) { throw 'Verifica della suite ponti non riuscita.' }
+        & py tools/package_bridge_suite.py
+        if ($LASTEXITCODE -ne 0) { throw 'Creazione pacchetto nativo dei ponti non riuscita.' }
     }
     if ($Package) {
         $compiled = Join-Path $projectRoot "src\BridGHe.Grasshopper\bin\$Configuration\net8.0-windows"

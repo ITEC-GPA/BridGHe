@@ -1,0 +1,11 @@
+{
+  "Id": "14-curvo-1campata",
+  "Title": "Curvo 30 m / R 80 m",
+  "Spans": [
+    30000
+  ],
+  "Radius": 80000,
+  "PanelsPerSpan": 48,
+  "Length": 30000,
+  "Panels": 48
+}

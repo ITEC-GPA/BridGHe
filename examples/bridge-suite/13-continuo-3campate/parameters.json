@@ -1,0 +1,13 @@
+{
+  "Id": "13-continuo-3campate",
+  "Title": "Rettilineo continuo 20 \u002B 30 \u002B 20 m",
+  "Spans": [
+    20000,
+    30000,
+    20000
+  ],
+  "Radius": 0,
+  "PanelsPerSpan": 12,
+  "Length": 70000,
+  "Panels": 36
+}

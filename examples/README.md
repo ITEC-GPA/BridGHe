@@ -68,3 +68,7 @@ I comandi si eseguono nella radice del repository sorgente. Il pacchetto install
 - [Report delle definizioni Grasshopper](validation/grasshopper.json).
 - Modelli `.st7`, risultati `.LSA/.NLA`, log del solutore e archivi `.bgmodel`: generati in `artifacts/examples/<data-ora>` e raccolti in `artifacts/BridGHe-native-examples.zip`.
 - Report e definizioni sono versionati; i file binari Straus sono artefatti rigenerabili. Le geometrie dei benchmark sono originali e non derivano da progetti reali.
+
+## Quattro nuovi ponti: esempi 12–15
+
+[Definizioni GHX, parametri, tre fasi + ritiro, dettagli gPC e risultati](bridge-suite/README.md). Due continui rettilinei e due curvi; [tavole riepilogative](bridge-suite/quattro-ponti.pdf).

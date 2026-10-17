@@ -6,3 +6,7 @@
 examples/bridge-grillage/*.csv linguist-generated=true
 examples/bridge-grillage/validation.json linguist-generated=true
 examples/bridge-grillage/grasshopper-stresses.json linguist-generated=true
+examples/bridge-suite/**/*.csv linguist-generated=true
+examples/bridge-suite/**/geometry.json linguist-generated=true
+examples/bridge-suite/**/validation.json linguist-generated=true
+examples/bridge-suite/**/grasshopper-stresses.json linguist-generated=true

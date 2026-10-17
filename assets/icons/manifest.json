@@ -1262,6 +1262,42 @@
       "family": "solver",
       "glyph": "solver",
       "badge": "play"
+    },
+    {
+      "key": "BridgeStudsComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeStudsComponent",
+      "guid": "a65b8556-6a36-4c53-b52e-434d747c576e",
+      "name": "Bridge Studs",
+      "family": "check",
+      "glyph": "studs",
+      "badge": ""
+    },
+    {
+      "key": "BridgeIntermediateStiffenerComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeIntermediateStiffenerComponent",
+      "guid": "ea6bf9ee-ddc5-4b3e-8409-74d5674d2732",
+      "name": "Bridge Intermediate Stiffener",
+      "family": "check",
+      "glyph": "stiffener",
+      "badge": ""
+    },
+    {
+      "key": "BridgeSupportStiffenerComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeSupportStiffenerComponent",
+      "guid": "bb5073af-270d-4603-b7f5-6bf65fcd6aab",
+      "name": "Bridge Support Stiffener",
+      "family": "check",
+      "glyph": "stiffener",
+      "badge": "force"
+    },
+    {
+      "key": "BridgeDetailCheckComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeDetailCheckComponent",
+      "guid": "ffad5404-7440-47e7-9824-90588810089f",
+      "name": "Bridge Detail Check",
+      "family": "check",
+      "glyph": "studs",
+      "badge": "check"
     }
   ]
 }

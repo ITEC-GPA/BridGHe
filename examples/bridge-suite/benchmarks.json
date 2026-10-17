@@ -1,0 +1,142 @@
+[
+  {
+    "Name": "Ritiro False Uz L/2 [mm]",
+    "Actual": -1.9498861252514947,
+    "Expected": -1.9498861252514947,
+    "AbsoluteTolerance": 1.9498861252514948E-08,
+    "Passed": true
+  },
+  {
+    "Name": "Ritiro False Ux L [mm]",
+    "Actual": -0.6211099119604008,
+    "Expected": -0.6211099119604008,
+    "AbsoluteTolerance": 1E-08,
+    "Passed": true
+  },
+  {
+    "Name": "Ritiro False N [N]",
+    "Actual": 1.1641532182693481E-10,
+    "Expected": 0,
+    "AbsoluteTolerance": 1E-06,
+    "Passed": true
+  },
+  {
+    "Name": "Ritiro False My [Nmm]",
+    "Actual": 5.960464477539063E-08,
+    "Expected": 0,
+    "AbsoluteTolerance": 0.001,
+    "Passed": true
+  },
+  {
+    "Name": "RITIRO equilibrio F0 [N]",
+    "Actual": 0,
+    "Expected": 0,
+    "AbsoluteTolerance": 1E-05,
+    "Passed": true
+  },
+  {
+    "Name": "RITIRO equilibrio M0 [Nmm]",
+    "Actual": 0,
+    "Expected": 0,
+    "AbsoluteTolerance": 0.01,
+    "Passed": true
+  },
+  {
+    "Name": "RITIRO equilibrio F1 [N]",
+    "Actual": 0,
+    "Expected": 0,
+    "AbsoluteTolerance": 1E-05,
+    "Passed": true
+  },
+  {
+    "Name": "RITIRO equilibrio M1 [Nmm]",
+    "Actual": -2.384185791015625E-07,
+    "Expected": 0,
+    "AbsoluteTolerance": 0.01,
+    "Passed": true
+  },
+  {
+    "Name": "RITIRO equilibrio F2 [N]",
+    "Actual": 0,
+    "Expected": 0,
+    "AbsoluteTolerance": 1E-05,
+    "Passed": true
+  },
+  {
+    "Name": "RITIRO equilibrio M2 [Nmm]",
+    "Actual": 1.4889251025954498E-23,
+    "Expected": 0,
+    "AbsoluteTolerance": 0.01,
+    "Passed": true
+  },
+  {
+    "Name": "Ritiro True Uz L/2 [mm]",
+    "Actual": 0,
+    "Expected": 0,
+    "AbsoluteTolerance": 1E-08,
+    "Passed": true
+  },
+  {
+    "Name": "Ritiro True Ux L [mm]",
+    "Actual": 0,
+    "Expected": 0,
+    "AbsoluteTolerance": 1E-08,
+    "Passed": true
+  },
+  {
+    "Name": "Ritiro True N [N]",
+    "Actual": 684095.1673193916,
+    "Expected": 684095.1673193915,
+    "AbsoluteTolerance": 0.006840951673193915,
+    "Passed": true
+  },
+  {
+    "Name": "Ritiro True My [Nmm]",
+    "Actual": -436272571.0402812,
+    "Expected": -436272571.0402813,
+    "AbsoluteTolerance": 4.362725710402813,
+    "Passed": true
+  },
+  {
+    "Name": "RITIRO equilibrio F0 [N]",
+    "Actual": 0,
+    "Expected": 0,
+    "AbsoluteTolerance": 0.013681903346387832,
+    "Passed": true
+  },
+  {
+    "Name": "RITIRO equilibrio M0 [Nmm]",
+    "Actual": 0,
+    "Expected": 0,
+    "AbsoluteTolerance": 8.725451420805626,
+    "Passed": true
+  },
+  {
+    "Name": "RITIRO equilibrio F1 [N]",
+    "Actual": 0,
+    "Expected": 0,
+    "AbsoluteTolerance": 0.013681903346387832,
+    "Passed": true
+  },
+  {
+    "Name": "RITIRO equilibrio M1 [Nmm]",
+    "Actual": -1.7881393432617188E-07,
+    "Expected": 0,
+    "AbsoluteTolerance": 8.725451420805626,
+    "Passed": true
+  },
+  {
+    "Name": "RITIRO equilibrio F2 [N]",
+    "Actual": 0,
+    "Expected": 0,
+    "AbsoluteTolerance": 0.013681903346387832,
+    "Passed": true
+  },
+  {
+    "Name": "RITIRO equilibrio M2 [Nmm]",
+    "Actual": 6.617444900424222E-24,
+    "Expected": 0,
+    "AbsoluteTolerance": 8.725451420805626,
+    "Passed": true
+  }
+]

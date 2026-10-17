@@ -212,3 +212,14 @@
 | Plate Filter | component | Plates; IDs; Positions; Units; Properties name; Groups | Plates; Others |
 | Remesh | component | Mesh; Target length; Max distance; Plane | Mesh |
 | Surface splitter curves | component | Surface; Points; Lines; Tolerance | Cuttings |
+
+## Componenti aggiunti per dettagli gPC
+
+| Componente | Modello/metodo gPC | Scopo |
+|---|---|---|
+| Bridge Studs | BridgeStudOptions | Pioli a testa, fila, passi, materiali e geometria di dettaglio |
+| Bridge Intermediate Stiffener | BridgeIntermediateStiffener | Piatti intermedi, pannelli, eccentricità e saldature |
+| Bridge Support Stiffener | BridgeSupportStiffener | Piatti d'appoggio, impronta, reazione e montante terminale |
+| Bridge Detail Check | HBridgeSection.Calculate | Controlli di dettaglio sulla storia del risultato MeCheck2 |
+
+Totale: 131 componenti, 9 parametri, più il plugin. I 16 componenti MeCheck2 originali conservano le loro porte.

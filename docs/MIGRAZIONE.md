@@ -116,3 +116,13 @@ Con la licenza API disponibile sono stati eseguiti dieci benchmark e cinque cont
 | `6fe4d7d` | `BridgeForceConvention.FromStraus` | I valori definiti negli assi positivi della sezione vengono trasformati nel riferimento di destinazione gPC. Il precedente codice assegnava direttamente il riferimento `(-x,-y)` e invertiva i segni in MeCheck2. Correzione verificata con flessione pura nativa e tensioni di lembo. |
 
 Le dichiarazioni aggiunte al binding sono rigenerate dall'header R3 installato, non adattate manualmente. Nessuna modifica a porte, GUID o sorgenti gPC. I benchmark di sezione composta esplicitano l'approssimazione a linea media delle flange del motore attuale. Le vecchie verifiche MeCheck2 vanno ricalcolate per effetto della correzione del segno, mentre le uscite beam continuano a riportare BM1/BM2 nella convenzione Straus.
+
+## Quattro ponti e dettagli gPC - 18 ottobre 2026
+
+- `StrausAnalysis.Run` e `StrausR3Helper.CreateModelCore` canonicalizzano il percorso con `Path.GetFullPath`: il solver nativo restituiva 1029 con separatori `/`, pur riuscendo a creare il file `.st7`. Commit `4493ca4`; verifica nativa della mensola con percorso relativo e slash.
+- Quattro nuovi componenti nella sottocategoria Bridge details: `BridgeStudsComponent`, `BridgeIntermediateStiffenerComponent`, `BridgeSupportStiffenerComponent`, `BridgeDetailCheckComponent`. Definiscono i record gPC ed eseguono `HBridgeSection.Calculate` conservando materiali, fasi e stato limite del risultato MeCheck2. Nessuna formula resistente duplicata nel plugin.
+- `BridgeDetailGoo.Write/Read/Duplicate`: persistenza dei tre record immutabili, discriminatore chiuso dei tipi, senza caricamento di tipi arbitrari dagli archivi.
+- I nuovi esempi usano le chiamate esistenti `St7SetBeamPreLoad1` e `St7SetBeamTempGradient2` per il ritiro longitudinale globale. Nessuna modifica delle firme native o delle DLL gPC.
+- Tutte le porte dei 103 oggetti conservati e dei 16 MeCheck2 sono invariate; quattro nuovi GUID, totale 141 con il plugin.
+
+Documentazione, ipotesi, procedura riproducibile e limiti: [suite ponti](../examples/bridge-suite/README.md).

@@ -32,6 +32,8 @@ internal static class Program
         if(args.Contains("--examples")) return NativeExamples.Run(args.SkipWhile(a=>a!="--examples").Skip(1).FirstOrDefault()??"all");
         if(args.Contains("--bridge-native")) return NativeBridgePhases.Run();
         if(args.Contains("--bridge-grillage")) return BridgeGrillageExample.Run(args.Contains("--gh"));
+        if(args.Contains("--bridge-suite")) return BridgeSuiteExample.Run(args.Contains("--gh"),args.Contains("--probe"),args.SkipWhile(a=>a!="--bridge-suite").Skip(1).FirstOrDefault(a=>!a.StartsWith("--"))??"all");
+        if(args.Contains("--bridge-gh-replay")) return GrasshopperBridgeSuite.Replay(args.SkipWhile(a=>a!="--bridge-gh-replay").Skip(1).FirstOrDefault()??"12");
         if(args.Contains("--gh-examples")) return GrasshopperExamples.Run(args.SkipWhile(a=>a!="--gh-examples").Skip(1).FirstOrDefault()??"all");
         if(args.Contains("--regression"))
             return RegressionTests.Run(args.SkipWhile(a=>a!="--regression").Skip(1).FirstOrDefault()??"all");

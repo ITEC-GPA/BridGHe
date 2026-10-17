@@ -32,7 +32,8 @@ internal static class RegressionTests
             ["preview-bounds"] = PreviewBounds,
             ["bridge-planar-noise"] = BridgePlanarNoise,
             ["bridge-instant-modulus"] = BridgeInstantModulus,
-            ["bridge-example-parameters"] = BridgeExampleParameters
+            ["bridge-example-parameters"] = BridgeExampleParameters,
+            ["bridge-detail-archives"] = BridgeDetailArchives
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
@@ -47,6 +48,37 @@ internal static class RegressionTests
     private static void Require(bool condition, string message)
     {
         if (!condition) throw new InvalidOperationException("REGRESSION FAILED: " + message);
+    }
+
+    private static void BridgeDetailArchives()
+    {
+        var assembly=System.Reflection.Assembly.LoadFrom(System.IO.Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha"));
+        var type=assembly.GetType("BridGHe.Grasshopper.DataTypes.BridgeDetailGoo",true);
+        object[] definitions={
+            new GPC.Checkers.CompositeBridge.BridgeStudOptions{Enabled=true,CountPerRow=3,Diameter=22,LongitudinalPitch=180},
+            new GPC.Checkers.CompositeBridge.BridgeIntermediateStiffener{Enabled=true,Layout=GPC.Checkers.CompositeBridge.BridgeStiffenerLayout.Unequal,Width=200,RightWidth=250,ExternalCompressionKN=123.4},
+            new GPC.Checkers.CompositeBridge.BridgeSupportStiffener{Enabled=true,Location=GPC.Checkers.CompositeBridge.BridgeSupportLocation.RightEnd,ReactionKN=1234.5,LoadX=-20}
+        };
+        foreach(var value in definitions)
+        {
+            var goo=(Grasshopper.Kernel.Types.IGH_Goo)Activator.CreateInstance(type,new[]{value});
+            var archive=new GH_IO.Serialization.GH_Archive();Require(archive.AppendObject(goo,"detail"),"detail serializes");
+            var restored=(Grasshopper.Kernel.Types.IGH_Goo)Activator.CreateInstance(type);
+            Require(archive.ExtractObject(restored,"detail")&&restored.IsValid,"detail deserializes");
+            var copy=type.GetProperty("Value").GetValue(restored);
+            Require(copy.Equals(value),"all gPC scalar options and enums survive GH archive");
+            Require(type.GetProperty("Value").GetValue(goo.Duplicate()).Equals(value),"immutable detail duplication");
+        }
+        var bad=new GH_IO.Serialization.GH_LooseChunk("bad");bad.SetString("Kind","ArbitraryType");bad.SetString("Data","{}");
+        Require(!(bool)type.GetMethod("Read").Invoke(Activator.CreateInstance(type),new object[]{bad}),"unknown detail type rejected");
+        using var document=new Grasshopper.Kernel.GH_Document();
+        var studs=(Grasshopper.Kernel.GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components.BridgeDetails.BridgeStudsComponent",true));
+        studs.CreateAttributes();document.AddObject(studs,false);
+        var count=(Grasshopper.Kernel.Parameters.Param_Number)studs.Params.Input[1];count.PersistentData.Clear();count.SetPersistentData(2.5);
+        Grasshopper.Kernel.GH_Document.EnableSolutions=true;document.Enabled=true;document.NewSolution(false,Grasshopper.Kernel.GH_SolutionMode.Silent);
+        Require(studs.RuntimeMessages(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error).Any(m=>m.Contains("integer"))&&studs.Params.Output[0].VolatileData.AllData(true).All(g=>g==null||!g.IsValid),"fractional stud count rejected by real component");
+        count.PersistentData.Clear();count.SetPersistentData(2);studs.ExpireSolution(false);document.NewSolution(false,Grasshopper.Kernel.GH_SolutionMode.Silent);
+        Require(studs.RuntimeMessages(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error).Count==0&&studs.Params.Output[0].VolatileDataCount==1,"valid stud definition recovers after invalid input");
     }
 
     private static void BridgeExampleParameters()

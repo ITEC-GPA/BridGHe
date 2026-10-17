@@ -8050,6 +8050,538 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeStudsComponent",
+    "guid": "a65b8556-6a36-4c53-b52e-434d747c576e",
+    "kind": "component",
+    "name": "Bridge Studs",
+    "nickname": "Studs",
+    "inputs": [
+      {
+        "name": "Enabled",
+        "nickname": "Enabled",
+        "description": "Enable studs",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "CountPerRow",
+        "nickname": "CountPerRow",
+        "description": "Integer studs per transverse row, 1 to 20",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Diameter",
+        "nickname": "Diameter",
+        "description": "Shank diameter [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Height",
+        "nickname": "Height",
+        "description": "Total height [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "LongitudinalPitch",
+        "nickname": "LongitudinalPitch",
+        "description": "Longitudinal pitch [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "TransversePitch",
+        "nickname": "TransversePitch",
+        "description": "Transverse pitch [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Fu",
+        "nickname": "Fu",
+        "description": "Stud ultimate tensile strength [MPa]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "GammaV",
+        "nickname": "GammaV",
+        "description": "Connection partial factor; select for applicable standard",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "HeadDiameter",
+        "nickname": "HeadDiameter",
+        "description": "Head diameter [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "HeadThickness",
+        "nickname": "HeadThickness",
+        "description": "Head thickness [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "RequiredCover",
+        "nickname": "RequiredCover",
+        "description": "Required cover [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "RepeatedActionDetail",
+        "nickname": "RepeatedActionDetail",
+        "description": "Detailing for repeated actions; this does not enable fatigue verification",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Detail",
+        "nickname": "D",
+        "description": "Immutable gPC detail definition",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeIntermediateStiffenerComponent",
+    "guid": "ea6bf9ee-ddc5-4b3e-8409-74d5674d2732",
+    "kind": "component",
+    "name": "Bridge Intermediate Stiffener",
+    "nickname": "IntStiff",
+    "inputs": [
+      {
+        "name": "Enabled",
+        "nickname": "Enabled",
+        "description": "Enable intermediate stiffener",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Layout",
+        "nickname": "Layout",
+        "description": "Symmetric / left / right / unequal",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Width",
+        "nickname": "Width",
+        "description": "Left plate outstand [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Thickness",
+        "nickname": "Thickness",
+        "description": "Left plate thickness [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "RightWidth",
+        "nickname": "RightWidth",
+        "description": "Right outstand, unequal layout [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "RightThickness",
+        "nickname": "RightThickness",
+        "description": "Right thickness, unequal layout [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "LeftPanel",
+        "nickname": "LeftPanel",
+        "description": "Left panel length [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "RightPanel",
+        "nickname": "RightPanel",
+        "description": "Right panel length [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "EqualPanels",
+        "nickname": "EqualPanels",
+        "description": "Use left length for both panels",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "LengthFactor",
+        "nickname": "LengthFactor",
+        "description": "Buckling length factor",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "ExternalCompressionKN",
+        "nickname": "ExternalCompressionKN",
+        "description": "Additional compression [kN], not N",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "LoadX",
+        "nickname": "LoadX",
+        "description": "Load transverse eccentricity [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "CheckWelds",
+        "nickname": "CheckWelds",
+        "description": "Check continuous welds",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "WeldThroat",
+        "nickname": "WeldThroat",
+        "description": "Fillet weld throat [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Detail",
+        "nickname": "D",
+        "description": "Immutable gPC detail definition",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeSupportStiffenerComponent",
+    "guid": "bb5073af-270d-4603-b7f5-6bf65fcd6aab",
+    "kind": "component",
+    "name": "Bridge Support Stiffener",
+    "nickname": "SupStiff",
+    "inputs": [
+      {
+        "name": "Enabled",
+        "nickname": "Enabled",
+        "description": "Enable bearing stiffener",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Layout",
+        "nickname": "Layout",
+        "description": "Symmetric / left / right / unequal",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Width",
+        "nickname": "Width",
+        "description": "Left plate outstand [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Thickness",
+        "nickname": "Thickness",
+        "description": "Left plate thickness [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "RightWidth",
+        "nickname": "RightWidth",
+        "description": "Right outstand, unequal layout [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "RightThickness",
+        "nickname": "RightThickness",
+        "description": "Right thickness, unequal layout [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Location",
+        "nickname": "Location",
+        "description": "Internal / left end / right end",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "LeftPanel",
+        "nickname": "LeftPanel",
+        "description": "Left panel length [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "RightPanel",
+        "nickname": "RightPanel",
+        "description": "Right panel length [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "ReactionKN",
+        "nickname": "ReactionKN",
+        "description": "Actual compression reaction envelope [kN], not N; zero means no external bearing compression",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "EndDistance",
+        "nickname": "EndDistance",
+        "description": "Distance from end [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "LoadX",
+        "nickname": "LoadX",
+        "description": "Transverse eccentricity [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "LoadZ",
+        "nickname": "LoadZ",
+        "description": "Longitudinal eccentricity [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "FootprintLength",
+        "nickname": "FootprintLength",
+        "description": "Bearing footprint longitudinal length [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "FootprintWidth",
+        "nickname": "FootprintWidth",
+        "description": "Bearing footprint transverse width [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "LengthFactor",
+        "nickname": "LengthFactor",
+        "description": "Buckling length factor",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "RigidEndPost",
+        "nickname": "RigidEndPost",
+        "description": "Enable rigid end-post checks",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "EndPostSpacing",
+        "nickname": "EndPostSpacing",
+        "description": "Two end-post pairs spacing [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "CheckWelds",
+        "nickname": "CheckWelds",
+        "description": "Check continuous welds",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "WeldThroat",
+        "nickname": "WeldThroat",
+        "description": "Fillet weld throat [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Detail",
+        "nickname": "D",
+        "description": "Immutable gPC detail definition",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeDetailCheckComponent",
+    "guid": "ffad5404-7440-47e7-9824-90588810089f",
+    "kind": "component",
+    "name": "Bridge Detail Check",
+    "nickname": "DetailCheck",
+    "inputs": [
+      {
+        "name": "Section result",
+        "nickname": "R",
+        "description": "BridgeStressResult from MeCheck2; the selected stage is retained",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Studs",
+        "nickname": "S",
+        "description": "Bridge Studs definition",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Intermediate stiffener",
+        "nickname": "I",
+        "description": "Bridge Intermediate Stiffener definition",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Support stiffener",
+        "nickname": "A",
+        "description": "Bridge Support Stiffener definition",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Section result",
+        "nickname": "R",
+        "description": "Updated gPC stress result, including Studs and Shear details",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Check",
+        "nickname": "C",
+        "description": "gPC check name",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Demand",
+        "nickname": "D",
+        "description": "Demand, units in U",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Resistance",
+        "nickname": "R",
+        "description": "Resistance or limit, units in U",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Units",
+        "nickname": "U",
+        "description": "gPC units",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Ratio",
+        "nickname": "Eta",
+        "description": "Demand/resistance; NaN where gPC requires a separate verification",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Status",
+        "nickname": "S",
+        "description": "Status and explanation, including limit state scope",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Warnings",
+        "nickname": "W",
+        "description": "gPC warnings",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Attributes.BeamOutputStationsComponent",
     "guid": "72860a35-4af0-41c0-9e26-79a3db608d5f",
     "kind": "component",

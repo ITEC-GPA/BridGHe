@@ -102,3 +102,20 @@ Le 21 famiglie parametriche sono state calcolate con l'API e hanno area e inerzi
 5. Eseguire almeno un caso NLA e uno staged, confrontando nomi/indici dei casi salvati e risultati riassociati agli elementi.
 
 Questi passaggi non sono sostituiti dalla sola compilazione. I controlli software già eseguiti rendono la trasposizione riproducibile e ispezionabile; la validazione del verificatore strutturale completo rimane distinta.
+
+## Suite ponti del 18 ottobre 2026
+
+Quattro esempi 12–15: **290 misure superate**, di cui 20 sui benchmark del ritiro libero/impedito e 270 nei quattro ponti (81, 85, 52, 52). Ogni GHX è stato riaperto e risolto con i componenti reali. Le verifiche numeriche comprendono tutti e quattro i contributi, equilibrio, convergenza della mesh, confronti analitici dei continui, tensioni primarie+secondarie, pioli e dettagli gPC.
+
+| Esempio | Mesh base→raffinata per campata | Massimo scarto Uz / picco di riferimento |
+|---|---|---|
+| 12, 20+20 m | 12→24 | 0,2972% |
+| 13, 20+30+20 m | 12→24 | 0,1516% |
+| 14, curvo R80 | 48→96 | 0,5831% |
+| 15, curvo R120 | 24→48 | 1,1128% |
+
+La prima mesh dei curvi non rispettava il 2%; è stata raffinata senza allargare la tolleranza. I file distribuiti corrispondono alle mesh della tabella. Il caso R80 ha una freccia di circa 136 mm nella fase di solo acciaio: è un esempio numerico flessibile, non un dimensionamento approvato; warping e instabilità globale non sono inclusi.
+
+Test generale della build aggiornata: **181 controlli smoke e 23 gruppi di regressione**, incluse le icone dei 140 oggetti Grasshopper e la persistenza dei dettagli gPC. Audit: 103 oggetti conservati, 16 MeCheck2, 141 GUID contando il plugin, nessun errore. Il bug nativo dei percorsi è verificato separatamente sul caso 01 a mensola (9 controlli).
+
+Per i curvi viene verificato anche che MeCheck2 segnali la torsione H non supportata: **questo è un test del software, non una verifica resistente del ponte**. Limiti, fonti e file riproducibili sono nel [README della suite](../examples/bridge-suite/README.md).

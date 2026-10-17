@@ -1,0 +1,12 @@
+{
+  "Id": "15-curvo-2campate",
+  "Title": "Curvo continuo 25 \u002B 25 m / R 120 m",
+  "Spans": [
+    25000,
+    25000
+  ],
+  "Radius": 120000,
+  "PanelsPerSpan": 24,
+  "Length": 50000,
+  "Panels": 48
+}

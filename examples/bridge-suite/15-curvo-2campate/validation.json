@@ -1,0 +1,499 @@
+{
+  "Date": "2026-10-18T01:01:55.0057764+02:00",
+  "Definition": {
+    "Id": "15-curvo-2campate",
+    "Title": "Curvo continuo 25 \u002B 25 m / R 120 m",
+    "Spans": [
+      25000,
+      25000
+    ],
+    "Radius": 120000,
+    "PanelsPerSpan": 24,
+    "Length": 50000,
+    "Panels": 48
+  },
+  "Section": {
+    "Span": 50000,
+    "Width": 10000,
+    "Panels": 12,
+    "SlabThickness": 250,
+    "SteelHeight": 1600,
+    "FlangeWidth": 600,
+    "FlangeThickness": 40,
+    "WebThickness": 16,
+    "PermanentPressure": 0.0025,
+    "TrafficPressure": 0.0025,
+    "VehicleWeight": 300000,
+    "AxleSpacing": 3000,
+    "MovingPositions": 21,
+    "PhiLong": 2,
+    "ShrinkageLong": -0.0001,
+    "ShrinkageInstant": 0
+  },
+  "Ec": 32836.56803133079,
+  "Shrinkage": {
+    "Centroid": -512.7366657183146,
+    "EA": 22028151673.193916,
+    "EI": 11187129478753822,
+    "Epsilon": -3.105549559802004E-05,
+    "Gradient": -3.8997722505029895E-08,
+    "PrimaryN": -684095.1673193915,
+    "PrimaryM": -436272571.0402813
+  },
+  "Method": "3 independent incremental linear stiffness states \u002B longitudinal differential shrinkage; primary section stress and native secondary resultants added once.",
+  "Scope": "Gross uncracked sections, full interaction, equivalent planar grillage. Torsion preserved; curved sections exceed current MeCheck2 action domain. No normative complete bridge verification.",
+  "Results": [
+    {
+      "Case": "G1_GETTO",
+      "MinUz": -10.911571597509791,
+      "MaxUz": 0,
+      "MaxAbsN": 4.1676387385243363E-11,
+      "MinMy": -1991008239.0489974,
+      "MaxMy": 1150800650.4346743,
+      "MaxAbsT": 17823003.48584669
+    },
+    {
+      "Case": "G2_PERMANENTI",
+      "MinUz": -1.5059161534809868,
+      "MaxUz": 0,
+      "MaxAbsN": 1.818148160423626E-11,
+      "MinMy": -558608505.3004627,
+      "MaxMy": 326178060.5995929,
+      "MaxAbsT": 350759.2159616791
+    },
+    {
+      "Case": "Q_TRAFFICO",
+      "MinUz": -1.1439403605924512,
+      "MaxUz": 0,
+      "MaxAbsN": 2.5890501812275644E-11,
+      "MinMy": -557461723.3725611,
+      "MaxMy": 325231183.8869202,
+      "MaxAbsT": 769398.138975907
+    },
+    {
+      "Case": "RITIRO",
+      "MinUz": -1.0226462519632786,
+      "MaxUz": 0,
+      "MaxAbsN": 489.8831400901545,
+      "MinMy": -762020039.3607028,
+      "MaxMy": 38409.242514669895,
+      "MaxAbsT": 217154.80479806633
+    }
+  ],
+  "Mesh": [
+    {
+      "Phase": "G1_GETTO",
+      "Base": 24,
+      "Refined": 48,
+      "MaxUzDifference": 0.12272487578519709,
+      "ReferencePeakUz": 11.028477486492612,
+      "RelativeError": 0.011127998033772773
+    },
+    {
+      "Phase": "G2_PERMANENTI",
+      "Base": 24,
+      "Refined": 48,
+      "MaxUzDifference": 0.002923385989150873,
+      "ReferencePeakUz": 1.5034508968153624,
+      "RelativeError": 0.0019444505938592629
+    },
+    {
+      "Phase": "Q_TRAFFICO",
+      "Base": 24,
+      "Refined": 48,
+      "MaxUzDifference": 0.002548503989478923,
+      "ReferencePeakUz": 1.14175159151757,
+      "RelativeError": 0.0022321002295180117
+    },
+    {
+      "Phase": "RITIRO",
+      "Base": 24,
+      "Refined": 48,
+      "MaxUzDifference": 0.002713076629766442,
+      "ReferencePeakUz": 1.0234710679198398,
+      "RelativeError": 0.0026508581578965898
+    }
+  ],
+  "Sections": [
+    {
+      "Beam": 13,
+      "Station": 0,
+      "FinalStress": [],
+      "Supported": false,
+      "Reason": "Il motore gPC adottato copre N\u2013Mx\u2013Vy. Flessione deviata, taglio trasversale e torsione richiedono un verificatore dedicato. M2=-2.18444E-07, T=1.04266E\u002B07 N mm (tolleranza numerica 0.001); V1=-2.8326E-11 N (tolleranza 1E-06)."
+    },
+    {
+      "Beam": 25,
+      "Station": 0,
+      "FinalStress": [],
+      "Supported": false,
+      "Reason": "Il motore gPC adottato copre N\u2013Mx\u2013Vy. Flessione deviata, taglio trasversale e torsione richiedono un verificatore dedicato. M2=-6.2016E-07, T=-1.7823E\u002B07 N mm (tolleranza numerica 0.001); V1=-1.08953E-10 N (tolleranza 1E-06)."
+    }
+  ],
+  "Checks": [
+    {
+      "Name": "G1_GETTO equilibrio F0 [N]",
+      "Actual": -2.4233807008389483E-27,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.0884411463237589,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO equilibrio M0 [Nmm]",
+      "Actual": 0.00015306472778320312,
+      "Expected": 0,
+      "AbsoluteTolerance": 2242.8328203256365,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO equilibrio F1 [N]",
+      "Actual": 4.5589849434532714E-26,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.0884411463237589,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO equilibrio M1 [Nmm]",
+      "Actual": -0.0003662109375,
+      "Expected": 0,
+      "AbsoluteTolerance": 2242.8328203256365,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO equilibrio F2 [N]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.0884411463237589,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO equilibrio M2 [Nmm]",
+      "Actual": -1.920205979098307E-09,
+      "Expected": 0,
+      "AbsoluteTolerance": 2242.8328203256365,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO risultati per ogni beam",
+      "Actual": 231,
+      "Expected": 231,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI equilibrio F0 [N]",
+      "Actual": -3.7865323450608567E-28,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.024999921508422982,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI equilibrio M0 [Nmm]",
+      "Actual": 8.940696716308594E-06,
+      "Expected": 0,
+      "AbsoluteTolerance": 633.9818267687875,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI equilibrio F1 [N]",
+      "Actual": 2.524354896707238E-28,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.024999921508422982,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI equilibrio M1 [Nmm]",
+      "Actual": 2.2411346435546875E-05,
+      "Expected": 0,
+      "AbsoluteTolerance": 633.9818267687875,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI equilibrio F2 [N]",
+      "Actual": 4.3655745685100555E-11,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.024999921508422982,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI equilibrio M2 [Nmm]",
+      "Actual": -3.7019467595639564E-11,
+      "Expected": 0,
+      "AbsoluteTolerance": 633.9818267687875,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI risultati per ogni beam",
+      "Actual": 339,
+      "Expected": 339,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO equilibrio F0 [N]",
+      "Actual": -4.96627382881888E-27,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.024999921508415887,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO equilibrio M0 [Nmm]",
+      "Actual": 6.473064422607422E-05,
+      "Expected": 0,
+      "AbsoluteTolerance": 633.9850181165566,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO equilibrio F1 [N]",
+      "Actual": 3.003982327081613E-27,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.024999921508415887,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO equilibrio M1 [Nmm]",
+      "Actual": -0.00011157989501953125,
+      "Expected": 0,
+      "AbsoluteTolerance": 633.9850181165566,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO equilibrio F2 [N]",
+      "Actual": 6.548361852765083E-11,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.024999921508415887,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO equilibrio M2 [Nmm]",
+      "Actual": -6.664377373272902E-12,
+      "Expected": 0,
+      "AbsoluteTolerance": 633.9850181165566,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO risultati per ogni beam",
+      "Actual": 339,
+      "Expected": 339,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "RITIRO equilibrio F0 [N]",
+      "Actual": 1.27675647831893E-14,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.00424314731436559,
+      "Passed": true
+    },
+    {
+      "Name": "RITIRO equilibrio M0 [Nmm]",
+      "Actual": -7.987022399902344E-06,
+      "Expected": 0,
+      "AbsoluteTolerance": 108.30704040250355,
+      "Passed": true
+    },
+    {
+      "Name": "RITIRO equilibrio F1 [N]",
+      "Actual": 8.659739592076221E-15,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.00424314731436559,
+      "Passed": true
+    },
+    {
+      "Name": "RITIRO equilibrio M1 [Nmm]",
+      "Actual": 7.808208465576172E-05,
+      "Expected": 0,
+      "AbsoluteTolerance": 108.30704040250355,
+      "Passed": true
+    },
+    {
+      "Name": "RITIRO equilibrio F2 [N]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.00424314731436559,
+      "Passed": true
+    },
+    {
+      "Name": "RITIRO equilibrio M2 [Nmm]",
+      "Actual": -2.8414328480518775E-05,
+      "Expected": 0,
+      "AbsoluteTolerance": 108.30704040250355,
+      "Passed": true
+    },
+    {
+      "Name": "RITIRO risultati per ogni beam",
+      "Actual": 339,
+      "Expected": 339,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO convergenza mesh Uz [mm]",
+      "Actual": 0.12272487578519709,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.22056954972985224,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI convergenza mesh Uz [mm]",
+      "Actual": 0.002923385989150873,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.030069017936307247,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO convergenza mesh Uz [mm]",
+      "Actual": 0.002548503989478923,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.0228350318303514,
+      "Passed": true
+    },
+    {
+      "Name": "RITIRO convergenza mesh Uz [mm]",
+      "Actual": 0.002713076629766442,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.020469421358396796,
+      "Passed": true
+    },
+    {
+      "Name": "MeCheck2 segnala azioni fuori campo beam 12",
+      "Actual": 1,
+      "Expected": 1,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "MeCheck2 segnala azioni fuori campo beam 24",
+      "Actual": 1,
+      "Expected": 1,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH G1_GETTO beam count",
+      "Actual": 231,
+      "Expected": 231,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH G1_GETTO scarto max XYZ tutti nodi [mm]",
+      "Actual": 2.3868906851021165E-11,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH G1_GETTO scarto max N V1 V2 [N]",
+      "Actual": 7.450580596923828E-07,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.001,
+      "Passed": true
+    },
+    {
+      "Name": "GH G1_GETTO scarto max BM1 BM2 T [Nmm]",
+      "Actual": 0.0031943321228027344,
+      "Expected": 0,
+      "AbsoluteTolerance": 1,
+      "Passed": true
+    },
+    {
+      "Name": "GH G2_PERMANENTI beam count",
+      "Actual": 339,
+      "Expected": 339,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH G2_PERMANENTI scarto max XYZ tutti nodi [mm]",
+      "Actual": 2.5375257450832578E-12,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH G2_PERMANENTI scarto max N V1 V2 [N]",
+      "Actual": 1.3737007975578308E-07,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.001,
+      "Passed": true
+    },
+    {
+      "Name": "GH G2_PERMANENTI scarto max BM1 BM2 T [Nmm]",
+      "Actual": 0.0005232691764831543,
+      "Expected": 0,
+      "AbsoluteTolerance": 1,
+      "Passed": true
+    },
+    {
+      "Name": "GH Q_TRAFFICO beam count",
+      "Actual": 339,
+      "Expected": 339,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH Q_TRAFFICO scarto max XYZ tutti nodi [mm]",
+      "Actual": 8.670841822322473E-13,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH Q_TRAFFICO scarto max N V1 V2 [N]",
+      "Actual": 1.434236764907837E-07,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.001,
+      "Passed": true
+    },
+    {
+      "Name": "GH Q_TRAFFICO scarto max BM1 BM2 T [Nmm]",
+      "Actual": 0.0003858804702758789,
+      "Expected": 0,
+      "AbsoluteTolerance": 1,
+      "Passed": true
+    },
+    {
+      "Name": "GH RITIRO beam count",
+      "Actual": 339,
+      "Expected": 339,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH RITIRO scarto max XYZ tutti nodi [mm]",
+      "Actual": 2.2088452516906008E-12,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH RITIRO scarto max N V1 V2 [N]",
+      "Actual": 1.601874828338623E-07,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.001,
+      "Passed": true
+    },
+    {
+      "Name": "GH RITIRO scarto max BM1 BM2 T [Nmm]",
+      "Actual": 0.0005817413330078125,
+      "Expected": 0,
+      "AbsoluteTolerance": 1,
+      "Passed": true
+    },
+    {
+      "Name": "GH MeCheck2 segnala torsione fuori campo",
+      "Actual": 1,
+      "Expected": 1,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH nessuna tensione parziale presentata come verifica",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    }
+  ]
+}

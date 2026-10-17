@@ -1,0 +1,578 @@
+[
+  {
+    "Studs": {
+      "Enabled": true,
+      "CountPerRow": 2,
+      "Diameter": 22,
+      "Height": 180,
+      "LongitudinalPitch": 200,
+      "TransversePitch": 150,
+      "Fu": 450,
+      "GammaV": 1.25,
+      "HeadDiameter": 35,
+      "HeadThickness": 10,
+      "RepeatedActionDetail": true,
+      "RequiredCover": 40
+    },
+    "Intermediate": {
+      "Enabled": false,
+      "LeftPanel": 0,
+      "RightPanel": 0,
+      "EqualPanels": false,
+      "ExternalCompressionKN": 0,
+      "LoadX": 0,
+      "Layout": 0,
+      "LayoutName": "Bilaterali simmetrici",
+      "Width": 0,
+      "Thickness": 0,
+      "RightWidth": 0,
+      "RightThickness": 0,
+      "LengthFactor": 1,
+      "CheckWelds": false,
+      "WeldThroat": 0
+    },
+    "Support": {
+      "Enabled": true,
+      "LeftPanel": 3333.3333333333335,
+      "RightPanel": 3333.3333333333335,
+      "EndDistance": 250,
+      "ReactionKN": 205.50223546385683,
+      "LoadX": 0,
+      "LoadZ": 0,
+      "FootprintLength": 400,
+      "FootprintWidth": 600,
+      "RigidEndPost": false,
+      "EndPostSpacing": 300,
+      "Location": 1,
+      "LocationName": "Estremit\u00E0 sinistra",
+      "Layout": 0,
+      "LayoutName": "Bilaterali simmetrici",
+      "Width": 250,
+      "Thickness": 25,
+      "RightWidth": 250,
+      "RightThickness": 25,
+      "LengthFactor": 1,
+      "CheckWelds": true,
+      "WeldThroat": 8
+    },
+    "Checks": [
+      {
+        "Name": "Anima \u00B7 resistenza a taglio",
+        "Demand": 176.63066641623533,
+        "Resistance": 2784.056628931202,
+        "Unit": "kN",
+        "Ratio": null,
+        "Note": "Resistenza SLU di confronto: assegnare la combinazione SLU per l\u2019esito",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Appoggio \u00B7 stabilit\u00E0 e pressoflessione II ordine",
+        "Demand": 16.374276077794907,
+        "Resistance": 322.7272727272727,
+        "Unit": "MPa",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; EN 1993-1-1 \u00A7\u00A75.2.2(7)a, 5.3.4: imperfezione equivalente Lcr/200, eccentricit\u00E0 effettive, due piani; nessuna riserva plastica",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Appoggio \u00B7 freccia fuori piano",
+        "Demand": 0.004486791514235535,
+        "Resistance": 5.066666666666666,
+        "Unit": "mm",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; EN 1993-1-5 \u00A79.2.1: w \u2264 b/300, b = hw",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Appoggio \u00B7 rigidezza torsionale",
+        "Demand": 0.9585829902932358,
+        "Resistance": 1,
+        "Unit": "\u2014",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; ",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Appoggio \u00B7 piatti entro classe 3",
+        "Demand": 0.877914475017397,
+        "Resistance": 1,
+        "Unit": "\u2014",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; Sbalzi uniformemente compressi c/t \u2264 14\u03B5; nessuna riduzione automatica dei piatti snelli",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Appoggio \u00B7 ingombro tra piattabande",
+        "Demand": 250,
+        "Resistance": 292,
+        "Unit": "mm",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; ",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Appoggio \u00B7 saldature verticali all\u2019anima",
+        "Demand": 4.5404803118320345,
+        "Resistance": 223.6239250646794,
+        "Unit": "MPa",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; Cordoni continui su entrambi i bordi di ogni piatto; risultante cautelativa, EN 1993-1-8 \u00A74.5.3.3; \u03B2w=1",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Appoggio \u00B7 saldature alle flange",
+        "Demand": 25.584806371554542,
+        "Resistance": 223.6239250646794,
+        "Unit": "MPa",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; ",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Appoggio \u00B7 gola minima",
+        "Demand": 3,
+        "Resistance": 8,
+        "Unit": "mm",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; ",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Appoggio \u00B7 lunghezza efficace cordone",
+        "Demand": 48,
+        "Resistance": 234,
+        "Unit": "mm",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; ",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Appoggio \u00B7 impronta trasversale sotto i piatti",
+        "Demand": 516,
+        "Resistance": 600,
+        "Unit": "mm",
+        "Ratio": null,
+        "Note": "",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Appoggio \u00B7 impronta longitudinale",
+        "Demand": 25,
+        "Resistance": 400,
+        "Unit": "mm",
+        "Ratio": null,
+        "Note": "",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Appoggio \u00B7 impronta entro l\u2019estremit\u00E0",
+        "Demand": 200,
+        "Resistance": 250,
+        "Unit": "mm",
+        "Ratio": null,
+        "Note": "",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Appoggio \u00B7 contatto piatti/flangia",
+        "Demand": 21.85350255456223,
+        "Resistance": 338.0952380952381,
+        "Unit": "MPa",
+        "Ratio": null,
+        "Note": "Piatti a contatto con la flangia inferiore; impronta interamente sottostante. Non comprende piastra di ripartizione o apparecchio d\u2019appoggio.",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Anima \u00B7 tensione equivalente elastica (inviluppo)",
+        "Demand": 16.49254062858829,
+        "Resistance": 355,
+        "Unit": "MPa",
+        "Ratio": 0.04645786092560082,
+        "Note": "\u221A(max|\u03C3|\u00B2 \u002B 3 max|\u03C4|\u00B2); \u03C4 sulla sezione lorda omogeneizzata",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Piolo \u00B7 taglio longitudinale",
+        "Demand": 2.438516570515595,
+        "Resistance": 82.10866559422284,
+        "Unit": "kN",
+        "Ratio": 0.029698650597570653,
+        "Note": "0,75 PRd; esito disponibile soltanto con la combinazione caratteristica/rara",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Pioli \u00B7 passo longitudinale minimo",
+        "Demand": 110,
+        "Resistance": 200,
+        "Unit": "mm",
+        "Ratio": 0.55,
+        "Note": "",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Pioli \u00B7 passo longitudinale massimo",
+        "Demand": 200,
+        "Resistance": 800,
+        "Unit": "mm",
+        "Ratio": 0.25,
+        "Note": "",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Pioli \u00B7 bordo libero piattabanda",
+        "Demand": 25,
+        "Resistance": 214,
+        "Unit": "mm",
+        "Ratio": 0.11682242990654206,
+        "Note": "",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Pioli \u00B7 copriferro superiore",
+        "Demand": 40,
+        "Resistance": 70,
+        "Unit": "mm",
+        "Ratio": 0.5714285714285714,
+        "Note": "",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Pioli \u00B7 diametro testa",
+        "Demand": 33,
+        "Resistance": 35,
+        "Unit": "mm",
+        "Ratio": 0.9428571428571428,
+        "Note": "",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Pioli \u00B7 spessore testa",
+        "Demand": 8.8,
+        "Resistance": 10,
+        "Unit": "mm",
+        "Ratio": 0.8800000000000001,
+        "Note": "",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Pioli \u00B7 diametro/spessore piattabanda",
+        "Demand": 22,
+        "Resistance": 60,
+        "Unit": "mm",
+        "Ratio": 0.36666666666666664,
+        "Note": "Dettaglio per azioni ripetute, obbligatorio anche con verifica resistente a fatica attiva",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Pioli \u00B7 passo trasversale minimo",
+        "Demand": 55,
+        "Resistance": 150,
+        "Unit": "mm",
+        "Ratio": 0.36666666666666664,
+        "Note": "",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Soletta \u00B7 taglio longitudinale e splitting",
+        "Demand": 0,
+        "Resistance": 0,
+        "Unit": "\u2014",
+        "Ratio": null,
+        "Note": "Attivare l\u2019armatura trasversale dedicata; le barre longitudinali non sono conteggiate",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Pioli \u00B7 resistenza a fatica",
+        "Demand": 0,
+        "Resistance": 0,
+        "Unit": "\u2014",
+        "Ratio": null,
+        "Note": "Non attivata: i dettagli per azioni ripetute non sostituiscono la verifica a fatica",
+        "Status": "Da verificare"
+      }
+    ],
+    "Warnings": [
+      "CLS teso nel modello non fessurato: valutare una situazione con soletta esclusa; non \u00E8 attestata la verifica del CLS in trazione.",
+      "Ritiro uniforme imposto al solo CLS: effetti primari autoequilibrati. Eventuali azioni secondarie da vincoli esterni vanno inserite come fasi N\u2013Mx separate.",
+      "Instabilit\u00E0 locale esclusa per: piattabanda superiore, piattabanda inferiore, anima (interamente efficaci, \u03C1 = 1). Giustificare l\u0027esclusione, ad esempio con classe 1\u20133 o con il vincolo della soletta connessa.",
+      "Appoggio: R \u00E8 l\u2019inviluppo SLU assegnato, indipendente dalle fasi. Piatti continui senza intagli, vincolati lateralmente alle flange. Apparecchio d\u2019appoggio e flessione della piastra di ripartizione esclusi.",
+      "Pioli: il ritiro uniforme non genera un gradiente longitudinale nel tratto uniforme. Assegnare \u0394q aggiuntivo per effetti di estremit\u00E0/vincolo ricavati dal modello globale.",
+      "Connessione: soletta piena, pioli verticali standard. I controlli di armatura assumono barre effettivamente ancorate e superfici a\u2013a/b\u2013b. Sollevamento imposto, torsione e splitting attraverso lo spessore richiedono un modello dedicato."
+    ]
+  },
+  {
+    "Studs": {
+      "Enabled": true,
+      "CountPerRow": 2,
+      "Diameter": 22,
+      "Height": 180,
+      "LongitudinalPitch": 200,
+      "TransversePitch": 150,
+      "Fu": 450,
+      "GammaV": 1.25,
+      "HeadDiameter": 35,
+      "HeadThickness": 10,
+      "RepeatedActionDetail": true,
+      "RequiredCover": 40
+    },
+    "Intermediate": {
+      "Enabled": true,
+      "LeftPanel": 3333.3333333333335,
+      "RightPanel": 3333.3333333333335,
+      "EqualPanels": true,
+      "ExternalCompressionKN": 0,
+      "LoadX": 0,
+      "Layout": 0,
+      "LayoutName": "Bilaterali simmetrici",
+      "Width": 200,
+      "Thickness": 20,
+      "RightWidth": 200,
+      "RightThickness": 20,
+      "LengthFactor": 1,
+      "CheckWelds": true,
+      "WeldThroat": 6
+    },
+    "Support": {
+      "Enabled": false,
+      "LeftPanel": 0,
+      "RightPanel": 0,
+      "EndDistance": 0,
+      "ReactionKN": 0,
+      "LoadX": 0,
+      "LoadZ": 0,
+      "FootprintLength": 0,
+      "FootprintWidth": 0,
+      "RigidEndPost": false,
+      "EndPostSpacing": 0,
+      "Location": 0,
+      "LocationName": "Appoggio interno",
+      "Layout": 0,
+      "LayoutName": "Bilaterali simmetrici",
+      "Width": 0,
+      "Thickness": 0,
+      "RightWidth": 0,
+      "RightThickness": 0,
+      "LengthFactor": 1,
+      "CheckWelds": false,
+      "WeldThroat": 0
+    },
+    "Checks": [
+      {
+        "Name": "Anima \u00B7 resistenza a taglio",
+        "Demand": 61.14439022577412,
+        "Resistance": 2784.056628931202,
+        "Unit": "kN",
+        "Ratio": null,
+        "Note": "Resistenza SLU di confronto: assegnare la combinazione SLU per l\u2019esito",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Intermedio \u00B7 rigidezza pannelli",
+        "Demand": 0.03887572583895454,
+        "Resistance": 1,
+        "Unit": "\u2014",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; EN 1993-1-5 \u00A79.3.3; controllo di entrambi i pannelli",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Intermedio \u00B7 stabilit\u00E0 e pressoflessione II ordine",
+        "Demand": 0.12004378581247344,
+        "Resistance": 322.7272727272727,
+        "Unit": "MPa",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; EN 1993-1-1 \u00A7\u00A75.2.2(7)a, 5.3.4: imperfezione equivalente Lcr/200, eccentricit\u00E0 effettive, due piani; nessuna riserva plastica",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Intermedio \u00B7 freccia fuori piano",
+        "Demand": 0.0006776516574709376,
+        "Resistance": 5.066666666666666,
+        "Unit": "mm",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; EN 1993-1-5 \u00A79.2.1: w \u2264 b/300, b = hw",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Intermedio \u00B7 rigidezza torsionale",
+        "Demand": 0.9585829902932357,
+        "Resistance": 1,
+        "Unit": "\u2014",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; ",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Intermedio \u00B7 piatti entro classe 3",
+        "Demand": 0.8779144750173968,
+        "Resistance": 1,
+        "Unit": "\u2014",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; Sbalzi uniformemente compressi c/t \u2264 14\u03B5; nessuna riduzione automatica dei piatti snelli",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Intermedio \u00B7 ingombro tra piattabande",
+        "Demand": 200,
+        "Resistance": 292,
+        "Unit": "mm",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; ",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Intermedio \u00B7 saldature verticali all\u2019anima",
+        "Demand": 0.0076207894424896675,
+        "Resistance": 203.73228379019946,
+        "Unit": "MPa",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; Cordoni continui su entrambi i bordi di ogni piatto; risultante cautelativa, EN 1993-1-8 \u00A74.5.3.3; \u03B2w=1",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Intermedio \u00B7 saldature alle flange",
+        "Demand": 0.20007297635412238,
+        "Resistance": 203.73228379019946,
+        "Unit": "MPa",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; ",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Intermedio \u00B7 gola minima",
+        "Demand": 3,
+        "Resistance": 6,
+        "Unit": "mm",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; ",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Intermedio \u00B7 lunghezza efficace cordone",
+        "Demand": 36,
+        "Resistance": 188,
+        "Unit": "mm",
+        "Ratio": null,
+        "Note": "Esito richiede azioni SLU; ",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Anima \u00B7 tensione equivalente elastica (inviluppo)",
+        "Demand": 19.690395031093345,
+        "Resistance": 355,
+        "Unit": "MPa",
+        "Ratio": 0.05546590149603759,
+        "Note": "\u221A(max|\u03C3|\u00B2 \u002B 3 max|\u03C4|\u00B2); \u03C4 sulla sezione lorda omogeneizzata",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Piolo \u00B7 taglio longitudinale",
+        "Demand": 0.48134432683491785,
+        "Resistance": 82.10866559422284,
+        "Unit": "kN",
+        "Ratio": 0.005862284124963118,
+        "Note": "0,75 PRd; esito disponibile soltanto con la combinazione caratteristica/rara",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Pioli \u00B7 passo longitudinale minimo",
+        "Demand": 110,
+        "Resistance": 200,
+        "Unit": "mm",
+        "Ratio": 0.55,
+        "Note": "",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Pioli \u00B7 passo longitudinale massimo",
+        "Demand": 200,
+        "Resistance": 800,
+        "Unit": "mm",
+        "Ratio": 0.25,
+        "Note": "",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Pioli \u00B7 bordo libero piattabanda",
+        "Demand": 25,
+        "Resistance": 214,
+        "Unit": "mm",
+        "Ratio": 0.11682242990654206,
+        "Note": "",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Pioli \u00B7 copriferro superiore",
+        "Demand": 40,
+        "Resistance": 70,
+        "Unit": "mm",
+        "Ratio": 0.5714285714285714,
+        "Note": "",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Pioli \u00B7 diametro testa",
+        "Demand": 33,
+        "Resistance": 35,
+        "Unit": "mm",
+        "Ratio": 0.9428571428571428,
+        "Note": "",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Pioli \u00B7 spessore testa",
+        "Demand": 8.8,
+        "Resistance": 10,
+        "Unit": "mm",
+        "Ratio": 0.8800000000000001,
+        "Note": "",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Pioli \u00B7 diametro/spessore piattabanda",
+        "Demand": 22,
+        "Resistance": 60,
+        "Unit": "mm",
+        "Ratio": 0.36666666666666664,
+        "Note": "Dettaglio per azioni ripetute, obbligatorio anche con verifica resistente a fatica attiva",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Pioli \u00B7 passo trasversale minimo",
+        "Demand": 55,
+        "Resistance": 150,
+        "Unit": "mm",
+        "Ratio": 0.36666666666666664,
+        "Note": "",
+        "Status": "Entro limite"
+      },
+      {
+        "Name": "Soletta \u00B7 taglio longitudinale e splitting",
+        "Demand": 0,
+        "Resistance": 0,
+        "Unit": "\u2014",
+        "Ratio": null,
+        "Note": "Attivare l\u2019armatura trasversale dedicata; le barre longitudinali non sono conteggiate",
+        "Status": "Da verificare"
+      },
+      {
+        "Name": "Pioli \u00B7 resistenza a fatica",
+        "Demand": 0,
+        "Resistance": 0,
+        "Unit": "\u2014",
+        "Ratio": null,
+        "Note": "Non attivata: i dettagli per azioni ripetute non sostituiscono la verifica a fatica",
+        "Status": "Da verificare"
+      }
+    ],
+    "Warnings": [
+      "CLS teso nel modello non fessurato: valutare una situazione con soletta esclusa; non \u00E8 attestata la verifica del CLS in trazione.",
+      "Ritiro uniforme imposto al solo CLS: effetti primari autoequilibrati. Eventuali azioni secondarie da vincoli esterni vanno inserite come fasi N\u2013Mx separate.",
+      "Instabilit\u00E0 locale esclusa per: piattabanda superiore, piattabanda inferiore, anima (interamente efficaci, \u03C1 = 1). Giustificare l\u0027esclusione, ad esempio con classe 1\u20133 o con il vincolo della soletta connessa.",
+      "Irrigidimento intermedio non idoneo: escluso il beneficio dei pannelli a taglio.",
+      "EN 1993-1-5 \u00A75.1: per questa anima snella sono necessari irrigidimenti trasversali agli appoggi, da dimensionare separatamente. L\u2019opzione del pannello riguarda quelli intermedi.",
+      "Pioli: il ritiro uniforme non genera un gradiente longitudinale nel tratto uniforme. Assegnare \u0394q aggiuntivo per effetti di estremit\u00E0/vincolo ricavati dal modello globale.",
+      "Connessione: soletta piena, pioli verticali standard. I controlli di armatura assumono barre effettivamente ancorate e superfici a\u2013a/b\u2013b. Sollevamento imposto, torsione e splitting attraverso lo spessore richiedono un modello dedicato."
+    ]
+  }
+]
