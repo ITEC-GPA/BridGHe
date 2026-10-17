@@ -92,3 +92,17 @@ Ottimizzazioni separate: `1bbeba3` indicizza i risultati MeCheck2 una volta per 
 - `CreateShapes`, `PlateModel.Points` e `GeometryRevision` governano rigenerazione e invalidazione delle anteprime.
 
 Non sono state modificate le DLL gPC, le firme P/Invoke R3 o le porte Grasshopper durante questa revisione.
+
+## Collaudo nativo del 17 ottobre 2026
+
+Con la licenza API disponibile sono stati eseguiti dieci benchmark e cinque contributi di fase composta, oltre a salvare, riaprire e risolvere le dieci definizioni Grasshopper. Formule, unità, tolleranze e risultati: [esempi](../examples/README.md).
+
+| Commit | Metodo corretto | Difetto e comportamento verificato |
+|---|---|---|
+| `69934c0` | `StrausSection.Assign` | `St7CalculateBeamSectionProperties` ammette solo le forme standard. Per BGL si leggono le proprietà calcolate da `St7SetBeamSectionGeometryBGL`; tutte le 21 famiglie passano. |
+| `969f61b` | `StrausR3Helper.CreateModelR3` | Dopo `St7AddStage` viene chiamato `St7EnableNLAStage`: senza abilitazione il solutore restituiva 1018, incrementi non definiti. |
+| `d6a9229` | `StrausResultsReader.Read` | `St7GetElementResultState` distingue gli elementi inattivi; non si richiedono le loro forze e non si generano zeri fittizi. Gli altri errori API restano bloccanti. |
+| `b86494b` | `StrausAnalysis.Run` | Controllo del numero di incrementi, di `St7GetResultCaseConvergence` e di `St7GetResultCaseStage` per tutta la storia NLA, anche per incrementi non selezionati in output. |
+| `6fe4d7d` | `BridgeForceConvention.FromStraus` | I valori definiti negli assi positivi della sezione vengono trasformati nel riferimento di destinazione gPC. Il precedente codice assegnava direttamente il riferimento `(-x,-y)` e invertiva i segni in MeCheck2. Correzione verificata con flessione pura nativa e tensioni di lembo. |
+
+Le dichiarazioni aggiunte al binding sono rigenerate dall'header R3 installato, non adattate manualmente. Nessuna modifica a porte, GUID o sorgenti gPC. I benchmark di sezione composta esplicitano l'approssimazione a linea media delle flange del motore attuale. Le vecchie verifiche MeCheck2 vanno ricalcolate per effetto della correzione del segno, mentre le uscite beam continuano a riportare BM1/BM2 nella convenzione Straus.

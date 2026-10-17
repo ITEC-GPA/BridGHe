@@ -2,7 +2,7 @@
 
 Plugin Grasshopper per Rhino 8: modello parametrico → Straus7 R3 → risultati negli elementi → MeCheck2 con librerie gPC.
 
-La versione 0.1.0 è una trasposizione compilabile e collaudata nel runtime Rhino 8. La catena nativa di analisi Straus **non è ancora validata**: nella sessione di sviluppo `St7Init` ha restituito `-8`, hardware lock API non disponibile. I dettagli e i limiti del verificatore sono in [VERIFICHE](docs/VERIFICHE.md).
+La versione 0.1.0 è stata collaudata con Rhino 8 e la licenza API Straus7 R3: **10 esempi numerici**, inclusi **5 di costruzione per fasi**, e **21 famiglie di sezioni parametriche**. I dieci file Grasshopper sono stati salvati, riaperti e risolti tramite i componenti reali. Un confronto aggiuntivo verifica cinque contributi di fase MeCheck2, compresi ritiri imposti. Copertura e limiti sono in [VERIFICHE](docs/VERIFICHE.md).
 
 ## Contenuto
 
@@ -42,7 +42,8 @@ Il pacchetto non include le DLL native Straus né le DLL Rhino/Grasshopper. Non 
 
 - [Passaggi eseguiti e metodi cambiati](docs/MIGRAZIONE.md).
 - [Uso, sezioni, carichi mobili e convenzioni](docs/USO.md).
-- [Controlli eseguiti, limiti e validazione nativa da completare](docs/VERIFICHE.md).
+- [Dieci esempi Grasshopper, formule e risultati](examples/README.md).
+- [Controlli eseguiti e limiti della validazione](docs/VERIFICHE.md).
 - [Inventario dei componenti](docs/COMPONENTI.md).
 - [Icone, catalogo e rigenerazione](docs/ICONE.md).
 - `migration/component-map.json`: GUID originali e nuovi; `cleanup-removed.json`: eliminazioni; `port-contract-baseline.json`: firme delle porte per l'audit senza il repository originale.

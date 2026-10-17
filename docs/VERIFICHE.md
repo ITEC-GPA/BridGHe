@@ -2,12 +2,12 @@
 
 ## Risultati effettivamente ottenuti
 
-Ambiente: Windows x64, Rhino 8 avviato senza finestra mediante Rhino.Inside, runtime .NET 8, compilazione con SDK 9.0.319. Data: 16 ottobre 2026.
+Ambiente: Windows x64, Rhino 8 avviato senza finestra mediante Rhino.Inside, runtime .NET 8, compilazione con SDK 9.0.319. Ultimo collaudo nativo: 17 ottobre 2026. Grasshopper installato 8.35.26251.13001; riferimenti di compilazione 8.27.26019.16021. Straus7 R3.1.5 x64 con licenza API disponibile.
 
 - Build Release: **0 errori, 0 avvisi**.
 - Audit delle porte: **103 componenti/parametri mantenuti**, inclusi **16 MeCheck2**, nessuna differenza non ammessa.
 - **137 GUID distinti** contando plugin e oggetti Grasshopper; nessuna collisione con i GUID della base.
-- Smoke test isolato dopo le correzioni: **177 controlli superati e 19 gruppi di regressione superati**, inclusa l'istanziazione di tutti i **136 componenti/parametri registrabili** nel runtime Rhino 8.
+- Smoke test e sezioni native: **202 controlli superati e 19 gruppi di regressione superati**, inclusa l'istanziazione di tutti i **136 componenti/parametri registrabili** nel runtime Rhino 8. I 202 comprendono i precedenti 177 controlli, 21 sezioni native, area analitica BGL rettangolare e tre controlli sulla mensola nativa.
 - Icone: tutte le 136 risorse presenti, distinte e associate al proprio oggetto a 24×24 px; logo plugin a 24 px; registrazione delle due categorie con icone a 16 px verificata nella sessione precedente; il controllo corrente sul profilo completo è rimasto bloccato durante il caricamento dei plugin installati. Confronto dei pixel opachi e alpha esatto, tolleranza di due livelli su 255 sui canali premoltiplicati dei bordi semitrasparenti per gli arrotondamenti GDI+.
 - Prove analitiche: area/inerzia del cerchio, sezione omogeneizzata di solo acciaio, tensione N/A, flessione con segno dei lembi, taglio VQ/(It).
 - Fasi: azioni istantanee e a lungo termine distinte, accumulo delle deformazioni imposte, errore esplicito per risultati mancanti alla stazione.
@@ -46,23 +46,27 @@ La regressione mirata precedente aveva misurato 37,6 ms a 800 stazioni. I tempi 
 
 Restano da profilare copie su modelli completi, risultati e anteprime. Le copie profonde usano l'archivio già presente per garantire l'isolamento; non viene dichiarata una riduzione dei loro costi. L'esecuzione del solutore resta sincrona e serializzata dal gate API.
 
-## Prova nativa non eseguita
+## Collaudo nativo e definizioni Grasshopper
 
-La DLL R3 è stata caricata, ma `St7Init` ha restituito:
+Il 17 ottobre 2026 `St7Init` ha inizializzato correttamente l'API con la licenza disponibile. Il precedente errore di hardware lock del 16 ottobre è superato. Le prove native richieste ora falliscono esplicitamente se la licenza non è disponibile; non vengono conteggiate come passate tramite uno skip.
 
-```text
-Straus -8: The API is running in STANDALONE mode but cannot find the hardware lock.
-```
+Sono stati eseguiti i **10 benchmark** descritti in [examples/README.md](../examples/README.md), con **5 casi di costruzione per fasi**. I report riportano valore atteso, valore ottenuto, tolleranza ed esito di ogni misura. Le dieci definizioni `.ghx` sono anche salvate, riaperte e risolte tramite i componenti Grasshopper reali, compresi `Node Results`, `Beam Results` e `Plate Results`. Il modello iniziale è internalizzato nelle definizioni; le ricette C# consentono di rigenerarlo con dati diversi.
 
-Il test stampa `NATIVE SKIPPED`; questo **non è un test nativo superato**. Non sono quindi attestati esportazione completa, proprietà native delle nuove sezioni, generazione BXS, distribuzione dei carichi mobili, solutori LSA/NLA/staged e associazione dei risultati dopo una reale soluzione R3.
+Esito della sessione: **121 confronti superati nei benchmark nativi**, **111 confronti ripetuti attraverso le definizioni Grasshopper**, **30 controlli superati nella catena delle fasi MeCheck2**. Questi conteggi si aggiungono ai 202 controlli smoke/nativi e ai 19 gruppi di regressione; i 111 confronti GH sono intenzionalmente gli stessi riferimenti numerici, verificati attraverso un diverso punto di ingresso.
+
+Copertura: equilibrio nodale, somma delle azioni, combinazioni lineari, carico distribuito, patch test shell, asse mobile in 13 posizioni, incrementi NLA, carico/scarico per fasi, nascita senza tensioni, rimozione con redistribuzione, selezione parziale degli incrementi e assenza di risultati per gli elementi inattivi. Per NLA si controllano convergenza dell'intera storia e fase nativa degli incrementi prima di associare i risultati agli elementi.
+
+Un benchmark aggiuntivo collega i momenti nativi al verificatore MeCheck2 e confronta **cinque contributi di fase**: solo acciaio, lungo termine, istantanea e due ritiri imposti. Controlla quattro tensioni di lembo dopo ogni fase con integrali di sezione indipendenti. Include una prova fisica del segno del momento: assi nativi, deformata verso l'alto per coppia terminale che produce flessione positiva e compressione del lembo superiore. Il riferimento tiene conto dell'idealizzazione a parete sottile delle flange adottata dal motore gPC nelle fasi composte; dettagli e formule sono nel README degli esempi.
+
+Le prove hanno individuato e corretto cinque difetti: ricalcolo improprio delle BGL, fasi NLA non abilitate, lettura di forze su elementi inattivi, accettazione senza controllo esplicito della convergenza e inversione dei segni nel riferimento MeCheck2. I commit e i metodi modificati sono elencati in [MIGRAZIONE](MIGRAZIONE.md). In particolare, le vecchie verifiche MeCheck2 devono essere rigenerate dopo la correzione dei segni.
 
 Per ripetere:
 
 ```powershell
-.\tools\build.ps1 -Native
+.\tools\build.ps1 -Native -Examples -Package
 ```
 
-Con licenza disponibile, il test tenta il calcolo di tutte le 21 sezioni parametriche e un benchmark di mensola: L=3000 mm, E=210000 N/mm², A=60000 mm², I11=450000000 mm⁴, carico terminale globale Z=-1000 N, sei vincoli all'origine, peso proprio escluso dal caso selezionato e aree di taglio nulle. Confronta lo spostamento con `-F L³/(3 E I) = -0.095238095 mm` e il modulo del momento alla radice con `F L = 3000000 Nmm`; tolleranza relativa 1e-5. **Questo benchmark è predisposto nel codice, ma non eseguito nella sessione senza licenza.**
+Le 21 famiglie parametriche sono state calcolate con l'API e hanno area e inerzie positive; per la BGL rettangolare cava è verificata anche l'area analitica. Ciò non costituisce una prova di tutte le combinazioni geometriche ammissibili. Restano da collaudare sistematicamente BXS e librerie BSL/BGL, tutte le modalità di carico mobile, stabilità/convergenza su ponti completi e la totalità dei componenti di verifica. I benchmark non attestano tutte le verifiche normative di un ponte.
 
 ## Limiti espliciti della trasposizione
 
@@ -75,7 +79,7 @@ Con licenza disponibile, il test tenta il calcolo di tutte le 21 sezioni paramet
 | TauB | `NaN` e warning finché non è definita una corrispondenza verificata. |
 | Effective Epsilon | `true` non supportato dal nuovo adattatore; usare `false` per il metodo corrente a larghezze efficaci. |
 | Vertical Offset della sezione composta | Supportato solo zero: il parametro della nuova libreria ha significato differente. |
-| Sezioni native nuove | Calcolo/export da validare con API; niente anteprima solida estrusa; moduli resistenti non letti = `NaN`. |
+| Sezioni native nuove | Calcolo delle 21 famiglie parametriche verificato; librerie/BXS e spazio completo delle geometrie da collaudare. Niente anteprima solida estrusa; moduli resistenti non letti = `NaN`. |
 | Mobile | Casi statici discreti; niente inviluppo da linee d'influenza. Target Entity Set/Brick non esportabili. Analisi termica da eseguire in Straus. |
 | Link Property legacy nei supporti | Porta mantenuta, utilizzo esplicitamente rifiutato; disponibili le rigidezze dei supporti gestite da R3. |
 | Cataloghi esterni | Selezione dai vecchi database rimossa; usare componenti materiali/sezioni. |
