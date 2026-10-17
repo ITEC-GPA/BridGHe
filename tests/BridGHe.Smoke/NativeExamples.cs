@@ -171,7 +171,11 @@ internal static class NativeExamples
             string folder=Path.Combine(root,example.Id);Directory.CreateDirectory(folder);example.Model.Name=example.Title;
             File.WriteAllBytes(Path.Combine(folder,"input.bgmodel"),ModelArchive.Write(example.Model));
             try{
-                var result=StrausAnalysis.Run(example.Model,Path.Combine(folder,"model.st7"),example.Solver,example.Cases,1e-6,example.Moving,out warnings);
+                // Exercise relative paths with '/' against the real native solver.
+                // Before canonicalisation St7NewFile succeeded but St7RunSolver
+                // failed with 1029 (cannot write result file).
+                string solverPath=example.Id=="01-cantilever"?Path.GetRelativePath(Environment.CurrentDirectory,Path.Combine(folder,"model.st7")).Replace('\\','/'):Path.Combine(folder,"model.st7");
+                var result=StrausAnalysis.Run(example.Model,solverPath,example.Solver,example.Cases,1e-6,example.Moving,out warnings);
                 File.WriteAllBytes(Path.Combine(folder,"results.bgmodel"),ModelArchive.Write(result));example.Verify(result,record);
                 record.Near("Input remains without results",example.Model.Elements.Sum(e=>e.Results.Count),0,0,0);
             }catch(Exception ex){error=ex.ToString();Console.WriteLine("ERROR: "+error);}

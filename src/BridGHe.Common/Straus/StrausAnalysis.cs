@@ -13,6 +13,9 @@ namespace BridGHe.Common.Straus
     {
         public static ModelModel Run(ModelModel input, string outputPath, int solver, IReadOnlyCollection<string> requested, double tolerance, bool movingOnly, out List<string> warnings)
         {
+            // The native solver accepts only canonical Windows paths when opening
+            // its result file, although St7NewFile also accepts forward slashes.
+            outputPath = Path.GetFullPath(outputPath);
             if (solver < 0 || solver > 2) throw new ArgumentOutOfRangeException(nameof(solver));
             if (!string.Equals(Path.GetExtension(outputPath), ".st7", StringComparison.OrdinalIgnoreCase)) throw new ArgumentException("Estensione richiesta: .st7");
             if (movingOnly && solver != 0) throw new ArgumentException("Moving Static Analysis richiede il solutore lineare.");

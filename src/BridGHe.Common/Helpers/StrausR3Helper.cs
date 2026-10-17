@@ -34,6 +34,7 @@ namespace BridGHe.Common.Helpers
             //scratchPath = Path.GetDirectoryName(outputPath) + "\\";
             try
             {
+                outputPath = Path.GetFullPath(outputPath);
                 modelId = StrausRuntime.AcquireModelId();
 
                 if (!Directory.Exists(Path.GetDirectoryName(outputPath)))
