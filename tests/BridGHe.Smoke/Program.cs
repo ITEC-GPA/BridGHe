@@ -28,6 +28,7 @@ internal static class Program
     {
         // --pure does not start Rhino, useful for CI and unlicensed environments.
         using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},WindowStyle.NoWindow);
+        if(args.Contains("--sections-only")) { CheckNativeSections();return 0; }
         if(args.Contains("--regression"))
             return RegressionTests.Run(args.SkipWhile(a=>a!="--regression").Skip(1).FirstOrDefault()??"all");
         var model=new ModelModel(ModelModel.ModelUnits.Nmm);
@@ -177,15 +178,22 @@ internal static class Program
 
     private static void CheckNative()
     {
-        try { StrausRuntime.EnsureInitialized(); }
-        catch(Exception ex) { Console.WriteLine("NATIVE SKIPPED: "+ex.Message);return; }
+        CheckNativeSections();
+        CheckNativeCantilever();
+    }
+
+    private static void CheckNativeSections()
+    {
+        StrausRuntime.EnsureInitialized();
         foreach(var shape in StrausSectionCatalog.All)
         {
             double Dimension(string n) => n.StartsWith("R")||n.StartsWith("alpha")?0:n=="D"?400:n=="B2"?100:n.StartsWith("B")?200:n=="L"?20:10;
-            var section=new StrausSection { Key=shape.Key,Dimensions=shape.Dimensions.Select(Dimension).ToArray() }.Calculate();
+            // A bulb with zero toe radius and slope is degenerate; use a finite bulb.
+            var dimensions=shape.Key=="BglBulb" ? new double[]{200,50,10,10,0,5,0,0,30} : shape.Dimensions.Select(Dimension).ToArray();
+            var section=new StrausSection { Key=shape.Key,Dimensions=dimensions }.Calculate();
             Assert(section.SectionArea>0 && section.I11>0 && section.I22>0,"native section "+shape.Key);
+            if(shape.Key=="BglRectangle") Assert(Math.Abs(section.SectionArea-11600)<1e-6,"BGL rectangular hollow analytical area");
         }
-        CheckNativeCantilever();
     }
 
     private static void CheckNativeCantilever()

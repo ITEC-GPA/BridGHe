@@ -87,8 +87,12 @@ namespace BridGHe.Common.Straus
             if (shape.Bgl)
                 StrausRuntime.Check(St7.St7SetBeamSectionGeometryBGL(modelId, propertyId, shape.NativeId, native), "St7SetBeamSectionGeometryBGL");
             else
+            {
                 StrausRuntime.Check(St7.St7SetBeamSectionGeometry(modelId, propertyId, shape.NativeId, native), "St7SetBeamSectionGeometry");
-            StrausRuntime.Check(St7.St7CalculateBeamSectionProperties(modelId, propertyId, St7.btTrue), "St7CalculateBeamSectionProperties");
+                // R3 API: this calculation accepts standard sections only. BGL assignment
+                // already computes its properties and is rejected by this function.
+                StrausRuntime.Check(St7.St7CalculateBeamSectionProperties(modelId, propertyId, St7.btTrue), "St7CalculateBeamSectionProperties");
+            }
         }
 
         /// <summary>Dimensions use the eventual model length unit. No silent unit conversion.</summary>
