@@ -52,7 +52,7 @@ internal static class NativeBridgePhases
             recorder.Near("Native principal axis 2 along +Z",axes[5],1);
             recorder.Near("Native principal axis 3 along +X",axes[6],1);
         }finally{St7API.St7.St7CloseFile(uid);StrausRuntime.ReleaseModelId(uid);}
-        recorder.Near("Upward deflection for sagging tip couple [mm]",result.Nodes[1].Results.OfType<NodeDisplResultModel>().First().Displacement.Z,1e6*3000*3000/(2*es*isSteel));
+        recorder.Near("Upward deflection for sagging tip couple [mm]",result.Nodes[1].Results.OfType<NodeDisplResultModel>().Single(r=>r.LoadCase.Name=="OnlySteel").Displacement.Z,1e6*3000*3000/(2*es*isSteel));
         actualBeam.Loads.Add(new CompositeBeamSlabStrainModel(cases[3],new(){Strain=-100e-6}));
         actualBeam.Loads.Add(new CompositeBeamSlabStrainModel(cases[4],new(){Strain=-50e-6}));
         var combination=new LoadCombinationModel("Five phases");foreach(var c in cases)combination.Values.Add(c,1);
