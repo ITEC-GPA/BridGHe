@@ -422,6 +422,10 @@ namespace St7API
         [DllImport("St7API.dll")]
         public static extern int St7RunSolver(int uID, int Solver, int Mode, int Wait);
         [DllImport("St7API.dll")]
+        public static extern int St7GetResultCaseStage(int uID, int CaseNum, ref int Stage);
+        [DllImport("St7API.dll")]
+        public static extern int St7GetResultCaseConvergence(int uID, int CaseNum, ref byte Converged);
+        [DllImport("St7API.dll")]
         public static extern int St7GetElementResultState(int uID, int Entity, int EntityNum, int ResultCase, int[] State);
         [DllImport("St7API.dll")]
         public static extern int St7GetNodeResult(int uID, int ResultType, int NodeNum, int ResultCase, double[] NodeResult);

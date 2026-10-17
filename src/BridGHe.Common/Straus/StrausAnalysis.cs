@@ -75,6 +75,26 @@ namespace BridGHe.Common.Straus
                     int countPrimary = 0, countSecondary = 0;
                     Check(St7.St7OpenResultFile(uid, resultPath, null, St7.btTrue, ref countPrimary, ref countSecondary), "St7OpenResultFile"); resultOpen = true;
                     if (solver == 0 && countPrimary != primary) throw new InvalidOperationException($"Mappatura risultati inattesa: {countPrimary} casi primari, attesi {primary}. Nessun risultato associato agli elementi.");
+                    if (solver != 0)
+                    {
+                        int expected = StrausResultSelection.Catalog(model, solver).Count;
+                        if (countPrimary != expected)
+                            throw new InvalidOperationException($"Analisi NLA incompleta: {countPrimary} incrementi salvati, attesi {expected}.");
+                        // A later selected increment may depend on an earlier failed step.
+                        // Validate the entire history before associating any results.
+                        var stages = model.StagedConstruction.SelectMany((s, i) => s.LoadCombinations.Select(_ => i + 1)).ToArray();
+                        for (int index = 1; index <= countPrimary; index++)
+                        {
+                            byte converged = St7.btFalse;
+                            Check(St7.St7GetResultCaseConvergence(uid, index, ref converged), "St7GetResultCaseConvergence");
+                            if (converged == St7.btFalse) throw new InvalidOperationException($"Incremento NLA {index} non convergente: risultati non accettati.");
+                            int actualStage = 0;
+                            Check(St7.St7GetResultCaseStage(uid, index, ref actualStage), "St7GetResultCaseStage");
+                            int expectedStage = solver == 2 ? stages[index - 1] : 0;
+                            if (actualStage != expectedStage)
+                                throw new InvalidOperationException($"Incremento {index}: fase Straus {actualStage}, attesa {expectedStage}.");
+                        }
+                    }
                     foreach (var item in read)
                     {
                         if (item.Index > countPrimary + countSecondary) throw new InvalidOperationException("Indice risultato oltre i casi disponibili.");
