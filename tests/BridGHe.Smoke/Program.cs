@@ -29,6 +29,7 @@ internal static class Program
         // --pure does not start Rhino, useful for CI and unlicensed environments.
         using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},WindowStyle.NoWindow);
         if(args.Contains("--sections-only")) { CheckNativeSections();return 0; }
+        if(args.Contains("--examples")) return NativeExamples.Run(args.SkipWhile(a=>a!="--examples").Skip(1).FirstOrDefault()??"all");
         if(args.Contains("--regression"))
             return RegressionTests.Run(args.SkipWhile(a=>a!="--regression").Skip(1).FirstOrDefault()??"all");
         var model=new ModelModel(ModelModel.ModelUnits.Nmm);
@@ -209,7 +210,7 @@ internal static class Program
         first.Attributes.Add(new NodeRestraintAttributeModel(true,true,true,true,true,true));
         var end=new NodeModel("N2",new Point3d(length,0,0));
         end.Loads.Add(new NodeForceLoadModel(loadCase,new Vector3d(0,0,-force)));
-        var beam=new BeamModel("B1",first.Position,end.Position,property);
+        var beam=new BeamModel("1",first.Position,end.Position,property);
         var input=new ModelModel(ModelModel.ModelUnits.Nmm);
         input.LoadCases.Add(loadCase);input.AddElements(new ElementModel[]{first,end,beam});
         string folder=Path.Combine("artifacts","native",Guid.NewGuid().ToString("N"));Directory.CreateDirectory(folder);
