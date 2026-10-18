@@ -197,7 +197,6 @@ MovingStaticAnalysisComponent|vehicle|play|solver
 StrausR3AnalysisComponent|solver|play|solver
 BeamOutputStationsComponent|stations||model
 BeamReleasesComponent|release||model
-BeamReleasesNamedSetComponent|release|library|model
 BeamStringGroupComponent|beam|link|model
 BeamSupportComponent|beam|support|model
 BeamTaperComponent|taper||model
@@ -208,15 +207,8 @@ NodeStiffnessComponent|spring||model
 PlateSupportComponent|plate|support|model
 SuperElementComponent|bridge|link|model
 ForceComponent|axes|force|load
-MixedSectionShearCheckComponent|composite|force|check
-MixedSectionTensionCheckComponent|composite|stress|check
-RCFrameAsComponent|bars|add|check
-RCFrameChecksComponent|bars|check|check
-SteelFrameChecksComponent|section:I|check|check
 GroupComponent|group||model
 LoadCaseComponent|case||load
-LoadCaseStageComponent|case|stages|load
-LoadCaseStageOperationComponent|stages|edit|load
 LoadCombinationComponent|case|add|load
 StagedConstructionComponent|stages||model
 BeamGeometricPropertyComponent|beam|measure|section
@@ -285,7 +277,6 @@ LoadCombinationsParam|case|parameter|load
 MaterialParam|material|parameter|material
 NodeParam|node|parameter|model
 PlateParam|plate|parameter|model
-VersionParam|id|parameter|tool
 BeamResultsComponent|beam|data|result
 NodeResultsComponent|node|data|result
 PlateResultsComponent|plate|data|result

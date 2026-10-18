@@ -54,7 +54,8 @@ namespace BridGHe.Common.Helpers
                 // Accept the empty containers without keeping the retired classes.
                 // Nonempty entries still fail type resolution rather than losing data silently.
                 if (name.StartsWith("System.Collections.Generic.List`1[[BridGHe.Common.Models.NamedSetsModel,", StringComparison.Ordinal) ||
-                    name.StartsWith("System.Collections.Generic.List`1[[BridGHe.Common.Models.FunctionModel,", StringComparison.Ordinal))
+                    name.StartsWith("System.Collections.Generic.List`1[[BridGHe.Common.Models.FunctionModel,", StringComparison.Ordinal) ||
+                    name.StartsWith("System.Collections.Generic.List`1[[BridGHe.Common.Models.LoadCaseModel+Stage+Operation,", StringComparison.Ordinal))
                     return typeof(System.Collections.Generic.List<object>);
                 return Type.GetType(name, assembly => AllowedAssembly(assembly) ? Assembly.Load(assembly) : throw new SerializationException("Assembly non ammesso: " + assembly.Name), null, true);
             }

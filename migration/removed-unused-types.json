@@ -8,5 +8,38 @@
     "src/BridGHe.Grasshopper/Components/Attributes/BeamReleasesNamedSetComponent.cs",
     "assets/icons/BeamReleasesNamedSetComponent.svg",
     "src/BridGHe.Grasshopper/Resources/Icons/BeamReleasesNamedSetComponent.png"
-  ]
+  ],
+  "disconnectedComponents": {
+    "reason": "Generic frame/mixed-section checkers have no compatible producer in the Straus model workflow; legacy load-case operations have no export implementation. Native staged construction remains supported.",
+    "files": [
+      "src/BridGHe.Grasshopper/Components/Checks/MixedSectionShearCheckComponent.cs",
+      "src/BridGHe.Grasshopper/Resources/Icons/MixedSectionShearCheckComponent.png",
+      "assets/icons/MixedSectionShearCheckComponent.svg",
+      "src/BridGHe.Grasshopper/Components/Checks/MixedSectionTensionCheckComponent.cs",
+      "src/BridGHe.Grasshopper/Resources/Icons/MixedSectionTensionCheckComponent.png",
+      "assets/icons/MixedSectionTensionCheckComponent.svg",
+      "src/BridGHe.Grasshopper/Components/Checks/RCFrameChecksComponent.cs",
+      "src/BridGHe.Grasshopper/Resources/Icons/RCFrameChecksComponent.png",
+      "assets/icons/RCFrameChecksComponent.svg",
+      "src/BridGHe.Grasshopper/Components/Checks/RCFrameAsComponent.cs",
+      "src/BridGHe.Grasshopper/Resources/Icons/RCFrameAsComponent.png",
+      "assets/icons/RCFrameAsComponent.svg",
+      "src/BridGHe.Grasshopper/Components/Checks/SteelFrameChecksComponent.cs",
+      "src/BridGHe.Grasshopper/Resources/Icons/SteelFrameChecksComponent.png",
+      "assets/icons/SteelFrameChecksComponent.svg",
+      "src/BridGHe.Grasshopper/Components/Definitions/LoadCaseStageComponent.cs",
+      "src/BridGHe.Grasshopper/Resources/Icons/LoadCaseStageComponent.png",
+      "assets/icons/LoadCaseStageComponent.svg",
+      "src/BridGHe.Grasshopper/Components/Definitions/LoadCaseStageOperationComponent.cs",
+      "src/BridGHe.Grasshopper/Resources/Icons/LoadCaseStageOperationComponent.png",
+      "assets/icons/LoadCaseStageOperationComponent.svg",
+      "src/BridGHe.Grasshopper/Components/Parameters/VersionParam.cs",
+      "src/BridGHe.Grasshopper/Resources/Icons/VersionParam.png",
+      "assets/icons/VersionParam.svg",
+      "src/BridGHe.Grasshopper/DataTypes/Fem/GH_LoadCaseStage.cs",
+      "src/BridGHe.Grasshopper/DataTypes/Fem/GH_LoadCaseStageOperation.cs",
+      "src/BridGHe.Grasshopper/DataTypes/Fem/GH_MixedSection.cs",
+      "src/BridGHe.Grasshopper/DataTypes/Fem/GH_MixedSectionBeam.cs"
+    ]
+  }
 }

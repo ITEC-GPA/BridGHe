@@ -46,14 +46,12 @@ namespace BridGHe.Grasshopper.Components.Definitions
         {
             string name = "";
             bool nsm = false;
-            List<GH_LoadCaseStage> stages = new List<GH_LoadCaseStage>();
 
             if (!DA.GetData(0, ref name))
                 return;
             if (!DA.GetData(1, ref nsm))
                 return;
 
-            // DA.GetDataList(2, stages);
 
             LoadCaseModel lc;
             if (name == LoadCaseModel.Dead.Name)
@@ -79,15 +77,6 @@ namespace BridGHe.Grasshopper.Components.Definitions
             }
 
             Message = name;
-
-            if (stages.Count > 0)
-            {
-                lc.Stages = new List<LoadCaseModel.Stage>();
-                foreach (GH_LoadCaseStage s in stages)
-                {
-                    lc.Stages.Add(new LoadCaseModel.Stage(s.Value));
-                }
-            }
 
             DA.SetData(0, new GH_LoadCase(lc));
         }

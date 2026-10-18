@@ -196,36 +196,6 @@
         "bc2cde43-3af2-4685-8ce7-63e3586edeb5"
       ]
     },
-    "src/BridGHe.Grasshopper/Components/Checks/MixedSectionShearCheckComponent.cs": {
-      "ports": "a48cd616d1d0cb731438feb640bc2f255ded908823a5989fa8820d867d56f6ce",
-      "guids": [
-        "b3669fd3-ab2d-462b-a378-c9e6a5578b59"
-      ]
-    },
-    "src/BridGHe.Grasshopper/Components/Checks/MixedSectionTensionCheckComponent.cs": {
-      "ports": "3890aa5e14ca6d84212d04e44c813a83ed9eec9cb5dd8ba4ad53505b6d94c53b",
-      "guids": [
-        "d370d023-bccf-4292-bed6-61858bcf71d8"
-      ]
-    },
-    "src/BridGHe.Grasshopper/Components/Checks/RCFrameAsComponent.cs": {
-      "ports": "6863dbc1266cdafae6f29075ef804b8e7f3ec84e6b9e19c3f41aa7940f2d33ac",
-      "guids": [
-        "31e3225e-3154-4726-9e6b-67539de1b524"
-      ]
-    },
-    "src/BridGHe.Grasshopper/Components/Checks/RCFrameChecksComponent.cs": {
-      "ports": "69dcf19e61c76e9d18ce6863ebd72808581f2aa3d3564a441bda38f36dc43eb8",
-      "guids": [
-        "fe7f2ad0-e6db-488c-befd-6077043c839d"
-      ]
-    },
-    "src/BridGHe.Grasshopper/Components/Checks/SteelFrameChecksComponent.cs": {
-      "ports": "0c2742e7991d3ea90be4f8049fbac22aa37c619c1fd04018daff3236544e5760",
-      "guids": [
-        "c42d7f54-7567-4f8a-8835-887f27af69eb"
-      ]
-    },
     "src/BridGHe.Grasshopper/Components/Definitions/GroupComponent.cs": {
       "ports": "73bb23a3a9dba03e617dbafb283a8ad21f7a4fd254579ac15e1c235eaff9f0b9",
       "guids": [
@@ -236,18 +206,6 @@
       "ports": "6ec4db7269931f985a8093c47d4c814b942a9ffbfaac26b78a97162a59ce7abd",
       "guids": [
         "977e4b26-8094-4d71-b165-f0f73b2282cd"
-      ]
-    },
-    "src/BridGHe.Grasshopper/Components/Definitions/LoadCaseStageComponent.cs": {
-      "ports": "96bf6c0bd3adaf8a8a01efcd2d83d5c1c22b854a31756cfdf6bec42ceed5fea6",
-      "guids": [
-        "5698330d-d3b6-4c35-bbd8-096aee7dfbb3"
-      ]
-    },
-    "src/BridGHe.Grasshopper/Components/Definitions/LoadCaseStageOperationComponent.cs": {
-      "ports": "e858b627ff67d9cc620e422a32aa35340f515718a4ecf682b9ec7afb0f0c2bef",
-      "guids": [
-        "785fff3f-6d81-4e5d-bf4d-cba31acedc58"
       ]
     },
     "src/BridGHe.Grasshopper/Components/Definitions/LoadCombinationComponent.cs": {
@@ -490,12 +448,6 @@
       "ports": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
       "guids": [
         "5483bff2-64ab-40d7-a5de-1af1e6f9bd12"
-      ]
-    },
-    "src/BridGHe.Grasshopper/Components/Parameters/VersionParam.cs": {
-      "ports": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-      "guids": [
-        "98efbea2-2189-43fa-8b2e-a9fb6736e306"
       ]
     },
     "src/BridGHe.Grasshopper/Components/Results/BeamResultsComponent.cs": {
