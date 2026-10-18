@@ -126,3 +126,11 @@ Le dichiarazioni aggiunte al binding sono rigenerate dall'header R3 installato, 
 - Tutte le porte dei 103 oggetti conservati e dei 16 MeCheck2 sono invariate; quattro nuovi GUID, totale 141 con il plugin.
 
 Documentazione, ipotesi, procedura riproducibile e limiti: [suite ponti](../examples/bridge-suite/README.md).
+
+## Output di compilazione nella root - 18 ottobre 2026
+
+- `Directory.Build.props` centralizza output e intermedi in `bin/<progetto>/<configurazione>/<framework>` e `bin/obj/<progetto>`. I riferimenti ai repository gPC restano separati tramite `RepositoryRoot`.
+- `Directory.Build.targets` esegue `tools/clean-builds.ps1` prima della compilazione reale. Rimuove gli output precedenti `bin`/`obj` sparsi nel repository e `artifacts/packages`; preserva la `bin` della root, i risultati nativi e le cartelle di configurazione. La pulizia è serializzata tra progetti e controlla percorsi e junction prima delle eliminazioni.
+- `BuildPaths.GrasshopperAssembly` sostituisce i sei percorsi Release fissi nei test e nei generatori GH. Usa la configurazione dell'eseguibile in corso. Il progetto smoke dipende anche dalla compilazione del plugin, senza aggiungerne il riferimento al compilatore C#.
+- `tools/build.ps1 -Package` legge il nuovo output e salva i pacchetti in `bin/packages/<configurazione>`.
+- Verifiche eseguite: build Release e Debug senza avvisi/errori; 181 controlli smoke e 23 gruppi di regressione in Release; otto test della pulizia, inclusi idempotenza, simulazione e protezione delle junction. Nessuna modifica a componenti, porte, GUID o API Straus.

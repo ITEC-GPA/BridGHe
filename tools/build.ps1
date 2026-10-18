@@ -61,8 +61,8 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'Creazione pacchetto nativo dei ponti non riuscita.' }
     }
     if ($Package) {
-        $compiled = Join-Path $projectRoot "src\BridGHe.Grasshopper\bin\$Configuration\net8.0-windows"
-        $packageRoot = Join-Path $projectRoot ('artifacts\packages\BridGHe-0.1.0-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+        $compiled = Join-Path $projectRoot "bin\BridGHe.Grasshopper\$Configuration\net8.0-windows"
+        $packageRoot = Join-Path $projectRoot ("bin\packages\$Configuration\BridGHe-0.1.0-" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
         New-Item -ItemType Directory -Path $packageRoot -Force | Out-Null
         $assemblies = @('BridGHe.Grasshopper.gha','BridGHe.Common.dll','GPCUtilities.dll','GPCGeometry.dll','DelaunayMesh.dll',
             'GPCModel.dll','GPCChecker.Concrete.dll','GPCChecker.Steel.dll','GPCChecker.CompositeBridge.dll','MathNet.Numerics.dll')

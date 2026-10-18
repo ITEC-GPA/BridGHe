@@ -1,0 +1,6 @@
+<Project>
+  <Target Name="CleanLegacyBuildOutputs" BeforeTargets="PrepareForBuild"
+          Condition="'$(DesignTimeBuild)' != 'true'">
+    <Exec Command="powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(BridGHeRoot)tools\clean-builds.ps1&quot;" />
+  </Target>
+</Project>

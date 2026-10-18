@@ -97,7 +97,7 @@ internal static class Program
     {
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
-        string path=Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha");
+        string path=BuildPaths.GrasshopperAssembly;
         var assembly=System.Reflection.Assembly.LoadFrom(path);
         var guids=new System.Collections.Generic.HashSet<Guid>();int count=0,mecheck=0;
         var iconIssues=new System.Collections.Generic.List<string>();

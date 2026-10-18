@@ -11,6 +11,11 @@
     <Product>BridGHe</Product>
     <Deterministic>true</Deterministic>
     <RhinoVersion>8.27.26019.16021</RhinoVersion>
+    <BridGHeRoot>$(MSBuildThisFileDirectory)</BridGHeRoot>
+    <BaseOutputPath>$(BridGHeRoot)bin\$(MSBuildProjectName)\</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(BridGHeRoot)bin\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <!-- Ignore legacy generated sources before the cleanup target runs. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);**/bin/**;**/obj/**</DefaultItemExcludes>
     <RepositoryRoot Condition="'$(RepositoryRoot)' == ''">$(MSBuildThisFileDirectory)..\</RepositoryRoot>
     <RestoreIgnoreFailedSources>true</RestoreIgnoreFailedSources>
     <NuGetAudit>false</NuGetAudit>

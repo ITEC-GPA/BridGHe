@@ -14,7 +14,7 @@ internal static class GrasshopperExamples
 {
     internal static int Run(string selected)
     {
-        var assembly=Assembly.LoadFrom(Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha"));
+        var assembly=Assembly.LoadFrom(BuildPaths.GrasshopperAssembly);
         // Isolated test process only. Avoid starting every third-party plugin installed
         // in the user's Rhino profile. No profile settings or installed files are changed.
         var field=typeof(Grasshopper.Instances).GetField("m_comServer",BindingFlags.NonPublic|BindingFlags.Static)

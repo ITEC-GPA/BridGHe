@@ -31,7 +31,16 @@ Requisiti: Windows x64, SDK .NET 8 o successivo, Rhino 8 eseguito con runtime .N
 
 Le DLL gPC devono essere già compilate nei repository fratelli `Utilities`, `Geometry`, `Model` e `Checker`. I sette riferimenti sono espliciti in [GpcReferences.props](build/GpcReferences.props); i sorgenti di quei repository non sono modificati. Per una diversa disposizione delle cartelle si può impostare la proprietà MSBuild `RepositoryRoot`.
 
-Output principale: `src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha`. Il pacchetto viene creato in `artifacts/packages` con dipendenze gestite e manifest SHA-256.
+Tutti gli output di compilazione sono nella cartella `bin` della root:
+
+- Plugin: `bin/BridGHe.Grasshopper/Release/net8.0-windows/BridGHe.Grasshopper.gha`.
+- Libreria e test: `bin/BridGHe.Common/<configurazione>/net8.0-windows` e `bin/BridGHe.Smoke/<configurazione>/net8.0-windows`.
+- File intermedi e restore NuGet: `bin/obj/<progetto>`.
+- Pacchetti ZIP con dipendenze gestite e manifest SHA-256: `bin/packages/<configurazione>`.
+
+Ogni compilazione reale, anche da Visual Studio o con `dotnet build`, elimina automaticamente le vecchie cartelle `bin` e `obj` sparse nel repository e i vecchi pacchetti in `artifacts/packages`. La pulizia preserva gli output correnti nella `bin` della root, i risultati Straus e gli esempi, le cartelle di configurazione (`.git`, `.vs`, `.agents`, `.codex`, `.aws`) e le DLL gPC nei repository fratelli. Si interrompe se un percorso da eliminare contiene link o junction.
+
+Per vedere le eliminazioni previste senza eseguirle: `./tools/clean-builds.ps1 -WhatIf`. Il test riproducibile della pulizia e dei suoi confini è `./tools/test-build-cleanup.ps1`.
 
 ## Installazione
 

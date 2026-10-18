@@ -19,7 +19,7 @@ internal static class GrasshopperBridgeExample
 {
     internal static void Run(BridgeGrillageExample.Parameters p,ModelModel[] inputs,ModelModel[] expected,BridgeGrillageExample.SectionReport sectionReference,NativeExamples.Recorder checks)
     {
-        var assembly=Assembly.LoadFrom(Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha"));
+        var assembly=Assembly.LoadFrom(BuildPaths.GrasshopperAssembly);
         var field=typeof(Grasshopper.Instances).GetField("m_comServer",BindingFlags.NonPublic|BindingFlags.Static);
         if(field.GetValue(null)!=null)throw new InvalidOperationException("Run this example in a fresh process.");
         var server=new GH_ComponentServer();field.SetValue(null,server);

@@ -52,7 +52,7 @@ internal static class RegressionTests
 
     private static void BridgeDetailArchives()
     {
-        var assembly=System.Reflection.Assembly.LoadFrom(System.IO.Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha"));
+        var assembly=System.Reflection.Assembly.LoadFrom(BuildPaths.GrasshopperAssembly);
         var type=assembly.GetType("BridGHe.Grasshopper.DataTypes.BridgeDetailGoo",true);
         object[] definitions={
             new GPC.Checkers.CompositeBridge.BridgeStudOptions{Enabled=true,CountPerRow=3,Diameter=22,LongitudinalPitch=180},
@@ -256,7 +256,7 @@ internal static class RegressionTests
     {
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
-        return System.Reflection.Assembly.LoadFrom(System.IO.Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha"));
+        return System.Reflection.Assembly.LoadFrom(BuildPaths.GrasshopperAssembly);
     }
 
     private static void PreviewBounds()

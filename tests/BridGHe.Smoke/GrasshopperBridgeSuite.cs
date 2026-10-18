@@ -36,7 +36,7 @@ internal static class GrasshopperBridgeSuite
     private static void Initialize()
     {
         if(assembly!=null)return;
-        assembly=Assembly.LoadFrom(Path.GetFullPath("src/BridGHe.Grasshopper/bin/Release/net8.0-windows/BridGHe.Grasshopper.gha"));
+        assembly=Assembly.LoadFrom(BuildPaths.GrasshopperAssembly);
         var field=typeof(Grasshopper.Instances).GetField("m_comServer",BindingFlags.NonPublic|BindingFlags.Static);
         if(field.GetValue(null)!=null)throw new InvalidOperationException("Use a fresh test process.");
         var server=new GH_ComponentServer();field.SetValue(null,server);
