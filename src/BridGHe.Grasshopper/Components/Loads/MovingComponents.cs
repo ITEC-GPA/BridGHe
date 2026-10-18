@@ -143,15 +143,16 @@ namespace BridGHe.Grasshopper.Components.Loads
             p.AddPointParameter("Lateral", "L", "Terzo punto che definisce il piano/curvatura secondo Straus.", GH_ParamAccess.item);
             p.AddIntegerParameter("Shape", "Sh", "0 straight; 1 curved; 2 quadratic.", GH_ParamAccess.item, 0);
             p.AddIntegerParameter("Surface", "Su", "0 flat; 1 curved. Ignorato per straight.", GH_ParamAccess.item, 0);
-            p.AddIntegerParameter("Target", "Tg", "0 any; 1 entity set; 2 beam; 3 plate; 4 brick.", GH_ParamAccess.item, 0);
+            p.AddIntegerParameter("Target", "Tg", "0 all model elements; 2 beam; 3 plate.", GH_ParamAccess.item, 0);
             p.AddIntegerParameter("Divisions", "D", "Discretizzazione del percorso.", GH_ParamAccess.item, 20);
-            p.AddIntegerParameter("Entity set ID", "Set", "ID del set per Target=1, già presente nel file Straus.", GH_ParamAccess.item, 0);
             p.AddBooleanParameter("Generate static cases", "Static", "Converte il percorso in casi statici durante l'esportazione. Per leggerli usare Moving Static Analysis.", GH_ParamAccess.item, true);
         }
         protected override MovingObject Build(IGH_DataAccess da)
         {
             Point3d s = Read<Point3d>(da, 2), e = Read<Point3d>(da, 3), l = Read<Point3d>(da, 4);
-            return new MovingPath { Template = Object<MovingTemplate>(da, 0), LoadCaseName = Read<string>(da, 1), Coordinates = new[] { s.X, s.Y, s.Z, e.X, e.Y, e.Z, l.X, l.Y, l.Z }, Shape = Read<int>(da, 5), Surface = Read<int>(da, 6), Target = Read<int>(da, 7), Divisions = Read<int>(da, 8), EntitySetId = Read<int>(da, 9), ConvertToStaticCases = Read<bool>(da, 10) };
+            int target = Read<int>(da, 7);
+            if (target != 0 && target != 2 && target != 3) throw new ArgumentException("Target must be 0 (all), 2 (beam) or 3 (plate).");
+            return new MovingPath { Template = Object<MovingTemplate>(da, 0), LoadCaseName = Read<string>(da, 1), Coordinates = new[] { s.X, s.Y, s.Z, e.X, e.Y, e.Z, l.X, l.Y, l.Z }, Shape = Read<int>(da, 5), Surface = Read<int>(da, 6), Target = target, Divisions = Read<int>(da, 8), ConvertToStaticCases = Read<bool>(da, 9) };
         }
         public override Guid ComponentGuid => new Guid("5adbf6aa-3fe8-4802-b60e-2c5a31e7adf3");
     }

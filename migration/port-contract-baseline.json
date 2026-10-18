@@ -86,7 +86,7 @@
       ]
     },
     "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamPropertyCompositeComponent.cs": {
-      "ports": "4543beaebd7e6cf49b39c490206009bc35bc56df2551405e38916bae6dd9c741",
+      "ports": "b426e8145aa6703f95bf96380b158799a34b5d5b2f12150e9ba69a9d740660fb",
       "guids": [
         "f87c7066-e509-4646-9ef5-79691675cbf4"
       ]
@@ -152,7 +152,7 @@
       ]
     },
     "src/BridGHe.Grasshopper/Components/BridgeChecks/CompositeSectionComponent.cs": {
-      "ports": "1cc5416006009f0517ccb7262bc5b40414887525392648dc529320685dfe0733",
+      "ports": "2a985e4359b011e4a1a1072295cd9a203ef70bddd5a755666f531029c2a20286",
       "guids": [
         "ee8b7912-f07c-4a17-8a26-e75959ed080f"
       ]
@@ -281,7 +281,7 @@
       ]
     },
     "src/BridGHe.Grasshopper/Components/Loads/MovingComponents.cs": {
-      "ports": "8596b496b7652cea04603af5580db37878e7c6547793a08dc0cdaa274a77460b",
+      "ports": "27e8e53168e33de4afbf5aee64b238337e9058548e754d016cb45032781f9776",
       "guids": [
         "f41f7887-84b9-4f35-8dd1-23469be692d1",
         "fd54ae98-983c-4d01-ae72-ac562343f240",

@@ -134,7 +134,7 @@ internal static class GrasshopperBridgeExample
         var section=Objects("Sezione mista H1600 + soletta 250",new[]{Goo("GH_CompositeBeamProperty",BridgeGrillageExample.Composite(p))},4620,1050);
         Wire(section,composite,1);Wire(section,composite,2);
         var check=Component("BridgeChecks.SuperElementCheckComponent",5200,650);Wire(merge.Params.Output[0],check,0);Wire(composite.Params.Output[0],check,1);check.Params.Input[1].DataMapping=GH_DataMapping.Flatten;
-        for(int i=2;i<=5;i++)Boolean(check,i,false);
+        for(int i=2;i<=4;i++)Boolean(check,i,false);
         var stresses=Component("BridgeChecks.CompositeBeamTensionResultComponent",5480,650);Wire(check.Params.Output[0],stresses,0);
         var concreteStress=Panel("Sigma cls superiore [MPa]","",5750,400,350,180);concreteStress.AddSource(stresses.Params.Output[1]);
         var steelStress=Panel("Sigma acciaio inferiore [MPa]","",5750,670,350,180);steelStress.AddSource(stresses.Params.Output[12]);

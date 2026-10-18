@@ -138,7 +138,7 @@ internal static class GrasshopperBridgeSuite
         var composite=Component("BridgeChecks.CompositeBeamComponent",5500,850);Wire(select.Params.Output[0],composite,0);
         var section=Objects("H1600 + soletta 250",new[]{Goo("GH_CompositeBeamProperty",BridgeGrillageExample.Composite(p))},5250,1300);Wire(section,composite,1);Wire(section,composite,2);
         var check=Component("BridgeChecks.SuperElementCheckComponent",5800,850);Wire(merge.Params.Output[0],check,0);Wire(composite.Params.Output[0],check,1);check.Params.Input[1].DataMapping=GH_DataMapping.Flatten;
-        for(int i=2;i<=5;i++)Boolean(check,i,false);
+        for(int i=2;i<=4;i++)Boolean(check,i,false);
         var stresses=Component("BridgeChecks.CompositeBeamTensionResultComponent",6100,850);Wire(check.Params.Output[0],stresses,0);
         Panel("Sigma cls [MPa]","",6350,600,350,160).AddSource(stresses.Params.Output[1]);Panel("Sigma acciaio [MPa]","",6350,900,350,160).AddSource(stresses.Params.Output[12]);
         Panel("PIOLI E IRRIGIDITORI gPC","Definizioni dei dettagli collegate ai risultati di sezione.\nAppoggio: G1, prima sezione; intermedio: G1, primo diaframma interno.\nPioli: 2 x diam.22, h180, passo200 mm. Piatti intermedi 200x20, appoggio 250x25 mm.\nReazione d'appoggio dimostrativa SLS: somma dei quattro casi; sostituire con inviluppo SLU per il progetto.\nLe verifiche conservano lo stato limite del risultato sorgente. Nei curvi BridgeChecks blocca prima la torsione H.\nI dettagli non aggiungono automaticamente rigidezza o peso al graticcio equivalente.",3900,2850,1500,170);

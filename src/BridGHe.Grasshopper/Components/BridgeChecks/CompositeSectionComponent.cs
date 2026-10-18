@@ -27,8 +27,9 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             pManager.AddGenericParameter("Steel Section", "SS", "I section geometry", GH_ParamAccess.item);
             pManager.AddGenericParameter("Concrete Material", "CM", "Material of the concrete slab", GH_ParamAccess.item);
             pManager.AddGenericParameter("Steel Material", "SM", "Material of the steel section profile", GH_ParamAccess.item);
-            pManager.AddGenericParameter("Reinforcement Material", "RM", "Material of the rebars", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Concrete Offset", "CO", "The distance between top flange and concrete slab", GH_ParamAccess.item, 0);
+            pManager.AddGenericParameter("Reinforcement Material", "RM", "Material of the rebars; required only when the slab contains reinforcement", GH_ParamAccess.item);
+            pManager[5].Optional = true;
+
         }
 
         /// <summary>
@@ -51,7 +52,6 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             DataTypes.Fem.GH_Material concreteMaterial = null;
             DataTypes.Fem.GH_Material steelMaterial = null;
             DataTypes.Fem.GH_Material rebarMaterial = null;
-            double concreteOffset = 0;
 
             if (!DA.GetData(0, ref name))
                 return;
@@ -63,9 +63,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 return;
             if (!DA.GetData(4, ref steelMaterial))
                 return;
-            if (!DA.GetData(5, ref rebarMaterial))
-                return;
-            DA.GetData(6, ref concreteOffset);
+            DA.GetData(5, ref rebarMaterial);
 
             // TODO: Dati che si possono prelevare dagli input dei materiali
             // SpecificCompressiveStrength
@@ -73,15 +71,21 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             // MinimumYieldStress (rebar)
             // steel.Modulus / concrete.Modulus
 
+            var slab = (concreteSection as GH_Goo<object>)?.Value as SectionConcreteSlabModel;
+            if (slab == null || !slab.IsValid || steelSection?.Value == null || steelMaterial?.Value == null || concreteMaterial?.Value == null)
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid slab, steel section or materials."); return; }
+            if (slab.TopRebarArea > 0 && rebarMaterial?.Value == null)
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Reinforcement material is required when reinforcement area is positive."); return; }
+
             CompositeBeamPropertyModel compositeBeamPropertyModel = new CompositeBeamPropertyModel()
             {
                 Name = name,
-                ConcreteSection = (concreteSection as GH_Goo<object>).Value as SectionConcreteSlabModel,
+                ConcreteSection = slab,
                 SteelSection = steelSection.Value,
                 SteelMaterial = steelMaterial.Value,
                 ConcreteMaterial = concreteMaterial.Value,
-                RebarMaterial = rebarMaterial.Value,
-                VerticalOffset = concreteOffset,
+                RebarMaterial = rebarMaterial?.Value ?? steelMaterial.Value,
+                VerticalOffset = 0,
             };
 
             GH_CompositeBeamProperty section = new GH_CompositeBeamProperty(compositeBeamPropertyModel);

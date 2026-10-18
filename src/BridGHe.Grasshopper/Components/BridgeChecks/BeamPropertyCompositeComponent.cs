@@ -30,7 +30,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             pManager.AddGenericParameter("Steel Material", "SM", "Material of the steel section profile", GH_ParamAccess.item);
             int i = pManager.AddGenericParameter("Reinforcement Material", "RM", "Material of the rebars", GH_ParamAccess.item);
             pManager[i].Optional = true;
-            pManager.AddNumberParameter("Concrete Offset", "CO", "The distance between top flange and concrete slab", GH_ParamAccess.item, 0);
+
             pManager.AddNumberParameter("n0", "n0", "Homogenization coefficient for instant time loads", GH_ParamAccess.item, 6);
             pManager.AddNumberParameter("n ∞", "n ∞", "Homogenization coefficient for infinite time loads", GH_ParamAccess.item, 18);
             pManager.AddBooleanParameter("Consider Concrete", "CC", "If true, consider concrete in the n0 and n ∞ phases", GH_ParamAccess.item, true);
@@ -42,7 +42,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         /// </summary>
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Composite Section", "CS", "The composite section for BridgeChecks.0 analysis", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Composite Section", "CS", "The composite section for BridGHe analysis", GH_ParamAccess.item);
             pManager.AddGenericParameter("Only Steel Property", "CS", "The steel section", GH_ParamAccess.item);
             pManager.AddGenericParameter("n0 Beam Section", "CS", "The homogenized beam section with n0 coefficient", GH_ParamAccess.item);
             pManager.AddGenericParameter("n ∞ Beam Section", "CS", "The homogenized beam section with n ∞ coefficient", GH_ParamAccess.item);
@@ -60,7 +60,6 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             DataTypes.Fem.GH_Material concreteMaterial = null;
             DataTypes.Fem.GH_Material steelMaterial = null;
             DataTypes.Fem.GH_Material rebarMaterial = null;
-            double concreteOffset = 0;
             double n0 = 0;
             double ninf = 0;
             bool considerConcrete = false;
@@ -76,27 +75,31 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 return;
             if (!DA.GetData(4, ref steelMaterial))
                 return;
-            if (!DA.GetData(5, ref rebarMaterial))
+            DA.GetData(5, ref rebarMaterial);
+            if (!DA.GetData(6, ref n0))
                 return;
-            DA.GetData(6, ref concreteOffset);
-            if (!DA.GetData(7, ref n0))
+            if (!DA.GetData(7, ref ninf))
                 return;
-            if (!DA.GetData(8, ref ninf))
+            if (!DA.GetData(8, ref considerConcrete))
                 return;
-            if (!DA.GetData(9, ref considerConcrete))
+            if (!DA.GetData(9, ref considerRebars))
                 return;
-            if (!DA.GetData(10, ref considerRebars))
-                return;
+
+            var slab = (concreteSection as GH_Goo<object>)?.Value as SectionConcreteSlabModel;
+            if (slab == null || !slab.IsValid || steelSection?.Value == null || steelMaterial?.Value == null || concreteMaterial?.Value == null)
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid slab, steel section or materials."); return; }
+            if (slab.TopRebarArea > 0 && rebarMaterial?.Value == null)
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Reinforcement material is required when reinforcement area is positive."); return; }
 
             CompositeBeamPropertyModel compositeBeamPropertyModel = new CompositeBeamPropertyModel()
             {
                 Name = name,
-                ConcreteSection = (concreteSection as GH_Goo<object>).Value as SectionConcreteSlabModel,
+                ConcreteSection = slab,
                 SteelSection = steelSection.Value,
                 SteelMaterial = steelMaterial.Value,
                 ConcreteMaterial = concreteMaterial.Value,
-                RebarMaterial = rebarMaterial.Value,
-                VerticalOffset = concreteOffset,
+                RebarMaterial = rebarMaterial?.Value ?? steelMaterial.Value,
+                VerticalOffset = 0,
                 NInstant = n0,
                 NInfinite = ninf,
                 ConsiderConcrete = considerConcrete,
