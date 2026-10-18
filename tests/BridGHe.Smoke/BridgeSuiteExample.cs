@@ -212,9 +212,8 @@ internal static class BridgeSuiteExample
     }
     internal static BridgeCheckAdapter Checker(Parameters p)
     {
-        var options=new BridgeCheckAdapter.SectionOptionsModelCode2010(Reference,SectionSolver.FailureAnalysisTypes.ConstantN,SectionSolver.FailureDomainTypes.Elastic,SectionSolver.StressAnalysisTypes.Linear,0,0,false,64,false)
-            {WebBuckling=false,TopFlangeBuckling=false,BottomFlangeBuckling=false};
-        return new(new SectionCheckerAttribute(Composite(p).GetReinforcedConcreteSection(),null,null),options,new StandardEN1992p11(),false,1,new StandardEN1993p11());
+        var options=new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare, WebBuckling=false,TopFlangeBuckling=false,BottomFlangeBuckling=false};
+        return new(Composite(p).GetReinforcedConcreteSection(),Reference, options);
     }
     internal static GPC.Geometry.CoordinateSystem Reference=>new(GPC.Geometry.Point3d.Origin,new GPC.Geometry.Vector3d(-1,0,0),new GPC.Geometry.Vector3d(0,-1,0));
     internal static double[] StressValues(BridgeStressResult r)=>new[]{r.Point1_ConcreteSigma,r.Point4_ConcreteSigma,r.Point5_SteelSigma,r.Point8_SteelSigma};

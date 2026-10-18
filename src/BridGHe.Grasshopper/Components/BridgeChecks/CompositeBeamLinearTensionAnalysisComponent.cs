@@ -1,4 +1,4 @@
-using SectionCheckerModelCode2010 = BridGHe.Common.Checks.BridgeCheckAdapter;
+using BridGHe.Common.Checks;
 using StressAnalysisResult = BridGHe.Common.Checks.BridgeStressResult;
 using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes;
@@ -44,8 +44,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             pManager.AddBooleanParameter("Web Subject To Local Instability", "WLI", "If true, web is subjected to loacel instability", GH_ParamAccess.item, true);
             pManager.AddBooleanParameter("Bottom Flange Subject To Local Instability", "BLI", "If true, bottom flange is subjected to loacel instability", GH_ParamAccess.item, true);
             pManager.AddBooleanParameter("Consider concrete", "CC", "If true, consider concrete for calculation of coordiante system and force resultant", GH_ParamAccess.item, true);
-            pManager.AddBooleanParameter("Effective Epsilon", "ε", "If true, consider the epsilon based on the real tensione distribuition on the part of the section. " +
-                "Otherwise, it consider the yelding tension over all the section (safety side, higher tension, lower class)", GH_ParamAccess.item, false);
+
         }
 
         /// <summary>
@@ -75,7 +74,6 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             bool webFlangeInstab = false;
             bool bottomFlangeInstab = false;
             bool considerConcrete = false;
-            bool effectiveEpsilon = false;
 
             int count = 0;
             if (!DA.GetData(count++, ref beam))
@@ -98,8 +96,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 return;
             if (!DA.GetData(count++, ref considerConcrete))
                 return;
-            if (!DA.GetData(count++, ref effectiveEpsilon))
-                return;
+
 
 
             bool constantSection = false;
@@ -171,26 +168,20 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     start_topRebarsCover, rebarBottom, start_b / numberRebars, sectionH, steelMaterialEN1992, start_topRebarsCover, start_verticalOffset, beam.Value.StartBeamProperty.Name);
 
 
-                StandardEN1992p11 standardEC2 = new StandardEN1992p11();
-                StandardEN1993p11 standardEC3 = new StandardEN1993p11();
-
                 double phiInfinite = CalculateHomogenizedFactorPhi(homogenizedFactorInfinite, steelMaterialEN1992, concreteMaterialEN1992);
                 double phiInstant = CalculateHomogenizedFactorPhi(homogenizedFactorInstant, steelMaterialEN1992, concreteMaterialEN1992);
 
                 var cs = GetCoordinateSystem(reinforcedConcreteSection);
 
-                SectionCheckerModelCode2010.SectionOptionsModelCode2010 options = new SectionCheckerModelCode2010.SectionOptionsModelCode2010(cs,
-                    SectionSolver.FailureAnalysisTypes.ConstantN, SectionSolver.FailureDomainTypes.Plastic, SectionSolver.StressAnalysisTypes.Linear, phiInfinite, 0, false, 64, effectiveEpsilon)
-                { WebBuckling = webFlangeInstab, TopFlangeBuckling = topFlangeInstab, BottomFlangeBuckling = bottomFlangeInstab };
+                GPC.Checkers.CompositeBridge.BridgeAnalysisOptions options = new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare,  WebBuckling = webFlangeInstab, TopFlangeBuckling = topFlangeInstab, BottomFlangeBuckling = bottomFlangeInstab };
 
                 ResultBeamForces resultBeamForcesOnlySteel = Common.Checks.BridgeForceConvention.FromStraus(beamForceResultOnlySteel, cs);
                 ResultBeamForces resultBeamForcesInfinite = Common.Checks.BridgeForceConvention.FromStraus(beamForceResultInfinite, cs);
                 ResultBeamForces resultBeamForcesInstant = Common.Checks.BridgeForceConvention.FromStraus(beamForceResultInstant, cs);
 
-                SectionCheckerAttribute sectionCheckerAttribute = new SectionCheckerAttribute(reinforcedConcreteSection, null, null);
-                SectionCheckerModelCode2010 sectionCheckerMC2010 = new SectionCheckerModelCode2010(sectionCheckerAttribute, options, standardEC2, false, -1, standardEC3);
+                BridgeCheckAdapter sectionChecker = new BridgeCheckAdapter(reinforcedConcreteSection, cs, options);
 
-                bool res = sectionCheckerMC2010.GetLinearAnalysisResultByStages(
+                bool res = sectionChecker.GetLinearAnalysisResultByStages(
                     out StressAnalysisResult resultOnlySteelBuckling,
                     out StressAnalysisResult resultInfiniteBuckling,
                     out StressAnalysisResult resultBuckling, out double TauB,

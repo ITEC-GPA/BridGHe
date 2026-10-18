@@ -128,7 +128,7 @@
       ]
     },
     "src/BridGHe.Grasshopper/Components/BridgeChecks/CompositeBeamLinearTensionAnalysisComponent.cs": {
-      "ports": "9e1940ddd9a4643e937bd293087bd52f1087a70e44fc24316ff7ebc69f448df7",
+      "ports": "58abdb19fa5000920ec66499d17374d3e54d5719195d8cdbbe1273665fc79a57",
       "guids": [
         "a487d0e7-bb07-4049-90a5-8cd2aa40b183"
       ]
@@ -170,7 +170,7 @@
       ]
     },
     "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckComponent.cs": {
-      "ports": "9bcb68a4202b9918b03e83b5b3effecb75ce1affdc3a2f951ce3bde2f5198d1b",
+      "ports": "7155d44762aff3d9a9667e97a31b626be9bbc1a78f1592a63ea50f4e69250b15",
       "guids": [
         "94839122-32f0-4f3e-a30f-979a53c3eca8"
       ]

@@ -241,9 +241,8 @@ internal static class Program
         Assert(Math.Abs(p.JxxH/n0-h.Jxx)<1e-4,"steel-only homogenized inertia");
         Assert(Math.Abs(p.centroidH.Y+150)<1e-8,"steel-only centroid");
         var cs=new GPC.Geometry.CoordinateSystem(new GPC.Geometry.Point2d(500,-150),new GPC.Geometry.Vector3d(1,0,0),new GPC.Geometry.Vector3d(0,1,0));
-        var options=new BridGHe.Common.Checks.BridgeCheckAdapter.SectionOptionsModelCode2010(cs,GPC.Checkers.Concrete.SectionSolvers.SectionSolver.FailureAnalysisTypes.ConstantN,GPC.Checkers.Concrete.SectionSolvers.SectionSolver.FailureDomainTypes.Plastic,GPC.Checkers.Concrete.SectionSolvers.SectionSolver.StressAnalysisTypes.Linear,0,0,false,64,false)
-        {WebBuckling=false,TopFlangeBuckling=false,BottomFlangeBuckling=false};
-        var checker=new BridGHe.Common.Checks.BridgeCheckAdapter(new GPC.Checkers.Concrete.Attributes.SectionCheckerAttribute(Create(),null,null),options,new GPC.Model.Standards.StandardEN1992p11(),false,1,new GPC.Model.Standards.StandardEN1993p11());
+        var options=new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare, WebBuckling=false,TopFlangeBuckling=false,BottomFlangeBuckling=false};
+        var checker=new BridGHe.Common.Checks.BridgeCheckAdapter(Create(),cs, options);
         var force=new GPC.Model.Results.ResultBeamForces(10000,0,10000,0,0,0,cs);
         var zero=new GPC.Model.Results.ResultBeamForces(0,0,0,0,0,0,cs);
         checker.GetLinearAnalysisResultByStages(out var first,out _,out var last,out var tauB,0,0,force,zero,zero,true);

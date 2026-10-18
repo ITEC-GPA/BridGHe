@@ -121,11 +121,8 @@ internal static class RegressionTests
         var concrete = new GPC.Model.Materials.ConcreteMaterialEN1992("C30",30,GPC.Model.Materials.ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle);
         var steel = new GPC.Model.Materials.SteelMaterialEN1992("S355",210000,355,510,.1,GPC.Model.Materials.SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic,GPC.Model.Materials.SteelMaterial.SteelTypes.Structural);
         var section = BridGHe.Common.Checks.CompositeSectionFactory.Create(1000,200,concrete,null,100,40,null,100,new GPC.Model.Sections.SectionH(300,10,200,20,200,20,"H"),steel,40,0,"Test");
-        var options = new BridGHe.Common.Checks.BridgeCheckAdapter.SectionOptionsModelCode2010(GPC.Geometry.CoordinateSystem.Global,
-            GPC.Checkers.Concrete.SectionSolvers.SectionSolver.FailureAnalysisTypes.ConstantN,
-            GPC.Checkers.Concrete.SectionSolvers.SectionSolver.FailureDomainTypes.Elastic,
-            GPC.Checkers.Concrete.SectionSolvers.SectionSolver.StressAnalysisTypes.Linear,0,0,false,64,false);
-        var checker = new BridGHe.Common.Checks.BridgeCheckAdapter(new GPC.Checkers.Concrete.Attributes.SectionCheckerAttribute(section,null,null),options,new GPC.Model.Standards.StandardEN1992p11(),false,1,new GPC.Model.Standards.StandardEN1993p11());
+        var options = new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare };
+        var checker = new BridGHe.Common.Checks.BridgeCheckAdapter(section,GPC.Geometry.CoordinateSystem.Global, options);
         double Analyze(double torque, double lateral=0, double minor=0)
         {
             var force = new GPC.Model.Results.ResultBeamForces(0,lateral,1000,torque,1e6,minor,GPC.Geometry.CoordinateSystem.Global);

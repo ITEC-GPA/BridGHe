@@ -1,4 +1,4 @@
-using SectionCheckerModelCode2010 = BridGHe.Common.Checks.BridgeCheckAdapter;
+using BridGHe.Common.Checks;
 using StressAnalysisResult = BridGHe.Common.Checks.BridgeStressResult;
 using BridGHe.Common.Models;
 using BridGHe.Grasshopper.ComponentAttributes;
@@ -61,8 +61,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             pManager.AddBooleanParameter("Web Local Instability", "WLI", "If true, web is subjected to loacel instability", GH_ParamAccess.item, true);
             pManager.AddBooleanParameter("Top Flange Local Instability", "TFLI", "If true, top flange is subjected to loacel instability", GH_ParamAccess.item, true);
             pManager.AddBooleanParameter("Bottom Flange Local Instability", "BLI", "If true, bottom flange is subjected to loacel instability", GH_ParamAccess.item, true);
-            pManager.AddBooleanParameter("Effective Epsilon", "ε", "If true, consider the epsilon based on the real tensione distribuition on the part of the section. " +
-                "Otherwise, it consider the yelding tension over all the section (safety side, higher tension, lower class)", GH_ParamAccess.item, false);
+
         }
 
         /// <summary>
@@ -87,7 +86,6 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             bool topFlangeInstab = false;
             bool webFlangeInstab = false;
             bool bottomFlangeInstab = false;
-            bool effectiveEpsilon = false;
 
             int n = 0;
             if (!DA.GetData(n++, ref model))
@@ -100,8 +98,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 return;
             if (!DA.GetData(n++, ref bottomFlangeInstab))
                 return;
-            if (!DA.GetData(n++, ref effectiveEpsilon))
-                return;
+
 
             if (model.Value == null)
             {
@@ -137,7 +134,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     (double[] StrainInfiniteTime, double[] StrainIstantTime)[][] strains = new
                         (double[] StrainInfiniteTime, double[] StrainIstantTime)[beams.Count][];
 
-                    SectionCheckerModelCode2010[][] sectionCheckerModelCode2010s = new SectionCheckerModelCode2010[beams.Count][];
+                    BridgeCheckAdapter[][] sectionCheckers = new BridgeCheckAdapter[beams.Count][];
                     (double psiInfinite, double psiInstant)[][] psis = new (double psiInfinite, double psiInstant)[beams.Count][];
 
                     for (int i = 0; i < beams.Count; i++)
@@ -210,7 +207,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                         List<double> stations = normStationsSet.OrderBy(value => value).ToList();
 
                         psis[i] = new (double psiInfinite, double psiInstant)[stations.Count];
-                        sectionCheckerModelCode2010s[i] = new SectionCheckerModelCode2010[stations.Count];
+                        sectionCheckers[i] = new BridgeCheckAdapter[stations.Count];
 
                         if (constantSection)
                         {
@@ -232,8 +229,6 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                                 RebarSectionCircular rebarTop = rebarDiameterTop != 0 ? new RebarSectionCircular("", rebarDiameterTop, rebarMaterial) : null;
                                 RebarSectionCircular rebarBottom = null;
 
-                                StandardEN1992p11 standardEC2 = new StandardEN1992p11();
-                                StandardEN1993p11 standardEC3 = new StandardEN1993p11();
 
                                 double phiInfinite = CalculateHomogenizedFactorPhi(homogenizedFactorInfinite, steelMaterialEN1992, concreteMaterialEN1992);
                                 double phiInstant = CalculateHomogenizedFactorPhi(homogenizedFactorInstant, steelMaterialEN1992, concreteMaterialEN1992);
@@ -243,16 +238,12 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
 
                                 CoordinateSystem cs = GetCoordinateSystem(reinforcedConcreteSection);
 
-                                SectionCheckerModelCode2010.SectionOptionsModelCode2010 options = new SectionCheckerModelCode2010.SectionOptionsModelCode2010(cs,
-                                    SectionSolver.FailureAnalysisTypes.ConstantN, SectionSolver.FailureDomainTypes.Plastic, SectionSolver.StressAnalysisTypes.Linear, phiInfinite, 0, false, 64, effectiveEpsilon)
-                                { WebBuckling = webFlangeInstab, TopFlangeBuckling = topFlangeInstab, BottomFlangeBuckling = bottomFlangeInstab };
-
-                                SectionCheckerAttribute sectionCheckerAttribute = new SectionCheckerAttribute(reinforcedConcreteSection, null, null);
+                                GPC.Checkers.CompositeBridge.BridgeAnalysisOptions options = new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare,  WebBuckling = webFlangeInstab, TopFlangeBuckling = topFlangeInstab, BottomFlangeBuckling = bottomFlangeInstab };
 
                                 for (int k = 0; k < stations.Count; k++)
                                 {
                                     psis[i][k] = (phiInfinite, phiInstant);
-                                    sectionCheckerModelCode2010s[i][k] = new SectionCheckerModelCode2010(sectionCheckerAttribute, options, standardEC2, false, -1, standardEC3);
+                                    sectionCheckers[i][k] = new BridgeCheckAdapter(reinforcedConcreteSection, cs, options);
                                 }
                             }
                             catch (Exception ex)
@@ -304,8 +295,6 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                                 RebarSectionCircular rebarTop = rebarDiameter != 0 ? new RebarSectionCircular("", rebarDiameter, rebarMaterial) : null;
                                 RebarSectionCircular rebarBottom = null;
 
-                                StandardEN1992p11 standardEC2 = new StandardEN1992p11();
-                                StandardEN1993p11 standardEC3 = new StandardEN1993p11();
 
                                 double phiInfinite = CalculateHomogenizedFactorPhi(nInfinite, steelMaterialEN1992, concreteMaterialEN1992);
                                 double phiInstant = CalculateHomogenizedFactorPhi(nInstant, steelMaterialEN1992, concreteMaterialEN1992);
@@ -315,14 +304,10 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
 
                                 CoordinateSystem cs = GetCoordinateSystem(reinforcedConcreteSection);
 
-                                SectionCheckerModelCode2010.SectionOptionsModelCode2010 options = new SectionCheckerModelCode2010.SectionOptionsModelCode2010(cs,
-                                    SectionSolver.FailureAnalysisTypes.ConstantN, SectionSolver.FailureDomainTypes.Plastic, SectionSolver.StressAnalysisTypes.Linear, phiInfinite, 0, false, 64, effectiveEpsilon)
-                                { WebBuckling = webFlangeInstab, TopFlangeBuckling = topFlangeInstab, BottomFlangeBuckling = bottomFlangeInstab };
-
-                                SectionCheckerAttribute sectionCheckerAttribute = new SectionCheckerAttribute(reinforcedConcreteSection, null, null);
+                                GPC.Checkers.CompositeBridge.BridgeAnalysisOptions options = new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare,  WebBuckling = webFlangeInstab, TopFlangeBuckling = topFlangeInstab, BottomFlangeBuckling = bottomFlangeInstab };
 
                                 psis[i][k] = (phiInfinite, phiInstant);
-                                sectionCheckerModelCode2010s[i][k] = new SectionCheckerModelCode2010(sectionCheckerAttribute, options, standardEC2, false, -1, standardEC3);
+                                sectionCheckers[i][k] = new BridgeCheckAdapter(reinforcedConcreteSection, cs, options);
                             }
                         }
                     }
@@ -407,7 +392,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                         tauBResults[i] = new double[forces[i].Length][];
                         for (int j = 0; j < forces[i].Length; j++)
                         {
-                            var checker = sectionCheckerModelCode2010s[i];
+                            var checker = sectionCheckers[i];
                             double psiInfinite = psis[i][j].psiInfinite;
                             double psiInstant = psis[i][j].psiInstant;
                             double[] strainIstant = strains[i][j].StrainIstantTime;

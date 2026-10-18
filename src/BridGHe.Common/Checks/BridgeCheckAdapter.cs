@@ -2,42 +2,29 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using GPC.Checkers.CompositeBridge;
-using GPC.Checkers.Concrete.Attributes;
-using GPC.Checkers.Concrete.SectionSolvers;
 using GPC.Geometry;
 using GPC.Model.Materials;
 using GPC.Model.Results;
 using GPC.Model.Sections;
 using GPC.Model.Sections.Concrete;
-using GPC.Model.Standards;
 
 namespace BridGHe.Common.Checks
 {
-    /// <summary>Boundary between the unchanged BridgeChecks ports and the current gPC bridge engine.
+    /// <summary>Adapter from Straus section forces to the gPC bridge engine.
     /// Geometry is in mm; actions are N and Nmm in the supplied reference system.</summary>
     public sealed class BridgeCheckAdapter
     {
         private readonly ReinforcedConcreteSection section;
-        private readonly SectionOptionsModelCode2010 options;
+        private readonly CoordinateSystem reference;
+        private readonly BridgeAnalysisOptions options;
 
-        public sealed class SectionOptionsModelCode2010
+        public BridgeCheckAdapter(ReinforcedConcreteSection section, CoordinateSystem reference,
+            BridgeAnalysisOptions options = null)
         {
-            public CoordinateSystem CoordinateSystem { get; }
-            public bool EffectiveEpsilon { get; }
-            public bool WebBuckling { get; set; } = true;
-            public bool TopFlangeBuckling { get; set; } = true;
-            public bool BottomFlangeBuckling { get; set; } = true;
-            public SectionOptionsModelCode2010(CoordinateSystem cs, SectionSolver.FailureAnalysisTypes failure,
-                SectionSolver.FailureDomainTypes domain, SectionSolver.StressAnalysisTypes analysis,
-                double phi, double psiTendon, bool tension, int discretization, bool effectiveEpsilon)
-            { CoordinateSystem = cs; EffectiveEpsilon = effectiveEpsilon; }
-        }
-
-        public BridgeCheckAdapter(SectionCheckerAttribute attribute, SectionOptionsModelCode2010 options,
-            StandardEN1992p11 concreteStandard, bool tensileConcrete, int id, StandardEN1993p11 steelStandard)
-        {
-            section = attribute.Section as ReinforcedConcreteSection ?? throw new NotSupportedException("È richiesta una sezione composta gPC.");
-            this.options = options;
+            this.section = section ?? throw new ArgumentNullException(nameof(section));
+            this.reference = reference ?? throw new ArgumentNullException(nameof(reference));
+            this.options = options ?? new BridgeAnalysisOptions
+            { Standard = BridgeStandard.Eurocode4, LimitState = BridgeLimitState.Rare };
         }
 
         private HBridgeInput Input(bool concrete, bool rebars, bool buckling)
@@ -47,8 +34,6 @@ namespace BridGHe.Common.Checks
             var positioned = section.SteelSections[0];
             if (Math.Abs(positioned.Rotation) > 1e-10 || Math.Abs(section.Jxy) > 1e-10 * (section.Jxx + section.Jyy))
                 throw new NotSupportedException("Sezione ruotata o non simmetrica: adattamento del verificatore da completare.");
-            if (buckling && options.EffectiveEpsilon)
-                throw new NotSupportedException("Effective Epsilon non ha un equivalente nell'API gPC corrente. Impostare false per il metodo attuale a larghezze efficaci.");
             var rows = section.Rebars.GroupBy(b => Math.Round(b.Position.Y, 8)).OrderByDescending(g => g.Key).ToArray();
             if (rows.Length > 2) throw new NotSupportedException("Sono supportate al massimo due file di armatura.");
             BridgeRebarRow Row(int index)
@@ -83,15 +68,10 @@ namespace BridGHe.Common.Checks
                 },
                 TopRebars = Row(0),
                 BottomRebars = Row(1),
-                Options = new BridgeAnalysisOptions
+                Options = options with
                 {
-                    Standard = BridgeStandard.Eurocode4,
-                    LimitState = BridgeLimitState.Rare,
-                    Class4 = buckling,
-                    WebBuckling = options.WebBuckling,
-                    TopFlangeBuckling = options.TopFlangeBuckling,
-                    BottomFlangeBuckling = options.BottomFlangeBuckling,
-                    CommonLoadY = options.CoordinateSystem.Origin.Y
+                    Class4 = buckling && options.Class4,
+                    CommonLoadY = reference.Origin.Y
                 }
             };
         }

@@ -284,9 +284,8 @@ internal static class BridgeGrillageExample
     {
         var property=Composite(p);var section=property.GetReinforcedConcreteSection();
         var cs=new GPC.Geometry.CoordinateSystem(GPC.Geometry.Point3d.Origin,new GPC.Geometry.Vector3d(-1,0,0),new GPC.Geometry.Vector3d(0,-1,0));
-        var options=new BridgeCheckAdapter.SectionOptionsModelCode2010(cs,SectionSolver.FailureAnalysisTypes.ConstantN,SectionSolver.FailureDomainTypes.Elastic,SectionSolver.StressAnalysisTypes.Linear,0,0,false,64,false)
-            {WebBuckling=false,TopFlangeBuckling=false,BottomFlangeBuckling=false};
-        var checker=new BridgeCheckAdapter(new SectionCheckerAttribute(section,null,null),options,new StandardEN1992p11(),false,1,new StandardEN1993p11());
+        var options=new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare, WebBuckling=false,TopFlangeBuckling=false,BottomFlangeBuckling=false};
+        var checker=new BridgeCheckAdapter(section,cs, options);
         var beam=new BeamModel(results[0].Beams[p.Panels/2]);beam.Results.Clear();beam.Loads.Clear();
         for(int k=0;k<3;k++)foreach(var force in results[k].Beams[p.Panels/2].Results.OfType<BeamForceResultModel>().Where(r=>r.LoadCase.Name==PhaseNames[k]))beam.Results.Add(ModelArchive.Clone(force));
         var combo=new LoadCombinationModel("SLS_SIMMETRICO");for(int k=0;k<3;k++)combo.Values.Add(results[k].LoadCases.Single(c=>c.Name==PhaseNames[k]),1);

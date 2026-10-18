@@ -25,13 +25,9 @@ internal static class BridgeNumericalBaseline
         var data = new Dictionary<string,double[]>();
         foreach (bool buckling in new[] { false, true })
         {
-            var options = new BridgeCheckAdapter.SectionOptionsModelCode2010(reference,
-                GPC.Checkers.Concrete.SectionSolvers.SectionSolver.FailureAnalysisTypes.ConstantN,
-                GPC.Checkers.Concrete.SectionSolvers.SectionSolver.FailureDomainTypes.Elastic,
-                GPC.Checkers.Concrete.SectionSolvers.SectionSolver.StressAnalysisTypes.Linear,0,0,false,64,false)
-                { WebBuckling=buckling,TopFlangeBuckling=buckling,BottomFlangeBuckling=buckling };
-            var checker = new BridgeCheckAdapter(new GPC.Checkers.Concrete.Attributes.SectionCheckerAttribute(section,null,null),
-                options,new GPC.Model.Standards.StandardEN1992p11(),false,1,new GPC.Model.Standards.StandardEN1993p11());
+            var options = new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare,  WebBuckling=buckling,TopFlangeBuckling=buckling,BottomFlangeBuckling=buckling };
+            var checker = new BridgeCheckAdapter(section,
+                reference, options);
             foreach (double sign in new[] { -1.0, 0, 1 })
             foreach (bool slab in new[] { false, true })
             {

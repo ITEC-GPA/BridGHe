@@ -27,9 +27,8 @@ internal static class NativeBridgePhases
         var h=new SectionH(300,10,200,20,200,20,"H");
         var section=CompositeSectionFactory.Create(1000,200,concrete,null,100,50,null,100,h,steel,50,0,"Bridge phase test");
         var cs=new GPC.Geometry.CoordinateSystem(GPC.Geometry.Point3d.Origin,new GPC.Geometry.Vector3d(-1,0,0),new GPC.Geometry.Vector3d(0,-1,0));
-        var options=new BridgeCheckAdapter.SectionOptionsModelCode2010(cs,SectionSolver.FailureAnalysisTypes.ConstantN,SectionSolver.FailureDomainTypes.Elastic,SectionSolver.StressAnalysisTypes.Linear,0,0,false,64,false)
-            {WebBuckling=false,TopFlangeBuckling=false,BottomFlangeBuckling=false};
-        var checker=new BridgeCheckAdapter(new SectionCheckerAttribute(section,null,null),options,new StandardEN1992p11(),false,1,new StandardEN1993p11());
+        var options=new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare, WebBuckling=false,TopFlangeBuckling=false,BottomFlangeBuckling=false};
+        var checker=new BridgeCheckAdapter(section,cs, options);
         var model=new ModelModel(ModelModel.ModelUnits.Nmm);
         var property=new BeamPropertyModel("1"){Name="H 300",Material=new MaterialModel("S355"){Name="S355",Modulus=es,PoissonRatio=.3},PropertyType=BeamPropertyType.Beam,
             Section=new SectionModel{SectionType=SectionModel.SectionTypes.Generic,SectionArea=asSteel,I11=isSteel,I22=2*20*Math.Pow(200,3)/12+260*Math.Pow(10,3)/12,J=1e6}};

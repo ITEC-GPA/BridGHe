@@ -1,4 +1,4 @@
-using SectionCheckerModelCode2010 = BridGHe.Common.Checks.BridgeCheckAdapter;
+using BridGHe.Common.Checks;
 using StressAnalysisResult = BridGHe.Common.Checks.BridgeStressResult;
 using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes;
@@ -68,16 +68,12 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             double phi = CalculateHomogenizedFactorPhi(n, reinforcedConcreteSection.SteelSections.First().Section.SteelMaterial, reinforcedConcreteSection.ConcreteMaterial);
             var cs = GetCoordinateSystem(reinforcedConcreteSection, phi);
 
-            SectionCheckerModelCode2010.SectionOptionsModelCode2010 options = new SectionCheckerModelCode2010.SectionOptionsModelCode2010(cs,
-                SectionSolver.FailureAnalysisTypes.ConstantN, SectionSolver.FailureDomainTypes.Plastic, SectionSolver.StressAnalysisTypes.Linear, phi, 0, false, 64, true);
+            GPC.Checkers.CompositeBridge.BridgeAnalysisOptions options = new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare };
 
-            StandardEN1992p11 standardEC2 = new StandardEN1992p11();
-            StandardEN1993p11 standardEC3 = new StandardEN1993p11();
 
-            SectionCheckerAttribute sectionCheckerAttribute = new SectionCheckerAttribute(reinforcedConcreteSection, null, null);
-            SectionCheckerModelCode2010 sectionCheckerMC2010 = new SectionCheckerModelCode2010(sectionCheckerAttribute, options, standardEC2, false, -1, standardEC3);
+            BridgeCheckAdapter sectionChecker = new BridgeCheckAdapter(reinforcedConcreteSection, cs, options);
 
-            StressAnalysisResult result = sectionCheckerMC2010.GetSelfTension(strain, phi);
+            StressAnalysisResult result = sectionChecker.GetSelfTension(strain, phi);
 
             DA.SetData(0, result);
         }
