@@ -10,14 +10,56 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using Rhino.Geometry;
 
 using System.Text.Json;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {
-    public class GH_Model : GH_Goo<ModelModel>, IGH_BakeAwareData
+    public class GH_Model : GH_Goo<ModelModel>, IGH_BakeAwareData, IGH_PreviewData
     {
         protected Dictionary<ElementModel, Guid> _guids;
+        private readonly ConditionalWeakTable<ElementModel, IGH_PreviewData> previews = new();
+
+        private IEnumerable<IGH_PreviewData> PreviewElements()
+        {
+            if (Value == null) yield break;
+            foreach (var element in Value.Elements)
+            {
+                if (element is not NodeModel && element is not BeamModel && element is not PlateModel) continue;
+                yield return previews.GetValue(element, e => e switch
+                {
+                    NodeModel node => new GH_Node(node),
+                    BeamModel beam => new GH_Beam(beam),
+                    PlateModel plate => new GH_Plate(plate),
+                    _ => throw new NotSupportedException()
+                });
+            }
+        }
+
+        public BoundingBox ClippingBox
+        {
+            get
+            {
+                var bounds = BoundingBox.Empty;
+                foreach (var preview in PreviewElements())
+                    if (preview.ClippingBox.IsValid) bounds.Union(preview.ClippingBox);
+                return bounds;
+            }
+        }
+
+        public void DrawViewportWires(GH_PreviewWireArgs args)
+        {
+            foreach (var preview in PreviewElements())
+                if (preview.ClippingBox.IsValid) preview.DrawViewportWires(args);
+        }
+
+        public void DrawViewportMeshes(GH_PreviewMeshArgs args)
+        {
+            foreach (var preview in PreviewElements())
+                if (preview.ClippingBox.IsValid) preview.DrawViewportMeshes(args);
+        }
 
         public Dictionary<ElementModel, Guid> Guids => _guids;
 

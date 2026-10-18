@@ -32,6 +32,7 @@ internal static class RegressionTests
             ["plate-point-updates"] = PlatePointUpdates,
             ["incomplete-beam-preview"] = IncompleteBeamPreview,
             ["preview-bounds"] = PreviewBounds,
+            ["model-preview"] = ModelPreview,
             ["bridge-planar-noise"] = BridgePlanarNoise,
             ["bridge-instant-modulus"] = BridgeInstantModulus,
             ["bridge-example-parameters"] = BridgeExampleParameters,
@@ -59,6 +60,27 @@ internal static class RegressionTests
     private static void Require(bool condition, string message)
     {
         if (!condition) throw new InvalidOperationException("REGRESSION FAILED: " + message);
+    }
+
+    private static void ModelPreview()
+    {
+        var assembly=System.Reflection.Assembly.LoadFrom(BuildPaths.GrasshopperAssembly);
+        var type=assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model",true);
+        var goo=Activator.CreateInstance(type);
+        var preview=(Grasshopper.Kernel.IGH_PreviewData)goo;
+        Require(!preview.ClippingBox.IsValid,"empty model has no preview bounds");
+        var beam=new BeamModel("B",Point3d.Origin,new Point3d(3000,0,0),new BeamPropertyModel("P") { Section=new SectionModel { SectionType=SectionModel.SectionTypes.SolidCircle,D=20 }, Material=new MaterialModel("S"){Modulus=210000}, PropertyType=BeamPropertyType.Beam });
+        var model=new ModelModel(ModelModel.ModelUnits.Nmm);model.AddElements(new ElementModel[]{beam});
+        type.GetProperty("Value").SetValue(goo,model);
+        Require(preview.ClippingBox.Max.X>=3000,"whole model includes the beam geometry");
+        beam.PointTo=new Point3d(8000,0,0);
+        Require(Math.Abs(preview.ClippingBox.Max.X-8000)<1e-6,"whole model preview follows in-place geometry changes");
+        model.Elements.Clear();
+        Require(!preview.ClippingBox.IsValid,"removed elements disappear from preview");
+        var node=new NodeModel("N",new Point3d(17,23,42));model.AddElements(new[]{node});
+        Require(preview.ClippingBox.Contains(node.Position),"added elements enter model preview");
+        type.GetProperty("Value").SetValue(goo,null);
+        Require(!preview.ClippingBox.IsValid,"clearing model discards old preview bounds");
     }
 
     private static void BridgeDetailArchives()
@@ -514,4 +536,5 @@ internal static class RegressionTests
         Require(!beam.IsValid, "zero-length native beam is invalid");
     }
 }
+
 
