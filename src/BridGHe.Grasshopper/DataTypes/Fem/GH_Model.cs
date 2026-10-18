@@ -86,7 +86,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         }
 
         public GH_Model(ModelModel.ModelUnits units, IEnumerable<IGH_GeometricGoo> elements, IEnumerable<GH_LoadCombination> combinations,
-            IEnumerable<GH_NamedSets> namedSets, IEnumerable<GH_StagedConstruction> stages)
+            IEnumerable<GH_StagedConstruction> stages)
             : this()
         {
             ModelHelper.ParseElements(elements, out List<GH_Node> nodes, out List<GH_Beam> beams, out List<GH_Plate> plates);
@@ -125,7 +125,6 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
             Value.AddLoadCombinations(combinations.Select(c => c.Value));
 
-            Value.AddNamedSets(namedSets.Select(c => c.Value));
 
             Value.AddStagedConstructions(stages.Select(s => s.Value));
         }

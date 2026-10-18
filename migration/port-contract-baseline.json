@@ -31,12 +31,6 @@
         "e3b6b459-dfcf-4a1a-b31f-3f7536b7bfa9"
       ]
     },
-    "src/BridGHe.Grasshopper/Components/Attributes/BeamReleasesNamedSetComponent.cs": {
-      "ports": "f4d439b5d22870816db142c4644d10f30fd3ffeaf606d73d758e60d74e77b801",
-      "guids": [
-        "5f7c35bc-b5c4-4ca0-9d0a-d6ad3523cdef"
-      ]
-    },
     "src/BridGHe.Grasshopper/Components/Attributes/BeamStringGroupComponent.cs": {
       "ports": "d5f3c2b0f9ec3f49571afa80252de845da11e9189dcdd5fc137f48e68fea1ef2",
       "guids": [
@@ -421,7 +415,7 @@
       ]
     },
     "src/BridGHe.Grasshopper/Components/Models/BuildModelComponent.cs": {
-      "ports": "c5f69460f4c981f143afde2ef161e5fa33a78f5c6f402460aa6f326e1b4ccda1",
+      "ports": "55df94a7cb7de18e805fe35a5ee6251b4b8196d1fec2879cea090791473095fc",
       "guids": [
         "d99dbb1b-13c4-4398-902e-ce66e5076ff4"
       ]

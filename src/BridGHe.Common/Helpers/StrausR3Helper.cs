@@ -1535,12 +1535,6 @@ namespace BridGHe.Common.Helpers
 
                 #endregion
 
-                // NamedSets
-                if (model.NamedSetsModels != null && model.NamedSetsModels.Count() > 0)
-                {
-                    warnings.Add("Named sets not supported");
-                }
-
                 // StagedLoadCase
                 for (int i = 0; i < loadCases.Count; i++)
                 {

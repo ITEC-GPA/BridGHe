@@ -41,8 +41,6 @@ namespace BridGHe.Grasshopper.Components.Models
                 Optional = true
             };
             pManager.AddParameter(combs, "Load Combinations", "LCB", "The load cases combinations", GH_ParamAccess.list);
-            pManager.AddGenericParameter("Named sets", "NS", "The named sets", GH_ParamAccess.list);
-            pManager[pManager.ParamCount - 1].Optional = true;
             pManager.AddGenericParameter("Staged constructions", "SC", "The staged contruction definitions", GH_ParamAccess.list);
             pManager[pManager.ParamCount - 1].Optional = true;
         }
@@ -67,7 +65,6 @@ namespace BridGHe.Grasshopper.Components.Models
                 string name = "";
                 int units = 0;
                 List<GH_LoadCombination> combinations = new List<GH_LoadCombination>();
-                List<GH_NamedSets> namedSets = new List<GH_NamedSets>();
                 List<GH_StagedConstruction> stages = new List<GH_StagedConstruction>();
 
                 if (!DA.GetDataList(0, elements))
@@ -97,18 +94,17 @@ namespace BridGHe.Grasshopper.Components.Models
                 foreach (LoadCombinationsParam param in combinations_params)
                     param.UpdateLoadCases(loadCases);
 
-                DA.GetDataList(4, namedSets);
 
                 // Set the load cases in the StagedConstructionComponent
-                foreach (IGH_Param param in Params.Input[5].Sources)
+                foreach (IGH_Param param in Params.Input[4].Sources)
                 {
                     if (((GH_Attributes<IGH_Component>)param.Attributes.GetTopLevel).Owner is StagedConstructionComponent scc)
                         scc.SetLoadCases(loadCases);
                 }
 
-                DA.GetDataList(5, stages);
+                DA.GetDataList(4, stages);
 
-                GH_Model model = new GH_Model((ModelModel.ModelUnits)units, elements, combinations, namedSets, stages);
+                GH_Model model = new GH_Model((ModelModel.ModelUnits)units, elements, combinations, stages);
                 model.Value.Name = name;
 
                 DA.SetData(0, model);

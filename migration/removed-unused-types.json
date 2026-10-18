@@ -1,0 +1,12 @@
+{
+  "reason": "Not used by Straus export/analysis or bridge verification; named sets were only reported as unsupported.",
+  "files": [
+    "src/BridGHe.Common/Models/NamedSetsModel.cs",
+    "src/BridGHe.Common/Models/BeamReleasesNamedModel.cs",
+    "src/BridGHe.Common/Models/FunctionModel.cs",
+    "src/BridGHe.Grasshopper/DataTypes/Fem/GH_NamedSets.cs",
+    "src/BridGHe.Grasshopper/Components/Attributes/BeamReleasesNamedSetComponent.cs",
+    "assets/icons/BeamReleasesNamedSetComponent.svg",
+    "src/BridGHe.Grasshopper/Resources/Icons/BeamReleasesNamedSetComponent.png"
+  ]
+}

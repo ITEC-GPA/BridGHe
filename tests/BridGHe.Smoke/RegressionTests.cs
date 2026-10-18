@@ -11,6 +11,7 @@ internal static class RegressionTests
     {
         var tests = new Dictionary<string, Action>
         {
+            ["archive-before-cleanup"] = ArchiveBeforeCleanup,
             ["composite-archive"] = CompositeArchive,
             ["composite-preview"] = CompositePreview,
             ["nodal-actions"] = NodalActions,
@@ -43,6 +44,15 @@ internal static class RegressionTests
         }
         Console.WriteLine($"REGRESSION TOTAL {count}");
         return 0;
+    }
+
+    private static void ArchiveBeforeCleanup()
+    {
+        var bytes = System.IO.File.ReadAllBytes("tests/BridGHe.Smoke/Fixtures/model-before-cleanup.bgha");
+        var model = ModelArchive.Read<ModelModel>(bytes);
+        Require(model.Name == "Archive before cleanup" && model.Units == ModelModel.ModelUnits.Nmm,
+            "existing model archive retains its identity and units after removal of unused containers");
+        Require(ModelArchive.Clone(model).Name == model.Name, "migrated archive roundtrip");
     }
 
     private static void Require(bool condition, string message)

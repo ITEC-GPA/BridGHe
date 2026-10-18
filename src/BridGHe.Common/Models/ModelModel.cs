@@ -37,9 +37,7 @@ namespace BridGHe.Common.Models
         protected Dictionary<string, int> _nodesIndexes;
         protected Dictionary<string, int> _beamsIndexes;
         protected Dictionary<string, int> _platesIndexes;
-        protected List<NamedSetsModel> _namedSetsModels;
         protected List<StagedConstructionModel> _stagedConstruction;
-        protected List<FunctionModel> _functionModels;
 
         public List<MovingLoads.MovingPath> MovingPaths { get; private set; } = new List<MovingLoads.MovingPath>();
 
@@ -65,11 +63,9 @@ namespace BridGHe.Common.Models
 
         public List<LoadCombinationModel> LoadCombinations => _loadCombinations;
 
-        public List<NamedSetsModel> NamedSetsModels => _namedSetsModels;
 
         public List<StagedConstructionModel> StagedConstruction => _stagedConstruction;
 
-        public List<FunctionModel> FunctionModels => _functionModels;
 
         public ModelModel(ModelUnits units)
         {
@@ -84,9 +80,7 @@ namespace BridGHe.Common.Models
             _nodesIndexes = new Dictionary<string, int>();
             _beamsIndexes = new Dictionary<string, int>();
             _platesIndexes = new Dictionary<string, int>();
-            _namedSetsModels = new List<NamedSetsModel>();
             _stagedConstruction = new List<StagedConstructionModel>();
-            _functionModels = new List<FunctionModel>();
         }
 
         public ModelModel(ModelModel model)
@@ -103,9 +97,7 @@ namespace BridGHe.Common.Models
             _nodesIndexes = copy._nodesIndexes;
             _beamsIndexes = copy._beamsIndexes;
             _platesIndexes = copy._platesIndexes;
-            _namedSetsModels = copy._namedSetsModels;
             _stagedConstruction = copy._stagedConstruction;
-            _functionModels = copy._functionModels;
             MovingPaths = copy.MovingPaths;
             GeneratedMovingCases = copy.GeneratedMovingCases;
         }
@@ -113,7 +105,7 @@ namespace BridGHe.Common.Models
         #region Serialization
 
         private string SERIALIZATION_RELEASE_NAME = "ModelModel_SERIALIZATION_RELEASE"; //do not modify the name!
-        private int SERIALIZATION_RELEASE = 5;
+        private int SERIALIZATION_RELEASE = 6;
 
         protected ModelModel(SerializationInfo info, StreamingContext context)
         {
@@ -140,18 +132,10 @@ namespace BridGHe.Common.Models
             _nodesIndexes = new Dictionary<string, int>();
             _beamsIndexes = new Dictionary<string, int>();
             _platesIndexes = new Dictionary<string, int>();
-            if (savedRelease >= 2)
-                _namedSetsModels = (List<NamedSetsModel>)info.GetValue("NamedSetsModels", typeof(List<NamedSetsModel>));
-            else
-                _namedSetsModels = new List<NamedSetsModel>();
             if (savedRelease >= 3)
                 _stagedConstruction = (List<StagedConstructionModel>)info.GetValue("StagedConstruction", typeof(List<StagedConstructionModel>));
             else
                 _stagedConstruction = new List<StagedConstructionModel>();
-            if (savedRelease >= 4)
-                _functionModels = (List<FunctionModel>)info.GetValue("FunctionModel", typeof(List<FunctionModel>));
-            else
-                _functionModels = new List<FunctionModel>();
             //Sync(0);//here cannot be done this because _elements is full of nulls! 
         }
         public void GetObjectData(SerializationInfo info, StreamingContext context)
@@ -166,9 +150,7 @@ namespace BridGHe.Common.Models
             info.AddValue("Elements", _elements, typeof(List<ElementModel>));
             info.AddValue("LoadCases", _loadCases, typeof(List<LoadCaseModel>));
             info.AddValue("LoadCombinations", _loadCombinations, typeof(List<LoadCombinationModel>));
-            info.AddValue("NamedSetsModels", _namedSetsModels, typeof(List<NamedSetsModel>));
             info.AddValue("StagedConstruction", _stagedConstruction, typeof(List<StagedConstructionModel>));
-            info.AddValue("FunctionModel", _functionModels, typeof(List<FunctionModel>));
         }
 
         #endregion
@@ -190,20 +172,14 @@ namespace BridGHe.Common.Models
             _loadCombinations.AddRange(combinations);
         }
 
-        public void AddNamedSets(IEnumerable<NamedSetsModel> namedSets)
-        {
-            _namedSetsModels.AddRange(namedSets);
-        }
+
 
         public void AddStagedConstructions(IEnumerable<StagedConstructionModel> stagedConstructions)
         {
             _stagedConstruction.AddRange(stagedConstructions);
         }
 
-        public void AddFunctionModels(IEnumerable<FunctionModel> functionModels)
-        {
-            _functionModels.AddRange(functionModels);
-        }
+
 
 
         public NodeModel GetNode(string id)
@@ -352,7 +328,6 @@ namespace BridGHe.Common.Models
             text += string.Format("\n{0} Elements", _elements.Count);
             text += string.Format("\n{0} Cases", _loadCases.Count);
             text += string.Format("\n{0} Combinations", _loadCombinations.Count);
-            text += string.Format("\n{0} NamedSets", _namedSetsModels.Count);
             return text;
         }
     }
