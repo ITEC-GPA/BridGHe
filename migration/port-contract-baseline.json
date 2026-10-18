@@ -104,13 +104,17 @@
       ]
     },
     "src/BridGHe.Grasshopper/Components/BridgeChecks/BridgeForcePlotComponent.cs": {
-      "ports": "f77febdb0ab3f5a737726a0975c659557605c9cf05d380a4b4f995e7e9dec195",
+      "ports": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
       "guids": [
         "77e9f533-e4e8-41de-baaf-6bfece84def9"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/BridgeChecks/BridgePlotComponent.cs": {
+      "ports": "44cc6b43620821033420470a326a8b9ddcd79d7e4d5e1d3d4591d754a7282e90",
+      "guids": []
+    },
     "src/BridGHe.Grasshopper/Components/BridgeChecks/BridgeResultPlotComponent.cs": {
-      "ports": "8862f3225414f79e4eefd3ddd4a5ed4286507b313f1fd5f826793a5a13ded43f",
+      "ports": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
       "guids": [
         "8f53f404-9446-4b47-90e3-d514f9c547c9"
       ]
