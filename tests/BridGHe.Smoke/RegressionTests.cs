@@ -11,6 +11,7 @@ internal static class RegressionTests
     {
         var tests = new Dictionary<string, Action>
         {
+            ["bridge-numerical-baseline"] = BridgeNumericalBaseline.Verify,
             ["archive-before-cleanup"] = ArchiveBeforeCleanup,
             ["composite-archive"] = CompositeArchive,
             ["composite-preview"] = CompositePreview,
