@@ -14,7 +14,7 @@ namespace BridGHe.Grasshopper.Components.Models
         /// Initializes a new instance of the PlateComponent class.
         /// </summary>
         public PlateComponent()
-          : base("Plate", "PL", "Define a Beam", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_MODEL)
+          : base("Plate", "PL", "Define a Beam", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_MODEL)
         {
         }
 

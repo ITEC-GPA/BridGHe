@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components.Loads
         /// Initializes a new instance of the NodeTemperatureComponent class.
         /// </summary>
         public NodeTemperatureComponent()
-          : base("Node Temperature", "NT", "Defines a node temperature load", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_LOADS)
+          : base("Node Temperature", "NT", "Defines a node temperature load", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_LOADS)
         {
         }
 

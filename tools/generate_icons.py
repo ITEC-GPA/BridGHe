@@ -257,7 +257,7 @@ BridgeSupportStiffenerComponent|stiffener|force|check
 BridgeDetailCheckComponent|studs|check|check
 BeamSectionConcreteSlabComponent|slab||check
 BeamSectionHPropertyComponent|section:I|data|check
-BuildMeCheckModel|model|check|check
+BuildBridgeModel|model|check|check
 CompositeBeamComponent|bridge|shape|check
 CompositeBeamLinearTensionAnalysisComponent_OBSOLETE|composite|play|check
 CompositeBeamSelfTensionComponent|composite|heat|check
@@ -266,8 +266,8 @@ CompositeBeamTensionResultComponent|stress|data|check
 CompositeSectionComponent_OBSOLETE|composite|add|check
 CompositeSectionGeometricPropertyComponent|composite|measure|check
 CreepAndShrinkageConcreteComponent|slab|clock|check
-PrintCheckImageMeCheckForceComponent|printer|force|check
-PrintCheckImageMeCheckResultComponent|printer|stress|check
+BridgeForcePlotComponent|printer|force|check
+BridgeResultPlotComponent|printer|stress|check
 SuperElementCheckComponent|bridge|check|check
 SuperElementFilterComponent|bridge|filter|check
 BeamComponent|beam||model

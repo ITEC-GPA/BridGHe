@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components.Loads
         /// Initializes a new instance of the PlatePreStressComponent class.
         /// </summary>
         public PlatePreStressComponent()
-          : base("Plate PreStress", "PPre", "Assign prestress in plate using its local coordinate system", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_LOADS)
+          : base("Plate PreStress", "PPre", "Assign prestress in plate using its local coordinate system", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_LOADS)
         {
         }
 

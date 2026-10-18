@@ -13,7 +13,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
     public class MaterialParam : GH_PersistentParam<DataTypes.Fem.GH_Material>
     {
         public MaterialParam()
-            : base("Material", "M", "Material", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
+            : base("Material", "M", "Material", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
         {
         }
 

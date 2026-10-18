@@ -269,7 +269,7 @@ internal static class BridgeGrillageExample
         WriteResults(p,results,moving);
         if(grasshopper)GrasshopperBridgeExample.Run(p,inputs,results,stresses,checks);
         var report=new{Date=DateTimeOffset.Now,Parameters=p,Ec,SteelArea=GpcH(p).Area,LineG1=G1(p),Nodes=inputs[2].Nodes.Count,Beams=inputs[2].Beams.Count,
-            StageMethod="Independent linear stiffness states; native wet-concrete stages are a separate benchmark, not summed into MeCheck2.",
+            StageMethod="Independent linear stiffness states; native wet-concrete stages are a separate benchmark, not summed into BridgeChecks.",
             Scope="SLS normal/shear stresses only for symmetric combination. Eccentric traffic torsion preserved; full mixed-action design NOT verified.",
             MidspanSteel=Midspan(results[0],p,PhaseNames[0]),MidspanLong=Midspan(results[1],p,PhaseNames[1]),MidspanLive=Midspan(results[2],p,PhaseNames[2]),
             Mesh=meshes,TorsionSensitivity=sensitivity,Stresses=stresses,Checks=checks.Measurements};
@@ -297,7 +297,7 @@ internal static class BridgeGrillageExample
         }
         var actions=BridgePhaseAssembler.Assemble(beam,beam.Length,0,combo,cs,1e-6);
         checker.GetLinearAnalysisResultByStages(out var response,out _,p.PhiLong,0,new[]{actions.Steel},new[]{actions.Infinite},new[]{actions.Instant},true,new[]{actions.StrainInfinite},new[]{actions.StrainInstant},false);
-        checks.Near("MeCheck2 cinque fasi accumulate",response[0].Analysis.Stages.Count,5,0,0);
+        checks.Near("BridgeChecks cinque fasi accumulate",response[0].Analysis.Stages.Count,5,0,0);
         var rows=new List<StressRow>();
         // Independent elastic section integrals, including the current gPC thin-wall flange convention.
         double a=GpcH(p).Area,ys=-p.SteelHeight/2,yc=p.SlabThickness/2,ac=p.Width/4*p.SlabThickness,ic=p.Width/4*Math.Pow(p.SlabThickness,3)/12;
@@ -337,7 +337,7 @@ internal static class BridgeGrillageExample
         bool rejected=false;
         try{var f=BridgeForceConvention.FromStraus(eccentric,cs);checker.GetLinearAnalysisResultByStages(out var _,out _,p.PhiLong,0,new[]{actions.Steel},new[]{actions.Infinite},new[]{f},true,new[]{0.0},new[]{0.0},false);}
         catch(NotSupportedException){rejected=true;}
-        checks.Near("MeCheck2 rifiuta correttamente torsione non supportata",rejected?1:0,1,0,0);
+        checks.Near("BridgeChecks rifiuta correttamente torsione non supportata",rejected?1:0,1,0,0);
         return new("G1, midspan, right-hand element end 1","G1 + G2 + Q_UDL + shrinkage long + imposed strain instant (unit factors)",rows,Math.Abs(eccentric.Torque));
     }
     private static void WriteResults(Parameters p,ModelModel[] models,ModelModel moving)

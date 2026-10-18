@@ -3,7 +3,7 @@ using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
 using System;
 
-namespace BridGHe.Grasshopper.Components.MeCheck2
+namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
     public class CompositeSectionGeometricPropertyComponent : GH_Component
     {
@@ -11,7 +11,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// Initializes a new instance of the BeamPropertyComponent class.
         /// </summary>
         public CompositeSectionGeometricPropertyComponent()
-          : base("Composite Geometric Property", "BGP", "Section geometric properties", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_MECHECK2)
+          : base("Composite Geometric Property", "BGP", "Section geometric properties", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
         {
 
         }

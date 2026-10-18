@@ -10,17 +10,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace BridGHe.Grasshopper.Components.MeCheck2
+namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
-    public class BuildMeCheckModel : GH_Component
+    public class BuildBridgeModel : GH_Component
     {
         protected bool _run;
 
         /// <summary>
         /// Initializes a new instance of the ChecksComponent class.
         /// </summary>
-        public BuildMeCheckModel()
-          : base("Build MeCheck Model", "BMCM", "Merge the FeMM models in to a single FeMM model with input phases", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_MECHECK2)
+        public BuildBridgeModel()
+          : base("Build BridGHe Model", "BMCM", "Merge the BridGHe models in to a single BridGHe model with input phases", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
         {
             _run = false;
         }
@@ -41,7 +41,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// </summary>
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("FeMM Models", "FM", "The FEM models (more than one for stages)", GH_ParamAccess.list);
+            pManager.AddGenericParameter("BridGHe Models", "FM", "The FEM models (more than one for stages)", GH_ParamAccess.list);
             pManager.AddGenericParameter("Load Combinations", "LCB", "The load cases combinations", GH_ParamAccess.tree);
             pManager.AddTextParameter("Phase Inf Load Cases", "INFLC", "The load cases name to assign to the Inf phase", GH_ParamAccess.list);
             pManager[2].Optional = true;
@@ -539,7 +539,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                                 LoadCombinationModel loadCombinationModel = new LoadCombinationModel(name);
                                 for (int j = 0; j < incrms.Count(); j++)
                                     // Reuse the canonical case carrying the assigned
-                                    // MeCheck2 phase. A fresh name-only case loses it.
+                                    // BridgeChecks phase. A fresh name-only case loses it.
                                     loadCombinationModel.Values.Add(newModel.LoadCases.Single(c => c.Name == cnames[j]), incrms.ElementAt(j));
 
                                 newModel.LoadCombinations.Add(loadCombinationModel);

@@ -1,6 +1,6 @@
 # Ponte misto a graticcio — esempio completo del flusso disponibile
 
-Aprire **11-ponte-graticcio.ghx** in Grasshopper / Rhino 8 con il pacchetto BridGHe aggiornato. Il file costruisce gli elementi tramite componenti, esegue Straus7 R3, legge i risultati, unisce i contributi delle fasi e calcola le tensioni con MeCheck2/gPC. Non è il progetto esecutivo di un ponte: la combinazione simmetrica è verificata numericamente; il traffico eccentrico richiede anche verifiche oggi non implementate dall'adattatore.
+Aprire **11-ponte-graticcio.ghx** in Grasshopper / Rhino 8 con il pacchetto BridGHe aggiornato. Il file costruisce gli elementi tramite componenti, esegue Straus7 R3, legge i risultati, unisce i contributi delle fasi e calcola le tensioni con BridgeChecks/gPC. Non è il progetto esecutivo di un ponte: la combinazione simmetrica è verificata numericamente; il traffico eccentrico richiede anche verifiche oggi non implementate dall'adattatore.
 
 ## Dati e modello fisico
 
@@ -22,7 +22,7 @@ Aprire **11-ponte-graticcio.ghx** in Grasshopper / Rhino 8 con il pacchetto Brid
 
 Sono ipotesi dell'esempio, non dimensionamenti normativi. La larghezza tributaria di 2,50 m è assunta anche come larghezza efficace: non viene calcolato lo shear lag. Non viene dimensionata l'armatura della soletta.
 
-Assi globali: X lungo la luce, Y trasversale, Z verso l'alto. Forze verticali verso il basso e Uz negativi. Le tensioni sono positive a trazione. I CSV mantengono tutte le componenti nelle convenzioni originali BridGHe/Straus; il passaggio a MeCheck2 usa `BridgeForceConvention`.
+Assi globali: X lungo la luce, Y trasversale, Z verso l'alto. Forze verticali verso il basso e Uz negativi. Le tensioni sono positive a trazione. I CSV mantengono tutte le componenti nelle convenzioni originali BridGHe/Straus; il passaggio a BridgeChecks usa `BridgeForceConvention`.
 
 ## Idealizzazione a graticcio e rigidezze
 
@@ -57,9 +57,9 @@ I pesi specifici assunti sono 78,5 kN/m³ per acciaio e 25 kN/m³ per calcestruz
 
 Il percorso mobile nativo applica quattro ruote da 75 kN, su Y = 1,25 e 3,75 m, asse della corsia Y = 2,50 m; la carreggiata del veicolo dimostrativo è 2,50 m. Il template e i valori sono **didattici, non LM1/NTC/Eurocodice**. Ventuno divisioni del percorso producono **23 posizioni non vuote**, includendo ingresso e uscita: nelle posizioni con un solo asse sul ponte la risultante è 150 kN. Non si applicano coefficienti dinamici o concomitanze normative.
 
-La combinazione MeCheck2 `SLS_SIMMETRICO` somma con fattori 1 G1, G2, Q_UDL e i due incrementi di deformazione imposta. Il ritiro è applicato al solo calcestruzzo come autotensione primaria di sezione: non è un'eigenstrain del modello FEM e non comprende effetti secondari globali. Il secondo incremento è un dato distinto, non la ripetizione del primo ritiro. La viscosità adottata è una schematizzazione elastica per rapporti modulari, non un'integrazione completa della storia reologica.
+La combinazione BridgeChecks `SLS_SIMMETRICO` somma con fattori 1 G1, G2, Q_UDL e i due incrementi di deformazione imposta. Il ritiro è applicato al solo calcestruzzo come autotensione primaria di sezione: non è un'eigenstrain del modello FEM e non comprende effetti secondari globali. Il secondo incremento è un dato distinto, non la ripetizione del primo ritiro. La viscosità adottata è una schematizzazione elastica per rapporti modulari, non un'integrazione completa della storia reologica.
 
-È presente anche **un benchmark separato di cinque fasi native di getto**: livelli totali 20%, 40%, 60%, 80%, 100% di G1, senza indurimento della soletta. Nei modelli NLA i vincoli nel piano sono rilasciati: Ux è bloccato solo al primo appoggio, Uy e Uz sugli appoggi, rotazioni libere. Si evita così l'irrigidimento membranale artificiale che i vincoli del graticcio piano introdurrebbero in grandi spostamenti. Questi risultati sono totali e **non vanno sommati** come contributi incrementali nel merge MeCheck2.
+È presente anche **un benchmark separato di cinque fasi native di getto**: livelli totali 20%, 40%, 60%, 80%, 100% di G1, senza indurimento della soletta. Nei modelli NLA i vincoli nel piano sono rilasciati: Ux è bloccato solo al primo appoggio, Uy e Uz sugli appoggi, rotazioni libere. Si evita così l'irrigidimento membranale artificiale che i vincoli del graticcio piano introdurrebbero in grandi spostamenti. Questi risultati sono totali e **non vanno sommati** come contributi incrementali nel merge BridgeChecks.
 
 ## Uso del file Grasshopper
 
@@ -67,8 +67,8 @@ La combinazione MeCheck2 `SLS_SIMMETRICO` somma con fattori 1 G1, G2, Q_UDL e i 
 2. Esaminare i tre blocchi orizzontali: punti → Node → Restraints → Node Load; curve + proprietà → Beam → Super Element → Element Id → Build Model.
 3. Impostare i percorsi `.st7` e avviare le tre `Straus R3 Analysis`. I percorsi iniziali puntano alla cartella temporanea del sistema, che esiste già. Nodo e beam risultati alimentano direttamente i pannelli di spostamenti, momenti e torsione.
 4. Avviare `Moving Static Analysis` per il ramo del veicolo. Le posizioni mobili restano distinte; non si mescolano massimi di componenti provenienti da posizioni incompatibili.
-5. Sulla destra, `Super Element Filter` seleziona G1…G4; i componenti `Composite Beam Strain` aggiungono i due incrementi di deformazione. I modelli di soli longitudinali hanno topologia identica e possono entrare in `Build MeCheck Model` nell'ordine acciaio, lungo termine, istantaneo.
-6. Premere **Run** su `Build MeCheck Model`, poi su `Super Element Check`. Si elaborano 48 elementi × 5 stazioni = **240 sezioni**. `Composite Beam` assegna la sezione mista; `Composite Section Linear Tension Results` espone le tensioni.
+5. Sulla destra, `Super Element Filter` seleziona G1…G4; i componenti `Composite Beam Strain` aggiungono i due incrementi di deformazione. I modelli di soli longitudinali hanno topologia identica e possono entrare in `Build BridGHe Model` nell'ordine acciaio, lungo termine, istantaneo.
+6. Premere **Run** su `Build BridGHe Model`, poi su `Super Element Check`. Si elaborano 48 elementi × 5 stazioni = **240 sezioni**. `Composite Beam` assegna la sezione mista; `Composite Section Linear Tension Results` espone le tensioni.
 7. Per modifiche coordinate a geometria, carichi e rigidezze usare `parameters.json` e rigenerare. Nel canvas i parametri geometrici e i dati sono modificabili, ma non sono collegati da slider universali: cambiare solo la soletta in un ramo non aggiorna automaticamente tutti gli altri. Il generatore è la fonte parametrica coerente.
 
 La matrice delle combinazioni contiene solo la combinazione simmetrica. Q_ECC e Q_MIRROR rimangono nei risultati uniti, ma non sono dichiarati verificati. Aggiungerli a una combinazione del checker provoca correttamente un errore per la torsione non supportata. Le tre opzioni di instabilità locale sono false per il confronto elastico a sezione lorda: non è una verifica di classe o di sezione efficace.
@@ -103,7 +103,7 @@ Per aggiornare anche le tavole dopo una modifica dei dati: eseguire `python tool
 - `parameters.json`: dati della fonte parametrica.
 - `validation.json`: misure, valori attesi, tolleranze, esiti e sensibilità.
 - `nodes.csv`, `forces.csv`: risultati completi, compresa la torsione; separatore virgola, decimale punto.
-- `grasshopper-stresses.json`: tensioni lette attraverso i componenti MeCheck2.
+- `grasshopper-stresses.json`: tensioni lette attraverso i componenti BridgeChecks.
 - `ponte-graticcio.pdf`: tavole sintetiche generate dai risultati.
 - `artifacts/bridge-grillage/`: modelli `.st7`, `.lsa`/`.nla`, archivi `.bgmodel` e log delle varie analisi.
 - `artifacts/BridGHe-ponte-graticcio-native.zip`: raccolta dei modelli e risultati nativi, prodotta da `-BridgeGrillage`.

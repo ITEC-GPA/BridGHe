@@ -13,7 +13,7 @@ namespace BridGHe.Grasshopper.Components.Models
         /// Initializes a new instance of the DecomposeModelComponent class.
         /// </summary>
         public DecomposeModelComponent()
-          : base("Decompose Model", "DM", "Decompose a FEM model in his elements", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_MODEL)
+          : base("Decompose Model", "DM", "Decompose a FEM model in his elements", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_MODEL)
         {
         }
 

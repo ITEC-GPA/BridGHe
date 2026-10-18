@@ -13,7 +13,7 @@ Quattro definizioni Grasshopper modificabili, costruite con componenti BridGHe e
 
 1. Caricare la versione aggiornata di BridGHe in Rhino 8/.NET 8. Aprire il GHX corrispondente.
 2. Controllare i quattro percorsi `.st7`, inizialmente nella cartella TEMP. Attivare **CALCOLA 4 MODELLI**.
-3. Esaminare spostamenti, azioni e torsione nei quattro rami. Eseguire **Run** nel menu di `Build MeCheck Model`, poi di `Super Element Check`.
+3. Esaminare spostamenti, azioni e torsione nei quattro rami. Eseguire **Run** nel menu di `Build BridGHe Model`, poi di `Super Element Check`.
 4. Nei rettilinei il ramo gPC produce tensioni elastiche e alimenta i nuovi componenti dei dettagli. Nei curvi il checker H segnala la torsione fuori campo e non produce un esito parziale presentato come completo. Le analisi FEM restano utilizzabili.
 5. Le proprietà e geometrie nei parametri GH sono editabili. Per cambiare in modo coerente campate, raggio e mesh, modificare `parameters.json` e rigenerare dalla radice del repository:
 
@@ -63,7 +63,7 @@ Il modello nativo impone **pre-strain = −ε0** e **gradiente 2 = k/α**, con �
 σc = Ec,eff [ε0 + k(z−zG) − εcs]
 ```
 
-L'adattatore storico MeCheck2 dispone di tre contenitori meccanici: il secondario RITIRO entra nel contenitore Ninf insieme a G2. L'autotensione entra nel quarto contributo separato. È equivalente per la somma elastica finale; i quattro CSV FEM mantengono invece separati G1/G2/Q/RITIRO. Non interpretare il secondo stato interno di MeCheck2 come G2 puro.
+L'adattatore storico BridgeChecks dispone di tre contenitori meccanici: il secondario RITIRO entra nel contenitore Ninf insieme a G2. L'autotensione entra nel quarto contributo separato. È equivalente per la somma elastica finale; i quattro CSV FEM mantengono invece separati G1/G2/Q/RITIRO. Non interpretare il secondo stato interno di BridgeChecks come G2 puro.
 
 Il ritiro trasversale delle strisce, la viscosità evolutiva con età dei getti, il rilassamento nel tempo di G1, gli scorrimenti dei pioli e gli offset fra piani medi non sono inclusi. Il graticcio è un modello globale equivalente, non un modello a due strati con connessione deformabile.
 
@@ -74,7 +74,7 @@ Nuovi componenti nella sottocategoria **Bridge details**:
 - `Bridge Studs`: tutti i parametri di `BridgeStudOptions` (diametro, altezza, passi, fila, testa, copriferro, fu, γV e dettagli per azioni ripetute).
 - `Bridge Intermediate Stiffener`: geometria anche asimmetrica, pannelli adiacenti, fattore di lunghezza, compressione esterna ed eccentricità, saldature.
 - `Bridge Support Stiffener`: piatti, reazione, impronta, posizione, eccentricità, montante terminale e saldature.
-- `Bridge Detail Check`: ricalcola l'input del risultato MeCheck2 con `HBridgeSection.Calculate`; espone domanda, resistenza, unità, rapporto, stato e avvisi originali gPC.
+- `Bridge Detail Check`: ricalcola l'input del risultato BridgeChecks con `HBridgeSection.Calculate`; espone domanda, resistenza, unità, rapporto, stato e avvisi originali gPC.
 
 I dettagli sono dati di verifica della sezione; non aggiungono massa, rigidezza o elementi piolo al FEM. Le definizioni sono salvate nel GHX. Negli esempi: pioli 2×Ø22, h=180 mm, passo longitudinale 200 mm e trasversale 150 mm; irrigiditori intermedi bilaterali 200×20 mm e d'appoggio 250×25 mm. Sono proposte dimostrative, non dettagli certificati.
 
@@ -84,7 +84,7 @@ I dettagli sono dati di verifica della sezione; non aggiungono massa, rigidezza 
 
 Ogni cartella contiene GHX, parametri, geometria, `nodes.csv`, `forces.csv` con tutte le sei azioni, `validation.json` con tolleranze ed esiti. Nei rettilinei sono presenti anche le tensioni GH e `details.json`. I file nativi sono generati in `artifacts/bridge-suite`, archiviati da `-BridgeSuite` in `artifacts/BridGHe-quattro-ponti-native.zip`.
 
-Controlli: equilibrio globale delle sei componenti; trave libera e impedita con ritiro; equazioni dei tre momenti e deformate analitiche dei continui; raffinamento 12→24, 24→48 o 48→96 per campata in tutti e quattro i contributi (scarto Uz ≤2% del picco); tensioni finali con integrali indipendenti; GHX salvati/riaperti, risolti e confrontati per spostamenti XYZ e tutte le azioni N/V1/V2/BM1/BM2/T. La resistenza dei pioli è confrontata con un calcolo indipendente. Il rifiuto della torsione da parte di MeCheck2 è un controllo del limite software, **non una verifica strutturale superata**.
+Controlli: equilibrio globale delle sei componenti; trave libera e impedita con ritiro; equazioni dei tre momenti e deformate analitiche dei continui; raffinamento 12→24, 24→48 o 48→96 per campata in tutti e quattro i contributi (scarto Uz ≤2% del picco); tensioni finali con integrali indipendenti; GHX salvati/riaperti, risolti e confrontati per spostamenti XYZ e tutte le azioni N/V1/V2/BM1/BM2/T. La resistenza dei pioli è confrontata con un calcolo indipendente. Il rifiuto della torsione da parte di BridgeChecks è un controllo del limite software, **non una verifica strutturale superata**.
 
 Restano da sviluppare per un progetto: soletta fessurata nelle zone di momento negativo, armatura e minima, shear lag, instabilità globale, torsione delle H e distorsione, inviluppi SLU/SLE del traffico, ritiro trasversale e storia reologica, fatica della connessione, soletta locale, appoggi e azioni orizzontali. In particolare la soletta non fessurata dei continui non costituisce un modello finale di progetto.
 

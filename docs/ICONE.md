@@ -13,7 +13,7 @@ Sistema grafico originale per il plugin, i 131 componenti e i 9 parametri Grassh
 | Materiali | Grigio blu | Materiali e proprietà |
 | Carichi e carichi mobili | Arancio | Forze, momenti, veicoli, percorsi e template |
 | Straus | Viola | Esportazione, analisi e fasi |
-| MeCheck2 e verifiche | Verde | Sezioni composte, controlli, effetti nel tempo e report |
+| BridgeChecks e verifiche | Verde | Sezioni composte, controlli, effetti nel tempo e report |
 | Risultati | Viola chiaro | Elemento e dati estratti |
 
 La sagoma e i contrassegni distinguono le funzioni anche senza affidarsi al solo colore. Ogni componente/parametro ha un asset distinto. I parametri hanno fondo bianco e un piccolo contrassegno dedicato. I simboli delle sezioni descrivono la tipologia, non la geometria corrente del modello.

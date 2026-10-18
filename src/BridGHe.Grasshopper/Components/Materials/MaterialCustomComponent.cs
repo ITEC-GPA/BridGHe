@@ -20,7 +20,7 @@ namespace BridGHe.Grasshopper.Components.Materials
         /// Initializes a new instance of the MaterialCustomComponent class.
         /// </summary>
         public MaterialCustomComponent()
-          : base("Custom Material", "CM", "Custom material", Helpers.CategoryNameConstants.CATEGORY_FEMM, Helpers.CategoryNameConstants.SUBCATEGORY_MATERIALS)
+          : base("Custom Material", "CM", "Custom material", Helpers.CategoryNameConstants.CATEGORY_MODEL, Helpers.CategoryNameConstants.SUBCATEGORY_MATERIALS)
         {
         }
 

@@ -13,7 +13,7 @@ namespace BridGHe.Grasshopper.Components.Loads
         /// Initializes a new instance of the PlatePressureComponent class.
         /// </summary>
         public PlateNSMassComponent()
-          : base("Plate non structural Mass", "PNSM", "Assign a plate non structural mass", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_LOADS)
+          : base("Plate non structural Mass", "PNSM", "Assign a plate non structural mass", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_LOADS)
         {
 
         }

@@ -18,9 +18,9 @@ namespace BridGHe.Grasshopper
         public override GH_LoadingInstruction PriorityLoad()
         {
             var server = global::Grasshopper.Instances.ComponentServer;
-            server.AddCategoryIcon(Helpers.CategoryNameConstants.CATEGORY_FEMM, Properties.ComponentIcons.ModelCategory);
-            server.AddCategoryShortName(Helpers.CategoryNameConstants.CATEGORY_FEMM, "BGH");
-            server.AddCategorySymbolName(Helpers.CategoryNameConstants.CATEGORY_FEMM, 'B');
+            server.AddCategoryIcon(Helpers.CategoryNameConstants.CATEGORY_MODEL, Properties.ComponentIcons.ModelCategory);
+            server.AddCategoryShortName(Helpers.CategoryNameConstants.CATEGORY_MODEL, "BGH");
+            server.AddCategorySymbolName(Helpers.CategoryNameConstants.CATEGORY_MODEL, 'B');
             server.AddCategoryIcon(Helpers.CategoryNameConstants.CATEGORY_CHECKS, Properties.ComponentIcons.ChecksCategory);
             server.AddCategoryShortName(Helpers.CategoryNameConstants.CATEGORY_CHECKS, "BGC");
             server.AddCategorySymbolName(Helpers.CategoryNameConstants.CATEGORY_CHECKS, 'C');

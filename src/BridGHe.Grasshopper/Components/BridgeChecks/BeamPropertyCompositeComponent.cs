@@ -6,7 +6,7 @@ using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using System;
 
-namespace BridGHe.Grasshopper.Components.MeCheck2
+namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
     public class BeamPropertyCompositeComponent : GH_Component
     {
@@ -14,7 +14,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// Initializes a new instance of the CompositeSectionComponent class.
         /// </summary>
         public BeamPropertyCompositeComponent()
-          : base("Composite Beam Property", "CS", "Define a composite section composed by two base sections and 2 materials", Helpers.CategoryNameConstants.CATEGORY_CHECKS, Helpers.CategoryNameConstants.SUBCATEGORY_MECHECK2)
+          : base("Composite Beam Property", "CS", "Define a composite section composed by two base sections and 2 materials", Helpers.CategoryNameConstants.CATEGORY_CHECKS, Helpers.CategoryNameConstants.SUBCATEGORY_BRIDGE)
         {
         }
 
@@ -42,7 +42,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// </summary>
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Composite Section", "CS", "The composite section for MeCheck2.0 analysis", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Composite Section", "CS", "The composite section for BridgeChecks.0 analysis", GH_ParamAccess.item);
             pManager.AddGenericParameter("Only Steel Property", "CS", "The steel section", GH_ParamAccess.item);
             pManager.AddGenericParameter("n0 Beam Section", "CS", "The homogenized beam section with n0 coefficient", GH_ParamAccess.item);
             pManager.AddGenericParameter("n ∞ Beam Section", "CS", "The homogenized beam section with n ∞ coefficient", GH_ParamAccess.item);

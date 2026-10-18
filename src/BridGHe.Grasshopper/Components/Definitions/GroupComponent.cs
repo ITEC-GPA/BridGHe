@@ -12,7 +12,7 @@ namespace BridGHe.Grasshopper.Components.Definitions
         /// Initializes a new instance of the GroupComponent class.
         /// </summary>
         public GroupComponent()
-          : base("Group", "G", "Defines a group", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_DEFINITIONS)
+          : base("Group", "G", "Defines a group", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_DEFINITIONS)
         {
         }
 

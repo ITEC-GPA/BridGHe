@@ -17,7 +17,7 @@ using GPC.Model.Sections.Rebar;
 using GPC.Model.Standards;
 using System;
 
-namespace BridGHe.Grasshopper.Components.MeCheck2
+namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
     public class CompositeBeamLinearTensionAnalysisComponent_OBSOLETE : GH_Component
     {
@@ -25,7 +25,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// Initializes a new instance of the MeshRemap class.
         /// </summary>
         public CompositeBeamLinearTensionAnalysisComponent_OBSOLETE()
-          : base("Composite Section Linear Tension Analysis", "CSLTA", "Composite Section Linear Tension Analysis", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_MECHECK2)
+          : base("Composite Section Linear Tension Analysis", "CSLTA", "Composite Section Linear Tension Analysis", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
         {
         }
 

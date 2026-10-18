@@ -90,11 +90,11 @@ for idx,(folder,r) in enumerate(zip(folders,reports)):
     label(520,284,f"mesh: {d['PanelsPerSpan']} -> {2*d['PanelsPerSpan']} / campata",10)
     if d['Radius']==0:
         details=json.loads((folder/'details.json').read_text(encoding='utf-8'))
-        text='MeCheck2: tensioni finali confrontate con integrali indipendenti; sezione lorda non fessurata. Pioli e irrigiditori calcolati da gPC nelle sezioni di appoggio e del primo diaframma. I controlli resistenti che richiedono SLU restano senza esito sul caso SLS.'
+        text='BridgeChecks: tensioni finali confrontate con integrali indipendenti; sezione lorda non fessurata. Pioli e irrigiditori calcolati da gPC nelle sezioni di appoggio e del primo diaframma. I controlli resistenti che richiedono SLU restano senza esito sul caso SLS.'
         ss=r['Sections'][-1]['FinalStress'];label(40,225,'Sezione campione su pila - tensioni finali [MPa]',11,TEAL,True)
         table(40,210,[188,188,188,191],['CLS sopra','CLS sotto','Acciaio sopra','Acciaio sotto'],[[f'{v:.3f}' for v in ss]])
     else:
-        text='La torsione delle travi ad H e conservata nel modello e nei CSV. MeCheck2 rifiuta le azioni fuori dal proprio campo: nessun esito di verifica H completa. Le definizioni dei pioli e degli irrigiditori sono presenti nel GHX; il ramo verifiche si arresta a monte. Il modello torsionale gPC per cassoni non e applicabile alla H.'
+        text='La torsione delle travi ad H e conservata nel modello e nei CSV. BridgeChecks rifiuta le azioni fuori dal proprio campo: nessun esito di verifica H completa. Le definizioni dei pioli e degli irrigiditori sono presenti nel GHX; il ramo verifiche si arresta a monte. Il modello torsionale gPC per cassoni non e applicabile alla H.'
         label(40,225,'FEM calcolato; verifica delle H curve da completare',12,PALETTE[2],True)
     para(40,143,text,750,10)
     para(40,83,'Limiti: niente fessurazione, ritiro trasversale, storia reologica, scorrimento dei pioli o inviluppo del traffico. Parametri, controlli con tolleranze, CSV e istruzioni nelle cartelle degli esempi e nel README.',750,9)

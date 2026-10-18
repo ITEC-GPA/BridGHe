@@ -25,7 +25,7 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
         /// Initializes a new instance of the BeamPropertyComponent class.
         /// </summary>
         public BeamPropertyComponent()
-          : base("Beam Property", "BP", "Beam properties", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_PROPERTIES)
+          : base("Beam Property", "BP", "Beam properties", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_PROPERTIES)
         {
             _disableSolution = false;
         }

@@ -25,7 +25,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace BridGHe.Grasshopper.Components.MeCheck2
+namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
     public class SuperElementCheckComponent : GH_Component
     {
@@ -35,7 +35,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// Initializes a new instance of the ChecksComponent class.
         /// </summary>
         public SuperElementCheckComponent()
-          : base("Super Element Check", "SEC", "Check the selected Super-Element", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_MECHECK2)
+          : base("Super Element Check", "SEC", "Check the selected Super-Element", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
         {
             _run = false;
         }
@@ -56,7 +56,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// </summary>
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("FeMM Model", "FM", "The FeMM model", GH_ParamAccess.item);
+            pManager.AddGenericParameter("BridGHe Model", "FM", "The BridGHe model", GH_ParamAccess.item);
             pManager.AddGenericParameter("Super-Element Beam", "SE", "The Super-Element Beam", GH_ParamAccess.list);
             pManager.AddBooleanParameter("Web Local Instability", "WLI", "If true, web is subjected to loacel instability", GH_ParamAccess.item, true);
             pManager.AddBooleanParameter("Top Flange Local Instability", "TFLI", "If true, top flange is subjected to loacel instability", GH_ParamAccess.item, true);
@@ -109,7 +109,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                 Message = "Error";
                 return;
             }
-            if (model.Value.Units != ModelModel.ModelUnits.Nmm) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "MeCheck2 richiede modello e sezioni in N-mm-MPa; convertire il modello prima della verifica."); return; }
+            if (model.Value.Units != ModelModel.ModelUnits.Nmm) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "BridgeChecks richiede modello e sezioni in N-mm-MPa; convertire il modello prima della verifica."); return; }
             List<SuperElementAttributeModel> superElementsBuffer = Common.Helpers.ModelHelper.GetSuperElements(model.Value);
             if (superElementsBuffer == null || superElementsBuffer.Count == 0)
             {

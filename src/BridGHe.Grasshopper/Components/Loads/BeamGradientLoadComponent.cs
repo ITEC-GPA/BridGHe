@@ -12,7 +12,7 @@ namespace BridGHe.Grasshopper.Components.Loads
         /// Initializes a new instance of the BeamGradientLoadComponent class.
         /// </summary>
         public BeamGradientLoadComponent()
-          : base("Beam Gradient Load", "BGL", "Defines the beam gradient load", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_LOADS)
+          : base("Beam Gradient Load", "BGL", "Defines the beam gradient load", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_LOADS)
         {
         }
 

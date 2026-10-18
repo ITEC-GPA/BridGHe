@@ -99,7 +99,7 @@ internal static class Program
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
         string path=BuildPaths.GrasshopperAssembly;
         var assembly=System.Reflection.Assembly.LoadFrom(path);
-        var guids=new System.Collections.Generic.HashSet<Guid>();int count=0,mecheck=0;
+        var guids=new System.Collections.Generic.HashSet<Guid>();int count=0,bridgeChecks=0;
         var iconIssues=new System.Collections.Generic.List<string>();
         var iconHashes=new System.Collections.Generic.HashSet<string>();
         var items=new System.Collections.Generic.List<object>();
@@ -108,7 +108,7 @@ internal static class Program
             var guidProperty=type.GetProperty("ComponentGuid");if(guidProperty==null)continue;
             var instance=Activator.CreateInstance(type);Guid guid=(Guid)guidProperty.GetValue(instance);
             Assert(guids.Add(guid),"unique component GUID: "+type.Name);count++;
-            if(type.Namespace.EndsWith(".MeCheck2"))mecheck++;
+            if(type.Namespace.EndsWith(".BridgeChecks"))bridgeChecks++;
             var component=instance as Grasshopper.Kernel.GH_Component;
             var documentObject=(Grasshopper.Kernel.IGH_DocumentObject)instance;
             using(var resource=assembly.GetManifestResourceStream("BridGHe.Grasshopper.Resources.Icons."+type.Name+".png"))
@@ -142,7 +142,7 @@ internal static class Program
             items.Add(new {type=type.FullName,guid,kind=component==null?"parameter":"component",name=documentObject.Name,nickname=documentObject.NickName,
                 inputs=component==null?Array.Empty<object>():Ports(component.Params.Input),outputs=component==null?Array.Empty<object>():Ports(component.Params.Output)});
         }
-        Assert(mecheck==16,"all 16 MeCheck2 components instantiate in Rhino 8");
+        Assert(bridgeChecks==16,"all 16 BridgeChecks components instantiate in Rhino 8");
         Assert(iconIssues.Count==0,"all component and parameter icons load at 24 px: "+string.Join(", ",iconIssues));
         Assert(iconHashes.Count==count,"each component and parameter has its own distinct icon");
         var info=(Grasshopper.Kernel.GH_AssemblyInfo)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.BridGHeInfo",true));
@@ -156,7 +156,7 @@ internal static class Program
         }
         else Console.WriteLine("SKIPPED: category registration with installed plugins (opt in with --installed-plugins)");
         File.WriteAllText("artifacts/component-runtime.json",System.Text.Json.JsonSerializer.Serialize(items,new System.Text.Json.JsonSerializerOptions {WriteIndented=true}));
-        Console.WriteLine($"COMPONENTS {count}, MECHECK2 {mecheck}");
+        Console.WriteLine($"COMPONENTS {count}, BRIDGE_CHECKS {bridgeChecks}");
         CheckGooArchives(assembly);
     }
 

@@ -26,7 +26,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
         /// Initializes a new instance of the StrausAnalysisComponent class.
         /// </summary>
         public StrausR3AnalysisComponent()
-          : base("Straus R3 Analysis", "SA", "Model Analisys with Straus7", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_ANALYSIS)
+          : base("Straus R3 Analysis", "SA", "Model Analisys with Straus7", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_ANALYSIS)
         {
             _run = false;
             _model = new GH_Model();

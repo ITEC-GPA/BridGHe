@@ -14,7 +14,7 @@ namespace BridGHe.Grasshopper.Components.Sections
         /// Initializes a new instance of the BeamSectionCComponent class.
         /// </summary>
         public BeamSectionCComponent()
-          : base("C Section", "C", "Defines a C section", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_SECTIONS)
+          : base("C Section", "C", "Defines a C section", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_SECTIONS)
         {
         }
 

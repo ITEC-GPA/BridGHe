@@ -17,7 +17,7 @@ namespace BridGHe.Grasshopper.Components.Attributes
 
 
         public BeamSupportComponent()
-          : base("Beam Support", "BSup", "Beam support", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
+          : base("Beam Support", "BSup", "Beam support", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
         {
 
         }

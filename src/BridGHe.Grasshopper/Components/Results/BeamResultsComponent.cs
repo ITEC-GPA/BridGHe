@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components.Results
         /// Initializes a new instance of the BeamResultsComponent class.
         /// </summary>
         public BeamResultsComponent()
-          : base("Beam Results", "BR", "The Beam analysis results", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_RESULTS)
+          : base("Beam Results", "BR", "The Beam analysis results", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_RESULTS)
         {
         }
 

@@ -16,7 +16,7 @@ namespace BridGHe.Grasshopper.Components.Export
         /// Initializes a new instance of the StrausExportComponent class.
         /// </summary>
         public StrausR3ExportComponent()
-          : base("Straus7 R3 Export", "ST7 R3", "Export to Straus7", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_EXPORT)
+          : base("Straus7 R3 Export", "ST7 R3", "Export to Straus7", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_EXPORT)
         {
             _status = "";
             _run = false;

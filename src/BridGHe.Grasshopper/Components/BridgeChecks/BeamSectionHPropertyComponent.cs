@@ -4,7 +4,7 @@ using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
 using System;
 
-namespace BridGHe.Grasshopper.Components.MeCheck2
+namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
     public class BeamSectionHPropertyComponent : GH_Component
     {
@@ -12,7 +12,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// Initializes a new instance of the BeamPropertyComponent class.
         /// </summary>
         public BeamSectionHPropertyComponent()
-          : base("Section H Beam Property", "BGP", "Geometric properties of a Section H beam property", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_MECHECK2)
+          : base("Section H Beam Property", "BGP", "Geometric properties of a Section H beam property", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
         {
 
         }

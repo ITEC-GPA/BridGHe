@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components.Attributes
         /// Initializes a new instance of the NodeRestraintsComponent class.
         /// </summary>
         public NodeRestraintsComponent()
-          : base("Restraints", "NR", "Define a node restraints \n false = not restrained; true = restrained", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
+          : base("Restraints", "NR", "Define a node restraints \n false = not restrained; true = restrained", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
         {
         }
 

@@ -22,7 +22,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
         public override Guid ComponentGuid => new Guid("98efbea2-2189-43fa-8b2e-a9fb6736e306");
 
         public VersionParam()
-            : base("Version controller", "VC", "Version controller", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
+            : base("Version controller", "VC", "Version controller", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
         {
         }
 
@@ -39,7 +39,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
         public string GetDescription()
         {
             if (PersistentDataCount > 0)
-                return "Saved with FeMM " + PersistentData.Last().Value;
+                return "Saved with BridGHe " + PersistentData.Last().Value;
             else
                 return "";
         }

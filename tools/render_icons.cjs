@@ -21,7 +21,7 @@ async function render() {
   await sharp(path.join(source,'BridGHe.svg'),{density:1536}).resize(512,512).png().toFile(path.join(source,'BridGHe-512.png'));
   // SVG catalogue embeds original vectors, avoiding external font/image dependencies for each icon.
   const families = [...new Set(manifest.icons.map(i=>i.family))];
-  const familyNames = {model:'MODELLAZIONE',material:'MATERIALI',section:'SEZIONI',load:'CARICHI',moving:'CARICHI MOBILI',solver:'STRAUS',check:'VERIFICHE · MECHECK2',result:'RISULTATI',tool:'STRUMENTI'};
+  const familyNames = {model:'MODELLAZIONE',material:'MATERIALI',section:'SEZIONI',load:'CARICHI',moving:'CARICHI MOBILI',solver:'STRAUS',check:'VERIFICHE · BRIDGE_CHECKS',result:'RISULTATI',tool:'STRUMENTI'};
   const rows=[];let y=140;
   for(const family of families) {
     const icons=manifest.icons.filter(i=>i.family===family);
@@ -45,7 +45,7 @@ async function render() {
   await fs.writeFile(path.join(source,'catalogue.svg'),sheet);
   await sharp(Buffer.from(sheet)).png().toFile(path.join(source,'catalogue.png'));
   const selections=[['BeamComponent','Beam'],['PlateComponent','Plate'],['MaterialSteelComponent','Materiali'],['StrausISectionComponent','Sezioni Straus'],['MovingVehicleComponent','Veicoli'],['MovingPathComponent','Percorsi mobili'],
-    ['StrausR3ExportComponent','Export R3'],['StrausR3AnalysisComponent','Analisi R3'],['SuperElementCheckComponent','MeCheck2'],['CreepAndShrinkageConcreteComponent','Viscosità e ritiro'],['BeamResultsComponent','Risultati'],['PrintCheckImageMeCheckResultComponent','Report']];
+    ['StrausR3ExportComponent','Export R3'],['StrausR3AnalysisComponent','Analisi R3'],['SuperElementCheckComponent','BridgeChecks'],['CreepAndShrinkageConcreteComponent','Viscosità e ritiro'],['BeamResultsComponent','Risultati'],['BridgeResultPlotComponent','Report']];
   const tiles=[];
   for(let i=0;i<selections.length;i++){
     const [key,label]=selections[i],x=42+(i%6)*170,y=205+Math.floor(i/6)*125;

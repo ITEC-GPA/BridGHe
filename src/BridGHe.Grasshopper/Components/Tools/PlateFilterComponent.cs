@@ -16,7 +16,7 @@ namespace BridGHe.Grasshopper.Components.Tools
         /// Initializes a new instance of the ElementFilterComponent class.
         /// </summary>
         public PlateFilterComponent()
-          : base("Plate Filter", "PF", "Plate filter", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_TOOLS)
+          : base("Plate Filter", "PF", "Plate filter", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_TOOLS)
         {
         }
 

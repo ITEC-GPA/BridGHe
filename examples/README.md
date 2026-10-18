@@ -1,6 +1,6 @@
 # Dieci esempi verificati con Straus7 R3
 
-È disponibile anche l'[esempio 11: ponte misto a graticcio](bridge-grillage/README.md), con un canvas costruito da componenti per geometria, vincoli, carichi, analisi e MeCheck2, 357 controlli e tavole PDF. I dieci benchmark qui sotto restano casi elementari separati.
+È disponibile anche l'[esempio 11: ponte misto a graticcio](bridge-grillage/README.md), con un canvas costruito da componenti per geometria, vincoli, carichi, analisi e BridgeChecks, 357 controlli e tavole PDF. I dieci benchmark qui sotto restano casi elementari separati.
 
 Aprire i file della cartella [grasshopper](grasshopper) in Rhino 8 con BridGHe installato. Ogni definizione contiene un modello FEM incorporato, il componente di analisi, `Decompose Model` e i componenti di lettura di spostamenti e sollecitazioni. Impostare il pannello del percorso `.st7` in una cartella esistente; premere **Run** sul componente di analisi. Nel caso mobile impostare il toggle **Run=true**, poi riportarlo a false.
 
@@ -33,7 +33,7 @@ Gli esempi 06–10 costituiscono **cinque test distinti di costruzione per fasi*
 
 Per ogni misura il criterio è `|ottenuto−atteso| ≤ max(tolleranza_assoluta, |atteso|×tolleranza_relativa)`. Default: relativa 1e−5, assoluta 1e−8 nella rispettiva unità. Conteggi e assenze sono esatti. Il confronto con le formule lineari nelle prove NLA è valido per questi piccoli spostamenti; sono verificate anche convergenza di tutti gli incrementi e appartenenza alle fasi. Non è una prova di convergenza generale in campo fortemente non lineare.
 
-## Cinque contributi di fase MeCheck2
+## Cinque contributi di fase BridgeChecks
 
 [NativeBridgePhases.cs](../tests/BridGHe.Smoke/NativeBridgePhases.cs) aggiunge un confronto Straus → `BridgePhaseAssembler` → `BridgeCheckAdapter` → gPC. Tre coppie terminali su una mensola producono momenti costanti noti. Il modello isostatico serve a validare lettura, segno e passaggio delle azioni; non simula la variazione di rigidezza globale della sezione composta.
 
@@ -61,10 +61,10 @@ dotnet run --project tests/BridGHe.Smoke -c Release -- --gh-examples 08
 
 Serve la licenza API Straus7 R3; le prove native falliscono esplicitamente se non disponibile. Il test Grasshopper avvia Rhino.Inside in un processo isolato, carica solo Grasshopper e BridGHe, scrive e riapre ogni `.ghx`, esegue il solutore attraverso il componente e controlla anche gli output dei componenti risultati. Non modifica i plugin o le impostazioni del profilo utente. L'isolamento usa due membri interni di Rhino 8 nel solo generatore di test e segnala un errore se cambiano.
 
-I comandi si eseguono nella radice del repository sorgente. Il pacchetto installabile contiene plugin, definizioni e report; per modificare e compilare le ricette C# usare il repository completo. Collaudo del 17 ottobre 2026: 121 confronti nativi, 111 confronti attraverso Grasshopper e 30 controlli sulle fasi MeCheck2, tutti superati.
+I comandi si eseguono nella radice del repository sorgente. Il pacchetto installabile contiene plugin, definizioni e report; per modificare e compilare le ricette C# usare il repository completo. Collaudo del 17 ottobre 2026: 121 confronti nativi, 111 confronti attraverso Grasshopper e 30 controlli sulle fasi BridgeChecks, tutti superati.
 
 - [Report dei dieci benchmark](validation/native.json): valori attesi, ottenuti, tolleranze ed esiti.
-- [Report delle cinque fasi composte](validation/mecheck2.json).
+- [Report delle cinque fasi composte](validation/bridgeChecks.json).
 - [Report delle definizioni Grasshopper](validation/grasshopper.json).
 - Modelli `.st7`, risultati `.LSA/.NLA`, log del solutore e archivi `.bgmodel`: generati in `artifacts/examples/<data-ora>` e raccolti in `artifacts/BridGHe-native-examples.zip`.
 - Report e definizioni sono versionati; i file binari Straus sono artefatti rigenerabili. Le geometrie dei benchmark sono originali e non derivano da progetti reali.

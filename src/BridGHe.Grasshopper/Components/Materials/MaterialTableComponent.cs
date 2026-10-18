@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components.Materials
     {
 
         public MaterialTableComponent()
-          : base("Table Material", "TM", "Table material", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_MATERIALS)
+          : base("Table Material", "TM", "Table material", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_MATERIALS)
         {
 
         }

@@ -220,19 +220,19 @@
     "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
   },
   {
-    "path": "Components/MeCheck/MixedSectionBeamCheckComponent.cs",
+    "path": "Components/BridGHe/MixedSectionBeamCheckComponent.cs",
     "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
   },
   {
-    "path": "Components/MeCheck/MixedSectionBeamComponent.cs",
+    "path": "Components/BridGHe/MixedSectionBeamComponent.cs",
     "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
   },
   {
-    "path": "Components/MeCheck/MixedSectionComponent.cs",
+    "path": "Components/BridGHe/MixedSectionComponent.cs",
     "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
   },
   {
-    "path": "Components/MeCheck/SuperElementCheckComponent.cs",
+    "path": "Components/BridGHe/SuperElementCheckComponent.cs",
     "reason": "Integrazione esterna, solutore non Straus R3 o strumenti dedicati al form-finding/patterning."
   },
   {

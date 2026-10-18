@@ -19,7 +19,7 @@ namespace BridGHe.Grasshopper.Components.Models
         /// Initializes a new instance of the BuildModelComponent class.
         /// </summary>
         public BuildModelComponent()
-          : base("Build Model", "BM", "Build the FEM model", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_MODEL)
+          : base("Build Model", "BM", "Build the FEM model", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_MODEL)
         {
         }
 

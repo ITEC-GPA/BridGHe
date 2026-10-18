@@ -11,7 +11,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
     public class CoordinateSystemParam : GH_PersistentParam<GH_CoordinateSystem>
     {
         public CoordinateSystemParam()
-            : base("CoordinateSystem", "CS", "The model coordinate system", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
+            : base("CoordinateSystem", "CS", "The model coordinate system", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
         {
         }
 

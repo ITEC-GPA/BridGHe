@@ -14,7 +14,7 @@ namespace BridGHe.Grasshopper.Components.Models
         /// Initializes a new instance of the NodeComponent class.
         /// </summary>
         public NodeComponent()
-          : base("Node", "N", "Define a Node", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_MODEL)
+          : base("Node", "N", "Define a Node", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_MODEL)
         {
         }
 

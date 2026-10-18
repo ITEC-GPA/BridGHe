@@ -22,7 +22,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
         public List<LoadCaseModel> LoadCaseList => _loadCases;
 
         public LoadCombinationsParam()
-            : base("Load Combinations", "LCS", "The load combinations definition", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
+            : base("Load Combinations", "LCS", "The load combinations definition", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
         {
             _loadCases = new List<LoadCaseModel>();
         }

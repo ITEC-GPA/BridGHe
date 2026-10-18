@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <Archive name="Root">
   <!--Grasshopper archive-->
   <!--Grasshopper and GH_IO.dll are copyrighted by Robert McNeel & Associates-->
@@ -125,7 +125,7 @@
 G1 acciaio/getto; G2 misto lungo termine; Q misto istantaneo; RITIRO misto lungo termine.
 Ritiro: pre-strain e gradiente per effetti globali + una sola autotensione di sezione.
 Geometrie e proprieta editabili. Per modifiche coerenti usare parameters.json e rigenerare.
-Attivare CALCOLA 4 MODELLI; poi Run Build MeCheck Model e Run Super Element Check.
+Attivare CALCOLA 4 MODELLI; poi Run Build BridGHe Model e Run Super Element Check.
 Per i ponti curvi il checker segnala la torsione non supportata: consultare tutti i risultati FEM.</item>
                   </items>
                   <chunks count="2">
@@ -45374,7 +45374,7 @@ G4</item>
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
                     <item name="InstanceGuid" type_name="gh_guid" type_code="9">fd04d502-5db8-470f-bdcb-faab2e109aa0</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
-                    <item name="NickName" type_name="gh_string" type_code="10">MECHECK2</item>
+                    <item name="NickName" type_name="gh_string" type_code="10">BRIDGE_CHECKS</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                     <item name="ScrollRatio" type_name="gh_double" type_code="6">0</item>
                     <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
@@ -45419,14 +45419,14 @@ Nessuna cancellazione o proiezione delle sollecitazioni non supportate.</item>
               <items count="3">
                 <item name="GUID" type_name="gh_guid" type_code="9">16695837-3f63-4305-a1ff-4491826dc3fe</item>
                 <item name="Lib" type_name="gh_guid" type_code="9">db9c536d-770b-4586-8c8c-1c7a4df232b4</item>
-                <item name="Name" type_name="gh_string" type_code="10">Build MeCheck Model</item>
+                <item name="Name" type_name="gh_string" type_code="10">Build BridGHe Model</item>
               </items>
               <chunks count="1">
                 <chunk name="Container">
                   <items count="4">
-                    <item name="Description" type_name="gh_string" type_code="10">Merge the FeMM models in to a single FeMM model with input phases</item>
+                    <item name="Description" type_name="gh_string" type_code="10">Merge the BridGHe models in to a single BridGHe model with input phases</item>
                     <item name="InstanceGuid" type_name="gh_guid" type_code="9">3287b782-bbaa-4b26-9b93-ae99ac6b457f</item>
-                    <item name="Name" type_name="gh_string" type_code="10">Build MeCheck Model</item>
+                    <item name="Name" type_name="gh_string" type_code="10">Build BridGHe Model</item>
                     <item name="NickName" type_name="gh_string" type_code="10">BMCM</item>
                   </items>
                   <chunks count="9">
@@ -45449,7 +45449,7 @@ Nessuna cancellazione o proiezione delle sollecitazioni non supportate.</item>
                         <item name="Access" type_name="gh_int32" type_code="3">1</item>
                         <item name="Description" type_name="gh_string" type_code="10">The FEM models (more than one for stages)</item>
                         <item name="InstanceGuid" type_name="gh_guid" type_code="9">5181c4f5-59ff-479b-98cc-1ef0b5e224c0</item>
-                        <item name="Name" type_name="gh_string" type_code="10">FeMM Models</item>
+                        <item name="Name" type_name="gh_string" type_code="10">BridGHe Models</item>
                         <item name="NickName" type_name="gh_string" type_code="10">FM</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                         <item name="Source" index="0" type_name="gh_guid" type_code="9">d1a9c36b-853c-42fc-be9d-171be7fcc393</item>
@@ -45673,7 +45673,7 @@ Nessuna cancellazione o proiezione delle sollecitazioni non supportate.</item>
                       <items count="7">
                         <item name="Description" type_name="gh_string" type_code="10">The FEM model</item>
                         <item name="InstanceGuid" type_name="gh_guid" type_code="9">f2435e92-7ae7-41ac-980c-3240545d2e43</item>
-                        <item name="Name" type_name="gh_string" type_code="10">FeMM Model</item>
+                        <item name="Name" type_name="gh_string" type_code="10">BridGHe Model</item>
                         <item name="NickName" type_name="gh_string" type_code="10">FM</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                         <item name="Source" index="0" type_name="gh_guid" type_code="9">98f48280-90f6-453f-81bf-b4c853c8a0ae</item>
@@ -46060,7 +46060,7 @@ G4</item>
                       <items count="7">
                         <item name="Description" type_name="gh_string" type_code="10">The FEM model</item>
                         <item name="InstanceGuid" type_name="gh_guid" type_code="9">eeb5f953-7b41-44b1-9530-fbbe84ef6ddc</item>
-                        <item name="Name" type_name="gh_string" type_code="10">FeMM Model</item>
+                        <item name="Name" type_name="gh_string" type_code="10">BridGHe Model</item>
                         <item name="NickName" type_name="gh_string" type_code="10">FM</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                         <item name="Source" index="0" type_name="gh_guid" type_code="9">f29c5206-46a8-4b05-94c8-805c8faed06b</item>
@@ -46447,7 +46447,7 @@ G4</item>
                       <items count="7">
                         <item name="Description" type_name="gh_string" type_code="10">The FEM model</item>
                         <item name="InstanceGuid" type_name="gh_guid" type_code="9">5933a758-05f5-4c3e-8286-a6eac28f9f8a</item>
-                        <item name="Name" type_name="gh_string" type_code="10">FeMM Model</item>
+                        <item name="Name" type_name="gh_string" type_code="10">BridGHe Model</item>
                         <item name="NickName" type_name="gh_string" type_code="10">FM</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                         <item name="Source" index="0" type_name="gh_guid" type_code="9">f19da0a6-396c-4f82-8aa5-647a1c7d0a72</item>
@@ -46834,7 +46834,7 @@ G4</item>
                       <items count="7">
                         <item name="Description" type_name="gh_string" type_code="10">The FEM model</item>
                         <item name="InstanceGuid" type_name="gh_guid" type_code="9">89c65159-de11-4b2a-83fa-0394b50c15d6</item>
-                        <item name="Name" type_name="gh_string" type_code="10">FeMM Model</item>
+                        <item name="Name" type_name="gh_string" type_code="10">BridGHe Model</item>
                         <item name="NickName" type_name="gh_string" type_code="10">FM</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                         <item name="Source" index="0" type_name="gh_guid" type_code="9">5fe634c2-61f5-4bc7-87a5-98019df26dfc</item>
@@ -47755,7 +47755,7 @@ G4</item>
                       <items count="7">
                         <item name="Description" type_name="gh_string" type_code="10">The FEM model</item>
                         <item name="InstanceGuid" type_name="gh_guid" type_code="9">0efc25f1-b384-465e-8692-a069672241de</item>
-                        <item name="Name" type_name="gh_string" type_code="10">FeMM Model</item>
+                        <item name="Name" type_name="gh_string" type_code="10">BridGHe Model</item>
                         <item name="NickName" type_name="gh_string" type_code="10">FM</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                         <item name="Source" index="0" type_name="gh_guid" type_code="9">d434d6fd-af7f-415a-9c72-942843a01f0b</item>
@@ -48110,9 +48110,9 @@ G4</item>
                     </chunk>
                     <chunk name="param_input" index="0">
                       <items count="7">
-                        <item name="Description" type_name="gh_string" type_code="10">The FeMM model</item>
+                        <item name="Description" type_name="gh_string" type_code="10">The BridGHe model</item>
                         <item name="InstanceGuid" type_name="gh_guid" type_code="9">6f288311-0942-4fe1-b0f1-77dde3efa24d</item>
-                        <item name="Name" type_name="gh_string" type_code="10">FeMM Model</item>
+                        <item name="Name" type_name="gh_string" type_code="10">BridGHe Model</item>
                         <item name="NickName" type_name="gh_string" type_code="10">FM</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                         <item name="Source" index="0" type_name="gh_guid" type_code="9">d434d6fd-af7f-415a-9c72-942843a01f0b</item>
@@ -48878,7 +48878,7 @@ G4</item>
 Appoggio: G1, prima sezione; intermedio: G1, primo diaframma interno.
 Pioli: 2 x diam.22, h180, passo200 mm. Piatti intermedi 200x20, appoggio 250x25 mm.
 Reazione d'appoggio dimostrativa SLS: somma dei quattro casi; sostituire con inviluppo SLU per il progetto.
-Le verifiche conservano lo stato limite del risultato sorgente. Nei curvi MeCheck2 blocca prima la torsione H.
+Le verifiche conservano lo stato limite del risultato sorgente. Nei curvi BridgeChecks blocca prima la torsione H.
 I dettagli non aggiungono automaticamente rigidezza o peso al graticcio equivalente.</item>
                   </items>
                   <chunks count="2">
@@ -51195,7 +51195,7 @@ I dettagli non aggiungono automaticamente rigidezza o peso al graticcio equivale
               <chunks count="1">
                 <chunk name="Container">
                   <items count="4">
-                    <item name="Description" type_name="gh_string" type_code="10">Recomputes a MeCheck2 section with gPC studs and stiffeners. Retains phase history, materials and limit state. No FEM stiffness change.</item>
+                    <item name="Description" type_name="gh_string" type_code="10">Recomputes a BridgeChecks section with gPC studs and stiffeners. Retains phase history, materials and limit state. No FEM stiffness change.</item>
                     <item name="InstanceGuid" type_name="gh_guid" type_code="9">43c28930-0e1a-41a9-82c0-38431c256b55</item>
                     <item name="Name" type_name="gh_string" type_code="10">Bridge Detail Check</item>
                     <item name="NickName" type_name="gh_string" type_code="10">DetailCheck</item>
@@ -51217,7 +51217,7 @@ I dettagli non aggiungono automaticamente rigidezza o peso al graticcio equivale
                     </chunk>
                     <chunk name="param_input" index="0">
                       <items count="7">
-                        <item name="Description" type_name="gh_string" type_code="10">BridgeStressResult from MeCheck2; the selected stage is retained</item>
+                        <item name="Description" type_name="gh_string" type_code="10">BridgeStressResult from BridgeChecks; the selected stage is retained</item>
                         <item name="InstanceGuid" type_name="gh_guid" type_code="9">4cb65fc1-a6a6-45ac-9e7d-d8517b44105d</item>
                         <item name="Name" type_name="gh_string" type_code="10">Section result</item>
                         <item name="NickName" type_name="gh_string" type_code="10">R</item>
@@ -51728,7 +51728,7 @@ I dettagli non aggiungono automaticamente rigidezza o peso al graticcio equivale
               <chunks count="1">
                 <chunk name="Container">
                   <items count="4">
-                    <item name="Description" type_name="gh_string" type_code="10">Recomputes a MeCheck2 section with gPC studs and stiffeners. Retains phase history, materials and limit state. No FEM stiffness change.</item>
+                    <item name="Description" type_name="gh_string" type_code="10">Recomputes a BridgeChecks section with gPC studs and stiffeners. Retains phase history, materials and limit state. No FEM stiffness change.</item>
                     <item name="InstanceGuid" type_name="gh_guid" type_code="9">0d4ad5d4-284d-4d7f-979c-f9c3efb10aee</item>
                     <item name="Name" type_name="gh_string" type_code="10">Bridge Detail Check</item>
                     <item name="NickName" type_name="gh_string" type_code="10">DetailCheck</item>
@@ -51750,7 +51750,7 @@ I dettagli non aggiungono automaticamente rigidezza o peso al graticcio equivale
                     </chunk>
                     <chunk name="param_input" index="0">
                       <items count="7">
-                        <item name="Description" type_name="gh_string" type_code="10">BridgeStressResult from MeCheck2; the selected stage is retained</item>
+                        <item name="Description" type_name="gh_string" type_code="10">BridgeStressResult from BridgeChecks; the selected stage is retained</item>
                         <item name="InstanceGuid" type_name="gh_guid" type_code="9">c4c5b806-64e0-41eb-b685-4df71a55f318</item>
                         <item name="Name" type_name="gh_string" type_code="10">Section result</item>
                         <item name="NickName" type_name="gh_string" type_code="10">R</item>

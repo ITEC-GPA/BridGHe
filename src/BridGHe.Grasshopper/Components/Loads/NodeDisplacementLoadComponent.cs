@@ -13,7 +13,7 @@ namespace BridGHe.Grasshopper.Components.Loads
         /// Initializes a new instance of the NodeLoadComponent class.
         /// </summary>
         public NodeDisplacementLoadComponent()
-          : base("Node Displacement", "ND", "Defines a node displacement", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_LOADS)
+          : base("Node Displacement", "ND", "Defines a node displacement", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_LOADS)
         {
         }
 

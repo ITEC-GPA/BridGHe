@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components.Models
         /// Initializes a new instance of the BuildModelComponent class.
         /// </summary>
         public MergeModelComponent()
-          : base("Merge Model", "BM", "Build the FEM model", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_MODEL)
+          : base("Merge Model", "BM", "Build the FEM model", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_MODEL)
         {
         }
 
@@ -33,9 +33,9 @@ namespace BridGHe.Grasshopper.Components.Models
         /// </summary>
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("FeMM Nodes", "FN", "", GH_ParamAccess.list);
-            pManager.AddGenericParameter("FeMM Beams", "FB", "", GH_ParamAccess.list);
-            pManager.AddGenericParameter("FeMM Plates", "FP", "", GH_ParamAccess.list);
+            pManager.AddGenericParameter("BridGHe Nodes", "FN", "", GH_ParamAccess.list);
+            pManager.AddGenericParameter("BridGHe Beams", "FB", "", GH_ParamAccess.list);
+            pManager.AddGenericParameter("BridGHe Plates", "FP", "", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -53,9 +53,9 @@ namespace BridGHe.Grasshopper.Components.Models
                     return;
                 DA.GetData(1, ref tolerance);
 
-                List<NodeModel> femmnodes = new List<NodeModel>();
-                List<BeamModel> femmbeams = new List<BeamModel>();
-                List<PlateModel> femmplates = new List<PlateModel>();
+                List<NodeModel> modelnodes = new List<NodeModel>();
+                List<BeamModel> modelbeams = new List<BeamModel>();
+                List<PlateModel> modelplates = new List<PlateModel>();
 
                 for (int i = 0; i < elements.Count; i++)
                 {
@@ -64,30 +64,30 @@ namespace BridGHe.Grasshopper.Components.Models
                         switch (elements[i])
                         {
                             case GH_Node fnode:
-                                femmnodes.Add(new NodeModel(fnode.Value));
+                                modelnodes.Add(new NodeModel(fnode.Value));
                                 break;
                             case GH_Beam fbeam:
-                                femmbeams.Add(new BeamModel(fbeam.Value));
+                                modelbeams.Add(new BeamModel(fbeam.Value));
                                 break;
                             case GH_Plate fplate:
-                                femmplates.Add(new PlateModel(fplate.Value));
+                                modelplates.Add(new PlateModel(fplate.Value));
                                 break;
                         }
                     }
                 }
 
-                Common.Helpers.ModelHelper.MergeModel(ref femmnodes, ref femmbeams, ref femmplates, tolerance);
+                Common.Helpers.ModelHelper.MergeModel(ref modelnodes, ref modelbeams, ref modelplates, tolerance);
 
                 List<GH_Node> gH_Nodes = new List<GH_Node>();
                 List<GH_Beam> gH_Beams = new List<GH_Beam>();
                 List<GH_Plate> gH_Plates = new List<GH_Plate>();
 
-                for (int i = 0; i < femmnodes.Count; i++)
-                    gH_Nodes.Add(new GH_Node(femmnodes[i]));
-                for (int i = 0; i < femmbeams.Count; i++)
-                    gH_Beams.Add(new GH_Beam(femmbeams[i]));
-                for (int i = 0; i < femmplates.Count; i++)
-                    gH_Plates.Add(new GH_Plate(femmplates[i]));
+                for (int i = 0; i < modelnodes.Count; i++)
+                    gH_Nodes.Add(new GH_Node(modelnodes[i]));
+                for (int i = 0; i < modelbeams.Count; i++)
+                    gH_Beams.Add(new GH_Beam(modelbeams[i]));
+                for (int i = 0; i < modelplates.Count; i++)
+                    gH_Plates.Add(new GH_Plate(modelplates[i]));
 
                 DA.SetDataList(0, gH_Nodes);
                 DA.SetDataList(1, gH_Beams);

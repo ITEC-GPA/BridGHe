@@ -37,7 +37,7 @@ internal static class GrasshopperBridgeExample
         void Integer(GH_Component c,int i,int value){var q=(Param_Integer)c.Params.Input[i];q.PersistentData.Clear();q.SetPersistentData(value);}
         void Boolean(GH_Component c,int i,bool value){var q=(Param_Boolean)c.Params.Input[i];q.PersistentData.Clear();q.SetPersistentData(value);}
         void Text(GH_Component c,int i,string value){var q=(Param_String)c.Params.Input[i];q.PersistentData.Clear();q.SetPersistentData(value);}
-        Panel("LEGGERE PRIMA","PONTE MISTO A GRATICCIO | N-mm-MPa\nTre modelli elastici: acciaio / misto lungo termine / misto istantaneo.\nGeometria, carichi e proprieta sono visibili e modificabili nei parametri.\nModificare parameters.json e rigenerare per cambiare coerentemente tutte le dipendenze.\nRun inizialmente false. File .st7 in TEMP, percorsi modificabili.\nMeCheck2: usare solo la combinazione simmetrica; il traffico eccentrico richiede anche torsione.\nSoletta e diaframmi sono travi equivalenti: non e una verifica normativa completa.",20,0,1300,160);
+        Panel("LEGGERE PRIMA","PONTE MISTO A GRATICCIO | N-mm-MPa\nTre modelli elastici: acciaio / misto lungo termine / misto istantaneo.\nGeometria, carichi e proprieta sono visibili e modificabili nei parametri.\nModificare parameters.json e rigenerare per cambiare coerentemente tutte le dipendenze.\nRun inizialmente false. File .st7 in TEMP, percorsi modificabili.\nBridgeChecks: usare solo la combinazione simmetrica; il traffico eccentrico richiede anche torsione.\nSoletta e diaframmi sono travi equivalenti: non e una verifica normativa completa.",20,0,1300,160);
         var analyses=new List<GH_Component>();var builds=new List<GH_Component>();
         for(int phase=0;phase<3;phase++)
         {
@@ -102,19 +102,19 @@ internal static class GrasshopperBridgeExample
         var movingCases=Panel("Posizioni mobili generate","",2630,3500,450,130);movingCases.AddSource(moving.Params.Output[1]);
 
         // Merge only longitudinal members: transverse topology changes when the
-        // slab hardens. Build MeCheck Model requires matching member order.
-        Panel("MECHECK2 - CAMPO COPERTO","Combinazione SLS simmetrica, coefficienti 1.0.\nSezione lorda, soletta non fessurata, armature escluse.\n5 contributi: G1, G2, Q_UDL, ritiro lungo termine, deformazione istantanea.\nPer il traffico eccentrico conservare T e usare un verificatore dedicato.\nDopo le analisi: Run Build MeCheck Model, poi Run Super Element Check.\nNon alimentare questo merge con i risultati TOTALI delle fasi di getto.",3270,20,1100,150);
-        var merge=Component("MeCheck2.BuildMeCheckModel",4300,650);
+        // slab hardens. Build BridGHe Model requires matching member order.
+        Panel("BRIDGE_CHECKS - CAMPO COPERTO","Combinazione SLS simmetrica, coefficienti 1.0.\nSezione lorda, soletta non fessurata, armature escluse.\n5 contributi: G1, G2, Q_UDL, ritiro lungo termine, deformazione istantanea.\nPer il traffico eccentrico conservare T e usare un verificatore dedicato.\nDopo le analisi: Run Build BridGHe Model, poi Run Super Element Check.\nNon alimentare questo merge con i risultati TOTALI delle fasi di getto.",3270,20,1100,150);
+        var merge=Component("BridgeChecks.BuildBridgeModel",4300,650);
         for(int phase=0;phase<3;phase++)
         {
             float y=270+phase*370;
-            var filter=Component("MeCheck2.SuperElementFilterComponent",3300,y);Wire(analyses[phase].Params.Output[0],filter,0);
+            var filter=Component("BridgeChecks.SuperElementFilterComponent",3300,y);Wire(analyses[phase].Params.Output[0],filter,0);
             Wire(Panel("Travi principali","G1\nG2\nG3\nG4",3100,y+50,150,95),filter,1);
             IGH_Param last=filter.Params.Output[0];
             if(phase>0)
             {
                 string name=phase==1?"RITIRO_INF":"DEF_IST";
-                var strain=Component("MeCheck2.CompositeBeamSlabStrainComponent",3650,y);Wire(last,strain,0);
+                var strain=Component("BridgeChecks.CompositeBeamSlabStrainComponent",3650,y);Wire(last,strain,0);
                 Wire(Objects(name,new[]{Goo("Fem.GH_LoadCase",new LoadCaseModel(name,name))},3420,y+110),strain,1);
                 var value=(Param_Number)strain.Params.Input[2];value.SetPersistentData(phase==1?p.ShrinkageLong:p.ShrinkageInstant);last=strain.Params.Output[0];
             }
@@ -128,14 +128,14 @@ internal static class GrasshopperBridgeExample
         Wire(combinations,merge,1);
         foreach(var entry in new[]{(2,"1-G1_GETTO"),(3,"2-G2_PERMANENTI"),(4,"3-Q_UDL\n3-Q_ECC\n3-Q_MIRROR"),(5,"2-RITIRO_INF"),(6,"3-DEF_IST")})
             Wire(Panel("Assegnazione fase "+entry.Item1,entry.Item2,4000,1450+(entry.Item1-2)*110,270,80),merge,entry.Item1);
-        var select=Component("MeCheck2.SuperElementFilterComponent",4580,650);Wire(merge.Params.Output[0],select,0);
+        var select=Component("BridgeChecks.SuperElementFilterComponent",4580,650);Wire(merge.Params.Output[0],select,0);
         Wire(Panel("Travi verificate","G1\nG2\nG3\nG4",4350,1050,150,95),select,1);
-        var composite=Component("MeCheck2.CompositeBeamComponent",4870,650);Wire(select.Params.Output[0],composite,0);
+        var composite=Component("BridgeChecks.CompositeBeamComponent",4870,650);Wire(select.Params.Output[0],composite,0);
         var section=Objects("Sezione mista H1600 + soletta 250",new[]{Goo("GH_CompositeBeamProperty",BridgeGrillageExample.Composite(p))},4620,1050);
         Wire(section,composite,1);Wire(section,composite,2);
-        var check=Component("MeCheck2.SuperElementCheckComponent",5200,650);Wire(merge.Params.Output[0],check,0);Wire(composite.Params.Output[0],check,1);check.Params.Input[1].DataMapping=GH_DataMapping.Flatten;
+        var check=Component("BridgeChecks.SuperElementCheckComponent",5200,650);Wire(merge.Params.Output[0],check,0);Wire(composite.Params.Output[0],check,1);check.Params.Input[1].DataMapping=GH_DataMapping.Flatten;
         for(int i=2;i<=5;i++)Boolean(check,i,false);
-        var stresses=Component("MeCheck2.CompositeBeamTensionResultComponent",5480,650);Wire(check.Params.Output[0],stresses,0);
+        var stresses=Component("BridgeChecks.CompositeBeamTensionResultComponent",5480,650);Wire(check.Params.Output[0],stresses,0);
         var concreteStress=Panel("Sigma cls superiore [MPa]","",5750,400,350,180);concreteStress.AddSource(stresses.Params.Output[1]);
         var steelStress=Panel("Sigma acciaio inferiore [MPa]","",5750,670,350,180);steelStress.AddSource(stresses.Params.Output[12]);
         Panel("ESITI DA NON CONFONDERE","TauB non disponibile: output NaN.\nTensioni elastiche non equivalgono a verifica SLU.\nInstabilita, connessione, fatica, soletta locale, appoggi e azioni orizzontali: da verificare a parte.\nLa deformazione istantanea imposta e un incremento separato; non ripetere lo stesso ritiro.",5450,1100,650,160);
@@ -171,8 +171,8 @@ internal static class GrasshopperBridgeExample
         errors=restored.Objects.OfType<GH_ActiveObject>().SelectMany(c=>c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Select(e=>c.Name+": "+e)).ToArray();
         if(errors.Length>0)throw new Exception(string.Join("\n",errors));
         var outputs=restoredCheck.Params.Output[0].VolatileData.AllData(true).Cast<GH_ObjectWrapper>().Select(g=>(BridGHe.Common.Checks.BridgeStressResult)g.Value).ToArray();
-        checks.Near("GH MeCheck2 stazioni elaborate",outputs.Length,4*p.Panels*5,0,0);
-        checks.Near("GH MeCheck2 cinque contributi",outputs.Min(r=>r.Analysis.Stages.Count),5,0,0);
+        checks.Near("GH BridgeChecks stazioni elaborate",outputs.Length,4*p.Panels*5,0,0);
+        checks.Near("GH BridgeChecks cinque contributi",outputs.Min(r=>r.Analysis.Stages.Count),5,0,0);
         var midspan=outputs.MaxBy(r=>r.Point8_SteelSigma);var reference=sectionReference.Rows.Last();
         checks.Near("GH sigma cls superiore mezzeria [MPa]",midspan.Point1_ConcreteSigma,reference.TopConcrete,1e-6,1e-6);
         checks.Near("GH sigma cls inferiore mezzeria [MPa]",midspan.Point4_ConcreteSigma,reference.BottomConcrete,1e-6,1e-6);

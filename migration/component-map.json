@@ -1,846 +1,846 @@
 [
   {
-    "source": "FeMM.Grasshopper/Components/Analysis/StrausR3AnalysisComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Analysis/StrausR3AnalysisComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Analysis/StrausR3AnalysisComponent.cs",
     "oldGuid": "8c86c9fd-5896-4b07-a893-7d5a5fd955b8",
     "newGuid": "c9985217-7bc3-4eb0-a8a1-d251e17c8140",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/BeamInsertionPointComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/BeamInsertionPointComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/BeamInsertionPointComponent.cs",
     "oldGuid": "d4da4c2d-0962-42dd-9812-6081e6f8de5c",
     "newGuid": "df515519-6d8f-4afa-8561-38db8b943d6e",
     "status": "removed"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/BeamModifiersComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/BeamModifiersComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/BeamModifiersComponent.cs",
     "oldGuid": "84d709bf-a0e6-4ae3-b910-1d5b330d4016",
     "newGuid": "65ca32a0-3084-4ba9-b950-a0a7b5b3509a",
     "status": "removed"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/BeamOutputStationsComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/BeamOutputStationsComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/BeamOutputStationsComponent.cs",
     "oldGuid": "6fde7eae-8abb-40d6-9a53-49dd678a22ad",
     "newGuid": "72860a35-4af0-41c0-9e26-79a3db608d5f",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/BeamReleasesComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/BeamReleasesComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/BeamReleasesComponent.cs",
     "oldGuid": "be84a0e3-5c7b-45eb-b834-84a6c39b7e6d",
     "newGuid": "e3b6b459-dfcf-4a1a-b31f-3f7536b7bfa9",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/BeamReleasesNamedSetComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/BeamReleasesNamedSetComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/BeamReleasesNamedSetComponent.cs",
     "oldGuid": "98627c5a-a704-4295-884b-f320665d1f79",
     "newGuid": "5f7c35bc-b5c4-4ca0-9d0a-d6ad3523cdef",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/BeamStringGroupComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/BeamStringGroupComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/BeamStringGroupComponent.cs",
     "oldGuid": "d5f0ddc5-a9ec-402f-ac12-9c49bd0eda3c",
     "newGuid": "a8cfb01f-5fac-41dc-b757-4d01d6103c15",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/BeamSupportComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/BeamSupportComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/BeamSupportComponent.cs",
     "oldGuid": "712f994f-80ea-4245-93c3-299906f0f2ae",
     "newGuid": "ed5438f5-aa16-4bcb-a5c9-a31bc27d4745",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/BeamTaperComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/BeamTaperComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/BeamTaperComponent.cs",
     "oldGuid": "7c350f6a-852c-42c4-a801-2653a480d9e4",
     "newGuid": "5010971e-bdee-44d6-9edc-9d6beb8ad165",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/ElementIdComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/ElementIdComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/ElementIdComponent.cs",
     "oldGuid": "b21816ea-0ef6-4feb-a522-f9371f28faf6",
     "newGuid": "3467176f-73ce-4557-b60b-961f5841f7a6",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/FixedAxialForceComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/FixedAxialForceComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/FixedAxialForceComponent.cs",
     "oldGuid": "a88a3d74-f64d-4062-8e6b-4d5d50657b5b",
     "newGuid": "a337f1ad-a547-4793-8f09-512907177715",
     "status": "removed"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/FixedCompensationComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/FixedCompensationComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/FixedCompensationComponent.cs",
     "oldGuid": "7608ac1c-9e5a-4dbb-8806-dd6791a6aa35",
     "newGuid": "f4a342b3-3200-4992-94e0-55d8f4256f48",
     "status": "removed"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/FixedLengthComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/FixedLengthComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/FixedLengthComponent.cs",
     "oldGuid": "5d89f883-1bbe-4f2e-81bc-62227bd42f59",
     "newGuid": "ec4fef1f-2967-4c42-8d0c-43898ccf335b",
     "status": "removed"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/ForceDensityCableComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/ForceDensityCableComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/ForceDensityCableComponent.cs",
     "oldGuid": "6ce47bc0-97a4-4f66-8358-a692c761e56e",
     "newGuid": "98f37cc0-d94d-43f3-bcfb-7c1bcf163a69",
     "status": "removed"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/ForceDensityComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/ForceDensityComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/ForceDensityComponent.cs",
     "oldGuid": "132f6d9d-8e99-4e36-bfed-ca3babd0e9c9",
     "newGuid": "1de9b286-cbc4-420b-8934-ea07e5db3966",
     "status": "removed"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/ForceDensityMembraneComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/ForceDensityMembraneComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/ForceDensityMembraneComponent.cs",
     "oldGuid": "b08e8e8e-493d-4f25-83ad-a7dddf1c412d",
     "newGuid": "1ba29cf3-1b6f-44ed-8680-9de573c7198c",
     "status": "removed"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/KeepPositionComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/KeepPositionComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/KeepPositionComponent.cs",
     "oldGuid": "86d016cf-0229-4569-ad7f-fbe4393fea08",
     "newGuid": "197a2519-ba77-45d1-8d9d-5c68e2043c2b",
     "status": "removed"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/LoadPatchTypeComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/LoadPatchTypeComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/LoadPatchTypeComponent.cs",
     "oldGuid": "ed34e8a6-0521-4b6c-b588-156005b514c4",
     "newGuid": "1dcb6c8b-8bd7-4e5b-a6a1-76c68a8f729b",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/LoadTransferComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/LoadTransferComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/LoadTransferComponent.cs",
     "oldGuid": "3fecca19-7158-4669-a835-dd3ac9d4cd91",
     "newGuid": "47b9f96e-3ecd-4ba6-a0d0-b4008e0f1b27",
     "status": "removed"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/NodeRestraintsComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/NodeRestraintsComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/NodeRestraintsComponent.cs",
     "oldGuid": "79186ea8-b0db-4a86-8f95-2414b580759b",
     "newGuid": "59ef0220-f913-42ef-88cf-f0f32a9ae608",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/NodeStiffnessComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/NodeStiffnessComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/NodeStiffnessComponent.cs",
     "oldGuid": "ca28e9b9-5a50-4f45-904e-3b6d1ca6caa1",
     "newGuid": "90a26129-a25e-4396-b677-b661d86246c2",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/PlateSupportComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/PlateSupportComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/PlateSupportComponent.cs",
     "oldGuid": "ad0431e8-d68f-45e9-a5c8-ab0c084cfc5a",
     "newGuid": "7489fa91-6962-46b7-95b7-cfdeddc411f2",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Attributes/SuperElementComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Attributes/SuperElementComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Attributes/SuperElementComponent.cs",
     "oldGuid": "cc2c347f-f8a2-4b30-8865-dfcba5447676",
     "newGuid": "2d01d2b5-9b10-402e-aee3-672cfc4a659b",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Checks/ForceComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Checks/ForceComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Checks/ForceComponent.cs",
     "oldGuid": "2e742740-6302-4402-9004-e253bcba029f",
     "newGuid": "bc2cde43-3af2-4685-8ce7-63e3586edeb5",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Checks/MixedSectionShearCheckComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Checks/MixedSectionShearCheckComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Checks/MixedSectionShearCheckComponent.cs",
     "oldGuid": "bf7c5582-66b5-4039-a972-472ff3dbaa15",
     "newGuid": "b3669fd3-ab2d-462b-a378-c9e6a5578b59",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Checks/MixedSectionTensionCheckComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Checks/MixedSectionTensionCheckComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Checks/MixedSectionTensionCheckComponent.cs",
     "oldGuid": "f4d2a021-7d8b-4db2-9fa8-ad08ded165d5",
     "newGuid": "d370d023-bccf-4292-bed6-61858bcf71d8",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Checks/RCBeamRebarsComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Checks/RCBeamRebarsComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Checks/RCBeamRebarsComponent.cs",
     "oldGuid": "08d7360f-efed-420e-8f32-28a6458d529c",
     "newGuid": "c3ef88eb-263f-45c4-a124-5740ed9f1ed8",
     "status": "removed"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Checks/RCFrameAsComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Checks/RCFrameAsComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Checks/RCFrameAsComponent.cs",
     "oldGuid": "e1dfc6ff-f680-4a6d-971c-33b7015322a9",
     "newGuid": "31e3225e-3154-4726-9e6b-67539de1b524",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Checks/RCFrameChecksComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Checks/RCFrameChecksComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Checks/RCFrameChecksComponent.cs",
     "oldGuid": "9cdb25d6-c9b5-4487-84f2-d093f6c6b08c",
     "newGuid": "fe7f2ad0-e6db-488c-befd-6077043c839d",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Checks/RCPillarRebarsComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Checks/RCPillarRebarsComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Checks/RCPillarRebarsComponent.cs",
     "oldGuid": "7594d13a-05b2-48d7-8f7d-cc2064941788",
     "newGuid": "41d6fbf4-a107-4a28-a5f9-dbab5cb0fdc1",
     "status": "removed"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Checks/SteelFrameChecksComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Checks/SteelFrameChecksComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Checks/SteelFrameChecksComponent.cs",
     "oldGuid": "07de430a-7b39-4500-9a3e-42a819385be2",
     "newGuid": "c42d7f54-7567-4f8a-8835-887f27af69eb",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Definitions/GroupComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Definitions/GroupComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Definitions/GroupComponent.cs",
     "oldGuid": "7cf9eb7e-1292-4d7c-b1d7-44f0c29e65be",
     "newGuid": "58972cd5-d1a4-47fb-a890-98dd16cb87f5",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Definitions/LoadCaseComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Definitions/LoadCaseComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Definitions/LoadCaseComponent.cs",
     "oldGuid": "fc022fd8-4ebf-4c56-a428-3a9efeff43b3",
     "newGuid": "977e4b26-8094-4d71-b165-f0f73b2282cd",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Definitions/LoadCaseStageComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Definitions/LoadCaseStageComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Definitions/LoadCaseStageComponent.cs",
     "oldGuid": "a585ecb5-f868-4971-91bc-ccb5bbbf48dd",
     "newGuid": "5698330d-d3b6-4c35-bbd8-096aee7dfbb3",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Definitions/LoadCaseStageOperationComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Definitions/LoadCaseStageOperationComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Definitions/LoadCaseStageOperationComponent.cs",
     "oldGuid": "3baa7a3b-f03b-4276-aaf8-25e47f0e65d9",
     "newGuid": "785fff3f-6d81-4e5d-bf4d-cba31acedc58",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Definitions/LoadCombinationComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Definitions/LoadCombinationComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Definitions/LoadCombinationComponent.cs",
     "oldGuid": "d03b7773-9323-4c36-96c7-56fb80d41eff",
     "newGuid": "bc427929-4998-48b4-821b-16d92af627cf",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Definitions/StagedConstructionComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Definitions/StagedConstructionComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Definitions/StagedConstructionComponent.cs",
     "oldGuid": "60d90bc8-d44e-4f07-a8a6-cdebf508cd23",
     "newGuid": "0d40d9ed-b87d-402b-bf96-e34ec04826a4",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Definitions/StoryComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Definitions/StoryComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Definitions/StoryComponent.cs",
     "oldGuid": "ceee65b4-2e67-432b-9178-b486047fe0af",
     "newGuid": "b1d25414-d8ba-49e6-bbe7-0c88d20ab82f",
     "status": "removed"
   },
   {
-    "source": "FeMM.Grasshopper/Components/ElementProperties/BeamGeometricPropertyComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/ElementProperties/BeamGeometricPropertyComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/ElementProperties/BeamGeometricPropertyComponent.cs",
     "oldGuid": "7040e517-fea8-44f7-ba94-41647730ee65",
     "newGuid": "8969e7d9-57da-478e-818c-949f6e93c883",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/ElementProperties/BeamNonPrismaticPropertyComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/ElementProperties/BeamNonPrismaticPropertyComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/ElementProperties/BeamNonPrismaticPropertyComponent.cs",
     "oldGuid": "4d3f7a2a-69de-47df-9323-ed4b57ff1910",
     "newGuid": "73c84046-6eab-461e-a5c8-5bcedf744f02",
     "status": "removed"
   },
   {
-    "source": "FeMM.Grasshopper/Components/ElementProperties/BeamPropertyComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/ElementProperties/BeamPropertyComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/ElementProperties/BeamPropertyComponent.cs",
     "oldGuid": "dfa97707-eae3-465a-84d6-90b240e1e972",
     "newGuid": "4dd0c4e3-9c82-4284-b177-b3d8c25390bf",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/ElementProperties/LinkDirectionPropertyComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/ElementProperties/LinkDirectionPropertyComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/ElementProperties/LinkDirectionPropertyComponent.cs",
     "oldGuid": "4b051322-95a7-46af-9bd7-91634324fd15",
     "newGuid": "ce789df9-79f2-437a-ab4f-2b43b662b3a9",
     "status": "removed"
   },
   {
-    "source": "FeMM.Grasshopper/Components/ElementProperties/LinkPropertyComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/ElementProperties/LinkPropertyComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/ElementProperties/LinkPropertyComponent.cs",
     "oldGuid": "454e763b-bad7-4e10-9cd1-5adc748c54cd",
     "newGuid": "984f7b33-e6bd-4572-a29a-f4c1367275cf",
     "status": "removed"
   },
   {
-    "source": "FeMM.Grasshopper/Components/ElementProperties/PlatePropertyComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/ElementProperties/PlatePropertyComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/ElementProperties/PlatePropertyComponent.cs",
     "oldGuid": "02de1de2-3151-4ff5-8059-0ce082fb5f44",
     "newGuid": "20915977-5436-4dcb-b091-1250312caa11",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Export/StrausR3ExportComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Export/StrausR3ExportComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Export/StrausR3ExportComponent.cs",
     "oldGuid": "835f0b41-2003-42bd-aa27-75029965ce5b",
     "newGuid": "fa0981e2-710c-41ed-9a60-98bc102def94",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Loads/BeamDistributedLoadComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Loads/BeamDistributedLoadComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Loads/BeamDistributedLoadComponent.cs",
     "oldGuid": "3203a9e1-c15b-4761-a81d-682c8da941ce",
     "newGuid": "517beddc-0100-4a8f-ab0c-90e17fe2791f",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Loads/BeamDistributedMomentComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Loads/BeamDistributedMomentComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Loads/BeamDistributedMomentComponent.cs",
     "oldGuid": "89cb999d-9de0-4fd2-8173-c03d3106e629",
     "newGuid": "fee217c4-8b33-4c74-8f3a-743818d6c78c",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Loads/BeamGradientLoadComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Loads/BeamGradientLoadComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Loads/BeamGradientLoadComponent.cs",
     "oldGuid": "ded498a7-4f14-4b02-9576-86bf6966bd80",
     "newGuid": "461ba509-c137-468a-bb8b-5a5d3666039e",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Loads/BeamPointLoadComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Loads/BeamPointLoadComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Loads/BeamPointLoadComponent.cs",
     "oldGuid": "08795ed9-9536-4f38-bc7f-960a3bf30266",
     "newGuid": "6558c246-9759-4d6f-adcf-ae0979c1158e",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Loads/BeamPointMomentComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Loads/BeamPointMomentComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Loads/BeamPointMomentComponent.cs",
     "oldGuid": "a5aacb7a-9b2a-429f-8e27-09e2222369bf",
     "newGuid": "2ec48e35-f612-4d14-895a-0179c6a7a8c0",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Loads/BeamPreLoadComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Loads/BeamPreLoadComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Loads/BeamPreLoadComponent.cs",
     "oldGuid": "72c9f8a9-8c17-43d7-86c4-088c0aeaac56",
     "newGuid": "584fa650-0996-4bf8-9825-aa8639444507",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Loads/NodeDisplacementLoadComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Loads/NodeDisplacementLoadComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Loads/NodeDisplacementLoadComponent.cs",
     "oldGuid": "876451fc-9f06-44ca-924f-9d2358360741",
     "newGuid": "ee96d3ac-9028-4ddd-a4a9-3e49333fc283",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Loads/NodeLoadComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Loads/NodeLoadComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Loads/NodeLoadComponent.cs",
     "oldGuid": "554499f4-e448-46a5-a457-40e308be5c87",
     "newGuid": "d30a7ae4-15af-49e2-a12c-a9efebc96d03",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Loads/NodeMomentComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Loads/NodeMomentComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Loads/NodeMomentComponent.cs",
     "oldGuid": "42e3a363-76f6-403d-92fc-3bb4c557a303",
     "newGuid": "fcbadad8-e4a9-447a-bc4c-c4cd6fce479a",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Loads/NodeTemperatureComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Loads/NodeTemperatureComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Loads/NodeTemperatureComponent.cs",
     "oldGuid": "c01c45fd-83ca-4f86-a0a1-1ecffe7512c5",
     "newGuid": "65b74dea-1358-43a8-9fe4-571ab8ac7f11",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Loads/PlateLoadUniformToFrameComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Loads/PlateLoadUniformToFrameComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Loads/PlateLoadUniformToFrameComponent.cs",
     "oldGuid": "5be19b7b-d92f-41f2-a189-1ab4fdaa21e4",
     "newGuid": "1e0c72f1-f48d-4eec-bdd5-c26b17dca202",
     "status": "removed"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Loads/PlateNSMassComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Loads/PlateNSMassComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Loads/PlateNSMassComponent.cs",
     "oldGuid": "2888ea62-ab8a-40e2-97bf-9427947cb208",
     "newGuid": "ca774fef-a0a3-4df4-97be-51ba543c6d05",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Loads/PlatePressureComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Loads/PlatePressureComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Loads/PlatePressureComponent.cs",
     "oldGuid": "95bf1a7e-b6de-4322-ba8b-6ec4bb3bee8e",
     "newGuid": "8e75d7d6-5661-4311-8919-2d64561bc085",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Loads/PlatePreStressComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Loads/PlatePreStressComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Loads/PlatePreStressComponent.cs",
     "oldGuid": "5c58e992-3792-45ec-ad19-d3474bf4f31f",
     "newGuid": "9d0160c6-e491-4a12-a289-a4b3c4cc6811",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Materials/MaterialAluminiumComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Materials/MaterialAluminiumComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Materials/MaterialAluminiumComponent.cs",
     "oldGuid": "ababcb15-84b5-499d-9803-871ee43d0bd7",
     "newGuid": "876df96b-8734-4247-be25-e84a8f302d68",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Materials/MaterialConcreteComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Materials/MaterialConcreteComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Materials/MaterialConcreteComponent.cs",
     "oldGuid": "9d2f4b12-e3f3-4cbd-af84-1b67fb3157b9",
     "newGuid": "c1dfa83d-e67e-4957-a375-da114a455158",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Materials/MaterialCustomComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Materials/MaterialCustomComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Materials/MaterialCustomComponent.cs",
     "oldGuid": "262c4c26-81bf-4cfc-9ff9-28cb6db0c7bd",
     "newGuid": "9404d0c7-cca7-4f29-b7f5-baf001386675",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Materials/MaterialSteelComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Materials/MaterialSteelComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Materials/MaterialSteelComponent.cs",
     "oldGuid": "f8fb5764-1e8a-420c-a530-f34727c05fe7",
     "newGuid": "5b123f35-7685-415b-9028-5b0fd4d67626",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Materials/MaterialTableComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Materials/MaterialTableComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Materials/MaterialTableComponent.cs",
     "oldGuid": "81d52ce7-7934-4a6b-abc5-ddcff5f165c0",
     "newGuid": "a0d75180-0aa3-445c-8faf-f0a00974f3d0",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/MeCheck2/BeamPropertyCompositeComponent.cs",
-    "target": "src/BridGHe.Grasshopper/Components/MeCheck2/BeamPropertyCompositeComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/BridgeChecks/BeamPropertyCompositeComponent.cs",
+    "target": "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamPropertyCompositeComponent.cs",
     "oldGuid": "69b80000-39dc-42fa-bee1-844ad1126a09",
     "newGuid": "f87c7066-e509-4646-9ef5-79691675cbf4",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/MeCheck2/BeamSectionConcreteSlabComponent.cs",
-    "target": "src/BridGHe.Grasshopper/Components/MeCheck2/BeamSectionConcreteSlabComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionConcreteSlabComponent.cs",
+    "target": "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionConcreteSlabComponent.cs",
     "oldGuid": "43d7f68c-940a-4d14-9681-e179aa682e8f",
     "newGuid": "1a539226-24ae-4d3f-8075-4f54cd1b9f68",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/MeCheck2/BeamSectionHPropertyComponent.cs",
-    "target": "src/BridGHe.Grasshopper/Components/MeCheck2/BeamSectionHPropertyComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionHPropertyComponent.cs",
+    "target": "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionHPropertyComponent.cs",
     "oldGuid": "fe7b0b8d-e374-47f1-a379-2bdb3f5ad6a4",
     "newGuid": "3ee2c935-dd7b-44b8-9bc2-c705ecd78052",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/MeCheck2/BuildMeCheckModel.cs",
-    "target": "src/BridGHe.Grasshopper/Components/MeCheck2/BuildMeCheckModel.cs",
+    "source": "BridGHe.Grasshopper/Components/BridgeChecks/BuildBridgeModel.cs",
+    "target": "src/BridGHe.Grasshopper/Components/BridgeChecks/BuildBridgeModel.cs",
     "oldGuid": "7395c22b-8c32-4f0a-b761-6387990c895b",
     "newGuid": "16695837-3f63-4305-a1ff-4491826dc3fe",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/MeCheck2/CompositeBeamComponent.cs",
-    "target": "src/BridGHe.Grasshopper/Components/MeCheck2/CompositeBeamComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/BridgeChecks/CompositeBeamComponent.cs",
+    "target": "src/BridGHe.Grasshopper/Components/BridgeChecks/CompositeBeamComponent.cs",
     "oldGuid": "b217224d-8ea0-48e4-83f4-02dea0cc41f1",
     "newGuid": "07260514-76e4-4a8d-8b1e-69288e348b6f",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/MeCheck2/CompositeBeamLinearTensionAnalysisComponent.cs",
-    "target": "src/BridGHe.Grasshopper/Components/MeCheck2/CompositeBeamLinearTensionAnalysisComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/BridgeChecks/CompositeBeamLinearTensionAnalysisComponent.cs",
+    "target": "src/BridGHe.Grasshopper/Components/BridgeChecks/CompositeBeamLinearTensionAnalysisComponent.cs",
     "oldGuid": "a4002ce1-c39c-4c2d-a75f-439e8699d9e1",
     "newGuid": "a487d0e7-bb07-4049-90a5-8cd2aa40b183",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/MeCheck2/CompositeBeamSelfTensionComponent.cs",
-    "target": "src/BridGHe.Grasshopper/Components/MeCheck2/CompositeBeamSelfTensionComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/BridgeChecks/CompositeBeamSelfTensionComponent.cs",
+    "target": "src/BridGHe.Grasshopper/Components/BridgeChecks/CompositeBeamSelfTensionComponent.cs",
     "oldGuid": "a25576bf-e159-401c-a355-b54060b57471",
     "newGuid": "e7cea623-0b51-485d-ab60-6ef6850945a6",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/MeCheck2/CompositeBeamSlabStrainComponent.cs",
-    "target": "src/BridGHe.Grasshopper/Components/MeCheck2/CompositeBeamSlabStrainComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/BridgeChecks/CompositeBeamSlabStrainComponent.cs",
+    "target": "src/BridGHe.Grasshopper/Components/BridgeChecks/CompositeBeamSlabStrainComponent.cs",
     "oldGuid": "400ef054-e6f8-4a1e-a6c8-8a85af822047",
     "newGuid": "adf0a668-9fee-4d5d-8665-57aa769319b0",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/MeCheck2/CompositeBeamTensionResultComponent.cs",
-    "target": "src/BridGHe.Grasshopper/Components/MeCheck2/CompositeBeamTensionResultComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/BridgeChecks/CompositeBeamTensionResultComponent.cs",
+    "target": "src/BridGHe.Grasshopper/Components/BridgeChecks/CompositeBeamTensionResultComponent.cs",
     "oldGuid": "d5038a4c-1473-4e4b-8a21-a9a2c433fe6b",
     "newGuid": "ac8892ff-18d2-4fe4-a8f5-d91053702b6d",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/MeCheck2/CompositeSectionComponent.cs",
-    "target": "src/BridGHe.Grasshopper/Components/MeCheck2/CompositeSectionComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/BridgeChecks/CompositeSectionComponent.cs",
+    "target": "src/BridGHe.Grasshopper/Components/BridgeChecks/CompositeSectionComponent.cs",
     "oldGuid": "9a283357-955f-438e-882f-4debe0979700",
     "newGuid": "ee8b7912-f07c-4a17-8a26-e75959ed080f",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/MeCheck2/CompositeSectionGeometricPropertyComponent.cs",
-    "target": "src/BridGHe.Grasshopper/Components/MeCheck2/CompositeSectionGeometricPropertyComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/BridgeChecks/CompositeSectionGeometricPropertyComponent.cs",
+    "target": "src/BridGHe.Grasshopper/Components/BridgeChecks/CompositeSectionGeometricPropertyComponent.cs",
     "oldGuid": "dac6c4b3-954b-468b-8b25-f89a87d8e7a9",
     "newGuid": "2515010a-be42-4530-aa44-5a21b0c0c8dc",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/MeCheck2/CreepAndShrinkageConcreteComponent.cs",
-    "target": "src/BridGHe.Grasshopper/Components/MeCheck2/CreepAndShrinkageConcreteComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/BridgeChecks/CreepAndShrinkageConcreteComponent.cs",
+    "target": "src/BridGHe.Grasshopper/Components/BridgeChecks/CreepAndShrinkageConcreteComponent.cs",
     "oldGuid": "83cbe8d4-b9b1-49c4-894c-4e54606a1356",
     "newGuid": "69fc44cb-48cd-4b15-af60-b025bd59bad5",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/MeCheck2/PrintCheckImageMeCheckForceComponent.cs",
-    "target": "src/BridGHe.Grasshopper/Components/MeCheck2/PrintCheckImageMeCheckForceComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/BridgeChecks/BridgeForcePlotComponent.cs",
+    "target": "src/BridGHe.Grasshopper/Components/BridgeChecks/BridgeForcePlotComponent.cs",
     "oldGuid": "3e421b4b-0e9b-4ac6-9cdc-6319dc18e632",
     "newGuid": "77e9f533-e4e8-41de-baaf-6bfece84def9",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/MeCheck2/PrintCheckImageMeCheckResultComponent.cs",
-    "target": "src/BridGHe.Grasshopper/Components/MeCheck2/PrintCheckImageMeCheckResultComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/BridgeChecks/BridgeResultPlotComponent.cs",
+    "target": "src/BridGHe.Grasshopper/Components/BridgeChecks/BridgeResultPlotComponent.cs",
     "oldGuid": "2a87525a-fce8-45ba-8a68-126dd59f644d",
     "newGuid": "8f53f404-9446-4b47-90e3-d514f9c547c9",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/MeCheck2/SuperElementCheckComponent.cs",
-    "target": "src/BridGHe.Grasshopper/Components/MeCheck2/SuperElementCheckComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckComponent.cs",
+    "target": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckComponent.cs",
     "oldGuid": "9dfff492-5eda-4a25-9047-ad8511017116",
     "newGuid": "94839122-32f0-4f3e-a30f-979a53c3eca8",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/MeCheck2/SuperElementFilterComponent.cs",
-    "target": "src/BridGHe.Grasshopper/Components/MeCheck2/SuperElementFilterComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/BridgeChecks/SuperElementFilterComponent.cs",
+    "target": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementFilterComponent.cs",
     "oldGuid": "c747298e-efce-4681-8c8d-c735546db2bc",
     "newGuid": "850d46e5-0410-408f-aef0-16a6a202e1a4",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Models/BeamComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Models/BeamComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Models/BeamComponent.cs",
     "oldGuid": "a5b774a8-51ec-4c79-bfe7-e19558f444a9",
     "newGuid": "ecb9c513-6bb3-46ac-9430-a79ba43b0451",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Models/BuildModelComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Models/BuildModelComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Models/BuildModelComponent.cs",
     "oldGuid": "c3c8837b-57fa-4fdc-8b99-849bfe468232",
     "newGuid": "d99dbb1b-13c4-4398-902e-ce66e5076ff4",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Models/DecomposeModelComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Models/DecomposeModelComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Models/DecomposeModelComponent.cs",
     "oldGuid": "700a15f9-cf8d-4062-9c99-32628b99cda8",
     "newGuid": "e39b6cad-cf34-4766-a8b5-fa3fe2effeb9",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Models/MergeModelComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Models/MergeModelComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Models/MergeModelComponent.cs",
     "oldGuid": "965a6404-f62f-4fdc-b139-8f7b6a159b97",
     "newGuid": "e6896f43-2dff-40a5-b679-9ac79a30cbe6",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Models/NodeComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Models/NodeComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Models/NodeComponent.cs",
     "oldGuid": "768f9c12-8a9f-4525-8d3a-f33a77793444",
     "newGuid": "9abf8116-70e5-4061-b0f6-b1934a306f07",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Models/PlateComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Models/PlateComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Models/PlateComponent.cs",
     "oldGuid": "2e9fcc4d-5f9b-403c-be31-40804205df1a",
     "newGuid": "886746b3-f39f-4efb-95d8-a7101caa7bf2",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Parameters/BeamParam.cs",
+    "source": "BridGHe.Grasshopper/Components/Parameters/BeamParam.cs",
     "target": "src/BridGHe.Grasshopper/Components/Parameters/BeamParam.cs",
     "oldGuid": "1dc4aa30-82a1-40e2-b90c-ca9a72090567",
     "newGuid": "dd6f2aa8-5224-45e3-9616-f9b8e0f0274b",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Parameters/BeamSectionParam.cs",
+    "source": "BridGHe.Grasshopper/Components/Parameters/BeamSectionParam.cs",
     "target": "src/BridGHe.Grasshopper/Components/Parameters/BeamSectionParam.cs",
     "oldGuid": "e0314b82-09fb-4765-ae3d-625c37217b39",
     "newGuid": "0f79b0ba-a920-405a-9cb4-309c1160633a",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Parameters/CoordinateSystemParam.cs",
+    "source": "BridGHe.Grasshopper/Components/Parameters/CoordinateSystemParam.cs",
     "target": "src/BridGHe.Grasshopper/Components/Parameters/CoordinateSystemParam.cs",
     "oldGuid": "6a7ad660-29b0-4cbb-af29-7f5ce72f1cf3",
     "newGuid": "35436342-56df-40a6-ad21-0f02449ecb3e",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Parameters/GroupParam.cs",
+    "source": "BridGHe.Grasshopper/Components/Parameters/GroupParam.cs",
     "target": "src/BridGHe.Grasshopper/Components/Parameters/GroupParam.cs",
     "oldGuid": "c7fb652f-75f1-40d5-8a43-6fc160470f3c",
     "newGuid": "8e3d57e8-79d2-4f5f-9153-bd7e25a9f39c",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Parameters/LoadCombinationsParam.cs",
+    "source": "BridGHe.Grasshopper/Components/Parameters/LoadCombinationsParam.cs",
     "target": "src/BridGHe.Grasshopper/Components/Parameters/LoadCombinationsParam.cs",
     "oldGuid": "0be68174-01fc-4ea5-b9d9-7839a7f2c64b",
     "newGuid": "9bfe3964-9ec3-4a9f-a757-487de39c661d",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Parameters/MaterialParam.cs",
+    "source": "BridGHe.Grasshopper/Components/Parameters/MaterialParam.cs",
     "target": "src/BridGHe.Grasshopper/Components/Parameters/MaterialParam.cs",
     "oldGuid": "5b81cf74-edf8-483e-a4dc-cf5fa5dfd3e8",
     "newGuid": "b2a70c33-31f5-463e-87a5-968c112dd4bb",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Parameters/NodeParam.cs",
+    "source": "BridGHe.Grasshopper/Components/Parameters/NodeParam.cs",
     "target": "src/BridGHe.Grasshopper/Components/Parameters/NodeParam.cs",
     "oldGuid": "85194998-f6f8-430b-a5bf-4e92a12cb4d4",
     "newGuid": "cf0fe79e-b493-49ed-b094-dadab15e1eae",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Parameters/PlateParam.cs",
+    "source": "BridGHe.Grasshopper/Components/Parameters/PlateParam.cs",
     "target": "src/BridGHe.Grasshopper/Components/Parameters/PlateParam.cs",
     "oldGuid": "dd0920b4-14b2-4a91-ba3f-46a91ec067b6",
     "newGuid": "5483bff2-64ab-40d7-a5de-1af1e6f9bd12",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Parameters/VersionParam.cs",
+    "source": "BridGHe.Grasshopper/Components/Parameters/VersionParam.cs",
     "target": "src/BridGHe.Grasshopper/Components/Parameters/VersionParam.cs",
     "oldGuid": "0b4e41a8-8f61-44ec-98c9-e834c77335cd",
     "newGuid": "98efbea2-2189-43fa-8b2e-a9fb6736e306",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Results/BeamResultsComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Results/BeamResultsComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Results/BeamResultsComponent.cs",
     "oldGuid": "ee27d853-f6a8-41e1-8e81-83d5b49ad1a2",
     "newGuid": "3a6035ca-82e4-42c6-8fe2-9e6cb39270e4",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Results/NodeResultsComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Results/NodeResultsComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Results/NodeResultsComponent.cs",
     "oldGuid": "9bfb71bd-14b5-453e-9fc4-6e34b249920b",
     "newGuid": "b34af03b-9b25-4e88-8e5c-a90e8a52f830",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Results/PlateResultsComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Results/PlateResultsComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Results/PlateResultsComponent.cs",
     "oldGuid": "30f8eb49-b4d2-4bd1-b667-7d26d45d2daf",
     "newGuid": "12f10928-8575-4e6e-a16a-e299fd7f5b39",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Sections/BeamSectionAngleComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Sections/BeamSectionAngleComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Sections/BeamSectionAngleComponent.cs",
     "oldGuid": "c991750b-19ce-4ba8-b94d-ef31c2de20b7",
     "newGuid": "733f76d9-09fa-470d-8a0b-0a6ebccfea9a",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Sections/BeamSectionBrepComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Sections/BeamSectionBrepComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Sections/BeamSectionBrepComponent.cs",
     "oldGuid": "348fb5b1-671c-4fd5-b409-8c241761dbf1",
     "newGuid": "b64697c6-7726-4626-9a05-43652bd8f26f",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Sections/BeamSectionCComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Sections/BeamSectionCComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Sections/BeamSectionCComponent.cs",
     "oldGuid": "19a82708-2ee3-4e75-aa88-436e47cbd1be",
     "newGuid": "052db5a7-11f9-4fec-b230-3e6a25f30fa8",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Sections/BeamSectionGenericComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Sections/BeamSectionGenericComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Sections/BeamSectionGenericComponent.cs",
     "oldGuid": "95a189e5-a04c-487f-a704-a389d3232603",
     "newGuid": "a7d89862-b835-4023-af6f-1fed05965136",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Sections/BeamSectionHollowCircleComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Sections/BeamSectionHollowCircleComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Sections/BeamSectionHollowCircleComponent.cs",
     "oldGuid": "b4e99212-ddb6-4e61-88df-071156cb83b6",
     "newGuid": "cd443ccf-2cff-4255-9787-54a0693f0805",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Sections/BeamSectionHollowRectComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Sections/BeamSectionHollowRectComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Sections/BeamSectionHollowRectComponent.cs",
     "oldGuid": "80ed3751-0e95-4f75-8a66-b27c94d781f4",
     "newGuid": "327c1358-f0a6-4ebc-b500-b7e989b3e1cc",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Sections/BeamSectionIComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Sections/BeamSectionIComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Sections/BeamSectionIComponent.cs",
     "oldGuid": "625ad93f-4c24-4b5b-85e5-746b83c8e9bd",
     "newGuid": "7a5fa90e-77d2-4eb7-904e-320f03fd790c",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Sections/BeamSectionSolidCircleComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Sections/BeamSectionSolidCircleComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Sections/BeamSectionSolidCircleComponent.cs",
     "oldGuid": "a5965076-70d7-4ce1-bbb6-966dadf0d9b6",
     "newGuid": "115f748b-b187-41e0-b59e-b4a2ac0b3716",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Sections/BeamSectionSolidRectComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Sections/BeamSectionSolidRectComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Sections/BeamSectionSolidRectComponent.cs",
     "oldGuid": "c68750fa-b296-4dab-ab51-8e9ff9ea2b27",
     "newGuid": "3d33df9e-3af5-498a-a95f-ebe0d8ecf940",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Sections/BeamSectionTComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Sections/BeamSectionTComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Sections/BeamSectionTComponent.cs",
     "oldGuid": "2a2a2c2f-c079-4ad1-b298-5ba8a53e0003",
     "newGuid": "55b57ea9-40e9-485d-bc51-54eb38275147",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Sections/SectionGeometricComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Sections/SectionGeometricComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Sections/SectionGeometricComponent.cs",
     "oldGuid": "22a94621-76c8-4e04-a6aa-f454e9aec86e",
     "newGuid": "8f7e3520-a83a-4b14-ac34-6b5a48ccaf84",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Sections/SectionGeometricPropertyComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Sections/SectionGeometricPropertyComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Sections/SectionGeometricPropertyComponent.cs",
     "oldGuid": "13915ea9-7393-4a2e-9724-90c0df6530e2",
     "newGuid": "b6603b65-7e0b-4662-919d-213d12874c4a",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Tools/AlignBeamAxesComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Tools/AlignBeamAxesComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Tools/AlignBeamAxesComponent.cs",
     "oldGuid": "370c7ccf-3f3f-44de-ba36-49860e59b12f",
     "newGuid": "28bac788-3e40-4658-b60d-f2be5183eb23",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Tools/AlignPlateAxesComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Tools/AlignPlateAxesComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Tools/AlignPlateAxesComponent.cs",
     "oldGuid": "23c8e24f-916f-494f-a7d6-9fc50717897c",
     "newGuid": "376c9d2a-b211-458a-9592-3669a14192ed",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Tools/BeamFilterComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Tools/BeamFilterComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Tools/BeamFilterComponent.cs",
     "oldGuid": "f19ab6c2-3624-48ad-9d49-a1e74dae489b",
     "newGuid": "7bdf1a95-62ad-45a7-8768-e1fd7fdc69a8",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Tools/BeamOverrideComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Tools/BeamOverrideComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Tools/BeamOverrideComponent.cs",
     "oldGuid": "6011223b-3830-4b73-aa23-593bd04ac1e8",
     "newGuid": "6962f28d-7b4a-4e37-bf9b-ea7f1f197e04",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Tools/ElementFilterComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Tools/ElementFilterComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Tools/ElementFilterComponent.cs",
     "oldGuid": "43fba7bf-8d62-41c7-97df-17b2f530752b",
     "newGuid": "c52e4345-36fa-4944-9ee5-99ed74034221",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Tools/MergeGeometryComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Tools/MergeGeometryComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Tools/MergeGeometryComponent.cs",
     "oldGuid": "6d0755f8-62b5-41fa-b461-42c8a022ff06",
     "newGuid": "8e321fc4-9fa5-4583-b80c-7bbcf9b3ad3c",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Tools/NodeFilterComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Tools/NodeFilterComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Tools/NodeFilterComponent.cs",
     "oldGuid": "ee66aa2b-1b65-44ee-a638-248871d92b64",
     "newGuid": "35d4ffef-5073-4ead-a931-83a0febedb69",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Tools/PlateFilterComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Tools/PlateFilterComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Tools/PlateFilterComponent.cs",
     "oldGuid": "7bcdad25-17a2-4303-9ba6-3a5edc029a94",
     "newGuid": "65613b73-39f2-4a8f-8212-96c44a775516",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Tools/RemeshComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Tools/RemeshComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Tools/RemeshComponent.cs",
     "oldGuid": "4c4d90ee-ff74-4cf0-8fc7-b3a73e06512a",
     "newGuid": "c338c62b-28d4-473f-94cc-e9c1c8c4cda7",
     "status": "retained"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Tools/SurfaceMeshComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Tools/SurfaceMeshComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Tools/SurfaceMeshComponent.cs",
     "oldGuid": "071bf3ed-b38f-4bfc-ae79-062ae6381bd9",
     "newGuid": "53331644-2763-4696-a367-2111a57c8b15",
     "status": "removed"
   },
   {
-    "source": "FeMM.Grasshopper/Components/Tools/SurfaceSplitterComponent.cs",
+    "source": "BridGHe.Grasshopper/Components/Tools/SurfaceSplitterComponent.cs",
     "target": "src/BridGHe.Grasshopper/Components/Tools/SurfaceSplitterComponent.cs",
     "oldGuid": "0c1c9946-28d3-4b06-bfb3-148e57349469",
     "newGuid": "97bab293-1482-420d-913e-fdf7b9204cae",

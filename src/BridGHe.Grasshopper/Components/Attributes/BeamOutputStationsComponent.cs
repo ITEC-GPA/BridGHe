@@ -16,7 +16,7 @@ namespace BridGHe.Grasshopper.Components.Attributes
         /// Initializes a new instance of the BeamReleasesComponent class.
         /// </summary>
         public BeamOutputStationsComponent()
-          : base("Beam Output Stations", "BOS", "Beam Output Stations", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
+          : base("Beam Output Stations", "BOS", "Beam Output Stations", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
         {
         }
 

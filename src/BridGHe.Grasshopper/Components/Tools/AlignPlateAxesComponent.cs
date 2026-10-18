@@ -22,7 +22,7 @@ namespace BridGHe.Grasshopper.Components
         /// Initializes a new instance of the BeamPointLoadComponent class.
         /// </summary>
         public AlignPlateAxesComponent()
-          : base("Align plate axes", "APA", "Align the local plate axes with a direction", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_TOOLS)
+          : base("Align plate axes", "APA", "Align the local plate axes with a direction", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_TOOLS)
         {
         }
 

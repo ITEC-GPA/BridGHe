@@ -15,7 +15,7 @@ using GPC.Model.Standards;
 using System;
 using System.Linq;
 
-namespace BridGHe.Grasshopper.Components.MeCheck2
+namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
     public class CompositeBeamSelfTensionComponent : GH_Component
     {
@@ -23,7 +23,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// Initializes a new instance of the MeshRemap class.
         /// </summary>
         public CompositeBeamSelfTensionComponent()
-          : base("Composite Section Self Tension", "CSST", "Composite Section Linear Tension Analysis", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_MECHECK2)
+          : base("Composite Section Self Tension", "CSST", "Composite Section Linear Tension Analysis", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
         {
         }
 

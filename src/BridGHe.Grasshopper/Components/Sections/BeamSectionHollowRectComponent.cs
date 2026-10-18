@@ -12,7 +12,7 @@ namespace BridGHe.Grasshopper.Components.Sections
         /// Initializes a new instance of the BeamSectionHollowRectComponent class.
         /// </summary>
         public BeamSectionHollowRectComponent()
-            : base("Hollow Rect", "HR", "Hollow rect beam section", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_SECTIONS)
+            : base("Hollow Rect", "HR", "Hollow rect beam section", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_SECTIONS)
         {
         }
 

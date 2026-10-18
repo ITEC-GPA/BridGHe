@@ -3448,25 +3448,25 @@
     ],
     "outputs": [
       {
-        "name": "FeMM Nodes",
+        "name": "BridGHe Nodes",
         "nickname": "FN",
-        "description": "FeMM Nodes",
+        "description": "BridGHe Nodes",
         "access": "list",
         "optional": false,
         "type": "Generic Data"
       },
       {
-        "name": "FeMM Beams",
+        "name": "BridGHe Beams",
         "nickname": "FB",
-        "description": "FeMM Beams",
+        "description": "BridGHe Beams",
         "access": "list",
         "optional": false,
         "type": "Generic Data"
       },
       {
-        "name": "FeMM Plates",
+        "name": "BridGHe Plates",
         "nickname": "FP",
-        "description": "FeMM Plates",
+        "description": "BridGHe Plates",
         "access": "list",
         "optional": false,
         "type": "Generic Data"
@@ -3611,7 +3611,7 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.MeCheck2.BeamPropertyCompositeComponent",
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamPropertyCompositeComponent",
     "guid": "f87c7066-e509-4646-9ef5-79691675cbf4",
     "kind": "component",
     "name": "Composite Beam Property",
@@ -3710,7 +3710,7 @@
       {
         "name": "Composite Section",
         "nickname": "CS",
-        "description": "The composite section for MeCheck2.0 analysis",
+        "description": "The composite section for BridgeChecks.0 analysis",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -3742,7 +3742,7 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.MeCheck2.BeamSectionConcreteSlabComponent",
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionConcreteSlabComponent",
     "guid": "1a539226-24ae-4d3f-8075-4f54cd1b9f68",
     "kind": "component",
     "name": "Concrete Slab Section",
@@ -3793,7 +3793,7 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.MeCheck2.BeamSectionHPropertyComponent",
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionHPropertyComponent",
     "guid": "3ee2c935-dd7b-44b8-9bc2-c705ecd78052",
     "kind": "component",
     "name": "Section H Beam Property",
@@ -3940,14 +3940,14 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.MeCheck2.BuildMeCheckModel",
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BuildBridgeModel",
     "guid": "16695837-3f63-4305-a1ff-4491826dc3fe",
     "kind": "component",
-    "name": "Build MeCheck Model",
+    "name": "Build BridGHe Model",
     "nickname": "BMCM",
     "inputs": [
       {
-        "name": "FeMM Models",
+        "name": "BridGHe Models",
         "nickname": "FM",
         "description": "The FEM models (more than one for stages)",
         "access": "list",
@@ -4015,7 +4015,7 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.MeCheck2.CompositeBeamComponent",
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamComponent",
     "guid": "07260514-76e4-4a8d-8b1e-69288e348b6f",
     "kind": "component",
     "name": "Composite beam",
@@ -4066,7 +4066,7 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.MeCheck2.CompositeBeamLinearTensionAnalysisComponent_OBSOLETE",
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamLinearTensionAnalysisComponent_OBSOLETE",
     "guid": "a487d0e7-bb07-4049-90a5-8cd2aa40b183",
     "kind": "component",
     "name": "Composite Section Linear Tension Analysis",
@@ -4197,7 +4197,7 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.MeCheck2.CompositeBeamSelfTensionComponent",
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamSelfTensionComponent",
     "guid": "e7cea623-0b51-485d-ab60-6ef6850945a6",
     "kind": "component",
     "name": "Composite Section Self Tension",
@@ -4240,7 +4240,7 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.MeCheck2.CompositeBeamSlabStrainComponent",
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamSlabStrainComponent",
     "guid": "adf0a668-9fee-4d5d-8665-57aa769319b0",
     "kind": "component",
     "name": "Composite Beam Strain",
@@ -4283,7 +4283,7 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.MeCheck2.CompositeBeamTensionResultComponent",
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamTensionResultComponent",
     "guid": "ac8892ff-18d2-4fe4-a8f5-d91053702b6d",
     "kind": "component",
     "name": "Composite Section Linear Tension Results",
@@ -4414,7 +4414,7 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.MeCheck2.CompositeSectionComponent_OBSOLETE",
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeSectionComponent_OBSOLETE",
     "guid": "ee8b7912-f07c-4a17-8a26-e75959ed080f",
     "kind": "component",
     "name": "Composite Beam Property",
@@ -4489,7 +4489,7 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.MeCheck2.CompositeSectionGeometricPropertyComponent",
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeSectionGeometricPropertyComponent",
     "guid": "2515010a-be42-4530-aa44-5a21b0c0c8dc",
     "kind": "component",
     "name": "Composite Geometric Property",
@@ -4636,7 +4636,7 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.MeCheck2.CreepAndShrinkageConcreteComponent",
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CreepAndShrinkageConcreteComponent",
     "guid": "69fc44cb-48cd-4b15-af60-b025bd59bad5",
     "kind": "component",
     "name": "Creep And Shrinkage Concrete",
@@ -4743,14 +4743,14 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.MeCheck2.PrintCheckImageMeCheckForceComponent",
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeForcePlotComponent",
     "guid": "77e9f533-e4e8-41de-baaf-6bfece84def9",
     "kind": "component",
-    "name": "Print MeCheck Forces",
+    "name": "Print BridGHe Forces",
     "nickname": "PI",
     "inputs": [
       {
-        "name": "FeMM Model",
+        "name": "BridGHe Model",
         "nickname": "FM",
         "description": "The FEM models (more than one for stages)",
         "access": "item",
@@ -4825,14 +4825,14 @@
     "outputs": []
   },
   {
-    "type": "BridGHe.Grasshopper.Components.MeCheck2.PrintCheckImageMeCheckResultComponent",
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeResultPlotComponent",
     "guid": "8f53f404-9446-4b47-90e3-d514f9c547c9",
     "kind": "component",
-    "name": "Print MeCheck Results",
+    "name": "Print BridGHe Results",
     "nickname": "PI",
     "inputs": [
       {
-        "name": "FeMM Model",
+        "name": "BridGHe Model",
         "nickname": "FM",
         "description": "The FEM models (more than one for stages)",
         "access": "item",
@@ -4850,7 +4850,7 @@
       {
         "name": "Results",
         "nickname": "R",
-        "description": "The MeCheck Results",
+        "description": "The BridGHe Results",
         "access": "tree",
         "optional": false,
         "type": "Generic Data"
@@ -4915,16 +4915,16 @@
     "outputs": []
   },
   {
-    "type": "BridGHe.Grasshopper.Components.MeCheck2.SuperElementCheckComponent",
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.SuperElementCheckComponent",
     "guid": "94839122-32f0-4f3e-a30f-979a53c3eca8",
     "kind": "component",
     "name": "Super Element Check",
     "nickname": "SEC",
     "inputs": [
       {
-        "name": "FeMM Model",
+        "name": "BridGHe Model",
         "nickname": "FM",
-        "description": "The FeMM model",
+        "description": "The BridGHe model",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -4998,14 +4998,14 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.MeCheck2.SuperElementFilterComponent",
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.SuperElementFilterComponent",
     "guid": "850d46e5-0410-408f-aef0-16a6a202e1a4",
     "kind": "component",
     "name": "Super Element Filter",
     "nickname": "SEF",
     "inputs": [
       {
-        "name": "FeMM Model",
+        "name": "BridGHe Model",
         "nickname": "FM",
         "description": "The FEM model",
         "access": "item",
@@ -8484,7 +8484,7 @@
       {
         "name": "Section result",
         "nickname": "R",
-        "description": "BridgeStressResult from MeCheck2; the selected stage is retained",
+        "description": "BridgeStressResult from BridgeChecks; the selected stage is retained",
         "access": "item",
         "optional": false,
         "type": "Generic Data"

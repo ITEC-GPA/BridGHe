@@ -1,23 +1,23 @@
 # BridGHe
 
-Plugin Grasshopper per Rhino 8: modello parametrico → Straus7 R3 → risultati negli elementi → MeCheck2 con librerie gPC.
+Plugin Grasshopper per Rhino 8: modello parametrico → Straus7 R3 → risultati negli elementi → BridgeChecks con librerie gPC.
 
 **Esempi 12–15:** [quattro ponti continui e curvi](examples/bridge-suite/README.md), ciascuno con tre contributi meccanici e ritiro longitudinale primario/secondario. Incluse le definizioni dei nuovi componenti gPC per pioli, irrigiditori intermedi e d'appoggio, con controlli di dettaglio nei casi supportati. Le H curve richiedono ancora un verificatore torsionale dedicato.
 
-**Nuovo esempio completo:** [ponte misto a graticcio](examples/bridge-grillage/README.md), luce 30 m, quattro travi, soletta, tre rigidezze, veicolo mobile e cinque contributi MeCheck2. Definizione GHX costruita con componenti e risolta realmente: **357 controlli superati**, 240 sezioni elaborate; incluse cinque fasi native di getto separate. [Tavole PDF](examples/bridge-grillage/ponte-graticcio.pdf). La verifica torsionale del traffico eccentrico resta da implementare.
+**Nuovo esempio completo:** [ponte misto a graticcio](examples/bridge-grillage/README.md), luce 30 m, quattro travi, soletta, tre rigidezze, veicolo mobile e cinque contributi BridgeChecks. Definizione GHX costruita con componenti e risolta realmente: **357 controlli superati**, 240 sezioni elaborate; incluse cinque fasi native di getto separate. [Tavole PDF](examples/bridge-grillage/ponte-graticcio.pdf). La verifica torsionale del traffico eccentrico resta da implementare.
 
-La versione 0.1.0 è stata collaudata con Rhino 8 e la licenza API Straus7 R3: **10 esempi numerici**, inclusi **5 di costruzione per fasi**, e **21 famiglie di sezioni parametriche**. I dieci file Grasshopper sono stati salvati, riaperti e risolti tramite i componenti reali. Un confronto aggiuntivo verifica cinque contributi di fase MeCheck2, compresi ritiri imposti. Copertura e limiti sono in [VERIFICHE](docs/VERIFICHE.md).
+La versione 0.1.0 è stata collaudata con Rhino 8 e la licenza API Straus7 R3: **10 esempi numerici**, inclusi **5 di costruzione per fasi**, e **21 famiglie di sezioni parametriche**. I dieci file Grasshopper sono stati salvati, riaperti e risolti tramite i componenti reali. Un confronto aggiuntivo verifica cinque contributi di fase BridgeChecks, compresi ritiri imposti. Copertura e limiti sono in [VERIFICHE](docs/VERIFICHE.md).
 
 ## Contenuto
 
-- Tutti i **16 componenti MeCheck2**, con porte, ordine, accessi e valori predefiniti mantenuti.
-- Componenti FeMM conservati per materiali, sezioni, elementi, attributi, carichi, combinazioni, modello, risultati ed esportazione R3.
+- Tutti i **16 componenti BridgeChecks**, con porte, ordine, accessi e valori predefiniti mantenuti.
+- Componenti BridGHe conservati per materiali, sezioni, elementi, attributi, carichi, combinazioni, modello, risultati ed esportazione R3.
 - **23 nuovi componenti di sezione Straus**: 15 forme standard, 6 forme BGL parametriche, BXS e librerie BSL/BGL. Restano le sezioni generiche e da geometria già presenti nella base.
 - **10 componenti per carichi mobili**, dall'oggetto di carico al template, percorso, associazione al modello e analisi dei casi statici generati.
 - GUID nuovi per plugin e tutti i componenti/parametri; nessuna dipendenza da SAP, ETABS, form finding o plugin R2.
 - Icone originali per il plugin, tutti i componenti e i parametri, con sorgenti SVG e PNG incorporati.
 
-Le diciture storiche di alcune porte, comprese quelle contenenti “FeMM”, sono intenzionalmente conservate per rispettare il contratto richiesto. I vecchi file Grasshopper non vengono riconnessi automaticamente: i GUID sono nuovi.
+Le diciture storiche di alcune porte, comprese quelle contenenti “BridGHe”, sono intenzionalmente conservate per rispettare il contratto richiesto. I vecchi file Grasshopper non vengono riconnessi automaticamente: i GUID sono nuovi.
 
 ## Aprire e compilare
 

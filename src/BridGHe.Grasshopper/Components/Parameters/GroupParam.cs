@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
         private string _separator;
 
         public GroupParam()
-            : base("Group", "G", "Contains a collection of groups", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
+            : base("Group", "G", "Contains a collection of groups", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
         {
             _separator = "::";
         }

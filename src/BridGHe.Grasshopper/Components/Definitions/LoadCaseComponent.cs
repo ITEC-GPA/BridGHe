@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components.Definitions
         /// Initializes a new instance of the LoadCaseComponent class.
         /// </summary>
         public LoadCaseComponent()
-          : base("Load Case", "LC", "A load case definition", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_DEFINITIONS)
+          : base("Load Case", "LC", "A load case definition", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_DEFINITIONS)
         {
         }
 

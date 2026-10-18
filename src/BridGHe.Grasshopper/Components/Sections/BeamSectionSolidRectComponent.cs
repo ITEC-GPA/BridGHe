@@ -12,7 +12,7 @@ namespace BridGHe.Grasshopper.Components.Sections
         /// Initializes a new instance of the BeamSectionSolidRectComponent class.
         /// </summary>
         public BeamSectionSolidRectComponent()
-          : base("Solid Rect", "SR", "Defines a solid rect beam section", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_SECTIONS)
+          : base("Solid Rect", "SR", "Defines a solid rect beam section", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_SECTIONS)
         {
         }
 

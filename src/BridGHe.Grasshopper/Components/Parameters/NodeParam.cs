@@ -16,7 +16,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
     public class NodeParam : GH_PersistentParam<GH_Node>
     {
         public NodeParam()
-            : base("Node", "N", "Contains a collection of nodess", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
+            : base("Node", "N", "Contains a collection of nodess", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
         {
         }
 

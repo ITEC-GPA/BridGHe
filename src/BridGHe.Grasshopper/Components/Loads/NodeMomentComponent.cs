@@ -14,7 +14,7 @@ namespace BridGHe.Grasshopper.Components.Loads
         /// Initializes a new instance of the NodeMomentComponent class.
         /// </summary>
         public NodeMomentComponent()
-          : base("Node Moment", "NM", "Defines a node moment", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_LOADS)
+          : base("Node Moment", "NM", "Defines a node moment", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_LOADS)
         {
         }
 

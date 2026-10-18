@@ -14,7 +14,7 @@ namespace BridGHe.Grasshopper.Components.Sections
         /// Initializes a new instance of the BeamSectionAngleComponent class.
         /// </summary>
         public BeamSectionAngleComponent()
-          : base("Angle Section", "A", "Defines an Angle section", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_SECTIONS)
+          : base("Angle Section", "A", "Defines an Angle section", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_SECTIONS)
         {
         }
 

@@ -13,7 +13,7 @@ namespace BridGHe.Grasshopper.Components.Models
         /// Initializes a new instance of the BeamComponent class.
         /// </summary>
         public BeamComponent()
-          : base("Beam", "BM", "Define a Beam", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_MODEL)
+          : base("Beam", "BM", "Define a Beam", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_MODEL)
         {
         }
 

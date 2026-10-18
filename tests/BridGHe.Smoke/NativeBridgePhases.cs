@@ -12,7 +12,7 @@ using GPC.Model.Sections;
 using GPC.Model.Standards;
 using Rhino.Geometry;
 
-/// <summary>Native end moments through the MeCheck2 adapter, checked against independent section integrals.</summary>
+/// <summary>Native end moments through the BridgeChecks adapter, checked against independent section integrals.</summary>
 internal static class NativeBridgePhases
 {
     internal static int Run()

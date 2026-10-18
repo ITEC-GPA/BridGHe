@@ -11,7 +11,7 @@ namespace BridGHe.Grasshopper.Components.Sections
         /// Initializes a new instance of the BeamSectionHollowCircleComponent class.
         /// </summary>
         public BeamSectionHollowCircleComponent()
-          : base("Hollow Circle", "HC", "Hollow circle beam section", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_SECTIONS)
+          : base("Hollow Circle", "HC", "Hollow circle beam section", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_SECTIONS)
         {
         }
 

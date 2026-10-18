@@ -5,20 +5,20 @@
 | Commit | Metodo | Correzione |
 |---|---|---|
 | `0c96b97` | `BridgeCheckAdapter.Phase` | Rifiuto dei dati non finiti; tolleranze dimensionali di 10⁻⁶ N e 10⁻³ Nmm sulle componenti fuori piano, per non rifiutare il rumore numerico di un graticcio simmetrico. Le azioni maggiori restano bloccanti e sono riportate nell'errore. |
-| `09ce512` | `CalculateHomogenizedFactorPhi` nei tre componenti MeCheck2 che lo usano | Nuovo helper `BridgeCreepCoefficient.FromModularRatio`: il rapporto istantaneo Es/Ec non produce più φ = −1,11·10⁻¹⁶. Solo valori in [−10⁻¹², 0) vengono ricondotti a zero; rapporti fisicamente non validi sono rifiutati. |
-| `eb79d8a` | `BuildMeCheckModel.SolveInstance` | Le combinazioni riutilizzano i casi canonici del modello con la fase assegnata, invece di creare copie contenenti solo il nome. Il flusso completo ora giunge alle tensioni. |
+| `09ce512` | `CalculateHomogenizedFactorPhi` nei tre componenti BridgeChecks che lo usano | Nuovo helper `BridgeCreepCoefficient.FromModularRatio`: il rapporto istantaneo Es/Ec non produce più φ = −1,11·10⁻¹⁶. Solo valori in [−10⁻¹², 0) vengono ricondotti a zero; rapporti fisicamente non validi sono rifiutati. |
+| `eb79d8a` | `BuildBridgeModel.SolveInstance` | Le combinazioni riutilizzano i casi canonici del modello con la fase assegnata, invece di creare copie contenenti solo il nome. Il flusso completo ora giunge alle tensioni. |
 
 Ogni fix ha un commit distinto. Nessuna modifica a porte, GUID, DLL gPC o chiamate Straus in questa attività. L'esempio 11 è generato da codice di test, non aggiunge componenti al plugin. Le ipotesi e i limiti numerici sono nella [guida](../examples/bridge-grillage/README.md).
 
 ## Passaggi eseguiti
 
-1. Creata una soluzione autonoma `BridGHe.sln`, con progetti Common e Grasshopper, target Windows x64 / .NET 8. La base FeMM è stata letta senza modificarla.
-2. Copiati i componenti pertinenti al flusso modello–Straus–risultati–verifica. Mantenuti tutti i 16 componenti MeCheck2, inclusi i componenti di stampa. Riassegnati i GUID e l'identità del plugin.
+1. Creata una soluzione autonoma `BridGHe.sln`, con progetti Common e Grasshopper, target Windows x64 / .NET 8. La base BridGHe è stata letta senza modificarla.
+2. Copiati i componenti pertinenti al flusso modello–Straus–risultati–verifica. Mantenuti tutti i 16 componenti BridgeChecks, inclusi i componenti di stampa. Riassegnati i GUID e l'identità del plugin.
 3. Sostituiti i riferimenti delle librerie con le DLL gPC disponibili nei repository fratelli. I riferimenti sono espliciti, senza includere indiscriminatamente tutte le DLL presenti in una cartella.
 4. Aggiornato il binding P/Invoke all'header della versione Straus R3 installata. Il file generato contiene solo i membri utilizzati; origine e SHA-256 sono in `migration/straus-api-source.json`.
 5. Introdotti 23 componenti per sezioni Straus e 10 componenti per carichi mobili. Il catalogo e le dimensioni sono descritti in USO.
 6. Separati gestione API, sezioni, generazione BXS, esportazione carichi mobili, avvio analisi e lettura risultati. Le operazioni native passano da un unico lock per processo e verificano i codici di ritorno.
-7. Adattato MeCheck2 al motore gPC corrente. Corretti scambio delle fasi istantanea/differita, accumulo delle deformazioni imposte, lettura dei flag di instabilità e interpolazione della soletta nelle sezioni variabili.
+7. Adattato BridgeChecks al motore gPC corrente. Corretti scambio delle fasi istantanea/differita, accumulo delle deformazioni imposte, lettura dei flag di instabilità e interpolazione della soletta nelle sezioni variabili.
 8. Eliminati componenti e classi specifici dei solutori esclusi e del form finding. Rimossi riferimenti a database esterni, vecchie finestre e integrazioni con il precedente plugin Rhino. Potate le risorse grafiche non referenziate.
 9. Sostituita la serializzazione BinaryFormatter con un archivio condiviso, versionato, a riferimenti preservati. Corretti salvataggio delle proprietà composte, sezioni annidate, attributi, risultati e metadati delle sezioni native.
 10. Eseguiti compilazione Release, audit dei contratti, prove numeriche e istanziazione nel runtime Rhino 8. Preparati script di build, pacchetto locale e manifest delle dipendenze.
@@ -29,9 +29,9 @@ Ogni fix ha un commit distinto. Nessuna modifica a porte, GUID, DLL gPC o chiama
 | Area / chiamata precedente | Implementazione corrente | Effetto e limite |
 |---|---|---|
 | Riferimenti ai vecchi assembly di geometria, modello e verifiche | `GPCGeometry`, `GPCModel`, `GPCUtilities`, `GPCChecker.*` | Namespace e assembly adattati; nessun riferimento alla precedente società nel progetto. |
-| `SectionCheckerModelCode2010.GetLinearAnalysisResultByStages` | `BridgeCheckAdapter` → `HBridgeSection.Calculate(HBridgeInput)` | Conservati gli output MeCheck2 tramite `BridgeStressResult`. Il motore corrente ha semantica Eurocode 4 / SLE rara per il calcolo tensionale; non equivale automaticamente a ogni opzione del vecchio checker. |
+| `SectionCheckerModelCode2010.GetLinearAnalysisResultByStages` | `BridgeCheckAdapter` → `HBridgeSection.Calculate(HBridgeInput)` | Conservati gli output BridgeChecks tramite `BridgeStressResult`. Il motore corrente ha semantica Eurocode 4 / SLE rara per il calcolo tensionale; non equivale automaticamente a ogni opzione del vecchio checker. |
 | `SectionCheckerModelCode2010.GetSelfTension` | Fase gPC `BridgePhaseKind.Shrinkage` | Deformazione imposta convertita da adimensionale a microstrain; effetti primari della soletta. |
-| `StressAnalysisResult.MeCheckResults.Point1…Point8` | `BridgeStressResult` | Tensioni ricostruite nei punti geometrici storici. Taglio dell'anima con somma dei contributi di fase `VQ/(It)`; tensione ideale `sqrt(sigma² + 3 tau²)`. Punto di armatura assente → `NaN`. |
+| `StressAnalysisResult.BridGHeResults.Point1…Point8` | `BridgeStressResult` | Tensioni ricostruite nei punti geometrici storici. Taglio dell'anima con somma dei contributi di fase `VQ/(It)`; tensione ideale `sqrt(sigma² + 3 tau²)`. Punto di armatura assente → `NaN`. |
 | Output `TauB` | Nessuna corrispondenza assunta | `NaN` e warning: occorre verificare la definizione fisica originaria prima di associarlo ai nuovi risultati di connessione. |
 | `ThinWalls.SubjectToLocalInstability` | `BridgeAnalysisOptions.WebBuckling`, `TopFlangeBuckling`, `BottomFlangeBuckling` | Flag separati. `Effective Epsilon=true` non ha un equivalente verificato e provoca errore esplicito. |
 | Vecchie chiamate temporali del calcestruzzo | `ConcreteTimeEffects(...).AtAge(t).CreepCoefficient` | `t=0` conserva il significato di tempo infinito. `n0=Es/Ecm`, `n(t)=n0[1+phi(t)/1.05]`, perché phi corrente è riferito a `Ec=1.05 Ecm`. |
@@ -39,7 +39,7 @@ Ogni fix ha un commit distinto. Nessuna modifica a porte, GUID, DLL gPC o chiama
 | `ReinforcedConcreteSection.CreateBridgeSection(..., verticalOffset, ...)` | `CompositeSectionFactory.Create` | Il parametro corrente è eccentricità **orizzontale**. Offset verticale diverso da zero rifiutato, senza reinterpretarlo. |
 | `GetHomogeneizedMechanicalProperties` con flag di inclusione | `CompositePropertyAdapter.Calculate` → API gPC con `phi` | Selezione di soletta, barre e acciaio sul modello temporaneo; ricostruzione dei momenti d'area quando il calcestruzzo è escluso. |
 | Operatore di scala delle forze non più disponibile | `BridgeCheckAdapter.Scale` | Scalate tutte le sei componenti, incluso fattore zero. |
-| Conversioni dei momenti duplicate nei componenti MeCheck2 | `BridgeForceConvention.FromStraus` | `BM1/BM2` sono momenti nei piani; gPC usa momenti attorno agli assi. Un'unica conversione, con test di segno. |
+| Conversioni dei momenti duplicate nei componenti BridgeChecks | `BridgeForceConvention.FromStraus` | `BM1/BM2` sono momenti nei piani; gPC usa momenti attorno agli assi. Un'unica conversione, con test di segno. |
 | Aggregazione delle fasi dentro `SuperElementCheckComponent` | `BridgePhaseAssembler.Assemble` | Lookup per caso/stazione, fasi esplicite, deformazioni sommate. Risultati mancanti o ambigui producono errore, non una forza nulla. |
 | Generazione BXS mediante processo R2 esterno | `StrausBxsGenerator` → `St7GenerateBXS` R3 | Mesh gPC/Delaunay e modello API temporaneo; nessun eseguibile R2. Richiede prova nativa. |
 | Gestione nativa distribuita tra componenti | `StrausRuntime`, `StrausAnalysis`, `StrausResultsReader` | Inizializzazione, DLL, ID dei modelli, chiusura file e lettura risultati centralizzati. Analisi su copia del modello. |
@@ -61,7 +61,7 @@ Le ottimizzazioni eseguite riguardano la cache delle immagini, la deduplicazione
 
 GUID plugin: `db9c536d-770b-4586-8c8c-1c7a4df232b4`. Ogni componente e parametro ha un GUID nuovo, isolato dai GUID della base. Dopo questa consegna i GUID devono restare stabili.
 
-L'audit confronta i token dei metodi `RegisterInputParams` / `RegisterOutputParams`, inclusi testo, ordine, accesso, default e opzionalità. Ignora commenti e spazi; normalizza solo le sostituzioni necessarie di namespace, enum del solutore e accesso alla tolleranza. La baseline è stata ricavata dalla base FeMM, non dal codice nuovo.
+L'audit confronta i token dei metodi `RegisterInputParams` / `RegisterOutputParams`, inclusi testo, ordine, accesso, default e opzionalità. Ignora commenti e spazi; normalizza solo le sostituzioni necessarie di namespace, enum del solutore e accesso alla tolleranza. La baseline è stata ricavata dalla base BridGHe, non dal codice nuovo.
 
 ## Revisione correttiva
 
@@ -89,7 +89,7 @@ Correzioni successive alla revisione del codice, con un commit per difetto. Port
 | `62d9094` | Cache delle bounding box invalidata alla modifica della geometria, anche per travi native. |
 | `63abc53` | Descrizioni di validità corrette per Goo piastra e trave composta. |
 
-Ottimizzazioni separate: `1bbeba3` indicizza i risultati MeCheck2 una volta per trave e rimuove le scansioni ridondanti; `3a34c87` riutilizza un indice spaziale per la connettività Straus. `950f4fb` rende opzionale il test delle categorie che carica i plugin esterni del profilo. Misure e copertura sono in [VERIFICHE](VERIFICHE.md).
+Ottimizzazioni separate: `1bbeba3` indicizza i risultati BridgeChecks una volta per trave e rimuove le scansioni ridondanti; `3a34c87` riutilizza un indice spaziale per la connettività Straus. `950f4fb` rende opzionale il test delle categorie che carica i plugin esterni del profilo. Misure e copertura sono in [VERIFICHE](VERIFICHE.md).
 
 ### Metodi modificati durante le correzioni
 
@@ -97,7 +97,7 @@ Ottimizzazioni separate: `1bbeba3` indicizza i risultati MeCheck2 una volta per 
 - `NodalLoadAccumulator.Sum` sostituisce l'accumulo implicito tramite letture/scritture native ripetute.
 - `GH_Model.FromModel`, `GetGuid`, `SynchronizeGuids`, `Write`, `Read` e `Duplicate` gestiscono identità e persistenza; i costruttori di copia dei modelli e `DuplicateGeometry` isolano i dati mutabili.
 - `StrausResultSelection.Catalog/Select` è condiviso da UI e analisi; `StrausAnalysis.Run` usa i risultati selezionati anche nelle fasi.
-- `BridgePhaseAssembler.CreateIndex(...).Assemble(...)` è usato da MeCheck2. La precedente firma statica `Assemble` resta disponibile.
+- `BridgePhaseAssembler.CreateIndex(...).Assemble(...)` è usato da BridgeChecks. La precedente firma statica `Assemble` resta disponibile.
 - `StrausNodeIndex.Find` sostituisce le scansioni complete dei nodi nell'esportatore.
 - `CreateShapes`, `PlateModel.Points` e `GeometryRevision` governano rigenerazione e invalidazione delle anteprime.
 
@@ -113,17 +113,17 @@ Con la licenza API disponibile sono stati eseguiti dieci benchmark e cinque cont
 | `969f61b` | `StrausR3Helper.CreateModelR3` | Dopo `St7AddStage` viene chiamato `St7EnableNLAStage`: senza abilitazione il solutore restituiva 1018, incrementi non definiti. |
 | `d6a9229` | `StrausResultsReader.Read` | `St7GetElementResultState` distingue gli elementi inattivi; non si richiedono le loro forze e non si generano zeri fittizi. Gli altri errori API restano bloccanti. |
 | `b86494b` | `StrausAnalysis.Run` | Controllo del numero di incrementi, di `St7GetResultCaseConvergence` e di `St7GetResultCaseStage` per tutta la storia NLA, anche per incrementi non selezionati in output. |
-| `6fe4d7d` | `BridgeForceConvention.FromStraus` | I valori definiti negli assi positivi della sezione vengono trasformati nel riferimento di destinazione gPC. Il precedente codice assegnava direttamente il riferimento `(-x,-y)` e invertiva i segni in MeCheck2. Correzione verificata con flessione pura nativa e tensioni di lembo. |
+| `6fe4d7d` | `BridgeForceConvention.FromStraus` | I valori definiti negli assi positivi della sezione vengono trasformati nel riferimento di destinazione gPC. Il precedente codice assegnava direttamente il riferimento `(-x,-y)` e invertiva i segni in BridgeChecks. Correzione verificata con flessione pura nativa e tensioni di lembo. |
 
-Le dichiarazioni aggiunte al binding sono rigenerate dall'header R3 installato, non adattate manualmente. Nessuna modifica a porte, GUID o sorgenti gPC. I benchmark di sezione composta esplicitano l'approssimazione a linea media delle flange del motore attuale. Le vecchie verifiche MeCheck2 vanno ricalcolate per effetto della correzione del segno, mentre le uscite beam continuano a riportare BM1/BM2 nella convenzione Straus.
+Le dichiarazioni aggiunte al binding sono rigenerate dall'header R3 installato, non adattate manualmente. Nessuna modifica a porte, GUID o sorgenti gPC. I benchmark di sezione composta esplicitano l'approssimazione a linea media delle flange del motore attuale. Le vecchie verifiche BridgeChecks vanno ricalcolate per effetto della correzione del segno, mentre le uscite beam continuano a riportare BM1/BM2 nella convenzione Straus.
 
 ## Quattro ponti e dettagli gPC - 18 ottobre 2026
 
 - `StrausAnalysis.Run` e `StrausR3Helper.CreateModelCore` canonicalizzano il percorso con `Path.GetFullPath`: il solver nativo restituiva 1029 con separatori `/`, pur riuscendo a creare il file `.st7`. Commit `4493ca4`; verifica nativa della mensola con percorso relativo e slash.
-- Quattro nuovi componenti nella sottocategoria Bridge details: `BridgeStudsComponent`, `BridgeIntermediateStiffenerComponent`, `BridgeSupportStiffenerComponent`, `BridgeDetailCheckComponent`. Definiscono i record gPC ed eseguono `HBridgeSection.Calculate` conservando materiali, fasi e stato limite del risultato MeCheck2. Nessuna formula resistente duplicata nel plugin.
+- Quattro nuovi componenti nella sottocategoria Bridge details: `BridgeStudsComponent`, `BridgeIntermediateStiffenerComponent`, `BridgeSupportStiffenerComponent`, `BridgeDetailCheckComponent`. Definiscono i record gPC ed eseguono `HBridgeSection.Calculate` conservando materiali, fasi e stato limite del risultato BridgeChecks. Nessuna formula resistente duplicata nel plugin.
 - `BridgeDetailGoo.Write/Read/Duplicate`: persistenza dei tre record immutabili, discriminatore chiuso dei tipi, senza caricamento di tipi arbitrari dagli archivi.
 - I nuovi esempi usano le chiamate esistenti `St7SetBeamPreLoad1` e `St7SetBeamTempGradient2` per il ritiro longitudinale globale. Nessuna modifica delle firme native o delle DLL gPC.
-- Tutte le porte dei 103 oggetti conservati e dei 16 MeCheck2 sono invariate; quattro nuovi GUID, totale 141 con il plugin.
+- Tutte le porte dei 103 oggetti conservati e dei 16 BridgeChecks sono invariate; quattro nuovi GUID, totale 141 con il plugin.
 
 Documentazione, ipotesi, procedura riproducibile e limiti: [suite ponti](../examples/bridge-suite/README.md).
 

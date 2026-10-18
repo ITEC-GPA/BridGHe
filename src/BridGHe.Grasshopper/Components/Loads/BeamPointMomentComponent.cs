@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components.Loads
         /// Initializes a new instance of the BeamPointMomentComponent class.
         /// </summary>
         public BeamPointMomentComponent()
-          : base("Beam Point Moment", "BPM", "Defines the beam point load moment", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_LOADS)
+          : base("Beam Point Moment", "BPM", "Defines the beam point load moment", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_LOADS)
         {
         }
 

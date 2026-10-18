@@ -16,7 +16,7 @@ namespace BridGHe.Grasshopper.Components.Models
         /// Initializes a new instance of the BuildModelComponent class.
         /// </summary>
         public MergeGeometryComponent()
-          : base("Merge Geometry", "MG", "Merge the input geometries", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_TOOLS)
+          : base("Merge Geometry", "MG", "Merge the input geometries", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_TOOLS)
         {
         }
 

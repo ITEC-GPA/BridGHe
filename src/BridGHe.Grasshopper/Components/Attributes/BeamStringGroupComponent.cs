@@ -12,7 +12,7 @@ namespace BridGHe.Grasshopper.Components.Attributes
         /// <summary>
         /// Initializes a new instance of the StringGroupComponent class.
         /// </summary>
-        public BeamStringGroupComponent() : base("String Group", "SG", "String Group - Available only for Straus7", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
+        public BeamStringGroupComponent() : base("String Group", "SG", "String Group - Available only for Straus7", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
         {
         }
 

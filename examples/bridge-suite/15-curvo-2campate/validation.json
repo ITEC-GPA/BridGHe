@@ -41,7 +41,7 @@
     "PrimaryM": -436272571.0402813
   },
   "Method": "3 independent incremental linear stiffness states \u002B longitudinal differential shrinkage; primary section stress and native secondary resultants added once.",
-  "Scope": "Gross uncracked sections, full interaction, equivalent planar grillage. Torsion preserved; curved sections exceed current MeCheck2 action domain. No normative complete bridge verification.",
+  "Scope": "Gross uncracked sections, full interaction, equivalent planar grillage. Torsion preserved; curved sections exceed current BridgeChecks action domain. No normative complete bridge verification.",
   "Results": [
     {
       "Case": "G1_GETTO",
@@ -356,14 +356,14 @@
       "Passed": true
     },
     {
-      "Name": "MeCheck2 segnala azioni fuori campo beam 12",
+      "Name": "BridgeChecks segnala azioni fuori campo beam 12",
       "Actual": 1,
       "Expected": 1,
       "AbsoluteTolerance": 0,
       "Passed": true
     },
     {
-      "Name": "MeCheck2 segnala azioni fuori campo beam 24",
+      "Name": "BridgeChecks segnala azioni fuori campo beam 24",
       "Actual": 1,
       "Expected": 1,
       "AbsoluteTolerance": 0,
@@ -482,7 +482,7 @@
       "Passed": true
     },
     {
-      "Name": "GH MeCheck2 segnala torsione fuori campo",
+      "Name": "GH BridgeChecks segnala torsione fuori campo",
       "Actual": 1,
       "Expected": 1,
       "AbsoluteTolerance": 0,

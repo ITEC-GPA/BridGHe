@@ -17,7 +17,7 @@ namespace BridGHe.Grasshopper.Components.Materials
         /// Initializes a new instance of the SteelMaterialComponent class.
         /// </summary>
         public MaterialSteelComponent()
-          : base("Steel", "SM", "Steel Material", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_MATERIALS)
+          : base("Steel", "SM", "Steel Material", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_MATERIALS)
         {
         }
 

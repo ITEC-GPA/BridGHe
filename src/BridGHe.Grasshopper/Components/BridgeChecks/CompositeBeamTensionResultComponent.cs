@@ -4,7 +4,7 @@ using Grasshopper.Kernel;
 using GPC.Checkers.Concrete.Results;
 using System;
 
-namespace BridGHe.Grasshopper.Components.MeCheck2
+namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
     public class CompositeBeamTensionResultComponent : GH_Component
     {
@@ -12,7 +12,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// Initializes a new instance of the MeshRemap class.
         /// </summary>
         public CompositeBeamTensionResultComponent()
-          : base("Composite Section Linear Tension Results", "CSLTR", "Results for Composite Section Linear Tension analysis", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_MECHECK2)
+          : base("Composite Section Linear Tension Results", "CSLTR", "Results for Composite Section Linear Tension analysis", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
         {
         }
 
@@ -58,20 +58,20 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                 return;
 
             int index = 0;
-            DA.SetData(index++, result.MeCheckResults.Point1_ConcreteEpsilon);
-            DA.SetData(index++, result.MeCheckResults.Point1_ConcreteSigma);
-            DA.SetData(index++, result.MeCheckResults.Point2_RebarSigma);
-            DA.SetData(index++, result.MeCheckResults.Point3_RebarSigma);
-            DA.SetData(index++, result.MeCheckResults.Point4_ConcreteSigma);
-            DA.SetData(index++, result.MeCheckResults.Point5_SteelSigma);
-            DA.SetData(index++, result.MeCheckResults.Point6_SteelSigma);
-            DA.SetData(index++, result.MeCheckResults.Point6_SteelTau);
-            DA.SetData(index++, result.MeCheckResults.Point6_SteelSigmaId);
-            DA.SetData(index++, result.MeCheckResults.Point7_SteelSigma);
-            DA.SetData(index++, result.MeCheckResults.Point7_SteelTau);
-            DA.SetData(index++, result.MeCheckResults.Point7_SteelSigmaId);
-            DA.SetData(index++, result.MeCheckResults.Point8_SteelSigma);
-            DA.SetData(index++, result.MeCheckResults.Point8_SteelEpsilon);
+            DA.SetData(index++, result.BridGHeResults.Point1_ConcreteEpsilon);
+            DA.SetData(index++, result.BridGHeResults.Point1_ConcreteSigma);
+            DA.SetData(index++, result.BridGHeResults.Point2_RebarSigma);
+            DA.SetData(index++, result.BridGHeResults.Point3_RebarSigma);
+            DA.SetData(index++, result.BridGHeResults.Point4_ConcreteSigma);
+            DA.SetData(index++, result.BridGHeResults.Point5_SteelSigma);
+            DA.SetData(index++, result.BridGHeResults.Point6_SteelSigma);
+            DA.SetData(index++, result.BridGHeResults.Point6_SteelTau);
+            DA.SetData(index++, result.BridGHeResults.Point6_SteelSigmaId);
+            DA.SetData(index++, result.BridGHeResults.Point7_SteelSigma);
+            DA.SetData(index++, result.BridGHeResults.Point7_SteelTau);
+            DA.SetData(index++, result.BridGHeResults.Point7_SteelSigmaId);
+            DA.SetData(index++, result.BridGHeResults.Point8_SteelSigma);
+            DA.SetData(index++, result.BridGHeResults.Point8_SteelEpsilon);
         }
 
         public override GH_Exposure Exposure => GH_Exposure.tertiary;

@@ -16,7 +16,7 @@ namespace BridGHe.Grasshopper.Components
         /// Initializes a new instance of the ElementFilterComponent class.
         /// </summary>
         public BeamFilterComponent()
-          : base("Beam Filter", "BF", "Beam filter", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_TOOLS)
+          : base("Beam Filter", "BF", "Beam filter", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_TOOLS)
         {
         }
 

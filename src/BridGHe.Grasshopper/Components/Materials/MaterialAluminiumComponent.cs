@@ -17,7 +17,7 @@ namespace BridGHe.Grasshopper.Components.Materials
         /// Initializes a new instance of the MaterialAluminiumComponent class.
         /// </summary>
         public MaterialAluminiumComponent()
-          : base("Aluminium", "AM", "Aluminium material", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_MATERIALS)
+          : base("Aluminium", "AM", "Aluminium material", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_MATERIALS)
         {
         }
 

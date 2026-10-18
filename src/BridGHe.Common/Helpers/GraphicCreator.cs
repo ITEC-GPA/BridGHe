@@ -406,7 +406,7 @@ namespace BridGHe.Common.Helpers
                     g.EndContainer(container);
 
                     /*
-                    using (Image watermark = Image.FromFile("G:\\Users\\g.todeschini\\Documents\\Sorgenti\\MeChecks\\Docs\\logo_small.bmp"))
+                    using (Image watermark = Image.FromFile("G:\\Users\\g.todeschini\\Documents\\Sorgenti\\BridGHe\\Docs\\logo_small.bmp"))
                     {
                         g.DrawImage(watermark, new PointF(5, x_refs_pts[0].Y - 20));
                         g.DrawImage(watermark, new PointF(_w_bmp - 45, x_refs_pts[0].Y - 20));

@@ -19,7 +19,7 @@ namespace BridGHe.Grasshopper.Components.Definitions
         /// Initializes a new instance of the StagedConstructionComponent class.
         /// </summary>
         public StagedConstructionComponent()
-          : base("Staged Construction ", "SC", "Defines a staged construction", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_DEFINITIONS)
+          : base("Staged Construction ", "SC", "Defines a staged construction", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_DEFINITIONS)
         {
             _loadCases = new List<LoadCaseModel>();
         }

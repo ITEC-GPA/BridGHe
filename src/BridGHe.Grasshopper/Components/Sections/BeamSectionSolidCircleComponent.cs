@@ -11,7 +11,7 @@ namespace BridGHe.Grasshopper.Components.Sections
         /// Initializes a new instance of the SolidCircleBeamSectionComponent class.
         /// </summary>
         public BeamSectionSolidCircleComponent()
-          : base("Solid Circle", "SC", "Defines a solid circle beam section", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_SECTIONS)
+          : base("Solid Circle", "SC", "Defines a solid circle beam section", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_SECTIONS)
         {
         }
 

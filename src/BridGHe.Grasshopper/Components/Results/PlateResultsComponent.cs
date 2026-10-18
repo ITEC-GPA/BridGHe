@@ -14,7 +14,7 @@ namespace BridGHe.Grasshopper.Components.Results
         /// Initializes a new instance of the PlateResultsComponent class.
         /// </summary>
         public PlateResultsComponent()
-          : base("Plate Results", "PR", "The Plate analysis results", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_RESULTS)
+          : base("Plate Results", "PR", "The Plate analysis results", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_RESULTS)
         {
         }
 

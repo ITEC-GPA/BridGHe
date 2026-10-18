@@ -19,7 +19,7 @@ namespace BridGHe.Grasshopper.Components.Checks
         /// Initializes a new instance of the BeamComponent class.
         /// </summary>
         public RCFrameAsComponent()
-          : base("RC frames As", "RCFAs", "Calculate the reinforcement area of RC frames", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_MECHECK)
+          : base("RC frames As", "RCFAs", "Calculate the reinforcement area of RC frames", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_SECTION_CHECKS)
         {
         }
 

@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components.Loads
         /// Initializes a new instance of the BeamPointLoadComponent class.
         /// </summary>
         public BeamPointLoadComponent()
-          : base("Beam Point Load", "BPL", "Defines the beam point load force", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_LOADS)
+          : base("Beam Point Load", "BPL", "Defines the beam point load force", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_LOADS)
         {
         }
 

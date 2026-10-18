@@ -17,7 +17,7 @@ namespace BridGHe.Grasshopper.Components.Attributes
         /// Initializes a new instance of the BeamReleasesComponent class.
         /// </summary>
         public BeamTaperComponent()
-          : base("Beam Taper", "BT", "Beam taper", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
+          : base("Beam Taper", "BT", "Beam taper", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
         {
         }
 

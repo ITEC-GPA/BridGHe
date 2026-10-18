@@ -41,7 +41,7 @@
     "PrimaryM": -436272571.0402813
   },
   "Method": "3 independent incremental linear stiffness states \u002B longitudinal differential shrinkage; primary section stress and native secondary resultants added once.",
-  "Scope": "Gross uncracked sections, full interaction, equivalent planar grillage. Torsion preserved; curved sections exceed current MeCheck2 action domain. No normative complete bridge verification.",
+  "Scope": "Gross uncracked sections, full interaction, equivalent planar grillage. Torsion preserved; curved sections exceed current BridgeChecks action domain. No normative complete bridge verification.",
   "Results": [
     {
       "Case": "G1_GETTO",
@@ -422,70 +422,70 @@
       "Passed": true
     },
     {
-      "Name": "MeCheck2 quattro contributi 6",
+      "Name": "BridgeChecks quattro contributi 6",
       "Actual": 4,
       "Expected": 4,
       "AbsoluteTolerance": 0,
       "Passed": true
     },
     {
-      "Name": "MeCheck2 primario \u002B secondario, beam 6, sigma 0",
+      "Name": "BridgeChecks primario \u002B secondario, beam 6, sigma 0",
       "Actual": 0.3735231882225858,
       "Expected": 0.3735231882225828,
       "AbsoluteTolerance": 1E-06,
       "Passed": true
     },
     {
-      "Name": "MeCheck2 primario \u002B secondario, beam 6, sigma 1",
+      "Name": "BridgeChecks primario \u002B secondario, beam 6, sigma 1",
       "Actual": 0.5266028030378446,
       "Expected": 0.5266028030378417,
       "AbsoluteTolerance": 1E-06,
       "Passed": true
     },
     {
-      "Name": "MeCheck2 primario \u002B secondario, beam 6, sigma 2",
+      "Name": "BridgeChecks primario \u002B secondario, beam 6, sigma 2",
       "Actual": -22.947585395444076,
       "Expected": -22.947585395444122,
       "AbsoluteTolerance": 2.294758539544412E-05,
       "Passed": true
     },
     {
-      "Name": "MeCheck2 primario \u002B secondario, beam 6, sigma 3",
+      "Name": "BridgeChecks primario \u002B secondario, beam 6, sigma 3",
       "Actual": 15.168565144643889,
       "Expected": 15.1685651446439,
       "AbsoluteTolerance": 1.51685651446439E-05,
       "Passed": true
     },
     {
-      "Name": "MeCheck2 quattro contributi 12",
+      "Name": "BridgeChecks quattro contributi 12",
       "Actual": 4,
       "Expected": 4,
       "AbsoluteTolerance": 0,
       "Passed": true
     },
     {
-      "Name": "MeCheck2 primario \u002B secondario, beam 12, sigma 0",
+      "Name": "BridgeChecks primario \u002B secondario, beam 12, sigma 0",
       "Actual": 1.508586482398223,
       "Expected": 1.5085864823982214,
       "AbsoluteTolerance": 1.5085864823982212E-06,
       "Passed": true
     },
     {
-      "Name": "MeCheck2 primario \u002B secondario, beam 12, sigma 1",
+      "Name": "BridgeChecks primario \u002B secondario, beam 12, sigma 1",
       "Actual": 1.2059141896315126,
       "Expected": 1.2059141896315122,
       "AbsoluteTolerance": 1.205914189631512E-06,
       "Passed": true
     },
     {
-      "Name": "MeCheck2 primario \u002B secondario, beam 12, sigma 2",
+      "Name": "BridgeChecks primario \u002B secondario, beam 12, sigma 2",
       "Actual": 25.90603851436664,
       "Expected": 25.906038514366617,
       "AbsoluteTolerance": 2.5906038514366615E-05,
       "Passed": true
     },
     {
-      "Name": "MeCheck2 primario \u002B secondario, beam 12, sigma 3",
+      "Name": "BridgeChecks primario \u002B secondario, beam 12, sigma 3",
       "Actual": -49.36514968719088,
       "Expected": -49.36514968719083,
       "AbsoluteTolerance": 4.936514968719083E-05,
@@ -604,14 +604,14 @@
       "Passed": true
     },
     {
-      "Name": "GH stazioni MeCheck2",
+      "Name": "GH stazioni BridgeChecks",
       "Actual": 480,
       "Expected": 480,
       "AbsoluteTolerance": 0,
       "Passed": true
     },
     {
-      "Name": "GH quattro contributi MeCheck2",
+      "Name": "GH quattro contributi BridgeChecks",
       "Actual": 4,
       "Expected": 4,
       "AbsoluteTolerance": 0,

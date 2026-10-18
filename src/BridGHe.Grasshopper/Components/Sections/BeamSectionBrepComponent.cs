@@ -14,7 +14,7 @@ namespace BridGHe.Grasshopper.Components.Sections
         /// Initializes a new instance of the BeamSectionCComponent class.
         /// </summary>
         public BeamSectionBrepComponent()
-          : base("Brep Section", "BS", "Defines a section composed by brep faces", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_SECTIONS)
+          : base("Brep Section", "BS", "Defines a section composed by brep faces", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_SECTIONS)
         {
         }
 

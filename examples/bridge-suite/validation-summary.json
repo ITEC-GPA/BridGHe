@@ -28,5 +28,5 @@
   "ShrinkageBenchmarkChecks": 20,
   "TotalChecks": 290,
   "Failures": 0,
-  "Scope": "Numerical and software validation. Curved H torsion is explicitly outside MeCheck2; no complete bridge design verification."
+  "Scope": "Numerical and software validation. Curved H torsion is explicitly outside BridgeChecks; no complete bridge design verification."
 }

@@ -3,10 +3,10 @@
 ## Flusso del modello
 
 1. Costruire materiali, sezioni e proprietà con i componenti esistenti. Collegare le proprietà a nodi, beam e plate; assegnare vincoli, carichi, gruppi e superelementi.
-2. Assemblare il modello con `Build Model`, dichiarando le unità. Per il flusso MeCheck2 utilizzare **N–mm–MPa**; il controllo dei superelementi rifiuta modelli con unità differenti.
+2. Assemblare il modello con `Build Model`, dichiarando le unità. Per il flusso BridgeChecks utilizzare **N–mm–MPa**; il controllo dei superelementi rifiuta modelli con unità differenti.
 3. Esportare con `Straus7 R3 Export`, oppure eseguire `Straus7 R3 Analysis` scegliendo i casi richiesti. I risultati sono restituiti negli elementi di una copia del modello.
-4. Per le fasi composte, analizzare i modelli con le proprietà di fase appropriate, combinarli mediante `Build MeCheck Model` e associare ogni caso a una sola fase: solo acciaio, lungo termine, istantanea, deformazione differita o istantanea.
-5. Collegare i superelementi al verificatore MeCheck2 e i risultati ai componenti di estrazione/stampa.
+4. Per le fasi composte, analizzare i modelli con le proprietà di fase appropriate, combinarli mediante `Build BridGHe Model` e associare ogni caso a una sola fase: solo acciaio, lungo termine, istantanea, deformazione differita o istantanea.
+5. Collegare i superelementi al verificatore BridgeChecks e i risultati ai componenti di estrazione/stampa.
 
 Il verificatore adottato assume le azioni al **baricentro lordo della sezione della rispettiva fase**. Il motore gPC effettua il trasporto al baricentro efficace se necessario. Un modello con azioni riferite ad altri punti richiede un adattamento esplicito prima della verifica.
 
@@ -73,12 +73,12 @@ Target supportati nel modello nuovo: Any, Beam e Plate. Entity Set e Brick sono 
 
 ## Convenzioni delle azioni
 
-In `BeamForceResultModel`, i nomi storici `Mx/My` conservano rispettivamente i valori Straus `BM1/BM2`, cioè i momenti **nei piani** 1/2. Nel riferimento positivo della sezione si usa `(M1, M2) = (BM2, -BM1)`; successivamente si ruotano anche i valori nel riferimento di destinazione del checker, spesso `(-x,-y)`. Assegnare quel riferimento ai valori senza trasformarli invertiva impropriamente i segni: corretto e verificato nativamente il 17 ottobre 2026. Il momento positivo nel piano verticale comprime il lembo superiore. Gli assi misurati per una trave da X=0 a X=L con Angle=0 sono 1=+Y, 2=+Z, 3=+X. Vedere [convenzioni ufficiali Strand7 R3](https://www.strand7.com/strand7r3help/Content/Topics/ResultsInterpretation/ResultsInterpretationBeamInternalForceConvention.htm) e [assi locali/principali](https://www.strand7.com/strand7r3help/Content/Topics/Elements/ElementsBeamsPrincipalAxes.htm). Rigenerare le verifiche MeCheck2 ottenute con la precedente conversione.
+In `BeamForceResultModel`, i nomi storici `Mx/My` conservano rispettivamente i valori Straus `BM1/BM2`, cioè i momenti **nei piani** 1/2. Nel riferimento positivo della sezione si usa `(M1, M2) = (BM2, -BM1)`; successivamente si ruotano anche i valori nel riferimento di destinazione del checker, spesso `(-x,-y)`. Assegnare quel riferimento ai valori senza trasformarli invertiva impropriamente i segni: corretto e verificato nativamente il 17 ottobre 2026. Il momento positivo nel piano verticale comprime il lembo superiore. Gli assi misurati per una trave da X=0 a X=L con Angle=0 sono 1=+Y, 2=+Z, 3=+X. Vedere [convenzioni ufficiali Strand7 R3](https://www.strand7.com/strand7r3help/Content/Topics/ResultsInterpretation/ResultsInterpretationBeamInternalForceConvention.htm) e [assi locali/principali](https://www.strand7.com/strand7r3help/Content/Topics/Elements/ElementsBeamsPrincipalAxes.htm). Rigenerare le verifiche BridgeChecks ottenute con la precedente conversione.
 
 Le prove del convertitore sono eseguite; la verifica completa dei segni dopo esportazione, analisi e rilettura richiede la licenza nativa. Non modificare nuovamente segni o ordine delle componenti nei componenti downstream per compensare la conversione.
 
 ## Dettagli di ponti misti
 
-I quattro nuovi componenti `Bridge Studs`, `Bridge Intermediate Stiffener`, `Bridge Support Stiffener` e `Bridge Detail Check` si trovano in **BridGHe-Checks / Bridge details**. Le definizioni espongono le opzioni scalari native gPC; l'ultimo componente riceve un risultato MeCheck2 e ricalcola la stessa storia con i dettagli assegnati. Unità degli irrigiditori: **kN**, mm; pioli: mm, MPa. I risultati elencano esplicitamente le unità. Un rapporto NaN indica una verifica non espressa da gPC, non un esito favorevole.
+I quattro nuovi componenti `Bridge Studs`, `Bridge Intermediate Stiffener`, `Bridge Support Stiffener` e `Bridge Detail Check` si trovano in **BridGHe-Checks / Bridge details**. Le definizioni espongono le opzioni scalari native gPC; l'ultimo componente riceve un risultato BridgeChecks e ricalcola la stessa storia con i dettagli assegnati. Unità degli irrigiditori: **kN**, mm; pioli: mm, MPa. I risultati elencano esplicitamente le unità. Un rapporto NaN indica una verifica non espressa da gPC, non un esito favorevole.
 
 I dettagli non modificano il graticcio FEM. Lo stato limite resta quello del risultato sorgente: nessuna conversione automatica SLS→SLU. Esempi collegati e limiti: [ponti continui e curvi](../examples/bridge-suite/README.md).

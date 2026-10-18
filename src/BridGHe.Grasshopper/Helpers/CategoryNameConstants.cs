@@ -2,7 +2,7 @@ namespace BridGHe.Grasshopper.Helpers
 {
     public static class CategoryNameConstants
     {
-        public const string CATEGORY_FEMM = "BridGHe";
+        public const string CATEGORY_MODEL = "BridGHe";
         public const string CATEGORY_CHECKS = "BridGHe-Checks";
         public const string CATEGORY_F2R = "Fem2Rhino";
 
@@ -21,8 +21,8 @@ namespace BridGHe.Grasshopper.Helpers
         public const string SUBCATEGORY_RESULTS = "13-Results";
         public const string SUBCATEGORY_TOOLS = "14-Tools";
 
-        public const string SUBCATEGORY_MECHECK = "MeChecks";
-        public const string SUBCATEGORY_MECHECK2 = "MeChecks 2.0";
+        public const string SUBCATEGORY_SECTION_CHECKS = "BridGHe";
+        public const string SUBCATEGORY_BRIDGE = "BridGHe 2.0";
         public const string SUBCATEGORY_STEELCHECKS = "Steel Checks";
 
 

@@ -46,7 +46,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
         }
 
         public BeamSectionParam()
-            : base("Section", "S", "Section", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
+            : base("Section", "S", "Section", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
         {
             _units = ModelModel.ModelUnits.Nmm;
         }

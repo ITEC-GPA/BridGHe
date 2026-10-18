@@ -3,7 +3,7 @@ using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
 using System;
 
-namespace BridGHe.Grasshopper.Components.MeCheck2
+namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
     public class BeamSectionConcreteSlabComponent : GH_Component
     {
@@ -11,7 +11,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// Initializes a new instance of the BeamSectionConcreteSlabComponent class.
         /// </summary>
         public BeamSectionConcreteSlabComponent()
-          : base("Concrete Slab Section", "S", "Defines an concrete slab section", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_MECHECK2)
+          : base("Concrete Slab Section", "S", "Defines an concrete slab section", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
         {
         }
 

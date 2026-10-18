@@ -14,7 +14,7 @@ namespace BridGHe.Grasshopper.Components.Results
         /// Initializes a new instance of the NodeResultsComponent class.
         /// </summary>
         public NodeResultsComponent()
-          : base("Node Results", "NR", "The Node analysis results", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_RESULTS)
+          : base("Node Results", "NR", "The Node analysis results", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_RESULTS)
         {
         }
 

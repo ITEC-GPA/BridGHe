@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components.Attributes
         /// Initializes a new instance of the SuperElementComponent class.
         /// </summary>
         public SuperElementComponent()
-          : base("Super Element", "SE", "Defines that the element belong to a Super-Element", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
+          : base("Super Element", "SE", "Defines that the element belong to a Super-Element", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
         {
         }
 

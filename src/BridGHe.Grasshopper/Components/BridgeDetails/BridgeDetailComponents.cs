@@ -89,12 +89,12 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
     }
     public sealed class BridgeDetailCheckComponent:GH_Component
     {
-        public BridgeDetailCheckComponent():base("Bridge Detail Check","DetailCheck","Recomputes a MeCheck2 section with gPC studs and stiffeners. Retains phase history, materials and limit state. No FEM stiffness change.","BridGHe-Checks","Bridge details") { }
+        public BridgeDetailCheckComponent():base("Bridge Detail Check","DetailCheck","Recomputes a BridgeChecks section with gPC studs and stiffeners. Retains phase history, materials and limit state. No FEM stiffness change.","BridGHe-Checks","Bridge details") { }
         public override Guid ComponentGuid=>new Guid("ffad5404-7440-47e7-9824-90588810089f");
         protected override System.Drawing.Bitmap Icon=>Properties.ComponentIcons.For(GetType());
         protected override void RegisterInputParams(GH_InputParamManager p)
         {
-            p.AddGenericParameter("Section result","R","BridgeStressResult from MeCheck2; the selected stage is retained",GH_ParamAccess.item);
+            p.AddGenericParameter("Section result","R","BridgeStressResult from BridgeChecks; the selected stage is retained",GH_ParamAccess.item);
             p.AddGenericParameter("Studs","S","Bridge Studs definition",GH_ParamAccess.item);p[1].Optional=true;
             p.AddGenericParameter("Intermediate stiffener","I","Bridge Intermediate Stiffener definition",GH_ParamAccess.item);p[2].Optional=true;
             p.AddGenericParameter("Support stiffener","A","Bridge Support Stiffener definition",GH_ParamAccess.item);p[3].Optional=true;
@@ -112,7 +112,7 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
             try
             {
                 GH_ObjectWrapper wrapper=null;if(!da.GetData(0,ref wrapper))return;
-                if(wrapper.Value is not BridgeStressResult result)throw new ArgumentException("Expected a MeCheck2 BridgeStressResult.");
+                if(wrapper.Value is not BridgeStressResult result)throw new ArgumentException("Expected a BridgeChecks BridgeStressResult.");
                 var input=result.Analysis.Input;
                 for(int i=1;i<=3;i++)
                 {

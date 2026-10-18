@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <Archive name="Root">
   <!--Grasshopper archive-->
   <!--Grasshopper and GH_IO.dll are copyrighted by Robert McNeel & Associates-->
@@ -117,7 +117,7 @@ Tre modelli elastici: acciaio / misto lungo termine / misto istantaneo.
 Geometria, carichi e proprieta sono visibili e modificabili nei parametri.
 Modificare parameters.json e rigenerare per cambiare coerentemente tutte le dipendenze.
 Run inizialmente false. File .st7 in TEMP, percorsi modificabili.
-MeCheck2: usare solo la combinazione simmetrica; il traffico eccentrico richiede anche torsione.
+BridgeChecks: usare solo la combinazione simmetrica; il traffico eccentrico richiede anche torsione.
 Soletta e diaframmi sono travi equivalenti: non e una verifica normativa completa.</item>
                   </items>
                   <chunks count="2">
@@ -20890,7 +20890,7 @@ Q_MIRROR</item>
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
                     <item name="InstanceGuid" type_name="gh_guid" type_code="9">f048fe31-04c5-48e9-87b8-4976370c92e6</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
-                    <item name="NickName" type_name="gh_string" type_code="10">MECHECK2 - CAMPO COPERTO</item>
+                    <item name="NickName" type_name="gh_string" type_code="10">BRIDGE_CHECKS - CAMPO COPERTO</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                     <item name="ScrollRatio" type_name="gh_double" type_code="6">0</item>
                     <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
@@ -20898,7 +20898,7 @@ Q_MIRROR</item>
 Sezione lorda, soletta non fessurata, armature escluse.
 5 contributi: G1, G2, Q_UDL, ritiro lungo termine, deformazione istantanea.
 Per il traffico eccentrico conservare T e usare un verificatore dedicato.
-Dopo le analisi: Run Build MeCheck Model, poi Run Super Element Check.
+Dopo le analisi: Run Build BridGHe Model, poi Run Super Element Check.
 Non alimentare questo merge con i risultati TOTALI delle fasi di getto.</item>
                   </items>
                   <chunks count="2">
@@ -20936,14 +20936,14 @@ Non alimentare questo merge con i risultati TOTALI delle fasi di getto.</item>
               <items count="3">
                 <item name="GUID" type_name="gh_guid" type_code="9">16695837-3f63-4305-a1ff-4491826dc3fe</item>
                 <item name="Lib" type_name="gh_guid" type_code="9">db9c536d-770b-4586-8c8c-1c7a4df232b4</item>
-                <item name="Name" type_name="gh_string" type_code="10">Build MeCheck Model</item>
+                <item name="Name" type_name="gh_string" type_code="10">Build BridGHe Model</item>
               </items>
               <chunks count="1">
                 <chunk name="Container">
                   <items count="4">
-                    <item name="Description" type_name="gh_string" type_code="10">Merge the FeMM models in to a single FeMM model with input phases</item>
+                    <item name="Description" type_name="gh_string" type_code="10">Merge the BridGHe models in to a single BridGHe model with input phases</item>
                     <item name="InstanceGuid" type_name="gh_guid" type_code="9">8d2d0b79-23cf-41e9-99ea-1a16b8b0d654</item>
-                    <item name="Name" type_name="gh_string" type_code="10">Build MeCheck Model</item>
+                    <item name="Name" type_name="gh_string" type_code="10">Build BridGHe Model</item>
                     <item name="NickName" type_name="gh_string" type_code="10">BMCM</item>
                   </items>
                   <chunks count="9">
@@ -20966,7 +20966,7 @@ Non alimentare questo merge con i risultati TOTALI delle fasi di getto.</item>
                         <item name="Access" type_name="gh_int32" type_code="3">1</item>
                         <item name="Description" type_name="gh_string" type_code="10">The FEM models (more than one for stages)</item>
                         <item name="InstanceGuid" type_name="gh_guid" type_code="9">962ed7de-7f9a-461b-ab34-6ddab44b29aa</item>
-                        <item name="Name" type_name="gh_string" type_code="10">FeMM Models</item>
+                        <item name="Name" type_name="gh_string" type_code="10">BridGHe Models</item>
                         <item name="NickName" type_name="gh_string" type_code="10">FM</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                         <item name="Source" index="0" type_name="gh_guid" type_code="9">b82fe883-cdcf-4b0f-89f4-ed0d8cd04caa</item>
@@ -21190,7 +21190,7 @@ Non alimentare questo merge con i risultati TOTALI delle fasi di getto.</item>
                       <items count="7">
                         <item name="Description" type_name="gh_string" type_code="10">The FEM model</item>
                         <item name="InstanceGuid" type_name="gh_guid" type_code="9">567fb66b-4355-4a4f-a032-bd3abd9d9ace</item>
-                        <item name="Name" type_name="gh_string" type_code="10">FeMM Model</item>
+                        <item name="Name" type_name="gh_string" type_code="10">BridGHe Model</item>
                         <item name="NickName" type_name="gh_string" type_code="10">FM</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                         <item name="Source" index="0" type_name="gh_guid" type_code="9">af5f7fdf-7064-4e91-ae65-fc78047cc174</item>
@@ -21577,7 +21577,7 @@ G4</item>
                       <items count="7">
                         <item name="Description" type_name="gh_string" type_code="10">The FEM model</item>
                         <item name="InstanceGuid" type_name="gh_guid" type_code="9">72b6d13f-2e93-46a5-a038-252c05a70091</item>
-                        <item name="Name" type_name="gh_string" type_code="10">FeMM Model</item>
+                        <item name="Name" type_name="gh_string" type_code="10">BridGHe Model</item>
                         <item name="NickName" type_name="gh_string" type_code="10">FM</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                         <item name="Source" index="0" type_name="gh_guid" type_code="9">fa5d6764-ab69-46b5-a72c-f915d6acdd54</item>
@@ -22164,7 +22164,7 @@ G4</item>
                       <items count="7">
                         <item name="Description" type_name="gh_string" type_code="10">The FEM model</item>
                         <item name="InstanceGuid" type_name="gh_guid" type_code="9">dc053ac6-282b-4afd-a5ab-85a569ff1da8</item>
-                        <item name="Name" type_name="gh_string" type_code="10">FeMM Model</item>
+                        <item name="Name" type_name="gh_string" type_code="10">BridGHe Model</item>
                         <item name="NickName" type_name="gh_string" type_code="10">FM</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                         <item name="Source" index="0" type_name="gh_guid" type_code="9">24a73a8a-c608-4cfc-a0e0-c35d8f7f86cc</item>
@@ -23134,7 +23134,7 @@ G4</item>
                       <items count="7">
                         <item name="Description" type_name="gh_string" type_code="10">The FEM model</item>
                         <item name="InstanceGuid" type_name="gh_guid" type_code="9">b425ddbe-e90c-46b0-965f-ffb78ccc854c</item>
-                        <item name="Name" type_name="gh_string" type_code="10">FeMM Model</item>
+                        <item name="Name" type_name="gh_string" type_code="10">BridGHe Model</item>
                         <item name="NickName" type_name="gh_string" type_code="10">FM</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                         <item name="Source" index="0" type_name="gh_guid" type_code="9">2e79c8c6-3c6c-4608-bee9-bed4c0dd2c2a</item>
@@ -23489,9 +23489,9 @@ G4</item>
                     </chunk>
                     <chunk name="param_input" index="0">
                       <items count="7">
-                        <item name="Description" type_name="gh_string" type_code="10">The FeMM model</item>
+                        <item name="Description" type_name="gh_string" type_code="10">The BridGHe model</item>
                         <item name="InstanceGuid" type_name="gh_guid" type_code="9">24d8a98a-1970-4d72-bf9f-3cc0a7699f31</item>
-                        <item name="Name" type_name="gh_string" type_code="10">FeMM Model</item>
+                        <item name="Name" type_name="gh_string" type_code="10">BridGHe Model</item>
                         <item name="NickName" type_name="gh_string" type_code="10">FM</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                         <item name="Source" index="0" type_name="gh_guid" type_code="9">2e79c8c6-3c6c-4608-bee9-bed4c0dd2c2a</item>

@@ -18,7 +18,7 @@ namespace BridGHe.Grasshopper.Components.Attributes
         /// Initializes a new instance of the LoadPatchTypeComponent class.
         /// </summary>
         public LoadPatchTypeComponent()
-          : base("Load Patch Type", "LPT", "The Plate Load Path Type", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
+          : base("Load Patch Type", "LPT", "The Plate Load Path Type", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
         {
         }
 

@@ -9,7 +9,7 @@ namespace BridGHe.Common.Checks
     {
         public HBridgeAnalysisResult Analysis { get; }
         public BridgeStage Stage { get; }
-        public BridgeStressResult MeCheckResults => this;
+        public BridgeStressResult BridGHeResults => this;
         public BridgeStressResult(HBridgeAnalysisResult analysis, int stage) { Analysis = analysis; Stage = analysis.Stages[stage]; }
         private double Sigma(string material, double y) => Stage.Contributions.Sum(c => c.Stress(material, y));
         private double Steel(double y) => Sigma("Acciaio", y);

@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components
         /// Initializes a new instance of the BeamOverrideComponent class.
         /// </summary>
         public BeamOverrideComponent()
-          : base("Beam Override", "BO", "Override one of the creation parameters", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_TOOLS)
+          : base("Beam Override", "BO", "Override one of the creation parameters", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_TOOLS)
         {
         }
 

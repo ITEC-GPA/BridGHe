@@ -19,7 +19,7 @@ namespace BridGHe.Grasshopper.Components.Materials
         /// Initializes a new instance of the MaterialConcreteComponent class.
         /// </summary>
         public MaterialConcreteComponent()
-          : base("Concrete", "CM", "Concrete Material", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_MATERIALS)
+          : base("Concrete", "CM", "Concrete Material", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_MATERIALS)
         {
         }
 

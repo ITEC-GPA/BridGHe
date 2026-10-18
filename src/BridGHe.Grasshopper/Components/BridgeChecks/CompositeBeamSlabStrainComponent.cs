@@ -4,7 +4,7 @@ using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
 using System;
 
-namespace BridGHe.Grasshopper.Components.MeCheck2
+namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
     public class CompositeBeamSlabStrainComponent : GH_Component
     {
@@ -12,7 +12,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// Initializes a new instance of the CompositeBeamSlabStrainComponent class.
         /// </summary>
         public CompositeBeamSlabStrainComponent()
-          : base("Composite Beam Strain", "CBS", "Assign a strain load to a composite beam", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_MECHECK2)
+          : base("Composite Beam Strain", "CBS", "Assign a strain load to a composite beam", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
         {
         }
 

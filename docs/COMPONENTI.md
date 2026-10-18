@@ -108,11 +108,11 @@
 | Steel | component | Name; Grade | Material |
 | Table Material | component | Name; Use Poisson; Poisson Ratio; Shear Modulus; Thermal Expansion; Density; Stresses; Strains | Material |
 
-## Components.MeCheck2
+## Components.BridgeChecks
 
 | Nome | Tipo | Ingressi | Uscite |
 |---|---|---|---|
-| Build MeCheck Model | component | FeMM Models; Load Combinations; Phase Inf Load Cases; Phase Ninf Load Cases; Phase N0 Load Cases; Phase Ninf strain Load Cases; Phase N0 strain Load Cases | Model |
+| Build BridGHe Model | component | BridGHe Models; Load Combinations; Phase Inf Load Cases; Phase Ninf Load Cases; Phase N0 Load Cases; Phase Ninf strain Load Cases; Phase N0 strain Load Cases | Model |
 | Composite Beam Property | component | Name; Concrete Slab Section; Steel Section; Concrete Material; Steel Material; Reinforcement Material; Concrete Offset; n0; n ∞; Consider Concrete; Consider Rebars | Composite Section; Only Steel Property; n0 Beam Section; n ∞ Beam Section |
 | Composite Beam Property | component | Name; Concrete Section; Steel Section; Concrete Material; Steel Material; Reinforcement Material; Concrete Offset | Composite Section |
 | Composite Beam Strain | component | Beam; LoadCase; Strain | Beam |
@@ -123,11 +123,11 @@
 | Composite beam | component | Beam; Section Start; Section End; Groups | Beam |
 | Concrete Slab Section | component | Height; Width; Rebar area; Top concrete cover | Concrete Slab |
 | Creep And Shrinkage Concrete | component | Fck; Elastic Modulus Steel; Concrete Area; RH; u; t0; t; Cement Type | n0; n ∞; y(t,t0); εcs |
-| Print MeCheck Forces | component | FeMM Model; Super-Element Beam; Forces; Force component; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running | — |
-| Print MeCheck Results | component | FeMM Model; Super-Element Beam; Results; Result component; Combinations; Show Min/Max Combo; Additional values; File Path; Graphic Title; Keep Running | — |
+| Print BridGHe Forces | component | BridGHe Model; Super-Element Beam; Forces; Force component; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running | — |
+| Print BridGHe Results | component | BridGHe Model; Super-Element Beam; Results; Result component; Combinations; Show Min/Max Combo; Additional values; File Path; Graphic Title; Keep Running | — |
 | Section H Beam Property | component | Section H Beam Property | Name; Area; xg; yg; Jxx; Jyy; Angle; J₁₁; J₂₂; J; Height; Top Flange Width; Bottom Flange Width; Web Thickness; Top Flange Thickness; Bottom Flange Thickness |
-| Super Element Check | component | FeMM Model; Super-Element Beam; Web Local Instability; Top Flange Local Instability; Bottom Flange Local Instability; Effective Epsilon | Tension Check; Tau b; Tension Forces |
-| Super Element Filter | component | FeMM Model; Super-Element | Beams |
+| Super Element Check | component | BridGHe Model; Super-Element Beam; Web Local Instability; Top Flange Local Instability; Bottom Flange Local Instability; Effective Epsilon | Tension Check; Tau b; Tension Forces |
+| Super Element Filter | component | BridGHe Model; Super-Element | Beams |
 
 ## Components.Models
 
@@ -137,7 +137,7 @@
 | Build Model | component | Elements; Name; Units; Load Combinations; Named sets; Staged constructions | Model |
 | Decompose Model | component | Model | Nodes; Beams; Plates |
 | Merge Geometry | component | Elements; Tolerance | Points; Curves; Meshes |
-| Merge Model | component | Elements; Tolerance | FeMM Nodes; FeMM Beams; FeMM Plates |
+| Merge Model | component | Elements; Tolerance | BridGHe Nodes; BridGHe Beams; BridGHe Plates |
 | Node | component | Point | Node |
 | Plate | component | Mesh; Property; Groups; Angle; Offset | Plate |
 
@@ -220,6 +220,6 @@
 | Bridge Studs | BridgeStudOptions | Pioli a testa, fila, passi, materiali e geometria di dettaglio |
 | Bridge Intermediate Stiffener | BridgeIntermediateStiffener | Piatti intermedi, pannelli, eccentricità e saldature |
 | Bridge Support Stiffener | BridgeSupportStiffener | Piatti d'appoggio, impronta, reazione e montante terminale |
-| Bridge Detail Check | HBridgeSection.Calculate | Controlli di dettaglio sulla storia del risultato MeCheck2 |
+| Bridge Detail Check | HBridgeSection.Calculate | Controlli di dettaglio sulla storia del risultato BridgeChecks |
 
-Totale: 131 componenti, 9 parametri, più il plugin. I 16 componenti MeCheck2 originali conservano le loro porte.
+Totale: 131 componenti, 9 parametri, più il plugin. I 16 componenti BridgeChecks originali conservano le loro porte.

@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components.Attributes
         /// Initializes a new instance of the BeamReleasesComponent class.
         /// </summary>
         public BeamReleasesComponent()
-          : base("Beam Releases", "BR", "Beam ends releases \n 0 or false = released; Null = fixed; Number = Partial released (0 = released)", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
+          : base("Beam Releases", "BR", "Beam ends releases \n 0 or false = released; Null = fixed; Number = Partial released (0 = released)", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
         {
         }
 

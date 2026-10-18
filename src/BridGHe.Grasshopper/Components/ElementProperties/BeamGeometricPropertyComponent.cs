@@ -12,7 +12,7 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
         /// Initializes a new instance of the BeamPropertyComponent class.
         /// </summary>
         public BeamGeometricPropertyComponent()
-          : base("Beam Geometric Property", "BGP", "Beam geometric properties", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_PROPERTIES)
+          : base("Beam Geometric Property", "BGP", "Beam geometric properties", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_PROPERTIES)
         {
 
         }

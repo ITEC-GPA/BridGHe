@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
         /// Initializes a new instance of the PlatePropertyComponent class.
         /// </summary>
         public PlatePropertyComponent()
-          : base("Plate Property", "PP", "Plate properties", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_PROPERTIES)
+          : base("Plate Property", "PP", "Plate properties", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_PROPERTIES)
         {
         }
 

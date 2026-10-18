@@ -15,9 +15,9 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
 
-namespace BridGHe.Grasshopper.Components.MeCheck2
+namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
-    public class PrintCheckImageMeCheckResultComponent : GH_Component
+    public class BridgeResultPlotComponent : GH_Component
     {
         protected bool _run;
 
@@ -57,8 +57,8 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// <summary>
         /// Initializes a new instance of the MyComponent1 class.
         /// </summary>
-        public PrintCheckImageMeCheckResultComponent()
-          : base("Print MeCheck Results", "PI", "Create the check image of super element check", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_MECHECK2)
+        public BridgeResultPlotComponent()
+          : base("Print BridGHe Results", "PI", "Create the check image of super element check", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
         {
         }
 
@@ -78,9 +78,9 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// </summary>
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("FeMM Model", "FM", "The FEM models (more than one for stages)", GH_ParamAccess.item);
+            pManager.AddGenericParameter("BridGHe Model", "FM", "The FEM models (more than one for stages)", GH_ParamAccess.item);
             pManager.AddGenericParameter("Super-Element Beam", "SE", "The Super-Element Beam", GH_ParamAccess.list);
-            pManager.AddGenericParameter("Results", "R", "The MeCheck Results", GH_ParamAccess.tree);
+            pManager.AddGenericParameter("Results", "R", "The BridGHe Results", GH_ParamAccess.tree);
             pManager.AddIntegerParameter("Result component", "FC", "The force component to print", GH_ParamAccess.item, 4);
             Param_Integer param = (Param_Integer)pManager[pManager.ParamCount - 1];
             for (int i = 0; i < _forceComponent.Count; i++)
@@ -241,7 +241,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                                         case 0:
                                             for (int j = 0; j < fff.Length; j++)
                                             {
-                                                double combonentBuffer = fff[j].MeCheckResults.Point1_ConcreteSigma;
+                                                double combonentBuffer = fff[j].BridGHeResults.Point1_ConcreteSigma;
                                                 MinMax(j, combonentBuffer, showMinMax, ref absoluteMaxValue, ref absoluteMinValue, ref absoluteMaxIndex, ref absoluteMinIndex, ref max, ref min);
                                             }
                                             break;
@@ -249,7 +249,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                                         case 1:
                                             for (int j = 0; j < fff.Length; j++)
                                             {
-                                                double combonentBuffer = fff[j].MeCheckResults.Point2_RebarSigma;
+                                                double combonentBuffer = fff[j].BridGHeResults.Point2_RebarSigma;
                                                 MinMax(j, combonentBuffer, showMinMax, ref absoluteMaxValue, ref absoluteMinValue, ref absoluteMaxIndex, ref absoluteMinIndex, ref max, ref min);
                                             }
                                             break;
@@ -257,7 +257,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                                         case 2:
                                             for (int j = 0; j < fff.Length; j++)
                                             {
-                                                double combonentBuffer = fff[j].MeCheckResults.Point4_ConcreteSigma;
+                                                double combonentBuffer = fff[j].BridGHeResults.Point4_ConcreteSigma;
                                                 MinMax(j, combonentBuffer, showMinMax, ref absoluteMaxValue, ref absoluteMinValue, ref absoluteMaxIndex, ref absoluteMinIndex, ref max, ref min);
                                             }
                                             break;
@@ -265,7 +265,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                                         case 3:
                                             for (int j = 0; j < fff.Length; j++)
                                             {
-                                                double combonentBuffer = fff[j].MeCheckResults.Point5_SteelSigma;
+                                                double combonentBuffer = fff[j].BridGHeResults.Point5_SteelSigma;
                                                 MinMax(j, combonentBuffer, showMinMax, ref absoluteMaxValue, ref absoluteMinValue, ref absoluteMaxIndex, ref absoluteMinIndex, ref max, ref min);
                                             }
                                             break;
@@ -273,7 +273,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                                         case 4:
                                             for (int j = 0; j < fff.Length; j++)
                                             {
-                                                double combonentBuffer = fff[j].MeCheckResults.Point6_SteelSigma;
+                                                double combonentBuffer = fff[j].BridGHeResults.Point6_SteelSigma;
                                                 MinMax(j, combonentBuffer, showMinMax, ref absoluteMaxValue, ref absoluteMinValue, ref absoluteMaxIndex, ref absoluteMinIndex, ref max, ref min);
                                             }
                                             break;
@@ -281,7 +281,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                                         case 5:
                                             for (int j = 0; j < fff.Length; j++)
                                             {
-                                                double combonentBuffer = fff[j].MeCheckResults.Point7_SteelSigma;
+                                                double combonentBuffer = fff[j].BridGHeResults.Point7_SteelSigma;
                                                 MinMax(j, combonentBuffer, showMinMax, ref absoluteMaxValue, ref absoluteMinValue, ref absoluteMaxIndex, ref absoluteMinIndex, ref max, ref min);
                                             }
                                             break;
@@ -289,7 +289,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                                         case 6:
                                             for (int j = 0; j < fff.Length; j++)
                                             {
-                                                double combonentBuffer = fff[j].MeCheckResults.Point8_SteelSigma;
+                                                double combonentBuffer = fff[j].BridGHeResults.Point8_SteelSigma;
                                                 MinMax(j, combonentBuffer, showMinMax, ref absoluteMaxValue, ref absoluteMinValue, ref absoluteMaxIndex, ref absoluteMinIndex, ref max, ref min);
                                             }
                                             break;
@@ -297,7 +297,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                                         case 7:
                                             for (int j = 0; j < fff.Length; j++)
                                             {
-                                                double combonentBuffer = fff[j].MeCheckResults.Point6_SteelTau;
+                                                double combonentBuffer = fff[j].BridGHeResults.Point6_SteelTau;
                                                 MinMax(j, combonentBuffer, showMinMax, ref absoluteMaxValue, ref absoluteMinValue, ref absoluteMaxIndex, ref absoluteMinIndex, ref max, ref min);
                                             }
                                             break;
@@ -305,7 +305,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                                         case 8:
                                             for (int j = 0; j < fff.Length; j++)
                                             {
-                                                double combonentBuffer = fff[j].MeCheckResults.Point7_SteelTau;
+                                                double combonentBuffer = fff[j].BridGHeResults.Point7_SteelTau;
                                                 MinMax(j, combonentBuffer, showMinMax, ref absoluteMaxValue, ref absoluteMinValue, ref absoluteMaxIndex, ref absoluteMinIndex, ref max, ref min);
                                             }
                                             break;
@@ -313,7 +313,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                                         case 9:
                                             for (int j = 0; j < fff.Length; j++)
                                             {
-                                                double combonentBuffer = fff[j].MeCheckResults.Point6_SteelSigmaId;
+                                                double combonentBuffer = fff[j].BridGHeResults.Point6_SteelSigmaId;
                                                 MinMax(j, combonentBuffer, showMinMax, ref absoluteMaxValue, ref absoluteMinValue, ref absoluteMaxIndex, ref absoluteMinIndex, ref max, ref min);
                                             }
                                             break;
@@ -321,7 +321,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                                         case 10:
                                             for (int j = 0; j < fff.Length; j++)
                                             {
-                                                double combonentBuffer = fff[j].MeCheckResults.Point7_SteelSigmaId;
+                                                double combonentBuffer = fff[j].BridGHeResults.Point7_SteelSigmaId;
                                                 MinMax(j, combonentBuffer, showMinMax, ref absoluteMaxValue, ref absoluteMinValue, ref absoluteMaxIndex, ref absoluteMinIndex, ref max, ref min);
                                             }
                                             break;
@@ -329,7 +329,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                                         case 11:
                                             for (int j = 0; j < fff.Length; j++)
                                             {
-                                                double combonentBuffer = fff[j].MeCheckResults.Point1_ConcreteEpsilon;
+                                                double combonentBuffer = fff[j].BridGHeResults.Point1_ConcreteEpsilon;
                                                 MinMax(j, combonentBuffer, showMinMax, ref absoluteMaxValue, ref absoluteMinValue, ref absoluteMaxIndex, ref absoluteMinIndex, ref max, ref min);
                                             }
                                             break;
@@ -337,7 +337,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                                         case 12:
                                             for (int j = 0; j < fff.Length; j++)
                                             {
-                                                double combonentBuffer = fff[j].MeCheckResults.Point8_SteelEpsilon;
+                                                double combonentBuffer = fff[j].BridGHeResults.Point8_SteelEpsilon;
                                                 MinMax(j, combonentBuffer, showMinMax, ref absoluteMaxValue, ref absoluteMinValue, ref absoluteMaxIndex, ref absoluteMinIndex, ref max, ref min);
                                             }
                                             break;
@@ -389,43 +389,43 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
                                         switch (resultComponent)
                                         {
                                             case 0:
-                                                vv = fff[comboIndex].MeCheckResults.Point1_ConcreteSigma;
+                                                vv = fff[comboIndex].BridGHeResults.Point1_ConcreteSigma;
                                                 break;
                                             case 1:
-                                                vv = fff[comboIndex].MeCheckResults.Point2_RebarSigma;
+                                                vv = fff[comboIndex].BridGHeResults.Point2_RebarSigma;
                                                 break;
                                             case 2:
-                                                vv = fff[comboIndex].MeCheckResults.Point4_ConcreteSigma;
+                                                vv = fff[comboIndex].BridGHeResults.Point4_ConcreteSigma;
                                                 break;
                                             case 3:
-                                                vv = fff[comboIndex].MeCheckResults.Point5_SteelSigma;
+                                                vv = fff[comboIndex].BridGHeResults.Point5_SteelSigma;
                                                 break;
                                             case 4:
-                                                vv = fff[comboIndex].MeCheckResults.Point6_SteelSigma;
+                                                vv = fff[comboIndex].BridGHeResults.Point6_SteelSigma;
                                                 break;
                                             case 5:
-                                                vv = fff[comboIndex].MeCheckResults.Point7_SteelSigma;
+                                                vv = fff[comboIndex].BridGHeResults.Point7_SteelSigma;
                                                 break;
                                             case 6:
-                                                vv = fff[comboIndex].MeCheckResults.Point8_SteelSigma;
+                                                vv = fff[comboIndex].BridGHeResults.Point8_SteelSigma;
                                                 break;
                                             case 7:
-                                                vv = fff[comboIndex].MeCheckResults.Point6_SteelTau;
+                                                vv = fff[comboIndex].BridGHeResults.Point6_SteelTau;
                                                 break;
                                             case 8:
-                                                vv = fff[comboIndex].MeCheckResults.Point7_SteelTau;
+                                                vv = fff[comboIndex].BridGHeResults.Point7_SteelTau;
                                                 break;
                                             case 9:
-                                                vv = fff[comboIndex].MeCheckResults.Point6_SteelSigmaId;
+                                                vv = fff[comboIndex].BridGHeResults.Point6_SteelSigmaId;
                                                 break;
                                             case 10:
-                                                vv = fff[comboIndex].MeCheckResults.Point7_SteelSigmaId;
+                                                vv = fff[comboIndex].BridGHeResults.Point7_SteelSigmaId;
                                                 break;
                                             case 11:
-                                                vv = fff[comboIndex].MeCheckResults.Point1_ConcreteEpsilon;
+                                                vv = fff[comboIndex].BridGHeResults.Point1_ConcreteEpsilon;
                                                 break;
                                             case 12:
-                                                vv = fff[comboIndex].MeCheckResults.Point8_SteelEpsilon;
+                                                vv = fff[comboIndex].BridGHeResults.Point8_SteelEpsilon;
                                                 break;
                                         }
 

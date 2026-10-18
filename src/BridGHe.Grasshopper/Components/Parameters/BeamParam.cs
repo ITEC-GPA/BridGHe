@@ -16,7 +16,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
     public class BeamParam : GH_PersistentParam<GH_Beam>
     {
         public BeamParam()
-            : base("Beam", "B", "Contains a collection of beams", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
+            : base("Beam", "B", "Contains a collection of beams", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
         {
         }
 

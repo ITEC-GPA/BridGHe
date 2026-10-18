@@ -19,7 +19,7 @@ namespace BridGHe.Grasshopper.Components.Loads
         /// Initializes a new instance of the BeamDistributedLoadComponent class.
         /// </summary>
         public BeamDistributedLoadComponent()
-          : base("Beam Distributed Load", "BDL", "Assign a beam distributed load", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_LOADS)
+          : base("Beam Distributed Load", "BDL", "Assign a beam distributed load", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_LOADS)
         {
         }
 

@@ -5,7 +5,7 @@ using GPC.Model.Materials;
 using System;
 using System.Collections.Generic;
 
-namespace BridGHe.Grasshopper.Components.MeCheck2
+namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
     public class CreepAndShrinkageConcreteComponent : GH_Component
     {
@@ -21,7 +21,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// Initializes a new instance of the MeshRemap class.
         /// </summary>
         public CreepAndShrinkageConcreteComponent()
-          : base("Creep And Shrinkage Concrete", "CS", "Calculate Creep And Shrinkage for Concrete according to standard EN1992", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_MECHECK2)
+          : base("Creep And Shrinkage Concrete", "CS", "Calculate Creep And Shrinkage for Concrete according to standard EN1992", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
         {
         }
 

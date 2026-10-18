@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components.Attributes
         /// Initializes a new instance of the PlateSupportComponent class.
         /// </summary>
         public PlateSupportComponent()
-          : base("Plate Support", "PS", "Define a plate support", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
+          : base("Plate Support", "PS", "Define a plate support", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
         {
         }
 

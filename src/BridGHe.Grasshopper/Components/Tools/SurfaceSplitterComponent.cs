@@ -13,7 +13,7 @@ namespace BridGHe.Grasshopper.Components.Tools
         /// Initializes a new instance of the SuperElementComponent class.
         /// </summary>
         public SurfaceSplitterComponent()
-          : base("Surface splitter curves", "SSC", "Get surface splitter curves based on internal points/lines", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_TOOLS)
+          : base("Surface splitter curves", "SSC", "Get surface splitter curves based on internal points/lines", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_TOOLS)
         {
         }
 

@@ -13,7 +13,7 @@ using GPC.Model.Standards;
 
 namespace BridGHe.Common.Checks
 {
-    /// <summary>Boundary between the unchanged MeCheck2 ports and the current gPC bridge engine.
+    /// <summary>Boundary between the unchanged BridgeChecks ports and the current gPC bridge engine.
     /// Geometry is in mm; actions are N and Nmm in the supplied reference system.</summary>
     public sealed class BridgeCheckAdapter
     {
@@ -43,7 +43,7 @@ namespace BridGHe.Common.Checks
         private HBridgeInput Input(bool concrete, bool rebars, bool buckling)
         {
             if (section.SteelSections.Count != 1 || !(section.SteelSections[0].Section.SectionShape is SectionH h))
-                throw new NotSupportedException("L'adattatore MeCheck2 supporta una singola sezione ad H con soletta rettangolare.");
+                throw new NotSupportedException("L'adattatore BridgeChecks supporta una singola sezione ad H con soletta rettangolare.");
             var positioned = section.SteelSections[0];
             if (Math.Abs(positioned.Rotation) > 1e-10 || Math.Abs(section.Jxy) > 1e-10 * (section.Jxx + section.Jyy))
                 throw new NotSupportedException("Sezione ruotata o non simmetrica: adattamento del verificatore da completare.");

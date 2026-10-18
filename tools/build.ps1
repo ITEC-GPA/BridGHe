@@ -33,7 +33,7 @@ try {
         New-Item -ItemType Directory -Path $validationRoot -Force | Out-Null
         $nativeRun = Get-Content -LiteralPath (Join-Path $projectRoot 'artifacts\examples\latest-passed.txt') -Raw
         Copy-Item -LiteralPath (Join-Path $nativeRun 'report.json') -Destination (Join-Path $validationRoot 'native.json')
-        Copy-Item -LiteralPath (Join-Path $projectRoot 'artifacts\native-bridge-phases\report.json') -Destination (Join-Path $validationRoot 'mecheck2.json')
+        Copy-Item -LiteralPath (Join-Path $projectRoot 'artifacts\native-bridge-phases\report.json') -Destination (Join-Path $validationRoot 'bridgeChecks.json')
         $ghReports = Get-ChildItem -LiteralPath (Join-Path $projectRoot 'artifacts\gh-examples') -Directory | ForEach-Object {
             [pscustomobject]@{example=$_.Name;measurements=(Get-Content -LiteralPath (Join-Path $_.FullName 'report.json') -Raw | ConvertFrom-Json)}
         }

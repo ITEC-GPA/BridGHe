@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components.Loads
         /// Initializes a new instance of the BeamPreLoadComponent class.
         /// </summary>
         public BeamPreLoadComponent()
-          : base("Beam PreLoad", "BPL", "Defines the beam preload", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_LOADS)
+          : base("Beam PreLoad", "BPL", "Defines the beam preload", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_LOADS)
         {
         }
 

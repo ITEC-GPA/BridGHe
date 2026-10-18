@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace BridGHe.Grasshopper.Components.MeCheck2
+namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
     public class SuperElementFilterComponent : GH_Component
     {
@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// Initializes a new instance of the ChecksComponent class.
         /// </summary>
         public SuperElementFilterComponent()
-          : base("Super Element Filter", "SEF", "Filter the selected Super-Element", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_MECHECK2)
+          : base("Super Element Filter", "SEF", "Filter the selected Super-Element", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
         {
 
         }
@@ -25,7 +25,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// </summary>
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("FeMM Model", "FM", "The FEM model", GH_ParamAccess.item);
+            pManager.AddGenericParameter("BridGHe Model", "FM", "The FEM model", GH_ParamAccess.item);
             pManager.AddTextParameter("Super-Element", "SE", "The name of the Super-Element to filter", GH_ParamAccess.item);
         }
 

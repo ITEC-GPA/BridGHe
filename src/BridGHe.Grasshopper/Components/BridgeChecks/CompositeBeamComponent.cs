@@ -6,7 +6,7 @@ using Grasshopper.Kernel;
 using System;
 using System.Collections.Generic;
 
-namespace BridGHe.Grasshopper.Components.MeCheck2
+namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
     public class CompositeBeamComponent : GH_Component
     {
@@ -14,7 +14,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// Initializes a new instance of the CompositeBeamComponent class.
         /// </summary>
         public CompositeBeamComponent()
-          : base("Composite beam", "CB", "Assign the composite sections to the beam", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_MECHECK2)
+          : base("Composite beam", "CB", "Assign the composite sections to the beam", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
         {
         }
 

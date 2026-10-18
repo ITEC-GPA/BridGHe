@@ -23,7 +23,7 @@
   "LineG1": 22.027459999999998,
   "Nodes": 52,
   "Beams": 87,
-  "StageMethod": "Independent linear stiffness states; native wet-concrete stages are a separate benchmark, not summed into MeCheck2.",
+  "StageMethod": "Independent linear stiffness states; native wet-concrete stages are a separate benchmark, not summed into BridgeChecks.",
   "Scope": "SLS normal/shear stresses only for symmetric combination. Eccentric traffic torsion preserved; full mixed-action design NOT verified.",
   "MidspanSteel": -32.460269173240626,
   "MidspanLong": -5.858865191659179,
@@ -1272,7 +1272,7 @@
       "Passed": true
     },
     {
-      "Name": "MeCheck2 cinque fasi accumulate",
+      "Name": "BridgeChecks cinque fasi accumulate",
       "Actual": 5,
       "Expected": 5,
       "AbsoluteTolerance": 0,
@@ -1419,7 +1419,7 @@
       "Passed": true
     },
     {
-      "Name": "MeCheck2 rifiuta correttamente torsione non supportata",
+      "Name": "BridgeChecks rifiuta correttamente torsione non supportata",
       "Actual": 1,
       "Expected": 1,
       "AbsoluteTolerance": 0,
@@ -2546,14 +2546,14 @@
       "Passed": true
     },
     {
-      "Name": "GH MeCheck2 stazioni elaborate",
+      "Name": "GH BridgeChecks stazioni elaborate",
       "Actual": 240,
       "Expected": 240,
       "AbsoluteTolerance": 0,
       "Passed": true
     },
     {
-      "Name": "GH MeCheck2 cinque contributi",
+      "Name": "GH BridgeChecks cinque contributi",
       "Actual": 5,
       "Expected": 5,
       "AbsoluteTolerance": 0,

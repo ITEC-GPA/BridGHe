@@ -249,13 +249,13 @@ internal static class BridgeSuiteExample
                 checker.GetLinearAnalysisResultByStages(out var stress,out _,p.PhiLong,0,new[]{BridgeForceConvention.FromStraus(f[0],Reference)},
                     new[]{BridgeForceConvention.FromStraus(combined,Reference)},new[]{BridgeForceConvention.FromStraus(f[2],Reference)},true,new[]{p.ShrinkageLong},new[]{0.0},false);
                 var actual=StressValues(stress[0]);var expected=ExpectedStress(p,f);
-                checks.Near("MeCheck2 quattro contributi "+beam,stress[0].Analysis.Stages.Count,4,0,0);
-                for(int i=0;i<4;i++)checks.Near("MeCheck2 primario + secondario, beam "+beam+", sigma "+i,actual[i],expected[i],1e-6,1e-6);
+                checks.Near("BridgeChecks quattro contributi "+beam,stress[0].Analysis.Stages.Count,4,0,0);
+                for(int i=0;i<4;i++)checks.Near("BridgeChecks primario + secondario, beam "+beam+", sigma "+i,actual[i],expected[i],1e-6,1e-6);
                 samples.Add(new(beam+1,0,actual,true,"Tensioni elastiche; sezione lorda non fessurata."));
             }
             catch(NotSupportedException ex)
             {
-                checks.Near("MeCheck2 segnala azioni fuori campo beam "+beam,d.Radius>0?1:0,1,0,0);
+                checks.Near("BridgeChecks segnala azioni fuori campo beam "+beam,d.Radius>0?1:0,1,0,0);
                 samples.Add(new(beam+1,0,Array.Empty<double>(),false,ex.Message));
             }
         }
@@ -328,7 +328,7 @@ internal static class BridgeSuiteExample
             if(grasshopper)GrasshopperBridgeSuite.Run(d,inputs,results,sections,checks);
             var report=new{Date=DateTimeOffset.Now,Definition=d,Section=SectionParameters(d),Ec,Shrinkage=Shrinkage(SectionParameters(d)),
                 Method="3 independent incremental linear stiffness states + longitudinal differential shrinkage; primary section stress and native secondary resultants added once.",
-                Scope="Gross uncracked sections, full interaction, equivalent planar grillage. Torsion preserved; curved sections exceed current MeCheck2 action domain. No normative complete bridge verification.",
+                Scope="Gross uncracked sections, full interaction, equivalent planar grillage. Torsion preserved; curved sections exceed current BridgeChecks action domain. No normative complete bridge verification.",
                 Results=results.Select((m,i)=>Summary(m,Cases[i],d.Panels)),Mesh=mesh,Sections=sections,Checks=checks.Measurements};
             File.WriteAllText(Path.Combine(folder,"validation.json"),JsonSerializer.Serialize(report,Json));
             int failed=checks.Measurements.Count(c=>!c.Passed);total+=checks.Measurements.Count;failures+=failed;

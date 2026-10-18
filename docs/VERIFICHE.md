@@ -2,25 +2,25 @@
 
 ## Ponte misto a graticcio — esempio 11
 
-Esecuzione del 17 ottobre 2026: **357 misure superate**, nessun fallimento, tramite `--bridge-grillage --gh`. La definizione GHX è stata riaperta e risolta con i componenti di costruzione, analisi, merge e MeCheck2; 240 sezioni hanno attraversato cinque contributi di fase. Riferimenti, unità e tolleranze: [guida del ponte](../examples/bridge-grillage/README.md); dati grezzi: [validation.json](../examples/bridge-grillage/validation.json).
+Esecuzione del 17 ottobre 2026: **357 misure superate**, nessun fallimento, tramite `--bridge-grillage --gh`. La definizione GHX è stata riaperta e risolta con i componenti di costruzione, analisi, merge e BridgeChecks; 240 sezioni hanno attraversato cinque contributi di fase. Riferimenti, unità e tolleranze: [guida del ponte](../examples/bridge-grillage/README.md); dati grezzi: [validation.json](../examples/bridge-grillage/validation.json).
 
 Copertura aggiuntiva: tre rigidezze del graticcio, equilibrio e risposta analitica simmetrica, reciprocità, veicolo eccentrico e speculare, 23 posizioni mobili, cinque incrementi nativi di getto, mesh 12/24/48, sensibilità GJ. Il traffico eccentrico produce torsione e viene correttamente rifiutato dal verificatore N–M–V. La combinazione simmetrica è controllata elasticamente a sezione lorda, senza instabilità locale o certificazione normativa.
 
-Dopo i fix è stata rieseguita la suite generale: **202 controlli smoke/nativi e 21 gruppi di regressione** superati. Il successivo controllo isolato `bridge-example-parameters` verifica i limiti della ricetta prima dell'analisi; non altera il modello di default. Porte e GUID: audit invariato, 16 componenti MeCheck2 e 137 GUID complessivi.
+Dopo i fix è stata rieseguita la suite generale: **202 controlli smoke/nativi e 21 gruppi di regressione** superati. Il successivo controllo isolato `bridge-example-parameters` verifica i limiti della ricetta prima dell'analisi; non altera il modello di default. Porte e GUID: audit invariato, 16 componenti BridgeChecks e 137 GUID complessivi.
 
 ## Risultati effettivamente ottenuti
 
 Ambiente: Windows x64, Rhino 8 avviato senza finestra mediante Rhino.Inside, runtime .NET 8, compilazione con SDK 9.0.319. Ultimo collaudo nativo: 17 ottobre 2026. Grasshopper installato 8.35.26251.13001; riferimenti di compilazione 8.27.26019.16021. Straus7 R3.1.5 x64 con licenza API disponibile.
 
 - Build Release: **0 errori, 0 avvisi**.
-- Audit delle porte: **103 componenti/parametri mantenuti**, inclusi **16 MeCheck2**, nessuna differenza non ammessa.
+- Audit delle porte: **103 componenti/parametri mantenuti**, inclusi **16 BridgeChecks**, nessuna differenza non ammessa.
 - **137 GUID distinti** contando plugin e oggetti Grasshopper; nessuna collisione con i GUID della base.
 - Smoke test e sezioni native: **202 controlli superati e 19 gruppi di regressione superati**, inclusa l'istanziazione di tutti i **136 componenti/parametri registrabili** nel runtime Rhino 8. I 202 comprendono i precedenti 177 controlli, 21 sezioni native, area analitica BGL rettangolare e tre controlli sulla mensola nativa.
 - Icone: tutte le 136 risorse presenti, distinte e associate al proprio oggetto a 24×24 px; logo plugin a 24 px; registrazione delle due categorie con icone a 16 px verificata nella sessione precedente; il controllo corrente sul profilo completo è rimasto bloccato durante il caricamento dei plugin installati. Confronto dei pixel opachi e alpha esatto, tolleranza di due livelli su 255 sui canali premoltiplicati dei bordi semitrasparenti per gli arrotondamenti GDI+.
 - Prove analitiche: area/inerzia del cerchio, sezione omogeneizzata di solo acciaio, tensione N/A, flessione con segno dei lembi, taglio VQ/(It).
 - Fasi: azioni istantanee e a lungo termine distinte, accumulo delle deformazioni imposte, errore esplicito per risultati mancanti alla stazione.
 - Persistenza: archivio del modello con nodi, beam, attributi e risultati; identità condivisa dei casi di carico; archivio Grasshopper di sezioni, proprietà e proprietà composte; dati e copia profonda dei carichi mobili.
-- Input non supportati: rifiuto di torsione nel percorso MeCheck2 adottato, offset verticale non reinterpretato, mobilità dei carichi non valida.
+- Input non supportati: rifiuto di torsione nel percorso BridgeChecks adottato, offset verticale non reinterpretato, mobilità dei carichi non valida.
 
 Il log corrente è `artifacts/bugfix-validation.log`; audit e inventario sono in `artifacts/contract-audit.json` e `artifacts/component-runtime.json`. Gli artefatti sono esclusi da Git. La suite isolata termina con `PASS TOTAL 177`, `REGRESSION TOTAL 19` e codice zero.
 
@@ -40,7 +40,7 @@ Sono coperti i difetti R1–R9 della revisione e i problemi aggiuntivi emersi du
 
 La separazione fra errori bloccanti e avvisi nell'esportatore e le descrizioni di validità dei Goo sono state controllate sul codice e compilate. Il comportamento delle chiamate native nei percorsi di errore non è attestato senza una prova API.
 
-### Microbenchmark MeCheck2
+### Microbenchmark BridgeChecks
 
 Un elemento, 8 casi, 10 combinazioni, mediana di tre esecuzioni dopo riscaldamento. L'indice viene ricostruito una volta per esecuzione e il suo costo è incluso. Checksum analitico delle azioni verificato in ogni esecuzione.
 
@@ -60,13 +60,13 @@ Il 17 ottobre 2026 `St7Init` ha inizializzato correttamente l'API con la licenza
 
 Sono stati eseguiti i **10 benchmark** descritti in [examples/README.md](../examples/README.md), con **5 casi di costruzione per fasi**. I report riportano valore atteso, valore ottenuto, tolleranza ed esito di ogni misura. Le dieci definizioni `.ghx` sono anche salvate, riaperte e risolte tramite i componenti Grasshopper reali, compresi `Node Results`, `Beam Results` e `Plate Results`. Il modello iniziale è internalizzato nelle definizioni; le ricette C# consentono di rigenerarlo con dati diversi.
 
-Esito della sessione: **121 confronti superati nei benchmark nativi**, **111 confronti ripetuti attraverso le definizioni Grasshopper**, **30 controlli superati nella catena delle fasi MeCheck2**. Questi conteggi si aggiungono ai 202 controlli smoke/nativi e ai 19 gruppi di regressione; i 111 confronti GH sono intenzionalmente gli stessi riferimenti numerici, verificati attraverso un diverso punto di ingresso.
+Esito della sessione: **121 confronti superati nei benchmark nativi**, **111 confronti ripetuti attraverso le definizioni Grasshopper**, **30 controlli superati nella catena delle fasi BridgeChecks**. Questi conteggi si aggiungono ai 202 controlli smoke/nativi e ai 19 gruppi di regressione; i 111 confronti GH sono intenzionalmente gli stessi riferimenti numerici, verificati attraverso un diverso punto di ingresso.
 
 Copertura: equilibrio nodale, somma delle azioni, combinazioni lineari, carico distribuito, patch test shell, asse mobile in 13 posizioni, incrementi NLA, carico/scarico per fasi, nascita senza tensioni, rimozione con redistribuzione, selezione parziale degli incrementi e assenza di risultati per gli elementi inattivi. Per NLA si controllano convergenza dell'intera storia e fase nativa degli incrementi prima di associare i risultati agli elementi.
 
-Un benchmark aggiuntivo collega i momenti nativi al verificatore MeCheck2 e confronta **cinque contributi di fase**: solo acciaio, lungo termine, istantanea e due ritiri imposti. Controlla quattro tensioni di lembo dopo ogni fase con integrali di sezione indipendenti. Include una prova fisica del segno del momento: assi nativi, deformata verso l'alto per coppia terminale che produce flessione positiva e compressione del lembo superiore. Il riferimento tiene conto dell'idealizzazione a parete sottile delle flange adottata dal motore gPC nelle fasi composte; dettagli e formule sono nel README degli esempi.
+Un benchmark aggiuntivo collega i momenti nativi al verificatore BridgeChecks e confronta **cinque contributi di fase**: solo acciaio, lungo termine, istantanea e due ritiri imposti. Controlla quattro tensioni di lembo dopo ogni fase con integrali di sezione indipendenti. Include una prova fisica del segno del momento: assi nativi, deformata verso l'alto per coppia terminale che produce flessione positiva e compressione del lembo superiore. Il riferimento tiene conto dell'idealizzazione a parete sottile delle flange adottata dal motore gPC nelle fasi composte; dettagli e formule sono nel README degli esempi.
 
-Le prove hanno individuato e corretto cinque difetti: ricalcolo improprio delle BGL, fasi NLA non abilitate, lettura di forze su elementi inattivi, accettazione senza controllo esplicito della convergenza e inversione dei segni nel riferimento MeCheck2. I commit e i metodi modificati sono elencati in [MIGRAZIONE](MIGRAZIONE.md). In particolare, le vecchie verifiche MeCheck2 devono essere rigenerate dopo la correzione dei segni.
+Le prove hanno individuato e corretto cinque difetti: ricalcolo improprio delle BGL, fasi NLA non abilitate, lettura di forze su elementi inattivi, accettazione senza controllo esplicito della convergenza e inversione dei segni nel riferimento BridgeChecks. I commit e i metodi modificati sono elencati in [MIGRAZIONE](MIGRAZIONE.md). In particolare, le vecchie verifiche BridgeChecks devono essere rigenerate dopo la correzione dei segni.
 
 Per ripetere:
 
@@ -80,8 +80,8 @@ Le 21 famiglie parametriche sono state calcolate con l'API e hanno area e inerzi
 
 | Ambito | Stato |
 |---|---|
-| MeCheck2 | Tutti i componenti e le porte ricreati. Il percorso adottato del motore gPC copre una singola H diritta con soletta rettangolare e fino a due file di barre a diametro uniforme per fila, sotto N–Mx–Vy. Flessione deviata, torsione, taglio trasversale e sezioni ruotate/asimmetriche sono rifiutati. |
-| Altri checker della base | I componenti esterni a MeCheck2 sono stati trasposti e compilati; non sono stati eseguiti benchmark numerici completi per ciascuno. Le convenzioni storiche di questi percorsi richiedono una validazione dedicata prima dell’uso progettuale. |
+| BridgeChecks | Tutti i componenti e le porte ricreati. Il percorso adottato del motore gPC copre una singola H diritta con soletta rettangolare e fino a due file di barre a diametro uniforme per fila, sotto N–Mx–Vy. Flessione deviata, torsione, taglio trasversale e sezioni ruotate/asimmetriche sono rifiutati. |
+| Altri checker della base | I componenti esterni a BridgeChecks sono stati trasposti e compilati; non sono stati eseguiti benchmark numerici completi per ciascuno. Le convenzioni storiche di questi percorsi richiedono una validazione dedicata prima dell’uso progettuale. |
 | Metodo di verifica | La trasposizione usa il motore gPC disponibile, con opzioni Eurocode 4 / SLE rara per la risposta tensionale. Non attesta tutte le verifiche NTC/Eurocodici di un ponte, né equivalenza numerica completa al vecchio checker. |
 | Ritiro calcolato dal tempo | `epsilonCS=NaN`; resta utilizzabile il ritiro **imposto** nei componenti di fase/self tension. |
 | TauB | `NaN` e warning finché non è definita una corrispondenza verificata. |
@@ -116,6 +116,6 @@ Quattro esempi 12–15: **290 misure superate**, di cui 20 sui benchmark del rit
 
 La prima mesh dei curvi non rispettava il 2%; è stata raffinata senza allargare la tolleranza. I file distribuiti corrispondono alle mesh della tabella. Il caso R80 ha una freccia di circa 136 mm nella fase di solo acciaio: è un esempio numerico flessibile, non un dimensionamento approvato; warping e instabilità globale non sono inclusi.
 
-Test generale della build aggiornata: **181 controlli smoke e 23 gruppi di regressione**, incluse le icone dei 140 oggetti Grasshopper e la persistenza dei dettagli gPC. Audit: 103 oggetti conservati, 16 MeCheck2, 141 GUID contando il plugin, nessun errore. Il bug nativo dei percorsi è verificato separatamente sul caso 01 a mensola (9 controlli).
+Test generale della build aggiornata: **181 controlli smoke e 23 gruppi di regressione**, incluse le icone dei 140 oggetti Grasshopper e la persistenza dei dettagli gPC. Audit: 103 oggetti conservati, 16 BridgeChecks, 141 GUID contando il plugin, nessun errore. Il bug nativo dei percorsi è verificato separatamente sul caso 01 a mensola (9 controlli).
 
-Per i curvi viene verificato anche che MeCheck2 segnali la torsione H non supportata: **questo è un test del software, non una verifica resistente del ponte**. Limiti, fonti e file riproducibili sono nel [README della suite](../examples/bridge-suite/README.md).
+Per i curvi viene verificato anche che BridgeChecks segnali la torsione H non supportata: **questo è un test del software, non una verifica resistente del ponte**. Limiti, fonti e file riproducibili sono nel [README della suite](../examples/bridge-suite/README.md).

@@ -17,7 +17,7 @@ namespace BridGHe.Grasshopper.Components.Loads
         /// Initializes a new instance of the PlatePressureComponent class.
         /// </summary>
         public PlatePressureComponent()
-          : base("Plate Pressure", "PP", "Assign a plate pressure", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_LOADS)
+          : base("Plate Pressure", "PP", "Assign a plate pressure", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_LOADS)
         {
         }
 

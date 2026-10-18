@@ -1,16 +1,6 @@
 using System;
 using Grasshopper.Kernel.Types;
 
-/* Unmerged change from project 'BridGHe.Grasshopper (net7.0-windows)'
-Before:
-using BridGHe.Common.Models;
-After:
-using BridGHe.Common.Models;
-using FeMM;
-using BridGHe.Grasshopper;
-using BridGHe.Grasshopper.DataTypes;
-using BridGHe.Grasshopper.DataTypes.Fem;
-*/
 using BridGHe.Common.Models;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem

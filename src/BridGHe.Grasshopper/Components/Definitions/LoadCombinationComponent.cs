@@ -12,7 +12,7 @@ namespace BridGHe.Grasshopper.Components.Definitions
     public class LoadCombinationComponent : GH_Component
     {
         public LoadCombinationComponent()
-          : base("Load Combination", "LCombo", "A load combination definition", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_DEFINITIONS)
+          : base("Load Combination", "LCombo", "A load combination definition", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_DEFINITIONS)
         {
 
         }

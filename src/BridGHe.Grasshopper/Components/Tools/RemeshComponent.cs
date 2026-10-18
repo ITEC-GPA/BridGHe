@@ -14,7 +14,7 @@ namespace BridGHe.Grasshopper.Components.Tools
         /// Initializes a new instance of the NodeComponent class.
         /// </summary>
         public RemeshComponent()
-          : base("Remesh", "R", "Remesh an existing mesh", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_PATTERNING)
+          : base("Remesh", "R", "Remesh an existing mesh", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_PATTERNING)
         {
         }
 

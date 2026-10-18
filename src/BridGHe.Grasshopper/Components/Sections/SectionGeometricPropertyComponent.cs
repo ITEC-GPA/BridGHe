@@ -12,7 +12,7 @@ namespace BridGHe.Grasshopper.Components.Sections
         /// Initializes a new instance of the BeamPropertyComponent class.
         /// </summary>
         public SectionGeometricPropertyComponent()
-          : base("Section Geometric Property", "BGP", "Section geometric properties", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_SECTIONS)
+          : base("Section Geometric Property", "BGP", "Section geometric properties", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_SECTIONS)
         {
 
         }

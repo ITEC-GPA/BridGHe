@@ -14,9 +14,9 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
 
-namespace BridGHe.Grasshopper.Components.MeCheck2
+namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
-    public class PrintCheckImageMeCheckForceComponent : GH_Component
+    public class BridgeForcePlotComponent : GH_Component
     {
         protected bool _run;
 
@@ -49,8 +49,8 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// <summary>
         /// Initializes a new instance of the MyComponent1 class.
         /// </summary>
-        public PrintCheckImageMeCheckForceComponent()
-          : base("Print MeCheck Forces", "PI", "Create the check image of super element check", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_MECHECK2)
+        public BridgeForcePlotComponent()
+          : base("Print BridGHe Forces", "PI", "Create the check image of super element check", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
         {
         }
 
@@ -71,7 +71,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// </summary>
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("FeMM Model", "FM", "The FEM models (more than one for stages)", GH_ParamAccess.item);
+            pManager.AddGenericParameter("BridGHe Model", "FM", "The FEM models (more than one for stages)", GH_ParamAccess.item);
             pManager.AddGenericParameter("Super-Element Beam", "SE", "The Super-Element Beam", GH_ParamAccess.list);
             pManager.AddGenericParameter("Forces", "F", "The Forces", GH_ParamAccess.tree);
             pManager.AddIntegerParameter("Force component", "FC", "The force component to print", GH_ParamAccess.item, 4);

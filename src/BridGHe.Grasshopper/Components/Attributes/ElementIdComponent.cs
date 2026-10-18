@@ -16,7 +16,7 @@ namespace BridGHe.Grasshopper.Components.Attributes
         /// Initializes a new instance of the SuperElementComponent class.
         /// </summary>
         public ElementIdComponent()
-          : base("Element Id", "EI", "Defines user element ID for node/beam/plate", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
+          : base("Element Id", "EI", "Defines user element ID for node/beam/plate", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
         {
         }
 

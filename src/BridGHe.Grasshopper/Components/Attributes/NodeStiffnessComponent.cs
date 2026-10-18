@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components.Attributes
         /// Initializes a new instance of the NodeRestraintsComponent class.
         /// </summary>
         public NodeStiffnessComponent()
-          : base("Stiffness", "NS", "Define a node stiffness", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
+          : base("Stiffness", "NS", "Define a node stiffness", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_ATTRIBUTES)
         {
         }
 

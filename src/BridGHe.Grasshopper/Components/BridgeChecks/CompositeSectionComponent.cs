@@ -5,7 +5,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using System;
 
-namespace BridGHe.Grasshopper.Components.MeCheck2
+namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
     public class CompositeSectionComponent_OBSOLETE : GH_Component
     {
@@ -13,7 +13,7 @@ namespace BridGHe.Grasshopper.Components.MeCheck2
         /// Initializes a new instance of the CompositeSectionComponent class.
         /// </summary>
         public CompositeSectionComponent_OBSOLETE()
-          : base("Composite Beam Property", "CBP", "Define a mixed section composed by two base sections and 2 materials", Helpers.CategoryNameConstants.CATEGORY_CHECKS, Helpers.CategoryNameConstants.SUBCATEGORY_MECHECK2)
+          : base("Composite Beam Property", "CBP", "Define a mixed section composed by two base sections and 2 materials", Helpers.CategoryNameConstants.CATEGORY_CHECKS, Helpers.CategoryNameConstants.SUBCATEGORY_BRIDGE)
         {
         }
 

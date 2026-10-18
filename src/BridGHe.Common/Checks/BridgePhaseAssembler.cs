@@ -71,7 +71,7 @@ namespace BridGHe.Common.Checks
                     if (entry.Value == 0) continue;
                     var loadCase = entry.Key;
                     if (loadCase.Stages == null || loadCase.Stages.Count != 1)
-                        throw new InvalidOperationException($"Il caso {loadCase.Name} deve appartenere a una sola fase MeCheck2.");
+                        throw new InvalidOperationException($"Il caso {loadCase.Name} deve appartenere a una sola fase BridgeChecks.");
                     var phase = loadCase.Stages[0].BridgePhase;
                     if (phase == LoadCaseModel.Stage.BridgePhases.StrainInfinite || phase == LoadCaseModel.Stage.BridgePhases.StrainInstant)
                     {

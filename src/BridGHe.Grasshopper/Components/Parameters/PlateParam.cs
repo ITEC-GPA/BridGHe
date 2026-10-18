@@ -16,7 +16,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
     public class PlateParam : GH_PersistentParam<GH_Plate>
     {
         public PlateParam()
-            : base("Plate", "P", "Contains a collection of plates", CategoryNameConstants.CATEGORY_FEMM, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
+            : base("Plate", "P", "Contains a collection of plates", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
         {
         }
 
