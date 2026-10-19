@@ -679,6 +679,48 @@
       "guids": [
         "97bab293-1482-420d-913e-fdf7b9204cae"
       ]
+    },
+    "src/BridGHe.Grasshopper/Components/Utilities/BridgeEnvelopeComponents.cs": {
+      "ports": "5b53f4dea386b861dfe9c0937cd4bad3bcb5da2d4028c5dc35d4fd8c1649b7ee",
+      "guids": [
+        "1ea9fccb-8a94-4b89-bc26-cd4fb7904248",
+        "8272699a-e096-49e0-b185-f31addd9e21d",
+        "7cdb2c25-a0b6-44d3-b64c-bd56232663fa"
+      ]
+    },
+    "src/BridGHe.Grasshopper/Components/Utilities/BridgeModelAuditComponent.cs": {
+      "ports": "8a78950d299597a17e88336f5250c856785df64f10a731bedbc91e4efffd777f",
+      "guids": [
+        "7f95faaf-b353-4a1a-9e3f-c9189baa9272"
+      ]
+    },
+    "src/BridGHe.Grasshopper/Components/Utilities/BridgeMovingLanesComponent.cs": {
+      "ports": "908d6fcbcc8b908fdc9fcf9174d579ba6bb7cb9e3dfbf346cafc2ff03803ed26",
+      "guids": [
+        "7a067caf-afd7-466d-869d-0d3cb77ce0b1"
+      ]
+    },
+    "src/BridGHe.Grasshopper/Components/Utilities/BridgePhaseModelComponent.cs": {
+      "ports": "99b993a37030e154afb84a113aa2d1947075422221a8562bb37244759b84a9f5",
+      "guids": [
+        "6ed9466e-9e5a-4059-a570-ae1461537a36"
+      ]
+    },
+    "src/BridGHe.Grasshopper/Components/Utilities/BridgeResultToolComponents.cs": {
+      "ports": "a3b304cedf84f436132aded39ae957d3e5cbb31b2f24e3498625afac4181c677",
+      "guids": [
+        "4a919ef3-341d-444c-be04-66918e1ea8ec",
+        "16496e6c-8199-44dd-88e9-72a4c6e0ece6",
+        "e0447314-cb48-4c24-8e65-6508ba9baa90"
+      ]
+    },
+    "src/BridGHe.Grasshopper/Components/Utilities/BridgeWorkflowToolComponents.cs": {
+      "ports": "b1323d7f4b760b73a5ace2d3ce84aa1a61471cedc1b5d858f0438b92a46ff896",
+      "guids": [
+        "f118c5fa-aae5-4638-b918-ed8f33b8f749",
+        "535694df-7d4b-41ab-b651-c7b1fa05e1ef",
+        "5482bd94-f35a-4057-9207-fd12143e535b"
+      ]
     }
   }
 }

@@ -2,11 +2,13 @@
 
 Plugin Grasshopper per **Rhino 8 / .NET 8 / Windows x64**: modello parametrico → Straus7 R3 → risultati negli elementi → verifiche e dettagli di ponti misti con gPC.
 
-La versione corrente comprende **138 componenti e 8 parametri**, con 147 GUID distinti incluso il plugin. Il refactoring del 19 ottobre 2026 semplifica gli input e rimuove i contenitori non utilizzati. I contratti aggiornati sono in [COMPONENTI](docs/COMPONENTI.md); le definizioni Grasshopper degli esempi sono state rigenerate.
+La versione corrente comprende **153 componenti e 8 parametri**, con 162 GUID distinti incluso il plugin. I contratti aggiornati sono in [COMPONENTI](docs/COMPONENTI.md). Gli strumenti operativi comprendono audit del modello, copie di fase, combinazioni per Action ID, inviluppi concomitanti, riepilogo GPC, confronti numerici, incrementi di ritiro e corsie mobili.
 
 ## Esempi
 
 [Indice unico degli esempi numerati](example/README.md). Ogni caso raccoglie definizione, istruzioni e calcoli nella propria cartella.
+
+I nuovi esempi **23–28** mostrano i 12 strumenti operativi; la [guida Word](docs/BridGHe_Guida_operativa.docx) li spiega nei capitoli 17–21. Le prove di inviluppo usano campioni controllati e il riepilogo esegue il calcolo di sezione GPC, senza nuove analisi Straus.
 
 - [01–10: casi analitici, carichi mobili e cinque esempi di costruzione per fasi](example/00-documentazione/benchmark-01-10.md).
 - [11: ponte misto a graticcio, quattro travi, veicolo mobile e tre rigidezze](example/11-ponte-graticcio/README.md).

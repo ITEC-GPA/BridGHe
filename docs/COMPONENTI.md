@@ -1,6 +1,6 @@
 # Inventario dei componenti 0.1.0
 
-141 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
+153 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
 
 ## BridGHe / 01-Parameters
 
@@ -70,6 +70,7 @@
 
 | Nome | Tipo | Ingressi | Uscite |
 |---|---|---|---|
+| Bridge Action Combinations | component | Phases; Action IDs; Names; Coefficients | Table; Omitted actions |
 | Group | component | Name; Parent | Group |
 | Load Case | component | Name; Gravity NSM | LoadCase |
 | Load Combination | component | Name; LoadCases; Coefficients | LoadCombination |
@@ -92,6 +93,8 @@
 | Beam | component | Line; Property; Groups; Angle; Offset | Beam |
 | Bridge Action | component | Action ID; Model; Case; Behavior; Beam IDs | Action |
 | Bridge Phase | component | Number; Name; Section State; Actions; Day | Phase |
+| Bridge Phase Model | component | Model; Name; Beam IDs; Property; Clear loads | Model |
+| Bridge Phase Table | component | Phases | Phases; Number; Name; Day; Section state; Action ID; Behavior; Source; Case; Strain |
 | Bridge Shrinkage Action | component | Action ID; Model; Case; Strain increment; Beam IDs; Primary Only; Response | Action |
 | Build BridGHe Model | component | Models; Phases; Combinations; Calculation | Model; Phases; Diagnostics |
 | Build Model | component | Elements; Name; Units; Load Combinations; Staged constructions | Model |
@@ -128,6 +131,7 @@
 | Bridge Rebar Row | component | Enabled; Diameter; Pitch; AxisDistance | Detail |
 | Bridge Section Geometry | component | SlabWidth; SlabHeight; WebHeight; WebThickness; TopWidth; TopThickness; BottomWidth; BottomThickness; SecondBottomEnabled; SecondBottomWidth; SecondBottomThickness; SectionType; WebOffset; WebSpacing | Detail |
 | Bridge Section Increment | component | Name; Active; Kind; Reference; ForceKN; MomentKNm; ShearKN; TorsionKNm; AdditionalConnectionFlow; ShrinkageMicrostrain; HomogenizationSource; Phi; PsiL; N | Detail |
+| Bridge Shrinkage Increments | component | Days; Cumulative strain; Initial strain | Increment; Days; Total increment |
 | Bridge Studs | component | Enabled; CountPerRow; Diameter; Height; LongitudinalPitch; TransversePitch; Fu; GammaV; HeadDiameter; HeadThickness; RequiredCover; RepeatedActionDetail | Detail |
 | Bridge Support Stiffener | component | Enabled; Layout; Width; Thickness; RightWidth; RightThickness; Location; LeftPanel; RightPanel; ReactionKN; EndDistance; LoadX; LoadZ; FootprintLength; FootprintWidth; LengthFactor; RigidEndPost; EndPostSpacing; CheckWelds; WeldThroat | Detail |
 | Bridge Transverse Reinforcement | component | Enabled; TopDiameter; TopPitch; BottomDiameter; BottomPitch; CotTheta; LeftFlowFraction; BendingSteelPerMetre; AnchorageLength; GoodBond; LeftConcreteEdge; RightConcreteEdge; EdgeUBar; UBarDiameter | Detail |
@@ -145,6 +149,7 @@
 | Beam Point Load | component | Beam; LoadCase; Coordinate System; P1; P2; P3; a | Beam |
 | Beam Point Moment | component | Beam; LoadCase; Coordinate System; M1; M2; M3; a | Beam |
 | Beam PreLoad | component | Beam; LoadCase; Type; Value | Beam |
+| Bridge Moving Lanes | component | Prototype; Offsets; Cases | Paths |
 | Composite Beam Strain | component | Beam; LoadCase; Strain | Beam |
 | Composite Shrinkage Actions | component | Composite property; Concrete strain | Straus pre-strain; Axis 2 thermal gradient; Free centroid strain; Free curvature |
 | Moving Centrifugal Data | component | K0; K1; Limit K1; Minimum K1; Maximum K1; Length unit; Force unit | Moving object |
@@ -191,7 +196,13 @@
 | Nome | Tipo | Ingressi | Uscite |
 |---|---|---|---|
 | Beam Results | component | Beam | Load cases; Stations; Steps; Shear Forces; Bending Moments; Axial Forces; Torques |
+| Bridge Beam Envelope | component | Model; Element IDs; Cases; Component; Mode | Element ID; Station; Value; Case; Step; Step type; Concomitant; Result; Coverage; Units |
+| Bridge Bearing Envelope | component | Model; Element IDs; Cases; Component; Mode | Element ID; Station; Value; Case; Step; Step type; Concomitant; Result; Coverage; Units |
+| Bridge Check Summary | component | Results; Labels | Label; Phase; Check; Ratio; Status; Units; Notes; Maximum finite ratio; Unavailable ratios; Governing labels |
+| Bridge Displacement Envelope | component | Model; Element IDs; Cases; Component; Mode | Element ID; Station; Value; Case; Step; Step type; Concomitant; Result; Coverage; Units |
 | Bridge Force Plot | component | BridGHe Model; Super-Element Beam; Results; Quantity; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running | SVG; File; Minimum; Maximum |
+| Bridge Result Cases | component | Model | Cases; Case by step; Step; Step type; Result type; Count; Units |
+| Bridge Result Comparison | component | Reference keys; Reference values; Candidate keys; Candidate values; Absolute tolerance; Relative tolerance | All within tolerance; Key; Difference; Relative difference; Within tolerance |
 | Bridge Shear Plot | component | BridGHe Model; Super-Element Beam; Results; Quantity; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running | SVG; File; Minimum; Maximum |
 | Bridge Shear Results | component | Section result | Shear; Average tau; Maximum tau; Equivalent stress; Web resistance; Warnings |
 | Bridge Stress Plot | component | BridGHe Model; Super-Element Beam; Results; Quantity; Combinations; Show Min/Max Combo; Additional values; File Path; Graphic Title; Keep Running | SVG; File; Minimum; Maximum |
@@ -210,6 +221,7 @@
 | Align plate axes | component | Plate; Axis; Direction | Plate |
 | Beam Filter | component | Beams; IDs; Ini Pos; End Pos; Units; Properties name; Groups | Beams; Others |
 | Beam Override | component | Beam; Property; Groups; Angle; Offset | Beam |
+| Bridge Model Audit | component | Model; Tolerance | No input errors; Severity; Code; Element; Description; Model |
 | Elements Filter | component | Elements; Find | Found; Others |
 | Merge Geometry | component | Elements; Tolerance | Points; Curves; Meshes |
 | Node Filter | component | Nodes; IDs; Positions; Units; Groups | Nodes; Others |

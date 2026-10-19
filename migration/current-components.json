@@ -240,6 +240,1110 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeBeamEnvelopeComponent",
+    "guid": "1ea9fccb-8a94-4b89-bc26-cd4fb7904248",
+    "kind": "component",
+    "name": "Bridge Beam Envelope",
+    "nickname": "BeamEnv",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Envelope stored results with governing case/step and all six concomitant values. Local beam forces N,V2,V3,T,M2,M3. Uses model units, no unit conversion or interpolation. Absolute mode retains the governing sign.",
+    "inputs": [
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "Analysed FEM model.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Element IDs",
+        "nickname": "IDs",
+        "description": "Optional selection; empty selects all elements of this type. Every selected element must have results.",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Cases",
+        "nickname": "LC",
+        "description": "Exact case names; empty selects all stored cases of this result type. Does not generate combinations.",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Component",
+        "nickname": "C",
+        "description": "0 N, 1 V2, 2 V3, 3 T, 4 M2, 5 M3; local Straus axes.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Mode",
+        "nickname": "Mode",
+        "description": "0 minimum, 1 maximum, 2 maximum absolute value (signed).",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Element ID",
+        "nickname": "ID",
+        "description": "Element corresponding to each result row.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Station",
+        "nickname": "X",
+        "description": "Beam distance from I in model length units; zero for nodes.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Value",
+        "nickname": "V",
+        "description": "Signed governing component, model units.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Case",
+        "nickname": "LC",
+        "description": "Governing case name.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Step",
+        "nickname": "Step",
+        "description": "Stored step identifier; may identify moving vehicle position, not a distance.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Step type",
+        "nickname": "Type",
+        "description": "Stored step type.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Concomitant",
+        "nickname": "All",
+        "description": "Six components from the SAME result. One branch per output row.",
+        "access": "tree",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Result",
+        "nickname": "R",
+        "description": "Original governing result object.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Coverage",
+        "nickname": "Coverage",
+        "description": "Case coverage at each sampled station; no assumption of identical step grids.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Units",
+        "nickname": "U",
+        "description": "Model unit system; moments use force times length.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeBearingEnvelopeComponent",
+    "guid": "8272699a-e096-49e0-b185-f31addd9e21d",
+    "kind": "component",
+    "name": "Bridge Bearing Envelope",
+    "nickname": "BearingEnv",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Envelope stored results with governing case/step and all six concomitant values. Global support reactions Fx,Fy,Fz,Mx,My,Mz. Select support Node IDs explicitly when the model also contains free nodes. Uses model units, no unit conversion or interpolation. Absolute mode retains the governing sign.",
+    "inputs": [
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "Analysed FEM model.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Element IDs",
+        "nickname": "IDs",
+        "description": "Optional selection; empty selects all elements of this type. Every selected element must have results.",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Cases",
+        "nickname": "LC",
+        "description": "Exact case names; empty selects all stored cases of this result type. Does not generate combinations.",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Component",
+        "nickname": "C",
+        "description": "0 Fx, 1 Fy, 2 Fz, 3 Mx, 4 My, 5 Mz; global axes.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Mode",
+        "nickname": "Mode",
+        "description": "0 minimum, 1 maximum, 2 maximum absolute value (signed).",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Element ID",
+        "nickname": "ID",
+        "description": "Element corresponding to each result row.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Station",
+        "nickname": "X",
+        "description": "Beam distance from I in model length units; zero for nodes.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Value",
+        "nickname": "V",
+        "description": "Signed governing component, model units.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Case",
+        "nickname": "LC",
+        "description": "Governing case name.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Step",
+        "nickname": "Step",
+        "description": "Stored step identifier; may identify moving vehicle position, not a distance.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Step type",
+        "nickname": "Type",
+        "description": "Stored step type.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Concomitant",
+        "nickname": "All",
+        "description": "Six components from the SAME result. One branch per output row.",
+        "access": "tree",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Result",
+        "nickname": "R",
+        "description": "Original governing result object.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Coverage",
+        "nickname": "Coverage",
+        "description": "Case coverage at each sampled station; no assumption of identical step grids.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Units",
+        "nickname": "U",
+        "description": "Model unit system; moments use force times length.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeDisplacementEnvelopeComponent",
+    "guid": "7cdb2c25-a0b6-44d3-b64c-bd56232663fa",
+    "kind": "component",
+    "name": "Bridge Displacement Envelope",
+    "nickname": "DispEnv",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Envelope stored results with governing case/step and all six concomitant values. Global node translations Ux,Uy,Uz and rotations Rx,Ry,Rz. Compare translations with project serviceability limits separately. Uses model units, no unit conversion or interpolation. Absolute mode retains the governing sign.",
+    "inputs": [
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "Analysed FEM model.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Element IDs",
+        "nickname": "IDs",
+        "description": "Optional selection; empty selects all elements of this type. Every selected element must have results.",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Cases",
+        "nickname": "LC",
+        "description": "Exact case names; empty selects all stored cases of this result type. Does not generate combinations.",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Component",
+        "nickname": "C",
+        "description": "0 Ux, 1 Uy, 2 Uz, 3 Rx, 4 Ry, 5 Rz; global axes, rotations in rad.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Mode",
+        "nickname": "Mode",
+        "description": "0 minimum, 1 maximum, 2 maximum absolute value (signed).",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Element ID",
+        "nickname": "ID",
+        "description": "Element corresponding to each result row.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Station",
+        "nickname": "X",
+        "description": "Beam distance from I in model length units; zero for nodes.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Value",
+        "nickname": "V",
+        "description": "Signed governing component, model units.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Case",
+        "nickname": "LC",
+        "description": "Governing case name.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Step",
+        "nickname": "Step",
+        "description": "Stored step identifier; may identify moving vehicle position, not a distance.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Step type",
+        "nickname": "Type",
+        "description": "Stored step type.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Concomitant",
+        "nickname": "All",
+        "description": "Six components from the SAME result. One branch per output row.",
+        "access": "tree",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Result",
+        "nickname": "R",
+        "description": "Original governing result object.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Coverage",
+        "nickname": "Coverage",
+        "description": "Case coverage at each sampled station; no assumption of identical step grids.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Units",
+        "nickname": "U",
+        "description": "Model unit system; moments use force times length.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeModelAuditComponent",
+    "guid": "7f95faaf-b353-4a1a-9e3f-c9189baa9272",
+    "kind": "component",
+    "name": "Bridge Model Audit",
+    "nickname": "Audit",
+    "category": "BridGHe",
+    "subcategory": "14-Tools",
+    "description": "Read-only model diagnostics: IDs, geometry, properties and disconnected parts. Does not certify stiffness stability or validate every load.",
+    "inputs": [
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "FEM model to inspect.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Tolerance",
+        "nickname": "Tol",
+        "description": "Geometric coincidence tolerance in model length units.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "No input errors",
+        "nickname": "OK",
+        "description": "No errors found by the listed checks; warnings remain separate.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Severity",
+        "nickname": "Severity",
+        "description": "Severity",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Code",
+        "nickname": "Code",
+        "description": "Code",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Element",
+        "nickname": "Element",
+        "description": "Element",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Description",
+        "nickname": "Description",
+        "description": "Description",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "Unmodified input model; use Preview for geometry.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeMovingLanesComponent",
+    "guid": "7a067caf-afd7-466d-869d-0d3cb77ce0b1",
+    "kind": "component",
+    "name": "Bridge Moving Lanes",
+    "nickname": "MovingLanes",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Create independent straight moving paths from a prototype and lateral offsets. Preserves the vehicle/template; defines no simultaneous-lane factors or normative arrangement automatically.",
+    "inputs": [
+      {
+        "name": "Prototype",
+        "nickname": "P",
+        "description": "Straight Moving Load Path. Template, target, divisions and static-case option are cloned.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Offsets",
+        "nickname": "Y",
+        "description": "Signed offsets in model length units, towards the third prototype point projected normal to its axis.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Cases",
+        "nickname": "LC",
+        "description": "One distinct load-case name per path.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Paths",
+        "nickname": "P",
+        "description": "Connect the list to Attach Moving Paths. Preview follows the shifted paths.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgePhaseModelComponent",
+    "guid": "6ed9466e-9e5a-4059-a570-ae1461537a36",
+    "kind": "component",
+    "name": "Bridge Phase Model",
+    "nickname": "PhaseModel",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Independent FEM copy for an incremental analysis: override selected beam properties, retain IDs and geometry, invalidate all results and old stage/combination recipes.",
+    "inputs": [
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "Base steel FEM model.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Name",
+        "nickname": "Name",
+        "description": "Name of this independent analysis model.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Beam IDs",
+        "nickname": "IDs",
+        "description": "Explicit selection of composite longitudinal beams.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Property",
+        "nickname": "BP",
+        "description": "Beam property for the selected response n0/n infinity/n shrinkage. Units must match the model.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Clear loads",
+        "nickname": "Clear",
+        "description": "True clears loads, cases and moving paths for a new increment. False retains source loads; results, combinations and stages are always cleared.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "New model, ready to add incremental loads and analyse. Geometry preview uses the replacement section.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeResultCasesComponent",
+    "guid": "4a919ef3-341d-444c-be04-66918e1ea8ec",
+    "kind": "component",
+    "name": "Bridge Result Cases",
+    "nickname": "ResultCases",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "List cases/steps actually present in stored results, with type and record count. Includes generated moving cases.",
+    "inputs": [
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "Analysed FEM model.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Cases",
+        "nickname": "LC",
+        "description": "Distinct stored case names for envelope selection.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Case by step",
+        "nickname": "Case",
+        "description": "Case name corresponding to each following row.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Step",
+        "nickname": "Step",
+        "description": "Stored step identifier, not necessarily a physical distance/time.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Step type",
+        "nickname": "Type",
+        "description": "Solver step type.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Result type",
+        "nickname": "R",
+        "description": "Stored result class.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Count",
+        "nickname": "Count",
+        "description": "Number of result records in this row.",
+        "access": "list",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Units",
+        "nickname": "U",
+        "description": "Model unit system.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeResultComparisonComponent",
+    "guid": "16496e6c-8199-44dd-88e9-72a4c6e0ece6",
+    "kind": "component",
+    "name": "Bridge Result Comparison",
+    "nickname": "Compare",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Compare repeated analyses or sampled mesh studies by explicit physical keys. No interpolation. Criterion: abs(delta) <= absolute tolerance + relative tolerance * abs(reference).",
+    "inputs": [
+      {
+        "name": "Reference keys",
+        "nickname": "K0",
+        "description": "Unique physical labels, e.g. girder/station/case/quantity. Do not rely on element IDs that change with remeshing.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Reference values",
+        "nickname": "V0",
+        "description": "Reference numerical values; all comparisons must use coherent units.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Candidate keys",
+        "nickname": "K1",
+        "description": "Same physical key set, any order.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Candidate values",
+        "nickname": "V1",
+        "description": "Candidate values in the same units as the reference.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Absolute tolerance",
+        "nickname": "Abs",
+        "description": "Tolerance in the units of the compared quantity.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Relative tolerance",
+        "nickname": "Rel",
+        "description": "Dimensionless; 0.01 = 1 percent.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "All within tolerance",
+        "nickname": "OK",
+        "description": "All supplied comparisons pass; does not establish mesh convergence by itself.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Key",
+        "nickname": "K",
+        "description": "Reference order.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Difference",
+        "nickname": "dV",
+        "description": "Candidate minus reference.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Relative difference",
+        "nickname": "Rel",
+        "description": "Difference / abs(reference). NaN for non-zero difference against zero.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Within tolerance",
+        "nickname": "Pass",
+        "description": "Per-key comparison result.",
+        "access": "list",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeCheckSummaryComponent",
+    "guid": "e0447314-cb48-4c24-8e65-6508ba9baa90",
+    "kind": "component",
+    "name": "Bridge Check Summary",
+    "nickname": "CheckSummary",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Tabulate existing GPC checks across sections, phases and combinations. Preserves original statuses/notes and exposes missing ratios; does not add engineering verifications.",
+    "inputs": [
+      {
+        "name": "Results",
+        "nickname": "R",
+        "description": "BridgeStressResult objects from Section/Detail/Super Element Check. Flatten deliberately if combining sections.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Labels",
+        "nickname": "ID",
+        "description": "One explicit beam/station/combination label per result, to preserve traceability.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Label",
+        "nickname": "Label",
+        "description": "Label",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Phase",
+        "nickname": "Phase",
+        "description": "Phase",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Check",
+        "nickname": "Check",
+        "description": "Check",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Ratio",
+        "nickname": "Eta",
+        "description": "Native ratio; NaN means not available, never treated as zero.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Status",
+        "nickname": "Status",
+        "description": "Unmodified GPC status.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Units",
+        "nickname": "Units",
+        "description": "Unmodified GPC units.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Notes",
+        "nickname": "Notes",
+        "description": "Unmodified GPC notes.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Maximum finite ratio",
+        "nickname": "Max",
+        "description": "Largest reported finite ratio. NaN when no numeric ratios exist; not an overall approval.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Unavailable ratios",
+        "nickname": "Missing",
+        "description": "Count of absent/non-finite ratios requiring interpretation of Status/Notes.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Governing labels",
+        "nickname": "Critical",
+        "description": "Labels / phases / checks attaining the maximum finite ratio.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgePhaseTableComponent",
+    "guid": "f118c5fa-aae5-4638-b918-ed8f33b8f749",
+    "kind": "component",
+    "name": "Bridge Phase Table",
+    "nickname": "PhaseTable",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Inspect chronology and Action IDs before Build BridGHe Model. Source availability and engineering compatibility are validated by Build BridGHe Model.",
+    "inputs": [
+      {
+        "name": "Phases",
+        "nickname": "P",
+        "description": "Numbered Bridge Phase objects.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Phases",
+        "nickname": "P",
+        "description": "Validated and ordered phase objects.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Number",
+        "nickname": "Number",
+        "description": "One row per action; activation-only phases use an empty action field.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Name",
+        "nickname": "Name",
+        "description": "One row per action; activation-only phases use an empty action field.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Day",
+        "nickname": "Day",
+        "description": "One row per action; activation-only phases use an empty action field.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Section state",
+        "nickname": "Section state",
+        "description": "One row per action; activation-only phases use an empty action field.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Action ID",
+        "nickname": "Action ID",
+        "description": "One row per action; activation-only phases use an empty action field.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Behavior",
+        "nickname": "Behavior",
+        "description": "One row per action; activation-only phases use an empty action field.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Source",
+        "nickname": "Source",
+        "description": "One row per action; activation-only phases use an empty action field.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Case",
+        "nickname": "Case",
+        "description": "One row per action; activation-only phases use an empty action field.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Strain",
+        "nickname": "Strain",
+        "description": "One row per action; activation-only phases use an empty action field.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeActionCombinationsComponent",
+    "guid": "535694df-7d4b-41ab-b651-c7b1fa05e1ef",
+    "kind": "component",
+    "name": "Bridge Action Combinations",
+    "nickname": "ActionComb",
+    "category": "BridGHe",
+    "subcategory": "04-Definitions",
+    "description": "Create the combination table for Build BridGHe Model from explicit Action IDs and coefficients. No automatic normative factors; omitted actions receive zero.",
+    "inputs": [
+      {
+        "name": "Phases",
+        "nickname": "P",
+        "description": "Numbered Bridge Phase objects defining available Action IDs.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Action IDs",
+        "nickname": "IDs",
+        "description": "Column order in the coefficient branches.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Names",
+        "nickname": "Names",
+        "description": "Combination names, in the same order as sorted coefficient tree paths.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Coefficients",
+        "nickname": "F",
+        "description": "One branch per combination, one coefficient per supplied Action ID. User-defined factors.",
+        "access": "tree",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Table",
+        "nickname": "C",
+        "description": "Wire directly to Combinations of Build BridGHe Model. Header branch plus coefficient rows.",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Omitted actions",
+        "nickname": "Zero",
+        "description": "Action IDs omitted from headers: zero in every combination.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeShrinkageIncrementsComponent",
+    "guid": "5482bd94-f35a-4057-9207-fd12143e535b",
+    "kind": "component",
+    "name": "Bridge Shrinkage Increments",
+    "nickname": "ShrinkInc",
+    "category": "BridGHe",
+    "subcategory": "08-Bridge",
+    "description": "Convert a supplied cumulative shrinkage history to increments for Bridge Shrinkage Action. Does not predict creep/shrinkage or select a normative law.",
+    "inputs": [
+      {
+        "name": "Days",
+        "nickname": "t",
+        "description": "Strictly increasing elapsed days.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Cumulative strain",
+        "nickname": "eps",
+        "description": "Dimensionless, negative contraction, monotonically non-increasing. Not microstrain.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Initial strain",
+        "nickname": "eps0",
+        "description": "Cumulative strain immediately before the first listed phase.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Increment",
+        "nickname": "deps",
+        "description": "Strain increment per phase; connect by matching index to the corresponding Bridge Shrinkage Action.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Days",
+        "nickname": "t",
+        "description": "Days corresponding to increments.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Total increment",
+        "nickname": "Sum",
+        "description": "Sum of increments = last cumulative strain minus initial strain.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Tools.ElementFilterComponent",
     "guid": "c52e4345-36fa-4944-9ee5-99ed74034221",
     "kind": "component",

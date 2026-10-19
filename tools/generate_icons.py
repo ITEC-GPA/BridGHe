@@ -189,6 +189,18 @@ def icon_svg(symbol, family, mark, title, parameter=False):
 
 # Each row is an explicit semantic assignment, never a generic unknown icon.
 ROWS = '''
+BridgeModelAuditComponent|model|check|tool
+BridgePhaseModelComponent|model|stages|model
+BridgeBeamEnvelopeComponent|beam|measure|result
+BridgeBearingEnvelopeComponent|support|data|result
+BridgeDisplacementEnvelopeComponent|axes|measure|result
+BridgePhaseTableComponent|stages|data|tool
+BridgeActionCombinationsComponent|case|stages|load
+BridgeShrinkageIncrementsComponent|strain|clock|check
+BridgeResultCasesComponent|case|data|result
+BridgeResultComparisonComponent|table|measure|result
+BridgeCheckSummaryComponent|bridge|data|result
+BridgeMovingLanesComponent|route|add|moving
 AlignBeamAxesComponent|beam|axes|model
 AlignPlateAxesComponent|plate|axes|model
 BeamFilterComponent|beam|filter|tool
