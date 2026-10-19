@@ -1,10 +1,12 @@
 using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
+using GH_IO.Serialization;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using System;
+using System.Linq;
 
 namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
@@ -65,8 +67,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             DataTypes.Fem.GH_Material rebarMaterial = null;
             double n0 = 0;
             double ninf = 0;
-            bool considerConcrete = false;
-            bool considerRebars = false;
+            bool considerConcrete = true;
+            bool considerRebars = true;
 
             if (!DA.GetData(0, ref name))
                 return;
@@ -83,13 +85,12 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 return;
             if (!DA.GetData(7, ref ninf))
                 return;
-            if (!DA.GetData(8, ref considerConcrete))
-                return;
-            if (!DA.GetData(9, ref considerRebars))
-                return;
-
             double nShrinkage = ninf;
-            DA.GetData(10, ref nShrinkage);
+            // Read() retains the port order saved by each document.
+            DA.GetData("n ritiro", ref nShrinkage);
+            DA.GetData("Consider Concrete", ref considerConcrete);
+            DA.GetData("Consider Rebars", ref considerRebars);
+
             if (!double.IsFinite(n0) || n0 <= 0 || !double.IsFinite(ninf) || ninf <= 0 || !double.IsFinite(nShrinkage) || nShrinkage <= 0)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Modular ratios must be finite and positive."); return; }
 
@@ -141,6 +142,24 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             DA.SetData(2, !considerConcrete && !considerRebars ? steelSectionProp : new GH_BeamProperty(compositeBeamPropertyModel.CreateHomogenizedProperty(n0, "_N0_istant")));
             DA.SetData(3, !considerConcrete && !considerRebars ? steelSectionProp : new GH_BeamProperty(compositeBeamPropertyModel.CreateHomogenizedProperty(ninf, "_N_infinite")));
             DA.SetData(4, !considerConcrete && !considerRebars ? steelSectionProp : new GH_BeamProperty(compositeBeamPropertyModel.CreateHomogenizedProperty(nShrinkage, "_N_shrinkage")));
+        }
+
+        public override bool Read(GH_IReader reader)
+        {
+            // GH restores static parameter data by index. Match the saved order first,
+            // otherwise a Boolean archive can be read into the numeric shrinkage port.
+            var parameters = Params.Input.Skip(8).ToDictionary(p => p.Name, StringComparer.Ordinal);
+            var savedNames = Enumerable.Range(8, 3)
+                .Select(i => reader.FindChunk("param_input", i)?.GetString("Name"))
+                .Where(name => name != null).ToArray();
+            if (savedNames.Length >= 2 && savedNames.Distinct().Count() == savedNames.Length &&
+                savedNames.All(parameters.ContainsKey))
+            {
+                var ordered = savedNames.Concat(parameters.Keys.Except(savedNames)).ToArray();
+                for (int i = 0; i < ordered.Length; i++) Params.Input[8 + i] = parameters[ordered[i]];
+                Params.OnParametersChanged();
+            }
+            return base.Read(reader);
         }
 
         /// <summary>

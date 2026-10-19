@@ -10,6 +10,8 @@
 
 Il verificatore adottato assume le azioni al **baricentro lordo della sezione della rispettiva fase**. Il motore gPC effettua il trasporto al baricentro efficace se necessario. Un modello con azioni riferite ad altri punti richiede un adattamento esplicito prima della verifica.
 
+`Composite Beam Property` legge `n ritiro`, `Consider Concrete` e `Consider Rebars` per nome, anche nei GHX salvati con un ordine diverso degli ultimi tre ingressi. Il fallback a n∞ si applica soltanto se `n ritiro` è omesso. La lettura per indice poteva ignorare il valore collegato nei documenti con il vecchio ordine: nel GHX REV001, n ritiro = 12 diventava 18. La correzione ripristina il valore dichiarato e può quindi cambiare le proprietà omogeneizzate e le tensioni da ritiro di quei documenti; non modifica le formule gPC né i risultati FEM già memorizzati.
+
 ## Selezione dei risultati
 
 `Linear Static` propone casi ordinari e combinazioni globali. `Nonlinear Static` propone solo le combinazioni che definiscono gli incrementi. `Staged analysis` propone le combinazioni delle fasi nel formato `Combinazione [Fase]`; selezionare il nome completo. Un nome inesistente o ambiguo viene rifiutato prima dell'esportazione. La selezione filtra i risultati letti senza rinumerare gli incrementi del modello.
