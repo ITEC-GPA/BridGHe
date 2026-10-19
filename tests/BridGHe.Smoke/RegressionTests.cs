@@ -91,6 +91,13 @@ internal static class RegressionTests
         Require(!preview.ClippingBox.IsValid,"removed elements disappear from preview");
         var node=new NodeModel("N",new Point3d(17,23,42));model.AddElements(new[]{node});
         Require(preview.ClippingBox.Contains(node.Position),"added elements enter model preview");
+        var path=new BridGHe.Common.MovingLoads.MovingPath { Coordinates=new double[]{0,0,0,9000,0,0,0,100,0} };
+        model.MovingPaths.Add(path);
+        Require(preview.ClippingBox.Max.X==9000,"model preview includes moving-path definition points");
+        path.Coordinates[3]=9500;
+        Require(preview.ClippingBox.Max.X==9500,"moving path preview follows edits without native calls");
+        model.MovingPaths.Clear();
+        Require(preview.ClippingBox.Max.X==17,"removing paths clears their preview bounds");
         type.GetProperty("Value").SetValue(goo,null);
         Require(!preview.ClippingBox.IsValid,"clearing model discards old preview bounds");
     }

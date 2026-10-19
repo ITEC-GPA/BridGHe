@@ -21,6 +21,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
     {
         protected Dictionary<ElementModel, Guid> _guids;
         private readonly ConditionalWeakTable<ElementModel, IGH_PreviewData> previews = new();
+        private readonly ConditionalWeakTable<Common.MovingLoads.MovingPath, MovingGoo> movingPreviews = new();
 
         private IEnumerable<IGH_PreviewData> PreviewElements()
         {
@@ -36,6 +37,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                     _ => throw new NotSupportedException()
                 });
             }
+            foreach(var path in Value.MovingPaths)
+                if(path!=null)yield return movingPreviews.GetValue(path,p=>new MovingGoo(p));
         }
 
         public BoundingBox ClippingBox

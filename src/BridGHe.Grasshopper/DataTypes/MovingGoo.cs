@@ -3,11 +3,30 @@ using System.Text.Json;
 using BridGHe.Common.MovingLoads;
 using GH_IO.Serialization;
 using Grasshopper.Kernel.Types;
+using Grasshopper.Kernel;
+using Rhino.Geometry;
+using System.Linq;
+using System.Drawing;
 
 namespace BridGHe.Grasshopper.DataTypes
 {
-    public sealed class MovingGoo : GH_Goo<MovingObject>
+    public sealed class MovingGoo : GH_Goo<MovingObject>, IGH_PreviewData
     {
+        private Point3d[] DefinitionPoints()
+        {
+            if(Value is not MovingPath path || path.Coordinates?.Length!=9 || path.Coordinates.Any(x=>!double.IsFinite(x)))return Array.Empty<Point3d>();
+            var c=path.Coordinates;return new[]{new Point3d(c[0],c[1],c[2]),new Point3d(c[3],c[4],c[5]),new Point3d(c[6],c[7],c[8])};
+        }
+        public BoundingBox ClippingBox=>new BoundingBox(DefinitionPoints());
+        public void DrawViewportMeshes(GH_PreviewMeshArgs args) { }
+        public void DrawViewportWires(GH_PreviewWireArgs args)
+        {
+            var points=DefinitionPoints();if(points.Length!=3)return;
+            var path=(MovingPath)Value;
+            // Circular/quadratic paths: show the actual definition points, not an assumed trajectory.
+            if(path.Shape==0)args.Pipeline.DrawLine(points[0],points[1],args.Color,args.Thickness);
+            for(int i=0;i<3;i++)args.Pipeline.DrawDot(points[i],i==0?"Start":i==1?"End":"Lateral / definition",args.Color,Color.White);
+        }
         public MovingGoo() { }
         public MovingGoo(MovingObject value) { Value = value; }
         public override bool IsValid { get { try { Value?.Validate(); return Value != null; } catch { return false; } } }
