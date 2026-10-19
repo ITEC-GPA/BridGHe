@@ -58,7 +58,7 @@
     "Checks": [
       {
         "Name": "Anima \u00B7 resistenza a taglio",
-        "Demand": 416.51988542063674,
+        "Demand": 416.5198854206666,
         "Resistance": 4350.088482705002,
         "Unit": "kN",
         "Ratio": null,
@@ -76,7 +76,7 @@
       },
       {
         "Name": "Appoggio \u00B7 freccia fuori piano",
-        "Demand": 0.018568700959141194,
+        "Demand": 0.01856870095914119,
         "Resistance": 6.333333333333333,
         "Unit": "mm",
         "Ratio": null,
@@ -184,19 +184,19 @@
       },
       {
         "Name": "Anima \u00B7 tensione equivalente elastica (inviluppo)",
-        "Demand": 28.228207574471448,
+        "Demand": 28.22820757447235,
         "Resistance": 355,
         "Unit": "MPa",
-        "Ratio": 0.07951607767456746,
+        "Ratio": 0.07951607767457,
         "Note": "\u221A(max|\u03C3|\u00B2 \u002B 3 max|\u03C4|\u00B2); \u03C4 sulla sezione lorda omogeneizzata",
         "Status": "Entro limite"
       },
       {
         "Name": "Piolo \u00B7 taglio longitudinale",
-        "Demand": 5.55346089384182,
+        "Demand": 5.553460893841819,
         "Resistance": 82.10866559422284,
         "Unit": "kN",
-        "Ratio": 0.06763550294784673,
+        "Ratio": 0.06763550294784672,
         "Note": "0,75 PRd; esito disponibile soltanto con la combinazione caratteristica/rara",
         "Status": "Entro limite"
       },
@@ -359,7 +359,7 @@
     "Checks": [
       {
         "Name": "Anima \u00B7 resistenza a taglio",
-        "Demand": 159.0614167307252,
+        "Demand": 217.5517995877424,
         "Resistance": 4350.088482705002,
         "Unit": "kN",
         "Ratio": null,
@@ -377,7 +377,7 @@
       },
       {
         "Name": "Intermedio \u00B7 stabilit\u00E0 e pressoflessione II ordine",
-        "Demand": 0.49485398052835566,
+        "Demand": 0.4871286994195982,
         "Resistance": 322.7272727272727,
         "Unit": "MPa",
         "Ratio": null,
@@ -386,7 +386,7 @@
       },
       {
         "Name": "Intermedio \u00B7 freccia fuori piano",
-        "Demand": 0.004323226165967426,
+        "Demand": 0.004255735272202815,
         "Resistance": 6.333333333333333,
         "Unit": "mm",
         "Ratio": null,
@@ -422,7 +422,7 @@
       },
       {
         "Name": "Intermedio \u00B7 saldature verticali all\u2019anima",
-        "Demand": 0.020459111957836455,
+        "Demand": 0.020139719980952535,
         "Resistance": 183.84064251571957,
         "Unit": "MPa",
         "Ratio": null,
@@ -431,7 +431,7 @@
       },
       {
         "Name": "Intermedio \u00B7 saldature alle flange",
-        "Demand": 0.8247566342139261,
+        "Demand": 0.8118811656993303,
         "Resistance": 183.84064251571957,
         "Unit": "MPa",
         "Ratio": null,
@@ -458,19 +458,19 @@
       },
       {
         "Name": "Anima \u00B7 tensione equivalente elastica (inviluppo)",
-        "Demand": 30.592577091433167,
+        "Demand": 30.58845713696415,
         "Resistance": 355,
         "Unit": "MPa",
-        "Ratio": 0.08617627349699483,
+        "Ratio": 0.0861646679914483,
         "Note": "\u221A(max|\u03C3|\u00B2 \u002B 3 max|\u03C4|\u00B2); \u03C4 sulla sezione lorda omogeneizzata",
         "Status": "Entro limite"
       },
       {
         "Name": "Piolo \u00B7 taglio longitudinale",
-        "Demand": 1.6023428759251643,
+        "Demand": 2.1853939416062715,
         "Resistance": 82.10866559422284,
         "Unit": "kN",
-        "Ratio": 0.019514905818149176,
+        "Ratio": 0.02661587453395462,
         "Note": "0,75 PRd; esito disponibile soltanto con la combinazione caratteristica/rara",
         "Status": "Entro limite"
       },

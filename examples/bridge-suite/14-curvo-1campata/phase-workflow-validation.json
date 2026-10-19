@@ -1,0 +1,131 @@
+{
+  "Mode": "cached-native-results",
+  "Checks": [
+    {
+      "Name": "GH G1_GETTO beam count",
+      "Actual": 213,
+      "Expected": 213,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH G1_GETTO scarto max XYZ tutti nodi [mm]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH G1_GETTO scarto max N V1 V2 [N]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.001,
+      "Passed": true
+    },
+    {
+      "Name": "GH G1_GETTO scarto max BM1 BM2 T [Nmm]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1,
+      "Passed": true
+    },
+    {
+      "Name": "GH G2_PERMANENTI beam count",
+      "Actual": 339,
+      "Expected": 339,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH G2_PERMANENTI scarto max XYZ tutti nodi [mm]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH G2_PERMANENTI scarto max N V1 V2 [N]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.001,
+      "Passed": true
+    },
+    {
+      "Name": "GH G2_PERMANENTI scarto max BM1 BM2 T [Nmm]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1,
+      "Passed": true
+    },
+    {
+      "Name": "GH Q_TRAFFICO beam count",
+      "Actual": 339,
+      "Expected": 339,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH Q_TRAFFICO scarto max XYZ tutti nodi [mm]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH Q_TRAFFICO scarto max N V1 V2 [N]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.001,
+      "Passed": true
+    },
+    {
+      "Name": "GH Q_TRAFFICO scarto max BM1 BM2 T [Nmm]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1,
+      "Passed": true
+    },
+    {
+      "Name": "GH RITIRO beam count",
+      "Actual": 339,
+      "Expected": 339,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH RITIRO scarto max XYZ tutti nodi [mm]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH RITIRO scarto max N V1 V2 [N]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.001,
+      "Passed": true
+    },
+    {
+      "Name": "GH RITIRO scarto max BM1 BM2 T [Nmm]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1,
+      "Passed": true
+    },
+    {
+      "Name": "GH BridgeChecks segnala torsione fuori campo",
+      "Actual": 1,
+      "Expected": 1,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH nessuna tensione parziale presentata come verifica",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    }
+  ]
+}

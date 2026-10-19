@@ -1,0 +1,1167 @@
+{
+  "Mode": "cached-native-results",
+  "Checks": [
+    {
+      "Name": "GH fase 0 beam count",
+      "Actual": 69,
+      "Expected": 69,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 1",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 2",
+      "Actual": -8.53316200798713,
+      "Expected": -8.53316200798713,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 3",
+      "Actual": -16.42155144394216,
+      "Expected": -16.42155144394216,
+      "AbsoluteTolerance": 1.642155144394216E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 4",
+      "Actual": -23.12114145021303,
+      "Expected": -23.12114145021303,
+      "AbsoluteTolerance": 2.312114145021303E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 5",
+      "Actual": -28.208800026403736,
+      "Expected": -28.208800026403736,
+      "AbsoluteTolerance": 2.8208800026403735E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 6",
+      "Actual": -31.382290029374296,
+      "Expected": -31.382290029374296,
+      "AbsoluteTolerance": 3.1382290029374294E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 7",
+      "Actual": -32.460269173240626,
+      "Expected": -32.460269173240626,
+      "AbsoluteTolerance": 3.2460269173240626E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 8",
+      "Actual": -31.382290029374655,
+      "Expected": -31.382290029374655,
+      "AbsoluteTolerance": 3.1382290029374654E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 9",
+      "Actual": -28.208800026404347,
+      "Expected": -28.208800026404347,
+      "AbsoluteTolerance": 2.8208800026404345E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 10",
+      "Actual": -23.121141450213695,
+      "Expected": -23.121141450213695,
+      "AbsoluteTolerance": 2.3121141450213696E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 11",
+      "Actual": -16.421551443942704,
+      "Expected": -16.421551443942704,
+      "AbsoluteTolerance": 1.6421551443942704E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 12",
+      "Actual": -8.53316200798743,
+      "Expected": -8.53316200798743,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 13",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 14",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 15",
+      "Actual": -8.53316200798723,
+      "Expected": -8.53316200798723,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 16",
+      "Actual": -16.42155144394235,
+      "Expected": -16.42155144394235,
+      "AbsoluteTolerance": 1.6421551443942348E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 17",
+      "Actual": -23.121141450213287,
+      "Expected": -23.121141450213287,
+      "AbsoluteTolerance": 2.3121141450213285E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 18",
+      "Actual": -28.208800026404013,
+      "Expected": -28.208800026404013,
+      "AbsoluteTolerance": 2.820880002640401E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 19",
+      "Actual": -31.38229002937452,
+      "Expected": -31.38229002937452,
+      "AbsoluteTolerance": 3.138229002937452E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 20",
+      "Actual": -32.460269173240775,
+      "Expected": -32.460269173240775,
+      "AbsoluteTolerance": 3.2460269173240774E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 21",
+      "Actual": -31.382290029374747,
+      "Expected": -31.382290029374747,
+      "AbsoluteTolerance": 3.1382290029374747E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 22",
+      "Actual": -28.208800026404404,
+      "Expected": -28.208800026404404,
+      "AbsoluteTolerance": 2.8208800026404404E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 23",
+      "Actual": -23.12114145021373,
+      "Expected": -23.12114145021373,
+      "AbsoluteTolerance": 2.312114145021373E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 24",
+      "Actual": -16.42155144394273,
+      "Expected": -16.42155144394273,
+      "AbsoluteTolerance": 1.6421551443942727E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 25",
+      "Actual": -8.533162007987446,
+      "Expected": -8.533162007987446,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 26",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 27",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 28",
+      "Actual": -8.533162007987235,
+      "Expected": -8.533162007987235,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 29",
+      "Actual": -16.42155144394239,
+      "Expected": -16.42155144394239,
+      "AbsoluteTolerance": 1.642155144394239E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 30",
+      "Actual": -23.1211414502134,
+      "Expected": -23.1211414502134,
+      "AbsoluteTolerance": 2.31211414502134E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 31",
+      "Actual": -28.208800026404166,
+      "Expected": -28.208800026404166,
+      "AbsoluteTolerance": 2.8208800026404167E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 32",
+      "Actual": -31.382290029374616,
+      "Expected": -31.382290029374616,
+      "AbsoluteTolerance": 3.1382290029374616E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 33",
+      "Actual": -32.46026917324076,
+      "Expected": -32.46026917324076,
+      "AbsoluteTolerance": 3.246026917324076E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 34",
+      "Actual": -31.382290029374648,
+      "Expected": -31.382290029374648,
+      "AbsoluteTolerance": 3.1382290029374646E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 35",
+      "Actual": -28.20880002640425,
+      "Expected": -28.20880002640425,
+      "AbsoluteTolerance": 2.820880002640425E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 36",
+      "Actual": -23.121141450213564,
+      "Expected": -23.121141450213564,
+      "AbsoluteTolerance": 2.3121141450213565E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 37",
+      "Actual": -16.42155144394259,
+      "Expected": -16.42155144394259,
+      "AbsoluteTolerance": 1.642155144394259E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 38",
+      "Actual": -8.533162007987368,
+      "Expected": -8.533162007987368,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 39",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 40",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 41",
+      "Actual": -8.533162007987283,
+      "Expected": -8.533162007987283,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 42",
+      "Actual": -16.421551443942437,
+      "Expected": -16.421551443942437,
+      "AbsoluteTolerance": 1.6421551443942437E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 43",
+      "Actual": -23.12114145021338,
+      "Expected": -23.12114145021338,
+      "AbsoluteTolerance": 2.312114145021338E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 44",
+      "Actual": -28.208800026404074,
+      "Expected": -28.208800026404074,
+      "AbsoluteTolerance": 2.8208800026404074E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 45",
+      "Actual": -31.382290029374488,
+      "Expected": -31.382290029374488,
+      "AbsoluteTolerance": 3.1382290029374485E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 46",
+      "Actual": -32.46026917324058,
+      "Expected": -32.46026917324058,
+      "AbsoluteTolerance": 3.2460269173240583E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 47",
+      "Actual": -31.382290029374357,
+      "Expected": -31.382290029374357,
+      "AbsoluteTolerance": 3.1382290029374353E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 48",
+      "Actual": -28.208800026403875,
+      "Expected": -28.208800026403875,
+      "AbsoluteTolerance": 2.8208800026403875E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 49",
+      "Actual": -23.121141450213198,
+      "Expected": -23.121141450213198,
+      "AbsoluteTolerance": 2.3121141450213196E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 50",
+      "Actual": -16.421551443942306,
+      "Expected": -16.421551443942306,
+      "AbsoluteTolerance": 1.6421551443942306E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 51",
+      "Actual": -8.533162007987212,
+      "Expected": -8.533162007987212,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 0 Uz node 52",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 beam count",
+      "Actual": 87,
+      "Expected": 87,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 1",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 2",
+      "Actual": -1.5401796453555074,
+      "Expected": -1.5401796453555074,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 3",
+      "Actual": -2.9639820802000805,
+      "Expected": -2.9639820802000805,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 4",
+      "Actual": -4.173214033165123,
+      "Expected": -4.173214033165123,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 5",
+      "Actual": -5.091502959852846,
+      "Expected": -5.091502959852846,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 6",
+      "Actual": -5.664297042836259,
+      "Expected": -5.664297042836259,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 7",
+      "Actual": -5.858865191659179,
+      "Expected": -5.858865191659179,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 8",
+      "Actual": -5.664297042836217,
+      "Expected": -5.664297042836217,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 9",
+      "Actual": -5.091502959852774,
+      "Expected": -5.091502959852774,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 10",
+      "Actual": -4.173214033165042,
+      "Expected": -4.173214033165042,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 11",
+      "Actual": -2.9639820802000107,
+      "Expected": -2.9639820802000107,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 12",
+      "Actual": -1.540179645355468,
+      "Expected": -1.540179645355468,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 13",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 14",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 15",
+      "Actual": -1.5401796453554684,
+      "Expected": -1.5401796453554684,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 16",
+      "Actual": -2.9639820802000036,
+      "Expected": -2.9639820802000036,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 17",
+      "Actual": -4.173214033165014,
+      "Expected": -4.173214033165014,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 18",
+      "Actual": -5.091502959852709,
+      "Expected": -5.091502959852709,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 19",
+      "Actual": -5.664297042836115,
+      "Expected": -5.664297042836115,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 20",
+      "Actual": -5.858865191659045,
+      "Expected": -5.858865191659045,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 21",
+      "Actual": -5.664297042836105,
+      "Expected": -5.664297042836105,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 22",
+      "Actual": -5.091502959852692,
+      "Expected": -5.091502959852692,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 23",
+      "Actual": -4.173214033164995,
+      "Expected": -4.173214033164995,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 24",
+      "Actual": -2.9639820801999894,
+      "Expected": -2.9639820801999894,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 25",
+      "Actual": -1.5401796453554608,
+      "Expected": -1.5401796453554608,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 26",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 27",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 28",
+      "Actual": -1.5401796453554595,
+      "Expected": -1.5401796453554595,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 29",
+      "Actual": -2.9639820801999957,
+      "Expected": -2.9639820801999957,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 30",
+      "Actual": -4.17321403316502,
+      "Expected": -4.17321403316502,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 31",
+      "Actual": -5.091502959852742,
+      "Expected": -5.091502959852742,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 32",
+      "Actual": -5.664297042836177,
+      "Expected": -5.664297042836177,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 33",
+      "Actual": -5.858865191659129,
+      "Expected": -5.858865191659129,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 34",
+      "Actual": -5.6642970428362025,
+      "Expected": -5.6642970428362025,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 35",
+      "Actual": -5.09150295985279,
+      "Expected": -5.09150295985279,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 36",
+      "Actual": -4.173214033165078,
+      "Expected": -4.173214033165078,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 37",
+      "Actual": -2.963982080200049,
+      "Expected": -2.963982080200049,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 38",
+      "Actual": -1.540179645355492,
+      "Expected": -1.540179645355492,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 39",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 40",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 41",
+      "Actual": -1.5401796453554943,
+      "Expected": -1.5401796453554943,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 42",
+      "Actual": -2.963982080200071,
+      "Expected": -2.963982080200071,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 43",
+      "Actual": -4.173214033165146,
+      "Expected": -4.173214033165146,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 44",
+      "Actual": -5.091502959852924,
+      "Expected": -5.091502959852924,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 45",
+      "Actual": -5.6642970428364015,
+      "Expected": -5.6642970428364015,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 46",
+      "Actual": -5.85886519165938,
+      "Expected": -5.85886519165938,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 47",
+      "Actual": -5.664297042836457,
+      "Expected": -5.664297042836457,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 48",
+      "Actual": -5.091502959853023,
+      "Expected": -5.091502959853023,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 49",
+      "Actual": -4.173214033165264,
+      "Expected": -4.173214033165264,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 50",
+      "Actual": -2.9639820802001755,
+      "Expected": -2.9639820802001755,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 51",
+      "Actual": -1.5401796453555545,
+      "Expected": -1.5401796453555545,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 1 Uz node 52",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 beam count",
+      "Actual": 87,
+      "Expected": 87,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 1",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 2",
+      "Actual": -1.1728782409055112,
+      "Expected": -1.1728782409055112,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 3",
+      "Actual": -2.2571328603022143,
+      "Expected": -2.2571328603022143,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 4",
+      "Actual": -3.177987677542052,
+      "Expected": -3.177987677542052,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 5",
+      "Actual": -3.877283441009878,
+      "Expected": -3.877283441009878,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 6",
+      "Actual": -4.313477828123446,
+      "Expected": -4.313477828123446,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 7",
+      "Actual": -4.461645445333416,
+      "Expected": -4.461645445333416,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 8",
+      "Actual": -4.313477828123351,
+      "Expected": -4.313477828123351,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 9",
+      "Actual": -3.8772834410097112,
+      "Expected": -3.8772834410097112,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 10",
+      "Actual": -3.177987677541855,
+      "Expected": -3.177987677541855,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 11",
+      "Actual": -2.257132860302037,
+      "Expected": -2.257132860302037,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 12",
+      "Actual": -1.1728782409054077,
+      "Expected": -1.1728782409054077,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 13",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 14",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 15",
+      "Actual": -1.172878240905308,
+      "Expected": -1.172878240905308,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 16",
+      "Actual": -2.257132860301826,
+      "Expected": -2.257132860301826,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 17",
+      "Actual": -3.1779876775415143,
+      "Expected": -3.1779876775415143,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 18",
+      "Actual": -3.8772834410092365,
+      "Expected": -3.8772834410092365,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 19",
+      "Actual": -4.313477828122753,
+      "Expected": -4.313477828122753,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 20",
+      "Actual": -4.4616454453327306,
+      "Expected": -4.4616454453327306,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 21",
+      "Actual": -4.313477828122726,
+      "Expected": -4.313477828122726,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 22",
+      "Actual": -3.87728344100919,
+      "Expected": -3.87728344100919,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 23",
+      "Actual": -3.177987677541457,
+      "Expected": -3.177987677541457,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 24",
+      "Actual": -2.2571328603017715,
+      "Expected": -2.2571328603017715,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 25",
+      "Actual": -1.1728782409052743,
+      "Expected": -1.1728782409052743,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 26",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 27",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 28",
+      "Actual": -1.1728782409051435,
+      "Expected": -1.1728782409051435,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 29",
+      "Actual": -2.257132860301514,
+      "Expected": -2.257132860301514,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 30",
+      "Actual": -3.177987677541086,
+      "Expected": -3.177987677541086,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 31",
+      "Actual": -3.877283441008728,
+      "Expected": -3.877283441008728,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 32",
+      "Actual": -4.3134778281222035,
+      "Expected": -4.3134778281222035,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 33",
+      "Actual": -4.461645445332176,
+      "Expected": -4.461645445332176,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 34",
+      "Actual": -4.313477828122199,
+      "Expected": -4.313477828122199,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 35",
+      "Actual": -3.877283441008723,
+      "Expected": -3.877283441008723,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 36",
+      "Actual": -3.177987677541085,
+      "Expected": -3.177987677541085,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 37",
+      "Actual": -2.257132860301516,
+      "Expected": -2.257132860301516,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 38",
+      "Actual": -1.1728782409051453,
+      "Expected": -1.1728782409051453,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 39",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 40",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 41",
+      "Actual": -1.1728782409050362,
+      "Expected": -1.1728782409050362,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 42",
+      "Actual": -2.2571328603013034,
+      "Expected": -2.2571328603013034,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 43",
+      "Actual": -3.177987677540784,
+      "Expected": -3.177987677540784,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 44",
+      "Actual": -3.8772834410083576,
+      "Expected": -3.8772834410083576,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 45",
+      "Actual": -4.3134778281218,
+      "Expected": -4.3134778281218,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 46",
+      "Actual": -4.461645445331765,
+      "Expected": -4.461645445331765,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 47",
+      "Actual": -4.313477828121798,
+      "Expected": -4.313477828121798,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 48",
+      "Actual": -3.877283441008352,
+      "Expected": -3.877283441008352,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 49",
+      "Actual": -3.1779876775407767,
+      "Expected": -3.1779876775407767,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 50",
+      "Actual": -2.2571328603012972,
+      "Expected": -2.2571328603012972,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 51",
+      "Actual": -1.1728782409050327,
+      "Expected": -1.1728782409050327,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH fase 2 Uz node 52",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH BridgeChecks stazioni elaborate",
+      "Actual": 240,
+      "Expected": 240,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH BridgeChecks cinque contributi",
+      "Actual": 5,
+      "Expected": 5,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH sigma cls superiore mezzeria [MPa]",
+      "Actual": -0.679849928872444,
+      "Expected": -0.679849928872435,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH sigma cls inferiore mezzeria [MPa]",
+      "Actual": 0.21731831583666295,
+      "Expected": 0.2173183158366685,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH sigma acciaio superiore mezzeria [MPa]",
+      "Actual": -86.26275723102657,
+      "Expected": -86.26275723102643,
+      "AbsoluteTolerance": 8.626275723102643E-05,
+      "Passed": true
+    },
+    {
+      "Name": "GH sigma acciaio inferiore mezzeria [MPa]",
+      "Actual": 90.26002296868386,
+      "Expected": 90.26002296868356,
+      "AbsoluteTolerance": 9.026002296868355E-05,
+      "Passed": true
+    },
+    {
+      "Name": "GH estrazione tensioni acciaio",
+      "Actual": 240,
+      "Expected": 240,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    }
+  ]
+}

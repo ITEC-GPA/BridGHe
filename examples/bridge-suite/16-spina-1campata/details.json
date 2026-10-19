@@ -58,7 +58,7 @@
     "Checks": [
       {
         "Name": "Anima \u00B7 resistenza a taglio",
-        "Demand": 1223.2538028105798,
+        "Demand": 1223.2538028106392,
         "Resistance": 4350.088482705002,
         "Unit": "kN",
         "Ratio": null,
@@ -184,10 +184,10 @@
       },
       {
         "Name": "Anima \u00B7 tensione equivalente elastica (inviluppo)",
-        "Demand": 60.085116834640466,
+        "Demand": 60.08511683464307,
         "Resistance": 355,
         "Unit": "MPa",
-        "Ratio": 0.16925385023842385,
+        "Ratio": 0.16925385023843117,
         "Note": "\u221A(max|\u03C3|\u00B2 \u002B 3 max|\u03C4|\u00B2); \u03C4 sulla sezione lorda omogeneizzata",
         "Status": "Entro limite"
       },
@@ -359,7 +359,7 @@
     "Checks": [
       {
         "Name": "Anima \u00B7 resistenza a taglio",
-        "Demand": 827.5854960142526,
+        "Demand": 827.5854960142227,
         "Resistance": 4350.088482705002,
         "Unit": "kN",
         "Ratio": null,
@@ -377,7 +377,7 @@
       },
       {
         "Name": "Intermedio \u00B7 stabilit\u00E0 e pressoflessione II ordine",
-        "Demand": 0.547275745660495,
+        "Demand": 0.5472757456604689,
         "Resistance": 322.7272727272727,
         "Unit": "MPa",
         "Ratio": null,
@@ -386,7 +386,7 @@
       },
       {
         "Name": "Intermedio \u00B7 freccia fuori piano",
-        "Demand": 0.004781201964087692,
+        "Demand": 0.004781201964087462,
         "Resistance": 6.333333333333333,
         "Unit": "mm",
         "Ratio": null,
@@ -422,7 +422,7 @@
       },
       {
         "Name": "Intermedio \u00B7 saldature verticali all\u2019anima",
-        "Demand": 0.022626423536740468,
+        "Demand": 0.022626423536739385,
         "Resistance": 183.84064251571957,
         "Unit": "MPa",
         "Ratio": null,
@@ -431,7 +431,7 @@
       },
       {
         "Name": "Intermedio \u00B7 saldature alle flange",
-        "Demand": 0.9121262427674917,
+        "Demand": 0.9121262427674481,
         "Resistance": 183.84064251571957,
         "Unit": "MPa",
         "Ratio": null,
@@ -458,10 +458,10 @@
       },
       {
         "Name": "Anima \u00B7 tensione equivalente elastica (inviluppo)",
-        "Demand": 74.60557865326359,
+        "Demand": 74.60557865326017,
         "Resistance": 355,
         "Unit": "MPa",
-        "Ratio": 0.210156559586658,
+        "Ratio": 0.21015655958664836,
         "Note": "\u221A(max|\u03C3|\u00B2 \u002B 3 max|\u03C4|\u00B2); \u03C4 sulla sezione lorda omogeneizzata",
         "Status": "Entro limite"
       },

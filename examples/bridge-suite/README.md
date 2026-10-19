@@ -1,3 +1,9 @@
+## Workflow aggiornato
+
+I GHX 12-18 usano ora Bridge Action, Bridge Shrinkage Action e Bridge Phase. Gli ID G1/G2/Q/RITIRO sostituiscono i prefissi derivati dall'ordine dei modelli. La sola colonna RITIRO governa primario e secondario, distinti nel calcolo. Vedere [la guida](../../docs/FASI-E-AZIONI.md).
+
+Il nuovo assemblaggio è stato verificato usando i risultati nativi storici (report phase-workflow-validation.json in ciascuna cartella); non sono state ripetute le analisi Straus. Le cache restano negli artefatti dei test per contenere il peso dei GHX: per ottenere risultati nel documento attivare CALCOLA 4 MODELLI e poi i due Run. Le descrizioni dei vecchi ingressi di matching e i PDF storici sotto si riferiscono alla precedente interfaccia; dati e ipotesi numeriche restano invariati.
+
 # Quattro ponti misti: tre fasi + ritiro
 
 ## Esempi aggiuntivi 16-18: spina centrale e due travi laterali

@@ -1,0 +1,222 @@
+{
+  "Mode": "cached-native-results",
+  "Checks": [
+    {
+      "Name": "GH G1_GETTO beam count",
+      "Actual": 86,
+      "Expected": 86,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH G1_GETTO scarto max XYZ tutti nodi [mm]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH G1_GETTO scarto max N V1 V2 [N]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.001,
+      "Passed": true
+    },
+    {
+      "Name": "GH G1_GETTO scarto max BM1 BM2 T [Nmm]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1,
+      "Passed": true
+    },
+    {
+      "Name": "GH G2_PERMANENTI beam count",
+      "Actual": 122,
+      "Expected": 122,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH G2_PERMANENTI scarto max XYZ tutti nodi [mm]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH G2_PERMANENTI scarto max N V1 V2 [N]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.001,
+      "Passed": true
+    },
+    {
+      "Name": "GH G2_PERMANENTI scarto max BM1 BM2 T [Nmm]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1,
+      "Passed": true
+    },
+    {
+      "Name": "GH Q_TRAFFICO beam count",
+      "Actual": 122,
+      "Expected": 122,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH Q_TRAFFICO scarto max XYZ tutti nodi [mm]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH Q_TRAFFICO scarto max N V1 V2 [N]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.001,
+      "Passed": true
+    },
+    {
+      "Name": "GH Q_TRAFFICO scarto max BM1 BM2 T [Nmm]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1,
+      "Passed": true
+    },
+    {
+      "Name": "GH RITIRO beam count",
+      "Actual": 122,
+      "Expected": 122,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH RITIRO scarto max XYZ tutti nodi [mm]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH RITIRO scarto max N V1 V2 [N]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.001,
+      "Passed": true
+    },
+    {
+      "Name": "GH RITIRO scarto max BM1 BM2 T [Nmm]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1,
+      "Passed": true
+    },
+    {
+      "Name": "GH stazioni BridgeChecks",
+      "Actual": 120,
+      "Expected": 120,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH cinque contributi BridgeChecks",
+      "Actual": 5,
+      "Expected": 5,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH tensioni campione beam 37",
+      "Actual": 1.4210854715202004E-14,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH tensioni campione beam 48",
+      "Actual": 1.4210854715202004E-14,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-06,
+      "Passed": true
+    },
+    {
+      "Name": "GH due sezioni con dettagli gPC",
+      "Actual": 2,
+      "Expected": 2,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH resistenza piolo indipendente [N]",
+      "Actual": 109478.22079229711,
+      "Expected": 109478.22079229711,
+      "AbsoluteTolerance": 1.0947822079229711E-07,
+      "Passed": true
+    },
+    {
+      "Name": "GH domanda per piolo da flusso [N]",
+      "Actual": 17912.529545204077,
+      "Expected": 17912.529545204077,
+      "AbsoluteTolerance": 1.7912529545204077E-08,
+      "Passed": true
+    },
+    {
+      "Name": "GH mantiene SLE senza esito SLU implicito",
+      "Actual": 1,
+      "Expected": 1,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH dettagli conservano cinque contributi",
+      "Actual": 5,
+      "Expected": 5,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH resistenza piolo indipendente [N]",
+      "Actual": 109478.22079229711,
+      "Expected": 109478.22079229711,
+      "AbsoluteTolerance": 1.0947822079229711E-07,
+      "Passed": true
+    },
+    {
+      "Name": "GH domanda per piolo da flusso [N]",
+      "Actual": 12317.44495545791,
+      "Expected": 12317.44495545791,
+      "AbsoluteTolerance": 1.2317444955457909E-08,
+      "Passed": true
+    },
+    {
+      "Name": "GH mantiene SLE senza esito SLU implicito",
+      "Actual": 1,
+      "Expected": 1,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH dettagli conservano cinque contributi",
+      "Actual": 5,
+      "Expected": 5,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH irrigiditore appoggio attivo",
+      "Actual": 1,
+      "Expected": 1,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "GH irrigiditore intermedio attivo",
+      "Actual": 1,
+      "Expected": 1,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    }
+  ]
+}

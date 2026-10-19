@@ -8,6 +8,7 @@ using System.Text.Json;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Models;
 using GPC.Checkers.CompositeBridge;
+using BridGHe.Common.Helpers;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Parameters;
@@ -29,8 +30,16 @@ internal static class GrasshopperBridgeSuite
             ModelModel[] Read(string file)=>Cases.Select(name=>BridGHe.Common.Helpers.ModelArchive.Read<ModelModel>(File.ReadAllBytes(Path.Combine(Artifacts,d.Id,name,file)))).ToArray();
             using var report=JsonDocument.Parse(File.ReadAllText(Path.Combine(Root,d.Id,"validation.json")));
             var samples=report.RootElement.GetProperty("Sections").Deserialize<List<SectionSample>>();
-            Run(d,Read("input.bgmodel"),Read("results.bgmodel"),samples,checks);
+            Run(d,Read("input.bgmodel"),Read("results.bgmodel"),samples,checks,cached:true);
         }
+        foreach(var original in BridgeSpineExamples.Definitions.Where(d=>prefix=="all"||d.Id.StartsWith(prefix,StringComparison.Ordinal)))
+        {
+            var setup=JsonSerializer.Deserialize<BridgeSpineExamples.Settings>(File.ReadAllText(Path.Combine(Root,original.Id,"parameters.json")));
+            ModelModel[] Read(string file)=>Cases.Select(name=>ModelArchive.Read<ModelModel>(File.ReadAllBytes(Path.Combine(Artifacts,original.Id,name,file)))).ToArray();
+            using var report=JsonDocument.Parse(File.ReadAllText(Path.Combine(Root,original.Id,"validation.json")));
+            Run(setup.Definition,Read("input.bgmodel"),Read("results.bgmodel"),report.RootElement.GetProperty("Sections").Deserialize<List<SectionSample>>(),checks,setup.Central,new[]{"G2"},cached:true);
+        }
+        Console.WriteLine("PHASE EXAMPLES: "+checks.Measurements.Count+" measurements; native solver not invoked.");
         return checks.Measurements.Count>0&&checks.Measurements.All(c=>c.Passed)?0:1;
     }
     private static void Initialize()
@@ -44,15 +53,21 @@ internal static class GrasshopperBridgeSuite
         var math=Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Components\MathComponents.gha");
         foreach(var a in new[]{typeof(GH_Document).Assembly,math,assembly})parse.Invoke(server,new object[]{a,a.Location});
     }
-    internal static void Run(Definition d,ModelModel[] inputs,ModelModel[] expected,List<SectionSample> samples,NativeExamples.Recorder checks,BridgeGrillageExample.Parameters sectionParameters=null,string[] selectedGroups=null)
+    internal static void Run(Definition d,ModelModel[] inputs,ModelModel[] expected,List<SectionSample> samples,NativeExamples.Recorder checks,BridgeGrillageExample.Parameters sectionParameters=null,string[] selectedGroups=null,bool cached=false)
     {
+        int checkStart=checks.Measurements.Count;
         Initialize();var p=sectionParameters??SectionParameters(d);var groupNames=selectedGroups??new[]{"G1","G2","G3","G4"};using var doc=new GH_Document();
         T Add<T>(T obj,float x,float y) where T:IGH_DocumentObject{obj.CreateAttributes();obj.Attributes.Pivot=new PointF(x,y);doc.AddObject(obj,false);return obj;}
         GH_Component Component(string type,float x,float y)=>Add((GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components."+type,true)),x,y);
         void Wire(IGH_Param from,GH_Component to,int i)=>to.Params.Input[i].AddSource(from);
         GH_Panel Panel(string name,string text,float x,float y,int w=230,int h=70)
         {var o=Add(new GH_Panel{NickName=name,UserText=text},x,y);o.Properties.Multiline=false;o.Attributes.Bounds=new RectangleF(x,y,w,h);return o;}
-        IGH_Goo Goo(string type,object value)=>(IGH_Goo)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.DataTypes."+type,true),new[]{value});
+        IGH_Goo Goo(string type,object value)
+        {
+            var t=assembly.GetType("BridGHe.Grasshopper.DataTypes."+type,true);
+            if(type!="Fem.GH_Model")return (IGH_Goo)Activator.CreateInstance(t,new[]{value});
+            var goo=(IGH_Goo)Activator.CreateInstance(t);t.GetProperty("Value").SetValue(goo,value);return goo;
+        }
         Param_GenericObject Objects(string name,IEnumerable<IGH_Goo> values,float x,float y)
         {var o=Add(new Param_GenericObject{NickName=name,Name=name},x,y);foreach(var v in values)o.PersistentData.Append(v);return o;}
         void Integer(GH_Component c,int i,int v){var q=(Param_Integer)c.Params.Input[i];q.PersistentData.Clear();q.SetPersistentData(v);}
@@ -117,23 +132,22 @@ internal static class GrasshopperBridgeSuite
             Panel("BM1 BM2 [Nmm]","",3260,y+650,400,180).AddSource(br.Params.Output[4]);
             Panel("T [Nmm] conservata","",3260,y+900,400,180).AddSource(br.Params.Output[6]);
         }
-        Panel("BridGHe", "SLS dimostrativo con coefficienti unitari: G1 + G2 + Q + ritiro primario e secondario.\nIl secondario del ritiro usa la rigidezza Ninf e viene aggregato a G2 solo nell'adattatore.\nNei CSV i quattro contributi restano distinti. Soletta lorda non fessurata, armature escluse.\nCURVE: non attivare la verifica aspettandosi un esito completo. Il motore N-M-V rifiuta T/M2.\nNessuna cancellazione o proiezione delle sollecitazioni non supportate.",3900,0,1250,155);
+        Panel("BridGHe", "SLS dimostrativo con coefficienti unitari: G1 + G2 + Q + ritiro primario e secondario.\nRITIRO: un unico coefficiente per secondario FEM e strain primario; n ritiro = Ninf in questi modelli storici.\nNei CSV i quattro contributi restano distinti. Soletta lorda non fessurata, armature escluse.\nCURVE: non attivare la verifica aspettandosi un esito completo. Il motore N-M-V rifiuta T/M2.\nNessuna cancellazione o proiezione delle sollecitazioni non supportate.",3900,0,1250,155);
         var merge=Component("BridgeChecks.BuildBridgeModel",4900,850);
         for(int phase=0;phase<4;phase++)
         {
             float y=280+phase*350;var filter=Component("BridgeChecks.SuperElementFilterComponent",3900,y);Wire(analyses[phase].Params.Output[0],filter,0);
             Wire(Panel("Longitudinali",string.Join("\n",groupNames),3700,y+80,150,90),filter,1);IGH_Param last=filter.Params.Output[0];
-            if(phase==3)
-            {
-                var strain=Component("BridgeChecks.CompositeBeamSlabStrainComponent",4250,y);Wire(last,strain,0);Number(strain,2,p.ShrinkageLong);
-                Wire(Objects("RITIRO_PRIMARIO",new[]{Goo("Fem.GH_LoadCase",new LoadCaseModel("RITIRO_PRIMARIO","RITIRO_PRIMARIO"))},4000,y+180),strain,1);last=strain.Params.Output[0];
-            }
-            var bm=Component("Models.BuildModelComponent",4570,y);Integer(bm,2,2);bm.Params.Input[0].DataMapping=GH_DataMapping.Flatten;Wire(last,bm,0);Wire(bm.Params.Output[0],merge,0);
+            var bm=Component("Models.BuildModelComponent",4250,y);Integer(bm,2,2);bm.Params.Input[0].DataMapping=GH_DataMapping.Flatten;Wire(last,bm,0);Wire(bm.Params.Output[0],merge,0);
+            var action=Component(phase==3?"BridgeChecks.BridgeShrinkageActionComponent":"BridgeChecks.BridgeActionComponent",4500,y);
+            Text(action,0,new[]{"G1","G2","Q","RITIRO"}[phase]);Wire(bm.Params.Output[0],action,1);
+            Wire(Objects("Caso sorgente",new[]{Goo("Fem.GH_LoadCase",new LoadCaseModel(Cases[phase],Cases[phase]))},4300,y+150),action,2);
+            if(phase==3)Number(action,3,p.ShrinkageLong);else Integer(action,3,phase);
+            var stage=Component("BridgeChecks.BridgeConstructionPhaseComponent",4750,y);Integer(stage,0,10*(phase+1));Text(stage,1,Cases[phase]);Integer(stage,2,phase==0?0:1);Wire(action.Params.Output[0],stage,3);Wire(stage.Params.Output[0],merge,1);
         }
-        var combos=Add(new Param_GenericObject{NickName="Combinazione SLS"},4610,1800);
-        foreach(string v in new[]{"","1-G1_GETTO","2-G2_PERMANENTI","3-Q_TRAFFICO","4-RITIRO","4-RITIRO_PRIMARIO"})combos.PersistentData.Append(new GH_String(v),new GH_Path(0));
-        foreach(string v in new[]{"SLS_3F_RITIRO","1","1","1","1","1"})combos.PersistentData.Append(new GH_String(v),new GH_Path(1));Wire(combos,merge,1);
-        foreach(var (i,names) in new[]{(2,"1-G1_GETTO"),(3,"2-G2_PERMANENTI\n4-RITIRO"),(4,"3-Q_TRAFFICO"),(5,"4-RITIRO_PRIMARIO")})Wire(Panel("Fasi "+i,names,4640,2000+(i-2)*130,250,90),merge,i);
+        var combos=Add(new Param_GenericObject{NickName="Combinazione SLS per ID azione"},4610,1800);
+        foreach(string v in new[]{"","G1","G2","Q","RITIRO"})combos.PersistentData.Append(new GH_String(v),new GH_Path(0));
+        foreach(string v in new[]{"SLS_3F_RITIRO","1","1","1","1"})combos.PersistentData.Append(new GH_String(v),new GH_Path(1));Wire(combos,merge,2);
         var select=Component("BridgeChecks.SuperElementFilterComponent",5200,850);Wire(merge.Params.Output[0],select,0);Wire(Panel("Travi",string.Join("\n",groupNames),5000,1150,150,90),select,1);
         var composite=Component("BridgeChecks.CompositeBeamComponent",5500,850);Wire(select.Params.Output[0],composite,0);
         var section=Objects($"H{p.SteelHeight} + soletta {p.SlabThickness}, b={p.GirderSlabWidth}",new[]{Goo("GH_CompositeBeamProperty",BridgeGrillageExample.Composite(p))},5250,1300);Wire(section,composite,1);Wire(section,composite,2);
@@ -159,9 +173,10 @@ internal static class GrasshopperBridgeSuite
         }
         string ghx=Path.Combine(Root,d.Id,d.Id+".ghx");GrasshopperBridgeExample.Write(doc,ghx);
         using var restored=GrasshopperBridgeExample.Read(ghx);
-        restored.Objects.OfType<GH_BooleanToggle>().Single().Value=true;
+        restored.Objects.OfType<GH_BooleanToggle>().Single().Value=!cached;
         var restoredAnalyses=restored.Objects.OfType<GH_Component>().Where(c=>c.GetType()==analyses[0].GetType()).OrderBy(c=>c.Attributes.Pivot.Y).ToArray();
         for(int phase=0;phase<4;phase++)((GH_Panel)restoredAnalyses[phase].Params.Input[3].Sources.Single()).UserText=Path.Combine(Artifacts,d.Id,"gh-"+Cases[phase]+".st7");
+        if(cached)for(int phase=0;phase<4;phase++)restoredAnalyses[phase].GetType().GetField("_model",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(restoredAnalyses[phase],Goo("Fem.GH_Model",expected[phase]));
         GH_Document.EnableSolutions=true;restored.Enabled=true;restored.NewSolution(false,GH_SolutionMode.Silent);
         string[] Errors()=>restored.Objects.OfType<GH_ActiveObject>().SelectMany(c=>c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Select(e=>c.Name+": "+e)).ToArray();
         if(Errors().Length>0)throw new Exception(string.Join("\n",Errors()));
@@ -196,13 +211,13 @@ internal static class GrasshopperBridgeSuite
         if(d.Radius>0)
         {
             checks.Near("GH BridgeChecks segnala torsione fuori campo",Errors().Any(e=>e.Contains("torsione"))?1:0,1,0,0);
-            checks.Near("GH nessuna tensione parziale presentata come verifica",restoredCheck.Params.Output[0].VolatileDataCount,0,0,0);
+            checks.Near("GH nessuna tensione parziale presentata come verifica",restoredCheck.Params.Output[0].VolatileData.AllData(true).Count(g=>g?.ScriptVariable() is BridgeStressResult),0,0,0);
         }
         else
         {
             if(Errors().Length>0)throw new Exception(string.Join("\n",Errors()));
             var outputs=restoredCheck.Params.Output[0].VolatileData.AllData(true).Cast<GH_ObjectWrapper>().Select(g=>(BridgeStressResult)g.Value).ToArray();
-            checks.Near("GH stazioni BridgeChecks",outputs.Length,groupNames.Length*d.Panels*5,0,0);checks.Near("GH quattro contributi BridgeChecks",outputs.Min(r=>r.Analysis.Stages.Count),4,0,0);
+            checks.Near("GH stazioni BridgeChecks",outputs.Length,groupNames.Length*d.Panels*5,0,0);checks.Near("GH cinque contributi BridgeChecks",outputs.Min(r=>r.Analysis.Stages.Count),5,0,0);
             foreach(var sample in samples.Where(s=>s.Supported))
             {
                 double nearest=outputs.Min(o=>StressValues(o).Zip(sample.FinalStress,(a,b)=>Math.Abs(a-b)).Max());
@@ -219,11 +234,15 @@ internal static class GrasshopperBridgeSuite
                 checks.Near("GH resistenza piolo indipendente [N]",stud.Resistance.Resistance,expectedResistance,1e-12);
                 checks.Near("GH domanda per piolo da flusso [N]",stud.ForcePerStud*1000,Math.Abs(stud.Flow)*options.LongitudinalPitch/options.CountPerRow,1e-12);
                 checks.Near("GH mantiene SLE senza esito SLU implicito",result.Stage.Shear.Checks.Any(c=>c.Ratio==null)?1:0,1,0,0);
-                checks.Near("GH dettagli conservano quattro contributi",result.Analysis.Stages.Count,4,0,0);
+                checks.Near("GH dettagli conservano cinque contributi",result.Analysis.Stages.Count,5,0,0);
             }
             checks.Near("GH irrigiditore appoggio attivo",detailResults[0].Analysis.Input.Support.Enabled?1:0,1,0,0);
             checks.Near("GH irrigiditore intermedio attivo",detailResults[1].Analysis.Input.Intermediate.Enabled?1:0,1,0,0);
             File.WriteAllText(Path.Combine(Root,d.Id,"details.json"),JsonSerializer.Serialize(detailResults.Select(r=>new{r.Analysis.Input.Studs,r.Analysis.Input.Intermediate,r.Analysis.Input.Support,Checks=r.Stage.Shear.Checks.Concat(r.Stage.Studs.Checks),r.Stage.Warnings}),BridgeGrillageExample.Json));
         }
+        restored.Objects.OfType<GH_BooleanToggle>().Single().Value=false;
+        foreach(var analysis in restoredAnalyses)analysis.GetType().GetField("_model",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(analysis,Goo("Fem.GH_Model",null));
+        GrasshopperBridgeExample.Write(restored,ghx);
+        File.WriteAllText(Path.Combine(Root,d.Id,"phase-workflow-validation.json"),JsonSerializer.Serialize(new{Mode=cached?"cached-native-results":"native-recalculation",Checks=checks.Measurements.Skip(checkStart)},BridgeGrillageExample.Json));
     }
 }

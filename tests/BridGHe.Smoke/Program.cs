@@ -40,6 +40,7 @@ internal static class Program
         if(args.Contains("--bridge-grillage")) return BridgeGrillageExample.Run(args.Contains("--gh"));
         if(args.Contains("--bridge-spine")) return BridgeSpineExamples.Run(args.Contains("--gh"),args.SkipWhile(a=>a!="--bridge-spine").Skip(1).FirstOrDefault(a=>!a.StartsWith("--"))??"all");
         if(args.Contains("--bridge-suite")) return BridgeSuiteExample.Run(args.Contains("--gh"),args.Contains("--probe"),args.SkipWhile(a=>a!="--bridge-suite").Skip(1).FirstOrDefault(a=>!a.StartsWith("--"))??"all");
+        if(args.Contains("--grillage-gh-replay")) return GrasshopperBridgeExample.Replay();
         if(args.Contains("--bridge-gh-replay")) return GrasshopperBridgeSuite.Replay(args.SkipWhile(a=>a!="--bridge-gh-replay").Skip(1).FirstOrDefault()??"12");
         if(args.Contains("--gh-examples")) return GrasshopperExamples.Run(args.SkipWhile(a=>a!="--gh-examples").Skip(1).FirstOrDefault()??"all");
         if(args.Contains("--regression"))

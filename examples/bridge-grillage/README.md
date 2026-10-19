@@ -1,3 +1,5 @@
+> Aggiornamento fasi: il GHX corrente usa Bridge Action, Bridge Shrinkage Action e Bridge Phase, con colonne delle combinazioni basate sugli ID azione. Vedere [FASI-E-AZIONI](../../docs/FASI-E-AZIONI.md). Le cache native restano negli artefatti dei test; per ottenere i risultati nel GHX attivare le analisi. Il report phase-workflow-validation.json documenta il replay delle analisi storiche senza nuove esecuzioni Straus. La descrizione numerica storica sotto resta il riferimento del benchmark; i vecchi prefissi e ingressi di matching sono sostituiti dal nuovo workflow.
+
 # Ponte misto a graticcio — esempio completo del flusso disponibile
 
 Aprire **11-ponte-graticcio.ghx** in Grasshopper / Rhino 8 con il pacchetto BridGHe aggiornato. Il file costruisce gli elementi tramite componenti, esegue Straus7 R3, legge i risultati, unisce i contributi delle fasi e calcola le tensioni con BridgeChecks/gPC. Non è il progetto esecutivo di un ponte: la combinazione simmetrica è verificata numericamente; il traffico eccentrico richiede anche verifiche oggi non implementate dall'adattatore.

@@ -17,7 +17,18 @@ using Rhino.Geometry;
 /// <summary>Builds a real editable component graph, then reopens and executes it.</summary>
 internal static class GrasshopperBridgeExample
 {
-    internal static void Run(BridgeGrillageExample.Parameters p,ModelModel[] inputs,ModelModel[] expected,BridgeGrillageExample.SectionReport sectionReference,NativeExamples.Recorder checks)
+    internal static int Replay()
+    {
+        var root=BridgeGrillageExample.Delivery;
+        var p=System.Text.Json.JsonSerializer.Deserialize<BridgeGrillageExample.Parameters>(File.ReadAllText(Path.Combine(root,"parameters.json")));
+        ModelModel[] Read(string file)=>new[]{"01-G1_GETTO","02-G2_PERMANENTI","03-Q_UDL"}.Select(n=>ModelArchive.Read<ModelModel>(File.ReadAllBytes(Path.Combine(BridgeGrillageExample.Output,n,file)))).ToArray();
+        using var report=System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(root,"validation.json")));
+        var section=System.Text.Json.JsonSerializer.Deserialize<BridgeGrillageExample.SectionReport>(report.RootElement.GetProperty("Stresses").GetRawText());
+        var checks=new NativeExamples.Recorder();Run(p,Read("input.bgmodel"),Read("results.bgmodel"),section,checks,true);
+        Console.WriteLine("PHASE EXAMPLE 11: "+checks.Measurements.Count+" measurements; native solver not invoked.");
+        return checks.Measurements.All(c=>c.Passed)?0:1;
+    }
+    internal static void Run(BridgeGrillageExample.Parameters p,ModelModel[] inputs,ModelModel[] expected,BridgeGrillageExample.SectionReport sectionReference,NativeExamples.Recorder checks,bool cached=false)
     {
         var assembly=Assembly.LoadFrom(BuildPaths.GrasshopperAssembly);
         var field=typeof(Grasshopper.Instances).GetField("m_comServer",BindingFlags.NonPublic|BindingFlags.Static);
@@ -31,7 +42,12 @@ internal static class GrasshopperBridgeExample
         void Wire(IGH_Param from,GH_Component to,int input)=>to.Params.Input[input].AddSource(from);
         GH_Panel Panel(string name,string text,float x,float y,int w=230,int h=70)
         {var o=Add(new GH_Panel{NickName=name,UserText=text},x,y);o.Properties.Multiline=false;o.Attributes.Bounds=new RectangleF(x,y,w,h);return o;}
-        IGH_Goo Goo(string type,object value)=> (IGH_Goo)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.DataTypes."+type,true),new[]{value});
+        IGH_Goo Goo(string type,object value)
+        {
+            var t=assembly.GetType("BridGHe.Grasshopper.DataTypes."+type,true);
+            if(type!="Fem.GH_Model")return (IGH_Goo)Activator.CreateInstance(t,new[]{value});
+            var goo=(IGH_Goo)Activator.CreateInstance(t);t.GetProperty("Value").SetValue(goo,value);return goo;
+        }
         Param_GenericObject Objects(string name,IEnumerable<IGH_Goo> values,float x,float y)
         {var obj=Add(new Param_GenericObject{NickName=name,Name=name},x,y);foreach(var v in values)obj.PersistentData.Append(v);return obj;}
         void Integer(GH_Component c,int i,int value){var q=(Param_Integer)c.Params.Input[i];q.PersistentData.Clear();q.SetPersistentData(value);}
@@ -102,7 +118,7 @@ internal static class GrasshopperBridgeExample
         var movingCases=Panel("Posizioni mobili generate","",2630,3500,450,130);movingCases.AddSource(moving.Params.Output[1]);
 
         // Merge only longitudinal members: transverse topology changes when the
-        // slab hardens. Build BridGHe Model requires matching member order.
+        // slab hardens. Build BridGHe Model aligns stable member IDs.
         Panel("BRIDGE_CHECKS - CAMPO COPERTO","Combinazione SLS simmetrica, coefficienti 1.0.\nSezione lorda, soletta non fessurata, armature escluse.\n5 contributi: G1, G2, Q_UDL, ritiro lungo termine, deformazione istantanea.\nPer il traffico eccentrico conservare T e usare un verificatore dedicato.\nDopo le analisi: Run Build BridGHe Model, poi Run Super Element Check.\nNon alimentare questo merge con i risultati TOTALI delle fasi di getto.",3270,20,1100,150);
         var merge=Component("BridgeChecks.BuildBridgeModel",4300,650);
         for(int phase=0;phase<3;phase++)
@@ -111,23 +127,20 @@ internal static class GrasshopperBridgeExample
             var filter=Component("BridgeChecks.SuperElementFilterComponent",3300,y);Wire(analyses[phase].Params.Output[0],filter,0);
             Wire(Panel("Travi principali","G1\nG2\nG3\nG4",3100,y+50,150,95),filter,1);
             IGH_Param last=filter.Params.Output[0];
+            var onlyLong=Component("Models.BuildModelComponent",3600,y);Integer(onlyLong,2,2);Text(onlyLong,1,"Risultati longitudinali fase "+phase);
+            onlyLong.Params.Input[0].DataMapping=GH_DataMapping.Flatten;Wire(last,onlyLong,0);Wire(onlyLong.Params.Output[0],merge,0);
+            var action=Component("BridgeChecks.BridgeActionComponent",3850,y);Text(action,0,new[]{"G1","G2","Q"}[phase]);Wire(onlyLong.Params.Output[0],action,1);Integer(action,3,phase);
+            Wire(Objects("Caso sorgente",new[]{Goo("Fem.GH_LoadCase",new LoadCaseModel(BridgeGrillageExample.PhaseNames[phase],BridgeGrillageExample.PhaseNames[phase]))},3650,y+120),action,2);
+            var stage=Component("BridgeChecks.BridgeConstructionPhaseComponent",4100,y);Integer(stage,0,10*(phase+1));Text(stage,1,BridgeGrillageExample.PhaseNames[phase]);Integer(stage,2,phase==0?0:1);Wire(action.Params.Output[0],stage,3);Wire(stage.Params.Output[0],merge,1);
             if(phase>0)
             {
-                string name=phase==1?"RITIRO_INF":"DEF_IST";
-                var strain=Component("BridgeChecks.CompositeBeamSlabStrainComponent",3650,y);Wire(last,strain,0);
-                Wire(Objects(name,new[]{Goo("Fem.GH_LoadCase",new LoadCaseModel(name,name))},3420,y+110),strain,1);
-                var value=(Param_Number)strain.Params.Input[2];value.SetPersistentData(phase==1?p.ShrinkageLong:p.ShrinkageInstant);last=strain.Params.Output[0];
+                var strain=Component("BridgeChecks.BridgeShrinkageActionComponent",3850,y+180);Text(strain,0,phase==1?"RITIRO":"DEF_IST");Boolean(strain,5,true);Integer(strain,6,phase==1?0:1);
+                ((Param_Number)strain.Params.Input[3]).SetPersistentData(phase==1?p.ShrinkageLong:p.ShrinkageInstant);Wire(strain.Params.Output[0],stage,3);
             }
-            var onlyLong=Component("Models.BuildModelComponent",3940,y);Integer(onlyLong,2,2);Text(onlyLong,1,"Risultati longitudinali fase "+phase);
-            onlyLong.Params.Input[0].DataMapping=GH_DataMapping.Flatten;Wire(last,onlyLong,0);Wire(onlyLong.Params.Output[0],merge,0);
         }
-        var combinations=Add(new Param_GenericObject{NickName="SLS simmetrico - matrice combinazioni"},4000,1350);
-        string[] headers={"","1-G1_GETTO","2-G2_PERMANENTI","3-Q_UDL","2-RITIRO_INF","3-DEF_IST"};
-        foreach(string value in headers)combinations.PersistentData.Append(new GH_String(value),new GH_Path(0));
-        foreach(string value in new[]{"SLS_SIMMETRICO","1","1","1","1","1"})combinations.PersistentData.Append(new GH_String(value),new GH_Path(1));
-        Wire(combinations,merge,1);
-        foreach(var entry in new[]{(2,"1-G1_GETTO"),(3,"2-G2_PERMANENTI"),(4,"3-Q_UDL\n3-Q_ECC\n3-Q_MIRROR"),(5,"2-RITIRO_INF"),(6,"3-DEF_IST")})
-            Wire(Panel("Assegnazione fase "+entry.Item1,entry.Item2,4000,1450+(entry.Item1-2)*110,270,80),merge,entry.Item1);
+        var combinations=Add(new Param_GenericObject{NickName="SLS simmetrico - ID azioni"},4000,1550);
+        foreach(string value in new[]{"","G1","G2","Q","RITIRO","DEF_IST"})combinations.PersistentData.Append(new GH_String(value),new GH_Path(0));
+        foreach(string value in new[]{"SLS_SIMMETRICO","1","1","1","1","1"})combinations.PersistentData.Append(new GH_String(value),new GH_Path(1));Wire(combinations,merge,2);
         var select=Component("BridgeChecks.SuperElementFilterComponent",4580,650);Wire(merge.Params.Output[0],select,0);
         Wire(Panel("Travi verificate","G1\nG2\nG3\nG4",4350,1050,150,95),select,1);
         var composite=Component("BridgeChecks.CompositeBeamComponent",4870,650);Wire(select.Params.Output[0],composite,0);
@@ -144,10 +157,11 @@ internal static class GrasshopperBridgeExample
         var restoredAnalyses=restored.Objects.OfType<GH_Component>().Where(c=>c.GetType()==analyses[0].GetType()).OrderBy(c=>c.Attributes.Pivot.Y).ToArray();
         for(int phase=0;phase<3;phase++)
         {
-            var c=restoredAnalyses[phase];Boolean(c,4,true);
+            var c=restoredAnalyses[phase];Boolean(c,4,!cached);
+            if(cached)c.GetType().GetField("_model",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(c,Goo("Fem.GH_Model",expected[phase]));
             ((GH_Panel)c.Params.Input[3].Sources.Single()).UserText=Path.Combine(BridgeGrillageExample.Output,"gh-phase-"+phase+".st7");
         }
-        var restoredMoving=restored.Objects.OfType<GH_Component>().Single(c=>c.GetType()==moving.GetType());Boolean(restoredMoving,2,true);
+        var restoredMoving=restored.Objects.OfType<GH_Component>().Single(c=>c.GetType()==moving.GetType());Boolean(restoredMoving,2,!cached);
         ((GH_Panel)restoredMoving.Params.Input[1].Sources.Single()).UserText=Path.Combine(BridgeGrillageExample.Output,"gh-moving.st7");
         GH_Document.EnableSolutions=true;restored.Enabled=true;restored.NewSolution(false,GH_SolutionMode.Silent);
         var errors=restored.Objects.OfType<GH_ActiveObject>().SelectMany(c=>c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Select(e=>c.Name+": "+e)).ToArray();
@@ -163,7 +177,7 @@ internal static class GrasshopperBridgeExample
                 checks.Near("GH fase "+phase+" Uz node "+node.NodeId,BridgeGrillageExample.Displ(actual,BridgeGrillageExample.PhaseNames[phase]).Displacement.Z,BridgeGrillageExample.Displ(node,BridgeGrillageExample.PhaseNames[phase]).Displacement.Z,1e-7,1e-6);
             }
         }
-        checks.Near("GH casi mobili",restoredMoving.Params.Output[1].VolatileDataCount,BridgeGrillageExample.MovingCaseCount(p),0,0);
+        if(!cached)checks.Near("GH casi mobili",restoredMoving.Params.Output[1].VolatileDataCount,BridgeGrillageExample.MovingCaseCount(p),0,0);
         var restoredMerge=restored.Objects.OfType<GH_Component>().Single(c=>c.GetType()==merge.GetType());
         var restoredCheck=restored.Objects.OfType<GH_Component>().Single(c=>c.GetType()==check.GetType());
         foreach(var c in new[]{restoredMerge,restoredCheck}){c.GetType().GetField("_run",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(c,true);c.ExpireSolution(false);}
@@ -181,6 +195,11 @@ internal static class GrasshopperBridgeExample
         var tensions=restored.Objects.OfType<GH_Component>().Single(c=>c.GetType()==stresses.GetType());
         checks.Near("GH estrazione tensioni acciaio",tensions.Params.Output[12].VolatileDataCount,outputs.Length,0,0);
         File.WriteAllText(Path.Combine(BridgeGrillageExample.Delivery,"grasshopper-stresses.json"),System.Text.Json.JsonSerializer.Serialize(outputs.Select(r=>new{r.Point1_ConcreteSigma,r.Point4_ConcreteSigma,r.Point5_SteelSigma,r.Point8_SteelSigma}),BridgeGrillageExample.Json));
+        foreach(var a in restoredAnalyses)Boolean(a,4,false);Boolean(restoredMoving,2,false);
+        foreach(var analysis in restoredAnalyses)analysis.GetType().GetField("_model",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(analysis,Goo("Fem.GH_Model",null));
+        Write(restored,Path.Combine(BridgeGrillageExample.Delivery,"11-ponte-graticcio.ghx"));
+        File.WriteAllText(Path.Combine(rootPath(),"phase-workflow-validation.json"),System.Text.Json.JsonSerializer.Serialize(new{Mode=cached?"cached-native-results":"native-recalculation",Checks=checks.Measurements},BridgeGrillageExample.Json));
+        string rootPath()=>BridgeGrillageExample.Delivery;
     }
     internal static void Write(GH_Document doc,string path)
     {var archive=new GH_Archive();if(!archive.AppendObject(doc,"Definition")||!archive.WriteToFile(path,true,false))throw new IOException("Cannot write "+path);}
