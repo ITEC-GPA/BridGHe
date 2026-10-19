@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-19",
+  "change": "Correzione autorizzata degli appoggi elastici distribuiti delle travi",
+  "source": "https://www.strand7.com/strand7r3help/Content/Topics/VISUALAttributes/BeamAttributesSupport.htm",
+  "api": "St7SetBeamSupport2 e St7GetBeamSupport2, Straus7 R3.1",
+  "before": [
+    "Gli indici 0/1/2 degli assi venivano passati come direzioni native; mancava la distinzione tra i lati positivi e negativi.",
+    "La coppia [rigidezza asse 1, rigidezza asse 2] veniva interpretata da Straus come [rigidezza, gap].",
+    "Il numero del caso di carico veniva usato al posto del caso di liberta.",
+    "Veniva esportata una sola direzione, quella dell'ultimo attributo; il contatto unilaterale non era trattato correttamente."
+  ],
+  "after": [
+    "Una chiamata per direzione nativa -1, +1, -2, +2, con caso di liberta 1 e coppia [rigidezza, gap].",
+    "Gap positivo per distacco, negativo per precompressione; comportamento unilaterale verificato con analisi non lineare.",
+    "Input rimossi: link property, orientamenti arbitrari, assi longitudinali e angoli non implementati.",
+    "Archivi e duplicazione conservano il gap; uguaglianza dell'attributo corretta anche con link nullo.",
+    "Anteprima con simboli di molle nei lati locali selezionati."
+  ],
+  "numericalImpact": "Cambiano i modelli che utilizzavano l'esportazione errata di BeamSupport. I modelli senza questo attributo non sono interessati. Non e possibile garantire equivalenza numerica con il comportamento precedente errato.",
+  "tests": {
+    "command": "dotnet run --project tests/BridGHe.Smoke -c Release -- --beam-support",
+    "nativeChecks": 29,
+    "result": "PASS",
+    "model": "Trave L=1000 mm, E=210000 MPa, carichi uniformi, rotazioni vincolate; traslazione uniforme su appoggi distribuiti.",
+    "linear": "q_y=2 N/mm, k_y=10 N/mm2: u_y=0.2 mm; q_z=4 N/mm, k_z=20 N/mm2: u_z=0.2 mm. Inversione a -0.5 volte: -0.1 mm.",
+    "contact": "Lato +2: k_c=40 N/mm2, gap=0.05 mm: u_z=(4+40*0.05)/(20+40)=0.1 mm. Lato -1: k_c=30 N/mm2, gap=0.04 mm: u_y=-(1+30*0.04)/(10+30)=-0.055 mm.",
+    "tolerances": "Lineare: max(1e-10 mm, 1e-8*|atteso|); non lineare: max(1e-8 mm, 1e-6*|atteso|). Lettura attributi: esatta salvo gap 1e-12."
+  }
+}

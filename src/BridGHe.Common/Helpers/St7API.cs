@@ -187,6 +187,10 @@ namespace St7API
         public const int ltLoadCase = 0;
         public const int smUsePoissonsRatio = 0;
         public const int smUseShearModulus = 1;
+        public const int adMinus1 = 0;
+        public const int adPlus1 = 1;
+        public const int adMinus2 = 2;
+        public const int adPlus2 = 3;
         [DllImport("St7API.dll")]
         public static extern int St7SetLicenceOptions(int Mode, int MaxRetry, int RetryPause);
         [DllImport("St7API.dll")]
@@ -301,6 +305,8 @@ namespace St7API
         public static extern int St7SetBeamDistributedForceGlobal6ID(int uID, int BeamNum, int BeamDir, int ProjectFlag, int CaseNum, int DLType, int ID, double[] Doubles);
         [DllImport("St7API.dll")]
         public static extern int St7SetBeamDistributedMomentPrincipal6ID(int uID, int BeamNum, int BeamDir, int CaseNum, int DLType, int ID, double[] Doubles);
+        [DllImport("St7API.dll")]
+        public static extern int St7GetBeamSupport2(int uID, int BeamNum, int Direction, int CaseNum, ref int Status, double[] Doubles);
         [DllImport("St7API.dll")]
         public static extern int St7SetPlateID(int uID, int PlateNum, int PlateID);
         [DllImport("St7API.dll")]

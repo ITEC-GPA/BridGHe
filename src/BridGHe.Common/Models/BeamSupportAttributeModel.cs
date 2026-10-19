@@ -89,6 +89,7 @@ namespace BridGHe.Common.Models
                 SimpleSpringType = attr.Value.SimpleSpringType,
                 LinkProperty = attr.Value.LinkProperty,
                 Stiffness = attr.Value.Stiffness,
+                Gap = attr.Value.Gap,
                 LocalAxis2Angle = attr.Value.LocalAxis2Angle,
                 Plane12Angle = attr.Value.Plane12Angle,
                 CoordinateSystem = attr.Value.CoordinateSystem,
@@ -101,7 +102,7 @@ namespace BridGHe.Common.Models
         #region Serialization
 
         private string SERIALIZATION_RELEASE_NAME = "BeamSupportAttributeModel_SERIALIZATION_RELEASE"; //do not modify the name!
-        private int SERIALIZATION_RELEASE = 2;
+        private int SERIALIZATION_RELEASE = 3;
 
         protected BeamSupportAttributeModel(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -120,6 +121,8 @@ namespace BridGHe.Common.Models
                 CustomDirection = (Vector3d)info.GetValue("Vector3d", typeof(Vector3d)),
 
             };
+            try { _value.Gap = info.GetDouble("Gap"); }
+            catch (SerializationException) { _value.Gap = 0; }
         }
 
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
@@ -134,6 +137,7 @@ namespace BridGHe.Common.Models
             info.AddValue("SimpleSpringTypes", _value.SimpleSpringType);
             info.AddValue("Property", _value.LinkProperty);
             info.AddValue("Stiffness", _value.Stiffness);
+            info.AddValue("Gap", _value.Gap);
             info.AddValue("LocalAxis2Angle", _value.LocalAxis2Angle);
             info.AddValue("Plane12Angle", _value.Plane12Angle);
             info.AddValue("CoordinateSystem", _value.CoordinateSystem);
@@ -229,8 +233,21 @@ namespace BridGHe.Common.Models
 
         public override void Draw(DisplayPipeline display, RhinoViewport viewport, Color color, ElementModel element)
         {
-
-            base.Draw(display, viewport, color, element);
+            if(element is not BeamModel beam || !beam.IsValid) return;
+            if(_value.SpringTensionOrientation!=SpringTensionOrientation.BeamLocalAxis) return;
+            beam.GetLocalAxes(true,out var axis1,out var axis2,out var axis3,out _);
+            Vector3d direction=_value.LocalAxisDirection switch
+            { LocalAxisDirection.negative1Axis=>-axis1,LocalAxisDirection.positive1Axis=>axis1,
+              LocalAxisDirection.negative2Axis=>-axis2,LocalAxisDirection.positive2Axis=>axis2,_=>Vector3d.Zero };
+            if(direction.IsZero)return;
+            for(int i=1;i<=3;i++)
+            {
+                Point3d origin=beam.PointFrom+(beam.PointTo-beam.PointFrom)*(i/4.0);
+                double size=DrawingHelper.GetScaleFactor(viewport,origin);
+                var points=new[]{origin,origin+direction*size*.25,origin+direction*size*.4+axis3*size*.15,
+                    origin+direction*size*.6-axis3*size*.15,origin+direction*size*.75,origin+direction*size};
+                display.DrawPolyline(points,color);display.DrawLine(points[5]-axis3*size*.25,points[5]+axis3*size*.25,color);
+            }
         }
 
 
@@ -244,6 +261,8 @@ namespace BridGHe.Common.Models
             /// Stiffness of spring only for <see cref="BeamSupportAttributeModel.SpringType.Simple"/>
             /// </summary>
             public double Stiffness { get; set; }
+
+            public double Gap { get; set; }
 
             public BeamSupportAttributeModel.SimpleSpringTypes SimpleSpringType { get; set; }
 
@@ -272,6 +291,11 @@ namespace BridGHe.Common.Models
             public AttributeData()
             {
                 CustomDirection = Vector3d.Unset;
+                SpringType = SpringType.Simple;
+                SpringTensionOrientation = SpringTensionOrientation.BeamLocalAxis;
+                SimpleSpringType = SimpleSpringTypes.TensionCompression;
+                LocalAxisDirection = LocalAxisDirection.positive2Axis;
+                CoordinateSystem = CoordinateSystem.Local;
             }
 
             public override bool Equals(object obj)
@@ -287,15 +311,16 @@ namespace BridGHe.Common.Models
 
                 return !(other is null) && other.SpringType.Equals(SpringType)
                                         && other.Stiffness.Equals(Stiffness)
+                                        && other.Gap.Equals(Gap)
                                         && other.SimpleSpringType.Equals(SimpleSpringType)
-                                        && other.LinkProperty.Equals(LinkProperty)
+                                        && Equals(other.LinkProperty, LinkProperty)
                                         && other.SpringTensionOrientation.Equals(SpringTensionOrientation)
                                         && other.CustomDirection.Equals(CustomDirection)
                                         && other.LocalAxis2Angle.Equals(LocalAxis2Angle)
                                         && other.LocalAxisDirection.Equals(LocalAxisDirection)
                                         && other.Plane12Angle.Equals(Plane12Angle)
                                         && other.CoordinateSystem.Equals(CoordinateSystem)
-                                        && base.Equals(other);
+                                        ;
 
             }
 
@@ -303,7 +328,10 @@ namespace BridGHe.Common.Models
             {
                 unchecked
                 {
-                    return base.GetHashCode();
+                    var hash = new HashCode();
+                    hash.Add(SpringType); hash.Add(Stiffness); hash.Add(Gap); hash.Add(SimpleSpringType); hash.Add(LinkProperty);
+                    hash.Add(SpringTensionOrientation); hash.Add(CustomDirection); hash.Add(LocalAxis2Angle);
+                    hash.Add(LocalAxisDirection); hash.Add(Plane12Angle); hash.Add(CoordinateSystem); return hash.ToHashCode();
                 }
             }
         }
