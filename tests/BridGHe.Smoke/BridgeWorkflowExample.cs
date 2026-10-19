@@ -20,8 +20,8 @@ using St7API;
 
 internal static class BridgeWorkflowExample
 {
-    private static readonly string Root=Path.GetFullPath("examples/19-flusso-acciaio-misto");
-    private static readonly string Native=Path.GetFullPath("artifacts/bridge-workflow");
+    private static readonly string Root=ExamplePaths.Case("19-flusso-acciaio-misto");
+    private static readonly string Native=ExamplePaths.Calculations("19-flusso-acciaio-misto");
     internal static int Run(bool native=false)
     {
         Directory.CreateDirectory(Root);Directory.CreateDirectory(Native);
@@ -172,7 +172,6 @@ internal static class BridgeWorkflowExample
             checks.Near("Checked spine stations",check.Params.Output[0].VolatileDataCount>=120?1:0,1,0,0);toggle.Value=false;
         }
         string path=Path.Combine(Root,"19-flusso-acciaio-misto_REV003.ghx");GrasshopperBridgeExample.Write(document,path);
-        GrasshopperBridgeExample.Write(document,Path.Combine(Root,"19-flusso-acciaio-misto.ghx"));
         using var reopened=GrasshopperBridgeExample.Read(path);reopened.Enabled=true;reopened.NewSolution(false,GH_SolutionMode.Silent);
         if(Errors(reopened).Length>0)throw new Exception("Reopened graph: "+string.Join("\n",Errors(reopened)));
         checks.Near("Reopened component count",reopened.Objects.Count,document.Objects.Count,0,0);

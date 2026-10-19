@@ -1,0 +1,200 @@
+[
+  {
+    "number": 1,
+    "id": "01-cantilever",
+    "title": "Mensola elastica",
+    "group": "FEM elementare",
+    "readme": "01-cantilever/README.md",
+    "definition": "01-cantilever/01-cantilever.ghx",
+    "calculations": "01-cantilever/calcoli"
+  },
+  {
+    "number": 2,
+    "id": "02-simply-supported",
+    "title": "Trave semplicemente appoggiata",
+    "group": "FEM elementare",
+    "readme": "02-simply-supported/README.md",
+    "definition": "02-simply-supported/02-simply-supported.ghx",
+    "calculations": "02-simply-supported/calcoli"
+  },
+  {
+    "number": 3,
+    "id": "03-plate-patch",
+    "title": "Piastra in trazione",
+    "group": "FEM elementare",
+    "readme": "03-plate-patch/README.md",
+    "definition": "03-plate-patch/03-plate-patch.ghx",
+    "calculations": "03-plate-patch/calcoli"
+  },
+  {
+    "number": 4,
+    "id": "04-moving-load",
+    "title": "Asse mobile su trave",
+    "group": "FEM elementare",
+    "readme": "04-moving-load/README.md",
+    "definition": "04-moving-load/04-moving-load.ghx",
+    "calculations": "04-moving-load/calcoli"
+  },
+  {
+    "number": 5,
+    "id": "05-nonlinear-increments",
+    "title": "Incrementi non lineari",
+    "group": "FEM elementare",
+    "readme": "05-nonlinear-increments/README.md",
+    "definition": "05-nonlinear-increments/05-nonlinear-increments.ghx",
+    "calculations": "05-nonlinear-increments/calcoli"
+  },
+  {
+    "number": 6,
+    "id": "06-stage-loading",
+    "title": "Fasi di carico",
+    "group": "Fasi native Straus",
+    "readme": "06-stage-loading/README.md",
+    "definition": "06-stage-loading/06-stage-loading.ghx",
+    "calculations": "06-stage-loading/calcoli"
+  },
+  {
+    "number": 7,
+    "id": "07-stage-unloading",
+    "title": "Scarico e ricarico",
+    "group": "Fasi native Straus",
+    "readme": "07-stage-unloading/README.md",
+    "definition": "07-stage-unloading/07-stage-unloading.ghx",
+    "calculations": "07-stage-unloading/calcoli"
+  },
+  {
+    "number": 8,
+    "id": "08-stage-activation",
+    "title": "Attivazione di elementi",
+    "group": "Fasi native Straus",
+    "readme": "08-stage-activation/README.md",
+    "definition": "08-stage-activation/08-stage-activation.ghx",
+    "calculations": "08-stage-activation/calcoli"
+  },
+  {
+    "number": 9,
+    "id": "09-stage-removal",
+    "title": "Rimozione di elementi",
+    "group": "Fasi native Straus",
+    "readme": "09-stage-removal/README.md",
+    "definition": "09-stage-removal/09-stage-removal.ghx",
+    "calculations": "09-stage-removal/calcoli"
+  },
+  {
+    "number": 10,
+    "id": "10-stage-selection",
+    "title": "Selezione degli incrementi",
+    "group": "Fasi native Straus",
+    "readme": "10-stage-selection/README.md",
+    "definition": "10-stage-selection/10-stage-selection.ghx",
+    "calculations": "10-stage-selection/calcoli"
+  },
+  {
+    "number": 11,
+    "id": "11-ponte-graticcio",
+    "title": "Ponte misto a graticcio",
+    "group": "Ponti misti",
+    "readme": "11-ponte-graticcio/README.md",
+    "definition": "11-ponte-graticcio/11-ponte-graticcio.ghx",
+    "calculations": "11-ponte-graticcio/calcoli"
+  },
+  {
+    "number": 12,
+    "id": "12-continuo-2campate",
+    "title": "Ponte continuo a due campate",
+    "group": "Ponti misti",
+    "readme": "12-continuo-2campate/README.md",
+    "definition": "12-continuo-2campate/12-continuo-2campate.ghx",
+    "calculations": "12-continuo-2campate/calcoli"
+  },
+  {
+    "number": 13,
+    "id": "13-continuo-3campate",
+    "title": "Ponte continuo a tre campate",
+    "group": "Ponti misti",
+    "readme": "13-continuo-3campate/README.md",
+    "definition": "13-continuo-3campate/13-continuo-3campate.ghx",
+    "calculations": "13-continuo-3campate/calcoli"
+  },
+  {
+    "number": 14,
+    "id": "14-curvo-1campata",
+    "title": "Ponte curvo a una campata",
+    "group": "Ponti misti",
+    "readme": "14-curvo-1campata/README.md",
+    "definition": "14-curvo-1campata/14-curvo-1campata.ghx",
+    "calculations": "14-curvo-1campata/calcoli"
+  },
+  {
+    "number": 15,
+    "id": "15-curvo-2campate",
+    "title": "Ponte curvo a due campate",
+    "group": "Ponti misti",
+    "readme": "15-curvo-2campate/README.md",
+    "definition": "15-curvo-2campate/15-curvo-2campate.ghx",
+    "calculations": "15-curvo-2campate/calcoli"
+  },
+  {
+    "number": 16,
+    "id": "16-spina-1campata",
+    "title": "Spina centrale a una campata",
+    "group": "Ponti misti",
+    "readme": "16-spina-1campata/README.md",
+    "definition": "16-spina-1campata/16-spina-1campata.ghx",
+    "calculations": "16-spina-1campata/calcoli"
+  },
+  {
+    "number": 17,
+    "id": "17-spina-3campate",
+    "title": "Spina centrale a tre campate",
+    "group": "Ponti misti",
+    "readme": "17-spina-3campate/README.md",
+    "definition": "17-spina-3campate/17-spina-3campate.ghx",
+    "calculations": "17-spina-3campate/calcoli"
+  },
+  {
+    "number": 18,
+    "id": "18-spina-curva-2campate",
+    "title": "Spina centrale curva a due campate",
+    "group": "Ponti misti",
+    "readme": "18-spina-curva-2campate/README.md",
+    "definition": "18-spina-curva-2campate/18-spina-curva-2campate.ghx",
+    "calculations": "18-spina-curva-2campate/calcoli"
+  },
+  {
+    "number": 19,
+    "id": "19-flusso-acciaio-misto",
+    "title": "Workflow acciaio misto con fasi e ritiro",
+    "group": "Ponti misti",
+    "readme": "19-flusso-acciaio-misto/README.md",
+    "definition": "19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+    "calculations": "19-flusso-acciaio-misto/calcoli"
+  },
+  {
+    "number": 20,
+    "id": "20-visualizzatore-grafici",
+    "title": "Visualizzatore dei grafici",
+    "group": "Visualizzazione",
+    "readme": "20-visualizzatore-grafici/README.md",
+    "definition": "20-visualizzatore-grafici/plot-preview.ghx",
+    "calculations": "20-visualizzatore-grafici/calcoli"
+  },
+  {
+    "number": 21,
+    "id": "21-benchmark-carichi-mobili",
+    "title": "Cinque benchmark dei carichi mobili",
+    "group": "Benchmark aggiuntivi",
+    "readme": "21-benchmark-carichi-mobili/README.md",
+    "definition": null,
+    "calculations": "21-benchmark-carichi-mobili/calcoli"
+  },
+  {
+    "number": 22,
+    "id": "22-fasi-sezione-gpc",
+    "title": "Fasi di sezione e benchmark del ritiro",
+    "group": "Benchmark aggiuntivi",
+    "readme": "22-fasi-sezione-gpc/README.md",
+    "definition": null,
+    "calculations": "22-fasi-sezione-gpc/calcoli"
+  }
+]

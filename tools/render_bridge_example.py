@@ -13,7 +13,7 @@ from reportlab.graphics.charts.lineplots import LinePlot
 from reportlab.graphics import renderPDF
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "examples/bridge-grillage"
+OUT = ROOT / "example/11-ponte-graticcio"
 r = json.loads((OUT / "validation.json").read_text(encoding="utf-8"))
 if not r["Checks"] or not all(x["Passed"] for x in r["Checks"]):
     raise SystemExit("Refusing to publish a report with failed or missing checks")

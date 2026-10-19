@@ -11,14 +11,14 @@ Ambiente effettivo: Windows x64, Rhino 8.35 avviato con Rhino.Inside, runtime .N
 | Famiglie di sezioni native | 21 famiglie Straus superate | `artifacts/straus-license-check.log` |
 | Regressioni | 36 gruppi superati | `--regression all` |
 | Baseline numerica prima/dopo | 238 valori su 14 casi, tutti esattamente uguali | `bridge-numerical-baseline`, fixture versionata; tolleranza 1e-12 |
-| Dieci esempi Straus | 121 misure, nessun fallimento | `examples/validation/native.json` |
-| Dieci esempi Grasshopper | 111 misure, nessun fallimento | `examples/validation/grasshopper.json` |
-| Cinque contributi di fase nativi/gPC | 30 misure superate | `examples/validation/bridgeChecks.json` |
+| Dieci esempi Straus | 121 misure, nessun fallimento | `example/00-documentazione/validazioni/native.json` |
+| Dieci esempi Grasshopper | 111 misure, nessun fallimento | `example/00-documentazione/validazioni/grasshopper.json` |
+| Cinque contributi di fase nativi/gPC | 30 misure superate | `example/00-documentazione/validazioni/bridgeChecks.json` |
 | Appoggi elastici distribuiti | 29 misure native superate | `--beam-support`, `docs/beam-support-fix.json` |
-| Esempio 11: graticcio completo | 357 misure superate | `examples/bridge-grillage/validation.json` |
-| Esempi 12-15: continui e curvi | 290 misure, inclusi 20 benchmark di ritiro | cartelle `examples/bridge-suite`, `benchmarks.json` |
-| Esempi 16-18: spina centrale | 212 misure superate | tre cartelle `examples/bridge-suite/1[678]-*` |
-| Esempio 19: acciaio → override → merge → verifica | 162 controlli, 4 analisi Straus, 62 stazioni gPC; riapertura del GHX verificata | `examples/19-flusso-acciaio-misto/validation.json` |
+| Esempio 11: graticcio completo | 357 misure superate | `example/11-ponte-graticcio/validation.json` |
+| Esempi 12-15: continui e curvi | 290 misure, inclusi 20 benchmark di ritiro | cartelle `example`, `benchmarks.json` |
+| Esempi 16-18: spina centrale | 212 misure superate | tre cartelle `example/1[678]-*` |
+| Esempio 19: acciaio → override → merge → verifica | 162 controlli, 4 analisi Straus, 62 stazioni gPC; riapertura del GHX verificata | `example/19-flusso-acciaio-misto/archivio/REV001/validation.json` |
 | Contratti e GUID | 104 file di contratto, 146 GUID unici, nessun errore | `tools/audit_contracts.py --baseline-only` |
 | Inventario e icone | 137 componenti + 8 parametri istanziati, 145 icone di oggetti; 147 PNG includendo plugin e categoria | `migration/current-components.json`, `assets/icons/manifest.json` |
 
@@ -32,7 +32,7 @@ L'ultima build Release termina senza errori o avvisi: 186 controlli smoke e 35 g
 
 L'esempio 19 usa quattro analisi incrementali reali: acciaio, misto a lungo termine, misto istantaneo e ritiro FEM. Il contributo di autotensione del ritiro viene aggiunto separatamente. Sono verificati le proprietà generiche esportate, gli equilibri, le soluzioni analitiche, il matching esplicito dei casi, entrambe le file di armatura e la conservazione esatta delle sollecitazioni nel merge. Il GHX contiene risultati salvati e viene riaperto con il solutore disattivato; il verificatore restituisce nuovamente 62 stazioni.
 
-I controlli delle preview composte comprendono solidi validi, contatto soletta/flangia, sezioni asimmetriche, copia e archivio dopo Beam Override, ingombri e armature schematiche. Le opzioni globali persistenti e quelle locali non modificano il modello FEM. La cattura del viewport con Rhino nascosto ha restituito un errore nativo GPU (`SEHException`): la resa a schermo di queste nuove opzioni resta da ispezionare in Rhino interattivo. Il file `examples/19-flusso-acciaio-misto/preview-sezioni-composte.3dm` contiene la geometria verificata per questa ispezione.
+I controlli delle preview composte comprendono solidi validi, contatto soletta/flangia, sezioni asimmetriche, copia e archivio dopo Beam Override, ingombri e armature schematiche. Le opzioni globali persistenti e quelle locali non modificano il modello FEM. La cattura del viewport con Rhino nascosto ha restituito un errore nativo GPU (`SEHException`): la resa a schermo di queste nuove opzioni resta da ispezionare in Rhino interattivo. Il file `example/19-flusso-acciaio-misto/archivio/REV001/preview-sezioni-composte.3dm` contiene la geometria verificata per questa ispezione.
 
 L'output distribuibile è solo `bin/Release`. Il pacchetto include l'esempio 19 e un manifest SHA-256 dei 13 file alla radice, verificato sullo ZIP generato; i dati intermedi della compilazione restano sotto `obj`.
 
@@ -60,13 +60,13 @@ La soglia è mantenuta al **2%**: massimo scarto di Uz sui nodi comuni, riferito
 | 17, spina 20+30+20 m | 48 → 96 | 1,6629% |
 | 18, spina curva R120 | 96 → 192 | 1,1782% |
 
-Le mesh iniziali che non rispettavano la soglia sono state raffinate, senza ampliare la tolleranza. Gli esempi con spina hanno geometrie e ritiro equivalente differenti fra trave centrale e laterali; nei rettilinei viene verificata la simmetria delle deformate laterali. I dettagli delle ipotesi sono nel [README della suite](../examples/bridge-suite/README.md).
+Le mesh iniziali che non rispettavano la soglia sono state raffinate, senza ampliare la tolleranza. Gli esempi con spina hanno geometrie e ritiro equivalente differenti fra trave centrale e laterali; nei rettilinei viene verificata la simmetria delle deformate laterali. I dettagli delle ipotesi sono nel [README della suite](../example/00-documentazione/ponti-12-18.md).
 
 ## Preview e grafici
 
 Aggiornamento grafici del 19 ottobre 2026: build Release dei soli commit pubblicabili, audit dei contratti (105 file, 147 GUID) e suite completa superati, con **187 controlli smoke e 36 gruppi di regressione**. Baseline: 238 valori invariati. La copia di verifica è stata creata sotto `obj` per escludere le modifiche locali preesistenti ai componenti di sezione composta e merge; quei sorgenti non sono stati modificati da questo intervento.
 
-I grafici ripristinano inviluppi, progressive in metri, separatori delle beam ed estremi annotati. Il nuovo `Bridge Plot Preview` è provato con SVG.NET sul canvas GH, cache, lista di grafici, ridimensionamento, errori, dati mancanti e rilascio delle immagini. L'esempio `examples/plot-preview/plot-preview.ghx` è stato salvato, riaperto e ricalcolato. Il renderer SVG.NET non usa il viewport GPU; il precedente limite di cattura della preview geometrica 3D non si applica a questi grafici 2D. Le chiamate di aggiornamento della finestra ingrandita sono testate automaticamente; il clic manuale e l'interazione con lo zoom restano da provare nella sessione interattiva dell'utente.
+I grafici ripristinano inviluppi, progressive in metri, separatori delle beam ed estremi annotati. Il nuovo `Bridge Plot Preview` è provato con SVG.NET sul canvas GH, cache, lista di grafici, ridimensionamento, errori, dati mancanti e rilascio delle immagini. L'esempio `example/20-visualizzatore-grafici/plot-preview.ghx` è stato salvato, riaperto e ricalcolato. Il renderer SVG.NET non usa il viewport GPU; il precedente limite di cattura della preview geometrica 3D non si applica a questi grafici 2D. Le chiamate di aggiornamento della finestra ingrandita sono testate automaticamente; il clic manuale e l'interazione con lo zoom restano da provare nella sessione interattiva dell'utente.
 
 Sono verificate 21 famiglie parametriche di sezione Straus: contorni presenti, estrusione chiusa, copia/archivio fedele e area geometrica della preview entro il 3% dell'area esatta. Le proprietà meccaniche restano quelle native; la discretizzazione grafica non entra nel solutore. I 21 contorni sono stati ispezionati anche visivamente. Librerie esterne e ogni possibile file BXS non sono coperti dal test delle 21 famiglie.
 
@@ -87,4 +87,4 @@ Verifica sulla copia pulita del commit `8b2effc`: compilazione Release senza avv
 
 Sul GHX utente corretto in `19-flusso-acciaio-misto_REV002.ghx`: **12 beam, 6 casi, 5 combinazioni, 275 risultati**; **223 campioni FEM** conservati dal merge con differenza massima zero sulle sei componenti. Il modello Straus del ritiro è stato ricalcolato con n = 12 e la cache aggiornata, poi il file finale è stato riaperto e verificato fino ai grafici. Le combinazioni XLSX sono state internalizzate nel solo processo di test, senza automazione Excel/TT Toolbox. Il foglio consegnato resta identico all'originale e non contiene il caso `4-RITIRO_FEM`: questo contributo non entra nelle cinque combinazioni.
 
-Dettagli e differenze numeriche: [README REV002](../examples/19-flusso-acciaio-misto/README_REV002.md) e [report](../examples/19-flusso-acciaio-misto/validation_REV002.json). Gli altri cambiamenti locali preesistenti ai due componenti non sono inclusi nei commit di questa verifica.
+Dettagli e differenze numeriche: [README REV002](../example/19-flusso-acciaio-misto/archivio/REV002/README_REV002.md) e [report](../example/19-flusso-acciaio-misto/archivio/REV002/validation_REV002.json). Gli altri cambiamenti locali preesistenti ai due componenti non sono inclusi nei commit di questa verifica.

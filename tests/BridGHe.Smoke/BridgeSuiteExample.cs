@@ -31,8 +31,7 @@ internal static class BridgeSuiteExample
     }
     internal sealed record ShrinkageData(double Centroid,double EA,double EI,double Epsilon,double Gradient,double PrimaryN,double PrimaryM);
     internal sealed record SectionSample(int Beam,double Station,double[] FinalStress,bool Supported,string Reason);
-    internal static readonly string Root=Path.GetFullPath("examples/bridge-suite");
-    internal static readonly string Artifacts=Path.GetFullPath("artifacts/bridge-suite");
+    internal static readonly string Root=ExamplePaths.Root;
     internal static readonly string[] Cases={"G1_GETTO","G2_PERMANENTI","Q_TRAFFICO","RITIRO"};
     internal static readonly Definition[] Defaults={
         new("12-continuo-2campate","Rettilineo continuo 20 + 20 m",new[]{20000.0,20000},0),
@@ -119,7 +118,7 @@ internal static class BridgeSuiteExample
     }
     internal static ModelModel Solve(ModelModel input,string name)
     {
-        string folder=Path.Combine(Artifacts,name);Directory.CreateDirectory(folder);
+        string folder=ExamplePaths.SuiteCalculation(name);Directory.CreateDirectory(folder);
         File.WriteAllBytes(Path.Combine(folder,"input.bgmodel"),ModelArchive.Write(input));
         var result=StrausAnalysis.Run(input,Path.Combine(folder,"model.st7"),0,input.LoadCases.Select(c=>c.Name).ToArray(),1e-6,false,out var warnings);
         File.WriteAllBytes(Path.Combine(folder,"results.bgmodel"),ModelArchive.Write(result));
@@ -287,9 +286,9 @@ internal static class BridgeSuiteExample
     internal static int Run(bool grasshopper,bool probe=false,string selected="all")
     {
         CultureInfo.CurrentCulture=CultureInfo.InvariantCulture;
-        Directory.CreateDirectory(Root);Directory.CreateDirectory(Artifacts);
+        Directory.CreateDirectory(Root);Directory.CreateDirectory(ExamplePaths.Documentation);
         var benchmarks=new NativeExamples.Recorder();ShrinkageBenchmarks(benchmarks);
-        File.WriteAllText(Path.Combine(Root,"benchmarks.json"),JsonSerializer.Serialize(benchmarks.Measurements,Json));
+        File.WriteAllText(Path.Combine(ExamplePaths.Documentation,"benchmarks.json"),JsonSerializer.Serialize(benchmarks.Measurements,Json));
         if(probe||benchmarks.Measurements.Any(c=>!c.Passed))return benchmarks.Measurements.All(c=>c.Passed)?0:1;
         int failures=0,total=benchmarks.Measurements.Count;
         var selectedDefinitions=Defaults.Where(d=>selected=="all"||d.Id.StartsWith(selected,StringComparison.Ordinal)).ToArray();

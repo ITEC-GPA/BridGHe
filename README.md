@@ -6,10 +6,12 @@ La versione corrente comprende **138 componenti e 8 parametri**, con 147 GUID di
 
 ## Esempi
 
-- [01–10: casi analitici, carichi mobili e cinque esempi di costruzione per fasi](examples/README.md).
-- [11: ponte misto a graticcio, quattro travi, veicolo mobile e tre rigidezze](examples/bridge-grillage/README.md).
-- [12–15: ponti continui e curvi, tre contributi meccanici più ritiro](examples/bridge-suite/README.md).
-- [16–18: spina centrale H2000 e due laterali H1600, una/tre campate o due campate curve](examples/bridge-suite/README.md#esempi-aggiuntivi-16-18-spina-centrale-e-due-travi-laterali). Tre fasi più ritiro differenziale, 212 controlli superati.
+[Indice unico degli esempi numerati](example/README.md). Ogni caso raccoglie definizione, istruzioni e calcoli nella propria cartella.
+
+- [01–10: casi analitici, carichi mobili e cinque esempi di costruzione per fasi](example/00-documentazione/benchmark-01-10.md).
+- [11: ponte misto a graticcio, quattro travi, veicolo mobile e tre rigidezze](example/11-ponte-graticcio/README.md).
+- [12–15: ponti continui e curvi, tre contributi meccanici più ritiro](example/00-documentazione/ponti-12-18.md).
+- [16–18: spina centrale H2000 e due laterali H1600, una/tre campate o due campate curve](example/00-documentazione/ponti-12-18.md#esempi-aggiuntivi-16-18-spina-centrale-e-due-travi-laterali). Tre fasi più ritiro differenziale, 212 controlli superati.
 
 I modelli sono esempi riproducibili, con ipotesi, unità, confronti analitici e tolleranze dichiarati. Il percorso automatico dei superelementi H rifiuta torsione e flessione minore fuori campo; il nuovo componente nativo gPC gestisce anche geometrie a cassone e anima inclinata. Non equivale a una verifica completa di ogni ponte.
 
@@ -82,4 +84,4 @@ Le proprietà omogeneizzate conservano acciaio e soletta nella preview delle bea
 
 ## Esempio del flusso acciaio → misto
 
-[Guida all'esempio 19](examples/19-flusso-acciaio-misto/README.md): REV003 contiene un ponte a due campate da 30 m e tre travi, con modello acciaio, override n∞, n0 e n ritiro, quattro analisi Straus e verifica gPC della spina centrale. Il nuovo graticcio è preparato e controllato offline; le analisi native sono ancora da eseguire con licenza disponibile. `Bridge Action` e `Bridge Shrinkage Action` associano casi e strain alle fasi numerate; le combinazioni usano gli Action ID. Gli ingressi correnti di `Build BridGHe Model` sono `Models`, `Phases`, `Combinations`, `Calculation`. Dopo le analisi premere Run sul Build e sul verificatore. Le vecchie connessioni di REV001/REV002 non sono compatibili con questa interfaccia. Le due file di armatura e il rapporto `n ritiro` sono inclusi nelle proprietà e nella verifica.
+[Guida all'esempio 19](example/19-flusso-acciaio-misto/README.md): REV003 contiene un ponte a due campate da 30 m e tre travi, con modello acciaio, override n∞, n0 e n ritiro, quattro analisi Straus e verifica gPC della spina centrale. Il nuovo graticcio è preparato e controllato offline; le analisi native sono ancora da eseguire con licenza disponibile. `Bridge Action` e `Bridge Shrinkage Action` associano casi e strain alle fasi numerate; le combinazioni usano gli Action ID. Gli ingressi correnti di `Build BridGHe Model` sono `Models`, `Phases`, `Combinations`, `Calculation`. Dopo le analisi premere Run sul Build e sul verificatore. Le vecchie connessioni di REV001/REV002 non sono compatibili con questa interfaccia. Le due file di armatura e il rapporto `n ritiro` sono inclusi nelle proprietà e nella verifica.

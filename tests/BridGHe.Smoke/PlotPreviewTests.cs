@@ -104,7 +104,7 @@ internal static class PlotPreviewTests
             var viewer=(GH_Component)Activator.CreateInstance(type);viewer.CreateAttributes();viewer.Attributes.Pivot=new PointF(650,80);example.AddObject(viewer,false);viewer.Params.Input[0].AddSource(source);
             var slider=new global::Grasshopper.Kernel.Special.GH_NumberSlider();slider.CreateAttributes();slider.Attributes.Pivot=new PointF(50,230);slider.Slider.Minimum=0;slider.Slider.Maximum=1;slider.Slider.Type=global::Grasshopper.GUI.Base.GH_SliderAccuracy.Integer;slider.SetSliderValue(0);example.AddObject(slider,false);viewer.Params.Input[1].AddSource(slider);
             example.Enabled=true;example.NewSolution(false,GH_SolutionMode.Silent);
-            string file=Path.GetFullPath("examples/plot-preview/plot-preview.ghx");Directory.CreateDirectory(Path.GetDirectoryName(file));
+            string file=Path.Combine(ExamplePaths.Case("20-visualizzatore-grafici"),"plot-preview.ghx");Directory.CreateDirectory(Path.GetDirectoryName(file));
             Require(new GH_DocumentIO{Document=example}.SaveQuiet(file),"Could not save preview example.");
             var io=new GH_DocumentIO();Require(io.Open(file),"Could not reopen preview example.");
             using var reopened=io.Document;reopened.Enabled=true;reopened.NewSolution(false,GH_SolutionMode.Silent);

@@ -39,7 +39,7 @@ internal static class NativeBridgePhases
         var cases=phases.Select(p=>new LoadCaseModel(p.ToString(),p.ToString()){Stages=new(){new LoadCaseModel.Stage(p.ToString()){BridgePhase=p}}}).ToArray();
         for(int i=0;i<3;i++){model.LoadCases.Add(cases[i]);last.Loads.Add(new NodeMomentLoadModel(cases[i],new Vector3d(0,-(i+1)*1e6,0)));}
         model.AddElements(new ElementModel[]{first,last,beam});
-        string folder=Path.GetFullPath("artifacts/native-bridge-phases");Directory.CreateDirectory(folder);
+        string folder=Path.Combine(ExamplePaths.Calculations("22-fasi-sezione-gpc"),"fasi-sezione");Directory.CreateDirectory(folder);
         var result=StrausAnalysis.Run(model,Path.Combine(folder,"moments.st7"),0,cases.Take(3).Select(c=>c.Name).ToArray(),1e-6,false,out var warnings);
         var actualBeam=result.Beams.Single();
         var recorder=new NativeExamples.Recorder();

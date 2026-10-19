@@ -27,7 +27,7 @@ internal static class GrasshopperBridgeSuite
         foreach(var original in Defaults.Where(d=>prefix=="all"||d.Id.StartsWith(prefix,StringComparison.Ordinal)))
         {
             var d=JsonSerializer.Deserialize<Definition>(File.ReadAllText(Path.Combine(Root,original.Id,"parameters.json")));
-            ModelModel[] Read(string file)=>Cases.Select(name=>BridGHe.Common.Helpers.ModelArchive.Read<ModelModel>(File.ReadAllBytes(Path.Combine(Artifacts,d.Id,name,file)))).ToArray();
+            ModelModel[] Read(string file)=>Cases.Select(name=>BridGHe.Common.Helpers.ModelArchive.Read<ModelModel>(File.ReadAllBytes(Path.Combine(ExamplePaths.Calculations(d.Id),name,file)))).ToArray();
             using var report=JsonDocument.Parse(File.ReadAllText(Path.Combine(Root,d.Id,"validation.json")));
             var samples=report.RootElement.GetProperty("Sections").Deserialize<List<SectionSample>>();
             Run(d,Read("input.bgmodel"),Read("results.bgmodel"),samples,checks,cached:true);
@@ -35,7 +35,7 @@ internal static class GrasshopperBridgeSuite
         foreach(var original in BridgeSpineExamples.Definitions.Where(d=>prefix=="all"||d.Id.StartsWith(prefix,StringComparison.Ordinal)))
         {
             var setup=JsonSerializer.Deserialize<BridgeSpineExamples.Settings>(File.ReadAllText(Path.Combine(Root,original.Id,"parameters.json")));
-            ModelModel[] Read(string file)=>Cases.Select(name=>ModelArchive.Read<ModelModel>(File.ReadAllBytes(Path.Combine(Artifacts,original.Id,name,file)))).ToArray();
+            ModelModel[] Read(string file)=>Cases.Select(name=>ModelArchive.Read<ModelModel>(File.ReadAllBytes(Path.Combine(ExamplePaths.Calculations(original.Id),name,file)))).ToArray();
             using var report=JsonDocument.Parse(File.ReadAllText(Path.Combine(Root,original.Id,"validation.json")));
             Run(setup.Definition,Read("input.bgmodel"),Read("results.bgmodel"),report.RootElement.GetProperty("Sections").Deserialize<List<SectionSample>>(),checks,setup.Central,new[]{"G2"},cached:true);
         }
@@ -124,7 +124,7 @@ internal static class GrasshopperBridgeSuite
                 Wire(Panel("ID elementi",string.Join("\n",members.Select(b=>b.BeamId)),1560,row+80,180,85),ids,1);Wire(ids.Params.Output[0],build,0);beamGroup++;
             }
             var analysis=Component("Analysis.StrausR3AnalysisComponent",2500,y+550);Wire(build.Params.Output[0],analysis,0);Integer(analysis,1,0);Text(analysis,2,Cases[phase]);Wire(toggle,analysis,4);
-            Wire(Panel("File Straus",Path.Combine(Path.GetTempPath(),"BridGHe-"+d.Id+"-"+Cases[phase]+".st7"),2140,y+750,390,65),analysis,3);analyses.Add(analysis);
+            Wire(Panel("File Straus",Path.Combine(ExamplePaths.Calculations(d.Id),"gh-"+Cases[phase]+".st7"),2140,y+750,390,65),analysis,3);analyses.Add(analysis);
             var parts=Component("Models.DecomposeModelComponent",2780,y+550);Wire(analysis.Params.Output[0],parts,0);
             var nr=Component("Results.NodeResultsComponent",3020,y+380);Wire(parts.Params.Output[0],nr,0);
             var br=Component("Results.BeamResultsComponent",3020,y+700);Wire(parts.Params.Output[1],br,0);
@@ -175,7 +175,7 @@ internal static class GrasshopperBridgeSuite
         using var restored=GrasshopperBridgeExample.Read(ghx);
         restored.Objects.OfType<GH_BooleanToggle>().Single().Value=!cached;
         var restoredAnalyses=restored.Objects.OfType<GH_Component>().Where(c=>c.GetType()==analyses[0].GetType()).OrderBy(c=>c.Attributes.Pivot.Y).ToArray();
-        for(int phase=0;phase<4;phase++)((GH_Panel)restoredAnalyses[phase].Params.Input[3].Sources.Single()).UserText=Path.Combine(Artifacts,d.Id,"gh-"+Cases[phase]+".st7");
+        for(int phase=0;phase<4;phase++)((GH_Panel)restoredAnalyses[phase].Params.Input[3].Sources.Single()).UserText=Path.Combine(ExamplePaths.Calculations(d.Id),"gh-"+Cases[phase]+".st7");
         if(cached)for(int phase=0;phase<4;phase++)restoredAnalyses[phase].GetType().GetField("_model",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(restoredAnalyses[phase],Goo("Fem.GH_Model",expected[phase]));
         GH_Document.EnableSolutions=true;restored.Enabled=true;restored.NewSolution(false,GH_SolutionMode.Silent);
         string[] Errors()=>restored.Objects.OfType<GH_ActiveObject>().SelectMany(c=>c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Select(e=>c.Name+": "+e)).ToArray();

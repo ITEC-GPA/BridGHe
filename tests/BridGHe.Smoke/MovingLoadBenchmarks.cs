@@ -35,7 +35,7 @@ internal static class MovingLoadBenchmarks
             : a*(Length-x)*(Length*Length-a*a-(Length-x)*(Length-x)))/(6*Length*E*I);
     internal static int Run(bool native,string selection="all")
     {
-        string root=Path.GetFullPath("artifacts/moving-load-tests/"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfff"));
+        string root=Path.Combine(ExamplePaths.Calculations("21-benchmark-carichi-mobili"),DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfff"));
         Directory.CreateDirectory(root);
         var selected=Scenarios.Where(s=>selection=="all"||s.Id.StartsWith(selection,StringComparison.Ordinal)).ToArray();
         if(selected.Length==0)throw new ArgumentException("Unknown moving-load scenario: "+selection);

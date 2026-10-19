@@ -85,7 +85,7 @@ Le prove del convertitore sono eseguite; la verifica completa dei segni dopo esp
 
 I quattro nuovi componenti `Bridge Studs`, `Bridge Intermediate Stiffener`, `Bridge Support Stiffener` e `Bridge Detail Check` si trovano in **BridGHe-Checks / Bridge details**. Le definizioni espongono le opzioni scalari native gPC; l'ultimo componente riceve un risultato BridgeChecks e ricalcola la stessa storia con i dettagli assegnati. Unità degli irrigiditori: **kN**, mm; pioli: mm, MPa. I risultati elencano esplicitamente le unità. Un rapporto NaN indica una verifica non espressa da gPC, non un esito favorevole.
 
-I dettagli non modificano il graticcio FEM. Lo stato limite resta quello del risultato sorgente: nessuna conversione automatica SLS→SLU. Esempi collegati e limiti: [ponti continui e curvi](../examples/bridge-suite/README.md).
+I dettagli non modificano il graticcio FEM. Lo stato limite resta quello del risultato sorgente: nessuna conversione automatica SLS→SLU. Esempi collegati e limiti: [ponti continui e curvi](../example/00-documentazione/ponti-12-18.md).
 
 
 ## Componenti gPC e grafici aggiunti

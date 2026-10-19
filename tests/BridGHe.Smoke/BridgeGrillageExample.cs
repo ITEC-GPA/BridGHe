@@ -59,8 +59,8 @@ internal static class BridgeGrillageExample
     internal static readonly string[] PhaseNames = {"G1_GETTO", "G2_PERMANENTI", "Q_UDL"};
     internal static readonly LoadCaseModel.Stage.BridgePhases[] Phases = {LoadCaseModel.Stage.BridgePhases.OnlySteel,LoadCaseModel.Stage.BridgePhases.NInfinite,LoadCaseModel.Stage.BridgePhases.NInstant};
     internal static readonly JsonSerializerOptions Json = new(){WriteIndented=true};
-    internal static readonly string Output = Path.GetFullPath("artifacts/bridge-grillage");
-    internal static readonly string Delivery = Path.GetFullPath("examples/bridge-grillage");
+    internal static readonly string Output = ExamplePaths.Calculations("11-ponte-graticcio");
+    internal static readonly string Delivery = ExamplePaths.Case("11-ponte-graticcio");
     internal static MaterialModel Steel() => new("S355"){Name="S355",Modulus=Es,PoissonRatio=NuSteel,MinimumYieldStress=355,MinimumTensileStress=510};
     internal static SectionModel H(Parameters p) => new(){SectionType=SectionModel.SectionTypes.I,D=p.SteelHeight,B1=p.FlangeWidth,B2=p.FlangeWidth,T1=p.FlangeThickness,T2=p.FlangeThickness,T3=p.WebThickness};
     internal static SectionH GpcH(Parameters p) => new(p.SteelHeight,p.WebThickness,p.FlangeWidth,p.FlangeThickness,p.FlangeWidth,p.FlangeThickness,"H principale");

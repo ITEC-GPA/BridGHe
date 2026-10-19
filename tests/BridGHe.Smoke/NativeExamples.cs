@@ -163,12 +163,13 @@ internal static class NativeExamples
     internal static int Run(string selected)
     {
         StrausRuntime.EnsureInitialized();
-        string root=Path.GetFullPath(Path.Combine("artifacts","examples",DateTime.Now.ToString("yyyyMMdd-HHmmss")));Directory.CreateDirectory(root);
+        string runId=DateTime.Now.ToString("yyyyMMdd-HHmmssfff");
+        string root=Path.Combine(ExamplePaths.Validation,"esecuzioni",runId);Directory.CreateDirectory(root);
         var reports=new List<object>();int failures=0,count=0;
         foreach(var example in Create().Where(x=>selected=="all"||x.Id.StartsWith(selected,StringComparison.Ordinal)))
         {
             count++;Console.WriteLine("EXAMPLE "+example.Id);var record=new Recorder();string error=null;List<string> warnings=new();
-            string folder=Path.Combine(root,example.Id);Directory.CreateDirectory(folder);example.Model.Name=example.Title;
+            string folder=Path.Combine(ExamplePaths.Calculations(example.Id),"native",runId);Directory.CreateDirectory(folder);example.Model.Name=example.Title;
             File.WriteAllBytes(Path.Combine(folder,"input.bgmodel"),ModelArchive.Write(example.Model));
             try{
                 // Exercise relative paths with '/' against the real native solver.
@@ -184,7 +185,7 @@ internal static class NativeExamples
             File.WriteAllText(Path.Combine(folder,"report.json"),JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true}));
         }
         File.WriteAllText(Path.Combine(root,"report.json"),JsonSerializer.Serialize(new{Date=DateTimeOffset.Now,Count=count,Failures=failures,Examples=reports},new JsonSerializerOptions{WriteIndented=true}));
-        if(selected=="all"&&count==10&&failures==0)File.WriteAllText("artifacts/examples/latest-passed.txt",root);
+        if(selected=="all"&&count==10&&failures==0)File.WriteAllText(Path.Combine(ExamplePaths.Validation,"latest-passed.txt"),runId);
         Console.WriteLine($"EXAMPLES {count}, FAILURES {failures}; report: {root}");return count>0&&failures==0?0:1;
     }
 }

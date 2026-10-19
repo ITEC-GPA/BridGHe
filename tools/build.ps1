@@ -40,19 +40,19 @@ try {
             & dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- $mode
             if ($LASTEXITCODE -ne 0) { throw "Esempi non riusciti: $mode" }
         }
-        $validationRoot = Join-Path $projectRoot 'examples\validation'
+        $validationRoot = Join-Path $projectRoot 'example\00-documentazione\validazioni'
         New-Item -ItemType Directory -Path $validationRoot -Force | Out-Null
-        $nativeRun = Get-Content -LiteralPath (Join-Path $projectRoot 'artifacts\examples\latest-passed.txt') -Raw
+        $nativeRunId = (Get-Content -LiteralPath (Join-Path $validationRoot 'latest-passed.txt') -Raw).Trim()
+        $nativeRun = Join-Path $validationRoot "esecuzioni\$nativeRunId"
         Copy-Item -LiteralPath (Join-Path $nativeRun 'report.json') -Destination (Join-Path $validationRoot 'native.json')
-        Copy-Item -LiteralPath (Join-Path $projectRoot 'artifacts\native-bridge-phases\report.json') -Destination (Join-Path $validationRoot 'bridgeChecks.json')
-        $ghReports = Get-ChildItem -LiteralPath (Join-Path $projectRoot 'artifacts\gh-examples') -Directory | ForEach-Object {
-            [pscustomobject]@{example=$_.Name;measurements=(Get-Content -LiteralPath (Join-Path $_.FullName 'report.json') -Raw | ConvertFrom-Json)}
+        Copy-Item -LiteralPath (Join-Path $projectRoot 'example\22-fasi-sezione-gpc\calcoli\fasi-sezione\report.json') -Destination (Join-Path $validationRoot 'bridgeChecks.json')
+        $ghReports = Get-ChildItem -LiteralPath (Join-Path $projectRoot 'example') -Directory | Where-Object { $_.Name -match '^(0[1-9]|10)-' } | ForEach-Object {
+            [pscustomobject]@{example=$_.Name;measurements=(Get-Content -LiteralPath (Join-Path $_.FullName 'calcoli\grasshopper\report.json') -Raw | ConvertFrom-Json)}
         }
         $ghReports | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $validationRoot 'grasshopper.json') -Encoding utf8
         # Native files remain generated artifacts; definitions, recipes and reports are versioned.
-        $nativeZip = Join-Path $projectRoot 'artifacts\BridGHe-native-examples.zip'
-        Compress-Archive -Path (Join-Path $nativeRun '*') -DestinationPath $nativeZip -Force
-        Write-Host "Esempi nativi: $nativeZip"
+        & py tools/package_native_examples.py $nativeRunId
+        if ($LASTEXITCODE -ne 0) { throw 'Creazione pacchetto dei benchmark nativi non riuscita.' }
     }
     if ($BridgeGrillage) {
         if ($Configuration -ne 'Release') { throw 'Il ponte a graticcio richiede Release.' }
@@ -60,7 +60,9 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'Compilazione del ponte non riuscita.' }
         & dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --bridge-grillage --gh
         if ($LASTEXITCODE -ne 0) { throw 'Verifica del ponte a graticcio non riuscita.' }
-        Compress-Archive -Path (Join-Path $projectRoot 'artifacts\bridge-grillage\*') -DestinationPath (Join-Path $projectRoot 'artifacts\BridGHe-ponte-graticcio-native.zip') -Force
+        $examplePackages = Join-Path $projectRoot 'example\00-documentazione\archivio-pacchetti'
+        New-Item -ItemType Directory -Path $examplePackages -Force | Out-Null
+        Compress-Archive -Path (Join-Path $projectRoot 'example\11-ponte-graticcio\calcoli\*') -DestinationPath (Join-Path $examplePackages 'BridGHe-ponte-graticcio-native.zip') -Force
     }
     if ($BridgeSuite) {
         if ($Configuration -ne 'Release') { throw 'I quattro ponti richiedono Release.' }
@@ -96,7 +98,16 @@ try {
             Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination $packageRoot
             Copy-Item -LiteralPath (Join-Path $projectRoot 'docs') -Destination $packageRoot -Recurse
             Copy-Item -LiteralPath (Join-Path $projectRoot 'migration') -Destination $packageRoot -Recurse
-            Copy-Item -LiteralPath (Join-Path $projectRoot 'examples') -Destination $packageRoot -Recurse
+            # Ship definitions and documentation; native runs and historical packages
+            # stay beside their examples locally, but must not bloat the plugin package.
+            $exampleRoot = Join-Path $projectRoot 'example'
+            foreach ($file in Get-ChildItem -LiteralPath $exampleRoot -File -Recurse) {
+                $relative = [IO.Path]::GetRelativePath($exampleRoot, $file.FullName)
+                if ($relative -match '(^|[\\/])(calcoli|archivio-pacchetti|esecuzioni|backup-prima-fasi)([\\/]|$)' -or $file.Name.StartsWith('~$')) { continue }
+                $target = Join-Path (Join-Path $packageRoot 'example') $relative
+                New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
+                Copy-Item -LiteralPath $file.FullName -Destination $target
+            }
             $packageAssets = Join-Path $packageRoot 'assets'
             New-Item -ItemType Directory -Path $packageAssets -Force | Out-Null
             Copy-Item -LiteralPath (Join-Path $projectRoot 'assets\icons') -Destination $packageAssets -Recurse

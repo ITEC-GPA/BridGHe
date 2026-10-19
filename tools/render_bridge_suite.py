@@ -11,7 +11,7 @@ from reportlab.graphics.shapes import Drawing, String
 from reportlab.graphics.charts.lineplots import LinePlot
 from reportlab.graphics import renderPDF
 
-ROOT = Path(__file__).resolve().parents[1] / 'examples/bridge-suite'
+ROOT = Path(__file__).resolve().parents[1] / 'example'
 spine = '--spine' in sys.argv
 folders = sorted(p.parent for p in ROOT.glob('1[678]-*/validation.json' if spine else '1[2345]-*/validation.json'))
 assert len(folders) == (3 if spine else 4)
@@ -19,7 +19,7 @@ reports = [json.loads((p/'validation.json').read_text(encoding='utf-8')) for p i
 assert all(r['Checks'] and all(c['Passed'] for c in r['Checks']) for r in reports)
 assert all(any(c['Name'].startswith('GH ') for c in r['Checks']) for r in reports)
 W, H = landscape(A4)
-output = ROOT/('ponti-spina-centrale.pdf' if spine else 'quattro-ponti.pdf')
+output = ROOT/'00-documentazione'/('ponti-spina-centrale.pdf' if spine else 'quattro-ponti.pdf')
 c = Canvas(str(output), pagesize=(W,H))
 c.setTitle('BridGHe | '+('Spina centrale a tre travi' if spine else 'Quattro ponti misti')+': tre fasi + ritiro')
 NAVY=colors.HexColor('#173548'); GREY=colors.HexColor('#62727c'); TEAL=colors.HexColor('#148b8a')

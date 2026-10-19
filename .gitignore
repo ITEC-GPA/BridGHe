@@ -7,3 +7,9 @@ artifacts/
 *.LSA
 *.NLA
 *.log
+example/**/calcoli/
+example/**/archivio-pacchetti/
+example/**/esecuzioni/
+example/**/backup-prima-fasi/
+~$*
+example/00-documentazione/validazioni/latest-passed.txt

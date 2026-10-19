@@ -101,7 +101,7 @@ internal static class GrasshopperBridgeExample
             }
             var analysis=Component("Analysis.StrausR3AnalysisComponent",2080,y+360);Wire(build.Params.Output[0],analysis,0);Integer(analysis,1,0);
             Wire(Panel("Casi da leggere",string.Join("\n",input.LoadCases.Select(c=>c.Name)),1770,y+530,260,90),analysis,2);
-            Wire(Panel("File Straus",Path.Combine(Path.GetTempPath(),"BridGHe-ponte-fase-"+phase+".st7"),1770,y+650,400,60),analysis,3);
+            Wire(Panel("File Straus",Path.Combine(BridgeGrillageExample.Output,"gh-phase-"+phase+".st7"),1770,y+650,400,60),analysis,3);
             Boolean(analysis,4,false);analyses.Add(analysis);
             var decompose=Component("Models.DecomposeModelComponent",2330,y+360);Wire(analysis.Params.Output[0],decompose,0);
             var nr=Component("Results.NodeResultsComponent",2560,y+260);Wire(decompose.Params.Output[0],nr,0);
@@ -114,7 +114,7 @@ internal static class GrasshopperBridgeExample
         var path=Objects("Percorso veicolo 2 assi",new[]{Goo("MovingGoo",BridgeGrillageExample.Traffic(p))},1700,3500);
         var attach=Component("Loads.AttachMovingPathsComponent",2020,3500);Wire(builds[2].Params.Output[0],attach,0);Wire(path,attach,1);
         var moving=Component("Analysis.MovingStaticAnalysisComponent",2350,3500);Wire(attach.Params.Output[0],moving,0);
-        Wire(Panel("File mobile",Path.Combine(Path.GetTempPath(),"BridGHe-ponte-mobile.st7"),1800,3640,450,60),moving,1);Boolean(moving,2,false);
+        Wire(Panel("File mobile",Path.Combine(BridgeGrillageExample.Output,"gh-moving.st7"),1800,3640,450,60),moving,1);Boolean(moving,2,false);
         var movingCases=Panel("Posizioni mobili generate","",2630,3500,450,130);movingCases.AddSource(moving.Params.Output[1]);
 
         // Merge only longitudinal members: transverse topology changes when the
