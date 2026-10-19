@@ -7,6 +7,19 @@ namespace BridGHe.Common.Checks
 {
     public static class BridgeMergeValidation
     {
+        public static double StationTolerance(double length) => Math.Max(GPC.Geometry.GeometryBase.Tolerance, length * 1e-12);
+        public static double[] CanonicalStations(IEnumerable<double> samples,double length)
+        {
+            var stations=new List<double>();double tolerance=StationTolerance(length);
+            foreach(double station in samples.OrderBy(x=>x))
+            {
+                if(!double.IsFinite(station) || station < -tolerance || station > length+tolerance)throw new ArgumentException("Result station outside beam bounds.");
+                double bounded=Math.Clamp(station,0,length);
+                if(stations.Count==0 || bounded-stations[stations.Count-1]>tolerance)stations.Add(bounded);
+            }
+            return stations.ToArray();
+        }
+
         public static BeamModel[][] Align(IReadOnlyList<ModelModel> models,double tolerance)
         {
             if(models.Count==0 || models.Any(m=>m==null))throw new ArgumentException("Provide analysed models in the intended origin order.");

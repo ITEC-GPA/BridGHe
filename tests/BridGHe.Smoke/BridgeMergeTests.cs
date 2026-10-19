@@ -21,7 +21,7 @@ internal static class BridgeMergeTests
             foreach(int i in phase==0?new[]{0,1}:new[]{1,0})
             {
                 var b=new BeamModel("B"+(i+1),new Point3d(0,1000*i,0),new Point3d(10000,1000*i,0),BridgeGrillageExample.LongProperty(new(),phase)){BeamId="B"+(i+1)};b.Attributes.Add(new SuperElementAttributeModel("Main"));
-                foreach(double x in new[]{0.0,.5,1})b.Results.Add(new BeamForceResultModel(lc,x,0,"",true){AxialForce=(phase+1)*100+(i+1)*10+x,My=1e7});
+                foreach(double x in new[]{0.0,.5,1})b.Results.Add(new BeamForceResultModel(lc,x+(phase==1&&x==.5?1e-14:0),0,"",true){AxialForce=(phase+1)*100+(i+1)*10+x,My=1e7});
                 b.Loads.Add(new CompositeBeamSlabStrainModel(strain,new(){Strain=-(phase+1)*.0001}));m.AddElements(new[]{b});
             }
             return m;
@@ -41,6 +41,7 @@ internal static class BridgeMergeTests
         var merged=(ModelModel)c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
         foreach(var beam in merged.Beams)
         {
+            Require(beam.Results.Count==6,"Native station roundoff created duplicate force stations.");
             var f=beam.Results.OfType<BeamForceResultModel>().Single(r=>r.LoadCase.Name=="2-G" && r.Station==5000);
             Require(!f.NormalizedLength && Math.Abs(f.AxialForce-(beam.BeamId=="B1"?210.5:220.5))<1e-12,"Wrong beam identity or normalized station after merge.");
             var strains=beam.Loads.OfType<CompositeBeamSlabStrainModel>().OrderBy(l=>l.LoadCase.Name).ToArray();

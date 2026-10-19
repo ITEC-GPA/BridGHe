@@ -344,7 +344,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
 
                     double[][] stations = new double[newModel.Beams.Count][];
                     for (int i = 0; i < newModel.Beams.Count; i++)
-                        stations[i] = stationsHash[i].ToArray();
+                        stations[i] = Common.Checks.BridgeMergeValidation.CanonicalStations(stationsHash[i],newModel.Beams[i].Length);
                     for (int i = 0; i < stations.Length; i++)
                         stations[i] = stations[i].OrderBy(k => k).ToArray();
 
@@ -382,10 +382,10 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                                 double stationDist = Math.Round(force.NormalizedLength ? force.Station * oldBeam.Length : force.Station, 15);
                                 string loadCaseName = force.LoadCase.Name;
 
-                                int stationIndex = beamStations.ToList().IndexOf(stationDist);
+                                int stationIndex = Array.FindIndex(beamStations, x => Math.Abs(x-stationDist)<=Common.Checks.BridgeMergeValidation.StationTolerance(oldBeam.Length));
                                 int comboIndex = newModel.LoadCases.Select(ll => ll.Name).ToList().IndexOf($"{m}-{loadCaseName}");
 
-                                BeamForceResultModel newForce = new BeamForceResultModel(newModel.LoadCases.First(k => k.Name == $"{m}-{force.LoadCase.Name}"), stationDist, 0, "", false)
+                                BeamForceResultModel newForce = new BeamForceResultModel(newModel.LoadCases.First(k => k.Name == $"{m}-{force.LoadCase.Name}"), beamStations[stationIndex], 0, "", false)
                                 {
                                     AxialForce = force.AxialForce,
                                     ShearForce = force.ShearForce,
