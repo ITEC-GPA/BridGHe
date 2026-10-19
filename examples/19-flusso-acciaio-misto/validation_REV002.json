@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-19",
+  "scope": "Grasshopper replay with archived forces, native Straus R3 rerun of shrinkage model only. XLSX coefficients supplied directly to merge; Excel UI not automated.",
+  "beamCount": 12,
+  "loadCaseCount": 6,
+  "combinationCount": 5,
+  "checkResultCount": 275,
+  "forceSamplesCompared": 223,
+  "maximumForceDifference": 0,
+  "shrinkageModularRatio": 12,
+  "cachedI11Before_mm4": 83425446885.93527,
+  "nativeI11After_mm4": 89482670772.21608,
+  "FEMShrinkageIncludedInCombinations": false,
+  "maximumAbsoluteStressDifference_MPa": {
+    "Point1_ConcreteSigma": 0.18635145770069883,
+    "Point2_RebarSigma": 4.403886725707714,
+    "Point3_RebarSigma": 4.030578508067904,
+    "Point8_SteelSigma": 1.071300466342831
+  },
+  "regressions": [
+    "bridge-plots",
+    "plot-preview",
+    "bridge-merge-origin",
+    "composite-property-phases"
+  ],
+  "files": {
+    "19-flusso-acciaio-misto_REV002.ghx": "a7f5a891de655b27ae413426392c323028352762556d5d00cf1c72fa1d8ce9bf",
+    "Combo_REV002.xlsx": "2168705e38d25470a13d35f7239772ed4659f8540938e400803ad096eb4f71d2"
+  }
+}
