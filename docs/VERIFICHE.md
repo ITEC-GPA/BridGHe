@@ -64,6 +64,10 @@ Le mesh iniziali che non rispettavano la soglia sono state raffinate, senza ampl
 
 ## Preview e grafici
 
+Aggiornamento grafici del 19 ottobre 2026: build Release dei soli commit pubblicabili, audit dei contratti (105 file, 147 GUID) e suite completa superati, con **187 controlli smoke e 36 gruppi di regressione**. Baseline: 238 valori invariati. La copia di verifica è stata creata sotto `obj` per escludere le modifiche locali preesistenti ai componenti di sezione composta e merge; quei sorgenti non sono stati modificati da questo intervento.
+
+I grafici ripristinano inviluppi, progressive in metri, separatori delle beam ed estremi annotati. Il nuovo `Bridge Plot Preview` è provato con SVG.NET sul canvas GH, cache, lista di grafici, ridimensionamento, errori, dati mancanti e rilascio delle immagini. L'esempio `examples/plot-preview/plot-preview.ghx` è stato salvato, riaperto e ricalcolato. Il renderer SVG.NET non usa il viewport GPU; il precedente limite di cattura della preview geometrica 3D non si applica a questi grafici 2D. Le chiamate di aggiornamento della finestra ingrandita sono testate automaticamente; il clic manuale e l'interazione con lo zoom restano da provare nella sessione interattiva dell'utente.
+
 Sono verificate 21 famiglie parametriche di sezione Straus: contorni presenti, estrusione chiusa, copia/archivio fedele e area geometrica della preview entro il 3% dell'area esatta. Le proprietà meccaniche restano quelle native; la discretizzazione grafica non entra nel solutore. I 21 contorni sono stati ispezionati anche visivamente. Librerie esterne e ogni possibile file BXS non sono coperti dal test delle 21 famiglie.
 
 Le regressioni della preview controllano geometrie aggiornate, elementi aggiunti/rimossi e cambiamenti ai percorsi mobili. Per i percorsi curvi/quadratici sono rappresentati solo i punti di definizione. Parametri numerici, materiali e opzioni non hanno una geometria autonoma; non viene dichiarata una preview 3D completa di ogni oggetto.
