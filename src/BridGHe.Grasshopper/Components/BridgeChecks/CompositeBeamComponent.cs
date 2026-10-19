@@ -25,8 +25,9 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         {
             pManager.AddGenericParameter("Beam", "B", "The beam to define the mixed section", GH_ParamAccess.item);
             pManager.AddGenericParameter("Section Start", "SS", "Section on the starting node", GH_ParamAccess.item);
-            pManager.AddGenericParameter("Section End", "SE", "Section on the starting node", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Section End", "SE", "Section at the end; omitted uses Section Start", GH_ParamAccess.item);
             pManager.AddGenericParameter("Groups", "G", "The groups to assign to the beam", GH_ParamAccess.list);
+            pManager[2].Optional = true;
             pManager[3].Optional = true;
         }
 
@@ -53,9 +54,15 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 return;
             if (!DA.GetData(1, ref startSection))
                 return;
-            if (!DA.GetData(2, ref endSection))
-                return;
+            DA.GetData(2, ref endSection);
+            endSection ??= startSection;
             DA.GetDataList(3, groups);
+
+            if (gH_Beam?.Value == null || startSection?.Value == null || endSection?.Value == null)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "A beam and a valid start section are required.");
+                return;
+            }
 
             BeamModel bb = gH_Beam.Value;
             CompositeBeamModel compositeBeamModel = new CompositeBeamModel()
@@ -73,6 +80,9 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 compositeBeamModel.Loads.Add(bb.Loads[i]);
             for (int i = 0; i < bb.Groups.Count; i++)
                 compositeBeamModel.Groups.Add(bb.Groups[i]);
+            foreach (GH_Group group in groups)
+                if (group?.Value is not null && !compositeBeamModel.Groups.Contains(group.Value))
+                    compositeBeamModel.Groups.Add(group.Value);
             for (int i = 0; i < bb.Results.Count; i++)
                 compositeBeamModel.Results.Add(bb.Results[i]);
 

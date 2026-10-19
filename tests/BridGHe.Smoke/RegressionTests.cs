@@ -16,6 +16,7 @@ internal static class RegressionTests
             ["bridge-numerical-baseline"] = BridgeNumericalBaseline.Verify,
             ["archive-before-cleanup"] = ArchiveBeforeCleanup,
             ["composite-archive"] = CompositeArchive,
+            ["composite-component"] = CompositeComponentTests.Run,
             ["composite-preview"] = CompositePreview,
             ["nodal-actions"] = NodalActions,
             ["load-case-identity"] = LoadCaseIdentity,
