@@ -30,6 +30,7 @@ internal static class Program
         using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},args.Contains("--preview-capture")?WindowStyle.Hidden:WindowStyle.NoWindow);
         if(args.Contains("--capture-bridge-baseline")) { BridgeNumericalBaseline.Capture();return 0; }
         if(args.Contains("--benchmark-plots")) { PlotTests.Run();PlotTests.Benchmark();return 0; }
+        if(args.Contains("--bridge-workflow")) return BridgeWorkflowExample.Run();
         if(args.Contains("--inventory")) { CheckGrasshopper(false,true);return 0; }
         if(args.Contains("--beam-support")) { NativeBeamSupportTests.Run();return 0; }
         if(args.Contains("--benchmark-shear")) { BridgePerformanceTests.Run();return 0; }

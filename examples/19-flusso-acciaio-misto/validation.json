@@ -1,0 +1,1575 @@
+{
+  "Stations": 62,
+  "Date": "2026-10-19T11:21:23.7618062+02:00",
+  "Measurements": [
+    {
+      "Name": "G1_GETTO native A",
+      "Actual": 72320,
+      "Expected": 72320,
+      "AbsoluteTolerance": 7.232E-08,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO native I11",
+      "Actual": 33892010666.66667,
+      "Expected": 33892010666.66664,
+      "AbsoluteTolerance": 0.03389201066666664,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO native I22",
+      "Actual": 1440518826.666666,
+      "Expected": 1440518826.6666718,
+      "AbsoluteTolerance": 0.0014405188266666718,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO automatic steel J positive",
+      "Actual": 1,
+      "Expected": 1,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO beams",
+      "Actual": 12,
+      "Expected": 12,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO vertical equilibrium",
+      "Actual": 192000.00000000003,
+      "Expected": 192000,
+      "AbsoluteTolerance": 0.00192,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO left reaction (including native shear flexibility)",
+      "Actual": 36828.91802383074,
+      "Expected": 36828.918023830745,
+      "AbsoluteTolerance": 0.036828918023830745,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO central reaction",
+      "Actual": 118342.16395233864,
+      "Expected": 118342.16395233851,
+      "AbsoluteTolerance": 0.1183421639523385,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI native A",
+      "Actual": 118708.88888888889,
+      "Expected": 118708.88888888889,
+      "AbsoluteTolerance": 1.187088888888889E-07,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI native I11",
+      "Actual": 58415407609.61716,
+      "Expected": 58415407609.61716,
+      "AbsoluteTolerance": 0.05841540760961716,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI native I22",
+      "Actual": 32691495861.17842,
+      "Expected": 32691495861.17842,
+      "AbsoluteTolerance": 0.03269149586117842,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI native J",
+      "Actual": 26677666.344812788,
+      "Expected": 26677666.344812788,
+      "AbsoluteTolerance": 2.667766634481279E-05,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI beams",
+      "Actual": 12,
+      "Expected": 12,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI vertical equilibrium",
+      "Actual": 95999.99999999999,
+      "Expected": 96000,
+      "AbsoluteTolerance": 0.00096,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI left reaction (including native shear flexibility)",
+      "Actual": 18000.00000000003,
+      "Expected": 18000,
+      "AbsoluteTolerance": 0.018,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI central reaction",
+      "Actual": 60000.00000000012,
+      "Expected": 60000,
+      "AbsoluteTolerance": 0.06,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO native A",
+      "Actual": 183748.57142857142,
+      "Expected": 183748.57142857142,
+      "AbsoluteTolerance": 1.8374857142857143E-07,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO native I11",
+      "Actual": 81798548404.20676,
+      "Expected": 81798548404.20676,
+      "AbsoluteTolerance": 0.08179854840420675,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO native I22",
+      "Actual": 72057632385.198,
+      "Expected": 72057632385.198,
+      "AbsoluteTolerance": 0.072057632385198,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO native J",
+      "Actual": 26677666.344812788,
+      "Expected": 26677666.344812788,
+      "AbsoluteTolerance": 2.667766634481279E-05,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO beams",
+      "Actual": 12,
+      "Expected": 12,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO vertical equilibrium",
+      "Actual": 288000,
+      "Expected": 288000,
+      "AbsoluteTolerance": 0.00288,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO left reaction (including native shear flexibility)",
+      "Actual": 54000.00000000023,
+      "Expected": 54000,
+      "AbsoluteTolerance": 0.054,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO central reaction",
+      "Actual": 180000.00000000064,
+      "Expected": 180000,
+      "AbsoluteTolerance": 0.18,
+      "Passed": true
+    },
+    {
+      "Name": "RITIRO_FEM native A",
+      "Actual": 139403.33333333334,
+      "Expected": 139403.33333333334,
+      "AbsoluteTolerance": 1.3940333333333334E-07,
+      "Passed": true
+    },
+    {
+      "Name": "RITIRO_FEM native I11",
+      "Actual": 64102688420.36609,
+      "Expected": 64102688420.36609,
+      "AbsoluteTolerance": 0.0641026884203661,
+      "Passed": true
+    },
+    {
+      "Name": "RITIRO_FEM native I22",
+      "Actual": 48316467124.86926,
+      "Expected": 48316467124.86926,
+      "AbsoluteTolerance": 0.04831646712486926,
+      "Passed": true
+    },
+    {
+      "Name": "RITIRO_FEM native J",
+      "Actual": 26677666.344812788,
+      "Expected": 26677666.344812788,
+      "AbsoluteTolerance": 2.667766634481279E-05,
+      "Passed": true
+    },
+    {
+      "Name": "RITIRO_FEM beams",
+      "Actual": 12,
+      "Expected": 12,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "RITIRO_FEM vertical equilibrium",
+      "Actual": -2.9103830456733704E-11,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-05,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage free axial displacement",
+      "Actual": -2.137682025776523,
+      "Expected": -2.137682025776524,
+      "AbsoluteTolerance": 2.1376820257765236E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage central moment magnitude",
+      "Actual": 1874118986.6335068,
+      "Expected": 1874118986.6335096,
+      "AbsoluteTolerance": 1874.1189866335096,
+      "Passed": true
+    },
+    {
+      "Name": "At least five force stations per beam",
+      "Actual": 1,
+      "Expected": 1,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "Five separate contributions",
+      "Actual": 5,
+      "Expected": 5,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage FEM uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Shrinkage autostress uses n ritiro",
+      "Actual": 11.999999999999998,
+      "Expected": 12,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Top and bottom reinforcement rows",
+      "Actual": 62,
+      "Expected": 62,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "Merged exact case origins",
+      "Actual": 5,
+      "Expected": 5,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "All native forces preserved by merge",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "Reopened cached results",
+      "Actual": 62,
+      "Expected": 62,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    }
+  ],
+  "Phases": [
+    {
+      "Name": "1-G1_GETTO",
+      "Phase": "OnlySteel"
+    },
+    {
+      "Name": "2-G2_PERMANENTI",
+      "Phase": "NInfinite"
+    },
+    {
+      "Name": "3-Q_TRAFFICO",
+      "Phase": "NInstant"
+    },
+    {
+      "Name": "4-RITIRO_FEM",
+      "Phase": "NShrinkage"
+    },
+    {
+      "Name": "4-RITIRO_PRIMARIO",
+      "Phase": "StrainInfinite"
+    }
+  ],
+  "Sections": [
+    {
+      "Name": "G1_GETTO",
+      "SectionArea": 72320,
+      "I11": 33892010666.66664,
+      "I22": 1440518826.6666718,
+      "J": 0
+    },
+    {
+      "Name": "G2_PERMANENTI",
+      "SectionArea": 118708.88888888889,
+      "I11": 58415407609.61716,
+      "I22": 32691495861.17842,
+      "J": 26677666.344812788
+    },
+    {
+      "Name": "Q_TRAFFICO",
+      "SectionArea": 183748.57142857142,
+      "I11": 81798548404.20676,
+      "I22": 72057632385.198,
+      "J": 26677666.344812788
+    },
+    {
+      "Name": "RITIRO_FEM",
+      "SectionArea": 139403.33333333334,
+      "I11": 64102688420.36609,
+      "I22": 48316467124.86926,
+      "J": 26677666.344812788
+    }
+  ],
+  "Shrinkage": {
+    "FreeStrain": -8.907008440735516E-05,
+    "Curvature": -9.281333172074232E-08,
+    "PreStrain": 8.907008440735516E-05,
+    "ThermalGradient": -0.007734444310061859,
+    "EigenForce": -2607500,
+    "EigenMoment": -1249412657.7556732,
+    "Centroid": -354.28193969536835
+  },
+  "Results": [
+    {
+      "Point1_ConcreteSigma": 0.9596661459159286,
+      "Point2_RebarSigma": -29.60681970952182,
+      "Point3_RebarSigma": -26.585399406844253,
+      "Point8_SteelSigma": 5.5781070410137295
+    },
+    {
+      "Point1_ConcreteSigma": 0.9907499846325997,
+      "Point2_RebarSigma": -29.1759994224741,
+      "Point3_RebarSigma": -26.266003584493575,
+      "Point8_SteelSigma": 5.122429025017835
+    },
+    {
+      "Point1_ConcreteSigma": 1.025394602448452,
+      "Point2_RebarSigma": -28.715701360490986,
+      "Point3_RebarSigma": -25.926237552409887,
+      "Point8_SteelSigma": 4.542960952237924
+    },
+    {
+      "Point1_ConcreteSigma": 1.0635999993634855,
+      "Point2_RebarSigma": -28.225925523572474,
+      "Point3_RebarSigma": -25.566101310593197,
+      "Point8_SteelSigma": 3.839702822674006
+    },
+    {
+      "Point1_ConcreteSigma": 1.1053661753776995,
+      "Point2_RebarSigma": -27.706671911718573,
+      "Point3_RebarSigma": -25.1855948590435,
+      "Point8_SteelSigma": 3.0126546363260984
+    },
+    {
+      "Point1_ConcreteSigma": 1.1053661753776998,
+      "Point2_RebarSigma": -27.706671911718573,
+      "Point3_RebarSigma": -25.1855948590435,
+      "Point8_SteelSigma": 3.0126546363260913
+    },
+    {
+      "Point1_ConcreteSigma": 1.1506931304910946,
+      "Point2_RebarSigma": -27.15794052492928,
+      "Point3_RebarSigma": -24.784718197760803,
+      "Point8_SteelSigma": 2.0618163931941895
+    },
+    {
+      "Point1_ConcreteSigma": 1.1995808647036705,
+      "Point2_RebarSigma": -26.579731363204587,
+      "Point3_RebarSigma": -24.363471326745096,
+      "Point8_SteelSigma": 0.9871880932782808
+    },
+    {
+      "Point1_ConcreteSigma": 1.2520293780154272,
+      "Point2_RebarSigma": -25.972044426544503,
+      "Point3_RebarSigma": -23.921854245996386,
+      "Point8_SteelSigma": -0.2112302634216352
+    },
+    {
+      "Point1_ConcreteSigma": 1.308038670426367,
+      "Point2_RebarSigma": -25.334879714949,
+      "Point3_RebarSigma": -23.459866955514652,
+      "Point8_SteelSigma": -1.533438676905587
+    },
+    {
+      "Point1_ConcreteSigma": 1.3080386704263658,
+      "Point2_RebarSigma": -25.334879714949015,
+      "Point3_RebarSigma": -23.459866955514663,
+      "Point8_SteelSigma": -1.5334386769055612
+    },
+    {
+      "Point1_ConcreteSigma": 1.3676087419364849,
+      "Point2_RebarSigma": -24.668237228418135,
+      "Point3_RebarSigma": -22.977509455299934,
+      "Point8_SteelSigma": -2.979437147173485
+    },
+    {
+      "Point1_ConcreteSigma": 1.3803988248422985,
+      "Point2_RebarSigma": -24.526401955127916,
+      "Point3_RebarSigma": -22.875002704748436,
+      "Point8_SteelSigma": -3.2945751962543763
+    },
+    {
+      "Point1_ConcreteSigma": 1.4307395925457858,
+      "Point2_RebarSigma": -23.972116966951855,
+      "Point3_RebarSigma": -22.474781745352196,
+      "Point8_SteelSigma": -4.549225674225415
+    },
+    {
+      "Point1_ConcreteSigma": 1.4974312222542667,
+      "Point2_RebarSigma": -23.246518930550188,
+      "Point3_RebarSigma": -21.95168382567146,
+      "Point8_SteelSigma": -6.242804258061348
+    },
+    {
+      "Point1_ConcreteSigma": 1.56768363106193,
+      "Point2_RebarSigma": -22.491443119213113,
+      "Point3_RebarSigma": -21.40821569625771,
+      "Point8_SteelSigma": -8.060172898681287
+    },
+    {
+      "Point1_ConcreteSigma": 1.5676836310619278,
+      "Point2_RebarSigma": -22.491443119213137,
+      "Point3_RebarSigma": -21.408215696257727,
+      "Point8_SteelSigma": -8.060172898681248
+    },
+    {
+      "Point1_ConcreteSigma": 1.641496818968771,
+      "Point2_RebarSigma": -21.706889532940675,
+      "Point3_RebarSigma": -20.844377357110975,
+      "Point8_SteelSigma": -10.001331596085178
+    },
+    {
+      "Point1_ConcreteSigma": 1.7188707859747954,
+      "Point2_RebarSigma": -20.892858171732822,
+      "Point3_RebarSigma": -20.26016880823122,
+      "Point8_SteelSigma": -12.066280350273118
+    },
+    {
+      "Point1_ConcreteSigma": 1.7998055320800008,
+      "Point2_RebarSigma": -20.04934903558957,
+      "Point3_RebarSigma": -19.655590049618457,
+      "Point8_SteelSigma": -14.255019161245059
+    },
+    {
+      "Point1_ConcreteSigma": 1.8843010572843877,
+      "Point2_RebarSigma": -19.176362124510916,
+      "Point3_RebarSigma": -19.03064108127268,
+      "Point8_SteelSigma": -16.567548029001014
+    },
+    {
+      "Point1_ConcreteSigma": 1.8843010572843895,
+      "Point2_RebarSigma": -19.176362124510895,
+      "Point3_RebarSigma": -19.030641081272666,
+      "Point8_SteelSigma": -16.56754802900105
+    },
+    {
+      "Point1_ConcreteSigma": 1.9723573615879577,
+      "Point2_RebarSigma": -18.273897438496846,
+      "Point3_RebarSigma": -18.385321903193883,
+      "Point8_SteelSigma": -19.003866953541024
+    },
+    {
+      "Point1_ConcreteSigma": 2.0639744449907065,
+      "Point2_RebarSigma": -17.341954977547402,
+      "Point3_RebarSigma": -17.7196325153821,
+      "Point8_SteelSigma": -21.563975934864988
+    },
+    {
+      "Point1_ConcreteSigma": 2.159152307492638,
+      "Point2_RebarSigma": -16.380534741662547,
+      "Point3_RebarSigma": -17.033572917837294,
+      "Point8_SteelSigma": -24.247874972972966
+    },
+    {
+      "Point1_ConcreteSigma": 2.257890949093748,
+      "Point2_RebarSigma": -15.389636730842316,
+      "Point3_RebarSigma": -16.327143110559497,
+      "Point8_SteelSigma": -27.055564067864935
+    },
+    {
+      "Point1_ConcreteSigma": 2.257890949093748,
+      "Point2_RebarSigma": -15.389636730842318,
+      "Point3_RebarSigma": -16.327143110559497,
+      "Point8_SteelSigma": -27.05556406786493
+    },
+    {
+      "Point1_ConcreteSigma": 2.3601903697940414,
+      "Point2_RebarSigma": -14.369260945086678,
+      "Point3_RebarSigma": -15.600343093548688,
+      "Point8_SteelSigma": -29.987043219540922
+    },
+    {
+      "Point1_ConcreteSigma": 2.4660505695935147,
+      "Point2_RebarSigma": -13.319407384395646,
+      "Point3_RebarSigma": -14.85317286680487,
+      "Point8_SteelSigma": -33.042312428000905
+    },
+    {
+      "Point1_ConcreteSigma": 2.57547154849217,
+      "Point2_RebarSigma": -12.240076048769215,
+      "Point3_RebarSigma": -14.085632430328046,
+      "Point8_SteelSigma": -36.2213716932449
+    },
+    {
+      "Point1_ConcreteSigma": 2.6884533064900054,
+      "Point2_RebarSigma": -11.131266938207393,
+      "Point3_RebarSigma": -13.29772178411822,
+      "Point8_SteelSigma": -39.52422101527291
+    },
+    {
+      "Point1_ConcreteSigma": 2.688453306490006,
+      "Point2_RebarSigma": -11.131266938207393,
+      "Point3_RebarSigma": -13.29772178411822,
+      "Point8_SteelSigma": -39.52422101527291
+    },
+    {
+      "Point1_ConcreteSigma": 2.5754715484921693,
+      "Point2_RebarSigma": -12.240076048769222,
+      "Point3_RebarSigma": -14.085632430328051,
+      "Point8_SteelSigma": -36.221371693244905
+    },
+    {
+      "Point1_ConcreteSigma": 2.4660505695935147,
+      "Point2_RebarSigma": -13.319407384395646,
+      "Point3_RebarSigma": -14.853172866804872,
+      "Point8_SteelSigma": -33.042312428000926
+    },
+    {
+      "Point1_ConcreteSigma": 2.360190369794041,
+      "Point2_RebarSigma": -14.369260945086682,
+      "Point3_RebarSigma": -15.600343093548691,
+      "Point8_SteelSigma": -29.98704321954093
+    },
+    {
+      "Point1_ConcreteSigma": 2.257890949093749,
+      "Point2_RebarSigma": -15.389636730842312,
+      "Point3_RebarSigma": -16.327143110559494,
+      "Point8_SteelSigma": -27.055564067864943
+    },
+    {
+      "Point1_ConcreteSigma": 2.25789094909375,
+      "Point2_RebarSigma": -15.389636730842298,
+      "Point3_RebarSigma": -16.327143110559483,
+      "Point8_SteelSigma": -27.055564067864964
+    },
+    {
+      "Point1_ConcreteSigma": 2.159152307492638,
+      "Point2_RebarSigma": -16.380534741662547,
+      "Point3_RebarSigma": -17.03357291783729,
+      "Point8_SteelSigma": -24.247874972972976
+    },
+    {
+      "Point1_ConcreteSigma": 2.0639744449907074,
+      "Point2_RebarSigma": -17.341954977547395,
+      "Point3_RebarSigma": -17.719632515382095,
+      "Point8_SteelSigma": -21.563975934865006
+    },
+    {
+      "Point1_ConcreteSigma": 1.9723573615879575,
+      "Point2_RebarSigma": -18.273897438496842,
+      "Point3_RebarSigma": -18.385321903193883,
+      "Point8_SteelSigma": -19.00386695354102
+    },
+    {
+      "Point1_ConcreteSigma": 1.8843010572843883,
+      "Point2_RebarSigma": -19.176362124510902,
+      "Point3_RebarSigma": -19.03064108127267,
+      "Point8_SteelSigma": -16.567548029001035
+    },
+    {
+      "Point1_ConcreteSigma": 1.884301057284392,
+      "Point2_RebarSigma": -19.17636212451086,
+      "Point3_RebarSigma": -19.030641081272634,
+      "Point8_SteelSigma": -16.567548029001046
+    },
+    {
+      "Point1_ConcreteSigma": 1.799805532080005,
+      "Point2_RebarSigma": -20.04934903558952,
+      "Point3_RebarSigma": -19.65559004961841,
+      "Point8_SteelSigma": -14.255019161245077
+    },
+    {
+      "Point1_ConcreteSigma": 1.7188707859747994,
+      "Point2_RebarSigma": -20.892858171732772,
+      "Point3_RebarSigma": -20.260168808231175,
+      "Point8_SteelSigma": -12.066280350273125
+    },
+    {
+      "Point1_ConcreteSigma": 1.6414968189687742,
+      "Point2_RebarSigma": -21.706889532940636,
+      "Point3_RebarSigma": -20.84437735711094,
+      "Point8_SteelSigma": -10.001331596085164
+    },
+    {
+      "Point1_ConcreteSigma": 1.56768363106193,
+      "Point2_RebarSigma": -22.49144311921311,
+      "Point3_RebarSigma": -21.4082156962577,
+      "Point8_SteelSigma": -8.060172898681213
+    },
+    {
+      "Point1_ConcreteSigma": 1.567683631061928,
+      "Point2_RebarSigma": -22.49144311921313,
+      "Point3_RebarSigma": -21.408215696257724,
+      "Point8_SteelSigma": -8.060172898681248
+    },
+    {
+      "Point1_ConcreteSigma": 1.4974312222542654,
+      "Point2_RebarSigma": -23.246518930550202,
+      "Point3_RebarSigma": -21.95168382567147,
+      "Point8_SteelSigma": -6.242804258061311
+    },
+    {
+      "Point1_ConcreteSigma": 1.430739592545784,
+      "Point2_RebarSigma": -23.972116966951873,
+      "Point3_RebarSigma": -22.47478174535221,
+      "Point8_SteelSigma": -4.549225674225378
+    },
+    {
+      "Point1_ConcreteSigma": 1.3803988248422958,
+      "Point2_RebarSigma": -24.52640195512794,
+      "Point3_RebarSigma": -22.875002704748454,
+      "Point8_SteelSigma": -3.294575196254314
+    },
+    {
+      "Point1_ConcreteSigma": 1.3676087419364835,
+      "Point2_RebarSigma": -24.66823722841815,
+      "Point3_RebarSigma": -22.977509455299945,
+      "Point8_SteelSigma": -2.979437147173453
+    },
+    {
+      "Point1_ConcreteSigma": 1.308038670426364,
+      "Point2_RebarSigma": -25.334879714949032,
+      "Point3_RebarSigma": -23.459866955514673,
+      "Point8_SteelSigma": -1.5334386769055115
+    },
+    {
+      "Point1_ConcreteSigma": 1.308038670426365,
+      "Point2_RebarSigma": -25.334879714949025,
+      "Point3_RebarSigma": -23.45986695551467,
+      "Point8_SteelSigma": -1.5334386769055364
+    },
+    {
+      "Point1_ConcreteSigma": 1.252029378015426,
+      "Point2_RebarSigma": -25.97204442654452,
+      "Point3_RebarSigma": -23.921854245996396,
+      "Point8_SteelSigma": -0.21123026342159346
+    },
+    {
+      "Point1_ConcreteSigma": 1.1995808647036679,
+      "Point2_RebarSigma": -26.579731363204615,
+      "Point3_RebarSigma": -24.363471326745117,
+      "Point8_SteelSigma": 0.9871880932783439
+    },
+    {
+      "Point1_ConcreteSigma": 1.1506931304910912,
+      "Point2_RebarSigma": -27.157940524929312,
+      "Point3_RebarSigma": -24.784718197760828,
+      "Point8_SteelSigma": 2.061816393194274
+    },
+    {
+      "Point1_ConcreteSigma": 1.105366175377698,
+      "Point2_RebarSigma": -27.70667191171859,
+      "Point3_RebarSigma": -25.185594859043515,
+      "Point8_SteelSigma": 3.012654636326142
+    },
+    {
+      "Point1_ConcreteSigma": 1.1053661753777004,
+      "Point2_RebarSigma": -27.706671911718562,
+      "Point3_RebarSigma": -25.185594859043487,
+      "Point8_SteelSigma": 3.0126546363261584
+    },
+    {
+      "Point1_ConcreteSigma": 1.0635999993634868,
+      "Point2_RebarSigma": -28.22592552357246,
+      "Point3_RebarSigma": -25.56610131059318,
+      "Point8_SteelSigma": 3.8397028226740604
+    },
+    {
+      "Point1_ConcreteSigma": 1.0253946024484542,
+      "Point2_RebarSigma": -28.71570136049096,
+      "Point3_RebarSigma": -25.926237552409866,
+      "Point8_SteelSigma": 4.542960952237957
+    },
+    {
+      "Point1_ConcreteSigma": 0.9907499846326027,
+      "Point2_RebarSigma": -29.175999422474067,
+      "Point3_RebarSigma": -26.266003584493543,
+      "Point8_SteelSigma": 5.122429025017848
+    },
+    {
+      "Point1_ConcreteSigma": 0.9596661459159286,
+      "Point2_RebarSigma": -29.60681970952182,
+      "Point3_RebarSigma": -26.585399406844253,
+      "Point8_SteelSigma": 5.578107041013731
+    }
+  ]
+}
