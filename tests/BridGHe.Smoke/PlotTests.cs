@@ -25,6 +25,15 @@ internal static class PlotTests
         if(!rejected)throw new Exception("All unavailable results must fail explicitly.");
         Directory.CreateDirectory("artifacts/plots");File.WriteAllText("artifacts/plots/regression.svg",svg);
         using(var bitmap=plot.Png())bitmap.Save("artifacts/plots/regression.png",System.Drawing.Imaging.ImageFormat.Png);
+        var bands=new[]{new[]{new PlotRange(0,2,4),new PlotRange(1,3,7),new PlotRange(2,double.NaN,double.NaN),new PlotRange(3,-2,6)},new[]{new PlotRange(3,-5,4),new PlotRange(4,-4,8)}};
+        var engineering=new BridgePlot("BridGHe - inviluppo e progressive","Station [m]","N [kN]",new[]{new PlotSeries("SLS",samples)},bands,new[]{0.0,3.0,4.0});
+        var drawing=XDocument.Parse(engineering.Svg());
+        if(drawing.Descendants(ns+"polygon").Count()!=3||drawing.Descendants(ns+"path").Count(e=>(string)e.Attribute("class")=="element-boundary")!=3)
+            throw new Exception("Envelope must split gaps and beam boundaries.");
+        if(engineering.Envelope[0][0].Minimum!=2||!drawing.Root.Value.Contains("Min -5")||!drawing.Root.Value.Contains("Max 8"))
+            throw new Exception("Envelope extrema must preserve positive minima and global values.");
+        using(var bitmap=engineering.Png())bitmap.Save("artifacts/plots/engineering.png",System.Drawing.Imaging.ImageFormat.Png);
+        File.WriteAllText("artifacts/plots/engineering.svg",engineering.Svg());
         Components();
         Console.WriteLine("PLOT: gaps, jumps, Unicode, escaping, culture, single point and unavailable results verified.");
     }
@@ -55,6 +64,7 @@ internal static class PlotTests
         }
         void Solve()
         {
+            component.Params.Input[2].ExpireSolution(false);
             component.ExpireSolution(false);Grasshopper.Kernel.GH_Document.EnableSolutions=true;doc.Enabled=true;doc.NewSolution(false,Grasshopper.Kernel.GH_SolutionMode.Silent);
             var errors=component.RuntimeMessages(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error);
             if(errors.Count>0||component.Params.Output[0].VolatileDataCount!=1)throw new Exception("Plot component failed: "+string.Join(";",errors));
@@ -67,6 +77,12 @@ internal static class PlotTests
         var governing=(Grasshopper.Kernel.Parameters.Param_Boolean)component.Params.Input[5];governing.PersistentData.Clear();governing.SetPersistentData(false);Solve();
         min=((Grasshopper.Kernel.Types.GH_Number)component.Params.Output[2].VolatileData.AllData(true).Single()).Value;
         if(min!=12)throw new Exception("Positive envelope must not be replaced with zero.");
+        string svg=((Grasshopper.Kernel.Types.GH_String)component.Params.Output[0].VolatileData.AllData(true).Single()).Value;
+        File.WriteAllText("artifacts/plots/component.svg",svg);
+        if(!svg.Contains("Station [m]")||!svg.Contains("Grey envelope: all combinations")||!svg.Contains("Min -5")||!svg.Contains("Max 18"))
+            throw new Exception("Engineering plot must retain all-combination envelope when selecting one curve.");
+        var xml=XDocument.Parse(svg);XNamespace ns="http://www.w3.org/2000/svg";
+        if(xml.Descendants(ns+"polygon").Count()!=2)throw new Exception("Missing station must split the envelope in the GH plot.");
     }
 
     internal static void Benchmark()

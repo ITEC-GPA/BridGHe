@@ -78,7 +78,7 @@ public abstract class BridgePlotComponent : GH_Component
                 if(path.Length!=2||path[0]<0||path[0]>=beams.Count||path[1]<0||path[1]>=stations[path[0]].Length)
                     throw new ArgumentException("Invalid beam/station path: "+tree.Paths[i]);
                 var branch=tree.Branches[i];if(branch.Count!=names.Length)throw new ArgumentException("Combination count mismatch at "+tree.Paths[i]);
-                rows.Add((path[0],path[1],origins[path[0]]+stations[path[0]][path[1]],branch.Select(g=>Value(g is GH_ObjectWrapper w?w.Value:g?.ScriptVariable(),quantity)).ToArray()));
+                rows.Add((path[0],path[1],(origins[path[0]]+stations[path[0]][path[1]])/1000.0,branch.Select(g=>Value(g is GH_ObjectWrapper w?w.Value:g?.ScriptVariable(),quantity)).ToArray()));
             }
             rows=rows.OrderBy(r=>r.Beam).ThenBy(r=>r.Station).ToList();
             var include=new HashSet<string>(selected.Count==0?names:selected,StringComparer.Ordinal);
@@ -86,6 +86,19 @@ public abstract class BridgePlotComponent : GH_Component
             if(finite.Length==0)throw new ArgumentException("No finite values for this quantity.");
             if(governing){include.Add(names[finite.MinBy(p=>p.Value).Index]);include.Add(names[finite.MaxBy(p=>p.Value).Index]);}
             var series=new List<PlotSeries>();
+            var envelope=new List<IReadOnlyList<PlotRange>>();
+            foreach(var group in rows.GroupBy(r=>r.Beam))
+            {
+                var ranges=new List<PlotRange>();int previous=-2;
+                foreach(var row in group)
+                {
+                    if(previous>=0&&row.Station!=previous+1)ranges.Add(new PlotRange(row.X,double.NaN,double.NaN));
+                    var available=row.Values.Where(double.IsFinite).ToArray();
+                    ranges.Add(new PlotRange(row.X,available.Length>0?available.Min():double.NaN,available.Length>0?available.Max():double.NaN));
+                    previous=row.Station;
+                }
+                envelope.Add(ranges);
+            }
             foreach(var group in rows.GroupBy(r=>r.Beam))
                 for(int c=0;c<names.Length;c++)if(include.Contains(names[c]))
                 {
@@ -98,8 +111,10 @@ public abstract class BridgePlotComponent : GH_Component
                     series.Add(new PlotSeries(names[c],points));
                 }
             var values=series.SelectMany(s=>s.Points).Where(p=>double.IsFinite(p.Y)).ToArray();
+            if(values.Length==0)throw new ArgumentException("No finite values in the selected combinations.");
             foreach(double level in levels)series.Add(new PlotSeries("Reference "+level.ToString("G5",System.Globalization.CultureInfo.InvariantCulture),new[]{new PlotPoint(values.Min(p=>p.X),level),new PlotPoint(values.Max(p=>p.X),level)}));
-            var plot=new BridgePlot(string.IsNullOrWhiteSpace(title)?Quantities[quantity]:title,"Station [mm]",Quantities[quantity]+" ["+Unit(quantity)+"]",series);
+            var boundaries=origins.Concat(beams.Count>0?new[]{origins[^1]+beams[^1].Value.Length}:Array.Empty<double>()).Select(x=>x/1000.0);
+            var plot=new BridgePlot(string.IsNullOrWhiteSpace(title)?Quantities[quantity]:title,"Station [m]",Quantities[quantity]+" ["+Unit(quantity)+"]",series,envelope,boundaries);
             string svg=plot.Svg();
             if(!string.IsNullOrWhiteSpace(file))
             {
