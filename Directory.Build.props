@@ -12,8 +12,11 @@
     <Deterministic>true</Deterministic>
     <RhinoVersion>8.27.26019.16021</RhinoVersion>
     <BridGHeRoot>$(MSBuildThisFileDirectory)</BridGHeRoot>
-    <BaseOutputPath>$(BridGHeRoot)bin\$(MSBuildProjectName)\</BaseOutputPath>
-    <BaseIntermediateOutputPath>$(BridGHeRoot)bin\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <!-- Compiler outputs are private; only the plugin Release is published to bin. -->
+    <BaseOutputPath>$(BridGHeRoot)obj\bin\$(MSBuildProjectName)\</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(BridGHeRoot)obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <!-- Let MSBuild run the post-build event even when Visual Studio considers inputs up to date. -->
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
     <!-- Ignore legacy generated sources before the cleanup target runs. -->
     <DefaultItemExcludes>$(DefaultItemExcludes);**/bin/**;**/obj/**</DefaultItemExcludes>
     <RepositoryRoot Condition="'$(RepositoryRoot)' == ''">$(MSBuildThisFileDirectory)..\</RepositoryRoot>

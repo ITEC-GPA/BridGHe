@@ -20,11 +20,13 @@ function Write-Marker([string]$Path) {
 try {
     New-Item -ItemType Directory -Path (Split-Path -Parent $cleaner) -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'clean-builds.ps1') -Destination $cleaner
-    $legacy = @('src\A\bin', 'src\A\obj', 'src\nested\B\bin', 'tests\T\bin', 'tests\T\obj', 'obj',
-        'artifacts\packages', 'artifacts\review\bin', 'artifacts\review\obj', 'scratch\probe\bin')
+    $legacy = @('src\A\bin', 'src\A\obj', 'src\nested\B\bin', 'tests\T\bin', 'tests\T\obj',
+        'artifacts\packages', 'artifacts\review\bin', 'artifacts\review\obj', 'scratch\probe\bin',
+        'bin\BridGHe.Grasshopper', 'bin\BridGHe.Common', 'bin\BridGHe.Smoke', 'bin\obj', 'bin\Debug', 'bin\packages')
     foreach ($path in $legacy) { Write-Marker (Join-Path $repository "$path\old.dll") }
-    $preserved = @('src\A\source.cs', 'build\references.props', 'bin\A\Release\new.dll', 'bin\obj\A\project.assets.json',
-        'bin\packages\current.zip', 'artifacts\bridge-suite\model.st7', 'examples\bridge\model.ghx', '.git\objects\bin\data', '.codex\cache\bin\data')
+    $preserved = @('src\A\source.cs', 'build\references.props', 'bin\Release\new.dll', 'obj\A\project.assets.json',
+        'obj\bin\A\Release\new.dll', 'artifacts\releases\current.zip', 'artifacts\bridge-suite\model.st7',
+        'examples\bridge\model.ghx', '.git\objects\bin\data', '.codex\cache\bin\data')
     foreach ($path in $preserved) { Write-Marker (Join-Path $repository $path) }
     $externalMarker = Join-Path $fixture 'Checker\bin\gpc.dll'
     Write-Marker $externalMarker
@@ -37,6 +39,73 @@ try {
     Require (Test-Path -LiteralPath $externalMarker) 'sibling gPC builds preserved'
     & $cleaner
     Require ($true) 'cleanup is idempotent'
+
+    # Publication mirrors the complete compiler output, including nested runtime assets.
+    $source = Join-Path $repository 'obj\bin\BridGHe.Grasshopper\Release\net8.0-windows'
+    $release = Join-Path $repository 'bin\Release'
+    $plugin = Join-Path $source 'BridGHe.Grasshopper.gha'
+    Write-Marker $plugin
+    Write-Marker (Join-Path $source 'GPCModel.dll')
+    Write-Marker (Join-Path $source 'runtimes\win-x64\native.dll')
+    Write-Marker (Join-Path $release 'obsolete\unused.dll')
+    & $cleaner -ReleaseSource $source -WhatIf
+    Require ((Test-Path -LiteralPath (Join-Path $release 'obsolete\unused.dll')) -and
+        -not (Test-Path -LiteralPath (Join-Path $release 'BridGHe.Grasshopper.gha'))) 'WhatIf neither publishes nor prunes Release'
+    & $cleaner -ReleaseSource $source
+    $sourceFiles = @(Get-ChildItem -LiteralPath $source -File -Recurse)
+    $mismatches = @($sourceFiles | Where-Object {
+        $target = Join-Path $release $_.FullName.Substring($source.Length + 1)
+        -not (Test-Path -LiteralPath $target) -or
+            (Get-FileHash -LiteralPath $_.FullName).Hash -ne (Get-FileHash -LiteralPath $target).Hash
+    })
+    Require ($mismatches.Count -eq 0 -and @(Get-ChildItem -LiteralPath $release -File -Recurse).Count -eq $sourceFiles.Count) 'Release contains exactly the compiler files with identical SHA256 hashes'
+    Require (-not (Test-Path -LiteralPath (Join-Path $release 'obsolete'))) 'obsolete dependency directories removed'
+    Require (@(Get-ChildItem -LiteralPath (Join-Path $repository 'bin')).Count -eq 1) 'only Release remains in root bin'
+    $publishedPlugin = Join-Path $release 'BridGHe.Grasshopper.gha'
+    (Get-Item -LiteralPath $publishedPlugin).LastWriteTimeUtc = [datetime]'2020-01-01'
+    & $cleaner -ReleaseSource $source
+    Require ((Get-Item -LiteralPath $publishedPlugin).LastWriteTimeUtc -eq [datetime]'2020-01-01') 'identical outputs are not rewritten on incremental builds'
+    Set-Content -LiteralPath $plugin -Value 'updated plugin'
+    & $cleaner -ReleaseSource $source
+    Require ((Get-FileHash -LiteralPath $plugin).Hash -eq (Get-FileHash -LiteralPath $publishedPlugin).Hash) 'changed compiler output replaces the published plugin'
+
+    Write-Marker (Join-Path $source 'file-to-directory\asset.dll')
+    Write-Marker (Join-Path $release 'file-to-directory')
+    Write-Marker (Join-Path $source 'directory-to-file')
+    Write-Marker (Join-Path $release 'directory-to-file\obsolete.dll')
+    & $cleaner -ReleaseSource $source
+    Require ((Test-Path -LiteralPath (Join-Path $release 'file-to-directory\asset.dll') -PathType Leaf) -and
+        (Test-Path -LiteralPath (Join-Path $release 'directory-to-file') -PathType Leaf)) 'publication handles file/directory replacements'
+
+    $safeMarker = Join-Path $repository 'src\A\bin\old.dll'
+    Write-Marker $safeMarker
+    $publishedHash = (Get-FileHash -LiteralPath $publishedPlugin).Hash
+    $lockedFile = [IO.File]::Open($safeMarker, 'Open', 'Read', 'Read')
+    try {
+        $rejected = $false
+        try { & $cleaner -ReleaseSource $source } catch { $rejected = $_.Exception.Message -like '*file in uso o non accessibile*' }
+        Require ($rejected -and (Test-Path -LiteralPath $safeMarker) -and
+            (Get-FileHash -LiteralPath $publishedPlugin).Hash -eq $publishedHash) 'locked legacy DLL fails before publication or partial deletion'
+    }
+    finally { $lockedFile.Dispose() }
+    $rejected = $false
+    try { & $cleaner -ReleaseSource (Join-Path $repository 'obj\missing') } catch { $rejected = $_.Exception.Message -like '*Output Release non valido*' }
+    Require ($rejected -and (Test-Path -LiteralPath $safeMarker) -and
+        (Get-FileHash -LiteralPath $publishedPlugin).Hash -eq $publishedHash) 'missing output preserves the previous Release and defers cleanup'
+    $rejected = $false
+    try { & $cleaner -ReleaseSource (Split-Path -Parent $externalMarker) } catch { $rejected = $_.Exception.Message -like '*esterno al progetto*' }
+    Require ($rejected -and (Test-Path -LiteralPath $externalMarker)) 'external publication source rejected'
+
+    foreach ($parent in @($source, $release)) {
+        $link = Join-Path $parent 'linked-runtime'
+        New-Item -ItemType Junction -Path $link -Target (Split-Path -Parent $externalMarker) | Out-Null
+        $junctions += $link
+        $rejected = $false
+        try { & $cleaner -ReleaseSource $source } catch { $rejected = $_.Exception.Message -like '*link o junction*' }
+        Require ($rejected -and (Test-Path -LiteralPath $safeMarker) -and (Test-Path -LiteralPath $externalMarker)) 'publication junction rejected before copying or deleting'
+        [IO.Directory]::Delete($link)
+        $junctions = @()
+    }
 
     # No external target may be traversed, even inside a candidate output tree.
     $safeMarker = Join-Path $repository 'src\A\bin\old.dll'

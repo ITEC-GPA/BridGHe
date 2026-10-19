@@ -3,7 +3,7 @@ using System.IO;
 
 internal static class BuildPaths
 {
-    // Follow the running test's configuration/TFM (and optional RID) within root bin.
+    // Release tests load the actual post-build distribution; Debug uses private outputs.
     internal static string GrasshopperAssembly
     {
         get
@@ -12,11 +12,13 @@ internal static class BuildPaths
             while (projectOutput != null && projectOutput.Name != "BridGHe.Smoke")
                 projectOutput = projectOutput.Parent;
             if (projectOutput?.Parent == null)
-                throw new InvalidOperationException("Eseguire i test dalla cartella bin/BridGHe.Smoke del progetto.");
+                throw new InvalidOperationException("Eseguire i test dalla cartella obj/bin/BridGHe.Smoke del progetto.");
 
             string configurationPath = Path.GetRelativePath(projectOutput.FullName, AppContext.BaseDirectory);
-            string assembly = Path.Combine(projectOutput.Parent.FullName, "BridGHe.Grasshopper",
-                configurationPath, "BridGHe.Grasshopper.gha");
+            string assembly = configurationPath.Split(Path.DirectorySeparatorChar)[0] == "Release"
+                ? Path.Combine(projectOutput.Parent.Parent.Parent.FullName, "bin", "Release", "BridGHe.Grasshopper.gha")
+                : Path.Combine(projectOutput.Parent.FullName, "BridGHe.Grasshopper",
+                    configurationPath, "BridGHe.Grasshopper.gha");
             if (!File.Exists(assembly))
                 throw new FileNotFoundException("Compilare il plugin nella stessa configurazione dei test.", assembly);
             return assembly;

@@ -1,6 +1,12 @@
 <Project>
-  <Target Name="CleanLegacyBuildOutputs" BeforeTargets="PrepareForBuild"
+  <!-- Runs for Visual Studio and dotnet, including incremental successful builds.
+       Never publish from design-time builds or before the compiler has succeeded. -->
+  <Target Name="BridGHePostBuild" AfterTargets="Build"
           Condition="'$(DesignTimeBuild)' != 'true'">
-    <Exec Command="powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(BridGHeRoot)tools\clean-builds.ps1&quot;" />
+    <PropertyGroup>
+      <_BridGHePublishArgument />
+      <_BridGHePublishArgument Condition="'$(MSBuildProjectName)' == 'BridGHe.Grasshopper' and '$(Configuration)' == 'Release'">-ReleaseSource &quot;$(TargetDir).&quot;</_BridGHePublishArgument>
+    </PropertyGroup>
+    <Exec Command="powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(BridGHeRoot)tools\clean-builds.ps1&quot; $(_BridGHePublishArgument)" />
   </Target>
 </Project>

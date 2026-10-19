@@ -32,7 +32,18 @@ Dalla root, con SDK .NET 8 o successivo e Python 3:
 
 Le DLL gPC devono essere compilate nei repository fratelli `Utilities`, `Geometry`, `Model` e `Checker`. I riferimenti sono espliciti in [GpcReferences.props](build/GpcReferences.props); `RepositoryRoot` permette una disposizione differente. I sorgenti delle librerie non sono modificati.
 
-Output plugin: `bin/BridGHe.Grasshopper/Release/net8.0-windows/BridGHe.Grasshopper.gha`. Libreria, test, file intermedi e pacchetti sono tutti sotto la `bin` della root. Ogni compilazione elimina automaticamente le vecchie cartelle `bin`/`obj` sparse nel progetto, con controllo dei confini e delle junction. Sono conservati risultati Straus, esempi e dipendenze esterne. Per simulare la pulizia: `tools/clean-builds.ps1 -WhatIf`.
+Output da installare: **`bin/Release/BridGHe.Grasshopper.gha`**, insieme alle DLL nella stessa cartella. L'evento MSBuild `BridGHePostBuild` in `Directory.Build.targets` parte **dopo ogni build riuscita**, sia da Visual Studio sia da `dotnet build`: per il plugin Release copia l'intero output in `bin/Release`, rimuove i file non più prodotti ed elimina le vecchie cartelle di compilazione sparse, comprese le precedenti sottocartelle di `bin`. Funziona anche con build incrementali e compilando direttamente il `.csproj`.
+
+`bin` contiene soltanto `Release`. Cache MSBuild/NuGet, output di lavoro e test sono raccolti nell'unica `obj` della root, necessaria per build incrementali e riferimenti fra progetti. Debug resta in `obj` e non sovrascrive la Release. Una compilazione fallita non pubblica il plugin. I pacchetti ZIP sono in `artifacts/releases`; risultati Straus, esempi e librerie dei repository fratelli sono conservati. La pulizia controlla confini e junction; per simularla: `tools/clean-builds.ps1 -WhatIf`.
+
+Prima di compilare, chiudere Rhino se sta usando gli output da aggiornare o eliminare. Se una vecchia DLL è in uso, il post-build segnala l'errore prima di eliminare le cartelle precedenti; ripetere la build dopo aver chiuso il processo.
+
+Test del sistema di build (20 controlli su copia/pulizia e 9 su build MSBuild reali in un progetto isolato):
+
+```powershell
+.\tools\test-build-cleanup.ps1
+.\tools\test-post-build.ps1
+```
 
 Chiudere Rhino, estrarre il pacchetto sotto la cartella Libraries di Grasshopper e tenere insieme `.gha` e DLL. Avviare Rhino 8 con .NET 8; categorie `BridGHe` e `BridGHe-Checks`. Le DLL native Straus e Rhino non sono distribuite. La licenza API Straus è necessaria anche per calcolare le sezioni native. Percorso predefinito: `C:\Program Files\Straus7 R31`; in alternativa impostare `BRIDGHE_STRAUS_HOME` prima di avviare Rhino.
 
