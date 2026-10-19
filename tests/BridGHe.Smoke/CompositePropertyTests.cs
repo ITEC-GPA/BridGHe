@@ -31,7 +31,7 @@ internal static class CompositePropertyTests
         Near(Output(2).I11,old0.I11);Near(Output(3).I11,oldInf.I11);
         var expected=property.GetHomogeneizedMechanicalProperties(12);var actual=Output(4);
         Near(actual.SectionArea,expected.areaH/12);Near(actual.I11,expected.J11H/12);Near(actual.I22,expected.J22H/12);Near(actual.J,property.GetOnlySteelMechanicalProperties().Jt);
-        Require(actual.Material.Modulus==property.SteelMaterial.Modulus && actual.Section.NativeSection==null && actual.IsValid,"Shrinkage property must be a valid generic steel-referenced Straus property.");
+        Require(actual.Material.Modulus==property.SteelMaterial.Modulus && actual.Section.NativeSection==null && actual.Section.SectionType==SectionModel.SectionTypes.Generic && actual.IsValid,"Shrinkage property must be a valid generic steel-referenced Straus property.");
         Near(((CompositeBeamPropertyModel)c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable()).NShrinkage,12);
         var beam=new BeamModel("Preview",Rhino.Geometry.Point3d.Origin,new Rhino.Geometry.Point3d(10000,0,0),actual);
         Require(beam.Shapes.Length==2 && beam.Shapes.All(b=>b.IsValid && b.IsSolid),"Override composite preview must contain solid steel and slab.");

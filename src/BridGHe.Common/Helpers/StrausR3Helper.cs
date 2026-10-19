@@ -200,7 +200,7 @@ namespace BridGHe.Common.Helpers
                     // Section Geometry
                     if (bp.Section.NativeSection != null)
                         bp.Section.NativeSection.Assign(modelId, id);
-                    else if (bp.SectionType != SectionModel.SectionTypes.Generic)
+                    else if (bp.SectionType != SectionModel.SectionTypes.Generic && bp.SectionType != SectionModel.SectionTypes.Composite)
                     {
                         if (bp.SectionType == SectionModel.SectionTypes.GenericShapes)
                         {

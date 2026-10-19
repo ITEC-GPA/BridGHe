@@ -161,7 +161,7 @@ namespace BridGHe.Common.Models
                 Name = Name + suffix, Material = SteelMaterial, PropertyType = BeamPropertyType.Beam,
                 Section = new SectionModel
                 {
-                    SectionType = SectionModel.SectionTypes.Composite,
+                    SectionType = SectionModel.SectionTypes.Generic,
                     CompositePreview = new CompositeSectionPreviewGeometry(this),
                     SectionArea = p.areaH / n, I11 = p.J11H / n, I22 = p.J22H / n,
                     J = GetOnlySteelMechanicalProperties().Jt,
