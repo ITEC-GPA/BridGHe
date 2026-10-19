@@ -22,3 +22,18 @@ La fascia grigia comprende tutte le combinazioni del modello, anche quando `Comb
 Sono mantenute le correzioni numeriche già introdotte: nessun minimo fittizio pari a zero per risultati tutti positivi, stazioni ordinate, nessuno spostamento artificiale di 1 mm all'estremità, nessun collegamento attraverso dati mancanti o tra elementi. I tratti rettilinei collegano i campioni disponibili senza spline o smoothing. La fascia non è un inviluppo analitico continuo fra le stazioni né un nuovo inviluppo normativo.
 
 Verifica riproducibile: `dotnet run --project tests/BridGHe.Smoke -c Release -- --regression bridge-plots`. Comprende conversioni, selezione delle combinazioni, inviluppo globale, lacune, salti, campione singolo, XML/Unicode e cultura numerica italiana.
+
+## Preview sul canvas di Grasshopper
+
+Inserire **BridGHe → 15-Preview → Bridge Plot Preview** e collegare `SVG` del plot a `SVG` del visualizzatore. Non serve compilare `File Path`. Il bottone **Draw** del plot aggiorna il grafico; con `Keep Running = true` il plot si aggiorna a ogni nuova soluzione e la preview lo segue.
+
+- `SVG`: testo SVG da uno o più plot. La lista viene appiattita.
+- `Index`: indice del grafico da mostrare, a partire da 0; default 0.
+- `Width`: larghezza sul canvas, da 240 a 1600 pixel; default 600. Le proporzioni sono conservate e l'altezza è limitata a 900 pixel.
+- Uscita `SVG`: testo selezionato, invariato.
+
+Doppio clic sul grafico o menu contestuale **Apri grafico** apre una finestra che segue gli aggiornamenti, con adattamento alla finestra e zoom 100%/200%. La rasterizzazione è mantenuta in cache finché non cambiano SVG o dimensioni. Dati mancanti o non validi cancellano la preview precedente. Immagini e finestra vengono rilasciate alla rimozione del componente/chiusura del documento.
+
+Il visualizzatore accetta i grafici SVG autonomi di BridGHe: niente browser, script, risorse esterne o file temporanei. Per l'esportazione vettoriale resta disponibile lo stesso SVG originale. La preview usa **SVG.NET 3.4.8** e **ExCSS 4.2.3**, incluse nella Release: il renderer SVG nativo di Rhino ha restituito immagini nulle nei test e non è usato. [API del renderer](https://svg-net.github.io/SVG/api/Svg.SvgDocument.html); licenze distribuite in `docs/licenses/` (MS-PL e MIT).
+
+[Esempio già collegato](../examples/plot-preview/plot-preview.ghx), con due grafici sintetici selezionabili tramite slider. Generazione, salvataggio e riapertura: `dotnet run --project tests/BridGHe.Smoke -c Release -- --regression plot-preview --write-plot-example`. La regressione controlla rendering SVG, cache, cambio grafico, ridimensionamento, errori, input scollegato e rilascio delle risorse.

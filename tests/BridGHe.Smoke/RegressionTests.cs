@@ -13,6 +13,7 @@ internal static class RegressionTests
         {
             ["component-layout"] = ComponentLayoutTests.Run,
             ["bridge-plots"] = PlotTests.Run,
+            ["plot-preview"] = PlotPreviewTests.Run,
             ["native-bridge-components"] = NativeBridgeComponentTests.Run,
             ["bridge-numerical-baseline"] = BridgeNumericalBaseline.Verify,
             ["archive-before-cleanup"] = ArchiveBeforeCleanup,

@@ -1,6 +1,6 @@
 # Inventario dei componenti 0.1.0
 
-137 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
+138 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
 
 ## BridGHe / 01-Parameters
 
@@ -219,5 +219,6 @@
 | Nome | Tipo | Ingressi | Uscite |
 |---|---|---|---|
 | BridGHe Panel | component | — | Help |
+| Bridge Plot Preview | component | SVG; Index; Width | SVG |
 | Display Settings | component | Enabled; Geometry; Sections; Shaded; Reinforcement; Loads; Supports; Releases; OtherAttributes; Axes; Labels; Symbol scale; Load scale; Transparency; Load case | Settings |
 | Preview BridGHe Model | component | Model / elements; Settings | Info |

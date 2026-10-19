@@ -94,6 +94,8 @@ I dettagli non modificano il graticcio FEM. Lo stato limite resta quello del ris
 
 `Bridge Shear Plot` e `Bridge Stud Plot`, insieme ai grafici delle azioni e tensioni, accettano un albero `{beam;station}` con le combinazioni nell'ordine del modello. Il percorso del file è opzionale; l'SVG è sempre restituito. Il PNG è rigenerato solo quando cambiano dati o destinazione. Le lacune non vengono unite e i salti alle stazioni non vengono smussati.
 
+Per vedere i grafici nel canvas: collegare `SVG` a **Bridge Plot Preview**, gruppo **15-Preview**. Doppio clic sull'immagine apre la vista ingrandita. L'inviluppo grigio usa tutte le combinazioni; le uscite min/max riguardano le curve selezionate. Progressive in metri, azioni in kN/kNm e tensioni in MPa. [Guida e confronto con la versione originaria](GRAFICI.md).
+
 ## Input semplificati e preview
 
 La sezione finale di `Composite beam` è opzionale e assume quella iniziale. Il materiale delle armature è opzionale quando non vi sono armature attive. I nuovi record gPC hanno input con default e opzionalità esplicita. I componenti preesistenti con valori persistenti usano tali default; gli input fisicamente necessari restano obbligatori. L'inventario runtime delle porte è in `migration/current-components.json`.

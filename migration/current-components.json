@@ -10427,5 +10427,51 @@
         "type": "Generic Data"
       }
     ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Preview.BridgePlotPreviewComponent",
+    "guid": "17ad3e86-b699-435c-b036-565d04c8cdb6",
+    "kind": "component",
+    "name": "Bridge Plot Preview",
+    "nickname": "PlotPreview",
+    "category": "BridGHe",
+    "subcategory": "15-Preview",
+    "description": "Show Bridge Plot SVGs on the Grasshopper canvas. Double-click the preview to enlarge. No file required.",
+    "inputs": [
+      {
+        "name": "SVG",
+        "nickname": "SVG",
+        "description": "Connect the SVG output of one or more Bridge Plot components",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Index",
+        "nickname": "I",
+        "description": "Zero-based index of the chart to display",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Width",
+        "nickname": "W",
+        "description": "Canvas preview width in pixels, from 240 to 1600",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "SVG",
+        "nickname": "SVG",
+        "description": "Selected SVG, unchanged",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
   }
 ]

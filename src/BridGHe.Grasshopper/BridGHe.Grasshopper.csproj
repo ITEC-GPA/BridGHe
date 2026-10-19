@@ -10,6 +10,7 @@
     <PackageReference Include="Grasshopper" Version="$(RhinoVersion)" ExcludeAssets="runtime" />
     <PackageReference Include="RhinoCommon" Version="$(RhinoVersion)" ExcludeAssets="runtime" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
+    <PackageReference Include="Svg" Version="3.4.8" />
     <EmbeddedResource Include="Resources\*.png" />
     <EmbeddedResource Include="Resources\Icons\*.png" />
   </ItemGroup>

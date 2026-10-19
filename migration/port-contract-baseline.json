@@ -665,6 +665,12 @@
       "guids": [
         "97bab293-1482-420d-913e-fdf7b9204cae"
       ]
+    },
+    "src/BridGHe.Grasshopper/Components/Preview/BridgePlotPreviewComponent.cs": {
+      "ports": "b292d970b2797ec0074be1c6df8db6350d217cc8db692cd2c20b31f14140a7a0",
+      "guids": [
+        "17ad3e86-b699-435c-b036-565d04c8cdb6"
+      ]
     }
   }
 }

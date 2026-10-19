@@ -284,6 +284,7 @@ PlateComponent|plate||model
 MergeGeometryComponent|merge||tool
 DisplaySettingsComponent|table|edit|tool
 PreviewModelComponent|model|shape|tool
+BridgePlotPreviewComponent|printer|shape|result
 DisplayPanelComponent|table|parameter|tool
 BeamParam|beam|parameter|model
 BeamSectionParam|section:I|parameter|section

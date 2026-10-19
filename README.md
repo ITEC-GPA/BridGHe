@@ -2,7 +2,7 @@
 
 Plugin Grasshopper per **Rhino 8 / .NET 8 / Windows x64**: modello parametrico → Straus7 R3 → risultati negli elementi → verifiche e dettagli di ponti misti con gPC.
 
-La versione corrente comprende **137 componenti e 8 parametri**, con 142 GUID distinti incluso il plugin. Il refactoring del 19 ottobre 2026 semplifica gli input e rimuove i contenitori non utilizzati. I contratti aggiornati sono in [COMPONENTI](docs/COMPONENTI.md); le definizioni Grasshopper degli esempi sono state rigenerate.
+La versione corrente comprende **138 componenti e 8 parametri**, con 147 GUID distinti incluso il plugin. Il refactoring del 19 ottobre 2026 semplifica gli input e rimuove i contenitori non utilizzati. I contratti aggiornati sono in [COMPONENTI](docs/COMPONENTI.md); le definizioni Grasshopper degli esempi sono state rigenerate.
 
 ## Esempi
 

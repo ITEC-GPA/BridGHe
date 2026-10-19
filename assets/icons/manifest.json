@@ -1343,6 +1343,15 @@
       "family": "solver",
       "glyph": "solver",
       "badge": "play"
+    },
+    {
+      "key": "BridgePlotPreviewComponent",
+      "type": "BridGHe.Grasshopper.Components.Preview.BridgePlotPreviewComponent",
+      "guid": "17ad3e86-b699-435c-b036-565d04c8cdb6",
+      "name": "Bridge Plot Preview",
+      "family": "result",
+      "glyph": "printer",
+      "badge": "shape"
     }
   ]
 }
