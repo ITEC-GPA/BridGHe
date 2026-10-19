@@ -103,6 +103,13 @@
         "3ee2c935-dd7b-44b8-9bc2-c705ecd78052"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/BridgeChecks/BridgeDetailPlotComponents.cs": {
+      "ports": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "guids": [
+        "c561aa2c-a635-4a3e-8eb0-b8a166d856fb",
+        "0394f8d3-e5cc-4d03-9ee3-9ce6420b7a37"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/BridgeChecks/BridgeForcePlotComponent.cs": {
       "ports": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
       "guids": [
@@ -186,12 +193,38 @@
       ]
     },
     "src/BridGHe.Grasshopper/Components/BridgeDetails/BridgeDetailComponents.cs": {
-      "ports": "a9000a834dd469f62e9a5c3b780522edd1439a91de9685703809e88349bb9461",
+      "ports": "07f47f6c2ef68e72ae872335defb72462bc55f47f2cb800e643875af2b5c20cc",
       "guids": [
         "a65b8556-6a36-4c53-b52e-434d747c576e",
         "ea6bf9ee-ddc5-4b3e-8409-74d5674d2732",
         "bb5073af-270d-4603-b7f5-6bf65fcd6aab",
         "ffad5404-7440-47e7-9824-90588810089f"
+      ]
+    },
+    "src/BridGHe.Grasshopper/Components/BridgeDetails/BridgeNativeDefinitions.cs": {
+      "ports": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "guids": [
+        "422a7607-2759-4da2-819b-158d2c6f6cb3",
+        "402a895f-b583-41ed-b2a0-b80c1d50732b",
+        "4660cce7-4aa2-49f7-a929-b85327e0b8d2",
+        "f86ac409-7bb4-4d8e-a62c-8893feebfe31",
+        "01f06ff8-ab56-4fb1-b291-983e7635aab8",
+        "7d5be63e-a554-44f6-a042-2ca037f73f7d",
+        "2dfc68e3-becc-4b23-948b-35b7b80521a7"
+      ]
+    },
+    "src/BridGHe.Grasshopper/Components/BridgeDetails/BridgeResultComponents.cs": {
+      "ports": "777b0e1fb5246d9d115dc260437a18d85b919ef5b601da512eeb3ca2cb023eaa",
+      "guids": [
+        "e73670ca-0481-4716-9cc9-d42b57804614",
+        "95046592-063b-4499-8191-1c8cf7ec21a1",
+        "7c15b6ee-252b-4bdb-b0f2-7b765be6adf8"
+      ]
+    },
+    "src/BridGHe.Grasshopper/Components/BridgeDetails/BridgeSectionCheckComponent.cs": {
+      "ports": "5407dda553327868a83b25d238e613df4c81c9c0442ef4b000d3b35e9f95299a",
+      "guids": [
+        "952a074e-823d-490f-87b9-79c95b5d2d1a"
       ]
     },
     "src/BridGHe.Grasshopper/Components/Checks/ForceComponent.cs": {

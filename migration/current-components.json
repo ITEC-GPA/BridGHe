@@ -3245,15 +3245,6 @@
     "outputs": []
   },
   {
-    "type": "BridGHe.Grasshopper.Components.Parameters.VersionParam",
-    "guid": "98efbea2-2189-43fa-8b2e-a9fb6736e306",
-    "kind": "parameter",
-    "name": "Version controller",
-    "nickname": "VC",
-    "inputs": [],
-    "outputs": []
-  },
-  {
     "type": "BridGHe.Grasshopper.Components.Models.BeamComponent",
     "guid": "ecb9c513-6bb3-46ac-9430-a79ba43b0451",
     "kind": "component",
@@ -3350,14 +3341,6 @@
         "access": "list",
         "optional": true,
         "type": "Load Combination"
-      },
-      {
-        "name": "Named sets",
-        "nickname": "NS",
-        "description": "The named sets",
-        "access": "list",
-        "optional": true,
-        "type": "Generic Data"
       },
       {
         "name": "Staged constructions",
@@ -3607,1428 +3590,6 @@
         "access": "list",
         "optional": false,
         "type": "Mesh"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamPropertyCompositeComponent",
-    "guid": "f87c7066-e509-4646-9ef5-79691675cbf4",
-    "kind": "component",
-    "name": "Composite Beam Property",
-    "nickname": "CS",
-    "inputs": [
-      {
-        "name": "Name",
-        "nickname": "N",
-        "description": "The name of the section",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Concrete Slab Section",
-        "nickname": "CSS",
-        "description": "Concrete slab geometry",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Steel Section",
-        "nickname": "SS",
-        "description": "I section geometry",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Concrete Material",
-        "nickname": "CM",
-        "description": "Material of the concrete slab",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Steel Material",
-        "nickname": "SM",
-        "description": "Material of the steel section profile",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Reinforcement Material",
-        "nickname": "RM",
-        "description": "Material of the rebars",
-        "access": "item",
-        "optional": true,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Concrete Offset",
-        "nickname": "CO",
-        "description": "The distance between top flange and concrete slab",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "n0",
-        "nickname": "n0",
-        "description": "Homogenization coefficient for instant time loads",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "n ∞",
-        "nickname": "n ∞",
-        "description": "Homogenization coefficient for infinite time loads",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Consider Concrete",
-        "nickname": "CC",
-        "description": "If true, consider concrete in the n0 and n ∞ phases",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      },
-      {
-        "name": "Consider Rebars",
-        "nickname": "CR",
-        "description": "If true, consider rebars in the n0 and n ∞ phases",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Composite Section",
-        "nickname": "CS",
-        "description": "The composite section for BridgeChecks.0 analysis",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Only Steel Property",
-        "nickname": "CS",
-        "description": "The steel section",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "n0 Beam Section",
-        "nickname": "CS",
-        "description": "The homogenized beam section with n0 coefficient",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "n ∞ Beam Section",
-        "nickname": "CS",
-        "description": "The homogenized beam section with n ∞ coefficient",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionConcreteSlabComponent",
-    "guid": "1a539226-24ae-4d3f-8075-4f54cd1b9f68",
-    "kind": "component",
-    "name": "Concrete Slab Section",
-    "nickname": "S",
-    "inputs": [
-      {
-        "name": "Height",
-        "nickname": "H",
-        "description": "The section height",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Width",
-        "nickname": "W",
-        "description": "The section width",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Rebar area",
-        "nickname": "RA",
-        "description": "The rebar area",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Top concrete cover",
-        "nickname": "TCC",
-        "description": "The concrete cover from the top of the slab",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Concrete Slab",
-        "nickname": "S",
-        "description": "The slab section",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionHPropertyComponent",
-    "guid": "3ee2c935-dd7b-44b8-9bc2-c705ecd78052",
-    "kind": "component",
-    "name": "Section H Beam Property",
-    "nickname": "BGP",
-    "inputs": [
-      {
-        "name": "Section H Beam Property",
-        "nickname": "BP",
-        "description": "Section Property",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Name",
-        "nickname": "N",
-        "description": "Section section name",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Area",
-        "nickname": "A",
-        "description": "Section section area",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "xg",
-        "nickname": "xg",
-        "description": "X coordinate of centroid",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "yg",
-        "nickname": "yg",
-        "description": "Y coordinate of centroid",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Jxx",
-        "nickname": "Jxx",
-        "description": "Second moment of area  respect x-x",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Jyy",
-        "nickname": "Jyy",
-        "description": "Second moment of area  respect y-y",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Angle",
-        "nickname": "A",
-        "description": "Angle",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "J₁₁",
-        "nickname": "J₁₁",
-        "description": "Second moment of area respect 1-1",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "J₂₂",
-        "nickname": "J₂₂",
-        "description": "Second moment of area respect 2-2",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "J",
-        "nickname": "J",
-        "description": "Torsional moment of area",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Height",
-        "nickname": "H",
-        "description": "Total height of the section",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Top Flange Width",
-        "nickname": "TFW",
-        "description": "Top Flange Width",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Bottom Flange Width",
-        "nickname": "BFW",
-        "description": "Bottom Flange Width",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Web Thickness",
-        "nickname": "Tw",
-        "description": "Web Thickness",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Top Flange Thickness",
-        "nickname": "TFT",
-        "description": "Top Flange Thickness",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Bottom Flange Thickness",
-        "nickname": "BFT",
-        "description": "Bottom Flange Thickness",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BuildBridgeModel",
-    "guid": "16695837-3f63-4305-a1ff-4491826dc3fe",
-    "kind": "component",
-    "name": "Build BridGHe Model",
-    "nickname": "BMCM",
-    "inputs": [
-      {
-        "name": "BridGHe Models",
-        "nickname": "FM",
-        "description": "The FEM models (more than one for stages)",
-        "access": "list",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Load Combinations",
-        "nickname": "LCB",
-        "description": "The load cases combinations",
-        "access": "tree",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Phase Inf Load Cases",
-        "nickname": "INFLC",
-        "description": "The load cases name to assign to the Inf phase",
-        "access": "list",
-        "optional": true,
-        "type": "Text"
-      },
-      {
-        "name": "Phase Ninf Load Cases",
-        "nickname": "NINFLC",
-        "description": "The load cases name to assign to the NInf phase",
-        "access": "list",
-        "optional": true,
-        "type": "Text"
-      },
-      {
-        "name": "Phase N0 Load Cases",
-        "nickname": "N0LC",
-        "description": "The load cases name to assign to the N0 phase",
-        "access": "list",
-        "optional": true,
-        "type": "Text"
-      },
-      {
-        "name": "Phase Ninf strain Load Cases",
-        "nickname": "NINFSLC",
-        "description": "The load cases name to assign to the Phase Ninf strain phase",
-        "access": "list",
-        "optional": true,
-        "type": "Text"
-      },
-      {
-        "name": "Phase N0 strain Load Cases",
-        "nickname": "N0SLC",
-        "description": "The load cases name to assign to the Phase N0 strain phase",
-        "access": "list",
-        "optional": true,
-        "type": "Text"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Model",
-        "nickname": "M",
-        "description": "The FEM model",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamComponent",
-    "guid": "07260514-76e4-4a8d-8b1e-69288e348b6f",
-    "kind": "component",
-    "name": "Composite beam",
-    "nickname": "CB",
-    "inputs": [
-      {
-        "name": "Beam",
-        "nickname": "B",
-        "description": "The beam to define the mixed section",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Section Start",
-        "nickname": "SS",
-        "description": "Section on the starting node",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Section End",
-        "nickname": "SE",
-        "description": "Section on the starting node",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Groups",
-        "nickname": "G",
-        "description": "The groups to assign to the beam",
-        "access": "list",
-        "optional": true,
-        "type": "Generic Data"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Beam",
-        "nickname": "B",
-        "description": "The composite section beam",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamLinearTensionAnalysisComponent_OBSOLETE",
-    "guid": "a487d0e7-bb07-4049-90a5-8cd2aa40b183",
-    "kind": "component",
-    "name": "Composite Section Linear Tension Analysis",
-    "nickname": "CSLTA",
-    "inputs": [
-      {
-        "name": "Beams",
-        "nickname": "B",
-        "description": "The model beams definitions",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Loads Only steel Phase",
-        "nickname": "L",
-        "description": "The loads to check for only steel section, one external force",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Loads Infinte Time Phase",
-        "nickname": "L",
-        "description": "The loads to check for whole section with n=15/18, one external force",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Loads Instant Time Phase",
-        "nickname": "L",
-        "description": "The loads to check for whole section with n=6/7, one external force",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Homogenization coefficient Infinite",
-        "nickname": "HC Inf",
-        "description": "Load homogenization coefficient for infinite time load cases",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Homogenization coefficient Istant",
-        "nickname": "HC Ist",
-        "description": "Load homogenization coefficient for instant time load cases",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Top Flange Subject To Local Instability",
-        "nickname": "TFLI",
-        "description": "If true, top flange is subjected to loacel instability",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      },
-      {
-        "name": "Web Subject To Local Instability",
-        "nickname": "WLI",
-        "description": "If true, web is subjected to loacel instability",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      },
-      {
-        "name": "Bottom Flange Subject To Local Instability",
-        "nickname": "BLI",
-        "description": "If true, bottom flange is subjected to loacel instability",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      },
-      {
-        "name": "Consider concrete",
-        "nickname": "CC",
-        "description": "If true, consider concrete for calculation of coordiante system and force resultant",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      },
-      {
-        "name": "Effective Epsilon",
-        "nickname": "ε",
-        "description": "If true, consider the epsilon based on the real tensione distribuition on the part of the section. Otherwise, it consider the yelding tension over all the section (safety side, higher tension, lower class)",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Only Steel Buckling",
-        "nickname": "R",
-        "description": "Analysis results",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Infinite Buckling",
-        "nickname": "R",
-        "description": "Analysis results",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Total Buckling",
-        "nickname": "R",
-        "description": "Analysis results",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "TauB",
-        "nickname": "R",
-        "description": "Analysis results",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamSelfTensionComponent",
-    "guid": "e7cea623-0b51-485d-ab60-6ef6850945a6",
-    "kind": "component",
-    "name": "Composite Section Self Tension",
-    "nickname": "CSST",
-    "inputs": [
-      {
-        "name": "Composite Beam Property",
-        "nickname": "CBP",
-        "description": "Composite Section Property",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Homogenization coefficient",
-        "nickname": "HC",
-        "description": "Load homogenization coefficient for load case",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Strain",
-        "nickname": "ε",
-        "description": "The strain applicated to the concrete slab",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Result",
-        "nickname": "R",
-        "description": "Analysis results",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamSlabStrainComponent",
-    "guid": "adf0a668-9fee-4d5d-8665-57aa769319b0",
-    "kind": "component",
-    "name": "Composite Beam Strain",
-    "nickname": "CBS",
-    "inputs": [
-      {
-        "name": "Beam",
-        "nickname": "B",
-        "description": "The beam where add the strain load",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "LoadCase",
-        "nickname": "LC",
-        "description": "The load case",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Strain",
-        "nickname": "S",
-        "description": "The strain value",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Beam",
-        "nickname": "B",
-        "description": "The modified beam",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamTensionResultComponent",
-    "guid": "ac8892ff-18d2-4fe4-a8f5-d91053702b6d",
-    "kind": "component",
-    "name": "Composite Section Linear Tension Results",
-    "nickname": "CSLTR",
-    "inputs": [
-      {
-        "name": "Linear Tension Results",
-        "nickname": "LTR",
-        "description": "The Linear Tension Results",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Point1_ConcreteEpsilon",
-        "nickname": "P1_CE",
-        "description": "Point1_ConcreteEpsilon",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Point1_ConcreteSigma",
-        "nickname": "P1_CS",
-        "description": "Point1_ConcreteSigma",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Point2_RebarSigma",
-        "nickname": "P2_RS",
-        "description": "Point2_RebarSigma",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Point3_RebarSigma",
-        "nickname": "P3_RS",
-        "description": "Point3_RebarSigma",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Point4_ConcreteSigma",
-        "nickname": "P4_CS",
-        "description": "Point4_ConcreteSigma",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Point5_SteelSigma",
-        "nickname": "P5_SS",
-        "description": "Point5_SteelSigma",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Point6_SteelSigma",
-        "nickname": "P6_SS",
-        "description": "Point6_SteelSigma",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Point6_SteelTau ",
-        "nickname": "P6_ST",
-        "description": "Point6_SteelTau ",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Point6_SigmaId ",
-        "nickname": "P6_Id",
-        "description": "Point6_SigmaId ",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Point7_SteelSigma",
-        "nickname": "P7_SS",
-        "description": "Point7_SteelSigma",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Point7_SteelTau ",
-        "nickname": "P7_ST",
-        "description": "Point7_SteelTau ",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Point7_SigmaId ",
-        "nickname": "P7_Id",
-        "description": "Point7_SigmaId ",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Point8_SteelSigma",
-        "nickname": "P8_SS",
-        "description": "Point8_SteelSigma",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Point8_SteelEpsilon",
-        "nickname": "P8_SE",
-        "description": "Point8_SteelEpsilon",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeSectionComponent_OBSOLETE",
-    "guid": "ee8b7912-f07c-4a17-8a26-e75959ed080f",
-    "kind": "component",
-    "name": "Composite Beam Property",
-    "nickname": "CBP",
-    "inputs": [
-      {
-        "name": "Name",
-        "nickname": "N",
-        "description": "The name of the section",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Concrete Section",
-        "nickname": "CS",
-        "description": "Concrete slab geometry",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Steel Section",
-        "nickname": "SS",
-        "description": "I section geometry",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Concrete Material",
-        "nickname": "CM",
-        "description": "Material of the concrete slab",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Steel Material",
-        "nickname": "SM",
-        "description": "Material of the steel section profile",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Reinforcement Material",
-        "nickname": "RM",
-        "description": "Material of the rebars",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Concrete Offset",
-        "nickname": "CO",
-        "description": "The distance between top flange and concrete slab",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Composite Section",
-        "nickname": "CS",
-        "description": "The composite section",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeSectionGeometricPropertyComponent",
-    "guid": "2515010a-be42-4530-aa44-5a21b0c0c8dc",
-    "kind": "component",
-    "name": "Composite Geometric Property",
-    "nickname": "BGP",
-    "inputs": [
-      {
-        "name": "Composite Beam Property",
-        "nickname": "CBP",
-        "description": "Composite Section Property",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "n",
-        "nickname": "HC",
-        "description": "Homogenization coefficient",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Consider Concrete",
-        "nickname": "CC",
-        "description": "If true, consider concrete",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      },
-      {
-        "name": "Consider Rebars",
-        "nickname": "CR",
-        "description": "If true, consider rebars",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      },
-      {
-        "name": "Consider Steel Section",
-        "nickname": "CSS",
-        "description": "If true, consider the steel section",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Name",
-        "nickname": "N",
-        "description": "Section section name",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Area",
-        "nickname": "A",
-        "description": "Section section area",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "xg",
-        "nickname": "xg",
-        "description": "X coordinate of centroid",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "yg",
-        "nickname": "yg",
-        "description": "Y coordinate of centroid",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Jxx",
-        "nickname": "Jxx",
-        "description": "Second moment of area respect x-x",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Jyy",
-        "nickname": "Jyy",
-        "description": "Second moment of area respect y-y",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Angle",
-        "nickname": "A",
-        "description": "Angle",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "J₁₁",
-        "nickname": "J₁₁",
-        "description": "Second moment of area respect 1-1",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "J₂₂",
-        "nickname": "J₂₂",
-        "description": "Second moment of area respect 2-2",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Sxx",
-        "nickname": "Sxx",
-        "description": "First moment of area respect x-x",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Syy",
-        "nickname": "Syy",
-        "description": "First moment of area respect y-y",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "J",
-        "nickname": "J",
-        "description": "Torsional moment of area",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CreepAndShrinkageConcreteComponent",
-    "guid": "69fc44cb-48cd-4b15-af60-b025bd59bad5",
-    "kind": "component",
-    "name": "Creep And Shrinkage Concrete",
-    "nickname": "CS",
-    "inputs": [
-      {
-        "name": "Fck",
-        "nickname": "Fck",
-        "description": "Fck",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Elastic Modulus Steel",
-        "nickname": "Ea",
-        "description": "Elastic modulus of steel",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Concrete Area",
-        "nickname": "Ac[mm]",
-        "description": "Cross sectional area",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "RH",
-        "nickname": "RH[%]",
-        "description": "Relative humidity of the ambient enviroment in %",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "u",
-        "nickname": "u[mm]",
-        "description": "The perimeter of the member in contact with the atmosphere",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "t0",
-        "nickname": "t0[days]",
-        "description": "The age of concrete at loading in days. Default value 28 days",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "t",
-        "nickname": "t[days]",
-        "description": "The age of concrete in days at the moment considerated. If is 0, consider infinite time",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Cement Type",
-        "nickname": "CT",
-        "description": "The type of cement",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "n0",
-        "nickname": "n0",
-        "description": "Homogenization coefficient for instant time loads",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "n ∞",
-        "nickname": "n ∞",
-        "description": "Homogenization coefficient for infinite time loads",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "y(t,t0)",
-        "nickname": "y",
-        "description": "Creep coefficient",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "εcs",
-        "nickname": "ε",
-        "description": "Total Shrinkage strain",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeForcePlotComponent",
-    "guid": "77e9f533-e4e8-41de-baaf-6bfece84def9",
-    "kind": "component",
-    "name": "Print BridGHe Forces",
-    "nickname": "PI",
-    "inputs": [
-      {
-        "name": "BridGHe Model",
-        "nickname": "FM",
-        "description": "The FEM models (more than one for stages)",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Super-Element Beam",
-        "nickname": "SE",
-        "description": "The Super-Element Beam",
-        "access": "list",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Forces",
-        "nickname": "F",
-        "description": "The Forces",
-        "access": "tree",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Force component",
-        "nickname": "FC",
-        "description": "The force component to print",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
-      },
-      {
-        "name": "Combinations",
-        "nickname": "C",
-        "description": "The list of the combinations to draw",
-        "access": "list",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Show Min/Max Combo",
-        "nickname": "SMM",
-        "description": "If true, show the combinations that maximize and minimize the envelop",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      },
-      {
-        "name": "File Path",
-        "nickname": "P",
-        "description": "The path of the file",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Graphic Title",
-        "nickname": "T",
-        "description": "The title of the graphic",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Keep Running",
-        "nickname": "KR",
-        "description": "Run",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      }
-    ],
-    "outputs": []
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeResultPlotComponent",
-    "guid": "8f53f404-9446-4b47-90e3-d514f9c547c9",
-    "kind": "component",
-    "name": "Print BridGHe Results",
-    "nickname": "PI",
-    "inputs": [
-      {
-        "name": "BridGHe Model",
-        "nickname": "FM",
-        "description": "The FEM models (more than one for stages)",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Super-Element Beam",
-        "nickname": "SE",
-        "description": "The Super-Element Beam",
-        "access": "list",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Results",
-        "nickname": "R",
-        "description": "The BridGHe Results",
-        "access": "tree",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Result component",
-        "nickname": "FC",
-        "description": "The force component to print",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
-      },
-      {
-        "name": "Combinations",
-        "nickname": "C",
-        "description": "The list of the combinations to draw",
-        "access": "list",
-        "optional": true,
-        "type": "Text"
-      },
-      {
-        "name": "Show Min/Max Combo",
-        "nickname": "SMM",
-        "description": "If true, show the combinations that maximize and minimize the envelop",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      },
-      {
-        "name": "Additional values",
-        "nickname": "AV",
-        "description": "List of values ​​to add to the graph",
-        "access": "list",
-        "optional": true,
-        "type": "Number"
-      },
-      {
-        "name": "File Path",
-        "nickname": "P",
-        "description": "The path of the file",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Graphic Title",
-        "nickname": "T",
-        "description": "The title of the graphic",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Keep Running",
-        "nickname": "KR",
-        "description": "Run",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      }
-    ],
-    "outputs": []
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.SuperElementCheckComponent",
-    "guid": "94839122-32f0-4f3e-a30f-979a53c3eca8",
-    "kind": "component",
-    "name": "Super Element Check",
-    "nickname": "SEC",
-    "inputs": [
-      {
-        "name": "BridGHe Model",
-        "nickname": "FM",
-        "description": "The BridGHe model",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Super-Element Beam",
-        "nickname": "SE",
-        "description": "The Super-Element Beam",
-        "access": "list",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Web Local Instability",
-        "nickname": "WLI",
-        "description": "If true, web is subjected to loacel instability",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      },
-      {
-        "name": "Top Flange Local Instability",
-        "nickname": "TFLI",
-        "description": "If true, top flange is subjected to loacel instability",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      },
-      {
-        "name": "Bottom Flange Local Instability",
-        "nickname": "BLI",
-        "description": "If true, bottom flange is subjected to loacel instability",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      },
-      {
-        "name": "Effective Epsilon",
-        "nickname": "ε",
-        "description": "If true, consider the epsilon based on the real tensione distribuition on the part of the section. Otherwise, it consider the yelding tension over all the section (safety side, higher tension, lower class)",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Tension Check",
-        "nickname": "C",
-        "description": "The results",
-        "access": "tree",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Tau b",
-        "nickname": "T",
-        "description": "The results",
-        "access": "tree",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Tension Forces",
-        "nickname": "C",
-        "description": "The forces",
-        "access": "tree",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.SuperElementFilterComponent",
-    "guid": "850d46e5-0410-408f-aef0-16a6a202e1a4",
-    "kind": "component",
-    "name": "Super Element Filter",
-    "nickname": "SEF",
-    "inputs": [
-      {
-        "name": "BridGHe Model",
-        "nickname": "FM",
-        "description": "The FEM model",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Super-Element",
-        "nickname": "SE",
-        "description": "The name of the Super-Element to filter",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Beams",
-        "nickname": "B",
-        "description": "The beams of selected super element",
-        "access": "list",
-        "optional": false,
-        "type": "Generic Data"
       }
     ]
   },
@@ -6368,7 +4929,7 @@
       {
         "name": "Target",
         "nickname": "Tg",
-        "description": "0 any; 1 entity set; 2 beam; 3 plate; 4 brick.",
+        "description": "0 all model elements; 2 beam; 3 plate.",
         "access": "item",
         "optional": false,
         "type": "Integer"
@@ -6377,14 +4938,6 @@
         "name": "Divisions",
         "nickname": "D",
         "description": "Discretizzazione del percorso.",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
-      },
-      {
-        "name": "Entity set ID",
-        "nickname": "Set",
-        "description": "ID del set per Target=1, già presente nel file Straus.",
         "access": "item",
         "optional": false,
         "type": "Integer"
@@ -7164,116 +5717,6 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.Definitions.LoadCaseStageComponent",
-    "guid": "5698330d-d3b6-4c35-bbd8-096aee7dfbb3",
-    "kind": "component",
-    "name": "Load Case Stage",
-    "nickname": "LCS",
-    "inputs": [
-      {
-        "name": "Name",
-        "nickname": "N",
-        "description": "The load case name",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Operations",
-        "nickname": "Os",
-        "description": "Operations of a stage",
-        "access": "list",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "LoadCaseStage",
-        "nickname": "LCS",
-        "description": "The defined load case stage",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.Definitions.LoadCaseStageOperationComponent",
-    "guid": "785fff3f-6d81-4e5d-bf4d-cba31acedc58",
-    "kind": "component",
-    "name": "Load Case Stage Op",
-    "nickname": "LCSO",
-    "inputs": [
-      {
-        "name": "OperationCode",
-        "nickname": "OC",
-        "description": "The operation code",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
-      },
-      {
-        "name": "Object type",
-        "nickname": "OT",
-        "description": "The operation type",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
-      },
-      {
-        "name": "Object name",
-        "nickname": "ON",
-        "description": "Object name",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Age",
-        "nickname": "A",
-        "description": "Age",
-        "access": "item",
-        "optional": true,
-        "type": "Number"
-      },
-      {
-        "name": "Type",
-        "nickname": "T",
-        "description": "The type",
-        "access": "item",
-        "optional": true,
-        "type": "Integer"
-      },
-      {
-        "name": "Name",
-        "nickname": "N",
-        "description": "Name",
-        "access": "item",
-        "optional": true,
-        "type": "Text"
-      },
-      {
-        "name": "ScaleFactor",
-        "nickname": "SF",
-        "description": "Scale factor",
-        "access": "item",
-        "optional": true,
-        "type": "Number"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Load Case Stage Op",
-        "nickname": "LCSO",
-        "description": "The defined load case stage operation",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ]
-  },
-  {
     "type": "BridGHe.Grasshopper.Components.Definitions.LoadCombinationComponent",
     "guid": "bc427929-4998-48b4-821b-16d92af627cf",
     "kind": "component",
@@ -7467,589 +5910,6 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.Checks.MixedSectionShearCheckComponent",
-    "guid": "b3669fd3-ab2d-462b-a378-c9e6a5578b59",
-    "kind": "component",
-    "name": "Composite Section Shear Check",
-    "nickname": "CSSC",
-    "inputs": [
-      {
-        "name": "Beam Section",
-        "nickname": "BS",
-        "description": "Section to check",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Stardard",
-        "nickname": "S",
-        "description": "The standard",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
-      },
-      {
-        "name": "Concrete Material",
-        "nickname": "CM",
-        "description": "Concrete Material",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Rebar Material",
-        "nickname": "RM",
-        "description": "Rebar Material",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Steel Material",
-        "nickname": "SM",
-        "description": "Steel Material",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Distance stiffeners ",
-        "nickname": "DS",
-        "description": "Clear distance between transverse stiffeners",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Loads",
-        "nickname": "L",
-        "description": "The loads to check",
-        "access": "list",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Shear Working Ratio",
-        "nickname": "SWR",
-        "description": "The shear check Working Ratio",
-        "access": "list",
-        "optional": false,
-        "type": "Number"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.Checks.MixedSectionTensionCheckComponent",
-    "guid": "d370d023-bccf-4292-bed6-61858bcf71d8",
-    "kind": "component",
-    "name": "Composite Section Tension Check",
-    "nickname": "CSTC",
-    "inputs": [
-      {
-        "name": "Beam Section",
-        "nickname": "BS",
-        "description": "Section to check",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Concrete Material",
-        "nickname": "CM",
-        "description": "Concrete Material",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Rebar Material",
-        "nickname": "RM",
-        "description": "Rebar Material",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Steel Material",
-        "nickname": "SM",
-        "description": "Steel Material",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Homogenized factor ",
-        "nickname": "N",
-        "description": "The homogenized factor",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Loads",
-        "nickname": "L",
-        "description": "The loads to check",
-        "access": "list",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Header",
-        "nickname": "H",
-        "description": "The result string header",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Summary Results",
-        "nickname": "R",
-        "description": "The result string to save in .cvs",
-        "access": "list",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Steel section points",
-        "nickname": "SSP",
-        "description": "The boundary points of the steel section",
-        "access": "list",
-        "optional": false,
-        "type": "Point"
-      },
-      {
-        "name": "Steel section value",
-        "nickname": "SSV",
-        "description": "The stress value associated to boundary points of the steel section",
-        "access": "list",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Concrete section points",
-        "nickname": "CSP",
-        "description": "The boundary points of the concrete section",
-        "access": "list",
-        "optional": false,
-        "type": "Point"
-      },
-      {
-        "name": "Concrete section value",
-        "nickname": "CSV",
-        "description": "The stress value associated to boundary points of the concrete section",
-        "access": "list",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Rebar points",
-        "nickname": "RP",
-        "description": "The points of the concrete section rebars",
-        "access": "list",
-        "optional": false,
-        "type": "Point"
-      },
-      {
-        "name": "Rebar value",
-        "nickname": "RV",
-        "description": "The stress value associated to points of the concrete section rebars",
-        "access": "list",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Neutral axis",
-        "nickname": "NA",
-        "description": "The neutral axis of the forces",
-        "access": "list",
-        "optional": false,
-        "type": "Line"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.Checks.RCFrameAsComponent",
-    "guid": "31e3225e-3154-4726-9e6b-67539de1b524",
-    "kind": "component",
-    "name": "RC frames As",
-    "nickname": "RCFAs",
-    "inputs": [
-      {
-        "name": "Frames",
-        "nickname": "Fs",
-        "description": "The frames containing results",
-        "access": "list",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Top beam cover",
-        "nickname": "TBC",
-        "description": "Top cover of beams",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Bottom beam cover",
-        "nickname": "BBC",
-        "description": "Bottom cover of beams",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Pillar cover",
-        "nickname": "PC",
-        "description": "Cover of pillars",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "γs",
-        "nickname": "γs",
-        "description": "Partial safety factor of rebar",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "fyk",
-        "nickname": "fyk",
-        "description": "Caratheristic yield resistance of rebar",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Length unit",
-        "nickname": "LU",
-        "description": "Units of the length",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
-      },
-      {
-        "name": "Force unit",
-        "nickname": "FU",
-        "description": "Units of the forces",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "RC Beams",
-        "nickname": "Bs",
-        "description": "Beams",
-        "access": "list",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Beam ascissas",
-        "nickname": "BAs",
-        "description": "Ascissas of beams",
-        "access": "tree",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Beam top As",
-        "nickname": "BTAs",
-        "description": "Beams required top reinforcement area",
-        "access": "tree",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Beam bottom As",
-        "nickname": "BBAs",
-        "description": "Beams required bottom reinforcement area",
-        "access": "tree",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Beam shear As",
-        "nickname": "BSAs",
-        "description": "Beams required shear reinforcement area",
-        "access": "tree",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "RC Pillars",
-        "nickname": "Ps",
-        "description": "Pillars",
-        "access": "list",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Pillar ascissas",
-        "nickname": "PAs",
-        "description": "Ascissas of pillars",
-        "access": "tree",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Pillar As",
-        "nickname": "PAs",
-        "description": "Pillar required longitudinal reinforcement area",
-        "access": "tree",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Pillar shear As",
-        "nickname": "PSAs",
-        "description": "Pillars required shear reinforcement area",
-        "access": "tree",
-        "optional": false,
-        "type": "Number"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.Checks.RCFrameChecksComponent",
-    "guid": "fe7f2ad0-e6db-488c-befd-6077043c839d",
-    "kind": "component",
-    "name": "RC frame checks",
-    "nickname": "RCFC",
-    "inputs": [
-      {
-        "name": "RC Beams",
-        "nickname": "B",
-        "description": "Beams",
-        "access": "list",
-        "optional": true,
-        "type": "Generic Data"
-      },
-      {
-        "name": "B,Ascissas",
-        "nickname": "B,Ls",
-        "description": "Location of sections of beams",
-        "access": "tree",
-        "optional": true,
-        "type": "Number"
-      },
-      {
-        "name": "RC Pillars",
-        "nickname": "P",
-        "description": "Pillars",
-        "access": "list",
-        "optional": true,
-        "type": "Generic Data"
-      },
-      {
-        "name": "P,Ascissas",
-        "nickname": "P,Ls",
-        "description": "Location of sections of pillars",
-        "access": "tree",
-        "optional": true,
-        "type": "Number"
-      },
-      {
-        "name": "Long As",
-        "nickname": "LAs",
-        "description": "Longitudinal reinforcement area of pillars in all sections",
-        "access": "tree",
-        "optional": true,
-        "type": "Number"
-      },
-      {
-        "name": "γs",
-        "nickname": "γs",
-        "description": "Partial safety factor of rebar",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "γc",
-        "nickname": "γc",
-        "description": "Partial safety factor of concrete",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "αcc",
-        "nickname": "αcc",
-        "description": "αcc factor of concrete",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "fyk",
-        "nickname": "fyk",
-        "description": "Caratheristic yield resistance of rebar",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Length unit",
-        "nickname": "LU",
-        "description": "Units of the length",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
-      },
-      {
-        "name": "Force unit",
-        "nickname": "FU",
-        "description": "Units of the forces",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Beams",
-        "nickname": "B",
-        "description": "Beams",
-        "access": "list",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Beams ascissas",
-        "nickname": "BAsc",
-        "description": "Ascissas of RC beams",
-        "access": "tree",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Beam resistance URs",
-        "nickname": "BRUR",
-        "description": "The maximum resistance utilization ratios, one for each beam",
-        "access": "tree",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Pillars",
-        "nickname": "P",
-        "description": "Pillars",
-        "access": "list",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Pillar ascissas",
-        "nickname": "PAsc",
-        "description": "Ascissas of RC pillars",
-        "access": "tree",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Pillar resistance URs",
-        "nickname": "PRUR",
-        "description": "The maximum resistance utilization ratios, one for each pillar",
-        "access": "tree",
-        "optional": false,
-        "type": "Number"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.Checks.SteelFrameChecksComponent",
-    "guid": "c42d7f54-7567-4f8a-8835-887f27af69eb",
-    "kind": "component",
-    "name": "Steel frame checks",
-    "nickname": "SFC",
-    "inputs": [
-      {
-        "name": "Frames",
-        "nickname": "Bs",
-        "description": "The frames containing results",
-        "access": "list",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "γM0",
-        "nickname": "γM0",
-        "description": "Partial safety factor on resistance checks",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "γM1",
-        "nickname": "γM1",
-        "description": "Partial safety factor on buckling checks",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Length unit",
-        "nickname": "LU",
-        "description": "Units of the length",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
-      },
-      {
-        "name": "Force unit",
-        "nickname": "FU",
-        "description": "Units of the forces",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Steel Frames",
-        "nickname": "SFs",
-        "description": "Steel frames where results are calculated",
-        "access": "list",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Ascissas",
-        "nickname": "As",
-        "description": "Ascissas of Frames where the UR are calculated",
-        "access": "tree",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Resistance URs",
-        "nickname": "RUR",
-        "description": "The maximum resistance utilization ratios, one for each beam",
-        "access": "tree",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Buckling URs",
-        "nickname": "BUR",
-        "description": "The maximum buckling utilization ratios, one for each beam",
-        "access": "tree",
-        "optional": false,
-        "type": "Number"
-      }
-    ]
-  },
-  {
     "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeStudsComponent",
     "guid": "a65b8556-6a36-4c53-b52e-434d747c576e",
     "kind": "component",
@@ -8061,7 +5921,7 @@
         "nickname": "Enabled",
         "description": "Enable studs",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Boolean"
       },
       {
@@ -8069,7 +5929,7 @@
         "nickname": "CountPerRow",
         "description": "Integer studs per transverse row, 1 to 20",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8077,7 +5937,7 @@
         "nickname": "Diameter",
         "description": "Shank diameter [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8085,7 +5945,7 @@
         "nickname": "Height",
         "description": "Total height [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8093,7 +5953,7 @@
         "nickname": "LongitudinalPitch",
         "description": "Longitudinal pitch [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8101,7 +5961,7 @@
         "nickname": "TransversePitch",
         "description": "Transverse pitch [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8109,7 +5969,7 @@
         "nickname": "Fu",
         "description": "Stud ultimate tensile strength [MPa]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8117,7 +5977,7 @@
         "nickname": "GammaV",
         "description": "Connection partial factor; select for applicable standard",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8125,7 +5985,7 @@
         "nickname": "HeadDiameter",
         "description": "Head diameter [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8133,7 +5993,7 @@
         "nickname": "HeadThickness",
         "description": "Head thickness [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8141,7 +6001,7 @@
         "nickname": "RequiredCover",
         "description": "Required cover [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8149,7 +6009,7 @@
         "nickname": "RepeatedActionDetail",
         "description": "Detailing for repeated actions; this does not enable fatigue verification",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Boolean"
       }
     ],
@@ -8176,7 +6036,7 @@
         "nickname": "Enabled",
         "description": "Enable intermediate stiffener",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Boolean"
       },
       {
@@ -8184,7 +6044,7 @@
         "nickname": "Layout",
         "description": "Symmetric / left / right / unequal",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Integer"
       },
       {
@@ -8192,7 +6052,7 @@
         "nickname": "Width",
         "description": "Left plate outstand [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8200,7 +6060,7 @@
         "nickname": "Thickness",
         "description": "Left plate thickness [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8208,7 +6068,7 @@
         "nickname": "RightWidth",
         "description": "Right outstand, unequal layout [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8216,7 +6076,7 @@
         "nickname": "RightThickness",
         "description": "Right thickness, unequal layout [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8224,7 +6084,7 @@
         "nickname": "LeftPanel",
         "description": "Left panel length [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8232,7 +6092,7 @@
         "nickname": "RightPanel",
         "description": "Right panel length [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8240,7 +6100,7 @@
         "nickname": "EqualPanels",
         "description": "Use left length for both panels",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Boolean"
       },
       {
@@ -8248,7 +6108,7 @@
         "nickname": "LengthFactor",
         "description": "Buckling length factor",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8256,7 +6116,7 @@
         "nickname": "ExternalCompressionKN",
         "description": "Additional compression [kN], not N",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8264,7 +6124,7 @@
         "nickname": "LoadX",
         "description": "Load transverse eccentricity [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8272,7 +6132,7 @@
         "nickname": "CheckWelds",
         "description": "Check continuous welds",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Boolean"
       },
       {
@@ -8280,7 +6140,7 @@
         "nickname": "WeldThroat",
         "description": "Fillet weld throat [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       }
     ],
@@ -8307,7 +6167,7 @@
         "nickname": "Enabled",
         "description": "Enable bearing stiffener",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Boolean"
       },
       {
@@ -8315,7 +6175,7 @@
         "nickname": "Layout",
         "description": "Symmetric / left / right / unequal",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Integer"
       },
       {
@@ -8323,7 +6183,7 @@
         "nickname": "Width",
         "description": "Left plate outstand [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8331,7 +6191,7 @@
         "nickname": "Thickness",
         "description": "Left plate thickness [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8339,7 +6199,7 @@
         "nickname": "RightWidth",
         "description": "Right outstand, unequal layout [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8347,7 +6207,7 @@
         "nickname": "RightThickness",
         "description": "Right thickness, unequal layout [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8355,7 +6215,7 @@
         "nickname": "Location",
         "description": "Internal / left end / right end",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Integer"
       },
       {
@@ -8363,7 +6223,7 @@
         "nickname": "LeftPanel",
         "description": "Left panel length [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8371,7 +6231,7 @@
         "nickname": "RightPanel",
         "description": "Right panel length [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8379,7 +6239,7 @@
         "nickname": "ReactionKN",
         "description": "Actual compression reaction envelope [kN], not N; zero means no external bearing compression",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8387,7 +6247,7 @@
         "nickname": "EndDistance",
         "description": "Distance from end [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8395,7 +6255,7 @@
         "nickname": "LoadX",
         "description": "Transverse eccentricity [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8403,7 +6263,7 @@
         "nickname": "LoadZ",
         "description": "Longitudinal eccentricity [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8411,7 +6271,7 @@
         "nickname": "FootprintLength",
         "description": "Bearing footprint longitudinal length [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8419,7 +6279,7 @@
         "nickname": "FootprintWidth",
         "description": "Bearing footprint transverse width [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8427,7 +6287,7 @@
         "nickname": "LengthFactor",
         "description": "Buckling length factor",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8435,7 +6295,7 @@
         "nickname": "RigidEndPost",
         "description": "Enable rigid end-post checks",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Boolean"
       },
       {
@@ -8443,7 +6303,7 @@
         "nickname": "EndPostSpacing",
         "description": "Two end-post pairs spacing [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
@@ -8451,7 +6311,7 @@
         "nickname": "CheckWelds",
         "description": "Check continuous welds",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Boolean"
       },
       {
@@ -8459,7 +6319,7 @@
         "nickname": "WeldThroat",
         "description": "Fillet weld throat [mm]",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       }
     ],
@@ -8510,6 +6370,22 @@
         "nickname": "A",
         "description": "Bridge Support Stiffener definition",
         "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Options",
+        "nickname": "O",
+        "description": "Optional native gPC analysis options; actions remain unchanged",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Additional details",
+        "nickname": "D",
+        "description": "Optional transverse slab reinforcement, fatigue or box options",
+        "access": "list",
         "optional": true,
         "type": "Generic Data"
       }
@@ -8578,6 +6454,2837 @@
         "access": "list",
         "optional": false,
         "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeGeometryComponent",
+    "guid": "422a7607-2759-4da2-819b-158d2c6f6cb3",
+    "kind": "component",
+    "name": "Bridge Section Geometry",
+    "nickname": "Geometry",
+    "inputs": [
+      {
+        "name": "SlabWidth",
+        "nickname": "SlabWidth",
+        "description": "Slab effective width [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "SlabHeight",
+        "nickname": "SlabHeight",
+        "description": "Slab thickness [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "WebHeight",
+        "nickname": "WebHeight",
+        "description": "Vertical web height [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "WebThickness",
+        "nickname": "WebThickness",
+        "description": "Web thickness normal to plate [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "TopWidth",
+        "nickname": "TopWidth",
+        "description": "Top flange width, each flange for box [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "TopThickness",
+        "nickname": "TopThickness",
+        "description": "Top flange thickness [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "BottomWidth",
+        "nickname": "BottomWidth",
+        "description": "Bottom flange total width [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "BottomThickness",
+        "nickname": "BottomThickness",
+        "description": "Bottom flange thickness [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "SecondBottomEnabled",
+        "nickname": "SecondBottomEnabled",
+        "description": "Enable second bottom plate, H only",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "SecondBottomWidth",
+        "nickname": "SecondBottomWidth",
+        "description": "Second bottom plate width [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "SecondBottomThickness",
+        "nickname": "SecondBottomThickness",
+        "description": "Second bottom plate thickness [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "SectionType",
+        "nickname": "SectionType",
+        "description": "H, inclined-web H, or box",
+        "access": "item",
+        "optional": true,
+        "type": "Integer"
+      },
+      {
+        "name": "WebOffset",
+        "nickname": "WebOffset",
+        "description": "Horizontal web offset [mm]; inward for box",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "WebSpacing",
+        "nickname": "WebSpacing",
+        "description": "Box web centreline spacing at top [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Detail",
+        "nickname": "D",
+        "description": "Immutable gPC detail definition",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeRebarRowComponent",
+    "guid": "402a895f-b583-41ed-b2a0-b80c1d50732b",
+    "kind": "component",
+    "name": "Bridge Rebar Row",
+    "nickname": "RebarRow",
+    "inputs": [
+      {
+        "name": "Enabled",
+        "nickname": "Enabled",
+        "description": "Enable this reinforcement row",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "Diameter",
+        "nickname": "Diameter",
+        "description": "Bar diameter [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Pitch",
+        "nickname": "Pitch",
+        "description": "Transverse bar pitch [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "AxisDistance",
+        "nickname": "AxisDistance",
+        "description": "Axis distance from the corresponding slab face [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Detail",
+        "nickname": "D",
+        "description": "Immutable gPC detail definition",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgePhaseComponent",
+    "guid": "4660cce7-4aa2-49f7-a929-b85327e0b8d2",
+    "kind": "component",
+    "name": "Bridge Phase",
+    "nickname": "Phase",
+    "inputs": [
+      {
+        "name": "Name",
+        "nickname": "Name",
+        "description": "Phase name",
+        "access": "item",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Active",
+        "nickname": "Active",
+        "description": "Include phase in calculation",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "Kind",
+        "nickname": "Kind",
+        "description": "Steel only, composite, concrete excluded, or shrinkage",
+        "access": "item",
+        "optional": true,
+        "type": "Integer"
+      },
+      {
+        "name": "Reference",
+        "nickname": "Reference",
+        "description": "Force reference: gross centroid, effective centroid, common elevation",
+        "access": "item",
+        "optional": true,
+        "type": "Integer"
+      },
+      {
+        "name": "ForceKN",
+        "nickname": "ForceKN",
+        "description": "Axial force increment [kN], native gPC sign",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "MomentKNm",
+        "nickname": "MomentKNm",
+        "description": "Major bending increment [kNm], native gPC sign",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "ShearKN",
+        "nickname": "ShearKN",
+        "description": "Shear increment [kN]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "TorsionKNm",
+        "nickname": "TorsionKNm",
+        "description": "Torque increment [kNm], only supported for box with Box Options",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "AdditionalConnectionFlow",
+        "nickname": "AdditionalConnectionFlow",
+        "description": "Additional connection shear flow [N/mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "ShrinkageMicrostrain",
+        "nickname": "ShrinkageMicrostrain",
+        "description": "Shrinkage increment [microstrain], contraction negative",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "HomogenizationSource",
+        "nickname": "HomogenizationSource",
+        "description": "Phi or modular ratio n",
+        "access": "item",
+        "optional": true,
+        "type": "Integer"
+      },
+      {
+        "name": "Phi",
+        "nickname": "Phi",
+        "description": "Creep coefficient",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "PsiL",
+        "nickname": "PsiL",
+        "description": "Creep multiplier for this action",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "N",
+        "nickname": "N",
+        "description": "Steel/concrete modular ratio, used only with ModularRatio",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Detail",
+        "nickname": "D",
+        "description": "Immutable gPC detail definition",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeAnalysisOptionsComponent",
+    "guid": "f86ac409-7bb4-4d8e-a62c-8893feebfe31",
+    "kind": "component",
+    "name": "Bridge Analysis Options",
+    "nickname": "CheckOptions",
+    "inputs": [
+      {
+        "name": "Standard",
+        "nickname": "Standard",
+        "description": "gPC standard selector: Ntc2018 or Eurocode4",
+        "access": "item",
+        "optional": true,
+        "type": "Integer"
+      },
+      {
+        "name": "LimitState",
+        "nickname": "LimitState",
+        "description": "Ultimate, rare SLS, quasi-permanent SLS",
+        "access": "item",
+        "optional": true,
+        "type": "Integer"
+      },
+      {
+        "name": "Class4",
+        "nickname": "Class4",
+        "description": "Effective-width analysis",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "TopFlangeBuckling",
+        "nickname": "TopFlangeBuckling",
+        "description": "Local buckling of top flange",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "BottomFlangeBuckling",
+        "nickname": "BottomFlangeBuckling",
+        "description": "Local buckling of bottom flange",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "WebBuckling",
+        "nickname": "WebBuckling",
+        "description": "Local buckling of web",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "CommonLoadY",
+        "nickname": "CommonLoadY",
+        "description": "Common load reference elevation [mm], zero at slab underside",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "GammaM0",
+        "nickname": "GammaM0",
+        "description": "Steel cross-section factor; user must select applicable value",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "GammaM1",
+        "nickname": "GammaM1",
+        "description": "Steel stability factor",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "GammaM2",
+        "nickname": "GammaM2",
+        "description": "Steel connection factor",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "GammaC",
+        "nickname": "GammaC",
+        "description": "Concrete factor",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "GammaS",
+        "nickname": "GammaS",
+        "description": "Reinforcement factor",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "AlphaCC",
+        "nickname": "AlphaCC",
+        "description": "Concrete strength coefficient",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "ShearEta",
+        "nickname": "ShearEta",
+        "description": "Shear resistance multiplier",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Detail",
+        "nickname": "D",
+        "description": "Immutable gPC detail definition",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeTransverseReinforcementComponent",
+    "guid": "01f06ff8-ab56-4fb1-b291-983e7635aab8",
+    "kind": "component",
+    "name": "Bridge Transverse Reinforcement",
+    "nickname": "SlabShear",
+    "inputs": [
+      {
+        "name": "Enabled",
+        "nickname": "Enabled",
+        "description": "Enable transverse slab reinforcement checks",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "TopDiameter",
+        "nickname": "TopDiameter",
+        "description": "Top transverse bar diameter [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "TopPitch",
+        "nickname": "TopPitch",
+        "description": "Top transverse bar longitudinal spacing [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "BottomDiameter",
+        "nickname": "BottomDiameter",
+        "description": "Bottom transverse bar diameter [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "BottomPitch",
+        "nickname": "BottomPitch",
+        "description": "Bottom transverse bar longitudinal spacing [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "CotTheta",
+        "nickname": "CotTheta",
+        "description": "Cotangent of compression strut angle, gPC slab domain 1 to 1.25",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "LeftFlowFraction",
+        "nickname": "LeftFlowFraction",
+        "description": "Fraction of connection flow transferred to left slab side",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "BendingSteelPerMetre",
+        "nickname": "BendingSteelPerMetre",
+        "description": "Reinforcement required by transverse bending [mm2/m]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "AnchorageLength",
+        "nickname": "AnchorageLength",
+        "description": "Available anchorage length [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "GoodBond",
+        "nickname": "GoodBond",
+        "description": "Good bond conditions",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "LeftConcreteEdge",
+        "nickname": "LeftConcreteEdge",
+        "description": "Distance to left concrete edge [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "RightConcreteEdge",
+        "nickname": "RightConcreteEdge",
+        "description": "Distance to right concrete edge [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "EdgeUBar",
+        "nickname": "EdgeUBar",
+        "description": "Edge U-bar detailing",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "UBarDiameter",
+        "nickname": "UBarDiameter",
+        "description": "Edge U-bar diameter [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Detail",
+        "nickname": "D",
+        "description": "Immutable gPC detail definition",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeFatigueComponent",
+    "guid": "7d5be63e-a554-44f6-a042-2ca037f73f7d",
+    "kind": "component",
+    "name": "Bridge Connection Fatigue",
+    "nickname": "Fatigue",
+    "inputs": [
+      {
+        "name": "Enabled",
+        "nickname": "Enabled",
+        "description": "Enable fatigue checks",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "MinimumFlow",
+        "nickname": "MinimumFlow",
+        "description": "Minimum connection flow [N/mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "MaximumFlow",
+        "nickname": "MaximumFlow",
+        "description": "Maximum connection flow [N/mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "EquivalenceFactor",
+        "nickname": "EquivalenceFactor",
+        "description": "Damage equivalence factor, supplied by user",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "DynamicFactor",
+        "nickname": "DynamicFactor",
+        "description": "Dynamic amplification, supplied by user",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "TensileFlange",
+        "nickname": "TensileFlange",
+        "description": "Steel flange in tension",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "FlangeStressRange",
+        "nickname": "FlangeStressRange",
+        "description": "Flange normal stress range [MPa]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "GammaFf",
+        "nickname": "GammaFf",
+        "description": "Fatigue action factor",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "GammaMfStud",
+        "nickname": "GammaMfStud",
+        "description": "Stud fatigue resistance factor",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "GammaMfFlange",
+        "nickname": "GammaMfFlange",
+        "description": "Flange fatigue resistance factor",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Detail",
+        "nickname": "D",
+        "description": "Immutable gPC detail definition",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeBoxOptionsComponent",
+    "guid": "2dfc68e3-becc-4b23-948b-35b7b80521a7",
+    "kind": "component",
+    "name": "Bridge Box Options",
+    "nickname": "BoxOptions",
+    "inputs": [
+      {
+        "name": "Enabled",
+        "nickname": "Enabled",
+        "description": "Enable box torsion and distortion",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "BracingThickness",
+        "nickname": "BracingThickness",
+        "description": "Equivalent upper bracing thickness [mm]; zero means open steel box",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "SpanLength",
+        "nickname": "SpanLength",
+        "description": "Distortion span [mm]; zero disables distortion analysis",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "DiaphragmSpacing",
+        "nickname": "DiaphragmSpacing",
+        "description": "Intermediate diaphragm spacing [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "DiaphragmKind",
+        "nickname": "DiaphragmKind",
+        "description": "Plate or cross bracing",
+        "access": "item",
+        "optional": true,
+        "type": "Integer"
+      },
+      {
+        "name": "DiaphragmThickness",
+        "nickname": "DiaphragmThickness",
+        "description": "Plate diaphragm thickness [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "BracingArea",
+        "nickname": "BracingArea",
+        "description": "Area of EACH diagonal [mm2]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "BracingRadius",
+        "nickname": "BracingRadius",
+        "description": "Minimum diagonal radius of gyration [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "BracingBucklingFactor",
+        "nickname": "BracingBucklingFactor",
+        "description": "Diagonal buckling length factor",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "DistributedTorque",
+        "nickname": "DistributedTorque",
+        "description": "Distributed distortion torque [kNm/m]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "ConcentratedTorque",
+        "nickname": "ConcentratedTorque",
+        "description": "Concentrated distortion torque [kNm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "SupportDiaphragmThickness",
+        "nickname": "SupportDiaphragmThickness",
+        "description": "Support diaphragm thickness [mm], zero disables check",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "SupportTorqueKNm",
+        "nickname": "SupportTorqueKNm",
+        "description": "Torque transferred to bearings [kNm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "BearingSpacing",
+        "nickname": "BearingSpacing",
+        "description": "Transverse bearing spacing [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Detail",
+        "nickname": "D",
+        "description": "Immutable gPC detail definition",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeShearResultsComponent",
+    "guid": "e73670ca-0481-4716-9cc9-d42b57804614",
+    "kind": "component",
+    "name": "Bridge Shear Results",
+    "nickname": "Tau",
+    "inputs": [
+      {
+        "name": "Section result",
+        "nickname": "R",
+        "description": "One cumulative BridgeStressResult from Section Check, Super Element Check or Detail Check",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Shear",
+        "nickname": "V",
+        "description": "Cumulative shear [kN]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Average tau",
+        "nickname": "TauAvg",
+        "description": "Native gPC average shear stress [MPa]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Maximum tau",
+        "nickname": "TauMax",
+        "description": "Native gPC maximum shear stress [MPa]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Equivalent stress",
+        "nickname": "SigmaEq",
+        "description": "Native gPC equivalent stress envelope [MPa]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Web resistance",
+        "nickname": "VRd",
+        "description": "Native gPC web shear resistance [kN]; selected partial factors and buckling apply",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Warnings",
+        "nickname": "W",
+        "description": "Stage warnings",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeStudResultsComponent",
+    "guid": "95046592-063b-4499-8191-1c8cf7ec21a1",
+    "kind": "component",
+    "name": "Bridge Stud Results",
+    "nickname": "StudResults",
+    "inputs": [
+      {
+        "name": "Section result",
+        "nickname": "R",
+        "description": "One cumulative BridgeStressResult from Section Check, Super Element Check or Detail Check",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Connection flow",
+        "nickname": "q",
+        "description": "Total longitudinal connection flow [N/mm = kN/m]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Force per stud",
+        "nickname": "PEd",
+        "description": "Demand per stud [kN]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Resistance per stud",
+        "nickname": "PRd",
+        "description": "Resistance per stud for the selected limit state [kN]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Resistance per length",
+        "nickname": "qRd",
+        "description": "Resistance per unit length [N/mm = kN/m]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Force ratio",
+        "nickname": "Eta",
+        "description": "PEd/PRd; separate geometry, fatigue and slab checks remain in Verification Results",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Phase",
+        "nickname": "P",
+        "description": "Names corresponding to the following flow contributions",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Phase flow",
+        "nickname": "dq",
+        "description": "Flow contribution including additional connection flow [N/mm]",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Warnings",
+        "nickname": "W",
+        "description": "Stage warnings",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeVerificationResultsComponent",
+    "guid": "7c15b6ee-252b-4bdb-b0f2-7b765be6adf8",
+    "kind": "component",
+    "name": "Bridge Verification Results",
+    "nickname": "Verifications",
+    "inputs": [
+      {
+        "name": "Section result",
+        "nickname": "R",
+        "description": "One cumulative BridgeStressResult from Section Check, Super Element Check or Detail Check",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Check",
+        "nickname": "C",
+        "description": "gPC check name",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Demand",
+        "nickname": "D",
+        "description": "Demand, units in U",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Resistance",
+        "nickname": "R",
+        "description": "Resistance or limit, units in U",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Units",
+        "nickname": "U",
+        "description": "gPC units",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Ratio",
+        "nickname": "Eta",
+        "description": "NaN means separate verification required",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Status",
+        "nickname": "S",
+        "description": "gPC status",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Notes",
+        "nickname": "N",
+        "description": "Scope and calculation notes from gPC",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeSectionCheckComponent",
+    "guid": "952a074e-823d-490f-87b9-79c95b5d2d1a",
+    "kind": "component",
+    "name": "Bridge Section Check",
+    "nickname": "BridgeCheck",
+    "inputs": [
+      {
+        "name": "Geometry",
+        "nickname": "G",
+        "description": "Bridge Section Geometry",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Concrete",
+        "nickname": "C",
+        "description": "BridGHe concrete material; compressive strength MPa",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Steel",
+        "nickname": "S",
+        "description": "BridGHe structural steel material; E and strengths MPa",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Rebar material",
+        "nickname": "R",
+        "description": "Required if either reinforcement row is enabled",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Phases",
+        "nickname": "P",
+        "description": "Chronological Bridge Phase definitions; increments, not cumulative totals",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Top rebars",
+        "nickname": "RT",
+        "description": "Optional upper longitudinal reinforcement row",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Bottom rebars",
+        "nickname": "RB",
+        "description": "Optional lower longitudinal reinforcement row",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Details",
+        "nickname": "D",
+        "description": "Studs, stiffeners, transverse reinforcement, fatigue and box options; at most one per type",
+        "access": "list",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Options",
+        "nickname": "O",
+        "description": "Bridge Analysis Options; default Eurocode4, rare SLS, native gPC coefficients",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Results",
+        "nickname": "R",
+        "description": "Cumulative result per active phase, compatible with shear/stud result components",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Phases",
+        "nickname": "P",
+        "description": "Active phase names in result order",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Warnings",
+        "nickname": "W",
+        "description": "gPC scope and warnings; includes checks requiring separate action data",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Native analysis",
+        "nickname": "A",
+        "description": "Complete gPC HBridgeAnalysisResult",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamPropertyCompositeComponent",
+    "guid": "f87c7066-e509-4646-9ef5-79691675cbf4",
+    "kind": "component",
+    "name": "Composite Beam Property",
+    "nickname": "CS",
+    "inputs": [
+      {
+        "name": "Name",
+        "nickname": "N",
+        "description": "The name of the section",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Concrete Slab Section",
+        "nickname": "CSS",
+        "description": "Concrete slab geometry",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Steel Section",
+        "nickname": "SS",
+        "description": "I section geometry",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Concrete Material",
+        "nickname": "CM",
+        "description": "Material of the concrete slab",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Steel Material",
+        "nickname": "SM",
+        "description": "Material of the steel section profile",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Reinforcement Material",
+        "nickname": "RM",
+        "description": "Material of the rebars",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "n0",
+        "nickname": "n0",
+        "description": "Homogenization coefficient for instant time loads",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "n ∞",
+        "nickname": "n ∞",
+        "description": "Homogenization coefficient for infinite time loads",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Consider Concrete",
+        "nickname": "CC",
+        "description": "If true, consider concrete in the n0 and n ∞ phases",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Consider Rebars",
+        "nickname": "CR",
+        "description": "If true, consider rebars in the n0 and n ∞ phases",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Composite Section",
+        "nickname": "CS",
+        "description": "The composite section for BridGHe analysis",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Only Steel Property",
+        "nickname": "CS",
+        "description": "The steel section",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "n0 Beam Section",
+        "nickname": "CS",
+        "description": "The homogenized beam section with n0 coefficient",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "n ∞ Beam Section",
+        "nickname": "CS",
+        "description": "The homogenized beam section with n ∞ coefficient",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionConcreteSlabComponent",
+    "guid": "1a539226-24ae-4d3f-8075-4f54cd1b9f68",
+    "kind": "component",
+    "name": "Concrete Slab Section",
+    "nickname": "S",
+    "inputs": [
+      {
+        "name": "Height",
+        "nickname": "H",
+        "description": "The section height",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Width",
+        "nickname": "W",
+        "description": "The section width",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Rebar area",
+        "nickname": "RA",
+        "description": "The rebar area",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Top concrete cover",
+        "nickname": "TCC",
+        "description": "The concrete cover from the top of the slab",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Concrete Slab",
+        "nickname": "S",
+        "description": "The slab section",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionHPropertyComponent",
+    "guid": "3ee2c935-dd7b-44b8-9bc2-c705ecd78052",
+    "kind": "component",
+    "name": "Section H Beam Property",
+    "nickname": "BGP",
+    "inputs": [
+      {
+        "name": "Section H Beam Property",
+        "nickname": "BP",
+        "description": "Section Property",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Name",
+        "nickname": "N",
+        "description": "Section section name",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Area",
+        "nickname": "A",
+        "description": "Section section area",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "xg",
+        "nickname": "xg",
+        "description": "X coordinate of centroid",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "yg",
+        "nickname": "yg",
+        "description": "Y coordinate of centroid",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Jxx",
+        "nickname": "Jxx",
+        "description": "Second moment of area  respect x-x",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Jyy",
+        "nickname": "Jyy",
+        "description": "Second moment of area  respect y-y",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Angle",
+        "nickname": "A",
+        "description": "Angle",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "J₁₁",
+        "nickname": "J₁₁",
+        "description": "Second moment of area respect 1-1",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "J₂₂",
+        "nickname": "J₂₂",
+        "description": "Second moment of area respect 2-2",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "J",
+        "nickname": "J",
+        "description": "Torsional moment of area",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Height",
+        "nickname": "H",
+        "description": "Total height of the section",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Top Flange Width",
+        "nickname": "TFW",
+        "description": "Top Flange Width",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Bottom Flange Width",
+        "nickname": "BFW",
+        "description": "Bottom Flange Width",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Web Thickness",
+        "nickname": "Tw",
+        "description": "Web Thickness",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Top Flange Thickness",
+        "nickname": "TFT",
+        "description": "Top Flange Thickness",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Bottom Flange Thickness",
+        "nickname": "BFT",
+        "description": "Bottom Flange Thickness",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeShearPlotComponent",
+    "guid": "c561aa2c-a635-4a3e-8eb0-b8a166d856fb",
+    "kind": "component",
+    "name": "Bridge Shear Plot",
+    "nickname": "TauPlot",
+    "inputs": [
+      {
+        "name": "BridGHe Model",
+        "nickname": "M",
+        "description": "Model with ordered load combinations, N-mm units",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Super-Element Beam",
+        "nickname": "SE",
+        "description": "Ordered beam segments; lengths and result stations define the abscissas",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Results",
+        "nickname": "R",
+        "description": "Tree {beam index; station index}, items in model combination order",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Quantity",
+        "nickname": "Q",
+        "description": "Quantity to draw",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Combinations",
+        "nickname": "C",
+        "description": "Names to draw; empty selects all",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Show Min/Max Combo",
+        "nickname": "MM",
+        "description": "Include the combinations governing the global minimum and maximum",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "File Path",
+        "nickname": "P",
+        "description": "Optional .svg or .png destination; SVG is always returned",
+        "access": "item",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Graphic Title",
+        "nickname": "T",
+        "description": "Chart title",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Keep Running",
+        "nickname": "Run",
+        "description": "Draw on every update; otherwise use the Draw button",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "SVG",
+        "nickname": "SVG",
+        "description": "Vector chart, with original samples and no smoothing",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "File",
+        "nickname": "P",
+        "description": "Written destination, if requested",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Minimum",
+        "nickname": "Min",
+        "description": "Minimum finite value among plotted series",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Maximum",
+        "nickname": "Max",
+        "description": "Maximum finite value among plotted series",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeStudPlotComponent",
+    "guid": "0394f8d3-e5cc-4d03-9ee3-9ce6420b7a37",
+    "kind": "component",
+    "name": "Bridge Stud Plot",
+    "nickname": "StudPlot",
+    "inputs": [
+      {
+        "name": "BridGHe Model",
+        "nickname": "M",
+        "description": "Model with ordered load combinations, N-mm units",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Super-Element Beam",
+        "nickname": "SE",
+        "description": "Ordered beam segments; lengths and result stations define the abscissas",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Results",
+        "nickname": "R",
+        "description": "Tree {beam index; station index}, items in model combination order",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Quantity",
+        "nickname": "Q",
+        "description": "Quantity to draw",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Combinations",
+        "nickname": "C",
+        "description": "Names to draw; empty selects all",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Show Min/Max Combo",
+        "nickname": "MM",
+        "description": "Include the combinations governing the global minimum and maximum",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "File Path",
+        "nickname": "P",
+        "description": "Optional .svg or .png destination; SVG is always returned",
+        "access": "item",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Graphic Title",
+        "nickname": "T",
+        "description": "Chart title",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Keep Running",
+        "nickname": "Run",
+        "description": "Draw on every update; otherwise use the Draw button",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "SVG",
+        "nickname": "SVG",
+        "description": "Vector chart, with original samples and no smoothing",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "File",
+        "nickname": "P",
+        "description": "Written destination, if requested",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Minimum",
+        "nickname": "Min",
+        "description": "Minimum finite value among plotted series",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Maximum",
+        "nickname": "Max",
+        "description": "Maximum finite value among plotted series",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeForcePlotComponent",
+    "guid": "77e9f533-e4e8-41de-baaf-6bfece84def9",
+    "kind": "component",
+    "name": "Bridge Force Plot",
+    "nickname": "ForcePlot",
+    "inputs": [
+      {
+        "name": "BridGHe Model",
+        "nickname": "M",
+        "description": "Model with ordered load combinations, N-mm units",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Super-Element Beam",
+        "nickname": "SE",
+        "description": "Ordered beam segments; lengths and result stations define the abscissas",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Results",
+        "nickname": "R",
+        "description": "Tree {beam index; station index}, items in model combination order",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Quantity",
+        "nickname": "Q",
+        "description": "Quantity to draw",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Combinations",
+        "nickname": "C",
+        "description": "Names to draw; empty selects all",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Show Min/Max Combo",
+        "nickname": "MM",
+        "description": "Include the combinations governing the global minimum and maximum",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "File Path",
+        "nickname": "P",
+        "description": "Optional .svg or .png destination; SVG is always returned",
+        "access": "item",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Graphic Title",
+        "nickname": "T",
+        "description": "Chart title",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Keep Running",
+        "nickname": "Run",
+        "description": "Draw on every update; otherwise use the Draw button",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "SVG",
+        "nickname": "SVG",
+        "description": "Vector chart, with original samples and no smoothing",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "File",
+        "nickname": "P",
+        "description": "Written destination, if requested",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Minimum",
+        "nickname": "Min",
+        "description": "Minimum finite value among plotted series",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Maximum",
+        "nickname": "Max",
+        "description": "Maximum finite value among plotted series",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeResultPlotComponent",
+    "guid": "8f53f404-9446-4b47-90e3-d514f9c547c9",
+    "kind": "component",
+    "name": "Bridge Stress Plot",
+    "nickname": "StressPlot",
+    "inputs": [
+      {
+        "name": "BridGHe Model",
+        "nickname": "M",
+        "description": "Model with ordered load combinations, N-mm units",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Super-Element Beam",
+        "nickname": "SE",
+        "description": "Ordered beam segments; lengths and result stations define the abscissas",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Results",
+        "nickname": "R",
+        "description": "Tree {beam index; station index}, items in model combination order",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Quantity",
+        "nickname": "Q",
+        "description": "Quantity to draw",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Combinations",
+        "nickname": "C",
+        "description": "Names to draw; empty selects all",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Show Min/Max Combo",
+        "nickname": "MM",
+        "description": "Include the combinations governing the global minimum and maximum",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Additional values",
+        "nickname": "AV",
+        "description": "Horizontal reference levels in the displayed units",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "File Path",
+        "nickname": "P",
+        "description": "Optional .svg or .png destination; SVG is always returned",
+        "access": "item",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Graphic Title",
+        "nickname": "T",
+        "description": "Chart title",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Keep Running",
+        "nickname": "Run",
+        "description": "Draw on every update; otherwise use the Draw button",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "SVG",
+        "nickname": "SVG",
+        "description": "Vector chart, with original samples and no smoothing",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "File",
+        "nickname": "P",
+        "description": "Written destination, if requested",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Minimum",
+        "nickname": "Min",
+        "description": "Minimum finite value among plotted series",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Maximum",
+        "nickname": "Max",
+        "description": "Maximum finite value among plotted series",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BuildBridgeModel",
+    "guid": "16695837-3f63-4305-a1ff-4491826dc3fe",
+    "kind": "component",
+    "name": "Build BridGHe Model",
+    "nickname": "BMCM",
+    "inputs": [
+      {
+        "name": "BridGHe Models",
+        "nickname": "FM",
+        "description": "The FEM models (more than one for stages)",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Load Combinations",
+        "nickname": "LCB",
+        "description": "The load cases combinations",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Phase Inf Load Cases",
+        "nickname": "INFLC",
+        "description": "The load cases name to assign to the Inf phase",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Phase Ninf Load Cases",
+        "nickname": "NINFLC",
+        "description": "The load cases name to assign to the NInf phase",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Phase N0 Load Cases",
+        "nickname": "N0LC",
+        "description": "The load cases name to assign to the N0 phase",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Phase Ninf strain Load Cases",
+        "nickname": "NINFSLC",
+        "description": "The load cases name to assign to the Phase Ninf strain phase",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Phase N0 strain Load Cases",
+        "nickname": "N0SLC",
+        "description": "The load cases name to assign to the Phase N0 strain phase",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "The FEM model",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamComponent",
+    "guid": "07260514-76e4-4a8d-8b1e-69288e348b6f",
+    "kind": "component",
+    "name": "Composite beam",
+    "nickname": "CB",
+    "inputs": [
+      {
+        "name": "Beam",
+        "nickname": "B",
+        "description": "The beam to define the mixed section",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Section Start",
+        "nickname": "SS",
+        "description": "Section on the starting node",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Section End",
+        "nickname": "SE",
+        "description": "Section on the starting node",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Groups",
+        "nickname": "G",
+        "description": "The groups to assign to the beam",
+        "access": "list",
+        "optional": true,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Beam",
+        "nickname": "B",
+        "description": "The composite section beam",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamLinearTensionAnalysisComponent_OBSOLETE",
+    "guid": "a487d0e7-bb07-4049-90a5-8cd2aa40b183",
+    "kind": "component",
+    "name": "Composite Section Linear Tension Analysis",
+    "nickname": "CSLTA",
+    "inputs": [
+      {
+        "name": "Beams",
+        "nickname": "B",
+        "description": "The model beams definitions",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Loads Only steel Phase",
+        "nickname": "L",
+        "description": "The loads to check for only steel section, one external force",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Loads Infinte Time Phase",
+        "nickname": "L",
+        "description": "The loads to check for whole section with n=15/18, one external force",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Loads Instant Time Phase",
+        "nickname": "L",
+        "description": "The loads to check for whole section with n=6/7, one external force",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Homogenization coefficient Infinite",
+        "nickname": "HC Inf",
+        "description": "Load homogenization coefficient for infinite time load cases",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Homogenization coefficient Istant",
+        "nickname": "HC Ist",
+        "description": "Load homogenization coefficient for instant time load cases",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Top Flange Subject To Local Instability",
+        "nickname": "TFLI",
+        "description": "If true, top flange is subjected to loacel instability",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Web Subject To Local Instability",
+        "nickname": "WLI",
+        "description": "If true, web is subjected to loacel instability",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Bottom Flange Subject To Local Instability",
+        "nickname": "BLI",
+        "description": "If true, bottom flange is subjected to loacel instability",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Consider concrete",
+        "nickname": "CC",
+        "description": "If true, consider concrete for calculation of coordiante system and force resultant",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Only Steel Buckling",
+        "nickname": "R",
+        "description": "Analysis results",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Infinite Buckling",
+        "nickname": "R",
+        "description": "Analysis results",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Total Buckling",
+        "nickname": "R",
+        "description": "Analysis results",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "TauB",
+        "nickname": "R",
+        "description": "Analysis results",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamSelfTensionComponent",
+    "guid": "e7cea623-0b51-485d-ab60-6ef6850945a6",
+    "kind": "component",
+    "name": "Composite Section Self Tension",
+    "nickname": "CSST",
+    "inputs": [
+      {
+        "name": "Composite Beam Property",
+        "nickname": "CBP",
+        "description": "Composite Section Property",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Homogenization coefficient",
+        "nickname": "HC",
+        "description": "Load homogenization coefficient for load case",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Strain",
+        "nickname": "ε",
+        "description": "The strain applicated to the concrete slab",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Result",
+        "nickname": "R",
+        "description": "Analysis results",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamSlabStrainComponent",
+    "guid": "adf0a668-9fee-4d5d-8665-57aa769319b0",
+    "kind": "component",
+    "name": "Composite Beam Strain",
+    "nickname": "CBS",
+    "inputs": [
+      {
+        "name": "Beam",
+        "nickname": "B",
+        "description": "The beam where add the strain load",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "LoadCase",
+        "nickname": "LC",
+        "description": "The load case",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Strain",
+        "nickname": "S",
+        "description": "The strain value",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Beam",
+        "nickname": "B",
+        "description": "The modified beam",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamTensionResultComponent",
+    "guid": "ac8892ff-18d2-4fe4-a8f5-d91053702b6d",
+    "kind": "component",
+    "name": "Composite Section Linear Tension Results",
+    "nickname": "CSLTR",
+    "inputs": [
+      {
+        "name": "Linear Tension Results",
+        "nickname": "LTR",
+        "description": "The Linear Tension Results",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Point1_ConcreteEpsilon",
+        "nickname": "P1_CE",
+        "description": "Point1_ConcreteEpsilon",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Point1_ConcreteSigma",
+        "nickname": "P1_CS",
+        "description": "Point1_ConcreteSigma",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Point2_RebarSigma",
+        "nickname": "P2_RS",
+        "description": "Point2_RebarSigma",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Point3_RebarSigma",
+        "nickname": "P3_RS",
+        "description": "Point3_RebarSigma",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Point4_ConcreteSigma",
+        "nickname": "P4_CS",
+        "description": "Point4_ConcreteSigma",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Point5_SteelSigma",
+        "nickname": "P5_SS",
+        "description": "Point5_SteelSigma",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Point6_SteelSigma",
+        "nickname": "P6_SS",
+        "description": "Point6_SteelSigma",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Point6_SteelTau ",
+        "nickname": "P6_ST",
+        "description": "Point6_SteelTau ",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Point6_SigmaId ",
+        "nickname": "P6_Id",
+        "description": "Point6_SigmaId ",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Point7_SteelSigma",
+        "nickname": "P7_SS",
+        "description": "Point7_SteelSigma",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Point7_SteelTau ",
+        "nickname": "P7_ST",
+        "description": "Point7_SteelTau ",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Point7_SigmaId ",
+        "nickname": "P7_Id",
+        "description": "Point7_SigmaId ",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Point8_SteelSigma",
+        "nickname": "P8_SS",
+        "description": "Point8_SteelSigma",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Point8_SteelEpsilon",
+        "nickname": "P8_SE",
+        "description": "Point8_SteelEpsilon",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeSectionComponent_OBSOLETE",
+    "guid": "ee8b7912-f07c-4a17-8a26-e75959ed080f",
+    "kind": "component",
+    "name": "Composite Beam Property",
+    "nickname": "CBP",
+    "inputs": [
+      {
+        "name": "Name",
+        "nickname": "N",
+        "description": "The name of the section",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Concrete Section",
+        "nickname": "CS",
+        "description": "Concrete slab geometry",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Steel Section",
+        "nickname": "SS",
+        "description": "I section geometry",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Concrete Material",
+        "nickname": "CM",
+        "description": "Material of the concrete slab",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Steel Material",
+        "nickname": "SM",
+        "description": "Material of the steel section profile",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Reinforcement Material",
+        "nickname": "RM",
+        "description": "Material of the rebars; required only when the slab contains reinforcement",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Composite Section",
+        "nickname": "CS",
+        "description": "The composite section",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeSectionGeometricPropertyComponent",
+    "guid": "2515010a-be42-4530-aa44-5a21b0c0c8dc",
+    "kind": "component",
+    "name": "Composite Geometric Property",
+    "nickname": "BGP",
+    "inputs": [
+      {
+        "name": "Composite Beam Property",
+        "nickname": "CBP",
+        "description": "Composite Section Property",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "n",
+        "nickname": "HC",
+        "description": "Homogenization coefficient",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Consider Concrete",
+        "nickname": "CC",
+        "description": "If true, consider concrete",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Consider Rebars",
+        "nickname": "CR",
+        "description": "If true, consider rebars",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Consider Steel Section",
+        "nickname": "CSS",
+        "description": "If true, consider the steel section",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Name",
+        "nickname": "N",
+        "description": "Section section name",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Area",
+        "nickname": "A",
+        "description": "Section section area",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "xg",
+        "nickname": "xg",
+        "description": "X coordinate of centroid",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "yg",
+        "nickname": "yg",
+        "description": "Y coordinate of centroid",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Jxx",
+        "nickname": "Jxx",
+        "description": "Second moment of area respect x-x",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Jyy",
+        "nickname": "Jyy",
+        "description": "Second moment of area respect y-y",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Angle",
+        "nickname": "A",
+        "description": "Angle",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "J₁₁",
+        "nickname": "J₁₁",
+        "description": "Second moment of area respect 1-1",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "J₂₂",
+        "nickname": "J₂₂",
+        "description": "Second moment of area respect 2-2",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Sxx",
+        "nickname": "Sxx",
+        "description": "First moment of area respect x-x",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Syy",
+        "nickname": "Syy",
+        "description": "First moment of area respect y-y",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "J",
+        "nickname": "J",
+        "description": "Torsional moment of area",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CreepAndShrinkageConcreteComponent",
+    "guid": "69fc44cb-48cd-4b15-af60-b025bd59bad5",
+    "kind": "component",
+    "name": "Creep And Shrinkage Concrete",
+    "nickname": "CS",
+    "inputs": [
+      {
+        "name": "Fck",
+        "nickname": "Fck",
+        "description": "Fck",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Elastic Modulus Steel",
+        "nickname": "Ea",
+        "description": "Elastic modulus of steel",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Concrete Area",
+        "nickname": "Ac[mm]",
+        "description": "Cross sectional area",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "RH",
+        "nickname": "RH[%]",
+        "description": "Relative humidity of the ambient enviroment in %",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "u",
+        "nickname": "u[mm]",
+        "description": "The perimeter of the member in contact with the atmosphere",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "t0",
+        "nickname": "t0[days]",
+        "description": "The age of concrete at loading in days. Default value 28 days",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "t",
+        "nickname": "t[days]",
+        "description": "The age of concrete in days at the moment considerated. If is 0, consider infinite time",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Cement Type",
+        "nickname": "CT",
+        "description": "The type of cement",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "n0",
+        "nickname": "n0",
+        "description": "Homogenization coefficient for instant time loads",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "n ∞",
+        "nickname": "n ∞",
+        "description": "Homogenization coefficient for infinite time loads",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "y(t,t0)",
+        "nickname": "y",
+        "description": "Creep coefficient",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "εcs",
+        "nickname": "ε",
+        "description": "Total Shrinkage strain",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.SuperElementCheckComponent",
+    "guid": "94839122-32f0-4f3e-a30f-979a53c3eca8",
+    "kind": "component",
+    "name": "Super Element Check",
+    "nickname": "SEC",
+    "inputs": [
+      {
+        "name": "BridGHe Model",
+        "nickname": "FM",
+        "description": "The BridGHe model",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Super-Element Beam",
+        "nickname": "SE",
+        "description": "The Super-Element Beam",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Web Local Instability",
+        "nickname": "WLI",
+        "description": "If true, web is subjected to loacel instability",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Top Flange Local Instability",
+        "nickname": "TFLI",
+        "description": "If true, top flange is subjected to loacel instability",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Bottom Flange Local Instability",
+        "nickname": "BLI",
+        "description": "If true, bottom flange is subjected to loacel instability",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Tension Check",
+        "nickname": "C",
+        "description": "The results",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Tau b",
+        "nickname": "T",
+        "description": "The results",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Tension Forces",
+        "nickname": "C",
+        "description": "The forces",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.SuperElementFilterComponent",
+    "guid": "850d46e5-0410-408f-aef0-16a6a202e1a4",
+    "kind": "component",
+    "name": "Super Element Filter",
+    "nickname": "SEF",
+    "inputs": [
+      {
+        "name": "BridGHe Model",
+        "nickname": "FM",
+        "description": "The FEM model",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Super-Element",
+        "nickname": "SE",
+        "description": "The name of the Super-Element to filter",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Beams",
+        "nickname": "B",
+        "description": "The beams of selected super element",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
       }
     ]
   },
@@ -8749,129 +9456,6 @@
         "name": "Beam",
         "nickname": "B",
         "description": "The modified beam",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.Attributes.BeamReleasesNamedSetComponent",
-    "guid": "5f7c35bc-b5c4-4ca0-9d0a-d6ad3523cdef",
-    "kind": "component",
-    "name": "Named Beam Releases",
-    "nickname": "NBR",
-    "inputs": [
-      {
-        "name": "Name",
-        "nickname": "N",
-        "description": "The name where to define the ends releases",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Axial N1",
-        "nickname": "AN1",
-        "description": "Axial load release starting node",
-        "access": "item",
-        "optional": true,
-        "type": "Number"
-      },
-      {
-        "name": "Axial N2",
-        "nickname": "AN2",
-        "description": "Axial load release ending node",
-        "access": "item",
-        "optional": true,
-        "type": "Number"
-      },
-      {
-        "name": "Shear 1 N1",
-        "nickname": "S1N1",
-        "description": "Shear force axis 1 release starting node",
-        "access": "item",
-        "optional": true,
-        "type": "Number"
-      },
-      {
-        "name": "Shear 2 N1",
-        "nickname": "S2N1",
-        "description": "Shear force axis 2 release starting node",
-        "access": "item",
-        "optional": true,
-        "type": "Number"
-      },
-      {
-        "name": "Shear 1 N2",
-        "nickname": "S1N2",
-        "description": "Shear force axis 1 release ending node",
-        "access": "item",
-        "optional": true,
-        "type": "Number"
-      },
-      {
-        "name": "Shear 2 N2",
-        "nickname": "S2N2",
-        "description": "Shear force axis 2 release ending node",
-        "access": "item",
-        "optional": true,
-        "type": "Number"
-      },
-      {
-        "name": "Torsion N1",
-        "nickname": "TN1",
-        "description": "Torsion release starting node",
-        "access": "item",
-        "optional": true,
-        "type": "Number"
-      },
-      {
-        "name": "Torsion N2",
-        "nickname": "TN2",
-        "description": "Torsion release ending node",
-        "access": "item",
-        "optional": true,
-        "type": "Number"
-      },
-      {
-        "name": "Moment 1 N1",
-        "nickname": "M1N1",
-        "description": "Moment axis 1 release starting node",
-        "access": "item",
-        "optional": true,
-        "type": "Number"
-      },
-      {
-        "name": "Moment 2 N1",
-        "nickname": "M2N1",
-        "description": "Moment axis 2 release starting node",
-        "access": "item",
-        "optional": true,
-        "type": "Number"
-      },
-      {
-        "name": "Moment 1 N2",
-        "nickname": "M1N2",
-        "description": "Moment axis 1 release ending node",
-        "access": "item",
-        "optional": true,
-        "type": "Number"
-      },
-      {
-        "name": "Moment 2 N2",
-        "nickname": "M2N2",
-        "description": "Moment axis 2 release ending node",
-        "access": "item",
-        "optional": true,
-        "type": "Number"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Named release",
-        "nickname": "NBR",
-        "description": "The named release",
         "access": "item",
         "optional": false,
         "type": "Generic Data"

@@ -535,15 +535,6 @@
       "badge": "parameter"
     },
     {
-      "key": "VersionParam",
-      "type": "BridGHe.Grasshopper.Components.Parameters.VersionParam",
-      "guid": "98efbea2-2189-43fa-8b2e-a9fb6736e306",
-      "name": "Version controller",
-      "family": "tool",
-      "glyph": "id",
-      "badge": "parameter"
-    },
-    {
       "key": "BeamComponent",
       "type": "BridGHe.Grasshopper.Components.Models.BeamComponent",
       "guid": "ecb9c513-6bb3-46ac-9430-a79ba43b0451",
@@ -605,150 +596,6 @@
       "family": "tool",
       "glyph": "merge",
       "badge": ""
-    },
-    {
-      "key": "BeamPropertyCompositeComponent",
-      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamPropertyCompositeComponent",
-      "guid": "f87c7066-e509-4646-9ef5-79691675cbf4",
-      "name": "Composite Beam Property",
-      "family": "check",
-      "glyph": "composite",
-      "badge": "data"
-    },
-    {
-      "key": "BeamSectionConcreteSlabComponent",
-      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionConcreteSlabComponent",
-      "guid": "1a539226-24ae-4d3f-8075-4f54cd1b9f68",
-      "name": "Concrete Slab Section",
-      "family": "check",
-      "glyph": "slab",
-      "badge": ""
-    },
-    {
-      "key": "BeamSectionHPropertyComponent",
-      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionHPropertyComponent",
-      "guid": "3ee2c935-dd7b-44b8-9bc2-c705ecd78052",
-      "name": "Section H Beam Property",
-      "family": "check",
-      "glyph": "section:I",
-      "badge": "data"
-    },
-    {
-      "key": "BuildBridgeModel",
-      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BuildBridgeModel",
-      "guid": "16695837-3f63-4305-a1ff-4491826dc3fe",
-      "name": "Build BridGHe Model",
-      "family": "check",
-      "glyph": "model",
-      "badge": "check"
-    },
-    {
-      "key": "CompositeBeamComponent",
-      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamComponent",
-      "guid": "07260514-76e4-4a8d-8b1e-69288e348b6f",
-      "name": "Composite beam",
-      "family": "check",
-      "glyph": "bridge",
-      "badge": "shape"
-    },
-    {
-      "key": "CompositeBeamLinearTensionAnalysisComponent_OBSOLETE",
-      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamLinearTensionAnalysisComponent_OBSOLETE",
-      "guid": "a487d0e7-bb07-4049-90a5-8cd2aa40b183",
-      "name": "Composite Section Linear Tension Analysis",
-      "family": "check",
-      "glyph": "composite",
-      "badge": "play"
-    },
-    {
-      "key": "CompositeBeamSelfTensionComponent",
-      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamSelfTensionComponent",
-      "guid": "e7cea623-0b51-485d-ab60-6ef6850945a6",
-      "name": "Composite Section Self Tension",
-      "family": "check",
-      "glyph": "composite",
-      "badge": "heat"
-    },
-    {
-      "key": "CompositeBeamSlabStrainComponent",
-      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamSlabStrainComponent",
-      "guid": "adf0a668-9fee-4d5d-8665-57aa769319b0",
-      "name": "Composite Beam Strain",
-      "family": "check",
-      "glyph": "strain",
-      "badge": ""
-    },
-    {
-      "key": "CompositeBeamTensionResultComponent",
-      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamTensionResultComponent",
-      "guid": "ac8892ff-18d2-4fe4-a8f5-d91053702b6d",
-      "name": "Composite Section Linear Tension Results",
-      "family": "check",
-      "glyph": "stress",
-      "badge": "data"
-    },
-    {
-      "key": "CompositeSectionComponent_OBSOLETE",
-      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeSectionComponent_OBSOLETE",
-      "guid": "ee8b7912-f07c-4a17-8a26-e75959ed080f",
-      "name": "Composite Beam Property",
-      "family": "check",
-      "glyph": "composite",
-      "badge": "add"
-    },
-    {
-      "key": "CompositeSectionGeometricPropertyComponent",
-      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeSectionGeometricPropertyComponent",
-      "guid": "2515010a-be42-4530-aa44-5a21b0c0c8dc",
-      "name": "Composite Geometric Property",
-      "family": "check",
-      "glyph": "composite",
-      "badge": "measure"
-    },
-    {
-      "key": "CreepAndShrinkageConcreteComponent",
-      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CreepAndShrinkageConcreteComponent",
-      "guid": "69fc44cb-48cd-4b15-af60-b025bd59bad5",
-      "name": "Creep And Shrinkage Concrete",
-      "family": "check",
-      "glyph": "slab",
-      "badge": "clock"
-    },
-    {
-      "key": "BridgeForcePlotComponent",
-      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeForcePlotComponent",
-      "guid": "77e9f533-e4e8-41de-baaf-6bfece84def9",
-      "name": "Print BridGHe Forces",
-      "family": "check",
-      "glyph": "printer",
-      "badge": "force"
-    },
-    {
-      "key": "BridgeResultPlotComponent",
-      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeResultPlotComponent",
-      "guid": "8f53f404-9446-4b47-90e3-d514f9c547c9",
-      "name": "Print BridGHe Results",
-      "family": "check",
-      "glyph": "printer",
-      "badge": "stress"
-    },
-    {
-      "key": "SuperElementCheckComponent",
-      "type": "BridGHe.Grasshopper.Components.BridgeChecks.SuperElementCheckComponent",
-      "guid": "94839122-32f0-4f3e-a30f-979a53c3eca8",
-      "name": "Super Element Check",
-      "family": "check",
-      "glyph": "bridge",
-      "badge": "check"
-    },
-    {
-      "key": "SuperElementFilterComponent",
-      "type": "BridGHe.Grasshopper.Components.BridgeChecks.SuperElementFilterComponent",
-      "guid": "850d46e5-0410-408f-aef0-16a6a202e1a4",
-      "name": "Super Element Filter",
-      "family": "check",
-      "glyph": "bridge",
-      "badge": "filter"
     },
     {
       "key": "MaterialAluminiumComponent",
@@ -1048,24 +895,6 @@
       "badge": ""
     },
     {
-      "key": "LoadCaseStageComponent",
-      "type": "BridGHe.Grasshopper.Components.Definitions.LoadCaseStageComponent",
-      "guid": "5698330d-d3b6-4c35-bbd8-096aee7dfbb3",
-      "name": "Load Case Stage",
-      "family": "load",
-      "glyph": "case",
-      "badge": "stages"
-    },
-    {
-      "key": "LoadCaseStageOperationComponent",
-      "type": "BridGHe.Grasshopper.Components.Definitions.LoadCaseStageOperationComponent",
-      "guid": "785fff3f-6d81-4e5d-bf4d-cba31acedc58",
-      "name": "Load Case Stage Op",
-      "family": "load",
-      "glyph": "stages",
-      "badge": "edit"
-    },
-    {
       "key": "LoadCombinationComponent",
       "type": "BridGHe.Grasshopper.Components.Definitions.LoadCombinationComponent",
       "guid": "bc427929-4998-48b4-821b-16d92af627cf",
@@ -1093,49 +922,301 @@
       "badge": "force"
     },
     {
-      "key": "MixedSectionShearCheckComponent",
-      "type": "BridGHe.Grasshopper.Components.Checks.MixedSectionShearCheckComponent",
-      "guid": "b3669fd3-ab2d-462b-a378-c9e6a5578b59",
-      "name": "Composite Section Shear Check",
+      "key": "BridgeStudsComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeStudsComponent",
+      "guid": "a65b8556-6a36-4c53-b52e-434d747c576e",
+      "name": "Bridge Studs",
       "family": "check",
-      "glyph": "composite",
+      "glyph": "studs",
+      "badge": ""
+    },
+    {
+      "key": "BridgeIntermediateStiffenerComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeIntermediateStiffenerComponent",
+      "guid": "ea6bf9ee-ddc5-4b3e-8409-74d5674d2732",
+      "name": "Bridge Intermediate Stiffener",
+      "family": "check",
+      "glyph": "stiffener",
+      "badge": ""
+    },
+    {
+      "key": "BridgeSupportStiffenerComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeSupportStiffenerComponent",
+      "guid": "bb5073af-270d-4603-b7f5-6bf65fcd6aab",
+      "name": "Bridge Support Stiffener",
+      "family": "check",
+      "glyph": "stiffener",
       "badge": "force"
     },
     {
-      "key": "MixedSectionTensionCheckComponent",
-      "type": "BridGHe.Grasshopper.Components.Checks.MixedSectionTensionCheckComponent",
-      "guid": "d370d023-bccf-4292-bed6-61858bcf71d8",
-      "name": "Composite Section Tension Check",
+      "key": "BridgeDetailCheckComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeDetailCheckComponent",
+      "guid": "ffad5404-7440-47e7-9824-90588810089f",
+      "name": "Bridge Detail Check",
       "family": "check",
-      "glyph": "composite",
-      "badge": "stress"
+      "glyph": "studs",
+      "badge": "check"
     },
     {
-      "key": "RCFrameAsComponent",
-      "type": "BridGHe.Grasshopper.Components.Checks.RCFrameAsComponent",
-      "guid": "31e3225e-3154-4726-9e6b-67539de1b524",
-      "name": "RC frames As",
+      "key": "BridgeGeometryComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeGeometryComponent",
+      "guid": "422a7607-2759-4da2-819b-158d2c6f6cb3",
+      "name": "Bridge Section Geometry",
+      "family": "check",
+      "glyph": "composite",
+      "badge": "native"
+    },
+    {
+      "key": "BridgeRebarRowComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeRebarRowComponent",
+      "guid": "402a895f-b583-41ed-b2a0-b80c1d50732b",
+      "name": "Bridge Rebar Row",
       "family": "check",
       "glyph": "bars",
       "badge": "add"
     },
     {
-      "key": "RCFrameChecksComponent",
-      "type": "BridGHe.Grasshopper.Components.Checks.RCFrameChecksComponent",
-      "guid": "fe7f2ad0-e6db-488c-befd-6077043c839d",
-      "name": "RC frame checks",
+      "key": "BridgePhaseComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgePhaseComponent",
+      "guid": "4660cce7-4aa2-49f7-a929-b85327e0b8d2",
+      "name": "Bridge Phase",
       "family": "check",
-      "glyph": "bars",
+      "glyph": "stages",
+      "badge": "native"
+    },
+    {
+      "key": "BridgeAnalysisOptionsComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeAnalysisOptionsComponent",
+      "guid": "f86ac409-7bb4-4d8e-a62c-8893feebfe31",
+      "name": "Bridge Analysis Options",
+      "family": "check",
+      "glyph": "table",
+      "badge": "edit"
+    },
+    {
+      "key": "BridgeTransverseReinforcementComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeTransverseReinforcementComponent",
+      "guid": "01f06ff8-ab56-4fb1-b291-983e7635aab8",
+      "name": "Bridge Transverse Reinforcement",
+      "family": "check",
+      "glyph": "slab",
+      "badge": "force"
+    },
+    {
+      "key": "BridgeFatigueComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeFatigueComponent",
+      "guid": "7d5be63e-a554-44f6-a042-2ca037f73f7d",
+      "name": "Bridge Connection Fatigue",
+      "family": "check",
+      "glyph": "studs",
+      "badge": "clock"
+    },
+    {
+      "key": "BridgeBoxOptionsComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeBoxOptionsComponent",
+      "guid": "2dfc68e3-becc-4b23-948b-35b7b80521a7",
+      "name": "Bridge Box Options",
+      "family": "check",
+      "glyph": "section:RectangleHollow",
       "badge": "check"
     },
     {
-      "key": "SteelFrameChecksComponent",
-      "type": "BridGHe.Grasshopper.Components.Checks.SteelFrameChecksComponent",
-      "guid": "c42d7f54-7567-4f8a-8835-887f27af69eb",
-      "name": "Steel frame checks",
+      "key": "BridgeShearResultsComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeShearResultsComponent",
+      "guid": "e73670ca-0481-4716-9cc9-d42b57804614",
+      "name": "Bridge Shear Results",
+      "family": "result",
+      "glyph": "shear",
+      "badge": "data"
+    },
+    {
+      "key": "BridgeStudResultsComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeStudResultsComponent",
+      "guid": "95046592-063b-4499-8191-1c8cf7ec21a1",
+      "name": "Bridge Stud Results",
+      "family": "result",
+      "glyph": "studs",
+      "badge": "data"
+    },
+    {
+      "key": "BridgeVerificationResultsComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeVerificationResultsComponent",
+      "guid": "7c15b6ee-252b-4bdb-b0f2-7b765be6adf8",
+      "name": "Bridge Verification Results",
+      "family": "result",
+      "glyph": "table",
+      "badge": "check"
+    },
+    {
+      "key": "BridgeSectionCheckComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeSectionCheckComponent",
+      "guid": "952a074e-823d-490f-87b9-79c95b5d2d1a",
+      "name": "Bridge Section Check",
+      "family": "check",
+      "glyph": "composite",
+      "badge": "check"
+    },
+    {
+      "key": "BeamPropertyCompositeComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamPropertyCompositeComponent",
+      "guid": "f87c7066-e509-4646-9ef5-79691675cbf4",
+      "name": "Composite Beam Property",
+      "family": "check",
+      "glyph": "composite",
+      "badge": "data"
+    },
+    {
+      "key": "BeamSectionConcreteSlabComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionConcreteSlabComponent",
+      "guid": "1a539226-24ae-4d3f-8075-4f54cd1b9f68",
+      "name": "Concrete Slab Section",
+      "family": "check",
+      "glyph": "slab",
+      "badge": ""
+    },
+    {
+      "key": "BeamSectionHPropertyComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionHPropertyComponent",
+      "guid": "3ee2c935-dd7b-44b8-9bc2-c705ecd78052",
+      "name": "Section H Beam Property",
       "family": "check",
       "glyph": "section:I",
+      "badge": "data"
+    },
+    {
+      "key": "BridgeShearPlotComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeShearPlotComponent",
+      "guid": "c561aa2c-a635-4a3e-8eb0-b8a166d856fb",
+      "name": "Bridge Shear Plot",
+      "family": "result",
+      "glyph": "shear",
+      "badge": "measure"
+    },
+    {
+      "key": "BridgeStudPlotComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeStudPlotComponent",
+      "guid": "0394f8d3-e5cc-4d03-9ee3-9ce6420b7a37",
+      "name": "Bridge Stud Plot",
+      "family": "result",
+      "glyph": "studs",
+      "badge": "measure"
+    },
+    {
+      "key": "BridgeForcePlotComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeForcePlotComponent",
+      "guid": "77e9f533-e4e8-41de-baaf-6bfece84def9",
+      "name": "Bridge Force Plot",
+      "family": "check",
+      "glyph": "printer",
+      "badge": "force"
+    },
+    {
+      "key": "BridgeResultPlotComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeResultPlotComponent",
+      "guid": "8f53f404-9446-4b47-90e3-d514f9c547c9",
+      "name": "Bridge Stress Plot",
+      "family": "check",
+      "glyph": "printer",
+      "badge": "stress"
+    },
+    {
+      "key": "BuildBridgeModel",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BuildBridgeModel",
+      "guid": "16695837-3f63-4305-a1ff-4491826dc3fe",
+      "name": "Build BridGHe Model",
+      "family": "check",
+      "glyph": "model",
       "badge": "check"
+    },
+    {
+      "key": "CompositeBeamComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamComponent",
+      "guid": "07260514-76e4-4a8d-8b1e-69288e348b6f",
+      "name": "Composite beam",
+      "family": "check",
+      "glyph": "bridge",
+      "badge": "shape"
+    },
+    {
+      "key": "CompositeBeamLinearTensionAnalysisComponent_OBSOLETE",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamLinearTensionAnalysisComponent_OBSOLETE",
+      "guid": "a487d0e7-bb07-4049-90a5-8cd2aa40b183",
+      "name": "Composite Section Linear Tension Analysis",
+      "family": "check",
+      "glyph": "composite",
+      "badge": "play"
+    },
+    {
+      "key": "CompositeBeamSelfTensionComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamSelfTensionComponent",
+      "guid": "e7cea623-0b51-485d-ab60-6ef6850945a6",
+      "name": "Composite Section Self Tension",
+      "family": "check",
+      "glyph": "composite",
+      "badge": "heat"
+    },
+    {
+      "key": "CompositeBeamSlabStrainComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamSlabStrainComponent",
+      "guid": "adf0a668-9fee-4d5d-8665-57aa769319b0",
+      "name": "Composite Beam Strain",
+      "family": "check",
+      "glyph": "strain",
+      "badge": ""
+    },
+    {
+      "key": "CompositeBeamTensionResultComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamTensionResultComponent",
+      "guid": "ac8892ff-18d2-4fe4-a8f5-d91053702b6d",
+      "name": "Composite Section Linear Tension Results",
+      "family": "check",
+      "glyph": "stress",
+      "badge": "data"
+    },
+    {
+      "key": "CompositeSectionComponent_OBSOLETE",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeSectionComponent_OBSOLETE",
+      "guid": "ee8b7912-f07c-4a17-8a26-e75959ed080f",
+      "name": "Composite Beam Property",
+      "family": "check",
+      "glyph": "composite",
+      "badge": "add"
+    },
+    {
+      "key": "CompositeSectionGeometricPropertyComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeSectionGeometricPropertyComponent",
+      "guid": "2515010a-be42-4530-aa44-5a21b0c0c8dc",
+      "name": "Composite Geometric Property",
+      "family": "check",
+      "glyph": "composite",
+      "badge": "measure"
+    },
+    {
+      "key": "CreepAndShrinkageConcreteComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CreepAndShrinkageConcreteComponent",
+      "guid": "69fc44cb-48cd-4b15-af60-b025bd59bad5",
+      "name": "Creep And Shrinkage Concrete",
+      "family": "check",
+      "glyph": "slab",
+      "badge": "clock"
+    },
+    {
+      "key": "SuperElementCheckComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.SuperElementCheckComponent",
+      "guid": "94839122-32f0-4f3e-a30f-979a53c3eca8",
+      "name": "Super Element Check",
+      "family": "check",
+      "glyph": "bridge",
+      "badge": "check"
+    },
+    {
+      "key": "SuperElementFilterComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.SuperElementFilterComponent",
+      "guid": "850d46e5-0410-408f-aef0-16a6a202e1a4",
+      "name": "Super Element Filter",
+      "family": "check",
+      "glyph": "bridge",
+      "badge": "filter"
     },
     {
       "key": "BeamOutputStationsComponent",
@@ -1154,15 +1235,6 @@
       "family": "model",
       "glyph": "release",
       "badge": ""
-    },
-    {
-      "key": "BeamReleasesNamedSetComponent",
-      "type": "BridGHe.Grasshopper.Components.Attributes.BeamReleasesNamedSetComponent",
-      "guid": "5f7c35bc-b5c4-4ca0-9d0a-d6ad3523cdef",
-      "name": "Named Beam Releases",
-      "family": "model",
-      "glyph": "release",
-      "badge": "library"
     },
     {
       "key": "BeamStringGroupComponent",
@@ -1262,42 +1334,6 @@
       "family": "solver",
       "glyph": "solver",
       "badge": "play"
-    },
-    {
-      "key": "BridgeStudsComponent",
-      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeStudsComponent",
-      "guid": "a65b8556-6a36-4c53-b52e-434d747c576e",
-      "name": "Bridge Studs",
-      "family": "check",
-      "glyph": "studs",
-      "badge": ""
-    },
-    {
-      "key": "BridgeIntermediateStiffenerComponent",
-      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeIntermediateStiffenerComponent",
-      "guid": "ea6bf9ee-ddc5-4b3e-8409-74d5674d2732",
-      "name": "Bridge Intermediate Stiffener",
-      "family": "check",
-      "glyph": "stiffener",
-      "badge": ""
-    },
-    {
-      "key": "BridgeSupportStiffenerComponent",
-      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeSupportStiffenerComponent",
-      "guid": "bb5073af-270d-4603-b7f5-6bf65fcd6aab",
-      "name": "Bridge Support Stiffener",
-      "family": "check",
-      "glyph": "stiffener",
-      "badge": "force"
-    },
-    {
-      "key": "BridgeDetailCheckComponent",
-      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeDetailCheckComponent",
-      "guid": "ffad5404-7440-47e7-9824-90588810089f",
-      "name": "Bridge Detail Check",
-      "family": "check",
-      "glyph": "studs",
-      "badge": "check"
     }
   ]
 }

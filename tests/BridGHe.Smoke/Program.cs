@@ -30,6 +30,7 @@ internal static class Program
         using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},WindowStyle.NoWindow);
         if(args.Contains("--capture-bridge-baseline")) { BridgeNumericalBaseline.Capture();return 0; }
         if(args.Contains("--benchmark-plots")) { PlotTests.Run();PlotTests.Benchmark();return 0; }
+        if(args.Contains("--inventory")) { CheckGrasshopper(false,true);return 0; }
         if(args.Contains("--sections-only")) { CheckNativeSections();return 0; }
         if(args.Contains("--examples")) return NativeExamples.Run(args.SkipWhile(a=>a!="--examples").Skip(1).FirstOrDefault()??"all");
         if(args.Contains("--bridge-native")) return NativeBridgePhases.Run();
@@ -95,7 +96,7 @@ internal static class Program
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static void CheckGrasshopper(bool installedPlugins)
+    private static void CheckGrasshopper(bool installedPlugins,bool inventoryOnly=false)
     {
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
@@ -144,7 +145,12 @@ internal static class Program
             items.Add(new {type=type.FullName,guid,kind=component==null?"parameter":"component",name=documentObject.Name,nickname=documentObject.NickName,
                 inputs=component==null?Array.Empty<object>():Ports(component.Params.Input),outputs=component==null?Array.Empty<object>():Ports(component.Params.Output)});
         }
-        Assert(bridgeChecks==16,"all 16 BridgeChecks components instantiate in Rhino 8");
+        if(inventoryOnly)
+        {
+            File.WriteAllText("artifacts/component-runtime.json",System.Text.Json.JsonSerializer.Serialize(items,new System.Text.Json.JsonSerializerOptions {WriteIndented=true}));
+            Console.WriteLine($"INVENTORY {count} objects; icon validation deferred until assets are generated.");return;
+        }
+        Assert(bridgeChecks==18,"all 18 bridge workflow components instantiate in Rhino 8");
         Assert(iconIssues.Count==0,"all component and parameter icons load at 24 px: "+string.Join(", ",iconIssues));
         Assert(iconHashes.Count==count,"each component and parameter has its own distinct icon");
         var info=(Grasshopper.Kernel.GH_AssemblyInfo)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.BridGHeInfo",true));

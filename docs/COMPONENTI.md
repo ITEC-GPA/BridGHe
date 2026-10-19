@@ -1,6 +1,6 @@
 # Inventario dei componenti 0.1.0
 
-127 componenti e 9 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi e descrizioni delle porte mantenute sono quelli della base.
+136 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
 
 ## Components
 
@@ -28,23 +28,60 @@
 | Beam Taper | component | Beam; NFromX; NFromY; NToX; NToY; AlignmentX; AlignmentY | Beam |
 | Element Id | component | Element; ID | Element |
 | Load Patch Type | component | Plate; Type; Edges; Weights | Plate |
-| Named Beam Releases | component | Name; Axial N1; Axial N2; Shear 1 N1; Shear 2 N1; Shear 1 N2; Shear 2 N2; Torsion N1; Torsion N2; Moment 1 N1; Moment 2 N1; Moment 1 N2; Moment 2 N2 | Named release |
 | Plate Support | component | Plate; Stiffness; Compression only; Face | Plate |
 | Restraints | component | Node; Transational; Rotation | Node |
 | Stiffness | component | Node; Transational; Rotational | Node |
 | String Group | component | Beam; String group ID | Beam |
 | Super Element | component | Element; Name | Element |
 
+## Components.BridgeChecks
+
+| Nome | Tipo | Ingressi | Uscite |
+|---|---|---|---|
+| Bridge Force Plot | component | BridGHe Model; Super-Element Beam; Results; Quantity; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running | SVG; File; Minimum; Maximum |
+| Bridge Shear Plot | component | BridGHe Model; Super-Element Beam; Results; Quantity; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running | SVG; File; Minimum; Maximum |
+| Bridge Stress Plot | component | BridGHe Model; Super-Element Beam; Results; Quantity; Combinations; Show Min/Max Combo; Additional values; File Path; Graphic Title; Keep Running | SVG; File; Minimum; Maximum |
+| Bridge Stud Plot | component | BridGHe Model; Super-Element Beam; Results; Quantity; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running | SVG; File; Minimum; Maximum |
+| Build BridGHe Model | component | BridGHe Models; Load Combinations; Phase Inf Load Cases; Phase Ninf Load Cases; Phase N0 Load Cases; Phase Ninf strain Load Cases; Phase N0 strain Load Cases | Model |
+| Composite Beam Property | component | Name; Concrete Slab Section; Steel Section; Concrete Material; Steel Material; Reinforcement Material; n0; n ∞; Consider Concrete; Consider Rebars | Composite Section; Only Steel Property; n0 Beam Section; n ∞ Beam Section |
+| Composite Beam Property | component | Name; Concrete Section; Steel Section; Concrete Material; Steel Material; Reinforcement Material | Composite Section |
+| Composite Beam Strain | component | Beam; LoadCase; Strain | Beam |
+| Composite Geometric Property | component | Composite Beam Property; n; Consider Concrete; Consider Rebars; Consider Steel Section | Name; Area; xg; yg; Jxx; Jyy; Angle; J₁₁; J₂₂; Sxx; Syy; J |
+| Composite Section Linear Tension Analysis | component | Beams; Loads Only steel Phase; Loads Infinte Time Phase; Loads Instant Time Phase; Homogenization coefficient Infinite; Homogenization coefficient Istant; Top Flange Subject To Local Instability; Web Subject To Local Instability; Bottom Flange Subject To Local Instability; Consider concrete | Only Steel Buckling; Infinite Buckling; Total Buckling; TauB |
+| Composite Section Linear Tension Results | component | Linear Tension Results | Point1_ConcreteEpsilon; Point1_ConcreteSigma; Point2_RebarSigma; Point3_RebarSigma; Point4_ConcreteSigma; Point5_SteelSigma; Point6_SteelSigma; Point6_SteelTau ; Point6_SigmaId ; Point7_SteelSigma; Point7_SteelTau ; Point7_SigmaId ; Point8_SteelSigma; Point8_SteelEpsilon |
+| Composite Section Self Tension | component | Composite Beam Property; Homogenization coefficient; Strain | Result |
+| Composite beam | component | Beam; Section Start; Section End; Groups | Beam |
+| Concrete Slab Section | component | Height; Width; Rebar area; Top concrete cover | Concrete Slab |
+| Creep And Shrinkage Concrete | component | Fck; Elastic Modulus Steel; Concrete Area; RH; u; t0; t; Cement Type | n0; n ∞; y(t,t0); εcs |
+| Section H Beam Property | component | Section H Beam Property | Name; Area; xg; yg; Jxx; Jyy; Angle; J₁₁; J₂₂; J; Height; Top Flange Width; Bottom Flange Width; Web Thickness; Top Flange Thickness; Bottom Flange Thickness |
+| Super Element Check | component | BridGHe Model; Super-Element Beam; Web Local Instability; Top Flange Local Instability; Bottom Flange Local Instability | Tension Check; Tau b; Tension Forces |
+| Super Element Filter | component | BridGHe Model; Super-Element | Beams |
+
+## Components.BridgeDetails
+
+| Nome | Tipo | Ingressi | Uscite |
+|---|---|---|---|
+| Bridge Analysis Options | component | Standard; LimitState; Class4; TopFlangeBuckling; BottomFlangeBuckling; WebBuckling; CommonLoadY; GammaM0; GammaM1; GammaM2; GammaC; GammaS; AlphaCC; ShearEta | Detail |
+| Bridge Box Options | component | Enabled; BracingThickness; SpanLength; DiaphragmSpacing; DiaphragmKind; DiaphragmThickness; BracingArea; BracingRadius; BracingBucklingFactor; DistributedTorque; ConcentratedTorque; SupportDiaphragmThickness; SupportTorqueKNm; BearingSpacing | Detail |
+| Bridge Connection Fatigue | component | Enabled; MinimumFlow; MaximumFlow; EquivalenceFactor; DynamicFactor; TensileFlange; FlangeStressRange; GammaFf; GammaMfStud; GammaMfFlange | Detail |
+| Bridge Detail Check | component | Section result; Studs; Intermediate stiffener; Support stiffener; Options; Additional details | Section result; Check; Demand; Resistance; Units; Ratio; Status; Warnings |
+| Bridge Intermediate Stiffener | component | Enabled; Layout; Width; Thickness; RightWidth; RightThickness; LeftPanel; RightPanel; EqualPanels; LengthFactor; ExternalCompressionKN; LoadX; CheckWelds; WeldThroat | Detail |
+| Bridge Phase | component | Name; Active; Kind; Reference; ForceKN; MomentKNm; ShearKN; TorsionKNm; AdditionalConnectionFlow; ShrinkageMicrostrain; HomogenizationSource; Phi; PsiL; N | Detail |
+| Bridge Rebar Row | component | Enabled; Diameter; Pitch; AxisDistance | Detail |
+| Bridge Section Check | component | Geometry; Concrete; Steel; Rebar material; Phases; Top rebars; Bottom rebars; Details; Options | Results; Phases; Warnings; Native analysis |
+| Bridge Section Geometry | component | SlabWidth; SlabHeight; WebHeight; WebThickness; TopWidth; TopThickness; BottomWidth; BottomThickness; SecondBottomEnabled; SecondBottomWidth; SecondBottomThickness; SectionType; WebOffset; WebSpacing | Detail |
+| Bridge Shear Results | component | Section result | Shear; Average tau; Maximum tau; Equivalent stress; Web resistance; Warnings |
+| Bridge Stud Results | component | Section result | Connection flow; Force per stud; Resistance per stud; Resistance per length; Force ratio; Phase; Phase flow; Warnings |
+| Bridge Studs | component | Enabled; CountPerRow; Diameter; Height; LongitudinalPitch; TransversePitch; Fu; GammaV; HeadDiameter; HeadThickness; RequiredCover; RepeatedActionDetail | Detail |
+| Bridge Support Stiffener | component | Enabled; Layout; Width; Thickness; RightWidth; RightThickness; Location; LeftPanel; RightPanel; ReactionKN; EndDistance; LoadX; LoadZ; FootprintLength; FootprintWidth; LengthFactor; RigidEndPost; EndPostSpacing; CheckWelds; WeldThroat | Detail |
+| Bridge Transverse Reinforcement | component | Enabled; TopDiameter; TopPitch; BottomDiameter; BottomPitch; CotTheta; LeftFlowFraction; BendingSteelPerMetre; AnchorageLength; GoodBond; LeftConcreteEdge; RightConcreteEdge; EdgeUBar; UBarDiameter | Detail |
+| Bridge Verification Results | component | Section result | Check; Demand; Resistance; Units; Ratio; Status; Notes |
+
 ## Components.Checks
 
 | Nome | Tipo | Ingressi | Uscite |
 |---|---|---|---|
-| Composite Section Shear Check | component | Beam Section; Stardard; Concrete Material; Rebar Material; Steel Material; Distance stiffeners ; Loads | Shear Working Ratio |
-| Composite Section Tension Check | component | Beam Section; Concrete Material; Rebar Material; Steel Material; Homogenized factor ; Loads | Header; Summary Results; Steel section points; Steel section value; Concrete section points; Concrete section value; Rebar points; Rebar value; Neutral axis |
 | Force component | component | Name; Axial Force; Shear 2; Shear 3; Torsion; Bending 2; Bending 3; Station; NormalizedLength | Force |
-| RC frame checks | component | RC Beams; B,Ascissas; RC Pillars; P,Ascissas; Long As; γs; γc; αcc; fyk; Length unit; Force unit | Beams; Beams ascissas; Beam resistance URs; Pillars; Pillar ascissas; Pillar resistance URs |
-| RC frames As | component | Frames; Top beam cover; Bottom beam cover; Pillar cover; γs; fyk; Length unit; Force unit | RC Beams; Beam ascissas; Beam top As; Beam bottom As; Beam shear As; RC Pillars; Pillar ascissas; Pillar As; Pillar shear As |
-| Steel frame checks | component | Frames; γM0; γM1; Length unit; Force unit | Steel Frames; Ascissas; Resistance URs; Buckling URs |
 
 ## Components.Definitions
 
@@ -52,8 +89,6 @@
 |---|---|---|---|
 | Group | component | Name; Parent | Group |
 | Load Case | component | Name; Gravity NSM | LoadCase |
-| Load Case Stage | component | Name; Operations | LoadCaseStage |
-| Load Case Stage Op | component | OperationCode; Object type; Object name; Age; Type; Name; ScaleFactor | Load Case Stage Op |
 | Load Combination | component | Name; LoadCases; Coefficients | LoadCombination |
 | Staged Construction  | component | Name; Groups; Load Combinations; Morph; Rotate clusters | Staged Construction |
 
@@ -86,7 +121,7 @@
 | Moving Distributed Force | component | X1; X2; Y1; Y2; Distributed force; Mobility; Axes; Adjacency; Centrifugal | Moving object |
 | Moving Heat Source | component | X; Y; Size X; Size Y; Heat | Moving object |
 | Moving Library Template | component | Library; Item | Moving object |
-| Moving Load Path | component | Template; Load case name; Start; End; Lateral; Shape; Surface; Target; Divisions; Entity set ID; Generate static cases | Moving object |
+| Moving Load Path | component | Template; Load case name; Start; End; Lateral; Shape; Surface; Target; Divisions; Generate static cases | Moving object |
 | Moving Load Template | component | Name; Vehicles; Lane factors; Multilane type; Transition load; Beam lateral tolerance; Relative tolerance; Minimum lane width; Centrifugal data | Moving object |
 | Moving Point Force | component | X; Y; Force; Mobility; Axes; Adjacency; Centrifugal | Moving object |
 | Moving Vehicle | component | Name; Loads; Instance; Direction; Velocity; Start time; Lanes; Vehicle set | Moving object |
@@ -108,33 +143,12 @@
 | Steel | component | Name; Grade | Material |
 | Table Material | component | Name; Use Poisson; Poisson Ratio; Shear Modulus; Thermal Expansion; Density; Stresses; Strains | Material |
 
-## Components.BridgeChecks
-
-| Nome | Tipo | Ingressi | Uscite |
-|---|---|---|---|
-| Build BridGHe Model | component | BridGHe Models; Load Combinations; Phase Inf Load Cases; Phase Ninf Load Cases; Phase N0 Load Cases; Phase Ninf strain Load Cases; Phase N0 strain Load Cases | Model |
-| Composite Beam Property | component | Name; Concrete Slab Section; Steel Section; Concrete Material; Steel Material; Reinforcement Material; Concrete Offset; n0; n ∞; Consider Concrete; Consider Rebars | Composite Section; Only Steel Property; n0 Beam Section; n ∞ Beam Section |
-| Composite Beam Property | component | Name; Concrete Section; Steel Section; Concrete Material; Steel Material; Reinforcement Material; Concrete Offset | Composite Section |
-| Composite Beam Strain | component | Beam; LoadCase; Strain | Beam |
-| Composite Geometric Property | component | Composite Beam Property; n; Consider Concrete; Consider Rebars; Consider Steel Section | Name; Area; xg; yg; Jxx; Jyy; Angle; J₁₁; J₂₂; Sxx; Syy; J |
-| Composite Section Linear Tension Analysis | component | Beams; Loads Only steel Phase; Loads Infinte Time Phase; Loads Instant Time Phase; Homogenization coefficient Infinite; Homogenization coefficient Istant; Top Flange Subject To Local Instability; Web Subject To Local Instability; Bottom Flange Subject To Local Instability; Consider concrete; Effective Epsilon | Only Steel Buckling; Infinite Buckling; Total Buckling; TauB |
-| Composite Section Linear Tension Results | component | Linear Tension Results | Point1_ConcreteEpsilon; Point1_ConcreteSigma; Point2_RebarSigma; Point3_RebarSigma; Point4_ConcreteSigma; Point5_SteelSigma; Point6_SteelSigma; Point6_SteelTau ; Point6_SigmaId ; Point7_SteelSigma; Point7_SteelTau ; Point7_SigmaId ; Point8_SteelSigma; Point8_SteelEpsilon |
-| Composite Section Self Tension | component | Composite Beam Property; Homogenization coefficient; Strain | Result |
-| Composite beam | component | Beam; Section Start; Section End; Groups | Beam |
-| Concrete Slab Section | component | Height; Width; Rebar area; Top concrete cover | Concrete Slab |
-| Creep And Shrinkage Concrete | component | Fck; Elastic Modulus Steel; Concrete Area; RH; u; t0; t; Cement Type | n0; n ∞; y(t,t0); εcs |
-| Print BridGHe Forces | component | BridGHe Model; Super-Element Beam; Forces; Force component; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running | — |
-| Print BridGHe Results | component | BridGHe Model; Super-Element Beam; Results; Result component; Combinations; Show Min/Max Combo; Additional values; File Path; Graphic Title; Keep Running | — |
-| Section H Beam Property | component | Section H Beam Property | Name; Area; xg; yg; Jxx; Jyy; Angle; J₁₁; J₂₂; J; Height; Top Flange Width; Bottom Flange Width; Web Thickness; Top Flange Thickness; Bottom Flange Thickness |
-| Super Element Check | component | BridGHe Model; Super-Element Beam; Web Local Instability; Top Flange Local Instability; Bottom Flange Local Instability; Effective Epsilon | Tension Check; Tau b; Tension Forces |
-| Super Element Filter | component | BridGHe Model; Super-Element | Beams |
-
 ## Components.Models
 
 | Nome | Tipo | Ingressi | Uscite |
 |---|---|---|---|
 | Beam | component | Line; Property; Groups; Angle; Offset | Beam |
-| Build Model | component | Elements; Name; Units; Load Combinations; Named sets; Staged constructions | Model |
+| Build Model | component | Elements; Name; Units; Load Combinations; Staged constructions | Model |
 | Decompose Model | component | Model | Nodes; Beams; Plates |
 | Merge Geometry | component | Elements; Tolerance | Points; Curves; Meshes |
 | Merge Model | component | Elements; Tolerance | BridGHe Nodes; BridGHe Beams; BridGHe Plates |
@@ -153,7 +167,6 @@
 | Node | parameter | — | — |
 | Plate | parameter | — | — |
 | Section | parameter | — | — |
-| Version controller | parameter | — | — |
 
 ## Components.Results
 
@@ -212,14 +225,3 @@
 | Plate Filter | component | Plates; IDs; Positions; Units; Properties name; Groups | Plates; Others |
 | Remesh | component | Mesh; Target length; Max distance; Plane | Mesh |
 | Surface splitter curves | component | Surface; Points; Lines; Tolerance | Cuttings |
-
-## Componenti aggiunti per dettagli gPC
-
-| Componente | Modello/metodo gPC | Scopo |
-|---|---|---|
-| Bridge Studs | BridgeStudOptions | Pioli a testa, fila, passi, materiali e geometria di dettaglio |
-| Bridge Intermediate Stiffener | BridgeIntermediateStiffener | Piatti intermedi, pannelli, eccentricità e saldature |
-| Bridge Support Stiffener | BridgeSupportStiffener | Piatti d'appoggio, impronta, reazione e montante terminale |
-| Bridge Detail Check | HBridgeSection.Calculate | Controlli di dettaglio sulla storia del risultato BridgeChecks |
-
-Totale: 131 componenti, 9 parametri, più il plugin. I 16 componenti BridgeChecks originali conservano le loro porte.

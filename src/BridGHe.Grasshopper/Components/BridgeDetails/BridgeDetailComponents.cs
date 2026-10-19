@@ -14,19 +14,24 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
     public abstract class DetailDefinition<T> : GH_Component where T:new()
     {
         protected abstract (string Name,object Default,string Description)[] Fields { get; }
+        private (System.Reflection.PropertyInfo Property,object Default,string Description)[] metadata;
+        private (System.Reflection.PropertyInfo Property,object Default,string Description)[] Metadata => metadata ??= Fields.Select(f =>
+            (typeof(T).GetProperty(f.Name) ?? throw new InvalidOperationException("Missing gPC property: "+f.Name),f.Default,f.Description)).ToArray();
         protected DetailDefinition(string name,string nick,string description):base(name,nick,description,"BridGHe-Checks","Bridge details") { }
         protected override void RegisterInputParams(GH_InputParamManager p)
         {
-            foreach(var f in Fields)
+            foreach(var f in Metadata)
             {
-                Type t=typeof(T).GetProperty(f.Name).PropertyType;
-                if(t==typeof(bool))p.AddBooleanParameter(f.Name,f.Name,f.Description,GH_ParamAccess.item,(bool)f.Default);
+                Type t=f.Property.PropertyType;
+                if(t==typeof(bool))p.AddBooleanParameter(f.Property.Name,f.Property.Name,f.Description,GH_ParamAccess.item,(bool)f.Default);
+                else if(t==typeof(string))p.AddTextParameter(f.Property.Name,f.Property.Name,f.Description,GH_ParamAccess.item,(string)f.Default);
                 else if(t.IsEnum)
                 {
-                    p.AddIntegerParameter(f.Name,f.Name,f.Description,GH_ParamAccess.item,(int)f.Default);
+                    p.AddIntegerParameter(f.Property.Name,f.Property.Name,f.Description,GH_ParamAccess.item,(int)f.Default);
                     var q=(Param_Integer)p[p.ParamCount-1];foreach(var e in Enum.GetValues(t))q.AddNamedValue(e.ToString(),Convert.ToInt32(e));
                 }
-                else p.AddNumberParameter(f.Name,f.Name,f.Description,GH_ParamAccess.item,Convert.ToDouble(f.Default));
+                else p.AddNumberParameter(f.Property.Name,f.Property.Name,f.Description,GH_ParamAccess.item,Convert.ToDouble(f.Default));
+                p[p.ParamCount-1].Optional=true;
             }
         }
         protected override void RegisterOutputParams(GH_OutputParamManager p)=>p.AddGenericParameter("Detail","D","Immutable gPC detail definition",GH_ParamAccess.item);
@@ -35,12 +40,13 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
             try
             {
                 var value=new T();int i=0;
-                foreach(var f in Fields)
+                foreach(var f in Metadata)
                 {
-                    var property=typeof(T).GetProperty(f.Name);object v;
-                    if(property.PropertyType==typeof(bool)){bool b=false;if(!da.GetData(i++,ref b))return;v=b;}
-                    else if(property.PropertyType.IsEnum){int e=0;if(!da.GetData(i++,ref e))return;if(!Enum.IsDefined(property.PropertyType,e))throw new ArgumentException("Invalid "+f.Name);v=Enum.ToObject(property.PropertyType,e);}
-                    else {double x=0;if(!da.GetData(i++,ref x))return;if(!double.IsFinite(x))throw new ArgumentException("Non-finite "+f.Name);v=x;}
+                    var property=f.Property;object v;
+                    if(property.PropertyType==typeof(bool)){bool b=(bool)f.Default;da.GetData(i++,ref b);v=b;}
+                    else if(property.PropertyType.IsEnum){int e=Convert.ToInt32(f.Default);da.GetData(i++,ref e);if(!Enum.IsDefined(property.PropertyType,e))throw new ArgumentException("Invalid "+f.Property.Name);v=Enum.ToObject(property.PropertyType,e);}
+                    else if(property.PropertyType==typeof(string)){string text=(string)f.Default;da.GetData(i++,ref text);v=text;}
+                    else {double x=Convert.ToDouble(f.Default);da.GetData(i++,ref x);if(!double.IsFinite(x))throw new ArgumentException("Non-finite "+f.Property.Name);v=x;}
                     property.SetValue(value,v);
                 }
                 if(value is BridgeStudOptions studs && studs.Enabled && (studs.CountPerRow<1||studs.CountPerRow>20||studs.CountPerRow!=Math.Truncate(studs.CountPerRow)))
@@ -98,6 +104,8 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
             p.AddGenericParameter("Studs","S","Bridge Studs definition",GH_ParamAccess.item);p[1].Optional=true;
             p.AddGenericParameter("Intermediate stiffener","I","Bridge Intermediate Stiffener definition",GH_ParamAccess.item);p[2].Optional=true;
             p.AddGenericParameter("Support stiffener","A","Bridge Support Stiffener definition",GH_ParamAccess.item);p[3].Optional=true;
+            p.AddGenericParameter("Options","O","Optional native gPC analysis options; actions remain unchanged",GH_ParamAccess.item);p[4].Optional=true;
+            p.AddGenericParameter("Additional details","D","Optional transverse slab reinforcement, fatigue or box options",GH_ParamAccess.list);p[5].Optional=true;
         }
         protected override void RegisterOutputParams(GH_OutputParamManager p)
         {
@@ -124,9 +132,15 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
                         3 when detail.Value is BridgeSupportStiffener s=>input with{Support=s},
                         _=>throw new ArgumentException("Wrong gPC detail type at input "+i)};
                 }
+                BridgeDetailGoo options=null;
+                if(da.GetData(4,ref options))input=options.Value is BridgeAnalysisOptions o?input with{Options=o}:throw new ArgumentException("Expected Bridge Analysis Options.");
+                var extra=new List<BridgeDetailGoo>();da.GetDataList(5,extra);
+                if(extra.Any(d=>d.Value is not BridgeTransverseReinforcement && d.Value is not BridgeFatigueOptions && d.Value is not BridgeBoxOptions))
+                    throw new ArgumentException("Additional details accepts transverse reinforcement, fatigue and box options only.");
+                input=BridgeGpc.WithDetails(input,extra.Select(d=>d.Value));
                 int stage=result.Analysis.Stages.IndexOf(result.Stage);if(stage<0)throw new ArgumentException("Unknown source stage.");
                 var analysis=HBridgeSection.Calculate(input);var updated=new BridgeStressResult(analysis,stage);var selected=updated.Stage;
-                var checks=(selected.Shear?.Checks??new List<BridgeLocalCheck>()).Concat(selected.Studs?.Checks??new List<BridgeLocalCheck>()).ToArray();
+                var checks=BridgeGpc.Checks(selected).ToArray();
                 da.SetData(0,updated);da.SetDataList(1,checks.Select(c=>c.Name));da.SetDataList(2,checks.Select(c=>c.Demand));da.SetDataList(3,checks.Select(c=>c.Resistance));
                 da.SetDataList(4,checks.Select(c=>c.Unit));da.SetDataList(5,checks.Select(c=>c.Ratio??double.NaN));da.SetDataList(6,checks.Select(c=>c.Status+": "+c.Note));da.SetDataList(7,selected.Warnings);
                 if(input.Options.LimitState!=BridgeLimitState.Ultimate)AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Stato limite del risultato sorgente SLE: gPC lascia senza esito le verifiche che richiedono azioni SLU. Nessun fattore di carico è applicato implicitamente.");

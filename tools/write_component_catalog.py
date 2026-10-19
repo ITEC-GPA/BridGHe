@@ -11,7 +11,7 @@ for item in items:
 components = sum(item['kind'] == 'component' for item in items)
 lines = ['# Inventario dei componenti 0.1.0', '',
          f'{components} componenti e {len(items)-components} parametri istanziati nel runtime Rhino 8. '
-         'GUID completi in `migration/current-components.json`. Nomi e descrizioni delle porte mantenute sono quelli della base.', '']
+         'GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.', '']
 
 def ports(values):
     return '; '.join(p['name'].replace('|', '/') for p in values) or '—'
