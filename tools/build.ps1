@@ -5,6 +5,7 @@ param(
     [switch]$Examples,
     [switch]$BridgeGrillage,
     [switch]$BridgeSuite,
+    [switch]$BridgeSpine,
     [switch]$Package
 )
 $ErrorActionPreference = 'Stop'
@@ -59,6 +60,15 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'Verifica della suite ponti non riuscita.' }
         & py tools/package_bridge_suite.py
         if ($LASTEXITCODE -ne 0) { throw 'Creazione pacchetto nativo dei ponti non riuscita.' }
+    }
+    if ($BridgeSpine) {
+        if ($Configuration -ne 'Release') { throw 'I ponti con spina centrale richiedono Release.' }
+        & dotnet build tests/BridGHe.Smoke/BridGHe.Smoke.csproj -c Release
+        if ($LASTEXITCODE -ne 0) { throw 'Compilazione degli esempi con spina centrale non riuscita.' }
+        & dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --bridge-spine all --gh
+        if ($LASTEXITCODE -ne 0) { throw 'Verifica degli esempi con spina centrale non riuscita.' }
+        & py tools/package_bridge_suite.py --spine
+        if ($LASTEXITCODE -ne 0) { throw 'Creazione pacchetto nativo con spina centrale non riuscita.' }
     }
     if ($Package) {
         $compiled = Join-Path $projectRoot "bin\BridGHe.Grasshopper\$Configuration\net8.0-windows"
