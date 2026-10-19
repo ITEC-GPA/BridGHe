@@ -9,13 +9,13 @@ internal static class RegressionTests
 {
     public static int Run(string selection)
     {
+        BridgeMergeTests.Initialize(); // Register before the first GH document can trigger plugin discovery.
         var tests = new Dictionary<string, Action>
         {
+            ["plot-preview"] = PlotPreviewTests.Run,
             ["bridge-workflow"] = BridgeWorkflowTests.Run,
-            ["bridge-history-workflow"] = BridgeHistoryWorkflowTests.Run,
             ["component-layout"] = ComponentLayoutTests.Run,
             ["bridge-plots"] = PlotTests.Run,
-            ["plot-preview"] = PlotPreviewTests.Run,
             ["native-bridge-components"] = NativeBridgeComponentTests.Run,
             ["bridge-numerical-baseline"] = BridgeNumericalBaseline.Verify,
             ["archive-before-cleanup"] = ArchiveBeforeCleanup,
@@ -25,6 +25,7 @@ internal static class RegressionTests
             ["composite-property-phases"] = CompositePropertyTests.Run,
             ["display-settings"] = DisplayTests.Run,
             ["bridge-merge-origin"] = BridgeMergeTests.Run,
+            ["bridge-history-workflow"] = BridgeHistoryWorkflowTests.Run,
             ["group-null-identity"] = GroupNullIdentity,
             ["composite-preview"] = CompositePreview,
             ["nodal-actions"] = NodalActions,
@@ -54,6 +55,7 @@ internal static class RegressionTests
         int count = 0;
         foreach (var test in tests.Where(t => selection == "all" || t.Key == selection))
         {
+            if (selection == "all" && test.Key is "plot-preview" or "bridge-plots") { Console.WriteLine("SEPARATE HOST: " + test.Key + " (executed by tools/build.ps1 -Smoke)"); continue; }
             test.Value(); count++; Console.WriteLine("PASS REGRESSION: " + test.Key);
         }
         Console.WriteLine($"REGRESSION TOTAL {count}");

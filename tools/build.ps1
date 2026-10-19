@@ -19,9 +19,18 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Audit delle porte/GUID non riuscito.' }
     if ($Smoke -or $Native) {
         if ($Configuration -ne 'Release') { throw 'Gli smoke test richiedono Release.' }
-        if ($Native) { & dotnet run --project tests/BridGHe.Smoke -c Release -- --native }
-        else { & dotnet run --project tests/BridGHe.Smoke -c Release }
+        if ($Native) { & dotnet run --project tests/BridGHe.Smoke -c Release -- --native | Tee-Object -Variable smokeOutput }
+        else { & dotnet run --project tests/BridGHe.Smoke -c Release | Tee-Object -Variable smokeOutput }
         if ($LASTEXITCODE -ne 0) { throw 'Smoke test non riusciti.' }
+        if (-not ($smokeOutput -match '^PASS TOTAL \d+$')) { throw 'Smoke test interrotti prima del riepilogo finale, anche se il processo ha restituito exit code 0.' }
+        # Rhino.Inside drawing integrations run in independent hosts, outside an active RhinoCore.
+        foreach ($group in @('bridge-plots','plot-preview')) {
+            & dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --regression $group --preview-capture | Tee-Object -Variable drawingOutput
+            if ($LASTEXITCODE -ne 0 -or -not ($drawingOutput -match '^REGRESSION TOTAL 1$')) {
+                throw "Test grafico incompleto o fallito: $group"
+            }
+        }
+        Write-Host 'SMOKE SUITE COMPLETE: core and both drawing integrations passed.'
     }
     if ($Examples) {
         if ($Configuration -ne 'Release') { throw 'Gli esempi richiedono Release.' }

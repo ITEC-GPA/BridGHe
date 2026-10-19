@@ -27,7 +27,7 @@ internal static class Program
     private static int Run(string[] args)
     {
         // --pure does not start Rhino, useful for CI and unlicensed environments.
-        using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},args.Contains("--preview-capture")?WindowStyle.Hidden:WindowStyle.NoWindow);
+        using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},WindowStyle.Hidden);
         if(args.Contains("--capture-bridge-baseline")) { BridgeNumericalBaseline.Capture();return 0; }
         if(args.Contains("--benchmark-plots")) { PlotTests.Run();PlotTests.Benchmark();return 0; }
         if(args.Contains("--bridge-workflow")) return BridgeWorkflowExample.Run();

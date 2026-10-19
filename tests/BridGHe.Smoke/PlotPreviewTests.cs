@@ -62,16 +62,20 @@ internal static class PlotPreviewTests
         File.WriteAllText("artifacts/plots/svg-preview.svg",svg);
         component.Attributes.PerformLayout();
         Require(component.Attributes.Bounds.Width >= 600 && component.Attributes.Bounds.Height > 300, "Canvas bounds exclude the preview.");
-        GH_Skin.LoadSkin();
-        using (var canvas = new GH_Canvas())
-        using (var bitmap = new Bitmap(1100, 700))
+        bool captureCanvas = Environment.GetCommandLineArgs().Contains("--preview-capture");
+        if (captureCanvas)
         {
-            canvas.Size = bitmap.Size; canvas.Document = document; canvas.CreateControl(); canvas.Viewport.Zoom=1;
-            canvas.Refresh();System.Windows.Forms.Application.DoEvents();
+            // A real canvas needs the hidden-window RhinoCore mode selected by --preview-capture.
+            // Creating it in NoWindow can terminate the process with exit code zero on Windows.
+            GH_Skin.LoadSkin();
+            using var canvas = new GH_Canvas();
+            using var bitmap = new Bitmap(1100, 700);
+            canvas.Size = bitmap.Size; canvas.Document = document; canvas.CreateControl(); canvas.Viewport.Zoom = 1;
+            canvas.Refresh(); System.Windows.Forms.Application.DoEvents();
             canvas.DrawToBitmap(bitmap, new Rectangle(Point.Empty, bitmap.Size));
-            bitmap.Save("artifacts/plots/grasshopper-preview.png");
-            canvas.Document = null;
+            bitmap.Save("artifacts/plots/grasshopper-preview.png"); canvas.Document = null;
         }
+        else Console.WriteLine("SKIPPED: GH canvas screenshot (opt in with --preview-capture); SVG pixels and component layout are tested.");
         var cached = Image(); Solve(); Require(ReferenceEquals(cached,Image()), "Unchanged SVG should reuse its raster.");
         SetWidth(800); Solve(); Require(!ReferenceEquals(cached,Image()) && Image().Width == 1600, "Resized preview did not update.");
         string second = svg.Replace("SLS 1", "SLS 3"); SetSvg(svg,second); SetIndex(1); Solve();
@@ -107,6 +111,6 @@ internal static class PlotPreviewTests
             var restored=reopened.Objects.OfType<GH_Component>().Single(c=>c.ComponentGuid==component.ComponentGuid);
             Require(restored.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count==0 && restored.Params.Output[0].VolatileDataCount==1,"Preview example did not recalculate after reopening.");
         }
-        Console.WriteLine("PLOT PREVIEW: SVG.NET, GH canvas, cache, list selection, resize, invalid input, window and resource release verified.");
+        Console.WriteLine("PLOT PREVIEW: SVG.NET, cache, list selection, resize, invalid input, window and resource release verified; canvas capture=" + captureCanvas + ".");
     }
 }
