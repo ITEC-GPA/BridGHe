@@ -6,7 +6,7 @@
         "Name": "P / Uz [mm]",
         "Actual": -0.09523809523809523,
         "Expected": -0.09523809523809523,
-        "AbsoluteTolerance": 9.523809523809525E-07,
+        "AbsoluteTolerance": 9.523809523809525e-07,
         "Passed": true
       },
       {
@@ -34,7 +34,7 @@
         "Name": "1.5P / Uz [mm]",
         "Actual": -0.14285714285714285,
         "Expected": -0.14285714285714285,
-        "AbsoluteTolerance": 1.4285714285714286E-06,
+        "AbsoluteTolerance": 1.4285714285714286e-06,
         "Passed": true
       },
       {
@@ -67,7 +67,7 @@
         "Name": "Uz midspan [mm]",
         "Actual": -0.17857142857142777,
         "Expected": -0.17857142857142858,
-        "AbsoluteTolerance": 1.7857142857142859E-06,
+        "AbsoluteTolerance": 1.7857142857142859e-06,
         "Passed": true
       },
       {
@@ -100,14 +100,14 @@
         "Name": "Ux right [mm]",
         "Actual": 0.0019047619047619041,
         "Expected": 0.0019047619047619048,
-        "AbsoluteTolerance": 1.9047619047619048E-08,
+        "AbsoluteTolerance": 1.9047619047619048e-08,
         "Passed": true
       },
       {
         "Name": "Poisson Uy [mm]",
         "Actual": -0.0002857142857142863,
         "Expected": -0.00028571428571428574,
-        "AbsoluteTolerance": 1E-08,
+        "AbsoluteTolerance": 1e-08,
         "Passed": true
       },
       {
@@ -121,28 +121,28 @@
         "Name": "Plate Nxx [N/mm]",
         "Actual": 3.9999999999999982,
         "Expected": 4,
-        "AbsoluteTolerance": 4E-05,
+        "AbsoluteTolerance": 4e-05,
         "Passed": true
       },
       {
         "Name": "Plate Nxx [N/mm]",
         "Actual": 3.9999999999999982,
         "Expected": 4,
-        "AbsoluteTolerance": 4E-05,
+        "AbsoluteTolerance": 4e-05,
         "Passed": true
       },
       {
         "Name": "Plate Nxx [N/mm]",
         "Actual": 4,
         "Expected": 4,
-        "AbsoluteTolerance": 4E-05,
+        "AbsoluteTolerance": 4e-05,
         "Passed": true
       },
       {
         "Name": "Plate Nxx [N/mm]",
         "Actual": 4,
         "Expected": 4,
-        "AbsoluteTolerance": 4E-05,
+        "AbsoluteTolerance": 4e-05,
         "Passed": true
       },
       {
@@ -453,7 +453,7 @@
         "Name": "Half / Uz [mm]",
         "Actual": -0.04761904761107912,
         "Expected": -0.047619047619047616,
-        "AbsoluteTolerance": 4.7619047619047623E-07,
+        "AbsoluteTolerance": 4.7619047619047623e-07,
         "Passed": true
       },
       {
@@ -481,7 +481,7 @@
         "Name": "Double / Uz [mm]",
         "Actual": -0.19047618996620638,
         "Expected": -0.19047619047619047,
-        "AbsoluteTolerance": 1.904761904761905E-06,
+        "AbsoluteTolerance": 1.904761904761905e-06,
         "Passed": true
       },
       {
@@ -514,7 +514,7 @@
         "Name": "Load [Steel] / Uz [mm]",
         "Actual": -0.09523809517434723,
         "Expected": -0.09523809523809523,
-        "AbsoluteTolerance": 9.523809523809525E-07,
+        "AbsoluteTolerance": 9.523809523809525e-07,
         "Passed": true
       },
       {
@@ -542,7 +542,7 @@
         "Name": "Load [Deck] / Uz [mm]",
         "Actual": -0.14285714264199328,
         "Expected": -0.14285714285714285,
-        "AbsoluteTolerance": 1.4285714285714286E-06,
+        "AbsoluteTolerance": 1.4285714285714286e-06,
         "Passed": true
       },
       {
@@ -575,7 +575,7 @@
         "Name": "Step [Loading] / Uz [mm]",
         "Actual": -0.09523809517434723,
         "Expected": -0.09523809523809523,
-        "AbsoluteTolerance": 9.523809523809525E-07,
+        "AbsoluteTolerance": 9.523809523809525e-07,
         "Passed": true
       },
       {
@@ -601,37 +601,37 @@
       },
       {
         "Name": "Step [Unloading] / Uz [mm]",
-        "Actual": -1.279763239825371E-10,
+        "Actual": -1.279763239825371e-10,
         "Expected": 0,
-        "AbsoluteTolerance": 1E-08,
+        "AbsoluteTolerance": 1e-08,
         "Passed": true
       },
       {
         "Name": "Step [Unloading] / Rz [N]",
         "Actual": 0,
         "Expected": 0,
-        "AbsoluteTolerance": 1E-08,
+        "AbsoluteTolerance": 1e-08,
         "Passed": true
       },
       {
         "Name": "Step [Unloading] / My reaction [N mm]",
         "Actual": 0,
         "Expected": 0,
-        "AbsoluteTolerance": 1E-08,
+        "AbsoluteTolerance": 1e-08,
         "Passed": true
       },
       {
         "Name": "Step [Unloading] / beam |My| [N mm]",
         "Actual": 0,
         "Expected": 0,
-        "AbsoluteTolerance": 1E-08,
+        "AbsoluteTolerance": 1e-08,
         "Passed": true
       },
       {
         "Name": "Step [Reloading] / Uz [mm]",
         "Actual": -0.04761904761107912,
         "Expected": -0.047619047619047616,
-        "AbsoluteTolerance": 4.7619047619047623E-07,
+        "AbsoluteTolerance": 4.7619047619047623e-07,
         "Passed": true
       },
       {
@@ -664,14 +664,14 @@
         "Name": "Original Ux [mm]",
         "Actual": 0.00023809523781892494,
         "Expected": 0.0002380952380952381,
-        "AbsoluteTolerance": 1E-08,
+        "AbsoluteTolerance": 1e-08,
         "Passed": true
       },
       {
         "Name": "Reinforced Ux [mm]",
         "Actual": 0.0003571428615032346,
         "Expected": 0.00035714285714285714,
-        "AbsoluteTolerance": 1E-08,
+        "AbsoluteTolerance": 1e-08,
         "Passed": true
       },
       {
@@ -704,14 +704,14 @@
         "Name": "Original Ux [mm]",
         "Actual": 0.00023809523781892494,
         "Expected": 0.0002380952380952381,
-        "AbsoluteTolerance": 1E-08,
+        "AbsoluteTolerance": 1e-08,
         "Passed": true
       },
       {
         "Name": "Reinforced Ux [mm]",
         "Actual": 0.0003571428615032346,
         "Expected": 0.00035714285714285714,
-        "AbsoluteTolerance": 1E-08,
+        "AbsoluteTolerance": 1e-08,
         "Passed": true
       },
       {
@@ -739,7 +739,7 @@
         "Name": "After removal Ux [mm]",
         "Actual": 0.00047619047609259724,
         "Expected": 0.0004761904761904762,
-        "AbsoluteTolerance": 1E-08,
+        "AbsoluteTolerance": 1e-08,
         "Passed": true
       },
       {
@@ -765,7 +765,7 @@
         "Name": "Full [Construction] / Uz [mm]",
         "Actual": -0.09523809517434723,
         "Expected": -0.09523809523809523,
-        "AbsoluteTolerance": 9.523809523809525E-07,
+        "AbsoluteTolerance": 9.523809523809525e-07,
         "Passed": true
       },
       {
@@ -793,7 +793,7 @@
         "Name": "ULS [Service] / Uz [mm]",
         "Actual": -0.2714285699528607,
         "Expected": -0.2714285714285714,
-        "AbsoluteTolerance": 2.7142857142857144E-06,
+        "AbsoluteTolerance": 2.7142857142857144e-06,
         "Passed": true
       },
       {

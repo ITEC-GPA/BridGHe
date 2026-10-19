@@ -1,5 +1,5 @@
 {
-  "Date": "2026-10-18T01:03:36.3062539+02:00",
+  "Date": "2026-10-19T07:56:25.904912+02:00",
   "Definition": {
     "Id": "14-curvo-1campata",
     "Title": "Curvo 30 m / R 80 m",
@@ -14,6 +14,8 @@
   "Section": {
     "Span": 30000,
     "Width": 10000,
+    "EffectiveSlabWidth": null,
+    "GirderSlabWidth": 2500,
     "Panels": 12,
     "SlabThickness": 250,
     "SteelHeight": 1600,

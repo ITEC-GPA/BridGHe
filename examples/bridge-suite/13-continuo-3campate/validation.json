@@ -1,5 +1,5 @@
 {
-  "Date": "2026-10-18T01:00:41.5829871+02:00",
+  "Date": "2026-10-19T07:55:53.0897397+02:00",
   "Definition": {
     "Id": "13-continuo-3campate",
     "Title": "Rettilineo continuo 20 \u002B 30 \u002B 20 m",
@@ -16,6 +16,8 @@
   "Section": {
     "Span": 70000,
     "Width": 10000,
+    "EffectiveSlabWidth": null,
+    "GirderSlabWidth": 2500,
     "Panels": 12,
     "SlabThickness": 250,
     "SteelHeight": 1600,

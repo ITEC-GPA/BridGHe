@@ -1,8 +1,10 @@
 {
-  "Date": "2026-10-17T20:05:57.1092494+02:00",
+  "Date": "2026-10-19T07:54:42.0849945+02:00",
   "Parameters": {
     "Span": 30000,
     "Width": 10000,
+    "EffectiveSlabWidth": null,
+    "GirderSlabWidth": 2500,
     "Panels": 12,
     "SlabThickness": 250,
     "SteelHeight": 1600,
