@@ -1,136 +1,52 @@
-# Trasposizione e refactoring — 16 ottobre 2026
+# Refactoring BridGHe - 19 ottobre 2026
 
-## Correzioni emerse dal ponte a graticcio — 17 ottobre 2026
+Questa revisione usa i nomi BridGHe, il solutore Straus7 R3 e le librerie gPC. I nomi storici sono rimossi dai sorgenti e dalla distribuzione. La storia Git conserva i commit precedenti.
 
-| Commit | Metodo | Correzione |
+## Risultati e compatibilità
+
+Prima delle ottimizzazioni è stata fissata una baseline di **238 valori su 14 casi**: instabilità attiva/disattiva, azioni di segno diverso, soletta inclusa/esclusa e ritiro. Dopo il refactoring tutti i 238 valori sono **esattamente uguali**; il test applica comunque una tolleranza relativa/assoluta di 1e-12. La baseline non è stata rigenerata dopo le modifiche.
+
+L'eccezione autorizzata è la correzione degli **appoggi elastici distribuiti**. I modelli che usavano l'esportazione errata possono cambiare risultato. [Differenze, formule, unità e 29 controlli nativi](beam-support-fix.json). I modelli senza questo attributo non sono interessati dalla correzione.
+
+Le porte sono state semplificate su richiesta. I GUID già assegnati a BridGHe restano stabili per i componenti mantenuti; i nuovi componenti hanno GUID propri. Gli esempi distribuiti usano i contratti aggiornati. I file GH modificati dall'utente con le porte eliminate vanno controllati; non è prevista una riconnessione automatica delle vecchie posizioni.
+
+## Metodi e chiamate modificati
+
+| Area | Implementazione corrente | Effetto |
 |---|---|---|
-| `0c96b97` | `BridgeCheckAdapter.Phase` | Rifiuto dei dati non finiti; tolleranze dimensionali di 10⁻⁶ N e 10⁻³ Nmm sulle componenti fuori piano, per non rifiutare il rumore numerico di un graticcio simmetrico. Le azioni maggiori restano bloccanti e sono riportate nell'errore. |
-| `09ce512` | `CalculateHomogenizedFactorPhi` nei tre componenti BridgeChecks che lo usano | Nuovo helper `BridgeCreepCoefficient.FromModularRatio`: il rapporto istantaneo Es/Ec non produce più φ = −1,11·10⁻¹⁶. Solo valori in [−10⁻¹², 0) vengono ricondotti a zero; rapporti fisicamente non validi sono rifiutati. |
-| `eb79d8a` | `BuildBridgeModel.SolveInstance` | Le combinazioni riutilizzano i casi canonici del modello con la fase assegnata, invece di creare copie contenenti solo il nome. Il flusso completo ora giunge alle tensioni. |
+| `BridgeCheckAdapter` | Costruttore con `BridgeAnalysisOptions` gPC | Eliminati wrapper di opzioni e argomenti normativi non utilizzati. |
+| `HBridgeSection.Calculate(HBridgeInput)` | Invocazione diretta nel nuovo `Bridge Section Check` | H, H inclinata, cassone, fasi e dettagli nativi; unità mm, MPa, kN e kNm. |
+| `BridgeStressResult` | Valutazione del taglio con proprietà di fase memorizzate nel singolo risultato | Ordine delle somme conservato; 8.000 letture da 1.106,66 ms a 17,23 ms, checksum identico. Non è il tempo dell'intero solutore. |
+| Grafici | `BridgePlot` e `BridgePlotComponent` condivisi | SVG vettoriale e PNG, campioni originali, salti e lacune conservati, min/max e file opzionale. |
+| `St7SetBeamSupport2` | Una chiamata per direzione -1/+1/-2/+2, caso di libertà 1, dati `[k,gap]` | Corregge indici, dati, lati, direzioni multiple e contatto; verifica NLA per gli appoggi unilaterali. |
+| `StrausSection.Calculate` | Proprietà native più contorni ottenuti con `St7SaveBeamSectionMesh` | La mesh serve solo alla preview. Per le sezioni circolari la discretizzazione grafica è portata a 48 divisioni dopo la lettura delle proprietà esatte. |
+| Lettura mesh di preview | `St7OpenFile`, `St7GetTotal`, `St7GetNodeXYZ`, `St7GetElementConnection` | Eseguita durante la creazione della sezione, mai nel callback di disegno; contorni conservati nell'archivio. |
+| `GH_Model` | Preview composta di nodi, beam, plate e punti dei percorsi mobili | Riutilizza i wrapper e segue le modifiche geometriche. |
+| `CompositeBeamComponent` | Sezione finale opzionale; gruppi aggiuntivi applicati senza duplicati | Omettendo la sezione finale si usa quella iniziale. L'input non viene modificato. |
+| `GroupModel` | Confronto null-safe | Evita eccezioni nella risalita della gerarchia. |
+| `BeamStringGroupAttributeModel.Equals(object)` | Controllo del tipo String Group corretto | Elimina un confronto errato e una possibile ricorsione infinita. |
+| Archivio del modello | Versione del contenuto aggiornata; lettura degli archivi precedenti verificata | Rimossi contenitori vuoti non utilizzati; formato BGHA1 conservato. |
 
-Ogni fix ha un commit distinto. Nessuna modifica a porte, GUID, DLL gPC o chiamate Straus in questa attività. L'esempio 11 è generato da codice di test, non aggiunge componenti al plugin. Le ipotesi e i limiti numerici sono nella [guida](../examples/bridge-grillage/README.md).
+I binding P/Invoke sono estratti dall'header R3 installato; origine, hash e numero di dichiarazioni sono in `migration/straus-api-source.json`. Le firme non sono riscritte manualmente.
 
-## Passaggi eseguiti
+## Rimozioni
 
-1. Creata una soluzione autonoma `BridGHe.sln`, con progetti Common e Grasshopper, target Windows x64 / .NET 8. La base BridGHe è stata letta senza modificarla.
-2. Copiati i componenti pertinenti al flusso modello–Straus–risultati–verifica. Mantenuti tutti i 16 componenti BridgeChecks, inclusi i componenti di stampa. Riassegnati i GUID e l'identità del plugin.
-3. Sostituiti i riferimenti delle librerie con le DLL gPC disponibili nei repository fratelli. I riferimenti sono espliciti, senza includere indiscriminatamente tutte le DLL presenti in una cartella.
-4. Aggiornato il binding P/Invoke all'header della versione Straus R3 installata. Il file generato contiene solo i membri utilizzati; origine e SHA-256 sono in `migration/straus-api-source.json`.
-5. Introdotti 23 componenti per sezioni Straus e 10 componenti per carichi mobili. Il catalogo e le dimensioni sono descritti in USO.
-6. Separati gestione API, sezioni, generazione BXS, esportazione carichi mobili, avvio analisi e lettura risultati. Le operazioni native passano da un unico lock per processo e verificano i codici di ritorno.
-7. Adattato BridgeChecks al motore gPC corrente. Corretti scambio delle fasi istantanea/differita, accumulo delle deformazioni imposte, lettura dei flag di instabilità e interpolazione della soletta nelle sezioni variabili.
-8. Eliminati componenti e classi specifici dei solutori esclusi e del form finding. Rimossi riferimenti a database esterni, vecchie finestre e integrazioni con il precedente plugin Rhino. Potate le risorse grafiche non referenziate.
-9. Sostituita la serializzazione BinaryFormatter con un archivio condiviso, versionato, a riferimenti preservati. Corretti salvataggio delle proprietà composte, sezioni annidate, attributi, risultati e metadati delle sezioni native.
-10. Eseguiti compilazione Release, audit dei contratti, prove numeriche e istanziazione nel runtime Rhino 8. Preparati script di build, pacchetto locale e manifest delle dipendenze.
-11. Creato il logo BridGHe e un sistema di icone SVG per tutti i 127 componenti e 9 parametri. Incorporati PNG da 24 px, registrate le due categorie con icone da 16 px e sostituite 94 vecchie icone. Porte e GUID mantenuti; dettagli in [ICONE](ICONE.md).
+L'elenco dei file eliminati e le motivazioni sono in `migration/removed-unused-types.json`.
 
-## Metodi e comportamenti cambiati
+- Named sets, rilasci mediante named set e contenitori generici di funzioni senza consumatore nell'export.
+- Operazioni legacy sui casi di carico prive di implementazione Straus. Restano le fasi native `StagedConstructionModel` e i metadati di fase del verificatore.
+- Verificatori generici scollegati dal flusso degli elementi Straus, tipi Goo associati e parametro versione non necessario.
+- Input Effective Epsilon, offset verticale della sezione composta e target Entity Set: non avevano un comportamento implementato e verificato.
+- Input dei supporti non esportabili; rimangono rigidezza distribuita, direzione nativa, compressione soltanto e gap.
+- Due input di Beam Output Stations senza effetto su Straus, insieme ai relativi dati non utilizzati. Il numero delle stazioni rimane attivo.
+- Vecchio generatore di immagini e metodo privato duplicato `BeamModel.SetSurface`, senza chiamanti.
 
-| Area / chiamata precedente | Implementazione corrente | Effetto e limite |
-|---|---|---|
-| Riferimenti ai vecchi assembly di geometria, modello e verifiche | `GPCGeometry`, `GPCModel`, `GPCUtilities`, `GPCChecker.*` | Namespace e assembly adattati; nessun riferimento alla precedente società nel progetto. |
-| `SectionCheckerModelCode2010.GetLinearAnalysisResultByStages` | `BridgeCheckAdapter` → `HBridgeSection.Calculate(HBridgeInput)` | Conservati gli output BridgeChecks tramite `BridgeStressResult`. Il motore corrente ha semantica Eurocode 4 / SLE rara per il calcolo tensionale; non equivale automaticamente a ogni opzione del vecchio checker. |
-| `SectionCheckerModelCode2010.GetSelfTension` | Fase gPC `BridgePhaseKind.Shrinkage` | Deformazione imposta convertita da adimensionale a microstrain; effetti primari della soletta. |
-| `StressAnalysisResult.BridGHeResults.Point1…Point8` | `BridgeStressResult` | Tensioni ricostruite nei punti geometrici storici. Taglio dell'anima con somma dei contributi di fase `VQ/(It)`; tensione ideale `sqrt(sigma² + 3 tau²)`. Punto di armatura assente → `NaN`. |
-| Output `TauB` | Nessuna corrispondenza assunta | `NaN` e warning: occorre verificare la definizione fisica originaria prima di associarlo ai nuovi risultati di connessione. |
-| `ThinWalls.SubjectToLocalInstability` | `BridgeAnalysisOptions.WebBuckling`, `TopFlangeBuckling`, `BottomFlangeBuckling` | Flag separati. `Effective Epsilon=true` non ha un equivalente verificato e provoca errore esplicito. |
-| Vecchie chiamate temporali del calcestruzzo | `ConcreteTimeEffects(...).AtAge(t).CreepCoefficient` | `t=0` conserva il significato di tempo infinito. `n0=Es/Ecm`, `n(t)=n0[1+phi(t)/1.05]`, perché phi corrente è riferito a `Ec=1.05 Ecm`. |
-| Vecchio ritiro dipendente dal tempo | Nessun metodo equivalente utilizzato | Output `epsilonCS=NaN`. Il metodo legacy a tempo infinito non è usato: nel sorgente gPC consultato sono presenti problemi nella determinazione di `kh`/interpolazione. Non sono state modificate le librerie esterne. |
-| `ReinforcedConcreteSection.CreateBridgeSection(..., verticalOffset, ...)` | `CompositeSectionFactory.Create` | Il parametro corrente è eccentricità **orizzontale**. Offset verticale diverso da zero rifiutato, senza reinterpretarlo. |
-| `GetHomogeneizedMechanicalProperties` con flag di inclusione | `CompositePropertyAdapter.Calculate` → API gPC con `phi` | Selezione di soletta, barre e acciaio sul modello temporaneo; ricostruzione dei momenti d'area quando il calcestruzzo è escluso. |
-| Operatore di scala delle forze non più disponibile | `BridgeCheckAdapter.Scale` | Scalate tutte le sei componenti, incluso fattore zero. |
-| Conversioni dei momenti duplicate nei componenti BridgeChecks | `BridgeForceConvention.FromStraus` | `BM1/BM2` sono momenti nei piani; gPC usa momenti attorno agli assi. Un'unica conversione, con test di segno. |
-| Aggregazione delle fasi dentro `SuperElementCheckComponent` | `BridgePhaseAssembler.Assemble` | Lookup per caso/stazione, fasi esplicite, deformazioni sommate. Risultati mancanti o ambigui producono errore, non una forza nulla. |
-| Generazione BXS mediante processo R2 esterno | `StrausBxsGenerator` → `St7GenerateBXS` R3 | Mesh gPC/Delaunay e modello API temporaneo; nessun eseguibile R2. Richiede prova nativa. |
-| Gestione nativa distribuita tra componenti | `StrausRuntime`, `StrausAnalysis`, `StrausResultsReader` | Inizializzazione, DLL, ID dei modelli, chiusura file e lettura risultati centralizzati. Analisi su copia del modello. |
-| Serializzazione locale dei singoli Goo / BinaryFormatter | `ModelArchive` / formato `BGHA1` | Conserva oggetti condivisi e dati annidati. Gli archivi binari legacy non sono importati automaticamente. |
-| Selettori dei cataloghi esterni | Warning che invita a collegare i componenti di costruzione | Nessun database legacy distribuito. Le porte dei parametri sono mantenute. |
-| Bake tramite il precedente plugin Rhino | Geometria Rhino nativa | Linee, punti e mesh; il bake non conserva automaticamente il modello strutturale nei dati utente Rhino. |
+Le classi che sembrano poco referenziate ma servono a export/lettura/persistenza sono conservate: `StrausResultsReader`, `MovingLoadExporter`, `StrausBxsGenerator`, `ModelTypeResolver`. `EnumExtensions` è utilizzata tramite extension methods.
 
-Le nuove API native per sezioni comprendono `St7SetBeamSectionGeometry`, `St7SetBeamSectionGeometryBGL`, `St7CalculateBeamSectionProperties`, `St7GetBeamSectionPropertyData`, `St7AssignBXS`, `St7AssignLibraryBeamSection` e `St7AssignLibraryBeamSectionBGL`. Per i carichi mobili sono usate le famiglie `St7*LoadPathTemplate*`, `St7SetLoadPath` e `St7ConvertLoadPathsToLoadCases`, con firme estratte dall'header installato.
+## Prestazioni e limiti
 
-## Pulizia e ottimizzazione
+Il maggiore guadagno misurato riguarda la lettura ripetuta delle tensioni di taglio: [dati prima/dopo](shear-performance.json). Il nuovo renderer migliora soprattutto formato, gestione delle discontinuità e riuso; il [benchmark grafico](plot-benchmark-2026-10-18.json) non mostra una grande riduzione delle allocazioni.
 
-Esclusi SAP/ETABS, componenti R2, cable net/form finding (incluse force density e condizioni di lunghezza/forza imposte al vecchio solutore), preferenze di progetto associate ai vecchi solutori, Story, link non esportati, insertion point SAP, trasferimenti di carico SAP e proprietà non prismatiche specifiche SAP. L'elenco dei file è in `migration/excluded-components.json` e `migration/cleanup-removed.json`.
+I costi rimanenti dipendono da analisi native, clonazione/serializzazione di modelli grandi, tessellazione delle preview e iterazioni gPC delle larghezze efficaci. Le chiamate Straus rimangono serializzate dal lock di processo. Non è stata introdotta una parallelizzazione non verificata dell'API nativa.
 
-Restano alcuni testi storici nelle porte, per esempio le due uscite plate un tempo specifiche SAP. In R3 tali valori sono `NaN`; non indicano una dipendenza dal solutore escluso.
-
-Le ottimizzazioni eseguite riguardano la cache delle immagini, la deduplicazione dei template mobili, l'assemblaggio delle fasi tramite lookup e la rimozione di codice/dipendenze inutilizzati. Non è stato eseguito un benchmark di prestazioni con un ponte completo: non viene dichiarata una percentuale di accelerazione. L'esportatore R3 conserva ancora parte della struttura della base; un'ulteriore riscrittura richiede prima i benchmark nativi descritti in VERIFICHE.
-
-## Identità e contratti
-
-GUID plugin: `db9c536d-770b-4586-8c8c-1c7a4df232b4`. Ogni componente e parametro ha un GUID nuovo, isolato dai GUID della base. Dopo questa consegna i GUID devono restare stabili.
-
-L'audit confronta i token dei metodi `RegisterInputParams` / `RegisterOutputParams`, inclusi testo, ordine, accesso, default e opzionalità. Ignora commenti e spazi; normalizza solo le sostituzioni necessarie di namespace, enum del solutore e accesso alla tolleranza. La baseline è stata ricavata dalla base BridGHe, non dal codice nuovo.
-
-## Revisione correttiva
-
-Correzioni successive alla revisione del codice, con un commit per difetto. Porte e GUID dei componenti/plugin non modificati. I nuovi controlli riguardano il comportamento del software; la validazione strutturale e nativa resta distinta.
-
-| Commit | Correzione |
-|---|---|
-| `9f02c7a` | R7: inizializzazione delle geometrie della trave composta durante deserializzazione. |
-| `be9eea4` | R7: sostituzione dei solidi di anteprima senza accumulo. |
-| `407152b` | R1: aggregazione di forze e momenti nodali per caso prima delle chiamate Straus. |
-| `55a3b46` | R2: mappa unica per nome dei casi, senza mutare gli ID delle istanze. |
-| `9086c08` | R3: conservazione di carichi, attributi, gruppi e identità dei nodi nel merge. |
-| `17747f7` | R4: rimappatura dei vertici delle mesh e conservazione delle facce valide. |
-| `8caa181` | Validità delle proprietà beam polimorfica; legge cutoff richiesta solo per cutoff bar. |
-| `8542bd6` | R8: validità FEM delle travi native indipendente dalla presenza di un solido di anteprima. |
-| `4d63918` | R5: mappa GUID completa, persistita e ripristinabile più volte senza collisioni. |
-| `ecfd303` | R6: copie indipendenti di modelli, elementi e Goo, con riferimenti interni conservati. |
-| `726b580` | R9: inclusione dei casi presenti soltanto nelle combinazioni di fase. |
-| `399dcb3` | R9: selezione dei risultati coerente con solutore e fase, senza rinumerazione. |
-| `9bf34c5` | Merge delle piastre basato sui nodi FEM, senza usare i vertici della geometria estrusa. |
-| `192f558` | Errori bloccanti separati dagli avvisi; eliminato il filtro basato sulle parole Failed/Unable. |
-| `5a7f071` | Ripristino degli aggiornamenti della geometria all'aggiunta/rimozione di attributi dopo archivio. |
-| `9adc51e` | Aggiornamento delle piastre dopo sostituzione, modifica o svuotamento della collezione dei nodi. |
-| `bec76f1` | Travi incomplete ispezionabili senza eccezioni e senza anteprime obsolete. |
-| `62d9094` | Cache delle bounding box invalidata alla modifica della geometria, anche per travi native. |
-| `63abc53` | Descrizioni di validità corrette per Goo piastra e trave composta. |
-
-Ottimizzazioni separate: `1bbeba3` indicizza i risultati BridgeChecks una volta per trave e rimuove le scansioni ridondanti; `3a34c87` riutilizza un indice spaziale per la connettività Straus. `950f4fb` rende opzionale il test delle categorie che carica i plugin esterni del profilo. Misure e copertura sono in [VERIFICHE](VERIFICHE.md).
-
-### Metodi modificati durante le correzioni
-
-- `ModelHelper.GetLoadCases` considera anche le fasi; `GetLoadCaseNumbers` centralizza la numerazione locale.
-- `NodalLoadAccumulator.Sum` sostituisce l'accumulo implicito tramite letture/scritture native ripetute.
-- `GH_Model.FromModel`, `GetGuid`, `SynchronizeGuids`, `Write`, `Read` e `Duplicate` gestiscono identità e persistenza; i costruttori di copia dei modelli e `DuplicateGeometry` isolano i dati mutabili.
-- `StrausResultSelection.Catalog/Select` è condiviso da UI e analisi; `StrausAnalysis.Run` usa i risultati selezionati anche nelle fasi.
-- `BridgePhaseAssembler.CreateIndex(...).Assemble(...)` è usato da BridgeChecks. La precedente firma statica `Assemble` resta disponibile.
-- `StrausNodeIndex.Find` sostituisce le scansioni complete dei nodi nell'esportatore.
-- `CreateShapes`, `PlateModel.Points` e `GeometryRevision` governano rigenerazione e invalidazione delle anteprime.
-
-Non sono state modificate le DLL gPC, le firme P/Invoke R3 o le porte Grasshopper durante questa revisione.
-
-## Collaudo nativo del 17 ottobre 2026
-
-Con la licenza API disponibile sono stati eseguiti dieci benchmark e cinque contributi di fase composta, oltre a salvare, riaprire e risolvere le dieci definizioni Grasshopper. Formule, unità, tolleranze e risultati: [esempi](../examples/README.md).
-
-| Commit | Metodo corretto | Difetto e comportamento verificato |
-|---|---|---|
-| `69934c0` | `StrausSection.Assign` | `St7CalculateBeamSectionProperties` ammette solo le forme standard. Per BGL si leggono le proprietà calcolate da `St7SetBeamSectionGeometryBGL`; tutte le 21 famiglie passano. |
-| `969f61b` | `StrausR3Helper.CreateModelR3` | Dopo `St7AddStage` viene chiamato `St7EnableNLAStage`: senza abilitazione il solutore restituiva 1018, incrementi non definiti. |
-| `d6a9229` | `StrausResultsReader.Read` | `St7GetElementResultState` distingue gli elementi inattivi; non si richiedono le loro forze e non si generano zeri fittizi. Gli altri errori API restano bloccanti. |
-| `b86494b` | `StrausAnalysis.Run` | Controllo del numero di incrementi, di `St7GetResultCaseConvergence` e di `St7GetResultCaseStage` per tutta la storia NLA, anche per incrementi non selezionati in output. |
-| `6fe4d7d` | `BridgeForceConvention.FromStraus` | I valori definiti negli assi positivi della sezione vengono trasformati nel riferimento di destinazione gPC. Il precedente codice assegnava direttamente il riferimento `(-x,-y)` e invertiva i segni in BridgeChecks. Correzione verificata con flessione pura nativa e tensioni di lembo. |
-
-Le dichiarazioni aggiunte al binding sono rigenerate dall'header R3 installato, non adattate manualmente. Nessuna modifica a porte, GUID o sorgenti gPC. I benchmark di sezione composta esplicitano l'approssimazione a linea media delle flange del motore attuale. Le vecchie verifiche BridgeChecks vanno ricalcolate per effetto della correzione del segno, mentre le uscite beam continuano a riportare BM1/BM2 nella convenzione Straus.
-
-## Quattro ponti e dettagli gPC - 18 ottobre 2026
-
-- `StrausAnalysis.Run` e `StrausR3Helper.CreateModelCore` canonicalizzano il percorso con `Path.GetFullPath`: il solver nativo restituiva 1029 con separatori `/`, pur riuscendo a creare il file `.st7`. Commit `4493ca4`; verifica nativa della mensola con percorso relativo e slash.
-- Quattro nuovi componenti nella sottocategoria Bridge details: `BridgeStudsComponent`, `BridgeIntermediateStiffenerComponent`, `BridgeSupportStiffenerComponent`, `BridgeDetailCheckComponent`. Definiscono i record gPC ed eseguono `HBridgeSection.Calculate` conservando materiali, fasi e stato limite del risultato BridgeChecks. Nessuna formula resistente duplicata nel plugin.
-- `BridgeDetailGoo.Write/Read/Duplicate`: persistenza dei tre record immutabili, discriminatore chiuso dei tipi, senza caricamento di tipi arbitrari dagli archivi.
-- I nuovi esempi usano le chiamate esistenti `St7SetBeamPreLoad1` e `St7SetBeamTempGradient2` per il ritiro longitudinale globale. Nessuna modifica delle firme native o delle DLL gPC.
-- Tutte le porte dei 103 oggetti conservati e dei 16 BridgeChecks sono invariate; quattro nuovi GUID, totale 141 con il plugin.
-
-Documentazione, ipotesi, procedura riproducibile e limiti: [suite ponti](../examples/bridge-suite/README.md).
-
-## Output di compilazione nella root - 18 ottobre 2026
-
-- `Directory.Build.props` centralizza output e intermedi in `bin/<progetto>/<configurazione>/<framework>` e `bin/obj/<progetto>`. I riferimenti ai repository gPC restano separati tramite `RepositoryRoot`.
-- `Directory.Build.targets` esegue `tools/clean-builds.ps1` prima della compilazione reale. Rimuove gli output precedenti `bin`/`obj` sparsi nel repository e `artifacts/packages`; preserva la `bin` della root, i risultati nativi e le cartelle di configurazione. La pulizia è serializzata tra progetti e controlla percorsi e junction prima delle eliminazioni.
-- `BuildPaths.GrasshopperAssembly` sostituisce i sei percorsi Release fissi nei test e nei generatori GH. Usa la configurazione dell'eseguibile in corso. Il progetto smoke dipende anche dalla compilazione del plugin, senza aggiungerne il riferimento al compilatore C#.
-- `tools/build.ps1 -Package` legge il nuovo output e salva i pacchetti in `bin/packages/<configurazione>`.
-- Verifiche eseguite: build Release e Debug senza avvisi/errori; 181 controlli smoke e 23 gruppi di regressione in Release; otto test della pulizia, inclusi idempotenza, simulazione e protezione delle junction. Nessuna modifica a componenti, porte, GUID o API Straus.
+Le nuove definizioni gPC usano direttamente i record della libreria. Gli adattatori del flusso FEM, il renderer e le preview restano interni a BridGHe per una futura migrazione in libreria.

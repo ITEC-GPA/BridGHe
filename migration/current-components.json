@@ -8492,9 +8492,9 @@
       {
         "name": "Section End",
         "nickname": "SE",
-        "description": "Section on the starting node",
+        "description": "Section at the end; omitted uses Section Start",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Generic Data"
       },
       {
@@ -9310,22 +9310,6 @@
         "access": "item",
         "optional": false,
         "type": "Integer"
-      },
-      {
-        "name": "At Intersections with other elements",
-        "nickname": "I",
-        "description": "If this item is True, no additional output stations are added at the ends of line elements when the frame object is internally meshed. (Only for SAP)",
-        "access": "item",
-        "optional": true,
-        "type": "Boolean"
-      },
-      {
-        "name": "At concentrated load locations",
-        "nickname": "PL",
-        "description": "If this item is True, no additional output stations are added at point load locations (only for SAP)",
-        "access": "item",
-        "optional": true,
-        "type": "Boolean"
       }
     ],
     "outputs": [
@@ -9507,97 +9491,49 @@
       {
         "name": "Beam",
         "nickname": "B",
-        "description": "The beam where to define the beam support",
+        "description": "Beam receiving an additional distributed support",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
-      },
-      {
-        "name": "Spring Type",
-        "nickname": "ST",
-        "description": "The spring type",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
-      },
-      {
-        "name": "Spring Tension Direction",
-        "nickname": "STD",
-        "description": "The spring direction",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
       },
       {
         "name": "Stiffness",
-        "nickname": "Stiff",
-        "description": "The simple spring stiffness per unit length of the frame object",
+        "nickname": "K",
+        "description": "Distributed stiffness [force/length²], positive",
         "access": "item",
-        "optional": true,
+        "optional": false,
         "type": "Number"
       },
       {
-        "name": "Tension Compression",
-        "nickname": "TC",
-        "description": "The spring type",
+        "name": "Direction",
+        "nickname": "D",
+        "description": "Native Straus support side in principal local axes",
         "access": "item",
-        "optional": true,
+        "optional": false,
         "type": "Integer"
       },
       {
-        "name": "Link property",
-        "nickname": "LP",
-        "description": "Link Property",
+        "name": "Compression only",
+        "nickname": "C",
+        "description": "Unilateral contact; requires nonlinear analysis to enforce contact status",
         "access": "item",
         "optional": true,
-        "type": "Generic Data"
+        "type": "Boolean"
       },
       {
-        "name": "Local axis-2 angle",
-        "nickname": "LA2A",
-        "description": "Local axis-2 angle from default",
+        "name": "Gap",
+        "nickname": "G",
+        "description": "Initial gap [length]; positive clearance, negative precompression. Compression-only support required",
         "access": "item",
         "optional": true,
         "type": "Number"
-      },
-      {
-        "name": "Frame Axis",
-        "nickname": "FA",
-        "description": "The frame object local axis that corresponds to the positive local .axis of the spring.",
-        "access": "item",
-        "optional": true,
-        "type": "Integer"
-      },
-      {
-        "name": "Plane 1-2 angle",
-        "nickname": "P12A",
-        "description": "This is the angle in the frame object 1-2 (2-3 for sap) plane measured counter clockwise from the frame positive 2-axis to the spring positive 3-axis (= 1-axis for sap)",
-        "access": "item",
-        "optional": true,
-        "type": "Number"
-      },
-      {
-        "name": "Coordinate system",
-        "nickname": "CS",
-        "description": "Coordinate system",
-        "access": "item",
-        "optional": true,
-        "type": "Integer"
-      },
-      {
-        "name": "Custom vector",
-        "nickname": "V",
-        "description": "Custom direction",
-        "access": "item",
-        "optional": true,
-        "type": "Vector"
       }
     ],
     "outputs": [
       {
         "name": "Beam",
         "nickname": "B",
-        "description": "The modified beam",
+        "description": "Copy of the beam with support",
         "access": "item",
         "optional": false,
         "type": "Generic Data"

@@ -46,7 +46,7 @@ Le sei geometrie BGL parametriche sono rettangolare cava, I, channel, T, angle e
 
 Per BXS/BSL/BGL da libreria specificare `Length unit`: 0 m, 1 cm, 2 mm, 3 ft, 4 in. La stessa unità deve essere usata nel modello; una differenza genera errore. Conservare i file BXS e le librerie per le successive riesportazioni.
 
-Restano `Generic Section` per proprietà assegnate numericamente e le sezioni da geometria della base, esportate mediante BXS. Le sezioni native nuove conservano geometria e proprietà nel modello, ma non hanno ancora l'anteprima solida estrusa; i moduli resistenti elastici non letti dalla chiamata nativa sono `NaN`.
+Restano `Generic Section` per proprietà assegnate numericamente e le sezioni da geometria della base, esportate mediante BXS. Le sezioni native nuove conservano geometria e proprietà nel modello, con contorni e anteprima solida estrusa discretizzata; i moduli resistenti elastici non letti dalla chiamata nativa sono `NaN`.
 
 ## Carichi mobili
 
@@ -82,3 +82,22 @@ Le prove del convertitore sono eseguite; la verifica completa dei segni dopo esp
 I quattro nuovi componenti `Bridge Studs`, `Bridge Intermediate Stiffener`, `Bridge Support Stiffener` e `Bridge Detail Check` si trovano in **BridGHe-Checks / Bridge details**. Le definizioni espongono le opzioni scalari native gPC; l'ultimo componente riceve un risultato BridgeChecks e ricalcola la stessa storia con i dettagli assegnati. Unità degli irrigiditori: **kN**, mm; pioli: mm, MPa. I risultati elencano esplicitamente le unità. Un rapporto NaN indica una verifica non espressa da gPC, non un esito favorevole.
 
 I dettagli non modificano il graticcio FEM. Lo stato limite resta quello del risultato sorgente: nessuna conversione automatica SLS→SLU. Esempi collegati e limiti: [ponti continui e curvi](../examples/bridge-suite/README.md).
+
+
+## Componenti gPC e grafici aggiunti
+
+`Bridge Section Geometry`, `Bridge Rebar Row`, `Bridge Phase` e `Bridge Analysis Options` costruiscono direttamente i record gPC. `Bridge Section Check` accetta fasi attive in ordine, tre tipi di sezione (H, H inclinata, cassone) e dettagli opzionali. Le forze delle fasi sono in **kN**, i momenti in **kNm**, il ritiro in **microstrain**, le geometrie in **mm** e le tensioni in **MPa**. Le azioni devono essere già combinate/fattorizzate per lo stato limite scelto.
+
+`Bridge Shear Results`, `Bridge Stud Results` e `Bridge Verification Results` espongono i risultati nativi. Per i pioli: flusso in N/mm (= kN/m), domanda/resistenza per piolo in kN. I controlli non applicabili o incompleti mantengono stato/avvisi e rapporto NaN. Non vengono trasformati in un esito positivo.
+
+`Bridge Transverse Reinforcement`, `Bridge Fatigue` e `Bridge Box Options` aggiungono i dati richiesti dai controlli gPC; il componente non ricava automaticamente una storia di fatica dal traffico. `Bridge Detail Check` accetta anche opzioni e dettagli aggiuntivi.
+
+`Bridge Shear Plot` e `Bridge Stud Plot`, insieme ai grafici delle azioni e tensioni, accettano un albero `{beam;station}` con le combinazioni nell'ordine del modello. Il percorso del file è opzionale; l'SVG è sempre restituito. Il PNG è rigenerato solo quando cambiano dati o destinazione. Le lacune non vengono unite e i salti alle stazioni non vengono smussati.
+
+## Input semplificati e preview
+
+La sezione finale di `Composite beam` è opzionale e assume quella iniziale. Il materiale delle armature è opzionale quando non vi sono armature attive. I nuovi record gPC hanno input con default e opzionalità esplicita. I componenti preesistenti con valori persistenti usano tali default; gli input fisicamente necessari restano obbligatori. L'inventario runtime delle porte è in `migration/current-components.json`.
+
+La preview del modello comprende nodi, beam, plate e definizioni dei percorsi mobili. Le 21 famiglie parametriche Straus hanno contorni e solidi estrusi discretizzati; la precisione geometrica della preview non sostituisce le proprietà meccaniche native. Materiali, combinazioni, risultati numerici e opzioni non richiedono una geometria autonoma. I percorsi rettilinei mostrano l'asse; quelli curvi/quadratici mostrano i tre punti di definizione: controllare la traiettoria completa in Straus. Le nuove opzioni/sezioni gPC del verificatore sono dati; la geometria del ponte viene mostrata dagli elementi FEM.
+
+`Beam Support`: K nelle unità F/L² del modello, direzioni -1/+1/-2/+2 principali, gap in L. Il comportamento compression-only richiede NLA. Riferimenti e convenzioni: `docs/beam-support-fix.json`.

@@ -1,62 +1,56 @@
 # BridGHe
 
-Plugin Grasshopper per Rhino 8: modello parametrico → Straus7 R3 → risultati negli elementi → BridgeChecks con librerie gPC.
+Plugin Grasshopper per **Rhino 8 / .NET 8 / Windows x64**: modello parametrico → Straus7 R3 → risultati negli elementi → verifiche e dettagli di ponti misti con gPC.
 
-**Esempi 12–15:** [quattro ponti continui e curvi](examples/bridge-suite/README.md), ciascuno con tre contributi meccanici e ritiro longitudinale primario/secondario. Incluse le definizioni dei nuovi componenti gPC per pioli, irrigiditori intermedi e d'appoggio, con controlli di dettaglio nei casi supportati. Le H curve richiedono ancora un verificatore torsionale dedicato.
+La versione corrente comprende **136 componenti e 8 parametri**, con 145 GUID distinti incluso il plugin. Il refactoring del 19 ottobre 2026 semplifica gli input e rimuove i contenitori non utilizzati. I contratti aggiornati sono in [COMPONENTI](docs/COMPONENTI.md); le definizioni Grasshopper degli esempi sono state rigenerate.
 
-**Nuovo esempio completo:** [ponte misto a graticcio](examples/bridge-grillage/README.md), luce 30 m, quattro travi, soletta, tre rigidezze, veicolo mobile e cinque contributi BridgeChecks. Definizione GHX costruita con componenti e risolta realmente: **357 controlli superati**, 240 sezioni elaborate; incluse cinque fasi native di getto separate. [Tavole PDF](examples/bridge-grillage/ponte-graticcio.pdf). La verifica torsionale del traffico eccentrico resta da implementare.
+## Esempi
 
-La versione 0.1.0 è stata collaudata con Rhino 8 e la licenza API Straus7 R3: **10 esempi numerici**, inclusi **5 di costruzione per fasi**, e **21 famiglie di sezioni parametriche**. I dieci file Grasshopper sono stati salvati, riaperti e risolti tramite i componenti reali. Un confronto aggiuntivo verifica cinque contributi di fase BridgeChecks, compresi ritiri imposti. Copertura e limiti sono in [VERIFICHE](docs/VERIFICHE.md).
+- [01–10: casi analitici, carichi mobili e cinque esempi di costruzione per fasi](examples/README.md).
+- [11: ponte misto a graticcio, quattro travi, veicolo mobile e tre rigidezze](examples/bridge-grillage/README.md).
+- [12–15: ponti continui e curvi, tre contributi meccanici più ritiro](examples/bridge-suite/README.md).
+- [16–18: spina centrale H2000 e due laterali H1600, una/tre campate o due campate curve](examples/bridge-suite/README.md#esempi-aggiuntivi-16-18-spina-centrale-e-due-travi-laterali). Tre fasi più ritiro differenziale, 212 controlli superati.
 
-## Contenuto
+I modelli sono esempi riproducibili, con ipotesi, unità, confronti analitici e tolleranze dichiarati. Il percorso automatico dei superelementi H rifiuta torsione e flessione minore fuori campo; il nuovo componente nativo gPC gestisce anche geometrie a cassone e anima inclinata. Non equivale a una verifica completa di ogni ponte.
 
-- Tutti i **16 componenti BridgeChecks**, con porte, ordine, accessi e valori predefiniti mantenuti.
-- Componenti BridGHe conservati per materiali, sezioni, elementi, attributi, carichi, combinazioni, modello, risultati ed esportazione R3.
-- **23 nuovi componenti di sezione Straus**: 15 forme standard, 6 forme BGL parametriche, BXS e librerie BSL/BGL. Restano le sezioni generiche e da geometria già presenti nella base.
-- **10 componenti per carichi mobili**, dall'oggetto di carico al template, percorso, associazione al modello e analisi dei casi statici generati.
-- GUID nuovi per plugin e tutti i componenti/parametri; nessuna dipendenza da SAP, ETABS, form finding o plugin R2.
-- Icone originali per il plugin, tutti i componenti e i parametri, con sorgenti SVG e PNG incorporati.
+## Funzioni
 
-Le diciture storiche di alcune porte, comprese quelle contenenti “BridGHe”, sono intenzionalmente conservate per rispettare il contratto richiesto. I vecchi file Grasshopper non vengono riconnessi automaticamente: i GUID sono nuovi.
+- Nodi, travi, plate, materiali, proprietà, vincoli, carichi, combinazioni e costruzione per fasi; esportazione e analisi Straus7 R3.
+- 23 componenti di sezione Straus: 21 famiglie parametriche, BXS e librerie BSL/BGL; restano le sezioni generiche e da geometria.
+- Carichi mobili: forze, distribuzioni, sorgenti termiche, veicoli, corsie, centrifuga, template, percorsi e analisi dei casi statici generati.
+- Geometrie gPC H, H inclinata e cassone; fasi, armatura, opzioni di verifica, pioli, irrigiditori, armatura trasversale, fatica e dettagli del cassone.
+- Estrazione di tensioni, taglio, flusso di connessione, domanda/resistenza dei pioli ed esiti gPC. Grafici SVG e PNG senza interpolare i campioni.
+- Preview del modello assemblato e delle sezioni native; icone SVG/PNG originali per tutti i componenti.
 
-## Aprire e compilare
+## Compilare e installare
 
-Aprire `BridGHe.sln` con un ambiente .NET che supporti `net8.0-windows`, oppure dalla cartella del progetto:
+Dalla root, con SDK .NET 8 o successivo e Python 3:
 
 ```powershell
-.\tools\build.ps1 -Smoke -Package
+.\tools\build.ps1 -Native -Package
 ```
 
-Requisiti: Windows x64, SDK .NET 8 o successivo, Rhino 8 eseguito con runtime .NET 8, Python 3 per l'audit. Le prove sono state eseguite con SDK 9.0.319 e riferimenti Rhino/Grasshopper `8.27.26019.16021`.
+Le DLL gPC devono essere compilate nei repository fratelli `Utilities`, `Geometry`, `Model` e `Checker`. I riferimenti sono espliciti in [GpcReferences.props](build/GpcReferences.props); `RepositoryRoot` permette una disposizione differente. I sorgenti delle librerie non sono modificati.
 
-Le DLL gPC devono essere già compilate nei repository fratelli `Utilities`, `Geometry`, `Model` e `Checker`. I sette riferimenti sono espliciti in [GpcReferences.props](build/GpcReferences.props); i sorgenti di quei repository non sono modificati. Per una diversa disposizione delle cartelle si può impostare la proprietà MSBuild `RepositoryRoot`.
+Output plugin: `bin/BridGHe.Grasshopper/Release/net8.0-windows/BridGHe.Grasshopper.gha`. Libreria, test, file intermedi e pacchetti sono tutti sotto la `bin` della root. Ogni compilazione elimina automaticamente le vecchie cartelle `bin`/`obj` sparse nel progetto, con controllo dei confini e delle junction. Sono conservati risultati Straus, esempi e dipendenze esterne. Per simulare la pulizia: `tools/clean-builds.ps1 -WhatIf`.
 
-Tutti gli output di compilazione sono nella cartella `bin` della root:
+Chiudere Rhino, estrarre il pacchetto sotto la cartella Libraries di Grasshopper e tenere insieme `.gha` e DLL. Avviare Rhino 8 con .NET 8; categorie `BridGHe` e `BridGHe-Checks`. Le DLL native Straus e Rhino non sono distribuite. La licenza API Straus è necessaria anche per calcolare le sezioni native. Percorso predefinito: `C:\Program Files\Straus7 R31`; in alternativa impostare `BRIDGHE_STRAUS_HOME` prima di avviare Rhino.
 
-- Plugin: `bin/BridGHe.Grasshopper/Release/net8.0-windows/BridGHe.Grasshopper.gha`.
-- Libreria e test: `bin/BridGHe.Common/<configurazione>/net8.0-windows` e `bin/BridGHe.Smoke/<configurazione>/net8.0-windows`.
-- File intermedi e restore NuGet: `bin/obj/<progetto>`.
-- Pacchetti ZIP con dipendenze gestite e manifest SHA-256: `bin/packages/<configurazione>`.
+## Riprodurre le verifiche
 
-Ogni compilazione reale, anche da Visual Studio o con `dotnet build`, elimina automaticamente le vecchie cartelle `bin` e `obj` sparse nel repository e i vecchi pacchetti in `artifacts/packages`. La pulizia preserva gli output correnti nella `bin` della root, i risultati Straus e gli esempi, le cartelle di configurazione (`.git`, `.vs`, `.agents`, `.codex`, `.aws`) e le DLL gPC nei repository fratelli. Si interrompe se un percorso da eliminare contiene link o junction.
+```powershell
+.\tools\build.ps1 -Native -Examples -BridgeGrillage -BridgeSuite -BridgeSpine -Package
+dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --beam-support
+```
 
-Per vedere le eliminazioni previste senza eseguirle: `./tools/clean-builds.ps1 -WhatIf`. Il test riproducibile della pulizia e dei suoi confini è `./tools/test-build-cleanup.ps1`.
+Gli script rigenerano e sovrascrivono gli esempi: salvare separatamente le modifiche manuali. I test Grasshopper usano un server componenti isolato per non caricare i plugin estranei installati nel profilo utente.
 
-## Installazione
+## Documentazione
 
-1. Chiudere Rhino. Estrarre il pacchetto in una sottocartella della cartella Libraries di Grasshopper, accessibile dal menu **File → Special Folders → Components Folder**.
-2. Tenere `.gha` e DLL del pacchetto insieme. Se Windows ha bloccato i file scaricati, rimuovere il blocco dalle proprietà del file ZIP prima di estrarlo.
-3. Avviare Rhino 8 con .NET 8 e aprire Grasshopper. Le categorie sono `BridGHe` e `BridGHe-Checks`.
-4. Per le funzioni native occorre Straus7 R3 x64 con licenza API disponibile. Il percorso predefinito è `C:\Program Files\Straus7 R31`; per altre installazioni impostare `BRIDGHE_STRAUS_HOME` prima di avviare Rhino. La DLL cercata è `Bin64\St7API.dll`.
-
-Il pacchetto non include le DLL native Straus né le DLL Rhino/Grasshopper. Non è stato installato automaticamente nel profilo utente.
-
-## Consultazione
-
-- [Passaggi eseguiti e metodi cambiati](docs/MIGRAZIONE.md).
-- [Uso, sezioni, carichi mobili e convenzioni](docs/USO.md).
-- [Dieci esempi Grasshopper, formule e risultati](examples/README.md).
-- [Controlli eseguiti e limiti della validazione](docs/VERIFICHE.md).
-- [Inventario dei componenti](docs/COMPONENTI.md).
-- [Icone, catalogo e rigenerazione](docs/ICONE.md).
-- `migration/component-map.json`: GUID originali e nuovi; `cleanup-removed.json`: eliminazioni; `port-contract-baseline.json`: firme delle porte per l'audit senza il repository originale.
+- [Metodi cambiati, rimozioni e compatibilità](docs/MIGRAZIONE.md).
+- [Uso e convenzioni](docs/USO.md).
+- [Verifiche eseguite e limiti](docs/VERIFICHE.md).
+- [Catalogo dei componenti e porte attuali](docs/COMPONENTI.md).
+- [Icone e rigenerazione](docs/ICONE.md).
+- [Correzione degli appoggi distribuiti e differenze numeriche](docs/beam-support-fix.json).
+- [Misura dell'ottimizzazione delle letture di taglio](docs/shear-performance.json).

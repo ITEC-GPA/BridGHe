@@ -41,5 +41,20 @@
       "src/BridGHe.Grasshopper/DataTypes/Fem/GH_MixedSection.cs",
       "src/BridGHe.Grasshopper/DataTypes/Fem/GH_MixedSectionBeam.cs"
     ]
-  }
+  },
+  "removedMembers": [
+    {
+      "type": "BeamModel",
+      "member": "SetSurface",
+      "reason": "Private duplicate surface builder; no callers."
+    },
+    {
+      "type": "BeamOutputStationsModel.AttributeData",
+      "members": [
+        "NoOutPutAndDesignAtElementEnds",
+        "NoOutPutAndDesignAtPointLoads"
+      ],
+      "reason": "Not consumed by StrausResultsReader; only MinimumNumberOfStations is used."
+    }
+  ]
 }

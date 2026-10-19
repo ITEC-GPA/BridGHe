@@ -22,9 +22,9 @@
 
 | Nome | Tipo | Ingressi | Uscite |
 |---|---|---|---|
-| Beam Output Stations | component | Beam; OutputStations; At Intersections with other elements; At concentrated load locations | Beam |
+| Beam Output Stations | component | Beam; OutputStations | Beam |
 | Beam Releases | component | Beam; Axial N1; Axial N2; Shear 1 N1; Shear 2 N1; Shear 1 N2; Shear 2 N2; Torsion N1; Torsion N2; Moment 1 N1; Moment 2 N1; Moment 1 N2; Moment 2 N2 | Beam |
-| Beam Support | component | Beam; Spring Type; Spring Tension Direction; Stiffness; Tension Compression; Link property; Local axis-2 angle; Frame Axis; Plane 1-2 angle; Coordinate system; Custom vector | Beam |
+| Beam Support | component | Beam; Stiffness; Direction; Compression only; Gap | Beam |
 | Beam Taper | component | Beam; NFromX; NFromY; NToX; NToY; AlignmentX; AlignmentY | Beam |
 | Element Id | component | Element; ID | Element |
 | Load Patch Type | component | Plate; Type; Edges; Weights | Plate |

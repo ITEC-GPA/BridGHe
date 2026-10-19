@@ -118,7 +118,7 @@ table(510,465,[170,100],["Caso simmetrico","Uz mezzeria"],[("G1 acciaio",f'{r["M
 para(510,325,"Le tre frecce sono contributi indipendenti. Somma meccanica: %.4f mm; non include ritiro." % sum(r[k] for k in ["MidspanSteel","MidspanLong","MidspanLive"]),265)
 table(45,215,[140,110,130],["Mesh lungo X","Uz G4 [mm]","Tipo di carico"],[(str(a["Panels"])+" divisioni",f'{a["Uz"]:.6f}',"Q_ECC") for a in r["Mesh"]])
 para(475,210,"Veicolo didattico: 2 assi da 150 kN, interasse 3 m. 21 divisioni del percorso e 23 posizioni caricate, inclusi ingresso e uscita.",310,11)
-para(475,142,"Massimo |T| sulle travi principali: %.4f kNm. Torsione conservata, NON verificata da BridgeChecks." % (r["Stresses"]["MaxTrafficTorqueNmm"]/1e6),310,11,AMBER)
+para(475,142,"Massimo |T| sulle travi principali: %.4f kNm. Torsione conservata, NON verificata da BridGHe." % (r["Stresses"]["MaxTrafficTorqueNmm"]/1e6),310,11,AMBER)
 label(45,64,"Equilibrio, simmetria, reciprocita, raffinamento e sensibilita GJ verificati nel report JSON.",10,TEAL,True)
 c.showPage()
 
@@ -128,7 +128,7 @@ rows=[]
 for name,s in zip(names,r["Stresses"]["Rows"]):rows.append([name]+[f'{s[k]:+.3f}' for k in ["TopConcrete","BottomConcrete","TopSteel","BottomSteel"]])
 table(40,468,[250,120,120,120,120],["Fase accumulata","Cls superiore","Cls inferiore","Acc. superiore","Acc. inferiore"],rows,32)
 label(40,240,str(len(r["Checks"]))+" controlli superati",19,TEAL,True)
-para(40,215,"Il file GHX viene scritto, riaperto e risolto. Gli spostamenti sono confrontati con i modelli nativi e le tensioni con l'integrazione elastica indipendente della sezione. 240 sezioni attraversano i componenti BridgeChecks.",740,11)
+para(40,215,"Il file GHX viene scritto, riaperto e risolto. Gli spostamenti sono confrontati con i modelli nativi e le tensioni con l'integrazione elastica indipendente della sezione. 240 sezioni attraversano i componenti BridGHe.",740,11)
 para(40,153,"Cinque fasi native di getto (20-40-60-80-100% di G1) sono testate separatamente. I risultati totali di queste fasi NON sono sommati nel merge dei contributi elastici.",740,11)
 para(40,104,"Non costituisce verifica completa del ponte: restano torsione, instabilita, connettori, soletta locale e armature, fatica, appoggi, reologia globale e combinazioni normative. TauB non disponibile. Dati, ipotesi, formule e limiti sono descritti nel README dell'esempio.",740,10,AMBER)
 c.save()
