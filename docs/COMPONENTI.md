@@ -32,7 +32,7 @@
 | Angle Section | component | Width; Flange thickness; Height; Web thickness; Double Sections; Gap | Section |
 | Brep Section | component | Breps | Section |
 | C Section | component | Width; Flange thickness; Height; Web thickness; Double Section; Gap | Section |
-| Concrete Slab Section | component | Height; Width; Rebar area; Top concrete cover | Concrete Slab |
+| Concrete Slab Section | component | Height; Width; Rebar area; Top concrete cover; Bottom rebar area; Bottom concrete cover | Concrete Slab |
 | Generic Section | component | Area; Second moment 1; Second moment 2; Torsion constant; Shear L1; Shear L2; Shear A1; Shear A2; Bending modulus 1; Bending modulus 2; Offset 1; Offset 2; Angle | Section |
 | Hollow Circle | component | Diameter; Thickness | Section |
 | Hollow Rect | component | Height; Base; Horizontal Thickness; Vertical Thickness | Section |

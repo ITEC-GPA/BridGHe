@@ -11,7 +11,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         /// Initializes a new instance of the BeamSectionConcreteSlabComponent class.
         /// </summary>
         public BeamSectionConcreteSlabComponent()
-          : base("Concrete Slab Section", "S", "Defines an concrete slab section", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_SECTIONS)
+          : base("Concrete Slab Section", "Slab", "Concrete slab with independent top and bottom reinforcement rows. Dimensions mm, total row areas mm²; covers are measured to bar axes.", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_SECTIONS)
         {
         }
 
@@ -22,8 +22,11 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         {
             pManager.AddNumberParameter("Height", "H", "The section height", GH_ParamAccess.item);
             pManager.AddNumberParameter("Width", "W", "The section width", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Rebar area", "RA", "The rebar area", GH_ParamAccess.item, 0);
-            pManager.AddNumberParameter("Top concrete cover", "TCC", "The concrete cover from the top of the slab", GH_ParamAccess.item, 50);
+            pManager.AddNumberParameter("Rebar area", "RA", "Total TOP row area over the slab width [mm²]. Zero disables this row.", GH_ParamAccess.item, 0);
+            pManager.AddNumberParameter("Top concrete cover", "TCC", "Distance from the top face to the TOP bar axes [mm], not clear cover", GH_ParamAccess.item, 50);
+            pManager.AddNumberParameter("Bottom rebar area", "BRA", "Total BOTTOM row area over the slab width [mm²]. Zero disables this row.", GH_ParamAccess.item, 0);
+            pManager.AddNumberParameter("Bottom concrete cover", "BCC", "Distance from the bottom face to the BOTTOM bar axes [mm], not clear cover", GH_ParamAccess.item, 50);
+            for (int i = 2; i < pManager.ParamCount; i++) pManager[i].Optional = true;
         }
 
         /// <summary>
@@ -43,18 +46,25 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             double height = 0;
             double width = 0;
             double topArea = 0;
-            double topCover = 0;
+            double topCover = 50;
+            double bottomArea = 0;
+            double bottomCover = 50;
 
             if (!DA.GetData(0, ref height))
                 return;
             if (!DA.GetData(1, ref width))
                 return;
-            if (!DA.GetData(2, ref topArea))
-                return;
-            if (!DA.GetData(3, ref topCover))
-                return;
+            DA.GetData(2, ref topArea);
+            DA.GetData(3, ref topCover);
+            DA.GetData(4, ref bottomArea);
+            DA.GetData(5, ref bottomCover);
 
-            SectionConcreteSlabModel sectionConcreteSlabModel = new SectionConcreteSlabModel(height, width, topArea, topCover);
+            var sectionConcreteSlabModel = new SectionConcreteSlabModel(height, width, topArea, topCover, bottomArea, bottomCover);
+            if (!sectionConcreteSlabModel.IsValid)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Use finite positive dimensions and nonnegative areas. Active row axes must lie inside the slab; the top row must be above the bottom row.");
+                return;
+            }
 
             DA.SetData(0, sectionConcreteSlabModel);
         }

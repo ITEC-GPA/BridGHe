@@ -67,3 +67,7 @@ Gli script rigenerano e sovrascrivono gli esempi: salvare separatamente le modif
 - [Misura dell'ottimizzazione delle letture di taglio](docs/shear-performance.json).
 
 Organizzazione delle palette e componenti non presenti negli esempi: [audit di utilizzo](docs/USO-COMPONENTI.md). Sezioni in `03-Sections`, appoggi in `07-Attributes`, tutti i carichi in `09-Loads`.
+# Soletta con due file di armatura
+
+`Concrete Slab Section` conserva i primi quattro input e aggiunge `Bottom rebar area` e `Bottom concrete cover`. Le aree sono totali sulla larghezza della soletta, in mm²; le distanze sono misurate dalla faccia della soletta all'asse delle barre, in mm. Area zero disattiva la fila. Gli archivi precedenti mantengono la sola fila superiore. Le due file entrano nelle proprietà omogeneizzate e nel verificatore gPC, con interpolazione di area e posizione lungo le travi a sezione variabile.
+

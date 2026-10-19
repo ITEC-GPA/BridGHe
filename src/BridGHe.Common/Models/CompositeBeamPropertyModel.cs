@@ -44,7 +44,7 @@ namespace BridGHe.Common.Models
 
         public bool ConsiderRebar { get => _considerRebar; set => _considerRebar = value; }
 
-        public override bool IsValid => _steelSection != null && _concreteSection != null
+        public override bool IsValid => _steelSection != null && _concreteSection != null && _concreteSection.IsValid
             && _steelMaterial != null && _concreteMaterial != null && _rebarMaterial != null;
 
         #endregion
@@ -147,6 +147,7 @@ namespace BridGHe.Common.Models
 
         public ReinforcedConcreteSection GetReinforcedConcreteSection()
         {
+            if (_concreteSection?.IsValid != true) throw new ArgumentException("Invalid concrete slab or reinforcement rows.");
             double bfw = _steelSection.B1;       // bottom flange width
             double tfw = _steelSection.B2;       // top flange width
             double h = _steelSection.D;          // heigth
@@ -177,9 +178,10 @@ namespace BridGHe.Common.Models
             double rebarDiameterTop = Math.Sqrt(topRebarsAreaTot * 4 / Math.PI);
 
             RebarSectionCircular rebarTop = rebarDiameterTop != 0 ? new RebarSectionCircular("", rebarDiameterTop, rebarMaterial) : null;
-            RebarSectionCircular rebarBottom = null;
+            double rebarDiameterBottom = Math.Sqrt(_concreteSection.BottomRebarArea * 4 / Math.PI);
+            RebarSectionCircular rebarBottom = rebarDiameterBottom != 0 ? new RebarSectionCircular("", rebarDiameterBottom, rebarMaterial) : null;
             ReinforcedConcreteSection reinforcedConcreteSection = BridGHe.Common.Checks.CompositeSectionFactory.Create(b, hh, concreteMaterialEN1992, rebarTop, b / 1.0,
-                topRebarsCover, rebarBottom, b / 1.0, sectionH, steelMaterialEN1992, topRebarsCover, verticalOffset, Name);
+                topRebarsCover, rebarBottom, b / 1.0, sectionH, steelMaterialEN1992, _concreteSection.BottomCover, verticalOffset, Name);
             return reinforcedConcreteSection;
         }
 

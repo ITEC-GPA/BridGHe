@@ -154,6 +154,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                         double start_b = beam.Value.StartBeamProperty.ConcreteSection.Width;       // base
                         double start_topRebarsAreaTot = beam.Value.StartBeamProperty.ConcreteSection.TopRebarArea;
                         double start_topRebarsCover = beam.Value.StartBeamProperty.ConcreteSection.TopCover;
+                        double start_bottomRebarsAreaTot = beam.Value.StartBeamProperty.ConcreteSection.BottomRebarArea;
+                        double start_bottomRebarsCover = beam.Value.StartBeamProperty.ConcreteSection.BottomCover;
 
                         double start_verticalOffset = beam.Value.StartBeamProperty.VerticalOffset;
                         double start_NInst = beam.Value.StartBeamProperty.NInstant;
@@ -176,6 +178,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                         double end_b = beam.Value.EndBeamProperty.ConcreteSection.Width;       // base
                         double end_topRebarsAreaTot = beam.Value.EndBeamProperty.ConcreteSection.TopRebarArea;
                         double end_topRebarsCover = beam.Value.EndBeamProperty.ConcreteSection.TopCover;
+                        double end_bottomRebarsAreaTot = beam.Value.EndBeamProperty.ConcreteSection.BottomRebarArea;
+                        double end_bottomRebarsCover = beam.Value.EndBeamProperty.ConcreteSection.BottomCover;
 
                         double end_verticalOffset = beam.Value.EndBeamProperty.VerticalOffset;
                         double end_NInst = beam.Value.EndBeamProperty.NInstant;
@@ -193,6 +197,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                         if (start_bfw == end_bfw && start_tfw == end_tfw && start_h == end_h && start_bft == end_bft && start_tft == end_tft && start_wt == end_wt)
                         {
                             if (start_hh == end_hh && start_b == end_b && start_topRebarsAreaTot == end_topRebarsAreaTot && start_topRebarsCover == end_topRebarsCover &&
+                    start_bottomRebarsAreaTot == end_bottomRebarsAreaTot && start_bottomRebarsCover == end_bottomRebarsCover &&
                                 start_verticalOffset == end_verticalOffset && start_NInst == end_NInst && start_NInf == end_NInf)
                             {
                                 if (start_concreteModel == end_concreteModel && start_steelModel == end_steelModel && start_rebarModel == end_rebarModel)
@@ -227,14 +232,15 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                                 double rebarDiameterTop = Math.Sqrt(rebarAreaTop * 4 / Math.PI);
 
                                 RebarSectionCircular rebarTop = rebarDiameterTop != 0 ? new RebarSectionCircular("", rebarDiameterTop, rebarMaterial) : null;
-                                RebarSectionCircular rebarBottom = null;
+                                double rebarDiameterBottom = Math.Sqrt(start_bottomRebarsAreaTot / numberRebars * 4 / Math.PI);
+                                RebarSectionCircular rebarBottom = rebarDiameterBottom != 0 ? new RebarSectionCircular("", rebarDiameterBottom, rebarMaterial) : null;
 
 
                                 double phiInfinite = CalculateHomogenizedFactorPhi(homogenizedFactorInfinite, steelMaterialEN1992, concreteMaterialEN1992);
                                 double phiInstant = CalculateHomogenizedFactorPhi(homogenizedFactorInstant, steelMaterialEN1992, concreteMaterialEN1992);
 
                                 ReinforcedConcreteSection reinforcedConcreteSection = BridGHe.Common.Checks.CompositeSectionFactory.Create(start_b, start_hh, concreteMaterialEN1992, rebarTop, start_b / numberRebars,
-                                    start_topRebarsCover, rebarBottom, start_b / numberRebars, sectionH, steelMaterialEN1992, start_topRebarsCover, start_verticalOffset, beam.Value.StartBeamProperty.Name);
+                                    start_topRebarsCover, rebarBottom, start_b / numberRebars, sectionH, steelMaterialEN1992, start_bottomRebarsCover, start_verticalOffset, beam.Value.StartBeamProperty.Name);
 
                                 CoordinateSystem cs = GetCoordinateSystem(reinforcedConcreteSection);
 
@@ -293,14 +299,17 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                                 double rebarDiameter = Math.Sqrt(rebarArea * 4 / Math.PI);
 
                                 RebarSectionCircular rebarTop = rebarDiameter != 0 ? new RebarSectionCircular("", rebarDiameter, rebarMaterial) : null;
-                                RebarSectionCircular rebarBottom = null;
+                                double bottomArea = Interpolation.GetLinearInterpolation(0, 1, start_bottomRebarsAreaTot, end_bottomRebarsAreaTot, currentStation);
+                                double bottomCover = Interpolation.GetLinearInterpolation(0, 1, start_bottomRebarsCover, end_bottomRebarsCover, currentStation);
+                                double rebarDiameterBottom = Math.Sqrt(bottomArea / numberRebars * 4 / Math.PI);
+                                RebarSectionCircular rebarBottom = rebarDiameterBottom != 0 ? new RebarSectionCircular("", rebarDiameterBottom, rebarMaterial) : null;
 
 
                                 double phiInfinite = CalculateHomogenizedFactorPhi(nInfinite, steelMaterialEN1992, concreteMaterialEN1992);
                                 double phiInstant = CalculateHomogenizedFactorPhi(nInstant, steelMaterialEN1992, concreteMaterialEN1992);
 
                                 ReinforcedConcreteSection reinforcedConcreteSection = BridGHe.Common.Checks.CompositeSectionFactory.Create(width, slabHeight, concreteMaterialEN1992, rebarTop, width / numberRebars,
-                                    cover, rebarBottom, width / numberRebars, sectionH, steelMaterialEN1992, cover, offset, beam.Value.StartBeamProperty.Name);
+                                    cover, rebarBottom, width / numberRebars, sectionH, steelMaterialEN1992, bottomCover, offset, beam.Value.StartBeamProperty.Name);
 
                                 CoordinateSystem cs = GetCoordinateSystem(reinforcedConcreteSection);
 

@@ -324,7 +324,9 @@
       "guid": "1a539226-24ae-4d3f-8075-4f54cd1b9f68",
       "panel": "03-Sections",
       "examples": [],
-      "namedInTestSources": []
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/SlabReinforcementTests.cs"
+      ]
     },
     {
       "name": "Creep And Shrinkage Concrete",
@@ -367,7 +369,8 @@
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
-        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
+        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs",
+        "tests/BridGHe.Smoke/SlabReinforcementTests.cs"
       ]
     },
     {

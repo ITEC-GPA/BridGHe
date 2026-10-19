@@ -7852,10 +7852,10 @@
     "guid": "1a539226-24ae-4d3f-8075-4f54cd1b9f68",
     "kind": "component",
     "name": "Concrete Slab Section",
-    "nickname": "S",
+    "nickname": "Slab",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Defines an concrete slab section",
+    "description": "Concrete slab with independent top and bottom reinforcement rows. Dimensions mm, total row areas mm²; covers are measured to bar axes.",
     "inputs": [
       {
         "name": "Height",
@@ -7876,17 +7876,33 @@
       {
         "name": "Rebar area",
         "nickname": "RA",
-        "description": "The rebar area",
+        "description": "Total TOP row area over the slab width [mm²]. Zero disables this row.",
         "access": "item",
-        "optional": false,
+        "optional": true,
         "type": "Number"
       },
       {
         "name": "Top concrete cover",
         "nickname": "TCC",
-        "description": "The concrete cover from the top of the slab",
+        "description": "Distance from the top face to the TOP bar axes [mm], not clear cover",
         "access": "item",
-        "optional": false,
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Bottom rebar area",
+        "nickname": "BRA",
+        "description": "Total BOTTOM row area over the slab width [mm²]. Zero disables this row.",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Bottom concrete cover",
+        "nickname": "BCC",
+        "description": "Distance from the bottom face to the BOTTOM bar axes [mm], not clear cover",
+        "access": "item",
+        "optional": true,
         "type": "Number"
       }
     ],

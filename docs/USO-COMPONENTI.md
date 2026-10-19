@@ -27,7 +27,7 @@ I riferimenti per nome nei sorgenti dei test indicano un uso esplicito; non sono
 | Composite Geometric Property | 05-Properties | No |
 | Composite Section Linear Tension Analysis | 10-Checks | No |
 | Composite Section Self Tension | 10-Checks | No |
-| Concrete Slab Section | 03-Sections | No |
+| Concrete Slab Section | 03-Sections | Sì |
 | Creep And Shrinkage Concrete | 08-Bridge | No |
 | Section Force | 08-Bridge | No |
 | Section H Beam Property | 03-Sections | No |

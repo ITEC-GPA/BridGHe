@@ -88,7 +88,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             var slab = (concreteSection as GH_Goo<object>)?.Value as SectionConcreteSlabModel;
             if (slab == null || !slab.IsValid || steelSection?.Value == null || steelMaterial?.Value == null || concreteMaterial?.Value == null)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid slab, steel section or materials."); return; }
-            if (slab.TopRebarArea > 0 && rebarMaterial?.Value == null)
+            if (slab.TotalRebarArea > 0 && rebarMaterial?.Value == null)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Reinforcement material is required when reinforcement area is positive."); return; }
 
             CompositeBeamPropertyModel compositeBeamPropertyModel = new CompositeBeamPropertyModel()
