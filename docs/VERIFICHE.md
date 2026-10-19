@@ -7,9 +7,9 @@ Ambiente effettivo: Windows x64, Rhino 8.35 avviato con Rhino.Inside, runtime .N
 | Prova | Esito | Evidenza riproducibile |
 |---|---|---|
 | Build Release | 0 errori, 0 avvisi | `tools/build.ps1` |
-| Smoke Release attuale | 186 controlli superati | `tools/build.ps1 -Smoke -Package` |
+| Smoke Release attuale | 187 controlli superati | `tools/build.ps1 -Smoke` |
 | Famiglie di sezioni native | 21 famiglie Straus superate | `artifacts/straus-license-check.log` |
-| Regressioni | 35 gruppi superati | `--regression all` |
+| Regressioni | 36 gruppi superati | `--regression all` |
 | Baseline numerica prima/dopo | 238 valori su 14 casi, tutti esattamente uguali | `bridge-numerical-baseline`, fixture versionata; tolleranza 1e-12 |
 | Dieci esempi Straus | 121 misure, nessun fallimento | `examples/validation/native.json` |
 | Dieci esempi Grasshopper | 111 misure, nessun fallimento | `examples/validation/grasshopper.json` |
@@ -81,3 +81,10 @@ La correzione di `BeamSupport` cambia i modelli interessati dall'esportazione er
 Restano verifiche di progetto specifiche: torsione/warping e flessione minore delle H nel percorso automatico dei superelementi; soletta fessurata nelle zone negative; shear lag; storia reologica evolutiva; connessione deformabile e trasferimenti di estremità; fatica con spettro di traffico; instabilità globale; soletta locale e armature; dispositivi di appoggio; inviluppi normativi e azioni orizzontali. I nuovi input gPC per fatica, armatura trasversale e cassone espongono la capacità della libreria, ma non derivano automaticamente le azioni richieste dal modello globale.
 
 I carichi mobili sono analizzati come posizioni statiche discrete; non è implementato un inviluppo completo mediante superfici d'influenza. Le sorgenti termiche vengono esportate, ma non sono oggetto del collaudo strutturale. Il traffico uniforme degli esempi 12–18 è dimostrativo, non un modello normativo LM1.
+## Asse dei grafici e matching del ritiro — 19 ottobre 2026
+
+Verifica sulla copia pulita del commit `8b2effc`: compilazione Release senza avvisi/errori, audit dei contratti superato, **187 smoke check e 36 gruppi di regressione** superati; **238 valori di baseline esattamente invariati**. Inclusi tacche ancorate allo zero con passi 1–2–5, SVG/PNG e preview GH, Value List dell'ultima fase alimentata dai casi FEM, distinzione fra forze e deformazioni imposte, serializzazione della sezione mista con i due ordini degli input e conservazione dei GUID delle porte.
+
+Sul GHX utente corretto in `19-flusso-acciaio-misto_REV002.ghx`: **12 beam, 6 casi, 5 combinazioni, 275 risultati**; **223 campioni FEM** conservati dal merge con differenza massima zero sulle sei componenti. Il modello Straus del ritiro è stato ricalcolato con n = 12 e la cache aggiornata, poi il file finale è stato riaperto e verificato fino ai grafici. Le combinazioni XLSX sono state internalizzate nel solo processo di test, senza automazione Excel/TT Toolbox. Il foglio consegnato resta identico all'originale e non contiene il caso `4-RITIRO_FEM`: questo contributo non entra nelle cinque combinazioni.
+
+Dettagli e differenze numeriche: [README REV002](../examples/19-flusso-acciaio-misto/README_REV002.md) e [report](../examples/19-flusso-acciaio-misto/validation_REV002.json). Gli altri cambiamenti locali preesistenti ai due componenti non sono inclusi nei commit di questa verifica.
