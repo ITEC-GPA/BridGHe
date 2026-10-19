@@ -34,8 +34,36 @@ internal static class PlotTests
             throw new Exception("Envelope extrema must preserve positive minima and global values.");
         using(var bitmap=engineering.Png())bitmap.Save("artifacts/plots/engineering.png",System.Drawing.Imaging.ImageFormat.Png);
         File.WriteAllText("artifacts/plots/engineering.svg",engineering.Svg());
+        RoundedAxis();
         Components();
         Console.WriteLine("PLOT: gaps, jumps, Unicode, escaping, culture, single point and unavailable results verified.");
+    }
+
+    private static void RoundedAxis()
+    {
+        XNamespace ns="http://www.w3.org/2000/svg";
+        foreach(var (minimum,maximum,expectedStep) in new[]{
+            (0.0,14.754,5.0),(-14.754,0.0,5.0),(-14.754,14.754,10.0),
+            (-22.0,61.0,20.0),(-90.0,120.0,50.0),
+            (-.000022,.000061,.00002),(-9e19,12e19,5e19),(0.0,0.0,.2)})
+        {
+            var plot=new BridgePlot("Rounded axis","x","y",new[]{new PlotSeries("Q",new[]{new PlotPoint(0,minimum),new PlotPoint(1,maximum)})});
+            var xml=XDocument.Parse(plot.Svg());
+            var labels=xml.Descendants(ns+"text").Where(e=>(string)e.Attribute("x")=="98").ToArray();
+            var ticks=labels.Select(e=>double.Parse(e.Value,System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+            if(ticks.Length<3||ticks.Length>8||labels.Count(e=>e.Value=="0")!=1)
+                throw new Exception("Ordinate axis must have readable ticks and exactly one literal zero.");
+            for(int i=1;i<ticks.Length;i++)
+                if(Math.Abs((ticks[i]-ticks[i-1])/expectedStep-1)>1e-12)
+                    throw new Exception($"Unexpected ordinate tick interval for [{minimum}, {maximum}].");
+            var zero=xml.Descendants(ns+"path").Single(e=>(string)e.Attribute("class")=="zero-axis");
+            double zeroY=double.Parse(labels.Single(e=>e.Value=="0").Attribute("y").Value,System.Globalization.CultureInfo.InvariantCulture)-5;
+            if(!zero.Attribute("d").Value.StartsWith("M110,"+zeroY.ToString("0.######",System.Globalization.CultureInfo.InvariantCulture)+"H"))
+                throw new Exception("Zero label must be aligned with the zero grid line.");
+            if(plot.Series[0].Points[0].Y!=minimum||plot.Series[0].Points[1].Y!=maximum)
+                throw new Exception("Axis rounding changed original results.");
+        }
+        Console.WriteLine("PLOT AXIS: zero, 5/10/20/50 steps, both signs, small/large values and zero-only data verified.");
     }
 
     private static void Components()

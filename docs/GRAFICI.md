@@ -19,6 +19,8 @@ Le conversioni delle azioni sono le stesse: N e tagli in kN; torsione e momenti 
 
 La fascia grigia comprende tutte le combinazioni del modello, anche quando `Combinations` seleziona poche curve. `Show Min/Max Combo` aggiunge le combinazioni che governano gli estremi globali. Le uscite `Minimum` e `Maximum` mantengono il significato BridGHe: estremi delle curve selezionate, escluse le rette di riferimento. Per questo possono differire dai valori annotati sull'inviluppo globale.
 
+L'asse verticale ha tacche ancorate allo zero, con passi della serie 1–2–5 per potenze di dieci: ad esempio 5, 10, 20, 50, oppure 0.005 per valori piccoli. Lo zero ha sempre la propria etichetta sulla linea di riferimento. Il passo dipende dall'ampiezza dei risultati: un massimo di 14.754 può avere tacche 0, 5, 10, 15. SVG, PNG e preview usano la stessa griglia; campioni, inviluppo, annotazioni degli estremi e uscite numeriche conservano i valori originali.
+
 Sono mantenute le correzioni numeriche già introdotte: nessun minimo fittizio pari a zero per risultati tutti positivi, stazioni ordinate, nessuno spostamento artificiale di 1 mm all'estremità, nessun collegamento attraverso dati mancanti o tra elementi. I tratti rettilinei collegano i campioni disponibili senza spline o smoothing. La fascia non è un inviluppo analitico continuo fra le stazioni né un nuovo inviluppo normativo.
 
 Verifica riproducibile: `dotnet run --project tests/BridGHe.Smoke -c Release -- --regression bridge-plots`. Comprende conversioni, selezione delle combinazioni, inviluppo globale, lacune, salti, campione singolo, XML/Unicode e cultura numerica italiana.

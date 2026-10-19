@@ -25,6 +25,7 @@ public sealed class BridgePlot
     public IReadOnlyList<double> ElementBoundaries { get; }
     private readonly string[] names;
     private readonly double xmin, xmax, ymin, ymax;
+    private readonly double[] yTicks;
     private const int Width=1500, PlotHeight=680, Left=110, Right=35, Top=80, Bottom=65;
     private int Height => PlotHeight + 64 + 24 * ((names.Length + 2) / 3);
     private static string N(double value) => value.ToString("0.######",CultureInfo.InvariantCulture);
@@ -53,6 +54,18 @@ public sealed class BridgePlot
         if(xmin==xmax){xmin-=.5;xmax+=.5;}
         if(ymin==ymax){ymin-=.5;ymax+=.5;}
         double margin=(ymax-ymin)*.06;ymin-=margin;ymax+=margin;
+        yTicks=RoundedTicks(ymin,ymax);
+    }
+    // Anchor the grid to zero and use 1/2/5 decades (5, 10, 20, 50, ...).
+    // Only the tick positions are rounded; bounds, samples and extrema stay unchanged.
+    private static double[] RoundedTicks(double minimum,double maximum)
+    {
+        double target=(maximum-minimum)/6;
+        double decade=Math.Pow(10,Math.Floor(Math.Log10(target)));
+        double fraction=target/decade;
+        double step=(fraction<=1?1:fraction<=2?2:fraction<=5?5:10)*decade;
+        int first=(int)Math.Ceiling(minimum/step),last=(int)Math.Floor(maximum/step);
+        return Enumerable.Range(first,last-first+1).Select(i=>i==0?0:i*step).ToArray();
     }
     private float X(double x)=>(float)(Left+(x-xmin)/(xmax-xmin)*(Width-Left-Right));
     private float Y(double y)=>(float)(Top+(ymax-y)/(ymax-ymin)*(PlotHeight-Top-Bottom));
@@ -99,12 +112,15 @@ public sealed class BridgePlot
                     ("fill","#e3e6e8"),("stroke","#a4adb3"),("stroke-width","1"));
             for(int i=0;i<=5;i++)
             {
-                double x=xmin+(xmax-xmin)*i/5,y=ymin+(ymax-ymin)*i/5;
-                Element("path",("d",$"M{N(X(x))},{Top}V{PlotHeight-Bottom} M{Left},{N(Y(y))}H{Width-Right}"),("stroke","#e1e8eb"),("fill","none"));
+                double x=xmin+(xmax-xmin)*i/5;
+                Element("path",("d",$"M{N(X(x))},{Top}V{PlotHeight-Bottom}"),("stroke","#e1e8eb"),("fill","none"));
                 Label(X(x),PlotHeight-Bottom+25,x.ToString("G5",CultureInfo.InvariantCulture),"middle");
+            }
+            foreach(double y in yTicks)
+            {
+                Element("path",("class",y==0?"zero-axis":"y-grid"),("d",$"M{Left},{N(Y(y))}H{Width-Right}"),("stroke",y==0?"#8396a0":"#e1e8eb"));
                 Label(Left-12,Y(y)+5,y.ToString("G5",CultureInfo.InvariantCulture),"end");
             }
-            Element("path",("d",$"M{Left},{N(Y(0))}H{Width-Right}"),("stroke","#8396a0"));
             foreach(double station in ElementBoundaries)
             {
                 Element("path",("class","element-boundary"),("d",$"M{N(X(station))},{Top}V{PlotHeight-Bottom}"),("stroke","#81919b"),("stroke-dasharray","4 5"));
@@ -160,10 +176,16 @@ public sealed class BridgePlot
             }
             for(int i=0;i<=5;i++)
             {
-                double x=xmin+(xmax-xmin)*i/5,y=ymin+(ymax-ymin)*i/5;
-                g.DrawLine(grid,X(x),Top,X(x),PlotHeight-Bottom);g.DrawLine(grid,Left,Y(y),Width-Right,Y(y));
+                double x=xmin+(xmax-xmin)*i/5;
+                g.DrawLine(grid,X(x),Top,X(x),PlotHeight-Bottom);
                 g.DrawString(x.ToString("G5",CultureInfo.InvariantCulture),font,ink,X(x)-15,PlotHeight-Bottom+8);
-                g.DrawString(y.ToString("G5",CultureInfo.InvariantCulture),font,ink,8,Y(y)-10);
+            }
+            using var zeroPen=new Pen(Color.FromArgb(131,150,160));
+            using var tickFormat=new StringFormat{Alignment=StringAlignment.Far,LineAlignment=StringAlignment.Center};
+            foreach(double y in yTicks)
+            {
+                g.DrawLine(y==0?zeroPen:grid,Left,Y(y),Width-Right,Y(y));
+                g.DrawString(y.ToString("G5",CultureInfo.InvariantCulture),font,ink,Left-12,Y(y),tickFormat);
             }
             g.DrawString(YLabel,font,ink,Left,52);g.DrawString(XLabel,font,ink,Width/2,PlotHeight-30);
             using var boundaryPen=new Pen(Color.FromArgb(129,145,155)){DashStyle=DashStyle.Dash};
@@ -172,7 +194,6 @@ public sealed class BridgePlot
                 g.DrawLine(boundaryPen,X(station),Top,X(station),PlotHeight-Bottom);
                 g.DrawString(station.ToString("G5",CultureInfo.InvariantCulture),font,ink,X(station)-15,PlotHeight-Bottom+28);
             }
-            using var zeroPen=new Pen(Color.FromArgb(131,150,160));g.DrawLine(zeroPen,Left,Y(0),Width-Right,Y(0));
             foreach(var s in Series)
             {
                 using var pen=new Pen(ColorTranslator.FromHtml(ColorFor(s.Name)),2);PointF? previous=null;
