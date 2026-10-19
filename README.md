@@ -2,7 +2,7 @@
 
 Plugin Grasshopper per **Rhino 8 / .NET 8 / Windows x64**: modello parametrico → Straus7 R3 → risultati negli elementi → verifiche e dettagli di ponti misti con gPC.
 
-La versione corrente comprende **136 componenti e 8 parametri**, con 142 GUID distinti incluso il plugin. Il refactoring del 19 ottobre 2026 semplifica gli input e rimuove i contenitori non utilizzati. I contratti aggiornati sono in [COMPONENTI](docs/COMPONENTI.md); le definizioni Grasshopper degli esempi sono state rigenerate.
+La versione corrente comprende **137 componenti e 8 parametri**, con 142 GUID distinti incluso il plugin. Il refactoring del 19 ottobre 2026 semplifica gli input e rimuove i contenitori non utilizzati. I contratti aggiornati sono in [COMPONENTI](docs/COMPONENTI.md); le definizioni Grasshopper degli esempi sono state rigenerate.
 
 ## Esempi
 
@@ -67,13 +67,17 @@ Gli script rigenerano e sovrascrivono gli esempi: salvare separatamente le modif
 - [Misura dell'ottimizzazione delle letture di taglio](docs/shear-performance.json).
 
 Organizzazione delle palette e componenti non presenti negli esempi: [audit di utilizzo](docs/USO-COMPONENTI.md). Sezioni in `03-Sections`, appoggi in `07-Attributes`, tutti i carichi in `09-Loads`.
-# Soletta con due file di armatura
+
+## Soletta con due file di armatura
 
 `Concrete Slab Section` conserva i primi quattro input e aggiunge `Bottom rebar area` e `Bottom concrete cover`. Le aree sono totali sulla larghezza della soletta, in mm²; le distanze sono misurate dalla faccia della soletta all'asse delle barre, in mm. Area zero disattiva la fila. Gli archivi precedenti mantengono la sola fila superiore. Le due file entrano nelle proprietà omogeneizzate e nel verificatore gPC, con interpolazione di area e posizione lungo le travi a sezione variabile.
-
 
 ## Visualizzazione
 
 Il menu **BridGHe → Visualizzazione…** e il componente **BridGHe Panel** aprono le preferenze persistenti. Sono disponibili geometria FEM, sezioni fisiche, superfici, armature schematiche, carichi, appoggi, svincoli, assi locali, etichette, scala dei simboli e filtro per nome esatto del caso. **Display Settings → Preview BridGHe Model**, nel gruppo **15-Preview**, applica opzioni locali; disattivare la preview automatica globale per evitare sovrapposizioni con gli output a monte. L'interruttore generale continua a controllare tutte le preview.
 
 Le proprietà omogeneizzate conservano acciaio e soletta nella preview delle beam dopo l'override. Le armature sono rappresentate con tre linee schematiche per fila attiva: gli input definiscono aree totali, non una distinta ferri. I test verificano i solidi Rhino, gli archivi, le opzioni locali e l'assenza di modifiche ai dati FEM. La cattura della viewport GPU nel processo Rhino nascosto restituisce un errore nativo su questa macchina; la prova visuale interattiva rimane da eseguire in Rhino. Il comando diagnostico `--regression display-settings --preview-capture` è separato dai test geometrici.
+
+## Esempio del flusso acciaio → misto
+
+[Guida all'esempio 19](examples/19-flusso-acciaio-misto/README.md): un unico modello acciaio, override con proprietà generiche n∞, n0 e n ritiro, quattro analisi Straus, merge ordinato con matching dei casi e verifica gPC. Il GHX conserva i risultati nativi già calcolati; premere Run sul merge e sul verificatore. La sezione mista aggiunge l'input opzionale `n ritiro` (omesso = n∞) e la relativa uscita; i primi dieci input e le prime quattro uscite mantengono ordine e GUID. `Build BridGHe Model` aggiunge in coda la selezione dei casi FEM di ritiro. Le due file di armatura sono incluse in proprietà e tensioni.

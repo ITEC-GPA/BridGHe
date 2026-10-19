@@ -1,6 +1,6 @@
 # Icone BridGHe
 
-Sistema grafico originale per il plugin, i 136 componenti e gli 8 parametri Grasshopper. Le icone sono risorse incorporate nel `.gha`: non richiedono file esterni durante l'uso. Il catalogo segue i componenti effettivamente registrati.
+Sistema grafico originale per il plugin, i 137 componenti e gli 8 parametri Grasshopper. Le icone sono risorse incorporate nel `.gha`: non richiedono file esterni durante l'uso. Il catalogo segue i componenti effettivamente registrati.
 
 ![Anteprima](../assets/icons/preview.png)
 
@@ -24,7 +24,7 @@ Il logo rappresenta un ponte ad arco con impalcato, appoggi e nodi. È disponibi
 
 - `assets/icons/`: sorgenti SVG modificabili, logo, anteprima e [catalogo completo](../assets/icons/catalogue.png).
 - `assets/icons/manifest.json`: associazione tra tipo .NET, GUID, famiglia, simbolo e contrassegno.
-- `src/BridGHe.Grasshopper/Resources/Icons/`: 146 PNG incorporati (141 componenti/parametri, marchio a 24 px e categoria a 16 px).
+- `src/BridGHe.Grasshopper/Resources/Icons/`: 147 PNG incorporati (141 componenti/parametri, marchio a 24 px e categoria a 16 px).
 - `assets/icons/replaced-legacy-assets.json`: elenco delle 94 vecchie icone sostituite. Gli schemi illustrativi ancora usati nei menu restano nel progetto.
 
 Per cambiare il sistema grafico in modo riproducibile, modificare `tools/generate_icons.py` e rigenerare dalla radice del repository. Richiede Python 3 e Node.js con il pacchetto `sharp` disponibile:

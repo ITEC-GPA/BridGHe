@@ -1,6 +1,6 @@
 {
   "scope": "Versioned GHX examples and explicit type names in test sources; external user files are not inspected.",
-  "exampleCount": 18,
+  "exampleCount": 19,
   "components": [
     {
       "name": "Bridge Analysis Options",
@@ -211,6 +211,7 @@
       "guid": "16695837-3f63-4305-a1ff-4491826dc3fe",
       "panel": "06-Model",
       "examples": [
+        "examples/19-flusso-acciaio-misto/19-flusso-acciaio-misto.ghx",
         "examples/bridge-grillage/11-ponte-graticcio.ghx",
         "examples/bridge-suite/12-continuo-2campate/12-continuo-2campate.ghx",
         "examples/bridge-suite/13-continuo-3campate/13-continuo-3campate.ghx",
@@ -221,6 +222,8 @@
         "examples/bridge-suite/18-spina-curva-2campate/18-spina-curva-2campate.ghx"
       ],
       "namedInTestSources": [
+        "tests/BridGHe.Smoke/BridgeMergeTests.cs",
+        "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
       ]
@@ -230,8 +233,13 @@
       "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamPropertyCompositeComponent",
       "guid": "f87c7066-e509-4646-9ef5-79691675cbf4",
       "panel": "05-Properties",
-      "examples": [],
-      "namedInTestSources": []
+      "examples": [
+        "examples/19-flusso-acciaio-misto/19-flusso-acciaio-misto.ghx"
+      ],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
+        "tests/BridGHe.Smoke/CompositePropertyTests.cs"
+      ]
     },
     {
       "name": "Composite Beam Strain",
@@ -239,6 +247,7 @@
       "guid": "adf0a668-9fee-4d5d-8665-57aa769319b0",
       "panel": "09-Loads",
       "examples": [
+        "examples/19-flusso-acciaio-misto/19-flusso-acciaio-misto.ghx",
         "examples/bridge-grillage/11-ponte-graticcio.ghx",
         "examples/bridge-suite/12-continuo-2campate/12-continuo-2campate.ghx",
         "examples/bridge-suite/13-continuo-3campate/13-continuo-3campate.ghx",
@@ -249,6 +258,7 @@
         "examples/bridge-suite/18-spina-curva-2campate/18-spina-curva-2campate.ghx"
       ],
       "namedInTestSources": [
+        "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
       ]
@@ -275,6 +285,7 @@
       "guid": "ac8892ff-18d2-4fe4-a8f5-d91053702b6d",
       "panel": "13-Results",
       "examples": [
+        "examples/19-flusso-acciaio-misto/19-flusso-acciaio-misto.ghx",
         "examples/bridge-grillage/11-ponte-graticcio.ghx",
         "examples/bridge-suite/12-continuo-2campate/12-continuo-2campate.ghx",
         "examples/bridge-suite/13-continuo-3campate/13-continuo-3campate.ghx",
@@ -285,6 +296,7 @@
         "examples/bridge-suite/18-spina-curva-2campate/18-spina-curva-2campate.ghx"
       ],
       "namedInTestSources": [
+        "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
       ]
@@ -303,6 +315,7 @@
       "guid": "07260514-76e4-4a8d-8b1e-69288e348b6f",
       "panel": "06-Model",
       "examples": [
+        "examples/19-flusso-acciaio-misto/19-flusso-acciaio-misto.ghx",
         "examples/bridge-grillage/11-ponte-graticcio.ghx",
         "examples/bridge-suite/12-continuo-2campate/12-continuo-2campate.ghx",
         "examples/bridge-suite/13-continuo-3campate/13-continuo-3campate.ghx",
@@ -313,6 +326,7 @@
         "examples/bridge-suite/18-spina-curva-2campate/18-spina-curva-2campate.ghx"
       ],
       "namedInTestSources": [
+        "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
         "tests/BridGHe.Smoke/CompositeComponentTests.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
@@ -323,8 +337,11 @@
       "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionConcreteSlabComponent",
       "guid": "1a539226-24ae-4d3f-8075-4f54cd1b9f68",
       "panel": "03-Sections",
-      "examples": [],
+      "examples": [
+        "examples/19-flusso-acciaio-misto/19-flusso-acciaio-misto.ghx"
+      ],
       "namedInTestSources": [
+        "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
         "tests/BridGHe.Smoke/SlabReinforcementTests.cs"
       ]
     },
@@ -358,6 +375,7 @@
       "guid": "94839122-32f0-4f3e-a30f-979a53c3eca8",
       "panel": "10-Checks",
       "examples": [
+        "examples/19-flusso-acciaio-misto/19-flusso-acciaio-misto.ghx",
         "examples/bridge-grillage/11-ponte-graticcio.ghx",
         "examples/bridge-suite/12-continuo-2campate/12-continuo-2campate.ghx",
         "examples/bridge-suite/13-continuo-3campate/13-continuo-3campate.ghx",
@@ -368,6 +386,7 @@
         "examples/bridge-suite/18-spina-curva-2campate/18-spina-curva-2campate.ghx"
       ],
       "namedInTestSources": [
+        "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs",
         "tests/BridGHe.Smoke/SlabReinforcementTests.cs"
@@ -379,6 +398,7 @@
       "guid": "850d46e5-0410-408f-aef0-16a6a202e1a4",
       "panel": "14-Tools",
       "examples": [
+        "examples/19-flusso-acciaio-misto/19-flusso-acciaio-misto.ghx",
         "examples/bridge-grillage/11-ponte-graticcio.ghx",
         "examples/bridge-suite/12-continuo-2campate/12-continuo-2campate.ghx",
         "examples/bridge-suite/13-continuo-3campate/13-continuo-3campate.ghx",
@@ -389,6 +409,7 @@
         "examples/bridge-suite/18-spina-curva-2campate/18-spina-curva-2campate.ghx"
       ],
       "namedInTestSources": [
+        "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
       ]

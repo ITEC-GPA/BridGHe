@@ -50,3 +50,20 @@ Il maggiore guadagno misurato riguarda la lettura ripetuta delle tensioni di tag
 I costi rimanenti dipendono da analisi native, clonazione/serializzazione di modelli grandi, tessellazione delle preview e iterazioni gPC delle larghezze efficaci. Le chiamate Straus rimangono serializzate dal lock di processo. Non è stata introdotta una parallelizzazione non verificata dell'API nativa.
 
 Le nuove definizioni gPC usano direttamente i record della libreria. Gli adattatori del flusso FEM, il renderer e le preview restano interni a BridGHe per una futura migrazione in libreria.
+
+## Riordino e flusso delle fasi — 19 ottobre 2026
+
+Un'unica tab BridGHe. Sezioni Straus in 03-Sections, Beam Support in 07-Attributes, carichi mobili e relativa analisi in 09-Loads. Eliminati Section Geometry, Remesh e la proprietà composta obsoleta duplicata. Gli altri componenti di verifica senza impiego negli esempi sono elencati in USO-COMPONENTI.md: non vengono automaticamente considerati inutili.
+
+Interfacce estese, con GUID e porte precedenti conservati:
+
+- Concrete Slab Section: aggiunti area e distanza dall'asse della fila inferiore; area nulla per gli archivi precedenti. Archivio soletta versione 2.
+- Composite Beam Property: aggiunti `n ritiro` opzionale e uscita generica omogeneizzata. Archivio proprietà composta versione 4; se il valore manca, viene usato n∞.
+- Build BridGHe Model: input aggiunto in coda per i casi FEM calcolati con n ritiro. `NShrinkage` è aggiunto alla fine dell'enum delle fasi, senza rinumerare i valori precedenti.
+- Nuovi componenti: Composite Shrinkage Actions, Display Settings, Preview BridGHe Model, BridGHe Panel.
+
+Metodi modificati: `CompositeBeamPropertyModel.CreateHomogenizedProperty` centralizza le proprietà riferite all'acciaio; `BridgeCheckAdapter.GetLinearAnalysisResultByStages` accetta opzionalmente rapporto e sollecitazioni del ritiro; `BridgePhaseAssembler` conserva il contributo FEM di ritiro separato; `BridgeMergeValidation` verifica ID/geometria e unifica le stazioni entro la tolleranza del verificatore. Gli overload precedenti mantengono i default. Le chiamate Straus non hanno una nuova firma: le proprietà omogeneizzate vengono inviate con `St7SetBeamSectionPropertyData`, evitando la chiamata a geometria nulla. Le vecchie sezioni di tipo Composite vengono trattate come generiche nell'export.
+
+Differenze corrette: abbinamento delle beam per ID anziché per indice; stazioni normalizzate convertite in lunghezze; prefissi distinti per casi di ritiro omonimi provenienti da modelli diversi; coefficienti delle combinazioni letti senza confonderli con nomi numerici; errori per fasi ambigue o mancanti. Le stazioni native quasi coincidenti non generano più campioni duplicati. L'esempio 19 verifica la conservazione esatta di ogni sollecitazione originale. Le convenzioni di rigidezza a taglio e torsione precedenti sono documentate nella guida dell'esempio.
+
+Preview: `SectionModel` versione 7 conserva metadati fisici separati dalle proprietà FEM. Sono ricostruiti profilo e soletta anche dopo Beam Override; per flange asimmetriche la soletta appoggia correttamente sulla flangia superiore. I metadati grafici non modificano area o inerzie esportate.

@@ -7,8 +7,9 @@ Ambiente effettivo: Windows x64, Rhino 8.35 avviato con Rhino.Inside, runtime .N
 | Prova | Esito | Evidenza riproducibile |
 |---|---|---|
 | Build Release | 0 errori, 0 avvisi | `tools/build.ps1` |
-| Smoke e native | 294 controlli superati | `--native` |
-| Regressioni | 30 gruppi superati | `--regression all` |
+| Smoke Release attuale | 186 controlli superati | `tools/build.ps1 -Smoke -Package` |
+| Famiglie di sezioni native | 21 famiglie Straus superate | `artifacts/straus-license-check.log` |
+| Regressioni | 35 gruppi superati | `--regression all` |
 | Baseline numerica prima/dopo | 238 valori su 14 casi, tutti esattamente uguali | `bridge-numerical-baseline`, fixture versionata; tolleranza 1e-12 |
 | Dieci esempi Straus | 121 misure, nessun fallimento | `examples/validation/native.json` |
 | Dieci esempi Grasshopper | 111 misure, nessun fallimento | `examples/validation/grasshopper.json` |
@@ -17,12 +18,23 @@ Ambiente effettivo: Windows x64, Rhino 8.35 avviato con Rhino.Inside, runtime .N
 | Esempio 11: graticcio completo | 357 misure superate | `examples/bridge-grillage/validation.json` |
 | Esempi 12-15: continui e curvi | 290 misure, inclusi 20 benchmark di ritiro | cartelle `examples/bridge-suite`, `benchmarks.json` |
 | Esempi 16-18: spina centrale | 212 misure superate | tre cartelle `examples/bridge-suite/1[678]-*` |
-| Contratti e GUID | 105 file di contratto, 145 GUID unici, nessun errore | `tools/audit_contracts.py --baseline-only` |
-| Inventario e icone | 136 componenti + 8 parametri istanziati, 144 icone distinte | `migration/current-components.json`, `assets/icons/manifest.json` |
+| Esempio 19: acciaio → override → merge → verifica | 162 controlli, 4 analisi Straus, 62 stazioni gPC; riapertura del GHX verificata | `examples/19-flusso-acciaio-misto/validation.json` |
+| Contratti e GUID | 104 file di contratto, 146 GUID unici, nessun errore | `tools/audit_contracts.py --baseline-only` |
+| Inventario e icone | 137 componenti + 8 parametri istanziati, 145 icone di oggetti; 147 PNG includendo plugin e categoria | `migration/current-components.json`, `assets/icons/manifest.json` |
 
 Una correzione finale è esclusivamente grafica: il raggio equivalente di una sezione generica ora usa le unità del modello, eliminando un fattore 0,001 improprio. Sono state rieseguite tutte le 30 regressioni, inclusi dimensioni della preview, confronto dei gruppi e baseline numerica invariata. Corretto anche il tipo usato da Equals(object) degli String Group, che poteva provocare ricorsione infinita confrontando un rilascio.
 
 I controlli software non coincidono con verifiche resistenti di progetto. In particolare, il rifiuto esplicito di torsione fuori campo è un test corretto del comportamento del software, non un esito positivo per il ponte.
+
+## Riesecuzione dopo il riordino delle palette e delle fasi
+
+L'ultima build Release termina senza errori o avvisi: 186 controlli smoke e 35 gruppi di regressione superati. I 238 valori della baseline rimangono esattamente uguali. Sono stati rieseguiti anche il confronto nativo/gPC dei cinque contributi di fase (30 misure) e le 21 famiglie di sezioni Straus. I report delle altre suite nella tabella documentano le esecuzioni precedenti; non sono stati rigenerati da questo riordino.
+
+L'esempio 19 usa quattro analisi incrementali reali: acciaio, misto a lungo termine, misto istantaneo e ritiro FEM. Il contributo di autotensione del ritiro viene aggiunto separatamente. Sono verificati le proprietà generiche esportate, gli equilibri, le soluzioni analitiche, il matching esplicito dei casi, entrambe le file di armatura e la conservazione esatta delle sollecitazioni nel merge. Il GHX contiene risultati salvati e viene riaperto con il solutore disattivato; il verificatore restituisce nuovamente 62 stazioni.
+
+I controlli delle preview composte comprendono solidi validi, contatto soletta/flangia, sezioni asimmetriche, copia e archivio dopo Beam Override, ingombri e armature schematiche. Le opzioni globali persistenti e quelle locali non modificano il modello FEM. La cattura del viewport con Rhino nascosto ha restituito un errore nativo GPU (`SEHException`): la resa a schermo di queste nuove opzioni resta da ispezionare in Rhino interattivo. Il file `examples/19-flusso-acciaio-misto/preview-sezioni-composte.3dm` contiene la geometria verificata per questa ispezione.
+
+L'output distribuibile è solo `bin/Release`. Il pacchetto include l'esempio 19 e un manifest SHA-256 dei 13 file alla radice, verificato sullo ZIP generato; i dati intermedi della compilazione restano sotto `obj`.
 
 ## Copertura numerica
 
