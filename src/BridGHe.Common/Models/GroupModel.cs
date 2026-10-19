@@ -88,7 +88,7 @@ namespace BridGHe.Common.Models
         {
             if (ReferenceEquals(grp1, grp2))
                 return true;
-            return grp1.Equals(grp2);
+            return grp1 is not null && grp1.Equals(grp2);
         }
 
         public static bool operator !=(GroupModel grp1, GroupModel grp2)

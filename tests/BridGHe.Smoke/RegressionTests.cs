@@ -17,6 +17,7 @@ internal static class RegressionTests
             ["archive-before-cleanup"] = ArchiveBeforeCleanup,
             ["composite-archive"] = CompositeArchive,
             ["composite-component"] = CompositeComponentTests.Run,
+            ["group-null-identity"] = GroupNullIdentity,
             ["composite-preview"] = CompositePreview,
             ["nodal-actions"] = NodalActions,
             ["load-case-identity"] = LoadCaseIdentity,
@@ -58,6 +59,14 @@ internal static class RegressionTests
         Require(model.Name == "Archive before cleanup" && model.Units == ModelModel.ModelUnits.Nmm,
             "existing model archive retains its identity and units after removal of unused containers");
         Require(ModelArchive.Clone(model).Name == model.Name, "migrated archive roundtrip");
+    }
+
+    private static void GroupNullIdentity()
+    {
+        GroupModel empty=null;var root=new GroupModel("Bridge");var child=new GroupModel("Spine",root);
+        Require(empty==null && empty!=root && root!=empty,"group comparison accepts null on either side");
+        Require(child==new GroupModel("Spine",new GroupModel("Bridge")),"group identity remains the full hierarchy");
+        Require(GroupModel.GetBranch(child).SequenceEqual(new[]{root,child}),"group traversal terminates at a null parent");
     }
 
     private static void Require(bool condition, string message)
