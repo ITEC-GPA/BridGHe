@@ -196,5 +196,59 @@
     "readme": "22-fasi-sezione-gpc/README.md",
     "definition": null,
     "calculations": "22-fasi-sezione-gpc/calcoli"
+  },
+  {
+    "number": 23,
+    "id": "23-audit-modello-fase",
+    "title": "Controllo del modello e copia di fase",
+    "group": "Strumenti operativi",
+    "readme": "23-audit-modello-fase/README.md",
+    "definition": "23-audit-modello-fase/23-audit-modello-fase.ghx",
+    "calculations": "23-audit-modello-fase/calcoli"
+  },
+  {
+    "number": 24,
+    "id": "24-inviluppi-concomitanti",
+    "title": "Inviluppi delle azioni e degli spostamenti",
+    "group": "Strumenti operativi",
+    "readme": "24-inviluppi-concomitanti/README.md",
+    "definition": "24-inviluppi-concomitanti/24-inviluppi-concomitanti.ghx",
+    "calculations": "24-inviluppi-concomitanti/calcoli"
+  },
+  {
+    "number": 25,
+    "id": "25-fasi-combinazioni",
+    "title": "Fasi ordinate e combinazioni per azione",
+    "group": "Strumenti operativi",
+    "readme": "25-fasi-combinazioni/README.md",
+    "definition": "25-fasi-combinazioni/25-fasi-combinazioni.ghx",
+    "calculations": "25-fasi-combinazioni/calcoli"
+  },
+  {
+    "number": 26,
+    "id": "26-riepilogo-verifiche-gpc",
+    "title": "Riepilogo dei controlli GPC",
+    "group": "Strumenti operativi",
+    "readme": "26-riepilogo-verifiche-gpc/README.md",
+    "definition": "26-riepilogo-verifiche-gpc/26-riepilogo-verifiche-gpc.ghx",
+    "calculations": "26-riepilogo-verifiche-gpc/calcoli"
+  },
+  {
+    "number": 27,
+    "id": "27-ritiro-confronti",
+    "title": "Incrementi di ritiro e confronto dei risultati",
+    "group": "Strumenti operativi",
+    "readme": "27-ritiro-confronti/README.md",
+    "definition": "27-ritiro-confronti/27-ritiro-confronti.ghx",
+    "calculations": "27-ritiro-confronti/calcoli"
+  },
+  {
+    "number": 28,
+    "id": "28-corsie-mobili",
+    "title": "Percorsi mobili paralleli",
+    "group": "Strumenti operativi",
+    "readme": "28-corsie-mobili/README.md",
+    "definition": "28-corsie-mobili/28-corsie-mobili.ghx",
+    "calculations": "28-corsie-mobili/calcoli"
   }
 ]

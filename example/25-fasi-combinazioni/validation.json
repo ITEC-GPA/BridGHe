@@ -1,0 +1,14 @@
+{
+  "example": "25-fasi-combinazioni",
+  "passed": true,
+  "reopened": true,
+  "objects": 10,
+  "components": [
+    "BridgeActionComponent",
+    "BridgeShrinkageActionComponent",
+    "BridgeConstructionPhaseComponent",
+    "BridgePhaseTableComponent",
+    "BridgeActionCombinationsComponent"
+  ],
+  "solverInvoked": false
+}

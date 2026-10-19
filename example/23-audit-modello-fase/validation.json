@@ -1,0 +1,11 @@
+{
+  "example": "23-audit-modello-fase",
+  "passed": true,
+  "reopened": true,
+  "objects": 6,
+  "components": [
+    "BridgeModelAuditComponent",
+    "BridgePhaseModelComponent"
+  ],
+  "solverInvoked": false
+}

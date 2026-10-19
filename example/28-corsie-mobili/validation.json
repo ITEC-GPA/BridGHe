@@ -1,0 +1,10 @@
+{
+  "example": "28-corsie-mobili",
+  "passed": true,
+  "reopened": true,
+  "objects": 3,
+  "components": [
+    "BridgeMovingLanesComponent"
+  ],
+  "solverInvoked": false
+}

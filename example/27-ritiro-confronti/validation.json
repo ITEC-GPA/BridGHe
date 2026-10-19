@@ -1,0 +1,11 @@
+{
+  "example": "27-ritiro-confronti",
+  "passed": true,
+  "reopened": true,
+  "objects": 5,
+  "components": [
+    "BridgeShrinkageIncrementsComponent",
+    "BridgeResultComparisonComponent"
+  ],
+  "solverInvoked": false
+}

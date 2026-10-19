@@ -1,0 +1,13 @@
+{
+  "example": "24-inviluppi-concomitanti",
+  "passed": true,
+  "reopened": true,
+  "objects": 9,
+  "components": [
+    "BridgeResultCasesComponent",
+    "BridgeBeamEnvelopeComponent",
+    "BridgeBearingEnvelopeComponent",
+    "BridgeDisplacementEnvelopeComponent"
+  ],
+  "solverInvoked": false
+}

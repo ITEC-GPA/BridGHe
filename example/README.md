@@ -57,3 +57,12 @@ Le analisi Straus richiedono la licenza API. Gli esempi 11–18 sono stati riall
 Verifica della struttura e dei collegamenti, senza Straus: `python tools/validate_example_layout.py`. Riapertura delle 20 definizioni correnti: `dotnet run --project tests/BridGHe.Smoke -c Release -- --example-layout`.
 
 I calcoli e i pacchetti nativi rimangono disponibili localmente ma sono esclusi da Git e dal pacchetto leggero del plugin. La generazione non deve creare una nuova cartella `examples` né distribuire calcoli di esempio in `artifacts`.
+
+## Strumenti operativi 23–28
+
+- [23 · Controllo del modello e copia di fase](23-audit-modello-fase/README.md)
+- [24 · Inviluppi delle azioni e degli spostamenti](24-inviluppi-concomitanti/README.md)
+- [25 · Fasi ordinate e combinazioni per azione](25-fasi-combinazioni/README.md)
+- [26 · Riepilogo dei controlli GPC](26-riepilogo-verifiche-gpc/README.md)
+- [27 · Incrementi di ritiro e confronto dei risultati](27-ritiro-confronti/README.md)
+- [28 · Percorsi mobili paralleli](28-corsie-mobili/README.md)

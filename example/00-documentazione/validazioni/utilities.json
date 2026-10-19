@@ -1,0 +1,74 @@
+[
+  {
+    "example": "23-audit-modello-fase",
+    "passed": true,
+    "reopened": true,
+    "objects": 6,
+    "components": [
+      "BridgeModelAuditComponent",
+      "BridgePhaseModelComponent"
+    ],
+    "solverInvoked": false
+  },
+  {
+    "example": "24-inviluppi-concomitanti",
+    "passed": true,
+    "reopened": true,
+    "objects": 9,
+    "components": [
+      "BridgeResultCasesComponent",
+      "BridgeBeamEnvelopeComponent",
+      "BridgeBearingEnvelopeComponent",
+      "BridgeDisplacementEnvelopeComponent"
+    ],
+    "solverInvoked": false
+  },
+  {
+    "example": "25-fasi-combinazioni",
+    "passed": true,
+    "reopened": true,
+    "objects": 10,
+    "components": [
+      "BridgeActionComponent",
+      "BridgeShrinkageActionComponent",
+      "BridgeConstructionPhaseComponent",
+      "BridgePhaseTableComponent",
+      "BridgeActionCombinationsComponent"
+    ],
+    "solverInvoked": false
+  },
+  {
+    "example": "26-riepilogo-verifiche-gpc",
+    "passed": true,
+    "reopened": true,
+    "objects": 7,
+    "components": [
+      "BridgeGeometryComponent",
+      "BridgeStudsComponent",
+      "BridgeSectionCheckComponent",
+      "BridgeCheckSummaryComponent"
+    ],
+    "solverInvoked": false
+  },
+  {
+    "example": "27-ritiro-confronti",
+    "passed": true,
+    "reopened": true,
+    "objects": 5,
+    "components": [
+      "BridgeShrinkageIncrementsComponent",
+      "BridgeResultComparisonComponent"
+    ],
+    "solverInvoked": false
+  },
+  {
+    "example": "28-corsie-mobili",
+    "passed": true,
+    "reopened": true,
+    "objects": 3,
+    "components": [
+      "BridgeMovingLanesComponent"
+    ],
+    "solverInvoked": false
+  }
+]

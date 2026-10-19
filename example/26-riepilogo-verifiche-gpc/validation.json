@@ -1,0 +1,13 @@
+{
+  "example": "26-riepilogo-verifiche-gpc",
+  "passed": true,
+  "reopened": true,
+  "objects": 7,
+  "components": [
+    "BridgeGeometryComponent",
+    "BridgeStudsComponent",
+    "BridgeSectionCheckComponent",
+    "BridgeCheckSummaryComponent"
+  ],
+  "solverInvoked": false
+}

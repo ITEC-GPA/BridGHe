@@ -15,8 +15,8 @@ def main():
     errors = []
     definitions = 0
     links = 0
-    if [row['number'] for row in catalog] != list(range(1, 23)):
-        errors.append('Catalog must contain examples 01 through 22 exactly once')
+    if [row['number'] for row in catalog] != list(range(1, len(catalog) + 1)):
+        errors.append('Catalog must contain consecutive numbered examples exactly once')
     expected = {'00-documentazione'} | {row['id'] for row in catalog}
     actual = {p.name for p in EXAMPLES.iterdir() if p.is_dir()}
     if expected != actual:
@@ -52,8 +52,9 @@ def main():
             if not (file.parent / path).exists():
                 errors.append(f'Broken link in {file.relative_to(ROOT)}: {target}')
             links += 1
-    if definitions != 20:
-        errors.append(f'Expected 20 current GHX definitions, found {definitions}')
+    expected_definitions = sum(row['definition'] is not None for row in catalog)
+    if definitions != expected_definitions:
+        errors.append(f'Expected {expected_definitions} current GHX definitions, found {definitions}')
     if errors:
         raise SystemExit('\n'.join(errors))
     print(f'EXAMPLE LAYOUT PASS: {len(catalog)} examples, {definitions} GHX, {links} local links')
