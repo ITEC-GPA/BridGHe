@@ -58,20 +58,20 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 return;
 
             int index = 0;
-            DA.SetData(index++, result.BridGHeResults.Point1_ConcreteEpsilon);
-            DA.SetData(index++, result.BridGHeResults.Point1_ConcreteSigma);
-            DA.SetData(index++, result.BridGHeResults.Point2_RebarSigma);
-            DA.SetData(index++, result.BridGHeResults.Point3_RebarSigma);
-            DA.SetData(index++, result.BridGHeResults.Point4_ConcreteSigma);
-            DA.SetData(index++, result.BridGHeResults.Point5_SteelSigma);
-            DA.SetData(index++, result.BridGHeResults.Point6_SteelSigma);
-            DA.SetData(index++, result.BridGHeResults.Point6_SteelTau);
-            DA.SetData(index++, result.BridGHeResults.Point6_SteelSigmaId);
-            DA.SetData(index++, result.BridGHeResults.Point7_SteelSigma);
-            DA.SetData(index++, result.BridGHeResults.Point7_SteelTau);
-            DA.SetData(index++, result.BridGHeResults.Point7_SteelSigmaId);
-            DA.SetData(index++, result.BridGHeResults.Point8_SteelSigma);
-            DA.SetData(index++, result.BridGHeResults.Point8_SteelEpsilon);
+            DA.SetData(index++, result.Point1_ConcreteEpsilon);
+            DA.SetData(index++, result.Point1_ConcreteSigma);
+            DA.SetData(index++, result.Point2_RebarSigma);
+            DA.SetData(index++, result.Point3_RebarSigma);
+            DA.SetData(index++, result.Point4_ConcreteSigma);
+            DA.SetData(index++, result.Point5_SteelSigma);
+            DA.SetData(index++, result.Point6_SteelSigma);
+            DA.SetData(index++, result.Point6_SteelTau);
+            DA.SetData(index++, result.Point6_SteelSigmaId);
+            DA.SetData(index++, result.Point7_SteelSigma);
+            DA.SetData(index++, result.Point7_SteelTau);
+            DA.SetData(index++, result.Point7_SteelSigmaId);
+            DA.SetData(index++, result.Point8_SteelSigma);
+            DA.SetData(index++, result.Point8_SteelEpsilon);
         }
 
         public override GH_Exposure Exposure => GH_Exposure.tertiary;

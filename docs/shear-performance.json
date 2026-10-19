@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-19",
+  "before": {
+    "iterations": 2000,
+    "values": 8000,
+    "ms": 1106.66,
+    "allocatedBytes": 2191855240,
+    "checksum": 167418.82715525705
+  },
+  "after": {
+    "iterations": 2000,
+    "values": 8000,
+    "ms": 17.2323,
+    "allocatedBytes": 8192040,
+    "checksum": 167418.82715525705
+  }
+}
