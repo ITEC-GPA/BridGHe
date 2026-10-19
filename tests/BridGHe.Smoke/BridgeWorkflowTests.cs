@@ -71,6 +71,9 @@ internal static class BridgeWorkflowTests
         var increments = Build(new[] { p1, p2 with { Actions = new[] { r with { Strain = -120e-6 } } }, p3 }, table: new[] { new[] { "", "G1", "RITIRO", "R2" }, new[] { "SLS", "1", "1", "1" } }).Model;
         var total = BridgePhaseAssembler.Assemble(increments.Beams[0], 10000, 5000, increments.LoadCombinations[0], reference, 1e-6);
         Require(Math.Abs(total.StrainInfinite + 200e-6) < 1e-16, "Incremental shrinkage accumulated incorrectly.");
+        var instant = Build(new[] { p1, p2 with { Actions = new[] { r with { Source=null, Case=null, PrimaryOnly=true, Behavior=BridgeActionBehavior.ShortTerm } } } }).Model;
+        var instantaneous = BridgePhaseAssembler.Assemble(instant.Beams[0],10000,5000,instant.LoadCombinations[0],reference,1e-6);
+        Require(Math.Abs(instantaneous.StrainInstant + 140e-6) < 1e-16 && instantaneous.StrainInfinite == 0, "Instant imposed strain assigned to long-term behavior.");
         Console.WriteLine("PASS workflow: numbering, source identity, joint coefficients, strain increments, selection, validation and archives");
     }
 }

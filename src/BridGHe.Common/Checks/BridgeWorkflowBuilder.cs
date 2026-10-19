@@ -47,11 +47,11 @@ public static class BridgeWorkflowBuilder
                     throw new ArgumentException($"{label}: action behavior does not match the active section.");
                 if (shrinkage && (phase.State != BridgeSectionState.Composite || action.Strain == null))
                     throw new ArgumentException($"{label}: shrinkage requires active concrete and an explicit strain increment.");
-                if (action.Strain.HasValue && (!shrinkage || !double.IsFinite(action.Strain.Value) || action.Strain > 0))
+                if (action.Strain.HasValue && (phase.State != BridgeSectionState.Composite || action.Behavior is BridgeActionBehavior.Steel or BridgeActionBehavior.LongTerm || !double.IsFinite(action.Strain.Value) || action.Strain > 0))
                     throw new ArgumentException($"{label}: concrete shrinkage is a finite, non-positive increment [strain].");
                 if (string.IsNullOrWhiteSpace(action.Case))
                 {
-                    if (!shrinkage || !action.PrimaryOnly) throw new ArgumentException($"{label}: supply the analysed FEM case, or explicitly select Primary Only for shrinkage.");
+                    if (!action.Strain.HasValue || !action.PrimaryOnly) throw new ArgumentException($"{label}: supply the analysed FEM case, or explicitly select Primary Only for shrinkage.");
                 }
                 else if (action.Source == null || action.PrimaryOnly)
                     throw new ArgumentException($"{label}: a FEM case needs its source model and cannot be Primary Only.");
@@ -108,7 +108,8 @@ public static class BridgeWorkflowBuilder
                 BridgeActionBehavior.LongTerm => LoadCaseModel.Stage.BridgePhases.NInfinite,
                 BridgeActionBehavior.ShortTerm => LoadCaseModel.Stage.BridgePhases.NInstant,
                 _ => LoadCaseModel.Stage.BridgePhases.NShrinkage }) : null;
-            var strainCase = action.Strain.HasValue ? Case(record.StrainCase, LoadCaseModel.Stage.BridgePhases.StrainInfinite) : null;
+            var strainCase = action.Strain.HasValue ? Case(record.StrainCase, action.Behavior == BridgeActionBehavior.ShortTerm
+                ? LoadCaseModel.Stage.BridgePhases.StrainInstant : LoadCaseModel.Stage.BridgePhases.StrainInfinite) : null;
             int sourceIndex = hasForce ? sources.FindIndex(m => ReferenceEquals(m, action.Source)) : -1;
             for (int i = 0; i < model.Beams.Count; i++)
             {
