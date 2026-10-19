@@ -7,7 +7,7 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails;
 
 public abstract class BridgeResultComponent:GH_Component
 {
-    protected BridgeResultComponent(string name,string nick,string description):base(name,nick,description,"BridGHe-Checks","Bridge results") { }
+    protected BridgeResultComponent(string name,string nick,string description):base(name,nick,description,Helpers.CategoryNameConstants.CATEGORY_MODEL, Helpers.CategoryNameConstants.SUBCATEGORY_RESULTS) { }
     protected override System.Drawing.Bitmap Icon=>Properties.ComponentIcons.For(GetType());
     protected override void RegisterInputParams(GH_InputParamManager p)=>p.AddGenericParameter("Section result","R","One cumulative BridgeStressResult from Section Check, Super Element Check or Detail Check",GH_ParamAccess.item);
     protected override void SolveInstance(IGH_DataAccess da)

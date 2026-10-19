@@ -14,7 +14,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         /// Initializes a new instance of the CompositeBeamComponent class.
         /// </summary>
         public CompositeBeamComponent()
-          : base("Composite beam", "CB", "Assign the composite sections to the beam", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
+          : base("Composite beam", "CB", "Assign the composite sections to the beam", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_MODEL)
         {
         }
 

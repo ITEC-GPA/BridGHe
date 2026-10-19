@@ -12,7 +12,7 @@ namespace BridGHe.Grasshopper.Components.Checks
         /// Initializes a new instance of the ForceComponent class.
         /// </summary>
         public ForceComponent()
-          : base("Force component", "FC", "Create a force object", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_STEELCHECKS)
+          : base("Section Force", "Force", "Create section actions for a standalone composite-section check", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_BRIDGE)
         {
         }
 

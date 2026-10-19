@@ -16,7 +16,7 @@ PALETTE = {
     'section': ('#316ca8', '#edf3fa'),
     'material': ('#526778', '#eff3f5'),
     'load': ('#bd5b19', '#fff2e5'),
-    'moving': ('#ba6120', '#fff2e5'),
+    'moving': ('#bd5b19', '#fff2e5'),
     'solver': ('#6751ad', '#f1edfa'),
     'check': ('#27734b', '#eaf6ee'),
     'result': ('#7e55a2', '#f5eff8'),
@@ -242,8 +242,8 @@ MaterialConcreteComponent|concrete||material
 MaterialCustomComponent|material|edit|material
 MaterialSteelComponent|steel||material
 MaterialTableComponent|table||material
-BeamPropertyCompositeComponent|composite|data|check
-BridgeGeometryComponent|composite|native|check
+BeamPropertyCompositeComponent|composite|data|section
+BridgeGeometryComponent|composite|native|section
 BridgeRebarRowComponent|bars|add|check
 BridgePhaseComponent|stages|native|check
 BridgeAnalysisOptionsComponent|table|edit|check
@@ -260,19 +260,18 @@ BridgeStudsComponent|studs||check
 BridgeIntermediateStiffenerComponent|stiffener||check
 BridgeSupportStiffenerComponent|stiffener|force|check
 BridgeDetailCheckComponent|studs|check|check
-BeamSectionConcreteSlabComponent|slab||check
-BeamSectionHPropertyComponent|section:I|data|check
+BeamSectionConcreteSlabComponent|slab||section
+BeamSectionHPropertyComponent|section:I|data|section
 BuildBridgeModel|model|check|check
 CompositeBeamComponent|bridge|shape|check
 CompositeBeamLinearTensionAnalysisComponent_OBSOLETE|composite|play|check
 CompositeBeamSelfTensionComponent|composite|heat|check
 CompositeBeamSlabStrainComponent|strain||check
 CompositeBeamTensionResultComponent|stress|data|check
-CompositeSectionComponent_OBSOLETE|composite|add|check
 CompositeSectionGeometricPropertyComponent|composite|measure|check
 CreepAndShrinkageConcreteComponent|slab|clock|check
-BridgeForcePlotComponent|printer|force|check
-BridgeResultPlotComponent|printer|stress|check
+BridgeForcePlotComponent|printer|force|result
+BridgeResultPlotComponent|printer|stress|result
 SuperElementCheckComponent|bridge|check|check
 SuperElementFilterComponent|bridge|filter|check
 BeamComponent|beam||model
@@ -303,14 +302,12 @@ BeamSectionIComponent|section:I||section
 BeamSectionSolidCircleComponent|section:CircularSolid||section
 BeamSectionSolidRectComponent|section:RectangleSolid||section
 BeamSectionTComponent|section:T||section
-SectionGeometricComponent|section:Brep|shape|section
 SectionGeometricPropertyComponent|section:Generic|measure|section
 StrausBxsSectionComponent|section:Brep|native|section
 StrausLibrarySectionComponent|library|native|section
 ElementFilterComponent|model|filter|tool
 NodeFilterComponent|node|filter|tool
 PlateFilterComponent|plate|filter|tool
-RemeshComponent|mesh|edit|tool
 SurfaceSplitterComponent|split||tool
 '''
 mapping = {r[0]:r[1:] for line in ROWS.strip().splitlines() if (r:=line.split('|'))}
@@ -333,6 +330,5 @@ for item in items:
 logo = rect(0.5,0.5,23,23,'#17364b',5.5) + path('M3.5 14.5H20.5M5 14.5V19M19 14.5V19','white',2) + path('M5 14Q12 1.5 19 14','#51d4c4',2.2) + path('M9 8.5V14M15 8.5V14','#51d4c4',1.2) + circle(5,14.5,1.6,'white')+circle(19,14.5,1.6,'white')
 plugin=f'<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><title>BridGHe</title>{logo}</svg>\n'
 (OUT/'BridGHe.svg').write_text(plugin,encoding='utf-8')
-(OUT/'BridGHeChecks.svg').write_text(icon_svg('bridge','check','check','BridGHe Checks'),encoding='utf-8')
 (OUT/'manifest.json').write_text(json.dumps({'grid':24,'palette':PALETTE,'icons':manifest},ensure_ascii=False,indent=2),encoding='utf-8')
-print(f'Generated {len(manifest)} component/parameter SVGs plus plugin and Checks category.')
+print(f'Generated {len(manifest)} component/parameter SVGs plus the single plugin/category icon.')

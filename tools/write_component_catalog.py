@@ -7,7 +7,7 @@ root = Path(__file__).resolve().parents[1]
 items = json.loads((root / 'artifacts/component-runtime.json').read_text(encoding='utf-8'))
 groups = defaultdict(list)
 for item in items:
-    groups[item['type'].rsplit('.', 1)[0]].append(item)
+    groups[item['subcategory']].append(item)
 components = sum(item['kind'] == 'component' for item in items)
 lines = ['# Inventario dei componenti 0.1.0', '',
          f'{components} componenti e {len(items)-components} parametri istanziati nel runtime Rhino 8. '
@@ -17,7 +17,7 @@ def ports(values):
     return '; '.join(p['name'].replace('|', '/') for p in values) or '—'
 
 for name, values in sorted(groups.items()):
-    lines += ['## ' + name.replace('BridGHe.Grasshopper.', ''), '',
+    lines += ['## BridGHe / ' + name, '',
               '| Nome | Tipo | Ingressi | Uscite |', '|---|---|---|---|']
     for item in sorted(values, key=lambda item: item['name']):
         lines.append(f"| {item['name'].replace('|', '/')} | {item['kind']} | {ports(item['inputs'])} | {ports(item['outputs'])} |")

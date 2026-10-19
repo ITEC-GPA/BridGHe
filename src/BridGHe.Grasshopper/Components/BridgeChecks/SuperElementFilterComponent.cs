@@ -15,7 +15,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         /// Initializes a new instance of the ChecksComponent class.
         /// </summary>
         public SuperElementFilterComponent()
-          : base("Super Element Filter", "SEF", "Filter the selected Super-Element", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
+          : base("Super Element Filter", "SEF", "Filter the selected Super-Element", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_TOOLS)
         {
 
         }

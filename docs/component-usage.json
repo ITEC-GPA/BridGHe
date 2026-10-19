@@ -1,0 +1,394 @@
+{
+  "scope": "Versioned GHX examples and explicit type names in test sources; external user files are not inspected.",
+  "exampleCount": 18,
+  "components": [
+    {
+      "name": "Bridge Analysis Options",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeAnalysisOptionsComponent",
+      "guid": "f86ac409-7bb4-4d8e-a62c-8893feebfe31",
+      "panel": "08-Bridge",
+      "examples": [],
+      "namedInTestSources": []
+    },
+    {
+      "name": "Bridge Box Options",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeBoxOptionsComponent",
+      "guid": "2dfc68e3-becc-4b23-948b-35b7b80521a7",
+      "panel": "08-Bridge",
+      "examples": [],
+      "namedInTestSources": []
+    },
+    {
+      "name": "Bridge Connection Fatigue",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeFatigueComponent",
+      "guid": "7d5be63e-a554-44f6-a042-2ca037f73f7d",
+      "panel": "08-Bridge",
+      "examples": [],
+      "namedInTestSources": []
+    },
+    {
+      "name": "Bridge Detail Check",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeDetailCheckComponent",
+      "guid": "ffad5404-7440-47e7-9824-90588810089f",
+      "panel": "10-Checks",
+      "examples": [
+        "examples/bridge-suite/12-continuo-2campate/12-continuo-2campate.ghx",
+        "examples/bridge-suite/13-continuo-3campate/13-continuo-3campate.ghx",
+        "examples/bridge-suite/14-curvo-1campata/14-curvo-1campata.ghx",
+        "examples/bridge-suite/15-curvo-2campate/15-curvo-2campate.ghx",
+        "examples/bridge-suite/16-spina-1campata/16-spina-1campata.ghx",
+        "examples/bridge-suite/17-spina-3campate/17-spina-3campate.ghx",
+        "examples/bridge-suite/18-spina-curva-2campate/18-spina-curva-2campate.ghx"
+      ],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
+      ]
+    },
+    {
+      "name": "Bridge Force Plot",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeForcePlotComponent",
+      "guid": "77e9f533-e4e8-41de-baaf-6bfece84def9",
+      "panel": "13-Results",
+      "examples": [],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/PlotTests.cs"
+      ]
+    },
+    {
+      "name": "Bridge Intermediate Stiffener",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeIntermediateStiffenerComponent",
+      "guid": "ea6bf9ee-ddc5-4b3e-8409-74d5674d2732",
+      "panel": "08-Bridge",
+      "examples": [
+        "examples/bridge-suite/12-continuo-2campate/12-continuo-2campate.ghx",
+        "examples/bridge-suite/13-continuo-3campate/13-continuo-3campate.ghx",
+        "examples/bridge-suite/14-curvo-1campata/14-curvo-1campata.ghx",
+        "examples/bridge-suite/15-curvo-2campate/15-curvo-2campate.ghx",
+        "examples/bridge-suite/16-spina-1campata/16-spina-1campata.ghx",
+        "examples/bridge-suite/17-spina-3campate/17-spina-3campate.ghx",
+        "examples/bridge-suite/18-spina-curva-2campate/18-spina-curva-2campate.ghx"
+      ],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
+      ]
+    },
+    {
+      "name": "Bridge Phase",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgePhaseComponent",
+      "guid": "4660cce7-4aa2-49f7-a929-b85327e0b8d2",
+      "panel": "08-Bridge",
+      "examples": [],
+      "namedInTestSources": []
+    },
+    {
+      "name": "Bridge Rebar Row",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeRebarRowComponent",
+      "guid": "402a895f-b583-41ed-b2a0-b80c1d50732b",
+      "panel": "08-Bridge",
+      "examples": [],
+      "namedInTestSources": []
+    },
+    {
+      "name": "Bridge Section Check",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeSectionCheckComponent",
+      "guid": "952a074e-823d-490f-87b9-79c95b5d2d1a",
+      "panel": "10-Checks",
+      "examples": [],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/NativeBridgeComponentTests.cs"
+      ]
+    },
+    {
+      "name": "Bridge Section Geometry",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeGeometryComponent",
+      "guid": "422a7607-2759-4da2-819b-158d2c6f6cb3",
+      "panel": "08-Bridge",
+      "examples": [],
+      "namedInTestSources": []
+    },
+    {
+      "name": "Bridge Shear Plot",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeShearPlotComponent",
+      "guid": "c561aa2c-a635-4a3e-8eb0-b8a166d856fb",
+      "panel": "13-Results",
+      "examples": [],
+      "namedInTestSources": []
+    },
+    {
+      "name": "Bridge Shear Results",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeShearResultsComponent",
+      "guid": "e73670ca-0481-4716-9cc9-d42b57804614",
+      "panel": "13-Results",
+      "examples": [],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/NativeBridgeComponentTests.cs"
+      ]
+    },
+    {
+      "name": "Bridge Stress Plot",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeResultPlotComponent",
+      "guid": "8f53f404-9446-4b47-90e3-d514f9c547c9",
+      "panel": "13-Results",
+      "examples": [],
+      "namedInTestSources": []
+    },
+    {
+      "name": "Bridge Stud Plot",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeStudPlotComponent",
+      "guid": "0394f8d3-e5cc-4d03-9ee3-9ce6420b7a37",
+      "panel": "13-Results",
+      "examples": [],
+      "namedInTestSources": []
+    },
+    {
+      "name": "Bridge Stud Results",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeStudResultsComponent",
+      "guid": "95046592-063b-4499-8191-1c8cf7ec21a1",
+      "panel": "13-Results",
+      "examples": [],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/NativeBridgeComponentTests.cs"
+      ]
+    },
+    {
+      "name": "Bridge Studs",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeStudsComponent",
+      "guid": "a65b8556-6a36-4c53-b52e-434d747c576e",
+      "panel": "08-Bridge",
+      "examples": [
+        "examples/bridge-suite/12-continuo-2campate/12-continuo-2campate.ghx",
+        "examples/bridge-suite/13-continuo-3campate/13-continuo-3campate.ghx",
+        "examples/bridge-suite/14-curvo-1campata/14-curvo-1campata.ghx",
+        "examples/bridge-suite/15-curvo-2campate/15-curvo-2campate.ghx",
+        "examples/bridge-suite/16-spina-1campata/16-spina-1campata.ghx",
+        "examples/bridge-suite/17-spina-3campate/17-spina-3campate.ghx",
+        "examples/bridge-suite/18-spina-curva-2campate/18-spina-curva-2campate.ghx"
+      ],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs",
+        "tests/BridGHe.Smoke/RegressionTests.cs"
+      ]
+    },
+    {
+      "name": "Bridge Support Stiffener",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeSupportStiffenerComponent",
+      "guid": "bb5073af-270d-4603-b7f5-6bf65fcd6aab",
+      "panel": "08-Bridge",
+      "examples": [
+        "examples/bridge-suite/12-continuo-2campate/12-continuo-2campate.ghx",
+        "examples/bridge-suite/13-continuo-3campate/13-continuo-3campate.ghx",
+        "examples/bridge-suite/14-curvo-1campata/14-curvo-1campata.ghx",
+        "examples/bridge-suite/15-curvo-2campate/15-curvo-2campate.ghx",
+        "examples/bridge-suite/16-spina-1campata/16-spina-1campata.ghx",
+        "examples/bridge-suite/17-spina-3campate/17-spina-3campate.ghx",
+        "examples/bridge-suite/18-spina-curva-2campate/18-spina-curva-2campate.ghx"
+      ],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
+      ]
+    },
+    {
+      "name": "Bridge Transverse Reinforcement",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeTransverseReinforcementComponent",
+      "guid": "01f06ff8-ab56-4fb1-b291-983e7635aab8",
+      "panel": "08-Bridge",
+      "examples": [],
+      "namedInTestSources": []
+    },
+    {
+      "name": "Bridge Verification Results",
+      "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeVerificationResultsComponent",
+      "guid": "7c15b6ee-252b-4bdb-b0f2-7b765be6adf8",
+      "panel": "13-Results",
+      "examples": [],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/NativeBridgeComponentTests.cs"
+      ]
+    },
+    {
+      "name": "Build BridGHe Model",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BuildBridgeModel",
+      "guid": "16695837-3f63-4305-a1ff-4491826dc3fe",
+      "panel": "06-Model",
+      "examples": [
+        "examples/bridge-grillage/11-ponte-graticcio.ghx",
+        "examples/bridge-suite/12-continuo-2campate/12-continuo-2campate.ghx",
+        "examples/bridge-suite/13-continuo-3campate/13-continuo-3campate.ghx",
+        "examples/bridge-suite/14-curvo-1campata/14-curvo-1campata.ghx",
+        "examples/bridge-suite/15-curvo-2campate/15-curvo-2campate.ghx",
+        "examples/bridge-suite/16-spina-1campata/16-spina-1campata.ghx",
+        "examples/bridge-suite/17-spina-3campate/17-spina-3campate.ghx",
+        "examples/bridge-suite/18-spina-curva-2campate/18-spina-curva-2campate.ghx"
+      ],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
+        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
+      ]
+    },
+    {
+      "name": "Composite Beam Property",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamPropertyCompositeComponent",
+      "guid": "f87c7066-e509-4646-9ef5-79691675cbf4",
+      "panel": "05-Properties",
+      "examples": [],
+      "namedInTestSources": []
+    },
+    {
+      "name": "Composite Beam Strain",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamSlabStrainComponent",
+      "guid": "adf0a668-9fee-4d5d-8665-57aa769319b0",
+      "panel": "09-Loads",
+      "examples": [
+        "examples/bridge-grillage/11-ponte-graticcio.ghx",
+        "examples/bridge-suite/12-continuo-2campate/12-continuo-2campate.ghx",
+        "examples/bridge-suite/13-continuo-3campate/13-continuo-3campate.ghx",
+        "examples/bridge-suite/14-curvo-1campata/14-curvo-1campata.ghx",
+        "examples/bridge-suite/15-curvo-2campate/15-curvo-2campate.ghx",
+        "examples/bridge-suite/16-spina-1campata/16-spina-1campata.ghx",
+        "examples/bridge-suite/17-spina-3campate/17-spina-3campate.ghx",
+        "examples/bridge-suite/18-spina-curva-2campate/18-spina-curva-2campate.ghx"
+      ],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
+        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
+      ]
+    },
+    {
+      "name": "Composite Geometric Property",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeSectionGeometricPropertyComponent",
+      "guid": "2515010a-be42-4530-aa44-5a21b0c0c8dc",
+      "panel": "05-Properties",
+      "examples": [],
+      "namedInTestSources": []
+    },
+    {
+      "name": "Composite Section Linear Tension Analysis",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamLinearTensionAnalysisComponent_OBSOLETE",
+      "guid": "a487d0e7-bb07-4049-90a5-8cd2aa40b183",
+      "panel": "10-Checks",
+      "examples": [],
+      "namedInTestSources": []
+    },
+    {
+      "name": "Composite Section Linear Tension Results",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamTensionResultComponent",
+      "guid": "ac8892ff-18d2-4fe4-a8f5-d91053702b6d",
+      "panel": "13-Results",
+      "examples": [
+        "examples/bridge-grillage/11-ponte-graticcio.ghx",
+        "examples/bridge-suite/12-continuo-2campate/12-continuo-2campate.ghx",
+        "examples/bridge-suite/13-continuo-3campate/13-continuo-3campate.ghx",
+        "examples/bridge-suite/14-curvo-1campata/14-curvo-1campata.ghx",
+        "examples/bridge-suite/15-curvo-2campate/15-curvo-2campate.ghx",
+        "examples/bridge-suite/16-spina-1campata/16-spina-1campata.ghx",
+        "examples/bridge-suite/17-spina-3campate/17-spina-3campate.ghx",
+        "examples/bridge-suite/18-spina-curva-2campate/18-spina-curva-2campate.ghx"
+      ],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
+        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
+      ]
+    },
+    {
+      "name": "Composite Section Self Tension",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamSelfTensionComponent",
+      "guid": "e7cea623-0b51-485d-ab60-6ef6850945a6",
+      "panel": "10-Checks",
+      "examples": [],
+      "namedInTestSources": []
+    },
+    {
+      "name": "Composite beam",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeBeamComponent",
+      "guid": "07260514-76e4-4a8d-8b1e-69288e348b6f",
+      "panel": "06-Model",
+      "examples": [
+        "examples/bridge-grillage/11-ponte-graticcio.ghx",
+        "examples/bridge-suite/12-continuo-2campate/12-continuo-2campate.ghx",
+        "examples/bridge-suite/13-continuo-3campate/13-continuo-3campate.ghx",
+        "examples/bridge-suite/14-curvo-1campata/14-curvo-1campata.ghx",
+        "examples/bridge-suite/15-curvo-2campate/15-curvo-2campate.ghx",
+        "examples/bridge-suite/16-spina-1campata/16-spina-1campata.ghx",
+        "examples/bridge-suite/17-spina-3campate/17-spina-3campate.ghx",
+        "examples/bridge-suite/18-spina-curva-2campate/18-spina-curva-2campate.ghx"
+      ],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/CompositeComponentTests.cs",
+        "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
+        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
+      ]
+    },
+    {
+      "name": "Concrete Slab Section",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionConcreteSlabComponent",
+      "guid": "1a539226-24ae-4d3f-8075-4f54cd1b9f68",
+      "panel": "03-Sections",
+      "examples": [],
+      "namedInTestSources": []
+    },
+    {
+      "name": "Creep And Shrinkage Concrete",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CreepAndShrinkageConcreteComponent",
+      "guid": "69fc44cb-48cd-4b15-af60-b025bd59bad5",
+      "panel": "08-Bridge",
+      "examples": [],
+      "namedInTestSources": []
+    },
+    {
+      "name": "Section Force",
+      "type": "BridGHe.Grasshopper.Components.Checks.ForceComponent",
+      "guid": "bc2cde43-3af2-4685-8ce7-63e3586edeb5",
+      "panel": "08-Bridge",
+      "examples": [],
+      "namedInTestSources": []
+    },
+    {
+      "name": "Section H Beam Property",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionHPropertyComponent",
+      "guid": "3ee2c935-dd7b-44b8-9bc2-c705ecd78052",
+      "panel": "03-Sections",
+      "examples": [],
+      "namedInTestSources": []
+    },
+    {
+      "name": "Super Element Check",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.SuperElementCheckComponent",
+      "guid": "94839122-32f0-4f3e-a30f-979a53c3eca8",
+      "panel": "10-Checks",
+      "examples": [
+        "examples/bridge-grillage/11-ponte-graticcio.ghx",
+        "examples/bridge-suite/12-continuo-2campate/12-continuo-2campate.ghx",
+        "examples/bridge-suite/13-continuo-3campate/13-continuo-3campate.ghx",
+        "examples/bridge-suite/14-curvo-1campata/14-curvo-1campata.ghx",
+        "examples/bridge-suite/15-curvo-2campate/15-curvo-2campate.ghx",
+        "examples/bridge-suite/16-spina-1campata/16-spina-1campata.ghx",
+        "examples/bridge-suite/17-spina-3campate/17-spina-3campate.ghx",
+        "examples/bridge-suite/18-spina-curva-2campate/18-spina-curva-2campate.ghx"
+      ],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
+        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
+      ]
+    },
+    {
+      "name": "Super Element Filter",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.SuperElementFilterComponent",
+      "guid": "850d46e5-0410-408f-aef0-16a6a202e1a4",
+      "panel": "14-Tools",
+      "examples": [
+        "examples/bridge-grillage/11-ponte-graticcio.ghx",
+        "examples/bridge-suite/12-continuo-2campate/12-continuo-2campate.ghx",
+        "examples/bridge-suite/13-continuo-3campate/13-continuo-3campate.ghx",
+        "examples/bridge-suite/14-curvo-1campata/14-curvo-1campata.ghx",
+        "examples/bridge-suite/15-curvo-2campate/15-curvo-2campate.ghx",
+        "examples/bridge-suite/16-spina-1campata/16-spina-1campata.ghx",
+        "examples/bridge-suite/17-spina-3campate/17-spina-3campate.ghx",
+        "examples/bridge-suite/18-spina-curva-2campate/18-spina-curva-2campate.ghx"
+      ],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
+        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
+      ]
+    }
+  ]
+}

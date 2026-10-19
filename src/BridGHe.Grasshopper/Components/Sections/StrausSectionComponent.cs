@@ -10,7 +10,7 @@ namespace BridGHe.Grasshopper.Components.Sections
         protected override System.Drawing.Bitmap Icon => Properties.ComponentIcons.For(GetType());
         protected abstract string ShapeKey { get; }
         protected StrausSectionComponent(string name, string nickname)
-            : base(name, nickname, "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.", "BridGHe", "Straus Sections") { }
+            : base(name, nickname, "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.", Helpers.CategoryNameConstants.CATEGORY_MODEL, Helpers.CategoryNameConstants.SUBCATEGORY_SECTIONS) { }
         protected override void RegisterInputParams(GH_InputParamManager p)
         {
             var shape = StrausSectionCatalog.Get(ShapeKey);
@@ -35,7 +35,7 @@ namespace BridGHe.Grasshopper.Components.Sections
     public sealed class StrausBxsSectionComponent : GH_Component
     {
         protected override System.Drawing.Bitmap Icon => Properties.ComponentIcons.For(GetType());
-        public StrausBxsSectionComponent() : base("Straus BXS Section", "S7BXS", "Sezione arbitraria da file BXS esistente. Richiede licenza API R3.", "BridGHe", "Straus Sections") { }
+        public StrausBxsSectionComponent() : base("Straus BXS Section", "S7BXS", "Sezione arbitraria da file BXS esistente. Richiede licenza API R3.", Helpers.CategoryNameConstants.CATEGORY_MODEL, Helpers.CategoryNameConstants.SUBCATEGORY_SECTIONS) { }
         protected override void RegisterInputParams(GH_InputParamManager p)
         {
             p.AddTextParameter("BXS file", "File", "Percorso assoluto del file .bxs.", GH_ParamAccess.item);
@@ -54,7 +54,7 @@ namespace BridGHe.Grasshopper.Components.Sections
     public sealed class StrausLibrarySectionComponent : GH_Component
     {
         protected override System.Drawing.Bitmap Icon => Properties.ComponentIcons.For(GetType());
-        public StrausLibrarySectionComponent() : base("Straus Library Section", "S7Lib", "Profilo delle librerie BSL/BGL installate in Straus R3. Materiale definito dal componente Beam Property.", "BridGHe", "Straus Sections") { }
+        public StrausLibrarySectionComponent() : base("Straus Library Section", "S7Lib", "Profilo delle librerie BSL/BGL installate in Straus R3. Materiale definito dal componente Beam Property.", Helpers.CategoryNameConstants.CATEGORY_MODEL, Helpers.CategoryNameConstants.SUBCATEGORY_SECTIONS) { }
         protected override void RegisterInputParams(GH_InputParamManager p)
         {
             p.AddTextParameter("Library", "Lib", "Nome della libreria senza estensione.", GH_ParamAccess.item);

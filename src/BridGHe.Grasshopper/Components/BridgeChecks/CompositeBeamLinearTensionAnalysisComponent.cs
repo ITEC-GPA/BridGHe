@@ -25,7 +25,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         /// Initializes a new instance of the MeshRemap class.
         /// </summary>
         public CompositeBeamLinearTensionAnalysisComponent_OBSOLETE()
-          : base("Composite Section Linear Tension Analysis", "CSLTA", "Composite Section Linear Tension Analysis", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
+          : base("Composite Section Linear Tension Analysis", "CSLTA", "Composite Section Linear Tension Analysis", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_DESIGN)
         {
         }
 

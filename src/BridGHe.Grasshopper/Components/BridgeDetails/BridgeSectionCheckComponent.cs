@@ -11,7 +11,7 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails;
 
 public sealed class BridgeSectionCheckComponent:GH_Component
 {
-    public BridgeSectionCheckComponent():base("Bridge Section Check","BridgeCheck","Native gPC staged composite section analysis. Geometry mm, materials MPa, actions kN/kNm. Actions must already include the selected combination factors.","BridGHe-Checks","Bridge details") { }
+    public BridgeSectionCheckComponent():base("Bridge Section Check","BridgeCheck","Native gPC staged composite section analysis. Geometry mm, materials MPa, actions kN/kNm. Actions must already include the selected combination factors.",Helpers.CategoryNameConstants.CATEGORY_MODEL, Helpers.CategoryNameConstants.SUBCATEGORY_DESIGN) { }
     public override Guid ComponentGuid=>new Guid("952a074e-823d-490f-87b9-79c95b5d2d1a");
     protected override System.Drawing.Bitmap Icon=>Properties.ComponentIcons.For(GetType());
     protected override void RegisterInputParams(GH_InputParamManager p)

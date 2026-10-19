@@ -5,6 +5,9 @@
     "kind": "component",
     "name": "Align beam axes",
     "nickname": "ABA",
+    "category": "BridGHe",
+    "subcategory": "14-Tools",
+    "description": "Align the beam axes (local or principal) with a direction",
     "inputs": [
       {
         "name": "Beam",
@@ -48,6 +51,9 @@
     "kind": "component",
     "name": "Align plate axes",
     "nickname": "APA",
+    "category": "BridGHe",
+    "subcategory": "14-Tools",
+    "description": "Align the local plate axes with a direction",
     "inputs": [
       {
         "name": "Plate",
@@ -91,6 +97,9 @@
     "kind": "component",
     "name": "Beam Filter",
     "nickname": "BF",
+    "category": "BridGHe",
+    "subcategory": "14-Tools",
+    "description": "Beam filter",
     "inputs": [
       {
         "name": "Beams",
@@ -174,6 +183,9 @@
     "kind": "component",
     "name": "Beam Override",
     "nickname": "BO",
+    "category": "BridGHe",
+    "subcategory": "14-Tools",
+    "description": "Override one of the creation parameters",
     "inputs": [
       {
         "name": "Beam",
@@ -233,6 +245,9 @@
     "kind": "component",
     "name": "Elements Filter",
     "nickname": "EF",
+    "category": "BridGHe",
+    "subcategory": "14-Tools",
+    "description": "Description",
     "inputs": [
       {
         "name": "Elements",
@@ -276,6 +291,9 @@
     "kind": "component",
     "name": "Node Filter",
     "nickname": "NF",
+    "category": "BridGHe",
+    "subcategory": "14-Tools",
+    "description": "Node filter",
     "inputs": [
       {
         "name": "Nodes",
@@ -343,6 +361,9 @@
     "kind": "component",
     "name": "Plate Filter",
     "nickname": "PF",
+    "category": "BridGHe",
+    "subcategory": "14-Tools",
+    "description": "Plate filter",
     "inputs": [
       {
         "name": "Plates",
@@ -413,62 +434,14 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.Tools.RemeshComponent",
-    "guid": "c338c62b-28d4-473f-94cc-e9c1c8c4cda7",
-    "kind": "component",
-    "name": "Remesh",
-    "nickname": "R",
-    "inputs": [
-      {
-        "name": "Mesh",
-        "nickname": "M",
-        "description": "The mesh to remesh",
-        "access": "item",
-        "optional": false,
-        "type": "Mesh"
-      },
-      {
-        "name": "Target length",
-        "nickname": "TL",
-        "description": "The target length of the mesh",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Max distance",
-        "nickname": "MD",
-        "description": "Max distance to consider two points collinear",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "Plane",
-        "nickname": "P",
-        "description": "The plane where the geometry will be remeshed",
-        "access": "item",
-        "optional": true,
-        "type": "Plane"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Mesh",
-        "nickname": "M",
-        "description": "The remeshed mesh",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ]
-  },
-  {
     "type": "BridGHe.Grasshopper.Components.Tools.SurfaceSplitterComponent",
     "guid": "97bab293-1482-420d-913e-fdf7b9204cae",
     "kind": "component",
     "name": "Surface splitter curves",
     "nickname": "SSC",
+    "category": "BridGHe",
+    "subcategory": "14-Tools",
+    "description": "Get surface splitter curves based on internal points/lines",
     "inputs": [
       {
         "name": "Surface",
@@ -520,6 +493,9 @@
     "kind": "component",
     "name": "Angle Section",
     "nickname": "A",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Defines an Angle section",
     "inputs": [
       {
         "name": "Width",
@@ -587,6 +563,9 @@
     "kind": "component",
     "name": "Brep Section",
     "nickname": "BS",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Defines a section composed by brep faces",
     "inputs": [
       {
         "name": "Breps",
@@ -614,6 +593,9 @@
     "kind": "component",
     "name": "C Section",
     "nickname": "C",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Defines a C section",
     "inputs": [
       {
         "name": "Width",
@@ -681,6 +663,9 @@
     "kind": "component",
     "name": "Generic Section",
     "nickname": "G",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Defines a generic section",
     "inputs": [
       {
         "name": "Area",
@@ -804,6 +789,9 @@
     "kind": "component",
     "name": "Hollow Circle",
     "nickname": "HC",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Hollow circle beam section",
     "inputs": [
       {
         "name": "Diameter",
@@ -839,6 +827,9 @@
     "kind": "component",
     "name": "Hollow Rect",
     "nickname": "HR",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Hollow rect beam section",
     "inputs": [
       {
         "name": "Height",
@@ -890,6 +881,9 @@
     "kind": "component",
     "name": "I Section",
     "nickname": "I",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Defines an I section",
     "inputs": [
       {
         "name": "Bottom flange width",
@@ -965,6 +959,9 @@
     "kind": "component",
     "name": "Solid Circle",
     "nickname": "SC",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Defines a solid circle beam section",
     "inputs": [
       {
         "name": "Diameter",
@@ -992,6 +989,9 @@
     "kind": "component",
     "name": "Solid Rect",
     "nickname": "SR",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Defines a solid rect beam section",
     "inputs": [
       {
         "name": "Height",
@@ -1027,6 +1027,9 @@
     "kind": "component",
     "name": "T Section",
     "nickname": "T",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Defines a T section",
     "inputs": [
       {
         "name": "Flange width",
@@ -1073,174 +1076,14 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.Sections.SectionGeometricComponent",
-    "guid": "8f7e3520-a83a-4b14-ac34-6b5a48ccaf84",
-    "kind": "component",
-    "name": "Section Geometry",
-    "nickname": "SG",
-    "inputs": [
-      {
-        "name": "Section Property",
-        "nickname": "BP",
-        "description": "Section Property",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Name",
-        "nickname": "N",
-        "description": "Section section name",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Type",
-        "nickname": "T",
-        "description": "Section type",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "ME_T2",
-        "nickname": "ME_T2",
-        "description": "ME_T2",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "ME_T3",
-        "nickname": "ME_T3",
-        "description": "ME_T3",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "ME_T2B",
-        "nickname": "ME_T2B",
-        "description": "ME_T2B",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "ME_T3B",
-        "nickname": "ME_T3B",
-        "description": "ME_T3B",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "ME_T2E",
-        "nickname": "ME_T2E",
-        "description": "ME_T2E",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "ME_T3E",
-        "nickname": "ME_T3E",
-        "description": "ME_T3E",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "ME_DIS",
-        "nickname": "ME_DIS",
-        "description": "ME_DIS",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "ME_R1",
-        "nickname": "ME_R1",
-        "description": "ME_R1",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "ME_R2",
-        "nickname": "ME_R2",
-        "description": "ME_R2",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "ME_TF",
-        "nickname": "ME_TF",
-        "description": "ME_TF",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "ME_TW",
-        "nickname": "ME_TW",
-        "description": "ME_TW",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "ME_TFB",
-        "nickname": "ME_TFB",
-        "description": "ME_TFB",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "ME_TWB",
-        "nickname": "ME_TWB",
-        "description": "ME_TWB",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "ME_TFE",
-        "nickname": "ME_TFE",
-        "description": "ME_TFE",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "ME_TWE",
-        "nickname": "ME_TWE",
-        "description": "ME_TWE",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      },
-      {
-        "name": "R_i",
-        "nickname": "R_i",
-        "description": "R_i",
-        "access": "item",
-        "optional": false,
-        "type": "Number"
-      }
-    ]
-  },
-  {
     "type": "BridGHe.Grasshopper.Components.Sections.SectionGeometricPropertyComponent",
     "guid": "b6603b65-7e0b-4662-919d-213d12874c4a",
     "kind": "component",
     "name": "Section Geometric Property",
     "nickname": "BGP",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Section geometric properties",
     "inputs": [
       {
         "name": "Section Property",
@@ -1372,6 +1215,9 @@
     "kind": "component",
     "name": "Straus BXS Section",
     "nickname": "S7BXS",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione arbitraria da file BXS esistente. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "BXS file",
@@ -1407,6 +1253,9 @@
     "kind": "component",
     "name": "Straus Library Section",
     "nickname": "S7Lib",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Profilo delle librerie BSL/BGL installate in Straus R3. Materiale definito dal componente Beam Property.",
     "inputs": [
       {
         "name": "Library",
@@ -1458,6 +1307,9 @@
     "kind": "component",
     "name": "Straus Circular Solid Section",
     "nickname": "S7CircularSolid",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "D",
@@ -1485,6 +1337,9 @@
     "kind": "component",
     "name": "Straus Circular Hollow Section",
     "nickname": "S7CircularHollow",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "D",
@@ -1520,6 +1375,9 @@
     "kind": "component",
     "name": "Straus Rectangle Solid Section",
     "nickname": "S7RectangleSolid",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B",
@@ -1555,6 +1413,9 @@
     "kind": "component",
     "name": "Straus Rectangle Hollow Section",
     "nickname": "S7RectangleHollow",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B",
@@ -1606,6 +1467,9 @@
     "kind": "component",
     "name": "Straus Lipped Channel Section",
     "nickname": "S7LipChannel",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B",
@@ -1673,6 +1537,9 @@
     "kind": "component",
     "name": "Straus Top Hat Section",
     "nickname": "S7TopHat",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B",
@@ -1740,6 +1607,9 @@
     "kind": "component",
     "name": "Straus I Section",
     "nickname": "S7I",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B1",
@@ -1807,6 +1677,9 @@
     "kind": "component",
     "name": "Straus T Section",
     "nickname": "S7T",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B",
@@ -1874,6 +1747,9 @@
     "kind": "component",
     "name": "Straus Angle Section",
     "nickname": "S7Angle",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B",
@@ -1925,6 +1801,9 @@
     "kind": "component",
     "name": "Straus Z Section",
     "nickname": "S7Z",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B1",
@@ -1992,6 +1871,9 @@
     "kind": "component",
     "name": "Straus Trapezoid Solid Section",
     "nickname": "S7TrapezoidSolid",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B1",
@@ -2035,6 +1917,9 @@
     "kind": "component",
     "name": "Straus Trapezoid Hollow Section",
     "nickname": "S7TrapezoidHollow",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B1",
@@ -2094,6 +1979,9 @@
     "kind": "component",
     "name": "Straus Triangle Solid Section",
     "nickname": "S7TriangleSolid",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B",
@@ -2129,6 +2017,9 @@
     "kind": "component",
     "name": "Straus Triangle Hollow Section",
     "nickname": "S7TriangleHollow",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B",
@@ -2180,6 +2071,9 @@
     "kind": "component",
     "name": "Straus Cruciform Section",
     "nickname": "S7Cruciform",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B",
@@ -2231,6 +2125,9 @@
     "kind": "component",
     "name": "Straus BGL Hollow Rectangle Section",
     "nickname": "S7BglRectangle",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "D",
@@ -2298,6 +2195,9 @@
     "kind": "component",
     "name": "Straus BGL I Section",
     "nickname": "S7BglI",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "D",
@@ -2429,6 +2329,9 @@
     "kind": "component",
     "name": "Straus BGL Channel Section",
     "nickname": "S7BglChannel",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "D",
@@ -2576,6 +2479,9 @@
     "kind": "component",
     "name": "Straus BGL T Section",
     "nickname": "S7BglT",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "D",
@@ -2675,6 +2581,9 @@
     "kind": "component",
     "name": "Straus BGL Angle Section",
     "nickname": "S7BglAngle",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "D",
@@ -2790,6 +2699,9 @@
     "kind": "component",
     "name": "Straus BGL Bulb Flat Section",
     "nickname": "S7BglBulb",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "D",
@@ -2881,6 +2793,9 @@
     "kind": "component",
     "name": "Beam Results",
     "nickname": "BR",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "The Beam analysis results",
     "inputs": [
       {
         "name": "Beam",
@@ -2956,6 +2871,9 @@
     "kind": "component",
     "name": "Node Results",
     "nickname": "NR",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "The Node analysis results",
     "inputs": [
       {
         "name": "Node",
@@ -3039,6 +2957,9 @@
     "kind": "component",
     "name": "Plate Results",
     "nickname": "PR",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "The Plate analysis results",
     "inputs": [
       {
         "name": "Plate",
@@ -3178,6 +3099,9 @@
     "kind": "parameter",
     "name": "Beam",
     "nickname": "B",
+    "category": "BridGHe",
+    "subcategory": "01-Parameters",
+    "description": "Contains a collection of beams",
     "inputs": [],
     "outputs": []
   },
@@ -3187,6 +3111,9 @@
     "kind": "parameter",
     "name": "Section",
     "nickname": "S",
+    "category": "BridGHe",
+    "subcategory": "01-Parameters",
+    "description": "Section",
     "inputs": [],
     "outputs": []
   },
@@ -3196,6 +3123,9 @@
     "kind": "parameter",
     "name": "CoordinateSystem",
     "nickname": "CS",
+    "category": "BridGHe",
+    "subcategory": "01-Parameters",
+    "description": "The model coordinate system",
     "inputs": [],
     "outputs": []
   },
@@ -3205,6 +3135,9 @@
     "kind": "parameter",
     "name": "Group",
     "nickname": "G",
+    "category": "BridGHe",
+    "subcategory": "01-Parameters",
+    "description": "Contains a collection of groups",
     "inputs": [],
     "outputs": []
   },
@@ -3214,6 +3147,9 @@
     "kind": "parameter",
     "name": "Load Combinations",
     "nickname": "LCS",
+    "category": "BridGHe",
+    "subcategory": "01-Parameters",
+    "description": "The load combinations definition",
     "inputs": [],
     "outputs": []
   },
@@ -3223,6 +3159,9 @@
     "kind": "parameter",
     "name": "Material",
     "nickname": "M",
+    "category": "BridGHe",
+    "subcategory": "01-Parameters",
+    "description": "Material",
     "inputs": [],
     "outputs": []
   },
@@ -3232,6 +3171,9 @@
     "kind": "parameter",
     "name": "Node",
     "nickname": "N",
+    "category": "BridGHe",
+    "subcategory": "01-Parameters",
+    "description": "Contains a collection of nodess",
     "inputs": [],
     "outputs": []
   },
@@ -3241,6 +3183,9 @@
     "kind": "parameter",
     "name": "Plate",
     "nickname": "P",
+    "category": "BridGHe",
+    "subcategory": "01-Parameters",
+    "description": "Contains a collection of plates",
     "inputs": [],
     "outputs": []
   },
@@ -3250,6 +3195,9 @@
     "kind": "component",
     "name": "Beam",
     "nickname": "BM",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Define a Beam",
     "inputs": [
       {
         "name": "Line",
@@ -3309,6 +3257,9 @@
     "kind": "component",
     "name": "Build Model",
     "nickname": "BM",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Build the FEM model",
     "inputs": [
       {
         "name": "Elements",
@@ -3368,6 +3319,9 @@
     "kind": "component",
     "name": "Decompose Model",
     "nickname": "DM",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Decompose a FEM model in his elements",
     "inputs": [
       {
         "name": "Model",
@@ -3411,6 +3365,9 @@
     "kind": "component",
     "name": "Merge Model",
     "nickname": "BM",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Build the FEM model",
     "inputs": [
       {
         "name": "Elements",
@@ -3462,6 +3419,9 @@
     "kind": "component",
     "name": "Node",
     "nickname": "N",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Define a Node",
     "inputs": [
       {
         "name": "Point",
@@ -3489,6 +3449,9 @@
     "kind": "component",
     "name": "Plate",
     "nickname": "PL",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Define a Beam",
     "inputs": [
       {
         "name": "Mesh",
@@ -3548,6 +3511,9 @@
     "kind": "component",
     "name": "Merge Geometry",
     "nickname": "MG",
+    "category": "BridGHe",
+    "subcategory": "14-Tools",
+    "description": "Merge the input geometries",
     "inputs": [
       {
         "name": "Elements",
@@ -3599,6 +3565,9 @@
     "kind": "component",
     "name": "Aluminium",
     "nickname": "AM",
+    "category": "BridGHe",
+    "subcategory": "02-Materials",
+    "description": "Aluminium material",
     "inputs": [
       {
         "name": "Name",
@@ -3642,6 +3611,9 @@
     "kind": "component",
     "name": "Concrete",
     "nickname": "CM",
+    "category": "BridGHe",
+    "subcategory": "02-Materials",
+    "description": "Concrete Material",
     "inputs": [
       {
         "name": "Name",
@@ -3677,6 +3649,9 @@
     "kind": "component",
     "name": "Custom Material",
     "nickname": "CM",
+    "category": "BridGHe",
+    "subcategory": "02-Materials",
+    "description": "Custom material",
     "inputs": [
       {
         "name": "Name",
@@ -3784,6 +3759,9 @@
     "kind": "component",
     "name": "Steel",
     "nickname": "SM",
+    "category": "BridGHe",
+    "subcategory": "02-Materials",
+    "description": "Steel Material",
     "inputs": [
       {
         "name": "Name",
@@ -3819,6 +3797,9 @@
     "kind": "component",
     "name": "Table Material",
     "nickname": "TM",
+    "category": "BridGHe",
+    "subcategory": "02-Materials",
+    "description": "Table material",
     "inputs": [
       {
         "name": "Name",
@@ -3902,6 +3883,9 @@
     "kind": "component",
     "name": "Beam Distributed Load",
     "nickname": "BDL",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Assign a beam distributed load",
     "inputs": [
       {
         "name": "Beam",
@@ -4009,6 +3993,9 @@
     "kind": "component",
     "name": "Beam Distributed Moment",
     "nickname": "BDM",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Assign a beam distributed moment",
     "inputs": [
       {
         "name": "Beam",
@@ -4108,6 +4095,9 @@
     "kind": "component",
     "name": "Beam Gradient Load",
     "nickname": "BGL",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Defines the beam gradient load",
     "inputs": [
       {
         "name": "Beam",
@@ -4159,6 +4149,9 @@
     "kind": "component",
     "name": "Beam Point Load",
     "nickname": "BPL",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Defines the beam point load force",
     "inputs": [
       {
         "name": "Beam",
@@ -4234,6 +4227,9 @@
     "kind": "component",
     "name": "Beam Point Moment",
     "nickname": "BPM",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Defines the beam point load moment",
     "inputs": [
       {
         "name": "Beam",
@@ -4309,6 +4305,9 @@
     "kind": "component",
     "name": "Beam PreLoad",
     "nickname": "BPL",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Defines the beam preload",
     "inputs": [
       {
         "name": "Beam",
@@ -4360,6 +4359,9 @@
     "kind": "component",
     "name": "Moving Point Force",
     "nickname": "MLPoint",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Forza puntuale mobile. Posizioni e forze nelle unità del modello.",
     "inputs": [
       {
         "name": "X",
@@ -4435,6 +4437,9 @@
     "kind": "component",
     "name": "Moving Distributed Force",
     "nickname": "MLDistr",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Carico distribuito mobile Straus R3, tutte le cinque modalità di mobilità.",
     "inputs": [
       {
         "name": "X1",
@@ -4526,6 +4531,9 @@
     "kind": "component",
     "name": "Moving Heat Source",
     "nickname": "MLHeat",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Sorgente termica mobile per analisi termica Straus; non è un incremento di temperatura strutturale.",
     "inputs": [
       {
         "name": "X",
@@ -4585,6 +4593,9 @@
     "kind": "component",
     "name": "Moving Vehicle",
     "nickname": "MLVehicle",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Assembla carichi mobili in un veicolo; le velocità sono nelle unità di lunghezza del modello per secondo.",
     "inputs": [
       {
         "name": "Name",
@@ -4668,6 +4679,9 @@
     "kind": "component",
     "name": "Moving Centrifugal Data",
     "nickname": "MLCentrifugal",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Fc = K0 + K1 Fz; espressioni Straus con variabili R, L, V, g.",
     "inputs": [
       {
         "name": "K0",
@@ -4743,6 +4757,9 @@
     "kind": "component",
     "name": "Moving Load Template",
     "nickname": "MLTemplate",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Assembla veicoli, corsie e parametri di distribuzione Straus R3.",
     "inputs": [
       {
         "name": "Name",
@@ -4834,6 +4851,9 @@
     "kind": "component",
     "name": "Moving Library Template",
     "nickname": "MLLibrary",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Usa un template MLT già installato nella libreria Straus; conserva le sue impostazioni.",
     "inputs": [
       {
         "name": "Library",
@@ -4869,6 +4889,9 @@
     "kind": "component",
     "name": "Moving Load Path",
     "nickname": "MLPath",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Percorso rettilineo, curvo o quadratico; i tre punti definiscono geometria e piano laterale Straus.",
     "inputs": [
       {
         "name": "Template",
@@ -4968,6 +4991,9 @@
     "kind": "component",
     "name": "Attach Moving Paths",
     "nickname": "MLModel",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Duplica il modello e sostituisce i percorsi mobili; output compatibile con Export e Analysis Straus R3.",
     "inputs": [
       {
         "name": "Model",
@@ -5003,6 +5029,9 @@
     "kind": "component",
     "name": "Node Displacement",
     "nickname": "ND",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Defines a node displacement",
     "inputs": [
       {
         "name": "Node",
@@ -5054,6 +5083,9 @@
     "kind": "component",
     "name": "Node Load",
     "nickname": "NL",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Defines a node load",
     "inputs": [
       {
         "name": "Node",
@@ -5097,6 +5129,9 @@
     "kind": "component",
     "name": "Node Moment",
     "nickname": "NM",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Defines a node moment",
     "inputs": [
       {
         "name": "Node",
@@ -5140,6 +5175,9 @@
     "kind": "component",
     "name": "Node Temperature",
     "nickname": "NT",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Defines a node temperature load",
     "inputs": [
       {
         "name": "Node",
@@ -5191,6 +5229,9 @@
     "kind": "component",
     "name": "Plate non structural Mass",
     "nickname": "PNSM",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Assign a plate non structural mass",
     "inputs": [
       {
         "name": "Plate",
@@ -5250,6 +5291,9 @@
     "kind": "component",
     "name": "Plate Pressure",
     "nickname": "PP",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Assign a plate pressure",
     "inputs": [
       {
         "name": "Plate",
@@ -5317,6 +5361,9 @@
     "kind": "component",
     "name": "Plate PreStress",
     "nickname": "PPre",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Assign prestress in plate using its local coordinate system",
     "inputs": [
       {
         "name": "Plate",
@@ -5376,6 +5423,9 @@
     "kind": "component",
     "name": "Straus7 R3 Export",
     "nickname": "ST7 R3",
+    "category": "BridGHe",
+    "subcategory": "11-Export",
+    "description": "Export to Straus7",
     "inputs": [
       {
         "name": "Model",
@@ -5411,6 +5461,9 @@
     "kind": "component",
     "name": "Beam Geometric Property",
     "nickname": "BGP",
+    "category": "BridGHe",
+    "subcategory": "05-Properties",
+    "description": "Beam geometric properties",
     "inputs": [
       {
         "name": "Beam Property",
@@ -5542,6 +5595,9 @@
     "kind": "component",
     "name": "Beam Property",
     "nickname": "BP",
+    "category": "BridGHe",
+    "subcategory": "05-Properties",
+    "description": "Beam properties",
     "inputs": [
       {
         "name": "Name",
@@ -5593,6 +5649,9 @@
     "kind": "component",
     "name": "Plate Property",
     "nickname": "PP",
+    "category": "BridGHe",
+    "subcategory": "05-Properties",
+    "description": "Plate properties",
     "inputs": [
       {
         "name": "Name",
@@ -5652,6 +5711,9 @@
     "kind": "component",
     "name": "Group",
     "nickname": "G",
+    "category": "BridGHe",
+    "subcategory": "04-Definitions",
+    "description": "Defines a group",
     "inputs": [
       {
         "name": "Name",
@@ -5687,6 +5749,9 @@
     "kind": "component",
     "name": "Load Case",
     "nickname": "LC",
+    "category": "BridGHe",
+    "subcategory": "04-Definitions",
+    "description": "A load case definition",
     "inputs": [
       {
         "name": "Name",
@@ -5722,6 +5787,9 @@
     "kind": "component",
     "name": "Load Combination",
     "nickname": "LCombo",
+    "category": "BridGHe",
+    "subcategory": "04-Definitions",
+    "description": "A load combination definition",
     "inputs": [
       {
         "name": "Name",
@@ -5765,6 +5833,9 @@
     "kind": "component",
     "name": "Staged Construction ",
     "nickname": "SC",
+    "category": "BridGHe",
+    "subcategory": "04-Definitions",
+    "description": "Defines a staged construction",
     "inputs": [
       {
         "name": "Name",
@@ -5822,8 +5893,11 @@
     "type": "BridGHe.Grasshopper.Components.Checks.ForceComponent",
     "guid": "bc2cde43-3af2-4685-8ce7-63e3586edeb5",
     "kind": "component",
-    "name": "Force component",
-    "nickname": "FC",
+    "name": "Section Force",
+    "nickname": "Force",
+    "category": "BridGHe",
+    "subcategory": "08-Bridge",
+    "description": "Create section actions for a standalone composite-section check",
     "inputs": [
       {
         "name": "Name",
@@ -5915,6 +5989,9 @@
     "kind": "component",
     "name": "Bridge Studs",
     "nickname": "Studs",
+    "category": "BridGHe",
+    "subcategory": "08-Bridge",
+    "description": "Defines headed studs using gPC. Dimensions mm, strength MPa. Connect to Bridge Detail Check.",
     "inputs": [
       {
         "name": "Enabled",
@@ -6030,6 +6107,9 @@
     "kind": "component",
     "name": "Bridge Intermediate Stiffener",
     "nickname": "IntStiff",
+    "category": "BridGHe",
+    "subcategory": "08-Bridge",
+    "description": "Intermediate web stiffener and adjacent panels, gPC. mm / kN.",
     "inputs": [
       {
         "name": "Enabled",
@@ -6161,6 +6241,9 @@
     "kind": "component",
     "name": "Bridge Support Stiffener",
     "nickname": "SupStiff",
+    "category": "BridGHe",
+    "subcategory": "08-Bridge",
+    "description": "Bearing stiffener, footprint and end post, gPC. Assign actual design reaction in kN.",
     "inputs": [
       {
         "name": "Enabled",
@@ -6340,6 +6423,9 @@
     "kind": "component",
     "name": "Bridge Detail Check",
     "nickname": "DetailCheck",
+    "category": "BridGHe",
+    "subcategory": "10-Checks",
+    "description": "Recomputes a BridgeChecks section with gPC studs and stiffeners. Retains phase history, materials and limit state. No FEM stiffness change.",
     "inputs": [
       {
         "name": "Section result",
@@ -6463,6 +6549,9 @@
     "kind": "component",
     "name": "Bridge Section Geometry",
     "nickname": "Geometry",
+    "category": "BridGHe",
+    "subcategory": "08-Bridge",
+    "description": "H, inclined-web H or box section. Dimensions mm; box TopWidth is EACH top flange.",
     "inputs": [
       {
         "name": "SlabWidth",
@@ -6594,6 +6683,9 @@
     "kind": "component",
     "name": "Bridge Rebar Row",
     "nickname": "RebarRow",
+    "category": "BridGHe",
+    "subcategory": "08-Bridge",
+    "description": "Longitudinal reinforcement row, native gPC. Connect to top or bottom row port.",
     "inputs": [
       {
         "name": "Enabled",
@@ -6645,6 +6737,9 @@
     "kind": "component",
     "name": "Bridge Phase",
     "nickname": "Phase",
+    "category": "BridGHe",
+    "subcategory": "08-Bridge",
+    "description": "One mechanical increment or shrinkage phase. Forces kN, moments kNm, shrinkage microstrain. Preserve chronological list order.",
     "inputs": [
       {
         "name": "Name",
@@ -6776,6 +6871,9 @@
     "kind": "component",
     "name": "Bridge Analysis Options",
     "nickname": "CheckOptions",
+    "category": "BridGHe",
+    "subcategory": "08-Bridge",
+    "description": "Native gPC verification options. Supply already factored actions; this component does not generate load combinations.",
     "inputs": [
       {
         "name": "Standard",
@@ -6907,6 +7005,9 @@
     "kind": "component",
     "name": "Bridge Transverse Reinforcement",
     "nickname": "SlabShear",
+    "category": "BridGHe",
+    "subcategory": "08-Bridge",
+    "description": "Native gPC longitudinal slab shear, transverse reinforcement and anchorage checks.",
     "inputs": [
       {
         "name": "Enabled",
@@ -7038,6 +7139,9 @@
     "kind": "component",
     "name": "Bridge Connection Fatigue",
     "nickname": "Fatigue",
+    "category": "BridGHe",
+    "subcategory": "08-Bridge",
+    "description": "Native gPC stud/flange fatigue parameters. Flow envelope and stress range must come from the fatigue load model.",
     "inputs": [
       {
         "name": "Enabled",
@@ -7137,6 +7241,9 @@
     "kind": "component",
     "name": "Bridge Box Options",
     "nickname": "BoxOptions",
+    "category": "BridGHe",
+    "subcategory": "08-Bridge",
+    "description": "Native gPC box torsion, distortion and diaphragm checks. No torsion verification is implied for an H girder.",
     "inputs": [
       {
         "name": "Enabled",
@@ -7268,6 +7375,9 @@
     "kind": "component",
     "name": "Bridge Shear Results",
     "nickname": "Tau",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Native gPC shear stresses and web resistance. Full shear, buckling and interaction statuses are available through Bridge Verification Results.",
     "inputs": [
       {
         "name": "Section result",
@@ -7335,6 +7445,9 @@
     "kind": "component",
     "name": "Bridge Stud Results",
     "nickname": "StudResults",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Native gPC connection flow, stud force and resistance. Includes phase contributions; disabled stud checks return NaN resistances.",
     "inputs": [
       {
         "name": "Section result",
@@ -7418,6 +7531,9 @@
     "kind": "component",
     "name": "Bridge Verification Results",
     "nickname": "Verifications",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Native gPC checks for web, stiffeners, studs, slab shear, fatigue, box torsion and diaphragms. Null ratios mean a separate verification is required.",
     "inputs": [
       {
         "name": "Section result",
@@ -7493,6 +7609,9 @@
     "kind": "component",
     "name": "Bridge Section Check",
     "nickname": "BridgeCheck",
+    "category": "BridGHe",
+    "subcategory": "10-Checks",
+    "description": "Native gPC staged composite section analysis. Geometry mm, materials MPa, actions kN/kNm. Actions must already include the selected combination factors.",
     "inputs": [
       {
         "name": "Geometry",
@@ -7608,6 +7727,9 @@
     "kind": "component",
     "name": "Composite Beam Property",
     "nickname": "CS",
+    "category": "BridGHe",
+    "subcategory": "05-Properties",
+    "description": "Define a composite section composed by two base sections and 2 materials",
     "inputs": [
       {
         "name": "Name",
@@ -7731,6 +7853,9 @@
     "kind": "component",
     "name": "Concrete Slab Section",
     "nickname": "S",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Defines an concrete slab section",
     "inputs": [
       {
         "name": "Height",
@@ -7782,6 +7907,9 @@
     "kind": "component",
     "name": "Section H Beam Property",
     "nickname": "BGP",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Geometric properties of a Section H beam property",
     "inputs": [
       {
         "name": "Section H Beam Property",
@@ -7929,6 +8057,9 @@
     "kind": "component",
     "name": "Bridge Shear Plot",
     "nickname": "TauPlot",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Vector or PNG diagrams of native gPC shear stresses and resistance.",
     "inputs": [
       {
         "name": "BridGHe Model",
@@ -8044,6 +8175,9 @@
     "kind": "component",
     "name": "Bridge Stud Plot",
     "nickname": "StudPlot",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Vector or PNG diagrams of native gPC connection flow and stud checks.",
     "inputs": [
       {
         "name": "BridGHe Model",
@@ -8159,6 +8293,9 @@
     "kind": "component",
     "name": "Bridge Force Plot",
     "nickname": "ForcePlot",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Vector or PNG diagram of Straus section forces.",
     "inputs": [
       {
         "name": "BridGHe Model",
@@ -8274,6 +8411,9 @@
     "kind": "component",
     "name": "Bridge Stress Plot",
     "nickname": "StressPlot",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Vector or PNG diagram of gPC stresses and strains.",
     "inputs": [
       {
         "name": "BridGHe Model",
@@ -8397,6 +8537,9 @@
     "kind": "component",
     "name": "Build BridGHe Model",
     "nickname": "BMCM",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Merge the BridGHe models in to a single BridGHe model with input phases",
     "inputs": [
       {
         "name": "BridGHe Models",
@@ -8472,6 +8615,9 @@
     "kind": "component",
     "name": "Composite beam",
     "nickname": "CB",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Assign the composite sections to the beam",
     "inputs": [
       {
         "name": "Beam",
@@ -8523,6 +8669,9 @@
     "kind": "component",
     "name": "Composite Section Linear Tension Analysis",
     "nickname": "CSLTA",
+    "category": "BridGHe",
+    "subcategory": "10-Checks",
+    "description": "Composite Section Linear Tension Analysis",
     "inputs": [
       {
         "name": "Beams",
@@ -8646,6 +8795,9 @@
     "kind": "component",
     "name": "Composite Section Self Tension",
     "nickname": "CSST",
+    "category": "BridGHe",
+    "subcategory": "10-Checks",
+    "description": "Composite Section Linear Tension Analysis",
     "inputs": [
       {
         "name": "Composite Beam Property",
@@ -8689,6 +8841,9 @@
     "kind": "component",
     "name": "Composite Beam Strain",
     "nickname": "CBS",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Assign a strain load to a composite beam",
     "inputs": [
       {
         "name": "Beam",
@@ -8732,6 +8887,9 @@
     "kind": "component",
     "name": "Composite Section Linear Tension Results",
     "nickname": "CSLTR",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Results for Composite Section Linear Tension analysis",
     "inputs": [
       {
         "name": "Linear Tension Results",
@@ -8858,78 +9016,14 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeSectionComponent_OBSOLETE",
-    "guid": "ee8b7912-f07c-4a17-8a26-e75959ed080f",
-    "kind": "component",
-    "name": "Composite Beam Property",
-    "nickname": "CBP",
-    "inputs": [
-      {
-        "name": "Name",
-        "nickname": "N",
-        "description": "The name of the section",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Concrete Section",
-        "nickname": "CS",
-        "description": "Concrete slab geometry",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Steel Section",
-        "nickname": "SS",
-        "description": "I section geometry",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Concrete Material",
-        "nickname": "CM",
-        "description": "Material of the concrete slab",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Steel Material",
-        "nickname": "SM",
-        "description": "Material of the steel section profile",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Reinforcement Material",
-        "nickname": "RM",
-        "description": "Material of the rebars; required only when the slab contains reinforcement",
-        "access": "item",
-        "optional": true,
-        "type": "Generic Data"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "Composite Section",
-        "nickname": "CS",
-        "description": "The composite section",
-        "access": "item",
-        "optional": false,
-        "type": "Generic Data"
-      }
-    ]
-  },
-  {
     "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeSectionGeometricPropertyComponent",
     "guid": "2515010a-be42-4530-aa44-5a21b0c0c8dc",
     "kind": "component",
     "name": "Composite Geometric Property",
     "nickname": "BGP",
+    "category": "BridGHe",
+    "subcategory": "05-Properties",
+    "description": "Section geometric properties",
     "inputs": [
       {
         "name": "Composite Beam Property",
@@ -9077,6 +9171,9 @@
     "kind": "component",
     "name": "Creep And Shrinkage Concrete",
     "nickname": "CS",
+    "category": "BridGHe",
+    "subcategory": "08-Bridge",
+    "description": "Calculate Creep And Shrinkage for Concrete according to standard EN1992",
     "inputs": [
       {
         "name": "Fck",
@@ -9184,6 +9281,9 @@
     "kind": "component",
     "name": "Super Element Check",
     "nickname": "SEC",
+    "category": "BridGHe",
+    "subcategory": "10-Checks",
+    "description": "Check the selected Super-Element",
     "inputs": [
       {
         "name": "BridGHe Model",
@@ -9259,6 +9359,9 @@
     "kind": "component",
     "name": "Super Element Filter",
     "nickname": "SEF",
+    "category": "BridGHe",
+    "subcategory": "14-Tools",
+    "description": "Filter the selected Super-Element",
     "inputs": [
       {
         "name": "BridGHe Model",
@@ -9294,6 +9397,9 @@
     "kind": "component",
     "name": "Beam Output Stations",
     "nickname": "BOS",
+    "category": "BridGHe",
+    "subcategory": "07-Attributes",
+    "description": "Beam Output Stations",
     "inputs": [
       {
         "name": "Beam",
@@ -9329,6 +9435,9 @@
     "kind": "component",
     "name": "Beam Releases",
     "nickname": "BR",
+    "category": "BridGHe",
+    "subcategory": "07-Attributes",
+    "description": "Beam ends releases \n 0 or false = released; Null = fixed; Number = Partial released (0 = released)",
     "inputs": [
       {
         "name": "Beam",
@@ -9452,6 +9561,9 @@
     "kind": "component",
     "name": "String Group",
     "nickname": "SG",
+    "category": "BridGHe",
+    "subcategory": "07-Attributes",
+    "description": "String Group - Available only for Straus7",
     "inputs": [
       {
         "name": "Beam",
@@ -9487,6 +9599,9 @@
     "kind": "component",
     "name": "Beam Support",
     "nickname": "BSup",
+    "category": "BridGHe",
+    "subcategory": "07-Attributes",
+    "description": "Distributed Straus elastic support along principal local axis ±1 or ±2, in freedom case 1.",
     "inputs": [
       {
         "name": "Beam",
@@ -9546,6 +9661,9 @@
     "kind": "component",
     "name": "Beam Taper",
     "nickname": "BT",
+    "category": "BridGHe",
+    "subcategory": "07-Attributes",
+    "description": "Beam taper",
     "inputs": [
       {
         "name": "Beam",
@@ -9621,6 +9739,9 @@
     "kind": "component",
     "name": "Element Id",
     "nickname": "EI",
+    "category": "BridGHe",
+    "subcategory": "07-Attributes",
+    "description": "Defines user element ID for node/beam/plate",
     "inputs": [
       {
         "name": "Element",
@@ -9656,6 +9777,9 @@
     "kind": "component",
     "name": "Load Patch Type",
     "nickname": "LPT",
+    "category": "BridGHe",
+    "subcategory": "07-Attributes",
+    "description": "The Plate Load Path Type",
     "inputs": [
       {
         "name": "Plate",
@@ -9707,6 +9831,9 @@
     "kind": "component",
     "name": "Restraints",
     "nickname": "NR",
+    "category": "BridGHe",
+    "subcategory": "07-Attributes",
+    "description": "Define a node restraints \n false = not restrained; true = restrained",
     "inputs": [
       {
         "name": "Node",
@@ -9750,6 +9877,9 @@
     "kind": "component",
     "name": "Stiffness",
     "nickname": "NS",
+    "category": "BridGHe",
+    "subcategory": "07-Attributes",
+    "description": "Define a node stiffness",
     "inputs": [
       {
         "name": "Node",
@@ -9793,6 +9923,9 @@
     "kind": "component",
     "name": "Plate Support",
     "nickname": "PS",
+    "category": "BridGHe",
+    "subcategory": "07-Attributes",
+    "description": "Define a plate support",
     "inputs": [
       {
         "name": "Plate",
@@ -9844,6 +9977,9 @@
     "kind": "component",
     "name": "Super Element",
     "nickname": "SE",
+    "category": "BridGHe",
+    "subcategory": "07-Attributes",
+    "description": "Defines that the element belong to a Super-Element",
     "inputs": [
       {
         "name": "Element",
@@ -9879,6 +10015,9 @@
     "kind": "component",
     "name": "Moving Static Analysis",
     "nickname": "MLAnalysis",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Genera i casi statici dei percorsi mobili, esegue LSA e associa tutti i risultati agli elementi. Richiede API e modulo Moving Load R3.",
     "inputs": [
       {
         "name": "Model",
@@ -9930,6 +10069,9 @@
     "kind": "component",
     "name": "Straus R3 Analysis",
     "nickname": "SA",
+    "category": "BridGHe",
+    "subcategory": "12-Analysis",
+    "description": "Model Analisys with Straus7",
     "inputs": [
       {
         "name": "Model",

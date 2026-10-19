@@ -1,6 +1,6 @@
 # Icone BridGHe
 
-Sistema grafico originale per il plugin, i 136 componenti e gli 8 parametri Grasshopper. Le icone sono risorse incorporate nel `.gha`: non richiedono file esterni durante l'uso. Porte, nomi e GUID non sono cambiati con questo aggiornamento.
+Sistema grafico originale per il plugin, i 133 componenti e gli 8 parametri Grasshopper. Le icone sono risorse incorporate nel `.gha`: non richiedono file esterni durante l'uso. Il catalogo segue i componenti effettivamente registrati.
 
 ![Anteprima](../assets/icons/preview.png)
 
@@ -13,18 +13,18 @@ Sistema grafico originale per il plugin, i 136 componenti e gli 8 parametri Gras
 | Materiali | Grigio blu | Materiali e proprietà |
 | Carichi e carichi mobili | Arancio | Forze, momenti, veicoli, percorsi e template |
 | Straus | Viola | Esportazione, analisi e fasi |
-| BridgeChecks e verifiche | Verde | Sezioni composte, controlli, effetti nel tempo e report |
+| Verifiche ponti | Verde | Controlli ed effetti nel tempo |
 | Risultati | Viola chiaro | Elemento e dati estratti |
 
 La sagoma e i contrassegni distinguono le funzioni anche senza affidarsi al solo colore. Ogni componente/parametro ha un asset distinto. I parametri hanno fondo bianco e un piccolo contrassegno dedicato. I simboli delle sezioni descrivono la tipologia, non la geometria corrente del modello.
 
-Il logo rappresenta un ponte ad arco con impalcato, appoggi e nodi. È disponibile anche a 512×512 px. Componenti e identità del plugin usano PNG **24×24 px**; le categorie `BridGHe` e `BridGHe-Checks` usano **16×16 px**, secondo l'API Grasshopper.
+Il logo rappresenta un ponte ad arco con impalcato, appoggi e nodi. È disponibile anche a 512×512 px. Componenti e identità del plugin usano PNG **24×24 px**; la sola categoria `BridGHe` usa **16×16 px**, secondo l'API Grasshopper.
 
 ## File e rigenerazione
 
 - `assets/icons/`: sorgenti SVG modificabili, logo, anteprima e [catalogo completo](../assets/icons/catalogue.png).
 - `assets/icons/manifest.json`: associazione tra tipo .NET, GUID, famiglia, simbolo e contrassegno.
-- `src/BridGHe.Grasshopper/Resources/Icons/`: 148 PNG incorporati (144 componenti/parametri, 2 marchi a 24 px e 2 icone di categoria a 16 px).
+- `src/BridGHe.Grasshopper/Resources/Icons/`: 143 PNG incorporati (141 componenti/parametri, marchio a 24 px e categoria a 16 px).
 - `assets/icons/replaced-legacy-assets.json`: elenco delle 94 vecchie icone sostituite. Gli schemi illustrativi ancora usati nei menu restano nel progetto.
 
 Per cambiare il sistema grafico in modo riproducibile, modificare `tools/generate_icons.py` e rigenerare dalla radice del repository. Richiede Python 3 e Node.js con il pacchetto `sharp` disponibile:

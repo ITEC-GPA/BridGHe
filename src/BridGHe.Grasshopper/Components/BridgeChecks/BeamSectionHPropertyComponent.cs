@@ -12,7 +12,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         /// Initializes a new instance of the BeamPropertyComponent class.
         /// </summary>
         public BeamSectionHPropertyComponent()
-          : base("Section H Beam Property", "BGP", "Geometric properties of a Section H beam property", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
+          : base("Section H Beam Property", "BGP", "Geometric properties of a Section H beam property", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_SECTIONS)
         {
 
         }

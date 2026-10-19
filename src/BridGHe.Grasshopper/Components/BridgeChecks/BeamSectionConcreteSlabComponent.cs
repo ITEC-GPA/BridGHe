@@ -11,7 +11,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         /// Initializes a new instance of the BeamSectionConcreteSlabComponent class.
         /// </summary>
         public BeamSectionConcreteSlabComponent()
-          : base("Concrete Slab Section", "S", "Defines an concrete slab section", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
+          : base("Concrete Slab Section", "S", "Defines an concrete slab section", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_SECTIONS)
         {
         }
 

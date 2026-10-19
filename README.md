@@ -2,7 +2,7 @@
 
 Plugin Grasshopper per **Rhino 8 / .NET 8 / Windows x64**: modello parametrico → Straus7 R3 → risultati negli elementi → verifiche e dettagli di ponti misti con gPC.
 
-La versione corrente comprende **136 componenti e 8 parametri**, con 145 GUID distinti incluso il plugin. Il refactoring del 19 ottobre 2026 semplifica gli input e rimuove i contenitori non utilizzati. I contratti aggiornati sono in [COMPONENTI](docs/COMPONENTI.md); le definizioni Grasshopper degli esempi sono state rigenerate.
+La versione corrente comprende **133 componenti e 8 parametri**, con 142 GUID distinti incluso il plugin. Il refactoring del 19 ottobre 2026 semplifica gli input e rimuove i contenitori non utilizzati. I contratti aggiornati sono in [COMPONENTI](docs/COMPONENTI.md); le definizioni Grasshopper degli esempi sono state rigenerate.
 
 ## Esempi
 
@@ -45,7 +45,7 @@ Test del sistema di build (21 controlli su copia/pulizia e 9 su build MSBuild re
 .\tools\test-post-build.ps1
 ```
 
-Chiudere Rhino, estrarre il pacchetto sotto la cartella Libraries di Grasshopper e tenere insieme `.gha` e DLL. Avviare Rhino 8 con .NET 8; categorie `BridGHe` e `BridGHe-Checks`. Le DLL native Straus e Rhino non sono distribuite. La licenza API Straus è necessaria anche per calcolare le sezioni native. Percorso predefinito: `C:\Program Files\Straus7 R31`; in alternativa impostare `BRIDGHE_STRAUS_HOME` prima di avviare Rhino.
+Chiudere Rhino, estrarre il pacchetto sotto la cartella Libraries di Grasshopper e tenere insieme `.gha` e DLL. Avviare Rhino 8 con .NET 8; unica tab `BridGHe`. Le DLL native Straus e Rhino non sono distribuite. La licenza API Straus è necessaria anche per calcolare le sezioni native. Percorso predefinito: `C:\Program Files\Straus7 R31`; in alternativa impostare `BRIDGHE_STRAUS_HOME` prima di avviare Rhino.
 
 ## Riprodurre le verifiche
 
@@ -65,3 +65,5 @@ Gli script rigenerano e sovrascrivono gli esempi: salvare separatamente le modif
 - [Icone e rigenerazione](docs/ICONE.md).
 - [Correzione degli appoggi distribuiti e differenze numeriche](docs/beam-support-fix.json).
 - [Misura dell'ottimizzazione delle letture di taglio](docs/shear-performance.json).
+
+Organizzazione delle palette e componenti non presenti negli esempi: [audit di utilizzo](docs/USO-COMPONENTI.md). Sezioni in `03-Sections`, appoggi in `07-Attributes`, tutti i carichi in `09-Loads`.

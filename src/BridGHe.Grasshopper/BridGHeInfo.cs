@@ -21,9 +21,6 @@ namespace BridGHe.Grasshopper
             server.AddCategoryIcon(Helpers.CategoryNameConstants.CATEGORY_MODEL, Properties.ComponentIcons.ModelCategory);
             server.AddCategoryShortName(Helpers.CategoryNameConstants.CATEGORY_MODEL, "BGH");
             server.AddCategorySymbolName(Helpers.CategoryNameConstants.CATEGORY_MODEL, 'B');
-            server.AddCategoryIcon(Helpers.CategoryNameConstants.CATEGORY_CHECKS, Properties.ComponentIcons.ChecksCategory);
-            server.AddCategoryShortName(Helpers.CategoryNameConstants.CATEGORY_CHECKS, "BGC");
-            server.AddCategorySymbolName(Helpers.CategoryNameConstants.CATEGORY_CHECKS, 'C');
             return GH_LoadingInstruction.Proceed;
         }
     }

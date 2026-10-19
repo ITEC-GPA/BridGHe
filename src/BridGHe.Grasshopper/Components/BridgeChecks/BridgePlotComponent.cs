@@ -23,7 +23,7 @@ public abstract class BridgePlotComponent : GH_Component
     protected virtual bool ReferenceLines => false;
     protected abstract double Value(object result,int quantity);
     protected abstract string Unit(int quantity);
-    protected BridgePlotComponent(string name,string nick,string description):base(name,nick,description,"BridGHe-Checks","Bridge plots") { }
+    protected BridgePlotComponent(string name,string nick,string description):base(name,nick,description,Helpers.CategoryNameConstants.CATEGORY_MODEL, Helpers.CategoryNameConstants.SUBCATEGORY_RESULTS) { }
     protected override System.Drawing.Bitmap Icon=>Properties.ComponentIcons.For(GetType());
     public override void CreateAttributes()
     {

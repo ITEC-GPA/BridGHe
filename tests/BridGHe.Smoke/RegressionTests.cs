@@ -11,6 +11,7 @@ internal static class RegressionTests
     {
         var tests = new Dictionary<string, Action>
         {
+            ["component-layout"] = ComponentLayoutTests.Run,
             ["bridge-plots"] = PlotTests.Run,
             ["native-bridge-components"] = NativeBridgeComponentTests.Run,
             ["bridge-numerical-baseline"] = BridgeNumericalBaseline.Verify,

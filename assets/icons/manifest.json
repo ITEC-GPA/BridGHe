@@ -18,7 +18,7 @@
       "#fff2e5"
     ],
     "moving": [
-      "#ba6120",
+      "#bd5b19",
       "#fff2e5"
     ],
     "solver": [
@@ -101,15 +101,6 @@
       "family": "tool",
       "glyph": "plate",
       "badge": "filter"
-    },
-    {
-      "key": "RemeshComponent",
-      "type": "BridGHe.Grasshopper.Components.Tools.RemeshComponent",
-      "guid": "c338c62b-28d4-473f-94cc-e9c1c8c4cda7",
-      "name": "Remesh",
-      "family": "tool",
-      "glyph": "mesh",
-      "badge": "edit"
     },
     {
       "key": "SurfaceSplitterComponent",
@@ -209,15 +200,6 @@
       "family": "section",
       "glyph": "section:T",
       "badge": ""
-    },
-    {
-      "key": "SectionGeometricComponent",
-      "type": "BridGHe.Grasshopper.Components.Sections.SectionGeometricComponent",
-      "guid": "8f7e3520-a83a-4b14-ac34-6b5a48ccaf84",
-      "name": "Section Geometry",
-      "family": "section",
-      "glyph": "section:Brep",
-      "badge": "shape"
     },
     {
       "key": "SectionGeometricPropertyComponent",
@@ -916,7 +898,7 @@
       "key": "ForceComponent",
       "type": "BridGHe.Grasshopper.Components.Checks.ForceComponent",
       "guid": "bc2cde43-3af2-4685-8ce7-63e3586edeb5",
-      "name": "Force component",
+      "name": "Section Force",
       "family": "load",
       "glyph": "axes",
       "badge": "force"
@@ -962,7 +944,7 @@
       "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgeGeometryComponent",
       "guid": "422a7607-2759-4da2-819b-158d2c6f6cb3",
       "name": "Bridge Section Geometry",
-      "family": "check",
+      "family": "section",
       "glyph": "composite",
       "badge": "native"
     },
@@ -1061,7 +1043,7 @@
       "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamPropertyCompositeComponent",
       "guid": "f87c7066-e509-4646-9ef5-79691675cbf4",
       "name": "Composite Beam Property",
-      "family": "check",
+      "family": "section",
       "glyph": "composite",
       "badge": "data"
     },
@@ -1070,7 +1052,7 @@
       "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionConcreteSlabComponent",
       "guid": "1a539226-24ae-4d3f-8075-4f54cd1b9f68",
       "name": "Concrete Slab Section",
-      "family": "check",
+      "family": "section",
       "glyph": "slab",
       "badge": ""
     },
@@ -1079,7 +1061,7 @@
       "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionHPropertyComponent",
       "guid": "3ee2c935-dd7b-44b8-9bc2-c705ecd78052",
       "name": "Section H Beam Property",
-      "family": "check",
+      "family": "section",
       "glyph": "section:I",
       "badge": "data"
     },
@@ -1106,7 +1088,7 @@
       "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeForcePlotComponent",
       "guid": "77e9f533-e4e8-41de-baaf-6bfece84def9",
       "name": "Bridge Force Plot",
-      "family": "check",
+      "family": "result",
       "glyph": "printer",
       "badge": "force"
     },
@@ -1115,7 +1097,7 @@
       "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeResultPlotComponent",
       "guid": "8f53f404-9446-4b47-90e3-d514f9c547c9",
       "name": "Bridge Stress Plot",
-      "family": "check",
+      "family": "result",
       "glyph": "printer",
       "badge": "stress"
     },
@@ -1172,15 +1154,6 @@
       "family": "check",
       "glyph": "stress",
       "badge": "data"
-    },
-    {
-      "key": "CompositeSectionComponent_OBSOLETE",
-      "type": "BridGHe.Grasshopper.Components.BridgeChecks.CompositeSectionComponent_OBSOLETE",
-      "guid": "ee8b7912-f07c-4a17-8a26-e75959ed080f",
-      "name": "Composite Beam Property",
-      "family": "check",
-      "glyph": "composite",
-      "badge": "add"
     },
     {
       "key": "CompositeSectionGeometricPropertyComponent",

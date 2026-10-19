@@ -162,12 +162,6 @@
         "ac8892ff-18d2-4fe4-a8f5-d91053702b6d"
       ]
     },
-    "src/BridGHe.Grasshopper/Components/BridgeChecks/CompositeSectionComponent.cs": {
-      "ports": "2a985e4359b011e4a1a1072295cd9a203ef70bddd5a755666f531029c2a20286",
-      "guids": [
-        "ee8b7912-f07c-4a17-8a26-e75959ed080f"
-      ]
-    },
     "src/BridGHe.Grasshopper/Components/BridgeChecks/CompositeSectionGeometricPropertyComponent.cs": {
       "ports": "3693193c773ca41aef9a0e15a466d28b530a4f53d45da13fc0b7c6e2c13c4223",
       "guids": [
@@ -565,12 +559,6 @@
         "55b57ea9-40e9-485d-bc51-54eb38275147"
       ]
     },
-    "src/BridGHe.Grasshopper/Components/Sections/SectionGeometricComponent.cs": {
-      "ports": "ae75ff775605bf9b24a7ed92a7c9c7be6d8ad265bc0190f7f83481de63ac9377",
-      "guids": [
-        "8f7e3520-a83a-4b14-ac34-6b5a48ccaf84"
-      ]
-    },
     "src/BridGHe.Grasshopper/Components/Sections/SectionGeometricPropertyComponent.cs": {
       "ports": "76068af3018dd10461ceabccb361a719f25f2ad52bf1b11393a6f60bf88fcf26",
       "guids": [
@@ -656,12 +644,6 @@
       "ports": "3e56dedd3ee025db364203b2400682fcb4ea37ad7acfb491710d2740e9e8c006",
       "guids": [
         "65613b73-39f2-4a8f-8212-96c44a775516"
-      ]
-    },
-    "src/BridGHe.Grasshopper/Components/Tools/RemeshComponent.cs": {
-      "ports": "a3a4e1f18878fa719b2ccc972838845f143455da8d98cad0a9fa7fce46f9084b",
-      "guids": [
-        "c338c62b-28d4-473f-94cc-e9c1c8c4cda7"
       ]
     },
     "src/BridGHe.Grasshopper/Components/Tools/SurfaceSplitterComponent.cs": {

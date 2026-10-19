@@ -10,6 +10,5 @@ namespace BridGHe.Grasshopper.Properties
         public static Bitmap For(Type componentType) => Resources.Load("Icons." + componentType.Name);
         public static Bitmap Plugin => Resources.Load("Icons.BridGHe");
         public static Bitmap ModelCategory => Resources.Load("Icons.BridGHeCategory");
-        public static Bitmap ChecksCategory => Resources.Load("Icons.BridGHeChecksCategory");
     }
 }

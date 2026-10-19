@@ -8,7 +8,7 @@ namespace BridGHe.Grasshopper.Components.Attributes;
 
 public sealed class BeamSupportComponent:GH_Component
 {
-    public BeamSupportComponent():base("Beam Support","BSup","Distributed Straus elastic support along principal local axis ±1 or ±2, in freedom case 1.","BridGHe","Attributes") { }
+    public BeamSupportComponent():base("Beam Support","BSup","Distributed Straus elastic support along principal local axis ±1 or ±2, in freedom case 1.",Helpers.CategoryNameConstants.CATEGORY_MODEL, Helpers.CategoryNameConstants.SUBCATEGORY_ATTRIBUTES) { }
     protected override void RegisterInputParams(GH_InputParamManager p)
     {
         p.AddGenericParameter("Beam","B","Beam receiving an additional distributed support",GH_ParamAccess.item);

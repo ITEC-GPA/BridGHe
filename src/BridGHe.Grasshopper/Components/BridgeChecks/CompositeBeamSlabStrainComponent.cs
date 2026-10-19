@@ -12,7 +12,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         /// Initializes a new instance of the CompositeBeamSlabStrainComponent class.
         /// </summary>
         public CompositeBeamSlabStrainComponent()
-          : base("Composite Beam Strain", "CBS", "Assign a strain load to a composite beam", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
+          : base("Composite Beam Strain", "CBS", "Assign a strain load to a composite beam", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_LOADS)
         {
         }
 

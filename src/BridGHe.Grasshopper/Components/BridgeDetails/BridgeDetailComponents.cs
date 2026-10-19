@@ -17,7 +17,7 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
         private (System.Reflection.PropertyInfo Property,object Default,string Description)[] metadata;
         private (System.Reflection.PropertyInfo Property,object Default,string Description)[] Metadata => metadata ??= Fields.Select(f =>
             (typeof(T).GetProperty(f.Name) ?? throw new InvalidOperationException("Missing gPC property: "+f.Name),f.Default,f.Description)).ToArray();
-        protected DetailDefinition(string name,string nick,string description):base(name,nick,description,"BridGHe-Checks","Bridge details") { }
+        protected DetailDefinition(string name,string nick,string description):base(name,nick,description,Helpers.CategoryNameConstants.CATEGORY_MODEL, Helpers.CategoryNameConstants.SUBCATEGORY_BRIDGE) { }
         protected override void RegisterInputParams(GH_InputParamManager p)
         {
             foreach(var f in Metadata)
@@ -95,7 +95,7 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
     }
     public sealed class BridgeDetailCheckComponent:GH_Component
     {
-        public BridgeDetailCheckComponent():base("Bridge Detail Check","DetailCheck","Recomputes a BridgeChecks section with gPC studs and stiffeners. Retains phase history, materials and limit state. No FEM stiffness change.","BridGHe-Checks","Bridge details") { }
+        public BridgeDetailCheckComponent():base("Bridge Detail Check","DetailCheck","Recomputes a BridgeChecks section with gPC studs and stiffeners. Retains phase history, materials and limit state. No FEM stiffness change.",Helpers.CategoryNameConstants.CATEGORY_MODEL, Helpers.CategoryNameConstants.SUBCATEGORY_DESIGN) { }
         public override Guid ComponentGuid=>new Guid("ffad5404-7440-47e7-9824-90588810089f");
         protected override System.Drawing.Bitmap Icon=>Properties.ComponentIcons.For(GetType());
         protected override void RegisterInputParams(GH_InputParamManager p)

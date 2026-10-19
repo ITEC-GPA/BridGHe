@@ -20,7 +20,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         /// Initializes a new instance of the ChecksComponent class.
         /// </summary>
         public BuildBridgeModel()
-          : base("Build BridGHe Model", "BMCM", "Merge the BridGHe models in to a single BridGHe model with input phases", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
+          : base("Build BridGHe Model", "BMCM", "Merge the BridGHe models in to a single BridGHe model with input phases", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_MODEL)
         {
             _run = false;
         }

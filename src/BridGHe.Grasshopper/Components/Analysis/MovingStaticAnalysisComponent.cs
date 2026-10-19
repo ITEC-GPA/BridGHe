@@ -8,7 +8,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
     public sealed class MovingStaticAnalysisComponent : GH_Component
     {
         protected override System.Drawing.Bitmap Icon => Properties.ComponentIcons.For(GetType());
-        public MovingStaticAnalysisComponent() : base("Moving Static Analysis", "MLAnalysis", "Genera i casi statici dei percorsi mobili, esegue LSA e associa tutti i risultati agli elementi. Richiede API e modulo Moving Load R3.", "BridGHe", "Moving Loads") { }
+        public MovingStaticAnalysisComponent() : base("Moving Static Analysis", "MLAnalysis", "Genera i casi statici dei percorsi mobili, esegue LSA e associa tutti i risultati agli elementi. Richiede API e modulo Moving Load R3.", Helpers.CategoryNameConstants.CATEGORY_MODEL, Helpers.CategoryNameConstants.SUBCATEGORY_LOADS) { }
         protected override void RegisterInputParams(GH_InputParamManager p)
         { p.AddGenericParameter("Model", "M", "Modello con percorsi mobili.", GH_ParamAccess.item); p.AddTextParameter("Output path", "O", "Percorso completo .st7.", GH_ParamAccess.item); p.AddBooleanParameter("Run", "R", "Eseguire analisi.", GH_ParamAccess.item, false); }
         protected override void RegisterOutputParams(GH_OutputParamManager p)

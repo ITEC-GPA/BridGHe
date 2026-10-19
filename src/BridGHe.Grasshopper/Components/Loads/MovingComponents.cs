@@ -13,7 +13,7 @@ namespace BridGHe.Grasshopper.Components.Loads
     public abstract class MovingComponent : GH_Component
     {
         protected override System.Drawing.Bitmap Icon => Properties.ComponentIcons.For(GetType());
-        protected MovingComponent(string name, string nickname, string description) : base(name, nickname, description, "BridGHe", "Moving Loads") { }
+        protected MovingComponent(string name, string nickname, string description) : base(name, nickname, description, Helpers.CategoryNameConstants.CATEGORY_MODEL, Helpers.CategoryNameConstants.SUBCATEGORY_LOADS) { }
         protected override void RegisterOutputParams(GH_OutputParamManager p) => p.AddGenericParameter("Moving object", "M", "Oggetto per la catena di carichi mobili Straus R3.", GH_ParamAccess.item);
         protected abstract MovingObject Build(IGH_DataAccess da);
         protected override void SolveInstance(IGH_DataAccess da)
@@ -159,7 +159,7 @@ namespace BridGHe.Grasshopper.Components.Loads
     public sealed class AttachMovingPathsComponent : GH_Component
     {
         protected override System.Drawing.Bitmap Icon => Properties.ComponentIcons.For(GetType());
-        public AttachMovingPathsComponent() : base("Attach Moving Paths", "MLModel", "Duplica il modello e sostituisce i percorsi mobili; output compatibile con Export e Analysis Straus R3.", "BridGHe", "Moving Loads") { }
+        public AttachMovingPathsComponent() : base("Attach Moving Paths", "MLModel", "Duplica il modello e sostituisce i percorsi mobili; output compatibile con Export e Analysis Straus R3.", Helpers.CategoryNameConstants.CATEGORY_MODEL, Helpers.CategoryNameConstants.SUBCATEGORY_LOADS) { }
         protected override void RegisterInputParams(GH_InputParamManager p) { p.AddGenericParameter("Model", "M", "Modello BridGHe.", GH_ParamAccess.item); p.AddGenericParameter("Paths", "P", "Percorsi mobili.", GH_ParamAccess.list); }
         protected override void RegisterOutputParams(GH_OutputParamManager p) => p.AddGenericParameter("Model", "M", "Modello con percorsi mobili.", GH_ParamAccess.item);
         protected override void SolveInstance(IGH_DataAccess da)

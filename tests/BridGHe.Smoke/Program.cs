@@ -145,7 +145,7 @@ internal static class Program
             }
             object[] Ports(System.Collections.Generic.IEnumerable<Grasshopper.Kernel.IGH_Param> ports) => ports.Select(p=>(object)new {
                 name=p.Name,nickname=p.NickName,description=p.Description,access=p.Access.ToString(),optional=p.Optional,type=p.TypeName }).ToArray();
-            items.Add(new {type=type.FullName,guid,kind=component==null?"parameter":"component",name=documentObject.Name,nickname=documentObject.NickName,
+            items.Add(new {type=type.FullName,guid,kind=component==null?"parameter":"component",name=documentObject.Name,nickname=documentObject.NickName,category=documentObject.Category,subcategory=documentObject.SubCategory,description=documentObject.Description,
                 inputs=component==null?Array.Empty<object>():Ports(component.Params.Input),outputs=component==null?Array.Empty<object>():Ports(component.Params.Output)});
         }
         if(inventoryOnly)
@@ -153,7 +153,7 @@ internal static class Program
             File.WriteAllText("artifacts/component-runtime.json",System.Text.Json.JsonSerializer.Serialize(items,new System.Text.Json.JsonSerializerOptions {WriteIndented=true}));
             Console.WriteLine($"INVENTORY {count} objects; icon validation deferred until assets are generated.");return;
         }
-        Assert(bridgeChecks==18,"all 18 bridge workflow components instantiate in Rhino 8");
+        Assert(bridgeChecks==17,"all 17 bridge workflow components instantiate in Rhino 8");
         Assert(iconIssues.Count==0,"all component and parameter icons load at 24 px: "+string.Join(", ",iconIssues));
         Assert(iconHashes.Count==count,"each component and parameter has its own distinct icon");
         var info=(Grasshopper.Kernel.GH_AssemblyInfo)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.BridGHeInfo",true));
@@ -162,8 +162,7 @@ internal static class Program
         {
             var priority=(Grasshopper.Kernel.GH_AssemblyPriority)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.BridGHeAssemblyPriority",true));
             Assert(priority.PriorityLoad()==Grasshopper.Kernel.GH_LoadingInstruction.Proceed,"category icon registration succeeds");
-            Assert(Grasshopper.Instances.ComponentServer.GetCategoryIcon("BridGHe") is {Width:16,Height:16}
-                && Grasshopper.Instances.ComponentServer.GetCategoryIcon("BridGHe-Checks") is {Width:16,Height:16},"both category icons have native 16 px dimensions");
+            Assert(Grasshopper.Instances.ComponentServer.GetCategoryIcon("BridGHe") is {Width:16,Height:16},"the single category icon has native 16 px dimensions");
         }
         else Console.WriteLine("SKIPPED: category registration with installed plugins (opt in with --installed-plugins)");
         File.WriteAllText("artifacts/component-runtime.json",System.Text.Json.JsonSerializer.Serialize(items,new System.Text.Json.JsonSerializerOptions {WriteIndented=true}));

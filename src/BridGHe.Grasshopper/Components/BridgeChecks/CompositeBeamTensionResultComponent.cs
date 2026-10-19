@@ -12,7 +12,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         /// Initializes a new instance of the MeshRemap class.
         /// </summary>
         public CompositeBeamTensionResultComponent()
-          : base("Composite Section Linear Tension Results", "CSLTR", "Results for Composite Section Linear Tension analysis", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_BRIDGE)
+          : base("Composite Section Linear Tension Results", "CSLTR", "Results for Composite Section Linear Tension analysis", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_RESULTS)
         {
         }
 
