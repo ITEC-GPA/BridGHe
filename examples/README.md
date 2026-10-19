@@ -1,3 +1,7 @@
+## Aggiornamento del workflow a fasi
+
+Gli esempi 11-19 usano Bridge Action, Bridge Shrinkage Action e Bridge Phase: vedere [la guida](../docs/FASI-E-AZIONI.md). I benchmark 01-10 non utilizzano Build BridGHe Model e mantengono le prove native. Nuovi [script dei carichi mobili](moving-loads/README.md) pronti per il collaudo con licenza. Il [ponte REV003](19-flusso-acciaio-misto/README.md) richiede nuove analisi; i risultati storici della vecchia geometria non gli si applicano.
+
 # Dieci esempi verificati con Straus7 R3
 
 È disponibile anche l'[esempio 11: ponte misto a graticcio](bridge-grillage/README.md), con un canvas costruito da componenti per geometria, vincoli, carichi, analisi e BridgeChecks, 357 controlli e tavole PDF. I dieci benchmark qui sotto restano casi elementari separati.

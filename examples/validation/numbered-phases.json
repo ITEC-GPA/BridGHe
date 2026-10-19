@@ -1,0 +1,87 @@
+{
+  "date": "2026-10-19",
+  "build": {
+    "configuration": "Release",
+    "warnings": 0,
+    "errors": 0,
+    "publishedDirectory": "bin/Release"
+  },
+  "smoke": {
+    "checks": 190,
+    "regressionGroups": 38,
+    "drawingGroupsInSeparateProcesses": 2,
+    "complete": true
+  },
+  "numericalBaseline": {
+    "values": 238,
+    "exactlyEqual": 238
+  },
+  "existingExamples": [
+    {
+      "example": "bridge-grillage",
+      "checks": 166,
+      "mode": "cached-native-results"
+    },
+    {
+      "example": "12-continuo-2campate",
+      "checks": 31,
+      "mode": "cached-native-results"
+    },
+    {
+      "example": "13-continuo-3campate",
+      "checks": 31,
+      "mode": "cached-native-results"
+    },
+    {
+      "example": "14-curvo-1campata",
+      "checks": 18,
+      "mode": "cached-native-results"
+    },
+    {
+      "example": "15-curvo-2campate",
+      "checks": 18,
+      "mode": "cached-native-results"
+    },
+    {
+      "example": "16-spina-1campata",
+      "checks": 31,
+      "mode": "cached-native-results"
+    },
+    {
+      "example": "17-spina-3campate",
+      "checks": 31,
+      "mode": "cached-native-results"
+    },
+    {
+      "example": "18-spina-curva-2campate",
+      "checks": 18,
+      "mode": "cached-native-results"
+    }
+  ],
+  "existingExampleChecks": 344,
+  "example19": {
+    "file": "19-flusso-acciaio-misto_REV003.ghx",
+    "nodes": 75,
+    "beams": 98,
+    "checks": 15,
+    "nativeExecuted": false
+  },
+  "movingLoads": {
+    "scenarios": [
+      "01-single-13",
+      "02-single-25",
+      "03-reverse",
+      "04-tandem",
+      "05-double-force"
+    ],
+    "preparationChecks": 11,
+    "nativeExecuted": false,
+    "nativeCommand": "powershell -ExecutionPolicy Bypass -File tools/test-moving-loads.ps1 -Native"
+  },
+  "pending": [
+    "Straus R3 run for the new REV003 geometry",
+    "Native moving-load benchmarks",
+    "Mesh sensitivity for REV003"
+  ],
+  "scope": "Existing example checks replay archived native results; no new Straus analysis was executed in this work."
+}
