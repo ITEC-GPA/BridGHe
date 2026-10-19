@@ -249,13 +249,26 @@ namespace BridGHe.Common.Models
             _shapes = new List<Brep>();
             if (_beamProperty?.Section == null || !_pointFrom.IsValid || !_pointTo.IsValid || Length <= 0)
                 return;
-            if (_beamProperty.Section.NativeSection != null) { _shapes = new List<Brep>(); return; }
             List<Brep> main_surfaces = new List<Brep>();
             double tol = 0.001;
             Point2d c = _beamProperty.Centroid;
 
-
-            switch (_beamProperty.SectionType)
+            if (_beamProperty.Section.NativeSection != null)
+            {
+                var contours=_beamProperty.Section.NativeSection.PreviewContours;
+                if (contours == null || contours.Length == 0) return;
+                var curves=new List<Curve>();
+                foreach (var coordinates in contours)
+                {
+                    var points=new List<Point3d>();
+                    for (int i=0;i+1<coordinates.Length;i+=2) points.Add(new Point3d(coordinates[i],coordinates[i+1],0));
+                    if (points.Count>=4) curves.Add(new PolylineCurve(points));
+                }
+                var sections=Brep.CreatePlanarBreps(curves,tol);
+                if (sections!=null) main_surfaces.AddRange(sections);
+                foreach (var curve in curves) curve.Dispose();
+            }
+            else switch (_beamProperty.SectionType)
             {
                 case SectionModel.SectionTypes.SolidCircle:
                     {
@@ -493,6 +506,7 @@ namespace BridGHe.Common.Models
 
                             LineCurve line = new LineCurve(_pointFrom, _pointTo);
                             Brep shape = surface.Faces[0].CreateExtrusion(line, true);
+                            if (shape.SolidOrientation == BrepSolidOrientation.Inward) shape.Flip();
                             _shapes.Add(shape);
                         }
                     }

@@ -202,6 +202,7 @@ internal static class Program
     private static void CheckNativeSections()
     {
         StrausRuntime.EnsureInitialized();
+        var previews=new System.Collections.Generic.List<object>();
         foreach(var shape in StrausSectionCatalog.All)
         {
             double Dimension(string n) => n.StartsWith("R")||n.StartsWith("alpha")?0:n=="D"?400:n=="B2"?100:n.StartsWith("B")?200:n=="L"?20:10;
@@ -209,8 +210,19 @@ internal static class Program
             var dimensions=shape.Key=="BglBulb" ? new double[]{200,50,10,10,0,5,0,0,30} : shape.Dimensions.Select(Dimension).ToArray();
             var section=new StrausSection { Key=shape.Key,Dimensions=dimensions }.Calculate();
             Assert(section.SectionArea>0 && section.I11>0 && section.I22>0,"native section "+shape.Key);
+            Assert(section.NativeSection.PreviewContours.Length>0,"native section boundary "+shape.Key);
+            var previewBeam=new BeamModel(Point3d.Origin,new(1000,0,0),new BeamPropertyModel("Preview"){Section=section,Material=new MaterialModel("S"),PropertyType=BeamPropertyType.Beam});
+            Assert(previewBeam.Shapes.Length>0 && previewBeam.Shapes.All(b=>b.IsSolid),"native solid preview "+shape.Key);
+            double volume=previewBeam.Shapes.Sum(b=> { using var mass=VolumeMassProperties.Compute(b);return mass.Volume; });
+            Console.WriteLine($"PREVIEW {shape.Key}: A={volume/1000:G17}, native={section.SectionArea:G17}, points={section.NativeSection.PreviewContours.Sum(x=>x.Length/2)}");
+            Assert(Math.Abs(volume/1000/section.SectionArea-1)<.03,"native preview area within 3 percent of exact area "+shape.Key);
+            var copy=ModelArchive.Clone(section);
+            Assert(copy.NativeSection.PreviewContours.SelectMany(x=>x).SequenceEqual(section.NativeSection.PreviewContours.SelectMany(x=>x)),"native preview archive "+shape.Key);
+            previews.Add(new { shape.Key,section.SectionArea,section.NativeSection.PreviewContours });
             if(shape.Key=="BglRectangle") Assert(Math.Abs(section.SectionArea-11600)<1e-6,"BGL rectangular hollow analytical area");
         }
+        Directory.CreateDirectory("artifacts/native-preview");
+        File.WriteAllText("artifacts/native-preview/sections.json",System.Text.Json.JsonSerializer.Serialize(previews));
     }
 
     private static void CheckNativeCantilever()

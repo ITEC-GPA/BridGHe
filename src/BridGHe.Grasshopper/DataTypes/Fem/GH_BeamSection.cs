@@ -1,6 +1,7 @@
 using BridGHe.Common.Models;
 using GH_IO.Serialization;
 using Grasshopper.Kernel.Types;
+using Grasshopper.Kernel;
 using GPC.Utilities.Units;
 using Rhino.Collections;
 using Rhino.Geometry;
@@ -10,8 +11,25 @@ using System.Linq;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {
-    public class GH_BeamSection : GH_Goo<SectionModel>
+    public class GH_BeamSection : GH_Goo<SectionModel>, IGH_PreviewData
     {
+        private IEnumerable<Polyline> NativeOutlines()
+        {
+            foreach(var coordinates in Value?.NativeSection?.PreviewContours ?? Array.Empty<double[]>())
+            {
+                var points=new List<Point3d>();
+                for(int i=0;i+1<coordinates.Length;i+=2)points.Add(new Point3d(coordinates[i],coordinates[i+1],0));
+                if(points.Count>1)yield return new Polyline(points);
+            }
+        }
+        public BoundingBox ClippingBox
+        {
+            get { var box=BoundingBox.Empty;foreach(var outline in NativeOutlines())box.Union(outline.BoundingBox);return box; }
+        }
+        public void DrawViewportWires(GH_PreviewWireArgs args)
+        { foreach(var outline in NativeOutlines())args.Pipeline.DrawPolyline(outline,args.Color,args.Thickness); }
+        public void DrawViewportMeshes(GH_PreviewMeshArgs args) { }
+
         public SectionModel.SectionTypes SectionType
         {
             get => Value.SectionType;

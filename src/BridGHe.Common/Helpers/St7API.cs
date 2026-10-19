@@ -36,6 +36,7 @@ namespace St7API
         public const int tuFAHRENHEIT = 1;
         public const int euJOULE = 0;
         public const int euBTU = 1;
+        public const int tyNODE = 0;
         public const int tyBEAM = 1;
         public const int tyPLATE = 2;
         public const int tyLOADPATH = 8;
@@ -214,6 +215,8 @@ namespace St7API
         [DllImport("St7API.dll")]
         public static extern int St7SetEntitySelectState(int uID, int Entity, int EntityNum, int EndEdgeFace, byte Selected);
         [DllImport("St7API.dll")]
+        public static extern int St7GetTotal(int uID, int Entity, ref int Total);
+        [DllImport("St7API.dll")]
         public static extern int St7GetBeamAxisSystemInitial(int uID, int BeamNum, double[] Doubles);
         [DllImport("St7API.dll")]
         public static extern int St7GenerateBXS(int uID, string BXSName, double[] Doubles);
@@ -251,6 +254,8 @@ namespace St7API
         public static extern int St7GetUnits(int uID, int[] Units);
         [DllImport("St7API.dll")]
         public static extern int St7SetNodeXYZ(int uID, int NodeNum, double[] XYZ);
+        [DllImport("St7API.dll")]
+        public static extern int St7GetNodeXYZ(int uID, int NodeNum, double[] XYZ);
         [DllImport("St7API.dll")]
         public static extern int St7SetElementConnection(int uID, int Entity, int EntityNum, int PropNum, int[] Connection);
         [DllImport("St7API.dll")]
@@ -348,9 +353,13 @@ namespace St7API
         [DllImport("St7API.dll")]
         public static extern int St7SetBeamSectionGeometryBGL(int uID, int PropNum, int Shape, double[] Dimensions);
         [DllImport("St7API.dll")]
+        public static extern int St7SetBeamSectionCircularDiscretisation(int uID, int PropNum, int[] Integers);
+        [DllImport("St7API.dll")]
         public static extern int St7CalculateBeamSectionProperties(int uID, int PropNum, byte DoShear);
         [DllImport("St7API.dll")]
         public static extern int St7AssignBXS(int uID, int PropNum, string BXSName);
+        [DllImport("St7API.dll")]
+        public static extern int St7SaveBeamSectionMesh(int uID, int PropNum, string FileName);
         [DllImport("St7API.dll")]
         public static extern int St7SetCutoffBarData(int uID, int PropNum, int[] Integers, double[] Doubles);
         [DllImport("St7API.dll")]

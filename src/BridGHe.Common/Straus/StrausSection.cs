@@ -16,6 +16,7 @@ namespace BridGHe.Common.Straus
         public string LibraryName { get; set; }
         public string LibraryItem { get; set; }
         public int LengthUnit { get; set; } = 2;
+        public double[][] PreviewContours { get; set; } = Array.Empty<double[]>();
         public StrausSection Clone() => new StrausSection
         {
             Key = Key,
@@ -23,7 +24,8 @@ namespace BridGHe.Common.Straus
             BxsPath = BxsPath,
             LibraryName = LibraryName,
             LibraryItem = LibraryItem,
-            LengthUnit = LengthUnit
+            LengthUnit = LengthUnit,
+            PreviewContours = PreviewContours?.Select(loop=>(double[])loop.Clone()).ToArray() ?? Array.Empty<double[]>()
         };
 
         public void Validate()
@@ -113,11 +115,15 @@ namespace BridGHe.Common.Straus
                 StrausRuntime.Check(St7.St7GetBeamSectionPropertyData(model.Id, 1, integers, data), "St7GetBeamSectionPropertyData");
                 double angle = data[St7.ipANGLE], c = Math.Cos(angle), s = Math.Sin(angle);
                 double i11 = data[St7.ipI11], i22 = data[St7.ipI22];
+                // Display tessellation only, after reading the exact mechanical properties.
+                if(Key is "CircularSolid" or "CircularHollow")
+                    StrausRuntime.Check(St7.St7SetBeamSectionCircularDiscretisation(model.Id,1,new[]{6}),"Preview circular divisions");
+                var native=Clone();native.PreviewContours=NativeSectionPreview.Read(model.Id,1);
                 return new SectionModel
                 {
                     Name = Key,
                     SectionType = SectionModel.SectionTypes.Generic,
-                    NativeSection = Clone(),
+                    NativeSection = native,
                     SectionArea = data[St7.ipAREA],
                     I11 = i11,
                     I22 = i22,
