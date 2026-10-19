@@ -1,0 +1,111 @@
+{
+  "Status": "prepared-offline-checked",
+  "NativeExecuted": false,
+  "Checks": [
+    {
+      "Name": "Bridge node count",
+      "Actual": 75,
+      "Expected": 75,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "Bridge member count",
+      "Actual": 98,
+      "Expected": 98,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO nodes",
+      "Actual": 75,
+      "Expected": 75,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO beams",
+      "Actual": 98,
+      "Expected": 98,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO stable beam IDs",
+      "Actual": 98,
+      "Expected": 98,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI nodes",
+      "Actual": 75,
+      "Expected": 75,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI beams",
+      "Actual": 98,
+      "Expected": 98,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI stable beam IDs",
+      "Actual": 98,
+      "Expected": 98,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO nodes",
+      "Actual": 75,
+      "Expected": 75,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO beams",
+      "Actual": 98,
+      "Expected": 98,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO stable beam IDs",
+      "Actual": 98,
+      "Expected": 98,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "RITIRO_FEM nodes",
+      "Actual": 75,
+      "Expected": 75,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "RITIRO_FEM beams",
+      "Actual": 98,
+      "Expected": 98,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "RITIRO_FEM stable beam IDs",
+      "Actual": 98,
+      "Expected": 98,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "Reopened component count",
+      "Actual": 132,
+      "Expected": 132,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    }
+  ]
+}
