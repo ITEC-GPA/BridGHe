@@ -58,6 +58,8 @@ Gli script rigenerano e sovrascrivono gli esempi: salvare separatamente le modif
 
 ## Documentazione
 
+- [Guida operativa Word con procedura completa e ponte REV003](docs/BridGHe_Guida_operativa.docx).
+- [Fasi numerate, azioni incrementali e ritiro](docs/FASI-E-AZIONI.md).
 - [Metodi cambiati, rimozioni e compatibilità](docs/MIGRAZIONE.md).
 - [Uso e convenzioni](docs/USO.md).
 - [Verifiche eseguite e limiti](docs/VERIFICHE.md).
@@ -80,4 +82,4 @@ Le proprietà omogeneizzate conservano acciaio e soletta nella preview delle bea
 
 ## Esempio del flusso acciaio → misto
 
-[Guida all'esempio 19](examples/19-flusso-acciaio-misto/README.md): un unico modello acciaio, override con proprietà generiche n∞, n0 e n ritiro, quattro analisi Straus, merge ordinato con matching dei casi e verifica gPC. Il GHX conserva i risultati nativi già calcolati; premere Run sul merge e sul verificatore. La sezione mista aggiunge l'input opzionale `n ritiro` (omesso = n∞) e la relativa uscita; i primi dieci input e le prime quattro uscite mantengono ordine e GUID. `Build BridGHe Model` aggiunge in coda la selezione dei casi FEM di ritiro. Le due file di armatura sono incluse in proprietà e tensioni.
+[Guida all'esempio 19](examples/19-flusso-acciaio-misto/README.md): REV003 contiene un ponte a due campate da 30 m e tre travi, con modello acciaio, override n∞, n0 e n ritiro, quattro analisi Straus e verifica gPC della spina centrale. Il nuovo graticcio è preparato e controllato offline; le analisi native sono ancora da eseguire con licenza disponibile. `Bridge Action` e `Bridge Shrinkage Action` associano casi e strain alle fasi numerate; le combinazioni usano gli Action ID. Gli ingressi correnti di `Build BridGHe Model` sono `Models`, `Phases`, `Combinations`, `Calculation`. Dopo le analisi premere Run sul Build e sul verificatore. Le vecchie connessioni di REV001/REV002 non sono compatibili con questa interfaccia. Le due file di armatura e il rapporto `n ritiro` sono inclusi nelle proprietà e nella verifica.
