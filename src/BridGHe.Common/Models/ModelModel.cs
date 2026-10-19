@@ -43,6 +43,8 @@ namespace BridGHe.Common.Models
 
         public Dictionary<int, string> GeneratedMovingCases { get; internal set; } = new Dictionary<int, string>();
 
+        public Checks.BridgeWorkflow BridgeWorkflow { get; internal set; }
+
         public string Name
         {
             get => _name;
@@ -100,12 +102,13 @@ namespace BridGHe.Common.Models
             _stagedConstruction = copy._stagedConstruction;
             MovingPaths = copy.MovingPaths;
             GeneratedMovingCases = copy.GeneratedMovingCases;
+            BridgeWorkflow = copy.BridgeWorkflow;
         }
 
         #region Serialization
 
         private string SERIALIZATION_RELEASE_NAME = "ModelModel_SERIALIZATION_RELEASE"; //do not modify the name!
-        private int SERIALIZATION_RELEASE = 6;
+        private int SERIALIZATION_RELEASE = 7;
 
         protected ModelModel(SerializationInfo info, StreamingContext context)
         {
@@ -120,6 +123,7 @@ namespace BridGHe.Common.Models
             }
             MovingPaths = savedRelease >= 5 ? System.Text.Json.JsonSerializer.Deserialize<List<MovingLoads.MovingPath>>(info.GetString("MovingPaths")) : new List<MovingLoads.MovingPath>();
             GeneratedMovingCases = savedRelease >= 5 ? System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, string>>(info.GetString("GeneratedMovingCases")) : new Dictionary<int, string>();
+            BridgeWorkflow = savedRelease >= 7 ? (Checks.BridgeWorkflow)info.GetValue("BridgeWorkflow", typeof(Checks.BridgeWorkflow)) : null;
             _name = info.GetString("Name");
             _units = (ModelUnits)info.GetValue("Units", typeof(ModelUnits));
             _elements = (List<ElementModel>)info.GetValue("Elements", typeof(List<ElementModel>));
@@ -145,6 +149,7 @@ namespace BridGHe.Common.Models
             info.AddValue(SERIALIZATION_RELEASE_NAME, SERIALIZATION_RELEASE);
             info.AddValue("MovingPaths", System.Text.Json.JsonSerializer.Serialize(MovingPaths));
             info.AddValue("GeneratedMovingCases", System.Text.Json.JsonSerializer.Serialize(GeneratedMovingCases));
+            info.AddValue("BridgeWorkflow", BridgeWorkflow, typeof(Checks.BridgeWorkflow));
             info.AddValue("Name", _name);
             info.AddValue("Units", _units, typeof(ModelUnits));
             info.AddValue("Elements", _elements, typeof(List<ElementModel>));

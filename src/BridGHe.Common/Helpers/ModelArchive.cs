@@ -31,6 +31,9 @@ namespace BridGHe.Common.Helpers
             using var reader = XmlDictionaryReader.CreateBinaryReader(data, Header.Length, data.Length - Header.Length, new XmlDictionaryReaderQuotas { MaxArrayLength = 10000000, MaxStringContentLength = 16000000, MaxDepth = 512, MaxBytesPerRead = 65536, MaxNameTableCharCount = 16000000 });
             T value = (T)Serializer<T>().ReadObject(reader);
             if (value is Models.ModelModel model) model.RebuildIndexes();
+            if (value is Checks.BridgeActionDefinition action) action.Source?.RebuildIndexes();
+            if (value is Checks.BridgePhaseDefinition phase)
+                foreach (var source in phase.Actions.Select(a => a.Source).Where(m => m != null).Distinct()) source.RebuildIndexes();
             return value;
         }
         public static T Clone<T>(T value) => Read<T>(Write(value));
