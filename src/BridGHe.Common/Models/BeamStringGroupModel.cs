@@ -147,7 +147,7 @@ namespace BridGHe.Common.Models
 
         public override bool Equals(object obj)
         {
-            if (obj is BeamReleasesAttributeModel br)
+            if (obj is BeamStringGroupAttributeModel br)
                 return Equals(br);
             return base.Equals(obj);
         }

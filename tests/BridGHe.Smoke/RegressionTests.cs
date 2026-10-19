@@ -67,6 +67,10 @@ internal static class RegressionTests
         Require(empty==null && empty!=root && root!=empty,"group comparison accepts null on either side");
         Require(child==new GroupModel("Spine",new GroupModel("Bridge")),"group identity remains the full hierarchy");
         Require(GroupModel.GetBranch(child).SequenceEqual(new[]{root,child}),"group traversal terminates at a null parent");
+        var stringGroup=new BeamStringGroupAttributeModel(new BeamStringGroupAttributeModel.AttributeData { ID=7 });
+        object same=new BeamStringGroupAttributeModel(new BeamStringGroupAttributeModel.AttributeData { ID=7 });
+        Require(stringGroup.Equals(same),"boxed string groups compare their IDs");
+        Require(!stringGroup.Equals((object)new BeamReleasesAttributeModel()),"string group comparison with releases terminates without recursive Equals");
     }
 
     private static void Require(bool condition, string message)
