@@ -7,6 +7,7 @@ using BridGHe.Common.Checks;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Parameters;
+using Grasshopper.Kernel.Special;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 
@@ -51,6 +52,23 @@ internal static class BridgeMergeTests
         Require(models.Select((m,i)=>ModelArchive.Write(m).SequenceEqual(before[i])).All(v=>v),"Merge mutated source models.");
         Cases(3);Cases(7,"2-G");Solve();Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count==0,"Shrinkage force phase rejected.");
         var withShrinkage=(ModelModel)c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();Require(withShrinkage.LoadCases.Single(l=>l.Name=="2-G").Stages.Single().BridgePhase==LoadCaseModel.Stage.BridgePhases.NShrinkage,"Shrinkage FEM silently merged into N infinite.");
+        // Exercise the connected Value List too: persistent strings alone do not test its catalogue.
+        Cases(7);
+        var list=new GH_ValueList{ListMode=GH_ValueListMode.CheckList};list.CreateAttributes();list.ListItems.Clear();
+        list.ListItems.Add(new GH_ValueListItem("2-G","\"2-G\""){Selected=true});
+        list.ListItems.Add(new GH_ValueListItem("1-S","\"1-S\""));
+        doc.AddObject(list,false);c.Params.Input[7].AddSource(list);Solve();
+        Require(list.ListItems.Select(i=>i.Name).OrderBy(x=>x).SequenceEqual(new[]{"1-G","2-G"}),"Shrinkage FEM Value List offers slab eigenstrain cases instead of force cases.");
+        Require(list.SelectedItems.Select(i=>i.Name).SequenceEqual(new[]{"2-G"}),"Refreshing the FEM catalogue lost the selected force case.");
+        Solve();Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count==0,"Shrinkage Value List merge failed: "+string.Join(";",c.RuntimeMessages(GH_RuntimeMessageLevel.Error)));
+        withShrinkage=(ModelModel)c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
+        Require(withShrinkage.LoadCases.Single(l=>l.Name=="2-G").Stages.Single().BridgePhase==LoadCaseModel.Stage.BridgePhases.NShrinkage,"Connected FEM case has wrong phase.");
+        c.Params.Input[7].RemoveAllSources();
+        Cases(5,"1-S");Cases(7,"2-S");Solve();
+        Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(e=>e.Contains("slab eigenstrain/autostress")&&e.Contains("Phase Ninf strain")),"Wrong-kind shrinkage input has no actionable diagnosis.");
+        Cases(7,"2-G");Cases(5,"1-S","2-S","1-G");Solve();
+        Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(e=>e.Contains("analysed FEM forces, not slab eigenstrain")),"Force case connected to an eigenstrain input was accepted.");
+        Cases(5,"1-S","2-S");
         Cases(7);Cases(3,"2-G");
         Cases(4,"1-G");Solve();Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(e=>e.Contains("more than one phase")),"Ambiguous phase assignment accepted.");
         Cases(4,"9-MISSING");Solve();Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(e=>e.Contains("Unknown phase")),"Unknown selected case accepted.");

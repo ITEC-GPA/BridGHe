@@ -225,9 +225,16 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             }
 
             var loadCaseNShrinkage = new List<string>();
-            DA.GetDataList(7, loadCaseNShrinkage);
-            foreach (var valueList in Params.Input[7].Sources.OfType<GH_ValueList>())
-            { valueList.ListMode=GH_ValueListMode.CheckList; ComponentsHelper.SetValueList(valueList,casesNames); }
+            DA.GetDataList(n, loadCaseNShrinkage);
+            // This phase takes analysed FEM forces, not the separate slab eigenstrain cases.
+            foreach (var valueList in Params.Input[n].Sources.OfType<GH_ValueList>())
+            {
+                valueList.ListMode = GH_ValueListMode.CheckList;
+                ComponentsHelper.SetValueList(valueList, casesNames);
+                valueList.NickName = Params.Input[n].NickName;
+            }
+            n++;
+
             if (_run)
             {
                 try
