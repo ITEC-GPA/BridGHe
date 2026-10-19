@@ -15,21 +15,15 @@ namespace BridGHe.Common.Models
         public class AttributeData : IEquatable<AttributeData>
         {
             public int MinimumNumberOfStations { get; set; }
-            public bool NoOutPutAndDesignAtElementEnds { get; set; }
-            public bool NoOutPutAndDesignAtPointLoads { get; set; }
 
-            public AttributeData(int minimumNumberOfStations, bool noOutPutAndDesignAtElementEnds, bool noOutPutAndDesignAtPointLoads)
+            public AttributeData(int minimumNumberOfStations)
             {
                 MinimumNumberOfStations = minimumNumberOfStations;
-                NoOutPutAndDesignAtElementEnds = noOutPutAndDesignAtElementEnds;
-                NoOutPutAndDesignAtPointLoads = noOutPutAndDesignAtPointLoads;
             }
 
             public AttributeData()
             {
                 MinimumNumberOfStations = 3;
-                NoOutPutAndDesignAtElementEnds = true;
-                NoOutPutAndDesignAtPointLoads = true;
             }
 
             public override bool Equals(object obj)
@@ -41,8 +35,6 @@ namespace BridGHe.Common.Models
             {
                 int hashCode = -23;
                 hashCode = hashCode * -23 + MinimumNumberOfStations.GetHashCode();
-                hashCode = hashCode * -23 + NoOutPutAndDesignAtElementEnds.GetHashCode();
-                hashCode = hashCode * -23 + NoOutPutAndDesignAtPointLoads.GetHashCode();
                 return hashCode;
             }
 
@@ -50,9 +42,7 @@ namespace BridGHe.Common.Models
             {
                 if (other == null)
                     return false;
-                if (MinimumNumberOfStations != other.MinimumNumberOfStations ||
-                    NoOutPutAndDesignAtElementEnds != other.NoOutPutAndDesignAtElementEnds ||
-                    NoOutPutAndDesignAtPointLoads != other.NoOutPutAndDesignAtPointLoads)
+                if (MinimumNumberOfStations != other.MinimumNumberOfStations)
                     return false;
 
                 return true;
@@ -69,13 +59,11 @@ namespace BridGHe.Common.Models
             _value = new AttributeData()
             {
                 MinimumNumberOfStations = beamModifiersModel.Value.MinimumNumberOfStations,
-                NoOutPutAndDesignAtElementEnds = beamModifiersModel.Value.NoOutPutAndDesignAtElementEnds,
-                NoOutPutAndDesignAtPointLoads = beamModifiersModel.Value.NoOutPutAndDesignAtPointLoads,
             };
         }
 
         private readonly string SERIALIZATION_RELEASE_NAME = "SERIALIZATION_RELEASE_BeamOutputStationsModel"; //do not modify the name!
-        private readonly int SERIALIZATION_RELEASE = 1;
+        private readonly int SERIALIZATION_RELEASE = 2;
 
         protected BeamOutputStationsModel(SerializationInfo info, StreamingContext context)
         {
@@ -90,9 +78,7 @@ namespace BridGHe.Common.Models
             }
             _value = new AttributeData()
             {
-                MinimumNumberOfStations = info.GetInt16("MinimumNumberOfStations"),
-                NoOutPutAndDesignAtElementEnds = info.GetBoolean("NoOutPutAndDesignAtElementEnds"),
-                NoOutPutAndDesignAtPointLoads = info.GetBoolean("NoOutPutAndDesignAtPointLoads"),
+                MinimumNumberOfStations = info.GetInt32("MinimumNumberOfStations"),
             };
         }
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
@@ -100,8 +86,6 @@ namespace BridGHe.Common.Models
             base.GetObjectData(info, context);
             info.AddValue(SERIALIZATION_RELEASE_NAME, SERIALIZATION_RELEASE);
             info.AddValue("MinimumNumberOfStations", _value.MinimumNumberOfStations);
-            info.AddValue("NoOutPutAndDesignAtElementEnds", _value.NoOutPutAndDesignAtElementEnds);
-            info.AddValue("NoOutPutAndDesignAtPointLoads", _value.NoOutPutAndDesignAtPointLoads);
         }
 
         public bool Equals(BeamOutputStationsModel other)

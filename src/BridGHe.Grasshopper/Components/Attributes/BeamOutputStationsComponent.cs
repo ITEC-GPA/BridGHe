@@ -27,15 +27,6 @@ namespace BridGHe.Grasshopper.Components.Attributes
         {
             pManager.AddGenericParameter("Beam", "B", "The beam where to define the output stations", GH_ParamAccess.item);
             pManager.AddIntegerParameter("OutputStations", "O", "The minimum number of stations", GH_ParamAccess.item);
-            int[] idx = new[]
-            {
-                pManager.AddBooleanParameter("At Intersections with other elements", "I", "If this item is True, no additional output stations are added at the ends " +
-                "of line elements when the frame object is internally meshed. (Only for SAP)", GH_ParamAccess.item, true),
-                pManager.AddBooleanParameter("At concentrated load locations", "PL", "If this item is True, no additional output stations are added at point load " +
-                "locations (only for SAP)", GH_ParamAccess.item, true),
-            };
-            foreach (int i in idx)
-                pManager[i].Optional = true;
         }
 
         /// <summary>
@@ -54,23 +45,17 @@ namespace BridGHe.Grasshopper.Components.Attributes
         {
             GH_Beam beam = null;
             int stations = 0;
-            bool atIntersections = true;
-            bool atPointLoad = true;
 
             if (!DA.GetData(0, ref beam))
                 return;
             if (!DA.GetData(1, ref stations))
                 return;
-            DA.GetData(2, ref atIntersections);
-            DA.GetData(3, ref atPointLoad);
 
             GH_Beam newBeam = new GH_Beam(beam);
 
             BeamOutputStationsModel.AttributeData attributeData = new BeamOutputStationsModel.AttributeData()
             {
                 MinimumNumberOfStations = stations,
-                NoOutPutAndDesignAtElementEnds = atIntersections,
-                NoOutPutAndDesignAtPointLoads = atPointLoad,
             };
             BeamOutputStationsModel attr = new BeamOutputStationsModel(attributeData);
             newBeam.Value.Attributes.Add(attr);
