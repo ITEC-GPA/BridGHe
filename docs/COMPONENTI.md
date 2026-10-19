@@ -1,6 +1,6 @@
 # Inventario dei componenti 0.1.0
 
-138 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
+141 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
 
 ## BridGHe / 01-Parameters
 
@@ -81,7 +81,7 @@
 |---|---|---|---|
 | Beam Geometric Property | component | Beam Property | Name; Area; xg; yg; Jxx; Jyy; Angle; J₁₁; J₂₂; W₁₁; W₂₂; ρ₁₁; ρ₂₂; J |
 | Beam Property | component | Name; Type; Section; Material | Property |
-| Composite Beam Property | component | Name; Concrete Slab Section; Steel Section; Concrete Material; Steel Material; Reinforcement Material; n0; n ∞; Consider Concrete; Consider Rebars; n ritiro | Composite Section; Only Steel Property; n0 Beam Section; n ∞ Beam Section; n ritiro Beam Section |
+| Composite Beam Property | component | Name; Concrete Slab Section; Steel Section; Concrete Material; Steel Material; Reinforcement Material; n0; n ∞; n ritiro; Consider Concrete; Consider Rebars | Composite Section; Only Steel Property; n0 Beam Section; n ∞ Beam Section; n ritiro Beam Section |
 | Composite Geometric Property | component | Composite Beam Property; n; Consider Concrete; Consider Rebars; Consider Steel Section | Name; Area; xg; yg; Jxx; Jyy; Angle; J₁₁; J₂₂; Sxx; Syy; J |
 | Plate Property | component | Name; Type; Membrane Thickness; Bending Thickness; Material | Property |
 
@@ -90,7 +90,10 @@
 | Nome | Tipo | Ingressi | Uscite |
 |---|---|---|---|
 | Beam | component | Line; Property; Groups; Angle; Offset | Beam |
-| Build BridGHe Model | component | BridGHe Models; Load Combinations; Phase Inf Load Cases; Phase Ninf Load Cases; Phase N0 Load Cases; Phase Ninf strain Load Cases; Phase N0 strain Load Cases; Phase n ritiro FEM Load Cases | Model |
+| Bridge Action | component | Action ID; Model; Case; Behavior; Beam IDs | Action |
+| Bridge Phase | component | Number; Name; Section State; Actions; Day | Phase |
+| Bridge Shrinkage Action | component | Action ID; Model; Case; Strain increment; Beam IDs; Primary Only; Response | Action |
+| Build BridGHe Model | component | Models; Phases; Combinations; Calculation | Model; Phases; Diagnostics |
 | Build Model | component | Elements; Name; Units; Load Combinations; Staged constructions | Model |
 | Composite beam | component | Beam; Section Start; Section End; Groups | Beam |
 | Decompose Model | component | Model | Nodes; Beams; Plates |
@@ -122,9 +125,9 @@
 | Bridge Box Options | component | Enabled; BracingThickness; SpanLength; DiaphragmSpacing; DiaphragmKind; DiaphragmThickness; BracingArea; BracingRadius; BracingBucklingFactor; DistributedTorque; ConcentratedTorque; SupportDiaphragmThickness; SupportTorqueKNm; BearingSpacing | Detail |
 | Bridge Connection Fatigue | component | Enabled; MinimumFlow; MaximumFlow; EquivalenceFactor; DynamicFactor; TensileFlange; FlangeStressRange; GammaFf; GammaMfStud; GammaMfFlange | Detail |
 | Bridge Intermediate Stiffener | component | Enabled; Layout; Width; Thickness; RightWidth; RightThickness; LeftPanel; RightPanel; EqualPanels; LengthFactor; ExternalCompressionKN; LoadX; CheckWelds; WeldThroat | Detail |
-| Bridge Phase | component | Name; Active; Kind; Reference; ForceKN; MomentKNm; ShearKN; TorsionKNm; AdditionalConnectionFlow; ShrinkageMicrostrain; HomogenizationSource; Phi; PsiL; N | Detail |
 | Bridge Rebar Row | component | Enabled; Diameter; Pitch; AxisDistance | Detail |
 | Bridge Section Geometry | component | SlabWidth; SlabHeight; WebHeight; WebThickness; TopWidth; TopThickness; BottomWidth; BottomThickness; SecondBottomEnabled; SecondBottomWidth; SecondBottomThickness; SectionType; WebOffset; WebSpacing | Detail |
+| Bridge Section Increment | component | Name; Active; Kind; Reference; ForceKN; MomentKNm; ShearKN; TorsionKNm; AdditionalConnectionFlow; ShrinkageMicrostrain; HomogenizationSource; Phi; PsiL; N | Detail |
 | Bridge Studs | component | Enabled; CountPerRow; Diameter; Height; LongitudinalPitch; TransversePitch; Fu; GammaV; HeadDiameter; HeadThickness; RequiredCover; RepeatedActionDetail | Detail |
 | Bridge Support Stiffener | component | Enabled; Layout; Width; Thickness; RightWidth; RightThickness; Location; LeftPanel; RightPanel; ReactionKN; EndDistance; LoadX; LoadZ; FootprintLength; FootprintWidth; LengthFactor; RigidEndPost; EndPostSpacing; CheckWelds; WeldThroat | Detail |
 | Bridge Transverse Reinforcement | component | Enabled; TopDiameter; TopPitch; BottomDiameter; BottomPitch; CotTheta; LeftFlowFraction; BendingSteelPerMetre; AnchorageLength; GoodBond; LeftConcreteEdge; RightConcreteEdge; EdgeUBar; UBarDiameter | Detail |

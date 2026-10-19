@@ -445,6 +445,15 @@
       "badge": "data"
     },
     {
+      "key": "BridgePlotPreviewComponent",
+      "type": "BridGHe.Grasshopper.Components.Preview.BridgePlotPreviewComponent",
+      "guid": "17ad3e86-b699-435c-b036-565d04c8cdb6",
+      "name": "Bridge Plot Preview",
+      "family": "result",
+      "glyph": "printer",
+      "badge": "shape"
+    },
+    {
       "key": "DisplaySettingsComponent",
       "type": "BridGHe.Grasshopper.Components.Preview.DisplaySettingsComponent",
       "guid": "f90a8ac7-df2d-43a3-8f50-219086386684",
@@ -997,7 +1006,7 @@
       "key": "BridgePhaseComponent",
       "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgePhaseComponent",
       "guid": "4660cce7-4aa2-49f7-a929-b85327e0b8d2",
-      "name": "Bridge Phase",
+      "name": "Bridge Section Increment",
       "family": "check",
       "glyph": "stages",
       "badge": "native"
@@ -1136,6 +1145,33 @@
       "family": "result",
       "glyph": "printer",
       "badge": "stress"
+    },
+    {
+      "key": "BridgeActionComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeActionComponent",
+      "guid": "56b74e2e-962a-4ad6-905e-105647144ea1",
+      "name": "Bridge Action",
+      "family": "check",
+      "glyph": "case",
+      "badge": "link"
+    },
+    {
+      "key": "BridgeShrinkageActionComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeShrinkageActionComponent",
+      "guid": "1c7b96b8-3bfb-4df0-a672-cae395330a79",
+      "name": "Bridge Shrinkage Action",
+      "family": "check",
+      "glyph": "strain",
+      "badge": "link"
+    },
+    {
+      "key": "BridgeConstructionPhaseComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeConstructionPhaseComponent",
+      "guid": "0118806b-7e8b-4d0e-8949-fe5965c650e5",
+      "name": "Bridge Phase",
+      "family": "check",
+      "glyph": "stages",
+      "badge": "add"
     },
     {
       "key": "BuildBridgeModel",
@@ -1343,15 +1379,6 @@
       "family": "solver",
       "glyph": "solver",
       "badge": "play"
-    },
-    {
-      "key": "BridgePlotPreviewComponent",
-      "type": "BridGHe.Grasshopper.Components.Preview.BridgePlotPreviewComponent",
-      "guid": "17ad3e86-b699-435c-b036-565d04c8cdb6",
-      "name": "Bridge Plot Preview",
-      "family": "result",
-      "glyph": "printer",
-      "badge": "shape"
     }
   ]
 }

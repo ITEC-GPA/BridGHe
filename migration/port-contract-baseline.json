@@ -86,7 +86,7 @@
       ]
     },
     "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamPropertyCompositeComponent.cs": {
-      "ports": "aee66f8a5c0a7074f11075cf495319930ff5560cc44bc2ad197153064886ab4a",
+      "ports": "d04200afa2b7d6df6487788de94f6b414c6b06320791646bf523c34d49c9c2e2",
       "guids": [
         "f87c7066-e509-4646-9ef5-79691675cbf4"
       ]
@@ -126,8 +126,16 @@
         "8f53f404-9446-4b47-90e3-d514f9c547c9"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/BridgeChecks/BridgeWorkflowComponents.cs": {
+      "ports": "aa1660967c3c8778fd5d32e8077ba2640ead566bb3108ce11d8dffc756b3a886",
+      "guids": [
+        "56b74e2e-962a-4ad6-905e-105647144ea1",
+        "1c7b96b8-3bfb-4df0-a672-cae395330a79",
+        "0118806b-7e8b-4d0e-8949-fe5965c650e5"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/BridgeChecks/BuildBridgeModel.cs": {
-      "ports": "86be27c9050241f106d315532ad6f2f58b95846d469cf7c59654ff6e6315f605",
+      "ports": "599e10dc35d1e1a5c482cc9e118594d3fa81c7cdcd53f53e972cb2bd9ca307ab",
       "guids": [
         "16695837-3f63-4305-a1ff-4491826dc3fe"
       ]
@@ -487,6 +495,12 @@
         "5483bff2-64ab-40d7-a5de-1af1e6f9bd12"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/Preview/BridgePlotPreviewComponent.cs": {
+      "ports": "b292d970b2797ec0074be1c6df8db6350d217cc8db692cd2c20b31f14140a7a0",
+      "guids": [
+        "17ad3e86-b699-435c-b036-565d04c8cdb6"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/Preview/PreviewComponents.cs": {
       "ports": "6f9dcb3fa2e10915ef23cd341295bea8bb2fba6ed985ad331a8d175857e35695",
       "guids": [
@@ -664,12 +678,6 @@
       "ports": "131f8a706639a96b141df5ae35747783887289cbffb30ac4a5928955f299621b",
       "guids": [
         "97bab293-1482-420d-913e-fdf7b9204cae"
-      ]
-    },
-    "src/BridGHe.Grasshopper/Components/Preview/BridgePlotPreviewComponent.cs": {
-      "ports": "b292d970b2797ec0074be1c6df8db6350d217cc8db692cd2c20b31f14140a7a0",
-      "guids": [
-        "17ad3e86-b699-435c-b036-565d04c8cdb6"
       ]
     }
   }

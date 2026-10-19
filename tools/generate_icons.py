@@ -264,6 +264,9 @@ BridgeDetailCheckComponent|studs|check|check
 BeamSectionConcreteSlabComponent|slab||section
 BeamSectionHPropertyComponent|section:I|data|section
 BuildBridgeModel|model|check|check
+BridgeActionComponent|case|link|check
+BridgeShrinkageActionComponent|strain|link|check
+BridgeConstructionPhaseComponent|stages|add|check
 CompositeBeamComponent|bridge|shape|check
 CompositeBeamLinearTensionAnalysisComponent_OBSOLETE|composite|play|check
 CompositeBeamSelfTensionComponent|composite|heat|check

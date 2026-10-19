@@ -154,7 +154,7 @@ internal static class Program
             File.WriteAllText("artifacts/component-runtime.json",System.Text.Json.JsonSerializer.Serialize(items,new System.Text.Json.JsonSerializerOptions {WriteIndented=true}));
             Console.WriteLine($"INVENTORY {count} objects; icon validation deferred until assets are generated.");return;
         }
-        Assert(bridgeChecks==17,"all 17 bridge workflow components instantiate in Rhino 8");
+        Assert(bridgeChecks==20,"all 20 bridge workflow components instantiate in Rhino 8");
         Assert(iconIssues.Count==0,"all component and parameter icons load at 24 px: "+string.Join(", ",iconIssues));
         Assert(iconHashes.Count==count,"each component and parameter has its own distinct icon");
         var info=(Grasshopper.Kernel.GH_AssemblyInfo)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.BridGHeInfo",true));

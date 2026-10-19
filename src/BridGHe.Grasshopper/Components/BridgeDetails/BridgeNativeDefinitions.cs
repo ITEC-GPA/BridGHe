@@ -40,7 +40,7 @@ public sealed class BridgeRebarRowComponent:DetailDefinition<BridgeRebarRow>
 
 public sealed class BridgePhaseComponent:DetailDefinition<BridgePhase>
 {
-    public BridgePhaseComponent():base("Bridge Phase","Phase","One mechanical increment or shrinkage phase. Forces kN, moments kNm, shrinkage microstrain. Preserve chronological list order.") { }
+    public BridgePhaseComponent():base("Bridge Section Increment","SectionStep","One native gPC section increment, not a model construction phase. Forces kN, moments kNm, shrinkage microstrain.") { }
     public override Guid ComponentGuid=>new Guid("4660cce7-4aa2-49f7-a929-b85327e0b8d2");
     protected override (string,object,string)[] Fields=>new (string,object,string)[]
     {

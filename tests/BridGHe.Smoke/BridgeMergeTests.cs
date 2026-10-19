@@ -1,77 +1,78 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
-using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Common.Checks;
+using BridGHe.Common.Models;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;
 using Grasshopper.Kernel.Types;
-using Rhino.Geometry;
 
 internal static class BridgeMergeTests
 {
+    internal static Assembly Initialize()
+    {
+        var assembly = Assembly.LoadFrom(BuildPaths.GrasshopperAssembly);
+        var field = typeof(Grasshopper.Instances).GetField("m_comServer", BindingFlags.NonPublic | BindingFlags.Static);
+        if (field.GetValue(null) == null)
+        {
+            var server = new GH_ComponentServer(); field.SetValue(null, server);
+            var parse = typeof(GH_ComponentServer).GetMethod("ParseGHA", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(Assembly), typeof(string) }, null);
+            foreach (var a in new[] { typeof(GH_Document).Assembly, assembly }) parse.Invoke(server, new object[] { a, a.Location });
+        }
+        return assembly;
+    }
     internal static void Run()
     {
-        void Require(bool value,string text){if(!value)throw new Exception(text);}
-        ModelModel Model(int phase)
+        var assembly = Initialize(); using var doc = new GH_Document();
+        GH_Component Add(string name)
         {
-            var m=new ModelModel(ModelModel.ModelUnits.Nmm);var lc=new LoadCaseModel("G","G");var strain=new LoadCaseModel("S","S");m.LoadCases.Add(lc);m.LoadCases.Add(strain);
-            foreach(int i in phase==0?new[]{0,1}:new[]{1,0})
-            {
-                var b=new BeamModel("B"+(i+1),new Point3d(0,1000*i,0),new Point3d(10000,1000*i,0),BridgeGrillageExample.LongProperty(new(),phase)){BeamId="B"+(i+1)};b.Attributes.Add(new SuperElementAttributeModel("Main"));
-                foreach(double x in new[]{0.0,.5,1})b.Results.Add(new BeamForceResultModel(lc,x+(phase==1&&x==.5?1e-14:0),0,"",true){AxialForce=(phase+1)*100+(i+1)*10+x,My=1e7});
-                b.Loads.Add(new CompositeBeamSlabStrainModel(strain,new(){Strain=-(phase+1)*.0001}));m.AddElements(new[]{b});
-            }
-            return m;
+            var c = (GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components.BridgeChecks." + name, true));
+            c.CreateAttributes(); doc.AddObject(c, false); return c;
         }
-        var models=new[]{Model(0),Model(1)};var before=models.Select(ModelArchive.Write).ToArray();
-        var aligned=BridgeMergeValidation.Align(models,1e-6);Require(aligned[1][0].BeamId=="B1","Beam matching still depends on list order.");
-        var reversed=ModelArchive.Clone(models[1]);(reversed.Beams[0].PointFrom,reversed.Beams[0].PointTo)=(reversed.Beams[0].PointTo,reversed.Beams[0].PointFrom);
-        bool rejected=false;try{BridgeMergeValidation.Align(new[]{models[0],reversed},1e-6);}catch(ArgumentException){rejected=true;}Require(rejected,"Reversed local axes were accepted.");
-        using var doc=new GH_Document();var assembly=Assembly.LoadFrom(BuildPaths.GrasshopperAssembly);
-        var c=(GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components.BridgeChecks.BuildBridgeModel",true));c.CreateAttributes();doc.AddObject(c,false);
-        var param=(Param_GenericObject)c.Params.Input[0];foreach(var model in models){var type=assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model",true);var g=(IGH_Goo)Activator.CreateInstance(type);type.GetProperty("Value").SetValue(g,model);param.PersistentData.Append(g);}
-        var combos=(Param_GenericObject)c.Params.Input[1];foreach(string s in new[]{"","1-G","2-G","1-S","2-S"})combos.PersistentData.Append(new GH_String(s),new GH_Path(0));foreach(string s in new[]{"123","1","1","1","1"})combos.PersistentData.Append(new GH_String(s),new GH_Path(1));
-        void Cases(int port,params string[] cases){var p=(Param_String)c.Params.Input[port];p.PersistentData.Clear();foreach(var s in cases)p.PersistentData.Append(new GH_String(s));p.ExpireSolution(false);}
-        Cases(2,"1-G");Cases(3,"2-G");Cases(5,"1-S","2-S");
-        void Solve(){c.GetType().GetField("_run",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(c,true);c.ExpireSolution(false);GH_Document.EnableSolutions=true;doc.Enabled=true;doc.NewSolution(false,GH_SolutionMode.Silent);}
-        Solve();Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count==0,string.Join(";",c.RuntimeMessages(GH_RuntimeMessageLevel.Error)));
-        var merged=(ModelModel)c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
-        foreach(var beam in merged.Beams)
+        IGH_Goo Model(ModelModel model)
         {
-            Require(beam.Results.Count==6,"Native station roundoff created duplicate force stations.");
-            var f=beam.Results.OfType<BeamForceResultModel>().Single(r=>r.LoadCase.Name=="2-G" && r.Station==5000);
-            Require(!f.NormalizedLength && Math.Abs(f.AxialForce-(beam.BeamId=="B1"?210.5:220.5))<1e-12,"Wrong beam identity or normalized station after merge.");
-            var strains=beam.Loads.OfType<CompositeBeamSlabStrainModel>().OrderBy(l=>l.LoadCase.Name).ToArray();
-            Require(strains.Length==2 && strains[0].LoadCase.Name=="1-S" && strains[0].Value.Strain==-.0001 && strains[1].LoadCase.Name=="2-S" && strains[1].Value.Strain==-.0002,"Duplicate strain names lost their source model.");
+            var type = assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model", true); var goo = (IGH_Goo)Activator.CreateInstance(type);
+            type.GetProperty("Value").SetValue(goo, model); return goo;
         }
-        Require(merged.LoadCombinations.Single().Values.Count==4,"Numeric combination name was mistaken for a coefficient.");
-        Require(models.Select((m,i)=>ModelArchive.Write(m).SequenceEqual(before[i])).All(v=>v),"Merge mutated source models.");
-        Cases(3);Cases(7,"2-G");Solve();Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count==0,"Shrinkage force phase rejected.");
-        var withShrinkage=(ModelModel)c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();Require(withShrinkage.LoadCases.Single(l=>l.Name=="2-G").Stages.Single().BridgePhase==LoadCaseModel.Stage.BridgePhases.NShrinkage,"Shrinkage FEM silently merged into N infinite.");
-        // Exercise the connected Value List too: persistent strings alone do not test its catalogue.
-        Cases(7);
-        var list=new GH_ValueList{ListMode=GH_ValueListMode.CheckList};list.CreateAttributes();list.ListItems.Clear();
-        list.ListItems.Add(new GH_ValueListItem("2-G","\"2-G\""){Selected=true});
-        list.ListItems.Add(new GH_ValueListItem("1-S","\"1-S\""));
-        doc.AddObject(list,false);c.Params.Input[7].AddSource(list);Solve();
-        Require(list.ListItems.Select(i=>i.Name).OrderBy(x=>x).SequenceEqual(new[]{"1-G","2-G"}),"Shrinkage FEM Value List offers slab eigenstrain cases instead of force cases.");
-        Require(list.SelectedItems.Select(i=>i.Name).SequenceEqual(new[]{"2-G"}),"Refreshing the FEM catalogue lost the selected force case.");
-        Solve();Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count==0,"Shrinkage Value List merge failed: "+string.Join(";",c.RuntimeMessages(GH_RuntimeMessageLevel.Error)));
-        withShrinkage=(ModelModel)c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
-        Require(withShrinkage.LoadCases.Single(l=>l.Name=="2-G").Stages.Single().BridgePhase==LoadCaseModel.Stage.BridgePhases.NShrinkage,"Connected FEM case has wrong phase.");
-        c.Params.Input[7].RemoveAllSources();
-        Cases(5,"1-S");Cases(7,"2-S");Solve();
-        Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(e=>e.Contains("slab eigenstrain/autostress")&&e.Contains("Phase Ninf strain")),"Wrong-kind shrinkage input has no actionable diagnosis.");
-        Cases(7,"2-G");Cases(5,"1-S","2-S","1-G");Solve();
-        Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(e=>e.Contains("analysed FEM forces, not slab eigenstrain")),"Force case connected to an eigenstrain input was accepted.");
-        Cases(5,"1-S","2-S");
-        Cases(7);Cases(3,"2-G");
-        Cases(4,"1-G");Solve();Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(e=>e.Contains("more than one phase")),"Ambiguous phase assignment accepted.");
-        Cases(4,"9-MISSING");Solve();Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(e=>e.Contains("Unknown phase")),"Unknown selected case accepted.");
-        Cases(4);Cases(3);Solve();Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(e=>e.Contains("exactly one phase")),"Active combination with unassigned phase accepted.");
+        void Generic(GH_Component c, int i, IGH_Goo value) => ((Param_GenericObject)c.Params.Input[i]).PersistentData.Append(value);
+        void Text(GH_Component c, int i, string value) { var p = (Param_String)c.Params.Input[i]; p.PersistentData.Clear(); p.SetPersistentData(value); }
+        void Int(GH_Component c, int i, int value) { var p = (Param_Integer)c.Params.Input[i]; p.PersistentData.Clear(); p.SetPersistentData(value); }
+        void Wire(GH_Component from, GH_Component to, int port) => to.Params.Input[port].AddSource(from.Params.Output[0]);
+        var steel = BridgeWorkflowTests.Source("Steel", 100); var shrink = BridgeWorkflowTests.Source("Shrinkage", 20);
+        var g = Add("BridgeActionComponent"); Text(g, 0, "G1"); Generic(g, 1, Model(steel)); Generic(g, 2, new GH_String("G"));
+        var r = Add("BridgeShrinkageActionComponent"); Text(r, 0, "RITIRO"); Generic(r, 1, Model(shrink)); Generic(r, 2, new GH_String("G"));
+        ((Param_Number)r.Params.Input[3]).SetPersistentData(-200e-6);
+        var phase1 = Add("BridgeConstructionPhaseComponent"); Int(phase1, 0, 10); Text(phase1, 1, "Getto"); Int(phase1, 2, 0); Wire(g, phase1, 3);
+        var phase2 = Add("BridgeConstructionPhaseComponent"); Int(phase2, 0, 30); Text(phase2, 1, "Ritiro"); Wire(r, phase2, 3);
+        var build = Add("BuildBridgeModel"); Generic(build, 0, Model(steel)); Wire(phase2, build, 1); Wire(phase1, build, 1);
+        var table = (Param_GenericObject)build.Params.Input[2];
+        foreach (var s in new[] { "", "G1", "RITIRO" }) table.PersistentData.Append(new GH_String(s), new GH_Path(0));
+        foreach (var s in new[] { "SLS", "1", "0.7" }) table.PersistentData.Append(new GH_String(s), new GH_Path(1));
+        void Solve(GH_Document document, GH_Component component)
+        {
+            component.GetType().GetField("_run", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(component, true);
+            component.ExpireSolution(false); GH_Document.EnableSolutions = true; document.Enabled = true; document.NewSolution(false, GH_SolutionMode.Silent);
+            var errors = document.Objects.OfType<GH_ActiveObject>().SelectMany(o => o.RuntimeMessages(GH_RuntimeMessageLevel.Error)).ToArray();
+            BridgeWorkflowTests.Require(errors.Length == 0, string.Join("; ", errors));
+        }
+        Solve(doc, build);
+        var merged = (ModelModel)build.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
+        BridgeWorkflowTests.Require(merged.LoadCases.Count == 3 && merged.BridgeWorkflow.Phases[0].Order == 10, "GH workflow incorrectly assembled.");
+        var list = new GH_ValueList { ListMode = GH_ValueListMode.DropDown }; list.CreateAttributes(); list.ListItems.Clear();
+        list.ListItems.Add(new GH_ValueListItem("G", "\"G\"") { Selected = true }); list.ListItems.Add(new GH_ValueListItem("Obsolete strain case", "\"Obsolete\"")); doc.AddObject(list, false);
+        g.Params.Input[2].AddSource(list); g.ExpireSolution(false); Solve(doc, build); Solve(doc, build);
+        BridgeWorkflowTests.Require(list.ListItems.Count == 1 && list.SelectedItems.Single().Name == "G", "FEM case selector lost or mixed its selection.");
+        Int(phase1, 0, 5); phase1.ExpireSolution(false); Solve(doc, build);
+        var renamed = (ModelModel)build.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
+        BridgeWorkflowTests.Require(renamed.LoadCases.Select(c => c.Name).SequenceEqual(merged.LoadCases.Select(c => c.Name)), "GH renumbering changed combination keys.");
+        string path = Path.GetFullPath("artifacts/phase-component-roundtrip.ghx"); GrasshopperBridgeExample.Write(doc, path);
+        using var restored = GrasshopperBridgeExample.Read(path);
+        var restoredBuild = restored.Objects.OfType<GH_Component>().Single(c => c.ComponentGuid == build.ComponentGuid); Solve(restored, restoredBuild);
+        var copy = (ModelModel)restoredBuild.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
+        BridgeWorkflowTests.Require(copy.LoadCombinations.Single().Values.Count == 3 && copy.BridgeWorkflow.Phases[1].Id == merged.BridgeWorkflow.Phases[1].Id, "GH save/reopen changed phase identities or coefficients.");
+        Console.WriteLine("PASS GH phases: real components, case selector, numbered assembly and GHX roundtrip");
     }
 }

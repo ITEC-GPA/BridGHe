@@ -3094,6 +3094,52 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Preview.BridgePlotPreviewComponent",
+    "guid": "17ad3e86-b699-435c-b036-565d04c8cdb6",
+    "kind": "component",
+    "name": "Bridge Plot Preview",
+    "nickname": "PlotPreview",
+    "category": "BridGHe",
+    "subcategory": "15-Preview",
+    "description": "Show Bridge Plot SVGs on the Grasshopper canvas. Double-click the preview to enlarge. No file required.",
+    "inputs": [
+      {
+        "name": "SVG",
+        "nickname": "SVG",
+        "description": "Connect the SVG output of one or more Bridge Plot components",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Index",
+        "nickname": "I",
+        "description": "Zero-based index of the chart to display",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Width",
+        "nickname": "W",
+        "description": "Canvas preview width in pixels, from 240 to 1600",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "SVG",
+        "nickname": "SVG",
+        "description": "Selected SVG, unchanged",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Preview.DisplaySettingsComponent",
     "guid": "f90a8ac7-df2d-43a3-8f50-219086386684",
     "kind": "component",
@@ -6998,11 +7044,11 @@
     "type": "BridGHe.Grasshopper.Components.BridgeDetails.BridgePhaseComponent",
     "guid": "4660cce7-4aa2-49f7-a929-b85327e0b8d2",
     "kind": "component",
-    "name": "Bridge Phase",
-    "nickname": "Phase",
+    "name": "Bridge Section Increment",
+    "nickname": "SectionStep",
     "category": "BridGHe",
     "subcategory": "08-Bridge",
-    "description": "One mechanical increment or shrinkage phase. Forces kN, moments kNm, shrinkage microstrain. Preserve chronological list order.",
+    "description": "One native gPC section increment, not a model construction phase. Forces kN, moments kNm, shrinkage microstrain.",
     "inputs": [
       {
         "name": "Name",
@@ -8059,6 +8105,14 @@
         "type": "Number"
       },
       {
+        "name": "n ritiro",
+        "nickname": "n sh",
+        "description": "Shrinkage modular ratio Es/Ec,eff. If omitted, uses n ∞ for compatibility.",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
         "name": "Consider Concrete",
         "nickname": "CC",
         "description": "If true, consider concrete in the n0 and n ∞ phases",
@@ -8073,14 +8127,6 @@
         "access": "item",
         "optional": false,
         "type": "Boolean"
-      },
-      {
-        "name": "n ritiro",
-        "nickname": "n sh",
-        "description": "Shrinkage modular ratio Es/Ec,eff. If omitted, uses n ∞ for compatibility.",
-        "access": "item",
-        "optional": true,
-        "type": "Number"
       }
     ],
     "outputs": [
@@ -8827,75 +8873,51 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BuildBridgeModel",
-    "guid": "16695837-3f63-4305-a1ff-4491826dc3fe",
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeActionComponent",
+    "guid": "56b74e2e-962a-4ad6-905e-105647144ea1",
     "kind": "component",
-    "name": "Build BridGHe Model",
-    "nickname": "BMCM",
+    "name": "Bridge Action",
+    "nickname": "Action",
     "category": "BridGHe",
     "subcategory": "06-Model",
-    "description": "Merge the BridGHe models in to a single BridGHe model with input phases",
+    "description": "Bind one incremental FEM case to a stable action identifier and a section behavior.",
     "inputs": [
       {
-        "name": "BridGHe Models",
-        "nickname": "FM",
-        "description": "The FEM models (more than one for stages)",
-        "access": "list",
+        "name": "Action ID",
+        "nickname": "ID",
+        "description": "Stable identifier used by combination headers; independent of phase number and source model order.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "Analysed incremental source model, N-mm-MPa.",
+        "access": "item",
         "optional": false,
         "type": "Generic Data"
       },
       {
-        "name": "Load Combinations",
-        "nickname": "LCB",
-        "description": "The load cases combinations",
-        "access": "tree",
+        "name": "Case",
+        "nickname": "LC",
+        "description": "Load case object or exact analysed case name. A Value List offers the available cases.",
+        "access": "item",
         "optional": false,
         "type": "Generic Data"
       },
       {
-        "name": "Phase Inf Load Cases",
-        "nickname": "INFLC",
-        "description": "The load cases name to assign to the Inf phase",
-        "access": "list",
-        "optional": true,
-        "type": "Text"
+        "name": "Behavior",
+        "nickname": "B",
+        "description": "0 Steel; 1 Long term n infinity; 2 Short term n0. Use Bridge Shrinkage Action for shrinkage.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
       },
       {
-        "name": "Phase Ninf Load Cases",
-        "nickname": "NINFLC",
-        "description": "The load cases name to assign to the NInf phase",
-        "access": "list",
-        "optional": true,
-        "type": "Text"
-      },
-      {
-        "name": "Phase N0 Load Cases",
-        "nickname": "N0LC",
-        "description": "The load cases name to assign to the N0 phase",
-        "access": "list",
-        "optional": true,
-        "type": "Text"
-      },
-      {
-        "name": "Phase Ninf strain Load Cases",
-        "nickname": "NINFSLC",
-        "description": "The load cases name to assign to the Phase Ninf strain phase",
-        "access": "list",
-        "optional": true,
-        "type": "Text"
-      },
-      {
-        "name": "Phase N0 strain Load Cases",
-        "nickname": "N0SLC",
-        "description": "The load cases name to assign to the Phase N0 strain phase",
-        "access": "list",
-        "optional": true,
-        "type": "Text"
-      },
-      {
-        "name": "Phase n ritiro FEM Load Cases",
-        "nickname": "NSHLC",
-        "description": "FEM forces calculated with the n ritiro section. Distinct from slab eigenstrain/autostress cases.",
+        "name": "Beam IDs",
+        "nickname": "IDs",
+        "description": "Optional selection of beam IDs. Empty applies this action to all beams.",
         "access": "list",
         "optional": true,
         "type": "Text"
@@ -8903,12 +8925,222 @@
     ],
     "outputs": [
       {
-        "name": "Model",
-        "nickname": "M",
-        "description": "The FEM model",
+        "name": "Action",
+        "nickname": "A",
+        "description": "Incremental action for Bridge Phase.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeShrinkageActionComponent",
+    "guid": "1c7b96b8-3bfb-4df0-a672-cae395330a79",
+    "kind": "component",
+    "name": "Bridge Shrinkage Action",
+    "nickname": "ShrinkageAction",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "One shrinkage action: concrete strain increment plus secondary FEM forces. A single combination coefficient scales both.",
+    "inputs": [
+      {
+        "name": "Action ID",
+        "nickname": "ID",
+        "description": "Single stable identifier for both shrinkage contributions in combinations.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "Source of secondary FEM forces calculated on the n shrinkage section.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Case",
+        "nickname": "LC",
+        "description": "Secondary FEM load case object or exact name.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Strain increment",
+        "nickname": "Δεcs",
+        "description": "Concrete shrinkage increment [dimensionless], negative for contraction. Supply the same increment to Composite Shrinkage Actions before Straus. Never enter cumulative shrinkage twice.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Beam IDs",
+        "nickname": "IDs",
+        "description": "Beams with this composite action; empty means all beams. Select longitudinal composite girders in a grillage.",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Primary Only",
+        "nickname": "P",
+        "description": "Explicitly omit global restraint forces. Only valid when Model/Case are not used for FEM forces.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Response",
+        "nickname": "R",
+        "description": "0 n shrinkage (default); 1 n0 for an explicitly instantaneous concrete strain increment. FEM forces, when present, must use the same response.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Action",
+        "nickname": "A",
+        "description": "Unified shrinkage action for Bridge Phase.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeConstructionPhaseComponent",
+    "guid": "0118806b-7e8b-4d0e-8949-fe5965c650e5",
+    "kind": "component",
+    "name": "Bridge Phase",
+    "nickname": "Phase",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Numbered construction phase containing incremental actions. Order is independent of source model order.",
+    "inputs": [
+      {
+        "name": "Number",
+        "nickname": "N",
+        "description": "Unique chronological order, e.g. 10, 20, 30.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Name",
+        "nickname": "Name",
+        "description": "Readable phase label. Renaming does not change action identifiers.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Section State",
+        "nickname": "S",
+        "description": "0 Steel; 1 Composite active; 2 Concrete excluded (LinearHistory only). This describes the section, not automatic activation of global Straus elements.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Actions",
+        "nickname": "A",
+        "description": "List of Bridge Action / Bridge Shrinkage Action objects. Empty allows an activation-only phase.",
+        "access": "list",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Day",
+        "nickname": "t",
+        "description": "Optional elapsed days, metadata only: no automatic age-dependent creep model.",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Phase",
+        "nickname": "P",
+        "description": "Numbered phase for Build BridGHe Model.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BuildBridgeModel",
+    "guid": "16695837-3f63-4305-a1ff-4491826dc3fe",
+    "kind": "component",
+    "name": "Build BridGHe Model",
+    "nickname": "BuildBridge",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Assemble numbered phases and incremental actions. One combination column per action, including unified shrinkage.",
+    "inputs": [
+      {
+        "name": "Models",
+        "nickname": "M",
+        "description": "Reference model(s), N-mm-MPa, with matching beam IDs/geometry. Action objects carry their own analysed sources; list order does not identify cases.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Phases",
+        "nickname": "P",
+        "description": "List of numbered Bridge Phase objects. Sorted by Number, with unique action identifiers.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Combinations",
+        "nickname": "C",
+        "description": "Table/tree: header label + action IDs, followed by combination name + coefficients. A shrinkage coefficient applies to both primary strain and secondary FEM forces.",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Calculation",
+        "nickname": "Calc",
+        "description": "0 Cumulative: existing numerical method grouped by section behavior; 1 LinearHistory: gPC sequential N–Mx section history. Neither runs global construction stages automatically.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "Assembled model with source results and phase recipe.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Phases",
+        "nickname": "P",
+        "description": "Ordered phase/action summary for a Panel.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Diagnostics",
+        "nickname": "D",
+        "description": "Unused actions and scope of the selected calculation.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
       }
     ]
   },
@@ -10425,52 +10657,6 @@
         "access": "item",
         "optional": false,
         "type": "Generic Data"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.Preview.BridgePlotPreviewComponent",
-    "guid": "17ad3e86-b699-435c-b036-565d04c8cdb6",
-    "kind": "component",
-    "name": "Bridge Plot Preview",
-    "nickname": "PlotPreview",
-    "category": "BridGHe",
-    "subcategory": "15-Preview",
-    "description": "Show Bridge Plot SVGs on the Grasshopper canvas. Double-click the preview to enlarge. No file required.",
-    "inputs": [
-      {
-        "name": "SVG",
-        "nickname": "SVG",
-        "description": "Connect the SVG output of one or more Bridge Plot components",
-        "access": "list",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Index",
-        "nickname": "I",
-        "description": "Zero-based index of the chart to display",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
-      },
-      {
-        "name": "Width",
-        "nickname": "W",
-        "description": "Canvas preview width in pixels, from 240 to 1600",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "SVG",
-        "nickname": "SVG",
-        "description": "Selected SVG, unchanged",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
       }
     ]
   }

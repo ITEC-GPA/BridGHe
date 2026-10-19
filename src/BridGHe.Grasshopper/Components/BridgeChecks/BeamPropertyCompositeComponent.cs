@@ -35,10 +35,10 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
 
             pManager.AddNumberParameter("n0", "n0", "Homogenization coefficient for instant time loads", GH_ParamAccess.item, 6);
             pManager.AddNumberParameter("n ∞", "n ∞", "Homogenization coefficient for infinite time loads", GH_ParamAccess.item, 18);
+            i = pManager.AddNumberParameter("n ritiro", "n sh", "Shrinkage modular ratio Es/Ec,eff. If omitted, uses n ∞ for compatibility.", GH_ParamAccess.item);
+            pManager[i].Optional = true;
             pManager.AddBooleanParameter("Consider Concrete", "CC", "If true, consider concrete in the n0 and n ∞ phases", GH_ParamAccess.item, true);
             pManager.AddBooleanParameter("Consider Rebars", "CR", "If true, consider rebars in the composite phases", GH_ParamAccess.item, true);
-            pManager.AddNumberParameter("n ritiro", "n sh", "Shrinkage modular ratio Es/Ec,eff. If omitted, uses n ∞ for compatibility.", GH_ParamAccess.item);
-            pManager[10].Optional = true;
         }
 
         /// <summary>
