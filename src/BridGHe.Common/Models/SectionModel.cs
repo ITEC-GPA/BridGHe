@@ -102,6 +102,7 @@ namespace BridGHe.Common.Models
         #region Properties
 
         public Straus.StrausSection NativeSection { get; set; }
+        public CompositeSectionPreviewGeometry CompositePreview { get; set; }
 
         public string Id { get => _id; set => _id = value; }
         public string Name { get => _name; set => _name = value; }
@@ -219,7 +220,7 @@ namespace BridGHe.Common.Models
         #region Serialization
 
         private string SERIALIZATION_RELEASE_NAME = "SERIALIZATION_RELEASE_SectionModel"; //do not modify the name!
-        private int SERIALIZATION_RELEASE = 6;
+        private int SERIALIZATION_RELEASE = 7;
 
         protected SectionModel(SerializationInfo info, StreamingContext context)
         {
@@ -232,6 +233,7 @@ namespace BridGHe.Common.Models
             {
                 savedRelease = 0;
             }
+            CompositePreview = savedRelease >= 7 ? (CompositeSectionPreviewGeometry)info.GetValue("CompositePreview", typeof(CompositeSectionPreviewGeometry)) : null;
             NativeSection = savedRelease >= 5 ? (Straus.StrausSection)info.GetValue("NativeSection", typeof(Straus.StrausSection)) : null;
             _id = info.GetString("Id");
             if (savedRelease >= 6) { _ixx = info.GetDouble("_ixx"); _iyy = info.GetDouble("_iyy"); _ixy = info.GetDouble("_ixy"); _wxx = info.GetDouble("_wxx"); _wyy = info.GetDouble("_wyy"); _rho11 = info.GetDouble("_rho11"); _rho22 = info.GetDouble("_rho22"); }
@@ -315,6 +317,7 @@ namespace BridGHe.Common.Models
             if (info == null)
                 throw new ArgumentNullException("info");
             info.AddValue(SERIALIZATION_RELEASE_NAME, SERIALIZATION_RELEASE);
+            info.AddValue("CompositePreview", CompositePreview, typeof(CompositeSectionPreviewGeometry));
             info.AddValue("NativeSection", NativeSection);
             info.AddValue("Id", _id);
             info.AddValue("_ixx", _ixx); info.AddValue("_iyy", _iyy); info.AddValue("_ixy", _ixy); info.AddValue("_wxx", _wxx); info.AddValue("_wyy", _wyy); info.AddValue("_rho11", _rho11); info.AddValue("_rho22", _rho22);
@@ -371,6 +374,7 @@ namespace BridGHe.Common.Models
         public void CopyFrom(SectionModel bp)
         {
             NativeSection = bp.NativeSection?.Clone();
+            CompositePreview = bp.CompositePreview?.Clone();
             _ixx = bp._ixx; _iyy = bp._iyy; _ixy = bp._ixy;
             _wxx = bp._wxx; _wyy = bp._wyy; _rho11 = bp._rho11; _rho22 = bp._rho22;
             if (bp._id != null)

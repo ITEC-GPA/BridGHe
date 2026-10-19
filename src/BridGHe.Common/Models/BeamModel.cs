@@ -253,7 +253,14 @@ namespace BridGHe.Common.Models
             double tol = 0.001;
             Point2d c = _beamProperty.Centroid;
 
-            if (_beamProperty.Section.NativeSection != null)
+            if (_beamProperty.Section.CompositePreview != null)
+            {
+                foreach (var curve in _beamProperty.Section.CompositePreview.Outlines())
+                {
+                    using (curve) { var sections = Brep.CreatePlanarBreps(curve, tol); if (sections != null) main_surfaces.AddRange(sections); }
+                }
+            }
+            else if (_beamProperty.Section.NativeSection != null)
             {
                 var contours=_beamProperty.Section.NativeSection.PreviewContours;
                 if (contours == null || contours.Length == 0) return;

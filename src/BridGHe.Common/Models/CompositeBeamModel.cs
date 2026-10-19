@@ -315,7 +315,7 @@ namespace BridGHe.Common.Models
             };
             PolylineCurve borderC = new PolylineCurve(ptsConcrete);
             Brep[] breps = Brep.CreatePlanarBreps(borderC, tol);
-            breps[0].Translate(0, +sectionModel.SteelSection.D / 2 + sectionModel.ConcreteSection.Height / 2, 0);
+            breps[0].Translate(0, +sectionModel.SteelSection.D - centroid.Y + sectionModel.ConcreteSection.Height / 2, 0);
             if (breps != null)
                 main_surfaces.Add(breps[0]);
         }

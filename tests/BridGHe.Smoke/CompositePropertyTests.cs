@@ -33,6 +33,14 @@ internal static class CompositePropertyTests
         Near(actual.SectionArea,expected.areaH/12);Near(actual.I11,expected.J11H/12);Near(actual.I22,expected.J22H/12);Near(actual.J,property.GetOnlySteelMechanicalProperties().Jt);
         Require(actual.Material.Modulus==property.SteelMaterial.Modulus && actual.Section.NativeSection==null && actual.IsValid,"Shrinkage property must be a valid generic steel-referenced Straus property.");
         Near(((CompositeBeamPropertyModel)c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable()).NShrinkage,12);
+        var beam=new BeamModel("Preview",Rhino.Geometry.Point3d.Origin,new Rhino.Geometry.Point3d(10000,0,0),actual);
+        Require(beam.Shapes.Length==2 && beam.Shapes.All(b=>b.IsValid && b.IsSolid),"Override composite preview must contain solid steel and slab.");
+        Near(beam.Shapes[0].GetBoundingBox(true).Max.Z,beam.Shapes[1].GetBoundingBox(true).Min.Z);
+        var archived=ModelArchive.Clone(beam);Require(archived.Shapes.Length==2 && archived.BeamProperty.Section.CompositePreview.Slab.BottomRebarArea==1500,"Archived generic section lost its physical preview.");
+        Near(archived.BeamProperty.I11,actual.I11);
+        var asym=ModelArchive.Clone(property);asym.SteelSection.B1=900;asym.SteelSection.B2=400;
+        var composite=new CompositeBeamModel(Rhino.Geometry.Point3d.Origin,new Rhino.Geometry.Point3d(10000,0,0),asym);
+        Near(composite.Shapes[0].GetBoundingBox(true).Max.Z,composite.Shapes[1].GetBoundingBox(true).Min.Z);
         Number(10,0);c.ExpireSolution(false);doc.NewSolution(false,GH_SolutionMode.Silent);Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count>0 && !c.Params.Output[4].VolatileData.AllData(true).Any(g=>g!=null),"Invalid shrinkage ratio produced a section.");
     }
 }

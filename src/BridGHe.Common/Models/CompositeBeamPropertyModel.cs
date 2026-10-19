@@ -162,6 +162,7 @@ namespace BridGHe.Common.Models
                 Section = new SectionModel
                 {
                     SectionType = SectionModel.SectionTypes.Composite,
+                    CompositePreview = new CompositeSectionPreviewGeometry(this),
                     SectionArea = p.areaH / n, I11 = p.J11H / n, I22 = p.J22H / n,
                     J = GetOnlySteelMechanicalProperties().Jt,
                     Centroid = new Rhino.Geometry.Point2d(p.centroidH.X, p.centroidH.Y), AngleX1Rad = 0
