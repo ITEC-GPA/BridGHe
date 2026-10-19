@@ -27,7 +27,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             get { var box=BoundingBox.Empty;foreach(var outline in NativeOutlines())box.Union(outline.BoundingBox);return box; }
         }
         public void DrawViewportWires(GH_PreviewWireArgs args)
-        { foreach(var outline in NativeOutlines())args.Pipeline.DrawPolyline(outline,args.Color,args.Thickness); }
+        { if(!Display.ModelPreview.Automatic || !Display.DisplayPreferences.Current.Sections)return;foreach(var outline in NativeOutlines())args.Pipeline.DrawPolyline(outline,args.Color,args.Thickness); }
         public void DrawViewportMeshes(GH_PreviewMeshArgs args) { }
 
         public SectionModel.SectionTypes SectionType

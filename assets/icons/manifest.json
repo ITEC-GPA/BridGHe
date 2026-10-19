@@ -445,6 +445,33 @@
       "badge": "data"
     },
     {
+      "key": "DisplaySettingsComponent",
+      "type": "BridGHe.Grasshopper.Components.Preview.DisplaySettingsComponent",
+      "guid": "f90a8ac7-df2d-43a3-8f50-219086386684",
+      "name": "Display Settings",
+      "family": "tool",
+      "glyph": "table",
+      "badge": "edit"
+    },
+    {
+      "key": "PreviewModelComponent",
+      "type": "BridGHe.Grasshopper.Components.Preview.PreviewModelComponent",
+      "guid": "404d47db-4efd-412c-aec9-9889a7e9e72d",
+      "name": "Preview BridGHe Model",
+      "family": "tool",
+      "glyph": "model",
+      "badge": "shape"
+    },
+    {
+      "key": "DisplayPanelComponent",
+      "type": "BridGHe.Grasshopper.Components.Preview.DisplayPanelComponent",
+      "guid": "8453bdb0-af5a-46f7-8d93-d7c707d5a9d3",
+      "name": "BridGHe Panel",
+      "family": "tool",
+      "glyph": "table",
+      "badge": "parameter"
+    },
+    {
       "key": "BeamParam",
       "type": "BridGHe.Grasshopper.Components.Parameters.BeamParam",
       "guid": "dd6f2aa8-5224-45e3-9616-f9b8e0f0274b",

@@ -21,11 +21,7 @@ namespace BridGHe.Grasshopper.DataTypes
         public void DrawViewportMeshes(GH_PreviewMeshArgs args) { }
         public void DrawViewportWires(GH_PreviewWireArgs args)
         {
-            var points=DefinitionPoints();if(points.Length!=3)return;
-            var path=(MovingPath)Value;
-            // Circular/quadratic paths: show the actual definition points, not an assumed trajectory.
-            if(path.Shape==0)args.Pipeline.DrawLine(points[0],points[1],args.Color,args.Thickness);
-            for(int i=0;i<3;i++)args.Pipeline.DrawDot(points[i],i==0?"Start":i==1?"End":"Lateral / definition",args.Color,Color.White);
+            if(Display.ModelPreview.Automatic && Value is MovingPath path)Display.ModelPreview.Moving(path,args.Pipeline,args.Color,Display.DisplayPreferences.Current);
         }
         public MovingGoo() { }
         public MovingGoo(MovingObject value) { Value = value; }

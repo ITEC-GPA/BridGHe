@@ -121,15 +121,12 @@ namespace BridGHe.Grasshopper.DataTypes
 
         public void DrawViewportMeshes(GH_PreviewMeshArgs args)
         {
+            if (Display.ModelPreview.Automatic && Value != null) Display.ModelPreview.Meshes(Value,args.Pipeline,Display.DisplayPreferences.Current);
         }
 
         public void DrawViewportWires(GH_PreviewWireArgs args)
         {
-            Value.DrawWireframe(args.Pipeline, args.Viewport, args.Color);
-            if (Settings.Instance.ShowSolids)
-                Value.DrawSolid(args.Pipeline, args.Viewport, args.Color);
-            if (Settings.Instance.ShowAttributes)
-                Value.DrawAttributes(args.Pipeline, args.Viewport);
+            if (Display.ModelPreview.Automatic) Display.ModelPreview.Wires(Value,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current);
         }
 
         #endregion

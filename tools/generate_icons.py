@@ -281,6 +281,9 @@ MergeModelComponent|model|link|model
 NodeComponent|node||model
 PlateComponent|plate||model
 MergeGeometryComponent|merge||tool
+DisplaySettingsComponent|table|edit|tool
+PreviewModelComponent|model|shape|tool
+DisplayPanelComponent|table|parameter|tool
 BeamParam|beam|parameter|model
 BeamSectionParam|section:I|parameter|section
 CoordinateSystemParam|axes|parameter|model

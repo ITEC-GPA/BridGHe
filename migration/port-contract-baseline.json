@@ -481,6 +481,14 @@
         "5483bff2-64ab-40d7-a5de-1af1e6f9bd12"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/Preview/PreviewComponents.cs": {
+      "ports": "6f9dcb3fa2e10915ef23cd341295bea8bb2fba6ed985ad331a8d175857e35695",
+      "guids": [
+        "f90a8ac7-df2d-43a3-8f50-219086386684",
+        "404d47db-4efd-412c-aec9-9889a7e9e72d",
+        "8453bdb0-af5a-46f7-8d93-d7c707d5a9d3"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/Results/BeamResultsComponent.cs": {
       "ports": "6b2c994db774934c72d2a118d3c78fefbdf88e285fee11bb3ded80215b55322b",
       "guids": [

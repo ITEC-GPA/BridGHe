@@ -28,12 +28,13 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             if (Value == null) yield break;
             foreach (var element in Value.Elements)
             {
-                if (element is not NodeModel && element is not BeamModel && element is not PlateModel) continue;
+                if (element is not NodeModel && element is not BeamModel && element is not PlateModel && element is not CompositeBeamModel) continue;
                 yield return previews.GetValue(element, e => e switch
                 {
                     NodeModel node => new GH_Node(node),
                     BeamModel beam => new GH_Beam(beam),
                     PlateModel plate => new GH_Plate(plate),
+                    CompositeBeamModel beam => new GH_CompositeBeam(beam),
                     _ => throw new NotSupportedException()
                 });
             }

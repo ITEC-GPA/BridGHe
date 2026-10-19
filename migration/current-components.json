@@ -3094,6 +3094,207 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Preview.DisplaySettingsComponent",
+    "guid": "f90a8ac7-df2d-43a3-8f50-219086386684",
+    "kind": "component",
+    "name": "Display Settings",
+    "nickname": "Display",
+    "category": "BridGHe",
+    "subcategory": "15-Preview",
+    "description": "Local preview settings; connect to Preview BridGHe Model. Does not change global preferences or FEM data.",
+    "inputs": [
+      {
+        "name": "Enabled",
+        "nickname": "Enabled",
+        "description": "Show Enabled",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "Geometry",
+        "nickname": "Geometry",
+        "description": "Show Geometry",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "Sections",
+        "nickname": "Sections",
+        "description": "Show Sections",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "Shaded",
+        "nickname": "Shaded",
+        "description": "Show Shaded",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "Reinforcement",
+        "nickname": "Reinforcement",
+        "description": "Show Reinforcement",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "Loads",
+        "nickname": "Loads",
+        "description": "Show Loads",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "Supports",
+        "nickname": "Supports",
+        "description": "Show Supports",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "Releases",
+        "nickname": "Releases",
+        "description": "Show Releases",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "OtherAttributes",
+        "nickname": "OtherAttributes",
+        "description": "Show OtherAttributes",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "Axes",
+        "nickname": "Axes",
+        "description": "Show Axes",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "Labels",
+        "nickname": "Labels",
+        "description": "Show Labels",
+        "access": "item",
+        "optional": true,
+        "type": "Boolean"
+      },
+      {
+        "name": "Symbol scale",
+        "nickname": "SS",
+        "description": "Multiplier for existing support symbols and local axes",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Load scale",
+        "nickname": "LS",
+        "description": "Multiplier for existing load arrows",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Transparency",
+        "nickname": "T",
+        "description": "0 opaque to 1 transparent",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Load case",
+        "nickname": "LC",
+        "description": "Exact case name; empty = all cases",
+        "access": "item",
+        "optional": true,
+        "type": "Text"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Settings",
+        "nickname": "S",
+        "description": "Local display options",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Preview.PreviewModelComponent",
+    "guid": "404d47db-4efd-412c-aec9-9889a7e9e72d",
+    "kind": "component",
+    "name": "Preview BridGHe Model",
+    "nickname": "Preview",
+    "category": "BridGHe",
+    "subcategory": "15-Preview",
+    "description": "Preview models or individual elements with optional local settings. Disable automatic preview in the BridGHe menu to avoid overlapping upstream previews.",
+    "inputs": [
+      {
+        "name": "Model / elements",
+        "nickname": "M",
+        "description": "Models, beams, composite beams, nodes, plates or moving paths",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Settings",
+        "nickname": "S",
+        "description": "Optional local Display Settings; otherwise follows global settings",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Info",
+        "nickname": "I",
+        "description": "Preview item count (does not alter model data)",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Preview.DisplayPanelComponent",
+    "guid": "8453bdb0-af5a-46f7-8d93-d7c707d5a9d3",
+    "kind": "component",
+    "name": "BridGHe Panel",
+    "nickname": "BridGHe",
+    "category": "BridGHe",
+    "subcategory": "15-Preview",
+    "description": "Right-click to open global display preferences, help and About. Also available in the BridGHe menu.",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "Help",
+        "nickname": "H",
+        "description": "Open the window from the component context menu",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Parameters.BeamParam",
     "guid": "dd6f2aa8-5224-45e3-9616-f9b8e0f0274b",
     "kind": "parameter",

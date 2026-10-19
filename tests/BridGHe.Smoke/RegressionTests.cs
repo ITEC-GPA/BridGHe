@@ -20,6 +20,7 @@ internal static class RegressionTests
             ["composite-component"] = CompositeComponentTests.Run,
             ["slab-reinforcement"] = SlabReinforcementTests.Run,
             ["composite-property-phases"] = CompositePropertyTests.Run,
+            ["display-settings"] = DisplayTests.Run,
             ["group-null-identity"] = GroupNullIdentity,
             ["composite-preview"] = CompositePreview,
             ["nodal-actions"] = NodalActions,
