@@ -77,6 +77,15 @@ function Assert-OutputUnlocked([string]$Path) {
     }
 }
 
+function Get-ContentDigest([string]$Path) {
+    # MSBuild workers can inherit a PSModulePath that omits Get-FileHash.
+    # Use the runtime directly so publication also works from those IDE sessions.
+    $stream = [IO.File]::OpenRead($Path)
+    $hasher = [Security.Cryptography.SHA256]::Create()
+    try { return [BitConverter]::ToString($hasher.ComputeHash($stream)) }
+    finally { $hasher.Dispose(); $stream.Dispose() }
+}
+
 function Sync-Release([string]$Source) {
     $sourcePrefix = $Source + [IO.Path]::DirectorySeparatorChar
     $files = @{}
@@ -96,8 +105,7 @@ function Sync-Release([string]$Source) {
             # Do not rewrite identical DLLs (incremental builds / Rhino may have them loaded).
             $same = (Test-Path -LiteralPath $target -PathType Leaf) -and
                 (Get-Item -LiteralPath $target).Length -eq $item.Length -and
-                (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash -eq
-                (Get-FileHash -LiteralPath $item.FullName -Algorithm SHA256).Hash
+                (Get-ContentDigest $target) -eq (Get-ContentDigest $item.FullName)
             if (-not $same) { Copy-Item -LiteralPath $item.FullName -Destination $target -Force }
         }
     }
