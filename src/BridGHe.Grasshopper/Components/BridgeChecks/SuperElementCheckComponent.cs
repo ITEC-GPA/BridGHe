@@ -125,6 +125,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             {
                 try
                 {
+                    var workflowIndexes = new BridgePhaseAssembler.ResultIndex[beams.Count];
+                    var workflowStations = new double[beams.Count][];
                     (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage)[][] forces = new
                         (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage)[beams.Count][];
 
@@ -351,6 +353,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                                 strains[i] = new (double[] StrainInfiniteTime, double[] StrainIstantTime)[station.Count];
 
                                 var phaseIndex = Common.Checks.BridgePhaseAssembler.CreateIndex(considerBeam, beam.Value.Length, GeometryBase.Tolerance);
+                                workflowIndexes[i] = phaseIndex;
+                                workflowStations[i] = station.ToArray();
                                 for (int k = 0; k < station.Count; k++)
                                 {
                                     double consideredStation = station[k];
@@ -411,6 +415,13 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                             double[] strainInfinite = strains[i][j].StrainInfiniteTime;
 
                             (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage) force = forces[i][j];
+                            if (model.Value.BridgeWorkflow?.Method == BridgeWorkflowMethod.LinearHistory)
+                            {
+                                stressAnalysisResults[i][j] = model.Value.LoadCombinations.Select(combo => checker[j].AnalyzeHistory(model.Value.BridgeWorkflow,
+                                    workflowIndexes[i], workflowStations[i][j], combo, psiInfinite, psiInstant, psis[i][j].psiShrinkage, beam.StartBeamProperty.ConsiderRebar)).ToArray();
+                                tauBResults[i][j] = Enumerable.Repeat(double.NaN, model.Value.LoadCombinations.Count).ToArray();
+                                continue;
+                            }
                             bool res = checker[j].GetLinearAnalysisResultByStages(out StressAnalysisResult[] result, out double[] tauB, psiInfinite, psiInstant, force.OnlySteel,
                                 force.NInfinite, force.Ninstant, beam.StartBeamProperty.ConsiderConcrete, strainInfinite, strainIstant, beam.StartBeamProperty.ConsiderRebar, psis[i][j].psiShrinkage, force.NShrinkage);
 
@@ -459,6 +470,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                         }
 
                     DA.SetDataTree(0, resultsDataTree);
+                    if (model.Value.BridgeWorkflow?.Method == BridgeWorkflowMethod.LinearHistory)
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "gPC LinearHistory: storico di sezione N–Mx; taglio, pioli e irrigidimenti non verificati. Strain geometrico riferito all'origine dello storico; nessuna integrazione temporale della viscosità.");
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Tau b non ha un equivalente verificato nell'API gPC attuale: output NaN.");
                     DA.SetDataTree(1, tauBDataTree);
                     DA.SetDataTree(2, forcesTree);

@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using GPC.Checkers.CompositeBridge;
+using GPC.Checkers.CompositeBridge.History;
+using BridGHe.Common.Models;
 using GPC.Geometry;
 using GPC.Model.Materials;
 using GPC.Model.Results;
@@ -155,6 +157,44 @@ namespace BridGHe.Common.Checks
                 Name = "Self tension", Kind = BridgePhaseKind.Shrinkage, Phi = phi, ShrinkageMicrostrain = strain * 1e6 } }
             };
             return new BridgeStressResult(HBridgeSection.Calculate(data), 0);
+        }
+
+        /// <summary>Sequential section history. Effective moduli affect new increments; this is not an age-dependent creep integrator.</summary>
+        public BridgeStressResult AnalyzeHistory(BridgeWorkflow workflow, BridgePhaseAssembler.ResultIndex index, double station,
+            LoadCombinationModel combination, double phiInfinite, double phiInstant, double phiShrinkage, bool rebars)
+        {
+            if (workflow?.Method != BridgeWorkflowMethod.LinearHistory) throw new ArgumentException("A LinearHistory workflow is required.");
+            var factors = combination.Values.ToDictionary(p => p.Key.Name, p => p.Value, StringComparer.Ordinal);
+            double Coefficient(string name) => name != null && factors.TryGetValue(name, out var factor) ? factor : 0;
+            var phases = new List<BridgePhase>();
+            foreach (var stage in workflow.Phases.OrderBy(p => p.Order))
+            {
+                var kind = stage.State switch {
+                    BridgeSectionState.Steel => BridgePhaseKind.SteelOnly,
+                    BridgeSectionState.Composite => BridgePhaseKind.Composite,
+                    _ => BridgePhaseKind.ConcreteExcluded };
+                int before = phases.Count;
+                foreach (var action in stage.Actions)
+                {
+                    double factor = Coefficient(action.ForceCase), strainFactor = Coefficient(action.StrainCase);
+                    if (action.ForceCase != null && action.StrainCase != null && factor != strainFactor)
+                        throw new ArgumentException($"Action {action.Key}: FEM and shrinkage coefficients differ.");
+                    double phi = action.Behavior switch { BridgeActionBehavior.LongTerm => phiInfinite,
+                        BridgeActionBehavior.Shrinkage => phiShrinkage, BridgeActionBehavior.ShortTerm => phiInstant, _ => 0 };
+                    string name = $"{stage.Order} · {stage.Name} / {action.Key}";
+                    if (action.ForceCase != null && factor != 0)
+                        phases.Add(Phase(index.ReadForce(action.ForceCase, station, reference, factor), kind, phi, name + " / FEM"));
+                    double strain = index.ReadStrain(action.StrainCase, strainFactor);
+                    if (strain != 0) phases.Add(new BridgePhase { Name = name + " / strain", Kind = BridgePhaseKind.Shrinkage,
+                        Phi = phi, ShrinkageMicrostrain = strain * 1e6 });
+                }
+                // Activation is a construction event even when every action coefficient is zero.
+                if (phases.Count == before) phases.Add(new BridgePhase { Name = $"{stage.Order} · {stage.Name}", Kind = kind,
+                    Phi = kind == BridgePhaseKind.SteelOnly ? 0 : phiInstant });
+            }
+            var data = Input(true, rebars, true) with { Phases = phases.ToArray() };
+            var analysis = HBridgeHistoryResults.Calculate(data, new HBridgeHistoryOptions { MaterialMode = HistoryMaterialMode.Linear });
+            return new BridgeStressResult(analysis, analysis.Stages.Count - 1);
         }
 
         public static ResultBeamForces Scale(ResultBeamForces f, double factor) => new ResultBeamForces(

@@ -60,6 +60,13 @@ namespace BridGHe.Common.Checks
                 return result;
             }
 
+            public ResultBeamForces ReadForce(string name, double station, CoordinateSystem reference, double coefficient) =>
+                name == null || coefficient == 0 ? new ResultBeamForces(0, 0, 0, 0, 0, 0, reference) :
+                BridgeCheckAdapter.Scale(BridgeForceConvention.FromStraus(ForceAt(name, station), reference), coefficient);
+
+            public double ReadStrain(string name, double coefficient) =>
+                name != null && _strains.TryGetValue(name, out double strain) ? strain * coefficient : 0;
+
             public BridgePhaseActions Assemble(double station, LoadCombinationModel combination, CoordinateSystem reference)
             {
                 if (!double.IsFinite(station)) throw new ArgumentOutOfRangeException(nameof(station));

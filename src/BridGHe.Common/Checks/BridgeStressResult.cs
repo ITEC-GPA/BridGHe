@@ -25,7 +25,7 @@ namespace BridGHe.Common.Checks
             return index < rows.Length ? Sigma("Armatura", rows[index]) : double.NaN;
         }
         public double Point1_ConcreteSigma => Sigma("CLS", Analysis.Geometry.SlabHeight);
-        public double Point1_ConcreteEpsilon => Stage.Contributions.Where(c => c.HasConcrete)
+        public double Point1_ConcreteEpsilon => Stage.GetHistory() is { } history ? history.State.TotalPlane.At(Analysis.Geometry.SlabHeight) : Stage.Contributions.Where(c => c.HasConcrete)
             .Sum(c => c.SteelStress(Analysis.Geometry.SlabHeight) / Analysis.Materials.Ea);
         public double Point2_RebarSigma => Rebar(0);
         public double Point3_RebarSigma => Rebar(1);
@@ -35,7 +35,7 @@ namespace BridGHe.Common.Checks
         public double Point7_SteelSigma => Steel(-Analysis.Geometry.TopThickness - Analysis.Geometry.WebHeight);
         // Same gross-section Jourawski calculation as current gPC HBridgeSection.Shear.
         // Use public gPC geometry/properties, evaluating at the actual point (not the envelope).
-        public double ShearAt(double y) => shear.Value(y);
+        public double ShearAt(double y) => Stage.GetHistory() != null ? double.NaN : shear.Value(y);
 
         // A result represents an analysis snapshot. Build section properties once,
         // preserving the original summation order at each evaluation coordinate.
