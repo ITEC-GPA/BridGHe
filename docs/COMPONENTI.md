@@ -81,7 +81,7 @@
 |---|---|---|---|
 | Beam Geometric Property | component | Beam Property | Name; Area; xg; yg; Jxx; Jyy; Angle; J₁₁; J₂₂; W₁₁; W₂₂; ρ₁₁; ρ₂₂; J |
 | Beam Property | component | Name; Type; Section; Material | Property |
-| Composite Beam Property | component | Name; Concrete Slab Section; Steel Section; Concrete Material; Steel Material; Reinforcement Material; n0; n ∞; Consider Concrete; Consider Rebars | Composite Section; Only Steel Property; n0 Beam Section; n ∞ Beam Section |
+| Composite Beam Property | component | Name; Concrete Slab Section; Steel Section; Concrete Material; Steel Material; Reinforcement Material; n0; n ∞; Consider Concrete; Consider Rebars; n ritiro | Composite Section; Only Steel Property; n0 Beam Section; n ∞ Beam Section; n ritiro Beam Section |
 | Composite Geometric Property | component | Composite Beam Property; n; Consider Concrete; Consider Rebars; Consider Steel Section | Name; Area; xg; yg; Jxx; Jyy; Angle; J₁₁; J₂₂; Sxx; Syy; J |
 | Plate Property | component | Name; Type; Membrane Thickness; Bending Thickness; Material | Property |
 

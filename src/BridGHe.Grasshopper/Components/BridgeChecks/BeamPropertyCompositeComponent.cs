@@ -14,7 +14,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         /// Initializes a new instance of the CompositeSectionComponent class.
         /// </summary>
         public BeamPropertyCompositeComponent()
-          : base("Composite Beam Property", "CS", "Define a composite section composed by two base sections and 2 materials", Helpers.CategoryNameConstants.CATEGORY_CHECKS, Helpers.CategoryNameConstants.SUBCATEGORY_PROPERTIES)
+          : base("Composite Beam Property", "CS", "Composite H + reinforced slab. Steel-referenced Straus properties for steel-only, instant, long-term and shrinkage phases (N-mm-MPa).", Helpers.CategoryNameConstants.CATEGORY_CHECKS, Helpers.CategoryNameConstants.SUBCATEGORY_PROPERTIES)
         {
         }
 
@@ -34,7 +34,9 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             pManager.AddNumberParameter("n0", "n0", "Homogenization coefficient for instant time loads", GH_ParamAccess.item, 6);
             pManager.AddNumberParameter("n ∞", "n ∞", "Homogenization coefficient for infinite time loads", GH_ParamAccess.item, 18);
             pManager.AddBooleanParameter("Consider Concrete", "CC", "If true, consider concrete in the n0 and n ∞ phases", GH_ParamAccess.item, true);
-            pManager.AddBooleanParameter("Consider Rebars", "CR", "If true, consider rebars in the n0 and n ∞ phases", GH_ParamAccess.item, true);
+            pManager.AddBooleanParameter("Consider Rebars", "CR", "If true, consider rebars in the composite phases", GH_ParamAccess.item, true);
+            pManager.AddNumberParameter("n ritiro", "n sh", "Shrinkage modular ratio Es/Ec,eff. If omitted, uses n ∞ for compatibility.", GH_ParamAccess.item);
+            pManager[10].Optional = true;
         }
 
         /// <summary>
@@ -46,6 +48,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             pManager.AddGenericParameter("Only Steel Property", "CS", "The steel section", GH_ParamAccess.item);
             pManager.AddGenericParameter("n0 Beam Section", "CS", "The homogenized beam section with n0 coefficient", GH_ParamAccess.item);
             pManager.AddGenericParameter("n ∞ Beam Section", "CS", "The homogenized beam section with n ∞ coefficient", GH_ParamAccess.item);
+            pManager.AddGenericParameter("n ritiro Beam Section", "CS sh", "Steel-referenced generic Straus property for shrinkage: A, I11, I22 and steel torsion J. Connect to Beam Override.", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -85,6 +88,11 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             if (!DA.GetData(9, ref considerRebars))
                 return;
 
+            double nShrinkage = ninf;
+            DA.GetData(10, ref nShrinkage);
+            if (!double.IsFinite(n0) || n0 <= 0 || !double.IsFinite(ninf) || ninf <= 0 || !double.IsFinite(nShrinkage) || nShrinkage <= 0)
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Modular ratios must be finite and positive."); return; }
+
             var slab = (concreteSection as GH_Goo<object>)?.Value as SectionConcreteSlabModel;
             if (slab == null || !slab.IsValid || steelSection?.Value == null || steelMaterial?.Value == null || concreteMaterial?.Value == null)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid slab, steel section or materials."); return; }
@@ -102,6 +110,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 VerticalOffset = 0,
                 NInstant = n0,
                 NInfinite = ninf,
+                NShrinkage = nShrinkage,
                 ConsiderConcrete = considerConcrete,
                 ConsiderRebar = considerRebars,
             };
@@ -127,62 +136,11 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             };
             GH_BeamProperty steelSectionProp = new GH_BeamProperty(onlySteelBeamPropModel);
 
-            if (!considerConcrete && !considerRebars)
-            {
-                DA.SetData(0, section);
-                DA.SetData(1, steelSectionProp);
-                DA.SetData(2, steelSectionProp);
-                DA.SetData(3, steelSectionProp);
-                return;
-            }
-
-            var propOS = compositeBeamPropertyModel.GetOnlySteelMechanicalProperties();
-            var propN0 = compositeBeamPropertyModel.GetHomogeneizedMechanicalProperties(n0, considerConcrete, considerRebars, true);
-            var propN1 = compositeBeamPropertyModel.GetHomogeneizedMechanicalProperties(ninf, considerConcrete, considerRebars, true);
-
-            SectionModel f0SectionModel = new SectionModel()
-            {
-                SectionType = SectionModel.SectionTypes.Composite,
-                SectionArea = propN0.areaH / n0,
-                I11 = propN0.J11H / n0,
-                I22 = propN0.J22H / n0,
-                J = propOS.Jt,
-                Centroid = new Point2d(propN0.centroidH.X, propN0.centroidH.Y),
-                AngleX1Rad = 0,
-            };
-            BeamPropertyModel f0BeamPropModel = new BeamPropertyModel()
-            {
-                Material = steelMaterial.Value,
-                Section = f0SectionModel,
-                PropertyType = BeamPropertyType.Beam,
-                Name = name + "_N0_istant",
-            };
-            GH_BeamProperty f0BeamProp = new GH_BeamProperty(f0BeamPropModel);
-
-            SectionModel f1SectionModel = new SectionModel()
-            {
-                SectionType = SectionModel.SectionTypes.Composite,
-                SectionArea = propN1.areaH / ninf,
-                I11 = propN1.J11H / ninf,
-                I22 = propN1.J22H / ninf,
-                J = propOS.Jt,
-                Centroid = new Point2d(propN1.centroidH.X, propN1.centroidH.Y),
-                AngleX1Rad = 0
-            };
-            BeamPropertyModel f1BeamPropModel = new BeamPropertyModel()
-            {
-                Material = steelMaterial.Value,
-                Section = f1SectionModel,
-                PropertyType = BeamPropertyType.Beam,
-                Name = name + "_N_infinite",
-            };
-            GH_BeamProperty f1BeamProp = new GH_BeamProperty(f1BeamPropModel);
-
-
             DA.SetData(0, section);
             DA.SetData(1, steelSectionProp);
-            DA.SetData(2, f0BeamProp);
-            DA.SetData(3, f1BeamProp);
+            DA.SetData(2, !considerConcrete && !considerRebars ? steelSectionProp : new GH_BeamProperty(compositeBeamPropertyModel.CreateHomogenizedProperty(n0, "_N0_istant")));
+            DA.SetData(3, !considerConcrete && !considerRebars ? steelSectionProp : new GH_BeamProperty(compositeBeamPropertyModel.CreateHomogenizedProperty(ninf, "_N_infinite")));
+            DA.SetData(4, !considerConcrete && !considerRebars ? steelSectionProp : new GH_BeamProperty(compositeBeamPropertyModel.CreateHomogenizedProperty(nShrinkage, "_N_shrinkage")));
         }
 
         /// <summary>

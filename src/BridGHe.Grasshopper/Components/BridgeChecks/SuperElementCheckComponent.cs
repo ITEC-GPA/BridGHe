@@ -135,7 +135,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                         (double[] StrainInfiniteTime, double[] StrainIstantTime)[beams.Count][];
 
                     BridgeCheckAdapter[][] sectionCheckers = new BridgeCheckAdapter[beams.Count][];
-                    (double psiInfinite, double psiInstant)[][] psis = new (double psiInfinite, double psiInstant)[beams.Count][];
+                    (double psiInfinite, double psiInstant, double psiShrinkage)[][] psis = new (double psiInfinite, double psiInstant, double psiShrinkage)[beams.Count][];
 
                     for (int i = 0; i < beams.Count; i++)
                     {
@@ -198,7 +198,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                         {
                             if (start_hh == end_hh && start_b == end_b && start_topRebarsAreaTot == end_topRebarsAreaTot && start_topRebarsCover == end_topRebarsCover &&
                     start_bottomRebarsAreaTot == end_bottomRebarsAreaTot && start_bottomRebarsCover == end_bottomRebarsCover &&
-                                start_verticalOffset == end_verticalOffset && start_NInst == end_NInst && start_NInf == end_NInf)
+                                start_verticalOffset == end_verticalOffset && start_NInst == end_NInst && start_NInf == end_NInf && beam.Value.StartBeamProperty.NShrinkage == beam.Value.EndBeamProperty.NShrinkage)
                             {
                                 if (start_concreteModel == end_concreteModel && start_steelModel == end_steelModel && start_rebarModel == end_rebarModel)
                                     constantSection = true;
@@ -211,7 +211,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
 
                         List<double> stations = normStationsSet.OrderBy(value => value).ToList();
 
-                        psis[i] = new (double psiInfinite, double psiInstant)[stations.Count];
+                        psis[i] = new (double psiInfinite, double psiInstant, double psiShrinkage)[stations.Count];
                         sectionCheckers[i] = new BridgeCheckAdapter[stations.Count];
 
                         if (constantSection)
@@ -248,7 +248,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
 
                                 for (int k = 0; k < stations.Count; k++)
                                 {
-                                    psis[i][k] = (phiInfinite, phiInstant);
+                                    psis[i][k] = (phiInfinite, phiInstant, CalculateHomogenizedFactorPhi(beam.Value.StartBeamProperty.NShrinkage, steelMaterialEN1992, concreteMaterialEN1992));
                                     sectionCheckers[i][k] = new BridgeCheckAdapter(reinforcedConcreteSection, cs, options);
                                 }
                             }
@@ -315,7 +315,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
 
                                 GPC.Checkers.CompositeBridge.BridgeAnalysisOptions options = new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare,  WebBuckling = webFlangeInstab, TopFlangeBuckling = topFlangeInstab, BottomFlangeBuckling = bottomFlangeInstab };
 
-                                psis[i][k] = (phiInfinite, phiInstant);
+                                double nShrinkage = Interpolation.GetLinearInterpolation(0, 1, beam.Value.StartBeamProperty.NShrinkage, beam.Value.EndBeamProperty.NShrinkage, currentStation);
+                                psis[i][k] = (phiInfinite, phiInstant, CalculateHomogenizedFactorPhi(nShrinkage, steelMaterialEN1992, concreteMaterialEN1992));
                                 sectionCheckers[i][k] = new BridgeCheckAdapter(reinforcedConcreteSection, cs, options);
                             }
                         }
@@ -409,7 +410,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
 
                             (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant) force = forces[i][j];
                             bool res = checker[j].GetLinearAnalysisResultByStages(out StressAnalysisResult[] result, out double[] tauB, psiInfinite, psiInstant, force.OnlySteel,
-                                force.NInfinite, force.Ninstant, beam.StartBeamProperty.ConsiderConcrete, strainInfinite, strainIstant, beam.StartBeamProperty.ConsiderRebar);
+                                force.NInfinite, force.Ninstant, beam.StartBeamProperty.ConsiderConcrete, strainInfinite, strainIstant, beam.StartBeamProperty.ConsiderRebar, psis[i][j].psiShrinkage);
 
                             if (res)
                             {

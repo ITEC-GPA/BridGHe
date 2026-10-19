@@ -7729,7 +7729,7 @@
     "nickname": "CS",
     "category": "BridGHe",
     "subcategory": "05-Properties",
-    "description": "Define a composite section composed by two base sections and 2 materials",
+    "description": "Composite H + reinforced slab. Steel-referenced Straus properties for steel-only, instant, long-term and shrinkage phases (N-mm-MPa).",
     "inputs": [
       {
         "name": "Name",
@@ -7806,10 +7806,18 @@
       {
         "name": "Consider Rebars",
         "nickname": "CR",
-        "description": "If true, consider rebars in the n0 and n ∞ phases",
+        "description": "If true, consider rebars in the composite phases",
         "access": "item",
         "optional": false,
         "type": "Boolean"
+      },
+      {
+        "name": "n ritiro",
+        "nickname": "n sh",
+        "description": "Shrinkage modular ratio Es/Ec,eff. If omitted, uses n ∞ for compatibility.",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
       }
     ],
     "outputs": [
@@ -7841,6 +7849,14 @@
         "name": "n ∞ Beam Section",
         "nickname": "CS",
         "description": "The homogenized beam section with n ∞ coefficient",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "n ritiro Beam Section",
+        "nickname": "CS sh",
+        "description": "Steel-referenced generic Straus property for shrinkage: A, I11, I22 and steel torsion J. Connect to Beam Override.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
