@@ -435,7 +435,7 @@ namespace BridGHe.Common.Models
                 case SectionModel.SectionTypes.Generic:
                     {
                         //equivalent circular section
-                        ArcCurve border = new ArcCurve(new Circle(0.001 * System.Math.Sqrt(_beamProperty.SectionArea / System.Math.PI)));
+                          ArcCurve border = new ArcCurve(new Circle(System.Math.Sqrt(_beamProperty.SectionArea / System.Math.PI)));
                         Brep[] breps = Brep.CreatePlanarBreps(border, tol);
                         if (breps != null)
                             main_surfaces.Add(breps[0]);

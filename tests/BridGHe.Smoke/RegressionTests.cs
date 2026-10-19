@@ -553,6 +553,12 @@ internal static class RegressionTests
         Require(converted, "native beam supports result conversion");
         beam.PointTo = beam.PointFrom;
         Require(!beam.IsValid, "zero-length native beam is invalid");
+        var generic=new SectionModel { SectionType=SectionModel.SectionTypes.Generic,SectionArea=Math.PI*100*100 };
+        property.Section=generic;
+        var equivalent=new BeamModel(Point3d.Origin,new Point3d(1000,0,0),property);
+        var bounds=equivalent.Shapes.Single().GetBoundingBox(true);
+        Require(Math.Abs(bounds.Max.Y-bounds.Min.Y-200)<1e-8 && Math.Abs(bounds.Max.Z-bounds.Min.Z-200)<1e-8,
+            "generic equivalent circle uses model length units, without a hidden factor of 0.001");
     }
 }
 
