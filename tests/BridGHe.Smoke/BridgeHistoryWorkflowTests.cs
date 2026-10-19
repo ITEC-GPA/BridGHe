@@ -50,6 +50,15 @@ internal static class BridgeHistoryWorkflowTests
         Near(final.IntegratedN, 100000, "History sectional force equilibrium");
         Near(final.ForceResidual, 0, "History force residual");
         BridgeWorkflowTests.Require(double.IsNaN(activation.Point6_SteelTau), "History exposes unverified shear as a calculated stress.");
+        var assembly = BridgeMergeTests.Initialize();
+        using var doc = new Grasshopper.Kernel.GH_Document();
+        var detail = (Grasshopper.Kernel.GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components.BridgeDetails.BridgeDetailCheckComponent", true));
+        detail.CreateAttributes(); doc.AddObject(detail, false);
+        ((Grasshopper.Kernel.Parameters.Param_GenericObject)detail.Params.Input[0]).PersistentData.Append(new Grasshopper.Kernel.Types.GH_ObjectWrapper(activation));
+        Grasshopper.Kernel.GH_Document.EnableSolutions = true; doc.Enabled = true; doc.NewSolution(false, Grasshopper.Kernel.GH_SolutionMode.Silent);
+        BridgeWorkflowTests.Require(detail.RuntimeMessages(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error).Any(s => s.Contains("LinearHistory")) && !detail.Params.Output[0].VolatileData.AllData(true).Any(g => g?.ScriptVariable() is BridgeStressResult),
+            "Detail history guard: " + string.Join("; ", detail.RuntimeMessages(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error)) + " | warnings: "
+                + string.Join("; ", detail.RuntimeMessages(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning)) + " | outputs=" + detail.Params.Output[0].VolatileDataCount);
         Console.WriteLine("PASS history: split shrinkage, analytical primary stresses, stress-free concrete activation, equilibrium, explicit unsupported shear");
     }
 }

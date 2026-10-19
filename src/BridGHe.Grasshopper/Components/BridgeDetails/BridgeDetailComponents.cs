@@ -121,6 +121,7 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
             {
                 GH_ObjectWrapper wrapper=null;if(!da.GetData(0,ref wrapper))return;
                 if(wrapper.Value is not BridgeStressResult result)throw new ArgumentException("Expected a BridgeChecks BridgeStressResult.");
+                if(result.Stage.GetHistory()!=null)throw new NotSupportedException("Bridge Detail Check does not support LinearHistory results. Recomputing them with the cumulative solver would change their history; use a separately validated detail calculation.");
                 var input=result.Analysis.Input;
                 for(int i=1;i<=3;i++)
                 {
