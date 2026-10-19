@@ -226,6 +226,9 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             {
                 try
                 {
+                    var aligned = Common.Checks.BridgeMergeValidation.Align(models.Select(v=>v.Value).ToArray(), Settings.Instance.Tolerance);
+                    Common.Checks.BridgeMergeValidation.ValidatePhases(casesNames, casesNamesStrain,
+                        (loadCaseOnlySteel,false),(loadCaseNInf,false),(loadCaseN0,false),(loadCaseStrainNInf,true),(loadCaseStrainN0,true));
                     // Nuovo modello di output
                     ModelModel newModel = new ModelModel(models[0].Value.Units);
 
@@ -276,9 +279,9 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                         //}
                         for (int i = 0; i < models[mm].Value.Beams.Count; i++)
                         {
-                            for (int j = 0; j < models[mm].Value.Beams[i].Loads.Count; j++)
+                            for (int j = 0; j < aligned[mm][i].Loads.Count; j++)
                             {
-                                newModel.Beams[i].Loads.Add((LoadModel)models[mm].Value.Beams[i].Loads[j].Clone());
+                                newModel.Beams[i].Loads.Add((LoadModel)aligned[mm][i].Loads[j].Clone());
                             }
                         }
                         //for (int i = 0; i < models[mm].Value.Plates.Count; i++)
@@ -299,6 +302,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     for (int i = 0; i < newModel.Beams.Count; i++)
                     {
                         newModel.Beams[i].Results.Clear();
+                        foreach(var strain in newModel.Beams[i].Loads.OfType<CompositeBeamSlabStrainModel>().ToArray())newModel.Beams[i].Loads.Remove(strain);
                     }
                     for (int i = 0; i < newModel.Plates.Count; i++)
                     {
@@ -318,7 +322,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                         for (int mm = 0; mm < models.Count; mm++)
                         {
                             GH_Model model = models[mm];
-                            BeamModel beam = model.Value.Beams[i];
+                            BeamModel beam = aligned[mm][i];
 
                             for (int j = 0; j < beam.Results.Count; j++)
                             {
@@ -360,7 +364,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                         for (int i = 0; i < newModel.Beams.Count; i++)
                         {
                             BeamModel newBeam = newModel.Beams[i];
-                            BeamModel oldBeam = model.Value.Beams[i];
+                            BeamModel oldBeam = aligned[mm][i];
                             double[] beamStations = stations[i];
 
                             for (int j = 0; j < oldBeam.Results.Count; j++)
@@ -372,7 +376,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                                 int stationIndex = beamStations.ToList().IndexOf(stationDist);
                                 int comboIndex = newModel.LoadCases.Select(ll => ll.Name).ToList().IndexOf($"{m}-{loadCaseName}");
 
-                                BeamForceResultModel newForce = new BeamForceResultModel(newModel.LoadCases.First(k => k.Name == $"{m}-{force.LoadCase.Name}"), force.Station, 0, "", false)
+                                BeamForceResultModel newForce = new BeamForceResultModel(newModel.LoadCases.First(k => k.Name == $"{m}-{force.LoadCase.Name}"), stationDist, 0, "", false)
                                 {
                                     AxialForce = force.AxialForce,
                                     ShearForce = force.ShearForce,
@@ -380,6 +384,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                                     BendingMoment = force.BendingMoment,
                                 };
 
+                                if (results[i][stationIndex][comboIndex] != null) throw new InvalidOperationException($"Duplicate force sample for beam {newBeam.BeamId}, case {loadCaseName}, station {stationDist}.");
                                 results[i][stationIndex][comboIndex] = newForce;
                             }
                         }
@@ -389,7 +394,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     for (int i = 0; i < newModel.Beams.Count; i++)
                     {
                         BeamModel beam = newModel.Beams[i];
-                        //BeamModel oldBeam = model.Value.Beams[i];
+                        //BeamModel oldBeam = aligned[mm][i];
                         double[] beamStations = stations[i];
 
                         for (int j = 0; j < beamStations.Length; j++)
@@ -433,6 +438,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                                         }
                                     }
 
+                                    if (forceMinus == null || forcePlus == null || ReferenceEquals(forceMinus,forcePlus))
+                                        throw new InvalidOperationException($"Incomplete results for beam {beam.BeamId}, case {newModel.LoadCases[s].Name}, station {stationDist}. Extrapolation is not permitted.");
                                     double distPlus = Math.Round(forcePlus.NormalizedLength ? forcePlus.Station * beam.Length : forcePlus.Station, 15);
                                     double distMinus = Math.Round(forceMinus.NormalizedLength ? forceMinus.Station * beam.Length : forceMinus.Station, 15);
                                     double x = stationDist - distMinus;
@@ -488,7 +495,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                         GH_Model model = models[i];
                         for (int j = 0; j < model.Value.Beams.Count; j++)
                         {
-                            BeamModel beam = model.Value.Beams[j];
+                            BeamModel beam = aligned[i][j];
                             BeamModel newBeam = newModel.Beams[j];
                             for (int k = 0; k < beam.Loads.Count; k++)
                             {
@@ -500,13 +507,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                                     LoadCaseModel loadCaseModelClone = newModel.LoadCases.Where(vv => vv.Name == lcase_name).FirstOrDefault();
                                     loadCaseModelClone.Name = lcase_name;
                                     clone.LoadCase = loadCaseModelClone;
-                                    for (int l = 0; l < newBeam.Loads.Count; l++)
-                                    {
-                                        if (newBeam.Loads[l].LoadCase.Name == compositeBeamSlabStrainModel.LoadCase.Name)
-                                        {
-                                            newBeam.Loads[l] = clone;
-                                        }
-                                    }
+                                    newBeam.Loads.Add(clone);
                                 }
                             }
                         }
@@ -528,19 +529,24 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                                 invalid_names = invalid_names.Where(c => !casesNamesStrain.Contains(c));
                                 if (invalid_names.Count() > 0)
                                 {
-                                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Invalid cases name: " + string.Join(", ", invalid_names));
-                                    break;
+                                    throw new ArgumentException("Invalid combination cases: " + string.Join(", ", invalid_names));
                                 }
                             }
                             else
                             {
                                 string name = ((GH_String)row[0]).Value;
-                                IEnumerable<double> incrms = row.Cast<GH_String>().Where(c => double.TryParse(c.Value, out double d)).Select(c => Convert.ToDouble(c.Value));
+                                if (row.Count != cnames.Count+1) throw new ArgumentException($"Combination {name}: expected {cnames.Count} coefficients.");
                                 LoadCombinationModel loadCombinationModel = new LoadCombinationModel(name);
-                                for (int j = 0; j < incrms.Count(); j++)
-                                    // Reuse the canonical case carrying the assigned
-                                    // BridgeChecks phase. A fresh name-only case loses it.
-                                    loadCombinationModel.Values.Add(newModel.LoadCases.Single(c => c.Name == cnames[j]), incrms.ElementAt(j));
+                                for (int j = 0; j < cnames.Count; j++)
+                                {
+                                    string text = ((GH_String)row[j+1]).Value;
+                                    if (!double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.CurrentCulture, out double factor) &&
+                                        !double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out factor) || !double.IsFinite(factor))
+                                        throw new ArgumentException($"Invalid coefficient '{text}' in {name}.");
+                                    var loadCase = newModel.LoadCases.Single(c => c.Name == cnames[j]);
+                                    if (factor != 0 && loadCase.Stages.Count != 1) throw new ArgumentException($"Case {loadCase.Name} in {name} must be assigned to exactly one phase.");
+                                    loadCombinationModel.Values.Add(loadCase,factor);
+                                }
 
                                 newModel.LoadCombinations.Add(loadCombinationModel);
                             }
