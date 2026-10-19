@@ -17,6 +17,16 @@ internal static class CompositePropertyTests
         var property=BridgeGrillageExample.Composite(new());property.ConcreteSection=new(250,3000,2000,40,1500,55);property.ConsiderRebar=true;
         Near(property.NShrinkage,property.NInfinite);Near(ModelArchive.Clone(property).NShrinkage,property.NInfinite);
         property.NShrinkage=12;Near(ModelArchive.Clone(property).NShrinkage,12);Near(new CompositeBeamPropertyModel(property).NShrinkage,12);
+        property.SteelMaterial.ThermalExpansion=1.2e-5;
+        var shrink=BridGHe.Common.Checks.CompositeShrinkageActions.Calculate(property,-.0002);
+        var zero=BridGHe.Common.Checks.CompositeShrinkageActions.Calculate(property,0);
+        Require(zero.FreeStrain==0 && zero.Curvature==0,"Zero eigenstrain must generate zero FEM actions.");
+        var twice=BridGHe.Common.Checks.CompositeShrinkageActions.Calculate(property,-.0004);
+        Near(twice.PreStrain,2*shrink.PreStrain);Near(twice.ThermalGradient,2*shrink.ThermalGradient);
+        var shProps=property.CreateHomogenizedProperty(12,"test");
+        Near(property.SteelMaterial.Modulus*shProps.SectionArea*shrink.FreeStrain,shrink.EigenForce);
+        Near(property.SteelMaterial.Modulus*shProps.I11*shrink.Curvature,shrink.EigenMoment);
+        Require(shrink.FreeStrain<0 && shrink.PreStrain>0,"Straus prestrain contraction sign reversed.");
         using var doc=new GH_Document();
         var c=(GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components.BridgeChecks.BeamPropertyCompositeComponent",true));c.CreateAttributes();doc.AddObject(c,false);
         IGH_Goo Wrap(string name,object value){var t=assembly.GetType("BridGHe.Grasshopper.DataTypes."+name,true);var g=(IGH_Goo)Activator.CreateInstance(t);t.GetProperty("Value").SetValue(g,value);return g;}

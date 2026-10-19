@@ -218,6 +218,7 @@ StrausR3ExportComponent|case|arrow|solver
 BeamDistributedLoadComponent|distributed||load
 BeamDistributedMomentComponent|moment|stages|load
 BeamGradientLoadComponent|gradient||load
+CompositeShrinkageActionsComponent|strain|data|load
 BeamPointLoadComponent|point||load
 BeamPointMomentComponent|moment||load
 BeamPreLoadComponent|preload||load

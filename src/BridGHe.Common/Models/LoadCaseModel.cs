@@ -309,6 +309,7 @@ namespace BridGHe.Common.Models
                 NInstant,
                 StrainInfinite,
                 StrainInstant,
+                NShrinkage,
             }
 
             private string _name;

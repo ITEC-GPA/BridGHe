@@ -55,11 +55,13 @@ internal static class SlabReinforcementTests
             var model=new ModelModel(ModelModel.ModelUnits.Nmm);model.AddElements(new[]{source});
             var combo=new LoadCombinationModel("Test");model.LoadCombinations.Add(combo);
             for(int phase=0;phase<3;phase++){var lc=BridgeGrillageExample.Case("Phase"+phase,phase);model.LoadCases.Add(lc);combo.Values.Add(lc,1);foreach(double x in new[]{0.0,0.5,1.0})beam.Results.Add(new BeamForceResultModel(lc,x,0,""){NormalizedLength=true,My=1e7});}
+            var shrinkFem=new LoadCaseModel("Shrink FEM","Shrink FEM"){Stages=new(){new("Shrink FEM"){BridgePhase=LoadCaseModel.Stage.BridgePhases.NShrinkage}}};combo.Values.Add(shrinkFem,1);
+            foreach(double x in new[]{0.0,.5,1.0})beam.Results.Add(new BeamForceResultModel(shrinkFem,x,0,"",true){My=5e6});
             var shrink=new LoadCaseModel("Shrink","Shrink"){Stages=new(){new("Shrink"){BridgePhase=LoadCaseModel.Stage.BridgePhases.StrainInfinite}}};
             combo.Values.Add(shrink,1);beam.Loads.Add(new CompositeBeamSlabStrainModel(shrink,new(){Strain=-0.0002}));
             Set(c,0,Wrap("Fem.GH_Model",model));Set(c,1,Wrap("GH_CompositeBeam",beam));Solve(doc,c,true);
             var results=c.Params.Output[0].VolatileData.AllData(true).Select(g=>(BridgeStressResult)g.ScriptVariable()).ToArray();Require(results.Length==3,"Expected three checked stations.");
-            for(int i=0;i<3;i++){var input=results[i].Analysis.Input;var row=input.BottomRebars;Require(row.Enabled,"Bottom row lost before gPC checker.");Near(results[i].Stage.Contributions.Last().HomogenizationN,12+(tapered?i:0));Near(row.AxisDistance,55+(tapered?5*i:0));Near(Math.PI*row.Diameter*row.Diameter/4*input.Geometry.SlabWidth/row.Pitch,1500+(tapered?500*i:0));}
+            for(int i=0;i<3;i++){var input=results[i].Analysis.Input;var row=input.BottomRebars;Require(row.Enabled,"Bottom row lost before gPC checker.");Require(results[i].Analysis.Stages.Count==5,"Expected steel, long, instant, shrinkage FEM and autostress contributions.");Near(results[i].Stage.Contributions[3].HomogenizationN,12+(tapered?i:0));Near(results[i].Stage.Contributions.Last().HomogenizationN,12+(tapered?i:0));Near(row.AxisDistance,55+(tapered?5*i:0));Near(Math.PI*row.Diameter*row.Diameter/4*input.Geometry.SlabWidth/row.Pitch,1500+(tapered?500*i:0));}
         }
     }
 }

@@ -125,11 +125,11 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             {
                 try
                 {
-                    (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant)[][] forces = new
-                        (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant)[beams.Count][];
+                    (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage)[][] forces = new
+                        (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage)[beams.Count][];
 
-                    (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant)[][] forcesForOutput = new
-                        (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant)[beams.Count][];
+                    (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage)[][] forcesForOutput = new
+                        (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage)[beams.Count][];
 
                     (double[] StrainInfiniteTime, double[] StrainIstantTime)[][] strains = new
                         (double[] StrainInfiniteTime, double[] StrainIstantTime)[beams.Count][];
@@ -346,8 +346,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                                 List<double> stationB = stationBuffer.ToList();
                                 List<double> station = stationB.OrderBy(b => b).ToList();
 
-                                forces[i] = new (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant)[station.Count];
-                                forcesForOutput[i] = new (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant)[station.Count];
+                                forces[i] = new (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage)[station.Count];
+                                forcesForOutput[i] = new (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage)[station.Count];
                                 strains[i] = new (double[] StrainInfiniteTime, double[] StrainIstantTime)[station.Count];
 
                                 var phaseIndex = Common.Checks.BridgePhaseAssembler.CreateIndex(considerBeam, beam.Value.Length, GeometryBase.Tolerance);
@@ -362,6 +362,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                                     ResultBeamForces[] resultBeamForcesInfinitesForOutput = new ResultBeamForces[model.Value.LoadCombinations.Count];
                                     ResultBeamForces[] resultBeamForcesInstantsForOutput = new ResultBeamForces[model.Value.LoadCombinations.Count];
 
+                                    ResultBeamForces[] resultShrinkage = new ResultBeamForces[model.Value.LoadCombinations.Count];
                                     double[] strainNIstantArray = new double[model.Value.LoadCombinations.Count];
                                     double[] strainNInfiniteArray = new double[model.Value.LoadCombinations.Count];
 
@@ -373,12 +374,13 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                                         resultBeamForcesOnlySteels[c] = resultBeamForcesOnlySteelsForOutput[c] = actions.Steel;
                                         resultBeamForcesInfinites[c] = resultBeamForcesInfinitesForOutput[c] = actions.Infinite;
                                         resultBeamForcesInstants[c] = resultBeamForcesInstantsForOutput[c] = actions.Instant;
+                                        resultShrinkage[c] = actions.Shrinkage;
                                         strainNInfiniteArray[c] = actions.StrainInfinite;
                                         strainNIstantArray[c] = actions.StrainInstant;
                                     }
 
-                                    forces[i][k] = (resultBeamForcesOnlySteels, resultBeamForcesInfinites, resultBeamForcesInstants);
-                                    forcesForOutput[i][k] = (resultBeamForcesOnlySteelsForOutput, resultBeamForcesInfinitesForOutput, resultBeamForcesInstantsForOutput);
+                                    forces[i][k] = (resultBeamForcesOnlySteels, resultBeamForcesInfinites, resultBeamForcesInstants, resultShrinkage);
+                                    forcesForOutput[i][k] = (resultBeamForcesOnlySteelsForOutput, resultBeamForcesInfinitesForOutput, resultBeamForcesInstantsForOutput, resultShrinkage);
                                     strains[i][k] = (strainNInfiniteArray, strainNIstantArray);
                                 }
                             }
@@ -408,9 +410,9 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                             double[] strainIstant = strains[i][j].StrainIstantTime;
                             double[] strainInfinite = strains[i][j].StrainInfiniteTime;
 
-                            (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant) force = forces[i][j];
+                            (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage) force = forces[i][j];
                             bool res = checker[j].GetLinearAnalysisResultByStages(out StressAnalysisResult[] result, out double[] tauB, psiInfinite, psiInstant, force.OnlySteel,
-                                force.NInfinite, force.Ninstant, beam.StartBeamProperty.ConsiderConcrete, strainInfinite, strainIstant, beam.StartBeamProperty.ConsiderRebar, psis[i][j].psiShrinkage);
+                                force.NInfinite, force.Ninstant, beam.StartBeamProperty.ConsiderConcrete, strainInfinite, strainIstant, beam.StartBeamProperty.ConsiderRebar, psis[i][j].psiShrinkage, force.NShrinkage);
 
                             if (res)
                             {
@@ -447,7 +449,11 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                         {
                             List<ResultBeamForces> list = new List<ResultBeamForces>();
                             for (int k = 0; k < forcesForOutput[i][j].OnlySteel.Length; k++)
-                                list.Add(forcesForOutput[i][j].OnlySteel[k] + forcesForOutput[i][j].NInfinite[k] + forcesForOutput[i][j].Ninstant[k]);
+                            {
+                                var total = forcesForOutput[i][j].OnlySteel[k] + forcesForOutput[i][j].NInfinite[k] + forcesForOutput[i][j].Ninstant[k];
+                                if (forcesForOutput[i][j].NShrinkage[k] != null) total += forcesForOutput[i][j].NShrinkage[k];
+                                list.Add(total);
+                            }
 
                             forcesTree.AddRange(list, new GH_Path(i, j));
                         }

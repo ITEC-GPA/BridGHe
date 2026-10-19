@@ -127,7 +127,7 @@
       ]
     },
     "src/BridGHe.Grasshopper/Components/BridgeChecks/BuildBridgeModel.cs": {
-      "ports": "f2c9475f8c9b0282a822d57f5340020c598f161598a26db2e91318f6b9eebe6e",
+      "ports": "86be27c9050241f106d315532ad6f2f58b95846d469cf7c59654ff6e6315f605",
       "guids": [
         "16695837-3f63-4305-a1ff-4491826dc3fe"
       ]
@@ -309,6 +309,12 @@
       "ports": "4ab297ff4f1ccb88ea7b5fdf4862a82f18416802a691c2ade9f87b16c8b91397",
       "guids": [
         "584fa650-0996-4bf8-9825-aa8639444507"
+      ]
+    },
+    "src/BridGHe.Grasshopper/Components/Loads/CompositeShrinkageActionsComponent.cs": {
+      "ports": "3ebd8985f10b9a7731abd5b41da36bc71b3a20a0b67cc6d707ff53366d5038a0",
+      "guids": [
+        "861d0a91-6375-4cab-a106-0f6922dd827a"
       ]
     },
     "src/BridGHe.Grasshopper/Components/Loads/MovingComponents.cs": {

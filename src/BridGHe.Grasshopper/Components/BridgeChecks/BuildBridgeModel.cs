@@ -53,6 +53,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             pManager[5].Optional = true;
             pManager.AddTextParameter("Phase N0 strain Load Cases", "N0SLC", "The load cases name to assign to the Phase N0 strain phase", GH_ParamAccess.list);
             pManager[6].Optional = true;
+            pManager.AddTextParameter("Phase n ritiro FEM Load Cases", "NSHLC", "FEM forces calculated with the n ritiro section. Distinct from slab eigenstrain/autostress cases.", GH_ParamAccess.list);
+            pManager[7].Optional = true;
         }
 
         /// <summary>
@@ -222,16 +224,21 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 n++;
             }
 
+            var loadCaseNShrinkage = new List<string>();
+            DA.GetDataList(7, loadCaseNShrinkage);
+            foreach (var valueList in Params.Input[7].Sources.OfType<GH_ValueList>())
+            { valueList.ListMode=GH_ValueListMode.CheckList; ComponentsHelper.SetValueList(valueList,casesNames); }
             if (_run)
             {
                 try
                 {
                     var aligned = Common.Checks.BridgeMergeValidation.Align(models.Select(v=>v.Value).ToArray(), Settings.Instance.Tolerance);
                     Common.Checks.BridgeMergeValidation.ValidatePhases(casesNames, casesNamesStrain,
-                        (loadCaseOnlySteel,false),(loadCaseNInf,false),(loadCaseN0,false),(loadCaseStrainNInf,true),(loadCaseStrainN0,true));
+                        (loadCaseOnlySteel,false),(loadCaseNInf,false),(loadCaseN0,false),(loadCaseStrainNInf,true),(loadCaseStrainN0,true),(loadCaseNShrinkage,false));
                     // Nuovo modello di output
                     ModelModel newModel = new ModelModel(models[0].Value.Units);
 
+                    var stageShrinkage = new LoadCaseModel.Stage("Shrinkage FEM Phase") { BridgePhase=LoadCaseModel.Stage.BridgePhases.NShrinkage };
                     LoadCaseModel.Stage stageOS = new LoadCaseModel.Stage("Only Steel Phase") { BridgePhase = LoadCaseModel.Stage.BridgePhases.OnlySteel };
                     LoadCaseModel.Stage stagenInst = new LoadCaseModel.Stage("Instant Time Loads Phase") { BridgePhase = LoadCaseModel.Stage.BridgePhases.NInstant };
                     LoadCaseModel.Stage stageninf = new LoadCaseModel.Stage("Infinite Time Loads Phase") { BridgePhase = LoadCaseModel.Stage.BridgePhases.NInfinite };
@@ -247,6 +254,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                             loadCaseModel.Stages.Add(stagenInst);
                         else if (loadCaseNInf.Contains(loadCaseModel.Name))
                             loadCaseModel.Stages.Add(stageninf);
+                        else if (loadCaseNShrinkage.Contains(loadCaseModel.Name))
+                            loadCaseModel.Stages.Add(stageShrinkage);
 
                         newModel.LoadCases.Add(loadCaseModel);
                     }

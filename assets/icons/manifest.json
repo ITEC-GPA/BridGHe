@@ -706,6 +706,15 @@
       "badge": ""
     },
     {
+      "key": "CompositeShrinkageActionsComponent",
+      "type": "BridGHe.Grasshopper.Components.Loads.CompositeShrinkageActionsComponent",
+      "guid": "861d0a91-6375-4cab-a106-0f6922dd827a",
+      "name": "Composite Shrinkage Actions",
+      "family": "load",
+      "glyph": "strain",
+      "badge": "data"
+    },
+    {
       "key": "MovingPointComponent",
       "type": "BridGHe.Grasshopper.Components.Loads.MovingPointComponent",
       "guid": "f41f7887-84b9-4f35-8dd1-23469be692d1",

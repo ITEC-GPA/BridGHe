@@ -118,7 +118,7 @@ namespace BridGHe.Common.Checks
 
         public bool GetLinearAnalysisResultByStages(out BridgeStressResult[] results, out double[] tauB,
             double phiInfinite, double phiInstant, ResultBeamForces[] steel, ResultBeamForces[] infinite,
-            ResultBeamForces[] instant, bool concrete, double[] strainInfinite, double[] strainInstant, bool rebars, double? phiShrinkage = null)
+            ResultBeamForces[] instant, bool concrete, double[] strainInfinite, double[] strainInstant, bool rebars, double? phiShrinkage = null, ResultBeamForces[] shrinkageForces = null)
         {
             int count = steel.Length;
             if (infinite.Length != count || instant.Length != count || strainInfinite.Length != count || strainInstant.Length != count)
@@ -126,7 +126,7 @@ namespace BridGHe.Common.Checks
             results = new BridgeStressResult[count]; tauB = new double[count];
             for (int i = 0; i < count; i++)
             {
-                var analysis = Analyze(phiInfinite, phiInstant, steel[i], infinite[i], instant[i], concrete, rebars, strainInfinite[i], strainInstant[i], phiShrinkage);
+                var analysis = Analyze(phiInfinite, phiInstant, steel[i], infinite[i], instant[i], concrete, rebars, strainInfinite[i], strainInstant[i], phiShrinkage, shrinkageForces?[i]);
                 results[i] = new BridgeStressResult(analysis, analysis.Stages.Count - 1);
                 tauB[i] = double.NaN;
             }
@@ -134,12 +134,13 @@ namespace BridGHe.Common.Checks
         }
 
         private HBridgeAnalysisResult Analyze(double phiInfinite, double phiInstant, ResultBeamForces steel,
-            ResultBeamForces infinite, ResultBeamForces instant, bool concrete, bool rebars, double strainInfinite, double strainInstant, double? phiShrinkage = null)
+            ResultBeamForces infinite, ResultBeamForces instant, bool concrete, bool rebars, double strainInfinite, double strainInstant, double? phiShrinkage = null, ResultBeamForces shrinkageForces = null)
         {
             var data = Input(concrete, rebars, true);
             var kind = concrete ? BridgePhaseKind.Composite : BridgePhaseKind.ConcreteExcluded;
             var phases = new List<BridgePhase> { Phase(steel, BridgePhaseKind.SteelOnly, 0, "Only Steel"),
                 Phase(infinite, kind, phiInfinite, "Infinite Time"), Phase(instant, kind, phiInstant, "Instant Time") };
+            if (shrinkageForces != null) phases.Add(Phase(shrinkageForces, kind, phiShrinkage ?? phiInfinite, "Shrinkage FEM"));
             if (!concrete && (strainInfinite != 0 || strainInstant != 0)) throw new NotSupportedException("Ritiro con soletta esclusa: definire prima la sequenza fisica delle fasi.");
             if (strainInfinite != 0) phases.Add(new BridgePhase { Name = "Strain Infinite", Kind = BridgePhaseKind.Shrinkage, Phi = phiShrinkage ?? phiInfinite, ShrinkageMicrostrain = strainInfinite * 1e6 });
             if (strainInstant != 0) phases.Add(new BridgePhase { Name = "Strain Instant", Kind = BridgePhaseKind.Shrinkage, Phi = phiInstant, ShrinkageMicrostrain = strainInstant * 1e6 });

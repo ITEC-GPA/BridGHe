@@ -8,7 +8,7 @@ using GPC.Model.Results;
 namespace BridGHe.Common.Checks
 {
     public sealed record BridgePhaseActions(ResultBeamForces Steel, ResultBeamForces Infinite, ResultBeamForces Instant,
-        double StrainInfinite, double StrainInstant);
+        double StrainInfinite, double StrainInstant, ResultBeamForces Shrinkage = null);
 
     public static class BridgePhaseAssembler
     {
@@ -65,6 +65,7 @@ namespace BridGHe.Common.Checks
                 if (!double.IsFinite(station)) throw new ArgumentOutOfRangeException(nameof(station));
                 ResultBeamForces Zero() => new ResultBeamForces(0, 0, 0, 0, 0, 0, reference);
                 var steel = Zero(); var infinite = Zero(); var instant = Zero();
+                ResultBeamForces shrinkage = null;
                 double strainInfinite = 0, strainInstant = 0;
                 foreach (var entry in combination.Values)
                 {
@@ -87,10 +88,11 @@ namespace BridGHe.Common.Checks
                         case LoadCaseModel.Stage.BridgePhases.OnlySteel: steel += force; break;
                         case LoadCaseModel.Stage.BridgePhases.NInfinite: infinite += force; break;
                         case LoadCaseModel.Stage.BridgePhases.NInstant: instant += force; break;
+                        case LoadCaseModel.Stage.BridgePhases.NShrinkage: shrinkage = (shrinkage ?? Zero()) + force; break;
                         default: throw new InvalidOperationException($"Fase non assegnata per il caso {loadCase.Name}.");
                     }
                 }
-                return new BridgePhaseActions(steel, infinite, instant, strainInfinite, strainInstant);
+                return new BridgePhaseActions(steel, infinite, instant, strainInfinite, strainInstant, shrinkage);
             }
         }
     }

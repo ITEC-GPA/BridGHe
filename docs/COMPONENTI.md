@@ -1,6 +1,6 @@
 # Inventario dei componenti 0.1.0
 
-136 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
+137 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
 
 ## BridGHe / 01-Parameters
 
@@ -90,7 +90,7 @@
 | Nome | Tipo | Ingressi | Uscite |
 |---|---|---|---|
 | Beam | component | Line; Property; Groups; Angle; Offset | Beam |
-| Build BridGHe Model | component | BridGHe Models; Load Combinations; Phase Inf Load Cases; Phase Ninf Load Cases; Phase N0 Load Cases; Phase Ninf strain Load Cases; Phase N0 strain Load Cases | Model |
+| Build BridGHe Model | component | BridGHe Models; Load Combinations; Phase Inf Load Cases; Phase Ninf Load Cases; Phase N0 Load Cases; Phase Ninf strain Load Cases; Phase N0 strain Load Cases; Phase n ritiro FEM Load Cases | Model |
 | Build Model | component | Elements; Name; Units; Load Combinations; Staged constructions | Model |
 | Composite beam | component | Beam; Section Start; Section End; Groups | Beam |
 | Decompose Model | component | Model | Nodes; Beams; Plates |
@@ -143,6 +143,7 @@
 | Beam Point Moment | component | Beam; LoadCase; Coordinate System; M1; M2; M3; a | Beam |
 | Beam PreLoad | component | Beam; LoadCase; Type; Value | Beam |
 | Composite Beam Strain | component | Beam; LoadCase; Strain | Beam |
+| Composite Shrinkage Actions | component | Composite property; Concrete strain | Straus pre-strain; Axis 2 thermal gradient; Free centroid strain; Free curvature |
 | Moving Centrifugal Data | component | K0; K1; Limit K1; Minimum K1; Maximum K1; Length unit; Force unit | Moving object |
 | Moving Distributed Force | component | X1; X2; Y1; Y2; Distributed force; Mobility; Axes; Adjacency; Centrifugal | Moving object |
 | Moving Heat Source | component | X; Y; Size X; Size Y; Heat | Moving object |

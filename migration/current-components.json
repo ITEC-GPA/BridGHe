@@ -4555,6 +4555,68 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Loads.CompositeShrinkageActionsComponent",
+    "guid": "861d0a91-6375-4cab-a106-0f6922dd827a",
+    "kind": "component",
+    "name": "Composite Shrinkage Actions",
+    "nickname": "Shrinkage",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Equivalent free strain and thermal gradient for a generic composite Straus beam using n ritiro. Also pass the same concrete strain once to Composite Slab Strain after analysis.",
+    "inputs": [
+      {
+        "name": "Composite property",
+        "nickname": "P",
+        "description": "H + reinforced slab in N-mm-MPa with n ritiro",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Concrete strain",
+        "nickname": "Eps",
+        "description": "Dimensionless; negative for shrinkage. Same value must be used for the primary section autostress.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Straus pre-strain",
+        "nickname": "PS",
+        "description": "Connect to Beam Pre Load with Type = Strain. Positive means contraction in Straus.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Axis 2 thermal gradient",
+        "nickname": "G2",
+        "description": "Connect to Beam Gradient Load Axis 2 [temperature/mm]. Requires steel thermal expansion coefficient.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Free centroid strain",
+        "nickname": "Eps0",
+        "description": "Free axial strain at the homogenized centroid [dimensionless]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Free curvature",
+        "nickname": "K",
+        "description": "Free curvature along section local axis 2 [1/mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Loads.MovingPointComponent",
     "guid": "f41f7887-84b9-4f35-8dd1-23469be692d1",
     "kind": "component",
@@ -8826,6 +8888,14 @@
         "name": "Phase N0 strain Load Cases",
         "nickname": "N0SLC",
         "description": "The load cases name to assign to the Phase N0 strain phase",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Phase n ritiro FEM Load Cases",
+        "nickname": "NSHLC",
+        "description": "FEM forces calculated with the n ritiro section. Distinct from slab eigenstrain/autostress cases.",
         "access": "list",
         "optional": true,
         "type": "Text"

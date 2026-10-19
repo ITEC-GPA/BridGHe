@@ -48,6 +48,9 @@ internal static class BridgeMergeTests
         }
         Require(merged.LoadCombinations.Single().Values.Count==4,"Numeric combination name was mistaken for a coefficient.");
         Require(models.Select((m,i)=>ModelArchive.Write(m).SequenceEqual(before[i])).All(v=>v),"Merge mutated source models.");
+        Cases(3);Cases(7,"2-G");Solve();Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count==0,"Shrinkage force phase rejected.");
+        var withShrinkage=(ModelModel)c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();Require(withShrinkage.LoadCases.Single(l=>l.Name=="2-G").Stages.Single().BridgePhase==LoadCaseModel.Stage.BridgePhases.NShrinkage,"Shrinkage FEM silently merged into N infinite.");
+        Cases(7);Cases(3,"2-G");
         Cases(4,"1-G");Solve();Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(e=>e.Contains("more than one phase")),"Ambiguous phase assignment accepted.");
         Cases(4,"9-MISSING");Solve();Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(e=>e.Contains("Unknown phase")),"Unknown selected case accepted.");
         Cases(4);Cases(3);Solve();Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(e=>e.Contains("exactly one phase")),"Active combination with unassigned phase accepted.");
