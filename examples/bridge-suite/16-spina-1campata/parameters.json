@@ -1,0 +1,53 @@
+{
+  "Definition": {
+    "Id": "16-spina-1campata",
+    "Title": "Spina centrale: campata 30 m",
+    "Spans": [
+      30000
+    ],
+    "Radius": 0,
+    "PanelsPerSpan": 24,
+    "Length": 30000,
+    "Panels": 24
+  },
+  "Central": {
+    "Span": 30000,
+    "Width": 12000,
+    "EffectiveSlabWidth": 4000,
+    "GirderSlabWidth": 4000,
+    "Panels": 12,
+    "SlabThickness": 250,
+    "SteelHeight": 2000,
+    "FlangeWidth": 800,
+    "FlangeThickness": 50,
+    "WebThickness": 20,
+    "PermanentPressure": 0.0025,
+    "TrafficPressure": 0.0025,
+    "VehicleWeight": 300000,
+    "AxleSpacing": 3000,
+    "MovingPositions": 21,
+    "PhiLong": 2,
+    "ShrinkageLong": -0.0002,
+    "ShrinkageInstant": 0
+  },
+  "Lateral": {
+    "Span": 30000,
+    "Width": 12000,
+    "EffectiveSlabWidth": 4000,
+    "GirderSlabWidth": 4000,
+    "Panels": 12,
+    "SlabThickness": 250,
+    "SteelHeight": 1600,
+    "FlangeWidth": 600,
+    "FlangeThickness": 40,
+    "WebThickness": 16,
+    "PermanentPressure": 0.0025,
+    "TrafficPressure": 0.0025,
+    "VehicleWeight": 300000,
+    "AxleSpacing": 3000,
+    "MovingPositions": 21,
+    "PhiLong": 2,
+    "ShrinkageLong": -0.0002,
+    "ShrinkageInstant": 0
+  }
+}

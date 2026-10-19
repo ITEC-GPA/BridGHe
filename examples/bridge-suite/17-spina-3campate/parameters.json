@@ -1,0 +1,55 @@
+{
+  "Definition": {
+    "Id": "17-spina-3campate",
+    "Title": "Spina centrale: 20 \u002B 30 \u002B 20 m",
+    "Spans": [
+      20000,
+      30000,
+      20000
+    ],
+    "Radius": 0,
+    "PanelsPerSpan": 48,
+    "Length": 70000,
+    "Panels": 144
+  },
+  "Central": {
+    "Span": 70000,
+    "Width": 12000,
+    "EffectiveSlabWidth": 4000,
+    "GirderSlabWidth": 4000,
+    "Panels": 12,
+    "SlabThickness": 250,
+    "SteelHeight": 2000,
+    "FlangeWidth": 800,
+    "FlangeThickness": 50,
+    "WebThickness": 20,
+    "PermanentPressure": 0.0025,
+    "TrafficPressure": 0.0025,
+    "VehicleWeight": 300000,
+    "AxleSpacing": 3000,
+    "MovingPositions": 21,
+    "PhiLong": 2,
+    "ShrinkageLong": -0.0002,
+    "ShrinkageInstant": 0
+  },
+  "Lateral": {
+    "Span": 70000,
+    "Width": 12000,
+    "EffectiveSlabWidth": 4000,
+    "GirderSlabWidth": 4000,
+    "Panels": 12,
+    "SlabThickness": 250,
+    "SteelHeight": 1600,
+    "FlangeWidth": 600,
+    "FlangeThickness": 40,
+    "WebThickness": 16,
+    "PermanentPressure": 0.0025,
+    "TrafficPressure": 0.0025,
+    "VehicleWeight": 300000,
+    "AxleSpacing": 3000,
+    "MovingPositions": 21,
+    "PhiLong": 2,
+    "ShrinkageLong": -0.0002,
+    "ShrinkageInstant": 0
+  }
+}

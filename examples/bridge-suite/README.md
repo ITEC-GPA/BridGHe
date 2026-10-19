@@ -1,5 +1,29 @@
 # Quattro ponti misti: tre fasi + ritiro
 
+## Esempi aggiuntivi 16-18: spina centrale e due travi laterali
+
+Sono disponibili tre nuovi modelli a **tre travi**, con quattro analisi incrementali ciascuno e **212 controlli superati** sul complesso dei tre esempi, inclusa la riapertura e soluzione dei file Grasshopper:
+
+| Esempio | Geometria | Elementi per campata / trave |
+|---|---|---|
+| [16: spina, campata unica](16-spina-1campata/16-spina-1campata.ghx) | 30 m rettilinei | 24 |
+| [17: spina, tre campate](17-spina-3campate/17-spina-3campate.ghx) | 20 + 30 + 20 m rettilinei | 48 |
+| [18: spina curva](18-spina-curva-2campate/18-spina-curva-2campate.ghx) | 25 + 25 m, R=120 m | 96 |
+
+Impalcato largo 12 m, assi delle travi a -4, 0 e +4 m. La spina centrale è una H2000 con flange 800x50 mm e anima 20 mm; le laterali sono H1600 con flange 600x40 mm e anima 16 mm. Soletta di 250 mm, larghezza efficace assunta pari alla tributaria di 4000 mm per ogni trave, senza verifica dello shear lag. Materiali, vincoli, diaframmi e pressioni seguono le ipotesi sotto riportate, con ritiro **-200 microstrain**. Il peso proprio distingue le tre sezioni. Il ritiro equivalente è calcolato separatamente per la spina e per le laterali.
+
+La mesh è confrontata con una discretizzazione doppia in tutte e quattro le analisi, con soglia del 2% sul massimo scarto di Uz riferito al picco della soluzione raffinata. Nei rettilinei sono controllate anche la simmetria delle deformate laterali e le tensioni della spina con formule indipendenti. Il ramo di verifica GH seleziona **G2**, la spina centrale; le azioni delle altre due travi restano nei risultati FEM. Per la spina H curva vengono conservate torsione e flessione minore e segnalato il superamento del campo dell'adattatore. Questo non costituisce una verifica completa delle tre travi o dell'impalcato.
+
+Per rigenerare, modificare i parametri geometrici e delle sezioni nei rispettivi `parameters.json`, poi eseguire dalla root:
+
+```powershell
+dotnet run --project tests/BridGHe.Smoke -c Release -- --bridge-spine all --gh
+```
+
+I CSV, le verifiche con tolleranze, i dettagli di pioli/irrigiditori e i file GHX si trovano nelle singole cartelle. I modelli Straus e i risultati sono generati in `artifacts/bridge-suite`.
+
+## Esempi 12-15: quattro travi longitudinali
+
 Quattro definizioni Grasshopper modificabili, costruite con componenti BridGHe e risolte con Straus7 R3. I quattro rami rappresentano **incrementi elastici con rigidezze differenti**: non sono quattro copie di risultati totali di un'analisi staged. I benchmark delle fasi native restano negli esempi 06–10 e 11.
 
 | Esempio | Campate, lungo asse [m] | Raggio asse [m] | Elementi per campata / trave |

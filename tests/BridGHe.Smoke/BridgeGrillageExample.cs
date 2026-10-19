@@ -25,6 +25,8 @@ internal static class BridgeGrillageExample
     {
         public double Span { get; init; } = 30000;
         public double Width { get; init; } = 10000;
+        public double? EffectiveSlabWidth { get; init; }
+        public double GirderSlabWidth => EffectiveSlabWidth ?? Width / 4;
         public int Panels { get; init; } = 12;
         public double SlabThickness { get; init; } = 250;
         public double SteelHeight { get; init; } = 1600;
@@ -41,7 +43,7 @@ internal static class BridgeGrillageExample
         public double ShrinkageInstant { get; init; } = -50e-6;
         public void Validate(bool refined = false)
         {
-            double[] positive = {Span,Width,SlabThickness,SteelHeight,FlangeWidth,FlangeThickness,WebThickness,VehicleWeight,AxleSpacing};
+            double[] positive = {Span,Width,GirderSlabWidth,SlabThickness,SteelHeight,FlangeWidth,FlangeThickness,WebThickness,VehicleWeight,AxleSpacing};
             if (positive.Any(x => !double.IsFinite(x) || x <= 0) || SteelHeight <= 2*FlangeThickness || FlangeWidth <= WebThickness || AxleSpacing >= Span)
                 throw new ArgumentException("Invalid bridge dimensions or vehicle weight.");
             if (Panels < 12 || Panels > (refined ? 96 : 24) || Panels % 12 != 0 || MovingPositions < 3 || MovingPositions > 201)
@@ -65,7 +67,7 @@ internal static class BridgeGrillageExample
     internal static CompositeBeamPropertyModel Composite(Parameters p) => new("Composite")
     {
         Name="H + soletta tributaria", SteelSection=H(p), SteelMaterial=Steel(),
-        ConcreteSection=new(p.SlabThickness,p.Width/4,0,40),
+        ConcreteSection=new(p.SlabThickness,p.GirderSlabWidth,0,40),
         ConcreteMaterial=new("C30"){Name="C30",Modulus=Ec,PoissonRatio=NuConcrete,SpecificCompressiveStrength=30},
         RebarMaterial=new("B450"){Name="B450",Modulus=Es,MinimumYieldStress=450,MinimumTensileStress=540},
         NInstant=Es/Ec,NInfinite=Es/Ec*(1+p.PhiLong),ConsiderConcrete=true,ConsiderRebar=false
@@ -85,7 +87,7 @@ internal static class BridgeGrillageExample
             double n=phase==1?Es/Ec*(1+p.PhiLong):Es/Ec;
             a=prop.areaH/n;ix=prop.JxxH/n;iy=prop.JyyH/n;
             double gc=Ec/(phase==1?1+p.PhiLong:1)/(2*(1+NuConcrete)),gs=Es/(2*(1+NuSteel));
-            j+=gc/gs*(p.Width/4)*Math.Pow(p.SlabThickness,3)/6;
+            j+=gc/gs*p.GirderSlabWidth*Math.Pow(p.SlabThickness,3)/6;
         }
         return Property("Longitudinale fase "+phase,a,ix,iy,j*torsionFactor);
     }

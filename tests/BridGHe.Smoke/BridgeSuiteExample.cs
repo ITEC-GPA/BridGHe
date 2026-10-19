@@ -25,7 +25,7 @@ internal static class BridgeSuiteExample
         {
             if(Spans==null||Spans.Length<1||Spans.Length>5||Spans.Any(l=>!double.IsFinite(l)||l<=0)
                 || !double.IsFinite(Radius)||Radius<0||Radius>0&&(Radius<=5000||Length/Radius>=Math.PI)
-                ||PanelsPerSpan<12||PanelsPerSpan>(refined?96:48)||PanelsPerSpan%12!=0)
+                ||PanelsPerSpan<12||PanelsPerSpan>(refined?192:96)||PanelsPerSpan%12!=0)
                 throw new ArgumentException("Invalid spans, radius or mesh.");
         }
     }
@@ -56,12 +56,12 @@ internal static class BridgeSuiteExample
     internal static Point3d Position(Definition d,double s,double y)=>d.Radius==0?new(s,y,0):new((d.Radius-y)*Math.Sin(s/d.Radius),d.Radius-(d.Radius-y)*Math.Cos(s/d.Radius),0);
     internal static ShrinkageData Shrinkage(Parameters p)
     {
-        double a=GpcH(p).Area,ac=p.Width/4*p.SlabThickness,ys=-p.SteelHeight/2,yc=p.SlabThickness/2,ec=Ec/(1+p.PhiLong);
+        double a=GpcH(p).Area,ac=p.GirderSlabWidth*p.SlabThickness,ys=-p.SteelHeight/2,yc=p.SlabThickness/2,ec=Ec/(1+p.PhiLong);
         double ea=Es*a+ec*ac,yg=(Es*a*ys+ec*ac*yc)/ea,ei=Es*SuiteProperty(p,1).Section.I11;
         double n=ec*ac*p.ShrinkageLong,m=n*(yc-yg);
         return new(yg,ea,ei,n/ea,m/ei,n,m);
     }
-    private static BeamPropertyModel CrossProperty(Parameters p,double strip,bool diaphragm,int phase)
+    internal static BeamPropertyModel CrossProperty(Parameters p,double strip,bool diaphragm,int phase)
     {
         var h=new GPC.Model.Sections.SectionH(800,12,300,20,300,20,"Diaframma");
         double a=diaphragm?h.Area:0,ix=diaphragm?h.Jxx:0,iy=diaphragm?h.Jyy:0,j=diaphragm?h.Jt:0;
@@ -126,7 +126,7 @@ internal static class BridgeSuiteExample
         File.WriteAllText(Path.Combine(folder,"warnings.json"),JsonSerializer.Serialize(warnings,Json));
         return result;
     }
-    private static void Equilibrium(ModelModel input,ModelModel result,string name,NativeExamples.Recorder checks)
+    internal static void Equilibrium(ModelModel input,ModelModel result,string name,NativeExamples.Recorder checks)
     {
         var force=Vector3d.Zero;var moment=Vector3d.Zero;double scaleF=0,scaleM=0;
         foreach(var node in result.Nodes)
@@ -217,11 +217,11 @@ internal static class BridgeSuiteExample
     }
     internal static GPC.Geometry.CoordinateSystem Reference=>new(GPC.Geometry.Point3d.Origin,new GPC.Geometry.Vector3d(-1,0,0),new GPC.Geometry.Vector3d(0,-1,0));
     internal static double[] StressValues(BridgeStressResult r)=>new[]{r.Point1_ConcreteSigma,r.Point4_ConcreteSigma,r.Point5_SteelSigma,r.Point8_SteelSigma};
-    private static double[] ExpectedStress(Parameters p,BeamForceResultModel[] f)
+    internal static double[] ExpectedStress(Parameters p,BeamForceResultModel[] f)
     {
-        double a=GpcH(p).Area,ys=-p.SteelHeight/2,ac=p.Width/4*p.SlabThickness,yc=p.SlabThickness/2;
+        double a=GpcH(p).Area,ys=-p.SteelHeight/2,ac=p.GirderSlabWidth*p.SlabThickness,yc=p.SlabThickness/2;
         double fullI=(p.FlangeWidth*Math.Pow(p.SteelHeight,3)-(p.FlangeWidth-p.WebThickness)*Math.Pow(p.SteelHeight-2*p.FlangeThickness,3))/12;
-        double mixedI=fullI-2*p.FlangeWidth*Math.Pow(p.FlangeThickness,3)/12,ic=p.Width/4*Math.Pow(p.SlabThickness,3)/12;
+        double mixedI=fullI-2*p.FlangeWidth*Math.Pow(p.FlangeThickness,3)/12,ic=p.GirderSlabWidth*Math.Pow(p.SlabThickness,3)/12;
         var sh=Shrinkage(p);
         return new[]{(p.SlabThickness,true),(0.0,true),(0.0,false),(-p.SteelHeight,false)}.Select(point=>{
             double z=point.Item1;bool concrete=point.Item2;double stress=concrete?0:f[0].AxialForce/a-f[0].My*(z-ys)/fullI;
@@ -266,7 +266,7 @@ internal static class BridgeSuiteExample
         MinMy=m.Beams.Take(4*n).SelectMany(b=>b.Results.OfType<BeamForceResultModel>()).Min(r=>r.My),
         MaxMy=m.Beams.Take(4*n).SelectMany(b=>b.Results.OfType<BeamForceResultModel>()).Max(r=>r.My),
         MaxAbsT=m.Beams.Take(4*n).SelectMany(b=>b.Results.OfType<BeamForceResultModel>()).Max(r=>Math.Abs(r.Torque))};
-    private static void WriteResults(string folder,Definition d,ModelModel[] models)
+    internal static void WriteResults(string folder,Definition d,ModelModel[] models)
     {
         using var nodes=new StreamWriter(Path.Combine(folder,"nodes.csv"));nodes.WriteLine("phase,case,node,s_mm,girder,x_mm,y_mm,ux_mm,uy_mm,uz_mm,rx_N,ry_N,rz_N");
         using var forces=new StreamWriter(Path.Combine(folder,"forces.csv"));forces.WriteLine("phase,case,beam,station_mm,N_N,V1_N,V2_N,BM1_Nmm,BM2_Nmm,T_Nmm");
