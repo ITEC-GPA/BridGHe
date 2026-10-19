@@ -88,6 +88,25 @@ try {
             (Get-FileHash -LiteralPath $publishedPlugin).Hash -eq $publishedHash) 'locked legacy DLL fails before publication or partial deletion'
     }
     finally { $lockedFile.Dispose() }
+
+    $ready = Join-Path $repository 'transient-lock-ready.txt'
+    $reader = Start-Job -ScriptBlock {
+        param($Path, $Ready)
+        $stream = [IO.File]::Open($Path, 'Open', 'Read', 'Read')
+        try { Set-Content -LiteralPath $Ready -Value 'ready'; Start-Sleep -Milliseconds 600 }
+        finally { $stream.Dispose() }
+    } -ArgumentList $safeMarker, $ready
+    try {
+        $deadline = [DateTime]::UtcNow.AddSeconds(15)
+        while (-not (Test-Path -LiteralPath $ready)) {
+            if ([DateTime]::UtcNow -gt $deadline) { throw 'Timeout del lettore temporaneo di test.' }
+            Start-Sleep -Milliseconds 20
+        }
+        & $cleaner -ReleaseSource $source
+        Require (-not (Test-Path -LiteralPath $safeMarker)) 'transient sharing lock is retried and cleanup completes'
+    }
+    finally { Stop-Job -Job $reader; Remove-Job -Job $reader }
+    Write-Marker $safeMarker
     $rejected = $false
     try { & $cleaner -ReleaseSource (Join-Path $repository 'obj\missing') } catch { $rejected = $_.Exception.Message -like '*Output Release non valido*' }
     Require ($rejected -and (Test-Path -LiteralPath $safeMarker) -and

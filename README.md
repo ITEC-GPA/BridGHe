@@ -38,7 +38,7 @@ Output da installare: **`bin/Release/BridGHe.Grasshopper.gha`**, insieme alle DL
 
 Prima di compilare, chiudere Rhino se sta usando gli output da aggiornare o eliminare. Se una vecchia DLL è in uso, il post-build segnala l'errore prima di eliminare le cartelle precedenti; ripetere la build dopo aver chiuso il processo.
 
-Test del sistema di build (20 controlli su copia/pulizia e 9 su build MSBuild reali in un progetto isolato):
+Test del sistema di build (21 controlli su copia/pulizia e 9 su build MSBuild reali in un progetto isolato):
 
 ```powershell
 .\tools\test-build-cleanup.ps1

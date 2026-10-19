@@ -56,12 +56,24 @@ function Assert-NoLinkedContents([string]$Directory) {
 function Assert-OutputUnlocked([string]$Path) {
     # Detect DLLs loaded by Rhino before partially deleting any old output tree.
     foreach ($file in Get-ChildItem -LiteralPath $Path -File -Recurse -Force) {
-        $stream = $null
-        try { $stream = [IO.File]::Open($file.FullName, 'Open', 'ReadWrite', 'None') }
-        catch {
-            throw "Post-build: file in uso o non accessibile: $($file.FullName). Salvare il lavoro e chiudere Rhino e gli altri processi che usano queste DLL, quindi ripetere la build. Nessuna cartella precedente e' stata eliminata."
+        for ($attempt = 0; $attempt -lt 6; $attempt++) {
+            $stream = $null
+            try {
+                $stream = [IO.File]::Open($file.FullName, 'Open', 'ReadWrite', 'None')
+                break
+            }
+            catch {
+                $cause = $_.Exception.GetBaseException()
+                # Sharing/lock violations can be brief (e.g. readers of freshly built PDBs).
+                # Retry for at most one second; permanent locks still fail before deletion.
+                if (($cause -is [IO.IOException]) -and (($cause.HResult -band 0xffff) -in @(32, 33)) -and $attempt -lt 5) {
+                    Start-Sleep -Milliseconds 200
+                    continue
+                }
+                throw "Post-build: file in uso o non accessibile: $($file.FullName). Salvare il lavoro e chiudere Rhino e gli altri processi che usano queste DLL, quindi ripetere la build. Nessuna cartella precedente e' stata eliminata. Dettaglio: $($cause.Message)"
+            }
+            finally { if ($stream) { $stream.Dispose() } }
         }
-        finally { if ($stream) { $stream.Dispose() } }
     }
 }
 
