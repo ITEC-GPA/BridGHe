@@ -53,7 +53,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
 
             if (model.Value == null)
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Null model");
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Awaiting a model from the upstream component");
                 Message = "Error";
                 return;
             }
