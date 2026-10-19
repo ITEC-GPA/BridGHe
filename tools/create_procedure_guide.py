@@ -121,7 +121,7 @@ def make_document():
     props.subject = "Workflow acciaio misto con fasi numerate e azioni incrementali"
     props.author = "BridGHe"
     props.keywords = "BridGHe, Grasshopper, Rhino 8, Straus7 R3, fasi, ritiro"
-    props.comments = "Documentazione della revisione software df39615 e dell’esempio 19 REV003."
+    props.comments = "Workflow REV003, esempi numerati e strumenti operativi 23–28."
 
     def p(text, style=None):
         par = doc.add_paragraph(style=style)
@@ -216,8 +216,9 @@ def make_document():
         ("10–12", "Verificatore, dettagli e visualizzazione", "11–13"),
         ("13–14", "Carichi mobili ed esecuzione dell’esempio 19", "14–15"),
         ("15–16", "Diagnostica, prove e riferimenti riproducibili", "16–17"),
+        ("17–21", "Nuovi strumenti operativi ed esempi 23–28", "18–22"),
     ], [1.0, 5.15, .79], centers=(0, 2))
-    p("**Versione documentata:** codice df39615, 19 ottobre 2026. Le interfacce precedenti di Build BridGHe Model non sono compatibili con il workflow corrente. La guida distingue i controlli già eseguiti dalle nuove analisi Straus ancora da eseguire.")
+    p("**Edizione aggiornata:** 19 ottobre 2026, workflow REV003 e strumenti operativi 23–28. Le interfacce precedenti di Build BridGHe Model non sono compatibili con il workflow corrente. La guida distingue i controlli già eseguiti dalle nuove analisi Straus ancora da eseguire.")
     p("Il percorso produce controlli di sezione nel campo implementato. L’esempio usa azioni e coefficienti didattici; le verifiche di ponte ancora necessarie sono indicate nei capitoli 10, 11 e 14.")
 
     # Page 2
@@ -240,7 +241,7 @@ def make_document():
     ], [2.0, 4.94])
     p("Impostare **N–mm** nel modello. Non è prevista una conversione implicita delle coordinate da metri a millimetri. Se la geometria proviene da un documento Rhino in metri, convertirla prima di creare gli elementi.")
     h("File e organizzazione")
-    p("Conservare nella cartella di lavoro definizione GHX, tabella delle combinazioni, modelli .st7 e risultati. Usare nomi diversi per ogni fase. La cartella bin/Release contiene il plugin installabile; obj contiene gli intermedi di compilazione e artifacts i risultati dei test.")
+    p("Ogni esempio è in example, in una cartella numerata con README e, quando prevista, definizione GHX. La sottocartella calcoli contiene modelli .st7 e risultati; archivio conserva le revisioni precedenti. Usare file diversi per ogni fase. L’indice completo è example/README.md; bin/Release contiene il plugin installabile.")
     p("Gli script di generazione possono sovrascrivere gli esempi generati: eseguirli dopo aver salvato le proprie modifiche con un nome distinto. REV001 e REV002 conservati dall’utente sono riferimenti storici, non la definizione corrente.")
 
     # Page 3
@@ -506,7 +507,7 @@ def make_document():
 
     # Page 15
     page(14, "Eseguire il ponte di esempio REV003")
-    p("Aprire **examples/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx**. Il file senza suffisso contiene la stessa definizione corrente. La nuova geometria non usa i risultati della precedente trave singola.")
+    p("Aprire **example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx**. Le revisioni precedenti e i relativi fogli Excel sono in archivio; i nuovi modelli Straus sono in calcoli. La nuova geometria non usa i risultati della precedente trave singola.")
     table(["Elemento", "Dati principali in mm"], [
         ("Spina centrale G2", "H 2000; flangia inferiore 800 × 40; superiore 600 × 30; anima 15"),
         ("Laterali G1 e G3", "H 1600; flangia inferiore 600 × 40; superiore 500 × 30; anima 16"),
@@ -547,10 +548,10 @@ def make_document():
 
     # Page 17
     page(16, "Prove disponibili e riferimenti")
-    p("La guida descrive il comportamento del codice e i risultati già registrati. La generazione del documento non esegue nuove analisi Straus. Lo stato seguente è riferito alla revisione df39615.")
+    p("La Release con gli strumenti operativi 23–28 è stata compilata e sottoposta alle regressioni. Per i ponti 11–18 si riportano i replay già registrati; nessuna nuova analisi Straus è stata eseguita per questo aggiornamento.")
     table(["Ambito", "Verifica eseguita", "Stato"], [
         ("Release", "Compilazione con 0 warning e 0 errori", "Eseguita"),
-        ("Smoke e regressioni", "190 controlli e 38 gruppi di regressione", "Superati"),
+        ("Smoke e regressioni", "202 controlli; 38 gruppi principali e 2 grafici", "Superati"),
         ("Conservazione numerica", "238 valori di baseline confrontati senza differenze", "Verificata"),
         ("Esempi 11–18", "344 confronti usando risultati nativi archiviati", "Replay superato; nessuna nuova analisi"),
         ("Esempio 19 REV003", "15 controlli offline; generazione e riapertura del grafo", "Nuovo calcolo Straus da eseguire"),
@@ -560,8 +561,100 @@ def make_document():
     code("# Release e suite senza nuove analisi Straus\npowershell -ExecutionPolicy Bypass -File tools/build.ps1 -Smoke\n\n# Preparare il progetto di test\ndotnet build tests/BridGHe.Smoke -c Release\n\n# Esempio 19 offline\ndotnet run --project tests/BridGHe.Smoke -c Release --no-build -- `\n  --bridge-workflow\n\n# Esempio 19 con licenza e controlli nativi\ndotnet run --project tests/BridGHe.Smoke -c Release --no-build -- `\n  --bridge-workflow --native")
     p("I comandi sono in sintassi PowerShell. Il carattere ` a fine riga continua il comando. Gli script rigenerano i file degli esempi: conservare prima una copia delle modifiche manuali. Per i carichi mobili usare i comandi del capitolo 13.")
     h("Riferimenti locali verificabili")
-    p("**Workflow e interfacce:** docs/FASI-E-AZIONI.md; docs/COMPONENTI.md; migration/current-components.json.\n**Grafici:** docs/GRAFICI.md.\n**Esempio corrente:** examples/19-flusso-acciaio-misto/README.md e validation-REV003.json nella stessa cartella.\n**Stato complessivo:** examples/validation/numbered-phases.json.\n**Riproduzione carichi mobili:** tools/test-moving-loads.ps1.")
+    p("**Workflow e interfacce:** docs/FASI-E-AZIONI.md; docs/COMPONENTI.md; migration/current-components.json.\n**Grafici:** docs/GRAFICI.md.\n**Esempio corrente:** example/19-flusso-acciaio-misto/README.md e validation-REV003.json nella stessa cartella.\n**Stato complessivo:** example/00-documentazione/validazioni/numbered-phases.json.\n**Riproduzione carichi mobili:** tools/test-moving-loads.ps1.")
     p("Per ricostruire i dettagli implementativi: BridgeWorkflowComponents.cs e BuildBridgeModel.cs in src/BridGHe.Grasshopper/Components/BridgeChecks. Questa guida non seleziona prescrizioni normative o coefficienti di progetto: documenta il trasferimento dei dati e i limiti del calcolo disponibile.")
+    page(17, "Controllare il modello e preparare una fase")
+    p("L’esempio **23 audit modello fase** introduce Bridge Model Audit e Bridge Phase Model. I due componenti si collocano tra Build Model e l’analisi Straus. Il primo rende leggibili alcuni errori di input; il secondo crea una copia indipendente per il nuovo incremento.")
+    h("Bridge Model Audit")
+    steps([
+        "Collegare il modello FEM a Model. Impostare Tolerance nelle unità di lunghezza del modello: in N–mm il valore è in mm. La tolleranza serve a riconoscere vertici coincidenti, non a correggere automaticamente la geometria.",
+        "Leggere Severity, Code, Element e Description come colonne della stessa tabella. Gli errori comprendono identificativi vuoti o duplicati, beam con proprietà/geometria non valide e lunghezze inferiori alla tolleranza. I warning comprendono parti geometricamente disconnesse e nodi isolati.",
+        "Usare No input errors come esito dei soli controlli elencati. Un modello con warning può restituire true. La stabilità, i rilasci, il rango della rigidezza, la qualità della mesh e la completezza delle azioni richiedono controlli distinti.",
+    ])
+    p("La connessione geometrica usa estremi delle beam e vertici delle plate. Due aste che si incrociano internamente senza un nodo comune non risultano connesse. La presenza di un attributo di vincolo non dimostra che tutti i moti rigidi siano impediti.")
+    h("Bridge Phase Model")
+    table(["Ingresso", "Uso operativo"], [
+        ("Model e Name", "Modello comune in acciaio e nome della nuova analisi"),
+        ("Beam IDs", "Selezione esplicita delle travi da rendere miste; non è ammessa una lista vuota"),
+        ("Property", "Beam Property della risposta n0, n infinito o n ritiro; unità coerenti con Model"),
+        ("Clear loads", "True: azzera carichi, casi e percorsi mobili. False: conserva i carichi del modello sorgente"),
+    ], [1.4, 5.54])
+    p("La copia mantiene geometria, ID, vincoli e altri attributi. I risultati precedenti, le combinazioni e le ricette di fase vengono sempre cancellati perché riferiti all’analisi originaria. Solo le proprietà delle beam selezionate sono sostituite. La preview usa il nuovo modello e la relativa sezione fisica quando disponibile.")
+    p("**Sequenza:** acciaio → Audit → Phase Model → nuovi carichi incrementali → Straus → Bridge Action. Phase Model non trasferisce uno stato di deformazione da un’analisi all’altra e non esegue una costruzione per fasi globale. Nell’esempio 23 le due travi sono volutamente disconnesse: DISCONNECTED è atteso.")
+
+    page(18, "Leggere inviluppi e valori concomitanti")
+    p("L’esempio **24 inviluppi concomitanti** mostra Bridge Result Cases e i tre inviluppi: Bridge Beam Envelope, Bridge Bearing Envelope e Bridge Displacement Envelope. Operano sui risultati già memorizzati nel modello; non lanciano Straus e non generano nuove combinazioni.")
+    h("Selezionare casi e grandezza")
+    steps([
+        "Collegare il modello analizzato a Bridge Result Cases. Cases elenca i nomi effettivamente presenti nei risultati; le altre colonne riportano caso, passo, tipo e numero dei record. Un caso definito ma non analizzato non compare.",
+        "Collegare Model all’inviluppo richiesto. Element IDs e Cases sono opzionali: vuoti selezionano tutti gli elementi del tipo richiesto e tutti i relativi casi disponibili. Selezionare gli appoggi esplicitamente per le reazioni. Ogni elemento selezionato deve avere risultati.",
+        "Impostare Component secondo la tabella e Mode: 0 minimo, 1 massimo, 2 massimo valore assoluto. Mode=2 mantiene il segno del valore governante.",
+        "Associare ciascuna riga di Value a Element ID, Station, Case, Step e Step type. Il ramo Concomitant con lo stesso indice contiene le sei componenti del medesimo campione governante.",
+    ])
+    table(["Componente", "Indici 0 1 2 3 4 5", "Riferimento"], [
+        ("Beam Envelope", "N  V2  V3  T  M2  M3", "Assi locali Straus"),
+        ("Bearing Envelope", "Fx  Fy  Fz  Mx  My  Mz", "Assi globali"),
+        ("Displacement Envelope", "Ux  Uy  Uz  Rx  Ry  Rz", "Assi globali; rotazioni rad"),
+    ], [1.85, 2.7, 2.39])
+    p("Le unità restano quelle del modello. In N–mm, forze e reazioni sono in N, momenti in Nmm e spostamenti in mm. Station è una distanza dal primo estremo della beam; eventuali stazioni normalizzate sono convertite usando la lunghezza dell’elemento. Per i nodi Station vale zero.")
+    h("Concomitanza e copertura")
+    p("Se governa M3 del caso Q, tutti gli altri valori di Concomitant provengono da Q allo stesso passo e alla stessa stazione. Non sono assemblati i massimi indipendenti di N, V e M. Step conserva l’identificatore disponibile: non è automaticamente una coordinata del veicolo.")
+    p("Coverage segnala i casi mancanti a una stazione. Non sono eseguite interpolazioni tra griglie di stazioni o passi diversi. Campioni duplicati, valori non finiti e selezioni inesistenti causano errore. L’esempio usa dati numerici controllati: Fz governante = −120 N e Uz governante = −10 mm; non rappresenta una nuova analisi strutturale.")
+
+    page(19, "Costruire combinazioni e incrementi di ritiro")
+    h("Bridge Phase Table")
+    p("Collegare la lista delle Bridge Phase a Phases. L’uscita Phases restituisce gli oggetti ordinati per Number. Le colonne mostrano numero, nome, giorno, stato della sezione, Action ID, comportamento, modello sorgente, caso e strain. Una fase di sola attivazione rimane visibile con Action ID vuoto.")
+    p("Il componente controlla unicità di numeri e identità, Action ID non duplicati e giorni non decrescenti quando assegnati. La corrispondenza effettiva di casi, geometrie e risultati resta verificata da Build BridGHe Model. Il giorno è un dato di sequenza, non un’integrazione automatica della viscosità.")
+    h("Bridge Action Combinations")
+    steps([
+        "Collegare le fasi ordinate a Phases. Scrivere in Action IDs gli identificativi delle colonne che si vogliono assegnare, nell’ordine scelto.",
+        "Fornire una lista Names e un albero Coefficients: un ramo per combinazione, un numero per Action ID. L’ordine dei nomi corrisponde all’ordine dei percorsi dei rami in Grasshopper.",
+        "Collegare Table direttamente all’ingresso Combinations del Build. La prima riga contiene gli Action ID; le successive nomi e fattori. Non appiattire questo albero.",
+    ])
+    p("Le azioni omesse ricevono zero e sono elencate in Omitted actions. I fattori devono essere finiti; nomi duplicati, ID sconosciuti e rami di lunghezza errata vengono rifiutati. La scelta normativa dei coefficienti e delle simultaneità rimane esplicita a carico dell’utente.")
+    p("Nell’**esempio 25**, le colonne CS,G1 e i valori 0.7,1 diventano una tabella ordinata G1,CS con 1,0.7. Il fattore CS scala l’intera azione di ritiro. L’esempio attiva Primary Only e quindi non comprende le forze secondarie da vincolo.")
+    h("Bridge Shrinkage Increments")
+    p("Nell’**esempio 27**, Days = 7,28,100 e Cumulative strain = −0.0001,−0.0002,−0.00025 producono Increment = −0.0001,−0.0001,−0.00005, con Initial strain = 0. Ogni valore va alla Bridge Shrinkage Action della stessa posizione temporale.")
+    p("La regola è Δεᵢ = εᵢ − εᵢ₋₁; per il primo valore si usa Initial strain. La somma deve coincidere con l’ultimo valore cumulativo meno quello iniziale. I giorni devono crescere strettamente; il ritiro cumulativo deve essere finito, negativo o nullo e non crescente. Un recupero di deformazione richiede un diverso modello di azione.")
+    p("Gli strain sono adimensionali: −200 µε corrispondono a −0.0002. Il componente converte una storia fornita dall’utente; non calcola una legge normativa di ritiro o viscosità e non modifica i risultati FEM.")
+
+    page(20, "Riepilogare le verifiche e confrontare analisi")
+    h("Bridge Check Summary")
+    p("L’**esempio 26** collega Bridge Section Check al nuovo riepilogo. Results accetta i BridgeStressResult prodotti da Section Check, Super Element Check e Detail Check. Labels richiede una voce per risultato, per esempio G2/x=15000/SLS, in modo da mantenere tracciabili sezione e combinazione.")
+    table(["Uscita", "Interpretazione"], [
+        ("Label Phase Check", "Identificano ogni controllo locale estratto dai risultati GPC"),
+        ("Ratio Status Units Notes", "Rapporto, stato, unità e note originali; le grandezze non vengono ricalcolate"),
+        ("Maximum finite ratio", "Massimo tra i rapporti numerici presenti; NaN se non ne esistono"),
+        ("Unavailable ratios", "Numero dei rapporti mancanti o non finiti da interpretare tramite stato e note"),
+        ("Governing labels", "Tutte le righe che raggiungono il massimo rapporto finito"),
+    ], [2.1, 4.84])
+    p("Una verifica non eseguita non vale zero. Anche con Maximum finite ratio inferiore a uno possono esistere controlli mancanti, fuori campo o da svolgere separatamente. Il riepilogo espone i controlli locali disponibili di taglio, connessione e torsione; non produce da solo un giudizio complessivo sul ponte.")
+    h("Bridge Result Comparison")
+    p("Per confrontare revisioni o discretizzazioni, campionare prima le stesse grandezze nelle stesse posizioni fisiche. Reference keys e Candidate keys devono contenere chiavi univoche uguali, anche in ordine diverso; i due elenchi Values devono avere le stesse unità.")
+    p("Il criterio applicato a ogni chiave è **|c − r| ≤ Abs + Rel · |r|**, con r riferimento e c candidato. Abs ha le unità della grandezza; Rel è adimensionale. Per grandezze con unità diverse usare componenti separati o tolleranze opportunamente normalizzate.")
+    p("Difference = c − r. Relative difference = (c − r)/|r|; se r = 0 e la differenza non è nulla, l’uscita relativa è NaN e il confronto usa la tolleranza assoluta. Chiavi mancanti, duplicati e numeri non finiti causano errore.")
+    p("Nell’**esempio 27**, gli spostamenti −10 e −20 mm vengono confrontati con −10.02 e −20.1 mm, presentati in ordine invertito. Entrambi passano con Rel = 0.01 e Abs = 0.000001 mm. Questo controllo non genera mesh né dimostra da solo la convergenza: per uno studio occorrono più raffinamenti e grandezze fisiche confrontabili.")
+
+    page(21, "Preparare le corsie e riprodurre gli esempi")
+    h("Bridge Moving Lanes")
+    p("L’**esempio 28** prepara tre percorsi rettilinei a partire da un unico Moving Load Path. Collegare il prototipo a Prototype, gli scostamenti trasversali a Offsets e un nome di caso univoco per ogni percorso a Cases.")
+    steps([
+        "Impostare nel prototipo veicolo, template, target, numero di divisioni e conversione in casi statici. Questi dati vengono copiati indipendentemente in ciascun percorso.",
+        "Fornire offsets distinti e finiti nelle unità del modello. Il verso positivo è quello del terzo punto del prototipo, proiettato perpendicolarmente all’asse rettilineo.",
+        "Collegare Paths ad Attach Moving Paths e controllare la preview. Procedere con Moving Static Analysis sul modello desiderato; la creazione dei percorsi non avvia il solutore.",
+    ])
+    p("Il componente genera percorsi indipendenti, non coefficienti di corsia o simultaneità normative. Per percorsi curvi usare le definizioni individuali di Moving Load Path: una semplice traslazione non crea automaticamente corsie concentriche. L’esempio assegna un veicolo dimostrativo da 100 kN su 20 m, con offsets −3, 0 e +3 m.")
+    h("Cartelle e verifiche riproducibili")
+    table(["Esempio", "Componenti e controlli"], [
+        ("23 audit modello fase", "Diagnostica e copia con invalidazione dei risultati"),
+        ("24 inviluppi concomitanti", "Catalogo casi, forze, reazioni e spostamenti"),
+        ("25 fasi combinazioni", "Ordine esplicito e matrice per Action ID"),
+        ("26 riepilogo verifiche gpc", "Rapporti e stati ricavati dal calcolo GPC"),
+        ("27 ritiro confronti", "Bilancio degli incrementi e confronto per chiavi fisiche"),
+        ("28 corsie mobili", "Copie indipendenti dei percorsi e preview"),
+    ], [2.08, 4.86])
+    code("# Controlli dei servizi\ndotnet run --project tests/BridGHe.Smoke -c Release --no-build -- `\n  --regression bridge-utilities\n# Rigenera gli esempi 23–28 e ne verifica salvataggio/riapertura\ndotnet run --project tests/BridGHe.Smoke -c Release --no-build -- `\n  --utility-examples")
+    p("Le prove dei nuovi strumenti comprendono 44 controlli di servizio e sei grafi calcolati e riaperti con i 12 nuovi componenti. Non richiedono una nuova analisi Straus. Gli esempi di inviluppo usano campioni controllati, mentre il riepilogo ricalcola la sezione con GPC. Salvare una copia prima di rigenerare esempi modificati manualmente.")
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     doc.save(OUTPUT)
     print(OUTPUT)
