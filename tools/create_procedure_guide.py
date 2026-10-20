@@ -504,7 +504,7 @@ def make_document():
     ], [1.1, 5.84])
     p("I benchmark usano una trave semplicemente appoggiata da 6000 mm, E = 210000 MPa e I = 450000000 mm⁴. Confrontano reazioni, momenti alle stazioni disponibili e frecce con soluzioni analitiche. Sono prove del trasferimento e della lettura, non modelli normativi di traffico.")
     code("# Dalla root del repository, preparazione senza Straus\npowershell -ExecutionPolicy Bypass -File tools/test-moving-loads.ps1\n# Esecuzione con licenza disponibile\npowershell -ExecutionPolicy Bypass -File tools/test-moving-loads.ps1 -Native\n# Per una sola prova aggiungere: -Scenario 04")
-    p("Stato alla data della guida: cinque scenari preparati e 11 controlli offline superati; la nuova esecuzione nativa resta da effettuare. Sul ponte completo occorrono anche posizionamento trasversale, combinazioni e controlli del campo di validità del verificatore.")
+    p("Collaudo nativo superato: 5.377 confronti su 80 posizioni. Usare Axes = 1 per mantenere la gravità globale nel percorso inverso. Il tandem include ingresso e uscita: 13 divisioni generano 16 casi. Sul ponte completo restano da verificare ripartizione trasversale e combinazioni di progetto.")
 
     # Page 15
     page(14, "Eseguire il ponte di esempio REV003")
@@ -549,14 +549,14 @@ def make_document():
 
     # Page 17
     page(16, "Prove disponibili e riferimenti")
-    p("La Release con gli esempi 33–45 supera i controlli offline. Per i ponti 11–18 si riportano replay già registrati. Questo aggiornamento non include nuove analisi Straus.")
+    p("Collaudo nativo completato il 20 ottobre 2026. Le nuove analisi riguardano il ponte 19 e i carichi mobili. Per i ponti 11–18 si riportano i replay già registrati.")
     table(["Ambito", "Verifica eseguita", "Stato"], [
         ("Release", "Compilazione con 0 warning e 0 errori", "Eseguita"),
         ("Smoke e regressioni", "218 controlli; 54 gruppi principali e 2 grafici", "Superati"),
         ("Conservazione numerica", "238 valori di baseline confrontati senza differenze", "Verificata"),
         ("Esempi 11–18", "344 confronti usando risultati nativi archiviati", "Replay superato; nessuna nuova analisi"),
-        ("Esempio 19 REV003", "15 controlli offline; generazione e riapertura del grafo", "Nuovo calcolo Straus da eseguire"),
-        ("Carichi mobili", "5 scenari e 11 controlli offline", "Benchmark nativi da eseguire"),
+        ("Esempio 19 REV003", "4 analisi; 20 controlli; 12.192 valori ricampionati", "378 risultati di sezione; nessun errore GH"),
+        ("Carichi mobili", "5 scenari; 80 posizioni; 5.377 confronti analitici", "Superati con Straus R3"),
     ], [1.55, 3.43, 1.96])
     h("Comandi dalla root del repository")
     code("# Release e suite senza nuove analisi Straus\npowershell -ExecutionPolicy Bypass -File tools/build.ps1 -Smoke\n\n# Preparare il progetto di test\ndotnet build tests/BridGHe.Smoke -c Release\n\n# Esempio 19 offline\ndotnet run --project tests/BridGHe.Smoke -c Release --no-build -- `\n  --bridge-workflow\n\n# Esempio 19 con licenza e controlli nativi\ndotnet run --project tests/BridGHe.Smoke -c Release --no-build -- `\n  --bridge-workflow --native")

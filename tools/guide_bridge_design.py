@@ -91,5 +91,5 @@ def append_design_chapters(page, h, p, table, steps, code):
     h("Rigenerare e controllare")
     code("dotnet run --project tests/BridGHe.Smoke -c Release -- `\n  --bridge-design-examples\npowershell -NoProfile -ExecutionPolicy Bypass `\n  -File tools/build.ps1 -Smoke")
     p("Il generatore risolve, salva e riapre tredici GHX; ogni cartella contiene README e validation.json. Il test offline controlla dati, geometria, archivi e risultati noti senza avviare Straus. Fare una copia prima di rigenerare file modificati manualmente.")
-    h("Verifica nativa ancora necessaria")
-    p("Le nuove chiamate St7SetUCS e St7SetRigidLink provengono dagli include ufficiali Straus R3 installati. L’ultimo tentativo nativo ha restituito St7Init −8, hardware lock non disponibile. Con licenza API eseguire --bridge-bearings-native e --bridge-connections-native. La compilazione e i test GH non sostituiscono queste prove.")
+    h("Verifica nativa completata")
+    p("Il 20 ottobre 2026 sono superati --bridge-bearings-native e --bridge-connections-native: UCS, vincoli, molle e link spaziali riletti da Straus R3. Le prove verificano l’esportazione e non avviano il solver. L’esempio 45 resta un modello geometrico senza carichi né nuova analisi strutturale; il precedente blocco della licenza è risolto.")
