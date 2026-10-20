@@ -46,7 +46,7 @@ public sealed record SimpleBridgeInput
     public bool Truss { get; init; }
 }
 
-public enum BridgeMemberFamily { Girder, SolidDiaphragm, TopChord, BottomChord, Post, Diagonal }
+public enum BridgeMemberFamily { Girder, SolidDiaphragm, TopChord, BottomChord, Post, Diagonal, LongitudinalBracing, BracingPost }
 
 [Serializable]
 public sealed record BridgeGeometryMember(string Id, BridgeMemberFamily Family, int Group, int Segment,
