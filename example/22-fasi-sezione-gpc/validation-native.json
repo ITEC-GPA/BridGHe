@@ -1,0 +1,218 @@
+{
+  "Date": "2026-10-20T23:47:43.409165+02:00",
+  "Warnings": [
+    "Stages on load cases not supported"
+  ],
+  "Measurements": [
+    {
+      "Name": "Native principal axis 1 along \u002BY",
+      "Actual": 1,
+      "Expected": 1,
+      "AbsoluteTolerance": 1E-05,
+      "Passed": true
+    },
+    {
+      "Name": "Native principal axis 2 along \u002BZ",
+      "Actual": 1,
+      "Expected": 1,
+      "AbsoluteTolerance": 1E-05,
+      "Passed": true
+    },
+    {
+      "Name": "Native principal axis 3 along \u002BX",
+      "Actual": 1,
+      "Expected": 1,
+      "AbsoluteTolerance": 1E-05,
+      "Passed": true
+    },
+    {
+      "Name": "Upward deflection for sagging tip couple [mm]",
+      "Actual": 0.12479270545039081,
+      "Expected": 0.12479270545039074,
+      "AbsoluteTolerance": 1.2479270545039076E-06,
+      "Passed": true
+    },
+    {
+      "Name": "Native steel moment -\u003E gPC M1 [N mm]",
+      "Actual": 1000000.0000000009,
+      "Expected": 1000000,
+      "AbsoluteTolerance": 10,
+      "Passed": true
+    },
+    {
+      "Name": "Native infinite moment -\u003E gPC M1 [N mm]",
+      "Actual": 2000000.0000000019,
+      "Expected": 2000000,
+      "AbsoluteTolerance": 20,
+      "Passed": true
+    },
+    {
+      "Name": "Native instant moment -\u003E gPC M1 [N mm]",
+      "Actual": 3000000.000000003,
+      "Expected": 3000000,
+      "AbsoluteTolerance": 30.000000000000004,
+      "Passed": true
+    },
+    {
+      "Name": "Imposed infinite strain",
+      "Actual": -0.0001,
+      "Expected": -0.0001,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Imposed instant strain",
+      "Actual": -5E-05,
+      "Expected": -5E-05,
+      "AbsoluteTolerance": 1E-08,
+      "Passed": true
+    },
+    {
+      "Name": "Five accumulated phases",
+      "Actual": 5,
+      "Expected": 5,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "OnlySteel / Top concrete [MPa]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-07,
+      "Passed": true
+    },
+    {
+      "Name": "OnlySteel / Bottom concrete [MPa]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 1E-07,
+      "Passed": true
+    },
+    {
+      "Name": "OnlySteel / Top steel [MPa]",
+      "Actual": -0.873548938152736,
+      "Expected": -0.8735489381527352,
+      "AbsoluteTolerance": 8.735489381527351E-07,
+      "Passed": true
+    },
+    {
+      "Name": "OnlySteel / Bottom steel [MPa]",
+      "Actual": 0.873548938152736,
+      "Expected": 0.8735489381527352,
+      "AbsoluteTolerance": 8.735489381527351E-07,
+      "Passed": true
+    },
+    {
+      "Name": "NInfinite / Top concrete [MPa]",
+      "Actual": -0.04407074959911299,
+      "Expected": -0.04407074959911305,
+      "AbsoluteTolerance": 1E-07,
+      "Passed": true
+    },
+    {
+      "Name": "NInfinite / Bottom concrete [MPa]",
+      "Actual": -0.005077777983657834,
+      "Expected": -0.005077777983657905,
+      "AbsoluteTolerance": 1E-07,
+      "Passed": true
+    },
+    {
+      "Name": "NInfinite / Top steel [MPa]",
+      "Actual": -0.970970816305536,
+      "Expected": -0.9709708163055365,
+      "AbsoluteTolerance": 9.709708163055366E-07,
+      "Passed": true
+    },
+    {
+      "Name": "NInfinite / Bottom steel [MPa]",
+      "Actual": 1.8983015254144244,
+      "Expected": 1.8983015254144222,
+      "AbsoluteTolerance": 1.8983015254144221E-06,
+      "Passed": true
+    },
+    {
+      "Name": "NInstant / Top concrete [MPa]",
+      "Actual": -0.14348514255930972,
+      "Expected": -0.1434851425593098,
+      "AbsoluteTolerance": 1.434851425593098E-07,
+      "Passed": true
+    },
+    {
+      "Name": "NInstant / Bottom concrete [MPa]",
+      "Actual": 0.017274487487966367,
+      "Expected": 0.017274487487966214,
+      "AbsoluteTolerance": 1E-07,
+      "Passed": true
+    },
+    {
+      "Name": "NInstant / Top steel [MPa]",
+      "Actual": -0.8280211711245185,
+      "Expected": -0.8280211711245195,
+      "AbsoluteTolerance": 8.280211711245194E-07,
+      "Passed": true
+    },
+    {
+      "Name": "NInstant / Bottom steel [MPa]",
+      "Actual": 3.2093542856781756,
+      "Expected": 3.209354285678172,
+      "AbsoluteTolerance": 3.209354285678172E-06,
+      "Passed": true
+    },
+    {
+      "Name": "StrainInfinite / Top concrete [MPa]",
+      "Actual": -0.19964617354249586,
+      "Expected": -0.19964617354249894,
+      "AbsoluteTolerance": 1.9964617354249893E-07,
+      "Passed": true
+    },
+    {
+      "Name": "StrainInfinite / Bottom concrete [MPa]",
+      "Actual": 0.49906977970857747,
+      "Expected": 0.49906977970857586,
+      "AbsoluteTolerance": 4.990697797085759E-07,
+      "Passed": true
+    },
+    {
+      "Name": "StrainInfinite / Top steel [MPa]",
+      "Actual": -12.584331824254502,
+      "Expected": -12.58433182425453,
+      "AbsoluteTolerance": 1.258433182425453E-05,
+      "Passed": true
+    },
+    {
+      "Name": "StrainInfinite / Bottom steel [MPa]",
+      "Actual": 6.934829821120999,
+      "Expected": 6.9348298211210135,
+      "AbsoluteTolerance": 6.934829821121014E-06,
+      "Passed": true
+    },
+    {
+      "Name": "StrainInstant / Top concrete [MPa]",
+      "Actual": -0.472672140408157,
+      "Expected": -0.4726721404081611,
+      "AbsoluteTolerance": 4.726721404081611E-07,
+      "Passed": true
+    },
+    {
+      "Name": "StrainInstant / Bottom concrete [MPa]",
+      "Actual": 1.06952907681545,
+      "Expected": 1.0695290768154477,
+      "AbsoluteTolerance": 1.0695290768154476E-06,
+      "Passed": true
+    },
+    {
+      "Name": "StrainInstant / Top steel [MPa]",
+      "Actual": -19.436068331000875,
+      "Expected": -19.436068331000907,
+      "AbsoluteTolerance": 1.9436068331000907E-05,
+      "Passed": true
+    },
+    {
+      "Name": "StrainInstant / Bottom steel [MPa]",
+      "Actual": 8.17461670067475,
+      "Expected": 8.174616700674763,
+      "AbsoluteTolerance": 8.174616700674763E-06,
+      "Passed": true
+    }
+  ]
+}

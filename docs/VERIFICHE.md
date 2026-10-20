@@ -1,5 +1,26 @@
 # Verifiche della Release
 
+## Collaudo con licenza Straus — 20 ottobre 2026
+
+Completate le prove rimaste sospese per la licenza. Il riepilogo versionato è [licensed-native-20261020.json](../example/00-documentazione/validazioni/licensed-native-20261020.json).
+
+| Prova eseguita | Esito e campo verificato |
+|---|---|
+| Appoggi orientati | UCS, verso dell'asse X, vincoli e molle riletti dall'API R3; nessuna soluzione FEM in questo test |
+| Collegamenti rigidi | Esportazione e rilettura del link spaziale XYZ; nessuna soluzione FEM in questo test |
+| Carichi mobili, esempio 21 | 5 scenari, 80 posizioni, **5.377 confronti** superati; nessun warning del solutore |
+| Ponte 19 REV003 | **4 nuove analisi**, 20 controlli, equilibrio G1/G2/Q/ritiro, merge e checker senza errori GH |
+| Stazioni del ponte 19 | **12.192 valori** contro ricampionamento API su 98 aste; **378 risultati di sezione** nel grafo GH |
+| Cinque contributi di sezione, esempio 22 | **30 confronti** Straus/gPC superati: acciaio, lungo termine, istantaneo e due incrementi di ritiro |
+
+Carichi mobili: errori assoluti massimi 2.48×10⁻¹⁰ N sull'equilibrio, 7.05×10⁻¹¹ N sulla reazione destra, 1.06×10⁻¹⁴ mm sulla freccia e 3.87×10⁻⁷ N·mm sui momenti. Ponte 19: scarto massimo di ricampionamento 6.37×10⁻¹² N sulle forze e 9.54×10⁻⁷ N·mm sui momenti. Tolleranze originali mantenute.
+
+Il collaudo ha corretto **due errori nei benchmark**, ciascuno in un commit: gravità erroneamente locale nel percorso inverso; numero e posizioni del tandem che omettevano ingresso/uscita. Ora il tandem usa tutta la luce e produce 16 casi per 13 divisioni. Non sono cambiate le chiamate native, le convenzioni o le formule del plugin. Dettagli e differenze in [esempio 21](../example/21-benchmark-carichi-mobili/README.md).
+
+Nel test 22 il warning `Stages on load cases not supported` è atteso: gli attributi di fase dei casi sono metadata del checker gPC e non stage nativi Straus. Si confrontano tre casi meccanici risolti e due contributi di ritiro di sezione; questa prova non convalida una nuova sequenza di costruzione nativa. Gli esempi 33–45 restano grafi geometrici/offline; non sono stati presentati come nuove analisi di ponte.
+
+Verifica finale: Release con 0 avvisi e 0 errori, sincronizzata in `bin/Release`; 218 controlli, 54 gruppi principali e 2 grafici superati, 238 valori di baseline esattamente uguali. Riaperti 43 GHX con 2.642 oggetti; catalogo di 45 esempi e collegamenti locali validato. Guida Word di 28 pagine renderizzata: le tre pagine modificate sono state ispezionate e le altre 25 sono identiche pixel per pixel alla versione già verificata.
+
 ## Strumenti del modello di ponte — 20 ottobre 2026
 
 Release compilata senza warning/errori e sincronizzata in `bin/Release`. `tools/build.ps1 -Smoke` completato: **218 controlli**, **54 gruppi di regressione principali e 2 grafici**, **238 valori di baseline esattamente invariati**. Il runtime registra 169 componenti e 8 parametri, tutti con GUID e icone distinti.
@@ -10,7 +31,7 @@ Le prove di servizio comprendono confronto esaustivo delle alternative del consi
 
 Correzioni emerse dall'integrazione: costruttore vuoto per ripristinare `GH_PlateProperty` da un GHX; diagnostica delle fasi mancanti nell'audit; esclusione degli stage nativi per selezioni parziali dentro lo stesso gruppo o elementi senza gruppo. Nel grafo completo Elements è appiattito per formare un solo modello.
 
-Le prove native dei nuovi UCS degli appoggi e dei link rigidi **non risultano superate**: `St7Init` ha restituito `-8`, hardware lock non disponibile. Comandi predisposti: `--bridge-bearings-native` e `--bridge-connections-native`. Nessuna nuova analisi di ponte è dichiarata eseguita. La guida Word di 28 pagine è stata renderizzata tramite Word e tutte le pagine ispezionate.
+Il primo tentativo nativo aveva restituito `St7Init -8`, hardware lock non disponibile. Il successivo collaudo con licenza ha superato `--bridge-bearings-native` e `--bridge-connections-native`, oltre alle analisi riportate sopra. La guida Word è aggiornata con gli esiti del collaudo.
 
 ## Stato precedente — 19 ottobre 2026
 

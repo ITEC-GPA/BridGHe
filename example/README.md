@@ -46,7 +46,7 @@ Il `README.md` descrive il caso e il file `.ghx` alla radice è la definizione d
 
 Aprire una definizione con Rhino 8 e BridGHe installato. Verificare i pannelli dei percorsi prima di eseguire: i file generati su questa macchina puntano alla cartella locale del rispettivo esempio. Se si sposta il repository su un altro PC, aggiornare quei percorsi o rigenerare la definizione.
 
-Le analisi Straus richiedono la licenza API. Gli esempi 11–18 sono stati riallineati alle fasi numerate usando risultati nativi già archiviati. Il nuovo ponte **19 REV003** e i benchmark **21** richiedono ancora il collaudo nativo descritto nei rispettivi README. Le revisioni archiviate del 19 non usano la nuova interfaccia.
+Le analisi Straus richiedono la licenza API. Gli esempi 11–18 sono stati riallineati alle fasi numerate usando risultati nativi già archiviati. Il collaudo del 20 ottobre 2026 supera le quattro analisi di **19 REV003**, il ricampionamento di 12.192 valori e i cinque benchmark **21**, con 5.377 confronti su 80 posizioni. Sono passate anche le riletture native di appoggi e link rigidi; dettagli nei rispettivi README e in `../docs/VERIFICHE.md`. Le revisioni archiviate del 19 non usano la nuova interfaccia.
 
 - [Procedura delle fasi](../docs/FASI-E-AZIONI.md)
 - [Guida Word](../docs/BridGHe_Guida_operativa.docx)

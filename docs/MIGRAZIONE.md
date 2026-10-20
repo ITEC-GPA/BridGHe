@@ -11,7 +11,7 @@
 - `GH_PlateProperty`: aggiunto il costruttore vuoto richiesto da Grasshopper per leggere i dati persistenti. Formato dell'archivio invariato.
 - `BridgeConstructionSequence`: produce snapshot indipendenti. Stage nativi solo per selezioni esatte di gruppi, proprietà/appoggi invariati, assenza di link rigidi e incrementi espliciti.
 
-Le firme Straus provengono da `API Includes/Visual C#/St7API.cs` dell'installazione R3 e sono rigenerate da `tools/update_straus_bindings.py`; origine registrata in `migration/straus-api-source.json`. Le nuove prove native sono predisposte ma il tentativo ha incontrato `St7Init -8` (hardware lock non disponibile). I 238 valori della baseline dei percorsi precedenti restano esattamente invariati.
+Le firme Straus provengono da `API Includes/Visual C#/St7API.cs` dell'installazione R3 e sono rigenerate da `tools/update_straus_bindings.py`; origine registrata in `migration/straus-api-source.json`. Il collaudo del 20 ottobre 2026 supera la rilettura nativa di UCS, vincoli, molle e link rigidi. Il precedente blocco `St7Init -8` era dovuto alla licenza non disponibile. I 238 valori della baseline dei percorsi precedenti restano esattamente invariati. I due errori emersi nei carichi mobili erano nei benchmark (assi della gravità e passaggio del tandem): nessuna chiamata o formula di produzione è stata modificata.
 
 ## Stato precedente — 19 ottobre 2026
 

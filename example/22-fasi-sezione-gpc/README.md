@@ -2,6 +2,8 @@
 
 Questa cartella raccoglie le prove numeriche senza definizione GHX dedicata.
 
+Riesecuzione del **20 ottobre 2026**: `--bridge-native` supera **30 confronti** sui cinque contributi di sezione. Report: [validation-native.json](validation-native.json). Il warning `Stages on load cases not supported` riguarda i metadata di fase destinati a gPC: questa prova risolve tre casi meccanici Straus e applica due contributi di ritiro nel checker; non esegue una nuova sequenza di costruzione staged nel solutore. I due benchmark di ritiro libero/vincolato riportati sotto restano le esecuzioni storiche.
+
 - `calcoli/fasi-sezione/`: tre incrementi meccanici e due incrementi di deformazione imposta su una sezione composta, con confronto indipendente delle tensioni.
 - `calcoli/benchmark-shrink-free/`: ritiro con deformazione libera.
 - `calcoli/benchmark-shrink-fixed/`: ritiro con vincoli alle deformazioni.

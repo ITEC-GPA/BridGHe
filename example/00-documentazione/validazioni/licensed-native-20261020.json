@@ -1,0 +1,152 @@
+{
+  "RecordedAt": "2026-10-20T21:50:57.506524+00:00",
+  "Status": "passed",
+  "Platform": "Windows x64, Rhino 8, Straus7 R3.1.5 API",
+  "Scope": "Previously blocked license-dependent tests; additional section phase regression",
+  "BearingAndRigidLinkTests": {
+    "ActualNativeApi": true,
+    "SolverInvoked": false,
+    "Verified": [
+      "UCS X axis",
+      "local restraint flags and UCS",
+      "local translational springs and UCS",
+      "spatial rigid link connectivity"
+    ]
+  },
+  "Moving": {
+    "Scenarios": [
+      {
+        "Id": "01-single-13",
+        "Divisions": 13,
+        "Positions": 13,
+        "Passed": 870,
+        "Failed": 0
+      },
+      {
+        "Id": "02-single-25",
+        "Divisions": 25,
+        "Positions": 25,
+        "Passed": 1674,
+        "Failed": 0
+      },
+      {
+        "Id": "03-reverse",
+        "Divisions": 13,
+        "Positions": 13,
+        "Passed": 870,
+        "Failed": 0
+      },
+      {
+        "Id": "04-tandem",
+        "Divisions": 13,
+        "Positions": 16,
+        "Passed": 1092,
+        "Failed": 0
+      },
+      {
+        "Id": "05-double-force",
+        "Divisions": 13,
+        "Positions": 13,
+        "Passed": 870,
+        "Failed": 0
+      }
+    ],
+    "TotalPositions": 80,
+    "Checks": 5377,
+    "Failed": 0,
+    "Report": "example/21-benchmark-carichi-mobili/validation-native.json",
+    "MaxAbsoluteErrors": {
+      "equilibrium [N]": 2.473825588822365e-10,
+      "right reaction [N]": 7.048583938740194e-11,
+      "midspan Uz [mm]": 1.0519363158323358e-14,
+      "M(x) [Nmm]": 3.864988684654236e-07
+    }
+  },
+  "Bridge19": {
+    "SolverRuns": 4,
+    "Checks": 20,
+    "ComparedStationValues": 12192,
+    "SectionResults": 378,
+    "MaxForceErrorN": 6.366462912410498e-12,
+    "MaxMomentErrorNmm": 9.5367431640625e-07,
+    "MaxTorqueErrorNmm": 1.1368683772161603e-13
+  },
+  "SectionPhases": {
+    "Contributions": 5,
+    "Checks": 30,
+    "Warnings": [
+      "Stages on load cases not supported"
+    ],
+    "Scope": "Three mechanical cases solved in Straus, two eigenstrain contributions checked in gPC; not a native staged-construction sequence"
+  },
+  "BenchmarkFixes": [
+    {
+      "Commit": "3618c18",
+      "Change": "Use global gravity in reversed path; local normal reversal was correctly exported"
+    },
+    {
+      "Commit": "2f6f40f",
+      "Change": "Full bridge path and entry/exit positions for tandem; 16 cases for 13 divisions"
+    }
+  ],
+  "ProductionNumericalChanges": false,
+  "Logs": [
+    {
+      "Path": "artifacts/native-bearings-20261020.log",
+      "Sha256": "cd867e45002ea82c9f6c609c394f44ab0d29db2c17129e486baf40e5525b9b68",
+      "CompletionMarker": "BRIDGE BEARINGS NATIVE PASS"
+    },
+    {
+      "Path": "artifacts/native-connections-20261020.log",
+      "Sha256": "4644e5b51d52097f81340faa8d95fb4c896a474cdaafcb591735363fed27b47b",
+      "CompletionMarker": "BRIDGE CONNECTIONS NATIVE PASS"
+    },
+    {
+      "Path": "artifacts/native-moving-final-20261020.log",
+      "Sha256": "9d897c5ec6af15f4277ede24f0ae6b417aa125c02a6557622240244fd11aab56",
+      "CompletionMarker": "MOVING NATIVE PASS"
+    },
+    {
+      "Path": "artifacts/native-workflow-20261020.log",
+      "Sha256": "e8c3d375fe405ddf976c2bc90440a8abe06817f0b6f2b921cd4ab8ac3dbe29ec",
+      "CompletionMarker": "WORKFLOW REV003 PASS"
+    },
+    {
+      "Path": "artifacts/native-stations-20261020.log",
+      "Sha256": "8b7c0be616767bb05be7d7bd977111bc08ef366a3262039f654130a3e423dba6",
+      "CompletionMarker": "NATIVE STATION REPLAY PASS"
+    },
+    {
+      "Path": "artifacts/native-final-release-20261020.log",
+      "Sha256": "c48bb15bfd177b0e60f6c88f7455dfb7b9ab50bd70906d61505a17cf51625dbe"
+    },
+    {
+      "Path": "artifacts/native-final-layout-20261020.log",
+      "Sha256": "4402e2db0bb2f560087ad27d0c1b6868ceb3c8bd4d6a33801ae719b2876cde27"
+    }
+  ],
+  "FinalRelease": {
+    "Directory": "bin/Release",
+    "BuildWarnings": 0,
+    "BuildErrors": 0,
+    "SmokeChecks": 218,
+    "RegressionGroups": 54,
+    "DrawingGroups": 2,
+    "BaselineValues": 238,
+    "ExactlyEqualBaselineValues": 238,
+    "ReopenedGrasshopperDocuments": 43,
+    "ReopenedObjects": 2642
+  },
+  "ReleaseFiles": [
+    {
+      "File": "bin/Release/BridGHe.Common.dll",
+      "Bytes": 591360,
+      "Sha256": "3f2047aabd83417ddd89c7f8dd38aae5a9ad6f531c6111b598160572d521d629"
+    },
+    {
+      "File": "bin/Release/BridGHe.Grasshopper.gha",
+      "Bytes": 726528,
+      "Sha256": "4be66cfe98f76660fb8d33c5a19e0a27b1f519827ec674cccda9746c65923d9d"
+    }
+  ]
+}

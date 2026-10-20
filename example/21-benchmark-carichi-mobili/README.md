@@ -1,5 +1,7 @@
 # Benchmark didattici dei carichi mobili
 
+**Collaudo nativo del 20 ottobre 2026 superato:** 5 scenari, 80 posizioni e 5.377 confronti, nessun fallimento o warning del solutore. Report completo: [validation-native.json](validation-native.json). Sono verificati equilibrio, reazione destra, freccia di mezzeria e momenti a ogni stazione restituita; le tolleranze sono quelle originarie.
+
 Preparazione senza licenza Straus:
 
 ```powershell
