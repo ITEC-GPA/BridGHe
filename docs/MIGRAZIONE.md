@@ -1,4 +1,19 @@
-# Refactoring BridGHe - 19 ottobre 2026
+# Refactoring BridGHe
+
+## Estensione del modello di ponte — 20 ottobre 2026
+
+- Dodici nuovi componenti con GUID nuovi e icone dedicate; inventario in `current-components.json`.
+- `SimpleBridgeSolid/Truss`: uscita **Bridge Geometry** aggiunta in coda; le precedenti uscite 0–13 restano nello stesso ordine.
+- `BridgeModelAudit.Inspect`: parametri opzionali per geometria attesa e modelli di fase; due ingressi opzionali aggiunti in coda al componente.
+- `BridgeMemberFamily`: aggiunte `LongitudinalBracing=6` e `BracingPost=7`; metadata fisici separati dagli ID numerici FEM.
+- `StrausR3Helper.CreateModelR3` / `CreateModelCore`: nodi con `NodeCoordinateAttributeModel` usano UCS dedicati per vincoli e molle; i nodi senza attributo mantengono il riferimento preesistente. `St7SetUCS` è una nuova chiamata, non una sostituzione di proprietà globali.
+- `RigidConnectionAttributeModel`: esportazione con la nuova chiamata `St7SetRigidLink`, dopo la creazione dei nodi. Nessun elemento rigido fittizio tramite rigidezza elevata.
+- `GH_PlateProperty`: aggiunto il costruttore vuoto richiesto da Grasshopper per leggere i dati persistenti. Formato dell'archivio invariato.
+- `BridgeConstructionSequence`: produce snapshot indipendenti. Stage nativi solo per selezioni esatte di gruppi, proprietà/appoggi invariati, assenza di link rigidi e incrementi espliciti.
+
+Le firme Straus provengono da `API Includes/Visual C#/St7API.cs` dell'installazione R3 e sono rigenerate da `tools/update_straus_bindings.py`; origine registrata in `migration/straus-api-source.json`. Le nuove prove native sono predisposte ma il tentativo ha incontrato `St7Init -8` (hardware lock non disponibile). I 238 valori della baseline dei percorsi precedenti restano esattamente invariati.
+
+## Stato precedente — 19 ottobre 2026
 
 Questa revisione usa i nomi BridGHe, il solutore Straus7 R3 e le librerie gPC. I nomi storici sono rimossi dai sorgenti e dalla distribuzione. La storia Git conserva i commit precedenti.
 

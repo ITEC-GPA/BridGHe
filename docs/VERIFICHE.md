@@ -1,4 +1,18 @@
-# Verifiche della Release - 19 ottobre 2026
+# Verifiche della Release
+
+## Strumenti del modello di ponte — 20 ottobre 2026
+
+Release compilata senza warning/errori e sincronizzata in `bin/Release`. `tools/build.ps1 -Smoke` completato: **218 controlli**, **54 gruppi di regressione principali e 2 grafici**, **238 valori di baseline esattamente invariati**. Il runtime registra 169 componenti e 8 parametri, tutti con GUID e icone distinti.
+
+Tredici esempi nuovi, **33–45**, risolti, salvati e riaperti con il motore Grasshopper: consigliatore delle campate, sezioni per progressiva, assegnazione, appoggi, connessioni, controventi, soletta, costruzione, dettagli, frecce, fatica, mappa e ponte integrato. Il modello dell'esempio 45 non ha errori o warning di audit e conserva tutti gli elementi delle sorgenti. I report per ciascun esempio indicano `solverInvoked=false`.
+
+Le prove di servizio comprendono confronto esaustivo delle alternative del consigliatore, cambi di mesh e identità fisiche, regole sovrapposte, rastremazioni, X/V/Warren, topologia dei collegamenti, area della soletta, selezioni delle fasi, attivazione per gruppi, quantità e volume dei dettagli, parabola di freccia nota, rainflow contato a mano e dati mancanti nelle mappe. Gli esempi 42/43 usano dati sintetici dichiarati; il 44 ricalcola controlli locali con gPC su azioni assegnate, senza FEM globale.
+
+Correzioni emerse dall'integrazione: costruttore vuoto per ripristinare `GH_PlateProperty` da un GHX; diagnostica delle fasi mancanti nell'audit; esclusione degli stage nativi per selezioni parziali dentro lo stesso gruppo o elementi senza gruppo. Nel grafo completo Elements è appiattito per formare un solo modello.
+
+Le prove native dei nuovi UCS degli appoggi e dei link rigidi **non risultano superate**: `St7Init` ha restituito `-8`, hardware lock non disponibile. Comandi predisposti: `--bridge-bearings-native` e `--bridge-connections-native`. Nessuna nuova analisi di ponte è dichiarata eseguita. La guida Word di 28 pagine è stata renderizzata tramite Word e tutte le pagine ispezionate.
+
+## Stato precedente — 19 ottobre 2026
 
 Ambiente effettivo: Windows x64, Rhino 8.35 avviato con Rhino.Inside, runtime .NET 8, SDK 9.0.319, riferimenti Rhino/Grasshopper 8.27.26019.16021, Straus7 R3.1.5 x64 con licenza API disponibile. Gli esempi Grasshopper vengono salvati, riaperti e risolti con i componenti reali in un server isolato dai plugin estranei del profilo.
 

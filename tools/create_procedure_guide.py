@@ -112,7 +112,7 @@ def make_document():
     sec.header.paragraphs[0].runs[0].font.size = Pt(9)
     foot = sec.footer.paragraphs[0]
     foot.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    foot.add_run("19 ottobre 2026   •   ").font.size = Pt(9)
+    foot.add_run("20 ottobre 2026   •   ").font.size = Pt(9)
     fld = OxmlElement("w:fldSimple")
     fld.set(qn("w:instr"), "PAGE")
     foot._p.append(fld)
@@ -217,8 +217,9 @@ def make_document():
         ("13–14", "Carichi mobili ed esecuzione dell’esempio 19", "14–15"),
         ("15–16", "Diagnostica, prove e riferimenti riproducibili", "16–17"),
         ("17–21", "Nuovi strumenti operativi ed esempi 23–28", "18–22"),
+        ("22–27", "Dal tracciato al modello ed esempi 29–45", "23–28"),
     ], [1.0, 5.15, .79], centers=(0, 2))
-    p("**Edizione aggiornata:** 19 ottobre 2026, workflow REV003 e strumenti operativi 23–28. Le interfacce precedenti di Build BridGHe Model non sono compatibili con il workflow corrente. La guida distingue i controlli già eseguiti dalle nuove analisi Straus ancora da eseguire.")
+    p("**Edizione aggiornata:** 20 ottobre 2026, workflow REV003, Simple Bridge e strumenti di modellazione 33–45. Le interfacce precedenti di Build BridGHe Model non sono compatibili con il workflow corrente. La guida distingue controlli offline e analisi Straus.")
     p("Il percorso produce controlli di sezione nel campo implementato. L’esempio usa azioni e coefficienti didattici; le verifiche di ponte ancora necessarie sono indicate nei capitoli 10, 11 e 14.")
 
     # Page 2
@@ -548,10 +549,10 @@ def make_document():
 
     # Page 17
     page(16, "Prove disponibili e riferimenti")
-    p("La Release con gli strumenti operativi 23–28 è stata compilata e sottoposta alle regressioni. Per i ponti 11–18 si riportano i replay già registrati; nessuna nuova analisi Straus è stata eseguita per questo aggiornamento.")
+    p("La Release con gli esempi 33–45 supera i controlli offline. Per i ponti 11–18 si riportano replay già registrati. Questo aggiornamento non include nuove analisi Straus.")
     table(["Ambito", "Verifica eseguita", "Stato"], [
         ("Release", "Compilazione con 0 warning e 0 errori", "Eseguita"),
-        ("Smoke e regressioni", "202 controlli; 38 gruppi principali e 2 grafici", "Superati"),
+        ("Smoke e regressioni", "218 controlli; 54 gruppi principali e 2 grafici", "Superati"),
         ("Conservazione numerica", "238 valori di baseline confrontati senza differenze", "Verificata"),
         ("Esempi 11–18", "344 confronti usando risultati nativi archiviati", "Replay superato; nessuna nuova analisi"),
         ("Esempio 19 REV003", "15 controlli offline; generazione e riapertura del grafo", "Nuovo calcolo Straus da eseguire"),
@@ -655,6 +656,8 @@ def make_document():
     ], [2.08, 4.86])
     code("# Controlli dei servizi\ndotnet run --project tests/BridGHe.Smoke -c Release --no-build -- `\n  --regression bridge-utilities\n# Rigenera gli esempi 23–28 e ne verifica salvataggio/riapertura\ndotnet run --project tests/BridGHe.Smoke -c Release --no-build -- `\n  --utility-examples")
     p("Le prove dei nuovi strumenti comprendono 44 controlli di servizio e sei grafi calcolati e riaperti con i 12 nuovi componenti. Non richiedono una nuova analisi Straus. Gli esempi di inviluppo usano campioni controllati, mentre il riepilogo ricalcola la sezione con GPC. Salvare una copia prima di rigenerare esempi modificati manualmente.")
+    from guide_bridge_design import append_design_chapters
+    append_design_chapters(page, h, p, table, steps, code)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     doc.save(OUTPUT)
     print(OUTPUT)
