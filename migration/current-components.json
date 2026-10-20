@@ -240,6 +240,282 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeCheckMapComponent",
+    "guid": "f9a95b40-c77d-4bc6-a08b-771f70905653",
+    "kind": "component",
+    "name": "Bridge Check Map",
+    "nickname": "CheckMap",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Map supplied gPC section/detail checks to FEM beam IDs and stations. Missing checks remain visible; colours do not certify a complete bridge verification.",
+    "inputs": [
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "Model whose beam axes are coloured.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Results",
+        "nickname": "R",
+        "description": "BridgeStressResult from existing section/detail checks, one per mapping entry.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Beam IDs",
+        "nickname": "B",
+        "description": "One exact FEM beam ID per result.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Stations",
+        "nickname": "X",
+        "description": "One physical station from beam start per result, in model length units.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Cases",
+        "nickname": "LC",
+        "description": "One explicit case/combination label per result.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Labels",
+        "nickname": "L",
+        "description": "Draw maximum-ratio labels in the viewport.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Axes",
+        "nickname": "A",
+        "description": "Axes paired with IDs and colours.",
+        "access": "list",
+        "optional": false,
+        "type": "Line"
+      },
+      {
+        "name": "Colours",
+        "nickname": "C",
+        "description": "Red: supplied ratio above 1. Amber: some checks unavailable. Grey: no numeric checks.",
+        "access": "list",
+        "optional": false,
+        "type": "Colour"
+      },
+      {
+        "name": "Beam IDs",
+        "nickname": "B",
+        "description": "Output model beam IDs.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Maximum Ratios",
+        "nickname": "R",
+        "description": "Largest supplied ratio per beam, NaN if unavailable.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Unavailable",
+        "nickname": "U",
+        "description": "Number of supplied checks with no numerical ratio.",
+        "access": "list",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Governing",
+        "nickname": "G",
+        "description": "Check, phase, case and station of every tied maximum.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Meaning and coverage of the map.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeDeflectionCamberComponent",
+    "guid": "aa3891ae-e93d-45c6-b493-5d2efea84758",
+    "kind": "component",
+    "name": "Bridge Deflection & Camber",
+    "nickname": "Camber",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Extract nodal displacement along a girder, subtract support chord motion and apply an explicit camber factor. N-mm.",
+    "inputs": [
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "Analysed model with nodal displacements.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Bridge Geometry",
+        "nickname": "BG",
+        "description": "Same geometry used for the analysed model.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Girder",
+        "nickname": "G",
+        "description": "Girder ID, one-based.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Case",
+        "nickname": "LC",
+        "description": "Exact stored case name.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Step",
+        "nickname": "S",
+        "description": "Exact stored step.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Step Type",
+        "nickname": "ST",
+        "description": "Optional exact step type; omitted only when unambiguous.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Direction",
+        "nickname": "D",
+        "description": "Projection direction; +Z gives negative downward displacement.",
+        "access": "item",
+        "optional": false,
+        "type": "Vector"
+      },
+      {
+        "name": "Camber Factor",
+        "nickname": "F",
+        "description": "Nonnegative multiplier. Camber is minus factor times selected displacement.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Relative Camber",
+        "nickname": "R",
+        "description": "True uses deflection relative to support chord; false uses absolute displacement.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Display Scale",
+        "nickname": "V",
+        "description": "Positive scale for curves only; numbers remain actual mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Stations",
+        "nickname": "Stations",
+        "description": "mm; paired by station.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Absolute Displacement",
+        "nickname": "Absolute Displacement",
+        "description": "mm; paired by station.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Relative Deflection",
+        "nickname": "Relative Deflection",
+        "description": "mm; paired by station.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Camber",
+        "nickname": "Camber",
+        "description": "mm; paired by station.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Deflected Curve",
+        "nickname": "U",
+        "description": "Polyline through actual displaced FEM nodes, with display scale.",
+        "access": "item",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Camber Curve",
+        "nickname": "C",
+        "description": "Proposed compensation curve; no input model change.",
+        "access": "item",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Source",
+        "nickname": "LC",
+        "description": "Model/case/step provenance.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Reference chord and sampling conventions.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Utilities.BridgeBeamEnvelopeComponent",
     "guid": "1ea9fccb-8a94-4b89-bc26-cd4fb7904248",
     "kind": "component",
@@ -642,6 +918,164 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeFatigueHistoryComponent",
+    "guid": "25ce0914-c534-4d08-883d-607b74c65883",
+    "kind": "component",
+    "name": "Bridge Fatigue History",
+    "nickname": "FatigueHistory",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Ordered response history and rainflow ranges. Accept direct stress/flow samples or extract FEM forces/explicit linear response. Does not infer an S-N curve or fatigue resistance.",
+    "inputs": [
+      {
+        "name": "Values",
+        "nickname": "V",
+        "description": "Optional ordered stress/flow history. Mutually exclusive with Model.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "Optional analysed N-mm model for FEM history extraction.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Beam ID",
+        "nickname": "B",
+        "description": "Required with Model.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Station",
+        "nickname": "X",
+        "description": "Physical distance from beam start, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Ordered Cases",
+        "nickname": "LC",
+        "description": "Explicit transit order. May be omitted only when one case exists; its steps are ordered numerically.",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Force Component",
+        "nickname": "F",
+        "description": "0=N,1=Vx,2=Vy,3=T,4=Mx,5=My; ignored when linear response factors are supplied.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Response Factors",
+        "nickname": "K",
+        "description": "Optional six factors: response=dot(N,Vx,Vy,T,Mx,My; factors). Supply coefficients for the actual section/phase and units.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Response Units",
+        "nickname": "U",
+        "description": "Units of direct values or linear response, e.g. MPa or N/mm. Raw force units are generated automatically.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Exponent",
+        "nickname": "m",
+        "description": "User-selected positive exponent for equivalent range; not an automatic material/detail classification.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Reference Cycles",
+        "nickname": "N",
+        "description": "Equivalent range = (sum(count*range^m)/N)^(1/m).",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "History",
+        "nickname": "V",
+        "description": "Ordered response samples.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Sources",
+        "nickname": "S",
+        "description": "Exact FEM case/step/station or direct sample index.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Ranges",
+        "nickname": "Ranges",
+        "description": "Paired rainflow cycle data; residual half cycles are retained.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Means",
+        "nickname": "Means",
+        "description": "Paired rainflow cycle data; residual half cycles are retained.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Cycle Counts",
+        "nickname": "Cycle Counts",
+        "description": "Paired rainflow cycle data; residual half cycles are retained.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Equivalent Range",
+        "nickname": "Eq",
+        "description": "Equivalent response range using supplied exponent/reference count.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Units",
+        "nickname": "U",
+        "description": "Response units.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Counting conventions and limits.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Utilities.BridgeModelAuditComponent",
     "guid": "7f95faaf-b353-4a1a-9e3f-c9189baa9272",
     "kind": "component",
@@ -666,6 +1100,22 @@
         "access": "item",
         "optional": false,
         "type": "Number"
+      },
+      {
+        "name": "Bridge Geometry",
+        "nickname": "BG",
+        "description": "Optional expected geometry: detects unassigned members/coverage gaps.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Phase Models",
+        "nickname": "P",
+        "description": "Optional phase snapshots: compare IDs, units, axes and offsets; property changes are allowed.",
+        "access": "list",
+        "optional": true,
+        "type": "Generic Data"
       }
     ],
     "outputs": [
@@ -6831,6 +7281,736 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSectionScheduleComponent",
+    "guid": "2cd3635e-8a72-4f8c-bb2f-bf4b76ff136c",
+    "kind": "component",
+    "name": "Bridge Section Schedule",
+    "nickname": "SectionSchedule",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Assign a property to a family/group/segment over an arc-length interval. Optional dimensional taper; overlapping rules are rejected.",
+    "inputs": [
+      {
+        "name": "Property",
+        "nickname": "P",
+        "description": "Beam property in N-mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Start",
+        "nickname": "S",
+        "description": "Start station, mm, inclusive.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "End",
+        "nickname": "E",
+        "description": "End station, mm, exclusive except bridge end.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Family",
+        "nickname": "F",
+        "description": "0 girder, 1 solid diaphragm, 2 top chord, 3 bottom chord, 4 post, 5 diagonal, 6 longitudinal bracing, 7 bracing post.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Group",
+        "nickname": "G",
+        "description": "0 all; otherwise girder number or diaphragm line.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Segment",
+        "nickname": "C",
+        "description": "0 all; otherwise fabrication segment or diaphragm bay.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Start Scale",
+        "nickname": "SF",
+        "description": "Section local x/y scale factors (X,Y); Z must be zero. Dimensional Straus taper, centred.",
+        "access": "item",
+        "optional": false,
+        "type": "Vector"
+      },
+      {
+        "name": "End Scale",
+        "nickname": "SE",
+        "description": "Section local x/y scale factors (X,Y), linearly varying along station interval.",
+        "access": "item",
+        "optional": false,
+        "type": "Vector"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Schedule",
+        "nickname": "S",
+        "description": "Connect one or more rules to Bridge Member Assignment.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeMemberAssignmentComponent",
+    "guid": "92ef4133-2716-4a81-9b70-ff01db7fd15d",
+    "kind": "component",
+    "name": "Bridge Member Assignment",
+    "nickname": "AssignBridge",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Convert Bridge Geometry into beams with physical IDs, groups and local section axes. No loads, restraints or analysis.",
+    "inputs": [
+      {
+        "name": "Bridge Geometry",
+        "nickname": "BG",
+        "description": "Typed output of Simple Bridge or Bridge Longitudinal Bracing.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Default Properties",
+        "nickname": "P",
+        "description": "Optional beam properties, paired with Families. Rules override these defaults.",
+        "access": "list",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Families",
+        "nickname": "F",
+        "description": "One code per default property. -1 applies to all families, or 0..7 for individual families.",
+        "access": "list",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Schedule",
+        "nickname": "S",
+        "description": "Optional Bridge Section Schedule entries; overlapping matching entries are rejected.",
+        "access": "list",
+        "optional": true,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Beams",
+        "nickname": "B",
+        "description": "Beam elements for Build Model, N-mm. Preview available through beam output/Preview BridGHe Model.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Physical IDs",
+        "nickname": "ID",
+        "description": "Mesh-independent family/group/segment identity paired with each beam.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Unassigned",
+        "nickname": "U",
+        "description": "Geometric member IDs without a property; an incomplete assignment must be resolved before export.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Counts, unused rules and assignment conventions.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeBearingsComponent",
+    "guid": "39cdb74c-d0d7-4c25-90be-3799a2787e0b",
+    "kind": "component",
+    "name": "Bridge Bearings",
+    "nickname": "Bearings",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Bridge bearing nodes with explicit local restraints or grounded springs, exported to Straus Cartesian UCS. No automatic stability claim.",
+    "inputs": [
+      {
+        "name": "Bridge Geometry",
+        "nickname": "BG",
+        "description": "Simple Bridge typed geometry in mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Supports",
+        "nickname": "S",
+        "description": "Support IDs, 1-based. Empty selects all.",
+        "access": "list",
+        "optional": true,
+        "type": "Integer"
+      },
+      {
+        "name": "Girders",
+        "nickname": "G",
+        "description": "Girder IDs, 1-based. Empty selects all.",
+        "access": "list",
+        "optional": true,
+        "type": "Integer"
+      },
+      {
+        "name": "Types",
+        "nickname": "T",
+        "description": "0 fixed translations, 1 longitudinal guide (free X), 2 multidirectional (free X/Y), 3 elastic. Rotations free except elastic stiffness. One or one per selected point.",
+        "access": "list",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Guide Angle",
+        "nickname": "A",
+        "description": "Rotation about bearing normal, degrees.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Translation Stiffness",
+        "nickname": "Kt",
+        "description": "Elastic X/Y/Z stiffnesses, N/mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Vector"
+      },
+      {
+        "name": "Rotation Stiffness",
+        "nickname": "Kr",
+        "description": "Elastic X/Y/Z rotational stiffnesses, N mm/rad.",
+        "access": "item",
+        "optional": false,
+        "type": "Vector"
+      },
+      {
+        "name": "Orientation",
+        "nickname": "F",
+        "description": "Optional shared orientation, origin reset at each bearing. Default: X horizontal alignment tangent, Y left, Z global up.",
+        "access": "item",
+        "optional": true,
+        "type": "Plane"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Nodes",
+        "nickname": "N",
+        "description": "Connect to Build Model with beam elements. No additional global restraint should be superimposed unintentionally.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Frames",
+        "nickname": "F",
+        "description": "Actual restraint frames X/Y/Z.",
+        "access": "list",
+        "optional": false,
+        "type": "Plane"
+      },
+      {
+        "name": "Labels",
+        "nickname": "ID",
+        "description": "Support/girder/type order.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeConnectionsComponent",
+    "guid": "66a0d167-4e5b-4ea1-9327-935c772fd97b",
+    "kind": "component",
+    "name": "Bridge Connections",
+    "nickname": "Connections",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Create native spatial rigid links, explicitly deformable beam/truss members, or assign beam section offsets. N-mm.",
+    "inputs": [
+      {
+        "name": "Mode",
+        "nickname": "M",
+        "description": "0 rigid links, 1 deformable members, 2 beam section offsets.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Connections",
+        "nickname": "L",
+        "description": "Connection axes; required in modes 0/1. Endpoints must join the intended FEM vertices.",
+        "access": "list",
+        "optional": true,
+        "type": "Line"
+      },
+      {
+        "name": "Property",
+        "nickname": "P",
+        "description": "Explicit Beam/Truss property, required only in mode 1.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Beams",
+        "nickname": "B",
+        "description": "Beams to duplicate and modify in mode 2; stored results are cleared.",
+        "access": "list",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Offset",
+        "nickname": "O",
+        "description": "Mode 2: local section x/y offsets, mm; Z must be zero. Sets the offset, does not increment it.",
+        "access": "item",
+        "optional": false,
+        "type": "Vector"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Elements",
+        "nickname": "E",
+        "description": "Nodes with rigid links or beam elements: connect to Build Model. Rigid link attributes survive model merging.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Chosen mechanical representation.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeConstructionSequenceComponent",
+    "guid": "b723e528-d958-4c30-a258-a9ae1b5fc2d3",
+    "kind": "component",
+    "name": "Bridge Construction Sequence",
+    "nickname": "Construction",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Prepare one explicit construction phase snapshot and, where representable, a native activation stage. Repeat per phase; no implicit force-history transfer.",
+    "inputs": [
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "Full assembled model, unchanged.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Phase",
+        "nickname": "P",
+        "description": "Numbered Bridge Phase; number/name/day identify the snapshot.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Active Groups",
+        "nickname": "G",
+        "description": "Exact full group paths; descendants included. Union with Physical IDs. Both lists empty selects all.",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Physical IDs",
+        "nickname": "ID",
+        "description": "Physical member IDs from Member Assignment, mesh independent.",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Active Bearing IDs",
+        "nickname": "B",
+        "description": "Exact FEM Node IDs. '*' all; leave empty with Enable Bearings=false to remove all.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Enable Bearings",
+        "nickname": "E",
+        "description": "False removes all nodal restraints/springs in the phase snapshot.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Girder Property",
+        "nickname": "S",
+        "description": "Optional explicit override on active longitudinal girders, e.g. steel/n0/n-infinity. No automatic change from phase label.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Load Increments",
+        "nickname": "LC",
+        "description": "Optional load combinations for a native group activation stage; do not infer incremental loads from cumulative states.",
+        "access": "list",
+        "optional": true,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Phase Model",
+        "nickname": "M",
+        "description": "Independent model snapshot; results cleared, existing loads retained on active elements.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Native Stage",
+        "nickname": "S",
+        "description": "Available only for group activation with unchanged bearings/properties and supplied increments. Connect ordered stages to the original full model.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Phase",
+        "nickname": "P",
+        "description": "Unchanged workflow phase; attach actions from subsequently solved models.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Active Physical IDs",
+        "nickname": "ID",
+        "description": "Selected physical member identities.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Available Groups",
+        "nickname": "G",
+        "description": "Full source group paths, including parents, for selection.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Snapshot/history distinction and native stage eligibility.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeDeckMeshComponent",
+    "guid": "87971a76-5aa5-4c78-938c-6da8bdeee793",
+    "kind": "component",
+    "name": "Bridge Deck Mesh",
+    "nickname": "DeckMesh",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Slab mid-surface FEM mesh with girder projection columns, pour boundaries and explicit connection lines. N-mm.",
+    "inputs": [
+      {
+        "name": "Bridge Geometry",
+        "nickname": "BG",
+        "description": "Typed Simple Bridge geometry.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Plate Property",
+        "nickname": "P",
+        "description": "Structural plate thicknesses must equal slab thickness. Steel-only girders are required with a structural deck.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Longitudinal Mesh Length",
+        "nickname": "L",
+        "description": "Maximum reference station interval, mm; existing geometry stations are retained.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Transverse Mesh Length",
+        "nickname": "W",
+        "description": "Maximum transverse interval, mm, with additional girder columns.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Pour Boundaries",
+        "nickname": "S",
+        "description": "Ordered internal stations, mm. Split mesh and define separate pour groups.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Triangles",
+        "nickname": "T",
+        "description": "True avoids warped quads; false produces quadrilateral plates.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Bridge Geometry",
+        "nickname": "BG",
+        "description": "Girder axes split at all deck attachment stations; use this output for Member Assignment.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Mesh",
+        "nickname": "M",
+        "description": "Open slab mid-surface mesh for preview.",
+        "access": "item",
+        "optional": false,
+        "type": "Mesh"
+      },
+      {
+        "name": "Plates",
+        "nickname": "P",
+        "description": "Plate elements to Build Model.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Connection Lines",
+        "nickname": "C",
+        "description": "Beam axis to deck vertex: connect to Bridge Connections. No automatic rigidity.",
+        "access": "list",
+        "optional": false,
+        "type": "Line"
+      },
+      {
+        "name": "Stations",
+        "nickname": "S",
+        "description": "Mesh stations along alignment, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Counts and modelling choices.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeDetailLayoutComponent",
+    "guid": "1fd6e3a9-14f3-478f-a3a4-d49b5c51d12c",
+    "kind": "component",
+    "name": "Bridge Detail Layout",
+    "nickname": "DetailLayout",
+    "category": "BridGHe",
+    "subcategory": "08-Bridge",
+    "description": "Place gPC studs and web stiffeners along girders; explicit steel top datum, geometry/quantities and matching check definitions.",
+    "inputs": [
+      {
+        "name": "Bridge Geometry",
+        "nickname": "BG",
+        "description": "Bridge geometry, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Section Geometry",
+        "nickname": "S",
+        "description": "gPC Bridge Section Geometry: H, inclined H or box.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Girders",
+        "nickname": "G",
+        "description": "Girder IDs; empty selects all.",
+        "access": "list",
+        "optional": true,
+        "type": "Integer"
+      },
+      {
+        "name": "Start",
+        "nickname": "A",
+        "description": "Inclusive start station, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "End",
+        "nickname": "B",
+        "description": "Exclusive end station, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Steel Top Offset",
+        "nickname": "Z",
+        "description": "Steel top surface above girder axis along deck normal, mm; not inferred from centroid.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Studs",
+        "nickname": "P",
+        "description": "Optional gPC Bridge Studs definition.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Intermediate Stiffener",
+        "nickname": "I",
+        "description": "Optional gPC intermediate stiffener.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Support Stiffener",
+        "nickname": "R",
+        "description": "Optional gPC support stiffener; actual support stations.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Stiffener Pitch",
+        "nickname": "L",
+        "description": "Automatic longitudinal pitch, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Stiffener Stations",
+        "nickname": "X",
+        "description": "Optional explicit stations override pitch; [Start,End).",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Stud Axes",
+        "nickname": "P",
+        "description": "One axis per stud.",
+        "access": "list",
+        "optional": false,
+        "type": "Line"
+      },
+      {
+        "name": "Stud Heads",
+        "nickname": "H",
+        "description": "Head outlines at stud top.",
+        "access": "list",
+        "optional": false,
+        "type": "Circle"
+      },
+      {
+        "name": "Stiffener Plates",
+        "nickname": "M",
+        "description": "Closed plate prisms for preview/quantities, not FEM plates.",
+        "access": "list",
+        "optional": false,
+        "type": "Mesh"
+      },
+      {
+        "name": "Details",
+        "nickname": "D",
+        "description": "gPC definitions paired with IDs/stations; use selected definitions in existing detail checks.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "IDs",
+        "nickname": "ID",
+        "description": "Detail row/position identifiers.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Stations",
+        "nickname": "S",
+        "description": "Detail progressive distances, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Counts and limitations.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSegmentsComponent",
     "guid": "190346aa-929b-443c-9a38-622dd4a497db",
     "kind": "component",
@@ -6943,6 +8123,242 @@
         "access": "item",
         "optional": false,
         "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeLongitudinalBracingComponent",
+    "guid": "4321ef9f-4f45-467a-beb3-aa92bdc86ce3",
+    "kind": "component",
+    "name": "Bridge Longitudinal Bracing",
+    "nickname": "LongBracing",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Add longitudinal plan bracing to typed geometry, with real attachment nodes and optional physical offset posts. mm.",
+    "inputs": [
+      {
+        "name": "Bridge Geometry",
+        "nickname": "BG",
+        "description": "Source geometry, unchanged.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Stations",
+        "nickname": "S",
+        "description": "Ordered panel boundaries along alignment, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Bays",
+        "nickname": "B",
+        "description": "Bay IDs 1..girders-1; empty selects all.",
+        "access": "list",
+        "optional": true,
+        "type": "Integer"
+      },
+      {
+        "name": "Pattern",
+        "nickname": "P",
+        "description": "0 X, 1 V, 2 alternating single diagonals.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Normal Offset",
+        "nickname": "Z",
+        "description": "Offset from girder axes along deck normal, mm. Nonzero generates physical posts (family 7).",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Connect X",
+        "nickname": "X",
+        "description": "Split actual 3D intersections; reject skew diagonals that do not intersect.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Omitted Panels",
+        "nickname": "O",
+        "description": "Panel numbers to omit, 1-based.",
+        "access": "list",
+        "optional": true,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Bridge Geometry",
+        "nickname": "BG",
+        "description": "Augmented geometry for Member Assignment. Existing girder axes split at attachment points.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Added Members",
+        "nickname": "L",
+        "description": "Families 6 and 7, with no assigned section or stiffness.",
+        "access": "list",
+        "optional": false,
+        "type": "Line"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Generation notes.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSpanAdvisorComponent",
+    "guid": "16259f7a-7258-4bae-84b7-1d275034ea27",
+    "kind": "component",
+    "name": "Bridge Span Advisor",
+    "nickname": "SpanAdvice",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Geometric span layouts outside forbidden XY regions. All lengths in mm; user-defined limits, no structural verification.",
+    "inputs": [
+      {
+        "name": "Alignment",
+        "nickname": "A",
+        "description": "Open 3D reference alignment, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Forbidden Regions",
+        "nickname": "R",
+        "description": "Closed horizontal boundaries; their XY footprints exclude support reference points.",
+        "access": "list",
+        "optional": true,
+        "type": "Curve"
+      },
+      {
+        "name": "Minimum Span",
+        "nickname": "Min",
+        "description": "User-selected minimum arc length, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Maximum Span",
+        "nickname": "Max",
+        "description": "User-selected maximum arc length, mm; not a verified structural limit.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Target Span",
+        "nickname": "L",
+        "description": "Preferred arc length, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Candidate Grid",
+        "nickname": "G",
+        "description": "Candidate station spacing, mm. Finer grid improves search resolution.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Clearance",
+        "nickname": "C",
+        "description": "Minimum XY distance from exclusion boundaries, mm. Include foundation footprint if required.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Alternatives",
+        "nickname": "N",
+        "description": "Number of ranked layouts, 1..10.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Pier Penalty",
+        "nickname": "P",
+        "description": "Nonnegative cost for each internal support; larger values favor fewer piers.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "End Span Ratio",
+        "nickname": "E",
+        "description": "Target end-span/target ratio, (0,1].",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Required Supports",
+        "nickname": "S",
+        "description": "Optional mandatory arc-length stations, mm. Start/end are always required.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Support Stations",
+        "nickname": "S",
+        "description": "One branch per alternative; select a branch for Simple Bridge.",
+        "access": "tree",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Support Points",
+        "nickname": "P",
+        "description": "3D reference support points; preview shows the best alternative.",
+        "access": "tree",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Span Lengths",
+        "nickname": "L",
+        "description": "Arc lengths, mm, one branch per alternative.",
+        "access": "tree",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Scores",
+        "nickname": "C",
+        "description": "Dimensionless geometric scores, lower is preferred.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Search resolution, objective and limitations.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
       }
     ]
   },
@@ -7173,6 +8589,14 @@
         "access": "list",
         "optional": false,
         "type": "Text"
+      },
+      {
+        "name": "Bridge Geometry",
+        "nickname": "BG",
+        "description": "Typed bridge geometry for assignment, bracing, bearings and detailing. mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
       }
     ]
   },
@@ -7403,6 +8827,14 @@
         "access": "list",
         "optional": false,
         "type": "Text"
+      },
+      {
+        "name": "Bridge Geometry",
+        "nickname": "BG",
+        "description": "Typed bridge geometry for assignment, bracing, bearings and detailing. mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
       }
     ]
   },

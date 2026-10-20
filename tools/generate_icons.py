@@ -67,6 +67,18 @@ def profile(kind, accent, rounded=False):
     return path(d, accent, 1 if rounded else 0, accent, fill_rule='evenodd')
 
 def glyph(name, a):
+    if name == 'bridge-advice': return path('M3 8H21M4 9L7 14H1ZM20 9L23 14H17ZM9 17L15 21M15 17L9 21',a,1.5)+arrow(7,5,17,5,a)
+    if name == 'bridge-assign': return path('M3 6H21M3 12H21M3 18H21M6 4V20',a,1.6)+circle(15,6,2,a)+circle(12,12,2,a)+circle(18,18,2,a)
+    if name == 'bridge-schedule': return path('M3 17H21M3 8H9V6H15V4H21M9 6V19M15 4V19',a,1.6)+path('M3 21H21',INK,1,stroke_dasharray='2 2')
+    if name == 'bridge-bearing': return path('M3 5H21M5 8H19M12 9L6 16H18ZM5 21H19',a,1.5)+circle(8,19,1.2,a)+circle(16,19,1.2,a)
+    if name == 'bridge-connection': return path('M4 4H13M11 20H20M8 4L16 20M6 8L14 4M10 20L18 16',a,1.8)+circle(8,4,2,'white',a,1.5)+circle(16,20,2,'white',a,1.5)
+    if name == 'bridge-bracing': return path('M3 5H21V19H3ZM3 5L12 19L21 5M3 19L12 5L21 19',a,1.5)
+    if name == 'bridge-deck': return path('M3 7L17 3L22 17L8 21ZM3 7L22 17M8 21L17 3M5.5 14L19.5 10M10 5L15 19',a,1.2)
+    if name == 'bridge-build': return path('M3 19H9V14H15V9H21M3 6H9M3 10H9M15 4H21',a,1.8)+arrow(4,22,21,22,a)
+    if name == 'bridge-details': return path('M3 9H21M3 20H21M8 9V20M16 9V20M6 3V9M18 3V9M4 3H8M16 3H20',a,1.6)
+    if name == 'bridge-camber': return path('M3 12H21M3 12Q12 1 21 12M3 12Q12 23 21 12',a,1.4)+arrow(12,12,12,5,a)
+    if name == 'bridge-history': return path('M3 3V21H22M4 17L8 5L12 14L16 8L20 17',a,1.5)+path('M8 5V17M16 8V14',INK,.8,stroke_dasharray='1 1')
+    if name == 'bridge-map': return path('M3 6H21M3 12H21M3 18H21M6 6V18M18 6V18',a,1.4)+circle(10,6,2.2,'#25815b')+circle(14,12,2.2,'#c44944')+circle(10,18,2.2,'#a5abb0')
     if name == 'bridge-solid':
         return path('M3 7H21M3 11H21M5 11V20M12 11V20M19 11V20', a, 2) + rect(4, 8, 16, 2, a)
     if name == 'bridge-truss':
@@ -197,6 +209,18 @@ def icon_svg(symbol, family, mark, title, parameter=False):
 
 # Each row is an explicit semantic assignment, never a generic unknown icon.
 ROWS = '''
+BridgeSpanAdvisorComponent|bridge-advice||model
+BridgeSectionScheduleComponent|bridge-schedule||model
+BridgeMemberAssignmentComponent|bridge-assign||model
+BridgeBearingsComponent|bridge-bearing||model
+BridgeConnectionsComponent|bridge-connection||model
+BridgeLongitudinalBracingComponent|bridge-bracing||model
+BridgeDeckMeshComponent|bridge-deck||model
+BridgeConstructionSequenceComponent|bridge-build||model
+BridgeDetailLayoutComponent|bridge-details||check
+BridgeDeflectionCamberComponent|bridge-camber||result
+BridgeFatigueHistoryComponent|bridge-history||result
+BridgeCheckMapComponent|bridge-map||result
 SimpleBridgeSolidComponent|bridge-solid||model
 SimpleBridgeTrussComponent|bridge-truss||model
 BridgeSegmentsComponent|bridge-segments||model
