@@ -27,6 +27,7 @@ internal static class BridgeDesignAuditTests
         var attribute = model.Beams[0].Attributes.OfType<BridgeMemberAttributeModel>().Single();
         attribute.Value = attribute.Value with { PhysicalId = null };
         Require(BridgeModelAudit.Inspect(model, 1e-6, geometry).Any(i => i.Code == "INVALID_BRIDGE_IDENTITY"), "Malformed identity is diagnosed without throwing");
+        Require(BridgeModelAudit.Inspect(model, 1e-6, null, new ModelModel[] { null }).Any(i => i.Code == "EMPTY_PHASE_MODEL"), "Missing phase is reported explicitly");
         Console.WriteLine("BRIDGE DESIGN AUDIT PASS: missing assignment, local axis drift, phase geometry, bearing frame conflicts and collapsed links.");
     }
     private static void Require(bool value, string text) { if (!value) throw new InvalidOperationException("BRIDGE AUDIT: " + text); }
