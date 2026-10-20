@@ -16,6 +16,7 @@ internal static class RegressionTests
             ["bridge-span-advisor"] = BridgeSpanAdvisorTests.Run,
             ["bridge-assignment"] = BridgeAssignmentTests.Run,
             ["bridge-bearings"] = BridgeBearingTests.Run,
+            ["bridge-connections"] = BridgeConnectionTests.Run,
             ["simple-bridge-components"] = () => SimpleBridgeExamples.Run(),
             ["bridge-utilities"] = BridgeUtilityTests.Run,
             ["bridge-utility-components"] = () => BridgeUtilityExamples.Run(),

@@ -817,6 +817,8 @@ namespace BridGHe.Common.Helpers
                     }
                 }
 
+                RigidConnectionExport.Export(modelId, model, tolerance);
+
                 // Beams
                 HashSet<int> addedBeamsId = new HashSet<int>();
                 //var ordered = model.Beams.OrderBy(k => k.BeamId).ToArray();
