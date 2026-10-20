@@ -57,6 +57,7 @@ public abstract class SimpleBridgeComponent : BridgeUtilityComponent
         p.AddTextParameter("Topology", "TB", "Semicolon table: ID, family, group, segment, span, node1, node2, station1, station2. Span=0 for diaphragm members or start overhang.", GH_ParamAccess.list);
         p.AddTextParameter("Segment Ranges", "C", "Girder;segment;start;end in mm. A segment can cross a support.", GH_ParamAccess.list);
         p.AddTextParameter("Information", "I", "Geometry counts, conventions and limitations.", GH_ParamAccess.list);
+        p.AddGenericParameter("Bridge Geometry", "BG", "Typed bridge geometry for assignment, bracing, bearings and detailing. mm.", GH_ParamAccess.item);
     }
 
     protected override void BeforeSolveInstance() { base.BeforeSolveInstance(); preview.Clear(); }
@@ -110,6 +111,7 @@ public abstract class SimpleBridgeComponent : BridgeUtilityComponent
         da.SetDataList(12, new[] { "Girder;Segment;Start_mm;End_mm" }.Concat(result.Segments.Select(s =>
             FormattableString.Invariant($"{s.Girder};{s.Segment};{s.Start:G17};{s.End:G17}"))));
         da.SetDataList(13, result.Diagnostics); Message = $"{result.Members.Count} axes";
+        da.SetData(14, new BridgeGeometryGoo(result));
     }
 
     public override BoundingBox ClippingBox

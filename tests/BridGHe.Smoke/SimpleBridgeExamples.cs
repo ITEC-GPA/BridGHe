@@ -42,6 +42,19 @@ internal static class SimpleBridgeExamples
     internal static void Run(bool generate = false)
     {
         plugin = BridgeMergeTests.Initialize();
+        var geometryType = plugin.GetType("BridGHe.Grasshopper.DataTypes.BridgeGeometryGoo", true);
+        var geometry = SimpleBridgeBuilder.Build(SimpleBridgeTests.Input());
+        var geometryGoo = (IGH_Goo)Activator.CreateInstance(geometryType, geometry);
+        var geometryArchive = new GH_IO.Serialization.GH_Archive();
+        SimpleBridgeTests.Require(geometryArchive.AppendObject(geometryGoo, "geometry"), "Typed geometry archive writes");
+        var restoredGeometryGoo = (IGH_Goo)Activator.CreateInstance(geometryType);
+        SimpleBridgeTests.Require(geometryArchive.ExtractObject(restoredGeometryGoo, "geometry"), "Typed geometry archive reads");
+        var restoredGeometry = (SimpleBridgeGeometry)geometryType.GetProperty("Value").GetValue(restoredGeometryGoo);
+        SimpleBridgeTests.Require(restoredGeometry.Members.SequenceEqual(geometry.Members) && restoredGeometry.Deck.IsClosed &&
+            restoredGeometry.Frames.SequenceEqual(geometry.Frames), "Typed geometry preserves topology, frames and deck");
+        var geometryCopy = (SimpleBridgeGeometry)geometryType.GetProperty("Value").GetValue(geometryGoo.Duplicate());
+        geometryCopy.Members.Clear();
+        SimpleBridgeTests.Require(geometry.Members.Count > 0, "Typed geometry duplication is independent");
         var settingsType = plugin.GetType("BridGHe.Grasshopper.DataTypes.BridgeLayoutGoo", true);
         var settings = new BridgeSegments { Joints = new() { [2] = new[] { 18000d, 36000 } } };
         var originalGoo = (IGH_Goo)Activator.CreateInstance(settingsType, settings);

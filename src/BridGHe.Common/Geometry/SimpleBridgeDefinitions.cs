@@ -48,14 +48,22 @@ public sealed record SimpleBridgeInput
 
 public enum BridgeMemberFamily { Girder, SolidDiaphragm, TopChord, BottomChord, Post, Diagonal }
 
+[Serializable]
 public sealed record BridgeGeometryMember(string Id, BridgeMemberFamily Family, int Group, int Segment,
-    int Span, int NodeFrom, int NodeTo, Line Axis, double StationFrom, double StationTo);
+    int Span, int NodeFrom, int NodeTo, Line Axis, double StationFrom, double StationTo)
+{
+    public string PhysicalId => $"{Family}:{Group}:{Segment}";
+}
 
+[Serializable]
 public sealed record BridgeSegmentRange(int Girder, int Segment, double Start, double End);
+[Serializable]
 public sealed record BridgeSupportPoint(int Support, int Girder, double Station, Point3d Point);
+[Serializable]
 public sealed record BridgeJointPoint(int Girder, int Joint, double Station, Point3d Point);
 
 /// <summary>Geometric axes only. No FE properties, constraints, releases, links or loads.</summary>
+[Serializable]
 public sealed class SimpleBridgeGeometry
 {
     public List<BridgeGeometryMember> Members { get; } = new();
