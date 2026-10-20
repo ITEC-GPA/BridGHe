@@ -976,6 +976,42 @@
       "badge": "stress"
     },
     {
+      "key": "BridgeSegmentsComponent",
+      "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSegmentsComponent",
+      "guid": "190346aa-929b-443c-9a38-622dd4a497db",
+      "name": "Bridge Segments",
+      "family": "model",
+      "glyph": "bridge-segments",
+      "badge": ""
+    },
+    {
+      "key": "BridgeDiaphragmsComponent",
+      "type": "BridGHe.Grasshopper.Components.Geometry.BridgeDiaphragmsComponent",
+      "guid": "7b70afbe-36b1-4880-9d3e-852628d0dbbc",
+      "name": "Bridge Diaphragms",
+      "family": "model",
+      "glyph": "bridge-diaphragms",
+      "badge": ""
+    },
+    {
+      "key": "SimpleBridgeSolidComponent",
+      "type": "BridGHe.Grasshopper.Components.Geometry.SimpleBridgeSolidComponent",
+      "guid": "e3eeef52-dba7-4bb0-8131-57d6956edf58",
+      "name": "Simple Bridge — Solid Diaphragms",
+      "family": "model",
+      "glyph": "bridge-solid",
+      "badge": ""
+    },
+    {
+      "key": "SimpleBridgeTrussComponent",
+      "type": "BridGHe.Grasshopper.Components.Geometry.SimpleBridgeTrussComponent",
+      "guid": "dc7cfadf-84f8-4ebd-8a49-17782694754e",
+      "name": "Simple Bridge — Truss Diaphragms",
+      "family": "model",
+      "glyph": "bridge-truss",
+      "badge": ""
+    },
+    {
       "key": "StrausR3ExportComponent",
       "type": "BridGHe.Grasshopper.Components.Export.StrausR3ExportComponent",
       "guid": "fa0981e2-710c-41ed-9a60-98bc102def94",

@@ -67,6 +67,14 @@ def profile(kind, accent, rounded=False):
     return path(d, accent, 1 if rounded else 0, accent, fill_rule='evenodd')
 
 def glyph(name, a):
+    if name == 'bridge-solid':
+        return path('M3 7H21M3 11H21M5 11V20M12 11V20M19 11V20', a, 2) + rect(4, 8, 16, 2, a)
+    if name == 'bridge-truss':
+        return path('M3 7H21M3 16H21M3 7L9 16L15 7L21 16M5 16V21M19 16V21', a, 1.6)
+    if name == 'bridge-segments':
+        return path('M3 8H21M3 15H21M7 5V18M16 5V18', a, 1.7) + circle(7, 15, 2, 'white', INK) + circle(16, 8, 2, 'white', INK)
+    if name == 'bridge-diaphragms':
+        return path('M5 3L3 21M12 3V21M19 3L21 21M4.5 7H19.5M4 12H20M3.5 17H20.5', a, 1.5)
     if name == 'studs':
         return rect(3,17,18,4,INK) + path('M7 17V7M17 17V7M4 6H10M14 6H20',a,2.5)
     if name == 'stiffener':
@@ -189,6 +197,10 @@ def icon_svg(symbol, family, mark, title, parameter=False):
 
 # Each row is an explicit semantic assignment, never a generic unknown icon.
 ROWS = '''
+SimpleBridgeSolidComponent|bridge-solid||model
+SimpleBridgeTrussComponent|bridge-truss||model
+BridgeSegmentsComponent|bridge-segments||model
+BridgeDiaphragmsComponent|bridge-diaphragms||model
 BridgeModelAuditComponent|model|check|tool
 BridgePhaseModelComponent|model|stages|model
 BridgeBeamEnvelopeComponent|beam|measure|result

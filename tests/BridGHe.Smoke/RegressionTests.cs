@@ -12,6 +12,8 @@ internal static class RegressionTests
         BridgeMergeTests.Initialize(); // Register before the first GH document can trigger plugin discovery.
         var tests = new Dictionary<string, Action>
         {
+            ["simple-bridge"] = SimpleBridgeTests.Run,
+            ["simple-bridge-components"] = () => SimpleBridgeExamples.Run(),
             ["bridge-utilities"] = BridgeUtilityTests.Run,
             ["bridge-utility-components"] = () => BridgeUtilityExamples.Run(),
             ["plot-preview"] = PlotPreviewTests.Run,

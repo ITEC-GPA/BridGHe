@@ -1,6 +1,6 @@
 # Inventario dei componenti 0.1.0
 
-153 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
+157 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
 
 ## BridGHe / 01-Parameters
 
@@ -92,9 +92,11 @@
 |---|---|---|---|
 | Beam | component | Line; Property; Groups; Angle; Offset | Beam |
 | Bridge Action | component | Action ID; Model; Case; Behavior; Beam IDs | Action |
+| Bridge Diaphragms | component | Stations; Maximum Spacing; At Supports; Truss Height; Panels per Bay; Pattern; Connect X | Diaphragms |
 | Bridge Phase | component | Number; Name; Section State; Actions; Day | Phase |
 | Bridge Phase Model | component | Model; Name; Beam IDs; Property; Clear loads | Model |
 | Bridge Phase Table | component | Phases | Phases; Number; Name; Day; Section state; Action ID; Behavior; Source; Case; Strain |
+| Bridge Segments | component | Joints; Maximum Length | Segments |
 | Bridge Shrinkage Action | component | Action ID; Model; Case; Strain increment; Beam IDs; Primary Only; Response | Action |
 | Build BridGHe Model | component | Models; Phases; Combinations; Calculation | Model; Phases; Diagnostics |
 | Build Model | component | Elements; Name; Units; Load Combinations; Staged constructions | Model |
@@ -103,6 +105,8 @@
 | Merge Model | component | Elements; Tolerance | BridGHe Nodes; BridGHe Beams; BridGHe Plates |
 | Node | component | Point | Node |
 | Plate | component | Mesh; Property; Groups; Angle; Offset | Plate |
+| Simple Bridge — Solid Diaphragms | component | Alignment; Support Stations; Girder Offsets; Girder Levels; Deck Widths; Deck Thickness; Crossfall; Segments; Diaphragms; Maximum Element Length; Chord Tolerance; Support Skew; Labels | Members; Member IDs; Longitudinals; Diaphragm Members; Nodes; Support Points; Joint Points; Deck; Deck Edges; Frames; Stations; Topology; Segment Ranges; Information |
+| Simple Bridge — Truss Diaphragms | component | Alignment; Support Stations; Girder Offsets; Girder Levels; Deck Widths; Deck Thickness; Crossfall; Segments; Diaphragms; Maximum Element Length; Chord Tolerance; Support Skew; Labels | Members; Member IDs; Longitudinals; Diaphragm Members; Nodes; Support Points; Joint Points; Deck; Deck Edges; Frames; Stations; Topology; Segment Ranges; Information |
 
 ## BridGHe / 07-Attributes
 

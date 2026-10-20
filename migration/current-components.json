@@ -6831,6 +6831,582 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSegmentsComponent",
+    "guid": "190346aa-929b-443c-9a38-622dd4a497db",
+    "kind": "component",
+    "name": "Bridge Segments",
+    "nickname": "Segments",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Girder fabrication joints in mm. Independent of supports, FE mesh and construction phases.",
+    "inputs": [
+      {
+        "name": "Joints",
+        "nickname": "J",
+        "description": "Ordered joint distances in mm. Branch {0}: common joints; {1}..{N}: additional joints for each girder. Non-empty explicit joints replace automatic subdivision for that girder.",
+        "access": "tree",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Maximum Length",
+        "nickname": "L",
+        "description": "Automatic equal segment subdivision when no explicit joints apply. Zero: a single segment. mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Segments",
+        "nickname": "S",
+        "description": "Connect to either Simple Bridge component. A joint does not create a release.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeDiaphragmsComponent",
+    "guid": "7b70afbe-36b1-4880-9d3e-852628d0dbbc",
+    "kind": "component",
+    "name": "Bridge Diaphragms",
+    "nickname": "Diaphragms",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Locations and truss layout for Simple Bridge. All lengths in mm; creates no stiffness or releases.",
+    "inputs": [
+      {
+        "name": "Stations",
+        "nickname": "S",
+        "description": "Explicit ordered distances; if empty, use Maximum Spacing.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Maximum Spacing",
+        "nickname": "L",
+        "description": "Automatic spacing in each span/overhang; zero: explicit/support lines only. mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "At Supports",
+        "nickname": "AS",
+        "description": "Add support lines with their skew. False omits supports from automatic grids; explicit Stations remain authoritative.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Truss Height",
+        "nickname": "H",
+        "description": "Total depth centred on the girder reference axes, along the diaphragm frame normal. Used only by Truss. mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Panels per Bay",
+        "nickname": "P",
+        "description": "Number of truss panels between adjacent girders.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Pattern",
+        "nickname": "T",
+        "description": "0 X, 1 V, 2 Warren. Warren has alternating diagonals and no internal posts.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Connect X",
+        "nickname": "X",
+        "description": "Split both X diagonals at their common centre. False: crossing without a node. No releases are assigned.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Diaphragms",
+        "nickname": "D",
+        "description": "Connect to Simple Bridge.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.SimpleBridgeSolidComponent",
+    "guid": "e3eeef52-dba7-4bb0-8131-57d6956edf58",
+    "kind": "component",
+    "name": "Simple Bridge — Solid Diaphragms",
+    "nickname": "BridgeSolid",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Multispan bridge geometry in mm, from a 3D top-of-deck reference alignment. Generates axes, slab, joints and topology; no materials, sections, loads, supports or releases are assigned.",
+    "inputs": [
+      {
+        "name": "Alignment",
+        "nickname": "A",
+        "description": "Open tangent-continuous curve at deck top reference, in mm. Direction sets stations and local left.",
+        "access": "item",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Support Stations",
+        "nickname": "S",
+        "description": "Ordered spandrel/pier distances along alignment in mm, minimum two. Points only; no restraints.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Girder Offsets",
+        "nickname": "Y",
+        "description": "Ordered signed distances: negative right, positive left looking along alignment. mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Girder Levels",
+        "nickname": "Z",
+        "description": "One or one per girder. Normal offsets below deck top reference, negative in mm. Reference axes, not inferred centroids.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Deck Widths",
+        "nickname": "W",
+        "description": "Left and right distances from alignment; one value makes them equal. mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Deck Thickness",
+        "nickname": "H",
+        "description": "Geometric slab thickness along local normal. mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Crossfall",
+        "nickname": "%",
+        "description": "Optional tree: one value for constant slope %, or one {station mm, slope %} pair per branch covering the alignment. Positive raises left edge.",
+        "access": "tree",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Segments",
+        "nickname": "C",
+        "description": "Optional Bridge Segments. Default: maximum 12000 mm, independent of spans.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Diaphragms",
+        "nickname": "D",
+        "description": "Optional Bridge Diaphragms. Default: maximum 5000 mm and support lines; truss X, height 1500 mm, two panels/bay.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Maximum Element Length",
+        "nickname": "L",
+        "description": "Maximum chord length, in mm, on all longitudinal axes and slab edges.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Chord Tolerance",
+        "nickname": "T",
+        "description": "Adaptive deviation tolerance in mm, checked at quarter/mid/three-quarter points of each interval.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Support Skew",
+        "nickname": "K",
+        "description": "One angle or one per support, degrees from the local transverse line towards the tangent. Skew ends need sufficient alignment beyond supports.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Labels",
+        "nickname": "ID",
+        "description": "Show girder/segment joints and support IDs in preview.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Members",
+        "nickname": "M",
+        "description": "All member axes. Paths {family;group;segment}. Families: 0 girders, 1 solid diaphragms, 2 top, 3 bottom, 4 posts, 5 diagonals. Connect to Beam with explicit properties.",
+        "access": "tree",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Member IDs",
+        "nickname": "ID",
+        "description": "Same paths/order as Members; deterministic for identical inputs. Connect to Element ID after Beam.",
+        "access": "tree",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Longitudinals",
+        "nickname": "G",
+        "description": "Girder axes, paths {girder;fabrication segment}, one-based. Joints do not imply releases.",
+        "access": "tree",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Diaphragm Members",
+        "nickname": "D",
+        "description": "Paths {family;diaphragm line;bay/girder}. Select families before assigning properties.",
+        "access": "tree",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Nodes",
+        "nickname": "N",
+        "description": "Unique member endpoints. Position in list + 1 is the topology node number.",
+        "access": "list",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Support Points",
+        "nickname": "S",
+        "description": "Paths {support;girder}; actual intersections including skew. Geometric points only.",
+        "access": "tree",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Joint Points",
+        "nickname": "J",
+        "description": "Paths {girder;joint}; fabrication joints, not FE hinges.",
+        "access": "tree",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Deck",
+        "nickname": "DK",
+        "description": "Closed geometric slab mesh; not a plate FEM mesh.",
+        "access": "item",
+        "optional": false,
+        "type": "Mesh"
+      },
+      {
+        "name": "Deck Edges",
+        "nickname": "E",
+        "description": "Left and right top edges.",
+        "access": "list",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Frames",
+        "nickname": "F",
+        "description": "X towards local left, Y deck normal, Z alignment tangent, at Stations.",
+        "access": "list",
+        "optional": false,
+        "type": "Plane"
+      },
+      {
+        "name": "Stations",
+        "nickname": "X",
+        "description": "Physical mm along reference alignment, common refined longitudinal grid.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Topology",
+        "nickname": "TB",
+        "description": "Semicolon table: ID, family, group, segment, span, node1, node2, station1, station2. Span=0 for diaphragm members or start overhang.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Segment Ranges",
+        "nickname": "C",
+        "description": "Girder;segment;start;end in mm. A segment can cross a support.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Geometry counts, conventions and limitations.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.SimpleBridgeTrussComponent",
+    "guid": "dc7cfadf-84f8-4ebd-8a49-17782694754e",
+    "kind": "component",
+    "name": "Simple Bridge — Truss Diaphragms",
+    "nickname": "BridgeTruss",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Multispan bridge geometry in mm, from a 3D top-of-deck reference alignment. Generates axes, slab, joints and topology; no materials, sections, loads, supports or releases are assigned.",
+    "inputs": [
+      {
+        "name": "Alignment",
+        "nickname": "A",
+        "description": "Open tangent-continuous curve at deck top reference, in mm. Direction sets stations and local left.",
+        "access": "item",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Support Stations",
+        "nickname": "S",
+        "description": "Ordered spandrel/pier distances along alignment in mm, minimum two. Points only; no restraints.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Girder Offsets",
+        "nickname": "Y",
+        "description": "Ordered signed distances: negative right, positive left looking along alignment. mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Girder Levels",
+        "nickname": "Z",
+        "description": "One or one per girder. Normal offsets below deck top reference, negative in mm. Reference axes, not inferred centroids.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Deck Widths",
+        "nickname": "W",
+        "description": "Left and right distances from alignment; one value makes them equal. mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Deck Thickness",
+        "nickname": "H",
+        "description": "Geometric slab thickness along local normal. mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Crossfall",
+        "nickname": "%",
+        "description": "Optional tree: one value for constant slope %, or one {station mm, slope %} pair per branch covering the alignment. Positive raises left edge.",
+        "access": "tree",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Segments",
+        "nickname": "C",
+        "description": "Optional Bridge Segments. Default: maximum 12000 mm, independent of spans.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Diaphragms",
+        "nickname": "D",
+        "description": "Optional Bridge Diaphragms. Default: maximum 5000 mm and support lines; truss X, height 1500 mm, two panels/bay.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Maximum Element Length",
+        "nickname": "L",
+        "description": "Maximum chord length, in mm, on all longitudinal axes and slab edges.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Chord Tolerance",
+        "nickname": "T",
+        "description": "Adaptive deviation tolerance in mm, checked at quarter/mid/three-quarter points of each interval.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Support Skew",
+        "nickname": "K",
+        "description": "One angle or one per support, degrees from the local transverse line towards the tangent. Skew ends need sufficient alignment beyond supports.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Labels",
+        "nickname": "ID",
+        "description": "Show girder/segment joints and support IDs in preview.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Members",
+        "nickname": "M",
+        "description": "All member axes. Paths {family;group;segment}. Families: 0 girders, 1 solid diaphragms, 2 top, 3 bottom, 4 posts, 5 diagonals. Connect to Beam with explicit properties.",
+        "access": "tree",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Member IDs",
+        "nickname": "ID",
+        "description": "Same paths/order as Members; deterministic for identical inputs. Connect to Element ID after Beam.",
+        "access": "tree",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Longitudinals",
+        "nickname": "G",
+        "description": "Girder axes, paths {girder;fabrication segment}, one-based. Joints do not imply releases.",
+        "access": "tree",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Diaphragm Members",
+        "nickname": "D",
+        "description": "Paths {family;diaphragm line;bay/girder}. Select families before assigning properties.",
+        "access": "tree",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Nodes",
+        "nickname": "N",
+        "description": "Unique member endpoints. Position in list + 1 is the topology node number.",
+        "access": "list",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Support Points",
+        "nickname": "S",
+        "description": "Paths {support;girder}; actual intersections including skew. Geometric points only.",
+        "access": "tree",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Joint Points",
+        "nickname": "J",
+        "description": "Paths {girder;joint}; fabrication joints, not FE hinges.",
+        "access": "tree",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Deck",
+        "nickname": "DK",
+        "description": "Closed geometric slab mesh; not a plate FEM mesh.",
+        "access": "item",
+        "optional": false,
+        "type": "Mesh"
+      },
+      {
+        "name": "Deck Edges",
+        "nickname": "E",
+        "description": "Left and right top edges.",
+        "access": "list",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Frames",
+        "nickname": "F",
+        "description": "X towards local left, Y deck normal, Z alignment tangent, at Stations.",
+        "access": "list",
+        "optional": false,
+        "type": "Plane"
+      },
+      {
+        "name": "Stations",
+        "nickname": "X",
+        "description": "Physical mm along reference alignment, common refined longitudinal grid.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Topology",
+        "nickname": "TB",
+        "description": "Semicolon table: ID, family, group, segment, span, node1, node2, station1, station2. Span=0 for diaphragm members or start overhang.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Segment Ranges",
+        "nickname": "C",
+        "description": "Girder;segment;start;end in mm. A segment can cross a support.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Geometry counts, conventions and limitations.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Export.StrausR3ExportComponent",
     "guid": "fa0981e2-710c-41ed-9a60-98bc102def94",
     "kind": "component",

@@ -283,6 +283,20 @@
         "fa0981e2-710c-41ed-9a60-98bc102def94"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/Geometry/BridgeLayoutComponents.cs": {
+      "ports": "52122b0c5be1459aee4208ecfe633442ee00514653e8d06f8a4194a08447f342",
+      "guids": [
+        "190346aa-929b-443c-9a38-622dd4a497db",
+        "7b70afbe-36b1-4880-9d3e-852628d0dbbc"
+      ]
+    },
+    "src/BridGHe.Grasshopper/Components/Geometry/SimpleBridgeComponents.cs": {
+      "ports": "940b0a93e014eb4153a67fd7915311198c9c60e9a0d3f3747c62bd7d95b4da5c",
+      "guids": [
+        "e3eeef52-dba7-4bb0-8131-57d6956edf58",
+        "dc7cfadf-84f8-4ebd-8a49-17782694754e"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/Loads/BeamDistributedLoadComponent.cs": {
       "ports": "e56bd864f1bc298401fa1c4308501059b7404a883189d696b8bb805e45307847",
       "guids": [
