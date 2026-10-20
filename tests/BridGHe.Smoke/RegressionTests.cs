@@ -21,6 +21,7 @@ internal static class RegressionTests
             ["bridge-deck"] = BridgeMeshTests.Deck,
             ["bridge-construction"] = BridgeConstructionTests.Run,
             ["bridge-detail-layout"] = BridgeDetailLayoutTests.Run,
+            ["bridge-deflection"] = BridgeDeflectionTests.Run,
             ["simple-bridge-components"] = () => SimpleBridgeExamples.Run(),
             ["bridge-utilities"] = BridgeUtilityTests.Run,
             ["bridge-utility-components"] = () => BridgeUtilityExamples.Run(),
