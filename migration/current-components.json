@@ -6967,7 +6967,7 @@
       {
         "name": "Support Stations",
         "nickname": "S",
-        "description": "Ordered spandrel/pier distances along alignment in mm, minimum two. Points only; no restraints.",
+        "description": "Ordered abutment/pier distances along alignment in mm, minimum two. Points only; no restraints.",
         "access": "list",
         "optional": false,
         "type": "Number"
@@ -7197,7 +7197,7 @@
       {
         "name": "Support Stations",
         "nickname": "S",
-        "description": "Ordered spandrel/pier distances along alignment in mm, minimum two. Points only; no restraints.",
+        "description": "Ordered abutment/pier distances along alignment in mm, minimum two. Points only; no restraints.",
         "access": "list",
         "optional": false,
         "type": "Number"

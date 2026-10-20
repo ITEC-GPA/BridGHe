@@ -1,0 +1,15 @@
+{
+  "example": "30-simple-bridge-pieno-curvo",
+  "geometryOnly": true,
+  "solverInvoked": false,
+  "solved": true,
+  "reopened": true,
+  "members": 255,
+  "nodes": 216,
+  "segments": 25,
+  "supports": 12,
+  "joints": 22,
+  "truss": false,
+  "curved": true,
+  "pattern": "Warren"
+}

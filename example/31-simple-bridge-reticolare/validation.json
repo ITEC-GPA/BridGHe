@@ -1,0 +1,15 @@
+{
+  "example": "31-simple-bridge-reticolare",
+  "geometryOnly": true,
+  "solverInvoked": false,
+  "solved": true,
+  "reopened": true,
+  "members": 717,
+  "nodes": 426,
+  "segments": 25,
+  "supports": 12,
+  "joints": 22,
+  "truss": true,
+  "curved": false,
+  "pattern": "X"
+}

@@ -66,3 +66,12 @@ I calcoli e i pacchetti nativi rimangono disponibili localmente ma sono esclusi 
 - [26 · Riepilogo dei controlli GPC](26-riepilogo-verifiche-gpc/README.md)
 - [27 · Incrementi di ritiro e confronto dei risultati](27-ritiro-confronti/README.md)
 - [28 · Percorsi mobili paralleli](28-corsie-mobili/README.md)
+
+## Geometria parametrica Simple Bridge 29–32
+
+- [29 · Traversi pieni, rettilineo](29-simple-bridge-pieno/README.md)
+- [30 · Traversi pieni, curva](30-simple-bridge-pieno-curvo/README.md)
+- [31 · Traversi reticolari, rettilineo](31-simple-bridge-reticolare/README.md)
+- [32 · Traversi reticolari, curva](32-simple-bridge-reticolare-curvo/README.md)
+
+I quattro esempi generano geometria senza solutore: campate 30+40+30 m, tre travi, conci indipendenti dalle campate, giunti sfalsati, pendenza trasversale e appoggi geometrici sghembi. Ogni README contiene prove guidate e il report di soluzione/riapertura. [Guida ai componenti](../docs/SIMPLE-BRIDGE.md).

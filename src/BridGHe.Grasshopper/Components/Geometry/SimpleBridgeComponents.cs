@@ -27,7 +27,7 @@ public abstract class SimpleBridgeComponent : BridgeUtilityComponent
     protected override void RegisterInputParams(GH_InputParamManager p)
     {
         p.AddCurveParameter("Alignment", "A", "Open tangent-continuous curve at deck top reference, in mm. Direction sets stations and local left.", GH_ParamAccess.item);
-        p.AddNumberParameter("Support Stations", "S", "Ordered spandrel/pier distances along alignment in mm, minimum two. Points only; no restraints.", GH_ParamAccess.list);
+        p.AddNumberParameter("Support Stations", "S", "Ordered abutment/pier distances along alignment in mm, minimum two. Points only; no restraints.", GH_ParamAccess.list);
         p.AddNumberParameter("Girder Offsets", "Y", "Ordered signed distances: negative right, positive left looking along alignment. mm.", GH_ParamAccess.list);
         p.AddNumberParameter("Girder Levels", "Z", "One or one per girder. Normal offsets below deck top reference, negative in mm. Reference axes, not inferred centroids.", GH_ParamAccess.list, -1500);
         p.AddNumberParameter("Deck Widths", "W", "Left and right distances from alignment; one value makes them equal. mm.", GH_ParamAccess.list, 6000);

@@ -250,5 +250,41 @@
     "readme": "28-corsie-mobili/README.md",
     "definition": "28-corsie-mobili/28-corsie-mobili.ghx",
     "calculations": "28-corsie-mobili/calcoli"
+  },
+  {
+    "number": 29,
+    "id": "29-simple-bridge-pieno",
+    "title": "Simple Bridge: traversi pieni, rettilineo",
+    "group": "Geometria parametrica",
+    "readme": "29-simple-bridge-pieno/README.md",
+    "definition": "29-simple-bridge-pieno/29-simple-bridge-pieno.ghx",
+    "calculations": "29-simple-bridge-pieno/calcoli"
+  },
+  {
+    "number": 30,
+    "id": "30-simple-bridge-pieno-curvo",
+    "title": "Simple Bridge: traversi pieni, curva",
+    "group": "Geometria parametrica",
+    "readme": "30-simple-bridge-pieno-curvo/README.md",
+    "definition": "30-simple-bridge-pieno-curvo/30-simple-bridge-pieno-curvo.ghx",
+    "calculations": "30-simple-bridge-pieno-curvo/calcoli"
+  },
+  {
+    "number": 31,
+    "id": "31-simple-bridge-reticolare",
+    "title": "Simple Bridge: traversi reticolari a X",
+    "group": "Geometria parametrica",
+    "readme": "31-simple-bridge-reticolare/README.md",
+    "definition": "31-simple-bridge-reticolare/31-simple-bridge-reticolare.ghx",
+    "calculations": "31-simple-bridge-reticolare/calcoli"
+  },
+  {
+    "number": 32,
+    "id": "32-simple-bridge-reticolare-curvo",
+    "title": "Simple Bridge: reticolo Warren, curva",
+    "group": "Geometria parametrica",
+    "readme": "32-simple-bridge-reticolare-curvo/README.md",
+    "definition": "32-simple-bridge-reticolare-curvo/32-simple-bridge-reticolare-curvo.ghx",
+    "calculations": "32-simple-bridge-reticolare-curvo/calcoli"
   }
 ]
