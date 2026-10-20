@@ -13,6 +13,9 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
     {
         GH_Material _material;
 
+        // Grasshopper instantiates persistent generic data before calling Read.
+        public GH_PlateProperty() { }
+
         public GH_PlateProperty(PlatePropertyModel plateProperty)
         {
             Value = plateProperty;

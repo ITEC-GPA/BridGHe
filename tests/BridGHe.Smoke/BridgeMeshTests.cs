@@ -38,6 +38,14 @@ internal static class BridgeMeshTests
     }
     internal static void Deck()
     {
+        var plugin = BridgeMergeTests.Initialize();
+        var type = plugin.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_PlateProperty", true);
+        var goo = (Grasshopper.Kernel.Types.IGH_Goo)Activator.CreateInstance(type, DeckProperty());
+        var archive = new GH_IO.Serialization.GH_Archive();
+        Require(archive.AppendObject(goo, "property"), "Persistent shell property writes");
+        var restored = (Grasshopper.Kernel.Types.IGH_Goo)Activator.CreateInstance(type);
+        Require(archive.ExtractObject(restored, "property") && restored.IsValid &&
+            ((PlatePropertyModel)restored.ScriptVariable()).MembraneThickness == 250, "Persistent shell property can be instantiated and restored");
         var source = SimpleBridgeBuilder.Build(SimpleBridgeTests.Input());
         int sourceCount = source.Members.Count;
         var result = BridgeDeckMesh.Create(source, DeckProperty(), 2500, 1500, new[] { 17321d, 60000 }, true);
