@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using BridGHe.Common.Diagnostics;
 using BridGHe.Grasshopper.DataTypes.Fem;
+using BridGHe.Grasshopper.DataTypes;
+using System.Collections.Generic;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
 
@@ -15,6 +17,8 @@ public sealed class BridgeModelAuditComponent : BridgeUtilityComponent
     {
         p.AddGenericParameter("Model", "M", "FEM model to inspect.", GH_ParamAccess.item);
         p.AddNumberParameter("Tolerance", "Tol", "Geometric coincidence tolerance in model length units.", GH_ParamAccess.item, 1e-6);
+        p.AddGenericParameter("Bridge Geometry", "BG", "Optional expected geometry: detects unassigned members/coverage gaps.", GH_ParamAccess.item); p[2].Optional = true;
+        p.AddGenericParameter("Phase Models", "P", "Optional phase snapshots: compare IDs, units, axes and offsets; property changes are allowed.", GH_ParamAccess.list); p[3].Optional = true;
     }
     protected override void RegisterOutputParams(GH_OutputParamManager p)
     {
@@ -26,7 +30,9 @@ public sealed class BridgeModelAuditComponent : BridgeUtilityComponent
     {
         GH_Model model = null; double tolerance = 1e-6;
         if (!da.GetData(0, ref model) || !da.GetData(1, ref tolerance)) return;
-        var items = BridgeModelAudit.Inspect(model.Value, tolerance);
+        BridgeGeometryGoo geometry = null; var phases = new List<GH_Model>();
+        da.GetData(2, ref geometry); da.GetDataList(3, phases);
+        var items = BridgeModelAudit.Inspect(model.Value, tolerance, geometry?.Value, phases.Select(p => p.Value).ToArray());
         da.SetData(0, !items.Any(i => i.Severity == "Error")); da.SetDataList(1, items.Select(i => i.Severity));
         da.SetDataList(2, items.Select(i => i.Code)); da.SetDataList(3, items.Select(i => i.Element)); da.SetDataList(4, items.Select(i => i.Description)); da.SetData(5, model);
         if (items.Length > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"{items.Length} diagnostics: inspect the report outputs.");
