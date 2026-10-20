@@ -26,6 +26,8 @@ Ogni esecuzione crea una cartella datata in `example/21-benchmark-carichi-mobili
 
 Schema: trave appoggiata di 6000 mm, 12 elementi, E = 210000 MPa, I = 450000000 mm⁴. Rigidezza a taglio omessa per il confronto Euler–Bernoulli. Carichi verticali verso −Z, reazioni positive verso +Z. Nessun peso proprio. Sono carichi di benchmark, non LM1 o altre azioni normative.
 
+Le forze di questi benchmark usano esplicitamente `Axes = 1`, sistema globale. Il primo collaudo nativo del 20 ottobre 2026 ha trovato un errore nel test inverso: mantenendo `Axes = 0` e lo stesso punto laterale, l'inversione del percorso ribalta la normale locale e quindi la forza globale. Il plugin esportava correttamente il dato locale, ma il riferimento analitico assumeva erroneamente una forza ancora verso −Z. Corretto il solo input del benchmark: la risultante delle reazioni passa da −1000 N a +1000 N e Uz cambia da positivo a negativo; il test inverso nativo è ora superato. Le convenzioni e i risultati dei modelli utente non sono modificati.
+
 Per assi di forza positiva P alle ascisse aᵢ:
 
 `Rdestra = Σ(P aᵢ / L)`; `Rsinistra = ΣP − Rdestra`.

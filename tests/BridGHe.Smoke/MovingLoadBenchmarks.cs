@@ -51,7 +51,9 @@ internal static class MovingLoadBenchmarks
                 path.Divisions=scenario.Positions;double margin=scenario.Offsets.Max(Math.Abs);
                 double start=scenario.Reverse?Length-margin:margin,end=scenario.Reverse?margin:Length-margin;
                 path.Coordinates=new[]{start,0,0,end,0,0,start,1000,0};
-                path.Template.Vehicles[0].Loads=scenario.Offsets.Select(a=>(MovingObject)new MovingPointForce{X=a,Force=new[]{0.0,0,-scenario.Force}}).ToArray();
+                // Gravity remains global -Z when the path reverses: its local normal reverses too.
+                // Straus R3 lpAxisGlobal = 1 (installed API include, point-force axis convention).
+                path.Template.Vehicles[0].Loads=scenario.Offsets.Select(a=>(MovingObject)new MovingPointForce{X=a,Axis=1,Force=new[]{0.0,0,-scenario.Force}}).ToArray();
                 path.Validate();
                 File.WriteAllBytes(Path.Combine(folder,"input.bgmodel"),ModelArchive.Write(model));
                 var roundtrip=ModelArchive.Read<ModelModel>(File.ReadAllBytes(Path.Combine(folder,"input.bgmodel")));
