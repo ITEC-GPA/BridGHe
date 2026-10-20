@@ -9,7 +9,7 @@ namespace BridGHe.Common.Checks;
 
 public sealed record BridgeWorkflowBuildResult(ModelModel Model, string[] Summary, string[] Warnings);
 
-/// <summary>Joins incremental FEM results by beam identity; preserves values and never mutates a source model.</summary>
+/// <summary>Joins incremental FEM results by beam identity, preserving FEM samples and resampling different station grids.</summary>
 public static class BridgeWorkflowBuilder
 {
     public static BridgeWorkflowBuildResult Build(IReadOnlyList<ModelModel> models, IEnumerable<BridgePhaseDefinition> definitions,
@@ -88,6 +88,7 @@ public static class BridgeWorkflowBuilder
         model.LoadCases.Clear(); model.LoadCombinations.Clear(); model.StagedConstruction.Clear(); model.MovingPaths.Clear(); model.GeneratedMovingCases.Clear();
         foreach (var element in model.Elements) { element.Results.Clear(); element.Loads.Clear(); }
         var records = new Dictionary<string, BridgeWorkflowAction>(StringComparer.Ordinal);
+        var concentratedLoads = new Dictionary<(string Action, string Beam), double[]>();
         var warnings = new List<string>();
         foreach (var (phase, action) in actions)
         {
@@ -120,6 +121,14 @@ public static class BridgeWorkflowBuilder
                 var input = aligned[sourceIndex][i];
                 var results = input.Results.OfType<BeamForceResultModel>().Where(r => r.LoadCase?.Name == action.Case).ToArray();
                 if (results.Length == 0) throw new ArgumentException($"Phase {phase.Order}, action {action.Key}, beam {beam.BeamId}: no FEM results for '{action.Case}'.");
+                if (results.Select(r => (r.StepNum, r.StepType)).Distinct().Count() != 1)
+                    throw new ArgumentException($"Action {action.Key}, beam {beam.BeamId}: select one FEM step before merging.");
+                var sourceCombination = action.Source.LoadCombinations.SingleOrDefault(c => c.Name == action.Case);
+                var contributingCases = sourceCombination == null ? new[] { action.Case }.ToHashSet(StringComparer.Ordinal) :
+                    sourceCombination.Values.Where(v => v.Value != 0).Select(v => v.Key.Name).ToHashSet(StringComparer.Ordinal);
+                concentratedLoads[(action.Key, beam.BeamId)] = input.Loads.OfType<BeamPointLoadModel>()
+                    .Where(l => l.LoadCase != null && contributingCases.Contains(l.LoadCase.Name) && l.Value.P.SquareLength > 0)
+                    .Select(l => l.Value.A * input.Length).ToArray();
                 foreach (var force in results)
                 {
                     if (new[] { force.AxialForce, force.Vx, force.Vy, force.Torque, force.Mx, force.My }.Any(v => !double.IsFinite(v)))
@@ -130,24 +139,28 @@ public static class BridgeWorkflowBuilder
             }
             if (action.PrimaryOnly) warnings.Add($"{action.Key}: primary shrinkage only; global restraint effects explicitly excluded.");
         }
-        // Align roundoff only, never interpolate across concentrated loads or fill missing analysed samples with zero.
+        // Different analyses can add different internal extrema. Retain their union and
+        // resample each action from its own original grid, never from another action.
+        int interpolatedSamples = 0;
         foreach (var beam in model.Beams)
         {
             var forces = beam.Results.OfType<BeamForceResultModel>().ToArray();
             var stations = BridgeMergeValidation.CanonicalStations(forces.Select(r => r.Station), beam.Length);
             if (stations.Length == 0) stations = new[] { 0d, beam.Length };
+            beam.Results.Clear();
             foreach (var record in records.Values.Where(r => r.ForceCase != null))
             {
                 var samples = forces.Where(r => r.LoadCase.Name == record.ForceCase).ToArray();
                 bool selected = record.BeamIds.Length == 0 || record.BeamIds.Contains(beam.BeamId, StringComparer.Ordinal);
                 var lc = model.LoadCases.Single(c => c.Name == record.ForceCase);
-                foreach (double station in stations)
+                if (selected)
                 {
-                    var at = samples.Where(r => Math.Abs(r.Station - station) <= BridgeMergeValidation.StationTolerance(beam.Length)).ToArray();
-                    if (selected && at.Length != 1) throw new ArgumentException($"Action {record.Key}, beam {beam.BeamId}, station {station:G9}: expected one FEM sample, found {at.Length}. Use the same result stations in all analyses.");
-                    if (selected) at[0].Station = station;
-                    else beam.Results.Add(new BeamForceResultModel(lc, station, 0, "", false));
+                    var resampled = BridgeForceResampling.Resample(samples, stations, beam.Length,
+                        $"Action {record.Key}, beam {beam.BeamId}", concentratedLoads[(record.Key, beam.BeamId)], out int added);
+                    foreach (var sample in resampled) beam.Results.Add(sample);
+                    interpolatedSamples += added;
                 }
+                else foreach (double station in stations) beam.Results.Add(new BeamForceResultModel(lc, station, 0, "", false));
             }
             if (forces.Length == 0 && records.Values.All(r => r.ForceCase == null))
             {
@@ -156,6 +169,8 @@ public static class BridgeWorkflowBuilder
                 foreach (var station in stations) beam.Results.Add(new BeamForceResultModel(grid, station, 0, "", false));
             }
         }
+        if (interpolatedSamples > 0)
+            warnings.Add($"Station alignment: {interpolatedSamples} interpolated FEM samples; original values retained. N/V/T linear, moments quadratic using shear and both endpoint moments. Refine output stations for non-polynomial diagrams.");
         model.BridgeWorkflow = new BridgeWorkflow { Method = method, Phases = phases.Select(p => new BridgeWorkflowPhase {
             Id = p.Id, Order = p.Order, Name = p.Name, State = p.State, Day = p.Day,
             Actions = p.Actions.Select(a => records[a.Key]).ToArray() }).ToArray() };

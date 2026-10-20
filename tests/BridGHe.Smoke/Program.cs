@@ -34,6 +34,7 @@ internal static class Program
         if(args.Contains("--example-layout")) return ExampleLayoutTests.Run(args.SkipWhile(a=>a!="--example-layout").Skip(1).FirstOrDefault(a=>!a.StartsWith("--")));
         if(args.Contains("--utility-examples")) { BridgeUtilityTests.Run(); BridgeUtilityExamples.Run(true); return 0; }
         if(args.Contains("--bridge-workflow")) return BridgeWorkflowExample.Run(args.Contains("--native"));
+        if(args.Contains("--workflow-stations-native")) return NativeWorkflowStationTests.Run(args.Contains("--capture-station-fixture"));
         if(args.Contains("--inventory")) { CheckGrasshopper(false,true);return 0; }
         if(args.Contains("--beam-support")) { NativeBeamSupportTests.Run();return 0; }
         if(args.Contains("--benchmark-shear")) { BridgePerformanceTests.Run();return 0; }

@@ -1,0 +1,82 @@
+{
+  "Mode": "Read-only replay of existing Straus LSA results; no new solver run",
+  "Compared": 12192,
+  "MaxForceErrorN": 6.366462912410498E-12,
+  "MaxMomentErrorNmm": 9.5367431640625E-07,
+  "MaxTorqueErrorNmm": 1.1368683772161603E-13,
+  "GrasshopperSectionResults": 378,
+  "GrasshopperErrors": 0,
+  "NativeFilesUnchanged": true,
+  "Cases": [
+    {
+      "Case": "G1_GETTO",
+      "Beams": 98
+    },
+    {
+      "Case": "G2_PERMANENTI",
+      "Beams": 98
+    },
+    {
+      "Case": "Q_TRAFFICO",
+      "Beams": 98
+    },
+    {
+      "Case": "RITIRO_FEM",
+      "Beams": 98
+    }
+  ],
+  "Sources": [
+    {
+      "File": "REV003-G1_GETTO-input.bgmodel",
+      "Sha256": "1C29E364829F7B04AD83428FF66F4D7ED2308B5E808E03FCEFE17970514C9AFE"
+    },
+    {
+      "File": "REV003-G1_GETTO.st7",
+      "Sha256": "31DC040E3683D73067507D64D088030ACC0A56F6880CEB224FE524ABEC2E2A08"
+    },
+    {
+      "File": "REV003-G1_GETTO.LSA",
+      "Sha256": "A5F700D2E7FDDA0BB17B58A9FEE5F96E26CF3B94E24A5A3E801DDF08B3056911"
+    },
+    {
+      "File": "REV003-G2_PERMANENTI-input.bgmodel",
+      "Sha256": "06AA6C66A71C20459493C6EA04184F78395312A598E1B14BE3652DFE2DBE7B90"
+    },
+    {
+      "File": "REV003-G2_PERMANENTI.st7",
+      "Sha256": "828D42E977319B7170D4165AF3C9FD383C2A0D160B6C7F025205C4904483A4E4"
+    },
+    {
+      "File": "REV003-G2_PERMANENTI.LSA",
+      "Sha256": "A2651FD81E08944D5E6685AF05EDCF140018F2B0662009DDDC3F08FAE6322F45"
+    },
+    {
+      "File": "REV003-Q_TRAFFICO-input.bgmodel",
+      "Sha256": "CFF8A6ADF43A323A7E2A43992EA58AC3FFCE3D9CEB0216949C799A6C507B3531"
+    },
+    {
+      "File": "REV003-Q_TRAFFICO.st7",
+      "Sha256": "AB31EC58E334A3C54C54BA8E7CAD1175B0269C4337EDC512BFA4BF9D3B93CA8D"
+    },
+    {
+      "File": "REV003-Q_TRAFFICO.LSA",
+      "Sha256": "BA1CFC4F80A5AF1831771528AFBCA5D0652901BB2460C5C98D26EC48D53A394D"
+    },
+    {
+      "File": "REV003-RITIRO_FEM-input.bgmodel",
+      "Sha256": "710B1F8DE665F700F1F369758706255E170A1C83CEF55B6485C42D4E933051BB"
+    },
+    {
+      "File": "REV003-RITIRO_FEM.st7",
+      "Sha256": "87FDD5117D3407EF072628C2D654BC9763180FE5F9FDB2DCFE8396061429E840"
+    },
+    {
+      "File": "REV003-RITIRO_FEM.LSA",
+      "Sha256": "CD6FA7820B5987B3C9EEB9CB6EBB6ED27C571290D051EB3F88215D2D444B4B21"
+    }
+  ],
+  "Warnings": [
+    "Station alignment: 54 interpolated FEM samples; original values retained. N/V/T linear, moments quadratic using shear and both endpoint moments. Refine output stations for non-polynomial diagrams.",
+    "Compatible: existing category-based section calculation; numbered phases are retained for inspection. Select LinearHistory for sequential section activation."
+  ]
+}

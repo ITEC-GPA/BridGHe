@@ -449,6 +449,8 @@ namespace St7API
         [DllImport("St7API.dll")]
         public static extern int St7GetBeamResultArray(int uID, int ResultType, int ResultSubType, int BeamNum, int MinStations, int ResultCase, ref int NumStations, ref int NumColumns, double[] BeamPos, double[] BeamResult);
         [DllImport("St7API.dll")]
+        public static extern int St7GetBeamResultArrayPos(int uID, int ResultType, int ResultSubType, int BeamNum, int ResultCase, int NumStations, double[] BeamPos, ref int NumColumns, double[] BeamResult);
+        [DllImport("St7API.dll")]
         public static extern int St7GetPlateResultArray(int uID, int ResultType, int ResultSubType, int PlateNum, int ResultCase, int SampleLocation, int Surface, int Layer, ref int NumPoints, ref int NumColumns, double[] PlateResult);
         [DllImport("St7API.dll")]
         public static extern int St7AddLSACombination(int uID, string CaseName);

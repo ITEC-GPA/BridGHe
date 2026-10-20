@@ -4,6 +4,8 @@ Aprire **[19-flusso-acciaio-misto_REV003.ghx](19-flusso-acciaio-misto_REV003.ghx
 
 REV003 è preparato e controllato senza nuove analisi Straus. Per ottenere sollecitazioni e grafici: verificare i quattro percorsi .st7, attivare **CALCOLA 4 MODELLI STRAUS**, riportarlo a false, premere **Run** su Build BridGHe Model e poi su Super Element Check. Non sono riutilizzati i risultati della vecchia trave, perché la geometria è cambiata.
 
+**Correzione del merge, 20 ottobre 2026:** i quattro risultati Straus del graticcio sono stati riletti e confrontati con il ricampionamento nativo su tutte le 98 aste: 12.192 valori confrontati. Il GHX corrente, alimentato con questi risultati, completa merge e verifica senza componenti rossi, producendo 378 risultati di sezione. È una rilettura delle analisi esistenti, senza avviare un nuovo solver. Il report è [validation-stations.json](validation-stations.json). L'errore su G1, asta 29, stazione 879.044934 mm era dovuto alla richiesta errata di griglie identiche; ora le stazioni aggiuntive delle varie analisi vengono interpolate. Vedere [metodo, limiti e audit del codice precedente](../../docs/INTERPOLAZIONE-STAZIONI.md).
+
 ## Geometria e ipotesi
 
 - Ponte rettilineo a due campate da 30 m, impalcato nominale largo 12 m. Tre travi agli assi y = −4, 0, +4 m.
@@ -43,4 +45,4 @@ dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --bridge-workf
 
 Il report corrente è `validation-REV003.json`; `archivio/REV001/validation.json`, `archivio/REV001/merged-results.bgmodel` e le immagini della vecchia trave sono risultati storici, non risultati di questo graticcio. Gli input e i risultati nuovi sono identificati REV003 in `calcoli/`.
 
-Restano da verificare nativamente il nuovo graticcio e la sensibilità alla mesh. L'esempio non comprende una verifica completa di ponte: mancano combinazioni di progetto, traffico mobile sul graticcio, azioni orizzontali, fatica, connessione, instabilità e soletta locale.
+La rilettura nativa ha verificato il ricampionamento e l'esecuzione del flusso GH; resta da verificare la sensibilità alla mesh del graticcio. L'esempio non comprende una verifica completa di ponte: mancano combinazioni di progetto, traffico mobile sul graticcio, azioni orizzontali, fatica, connessione, instabilità e soletta locale.

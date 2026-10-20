@@ -16,6 +16,7 @@ internal static class RegressionTests
             ["bridge-utility-components"] = () => BridgeUtilityExamples.Run(),
             ["plot-preview"] = PlotPreviewTests.Run,
             ["bridge-workflow"] = BridgeWorkflowTests.Run,
+            ["bridge-stations"] = BridgeStationTests.Run,
             ["component-layout"] = ComponentLayoutTests.Run,
             ["bridge-plots"] = PlotTests.Run,
             ["native-bridge-components"] = NativeBridgeComponentTests.Run,

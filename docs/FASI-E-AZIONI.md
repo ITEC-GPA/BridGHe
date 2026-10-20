@@ -23,7 +23,7 @@ Nel secondo esempio il coefficiente 0.7 si applica sia a `RITIRO [FEM]` sia a `R
 
 La contrazione ha segno negativo e unità adimensionale: −200 µε = −0.0002. Le azioni sono **incrementali**: −120 µε seguite da −80 µε danno −200 µε, non −320 µε. `Primary Only` deve essere esplicitamente attivo per omettere il modello FEM: questa scelta omette gli effetti secondari, non li calcola automaticamente. La deformazione primaria e i carichi equivalenti per Straus devono derivare dallo stesso input.
 
-`Models` fornisce geometria e riferimenti; ogni azione porta la propria sorgente analizzata. L'ordine della lista dei modelli non identifica più i casi. Sono richiesti N-mm-MPa, Beam IDs univoci, geometria e orientamento coerenti e campionamento compatibile. Campioni mancanti, risultati non finiti, ID duplicati e casi non trovati producono errori espliciti; non viene interpolato attraverso salti delle sollecitazioni.
+`Models` fornisce geometria e riferimenti; ogni azione porta la propria sorgente analizzata. L'ordine della lista dei modelli non identifica più i casi. Sono richiesti N-mm-MPa, Beam IDs univoci, geometria e orientamento coerenti. Le stazioni interne possono differire: il merge conserva la loro unione e interpola ciascun caso dai suoi campioni originali (N/V/T lineari, momenti quadratici basati sul taglio e vincolati ai due momenti FEM). Sono necessari i campioni agli estremi; non si estrapola. Duplicati, step ambigui, risultati non finiti e casi non trovati producono errori espliciti. I carichi concentrati richiedono la gestione dei due lati del salto. Metodo, limiti e test sono descritti in [Allineamento delle stazioni FEM](INTERPOLAZIONE-STAZIONI.md).
 
 ## Due metodi numerici espliciti
 
