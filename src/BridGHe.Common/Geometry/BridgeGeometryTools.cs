@@ -19,7 +19,9 @@ public static class BridgeGeometryTools
 
     public static Plane FrameAt(SimpleBridgeGeometry geometry, double station)
     {
-        Validate(geometry);
+        ArgumentNullException.ThrowIfNull(geometry);
+        if (geometry.Stations.Count < 2 || geometry.Frames.Count != geometry.Stations.Count)
+            throw new ArgumentException("Invalid Bridge Geometry station/frame grid.");
         if (!double.IsFinite(station) || station < geometry.Stations[0] - 1e-6 || station > geometry.Stations[^1] + 1e-6)
             throw new ArgumentException("Station is outside Bridge Geometry.");
         int index = geometry.Stations.BinarySearch(station);

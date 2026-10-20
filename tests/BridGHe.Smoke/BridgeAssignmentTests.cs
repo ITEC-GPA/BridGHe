@@ -27,6 +27,8 @@ internal static class BridgeAssignmentTests
         Require(selected.Length > 0 && selected.All(b => b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value.Group == 2), "Schedule selects G2");
         foreach (var beam in result.Beams)
         {
+            Require(beam.Groups.Count == 1 && int.TryParse(beam.Attributes.OfType<ElementIdAttributeModel>().Single().Value, out _),
+                "Straus-compatible integer IDs and single hierarchical group");
             var data = beam.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value;
             beam.GetLocalAxes(false, out _, out var up, out _, out _);
             Require(up * data.SectionUp > 1 - 1e-10, "Actual local axis matches requested frame");

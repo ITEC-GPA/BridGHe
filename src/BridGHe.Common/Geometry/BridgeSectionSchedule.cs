@@ -91,13 +91,13 @@ public static class BridgeMemberAssignment
                 if (rule != null) used.Add(rule);
                 double t0 = member.Family == BridgeMemberFamily.Girder ? (a - member.StationFrom) / (member.StationTo - member.StationFrom) : 0;
                 double t1 = member.Family == BridgeMemberFamily.Girder ? (b - member.StationFrom) / (member.StationTo - member.StationFrom) : 1;
-                var beam = new BeamModel(id, member.Axis.PointAt(t0), member.Axis.PointAt(t1), properties[property]);
-                beam.Groups.Add(new GroupModel($"Family/{member.Family}"));
-                beam.Groups.Add(new GroupModel($"Physical/{member.PhysicalId}"));
+                string solverId = (beams.Count + 1).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                var beam = new BeamModel(solverId, member.Axis.PointAt(t0), member.Axis.PointAt(t1), properties[property]) { BeamId = solverId };
+                var familyGroup = new GroupModel(member.Family.ToString());
+                var memberGroup = new GroupModel($"Group{member.Group}", familyGroup);
+                beam.Groups.Add(new GroupModel($"Segment{member.Segment}", memberGroup));
                 if (member.Family == BridgeMemberFamily.Girder)
                 {
-                    beam.Groups.Add(new GroupModel($"Girder/G{member.Group}"));
-                    beam.Groups.Add(new GroupModel($"Span/{member.Span}"));
                     beam.Attributes.Add(new SuperElementAttributeModel($"G{member.Group}"));
                 }
                 var frame = BridgeGeometryTools.FrameAt(geometry, mid);
@@ -108,7 +108,7 @@ public static class BridgeMemberAssignment
                 var up = desiredUp - (desiredUp * axis) * axis; up.Unitize();
                 beam.AngleDeg += Math.Atan2(up * Vector3d.CrossProduct(axis, oldUp), up * oldUp) * 180 / Math.PI;
                 beam.Attributes.Add(new BridgeMemberAttributeModel(new(member.PhysicalId, member.Family, member.Group,
-                    member.Segment, member.Span, a, b, up)));
+                    member.Segment, member.Span, a, b, up, id)));
                 if (rule != null)
                 {
                     var sf = rule.Scale(a); var st = rule.Scale(b);
@@ -123,6 +123,7 @@ public static class BridgeMemberAssignment
         {
             $"{beams.Count} beam elements, {missing.Count} unassigned, {schedule.Count - used.Count} unused schedule entries.",
             "N-mm properties required. Local section y follows projected deck normal; vertical posts use deck transverse direction.",
+            "Each beam has one hierarchical Straus group (family/group/physical segment) and an integer export ID; geometric IDs are retained in metadata.",
             "Section changes split existing geometric chords. Fabrication segment IDs remain independent of this FEM subdivision.",
             "Scale interpolation tapers the dimensional section about its centre; it is not interpolation of arbitrary section properties."
         });

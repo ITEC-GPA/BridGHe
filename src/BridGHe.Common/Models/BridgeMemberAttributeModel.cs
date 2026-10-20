@@ -7,7 +7,7 @@ namespace BridGHe.Common.Models;
 
 [Serializable]
 public sealed record BridgeMemberMetadata(string PhysicalId, BridgeMemberFamily Family, int Group, int Segment,
-    int Span, double StationFrom, double StationTo, Vector3d SectionUp);
+    int Span, double StationFrom, double StationTo, Vector3d SectionUp, string GeometryId = "");
 
 /// <summary>Traceable geometry identity; does not change stiffness or export numerical values.</summary>
 [Serializable]
