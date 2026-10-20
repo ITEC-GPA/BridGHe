@@ -75,6 +75,7 @@ public sealed class SimpleBridgeGeometry
     public List<double> Stations { get; } = new();
     public List<string> Diagnostics { get; } = new();
     public Mesh Deck { get; internal set; }
+    public double DeckThickness { get; internal set; }
     public Polyline LeftEdge { get; internal set; }
     public Polyline RightEdge { get; internal set; }
 }

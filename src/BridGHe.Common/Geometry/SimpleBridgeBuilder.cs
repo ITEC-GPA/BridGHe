@@ -375,7 +375,7 @@ public static class SimpleBridgeBuilder
             int last = mesh.Vertices.Count - 4; mesh.Faces.AddFace(last, last + 1, last + 2, last + 3);
             mesh.Normals.ComputeNormals(); mesh.Compact();
             if (!mesh.IsValid || !mesh.IsClosed) throw new ArgumentException("Cannot form a closed deck mesh.");
-            output.Deck = mesh; output.LeftEdge = left; output.RightEdge = right;
+            output.Deck = mesh; output.LeftEdge = left; output.RightEdge = right; output.DeckThickness = p.DeckThickness;
         }
     }
 }
