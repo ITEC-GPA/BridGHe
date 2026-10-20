@@ -1,0 +1,11 @@
+{
+  "example": "37-connessioni-offset",
+  "solved": true,
+  "reopened": true,
+  "solverInvoked": false,
+  "objects": 9,
+  "components": [
+    "BridgeConnectionsComponent"
+  ],
+  "warnings": []
+}

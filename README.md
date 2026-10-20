@@ -68,6 +68,7 @@ Gli script rigenerano e sovrascrivono gli esempi: salvare separatamente le modif
 - [Uso e convenzioni](docs/USO.md).
 - [Verifiche eseguite e limiti](docs/VERIFICHE.md).
 - [Catalogo dei componenti e porte attuali](docs/COMPONENTI.md).
+- [Dal tracciato al modello: dodici strumenti e tredici esempi](docs/BRIDGE-DESIGN.md).
 - [Icone e rigenerazione](docs/ICONE.md).
 - [Correzione degli appoggi distribuiti e differenze numeriche](docs/beam-support-fix.json).
 - [Misura dell'ottimizzazione delle letture di taglio](docs/shear-performance.json).
@@ -87,3 +88,9 @@ Le proprietà omogeneizzate conservano acciaio e soletta nella preview delle bea
 ## Esempio del flusso acciaio → misto
 
 [Guida all'esempio 19](example/19-flusso-acciaio-misto/README.md): REV003 contiene un ponte a due campate da 30 m e tre travi, con modello acciaio, override n∞, n0 e n ritiro, quattro analisi Straus e verifica gPC della spina centrale. Il nuovo graticcio è preparato e controllato offline; le analisi native sono ancora da eseguire con licenza disponibile. `Bridge Action` e `Bridge Shrinkage Action` associano casi e strain alle fasi numerate; le combinazioni usano gli Action ID. Gli ingressi correnti di `Build BridGHe Model` sono `Models`, `Phases`, `Combinations`, `Calculation`. Dopo le analisi premere Run sul Build e sul verificatore. Le vecchie connessioni di REV001/REV002 non sono compatibili con questa interfaccia. Le due file di armatura e il rapporto `n ritiro` sono inclusi nelle proprietà e nella verifica.
+
+## Dal tracciato al modello di ponte
+
+Gli [esempi 33–45](example/README.md#progettazione-del-modello-3345) coprono consigliatore delle campate con zone vietate, sezioni per progressiva, assegnazione, appoggi, connessioni, controventi, soletta, fasi, dettagli, frecce, storie per fatica e mappa delle verifiche. L'[esempio 45](example/45-ponte-completo-fasi/README.md) assembla un ponte curvo a tre travi, con campate 30+40+30 m, conci, shell e tre snapshot costruttivi. Non contiene carichi o risultati FEM inventati.
+
+I tredici grafi sono risolti, salvati e riaperti dai test. La Release passa 218 controlli, 54 gruppi di regressione e due gruppi grafici; tutti i 238 valori della baseline numerica restano identici. Le nuove chiamate native per UCS degli appoggi e link rigidi richiedono ancora la prova con licenza API Straus disponibile.

@@ -1,0 +1,13 @@
+{
+  "example": "35-assegnazione-membri",
+  "solved": true,
+  "reopened": true,
+  "solverInvoked": false,
+  "objects": 10,
+  "components": [
+    "SimpleBridgeSolidComponent",
+    "BridgeSegmentsComponent",
+    "BridgeMemberAssignmentComponent"
+  ],
+  "warnings": []
+}

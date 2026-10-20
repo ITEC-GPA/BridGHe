@@ -1,0 +1,13 @@
+{
+  "example": "36-appoggi-orientati",
+  "solved": true,
+  "reopened": true,
+  "solverInvoked": false,
+  "objects": 8,
+  "components": [
+    "SimpleBridgeSolidComponent",
+    "BridgeSegmentsComponent",
+    "BridgeBearingsComponent"
+  ],
+  "warnings": []
+}

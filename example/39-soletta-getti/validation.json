@@ -1,0 +1,14 @@
+{
+  "example": "39-soletta-getti",
+  "solved": true,
+  "reopened": true,
+  "solverInvoked": false,
+  "objects": 12,
+  "components": [
+    "SimpleBridgeSolidComponent",
+    "BridgeSegmentsComponent",
+    "BridgeDeckMeshComponent",
+    "BridgeMemberAssignmentComponent"
+  ],
+  "warnings": []
+}

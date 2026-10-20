@@ -286,5 +286,122 @@
     "readme": "32-simple-bridge-reticolare-curvo/README.md",
     "definition": "32-simple-bridge-reticolare-curvo/32-simple-bridge-reticolare-curvo.ghx",
     "calculations": "32-simple-bridge-reticolare-curvo/calcoli"
+  },
+  {
+    "number": 33,
+    "id": "33-consigliatore-campate",
+    "title": "Consigliatore delle campate",
+    "group": "Progettazione del modello",
+    "readme": "33-consigliatore-campate/README.md",
+    "definition": "33-consigliatore-campate/33-consigliatore-campate.ghx",
+    "calculations": "33-consigliatore-campate/calcoli"
+  },
+  {
+    "number": 34,
+    "id": "34-sezioni-per-progressiva",
+    "title": "Sezioni per progressiva e rastremazione",
+    "group": "Progettazione del modello",
+    "readme": "34-sezioni-per-progressiva/README.md",
+    "definition": "34-sezioni-per-progressiva/34-sezioni-per-progressiva.ghx",
+    "calculations": "34-sezioni-per-progressiva/calcoli"
+  },
+  {
+    "number": 35,
+    "id": "35-assegnazione-membri",
+    "title": "Assegnazione dei membri del ponte",
+    "group": "Progettazione del modello",
+    "readme": "35-assegnazione-membri/README.md",
+    "definition": "35-assegnazione-membri/35-assegnazione-membri.ghx",
+    "calculations": "35-assegnazione-membri/calcoli"
+  },
+  {
+    "number": 36,
+    "id": "36-appoggi-orientati",
+    "title": "Appoggi orientati",
+    "group": "Progettazione del modello",
+    "readme": "36-appoggi-orientati/README.md",
+    "definition": "36-appoggi-orientati/36-appoggi-orientati.ghx",
+    "calculations": "36-appoggi-orientati/calcoli"
+  },
+  {
+    "number": 37,
+    "id": "37-connessioni-offset",
+    "title": "Connessioni e offset",
+    "group": "Progettazione del modello",
+    "readme": "37-connessioni-offset/README.md",
+    "definition": "37-connessioni-offset/37-connessioni-offset.ghx",
+    "calculations": "37-connessioni-offset/calcoli"
+  },
+  {
+    "number": 38,
+    "id": "38-controventi-longitudinali",
+    "title": "Controventi longitudinali",
+    "group": "Progettazione del modello",
+    "readme": "38-controventi-longitudinali/README.md",
+    "definition": "38-controventi-longitudinali/38-controventi-longitudinali.ghx",
+    "calculations": "38-controventi-longitudinali/calcoli"
+  },
+  {
+    "number": 39,
+    "id": "39-soletta-getti",
+    "title": "Soletta strutturale e zone di getto",
+    "group": "Progettazione del modello",
+    "readme": "39-soletta-getti/README.md",
+    "definition": "39-soletta-getti/39-soletta-getti.ghx",
+    "calculations": "39-soletta-getti/calcoli"
+  },
+  {
+    "number": 40,
+    "id": "40-sequenza-costruttiva",
+    "title": "Sequenza costruttiva per gruppi e conci",
+    "group": "Progettazione del modello",
+    "readme": "40-sequenza-costruttiva/README.md",
+    "definition": "40-sequenza-costruttiva/40-sequenza-costruttiva.ghx",
+    "calculations": "40-sequenza-costruttiva/calcoli"
+  },
+  {
+    "number": 41,
+    "id": "41-pioli-irrigidimenti",
+    "title": "Distribuzione di pioli e irrigidimenti",
+    "group": "Progettazione del modello",
+    "readme": "41-pioli-irrigidimenti/README.md",
+    "definition": "41-pioli-irrigidimenti/41-pioli-irrigidimenti.ghx",
+    "calculations": "41-pioli-irrigidimenti/calcoli"
+  },
+  {
+    "number": 42,
+    "id": "42-frecce-controfreccia",
+    "title": "Frecce e controfreccia",
+    "group": "Progettazione del modello",
+    "readme": "42-frecce-controfreccia/README.md",
+    "definition": "42-frecce-controfreccia/42-frecce-controfreccia.ghx",
+    "calculations": "42-frecce-controfreccia/calcoli"
+  },
+  {
+    "number": 43,
+    "id": "43-storie-fatica",
+    "title": "Estrazione e conteggio delle storie per fatica",
+    "group": "Progettazione del modello",
+    "readme": "43-storie-fatica/README.md",
+    "definition": "43-storie-fatica/43-storie-fatica.ghx",
+    "calculations": "43-storie-fatica/calcoli"
+  },
+  {
+    "number": 44,
+    "id": "44-mappa-verifiche",
+    "title": "Mappa delle verifiche locali",
+    "group": "Progettazione del modello",
+    "readme": "44-mappa-verifiche/README.md",
+    "definition": "44-mappa-verifiche/44-mappa-verifiche.ghx",
+    "calculations": "44-mappa-verifiche/calcoli"
+  },
+  {
+    "number": 45,
+    "id": "45-ponte-completo-fasi",
+    "title": "Ponte curvo completo con tre fasi",
+    "group": "Progettazione del modello",
+    "readme": "45-ponte-completo-fasi/README.md",
+    "definition": "45-ponte-completo-fasi/45-ponte-completo-fasi.ghx",
+    "calculations": "45-ponte-completo-fasi/calcoli"
   }
 ]

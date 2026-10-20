@@ -1,0 +1,11 @@
+{
+  "example": "43-storie-fatica",
+  "solved": true,
+  "reopened": true,
+  "solverInvoked": false,
+  "objects": 8,
+  "components": [
+    "BridgeFatigueHistoryComponent"
+  ],
+  "warnings": []
+}

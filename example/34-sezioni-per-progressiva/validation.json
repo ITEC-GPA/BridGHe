@@ -1,0 +1,14 @@
+{
+  "example": "34-sezioni-per-progressiva",
+  "solved": true,
+  "reopened": true,
+  "solverInvoked": false,
+  "objects": 13,
+  "components": [
+    "SimpleBridgeSolidComponent",
+    "BridgeSegmentsComponent",
+    "BridgeSectionScheduleComponent",
+    "BridgeMemberAssignmentComponent"
+  ],
+  "warnings": []
+}

@@ -1,0 +1,14 @@
+{
+  "example": "38-controventi-longitudinali",
+  "solved": true,
+  "reopened": true,
+  "solverInvoked": false,
+  "objects": 12,
+  "components": [
+    "SimpleBridgeSolidComponent",
+    "BridgeSegmentsComponent",
+    "BridgeLongitudinalBracingComponent",
+    "BridgeMemberAssignmentComponent"
+  ],
+  "warnings": []
+}

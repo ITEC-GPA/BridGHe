@@ -1,0 +1,21 @@
+{
+  "example": "45-ponte-completo-fasi",
+  "solved": true,
+  "reopened": true,
+  "solverInvoked": false,
+  "objects": 27,
+  "components": [
+    "SimpleBridgeSolidComponent",
+    "BridgeSegmentsComponent",
+    "BridgeLongitudinalBracingComponent",
+    "BridgeDeckMeshComponent",
+    "BridgeMemberAssignmentComponent",
+    "BridgeBearingsComponent",
+    "BridgeConnectionsComponent",
+    "BuildModelComponent",
+    "BridgeModelAuditComponent",
+    "BridgeConstructionPhaseComponent",
+    "BridgeConstructionSequenceComponent"
+  ],
+  "warnings": []
+}

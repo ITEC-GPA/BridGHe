@@ -1,0 +1,16 @@
+{
+  "example": "40-sequenza-costruttiva",
+  "solved": true,
+  "reopened": true,
+  "solverInvoked": false,
+  "objects": 18,
+  "components": [
+    "SimpleBridgeSolidComponent",
+    "BridgeSegmentsComponent",
+    "BridgeMemberAssignmentComponent",
+    "BuildModelComponent",
+    "BridgeConstructionPhaseComponent",
+    "BridgeConstructionSequenceComponent"
+  ],
+  "warnings": []
+}

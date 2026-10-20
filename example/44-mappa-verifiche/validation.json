@@ -1,0 +1,18 @@
+{
+  "example": "44-mappa-verifiche",
+  "solved": true,
+  "reopened": true,
+  "solverInvoked": false,
+  "objects": 18,
+  "components": [
+    "SimpleBridgeSolidComponent",
+    "BridgeSegmentsComponent",
+    "BridgeMemberAssignmentComponent",
+    "BuildModelComponent",
+    "BridgeGeometryComponent",
+    "BridgeStudsComponent",
+    "BridgeSectionCheckComponent",
+    "BridgeCheckMapComponent"
+  ],
+  "warnings": []
+}

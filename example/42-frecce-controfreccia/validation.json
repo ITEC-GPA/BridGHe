@@ -1,0 +1,11 @@
+{
+  "example": "42-frecce-controfreccia",
+  "solved": true,
+  "reopened": true,
+  "solverInvoked": false,
+  "objects": 8,
+  "components": [
+    "BridgeDeflectionCamberComponent"
+  ],
+  "warnings": []
+}

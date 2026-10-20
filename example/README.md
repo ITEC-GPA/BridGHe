@@ -75,3 +75,21 @@ I calcoli e i pacchetti nativi rimangono disponibili localmente ma sono esclusi 
 - [32 · Traversi reticolari, curva](32-simple-bridge-reticolare-curvo/README.md)
 
 I quattro esempi generano geometria senza solutore: campate 30+40+30 m, tre travi, conci indipendenti dalle campate, giunti sfalsati, pendenza trasversale e appoggi geometrici sghembi. Ogni README contiene prove guidate e il report di soluzione/riapertura. [Guida ai componenti](../docs/SIMPLE-BRIDGE.md).
+
+## Progettazione del modello 33–45
+
+- [33 · Consigliatore delle campate](33-consigliatore-campate/README.md)
+- [34 · Sezioni per progressiva e rastremazione](34-sezioni-per-progressiva/README.md)
+- [35 · Assegnazione dei membri del ponte](35-assegnazione-membri/README.md)
+- [36 · Appoggi orientati](36-appoggi-orientati/README.md)
+- [37 · Connessioni e offset](37-connessioni-offset/README.md)
+- [38 · Controventi longitudinali](38-controventi-longitudinali/README.md)
+- [39 · Soletta strutturale e zone di getto](39-soletta-getti/README.md)
+- [40 · Sequenza costruttiva per gruppi e conci](40-sequenza-costruttiva/README.md)
+- [41 · Distribuzione di pioli e irrigidimenti](41-pioli-irrigidimenti/README.md)
+- [42 · Frecce e controfreccia](42-frecce-controfreccia/README.md)
+- [43 · Estrazione e conteggio delle storie per fatica](43-storie-fatica/README.md)
+- [44 · Mappa delle verifiche locali](44-mappa-verifiche/README.md)
+- [45 · Ponte curvo completo con tre fasi](45-ponte-completo-fasi/README.md)
+
+Tredici definizioni GHX con soluzione e riapertura verificate senza solutore. [Procedura e limiti](../docs/BRIDGE-DESIGN.md).

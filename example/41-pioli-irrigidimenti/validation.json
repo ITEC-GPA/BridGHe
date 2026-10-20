@@ -1,0 +1,13 @@
+{
+  "example": "41-pioli-irrigidimenti",
+  "solved": true,
+  "reopened": true,
+  "solverInvoked": false,
+  "objects": 13,
+  "components": [
+    "SimpleBridgeSolidComponent",
+    "BridgeSegmentsComponent",
+    "BridgeDetailLayoutComponent"
+  ],
+  "warnings": []
+}

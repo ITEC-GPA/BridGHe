@@ -37,6 +37,7 @@ internal static class Program
         if(args.Contains("--workflow-stations-native")) return NativeWorkflowStationTests.Run(args.Contains("--capture-station-fixture"));
         if(args.Contains("--inventory")) { CheckGrasshopper(false,true);return 0; }
         if(args.Contains("--simple-bridge-examples")) { SimpleBridgeTests.Run(); SimpleBridgeExamples.Run(true); return 0; }
+        if(args.Contains("--bridge-design-examples")) { BridgeDesignExamples.Run(true); return 0; }
         if(args.Contains("--bridge-bearings-native")) { BridgeBearingTests.Run(); BridgeBearingTests.Native(); return 0; }
         if(args.Contains("--bridge-connections-native")) { BridgeConnectionTests.Run(); BridgeConnectionTests.Native(); return 0; }
         if(args.Contains("--beam-support")) { NativeBeamSupportTests.Run();return 0; }

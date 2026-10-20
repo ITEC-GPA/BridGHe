@@ -1,0 +1,11 @@
+{
+  "example": "33-consigliatore-campate",
+  "solved": true,
+  "reopened": true,
+  "solverInvoked": false,
+  "objects": 9,
+  "components": [
+    "BridgeSpanAdvisorComponent"
+  ],
+  "warnings": []
+}
