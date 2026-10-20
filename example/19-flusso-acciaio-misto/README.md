@@ -2,9 +2,11 @@
 
 Aprire **[19-flusso-acciaio-misto_REV003.ghx](19-flusso-acciaio-misto_REV003.ghx)** in Rhino 8 / Grasshopper. Il file corrente è soltanto REV003. REV001, REV002 e i fogli Excel dell'utente sono raccolti nelle rispettive cartelle `archivio/REV001` e `archivio/REV002`; la copia senza suffisso è conservata in `archivio/alias-REV003`. I vecchi collegamenti al merge delle revisioni 001 e 002 non rappresentano la nuova interfaccia.
 
-REV003 è preparato e controllato senza nuove analisi Straus. Per ottenere sollecitazioni e grafici: verificare i quattro percorsi .st7, attivare **CALCOLA 4 MODELLI STRAUS**, riportarlo a false, premere **Run** su Build BridGHe Model e poi su Super Element Check. Non sono riutilizzati i risultati della vecchia trave, perché la geometria è cambiata.
+**Collaudo nativo completato il 20 ottobre 2026:** quattro nuove analisi Straus, 20 controlli superati, merge e verifica della spina senza componenti rossi. Il replay indipendente produce 378 risultati di sezione e confronta 12.192 valori con il ricampionamento Straus: scarto massimo 6.37×10⁻¹² N sulle forze e 9.54×10⁻⁷ N·mm sui momenti. I nuovi file sono in `calcoli/REV003-*`; gli esiti sono in `validation-REV003.json` e `validation-stations.json`.
 
-**Correzione del merge, 20 ottobre 2026:** i quattro risultati Straus del graticcio sono stati riletti e confrontati con il ricampionamento nativo su tutte le 98 aste: 12.192 valori confrontati. Il GHX corrente, alimentato con questi risultati, completa merge e verifica senza componenti rossi, producendo 378 risultati di sezione. È una rilettura delle analisi esistenti, senza avviare un nuovo solver. Il report è [validation-stations.json](validation-stations.json). L'errore su G1, asta 29, stazione 879.044934 mm era dovuto alla richiesta errata di griglie identiche; ora le stazioni aggiuntive delle varie analisi vengono interpolate. Vedere [metodo, limiti e audit del codice precedente](../../docs/INTERPOLAZIONE-STAZIONI.md).
+Per aggiornare sollecitazioni e grafici dopo una modifica: verificare i quattro percorsi .st7, attivare **CALCOLA 4 MODELLI STRAUS**, riportarlo a false, premere **Run** su Build BridGHe Model e poi su Super Element Check. Non sono riutilizzati i risultati della vecchia trave, perché la geometria è cambiata.
+
+**Correzione del merge:** l'errore su G1, asta 29, stazione 879.044934 mm era dovuto alla richiesta errata di griglie identiche; ora le stazioni aggiuntive delle varie analisi vengono interpolate. Dopo le quattro nuove analisi è stato ripetuto il replay di lettura su tutte le 98 aste, senza modificare i file nativi. Vedere [metodo, limiti e audit del codice precedente](../../docs/INTERPOLAZIONE-STAZIONI.md).
 
 ## Geometria e ipotesi
 
@@ -41,6 +43,8 @@ dotnet build tests/BridGHe.Smoke -c Release
 dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --bridge-workflow
 # Con licenza, nuove analisi e controlli di equilibrio:
 dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --bridge-workflow --native
+# Confronto indipendente delle stazioni delle analisi appena calcolate:
+dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --workflow-stations-native
 ```
 
 Il report corrente è `validation-REV003.json`; `archivio/REV001/validation.json`, `archivio/REV001/merged-results.bgmodel` e le immagini della vecchia trave sono risultati storici, non risultati di questo graticcio. Gli input e i risultati nuovi sono identificati REV003 in `calcoli/`.

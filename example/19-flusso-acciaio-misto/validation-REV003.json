@@ -1,6 +1,6 @@
 {
-  "Status": "prepared-offline-checked",
-  "NativeExecuted": false,
+  "Status": "native-checked",
+  "NativeExecuted": true,
   "Checks": [
     {
       "Name": "Bridge node count",
@@ -97,6 +97,41 @@
       "Name": "RITIRO_FEM stable beam IDs",
       "Actual": 98,
       "Expected": 98,
+      "AbsoluteTolerance": 0,
+      "Passed": true
+    },
+    {
+      "Name": "G1_GETTO equilibrium [N]",
+      "Actual": 5940000.000000002,
+      "Expected": 5940000,
+      "AbsoluteTolerance": 5.9399999999999995,
+      "Passed": true
+    },
+    {
+      "Name": "G2_PERMANENTI equilibrium [N]",
+      "Actual": 1800000,
+      "Expected": 1800000,
+      "AbsoluteTolerance": 1.7999999999999998,
+      "Passed": true
+    },
+    {
+      "Name": "Q_TRAFFICO equilibrium [N]",
+      "Actual": 1799999.9999999995,
+      "Expected": 1800000,
+      "AbsoluteTolerance": 1.7999999999999998,
+      "Passed": true
+    },
+    {
+      "Name": "RITIRO_FEM equilibrium [N]",
+      "Actual": 0,
+      "Expected": 0,
+      "AbsoluteTolerance": 0.001,
+      "Passed": true
+    },
+    {
+      "Name": "Checked spine stations",
+      "Actual": 1,
+      "Expected": 1,
       "AbsoluteTolerance": 0,
       "Passed": true
     },
