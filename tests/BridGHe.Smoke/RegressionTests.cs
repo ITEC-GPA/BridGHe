@@ -13,6 +13,7 @@ internal static class RegressionTests
         var tests = new Dictionary<string, Action>
         {
             ["simple-bridge"] = SimpleBridgeTests.Run,
+            ["bridge-span-advisor"] = BridgeSpanAdvisorTests.Run,
             ["simple-bridge-components"] = () => SimpleBridgeExamples.Run(),
             ["bridge-utilities"] = BridgeUtilityTests.Run,
             ["bridge-utility-components"] = () => BridgeUtilityExamples.Run(),
