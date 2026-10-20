@@ -21,7 +21,7 @@ Ogni esecuzione crea una cartella datata in `example/21-benchmark-carichi-mobili
 | 01-single-13 | Asse da 1000 N, 13 posizioni |
 | 02-single-25 | Stesso asse, 25 posizioni; confronto con la stessa soluzione continua |
 | 03-reverse | Inversione del percorso e andamento delle reazioni |
-| 04-tandem | Due assi da 1000 N distanti 1500 mm; il percorso tiene entrambi sulla trave |
+| 04-tandem | Due assi da 1000 N distanti 1500 mm; 13 divisioni, 16 posizioni compresi ingresso e uscita |
 | 05-double-force | 2000 N, controllo della proporzionalità elastica |
 
 Schema: trave appoggiata di 6000 mm, 12 elementi, E = 210000 MPa, I = 450000000 mm⁴. Rigidezza a taglio omessa per il confronto Euler–Bernoulli. Carichi verticali verso −Z, reazioni positive verso +Z. Nessun peso proprio. Sono carichi di benchmark, non LM1 o altre azioni normative.
@@ -36,6 +36,10 @@ Per assi di forza positiva P alle ascisse aᵢ:
 
 Lo spostamento di mezzeria si ricava per sovrapposizione dalla funzione di Green della trave appoggiata, implementata separatamente dai risultati FEM. Si confrontano reazioni, equilibrio, spostamenti e momenti a **ogni stazione restituita**. Non si presume che il campionamento contenga sempre la posizione esatta di ciascun asse. Tolleranze: 10⁻⁶ relative per le reazioni, 10⁻⁵ per momenti/spostamenti, con minimi assoluti dichiarati nel report.
 
-Le posizioni di riferimento sono i centri delle divisioni del percorso, coerentemente con il benchmark 04 esistente; il confronto nativo controllerà anche questa convenzione per tandem e percorso inverso. Un disaccordo deve restare un fallimento da indagare, senza ricavare le posizioni dalle reazioni misurate.
+Il secondo errore del benchmark riguardava il tandem: `Divisions` discretizza il percorso, ma non è necessariamente il numero dei casi generati. La conversione include ingresso e uscita del veicolo. Accorciare il percorso non serve a mantenere entrambi gli assi sulla trave e può alterare il trasferimento vicino ai bordi. Il percorso corretto coincide con tutta la luce, da 0 a 6000 mm.
+
+Per queste prove di forze raggruppate si pone `h = L / Divisions`: alla posizione k, con k da zero, l'asse avanzato si trova a `(k + 0.5) h`, l'altro 1500 mm più indietro. Si considerano solo gli assi entro il percorso; il passaggio continua fino all'uscita dell'ultimo asse. Con 13 divisioni e interasse 1500 mm risultano **16 casi**, di cui 6 con un solo asse e 10 con entrambi. Nel percorso inverso si usa `x = L − x`. Il riferimento è calcolato dagli input, senza ricavare posizioni dalle reazioni misurate; il test nativo tandem è superato con queste convenzioni e con le tolleranze originali.
+
+Il [manuale ufficiale della conversione](https://www.strand7.com/strand7r3help/Content/Topics/VISUALTools/ToolsConvertLoadPathsToLoadCases.htm) distingue i casi generati dalle divisioni del percorso; il [manuale dei template](https://www.strand7.com/strand7r3help/Content/Topics/LAYOUTS/LayoutsPaths.htm) descrive gli assi globali/locali e la spaziatura fissa delle forze raggruppate. La formula di campionamento sopra è stata verificata sperimentalmente su Straus R3.1.5 per questi cinque scenari, non è un contratto generale per tutti i template.
 
 L'inviluppo di più posizioni non è uno stato simultaneo: non combinare indipendentemente i massimi di ogni componente per ricostruire una singola posizione del veicolo. Questi test non coprono ancora dinamica, centrifughe, superfici shell o ripartizione fra più corsie.

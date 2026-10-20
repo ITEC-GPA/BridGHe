@@ -13,7 +13,7 @@ using BridGHe.Common.Straus;
 internal static class MovingLoadBenchmarks
 {
     private const double Length = 6000, E = 210000, I = 450000000;
-    internal sealed record Scenario(string Id, int Positions, double Force, double[] Offsets, bool Reverse = false);
+    internal sealed record Scenario(string Id, int Divisions, double Force, double[] Offsets, bool Reverse = false);
     private static readonly Scenario[] Scenarios = {
         new("01-single-13",13,1000,new[]{0.0}),
         new("02-single-25",25,1000,new[]{0.0}),
@@ -23,10 +23,15 @@ internal static class MovingLoadBenchmarks
     };
     private static double[] Axles(Scenario s,int step)
     {
-        double margin=s.Offsets.Max(Math.Abs), t=(step+.5)/s.Positions;
-        double center=margin+(Length-2*margin)*(s.Reverse?1-t:t);
-        return s.Offsets.Select(a=>center+(s.Reverse?-a:a)).ToArray();
+        // The leading axle starts at the first patch centre. Continue until the last
+        // axle leaves the path; entry/exit cases contain only the axles on the bridge.
+        // This reference is computed from input geometry, never inferred from reactions.
+        double front=(step+.5)*Length/s.Divisions, leading=s.Offsets.Max();
+        return s.Offsets.Select(a=>front+a-leading).Where(x=>x>=0 && x<=Length)
+            .Select(x=>s.Reverse?Length-x:x).ToArray();
     }
+    private static int Steps(Scenario s) => (int)Math.Ceiling(
+        (Length+s.Offsets.Max()-s.Offsets.Min())/(Length/s.Divisions)-.5);
     private static double Moment(Scenario s,double[] axles,double x)
         => s.Force*axles.Sum(a=>1-a/Length)*x-s.Force*axles.Sum(a=>Math.Max(0,x-a));
     // Euler-Bernoulli Green function for a downward point force; negative global Uz.
@@ -48,8 +53,8 @@ internal static class MovingLoadBenchmarks
                 string folder=Path.Combine(root,scenario.Id);Directory.CreateDirectory(folder);
                 var model=ModelArchive.Clone(NativeExamples.Create().Single(e=>e.Id=="04-moving-load").Model);
                 model.Name=scenario.Id;var path=model.MovingPaths.Single();path.LoadCaseName=scenario.Id;
-                path.Divisions=scenario.Positions;double margin=scenario.Offsets.Max(Math.Abs);
-                double start=scenario.Reverse?Length-margin:margin,end=scenario.Reverse?margin:Length-margin;
+                path.Divisions=scenario.Divisions;
+                double start=scenario.Reverse?Length:0,end=scenario.Reverse?0:Length;
                 path.Coordinates=new[]{start,0,0,end,0,0,start,1000,0};
                 // Gravity remains global -Z when the path reverses: its local normal reverses too.
                 // Straus R3 lpAxisGlobal = 1 (installed API include, point-force axis convention).
@@ -57,10 +62,10 @@ internal static class MovingLoadBenchmarks
                 path.Validate();
                 File.WriteAllBytes(Path.Combine(folder,"input.bgmodel"),ModelArchive.Write(model));
                 var roundtrip=ModelArchive.Read<ModelModel>(File.ReadAllBytes(Path.Combine(folder,"input.bgmodel")));
-                checks.Near(scenario.Id+" archive positions",roundtrip.MovingPaths.Single().Divisions,scenario.Positions,0,0);
+                checks.Near(scenario.Id+" archive divisions",roundtrip.MovingPaths.Single().Divisions,scenario.Divisions,0,0);
                 checks.Near(scenario.Id+" archive axles",roundtrip.MovingPaths.Single().Template.Vehicles[0].Loads.Length,scenario.Offsets.Length,0,0);
                 var csv=new StringBuilder("step,axles_mm,Rleft_N,Rright_N,Mmax_Nmm,Uz_mid_mm\n");
-                for(int step=0;step<scenario.Positions;step++)
+                for(int step=0;step<Steps(scenario);step++)
                 {
                     var axles=Axles(scenario,step);double right=scenario.Force*axles.Sum()/Length;
                     csv.AppendLine(FormattableString.Invariant($"{step+1},{string.Join(";",axles.Select(a=>a.ToString("G17",CultureInfo.InvariantCulture)))},{scenario.Force*axles.Length-right:G17},{right:G17},{axles.Max(a=>Moment(scenario,axles,a)):G17},{Displacement(scenario,axles,Length/2):G17}"));
@@ -71,8 +76,8 @@ internal static class MovingLoadBenchmarks
                 File.WriteAllBytes(Path.Combine(folder,"results.bgmodel"),ModelArchive.Write(result));
                 File.WriteAllText(Path.Combine(folder,"warnings.json"),JsonSerializer.Serialize(warnings));
                 var cases=result.GeneratedMovingCases.OrderBy(c=>c.Key).Select(c=>c.Value).ToArray();
-                checks.Near(scenario.Id+" generated positions",cases.Length,scenario.Positions,0,0);
-                if(cases.Length!=scenario.Positions)throw new InvalidOperationException("Wrong generated case count.");
+                checks.Near(scenario.Id+" generated positions",cases.Length,Steps(scenario),0,0);
+                if(cases.Length!=Steps(scenario))throw new InvalidOperationException("Wrong generated case count.");
                 for(int step=0;step<cases.Length;step++)
                 {
                     string name=cases[step],label=scenario.Id+" / "+name;var axles=Axles(scenario,step);
