@@ -78,8 +78,13 @@ public static class BridgeConstructionSequence
         if (clonedIncrements.Any(c => c == null || c.Values.Any(v => v.Key == null || !caseNames.Contains(v.Key.Name) || !double.IsFinite(v.Value))))
             throw new ArgumentException("Construction increments contain unknown cases or non-finite coefficients.");
         StagedConstructionModel stage = null;
+        var sourceStructure = source.Elements.Where(e => e is BeamModel or PlateModel).ToArray();
+        // Native activation selects whole groups, not individual physical members within a shared group.
+        var selectedGroups = structure.SelectMany(e => e.Groups).Select(g => g.FullName).ToHashSet(StringComparer.Ordinal);
+        bool exactGroupSelection = sourceStructure.All(e => e.Groups.Count == 1 &&
+            (Active(e) == selectedGroups.Contains(e.Groups[0].FullName)));
         bool eligible = girderOverride == null && bearingIds.SequenceEqual(new[] { "*" }) &&
-            !source.Nodes.Any(n => n.Attributes.OfType<RigidConnectionAttributeModel>().Any());
+            exactGroupSelection && !source.Nodes.Any(n => n.Attributes.OfType<RigidConnectionAttributeModel>().Any());
         if (eligible && clonedIncrements.Length > 0)
         {
             stage = new StagedConstructionModel(model.Name);
@@ -92,7 +97,7 @@ public static class BridgeConstructionSequence
             "Phase Model is an independent analysis snapshot. Previous forces/deformations, creep or activation history are not automatically transferred.",
             "Apply the intended incremental actions to each snapshot, solve it, then use Bridge Action/Bridge Shrinkage Action and the existing phase workflow.",
             stage != null ? "Native Stage available: only element group activation and supplied load increments; connect ordered stages to the original full model." :
-                "Native Stage omitted: requires load increments, unchanged bearings/properties, and no rigid links. Use explicit phase snapshots for the selected configuration.",
+                "Native Stage omitted: requires load increments, exact whole-group selection (one group per element), unchanged bearings/properties, and no rigid links. Use explicit phase snapshots for the selected configuration.",
             "Section State and Day are workflow metadata; section properties change only through the explicit Girder Property input."
         });
     }

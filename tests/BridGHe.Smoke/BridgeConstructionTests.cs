@@ -37,6 +37,13 @@ internal static class BridgeConstructionTests
         Require(native.Stage.LoadCombinations.Single().Values.Single().Value == 1, "Native load increment preserved");
         var physical = BridgeConstructionSequence.Create(source, phase, null, new[] { "Girder:2:1" }, new[] { "*" }, null, null);
         Require(physical.Model.Beams.Count == 40 && physical.ActivePhysicalIds.Single() == "Girder:2:1", "Physical selection independent of beam ordering");
+        var sharedGroups = new ModelModel(source);
+        foreach (var beam in sharedGroups.Beams) { beam.Groups.Clear(); beam.Groups.Add(new GroupModel("AllSteel")); }
+        var partial = BridgeConstructionSequence.Create(sharedGroups, phase, null, new[] { "Girder:2:1" }, new[] { "*" }, null, new[] { increment });
+        Require(partial.Stage == null && partial.Model.Beams.Count == 40, "Partial physical selection cannot activate an entire shared native group");
+        sharedGroups.Beams[0].Groups.Clear();
+        Require(BridgeConstructionSequence.Create(sharedGroups, phase, null, null, new[] { "*" }, null, new[] { increment }).Stage == null,
+            "Ungrouped structural elements cannot be represented by group activation");
         Reject(() => BridgeConstructionSequence.Create(source, phase, new[] { "missing" }, null, null, null, null));
         Reject(() => BridgeConstructionSequence.Create(source, phase, null, null, new[] { "missing" }, null, null));
         Console.WriteLine("BRIDGE CONSTRUCTION PASS: active groups/physical members, bearing removal, phase override, node pruning and native-stage eligibility.");
