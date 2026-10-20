@@ -40,6 +40,7 @@ namespace St7API
         public const int tyBEAM = 1;
         public const int tyPLATE = 2;
         public const int tyLOADPATH = 8;
+        public const int rlPlaneXYZ = 0;
         public const int brReleased = 0;
         public const int brFixed = 1;
         public const int brPartial = 2;
@@ -132,6 +133,7 @@ namespace St7API
         public const int ipPlateCombPrincipal22 = 1;
         public const int ipPlateCombPrincipalAngle = 3;
         public const int ipPlateCombVonMises = 4;
+        public const int csCartesian = 0;
         public const int ttStressStrain = 4;
         public const int ptBeamStressVsStrain = 1011;
         public const int ptPlateStressVsStrain = 2007;
@@ -213,6 +215,8 @@ namespace St7API
         [DllImport("St7API.dll")]
         public static extern int St7GetSolverErrorString(int iErr, StringBuilder ErrorString, int MaxStringLen);
         [DllImport("St7API.dll")]
+        public static extern int St7VectorTransformToXYZ(int uID, int UCSId, double[] Position, double[] VXYZ);
+        [DllImport("St7API.dll")]
         public static extern int St7SetEntitySelectState(int uID, int Entity, int EntityNum, int EndEdgeFace, byte Selected);
         [DllImport("St7API.dll")]
         public static extern int St7GetTotal(int uID, int Entity, ref int Total);
@@ -236,6 +240,8 @@ namespace St7API
         public static extern int St7SetLoadCaseGravityDir(int uID, int CaseNum, int GravDir);
         [DllImport("St7API.dll")]
         public static extern int St7SetLoadCaseMassOption(int uID, int CaseNum, byte SMass, byte NSMass);
+        [DllImport("St7API.dll")]
+        public static extern int St7SetUCS(int uID, int UCSId, int UCSType, double[] UCSDoubles);
         [DllImport("St7API.dll")]
         public static extern int St7GetNumGroups(int uID, ref int NumGroups);
         [DllImport("St7API.dll")]
@@ -261,6 +267,10 @@ namespace St7API
         [DllImport("St7API.dll")]
         public static extern int St7GetElementConnection(int uID, int Entity, int EntityNum, int[] Connection);
         [DllImport("St7API.dll")]
+        public static extern int St7SetRigidLink(int uID, int LinkNum, int UCSId, int Plane, int[] Connection);
+        [DllImport("St7API.dll")]
+        public static extern int St7GetRigidLink(int uID, int LinkNum, ref int UCSId, ref int Plane, int[] Connection);
+        [DllImport("St7API.dll")]
         public static extern int St7SetLoadPath(int uID, int LoadPathID, int[] Integers, double[] Doubles);
         [DllImport("St7API.dll")]
         public static extern int St7SetNodeID(int uID, int NodeNum, int NodeID);
@@ -276,6 +286,10 @@ namespace St7API
         public static extern int St7SetNodeKTranslation3F(int uID, int NodeNum, int CaseNum, int UCSId, double[] Doubles);
         [DllImport("St7API.dll")]
         public static extern int St7SetNodeKRotation3F(int uID, int NodeNum, int CaseNum, int UCSId, double[] Doubles);
+        [DllImport("St7API.dll")]
+        public static extern int St7GetNodeRestraint6(int uID, int NodeNum, int CaseNum, ref int UCSId, int[] Status, double[] Doubles);
+        [DllImport("St7API.dll")]
+        public static extern int St7GetNodeKTranslation3F(int uID, int NodeNum, int CaseNum, ref int UCSId, double[] Doubles);
         [DllImport("St7API.dll")]
         public static extern int St7SetBeamID(int uID, int BeamNum, int BeamID);
         [DllImport("St7API.dll")]

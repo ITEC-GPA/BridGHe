@@ -726,6 +726,7 @@ namespace BridGHe.Common.Helpers
                             addedNodesNumber.Add(nodeNumber);
                         }
 
+                        int restraintUcs = NodeCoordinateExport.Create(modelId, node, nodeNumber);
                         if (node.HasAttribute(typeof(NodeRestraintAttributeModel)))
                         {
                             try
@@ -760,7 +761,7 @@ namespace BridGHe.Common.Helpers
                                         break;
                                     }
                                 }
-                                StrausRuntime.Check(St7.St7SetNodeRestraint6(modelId, nodeNumber, 1, 1, sts, doubles), "St7SetNodeRestraint6");
+                                StrausRuntime.Check(St7.St7SetNodeRestraint6(modelId, nodeNumber, 1, restraintUcs, sts, doubles), "St7SetNodeRestraint6");
                             }
                             catch (Exception ex)
                             {
@@ -775,8 +776,8 @@ namespace BridGHe.Common.Helpers
                             {
                                 NodeStiffnessAttributeModel.AttributeData stiffness = NodeStiffnessAttributeModel.GetStiffness(node);
                                 int[] sts = new int[6];
-                                StrausRuntime.Check(St7.St7SetNodeKTranslation3F(modelId, nodeNumber, 1, 1, new double[] { stiffness.Tx, stiffness.Ty, stiffness.Tz }), "St7SetNodeKTranslation3F");
-                                StrausRuntime.Check(St7.St7SetNodeKRotation3F(modelId, nodeNumber, 1, 1, new double[] { stiffness.Rx, stiffness.Ry, stiffness.Rz }), "St7SetNodeKRotation3F");
+                                StrausRuntime.Check(St7.St7SetNodeKTranslation3F(modelId, nodeNumber, 1, restraintUcs, new double[] { stiffness.Tx, stiffness.Ty, stiffness.Tz }), "St7SetNodeKTranslation3F");
+                                StrausRuntime.Check(St7.St7SetNodeKRotation3F(modelId, nodeNumber, 1, restraintUcs, new double[] { stiffness.Rx, stiffness.Ry, stiffness.Rz }), "St7SetNodeKRotation3F");
                             }
                             catch (Exception ex)
                             {

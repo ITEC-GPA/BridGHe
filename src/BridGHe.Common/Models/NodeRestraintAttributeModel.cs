@@ -121,19 +121,20 @@ namespace BridGHe.Common.Models
             NodeModel node = (NodeModel)element;
             if (node != null)
             {
+                var frame = node.Attributes.OfType<NodeCoordinateAttributeModel>().FirstOrDefault()?.Value ?? Plane.WorldXY;
                 double lr = DrawingHelper.GetScaleFactor(display.Viewport, node.Position) * Scale;
                 if (_value.Tx)
-                    display.DrawLine(node.Position, node.Position + new Vector3d(lr, 0, 0), Color.Magenta);
+                    display.DrawLine(node.Position, node.Position + lr * frame.XAxis, Color.Magenta);
                 if (_value.Ty)
-                    display.DrawLine(node.Position, node.Position + new Vector3d(0, lr, 0), Color.Magenta);
+                    display.DrawLine(node.Position, node.Position + lr * frame.YAxis, Color.Magenta);
                 if (_value.Tz)
-                    display.DrawLine(node.Position, node.Position + new Vector3d(0, 0, lr), Color.Magenta);
+                    display.DrawLine(node.Position, node.Position + lr * frame.ZAxis, Color.Magenta);
                 if (_value.Rx)
-                    display.DrawLine(node.Position, node.Position - new Vector3d(lr, 0, 0), Color.White);
+                    display.DrawLine(node.Position, node.Position - lr * frame.XAxis, Color.White);
                 if (_value.Ry)
-                    display.DrawLine(node.Position, node.Position - new Vector3d(0, lr, 0), Color.White);
+                    display.DrawLine(node.Position, node.Position - lr * frame.YAxis, Color.White);
                 if (_value.Rz)
-                    display.DrawLine(node.Position, node.Position - new Vector3d(0, 0, lr), Color.White);
+                    display.DrawLine(node.Position, node.Position - lr * frame.ZAxis, Color.White);
             }
         }
 

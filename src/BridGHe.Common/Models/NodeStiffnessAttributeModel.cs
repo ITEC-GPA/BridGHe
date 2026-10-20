@@ -158,19 +158,20 @@ namespace BridGHe.Common.Models
             NodeModel node = (NodeModel)element;
             if (node != null)
             {
+                var frame = node.Attributes.OfType<NodeCoordinateAttributeModel>().FirstOrDefault()?.Value ?? Plane.WorldXY;
                 double lr = -DrawingHelper.GetScaleFactor(display.Viewport, node.Position) * Scale;
                 if (Math.Abs(_value.Tx) > TOLL)
-                    DrawZigZag(display, node.Position, Vector3d.XAxis, lr * Math.Sign(_value.Tx), Vector3d.YAxis, Color);
+                    DrawZigZag(display, node.Position, frame.XAxis, lr * Math.Sign(_value.Tx), frame.YAxis, Color);
                 if (Math.Abs(_value.Ty) > TOLL)
-                    DrawZigZag(display, node.Position, Vector3d.YAxis, lr * Math.Sign(_value.Ty), Vector3d.XAxis, Color);
+                    DrawZigZag(display, node.Position, frame.YAxis, lr * Math.Sign(_value.Ty), frame.XAxis, Color);
                 if (Math.Abs(_value.Tz) > TOLL)
-                    DrawZigZag(display, node.Position, Vector3d.ZAxis, lr * Math.Sign(_value.Tz), Vector3d.XAxis, Color);
+                    DrawZigZag(display, node.Position, frame.ZAxis, lr * Math.Sign(_value.Tz), frame.XAxis, Color);
                 if (Math.Abs(_value.Rx) > TOLL)
-                    DrawZigZag(display, node.Position, Vector3d.XAxis, lr * Math.Sign(_value.Rx), Vector3d.YAxis, Color);
+                    DrawZigZag(display, node.Position, frame.XAxis, lr * Math.Sign(_value.Rx), frame.YAxis, Color);
                 if (Math.Abs(_value.Ry) > TOLL)
-                    DrawZigZag(display, node.Position, Vector3d.YAxis, lr * Math.Sign(_value.Ry), Vector3d.XAxis, Color);
+                    DrawZigZag(display, node.Position, frame.YAxis, lr * Math.Sign(_value.Ry), frame.XAxis, Color);
                 if (Math.Abs(_value.Rz) > TOLL)
-                    DrawZigZag(display, node.Position, Vector3d.ZAxis, lr * Math.Sign(_value.Rz), Vector3d.XAxis, Color);
+                    DrawZigZag(display, node.Position, frame.ZAxis, lr * Math.Sign(_value.Rz), frame.XAxis, Color);
             }
         }
 
