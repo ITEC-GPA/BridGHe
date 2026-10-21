@@ -117,7 +117,7 @@ internal static class Program
         var graphCopy=new ModelModel(model);
         Assert(graphCopy.Beams.Count==1 && graphCopy.Nodes[0].Attributes.Count==1,"FEM copy constructor with cloned attributes");
         CheckGrasshopper(args.Contains("--installed-plugins"));
-        RegressionTests.Run("all");
+        if (RegressionTests.Run("all") != 0) return 1;
         }
         Assert(StrausSectionCatalog.All.Length==21 && StrausSectionCatalog.All.Select(s=>s.Key).Distinct().Count()==21,"all 15 standard and 6 BGL sections");
         bool invalid=false;try {new MovingPointForce { Mobility=2 }.Validate();}catch(ArgumentException){invalid=true;}

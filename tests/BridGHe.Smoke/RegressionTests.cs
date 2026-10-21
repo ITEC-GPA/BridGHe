@@ -83,7 +83,17 @@ internal static class RegressionTests
         foreach (var test in tests.Where(t => selection == "all" || t.Key == selection))
         {
             if (selection == "all" && test.Key is "plot-preview" or "bridge-plots") { Console.WriteLine("SEPARATE HOST: " + test.Key + " (executed by tools/build.ps1 -Smoke)"); continue; }
-            test.Value(); count++; Console.WriteLine("PASS REGRESSION: " + test.Key);
+            Console.WriteLine("RUN REGRESSION: " + test.Key);
+            try { test.Value(); }
+            catch (Exception error)
+            {
+                // Report before RhinoCore.Dispose: the native host may otherwise terminate
+                // while unwinding, hiding the managed failure and returning exit code zero.
+                Console.Error.WriteLine("FAIL REGRESSION: " + test.Key + "\n" + error);
+                Console.Error.Flush();
+                return 1;
+            }
+            count++; Console.WriteLine("PASS REGRESSION: " + test.Key);
         }
         Console.WriteLine($"REGRESSION TOTAL {count}");
         return 0;
