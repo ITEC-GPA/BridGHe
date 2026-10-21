@@ -7,6 +7,7 @@ using BridGHe.Common.Checks;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
 
 namespace BridGHe.Grasshopper.Components.Utilities;
@@ -72,7 +73,7 @@ public sealed class BridgeResultComparisonComponent : BridgeUtilityComponent
 public sealed class BridgeCheckSummaryComponent : BridgeUtilityComponent
 {
     private const string LabelsDescription = "Optional custom label per result. Leave empty for automatic beam/local station/combination labels. Results without FEM provenance use their tree position and phase.";
-    public BridgeCheckSummaryComponent() : base("Bridge Check Summary", "CheckSummary", "Tabulate existing GPC checks across sections, phases and combinations. Preserves original statuses/notes and exposes missing ratios; does not add engineering verifications.", CategoryNameConstants.SUBCATEGORY_RESULTS) { }
+    public BridgeCheckSummaryComponent() : base("Bridge Check Summary", "CheckSummary", "Tabulate existing GPC checks across sections, phases and combinations. Preserves original statuses/notes and exposes missing ratios; does not add engineering verifications.", CategoryNameConstants.SUBCATEGORY_RESULTS) { PrincipalParameterIndex = 0; }
     public override Guid ComponentGuid => new Guid("e0447314-cb48-4c24-8e65-6508ba9baa90");
     protected override void RegisterInputParams(GH_InputParamManager p)
     {
@@ -84,6 +85,7 @@ public sealed class BridgeCheckSummaryComponent : BridgeUtilityComponent
         bool success = base.Read(reader);
         if (success)
         {
+            PrincipalParameterIndex = 0;
             // Existing definitions store Optional=false and the old tooltip in their input archive.
             Params.Input[1].Optional = true;
             Params.Input[1].Description = LabelsDescription;
@@ -112,10 +114,23 @@ public sealed class BridgeCheckSummaryComponent : BridgeUtilityComponent
             throw new ArgumentException("Leave Labels empty for automatic labels, or supply one non-empty custom label per result in the same branch.");
         var rows = results.SelectMany((r, i) => { var result = (BridgeStressResult)r.Value; return BridgeGpc.Checks(result.Stage).Select(c => (Label: labels[i], Phase: result.Stage.Name, Check: c)); }).ToArray();
         double Ratio(int i) => rows[i].Check.Ratio ?? double.NaN;
-        da.SetDataList(0, rows.Select(r => r.Label)); da.SetDataList(1, rows.Select(r => r.Phase)); da.SetDataList(2, rows.Select(r => r.Check.Name));
-        da.SetDataList(3, rows.Select((_, i) => Ratio(i))); da.SetDataList(4, rows.Select(r => r.Check.Status.ToString())); da.SetDataList(5, rows.Select(r => r.Check.Unit)); da.SetDataList(6, rows.Select(r => r.Check.Note));
+        // Explicit output branches avoid implicit grafting when optional Labels is empty.
+        // The Results input determines paths for both automatic and custom labels.
+        var path = da.ParameterTargetPath(0);
+        void Text(int port, IEnumerable<string> values)
+        {
+            var tree = new GH_Structure<GH_String>(); tree.AppendRange(values.Select(v => new GH_String(v)), path); da.SetDataTree(port, tree);
+        }
+        void Numbers(int port, IEnumerable<double> values)
+        {
+            var tree = new GH_Structure<GH_Number>(); tree.AppendRange(values.Select(v => new GH_Number(v)), path); da.SetDataTree(port, tree);
+        }
+        Text(0, rows.Select(r => r.Label)); Text(1, rows.Select(r => r.Phase)); Text(2, rows.Select(r => r.Check.Name));
+        Numbers(3, rows.Select((_, i) => Ratio(i))); Text(4, rows.Select(r => r.Check.Status.ToString())); Text(5, rows.Select(r => r.Check.Unit)); Text(6, rows.Select(r => r.Check.Note));
         var finite = Enumerable.Range(0, rows.Length).Where(i => double.IsFinite(Ratio(i))).ToArray(); double max = finite.Length == 0 ? double.NaN : finite.Max(Ratio);
-        da.SetData(7, max); da.SetData(8, rows.Length - finite.Length); da.SetDataList(9, finite.Where(i => Ratio(i) == max).Select(i => rows[i].Label + " / " + rows[i].Phase + " / " + rows[i].Check.Name));
+        Numbers(7, new[] { max });
+        var missing = new GH_Structure<GH_Integer>(); missing.Append(new GH_Integer(rows.Length - finite.Length), path); da.SetDataTree(8, missing);
+        Text(9, finite.Where(i => Ratio(i) == max).Select(i => rows[i].Label + " / " + rows[i].Phase + " / " + rows[i].Check.Name));
         if (rows.Length == 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No local checks are available in these results.");
     }
 }

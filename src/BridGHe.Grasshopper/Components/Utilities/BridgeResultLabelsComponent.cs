@@ -5,6 +5,7 @@ using System.Linq;
 using BridGHe.Common.Checks;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Special;
 using Grasshopper.Kernel.Types;
 
@@ -19,6 +20,7 @@ public sealed class BridgeResultLabelsComponent : BridgeUtilityComponent
         "Create one label per bridge result, preserving order and tree branches. Connect a Value List to Format to populate its choices automatically.",
         CategoryNameConstants.SUBCATEGORY_RESULTS)
     {
+        PrincipalParameterIndex = 0;
         Params.ParameterSourcesChanged += (_, _) => ConfigureValueLists();
     }
     public override Guid ComponentGuid => new Guid("d507b37a-ca9f-4c25-890c-2cd354c22ebc");
@@ -35,6 +37,7 @@ public sealed class BridgeResultLabelsComponent : BridgeUtilityComponent
     public override void AddedToDocument(GH_Document document)
     {
         base.AddedToDocument(document);
+        PrincipalParameterIndex = 0;
         ConfigureValueLists();
     }
     private void ConfigureValueLists()
@@ -71,8 +74,13 @@ public sealed class BridgeResultLabelsComponent : BridgeUtilityComponent
         if (Params.Input[1].VolatileDataCount > 1) throw new ArgumentException("Choose a single Format for all results.");
         if (format < 0 || format >= FormatNames.Length) throw new ArgumentException("Format must be 0 Completa, 1 Trave e stazione, 2 Combinazione or 3 Fase.");
         if (values.Any(v => v?.Value is not BridgeStressResult)) throw new ArgumentException("Results must contain BridgeStressResult objects from a bridge checker.");
-        da.SetDataList(0, values.Select((v, i) => BridgeResultLabels.Format((BridgeStressResult)v.Value,
-            (BridgeResultLabelFormat)format, $"{da.ParameterTargetPath(0)}[{i}]")));
+        // SetDataList can graft an iteration index when Format uses item access.
+        // Explicit branches keep this output aligned with the original Results tree.
+        var path = da.ParameterTargetPath(0);
+        var labels = new GH_Structure<GH_String>();
+        labels.AppendRange(values.Select((v, i) => new GH_String(BridgeResultLabels.Format((BridgeStressResult)v.Value,
+            (BridgeResultLabelFormat)format, $"{path}[{i}]"))), path);
+        da.SetDataTree(0, labels);
         Message = FormatNames[format];
     }
 }

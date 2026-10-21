@@ -26,6 +26,9 @@ internal static class BridgeResultLabelsTests
         input.PersistentData.Append(new GH_ObjectWrapper(b), first);
         input.PersistentData.Append(new GH_ObjectWrapper(plain), second);
         Solve(); Verify(0);
+        // A singleton selector in a deeper branch must not become the principal result path.
+        format.PersistentData.Clear(); format.PersistentData.Append(new GH_Integer(1), new GH_Path(9, 8, 7));
+        Solve(); Verify(1);
 
         var list = new GH_ValueList(); list.CreateAttributes(); doc.AddObject(list, false);
         format.AddSource(list); Solve(); Verify(0);
@@ -43,6 +46,7 @@ internal static class BridgeResultLabelsTests
 
         // Save the selector and its chosen format; raw test results are supplied again after reopening.
         input.PersistentData.Clear();
+        component.PrincipalParameterIndex = -1; // Simulate the original saved contract.
         var archive = new GH_IO.Serialization.GH_Archive();
         Require(archive.AppendObject(doc, "Definition"), "Could not save the label selector.");
         using var reopened = new GH_Document { Enabled = true };
@@ -51,7 +55,7 @@ internal static class BridgeResultLabelsTests
         var restoredList = reopened.Objects.OfType<GH_ValueList>().Single();
         ((Param_GenericObject)restored.Params.Input[0]).PersistentData.Append(new GH_ObjectWrapper(a), first);
         reopened.NewSolution(false, GH_SolutionMode.Silent);
-        Require(restoredList.SelectedItems.Single().Name == "Fase" && restored.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable().Equals(a.Stage.Name),
+        Require(restored.PrincipalParameterIndex == 0 && restoredList.SelectedItems.Single().Name == "Fase" && restored.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable().Equals(a.Stage.Name),
             "Save/reopen lost the selected format or failed to solve.");
 
         input.PersistentData.Append(new GH_ObjectWrapper(a)); format.RemoveAllSources();
@@ -68,7 +72,9 @@ internal static class BridgeResultLabelsTests
         }
         void Verify(int mode)
         {
-            Require(component.Params.Output[0].VolatileData.Paths.SequenceEqual(new[] { first, second }), "Label branches do not match results.");
+            Require(component.Params.Output[0].VolatileData.Paths.Select(p => p.ToString()).SequenceEqual(new[] { first.ToString(), second.ToString() }),
+                "Label branches do not match results. Input: " + string.Join(", ", input.VolatileData.Paths)
+                + "; output: " + string.Join(", ", component.Params.Output[0].VolatileData.Paths));
             string[] expected = mode switch
             {
                 0 => new[] { a.Source.Label, b.Source.Label, $"Result {second}[0] / {plain.Stage.Name}" },

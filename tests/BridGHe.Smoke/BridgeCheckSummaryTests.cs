@@ -41,10 +41,19 @@ internal static class BridgeCheckSummaryTests
         input.PersistentData.Append(new GH_ObjectWrapper(b), first);
         input.PersistentData.Append(new GH_ObjectWrapper(c), second);
         Solve();
-        Require(summary.Params.Output[0].VolatileData.Paths.SequenceEqual(new[] { first, second }), "Automatic labels changed tree paths.");
+        Require(summary.Params.Output.All(p => p.VolatileData.Paths.Select(path => path.ToString()).SequenceEqual(new[] { first.ToString(), second.ToString() })),
+            "Automatic labels changed tree paths.");
         VerifyLabels(a, b, c);
         var expectedRatios = new[] { a, b, c }.SelectMany(r => BridgeGpc.Checks(r.Stage)).Select(v => v.Ratio ?? double.NaN);
         Require(Values<double>(3).SequenceEqual(expectedRatios), "Automatic naming changed numerical ratios or NaN values.");
+
+        // Exercise the actual labeler -> summary connection on a branched result tree.
+        var labeler = Create("BridgeResultLabelsComponent"); labeler.CreateAttributes(); doc.AddObject(labeler, false);
+        ((Param_GenericObject)labeler.Params.Input[0]).PersistentData.MergeStructure(input.PersistentData);
+        labels.AddSource(labeler.Params.Output[0]); Solve(); VerifyLabels(a, b, c);
+        Require(summary.Params.Output[0].VolatileData.Paths.Select(path => path.ToString()).SequenceEqual(new[] { first.ToString(), second.ToString() })
+            && Values<double>(3).SequenceEqual(expectedRatios), "Connecting the labeler changed paths or check ratios.");
+        labels.RemoveAllSources(); doc.RemoveObject(labeler, false);
 
         // Reordered/flattened results must retain their own identity, independently of item position.
         input.PersistentData.Clear();
@@ -72,11 +81,12 @@ internal static class BridgeCheckSummaryTests
         Require(detailed.Source == a.Source && detailed.Analysis.Input.Phases.SequenceEqual(a.Analysis.Input.Phases), "Detail checking lost provenance or changed actions.");
 
         // Simulate an old definition, whose archive explicitly says Labels is required.
-        input.PersistentData.Clear(); labels.Optional = false;
+        input.PersistentData.Clear(); labels.Optional = false; summary.PrincipalParameterIndex = -1;
         var archive = new GH_IO.Serialization.GH_Archive();
         Require(archive.AppendObject(summary, "Summary"), "Could not save summary contract.");
         var restored = Create("BridgeCheckSummaryComponent");
-        Require(archive.ExtractObject(restored, "Summary") && restored.Params.Input[1].Optional, "Old archives must adopt optional labels.");
+        Require(archive.ExtractObject(restored, "Summary") && restored.Params.Input[1].Optional && restored.PrincipalParameterIndex == 0,
+            "Old archives must adopt optional labels and Results as the principal parameter.");
         Require(restored.ComponentGuid == summary.ComponentGuid && restored.Params.Input.Count == 2 && restored.Params.Output.Count == 10,
             "Component GUID or port positions changed.");
         using var reopened = new GH_Document { Enabled = true };
