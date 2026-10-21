@@ -1,28 +1,37 @@
 """Report repository evidence of use, not whether a component is used in external documents."""
 import json
 from pathlib import Path
+from xml.etree import ElementTree as ET
+from current_example_definitions import current_definitions
 
 root = Path(__file__).resolve().parents[1]
 items = json.loads((root / 'migration/current-components.json').read_text(encoding='utf-8'))
-examples = [(p, p.read_text(encoding='utf-8-sig').lower()) for p in (root / 'examples').rglob('*.ghx')]
+catalog = json.loads((root / 'example/catalog.json').read_text(encoding='utf-8'))
+examples = []
+for path in current_definitions(root / 'example', catalog):
+    objects = ET.parse(path).find(".//chunk[@name='DefinitionObjects']/chunks")
+    if objects is None:
+        raise ValueError(f'No Grasshopper objects in {path}')
+    guids = {node.text.lower() for node in objects.findall("chunk/items/item[@name='GUID']")}
+    examples.append((path, guids))
 tests = [(p, p.read_text(encoding='utf-8-sig')) for p in (root / 'tests').rglob('*.cs')]
 rows = []
 for item in items:
-    if not any(part in item['type'] for part in ('.BridgeChecks.', '.BridgeDetails.', '.Checks.')):
+    if item['kind'] != 'component':
         continue
     key = item['type'].split('.')[-1]
     rows.append({
         'name': item['name'], 'type': item['type'], 'guid': item['guid'],
         'panel': item['subcategory'],
-        'examples': [p.relative_to(root).as_posix() for p, text in examples if item['guid'].lower() in text],
+        'examples': [p.relative_to(root).as_posix() for p, guids in examples if item['guid'].lower() in guids],
         'namedInTestSources': [p.relative_to(root).as_posix() for p, text in tests if key in text],
     })
 rows.sort(key=lambda r: r['name'])
-report = {'scope': 'Versioned GHX examples and explicit type names in test sources; external user files are not inspected.',
+report = {'scope': 'Current GHX definitions explicitly listed in example/catalog.json and explicit type names in test sources. Archived and personal files are not inspected. Presence is not execution coverage.',
           'exampleCount': len(examples), 'components': rows}
 (root / 'docs/component-usage.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
-lines = ['# Uso dei componenti di verifica BridGHe', '',
-         f"Audit dei GUID nei **{len(examples)} esempi GHX** del repository. Assenza dagli esempi non significa componente inutile o non utilizzato nei file dell'utente.", '',
+lines = ['# Uso dei componenti BridGHe', '',
+         f"Audit di **{len(rows)} componenti** nei **{len(examples)} GHX correnti** elencati in `example/catalog.json`, comprese le definizioni aggiuntive. Copie archiviate e cartelle personali sono escluse. Assenza dagli esempi non significa componente inutile o non utilizzato nei file dell'utente.", '',
          'I riferimenti per nome nei sorgenti dei test indicano un uso esplicito; non sono una misura di copertura. Il caricamento e le icone di tutti i componenti sono controllati separatamente dagli smoke test.', '',
          '## Componenti assenti dagli esempi GHX', '',
          '| Componente | Gruppo nella tab BridGHe | Riferimenti espliciti nei test |', '|---|---|---|']

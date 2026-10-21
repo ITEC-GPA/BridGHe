@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 from urllib.parse import unquote
 from xml.etree import ElementTree as ET
+from current_example_definitions import current_definitions
 
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES = ROOT / 'example'
@@ -26,9 +27,8 @@ def main():
     for row in catalog:
         if not (EXAMPLES / row['readme']).is_file():
             errors.append(f"Missing instructions: {row['id']}")
-        if not row['definition']:
-            continue
-        file = EXAMPLES / row['definition']
+    files = current_definitions(EXAMPLES, catalog)
+    for file in files:
         try:
             text = file.read_text(encoding='utf-8-sig')
             xml = ET.fromstring(text)
@@ -52,7 +52,7 @@ def main():
             if not (file.parent / path).exists():
                 errors.append(f'Broken link in {file.relative_to(ROOT)}: {target}')
             links += 1
-    expected_definitions = sum(row['definition'] is not None for row in catalog)
+    expected_definitions = len(files)
     if definitions != expected_definitions:
         errors.append(f'Expected {expected_definitions} current GHX definitions, found {definitions}')
     if errors:

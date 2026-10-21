@@ -420,6 +420,10 @@
     "group": "Verifiche locali e dettagli",
     "readme": "47-pioli-irrigidimenti-verifiche/README.md",
     "definition": "47-pioli-irrigidimenti-verifiche/47-pioli-irrigidimenti-verifiche.ghx",
+    "additionalDefinitions": [
+      "47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
+      "47-pioli-irrigidimenti-verifiche/47-anteprima-grafici.ghx"
+    ],
     "calculations": "47-pioli-irrigidimenti-verifiche/calcoli"
   },
   {
