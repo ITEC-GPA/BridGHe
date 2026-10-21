@@ -40,6 +40,7 @@ internal static class RegressionTests
             ["bridge-stations"] = BridgeStationTests.Run,
             ["component-layout"] = ComponentLayoutTests.Run,
             ["bridge-plots"] = PlotTests.Run,
+            ["bridge-detail-plots"] = BridgeDetailPlotTests.Run,
             ["native-bridge-components"] = NativeBridgeComponentTests.Run,
             ["bridge-numerical-baseline"] = BridgeNumericalBaseline.Verify,
             ["archive-before-cleanup"] = ArchiveBeforeCleanup,

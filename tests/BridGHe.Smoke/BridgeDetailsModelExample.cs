@@ -58,6 +58,15 @@ internal static class BridgeDetailsModelExample
             BridgeWorkflowTests.Require(s.Enabled && s.ResistancePerStud > 0 && Math.Abs(s.ForcePerStud - Math.Abs(s.Flow) * .1) < 1e-8, "Incorrect connected stud force.");
             BridgeWorkflowTests.Require(BridgeGpc.Checks(b[i].Stage).Any(c => c.Name.StartsWith("Intermedio")) && BridgeGpc.Checks(b[i].Stage).Any(c => c.Name.StartsWith("Appoggio")), "Missing stiffener checks.");
         }
+        foreach(var plot in d.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name is "BridgeStudPlotComponent" or "BridgeIntermediateStiffenerPlotComponent" or "BridgeSupportStiffenerPlotComponent"))
+        {
+            var svg=(string)plot.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
+            BridgeWorkflowTests.Require(svg.Contains("<svg") && svg.Contains("Station [m]"),"Missing native detail plot.");
+            if(plot.GetType().Name!="BridgeStudPlotComponent")
+                BridgeWorkflowTests.Require(plot.Params.Output[4].VolatileDataCount>0 && plot.Params.Output[5].VolatileData.AllData(true).All(g=>string.IsNullOrEmpty(g.ScriptVariable() as string)),"Incomplete stiffener WR in the tutorial.");
+        }
+        var previews=d.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgePlotPreviewComponent").ToArray();
+        BridgeWorkflowTests.Require(previews.Length==3&&previews.All(c=>c.Params.Output[0].VolatileDataCount==1),"Detail plots are not visible in their three GH previews.");
         return a.Length;
     }
     internal static void Replay()
@@ -133,14 +142,77 @@ internal static class BridgeDetailsModelExample
         Panel("PERCORSO E LIMITI", "Tension Check contiene BridgeStressResult, non soltanto tensioni. Conservare l'albero {indice beam;indice stazione}; gli item sono le combinazioni.\nDetails di Layout è una lista di definizioni geometriche: non collegarla indiscriminatamente a Results. Suddividere le zone e associare il dettaglio alla sua stazione.\nCalculation=1 LinearHistory NON è supportato da Detail Check. L'opzione Ultimate non genera coefficienti né altera le azioni FEM.\nPer appoggi reali usare la reazione compressiva corretta, con unità e associazione di combinazione coerenti. R=900 in questo file è dimostrativa.", 3870, 1000, 1300, 220);
         Calculate(d);
         Panel("Riepilogo — controllo governante per stazione", "", 4330, 800, 880, 140).AddSource(sum.Params.Output[9]); Solve(d);
+        Panel("GRAFICI DEI DETTAGLI", "Pioli: confronto PEd/PRd. Irrigiditori: selezionare Inviluppo WR o una singola voce nella Value List. Display=0 WR; 1 domanda; 2 limite; 3 confronto.\nStations è in metri dall'inizio dell'estratto: 0 m = X globale 27.5 m; 2.5 m = pila a X globale 30 m. Dettagli assegnati a queste due posizioni per il tutorial.\nLa definizione intermedia e i pannelli da 2 m restano ipotesi locali dimostrative: il plot non deriva automaticamente il passo reale o la reazione dagli elementi FEM.\nI punti degli irrigiditori non sono interpolati. Ogni WR deriva da GPC; l'inviluppo richiede tutte le voci applicabili. Leggere Governing checks e Unavailable checks.", 5570, -480, 1450, 230);
+        foreach(var (type,nick,y,station) in new[]{
+            ("BridgeStudPlotComponent","Pioli — PEd / PRd",0f,0.0),
+            ("BridgeIntermediateStiffenerPlotComponent","Intermedio — WR a s=0 m",700f,0.0),
+            ("BridgeSupportStiffenerPlotComponent","Appoggio — WR a s=2.5 m",1400f,2.5)})
+        {
+            var plot=Add(type,nick,5850,y+180);Wire(build,0,plot,0);Wire(composite,0,plot,1);Wire(detail,0,plot,2);
+            Set(plot,7,nick);
+            ((Param_Boolean)plot.Params.Input[8]).PersistentData.Clear();((Param_Boolean)plot.Params.Input[8]).SetPersistentData(true);
+            if(type=="BridgeStudPlotComponent")Set(plot,3,5);
+            else
+            {
+                var selector=new GH_ValueList{NickName="Voce GPC / inviluppo WR"};selector.CreateAttributes();selector.Attributes.Pivot=new PointF(5350,y+180);d.AddObject(selector,false);plot.Params.Input[3].AddSource(selector);
+                Set(plot,10,station);
+                Panel("Voce governante", "", 5570,y+420,530,140).AddSource(plot.Params.Output[4]);
+            }
+            var preview=Add("BridgePlotPreviewComponent",nick+" — preview",6400,y);Wire(plot,0,preview,0);
+        }
+        Solve(d);
         int count = Validate(d); Directory.CreateDirectory(Folder); GrasshopperBridgeExample.Write(d, FileName);
         using var reopened = GrasshopperBridgeExample.Read(FileName); Calculate(reopened); BridgeWorkflowTests.Require(Validate(reopened) == count, "Replay changed station count.");
+        Console.WriteLine("DETAIL EXAMPLE: integrated document solved, saved and reopened.");
         BridgeWorkflowTests.Require(paths.Select(p => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(p)))).SequenceEqual(hashes), "Source native result archives were modified.");
+        Console.WriteLine("DETAIL EXAMPLE: source archive hashes unchanged.");
+        string plotFolder=Path.Combine(Folder,"grafici");Directory.CreateDirectory(plotFolder);
+        foreach(var plot in d.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name is "BridgeStudPlotComponent" or "BridgeIntermediateStiffenerPlotComponent" or "BridgeSupportStiffenerPlotComponent"))
+        {
+            Console.WriteLine("DETAIL EXAMPLE: exporting "+plot.GetType().Name);
+            File.WriteAllText(Path.Combine(plotFolder,plot.GetType().Name+".svg"),(string)plot.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable());
+        }
+        Console.WriteLine("DETAIL EXAMPLE: three SVG charts exported.");
+        WritePlotViewer(plugin,plotFolder);
         File.WriteAllText(Path.Combine(Folder, "validation-modello.json"), JsonSerializer.Serialize(new {
             solved = true, reopened = true, solverInvoked = false, source = "Example 19 REV003 archived Straus results", beam = "36", stationCombinationResults = count,
+            detailPlots=3, plotPreviews=3, intermediateStationsM=new[]{0.0}, supportStationsM=new[]{2.5},
             sourceHashes = paths.Select((p, i) => new { file = Path.GetFileName(p), sha256 = hashes[i] }),
             warnings = d.Objects.OfType<GH_ActiveObject>().SelectMany(c => c.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Select(e => c.Name + ": " + e))
         }, new JsonSerializerOptions { WriteIndented = true }));
         Console.WriteLine($"MODEL DETAIL EXAMPLE PASS: {count} native station/combination samples, save/reopen, actions and paths preserved, source hashes unchanged; no new Straus analysis.");
+    }
+
+    internal static void GeneratePlotViewer()
+    {
+        WritePlotViewer(BridgeMergeTests.Initialize(),Path.Combine(Folder,"grafici"));
+        Console.WriteLine("DETAIL PLOT VIEWER PASS: saved, reopened and all three SVG snapshots selected.");
+    }
+
+    private static void WritePlotViewer(Assembly plugin,string plotFolder)
+    {
+        Console.WriteLine("DETAIL EXAMPLE: creating snapshot viewer.");
+        using var doc=new GH_Document();
+        var data=new Param_String{NickName="Snapshot dei tre grafici dell'esempio 47"};data.CreateAttributes();data.Attributes.Pivot=new PointF(100,100);doc.AddObject(data,false);
+        foreach(var type in new[]{"BridgeStudPlotComponent","BridgeIntermediateStiffenerPlotComponent","BridgeSupportStiffenerPlotComponent"})
+            data.PersistentData.Append(new GH_String(File.ReadAllText(Path.Combine(plotFolder,type+".svg"))));
+        var list=new GH_ValueList{NickName="Grafico",ListMode=GH_ValueListMode.DropDown};list.CreateAttributes();list.Attributes.Pivot=new PointF(100,240);list.ListItems.Clear();
+        foreach(var (name,index) in new[]{("Pioli PEd / PRd",0),("Intermedio WR",1),("Appoggio WR",2)})list.ListItems.Add(new GH_ValueListItem(name,index.ToString()){Selected=index==0});doc.AddObject(list,false);
+        var preview=(GH_Component)Activator.CreateInstance(plugin.GetTypes().Single(t=>t.Name=="BridgePlotPreviewComponent"));preview.CreateAttributes();preview.Attributes.Pivot=new PointF(450,80);doc.AddObject(preview,false);
+        preview.Params.Input[0].AddSource(data);preview.Params.Input[1].AddSource(list);
+        var note=new GH_Panel{UserText="47 | ANTEPRIMA DEI GRAFICI\nSnapshot dei risultati dell'esempio integrato, non ricalcolati qui. Scegliere il grafico nella Value List; doppio clic per ingrandire.\nPer cambiare combinazioni, verifiche o progressive aprire 47-integrazione-modello.ghx. Il WR massimo non comprende verifiche non implementate o non attivate."};
+        note.CreateAttributes();note.Attributes.Pivot=new PointF(50,-200);note.Attributes.Bounds=new RectangleF(50,-200,1080,150);doc.AddObject(note,false);
+        Solve(doc);Console.WriteLine("DETAIL EXAMPLE: snapshot viewer solved.");
+        string path=Path.Combine(Folder,"47-anteprima-grafici.ghx");GrasshopperBridgeExample.Write(doc,path);
+        using var reopened=GrasshopperBridgeExample.Read(path);
+        var restoredList=reopened.Objects.OfType<GH_ValueList>().Single();
+        var restored=reopened.Objects.OfType<GH_Component>().Single();
+        for(int i=0;i<3;i++)
+        {
+            for(int j=0;j<3;j++)restoredList.ListItems[j].Selected=j==i;
+            restoredList.ExpireSolution(false);Solve(reopened);
+            BridgeWorkflowTests.Require(restored.Params.Output[0].VolatileDataCount==1,"Cannot reopen/select detail chart snapshot.");
+        }
+        Console.WriteLine("DETAIL EXAMPLE: snapshot viewer saved, reopened and all three charts selected.");
     }
 }

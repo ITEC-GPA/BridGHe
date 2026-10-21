@@ -20,6 +20,7 @@ public sealed class BridgePlot
     public string Title { get; }
     public string XLabel { get; }
     public string YLabel { get; }
+    public string Note { get; }
     public IReadOnlyList<PlotSeries> Series { get; }
     public IReadOnlyList<IReadOnlyList<PlotRange>> Envelope { get; }
     public IReadOnlyList<double> ElementBoundaries { get; }
@@ -27,13 +28,13 @@ public sealed class BridgePlot
     private readonly double xmin, xmax, ymin, ymax;
     private readonly double[] yTicks;
     private const int Width=1500, PlotHeight=680, Left=110, Right=35, Top=80, Bottom=65;
-    private int Height => PlotHeight + 64 + 24 * ((names.Length + 2) / 3);
+    private int Height => PlotHeight + 64 + 24 * ((names.Length + 2) / 3) + (Note.Length>0?24:0);
     private static string N(double value) => value.ToString("0.######",CultureInfo.InvariantCulture);
 
     public BridgePlot(string title, string xLabel, string yLabel, IEnumerable<PlotSeries> series,
-        IEnumerable<IReadOnlyList<PlotRange>> envelope = null, IEnumerable<double> elementBoundaries = null)
+        IEnumerable<IReadOnlyList<PlotRange>> envelope = null, IEnumerable<double> elementBoundaries = null, string note = null)
     {
-        Title=title??"";XLabel=xLabel??"";YLabel=yLabel??"";
+        Title=title??"";XLabel=xLabel??"";YLabel=yLabel??"";Note=note??"";
         Series=series.Select(s=>new PlotSeries(s.Name??"",s.Points.ToArray())).ToArray();
         Envelope=(envelope??Array.Empty<IReadOnlyList<PlotRange>>()).Select(r=>(IReadOnlyList<PlotRange>)r.ToArray()).ToArray();
         ElementBoundaries=(elementBoundaries??Array.Empty<double>()).Distinct().OrderBy(x=>x).ToArray();
@@ -151,7 +152,8 @@ public sealed class BridgePlot
                 Element("circle",("cx",N(X(point.X))),("cy",N(Y(point.Y))),("r","3"),("fill","#203b50"));
                 Label(X(point.X),Y(point.Y)+dy,$"{label} {point.Y.ToString("G6",CultureInfo.InvariantCulture)}",X(point.X)>Width/2?"end":"start",14);
             }
-            if(Envelope.Count>0)Label(Left,Height-12,"Grey envelope: all combinations",size:13);
+            if(Envelope.Count>0)Label(Left,Height-12-(Note.Length>0?24:0),"Grey envelope: all combinations",size:13);
+            if(Note.Length>0)Label(Left,Height-12,Note,size:13);
             xml.WriteEndElement();
         }
         return text.ToString();
@@ -215,7 +217,8 @@ public sealed class BridgePlot
                 float x=X(point.X);if(x>Width/2)x-=g.MeasureString(value,font).Width;
                 g.FillEllipse(ink,X(point.X)-3,Y(point.Y)-3,6,6);g.DrawString(value,font,ink,x,Y(point.Y)+dy);
             }
-            if(Envelope.Count>0)g.DrawString("Grey envelope: all combinations",font,ink,Left,Height-25);
+            if(Envelope.Count>0)g.DrawString("Grey envelope: all combinations",font,ink,Left,Height-25-(Note.Length>0?24:0));
+            if(Note.Length>0)g.DrawString(Note,font,ink,Left,Height-25);
             return bitmap;
         }
         catch{bitmap.Dispose();throw;}

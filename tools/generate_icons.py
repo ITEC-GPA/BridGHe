@@ -307,6 +307,8 @@ BridgeStudResultsComponent|studs|data|result
 BridgeVerificationResultsComponent|table|check|result
 BridgeShearPlotComponent|shear|measure|result
 BridgeStudPlotComponent|studs|measure|result
+BridgeIntermediateStiffenerPlotComponent|stiffener|measure|result
+BridgeSupportStiffenerPlotComponent|stiffener|force|result
 BridgeStudsComponent|studs||check
 BridgeIntermediateStiffenerComponent|stiffener||check
 BridgeSupportStiffenerComponent|stiffener|force|check

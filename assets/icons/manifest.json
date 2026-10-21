@@ -85,6 +85,15 @@
       "badge": ""
     },
     {
+      "key": "BridgeCombinationExcelComponent",
+      "type": "BridGHe.Grasshopper.Components.Utilities.BridgeCombinationExcelComponent",
+      "guid": "2776b9ba-309e-4a25-91ad-4177c557bc13",
+      "name": "Bridge Combination Excel",
+      "family": "load",
+      "glyph": "table",
+      "badge": "arrow"
+    },
+    {
       "key": "BridgeDeflectionCamberComponent",
       "type": "BridGHe.Grasshopper.Components.Utilities.BridgeDeflectionCamberComponent",
       "guid": "aa3891ae-e93d-45c6-b493-5d2efea84758",
@@ -157,6 +166,15 @@
       "badge": "stages"
     },
     {
+      "key": "BridgeResultLabelsComponent",
+      "type": "BridGHe.Grasshopper.Components.Utilities.BridgeResultLabelsComponent",
+      "guid": "d507b37a-ca9f-4c25-890c-2cd354c22ebc",
+      "name": "Bridge Result Labels",
+      "family": "result",
+      "glyph": "case",
+      "badge": "edit"
+    },
+    {
       "key": "BridgeResultCasesComponent",
       "type": "BridGHe.Grasshopper.Components.Utilities.BridgeResultCasesComponent",
       "guid": "4a919ef3-341d-444c-be04-66918e1ea8ec",
@@ -182,15 +200,6 @@
       "family": "result",
       "glyph": "bridge",
       "badge": "data"
-    },
-    {
-      "key": "BridgeResultLabelsComponent",
-      "type": "BridGHe.Grasshopper.Components.Utilities.BridgeResultLabelsComponent",
-      "guid": "d507b37a-ca9f-4c25-890c-2cd354c22ebc",
-      "name": "Bridge Result Labels",
-      "family": "result",
-      "glyph": "case",
-      "badge": "edit"
     },
     {
       "key": "BridgePhaseTableComponent",
@@ -1408,6 +1417,24 @@
       "badge": "stress"
     },
     {
+      "key": "BridgeIntermediateStiffenerPlotComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeIntermediateStiffenerPlotComponent",
+      "guid": "712219f9-3d5a-4ab1-9c85-68cf18287a8f",
+      "name": "Bridge Intermediate Stiffener Plot",
+      "family": "result",
+      "glyph": "stiffener",
+      "badge": "measure"
+    },
+    {
+      "key": "BridgeSupportStiffenerPlotComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeSupportStiffenerPlotComponent",
+      "guid": "f1eb442d-9a41-4f39-b48c-46a08c811db9",
+      "name": "Bridge Support Stiffener Plot",
+      "family": "result",
+      "glyph": "stiffener",
+      "badge": "force"
+    },
+    {
       "key": "BridgeActionComponent",
       "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeActionComponent",
       "guid": "56b74e2e-962a-4ad6-905e-105647144ea1",
@@ -1640,15 +1667,6 @@
       "family": "solver",
       "glyph": "solver",
       "badge": "play"
-    },
-    {
-      "key": "BridgeCombinationExcelComponent",
-      "type": "BridGHe.Grasshopper.Components.Utilities.BridgeCombinationExcelComponent",
-      "guid": "2776b9ba-309e-4a25-91ad-4177c557bc13",
-      "name": "Bridge Combination Excel",
-      "family": "load",
-      "glyph": "table",
-      "badge": "arrow"
     }
   ]
 }

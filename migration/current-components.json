@@ -12117,6 +12117,306 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeIntermediateStiffenerPlotComponent",
+    "guid": "712219f9-3d5a-4ab1-9c85-68cf18287a8f",
+    "kind": "component",
+    "name": "Bridge Intermediate Stiffener Plot",
+    "nickname": "IntStiffPlot",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Plot individual native gPC checks or their maximum WR at actual intermediate stiffener stations. Missing WR makes the envelope incomplete.",
+    "inputs": [
+      {
+        "name": "BridGHe Model",
+        "nickname": "M",
+        "description": "Model with ordered load combinations, N-mm units",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Super-Element Beam",
+        "nickname": "SE",
+        "description": "Ordered beam segments; lengths and result stations define the abscissas",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Results",
+        "nickname": "R",
+        "description": "Tree {beam index; station index}, items in model combination order",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Check",
+        "nickname": "Check",
+        "description": "0: maximum native WR of all applicable checks. Other choices select one gPC check. Connect a Value List to populate choices automatically.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Combinations",
+        "nickname": "C",
+        "description": "Names to draw; empty selects all",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Show Min/Max Combo",
+        "nickname": "MM",
+        "description": "Include the combinations governing the global minimum and maximum",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "File Path",
+        "nickname": "P",
+        "description": "Optional .svg or .png destination; SVG is always returned",
+        "access": "item",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Graphic Title",
+        "nickname": "T",
+        "description": "Chart title",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Keep Running",
+        "nickname": "Run",
+        "description": "Draw on every update; otherwise use the Draw button",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Display",
+        "nickname": "D",
+        "description": "0 WR; 1 demand; 2 resistance/limit; 3 demand and resistance/limit. The all-check envelope always uses WR, never mixed physical units.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Stations",
+        "nickname": "S",
+        "description": "Actual stiffener locations [m], measured along the ordered Super-Element Beam from its start. Must match existing result stations within 0.000001 m; no interpolation. At a beam joint both sides are retained.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "SVG",
+        "nickname": "SVG",
+        "description": "Vector chart, with original samples and no smoothing",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "File",
+        "nickname": "P",
+        "description": "Written destination, if requested",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Minimum",
+        "nickname": "Min",
+        "description": "Minimum finite value among plotted series",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Maximum",
+        "nickname": "Max",
+        "description": "Maximum finite value among plotted series",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Governing checks",
+        "nickname": "Gov",
+        "description": "Native check(s) governing each location and combination; original {beam;station} paths. Ties are retained.",
+        "access": "tree",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Unavailable checks",
+        "nickname": "Missing",
+        "description": "Missing native WR or absent checks, with gPC notes. An incomplete all-check envelope is a gap, never zero or an approval. Original paths and combination order.",
+        "access": "tree",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeSupportStiffenerPlotComponent",
+    "guid": "f1eb442d-9a41-4f39-b48c-46a08c811db9",
+    "kind": "component",
+    "name": "Bridge Support Stiffener Plot",
+    "nickname": "SupStiffPlot",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Plot individual native gPC bearing/end-post checks or their maximum WR at actual bearing stiffener stations. Includes both end-post pairs when enabled.",
+    "inputs": [
+      {
+        "name": "BridGHe Model",
+        "nickname": "M",
+        "description": "Model with ordered load combinations, N-mm units",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Super-Element Beam",
+        "nickname": "SE",
+        "description": "Ordered beam segments; lengths and result stations define the abscissas",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Results",
+        "nickname": "R",
+        "description": "Tree {beam index; station index}, items in model combination order",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Check",
+        "nickname": "Check",
+        "description": "0: maximum native WR of all applicable checks. Other choices select one gPC check. Connect a Value List to populate choices automatically.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Combinations",
+        "nickname": "C",
+        "description": "Names to draw; empty selects all",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Show Min/Max Combo",
+        "nickname": "MM",
+        "description": "Include the combinations governing the global minimum and maximum",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "File Path",
+        "nickname": "P",
+        "description": "Optional .svg or .png destination; SVG is always returned",
+        "access": "item",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Graphic Title",
+        "nickname": "T",
+        "description": "Chart title",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Keep Running",
+        "nickname": "Run",
+        "description": "Draw on every update; otherwise use the Draw button",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Display",
+        "nickname": "D",
+        "description": "0 WR; 1 demand; 2 resistance/limit; 3 demand and resistance/limit. The all-check envelope always uses WR, never mixed physical units.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Stations",
+        "nickname": "S",
+        "description": "Actual stiffener locations [m], measured along the ordered Super-Element Beam from its start. Must match existing result stations within 0.000001 m; no interpolation. At a beam joint both sides are retained.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "SVG",
+        "nickname": "SVG",
+        "description": "Vector chart, with original samples and no smoothing",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "File",
+        "nickname": "P",
+        "description": "Written destination, if requested",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Minimum",
+        "nickname": "Min",
+        "description": "Minimum finite value among plotted series",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Maximum",
+        "nickname": "Max",
+        "description": "Maximum finite value among plotted series",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Governing checks",
+        "nickname": "Gov",
+        "description": "Native check(s) governing each location and combination; original {beam;station} paths. Ties are retained.",
+        "access": "tree",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Unavailable checks",
+        "nickname": "Missing",
+        "description": "Missing native WR or absent checks, with gPC notes. An incomplete all-check envelope is a gap, never zero or an approval. Original paths and combination order.",
+        "access": "tree",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.BridgeChecks.BridgeActionComponent",
     "guid": "56b74e2e-962a-4ad6-905e-105647144ea1",
     "kind": "component",

@@ -21,8 +21,19 @@ public abstract class BridgePlotComponent : GH_Component
     private string renderedSvg, renderedPath;
     protected abstract string[] Quantities { get; }
     protected virtual bool ReferenceLines => false;
-    protected abstract double Value(object result,int quantity);
+    protected virtual int DefaultQuantity => Math.Min(4,Quantities.Length-1);
+    protected virtual bool DiscreteSamples => false;
+    protected virtual double Value(object result,int quantity) => throw new NotSupportedException("No plot reader configured.");
     protected abstract string Unit(int quantity);
+    protected readonly record struct Reading(double Value, double Limit = double.NaN);
+    protected virtual Reading ReadValue(object result,int quantity,GH_Path path,string combination) => new(Value(result,quantity));
+    protected virtual void BeforeRead(IGH_DataAccess da,int quantity) { }
+    protected virtual bool AcceptStation(double station) => true;
+    protected virtual void CompleteRead(IGH_DataAccess da,IEnumerable<double> stations) { }
+    protected virtual string PrimaryLabel(int quantity) => "";
+    protected virtual string LimitLabel(int quantity) => null;
+    protected virtual IEnumerable<double> FixedLevels(int quantity) => Array.Empty<double>();
+    protected virtual string PlotNote => null;
     protected BridgePlotComponent(string name,string nick,string description):base(name,nick,description,Helpers.CategoryNameConstants.CATEGORY_MODEL, Helpers.CategoryNameConstants.SUBCATEGORY_RESULTS) { }
     protected override System.Drawing.Bitmap Icon=>Properties.ComponentIcons.For(GetType());
     public override void CreateAttributes()
@@ -35,7 +46,7 @@ public abstract class BridgePlotComponent : GH_Component
         p.AddGenericParameter("BridGHe Model","M","Model with ordered load combinations, N-mm units",GH_ParamAccess.item);
         p.AddGenericParameter("Super-Element Beam","SE","Ordered beam segments; lengths and result stations define the abscissas",GH_ParamAccess.list);
         p.AddGenericParameter("Results","R","Tree {beam index; station index}, items in model combination order",GH_ParamAccess.tree);
-        p.AddIntegerParameter("Quantity","Q","Quantity to draw",GH_ParamAccess.item,Math.Min(4,Quantities.Length-1));
+        p.AddIntegerParameter("Quantity","Q","Quantity to draw",GH_ParamAccess.item,DefaultQuantity);
         for(int i=0;i<Quantities.Length;i++)((Param_Integer)p[3]).AddNamedValue(Quantities[i],i);
         p.AddTextParameter("Combinations","C","Names to draw; empty selects all",GH_ParamAccess.list);p[4].Optional=true;
         p.AddBooleanParameter("Show Min/Max Combo","MM","Include the combinations governing the global minimum and maximum",GH_ParamAccess.item,true);
@@ -65,24 +76,29 @@ public abstract class BridgePlotComponent : GH_Component
         {
             if(model?.Value==null||model.Value.Units!=ModelModel.ModelUnits.Nmm)throw new ArgumentException("Plot inputs require an N-mm model.");
             if(quantity<0||quantity>=Quantities.Length)throw new ArgumentOutOfRangeException(nameof(quantity));
+            BeforeRead(da,quantity);
+            levels.AddRange(FixedLevels(quantity));
             var names=model.Value.LoadCombinations.Select(c=>c.Name).ToArray();
             if(names.Length==0||names.Distinct(StringComparer.Ordinal).Count()!=names.Length)throw new ArgumentException("Distinct combination names are required.");
             var unknown=selected.Except(names,StringComparer.Ordinal).ToArray();if(unknown.Length>0)throw new ArgumentException("Unknown combinations: "+string.Join(", ",unknown));
             var stations=beams.Select(b=>b.Value.Results.OfType<BeamForceResultModel>()
                 .Select(f=>Math.Round(f.NormalizedLength?f.Station*b.Value.Length:f.Station,15)).Distinct().OrderBy(x=>x).ToArray()).ToArray();
             var origins=new double[beams.Count];for(int i=1;i<beams.Count;i++)origins[i]=origins[i-1]+beams[i-1].Value.Length;
-            var rows=new List<(int Beam,int Station,double X,double[] Values)>();
+            var rows=new List<(int Beam,int Station,double X,Reading[] Readings)>();
             for(int i=0;i<tree.PathCount;i++)
             {
                 var path=tree.Paths[i].Indices;
                 if(path.Length!=2||path[0]<0||path[0]>=beams.Count||path[1]<0||path[1]>=stations[path[0]].Length)
                     throw new ArgumentException("Invalid beam/station path: "+tree.Paths[i]);
                 var branch=tree.Branches[i];if(branch.Count!=names.Length)throw new ArgumentException("Combination count mismatch at "+tree.Paths[i]);
-                rows.Add((path[0],path[1],(origins[path[0]]+stations[path[0]][path[1]])/1000.0,branch.Select(g=>Value(g is GH_ObjectWrapper w?w.Value:g?.ScriptVariable(),quantity)).ToArray()));
+                double x=(origins[path[0]]+stations[path[0]][path[1]])/1000.0;
+                if(!AcceptStation(x))continue;
+                rows.Add((path[0],path[1],x,branch.Select((g,c)=>ReadValue(g is GH_ObjectWrapper w?w.Value:g?.ScriptVariable(),quantity,tree.Paths[i],names[c])).ToArray()));
             }
             rows=rows.OrderBy(r=>r.Beam).ThenBy(r=>r.Station).ToList();
+            CompleteRead(da,rows.Select(r=>r.X));
             var include=new HashSet<string>(selected.Count==0?names:selected,StringComparer.Ordinal);
-            var finite=rows.SelectMany(r=>r.Values.Select((v,i)=>(Value:v,Index:i))).Where(p=>double.IsFinite(p.Value)).ToArray();
+            var finite=rows.SelectMany(r=>r.Readings.Select((v,i)=>(Value:v.Value,Index:i))).Where(p=>double.IsFinite(p.Value)).ToArray();
             if(finite.Length==0)throw new ArgumentException("No finite values for this quantity.");
             if(governing){include.Add(names[finite.MinBy(p=>p.Value).Index]);include.Add(names[finite.MaxBy(p=>p.Value).Index]);}
             var series=new List<PlotSeries>();
@@ -92,8 +108,8 @@ public abstract class BridgePlotComponent : GH_Component
                 var ranges=new List<PlotRange>();int previous=-2;
                 foreach(var row in group)
                 {
-                    if(previous>=0&&row.Station!=previous+1)ranges.Add(new PlotRange(row.X,double.NaN,double.NaN));
-                    var available=row.Values.Where(double.IsFinite).ToArray();
+                    if(previous>=0&&(DiscreteSamples||row.Station!=previous+1))ranges.Add(new PlotRange(row.X,double.NaN,double.NaN));
+                    var available=row.Readings.Select(r=>r.Value).Where(double.IsFinite).ToArray();
                     ranges.Add(new PlotRange(row.X,available.Length>0?available.Min():double.NaN,available.Length>0?available.Max():double.NaN));
                     previous=row.Station;
                 }
@@ -102,19 +118,24 @@ public abstract class BridgePlotComponent : GH_Component
             foreach(var group in rows.GroupBy(r=>r.Beam))
                 for(int c=0;c<names.Length;c++)if(include.Contains(names[c]))
                 {
-                    var points=new List<PlotPoint>();int last=-2;
+                    var points=new List<PlotPoint>();var limits=new List<PlotPoint>();int last=-2;
                     foreach(var row in group)
                     {
-                        if(last>=0&&row.Station!=last+1)points.Add(new PlotPoint(row.X,double.NaN));
-                        points.Add(new PlotPoint(row.X,row.Values[c]));last=row.Station;
+                        if(last>=0&&(DiscreteSamples||row.Station!=last+1))
+                        {points.Add(new PlotPoint(row.X,double.NaN));limits.Add(new PlotPoint(row.X,double.NaN));}
+                        points.Add(new PlotPoint(row.X,row.Readings[c].Value));
+                        limits.Add(new PlotPoint(row.X,row.Readings[c].Limit));last=row.Station;
                     }
-                    series.Add(new PlotSeries(names[c],points));
+                    series.Add(new PlotSeries(names[c]+PrimaryLabel(quantity),points));
+                    if(LimitLabel(quantity) is string label)series.Add(new PlotSeries(names[c]+label,limits));
                 }
             var values=series.SelectMany(s=>s.Points).Where(p=>double.IsFinite(p.Y)).ToArray();
             if(values.Length==0)throw new ArgumentException("No finite values in the selected combinations.");
-            foreach(double level in levels)series.Add(new PlotSeries("Reference "+level.ToString("G5",System.Globalization.CultureInfo.InvariantCulture),new[]{new PlotPoint(values.Min(p=>p.X),level),new PlotPoint(values.Max(p=>p.X),level)}));
-            var boundaries=origins.Concat(beams.Count>0?new[]{origins[^1]+beams[^1].Value.Length}:Array.Empty<double>()).Select(x=>x/1000.0);
-            var plot=new BridgePlot(string.IsNullOrWhiteSpace(title)?Quantities[quantity]:title,"Station [m]",Quantities[quantity]+" ["+Unit(quantity)+"]",series,envelope,boundaries);
+            var boundaries=origins.Concat(beams.Count>0?new[]{origins[^1]+beams[^1].Value.Length}:Array.Empty<double>()).Select(x=>x/1000.0).ToArray();
+            // A single discrete stiffener still needs a visible WR=1 line over the complete element.
+            double referenceStart=DiscreteSamples?boundaries.First():values.Min(p=>p.X),referenceEnd=DiscreteSamples?boundaries.Last():values.Max(p=>p.X);
+            foreach(double level in levels)series.Add(new PlotSeries("Reference "+level.ToString("G5",System.Globalization.CultureInfo.InvariantCulture),new[]{new PlotPoint(referenceStart,level),new PlotPoint(referenceEnd,level)}));
+            var plot=new BridgePlot(string.IsNullOrWhiteSpace(title)?Quantities[quantity]:title,"Station [m]",Quantities[quantity]+" ["+Unit(quantity)+"]",series,envelope,boundaries,PlotNote);
             string svg=plot.Svg();
             if(!string.IsNullOrWhiteSpace(file))
             {

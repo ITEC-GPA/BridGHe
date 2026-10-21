@@ -38,10 +38,12 @@ internal static class Program
         if(args.Contains("--bridge-workflow")) return BridgeWorkflowExample.Run(args.Contains("--native"));
         if(args.Contains("--workflow-stations-native")) return NativeWorkflowStationTests.Run(args.Contains("--capture-station-fixture"));
         if(args.Contains("--inventory")) { CheckGrasshopper(false,true);return 0; }
+        if(args.Contains("--components-only")) { CheckGrasshopper(false);return 0; }
         if(args.Contains("--simple-bridge-examples")) { SimpleBridgeTests.Run(); SimpleBridgeExamples.Run(true); return 0; }
         if(args.Contains("--bridge-design-examples")) { BridgeDesignExamples.Run(true); return 0; }
         if(args.Contains("--bridge-details-example")) { BridgeDetailsExample.Run(true); return 0; }
         if(args.Contains("--bridge-details-model-example")) { BridgeDetailsModelExample.Generate(); return 0; }
+        if(args.Contains("--bridge-details-plot-viewer")) { BridgeDetailsModelExample.GeneratePlotViewer(); return 0; }
         if(args.Contains("--bridge-bearings-native")) { BridgeBearingTests.Run(); BridgeBearingTests.Native(); return 0; }
         if(args.Contains("--bridge-connections-native")) { BridgeConnectionTests.Run(); BridgeConnectionTests.Native(); return 0; }
         if(args.Contains("--beam-support")) { NativeBeamSupportTests.Run();return 0; }
@@ -167,7 +169,7 @@ internal static class Program
             File.WriteAllText("artifacts/component-runtime.json",System.Text.Json.JsonSerializer.Serialize(items,new System.Text.Json.JsonSerializerOptions {WriteIndented=true}));
             Console.WriteLine($"INVENTORY {count} objects; icon validation deferred until assets are generated.");return;
         }
-        Assert(bridgeChecks==20,"all 20 bridge workflow components instantiate in Rhino 8");
+        Assert(bridgeChecks==22,"all 22 bridge workflow and plot components instantiate in Rhino 8");
         Assert(iconIssues.Count==0,"all component and parameter icons load at 24 px: "+string.Join(", ",iconIssues));
         Assert(iconHashes.Count==count,"each component and parameter has its own distinct icon");
         var info=(Grasshopper.Kernel.GH_AssemblyInfo)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.BridGHeInfo",true));

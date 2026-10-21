@@ -1,6 +1,6 @@
 # Inventario dei componenti 0.1.0
 
-171 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
+173 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
 
 ## BridGHe / 01-Parameters
 
@@ -218,6 +218,7 @@
 | Bridge Displacement Envelope | component | Model; Element IDs; Cases; Component; Mode | Element ID; Station; Value; Case; Step; Step type; Concomitant; Result; Coverage; Units |
 | Bridge Fatigue History | component | Values; Model; Beam ID; Station; Ordered Cases; Force Component; Response Factors; Response Units; Exponent; Reference Cycles | History; Sources; Ranges; Means; Cycle Counts; Equivalent Range; Units; Information |
 | Bridge Force Plot | component | BridGHe Model; Super-Element Beam; Results; Quantity; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running | SVG; File; Minimum; Maximum |
+| Bridge Intermediate Stiffener Plot | component | BridGHe Model; Super-Element Beam; Results; Check; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running; Display; Stations | SVG; File; Minimum; Maximum; Governing checks; Unavailable checks |
 | Bridge Result Cases | component | Model | Cases; Case by step; Step; Step type; Result type; Count; Units |
 | Bridge Result Comparison | component | Reference keys; Reference values; Candidate keys; Candidate values; Absolute tolerance; Relative tolerance | All within tolerance; Key; Difference; Relative difference; Within tolerance |
 | Bridge Result Labels | component | Results; Format | Labels |
@@ -226,6 +227,7 @@
 | Bridge Stress Plot | component | BridGHe Model; Super-Element Beam; Results; Quantity; Combinations; Show Min/Max Combo; Additional values; File Path; Graphic Title; Keep Running | SVG; File; Minimum; Maximum |
 | Bridge Stud Plot | component | BridGHe Model; Super-Element Beam; Results; Quantity; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running | SVG; File; Minimum; Maximum |
 | Bridge Stud Results | component | Section result | Connection flow; Force per stud; Resistance per stud; Resistance per length; Force ratio; Phase; Phase flow; Warnings |
+| Bridge Support Stiffener Plot | component | BridGHe Model; Super-Element Beam; Results; Check; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running; Display; Stations | SVG; File; Minimum; Maximum; Governing checks; Unavailable checks |
 | Bridge Verification Results | component | Section result | Check; Demand; Resistance; Units; Ratio; Status; Notes |
 | Composite Section Linear Tension Results | component | Linear Tension Results | Point1_ConcreteEpsilon; Point1_ConcreteSigma; Point2_RebarSigma; Point3_RebarSigma; Point4_ConcreteSigma; Point5_SteelSigma; Point6_SteelSigma; Point6_SteelTau ; Point6_SigmaId ; Point7_SteelSigma; Point7_SteelTau ; Point7_SigmaId ; Point8_SteelSigma; Point8_SteelEpsilon |
 | Node Results | component | Node | Load cases D; Steps D; Displacements; Rotations; Load cases F; Steps F; Forces; Moments |
