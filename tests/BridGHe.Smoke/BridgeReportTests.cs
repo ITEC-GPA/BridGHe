@@ -46,6 +46,9 @@ internal static class BridgeReportTests
         Require(text.Contains("Riepilogo e copertura") && text.Contains("Non" , StringComparison.OrdinalIgnoreCase), "Mandatory coverage is missing.");
         Require(XDocument.Parse(Part(full,"word/header1.xml")).Descendants(W+"t").Select(t=>t.Value).Aggregate("",(a,b)=>a+b).Contains("Progetto <A> & B"),"Split-run scalar in header not replaced.");
         Require(Part(full,"word/styles.xml")==Part(Template,"word/styles.xml"),"Template styles changed.");
+        var bodyElements=XDocument.Parse(Part(full,"word/document.xml")).Root.Element(W+"body").Elements().ToArray();
+        Require(!bodyElements.Zip(bodyElements.Skip(1),(a,b)=>a.Name==W+"tbl"&&b.Name==W+"tbl").Any(adjacent=>adjacent),
+            "Word would merge consecutive geometry/material tables and repeat the wrong header.");
         Require(XNode.DeepEquals(XDocument.Parse(Part(full,"word/document.xml")).Descendants(W+"sectPr").Last(),XDocument.Parse(Part(Template,"word/document.xml")).Descendants(W+"sectPr").Last()),"Margins or header/footer references changed.");
         using(var archive=JsonDocument.Parse(Part(full,"bridghe/report.json")))
         {

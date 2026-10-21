@@ -87,8 +87,22 @@ public static class BridgeWordReport
         }).DefaultIfEmpty(9360).Min();
         if (width < 4000) throw new ArgumentException("Template text area is too narrow for report tables (minimum 4000 twips).");
         var content = new BridgeReportContent(data, selected, figures, warnings, width, parts);
+        var generatedTables = new HashSet<XElement>();
         foreach (var marker in markers)
-            marker.Value.ReplaceWith(marker.Key == "Report" ? content.All() : content.Chapter(marker.Key));
+        {
+            var block = (marker.Key == "Report" ? content.All() : content.Chapter(marker.Key)).ToArray();
+            foreach (var table in block.Where(e => e.Name == W + "tbl")) generatedTables.Add(table);
+            marker.Value.ReplaceWith(block);
+        }
+        // Word merges consecutive tables, including their repeated header rows and column grids.
+        // Separate generated tables without changing the template's own table layout or styles.
+        var bodyElements = body.Elements().ToArray();
+        for (int i = 1; i < bodyElements.Length; i++)
+            if (bodyElements[i].Name == W + "tbl" && bodyElements[i - 1].Name == W + "tbl"
+                && (generatedTables.Contains(bodyElements[i]) || generatedTables.Contains(bodyElements[i - 1])))
+                bodyElements[i].AddBeforeSelf(new XElement(W + "p", new XElement(W + "pPr",
+                    new XElement(W + "spacing", new XAttribute(W + "before", "0"), new XAttribute(W + "after", "0"),
+                        new XAttribute(W + "line", "20"), new XAttribute(W + "lineRule", "exact")))));
         var values = new Dictionary<string, string> { ["Title"] = data.Metadata.Title, ["Project"] = data.Metadata.Project,
             ["Author"] = data.Metadata.Author, ["Revision"] = data.Metadata.Revision, ["Date"] = data.Created.ToString("yyyy-MM-dd HH:mm zzz"), ["ReportId"] = data.Id };
         foreach (var item in texts)
