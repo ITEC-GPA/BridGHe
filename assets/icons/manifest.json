@@ -103,6 +103,15 @@
       "badge": ""
     },
     {
+      "key": "BridgeDetailStationsComponent",
+      "type": "BridGHe.Grasshopper.Components.Utilities.BridgeDetailStationsComponent",
+      "guid": "6dfef487-3bcf-456d-8de7-d28851f797f8",
+      "name": "Bridge Detail Stations",
+      "family": "result",
+      "glyph": "bridge-bearing",
+      "badge": "data"
+    },
+    {
       "key": "BridgeBeamEnvelopeComponent",
       "type": "BridGHe.Grasshopper.Components.Utilities.BridgeBeamEnvelopeComponent",
       "guid": "1ea9fccb-8a94-4b89-bc26-cd4fb7904248",

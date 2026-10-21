@@ -428,7 +428,7 @@
       {
         "name": "Table",
         "nickname": "T",
-        "description": "Read mode: header and combination rows, ready for Build BridGHe Model > Combinations. Empty after Create until you fill and read the workbook.",
+        "description": "Read mode: header and combination rows, ready for Build BridGHe Model \u003E Combinations. Empty after Create until you fill and read the workbook.",
         "access": "tree",
         "optional": false,
         "type": "Text"
@@ -455,7 +455,7 @@
     "type": "BridGHe.Grasshopper.Components.Utilities.BridgeDeflectionCamberComponent",
     "guid": "aa3891ae-e93d-45c6-b493-5d2efea84758",
     "kind": "component",
-    "name": "Bridge Deflection & Camber",
+    "name": "Bridge Deflection \u0026 Camber",
     "nickname": "Camber",
     "category": "BridGHe",
     "subcategory": "13-Results",
@@ -512,7 +512,7 @@
       {
         "name": "Direction",
         "nickname": "D",
-        "description": "Projection direction; +Z gives negative downward displacement.",
+        "description": "Projection direction; \u002BZ gives negative downward displacement.",
         "access": "item",
         "optional": false,
         "type": "Vector"
@@ -606,6 +606,108 @@
         "access": "list",
         "optional": false,
         "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeDetailStationsComponent",
+    "guid": "6dfef487-3bcf-456d-8de7-d28851f797f8",
+    "kind": "component",
+    "name": "Bridge Detail Stations",
+    "nickname": "DetailStations",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Select existing section results at physical stiffener points. Optionally combine actual support reactions from the original phase sources for bearing stiffeners.",
+    "inputs": [
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "Assembled Build BridGHe Model, N-mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Results",
+        "nickname": "R",
+        "description": "Final cumulative section results; original beam/station/combination provenance is required.",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Locations",
+        "nickname": "P",
+        "description": "Actual stiffener or support points on the FEM beam reference axes, in mm. No interpolation.",
+        "access": "list",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Phases",
+        "nickname": "Ph",
+        "description": "Optional original Bridge Phase objects with full analysed models and node reactions. Connect only for supports; no phases means selection only.",
+        "access": "list",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Up",
+        "nickname": "Up",
+        "description": "Positive compression reaction direction. Global Z by default.",
+        "access": "item",
+        "optional": false,
+        "type": "Vector"
+      },
+      {
+        "name": "Tolerance",
+        "nickname": "Tol",
+        "description": "Point matching tolerance [mm].",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Results",
+        "nickname": "R",
+        "description": "Selected results, with original paths, combinations and both sides of beam joints.",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Compression kN",
+        "nickname": "R\u002B",
+        "description": "max(0, signed reaction), same tree/items as Results; to Support Stiffener \u003E ReactionKN. NaN in selection-only mode.",
+        "access": "tree",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Signed reaction kN",
+        "nickname": "Rsgn",
+        "description": "Positive compression, negative uplift; never absolute value.",
+        "access": "tree",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "End type",
+        "nickname": "End",
+        "description": "0 internal, 1 start, 2 end of the selected girder chain; to Support Stiffener \u003E Location.",
+        "access": "tree",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Points",
+        "nickname": "P",
+        "description": "Matched reference-axis points, same tree/items.",
+        "access": "tree",
+        "optional": false,
+        "type": "Point"
       }
     ]
   },
@@ -1629,7 +1731,7 @@
     "nickname": "Compare",
     "category": "BridGHe",
     "subcategory": "13-Results",
-    "description": "Compare repeated analyses or sampled mesh studies by explicit physical keys. No interpolation. Criterion: abs(delta) <= absolute tolerance + relative tolerance * abs(reference).",
+    "description": "Compare repeated analyses or sampled mesh studies by explicit physical keys. No interpolation. Criterion: abs(delta) \u003C= absolute tolerance \u002B relative tolerance * abs(reference).",
     "inputs": [
       {
         "name": "Reference keys",
@@ -2490,7 +2592,7 @@
       {
         "name": "Area",
         "nickname": "SA",
-        "description": "Section area [L²]",
+        "description": "Section area [L\u00B2]",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -2498,7 +2600,7 @@
       {
         "name": "Second moment 1",
         "nickname": "I11",
-        "description": "Second moment of area about the principal 1 axis [L⁴]",
+        "description": "Second moment of area about the principal 1 axis [L\u2074]",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -2506,7 +2608,7 @@
       {
         "name": "Second moment 2",
         "nickname": "I22",
-        "description": "Second moment of area about the principal 2 axis [L⁴]",
+        "description": "Second moment of area about the principal 2 axis [L\u2074]",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -2514,7 +2616,7 @@
       {
         "name": "Torsion constant",
         "nickname": "J",
-        "description": "The torsional constant. [L⁴]",
+        "description": "The torsional constant. [L\u2074]",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -2538,7 +2640,7 @@
       {
         "name": "Shear A1",
         "nickname": "SA1",
-        "description": "Shear area in the principal 1 axis direction. [L²]",
+        "description": "Shear area in the principal 1 axis direction. [L\u00B2]",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -2546,7 +2648,7 @@
       {
         "name": "Shear A2",
         "nickname": "SA2",
-        "description": "Shear area in the principal 2 axis direction. [L²]",
+        "description": "Shear area in the principal 2 axis direction. [L\u00B2]",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -2554,7 +2656,7 @@
       {
         "name": "Bending modulus 1",
         "nickname": "S11",
-        "description": "The section modulus for bending about the local 1 axis. [L³]",
+        "description": "The section modulus for bending about the local 1 axis. [L\u00B3]",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -2562,7 +2664,7 @@
       {
         "name": "Bending modulus 2",
         "nickname": "S22",
-        "description": "The section modulus for bending about the local 2 axis. [L³]",
+        "description": "The section modulus for bending about the local 2 axis. [L\u00B3]",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -2972,48 +3074,48 @@
         "type": "Number"
       },
       {
-        "name": "J₁₁",
-        "nickname": "J₁₁",
+        "name": "J\u2081\u2081",
+        "nickname": "J\u2081\u2081",
         "description": "Second moment of area respect 1-1",
         "access": "item",
         "optional": false,
         "type": "Number"
       },
       {
-        "name": "J₂₂",
-        "nickname": "J₂₂",
+        "name": "J\u2082\u2082",
+        "nickname": "J\u2082\u2082",
         "description": "Second moment of area respect 2-2",
         "access": "item",
         "optional": false,
         "type": "Number"
       },
       {
-        "name": "W₁₁",
-        "nickname": "W₁₁",
+        "name": "W\u2081\u2081",
+        "nickname": "W\u2081\u2081",
         "description": "Elastic section modulus respect 1-1",
         "access": "item",
         "optional": false,
         "type": "Number"
       },
       {
-        "name": "W₂₂",
-        "nickname": "W₂₂",
+        "name": "W\u2082\u2082",
+        "nickname": "W\u2082\u2082",
         "description": "Elastic section modulus respect 2-2",
         "access": "item",
         "optional": false,
         "type": "Number"
       },
       {
-        "name": "ρ₁₁",
-        "nickname": "ρ₁₁",
+        "name": "\u03C1\u2081\u2081",
+        "nickname": "\u03C1\u2081\u2081",
         "description": "Radius of gyration respect 1-1",
         "access": "item",
         "optional": false,
         "type": "Number"
       },
       {
-        "name": "ρ₂₂",
-        "nickname": "ρ₂₂",
+        "name": "\u03C1\u2082\u2082",
+        "nickname": "\u03C1\u2082\u2082",
         "description": "Radius of gyration respect 2-2",
         "access": "item",
         "optional": false,
@@ -3050,7 +3152,7 @@
       {
         "name": "Length unit",
         "nickname": "U",
-        "description": "Unità del modello: 0=m, 1=cm, 2=mm, 3=ft, 4=in.",
+        "description": "Unit\u00E0 del modello: 0=m, 1=cm, 2=mm, 3=ft, 4=in.",
         "access": "item",
         "optional": false,
         "type": "Integer"
@@ -3096,7 +3198,7 @@
       {
         "name": "BGL",
         "nickname": "BGL",
-        "description": "True: libreria geometrica BGL. False: libreria proprietà BSL.",
+        "description": "True: libreria geometrica BGL. False: libreria propriet\u00E0 BSL.",
         "access": "item",
         "optional": false,
         "type": "Boolean"
@@ -3104,7 +3206,7 @@
       {
         "name": "Length unit",
         "nickname": "U",
-        "description": "Unità del modello: 0=m, 1=cm, 2=mm, 3=ft, 4=in.",
+        "description": "Unit\u00E0 del modello: 0=m, 1=cm, 2=mm, 3=ft, 4=in.",
         "access": "item",
         "optional": false,
         "type": "Integer"
@@ -3129,12 +3231,12 @@
     "nickname": "S7CircularSolid",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 CircularSolid.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 CircularSolid.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3144,7 +3246,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -3159,12 +3261,12 @@
     "nickname": "S7CircularHollow",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 CircularHollow.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 CircularHollow.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3172,7 +3274,7 @@
       {
         "name": "T",
         "nickname": "T",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 CircularHollow.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 CircularHollow.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3182,7 +3284,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -3197,12 +3299,12 @@
     "nickname": "S7RectangleSolid",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B",
         "nickname": "B",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 RectangleSolid.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 RectangleSolid.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3210,7 +3312,7 @@
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 RectangleSolid.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 RectangleSolid.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3220,7 +3322,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -3235,12 +3337,12 @@
     "nickname": "S7RectangleHollow",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B",
         "nickname": "B",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 RectangleHollow.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 RectangleHollow.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3248,7 +3350,7 @@
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 RectangleHollow.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 RectangleHollow.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3256,7 +3358,7 @@
       {
         "name": "T1",
         "nickname": "T1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 RectangleHollow.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 RectangleHollow.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3264,7 +3366,7 @@
       {
         "name": "T2",
         "nickname": "T2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 RectangleHollow.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 RectangleHollow.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3274,7 +3376,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -3289,12 +3391,12 @@
     "nickname": "S7LipChannel",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B",
         "nickname": "B",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 LipChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 LipChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3302,7 +3404,7 @@
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 LipChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 LipChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3310,7 +3412,7 @@
       {
         "name": "L",
         "nickname": "L",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 LipChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 LipChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3318,7 +3420,7 @@
       {
         "name": "T1",
         "nickname": "T1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 LipChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 LipChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3326,7 +3428,7 @@
       {
         "name": "T2",
         "nickname": "T2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 LipChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 LipChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3334,7 +3436,7 @@
       {
         "name": "T3",
         "nickname": "T3",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 LipChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 LipChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3344,7 +3446,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -3359,12 +3461,12 @@
     "nickname": "S7TopHat",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B",
         "nickname": "B",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TopHat.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TopHat.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3372,7 +3474,7 @@
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TopHat.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TopHat.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3380,7 +3482,7 @@
       {
         "name": "L",
         "nickname": "L",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TopHat.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TopHat.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3388,7 +3490,7 @@
       {
         "name": "T1",
         "nickname": "T1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TopHat.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TopHat.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3396,7 +3498,7 @@
       {
         "name": "T2",
         "nickname": "T2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TopHat.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TopHat.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3404,7 +3506,7 @@
       {
         "name": "T3",
         "nickname": "T3",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TopHat.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TopHat.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3414,7 +3516,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -3429,12 +3531,12 @@
     "nickname": "S7I",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B1",
         "nickname": "B1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 I.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 I.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3442,7 +3544,7 @@
       {
         "name": "B2",
         "nickname": "B2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 I.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 I.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3450,7 +3552,7 @@
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 I.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 I.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3458,7 +3560,7 @@
       {
         "name": "T1",
         "nickname": "T1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 I.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 I.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3466,7 +3568,7 @@
       {
         "name": "T2",
         "nickname": "T2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 I.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 I.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3474,7 +3576,7 @@
       {
         "name": "T3",
         "nickname": "T3",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 I.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 I.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3484,7 +3586,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -3499,12 +3601,12 @@
     "nickname": "S7T",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B",
         "nickname": "B",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 T.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 T.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3512,7 +3614,7 @@
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 T.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 T.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3520,7 +3622,7 @@
       {
         "name": "L",
         "nickname": "L",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 T.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 T.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3528,7 +3630,7 @@
       {
         "name": "T1",
         "nickname": "T1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 T.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 T.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3536,7 +3638,7 @@
       {
         "name": "T2",
         "nickname": "T2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 T.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 T.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3544,7 +3646,7 @@
       {
         "name": "T3",
         "nickname": "T3",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 T.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 T.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3554,7 +3656,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -3569,12 +3671,12 @@
     "nickname": "S7Angle",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B",
         "nickname": "B",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 Angle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 Angle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3582,7 +3684,7 @@
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 Angle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 Angle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3590,7 +3692,7 @@
       {
         "name": "T1",
         "nickname": "T1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 Angle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 Angle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3598,7 +3700,7 @@
       {
         "name": "T2",
         "nickname": "T2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 Angle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 Angle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3608,7 +3710,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -3623,12 +3725,12 @@
     "nickname": "S7Z",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B1",
         "nickname": "B1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 Z.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 Z.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3636,7 +3738,7 @@
       {
         "name": "B2",
         "nickname": "B2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 Z.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 Z.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3644,7 +3746,7 @@
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 Z.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 Z.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3652,7 +3754,7 @@
       {
         "name": "T1",
         "nickname": "T1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 Z.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 Z.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3660,7 +3762,7 @@
       {
         "name": "T2",
         "nickname": "T2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 Z.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 Z.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3668,7 +3770,7 @@
       {
         "name": "T3",
         "nickname": "T3",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 Z.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 Z.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3678,7 +3780,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -3693,12 +3795,12 @@
     "nickname": "S7TrapezoidSolid",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B1",
         "nickname": "B1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TrapezoidSolid.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TrapezoidSolid.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3706,7 +3808,7 @@
       {
         "name": "B2",
         "nickname": "B2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TrapezoidSolid.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TrapezoidSolid.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3714,7 +3816,7 @@
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TrapezoidSolid.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TrapezoidSolid.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3724,7 +3826,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -3739,12 +3841,12 @@
     "nickname": "S7TrapezoidHollow",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B1",
         "nickname": "B1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TrapezoidHollow.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TrapezoidHollow.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3752,7 +3854,7 @@
       {
         "name": "B2",
         "nickname": "B2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TrapezoidHollow.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TrapezoidHollow.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3760,7 +3862,7 @@
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TrapezoidHollow.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TrapezoidHollow.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3768,7 +3870,7 @@
       {
         "name": "T1",
         "nickname": "T1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TrapezoidHollow.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TrapezoidHollow.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3776,7 +3878,7 @@
       {
         "name": "T2",
         "nickname": "T2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TrapezoidHollow.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TrapezoidHollow.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3786,7 +3888,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -3801,12 +3903,12 @@
     "nickname": "S7TriangleSolid",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B",
         "nickname": "B",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TriangleSolid.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TriangleSolid.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3814,7 +3916,7 @@
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TriangleSolid.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TriangleSolid.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3824,7 +3926,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -3839,12 +3941,12 @@
     "nickname": "S7TriangleHollow",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B",
         "nickname": "B",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TriangleHollow.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TriangleHollow.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3852,7 +3954,7 @@
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TriangleHollow.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TriangleHollow.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3860,7 +3962,7 @@
       {
         "name": "T1",
         "nickname": "T1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TriangleHollow.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TriangleHollow.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3868,7 +3970,7 @@
       {
         "name": "T2",
         "nickname": "T2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 TriangleHollow.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 TriangleHollow.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3878,7 +3980,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -3893,12 +3995,12 @@
     "nickname": "S7Cruciform",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "B",
         "nickname": "B",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 Cruciform.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 Cruciform.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3906,7 +4008,7 @@
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 Cruciform.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 Cruciform.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3914,7 +4016,7 @@
       {
         "name": "T1",
         "nickname": "T1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 Cruciform.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 Cruciform.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3922,7 +4024,7 @@
       {
         "name": "T2",
         "nickname": "T2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 Cruciform.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 Cruciform.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3932,7 +4034,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -3947,12 +4049,12 @@
     "nickname": "S7BglRectangle",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglRectangle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglRectangle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3960,7 +4062,7 @@
       {
         "name": "B",
         "nickname": "B",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglRectangle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglRectangle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3968,7 +4070,7 @@
       {
         "name": "tw",
         "nickname": "tw",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglRectangle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglRectangle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3976,7 +4078,7 @@
       {
         "name": "tf",
         "nickname": "tf",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglRectangle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglRectangle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3984,7 +4086,7 @@
       {
         "name": "Ri",
         "nickname": "Ri",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglRectangle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglRectangle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -3992,7 +4094,7 @@
       {
         "name": "Ro",
         "nickname": "Ro",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglRectangle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglRectangle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4002,7 +4104,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -4017,12 +4119,12 @@
     "nickname": "S7BglI",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglI.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglI.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4030,7 +4132,7 @@
       {
         "name": "B1",
         "nickname": "B1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglI.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglI.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4038,7 +4140,7 @@
       {
         "name": "B2",
         "nickname": "B2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglI.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglI.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4046,7 +4148,7 @@
       {
         "name": "tw",
         "nickname": "tw",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglI.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglI.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4054,7 +4156,7 @@
       {
         "name": "tf1",
         "nickname": "tf1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglI.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglI.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4062,7 +4164,7 @@
       {
         "name": "tf2",
         "nickname": "tf2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglI.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglI.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4070,7 +4172,7 @@
       {
         "name": "Rr1",
         "nickname": "Rr1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglI.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglI.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4078,7 +4180,7 @@
       {
         "name": "Rr2",
         "nickname": "Rr2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglI.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglI.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4086,7 +4188,7 @@
       {
         "name": "Rt1",
         "nickname": "Rt1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglI.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglI.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4094,7 +4196,7 @@
       {
         "name": "Rt2",
         "nickname": "Rt2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglI.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglI.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4102,7 +4204,7 @@
       {
         "name": "Rt3",
         "nickname": "Rt3",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglI.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglI.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4110,7 +4212,7 @@
       {
         "name": "Rt4",
         "nickname": "Rt4",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglI.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglI.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4136,7 +4238,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -4151,12 +4253,12 @@
     "nickname": "S7BglChannel",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4164,7 +4266,7 @@
       {
         "name": "B1",
         "nickname": "B1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4172,7 +4274,7 @@
       {
         "name": "B2",
         "nickname": "B2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4180,7 +4282,7 @@
       {
         "name": "tw",
         "nickname": "tw",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4188,7 +4290,7 @@
       {
         "name": "tf1",
         "nickname": "tf1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4196,7 +4298,7 @@
       {
         "name": "tf2",
         "nickname": "tf2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4204,7 +4306,7 @@
       {
         "name": "Rr1",
         "nickname": "Rr1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4212,7 +4314,7 @@
       {
         "name": "Rr2",
         "nickname": "Rr2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4220,7 +4322,7 @@
       {
         "name": "Rh1",
         "nickname": "Rh1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4228,7 +4330,7 @@
       {
         "name": "Rh2",
         "nickname": "Rh2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4236,7 +4338,7 @@
       {
         "name": "Rt1",
         "nickname": "Rt1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4244,7 +4346,7 @@
       {
         "name": "Rt2",
         "nickname": "Rt2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4252,7 +4354,7 @@
       {
         "name": "Rt3",
         "nickname": "Rt3",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4260,7 +4362,7 @@
       {
         "name": "Rt4",
         "nickname": "Rt4",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglChannel.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglChannel.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4286,7 +4388,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -4301,12 +4403,12 @@
     "nickname": "S7BglT",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglT.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglT.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4314,7 +4416,7 @@
       {
         "name": "B",
         "nickname": "B",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglT.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglT.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4322,7 +4424,7 @@
       {
         "name": "tw",
         "nickname": "tw",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglT.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglT.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4330,7 +4432,7 @@
       {
         "name": "tf",
         "nickname": "tf",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglT.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglT.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4338,7 +4440,7 @@
       {
         "name": "Rr",
         "nickname": "Rr",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglT.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglT.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4346,7 +4448,7 @@
       {
         "name": "Rt1",
         "nickname": "Rt1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglT.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglT.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4354,7 +4456,7 @@
       {
         "name": "Rt2",
         "nickname": "Rt2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglT.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglT.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4362,7 +4464,7 @@
       {
         "name": "Rt3",
         "nickname": "Rt3",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglT.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglT.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4388,7 +4490,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -4403,12 +4505,12 @@
     "nickname": "S7BglAngle",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglAngle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglAngle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4416,7 +4518,7 @@
       {
         "name": "B",
         "nickname": "B",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglAngle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglAngle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4424,7 +4526,7 @@
       {
         "name": "tw",
         "nickname": "tw",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglAngle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglAngle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4432,7 +4534,7 @@
       {
         "name": "tf",
         "nickname": "tf",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglAngle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglAngle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4440,7 +4542,7 @@
       {
         "name": "Rr",
         "nickname": "Rr",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglAngle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglAngle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4448,7 +4550,7 @@
       {
         "name": "Rh",
         "nickname": "Rh",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglAngle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglAngle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4456,7 +4558,7 @@
       {
         "name": "Rt1",
         "nickname": "Rt1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglAngle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglAngle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4464,7 +4566,7 @@
       {
         "name": "Rt2",
         "nickname": "Rt2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglAngle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglAngle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4472,7 +4574,7 @@
       {
         "name": "Rt3",
         "nickname": "Rt3",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglAngle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglAngle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4480,7 +4582,7 @@
       {
         "name": "Rt4",
         "nickname": "Rt4",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglAngle.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglAngle.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4506,7 +4608,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -4521,12 +4623,12 @@
     "nickname": "S7BglBulb",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
+    "description": "Sezione nativa Straus R3. Dimensioni nelle unit\u00E0 di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "inputs": [
       {
         "name": "D",
         "nickname": "D",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglBulb.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglBulb.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4534,7 +4636,7 @@
       {
         "name": "B",
         "nickname": "B",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglBulb.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglBulb.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4542,7 +4644,7 @@
       {
         "name": "t",
         "nickname": "t",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglBulb.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglBulb.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4550,7 +4652,7 @@
       {
         "name": "Rr",
         "nickname": "Rr",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglBulb.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglBulb.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4558,7 +4660,7 @@
       {
         "name": "Rh",
         "nickname": "Rh",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglBulb.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglBulb.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4566,7 +4668,7 @@
       {
         "name": "Rt1",
         "nickname": "Rt1",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglBulb.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglBulb.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4574,7 +4676,7 @@
       {
         "name": "Rt2",
         "nickname": "Rt2",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglBulb.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglBulb.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4582,7 +4684,7 @@
       {
         "name": "Rt3",
         "nickname": "Rt3",
-        "description": "Dimensione nelle unità di lunghezza del modello; convenzione Straus R3 BglBulb.",
+        "description": "Dimensione nelle unit\u00E0 di lunghezza del modello; convenzione Straus R3 BglBulb.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -4600,7 +4702,7 @@
       {
         "name": "Section",
         "nickname": "S",
-        "description": "Sezione con proprietà calcolate da Straus R3; compatibile con Beam Property.",
+        "description": "Sezione con propriet\u00E0 calcolate da Straus R3; compatibile con Beam Property.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -4654,7 +4756,7 @@
       {
         "name": "Shear Forces",
         "nickname": "SF",
-        "description": "The shear forces in the principal direction 1 and 2 (>0 st7)",
+        "description": "The shear forces in the principal direction 1 and 2 (\u003E0 st7)",
         "access": "list",
         "optional": false,
         "type": "Vector"
@@ -4662,7 +4764,7 @@
       {
         "name": "Bending Moments",
         "nickname": "BM",
-        "description": "The bending moments in the principal direction 1 and 2 (>0 st7)",
+        "description": "The bending moments in the principal direction 1 and 2 (\u003E0 st7)",
         "access": "list",
         "optional": false,
         "type": "Vector"
@@ -4678,7 +4780,7 @@
       {
         "name": "Torques",
         "nickname": "T",
-        "description": "The torque (>0 st7)",
+        "description": "The torque (\u003E0 st7)",
         "access": "list",
         "optional": false,
         "type": "Number"
@@ -4818,7 +4920,7 @@
       {
         "name": "Force",
         "nickname": "F",
-        "description": "Internal direct force per length (X = F11 direct force, Y = F22 direct force, Z = F12 shear force) (>0 st7)",
+        "description": "Internal direct force per length (X = F11 direct force, Y = F22 direct force, Z = F12 shear force) (\u003E0 st7)",
         "access": "list",
         "optional": false,
         "type": "Vector"
@@ -4826,7 +4928,7 @@
       {
         "name": "Force Max",
         "nickname": "FMAX",
-        "description": "The maximum principal force per length (>0 st7)",
+        "description": "The maximum principal force per length (\u003E0 st7)",
         "access": "list",
         "optional": false,
         "type": "Number"
@@ -4834,7 +4936,7 @@
       {
         "name": "Force Min",
         "nickname": "FMIN",
-        "description": "The minimum principal force per length (>0 st7)",
+        "description": "The minimum principal force per length (\u003E0 st7)",
         "access": "list",
         "optional": false,
         "type": "Number"
@@ -4842,7 +4944,7 @@
       {
         "name": "Force Angle",
         "nickname": "FANG",
-        "description": "The angle from the area local 1 axis to the direction of the maximum principal force (>0 st7)",
+        "description": "The angle from the area local 1 axis to the direction of the maximum principal force (\u003E0 st7)",
         "access": "list",
         "optional": false,
         "type": "Number"
@@ -4850,7 +4952,7 @@
       {
         "name": "Force Von Mises",
         "nickname": "FVM",
-        "description": "The internal Von Mises force per length (>0 st7)",
+        "description": "The internal Von Mises force per length (\u003E0 st7)",
         "access": "list",
         "optional": false,
         "type": "Number"
@@ -4858,7 +4960,7 @@
       {
         "name": "Moment",
         "nickname": "M",
-        "description": "The internal moment per length (X = M11 bending moment, Y = M22 bending moment, Z = M12 twisting moment) (>0 st7)",
+        "description": "The internal moment per length (X = M11 bending moment, Y = M22 bending moment, Z = M12 twisting moment) (\u003E0 st7)",
         "access": "list",
         "optional": false,
         "type": "Vector"
@@ -4866,7 +4968,7 @@
       {
         "name": "Moment Max",
         "nickname": "MMAX",
-        "description": "The maximum principal moment per length (>0 st7)",
+        "description": "The maximum principal moment per length (\u003E0 st7)",
         "access": "list",
         "optional": false,
         "type": "Number"
@@ -4874,7 +4976,7 @@
       {
         "name": "Moment Min",
         "nickname": "MMIN",
-        "description": "The minimum principal moment per length (>0 st7)",
+        "description": "The minimum principal moment per length (\u003E0 st7)",
         "access": "list",
         "optional": false,
         "type": "Number"
@@ -4882,7 +4984,7 @@
       {
         "name": "Moment Angle",
         "nickname": "MANG",
-        "description": "The angle from the area local 1 axis to the direction of the maximum principal moment (>0 st7)",
+        "description": "The angle from the area local 1 axis to the direction of the maximum principal moment (\u003E0 st7)",
         "access": "list",
         "optional": false,
         "type": "Number"
@@ -4890,7 +4992,7 @@
       {
         "name": "Shear Force",
         "nickname": "SF",
-        "description": "The transverse shear force per length (X = V13, Y = V23) (>0 st7)",
+        "description": "The transverse shear force per length (X = V13, Y = V23) (\u003E0 st7)",
         "access": "list",
         "optional": false,
         "type": "Vector"
@@ -5754,7 +5856,7 @@
       },
       {
         "name": "Poisson Ratio",
-        "nickname": "ν",
+        "nickname": "\u03BD",
         "description": "Poisson Ratio",
         "access": "item",
         "optional": true,
@@ -5762,7 +5864,7 @@
       },
       {
         "name": "Thermal Expansion",
-        "nickname": "α",
+        "nickname": "\u03B1",
         "description": "Thermal Expansion",
         "access": "item",
         "optional": true,
@@ -5778,7 +5880,7 @@
       },
       {
         "name": "Use Poisson",
-        "nickname": "ν?",
+        "nickname": "\u03BD?",
         "description": "Use Poisson",
         "access": "item",
         "optional": true,
@@ -5786,7 +5888,7 @@
       },
       {
         "name": "Density",
-        "nickname": "ρ",
+        "nickname": "\u03C1",
         "description": "Density",
         "access": "item",
         "optional": true,
@@ -5878,7 +5980,7 @@
       },
       {
         "name": "Use Poisson",
-        "nickname": "ν?",
+        "nickname": "\u03BD?",
         "description": "Use Poisson",
         "access": "item",
         "optional": false,
@@ -5886,7 +5988,7 @@
       },
       {
         "name": "Poisson Ratio",
-        "nickname": "ν",
+        "nickname": "\u03BD",
         "description": "Poisson Ratio",
         "access": "item",
         "optional": false,
@@ -5902,7 +6004,7 @@
       },
       {
         "name": "Thermal Expansion",
-        "nickname": "α",
+        "nickname": "\u03B1",
         "description": "Thermal Expansion",
         "access": "item",
         "optional": true,
@@ -5910,7 +6012,7 @@
       },
       {
         "name": "Density",
-        "nickname": "ρ",
+        "nickname": "\u03C1",
         "description": "Density",
         "access": "item",
         "optional": true,
@@ -5918,7 +6020,7 @@
       },
       {
         "name": "Stresses",
-        "nickname": "σ",
+        "nickname": "\u03C3",
         "description": "Stresses",
         "access": "list",
         "optional": false,
@@ -5926,7 +6028,7 @@
       },
       {
         "name": "Strains",
-        "nickname": "ε",
+        "nickname": "\u03B5",
         "description": "Strains",
         "access": "list",
         "optional": false,
@@ -6433,7 +6535,7 @@
       {
         "name": "Composite property",
         "nickname": "P",
-        "description": "H + reinforced slab in N-mm-MPa with n ritiro",
+        "description": "H \u002B reinforced slab in N-mm-MPa with n ritiro",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -6490,7 +6592,7 @@
     "nickname": "MLPoint",
     "category": "BridGHe",
     "subcategory": "09-Loads",
-    "description": "Forza puntuale mobile. Posizioni e forze nelle unità del modello.",
+    "description": "Forza puntuale mobile. Posizioni e forze nelle unit\u00E0 del modello.",
     "inputs": [
       {
         "name": "X",
@@ -6511,7 +6613,7 @@
       {
         "name": "Force",
         "nickname": "F",
-        "description": "Componenti F1,F2,F3 nelle unità di forza del modello.",
+        "description": "Componenti F1,F2,F3 nelle unit\u00E0 di forza del modello.",
         "access": "item",
         "optional": false,
         "type": "Vector"
@@ -6568,12 +6670,12 @@
     "nickname": "MLDistr",
     "category": "BridGHe",
     "subcategory": "09-Loads",
-    "description": "Carico distribuito mobile Straus R3, tutte le cinque modalità di mobilità.",
+    "description": "Carico distribuito mobile Straus R3, tutte le cinque modalit\u00E0 di mobilit\u00E0.",
     "inputs": [
       {
         "name": "X1",
         "nickname": "X1",
-        "description": "Estremo dell'area di carico nelle unità del modello.",
+        "description": "Estremo dell\u0027area di carico nelle unit\u00E0 del modello.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -6581,7 +6683,7 @@
       {
         "name": "X2",
         "nickname": "X2",
-        "description": "Estremo dell'area di carico nelle unità del modello.",
+        "description": "Estremo dell\u0027area di carico nelle unit\u00E0 del modello.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -6589,7 +6691,7 @@
       {
         "name": "Y1",
         "nickname": "Y1",
-        "description": "Estremo dell'area di carico nelle unità del modello.",
+        "description": "Estremo dell\u0027area di carico nelle unit\u00E0 del modello.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -6597,7 +6699,7 @@
       {
         "name": "Y2",
         "nickname": "Y2",
-        "description": "Estremo dell'area di carico nelle unità del modello.",
+        "description": "Estremo dell\u0027area di carico nelle unit\u00E0 del modello.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -6605,7 +6707,7 @@
       {
         "name": "Distributed force",
         "nickname": "q",
-        "description": "Componenti distribuite q1,q2,q3 secondo la convenzione del template Straus; unità coerenti con il modello.",
+        "description": "Componenti distribuite q1,q2,q3 secondo la convenzione del template Straus; unit\u00E0 coerenti con il modello.",
         "access": "item",
         "optional": false,
         "type": "Vector"
@@ -6662,12 +6764,12 @@
     "nickname": "MLHeat",
     "category": "BridGHe",
     "subcategory": "09-Loads",
-    "description": "Sorgente termica mobile per analisi termica Straus; non è un incremento di temperatura strutturale.",
+    "description": "Sorgente termica mobile per analisi termica Straus; non \u00E8 un incremento di temperatura strutturale.",
     "inputs": [
       {
         "name": "X",
         "nickname": "X",
-        "description": "Valore nelle unità coerenti del modello Straus.",
+        "description": "Valore nelle unit\u00E0 coerenti del modello Straus.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -6675,7 +6777,7 @@
       {
         "name": "Y",
         "nickname": "Y",
-        "description": "Valore nelle unità coerenti del modello Straus.",
+        "description": "Valore nelle unit\u00E0 coerenti del modello Straus.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -6683,7 +6785,7 @@
       {
         "name": "Size X",
         "nickname": "Size X",
-        "description": "Valore nelle unità coerenti del modello Straus.",
+        "description": "Valore nelle unit\u00E0 coerenti del modello Straus.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -6691,7 +6793,7 @@
       {
         "name": "Size Y",
         "nickname": "Size Y",
-        "description": "Valore nelle unità coerenti del modello Straus.",
+        "description": "Valore nelle unit\u00E0 coerenti del modello Straus.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -6699,7 +6801,7 @@
       {
         "name": "Heat",
         "nickname": "Heat",
-        "description": "Valore nelle unità coerenti del modello Straus.",
+        "description": "Valore nelle unit\u00E0 coerenti del modello Straus.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -6724,7 +6826,7 @@
     "nickname": "MLVehicle",
     "category": "BridGHe",
     "subcategory": "09-Loads",
-    "description": "Assembla carichi mobili in un veicolo; le velocità sono nelle unità di lunghezza del modello per secondo.",
+    "description": "Assembla carichi mobili in un veicolo; le velocit\u00E0 sono nelle unit\u00E0 di lunghezza del modello per secondo.",
     "inputs": [
       {
         "name": "Name",
@@ -6761,7 +6863,7 @@
       {
         "name": "Velocity",
         "nickname": "V",
-        "description": "Velocità non negativa [lunghezza/s].",
+        "description": "Velocit\u00E0 non negativa [lunghezza/s].",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -6810,7 +6912,7 @@
     "nickname": "MLCentrifugal",
     "category": "BridGHe",
     "subcategory": "09-Loads",
-    "description": "Fc = K0 + K1 Fz; espressioni Straus con variabili R, L, V, g.",
+    "description": "Fc = K0 \u002B K1 Fz; espressioni Straus con variabili R, L, V, g.",
     "inputs": [
       {
         "name": "K0",
@@ -6949,7 +7051,7 @@
       {
         "name": "Minimum lane width",
         "nickname": "W",
-        "description": "Larghezza minima nelle unità del modello.",
+        "description": "Larghezza minima nelle unit\u00E0 del modello.",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -6982,7 +7084,7 @@
     "nickname": "MLLibrary",
     "category": "BridGHe",
     "subcategory": "09-Loads",
-    "description": "Usa un template MLT già installato nella libreria Straus; conserva le sue impostazioni.",
+    "description": "Usa un template MLT gi\u00E0 installato nella libreria Straus; conserva le sue impostazioni.",
     "inputs": [
       {
         "name": "Library",
@@ -7097,7 +7199,7 @@
       {
         "name": "Generate static cases",
         "nickname": "Static",
-        "description": "Converte il percorso in casi statici durante l'esportazione. Per leggerli usare Moving Static Analysis.",
+        "description": "Converte il percorso in casi statici durante l\u0027esportazione. Per leggerli usare Moving Static Analysis.",
         "access": "item",
         "optional": false,
         "type": "Boolean"
@@ -7927,7 +8029,7 @@
       {
         "name": "Active Bearing IDs",
         "nickname": "B",
-        "description": "Exact FEM Node IDs. '*' all; leave empty with Enable Bearings=false to remove all.",
+        "description": "Exact FEM Node IDs. \u0027*\u0027 all; leave empty with Enable Bearings=false to remove all.",
         "access": "list",
         "optional": false,
         "type": "Text"
@@ -8632,7 +8734,7 @@
     "type": "BridGHe.Grasshopper.Components.Geometry.SimpleBridgeSolidComponent",
     "guid": "e3eeef52-dba7-4bb0-8131-57d6956edf58",
     "kind": "component",
-    "name": "Simple Bridge — Solid Diaphragms",
+    "name": "Simple Bridge \u2014 Solid Diaphragms",
     "nickname": "BridgeSolid",
     "category": "BridGHe",
     "subcategory": "06-Model",
@@ -8779,7 +8881,7 @@
       {
         "name": "Nodes",
         "nickname": "N",
-        "description": "Unique member endpoints. Position in list + 1 is the topology node number.",
+        "description": "Unique member endpoints. Position in list \u002B 1 is the topology node number.",
         "access": "list",
         "optional": false,
         "type": "Point"
@@ -8870,7 +8972,7 @@
     "type": "BridGHe.Grasshopper.Components.Geometry.SimpleBridgeTrussComponent",
     "guid": "dc7cfadf-84f8-4ebd-8a49-17782694754e",
     "kind": "component",
-    "name": "Simple Bridge — Truss Diaphragms",
+    "name": "Simple Bridge \u2014 Truss Diaphragms",
     "nickname": "BridgeTruss",
     "category": "BridGHe",
     "subcategory": "06-Model",
@@ -9017,7 +9119,7 @@
       {
         "name": "Nodes",
         "nickname": "N",
-        "description": "Unique member endpoints. Position in list + 1 is the topology node number.",
+        "description": "Unique member endpoints. Position in list \u002B 1 is the topology node number.",
         "access": "list",
         "optional": false,
         "type": "Point"
@@ -9219,48 +9321,48 @@
         "type": "Number"
       },
       {
-        "name": "J₁₁",
-        "nickname": "J₁₁",
+        "name": "J\u2081\u2081",
+        "nickname": "J\u2081\u2081",
         "description": "Second moment of area respect 1-1",
         "access": "item",
         "optional": false,
         "type": "Number"
       },
       {
-        "name": "J₂₂",
-        "nickname": "J₂₂",
+        "name": "J\u2082\u2082",
+        "nickname": "J\u2082\u2082",
         "description": "Second moment of area respect 2-2",
         "access": "item",
         "optional": false,
         "type": "Number"
       },
       {
-        "name": "W₁₁",
-        "nickname": "W₁₁",
+        "name": "W\u2081\u2081",
+        "nickname": "W\u2081\u2081",
         "description": "Elastic section modulus respect 1-1",
         "access": "item",
         "optional": false,
         "type": "Number"
       },
       {
-        "name": "W₂₂",
-        "nickname": "W₂₂",
+        "name": "W\u2082\u2082",
+        "nickname": "W\u2082\u2082",
         "description": "Elastic section modulus respect 2-2",
         "access": "item",
         "optional": false,
         "type": "Number"
       },
       {
-        "name": "ρ₁₁",
-        "nickname": "ρ₁₁",
+        "name": "\u03C1\u2081\u2081",
+        "nickname": "\u03C1\u2081\u2081",
         "description": "Radius of gyration respect 1-1",
         "access": "item",
         "optional": false,
         "type": "Number"
       },
       {
-        "name": "ρ₂₂",
-        "nickname": "ρ₂₂",
+        "name": "\u03C1\u2082\u2082",
+        "nickname": "\u03C1\u2082\u2082",
         "description": "Radius of gyration respect 2-2",
         "access": "item",
         "optional": false,
@@ -11416,7 +11518,7 @@
     "nickname": "CS",
     "category": "BridGHe",
     "subcategory": "05-Properties",
-    "description": "Composite H + reinforced slab. Steel-referenced Straus properties for steel-only, instant, long-term and shrinkage phases (N-mm-MPa).",
+    "description": "Composite H \u002B reinforced slab. Steel-referenced Straus properties for steel-only, instant, long-term and shrinkage phases (N-mm-MPa).",
     "inputs": [
       {
         "name": "Name",
@@ -11475,8 +11577,8 @@
         "type": "Number"
       },
       {
-        "name": "n ∞",
-        "nickname": "n ∞",
+        "name": "n \u221E",
+        "nickname": "n \u221E",
         "description": "Homogenization coefficient for infinite time loads",
         "access": "item",
         "optional": false,
@@ -11485,7 +11587,7 @@
       {
         "name": "n ritiro",
         "nickname": "n sh",
-        "description": "Shrinkage modular ratio Es/Ec,eff. If omitted, uses n ∞ for compatibility.",
+        "description": "Shrinkage modular ratio Es/Ec,eff. If omitted, uses n \u221E for compatibility.",
         "access": "item",
         "optional": true,
         "type": "Number"
@@ -11493,7 +11595,7 @@
       {
         "name": "Consider Concrete",
         "nickname": "CC",
-        "description": "If true, consider concrete in the n0 and n ∞ phases",
+        "description": "If true, consider concrete in the n0 and n \u221E phases",
         "access": "item",
         "optional": false,
         "type": "Boolean"
@@ -11533,9 +11635,9 @@
         "type": "Generic Data"
       },
       {
-        "name": "n ∞ Beam Section",
+        "name": "n \u221E Beam Section",
         "nickname": "CS",
-        "description": "The homogenized beam section with n ∞ coefficient",
+        "description": "The homogenized beam section with n \u221E coefficient",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -11558,7 +11660,7 @@
     "nickname": "Slab",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Concrete slab with independent top and bottom reinforcement rows. Dimensions mm, total row areas mm²; covers are measured to bar axes.",
+    "description": "Concrete slab with independent top and bottom reinforcement rows. Dimensions mm, total row areas mm\u00B2; covers are measured to bar axes.",
     "inputs": [
       {
         "name": "Height",
@@ -11579,7 +11681,7 @@
       {
         "name": "Rebar area",
         "nickname": "RA",
-        "description": "Total TOP row area over the slab width [mm²]. Zero disables this row.",
+        "description": "Total TOP row area over the slab width [mm\u00B2]. Zero disables this row.",
         "access": "item",
         "optional": true,
         "type": "Number"
@@ -11595,7 +11697,7 @@
       {
         "name": "Bottom rebar area",
         "nickname": "BRA",
-        "description": "Total BOTTOM row area over the slab width [mm²]. Zero disables this row.",
+        "description": "Total BOTTOM row area over the slab width [mm\u00B2]. Zero disables this row.",
         "access": "item",
         "optional": true,
         "type": "Number"
@@ -11697,16 +11799,16 @@
         "type": "Number"
       },
       {
-        "name": "J₁₁",
-        "nickname": "J₁₁",
+        "name": "J\u2081\u2081",
+        "nickname": "J\u2081\u2081",
         "description": "Second moment of area respect 1-1",
         "access": "item",
         "optional": false,
         "type": "Number"
       },
       {
-        "name": "J₂₂",
-        "nickname": "J₂₂",
+        "name": "J\u2082\u2082",
+        "nickname": "J\u2082\u2082",
         "description": "Second moment of area respect 2-2",
         "access": "item",
         "optional": false,
@@ -12648,7 +12750,7 @@
       },
       {
         "name": "Strain increment",
-        "nickname": "Δεcs",
+        "nickname": "\u0394\u03B5cs",
         "description": "Concrete shrinkage increment [dimensionless], negative for contraction. Supply the same increment to Composite Shrinkage Actions before Straus. Never enter cumulative shrinkage twice.",
         "access": "item",
         "optional": false,
@@ -12781,7 +12883,7 @@
       {
         "name": "Combinations",
         "nickname": "C",
-        "description": "Table/tree: header label + action IDs, followed by combination name + coefficients. A shrinkage coefficient applies to both primary strain and secondary FEM forces.",
+        "description": "Table/tree: header label \u002B action IDs, followed by combination name \u002B coefficients. A shrinkage coefficient applies to both primary strain and secondary FEM forces.",
         "access": "tree",
         "optional": false,
         "type": "Generic Data"
@@ -12789,7 +12891,7 @@
       {
         "name": "Calculation",
         "nickname": "Calc",
-        "description": "0 Cumulative: existing numerical method grouped by section behavior; 1 LinearHistory: gPC sequential N–Mx section history. Neither runs global construction stages automatically.",
+        "description": "0 Cumulative: existing numerical method grouped by section behavior; 1 LinearHistory: gPC sequential N\u2013Mx section history. Neither runs global construction stages automatically.",
         "access": "item",
         "optional": false,
         "type": "Integer"
@@ -13030,7 +13132,7 @@
       },
       {
         "name": "Strain",
-        "nickname": "ε",
+        "nickname": "\u03B5",
         "description": "The strain applicated to the concrete slab",
         "access": "item",
         "optional": false,
@@ -13337,16 +13439,16 @@
         "type": "Number"
       },
       {
-        "name": "J₁₁",
-        "nickname": "J₁₁",
+        "name": "J\u2081\u2081",
+        "nickname": "J\u2081\u2081",
         "description": "Second moment of area respect 1-1",
         "access": "item",
         "optional": false,
         "type": "Number"
       },
       {
-        "name": "J₂₂",
-        "nickname": "J₂₂",
+        "name": "J\u2082\u2082",
+        "nickname": "J\u2082\u2082",
         "description": "Second moment of area respect 2-2",
         "access": "item",
         "optional": false,
@@ -13451,6 +13553,22 @@
         "access": "item",
         "optional": false,
         "type": "Integer"
+      },
+      {
+        "name": "Drying start",
+        "nickname": "ts",
+        "description": "End of curing / drying start [days] for EN 1992-1-1:2004 shrinkage.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Reference age",
+        "nickname": "tr",
+        "description": "Age at which composite restraint becomes active [days]. Output epsilon is the increment from this age; 0 includes all shrinkage.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
       }
     ],
     "outputs": [
@@ -13463,8 +13581,8 @@
         "type": "Number"
       },
       {
-        "name": "n ∞",
-        "nickname": "n ∞",
+        "name": "n \u221E",
+        "nickname": "n \u221E",
         "description": "Homogenization coefficient for infinite time loads",
         "access": "item",
         "optional": false,
@@ -13479,9 +13597,41 @@
         "type": "Number"
       },
       {
-        "name": "εcs",
-        "nickname": "ε",
-        "description": "Total Shrinkage strain",
+        "name": "\u03B5cs",
+        "nickname": "\u03B5",
+        "description": "Shrinkage increment epsilon(t)-epsilon(tr), negative contraction, dimensionless. Wire the same value to FEM shrinkage and Bridge Shrinkage Action.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Total shrinkage",
+        "nickname": "Total",
+        "description": "Total negative shrinkage at age t, dimensionless.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Drying shrinkage",
+        "nickname": "Dry",
+        "description": "Negative drying component at age t, dimensionless.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Autogenous shrinkage",
+        "nickname": "Auto",
+        "description": "Negative autogenous component at age t, dimensionless.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Notional size",
+        "nickname": "h0",
+        "description": "2 Ac / drying perimeter [mm].",
         "access": "item",
         "optional": false,
         "type": "Number"
@@ -13814,7 +13964,7 @@
     "nickname": "BSup",
     "category": "BridGHe",
     "subcategory": "07-Attributes",
-    "description": "Distributed Straus elastic support along principal local axis ±1 or ±2, in freedom case 1.",
+    "description": "Distributed Straus elastic support along principal local axis \u00B11 or \u00B12, in freedom case 1.",
     "inputs": [
       {
         "name": "Beam",
@@ -13827,7 +13977,7 @@
       {
         "name": "Stiffness",
         "nickname": "K",
-        "description": "Distributed stiffness [force/length²], positive",
+        "description": "Distributed stiffness [force/length\u00B2], positive",
         "access": "item",
         "optional": false,
         "type": "Number"

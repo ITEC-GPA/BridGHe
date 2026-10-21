@@ -14,6 +14,7 @@ internal static class RegressionTests
         {
             ["bridge-combination-excel"] = BridgeCombinationExcelTests.Run,
             ["concrete-shrinkage"] = ConcreteShrinkageTests.Run,
+            ["bridge-detail-stations"] = BridgeSupportReactionTests.Run,
             ["bridge-combination-excel-component"] = () => BridgeCombinationExcelExample.Run(),
             ["simple-bridge"] = SimpleBridgeTests.Run,
             ["bridge-span-advisor"] = BridgeSpanAdvisorTests.Run,

@@ -311,6 +311,7 @@ BridgeShearPlotComponent|shear|measure|result
 BridgeStudPlotComponent|studs|measure|result
 BridgeIntermediateStiffenerPlotComponent|stiffener|measure|result
 BridgeSupportStiffenerPlotComponent|stiffener|force|result
+BridgeDetailStationsComponent|bridge-bearing|data|result
 BridgeStudsComponent|studs||check
 BridgeIntermediateStiffenerComponent|stiffener||check
 BridgeSupportStiffenerComponent|stiffener|force|check
