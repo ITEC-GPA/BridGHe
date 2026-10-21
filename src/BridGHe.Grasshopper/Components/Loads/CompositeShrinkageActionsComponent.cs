@@ -8,7 +8,7 @@ namespace BridGHe.Grasshopper.Components.Loads
 {
     public sealed class CompositeShrinkageActionsComponent:GH_Component
     {
-        public CompositeShrinkageActionsComponent():base("Composite Shrinkage Actions","Shrinkage","Equivalent free strain and thermal gradient for a generic composite Straus beam using n ritiro. Also pass the same concrete strain once to Composite Slab Strain after analysis.",CategoryNameConstants.CATEGORY_MODEL,CategoryNameConstants.SUBCATEGORY_LOADS){}
+        public CompositeShrinkageActionsComponent():base("Composite Shrinkage Actions","Shrinkage","Equivalent free strain and thermal gradient for a generic composite Straus beam using n ritiro. Pass the same concrete strain and the calculated FEM case to Bridge Shrinkage Action for the phase workflow.",CategoryNameConstants.CATEGORY_MODEL,CategoryNameConstants.SUBCATEGORY_LOADS){}
         protected override void RegisterInputParams(GH_InputParamManager p)
         {
             p.AddGenericParameter("Composite property","P","H + reinforced slab in N-mm-MPa with n ritiro",GH_ParamAccess.item);

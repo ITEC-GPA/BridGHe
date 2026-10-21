@@ -6,14 +6,16 @@ using System;
 
 namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
+    [Obsolete("Use Bridge Shrinkage Action in the phase workflow.")]
     public class CompositeBeamSlabStrainComponent : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the CompositeBeamSlabStrainComponent class.
         /// </summary>
         public CompositeBeamSlabStrainComponent()
-          : base("Composite Beam Strain", "CBS", "Assign a strain load to a composite beam", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_LOADS)
+          : base("Composite Beam Strain", "CBS", "OBSOLETE: assign a strain load directly to a composite beam. Retained for existing definitions; use Bridge Shrinkage Action in the phase workflow.", CategoryNameConstants.CATEGORY_CHECKS, CategoryNameConstants.SUBCATEGORY_LOADS)
         {
+            Message = "Obsolete";
         }
 
         /// <summary>
@@ -50,6 +52,9 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 return;
             if (!DA.GetData(2, ref strain))
                 return;
+
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
+                "Obsolete component retained for existing definitions. For the phase workflow use Bridge Shrinkage Action -> Bridge Phase -> Build BridGHe Model.");
 
             CompositeBeamSlabStrainModel.LoadData load_value = new CompositeBeamSlabStrainModel.LoadData()
             {
