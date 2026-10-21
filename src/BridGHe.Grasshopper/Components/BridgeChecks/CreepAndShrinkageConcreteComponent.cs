@@ -42,6 +42,9 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             foreach (KeyValuePair<int, string> v in _cementType)
                 mtParam.AddNamedValue(v.Value, v.Key);
 
+            pManager.AddNumberParameter("Drying start", "ts", "End of curing / drying start [days] for EN 1992-1-1:2004 shrinkage.", GH_ParamAccess.item, 7);
+            pManager.AddNumberParameter("Reference age", "tr", "Age at which composite restraint becomes active [days]. Output epsilon is the increment from this age; 0 includes all shrinkage.", GH_ParamAccess.item, 0);
+
         }
 
         /// <summary>
@@ -52,7 +55,11 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             pManager.AddNumberParameter("n0", "n0", "Homogenization coefficient for instant time loads", GH_ParamAccess.item);
             pManager.AddNumberParameter("n ∞", "n ∞", "Homogenization coefficient for infinite time loads", GH_ParamAccess.item);
             pManager.AddNumberParameter("y(t,t0)", "y", "Creep coefficient", GH_ParamAccess.item);
-            pManager.AddNumberParameter("εcs", "ε", "Total Shrinkage strain", GH_ParamAccess.item);
+            pManager.AddNumberParameter("εcs", "ε", "Shrinkage increment epsilon(t)-epsilon(tr), negative contraction, dimensionless. Wire the same value to FEM shrinkage and Bridge Shrinkage Action.", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Total shrinkage", "Total", "Total negative shrinkage at age t, dimensionless.", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Drying shrinkage", "Dry", "Negative drying component at age t, dimensionless.", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Autogenous shrinkage", "Auto", "Negative autogenous component at age t, dimensionless.", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Notional size", "h0", "2 Ac / drying perimeter [mm].", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -87,7 +94,11 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 return;
             if (!DA.GetData(count++, ref cementType))
                 return;
-
+            double dryingStart = 7, referenceAge = 0;
+            DA.GetData(count++, ref dryingStart); DA.GetData(count++, ref referenceAge);
+            try
+            {
+            if (!double.IsFinite(Es) || Es <= 0 || !double.IsFinite(t) || t < 0) throw new ArgumentException("Steel modulus must be positive and age must be finite and non-negative (0 = infinity).");
             ConcreteMaterialEN1992 concreteMaterialEN1992 = new ConcreteMaterialEN1992("", fck, ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle,
                 0.2, 0.0025, 1e-6, (ConcreteMaterial.CementTypes)cementType);
 
@@ -97,14 +108,16 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             double psiInf = timeEffects.AtAge(t == 0 ? double.PositiveInfinity : t).CreepCoefficient;
             // gPC phi is referred to Ec=1.05 Ecm; preserve the actual creep compliance.
             double n1 = n0 * (1 + psiInf / 1.05);
-            double epsilonCS = double.NaN;
-            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
-                "Ritiro: l'API temporale precedente non è più disponibile; epsilonCS = NaN. Il metodo legacy a tempo infinito presenta difetti documentati nella libreria gPC e non viene usato.");
+            var shrinkage = BridGHe.Common.Checks.ConcreteShrinkage.Calculate(fck, (ConcreteMaterialEuropeanCommon.CementTypes)cementType,
+                rh, concreteArea, u, t == 0 ? double.PositiveInfinity : t, dryingStart, referenceAge);
 
             DA.SetData(0, n0);
             DA.SetData(1, n1);
             DA.SetData(2, psiInf);
-            DA.SetData(3, epsilonCS);
+            DA.SetData(3, shrinkage.Increment);
+            DA.SetData(4, shrinkage.Total); DA.SetData(5, shrinkage.Drying); DA.SetData(6, shrinkage.Autogenous); DA.SetData(7, shrinkage.NotionalSize);
+            }
+            catch (ArgumentException error) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, error.Message); }
         }
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;
