@@ -38,7 +38,7 @@
             <item name="Date" type_name="gh_date" type_code="8">639281237133517960</item>
             <item name="Description" type_name="gh_string" type_code="10"></item>
             <item name="KeepOpen" type_name="gh_bool" type_code="1">false</item>
-            <item name="Name" type_name="gh_string" type_code="10"></item>
+            <item name="Name" type_name="gh_string" type_code="10">unnamed</item>
           </items>
           <chunks count="3">
             <chunk name="Revisions">
@@ -164,14 +164,14 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <item name="Name" type_name="gh_string" type_code="10">Simple Bridge — Truss Diaphragms</item>
                     <item name="NickName" type_name="gh_string" type_code="10">BridgeTruss</item>
                   </items>
-                  <chunks count="28">
+                  <chunks count="29">
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>0</X>
-                          <Y>0</Y>
-                          <W>150</W>
-                          <H>20</H>
+                          <X>1085</X>
+                          <Y>148</Y>
+                          <W>76</W>
+                          <H>304</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
                           <X>1120</X>
@@ -191,12 +191,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1087</X>
+                              <Y>150</Y>
+                              <W>18</W>
+                              <H>23</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1097.5</X>
+                              <Y>161.53847</Y>
                             </item>
                           </items>
                         </chunk>
@@ -215,12 +219,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1087</X>
+                              <Y>173</Y>
+                              <W>18</W>
+                              <H>23</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1097.5</X>
+                              <Y>184.61539</Y>
                             </item>
                           </items>
                         </chunk>
@@ -239,12 +247,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1087</X>
+                              <Y>196</Y>
+                              <W>18</W>
+                              <H>23</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1097.5</X>
+                              <Y>207.6923</Y>
                             </item>
                           </items>
                         </chunk>
@@ -263,12 +275,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1087</X>
+                              <Y>219</Y>
+                              <W>18</W>
+                              <H>23</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1097.5</X>
+                              <Y>230.76924</Y>
                             </item>
                           </items>
                         </chunk>
@@ -307,12 +323,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1087</X>
+                              <Y>242</Y>
+                              <W>18</W>
+                              <H>23</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1097.5</X>
+                              <Y>253.84616</Y>
                             </item>
                           </items>
                         </chunk>
@@ -350,12 +370,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1087</X>
+                              <Y>265</Y>
+                              <W>18</W>
+                              <H>23</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1097.5</X>
+                              <Y>276.92307</Y>
                             </item>
                           </items>
                         </chunk>
@@ -394,12 +418,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1087</X>
+                              <Y>288</Y>
+                              <W>18</W>
+                              <H>23</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1097.5</X>
+                              <Y>300</Y>
                             </item>
                           </items>
                         </chunk>
@@ -417,12 +445,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1087</X>
+                              <Y>311</Y>
+                              <W>18</W>
+                              <H>23</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1097.5</X>
+                              <Y>323.0769</Y>
                             </item>
                           </items>
                         </chunk>
@@ -440,12 +472,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1087</X>
+                              <Y>334</Y>
+                              <W>18</W>
+                              <H>23</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1097.5</X>
+                              <Y>346.15384</Y>
                             </item>
                           </items>
                         </chunk>
@@ -463,12 +499,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1087</X>
+                              <Y>357</Y>
+                              <W>18</W>
+                              <H>23</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1097.5</X>
+                              <Y>369.23077</Y>
                             </item>
                           </items>
                         </chunk>
@@ -506,12 +546,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1087</X>
+                              <Y>380</Y>
+                              <W>18</W>
+                              <H>23</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1097.5</X>
+                              <Y>392.30768</Y>
                             </item>
                           </items>
                         </chunk>
@@ -550,12 +594,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1087</X>
+                              <Y>403</Y>
+                              <W>18</W>
+                              <H>23</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1097.5</X>
+                              <Y>415.3846</Y>
                             </item>
                           </items>
                         </chunk>
@@ -592,12 +640,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1087</X>
+                              <Y>426</Y>
+                              <W>18</W>
+                              <H>24</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1097.5</X>
+                              <Y>438.46155</Y>
                             </item>
                           </items>
                         </chunk>
@@ -635,12 +687,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1135</X>
+                              <Y>150</Y>
+                              <W>24</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1147</X>
+                              <Y>160</Y>
                             </item>
                           </items>
                         </chunk>
@@ -658,12 +714,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1135</X>
+                              <Y>170</Y>
+                              <W>24</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1147</X>
+                              <Y>180</Y>
                             </item>
                           </items>
                         </chunk>
@@ -681,12 +741,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1135</X>
+                              <Y>190</Y>
+                              <W>24</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1147</X>
+                              <Y>200</Y>
                             </item>
                           </items>
                         </chunk>
@@ -704,12 +768,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1135</X>
+                              <Y>210</Y>
+                              <W>24</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1147</X>
+                              <Y>220</Y>
                             </item>
                           </items>
                         </chunk>
@@ -727,12 +795,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1135</X>
+                              <Y>230</Y>
+                              <W>24</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1147</X>
+                              <Y>240</Y>
                             </item>
                           </items>
                         </chunk>
@@ -750,12 +822,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1135</X>
+                              <Y>250</Y>
+                              <W>24</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1147</X>
+                              <Y>260</Y>
                             </item>
                           </items>
                         </chunk>
@@ -773,12 +849,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1135</X>
+                              <Y>270</Y>
+                              <W>24</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1147</X>
+                              <Y>280</Y>
                             </item>
                           </items>
                         </chunk>
@@ -795,12 +875,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1135</X>
+                              <Y>290</Y>
+                              <W>24</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1147</X>
+                              <Y>300</Y>
                             </item>
                           </items>
                         </chunk>
@@ -818,12 +902,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1135</X>
+                              <Y>310</Y>
+                              <W>24</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1147</X>
+                              <Y>320</Y>
                             </item>
                           </items>
                         </chunk>
@@ -841,12 +929,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1135</X>
+                              <Y>330</Y>
+                              <W>24</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1147</X>
+                              <Y>340</Y>
                             </item>
                           </items>
                         </chunk>
@@ -864,12 +956,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1135</X>
+                              <Y>350</Y>
+                              <W>24</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1147</X>
+                              <Y>360</Y>
                             </item>
                           </items>
                         </chunk>
@@ -887,12 +983,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1135</X>
+                              <Y>370</Y>
+                              <W>24</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1147</X>
+                              <Y>380</Y>
                             </item>
                           </items>
                         </chunk>
@@ -910,12 +1010,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1135</X>
+                              <Y>390</Y>
+                              <W>24</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1147</X>
+                              <Y>400</Y>
                             </item>
                           </items>
                         </chunk>
@@ -933,12 +1037,42 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1135</X>
+                              <Y>410</Y>
+                              <W>24</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1147</X>
+                              <Y>420</Y>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="14">
+                      <items count="6">
+                        <item name="Description" type_name="gh_string" type_code="10">Typed bridge geometry for assignment, bracing, bearings and detailing. mm.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">b3d9ec40-099f-4204-a806-f497bb6ff532</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Bridge Geometry</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">BG</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="2">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>1135</X>
+                              <Y>430</Y>
+                              <W>24</W>
+                              <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1147</X>
+                              <Y>440</Y>
                             </item>
                           </items>
                         </chunk>
@@ -968,8 +1102,8 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>-25</X>
-                          <Y>-12</Y>
+                          <X>795</X>
+                          <Y>18</Y>
                           <W>50</W>
                           <H>24</H>
                         </item>
@@ -1273,8 +1407,8 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>-25</X>
-                          <Y>-12</Y>
+                          <X>795</X>
+                          <Y>188</Y>
                           <W>50</W>
                           <H>24</H>
                         </item>
@@ -1368,8 +1502,8 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>-25</X>
-                          <Y>-12</Y>
+                          <X>15</X>
+                          <Y>198</Y>
                           <W>50</W>
                           <H>24</H>
                         </item>
@@ -1464,10 +1598,10 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>0</X>
-                          <Y>0</Y>
-                          <W>150</W>
-                          <H>20</H>
+                          <X>271</X>
+                          <Y>188</Y>
+                          <W>62</W>
+                          <H>44</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
                           <X>300</X>
@@ -1488,12 +1622,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>273</X>
+                              <Y>190</Y>
+                              <W>12</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>280.5</X>
+                              <Y>200</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1510,12 +1648,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>273</X>
+                              <Y>210</Y>
+                              <W>12</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>280.5</X>
+                              <Y>220</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1552,12 +1694,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>315</X>
+                              <Y>190</Y>
+                              <W>16</W>
+                              <H>40</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>323</X>
+                              <Y>210</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1585,10 +1731,10 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>0</X>
-                          <Y>0</Y>
-                          <W>150</W>
-                          <H>20</H>
+                          <X>263</X>
+                          <Y>778</Y>
+                          <W>72</W>
+                          <H>144</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
                           <X>300</X>
@@ -1608,12 +1754,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>265</X>
+                              <Y>780</Y>
+                              <W>20</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>276.5</X>
+                              <Y>790</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1631,12 +1781,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>265</X>
+                              <Y>800</Y>
+                              <W>20</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>276.5</X>
+                              <Y>810</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1673,12 +1827,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>265</X>
+                              <Y>820</Y>
+                              <W>20</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>276.5</X>
+                              <Y>830</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1716,12 +1874,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>265</X>
+                              <Y>840</Y>
+                              <W>20</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>276.5</X>
+                              <Y>850</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1758,12 +1920,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>265</X>
+                              <Y>860</Y>
+                              <W>20</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>276.5</X>
+                              <Y>870</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1800,12 +1966,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>265</X>
+                              <Y>880</Y>
+                              <W>20</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>276.5</X>
+                              <Y>890</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1842,12 +2012,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>265</X>
+                              <Y>900</Y>
+                              <W>20</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>276.5</X>
+                              <Y>910</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1884,12 +2058,16 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>315</X>
+                              <Y>780</Y>
+                              <W>18</W>
+                              <H>140</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>324</X>
+                              <Y>850</Y>
                             </item>
                           </items>
                         </chunk>
