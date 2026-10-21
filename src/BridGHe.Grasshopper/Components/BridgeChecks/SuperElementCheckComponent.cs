@@ -446,8 +446,14 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
 
                     DataTree<StressAnalysisResult> resultsDataTree = new DataTree<StressAnalysisResult>();
                     for (int i = 0; i < stressAnalysisResults.Length; i++)
+                    {
+                        var beam = beams[i].Value;
+                        string superElement = string.Join(", ", beam.Attributes.OfType<SuperElementAttributeModel>()
+                            .Select(a => a.Value).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().OrderBy(s => s, StringComparer.Ordinal));
                         for (int j = 0; j < stressAnalysisResults[i].Length; j++)
-                            resultsDataTree.AddRange(stressAnalysisResults[i][j], new GH_Path(i, j));
+                            resultsDataTree.AddRange(stressAnalysisResults[i][j].Select((result, k) => result.WithSource(
+                                new BridgeResultSource(beam.BeamId, workflowStations[i][j], model.Value.LoadCombinations[k].Name, superElement))), new GH_Path(i, j));
+                    }
 
                     DataTree<double> tauBDataTree = new DataTree<double>();
                     for (int i = 0; i < tauBResults.Length; i++)

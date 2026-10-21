@@ -81,6 +81,16 @@ In `BeamForceResultModel`, i nomi storici `Mx/My` conservano rispettivamente i v
 
 Le prove del convertitore sono eseguite; la verifica completa dei segni dopo esportazione, analisi e rilettura richiede la licenza nativa. Non modificare nuovamente segni o ordine delle componenti nei componenti downstream per compensare la conversione.
 
+## Riepilogo con etichette automatiche
+
+Collegare **Tension Check** di **Super Element Check**, oppure **Results** di **Bridge Detail Check**, direttamente a **Results** di **Bridge Check Summary**. Lasciare **Labels vuoto**: non servono Panel, Series o altri componenti per costruire i nomi.
+
+Il riepilogo usa i riferimenti contenuti nel risultato: per esempio `G2 / Beam 36 / s=1250 mm / DEMO`. `s` è la distanza dall'inizio della singola asta FEM, in mm; non è una coordinata globale né la progressiva del tracciato. Il superelemento è riportato quando presente. La fase resta nella colonna `Phase`. I riferimenti seguono il risultato anche dopo il controllo dei dettagli, un riordino o un Flatten; quest'ultimo raggruppa tutti gli esiti in un unico riepilogo.
+
+Per **Bridge Section Check** e risultati senza riferimenti FEM, l'etichetta contiene percorso dell'albero, indice dell'item e fase, ad esempio `Result {0}[1] / Long`: non vengono dedotti nomi di aste o combinazioni inesistenti. Per ottenere i riferimenti completi da un vecchio documento, ricalcolare **Super Element Check** con la versione aggiornata. I documenti precedenti mantengono gli eventuali nomi manuali: scollegare il filo e cancellare eventuali dati persistenti di `Labels` per passare all'automatismo.
+
+`Labels` rimane disponibile per nomi personalizzati: se usato, richiede un testo non vuoto per risultato, con lo stesso ordine e gli stessi rami. La generazione delle etichette non modifica sollecitazioni, fasi, rapporti, stati o note di verifica.
+
 ## Dettagli di ponti misti
 
 I quattro nuovi componenti `Bridge Studs`, `Bridge Intermediate Stiffener`, `Bridge Support Stiffener` e `Bridge Detail Check` si trovano in **BridGHe-Checks / Bridge details**. Le definizioni espongono le opzioni scalari native gPC; l'ultimo componente riceve un risultato BridgeChecks e ricalcola la stessa storia con i dettagli assegnati. Unità degli irrigiditori: **kN**, mm; pioli: mm, MPa. I risultati elencano esplicitamente le unità. Un rapporto NaN indica una verifica non espressa da gPC, non un esito favorevole.

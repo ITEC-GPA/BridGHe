@@ -1,29 +1,36 @@
 {
-  "solved": true,
-  "reopened": true,
-  "solverInvoked": false,
-  "source": "Example 19 REV003 archived Straus results",
-  "beam": "36",
-  "stationCombinationResults": 5,
-  "sourceHashes": [
-    {
-      "file": "REV003-G1_GETTO-results.bgmodel",
-      "sha256": "8246A3B04E1B02EE5D326FD240BCDBBB6FD8D59A7D960CBDA82D52C24CE116C7"
-    },
-    {
-      "file": "REV003-G2_PERMANENTI-results.bgmodel",
-      "sha256": "8905C199C1BB40B8C04B106BE25E0287CD53B1733F2A51354595626F644DD6A9"
-    },
-    {
-      "file": "REV003-Q_TRAFFICO-results.bgmodel",
-      "sha256": "9AE3E6A826445B85756C462F11DEFE19251D6D179215FB7FFE90460EB9729454"
-    },
-    {
-      "file": "REV003-RITIRO_FEM-results.bgmodel",
-      "sha256": "51AF73D72C759939A89F47B8B58F5856F6DDD61A56EBD670A4D4C49F2DB380E9"
-    }
-  ],
-  "warnings": [
-    "Super Element Check: Tau b non ha un equivalente verificato nell\u0027API gPC attuale: output NaN."
-  ]
+  "status": "pending-runtime-validation",
+  "reason": "Automatic labels update; compilation and Rhino tests deferred at user request.",
+  "staticXmlValidated": true,
+  "labelInputEmpty": true,
+  "objects": 33,
+  "previousRevisionValidation": {
+    "solved": true,
+    "reopened": true,
+    "solverInvoked": false,
+    "source": "Example 19 REV003 archived Straus results",
+    "beam": "36",
+    "stationCombinationResults": 5,
+    "sourceHashes": [
+      {
+        "file": "REV003-G1_GETTO-results.bgmodel",
+        "sha256": "8246A3B04E1B02EE5D326FD240BCDBBB6FD8D59A7D960CBDA82D52C24CE116C7"
+      },
+      {
+        "file": "REV003-G2_PERMANENTI-results.bgmodel",
+        "sha256": "8905C199C1BB40B8C04B106BE25E0287CD53B1733F2A51354595626F644DD6A9"
+      },
+      {
+        "file": "REV003-Q_TRAFFICO-results.bgmodel",
+        "sha256": "9AE3E6A826445B85756C462F11DEFE19251D6D179215FB7FFE90460EB9729454"
+      },
+      {
+        "file": "REV003-RITIRO_FEM-results.bgmodel",
+        "sha256": "51AF73D72C759939A89F47B8B58F5856F6DDD61A56EBD670A4D4C49F2DB380E9"
+      }
+    ],
+    "warnings": [
+      "Super Element Check: Tau b non ha un equivalente verificato nell'API gPC attuale: output NaN."
+    ]
+  }
 }

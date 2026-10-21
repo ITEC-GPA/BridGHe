@@ -10,7 +10,9 @@ Sezione mista H con quattro incrementi di sezione: Steel, Long, Instant, Shrinka
 
 ## Procedura
 
-Collegare Results della verifica a Check Summary. Fornire una Label per ogni risultato, contenente trave/stazione/combinazione. Leggere Phase, Check, Ratio, Status, Units e Notes. Maximum finite ratio e Governing labels identificano il massimo tra i rapporti numerici disponibili.
+Collegare Results della verifica a Results di Check Summary e lasciare **Labels vuoto**. I nomi sono automatici: in questo esempio di sezione isolata contengono posizione nell'albero e fase; non vengono inventati trave, stazione o combinazione FEM. Leggere Phase, Check, Ratio, Status, Units e Notes. Maximum finite ratio e Governing labels identificano il massimo tra i rapporti numerici disponibili.
+
+Per sostituire i nomi automatici, Labels accetta facoltativamente un testo non vuoto per ogni risultato, con lo stesso ordine e gli stessi rami. Nel flusso Super Element Check → Detail Check → Summary i risultati portano invece già superelemento, Beam ID, distanza locale in mm e combinazione.
 
 ## Risultati attesi e campo
 

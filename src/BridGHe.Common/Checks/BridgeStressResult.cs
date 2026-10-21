@@ -9,14 +9,21 @@ namespace BridGHe.Common.Checks
     {
         public HBridgeAnalysisResult Analysis { get; }
         public BridgeStage Stage { get; }
+        public BridgeResultSource Source { get; }
+        private readonly int stageIndex;
         private readonly Lazy<Func<double,double>> shear;
         private readonly Lazy<double[]> rebarRows;
-        public BridgeStressResult(HBridgeAnalysisResult analysis, int stage)
+        public BridgeStressResult(HBridgeAnalysisResult analysis, int stage) : this(analysis, stage, null) { }
+
+        public BridgeStressResult(HBridgeAnalysisResult analysis, int stage, BridgeResultSource source)
         {
             Analysis = analysis ?? throw new ArgumentNullException(nameof(analysis)); Stage = analysis.Stages[stage];
+            stageIndex = stage; Source = source;
             shear = new Lazy<Func<double,double>>(CreateShearEvaluator);
             rebarRows = new Lazy<double[]>(()=>Analysis.Geometry.Bars.Select(b=>b.Y).Distinct().OrderByDescending(y=>y).ToArray());
         }
+        /// <summary>Attach provenance without recomputing or modifying the numerical analysis.</summary>
+        public BridgeStressResult WithSource(BridgeResultSource source) => new BridgeStressResult(Analysis, stageIndex, source);
         private double Sigma(string material, double y) => Stage.Contributions.Sum(c => c.Stress(material, y));
         private double Steel(double y) => Sigma("Acciaio", y);
         private double Rebar(int index)

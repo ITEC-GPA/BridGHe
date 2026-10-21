@@ -71,12 +71,24 @@ public sealed class BridgeResultComparisonComponent : BridgeUtilityComponent
 
 public sealed class BridgeCheckSummaryComponent : BridgeUtilityComponent
 {
+    private const string LabelsDescription = "Optional custom label per result. Leave empty for automatic beam/local station/combination labels. Results without FEM provenance use their tree position and phase.";
     public BridgeCheckSummaryComponent() : base("Bridge Check Summary", "CheckSummary", "Tabulate existing GPC checks across sections, phases and combinations. Preserves original statuses/notes and exposes missing ratios; does not add engineering verifications.", CategoryNameConstants.SUBCATEGORY_RESULTS) { }
     public override Guid ComponentGuid => new Guid("e0447314-cb48-4c24-8e65-6508ba9baa90");
     protected override void RegisterInputParams(GH_InputParamManager p)
     {
         p.AddGenericParameter("Results", "R", "BridgeStressResult objects from Section/Detail/Super Element Check. Flatten deliberately if combining sections.", GH_ParamAccess.list);
-        p.AddTextParameter("Labels", "ID", "One explicit beam/station/combination label per result, to preserve traceability.", GH_ParamAccess.list);
+        p.AddTextParameter("Labels", "ID", LabelsDescription, GH_ParamAccess.list); p[1].Optional = true;
+    }
+    public override bool Read(GH_IO.Serialization.GH_IReader reader)
+    {
+        bool success = base.Read(reader);
+        if (success)
+        {
+            // Existing definitions store Optional=false and the old tooltip in their input archive.
+            Params.Input[1].Optional = true;
+            Params.Input[1].Description = LabelsDescription;
+        }
+        return success;
     }
     protected override void RegisterOutputParams(GH_OutputParamManager p)
     {
@@ -90,8 +102,14 @@ public sealed class BridgeCheckSummaryComponent : BridgeUtilityComponent
     protected override void Solve(IGH_DataAccess da)
     {
         var results = new List<GH_ObjectWrapper>(); var labels = new List<string>();
-        if (!da.GetDataList(0, results) || !da.GetDataList(1, labels)) return;
-        if (results.Count == 0 || results.Count != labels.Count || labels.Any(string.IsNullOrWhiteSpace) || results.Any(r => r?.Value is not BridgeStressResult)) throw new ArgumentException("Supply one non-empty traceability label for every BridgeStressResult.");
+        if (!da.GetDataList(0, results)) return;
+        if (results.Count == 0 || results.Any(r => r?.Value is not BridgeStressResult)) throw new ArgumentException("Supply BridgeStressResult objects from a bridge checker.");
+        da.GetDataList(1, labels);
+        if (labels.Count == 0)
+            labels.AddRange(results.Select((r, i) => { var result = (BridgeStressResult)r.Value;
+                return result.Source?.Label ?? $"Result {da.ParameterTargetPath(0)}[{i}] / {result.Stage.Name}"; }));
+        else if (results.Count != labels.Count || labels.Any(string.IsNullOrWhiteSpace))
+            throw new ArgumentException("Leave Labels empty for automatic labels, or supply one non-empty custom label per result in the same branch.");
         var rows = results.SelectMany((r, i) => { var result = (BridgeStressResult)r.Value; return BridgeGpc.Checks(result.Stage).Select(c => (Label: labels[i], Phase: result.Stage.Name, Check: c)); }).ToArray();
         double Ratio(int i) => rows[i].Check.Ratio ?? double.NaN;
         da.SetDataList(0, rows.Select(r => r.Label)); da.SetDataList(1, rows.Select(r => r.Phase)); da.SetDataList(2, rows.Select(r => r.Check.Name));

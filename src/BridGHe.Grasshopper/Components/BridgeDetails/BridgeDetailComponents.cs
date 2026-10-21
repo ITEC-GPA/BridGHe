@@ -140,7 +140,7 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
                     throw new ArgumentException("Additional details accepts transverse reinforcement, fatigue and box options only.");
                 input=BridgeGpc.WithDetails(input,extra.Select(d=>d.Value));
                 int stage=result.Analysis.Stages.IndexOf(result.Stage);if(stage<0)throw new ArgumentException("Unknown source stage.");
-                var analysis=HBridgeSection.Calculate(input);var updated=new BridgeStressResult(analysis,stage);var selected=updated.Stage;
+                var analysis=HBridgeSection.Calculate(input);var updated=new BridgeStressResult(analysis,stage,result.Source);var selected=updated.Stage;
                 var checks=BridgeGpc.Checks(selected).ToArray();
                 da.SetData(0,updated);da.SetDataList(1,checks.Select(c=>c.Name));da.SetDataList(2,checks.Select(c=>c.Demand));da.SetDataList(3,checks.Select(c=>c.Resistance));
                 da.SetDataList(4,checks.Select(c=>c.Unit));da.SetDataList(5,checks.Select(c=>c.Ratio??double.NaN));da.SetDataList(6,checks.Select(c=>c.Status+": "+c.Note));da.SetDataList(7,selected.Warnings);

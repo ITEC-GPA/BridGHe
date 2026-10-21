@@ -37,12 +37,21 @@ internal static class BridgeDetailsModelExample
         BridgeWorkflowTests.Require(source.DataCount > 2 && source.DataCount == details.DataCount, "Lost station/combination results between super-element and detail checker.");
         BridgeWorkflowTests.Require(source.Paths.SequenceEqual(details.Paths), "Station tree paths changed in detail checking.");
         var summary = Find(d, "BridgeCheckSummaryComponent");
-        BridgeWorkflowTests.Require(summary.Params.Output[0].VolatileDataCount > source.DataCount && summary.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Count == 0,
-            "Summary must receive explicit station labels and produce check rows.");
+        BridgeWorkflowTests.Require(summary.Params.Input[1].Optional && summary.Params.Input[1].VolatileDataCount == 0
+            && summary.Params.Output[0].VolatileDataCount > source.DataCount && summary.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Count == 0,
+            "Summary must generate station labels with only Results connected.");
         var a = source.AllData(true).Select(g => (BridgeStressResult)g.ScriptVariable()).ToArray();
         var b = details.AllData(true).Select(g => (BridgeStressResult)g.ScriptVariable()).ToArray();
+        var combinedModel = (ModelModel)Find(d, "BuildBridgeModel").Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
+        var beam = combinedModel.Beams.Single();
+        var stations = beam.Results.OfType<BeamForceResultModel>().Select(r => r.NormalizedLength ? r.Station * beam.Length : r.Station).Distinct().OrderBy(x => x).ToArray();
+        var expectedSources = stations.SelectMany(s => combinedModel.LoadCombinations.Select(combo => new BridgeResultSource(beam.BeamId, s, combo.Name, "G2"))).ToArray();
+        BridgeWorkflowTests.Require(a.Select(r => r.Source).SequenceEqual(expectedSources), "Super-element result provenance does not match the beam, local stations and combinations.");
+        var expectedLabels = b.SelectMany(r => BridgeGpc.Checks(r.Stage).Select(_ => r.Source.Label));
+        BridgeWorkflowTests.Require(summary.Params.Output[0].VolatileData.AllData(true).Select(g => (string)g.ScriptVariable()).SequenceEqual(expectedLabels), "Automatic summary labels lost the source identity.");
         for (int i = 0; i < a.Length; i++)
         {
+            BridgeWorkflowTests.Require(a[i].Source == b[i].Source, "Detail checking lost result provenance.");
             BridgeWorkflowTests.Require(a[i].Analysis.Input.Options.LimitState == BridgeLimitState.Rare && b[i].Analysis.Input.Options.LimitState == BridgeLimitState.Ultimate, "Explicit limit state override not applied.");
             BridgeWorkflowTests.Require(a[i].Analysis.Input.Phases.SequenceEqual(b[i].Analysis.Input.Phases), "Detail checking changed already combined FEM actions or strain.");
             var s = b[i].Stage.Studs;
@@ -122,17 +131,7 @@ internal static class BridgeDetailsModelExample
         Panel("Controlli", "", 4330, 0, 490, 720).AddSource(detail.Params.Output[1]);
         Panel("Rapporti — stesso ordine", "", 4850, 0, 360, 720).AddSource(detail.Params.Output[5]);
         Panel("PERCORSO E LIMITI", "Tension Check contiene BridgeStressResult, non soltanto tensioni. Conservare l'albero {indice beam;indice stazione}; gli item sono le combinazioni.\nDetails di Layout è una lista di definizioni geometriche: non collegarla indiscriminatamente a Results. Suddividere le zone e associare il dettaglio alla sua stazione.\nCalculation=1 LinearHistory NON è supportato da Detail Check. L'opzione Ultimate non genera coefficienti né altera le azioni FEM.\nPer appoggi reali usare la reazione compressiva corretta, con unità e associazione di combinazione coerenti. R=900 in questo file è dimostrativa.", 3870, 1000, 1300, 220);
-        sum.Locked = true; Calculate(d);
-        var merged = (ModelModel)build.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
-        var beam = merged.Beams.Single();
-        var stations = beam.Results.OfType<BeamForceResultModel>().Select(r => r.NormalizedLength ? r.Station * beam.Length : r.Station).Distinct().OrderBy(x => x).ToArray();
-        var resultPaths = check.Params.Output[0].VolatileData.Paths;
-        BridgeWorkflowTests.Require(stations.Length == resultPaths.Count, "Summary label station mapping.");
-        var labels = new Param_String { NickName = "Etichette del campione — aggiornare se cambiano stazioni o combo" };
-        labels.CreateAttributes(); labels.Attributes.Pivot = new PointF(3000, 750); d.AddObject(labels, false);
-        for (int i = 0; i < stations.Length; i++)
-            labels.PersistentData.Append(new GH_String("G2 / beam36 / x=" + (beam.PointFrom.X + stations[i]).ToString("G9", System.Globalization.CultureInfo.InvariantCulture) + " mm / DEMO"), resultPaths[i]);
-        sum.Params.Input[1].AddSource(labels); sum.Locked = false; sum.ExpireSolution(false); Solve(d);
+        Calculate(d);
         Panel("Riepilogo — controllo governante per stazione", "", 4330, 800, 880, 140).AddSource(sum.Params.Output[9]); Solve(d);
         int count = Validate(d); Directory.CreateDirectory(Folder); GrasshopperBridgeExample.Write(d, FileName);
         using var reopened = GrasshopperBridgeExample.Read(FileName); Calculate(reopened); BridgeWorkflowTests.Require(Validate(reopened) == count, "Replay changed station count.");

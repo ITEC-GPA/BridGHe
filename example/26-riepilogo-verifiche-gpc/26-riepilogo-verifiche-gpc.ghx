@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <Archive name="Root">
   <!--Grasshopper archive-->
   <!--Grasshopper and GH_IO.dll are copyrighted by Robert McNeel & Associates-->
@@ -1820,14 +1820,14 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                     <chunk name="param_input" index="1">
                       <items count="7">
                         <item name="Access" type_name="gh_int32" type_code="3">1</item>
-                        <item name="Description" type_name="gh_string" type_code="10">One explicit beam/station/combination label per result, to preserve traceability.</item>
+                        <item name="Description" type_name="gh_string" type_code="10">Optional custom label per result. Leave empty for automatic beam/local station/combination labels. Results without FEM provenance use their tree position and phase.</item>
                         <item name="InstanceGuid" type_name="gh_guid" type_code="9">5afa9277-1bc6-47e6-8222-07c837af809e</item>
                         <item name="Name" type_name="gh_string" type_code="10">Labels</item>
                         <item name="NickName" type_name="gh_string" type_code="10">ID</item>
-                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">true</item>
                         <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
                       </items>
-                      <chunks count="2">
+                      <chunks count="1">
                         <chunk name="Attributes">
                           <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
@@ -1837,45 +1837,6 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                               <H>20</H>
                             </item>
                           </items>
-                        </chunk>
-                        <chunk name="PersistentData">
-                          <items count="1">
-                            <item name="Count" type_name="gh_int32" type_code="3">1</item>
-                          </items>
-                          <chunks count="1">
-                            <chunk name="Branch" index="0">
-                              <items count="2">
-                                <item name="Count" type_name="gh_int32" type_code="3">4</item>
-                                <item name="Path" type_name="gh_string" type_code="10">{0}</item>
-                              </items>
-                              <chunks count="4">
-                                <chunk name="Item" index="0">
-                                  <items count="2">
-                                    <item name="null_string" type_name="gh_bool" type_code="1">false</item>
-                                    <item name="string" type_name="gh_string" type_code="10">G2/x=15000/SLS</item>
-                                  </items>
-                                </chunk>
-                                <chunk name="Item" index="1">
-                                  <items count="2">
-                                    <item name="null_string" type_name="gh_bool" type_code="1">false</item>
-                                    <item name="string" type_name="gh_string" type_code="10">G2/x=15000/SLS</item>
-                                  </items>
-                                </chunk>
-                                <chunk name="Item" index="2">
-                                  <items count="2">
-                                    <item name="null_string" type_name="gh_bool" type_code="1">false</item>
-                                    <item name="string" type_name="gh_string" type_code="10">G2/x=15000/SLS</item>
-                                  </items>
-                                </chunk>
-                                <chunk name="Item" index="3">
-                                  <items count="2">
-                                    <item name="null_string" type_name="gh_bool" type_code="1">false</item>
-                                    <item name="string" type_name="gh_string" type_code="10">G2/x=15000/SLS</item>
-                                  </items>
-                                </chunk>
-                              </chunks>
-                            </chunk>
-                          </chunks>
                         </chunk>
                       </chunks>
                     </chunk>

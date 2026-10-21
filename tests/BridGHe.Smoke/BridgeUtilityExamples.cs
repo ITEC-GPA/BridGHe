@@ -136,7 +136,7 @@ internal static class BridgeUtilityExamples
             new BridgePhase { Name = "Long", MomentKNm = 200, ShearKN = 100, Phi = 2 }, new BridgePhase { Name = "Instant", MomentKNm = 400, ShearKN = -50 },
             new BridgePhase { Name = "Shrinkage", Kind = BridgePhaseKind.Shrinkage, ShrinkageMicrostrain = -200, Phi = 2 } };
         Generic(checker, 4, phases.Select(p => Goo("BridgeDetailGoo", p)).ToArray());
-        var summary = Add(doc, "BridgeCheckSummaryComponent", 950, 100); Wire(checker, 0, summary, 0); Text(summary, 1, "G2/x=15000/SLS", "G2/x=15000/SLS", "G2/x=15000/SLS", "G2/x=15000/SLS");
+        var summary = Add(doc, "BridgeCheckSummaryComponent", 950, 100); Wire(checker, 0, summary, 0);
         Panel(doc, summary, 9, 1330, 70); Panel(doc, summary, 4, 1330, 400);
         Save(doc, "26-riepilogo-verifiche-gpc", d =>
         {
@@ -144,6 +144,8 @@ internal static class BridgeUtilityExamples
             var expected = results.SelectMany(r => BridgeGpc.Checks(r.Stage)).Select(c => c.Ratio ?? double.NaN).ToArray();
             var actual = Output(Find(d, "BridgeCheckSummaryComponent"), 3).Cast<double>().ToArray();
             BridgeUtilityTests.Assert(expected.Length > 0 && actual.SequenceEqual(expected), "GPC summary changed or dropped ratios.");
+            var labels = Output(Find(d, "BridgeCheckSummaryComponent"), 0).Cast<string>().ToArray();
+            BridgeUtilityTests.Assert(labels.Length == actual.Length && results.All(r => labels.Any(l => l.Contains(r.Stage.Name))), "Standalone phase labels were not generated.");
         });
     }
     private static void Comparison()
