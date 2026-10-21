@@ -1,6 +1,6 @@
 # Inventario dei componenti 0.1.0
 
-169 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
+171 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
 
 ## BridGHe / 01-Parameters
 
@@ -71,6 +71,7 @@
 | Nome | Tipo | Ingressi | Uscite |
 |---|---|---|---|
 | Bridge Action Combinations | component | Phases; Action IDs; Names; Coefficients | Table; Omitted actions |
+| Bridge Combination Excel | component | Models; Phases; File; Mode; Rows; Overwrite | File; Table; Action IDs; Summary |
 | Group | component | Name; Parent | Group |
 | Load Case | component | Name; Gravity NSM | LoadCase |
 | Load Combination | component | Name; LoadCases; Coefficients | LoadCombination |
@@ -219,6 +220,7 @@
 | Bridge Force Plot | component | BridGHe Model; Super-Element Beam; Results; Quantity; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running | SVG; File; Minimum; Maximum |
 | Bridge Result Cases | component | Model | Cases; Case by step; Step; Step type; Result type; Count; Units |
 | Bridge Result Comparison | component | Reference keys; Reference values; Candidate keys; Candidate values; Absolute tolerance; Relative tolerance | All within tolerance; Key; Difference; Relative difference; Within tolerance |
+| Bridge Result Labels | component | Results; Format | Labels |
 | Bridge Shear Plot | component | BridGHe Model; Super-Element Beam; Results; Quantity; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running | SVG; File; Minimum; Maximum |
 | Bridge Shear Results | component | Section result | Shear; Average tau; Maximum tau; Equivalent stress; Web resistance; Warnings |
 | Bridge Stress Plot | component | BridGHe Model; Super-Element Beam; Results; Quantity; Combinations; Show Min/Max Combo; Additional values; File Path; Graphic Title; Keep Running | SVG; File; Minimum; Maximum |

@@ -358,6 +358,100 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeCombinationExcelComponent",
+    "guid": "2776b9ba-309e-4a25-91ad-4177c557bc13",
+    "kind": "component",
+    "name": "Bridge Combination Excel",
+    "nickname": "ComboExcel",
+    "category": "BridGHe",
+    "subcategory": "04-Definitions",
+    "description": "Create an Excel template from Models and numbered Phases, or read completed coefficients into Build BridGHe Model. Press Run to access the file.",
+    "inputs": [
+      {
+        "name": "Models",
+        "nickname": "M",
+        "description": "Reference Models in N-mm-MPa, as for Build BridGHe Model. Each action carries its own source model and case.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Phases",
+        "nickname": "P",
+        "description": "Numbered Bridge Phase objects. Their exact Action IDs become the Excel column headers.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "File",
+        "nickname": "F",
+        "description": ".xlsx file. Relative paths are resolved beside the saved GH definition; use an absolute path for an unsaved definition.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Mode",
+        "nickname": "Mode",
+        "description": "0 Create template; 1 Read completed workbook. Press Run after selecting the mode. No automatic file access on reopening GH.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Rows",
+        "nickname": "Rows",
+        "description": "Blank combination rows in a new template, 1..10000. No factors are assigned automatically.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Overwrite",
+        "nickname": "O",
+        "description": "Allow Create to replace an existing file. Default false protects user coefficients. Close Excel before replacing a workbook.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "File",
+        "nickname": "F",
+        "description": "Resolved Excel path.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Table",
+        "nickname": "T",
+        "description": "Read mode: header and combination rows, ready for Build BridGHe Model > Combinations. Empty after Create until you fill and read the workbook.",
+        "access": "tree",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Action IDs",
+        "nickname": "ID",
+        "description": "Exact action identifiers ordered by phase number. No prefixes to add.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Summary",
+        "nickname": "S",
+        "description": "Action/source mapping and file-operation diagnostics.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Utilities.BridgeDeflectionCamberComponent",
     "guid": "aa3891ae-e93d-45c6-b493-5d2efea84758",
     "kind": "component",
@@ -1278,6 +1372,44 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeResultLabelsComponent",
+    "guid": "d507b37a-ca9f-4c25-890c-2cd354c22ebc",
+    "kind": "component",
+    "name": "Bridge Result Labels",
+    "nickname": "ResultLabels",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Create one label per bridge result, preserving order and tree branches. Connect a Value List to Format to populate its choices automatically.",
+    "inputs": [
+      {
+        "name": "Results",
+        "nickname": "R",
+        "description": "The same BridgeStressResult tree connected to Bridge Check Summary.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Format",
+        "nickname": "F",
+        "description": "0 Completa; 1 Trave e stazione; 2 Combinazione; 3 Fase. Connect a Value List for automatic choices. One format for the entire tree.",
+        "access": "item",
+        "optional": true,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Labels",
+        "nickname": "L",
+        "description": "One label per input result, with identical order and branches. Connect to Labels of Bridge Check Summary. Station s is measured from the FEM beam start in mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Utilities.BridgeResultCasesComponent",
     "guid": "4a919ef3-341d-444c-be04-66918e1ea8ec",
     "kind": "component",
@@ -1478,9 +1610,9 @@
       {
         "name": "Labels",
         "nickname": "ID",
-        "description": "One explicit beam/station/combination label per result, to preserve traceability.",
+        "description": "Optional custom label per result. Leave empty for automatic beam/local station/combination labels. Results without FEM provenance use their tree position and phase.",
         "access": "list",
-        "optional": false,
+        "optional": true,
         "type": "Text"
       }
     ],
@@ -6162,7 +6294,7 @@
     "nickname": "Shrinkage",
     "category": "BridGHe",
     "subcategory": "09-Loads",
-    "description": "Equivalent free strain and thermal gradient for a generic composite Straus beam using n ritiro. Also pass the same concrete strain once to Composite Slab Strain after analysis.",
+    "description": "Equivalent free strain and thermal gradient for a generic composite Straus beam using n ritiro. Pass the same concrete strain and the calculated FEM case to Bridge Shrinkage Action for the phase workflow.",
     "inputs": [
       {
         "name": "Composite property",
@@ -12490,7 +12622,7 @@
     "nickname": "CBS",
     "category": "BridGHe",
     "subcategory": "09-Loads",
-    "description": "Assign a strain load to a composite beam",
+    "description": "OBSOLETE: assign a strain load directly to a composite beam. Retained for existing definitions; use Bridge Shrinkage Action in the phase workflow.",
     "inputs": [
       {
         "name": "Beam",
@@ -13769,100 +13901,6 @@
         "access": "item",
         "optional": false,
         "type": "Generic Data"
-      }
-    ]
-  },
-  {
-    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeCombinationExcelComponent",
-    "guid": "2776b9ba-309e-4a25-91ad-4177c557bc13",
-    "kind": "component",
-    "name": "Bridge Combination Excel",
-    "nickname": "ComboExcel",
-    "category": "BridGHe",
-    "subcategory": "04-Definitions",
-    "description": "Create an Excel template from Models and numbered Phases, or read completed coefficients into Build BridGHe Model. Press Run to access the file.",
-    "inputs": [
-      {
-        "name": "Models",
-        "nickname": "M",
-        "description": "Reference Models in N-mm-MPa, as for Build BridGHe Model. Each action carries its own source model and case.",
-        "access": "list",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Phases",
-        "nickname": "P",
-        "description": "Numbered Bridge Phase objects. Their exact Action IDs become the Excel column headers.",
-        "access": "list",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "File",
-        "nickname": "F",
-        "description": ".xlsx file. Relative paths are resolved beside the saved GH definition; use an absolute path for an unsaved definition.",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Mode",
-        "nickname": "Mode",
-        "description": "0 Create template; 1 Read completed workbook. Press Run after selecting the mode. No automatic file access on reopening GH.",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
-      },
-      {
-        "name": "Rows",
-        "nickname": "Rows",
-        "description": "Blank combination rows in a new template, 1..10000. No factors are assigned automatically.",
-        "access": "item",
-        "optional": false,
-        "type": "Integer"
-      },
-      {
-        "name": "Overwrite",
-        "nickname": "O",
-        "description": "Allow Create to replace an existing file. Default false protects user coefficients. Close Excel before replacing a workbook.",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "File",
-        "nickname": "F",
-        "description": "Resolved Excel path.",
-        "access": "item",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Table",
-        "nickname": "T",
-        "description": "Read mode: header and combination rows, ready for Build BridGHe Model > Combinations. Empty after Create until you fill and read the workbook.",
-        "access": "tree",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Action IDs",
-        "nickname": "ID",
-        "description": "Exact action identifiers ordered by phase number. No prefixes to add.",
-        "access": "list",
-        "optional": false,
-        "type": "Text"
-      },
-      {
-        "name": "Summary",
-        "nickname": "S",
-        "description": "Action/source mapping and file-operation diagnostics.",
-        "access": "list",
-        "optional": false,
-        "type": "Text"
       }
     ]
   }
