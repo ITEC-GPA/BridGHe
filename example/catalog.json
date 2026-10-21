@@ -403,5 +403,14 @@
     "readme": "45-ponte-completo-fasi/README.md",
     "definition": "45-ponte-completo-fasi/45-ponte-completo-fasi.ghx",
     "calculations": "45-ponte-completo-fasi/calcoli"
+  },
+  {
+    "number": 46,
+    "id": "46-combinazioni-excel",
+    "title": "Template Excel da modelli e fasi",
+    "group": "Fasi e combinazioni",
+    "readme": "46-combinazioni-excel/README.md",
+    "definition": "46-combinazioni-excel/46-combinazioni-excel.ghx",
+    "calculations": "46-combinazioni-excel/calcoli"
   }
 ]

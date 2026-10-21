@@ -658,6 +658,20 @@ def make_document():
     p("Le prove dei nuovi strumenti comprendono 44 controlli di servizio e sei grafi calcolati e riaperti con i 12 nuovi componenti. Non richiedono una nuova analisi Straus. Gli esempi di inviluppo usano campioni controllati, mentre il riepilogo ricalcola la sezione con GPC. Salvare una copia prima di rigenerare esempi modificati manualmente.")
     from guide_bridge_design import append_design_chapters
     append_design_chapters(page, h, p, table, steps, code)
+    page(28, "Creare e leggere il template Excel delle combinazioni")
+    p("**Bridge Combination Excel**, in BridGHe / 04-Definitions, ricava le intestazioni dalle azioni delle fasi. Collegare gli stessi Models e Phases del Build. Ogni azione conserva il proprio modello e caso sorgente: l’ordine della lista Models non definisce i nomi delle colonne.")
+    steps([
+        "Impostare File su un percorso .xlsx. Un nome relativo viene risolto nella cartella del GH salvato; per un documento non salvato usare un percorso assoluto.",
+        "Con Mode = 0 premere Run. Il componente crea Combinations e Actions; Rows controlla le righe vuote, con default 20. Un file esistente viene sostituito solo con Overwrite = True esplicito, dopo aver chiuso Excel.",
+        "In Combinations inserire un nome univoco in colonna A e tutti i coefficienti della riga. Usare 0 per le azioni inattive; le righe completamente vuote sono ignorate. Non aggiungere prefissi alle intestazioni.",
+        "Salvare Excel, impostare Mode = 1 e premere Run. Collegare Table a Combinations di Build BridGHe Model e premere Run anche sul Build. Ripetere i due Run dopo ogni modifica ai coefficienti.",
+    ])
+    h("Associazioni e controlli")
+    p("Actions documenta fase, modello, caso, comportamento, strain adimensionale e selezione delle aste; [] significa tutte le aste. Conservare il foglio invariato. La lettura confronta questi dati con le fasi correnti e rifiuta intestazioni errate, duplicati e coefficienti mancanti o non finiti. È ammesso riordinare le colonne di Combinations. Se cambiano le associazioni, generare un nuovo template e trasferire consapevolmente i coefficienti.")
+    p("Le formule numeriche usano il risultato salvato da Excel: ricalcolare e salvare prima di Read. Il plugin non esegue le formule e segnala l’uso dei valori salvati. La riapertura del GH non legge o scrive file; un errore di lettura svuota Table. Il template può precedere l’analisi se i casi sono già definiti: la mancanza dei risultati viene segnalata.")
+    h("Esempio 46")
+    p("Aprire **example/46-combinazioni-excel/46-combinazioni-excel.ghx**. Le tre fasi contengono G1, G2, Q e RITIRO, mentre tutti i casi sorgente si chiamano G. Combinations.xlsx contiene due righe DEMO; Template.xlsx è vuoto. Un coefficiente RITIRO moltiplica insieme il contributo FEM e la deformazione primaria. I campioni su due aste sono sintetici e non richiedono Straus.")
+    p("Non vengono assegnati coefficienti normativi. I nomi come SLU_01 sono etichette e non selezionano lo stato limite: Super Element Check usa attualmente Rare. Il generatore automatico delle combinazioni è previsto come attività successiva.")
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     doc.save(OUTPUT)
     print(OUTPUT)

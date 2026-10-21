@@ -1,0 +1,13 @@
+{
+  "example": "46-combinazioni-excel",
+  "passed": true,
+  "reopened": true,
+  "objects": 13,
+  "combinations": 2,
+  "phases": 3,
+  "actions": 4,
+  "solverInvoked": false,
+  "syntheticFemSamples": true,
+  "explicitRunVerified": true,
+  "staleOutputCleared": true
+}

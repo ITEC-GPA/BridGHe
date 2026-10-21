@@ -10,6 +10,27 @@ Il flusso Grasshopper è `Straus R3 Analysis → Bridge Action / Bridge Shrinkag
 | Bridge Shrinkage Action | ID stabile, incremento di deformazione della soletta, modello/caso degli effetti secondari. Un solo coefficiente moltiplica entrambi. Response seleziona n ritiro oppure n0 per una deformazione istantanea imposta. |
 | Bridge Phase | Numero, nome, stato della sezione, lista di azioni e giorno facoltativo. I numeri ordinano le fasi; non rinominano i casi. |
 | Build BridGHe Model | Models, Phases, Combinations, Calculation. Restituisce modello, riepilogo delle fasi e diagnostica. |
+| Bridge Combination Excel | Crea il template XLSX da Models e Phases e rilegge i coefficienti compilati. Table si collega a Combinations del Build. |
+
+## Template Excel da modelli e fasi
+
+In **BridGHe → 04-Definitions**, inserire **Bridge Combination Excel**. Collegare gli stessi `Models` e `Phases` del Build; ogni azione mantiene il proprio modello sorgente, anche se non è elencato in Models. Non vengono aggiunti automaticamente casi non associati alle fasi.
+
+1. Impostare `File` su un percorso `.xlsx`. Un percorso relativo viene risolto rispetto al GH salvato; per un documento non salvato serve un percorso assoluto.
+2. Lasciare `Mode = 0` e premere **Run**: vengono creati `Combinations` e `Actions`. `Rows` vale 20 per default. Un file esistente è protetto, salvo `Overwrite = True` esplicito.
+3. In `Combinations`, scrivere il nome di ogni combinazione nella prima colonna e un coefficiente numerico per **ogni** azione. Usare **0 esplicito** per un'azione inattiva. Le righe completamente vuote vengono ignorate. Le intestazioni sono già corrette; non servono prefissi.
+4. Conservare `Actions` invariato: riporta numero/nome/stato/giorno della fase, modello e caso sorgente, comportamento, strain adimensionale, selezione delle aste e Primary Only. `[]` nella selezione significa tutte le aste.
+5. Salvare Excel, impostare `Mode = 1` e premere **Run**. Collegare `Table` direttamente a `Build BridGHe Model → Combinations`, quindi premere Run sul Build.
+
+La riapertura del GH e la normale ricomputazione non leggono né scrivono il file: richiedono Run. Dopo una modifica agli input o un errore di lettura non viene restituita la vecchia tabella. Quando si modifica il contenuto Excel, premere nuovamente Run in lettura e poi sul Build.
+
+Il lettore controlla intestazioni esatte e univoche, nomi delle combinazioni, coefficienti mancanti/non finiti e corrispondenza del foglio Actions con le fasi correnti. È consentito riordinare le colonne di Combinations. Se cambia una fase o l'associazione dell'azione, creare un nuovo template e trasferire consapevolmente i coefficienti. Il controllo delle associazioni non certifica la geometria o la correttezza dei risultati FEM: queste verifiche restano al Build e ai controlli del modello.
+
+Si possono preparare i template anche prima dell'analisi se il caso è definito nel modello: viene emesso un avviso per i risultati mancanti. Per le formule numeriche il lettore usa il valore salvato da Excel e lo segnala: **ricalcolare e salvare prima di Read**; il plugin non esegue le formule. Le formule senza risultato salvato e gli errori Excel vengono rifiutati. Nomi e intestazioni devono essere testi letterali.
+
+Il componente non assegna coefficienti normativi. Anche nomi come `SLU_01` sono etichette: non selezionano lo stato limite del checker; attualmente Super Element Check usa `Rare`. Il generatore automatico di combinazioni è un'attività successiva.
+
+L'[esempio 46](../example/46-combinazioni-excel/README.md) contiene template vuoto, workbook dimostrativo compilato e collegamento Excel → Build con ritiro FEM + strain.
 
 Le combinazioni hanno una colonna per **Action ID**, senza prefissi derivati dalla posizione del modello. Esempio:
 

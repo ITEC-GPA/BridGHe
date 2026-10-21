@@ -93,3 +93,7 @@ I quattro esempi generano geometria senza solutore: campate 30+40+30 m, tre trav
 - [45 · Ponte curvo completo con tre fasi](45-ponte-completo-fasi/README.md)
 
 Tredici definizioni GHX con soluzione e riapertura verificate senza solutore. [Procedura e limiti](../docs/BRIDGE-DESIGN.md).
+
+## Excel delle combinazioni
+
+- [46 — Template Excel da Models e Phases](46-combinazioni-excel/README.md): crea le intestazioni dagli Action ID, rilegge i coefficienti e alimenta Build BridGHe Model. Include template vuoto e workbook dimostrativo con ritiro FEM + strain.
