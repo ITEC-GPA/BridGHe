@@ -421,5 +421,14 @@
     "readme": "47-pioli-irrigidimenti-verifiche/README.md",
     "definition": "47-pioli-irrigidimenti-verifiche/47-pioli-irrigidimenti-verifiche.ghx",
     "calculations": "47-pioli-irrigidimenti-verifiche/calcoli"
+  },
+  {
+    "number": 48,
+    "id": "48-report-word",
+    "title": "Report Word delle verifiche da template",
+    "group": "Report delle verifiche",
+    "readme": "48-report-word/README.md",
+    "definition": "48-report-word/48-report-word.ghx",
+    "calculations": null
   }
 ]

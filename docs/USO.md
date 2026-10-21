@@ -129,6 +129,8 @@ Per vedere i grafici nel canvas: collegare `SVG` a **Bridge Plot Preview**, grup
 
 ## Input semplificati e preview
 
+`Bridge Report`, in **13-Results**, legge un template Word e genera una relazione dai risultati GPC. Collegare una Value List a Topics per scegliere i capitoli; il riepilogo di copertura resta sempre presente. La generazione è esplicita tramite Generate, senza scritture automatiche alla riapertura. [Template, impostazioni e limiti](REPORT.md) · [Esempio 48](../example/48-report-word/README.md).
+
 La sezione finale di `Composite beam` è opzionale e assume quella iniziale. Il materiale delle armature è opzionale quando non vi sono armature attive. I nuovi record gPC hanno input con default e opzionalità esplicita. I componenti preesistenti con valori persistenti usano tali default; gli input fisicamente necessari restano obbligatori. L'inventario runtime delle porte è in `migration/current-components.json`.
 
 La preview del modello comprende nodi, beam, plate e definizioni dei percorsi mobili. Le 21 famiglie parametriche Straus hanno contorni e solidi estrusi discretizzati; la precisione geometrica della preview non sostituisce le proprietà meccaniche native. Materiali, combinazioni, risultati numerici e opzioni non richiedono una geometria autonoma. I percorsi rettilinei mostrano l'asse; quelli curvi/quadratici mostrano i tre punti di definizione: controllare la traiettoria completa in Straus. Le nuove opzioni/sezioni gPC del verificatore sono dati; la geometria del ponte viene mostrata dagli elementi FEM.
