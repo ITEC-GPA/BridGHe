@@ -434,5 +434,15 @@
     "readme": "48-report-word/README.md",
     "definition": "48-report-word/48-report-word.ghx",
     "calculations": null
+  },
+  {
+    "number": 99,
+    "id": "99-Ponte completo GPC",
+    "title": "Dal file personale al ponte a due travi con verifiche e report",
+    "group": "Flusso completo",
+    "readme": "99-Ponte completo GPC/README.md",
+    "definition": "99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+    "additionalDefinitions": ["99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"],
+    "calculations": "99-Ponte completo GPC/REV003/calcoli"
   }
 ]

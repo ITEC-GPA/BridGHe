@@ -47,3 +47,26 @@ I controlli nativi usano gli argomenti `--examples all`, `--moving-load-tests al
 I log della sessione sono in `artifacts/current-component-audit/`. I report numerici nativi sono nelle cartelle `calcoli` degli esempi e in `example/00-documentazione/validazioni/esecuzioni/20261021-222728482/`.
 
 La riapertura di 48 file non equivale al ricalcolo FEM di tutti i ponti del catalogo: sono stati ricalcolati i benchmark e ripercorsi i flussi esplicitamente indicati. L'audit trova 81 componenti nei GHX correnti e 93 assenti; questa misura non descrive la copertura numerica dei test. La cartella personale 99 è stata esclusa da questo controllo iniziale e viene affrontata con revisioni dedicate su richiesta dell'utente.
+
+## Completamento dell'esempio 99
+
+Le [revisioni 002 e 003](../example/99-Ponte%20completo%20GPC/README.md) estendono il file personale, conservato senza modifiche. REV002 completa la travata originale; REV003 costruisce due travi, soletta e traversi con `Simple Bridge Solid`. Il ritiro incrementale è calcolato e condiviso fra effetti FEM e primari; le reazioni per gli irrigiditori provengono dai casi nativi e dagli stessi coefficienti delle combinazioni. Azioni e coefficienti restano dimostrativi; il README identifica i limiti strutturali.
+
+| Controllo finale | Esito |
+|---|---|
+| Compilazione Release | 0 errori e 0 avvisi; sincronizzazione in `bin/Release` |
+| Ritiro | 36 controlli, incluse classi di cemento, tempi, segni e collegamento GH |
+| Selezione dettagli e reazioni | 13 controlli su coefficienti, ritiro, sollevamento, dati mancanti e alberi |
+| Smoke e regressioni | 224 controlli principali; 64 gruppi nello stesso processo e 3 gruppi grafici in processi separati |
+| Baseline numerica | Tutti i 238 valori esattamente invariati |
+| Contratti | 130 file, 184 GUID, nessun errore |
+| Catalogo aggiornato | 49 esempi, 50 GHX, 3.401 oggetti e 3.530 collegamenti conservati |
+| Ricalcolo dei portabili | 23 definizioni correnti risolte senza componenti rossi |
+| Esempio 99 nativo | Quattro analisi Straus per revisione; 384/648 risultati di sezione |
+| Equilibrio | Somma delle reazioni confrontata con G1/G2/Q e risultante nulla del ritiro |
+| Riapertura del 99 | 5/10 grafici, risultati coincidenti con l'archivio del report, nessuna modifica agli ST7/LSA |
+| Report Word | 30 asserzioni; rendering e controllo visivo dei due DOCX di 7/9 pagine |
+
+Il test aggregato si interrompeva senza riepilogo durante la generazione grafica del report; ora quel test usa un processo Rhino dedicato, con esito e marcatore di completamento obbligatori. Dopo il passaggio di tutti i gruppi, l'audit dei file ha rilevato l'ordine precedente delle porte di `Composite Beam Property` nel file 99. Le nuove revisioni sono state riallineate conservando GUID, valori e sorgenti; le impronte numeriche dei report sono rimaste identiche. Sono poi stati rieseguiti con successo i controlli di riapertura dell'intero catalogo e di soluzione dei portabili. I log delle fasi finali sono separati in `artifacts/example99/final-smoke-isolated.log`, `final-layout.log` e `final-portable.log`.
+
+Il controllo Word ha inoltre individuato la fusione di tabelle consecutive, che ripeteva l'intestazione sbagliata alla pagina successiva: è stata corretta e coperta da una regressione. Il grafico delle tensioni della seconda trave ora riceve tutte le sezioni verificate; il replay controlla il collegamento e il numero dei risultati ricevuti.

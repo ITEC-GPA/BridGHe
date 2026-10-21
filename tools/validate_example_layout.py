@@ -16,8 +16,11 @@ def main():
     errors = []
     definitions = 0
     links = 0
-    if [row['number'] for row in catalog] != list(range(1, len(catalog) + 1)):
-        errors.append('Catalog must contain consecutive numbered examples exactly once')
+    numbers = [row['number'] for row in catalog]
+    if numbers != sorted(set(numbers)) or any(n <= 0 for n in numbers):
+        errors.append('Catalog must contain ordered positive example numbers exactly once')
+    if any(not row['id'].startswith(f"{row['number']:02d}-") for row in catalog):
+        errors.append('Example directory prefixes must match their stable catalog numbers')
     expected = {'00-documentazione'} | {row['id'] for row in catalog}
     actual = {p.name for p in EXAMPLES.iterdir() if p.is_dir()}
     if expected != actual:

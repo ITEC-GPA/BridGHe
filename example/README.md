@@ -54,7 +54,7 @@ Le analisi Straus richiedono la licenza API. Gli esempi 11–18 sono stati riall
 - [Ipotesi dei ponti 12–18](00-documentazione/ponti-12-18.md)
 - [Riepilogo della validazione delle fasi](00-documentazione/validazioni/numbered-phases.json)
 
-Verifica della struttura e dei collegamenti, senza Straus: `python tools/validate_example_layout.py`. Riapertura delle 20 definizioni correnti: `dotnet run --project tests/BridGHe.Smoke -c Release -- --example-layout`.
+Verifica della struttura e dei collegamenti, senza Straus: `python tools/validate_example_layout.py`. Riapertura di tutte le definizioni correnti del catalogo: `dotnet run --project tests/BridGHe.Smoke -c Release -- --example-layout`.
 
 I calcoli e i pacchetti nativi rimangono disponibili localmente ma sono esclusi da Git e dal pacchetto leggero del plugin. La generazione non deve creare una nuova cartella `examples` né distribuire calcoli di esempio in `artifacts`.
 
@@ -105,3 +105,7 @@ Tredici definizioni GHX con soluzione e riapertura verificate senza solutore. [P
 ## Report Word
 
 - [48 · Report delle verifiche da template](48-report-word/README.md): scelta dei capitoli con checklist, template personalizzabile, report esteso e sintetico, grafici e archivio dei risultati incorporato.
+
+## File personale completato
+
+- [99 · Ponte misto, fasi, verifiche e report](99-Ponte%20completo%20GPC/README.md): REV002 completa la travata originale; REV003 costruisce un ponte a due travi con soletta, due campate, traversi e appoggi. Entrambe includono ritiro calcolato, quattro analisi Straus, Excel delle combinazioni, verifiche di sezione/pioli/irrigiditori e report Word. Il file originale è conservato invariato; sono catalogate soltanto le due revisioni aggiornate.

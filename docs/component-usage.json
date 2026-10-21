@@ -1,6 +1,6 @@
 {
-  "scope": "Current GHX definitions explicitly listed in example/catalog.json and explicit type names in test sources. Archived and personal files are not inspected. Presence is not execution coverage.",
-  "exampleCount": 48,
+  "scope": "Current GHX definitions explicitly listed in example/catalog.json and explicit type names in test sources. Unlisted personal files and archives are not inspected. Presence is not execution coverage.",
+  "exampleCount": 50,
   "components": [
     {
       "name": "Align beam axes",
@@ -60,14 +60,17 @@
         "example/16-spina-1campata/16-spina-1campata.ghx",
         "example/17-spina-3campate/17-spina-3campate.ghx",
         "example/18-spina-curva-2campate/18-spina-curva-2campate.ghx",
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeDetailsModelExample.cs",
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
         "tests/BridGHe.Smoke/CompositeComponentTests.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
-        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
+        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs"
       ]
     },
     {
@@ -76,7 +79,9 @@
       "guid": "517beddc-0100-4a8f-ab0c-90e17fe2791f",
       "panel": "09-Loads",
       "examples": [
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs"
@@ -95,7 +100,10 @@
       "type": "BridGHe.Grasshopper.Components.BeamFilterComponent",
       "guid": "7bdf1a95-62ad-45a7-8768-e1fd7fdc69a8",
       "panel": "14-Tools",
-      "examples": [],
+      "examples": [
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
+      ],
       "namedInTestSources": []
     },
     {
@@ -119,7 +127,9 @@
         "example/16-spina-1campata/16-spina-1campata.ghx",
         "example/17-spina-3campate/17-spina-3campate.ghx",
         "example/18-spina-curva-2campate/18-spina-curva-2campate.ghx",
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
@@ -131,7 +141,10 @@
       "type": "BridGHe.Grasshopper.Components.Attributes.BeamOutputStationsComponent",
       "guid": "72860a35-4af0-41c0-9e26-79a3db608d5f",
       "panel": "07-Attributes",
-      "examples": [],
+      "examples": [
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
+      ],
       "namedInTestSources": []
     },
     {
@@ -140,7 +153,9 @@
       "guid": "6962f28d-7b4a-4e37-bf9b-ea7f1f197e04",
       "panel": "14-Tools",
       "examples": [
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs"
@@ -175,7 +190,9 @@
         "example/16-spina-1campata/16-spina-1campata.ghx",
         "example/17-spina-3campate/17-spina-3campate.ghx",
         "example/18-spina-curva-2campate/18-spina-curva-2campate.ghx",
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
@@ -188,10 +205,12 @@
       "guid": "4dd0c4e3-9c82-4284-b177-b3d8c25390bf",
       "panel": "05-Properties",
       "examples": [
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx"
       ],
       "namedInTestSources": [
-        "tests/BridGHe.Smoke/BridgeWorkflowExample.cs"
+        "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs"
       ]
     },
     {
@@ -263,7 +282,10 @@
       "type": "BridGHe.Grasshopper.Components.Preview.DisplayPanelComponent",
       "guid": "8453bdb0-af5a-46f7-8d93-d7c707d5a9d3",
       "panel": "15-Preview",
-      "examples": [],
+      "examples": [
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
+      ],
       "namedInTestSources": []
     },
     {
@@ -284,7 +306,9 @@
         "example/25-fasi-combinazioni/25-fasi-combinazioni.ghx",
         "example/46-combinazioni-excel/46-combinazioni-excel.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeCombinationExcelExample.cs",
@@ -293,7 +317,8 @@
         "tests/BridGHe.Smoke/BridgeUtilityExamples.cs",
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
-        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
+        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeRevision.cs"
       ]
     },
     {
@@ -316,7 +341,9 @@
       "examples": [
         "example/47-pioli-irrigidimenti-verifiche/47-pioli-irrigidimenti-verifiche.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeDetailsExample.cs",
@@ -354,10 +381,12 @@
       "panel": "06-Model",
       "examples": [
         "example/36-appoggi-orientati/36-appoggi-orientati.ghx",
-        "example/45-ponte-completo-fasi/45-ponte-completo-fasi.ghx"
+        "example/45-ponte-completo-fasi/45-ponte-completo-fasi.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx"
       ],
       "namedInTestSources": [
-        "tests/BridGHe.Smoke/BridgeDesignExamples.cs"
+        "tests/BridGHe.Smoke/BridgeDesignExamples.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs"
       ]
     },
     {
@@ -388,7 +417,9 @@
       "examples": [
         "example/26-riepilogo-verifiche-gpc/26-riepilogo-verifiche-gpc.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeCheckSummaryTests.cs",
@@ -402,10 +433,14 @@
       "guid": "2776b9ba-309e-4a25-91ad-4177c557bc13",
       "panel": "04-Definitions",
       "examples": [
-        "example/46-combinazioni-excel/46-combinazioni-excel.ghx"
+        "example/46-combinazioni-excel/46-combinazioni-excel.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
-        "tests/BridGHe.Smoke/BridgeCombinationExcelExample.cs"
+        "tests/BridGHe.Smoke/BridgeCombinationExcelExample.cs",
+        "tests/BridGHe.Smoke/ExampleLayoutTests.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeRevision.cs"
       ]
     },
     {
@@ -482,7 +517,9 @@
         "example/18-spina-curva-2campate/18-spina-curva-2campate.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-pioli-irrigidimenti-verifiche.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeCheckSummaryTests.cs",
@@ -490,7 +527,9 @@
         "tests/BridGHe.Smoke/BridgeDetailsModelExample.cs",
         "tests/BridGHe.Smoke/BridgeHistoryWorkflowTests.cs",
         "tests/BridGHe.Smoke/BridgeReportExample.cs",
-        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
+        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeRevision.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs"
       ]
     },
     {
@@ -508,6 +547,21 @@
       ]
     },
     {
+      "name": "Bridge Detail Stations",
+      "type": "BridGHe.Grasshopper.Components.Utilities.BridgeDetailStationsComponent",
+      "guid": "6dfef487-3bcf-456d-8de7-d28851f797f8",
+      "panel": "13-Results",
+      "examples": [
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
+      ],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/BridgeSupportReactionTests.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeRevision.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs"
+      ]
+    },
+    {
       "name": "Bridge Diaphragms",
       "type": "BridGHe.Grasshopper.Components.Geometry.BridgeDiaphragmsComponent",
       "guid": "7b70afbe-36b1-4880-9d3e-852628d0dbbc",
@@ -516,9 +570,11 @@
         "example/29-simple-bridge-pieno/29-simple-bridge-pieno.ghx",
         "example/30-simple-bridge-pieno-curvo/30-simple-bridge-pieno-curvo.ghx",
         "example/31-simple-bridge-reticolare/31-simple-bridge-reticolare.ghx",
-        "example/32-simple-bridge-reticolare-curvo/32-simple-bridge-reticolare-curvo.ghx"
+        "example/32-simple-bridge-reticolare-curvo/32-simple-bridge-reticolare-curvo.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx"
       ],
       "namedInTestSources": [
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs",
         "tests/BridGHe.Smoke/SimpleBridgeExamples.cs"
       ]
     },
@@ -552,10 +608,14 @@
       "guid": "77e9f533-e4e8-41de-baaf-6bfece84def9",
       "panel": "13-Results",
       "examples": [
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeRevision.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs",
         "tests/BridGHe.Smoke/PlotTests.cs"
       ]
     },
@@ -574,7 +634,9 @@
         "example/18-spina-curva-2campate/18-spina-curva-2campate.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-pioli-irrigidimenti-verifiche.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeDetailsExample.cs",
@@ -589,12 +651,16 @@
       "panel": "13-Results",
       "examples": [
         "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeDetailPlotTests.cs",
         "tests/BridGHe.Smoke/BridgeDetailsModelExample.cs",
-        "tests/BridGHe.Smoke/BridgeReportExample.cs"
+        "tests/BridGHe.Smoke/BridgeReportExample.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeRevision.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs"
       ]
     },
     {
@@ -622,10 +688,12 @@
         "example/39-soletta-getti/39-soletta-getti.ghx",
         "example/40-sequenza-costruttiva/40-sequenza-costruttiva.ghx",
         "example/44-mappa-verifiche/44-mappa-verifiche.ghx",
-        "example/45-ponte-completo-fasi/45-ponte-completo-fasi.ghx"
+        "example/45-ponte-completo-fasi/45-ponte-completo-fasi.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx"
       ],
       "namedInTestSources": [
-        "tests/BridGHe.Smoke/BridgeDesignExamples.cs"
+        "tests/BridGHe.Smoke/BridgeDesignExamples.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs"
       ]
     },
     {
@@ -635,7 +703,9 @@
       "panel": "14-Tools",
       "examples": [
         "example/23-audit-modello-fase/23-audit-modello-fase.ghx",
-        "example/45-ponte-completo-fasi/45-ponte-completo-fasi.ghx"
+        "example/45-ponte-completo-fasi/45-ponte-completo-fasi.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeDesignExamples.cs",
@@ -674,7 +744,9 @@
         "example/45-ponte-completo-fasi/45-ponte-completo-fasi.ghx",
         "example/46-combinazioni-excel/46-combinazioni-excel.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeCombinationExcelExample.cs",
@@ -705,7 +777,9 @@
       "guid": "f118c5fa-aae5-4638-b918-ed8f33b8f749",
       "panel": "06-Model",
       "examples": [
-        "example/25-fasi-combinazioni/25-fasi-combinazioni.ghx"
+        "example/25-fasi-combinazioni/25-fasi-combinazioni.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeUtilityExamples.cs"
@@ -721,11 +795,15 @@
         "example/20-visualizzatore-grafici/plot-preview.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-anteprima-grafici.ghx",
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeDetailsModelExample.cs",
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeRevision.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs",
         "tests/BridGHe.Smoke/PlotPreviewTests.cs"
       ]
     },
@@ -747,10 +825,14 @@
       "guid": "a9c85c3b-2ce0-4479-a147-cf13eb3f5d95",
       "panel": "13-Results",
       "examples": [
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
-        "tests/BridGHe.Smoke/BridgeReportExample.cs"
+        "tests/BridGHe.Smoke/BridgeReportExample.cs",
+        "tests/BridGHe.Smoke/ExampleLayoutTests.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeRevision.cs"
       ]
     },
     {
@@ -783,7 +865,9 @@
       "guid": "d507b37a-ca9f-4c25-890c-2cd354c22ebc",
       "panel": "13-Results",
       "examples": [
-        "example/26-riepilogo-verifiche-gpc/26-riepilogo-verifiche-gpc.ghx"
+        "example/26-riepilogo-verifiche-gpc/26-riepilogo-verifiche-gpc.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeCheckSummaryTests.cs",
@@ -842,10 +926,12 @@
       "guid": "2cd3635e-8a72-4f8c-bb2f-bf4b76ff136c",
       "panel": "06-Model",
       "examples": [
-        "example/34-sezioni-per-progressiva/34-sezioni-per-progressiva.ghx"
+        "example/34-sezioni-per-progressiva/34-sezioni-per-progressiva.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx"
       ],
       "namedInTestSources": [
-        "tests/BridGHe.Smoke/BridgeDesignExamples.cs"
+        "tests/BridGHe.Smoke/BridgeDesignExamples.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs"
       ]
     },
     {
@@ -866,10 +952,12 @@
         "example/40-sequenza-costruttiva/40-sequenza-costruttiva.ghx",
         "example/41-pioli-irrigidimenti/41-pioli-irrigidimenti.ghx",
         "example/44-mappa-verifiche/44-mappa-verifiche.ghx",
-        "example/45-ponte-completo-fasi/45-ponte-completo-fasi.ghx"
+        "example/45-ponte-completo-fasi/45-ponte-completo-fasi.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeDesignExamples.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs",
         "tests/BridGHe.Smoke/SimpleBridgeExamples.cs"
       ]
     },
@@ -909,7 +997,9 @@
         "example/25-fasi-combinazioni/25-fasi-combinazioni.ghx",
         "example/46-combinazioni-excel/46-combinazioni-excel.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeCombinationExcelExample.cs",
@@ -951,10 +1041,14 @@
       "guid": "8f53f404-9446-4b47-90e3-d514f9c547c9",
       "panel": "13-Results",
       "examples": [
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
-        "tests/BridGHe.Smoke/BridgeWorkflowExample.cs"
+        "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeRevision.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs"
       ]
     },
     {
@@ -964,12 +1058,16 @@
       "panel": "13-Results",
       "examples": [
         "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeDetailPlotTests.cs",
         "tests/BridGHe.Smoke/BridgeDetailsModelExample.cs",
-        "tests/BridGHe.Smoke/BridgeReportExample.cs"
+        "tests/BridGHe.Smoke/BridgeReportExample.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeRevision.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs"
       ]
     },
     {
@@ -980,7 +1078,9 @@
       "examples": [
         "example/47-pioli-irrigidimenti-verifiche/47-pioli-irrigidimenti-verifiche.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeDetailsExample.cs",
@@ -1005,7 +1105,9 @@
         "example/44-mappa-verifiche/44-mappa-verifiche.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-pioli-irrigidimenti-verifiche.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeDesignExamples.cs",
@@ -1031,7 +1133,9 @@
         "example/18-spina-curva-2campate/18-spina-curva-2campate.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-pioli-irrigidimenti-verifiche.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeDetailsExample.cs",
@@ -1046,12 +1150,16 @@
       "panel": "13-Results",
       "examples": [
         "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeDetailPlotTests.cs",
         "tests/BridGHe.Smoke/BridgeDetailsModelExample.cs",
-        "tests/BridGHe.Smoke/BridgeReportExample.cs"
+        "tests/BridGHe.Smoke/BridgeReportExample.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeRevision.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs"
       ]
     },
     {
@@ -1093,7 +1201,9 @@
         "example/25-fasi-combinazioni/25-fasi-combinazioni.ghx",
         "example/46-combinazioni-excel/46-combinazioni-excel.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeCombinationExcelExample.cs",
@@ -1102,6 +1212,7 @@
         "tests/BridGHe.Smoke/BridgeReportExample.cs",
         "tests/BridGHe.Smoke/BridgeUtilityExamples.cs",
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
+        "tests/BridGHe.Smoke/ExampleLayoutTests.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs",
         "tests/BridGHe.Smoke/NativeWorkflowStationTests.cs"
@@ -1124,7 +1235,9 @@
         "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
         "example/40-sequenza-costruttiva/40-sequenza-costruttiva.ghx",
         "example/44-mappa-verifiche/44-mappa-verifiche.ghx",
-        "example/45-ponte-completo-fasi/45-ponte-completo-fasi.ghx"
+        "example/45-ponte-completo-fasi/45-ponte-completo-fasi.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeDesignExamples.cs",
@@ -1147,12 +1260,15 @@
       "guid": "f87c7066-e509-4646-9ef5-79691675cbf4",
       "panel": "05-Properties",
       "examples": [
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeDetailsModelExample.cs",
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
-        "tests/BridGHe.Smoke/CompositePropertyTests.cs"
+        "tests/BridGHe.Smoke/CompositePropertyTests.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeRevision.cs"
       ]
     },
     {
@@ -1194,7 +1310,9 @@
         "example/15-curvo-2campate/15-curvo-2campate.ghx",
         "example/16-spina-1campata/16-spina-1campata.ghx",
         "example/17-spina-3campate/17-spina-3campate.ghx",
-        "example/18-spina-curva-2campate/18-spina-curva-2campate.ghx"
+        "example/18-spina-curva-2campate/18-spina-curva-2campate.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
@@ -1215,7 +1333,9 @@
       "guid": "861d0a91-6375-4cab-a106-0f6922dd827a",
       "panel": "09-Loads",
       "examples": [
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs"
@@ -1237,14 +1357,17 @@
         "example/18-spina-curva-2campate/18-spina-curva-2campate.ghx",
         "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeDetailsModelExample.cs",
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
         "tests/BridGHe.Smoke/CompositeComponentTests.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
-        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
+        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs"
       ]
     },
     {
@@ -1252,7 +1375,10 @@
       "type": "BridGHe.Grasshopper.Components.Materials.MaterialConcreteComponent",
       "guid": "c1dfa83d-e67e-4957-a375-da114a455158",
       "panel": "02-Materials",
-      "examples": [],
+      "examples": [
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
+      ],
       "namedInTestSources": []
     },
     {
@@ -1261,7 +1387,9 @@
       "guid": "1a539226-24ae-4d3f-8075-4f54cd1b9f68",
       "panel": "03-Sections",
       "examples": [
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
@@ -1273,8 +1401,14 @@
       "type": "BridGHe.Grasshopper.Components.BridgeChecks.CreepAndShrinkageConcreteComponent",
       "guid": "69fc44cb-48cd-4b15-af60-b025bd59bad5",
       "panel": "08-Bridge",
-      "examples": [],
-      "namedInTestSources": []
+      "examples": [
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
+      ],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/ConcreteShrinkageTests.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeRevision.cs"
+      ]
     },
     {
       "name": "Custom Material",
@@ -1308,7 +1442,9 @@
         "example/16-spina-1campata/16-spina-1campata.ghx",
         "example/17-spina-3campate/17-spina-3campate.ghx",
         "example/18-spina-curva-2campate/18-spina-curva-2campate.ghx",
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
@@ -1323,7 +1459,9 @@
       "guid": "f90a8ac7-df2d-43a3-8f50-219086386684",
       "panel": "15-Preview",
       "examples": [
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
@@ -1344,12 +1482,14 @@
         "example/16-spina-1campata/16-spina-1campata.ghx",
         "example/17-spina-3campate/17-spina-3campate.ghx",
         "example/18-spina-curva-2campate/18-spina-curva-2campate.ghx",
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
-        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
+        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs"
       ]
     },
     {
@@ -1362,7 +1502,8 @@
         "tests/BridGHe.Smoke/BridgeDetailsModelExample.cs",
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
-        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
+        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs"
       ]
     },
     {
@@ -1403,10 +1544,13 @@
       "guid": "7a5fa90e-77d2-4eb7-904e-320f03fd790c",
       "panel": "03-Sections",
       "examples": [
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
-        "tests/BridGHe.Smoke/BridgeWorkflowExample.cs"
+        "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs"
       ]
     },
     {
@@ -1414,7 +1558,10 @@
       "type": "BridGHe.Grasshopper.Components.Definitions.LoadCaseComponent",
       "guid": "977e4b26-8094-4d71-b165-f0f73b2282cd",
       "panel": "04-Definitions",
-      "examples": [],
+      "examples": [
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
+      ],
       "namedInTestSources": []
     },
     {
@@ -1422,7 +1569,10 @@
       "type": "BridGHe.Grasshopper.Components.Definitions.LoadCombinationComponent",
       "guid": "bc427929-4998-48b4-821b-16d92af627cf",
       "panel": "04-Definitions",
-      "examples": [],
+      "examples": [
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
+      ],
       "namedInTestSources": []
     },
     {
@@ -1515,6 +1665,7 @@
         "example/11-ponte-graticcio/11-ponte-graticcio.ghx"
       ],
       "namedInTestSources": [
+        "tests/BridGHe.Smoke/ExampleLayoutTests.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
         "tests/BridGHe.Smoke/GrasshopperExamples.cs"
       ]
@@ -1541,7 +1692,9 @@
         "example/16-spina-1campata/16-spina-1campata.ghx",
         "example/17-spina-3campate/17-spina-3campate.ghx",
         "example/18-spina-curva-2campate/18-spina-curva-2campate.ghx",
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
@@ -1706,7 +1859,9 @@
       "guid": "404d47db-4efd-412c-aec9-9889a7e9e72d",
       "panel": "15-Preview",
       "examples": [
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
@@ -1727,7 +1882,9 @@
         "example/16-spina-1campata/16-spina-1campata.ghx",
         "example/17-spina-3campate/17-spina-3campate.ghx",
         "example/18-spina-curva-2campate/18-spina-curva-2campate.ghx",
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
@@ -1748,8 +1905,12 @@
       "type": "BridGHe.Grasshopper.Components.Sections.SectionGeometricPropertyComponent",
       "guid": "b6603b65-7e0b-4662-919d-213d12874c4a",
       "panel": "03-Sections",
-      "examples": [],
-      "namedInTestSources": []
+      "examples": [
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx"
+      ],
+      "namedInTestSources": [
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs"
+      ]
     },
     {
       "name": "Section H Beam Property",
@@ -1776,11 +1937,13 @@
         "example/41-pioli-irrigidimenti/41-pioli-irrigidimenti.ghx",
         "example/44-mappa-verifiche/44-mappa-verifiche.ghx",
         "example/45-ponte-completo-fasi/45-ponte-completo-fasi.ghx",
-        "example/47-pioli-irrigidimenti-verifiche/47-pioli-irrigidimenti-verifiche.ghx"
+        "example/47-pioli-irrigidimenti-verifiche/47-pioli-irrigidimenti-verifiche.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeDesignExamples.cs",
         "tests/BridGHe.Smoke/BridgeDetailsExample.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs",
         "tests/BridGHe.Smoke/SimpleBridgeExamples.cs"
       ]
     },
@@ -1826,7 +1989,10 @@
       "type": "BridGHe.Grasshopper.Components.Materials.MaterialSteelComponent",
       "guid": "5b123f35-7685-415b-9028-5b0fd4d67626",
       "panel": "02-Materials",
-      "examples": [],
+      "examples": [
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
+      ],
       "namedInTestSources": []
     },
     {
@@ -1972,14 +2138,17 @@
         "example/16-spina-1campata/16-spina-1campata.ghx",
         "example/17-spina-3campate/17-spina-3campate.ghx",
         "example/18-spina-curva-2campate/18-spina-curva-2campate.ghx",
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs",
         "tests/BridGHe.Smoke/GrasshopperExamples.cs",
-        "tests/BridGHe.Smoke/NativeWorkflowStationTests.cs"
+        "tests/BridGHe.Smoke/NativeWorkflowStationTests.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeRevision.cs"
       ]
     },
     {
@@ -2084,7 +2253,9 @@
         "example/16-spina-1campata/16-spina-1campata.ghx",
         "example/17-spina-3campate/17-spina-3campate.ghx",
         "example/18-spina-curva-2campate/18-spina-curva-2campate.ghx",
-        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx"
+        "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
@@ -2108,7 +2279,9 @@
         "example/18-spina-curva-2campate/18-spina-curva-2campate.ghx",
         "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeDetailsModelExample.cs",
@@ -2117,6 +2290,8 @@
         "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs",
         "tests/BridGHe.Smoke/NativeWorkflowStationTests.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeRevision.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs",
         "tests/BridGHe.Smoke/SlabReinforcementTests.cs"
       ]
     },
@@ -2136,13 +2311,16 @@
         "example/18-spina-curva-2campate/18-spina-curva-2campate.ghx",
         "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
         "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
-        "example/48-report-word/48-report-word.ghx"
+        "example/48-report-word/48-report-word.ghx",
+        "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"
       ],
       "namedInTestSources": [
         "tests/BridGHe.Smoke/BridgeDetailsModelExample.cs",
         "tests/BridGHe.Smoke/BridgeWorkflowExample.cs",
         "tests/BridGHe.Smoke/GrasshopperBridgeExample.cs",
-        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs"
+        "tests/BridGHe.Smoke/GrasshopperBridgeSuite.cs",
+        "tests/BridGHe.Smoke/PersonalBridgeTwoGirders.cs"
       ]
     },
     {

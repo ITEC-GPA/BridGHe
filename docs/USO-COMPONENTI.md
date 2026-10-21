@@ -1,6 +1,6 @@
 # Uso dei componenti BridGHe
 
-Audit di **174 componenti** nei **48 GHX correnti** elencati in `example/catalog.json`, comprese le definizioni aggiuntive. Copie archiviate e cartelle personali sono escluse. Assenza dagli esempi non significa componente inutile o non utilizzato nei file dell'utente.
+Audit di **175 componenti** nei **50 GHX correnti** elencati in `example/catalog.json`, comprese le definizioni aggiuntive. Copie archiviate e file personali non catalogati sono esclusi. Assenza dagli esempi non significa componente inutile o non utilizzato nei file dell'utente.
 
 I riferimenti per nome nei sorgenti dei test indicano un uso esplicito; non sono una misura di copertura. Il caricamento e le icone di tutti i componenti sono controllati separatamente dagli smoke test.
 
@@ -13,16 +13,13 @@ I riferimenti per nome nei sorgenti dei test indicano un uso esplicito; non sono
 | Aluminium | 02-Materials | No |
 | Angle Section | 03-Sections | No |
 | Beam Distributed Moment | 09-Loads | No |
-| Beam Filter | 14-Tools | No |
 | Beam Geometric Property | 05-Properties | No |
-| Beam Output Stations | 07-Attributes | No |
 | Beam Point Load | 09-Loads | No |
 | Beam Point Moment | 09-Loads | No |
 | Beam Releases | 07-Attributes | No |
 | Beam Support | 07-Attributes | Sì |
 | Beam Taper | 07-Attributes | No |
 | Brep Section | 03-Sections | No |
-| BridGHe Panel | 15-Preview | No |
 | Bridge Box Options | 08-Bridge | No |
 | Bridge Connection Fatigue | 08-Bridge | No |
 | Bridge Shear Plot | 13-Results | No |
@@ -33,16 +30,12 @@ I riferimenti per nome nei sorgenti dei test indicano un uso esplicito; non sono
 | Composite Geometric Property | 05-Properties | No |
 | Composite Section Linear Tension Analysis | 10-Checks | No |
 | Composite Section Self Tension | 10-Checks | No |
-| Concrete | 02-Materials | No |
-| Creep And Shrinkage Concrete | 08-Bridge | No |
 | Custom Material | 02-Materials | No |
 | Elements Filter | 14-Tools | Sì |
 | Generic Section | 03-Sections | No |
 | Group | 04-Definitions | No |
 | Hollow Circle | 03-Sections | No |
 | Hollow Rect | 03-Sections | No |
-| Load Case | 04-Definitions | No |
-| Load Combination | 04-Definitions | No |
 | Load Patch Type | 07-Attributes | No |
 | Merge Geometry | 14-Tools | No |
 | Merge Model | 06-Model | No |
@@ -66,12 +59,10 @@ I riferimenti per nome nei sorgenti dei test indicano un uso esplicito; non sono
 | Plate Support | 07-Attributes | No |
 | Plate non structural Mass | 09-Loads | No |
 | Section Force | 08-Bridge | No |
-| Section Geometric Property | 03-Sections | No |
 | Section H Beam Property | 03-Sections | No |
 | Solid Circle | 03-Sections | No |
 | Solid Rect | 03-Sections | No |
 | Staged Construction  | 04-Definitions | No |
-| Steel | 02-Materials | No |
 | Stiffness | 07-Attributes | No |
 | Straus Angle Section | 03-Sections | No |
 | Straus BGL Angle Section | 03-Sections | No |
@@ -115,85 +106,95 @@ I riferimenti per nome nei sorgenti dei test indicano un uso esplicito; non sono
 | Componente | Esempi |
 |---|---|
 | Attach Moving Paths | 1 |
-| Beam | 9 |
-| Beam Distributed Load | 1 |
-| Beam Gradient Load | 8 |
-| Beam Override | 1 |
-| Beam PreLoad | 8 |
-| Beam Property | 1 |
+| Beam | 11 |
+| Beam Distributed Load | 3 |
+| Beam Filter | 2 |
+| Beam Gradient Load | 10 |
+| Beam Output Stations | 2 |
+| Beam Override | 3 |
+| Beam PreLoad | 10 |
+| Beam Property | 2 |
 | Beam Results | 17 |
-| Bridge Action | 13 |
+| BridGHe Panel | 2 |
+| Bridge Action | 15 |
 | Bridge Action Combinations | 1 |
-| Bridge Analysis Options | 3 |
+| Bridge Analysis Options | 5 |
 | Bridge Beam Envelope | 1 |
 | Bridge Bearing Envelope | 1 |
-| Bridge Bearings | 2 |
+| Bridge Bearings | 3 |
 | Bridge Check Map | 1 |
-| Bridge Check Summary | 3 |
-| Bridge Combination Excel | 1 |
+| Bridge Check Summary | 5 |
+| Bridge Combination Excel | 3 |
 | Bridge Connections | 2 |
 | Bridge Construction Sequence | 2 |
 | Bridge Deck Mesh | 2 |
 | Bridge Deflection & Camber | 1 |
-| Bridge Detail Check | 10 |
+| Bridge Detail Check | 12 |
 | Bridge Detail Layout | 2 |
-| Bridge Diaphragms | 4 |
+| Bridge Detail Stations | 2 |
+| Bridge Diaphragms | 5 |
 | Bridge Displacement Envelope | 1 |
 | Bridge Fatigue History | 1 |
-| Bridge Force Plot | 1 |
-| Bridge Intermediate Stiffener | 10 |
-| Bridge Intermediate Stiffener Plot | 2 |
+| Bridge Force Plot | 3 |
+| Bridge Intermediate Stiffener | 12 |
+| Bridge Intermediate Stiffener Plot | 4 |
 | Bridge Longitudinal Bracing | 2 |
-| Bridge Member Assignment | 7 |
-| Bridge Model Audit | 2 |
+| Bridge Member Assignment | 8 |
+| Bridge Model Audit | 4 |
 | Bridge Moving Lanes | 1 |
-| Bridge Phase | 15 |
+| Bridge Phase | 17 |
 | Bridge Phase Model | 1 |
-| Bridge Phase Table | 1 |
-| Bridge Plot Preview | 5 |
+| Bridge Phase Table | 3 |
+| Bridge Plot Preview | 7 |
 | Bridge Rebar Row | 1 |
-| Bridge Report | 1 |
+| Bridge Report | 3 |
 | Bridge Result Cases | 1 |
 | Bridge Result Comparison | 1 |
-| Bridge Result Labels | 1 |
+| Bridge Result Labels | 3 |
 | Bridge Section Check | 3 |
 | Bridge Section Geometry | 3 |
 | Bridge Section Increment | 1 |
-| Bridge Section Schedule | 1 |
-| Bridge Segments | 13 |
-| Bridge Shrinkage Action | 13 |
+| Bridge Section Schedule | 2 |
+| Bridge Segments | 14 |
+| Bridge Shrinkage Action | 15 |
 | Bridge Shrinkage Increments | 1 |
 | Bridge Span Advisor | 1 |
-| Bridge Stress Plot | 1 |
-| Bridge Stud Plot | 2 |
-| Bridge Stud Results | 3 |
-| Bridge Studs | 12 |
-| Bridge Support Stiffener | 10 |
-| Bridge Support Stiffener Plot | 2 |
+| Bridge Stress Plot | 3 |
+| Bridge Stud Plot | 4 |
+| Bridge Stud Results | 5 |
+| Bridge Studs | 14 |
+| Bridge Support Stiffener | 12 |
+| Bridge Support Stiffener Plot | 4 |
 | Bridge Verification Results | 1 |
-| Build BridGHe Model | 13 |
-| Build Model | 12 |
-| Composite Beam Property | 1 |
-| Composite Section Linear Tension Results | 8 |
-| Composite Shrinkage Actions | 1 |
-| Composite beam | 11 |
-| Concrete Slab Section | 1 |
-| Decompose Model | 19 |
-| Display Settings | 1 |
-| Element Id | 9 |
-| I Section | 1 |
+| Build BridGHe Model | 15 |
+| Build Model | 14 |
+| Composite Beam Property | 3 |
+| Composite Section Linear Tension Results | 10 |
+| Composite Shrinkage Actions | 3 |
+| Composite beam | 13 |
+| Concrete | 2 |
+| Concrete Slab Section | 3 |
+| Creep And Shrinkage Concrete | 2 |
+| Decompose Model | 21 |
+| Display Settings | 3 |
+| Element Id | 10 |
+| I Section | 3 |
+| Load Case | 2 |
+| Load Combination | 2 |
 | Moving Static Analysis | 2 |
-| Node | 9 |
+| Node | 11 |
 | Node Load | 8 |
 | Node Results | 18 |
 | Plate Results | 1 |
-| Preview BridGHe Model | 1 |
-| Restraints | 9 |
-| Simple Bridge — Solid Diaphragms | 12 |
+| Preview BridGHe Model | 3 |
+| Restraints | 11 |
+| Section Geometric Property | 1 |
+| Simple Bridge — Solid Diaphragms | 13 |
 | Simple Bridge — Truss Diaphragms | 2 |
-| Straus R3 Analysis | 18 |
-| Super Element | 9 |
-| Super Element Check | 11 |
-| Super Element Filter | 11 |
+| Steel | 2 |
+| Straus R3 Analysis | 20 |
+| Super Element | 11 |
+| Super Element Check | 13 |
+| Super Element Filter | 13 |
 
 Dettagli riproducibili, GUID e percorsi: [component-usage.json](component-usage.json). Rigenerazione: `py tools/audit_component_usage.py`.

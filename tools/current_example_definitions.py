@@ -1,4 +1,4 @@
-"""Resolve current, explicitly catalogued GHX files (never personal or archived copies)."""
+"""Resolve current, explicitly catalogued GHX files (never unlisted or archived copies)."""
 from pathlib import Path
 
 

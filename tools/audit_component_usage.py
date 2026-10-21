@@ -27,11 +27,11 @@ for item in items:
         'namedInTestSources': [p.relative_to(root).as_posix() for p, text in tests if key in text],
     })
 rows.sort(key=lambda r: r['name'])
-report = {'scope': 'Current GHX definitions explicitly listed in example/catalog.json and explicit type names in test sources. Archived and personal files are not inspected. Presence is not execution coverage.',
+report = {'scope': 'Current GHX definitions explicitly listed in example/catalog.json and explicit type names in test sources. Unlisted personal files and archives are not inspected. Presence is not execution coverage.',
           'exampleCount': len(examples), 'components': rows}
 (root / 'docs/component-usage.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
 lines = ['# Uso dei componenti BridGHe', '',
-         f"Audit di **{len(rows)} componenti** nei **{len(examples)} GHX correnti** elencati in `example/catalog.json`, comprese le definizioni aggiuntive. Copie archiviate e cartelle personali sono escluse. Assenza dagli esempi non significa componente inutile o non utilizzato nei file dell'utente.", '',
+         f"Audit di **{len(rows)} componenti** nei **{len(examples)} GHX correnti** elencati in `example/catalog.json`, comprese le definizioni aggiuntive. Copie archiviate e file personali non catalogati sono esclusi. Assenza dagli esempi non significa componente inutile o non utilizzato nei file dell'utente.", '',
          'I riferimenti per nome nei sorgenti dei test indicano un uso esplicito; non sono una misura di copertura. Il caricamento e le icone di tutti i componenti sono controllati separatamente dagli smoke test.', '',
          '## Componenti assenti dagli esempi GHX', '',
          '| Componente | Gruppo nella tab BridGHe | Riferimenti espliciti nei test |', '|---|---|---|']
