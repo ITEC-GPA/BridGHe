@@ -91,6 +91,21 @@ Per **Bridge Section Check** e risultati senza riferimenti FEM, l'etichetta cont
 
 `Labels` rimane disponibile per nomi personalizzati: se usato, richiede un testo non vuoto per risultato, con lo stesso ordine e gli stessi rami. La generazione delle etichette non modifica sollecitazioni, fasi, rapporti, stati o note di verifica.
 
+Per scegliere un formato senza scrivere testi, usare **Bridge Result Labels**, in **BridGHe → 13-Results**:
+
+1. Collegare gli stessi risultati a `Results` del riepilogo e a `Results` di Bridge Result Labels.
+2. Collegare una normale **Value List** a `Format`: le quattro voci vengono compilate automaticamente. La scelta è conservata nei ricalcoli e al salvataggio.
+3. Collegare l'uscita `Labels` del nuovo componente all'ingresso `Labels` del riepilogo.
+
+| Formato | Esempio |
+|---|---|
+| Completa (default) | `G2 / Beam 36 / s=1250 mm / DEMO` |
+| Trave e stazione | `G2 / Beam 36 / s=1250 mm` |
+| Combinazione | `DEMO` |
+| Fase | Nome della fase del risultato |
+
+Il componente conserva numero, ordine e rami dei risultati. Quando mancano i riferimenti FEM, segnala il campo non disponibile e usa la posizione nell'albero; il formato Fase usa sempre il nome della fase. I formati abbreviati possono avere nomi ripetuti: per identificare una sezione e combinazione insieme usare Completa. La Value List è un menu a scelta singola; non serve una checklist. L'[esempio 26](../example/26-riepilogo-verifiche-gpc/README.md) contiene il collegamento completo; l'[esempio 47 integrato](../example/47-pioli-irrigidimenti-verifiche/README.md) mostra il riepilogo automatico con Labels vuoto.
+
 ## Dettagli di ponti misti
 
 I quattro nuovi componenti `Bridge Studs`, `Bridge Intermediate Stiffener`, `Bridge Support Stiffener` e `Bridge Detail Check` si trovano in **BridGHe-Checks / Bridge details**. Le definizioni espongono le opzioni scalari native gPC; l'ultimo componente riceve un risultato BridgeChecks e ricalcola la stessa storia con i dettagli assegnati. Unità degli irrigiditori: **kN**, mm; pioli: mm, MPa. I risultati elencano esplicitamente le unità. Un rapporto NaN indica una verifica non espressa da gPC, non un esito favorevole.

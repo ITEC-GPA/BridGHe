@@ -15,17 +15,7 @@ internal static class BridgeCheckSummaryTests
     {
         var plugin = BridgeMergeTests.Initialize();
         GH_Component Create(string name) => (GH_Component)Activator.CreateInstance(plugin.GetTypes().Single(t => t.Name == name));
-        var analysis = HBridgeSection.Calculate(new HBridgeInput
-        {
-            Geometry = BridgeDetailLayoutTests.Section(),
-            Materials = BridgeGpc.Materials(new MaterialModel("C30") { Name = "C30", SpecificCompressiveStrength = 30 },
-                new MaterialModel("S355") { Name = "S355", Modulus = 210000, MinimumYieldStress = 355, MinimumTensileStress = 510 }, null),
-            TopRebars = new BridgeRebarRow { Enabled = false }, BottomRebars = new BridgeRebarRow { Enabled = false },
-            Options = new BridgeAnalysisOptions { Standard = BridgeStandard.Eurocode4, LimitState = BridgeLimitState.Ultimate },
-            Phases = new[] { new BridgePhase { Name = "Steel", Kind = BridgePhaseKind.SteelOnly, MomentKNm = 100, ShearKN = 50 },
-                new BridgePhase { Name = "Composite", MomentKNm = 200, ShearKN = 100 } }
-        });
-        var plain = new BridgeStressResult(analysis, analysis.Stages.Count - 1);
+        var plain = SampleResult();
         var source = new BridgeResultSource("36", 1250.25, "C1", "G2");
         var a = plain.WithSource(source);
         var b = plain.WithSource(source with { Combination = "C2" });
@@ -111,6 +101,20 @@ internal static class BridgeCheckSummaryTests
             Require(expectError ? errors.Any(e => e.Contains("Labels")) && summary.Params.Output[0].VolatileDataCount == 0 : errors.Count == 0,
                 "Summary error handling: " + string.Join("; ", errors));
         }
+    }
+    internal static BridgeStressResult SampleResult()
+    {
+        var analysis = HBridgeSection.Calculate(new HBridgeInput
+        {
+            Geometry = BridgeDetailLayoutTests.Section(),
+            Materials = BridgeGpc.Materials(new MaterialModel("C30") { Name = "C30", SpecificCompressiveStrength = 30 },
+                new MaterialModel("S355") { Name = "S355", Modulus = 210000, MinimumYieldStress = 355, MinimumTensileStress = 510 }, null),
+            TopRebars = new BridgeRebarRow { Enabled = false }, BottomRebars = new BridgeRebarRow { Enabled = false },
+            Options = new BridgeAnalysisOptions { Standard = BridgeStandard.Eurocode4, LimitState = BridgeLimitState.Ultimate },
+            Phases = new[] { new BridgePhase { Name = "Steel", Kind = BridgePhaseKind.SteelOnly, MomentKNm = 100, ShearKN = 50 },
+                new BridgePhase { Name = "Composite", MomentKNm = 200, ShearKN = 100 } }
+        });
+        return new BridgeStressResult(analysis, analysis.Stages.Count - 1);
     }
     private static void Require(bool condition, string message)
     { if (!condition) throw new InvalidOperationException("CHECK SUMMARY: " + message); }

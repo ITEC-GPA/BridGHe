@@ -237,6 +237,7 @@ BridgeShrinkageIncrementsComponent|strain|clock|check
 BridgeResultCasesComponent|case|data|result
 BridgeResultComparisonComponent|table|measure|result
 BridgeCheckSummaryComponent|bridge|data|result
+BridgeResultLabelsComponent|case|edit|result
 BridgeMovingLanesComponent|route|add|moving
 AlignBeamAxesComponent|beam|axes|model
 AlignPlateAxesComponent|plate|axes|model

@@ -184,6 +184,15 @@
       "badge": "data"
     },
     {
+      "key": "BridgeResultLabelsComponent",
+      "type": "BridGHe.Grasshopper.Components.Utilities.BridgeResultLabelsComponent",
+      "guid": "d507b37a-ca9f-4c25-890c-2cd354c22ebc",
+      "name": "Bridge Result Labels",
+      "family": "result",
+      "glyph": "case",
+      "badge": "edit"
+    },
+    {
       "key": "BridgePhaseTableComponent",
       "type": "BridGHe.Grasshopper.Components.Utilities.BridgePhaseTableComponent",
       "guid": "f118c5fa-aae5-4638-b918-ed8f33b8f749",

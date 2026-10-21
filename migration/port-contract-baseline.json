@@ -793,6 +793,12 @@
         "6ed9466e-9e5a-4059-a570-ae1461537a36"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/Utilities/BridgeResultLabelsComponent.cs": {
+      "ports": "618e352a1993a7b899a8b9c6f3842f56320fba29b71c22494a124a9eab7d3960",
+      "guids": [
+        "d507b37a-ca9f-4c25-890c-2cd354c22ebc"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/Utilities/BridgeResultToolComponents.cs": {
       "ports": "e79196a9aec97824ca0906056542ac5364cad135b8f4d6ae1ea473da67810267",
       "guids": [

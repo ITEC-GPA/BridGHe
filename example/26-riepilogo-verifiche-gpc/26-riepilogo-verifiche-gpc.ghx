@@ -94,9 +94,9 @@
         </chunk>
         <chunk name="DefinitionObjects">
           <items count="1">
-            <item name="ObjectCount" type_name="gh_int32" type_code="3">7</item>
+            <item name="ObjectCount" type_name="gh_int32" type_code="3">9</item>
           </items>
-          <chunks count="7">
+          <chunks count="9">
             <chunk name="Object" index="0">
               <items count="2">
                 <item name="GUID" type_name="gh_guid" type_code="9">59e0b89a-e487-49f8-bab8-b5bab16be14c</item>
@@ -108,7 +108,7 @@
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
                     <item name="InstanceGuid" type_name="gh_guid" type_code="9">0db9d159-4af6-4c8e-b1c3-e1f549490867</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
-                    <item name="NickName" type_name="gh_string" type_code="10"></item>
+                    <item name="NickName" type_name="gh_string" type_code="10" />
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                     <item name="ScrollRatio" type_name="gh_double" type_code="6">0</item>
                     <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
@@ -1782,13 +1782,13 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>0</X>
-                          <Y>0</Y>
+                          <X>1320</X>
+                          <Y>100</Y>
                           <W>150</W>
                           <H>20</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                          <X>950</X>
+                          <X>1320</X>
                           <Y>100</Y>
                         </item>
                       </items>
@@ -1818,14 +1818,15 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </chunks>
                     </chunk>
                     <chunk name="param_input" index="1">
-                      <items count="7">
+                      <items count="8">
                         <item name="Access" type_name="gh_int32" type_code="3">1</item>
                         <item name="Description" type_name="gh_string" type_code="10">Optional custom label per result. Leave empty for automatic beam/local station/combination labels. Results without FEM provenance use their tree position and phase.</item>
                         <item name="InstanceGuid" type_name="gh_guid" type_code="9">5afa9277-1bc6-47e6-8222-07c837af809e</item>
                         <item name="Name" type_name="gh_string" type_code="10">Labels</item>
                         <item name="NickName" type_name="gh_string" type_code="10">ID</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">true</item>
-                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">c72dec93-017c-4a24-9c25-f7a286d7458c</item>
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
@@ -2083,7 +2084,7 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
                     <item name="InstanceGuid" type_name="gh_guid" type_code="9">f9dc9daf-95a3-4795-bb8b-4650c39e7dcd</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
-                    <item name="NickName" type_name="gh_string" type_code="10"></item>
+                    <item name="NickName" type_name="gh_string" type_code="10" />
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                     <item name="ScrollRatio" type_name="gh_double" type_code="6">0</item>
                     <item name="Source" index="0" type_name="gh_guid" type_code="9">dbf5e37f-ac0e-4bf2-8868-f70b9439ae71</item>
@@ -2094,8 +2095,8 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                     <chunk name="Attributes">
                       <items count="4">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>1330</X>
-                          <Y>70</Y>
+                          <X>1700</X>
+                          <Y>70.0</Y>
                           <W>230</W>
                           <H>230</H>
                         </item>
@@ -2132,7 +2133,7 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
                     <item name="InstanceGuid" type_name="gh_guid" type_code="9">9c82893b-3527-45e9-9fda-420039628ba3</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
-                    <item name="NickName" type_name="gh_string" type_code="10"></item>
+                    <item name="NickName" type_name="gh_string" type_code="10" />
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                     <item name="ScrollRatio" type_name="gh_double" type_code="6">0</item>
                     <item name="Source" index="0" type_name="gh_guid" type_code="9">36dd5943-3954-4ea3-8d78-5a088e1b48d7</item>
@@ -2143,8 +2144,8 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                     <chunk name="Attributes">
                       <items count="4">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>1330</X>
-                          <Y>400</Y>
+                          <X>1700</X>
+                          <Y>400.0</Y>
                           <W>230</W>
                           <H>230</H>
                         </item>
@@ -2164,6 +2165,175 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                         <item name="SpecialCodes" type_name="gh_bool" type_code="1">false</item>
                         <item name="Stream" type_name="gh_bool" type_code="1">false</item>
                         <item name="Wrap" type_name="gh_bool" type_code="1">true</item>
+                      </items>
+                    </chunk>
+                  </chunks>
+                </chunk>
+              </chunks>
+            </chunk>
+            <chunk name="Object" index="7">
+              <items count="3">
+                <item name="GUID" type_name="gh_guid" type_code="9">d507b37a-ca9f-4c25-890c-2cd354c22ebc</item>
+                <item name="Lib" type_name="gh_guid" type_code="9">db9c536d-770b-4586-8c8c-1c7a4df232b4</item>
+                <item name="Name" type_name="gh_string" type_code="10">Bridge Result Labels</item>
+              </items>
+              <chunks count="1">
+                <chunk name="Container">
+                  <items count="4">
+                    <item name="Description" type_name="gh_string" type_code="10">Create one label per bridge result, preserving order and tree branches. Connect a Value List to Format to populate its choices automatically.</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">c52a8b08-1429-4960-807f-8375f12a5124</item>
+                    <item name="Name" type_name="gh_string" type_code="10">Bridge Result Labels</item>
+                    <item name="NickName" type_name="gh_string" type_code="10">ResultLabels</item>
+                  </items>
+                  <chunks count="4">
+                    <chunk name="Attributes">
+                      <items count="2">
+                        <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                          <X>950</X>
+                          <Y>100</Y>
+                          <W>150</W>
+                          <H>20</H>
+                        </item>
+                        <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                          <X>950</X>
+                          <Y>100</Y>
+                        </item>
+                      </items>
+                    </chunk>
+                    <chunk name="param_input" index="0">
+                      <items count="8">
+                        <item name="Access" type_name="gh_int32" type_code="3">1</item>
+                        <item name="Description" type_name="gh_string" type_code="10">The same BridgeStressResult tree connected to Bridge Check Summary.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">d5728240-a9b9-4a89-8cf2-ad9fd0099743</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Results</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">R</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">54930b69-0d43-48dd-b2ef-58e91adc90cb</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_input" index="1">
+                      <items count="8">
+                        <item name="Access" type_name="gh_int32" type_code="3">0</item>
+                        <item name="Description" type_name="gh_string" type_code="10">0 Completa; 1 Trave e stazione; 2 Combinazione; 3 Fase. Connect a Value List for automatic choices. One format for the entire tree.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">04b6dc38-bea5-4d19-b5ab-d04fa110f3ab</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Format</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">F</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">true</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">95677837-f64b-4e86-8bd7-0398daaeeb2e</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="0">
+                      <items count="7">
+                        <item name="Access" type_name="gh_int32" type_code="3">1</item>
+                        <item name="Description" type_name="gh_string" type_code="10">One label per input result, with identical order and branches. Connect to Labels of Bridge Check Summary. Station s is measured from the FEM beam start in mm.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">c72dec93-017c-4a24-9c25-f7a286d7458c</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Labels</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">L</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                  </chunks>
+                </chunk>
+              </chunks>
+            </chunk>
+            <chunk name="Object" index="8">
+              <items count="2">
+                <item name="GUID" type_name="gh_guid" type_code="9">00027467-0d24-4fa7-b178-8dc0ac5f42ec</item>
+                <item name="Name" type_name="gh_string" type_code="10">Value List</item>
+              </items>
+              <chunks count="1">
+                <chunk name="Container">
+                  <items count="9">
+                    <item name="Description" type_name="gh_string" type_code="10">Provides a list of preset values to choose from</item>
+                    <item name="Hidden" type_name="gh_bool" type_code="1">false</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">95677837-f64b-4e86-8bd7-0398daaeeb2e</item>
+                    <item name="ListCount" type_name="gh_int32" type_code="3">4</item>
+                    <item name="ListMode" type_name="gh_int32" type_code="3">1</item>
+                    <item name="Name" type_name="gh_string" type_code="10">Value List</item>
+                    <item name="NickName" type_name="gh_string" type_code="10">Formato etichette</item>
+                    <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                    <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                  </items>
+                  <chunks count="5">
+                    <chunk name="ListItem" index="0">
+                      <items count="3">
+                        <item name="Expression" type_name="gh_string" type_code="10">0</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Completa</item>
+                        <item name="Selected" type_name="gh_bool" type_code="1">true</item>
+                      </items>
+                    </chunk>
+                    <chunk name="ListItem" index="1">
+                      <items count="3">
+                        <item name="Expression" type_name="gh_string" type_code="10">1</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Trave e stazione</item>
+                        <item name="Selected" type_name="gh_bool" type_code="1">false</item>
+                      </items>
+                    </chunk>
+                    <chunk name="ListItem" index="2">
+                      <items count="3">
+                        <item name="Expression" type_name="gh_string" type_code="10">2</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Combinazione</item>
+                        <item name="Selected" type_name="gh_bool" type_code="1">false</item>
+                      </items>
+                    </chunk>
+                    <chunk name="ListItem" index="3">
+                      <items count="3">
+                        <item name="Expression" type_name="gh_string" type_code="10">3</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Fase</item>
+                        <item name="Selected" type_name="gh_bool" type_code="1">false</item>
+                      </items>
+                    </chunk>
+                    <chunk name="Attributes">
+                      <items count="2">
+                        <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                          <X>650</X>
+                          <Y>460</Y>
+                          <W>296</W>
+                          <H>110</H>
+                        </item>
+                        <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                          <X>650</X>
+                          <Y>460</Y>
+                        </item>
                       </items>
                     </chunk>
                   </chunks>

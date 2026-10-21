@@ -106,8 +106,8 @@ public sealed class BridgeCheckSummaryComponent : BridgeUtilityComponent
         if (results.Count == 0 || results.Any(r => r?.Value is not BridgeStressResult)) throw new ArgumentException("Supply BridgeStressResult objects from a bridge checker.");
         da.GetDataList(1, labels);
         if (labels.Count == 0)
-            labels.AddRange(results.Select((r, i) => { var result = (BridgeStressResult)r.Value;
-                return result.Source?.Label ?? $"Result {da.ParameterTargetPath(0)}[{i}] / {result.Stage.Name}"; }));
+            labels.AddRange(results.Select((r, i) => BridgeResultLabels.Format((BridgeStressResult)r.Value,
+                BridgeResultLabelFormat.Complete, $"{da.ParameterTargetPath(0)}[{i}]")));
         else if (results.Count != labels.Count || labels.Any(string.IsNullOrWhiteSpace))
             throw new ArgumentException("Leave Labels empty for automatic labels, or supply one non-empty custom label per result in the same branch.");
         var rows = results.SelectMany((r, i) => { var result = (BridgeStressResult)r.Value; return BridgeGpc.Checks(result.Stage).Select(c => (Label: labels[i], Phase: result.Stage.Name, Check: c)); }).ToArray();

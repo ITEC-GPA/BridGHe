@@ -1,9 +1,9 @@
 {
   "status": "pending-runtime-validation",
-  "reason": "Automatic labels update; compilation and Rhino tests deferred at user request.",
+  "reason": "Result Labels and automatic format Value List added; compilation and Rhino tests deferred at user request.",
   "staticXmlValidated": true,
   "labelInputEmpty": true,
-  "objects": 7,
+  "objects": 9,
   "previousRevisionValidation": {
     "example": "26-riepilogo-verifiche-gpc",
     "passed": true,
@@ -16,5 +16,6 @@
       "BridgeCheckSummaryComponent"
     ],
     "solverInvoked": false
-  }
+  },
+  "formatValueListPrepared": true
 }

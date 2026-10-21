@@ -76,7 +76,7 @@ internal static class BridgeUtilityExamples
         var reportFolder = writeExamples ? ExamplePaths.Validation : System.IO.Path.GetFullPath("artifacts/utility-component-tests");
         Directory.CreateDirectory(reportFolder);
         File.WriteAllText(System.IO.Path.Combine(reportFolder, "utilities.json"), JsonSerializer.Serialize(reports, new JsonSerializerOptions { WriteIndented = true }));
-        Console.WriteLine("UTILITY EXAMPLES PASS: 6 GHX definitions solved and reopened; 12 new component types exercised; no Straus solver invoked.");
+        Console.WriteLine("UTILITY EXAMPLES PASS: 6 GHX definitions solved and reopened; 13 utility component types exercised; no Straus solver invoked.");
     }
     private static void AuditPhase()
     {
@@ -136,8 +136,11 @@ internal static class BridgeUtilityExamples
             new BridgePhase { Name = "Long", MomentKNm = 200, ShearKN = 100, Phi = 2 }, new BridgePhase { Name = "Instant", MomentKNm = 400, ShearKN = -50 },
             new BridgePhase { Name = "Shrinkage", Kind = BridgePhaseKind.Shrinkage, ShrinkageMicrostrain = -200, Phi = 2 } };
         Generic(checker, 4, phases.Select(p => Goo("BridgeDetailGoo", p)).ToArray());
-        var summary = Add(doc, "BridgeCheckSummaryComponent", 950, 100); Wire(checker, 0, summary, 0);
-        Panel(doc, summary, 9, 1330, 70); Panel(doc, summary, 4, 1330, 400);
+        var labeler = Add(doc, "BridgeResultLabelsComponent", 950, 100); Wire(checker, 0, labeler, 0);
+        var formats = new GH_ValueList { NickName = "Formato etichette" }; formats.CreateAttributes(); formats.Attributes.Pivot = new PointF(650, 460); doc.AddObject(formats, false);
+        labeler.Params.Input[1].AddSource(formats);
+        var summary = Add(doc, "BridgeCheckSummaryComponent", 1320, 100); Wire(checker, 0, summary, 0); Wire(labeler, 0, summary, 1);
+        Panel(doc, summary, 9, 1700, 70); Panel(doc, summary, 4, 1700, 400);
         Save(doc, "26-riepilogo-verifiche-gpc", d =>
         {
             var results = Output(Find(d, "BridgeSectionCheckComponent"), 0).Cast<BridgeStressResult>().ToArray();
@@ -146,6 +149,8 @@ internal static class BridgeUtilityExamples
             BridgeUtilityTests.Assert(expected.Length > 0 && actual.SequenceEqual(expected), "GPC summary changed or dropped ratios.");
             var labels = Output(Find(d, "BridgeCheckSummaryComponent"), 0).Cast<string>().ToArray();
             BridgeUtilityTests.Assert(labels.Length == actual.Length && results.All(r => labels.Any(l => l.Contains(r.Stage.Name))), "Standalone phase labels were not generated.");
+            BridgeUtilityTests.Assert(Output(Find(d, "BridgeResultLabelsComponent"), 0).Length == results.Length
+                && d.Objects.OfType<GH_ValueList>().Single().ListItems.Count == 4, "Label component or automatic format choices not restored.");
         });
     }
     private static void Comparison()
