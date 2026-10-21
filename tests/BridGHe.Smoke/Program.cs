@@ -43,7 +43,7 @@ internal static class Program
         if(args.Contains("--capture-bridge-baseline")) { BridgeNumericalBaseline.Capture();return 0; }
         if(args.Contains("--benchmark-plots")) { PlotTests.Run();PlotTests.Benchmark();return 0; }
         if(args.Contains("--moving-load-tests")) return MovingLoadBenchmarks.Run(args.Contains("--native"),args.SkipWhile(a=>a!="--moving-load-tests").Skip(1).FirstOrDefault(a=>!a.StartsWith("--"))??"all");
-        if(args.Contains("--example-layout")) return ExampleLayoutTests.Run(args.SkipWhile(a=>a!="--example-layout").Skip(1).FirstOrDefault(a=>!a.StartsWith("--")));
+        if(args.Contains("--example-layout")) return ExampleLayoutTests.Run(args.SkipWhile(a=>a!="--example-layout").Skip(1).FirstOrDefault(a=>!a.StartsWith("--")), args.Contains("--refresh-contracts"), args.Contains("--solve-portable"));
         if(args.Contains("--utility-examples")) { BridgeUtilityTests.Run(); BridgeUtilityExamples.Run(true); return 0; }
         if(args.Contains("--combination-excel-example")) { BridgeCombinationExcelExample.Run(true); return 0; }
         if(args.Contains("--bridge-workflow")) return BridgeWorkflowExample.Run(args.Contains("--native"));

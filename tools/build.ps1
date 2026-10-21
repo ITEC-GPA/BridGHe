@@ -23,14 +23,22 @@ try {
         else { & dotnet run --project tests/BridGHe.Smoke -c Release | Tee-Object -Variable smokeOutput }
         if ($LASTEXITCODE -ne 0) { throw 'Smoke test non riusciti.' }
         if (-not ($smokeOutput -match '^PASS TOTAL \d+$')) { throw 'Smoke test interrotti prima del riepilogo finale, anche se il processo ha restituito exit code 0.' }
-        # Rhino.Inside drawing integrations run in independent hosts, outside an active RhinoCore.
+        # Drawing integrations run in independent Rhino.Inside processes.
         foreach ($group in @('bridge-plots','plot-preview')) {
             & dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --regression $group --preview-capture | Tee-Object -Variable drawingOutput
             if ($LASTEXITCODE -ne 0 -or -not ($drawingOutput -match '^REGRESSION TOTAL 1$')) {
                 throw "Test grafico incompleto o fallito: $group"
             }
         }
-        Write-Host 'SMOKE SUITE COMPLETE: core and both drawing integrations passed.'
+        foreach ($replay in @($false, $true)) {
+            $exampleArgs = @('--example-layout')
+            if ($replay) { $exampleArgs += '--solve-portable' }
+            & dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- @exampleArgs | Tee-Object -Variable exampleOutput
+            if ($LASTEXITCODE -ne 0 -or -not ($exampleOutput -match '^EXAMPLE REOPEN PASS:')) {
+                throw "Test dei GHX distribuiti incompleto o fallito: replay=$replay"
+            }
+        }
+        Write-Host 'SMOKE SUITE COMPLETE: core, drawing integrations, current GHX contracts and saved portable examples passed.'
     }
     if ($Examples) {
         if ($Configuration -ne 'Release') { throw 'Gli esempi richiedono Release.' }
