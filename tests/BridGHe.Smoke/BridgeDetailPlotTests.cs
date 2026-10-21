@@ -16,7 +16,7 @@ using Rhino.Geometry;
 internal static class BridgeDetailPlotTests
 {
     private static int assertions;
-    private static void Require(bool ok,string message){if(!ok)throw new Exception("DETAIL PLOT: "+message);assertions++;}
+    private static void Require(bool ok,string message){if(!ok){Console.Error.WriteLine("DETAIL PLOT FAILED: "+message);throw new Exception("DETAIL PLOT: "+message);}assertions++;}
     internal static BridgeStressResult Result()
     {
         var input=BridgeCheckSummaryTests.SampleResult().Analysis.Input with {
@@ -73,10 +73,12 @@ internal static class BridgeDetailPlotTests
         foreach(double station in new[]{0.0,1000,2000,3000})beam.Results.Add(new BeamForceResultModel(load,station,0,""));
         var modelGoo=(IGH_Goo)Activator.CreateInstance(plugin.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model",true));modelGoo.GetType().GetProperty("Value").SetValue(modelGoo,model);
         var beamGoo=(IGH_Goo)Activator.CreateInstance(plugin.GetType("BridGHe.Grasshopper.DataTypes.GH_CompositeBeam",true),new object[]{beam,null});
-        Directory.CreateDirectory("artifacts/detail-plots");
+        string folder = Path.GetFullPath(Path.Combine("artifacts/detail-plots", Guid.NewGuid().ToString("N")));
+        Directory.CreateDirectory(folder);
         XNamespace ns="http://www.w3.org/2000/svg";
         foreach(var (type,role) in new[]{("BridgeIntermediateStiffenerPlotComponent",StiffenerPlotRole.Intermediate),("BridgeSupportStiffenerPlotComponent",StiffenerPlotRole.Support),("BridgeStudPlotComponent",StiffenerPlotRole.Intermediate)})
         {
+            Console.WriteLine("DETAIL PLOT: " + type);
             var component=(GH_Component)Activator.CreateInstance(plugin.GetTypes().Single(t=>t.Name==type));component.CreateAttributes();doc.AddObject(component,false);
             ((Param_GenericObject)component.Params.Input[0]).PersistentData.Append(modelGoo);
             ((Param_GenericObject)component.Params.Input[1]).PersistentData.Append(beamGoo);
@@ -133,10 +135,14 @@ internal static class BridgeDetailPlotTests
                 }
                 quantity.RemoveAllSources();doc.RemoveObject(list,false);Solve();
             }
-            var file=(Param_String)component.Params.Input[6];file.PersistentData.Clear();file.SetPersistentData(Path.GetFullPath("artifacts/detail-plots/"+type+".png"));Solve();
+            Console.WriteLine("DETAIL PLOT: exporting PNG " + type);
+            var file=(Param_String)component.Params.Input[6];file.PersistentData.Clear();file.SetPersistentData(Path.Combine(folder,type+".png"));Solve();
             using(var png=System.Drawing.Image.FromFile((string)component.Params.Output[1].VolatileData.AllData(true).Single().ScriptVariable()))
                 Require(png.Width==1500&&png.Height>680,"Native PNG export failed.");
-            File.WriteAllText("artifacts/detail-plots/"+type+".svg",Svg().ToString(SaveOptions.DisableFormatting));
+            var before = File.ReadAllBytes(Path.Combine(folder,type+".png"));
+            var title = (Param_String)component.Params.Input[7]; title.PersistentData.Clear(); title.SetPersistentData("Updated chart"); Solve();
+            Require(!before.SequenceEqual(File.ReadAllBytes(Path.Combine(folder,type+".png"))), "PNG overwrite retained the old chart.");
+            File.WriteAllText(Path.Combine(folder,type+".svg"),Svg().ToString(SaveOptions.DisableFormatting));
             doc.RemoveObject(component,false);
 
             System.Collections.Generic.IEnumerable<XElement> TitledPaths(XDocument x)=>x.Descendants(ns+"path").Where(p=>p.Element(ns+"title")!=null);

@@ -21,7 +21,7 @@ internal static class BridgeCombinationExcelExample
     private static void RunCore(bool generate)
     {
         const string id = "46-combinazioni-excel";
-        string folder = generate ? ExamplePaths.Case(id) : Path.GetFullPath("artifacts/combination-excel-component");
+        string folder = generate ? ExamplePaths.Case(id) : Path.GetFullPath(Path.Combine("artifacts/combination-excel-component", Guid.NewGuid().ToString("N")));
         Directory.CreateDirectory(folder);
         string path = Path.Combine(folder, id + ".ghx"), excel = Path.Combine(folder, "Combinations.xlsx"), template = Path.Combine(folder, "Template.xlsx");
         var plugin = BridgeMergeTests.Initialize();

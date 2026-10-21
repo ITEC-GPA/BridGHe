@@ -13,7 +13,7 @@ internal static class BridgeReportExample
     internal static void Run(bool generate=false)
     {
         var plugin=BridgeMergeTests.Initialize();
-        string folder=generate?ExamplePaths.Case("48-report-word"):Path.GetFullPath("artifacts/report-component");Directory.CreateDirectory(folder);
+        string folder=generate?ExamplePaths.Case("48-report-word"):Path.GetFullPath(Path.Combine("artifacts/report-component",Guid.NewGuid().ToString("N")));Directory.CreateDirectory(folder);
         if(!generate)File.Copy(BridgeReportTests.Template,Path.Combine(folder,"Template_BridGHe.docx"),true);
         string definition=Path.Combine(folder,"48-report-word.ghx"),output=Path.Combine(folder,"Report_esempio.docx");
         using var doc=GrasshopperBridgeExample.Read(Path.Combine(ExamplePaths.Case("47-pioli-irrigidimenti-verifiche"),"47-integrazione-modello.ghx"));doc.FilePath=definition;
@@ -35,6 +35,9 @@ internal static class BridgeReportExample
         GrasshopperBridgeExample.Write(doc,definition);
         var overwrite=(Param_Boolean)report.Params.Input[10];overwrite.PersistentData.Clear();overwrite.SetPersistentData(true);Run(report);Solve();
         Require(File.Exists(output)&&report.Params.Output[3].VolatileDataCount==1,"DOCX export missing.");
+        var firstId=report.Params.Output[3].VolatileData.AllData(true).Single().ScriptVariable();
+        Run(report);Solve();
+        Require(!Equals(firstId,report.Params.Output[3].VolatileData.AllData(true).Single().ScriptVariable()),"Explicit overwrite did not create a new report identity.");
         var hash=BridGHe.Common.Reports.BridgeReportData.Hash(File.ReadAllBytes(output));
         using var reopened=GrasshopperBridgeExample.Read(definition);reopened.FilePath=definition;reopened.Enabled=true;reopened.NewSolution(false,GH_SolutionMode.Silent);
         Require(hash==BridGHe.Common.Reports.BridgeReportData.Hash(File.ReadAllBytes(output)),"Reopening GH rewrote the document.");
