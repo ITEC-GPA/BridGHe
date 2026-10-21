@@ -800,6 +800,12 @@
         "6ed9466e-9e5a-4059-a570-ae1461537a36"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/Utilities/BridgeReportComponent.cs": {
+      "ports": "7b46d0ed08daea5b36d7268b3f8bf72bb652fa4be0e09df7964517eb39f62207",
+      "guids": [
+        "a9c85c3b-2ce0-4479-a147-cf13eb3f5d95"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/Utilities/BridgeResultLabelsComponent.cs": {
       "ports": "618e352a1993a7b899a8b9c6f3842f56320fba29b71c22494a124a9eab7d3960",
       "guids": [

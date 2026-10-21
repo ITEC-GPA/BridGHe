@@ -30,6 +30,8 @@ internal static class RegressionTests
             ["bridge-check-map"] = BridgeCheckMapTests.Run,
             ["bridge-check-summary"] = BridgeCheckSummaryTests.Run,
             ["bridge-result-labels"] = BridgeResultLabelsTests.Run,
+            ["bridge-report"] = BridgeReportTests.Run,
+            ["bridge-report-component"] = () => BridgeReportExample.Run(),
             ["bridge-design-audit"] = BridgeDesignAuditTests.Run,
             ["bridge-design-components"] = () => BridgeDesignExamples.Run(),
             ["simple-bridge-components"] = () => SimpleBridgeExamples.Run(),

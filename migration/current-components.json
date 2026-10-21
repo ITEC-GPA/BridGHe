@@ -1372,6 +1372,140 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeReportComponent",
+    "guid": "a9c85c3b-2ce0-4479-a147-cf13eb3f5d95",
+    "kind": "component",
+    "name": "Bridge Report",
+    "nickname": "Report",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Generate a Word report from native GPC results and a DOCX/DOTX template. Choose chapters with an automatic checklist Value List. Press Generate; never writes automatically on reopening.",
+    "inputs": [
+      {
+        "name": "Results",
+        "nickname": "R",
+        "description": "BridgeStressResult tree from Section, Super Element or Detail Check. One document for the entire tree; original paths and native provenance are retained.",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Template",
+        "nickname": "T",
+        "description": "Word .docx/.dotx with {{BG.Report}}, or {{BG.Summary}} and individual chapter markers on separate body paragraphs. Relative to the saved GH definition.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "File",
+        "nickname": "F",
+        "description": "Destination .docx. Relative to the saved GH definition. The template cannot be overwritten.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Topics",
+        "nickname": "Ch",
+        "description": "0 Model; 1 Sections; 2 Phases; 3 Checks; 4 Critical; 5 Plots; 6 full Appendix. Connect a Value List to populate a checklist. Disconnected uses 0..5; an attached empty checklist keeps only Summary.",
+        "access": "list",
+        "optional": true,
+        "type": "Integer"
+      },
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "Optional assembled N-mm BridGHe model for workflow/case coefficients and identity checks. Does not recalculate or certify source revision.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Title",
+        "nickname": "Title",
+        "description": "Report title.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Project",
+        "nickname": "Prj",
+        "description": "Project or job name.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Author",
+        "nickname": "By",
+        "description": "Author printed in the template; no signature is generated.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Revision",
+        "nickname": "Rev",
+        "description": "Document revision.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "SVG",
+        "nickname": "SVG",
+        "description": "Optional SVGs from Bridge Plot components, in document order. Verify their correspondence to Results; SVG does not carry authenticated result provenance.",
+        "access": "tree",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Overwrite",
+        "nickname": "O",
+        "description": "Explicitly replace the destination DOCX. Default false; close it in Word first.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "File",
+        "nickname": "F",
+        "description": "Written DOCX; populated only after a successful Generate.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Summary",
+        "nickname": "S",
+        "description": "Export counts and selected chapters.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Warnings",
+        "nickname": "W",
+        "description": "Missing provenance and coverage limitations, also written in the report.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Report ID",
+        "nickname": "ID",
+        "description": "Export identity included in the DOCX and embedded numerical archive.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Utilities.BridgeResultLabelsComponent",
     "guid": "d507b37a-ca9f-4c25-890c-2cd354c22ebc",
     "kind": "component",

@@ -18,11 +18,22 @@ internal static class Program
         try
         {
             RhinoInside.Resolver.Initialize(@"C:\Program Files\Rhino 8\System");
+            if(args.Contains("--regression") && args.SkipWhile(a=>a!="--regression").Skip(1).FirstOrDefault()=="bridge-report")
+                return RunBridgeReport();
             return Run(args);
         }
         catch(Exception ex) { Console.Error.WriteLine(ex);return 1; }
     }
     private static void Assert(bool test,string name) { if(!test)throw new Exception("FAIL: "+name);checks++;Console.WriteLine("PASS: "+name); }
+    // Run managed Word packaging tests without initializing the native Rhino host.
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static int RunBridgeReport()
+    {
+        Console.WriteLine("RUN REGRESSION: bridge-report");
+        BridgeReportTests.Run();
+        Console.WriteLine("PASS REGRESSION: bridge-report");
+        return 0;
+    }
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static int Run(string[] args)
     {
@@ -44,6 +55,7 @@ internal static class Program
         if(args.Contains("--bridge-details-example")) { BridgeDetailsExample.Run(true); return 0; }
         if(args.Contains("--bridge-details-model-example")) { BridgeDetailsModelExample.Generate(); return 0; }
         if(args.Contains("--bridge-details-plot-viewer")) { BridgeDetailsModelExample.GeneratePlotViewer(); return 0; }
+        if(args.Contains("--bridge-report-example")) { BridgeReportExample.Run(true); return 0; }
         if(args.Contains("--bridge-bearings-native")) { BridgeBearingTests.Run(); BridgeBearingTests.Native(); return 0; }
         if(args.Contains("--bridge-connections-native")) { BridgeConnectionTests.Run(); BridgeConnectionTests.Native(); return 0; }
         if(args.Contains("--beam-support")) { NativeBeamSupportTests.Run();return 0; }

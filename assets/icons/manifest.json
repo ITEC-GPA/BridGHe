@@ -166,6 +166,15 @@
       "badge": "stages"
     },
     {
+      "key": "BridgeReportComponent",
+      "type": "BridGHe.Grasshopper.Components.Utilities.BridgeReportComponent",
+      "guid": "a9c85c3b-2ce0-4479-a147-cf13eb3f5d95",
+      "name": "Bridge Report",
+      "family": "result",
+      "glyph": "table",
+      "badge": "export"
+    },
+    {
       "key": "BridgeResultLabelsComponent",
       "type": "BridGHe.Grasshopper.Components.Utilities.BridgeResultLabelsComponent",
       "guid": "d507b37a-ca9f-4c25-890c-2cd354c22ebc",

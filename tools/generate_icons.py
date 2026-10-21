@@ -176,6 +176,7 @@ def badge(kind, accent):
     if not kind: return ''
     marks = {
         'add': path('M19 16V22M16 19H22','white',1.5),
+        'export': path('M16 16V22H22V20M18 19L22 15M19 15H22V18','white',1.3),
         'check': path('M16 19L18 21L22 17','white',1.6),
         'arrow': arrow(16,19,22,19,'white'),
         'play': path('M17 16L22 19L17 22Z','white',0,'white'),
@@ -237,6 +238,7 @@ BridgeShrinkageIncrementsComponent|strain|clock|check
 BridgeResultCasesComponent|case|data|result
 BridgeResultComparisonComponent|table|measure|result
 BridgeCheckSummaryComponent|bridge|data|result
+BridgeReportComponent|table|export|result
 BridgeResultLabelsComponent|case|edit|result
 BridgeMovingLanesComponent|route|add|moving
 AlignBeamAxesComponent|beam|axes|model

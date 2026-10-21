@@ -1,6 +1,6 @@
 # Inventario dei componenti 0.1.0
 
-173 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
+174 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
 
 ## BridGHe / 01-Parameters
 
@@ -219,6 +219,7 @@
 | Bridge Fatigue History | component | Values; Model; Beam ID; Station; Ordered Cases; Force Component; Response Factors; Response Units; Exponent; Reference Cycles | History; Sources; Ranges; Means; Cycle Counts; Equivalent Range; Units; Information |
 | Bridge Force Plot | component | BridGHe Model; Super-Element Beam; Results; Quantity; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running | SVG; File; Minimum; Maximum |
 | Bridge Intermediate Stiffener Plot | component | BridGHe Model; Super-Element Beam; Results; Check; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running; Display; Stations | SVG; File; Minimum; Maximum; Governing checks; Unavailable checks |
+| Bridge Report | component | Results; Template; File; Topics; Model; Title; Project; Author; Revision; SVG; Overwrite | File; Summary; Warnings; Report ID |
 | Bridge Result Cases | component | Model | Cases; Case by step; Step; Step type; Result type; Count; Units |
 | Bridge Result Comparison | component | Reference keys; Reference values; Candidate keys; Candidate values; Absolute tolerance; Relative tolerance | All within tolerance; Key; Difference; Relative difference; Within tolerance |
 | Bridge Result Labels | component | Results; Format | Labels |
