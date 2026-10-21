@@ -84,7 +84,7 @@ internal static class RegressionTests
         int count = 0;
         foreach (var test in tests.Where(t => selection == "all" || t.Key == selection))
         {
-            if (selection == "all" && test.Key is "plot-preview" or "bridge-plots") { Console.WriteLine("SEPARATE HOST: " + test.Key + " (executed by tools/build.ps1 -Smoke)"); continue; }
+            if (selection == "all" && test.Key is "plot-preview" or "bridge-plots" or "bridge-report-component") { Console.WriteLine("SEPARATE HOST: " + test.Key + " (executed by tools/build.ps1 -Smoke)"); continue; }
             Console.WriteLine("RUN REGRESSION: " + test.Key);
             try { test.Value(); }
             catch (Exception error)

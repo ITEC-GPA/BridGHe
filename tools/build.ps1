@@ -23,8 +23,8 @@ try {
         else { & dotnet run --project tests/BridGHe.Smoke -c Release | Tee-Object -Variable smokeOutput }
         if ($LASTEXITCODE -ne 0) { throw 'Smoke test non riusciti.' }
         if (-not ($smokeOutput -match '^PASS TOTAL \d+$')) { throw 'Smoke test interrotti prima del riepilogo finale, anche se il processo ha restituito exit code 0.' }
-        # Drawing integrations run in independent Rhino.Inside processes.
-        foreach ($group in @('bridge-plots','plot-preview')) {
+        # Drawing integrations (including SVG pictures in Word) run in independent Rhino.Inside processes.
+        foreach ($group in @('bridge-plots','plot-preview','bridge-report-component')) {
             & dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --regression $group --preview-capture | Tee-Object -Variable drawingOutput
             if ($LASTEXITCODE -ne 0 -or -not ($drawingOutput -match '^REGRESSION TOTAL 1$')) {
                 throw "Test grafico incompleto o fallito: $group"
