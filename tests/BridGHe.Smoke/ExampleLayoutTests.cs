@@ -23,8 +23,9 @@ internal static class ExampleLayoutTests
             null, new[] { typeof(Assembly), typeof(string) }, null) ?? throw new NotSupportedException("Rhino loader changed.");
         // Older bridge graphs contain the standard List Item component. Without MathComponents,
         // GH opens a modal missing-component dialog inside the hidden Rhino host.
-        var math = Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Components\MathComponents.gha");
-        foreach (var a in new[] { typeof(GH_Document).Assembly, math, assembly }) parse.Invoke(server, new object[] { a, a.Location });
+        var libraries = new[] { "MathComponents", "CurveComponents", "SurfaceComponents", "VectorComponents" }
+            .Select(name=>Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Components\"+name+".gha"));
+        foreach (var a in new[] { typeof(GH_Document).Assembly, assembly }.Concat(libraries)) parse.Invoke(server, new object[] { a, a.Location });
         var registered = server.ObjectProxies.Select(p => p.Guid).ToHashSet();
         using var catalog = JsonDocument.Parse(File.ReadAllText(Path.Combine(ExamplePaths.Root, "catalog.json")));
         int documents = 0, objects = 0, wires = 0;

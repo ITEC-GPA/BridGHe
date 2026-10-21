@@ -39,6 +39,7 @@ internal static class Program
     {
         // --pure does not start Rhino, useful for CI and unlicensed environments.
         using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},WindowStyle.Hidden);
+        if(args.Contains("--example99")) return PersonalBridgeExample.Run(args.SkipWhile(a => a != "--example99").Skip(1).FirstOrDefault() ?? "inspect");
         if(args.Contains("--combination-excel-read")) { BridgeCombinationExcelTests.ReadExternal(args.SkipWhile(a => a != "--combination-excel-read").Skip(1).First()); return 0; }
         if(args.Contains("--capture-bridge-baseline")) { BridgeNumericalBaseline.Capture();return 0; }
         if(args.Contains("--benchmark-plots")) { PlotTests.Run();PlotTests.Benchmark();return 0; }
