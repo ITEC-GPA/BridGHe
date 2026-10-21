@@ -672,6 +672,8 @@ def make_document():
     h("Esempio 46")
     p("Aprire **example/46-combinazioni-excel/46-combinazioni-excel.ghx**. Le tre fasi contengono G1, G2, Q e RITIRO, mentre tutti i casi sorgente si chiamano G. Combinations.xlsx contiene due righe DEMO; Template.xlsx è vuoto. Un coefficiente RITIRO moltiplica insieme il contributo FEM e la deformazione primaria. I campioni su due aste sono sintetici e non richiedono Straus.")
     p("Non vengono assegnati coefficienti normativi. I nomi come SLU_01 sono etichette e non selezionano lo stato limite: Super Element Check usa attualmente Rare. Il generatore automatico delle combinazioni è previsto come attività successiva.")
+    from guide_bridge_details import append_detail_chapters
+    append_detail_chapters(page, h, p, table, steps, code)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     doc.save(OUTPUT)
     print(OUTPUT)

@@ -412,5 +412,14 @@
     "readme": "46-combinazioni-excel/README.md",
     "definition": "46-combinazioni-excel/46-combinazioni-excel.ghx",
     "calculations": "46-combinazioni-excel/calcoli"
+  },
+  {
+    "number": 47,
+    "id": "47-pioli-irrigidimenti-verifiche",
+    "title": "Pioli e irrigidimenti dal dettaglio al modello",
+    "group": "Verifiche locali e dettagli",
+    "readme": "47-pioli-irrigidimenti-verifiche/README.md",
+    "definition": "47-pioli-irrigidimenti-verifiche/47-pioli-irrigidimenti-verifiche.ghx",
+    "calculations": "47-pioli-irrigidimenti-verifiche/calcoli"
   }
 ]

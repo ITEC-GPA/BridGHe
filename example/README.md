@@ -97,3 +97,7 @@ Tredici definizioni GHX con soluzione e riapertura verificate senza solutore. [P
 ## Excel delle combinazioni
 
 - [46 — Template Excel da Models e Phases](46-combinazioni-excel/README.md): crea le intestazioni dagli Action ID, rilegge i coefficienti e alimenta Build BridGHe Model. Include template vuoto e workbook dimostrativo con ritiro FEM + strain.
+
+## Pioli e irrigidimenti
+
+- [47 · Dal dettaglio al modello calcolato](47-pioli-irrigidimenti-verifiche/README.md): due GHX spiegati, layout su un ponte a tre campate, confronti di passo/spessore/reazione e collegamento dei dettagli ai risultati del superelemento.
