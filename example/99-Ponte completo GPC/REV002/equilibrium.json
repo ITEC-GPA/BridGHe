@@ -1,0 +1,26 @@
+[
+  {
+    "Name": "G1_GETTO",
+    "expectedVerticalN": 240000,
+    "actualVerticalN": 240000,
+    "residualN": 0
+  },
+  {
+    "Name": "G2_PERMANENTI",
+    "expectedVerticalN": 312000,
+    "actualVerticalN": 311999.9999999999,
+    "residualN": -1.1641532182693481E-10
+  },
+  {
+    "Name": "Q_TRAFFICO",
+    "expectedVerticalN": 240000,
+    "actualVerticalN": 240000,
+    "residualN": 0
+  },
+  {
+    "Name": "RITIRO_FEM",
+    "expectedVerticalN": 0,
+    "actualVerticalN": 2.9103830456733704E-11,
+    "residualN": 2.9103830456733704E-11
+  }
+]

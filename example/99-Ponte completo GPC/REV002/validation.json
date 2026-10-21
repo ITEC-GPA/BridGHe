@@ -1,0 +1,21 @@
+{
+  "revision": "REV002",
+  "originalSha256": "29AF1A69C7BE92DB3BFCD10C7C477995D0513D00F7B80275FBC69A690E94B04F",
+  "Name": "BridGHe phase model",
+  "beams": 12,
+  "nodes": 13,
+  "sectionResults": 384,
+  "supportResultsForFirstGirder": 24,
+  "intermediateResultsForFirstGirder": 120,
+  "shrinkage": -0.00019893901674492397,
+  "allAnalysesExecuted": true,
+  "warnings": [
+    "Straus R3 Analysis: The beam property H1800 600x30 800x40 anima15 \u002B soletta 2500x300OnlySteel already exists",
+    "Straus R3 Analysis: The beam property H1800 600x30 800x40 anima15 \u002B soletta 2500x300_N_infinite already exists",
+    "Straus R3 Analysis: The beam property H1800 600x30 800x40 anima15 \u002B soletta 2500x300_N0_istant already exists",
+    "Straus R3 Analysis: The beam property H1800 600x30 800x40 anima15 \u002B soletta 2500x300_N_shrinkage already exists",
+    "Super Element Check: Tau b non ha un equivalente verificato nell\u0027API gPC attuale: output NaN.",
+    "Build BridGHe Model: Action WIND is not active in any combination.",
+    "Bridge Detail Stations: Uplift exists: compression is zero there; bearing anchorage requires a separate check. See Signed reaction."
+  ]
+}
