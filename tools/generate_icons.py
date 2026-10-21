@@ -232,6 +232,7 @@ BridgeBearingEnvelopeComponent|support|data|result
 BridgeDisplacementEnvelopeComponent|axes|measure|result
 BridgePhaseTableComponent|stages|data|tool
 BridgeActionCombinationsComponent|case|stages|load
+BridgeCombinationExcelComponent|table|arrow|load
 BridgeShrinkageIncrementsComponent|strain|clock|check
 BridgeResultCasesComponent|case|data|result
 BridgeResultComparisonComponent|table|measure|result

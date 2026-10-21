@@ -13771,5 +13771,99 @@
         "type": "Generic Data"
       }
     ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeCombinationExcelComponent",
+    "guid": "2776b9ba-309e-4a25-91ad-4177c557bc13",
+    "kind": "component",
+    "name": "Bridge Combination Excel",
+    "nickname": "ComboExcel",
+    "category": "BridGHe",
+    "subcategory": "04-Definitions",
+    "description": "Create an Excel template from Models and numbered Phases, or read completed coefficients into Build BridGHe Model. Press Run to access the file.",
+    "inputs": [
+      {
+        "name": "Models",
+        "nickname": "M",
+        "description": "Reference Models in N-mm-MPa, as for Build BridGHe Model. Each action carries its own source model and case.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Phases",
+        "nickname": "P",
+        "description": "Numbered Bridge Phase objects. Their exact Action IDs become the Excel column headers.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "File",
+        "nickname": "F",
+        "description": ".xlsx file. Relative paths are resolved beside the saved GH definition; use an absolute path for an unsaved definition.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Mode",
+        "nickname": "Mode",
+        "description": "0 Create template; 1 Read completed workbook. Press Run after selecting the mode. No automatic file access on reopening GH.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Rows",
+        "nickname": "Rows",
+        "description": "Blank combination rows in a new template, 1..10000. No factors are assigned automatically.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Overwrite",
+        "nickname": "O",
+        "description": "Allow Create to replace an existing file. Default false protects user coefficients. Close Excel before replacing a workbook.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "File",
+        "nickname": "F",
+        "description": "Resolved Excel path.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Table",
+        "nickname": "T",
+        "description": "Read mode: header and combination rows, ready for Build BridGHe Model > Combinations. Empty after Create until you fill and read the workbook.",
+        "access": "tree",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Action IDs",
+        "nickname": "ID",
+        "description": "Exact action identifiers ordered by phase number. No prefixes to add.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Summary",
+        "nickname": "S",
+        "description": "Action/source mapping and file-operation diagnostics.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
   }
 ]

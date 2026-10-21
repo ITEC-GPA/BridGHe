@@ -28,11 +28,13 @@ internal static class Program
     {
         // --pure does not start Rhino, useful for CI and unlicensed environments.
         using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},WindowStyle.Hidden);
+        if(args.Contains("--combination-excel-read")) { BridgeCombinationExcelTests.ReadExternal(args.SkipWhile(a => a != "--combination-excel-read").Skip(1).First()); return 0; }
         if(args.Contains("--capture-bridge-baseline")) { BridgeNumericalBaseline.Capture();return 0; }
         if(args.Contains("--benchmark-plots")) { PlotTests.Run();PlotTests.Benchmark();return 0; }
         if(args.Contains("--moving-load-tests")) return MovingLoadBenchmarks.Run(args.Contains("--native"),args.SkipWhile(a=>a!="--moving-load-tests").Skip(1).FirstOrDefault(a=>!a.StartsWith("--"))??"all");
         if(args.Contains("--example-layout")) return ExampleLayoutTests.Run(args.SkipWhile(a=>a!="--example-layout").Skip(1).FirstOrDefault(a=>!a.StartsWith("--")));
         if(args.Contains("--utility-examples")) { BridgeUtilityTests.Run(); BridgeUtilityExamples.Run(true); return 0; }
+        if(args.Contains("--combination-excel-example")) { BridgeCombinationExcelExample.Run(true); return 0; }
         if(args.Contains("--bridge-workflow")) return BridgeWorkflowExample.Run(args.Contains("--native"));
         if(args.Contains("--workflow-stations-native")) return NativeWorkflowStationTests.Run(args.Contains("--capture-station-fixture"));
         if(args.Contains("--inventory")) { CheckGrasshopper(false,true);return 0; }

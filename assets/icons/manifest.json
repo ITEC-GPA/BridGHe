@@ -1631,6 +1631,15 @@
       "family": "solver",
       "glyph": "solver",
       "badge": "play"
+    },
+    {
+      "key": "BridgeCombinationExcelComponent",
+      "type": "BridGHe.Grasshopper.Components.Utilities.BridgeCombinationExcelComponent",
+      "guid": "2776b9ba-309e-4a25-91ad-4177c557bc13",
+      "name": "Bridge Combination Excel",
+      "family": "load",
+      "glyph": "table",
+      "badge": "arrow"
     }
   ]
 }

@@ -749,6 +749,12 @@
         "f9a95b40-c77d-4bc6-a08b-771f70905653"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/Utilities/BridgeCombinationExcelComponent.cs": {
+      "ports": "4293fc4764d90042cdd15036729e451ce4f089b380f8ead5d52a7a622f117561",
+      "guids": [
+        "2776b9ba-309e-4a25-91ad-4177c557bc13"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/Utilities/BridgeDeflectionCamberComponent.cs": {
       "ports": "68f23576a29d1046b12b4ca7dc0fbabf40c2e8e82853da7c9a04f323e8604bdc",
       "guids": [
