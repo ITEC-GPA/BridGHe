@@ -26,4 +26,4 @@ Dalla root: `dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- -
 
 [Rapporto della prova](validation.json) · [Indice degli esempi](../README.md).
 
-L'aggiornamento delle etichette e della Value List è stato controllato nella struttura XML e nei collegamenti. La nuova compilazione e la prova in Rhino sono in attesa del via dell'utente; il rapporto conserva separatamente la validazione della revisione precedente.
+La Release aggiornata è stata compilata e il grafo è stato calcolato, salvato e riaperto in Rhino/Grasshopper. Il test verifica l'identità dei rapporti GPC, una label per risultato e il ripristino delle quattro opzioni della Value List. Le prove dedicate controllano anche la selezione dei formati, i rami dell'albero e la migrazione delle definizioni precedenti.
