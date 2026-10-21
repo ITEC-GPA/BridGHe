@@ -5,6 +5,14 @@
   "source": "Example 19 REV003 archived Straus results",
   "beam": "36",
   "stationCombinationResults": 5,
+  "detailPlots": 3,
+  "plotPreviews": 3,
+  "intermediateStationsM": [
+    0
+  ],
+  "supportStationsM": [
+    2.5
+  ],
   "sourceHashes": [
     {
       "file": "REV003-G1_GETTO-results.bgmodel",

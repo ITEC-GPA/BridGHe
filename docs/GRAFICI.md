@@ -1,5 +1,33 @@
 # Grafici delle azioni e delle verifiche
 
+## Pioli e irrigiditori: domanda, resistenza e WR
+
+Il percorso è **Super Element Check → Bridge Detail Check → plot → Bridge Plot Preview**. Collegare al plot anche lo stesso **BridGHe Model** e la lista ordinata **Super-Element Beam** usati per la verifica. `Results` è l'uscita **Section result** di Detail Check, con percorsi `{beam;station}` e combinazioni nell'ordine del modello. Il disegno legge i risultati GPC: non modifica azioni, dettagli o resistenze.
+
+**Bridge Stud Plot** conserva le quantità 0–4 e aggiunge:
+
+| Quantity | Grafico | Unità |
+|---|---|---|
+| 4 | Rapporto forza per piolo / resistenza, con riferimento 1 | WR |
+| 5 | PEd e PRd sovrapposti, per ogni combinazione | kN/piolo |
+| 6 | Valore assoluto del flusso longitudinale e resistenza per lunghezza | N/mm = kN/m |
+
+La quantità 4 è il rapporto resistente del piolo, non l'inviluppo di geometria, soletta e fatica. I controlli distinti restano in Verification Results. Per un cassoncino con contributo torsionale alla soletta usare la quantità 5: il solo flusso longitudinale totale non rappresenta la domanda sulla piattabanda più caricata, già inclusa nel PEd nativo GPC. La quantità 6 rifiuta quel caso.
+
+**Bridge Intermediate Stiffener Plot** e **Bridge Support Stiffener Plot** sono in `13-Results`. Mantengono gli ingressi e le prime quattro uscite dei plot; `Quantity` diventa **Check**. Un'eventuale Value List collegata a Check si compila automaticamente con l'inviluppo e le singole voci. La selezione si conserva alla riapertura. Il secondo componente comprende anche i controlli del terminale e della seconda coppia, quando presenti nei risultati.
+
+- **Check = 0 — Inviluppo di tutte le verifiche:** per ciascuna posizione e combinazione, `WRmax(s,C) = max_j WRj(s,C)` sulle voci applicabili del gruppo. Usa sempre WR, qualunque sia Display.
+- **Check > 0:** selezione della singola verifica GPC. **Display** sceglie 0 WR, 1 domanda, 2 resistenza/limite, 3 confronto domanda–limite. Le unità provengono dalla verifica scelta: MPa, mm, mm² o valori adimensionali. Non si sommano né si inviluppano grandezze con unità diverse.
+- **Stations:** progressive reali degli irrigiditori, in **metri dall'inizio della lista ordinata delle aste del superelemento**. Non sono coordinate globali né millimetri. Devono coincidere con stazioni di risultato, tolleranza assoluta `1e-6 m`; una progressiva senza risultati viene segnalata, senza interpolare. Ad un giunto sono conservati entrambi i lati disponibili. I grafici degli irrigiditori mostrano punti separati.
+- **Governing checks:** verifica governante per posizione/combinazione e fase, con tutte le voci a pari WR massimo. Conserva i percorsi originari.
+- **Unavailable checks:** voci prive di WR, dettaglio disattivato, verifica non applicabile o non disponibile; riporta anche le note GPC. Le posizioni senza anomalie hanno una stringa vuota, mantenendo la corrispondenza degli item.
+
+Il WR è quello restituito da GPC, **non un rapporto domanda/resistenza ricostruito indiscriminatamente**. Nei controlli qualitativi GPC può assegnare valori convenzionali, ad esempio 0/2: non esprimono una riserva resistente fisica. Una voce con WR assente (`null`) o non finito rende incompleto l'inviluppo di quella posizione/combinazione: viene lasciata una lacuna, accompagnata da warning e nota nel grafico esportato. È comunque possibile scegliere una singola voce disponibile. Se nessun campione è disponibile il componente segnala l'errore e non produce un grafico apparentemente verificato. In SLE diversi controlli degli irrigiditori non hanno esito: occorrono le appropriate azioni SLU a monte, senza maggiorazioni implicite nel plot.
+
+La linea **WR = 1** è un riferimento e non entra nelle uscite Minimum/Maximum. L'inviluppo sulle **voci di verifica** è distinto dalla fascia grigia sulle **combinazioni**. Nei confronti Ed/Rd la fascia grigia e le sue annotazioni riguardano Ed; le uscite Minimum/Maximum considerano entrambe le serie selezionate. Gli appoggi richiedono una reazione coerente assegnata nel verificatore: il plot non la ricava automaticamente dal FEM. Il massimo non include verifiche che la libreria non implementa o che non appartengono al gruppo scelto.
+
+[Esempio 47 aggiornato](../example/47-pioli-irrigidimenti-verifiche/README.md): flusso integrato, Value List, preview e file di sola anteprima già pronti. Test dedicati: `dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --regression bridge-detail-plots`.
+
 ## Confronto con la versione originaria
 
 Il confronto è stato eseguito sui sorgenti originali dei due componenti di stampa delle azioni e delle tensioni e del relativo renderer. L'output non era identico a quello della prima riscrittura dei plot BridGHe.

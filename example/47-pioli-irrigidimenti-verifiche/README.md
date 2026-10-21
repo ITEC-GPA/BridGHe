@@ -150,7 +150,25 @@ Il file dimostra anche il passaggio da SLE rara, attualmente usato da Super Elem
 
 **Limite del metodo:** usare `Calculation=0, Cumulative`. Il percorso `LinearHistory` conserva uno storico N–Mx diverso e non implementa taglio, pioli e irrigidimenti; Detail Check lo rifiuta esplicitamente. Non cambiarlo in Cumulative soltanto per far sparire l'errore: va scelta consapevolmente l'ipotesi di calcolo. Anche l'adattatore dei superelementi ha un campo limitato a una H simmetrica con soletta e azioni N–Mx–Vy: torsione e flessione deviata richiedono un verificatore diverso.
 
-## 7. Riproduzione e controlli
+## 7. Grafici di pioli e irrigiditori
+
+Il file [47-integrazione-modello.ghx](47-integrazione-modello.ghx) include tre plot, ciascuno collegato a un **Bridge Plot Preview**:
+
+1. **Pioli:** PEd e PRd in kN/piolo lungo l'estratto di trave. Quantity 5 confronta le due curve; 4 mostra il rapporto con riferimento WR=1; 6 confronta il flusso e la resistenza per lunghezza.
+2. **Intermedio:** inviluppo dei WR delle voci GPC alla progressiva locale `s=0 m` (X globale 27.5 m).
+3. **Appoggio:** inviluppo dei WR alla progressiva locale `s=2.5 m` (pila a X globale 30 m).
+
+Le due posizioni sono assegnate per il tutorial. Geometria, pannelli da 2 m e reazione da 900 kN rimangono gli input locali dimostrativi descritti sopra; il grafico non identifica automaticamente gli irrigiditori fisici o la reazione nel modello. Nel progetto reale associare a ogni posizione il suo dettaglio, i pannelli effettivi e le azioni pertinenti.
+
+La **Value List** di ogni irrigiditore seleziona l'inviluppo o una voce singola. Per quest'ultima, `Display` sceglie **0 WR**, **1 domanda**, **2 resistenza/limite**, **3 confronto**. L'inviluppo usa sempre WR. **Governing checks** identifica la voce governante, comprese le parità; **Unavailable checks** espone gli esiti mancanti. Un controllo senza WR non diventa zero: l'inviluppo in quella posizione/combinazione è incompleto. Per i controlli qualitativi il WR può essere convenzionale, non una misura della riserva resistente.
+
+Le progressive sono in **metri dalla prima asta di Super-Element Beam**, non coordinate globali. I risultati devono essere presenti esattamente alle posizioni richieste, entro `1e-6 m`. Nessuna interpolazione tra irrigiditori. I controlli d'appoggio comprendono terminale e seconda coppia solo quando attivati nel verificatore.
+
+Per vedere subito i risultati, aprire [47-anteprima-grafici.ghx](47-anteprima-grafici.ghx): contiene snapshot dei tre SVG e una Value List per scegliere il grafico. Questo file visualizza i risultati salvati; per ricalcolarli usare il file integrato. Gli stessi grafici sono esportati in [grafici/](grafici/), in SVG. Per ottenere un PNG assegnare un percorso con estensione `.png` al plot. Doppio clic sulla preview per ingrandire.
+
+La combinazione resta **DEMO**: questi diagrammi illustrano il funzionamento e non costituiscono la verifica completa del ponte. [Guida dei plot](../../docs/GRAFICI.md#pioli-e-irrigiditori-domanda-resistenza-e-wr).
+
+## 8. Riproduzione e controlli
 
 ```powershell
 dotnet build tests/BridGHe.Smoke -c Release

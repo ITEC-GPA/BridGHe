@@ -100,4 +100,4 @@ Tredici definizioni GHX con soluzione e riapertura verificate senza solutore. [P
 
 ## Pioli e irrigidimenti
 
-- [47 · Dal dettaglio al modello calcolato](47-pioli-irrigidimenti-verifiche/README.md): due GHX spiegati, layout su un ponte a tre campate, confronti di passo/spessore/reazione e collegamento dei dettagli ai risultati del superelemento.
+- [47 · Dal dettaglio al modello calcolato](47-pioli-irrigidimenti-verifiche/README.md): layout su un ponte a tre campate, confronti di passo/spessore/reazione, collegamento ai risultati del superelemento e grafici dei pioli/WR degli irrigiditori. Il file integrato contiene i plot; [anteprima pronta](47-pioli-irrigidimenti-verifiche/47-anteprima-grafici.ghx) con tre grafici selezionabili.

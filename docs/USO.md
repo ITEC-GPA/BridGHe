@@ -123,6 +123,8 @@ I dettagli non modificano il graticcio FEM. Lo stato limite resta quello del ris
 
 `Bridge Shear Plot` e `Bridge Stud Plot`, insieme ai grafici delle azioni e tensioni, accettano un albero `{beam;station}` con le combinazioni nell'ordine del modello. Il percorso del file è opzionale; l'SVG è sempre restituito. Il PNG è rigenerato solo quando cambiano dati o destinazione. Le lacune non vengono unite e i salti alle stazioni non vengono smussati.
 
+`Bridge Stud Plot` aggiunge i confronti PEd/PRd (Quantity 5) e flusso/resistenza per lunghezza (6). `Bridge Intermediate Stiffener Plot` e `Bridge Support Stiffener Plot` selezionano una voce GPC o l'inviluppo dei **WR** con `Check=0`. Collegando una Value List a Check, le voci si compilano automaticamente. `Stations` richiede le progressive reali in metri dall'inizio del superelemento; i dettagli sono rappresentati con punti separati. `Display` permette WR, domanda, limite o confronto per la singola voce. Un WR mancante rende incompleto l'inviluppo e viene segnalato, senza sostituirlo con zero. [Procedura e significato dei WR](GRAFICI.md#pioli-e-irrigiditori-domanda-resistenza-e-wr).
+
 Per vedere i grafici nel canvas: collegare `SVG` a **Bridge Plot Preview**, gruppo **15-Preview**. Doppio clic sull'immagine apre la vista ingrandita. L'inviluppo grigio usa tutte le combinazioni; le uscite min/max riguardano le curve selezionate. Progressive in metri, azioni in kN/kNm e tensioni in MPa. [Guida e confronto con la versione originaria](GRAFICI.md).
 
 ## Input semplificati e preview
