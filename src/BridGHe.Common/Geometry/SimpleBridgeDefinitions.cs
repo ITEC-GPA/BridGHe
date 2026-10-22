@@ -43,10 +43,13 @@ public sealed record SimpleBridgeInput
     public BridgeDiaphragms Diaphragms { get; init; } = new();
     public double MaximumElementLength { get; init; } = 2500;
     public double ChordTolerance { get; init; } = 5;
+    public double DeckBeamSpacing { get; init; }
+    public double[] DeckBeamStations { get; init; } = Array.Empty<double>();
+    public double? DeckBeamLevel { get; init; }
     public bool Truss { get; init; }
 }
 
-public enum BridgeMemberFamily { Girder, SolidDiaphragm, TopChord, BottomChord, Post, Diagonal, LongitudinalBracing, BracingPost }
+public enum BridgeMemberFamily { Girder, SolidDiaphragm, TopChord, BottomChord, Post, Diagonal, LongitudinalBracing, BracingPost, DeckTransverse }
 
 [Serializable]
 public sealed record BridgeGeometryMember(string Id, BridgeMemberFamily Family, int Group, int Segment,

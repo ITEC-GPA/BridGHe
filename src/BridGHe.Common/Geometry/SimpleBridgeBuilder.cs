@@ -50,6 +50,11 @@ public static class SimpleBridgeBuilder
             widths = Expand(p.DeckWidths, 2, "Deck widths");
             foreach (double w in widths) Positive(w, "Deck widths");
             Positive(p.DeckThickness, "Deck thickness");
+            Stations(p.DeckBeamStations, "Deck beam stations", 0);
+            if (!double.IsFinite(p.DeckBeamSpacing) || p.DeckBeamSpacing < 0)
+                throw new ArgumentException("Deck beam spacing must be finite and non-negative.");
+            if (p.DeckBeamLevel is double deckLevel && (!double.IsFinite(deckLevel) || deckLevel < -p.DeckThickness || deckLevel > 0))
+                throw new ArgumentException("Deck beam level must lie within the slab: -Deck Thickness .. 0 mm.");
             if (p.GirderOffsets[0] < -widths[1] || p.GirderOffsets[^1] > widths[0])
                 throw new ArgumentException("Girder axes must lie within the left/right deck widths.");
             if (levels.Any(v => v >= -p.DeckThickness))
@@ -93,6 +98,7 @@ public static class SimpleBridgeBuilder
         {
             joints = new double[levels.Length][]; supports = new double[levels.Length][];
             var stationSet = new List<double> { 0, length };
+            stationSet.AddRange(BridgeDeckGrillage.RequestedStations(p, length));
             for (int g = 0; g < levels.Length; g++)
             {
                 var explicitJoints = p.Segments.Joints.GetValueOrDefault(0, Array.Empty<double>())

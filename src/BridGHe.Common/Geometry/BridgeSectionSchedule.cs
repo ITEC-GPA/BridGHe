@@ -85,7 +85,8 @@ public static class BridgeMemberAssignment
                     Math.Abs(mid - geometry.Stations[^1]) < 1e-7 && Math.Abs(r.End - mid) < 1e-7)).ToArray();
                 if (matches.Length > 1) throw new ArgumentException($"Overlapping section schedule on {member.Id} at {mid:G9} mm.");
                 var rule = matches.SingleOrDefault();
-                var property = rule?.Property ?? defaults.GetValueOrDefault((int)member.Family) ?? defaults.GetValueOrDefault(-1);
+                var property = rule?.Property ?? defaults.GetValueOrDefault((int)member.Family) ??
+                    (member.Family == BridgeMemberFamily.DeckTransverse ? null : defaults.GetValueOrDefault(-1));
                 string id = parts == 1 ? member.Id : $"{member.Id}/P{part + 1}";
                 if (property == null) { missing.Add(id); continue; }
                 if (rule != null) used.Add(rule);

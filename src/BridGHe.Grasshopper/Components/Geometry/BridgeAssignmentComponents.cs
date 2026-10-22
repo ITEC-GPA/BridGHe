@@ -22,7 +22,7 @@ public sealed class BridgeSectionScheduleComponent : BridgeUtilityComponent
         p.AddGenericParameter("Property", "P", "Beam property in N-mm.", GH_ParamAccess.item);
         p.AddNumberParameter("Start", "S", "Start station, mm, inclusive.", GH_ParamAccess.item);
         p.AddNumberParameter("End", "E", "End station, mm, exclusive except bridge end.", GH_ParamAccess.item);
-        p.AddIntegerParameter("Family", "F", "0 girder, 1 solid diaphragm, 2 top chord, 3 bottom chord, 4 post, 5 diagonal, 6 longitudinal bracing, 7 bracing post.", GH_ParamAccess.item, 0);
+        p.AddIntegerParameter("Family", "F", "0 girder, 1 solid diaphragm, 2 top chord, 3 bottom chord, 4 post, 5 diagonal, 6 longitudinal bracing, 7 bracing post, 8 transverse slab.", GH_ParamAccess.item, 0);
         p.AddIntegerParameter("Group", "G", "0 all; otherwise girder number or diaphragm line.", GH_ParamAccess.item, 0);
         p.AddIntegerParameter("Segment", "C", "0 all; otherwise fabrication segment or diaphragm bay.", GH_ParamAccess.item, 0);
         p.AddVectorParameter("Start Scale", "SF", "Section local x/y scale factors (X,Y); Z must be zero. Dimensional Straus taper, centred.", GH_ParamAccess.item, new Vector3d(1, 1, 0));
@@ -52,7 +52,7 @@ public sealed class BridgeMemberAssignmentComponent : BridgeUtilityComponent
     {
         p.AddGenericParameter("Bridge Geometry", "BG", "Typed output of Simple Bridge or Bridge Longitudinal Bracing.", GH_ParamAccess.item);
         p.AddGenericParameter("Default Properties", "P", "Optional beam properties, paired with Families. Rules override these defaults.", GH_ParamAccess.list); p[1].Optional = true;
-        p.AddIntegerParameter("Families", "F", "One code per default property. -1 applies to all families, or 0..7 for individual families.", GH_ParamAccess.list, -1);
+        p.AddIntegerParameter("Families", "F", "One code per default property. Codes 0..8 select families; -1 applies to steel families only. Family 8 (slab) requires an explicit property.", GH_ParamAccess.list, -1);
         p.AddGenericParameter("Schedule", "S", "Optional Bridge Section Schedule entries; overlapping matching entries are rejected.", GH_ParamAccess.list); p[3].Optional = true;
     }
     protected override void RegisterOutputParams(GH_OutputParamManager p)
