@@ -12,7 +12,7 @@ public static class BridgeGpc
     public static BridgeMaterialSet Materials(MaterialModel concrete,MaterialModel steel,MaterialModel rebar)
     {
         if(concrete==null||steel==null)throw new ArgumentException("Concrete and structural steel materials are required.");
-        SteelMaterialEN1992 Steel(MaterialModel m,bool reinforcing)=>new(m.Name,m.Modulus,m.MinimumYieldStress,m.MinimumTensileStress,.1,
+        SteelMaterialEN1992 Steel(MaterialModel m,bool reinforcing)=>new(m.Name,m.Modulus,m.MinimumYieldStress,m.MinimumTensileStress,reinforcing ? m.ReinforcementUltimateStrain ?? .1 : .1,
             SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic,reinforcing?SteelMaterial.SteelTypes.Rebar:SteelMaterial.SteelTypes.Structural);
         return new BridgeMaterialSet(new ConcreteMaterialEN1992(concrete.Name,concrete.SpecificCompressiveStrength,
             ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle),Steel(steel,false),Steel(rebar??steel,rebar!=null));

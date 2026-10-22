@@ -109,6 +109,8 @@ def glyph(name, a):
         return rect(3,4,18,4,a,0.7) + path('M6 10H18M12 10V19M6 19H18',INK,2.8)
     if name == 'slab':
         return rect(3,6,18,11,'white',1,a,1.8) + ''.join(circle(x,9,1.2,a) for x in [6,10,14,18]) + path('M5 15H19',a,1)
+    if name == 'reinforcement':
+        return path('M4 8L18 4M6 19L20 15', a, 3) + path('M7 5L9 9M12 3.5L14 7.5M8 16L10 20M13 14.5L15 18.5M18 13L20 17', INK, 1.3)
     if name in ('steel','aluminium','concrete','material'):
         out = path('M4 8L12 4L20 8V17L12 21L4 17ZM4 8L12 12L20 8M12 12V21', a, 1.5, 'white')
         if name=='steel': out+=path('M6 11L10 13M8 12V16M6 15L10 17',INK,1.3)
@@ -294,6 +296,7 @@ MaterialAluminiumComponent|aluminium||material
 MaterialConcreteComponent|concrete||material
 MaterialCustomComponent|material|edit|material
 MaterialSteelComponent|steel||material
+MaterialRebarComponent|reinforcement||material
 MaterialTableComponent|table||material
 BeamPropertyCompositeComponent|composite|data|section
 BridgeGeometryComponent|composite|native|section

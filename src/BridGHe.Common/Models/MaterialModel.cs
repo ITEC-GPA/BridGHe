@@ -75,6 +75,8 @@ namespace BridGHe.Common.Models
         #region Properties
 
         public string Id => _id;
+        /// <summary>Characteristic reinforcement ultimate strain. Null retains the historic GPC conversion default.</summary>
+        public double? ReinforcementUltimateStrain { get; set; }
 
         public string Name
         {
@@ -308,6 +310,8 @@ namespace BridGHe.Common.Models
             _tensileYieldStrength = info.GetDouble("TensileYieldStrength");
             _tensileUltimateStrength = info.GetDouble("TensileUltimateStrength");
             _shearUltimateStrength = info.GetDouble("ShearUltimateStrength");
+            try { ReinforcementUltimateStrain = (double?)info.GetValue("ReinforcementUltimateStrain", typeof(double?)); }
+            catch (SerializationException) { ReinforcementUltimateStrain = null; }
             try
             {
                 _stressStrainTable = ((double stress, double strain)[])info.GetValue("StressStrainTable", typeof((double stress, double strain)[]));
@@ -350,6 +354,7 @@ namespace BridGHe.Common.Models
             info.AddValue("TensileYieldStrength", _tensileYieldStrength);
             info.AddValue("TensileUltimateStrength", _tensileUltimateStrength);
             info.AddValue("ShearUltimateStrength", _shearUltimateStrength);
+            info.AddValue("ReinforcementUltimateStrain", ReinforcementUltimateStrain, typeof(double?));
             info.AddValue("StressStrainTable", _stressStrainTable, typeof((double stress, double strain)[]));
         }
 
@@ -386,6 +391,7 @@ namespace BridGHe.Common.Models
             _tensileYieldStrength = material._tensileYieldStrength;
             _tensileUltimateStrength = material._tensileUltimateStrength;
             _shearUltimateStrength = material._shearUltimateStrength;
+            ReinforcementUltimateStrain = material.ReinforcementUltimateStrain;
 
             _stressStrainTable = material._stressStrainTable;
         }

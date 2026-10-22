@@ -814,6 +814,15 @@
       "badge": "edit"
     },
     {
+      "key": "MaterialRebarComponent",
+      "type": "BridGHe.Grasshopper.Components.Materials.MaterialRebarComponent",
+      "guid": "91f4df3c-8079-4324-a368-4ea1ea3dd13f",
+      "name": "Reinforcement Steel B450C",
+      "family": "material",
+      "glyph": "reinforcement",
+      "badge": ""
+    },
+    {
       "key": "MaterialSteelComponent",
       "type": "BridGHe.Grasshopper.Components.Materials.MaterialSteelComponent",
       "guid": "5b123f35-7685-415b-9028-5b0fd4d67626",

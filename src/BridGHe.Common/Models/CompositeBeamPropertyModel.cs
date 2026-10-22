@@ -198,7 +198,7 @@ namespace BridGHe.Common.Models
             SteelMaterialEN1992 steelMaterialEN1992 = new SteelMaterialEN1992(steelModel.Name, steelModel.Modulus, steelModel.MinimumYieldStress, steelModel.MinimumTensileStress,
                 0.1, GPC.Model.Materials.SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic, GPC.Model.Materials.SteelMaterial.SteelTypes.Structural);
             SteelMaterialEN1992 rebarMaterial = new SteelMaterialEN1992(rebarModel.Name, rebarModel.Modulus, rebarModel.MinimumYieldStress, rebarModel.MinimumTensileStress,
-                0.1, GPC.Model.Materials.SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic, GPC.Model.Materials.SteelMaterial.SteelTypes.Rebar);
+                rebarModel.ReinforcementUltimateStrain ?? 0.1, GPC.Model.Materials.SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic, GPC.Model.Materials.SteelMaterial.SteelTypes.Rebar);
 
             double rebarDiameterTop = Math.Sqrt(topRebarsAreaTot * 4 / Math.PI);
 
