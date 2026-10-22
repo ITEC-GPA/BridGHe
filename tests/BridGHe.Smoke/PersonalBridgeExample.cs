@@ -39,7 +39,7 @@ internal static class PersonalBridgeExample
             Console.WriteLine("EXAMPLE 99: reading " + Path.GetFileName(source));
             using var doc = GrasshopperBridgeExample.Read(source); doc.FilePath = source;
             if(mode.StartsWith("replay")||mode.StartsWith("finalize"))return new PersonalBridgeRevision(doc,plugin,Root).Replay(mode.StartsWith("finalize"));
-            if (mode is "rev002" or "rev003") return new PersonalBridgeRevision(doc, plugin, Root).Build(mode);
+            if (mode is "rev002" or "rev003" or "rev004") return new PersonalBridgeRevision(doc, plugin, Root).Build(mode);
             if (mode != "inspect") throw new ArgumentException("Unknown example 99 mode: " + mode);
             foreach (var toggle in doc.Objects.OfType<GH_BooleanToggle>()) toggle.Value = false;
             foreach (var c in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name.Contains("PlotComponent")))

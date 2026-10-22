@@ -1,0 +1,50 @@
+[
+  {
+    "Name": "G1_GETTO",
+    "beams": 37,
+    "nodes": 26,
+    "deckBeams": 0,
+    "supports": 6,
+    "maxDisplacementMm": 0.21873334506025544,
+    "solverWarnings": 0,
+    "maxVxN": 2.2951812798181484E-12,
+    "maxMyNmm": 165084202.17700067,
+    "maxTorqueNmm": 8.883330069692702E-11
+  },
+  {
+    "Name": "G2_PERMANENTI",
+    "beams": 76,
+    "nodes": 78,
+    "deckBeams": 39,
+    "supports": 6,
+    "maxDisplacementMm": 0.07133831545990725,
+    "solverWarnings": 0,
+    "maxVxN": 1.817262121556062E-11,
+    "maxMyNmm": 233999999.99999866,
+    "maxTorqueNmm": 2.2281832742173678E-10
+  },
+  {
+    "Name": "Q_TRAFFICO",
+    "beams": 76,
+    "nodes": 78,
+    "deckBeams": 39,
+    "supports": 6,
+    "maxDisplacementMm": 0.04537064120345471,
+    "solverWarnings": 0,
+    "maxVxN": 1.824275071669573E-11,
+    "maxMyNmm": 179999999.99999982,
+    "maxTorqueNmm": 1.855725177505889E-10
+  },
+  {
+    "Name": "RITIRO_FEM",
+    "beams": 76,
+    "nodes": 78,
+    "deckBeams": 39,
+    "supports": 6,
+    "maxDisplacementMm": 2.101187312036056,
+    "solverWarnings": 0,
+    "maxVxN": 1.894832702442288E-09,
+    "maxMyNmm": 2207584929.4960804,
+    "maxTorqueNmm": 1.0845091855477383E-09
+  }
+]

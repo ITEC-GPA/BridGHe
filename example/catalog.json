@@ -441,8 +441,8 @@
     "title": "Dal file personale al ponte a due travi con verifiche e report",
     "group": "Flusso completo",
     "readme": "99-Ponte completo GPC/README.md",
-    "definition": "99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+    "definition": "99-Ponte completo GPC/REV004/flusso-acciaio-misto_REV004.ghx",
     "additionalDefinitions": ["99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx"],
-    "calculations": "99-Ponte completo GPC/REV003/calcoli"
+    "calculations": "99-Ponte completo GPC/REV004/calcoli"
   }
 ]

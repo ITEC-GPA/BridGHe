@@ -1,5 +1,27 @@
 # Esempio 99 dal file personale alle verifiche
 
+## Revisione corrente 004 con soletta a graticcio
+
+Aprire [REV004](REV004/flusso-acciaio-misto_REV004.ghx). Include la soletta trasversale di **Simple Bridge Solid**, i collegamenti eccentrici e **Reinforcement Steel B450C**. Le revisioni precedenti restano disponibili sotto; la REV003 modificata localmente dall'utente non è stata sovrascritta.
+
+- Geometria: due campate 12+12 m, due travi a interasse 3 m, soletta 5 m × 300 mm. Le 13 linee trasversali ogni 2 m sono suddivise in 39 aste: sbalzo destro 1 m, tratto fra travi 3 m, sbalzo sinistro 1 m. Asse della soletta a quota −150 mm; 26 link rigidi agli assi delle travi, quota −1359.318631 mm.
+- G1 mantiene 37 aste di acciaio e 26 nodi. G2, Q e ritiro hanno 76 aste, 78 nodi e 26 link. Tutte le fasi conservano i sei appoggi. Gli assi longitudinali sono già suddivisi alle progressive della soletta.
+- Le sezioni delle fasce sono 2000×300 mm internamente e 1000×300 mm alle estremità. Le larghezze si aggiornano dall'uscita geometrica per passo uniforme; per progressive non uniformi occorre assegnare ciascuna larghezza tributaria. Il materiale FEM trasversale usa `Ec,eff = Es/n` della stessa fase.
+- Il B450C alimenta `Reinforcement Material` della proprietà mista e quindi entrambe le file definite nella soletta. Non sostituisce S355 nella carpenteria.
+- `Additional Phase Members = true` in **Build BridGHe Model** verifica le aste del primo modello di riferimento, G1. Le aste cls aggiuntive restano nelle sorgenti FEM complete utilizzate anche per le reazioni; non entrano nel checker delle travi longitudinali.
+
+Le quattro analisi sono state eseguite con Straus7 R3. Sono disponibili [controlli delle fasi e degli spostamenti](REV004/grillage-validation.json), [equilibrio](REV004/equilibrium.json), [verifiche](REV004/validation.json), [combinazioni](REV004/Combinazioni_REV004.xlsx) e [report Word](REV004/Report_REV004.docx). Il flusso produce 648 risultati di sezione e i grafici di entrambe le travi. Un calcolo completato non implica che tutti i tassi di lavoro siano inferiori a 1: leggere gli esiti delle singole verifiche e gli avvisi.
+
+In questa revisione il ritiro è longitudinale, con effetto primario e secondario associati alla stessa azione. Non è applicato il ritiro trasversale delle fasce. Il progetto trasversale della soletta, la fessurazione e la calibrazione delle rigidezze del graticcio restano fuori da questo esempio. WIND resta calcolato ma con coefficiente zero nelle combinazioni del checker N–Mx–Vy; Tau b non è disponibile nell'attuale API GPC. I carichi e le combinazioni sono dimostrativi, come descritto sotto.
+
+Durante il test è stato corretto un difetto di **Build Model**: nodi coincidenti potevano perdere gli attributi del nodo successivo, inclusi gli appoggi. Ora vengono uniti vincoli, link, gruppi e carichi. La precedente esecuzione di sviluppo senza appoggi era instabile e non è una soluzione valida da confrontare numericamente. Il nuovo test controlla i due ordini di ingresso, i sei appoggi di ciascuna fase, gli avvisi del solutore e la plausibilità degli spostamenti, oltre all'equilibrio.
+
+Per ripetere: `dotnet run --project tests/BridGHe.Smoke -c Release -- --example99 replay004` riapre e verifica risultati salvati senza rilanciare Straus; `--example99 rev004` rigenera e ricalcola la revisione, richiedendo la licenza. Salvare altrove eventuali modifiche personali prima di rigenerare.
+
+Validazione del 22 ottobre 2026: le quattro nuove analisi Straus hanno zero avvisi/errori nei log del solutore; la riapertura ricostruisce 648 risultati e 10 grafici, conserva i file nativi e conferma l'impronta numerica del report. `tools/build.ps1 -Smoke` completa 225 controlli principali, 67 gruppi di regressione e 3 gruppi grafici/report separati. Sono stati riaperti 50 GHX con 3626 collegamenti conservati e risolti i 23 esempi portabili senza richiamare Straus. La Release è stata sincronizzata in `bin/Release` con zero avvisi di compilazione e zero errori. Questo aggiornamento non riesegue le analisi FEM di tutti gli esempi storici.
+
+## Revisioni precedenti
+
 Aprire [REV003](REV003/flusso-acciaio-misto_REV003.ghx) per il ponte a due travi oppure [REV002](REV002/flusso-acciaio-misto_REV002.ghx) per il completamento della travata originale. Il file `flusso-acciaio-misto_REV001.ghx`, il suo Excel e i suoi calcoli sono conservati invariati. Le due nuove revisioni hanno cartelle, Excel, template e report autonomi.
 
 ## Geometria e ipotesi

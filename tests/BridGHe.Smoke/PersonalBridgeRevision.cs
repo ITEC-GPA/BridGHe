@@ -97,7 +97,8 @@ internal sealed partial class PersonalBridgeRevision
         foreach (var plot in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name.Contains("PlotComponent")))
             foreach (var p in plot.Params.Input.OfType<Param_String>().Where(p => p.Name is "File" or "Output Path" or "File Path")) { p.RemoveAllSources(); p.PersistentData.Clear(); p.ExpireSolution(false); }
         ConfigureSectionAndShrinkage(); ConfigurePhases();
-        if (mode == "rev003") ConfigureTwoGirders();
+        if (mode is "rev003" or "rev004") ConfigureTwoGirders();
+        if (mode == "rev004") ConfigureDeckGrillage();
         analyses = doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "StrausR3AnalysisComponent").ToArray();
         Wire(C(BuildId),0,analyses.Select(a=>a.Params.Output[0]).ToArray());
         foreach(var excel in doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeCombinationExcelComponent")) Wire(excel,0,analyses.Select(a=>a.Params.Output[0]).ToArray());
@@ -114,6 +115,7 @@ internal sealed partial class PersonalBridgeRevision
         foreach (var a in analyses) { Console.WriteLine("EXAMPLE 99 " + revision + ": Straus " + a.Params.Input[3].VolatileData.AllData(true).First()); Run(a); Solve();
             if (a.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count > 0) throw new Exception(string.Join(";", a.RuntimeMessages(GH_RuntimeMessageLevel.Error))); }
         ValidateReactions(); WriteCombinations();
+        if (revision == "REV004") ValidateDeckPhaseModels();
         Run(C(ExcelId)); Solve(); Run(C(BuildId)); Solve(); Run(C(CheckId)); Solve();
         if(secondCheck!=null) { Run(secondCheck); Solve(); }
         foreach (var c in new[] { C(ExcelId), C(BuildId), C(CheckId) })
@@ -206,7 +208,7 @@ internal sealed partial class PersonalBridgeRevision
 
     private void ValidateReactions()
     {
-        var rows=new List<object>();int girders=revision=="REV003"?2:1;
+        var rows=new List<object>();int girders=revision is "REV003" or "REV004"?2:1;
         foreach(var analysis in analyses)
         {
             var model=(ModelModel)Value(analysis);
@@ -273,6 +275,7 @@ internal sealed partial class PersonalBridgeRevision
         var checks=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="SuperElementCheckComponent").ToArray();
         foreach(var c in checks){Run(c);Solve();} Solve(true);
         ValidateReactions();
+        if (revision == "REV004") ValidateDeckPhaseModels();
         report=doc.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="BridgeReportComponent");
         if(updateReport)
         {
