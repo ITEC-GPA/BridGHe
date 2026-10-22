@@ -74,6 +74,15 @@ internal static class BridgeWorkflowTests
         var instant = Build(new[] { p1, p2 with { Actions = new[] { r with { Source=null, Case=null, PrimaryOnly=true, Behavior=BridgeActionBehavior.ShortTerm } } } }).Model;
         var instantaneous = BridgePhaseAssembler.Assemble(instant.Beams[0],10000,5000,instant.LoadCombinations[0],reference,1e-6);
         Require(Math.Abs(instantaneous.StrainInstant + 140e-6) < 1e-16 && instantaneous.StrainInfinite == 0, "Instant imposed strain assigned to long-term behavior.");
+        var withDeck = ModelArchive.Clone(shrink);
+        withDeck.AddElements(new[] { new BeamModel("Deck", new Point3d(0,0,1000), new Point3d(0,2000,1000), BridgeAssignmentTests.Property()) { BeamId = "Deck" } });
+        var deckPhase = p2 with { Actions = new[] { r with { Source = withDeck } } };
+        Reject(() => Build(new[] { p1, deckPhase }, new[] { steel, withDeck }), "beam count");
+        var mixed = BridgeWorkflowBuilder.Build(new[] { steel, withDeck }, new[] { p1, deckPhase }, combinations, BridgeWorkflowMethod.Compatible, 1e-6, true);
+        Require(mixed.Model.Beams.Count == 2 && mixed.Warnings.Any(w => w.Contains("additional phase members")), "Additional deck members explicitly excluded from longitudinal checking model");
+        Require(mixed.Model.Beams[0].Results.OfType<BeamForceResultModel>().Select(f => f.AxialForce).SequenceEqual(beam.Results.OfType<BeamForceResultModel>().Select(f => f.AxialForce)), "Additional members do not alter stored steel forces");
+        withDeck.Beams[0].PointTo += new Vector3d(0,0,1);
+        Reject(() => BridgeWorkflowBuilder.Build(new[] { steel, withDeck }, new[] { p1, deckPhase }, combinations, BridgeWorkflowMethod.Compatible, 1e-6, true), "geometry");
         Console.WriteLine("PASS workflow: numbering, source identity, joint coefficients, strain increments, selection, validation and archives");
     }
 }

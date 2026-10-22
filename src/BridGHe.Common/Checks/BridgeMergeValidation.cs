@@ -20,7 +20,7 @@ namespace BridGHe.Common.Checks
             return stations.ToArray();
         }
 
-        public static BeamModel[][] Align(IReadOnlyList<ModelModel> models,double tolerance)
+        public static BeamModel[][] Align(IReadOnlyList<ModelModel> models,double tolerance, bool allowAdditionalMembers = false)
         {
             if(models.Count==0 || models.Any(m=>m==null))throw new ArgumentException("Provide analysed models in the intended origin order.");
             var first=models[0];
@@ -30,7 +30,7 @@ namespace BridGHe.Common.Checks
             for(int i=0;i<models.Count;i++)
             {
                 var map=models[i].Beams.ToDictionary(b=>b.BeamId,StringComparer.Ordinal);
-                if(map.Count!=first.Beams.Count)throw new ArgumentException($"Model {i+1}: beam count differs from model 1.");
+                if(!allowAdditionalMembers && map.Count!=first.Beams.Count)throw new ArgumentException($"Model {i+1}: beam count differs from model 1.");
                 aligned[i]=new BeamModel[first.Beams.Count];
                 for(int j=0;j<first.Beams.Count;j++)
                 {

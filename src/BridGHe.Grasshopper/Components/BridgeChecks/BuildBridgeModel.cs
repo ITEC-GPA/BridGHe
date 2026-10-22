@@ -30,6 +30,7 @@ public class BuildBridgeModel : GH_Component
         p.AddGenericParameter("Phases", "P", "List of numbered Bridge Phase objects. Sorted by Number, with unique action identifiers.", GH_ParamAccess.list);
         p.AddGenericParameter("Combinations", "C", "Table/tree: header label + action IDs, followed by combination name + coefficients. A shrinkage coefficient applies to both primary strain and secondary FEM forces.", GH_ParamAccess.tree);
         p.AddIntegerParameter("Calculation", "Calc", "0 Cumulative: existing numerical method grouped by section behavior; 1 LinearHistory: gPC sequential N–Mx section history. Neither runs global construction stages automatically.", GH_ParamAccess.item, 0);
+        p.AddBooleanParameter("Additional Phase Members", "AP", "Allow later FEM sources to contain additional members (e.g. transverse slab strips). Checks include only the FIRST reference model's beams; all must exist with identical IDs/axes in every phase. Full source reactions remain available via Phases.", GH_ParamAccess.item, false);
     }
     protected override void RegisterOutputParams(GH_OutputParamManager p)
     {
@@ -41,6 +42,7 @@ public class BuildBridgeModel : GH_Component
     {
         var models = new List<GH_Model>(); var phases = new List<BridgeWorkflowGoo>(); int method = 0;
         if (!da.GetDataList(0, models) || !da.GetDataList(1, phases) || !da.GetDataTree(2, out GH_Structure<IGH_Goo> combinations) || !da.GetData(3, ref method)) return;
+        bool additional = false; da.GetData(4, ref additional);
         if (!_run) return;
         _run = false;
         try
@@ -48,7 +50,7 @@ public class BuildBridgeModel : GH_Component
             if (models.Any(m => m?.Value == null) || phases.Any(p => p?.Value is not BridgePhaseDefinition)) throw new ArgumentException("Connect models and Bridge Phase objects to their corresponding inputs.");
             string Cell(IGH_Goo goo) => goo?.ScriptVariable() is IFormattable n ? n.ToString(null, CultureInfo.InvariantCulture) : goo?.ScriptVariable()?.ToString() ?? "";
             var result = BridgeWorkflowBuilder.Build(models.Select(m => m.Value).ToArray(), phases.Select(p => (BridgePhaseDefinition)p.Value),
-                combinations.Branches.Select(b => b.Select(Cell).ToArray()).ToArray(), (BridgeWorkflowMethod)method, Settings.Instance.Tolerance);
+                combinations.Branches.Select(b => b.Select(Cell).ToArray()).ToArray(), (BridgeWorkflowMethod)method, Settings.Instance.Tolerance, additional);
             da.SetData(0, GH_Model.FromModel(result.Model, models[0]));
             da.SetDataList(1, result.Summary); da.SetDataList(2, result.Warnings);
             foreach (var warning in result.Warnings.Where(w => w.Contains("not active") || w.Contains("primary shrinkage only"))) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);

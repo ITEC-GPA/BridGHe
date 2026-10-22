@@ -13,7 +13,7 @@ public sealed record BridgeWorkflowBuildResult(ModelModel Model, string[] Summar
 public static class BridgeWorkflowBuilder
 {
     public static BridgeWorkflowBuildResult Build(IReadOnlyList<ModelModel> models, IEnumerable<BridgePhaseDefinition> definitions,
-        IReadOnlyList<string[]> combinations, BridgeWorkflowMethod method, double tolerance)
+        IReadOnlyList<string[]> combinations, BridgeWorkflowMethod method, double tolerance, bool allowAdditionalMembers = false)
     {
         if (!Enum.IsDefined(method)) throw new ArgumentException("Unknown workflow method.");
         if (!double.IsFinite(tolerance) || tolerance < 0) throw new ArgumentException("Invalid geometry tolerance.");
@@ -68,7 +68,7 @@ public static class BridgeWorkflowBuilder
             if (a.Source != null && !sources.Any(m => ReferenceEquals(m, a.Source))) sources.Add(a.Source);
         if (sources.Count == 0) throw new ArgumentException("A reference model is required, including for strain-only workflows.");
         if (sources[0].Units != ModelModel.ModelUnits.Nmm) throw new ArgumentException("Bridge checks require N-mm-MPa models.");
-        var aligned = BridgeMergeValidation.Align(sources, tolerance);
+        var aligned = BridgeMergeValidation.Align(sources, tolerance, allowAdditionalMembers);
         var beamIds = sources[0].Beams.Select(b => b.BeamId).ToHashSet(StringComparer.Ordinal);
         foreach (var (_, a) in actions)
         {
@@ -90,6 +90,9 @@ public static class BridgeWorkflowBuilder
         var records = new Dictionary<string, BridgeWorkflowAction>(StringComparer.Ordinal);
         var concentratedLoads = new Dictionary<(string Action, string Beam), double[]>();
         var warnings = new List<string>();
+        if (allowAdditionalMembers)
+            foreach (var source in sources.Where(s => s.Beams.Count > sources[0].Beams.Count))
+                warnings.Add($"{source.Name}: {source.Beams.Count - sources[0].Beams.Count} additional phase members retained in the FEM source only. Checks use the first reference model's beams; global reactions must come from the full source models.");
         foreach (var (phase, action) in actions)
         {
             bool hasForce = !string.IsNullOrWhiteSpace(action.Case);
