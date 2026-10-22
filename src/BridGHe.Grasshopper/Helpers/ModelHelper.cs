@@ -214,18 +214,37 @@ namespace BridGHe.Grasshopper.Helpers
             List<GH_Node> nodeList = nodesDict.Values.ToList();
             List<GH_Node> orderedNodeList = new List<GH_Node>();
 
-            RTree rTree = new RTree();
+            using RTree rTree = new RTree();
 
             for (int i = 0; i < nodeList.Count; i++)
             {
                 Point3d pt = nodeList[i].Value.Position;
                 bool found = false;
-                rTree.Search(new Sphere(pt, tol), new EventHandler<RTreeEventArgs>((sender, e) => { found = true; }));
+                int foundId = -1; double nearest = double.PositiveInfinity;
+                rTree.Search(new Sphere(pt, tol), (sender, e) =>
+                {
+                    double distance = orderedNodeList[e.Id].Value.Position.DistanceToSquared(pt);
+                    if (distance < nearest || distance == nearest && e.Id < foundId)
+                    { found = true; foundId = e.Id; nearest = distance; }
+                });
 
                 if (!found)
                 {
                     orderedNodeList.Add(new GH_Node(nodeList[i]));
                     rTree.Insert(pt, orderedNodeList.Count - 1);
+                }
+                else
+                {
+                    var target = orderedNodeList[foundId].Value;
+                    var source = nodeList[i].Value;
+                    foreach (var group in source.Groups) if (!target.Groups.Contains(group)) target.Groups.Add(group);
+                    // Geometry coincidence must not discard restraints, rigid links or actions.
+                    // Equal-valued loads on distinct nodes remain additive.
+                    foreach (var load in source.Loads) if (!target.Loads.Any(l => ReferenceEquals(l, load))) target.Loads.Add(load);
+                    foreach (var attribute in source.Attributes)
+                        if (!target.Attributes.Contains(attribute) && !(attribute is ElementIdAttributeModel && target.HasAttribute(typeof(ElementIdAttributeModel))))
+                            target.Attributes.Add(attribute);
+                    foreach (var result in source.Results) if (!target.Results.Contains(result)) target.Results.Add(result);
                 }
             }
 

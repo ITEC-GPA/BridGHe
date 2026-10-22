@@ -17,6 +17,7 @@ internal static class RegressionTests
             ["bridge-detail-stations"] = BridgeSupportReactionTests.Run,
             ["bridge-combination-excel-component"] = () => BridgeCombinationExcelExample.Run(),
             ["simple-bridge"] = SimpleBridgeTests.Run,
+            ["gh-node-merge"] = GrasshopperNodeMergeTests.Run,
             ["bridge-span-advisor"] = BridgeSpanAdvisorTests.Run,
             ["bridge-assignment"] = BridgeAssignmentTests.Run,
             ["bridge-bearings"] = BridgeBearingTests.Run,
