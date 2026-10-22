@@ -4,6 +4,18 @@
 
 Aprire [REV004](REV004/flusso-acciaio-misto_REV004.ghx). Include la soletta trasversale di **Simple Bridge Solid**, i collegamenti eccentrici e **Reinforcement Steel B450C**. Le revisioni precedenti restano disponibili sotto; la REV003 modificata localmente dall'utente non è stata sovrascritta.
 
+### Input espliciti sul canvas
+
+La REV004 aggiornata espone i 480 ingressi precedentemente memorizzati nei componenti: 195 slider, 126 toggle, 61 Value List, 88 pannelli e 10 parametri tipizzati per stringhe vuote o dati generici. Ogni controllo è vicino al componente che alimenta, nel gruppo `Input | …`, e riporta la descrizione della variabile. Sono stati rinominati anche i controlli preesistenti collegati: per esempio **Spessore soletta [mm]**, **Umidità relativa [%]**, **Passo longitudinale pioli [mm]** e **Età attivazione misto [giorni]**. I tooltip conservano la descrizione completa dell'ingresso.
+
+Le Value List mostrano i nomi delle opzioni. I pannelli contengono testi, percorsi, vettori e liste ordinate; i valori numerici che uno slider arrotonderebbe restano nei pannelli. I parametri marcati `(vuoto)` forniscono una stringa vuota. Gli ingressi opzionali senza dati rimangono scollegati quando indicano assenza di filtro, selezione o override. I pulsanti **Run/Generate** restano sui componenti: l'aggiornamento non abilita l'esecuzione automatica di Straus o la scrittura del report.
+
+L'opzione **Considera calcestruzzo nelle fasi miste** è ora esplicitamente `True`: nel precedente GHX era presente un posto vuoto, interpretato già come `True` dal componente. Il controllo numerico conferma gli stessi risultati. Non vengono modificati gli Excel, i file Straus o il report: [validazione degli input espliciti](REV004/explicit-inputs-validation.json).
+
+Il generatore `--example99 rev004` produce già questa configurazione. `--example99 inputs004` aggiorna una REV004 esistente e verifica valori, alberi, riapertura e corrispondenza con il report salvato; se è già aggiornata, la controlla senza riscriverla. Questa revisione richiede anche la Release aggiornata del plugin: è stato corretto il caricamento degli schemi dei carichi distribuiti quando il tipo proviene da un controllo esterno.
+
+### Geometria e fasi della revisione
+
 - Geometria: due campate 12+12 m, due travi a interasse 3 m, soletta 5 m × 300 mm. Le 13 linee trasversali ogni 2 m sono suddivise in 39 aste: sbalzo destro 1 m, tratto fra travi 3 m, sbalzo sinistro 1 m. Asse della soletta a quota −150 mm; 26 link rigidi agli assi delle travi, quota −1359.318631 mm.
 - G1 mantiene 37 aste di acciaio e 26 nodi. G2, Q e ritiro hanno 76 aste, 78 nodi e 26 link. Tutte le fasi conservano i sei appoggi. Gli assi longitudinali sono già suddivisi alle progressive della soletta.
 - Le sezioni delle fasce sono 2000×300 mm internamente e 1000×300 mm alle estremità. Le larghezze si aggiornano dall'uscita geometrica per passo uniforme; per progressive non uniformi occorre assegnare ciascuna larghezza tributaria. Il materiale FEM trasversale usa `Ec,eff = Es/n` della stessa fase.

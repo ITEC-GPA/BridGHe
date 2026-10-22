@@ -35,9 +35,11 @@ internal static class PersonalBridgeExample
                 .Select(c => c.Element("items").Elements("item").Single(i => (string)i.Attribute("name") == "GUID").Value).Select(Guid.Parse);
             var missing = ids.Where(id => !registered.Contains(id)).Distinct().ToArray();
             if (missing.Length > 0) throw new InvalidOperationException("Unregistered object GUIDs: " + string.Join(", ", missing));
-            string source=mode.StartsWith("replay")||mode.StartsWith("finalize")?Path.Combine(Root,"REV"+mode.Substring(mode.Length-3),"flusso-acciaio-misto_REV"+mode.Substring(mode.Length-3)+".ghx"):Original;
+            string source=mode.StartsWith("replay")||mode.StartsWith("finalize")||mode is "inputs004" or "inspect004"?Path.Combine(Root,"REV"+mode.Substring(mode.Length-3),"flusso-acciaio-misto_REV"+mode.Substring(mode.Length-3)+".ghx"):Original;
             Console.WriteLine("EXAMPLE 99: reading " + Path.GetFileName(source));
             using var doc = GrasshopperBridgeExample.Read(source); doc.FilePath = source;
+            if (mode == "inspect004") return PersonalBridgeExplicitInputs.Inspect(doc);
+            if (mode == "inputs004") return PersonalBridgeExplicitInputs.Update(doc, plugin, Root);
             if(mode.StartsWith("replay")||mode.StartsWith("finalize"))return new PersonalBridgeRevision(doc,plugin,Root).Replay(mode.StartsWith("finalize"));
             if (mode is "rev002" or "rev003" or "rev004") return new PersonalBridgeRevision(doc, plugin, Root).Build(mode);
             if (mode != "inspect") throw new ArgumentException("Unknown example 99 mode: " + mode);

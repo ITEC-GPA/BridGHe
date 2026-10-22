@@ -1,0 +1,3864 @@
+{
+  "revision": "REV004",
+  "previousDefinitionSha256": "3DAE823C6CF09BC9B77A070204847EB4617A6EC1C77C73DD0D1F2386B32D8927",
+  "exposedInputs": 480,
+  "controls": {
+    "GH_Panel": 88,
+    "GH_BooleanToggle": 126,
+    "GH_NumberSlider": 195,
+    "GH_ValueList": 61,
+    "Param_String": 8,
+    "Param_GenericObject": 2
+  },
+  "internalPersistentValues": 0,
+  "inputValuesAndTreesUnchangedAfterDefaultNormalization": true,
+  "reopened": true,
+  "normalizedDefaults": [
+    "Consider Concrete: empty legacy slot made explicit as true, matching SolveInstance\u0027s existing default."
+  ],
+  "nativeSolverInvoked": false,
+  "nativeFilesAndReportAndWorkbookUnchanged": true,
+  "reportNumericalHashMatches": true,
+  "inputs": [
+    {
+      "ComponentId": "4b953bca-d42c-44d0-bcac-e51f2e21c1fd",
+      "Component": "Composite Beam Property",
+      "Input": "Name",
+      "InputId": "2821fd64-dd29-4ea3-9bae-662df012d061",
+      "Control": "GH_Panel",
+      "ControlId": "46e5368b-5b40-430d-bcea-3622ed2c404f"
+    },
+    {
+      "ComponentId": "4b953bca-d42c-44d0-bcac-e51f2e21c1fd",
+      "Component": "Composite Beam Property",
+      "Input": "Consider Concrete",
+      "InputId": "b56baba6-c74a-408a-aadd-3ff6e7cdf62a",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "5f34d848-59dc-4684-bfba-d7fa1e1b078f"
+    },
+    {
+      "ComponentId": "4b953bca-d42c-44d0-bcac-e51f2e21c1fd",
+      "Component": "Composite Beam Property",
+      "Input": "Consider Rebars",
+      "InputId": "f30043bb-dc7c-46ed-9d22-d8edc7a6d96b",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "14722ee1-98e9-40fe-96d5-b2b825989fb2"
+    },
+    {
+      "ComponentId": "a3eb51f7-8083-451a-b969-359f72700463",
+      "Component": "Beam",
+      "Input": "Angle",
+      "InputId": "90a58cf4-2ec9-4b65-8b93-17fad23ba1f4",
+      "Control": "GH_NumberSlider",
+      "ControlId": "ec5270e2-6d95-4b64-bbec-d3fdf32d4266"
+    },
+    {
+      "ComponentId": "d082c27d-61ca-4cef-be8e-f7bbec0b4342",
+      "Component": "Build Model",
+      "Input": "Name",
+      "InputId": "1e98b24c-620f-4fde-b66a-9ffb651c05ce",
+      "Control": "GH_Panel",
+      "ControlId": "4b21130f-4da9-46d8-94dd-4a8e747a53f1"
+    },
+    {
+      "ComponentId": "d082c27d-61ca-4cef-be8e-f7bbec0b4342",
+      "Component": "Build Model",
+      "Input": "Units",
+      "InputId": "57b3a745-b759-4416-8e7b-d7ca4b41d642",
+      "Control": "GH_ValueList",
+      "ControlId": "4543278d-30ce-443c-bfd8-f1f006bccf17"
+    },
+    {
+      "ComponentId": "7366b76a-6b68-4819-8867-c47e68bc48bb",
+      "Component": "Beam Distributed Load",
+      "Input": "Type",
+      "InputId": "8db9b67d-34f2-4434-ade6-b9d109cbb6b2",
+      "Control": "GH_ValueList",
+      "ControlId": "a82b5792-67db-47ac-ba81-c47915d6672f"
+    },
+    {
+      "ComponentId": "7366b76a-6b68-4819-8867-c47e68bc48bb",
+      "Component": "Beam Distributed Load",
+      "Input": "Direction",
+      "InputId": "50ab56c5-3480-4777-9d34-965b254c792f",
+      "Control": "GH_ValueList",
+      "ControlId": "2c15d397-ac43-43f3-b9c6-97574b026748"
+    },
+    {
+      "ComponentId": "7366b76a-6b68-4819-8867-c47e68bc48bb",
+      "Component": "Beam Distributed Load",
+      "Input": "a",
+      "InputId": "47684d5a-148d-4cb2-9c38-eff775bf5a7c",
+      "Control": "GH_NumberSlider",
+      "ControlId": "b77e2480-ca2c-41f7-ba60-e21664eba4e4"
+    },
+    {
+      "ComponentId": "7366b76a-6b68-4819-8867-c47e68bc48bb",
+      "Component": "Beam Distributed Load",
+      "Input": "b",
+      "InputId": "d0ae4bb5-d324-43c3-969b-1470f29a0102",
+      "Control": "GH_NumberSlider",
+      "ControlId": "fa2b46d0-44e3-4691-95b5-f175cb9c48ca"
+    },
+    {
+      "ComponentId": "b4db0475-9d8e-4e1d-8d9f-3db4e4d918df",
+      "Component": "Build Model",
+      "Input": "Name",
+      "InputId": "04e93478-6979-41bc-9c88-62874da1039f",
+      "Control": "GH_Panel",
+      "ControlId": "057fe00e-d307-42e3-ad31-4a74ce16e327"
+    },
+    {
+      "ComponentId": "b4db0475-9d8e-4e1d-8d9f-3db4e4d918df",
+      "Component": "Build Model",
+      "Input": "Units",
+      "InputId": "4063b1e7-6729-4c86-9983-6f954dce4efc",
+      "Control": "GH_ValueList",
+      "ControlId": "f5ab9a08-d75a-42b8-b243-54cf5a82a237"
+    },
+    {
+      "ComponentId": "2c52577a-da63-4e52-a6c9-57c0f9a8a0b7",
+      "Component": "Straus R3 Analysis",
+      "Input": "Solver",
+      "InputId": "0541aaf3-49d7-48ba-a901-e12a4ae52f5d",
+      "Control": "GH_ValueList",
+      "ControlId": "d5ae17f3-5d81-48b4-859d-2fcd061d08f9"
+    },
+    {
+      "ComponentId": "2c52577a-da63-4e52-a6c9-57c0f9a8a0b7",
+      "Component": "Straus R3 Analysis",
+      "Input": "Output Path",
+      "InputId": "c500fd43-ab20-46de-84ea-93f1756a5561",
+      "Control": "GH_Panel",
+      "ControlId": "84cb0790-33f8-4723-9bd1-24ddae0542ae"
+    },
+    {
+      "ComponentId": "2c52577a-da63-4e52-a6c9-57c0f9a8a0b7",
+      "Component": "Straus R3 Analysis",
+      "Input": "Keep Running",
+      "InputId": "5b64ae21-0cca-420a-8a8a-80c705a62d3c",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "d9014bed-0e31-4856-a1c7-f73fa92cf4d8"
+    },
+    {
+      "ComponentId": "ab711c5b-b140-4e40-93a4-5a19b3d3ffd1",
+      "Component": "Beam Distributed Load",
+      "Input": "Type",
+      "InputId": "4f07f9e6-e2e4-42ed-bd58-5495a2239181",
+      "Control": "GH_ValueList",
+      "ControlId": "05bffce4-6247-4a3d-b490-7d84cf150ef3"
+    },
+    {
+      "ComponentId": "ab711c5b-b140-4e40-93a4-5a19b3d3ffd1",
+      "Component": "Beam Distributed Load",
+      "Input": "Direction",
+      "InputId": "4f9a250d-59f3-4f8f-ae2f-545eca7256c1",
+      "Control": "GH_ValueList",
+      "ControlId": "a4a20432-5db2-415b-9e8c-85debcbb7b89"
+    },
+    {
+      "ComponentId": "ab711c5b-b140-4e40-93a4-5a19b3d3ffd1",
+      "Component": "Beam Distributed Load",
+      "Input": "a",
+      "InputId": "17dcd78c-4f9a-430e-a8df-382953fced35",
+      "Control": "GH_NumberSlider",
+      "ControlId": "c291fcf9-f244-4519-8eea-6a20301f142b"
+    },
+    {
+      "ComponentId": "ab711c5b-b140-4e40-93a4-5a19b3d3ffd1",
+      "Component": "Beam Distributed Load",
+      "Input": "b",
+      "InputId": "2081ca09-e85d-4068-bb5f-0e8a1b174851",
+      "Control": "GH_NumberSlider",
+      "ControlId": "7ede3606-8a06-4bfa-9b23-726d1abebd3f"
+    },
+    {
+      "ComponentId": "a2b57f7a-764c-44e1-b68e-6b71ee7b8b84",
+      "Component": "Build Model",
+      "Input": "Name",
+      "InputId": "43ba95e4-f3ff-4a94-9f07-86610e452020",
+      "Control": "GH_Panel",
+      "ControlId": "829b20f6-1605-4c47-9c45-eeec05fd74a0"
+    },
+    {
+      "ComponentId": "a2b57f7a-764c-44e1-b68e-6b71ee7b8b84",
+      "Component": "Build Model",
+      "Input": "Units",
+      "InputId": "46048591-f373-4cec-8ea1-1249267f80ab",
+      "Control": "GH_ValueList",
+      "ControlId": "8981065b-c2e0-44b1-bf80-bf4aff2624bd"
+    },
+    {
+      "ComponentId": "8187f478-4f1f-4b1d-91ef-51b19851099e",
+      "Component": "Straus R3 Analysis",
+      "Input": "Solver",
+      "InputId": "dce77fe3-0d0b-4ef8-bec5-2207c3bf34ff",
+      "Control": "GH_ValueList",
+      "ControlId": "4dc8046f-96c5-48dd-bc28-480dd332bdcf"
+    },
+    {
+      "ComponentId": "8187f478-4f1f-4b1d-91ef-51b19851099e",
+      "Component": "Straus R3 Analysis",
+      "Input": "Output Path",
+      "InputId": "9a12c997-b01e-47f7-b290-28ec536661b1",
+      "Control": "GH_Panel",
+      "ControlId": "153f72dd-018f-45bd-ae06-ab5ba1860688"
+    },
+    {
+      "ComponentId": "8187f478-4f1f-4b1d-91ef-51b19851099e",
+      "Component": "Straus R3 Analysis",
+      "Input": "Keep Running",
+      "InputId": "7289c80b-8f04-45da-bb44-9b59a642429c",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "b7f3770c-6583-44ef-8292-c7ebb1206c12"
+    },
+    {
+      "ComponentId": "269800c2-cd9b-4770-a437-0fc7a06d297f",
+      "Component": "Beam Distributed Load",
+      "Input": "Type",
+      "InputId": "f125f59c-ed31-44b3-9542-4cadaec1676c",
+      "Control": "GH_ValueList",
+      "ControlId": "7f4561c5-27f2-4f72-909f-11abba669228"
+    },
+    {
+      "ComponentId": "269800c2-cd9b-4770-a437-0fc7a06d297f",
+      "Component": "Beam Distributed Load",
+      "Input": "Direction",
+      "InputId": "db293894-dd65-42a2-a6c9-a15a124296a7",
+      "Control": "GH_ValueList",
+      "ControlId": "005bdf9a-4d1b-49d1-b913-d3d70772bd82"
+    },
+    {
+      "ComponentId": "269800c2-cd9b-4770-a437-0fc7a06d297f",
+      "Component": "Beam Distributed Load",
+      "Input": "a",
+      "InputId": "42b1e71f-8807-47f5-bf10-42f8e9141e76",
+      "Control": "GH_NumberSlider",
+      "ControlId": "8a096ecf-c427-4dc0-aa8f-19e842f62bcf"
+    },
+    {
+      "ComponentId": "269800c2-cd9b-4770-a437-0fc7a06d297f",
+      "Component": "Beam Distributed Load",
+      "Input": "b",
+      "InputId": "42e420ec-36a3-4b41-8a2b-c327a9751b27",
+      "Control": "GH_NumberSlider",
+      "ControlId": "065d51aa-4c62-4981-82fe-b3e30f5532ac"
+    },
+    {
+      "ComponentId": "f57d490b-f486-4a2f-8764-2b5d9f3c9c42",
+      "Component": "Build Model",
+      "Input": "Name",
+      "InputId": "b2076751-8ff2-41ae-ad57-b4a97c891a18",
+      "Control": "GH_Panel",
+      "ControlId": "5a3650b8-9645-423c-8416-97f8af544440"
+    },
+    {
+      "ComponentId": "f57d490b-f486-4a2f-8764-2b5d9f3c9c42",
+      "Component": "Build Model",
+      "Input": "Units",
+      "InputId": "8e03157a-3fe9-47fe-b4a8-9ad3c6ecfb33",
+      "Control": "GH_ValueList",
+      "ControlId": "7902f109-231d-4e44-b9ab-96d85c8a8556"
+    },
+    {
+      "ComponentId": "0f593523-bfa4-4c07-b68d-fda28f451c7b",
+      "Component": "Straus R3 Analysis",
+      "Input": "Solver",
+      "InputId": "739ca676-07bb-45cf-a814-a1e6102e7361",
+      "Control": "GH_ValueList",
+      "ControlId": "ea182fb1-f071-4389-80f6-729653a29dcd"
+    },
+    {
+      "ComponentId": "0f593523-bfa4-4c07-b68d-fda28f451c7b",
+      "Component": "Straus R3 Analysis",
+      "Input": "Analysis Results",
+      "InputId": "9bbd3936-d3d2-436d-b3d4-a391c057db8e",
+      "Control": "GH_Panel",
+      "ControlId": "70ab4d31-267f-4566-8e7a-9f100f93b81e"
+    },
+    {
+      "ComponentId": "0f593523-bfa4-4c07-b68d-fda28f451c7b",
+      "Component": "Straus R3 Analysis",
+      "Input": "Output Path",
+      "InputId": "24f1e97d-fc54-41c0-ad10-6cb0ed86e3d4",
+      "Control": "GH_Panel",
+      "ControlId": "32eaa42c-537c-44b6-9042-114c0ad51f0e"
+    },
+    {
+      "ComponentId": "0f593523-bfa4-4c07-b68d-fda28f451c7b",
+      "Component": "Straus R3 Analysis",
+      "Input": "Keep Running",
+      "InputId": "d4933422-7ea5-496f-b4b5-8b208e3d183b",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "0b3f67c8-bb22-45b4-b292-1ccc20ef695f"
+    },
+    {
+      "ComponentId": "f0f4d62d-46f6-4d42-8d71-64cd4f17e066",
+      "Component": "Beam PreLoad",
+      "Input": "Type",
+      "InputId": "88b184a6-7b7e-4909-97be-0b53c54d7910",
+      "Control": "GH_ValueList",
+      "ControlId": "143d5e60-6a7b-4e1c-aece-2ddb877141b5"
+    },
+    {
+      "ComponentId": "f624c99c-3cc3-4bd5-9689-ed435061b28d",
+      "Component": "Beam Gradient Load",
+      "Input": "Axis 1",
+      "InputId": "1245f64a-2042-4f01-99b1-d1585008d70e",
+      "Control": "GH_NumberSlider",
+      "ControlId": "58361c8d-8f54-47bb-a310-fe22bce71aca"
+    },
+    {
+      "ComponentId": "d9961a47-9644-4892-88f8-227d97e77948",
+      "Component": "Build Model",
+      "Input": "Name",
+      "InputId": "19988266-90be-4a58-a0db-240a63f969b6",
+      "Control": "GH_Panel",
+      "ControlId": "3f8264a2-019e-4f05-9a02-3264dc4c455c"
+    },
+    {
+      "ComponentId": "d9961a47-9644-4892-88f8-227d97e77948",
+      "Component": "Build Model",
+      "Input": "Units",
+      "InputId": "fb8217f3-b249-4c44-96f3-599a93cb3cf3",
+      "Control": "GH_ValueList",
+      "ControlId": "a7eb77ec-d753-4d9d-8807-66fe0ee72995"
+    },
+    {
+      "ComponentId": "2596c64c-16e2-4176-ae57-929880f64ce2",
+      "Component": "Straus R3 Analysis",
+      "Input": "Solver",
+      "InputId": "1ff4f6d2-7d8a-4bc2-8dae-407414e82521",
+      "Control": "GH_ValueList",
+      "ControlId": "b5e0aa73-5058-4907-ae74-d8a9ebd7df21"
+    },
+    {
+      "ComponentId": "2596c64c-16e2-4176-ae57-929880f64ce2",
+      "Component": "Straus R3 Analysis",
+      "Input": "Output Path",
+      "InputId": "0ae8fabf-e868-4c39-b751-fc8070324675",
+      "Control": "GH_Panel",
+      "ControlId": "ccdb5d54-4bb6-4fc2-a339-6604e49d4b52"
+    },
+    {
+      "ComponentId": "2596c64c-16e2-4176-ae57-929880f64ce2",
+      "Component": "Straus R3 Analysis",
+      "Input": "Keep Running",
+      "InputId": "e2e6af9e-ca20-4420-afa9-16adaa18d569",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "df58bf31-7f38-4dd8-96da-d349a1a58af3"
+    },
+    {
+      "ComponentId": "dd29b475-2431-4a9f-9066-d968f12d3ea5",
+      "Component": "Super Element Filter",
+      "Input": "Super-Element",
+      "InputId": "55be1c9f-ca67-4b2a-b77f-0ebdc1c968fc",
+      "Control": "GH_Panel",
+      "ControlId": "1ee578ee-4ee4-4b7d-8d82-a4f3e6ad5618"
+    },
+    {
+      "ComponentId": "a8d8af21-d392-4f24-af39-fe1ff1e631fe",
+      "Component": "Super Element Check",
+      "Input": "Web Local Instability",
+      "InputId": "676a5897-00d9-4148-939b-f0e8b106019d",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "dcfb1345-20f4-45f3-a971-3ed5a511a856"
+    },
+    {
+      "ComponentId": "a8d8af21-d392-4f24-af39-fe1ff1e631fe",
+      "Component": "Super Element Check",
+      "Input": "Top Flange Local Instability",
+      "InputId": "e63821a7-f512-4ac0-ae86-d8466314f3f0",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "b11222b9-0bb6-404d-a4c5-158aa963a651"
+    },
+    {
+      "ComponentId": "a8d8af21-d392-4f24-af39-fe1ff1e631fe",
+      "Component": "Super Element Check",
+      "Input": "Bottom Flange Local Instability",
+      "InputId": "aefb41e0-4d66-43a1-8b67-8dc3771831cb",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "a5e0823d-ac5d-428b-b0a4-4d0fe790866e"
+    },
+    {
+      "ComponentId": "231295c0-7e1a-4392-8c37-77ba79130c0d",
+      "Component": "Display Settings",
+      "Input": "Enabled",
+      "InputId": "06807b3b-c592-4368-8fef-e4fc83027759",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "58c44ec7-905f-41c4-bcad-04b04f687114"
+    },
+    {
+      "ComponentId": "231295c0-7e1a-4392-8c37-77ba79130c0d",
+      "Component": "Display Settings",
+      "Input": "Geometry",
+      "InputId": "83e2b73c-5694-40b6-a383-2f791cf1e1e9",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "500a00f1-4704-4677-9e9c-97be1b5db9bb"
+    },
+    {
+      "ComponentId": "231295c0-7e1a-4392-8c37-77ba79130c0d",
+      "Component": "Display Settings",
+      "Input": "Sections",
+      "InputId": "d60411a5-0c69-4778-a794-d7d6e75eb152",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "638cc097-6687-42e9-a472-e748d8cb3d4c"
+    },
+    {
+      "ComponentId": "231295c0-7e1a-4392-8c37-77ba79130c0d",
+      "Component": "Display Settings",
+      "Input": "Shaded",
+      "InputId": "e104fd19-d3f2-4cb5-9913-8291b0f49afc",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "f1402ff7-86d9-4f66-97de-557c47022d81"
+    },
+    {
+      "ComponentId": "231295c0-7e1a-4392-8c37-77ba79130c0d",
+      "Component": "Display Settings",
+      "Input": "Reinforcement",
+      "InputId": "2b50a436-23ec-4e99-b6fa-727e4998a471",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "5a232bf8-1766-42c6-8034-ac53140934bc"
+    },
+    {
+      "ComponentId": "231295c0-7e1a-4392-8c37-77ba79130c0d",
+      "Component": "Display Settings",
+      "Input": "Loads",
+      "InputId": "5f35e756-1054-4d3f-9e93-092b7669b849",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "76ed2b50-87a0-471b-aaeb-15eac543ade9"
+    },
+    {
+      "ComponentId": "231295c0-7e1a-4392-8c37-77ba79130c0d",
+      "Component": "Display Settings",
+      "Input": "Supports",
+      "InputId": "14997f03-e7b5-4462-a881-eed59933f2ab",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "8a532c09-1d0e-47e7-969e-f639a507a68b"
+    },
+    {
+      "ComponentId": "231295c0-7e1a-4392-8c37-77ba79130c0d",
+      "Component": "Display Settings",
+      "Input": "Releases",
+      "InputId": "8d68c0d6-e47f-4b8c-9bcd-04f88fc71ab1",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "5dfb0fd2-66ab-44b2-a31c-9526582888d1"
+    },
+    {
+      "ComponentId": "231295c0-7e1a-4392-8c37-77ba79130c0d",
+      "Component": "Display Settings",
+      "Input": "OtherAttributes",
+      "InputId": "25deee3e-8af7-4d6f-a275-dd7f253c6ff4",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "26826f6b-41e1-46e2-826b-c537cb892b26"
+    },
+    {
+      "ComponentId": "231295c0-7e1a-4392-8c37-77ba79130c0d",
+      "Component": "Display Settings",
+      "Input": "Axes",
+      "InputId": "4ccd1f2d-f0b6-46e3-b2f9-5fd14a45169b",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "fb663c47-f38a-4378-b965-ee679a2336fb"
+    },
+    {
+      "ComponentId": "231295c0-7e1a-4392-8c37-77ba79130c0d",
+      "Component": "Display Settings",
+      "Input": "Labels",
+      "InputId": "ab273089-acb5-4c10-a0e2-30952c45bf4d",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "66ce059c-96fd-478a-803d-bfb079d1d1c6"
+    },
+    {
+      "ComponentId": "231295c0-7e1a-4392-8c37-77ba79130c0d",
+      "Component": "Display Settings",
+      "Input": "Symbol scale",
+      "InputId": "9cd09348-6faa-48c3-8d9e-ef6d77b45dd1",
+      "Control": "GH_NumberSlider",
+      "ControlId": "edc5c0fd-044b-4498-ac2c-2138832a8111"
+    },
+    {
+      "ComponentId": "231295c0-7e1a-4392-8c37-77ba79130c0d",
+      "Component": "Display Settings",
+      "Input": "Load scale",
+      "InputId": "c3d577e0-64f9-4b3a-8c6e-a2df33ac9b3d",
+      "Control": "GH_NumberSlider",
+      "ControlId": "9bb24ff5-489c-4832-a9fc-2291418e7b0d"
+    },
+    {
+      "ComponentId": "231295c0-7e1a-4392-8c37-77ba79130c0d",
+      "Component": "Display Settings",
+      "Input": "Transparency",
+      "InputId": "6fd0516d-d2f7-433a-bbb2-296890cff399",
+      "Control": "GH_NumberSlider",
+      "ControlId": "780645c9-5b57-4d6b-8c80-b8199a949f02"
+    },
+    {
+      "ComponentId": "231295c0-7e1a-4392-8c37-77ba79130c0d",
+      "Component": "Display Settings",
+      "Input": "Load case",
+      "InputId": "54c50284-870e-4a34-b04f-290c14eb4aae",
+      "Control": "Param_String",
+      "ControlId": "1a6c1feb-2983-4f0e-b321-ee1d45addd6d"
+    },
+    {
+      "ComponentId": "58c312f7-3e3d-4a53-b764-56245251f7d7",
+      "Component": "Bridge Force Plot",
+      "Input": "Quantity",
+      "InputId": "c2456bdc-78d5-4f16-9800-dc1da4bf8fc2",
+      "Control": "GH_ValueList",
+      "ControlId": "8cd3b486-94c5-4b07-bdf2-bab1c089c671"
+    },
+    {
+      "ComponentId": "58c312f7-3e3d-4a53-b764-56245251f7d7",
+      "Component": "Bridge Force Plot",
+      "Input": "Show Min/Max Combo",
+      "InputId": "0e3ce147-0d88-4f0a-b9de-1ccee3d79208",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "b7283f4d-288d-4de2-ab7e-60370acaf199"
+    },
+    {
+      "ComponentId": "58c312f7-3e3d-4a53-b764-56245251f7d7",
+      "Component": "Bridge Force Plot",
+      "Input": "Graphic Title",
+      "InputId": "07a465cf-dc99-4e54-9d05-61eabb679595",
+      "Control": "GH_Panel",
+      "ControlId": "ee6e0e78-e23a-47ee-984a-52106cd719db"
+    },
+    {
+      "ComponentId": "58c312f7-3e3d-4a53-b764-56245251f7d7",
+      "Component": "Bridge Force Plot",
+      "Input": "Keep Running",
+      "InputId": "3c9809de-ad4b-47a4-878a-6ecb89b79623",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "cf9ee707-0a6b-49a1-b55f-029d7c714276"
+    },
+    {
+      "ComponentId": "f7160f75-761f-45f8-87bf-e20a1621711b",
+      "Component": "Bridge Stress Plot",
+      "Input": "Quantity",
+      "InputId": "482070f4-ce76-4292-b1e7-caf5db8dc31c",
+      "Control": "GH_ValueList",
+      "ControlId": "33229f64-c14d-4d1c-a77a-dc6cbdb8b307"
+    },
+    {
+      "ComponentId": "f7160f75-761f-45f8-87bf-e20a1621711b",
+      "Component": "Bridge Stress Plot",
+      "Input": "Show Min/Max Combo",
+      "InputId": "27b650fa-3259-4e7a-974d-29cfbef84054",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "d4eb92e3-4085-4f95-905b-69759d4924ec"
+    },
+    {
+      "ComponentId": "f7160f75-761f-45f8-87bf-e20a1621711b",
+      "Component": "Bridge Stress Plot",
+      "Input": "Graphic Title",
+      "InputId": "d46f5fba-fbe7-4f56-a153-6d4e5a17d74e",
+      "Control": "GH_Panel",
+      "ControlId": "d74efc1e-fb6a-4cdf-81ef-96c55d4f3339"
+    },
+    {
+      "ComponentId": "f7160f75-761f-45f8-87bf-e20a1621711b",
+      "Component": "Bridge Stress Plot",
+      "Input": "Keep Running",
+      "InputId": "0a7eab07-88e5-494e-aa0c-ca88665bb5a6",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "c8ff9f81-e595-4a97-80f1-e74181cc121b"
+    },
+    {
+      "ComponentId": "df362034-315c-4fcb-8509-f758102c83dd",
+      "Component": "Steel",
+      "Input": "Grade",
+      "InputId": "4ce11b78-ab40-4054-8147-f96a8fbe1947",
+      "Control": "GH_ValueList",
+      "ControlId": "bcc2cc2c-a485-4723-93f0-a12b4804a49f"
+    },
+    {
+      "ComponentId": "2e179a4b-9efc-49eb-9d36-e1b8bf51fbda",
+      "Component": "Concrete",
+      "Input": "Grade",
+      "InputId": "a828a5ce-a5ca-41da-9889-de5a6cee9085",
+      "Control": "GH_ValueList",
+      "ControlId": "aec4a7b2-caac-47b6-8230-1d9ce5adc353"
+    },
+    {
+      "ComponentId": "1777690f-b3ea-4641-83df-186914c57f9f",
+      "Component": "I Section",
+      "Input": "Radius",
+      "InputId": "4e07c961-6a50-4430-8125-f5ec986dd199",
+      "Control": "GH_NumberSlider",
+      "ControlId": "470f6063-d335-469e-8565-011d1bd5eecb"
+    },
+    {
+      "ComponentId": "143b7269-0816-4277-8372-ae901ba55d87",
+      "Component": "Display Settings",
+      "Input": "Enabled",
+      "InputId": "42bf9d57-433a-43d6-a422-7adfa64ea026",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "7af888d2-e55a-41ca-a4b6-130bc1c066c4"
+    },
+    {
+      "ComponentId": "143b7269-0816-4277-8372-ae901ba55d87",
+      "Component": "Display Settings",
+      "Input": "Geometry",
+      "InputId": "5d97b8cd-9a10-496e-96c1-875e0601d207",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "033282ad-e888-486c-ade7-4900f3fba1f9"
+    },
+    {
+      "ComponentId": "143b7269-0816-4277-8372-ae901ba55d87",
+      "Component": "Display Settings",
+      "Input": "Sections",
+      "InputId": "1965ffc2-9886-4e68-a7ca-f3b1ee8cfec7",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "314d1ef0-5207-4fcd-a939-49334f0c2b6e"
+    },
+    {
+      "ComponentId": "143b7269-0816-4277-8372-ae901ba55d87",
+      "Component": "Display Settings",
+      "Input": "Shaded",
+      "InputId": "9afa2ea8-2de3-4c2d-ae16-4654ed187d40",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "e48841b6-b223-464f-9fe1-4e962006b097"
+    },
+    {
+      "ComponentId": "143b7269-0816-4277-8372-ae901ba55d87",
+      "Component": "Display Settings",
+      "Input": "Reinforcement",
+      "InputId": "e0926a61-b7ea-461c-b696-cee23722645e",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "ff50cebf-76d0-4049-837b-e636bb511c71"
+    },
+    {
+      "ComponentId": "143b7269-0816-4277-8372-ae901ba55d87",
+      "Component": "Display Settings",
+      "Input": "Loads",
+      "InputId": "8c88469b-eeb0-41b5-a804-5592a6710f71",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "42ae8fbe-cbeb-43ff-9e54-88daa01222f5"
+    },
+    {
+      "ComponentId": "143b7269-0816-4277-8372-ae901ba55d87",
+      "Component": "Display Settings",
+      "Input": "Supports",
+      "InputId": "45b20dcd-813a-4b94-998a-6d1b5286ba4a",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "2eb6d84a-9c19-46ee-b4be-588c024f66b4"
+    },
+    {
+      "ComponentId": "143b7269-0816-4277-8372-ae901ba55d87",
+      "Component": "Display Settings",
+      "Input": "Releases",
+      "InputId": "f9a13df6-df26-4562-8745-52cada7b7afd",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "c9784253-c682-44a5-9764-f1b586a877a7"
+    },
+    {
+      "ComponentId": "143b7269-0816-4277-8372-ae901ba55d87",
+      "Component": "Display Settings",
+      "Input": "OtherAttributes",
+      "InputId": "5647ab52-537f-45fd-b38a-37482ffecf04",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "8532b062-7bcc-48d8-90c7-1a95f6a8a7a9"
+    },
+    {
+      "ComponentId": "143b7269-0816-4277-8372-ae901ba55d87",
+      "Component": "Display Settings",
+      "Input": "Axes",
+      "InputId": "5ac361d8-044f-4d1a-8f77-ce62bd59972e",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "fbdea423-367e-4502-abdb-7a57719c9656"
+    },
+    {
+      "ComponentId": "143b7269-0816-4277-8372-ae901ba55d87",
+      "Component": "Display Settings",
+      "Input": "Labels",
+      "InputId": "44a60326-a797-4481-83f3-50d82cc3bcc1",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "b37c43cc-f27b-4805-b478-a88d78596d00"
+    },
+    {
+      "ComponentId": "143b7269-0816-4277-8372-ae901ba55d87",
+      "Component": "Display Settings",
+      "Input": "Symbol scale",
+      "InputId": "b770485e-0472-47f2-8af5-36168429d3a3",
+      "Control": "GH_NumberSlider",
+      "ControlId": "c99fe8c1-ef54-42da-a46c-420d54b68dca"
+    },
+    {
+      "ComponentId": "143b7269-0816-4277-8372-ae901ba55d87",
+      "Component": "Display Settings",
+      "Input": "Load scale",
+      "InputId": "28eb05f8-03c7-41c2-a38e-bdbd4587dcbf",
+      "Control": "GH_NumberSlider",
+      "ControlId": "d876e94e-ddfb-48d5-b3b9-a650ce48ad1d"
+    },
+    {
+      "ComponentId": "143b7269-0816-4277-8372-ae901ba55d87",
+      "Component": "Display Settings",
+      "Input": "Transparency",
+      "InputId": "3168435b-8f2f-4e39-aa32-7d5a9edfb404",
+      "Control": "GH_NumberSlider",
+      "ControlId": "8df82e50-1bb3-4576-b8a0-e19b3b82ca24"
+    },
+    {
+      "ComponentId": "143b7269-0816-4277-8372-ae901ba55d87",
+      "Component": "Display Settings",
+      "Input": "Load case",
+      "InputId": "03d48fb8-d55e-4cdf-ac8b-5e382f42f541",
+      "Control": "Param_String",
+      "ControlId": "580c3769-f434-4af3-addf-bb1a024363c6"
+    },
+    {
+      "ComponentId": "922076fc-4349-47df-bb1a-27af7fae6160",
+      "Component": "Series",
+      "Input": "Start",
+      "InputId": "290bfed5-35d6-4270-96bd-b9dc8c877a81",
+      "Control": "GH_NumberSlider",
+      "ControlId": "41b5c7c6-b754-4744-b7a1-61fec3222dcf"
+    },
+    {
+      "ComponentId": "922076fc-4349-47df-bb1a-27af7fae6160",
+      "Component": "Series",
+      "Input": "Step",
+      "InputId": "aedccf46-28b8-40c5-acf6-5acdb8eceb82",
+      "Control": "GH_NumberSlider",
+      "ControlId": "64527b8f-3669-48d8-88b9-22c5ebe367d6"
+    },
+    {
+      "ComponentId": "e3638efa-0be6-4fd7-b5d8-3cb34a3ba283",
+      "Component": "Beam Filter",
+      "Input": "Units",
+      "InputId": "99dd990c-e689-466b-8f55-f73ff387ef2d",
+      "Control": "GH_ValueList",
+      "ControlId": "fbdb148c-b316-45f3-a499-1520f89aa140"
+    },
+    {
+      "ComponentId": "e3638efa-0be6-4fd7-b5d8-3cb34a3ba283",
+      "Component": "Beam Filter",
+      "Input": "Properties name",
+      "InputId": "b4ee9da4-441f-4c44-a276-27ac1d6cfa80",
+      "Control": "GH_Panel",
+      "ControlId": "a0ac302e-c79a-461d-8b8e-6af5fe33e263"
+    },
+    {
+      "ComponentId": "5fabebf6-e15a-46e5-9376-d4542c34a7d4",
+      "Component": "Load Case",
+      "Input": "Gravity NSM",
+      "InputId": "38cb2572-e7b4-4429-a742-2ef947422d3c",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "f587228a-c16a-4c43-acd7-31a533c46609"
+    },
+    {
+      "ComponentId": "1ff8aad4-6122-41ab-b0a6-f3a8e61b1c15",
+      "Component": "Load Case",
+      "Input": "Gravity NSM",
+      "InputId": "b81ff262-2390-47ea-8194-43c85d6beb70",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "fc2f8d00-cc43-4973-a752-805d20825b19"
+    },
+    {
+      "ComponentId": "8dac2c9c-6022-4b9f-980b-17103b052462",
+      "Component": "Load Case",
+      "Input": "Gravity NSM",
+      "InputId": "ef4070b3-2537-4e03-bbca-6dcba8a44eeb",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "d3131d59-0d25-4adb-a456-872f2438cb85"
+    },
+    {
+      "ComponentId": "4e5c06ac-db71-4a75-9225-52b112d96af8",
+      "Component": "Display Settings",
+      "Input": "Enabled",
+      "InputId": "df21c704-8417-46ce-8c36-eaeb8ec4a24e",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "0eb8c9e2-4696-46e6-8a1d-296efcb6d17e"
+    },
+    {
+      "ComponentId": "4e5c06ac-db71-4a75-9225-52b112d96af8",
+      "Component": "Display Settings",
+      "Input": "Geometry",
+      "InputId": "093d108a-208b-4a46-9f65-d6855083b34e",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "4f0a4ed4-62cb-48cf-9ea4-d7aa64121636"
+    },
+    {
+      "ComponentId": "4e5c06ac-db71-4a75-9225-52b112d96af8",
+      "Component": "Display Settings",
+      "Input": "Sections",
+      "InputId": "b31b5e0b-1682-49f4-8d77-bb03a729c652",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "d3d9c185-e110-4204-b13a-5834dafe2f38"
+    },
+    {
+      "ComponentId": "4e5c06ac-db71-4a75-9225-52b112d96af8",
+      "Component": "Display Settings",
+      "Input": "Shaded",
+      "InputId": "ef69ab9d-f112-4b8c-b767-396dcb0e0a29",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "dada9841-d6b7-43c6-bbd0-81f0714e60d2"
+    },
+    {
+      "ComponentId": "4e5c06ac-db71-4a75-9225-52b112d96af8",
+      "Component": "Display Settings",
+      "Input": "Reinforcement",
+      "InputId": "5aa39fa2-7719-4a5c-b2e2-e081860deac5",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "df3765f8-b9ec-4f12-ab25-3ded82563c16"
+    },
+    {
+      "ComponentId": "4e5c06ac-db71-4a75-9225-52b112d96af8",
+      "Component": "Display Settings",
+      "Input": "Loads",
+      "InputId": "c0e6ebec-0c36-4fb2-8a70-0b70e5102188",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "7b0c0f95-eb3e-4567-925e-5b7dff4c3eaa"
+    },
+    {
+      "ComponentId": "4e5c06ac-db71-4a75-9225-52b112d96af8",
+      "Component": "Display Settings",
+      "Input": "Supports",
+      "InputId": "f53309f6-6013-4de6-96fa-7b8e8c785b67",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "4abb63f0-d577-4cd8-b685-5953f5f0c40d"
+    },
+    {
+      "ComponentId": "4e5c06ac-db71-4a75-9225-52b112d96af8",
+      "Component": "Display Settings",
+      "Input": "Releases",
+      "InputId": "29acc1b0-6df3-49e1-acde-d7e10d9489b6",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "a83fa4e9-2258-480a-9be7-09fdeb79af95"
+    },
+    {
+      "ComponentId": "4e5c06ac-db71-4a75-9225-52b112d96af8",
+      "Component": "Display Settings",
+      "Input": "OtherAttributes",
+      "InputId": "68ebf8af-c579-4dfa-b834-183a808f05c2",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "6a766f2b-513d-4a69-95f5-1d69c6ab081b"
+    },
+    {
+      "ComponentId": "4e5c06ac-db71-4a75-9225-52b112d96af8",
+      "Component": "Display Settings",
+      "Input": "Axes",
+      "InputId": "0c007343-7d94-4cbb-839d-d513e676854c",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "e4a76c75-0a1d-42e8-af60-3bffd97dd915"
+    },
+    {
+      "ComponentId": "4e5c06ac-db71-4a75-9225-52b112d96af8",
+      "Component": "Display Settings",
+      "Input": "Labels",
+      "InputId": "105d375b-2e97-4d96-9928-91faf0128830",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "a6a4a27f-3ed5-491e-bf5f-2ba066831c1b"
+    },
+    {
+      "ComponentId": "4e5c06ac-db71-4a75-9225-52b112d96af8",
+      "Component": "Display Settings",
+      "Input": "Symbol scale",
+      "InputId": "26103ae4-2afe-48f4-9376-3722f49388ce",
+      "Control": "GH_NumberSlider",
+      "ControlId": "23391ab8-7116-49a7-a60e-599b7a1d5962"
+    },
+    {
+      "ComponentId": "4e5c06ac-db71-4a75-9225-52b112d96af8",
+      "Component": "Display Settings",
+      "Input": "Load scale",
+      "InputId": "db934ca8-c634-4728-b110-bfd6361e7bfc",
+      "Control": "GH_NumberSlider",
+      "ControlId": "af9c3470-0c28-4426-992c-ea7aff4aafa7"
+    },
+    {
+      "ComponentId": "4e5c06ac-db71-4a75-9225-52b112d96af8",
+      "Component": "Display Settings",
+      "Input": "Transparency",
+      "InputId": "5757f0f3-5a8b-42ab-9a6b-f23aa3fdcf2d",
+      "Control": "GH_NumberSlider",
+      "ControlId": "d4d35f91-6c48-4b5a-b5fe-1e87a1012eae"
+    },
+    {
+      "ComponentId": "4e5c06ac-db71-4a75-9225-52b112d96af8",
+      "Component": "Display Settings",
+      "Input": "Load case",
+      "InputId": "c2b6f18d-bf52-477e-8ded-154d56c6eb27",
+      "Control": "Param_String",
+      "ControlId": "ab49ca90-2ca6-4446-b2ed-d93a67e6ee57"
+    },
+    {
+      "ComponentId": "b9728851-aee3-410e-a66d-232642de16a5",
+      "Component": "Display Settings",
+      "Input": "Enabled",
+      "InputId": "052402fb-2e20-44ef-985a-feb40b71cc81",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "3877b352-78c9-4ed3-84fd-f7e55582623a"
+    },
+    {
+      "ComponentId": "b9728851-aee3-410e-a66d-232642de16a5",
+      "Component": "Display Settings",
+      "Input": "Geometry",
+      "InputId": "ebdb2f3f-4091-444c-bc39-b832c05edf62",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "861bb62d-47d4-4180-81d8-c97ffce104d0"
+    },
+    {
+      "ComponentId": "b9728851-aee3-410e-a66d-232642de16a5",
+      "Component": "Display Settings",
+      "Input": "Sections",
+      "InputId": "6cd81be1-4cbc-402c-9bfe-e59675b61941",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "e620040d-73c5-47f1-9dd2-3dcf0f0414fb"
+    },
+    {
+      "ComponentId": "b9728851-aee3-410e-a66d-232642de16a5",
+      "Component": "Display Settings",
+      "Input": "Shaded",
+      "InputId": "7bc7638c-3ce8-4f47-bbd1-73b4ca802acb",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "abff5558-3fba-4aa8-b515-00d50492344a"
+    },
+    {
+      "ComponentId": "b9728851-aee3-410e-a66d-232642de16a5",
+      "Component": "Display Settings",
+      "Input": "Reinforcement",
+      "InputId": "c2d24154-0f33-4a26-80b4-dbe0bea9cae8",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "e2d44597-552c-4266-a27e-8bcdc938e2de"
+    },
+    {
+      "ComponentId": "b9728851-aee3-410e-a66d-232642de16a5",
+      "Component": "Display Settings",
+      "Input": "Loads",
+      "InputId": "b493c327-5c24-45d0-b700-95306fa68f20",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "cbc64852-75de-4443-ae84-9764b2099b74"
+    },
+    {
+      "ComponentId": "b9728851-aee3-410e-a66d-232642de16a5",
+      "Component": "Display Settings",
+      "Input": "Supports",
+      "InputId": "e5f6862f-6691-462e-b1b4-c2eb09dd4558",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "ea0c8548-e553-432f-bc55-24770b06c97f"
+    },
+    {
+      "ComponentId": "b9728851-aee3-410e-a66d-232642de16a5",
+      "Component": "Display Settings",
+      "Input": "Releases",
+      "InputId": "f9ead77b-5790-4bfb-be3e-e455eda13fc0",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "e7c30ff6-a83e-404d-89f6-e793e6fda92a"
+    },
+    {
+      "ComponentId": "b9728851-aee3-410e-a66d-232642de16a5",
+      "Component": "Display Settings",
+      "Input": "OtherAttributes",
+      "InputId": "e9e4ec45-258d-4e32-ba28-fe96b21c4522",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "f23ffda6-8cf2-4ba9-bca0-258c91dc6948"
+    },
+    {
+      "ComponentId": "b9728851-aee3-410e-a66d-232642de16a5",
+      "Component": "Display Settings",
+      "Input": "Axes",
+      "InputId": "f5099d63-1f51-4c42-b8ee-8953cf5cc327",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "36f6d32a-a0c0-4320-a028-02a8b082daf8"
+    },
+    {
+      "ComponentId": "b9728851-aee3-410e-a66d-232642de16a5",
+      "Component": "Display Settings",
+      "Input": "Labels",
+      "InputId": "0c8ad1e6-c369-431b-99de-0895d849519d",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "d5d8e4f0-e6c4-4891-a377-9e5f74429610"
+    },
+    {
+      "ComponentId": "b9728851-aee3-410e-a66d-232642de16a5",
+      "Component": "Display Settings",
+      "Input": "Symbol scale",
+      "InputId": "b8bde43c-32d0-482f-8315-2b2dc8549cbe",
+      "Control": "GH_NumberSlider",
+      "ControlId": "7d5c07e0-9328-4921-b1c1-142c92ba1fd1"
+    },
+    {
+      "ComponentId": "b9728851-aee3-410e-a66d-232642de16a5",
+      "Component": "Display Settings",
+      "Input": "Load scale",
+      "InputId": "d309d6b7-9257-450a-93c1-fd167d1f39b5",
+      "Control": "GH_NumberSlider",
+      "ControlId": "3dd3b0f4-5429-4078-86af-1df799fb2f7c"
+    },
+    {
+      "ComponentId": "b9728851-aee3-410e-a66d-232642de16a5",
+      "Component": "Display Settings",
+      "Input": "Transparency",
+      "InputId": "1592bbce-d0f3-4bdb-9eaa-73799e7bb6cb",
+      "Control": "GH_NumberSlider",
+      "ControlId": "714d9125-dac0-49ed-ac52-a0bd380bdd16"
+    },
+    {
+      "ComponentId": "b9728851-aee3-410e-a66d-232642de16a5",
+      "Component": "Display Settings",
+      "Input": "Load case",
+      "InputId": "460d3225-eb54-4493-ab89-b1801c8948bd",
+      "Control": "Param_String",
+      "ControlId": "e7a8c167-832b-4f82-963c-eb289702e863"
+    },
+    {
+      "ComponentId": "3a60f1dc-14bb-4698-a6ca-f2c72ae0ddf8",
+      "Component": "Display Settings",
+      "Input": "Enabled",
+      "InputId": "6bb2d76f-507c-4f93-b945-9c1b89ffd043",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "d25f49e9-09e2-47c8-bb3a-916a039f7047"
+    },
+    {
+      "ComponentId": "3a60f1dc-14bb-4698-a6ca-f2c72ae0ddf8",
+      "Component": "Display Settings",
+      "Input": "Geometry",
+      "InputId": "44a8ec2f-ac54-44cc-aef8-0efafb4815e1",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "7b089fad-9502-4b21-bdc5-375330b9c071"
+    },
+    {
+      "ComponentId": "3a60f1dc-14bb-4698-a6ca-f2c72ae0ddf8",
+      "Component": "Display Settings",
+      "Input": "Sections",
+      "InputId": "ca5b289f-0de4-4116-a648-5bbb5a4be9a9",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "fe4819a6-13ee-4f0d-87ba-e8834edc878d"
+    },
+    {
+      "ComponentId": "3a60f1dc-14bb-4698-a6ca-f2c72ae0ddf8",
+      "Component": "Display Settings",
+      "Input": "Shaded",
+      "InputId": "84f35638-0c8d-4f92-b576-fec2af5c01ce",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "e2961435-08fb-42b1-be72-b708e5cca27d"
+    },
+    {
+      "ComponentId": "3a60f1dc-14bb-4698-a6ca-f2c72ae0ddf8",
+      "Component": "Display Settings",
+      "Input": "Reinforcement",
+      "InputId": "084f29f3-f141-430a-a918-444ecc8c4823",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "fc61a169-b4f8-40fb-a9dc-cd92d5b26847"
+    },
+    {
+      "ComponentId": "3a60f1dc-14bb-4698-a6ca-f2c72ae0ddf8",
+      "Component": "Display Settings",
+      "Input": "Loads",
+      "InputId": "ae876e40-6f07-43a5-8120-badfb29c49b5",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "f2a0947a-cbf1-4c68-89f8-79a0dea64433"
+    },
+    {
+      "ComponentId": "3a60f1dc-14bb-4698-a6ca-f2c72ae0ddf8",
+      "Component": "Display Settings",
+      "Input": "Supports",
+      "InputId": "76283aea-1912-4111-9507-a00f6de65e01",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "d059317f-b0f3-427b-859e-0eabc47a0626"
+    },
+    {
+      "ComponentId": "3a60f1dc-14bb-4698-a6ca-f2c72ae0ddf8",
+      "Component": "Display Settings",
+      "Input": "Releases",
+      "InputId": "9b594fcc-754a-4bd3-bb96-1e393edbaba2",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "4ebf72cb-b06a-4de4-a164-5f3ae3a882b0"
+    },
+    {
+      "ComponentId": "3a60f1dc-14bb-4698-a6ca-f2c72ae0ddf8",
+      "Component": "Display Settings",
+      "Input": "OtherAttributes",
+      "InputId": "27b41b3e-433a-43e2-a168-48d9b952aa54",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "6dc6c20a-1f99-4084-8cb2-7a5a02bc6bfa"
+    },
+    {
+      "ComponentId": "3a60f1dc-14bb-4698-a6ca-f2c72ae0ddf8",
+      "Component": "Display Settings",
+      "Input": "Axes",
+      "InputId": "d1d06542-a9a2-41f8-bd60-640cd1ec4f7e",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "feb067fd-d560-4421-9a83-0a92528aa5d1"
+    },
+    {
+      "ComponentId": "3a60f1dc-14bb-4698-a6ca-f2c72ae0ddf8",
+      "Component": "Display Settings",
+      "Input": "Labels",
+      "InputId": "3499b17e-9959-44a9-a65c-5b6267c7cc82",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "c22cd44f-f2b6-475c-898b-3f6477c33e4f"
+    },
+    {
+      "ComponentId": "3a60f1dc-14bb-4698-a6ca-f2c72ae0ddf8",
+      "Component": "Display Settings",
+      "Input": "Symbol scale",
+      "InputId": "c0a06e54-9878-471b-b716-2231b151b68c",
+      "Control": "GH_NumberSlider",
+      "ControlId": "589f03bb-ed4b-4654-a2c9-f2b50bae1764"
+    },
+    {
+      "ComponentId": "3a60f1dc-14bb-4698-a6ca-f2c72ae0ddf8",
+      "Component": "Display Settings",
+      "Input": "Load scale",
+      "InputId": "ed74ea5a-29b2-48dd-aecc-2068f41d683e",
+      "Control": "GH_NumberSlider",
+      "ControlId": "3a5a9ccf-314d-4fa9-a7c8-98db106ee0f3"
+    },
+    {
+      "ComponentId": "3a60f1dc-14bb-4698-a6ca-f2c72ae0ddf8",
+      "Component": "Display Settings",
+      "Input": "Transparency",
+      "InputId": "3f3934c7-f96f-4454-a424-6c9a121f792f",
+      "Control": "GH_NumberSlider",
+      "ControlId": "4c8bb18e-780a-4164-8177-175fc038bf5d"
+    },
+    {
+      "ComponentId": "3a60f1dc-14bb-4698-a6ca-f2c72ae0ddf8",
+      "Component": "Display Settings",
+      "Input": "Load case",
+      "InputId": "0cd54154-ac09-4d1d-9eb6-2041268926d2",
+      "Control": "Param_String",
+      "ControlId": "4b5bd1d3-a5a8-4a64-a38d-82f8d2796a84"
+    },
+    {
+      "ComponentId": "ef0cef3e-05db-4056-9ed0-5b539c6791b0",
+      "Component": "Load Case",
+      "Input": "Gravity NSM",
+      "InputId": "717a48cd-e655-4b27-9d4e-c23868e92764",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "0328a0fc-a992-4214-afaa-37e7bf1d0313"
+    },
+    {
+      "ComponentId": "100291f4-537e-442e-952b-724a2a80ac83",
+      "Component": "Duplicate Data",
+      "Input": "Data",
+      "InputId": "ff033bdc-f6c7-4355-b9dd-9eba5bdd22df",
+      "Control": "Param_GenericObject",
+      "ControlId": "6e7ae90f-e744-49e1-a901-4baca5816275"
+    },
+    {
+      "ComponentId": "100291f4-537e-442e-952b-724a2a80ac83",
+      "Component": "Duplicate Data",
+      "Input": "Order",
+      "InputId": "c2ceb152-01b9-4ce3-875c-bc86c37b4d82",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "86f9e1a9-33b7-4116-8f1d-e64467655334"
+    },
+    {
+      "ComponentId": "50bc903c-4d3d-438d-95c4-0ee9470af202",
+      "Component": "Duplicate Data",
+      "Input": "Data",
+      "InputId": "29a1971e-84aa-408d-866a-46abd7f08422",
+      "Control": "Param_GenericObject",
+      "ControlId": "03a50a60-ce45-41ad-9ef2-e5918231387f"
+    },
+    {
+      "ComponentId": "50bc903c-4d3d-438d-95c4-0ee9470af202",
+      "Component": "Duplicate Data",
+      "Input": "Order",
+      "InputId": "a4670849-4dcb-465c-8deb-2bcde280937d",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "0c2b4c54-a714-4a6e-963e-4dc7037f49c7"
+    },
+    {
+      "ComponentId": "7a628908-6204-439f-98a0-69b6917b1ddd",
+      "Component": "Load Case",
+      "Input": "Gravity NSM",
+      "InputId": "bb2024d0-fd6a-4105-a7db-372718048c2a",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "5f027e1f-b109-47bc-b47a-e88a11f1e4fd"
+    },
+    {
+      "ComponentId": "5f636a9e-cd54-4240-95f5-430caa65d25a",
+      "Component": "Load Case",
+      "Input": "Gravity NSM",
+      "InputId": "6dd721e3-1ab8-4256-9ff8-f277e4c5352a",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "bf5c41be-8891-4206-9704-27d83ae5beb1"
+    },
+    {
+      "ComponentId": "1b247e69-ee1f-4658-a34b-a848b39dcb69",
+      "Component": "Bridge Plot Preview",
+      "Input": "Index",
+      "InputId": "018b069c-7bbc-44db-a8d6-8905b1cda69e",
+      "Control": "GH_NumberSlider",
+      "ControlId": "5407842c-7545-4533-85ff-db5de4a7856d"
+    },
+    {
+      "ComponentId": "1b247e69-ee1f-4658-a34b-a848b39dcb69",
+      "Component": "Bridge Plot Preview",
+      "Input": "Width",
+      "InputId": "07492463-c2de-45c7-87bf-e63e603d2d57",
+      "Control": "GH_NumberSlider",
+      "ControlId": "d22c859a-ee73-4f88-93c3-f1695334a6a7"
+    },
+    {
+      "ComponentId": "f2236bc2-c2c8-4d80-9e20-98c0f54996e1",
+      "Component": "Super Element Filter",
+      "Input": "Super-Element",
+      "InputId": "d8a3f125-a1a8-40a1-b9d8-b0d14c59cf95",
+      "Control": "GH_Panel",
+      "ControlId": "8420e4fd-201d-4577-9e96-a62ff99a5adb"
+    },
+    {
+      "ComponentId": "d820f9e7-ad16-4211-98c6-b1eee47976a3",
+      "Component": "Build Model",
+      "Input": "Name",
+      "InputId": "dbb79158-b30b-421d-986c-ea5471141593",
+      "Control": "Param_String",
+      "ControlId": "60fde60a-8fbb-4066-9fb8-bc44830d1a63"
+    },
+    {
+      "ComponentId": "d820f9e7-ad16-4211-98c6-b1eee47976a3",
+      "Component": "Build Model",
+      "Input": "Units",
+      "InputId": "981b8604-7010-45fc-92ce-9869dccdfa64",
+      "Control": "GH_ValueList",
+      "ControlId": "224752ba-d6f8-4166-b64a-7f56330cd503"
+    },
+    {
+      "ComponentId": "36f18358-3141-4ba4-b908-dd34a3482148",
+      "Component": "Bridge Phase",
+      "Input": "Number",
+      "InputId": "526d5347-3c8c-49ca-b126-e044c560f02a",
+      "Control": "GH_NumberSlider",
+      "ControlId": "43558449-774a-4857-8def-044272bd8a22"
+    },
+    {
+      "ComponentId": "cb253356-b7fc-4ecb-a2d9-5558abf481f8",
+      "Component": "Super Element Filter",
+      "Input": "Super-Element",
+      "InputId": "63360886-58db-4ca4-a914-60b4d837afd2",
+      "Control": "GH_Panel",
+      "ControlId": "d4b35304-a9c5-440a-8a23-5142e7bbd156"
+    },
+    {
+      "ComponentId": "3501266e-11a4-4e13-8915-65083b086657",
+      "Component": "Build Model",
+      "Input": "Name",
+      "InputId": "57e79e28-f664-4888-ab7f-e664396fbb14",
+      "Control": "Param_String",
+      "ControlId": "3b78c1bf-e85f-4174-9535-70153a2ff8cb"
+    },
+    {
+      "ComponentId": "3501266e-11a4-4e13-8915-65083b086657",
+      "Component": "Build Model",
+      "Input": "Units",
+      "InputId": "fc68e81e-da24-48ea-b5ef-cc48e017e90a",
+      "Control": "GH_ValueList",
+      "ControlId": "10c276bd-402e-4f36-ae88-75a415ea6746"
+    },
+    {
+      "ComponentId": "e8ac2ccc-19ea-457f-a00e-a50896eb8c35",
+      "Component": "Bridge Phase",
+      "Input": "Number",
+      "InputId": "1678434f-5156-4f06-9234-5a589ae67b13",
+      "Control": "GH_NumberSlider",
+      "ControlId": "18ff1b2c-8b20-434d-aad8-97bb6ca3db5b"
+    },
+    {
+      "ComponentId": "8394121a-76b9-41a6-988a-a4599c7dbf73",
+      "Component": "Build BridGHe Model",
+      "Input": "Calculation",
+      "InputId": "243cf7b5-ea83-48b7-8299-368f5bed6e67",
+      "Control": "GH_NumberSlider",
+      "ControlId": "c006cd2d-d27b-4786-b845-f4778c8626c4"
+    },
+    {
+      "ComponentId": "8394121a-76b9-41a6-988a-a4599c7dbf73",
+      "Component": "Build BridGHe Model",
+      "Input": "Additional Phase Members",
+      "InputId": "e801e6a2-d4ae-48e8-855b-a7a527f72bc5",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "705446aa-69c3-4f05-9ffb-d6cf2e05ca2a"
+    },
+    {
+      "ComponentId": "999b5e70-e227-4309-988d-185463fd204a",
+      "Component": "Super Element Filter",
+      "Input": "Super-Element",
+      "InputId": "a6fcb7a1-b646-4449-a985-5fbc7b897a08",
+      "Control": "GH_Panel",
+      "ControlId": "da8656cb-6631-4ebd-95f7-ee7ea16c048a"
+    },
+    {
+      "ComponentId": "3f5e711a-8fbf-4746-bcc3-cc335493991b",
+      "Component": "Build Model",
+      "Input": "Name",
+      "InputId": "eb29067e-e13d-4e76-b5b6-73a37c41e95c",
+      "Control": "Param_String",
+      "ControlId": "ad30ec24-643e-47d8-9000-525bf60b52cf"
+    },
+    {
+      "ComponentId": "3f5e711a-8fbf-4746-bcc3-cc335493991b",
+      "Component": "Build Model",
+      "Input": "Units",
+      "InputId": "df295868-d589-48f8-a906-3ba11f0c1acc",
+      "Control": "GH_ValueList",
+      "ControlId": "672be92c-829f-46d6-aab7-cf9cd010d687"
+    },
+    {
+      "ComponentId": "aee86ebf-20ce-4ae6-8fc7-294acf5ffbaa",
+      "Component": "Bridge Phase",
+      "Input": "Number",
+      "InputId": "69d2156b-e06e-4d34-8942-4f0bc0393f29",
+      "Control": "GH_NumberSlider",
+      "ControlId": "2b027a8f-54ac-43f1-97b1-d97833828617"
+    },
+    {
+      "ComponentId": "3307b7eb-cdd6-4f3d-b04c-ca3dcfc6d7d5",
+      "Component": "Bridge Shrinkage Action",
+      "Input": "Action ID",
+      "InputId": "987f5bde-0775-4a2c-94e1-e92f00b195bf",
+      "Control": "GH_Panel",
+      "ControlId": "414c03ce-867d-4775-be0a-a5cf625c26a8"
+    },
+    {
+      "ComponentId": "3307b7eb-cdd6-4f3d-b04c-ca3dcfc6d7d5",
+      "Component": "Bridge Shrinkage Action",
+      "Input": "Case",
+      "InputId": "1ae9a533-aca5-421c-bb08-6595eb3dff84",
+      "Control": "GH_Panel",
+      "ControlId": "a7e83428-cbe1-41e5-81a5-2ed20461d829"
+    },
+    {
+      "ComponentId": "3307b7eb-cdd6-4f3d-b04c-ca3dcfc6d7d5",
+      "Component": "Bridge Shrinkage Action",
+      "Input": "Primary Only",
+      "InputId": "81468856-c977-4816-bd11-6960f6bc76dc",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "3ca503f3-b9ea-451b-8340-a2575e8c3100"
+    },
+    {
+      "ComponentId": "3307b7eb-cdd6-4f3d-b04c-ca3dcfc6d7d5",
+      "Component": "Bridge Shrinkage Action",
+      "Input": "Response",
+      "InputId": "93e19bca-a1b6-43a8-9ef9-b8143368cf53",
+      "Control": "GH_NumberSlider",
+      "ControlId": "60460ad9-bf35-4b23-ac3b-2d09d1e18654"
+    },
+    {
+      "ComponentId": "7a004b6b-2ab4-48c1-823e-1c0881d5d615",
+      "Component": "Bridge Phase",
+      "Input": "Number",
+      "InputId": "82860174-07d8-4f7b-8203-6eb4677b38a6",
+      "Control": "GH_NumberSlider",
+      "ControlId": "1f239338-8219-4b34-985e-3a061040f1f4"
+    },
+    {
+      "ComponentId": "7a004b6b-2ab4-48c1-823e-1c0881d5d615",
+      "Component": "Bridge Phase",
+      "Input": "Name",
+      "InputId": "4f2dcedb-267b-4f76-bd52-46ba9c049a92",
+      "Control": "GH_Panel",
+      "ControlId": "c504e92f-0b20-47ae-8835-3c99cfdc0667"
+    },
+    {
+      "ComponentId": "608ce2bd-cc9f-489e-888d-3f3a4affad1d",
+      "Component": "Bridge Model Audit",
+      "Input": "Tolerance",
+      "InputId": "bac7219a-ac8c-483b-a833-143235c68ad6",
+      "Control": "GH_NumberSlider",
+      "ControlId": "2cab701b-a1fd-4abc-91fd-5e84ad447cfa"
+    },
+    {
+      "ComponentId": "404be398-1fb8-4f7e-9ac6-8364dc315e6e",
+      "Component": "Bridge Combination Excel",
+      "Input": "File",
+      "InputId": "4f531275-0bd3-4574-b5ae-101185aec485",
+      "Control": "GH_Panel",
+      "ControlId": "35b82381-29d2-4367-9fbd-cce71ef14988"
+    },
+    {
+      "ComponentId": "404be398-1fb8-4f7e-9ac6-8364dc315e6e",
+      "Component": "Bridge Combination Excel",
+      "Input": "Mode",
+      "InputId": "7c328255-66b3-43e3-b4d8-b271b744212e",
+      "Control": "GH_NumberSlider",
+      "ControlId": "a075a1b2-8f50-4cba-9467-527c3259e7a6"
+    },
+    {
+      "ComponentId": "404be398-1fb8-4f7e-9ac6-8364dc315e6e",
+      "Component": "Bridge Combination Excel",
+      "Input": "Rows",
+      "InputId": "e44887d6-9798-4ca6-9976-893b6b98ea1b",
+      "Control": "GH_NumberSlider",
+      "ControlId": "9c153d41-87ed-4781-b716-8a3ac18e53a8"
+    },
+    {
+      "ComponentId": "404be398-1fb8-4f7e-9ac6-8364dc315e6e",
+      "Component": "Bridge Combination Excel",
+      "Input": "Overwrite",
+      "InputId": "479ca4f7-df11-4d0e-8956-b0319617f4f9",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "ff1b4ac8-a956-4b3b-b13b-a321df53fa3b"
+    },
+    {
+      "ComponentId": "cd8f3cb4-0d78-494f-992d-367f7816d8e4",
+      "Component": "Bridge Combination Excel",
+      "Input": "File",
+      "InputId": "9cd3428d-c4d8-4d48-94d9-646abf3174de",
+      "Control": "GH_Panel",
+      "ControlId": "0bcc93c6-b969-4bf1-8e70-ecf710ed9ad5"
+    },
+    {
+      "ComponentId": "cd8f3cb4-0d78-494f-992d-367f7816d8e4",
+      "Component": "Bridge Combination Excel",
+      "Input": "Mode",
+      "InputId": "83928e04-2931-48c2-8f9b-21b919a0f01a",
+      "Control": "GH_NumberSlider",
+      "ControlId": "d19feec8-81c8-4f06-8fe7-ea93eee819de"
+    },
+    {
+      "ComponentId": "cd8f3cb4-0d78-494f-992d-367f7816d8e4",
+      "Component": "Bridge Combination Excel",
+      "Input": "Rows",
+      "InputId": "89afa669-73bc-451b-bf94-df017d8b8585",
+      "Control": "GH_NumberSlider",
+      "ControlId": "a4ac6965-eb58-4781-90f2-20000f5b9e7a"
+    },
+    {
+      "ComponentId": "cd8f3cb4-0d78-494f-992d-367f7816d8e4",
+      "Component": "Bridge Combination Excel",
+      "Input": "Overwrite",
+      "InputId": "07b5ab6c-3503-48aa-8cd4-accf32098c58",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "92cce7c0-3316-4117-99c9-4150ac360bc0"
+    },
+    {
+      "ComponentId": "1b174ccb-3cbd-424a-96db-bdece0061eac",
+      "Component": "Pioli 2x22 passo200",
+      "Input": "Enabled",
+      "InputId": "fbb90353-0395-40a4-8be3-683fcac2f972",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "8523ac1a-835f-46e8-b3d8-8040b401acab"
+    },
+    {
+      "ComponentId": "1b174ccb-3cbd-424a-96db-bdece0061eac",
+      "Component": "Pioli 2x22 passo200",
+      "Input": "CountPerRow",
+      "InputId": "f1eca28b-6a0b-488c-9f1e-fae8ebe1ba76",
+      "Control": "GH_NumberSlider",
+      "ControlId": "19f5a4db-55b5-4816-8c10-bf370fc72c3f"
+    },
+    {
+      "ComponentId": "1b174ccb-3cbd-424a-96db-bdece0061eac",
+      "Component": "Pioli 2x22 passo200",
+      "Input": "Diameter",
+      "InputId": "a3b5fcac-2285-4088-abf4-15aebde75ce3",
+      "Control": "GH_NumberSlider",
+      "ControlId": "f2db0c3c-dd5b-4554-94cb-e9b2ec819c4b"
+    },
+    {
+      "ComponentId": "1b174ccb-3cbd-424a-96db-bdece0061eac",
+      "Component": "Pioli 2x22 passo200",
+      "Input": "Height",
+      "InputId": "b8250182-a6ac-4425-8c0f-ba376e973306",
+      "Control": "GH_NumberSlider",
+      "ControlId": "2c03b215-01db-42bd-9fb7-131e0936c0ef"
+    },
+    {
+      "ComponentId": "1b174ccb-3cbd-424a-96db-bdece0061eac",
+      "Component": "Pioli 2x22 passo200",
+      "Input": "LongitudinalPitch",
+      "InputId": "d00df0e0-e7bd-42d4-a52d-823fe6386f01",
+      "Control": "GH_NumberSlider",
+      "ControlId": "283ceb80-d948-42b8-9e51-b7b869a09086"
+    },
+    {
+      "ComponentId": "1b174ccb-3cbd-424a-96db-bdece0061eac",
+      "Component": "Pioli 2x22 passo200",
+      "Input": "TransversePitch",
+      "InputId": "b760982a-7f45-46f1-ad29-838457390776",
+      "Control": "GH_NumberSlider",
+      "ControlId": "4ded8d62-df9e-4ed5-a90f-46f233141327"
+    },
+    {
+      "ComponentId": "1b174ccb-3cbd-424a-96db-bdece0061eac",
+      "Component": "Pioli 2x22 passo200",
+      "Input": "Fu",
+      "InputId": "cda7fa3f-ae75-47d8-b3ee-d45df3370574",
+      "Control": "GH_NumberSlider",
+      "ControlId": "bc424431-c064-4c75-90df-fde9bf2d9a91"
+    },
+    {
+      "ComponentId": "1b174ccb-3cbd-424a-96db-bdece0061eac",
+      "Component": "Pioli 2x22 passo200",
+      "Input": "GammaV",
+      "InputId": "bd850a58-51de-43d9-bdbd-a1d96e001385",
+      "Control": "GH_NumberSlider",
+      "ControlId": "75f1c04a-e023-423c-8c86-9d5ca3966e06"
+    },
+    {
+      "ComponentId": "1b174ccb-3cbd-424a-96db-bdece0061eac",
+      "Component": "Pioli 2x22 passo200",
+      "Input": "HeadDiameter",
+      "InputId": "89733de6-cddb-4b2a-a97b-e548fa200129",
+      "Control": "GH_NumberSlider",
+      "ControlId": "8c2263ff-5430-4826-8477-ebb024d62445"
+    },
+    {
+      "ComponentId": "1b174ccb-3cbd-424a-96db-bdece0061eac",
+      "Component": "Pioli 2x22 passo200",
+      "Input": "HeadThickness",
+      "InputId": "17b323a1-ee34-4df4-a886-efce345524b8",
+      "Control": "GH_NumberSlider",
+      "ControlId": "beeb2225-5c82-424d-ab0f-2f69037366db"
+    },
+    {
+      "ComponentId": "1b174ccb-3cbd-424a-96db-bdece0061eac",
+      "Component": "Pioli 2x22 passo200",
+      "Input": "RequiredCover",
+      "InputId": "fa541b9f-3cf7-4a4e-a196-776464e425dc",
+      "Control": "GH_NumberSlider",
+      "ControlId": "73e8aa6d-1bf6-4ad3-afd6-92d33a1fc0de"
+    },
+    {
+      "ComponentId": "1b174ccb-3cbd-424a-96db-bdece0061eac",
+      "Component": "Pioli 2x22 passo200",
+      "Input": "RepeatedActionDetail",
+      "InputId": "5de34d38-fdb1-4295-a1dd-abcd779f25a6",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "568afa96-72b2-452d-afef-002fca86251a"
+    },
+    {
+      "ComponentId": "17d36e61-ca92-4706-b6aa-12efb6b88ded",
+      "Component": "Intermedi 200x20 pannelli2m",
+      "Input": "Enabled",
+      "InputId": "ca30ffcb-f7d1-4952-be6e-627789a55370",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "65fceb23-38b1-4bd9-a5e0-1ab1b5ea285e"
+    },
+    {
+      "ComponentId": "17d36e61-ca92-4706-b6aa-12efb6b88ded",
+      "Component": "Intermedi 200x20 pannelli2m",
+      "Input": "Layout",
+      "InputId": "90c23dba-8caf-4925-a9d1-d7d6d15e33f9",
+      "Control": "GH_ValueList",
+      "ControlId": "78fa2b18-8f1a-440a-a57b-2c3e89cbba47"
+    },
+    {
+      "ComponentId": "17d36e61-ca92-4706-b6aa-12efb6b88ded",
+      "Component": "Intermedi 200x20 pannelli2m",
+      "Input": "Width",
+      "InputId": "60dbc935-7de4-4d2d-98da-eff6f24b3b32",
+      "Control": "GH_NumberSlider",
+      "ControlId": "88dfea71-4124-47a8-8b92-e3e54f4d4f1e"
+    },
+    {
+      "ComponentId": "17d36e61-ca92-4706-b6aa-12efb6b88ded",
+      "Component": "Intermedi 200x20 pannelli2m",
+      "Input": "Thickness",
+      "InputId": "180580cd-801d-4d53-8d72-4ca9586722bd",
+      "Control": "GH_NumberSlider",
+      "ControlId": "b9cb189f-bc35-463a-96cc-e055d3d6bc3f"
+    },
+    {
+      "ComponentId": "17d36e61-ca92-4706-b6aa-12efb6b88ded",
+      "Component": "Intermedi 200x20 pannelli2m",
+      "Input": "RightWidth",
+      "InputId": "c7576f94-e43a-4f2e-b15f-31a1e78a929a",
+      "Control": "GH_NumberSlider",
+      "ControlId": "07b6b317-0f5a-4e16-a680-df017055d9d6"
+    },
+    {
+      "ComponentId": "17d36e61-ca92-4706-b6aa-12efb6b88ded",
+      "Component": "Intermedi 200x20 pannelli2m",
+      "Input": "RightThickness",
+      "InputId": "c75be73f-5706-43d8-8433-b847f08a5851",
+      "Control": "GH_NumberSlider",
+      "ControlId": "fefe165f-cb0a-4d46-8859-22fe16abc64e"
+    },
+    {
+      "ComponentId": "17d36e61-ca92-4706-b6aa-12efb6b88ded",
+      "Component": "Intermedi 200x20 pannelli2m",
+      "Input": "LeftPanel",
+      "InputId": "20c3c86f-c9a3-488e-ba11-b82a06c8fb2a",
+      "Control": "GH_NumberSlider",
+      "ControlId": "6b16398e-ce46-4c8b-8b8f-57edf6297a21"
+    },
+    {
+      "ComponentId": "17d36e61-ca92-4706-b6aa-12efb6b88ded",
+      "Component": "Intermedi 200x20 pannelli2m",
+      "Input": "RightPanel",
+      "InputId": "d9e23b0d-30a6-4a55-85d5-5a887f472bde",
+      "Control": "GH_NumberSlider",
+      "ControlId": "525d3354-a4b6-4cc4-89d7-b35e61fbfa69"
+    },
+    {
+      "ComponentId": "17d36e61-ca92-4706-b6aa-12efb6b88ded",
+      "Component": "Intermedi 200x20 pannelli2m",
+      "Input": "EqualPanels",
+      "InputId": "a7ba02d8-45f7-4c00-a5c1-03c8e85fc970",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "e52da403-4358-40b5-b29f-65029d6a604d"
+    },
+    {
+      "ComponentId": "17d36e61-ca92-4706-b6aa-12efb6b88ded",
+      "Component": "Intermedi 200x20 pannelli2m",
+      "Input": "LengthFactor",
+      "InputId": "370b3975-c566-4afe-b878-8ad15feef260",
+      "Control": "GH_NumberSlider",
+      "ControlId": "04b3cbbb-887e-4d30-ba11-91fdecb550f5"
+    },
+    {
+      "ComponentId": "17d36e61-ca92-4706-b6aa-12efb6b88ded",
+      "Component": "Intermedi 200x20 pannelli2m",
+      "Input": "ExternalCompressionKN",
+      "InputId": "722ab5a6-da5b-4f6d-8b40-9be8713adcd3",
+      "Control": "GH_NumberSlider",
+      "ControlId": "01892762-a1c2-43cc-9be3-8fdf1423e831"
+    },
+    {
+      "ComponentId": "17d36e61-ca92-4706-b6aa-12efb6b88ded",
+      "Component": "Intermedi 200x20 pannelli2m",
+      "Input": "LoadX",
+      "InputId": "7d381d64-6367-4b35-90b2-776b9e596319",
+      "Control": "GH_NumberSlider",
+      "ControlId": "f18b3842-3d5d-4d06-bb56-83ddafd7fc74"
+    },
+    {
+      "ComponentId": "17d36e61-ca92-4706-b6aa-12efb6b88ded",
+      "Component": "Intermedi 200x20 pannelli2m",
+      "Input": "CheckWelds",
+      "InputId": "3f1e0d29-193f-4d7c-b30a-45b7f88d948d",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "62a73aa6-5138-4d0f-9b70-7682cd279291"
+    },
+    {
+      "ComponentId": "17d36e61-ca92-4706-b6aa-12efb6b88ded",
+      "Component": "Intermedi 200x20 pannelli2m",
+      "Input": "WeldThroat",
+      "InputId": "51b530d6-753b-4632-9d92-db865acf2a80",
+      "Control": "GH_NumberSlider",
+      "ControlId": "949408b9-17ba-4255-8b29-8a55ee548faa"
+    },
+    {
+      "ComponentId": "bc9ea8ec-36bf-4344-acd9-f50456e1b9cd",
+      "Component": "Appoggio R FEM per combinazione",
+      "Input": "Enabled",
+      "InputId": "dd827ce4-c161-4ece-a943-b57347613179",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "7e44be14-f830-4e79-9728-c9db58f935f0"
+    },
+    {
+      "ComponentId": "bc9ea8ec-36bf-4344-acd9-f50456e1b9cd",
+      "Component": "Appoggio R FEM per combinazione",
+      "Input": "Layout",
+      "InputId": "6c0efe80-3b08-4e21-aa75-84f364803d4a",
+      "Control": "GH_ValueList",
+      "ControlId": "e55a3647-9752-43fb-9ac1-e75bfa823596"
+    },
+    {
+      "ComponentId": "bc9ea8ec-36bf-4344-acd9-f50456e1b9cd",
+      "Component": "Appoggio R FEM per combinazione",
+      "Input": "Width",
+      "InputId": "3215d07d-51d2-435f-8cf1-15dc46162c12",
+      "Control": "GH_NumberSlider",
+      "ControlId": "2a1463b7-f57d-4954-ba25-bcdb67ae579a"
+    },
+    {
+      "ComponentId": "bc9ea8ec-36bf-4344-acd9-f50456e1b9cd",
+      "Component": "Appoggio R FEM per combinazione",
+      "Input": "Thickness",
+      "InputId": "0892fa89-828a-4d00-8dc5-f8bc88673229",
+      "Control": "GH_NumberSlider",
+      "ControlId": "66e1396b-2d16-4cdd-a34f-ed4532d7101a"
+    },
+    {
+      "ComponentId": "bc9ea8ec-36bf-4344-acd9-f50456e1b9cd",
+      "Component": "Appoggio R FEM per combinazione",
+      "Input": "RightWidth",
+      "InputId": "6ea7fa76-e653-4218-aae1-ada9f126f448",
+      "Control": "GH_NumberSlider",
+      "ControlId": "8d87f7cd-ecbc-464f-b358-be67251667fc"
+    },
+    {
+      "ComponentId": "bc9ea8ec-36bf-4344-acd9-f50456e1b9cd",
+      "Component": "Appoggio R FEM per combinazione",
+      "Input": "RightThickness",
+      "InputId": "c29790b5-47f0-4e90-a92b-ecfe936ebef3",
+      "Control": "GH_NumberSlider",
+      "ControlId": "bba04cd4-8791-4cb7-b2f8-782439c2ca7e"
+    },
+    {
+      "ComponentId": "bc9ea8ec-36bf-4344-acd9-f50456e1b9cd",
+      "Component": "Appoggio R FEM per combinazione",
+      "Input": "LeftPanel",
+      "InputId": "baa5e6fe-8fd3-4d9a-835d-290902f44db5",
+      "Control": "GH_NumberSlider",
+      "ControlId": "f32f5e63-b41d-48ea-a15c-2a857bd5b77e"
+    },
+    {
+      "ComponentId": "bc9ea8ec-36bf-4344-acd9-f50456e1b9cd",
+      "Component": "Appoggio R FEM per combinazione",
+      "Input": "RightPanel",
+      "InputId": "404e184c-4051-42e9-b851-5e8e272347e5",
+      "Control": "GH_NumberSlider",
+      "ControlId": "f3f9c6b0-1284-45ea-81dc-c88ff3ff9aa8"
+    },
+    {
+      "ComponentId": "bc9ea8ec-36bf-4344-acd9-f50456e1b9cd",
+      "Component": "Appoggio R FEM per combinazione",
+      "Input": "EndDistance",
+      "InputId": "31a78e26-0dca-4e24-b770-6061b664acd1",
+      "Control": "GH_NumberSlider",
+      "ControlId": "22d1f86e-6d33-44f4-9833-a1b39eba6267"
+    },
+    {
+      "ComponentId": "bc9ea8ec-36bf-4344-acd9-f50456e1b9cd",
+      "Component": "Appoggio R FEM per combinazione",
+      "Input": "LoadX",
+      "InputId": "b5d993fb-9ecc-477d-9525-b853d7c072f1",
+      "Control": "GH_NumberSlider",
+      "ControlId": "987051fc-6c51-4e63-a1a6-47067d4c0e0c"
+    },
+    {
+      "ComponentId": "bc9ea8ec-36bf-4344-acd9-f50456e1b9cd",
+      "Component": "Appoggio R FEM per combinazione",
+      "Input": "LoadZ",
+      "InputId": "523636fa-5d95-41c8-9591-48071721eb30",
+      "Control": "GH_NumberSlider",
+      "ControlId": "9de5dcea-198f-497b-8062-d9b5a4574a67"
+    },
+    {
+      "ComponentId": "bc9ea8ec-36bf-4344-acd9-f50456e1b9cd",
+      "Component": "Appoggio R FEM per combinazione",
+      "Input": "FootprintLength",
+      "InputId": "c88bcabe-6fae-4e5b-8c09-fe2d53b9aec9",
+      "Control": "GH_NumberSlider",
+      "ControlId": "76dd9613-da93-4ea8-8994-88d41364f5ba"
+    },
+    {
+      "ComponentId": "bc9ea8ec-36bf-4344-acd9-f50456e1b9cd",
+      "Component": "Appoggio R FEM per combinazione",
+      "Input": "FootprintWidth",
+      "InputId": "4656b184-c3d4-465b-ab24-070cce6aa2fe",
+      "Control": "GH_NumberSlider",
+      "ControlId": "99bd7e91-a692-4ff5-9d82-43005aa700c0"
+    },
+    {
+      "ComponentId": "bc9ea8ec-36bf-4344-acd9-f50456e1b9cd",
+      "Component": "Appoggio R FEM per combinazione",
+      "Input": "LengthFactor",
+      "InputId": "c940ddb1-4285-4697-82bb-434543d14131",
+      "Control": "GH_NumberSlider",
+      "ControlId": "0b4ba4aa-4e8d-4bd2-a9ea-4641c103361f"
+    },
+    {
+      "ComponentId": "bc9ea8ec-36bf-4344-acd9-f50456e1b9cd",
+      "Component": "Appoggio R FEM per combinazione",
+      "Input": "RigidEndPost",
+      "InputId": "f846ae16-330c-4d9e-b33c-e151ffd0c4f0",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "2d7f25ec-3e03-4587-b420-da41bde00c51"
+    },
+    {
+      "ComponentId": "bc9ea8ec-36bf-4344-acd9-f50456e1b9cd",
+      "Component": "Appoggio R FEM per combinazione",
+      "Input": "EndPostSpacing",
+      "InputId": "af8c3592-0882-4a28-977e-885ba955f591",
+      "Control": "GH_NumberSlider",
+      "ControlId": "9dc98de4-7500-47bf-8ea8-87fe93013052"
+    },
+    {
+      "ComponentId": "bc9ea8ec-36bf-4344-acd9-f50456e1b9cd",
+      "Component": "Appoggio R FEM per combinazione",
+      "Input": "CheckWelds",
+      "InputId": "1f90d7ee-00d8-4c03-a6df-b62c9c1cbc71",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "ccd86a60-a358-41f1-892f-c69422e5cf1b"
+    },
+    {
+      "ComponentId": "bc9ea8ec-36bf-4344-acd9-f50456e1b9cd",
+      "Component": "Appoggio R FEM per combinazione",
+      "Input": "WeldThroat",
+      "InputId": "25eb4118-6b4d-40d5-a817-3b26958dd4e8",
+      "Control": "GH_NumberSlider",
+      "ControlId": "4b31553d-04cc-446e-88fb-2abada47f9d9"
+    },
+    {
+      "ComponentId": "535d8152-58b8-4831-be93-f0ab10fafaf6",
+      "Component": "Ultimate SOLO dimostrazione",
+      "Input": "Standard",
+      "InputId": "8d7edd34-70df-43f3-9ffd-8f498c49d1be",
+      "Control": "GH_ValueList",
+      "ControlId": "b5b0de74-c54c-451c-b51c-9c739a65a4b1"
+    },
+    {
+      "ComponentId": "535d8152-58b8-4831-be93-f0ab10fafaf6",
+      "Component": "Ultimate SOLO dimostrazione",
+      "Input": "LimitState",
+      "InputId": "af3de57c-be50-4d93-bf38-922e698a55ed",
+      "Control": "GH_ValueList",
+      "ControlId": "b8f07035-2031-4be4-ad60-75ad20606a1e"
+    },
+    {
+      "ComponentId": "535d8152-58b8-4831-be93-f0ab10fafaf6",
+      "Component": "Ultimate SOLO dimostrazione",
+      "Input": "Class4",
+      "InputId": "6e9274b7-3e66-4dec-ba6a-b4660b0edee7",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "7eee8773-c17c-403c-b385-545d38332ba5"
+    },
+    {
+      "ComponentId": "535d8152-58b8-4831-be93-f0ab10fafaf6",
+      "Component": "Ultimate SOLO dimostrazione",
+      "Input": "TopFlangeBuckling",
+      "InputId": "e03459e2-c093-4ca3-9bc6-3639464251c7",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "5032d33f-d5c3-42e4-8d82-e54bf13818f0"
+    },
+    {
+      "ComponentId": "535d8152-58b8-4831-be93-f0ab10fafaf6",
+      "Component": "Ultimate SOLO dimostrazione",
+      "Input": "BottomFlangeBuckling",
+      "InputId": "937ccd40-3d64-4eae-afcb-36558410fb2c",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "5e87bc58-65ee-428b-b844-570998fbf907"
+    },
+    {
+      "ComponentId": "535d8152-58b8-4831-be93-f0ab10fafaf6",
+      "Component": "Ultimate SOLO dimostrazione",
+      "Input": "WebBuckling",
+      "InputId": "76c491f1-6140-476e-ad55-527d2f57b2ce",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "864b3b29-6553-482d-81a8-f350aaa437d2"
+    },
+    {
+      "ComponentId": "535d8152-58b8-4831-be93-f0ab10fafaf6",
+      "Component": "Ultimate SOLO dimostrazione",
+      "Input": "CommonLoadY",
+      "InputId": "0135d684-ddf0-4998-b56b-18317c116725",
+      "Control": "GH_NumberSlider",
+      "ControlId": "b1cec1e6-d439-4878-bc82-eb693da12191"
+    },
+    {
+      "ComponentId": "535d8152-58b8-4831-be93-f0ab10fafaf6",
+      "Component": "Ultimate SOLO dimostrazione",
+      "Input": "GammaM0",
+      "InputId": "5b59582b-cad9-489f-abaf-013ca83754c1",
+      "Control": "GH_NumberSlider",
+      "ControlId": "055221e0-0e11-454a-b401-5bac8a4609be"
+    },
+    {
+      "ComponentId": "535d8152-58b8-4831-be93-f0ab10fafaf6",
+      "Component": "Ultimate SOLO dimostrazione",
+      "Input": "GammaM1",
+      "InputId": "58c3dccd-da30-49f3-ad78-4caa34c7b1fe",
+      "Control": "GH_NumberSlider",
+      "ControlId": "c380aa66-d957-40a1-af40-390538fe404b"
+    },
+    {
+      "ComponentId": "535d8152-58b8-4831-be93-f0ab10fafaf6",
+      "Component": "Ultimate SOLO dimostrazione",
+      "Input": "GammaM2",
+      "InputId": "56f541ad-7313-4ff0-9394-9975da487a3c",
+      "Control": "GH_NumberSlider",
+      "ControlId": "b2b00703-618b-478c-8c8f-21f5f86efa79"
+    },
+    {
+      "ComponentId": "535d8152-58b8-4831-be93-f0ab10fafaf6",
+      "Component": "Ultimate SOLO dimostrazione",
+      "Input": "GammaC",
+      "InputId": "abcd54ac-29ac-4a8f-98e6-0cc516d95214",
+      "Control": "GH_NumberSlider",
+      "ControlId": "e7593e4c-e1d3-48db-9927-2646cb13d9e6"
+    },
+    {
+      "ComponentId": "535d8152-58b8-4831-be93-f0ab10fafaf6",
+      "Component": "Ultimate SOLO dimostrazione",
+      "Input": "GammaS",
+      "InputId": "4187bac0-ed1e-45f3-bf14-1662e3c2e59f",
+      "Control": "GH_NumberSlider",
+      "ControlId": "6946fd9b-69a9-44bc-ac1b-b822234d80b7"
+    },
+    {
+      "ComponentId": "535d8152-58b8-4831-be93-f0ab10fafaf6",
+      "Component": "Ultimate SOLO dimostrazione",
+      "Input": "AlphaCC",
+      "InputId": "0a8ccfc8-3691-4a1c-8103-7bd2f18be8cb",
+      "Control": "GH_NumberSlider",
+      "ControlId": "d71a9d9d-99ea-41d8-bffe-46f52b23098e"
+    },
+    {
+      "ComponentId": "535d8152-58b8-4831-be93-f0ab10fafaf6",
+      "Component": "Ultimate SOLO dimostrazione",
+      "Input": "ShearEta",
+      "InputId": "027e1cff-9227-4cd5-8487-0509ad2ca157",
+      "Control": "GH_NumberSlider",
+      "ControlId": "71fdda60-7923-459a-b8c2-be0822bf45db"
+    },
+    {
+      "ComponentId": "b54e94c9-1b23-4905-8c75-2230d54ba87a",
+      "Component": "Beam Distributed Load",
+      "Input": "Type",
+      "InputId": "5f17ca54-36ef-4477-9f48-39a5f642f63c",
+      "Control": "GH_ValueList",
+      "ControlId": "903eef9a-0460-4603-b3ab-00d5d8dc3683"
+    },
+    {
+      "ComponentId": "b54e94c9-1b23-4905-8c75-2230d54ba87a",
+      "Component": "Beam Distributed Load",
+      "Input": "Direction",
+      "InputId": "8eea92ee-c3dd-4984-b079-91e51f40483a",
+      "Control": "GH_ValueList",
+      "ControlId": "e8ba9eb2-d3eb-4951-8817-40ab1cc4f94d"
+    },
+    {
+      "ComponentId": "b54e94c9-1b23-4905-8c75-2230d54ba87a",
+      "Component": "Beam Distributed Load",
+      "Input": "a",
+      "InputId": "5229b0f6-2055-4212-a631-b85dbf5dec7d",
+      "Control": "GH_NumberSlider",
+      "ControlId": "bf27610b-aab6-412b-bf0b-61e1ae9fe797"
+    },
+    {
+      "ComponentId": "b54e94c9-1b23-4905-8c75-2230d54ba87a",
+      "Component": "Beam Distributed Load",
+      "Input": "b",
+      "InputId": "fed86acd-e706-45c3-bb08-5952c78f8000",
+      "Control": "GH_NumberSlider",
+      "ControlId": "b7b9ceb0-691b-4971-bbe1-131fd880019f"
+    },
+    {
+      "ComponentId": "b507014d-dff3-42c0-a670-42090d6ec294",
+      "Component": "Beam Distributed Load",
+      "Input": "Type",
+      "InputId": "dd462184-60e1-4277-87b8-a63ddc1305e7",
+      "Control": "GH_ValueList",
+      "ControlId": "9dbe2ff1-2692-4628-9bac-9abe9c31f780"
+    },
+    {
+      "ComponentId": "b507014d-dff3-42c0-a670-42090d6ec294",
+      "Component": "Beam Distributed Load",
+      "Input": "Direction",
+      "InputId": "ffc36542-f5c5-485d-80d5-c21e819334b9",
+      "Control": "GH_ValueList",
+      "ControlId": "f7e26163-2cec-4a50-b07c-be4e8ef44132"
+    },
+    {
+      "ComponentId": "b507014d-dff3-42c0-a670-42090d6ec294",
+      "Component": "Beam Distributed Load",
+      "Input": "a",
+      "InputId": "a892b7a7-357d-4695-988c-ac78c56d8976",
+      "Control": "GH_NumberSlider",
+      "ControlId": "7deffae4-2137-4950-bfb0-7ca29640ca54"
+    },
+    {
+      "ComponentId": "b507014d-dff3-42c0-a670-42090d6ec294",
+      "Component": "Beam Distributed Load",
+      "Input": "b",
+      "InputId": "a83839a7-56fc-4167-b87b-3d0d971dafa3",
+      "Control": "GH_NumberSlider",
+      "ControlId": "e1ede45f-64f1-462f-a86f-9679fca7f910"
+    },
+    {
+      "ComponentId": "b606251e-464c-4fef-8337-46eecb4b49f0",
+      "Component": "Load Case",
+      "Input": "Gravity NSM",
+      "InputId": "572f043c-8eea-41e2-a9c9-c1a6ff3466ff",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "1e936964-a080-4076-8ac6-7aeab8b90980"
+    },
+    {
+      "ComponentId": "02c08bf0-98a4-4e28-baf7-6d07ca016a22",
+      "Component": "Load Case",
+      "Input": "Gravity NSM",
+      "InputId": "16063e37-9443-4c6c-80b8-d8972ada5748",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "fddb1a70-7cb2-433e-b14f-3fad4b13c4f9"
+    },
+    {
+      "ComponentId": "0e7d007d-4ed7-4bd9-96d2-17f0e94ef815",
+      "Component": "List Item",
+      "Input": "Index",
+      "InputId": "0a5b515c-ac24-4e66-85af-a54450b7c0de",
+      "Control": "GH_NumberSlider",
+      "ControlId": "f3367f04-7b45-4e93-96ee-6abe7549ef28"
+    },
+    {
+      "ComponentId": "0e7d007d-4ed7-4bd9-96d2-17f0e94ef815",
+      "Component": "List Item",
+      "Input": "Wrap",
+      "InputId": "c2d37921-a091-484e-91e8-428c84b55644",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "9a956317-70bf-46d0-818f-4c9647f2e428"
+    },
+    {
+      "ComponentId": "795a6449-b687-44ff-b0e2-a7cfb69026af",
+      "Component": "Beam Distributed Load",
+      "Input": "Type",
+      "InputId": "4e5d317b-4d5e-4d2f-b19a-9edd62922bb1",
+      "Control": "GH_ValueList",
+      "ControlId": "9b725516-6795-4a13-8e92-9b21caafb825"
+    },
+    {
+      "ComponentId": "795a6449-b687-44ff-b0e2-a7cfb69026af",
+      "Component": "Beam Distributed Load",
+      "Input": "Direction",
+      "InputId": "5f765790-ca44-4005-9fdc-6339c3e0b3e4",
+      "Control": "GH_ValueList",
+      "ControlId": "502a5b7a-0f00-4629-a50c-0cb3045f61fd"
+    },
+    {
+      "ComponentId": "795a6449-b687-44ff-b0e2-a7cfb69026af",
+      "Component": "Beam Distributed Load",
+      "Input": "a",
+      "InputId": "6c19aa9c-6596-44d0-af18-1ad8ab3eb063",
+      "Control": "GH_NumberSlider",
+      "ControlId": "acddc167-1e14-4f5a-a514-a8a98799e098"
+    },
+    {
+      "ComponentId": "795a6449-b687-44ff-b0e2-a7cfb69026af",
+      "Component": "Beam Distributed Load",
+      "Input": "b",
+      "InputId": "6e5e66a7-f19b-4341-bbd4-d1ec74c063a2",
+      "Control": "GH_NumberSlider",
+      "ControlId": "48ecda2f-d9ab-481b-90d7-6f93dbb91068"
+    },
+    {
+      "ComponentId": "7c1dd262-3cdb-40d9-8355-57aa1b4f2cad",
+      "Component": "Load Case",
+      "Input": "Gravity NSM",
+      "InputId": "de808451-7b6d-486c-8d83-ad14d3f67ab9",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "9d1a19f6-c25e-4c81-be4b-045240ac6f87"
+    },
+    {
+      "ComponentId": "89b3f343-8101-4d2a-8c8e-befd69efa481",
+      "Component": "Bridge Plot Preview",
+      "Input": "Index",
+      "InputId": "05fd6fb1-0484-4934-8d09-e4ee18c2d112",
+      "Control": "GH_NumberSlider",
+      "ControlId": "7080b9a9-b067-43ad-ad3c-2b0ecb6afcc5"
+    },
+    {
+      "ComponentId": "89b3f343-8101-4d2a-8c8e-befd69efa481",
+      "Component": "Bridge Plot Preview",
+      "Input": "Width",
+      "InputId": "71be48ab-47b5-403e-ac46-e6f2b9fe1355",
+      "Control": "GH_NumberSlider",
+      "ControlId": "39281b6b-fae0-4f05-89ce-58993784b853"
+    },
+    {
+      "ComponentId": "5871b69a-bbae-430a-8ae3-d7d4e464468f",
+      "Component": "Ritiro da RH geometria ed et\u00E0",
+      "Input": "Fck",
+      "InputId": "d3ed8a3d-3bb5-4899-9ba2-48473f1c5bb8",
+      "Control": "GH_NumberSlider",
+      "ControlId": "5dcc2ffb-0a12-4163-aaa4-83efc3589e38"
+    },
+    {
+      "ComponentId": "5871b69a-bbae-430a-8ae3-d7d4e464468f",
+      "Component": "Ritiro da RH geometria ed et\u00E0",
+      "Input": "Elastic Modulus Steel",
+      "InputId": "65f1a581-2b97-4288-abfc-7d6734c945e0",
+      "Control": "GH_NumberSlider",
+      "ControlId": "42739ad8-8e0e-47df-aa13-f22d2fee2569"
+    },
+    {
+      "ComponentId": "5871b69a-bbae-430a-8ae3-d7d4e464468f",
+      "Component": "Ritiro da RH geometria ed et\u00E0",
+      "Input": "RH",
+      "InputId": "3f202d63-b25e-43c9-825a-23b184c397f2",
+      "Control": "GH_NumberSlider",
+      "ControlId": "3f8f1e05-478b-4d5e-9a8b-5e90a204fbe0"
+    },
+    {
+      "ComponentId": "5871b69a-bbae-430a-8ae3-d7d4e464468f",
+      "Component": "Ritiro da RH geometria ed et\u00E0",
+      "Input": "t0",
+      "InputId": "730dd26a-405d-4c27-b4ee-531821714419",
+      "Control": "GH_NumberSlider",
+      "ControlId": "35f6181f-e6b4-425d-8063-2ce17658686b"
+    },
+    {
+      "ComponentId": "5871b69a-bbae-430a-8ae3-d7d4e464468f",
+      "Component": "Ritiro da RH geometria ed et\u00E0",
+      "Input": "t",
+      "InputId": "87a690aa-ebd9-4da1-ad66-6216512943da",
+      "Control": "GH_NumberSlider",
+      "ControlId": "840c2802-833f-4c84-8807-28431434d955"
+    },
+    {
+      "ComponentId": "5871b69a-bbae-430a-8ae3-d7d4e464468f",
+      "Component": "Ritiro da RH geometria ed et\u00E0",
+      "Input": "Cement Type",
+      "InputId": "4d8e008d-04c9-4c9e-82fb-7c18b7e07003",
+      "Control": "GH_ValueList",
+      "ControlId": "99f16061-f0c9-4756-aab8-c9731facd5a8"
+    },
+    {
+      "ComponentId": "5871b69a-bbae-430a-8ae3-d7d4e464468f",
+      "Component": "Ritiro da RH geometria ed et\u00E0",
+      "Input": "Drying start",
+      "InputId": "e44104b3-0843-4bf1-90b2-8c6a7f7a2be8",
+      "Control": "GH_NumberSlider",
+      "ControlId": "203228ed-13c8-415f-8077-2881a83d181f"
+    },
+    {
+      "ComponentId": "5871b69a-bbae-430a-8ae3-d7d4e464468f",
+      "Component": "Ritiro da RH geometria ed et\u00E0",
+      "Input": "Reference age",
+      "InputId": "cebe7574-e90e-4812-b41b-6868d624a37c",
+      "Control": "GH_NumberSlider",
+      "ControlId": "72e8f383-2007-4ccc-8a45-61db81cde038"
+    },
+    {
+      "ComponentId": "32188d5a-8b4e-40f2-8dde-d88bfcf8da95",
+      "Component": "WIND dal modello Q",
+      "Input": "Action ID",
+      "InputId": "6a45cf0b-e373-4fa2-a0f1-f1fe8f226c91",
+      "Control": "GH_Panel",
+      "ControlId": "553496c0-67d4-4ef0-8708-b46c01ef189a"
+    },
+    {
+      "ComponentId": "32188d5a-8b4e-40f2-8dde-d88bfcf8da95",
+      "Component": "WIND dal modello Q",
+      "Input": "Case",
+      "InputId": "a8784889-12a9-4080-8751-a83c0bfc20cd",
+      "Control": "GH_Panel",
+      "ControlId": "724bba14-467a-43ef-b59a-fdf9cf187103"
+    },
+    {
+      "ComponentId": "32188d5a-8b4e-40f2-8dde-d88bfcf8da95",
+      "Component": "WIND dal modello Q",
+      "Input": "Behavior",
+      "InputId": "23a56765-3ece-4cb7-87d9-481b1d2aff04",
+      "Control": "GH_NumberSlider",
+      "ControlId": "7c6d108c-d95a-43b2-8805-6c9ef8ec1917"
+    },
+    {
+      "ComponentId": "55c65698-a941-4227-9608-46b1b12f7c9c",
+      "Component": "Graticcio acciaio \u002B soletta 12\u002B12 m",
+      "Input": "Support Stations",
+      "InputId": "6b84e977-c7a6-4e01-9fa2-b15cdf911f67",
+      "Control": "GH_Panel",
+      "ControlId": "e5ff1e88-1a6b-4d9b-92b5-12b976b2dad4"
+    },
+    {
+      "ComponentId": "55c65698-a941-4227-9608-46b1b12f7c9c",
+      "Component": "Graticcio acciaio \u002B soletta 12\u002B12 m",
+      "Input": "Girder Offsets",
+      "InputId": "55ecb019-e278-479d-97db-1f41e79bf2b2",
+      "Control": "GH_Panel",
+      "ControlId": "2f499dc1-fb43-4ec6-b6f6-fe3abed23cba"
+    },
+    {
+      "ComponentId": "55c65698-a941-4227-9608-46b1b12f7c9c",
+      "Component": "Graticcio acciaio \u002B soletta 12\u002B12 m",
+      "Input": "Maximum Element Length",
+      "InputId": "bfce3ee0-1c30-4c15-9378-978669477d88",
+      "Control": "GH_NumberSlider",
+      "ControlId": "69e8a88a-bf74-4da8-a6fc-2d73a2428514"
+    },
+    {
+      "ComponentId": "55c65698-a941-4227-9608-46b1b12f7c9c",
+      "Component": "Graticcio acciaio \u002B soletta 12\u002B12 m",
+      "Input": "Chord Tolerance",
+      "InputId": "dc64c562-fc5b-466c-bcdd-6743e209e256",
+      "Control": "GH_NumberSlider",
+      "ControlId": "46dd44a2-c58d-464f-94c8-209a6a2f80e0"
+    },
+    {
+      "ComponentId": "55c65698-a941-4227-9608-46b1b12f7c9c",
+      "Component": "Graticcio acciaio \u002B soletta 12\u002B12 m",
+      "Input": "Support Skew",
+      "InputId": "db1c3ef3-0afe-4b72-b83b-dfaefd8f0e2a",
+      "Control": "GH_NumberSlider",
+      "ControlId": "d507f587-e188-4465-ad85-484e27ef0111"
+    },
+    {
+      "ComponentId": "55c65698-a941-4227-9608-46b1b12f7c9c",
+      "Component": "Graticcio acciaio \u002B soletta 12\u002B12 m",
+      "Input": "Labels",
+      "InputId": "f1875a0c-5673-4541-a5c2-16eaf6a28f34",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "98eed068-f5bb-46b7-ad88-7110e45f822a"
+    },
+    {
+      "ComponentId": "55c65698-a941-4227-9608-46b1b12f7c9c",
+      "Component": "Graticcio acciaio \u002B soletta 12\u002B12 m",
+      "Input": "Deck Beam Spacing",
+      "InputId": "8df4b094-b296-48b2-8b14-b9deafc98904",
+      "Control": "GH_NumberSlider",
+      "ControlId": "ad9d41f6-d608-4e65-95b6-53ba12a81632"
+    },
+    {
+      "ComponentId": "fa81b372-a486-45d2-8b2b-e2758cfe2fe3",
+      "Component": "Segments",
+      "Input": "Maximum Length",
+      "InputId": "14ef00a4-9e36-49cf-95c1-4237f2da317c",
+      "Control": "GH_NumberSlider",
+      "ControlId": "cba8f899-f35c-4336-a625-189d42f91953"
+    },
+    {
+      "ComponentId": "8f87d9af-d0a7-45b3-8750-e3353e15e3bc",
+      "Component": "Diaphragms",
+      "Input": "Maximum Spacing",
+      "InputId": "5a3b970b-5347-49ff-8cae-515208e64f49",
+      "Control": "GH_NumberSlider",
+      "ControlId": "4d7fb900-096b-4e3f-b650-054ed9282767"
+    },
+    {
+      "ComponentId": "8f87d9af-d0a7-45b3-8750-e3353e15e3bc",
+      "Component": "Diaphragms",
+      "Input": "At Supports",
+      "InputId": "24884822-61e0-4cab-9912-9243384ffb28",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "a76992b4-3e30-43ab-9a9e-ee108c0edcfd"
+    },
+    {
+      "ComponentId": "8f87d9af-d0a7-45b3-8750-e3353e15e3bc",
+      "Component": "Diaphragms",
+      "Input": "Truss Height",
+      "InputId": "a3d5e97e-352e-4066-9c80-8757effa8e4c",
+      "Control": "GH_NumberSlider",
+      "ControlId": "ae30ad32-1896-4173-b6c8-a8c02b1c6595"
+    },
+    {
+      "ComponentId": "8f87d9af-d0a7-45b3-8750-e3353e15e3bc",
+      "Component": "Diaphragms",
+      "Input": "Panels per Bay",
+      "InputId": "35b139c9-75c6-41ac-ac14-d7b13e948d94",
+      "Control": "GH_NumberSlider",
+      "ControlId": "5c6fa0c5-b854-44af-b3e6-f032c5dc4aba"
+    },
+    {
+      "ComponentId": "8f87d9af-d0a7-45b3-8750-e3353e15e3bc",
+      "Component": "Diaphragms",
+      "Input": "Pattern",
+      "InputId": "6dcfc5b5-dc94-4ea3-afd8-8724a019fc93",
+      "Control": "GH_ValueList",
+      "ControlId": "c6275c11-2025-4a19-afd7-4d17dc88454e"
+    },
+    {
+      "ComponentId": "8f87d9af-d0a7-45b3-8750-e3353e15e3bc",
+      "Component": "Diaphragms",
+      "Input": "Connect X",
+      "InputId": "f0f40976-32cf-4edf-aa6f-9d0d6d8bbce8",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "deb363b1-043d-4a41-8f6f-1f970bbf44b4"
+    },
+    {
+      "ComponentId": "d1d13d0d-9d11-4765-8a30-6a181fb03321",
+      "Component": "AssignBridge",
+      "Input": "Families",
+      "InputId": "6089b53a-cfeb-4bd5-a54c-1ed5b66a892a",
+      "Control": "GH_NumberSlider",
+      "ControlId": "1536d265-9518-4103-8f25-3edad59fcf13"
+    },
+    {
+      "ComponentId": "a25d00c1-becd-4402-aef6-44876ed495c0",
+      "Component": "Traversi H800",
+      "Input": "Bottom flange width",
+      "InputId": "47427906-d561-4cc3-842c-6288c8e25cf2",
+      "Control": "GH_NumberSlider",
+      "ControlId": "6f7d2609-a0c0-43ad-9b26-da1d7e39e3f5"
+    },
+    {
+      "ComponentId": "a25d00c1-becd-4402-aef6-44876ed495c0",
+      "Component": "Traversi H800",
+      "Input": "Top flange width",
+      "InputId": "4585d390-72f7-4502-9465-d06a43c7f000",
+      "Control": "GH_NumberSlider",
+      "ControlId": "23cf766b-7e5e-4b02-b572-48f2eee262c4"
+    },
+    {
+      "ComponentId": "a25d00c1-becd-4402-aef6-44876ed495c0",
+      "Component": "Traversi H800",
+      "Input": "Height",
+      "InputId": "975e4c68-fbea-49ed-b9af-a65fa80104d2",
+      "Control": "GH_NumberSlider",
+      "ControlId": "7f5fa2f7-8ca3-4446-8fa8-695466f6bc59"
+    },
+    {
+      "ComponentId": "a25d00c1-becd-4402-aef6-44876ed495c0",
+      "Component": "Traversi H800",
+      "Input": "Bottom flange thickness",
+      "InputId": "f503d8a1-ca3e-4fd1-b150-c2d9bfb23fb1",
+      "Control": "GH_NumberSlider",
+      "ControlId": "154b724b-bb25-44b0-b15a-09d9f1720b83"
+    },
+    {
+      "ComponentId": "a25d00c1-becd-4402-aef6-44876ed495c0",
+      "Component": "Traversi H800",
+      "Input": "Top flange thickness",
+      "InputId": "2245178c-2bf5-4e5a-a58f-54ae8830f5c1",
+      "Control": "GH_NumberSlider",
+      "ControlId": "062ab8ca-ec8d-4ef2-92ed-8e064cab901d"
+    },
+    {
+      "ComponentId": "a25d00c1-becd-4402-aef6-44876ed495c0",
+      "Component": "Traversi H800",
+      "Input": "Web thickness",
+      "InputId": "9a14f542-fa42-4c08-a3cb-18381083490f",
+      "Control": "GH_NumberSlider",
+      "ControlId": "cef39cd2-3bd1-41ca-a4de-276063e5c7b0"
+    },
+    {
+      "ComponentId": "a25d00c1-becd-4402-aef6-44876ed495c0",
+      "Component": "Traversi H800",
+      "Input": "Radius",
+      "InputId": "7fbbf2ec-e1de-4c93-a802-8493f7014934",
+      "Control": "GH_NumberSlider",
+      "ControlId": "2c40963f-a9d4-4c72-a635-6424a20cea56"
+    },
+    {
+      "ComponentId": "105af6e5-8e13-40bf-88b6-ece2351f9ee6",
+      "Component": "S355 traversi",
+      "Input": "Name",
+      "InputId": "2eec5221-d51e-44ab-88c6-5909b8b62d18",
+      "Control": "GH_Panel",
+      "ControlId": "bf3bac15-a8d9-447f-9ed8-ebb47c15328c"
+    },
+    {
+      "ComponentId": "105af6e5-8e13-40bf-88b6-ece2351f9ee6",
+      "Component": "S355 traversi",
+      "Input": "Type",
+      "InputId": "c2b07e4b-2ad3-448f-b867-f9374af6b61b",
+      "Control": "GH_ValueList",
+      "ControlId": "e89b57e2-691e-465d-ae49-c23b26b16b8f"
+    },
+    {
+      "ComponentId": "6acadc34-4ce6-4d4e-bc14-b7a552a507f2",
+      "Component": "SectionSchedule",
+      "Input": "Start",
+      "InputId": "ac480f02-178c-41ae-8bfb-acc151615a8c",
+      "Control": "GH_NumberSlider",
+      "ControlId": "30019ed2-eeeb-45a9-8477-7acd0eabafd0"
+    },
+    {
+      "ComponentId": "6acadc34-4ce6-4d4e-bc14-b7a552a507f2",
+      "Component": "SectionSchedule",
+      "Input": "End",
+      "InputId": "7b096122-fa8a-49c7-8a03-a677129e6d82",
+      "Control": "GH_NumberSlider",
+      "ControlId": "0d0f82aa-b3de-4204-8ada-9d4d2e5ec554"
+    },
+    {
+      "ComponentId": "6acadc34-4ce6-4d4e-bc14-b7a552a507f2",
+      "Component": "SectionSchedule",
+      "Input": "Family",
+      "InputId": "e803decf-c32a-4fd2-9f5e-e0cdffc4c73d",
+      "Control": "GH_NumberSlider",
+      "ControlId": "78bf2643-0adb-4fac-9556-ece1e7749eaa"
+    },
+    {
+      "ComponentId": "6acadc34-4ce6-4d4e-bc14-b7a552a507f2",
+      "Component": "SectionSchedule",
+      "Input": "Group",
+      "InputId": "3916baf8-920a-4543-8413-f2a9957157ef",
+      "Control": "GH_NumberSlider",
+      "ControlId": "49ad1c68-c6f7-43d2-b74e-863ffdef0b86"
+    },
+    {
+      "ComponentId": "6acadc34-4ce6-4d4e-bc14-b7a552a507f2",
+      "Component": "SectionSchedule",
+      "Input": "Segment",
+      "InputId": "a4f10830-ccc3-45ea-8fcc-ac82d776b6d7",
+      "Control": "GH_NumberSlider",
+      "ControlId": "2b29311f-b455-4118-89b3-a840fba71acd"
+    },
+    {
+      "ComponentId": "6acadc34-4ce6-4d4e-bc14-b7a552a507f2",
+      "Component": "SectionSchedule",
+      "Input": "Start Scale",
+      "InputId": "6bf6610e-cbbd-4728-b086-9dccc73643c9",
+      "Control": "GH_Panel",
+      "ControlId": "80c8caf7-a4c6-403b-9d68-df5c5dcaea20"
+    },
+    {
+      "ComponentId": "6acadc34-4ce6-4d4e-bc14-b7a552a507f2",
+      "Component": "SectionSchedule",
+      "Input": "End Scale",
+      "InputId": "0cd61cb5-25ed-4cd1-b33b-0da441563d63",
+      "Control": "GH_Panel",
+      "ControlId": "d445e181-2a0a-4947-a96c-e17da7036cd6"
+    },
+    {
+      "ComponentId": "96935919-b61b-4f2a-9d66-35764efc519f",
+      "Component": "Bearings",
+      "Input": "Types",
+      "InputId": "c7a15197-2119-4c0c-9165-d48bebd0744f",
+      "Control": "GH_Panel",
+      "ControlId": "1d4a0a6e-786f-4166-9185-b24da38f58f9"
+    },
+    {
+      "ComponentId": "96935919-b61b-4f2a-9d66-35764efc519f",
+      "Component": "Bearings",
+      "Input": "Guide Angle",
+      "InputId": "3ac4e1cb-e6aa-4584-b9cc-1bc28b49590e",
+      "Control": "GH_NumberSlider",
+      "ControlId": "34ea61f0-3f70-420c-8467-4cdecc30d234"
+    },
+    {
+      "ComponentId": "96935919-b61b-4f2a-9d66-35764efc519f",
+      "Component": "Bearings",
+      "Input": "Translation Stiffness",
+      "InputId": "b1adeba2-3e59-4eb5-b489-99b74847a328",
+      "Control": "GH_Panel",
+      "ControlId": "cba324d2-ad0d-430f-9293-f817dbfc1f25"
+    },
+    {
+      "ComponentId": "96935919-b61b-4f2a-9d66-35764efc519f",
+      "Component": "Bearings",
+      "Input": "Rotation Stiffness",
+      "InputId": "fa02a5f2-2baa-4e9c-b6f9-6fd19e490df7",
+      "Control": "GH_Panel",
+      "ControlId": "72b0acc0-347d-42d4-9eeb-f31932ee5c0d"
+    },
+    {
+      "ComponentId": "628c042f-ce2c-4314-9247-3f52e0087191",
+      "Component": "Trave G2",
+      "Input": "Super-Element",
+      "InputId": "156c9b54-7d30-4378-a312-73e837e50216",
+      "Control": "GH_Panel",
+      "ControlId": "cbcad993-1b96-43ad-965e-8a3230b01630"
+    },
+    {
+      "ComponentId": "f04b8147-e74b-4169-9cb2-d436bbd120af",
+      "Component": "Verifiche G2",
+      "Input": "Web Local Instability",
+      "InputId": "7eef866b-b06d-4f07-917e-75b58b8f4954",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "b6037a72-e3c6-422a-869c-130a2ee2176e"
+    },
+    {
+      "ComponentId": "f04b8147-e74b-4169-9cb2-d436bbd120af",
+      "Component": "Verifiche G2",
+      "Input": "Top Flange Local Instability",
+      "InputId": "7a196221-0031-46c5-8e4d-8b4b9d33098c",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "573a81a6-49fe-42fb-9a13-fc5859d8c48d"
+    },
+    {
+      "ComponentId": "f04b8147-e74b-4169-9cb2-d436bbd120af",
+      "Component": "Verifiche G2",
+      "Input": "Bottom Flange Local Instability",
+      "InputId": "5b8794de-cff8-4a77-b1fa-36c708fe69cb",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "72bce3fc-dad0-499b-be78-6f2d2d20e107"
+    },
+    {
+      "ComponentId": "8caf828d-7cf1-4345-8d9b-5f63cc479845",
+      "Component": "B450C",
+      "Input": "Name",
+      "InputId": "29ca4a3d-bc40-44f1-9306-dbc12835d70a",
+      "Control": "GH_Panel",
+      "ControlId": "8da6aa43-586c-4690-a9df-17fca37a5d50"
+    },
+    {
+      "ComponentId": "74c73354-67ae-4352-91ba-dba3d9774758",
+      "Component": "Eccentricit\u00E0 rigide trave-soletta",
+      "Input": "Mode",
+      "InputId": "4e7d661f-0ea5-44ee-9774-0b015e72d7fe",
+      "Control": "GH_NumberSlider",
+      "ControlId": "e1d59178-0b82-44be-802e-788656af1b07"
+    },
+    {
+      "ComponentId": "74c73354-67ae-4352-91ba-dba3d9774758",
+      "Component": "Eccentricit\u00E0 rigide trave-soletta",
+      "Input": "Offset",
+      "InputId": "bf5872a6-4061-4814-afda-1612724d5fbd",
+      "Control": "GH_Panel",
+      "ControlId": "13e479fd-38a5-4fb6-9747-865ee9d91263"
+    },
+    {
+      "ComponentId": "59171591-8402-478d-b33f-4bcc5120b77b",
+      "Component": "Item",
+      "Input": "Index",
+      "InputId": "1488927b-2ec5-41d5-898b-eaa3f7ef67a9",
+      "Control": "GH_NumberSlider",
+      "ControlId": "0b5be5a1-475c-4228-8712-cce8d3e845cb"
+    },
+    {
+      "ComponentId": "59171591-8402-478d-b33f-4bcc5120b77b",
+      "Component": "Item",
+      "Input": "Wrap",
+      "InputId": "95f0297f-ec1b-450f-8235-e4b9b7d1659c",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "cb0489fa-67af-4c57-8b7c-f64f127b0f6f"
+    },
+    {
+      "ComponentId": "1524d99c-d241-4a48-8609-5594a8fe4f87",
+      "Component": "Cls equivalente G2",
+      "Input": "Name",
+      "InputId": "8c040e9c-9aaa-4859-b7a9-745ae0c726d9",
+      "Control": "GH_Panel",
+      "ControlId": "052cb2d2-23fa-40eb-b0f9-161903643f61"
+    },
+    {
+      "ComponentId": "1524d99c-d241-4a48-8609-5594a8fe4f87",
+      "Component": "Cls equivalente G2",
+      "Input": "Kind",
+      "InputId": "97020498-ce95-4033-9c7c-31d8d1f5eed4",
+      "Control": "GH_ValueList",
+      "ControlId": "441018c4-62fc-4a1e-b780-8ae0777cdf16"
+    },
+    {
+      "ComponentId": "1524d99c-d241-4a48-8609-5594a8fe4f87",
+      "Component": "Cls equivalente G2",
+      "Input": "Units",
+      "InputId": "c6354c00-709d-43ca-ac27-586598920322",
+      "Control": "GH_ValueList",
+      "ControlId": "0bab45c3-1e24-476f-a1b3-fd6d4e2b5951"
+    },
+    {
+      "ComponentId": "1524d99c-d241-4a48-8609-5594a8fe4f87",
+      "Component": "Cls equivalente G2",
+      "Input": "Poisson Ratio",
+      "InputId": "274cbef2-9a24-4fd8-bdef-ed3eb2f8334f",
+      "Control": "GH_NumberSlider",
+      "ControlId": "f3327dc7-5889-48e7-b12f-33e771b71746"
+    },
+    {
+      "ComponentId": "1524d99c-d241-4a48-8609-5594a8fe4f87",
+      "Component": "Cls equivalente G2",
+      "Input": "Thermal Expansion",
+      "InputId": "bc755232-e54a-4dae-be6e-25cca535c090",
+      "Control": "GH_NumberSlider",
+      "ControlId": "7fc87a32-332b-467e-8470-098484ef71be"
+    },
+    {
+      "ComponentId": "1524d99c-d241-4a48-8609-5594a8fe4f87",
+      "Component": "Cls equivalente G2",
+      "Input": "Use Poisson",
+      "InputId": "f2537e96-b298-49bb-8655-51add8d1b3f0",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "d645e55f-6af3-4115-b310-134f44c99506"
+    },
+    {
+      "ComponentId": "1524d99c-d241-4a48-8609-5594a8fe4f87",
+      "Component": "Cls equivalente G2",
+      "Input": "Density",
+      "InputId": "8690a408-3746-4127-b62b-0ecfadb55223",
+      "Control": "GH_Panel",
+      "ControlId": "ca7d5280-5ce2-44b6-971c-9cc97d546be2"
+    },
+    {
+      "ComponentId": "1524d99c-d241-4a48-8609-5594a8fe4f87",
+      "Component": "Cls equivalente G2",
+      "Input": "Yielding",
+      "InputId": "1c9d0dc4-3aea-4a19-946a-6ea88187c019",
+      "Control": "GH_NumberSlider",
+      "ControlId": "1617e6a5-b169-4193-91c2-dbdbeb544549"
+    },
+    {
+      "ComponentId": "1524d99c-d241-4a48-8609-5594a8fe4f87",
+      "Component": "Cls equivalente G2",
+      "Input": "Strength for Steel",
+      "InputId": "dda64435-f8b0-4e12-9251-954700b9a0c6",
+      "Control": "GH_NumberSlider",
+      "ControlId": "2cdb5568-4d17-4598-9c96-c63f33a0d71f"
+    },
+    {
+      "ComponentId": "e21eb37c-5dda-4da4-91dd-1e7294b4b97d",
+      "Component": "Soletta G2 interna",
+      "Input": "Name",
+      "InputId": "b98442a9-27f6-44cf-986e-6a97b69fcf64",
+      "Control": "GH_Panel",
+      "ControlId": "889ad094-deef-4a4a-8ff6-670e348cd668"
+    },
+    {
+      "ComponentId": "e21eb37c-5dda-4da4-91dd-1e7294b4b97d",
+      "Component": "Soletta G2 interna",
+      "Input": "Type",
+      "InputId": "a16a4ffc-b843-4ff5-8d03-dfcad32f2f13",
+      "Control": "GH_ValueList",
+      "ControlId": "b183fc5b-f61f-4a39-a244-012655601462"
+    },
+    {
+      "ComponentId": "be72f399-3558-4f33-b21f-36d6495a739f",
+      "Component": "Soletta G2 estremit\u00E0",
+      "Input": "Name",
+      "InputId": "16f26668-8249-479f-b46c-c2f746b6e93e",
+      "Control": "GH_Panel",
+      "ControlId": "3f3729b3-d7a2-4f62-960f-ca5aea657817"
+    },
+    {
+      "ComponentId": "be72f399-3558-4f33-b21f-36d6495a739f",
+      "Component": "Soletta G2 estremit\u00E0",
+      "Input": "Type",
+      "InputId": "8294e07d-8bd0-4848-9aaf-6af51bea3c2f",
+      "Control": "GH_ValueList",
+      "ControlId": "a1dc0a54-b12b-40ce-9c2b-352da89da465"
+    },
+    {
+      "ComponentId": "13d99fa5-ce68-4030-a5f3-5acf6724ae01",
+      "Component": "Assegna soletta G2",
+      "Input": "Families",
+      "InputId": "9b563509-feda-4d2f-98d6-c7b367d3b473",
+      "Control": "GH_Panel",
+      "ControlId": "f6a6dcbb-cdbe-4113-afa8-1d7c9a4c67cb"
+    },
+    {
+      "ComponentId": "1476252a-24b3-4c2b-8446-590841c6e0fe",
+      "Component": "SectionSchedule",
+      "Input": "Start",
+      "InputId": "a9c8a46e-ceba-4df1-bb5d-d4980600717d",
+      "Control": "GH_NumberSlider",
+      "ControlId": "87918230-dec5-4dea-9378-61ccc480739b"
+    },
+    {
+      "ComponentId": "1476252a-24b3-4c2b-8446-590841c6e0fe",
+      "Component": "SectionSchedule",
+      "Input": "End",
+      "InputId": "488888f4-d17a-463c-95f8-f9ee6ff08e02",
+      "Control": "GH_NumberSlider",
+      "ControlId": "31613329-fba7-49ee-90df-e4f2ee67bfbb"
+    },
+    {
+      "ComponentId": "1476252a-24b3-4c2b-8446-590841c6e0fe",
+      "Component": "SectionSchedule",
+      "Input": "Family",
+      "InputId": "bc5e7a82-3a7f-4111-a568-f9fb5d211b6e",
+      "Control": "GH_NumberSlider",
+      "ControlId": "3b1af9e9-9147-442d-9891-d1ac745557d1"
+    },
+    {
+      "ComponentId": "1476252a-24b3-4c2b-8446-590841c6e0fe",
+      "Component": "SectionSchedule",
+      "Input": "Group",
+      "InputId": "a4f3e3c7-f79c-4675-93a4-bbb47d6128ff",
+      "Control": "GH_NumberSlider",
+      "ControlId": "48b982d8-85fe-45a2-9162-2476b4cea0fd"
+    },
+    {
+      "ComponentId": "1476252a-24b3-4c2b-8446-590841c6e0fe",
+      "Component": "SectionSchedule",
+      "Input": "Segment",
+      "InputId": "c9450ffa-dbc5-4fad-b4f0-ba9eefb1a96b",
+      "Control": "GH_NumberSlider",
+      "ControlId": "68fd2abb-c1d3-4f51-b2ca-6f15ce87fb1c"
+    },
+    {
+      "ComponentId": "1476252a-24b3-4c2b-8446-590841c6e0fe",
+      "Component": "SectionSchedule",
+      "Input": "Start Scale",
+      "InputId": "e4701ae9-d18a-4d12-b7c7-65f3db129170",
+      "Control": "GH_Panel",
+      "ControlId": "aa7276ee-bbc0-454f-9c01-0abba7a1e595"
+    },
+    {
+      "ComponentId": "1476252a-24b3-4c2b-8446-590841c6e0fe",
+      "Component": "SectionSchedule",
+      "Input": "End Scale",
+      "InputId": "e85e4171-65eb-4cb0-9621-9700312da65f",
+      "Control": "GH_Panel",
+      "ControlId": "4615ca88-6953-46c3-8443-2a04bc466bbc"
+    },
+    {
+      "ComponentId": "c9a54efd-f066-4e1f-9039-b61b56c103ec",
+      "Component": "SectionSchedule",
+      "Input": "Start",
+      "InputId": "64d56f44-7551-43d4-a637-7b202cc62921",
+      "Control": "GH_NumberSlider",
+      "ControlId": "99309038-ad73-42f0-937a-2cf92998e16f"
+    },
+    {
+      "ComponentId": "c9a54efd-f066-4e1f-9039-b61b56c103ec",
+      "Component": "SectionSchedule",
+      "Input": "End",
+      "InputId": "0ad365e6-e642-480b-8840-da512ee7497d",
+      "Control": "GH_NumberSlider",
+      "ControlId": "8c154090-f4ab-4c74-a03a-76f0dff89f55"
+    },
+    {
+      "ComponentId": "c9a54efd-f066-4e1f-9039-b61b56c103ec",
+      "Component": "SectionSchedule",
+      "Input": "Family",
+      "InputId": "ab6cb39f-23b1-458c-8d4a-d68d7ede0040",
+      "Control": "GH_NumberSlider",
+      "ControlId": "1a7b4056-1ddb-4f49-bd18-6336ca10415d"
+    },
+    {
+      "ComponentId": "c9a54efd-f066-4e1f-9039-b61b56c103ec",
+      "Component": "SectionSchedule",
+      "Input": "Segment",
+      "InputId": "53ae1dcd-917f-4a5e-a022-a69943774cb3",
+      "Control": "GH_NumberSlider",
+      "ControlId": "ee8e894b-adfc-40b9-8c24-e858b5adcdaa"
+    },
+    {
+      "ComponentId": "c9a54efd-f066-4e1f-9039-b61b56c103ec",
+      "Component": "SectionSchedule",
+      "Input": "Start Scale",
+      "InputId": "5e37ef40-0862-4cbe-a9d0-c9058a693099",
+      "Control": "GH_Panel",
+      "ControlId": "9784ad42-f974-4b74-8f63-fe3d689c4a1b"
+    },
+    {
+      "ComponentId": "c9a54efd-f066-4e1f-9039-b61b56c103ec",
+      "Component": "SectionSchedule",
+      "Input": "End Scale",
+      "InputId": "ab6a14ec-e994-4706-bccc-02d56e80fee8",
+      "Control": "GH_Panel",
+      "ControlId": "0ac518b2-2283-4594-be6e-57e8ef6e2d79"
+    },
+    {
+      "ComponentId": "16b2c5e3-f7fe-401c-86e6-0bdb58a87e4a",
+      "Component": "Solo fasce cls G2",
+      "Input": "Units",
+      "InputId": "c4fe8023-ae47-4a38-a60e-a502ff0933ec",
+      "Control": "GH_ValueList",
+      "ControlId": "7e26c175-4ea2-4502-932e-f7cd953ff3c2"
+    },
+    {
+      "ComponentId": "16b2c5e3-f7fe-401c-86e6-0bdb58a87e4a",
+      "Component": "Solo fasce cls G2",
+      "Input": "Properties name",
+      "InputId": "db0836c0-4b35-4e80-984a-ee266699fc88",
+      "Control": "GH_Panel",
+      "ControlId": "6a25a9e3-f638-45f1-b97e-aacba518fdc1"
+    },
+    {
+      "ComponentId": "af7f8f6d-e76d-4196-9f4f-ed935312f556",
+      "Component": "Cls equivalente Q",
+      "Input": "Name",
+      "InputId": "0aeb1d53-2cf4-48cd-841d-34a1e4e3f186",
+      "Control": "GH_Panel",
+      "ControlId": "6d35a228-1d47-4d70-ae0f-71f28ca9e93d"
+    },
+    {
+      "ComponentId": "af7f8f6d-e76d-4196-9f4f-ed935312f556",
+      "Component": "Cls equivalente Q",
+      "Input": "Kind",
+      "InputId": "6d3a6075-2a78-429b-b543-ea68e974e5f2",
+      "Control": "GH_ValueList",
+      "ControlId": "65959fec-7040-4d13-8e26-909b72ff085e"
+    },
+    {
+      "ComponentId": "af7f8f6d-e76d-4196-9f4f-ed935312f556",
+      "Component": "Cls equivalente Q",
+      "Input": "Units",
+      "InputId": "9761e5e9-ae61-4e30-b4cc-5a253db333ff",
+      "Control": "GH_ValueList",
+      "ControlId": "900bc140-5b0b-495b-84f1-52f5c8002d64"
+    },
+    {
+      "ComponentId": "af7f8f6d-e76d-4196-9f4f-ed935312f556",
+      "Component": "Cls equivalente Q",
+      "Input": "Poisson Ratio",
+      "InputId": "237623b3-9d80-443b-b421-72e39cd97cbe",
+      "Control": "GH_NumberSlider",
+      "ControlId": "41940fa1-67dd-4793-b0a5-17bfe765bc89"
+    },
+    {
+      "ComponentId": "af7f8f6d-e76d-4196-9f4f-ed935312f556",
+      "Component": "Cls equivalente Q",
+      "Input": "Thermal Expansion",
+      "InputId": "ff9a4c8f-bf33-4850-ba8f-37da82c89ccb",
+      "Control": "GH_NumberSlider",
+      "ControlId": "b1a7b232-b3ce-4b48-b006-557fa58a8699"
+    },
+    {
+      "ComponentId": "af7f8f6d-e76d-4196-9f4f-ed935312f556",
+      "Component": "Cls equivalente Q",
+      "Input": "Use Poisson",
+      "InputId": "7dbade66-8af8-4b03-a107-13b037afd7aa",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "fca583a5-8eef-4f01-af17-63affa0805f6"
+    },
+    {
+      "ComponentId": "af7f8f6d-e76d-4196-9f4f-ed935312f556",
+      "Component": "Cls equivalente Q",
+      "Input": "Density",
+      "InputId": "d48e3bb0-3534-4441-9677-e161d96af9a8",
+      "Control": "GH_Panel",
+      "ControlId": "8d1273a6-3097-4345-9628-2a250ee8ad86"
+    },
+    {
+      "ComponentId": "af7f8f6d-e76d-4196-9f4f-ed935312f556",
+      "Component": "Cls equivalente Q",
+      "Input": "Yielding",
+      "InputId": "7f011981-b394-4191-808d-3a7e91fb4401",
+      "Control": "GH_NumberSlider",
+      "ControlId": "f675a55e-aff0-406b-b2e1-5e59bce4ff5a"
+    },
+    {
+      "ComponentId": "af7f8f6d-e76d-4196-9f4f-ed935312f556",
+      "Component": "Cls equivalente Q",
+      "Input": "Strength for Steel",
+      "InputId": "0d08e7ef-0fa3-407c-a8ec-56ebaf81bcf9",
+      "Control": "GH_NumberSlider",
+      "ControlId": "de9628a2-e99f-4280-9c00-9268db22e158"
+    },
+    {
+      "ComponentId": "40fba790-5218-43ba-8154-39207ddd9862",
+      "Component": "Soletta Q interna",
+      "Input": "Name",
+      "InputId": "52a02940-20cd-4351-9fbf-9dc814208dc9",
+      "Control": "GH_Panel",
+      "ControlId": "ef97f844-644f-4917-9c3e-77161fb156c1"
+    },
+    {
+      "ComponentId": "40fba790-5218-43ba-8154-39207ddd9862",
+      "Component": "Soletta Q interna",
+      "Input": "Type",
+      "InputId": "38a79200-ae8a-4855-b2e5-f79479db8a2f",
+      "Control": "GH_ValueList",
+      "ControlId": "2cf7c937-5894-4da3-ade3-7920bf56a20f"
+    },
+    {
+      "ComponentId": "3c3da61a-cbe4-4ab1-88e5-62833fb01e85",
+      "Component": "Soletta Q estremit\u00E0",
+      "Input": "Name",
+      "InputId": "4592ed83-54a3-43dc-b8e1-433e48fac2b3",
+      "Control": "GH_Panel",
+      "ControlId": "974900c8-8153-4d8a-b206-ce7a475c6d2e"
+    },
+    {
+      "ComponentId": "3c3da61a-cbe4-4ab1-88e5-62833fb01e85",
+      "Component": "Soletta Q estremit\u00E0",
+      "Input": "Type",
+      "InputId": "ce2b4281-717f-44ed-9931-68429341a899",
+      "Control": "GH_ValueList",
+      "ControlId": "cd22853f-fc12-46fc-accb-a69640cb5c86"
+    },
+    {
+      "ComponentId": "403b7119-ef8d-4c7a-a1a0-dff0efc0c06f",
+      "Component": "Assegna soletta Q",
+      "Input": "Families",
+      "InputId": "63291189-84a5-4a44-80a5-8393b4100c1c",
+      "Control": "GH_Panel",
+      "ControlId": "32807fc6-73cf-4402-9d44-65c1050063bc"
+    },
+    {
+      "ComponentId": "0dd13660-56e8-4c94-9025-25e679a1d491",
+      "Component": "SectionSchedule",
+      "Input": "Start",
+      "InputId": "72a7a172-7487-457b-a800-05ff4ca3dd7f",
+      "Control": "GH_NumberSlider",
+      "ControlId": "dfa78436-3b92-4a30-b0f4-0014efd93fb5"
+    },
+    {
+      "ComponentId": "0dd13660-56e8-4c94-9025-25e679a1d491",
+      "Component": "SectionSchedule",
+      "Input": "End",
+      "InputId": "39b13a3f-44f0-49c2-b887-0ab96891e3d1",
+      "Control": "GH_NumberSlider",
+      "ControlId": "8abcc608-5f90-497b-b511-493181c698ff"
+    },
+    {
+      "ComponentId": "0dd13660-56e8-4c94-9025-25e679a1d491",
+      "Component": "SectionSchedule",
+      "Input": "Family",
+      "InputId": "e764a3c1-ed78-460d-9ace-c1fdc7ad99aa",
+      "Control": "GH_NumberSlider",
+      "ControlId": "01bd8d55-8515-499b-a554-ff55de24acc6"
+    },
+    {
+      "ComponentId": "0dd13660-56e8-4c94-9025-25e679a1d491",
+      "Component": "SectionSchedule",
+      "Input": "Group",
+      "InputId": "d4620b15-5413-4194-8acc-c03c26beb551",
+      "Control": "GH_NumberSlider",
+      "ControlId": "198c0e88-f94c-45ce-ad72-3cd766401683"
+    },
+    {
+      "ComponentId": "0dd13660-56e8-4c94-9025-25e679a1d491",
+      "Component": "SectionSchedule",
+      "Input": "Segment",
+      "InputId": "c4821c28-5652-44b4-898f-d75f30e5ab7c",
+      "Control": "GH_NumberSlider",
+      "ControlId": "549c7486-e04c-4b15-b0ff-56ab4f2a7b76"
+    },
+    {
+      "ComponentId": "0dd13660-56e8-4c94-9025-25e679a1d491",
+      "Component": "SectionSchedule",
+      "Input": "Start Scale",
+      "InputId": "0e2dc8ba-da90-4279-9442-ef5e4ecf4a8f",
+      "Control": "GH_Panel",
+      "ControlId": "db50450a-9df9-4c98-8555-08f93f0ca4c2"
+    },
+    {
+      "ComponentId": "0dd13660-56e8-4c94-9025-25e679a1d491",
+      "Component": "SectionSchedule",
+      "Input": "End Scale",
+      "InputId": "af6020a5-4f81-41be-bb91-6709509b29d8",
+      "Control": "GH_Panel",
+      "ControlId": "3619ed08-ed7a-44f5-b3bd-dfa399b10834"
+    },
+    {
+      "ComponentId": "5a5cf227-c78f-4bbe-8374-7d5577e0d357",
+      "Component": "SectionSchedule",
+      "Input": "Start",
+      "InputId": "f561712b-8345-4743-a4fa-35e0604ff84e",
+      "Control": "GH_NumberSlider",
+      "ControlId": "b6b6aaec-9ead-437a-a2fd-026b507d24a8"
+    },
+    {
+      "ComponentId": "5a5cf227-c78f-4bbe-8374-7d5577e0d357",
+      "Component": "SectionSchedule",
+      "Input": "End",
+      "InputId": "c5b55a3b-625b-4447-b619-57c90ac058bd",
+      "Control": "GH_NumberSlider",
+      "ControlId": "724e1d6c-7f94-4079-b70e-1316eeda8752"
+    },
+    {
+      "ComponentId": "5a5cf227-c78f-4bbe-8374-7d5577e0d357",
+      "Component": "SectionSchedule",
+      "Input": "Family",
+      "InputId": "85718feb-c85c-4356-8bf6-d96bb4313bdb",
+      "Control": "GH_NumberSlider",
+      "ControlId": "fa5eb10b-47a6-4ad5-8a1a-8179d7397c0c"
+    },
+    {
+      "ComponentId": "5a5cf227-c78f-4bbe-8374-7d5577e0d357",
+      "Component": "SectionSchedule",
+      "Input": "Segment",
+      "InputId": "d69178b4-8fcf-4e73-a138-c1626c4a6913",
+      "Control": "GH_NumberSlider",
+      "ControlId": "95ad23d5-9005-44aa-848f-f90a24ddbe95"
+    },
+    {
+      "ComponentId": "5a5cf227-c78f-4bbe-8374-7d5577e0d357",
+      "Component": "SectionSchedule",
+      "Input": "Start Scale",
+      "InputId": "f610da00-a293-487b-9ffd-7791b8cce88d",
+      "Control": "GH_Panel",
+      "ControlId": "450c5137-ef63-49b2-bb0e-4084d71d5ab8"
+    },
+    {
+      "ComponentId": "5a5cf227-c78f-4bbe-8374-7d5577e0d357",
+      "Component": "SectionSchedule",
+      "Input": "End Scale",
+      "InputId": "91ddc65b-d878-4d8e-8441-a2d07cd9b21e",
+      "Control": "GH_Panel",
+      "ControlId": "d85576f1-ffce-4ecd-8b85-38101d422766"
+    },
+    {
+      "ComponentId": "c51a03ba-27b2-4d89-9017-44b6908b096a",
+      "Component": "Solo fasce cls Q",
+      "Input": "Units",
+      "InputId": "b1cff4c2-f07b-4b27-bc6f-6516799ebd24",
+      "Control": "GH_ValueList",
+      "ControlId": "33aced4f-2965-4ebe-9058-98470fab15af"
+    },
+    {
+      "ComponentId": "c51a03ba-27b2-4d89-9017-44b6908b096a",
+      "Component": "Solo fasce cls Q",
+      "Input": "Properties name",
+      "InputId": "9d09cd8c-89b7-48a3-8f6e-ce7c4bcae1b4",
+      "Control": "GH_Panel",
+      "ControlId": "c5778a68-a1c2-4e9b-a7d5-46d32e8e5463"
+    },
+    {
+      "ComponentId": "15c27ba4-5181-4a04-93dd-e751454c0a02",
+      "Component": "Cls equivalente RITIRO",
+      "Input": "Name",
+      "InputId": "d6202ded-6670-4691-8c35-1c5df781e499",
+      "Control": "GH_Panel",
+      "ControlId": "3c715904-8727-4332-b5a2-6bb83dce1b96"
+    },
+    {
+      "ComponentId": "15c27ba4-5181-4a04-93dd-e751454c0a02",
+      "Component": "Cls equivalente RITIRO",
+      "Input": "Kind",
+      "InputId": "11d507cb-1812-4f94-b683-5f5b77f1c0f0",
+      "Control": "GH_ValueList",
+      "ControlId": "e9146d4f-1f2c-4f12-9967-8cfcf658bc43"
+    },
+    {
+      "ComponentId": "15c27ba4-5181-4a04-93dd-e751454c0a02",
+      "Component": "Cls equivalente RITIRO",
+      "Input": "Units",
+      "InputId": "3e1f3eee-ac09-4f46-a6af-bc0a124948ce",
+      "Control": "GH_ValueList",
+      "ControlId": "7d6918ac-28e4-47e3-8814-e93ad1dc2fa6"
+    },
+    {
+      "ComponentId": "15c27ba4-5181-4a04-93dd-e751454c0a02",
+      "Component": "Cls equivalente RITIRO",
+      "Input": "Poisson Ratio",
+      "InputId": "0dea04d4-bf6a-4fc6-8381-ea3a29c87fdd",
+      "Control": "GH_NumberSlider",
+      "ControlId": "49bca07e-c5fc-4321-9e94-3dba8aacc9f3"
+    },
+    {
+      "ComponentId": "15c27ba4-5181-4a04-93dd-e751454c0a02",
+      "Component": "Cls equivalente RITIRO",
+      "Input": "Thermal Expansion",
+      "InputId": "36cae794-ecae-4be5-9f37-c922663c9bae",
+      "Control": "GH_NumberSlider",
+      "ControlId": "411ae7a8-8976-4530-b743-000c11edd164"
+    },
+    {
+      "ComponentId": "15c27ba4-5181-4a04-93dd-e751454c0a02",
+      "Component": "Cls equivalente RITIRO",
+      "Input": "Use Poisson",
+      "InputId": "7e9e7b92-cf72-4599-b468-ec09b4292992",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "9329fc4c-f316-47ea-b01a-c275c76c188d"
+    },
+    {
+      "ComponentId": "15c27ba4-5181-4a04-93dd-e751454c0a02",
+      "Component": "Cls equivalente RITIRO",
+      "Input": "Density",
+      "InputId": "21748799-6427-4b6c-9aac-e82ec0026fd2",
+      "Control": "GH_Panel",
+      "ControlId": "0dfecae7-a70c-471f-a474-4fdc214b58b2"
+    },
+    {
+      "ComponentId": "15c27ba4-5181-4a04-93dd-e751454c0a02",
+      "Component": "Cls equivalente RITIRO",
+      "Input": "Yielding",
+      "InputId": "da1eef3f-07ad-421c-ac89-f4555e3513e1",
+      "Control": "GH_NumberSlider",
+      "ControlId": "c1bf34d8-8bdb-4e43-a965-6014be38749b"
+    },
+    {
+      "ComponentId": "15c27ba4-5181-4a04-93dd-e751454c0a02",
+      "Component": "Cls equivalente RITIRO",
+      "Input": "Strength for Steel",
+      "InputId": "9b59c77f-adda-4165-bdea-434c44de50a1",
+      "Control": "GH_NumberSlider",
+      "ControlId": "55ca7155-f192-4d6e-a514-105f0fa7b66e"
+    },
+    {
+      "ComponentId": "6625b708-1950-4fba-95de-c54660bdefde",
+      "Component": "Soletta RITIRO interna",
+      "Input": "Name",
+      "InputId": "165bef21-57fd-4261-9535-ec54b8b6f6af",
+      "Control": "GH_Panel",
+      "ControlId": "cbc193e8-aef2-451c-b13b-9f273d2839f9"
+    },
+    {
+      "ComponentId": "6625b708-1950-4fba-95de-c54660bdefde",
+      "Component": "Soletta RITIRO interna",
+      "Input": "Type",
+      "InputId": "86e829f4-ce16-4ad0-bd00-de4baef0e82d",
+      "Control": "GH_ValueList",
+      "ControlId": "b9afa1eb-9fad-4353-bb50-615ab8bac6a0"
+    },
+    {
+      "ComponentId": "6c268cee-2a6f-4a4b-bd86-4a9d744f11e1",
+      "Component": "Soletta RITIRO estremit\u00E0",
+      "Input": "Name",
+      "InputId": "23cd7f62-7f34-4172-9112-eca7077e690d",
+      "Control": "GH_Panel",
+      "ControlId": "5c6af2f6-210e-4036-81bd-8c9a72dbf67b"
+    },
+    {
+      "ComponentId": "6c268cee-2a6f-4a4b-bd86-4a9d744f11e1",
+      "Component": "Soletta RITIRO estremit\u00E0",
+      "Input": "Type",
+      "InputId": "4050f16f-b9ef-4c84-b331-92770ea18b98",
+      "Control": "GH_ValueList",
+      "ControlId": "f25df48f-7271-484a-9b1e-2d0776e118d6"
+    },
+    {
+      "ComponentId": "febfc254-71de-48ac-ba92-548219af3b52",
+      "Component": "Assegna soletta RITIRO",
+      "Input": "Families",
+      "InputId": "27c446f2-4b65-4050-ba96-de1709d371ba",
+      "Control": "GH_Panel",
+      "ControlId": "32f30a41-9349-4fea-9859-f7e298a6cf2d"
+    },
+    {
+      "ComponentId": "044ceca0-3d0e-4518-acb4-bbb17c23c1a7",
+      "Component": "SectionSchedule",
+      "Input": "Start",
+      "InputId": "557c3b46-87b3-4fa4-85c3-4dafa0e47581",
+      "Control": "GH_NumberSlider",
+      "ControlId": "b765ccca-b3ab-424e-8761-eff983301534"
+    },
+    {
+      "ComponentId": "044ceca0-3d0e-4518-acb4-bbb17c23c1a7",
+      "Component": "SectionSchedule",
+      "Input": "End",
+      "InputId": "2b7fd0c5-5bd5-4212-8ff1-b307695f845d",
+      "Control": "GH_NumberSlider",
+      "ControlId": "abee518b-daf6-449c-8044-a80ac0c9d788"
+    },
+    {
+      "ComponentId": "044ceca0-3d0e-4518-acb4-bbb17c23c1a7",
+      "Component": "SectionSchedule",
+      "Input": "Family",
+      "InputId": "661d590c-cb1b-4ecf-8656-85e3c7866307",
+      "Control": "GH_NumberSlider",
+      "ControlId": "418d73c5-77e4-4a5b-ba3d-ccc1e228131f"
+    },
+    {
+      "ComponentId": "044ceca0-3d0e-4518-acb4-bbb17c23c1a7",
+      "Component": "SectionSchedule",
+      "Input": "Group",
+      "InputId": "f2f364b7-fa8c-4830-8b23-d23f76b4903b",
+      "Control": "GH_NumberSlider",
+      "ControlId": "984d4538-1b51-474e-a22a-b98de9613537"
+    },
+    {
+      "ComponentId": "044ceca0-3d0e-4518-acb4-bbb17c23c1a7",
+      "Component": "SectionSchedule",
+      "Input": "Segment",
+      "InputId": "17729b75-c60c-45c5-aa0f-7d24a19bdbfb",
+      "Control": "GH_NumberSlider",
+      "ControlId": "4407e2ca-0e1e-4908-b9a7-e9d46a2a73e0"
+    },
+    {
+      "ComponentId": "044ceca0-3d0e-4518-acb4-bbb17c23c1a7",
+      "Component": "SectionSchedule",
+      "Input": "Start Scale",
+      "InputId": "5e6a2830-82bd-4527-81c2-ba92c8b8fc91",
+      "Control": "GH_Panel",
+      "ControlId": "4339b3cf-a38e-4c47-a693-81b8ff800d60"
+    },
+    {
+      "ComponentId": "044ceca0-3d0e-4518-acb4-bbb17c23c1a7",
+      "Component": "SectionSchedule",
+      "Input": "End Scale",
+      "InputId": "abdbfd02-40aa-458c-81a9-7b6e003e0128",
+      "Control": "GH_Panel",
+      "ControlId": "dc826420-e40a-49b9-9193-a0a5d6eeb1e8"
+    },
+    {
+      "ComponentId": "26dab2d9-bf45-4454-907d-9dfac95951bf",
+      "Component": "SectionSchedule",
+      "Input": "Start",
+      "InputId": "96283388-848c-4015-8183-e90fef15e44e",
+      "Control": "GH_NumberSlider",
+      "ControlId": "f2999b1a-be24-49fc-971b-38f26ba2015e"
+    },
+    {
+      "ComponentId": "26dab2d9-bf45-4454-907d-9dfac95951bf",
+      "Component": "SectionSchedule",
+      "Input": "End",
+      "InputId": "235ac513-c363-4944-8aff-e36f3b4c75fc",
+      "Control": "GH_NumberSlider",
+      "ControlId": "4261b781-2f66-4417-8d77-0af11e170985"
+    },
+    {
+      "ComponentId": "26dab2d9-bf45-4454-907d-9dfac95951bf",
+      "Component": "SectionSchedule",
+      "Input": "Family",
+      "InputId": "f9bd1ebd-7b64-4b2b-818f-ec8357f81604",
+      "Control": "GH_NumberSlider",
+      "ControlId": "c2b0acdb-55fb-45d6-b69f-3bbeef477d62"
+    },
+    {
+      "ComponentId": "26dab2d9-bf45-4454-907d-9dfac95951bf",
+      "Component": "SectionSchedule",
+      "Input": "Segment",
+      "InputId": "b7997702-d6f8-4226-8af3-75a27ae747d9",
+      "Control": "GH_NumberSlider",
+      "ControlId": "126bc70e-8ec9-4963-a932-0eb14aea0a60"
+    },
+    {
+      "ComponentId": "26dab2d9-bf45-4454-907d-9dfac95951bf",
+      "Component": "SectionSchedule",
+      "Input": "Start Scale",
+      "InputId": "75d257fd-7977-4526-a481-1c6d79b4ca5f",
+      "Control": "GH_Panel",
+      "ControlId": "b944c19b-b475-4293-9d80-a144ed9bc3ee"
+    },
+    {
+      "ComponentId": "26dab2d9-bf45-4454-907d-9dfac95951bf",
+      "Component": "SectionSchedule",
+      "Input": "End Scale",
+      "InputId": "cc111aa9-42ca-4e52-b18a-362f814f8c1a",
+      "Control": "GH_Panel",
+      "ControlId": "34e2ca31-5b2a-4bb3-96b2-2a30b6f218b5"
+    },
+    {
+      "ComponentId": "42251695-16bd-4ecd-a3d6-ae09c56e944f",
+      "Component": "Solo fasce cls RITIRO",
+      "Input": "Units",
+      "InputId": "839da306-cd06-454a-91cf-6380f38b8456",
+      "Control": "GH_ValueList",
+      "ControlId": "e626d3bf-06c8-4d42-9bd2-881707974d4c"
+    },
+    {
+      "ComponentId": "42251695-16bd-4ecd-a3d6-ae09c56e944f",
+      "Component": "Solo fasce cls RITIRO",
+      "Input": "Properties name",
+      "InputId": "ed9359a0-82ea-4b7f-be14-56142ba67cee",
+      "Control": "GH_Panel",
+      "ControlId": "831efa34-12f1-4aec-ab20-98e26534ac9f"
+    },
+    {
+      "ComponentId": "cfa1ca47-9631-4d79-b382-de7878247ef8",
+      "Component": "Appoggi e reazioni reali",
+      "Input": "Up",
+      "InputId": "f67dba32-efb5-4be6-9afc-956235b8d753",
+      "Control": "GH_Panel",
+      "ControlId": "9fd68fcb-2e45-4f62-92fe-4f14e5879921"
+    },
+    {
+      "ComponentId": "cfa1ca47-9631-4d79-b382-de7878247ef8",
+      "Component": "Appoggi e reazioni reali",
+      "Input": "Tolerance",
+      "InputId": "0a73220a-30a1-4700-8fc9-d900854d678a",
+      "Control": "GH_NumberSlider",
+      "ControlId": "fe33f3b9-16d8-49e4-ba84-8467a9959d52"
+    },
+    {
+      "ComponentId": "433e1633-195e-457a-8f13-ce5ca5dee086",
+      "Component": "Sezioni irrigiditori intermedi",
+      "Input": "Up",
+      "InputId": "6198e32b-7fb2-4eea-b5d8-b8c5801736ec",
+      "Control": "GH_Panel",
+      "ControlId": "86311d1f-5a1a-467e-9ec6-a37a56430f6e"
+    },
+    {
+      "ComponentId": "433e1633-195e-457a-8f13-ce5ca5dee086",
+      "Component": "Sezioni irrigiditori intermedi",
+      "Input": "Tolerance",
+      "InputId": "a4b34bfe-0311-4103-953f-b63d146c1186",
+      "Control": "GH_NumberSlider",
+      "ControlId": "48199c19-39bb-4658-b18a-b4f802beb0a2"
+    },
+    {
+      "ComponentId": "2904b503-0e42-4937-b1ca-58ebde2290b8",
+      "Component": "StudPlot",
+      "Input": "Quantity",
+      "InputId": "c6a47c78-ad94-47d9-9859-04ce215dff89",
+      "Control": "GH_ValueList",
+      "ControlId": "1192055f-782e-4f53-be36-a62c1ec9fe07"
+    },
+    {
+      "ComponentId": "2904b503-0e42-4937-b1ca-58ebde2290b8",
+      "Component": "StudPlot",
+      "Input": "Show Min/Max Combo",
+      "InputId": "437e48c0-eb0c-4e94-8b6c-af44a74ecc17",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "b4603ac6-22ff-4669-9217-f2c95961a47b"
+    },
+    {
+      "ComponentId": "2904b503-0e42-4937-b1ca-58ebde2290b8",
+      "Component": "StudPlot",
+      "Input": "Graphic Title",
+      "InputId": "3194bfad-b1f7-4bbc-afa0-211a5737f565",
+      "Control": "GH_Panel",
+      "ControlId": "04cc8f72-09be-42b0-8625-d19877398fa8"
+    },
+    {
+      "ComponentId": "2904b503-0e42-4937-b1ca-58ebde2290b8",
+      "Component": "StudPlot",
+      "Input": "Keep Running",
+      "InputId": "774f2b56-7112-44a0-a3a7-71878cf54d33",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "fd889ccc-c5b7-42c1-8c1f-1e0b21e051ed"
+    },
+    {
+      "ComponentId": "6509a514-2e6d-4692-a6a1-b228eae75c01",
+      "Component": "PlotPreview",
+      "Input": "Index",
+      "InputId": "9fa3485b-04bc-4f28-8c65-7a6a8e2158fc",
+      "Control": "GH_NumberSlider",
+      "ControlId": "bc02bcb1-e807-46cd-b308-1aa1a8916a14"
+    },
+    {
+      "ComponentId": "6509a514-2e6d-4692-a6a1-b228eae75c01",
+      "Component": "PlotPreview",
+      "Input": "Width",
+      "InputId": "81f62fc5-fc85-40e3-adf2-6429497e4f3c",
+      "Control": "GH_NumberSlider",
+      "ControlId": "f3f3f034-b0be-423b-824c-b8f97fe8f7af"
+    },
+    {
+      "ComponentId": "17a04b1d-eb39-4756-b8d7-8f23748690ab",
+      "Component": "IntStiffPlot",
+      "Input": "Show Min/Max Combo",
+      "InputId": "b4f43b5e-67a9-4b69-a690-048594412b6b",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "b6555ad5-d9c3-44a3-8219-3b65d7147c70"
+    },
+    {
+      "ComponentId": "17a04b1d-eb39-4756-b8d7-8f23748690ab",
+      "Component": "IntStiffPlot",
+      "Input": "Graphic Title",
+      "InputId": "09a7b228-0e09-46d5-9e77-56b37a57c642",
+      "Control": "GH_Panel",
+      "ControlId": "fd0e0837-5dcc-4f5a-b9bb-78b5851d47f0"
+    },
+    {
+      "ComponentId": "17a04b1d-eb39-4756-b8d7-8f23748690ab",
+      "Component": "IntStiffPlot",
+      "Input": "Keep Running",
+      "InputId": "1a790325-c88a-4002-91dd-32f018c38c50",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "9087e47d-03c9-4385-8474-8452f2b5dad5"
+    },
+    {
+      "ComponentId": "17a04b1d-eb39-4756-b8d7-8f23748690ab",
+      "Component": "IntStiffPlot",
+      "Input": "Display",
+      "InputId": "7e26255c-7cca-4a02-ada9-474913f880bf",
+      "Control": "GH_ValueList",
+      "ControlId": "f9625abf-0669-41c6-8205-f56183ff852a"
+    },
+    {
+      "ComponentId": "17a04b1d-eb39-4756-b8d7-8f23748690ab",
+      "Component": "IntStiffPlot",
+      "Input": "Stations",
+      "InputId": "0bd49816-0b05-40fc-83e2-d2a8a5b87504",
+      "Control": "GH_Panel",
+      "ControlId": "dc48ef3c-937e-4269-898f-ddea913b6b1f"
+    },
+    {
+      "ComponentId": "7bf4fcb3-4d21-4c8b-9412-24f608adaf6d",
+      "Component": "PlotPreview",
+      "Input": "Index",
+      "InputId": "fd8a246b-d591-4e8f-bcdc-1050f0fae606",
+      "Control": "GH_NumberSlider",
+      "ControlId": "b06b70d1-5811-4212-9515-2689a8c0eea8"
+    },
+    {
+      "ComponentId": "7bf4fcb3-4d21-4c8b-9412-24f608adaf6d",
+      "Component": "PlotPreview",
+      "Input": "Width",
+      "InputId": "b1b0f2e7-c7e1-429e-912f-058436e29970",
+      "Control": "GH_NumberSlider",
+      "ControlId": "137c52a5-735f-478a-a79f-c61354c03405"
+    },
+    {
+      "ComponentId": "6fa24fce-1591-4b14-95d6-db6bbf43a8ed",
+      "Component": "SupStiffPlot",
+      "Input": "Show Min/Max Combo",
+      "InputId": "f68a620f-61ff-4cc1-a4e0-0ef42bc48a6c",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "e8d091d8-e711-4a80-91f4-2f4dd33979bd"
+    },
+    {
+      "ComponentId": "6fa24fce-1591-4b14-95d6-db6bbf43a8ed",
+      "Component": "SupStiffPlot",
+      "Input": "Graphic Title",
+      "InputId": "dc5d2a1a-438b-456c-985e-ba9b35ac4350",
+      "Control": "GH_Panel",
+      "ControlId": "0be7d171-0e6b-4223-ade4-177f8e3c2fda"
+    },
+    {
+      "ComponentId": "6fa24fce-1591-4b14-95d6-db6bbf43a8ed",
+      "Component": "SupStiffPlot",
+      "Input": "Keep Running",
+      "InputId": "2d4d2da3-e93e-4b1c-8658-624fe6e47dab",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "ecaa8392-24ac-405c-a6a1-3cffc9a42f7d"
+    },
+    {
+      "ComponentId": "6fa24fce-1591-4b14-95d6-db6bbf43a8ed",
+      "Component": "SupStiffPlot",
+      "Input": "Display",
+      "InputId": "97b3ca4a-6d49-480c-b27b-0d2302188f26",
+      "Control": "GH_ValueList",
+      "ControlId": "941581e2-8c57-49c2-9591-cbec7c456f1c"
+    },
+    {
+      "ComponentId": "6fa24fce-1591-4b14-95d6-db6bbf43a8ed",
+      "Component": "SupStiffPlot",
+      "Input": "Stations",
+      "InputId": "eb732949-398d-4240-b650-b88ff7fb595f",
+      "Control": "GH_Panel",
+      "ControlId": "549574d5-700c-4c6a-9bb0-5a4a3525248f"
+    },
+    {
+      "ComponentId": "83cb5989-3851-4f87-8021-058cda3a371d",
+      "Component": "PlotPreview",
+      "Input": "Index",
+      "InputId": "a0e77fac-5a54-4219-952d-f81150dd2987",
+      "Control": "GH_NumberSlider",
+      "ControlId": "23c2cb62-a790-46a9-81ff-32f3bb704bae"
+    },
+    {
+      "ComponentId": "83cb5989-3851-4f87-8021-058cda3a371d",
+      "Component": "PlotPreview",
+      "Input": "Width",
+      "InputId": "c8906f0a-cc82-4344-a869-b0ed4376493b",
+      "Control": "GH_NumberSlider",
+      "ControlId": "e03cf3d0-36f6-4011-8f00-680a25cbd7ba"
+    },
+    {
+      "ComponentId": "b53375c8-fab2-4b95-a9bc-cc3e123f8bd1",
+      "Component": "Report completo REV004",
+      "Input": "Template",
+      "InputId": "866bcb68-abb1-49d9-b5ed-1d3d86e9833b",
+      "Control": "GH_Panel",
+      "ControlId": "20f4d629-3419-4d21-b59b-0a39f2097668"
+    },
+    {
+      "ComponentId": "b53375c8-fab2-4b95-a9bc-cc3e123f8bd1",
+      "Component": "Report completo REV004",
+      "Input": "File",
+      "InputId": "2cceeb5b-d22c-4426-afc5-9a3726d39299",
+      "Control": "GH_Panel",
+      "ControlId": "cb105072-4c85-46bd-a3d1-55e10c0bb0e2"
+    },
+    {
+      "ComponentId": "b53375c8-fab2-4b95-a9bc-cc3e123f8bd1",
+      "Component": "Report completo REV004",
+      "Input": "Title",
+      "InputId": "c2262bf1-7ff4-492a-85ab-dd41e6eb7fef",
+      "Control": "GH_Panel",
+      "ControlId": "31824a54-b4bb-4328-9d4c-65681e3d8ead"
+    },
+    {
+      "ComponentId": "b53375c8-fab2-4b95-a9bc-cc3e123f8bd1",
+      "Component": "Report completo REV004",
+      "Input": "Project",
+      "InputId": "fc2ce44a-7ae5-44fe-adc8-d7d42df71ac7",
+      "Control": "GH_Panel",
+      "ControlId": "616bffae-3a41-4140-9b3b-5966ef20624f"
+    },
+    {
+      "ComponentId": "b53375c8-fab2-4b95-a9bc-cc3e123f8bd1",
+      "Component": "Report completo REV004",
+      "Input": "Author",
+      "InputId": "dc4e3c66-f0a8-4b65-833e-34c7a09221d0",
+      "Control": "GH_Panel",
+      "ControlId": "b2c20a20-1a52-48e9-9ec1-723b010a9b46"
+    },
+    {
+      "ComponentId": "b53375c8-fab2-4b95-a9bc-cc3e123f8bd1",
+      "Component": "Report completo REV004",
+      "Input": "Revision",
+      "InputId": "3b065a01-7f75-4e4c-8341-cf8584d38834",
+      "Control": "GH_Panel",
+      "ControlId": "abfb8941-6001-4034-bb77-a161b1d9bd54"
+    },
+    {
+      "ComponentId": "b53375c8-fab2-4b95-a9bc-cc3e123f8bd1",
+      "Component": "Report completo REV004",
+      "Input": "Overwrite",
+      "InputId": "b7b89d8d-7a5f-4d39-936e-1f3a3f46d5fe",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "7dcc0308-e52a-4a42-b0e3-6afd6d156e2b"
+    },
+    {
+      "ComponentId": "48b170a3-6b0a-4461-b804-02198281dd45",
+      "Component": "Appoggi G2",
+      "Input": "Up",
+      "InputId": "ab3e5d28-777f-4d71-beef-590fc2f7956c",
+      "Control": "GH_Panel",
+      "ControlId": "2d78718c-95a1-4630-ad9d-b960460baa6c"
+    },
+    {
+      "ComponentId": "48b170a3-6b0a-4461-b804-02198281dd45",
+      "Component": "Appoggi G2",
+      "Input": "Tolerance",
+      "InputId": "3c629a4f-6e7b-47f2-bd13-08718978456c",
+      "Control": "GH_NumberSlider",
+      "ControlId": "8ed5f21a-dd55-46fd-9e3d-5b031b632a79"
+    },
+    {
+      "ComponentId": "72ce1177-6016-4318-a6c2-3364e0d7f213",
+      "Component": "Irrigiditori appoggi G2",
+      "Input": "Enabled",
+      "InputId": "adee162c-1391-4fa3-b94e-4f0142818b5f",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "c3a5692e-e705-4314-ba0b-1ce5b3584708"
+    },
+    {
+      "ComponentId": "72ce1177-6016-4318-a6c2-3364e0d7f213",
+      "Component": "Irrigiditori appoggi G2",
+      "Input": "Layout",
+      "InputId": "85c16261-de2a-46af-91b8-edc4b6995d8d",
+      "Control": "GH_ValueList",
+      "ControlId": "73372b2d-86bf-4f8e-8aff-17a1f68f75dc"
+    },
+    {
+      "ComponentId": "72ce1177-6016-4318-a6c2-3364e0d7f213",
+      "Component": "Irrigiditori appoggi G2",
+      "Input": "Width",
+      "InputId": "a3d6358f-7578-4a74-8b4f-b9ff704fb3d8",
+      "Control": "GH_NumberSlider",
+      "ControlId": "22caea38-dfec-47ab-9a15-1a58b3227809"
+    },
+    {
+      "ComponentId": "72ce1177-6016-4318-a6c2-3364e0d7f213",
+      "Component": "Irrigiditori appoggi G2",
+      "Input": "Thickness",
+      "InputId": "a15fa77f-c0b0-4963-8ea1-c63d313c1e6c",
+      "Control": "GH_NumberSlider",
+      "ControlId": "6f291f06-9533-4fa5-9a58-34714d08d655"
+    },
+    {
+      "ComponentId": "72ce1177-6016-4318-a6c2-3364e0d7f213",
+      "Component": "Irrigiditori appoggi G2",
+      "Input": "RightWidth",
+      "InputId": "b35cfef4-3de3-47bc-bf95-ec4197a68797",
+      "Control": "GH_NumberSlider",
+      "ControlId": "0261dfe8-396c-4a8c-9101-fb062888fe6c"
+    },
+    {
+      "ComponentId": "72ce1177-6016-4318-a6c2-3364e0d7f213",
+      "Component": "Irrigiditori appoggi G2",
+      "Input": "RightThickness",
+      "InputId": "86f632c2-d706-44ae-b919-43cf9cfe023a",
+      "Control": "GH_NumberSlider",
+      "ControlId": "61794f8b-da6a-4bd1-8d40-cd95af0e31de"
+    },
+    {
+      "ComponentId": "72ce1177-6016-4318-a6c2-3364e0d7f213",
+      "Component": "Irrigiditori appoggi G2",
+      "Input": "LeftPanel",
+      "InputId": "41d2d807-371e-402c-ba69-babebf524b9e",
+      "Control": "GH_NumberSlider",
+      "ControlId": "55a11673-d48e-4816-83e4-8ac4006ca4d8"
+    },
+    {
+      "ComponentId": "72ce1177-6016-4318-a6c2-3364e0d7f213",
+      "Component": "Irrigiditori appoggi G2",
+      "Input": "RightPanel",
+      "InputId": "f6bc9f5c-dec0-495e-8b37-c1dab918b205",
+      "Control": "GH_NumberSlider",
+      "ControlId": "5f7a15d3-86b6-4115-a6bf-6f86070e2419"
+    },
+    {
+      "ComponentId": "72ce1177-6016-4318-a6c2-3364e0d7f213",
+      "Component": "Irrigiditori appoggi G2",
+      "Input": "EndDistance",
+      "InputId": "9c68ffd8-ab56-4050-bd79-46d1f6f5f81d",
+      "Control": "GH_NumberSlider",
+      "ControlId": "d0e4f5f1-a965-47dc-abd6-ccb50afd7167"
+    },
+    {
+      "ComponentId": "72ce1177-6016-4318-a6c2-3364e0d7f213",
+      "Component": "Irrigiditori appoggi G2",
+      "Input": "LoadX",
+      "InputId": "6df7c1ef-4f9d-4302-a540-67df22242293",
+      "Control": "GH_NumberSlider",
+      "ControlId": "f58c8f8d-bdaa-4128-83e0-8adb6a3ba006"
+    },
+    {
+      "ComponentId": "72ce1177-6016-4318-a6c2-3364e0d7f213",
+      "Component": "Irrigiditori appoggi G2",
+      "Input": "LoadZ",
+      "InputId": "7192df35-da39-4b33-9033-f57836b64ea7",
+      "Control": "GH_NumberSlider",
+      "ControlId": "99177cde-a09d-425e-8018-21711c7c2de1"
+    },
+    {
+      "ComponentId": "72ce1177-6016-4318-a6c2-3364e0d7f213",
+      "Component": "Irrigiditori appoggi G2",
+      "Input": "FootprintLength",
+      "InputId": "84ad1f86-32e6-42d3-bb02-9c3a4709ea80",
+      "Control": "GH_NumberSlider",
+      "ControlId": "3178868f-8d56-49d6-b3bb-c848dfaa2f3c"
+    },
+    {
+      "ComponentId": "72ce1177-6016-4318-a6c2-3364e0d7f213",
+      "Component": "Irrigiditori appoggi G2",
+      "Input": "FootprintWidth",
+      "InputId": "e507a571-e7f7-4ef4-b174-6db2e7feb947",
+      "Control": "GH_NumberSlider",
+      "ControlId": "8838e7d1-b108-432a-858d-93e5cb3e4f62"
+    },
+    {
+      "ComponentId": "72ce1177-6016-4318-a6c2-3364e0d7f213",
+      "Component": "Irrigiditori appoggi G2",
+      "Input": "LengthFactor",
+      "InputId": "3a074886-5ec6-4b3d-a033-52d7badf0da0",
+      "Control": "GH_NumberSlider",
+      "ControlId": "665ed68a-03f2-4097-a52b-20432df08cdf"
+    },
+    {
+      "ComponentId": "72ce1177-6016-4318-a6c2-3364e0d7f213",
+      "Component": "Irrigiditori appoggi G2",
+      "Input": "RigidEndPost",
+      "InputId": "3bbda5c2-c9b5-4705-9a7b-db7427185b3b",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "a3ec795f-42eb-469d-9c3b-8dbffc84fef7"
+    },
+    {
+      "ComponentId": "72ce1177-6016-4318-a6c2-3364e0d7f213",
+      "Component": "Irrigiditori appoggi G2",
+      "Input": "EndPostSpacing",
+      "InputId": "63182213-20a7-4f6a-8ec2-c15f1c11d312",
+      "Control": "GH_NumberSlider",
+      "ControlId": "7f47f5e3-8f65-4438-a2c3-4001dc4f425a"
+    },
+    {
+      "ComponentId": "72ce1177-6016-4318-a6c2-3364e0d7f213",
+      "Component": "Irrigiditori appoggi G2",
+      "Input": "CheckWelds",
+      "InputId": "00f20b0a-a26f-4fe7-8f11-47b08f1480a5",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "7443622a-84e9-41ec-b7f7-81a70d267a2f"
+    },
+    {
+      "ComponentId": "72ce1177-6016-4318-a6c2-3364e0d7f213",
+      "Component": "Irrigiditori appoggi G2",
+      "Input": "WeldThroat",
+      "InputId": "0db1a6a3-c850-4cad-9698-18ec38662b9e",
+      "Control": "GH_NumberSlider",
+      "ControlId": "bcd07873-8841-4f42-9ff8-ba03695e3f34"
+    },
+    {
+      "ComponentId": "88447df1-0027-4d71-a6ed-2b7a7b9ccb14",
+      "Component": "Intermedi G2",
+      "Input": "Up",
+      "InputId": "95bda791-b2a2-421f-9608-583704c8be1b",
+      "Control": "GH_Panel",
+      "ControlId": "1e28c174-835e-4017-8c8f-1be5b5854ad2"
+    },
+    {
+      "ComponentId": "88447df1-0027-4d71-a6ed-2b7a7b9ccb14",
+      "Component": "Intermedi G2",
+      "Input": "Tolerance",
+      "InputId": "9df6b239-eee3-4f1c-a0af-1fcb5e78d0b0",
+      "Control": "GH_NumberSlider",
+      "ControlId": "d91fc35b-fa3a-44c1-b843-92739c644622"
+    },
+    {
+      "ComponentId": "2b956dc9-c8c5-4313-8c1f-bcda2507bd53",
+      "Component": "Bridge Force Plot G2",
+      "Input": "Quantity",
+      "InputId": "ae4863d6-d513-41aa-8704-8e71fd8e033f",
+      "Control": "GH_ValueList",
+      "ControlId": "71cce40a-67dc-4440-9482-3f623eb6f240"
+    },
+    {
+      "ComponentId": "2b956dc9-c8c5-4313-8c1f-bcda2507bd53",
+      "Component": "Bridge Force Plot G2",
+      "Input": "Show Min/Max Combo",
+      "InputId": "26b6848c-211b-4481-983e-b6d05d6371f3",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "9a4aef31-2629-4a7d-a277-9d0577c19698"
+    },
+    {
+      "ComponentId": "2b956dc9-c8c5-4313-8c1f-bcda2507bd53",
+      "Component": "Bridge Force Plot G2",
+      "Input": "Graphic Title",
+      "InputId": "2d5cf585-7da0-4147-8b1d-a2037427975b",
+      "Control": "GH_Panel",
+      "ControlId": "54d31ab2-7bdb-49ca-aadb-555c0e011020"
+    },
+    {
+      "ComponentId": "2b956dc9-c8c5-4313-8c1f-bcda2507bd53",
+      "Component": "Bridge Force Plot G2",
+      "Input": "Keep Running",
+      "InputId": "06542d7c-62d1-4ea6-acdc-5435a3a6e0f5",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "700d039f-127b-48cf-9eb4-c67add4c85e7"
+    },
+    {
+      "ComponentId": "9bf23439-ae22-4b39-b960-00e5cc54dc7f",
+      "Component": "PlotPreview",
+      "Input": "Index",
+      "InputId": "4bc61066-6891-436d-93e0-3dd019799139",
+      "Control": "GH_NumberSlider",
+      "ControlId": "d0b0714c-20f8-436f-9861-bdb226431977"
+    },
+    {
+      "ComponentId": "9bf23439-ae22-4b39-b960-00e5cc54dc7f",
+      "Component": "PlotPreview",
+      "Input": "Width",
+      "InputId": "e8c993c7-736f-4bf2-b249-b74e7a69d500",
+      "Control": "GH_NumberSlider",
+      "ControlId": "c27a87a7-92b1-4d72-bcb6-395608901484"
+    },
+    {
+      "ComponentId": "85c5d078-6491-44f4-a8ca-59fa4c5c2a8e",
+      "Component": "Bridge Stress Plot G2",
+      "Input": "Quantity",
+      "InputId": "818c1b6f-38e9-424d-aa24-0d5702786785",
+      "Control": "GH_ValueList",
+      "ControlId": "85eaaebb-63f5-4596-9574-294b6545f095"
+    },
+    {
+      "ComponentId": "85c5d078-6491-44f4-a8ca-59fa4c5c2a8e",
+      "Component": "Bridge Stress Plot G2",
+      "Input": "Show Min/Max Combo",
+      "InputId": "b33cd0f5-f460-415d-ad49-04f0fe542bcc",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "1331c044-90ad-459f-b96a-157947f326af"
+    },
+    {
+      "ComponentId": "85c5d078-6491-44f4-a8ca-59fa4c5c2a8e",
+      "Component": "Bridge Stress Plot G2",
+      "Input": "Graphic Title",
+      "InputId": "55dad5df-9eaf-4195-a8b4-f1022664c70b",
+      "Control": "GH_Panel",
+      "ControlId": "36efe57a-f745-4474-bc39-aa4edd4e2d8f"
+    },
+    {
+      "ComponentId": "85c5d078-6491-44f4-a8ca-59fa4c5c2a8e",
+      "Component": "Bridge Stress Plot G2",
+      "Input": "Keep Running",
+      "InputId": "be2e70f0-645c-450c-99b1-b608e1754f8e",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "4a03b009-37ba-494d-8d31-b5afe7147d1f"
+    },
+    {
+      "ComponentId": "23e7cb61-224d-4f0a-8caf-89840b8abb17",
+      "Component": "PlotPreview",
+      "Input": "Index",
+      "InputId": "424fd3e5-42f4-425d-b2f6-7fbdf6961311",
+      "Control": "GH_NumberSlider",
+      "ControlId": "83bf057b-2a71-4d17-a3a8-57aeb5a0fabf"
+    },
+    {
+      "ComponentId": "23e7cb61-224d-4f0a-8caf-89840b8abb17",
+      "Component": "PlotPreview",
+      "Input": "Width",
+      "InputId": "4e30284e-2ad2-457b-bb87-8bbe6f82f303",
+      "Control": "GH_NumberSlider",
+      "ControlId": "0eb3d035-8799-49b0-b3c7-2da8f12bbc38"
+    },
+    {
+      "ComponentId": "a6bf1ef9-e779-475d-857f-1c1eae2d2350",
+      "Component": "Bridge Stud Plot G2",
+      "Input": "Quantity",
+      "InputId": "14d9bf48-40aa-4abc-88fd-8cdc77ec84d5",
+      "Control": "GH_ValueList",
+      "ControlId": "ea515ed9-22d1-4f82-bbf9-90effc244323"
+    },
+    {
+      "ComponentId": "a6bf1ef9-e779-475d-857f-1c1eae2d2350",
+      "Component": "Bridge Stud Plot G2",
+      "Input": "Show Min/Max Combo",
+      "InputId": "06707162-4adc-42ea-beda-7717e701205f",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "55c5560f-2573-4211-8008-888d0002df6e"
+    },
+    {
+      "ComponentId": "a6bf1ef9-e779-475d-857f-1c1eae2d2350",
+      "Component": "Bridge Stud Plot G2",
+      "Input": "Graphic Title",
+      "InputId": "b0c1fa6c-c2df-4dd3-a1b7-1fdd6478da4f",
+      "Control": "GH_Panel",
+      "ControlId": "280435b0-93c3-4e5c-b943-74acca83a221"
+    },
+    {
+      "ComponentId": "a6bf1ef9-e779-475d-857f-1c1eae2d2350",
+      "Component": "Bridge Stud Plot G2",
+      "Input": "Keep Running",
+      "InputId": "5998958a-9bfa-4f44-83f7-871adc87254e",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "d67c31d8-1818-4eae-9c79-415c6ebdc9ec"
+    },
+    {
+      "ComponentId": "850845ec-d549-444a-9ff1-f2bf671f8c84",
+      "Component": "PlotPreview",
+      "Input": "Index",
+      "InputId": "fb9a631b-c218-4852-a593-747106a9b2ea",
+      "Control": "GH_NumberSlider",
+      "ControlId": "7be45365-ecf3-47a6-9055-3c01f84a9e88"
+    },
+    {
+      "ComponentId": "850845ec-d549-444a-9ff1-f2bf671f8c84",
+      "Component": "PlotPreview",
+      "Input": "Width",
+      "InputId": "bc37a748-e1d2-41d6-ad44-80b01530835c",
+      "Control": "GH_NumberSlider",
+      "ControlId": "1aa76869-fbe8-49f0-8591-e49b2b549385"
+    },
+    {
+      "ComponentId": "fdad523f-bf7a-49fb-b403-529cfef1154a",
+      "Component": "Bridge Intermediate Stiffener Plot G2",
+      "Input": "Show Min/Max Combo",
+      "InputId": "60173236-c9f2-4a1c-b28b-1c627d6de930",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "fe6b5789-382a-4db2-b9ff-b7711cb8ca3e"
+    },
+    {
+      "ComponentId": "fdad523f-bf7a-49fb-b403-529cfef1154a",
+      "Component": "Bridge Intermediate Stiffener Plot G2",
+      "Input": "Graphic Title",
+      "InputId": "d127f434-2e4c-49f4-97b8-fb672041c38d",
+      "Control": "GH_Panel",
+      "ControlId": "e1256376-0c4c-4dd7-b050-0645b7b3a71f"
+    },
+    {
+      "ComponentId": "fdad523f-bf7a-49fb-b403-529cfef1154a",
+      "Component": "Bridge Intermediate Stiffener Plot G2",
+      "Input": "Keep Running",
+      "InputId": "011bfac6-96b9-4272-b633-38addd63ab2f",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "785203f2-06ff-428e-b772-992b98b9f378"
+    },
+    {
+      "ComponentId": "fdad523f-bf7a-49fb-b403-529cfef1154a",
+      "Component": "Bridge Intermediate Stiffener Plot G2",
+      "Input": "Display",
+      "InputId": "276eca12-89cc-4b84-ad38-f694dbdd11d8",
+      "Control": "GH_ValueList",
+      "ControlId": "201ce406-90ed-4ec2-82f6-b0142f6a0aa2"
+    },
+    {
+      "ComponentId": "fdad523f-bf7a-49fb-b403-529cfef1154a",
+      "Component": "Bridge Intermediate Stiffener Plot G2",
+      "Input": "Stations",
+      "InputId": "5d09b97b-7e90-4447-8245-069708791153",
+      "Control": "GH_Panel",
+      "ControlId": "95673b36-6110-4eb6-9d38-dabeefddfb7f"
+    },
+    {
+      "ComponentId": "be1e2311-488c-4c5e-96eb-0470c140c374",
+      "Component": "PlotPreview",
+      "Input": "Index",
+      "InputId": "6331e221-fc69-48af-ad75-299ddde16802",
+      "Control": "GH_NumberSlider",
+      "ControlId": "117a006c-2e0d-4263-aaf5-a7750c20f6a0"
+    },
+    {
+      "ComponentId": "be1e2311-488c-4c5e-96eb-0470c140c374",
+      "Component": "PlotPreview",
+      "Input": "Width",
+      "InputId": "ed002aa3-756b-4630-914a-5fb1458f5016",
+      "Control": "GH_NumberSlider",
+      "ControlId": "62a47cea-aa3a-4d0d-a41e-5aa1be9168ce"
+    },
+    {
+      "ComponentId": "2217fc02-8a27-414a-afaf-4bbf68911b62",
+      "Component": "Bridge Support Stiffener Plot G2",
+      "Input": "Show Min/Max Combo",
+      "InputId": "3ce864a6-4941-4639-9dc2-da276379c421",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "c7862270-e878-42f3-9def-fbd7fcd60513"
+    },
+    {
+      "ComponentId": "2217fc02-8a27-414a-afaf-4bbf68911b62",
+      "Component": "Bridge Support Stiffener Plot G2",
+      "Input": "Graphic Title",
+      "InputId": "84b2b723-4645-4107-a3bd-c6dda13966b6",
+      "Control": "GH_Panel",
+      "ControlId": "9852168e-5524-4b65-bef2-56b250b9e390"
+    },
+    {
+      "ComponentId": "2217fc02-8a27-414a-afaf-4bbf68911b62",
+      "Component": "Bridge Support Stiffener Plot G2",
+      "Input": "Keep Running",
+      "InputId": "2777301b-7b9d-4938-9ef9-bf6841d51536",
+      "Control": "GH_BooleanToggle",
+      "ControlId": "3b31196b-d183-4f81-b6ee-01dfa2e4712e"
+    },
+    {
+      "ComponentId": "2217fc02-8a27-414a-afaf-4bbf68911b62",
+      "Component": "Bridge Support Stiffener Plot G2",
+      "Input": "Display",
+      "InputId": "78b469a0-1c24-4ada-9471-f3bed58ec1e9",
+      "Control": "GH_ValueList",
+      "ControlId": "16db4394-7f43-4d43-8224-7ff73ac69f2c"
+    },
+    {
+      "ComponentId": "2217fc02-8a27-414a-afaf-4bbf68911b62",
+      "Component": "Bridge Support Stiffener Plot G2",
+      "Input": "Stations",
+      "InputId": "dbdbf964-7353-4937-b015-0e28ba1ea34d",
+      "Control": "GH_Panel",
+      "ControlId": "2a2fc960-e680-421f-92cd-0e222a21417a"
+    },
+    {
+      "ComponentId": "429596e5-a770-4953-b38f-1ae977dd0a9d",
+      "Component": "PlotPreview",
+      "Input": "Index",
+      "InputId": "dab96b9a-9cb8-4035-9916-7603dfef069c",
+      "Control": "GH_NumberSlider",
+      "ControlId": "d46b03b8-8fe3-4e97-8b73-7771c618f2ed"
+    },
+    {
+      "ComponentId": "429596e5-a770-4953-b38f-1ae977dd0a9d",
+      "Component": "PlotPreview",
+      "Input": "Width",
+      "InputId": "18054433-e1b2-4916-ad40-5883d63e80da",
+      "Control": "GH_NumberSlider",
+      "ControlId": "674ed694-1432-4cb9-a481-3709323e74af"
+    }
+  ]
+}

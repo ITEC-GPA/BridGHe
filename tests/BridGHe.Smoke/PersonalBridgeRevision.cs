@@ -133,6 +133,7 @@ internal sealed partial class PersonalBridgeRevision
         var model = (ModelModel)Value(C(BuildId));
         File.WriteAllBytes(Path.Combine(folder, "calcoli", "combined.bgmodel"), ModelArchive.Write(model));
         foreach (var a in analyses) { var m = (ModelModel)Value(a); File.WriteAllBytes(Path.Combine(folder, "calcoli", m.Name + "-results.bgmodel"), ModelArchive.Write(m)); }
+        if (revision == "REV004") PersonalBridgeExplicitInputs.Apply(doc);
         GrasshopperBridgeExample.Write(doc, doc.FilePath);
         var validation = new { revision, originalSha256 = Convert.ToHexString(originalHash), model.Name, beams = model.Beams.Count, nodes = model.Nodes.Count,
             sectionResults = results.Length, supportResultsForFirstGirder = supportCheck.Params.Output[0].VolatileDataCount,
