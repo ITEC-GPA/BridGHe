@@ -38,7 +38,7 @@
             <item name="Date" type_name="gh_date" type_code="8">639281305661978937</item>
             <item name="Description" type_name="gh_string" type_code="10"></item>
             <item name="KeepOpen" type_name="gh_bool" type_code="1">false</item>
-            <item name="Name" type_name="gh_string" type_code="10"></item>
+            <item name="Name" type_name="gh_string" type_code="10">unnamed</item>
           </items>
           <chunks count="3">
             <chunk name="Revisions">
@@ -163,14 +163,14 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                     <item name="Name" type_name="gh_string" type_code="10">Simple Bridge — Solid Diaphragms</item>
                     <item name="NickName" type_name="gh_string" type_code="10">BridgeSolid</item>
                   </items>
-                  <chunks count="29">
+                  <chunks count="38">
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>0</X>
-                          <Y>0</Y>
-                          <W>150</W>
-                          <H>20</H>
+                          <X>382</X>
+                          <Y>-162</Y>
+                          <W>83</W>
+                          <H>424</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
                           <X>420</X>
@@ -190,12 +190,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>384</X>
+                              <Y>-160</Y>
+                              <W>21</W>
+                              <H>26</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>396</X>
+                              <Y>-146.875</Y>
                             </item>
                           </items>
                         </chunk>
@@ -214,12 +218,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>384</X>
+                              <Y>-134</Y>
+                              <W>21</W>
+                              <H>26</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>396</X>
+                              <Y>-120.625</Y>
                             </item>
                           </items>
                         </chunk>
@@ -238,12 +246,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>384</X>
+                              <Y>-108</Y>
+                              <W>21</W>
+                              <H>26</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>396</X>
+                              <Y>-94.375</Y>
                             </item>
                           </items>
                         </chunk>
@@ -261,12 +273,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>384</X>
+                              <Y>-82</Y>
+                              <W>21</W>
+                              <H>27</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>396</X>
+                              <Y>-68.125</Y>
                             </item>
                           </items>
                         </chunk>
@@ -304,12 +320,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>384</X>
+                              <Y>-55</Y>
+                              <W>21</W>
+                              <H>26</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>396</X>
+                              <Y>-41.875</Y>
                             </item>
                           </items>
                         </chunk>
@@ -346,12 +366,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>384</X>
+                              <Y>-29</Y>
+                              <W>21</W>
+                              <H>26</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>396</X>
+                              <Y>-15.625</Y>
                             </item>
                           </items>
                         </chunk>
@@ -389,12 +413,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>384</X>
+                              <Y>-3</Y>
+                              <W>21</W>
+                              <H>26</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>396</X>
+                              <Y>10.625</Y>
                             </item>
                           </items>
                         </chunk>
@@ -412,12 +440,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>384</X>
+                              <Y>23</Y>
+                              <W>21</W>
+                              <H>27</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>396</X>
+                              <Y>36.875</Y>
                             </item>
                           </items>
                         </chunk>
@@ -434,12 +466,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>384</X>
+                              <Y>50</Y>
+                              <W>21</W>
+                              <H>26</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>396</X>
+                              <Y>63.125</Y>
                             </item>
                           </items>
                         </chunk>
@@ -456,12 +492,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>384</X>
+                              <Y>76</Y>
+                              <W>21</W>
+                              <H>26</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>396</X>
+                              <Y>89.375</Y>
                             </item>
                           </items>
                         </chunk>
@@ -498,12 +538,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>384</X>
+                              <Y>102</Y>
+                              <W>21</W>
+                              <H>26</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>396</X>
+                              <Y>115.625</Y>
                             </item>
                           </items>
                         </chunk>
@@ -541,12 +585,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>384</X>
+                              <Y>128</Y>
+                              <W>21</W>
+                              <H>27</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>396</X>
+                              <Y>141.875</Y>
                             </item>
                           </items>
                         </chunk>
@@ -583,12 +631,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>384</X>
+                              <Y>155</Y>
+                              <W>21</W>
+                              <H>26</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>396</X>
+                              <Y>168.125</Y>
                             </item>
                           </items>
                         </chunk>
@@ -614,6 +666,105 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                         </chunk>
                       </chunks>
                     </chunk>
+                    <chunk name="param_input" index="13">
+                      <items count="6">
+                        <item name="Description" type_name="gh_string" type_code="10">Maximum transverse slab spacing along alignment, mm. 0 uses the refined longitudinal grid. Explicit Deck Beam Stations override spacing.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">67f537b7-4dd5-47b5-813e-8d4293fd23c8</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Deck Beam Spacing</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">DS</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="2">
+                        <chunk name="Attributes">
+                          <items count="2">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>384</X>
+                              <Y>181</Y>
+                              <W>21</W>
+                              <H>26</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>396</X>
+                              <Y>194.375</Y>
+                            </item>
+                          </items>
+                        </chunk>
+                        <chunk name="PersistentData">
+                          <items count="1">
+                            <item name="Count" type_name="gh_int32" type_code="3">1</item>
+                          </items>
+                          <chunks count="1">
+                            <chunk name="Branch" index="0">
+                              <items count="2">
+                                <item name="Count" type_name="gh_int32" type_code="3">1</item>
+                                <item name="Path" type_name="gh_string" type_code="10">{0}</item>
+                              </items>
+                              <chunks count="1">
+                                <chunk name="Item" index="0">
+                                  <items count="1">
+                                    <item name="number" type_name="gh_double" type_code="6">0</item>
+                                  </items>
+                                </chunk>
+                              </chunks>
+                            </chunk>
+                          </chunks>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_input" index="14">
+                      <items count="7">
+                        <item name="Access" type_name="gh_int32" type_code="3">1</item>
+                        <item name="Description" type_name="gh_string" type_code="10">Optional ordered distances along alignment, mm. Bridge ends are always included. Girders are split at each station.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">3216a177-69ba-4860-8f8b-5080ad0845dc</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Deck Beam Stations</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">DX</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">true</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="2">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>384</X>
+                              <Y>207</Y>
+                              <W>21</W>
+                              <H>26</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>396</X>
+                              <Y>220.625</Y>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_input" index="15">
+                      <items count="6">
+                        <item name="Description" type_name="gh_string" type_code="10">Normal offset from deck top, mm, between -Deck Thickness and 0. Default: -Deck Thickness / 2 (slab mid-plane).</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">5fc04e36-b570-4f77-8ed1-94321ed5c788</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Deck Beam Level</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">DZ</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">true</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="2">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>384</X>
+                              <Y>233</Y>
+                              <W>21</W>
+                              <H>27</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>396</X>
+                              <Y>246.875</Y>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
                     <chunk name="param_output" index="0">
                       <items count="7">
                         <item name="Access" type_name="gh_int32" type_code="3">2</item>
@@ -626,12 +777,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>435</X>
+                              <Y>-160</Y>
+                              <W>28</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>-150</Y>
                             </item>
                           </items>
                         </chunk>
@@ -649,12 +804,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>435</X>
+                              <Y>-140</Y>
+                              <W>28</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>-130</Y>
                             </item>
                           </items>
                         </chunk>
@@ -672,12 +831,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>435</X>
+                              <Y>-120</Y>
+                              <W>28</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>-110</Y>
                             </item>
                           </items>
                         </chunk>
@@ -695,12 +858,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>435</X>
+                              <Y>-100</Y>
+                              <W>28</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>-90</Y>
                             </item>
                           </items>
                         </chunk>
@@ -718,12 +885,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>435</X>
+                              <Y>-80</Y>
+                              <W>28</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>-70</Y>
                             </item>
                           </items>
                         </chunk>
@@ -741,12 +912,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>435</X>
+                              <Y>-60</Y>
+                              <W>28</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>-50</Y>
                             </item>
                           </items>
                         </chunk>
@@ -764,12 +939,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>435</X>
+                              <Y>-40</Y>
+                              <W>28</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>-30</Y>
                             </item>
                           </items>
                         </chunk>
@@ -786,12 +965,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>435</X>
+                              <Y>-20</Y>
+                              <W>28</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>-10</Y>
                             </item>
                           </items>
                         </chunk>
@@ -809,12 +992,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
+                              <X>435</X>
                               <Y>0</Y>
-                              <W>150</W>
+                              <W>28</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>10</Y>
                             </item>
                           </items>
                         </chunk>
@@ -832,12 +1019,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>435</X>
+                              <Y>20</Y>
+                              <W>28</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>30</Y>
                             </item>
                           </items>
                         </chunk>
@@ -855,12 +1046,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>435</X>
+                              <Y>40</Y>
+                              <W>28</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>50</Y>
                             </item>
                           </items>
                         </chunk>
@@ -878,12 +1073,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>435</X>
+                              <Y>60</Y>
+                              <W>28</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>70</Y>
                             </item>
                           </items>
                         </chunk>
@@ -901,12 +1100,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>435</X>
+                              <Y>80</Y>
+                              <W>28</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>90</Y>
                             </item>
                           </items>
                         </chunk>
@@ -924,12 +1127,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>435</X>
+                              <Y>100</Y>
+                              <W>28</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>110</Y>
                             </item>
                           </items>
                         </chunk>
@@ -946,12 +1153,177 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>435</X>
+                              <Y>120</Y>
+                              <W>28</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>130</Y>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="15">
+                      <items count="7">
+                        <item name="Access" type_name="gh_int32" type_code="3">2</item>
+                        <item name="Description" type_name="gh_string" type_code="10">Slab axes at the selected elevation, split at girder axes and deck edges. Paths {station;strip}, one-based. Geometry only.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">6b004a27-cebb-46b4-b961-dfc4a426e87c</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Deck Beams</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">DB</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="2">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>435</X>
+                              <Y>140</Y>
+                              <W>28</W>
+                              <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>150</Y>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="16">
+                      <items count="7">
+                        <item name="Access" type_name="gh_int32" type_code="3">2</item>
+                        <item name="Description" type_name="gh_string" type_code="10">Girder axis to slab axis. Paths {station;girder}. Connect to Bridge Connections: mode 0 rigid links or mode 1 explicit beam properties.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">27421b4d-f562-4f8f-9423-1a2c23b4063e</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Deck Connections</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">DC</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="2">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>435</X>
+                              <Y>160</Y>
+                              <W>28</W>
+                              <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>170</Y>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="17">
+                      <items count="7">
+                        <item name="Access" type_name="gh_int32" type_code="3">1</item>
+                        <item name="Description" type_name="gh_string" type_code="10">Actual slab stations along the reference alignment, mm.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">088618bd-f354-4342-abd6-59b2fa4806fd</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Deck Beam Stations</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">DX</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="2">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>435</X>
+                              <Y>180</Y>
+                              <W>28</W>
+                              <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>190</Y>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="18">
+                      <items count="7">
+                        <item name="Access" type_name="gh_int32" type_code="3">2</item>
+                        <item name="Description" type_name="gh_string" type_code="10">Tributary widths along alignment, mm, same paths as Deck Beams. Half width at ends. Curved/skew deck stiffness needs calibration.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">ecff5198-1366-44d8-81d7-64a5997b90ec</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Deck Strip Widths</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">DW</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="2">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>435</X>
+                              <Y>200</Y>
+                              <W>28</W>
+                              <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>210</Y>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="19">
+                      <items count="6">
+                        <item name="Description" type_name="gh_string" type_code="10">Steel geometry plus slab family 8. Assign an explicit property to family 8 and add Deck Connections separately to the model.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">d68a962e-919e-493b-9698-13ef7b47696c</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Grillage Geometry</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">GG</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="2">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>435</X>
+                              <Y>220</Y>
+                              <W>28</W>
+                              <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>230</Y>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="20">
+                      <items count="7">
+                        <item name="Access" type_name="gh_int32" type_code="3">2</item>
+                        <item name="Description" type_name="gh_string" type_code="10">Geometric IDs, same paths as Deck Beams.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">a3208a5d-8130-4d71-80c8-760f43412500</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Deck Member IDs</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">DI</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="2">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>435</X>
+                              <Y>240</Y>
+                              <W>28</W>
+                              <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>449</X>
+                              <Y>250</Y>
                             </item>
                           </items>
                         </chunk>
@@ -980,8 +1352,8 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>-25</X>
-                          <Y>-12</Y>
+                          <X>215</X>
+                          <Y>-162</Y>
                           <W>50</W>
                           <H>24</H>
                         </item>
@@ -1139,10 +1511,10 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>0</X>
-                          <Y>0</Y>
-                          <W>150</W>
-                          <H>20</H>
+                          <X>391</X>
+                          <Y>628</Y>
+                          <W>62</W>
+                          <H>44</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
                           <X>420</X>
@@ -1162,12 +1534,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>393</X>
+                              <Y>630</Y>
+                              <W>12</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>400.5</X>
+                              <Y>640</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1234,12 +1610,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>393</X>
+                              <Y>650</Y>
+                              <W>12</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>400.5</X>
+                              <Y>660</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1276,12 +1656,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>435</X>
+                              <Y>630</Y>
+                              <W>16</W>
+                              <H>40</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>443</X>
+                              <Y>650</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1309,10 +1693,10 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>0</X>
-                          <Y>0</Y>
-                          <W>150</W>
-                          <H>20</H>
+                          <X>1112</X>
+                          <Y>-62</Y>
+                          <W>76</W>
+                          <H>224</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
                           <X>1150</X>
@@ -1332,12 +1716,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1114</X>
+                              <Y>-60</Y>
+                              <W>21</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1126</X>
+                              <Y>-50</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1355,12 +1743,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1114</X>
+                              <Y>-40</Y>
+                              <W>21</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1126</X>
+                              <Y>-30</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1378,12 +1770,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1114</X>
+                              <Y>-20</Y>
+                              <W>21</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1126</X>
+                              <Y>-10</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1421,12 +1817,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
+                              <X>1114</X>
                               <Y>0</Y>
-                              <W>150</W>
+                              <W>21</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1126</X>
+                              <Y>10</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1444,12 +1844,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1114</X>
+                              <Y>20</Y>
+                              <W>21</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1126</X>
+                              <Y>30</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1466,12 +1870,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1114</X>
+                              <Y>40</Y>
+                              <W>21</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1126</X>
+                              <Y>50</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1509,12 +1917,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1114</X>
+                              <Y>60</Y>
+                              <W>21</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1126</X>
+                              <Y>70</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1532,12 +1944,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1114</X>
+                              <Y>80</Y>
+                              <W>21</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1126</X>
+                              <Y>90</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1554,12 +1970,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1114</X>
+                              <Y>100</Y>
+                              <W>21</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1126</X>
+                              <Y>110</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1576,12 +1996,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1114</X>
+                              <Y>120</Y>
+                              <W>21</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1126</X>
+                              <Y>130</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1619,12 +2043,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1114</X>
+                              <Y>140</Y>
+                              <W>21</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1126</X>
+                              <Y>150</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1642,12 +2070,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1165</X>
+                              <Y>-60</Y>
+                              <W>21</W>
+                              <H>31</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1175.5</X>
+                              <Y>-44.285713</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1665,12 +2097,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1165</X>
+                              <Y>-29</Y>
+                              <W>21</W>
+                              <H>31</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1175.5</X>
+                              <Y>-12.857142</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1688,12 +2124,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1165</X>
+                              <Y>2</Y>
+                              <W>21</W>
+                              <H>32</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1175.5</X>
+                              <Y>18.57143</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1711,12 +2151,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1165</X>
+                              <Y>34</Y>
+                              <W>21</W>
+                              <H>31</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1175.5</X>
+                              <Y>50</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1734,12 +2178,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1165</X>
+                              <Y>65</Y>
+                              <W>21</W>
+                              <H>32</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1175.5</X>
+                              <Y>81.42857</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1757,12 +2205,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1165</X>
+                              <Y>97</Y>
+                              <W>21</W>
+                              <H>31</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1175.5</X>
+                              <Y>112.85714</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1780,12 +2232,16 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1165</X>
+                              <Y>128</Y>
+                              <W>21</W>
+                              <H>32</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1175.5</X>
+                              <Y>144.2857</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1814,8 +2270,8 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>-25</X>
-                          <Y>-12</Y>
+                          <X>925</X>
+                          <Y>-67</Y>
                           <W>50</W>
                           <H>24</H>
                         </item>
@@ -1870,8 +2326,8 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>-25</X>
-                          <Y>-12</Y>
+                          <X>925</X>
+                          <Y>-267</Y>
                           <W>50</W>
                           <H>24</H>
                         </item>
@@ -1926,8 +2382,8 @@ Unità N, mm, MPa. Nessuna analisi Straus avviata. Procedura e controlli nel REA
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>-25</X>
-                          <Y>-12</Y>
+                          <X>925</X>
+                          <Y>-307</Y>
                           <W>50</W>
                           <H>24</H>
                         </item>

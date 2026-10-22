@@ -9,10 +9,12 @@ Il flusso Grasshopper è `Straus R3 Analysis → Bridge Action / Bridge Shrinkag
 | Bridge Action | ID stabile, modello analizzato, caso sorgente, comportamento Steel / Long term / Short term. Selezione facoltativa dei Beam IDs. |
 | Bridge Shrinkage Action | ID stabile, incremento di deformazione della soletta, modello/caso degli effetti secondari. Un solo coefficiente moltiplica entrambi. Response seleziona n ritiro oppure n0 per una deformazione istantanea imposta. |
 | Bridge Phase | Numero, nome, stato della sezione, lista di azioni e giorno facoltativo. I numeri ordinano le fasi; non rinominano i casi. |
-| Build BridGHe Model | Models, Phases, Combinations, Calculation. Restituisce modello, riepilogo delle fasi e diagnostica. |
+| Build BridGHe Model | Models, Phases, Combinations, Calculation, Additional Phase Members. Restituisce modello, riepilogo delle fasi e diagnostica. |
 | Bridge Combination Excel | Crea il template XLSX da Models e Phases e rilegge i coefficienti compilati. Table si collega a Combinations del Build. |
 
 ## Template Excel da modelli e fasi
+
+Per un graticcio che aggiunge la soletta dopo G1, attivare `Additional Phase Members` e mettere per primo in `Models` il modello della carpenteria da verificare. Tutte le sue aste devono esistere con stessi ID, estremi, orientamenti e offset nelle sorgenti successive. Queste possono avere altre aste, segnalate in `Diagnostics` e conservate nelle sorgenti FEM ma escluse dal modello di verifica. Il componente non inventa risultati nulli per aste mancanti. Le reazioni globali vanno ricavate dalle sorgenti complete delle `Phases`. Con l'opzione disattivata rimane obbligatoria la stessa topologia in tutte le fasi. Un'applicazione è [l'esempio 99 REV004](../example/99-Ponte%20completo%20GPC/README.md).
 
 In **BridGHe → 04-Definitions**, inserire **Bridge Combination Excel**. Collegare gli stessi `Models` e `Phases` del Build; ogni azione mantiene il proprio modello sorgente, anche se non è elencato in Models. Non vengono aggiunti automaticamente casi non associati alle fasi.
 

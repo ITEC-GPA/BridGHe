@@ -1,6 +1,6 @@
 # Inventario dei componenti 0.1.0
 
-174 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
+176 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
 
 ## BridGHe / 01-Parameters
 
@@ -22,6 +22,7 @@
 | Aluminium | component | Name; Type; Alloy | Material |
 | Concrete | component | Name; Grade | Material |
 | Custom Material | component | Name; Kind; Units; Modulus; Poisson Ratio; Thermal Expansion; Shear Modulus; Use Poisson; Density; Yielding; Strength for Steel | Material |
+| Reinforcement Steel B450C | component | Name | Material; Information |
 | Steel | component | Name; Grade | Material |
 | Table Material | component | Name; Use Poisson; Poisson Ratio; Shear Modulus; Thermal Expansion; Density; Stresses; Strains | Material |
 
@@ -107,15 +108,15 @@
 | Bridge Segments | component | Joints; Maximum Length | Segments |
 | Bridge Shrinkage Action | component | Action ID; Model; Case; Strain increment; Beam IDs; Primary Only; Response | Action |
 | Bridge Span Advisor | component | Alignment; Forbidden Regions; Minimum Span; Maximum Span; Target Span; Candidate Grid; Clearance; Alternatives; Pier Penalty; End Span Ratio; Required Supports | Support Stations; Support Points; Span Lengths; Scores; Information |
-| Build BridGHe Model | component | Models; Phases; Combinations; Calculation | Model; Phases; Diagnostics |
+| Build BridGHe Model | component | Models; Phases; Combinations; Calculation; Additional Phase Members | Model; Phases; Diagnostics |
 | Build Model | component | Elements; Name; Units; Load Combinations; Staged constructions | Model |
 | Composite beam | component | Beam; Section Start; Section End; Groups | Beam |
 | Decompose Model | component | Model | Nodes; Beams; Plates |
 | Merge Model | component | Elements; Tolerance | BridGHe Nodes; BridGHe Beams; BridGHe Plates |
 | Node | component | Point | Node |
 | Plate | component | Mesh; Property; Groups; Angle; Offset | Plate |
-| Simple Bridge — Solid Diaphragms | component | Alignment; Support Stations; Girder Offsets; Girder Levels; Deck Widths; Deck Thickness; Crossfall; Segments; Diaphragms; Maximum Element Length; Chord Tolerance; Support Skew; Labels | Members; Member IDs; Longitudinals; Diaphragm Members; Nodes; Support Points; Joint Points; Deck; Deck Edges; Frames; Stations; Topology; Segment Ranges; Information; Bridge Geometry |
-| Simple Bridge — Truss Diaphragms | component | Alignment; Support Stations; Girder Offsets; Girder Levels; Deck Widths; Deck Thickness; Crossfall; Segments; Diaphragms; Maximum Element Length; Chord Tolerance; Support Skew; Labels | Members; Member IDs; Longitudinals; Diaphragm Members; Nodes; Support Points; Joint Points; Deck; Deck Edges; Frames; Stations; Topology; Segment Ranges; Information; Bridge Geometry |
+| Simple Bridge — Solid Diaphragms | component | Alignment; Support Stations; Girder Offsets; Girder Levels; Deck Widths; Deck Thickness; Crossfall; Segments; Diaphragms; Maximum Element Length; Chord Tolerance; Support Skew; Labels; Deck Beam Spacing; Deck Beam Stations; Deck Beam Level | Members; Member IDs; Longitudinals; Diaphragm Members; Nodes; Support Points; Joint Points; Deck; Deck Edges; Frames; Stations; Topology; Segment Ranges; Information; Bridge Geometry; Deck Beams; Deck Connections; Deck Beam Stations; Deck Strip Widths; Grillage Geometry; Deck Member IDs |
+| Simple Bridge — Truss Diaphragms | component | Alignment; Support Stations; Girder Offsets; Girder Levels; Deck Widths; Deck Thickness; Crossfall; Segments; Diaphragms; Maximum Element Length; Chord Tolerance; Support Skew; Labels; Deck Beam Spacing; Deck Beam Stations; Deck Beam Level | Members; Member IDs; Longitudinals; Diaphragm Members; Nodes; Support Points; Joint Points; Deck; Deck Edges; Frames; Stations; Topology; Segment Ranges; Information; Bridge Geometry; Deck Beams; Deck Connections; Deck Beam Stations; Deck Strip Widths; Grillage Geometry; Deck Member IDs |
 
 ## BridGHe / 07-Attributes
 
@@ -149,7 +150,7 @@
 | Bridge Studs | component | Enabled; CountPerRow; Diameter; Height; LongitudinalPitch; TransversePitch; Fu; GammaV; HeadDiameter; HeadThickness; RequiredCover; RepeatedActionDetail | Detail |
 | Bridge Support Stiffener | component | Enabled; Layout; Width; Thickness; RightWidth; RightThickness; Location; LeftPanel; RightPanel; ReactionKN; EndDistance; LoadX; LoadZ; FootprintLength; FootprintWidth; LengthFactor; RigidEndPost; EndPostSpacing; CheckWelds; WeldThroat | Detail |
 | Bridge Transverse Reinforcement | component | Enabled; TopDiameter; TopPitch; BottomDiameter; BottomPitch; CotTheta; LeftFlowFraction; BendingSteelPerMetre; AnchorageLength; GoodBond; LeftConcreteEdge; RightConcreteEdge; EdgeUBar; UBarDiameter | Detail |
-| Creep And Shrinkage Concrete | component | Fck; Elastic Modulus Steel; Concrete Area; RH; u; t0; t; Cement Type | n0; n ∞; y(t,t0); εcs |
+| Creep And Shrinkage Concrete | component | Fck; Elastic Modulus Steel; Concrete Area; RH; u; t0; t; Cement Type; Drying start; Reference age | n0; n ∞; y(t,t0); εcs; Total shrinkage; Drying shrinkage; Autogenous shrinkage; Notional size |
 | Section Force | component | Name; Axial Force; Shear 2; Shear 3; Torsion; Bending 2; Bending 3; Station; NormalizedLength | Force |
 
 ## BridGHe / 09-Loads
@@ -215,6 +216,7 @@
 | Bridge Check Map | component | Model; Results; Beam IDs; Stations; Cases; Labels | Axes; Colours; Beam IDs; Maximum Ratios; Unavailable; Governing; Information |
 | Bridge Check Summary | component | Results; Labels | Label; Phase; Check; Ratio; Status; Units; Notes; Maximum finite ratio; Unavailable ratios; Governing labels |
 | Bridge Deflection & Camber | component | Model; Bridge Geometry; Girder; Case; Step; Step Type; Direction; Camber Factor; Relative Camber; Display Scale | Stations; Absolute Displacement; Relative Deflection; Camber; Deflected Curve; Camber Curve; Source; Information |
+| Bridge Detail Stations | component | Model; Results; Locations; Phases; Up; Tolerance | Results; Compression kN; Signed reaction kN; End type; Points |
 | Bridge Displacement Envelope | component | Model; Element IDs; Cases; Component; Mode | Element ID; Station; Value; Case; Step; Step type; Concomitant; Result; Coverage; Units |
 | Bridge Fatigue History | component | Values; Model; Beam ID; Station; Ordered Cases; Force Component; Response Factors; Response Units; Exponent; Reference Cycles | History; Sources; Ranges; Means; Cycle Counts; Equivalent Range; Units; Information |
 | Bridge Force Plot | component | BridGHe Model; Super-Element Beam; Results; Quantity; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running | SVG; File; Minimum; Maximum |
