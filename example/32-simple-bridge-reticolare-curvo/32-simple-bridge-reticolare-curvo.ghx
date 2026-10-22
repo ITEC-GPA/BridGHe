@@ -22,7 +22,7 @@
       <chunks count="5">
         <chunk name="DocumentHeader">
           <items count="5">
-            <item name="DocumentID" type_name="gh_guid" type_code="9">e946855a-5dec-4ecd-beac-3777cba0afd7</item>
+            <item name="DocumentID" type_name="gh_guid" type_code="9">50f0eb17-2c54-4a93-9edf-d3d2cb58a7c4</item>
             <item name="Preview" type_name="gh_string" type_code="10">Shaded</item>
             <item name="PreviewMeshType" type_name="gh_int32" type_code="3">1</item>
             <item name="PreviewNormal" type_name="gh_drawing_color" type_code="36">
@@ -35,10 +35,10 @@
         </chunk>
         <chunk name="DefinitionProperties">
           <items count="4">
-            <item name="Date" type_name="gh_date" type_code="8">639281237133517960</item>
+            <item name="Date" type_name="gh_date" type_code="8">639282642559939150</item>
             <item name="Description" type_name="gh_string" type_code="10"></item>
             <item name="KeepOpen" type_name="gh_bool" type_code="1">false</item>
-            <item name="Name" type_name="gh_string" type_code="10">unnamed</item>
+            <item name="Name" type_name="gh_string" type_code="10"></item>
           </items>
           <chunks count="3">
             <chunk name="Revisions">
@@ -49,10 +49,10 @@
             <chunk name="Projection">
               <items count="2">
                 <item name="Target" type_name="gh_drawing_point" type_code="30">
-                  <X>15</X>
-                  <Y>15</Y>
+                  <X>12</X>
+                  <Y>12</Y>
                 </item>
-                <item name="Zoom" type_name="gh_single" type_code="5">1.5</item>
+                <item name="Zoom" type_name="gh_single" type_code="5">1.25</item>
               </items>
             </chunk>
             <chunk name="Views">
@@ -94,9 +94,9 @@
         </chunk>
         <chunk name="DefinitionObjects">
           <items count="1">
-            <item name="ObjectCount" type_name="gh_int32" type_code="3">20</item>
+            <item name="ObjectCount" type_name="gh_int32" type_code="3">23</item>
           </items>
-          <chunks count="20">
+          <chunks count="23">
             <chunk name="Object" index="0">
               <items count="2">
                 <item name="GUID" type_name="gh_guid" type_code="9">59e0b89a-e487-49f8-bab8-b5bab16be14c</item>
@@ -106,7 +106,7 @@
                 <chunk name="Container">
                   <items count="8">
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">e7f57d14-6d6f-4d16-bf18-fdf809735e26</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">61379159-ffd5-454b-8584-40f321babd9a</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
                     <item name="NickName" type_name="gh_string" type_code="10">PROCEDURA</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -114,10 +114,11 @@
                     <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
                     <item name="UserText" type_name="gh_string" type_code="10">32 | SIMPLE BRIDGE RETICOLARE | CURVO R=250 m
 Geometria in mm: campate 30+40+30 m, tre travi a -4/0/+4 m, soletta 12 m x 250 mm.
-Modifica i pannelli: appoggi, interassi, quote, conci, traversi. Nessun carico, materiale, vincolo o analisi.
+Modifica i pannelli: appoggi, interassi, quote, conci, traversi, passo soletta. Nessun carico o analisi.
 Il concio 24-36 m attraversa la pila a 30 m. Il giunto aggiuntivo a 18 m interessa solo G2.
 Members + Member IDs hanno gli stessi percorsi. Famiglie: 0 travi, 1 traversi pieni, 2/3 correnti, 4 montanti, 5 diagonali.
-Apri README.md per le prove guidate. Le quote sono assi di riferimento: non baricentri dedotti da sezioni.</item>
+Deck Beams: soletta a metà spessore; Deck Connections -&gt; Bridge Connections mode 0 per link rigidi.
+Grillage Geometry include la famiglia 8: assegnare esplicitamente una proprietà cls. Bridge Geometry mantiene la sola carpenteria.</item>
                   </items>
                   <chunks count="2">
                     <chunk name="Attributes">
@@ -160,18 +161,18 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 <chunk name="Container">
                   <items count="4">
                     <item name="Description" type_name="gh_string" type_code="10">Multispan bridge geometry in mm, from a 3D top-of-deck reference alignment. Generates axes, slab, joints and topology; no materials, sections, loads, supports or releases are assigned.</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">d5830211-383c-4278-9ff3-21875ed699d9</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">0c3cf028-ff9a-4be6-bb3e-2a0fe6e3de34</item>
                     <item name="Name" type_name="gh_string" type_code="10">Simple Bridge — Truss Diaphragms</item>
                     <item name="NickName" type_name="gh_string" type_code="10">BridgeTruss</item>
                   </items>
-                  <chunks count="29">
+                  <chunks count="38">
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>1085</X>
-                          <Y>148</Y>
-                          <W>76</W>
-                          <H>304</H>
+                          <X>0</X>
+                          <Y>0</Y>
+                          <W>150</W>
+                          <H>20</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
                           <X>1120</X>
@@ -182,25 +183,21 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_input" index="0">
                       <items count="7">
                         <item name="Description" type_name="gh_string" type_code="10">Open tangent-continuous curve at deck top reference, in mm. Direction sets stations and local left.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">6429d295-a0c7-441a-b49d-b52d57fe6175</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">bba1131c-ffb9-4cf4-a9a3-36457d6ff9bc</item>
                         <item name="Name" type_name="gh_string" type_code="10">Alignment</item>
                         <item name="NickName" type_name="gh_string" type_code="10">A</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
-                        <item name="Source" index="0" type_name="gh_guid" type_code="9">0d48311c-e59a-4c9c-aa44-ab6fe54bdcac</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">3fe493f5-0403-4422-8a36-610398d23f14</item>
                         <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1087</X>
-                              <Y>150</Y>
-                              <W>18</W>
-                              <H>23</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1097.5</X>
-                              <Y>161.53847</Y>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
                             </item>
                           </items>
                         </chunk>
@@ -209,26 +206,22 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_input" index="1">
                       <items count="8">
                         <item name="Access" type_name="gh_int32" type_code="3">1</item>
-                        <item name="Description" type_name="gh_string" type_code="10">Ordered spandrel/pier distances along alignment in mm, minimum two. Points only; no restraints.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">d337718d-509d-465b-87a1-c8cec4db9ff0</item>
+                        <item name="Description" type_name="gh_string" type_code="10">Ordered abutment/pier distances along alignment in mm, minimum two. Points only; no restraints.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">b7a0b99b-ba6f-4c4e-bb70-0c9a5239c1e3</item>
                         <item name="Name" type_name="gh_string" type_code="10">Support Stations</item>
                         <item name="NickName" type_name="gh_string" type_code="10">S</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
-                        <item name="Source" index="0" type_name="gh_guid" type_code="9">3710d2cb-a94d-473d-952a-f37109fee311</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">5b6eddcd-ff1b-43d0-9871-93661da6696e</item>
                         <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1087</X>
-                              <Y>173</Y>
-                              <W>18</W>
-                              <H>23</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1097.5</X>
-                              <Y>184.61539</Y>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
                             </item>
                           </items>
                         </chunk>
@@ -238,25 +231,21 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="8">
                         <item name="Access" type_name="gh_int32" type_code="3">1</item>
                         <item name="Description" type_name="gh_string" type_code="10">Ordered signed distances: negative right, positive left looking along alignment. mm.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">15eb1114-6158-4c5d-b080-d93ba09f0050</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">8ea8a51d-904e-4659-8178-bb5adb1b2b77</item>
                         <item name="Name" type_name="gh_string" type_code="10">Girder Offsets</item>
                         <item name="NickName" type_name="gh_string" type_code="10">Y</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
-                        <item name="Source" index="0" type_name="gh_guid" type_code="9">171c35a8-425b-471d-a167-4e673e9b78f1</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">d84abdd7-158e-4b2f-b30d-2132cef39ed5</item>
                         <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1087</X>
-                              <Y>196</Y>
-                              <W>18</W>
-                              <H>23</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1097.5</X>
-                              <Y>207.6923</Y>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
                             </item>
                           </items>
                         </chunk>
@@ -266,25 +255,21 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="8">
                         <item name="Access" type_name="gh_int32" type_code="3">1</item>
                         <item name="Description" type_name="gh_string" type_code="10">One or one per girder. Normal offsets below deck top reference, negative in mm. Reference axes, not inferred centroids.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">fbe4d5cd-2721-4656-93c7-3bf8832279ea</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">735459bb-a193-4764-baf6-af5645bc61fc</item>
                         <item name="Name" type_name="gh_string" type_code="10">Girder Levels</item>
                         <item name="NickName" type_name="gh_string" type_code="10">Z</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
-                        <item name="Source" index="0" type_name="gh_guid" type_code="9">62f25348-a068-4c24-9699-57e58dfa21d4</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">7e05097e-e4dd-4d37-8284-694f19842087</item>
                         <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1087</X>
-                              <Y>219</Y>
-                              <W>18</W>
-                              <H>23</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1097.5</X>
-                              <Y>230.76924</Y>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
                             </item>
                           </items>
                         </chunk>
@@ -314,25 +299,21 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="8">
                         <item name="Access" type_name="gh_int32" type_code="3">1</item>
                         <item name="Description" type_name="gh_string" type_code="10">Left and right distances from alignment; one value makes them equal. mm.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">eb9d1ada-2ba6-477e-9076-71977575ab8b</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">5e6d3b8e-04aa-452b-9914-2a8e7f954351</item>
                         <item name="Name" type_name="gh_string" type_code="10">Deck Widths</item>
                         <item name="NickName" type_name="gh_string" type_code="10">W</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
-                        <item name="Source" index="0" type_name="gh_guid" type_code="9">4db02313-29e1-430a-92c8-e9f34cd92b73</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">9a692556-7de0-45a6-a296-54623315cd7e</item>
                         <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1087</X>
-                              <Y>242</Y>
-                              <W>18</W>
-                              <H>23</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1097.5</X>
-                              <Y>253.84616</Y>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
                             </item>
                           </items>
                         </chunk>
@@ -361,25 +342,21 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_input" index="5">
                       <items count="7">
                         <item name="Description" type_name="gh_string" type_code="10">Geometric slab thickness along local normal. mm.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">adedf17c-518f-4d2c-93d0-e8c584a8bdc7</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">91ce0576-befb-46f6-bd02-b78a7103ede7</item>
                         <item name="Name" type_name="gh_string" type_code="10">Deck Thickness</item>
                         <item name="NickName" type_name="gh_string" type_code="10">H</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
-                        <item name="Source" index="0" type_name="gh_guid" type_code="9">63b8f024-e3d1-40c8-bcf3-28c0d7d686af</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">fffe685e-d4d8-4f22-9fec-a6baaf3a15a0</item>
                         <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1087</X>
-                              <Y>265</Y>
-                              <W>18</W>
-                              <H>23</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1097.5</X>
-                              <Y>276.92307</Y>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
                             </item>
                           </items>
                         </chunk>
@@ -409,25 +386,21 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="8">
                         <item name="Access" type_name="gh_int32" type_code="3">2</item>
                         <item name="Description" type_name="gh_string" type_code="10">Optional tree: one value for constant slope %, or one {station mm, slope %} pair per branch covering the alignment. Positive raises left edge.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">e6c7d929-7c73-4b38-acc9-c770b6db2622</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">bf1bfaa0-9c70-469a-bc57-665c3425e98e</item>
                         <item name="Name" type_name="gh_string" type_code="10">Crossfall</item>
                         <item name="NickName" type_name="gh_string" type_code="10">%</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">true</item>
-                        <item name="Source" index="0" type_name="gh_guid" type_code="9">d041ab0b-951d-47e6-b9b4-e27af729bdb4</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">a902c97c-717c-4cc1-a436-3c6c2a434ecc</item>
                         <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1087</X>
-                              <Y>288</Y>
-                              <W>18</W>
-                              <H>23</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1097.5</X>
-                              <Y>300</Y>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
                             </item>
                           </items>
                         </chunk>
@@ -436,25 +409,21 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_input" index="7">
                       <items count="7">
                         <item name="Description" type_name="gh_string" type_code="10">Optional Bridge Segments. Default: maximum 12000 mm, independent of spans.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">21ecc604-e306-47a7-8ddf-71a1c2ffb3b5</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">5642cca5-4b0c-4fa2-b480-7745b1fd6140</item>
                         <item name="Name" type_name="gh_string" type_code="10">Segments</item>
                         <item name="NickName" type_name="gh_string" type_code="10">C</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">true</item>
-                        <item name="Source" index="0" type_name="gh_guid" type_code="9">ebb9be35-10e5-441d-ba46-d4e64553ce1e</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">23d55a44-840e-4078-8103-d11300c9c3d6</item>
                         <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1087</X>
-                              <Y>311</Y>
-                              <W>18</W>
-                              <H>23</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1097.5</X>
-                              <Y>323.0769</Y>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
                             </item>
                           </items>
                         </chunk>
@@ -463,25 +432,21 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_input" index="8">
                       <items count="7">
                         <item name="Description" type_name="gh_string" type_code="10">Optional Bridge Diaphragms. Default: maximum 5000 mm and support lines; truss X, height 1500 mm, two panels/bay.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">3fe705f8-bd18-4892-afb5-3864c08cab5e</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">5409b8ad-12f7-4926-ba5e-aaf15fb23758</item>
                         <item name="Name" type_name="gh_string" type_code="10">Diaphragms</item>
                         <item name="NickName" type_name="gh_string" type_code="10">D</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">true</item>
-                        <item name="Source" index="0" type_name="gh_guid" type_code="9">abfc1dad-b6b1-4065-9710-e41aced8e99d</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">bbe46a56-f9d3-4a82-883a-33dfe0910035</item>
                         <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1087</X>
-                              <Y>334</Y>
-                              <W>18</W>
-                              <H>23</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1097.5</X>
-                              <Y>346.15384</Y>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
                             </item>
                           </items>
                         </chunk>
@@ -490,25 +455,21 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_input" index="9">
                       <items count="7">
                         <item name="Description" type_name="gh_string" type_code="10">Maximum chord length, in mm, on all longitudinal axes and slab edges.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">49fec6e2-c727-464f-98a9-a3e39aa8f299</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">7a98214a-456a-4c22-99b6-bfd9bf8e5194</item>
                         <item name="Name" type_name="gh_string" type_code="10">Maximum Element Length</item>
                         <item name="NickName" type_name="gh_string" type_code="10">L</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
-                        <item name="Source" index="0" type_name="gh_guid" type_code="9">938e3604-2366-4799-8a5a-8d15169bc14d</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">a2aeee51-3038-4fa7-bad2-e013bccc5a51</item>
                         <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1087</X>
-                              <Y>357</Y>
-                              <W>18</W>
-                              <H>23</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1097.5</X>
-                              <Y>369.23077</Y>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
                             </item>
                           </items>
                         </chunk>
@@ -537,25 +498,21 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_input" index="10">
                       <items count="7">
                         <item name="Description" type_name="gh_string" type_code="10">Adaptive deviation tolerance in mm, checked at quarter/mid/three-quarter points of each interval.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">aa0001a6-9242-4932-b60e-97a5be8b2eab</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">c14d2f9f-8160-4d3d-91a9-47b50e2c7707</item>
                         <item name="Name" type_name="gh_string" type_code="10">Chord Tolerance</item>
                         <item name="NickName" type_name="gh_string" type_code="10">T</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
-                        <item name="Source" index="0" type_name="gh_guid" type_code="9">0fbfe77f-9092-4d6e-870d-d7ff0b5b1546</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">8771729f-4dce-486b-8462-6c740f6bba7c</item>
                         <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1087</X>
-                              <Y>380</Y>
-                              <W>18</W>
-                              <H>23</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1097.5</X>
-                              <Y>392.30768</Y>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
                             </item>
                           </items>
                         </chunk>
@@ -585,25 +542,21 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="8">
                         <item name="Access" type_name="gh_int32" type_code="3">1</item>
                         <item name="Description" type_name="gh_string" type_code="10">One angle or one per support, degrees from the local transverse line towards the tangent. Skew ends need sufficient alignment beyond supports.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">e7d160ee-c971-4cd7-b98f-b252e0ffbf82</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">aeb108d8-3707-4f18-af59-be4899b463fc</item>
                         <item name="Name" type_name="gh_string" type_code="10">Support Skew</item>
                         <item name="NickName" type_name="gh_string" type_code="10">K</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
-                        <item name="Source" index="0" type_name="gh_guid" type_code="9">8e412335-c008-482b-9a7d-1844419971d0</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">1f5dacaf-ba50-4383-9b4a-2042dae141e6</item>
                         <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1087</X>
-                              <Y>403</Y>
-                              <W>18</W>
-                              <H>23</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1097.5</X>
-                              <Y>415.3846</Y>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
                             </item>
                           </items>
                         </chunk>
@@ -632,7 +585,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_input" index="12">
                       <items count="6">
                         <item name="Description" type_name="gh_string" type_code="10">Show girder/segment joints and support IDs in preview.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">b2bb227e-b168-4c89-88e4-dfd42e5783e3</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">68816636-59a4-4971-89c6-8795dd655ec1</item>
                         <item name="Name" type_name="gh_string" type_code="10">Labels</item>
                         <item name="NickName" type_name="gh_string" type_code="10">ID</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -640,16 +593,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1087</X>
-                              <Y>426</Y>
-                              <W>18</W>
-                              <H>24</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1097.5</X>
-                              <Y>438.46155</Y>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
                             </item>
                           </items>
                         </chunk>
@@ -675,11 +624,99 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                         </chunk>
                       </chunks>
                     </chunk>
+                    <chunk name="param_input" index="13">
+                      <items count="7">
+                        <item name="Description" type_name="gh_string" type_code="10">Maximum transverse slab spacing along alignment, mm. 0 uses the refined longitudinal grid. Explicit Deck Beam Stations override spacing.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">f37ace4a-ee68-4ca7-a476-1dfbf78d5e46</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Deck Beam Spacing</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">DS</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">de3885ac-a548-4cf5-85c7-bf3df16c5bf2</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
+                      </items>
+                      <chunks count="2">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
+                            </item>
+                          </items>
+                        </chunk>
+                        <chunk name="PersistentData">
+                          <items count="1">
+                            <item name="Count" type_name="gh_int32" type_code="3">1</item>
+                          </items>
+                          <chunks count="1">
+                            <chunk name="Branch" index="0">
+                              <items count="2">
+                                <item name="Count" type_name="gh_int32" type_code="3">1</item>
+                                <item name="Path" type_name="gh_string" type_code="10">{0}</item>
+                              </items>
+                              <chunks count="1">
+                                <chunk name="Item" index="0">
+                                  <items count="1">
+                                    <item name="number" type_name="gh_double" type_code="6">0</item>
+                                  </items>
+                                </chunk>
+                              </chunks>
+                            </chunk>
+                          </chunks>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_input" index="14">
+                      <items count="7">
+                        <item name="Access" type_name="gh_int32" type_code="3">1</item>
+                        <item name="Description" type_name="gh_string" type_code="10">Optional ordered distances along alignment, mm. Bridge ends are always included. Girders are split at each station.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">8ee9a11f-c658-45ca-ba93-046dc3d07b04</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Deck Beam Stations</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">DX</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">true</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_input" index="15">
+                      <items count="6">
+                        <item name="Description" type_name="gh_string" type_code="10">Normal offset from deck top, mm, between -Deck Thickness and 0. Default: -Deck Thickness / 2 (slab mid-plane).</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">458c543e-b17d-41cc-bb8a-d2c6c3ee540a</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Deck Beam Level</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">DZ</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">true</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
                     <chunk name="param_output" index="0">
                       <items count="7">
                         <item name="Access" type_name="gh_int32" type_code="3">2</item>
                         <item name="Description" type_name="gh_string" type_code="10">All member axes. Paths {family;group;segment}. Families: 0 girders, 1 solid diaphragms, 2 top, 3 bottom, 4 posts, 5 diagonals. Connect to Beam with explicit properties.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">d7916c65-493c-4e70-bbd1-4f5ad0ad4bbf</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">339db9e9-0292-475e-8ec5-902754463ee9</item>
                         <item name="Name" type_name="gh_string" type_code="10">Members</item>
                         <item name="NickName" type_name="gh_string" type_code="10">M</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -687,16 +724,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1135</X>
-                              <Y>150</Y>
-                              <W>24</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1147</X>
-                              <Y>160</Y>
                             </item>
                           </items>
                         </chunk>
@@ -706,7 +739,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="7">
                         <item name="Access" type_name="gh_int32" type_code="3">2</item>
                         <item name="Description" type_name="gh_string" type_code="10">Same paths/order as Members; deterministic for identical inputs. Connect to Element ID after Beam.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">6891bcb9-e025-46f1-8064-e80a873907fc</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">3bb041fd-36ec-4eae-a960-ebcb44f09bba</item>
                         <item name="Name" type_name="gh_string" type_code="10">Member IDs</item>
                         <item name="NickName" type_name="gh_string" type_code="10">ID</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -714,16 +747,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1135</X>
-                              <Y>170</Y>
-                              <W>24</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1147</X>
-                              <Y>180</Y>
                             </item>
                           </items>
                         </chunk>
@@ -733,7 +762,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="7">
                         <item name="Access" type_name="gh_int32" type_code="3">2</item>
                         <item name="Description" type_name="gh_string" type_code="10">Girder axes, paths {girder;fabrication segment}, one-based. Joints do not imply releases.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">c0d024fb-3ea2-48a4-a87b-487b6e2ce2f0</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">60175b0d-73ee-4917-8a1a-fce2efe406e9</item>
                         <item name="Name" type_name="gh_string" type_code="10">Longitudinals</item>
                         <item name="NickName" type_name="gh_string" type_code="10">G</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -741,16 +770,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1135</X>
-                              <Y>190</Y>
-                              <W>24</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1147</X>
-                              <Y>200</Y>
                             </item>
                           </items>
                         </chunk>
@@ -760,7 +785,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="7">
                         <item name="Access" type_name="gh_int32" type_code="3">2</item>
                         <item name="Description" type_name="gh_string" type_code="10">Paths {family;diaphragm line;bay/girder}. Select families before assigning properties.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">8e3fed2d-6040-4d75-bccf-81d722a02579</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">2c235c18-05de-4dfc-aa18-2ed80de95676</item>
                         <item name="Name" type_name="gh_string" type_code="10">Diaphragm Members</item>
                         <item name="NickName" type_name="gh_string" type_code="10">D</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -768,16 +793,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1135</X>
-                              <Y>210</Y>
-                              <W>24</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1147</X>
-                              <Y>220</Y>
                             </item>
                           </items>
                         </chunk>
@@ -787,7 +808,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="7">
                         <item name="Access" type_name="gh_int32" type_code="3">1</item>
                         <item name="Description" type_name="gh_string" type_code="10">Unique member endpoints. Position in list + 1 is the topology node number.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">2fa5d327-529e-44fd-aa0e-addbab515df1</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">378b5206-9578-4d1f-b2f8-fea7c1155435</item>
                         <item name="Name" type_name="gh_string" type_code="10">Nodes</item>
                         <item name="NickName" type_name="gh_string" type_code="10">N</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -795,16 +816,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1135</X>
-                              <Y>230</Y>
-                              <W>24</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1147</X>
-                              <Y>240</Y>
                             </item>
                           </items>
                         </chunk>
@@ -814,7 +831,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="7">
                         <item name="Access" type_name="gh_int32" type_code="3">2</item>
                         <item name="Description" type_name="gh_string" type_code="10">Paths {support;girder}; actual intersections including skew. Geometric points only.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">60972a41-effc-495b-ab9f-635d9e71d092</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">5f5b9d62-a841-464f-b454-b837072a3309</item>
                         <item name="Name" type_name="gh_string" type_code="10">Support Points</item>
                         <item name="NickName" type_name="gh_string" type_code="10">S</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -822,16 +839,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1135</X>
-                              <Y>250</Y>
-                              <W>24</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1147</X>
-                              <Y>260</Y>
                             </item>
                           </items>
                         </chunk>
@@ -841,7 +854,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="7">
                         <item name="Access" type_name="gh_int32" type_code="3">2</item>
                         <item name="Description" type_name="gh_string" type_code="10">Paths {girder;joint}; fabrication joints, not FE hinges.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">2a8d95fe-5e95-4ea8-8cb4-e56fa7cbebea</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">3102e7b5-abae-4c62-a68a-4a0ff9db1e66</item>
                         <item name="Name" type_name="gh_string" type_code="10">Joint Points</item>
                         <item name="NickName" type_name="gh_string" type_code="10">J</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -849,16 +862,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1135</X>
-                              <Y>270</Y>
-                              <W>24</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1147</X>
-                              <Y>280</Y>
                             </item>
                           </items>
                         </chunk>
@@ -867,7 +876,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_output" index="7">
                       <items count="6">
                         <item name="Description" type_name="gh_string" type_code="10">Closed geometric slab mesh; not a plate FEM mesh.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">ff0645a1-e0a8-42d1-a6f2-8c45953d09ef</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">12ca8b1a-1159-485f-9392-16683db80543</item>
                         <item name="Name" type_name="gh_string" type_code="10">Deck</item>
                         <item name="NickName" type_name="gh_string" type_code="10">DK</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -875,16 +884,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1135</X>
-                              <Y>290</Y>
-                              <W>24</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1147</X>
-                              <Y>300</Y>
                             </item>
                           </items>
                         </chunk>
@@ -894,7 +899,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="7">
                         <item name="Access" type_name="gh_int32" type_code="3">1</item>
                         <item name="Description" type_name="gh_string" type_code="10">Left and right top edges.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">966ed1e0-3774-4528-8a3e-6b442b5afe0f</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">f26dc882-1ba1-4630-bb10-657eeda60952</item>
                         <item name="Name" type_name="gh_string" type_code="10">Deck Edges</item>
                         <item name="NickName" type_name="gh_string" type_code="10">E</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -902,16 +907,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1135</X>
-                              <Y>310</Y>
-                              <W>24</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1147</X>
-                              <Y>320</Y>
                             </item>
                           </items>
                         </chunk>
@@ -921,7 +922,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="7">
                         <item name="Access" type_name="gh_int32" type_code="3">1</item>
                         <item name="Description" type_name="gh_string" type_code="10">X towards local left, Y deck normal, Z alignment tangent, at Stations.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">37fb7d1a-db27-4369-8be7-74531f56d1f8</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">953a097a-9808-42f0-bfdc-670ba60abb00</item>
                         <item name="Name" type_name="gh_string" type_code="10">Frames</item>
                         <item name="NickName" type_name="gh_string" type_code="10">F</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -929,16 +930,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1135</X>
-                              <Y>330</Y>
-                              <W>24</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1147</X>
-                              <Y>340</Y>
                             </item>
                           </items>
                         </chunk>
@@ -948,7 +945,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="7">
                         <item name="Access" type_name="gh_int32" type_code="3">1</item>
                         <item name="Description" type_name="gh_string" type_code="10">Physical mm along reference alignment, common refined longitudinal grid.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">201dbcd2-9e04-46d6-b19d-996c88d6a953</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">4bfe9f5b-678f-4b72-bac7-15b20b4bbdbe</item>
                         <item name="Name" type_name="gh_string" type_code="10">Stations</item>
                         <item name="NickName" type_name="gh_string" type_code="10">X</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -956,16 +953,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1135</X>
-                              <Y>350</Y>
-                              <W>24</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1147</X>
-                              <Y>360</Y>
                             </item>
                           </items>
                         </chunk>
@@ -975,7 +968,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="7">
                         <item name="Access" type_name="gh_int32" type_code="3">1</item>
                         <item name="Description" type_name="gh_string" type_code="10">Semicolon table: ID, family, group, segment, span, node1, node2, station1, station2. Span=0 for diaphragm members or start overhang.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">0af14451-c494-4a6e-97d5-1b11df0b588d</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">ff5107a2-0c1b-4385-b02e-109fe29cd844</item>
                         <item name="Name" type_name="gh_string" type_code="10">Topology</item>
                         <item name="NickName" type_name="gh_string" type_code="10">TB</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -983,16 +976,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1135</X>
-                              <Y>370</Y>
-                              <W>24</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1147</X>
-                              <Y>380</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1002,7 +991,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="7">
                         <item name="Access" type_name="gh_int32" type_code="3">1</item>
                         <item name="Description" type_name="gh_string" type_code="10">Girder;segment;start;end in mm. A segment can cross a support.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">42b74724-48bd-44b5-82fc-293afad7c4c0</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">f05070cb-b902-4ded-908c-509c4efb137e</item>
                         <item name="Name" type_name="gh_string" type_code="10">Segment Ranges</item>
                         <item name="NickName" type_name="gh_string" type_code="10">C</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -1010,16 +999,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1135</X>
-                              <Y>390</Y>
-                              <W>24</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1147</X>
-                              <Y>400</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1029,7 +1014,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="7">
                         <item name="Access" type_name="gh_int32" type_code="3">1</item>
                         <item name="Description" type_name="gh_string" type_code="10">Geometry counts, conventions and limitations.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">10394e71-d0f9-4180-a31e-8dd0d374027c</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">0944a46d-739b-449f-b79b-b97c347ee738</item>
                         <item name="Name" type_name="gh_string" type_code="10">Information</item>
                         <item name="NickName" type_name="gh_string" type_code="10">I</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -1037,16 +1022,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1135</X>
-                              <Y>410</Y>
-                              <W>24</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1147</X>
-                              <Y>420</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1055,7 +1036,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_output" index="14">
                       <items count="6">
                         <item name="Description" type_name="gh_string" type_code="10">Typed bridge geometry for assignment, bracing, bearings and detailing. mm.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">b3d9ec40-099f-4204-a806-f497bb6ff532</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">415bf63e-3b92-4fbe-91b6-737681323809</item>
                         <item name="Name" type_name="gh_string" type_code="10">Bridge Geometry</item>
                         <item name="NickName" type_name="gh_string" type_code="10">BG</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -1063,16 +1044,149 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>1135</X>
-                              <Y>430</Y>
-                              <W>24</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
                             </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>1147</X>
-                              <Y>440</Y>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="15">
+                      <items count="7">
+                        <item name="Access" type_name="gh_int32" type_code="3">2</item>
+                        <item name="Description" type_name="gh_string" type_code="10">Slab axes at the selected elevation, split at girder axes and deck edges. Paths {station;strip}, one-based. Geometry only.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">dad02aff-ad98-459f-8011-6c3cebdeedd1</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Deck Beams</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">DB</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="16">
+                      <items count="7">
+                        <item name="Access" type_name="gh_int32" type_code="3">2</item>
+                        <item name="Description" type_name="gh_string" type_code="10">Girder axis to slab axis. Paths {station;girder}. Connect to Bridge Connections: mode 0 rigid links or mode 1 explicit beam properties.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">9956dad3-a7e3-42ab-881a-40c07084ae8a</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Deck Connections</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">DC</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="17">
+                      <items count="7">
+                        <item name="Access" type_name="gh_int32" type_code="3">1</item>
+                        <item name="Description" type_name="gh_string" type_code="10">Actual slab stations along the reference alignment, mm.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">aace3f32-8ede-4c98-a320-70a376e7a71e</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Deck Beam Stations</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">DX</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="18">
+                      <items count="7">
+                        <item name="Access" type_name="gh_int32" type_code="3">2</item>
+                        <item name="Description" type_name="gh_string" type_code="10">Tributary widths along alignment, mm, same paths as Deck Beams. Half width at ends. Curved/skew deck stiffness needs calibration.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">b452f8ca-ee84-4715-acaf-94c2a2bdfa73</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Deck Strip Widths</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">DW</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="19">
+                      <items count="6">
+                        <item name="Description" type_name="gh_string" type_code="10">Steel geometry plus slab family 8. Assign an explicit property to family 8 and add Deck Connections separately to the model.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">6753e140-97a3-4420-9c10-e0fc5da78d3f</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Grillage Geometry</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">GG</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="20">
+                      <items count="7">
+                        <item name="Access" type_name="gh_int32" type_code="3">2</item>
+                        <item name="Description" type_name="gh_string" type_code="10">Geometric IDs, same paths as Deck Beams.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">df24acb9-e9f6-4dce-a52b-4ebd6100cfa6</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Deck Member IDs</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">DI</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
                             </item>
                           </items>
                         </chunk>
@@ -1092,7 +1206,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                   <items count="7">
                     <item name="Description" type_name="gh_string" type_code="10">Contains a collection of generic curves</item>
                     <item name="Hidden" type_name="gh_bool" type_code="1">true</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">0d48311c-e59a-4c9c-aa44-ab6fe54bdcac</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">3fe493f5-0403-4422-8a36-610398d23f14</item>
                     <item name="Name" type_name="gh_string" type_code="10">Curve</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Tracciato 3D — mm</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -1102,8 +1216,8 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>795</X>
-                          <Y>18</Y>
+                          <X>-25</X>
+                          <Y>-12</Y>
                           <W>50</W>
                           <H>24</H>
                         </item>
@@ -1151,7 +1265,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 <chunk name="Container">
                   <items count="8">
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">3710d2cb-a94d-473d-952a-f37109fee311</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">5b6eddcd-ff1b-43d0-9871-93661da6696e</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Progressive appoggi [mm]</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -1202,7 +1316,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 <chunk name="Container">
                   <items count="8">
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">171c35a8-425b-471d-a167-4e673e9b78f1</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">d84abdd7-158e-4b2f-b30d-2132cef39ed5</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Offsets travi [mm]</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -1252,7 +1366,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 <chunk name="Container">
                   <items count="8">
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">62f25348-a068-4c24-9699-57e58dfa21d4</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">7e05097e-e4dd-4d37-8284-694f19842087</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Quote assi [mm]</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -1300,7 +1414,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 <chunk name="Container">
                   <items count="8">
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">4db02313-29e1-430a-92c8-e9f34cd92b73</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">9a692556-7de0-45a6-a296-54623315cd7e</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Larghezze SX / DX [mm]</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -1349,7 +1463,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 <chunk name="Container">
                   <items count="8">
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">63b8f024-e3d1-40c8-bcf3-28c0d7d686af</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">fffe685e-d4d8-4f22-9fec-a6baaf3a15a0</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Spessore soletta [mm]</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -1397,7 +1511,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 <chunk name="Container">
                   <items count="6">
                     <item name="Description" type_name="gh_string" type_code="10">Contains a collection of floating point numbers</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">d041ab0b-951d-47e6-b9b4-e27af729bdb4</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">a902c97c-717c-4cc1-a436-3c6c2a434ecc</item>
                     <item name="Name" type_name="gh_string" type_code="10">Number</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Coppie progressiva / pendenza %</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -1407,8 +1521,8 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>795</X>
-                          <Y>188</Y>
+                          <X>-25</X>
+                          <Y>-12</Y>
                           <W>50</W>
                           <H>24</H>
                         </item>
@@ -1492,7 +1606,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 <chunk name="Container">
                   <items count="6">
                     <item name="Description" type_name="gh_string" type_code="10">Contains a collection of floating point numbers</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">5ac953cc-35f9-4567-9229-41ae3609a0db</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">2b07636b-738e-41a5-8a67-252b6e199fe0</item>
                     <item name="Name" type_name="gh_string" type_code="10">Number</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Giunti mm: {0} comuni; {2} solo G2</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -1502,8 +1616,8 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>15</X>
-                          <Y>198</Y>
+                          <X>-25</X>
+                          <Y>-12</Y>
                           <W>50</W>
                           <H>24</H>
                         </item>
@@ -1590,7 +1704,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 <chunk name="Container">
                   <items count="4">
                     <item name="Description" type_name="gh_string" type_code="10">Girder fabrication joints in mm. Independent of supports, FE mesh and construction phases.</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">17d52d84-8544-447e-b32a-290b8274c8ec</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">f4b8ca88-1dc6-44e6-8941-6ba2a7df3dc6</item>
                     <item name="Name" type_name="gh_string" type_code="10">Bridge Segments</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Segments</item>
                   </items>
@@ -1598,10 +1712,10 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>271</X>
-                          <Y>188</Y>
-                          <W>62</W>
-                          <H>44</H>
+                          <X>0</X>
+                          <Y>0</Y>
+                          <W>150</W>
+                          <H>20</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
                           <X>300</X>
@@ -1613,25 +1727,21 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="8">
                         <item name="Access" type_name="gh_int32" type_code="3">2</item>
                         <item name="Description" type_name="gh_string" type_code="10">Ordered joint distances in mm. Branch {0}: common joints; {1}..{N}: additional joints for each girder. Non-empty explicit joints replace automatic subdivision for that girder.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">ec8453a6-893a-4c78-9567-fbef58dbcfed</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">8979a5ce-240e-4ea2-859e-03b9d204aa21</item>
                         <item name="Name" type_name="gh_string" type_code="10">Joints</item>
                         <item name="NickName" type_name="gh_string" type_code="10">J</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">true</item>
-                        <item name="Source" index="0" type_name="gh_guid" type_code="9">5ac953cc-35f9-4567-9229-41ae3609a0db</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">2b07636b-738e-41a5-8a67-252b6e199fe0</item>
                         <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>273</X>
-                              <Y>190</Y>
-                              <W>12</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>280.5</X>
-                              <Y>200</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1640,7 +1750,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_input" index="1">
                       <items count="6">
                         <item name="Description" type_name="gh_string" type_code="10">Automatic equal segment subdivision when no explicit joints apply. Zero: a single segment. mm.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">5c96aa0f-8b05-4dee-a8c5-58fc841c95f3</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">45c734bd-a193-479c-b87b-d47acbe0f868</item>
                         <item name="Name" type_name="gh_string" type_code="10">Maximum Length</item>
                         <item name="NickName" type_name="gh_string" type_code="10">L</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -1648,16 +1758,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>273</X>
-                              <Y>210</Y>
-                              <W>12</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>280.5</X>
-                              <Y>220</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1686,7 +1792,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_output" index="0">
                       <items count="6">
                         <item name="Description" type_name="gh_string" type_code="10">Connect to either Simple Bridge component. A joint does not create a release.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">ebb9be35-10e5-441d-ba46-d4e64553ce1e</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">23d55a44-840e-4078-8103-d11300c9c3d6</item>
                         <item name="Name" type_name="gh_string" type_code="10">Segments</item>
                         <item name="NickName" type_name="gh_string" type_code="10">S</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -1694,16 +1800,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>315</X>
-                              <Y>190</Y>
-                              <W>16</W>
-                              <H>40</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>323</X>
-                              <Y>210</Y>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
                             </item>
                           </items>
                         </chunk>
@@ -1723,7 +1825,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 <chunk name="Container">
                   <items count="4">
                     <item name="Description" type_name="gh_string" type_code="10">Locations and truss layout for Simple Bridge. All lengths in mm; creates no stiffness or releases.</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">7e065c3e-6fd0-4fa0-bffa-59c804f017b9</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">d899ab4c-4c96-4739-9a11-2281098a1957</item>
                     <item name="Name" type_name="gh_string" type_code="10">Bridge Diaphragms</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Diaphragms</item>
                   </items>
@@ -1731,10 +1833,10 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>263</X>
-                          <Y>778</Y>
-                          <W>72</W>
-                          <H>144</H>
+                          <X>0</X>
+                          <Y>0</Y>
+                          <W>150</W>
+                          <H>20</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
                           <X>300</X>
@@ -1746,7 +1848,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       <items count="7">
                         <item name="Access" type_name="gh_int32" type_code="3">1</item>
                         <item name="Description" type_name="gh_string" type_code="10">Explicit ordered distances; if empty, use Maximum Spacing.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">9c536a09-6353-4a4e-a15e-800759c4d773</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">b847c02d-0539-4424-8cfc-87d85a1e4333</item>
                         <item name="Name" type_name="gh_string" type_code="10">Stations</item>
                         <item name="NickName" type_name="gh_string" type_code="10">S</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">true</item>
@@ -1754,16 +1856,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>265</X>
-                              <Y>780</Y>
-                              <W>20</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>276.5</X>
-                              <Y>790</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1772,25 +1870,21 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_input" index="1">
                       <items count="7">
                         <item name="Description" type_name="gh_string" type_code="10">Automatic spacing in each span/overhang; zero: explicit/support lines only. mm.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">d1d7e1b0-eb35-4266-a714-56bbbcb8dde9</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">aa2626d5-d7b3-4ca5-b8be-9af0837153b5</item>
                         <item name="Name" type_name="gh_string" type_code="10">Maximum Spacing</item>
                         <item name="NickName" type_name="gh_string" type_code="10">L</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
-                        <item name="Source" index="0" type_name="gh_guid" type_code="9">54d24d7e-cfa0-493b-823f-21a1fec2da69</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">0477805a-ad45-4d8e-a814-9b88d4b167e2</item>
                         <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>265</X>
-                              <Y>800</Y>
-                              <W>20</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>276.5</X>
-                              <Y>810</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1819,7 +1913,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_input" index="2">
                       <items count="6">
                         <item name="Description" type_name="gh_string" type_code="10">Add support lines with their skew. False omits supports from automatic grids; explicit Stations remain authoritative.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">5ab4da18-96c2-469a-b65b-100420a90d5a</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">14fab428-3a99-4971-9524-3f64334bd1ff</item>
                         <item name="Name" type_name="gh_string" type_code="10">At Supports</item>
                         <item name="NickName" type_name="gh_string" type_code="10">AS</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -1827,16 +1921,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>265</X>
-                              <Y>820</Y>
-                              <W>20</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>276.5</X>
-                              <Y>830</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1865,25 +1955,21 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_input" index="3">
                       <items count="7">
                         <item name="Description" type_name="gh_string" type_code="10">Total depth centred on the girder reference axes, along the diaphragm frame normal. Used only by Truss. mm.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">e0c4d2ab-a176-409a-b57c-2a9b2cf237f8</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">f81f4754-8d5a-4651-9f2a-da73bfbf45c4</item>
                         <item name="Name" type_name="gh_string" type_code="10">Truss Height</item>
                         <item name="NickName" type_name="gh_string" type_code="10">H</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
-                        <item name="Source" index="0" type_name="gh_guid" type_code="9">d40a5ac5-3975-46ee-9c41-b41773d52cee</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">eb86e671-3470-4340-abda-50f0506dd522</item>
                         <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>265</X>
-                              <Y>840</Y>
-                              <W>20</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>276.5</X>
-                              <Y>850</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1912,7 +1998,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_input" index="4">
                       <items count="6">
                         <item name="Description" type_name="gh_string" type_code="10">Number of truss panels between adjacent girders.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">98da6023-c6df-41c5-bd4e-833b2372340f</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">56d781f0-9e46-409f-ae43-5d0758436f99</item>
                         <item name="Name" type_name="gh_string" type_code="10">Panels per Bay</item>
                         <item name="NickName" type_name="gh_string" type_code="10">P</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -1920,16 +2006,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>265</X>
-                              <Y>860</Y>
-                              <W>20</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>276.5</X>
-                              <Y>870</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1958,7 +2040,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_input" index="5">
                       <items count="6">
                         <item name="Description" type_name="gh_string" type_code="10">0 X, 1 V, 2 Warren. Warren has alternating diagonals and no internal posts.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">630f47f5-24ae-47bb-9b8e-1b504a2b4508</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">dc7efe24-df82-447d-93f2-d128560036b2</item>
                         <item name="Name" type_name="gh_string" type_code="10">Pattern</item>
                         <item name="NickName" type_name="gh_string" type_code="10">T</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -1966,16 +2048,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>265</X>
-                              <Y>880</Y>
-                              <W>20</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>276.5</X>
-                              <Y>890</Y>
                             </item>
                           </items>
                         </chunk>
@@ -2004,7 +2082,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_input" index="6">
                       <items count="6">
                         <item name="Description" type_name="gh_string" type_code="10">Split both X diagonals at their common centre. False: crossing without a node. No releases are assigned.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">0b7ecc13-2ef9-4e4b-b452-4cc35125a5a1</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">a1a58c5a-94b1-4c80-b159-f89ba1ff8932</item>
                         <item name="Name" type_name="gh_string" type_code="10">Connect X</item>
                         <item name="NickName" type_name="gh_string" type_code="10">X</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -2012,16 +2090,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>265</X>
-                              <Y>900</Y>
-                              <W>20</W>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
                               <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>276.5</X>
-                              <Y>910</Y>
                             </item>
                           </items>
                         </chunk>
@@ -2050,7 +2124,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                     <chunk name="param_output" index="0">
                       <items count="6">
                         <item name="Description" type_name="gh_string" type_code="10">Connect to Simple Bridge.</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">abfc1dad-b6b1-4065-9710-e41aced8e99d</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">bbe46a56-f9d3-4a82-883a-33dfe0910035</item>
                         <item name="Name" type_name="gh_string" type_code="10">Diaphragms</item>
                         <item name="NickName" type_name="gh_string" type_code="10">D</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -2058,16 +2132,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="2">
+                          <items count="1">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>315</X>
-                              <Y>780</Y>
-                              <W>18</W>
-                              <H>140</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>324</X>
-                              <Y>850</Y>
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
                             </item>
                           </items>
                         </chunk>
@@ -2086,7 +2156,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 <chunk name="Container">
                   <items count="8">
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">54d24d7e-cfa0-493b-823f-21a1fec2da69</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">0477805a-ad45-4d8e-a814-9b88d4b167e2</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Passo traversi [mm]</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -2134,7 +2204,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 <chunk name="Container">
                   <items count="8">
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">d40a5ac5-3975-46ee-9c41-b41773d52cee</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">eb86e671-3470-4340-abda-50f0506dd522</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Altezza reticolo [mm]</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -2182,7 +2252,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 <chunk name="Container">
                   <items count="8">
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">938e3604-2366-4799-8a5a-8d15169bc14d</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">a2aeee51-3038-4fa7-bad2-e013bccc5a51</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Lunghezza massima [mm]</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -2230,7 +2300,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 <chunk name="Container">
                   <items count="8">
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">0fbfe77f-9092-4d6e-870d-d7ff0b5b1546</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">8771729f-4dce-486b-8462-6c740f6bba7c</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Errore di corda [mm]</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -2278,7 +2348,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 <chunk name="Container">
                   <items count="8">
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">8e412335-c008-482b-9a7d-1844419971d0</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">1f5dacaf-ba50-4383-9b4a-2042dae141e6</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Sghembi appoggi [deg]</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
@@ -2327,14 +2397,347 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
               </items>
               <chunks count="1">
                 <chunk name="Container">
+                  <items count="8">
+                    <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">de3885ac-a548-4cf5-85c7-bf3df16c5bf2</item>
+                    <item name="Name" type_name="gh_string" type_code="10">Panel</item>
+                    <item name="NickName" type_name="gh_string" type_code="10">Passo soletta [mm]</item>
+                    <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                    <item name="ScrollRatio" type_name="gh_double" type_code="6">0</item>
+                    <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                    <item name="UserText" type_name="gh_string" type_code="10">2000</item>
+                  </items>
+                  <chunks count="2">
+                    <chunk name="Attributes">
+                      <items count="4">
+                        <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                          <X>800</X>
+                          <Y>1070</Y>
+                          <W>250</W>
+                          <H>110</H>
+                        </item>
+                        <item name="MarginLeft" type_name="gh_int32" type_code="3">0</item>
+                        <item name="MarginRight" type_name="gh_int32" type_code="3">0</item>
+                        <item name="MarginTop" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                    </chunk>
+                    <chunk name="PanelProperties">
+                      <items count="7">
+                        <item name="Colour" type_name="gh_drawing_color" type_code="36">
+                          <ARGB>255;255;250;90</ARGB>
+                        </item>
+                        <item name="DrawIndices" type_name="gh_bool" type_code="1">true</item>
+                        <item name="DrawPaths" type_name="gh_bool" type_code="1">true</item>
+                        <item name="Multiline" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SpecialCodes" type_name="gh_bool" type_code="1">false</item>
+                        <item name="Stream" type_name="gh_bool" type_code="1">false</item>
+                        <item name="Wrap" type_name="gh_bool" type_code="1">true</item>
+                      </items>
+                    </chunk>
+                  </chunks>
+                </chunk>
+              </chunks>
+            </chunk>
+            <chunk name="Object" index="18">
+              <items count="3">
+                <item name="GUID" type_name="gh_guid" type_code="9">66a0d167-4e5b-4ea1-9327-935c772fd97b</item>
+                <item name="Lib" type_name="gh_guid" type_code="9">db9c536d-770b-4586-8c8c-1c7a4df232b4</item>
+                <item name="Name" type_name="gh_string" type_code="10">Bridge Connections</item>
+              </items>
+              <chunks count="1">
+                <chunk name="Container">
+                  <items count="4">
+                    <item name="Description" type_name="gh_string" type_code="10">Create native spatial rigid links, explicitly deformable beam/truss members, or assign beam section offsets. N-mm.</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">849aa379-25d4-405c-947b-c30dc8202d29</item>
+                    <item name="Name" type_name="gh_string" type_code="10">Bridge Connections</item>
+                    <item name="NickName" type_name="gh_string" type_code="10">Connections</item>
+                  </items>
+                  <chunks count="8">
+                    <chunk name="Attributes">
+                      <items count="2">
+                        <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                          <X>0</X>
+                          <Y>0</Y>
+                          <W>150</W>
+                          <H>20</H>
+                        </item>
+                        <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                          <X>1460</X>
+                          <Y>1120</Y>
+                        </item>
+                      </items>
+                    </chunk>
+                    <chunk name="param_input" index="0">
+                      <items count="6">
+                        <item name="Description" type_name="gh_string" type_code="10">0 rigid links, 1 deformable members, 2 beam section offsets.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">38082a8b-3102-4f72-87fc-718dc45b9c20</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Mode</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">M</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="2">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
+                            </item>
+                          </items>
+                        </chunk>
+                        <chunk name="PersistentData">
+                          <items count="1">
+                            <item name="Count" type_name="gh_int32" type_code="3">1</item>
+                          </items>
+                          <chunks count="1">
+                            <chunk name="Branch" index="0">
+                              <items count="2">
+                                <item name="Count" type_name="gh_int32" type_code="3">1</item>
+                                <item name="Path" type_name="gh_string" type_code="10">{0}</item>
+                              </items>
+                              <chunks count="1">
+                                <chunk name="Item" index="0">
+                                  <items count="1">
+                                    <item name="number" type_name="gh_int32" type_code="3">0</item>
+                                  </items>
+                                </chunk>
+                              </chunks>
+                            </chunk>
+                          </chunks>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_input" index="1">
+                      <items count="9">
+                        <item name="Access" type_name="gh_int32" type_code="3">1</item>
+                        <item name="Description" type_name="gh_string" type_code="10">Connection axes; required in modes 0/1. Endpoints must join the intended FEM vertices.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">973c26fc-1477-4744-9ca0-392b85e2a5a2</item>
+                        <item name="Mapping" type_name="gh_int32" type_code="3">1</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Connections</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">L</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">true</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">9956dad3-a7e3-42ab-881a-40c07084ae8a</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_input" index="2">
+                      <items count="6">
+                        <item name="Description" type_name="gh_string" type_code="10">Explicit Beam/Truss property, required only in mode 1.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">1b917518-beaf-468e-8c0a-3eac3d24f460</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Property</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">P</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">true</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_input" index="3">
+                      <items count="7">
+                        <item name="Access" type_name="gh_int32" type_code="3">1</item>
+                        <item name="Description" type_name="gh_string" type_code="10">Beams to duplicate and modify in mode 2; stored results are cleared.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">1f7a0342-9f53-47f9-b53c-6c49b8a5aa7f</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Beams</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">B</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">true</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_input" index="4">
+                      <items count="6">
+                        <item name="Description" type_name="gh_string" type_code="10">Mode 2: local section x/y offsets, mm; Z must be zero. Sets the offset, does not increment it.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">95c7f807-b4f4-47ef-8c30-1a6fce61c479</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Offset</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">O</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="2">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
+                            </item>
+                          </items>
+                        </chunk>
+                        <chunk name="PersistentData">
+                          <items count="1">
+                            <item name="Count" type_name="gh_int32" type_code="3">1</item>
+                          </items>
+                          <chunks count="1">
+                            <chunk name="Branch" index="0">
+                              <items count="2">
+                                <item name="Count" type_name="gh_int32" type_code="3">1</item>
+                                <item name="Path" type_name="gh_string" type_code="10">{0}</item>
+                              </items>
+                              <chunks count="1">
+                                <chunk name="Item" index="0">
+                                  <items count="1">
+                                    <item name="vector" type_name="gh_point3d" type_code="51">
+                                      <X>0</X>
+                                      <Y>0</Y>
+                                      <Z>0</Z>
+                                    </item>
+                                  </items>
+                                </chunk>
+                              </chunks>
+                            </chunk>
+                          </chunks>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="0">
+                      <items count="7">
+                        <item name="Access" type_name="gh_int32" type_code="3">1</item>
+                        <item name="Description" type_name="gh_string" type_code="10">Nodes with rigid links or beam elements: connect to Build Model. Rigid link attributes survive model merging.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">56ee1027-6273-4d58-ae5b-0a644c68f1a3</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Elements</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">E</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="1">
+                      <items count="6">
+                        <item name="Description" type_name="gh_string" type_code="10">Chosen mechanical representation.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">28c172ae-ba68-4055-8712-c09e00131863</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Information</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">I</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="1">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>0</X>
+                              <Y>0</Y>
+                              <W>150</W>
+                              <H>20</H>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                  </chunks>
+                </chunk>
+              </chunks>
+            </chunk>
+            <chunk name="Object" index="19">
+              <items count="2">
+                <item name="GUID" type_name="gh_guid" type_code="9">59e0b89a-e487-49f8-bab8-b5bab16be14c</item>
+                <item name="Name" type_name="gh_string" type_code="10">Panel</item>
+              </items>
+              <chunks count="1">
+                <chunk name="Container">
                   <items count="9">
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">6ddf41e0-4797-4f66-a1fb-4d27b3a77690</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">2c4ac092-508d-4dcc-9252-a92526ea4e92</item>
+                    <item name="Name" type_name="gh_string" type_code="10">Panel</item>
+                    <item name="NickName" type_name="gh_string" type_code="10">Larghezze tributarie soletta [mm]</item>
+                    <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                    <item name="ScrollRatio" type_name="gh_double" type_code="6">0</item>
+                    <item name="Source" index="0" type_name="gh_guid" type_code="9">b452f8ca-ee84-4715-acaf-94c2a2bdfa73</item>
+                    <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
+                    <item name="UserText" type_name="gh_string" type_code="10"></item>
+                  </items>
+                  <chunks count="2">
+                    <chunk name="Attributes">
+                      <items count="4">
+                        <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                          <X>1460</X>
+                          <Y>820</Y>
+                          <W>620</W>
+                          <H>230</H>
+                        </item>
+                        <item name="MarginLeft" type_name="gh_int32" type_code="3">0</item>
+                        <item name="MarginRight" type_name="gh_int32" type_code="3">0</item>
+                        <item name="MarginTop" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                    </chunk>
+                    <chunk name="PanelProperties">
+                      <items count="7">
+                        <item name="Colour" type_name="gh_drawing_color" type_code="36">
+                          <ARGB>255;255;250;90</ARGB>
+                        </item>
+                        <item name="DrawIndices" type_name="gh_bool" type_code="1">true</item>
+                        <item name="DrawPaths" type_name="gh_bool" type_code="1">true</item>
+                        <item name="Multiline" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SpecialCodes" type_name="gh_bool" type_code="1">false</item>
+                        <item name="Stream" type_name="gh_bool" type_code="1">false</item>
+                        <item name="Wrap" type_name="gh_bool" type_code="1">true</item>
+                      </items>
+                    </chunk>
+                  </chunks>
+                </chunk>
+              </chunks>
+            </chunk>
+            <chunk name="Object" index="20">
+              <items count="2">
+                <item name="GUID" type_name="gh_guid" type_code="9">59e0b89a-e487-49f8-bab8-b5bab16be14c</item>
+                <item name="Name" type_name="gh_string" type_code="10">Panel</item>
+              </items>
+              <chunks count="1">
+                <chunk name="Container">
+                  <items count="9">
+                    <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">1e26c420-37cc-4f86-be60-60f3015d4189</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Informazioni</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                     <item name="ScrollRatio" type_name="gh_double" type_code="6">0</item>
-                    <item name="Source" index="0" type_name="gh_guid" type_code="9">10394e71-d0f9-4180-a31e-8dd0d374027c</item>
+                    <item name="Source" index="0" type_name="gh_guid" type_code="9">0944a46d-739b-449f-b79b-b97c347ee738</item>
                     <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                     <item name="UserText" type_name="gh_string" type_code="10"></item>
                   </items>
@@ -2369,7 +2772,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 </chunk>
               </chunks>
             </chunk>
-            <chunk name="Object" index="18">
+            <chunk name="Object" index="21">
               <items count="2">
                 <item name="GUID" type_name="gh_guid" type_code="9">59e0b89a-e487-49f8-bab8-b5bab16be14c</item>
                 <item name="Name" type_name="gh_string" type_code="10">Panel</item>
@@ -2378,12 +2781,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 <chunk name="Container">
                   <items count="9">
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">52e73cf4-6720-4bbe-aaec-ac8ab5d3ea6d</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">7fd423b0-19d3-484c-aeba-8bd37db12ee6</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Conci: girder;segment;start;end</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                     <item name="ScrollRatio" type_name="gh_double" type_code="6">0</item>
-                    <item name="Source" index="0" type_name="gh_guid" type_code="9">42b74724-48bd-44b5-82fc-293afad7c4c0</item>
+                    <item name="Source" index="0" type_name="gh_guid" type_code="9">f05070cb-b902-4ded-908c-509c4efb137e</item>
                     <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                     <item name="UserText" type_name="gh_string" type_code="10"></item>
                   </items>
@@ -2418,7 +2821,7 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 </chunk>
               </chunks>
             </chunk>
-            <chunk name="Object" index="19">
+            <chunk name="Object" index="22">
               <items count="2">
                 <item name="GUID" type_name="gh_guid" type_code="9">59e0b89a-e487-49f8-bab8-b5bab16be14c</item>
                 <item name="Name" type_name="gh_string" type_code="10">Panel</item>
@@ -2427,12 +2830,12 @@ Apri README.md per le prove guidate. Le quote sono assi di riferimento: non bari
                 <chunk name="Container">
                   <items count="9">
                     <item name="Description" type_name="gh_string" type_code="10">A panel for custom notes and text values</item>
-                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">de973fda-a618-4f53-8146-92292e9b274a</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">0af1bc3d-7d3a-4cd1-a118-abc47440d98c</item>
                     <item name="Name" type_name="gh_string" type_code="10">Panel</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Topologia degli assi</item>
                     <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                     <item name="ScrollRatio" type_name="gh_double" type_code="6">0</item>
-                    <item name="Source" index="0" type_name="gh_guid" type_code="9">0af14451-c494-4a6e-97d5-1b11df0b588d</item>
+                    <item name="Source" index="0" type_name="gh_guid" type_code="9">ff5107a2-0c1b-4385-b02e-109fe29cd844</item>
                     <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                     <item name="UserText" type_name="gh_string" type_code="10"></item>
                   </items>

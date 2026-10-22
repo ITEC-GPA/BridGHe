@@ -79,15 +79,17 @@ internal static class SimpleBridgeExamples
                 Segments = new BridgeSegments { Joints = new() { [0] = new[] { 12000d, 24000, 36000, 48000, 60000, 72000, 84000 }, [2] = new[] { 18000d } } },
                 SupportSkewDegrees = new[] { 0d, 12, -8, 0 },
                 CrossfallStations = new[] { 0d, 50000, 100000 }, CrossfallPercent = new[] { -2d, 2, 3 },
-                Diaphragms = new BridgeDiaphragms { Pattern = curved ? BridgeTrussPattern.Warren : BridgeTrussPattern.X }
+                Diaphragms = new BridgeDiaphragms { Pattern = curved ? BridgeTrussPattern.Warren : BridgeTrussPattern.X },
+                DeckBeamSpacing = 2000
             };
             using var doc = new GH_Document();
             Panel(doc, "PROCEDURA", $"{number} | SIMPLE BRIDGE {(truss ? "RETICOLARE" : "ANIMA PIENA")} | {(curved ? "CURVO R=250 m" : "RETTILINEO")}\n" +
                 "Geometria in mm: campate 30+40+30 m, tre travi a -4/0/+4 m, soletta 12 m x 250 mm.\n" +
-                "Modifica i pannelli: appoggi, interassi, quote, conci, traversi. Nessun carico, materiale, vincolo o analisi.\n" +
+                "Modifica i pannelli: appoggi, interassi, quote, conci, traversi, passo soletta. Nessun carico o analisi.\n" +
                 "Il concio 24-36 m attraversa la pila a 30 m. Il giunto aggiuntivo a 18 m interessa solo G2.\n" +
                 "Members + Member IDs hanno gli stessi percorsi. Famiglie: 0 travi, 1 traversi pieni, 2/3 correnti, 4 montanti, 5 diagonali.\n" +
-                "Apri README.md per le prove guidate. Le quote sono assi di riferimento: non baricentri dedotti da sezioni.",
+                "Deck Beams: soletta a metà spessore; Deck Connections -> Bridge Connections mode 0 per link rigidi.\n" +
+                "Grillage Geometry include la famiglia 8: assegnare esplicitamente una proprietà cls. Bridge Geometry mantiene la sola carpenteria.",
                 0, -250, 1700, 190);
             var component = Add(doc, truss ? "SimpleBridgeTrussComponent" : "SimpleBridgeSolidComponent", 1120, 300);
             var alignment = new Param_Curve { NickName = "Tracciato 3D — mm" }; alignment.CreateAttributes();
@@ -115,11 +117,16 @@ internal static class SimpleBridgeExamples
             Numbers(doc, component, 9, "Lunghezza massima [mm]", new[] { input.MaximumElementLength }, 800, 650);
             Numbers(doc, component, 10, "Errore di corda [mm]", new[] { input.ChordTolerance }, 800, 790);
             Numbers(doc, component, 11, "Sghembi appoggi [deg]", input.SupportSkewDegrees, 800, 930);
+            Numbers(doc, component, 13, "Passo soletta [mm]", new[] { input.DeckBeamSpacing }, 800, 1070);
+            var connection = Add(doc, "BridgeConnectionsComponent", 1460, 1120);
+            connection.Params.Input[1].AddSource(component.Params.Output[16]); connection.Params.Input[1].DataMapping = GH_DataMapping.Flatten;
+            var stripPanel = Panel(doc, "Larghezze tributarie soletta [mm]", "", 1460, 820, 620, 230); stripPanel.AddSource(component.Params.Output[18]);
             foreach (var (port, label, y) in new[] { (13, "Informazioni", 20), (12, "Conci: girder;segment;start;end", 280), (11, "Topologia degli assi", 550) })
             {
                 var panel = Panel(doc, label, "", 1460, y, 620, 230); panel.AddSource(component.Params.Output[port]);
             }
             var expected = SimpleBridgeBuilder.Build(input);
+            var expectedDeck = BridgeDeckGrillage.Build(input, expected);
             void Validate(GH_Document document)
             {
                 var c = document.Objects.OfType<GH_Component>().Single(o => o.GetType() == component.GetType());
@@ -134,6 +141,10 @@ internal static class SimpleBridgeExamples
                 var deck = (Mesh)c.Params.Output[7].VolatileData.AllData(true).Single().ScriptVariable();
                 SimpleBridgeTests.Require(deck.IsClosed && deck.IsValid, "GH slab geometry");
                 SimpleBridgeTests.Require(c.Params.Output[5].VolatileDataCount == 12 && c.Params.Output[6].VolatileDataCount == expected.Joints.Count, "Support/joint output branches");
+                SimpleBridgeTests.Require(c.Params.Output[15].VolatileDataCount == expectedDeck.Strips.Length && c.Params.Output[16].VolatileDataCount == expectedDeck.Connections.Length, "GH slab and link outputs including saved/reopened contract");
+                SimpleBridgeTests.Require(c.Params.Output[18].VolatileDataCount == c.Params.Output[15].VolatileDataCount && c.Params.Output[20].VolatileDataCount == c.Params.Output[15].VolatileDataCount, "One width and ID for every transverse strip");
+                var links = document.Objects.OfType<GH_Component>().Single(o => o.GetType().Name == "BridgeConnectionsComponent");
+                SimpleBridgeTests.Require(links.Params.Output[0].VolatileDataCount == 2 * expectedDeck.Connections.Length, "Every geometric connection creates two linked nodes");
             }
             Solve(doc); Validate(doc);
             string folder = generate ? ExamplePaths.Case(id) : Path.GetFullPath(Path.Combine("artifacts", "simple-bridge-tests", id));
@@ -151,9 +162,10 @@ internal static class SimpleBridgeExamples
             {
                 example = id, geometryOnly = true, solverInvoked = false, solved = true, reopened = true,
                 members = expected.Members.Count, nodes = expected.Nodes.Count, segments = expected.Segments.Count,
-                supports = expected.Supports.Count, joints = expected.Joints.Count, truss, curved, pattern = input.Diaphragms.Pattern.ToString()
+                supports = expected.Supports.Count, joints = expected.Joints.Count, truss, curved, pattern = input.Diaphragms.Pattern.ToString(),
+                deckBeams = expectedDeck.Strips.Length, deckConnections = expectedDeck.Connections.Length, deckStations = expectedDeck.Stations.Length
             }, new JsonSerializerOptions { WriteIndented = true }));
-            Preview(expected, Path.Combine(folder, "preview.svg"), id);
+            Preview(expectedDeck.Geometry, Path.Combine(folder, "preview.svg"), id, expectedDeck.Connections);
             Console.WriteLine($"SIMPLE BRIDGE GH PASS: {id}, {expected.Members.Count} axes, solved and reopened");
         }
         MinimalInputs();
@@ -175,7 +187,7 @@ internal static class SimpleBridgeExamples
             "Invalid input clears old preview and outputs");
     }
 
-    private static void Preview(SimpleBridgeGeometry geometry, string path, string title)
+    private static void Preview(SimpleBridgeGeometry geometry, string path, string title, BridgeDeckConnection[] connections)
     {
         // Orthographic illustration from the actual generated geometry, not a design mock-up.
         (double X, double Y) Project(Point3d p) => (.8 * p.X - .6 * p.Y, .25 * (.6 * p.X + .8 * p.Y) - p.Z);
@@ -188,7 +200,9 @@ internal static class SimpleBridgeExamples
         svg.Append("<text x=\"40\" y=\"60\" font-family=\"Segoe UI,Arial\" font-size=\"14\" fill=\"#506070\">30 + 40 + 30 m · geometria senza carichi o vincoli · conci indipendenti dalle campate</text>");
         var deck = geometry.LeftEdge.Concat(geometry.RightEdge.AsEnumerable().Reverse()).Select(P);
         svg.Append($"<polygon points=\"{string.Join(" ", deck)}\" fill=\"#b9c5cd\" fill-opacity=\".24\" stroke=\"#8596a0\"/>");
-        string[] colors = { "#137f86", "#bf641b", "#356cb5", "#8058a0", "#687784", "#c34a48" };
+        string[] colors = { "#137f86", "#bf641b", "#356cb5", "#8058a0", "#687784", "#c34a48", "#687784", "#687784", "#2e8b57" };
+        foreach (var link in connections)
+            svg.Append($"<polyline points=\"{P(link.Axis.From)} {P(link.Axis.To)}\" fill=\"none\" stroke=\"#7d3a9e\" stroke-width=\"1\"/>");
         foreach (var m in geometry.Members)
             svg.Append($"<polyline points=\"{P(m.Axis.From)} {P(m.Axis.To)}\" fill=\"none\" stroke=\"{colors[m.Family == BridgeMemberFamily.Girder ? (m.Segment - 1) % 3 : (int)m.Family]}\" stroke-width=\"{(m.Family == BridgeMemberFamily.Girder ? "2" : "1")}\"/>");
         foreach (var s in geometry.Supports)

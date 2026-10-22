@@ -7,7 +7,43 @@ In **BridGHe → 06-Model**:
 - **Bridge Segments** definisce i conci.
 - **Bridge Diaphragms** definisce le posizioni dei traversi e lo schema reticolare.
 
-Sono generatori geometrici per preparare un ponte in misto: non definiscono sezioni, materiali, carichi, appoggi meccanici, rilasci o fasi di attivazione. La soletta è una mesh chiusa di riferimento, **non** una mesh di elementi plate. Gli assi dei traversi pieni non rappresentano lo spessore o i dettagli costruttivi delle loro anime.
+Sono generatori geometrici per preparare un ponte in misto: non definiscono sezioni, materiali, carichi, appoggi meccanici, rilasci o fasi di attivazione. La soletta è disponibile come mesh chiusa di riferimento e come assi trasversali per un graticcio. Non viene generata una mesh di elementi plate. Gli assi dei traversi pieni non rappresentano lo spessore o i dettagli costruttivi delle loro anime.
+
+## Soletta a graticcio e collegamenti eccentrici
+
+Entrambi i generatori aggiungono questi ingressi, senza spostare quelli esistenti:
+
+| Ingresso | Convenzione |
+|---|---|
+| `Deck Beam Spacing` | Passo massimo lungo il tracciato, mm. Suddivisione uniforme dell'intera lunghezza. Zero usa la griglia longitudinale raffinata. |
+| `Deck Beam Stations` | Lista facoltativa di progressive ordinate. Sostituisce il passo; aggiunge sempre inizio e fine del ponte. |
+| `Deck Beam Level` | Quota lungo la normale locale rispetto all'estradosso, mm. Default `−Deck Thickness/2`. Valore ammesso fra `−Deck Thickness` e zero. |
+
+`Deck Beams` contiene assi ortogonali alla tangente del tracciato, inclinati con la pendenza trasversale e spezzati in corrispondenza di tutte le travi. Include gli sbalzi fino ai bordi. Le travi longitudinali vengono suddivise alle stesse progressive **prima** del raffinamento geometrico: l'attacco non è una proiezione approssimata su una corda già discretizzata. Lo sghembo degli appoggi non ruota le aste della soletta.
+
+`Deck Connections` collega ciascun nodo dell'asse della trave al corrispondente nodo dell'asse della soletta. I percorsi sono `{linea soletta;trave}`, con indici da 1. Collegare queste linee a **Bridge Connections**, ingresso `Connections`, appiattendo la lista se si vuole un unico insieme:
+
+- `Mode=0`: link rigidi cinematici nativi Straus, senza materiale artificialmente rigido;
+- `Mode=1`: aste con la proprietà meccanica esplicitamente assegnata;
+- `Mode=2` del componente esistente applica invece un offset locale alle travi fornite: non va sommato automaticamente ai link, altrimenti si può contare due volte l'eccentricità.
+
+`Deck Strip Widths` ha gli stessi percorsi `{linea soletta;fascia}` di `Deck Beams` e `Deck Member IDs`. Le larghezze tributarie sono misurate lungo il tracciato: internamente `(s[i+1]−s[i−1])/2`, agli estremi metà dell'intervallo adiacente. Per una sezione rettangolare il primo modello è `b = larghezza tributaria`, `h = spessore soletta`. In curva o con sghembi questa suddivisione geometrica non costituisce una calibrazione automatica delle rigidezze flessionali e torsionali del graticcio.
+
+`Bridge Geometry` e `Members` mantengono la carpenteria. `Grillage Geometry` aggiunge le aste della soletta nella **famiglia 8, DeckTransverse**; gruppo = linea soletta, segmento = fascia. La famiglia 8 richiede una proprietà esplicita in **Bridge Member Assignment** o una regola **Bridge Section Schedule**. Il default `−1` per l'acciaio non viene applicato automaticamente alla soletta. I link rimangono separati: aggiungere il risultato di **Bridge Connections** agli elementi di **Build Model**.
+
+La preview mostra gli assi della soletta in verde e i collegamenti eccentrici in viola, oltre alla mesh e alla carpenteria. La quota delle travi rimane un input: il generatore non deduce un baricentro da sezioni non ancora assegnate.
+
+### Inserimento nel flusso a fasi
+
+Nella fase di getto G1 si può usare la sola carpenteria, con il peso del getto fresco applicato come carico. Dopo l'attivazione del misto si aggiungono fasce cls e link, aggiornando le proprietà longitudinali con gli override. Se si impiegano già sezioni longitudinali omogeneizzate, non aggiungere anche una soletta shell longitudinale senza riformulare la rigidezza del modello.
+
+**Build BridGHe Model → Additional Phase Members = true** consente aste aggiuntive nelle sorgenti FEM: le verifiche riguardano le aste del **primo modello di riferimento**. Gli ID, gli estremi e gli assi locali di queste aste devono coincidere in tutte le fasi. Aste mancanti o invertite restano errori. Le aste aggiuntive vengono segnalate in `Diagnostics`; non sono verificate dal checker longitudinale. Per le reazioni utilizzare `Phases` con le sorgenti complete. Il default è false e conserva il controllo di uguaglianza delle topologie.
+
+### Acciaio da armatura
+
+**BridGHe → 02-Materials → Reinforcement Steel B450C** restituisce un `Material` di tipo `Rebar`. Collegarlo a `Reinforcement Material` della proprietà mista; le due file di armatura restano definite nella soletta.
+
+Il componente usa `GPC.Model.Materials.SteelMaterialEN1992`, con i dati del catalogo locale GPC: `E=200000 MPa`, `fyk=450 MPa`, `ftk=540 MPa`, deformazione ultima caratteristica `0.075`, densità `7.85e−9 t/mm³`. Non applica coefficienti di sicurezza al materiale FEM. La deformazione ultima è conservata nell'archivio e nelle conversioni al checker; i materiali precedenti senza questo dato mantengono il valore usato in precedenza. Il catalogo non sostituisce la qualificazione del prodotto impiegato.
 
 ## Avvio rapido
 
@@ -164,8 +200,13 @@ Tutti hanno campate 30+40+30 m, tre travi, pendenza trasversale variabile, giunt
 dotnet build tests/BridGHe.Smoke -c Release
 dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --regression simple-bridge
 dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --regression simple-bridge-components
+dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --regression bridge-deck-grillage
+dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --regression reinforcement-material
+dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --regression gh-node-merge
 # Rigenera i quattro GHX nelle cartelle 29–32: salvare prima eventuali modifiche personali.
 dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --simple-bridge-examples
 ```
 
 I test comprendono volume analitico della soletta, coordinate concentriche in curva, sghembo analitico, pendenze, limiti delle corde, collegamenti e assenza di aste duplicate, conci attraverso le pile, tutti gli schemi reticolari, incroci collegati/separati, input non validi, archiviazione delle configurazioni, abbinamento curve/ID e soluzione/riapertura dei quattro GHX.
+
+I test del graticcio controllano anche l'ortogonalità degli assi trasversali, le quote sulla normale locale, la coincidenza esatta degli attacchi con i nodi longitudinali, le larghezze tributarie e l'assegnazione esplicita della famiglia 8. Il test di unione dei nodi verifica che appoggi e link sopravvivano in entrambi gli ordini di ingresso a `Build Model`, senza perdere i carichi. L'[esempio 99 REV004](../example/99-Ponte%20completo%20GPC/README.md) completa il percorso con quattro analisi Straus, verifiche e report.

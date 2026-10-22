@@ -4,12 +4,15 @@
   "solverInvoked": false,
   "solved": true,
   "reopened": true,
-  "members": 591,
-  "nodes": 426,
+  "members": 570,
+  "nodes": 405,
   "segments": 25,
   "supports": 12,
   "joints": 22,
   "truss": true,
   "curved": true,
-  "pattern": "Warren"
+  "pattern": "Warren",
+  "deckBeams": 204,
+  "deckConnections": 153,
+  "deckStations": 51
 }
