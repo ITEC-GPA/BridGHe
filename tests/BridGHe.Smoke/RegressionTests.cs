@@ -20,6 +20,7 @@ internal static class RegressionTests
             ["bridge-deck-grillage"] = BridgeDeckGrillageTests.Run,
             ["reinforcement-material"] = ReinforcementMaterialTests.Run,
             ["gh-node-merge"] = GrasshopperNodeMergeTests.Run,
+            ["wired-load-schema"] = WiredLoadSchemaTests.Run,
             ["bridge-span-advisor"] = BridgeSpanAdvisorTests.Run,
             ["bridge-assignment"] = BridgeAssignmentTests.Run,
             ["bridge-bearings"] = BridgeBearingTests.Run,

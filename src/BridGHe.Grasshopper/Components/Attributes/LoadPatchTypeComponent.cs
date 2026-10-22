@@ -45,10 +45,9 @@ namespace BridGHe.Grasshopper.Components.Attributes
             pManager[3].Optional = true;
         }
 
-        private void SetTypeImage()
+        private void SetTypeImage(int type)
         {
-            Param_Integer type_param = (Param_Integer)Params.Input[1];
-            switch (type_param.PersistentData.Branches[0][0].Value)
+            switch (type)
             {
                 case 0:
                     ((ComponentWithImageAttributes)m_attributes).Bitmap = Properties.Resources.LoadPatchTypeAuto1;
@@ -96,7 +95,7 @@ namespace BridGHe.Grasshopper.Components.Attributes
             DA.GetDataList("Edges", edges);
             DA.GetDataList("Weights", weights);
 
-            SetTypeImage();
+            SetTypeImage(type);
 
             if (edges.Count > plate.Value.Points.Count)
             {
@@ -160,7 +159,8 @@ namespace BridGHe.Grasshopper.Components.Attributes
         public override bool Read(GH_IReader reader)
         {
             bool success = base.Read(reader);
-            SetTypeImage();
+            // A wired type has no internal value while sources are being restored.
+            SetTypeImage(((Param_Integer)Params.Input[1]).PersistentData.Branches.SelectMany(b => b).FirstOrDefault()?.Value ?? 0);
             return success;
         }
 

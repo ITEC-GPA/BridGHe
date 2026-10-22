@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using BridGHe.Common.Helpers;
 using BridGHe.Common.Models;
 using BridGHe.Grasshopper.ComponentAttributes;
@@ -101,7 +102,9 @@ namespace BridGHe.Grasshopper.Components.Loads
         private void SetSchemaImage()
         {
             Param_Integer type_param = (Param_Integer)Params.Input[2];
-            switch (type_param.PersistentData.Branches[0][0].Value)
+            // Wired inputs have no persistent value during Read; SolveInstance will
+            // update the illustration from the actual collected schema.
+            switch (type_param.PersistentData.Branches.SelectMany(b => b).FirstOrDefault()?.Value ?? 0)
             {
                 case 0:
                     ((ComponentWithImageAttributes)m_attributes).Bitmap = Properties.Resources.BeamDistributedLoadType1Image;

@@ -7,6 +7,7 @@ using GH_IO.Serialization;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using System;
+using System.Linq;
 
 namespace BridGHe.Grasshopper.Components.Loads
 {
@@ -62,7 +63,9 @@ namespace BridGHe.Grasshopper.Components.Loads
         private void SetSchemaImage()
         {
             Param_Integer type_param = (Param_Integer)Params.Input[2];
-            switch (type_param.PersistentData.Branches[0][0].Value)
+            // Sources are restored after Read. Missing internal data is normal for
+            // an external slider or Value List, and must not abort deserialization.
+            switch (type_param.PersistentData.Branches.SelectMany(b => b).FirstOrDefault()?.Value ?? 0)
             {
                 case 0:
                     ((ComponentWithImageAttributes)m_attributes).Bitmap = Properties.Resources.BeamDistributedMomentType1Image;
