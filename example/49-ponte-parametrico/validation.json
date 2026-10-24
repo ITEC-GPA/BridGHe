@@ -1,0 +1,88 @@
+{
+  "baseline": {
+    "beams": 324,
+    "nodes": 266,
+    "slabBeams": 124,
+    "supports": 12,
+    "objects": 271,
+    "sliders": 87,
+    "warnings": []
+  },
+  "reopened": true,
+  "allInputsExternal": true,
+  "solverInvoked": false,
+  "scenarios": [
+    {
+      "spans": 1,
+      "girders": 2,
+      "truss": false,
+      "radius": 0,
+      "data": {
+        "beams": 73,
+        "nodes": 70,
+        "slabBeams": 33,
+        "supports": 4,
+        "objects": 271,
+        "sliders": 87,
+        "warnings": []
+      }
+    },
+    {
+      "spans": 2,
+      "girders": 4,
+      "truss": true,
+      "radius": 0,
+      "data": {
+        "beams": 630,
+        "nodes": 364,
+        "slabBeams": 105,
+        "supports": 12,
+        "objects": 271,
+        "sliders": 87,
+        "warnings": []
+      }
+    },
+    {
+      "spans": 3,
+      "girders": 3,
+      "truss": true,
+      "radius": 250000,
+      "data": {
+        "beams": 748,
+        "nodes": 498,
+        "slabBeams": 124,
+        "supports": 12,
+        "objects": 271,
+        "sliders": 87,
+        "warnings": []
+      }
+    },
+    {
+      "spans": 4,
+      "girders": 5,
+      "truss": false,
+      "radius": -400000,
+      "data": {
+        "beams": 890,
+        "nodes": 692,
+        "slabBeams": 246,
+        "supports": 25,
+        "objects": 271,
+        "sliders": 87,
+        "warnings": []
+      }
+    },
+    {
+      "name": "Campate, interassi e fasce non uniformi; controventi disattivati",
+      "data": {
+        "beams": 140,
+        "nodes": 129,
+        "slabBeams": 24,
+        "supports": 12,
+        "objects": 271,
+        "sliders": 87,
+        "warnings": []
+      }
+    }
+  ]
+}

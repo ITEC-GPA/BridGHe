@@ -106,6 +106,10 @@ Tredici definizioni GHX con soluzione e riapertura verificate senza solutore. [P
 
 - [48 · Report delle verifiche da template](48-report-word/README.md): scelta dei capitoli con checklist, template personalizzabile, report esteso e sintetico, grafici e archivio dei risultati incorporato.
 
+## Generatore parametrico completo
+
+- [49 · Ponte parametrico con tutti gli input a sinistra](49-ponte-parametrico/README.md): numero variabile di campate e travi, curve, conci, diaframmi pieni/reticolari, controventi, soletta a graticcio, appoggi, link e modelli FEM. Include script di rigenerazione e controlli delle varianti.
+
 ## File personale completato
 
 - [99 · Ponte misto, fasi, verifiche e report](99-Ponte%20completo%20GPC/README.md): REV002 completa la travata originale; REV003 costruisce un ponte a due travi con soletta, due campate, traversi e appoggi. Entrambe includono ritiro calcolato, quattro analisi Straus, Excel delle combinazioni, verifiche di sezione/pioli/irrigiditori e report Word. Il file originale è conservato invariato; sono catalogate soltanto le due revisioni aggiornate.
