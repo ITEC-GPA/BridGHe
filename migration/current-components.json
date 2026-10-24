@@ -8841,6 +8841,100 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSegmentSectionsComponent",
+    "guid": "8b33beac-6c81-4285-94ad-4e3dc2351a21",
+    "kind": "component",
+    "name": "Bridge Segment Sections",
+    "nickname": "SegmentSections",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Create a steel I section for every girder fabrication segment. An external panel holds editable dimensions; '*' inherits the base section. Press Tabella conci to populate/refresh it.",
+    "inputs": [
+      {
+        "name": "Bridge Geometry",
+        "nickname": "BG",
+        "description": "Simple Bridge geometry, also after longitudinal bracing. Segment identity is independent of mesh subdivisions.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Base Property",
+        "nickname": "P",
+        "description": "Steel I Section + Beam property. Material and formulation are retained; dimensions marked '*' follow this section.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Section Table",
+        "nickname": "T",
+        "description": "One row per concio: ID; start; end; b_bottom; b_top; height; t_bottom; t_top; t_web; radius. All dimensions mm. '*' inherits base dimension. Empty = all base. Press Tabella conci to fill an attached editable Panel.",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Schedule",
+        "nickname": "S",
+        "description": "One section assignment per girder/concio, ready for Bridge Member Assignment > Schedule.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Properties",
+        "nickname": "P",
+        "description": "One FEM beam property per girder/concio, same order as IDs.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Sections",
+        "nickname": "Sec",
+        "description": "Steel sections for composite sections and phase overrides, same order as IDs.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Segment IDs",
+        "nickname": "ID",
+        "description": "G1-C1 = first girder, first fabrication segment. Ordered by girder, then concio.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Resolved Table",
+        "nickname": "T",
+        "description": "Actual section dimensions after resolving '*'. Header and one row per concio; semicolon separated.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Top Offsets",
+        "nickname": "Ztop",
+        "description": "Distance from section centroid to top flange, mm. Reference information: this component does not move beam axes or change eccentric links.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Counts, table-refresh changes and geometric reference warnings.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSlabGrillageComponent",
     "guid": "cf9a654c-6e81-4a74-ad4e-656308f92c69",
     "kind": "component",

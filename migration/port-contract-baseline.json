@@ -346,6 +346,12 @@
         "14c68fb0-de0e-4eec-bc39-282e2c5f08b6"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/Geometry/BridgeSegmentSectionsComponent.cs": {
+      "ports": "2f623742a1f9346bd28d87ca08f12ee82c30a5ad93d4056e2da24877a576301b",
+      "guids": [
+        "8b33beac-6c81-4285-94ad-4e3dc2351a21"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/Geometry/BridgeSlabGrillageComponent.cs": {
       "ports": "83a76567a0212af9abd8b93444181e5305d068958cfe812fb3a2ada3bf823718",
       "guids": [

@@ -19,6 +19,7 @@ internal static class RegressionTests
             ["simple-bridge"] = SimpleBridgeTests.Run,
             ["build-model-parameters"] = BuildModelParameterTests.Run,
             ["parametric-bridge"] = ParametricBridgeTests.Run,
+            ["bridge-segment-sections"] = BridgeSegmentSectionsTests.Run,
             ["bridge-deck-grillage"] = BridgeDeckGrillageTests.Run,
             ["reinforcement-material"] = ReinforcementMaterialTests.Run,
             ["gh-node-merge"] = GrasshopperNodeMergeTests.Run,
