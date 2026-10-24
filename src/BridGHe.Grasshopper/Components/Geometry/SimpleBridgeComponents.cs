@@ -71,6 +71,7 @@ public abstract class SimpleBridgeComponent : BridgeUtilityComponent
     }
 
     protected override void BeforeSolveInstance() { base.BeforeSolveInstance(); preview.Clear(); deckPreview.Clear(); linkPreview.Clear(); }
+    protected virtual bool TrussMode(IGH_DataAccess da) => truss;
     protected override void Solve(IGH_DataAccess da)
     {
         Curve alignment = null; var supports = new List<double>(); var offsets = new List<double>(); var levels = new List<double>();
@@ -99,7 +100,7 @@ public abstract class SimpleBridgeComponent : BridgeUtilityComponent
             Alignment = alignment, Supports = supports.ToArray(), GirderOffsets = offsets.ToArray(), GirderLevels = levels.ToArray(),
             DeckWidths = widths.ToArray(), DeckThickness = thickness, SupportSkewDegrees = skew.ToArray(),
             CrossfallStations = slopeStations, CrossfallPercent = slopes, Segments = segments?.Value as BridgeSegments ?? new(),
-            Diaphragms = diaphragms?.Value as BridgeDiaphragms ?? new(), MaximumElementLength = maxLength, ChordTolerance = tolerance, Truss = truss,
+            Diaphragms = diaphragms?.Value as BridgeDiaphragms ?? new(), MaximumElementLength = maxLength, ChordTolerance = tolerance, Truss = TrussMode(da),
             DeckBeamSpacing = deckSpacing, DeckBeamStations = deckStations.ToArray(), DeckBeamLevel = hasDeckLevel ? deckLevel : null
         };
         var result = SimpleBridgeBuilder.Build(input);

@@ -1138,6 +1138,24 @@
       "badge": ""
     },
     {
+      "key": "BridgeParametricLayoutComponent",
+      "type": "BridGHe.Grasshopper.Components.Geometry.BridgeParametricLayoutComponent",
+      "guid": "14c68fb0-de0e-4eec-bc39-282e2c5f08b6",
+      "name": "Bridge Parametric Layout",
+      "family": "model",
+      "glyph": "bridge-schedule",
+      "badge": "measure"
+    },
+    {
+      "key": "BridgeSlabGrillageComponent",
+      "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSlabGrillageComponent",
+      "guid": "cf9a654c-6e81-4a74-ad4e-656308f92c69",
+      "name": "Bridge Slab Grillage",
+      "family": "model",
+      "glyph": "bridge-deck",
+      "badge": "native"
+    },
+    {
       "key": "BridgeSpanAdvisorComponent",
       "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSpanAdvisorComponent",
       "guid": "16259f7a-7258-4bae-84b7-1d275034ea27",
@@ -1163,6 +1181,15 @@
       "family": "model",
       "glyph": "bridge-truss",
       "badge": ""
+    },
+    {
+      "key": "SimpleBridgeConfigurableComponent",
+      "type": "BridGHe.Grasshopper.Components.Geometry.SimpleBridgeConfigurableComponent",
+      "guid": "229b4f95-4bc6-43d4-8f58-e4faea8d0b34",
+      "name": "Simple Bridge",
+      "family": "model",
+      "glyph": "bridge-solid",
+      "badge": "native"
     },
     {
       "key": "StrausR3ExportComponent",

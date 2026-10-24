@@ -340,6 +340,18 @@
         "4321ef9f-4f45-467a-beb3-aa92bdc86ce3"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/Geometry/BridgeParametricLayoutComponent.cs": {
+      "ports": "af41671ee25fbab652d505f19d454ca0255ec144aa70b7e9acc8796c58007d8f",
+      "guids": [
+        "14c68fb0-de0e-4eec-bc39-282e2c5f08b6"
+      ]
+    },
+    "src/BridGHe.Grasshopper/Components/Geometry/BridgeSlabGrillageComponent.cs": {
+      "ports": "83a76567a0212af9abd8b93444181e5305d068958cfe812fb3a2ada3bf823718",
+      "guids": [
+        "cf9a654c-6e81-4a74-ad4e-656308f92c69"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/Geometry/BridgeSpanAdvisorComponent.cs": {
       "ports": "f11e00be0bd8673c9eda2f84e1ff39e5f163844d862d9b184bfcb53ad1551227",
       "guids": [
@@ -351,6 +363,12 @@
       "guids": [
         "e3eeef52-dba7-4bb0-8131-57d6956edf58",
         "dc7cfadf-84f8-4ebd-8a49-17782694754e"
+      ]
+    },
+    "src/BridGHe.Grasshopper/Components/Geometry/SimpleBridgeConfigurableComponent.cs": {
+      "ports": "c36bc4ae9be7cb6e5b7a82f6d5b93956d23fc0b3c676df68a1478ac1700ee105",
+      "guids": [
+        "229b4f95-4bc6-43d4-8f58-e4faea8d0b34"
       ]
     },
     "src/BridGHe.Grasshopper/Components/Loads/BeamDistributedLoadComponent.cs": {

@@ -225,6 +225,9 @@ BridgeDeflectionCamberComponent|bridge-camber||result
 BridgeFatigueHistoryComponent|bridge-history||result
 BridgeCheckMapComponent|bridge-map||result
 SimpleBridgeSolidComponent|bridge-solid||model
+SimpleBridgeConfigurableComponent|bridge-solid|native|model
+BridgeParametricLayoutComponent|bridge-schedule|measure|model
+BridgeSlabGrillageComponent|bridge-deck|native|model
 SimpleBridgeTrussComponent|bridge-truss||model
 BridgeSegmentsComponent|bridge-segments||model
 BridgeDiaphragmsComponent|bridge-diaphragms||model

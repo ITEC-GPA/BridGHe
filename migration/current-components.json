@@ -8627,6 +8627,298 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeParametricLayoutComponent",
+    "guid": "14c68fb0-de0e-4eec-bc39-282e2c5f08b6",
+    "kind": "component",
+    "name": "Bridge Parametric Layout",
+    "nickname": "BridgeLayout",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Regular or explicit spans/girders, straight/circular/custom alignment and a suggested bearing pattern. All lengths in mm; no structural sizing.",
+    "inputs": [
+      {
+        "name": "Span Count",
+        "nickname": "N",
+        "description": "Number of equal spans; ignored when Span Lengths is supplied.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Span Length",
+        "nickname": "L",
+        "description": "Uniform span length, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Span Lengths",
+        "nickname": "Ls",
+        "description": "Optional unequal span lengths in mm; overrides count and uniform length.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Girder Count",
+        "nickname": "NG",
+        "description": "Number of regularly spaced girders, minimum 2; ignored with explicit offsets.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Girder Spacing",
+        "nickname": "DY",
+        "description": "Uniform girder spacing, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Girder Offsets",
+        "nickname": "Y",
+        "description": "Optional increasing signed offsets in mm: right negative, left positive.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Left Overhang",
+        "nickname": "OL",
+        "description": "Deck edge beyond leftmost girder, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Right Overhang",
+        "nickname": "OR",
+        "description": "Deck edge beyond rightmost girder, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Start Overhang",
+        "nickname": "OS",
+        "description": "Alignment extension before first support, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "End Overhang",
+        "nickname": "OE",
+        "description": "Alignment extension after last support, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Radius",
+        "nickname": "R",
+        "description": "Plan radius, mm: 0 straight, positive left curve, negative right curve. Automatic arc below 180 degrees.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Origin",
+        "nickname": "O",
+        "description": "Start point of the generated alignment, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Heading",
+        "nickname": "A",
+        "description": "Initial heading from global X about global Z, degrees.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Custom Alignment",
+        "nickname": "C",
+        "description": "Optional open 3D curve. Length must equal total spans plus end overhangs. Overrides Radius, Origin and Heading.",
+        "access": "item",
+        "optional": true,
+        "type": "Curve"
+      },
+      {
+        "name": "Bracing Spacing",
+        "nickname": "BS",
+        "description": "Maximum spacing of longitudinal bracing panels, mm. Every support is included.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Bearing Types Override",
+        "nickname": "BO",
+        "description": "Optional one code or one per bearing, ordered by support then girder: 0 fixed, 1 longitudinal guide, 2 multidirectional, 3 elastic.",
+        "access": "list",
+        "optional": true,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Alignment",
+        "nickname": "A",
+        "description": "Top-of-deck reference alignment, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Support Stations",
+        "nickname": "S",
+        "description": "Support distances along alignment, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Girder Offsets",
+        "nickname": "Y",
+        "description": "Actual signed girder offsets, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Deck Widths",
+        "nickname": "W",
+        "description": "Left and right distances from alignment, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Span Lengths",
+        "nickname": "L",
+        "description": "Actual span lengths, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Bearing Types",
+        "nickname": "BT",
+        "description": "Suggested support-major/girder-minor order: first girder fixed at first support, guided at others; remaining bearings multidirectional. Review for curved/skew bridges.",
+        "access": "list",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Length",
+        "nickname": "TL",
+        "description": "Total alignment length, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Layout and override precedence.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Bracing Stations",
+        "nickname": "BS",
+        "description": "Regular bracing panel boundaries in each span/overhang, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSlabGrillageComponent",
+    "guid": "cf9a654c-6e81-4a74-ad4e-656308f92c69",
+    "kind": "component",
+    "name": "Bridge Slab Grillage",
+    "nickname": "SlabGrillage",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Assign concrete rectangular sections to transverse slab axes, including unequal station spacing and half end strips. No longitudinal composite stiffness or rigid links added.",
+    "inputs": [
+      {
+        "name": "Grillage Geometry",
+        "nickname": "GG",
+        "description": "Simple Bridge Grillage Geometry: family 8 and geometric slab thickness, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Concrete Material",
+        "nickname": "M",
+        "description": "Concrete material in N-mm. Supply an effective modulus for the intended phase when needed.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Name",
+        "nickname": "N",
+        "description": "Prefix for strip properties.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Beams",
+        "nickname": "B",
+        "description": "Transverse slab FEM beams; add to Build Model with steel and explicit links.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Properties",
+        "nickname": "P",
+        "description": "One rectangular property per beam, same order.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Strip Widths",
+        "nickname": "W",
+        "description": "Actual tributary length per beam, mm, including reduced end strips.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Member IDs",
+        "nickname": "ID",
+        "description": "Geometric ID per beam.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Mechanical scope of the generated strips.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSpanAdvisorComponent",
     "guid": "16259f7a-7258-4bae-84b7-1d275034ea27",
     "kind": "component",
@@ -9215,6 +9507,324 @@
         "access": "item",
         "optional": true,
         "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Members",
+        "nickname": "M",
+        "description": "All member axes. Paths {family;group;segment}. Families: 0 girders, 1 solid diaphragms, 2 top, 3 bottom, 4 posts, 5 diagonals. Connect to Beam with explicit properties.",
+        "access": "tree",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Member IDs",
+        "nickname": "ID",
+        "description": "Same paths/order as Members; deterministic for identical inputs. Connect to Element ID after Beam.",
+        "access": "tree",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Longitudinals",
+        "nickname": "G",
+        "description": "Girder axes, paths {girder;fabrication segment}, one-based. Joints do not imply releases.",
+        "access": "tree",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Diaphragm Members",
+        "nickname": "D",
+        "description": "Paths {family;diaphragm line;bay/girder}. Select families before assigning properties.",
+        "access": "tree",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Nodes",
+        "nickname": "N",
+        "description": "Unique member endpoints. Position in list + 1 is the topology node number.",
+        "access": "list",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Support Points",
+        "nickname": "S",
+        "description": "Paths {support;girder}; actual intersections including skew. Geometric points only.",
+        "access": "tree",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Joint Points",
+        "nickname": "J",
+        "description": "Paths {girder;joint}; fabrication joints, not FE hinges.",
+        "access": "tree",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Deck",
+        "nickname": "DK",
+        "description": "Closed geometric slab mesh; not a plate FEM mesh.",
+        "access": "item",
+        "optional": false,
+        "type": "Mesh"
+      },
+      {
+        "name": "Deck Edges",
+        "nickname": "E",
+        "description": "Left and right top edges.",
+        "access": "list",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Frames",
+        "nickname": "F",
+        "description": "X towards local left, Y deck normal, Z alignment tangent, at Stations.",
+        "access": "list",
+        "optional": false,
+        "type": "Plane"
+      },
+      {
+        "name": "Stations",
+        "nickname": "X",
+        "description": "Physical mm along reference alignment, common refined longitudinal grid.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Topology",
+        "nickname": "TB",
+        "description": "Semicolon table: ID, family, group, segment, span, node1, node2, station1, station2. Span=0 for diaphragm members or start overhang.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Segment Ranges",
+        "nickname": "C",
+        "description": "Girder;segment;start;end in mm. A segment can cross a support.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Geometry counts, conventions and limitations.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Bridge Geometry",
+        "nickname": "BG",
+        "description": "Typed bridge geometry for assignment, bracing, bearings and detailing. mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Deck Beams",
+        "nickname": "DB",
+        "description": "Slab axes at the selected elevation, split at girder axes and deck edges. Paths {station;strip}, one-based. Geometry only.",
+        "access": "tree",
+        "optional": false,
+        "type": "Line"
+      },
+      {
+        "name": "Deck Connections",
+        "nickname": "DC",
+        "description": "Girder axis to slab axis. Paths {station;girder}. Connect to Bridge Connections: mode 0 rigid links or mode 1 explicit beam properties.",
+        "access": "tree",
+        "optional": false,
+        "type": "Line"
+      },
+      {
+        "name": "Deck Beam Stations",
+        "nickname": "DX",
+        "description": "Actual slab stations along the reference alignment, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Deck Strip Widths",
+        "nickname": "DW",
+        "description": "Tributary widths along alignment, mm, same paths as Deck Beams. Half width at ends. Curved/skew deck stiffness needs calibration.",
+        "access": "tree",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Grillage Geometry",
+        "nickname": "GG",
+        "description": "Steel geometry plus slab family 8. Assign an explicit property to family 8 and add Deck Connections separately to the model.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Deck Member IDs",
+        "nickname": "DI",
+        "description": "Geometric IDs, same paths as Deck Beams.",
+        "access": "tree",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.SimpleBridgeConfigurableComponent",
+    "guid": "229b4f95-4bc6-43d4-8f58-e4faea8d0b34",
+    "kind": "component",
+    "name": "Simple Bridge",
+    "nickname": "SimpleBridge",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Multispan bridge geometry in mm, from a 3D top-of-deck reference alignment. Generates axes, slab, joints and topology; no materials, sections, loads, supports or releases are assigned.",
+    "inputs": [
+      {
+        "name": "Alignment",
+        "nickname": "A",
+        "description": "Open tangent-continuous curve at deck top reference, in mm. Direction sets stations and local left.",
+        "access": "item",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Support Stations",
+        "nickname": "S",
+        "description": "Ordered abutment/pier distances along alignment in mm, minimum two. Points only; no restraints.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Girder Offsets",
+        "nickname": "Y",
+        "description": "Ordered signed distances: negative right, positive left looking along alignment. mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Girder Levels",
+        "nickname": "Z",
+        "description": "One or one per girder. Normal offsets below deck top reference, negative in mm. Reference axes, not inferred centroids.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Deck Widths",
+        "nickname": "W",
+        "description": "Left and right distances from alignment; one value makes them equal. mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Deck Thickness",
+        "nickname": "H",
+        "description": "Geometric slab thickness along local normal. mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Crossfall",
+        "nickname": "%",
+        "description": "Optional tree: one value for constant slope %, or one {station mm, slope %} pair per branch covering the alignment. Positive raises left edge.",
+        "access": "tree",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Segments",
+        "nickname": "C",
+        "description": "Optional Bridge Segments. Default: maximum 12000 mm, independent of spans.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Diaphragms",
+        "nickname": "D",
+        "description": "Optional Bridge Diaphragms. Default: maximum 5000 mm and support lines; truss X, height 1500 mm, two panels/bay.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Maximum Element Length",
+        "nickname": "L",
+        "description": "Maximum chord length, in mm, on all longitudinal axes and slab edges.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Chord Tolerance",
+        "nickname": "T",
+        "description": "Adaptive deviation tolerance in mm, checked at quarter/mid/three-quarter points of each interval.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Support Skew",
+        "nickname": "K",
+        "description": "One angle or one per support, degrees from the local transverse line towards the tangent. Skew ends need sufficient alignment beyond supports.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Labels",
+        "nickname": "ID",
+        "description": "Show girder/segment joints and support IDs in preview.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Deck Beam Spacing",
+        "nickname": "DS",
+        "description": "Maximum transverse slab spacing along alignment, mm. 0 uses the refined longitudinal grid. Explicit Deck Beam Stations override spacing.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Deck Beam Stations",
+        "nickname": "DX",
+        "description": "Optional ordered distances along alignment, mm. Bridge ends are always included. Girders are split at each station.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Deck Beam Level",
+        "nickname": "DZ",
+        "description": "Normal offset from deck top, mm, between -Deck Thickness and 0. Default: -Deck Thickness / 2 (slab mid-plane).",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Truss Diaphragms",
+        "nickname": "TR",
+        "description": "False: solid-web diaphragms. True: truss diaphragms using Bridge Diaphragms layout. Geometry only.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
       }
     ],
     "outputs": [
