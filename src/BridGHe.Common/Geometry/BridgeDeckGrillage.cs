@@ -19,7 +19,10 @@ public static class BridgeDeckGrillage
         if (input.DeckBeamStations.Length > 0)
             return input.DeckBeamStations.Concat(new[] { 0d, length }).OrderBy(s => s).ToArray();
         if (input.DeckBeamSpacing == 0) return Array.Empty<double>();
-        double count = Math.Ceiling(length / input.DeckBeamSpacing);
+        // The canonical longitudinal grid can snap its end by JoinTolerance.
+        // Near an exact multiple, raw Ceiling could then select a different number
+        // of strips in the steel and slab passes (e.g. 30 versus 31 on a circular arc).
+        double count = Math.Max(1, Math.Ceiling((length - SimpleBridgeBuilder.JoinTolerance) / input.DeckBeamSpacing));
         if (count > 19999) throw new ArgumentException("Too many deck beam stations; increase spacing.");
         return Enumerable.Range(0, (int)count + 1).Select(i => length * i / count).ToArray();
     }

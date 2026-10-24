@@ -53,6 +53,16 @@ internal static class BridgeDeckGrillageTests
         var autoSteel = SimpleBridgeBuilder.Build(auto); var autoResult = BridgeDeckGrillage.Build(auto, autoSteel);
         Require(autoResult.Stations.Length == 35 && autoResult.Stations.Zip(autoResult.Stations.Skip(1), (a,b) => b-a).All(d => d <= 3000), "Maximum spacing inserts all required nodes");
         Require(Math.Abs(autoResult.Connections[0].Axis.To.Z + 125) < 1e-9, "Default slab centroid elevation");
+        foreach(double sign in new[]{-1d,1d}) foreach(double perturbation in new[]{-1e-7,0d,1e-7})
+        {
+            const double radius=250000; double angle=(90000+perturbation)/radius;
+            Point3d P(double a)=>new(radius*Math.Sin(a),sign*radius*(1-Math.Cos(a)),0);
+            var roundoff=SimpleBridgeTests.Input(curved:true) with { Alignment=new ArcCurve(new Arc(Point3d.Origin,P(angle/2),P(angle))),
+                Supports=new[]{0d,30000,60000,90000},DeckBeamSpacing=3000 };
+            var roundoffSteel=SimpleBridgeBuilder.Build(roundoff); var roundoffDeck=BridgeDeckGrillage.Build(roundoff,roundoffSteel);
+            Require(roundoffDeck.Stations.Length==31,"Exact-multiple spacing stable under sub-tolerance arc-length perturbations");
+            Require(roundoffDeck.Stations.Zip(roundoffDeck.Stations.Skip(1),(a,b)=>b-a).All(d=>d<=3000+SimpleBridgeBuilder.JoinTolerance),"Maximum spacing respected within geometric join tolerance");
+        }
         var gradedInput = SimpleBridgeTests.Input() with { Alignment = new LineCurve(Point3d.Origin,
             new Point3d(Math.Sqrt(100000d * 100000 - 5000d * 5000),0,5000)), CrossfallPercent = new[] { 4d }, DeckBeamSpacing = 2000 };
         var gradedSteel = SimpleBridgeBuilder.Build(gradedInput); var graded = BridgeDeckGrillage.Build(gradedInput, gradedSteel);
