@@ -98,7 +98,7 @@ namespace BridGHe.Grasshopper.Components.Models
                 // Set the load cases in the StagedConstructionComponent
                 foreach (IGH_Param param in Params.Input[4].Sources)
                 {
-                    if (((GH_Attributes<IGH_Component>)param.Attributes.GetTopLevel).Owner is StagedConstructionComponent scc)
+                    if (param.Attributes.GetTopLevel.DocObject is StagedConstructionComponent scc)
                         scc.SetLoadCases(loadCases);
                 }
 
