@@ -34,6 +34,11 @@ internal static class BridgeMeshTests
         var omitted = BridgeLongitudinalBracing.Add(source, stations, null, BridgeTrussPattern.X, 0, false, new[] { 2 });
         Require(omitted.Members.Count(m => m.Family == BridgeMemberFamily.LongitudinalBracing) == 4, "Panel exclusion");
         Reject(() => BridgeLongitudinalBracing.Add(source, new[] { 30000d, 10000 }, null, BridgeTrussPattern.X, 0, false));
+        double end=source.Stations[^1];
+        var exactEnds=BridgeLongitudinalBracing.Add(source,new[]{0d,end},null,BridgeTrussPattern.X,0,false);
+        var roundedEnds=BridgeLongitudinalBracing.Add(source,new[]{-1e-7,end+1e-7},null,BridgeTrussPattern.X,0,false);
+        Require(exactEnds.Members.SequenceEqual(roundedEnds.Members),"Sub-tolerance endpoint roundoff preserves exact bracing topology");
+        Reject(()=>BridgeLongitudinalBracing.Add(source,new[]{0d,end+2*SimpleBridgeBuilder.JoinTolerance},null,BridgeTrussPattern.X,0,false));
         Console.WriteLine("BRIDGE BRACING PASS: X/V/Warren, intersections, shared posts, upper/lower chaining, exclusions and exact topology.");
     }
     internal static void Deck()

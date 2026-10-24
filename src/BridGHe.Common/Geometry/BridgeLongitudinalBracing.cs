@@ -11,8 +11,13 @@ public static class BridgeLongitudinalBracing
         IReadOnlyList<int> bays, BridgeTrussPattern pattern, double normalOffset, bool connectX, IReadOnlyList<int> omittedPanels = null)
     {
         BridgeGeometryTools.Validate(source);
-        if (stations == null || stations.Count < 2 || stations.Count > 1001 || stations.Any(s => !double.IsFinite(s) || s < source.Stations[0] || s > source.Stations[^1]) ||
-            stations.Zip(stations.Skip(1)).Any(p => p.Second - p.First <= 1e-5))
+        double start=source.Stations[0], end=source.Stations[^1], tolerance=SimpleBridgeBuilder.JoinTolerance;
+        if (stations == null || stations.Count < 2 || stations.Count > 1001 || stations.Any(s => !double.IsFinite(s) || s < start-tolerance || s > end+tolerance))
+            throw new ArgumentException("Provide 2..1001 increasing bracing panel stations within Bridge Geometry, in mm.");
+        // The builder merges coincident end stations. Use that same tolerance when a
+        // separately computed alignment length lies just outside the canonical grid.
+        stations=stations.Select(s=>Math.Clamp(s,start,end)).ToArray();
+        if(stations.Zip(stations.Skip(1)).Any(p=>p.Second-p.First<=tolerance))
             throw new ArgumentException("Provide 2..1001 increasing bracing panel stations within Bridge Geometry, in mm.");
         if (!Enum.IsDefined(pattern) || !double.IsFinite(normalOffset)) throw new ArgumentException("Invalid bracing pattern/normal offset.");
         int girders = source.Segments.Max(s => s.Girder);
