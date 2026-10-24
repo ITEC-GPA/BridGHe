@@ -4,12 +4,17 @@
     "nodes": 266,
     "slabBeams": 124,
     "supports": 12,
-    "objects": 327,
+    "segmentSections": 24,
+    "objects": 344,
     "sliders": 87,
     "warnings": []
   },
   "reopened": true,
   "allInputsExternal": true,
+  "allOutputsCaptioned": true,
+  "segmentTablePopulated": true,
+  "editedSectionCheckedInAssembledModel": true,
+  "editedSectionReopened": true,
   "solverInvoked": false,
   "scenarios": [
     {
@@ -22,7 +27,8 @@
         "nodes": 70,
         "slabBeams": 33,
         "supports": 4,
-        "objects": 327,
+        "segmentSections": 6,
+        "objects": 344,
         "sliders": 87,
         "warnings": []
       }
@@ -37,7 +43,8 @@
         "nodes": 364,
         "slabBeams": 105,
         "supports": 12,
-        "objects": 327,
+        "segmentSections": 20,
+        "objects": 344,
         "sliders": 87,
         "warnings": []
       }
@@ -52,7 +59,8 @@
         "nodes": 498,
         "slabBeams": 124,
         "supports": 12,
-        "objects": 327,
+        "segmentSections": 24,
+        "objects": 344,
         "sliders": 87,
         "warnings": []
       }
@@ -67,7 +75,8 @@
         "nodes": 692,
         "slabBeams": 246,
         "supports": 25,
-        "objects": 327,
+        "segmentSections": 50,
+        "objects": 344,
         "sliders": 87,
         "warnings": []
       }
@@ -79,7 +88,8 @@
         "nodes": 129,
         "slabBeams": 24,
         "supports": 12,
-        "objects": 327,
+        "segmentSections": 15,
+        "objects": 344,
         "sliders": 87,
         "warnings": []
       }

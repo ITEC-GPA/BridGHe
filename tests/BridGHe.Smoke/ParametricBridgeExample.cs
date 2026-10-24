@@ -242,12 +242,20 @@ internal sealed class ParametricBridgeExample
         var mainProperty=Property(mainSection,"Travi principali",5600); var diaProperty=Property(diaSection,"Traversi pieni",6400);
         var chordProperty=Property(chord,"Correnti",7200); var postProperty=Property(post,"Montanti",7800);
         var diagonalProperty=Property(diagonal,"Diagonali",8400);
+        Group("05b | Sezioni per concio — modifica una riga per ogni Gx-Cy");
+        var segmentSections=Add("BridgeSegmentSectionsComponent","Sezione di ogni concio",3500,4400);
+        Wire(selected.Params.Output[0],segmentSections,"Bridge Geometry"); Wire(mainProperty,"Property",segmentSections,"Base Property");
+        var sectionTable=Control("segment-sections","SEZIONI CONCI [mm] — * = slider sezione base",new GH_Panel {UserText=BridgeSegmentSections.Header});
+        sectionTable.Properties.Multiline=false;
+        sectionTable.Attributes.Bounds=new RectangleF(60,sectionTable.Attributes.Pivot.Y,840,600); inputY+=530;
+        Set(segmentSections,"Section Table",sectionTable);
         var assign=Add("BridgeMemberAssignmentComponent","Carpenteria FEM per famiglia",4200,5000);
         Wire(selected.Params.Output[0],assign,"Bridge Geometry");
         var properties=new[]{mainProperty,diaProperty,chordProperty,chordProperty,postProperty,diagonalProperty,diagonalProperty,postProperty};
         // Repeated sources are deduplicated by GH; use explicit family rules for the shared chord/diagonal properties.
         Set(assign,"Families",Text("families","Famiglia proprietà di base — -1 tutte le famiglie acciaio","-1"));
         Wire(mainProperty,"Property",assign,"Default Properties");
+        Wire(segmentSections,"Schedule",assign,"Schedule");
         for(int family=1;family<8;family++)
         {
             var rule=Add("BridgeSectionScheduleComponent","Proprietà famiglia "+family,3500,5700+(family-1)*360);
@@ -317,6 +325,13 @@ internal sealed class ParametricBridgeExample
         Output(assign,"Unassigned","Assi privi di proprietà — deve essere vuoto");
         foreach(var p in new[]{mainProperty,diaProperty,chordProperty,postProperty,diagonalProperty}) Output(p,"Property","Proprietà FEM | "+p.NickName);
         Output(steelModel,"Model","MODELLO ACCIAIO — base per fasi di getto");
+        Output(segmentSections,"Sections","Sezione acciaio di ciascun concio — per sezioni miste e override");
+        Output(segmentSections,"Properties","Proprietà FEM di ciascun concio");
+        Output(segmentSections,"Segment IDs","ID ordinati delle sezioni — G = trave, C = concio");
+        Output(segmentSections,"Schedule","Regole effettive di assegnazione delle sezioni ai conci");
+        Output(segmentSections,"Resolved Table","Dimensioni effettive di ciascuna sezione [mm]");
+        Output(segmentSections,"Top Offsets","Quota ala superiore rispetto al baricentro, per concio [mm]");
+        Output(segmentSections,"Information","Diagnostica sezioni e aggiornamento tabella conci");
         outputY=9000;
         Output(slab,"Beams","Elementi FEM fasce soletta"); Output(slab,"Properties","Proprietà individuali fasce soletta");
         Output(slab,"Strip Widths","Larghezze individuali fasce FEM [mm]"); Output(slab,"Member IDs","ID fasce FEM");
@@ -327,11 +342,12 @@ internal sealed class ParametricBridgeExample
         Output(audit,"No input errors","Audit: assenza errori negli input"); Output(audit,"Code","Codici diagnostici"); Output(audit,"Description","Descrizione diagnostica del modello");
         Output(steel,"Material","Materiale acciaio"); Output(concrete,"Material","Materiale calcestruzzo");
         Output(rebar,"Material","Materiale armature B450C"); Output(slabCheck,"Concrete Slab","Soletta con due file di armature per sezione mista");
-        Output(mainSection,"Section","Sezione acciaio della trave principale");
+        Output(mainSection,"Section","Sezione acciaio BASE — le sezioni effettive sono distinte per concio");
         var note=new GH_Panel {NickName="COME USARE IL PONTE PARAMETRICO",UserText=
             "49 | PONTE PARAMETRICO — INPUT A SINISTRA / COMPONENTI AL CENTRO / OUTPUT A DESTRA\n"+
             "Unità: N, mm, MPa. Slider numero campate/travi, luce/interasse; liste opzionali per geometrie non regolari.\n"+
             "Diaframmi reticolari: True = X/V/Warren; False = anima piena. La preview del modello è in basso al centro.\n"+
+            "SEZIONI CONCI: tabella nel gruppo 05b. Una riga per Gx-Cy; * segue gli slider base. Pulsante Tabella conci per aggiornare i giunti.\n"+
             "La soletta è a graticcio: assi trasversali alla quota reale, link eccentrici e proprietà per ogni fascia.\n"+
             "La quota degli assi travi è un input indipendente: aggiornarla se cambia il baricentro della sezione.\n"+
             "Modelli senza carichi e senza analisi. La rigidezza longitudinale mista va assegnata nelle fasi tramite override delle sezioni.\n"+
@@ -361,6 +377,16 @@ internal sealed class ParametricBridgeExample
         ParametricBridgeTests.Require(!issues.Any(i=>i.Severity=="Error"||i.Code=="DISCONNECTED"),string.Join("; ",issues.Select(i=>i.ToString())));
         ParametricBridgeTests.Require(model.Nodes.Count(n=>n.Attributes.OfType<NodeRestraintAttributeModel>().Any())==geo.Supports.Count,"All bearings assembled");
         ParametricBridgeTests.Require(model.Elements.All(e=>e.Results.Count==0),"No invented analysis results");
+        var segmentSections=Find(d,"BridgeSegmentSectionsComponent");
+        var sectionIds=Out(segmentSections,"Segment IDs").VolatileData.AllData(true).Select(g=>g.ScriptVariable().ToString()).ToArray();
+        ParametricBridgeTests.Require(sectionIds.SequenceEqual(geo.Segments.OrderBy(s=>s.Girder).ThenBy(s=>s.Segment).Select(BridgeSegmentSections.Id)),
+            "Exactly one keyed steel section for every concio, independent of FEM mesh");
+        foreach(var beam in Out(steel,"Beams").VolatileData.AllData(true).Select(g=>(BeamModel)g.ScriptVariable()))
+        {
+            var meta=beam.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value;
+            if(meta.Family==BridgeMemberFamily.Girder)
+                ParametricBridgeTests.Require(beam.BeamProperty.Id==$"Concio G{meta.Group}-C{meta.Segment}","Concio properties reach assigned FEM beams");
+        }
         var controls=d.Objects.OfType<IGH_Param>().Where(p=>p.SourceCount==0).ToArray();
         ParametricBridgeTests.Require(controls.All(p=>p.Attributes.Pivot.X<700),"All input controls lie on the left");
         var outputs=d.Objects.OfType<IGH_Param>().Where(p=>p.Attributes.Pivot.X>6000).ToArray();
@@ -370,25 +396,63 @@ internal sealed class ParametricBridgeExample
         var hidden=d.Objects.OfType<GH_Component>().SelectMany(c=>c.Params.Input.Where(p=>p.SourceCount==0 || Persistent(p)?.IsEmpty==false).Select(p=>c.NickName+" / "+p.Name)).ToArray();
         ParametricBridgeTests.Require(hidden.Length==0,"Every input is explicitly connected with no embedded values: "+string.Join(", ",hidden));
         return new {beams=model.Beams.Count,nodes=model.Nodes.Count,slabBeams=Out(slab,"Beams").VolatileDataCount,
-            supports=geo.Supports.Count,objects=d.Objects.Count,sliders=controls.OfType<GH_NumberSlider>().Count(),warnings=issues.Select(i=>i.ToString()).ToArray()};
+            supports=geo.Supports.Count,segmentSections=sectionIds.Length,objects=d.Objects.Count,sliders=controls.OfType<GH_NumberSlider>().Count(),warnings=issues.Select(i=>i.ToString()).ToArray()};
+    }
+    private static void RefreshSectionTable(GH_Document d)
+    {
+        // A changed fabrication layout deliberately invalidates the old table. Solve geometry first,
+        // then invoke exactly the explicit button action used by the operator and revalidate everything.
+        GH_Document.EnableSolutions=true; d.Enabled=true; d.NewSolution(false,GH_SolutionMode.Silent);
+        var component=Find(d,"BridgeSegmentSectionsComponent");
+        component.GetType().GetMethod("UpdateTablePanel").Invoke(component,null);
+        Solve(d);
     }
     internal static int Run()
     {
         try
         {
             ParametricBridgeTests.Run();
+            BridgeSegmentSectionsTests.Run();
             var example=new ParametricBridgeExample(); using var document=example.doc; example.Build(); Solve(document);
+            RefreshSectionTable(document);
             var baseline=Validate(document); string folder=ExamplePaths.Case(Id); string path=Path.Combine(folder,Id+".ghx");
             string temporary=path+".tmp.ghx";
             Directory.CreateDirectory(folder); GrasshopperBridgeExample.Write(document,temporary);
             using(var reopened=GrasshopperBridgeExample.Read(temporary)) { Solve(reopened); Validate(reopened); }
+            var sectionPanel=(GH_Panel)example.controls["segment-sections"];
+            string originalTable=sectionPanel.UserText;
+            var edit=originalTable.Split(new[]{"\r\n","\n"},StringSplitOptions.None);
+            edit[1]=BridgeSegmentSectionsTests.Edit(edit[1],6,"50");
+            sectionPanel.UserText=string.Join(Environment.NewLine,edit); sectionPanel.ExpireSolution(false); Solve(document); Validate(document);
+            void CheckEditedModel(GH_Document d)
+            {
+                var assembled=(ModelModel)Value(Out(d.Objects.OfType<GH_Component>().Single(c=>c.NickName=="Modello graticcio con soletta"),"Model"));
+                int editedCount=0;
+                foreach(var b in assembled.Beams)
+                {
+                    var m=b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value;
+                    if(m.Family!=BridgeMemberFamily.Girder) continue;
+                    bool edited=m.Group==1 && m.Segment==1;
+                    ParametricBridgeTests.Require(b.BeamProperty.T1==(edited?50:30),"External panel edit affects exactly G1-C1 in the assembled FEM model");
+                    if(edited) editedCount++;
+                }
+                ParametricBridgeTests.Require(editedCount>0,"Edited concio is present in the assembled model");
+            }
+            CheckEditedModel(document);
+            string editedPath=Path.GetFullPath(Path.Combine(folder,"..","..","artifacts","parametric-bridge-edited.ghx"));
+            GrasshopperBridgeExample.Write(document,editedPath);
+            using(var reopenedEdit=GrasshopperBridgeExample.Read(editedPath)) { Solve(reopenedEdit); Validate(reopenedEdit); CheckEditedModel(reopenedEdit); }
+            RefreshSectionTable(document);
+            ParametricBridgeTests.Require(sectionPanel.UserText.Contains("; 50;"),"Refresh button preserves an edited row on unchanged geometry");
+            sectionPanel.UserText=originalTable; sectionPanel.ExpireSolution(false); Solve(document);
+            Console.WriteLine("SEGMENT SECTIONS COMPONENT PASS: external panel populated, edited and refreshed; individual properties reach the assembled FEM model.");
             var scenarios=new List<object>();
             void Change(string name,double value) { var s=(GH_NumberSlider)example.controls[name]; s.SetSliderValue((decimal)value); s.ExpireSolution(false); }
             foreach(var s in new[]{(1,2,false,0d),(2,4,true,0d),(3,3,true,250000d),(4,5,false,-400000d)})
             {
                 Change("spans",s.Item1); Change("girders",s.Item2); Change("radius",s.Item4);
                 var toggle=(GH_BooleanToggle)example.controls["truss"]; toggle.Value=s.Item3; toggle.ExpireSolution(false);
-                Solve(document); var data=Validate(document); scenarios.Add(new{spans=s.Item1,girders=s.Item2,truss=s.Item3,radius=s.Item4,data});
+                RefreshSectionTable(document); var data=Validate(document); scenarios.Add(new{spans=s.Item1,girders=s.Item2,truss=s.Item3,radius=s.Item4,data});
                 Console.WriteLine($"PARAMETRIC SCENARIO PASS: {s.Item1} spans, {s.Item2} girders, truss={s.Item3}, R={s.Item4}.");
             }
             void Explicit(string type,string port,double[] values)
@@ -400,13 +464,14 @@ internal sealed class ParametricBridgeExample
             Explicit("BridgeParametricLayoutComponent","Girder Offsets",new[]{-4000d,-500,4000});
             Explicit("SimpleBridgeConfigurableComponent","Deck Beam Stations",new[]{0d,2100,5000,18000,31000,54000});
             var braceToggle=(GH_BooleanToggle)example.controls["bracing-enabled"]; braceToggle.Value=false; braceToggle.ExpireSolution(false);
-            Solve(document); scenarios.Add(new{name="Campate, interassi e fasce non uniformi; controventi disattivati",data=Validate(document)});
+            RefreshSectionTable(document); scenarios.Add(new{name="Campate, interassi e fasce non uniformi; controventi disattivati",data=Validate(document)});
             var actualSteel=Out(Find(document,"BridgeMemberAssignmentComponent"),"Beams").VolatileData.AllData(true).Select(g=>(BeamModel)g.ScriptVariable());
             ParametricBridgeTests.Require(actualSteel.All(b=>b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value.Family is not (BridgeMemberFamily.LongitudinalBracing or BridgeMemberFamily.BracingPost)),"Bracing toggle actually removes the bracing from the model");
             ParametricBridgeTests.Require(Out(Find(document,"BridgeSlabGrillageComponent"),"Beams").VolatileDataCount==24,"Explicit slab stations replace regular spacing");
             Console.WriteLine("PARAMETRIC SCENARIO PASS: explicit unequal spans/offsets/slab stations override sliders; bracing disabled.");
             File.Move(temporary,path,true);
-            File.WriteAllText(Path.Combine(folder,"validation.json"),JsonSerializer.Serialize(new{baseline,reopened=true,allInputsExternal=true,solverInvoked=false,scenarios},new JsonSerializerOptions{WriteIndented=true}));
+            File.WriteAllText(Path.Combine(folder,"validation.json"),JsonSerializer.Serialize(new{baseline,reopened=true,allInputsExternal=true,allOutputsCaptioned=true,
+                segmentTablePopulated=true,editedSectionCheckedInAssembledModel=true,editedSectionReopened=true,solverInvoked=false,scenarios},new JsonSerializerOptions{WriteIndented=true}));
             Console.WriteLine("PARAMETRIC BRIDGE EXAMPLE PASS: saved/reopened, five live variants, external named controls and assembled FEM models; no solver invoked."); return 0;
         }
         catch(Exception ex){Console.Error.WriteLine("PARAMETRIC BRIDGE EXAMPLE FAILED: "+ex); return 1;}

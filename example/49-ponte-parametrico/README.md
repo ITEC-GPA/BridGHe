@@ -14,7 +14,7 @@ Configurazione iniziale: tre campate da 30 m, tre travi a interasse 3,5 m, solet
 2. Nel gruppo **02**, impostare quota degli assi delle travi, spessore e pendenza della soletta, mesh, sghembi e passo delle aste trasversali. La soletta è posta automaticamente a metà spessore; il parametro opzionale della quota consente di cambiarla.
 3. Nel gruppo **03**, scegliere i conci e i diaframmi. Il toggle **Diaframmi reticolari** seleziona anima piena oppure reticolo; la Value List permette di scegliere X, V o Warren. I giunti di concio identificano pezzi di officina: non introducono cerniere.
 4. Nel gruppo **04**, attivare o disattivare i controventi longitudinali e impostarne schema, campi, offset e connessione degli incroci.
-5. Nel gruppo **05**, modificare materiali e sezioni di travi principali, diaframmi pieni, correnti, montanti e diagonali. Le proprietà sono assegnate per famiglia, mantenendo ID fisici, gruppo, concio e progressiva. L'uscita **Assi privi di proprietà** deve essere vuota.
+5. Nel gruppo **05**, modificare materiali e sezioni base di travi principali, diaframmi pieni, correnti, montanti e diagonali. Nel gruppo **05b**, la tabella assegna una sezione a I a ogni concio delle travi principali: seguire la procedura qui sotto. Le altre famiglie conservano le proprie sezioni. L'uscita **Assi privi di proprietà** deve essere vuota.
 6. Nel gruppo **06**, verificare lo schema degli appoggi e scegliere i collegamenti trave–soletta. Il modo iniziale usa link cinematici rigidi. Per aste deformabili selezionare il modo 1 e fornire la relativa proprietà; non è previsto un materiale artificialmente rigido implicito.
 7. Nel gruppo **07**, sono disponibili B450C e la soletta con due file di armature per costruire successivamente le sezioni miste. La larghezza efficace è un input esplicito, distinto dalla larghezza geometrica totale dell'impalcato.
 8. Collegare il modello scelto, a destra, al flusso di caricamento/esportazione/analisi Straus. La definizione non avvia analisi e non applica carichi. **Audit** controlla input e connessioni; non risolve la matrice di rigidezza.
@@ -35,12 +35,54 @@ Configurazione iniziale: tre campate da 30 m, tre travi a interasse 3,5 m, solet
 
 Per assegnare una lista a un parametro opzionale: collegare un pannello con un valore per riga, oppure usare **Set multiple…** nel menu del parametro, quando disponibile. Per curve, piani e alberi usare i corrispondenti parametri/componenti GH. Non scrivere segnaposto testuali negli ingressi numerici vuoti.
 
+## Una sezione per ogni concio
+
+Il componente **Bridge Segment Sections**, già collegato nell'esempio, genera sezioni a I in acciaio, anche asimmetriche, e le assegna alle travi tramite **Bridge Member Assignment**. Non occorre creare a mano una catena di componenti per ogni concio. Le proprietà geometriche seguono lo stesso calcolo GPC del componente **I Section**.
+
+1. Impostare geometria, giunti e **sezione base** mediante gli slider a sinistra.
+2. Nel gruppo **05b**, aprire con doppio clic il pannello **SEZIONI CONCI [mm]**. È già compilato con una riga per concio. `G1-C2` indica la prima trave e il secondo concio di officina; la numerazione non è quella delle campate né quella delle aste FEM.
+3. Lasciare `*` nelle dimensioni che devono seguire gli slider della sezione base. Sostituire `*` con un numero soltanto nelle celle da differenziare. La modifica entra immediatamente nelle aste del modello e nella preview.
+4. Se si cambia il numero di travi, la lunghezza del ponte o la posizione dei giunti, premere **Tabella conci** sul componente, oppure scegliere **Aggiorna tabella conci** dal suo menu. Il comando aggiorna il pannello esterno. Conserva gli override solo quando coincidono sia ID sia progressive; i conci nuovi o modificati ripartono dalla sezione base (`*`). L'uscita **Diagnostica sezioni e aggiornamento tabella conci** elenca aggiunte, reset e rimozioni. Undo di GH ripristina il pannello precedente.
+5. Controllare **Dimensioni effettive di ciascuna sezione [mm]**, gli ID e le **Proprietà FEM di ciascun concio** a destra. L'ordine è sempre trave, poi concio, anche se le righe del pannello vengono riordinate.
+
+Ogni riga ha **10 colonne**, separate da `;` oppure da tabulazioni:
+
+| Colonna | Significato | Modifica |
+|---|---|---|
+| ID | Identità `Gx-Cy` del concio | Generata dalla geometria |
+| s_inizio_mm, s_fine_mm | Progressive lungo il tracciato | Generate; non usarle per spostare i giunti |
+| b_inf_mm, b_sup_mm | Larghezze ala inferiore e superiore | Numero oppure `*` |
+| h_mm | Altezza totale della sezione | Numero oppure `*` |
+| t_inf_mm, t_sup_mm | Spessori ala inferiore e superiore | Numero oppure `*` |
+| tw_mm | Spessore dell'anima | Numero oppure `*` |
+| r_mm | Raggio dei raccordi anima–ali | Numero, `0` per spigoli vivi, oppure `*` |
+
+Esempio: il primo concio dell'esempio iniziale va da 0 a 11250 mm. Per aumentare **solo l'ala inferiore a 50 mm**, lasciare le altre dimensioni legate agli slider:
+
+```text
+G1-C1; 0; 11250; *; *; *; 50; *; *; *
+```
+
+Per definire tutte le quote di quel concio, la stessa riga diventa:
+
+```text
+G1-C1; 0; 11250; 600; 600; 2500; 50; 30; 16; 0
+```
+
+Le altre righe devono restare nel pannello. Sono ammessi sia punto sia virgola decimale, senza separatori delle migliaia. L'intestazione che inizia con `#` è un commento. Una cella vuota è un errore: per ereditare la dimensione base scrivere `*`. Per tornare completamente agli slider, svuotare il pannello e premere **Tabella conci**.
+
+L'aggiornamento è esplicito: il componente non sovrascrive il testo durante il calcolo o la riapertura del file. In presenza di righe duplicate, mancanti, estranee o con progressive non più corrispondenti, blocca l'assegnazione e indica il problema. Una variazione della sola mesh non richiede aggiornamenti, perché le sezioni sono associate ai conci fisici.
+
+**Sezioni miste e fasi:** utilizzare l'uscita **Sezione acciaio di ciascun concio** insieme agli **ID ordinati delle sezioni**, poi generare le sezioni miste e gli override delle fasi. La singola uscita **Sezione acciaio BASE** è soltanto il riferimento degli slider: non rappresenta tutte le sezioni dopo gli override della tabella. Materiale, formulazione Beam e impostazione torsionale sono ereditati dalla proprietà base; questo componente non dimensiona i conci e non assegna verifiche o carichi.
+
+**Quote delle travi:** modificare altezza o asimmetria può spostare il baricentro e la quota dell'ala superiore rispetto all'asse FEM. L'uscita **Quota ala superiore rispetto al baricentro, per concio [mm]** permette di controllarlo. Il componente segnala differenze rispetto alla sezione base, ma non sposta automaticamente gli assi né i link: adeguare geometria/offset se si vuole mantenere l'estradosso allineato alla soletta.
+
 ## Uscite disponibili
 
 - **Geometria:** tracciato, assi longitudinali, diaframmi per famiglia, controventi, punti degli appoggi, giunti dei conci, nodi geometrici, volume e bordi della soletta, assi trasversali alla quota reale, eccentricità, piani locali, progressive, larghezze tributarie, topologia e ID.
 - **Entità FEM:** carpenteria, fasce di soletta, proprietà per famiglia e per fascia, nodi vincolati, piani/etichette degli appoggi, link rigidi o aste di collegamento, tutti i nodi e i beam del modello assemblato.
 - **Modelli:** sola carpenteria per la fase acciaio/getto; carpenteria più graticcio trasversale per il seguito del flusso. Il secondo modello aggiunge le fasce di soletta e i collegamenti eccentrici.
-- **Dati per il misto:** sezione della trave, materiali acciaio/cls/B450C e soletta con due file di armature.
+- **Dati per il misto:** sezioni di ogni concio con ID e proprietà FEM, sezione base, materiali acciaio/cls/B450C e soletta con due file di armature.
 - **Controlli:** elementi privi di proprietà, esito e descrizioni dell'audit.
 
 L'uscita degli assi dei controventi mostra i candidati generati dal relativo componente. Per sapere quali siano effettivamente assemblati usare **Geometria carpenteria con opzione controventi** e il modello FEM, che rispettano il toggle di attivazione.
@@ -68,3 +110,5 @@ Eseguire dalla root del repository:
 Se il GHX esiste già, lo script richiede `-Force` e ne salva una copia con data e ora in `artifacts/parametric-bridge-backups`. Il generatore è [ParametricBridgeExample.cs](../../tests/BridGHe.Smoke/ParametricBridgeExample.cs); il modello finale si modifica normalmente da Grasshopper.
 
 Il report [validation.json](validation.json) viene scritto soltanto dopo soluzione, salvataggio, riapertura e controlli delle varianti. I test verificano aggiornamenti del numero di campate/travi, diaframmi reticolari, curve nei due sensi, quantità di elementi, appoggi, connettività, proprietà assegnate, assenza di risultati FEM inventati e posizione degli input sul canvas. Non costituiscono un'analisi Straus: qui il solutore non viene invocato.
+
+Sono verificati anche nomi e didascalie delle uscite, compilazione/aggiornamento del pannello conci, modifica locale di `G1-C1`, permanenza degli override alla riapertura e indipendenza dalla mesh. Il test `--regression bridge-segment-sections` confronta area, baricentro e inerzia di una sezione asimmetrica con un calcolo indipendente a tre rettangoli e rifiuta tabelle incomplete, duplicate, non aggiornate e dimensioni non valide.
