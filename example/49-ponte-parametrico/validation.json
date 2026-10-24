@@ -4,7 +4,7 @@
     "nodes": 266,
     "slabBeams": 124,
     "supports": 12,
-    "objects": 271,
+    "objects": 327,
     "sliders": 87,
     "warnings": []
   },
@@ -22,7 +22,7 @@
         "nodes": 70,
         "slabBeams": 33,
         "supports": 4,
-        "objects": 271,
+        "objects": 327,
         "sliders": 87,
         "warnings": []
       }
@@ -37,7 +37,7 @@
         "nodes": 364,
         "slabBeams": 105,
         "supports": 12,
-        "objects": 271,
+        "objects": 327,
         "sliders": 87,
         "warnings": []
       }
@@ -52,7 +52,7 @@
         "nodes": 498,
         "slabBeams": 124,
         "supports": 12,
-        "objects": 271,
+        "objects": 327,
         "sliders": 87,
         "warnings": []
       }
@@ -67,7 +67,7 @@
         "nodes": 692,
         "slabBeams": 246,
         "supports": 25,
-        "objects": 271,
+        "objects": 327,
         "sliders": 87,
         "warnings": []
       }
@@ -79,7 +79,7 @@
         "nodes": 129,
         "slabBeams": 24,
         "supports": 12,
-        "objects": 271,
+        "objects": 327,
         "sliders": 87,
         "warnings": []
       }

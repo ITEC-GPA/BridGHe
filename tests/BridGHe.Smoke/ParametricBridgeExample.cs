@@ -104,9 +104,13 @@ internal sealed class ParametricBridgeExample
     {
         // Use the source parameter type to preserve trees and FEM goo, with no internal data.
         var p=(IGH_Param)Activator.CreateInstance(source.GetType()); Persistent(p)?.Clear();
-        p.NickName=label; p.Description=description??source.Description; p.CreateAttributes();
+        p.Name=label; p.NickName=label; p.Description=description??source.Description; p.CreateAttributes();
         p.Attributes.Pivot=new PointF(6200,outputY); p.AddSource(source); if(p is IGH_PreviewObject preview) preview.Hidden=true;
-        doc.AddObject(p,false); outputY+=95;
+        doc.AddObject(p,false);
+        // Group captions stay visible even when GH displays parameter icons instead of nicknames.
+        var caption=new GH_Group {Name=label,NickName=label,Colour=Color.FromArgb(45,30,130,145)};
+        caption.CreateAttributes(); doc.AddObject(caption,false); caption.AddObject(p.InstanceGuid);
+        outputY+=95;
     }
     private void Output(GH_Component c,string port,string label)=>Output(Out(c,port),label);
     private void Defaults()
@@ -359,6 +363,10 @@ internal sealed class ParametricBridgeExample
         ParametricBridgeTests.Require(model.Elements.All(e=>e.Results.Count==0),"No invented analysis results");
         var controls=d.Objects.OfType<IGH_Param>().Where(p=>p.SourceCount==0).ToArray();
         ParametricBridgeTests.Require(controls.All(p=>p.Attributes.Pivot.X<700),"All input controls lie on the left");
+        var outputs=d.Objects.OfType<IGH_Param>().Where(p=>p.Attributes.Pivot.X>6000).ToArray();
+        ParametricBridgeTests.Require(outputs.Length>40 && outputs.All(p=>p.SourceCount==1 && p.Name==p.NickName &&
+            d.Objects.OfType<GH_Group>().Any(g=>g.NickName==p.Name && g.ObjectIDs.Contains(p.InstanceGuid))),
+            "Every right-hand output has an explicit name and a visible group caption, also after reopening");
         var hidden=d.Objects.OfType<GH_Component>().SelectMany(c=>c.Params.Input.Where(p=>p.SourceCount==0 || Persistent(p)?.IsEmpty==false).Select(p=>c.NickName+" / "+p.Name)).ToArray();
         ParametricBridgeTests.Require(hidden.Length==0,"Every input is explicitly connected with no embedded values: "+string.Join(", ",hidden));
         return new {beams=model.Beams.Count,nodes=model.Nodes.Count,slabBeams=Out(slab,"Beams").VolatileDataCount,

@@ -4,6 +4,8 @@ Aprire **[49-ponte-parametrico.ghx](49-ponte-parametrico.ghx)** con Rhino 8 e la
 
 La definizione raccoglie **tutti gli input a sinistra**, i componenti al centro e gli output nominati a destra. I valori assegnati sono esterni: slider, toggle, Value List e pannelli. Anche gli ingressi opzionali hanno un parametro esterno, inizialmente vuoto. Ogni parametro conserva nel tooltip la spiegazione del relativo ingresso.
 
+Ogni uscita sulla destra ha il nome completo sia nel parametro sia nella didascalia del relativo gruppo: resta leggibile anche con la visualizzazione a icone di Grasshopper.
+
 Configurazione iniziale: tre campate da 30 m, tre travi a interasse 3,5 m, soletta larga 10 m e spessa 300 mm, diaframmi pieni, conci con lunghezza massima 12 m. Le sezioni iniziali sono dati dimostrativi modificabili, non un predimensionamento verificato. Unità: **N, mm, MPa**.
 
 ## Procedura
