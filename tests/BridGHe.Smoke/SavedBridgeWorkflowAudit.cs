@@ -14,7 +14,7 @@ using Grasshopper.Kernel.Parameters;
 /// <summary>Read-only audit of the user's saved bridge workflows. Native analyses, exports and report writes are disabled.</summary>
 internal static class SavedBridgeWorkflowAudit
 {
-    internal static int Run()
+    internal static int Run(bool prepareRevision004 = false)
     {
         BridgeMergeTests.Initialize();
         foreach(string name in new[]{"MathComponents","CurveComponents","SurfaceComponents","VectorComponents"})
@@ -24,8 +24,8 @@ internal static class SavedBridgeWorkflowAudit
                 .Invoke(Grasshopper.Instances.ComponentServer,new object[]{assembly,assembly.Location});
         }
         var paths=new[]{"REV002","REV003","REV004"}.Select(r=>Path.GetFullPath(Path.Combine("example/99-Ponte completo GPC",r,"flusso-acciaio-misto_"+r+".ghx"))).ToArray();
-        var rows=new List<object>();int failures=0;
-        foreach(string path in paths)
+        var rows=new List<object>();int failures=0,pending=0;
+        foreach(string path in paths.Where(p=>!prepareRevision004||p.Contains("REV004")))
         {
             string hash=Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path)));
             try
@@ -53,13 +53,46 @@ internal static class SavedBridgeWorkflowAudit
                     Solve();
                 }
                 Solve();
+                if(prepareRevision004)
+                {
+                    foreach(var analysis in components.Where(c=>c.GetType().Name=="StrausR3AnalysisComponent"))
+                    {
+                        var input=analysis.Params.Input[0].VolatileData.AllData(true).Single();
+                        var fresh=input.Duplicate();
+                        if(((ModelModel)fresh.ScriptVariable()).Elements.Any(e=>e.Results.Count!=0))throw new Exception("Preparation input unexpectedly contains FEM results.");
+                        analysis.GetType().GetField("_model",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(analysis,fresh);
+                        analysis.ExpireSolution(false);
+                    }
+                    Solve();
+                }
+                if(path.Contains("REV004"))
+                {
+                    object Snapshot(ModelModel model)=>model==null?null:new{model.Name,beams=model.Beams.Count,
+                        beamData=model.Beams.Select(b=>new{b.BeamId,from=b.PointFrom.ToString(),to=b.PointTo.ToString(),area=b.BeamProperty.SectionArea,
+                            pre=b.Loads.OfType<BeamPreLoadModel>().Select(l=>new{l.LoadCase.Name,l.Value,l.PreLoadType}),
+                            gradient=b.Loads.OfType<BeamGradientLoadModel>().Select(l=>new{l.LoadCase.Name,l.Value.Axis1,l.Value.Axis2}),results=b.Results.Count})};
+                    File.WriteAllText("artifacts/99-rev004-cache-inspection.json",JsonSerializer.Serialize(components.Where(c=>c.GetType().Name=="StrausR3AnalysisComponent").Select(c=>new{
+                        c.NickName,c.InstanceGuid,input=Snapshot(c.Params.Input[0].VolatileData.AllData(true).Single().ScriptVariable() as ModelModel),
+                        saved=Snapshot(c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable() as ModelModel)}),new JsonSerializerOptions{WriteIndented=true}));
+                }
                 foreach(var excel in components.Where(c=>c.GetType().Name=="BridgeCombinationExcelComponent"))
                 {
                     var catalog=new BridgeCombinationCatalog(excel.Params.Input[0].VolatileData.AllData(true).Select(g=>(ModelModel)g.ScriptVariable()).ToArray(),
                         excel.Params.Input[1].VolatileData.AllData(true).Select(g=>(BridgePhaseDefinition)g.ScriptVariable()));
                     File.WriteAllText("artifacts/"+Path.GetFileNameWithoutExtension(path)+"-catalog-"+excel.InstanceGuid+".json",JsonSerializer.Serialize(catalog.ReferenceRows));
                 }
-                RunButtons("BridgeCombinationExcelComponent");RunButtons("BuildBridgeModel");RunButtons("SuperElementCheckComponent");
+                RunButtons("BridgeCombinationExcelComponent");
+                var sources=components.Where(c=>c.GetType().Name=="StrausR3AnalysisComponent").Select(c=>(ModelModel)c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable()).ToArray();
+                if(sources.Length>0 && sources.All(m=>m.Elements.All(e=>e.Results.Count==0)))
+                {
+                    pending++;
+                    if(prepareRevision004)GrasshopperBridgeExample.Write(document,"artifacts/align99/prepared.ghx");
+                    rows.Add(new{file=path,status="pending-native",excelReferencesValid=true,cachedResults=0,models=sources.Select(m=>new{m.Name,beams=m.Beams.Count})});
+                    Console.WriteLine("SAVED BRIDGE AUDIT PENDING NATIVE: "+Path.GetFileName(path)+"; Excel consistent, stale FEM results absent; run all phase analyses before Build/Check.");
+                    if(hash!=Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))))throw new Exception("Audit modified the user's GHX: "+path);
+                    continue;
+                }
+                RunButtons("BuildBridgeModel");RunButtons("SuperElementCheckComponent");
                 var checks=components.Where(c=>c.GetType().Name=="SuperElementCheckComponent").ToArray();
                 var results=checks.SelectMany(c=>c.Params.Output[0].VolatileData.AllData(true)).Select(g=>g.ScriptVariable()).OfType<BridgeStressResult>().ToArray();
                 if(checks.Length==0 || results.Length==0 || checks.Any(c=>c.Params.Output[0].VolatileDataCount==0))throw new Exception("Missing section results in a saved check branch.");
@@ -71,7 +104,7 @@ internal static class SavedBridgeWorkflowAudit
             {failures++;rows.Add(new{file=path,status="failed",error=error.Message});Console.WriteLine("SAVED BRIDGE AUDIT FAILED: "+Path.GetFileName(path)+": "+error.Message);}
             if(hash!=Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))))throw new Exception("Audit modified the user's GHX: "+path);
         }
-        File.WriteAllText("artifacts/saved-bridge-workflow-audit.json",JsonSerializer.Serialize(new{nativeSolverInvoked=false,sourceDocumentsUnchanged=true,failures,documents=rows},new JsonSerializerOptions{WriteIndented=true}));
-        return failures==0?0:1;
+        File.WriteAllText("artifacts/saved-bridge-workflow-audit.json",JsonSerializer.Serialize(new{nativeSolverInvoked=false,sourceDocumentsUnchanged=true,failures,pendingNative=pending,documents=rows},new JsonSerializerOptions{WriteIndented=true}));
+        return failures>0?1:pending>0&&!prepareRevision004?2:0;
     }
 }

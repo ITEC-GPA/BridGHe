@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-25",
+  "epsilonCs": -0.0003171439341670765,
+  "excelReference": "Actions!I4",
+  "combinationCoefficientsUnchanged": true,
+  "geometryAndInputsUnchanged": true,
+  "invalidatedAnalysisCaches": [
+    "2c52577a-da63-4e52-a6c9-57c0f9a8a0b7",
+    "8187f478-4f1f-4b1d-91ef-51b19851099e",
+    "0f593523-bfa4-4c07-b68d-fda28f451c7b",
+    "2596c64c-16e2-4176-ae57-929880f64ce2"
+  ],
+  "solverInvoked": false,
+  "solverResultsVerified": false,
+  "status": "pending-native",
+  "reason": "Current phase models have 73/112/112/112 beams; stored analyses had 37/76/76/76. Reanalyse every phase before Build, checks and report.",
+  "sourceBeforeSha256": "c00f7e34d4f48bea39689f394f7a1f46ec94fc382db3b2cd247e957dc0c211d7"
+}

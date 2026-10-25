@@ -1,5 +1,16 @@
 # Esempio 99 dal file personale alle verifiche
 
+## Stato corrente della REV004 al 25 ottobre 2026
+
+Ritiro allineato a **εcs = −0,0003171439341670765** (circa −317 µε), calcolato dagli input attuali. Il generatore FEM e l’azione primaria usano la stessa uscita; `Actions!I4` nell’Excel è aggiornato e tutti i coefficienti delle combinazioni sono conservati.
+
+Le quattro cache FEM erano riferite a geometrie precedenti (37/76/76/76 aste, contro 73/112/112/112 attuali) e sono state invalidate. Input, geometria e collegamenti personali sono conservati. Il GHX si riapre e il template viene letto, ma occorre **ricalcolare tutte le quattro analisi Straus**, poi Read Excel → Build → Check → Generate report. ST7/LSA, report Word e validazioni numeriche precedenti sono storici; non verificano la configurazione corrente. Vedere [validazione dell’allineamento](REV004/alignment-validation.json).
+
+Il verificatore usa N–Mx–Vy. T, M2 e V1 sono trascurati nelle verifiche e conservati nei risultati FEM; l’ipotesi è dichiarata anche nel report.
+
+## Configurazione e prove precedenti
+
+
 ## Revisione corrente 004 con soletta a graticcio
 
 Aprire [REV004](REV004/flusso-acciaio-misto_REV004.ghx). Include la soletta trasversale di **Simple Bridge Solid**, i collegamenti eccentrici e **Reinforcement Steel B450C**. Le revisioni precedenti restano disponibili sotto; la REV003 modificata localmente dall'utente non è stata sovrascritta.
@@ -69,7 +80,7 @@ La stessa uscita εcs alimenta sia `Composite Shrinkage Actions`, che produce pr
 
 ## Combinazioni e campo coperto
 
-I coefficienti sono dimostrativi, non combinazioni NTC/Eurocodici generate automaticamente. Sono presenti getto, permanenti, permanenti+ritiro, totale, Q isolata e una combinazione amplificata. La colonna WIND è zero: il caso è calcolato nel FEM, ma il verificatore GPC adottato copre N–Mx–Vy e rifiuta flessione deviata, taglio trasversale e torsione. Queste azioni richiedono un verificatore dedicato; non sono state ignorate dentro il motore di verifica.
+I coefficienti sono dimostrativi, non combinazioni NTC/Eurocodici generate automaticamente. Sono presenti getto, permanenti, permanenti+ritiro, totale, Q isolata e una combinazione amplificata. La colonna WIND è zero: il caso è calcolato nel FEM, ma il verificatore corrente copre N–Mx–Vy ed esclude esplicitamente T, M2 e V1. Le sei componenti rimangono nei risultati FEM; gli effetti esclusi e le loro interazioni non sono verificati.
 
 Il report distingue WR entro limite, superamenti e dati mancanti. `Tau b` resta NaN perché manca un equivalente verificato nell'API GPC corrente; le verifiche di taglio effettivamente disponibili e i pioli sono mantenuti. Sollevamento/ancoraggi, fatica, instabilità globale, sisma, soletta trasversale, attraversamenti e fondazioni non risultano verificati da questo esempio. Le verifiche attivate possono non essere soddisfatte: il completamento del flusso non equivale al dimensionamento del ponte.
 
