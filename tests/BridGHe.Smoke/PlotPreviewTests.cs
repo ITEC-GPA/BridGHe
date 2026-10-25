@@ -77,6 +77,13 @@ internal static class PlotPreviewTests
         }
         else Console.WriteLine("SKIPPED: GH canvas screenshot (opt in with --preview-capture); SVG pixels and component layout are tested.");
         var cached = Image(); Solve(); Require(ReferenceEquals(cached,Image()), "Unchanged SVG should reuse its raster.");
+        foreach(string empty in new[]{"", "  \r\n"})
+        {
+            SetSvg(empty); Solve(); Require(Image()==null && !component.Params.Output[0].VolatileData.AllData(true).OfType<GH_String>().Any(g=>!string.IsNullOrEmpty(g.Value)),"An empty upstream plot must clear the old preview without a red component.");
+            SetSvg(svg); Solve();
+        }
+        SetSvg("",svg); SetIndex(1); Solve(); Require(Image()!=null,"Empty charts must not shift subsequent indices.");
+        SetSvg(svg); SetIndex(0); Solve(); cached=Image();
         SetWidth(800); Solve(); Require(!ReferenceEquals(cached,Image()) && Image().Width == 1600, "Resized preview did not update.");
         string second = svg.Replace("SLS 1", "SLS 3"); SetSvg(svg,second); SetIndex(1); Solve();
         Require(((GH_String)component.Params.Output[0].VolatileData.AllData(true).Single()).Value == second, "Multiple chart selection failed.");

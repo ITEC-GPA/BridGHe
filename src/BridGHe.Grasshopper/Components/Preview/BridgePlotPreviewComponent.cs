@@ -37,9 +37,13 @@ public sealed class BridgePlotPreviewComponent : GH_Component
     {
         var plots = new List<string>(); int index = 0, width = 600;
         if (!da.GetDataList(0, plots) || !da.GetData(1, ref index) || !da.GetData(2, ref width)) return;
+        if (plots.Count == 0) return;
         try
         {
             if (index < 0 || index >= plots.Count) throw new ArgumentOutOfRangeException(nameof(index), $"Index must be between 0 and {plots.Count - 1}.");
+            // An upstream Draw/Run component can legitimately output an empty string while awaiting results.
+            // Keep list indices stable and clear the old image; malformed nonempty SVG still raises an error.
+            if (string.IsNullOrWhiteSpace(plots[index])) { ClearPreview(); return; }
             Preview.Set(plots[index], width);
             CanvasWidth = width; received = true;
             da.SetData(0, plots[index]);
