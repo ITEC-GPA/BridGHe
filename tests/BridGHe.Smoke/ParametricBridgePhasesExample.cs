@@ -21,7 +21,7 @@ using Grasshopper.Kernel.Special;
 using Grasshopper.Kernel.Types;
 
 /// <summary>Example 50 extends a read-only copy of 49 with four independent loaded FEM models.</summary>
-internal sealed class ParametricBridgePhasesExample : IDisposable
+internal sealed partial class ParametricBridgePhasesExample : IDisposable
 {
     internal const string Id="50-ponte-quattro-modelli";
     private static readonly string Source=Path.Combine(ExamplePaths.Case("49-ponte-parametrico"),"49-ponte-parametrico.ghx");
@@ -31,9 +31,12 @@ internal sealed class ParametricBridgePhasesExample : IDisposable
     private readonly Assembly plugin;
     private readonly List<GH_Component> added=new();
     private readonly List<GH_Component> models=new(),analyses=new(),overrides=new(),actions=new();
-    private GH_Component composite,merge;
+    private GH_Component composite,merge,creep;
+    private readonly List<GH_Component> phases=new();
+    private static string[] Cases(int i)=>i==3?new[]{Tags[i]+"_RITIRO"}:new[]{Tags[i]+"_SOLETTA",Tags[i]+"_TRAVI"};
+    private static string[] ActionKeys=>Enumerable.Range(0,4).SelectMany(Cases).ToArray();
     private GH_BooleanToggle runAll;
-    private float inputY,outputY=14300;
+    private float inputY,outputY=14300,outputX=8500;
     private readonly List<Guid> groupItems=new();
     private string groupName;
     private readonly Dictionary<string,IGH_Param> controls=new();
@@ -107,7 +110,7 @@ internal sealed class ParametricBridgePhasesExample : IDisposable
     {
         if(y.HasValue)outputY=y.Value;
         var p=(IGH_Param)Activator.CreateInstance(source.GetType());Persistent(p)?.Clear();p.Name=p.NickName=label;p.Description=source.Description;
-        p.CreateAttributes();p.Attributes.Pivot=new PointF(8500,outputY);p.AddSource(source);if(p is IGH_PreviewObject preview)preview.Hidden=true;doc.AddObject(p,false);
+        p.CreateAttributes();p.Attributes.Pivot=new PointF(outputX,outputY);p.AddSource(source);if(p is IGH_PreviewObject preview)preview.Hidden=true;doc.AddObject(p,false);
         var g=new GH_Group{Name=label,NickName=label,Colour=Color.FromArgb(45,70,120,160)};g.CreateAttributes();doc.AddObject(g,false);g.AddObject(p.InstanceGuid);outputY+=100;
     }
     private void RenameExistingModel(GH_Component c,string name,float y)
@@ -186,6 +189,7 @@ internal sealed class ParametricBridgePhasesExample : IDisposable
         Scalar(fictitious,"Yielding","Resistenza cls fittizio [MPa]",32,1,80);Scalar(fictitious,"Strength for Steel","Resistenza acciaio non usata dal materiale cls",0,0,1);
         Wire(fictitious,"Material",slab,"Concrete Material",true);
         Output(Out(fictitious,"Material"),"Materiale delle fasce trasversali — cls senza peso",13400);
+        AddShrinkage(slabCheck);
 
         Group("12 | Carichi e analisi — impostazioni comuni");
         var unit=Choice("Unità dei quattro modelli",new[]{("N mm MPa",2)},2);
@@ -208,12 +212,30 @@ internal sealed class ParametricBridgePhasesExample : IDisposable
             Wire(assignment,"Beams",over,"Beams");Wire(segment,"Segment IDs",over,"Segment IDs");
             Wire(i==0?Out(segment,"Properties"):Out(composite,new[]{"","n ∞ Beam Section","n0 Beam Section","n ritiro Beam Section"}[i]),over,"Properties");
             var lcs=new List<GH_Component>();
-            foreach(string family in new[]{"SOLETTA","TRAVI"})
+            foreach(string family in i==3?new[]{"RITIRO"}:new[]{"SOLETTA","TRAVI"})
             {
                 var lc=Add("LoadCaseComponent",tag+" | caso "+family,1500,y+(family=="SOLETTA"?0:550));
                 Literal(lc,"Name",tag+" | nome caso "+family,tag+"_"+family);Flag(lc,"Gravity NSM",tag+" | gravità masse non strutturali "+family,false);lcs.Add(lc);
             }
             casesByModel.Add(lcs.ToArray());
+            IGH_Param loadedGirders,loadedSlab;
+            if(i==3)
+            {
+                var map=MapSections(Out(over,"Girders"),"M04 | sezione mista di ogni asta",2800,y+250);
+                var equivalent=Add("CompositeShrinkageActionsComponent","M04 | deformazioni equivalenti per concio",3100,y+600);
+                Wire(map,"Composite Properties",equivalent,"Composite property");Wire(creep,"εcs",equivalent,"Concrete strain");
+                var pre=Add("BeamPreLoadComponent","M04 | contrazione equivalente Straus",3500,y);
+                Wire(map,"Girders",pre,"Beam");Wire(lcs[0],"LoadCase",pre,"LoadCase");
+                Wire(Choice("M04 | tipo predeformazione",new[]{("Strain — deformazione imposta",1)},1),pre,"Type");
+                Wire(equivalent,"Straus pre-strain",pre,"Value");
+                var gradient=Add("BeamGradientLoadComponent","M04 | curvatura equivalente del ritiro",3900,y+350);
+                Wire(pre,"Beam",gradient,"Beam");Wire(lcs[0],"LoadCase",gradient,"LoadCase");Wire(equivalent,"Axis 2 thermal gradient",gradient,"Axis 2");
+                loadedGirders=Out(gradient,"Beam");loadedSlab=Out(slab,"Beams");
+                Output(Out(equivalent,"Straus pre-strain"),"Ritiro | predeformazione assiale equivalente per asta",y+1200);
+                Output(Out(equivalent,"Axis 2 thermal gradient"),"Ritiro | gradiente equivalente per curvatura [K/mm]");
+            }
+            else
+            {
             var pressure=Slider(tag+" | pressione verticale soletta [kN/m²]",-1,-20,20);
             var stripPressure=Product(pressure,pressureFactor,tag+" | pressione in N/mm²",1700,y+950);
             var stripLineLoad=Product(stripPressure,Out(slab,"Strip Widths"),tag+" | q = pressione × fascia tributaria",2600,y+950);
@@ -225,27 +247,30 @@ internal sealed class ParametricBridgePhasesExample : IDisposable
             }
             var slabLoad=Load(Out(slab,"Beams"),stripLineLoad,lcs[0],"soletta",300);
             var girderLoad=Load(Out(over,"Girders"),q,lcs[1],"travi",0);
+            loadedGirders=Out(girderLoad,"Beam");loadedSlab=Out(slabLoad,"Beam");
+            }
             var model=i<2?oldModels[i]:Add("BuildModelComponent",tag,4500,y);
             if(i<2)RenameExistingModel(model,tag,y);else Literal(model,"Name",tag+" | nome modello",tag);
             In(model,"Elements").RemoveAllSources();In(model,"Elements").DataMapping=GH_DataMapping.Flatten;
-            Wire(girderLoad,"Beam",model,"Elements");Wire(over,"Other Steel",model,"Elements");Wire(slabLoad,"Beam",model,"Elements");
+            Wire(loadedGirders,model,"Elements");Wire(over,"Other Steel",model,"Elements");Wire(loadedSlab,model,"Elements");
             Wire(bearings,"Nodes",model,"Elements");Wire(links,"Elements",model,"Elements");Wire(unit,model,"Units",true);models.Add(model);
             var analysis=Add("StrausR3AnalysisComponent",tag+" | analisi lineare",5100,y);analyses.Add(analysis);
             Wire(model,"Model",analysis,"Model");Wire(runAll,analysis,"Keep Running");
             Literal(analysis,"Output Path",tag+" | file Straus",Path.Combine(Folder,"calcoli",tag+".st7"));
-            Literal(analysis,"Analysis Results",tag+" | casi restituiti",tag+"_SOLETTA\n"+tag+"_TRAVI\nDead");
+            Literal(analysis,"Analysis Results",tag+" | casi restituiti",string.Join("\n",Cases(i))+(i<3?"\nDead":""));
             Output(Out(model,"Model"),tag+" | MODELLO FEM CARICATO",y);
             Output(Out(analysis,"Model"),tag+" | MODELLO CON RISULTATI STRAUS");
             Output(Out(over,"Beam IDs"),tag+" | ID travi longitudinali");
-            Output(Out(girderLoad,"Beam"),tag+" | travi principali con proprietà e carichi");
-            Output(Out(slabLoad,"Beam"),tag+" | fasce soletta con carico tributario");
+            Output(loadedGirders,tag+" | travi principali con proprietà e "+(i==3?"ritiro":"carichi"));
+            Output(loadedSlab,tag+" | fasce soletta "+(i==3?"senza carichi":"con carico tributario"));
             foreach(var lc in lcs)Output(Out(lc,"LoadCase"),tag+" | "+lc.NickName);
         }
 
         Group("17 | Assemblaggio delle quattro risposte — combinazioni solo di prova");
         merge=Add("BuildBridgeModel","ASSEMBLA QUATTRO MODELLI E FASI",7500,17700);
-        var rows=new List<string>{"Combinazione;"+string.Join(";",Tags.SelectMany(t=>new[]{t+"_SOLETTA",t+"_TRAVI"}))};
-        for(int i=0;i<4;i++)rows.Add("TEST_"+Tags[i]+";"+string.Join(";",Enumerable.Range(0,8).Select(j=>j/2==i?"1":"0")));
+        var rows=new List<string>{"Combinazione;"+string.Join(";",ActionKeys)};
+        for(int i=0;i<4;i++)rows.Add("TEST_"+Tags[i]+";"+string.Join(";",ActionKeys.Select(k=>Cases(i).Contains(k)?"1":"0")));
+        rows.Add("DEMO_CUMULATIVA;"+string.Join(";",ActionKeys.Select(_=>"1")));
         var combinations=Text("COMBINAZIONI TEST — una riga per risposta, coefficienti modificabili",string.Join("\n",rows));
         combinations.Attributes.Bounds=new RectangleF(60,combinations.Attributes.Pivot.Y,840,200);inputY+=105;
         var split=Standard("Text Split",6700,18400);split.NickName="Tabella combinazioni da righe separate da ;";
@@ -255,19 +280,19 @@ internal sealed class ParametricBridgePhasesExample : IDisposable
         {
             string tag=Tags[i];float y=15100+i*1600;Wire(analyses[i],"Model",merge,"Models");
             var phase=Add("BridgeConstructionPhaseComponent",tag+" | fase di test",6900,y);
+            phases.Add(phase);
             Scalar(phase,"Number",tag+" | numero fase",10*(i+1),0,100,0);Literal(phase,"Name",tag+" | nome fase",tag);
             Wire(Choice(tag+" | stato sezione",new[]{("Acciaio",0),("Misto attivo",1)},i==0?0:1),phase,"Section State");
-            for(int family=0;family<2;family++)
+            for(int family=0;family<Cases(i).Length;family++)
             {
-                string key=tag+(family==0?"_SOLETTA":"_TRAVI");
+                string key=Cases(i)[family];
                 var action=Add(i==3?"BridgeShrinkageActionComponent":"BridgeActionComponent",key+" | azione",6050,y+family*500);actions.Add(action);
                 Literal(action,"Action ID",key+" | identificativo azione",key);Wire(analyses[i],"Model",action,"Model");Wire(casesByModel[i][family],"LoadCase",action,"Case");
-                Wire(overrides[i],"Beam IDs",action,"Beam IDs");
+                // Whole-model actions preserve global support reactions. The checker selects the longitudinal beams downstream.
                 if(i<3)Wire(Choice(key+" | comportamento",new[]{("Acciaio",0),("Lungo termine n infinito",1),("Istantaneo n0",2)},i),action,"Behavior");
                 else
                 {
-                    // Mechanical test on n-sh stiffness, not an imposed shrinkage load. Never invent eigenstrain.
-                    Literal(action,"Strain increment",key+" | epsilon ZERO — solo carico meccanico di prova","0");
+                    Wire(creep,"εcs",action,"Strain increment");
                     Flag(action,"Primary Only",key+" | solo effetto primario",false);
                     Wire(Choice(key+" | risposta",new[]{("n ritiro",0)},0),action,"Response");
                 }
@@ -277,7 +302,7 @@ internal sealed class ParametricBridgePhasesExample : IDisposable
         }
         Wire(Choice("Metodo Build BridGHe Model",new[]{("Cumulativo",0),("Storia lineare",1)},0),merge,"Calculation");Flag(merge,"Additional Phase Members","Consenti elementi aggiuntivi nelle fasi — geometrie identiche",false);
         Output(Out(merge,"Model"),"MODELLO BRIDGHE ASSEMBLATO — dopo analisi e Run",22000);
-        Output(Out(merge,"Phases"),"Riepilogo delle quattro fasi e degli otto casi");Output(Out(merge,"Diagnostics"),"Diagnostica assemblaggio delle risposte");
+        Output(Out(merge,"Phases"),"Riepilogo delle quattro fasi e delle sette azioni");Output(Out(merge,"Diagnostics"),"Diagnostica assemblaggio delle risposte");
         // Keep the existing preview/audit useful, but select explicitly which loaded FEM model is displayed.
         var selector=Standard("List Item",5000,23200);selector.NickName="Modello FEM visualizzato";
         foreach(var m in models)selector.Params.Input[0].AddSource(Out(m,"Model"));selector.Params.Input[0].DataMapping=GH_DataMapping.Flatten;
@@ -285,6 +310,7 @@ internal sealed class ParametricBridgePhasesExample : IDisposable
         Wire(selector.Params.Output[0],Find("PreviewModelComponent"),"Model / elements",true);
         Wire(selector.Params.Output[0],Find("BridgeModelAuditComponent"),"Model",true);
         Wire(selector.Params.Output[0],Find("DecomposeModelComponent"),"Model",true);
+        AddChecks();
         ExternalDefaults();
         // Remove only orphaned input controls produced by replacing old sources in this in-memory copy.
         var recipients=doc.Objects.OfType<GH_Component>().SelectMany(c=>c.Params.Input).Concat(doc.Objects.OfType<IGH_Param>()).SelectMany(p=>p.Sources).ToHashSet();
@@ -294,10 +320,12 @@ internal sealed class ParametricBridgePhasesExample : IDisposable
         title.UserText="50 | STESSA GEOMETRIA, QUATTRO RISPOSTE: ACCIAIO / n infinito / n0 / n ritiro\n"+
             "Conci e input geometrici come nel 49, che resta invariato. Sezioni a I per concio → sezioni miste → override per ID.\n"+
             "Fasce trasversali della soletta con materiale cls di densità ZERO in tutti i modelli; E = 30000 MPa comune e modificabile.\n"+
-            "Per ogni modello: un caso di pressione sulla soletta e un caso di carico lineare sulle travi principali, entrambi verticali globali.\n"+
-            "n infinito = coefficiente finito a lungo termine. Il ramo n ritiro ha qui solo carichi meccanici di test, epsilon = 0.\n"+
+            "M01/M02/M03: pressione soletta e carico lineare travi. M04: SOLO ritiro, stessa epsilon per FEM e azione primaria.\n"+
+            "Ritiro calcolato da Creep And Shrinkage Concrete, quindi convertito in pre-strain + curvatura equivalente di ogni concio.\n"+
             "CALCOLA I QUATTRO MODELLI = True, attendere le analisi, poi False. Run sul Build BridGHe Model per assemblare le quattro risposte.\n"+
-            "Le combinazioni TEST isolano ogni modello: non sommano quattro volte gli stessi carichi. Nessuna combinazione normativa o verifica finale.\n"+
+            "Run su Verifiche di tutte le travi → pioli / irrigiditori / riepilogo. Draw sui grafici; Generate sul report Word.\n"+
+            "Le TEST isolano le risposte; DEMO_CUMULATIVA somma tre incrementi meccanici distinti e un solo ritiro. Coefficienti dimostrativi.\n"+
+            BridgeCheckAdapter.PlanarAssumption+"\n"+
             "Le fasce cls sono attive anche nel ramo acciaio per questo confronto: non rappresenta automaticamente la fase fisica di getto fresco.\n"+
             "Quote FEM, eccentricità e convenzione delle sezioni omogeneizzate seguono il flusso esistente. Vedere README dell'esempio 50.";
     }
@@ -319,7 +347,7 @@ internal sealed class ParametricBridgePhasesExample : IDisposable
         {
             var m=ms[i];Require(m.Name==Tags[i] && m.Beams.Count==ms[0].Beams.Count && m.Nodes.Count==ms[0].Nodes.Count,"identical topology across models");
             ModelHelper.GetLoadCases(m,out var cases);
-            Require(cases.Where(l=>l.Name!="Dead").Select(l=>l.Name).Order().SequenceEqual(new[]{Tags[i]+"_SOLETTA",Tags[i]+"_TRAVI"}.Order()),"two distinct test cases plus reserved Dead per model: "+string.Join(",",cases.Select(l=>l.Name)));
+            Require(cases.Where(l=>l.Name!="Dead").Select(l=>l.Name).Order().SequenceEqual(Cases(i).Order()),"correct phase cases: "+string.Join(",",cases.Select(l=>l.Name)));
             Require(cases.Where(l=>l.Name!="Dead").All(l=>l.GlobalInertiaLoad==LoadCaseModel.GlobalInertiaLoads.None),"no implicit gravity in test cases");
             var audit=BridgeModelAudit.Inspect(m,1e-3);Require(!audit.Any(a=>a.Severity=="Error"||a.Code=="DISCONNECTED"),"model audit: "+string.Join(";",audit.Select(a=>a.ToString())));
             double deckForce=0,girderForce=0;
@@ -333,7 +361,20 @@ internal sealed class ParametricBridgePhasesExample : IDisposable
                 else Require(b.BeamProperty.SectionArea==original.BeamProperty.SectionArea && b.BeamProperty.I11==original.BeamProperty.I11,"other members retain stiffness");
                 Require(Math.Abs(b.BeamProperty.Material.Density*b.BeamProperty.SectionArea-original.BeamProperty.Material.Density*original.BeamProperty.SectionArea)<1e-15,"physical steel mass unchanged by homogenization");
                 var loads=b.Loads.OfType<BeamDistributedLoadModel>().ToArray();
-                Require(loads.Length==(meta.Family is BridgeMemberFamily.Girder or BridgeMemberFamily.DeckTransverse?1:0),"load only on intended member families");
+                Require(loads.Length==(i<3 && meta.Family is BridgeMemberFamily.Girder or BridgeMemberFamily.DeckTransverse?1:0),"mechanical loads only on intended member families and phases");
+                if(i==3)
+                {
+                    Require(b.Loads.Count==(meta.Family==BridgeMemberFamily.Girder?2:0),"shrinkage model contains only two equivalent strain actions per longitudinal beam");
+                    if(meta.Family==BridgeMemberFamily.Girder)
+                    {
+                        var c=d.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="BeamPropertyCompositeComponent");
+                        var section=Values<CompositeBeamPropertyModel>(Out(c,"Composite Section")).Single(s=>s.Name==$"G{meta.Group}-C{meta.Segment}");
+                        double epsilon=(double)Value(Out(d.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="CreepAndShrinkageConcreteComponent"),"εcs"));
+                        var expected=CompositeShrinkageActions.Calculate(section,epsilon);
+                        var pre=b.Loads.OfType<BeamPreLoadModel>().Single();var grad=b.Loads.OfType<BeamGradientLoadModel>().Single();
+                        Require(epsilon<0 && pre.PreLoadType==BeamPreLoadModel.LoadType.Strain && Math.Abs(pre.Value-expected.PreStrain)<1e-14 && grad.Value.Axis1==0 && Math.Abs(grad.Value.Axis2-expected.ThermalGradient)<1e-14,"correct concio shrinkage axial strain and curvature");
+                    }
+                }
                 foreach(var load in loads)
                 {
                     Require(load.Value.CoordinateSystem!=null && load.Value.LoadDirection==BeamDistributedLoadModel.LoadDirection.Z,"global vertical loading");
@@ -341,7 +382,7 @@ internal sealed class ParametricBridgePhasesExample : IDisposable
                     if(meta.Family==BridgeMemberFamily.DeckTransverse)deckForce+=force;else girderForce+=force;
                 }
             }
-            Require(Math.Abs(deckForce+900000)<1e-5 && Math.Abs(girderForce+270000)<1e-5,"analytical load totals: -900 kN deck and -270 kN girders");
+            Require(Math.Abs(deckForce+(i==3?0:900000))<1e-5 && Math.Abs(girderForce+(i==3?0:270000))<1e-5,"analytical load totals; zero mechanical loads in shrinkage model");
             rows.Add(new{m.Name,beams=m.Beams.Count,nodes=m.Nodes.Count,deckForceN=deckForce,girderForceN=girderForce,zeroSlabDensity=true});
         }
         var comp=d.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="BeamPropertyCompositeComponent");
@@ -357,9 +398,13 @@ internal sealed class ParametricBridgePhasesExample : IDisposable
         var merger=d.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="BuildBridgeModel");
         var data=In(merger,"Combinations").VolatileData;
         var table=data.Paths.Select(path=>data.get_Branch(path).Cast<IGH_Goo>().Select(g=>g.ScriptVariable()?.ToString()).ToArray()).ToArray();
-        Require(table.Length==5 && table.All(r=>r.Length==9),"combination panel splits into one header and four rows, with eight action columns");
-        Require(table[0].Skip(1).SequenceEqual(Tags.SelectMany(t=>new[]{t+"_SOLETTA",t+"_TRAVI"})),"combination headers exactly match action IDs");
-        for(int i=0;i<4;i++)Require(table[i+1].Skip(1).SequenceEqual(Enumerable.Range(0,8).Select(j=>j/2==i?"1":"0")),"comparison isolates one model and never repeats the same load four times");
+        Require(table.Length==6 && table.All(r=>r.Length==8),"header and five combinations with seven action columns");
+        Require(table[0].Skip(1).SequenceEqual(ActionKeys),"combination headers exactly match action IDs");
+        for(int i=0;i<4;i++)Require(table[i+1].Skip(1).SequenceEqual(ActionKeys.Select(k=>Cases(i).Contains(k)?"1":"0")),"comparison isolates one model");
+        Require(table[5].Skip(1).All(s=>s=="1"),"cumulative demo combines three distinct mechanical increments and shrinkage once");
+        var shrink=d.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="BridgeShrinkageActionComponent");
+        var strain=d.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="CreepAndShrinkageConcreteComponent");
+        Require(In(shrink,"Strain increment").Sources.Single()==Out(strain,"εcs") && In(d.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="CompositeShrinkageActionsComponent"),"Concrete strain").Sources.Single()==Out(strain,"εcs"),"one strain source for primary and secondary shrinkage");
         Require(d.Objects.OfType<GH_Component>().SelectMany(c=>c.Params.Input).All(p=>p.SourceCount>0 && Persistent(p)?.IsEmpty!=false),"all inputs remain explicitly wired");
         return rows;
     }
@@ -376,23 +421,31 @@ internal sealed class ParametricBridgePhasesExample : IDisposable
             foreach(var b in snapshot.Beams)
             foreach(var lc in cases.Where(c=>c.Name!="Dead"))
             foreach(double station in new[]{0d,b.PointFrom.DistanceTo(b.PointTo)})
-                b.Results.Add(new BeamForceResultModel(lc,station,0,""){AxialForce=10*(i+1)+(lc.Name.EndsWith("TRAVI")?1:0)});
+                b.Results.Add(new BeamForceResultModel(lc,station,0,""){AxialForce=10*(i+1)+(lc.Name.EndsWith("TRAVI")?1:0),Vy=2000*(i+1),My=1e7*(i+1),Torque=5e6,Mx=-2e6,Vx=3e4});
+            foreach(var node in snapshot.Nodes)
+            foreach(var lc in cases.Where(c=>c.Name!="Dead"))
+                node.Results.Add(new NodeReactResultModel(lc){Force=new Rhino.Geometry.Vector3d(0,0,1000*(i+1))});
             var analysis=fixture.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="StrausR3AnalysisComponent"&&c.NickName.StartsWith(Tags[i]));
             var field=analysis.GetType().GetField("_model",BindingFlags.Instance|BindingFlags.NonPublic);
             var goo=Activator.CreateInstance(field.FieldType);field.FieldType.GetProperty("Value").SetValue(goo,snapshot);field.SetValue(analysis,goo);
             analysis.ExpireSolution(false);
         }
         var merger=fixture.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="BuildBridgeModel");RunButton(merger);merger.ExpireSolution(false);Solve(fixture);
-        var result=(ModelModel)Value(Out(merger,"Model"));Require(result.BridgeWorkflow?.Phases.Length==4 && result.LoadCombinations.Count==4,"four wired phases and four comparison combinations in fixture");
-        Require(result.BridgeWorkflow.Phases.SelectMany(p=>p.Actions).Count()==8,"all eight distinct wired actions reach the builder");
+        var result=(ModelModel)Value(Out(merger,"Model"));Require(result.BridgeWorkflow?.Phases.Length==4 && result.LoadCombinations.Count==5,"four wired phases and five demo combinations in fixture");
+        Require(result.BridgeWorkflow.Phases.SelectMany(p=>p.Actions).Count()==7,"all seven distinct wired actions reach the builder");
         foreach(var b in result.Beams.Where(b=>b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value.Family==BridgeMemberFamily.Girder))
         for(int i=0;i<4;i++)
-        foreach(var family in new[]{"SOLETTA","TRAVI"})
+        foreach(var key in Cases(i))
         {
-            var values=b.Results.OfType<BeamForceResultModel>().Where(r=>r.LoadCase.Name==Tags[i]+"_"+family+" [FEM]").ToArray();
-            Require(values.Length>=2 && values.All(v=>v.AxialForce==10*(i+1)+(family=="TRAVI"?1:0)),"fixture force remains associated with its exact action and source model");
+            var values=b.Results.OfType<BeamForceResultModel>().Where(r=>r.LoadCase.Name==key+" [FEM]").ToArray();
+            Require(values.Length>=2 && values.All(v=>v.AxialForce==10*(i+1)+(key.EndsWith("TRAVI")?1:0)),"fixture force remains associated with its exact action and source model");
         }
-        Console.WriteLine("FOUR MODELS WIRING FIXTURE PASS: eight actions, four phases and four comparisons; synthetic test data discarded, no FEM result claimed.");
+        ValidateChecks(fixture);
+        var checker=fixture.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="SuperElementCheckComponent");
+        var fullForces=Values<GPC.Model.Results.ResultBeamForces>(Out(checker,"Tension Forces")).ToArray();
+        Require(fullForces.Any(f=>Math.Abs(f.T)>1 && Math.Abs(f.M2)>1 && Math.Abs(f.V1)>1),
+            "checker force output and force plots retain T, M2 and V1 excluded from section checks");
+        Console.WriteLine("FOUR MODELS WIRING FIXTURE PASS: seven actions, four phases, five combinations and whole-bridge checks; synthetic test data discarded, no FEM result claimed.");
     }
     private object Native()
     {
@@ -403,12 +456,12 @@ internal sealed class ParametricBridgePhasesExample : IDisposable
             var model=(ModelModel)Value(Out(analyses[i],"Model"));
             var lines=new List<object>();
             ModelHelper.GetLoadCases(model,out var cases);
-            foreach(var lc in cases)
+            foreach(var lc in cases.Where(c=>i<3||c.Name!="Dead"))
             {
                 var reactions=model.Nodes.SelectMany(n=>n.Results.OfType<NodeReactResultModel>()).Where(r=>r.LoadCase.Name==lc.Name).ToArray();
                 Require(reactions.Length>0,"native support reactions for "+lc.Name);
                 double rz=reactions.Sum(r=>r.Force.Z),expected=lc.Name=="Dead"?model.Beams.Sum(b=>b.BeamProperty.Material.Density*b.BeamProperty.SectionArea*b.PointFrom.DistanceTo(b.PointTo))*ModelModel.GRAVITY_mmSuS2:
-                    lc.Name.EndsWith("SOLETTA")?900000:270000;
+                    lc.Name.EndsWith("RITIRO")?0:lc.Name.EndsWith("SOLETTA")?900000:270000;
                 Require(Math.Abs(rz-expected)<=Math.Max(1e-3,expected*1e-7),"vertical native equilibrium for "+lc.Name);
                 lines.Add(new{lc.Name,reactionZ=rz,expectedZ=expected});
             }
@@ -418,8 +471,9 @@ internal sealed class ParametricBridgePhasesExample : IDisposable
         }
         RunButton(merge);merge.ExpireSolution(false);Solve(doc);
         var merged=(ModelModel)Value(Out(merge,"Model"));Require(merged.BridgeWorkflow?.Phases.Length==4,"four phases assembled after real analyses");
-        Require(merged.LoadCombinations.Count==4,"four comparison combinations assembled");
-        return new{models=results,mergedPhases=4,combinations=4};
+        Require(merged.LoadCombinations.Count==5,"five demo combinations assembled");
+        ValidateChecks(doc);
+        return new{models=results,mergedPhases=4,combinations=5,wholeBridgeChecksExecuted=true};
     }
     internal static int Run(bool native)
     {
@@ -444,7 +498,7 @@ internal sealed class ParametricBridgePhasesExample : IDisposable
                 File.WriteAllText(Path.Combine(Folder,"native-validation.json"),JsonSerializer.Serialize(result,new JsonSerializerOptions{WriteIndented=true}));
                 // Persist real results; the automatic-run toggle stays false, so reopening never launches analysis.
                 GrasshopperBridgeExample.Write(example.doc,temporary);File.Move(temporary,path,true);
-                Console.WriteLine("FOUR MODELS NATIVE PASS: eight test cases plus four Dead cases, reaction equilibrium and final Build BridGHe Model.");
+                Console.WriteLine("FOUR MODELS NATIVE PASS: six mechanical cases, one shrinkage case, three Dead result cases, reaction equilibrium and whole-bridge checks.");
             }
             return 0;
         }

@@ -33,8 +33,8 @@
       "Name": "M04_NSH",
       "beams": 324,
       "nodes": 266,
-      "deckForceN": -900000,
-      "girderForceN": -270000,
+      "deckForceN": 0,
+      "girderForceN": 0,
       "zeroSlabDensity": true
     }
   ]
