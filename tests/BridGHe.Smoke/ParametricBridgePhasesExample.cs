@@ -137,7 +137,17 @@ internal sealed class ParametricBridgePhasesExample : IDisposable
             }
             else if(values.Length==1 && values[0] is GH_Boolean b)source=Control(label,new GH_BooleanToggle{Value=b.Value});
             else if(values.Length==1 && values[0] is GH_Integer i)source=Slider(label,i.Value,Math.Min(0,i.Value),Math.Max(10,i.Value*2),0);
-            else if(values.Length==1 && values[0] is GH_Number n)source=Slider(label,n.Value,Math.Min(0,n.Value),Math.Max(1,n.Value*2));
+            else if(values.Length==1 && values[0] is GH_Number n)
+            {
+                if(double.IsFinite(n.Value) && Math.Abs(n.Value)<=1e20 && decimal.TryParse(n.Value.ToString("R",Inv),NumberStyles.Float,Inv,out var exact) && (double)exact==n.Value)
+                {
+                    int precision=Math.Max(3,(decimal.GetBits(exact)[3]>>16)&0xff);
+                    var slider=Slider(label,n.Value,Math.Min(0,n.Value),Math.Max(1,n.Value*2),precision);
+                    if((double)slider.CurrentValue!=n.Value)throw new Exception("Slider changed the default value of "+label);
+                    source=slider;
+                }
+                else source=Text(label,n.Value.ToString("R",Inv));
+            }
             else source=Text(label,string.Join("\n",values.Select(g=>g.ScriptVariable() is IFormattable v?v.ToString(null,Inv):g.ToString())));
             Wire(source,c,p.Name);source.Description=p.Description;
         }
