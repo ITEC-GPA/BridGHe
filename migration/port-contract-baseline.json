@@ -346,6 +346,12 @@
         "14c68fb0-de0e-4eec-bc39-282e2c5f08b6"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/Geometry/BridgeSegmentOverrideComponent.cs": {
+      "ports": "73c5738a4a446ff480d159c32ca357b8e93b66a82e21ceb20756b98765c1c874",
+      "guids": [
+        "1e3d5d47-4df8-4dde-9cc9-7ec2c327ff2d"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/Geometry/BridgeSegmentSectionsComponent.cs": {
       "ports": "2f623742a1f9346bd28d87ca08f12ee82c30a5ad93d4056e2da24877a576301b",
       "guids": [

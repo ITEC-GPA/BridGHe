@@ -1147,6 +1147,15 @@
       "badge": "measure"
     },
     {
+      "key": "BridgeSegmentOverrideComponent",
+      "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSegmentOverrideComponent",
+      "guid": "1e3d5d47-4df8-4dde-9cc9-7ec2c327ff2d",
+      "name": "Bridge Segment Override",
+      "family": "model",
+      "glyph": "bridge-segments",
+      "badge": "edit"
+    },
+    {
       "key": "BridgeSegmentSectionsComponent",
       "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSegmentSectionsComponent",
       "guid": "8b33beac-6c81-4285-94ad-4e3dc2351a21",

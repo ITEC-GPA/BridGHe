@@ -229,6 +229,7 @@ SimpleBridgeConfigurableComponent|bridge-solid|native|model
 BridgeParametricLayoutComponent|bridge-schedule|measure|model
 BridgeSlabGrillageComponent|bridge-deck|native|model
 BridgeSegmentSectionsComponent|bridge-segments|native|section
+BridgeSegmentOverrideComponent|bridge-segments|edit|model
 SimpleBridgeTrussComponent|bridge-truss||model
 BridgeSegmentsComponent|bridge-segments||model
 BridgeDiaphragmsComponent|bridge-diaphragms||model

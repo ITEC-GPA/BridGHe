@@ -8841,6 +8841,84 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSegmentOverrideComponent",
+    "guid": "1e3d5d47-4df8-4dde-9cc9-7ec2c327ff2d",
+    "kind": "component",
+    "name": "Bridge Segment Override",
+    "nickname": "SegmentOverride",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Override longitudinal beam properties by fabrication segment ID. Keeps steel cross-members, IDs, loads and geometry; clears results in independent copies.",
+    "inputs": [
+      {
+        "name": "Beams",
+        "nickname": "B",
+        "description": "Steel members from Bridge Member Assignment, carrying physical segment metadata.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Segment IDs",
+        "nickname": "ID",
+        "description": "G1-C1, G1-C2, etc., paired with Properties. Connect Bridge Segment Sections > Segment IDs.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Properties",
+        "nickname": "P",
+        "description": "Exactly one property per Segment ID: steel, n0, n infinity or n shrinkage. No list broadcasting.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Preserve Mass",
+        "nickname": "Mass",
+        "description": "Preserve source mass per length: replacement density = source density * source area / replacement area. Prevents transformed concrete area being counted as steel self-weight. Elastic properties are unchanged.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Girders",
+        "nickname": "G",
+        "description": "Longitudinal beams with replaced properties. Apply phase loads before Build Model.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Other Steel",
+        "nickname": "S",
+        "description": "Unchanged properties of cross-members and bracing, copied independently.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Beam IDs",
+        "nickname": "ID",
+        "description": "Stable FEM IDs of the longitudinal girders, in Girders order.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Scope and reference-axis convention.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSegmentSectionsComponent",
     "guid": "8b33beac-6c81-4285-94ad-4e3dc2351a21",
     "kind": "component",
