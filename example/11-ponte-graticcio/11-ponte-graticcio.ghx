@@ -117,7 +117,7 @@ Tre modelli elastici: acciaio / misto lungo termine / misto istantaneo.
 Geometria, carichi e proprieta sono visibili e modificabili nei parametri.
 Modificare parameters.json e rigenerare per cambiare coerentemente tutte le dipendenze.
 Run inizialmente false. File .st7 in TEMP, percorsi modificabili.
-BridgeChecks: usare solo la combinazione simmetrica; il traffico eccentrico richiede anche torsione.
+BridgeChecks: solo N-Mx-Vy, esclusi T, M2 e V1. La combinazione iniziale è simmetrica; gli effetti fuori piano non sono verificati.
 Soletta e diaframmi sono travi equivalenti: non e una verifica normativa completa.</item>
                   </items>
                   <chunks count="2">

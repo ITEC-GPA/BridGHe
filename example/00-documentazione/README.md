@@ -1,6 +1,7 @@
 # Documentazione comune degli esempi
 
 - [Indice completo](../README.md)
+- [Revisione degli esempi del 25 ottobre 2026](../../docs/REVISIONE-ESEMPI-2026-10-25.md)
 - [Schemi e formule dei benchmark 01–10](benchmark-01-10.md)
 - [Materiali e ipotesi dei ponti 12–18](ponti-12-18.md)
 - [Tavole storiche dei quattro ponti](quattro-ponti.pdf)

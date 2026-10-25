@@ -433,7 +433,7 @@ def make_document():
     ], [1.35, 5.59])
     p("La struttura dei risultati segue beam e stazioni; le combinazioni sono nell’ordine del modello. Conservare l’albero **{beam;station}** e la stessa lista ordinata di Composite beam fino ai grafici. Un Flatten indiscriminato può perdere l’associazione fisica dei risultati.")
     h("Campo della verifica")
-    p("Il checker H gestisce il campo di azioni implementato e rifiuta componenti fuori campo, fra cui torsione e flessione sull’asse minore. Le azioni FEM non supportate non vengono azzerate per ottenere un esito. Per travi laterali, ponti curvi o azioni eccentriche occorrono verifiche dedicate.")
+    p("Il checker H verifica nel piano N–Mx–Vy. Torsione T, momento sull’asse debole M2 e taglio trasversale V1 sono trascurati nelle verifiche di sezione e dei dettagli; restano nei risultati FEM e nei grafici delle sollecitazioni. L’ipotesi accompagna i risultati e compare nel report. Gli effetti esclusi e le loro interazioni non sono verificati.")
     p("Le azioni di sezione devono essere riferite coerentemente al baricentro lordo previsto dalla fase; il trasferimento interno fra sezione lorda ed efficace non corregge automaticamente un riferimento FEM eccentrico arbitrario.")
     p("Per l’esempio centrale simmetrico, confrontare prima segni e valori dei singoli contributi G1, G2, Q e RITIRO, poi la combinazione. Una verifica delle tensioni non copre automaticamente stabilità globale, fatica, connessioni, soletta locale o tutte le combinazioni di progetto.")
 
@@ -539,7 +539,7 @@ def make_document():
         ("Ritiro troppo grande", "Strain in µε anziché adimensionale o doppio primario", "Usare −0.0002 per −200 µε; rimuovere la duplicazione tramite Composite Beam Strain"),
         ("Plot vuoto o incoerente", "Albero appiattito, uscita errata o dati non aggiornati", "Forces da Tension Forces; stresses da Tension Check; mantenere gli alberi e premere Draw"),
         ("Tau NaN o dettagli rifiutati", "Metodo o grandezza non supportati", "Non interpretare NaN come zero; usare un percorso di verifica compatibile"),
-        ("Errore per torsione o asse minore", "Azioni fuori dal campo del checker H", "Mantenere le azioni FEM e verificarle con un metodo dedicato"),
+        ("T, M2 e V1 esclusi dalle verifiche", "Ipotesi di verifica nel piano N–Mx–Vy", "Leggere l’ipotesi nel report; verificare separatamente gli effetti esclusi"),
         ("DLL non copiabile dopo build", "Rhino mantiene il file caricato", "Salvare, chiudere Rhino, ricompilare e riavviare"),
     ], [1.73, 2.14, 3.07])
     h("Ordine di aggiornamento")

@@ -56,7 +56,7 @@ La contrazione ha segno negativo e unità adimensionale: −200 µε = −0.0002
 
 **Calculation = 1, LinearHistory**, usa `HBridgeHistoryResults.Calculate` della libreria GPC. Segue gli incrementi N–Mx e l'attivazione della soletta, compreso lo stato ConcreteExcluded. Non è un solutore globale di costruzione per il ponte: le sollecitazioni devono essere già ottenute dai corretti modelli Straus. Il giorno è metadato, senza integrazione automatica di viscosità o ritiro nel tempo. La deformazione riportata è geometrica rispetto all'inizio della storia; la tensione del calcestruzzo segue la sua attivazione.
 
-LinearHistory non verifica taglio, pioli o irrigiditori: tau non disponibile è NaN e Bridge Detail Check rifiuta questi risultati, evitando di ricalcolarli con il metodo cumulativo. Il checker H conserva i limiti relativi a torsione e flessione sull'asse minore; le componenti FEM non supportate non vengono cancellate.
+LinearHistory non verifica taglio, pioli o irrigiditori: tau non disponibile è NaN e Bridge Detail Check rifiuta questi risultati, evitando di ricalcolarli con il metodo cumulativo. L’adattatore usa l’ipotesi piana: T, M2 e V1 sono esclusi dal checker e conservati nei risultati FEM. L’ipotesi segue ogni risultato fino al report. Nel metodo Cumulative si usa N–Mx–Vy; LinearHistory mantiene la sola risposta N–Mx e non acquisisce nuove capacità di verifica del taglio.
 
 ## Modifiche dell'interfaccia
 
@@ -70,6 +70,8 @@ LinearHistory non verifica taglio, pioli o irrigiditori: tau non disponibile è 
 
 Gli esempi 11–18 usano gli archivi dei risultati nativi esistenti per verificare il nuovo assemblaggio senza avviare Straus. Negli esempi 12–18 n ritiro coincide con n infinito, coerentemente con le analisi storiche. Il secondario e il primario sono ora due contributi distinti associati alla stessa azione. L'esempio 11 mantiene le due deformazioni imposte primarie del precedente modello, con Response rispettivamente n ritiro e n0.
 
+I comandi di replay 11–18 scrivono copie e diagnostica in `artifacts/example-replay`, senza riscrivere i GHX distribuiti o i loro report di validazione. Per l'esempio 19, `--workflow-archived-replay` ricalcola il workflow dagli archivi `.bgmodel` senza accedere all'API Straus. `--saved-bridge-audit` verifica in sola lettura le revisioni 002–004 del 99, con analisi native e scrittura report disabilitate.
+
 ```powershell
 dotnet build tests/BridGHe.Smoke -c Release
 dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --grillage-gh-replay
@@ -77,4 +79,6 @@ dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --bridge-gh-re
 dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --bridge-workflow
 ```
 
-L'ultimo comando prepara REV003 del ponte a tre travi senza eseguire Straus. Aggiungere `--native` per analizzare e controllare il nuovo modello. Nei ponti curvi il blocco per torsione fuori campo è un esito atteso; non rappresenta una verifica completa del ponte.
+L'ultimo comando prepara REV003 del ponte a tre travi senza eseguire Straus. Aggiungere `--native` per analizzare e controllare il nuovo modello. Anche nei ponti curvi il checker produce la verifica nel piano N–Mx–Vy, trascurando T, M2 e V1. Le sei componenti rimangono nei modelli e nei grafici delle sollecitazioni. Non sono verificati gli effetti esclusi né le loro interazioni.
+
+Azioni e template possono essere predisposti prima dei risultati FEM: il modello deve contenere geometria e casi definiti. Bridge Action e Bridge Shrinkage Action avvisano che manca l’analisi; le Value List elencano anche i casi e le combinazioni definiti. Il Build continua a richiedere i campioni FEM delle azioni secondarie.

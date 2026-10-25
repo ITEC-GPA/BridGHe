@@ -1,5 +1,7 @@
 # Verifiche della Release
 
+[Revisione corrente degli esempi e limiti dei controlli del 25 ottobre 2026](REVISIONE-ESEMPI-2026-10-25.md).
+
 ## Collaudo con licenza Straus — 20 ottobre 2026
 
 Completate le prove rimaste sospese per la licenza. Il riepilogo versionato è [licensed-native-20261020.json](../example/00-documentazione/validazioni/licensed-native-20261020.json).
@@ -59,7 +61,7 @@ Ambiente effettivo: Windows x64, Rhino 8.35 avviato con Rhino.Inside, runtime .N
 
 Una correzione finale è esclusivamente grafica: il raggio equivalente di una sezione generica ora usa le unità del modello, eliminando un fattore 0,001 improprio. Sono state rieseguite tutte le 30 regressioni, inclusi dimensioni della preview, confronto dei gruppi e baseline numerica invariata. Corretto anche il tipo usato da Equals(object) degli String Group, che poteva provocare ricorsione infinita confrontando un rilascio.
 
-I controlli software non coincidono con verifiche resistenti di progetto. In particolare, il rifiuto esplicito di torsione fuori campo è un test corretto del comportamento del software, non un esito positivo per il ponte.
+I controlli software non coincidono con verifiche resistenti di progetto. I report storici includono il precedente rifiuto della torsione. Dal 25 ottobre 2026 il checker applica l’ipotesi dichiarata N–Mx–Vy: T, M2 e V1 restano nei risultati FEM ma sono esclusi dalle verifiche. La regressione ne controlla la conservazione e la proiezione; non certifica gli effetti esclusi.
 
 ## Riesecuzione dopo il riordino delle palette e delle fasi
 

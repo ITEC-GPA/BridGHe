@@ -73,7 +73,7 @@ La combinazione BridgeChecks `SLS_SIMMETRICO` somma con fattori 1 G1, G2, Q_UDL 
 6. Premere **Run** su `Build BridGHe Model`, poi su `Super Element Check`. Si elaborano 48 elementi × 5 stazioni = **240 sezioni**. `Composite Beam` assegna la sezione mista; `Composite Section Linear Tension Results` espone le tensioni.
 7. Per modifiche coordinate a geometria, carichi e rigidezze usare `parameters.json` e rigenerare. Nel canvas i parametri geometrici e i dati sono modificabili, ma non sono collegati da slider universali: cambiare solo la soletta in un ramo non aggiorna automaticamente tutti gli altri. Il generatore è la fonte parametrica coerente.
 
-La matrice delle combinazioni contiene solo la combinazione simmetrica. Q_ECC e Q_MIRROR rimangono nei risultati uniti, ma non sono dichiarati verificati. Aggiungerli a una combinazione del checker provoca correttamente un errore per la torsione non supportata. Le tre opzioni di instabilità locale sono false per il confronto elastico a sezione lorda: non è una verifica di classe o di sezione efficace.
+La matrice delle combinazioni contiene solo la combinazione simmetrica. Q_ECC e Q_MIRROR rimangono nei risultati uniti, ma non sono dichiarati verificati. Aggiungerli a una combinazione produce ora soltanto la verifica N–Mx–Vy: T, M2 e V1 sono esclusi e conservati nei risultati FEM. Il risultato e il report dichiarano tale ipotesi; gli effetti fuori piano non sono verificati. Le tre opzioni di instabilità locale sono false per il confronto elastico a sezione lorda: non è una verifica di classe o di sezione efficace.
 
 ## Risultati e controlli riproducibili
 

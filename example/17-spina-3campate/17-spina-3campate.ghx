@@ -126,7 +126,7 @@ G1 acciaio/getto; G2 misto lungo termine; Q misto istantaneo; RITIRO misto lungo
 Ritiro: pre-strain e gradiente per effetti globali + una sola autotensione di sezione.
 Geometrie e proprieta editabili. Per modifiche coerenti usare parameters.json e rigenerare.
 Attivare CALCOLA 4 MODELLI; poi Run Build BridGHe Model e Run Super Element Check.
-Per i ponti curvi il checker segnala la torsione non supportata: consultare tutti i risultati FEM.</item>
+Verifiche N-Mx-Vy: T, M2 e V1 esclusi dal checker e conservati nei risultati FEM; gli effetti esclusi non sono verificati.</item>
                   </items>
                   <chunks count="2">
                     <chunk name="Attributes">
@@ -100869,7 +100869,7 @@ Nessuna cancellazione o proiezione delle sollecitazioni non supportate.</item>
 Prima trave selezionata: appoggio e primo diaframma interno.
 Pioli: 2 x diam.22, h180, passo200 mm. Piatti intermedi 200x20, appoggio 250x25 mm.
 Reazione d'appoggio dimostrativa SLS: somma dei quattro casi; sostituire con inviluppo SLU per il progetto.
-Le verifiche conservano lo stato limite del risultato sorgente. Nei curvi BridgeChecks blocca prima la torsione H.
+Le verifiche conservano lo stato limite e l’ipotesi N-Mx-Vy del risultato sorgente; T, M2 e V1 restano esclusi anche nei dettagli.
 I dettagli non aggiungono automaticamente rigidezza o peso al graticcio equivalente.</item>
                   </items>
                   <chunks count="2">

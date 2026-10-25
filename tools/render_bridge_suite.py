@@ -98,7 +98,7 @@ for idx,(folder,r) in enumerate(zip(folders,reports)):
         ss=r['Sections'][-1]['FinalStress'];label(40,225,'Sezione campione - tensioni finali [MPa]',11,TEAL,True)
         table(40,210,[188,188,188,191],['CLS sopra','CLS sotto','Acciaio sopra','Acciaio sotto'],[[f'{v:.3f}' for v in ss]])
     else:
-        text='La torsione delle travi ad H e conservata nel modello e nei CSV. BridGHe rifiuta le azioni fuori dal proprio campo: nessun esito di verifica H completa. Le definizioni dei pioli e degli irrigiditori sono presenti nel GHX; il ramo verifiche si arresta a monte. Il modello torsionale gPC per cassoni non e applicabile alla H.'
+        text='La torsione delle travi ad H e conservata nel modello e nei CSV. Il report storico registra il precedente blocco del checker. Il checker attuale usa N-Mx-Vy, escludendo T, M2 e V1 anche nei dettagli: gli effetti esclusi non sono verificati. Il modello torsionale gPC per cassoni non e applicabile alla H.'
         label(40,225,'FEM calcolato; verifica delle H curve da completare',12,PALETTE[2],True)
     para(40,143,text,750,10)
     para(40,83,'Limiti: niente fessurazione, ritiro trasversale, storia reologica, scorrimento dei pioli o inviluppo del traffico. Parametri, controlli con tolleranze, CSV e istruzioni nelle cartelle degli esempi e nel README.',750,9)

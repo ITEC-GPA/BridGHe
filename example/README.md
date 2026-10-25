@@ -1,5 +1,7 @@
 # Esempi BridGHe
 
+[Audit degli esempi del 25 ottobre 2026](../docs/REVISIONE-ESEMPI-2026-10-25.md): ipotesi N–Mx–Vy, test offline e allineamento del ritiro e analisi da rifare in 99 REV004.
+
 Un unico punto di ingresso per definizioni Grasshopper, dati, risultati e istruzioni. La numerazione identifica il caso e rimane stabile quando si rigenerano i file.
 
 - **01–05**: benchmark FEM elementari e carico mobile di base.
@@ -109,8 +111,8 @@ Tredici definizioni GHX con soluzione e riapertura verificate senza solutore. [P
 ## Generatore parametrico completo
 
 - [49 · Ponte parametrico con tutti gli input a sinistra](49-ponte-parametrico/README.md): numero variabile di campate e travi, curve, conci, diaframmi pieni/reticolari, controventi, soletta a graticcio, appoggi, link e modelli FEM. Include script di rigenerazione e controlli delle varianti.
-- [50 · Quattro modelli del ponte parametrico](50-ponte-quattro-modelli/README.md): acciaio, n infinito, n0 e n da ritiro, con sezioni per concio, soletta senza peso, carichi di test indipendenti, quattro analisi Straus e Build BridGHe Model finale. Il 49 resta invariato.
+- [50 · Quattro modelli del ponte parametrico](50-ponte-quattro-modelli/README.md): acciaio, n infinito, n0 e n da ritiro, sezioni per concio, soletta senza peso; quattro fasi e sette azioni, solo deformazione nel ritiro, Build, verifiche N–Mx–Vy di tutte le travi, pioli, irrigiditori, sei grafici e report Word collegato. Analisi native da eseguire. Il 49 resta invariato.
 
 ## File personale completato
 
-- [99 · Ponte misto, fasi, verifiche e report](99-Ponte%20completo%20GPC/README.md): REV002 completa la travata originale; REV003 costruisce un ponte a due travi con soletta, due campate, traversi e appoggi. Entrambe includono ritiro calcolato, quattro analisi Straus, Excel delle combinazioni, verifiche di sezione/pioli/irrigiditori e report Word. Il file originale è conservato invariato; sono catalogate soltanto le due revisioni aggiornate.
+- [99 · Ponte misto, fasi, verifiche e report](99-Ponte%20completo%20GPC/README.md): REV002 completa la travata originale; REV003 costruisce un ponte a due travi con soletta, due campate, traversi e appoggi. REV004 aggiunge il graticcio con fasce di soletta alla quota reale e input espliciti. Le revisioni includono ritiro, quattro analisi Straus, combinazioni, verifiche e report. Le modifiche personali restano conservate. Vedere la revisione del 25 ottobre per l’allineamento del ritiro e le cache obsolete invalidate in REV004.
