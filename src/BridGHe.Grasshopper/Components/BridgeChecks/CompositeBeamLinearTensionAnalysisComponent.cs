@@ -186,6 +186,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 ResultBeamForces resultBeamForcesInstant = Common.Checks.BridgeForceConvention.FromStraus(beamForceResultInstant, cs);
 
                 BridgeCheckAdapter sectionChecker = new BridgeCheckAdapter(reinforcedConcreteSection, cs, options);
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, BridgeCheckAdapter.PlanarAssumption);
 
                 bool res = sectionChecker.GetLinearAnalysisResultByStages(
                     out StressAnalysisResult resultOnlySteelBuckling,

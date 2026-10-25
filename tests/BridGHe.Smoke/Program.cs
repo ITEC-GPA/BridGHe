@@ -305,8 +305,8 @@ internal static class Program
         bool rejected=false;try { BridGHe.Common.Checks.CompositeSectionFactory.Create(1000,200,concrete,null,100,50,null,100,h,steel,50,10,"Invalid"); }catch(NotSupportedException){rejected=true;}
         Assert(rejected,"vertical offset is not reinterpreted horizontally");
         var invalidForce=new GPC.Model.Results.ResultBeamForces(0,0,0,1000,0,0,cs);
-        rejected=false;try {checker.GetLinearAnalysisResultByStages(out _,out _,out _,out _,0,0,invalidForce,zero,zero,true);}catch(NotSupportedException){rejected=true;}
-        Assert(rejected,"unsupported torsion rejected, not discarded");
+        checker.GetLinearAnalysisResultByStages(out var planar,out _,out _,out _,0,0,invalidForce,zero,zero,true);
+        Assert(Math.Abs(planar.Point8_SteelSigma)<1e-10 && invalidForce.T==1000 && planar.Assumptions.Contains(BridGHe.Common.Checks.BridgeCheckAdapter.PlanarAssumption),"planar torsion exclusion is declared without mutating FEM forces");
         var exportedAxes = new GPC.Geometry.CoordinateSystem(GPC.Geometry.Point3d.Origin, new GPC.Geometry.Vector3d(-1,0,0), new GPC.Geometry.Vector3d(0,-1,0));
         var diagram = new BeamForceResultModel(new LoadCaseModel("Bending"),0,0,"") { My=1e6 };
         var converted = BridGHe.Common.Checks.BridgeForceConvention.FromStraus(diagram,exportedAxes);

@@ -19,15 +19,21 @@ namespace BridGHe.Common.Checks
         private readonly ReinforcedConcreteSection section;
         private readonly CoordinateSystem reference;
         private readonly BridgeAnalysisOptions options;
+        public const string PlanarAssumption = "Verifica nel piano N–Mx–Vy: torsione T, flessione sull'asse debole M2 e taglio trasversale V1 sono trascurati nelle verifiche di sezione e dei dettagli; rimangono nei risultati FEM. I relativi effetti e interazioni non sono verificati.";
+        private readonly bool ignoreSecondaryActions;
 
         public BridgeCheckAdapter(ReinforcedConcreteSection section, CoordinateSystem reference,
-            BridgeAnalysisOptions options = null)
+            BridgeAnalysisOptions options = null, bool ignoreSecondaryActions = true)
         {
             this.section = section ?? throw new ArgumentNullException(nameof(section));
             this.reference = reference ?? throw new ArgumentNullException(nameof(reference));
             this.options = options ?? new BridgeAnalysisOptions
             { Standard = BridgeStandard.Eurocode4, LimitState = BridgeLimitState.Rare };
+            this.ignoreSecondaryActions = ignoreSecondaryActions;
         }
+
+        private BridgeStressResult Result(HBridgeAnalysisResult analysis, int stage) => new(analysis, stage, null,
+            ignoreSecondaryActions ? new[] { PlanarAssumption } : Array.Empty<string>());
 
         private HBridgeInput Input(bool concrete, bool rebars, bool buckling)
         {
@@ -81,14 +87,13 @@ namespace BridGHe.Common.Checks
         private BridgePhase Phase(ResultBeamForces forces, BridgePhaseKind kind, double phi, string name)
         {
             if (forces == null) throw new ArgumentNullException(nameof(forces));
-            // Respect the supplied local axes. Native symmetric grillages retain
-            // round-off torsion (~1e-6 N mm); use dimensional tolerances, not the
-            // same near-machine-zero number for both forces and moments.
+            // Project onto the checker plane without changing the source FEM forces.
+            // Strict callers may reject out-of-plane actions using dimensional tolerances.
             var global = forces.ToGlobalCoordinateSystem();
             if (new[] { global.N, global.V1, global.V2, global.T, global.M1, global.M2 }.Any(value => !double.IsFinite(value)))
                 throw new ArgumentException("Azioni di sezione non finite.", nameof(forces));
             const double forceNoiseN = 1e-6, momentNoiseNmm = 1e-3;
-            if (Math.Abs(global.M2) > momentNoiseNmm || Math.Abs(global.T) > momentNoiseNmm || Math.Abs(global.V1) > forceNoiseN)
+            if (!ignoreSecondaryActions && (Math.Abs(global.M2) > momentNoiseNmm || Math.Abs(global.T) > momentNoiseNmm || Math.Abs(global.V1) > forceNoiseN))
                 throw new NotSupportedException($"Il motore gPC adottato copre N–Mx–Vy. Flessione deviata, taglio trasversale e torsione richiedono un verificatore dedicato. " +
                     $"M2={global.M2:G6}, T={global.T:G6} N mm (tolleranza numerica {momentNoiseNmm:G}); V1={global.V1:G6} N (tolleranza {forceNoiseN:G}).");
             if (phi < 0 || !double.IsFinite(phi)) throw new ArgumentOutOfRangeException(nameof(phi), "Il rapporto modulare deve dare phi >= 0.");
@@ -111,9 +116,9 @@ namespace BridGHe.Common.Checks
             ResultBeamForces steel, ResultBeamForces infinite, ResultBeamForces instant, bool concrete)
         {
             var analysis = Analyze(phiInfinite, phiInstant, steel, infinite, instant, concrete, true, 0, 0);
-            steelResult = new BridgeStressResult(analysis, 0);
-            infiniteResult = new BridgeStressResult(analysis, 1);
-            result = new BridgeStressResult(analysis, analysis.Stages.Count - 1);
+            steelResult = Result(analysis, 0);
+            infiniteResult = Result(analysis, 1);
+            result = Result(analysis, analysis.Stages.Count - 1);
             tauB = double.NaN;
             return true;
         }
@@ -129,7 +134,7 @@ namespace BridGHe.Common.Checks
             for (int i = 0; i < count; i++)
             {
                 var analysis = Analyze(phiInfinite, phiInstant, steel[i], infinite[i], instant[i], concrete, rebars, strainInfinite[i], strainInstant[i], phiShrinkage, shrinkageForces?[i]);
-                results[i] = new BridgeStressResult(analysis, analysis.Stages.Count - 1);
+                results[i] = Result(analysis, analysis.Stages.Count - 1);
                 tauB[i] = double.NaN;
             }
             return true;
@@ -156,7 +161,7 @@ namespace BridGHe.Common.Checks
                 Phases = new[] { new BridgePhase {
                 Name = "Self tension", Kind = BridgePhaseKind.Shrinkage, Phi = phi, ShrinkageMicrostrain = strain * 1e6 } }
             };
-            return new BridgeStressResult(HBridgeSection.Calculate(data), 0);
+            return Result(HBridgeSection.Calculate(data), 0);
         }
 
         /// <summary>Sequential section history. Effective moduli affect new increments; this is not an age-dependent creep integrator.</summary>
@@ -194,7 +199,7 @@ namespace BridGHe.Common.Checks
             }
             var data = Input(true, rebars, true) with { Phases = phases.ToArray() };
             var analysis = HBridgeHistoryResults.Calculate(data, new HBridgeHistoryOptions { MaterialMode = HistoryMaterialMode.Linear });
-            return new BridgeStressResult(analysis, analysis.Stages.Count - 1);
+            return Result(analysis, analysis.Stages.Count - 1);
         }
 
         public static ResultBeamForces Scale(ResultBeamForces f, double factor) => new ResultBeamForces(

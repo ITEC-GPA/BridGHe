@@ -76,7 +76,7 @@ internal static class GrasshopperBridgeSuite
         void Number(GH_Component c,int i,double v){var q=(Param_Number)c.Params.Input[i];q.PersistentData.Clear();q.SetPersistentData(v);}
         void Boolean(GH_Component c,int i,bool v){var q=(Param_Boolean)c.Params.Input[i];q.PersistentData.Clear();q.SetPersistentData(v);}
         void Text(GH_Component c,int i,string v){var q=(Param_String)c.Params.Input[i];q.PersistentData.Clear();q.SetPersistentData(v);}
-        Panel("LEGGERE",d.Title+" | N-mm-MPa\n3 FASI + RITIRO LONGITUDINALE: quattro analisi incrementali con le rispettive rigidezze.\nG1 acciaio/getto; G2 misto lungo termine; Q misto istantaneo; RITIRO misto lungo termine.\nRitiro: pre-strain e gradiente per effetti globali + una sola autotensione di sezione.\nGeometrie e proprieta editabili. Per modifiche coerenti usare parameters.json e rigenerare.\nAttivare CALCOLA 4 MODELLI; poi Run Build BridGHe Model e Run Super Element Check.\nPer i ponti curvi il checker segnala la torsione non supportata: consultare tutti i risultati FEM.",20,0,1400,190);
+        Panel("LEGGERE",d.Title+" | N-mm-MPa\n3 FASI + RITIRO LONGITUDINALE: quattro analisi incrementali con le rispettive rigidezze.\nG1 acciaio/getto; G2 misto lungo termine; Q misto istantaneo; RITIRO misto lungo termine.\nRitiro: pre-strain e gradiente per effetti globali + una sola autotensione di sezione.\nGeometrie e proprieta editabili. Per modifiche coerenti usare parameters.json e rigenerare.\nAttivare CALCOLA 4 MODELLI; poi Run Build BridGHe Model e Run Super Element Check.\nVerifiche N-Mx-Vy: T, M2 e V1 esclusi dal checker e conservati nei risultati FEM; gli effetti esclusi non sono verificati.",20,0,1400,190);
         var toggle=Add(new GH_BooleanToggle{NickName="CALCOLA 4 MODELLI",Value=false},1600,80);
         var analyses=new List<GH_Component>();
         for(int phase=0;phase<4;phase++)
@@ -157,7 +157,7 @@ internal static class GrasshopperBridgeSuite
         for(int i=2;i<=4;i++)Boolean(check,i,false);
         var stresses=Component("BridgeChecks.CompositeBeamTensionResultComponent",6100,850);Wire(check.Params.Output[0],stresses,0);
         Panel("Sigma cls [MPa]","",6350,600,350,160).AddSource(stresses.Params.Output[1]);Panel("Sigma acciaio [MPa]","",6350,900,350,160).AddSource(stresses.Params.Output[12]);
-        Panel("PIOLI E IRRIGIDITORI gPC","Definizioni dei dettagli collegate ai risultati di sezione.\nPrima trave selezionata: appoggio e primo diaframma interno.\nPioli: 2 x diam.22, h180, passo200 mm. Piatti intermedi 200x20, appoggio 250x25 mm.\nReazione d'appoggio dimostrativa SLS: somma dei quattro casi; sostituire con inviluppo SLU per il progetto.\nLe verifiche conservano lo stato limite del risultato sorgente. Nei curvi BridgeChecks blocca prima la torsione H.\nI dettagli non aggiungono automaticamente rigidezza o peso al graticcio equivalente.",3900,2850,1500,170);
+        Panel("PIOLI E IRRIGIDITORI gPC","Definizioni dei dettagli collegate ai risultati di sezione.\nPrima trave selezionata: appoggio e primo diaframma interno.\nPioli: 2 x diam.22, h180, passo200 mm. Piatti intermedi 200x20, appoggio 250x25 mm.\nReazione d'appoggio dimostrativa SLS: somma dei quattro casi; sostituire con inviluppo SLU per il progetto.\nLe verifiche conservano lo stato limite e l’ipotesi N-Mx-Vy del risultato sorgente; T, M2 e V1 restano esclusi anche nei dettagli.\nI dettagli non aggiungono automaticamente rigidezza o peso al graticcio equivalente.",3900,2850,1500,170);
         var studs=Component("BridgeDetails.BridgeStudsComponent",4200,3200);
         var intermediate=Component("BridgeDetails.BridgeIntermediateStiffenerComponent",4200,3550);Number(intermediate,6,d.Spans[0]/6);Number(intermediate,7,d.Spans[0]/6);
         var support=Component("BridgeDetails.BridgeSupportStiffenerComponent",4200,4000);Integer(support,6,1);Number(support,7,d.Spans[0]/6);Number(support,8,d.Spans[0]/6);
@@ -210,19 +210,15 @@ internal static class GrasshopperBridgeSuite
         var restoredCheck=restored.Objects.OfType<GH_Component>().Single(c=>c.GetType()==check.GetType());
         foreach(var c in new[]{restoredMerge,restoredCheck}){c.GetType().GetField("_run",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(c,true);c.ExpireSolution(false);}
         restored.NewSolution(false,GH_SolutionMode.Silent);
-        if(d.Radius>0)
-        {
-            checks.Near("GH BridgeChecks segnala torsione fuori campo",Errors().Any(e=>e.Contains("torsione"))?1:0,1,0,0);
-            checks.Near("GH nessuna tensione parziale presentata come verifica",restoredCheck.Params.Output[0].VolatileData.AllData(true).Count(g=>g?.ScriptVariable() is BridgeStressResult),0,0,0);
-        }
-        else
         {
             if(Errors().Length>0)throw new Exception(string.Join("\n",Errors()));
             var outputs=restoredCheck.Params.Output[0].VolatileData.AllData(true).Cast<GH_ObjectWrapper>().Select(g=>(BridgeStressResult)g.Value).ToArray();
             checks.Near("GH stazioni BridgeChecks",outputs.Length,groupNames.Length*d.Panels*5,0,0);checks.Near("GH cinque contributi BridgeChecks",outputs.Min(r=>r.Analysis.Stages.Count),5,0,0);
-            foreach(var sample in samples.Where(s=>s.Supported))
+            checks.Near("GH ipotesi N-Mx-Vy esplicita in tutti i risultati",outputs.All(r=>r.Assumptions.Contains(BridgeCheckAdapter.PlanarAssumption))?1:0,1,0,0);
+            foreach(var sample in samples)
             {
-                double nearest=outputs.Min(o=>StressValues(o).Zip(sample.FinalStress,(a,b)=>Math.Abs(a-b)).Max());
+                var baseline=sample.Supported?sample.FinalStress:ExpectedStress(p,Enumerable.Range(0,4).Select(phase=>expected[phase].Beams.Single(b=>b.BeamId==sample.Beam.ToString()).Results.OfType<BeamForceResultModel>().Where(r=>r.LoadCase.Name==Cases[phase]).OrderBy(r=>r.Station).First()).ToArray());
+                double nearest=outputs.Min(o=>StressValues(o).Zip(baseline,(a,b)=>Math.Abs(a-b)).Max());
                 checks.Near("GH tensioni campione beam "+sample.Beam,nearest,0,0,1e-6);
             }
             File.WriteAllText(Path.Combine(delivery,"grasshopper-stresses.json"),JsonSerializer.Serialize(outputs.Select(StressValues),BridgeGrillageExample.Json));

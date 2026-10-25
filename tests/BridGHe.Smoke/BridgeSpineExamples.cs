@@ -159,7 +159,7 @@ internal static class BridgeSpineExamples
             var report=new { Date=DateTimeOffset.Now,Definition=d,Section=setup.Central,LateralSection=setup.Lateral,Girders=3,Ec,
                 Shrinkage=Shrinkage(setup.Central),LateralShrinkage=Shrinkage(setup.Lateral),
                 Method="Three incremental linear stiffness states plus differential shrinkage. Primary section stress plus native secondary resultants, once each.",
-                Scope="Equivalent planar grillage, gross uncracked sections, full interaction; explicit tributary effective width. Central H section only for straight examples. Curved H torsion/minor bending rejected; all FEM resultants retained. No complete bridge design verification.",
+                Scope="Equivalent planar grillage, gross uncracked sections, full interaction; explicit tributary effective width. Central H section only. N-Mx-Vy checks exclude T, M2 and V1 with an explicit assumption; all FEM resultants retained. No complete bridge design verification.",
                 Results=results.Select((m,phase)=>new { Case=Cases[phase],MinUz=m.Nodes.Min(n=>Displ(n,Cases[phase]).Displacement.Z),MaxUz=m.Nodes.Max(n=>Displ(n,Cases[phase]).Displacement.Z),
                     MinMy=m.Beams.Take(3*d.Panels).SelectMany(b=>b.Results.OfType<BeamForceResultModel>()).Min(f=>f.My),MaxMy=m.Beams.Take(3*d.Panels).SelectMany(b=>b.Results.OfType<BeamForceResultModel>()).Max(f=>f.My),
                     MaxAbsT=m.Beams.Take(3*d.Panels).SelectMany(b=>b.Results.OfType<BeamForceResultModel>()).Max(f=>Math.Abs(f.Torque)) }),Mesh=mesh,Sections=sections,Checks=checks.Measurements };

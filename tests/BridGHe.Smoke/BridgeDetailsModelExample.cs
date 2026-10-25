@@ -52,6 +52,7 @@ internal static class BridgeDetailsModelExample
         for (int i = 0; i < a.Length; i++)
         {
             BridgeWorkflowTests.Require(a[i].Source == b[i].Source, "Detail checking lost result provenance.");
+            BridgeWorkflowTests.Require(a[i].Assumptions.Count>0 && a[i].Assumptions.SequenceEqual(b[i].Assumptions),"Detail checking lost the declared planar force assumptions.");
             BridgeWorkflowTests.Require(a[i].Analysis.Input.Options.LimitState == BridgeLimitState.Rare && b[i].Analysis.Input.Options.LimitState == BridgeLimitState.Ultimate, "Explicit limit state override not applied.");
             BridgeWorkflowTests.Require(a[i].Analysis.Input.Phases.SequenceEqual(b[i].Analysis.Input.Phases), "Detail checking changed already combined FEM actions or strain.");
             var s = b[i].Stage.Studs;

@@ -242,20 +242,12 @@ internal static class BridgeSuiteExample
         {
             var f=Enumerable.Range(0,4).Select(phase=>Force(results[phase],beam,Cases[phase])).ToArray();
             var combined=ModelArchive.Clone(f[1]);combined.AxialForce+=f[3].AxialForce;combined.Vx+=f[3].Vx;combined.Vy+=f[3].Vy;combined.Mx+=f[3].Mx;combined.My+=f[3].My;combined.Torque+=f[3].Torque;
-            try
-            {
-                checker.GetLinearAnalysisResultByStages(out var stress,out _,p.PhiLong,0,new[]{BridgeForceConvention.FromStraus(f[0],Reference)},
-                    new[]{BridgeForceConvention.FromStraus(combined,Reference)},new[]{BridgeForceConvention.FromStraus(f[2],Reference)},true,new[]{p.ShrinkageLong},new[]{0.0},false);
-                var actual=StressValues(stress[0]);var expected=ExpectedStress(p,f);
-                checks.Near("BridgeChecks quattro contributi "+beam,stress[0].Analysis.Stages.Count,4,0,0);
-                for(int i=0;i<4;i++)checks.Near("BridgeChecks primario + secondario, beam "+beam+", sigma "+i,actual[i],expected[i],1e-6,1e-6);
-                samples.Add(new(beam+1,0,actual,true,"Tensioni elastiche; sezione lorda non fessurata."));
-            }
-            catch(NotSupportedException ex)
-            {
-                checks.Near("BridgeChecks segnala azioni fuori campo beam "+beam,d.Radius>0?1:0,1,0,0);
-                samples.Add(new(beam+1,0,Array.Empty<double>(),false,ex.Message));
-            }
+            checker.GetLinearAnalysisResultByStages(out var stress,out _,p.PhiLong,0,new[]{BridgeForceConvention.FromStraus(f[0],Reference)},
+                new[]{BridgeForceConvention.FromStraus(combined,Reference)},new[]{BridgeForceConvention.FromStraus(f[2],Reference)},true,new[]{p.ShrinkageLong},new[]{0.0},false);
+            var actual=StressValues(stress[0]);var expected=ExpectedStress(p,f);
+            checks.Near("BridgeChecks quattro contributi "+beam,stress[0].Analysis.Stages.Count,4,0,0);
+            for(int i=0;i<4;i++)checks.Near("BridgeChecks primario + secondario, beam "+beam+", sigma "+i,actual[i],expected[i],1e-6,1e-6);
+            samples.Add(new(beam+1,0,actual,true,"Tensioni elastiche N-Mx-Vy; T, M2 e V1 esclusi; sezione lorda non fessurata."));
         }
         return samples;
     }

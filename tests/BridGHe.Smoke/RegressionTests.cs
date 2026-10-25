@@ -225,7 +225,7 @@ internal static class RegressionTests
         var steel = new GPC.Model.Materials.SteelMaterialEN1992("S355",210000,355,510,.1,GPC.Model.Materials.SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic,GPC.Model.Materials.SteelMaterial.SteelTypes.Structural);
         var section = BridGHe.Common.Checks.CompositeSectionFactory.Create(1000,200,concrete,null,100,40,null,100,new GPC.Model.Sections.SectionH(300,10,200,20,200,20,"H"),steel,40,0,"Test");
         var options = new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare };
-        var checker = new BridGHe.Common.Checks.BridgeCheckAdapter(section,GPC.Geometry.CoordinateSystem.Global, options);
+        var checker = new BridGHe.Common.Checks.BridgeCheckAdapter(section,GPC.Geometry.CoordinateSystem.Global, options, ignoreSecondaryActions:false);
         double Analyze(double torque, double lateral=0, double minor=0)
         {
             var force = new GPC.Model.Results.ResultBeamForces(0,lateral,1000,torque,1e6,minor,GPC.Geometry.CoordinateSystem.Global);
@@ -241,6 +241,15 @@ internal static class RegressionTests
         }
         bool nonfinite=false;try{Analyze(double.NaN);}catch(ArgumentException){nonfinite=true;}
         Require(nonfinite,"nonfinite unsupported component cannot silently pass the domain guard");
+        checker = new BridGHe.Common.Checks.BridgeCheckAdapter(section,GPC.Geometry.CoordinateSystem.Global, options);
+        Require(Math.Abs(Analyze(1e9,3e6,-2e9)-baseline)<1e-10,"declared planar approximation ignores T, M2 and V1 without changing N-Mx-Vy stresses");
+        nonfinite=false;try{Analyze(0,double.NaN);}catch(ArgumentException){nonfinite=true;}
+        Require(nonfinite,"planar projection still rejects nonfinite excluded actions");
+        var supplied=new GPC.Model.Results.ResultBeamForces(10,3e6,1000,1e9,1e6,-2e9,GPC.Geometry.CoordinateSystem.Global);
+        checker.GetLinearAnalysisResultByStages(out var _,out var _,out var projected,out _,0,0,supplied,supplied,supplied,true);
+        Require(supplied.T==1e9 && supplied.M2==-2e9 && supplied.V1==3e6,"planar approximation must not mutate supplied FEM forces");
+        Require(projected.Assumptions.Contains(BridGHe.Common.Checks.BridgeCheckAdapter.PlanarAssumption) &&
+            projected.WithSource(new("B",0,"C")).Assumptions.SequenceEqual(projected.Assumptions),"planar assumptions follow the result and its provenance");
     }
 
     private static CompositeBeamModel CompositeBeam()

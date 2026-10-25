@@ -24,7 +24,7 @@ internal static class BridgeReportTests
         var stages = plain.Analysis.Stages.ToList();
         stages[^1] = plain.Stage with { Shear = plain.Stage.Shear with { Checks = new() {
             new("Intermedio · A", 8, 10, "MPa", .8), new("Intermedio · B", 0, 1, "—", 2), new("Intermedio · C", 3, 4, "MPa", null, "Controllo mancante") } } };
-        var result = new BridgeStressResult(plain.Analysis with { Stages = stages }, stages.Count - 1, new("B1", 200, "C1", "G1"));
+        var result = new BridgeStressResult(plain.Analysis with { Stages = stages }, stages.Count - 1, new("B1", 200, "C1", "G1"),new[]{BridgeCheckAdapter.PlanarAssumption});
         var data = BridgeReportData.Create(new[] { new BridgeReportEntry(result, "{2;4}[0]"), new BridgeReportEntry(result.WithSource(result.Source with { Combination = "C2" }), "{2;4}[1]") },
             new("Verifiche del ponte", "Progetto <A> & B", "Tecnico", "03"));
         Require(data.Samples.Length == 2 && data.Sections.Length == 1, "Lost samples or duplicate section configurations.");
@@ -40,6 +40,7 @@ internal static class BridgeReportTests
         string full = Path.Combine(folder,"full.docx");
         var exported = BridgeWordReport.Write(Template,full,data,new[]{BridgeReportTopic.Sections,BridgeReportTopic.Checks,BridgeReportTopic.Critical},overwrite:true);
         string text = Text(full);
+        Require(text.Contains("Ipotesi del verificatore") && text.Contains(BridgeCheckAdapter.PlanarAssumption) && data.Samples.All(s=>s.Assumptions.Contains(BridgeCheckAdapter.PlanarAssumption)),"Planar force exclusions must be visible and archived in the report, irrespective of selected chapters.");
         Require(text.Contains("non disponibili") && text.Contains("R00001") && text.Contains("R00002"), "Incomplete checks or source IDs absent from document.");
         Require(!text.Contains("{{BG.") && text.Contains("Progetto <A> & B"), "Unreplaced/unsafe XML tokens.");
         Require(!text.Contains("Modello di riferimento") && !text.Contains("Tabulato completo"), "Unselected chapters leaked into document.");

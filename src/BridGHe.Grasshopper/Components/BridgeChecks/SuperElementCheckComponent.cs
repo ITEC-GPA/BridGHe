@@ -80,7 +80,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            Message = "";
+            Message = "N–Mx–Vy";
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, BridgeCheckAdapter.PlanarAssumption);
             GH_Model model = new GH_Model();
             List<GH_CompositeBeam> beams = new List<GH_CompositeBeam>();
             bool topFlangeInstab = false;
@@ -482,7 +483,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     DA.SetDataTree(1, tauBDataTree);
                     DA.SetDataTree(2, forcesTree);
 
-                    Message = "Done";
+                    Message = "N–Mx–Vy";
                     _run = false;
                 }
                 catch (Exception e)

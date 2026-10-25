@@ -335,10 +335,12 @@ internal static class BridgeGrillageExample
             rows.Add(new(phase+1,actual[0],actual[1],actual[2],actual[3]));
         }
         var eccentric=results[2].Beams.Take(4*p.Panels).SelectMany(b=>b.Results.OfType<BeamForceResultModel>()).Where(r=>r.LoadCase.Name=="Q_ECC").MaxBy(r=>Math.Abs(r.Torque));
-        bool rejected=false;
-        try{var f=BridgeForceConvention.FromStraus(eccentric,cs);checker.GetLinearAnalysisResultByStages(out var _,out _,p.PhiLong,0,new[]{actions.Steel},new[]{actions.Infinite},new[]{f},true,new[]{0.0},new[]{0.0},false);}
-        catch(NotSupportedException){rejected=true;}
-        checks.Near("BridgeChecks rifiuta correttamente torsione non supportata",rejected?1:0,1,0,0);
+        var f=BridgeForceConvention.FromStraus(eccentric,cs);
+        checker.GetLinearAnalysisResultByStages(out var planar,out _,p.PhiLong,0,new[]{actions.Steel},new[]{actions.Infinite},new[]{f},true,new[]{0.0},new[]{0.0},false);
+        var projected=ModelArchive.Clone(eccentric);projected.Torque=projected.Mx=projected.Vx=0;
+        checker.GetLinearAnalysisResultByStages(out var reference,out _,p.PhiLong,0,new[]{actions.Steel},new[]{actions.Infinite},new[]{BridgeForceConvention.FromStraus(projected,cs)},true,new[]{0.0},new[]{0.0},false);
+        checks.Near("BridgeChecks proiezione N-Mx-Vy della risposta eccentrica",planar[0].Point8_SteelSigma,reference[0].Point8_SteelSigma,0,1e-10);
+        checks.Near("BridgeChecks ipotesi piana esplicita",planar[0].Assumptions.Contains(BridgeCheckAdapter.PlanarAssumption)?1:0,1,0,0);
         return new("G1, midspan, right-hand element end 1","G1 + G2 + Q_UDL + shrinkage long + imposed strain instant (unit factors)",rows,Math.Abs(eccentric.Torque));
     }
     private static void WriteResults(Parameters p,ModelModel[] models,ModelModel moving)

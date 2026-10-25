@@ -50,6 +50,10 @@ internal static class BridgeHistoryWorkflowTests
         Near(final.IntegratedN, 100000, "History sectional force equilibrium");
         Near(final.ForceResidual, 0, "History force residual");
         BridgeWorkflowTests.Require(double.IsNaN(activation.Point6_SteelTau), "History exposes unverified shear as a calculated stress.");
+        foreach(var force in source.Beams.SelectMany(b=>b.Results).OfType<BeamForceResultModel>()){force.Torque=8e8;force.Mx=-4e8;force.Vx=3e6;}
+        var planar=Solve(new[] { Phase(10, BridgeSectionState.Steel, load), Phase(20, BridgeSectionState.Composite) },"G");
+        Near(planar.Point8_SteelSigma,activation.Point8_SteelSigma,"LinearHistory retains N-M response while excluding T, weak-axis bending and transverse shear");
+        BridgeWorkflowTests.Require(planar.Assumptions.Contains(BridgeCheckAdapter.PlanarAssumption),"History result lost its planar assumption.");
         var assembly = BridgeMergeTests.Initialize();
         using var doc = new Grasshopper.Kernel.GH_Document();
         var detail = (Grasshopper.Kernel.GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components.BridgeDetails.BridgeDetailCheckComponent", true));

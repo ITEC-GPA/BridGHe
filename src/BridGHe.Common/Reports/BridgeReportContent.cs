@@ -78,6 +78,12 @@ internal sealed class BridgeReportContent
         var rows = data.Rows.ToArray(); int finite = rows.Count(r => r.Check.HasRatio), failed = rows.Count(r => r.Check.HasRatio && r.Check.Ratio > 1);
         int missing = rows.Count(r => r.Check.Active && !r.Check.HasRatio), inactive = rows.Count(r => !r.Check.Active);
         yield return H("Riepilogo e copertura delle verifiche");
+        var assumptions=data.Samples.SelectMany(s=>s.Assumptions??Array.Empty<string>()).Distinct().ToArray();
+        if(assumptions.Length>0)
+        {
+            yield return H("Ipotesi del verificatore",true);
+            foreach(var assumption in assumptions)yield return P(assumption);
+        }
         yield return P($"Risultati forniti: {data.Samples.Length}. Configurazioni di sezione e dettaglio: {data.Sections.Length}. " +
             $"{finite} esiti con WR numerico, di cui {failed} oltre limite; {missing} esiti attivi senza WR disponibile e {inactive} punti non attivi.");
         yield return P(failed > 0 ? "Sono presenti verifiche oltre limite nei risultati forniti."

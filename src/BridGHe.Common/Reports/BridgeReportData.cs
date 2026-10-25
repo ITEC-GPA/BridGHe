@@ -25,7 +25,7 @@ public sealed record BridgeReportSection(string Id, BridgeGeometry Geometry, Bri
 public sealed record BridgeReportContribution(string Name, double N, double Mx, double V, double HomogenizationN, double ShrinkageStrain, JsonElement Native);
 public sealed record BridgeReportSample(string Id, string TreePosition, BridgeResultSource Source, string SectionId,
     string Phase, string LimitState, string Method, string Scope, int Iterations, double Residual,
-    BridgeReportContribution[] Contributions, BridgePhase[] InputPhases, BridgeReportCheck[] Checks, string[] Warnings);
+    BridgeReportContribution[] Contributions, BridgePhase[] InputPhases, BridgeReportCheck[] Checks, string[] Warnings, string[] Assumptions);
 public sealed record BridgeReportModel(string Name, string Units, int Nodes, int Beams, int Plates,
     BridgeWorkflow Workflow, BridgeReportCombination[] Combinations);
 public sealed record BridgeReportCombination(string Name, BridgeReportFactor[] Factors);
@@ -105,7 +105,7 @@ public sealed record BridgeReportData(string Id, DateTimeOffset Created, BridgeR
                 warnings.Add(id + ": dettagli disattivati: " + string.Join(", ", new[] { !i.Studs.Enabled ? "pioli" : null, !i.Intermediate.Enabled ? "irrigiditori intermedi" : null, !i.Support.Enabled ? "irrigiditori di appoggio" : null }.Where(s => s != null)) + ". Non inclusi nel massimo WR.");
             samples.Add(new(id, entry.TreePosition, r.Source, section.Id, r.Stage.Name, i.Options.LimitStateName, a.Method, a.Scope,
                 r.Stage.Iterations, r.Stage.Residual, r.Stage.Contributions.Select(c => new BridgeReportContribution(c.Name, c.N, c.Mx, c.V, c.HomogenizationN, c.ShrinkageStrain,
-                    JsonSerializer.SerializeToElement(c, JsonOptions))).ToArray(), i.Phases.ToArray(), checks.ToArray(), r.Stage.Warnings.ToArray()));
+                    JsonSerializer.SerializeToElement(c, JsonOptions))).ToArray(), i.Phases.ToArray(), checks.ToArray(), r.Stage.Warnings.ToArray(), r.Assumptions.ToArray()));
         }
         foreach (var g in samples.Where(s => s.Source != null).GroupBy(s => (s.Source, s.Phase, s.LimitState)).Where(g => g.Count() > 1))
             warnings.Add("Provenienza ripetuta: " + string.Join(", ", g.Select(s => s.Id)) + ". I risultati sono conservati separatamente.");
