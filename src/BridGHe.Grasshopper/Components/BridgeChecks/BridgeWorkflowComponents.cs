@@ -21,7 +21,10 @@ internal static class WorkflowInputs
     internal static void Catalogue(GH_Component component, int port, ModelModel model)
     {
         if (model == null) return;
-        var names = model.Beams.SelectMany(b => b.Results).OfType<BeamForceResultModel>().Select(f => f.LoadCase.Name).Distinct().OrderBy(n => n).ToList();
+        var names = model.Beams.SelectMany(b => b.Results).OfType<BeamForceResultModel>().Select(f => f.LoadCase.Name)
+            .Concat(model.LoadCases.Select(c=>c.Name)).Concat(model.LoadCombinations.Select(c=>c.Name))
+            .Concat(model.Elements.SelectMany(e=>e.Loads).Select(l=>l.LoadCase?.Name))
+            .Where(n=>!string.IsNullOrWhiteSpace(n)).Distinct().OrderBy(n => n).ToList();
         foreach (var list in component.Params.Input[port].Sources.OfType<GH_ValueList>())
         {
             list.ListMode = GH_ValueListMode.DropDown; ComponentsHelper.SetValueList(list, names);
@@ -47,8 +50,10 @@ public sealed class BridgeActionComponent : GH_Component
     {
         string key = null; GH_Model model = null; object lc = null; int behavior = 0; var ids = new List<string>();
         if (!da.GetData(0, ref key) || !da.GetData(1, ref model)) return;
-        if (model?.Value == null || !model.Value.Beams.Any(b => b.Results.OfType<BeamForceResultModel>().Any()))
-        { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Awaiting analysed FEM results. Run the source Straus analysis first."); return; }
+        if (model?.Value == null || model.Value.Beams.Count==0)
+        { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Awaiting a source FEM model."); return; }
+        if(!model.Value.Beams.Any(b=>b.Results.OfType<BeamForceResultModel>().Any()))
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Action defined without FEM results. Analyse the source model before Build BridGHe Model.");
         WorkflowInputs.Catalogue(this, 2, model?.Value);
         if (!da.GetData(2, ref lc) || !da.GetData(3, ref behavior)) return;
         da.GetDataList(4, ids);
@@ -83,8 +88,10 @@ public sealed class BridgeShrinkageActionComponent : GH_Component
         string key = null; GH_Model model = null; object lc = null; double strain = 0; bool primary = false; int response = 0; var ids = new List<string>();
         if (!da.GetData(0, ref key) || !da.GetData(3, ref strain) || !da.GetData(5, ref primary) || !da.GetData(6, ref response)) return;
         da.GetData(1, ref model); WorkflowInputs.Catalogue(this, 2, model?.Value); da.GetData(2, ref lc); da.GetDataList(4, ids);
-        if (!primary && model != null && (model.Value == null || !model.Value.Beams.Any(b => b.Results.OfType<BeamForceResultModel>().Any())))
-        { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Awaiting secondary shrinkage FEM results. Run Straus first."); return; }
+        if (!primary && model != null && (model.Value == null || model.Value.Beams.Count==0))
+        { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Awaiting the secondary shrinkage FEM model."); return; }
+        if(!primary && model?.Value!=null && !model.Value.Beams.Any(b=>b.Results.OfType<BeamForceResultModel>().Any()))
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Shrinkage action defined without secondary FEM results. Run Straus before Build BridGHe Model.");
         try
         {
             if (string.IsNullOrWhiteSpace(key) || !double.IsFinite(strain) || strain > 0) throw new ArgumentException("Supply a stable ID and a finite, non-positive concrete shrinkage increment.");

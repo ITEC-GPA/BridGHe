@@ -54,6 +54,7 @@ internal static class BridgeCombinationExcelTests
     internal static void Run()
     {
         Console.WriteLine("EXCEL TEST: catalog and file protection");
+        BridgePreAnalysisActionTests.Run();
         var (models, phases) = Recipe(); var original = ModelArchive.Write(models[0]);
         var catalog = new BridgeCombinationCatalog(models.Take(1).ToArray(), phases.Reverse());
         Assert(catalog.ActionIds.SequenceEqual(new[] { "G1", "G2", "Q", "RITIRO" }), "headers must be Action IDs, not source case G repeated four times");
