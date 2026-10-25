@@ -230,6 +230,8 @@ BridgeParametricLayoutComponent|bridge-schedule|measure|model
 BridgeSlabGrillageComponent|bridge-deck|native|model
 BridgeSegmentSectionsComponent|bridge-segments|native|section
 BridgeSegmentOverrideComponent|bridge-segments|edit|model
+BridgeSegmentCompositeComponent|bridge-segments|link|model
+BridgeGirderResultsComponent|bridge-segments|filter|result
 SimpleBridgeTrussComponent|bridge-truss||model
 BridgeSegmentsComponent|bridge-segments||model
 BridgeDiaphragmsComponent|bridge-diaphragms||model

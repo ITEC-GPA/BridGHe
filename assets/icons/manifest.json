@@ -148,6 +148,15 @@
       "badge": ""
     },
     {
+      "key": "BridgeGirderResultsComponent",
+      "type": "BridGHe.Grasshopper.Components.Utilities.BridgeGirderResultsComponent",
+      "guid": "c4b7f193-ed59-4848-9d46-f368ca56a2b5",
+      "name": "Bridge Girder Results",
+      "family": "result",
+      "glyph": "bridge-segments",
+      "badge": "filter"
+    },
+    {
       "key": "BridgeModelAuditComponent",
       "type": "BridGHe.Grasshopper.Components.Utilities.BridgeModelAuditComponent",
       "guid": "7f95faaf-b353-4a1a-9e3f-c9189baa9272",
@@ -1145,6 +1154,15 @@
       "family": "model",
       "glyph": "bridge-schedule",
       "badge": "measure"
+    },
+    {
+      "key": "BridgeSegmentCompositeComponent",
+      "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSegmentCompositeComponent",
+      "guid": "36a9ed77-8fb7-4348-a783-f1c057a921e4",
+      "name": "Bridge Segment Composite",
+      "family": "model",
+      "glyph": "bridge-segments",
+      "badge": "link"
     },
     {
       "key": "BridgeSegmentOverrideComponent",

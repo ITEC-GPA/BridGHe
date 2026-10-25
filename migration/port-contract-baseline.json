@@ -346,6 +346,12 @@
         "14c68fb0-de0e-4eec-bc39-282e2c5f08b6"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/Geometry/BridgeSegmentCompositeComponent.cs": {
+      "ports": "5616a5da8d95c4b6be9360dd9293ebd971db6d72cf2b11e1bc8a12894a5b816b",
+      "guids": [
+        "36a9ed77-8fb7-4348-a783-f1c057a921e4"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/Geometry/BridgeSegmentOverrideComponent.cs": {
       "ports": "73c5738a4a446ff480d159c32ca357b8e93b66a82e21ceb20756b98765c1c874",
       "guids": [
@@ -822,6 +828,12 @@
       "ports": "13c504b139c2851d0c38b2fb4647250b4c3529524005f05ec95dcc069a0513b7",
       "guids": [
         "25ce0914-c534-4d08-883d-607b74c65883"
+      ]
+    },
+    "src/BridGHe.Grasshopper/Components/Utilities/BridgeGirderResultsComponent.cs": {
+      "ports": "e656c30c7ca99b46015b96eed8108159524e288f5ea4023f076f6d94a9fa37d1",
+      "guids": [
+        "c4b7f193-ed59-4848-9d46-f368ca56a2b5"
       ]
     },
     "src/BridGHe.Grasshopper/Components/Utilities/BridgeModelAuditComponent.cs": {

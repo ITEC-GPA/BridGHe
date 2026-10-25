@@ -1272,6 +1272,76 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeGirderResultsComponent",
+    "guid": "c4b7f193-ed59-4848-9d46-f368ca56a2b5",
+    "kind": "component",
+    "name": "Bridge Girder Results",
+    "nickname": "GirderResults",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Select one longitudinal girder from a whole-bridge check. Reindexes beam/station paths for the plot components and retains combination order.",
+    "inputs": [
+      {
+        "name": "Beams",
+        "nickname": "B",
+        "description": "The exact ordered Composite beam list supplied to Super Element Check.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Results",
+        "nickname": "R",
+        "description": "Section/detail/force tree {beam index; station index}. Sparse detail trees are supported.",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Girder",
+        "nickname": "G",
+        "description": "Physical girder number, 1-based, from Bridge Member metadata.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Beams",
+        "nickname": "B",
+        "description": "Selected composite beams in increasing alignment station order; to plot Super-Element Beam.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Results",
+        "nickname": "R",
+        "description": "Reindexed {beam;station} tree; to plot Results.",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Stations",
+        "nickname": "S",
+        "description": "Existing result locations along this girder [m]; to stiffener plot Stations.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Available Girders",
+        "nickname": "G",
+        "description": "Available physical girder numbers.",
+        "access": "list",
+        "optional": false,
+        "type": "Integer"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Utilities.BridgeModelAuditComponent",
     "guid": "7f95faaf-b353-4a1a-9e3f-c9189baa9272",
     "kind": "component",
@@ -8837,6 +8907,76 @@
         "access": "list",
         "optional": false,
         "type": "Number"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSegmentCompositeComponent",
+    "guid": "36a9ed77-8fb7-4348-a783-f1c057a921e4",
+    "kind": "component",
+    "name": "Bridge Segment Composite",
+    "nickname": "SegmentComposite",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Match composite sections to longitudinal FEM beams by physical concio ID. Retains results; aligned outputs feed Composite beam and Composite Shrinkage Actions.",
+    "inputs": [
+      {
+        "name": "Beams",
+        "nickname": "B",
+        "description": "FEM members carrying Bridge Member metadata. Other member families are filtered out.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Segment IDs",
+        "nickname": "ID",
+        "description": "Distinct G1-C1 etc., paired with Composite Properties, from Bridge Segment Sections.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Composite Properties",
+        "nickname": "P",
+        "description": "One composite section per Segment ID. No list broadcasting.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Girders",
+        "nickname": "B",
+        "description": "FEM girders ordered by girder and alignment station, retaining forces. Connect to Composite beam > Beam.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Composite Properties",
+        "nickname": "P",
+        "description": "One matched section per output FEM beam. Connect to Section Start or shrinkage conversion.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Segment IDs",
+        "nickname": "ID",
+        "description": "Concio key per output beam.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Beam IDs",
+        "nickname": "FEM",
+        "description": "FEM IDs in output order.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
       }
     ]
   },
