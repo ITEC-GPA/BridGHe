@@ -53,6 +53,7 @@ internal static class Program
         if(args.Contains("--components-only")) { CheckGrasshopper(false);return 0; }
         if(args.Contains("--simple-bridge-examples")) { SimpleBridgeTests.Run(); SimpleBridgeExamples.Run(true); return 0; }
         if(args.Contains("--parametric-bridge-example")) return ParametricBridgeExample.Run();
+        if(args.Contains("--parametric-bridge-phases")) return ParametricBridgePhasesExample.Run(args.Contains("--native"));
         if(args.Contains("--bridge-design-examples")) { BridgeDesignExamples.Run(true); return 0; }
         if(args.Contains("--bridge-details-example")) { BridgeDetailsExample.Run(true); return 0; }
         if(args.Contains("--bridge-details-model-example")) { BridgeDetailsModelExample.Generate(); return 0; }

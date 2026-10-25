@@ -1,0 +1,41 @@
+{
+  "source49Sha256": "E652FFCC2E1918341CEFE282F7FE47DCAD7A3A230B54D3AC04D770D11F533200",
+  "sourceUnchanged": true,
+  "reopened": true,
+  "workflowWiringTestedWithDiscardedSyntheticFixture": true,
+  "solverInvoked": false,
+  "models": [
+    {
+      "Name": "M01_ACCIAIO",
+      "beams": 324,
+      "nodes": 266,
+      "deckForceN": -900000,
+      "girderForceN": -270000,
+      "zeroSlabDensity": true
+    },
+    {
+      "Name": "M02_NINF",
+      "beams": 324,
+      "nodes": 266,
+      "deckForceN": -900000,
+      "girderForceN": -270000,
+      "zeroSlabDensity": true
+    },
+    {
+      "Name": "M03_N0",
+      "beams": 324,
+      "nodes": 266,
+      "deckForceN": -900000,
+      "girderForceN": -270000,
+      "zeroSlabDensity": true
+    },
+    {
+      "Name": "M04_NSH",
+      "beams": 324,
+      "nodes": 266,
+      "deckForceN": -900000,
+      "girderForceN": -270000,
+      "zeroSlabDensity": true
+    }
+  ]
+}

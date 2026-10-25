@@ -109,6 +109,7 @@ Tredici definizioni GHX con soluzione e riapertura verificate senza solutore. [P
 ## Generatore parametrico completo
 
 - [49 · Ponte parametrico con tutti gli input a sinistra](49-ponte-parametrico/README.md): numero variabile di campate e travi, curve, conci, diaframmi pieni/reticolari, controventi, soletta a graticcio, appoggi, link e modelli FEM. Include script di rigenerazione e controlli delle varianti.
+- [50 · Quattro modelli del ponte parametrico](50-ponte-quattro-modelli/README.md): acciaio, n infinito, n0 e n da ritiro, con sezioni per concio, soletta senza peso, carichi di test indipendenti, quattro analisi Straus e Build BridGHe Model finale. Il 49 resta invariato.
 
 ## File personale completato
 

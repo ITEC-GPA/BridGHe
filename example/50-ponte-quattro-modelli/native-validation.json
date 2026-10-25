@@ -1,0 +1,5 @@
+{
+  "status": "not-run",
+  "solverResultsVerified": false,
+  "reason": "Analyses deferred. Run the four Straus components, then Build BridGHe Model, or regenerate with -Native when the licence is available."
+}

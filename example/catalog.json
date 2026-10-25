@@ -445,6 +445,15 @@
     "calculations": null
   },
   {
+    "number": 50,
+    "id": "50-ponte-quattro-modelli",
+    "title": "Ponte parametrico: acciaio, n infinito, n0 e n ritiro",
+    "group": "Fasi e combinazioni",
+    "readme": "50-ponte-quattro-modelli/README.md",
+    "definition": "50-ponte-quattro-modelli/50-ponte-quattro-modelli.ghx",
+    "calculations": "50-ponte-quattro-modelli/calcoli"
+  },
+  {
     "number": 99,
     "id": "99-Ponte completo GPC",
     "title": "Dal file personale al ponte a due travi con verifiche e report",
