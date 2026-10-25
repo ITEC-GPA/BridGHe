@@ -55,6 +55,8 @@ internal static class GrasshopperBridgeSuite
     }
     internal static void Run(Definition d,ModelModel[] inputs,ModelModel[] expected,List<SectionSample> samples,NativeExamples.Recorder checks,BridgeGrillageExample.Parameters sectionParameters=null,string[] selectedGroups=null,bool cached=false)
     {
+        var delivery=cached?Path.GetFullPath(Path.Combine("artifacts/example-replay",d.Id)):Path.Combine(Root,d.Id);
+        Directory.CreateDirectory(delivery);
         int checkStart=checks.Measurements.Count;
         Initialize();var p=sectionParameters??SectionParameters(d);var groupNames=selectedGroups??new[]{"G1","G2","G3","G4"};using var doc=new GH_Document();
         T Add<T>(T obj,float x,float y) where T:IGH_DocumentObject{obj.CreateAttributes();obj.Attributes.Pivot=new PointF(x,y);doc.AddObject(obj,false);return obj;}
@@ -171,7 +173,7 @@ internal static class GrasshopperBridgeSuite
             Wire((i==0?support:intermediate).Params.Output[0],detail,i==0?3:2);detailChecks.Add(detail);
             Panel(i==0?"Dettagli appoggio":"Dettagli intermedio","",5500,y-100,700,330).AddSource(detail.Params.Output[6]);
         }
-        string ghx=Path.Combine(Root,d.Id,d.Id+".ghx");GrasshopperBridgeExample.Write(doc,ghx);
+        string ghx=Path.Combine(delivery,d.Id+".ghx");GrasshopperBridgeExample.Write(doc,ghx);
         using var restored=GrasshopperBridgeExample.Read(ghx);
         restored.Objects.OfType<GH_BooleanToggle>().Single().Value=!cached;
         var restoredAnalyses=restored.Objects.OfType<GH_Component>().Where(c=>c.GetType()==analyses[0].GetType()).OrderBy(c=>c.Attributes.Pivot.Y).ToArray();
@@ -223,7 +225,7 @@ internal static class GrasshopperBridgeSuite
                 double nearest=outputs.Min(o=>StressValues(o).Zip(sample.FinalStress,(a,b)=>Math.Abs(a-b)).Max());
                 checks.Near("GH tensioni campione beam "+sample.Beam,nearest,0,0,1e-6);
             }
-            File.WriteAllText(Path.Combine(Root,d.Id,"grasshopper-stresses.json"),JsonSerializer.Serialize(outputs.Select(StressValues),BridgeGrillageExample.Json));
+            File.WriteAllText(Path.Combine(delivery,"grasshopper-stresses.json"),JsonSerializer.Serialize(outputs.Select(StressValues),BridgeGrillageExample.Json));
             var detailResults=restored.Objects.OfType<GH_Component>().Where(c=>c.GetType()==detailChecks[0].GetType()).OrderBy(c=>c.Attributes.Pivot.Y)
                 .Select(c=>(BridgeStressResult)((GH_ObjectWrapper)c.Params.Output[0].VolatileData.AllData(true).Single()).Value).ToArray();
             checks.Near("GH due sezioni con dettagli gPC",detailResults.Length,2,0,0);
@@ -238,11 +240,11 @@ internal static class GrasshopperBridgeSuite
             }
             checks.Near("GH irrigiditore appoggio attivo",detailResults[0].Analysis.Input.Support.Enabled?1:0,1,0,0);
             checks.Near("GH irrigiditore intermedio attivo",detailResults[1].Analysis.Input.Intermediate.Enabled?1:0,1,0,0);
-            File.WriteAllText(Path.Combine(Root,d.Id,"details.json"),JsonSerializer.Serialize(detailResults.Select(r=>new{r.Analysis.Input.Studs,r.Analysis.Input.Intermediate,r.Analysis.Input.Support,Checks=r.Stage.Shear.Checks.Concat(r.Stage.Studs.Checks),r.Stage.Warnings}),BridgeGrillageExample.Json));
+            File.WriteAllText(Path.Combine(delivery,"details.json"),JsonSerializer.Serialize(detailResults.Select(r=>new{r.Analysis.Input.Studs,r.Analysis.Input.Intermediate,r.Analysis.Input.Support,Checks=r.Stage.Shear.Checks.Concat(r.Stage.Studs.Checks),r.Stage.Warnings}),BridgeGrillageExample.Json));
         }
         restored.Objects.OfType<GH_BooleanToggle>().Single().Value=false;
         foreach(var analysis in restoredAnalyses)analysis.GetType().GetField("_model",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(analysis,Goo("Fem.GH_Model",null));
         GrasshopperBridgeExample.Write(restored,ghx);
-        File.WriteAllText(Path.Combine(Root,d.Id,"phase-workflow-validation.json"),JsonSerializer.Serialize(new{Mode=cached?"cached-native-results":"native-recalculation",Checks=checks.Measurements.Skip(checkStart)},BridgeGrillageExample.Json));
+        File.WriteAllText(Path.Combine(delivery,"phase-workflow-validation.json"),JsonSerializer.Serialize(new{Mode=cached?"cached-native-results":"native-recalculation",Checks=checks.Measurements.Skip(checkStart)},BridgeGrillageExample.Json));
     }
 }

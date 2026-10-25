@@ -30,6 +30,8 @@ internal static class GrasshopperBridgeExample
     }
     internal static void Run(BridgeGrillageExample.Parameters p,ModelModel[] inputs,ModelModel[] expected,BridgeGrillageExample.SectionReport sectionReference,NativeExamples.Recorder checks,bool cached=false)
     {
+        var delivery=cached?Path.GetFullPath("artifacts/example-replay/11-ponte-graticcio"):BridgeGrillageExample.Delivery;
+        Directory.CreateDirectory(delivery);
         var assembly=Assembly.LoadFrom(BuildPaths.GrasshopperAssembly);
         var field=typeof(Grasshopper.Instances).GetField("m_comServer",BindingFlags.NonPublic|BindingFlags.Static);
         if(field.GetValue(null)!=null)throw new InvalidOperationException("Run this example in a fresh process.");
@@ -152,8 +154,8 @@ internal static class GrasshopperBridgeExample
         var concreteStress=Panel("Sigma cls superiore [MPa]","",5750,400,350,180);concreteStress.AddSource(stresses.Params.Output[1]);
         var steelStress=Panel("Sigma acciaio inferiore [MPa]","",5750,670,350,180);steelStress.AddSource(stresses.Params.Output[12]);
         Panel("ESITI DA NON CONFONDERE","TauB non disponibile: output NaN.\nTensioni elastiche non equivalgono a verifica SLU.\nInstabilita, connessione, fatica, soletta locale, appoggi e azioni orizzontali: da verificare a parte.\nLa deformazione istantanea imposta e un incremento separato; non ripetere lo stesso ritiro.",5450,1100,650,160);
-        Write(doc,Path.Combine(BridgeGrillageExample.Delivery,"11-ponte-graticcio.ghx"));
-        using var restored=Read(Path.Combine(BridgeGrillageExample.Delivery,"11-ponte-graticcio.ghx"));
+        Write(doc,Path.Combine(delivery,"11-ponte-graticcio.ghx"));
+        using var restored=Read(Path.Combine(delivery,"11-ponte-graticcio.ghx"));
         var restoredAnalyses=restored.Objects.OfType<GH_Component>().Where(c=>c.GetType()==analyses[0].GetType()).OrderBy(c=>c.Attributes.Pivot.Y).ToArray();
         for(int phase=0;phase<3;phase++)
         {
@@ -194,12 +196,11 @@ internal static class GrasshopperBridgeExample
         checks.Near("GH sigma acciaio inferiore mezzeria [MPa]",midspan.Point8_SteelSigma,reference.BottomSteel,1e-6,1e-6);
         var tensions=restored.Objects.OfType<GH_Component>().Single(c=>c.GetType()==stresses.GetType());
         checks.Near("GH estrazione tensioni acciaio",tensions.Params.Output[12].VolatileDataCount,outputs.Length,0,0);
-        File.WriteAllText(Path.Combine(BridgeGrillageExample.Delivery,"grasshopper-stresses.json"),System.Text.Json.JsonSerializer.Serialize(outputs.Select(r=>new{r.Point1_ConcreteSigma,r.Point4_ConcreteSigma,r.Point5_SteelSigma,r.Point8_SteelSigma}),BridgeGrillageExample.Json));
+        File.WriteAllText(Path.Combine(delivery,"grasshopper-stresses.json"),System.Text.Json.JsonSerializer.Serialize(outputs.Select(r=>new{r.Point1_ConcreteSigma,r.Point4_ConcreteSigma,r.Point5_SteelSigma,r.Point8_SteelSigma}),BridgeGrillageExample.Json));
         foreach(var a in restoredAnalyses)Boolean(a,4,false);Boolean(restoredMoving,2,false);
         foreach(var analysis in restoredAnalyses)analysis.GetType().GetField("_model",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(analysis,Goo("Fem.GH_Model",null));
-        Write(restored,Path.Combine(BridgeGrillageExample.Delivery,"11-ponte-graticcio.ghx"));
-        File.WriteAllText(Path.Combine(rootPath(),"phase-workflow-validation.json"),System.Text.Json.JsonSerializer.Serialize(new{Mode=cached?"cached-native-results":"native-recalculation",Checks=checks.Measurements},BridgeGrillageExample.Json));
-        string rootPath()=>BridgeGrillageExample.Delivery;
+        Write(restored,Path.Combine(delivery,"11-ponte-graticcio.ghx"));
+        File.WriteAllText(Path.Combine(delivery,"phase-workflow-validation.json"),System.Text.Json.JsonSerializer.Serialize(new{Mode=cached?"cached-native-results":"native-recalculation",Checks=checks.Measurements},BridgeGrillageExample.Json));
     }
     internal static void Write(GH_Document doc,string path)
     {var archive=new GH_Archive();if(!archive.AppendObject(doc,"Definition")||!archive.WriteToFile(path,true,false))throw new IOException("Cannot write "+path);}
