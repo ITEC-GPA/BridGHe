@@ -54,6 +54,8 @@ internal static class Program
         if(args.Contains("--simple-bridge-examples")) { SimpleBridgeTests.Run(); SimpleBridgeExamples.Run(true); return 0; }
         if(args.Contains("--parametric-bridge-example")) return ParametricBridgeExample.Run();
         if(args.Contains("--parametric-bridge-phases")) return ParametricBridgePhasesExample.Run(args.Contains("--native"));
+        if(args.Contains("--saved-bridge-audit")) return SavedBridgeWorkflowAudit.Run();
+        if(args.Contains("--workflow-archived-replay")) return NativeWorkflowStationTests.ReplayArchived();
         if(args.Contains("--bridge-design-examples")) { BridgeDesignExamples.Run(true); return 0; }
         if(args.Contains("--bridge-details-example")) { BridgeDetailsExample.Run(true); return 0; }
         if(args.Contains("--bridge-details-model-example")) { BridgeDetailsModelExample.Generate(); return 0; }
@@ -340,4 +342,3 @@ internal static class Program
         Assert(rejected,"missing station results fail instead of silently adding zero forces");
     }
 }
-

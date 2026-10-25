@@ -16,6 +16,15 @@ using Grasshopper.Kernel.Special;
 /// <summary>Read-only replay of example 19 native files; independently asks Straus for union stations.</summary>
 internal static class NativeWorkflowStationTests
 {
+    internal static int ReplayArchived()
+    {
+        string root=ExamplePaths.Calculations("19-flusso-acciaio-misto");
+        var models=new[]{"G1_GETTO","G2_PERMANENTI","Q_TRAFFICO","RITIRO_FEM"}.Select(name=>
+            ModelArchive.Read<ModelModel>(File.ReadAllBytes(Path.Combine(root,"REV003-"+name+"-results.bgmodel")))).ToArray();
+        int count=ReplayGrasshopper(models);
+        Console.WriteLine($"ARCHIVED WORKFLOW 19 PASS: {count} section results; existing bgmodel archives, no Straus API or file writes.");
+        return 0;
+    }
     internal sealed record Sample(double Station, double N, double V1, double V2, double T, double M1, double M2);
     internal sealed record CaseSamples(string Key, Sample[] Original, Sample[] NativeAtUnion);
     internal sealed record Fixture(double Length, string BeamId, CaseSamples[] Cases);
