@@ -290,6 +290,12 @@
         "fa0981e2-710c-41ed-9a60-98bc102def94"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/Geometry/BeamMomentDispatchComponent.cs": {
+      "ports": "76350b2769ef3c1558ab2799a4a64c31d7ea502f6a8e6f019069f806ae745469",
+      "guids": [
+        "2db286af-c169-4c73-b623-3ec29ca21341"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/Geometry/BridgeAlignmentInputsComponent.cs": {
       "ports": "ebccaa9f31a0a59cdcbeec0876cd5d87a4fd959e5958f42d89b8ef958aed622b",
       "guids": [
@@ -386,6 +392,12 @@
       "ports": "f11e00be0bd8673c9eda2f84e1ff39e5f163844d862d9b184bfcb53ad1551227",
       "guids": [
         "16259f7a-7258-4bae-84b7-1d275034ea27"
+      ]
+    },
+    "src/BridGHe.Grasshopper/Components/Geometry/BridgeStateOverrideComponent.cs": {
+      "ports": "8d6fd636f577b3551d529dc5f4dfa8404697348c5c74eadd9354663dc31b78c0",
+      "guids": [
+        "47812468-52bb-4454-9363-4602d399473e"
       ]
     },
     "src/BridGHe.Grasshopper/Components/Geometry/SimpleBridgeComponents.cs": {

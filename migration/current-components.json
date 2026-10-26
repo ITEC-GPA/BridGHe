@@ -7849,6 +7849,116 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BeamMomentDispatchComponent",
+    "guid": "2db286af-c169-4c73-b623-3ec29ca21341",
+    "kind": "component",
+    "name": "Beam Moment Dispatch",
+    "nickname": "MomentDispatch",
+    "category": "BridGHe",
+    "subcategory": "14-Tools",
+    "description": "Classify all sampled moments of each beam in one FEM case. This is a preliminary stiffness map, not a code cracking assessment.",
+    "inputs": [
+      {
+        "name": "Beams",
+        "nickname": "B",
+        "description": "Analysed longitudinal beams, unique FEM IDs.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Case",
+        "nickname": "C",
+        "description": "Exact result case name. Dead is the reserved self-weight case in this example.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Tolerance",
+        "nickname": "T",
+        "description": "Zero moment tolerance [N mm].",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Component",
+        "nickname": "M",
+        "description": "0=Mx/BM1, 1=My/BM2. Bridge main bending uses BM2 after Straus result normalization.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Sign",
+        "nickname": "S",
+        "description": "+1 or -1. With consistent section-up axes, positive BM2 compresses the slab.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Positive",
+        "nickname": "Positive",
+        "description": "Original beams in this class; input order retained.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Negative",
+        "nickname": "Negative",
+        "description": "Original beams in this class; input order retained.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Mixed",
+        "nickname": "Mixed",
+        "description": "Original beams in this class; input order retained.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Zero",
+        "nickname": "Zero",
+        "description": "Original beams in this class; input order retained.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Missing",
+        "nickname": "Missing",
+        "description": "Original beams in this class; input order retained.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "States",
+        "nickname": "S",
+        "description": "Per-beam classification for Bridge State Override.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "ID, sampled extrema [N mm], class and scope.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Geometry.BridgeAlignmentInputsComponent",
     "guid": "750d7fac-a9b7-4fbb-8c11-c291e99a5cb8",
     "kind": "component",
@@ -9742,6 +9852,116 @@
         "name": "Information",
         "nickname": "I",
         "description": "Search resolution, objective and limitations.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeStateOverrideComponent",
+    "guid": "47812468-52bb-4454-9363-4602d399473e",
+    "kind": "component",
+    "name": "Bridge State Override",
+    "nickname": "StateOverride",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Assign uncracked or steel+rebar properties per FEM beam, retaining one physical section per fabrication segment. Stores the local state for the bridge checker. Shrinkage is excluded.",
+    "inputs": [
+      {
+        "name": "Beams",
+        "nickname": "B",
+        "description": "Steel members, same reference mesh as the classified model.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Segment IDs",
+        "nickname": "ID",
+        "description": "One physical segment ID per Composite Section.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Composite Sections",
+        "nickname": "P",
+        "description": "Full composite properties, concrete and rebar enabled, one per segment.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "States",
+        "nickname": "S",
+        "description": "Beam Moment Dispatch > States. All longitudinal beams required.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Response",
+        "nickname": "R",
+        "description": "1=long-term n infinity; 2=instantaneous n0. No shrinkage here.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Mixed Policy",
+        "nickname": "Mix",
+        "description": "0=stop, 1=uncracked, 2=cracked. A uniform approximation over each mixed-sign FEM beam; neither choice is a general safety bound.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Zero Policy",
+        "nickname": "Zero",
+        "description": "0=uncracked, 1=cracked for moments within tolerance.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Preserve Mass",
+        "nickname": "Mass",
+        "description": "Keep original mass per length by adjusting only transformed material density.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Girders",
+        "nickname": "G",
+        "description": "Updated longitudinal beams; FEM results cleared.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Other Steel",
+        "nickname": "S",
+        "description": "Other members with original properties; results cleared.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Beam IDs",
+        "nickname": "ID",
+        "description": "Girder IDs in output order.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Assigned section state per beam. Recalculate before merging.",
         "access": "list",
         "optional": false,
         "type": "Text"

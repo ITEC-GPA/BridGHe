@@ -1075,6 +1075,15 @@
       "badge": "stress"
     },
     {
+      "key": "BeamMomentDispatchComponent",
+      "type": "BridGHe.Grasshopper.Components.Geometry.BeamMomentDispatchComponent",
+      "guid": "2db286af-c169-4c73-b623-3ec29ca21341",
+      "name": "Beam Moment Dispatch",
+      "family": "result",
+      "glyph": "beam",
+      "badge": "filter"
+    },
+    {
       "key": "BridgeAlignmentInputsComponent",
       "type": "BridGHe.Grasshopper.Components.Geometry.BridgeAlignmentInputsComponent",
       "guid": "750d7fac-a9b7-4fbb-8c11-c291e99a5cb8",
@@ -1235,6 +1244,15 @@
       "family": "model",
       "glyph": "bridge-advice",
       "badge": ""
+    },
+    {
+      "key": "BridgeStateOverrideComponent",
+      "type": "BridGHe.Grasshopper.Components.Geometry.BridgeStateOverrideComponent",
+      "guid": "47812468-52bb-4454-9363-4602d399473e",
+      "name": "Bridge State Override",
+      "family": "model",
+      "glyph": "bridge-segments",
+      "badge": "swap"
     },
     {
       "key": "SimpleBridgeSolidComponent",

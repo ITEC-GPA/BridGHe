@@ -96,10 +96,18 @@ public static class BridgeWorkflowBuilder
         foreach (var (phase, action) in actions)
         {
             bool hasForce = !string.IsNullOrWhiteSpace(action.Case);
+            var assigned = (action.Source?.Beams ?? new List<BeamModel>()).Where(b => action.BeamIds.Length == 0 || action.BeamIds.Contains(b.BeamId, StringComparer.Ordinal))
+                .SelectMany(b => b.Attributes.OfType<BridgeSectionStateAttributeModel>().Select(a => (b.BeamId, a.Value, b.BeamProperty))).ToArray();
+            if (assigned.Select(a => a.BeamId).Distinct(StringComparer.Ordinal).Count() != assigned.Length ||
+                assigned.Any(a => a.Value.Behavior != action.Behavior || phase.State != BridgeSectionState.Composite))
+                throw new ArgumentException($"Action {action.Key}: local FEM section state does not match the mechanical phase. Do not reuse it for shrinkage.");
+            if (assigned.Any(a => a.Value.PropertySignature != BridgeSectionAssignment.Signature(a.BeamProperty)))
+                throw new ArgumentException($"Action {action.Key}: FEM properties changed after the local section-state assignment. Reapply Bridge State Override and recalculate.");
             var record = new BridgeWorkflowAction { Key = action.Key, SourceName = action.Source?.Name, SourceCase = action.Case,
                 Behavior = action.Behavior, ForceCase = hasForce ? action.Key + " [FEM]" : null,
                 StrainCase = action.Strain.HasValue ? action.Key + " [strain]" : null,
-                Strain = action.Strain, BeamIds = action.BeamIds.ToArray() };
+                Strain = action.Strain, BeamIds = action.BeamIds.ToArray(), HasLocalSectionStates = assigned.Length > 0,
+                ConcreteExcludedBeamIds = assigned.Where(a => a.Value.ConcreteExcluded).Select(a => a.BeamId).ToArray() };
             records.Add(action.Key, record);
             LoadCaseModel Case(string name, LoadCaseModel.Stage.BridgePhases kind)
             {
@@ -182,6 +190,7 @@ public static class BridgeWorkflowBuilder
             if (!model.LoadCombinations.Any(c => c.Values.Any(v => (v.Key.Name == record.ForceCase || v.Key.Name == record.StrainCase) && v.Value != 0)))
                 warnings.Add($"Action {record.Key} is not active in any combination.");
         if (phases.Any(p => p.Day.HasValue)) warnings.Add("Days describe the sequence; no age-dependent creep integration is performed.");
+        if (records.Values.Any(a => a.HasLocalSectionStates)) warnings.Add("Per-beam mechanical section states retained. Each action is checked using its own gross centroid and concrete inclusion. Shrinkage remains uncracked if its source has no state override. Moment-sign classification is a preliminary stiffness assumption, not a code cracking assessment.");
         if (method == BridgeWorkflowMethod.Compatible) warnings.Add("Compatible: existing category-based section calculation; numbered phases are retained for inspection. Select LinearHistory for sequential section activation.");
         else warnings.Add("LinearHistory: gPC section N–Mx history; global construction stages must already be analysed in Straus. Shear, studs and stiffeners are not verified by this history method.");
         var summary = model.BridgeWorkflow.Phases.SelectMany(p => new[] { $"{p.Order} | {p.Name} | {p.State}" + (p.Day.HasValue ? $" | day {p.Day:G6}" : "") }

@@ -416,9 +416,10 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                             double[] strainInfinite = strains[i][j].StrainInfiniteTime;
 
                             (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage) force = forces[i][j];
-                            if (model.Value.BridgeWorkflow?.Method == BridgeWorkflowMethod.LinearHistory)
+                            if (model.Value.BridgeWorkflow?.Method == BridgeWorkflowMethod.LinearHistory ||
+                                model.Value.BridgeWorkflow?.Phases.Any(p => p.Actions.Any(a => a.HasLocalSectionStates)) == true)
                             {
-                                stressAnalysisResults[i][j] = model.Value.LoadCombinations.Select(combo => checker[j].AnalyzeHistory(model.Value.BridgeWorkflow,
+                                stressAnalysisResults[i][j] = model.Value.LoadCombinations.Select(combo => checker[j].AnalyzeWorkflow(model.Value.BridgeWorkflow,
                                     workflowIndexes[i], workflowStations[i][j], combo, psiInfinite, psiInstant, psis[i][j].psiShrinkage, beam.StartBeamProperty.ConsiderRebar)).ToArray();
                                 tauBResults[i][j] = Enumerable.Repeat(double.NaN, model.Value.LoadCombinations.Count).ToArray();
                                 continue;

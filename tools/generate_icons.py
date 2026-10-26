@@ -233,6 +233,8 @@ BridgeSegmentSectionsComponent|bridge-segments|native|section
 BridgeSegmentExcelComponent|table|native|section
 BridgeAlignmentInputsComponent|bridge-solid|arrow|model
 BridgeSegmentOverrideComponent|bridge-segments|edit|model
+BridgeStateOverrideComponent|bridge-segments|swap|model
+BeamMomentDispatchComponent|beam|filter|result
 BridgeSegmentCompositeComponent|bridge-segments|link|model
 BridgeGirderResultsComponent|bridge-segments|filter|result
 SimpleBridgeTrussComponent|bridge-truss||model

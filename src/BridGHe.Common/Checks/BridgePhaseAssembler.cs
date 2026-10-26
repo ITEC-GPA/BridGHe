@@ -21,6 +21,7 @@ namespace BridGHe.Common.Checks
         /// <summary>Build once after results are attached, then reuse for every station and combination.</summary>
         public sealed class ResultIndex
         {
+            public string BeamId { get; }
             private readonly Dictionary<string, (double Station, BeamForceResultModel Force)[]> _forces;
             private readonly Dictionary<string, double> _strains;
             private readonly double _tolerance;
@@ -28,6 +29,7 @@ namespace BridGHe.Common.Checks
             internal ResultIndex(ElementModel beam, double length, double tolerance)
             {
                 if (beam == null) throw new ArgumentNullException(nameof(beam));
+                BeamId = beam switch { BeamModel b => b.BeamId, CompositeBeamModel b => b.BeamId, _ => null };
                 if (!double.IsFinite(length) || length <= 0) throw new ArgumentOutOfRangeException(nameof(length));
                 if (!double.IsFinite(tolerance) || tolerance < 0) throw new ArgumentOutOfRangeException(nameof(tolerance));
                 _tolerance = tolerance;

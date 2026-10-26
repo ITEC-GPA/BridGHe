@@ -58,6 +58,9 @@ public sealed record BridgeWorkflowPhase
 [DataContract]
 public sealed record BridgeWorkflowAction
 {
+    /// <summary>Only populated by an explicit per-beam FEM state assignment. Null in older archives.</summary>
+    [DataMember] public string[] ConcreteExcludedBeamIds { get; init; } = Array.Empty<string>();
+    [DataMember] public bool HasLocalSectionStates { get; init; }
     [DataMember] public string Key { get; init; }
     [DataMember] public string SourceName { get; init; }
     [DataMember] public string SourceCase { get; init; }

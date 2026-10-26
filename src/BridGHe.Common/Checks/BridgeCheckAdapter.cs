@@ -20,6 +20,7 @@ namespace BridGHe.Common.Checks
         private readonly CoordinateSystem reference;
         private readonly BridgeAnalysisOptions options;
         public const string PlanarAssumption = "Verifica nel piano N–Mx–Vy: torsione T, flessione sull'asse debole M2 e taglio trasversale V1 sono trascurati nelle verifiche di sezione e dei dettagli; rimangono nei risultati FEM. I relativi effetti e interazioni non sono verificati.";
+        public const string LocalStateAssumption = "Stati di rigidezza locali assegnati dal segno del momento campionato nel caso di riferimento: ipotesi preliminare, non delimitazione normativa della fessurazione. Ogni incremento meccanico usa il proprio stato e baricentro lordo. Il ritiro resta non fessurato se il suo modello non contiene override di stato. Le aste a segno variabile sono approssimate uniformemente secondo la politica scelta; verificare la sensibilità alla mesh.";
         private readonly bool ignoreSecondaryActions;
 
         public BridgeCheckAdapter(ReinforcedConcreteSection section, CoordinateSystem reference,
@@ -169,6 +170,15 @@ namespace BridGHe.Common.Checks
             LoadCombinationModel combination, double phiInfinite, double phiInstant, double phiShrinkage, bool rebars)
         {
             if (workflow?.Method != BridgeWorkflowMethod.LinearHistory) throw new ArgumentException("A LinearHistory workflow is required.");
+            return AnalyzeWorkflow(workflow,index,station,combination,phiInfinite,phiInstant,phiShrinkage,rebars);
+        }
+
+        /// <summary>Per-action local states keep the FEM gross centroid and checker phase consistent.
+        /// Compatible uses cumulative contributions, including the explicitly uncracked shrinkage model.</summary>
+        public BridgeStressResult AnalyzeWorkflow(BridgeWorkflow workflow, BridgePhaseAssembler.ResultIndex index, double station,
+            LoadCombinationModel combination, double phiInfinite, double phiInstant, double phiShrinkage, bool rebars)
+        {
+            if (workflow == null) throw new ArgumentNullException(nameof(workflow));
             var factors = combination.Values.ToDictionary(p => p.Key.Name, p => p.Value, StringComparer.Ordinal);
             double Coefficient(string name) => name != null && factors.TryGetValue(name, out var factor) ? factor : 0;
             var phases = new List<BridgePhase>();
@@ -181,14 +191,15 @@ namespace BridGHe.Common.Checks
                 int before = phases.Count;
                 foreach (var action in stage.Actions)
                 {
+                    var actionKind = action.ConcreteExcludedBeamIds?.Contains(index.BeamId, StringComparer.Ordinal) == true ? BridgePhaseKind.ConcreteExcluded : kind;
                     double factor = Coefficient(action.ForceCase), strainFactor = Coefficient(action.StrainCase);
                     if (action.ForceCase != null && action.StrainCase != null && factor != strainFactor)
                         throw new ArgumentException($"Action {action.Key}: FEM and shrinkage coefficients differ.");
                     double phi = action.Behavior switch { BridgeActionBehavior.LongTerm => phiInfinite,
                         BridgeActionBehavior.Shrinkage => phiShrinkage, BridgeActionBehavior.ShortTerm => phiInstant, _ => 0 };
                     string name = $"{stage.Order} · {stage.Name} / {action.Key}";
-                    if (action.ForceCase != null && factor != 0)
-                        phases.Add(Phase(index.ReadForce(action.ForceCase, station, reference, factor), kind, phi, name + " / FEM"));
+                    if (action.ForceCase != null && (factor != 0 || action.HasLocalSectionStates))
+                        phases.Add(Phase(index.ReadForce(action.ForceCase, station, reference, factor), actionKind, phi, name + " / FEM"));
                     double strain = index.ReadStrain(action.StrainCase, strainFactor);
                     if (strain != 0) phases.Add(new BridgePhase { Name = name + " / strain", Kind = BridgePhaseKind.Shrinkage,
                         Phi = phi, ShrinkageMicrostrain = strain * 1e6 });
@@ -198,8 +209,10 @@ namespace BridGHe.Common.Checks
                     Phi = kind == BridgePhaseKind.SteelOnly ? 0 : phiInstant });
             }
             var data = Input(true, rebars, true) with { Phases = phases.ToArray() };
-            var analysis = HBridgeHistoryResults.Calculate(data, new HBridgeHistoryOptions { MaterialMode = HistoryMaterialMode.Linear });
-            return Result(analysis, analysis.Stages.Count - 1);
+            var analysis = workflow.Method == BridgeWorkflowMethod.LinearHistory ? HBridgeHistoryResults.Calculate(data, new HBridgeHistoryOptions { MaterialMode = HistoryMaterialMode.Linear }) : HBridgeSection.Calculate(data);
+            var result = Result(analysis, analysis.Stages.Count - 1);
+            return workflow.Phases.Any(p => p.Actions.Any(a => a.HasLocalSectionStates))
+                ? new BridgeStressResult(analysis, analysis.Stages.Count - 1, null, result.Assumptions.Append(LocalStateAssumption)) : result;
         }
 
         public static ResultBeamForces Scale(ResultBeamForces f, double factor) => new ResultBeamForces(
