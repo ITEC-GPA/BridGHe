@@ -1,6 +1,16 @@
 # 50 · Ponte parametrico: quattro modelli, fasi, ritiro e verifiche
 
-Aprire **[50-ponte-quattro-modelli.ghx](50-ponte-quattro-modelli.ghx)** con la Release aggiornata di BridGHe per Rhino 8. L'esempio deriva da una copia del **49**, che resta invariato. Input espliciti e nominati a sinistra; analisi, verifiche, grafici e report sono collegati.
+Aprire **[50-ponte-quattro-modelli.ghx](50-ponte-quattro-modelli.ghx)** con la Release aggiornata di BridGHe per Rhino 8. L'esempio deriva da una copia del **49**, che resta invariato. Il flusso si legge **da sinistra a destra**; ogni componente ha i propri input espliciti a sinistra e gli output nominati a destra.
+
+## Organizzazione del canvas
+
+Le undici zone numerate seguono questa sequenza: **geometria → materiali e sezioni → graticcio comune → modello 0 acciaio → modello 1 n∞ → modello 2 n0 → modello 3 ritiro → assemblaggio → verifiche → grafici → report**.
+
+La numerazione visiva 0–3 corrisponde ai modelli esistenti M01–M04: nomi dei casi, identificativi delle fasi e combinazioni restano gli stessi. In ciascun ramo di calcolo, leggere proprietà, carichi/deformazioni, Build Model e analisi, quindi azioni e fase. I componenti paralleli sono impilati nello stesso blocco; i modelli successivi proseguono verso destra.
+
+I controlli condivisi si trovano presso il primo componente che li utilizza. I collegamenti fra zone sono impostati su **Hidden** per evitare fasci di fili attraverso l'intera definizione: **selezionare il componente destinatario per vederli**. I collegamenti locali restano visibili. I sei grafici sono organizzati in due gruppi affiancati di tre righe, ciascuna con selezione della trave, generazione e anteprima.
+
+Il riordino modifica soltanto posizioni, dimensioni e annotazioni del canvas e visualizzazione dei fili. Valori, GUID dei componenti e dei parametri, sorgenti ordinate, cache e impostazioni di calcolo sono conservati.
 
 Configurazione iniziale: tre campate da 30 m, tre travi, 24 conci, diaframmi, controventi, fasce trasversali di soletta alla quota reale, link rigidi e 12 appoggi. Ciascun modello contiene 324 beam (108 longitudinali) e 266 nodi. Carichi e dettagli sono dimostrativi: questo file non attesta un progetto verificato.
 
@@ -77,3 +87,12 @@ Analisi Straus e report numerico reale restano da eseguire. native-validation.js
 Per rigenerare da PowerShell: `.\example\50-ponte-quattro-modelli\genera.ps1 -Force`. Il comando crea un backup, riparte dal 49 e non usa Straus. Aggiungere `-Native` soltanto quando autorizzato e con licenza disponibile: esegue analisi, equilibrio, merge e verifiche. Il report resta a generazione manuale.
 
 La rigenerazione usa i valori del generatore: per conservare personalizzazioni nel 50, usare il GHX e i pulsanti. Backup in artifacts/four-models-backups; file Straus in calcoli; Release in bin/Release.
+
+La rigenerazione applica automaticamente il layout orizzontale. Per ridisporre **il file 50 esistente conservandone i dati**, dalla root eseguire:
+
+```powershell
+dotnet build tests/BridGHe.Smoke -c Release -p:BuildProjectReferences=false
+dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --example50-horizontal
+```
+
+Questo comando non risolve il grafo né avvia Straus. Prima di sostituire il file controlla l'identità del contenuto funzionale XML, la riapertura e l'assenza di sovrapposizioni. Crea un backup in `artifacts/example50-horizontal` e aggiorna [layout-validation.json](layout-validation.json). Le validazioni numeriche precedenti restano separate da questa verifica del canvas.

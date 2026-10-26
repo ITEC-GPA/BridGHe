@@ -328,6 +328,7 @@ internal sealed partial class ParametricBridgePhasesExample : IDisposable
             BridgeCheckAdapter.PlanarAssumption+"\n"+
             "Le fasce cls sono attive anche nel ramo acciaio per questo confronto: non rappresenta automaticamente la fase fisica di getto fresco.\n"+
             "Quote FEM, eccentricità e convenzione delle sezioni omogeneizzate seguono il flusso esistente. Vedere README dell'esempio 50.";
+        Example50HorizontalLayout.Apply(doc);
     }
 
     private static object Value(IGH_Param p)=>p.VolatileData.AllData(true).Single().ScriptVariable();

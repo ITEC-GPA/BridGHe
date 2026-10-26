@@ -54,6 +54,7 @@ internal static class Program
         if(args.Contains("--simple-bridge-examples")) { SimpleBridgeTests.Run(); SimpleBridgeExamples.Run(true); return 0; }
         if(args.Contains("--parametric-bridge-example")) return ParametricBridgeExample.Run();
         if(args.Contains("--parametric-bridge-phases")) return ParametricBridgePhasesExample.Run(args.Contains("--native"));
+        if(args.Contains("--example50-horizontal")) return Example50HorizontalLayout.Run();
         if(args.Contains("--saved-bridge-audit")) return SavedBridgeWorkflowAudit.Run();
         if(args.Contains("--prepare99-rev004")) return SavedBridgeWorkflowAudit.Run(true);
         if(args.Contains("--workflow-archived-replay")) return NativeWorkflowStationTests.ReplayArchived();

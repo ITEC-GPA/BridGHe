@@ -1,0 +1,98 @@
+{
+  "Mode": "horizontal-layout-only",
+  "NativeSolverInvoked": false,
+  "Components": 127,
+  "FunctionalObjects": 714,
+  "Connections": 873,
+  "FunctionalContentSha256": "D320A8B62B16BC875889326D20E3C238C740E8A3076BE58141E7D5E40EEF3676",
+  "AllInputsAndCachesPreserved": true,
+  "NoOverlaps": true,
+  "Reopened": true,
+  "Before": {
+    "Width": 67086,
+    "Height": 4505
+  },
+  "After": {
+    "Width": 67085,
+    "Height": 4505
+  },
+  "Stages": [
+    {
+      "Title": "01 | GEOMETRIA \u2014 tracciato, campate, travi, diaframmi e conci",
+      "Components": 6,
+      "X": 100,
+      "Width": 4907,
+      "Height": 1970
+    },
+    {
+      "Title": "02 | MATERIALI E SEZIONI \u2014 acciaio, soletta e misto per concio",
+      "Components": 20,
+      "X": 5707,
+      "Width": 6927,
+      "Height": 2875
+    },
+    {
+      "Title": "03 | GRATICCIO COMUNE \u2014 aste, soletta, appoggi e collegamenti",
+      "Components": 11,
+      "X": 13334,
+      "Width": 3143,
+      "Height": 4885
+    },
+    {
+      "Title": "04 | MODELLO 0 \u00B7 ACCIAIO (M01) \u2014 propriet\u00E0 \u2192 carichi \u2192 FEM \u2192 fase 10",
+      "Components": 12,
+      "X": 17177,
+      "Width": 6561,
+      "Height": 1350
+    },
+    {
+      "Title": "05 | MODELLO 1 \u00B7 n\u221E (M02) \u2014 propriet\u00E0 \u2192 carichi \u2192 FEM \u2192 fase 20",
+      "Components": 12,
+      "X": 24438,
+      "Width": 6561,
+      "Height": 1180
+    },
+    {
+      "Title": "06 | MODELLO 2 \u00B7 n0 (M03) \u2014 propriet\u00E0 \u2192 carichi \u2192 FEM \u2192 fase 30",
+      "Components": 12,
+      "X": 31699,
+      "Width": 6561,
+      "Height": 1180
+    },
+    {
+      "Title": "07 | MODELLO 3 \u00B7 RITIRO (M04) \u2014 \u03B5cs \u2192 deformazioni \u2192 FEM \u2192 fase 40",
+      "Components": 13,
+      "X": 38960,
+      "Width": 5985,
+      "Height": 1902
+    },
+    {
+      "Title": "08 | ASSEMBLAGGIO \u2014 quattro modelli \u002B fasi \u002B combinazioni; preview FEM",
+      "Components": 7,
+      "X": 45645,
+      "Width": 3603,
+      "Height": 2071
+    },
+    {
+      "Title": "09 | VERIFICHE \u2014 sezioni, pioli, irrigiditori e riepilogo",
+      "Components": 15,
+      "X": 49948,
+      "Width": 8328,
+      "Height": 2386
+    },
+    {
+      "Title": "10 | GRAFICI \u2014 selezione trave, diagrammi e anteprime Grasshopper",
+      "Components": 18,
+      "X": 58876,
+      "Width": 6636.5,
+      "Height": 2300
+    },
+    {
+      "Title": "11 | REPORT \u2014 contenuti, template Word e generazione",
+      "Components": 1,
+      "X": 66212,
+      "Width": 973,
+      "Height": 1461
+    }
+  ]
+}
