@@ -76,6 +76,15 @@
       "badge": "edit"
     },
     {
+      "key": "GetBeamPropertyComponent",
+      "type": "BridGHe.Grasshopper.Components.GetBeamPropertyComponent",
+      "guid": "5b890d9d-1629-4591-a02c-07c507f88252",
+      "name": "Get Beam Property",
+      "family": "tool",
+      "glyph": "beam",
+      "badge": "data"
+    },
+    {
       "key": "BridgeCheckMapComponent",
       "type": "BridGHe.Grasshopper.Components.Utilities.BridgeCheckMapComponent",
       "guid": "f9a95b40-c77d-4bc6-a08b-771f70905653",

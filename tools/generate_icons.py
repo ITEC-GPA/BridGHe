@@ -256,6 +256,7 @@ AlignBeamAxesComponent|beam|axes|model
 AlignPlateAxesComponent|plate|axes|model
 BeamFilterComponent|beam|filter|tool
 BeamOverrideComponent|beam|edit|tool
+GetBeamPropertyComponent|beam|data|tool
 MovingStaticAnalysisComponent|vehicle|play|solver
 StrausR3AnalysisComponent|solver|play|solver
 BeamOutputStationsComponent|stations||model

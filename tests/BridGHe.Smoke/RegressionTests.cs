@@ -23,6 +23,7 @@ internal static class RegressionTests
             ["bridge-segment-excel"] = BridgeSegmentExcelTests.Run,
             ["bridge-alignment-inputs"] = BridgeAlignmentInputsTests.Run,
             ["bridge-segment-override"] = BridgeSegmentOverrideTests.Run,
+            ["get-beam-property"] = GetBeamPropertyTests.Run,
             ["bridge-segment-composite"] = BridgeSegmentCompositeTests.Run,
             ["bridge-deck-grillage"] = BridgeDeckGrillageTests.Run,
             ["reinforcement-material"] = ReinforcementMaterialTests.Run,

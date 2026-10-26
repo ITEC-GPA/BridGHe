@@ -780,6 +780,12 @@
         "c52e4345-36fa-4944-9ee5-99ed74034221"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/Tools/GetBeamPropertyComponent.cs": {
+      "ports": "f81a3d8ac841cbff31e2e4834b93def0cbc312191b4a11f41bc980364a3180ba",
+      "guids": [
+        "5b890d9d-1629-4591-a02c-07c507f88252"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/Tools/MergeGeometryComponent.cs": {
       "ports": "d17a182f2ede11fa3b34f2c739f5cfce11a9ed756e8478c79811a1e90c98eda4",
       "guids": [

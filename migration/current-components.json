@@ -240,6 +240,36 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.GetBeamPropertyComponent",
+    "guid": "5b890d9d-1629-4591-a02c-07c507f88252",
+    "kind": "component",
+    "name": "Get Beam Property",
+    "nickname": "GetProperty",
+    "category": "BridGHe",
+    "subcategory": "14-Tools",
+    "description": "Extract an independent copy of the complete Beam Property assigned to a beam. Lists/trees are processed item by item; name, material, section and composite preview data are retained.",
+    "inputs": [
+      {
+        "name": "Beam",
+        "nickname": "B",
+        "description": "Beam whose assigned property is required.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Property",
+        "nickname": "P",
+        "description": "Independent copy of the complete Beam Property. Connect to Beam Property Override or other property inputs.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Utilities.BridgeCheckMapComponent",
     "guid": "f9a95b40-c77d-4bc6-a08b-771f70905653",
     "kind": "component",
