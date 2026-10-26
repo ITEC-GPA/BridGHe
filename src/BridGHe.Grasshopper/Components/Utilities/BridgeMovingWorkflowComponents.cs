@@ -45,7 +45,7 @@ public sealed class BridgeStraightMovingPathComponent : BridgeUtilityComponent
 
 public sealed class BridgeMovingCombinationsComponent : BridgeUtilityComponent
 {
-    public BridgeMovingCombinationsComponent() : base("Bridge Moving Combinations", "MovingComb", "Append alternative moving positions to an explicit base table. Exactly one position per added combination; no normative coefficients or force envelopes.", CategoryNameConstants.SUBCATEGORY_DEFINITIONS) { }
+    public BridgeMovingCombinationsComponent() : base("Bridge Moving Combinations", "MovingComb", "Append alternative moving positions to an explicit base table. Exactly one position per added combination; no normative coefficients or force envelopes.", CategoryNameConstants.SUBCATEGORY_LOADS) { }
     public override Guid ComponentGuid => new Guid("9a43a3f7-3d36-4ba1-b7d1-1bfb973d4015");
     protected override void RegisterInputParams(GH_InputParamManager p)
     {

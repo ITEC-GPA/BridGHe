@@ -1658,7 +1658,7 @@
     "name": "Bridge Moving Combinations",
     "nickname": "MovingComb",
     "category": "BridGHe",
-    "subcategory": "04-Definitions",
+    "subcategory": "09-Loads",
     "description": "Append alternative moving positions to an explicit base table. Exactly one position per added combination; no normative coefficients or force envelopes.",
     "inputs": [
       {

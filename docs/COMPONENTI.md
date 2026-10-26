@@ -1,4 +1,4 @@
-# Inventario dei componenti 0.1.0
+# Inventario dei componenti 0.2.0
 
 220 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
 
@@ -77,7 +77,6 @@
 |---|---|---|---|
 | Bridge Action Combinations | component | Phases; Action IDs; Names; Coefficients | Table; Omitted actions |
 | Bridge Combination Excel | component | Models; Phases; File; Mode; Rows; Overwrite | File; Table; Action IDs; Summary |
-| Bridge Moving Combinations | component | Base table; Moving cases; Base combination; Traffic factor; Isolated positions; Action prefix | Table; Action IDs; Cases; Mapping |
 | Group | component | Name; Parent | Group |
 | Load Case | component | Name; Gravity NSM | LoadCase |
 | Load Combination | component | Name; LoadCases; Coefficients | LoadCombination |
@@ -202,6 +201,7 @@
 | Beam Point Load | component | Beam; LoadCase; Coordinate System; P1; P2; P3; a | Beam |
 | Beam Point Moment | component | Beam; LoadCase; Coordinate System; M1; M2; M3; a | Beam |
 | Beam PreLoad | component | Beam; LoadCase; Type; Value | Beam |
+| Bridge Moving Combinations | component | Base table; Moving cases; Base combination; Traffic factor; Isolated positions; Action prefix | Table; Action IDs; Cases; Mapping |
 | Bridge Moving Lanes | component | Prototype; Offsets; Cases | Paths |
 | Bridge Straight Moving Path | component | Grillage Geometry; Template; Case; Lane offset; Divisions | Path; Axis; Step |
 | Composite Beam Strain | component | Beam; LoadCase; Strain | Beam |
