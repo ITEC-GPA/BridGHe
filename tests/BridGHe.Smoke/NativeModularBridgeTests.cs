@@ -38,7 +38,7 @@ internal static class NativeModularBridgeTests
         using var doc=GrasshopperBridgeExample.Read(candidate);doc.FilePath=source;
         var analyses=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="StrausR3AnalysisComponent").OrderBy(c=>c.NickName).ToArray();
         if(analyses.Length!=4)throw new Exception("Expected four Straus phase models.");
-        foreach(var a in analyses){ClearAnalysis(a);SetText(a,"Output Path",Path.Combine(folder,a.NickName.Split(' ')[0]+".st7"));}
+        for(int i=0;i<analyses.Length;i++){var a=analyses[i];ClearAnalysis(a);SetText(a,"Output Path",Path.Combine(folder,$"{i+1:00}-"+a.NickName.Split(' ')[0]+".st7"));}
         foreach(var report in doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeReportComponent"))report.GetType().GetField("_run",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(report,false);
         BridgeSegmentExcelTests.Solve(doc,true);
         foreach(var read in doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeSectionReadComponent")){BridgeSegmentExcelTests.Press(read);read.ExpireSolution(false);}
@@ -69,10 +69,16 @@ internal static class NativeModularBridgeTests
             File.WriteAllText(Path.Combine(folder,"progress.json"),JsonSerializer.Serialize(summary,new JsonSerializerOptions{WriteIndented=true}));
             Console.WriteLine("NATIVE MODULAR PASS: "+a.NickName+"; reactions in equilibrium.");
         }
+        // Existing workbooks are read only after their source phases are populated.
+        // Never press a Create-mode Excel component in an end-to-end replay.
+        foreach(var excel in doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeCombinationExcelComponent"))
+            if(Values<int>(Input(excel,"Mode")).SingleOrDefault()==1){Press(excel);BridgeSegmentExcelTests.Solve(doc,true);}
         var merge=doc.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="BuildBridgeModel");Press(merge);BridgeSegmentExcelTests.Solve(doc,true);
-        var model=Values<ModelModel>(Output(merge,"Model")).SingleOrDefault();if(model?.BridgeWorkflow?.Phases.Length!=4)throw new Exception("Four-phase merge failed.\n"+Errors(doc));
-        var check=doc.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="SuperElementCheckComponent");Press(check);BridgeSegmentExcelTests.Solve(doc,true);
-        var rows=Values<BridgeStressResult>(Output(check,"Tension Check"));if(rows.Length==0)throw new Exception("No section check results.\n"+Errors(doc));
+        var model=Values<ModelModel>(Output(merge,"Model")).SingleOrDefault();if(model?.BridgeWorkflow?.Phases.Length!=4)throw new Exception("Four-phase merge failed. Inputs: "+string.Join(", ",merge.Params.Input.Select(p=>p.Name+"="+p.VolatileDataCount))+"\n"+Errors(doc));
+        var checks=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="SuperElementCheckComponent").ToArray();
+        foreach(var check in checks){Press(check);BridgeSegmentExcelTests.Solve(doc,true);}
+        var rows=checks.SelectMany(check=>Values<BridgeStressResult>(Output(check,"Tension Check"))).ToArray();
+        if(checks.Length==0||checks.Any(check=>Output(check,"Tension Check").VolatileDataCount==0))throw new Exception("Missing section check results.\n"+Errors(doc));
         var details=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeDetailCheckComponent").ToArray();
         if(details.Any(c=>Output(c,"Section result").VolatileDataCount==0))throw new Exception("A detail check branch has no output.\n"+Errors(doc));
         var plots=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name.EndsWith("PlotComponent")).ToArray();
@@ -97,9 +103,24 @@ internal static class NativeModularBridgeTests
         {
             if(load is BeamDistributedLoadModel d)
             {
-                var v=d.Value;if(d.DistributedLoadType!=BeamDistributedLoadModel.LoadType.Force||v.LoadSchema!=BeamDistributedLoadModel.LoadSchema.Uniform||v.CoordinateSystem==null||v.LoadDirection!=BeamDistributedLoadModel.LoadDirection.Z)
-                    throw new NotSupportedException("Independent equilibrium fixture requires uniform global Z forces.");
-                sum-=v.PA*b.Length*(1-v.A-v.B);
+                if(d.DistributedLoadType!=BeamDistributedLoadModel.LoadType.Force)continue; // Distributed couples have zero net force.
+                var v=d.Value;
+                if(v.LoadSchema!=BeamDistributedLoadModel.LoadSchema.Uniform)
+                    throw new NotSupportedException("Independent equilibrium integration is not implemented for "+v.LoadSchema);
+                double vertical;
+                if(v.CoordinateSystem==null)
+                {
+                    b.GetLocalAxes(true,out var axis1,out var axis2,out var axis3,out _);
+                    vertical=v.LoadDirection switch{BeamDistributedLoadModel.LoadDirection.X=>axis1.Z,BeamDistributedLoadModel.LoadDirection.Y=>axis2.Z,BeamDistributedLoadModel.LoadDirection.Z=>axis3.Z,_=>throw new NotSupportedException("Unsupported local load direction.")};
+                }
+                else
+                {
+                    if(v.CoordinateSystem.Name!=CoordinateSystemModel.Global.Name)throw new NotSupportedException("Independent integration of custom load UCS is not implemented.");
+                    vertical=v.LoadDirection switch{BeamDistributedLoadModel.LoadDirection.Gravity or BeamDistributedLoadModel.LoadDirection.Gravity_Projected=>-1,BeamDistributedLoadModel.LoadDirection.Z or BeamDistributedLoadModel.LoadDirection.Z_Projected=>1,_=>0};
+                    if(v.LoadDirection is BeamDistributedLoadModel.LoadDirection.Z_Projected or BeamDistributedLoadModel.LoadDirection.Gravity_Projected)
+                    {double tangentZ=(b.PointTo.Z-b.PointFrom.Z)/b.Length;vertical*=Math.Sqrt(Math.Max(0,1-tangentZ*tangentZ));}
+                }
+                sum-=v.PA*b.Length*(1-v.A-v.B)*vertical;
             }
             else if(load is not (BeamPreLoadModel or BeamGradientLoadModel or CompositeBeamSlabStrainModel))throw new NotSupportedException("Add independent integration for "+load.GetType().Name);
         }
