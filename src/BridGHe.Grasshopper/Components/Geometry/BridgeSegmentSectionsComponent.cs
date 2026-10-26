@@ -25,7 +25,7 @@ public sealed class BridgeSegmentSectionsComponent : BridgeUtilityComponent
     {
         p.AddGenericParameter("Bridge Geometry", "BG", "Simple Bridge geometry, also after longitudinal bracing. Segment identity is independent of mesh subdivisions.", GH_ParamAccess.item);
         p.AddGenericParameter("Base Property", "P", "Steel I Section + Beam property. Material and formulation are retained; dimensions marked '*' follow this section.", GH_ParamAccess.item);
-        p.AddTextParameter("Section Table", "T", "One row per concio: ID; start; end; b_bottom; b_top; height; t_bottom; t_top; t_web; radius. All dimensions mm. '*' inherits base dimension. Empty = all base. Press Tabella conci to fill an attached editable Panel.", GH_ParamAccess.list);
+        p.AddTextParameter("Section Table", "T", "One row per concio: ID; start; end; b_bottom; b_top; height; t_bottom; t_top; t_web; radius. All dimensions mm. '*' inherits base dimension. Disconnected or header-only = all base; a connected empty source waits for data. Press Tabella conci to fill an attached editable Panel.", GH_ParamAccess.list);
         p[2].Optional = true;
     }
     protected override void RegisterOutputParams(GH_OutputParamManager p)
@@ -90,6 +90,12 @@ public sealed class BridgeSegmentSectionsComponent : BridgeUtilityComponent
         if (Params.Input[0].VolatileDataCount != 1 || Params.Input[1].VolatileDataCount != 1)
             throw new ArgumentException("Connect exactly one Bridge Geometry and one Base Property; use Section Table for multiple segments.");
         da.GetDataList(2, table);
+        if (table.Count == 0 && Params.Input[2].SourceCount > 0)
+        {
+            Message = "Waiting for table";
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The connected Section Table has no data. Read the workbook or supply a valid table before assigning sections. Disconnect the input to use only the base section.");
+            return;
+        }
         var result = BridgeSegmentSections.Create(geometry.Value, property.Value, table);
         var properties = result.Rules.Select(r => r.Property).ToArray();
         da.SetDataList(0, result.Rules.Select(r => new BridgeDesignGoo(r)));

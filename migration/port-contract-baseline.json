@@ -352,6 +352,12 @@
         "36a9ed77-8fb7-4348-a783-f1c057a921e4"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/Geometry/BridgeSegmentExcelComponent.cs": {
+      "ports": "d0020cfa63919231f3766eaa5e0ddcf14d21aef76d7083bae1fe27f064409f79",
+      "guids": [
+        "f9286827-2ca1-4268-a6dc-79c8ba6d1c9f"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/Geometry/BridgeSegmentOverrideComponent.cs": {
       "ports": "73c5738a4a446ff480d159c32ca357b8e93b66a82e21ceb20756b98765c1c874",
       "guids": [
@@ -359,7 +365,7 @@
       ]
     },
     "src/BridGHe.Grasshopper/Components/Geometry/BridgeSegmentSectionsComponent.cs": {
-      "ports": "2f623742a1f9346bd28d87ca08f12ee82c30a5ad93d4056e2da24877a576301b",
+      "ports": "157bac190d352464a695c798388f287111e804cd6f7da44a0f2c5496f9222d6d",
       "guids": [
         "8b33beac-6c81-4285-94ad-4e3dc2351a21"
       ]

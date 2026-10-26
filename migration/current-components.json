@@ -8981,6 +8981,116 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSegmentExcelComponent",
+    "guid": "f9286827-2ca1-4268-a6dc-79c8ba6d1c9f",
+    "kind": "component",
+    "name": "Bridge Segment Excel",
+    "nickname": "SegmentExcel",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Count fabrication segments before assigning sections. Create an Excel template from geometry, then read its dimensions into Bridge Segment Sections. File access only on Run.",
+    "inputs": [
+      {
+        "name": "Bridge Geometry",
+        "nickname": "BG",
+        "description": "Bridge Geometry from Simple Bridge, before section assignment. Counts fabrication segments, not FEM elements.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "File",
+        "nickname": "F",
+        "description": "Excel .xlsx path. Relative to the saved GH definition. Used only on Run; not required for counts.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Mode",
+        "nickname": "M",
+        "description": "0 Create template; 1 Read completed workbook. Press Run to access the file.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Base Property",
+        "nickname": "P",
+        "description": "Optional steel I Beam Property: prefill numeric dimensions when creating Excel. Without it, '*' inherits Base Property later in Bridge Segment Sections.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Overwrite",
+        "nickname": "O",
+        "description": "Allow explicit Create to replace an existing Excel file. False by default. Use a new file after changing geometry to preserve your previous dimensions.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Count",
+        "nickname": "N",
+        "description": "Total fabrication segments, all girders. Available without a section or Excel file.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Segment IDs",
+        "nickname": "ID",
+        "description": "One unique G1-C1 etc. per girder/concio. Ordered by girder then concio.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Girder IDs",
+        "nickname": "G",
+        "description": "Girder IDs, paired with Counts per Girder.",
+        "access": "list",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Counts per Girder",
+        "nickname": "NG",
+        "description": "Number of fabrication segments in each girder, paired with Girder IDs.",
+        "access": "list",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Section Table",
+        "nickname": "T",
+        "description": "Connect to Bridge Segment Sections > Section Table. Create: current template. Read: validated workbook dimensions retained until next Run or invalidation.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "File",
+        "nickname": "F",
+        "description": "Resolved path when available.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Counts, file operation and cache warnings. Dimensions and stations are in mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSegmentOverrideComponent",
     "guid": "1e3d5d47-4df8-4dde-9cc9-7ec2c327ff2d",
     "kind": "component",
@@ -9087,7 +9197,7 @@
       {
         "name": "Section Table",
         "nickname": "T",
-        "description": "One row per concio: ID; start; end; b_bottom; b_top; height; t_bottom; t_top; t_web; radius. All dimensions mm. '*' inherits base dimension. Empty = all base. Press Tabella conci to fill an attached editable Panel.",
+        "description": "One row per concio: ID; start; end; b_bottom; b_top; height; t_bottom; t_top; t_web; radius. All dimensions mm. '*' inherits base dimension. Disconnected or header-only = all base; a connected empty source waits for data. Press Tabella conci to fill an attached editable Panel.",
         "access": "list",
         "optional": true,
         "type": "Text"

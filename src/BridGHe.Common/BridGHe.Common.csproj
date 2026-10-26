@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\..\build\GpcReferences.props" />
   <ItemGroup>
+    <EmbeddedResource Include="Resources\BridgeSegmentSections.xlsx" />
     <PackageReference Include="RhinoCommon" Version="$(RhinoVersion)" ExcludeAssets="runtime" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
   </ItemGroup>

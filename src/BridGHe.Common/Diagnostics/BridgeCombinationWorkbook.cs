@@ -66,7 +66,7 @@ public static class BridgeCombinationWorkbook
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
 
-    private static void Publish(string temporary, string path, bool overwrite)
+    internal static void Publish(string temporary, string path, bool overwrite)
     {
         if (!overwrite || !File.Exists(path)) { File.Move(temporary, path); return; }
         using var target = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
@@ -95,7 +95,7 @@ public static class BridgeCombinationWorkbook
         finally { if (safeToDelete) File.Delete(recovery); }
     }
 
-    public static BridgeCombinationWorkbookResult Read(string path, BridgeCombinationCatalog catalog)
+    internal static Dictionary<string, Dictionary<(int Row, int Column), Cell>> ReadSheets(string path, params string[] names)
     {
         using var zip = ZipFile.OpenRead(FilePath(path));
         if (zip.Entries.Count > 2048 || zip.Entries.Sum(e => e.Length) > 128 * 1024 * 1024 || zip.Entries.Any(e => e.Length > MaxPartSize))
@@ -139,7 +139,13 @@ public static class BridgeCombinationWorkbook
             }
             return cells;
         }
-        var reference = ReadSheet("Actions");
+        return names.ToDictionary(name => name, ReadSheet);
+    }
+
+    public static BridgeCombinationWorkbookResult Read(string path, BridgeCombinationCatalog catalog)
+    {
+        var sheets = ReadSheets(path, "Actions", "Combinations");
+        var reference = sheets["Actions"];
         for (int i = 0; i < catalog.ReferenceRows.Length; i++)
         for (int j = 0; j < catalog.ReferenceRows[i].Length; j++)
         {
@@ -148,7 +154,7 @@ public static class BridgeCombinationWorkbook
                 throw new ArgumentException($"Actions reference changed at {Column(j + 1)}{i + 1}: current phases/source cases differ from the workbook, or its Actions sheet was edited. Regenerate into a new file.");
         }
         if (reference.Count != 0) throw new ArgumentException("Actions sheet contains unexpected data. Regenerate the template.");
-        var input = ReadSheet("Combinations");
+        var input = sheets["Combinations"];
         if (input.Count == 0 || input.Keys.Any(k => k.Column > catalog.ActionIds.Length + 1 || k.Row > 10001))
             throw new ArgumentException("Combinations has unexpected columns, too many rows, or no header.");
         var table = new List<string[]>(); bool formulas = false;
@@ -170,7 +176,7 @@ public static class BridgeCombinationWorkbook
         return new BridgeCombinationWorkbookResult(catalog.ValidateTable(table), warnings.ToArray());
     }
 
-    private sealed record Cell(string Value, bool Formula, bool InvalidType);
+    internal sealed record Cell(string Value, bool Formula, bool InvalidType);
     private static string Text(XElement element) => string.Concat(element?.Descendants(S + "t").Where(t => t.Parent?.Name != S + "rPh").Select(t => t.Value) ?? Enumerable.Empty<string>());
     private static (int Row, int Column) Address(string address)
     {

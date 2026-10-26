@@ -20,6 +20,7 @@ internal static class RegressionTests
             ["build-model-parameters"] = BuildModelParameterTests.Run,
             ["parametric-bridge"] = ParametricBridgeTests.Run,
             ["bridge-segment-sections"] = BridgeSegmentSectionsTests.Run,
+            ["bridge-segment-excel"] = BridgeSegmentExcelTests.Run,
             ["bridge-segment-override"] = BridgeSegmentOverrideTests.Run,
             ["bridge-segment-composite"] = BridgeSegmentCompositeTests.Run,
             ["bridge-deck-grillage"] = BridgeDeckGrillageTests.Run,

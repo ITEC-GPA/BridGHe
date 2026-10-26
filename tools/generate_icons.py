@@ -229,6 +229,7 @@ SimpleBridgeConfigurableComponent|bridge-solid|native|model
 BridgeParametricLayoutComponent|bridge-schedule|measure|model
 BridgeSlabGrillageComponent|bridge-deck|native|model
 BridgeSegmentSectionsComponent|bridge-segments|native|section
+BridgeSegmentExcelComponent|table|native|section
 BridgeSegmentOverrideComponent|bridge-segments|edit|model
 BridgeSegmentCompositeComponent|bridge-segments|link|model
 BridgeGirderResultsComponent|bridge-segments|filter|result

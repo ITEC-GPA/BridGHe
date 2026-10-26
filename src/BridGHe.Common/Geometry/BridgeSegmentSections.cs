@@ -21,7 +21,7 @@ public static class BridgeSegmentSections
     public static string Id(BridgeSegmentRange segment) => $"G{segment.Girder}-C{segment.Segment}";
     private static string Number(double value) => value.ToString("0.######", Inv);
 
-    private static BridgeSegmentRange[] Segments(SimpleBridgeGeometry geometry)
+    public static BridgeSegmentRange[] Segments(SimpleBridgeGeometry geometry)
     {
         BridgeGeometryTools.Validate(geometry);
         var result = geometry.Segments.OrderBy(s => s.Girder).ThenBy(s => s.Segment).ToArray();
@@ -90,19 +90,12 @@ public static class BridgeSegmentSections
             baseProperty.Section.Mirror != SectionModel.MirrorTypes.None || baseProperty.Section.NativeSection != null ||
             baseProperty.PropertyType != BeamPropertyType.Beam || baseProperty.Material?.Kind != MaterialModel.MaterialKind.Steel)
             throw new ArgumentException("Base Property must be an unmirrored I Section with Steel Material and Beam formulation.");
-        var rows = Parse(table);
-        if (rows.Count == 0) rows = Parse(Synchronize(geometry, null).Table);
-        var keys = segments.Select(Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var missing = keys.Except(rows.Keys, StringComparer.OrdinalIgnoreCase).ToArray();
-        var extra = rows.Keys.Except(keys, StringComparer.OrdinalIgnoreCase).ToArray();
-        if (missing.Length > 0 || extra.Length > 0)
-            throw new ArgumentException($"Section table differs from geometry. Missing: {string.Join(", ", missing)}. Obsolete: {string.Join(", ", extra)}. Use 'Aggiorna tabella conci' on the component.");
+        var rows = MatchRows(segments, table, true);
         var rules = new List<BridgeSectionRule>(); var normalized = new List<string> { Header }; var resolved = new List<string> { Header };
         double[] defaults = { baseProperty.B1, baseProperty.B2, baseProperty.D, baseProperty.T1, baseProperty.T2, baseProperty.T3, baseProperty.R };
         foreach (var s in segments)
         {
             var row = rows[Id(s)];
-            if (!SameRange(row, s)) throw new ArgumentException($"{Id(s)}: fabrication range changed. Use 'Aggiorna tabella conci'; section overrides on changed ranges are reset explicitly.");
             double[] v = row.Dimensions.Select((value, i) => value ?? defaults[i]).ToArray();
             if (v.Any(value => !double.IsFinite(value)) || v.Take(6).Any(value => value <= 0) || v[6] < 0 ||
                 v[2] <= v[3] + v[4] || v[5] > Math.Min(v[0], v[1]) ||
@@ -121,5 +114,30 @@ public static class BridgeSegmentSections
             normalized.Add(Line(s, row.Dimensions)); resolved.Add(Line(s, v.Select(value => (double?)value)));
         }
         return new(rules.ToArray(), normalized.ToArray(), resolved.ToArray());
+    }
+
+    /// <summary>Validate an explicit table without requiring materials or constructing FEM sections.</summary>
+    public static string[] ValidateTable(SimpleBridgeGeometry geometry, IEnumerable<string> table)
+    {
+        var segments = Segments(geometry);
+        var rows = MatchRows(segments, table, false);
+        return new[] { Header }.Concat(segments.Select(s => Line(s, rows[Id(s)].Dimensions))).ToArray();
+    }
+
+    private static Dictionary<string, Row> MatchRows(BridgeSegmentRange[] segments, IEnumerable<string> table, bool allowEmpty)
+    {
+        var rows = Parse(table);
+        if (allowEmpty && rows.Count == 0) rows = Parse(segments.Select(s => Line(s, new double?[7])));
+        var keys = segments.Select(Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var missing = keys.Except(rows.Keys, StringComparer.OrdinalIgnoreCase).ToArray();
+        var extra = rows.Keys.Except(keys, StringComparer.OrdinalIgnoreCase).ToArray();
+        if (missing.Length > 0 || extra.Length > 0)
+            throw new ArgumentException($"Section table differs from geometry. Missing: {string.Join(", ", missing)}. Obsolete: {string.Join(", ", extra)}. Use 'Aggiorna tabella conci' on the component.");
+        foreach (var s in segments)
+        {
+            var row = rows[Id(s)];
+            if (!SameRange(row, s)) throw new ArgumentException($"{Id(s)}: fabrication range changed. Use 'Aggiorna tabella conci'; section overrides on changed ranges are reset explicitly.");
+        }
+        return rows;
     }
 }
