@@ -1,0 +1,1719 @@
+{
+  "date": "2026-10-26",
+  "platform": "Rhino 8 / .NET 8 / Straus7 R3 / Windows x64",
+  "release": {
+    "buildErrors": 0,
+    "buildWarnings": 0,
+    "pluginSHA256": "B13D1A067B477A4BAB25DE475B96D60BE69608A73DFE9396337E6ABF84549556",
+    "commonSHA256": "3CBCC5F7A1A14134A7FE3ABC14D5590A2102689940FCA46D327212E8F498699B",
+    "objects": 226,
+    "componentGUIDsIncludingPlugin": 227
+  },
+  "nativeBridgeREV002": {
+    "Definition": "50-ponte-quattro-modelli\\50-ponte-quattro-modelli_REV002.ghx",
+    "SourceSHA256": "4735BF34E7DC10BC9AC6A0A512E87B6639EC55B88556586790E77D9F73C4AFAA",
+    "MigratedSHA256": "4735BF34E7DC10BC9AC6A0A512E87B6639EC55B88556586790E77D9F73C4AFAA",
+    "Native": true,
+    "Models": [
+      {
+        "Phase": 0,
+        "Beams": 498,
+        "Nodes": 488,
+        "Equilibrium": [
+          {
+            "Case": "Dead",
+            "ReactionZ_N": 1320134.8700638777,
+            "Expected_N": 1320134.8700638788,
+            "Tolerance_N": 0.13201348700638788
+          },
+          {
+            "Case": "M01_ACCIAIO_SOLETTA",
+            "ReactionZ_N": 4499999.999999994,
+            "Expected_N": 4500000,
+            "Tolerance_N": 0.44999999999999996
+          },
+          {
+            "Case": "M01_ACCIAIO_TRAVI",
+            "ReactionZ_N": 0,
+            "Expected_N": 0,
+            "Tolerance_N": 0.01
+          },
+          {
+            "Case": "M01-Solo Acciaio",
+            "ReactionZ_N": 6150168.587579843,
+            "Expected_N": 6150168.587579848,
+            "Tolerance_N": 0.6150168587579848
+          }
+        ]
+      },
+      {
+        "Phase": 1,
+        "Beams": 498,
+        "Nodes": 488,
+        "Equilibrium": [
+          {
+            "Case": "Dead",
+            "ReactionZ_N": 1320134.8700638781,
+            "Expected_N": 1320134.8700638788,
+            "Tolerance_N": 0.13201348700638788
+          },
+          {
+            "Case": "M02_NINF_SOLETTA",
+            "ReactionZ_N": 600000.0000000001,
+            "Expected_N": 600000,
+            "Tolerance_N": 0.06
+          },
+          {
+            "Case": "M02_NINF_TRAVI",
+            "ReactionZ_N": 180000.00000000012,
+            "Expected_N": 180000,
+            "Tolerance_N": 0.018
+          }
+        ]
+      },
+      {
+        "Phase": 2,
+        "Beams": 498,
+        "Nodes": 488,
+        "Equilibrium": [
+          {
+            "Case": "Dead",
+            "ReactionZ_N": 1320134.8700638788,
+            "Expected_N": 1320134.8700638788,
+            "Tolerance_N": 0.13201348700638788
+          },
+          {
+            "Case": "M03_N0_SOLETTA",
+            "ReactionZ_N": 600000.0000000001,
+            "Expected_N": 600000,
+            "Tolerance_N": 0.06
+          },
+          {
+            "Case": "M03_N0_TRAVI",
+            "ReactionZ_N": 179999.99999999997,
+            "Expected_N": 180000,
+            "Tolerance_N": 0.018
+          }
+        ]
+      },
+      {
+        "Phase": 3,
+        "Beams": 498,
+        "Nodes": 488,
+        "Equilibrium": [
+          {
+            "Case": "Dead",
+            "ReactionZ_N": 1320134.870063877,
+            "Expected_N": 1320134.8700638788,
+            "Tolerance_N": 0.13201348700638788
+          },
+          {
+            "Case": "M04_NSH_RITIRO",
+            "ReactionZ_N": 2.528395270928735e-10,
+            "Expected_N": 0,
+            "Tolerance_N": 0.01
+          }
+        ]
+      }
+    ],
+    "Phases": 4,
+    "Combinations": 5,
+    "SectionChecks": 4560,
+    "DetailBranches": 3,
+    "Plots": 6,
+    "ReportInputs": true,
+    "ResultsSavedInGHX": false
+  },
+  "nativeBridge99REV004": {
+    "Definition": "99-Ponte completo GPC/REV004/flusso-acciaio-misto_REV004.ghx",
+    "SourceSHA256": "818150413D237D262230DFB297E806838FD1A7352D57E8DD0B3CC82F4CBE8B3C",
+    "MigratedSHA256": "818150413D237D262230DFB297E806838FD1A7352D57E8DD0B3CC82F4CBE8B3C",
+    "Native": true,
+    "Models": [
+      {
+        "Phase": 0,
+        "Beams": 73,
+        "Nodes": 50,
+        "Equilibrium": [
+          {
+            "Case": "G1_GETTO",
+            "ReactionZ_N": 479999.99999999977,
+            "Expected_N": 480000,
+            "Tolerance_N": 0.048
+          }
+        ]
+      },
+      {
+        "Phase": 1,
+        "Beams": 112,
+        "Nodes": 102,
+        "Equilibrium": [
+          {
+            "Case": "G2_PERMANENTI",
+            "ReactionZ_N": 624000,
+            "Expected_N": 624000,
+            "Tolerance_N": 0.0624
+          }
+        ]
+      },
+      {
+        "Phase": 2,
+        "Beams": 112,
+        "Nodes": 102,
+        "Equilibrium": [
+          {
+            "Case": "Q_TRAFFICO",
+            "ReactionZ_N": 479999.99999999994,
+            "Expected_N": 480000,
+            "Tolerance_N": 0.048
+          },
+          {
+            "Case": "WIND_1",
+            "ReactionZ_N": -1.1311840353300798e-11,
+            "Expected_N": 0,
+            "Tolerance_N": 0.01
+          }
+        ]
+      },
+      {
+        "Phase": 3,
+        "Beams": 112,
+        "Nodes": 102,
+        "Equilibrium": [
+          {
+            "Case": "RITIRO_FEM",
+            "ReactionZ_N": -3.326540061618303e-11,
+            "Expected_N": 0,
+            "Tolerance_N": 0.01
+          }
+        ]
+      }
+    ],
+    "Phases": 4,
+    "Combinations": 6,
+    "SectionChecks": 1224,
+    "DetailBranches": 6,
+    "Plots": 10,
+    "ReportInputs": true,
+    "ResultsSavedInGHX": false
+  },
+  "gpcCandidateSet": {
+    "repositories": {
+      "Utilities": {
+        "commit": "e57b440b16a0a311a7bf0af2f9cf4d2681b83491",
+        "branch": "master",
+        "onOriginMaster": true
+      },
+      "Geometry": {
+        "commit": "6734eee1004142576b96759e34c15dec48776e23",
+        "branch": "master",
+        "onOriginMaster": true
+      },
+      "Model": {
+        "commit": "2acc60efad0924b9b05aafdd75588f13842904a1",
+        "branch": "master",
+        "onOriginMaster": true
+      },
+      "Checker": {
+        "commit": "eea6f307a3e82c8fe395625a7a4d8cf3fd62f664",
+        "branch": "codex/bridge-small-load-equilibrium",
+        "onOriginMaster": false
+      }
+    },
+    "usedLibraries": [
+      {
+        "file": "GPCUtilities.dll",
+        "repository": "Utilities",
+        "source": "GPCUtilities/bin/Release/netstandard2.0/GPCUtilities.dll",
+        "assemblyVersion": "3.0.0.0",
+        "fileVersion": "3.0.0.0",
+        "informationalVersion": "3.0.0.0",
+        "sha256": "92031B381F9AA426A5F88B48762C72DB89724F784670FFDA8802203FC52A05E5",
+        "commit": "e57b440b16a0a311a7bf0af2f9cf4d2681b83491"
+      },
+      {
+        "file": "GPCGeometry.dll",
+        "repository": "Geometry",
+        "source": "GPCGeometry/bin/Release/netstandard2.0/GPCGeometry.dll",
+        "assemblyVersion": "2.3.0.0",
+        "fileVersion": "2.3.0.0",
+        "informationalVersion": "2.3.0.0",
+        "sha256": "7EF76EDFB4C3736AAE7B6F66B2F3CE30A8BB8DE031C492B03BD52289D6E9D29E",
+        "commit": "6734eee1004142576b96759e34c15dec48776e23"
+      },
+      {
+        "file": "DelaunayMesh.dll",
+        "repository": "Geometry",
+        "source": "DelaunayMesh/bin/Release/netstandard2.0/DelaunayMesh.dll",
+        "assemblyVersion": "2.0.0.14",
+        "fileVersion": "2.0.0.14",
+        "informationalVersion": "2.0.0.14",
+        "sha256": "D18BB08255D23239271C197130515758767291F75CE1A9996F1A92DB55F114BB",
+        "commit": "6734eee1004142576b96759e34c15dec48776e23"
+      },
+      {
+        "file": "GPCModel.dll",
+        "repository": "Model",
+        "source": "Model/bin/Release/netstandard2.0/GPCModel.dll",
+        "assemblyVersion": "5.21.0.1",
+        "fileVersion": "5.21.0.1",
+        "informationalVersion": "5.21.0.1",
+        "sha256": "A84BC0DE5AB36B36096BB08930CABF12575B2FCF2EAE30F5F6B9736168411644",
+        "commit": "2acc60efad0924b9b05aafdd75588f13842904a1"
+      },
+      {
+        "file": "GPCChecker.Concrete.dll",
+        "repository": "Checker",
+        "source": "GPCChecker.Concrete/bin/Release/netstandard2.0/GPCChecker.Concrete.dll",
+        "assemblyVersion": "0.24.0.4",
+        "fileVersion": "0.24.0.4",
+        "informationalVersion": "0.24.0.4",
+        "sha256": "F623770C6909484FB4AF2C904AA2CF10C8F675765AF30C2AC6285A52FA346A93",
+        "commit": "eea6f307a3e82c8fe395625a7a4d8cf3fd62f664"
+      },
+      {
+        "file": "GPCChecker.Steel.dll",
+        "repository": "Checker",
+        "source": "GPCChecker.Steel/bin/Release/netstandard2.0/GPCChecker.Steel.dll",
+        "assemblyVersion": "2.118.0.1",
+        "fileVersion": "2.118.0.1",
+        "informationalVersion": "2.118.0.1",
+        "sha256": "90817A96781E1A9C08DD91314CF64D9EFC132CADD3FBD390DB000CD6B636C5F1",
+        "commit": "eea6f307a3e82c8fe395625a7a4d8cf3fd62f664"
+      },
+      {
+        "file": "GPCChecker.CompositeBridge.dll",
+        "repository": "Checker",
+        "source": "GPCChecker.CompositeBridge/bin/Release/netstandard2.0/GPCChecker.CompositeBridge.dll",
+        "assemblyVersion": "1.19.0.4",
+        "fileVersion": "1.19.0.4",
+        "informationalVersion": "1.19.0.4+eea6f307a3e82c8fe395625a7a4d8cf3fd62f664",
+        "sha256": "02045A57CA472D754F01AB3851864B5D1698249D00AD8415E0CA9BA578C2692F",
+        "commit": "eea6f307a3e82c8fe395625a7a4d8cf3fd62f664"
+      }
+    ],
+    "suites": [
+      {
+        "name": "Model.Core.Tests",
+        "repository": "Model",
+        "passed": 34,
+        "failed": 0,
+        "other": 0
+      },
+      {
+        "name": "UnitTest",
+        "repository": "Model",
+        "passed": 1459,
+        "failed": 0,
+        "other": 3
+      },
+      {
+        "name": "GPCChecker.Test.Concrete",
+        "repository": "Checker",
+        "passed": 908,
+        "failed": 0,
+        "other": 0,
+        "knownFailures": []
+      },
+      {
+        "name": "GPCChecker.Test.Steel",
+        "repository": "Checker",
+        "passed": 122,
+        "failed": 0,
+        "other": 0,
+        "knownFailures": []
+      },
+      {
+        "name": "GPCChecker.Test.CompositeBridge",
+        "repository": "Checker",
+        "passed": 402,
+        "failed": 0,
+        "other": 0,
+        "knownFailures": []
+      },
+      {
+        "name": "GPCChecker.Test.Geotechnics",
+        "repository": "Checker",
+        "passed": 193,
+        "failed": 0,
+        "other": 0,
+        "knownFailures": []
+      },
+      {
+        "name": "GPCChecker.Test.Calculation",
+        "repository": "Checker",
+        "passed": 175,
+        "failed": 0,
+        "other": 0,
+        "knownFailures": []
+      },
+      {
+        "name": "ShallowFoundation.Tests",
+        "repository": "Checker",
+        "passed": 28,
+        "failed": 0,
+        "other": 0,
+        "knownFailures": []
+      },
+      {
+        "name": "EmbeddedWalls.Tests",
+        "repository": "Checker",
+        "passed": 99,
+        "failed": 0,
+        "other": 0,
+        "knownFailures": []
+      },
+      {
+        "name": "Steel.Members.Tests",
+        "repository": "Checker",
+        "passed": 6423,
+        "failed": 0,
+        "other": 0,
+        "knownFailures": []
+      },
+      {
+        "name": "Design.Checks",
+        "repository": "Checker",
+        "passed": 109,
+        "failed": 0,
+        "other": 0,
+        "knownFailures": []
+      },
+      {
+        "name": "Design.Checks.net472",
+        "repository": "Checker",
+        "passed": 108,
+        "failed": 0,
+        "other": 0,
+        "knownFailures": []
+      },
+      {
+        "name": "ModelChecker.Tests",
+        "repository": "Checker",
+        "passed": 473,
+        "failed": 0,
+        "other": 0,
+        "knownFailures": []
+      }
+    ],
+    "manifest": "artifacts/modular-bridge/gpc-candidate-set/release-set.json",
+    "candidate": true
+  },
+  "precisionFix": {
+    "baselineValues": 238,
+    "exactlyUnchanged": 238,
+    "smallLoadIntegratedValues": 24,
+    "checkerCommit": "f3f0cb9f",
+    "versionCommit": "eea6f307",
+    "concreteVersion": "0.24.0.4",
+    "compositeBridgeVersion": "1.19.0.4",
+    "auditAcceptanceUnchanged": 1e-05,
+    "retrySolverTolerance": 1e-12
+  },
+  "nativeAnalyticalBenchmarks": {
+    "count": 10,
+    "failures": 0,
+    "examples": [
+      {
+        "id": "01-cantilever",
+        "passed": true,
+        "warnings": [],
+        "measurements": {
+          "count": 9,
+          "failures": 0,
+          "maximumErrorOverTolerance": 0.0
+        }
+      },
+      {
+        "id": "02-simply-supported",
+        "passed": true,
+        "warnings": [],
+        "measurements": {
+          "count": 5,
+          "failures": 0,
+          "maximumErrorOverTolerance": 4.850638409455617e-10
+        }
+      },
+      {
+        "id": "03-plate-patch",
+        "passed": true,
+        "warnings": [],
+        "measurements": {
+          "count": 9,
+          "failures": 0,
+          "maximumErrorOverTolerance": 5.421010862427522e-11
+        }
+      },
+      {
+        "id": "04-moving-load",
+        "passed": true,
+        "warnings": [],
+        "measurements": {
+          "count": 42,
+          "failures": 0,
+          "maximumErrorOverTolerance": 0.01444443696978116
+        }
+      },
+      {
+        "id": "05-nonlinear-increments",
+        "passed": true,
+        "warnings": [],
+        "measurements": {
+          "count": 9,
+          "failures": 0,
+          "maximumErrorOverTolerance": 0.00026774164343934537
+        }
+      },
+      {
+        "id": "06-stage-loading",
+        "passed": true,
+        "warnings": [],
+        "measurements": {
+          "count": 9,
+          "failures": 0,
+          "maximumErrorOverTolerance": 0.00015060469538141774
+        }
+      },
+      {
+        "id": "07-stage-unloading",
+        "passed": true,
+        "warnings": [],
+        "measurements": {
+          "count": 13,
+          "failures": 0,
+          "maximumErrorOverTolerance": 0.012797632398253711
+        }
+      },
+      {
+        "id": "08-stage-activation",
+        "passed": true,
+        "warnings": [
+          "The beam property Elastic beam already exists"
+        ],
+        "measurements": {
+          "count": 6,
+          "failures": 0,
+          "maximumErrorOverTolerance": 0.003999063096671307
+        }
+      },
+      {
+        "id": "09-stage-removal",
+        "passed": true,
+        "warnings": [
+          "The beam property Elastic beam already exists"
+        ],
+        "measurements": {
+          "count": 9,
+          "failures": 0,
+          "maximumErrorOverTolerance": 0.003999063096671307
+        }
+      },
+      {
+        "id": "10-stage-selection",
+        "passed": true,
+        "warnings": [],
+        "measurements": {
+          "count": 10,
+          "failures": 0,
+          "maximumErrorOverTolerance": 0.0005436828969485637
+        }
+      }
+    ]
+  },
+  "nativeMovingLoads": {
+    "scenarios": [
+      {
+        "Id": "01-single-13",
+        "Divisions": 13,
+        "Force": 1000,
+        "Offsets": [
+          0
+        ],
+        "Reverse": false
+      },
+      {
+        "Id": "02-single-25",
+        "Divisions": 25,
+        "Force": 1000,
+        "Offsets": [
+          0
+        ],
+        "Reverse": false
+      },
+      {
+        "Id": "03-reverse",
+        "Divisions": 13,
+        "Force": 1000,
+        "Offsets": [
+          0
+        ],
+        "Reverse": true
+      },
+      {
+        "Id": "04-tandem",
+        "Divisions": 13,
+        "Force": 1000,
+        "Offsets": [
+          -750,
+          750
+        ],
+        "Reverse": false
+      },
+      {
+        "Id": "05-double-force",
+        "Divisions": 13,
+        "Force": 2000,
+        "Offsets": [
+          0
+        ],
+        "Reverse": false
+      }
+    ],
+    "status": "native-passed",
+    "measurements": {
+      "count": 5377,
+      "failures": 0,
+      "maximumErrorOverTolerance": 9.313225746154785e-06
+    }
+  },
+  "nativeCompositePhases": {
+    "phases": 5,
+    "measurements": {
+      "count": 30,
+      "failures": 0,
+      "maximumErrorOverTolerance": 1.5431645088248993e-08
+    },
+    "warnings": [
+      "Stages on load cases not supported"
+    ],
+    "note": "Legacy phase metadata warning: three mechanical FEM cases and two local shrinkage increments are compared with analytical stresses; no claim of five native construction stages in this benchmark."
+  },
+  "regressionGroups": [
+    {
+      "group": "bridge-combination-excel",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 11.64,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-combination-excel.log"
+    },
+    {
+      "group": "concrete-shrinkage",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.58,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\concrete-shrinkage.log"
+    },
+    {
+      "group": "bridge-detail-stations",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.05,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-detail-stations.log"
+    },
+    {
+      "group": "bridge-combination-excel-component",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.22,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-combination-excel-component.log"
+    },
+    {
+      "group": "simple-bridge",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.6,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\simple-bridge.log"
+    },
+    {
+      "group": "modular-bridge",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.53,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\modular-bridge.log"
+    },
+    {
+      "group": "build-model-parameters",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.1,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\build-model-parameters.log"
+    },
+    {
+      "group": "parametric-bridge",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.41,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\parametric-bridge.log"
+    },
+    {
+      "group": "bridge-segment-sections",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.63,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-segment-sections.log"
+    },
+    {
+      "group": "bridge-segment-excel",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 10.02,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-segment-excel.log"
+    },
+    {
+      "group": "bridge-alignment-inputs",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.0,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-alignment-inputs.log"
+    },
+    {
+      "group": "bridge-segment-override",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 9.34,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-segment-override.log"
+    },
+    {
+      "group": "get-beam-property",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.95,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\get-beam-property.log"
+    },
+    {
+      "group": "beam-property-override",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.38,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\beam-property-override.log"
+    },
+    {
+      "group": "bridge-moment-state",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 9.64,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-moment-state.log"
+    },
+    {
+      "group": "bridge-segment-composite",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.61,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-segment-composite.log"
+    },
+    {
+      "group": "bridge-deck-grillage",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 9.98,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-deck-grillage.log"
+    },
+    {
+      "group": "reinforcement-material",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.45,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\reinforcement-material.log"
+    },
+    {
+      "group": "gh-node-merge",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.47,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\gh-node-merge.log"
+    },
+    {
+      "group": "wired-load-schema",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.87,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\wired-load-schema.log"
+    },
+    {
+      "group": "bridge-span-advisor",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.12,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-span-advisor.log"
+    },
+    {
+      "group": "bridge-assignment",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 9.16,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-assignment.log"
+    },
+    {
+      "group": "bridge-bearings",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.75,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-bearings.log"
+    },
+    {
+      "group": "bridge-connections",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.52,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-connections.log"
+    },
+    {
+      "group": "bridge-bracing",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.94,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-bracing.log"
+    },
+    {
+      "group": "bridge-deck",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.86,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-deck.log"
+    },
+    {
+      "group": "bridge-construction",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.33,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-construction.log"
+    },
+    {
+      "group": "bridge-detail-layout",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.06,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-detail-layout.log"
+    },
+    {
+      "group": "bridge-details-example",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.17,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-details-example.log"
+    },
+    {
+      "group": "bridge-details-model-example",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.93,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-details-model-example.log"
+    },
+    {
+      "group": "bridge-deflection",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.84,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-deflection.log"
+    },
+    {
+      "group": "bridge-fatigue-history",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.53,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-fatigue-history.log"
+    },
+    {
+      "group": "bridge-check-map",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.22,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-check-map.log"
+    },
+    {
+      "group": "bridge-check-summary",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.66,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-check-summary.log"
+    },
+    {
+      "group": "bridge-result-labels",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.65,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-result-labels.log"
+    },
+    {
+      "group": "bridge-report",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 2.45,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-report.log"
+    },
+    {
+      "group": "bridge-report-component",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 9.7,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-report-component.log"
+    },
+    {
+      "group": "bridge-design-audit",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.62,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-design-audit.log"
+    },
+    {
+      "group": "bridge-design-components",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 25.75,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-design-components.log"
+    },
+    {
+      "group": "simple-bridge-components",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 9.18,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\simple-bridge-components.log"
+    },
+    {
+      "group": "bridge-utilities",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.99,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-utilities.log"
+    },
+    {
+      "group": "bridge-utility-components",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.88,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-utility-components.log"
+    },
+    {
+      "group": "plot-preview",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 12.96,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\plot-preview.log"
+    },
+    {
+      "group": "bridge-workflow",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.72,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-workflow.log"
+    },
+    {
+      "group": "bridge-stations",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.41,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-stations.log"
+    },
+    {
+      "group": "component-layout",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.56,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\component-layout.log"
+    },
+    {
+      "group": "bridge-plots",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.73,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-plots.log"
+    },
+    {
+      "group": "bridge-detail-plots",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.46,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-detail-plots.log"
+    },
+    {
+      "group": "native-bridge-components",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.15,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\native-bridge-components.log"
+    },
+    {
+      "group": "bridge-numerical-baseline",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.89,
+      "log": "artifacts\\modular-bridge\\precision-regressions\\bridge-numerical-baseline.log"
+    },
+    {
+      "group": "archive-before-cleanup",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.73,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\archive-before-cleanup.log"
+    },
+    {
+      "group": "composite-archive",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.2,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\composite-archive.log"
+    },
+    {
+      "group": "composite-component",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.79,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\composite-component.log"
+    },
+    {
+      "group": "slab-reinforcement",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.78,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\slab-reinforcement.log"
+    },
+    {
+      "group": "composite-property-phases",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.63,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\composite-property-phases.log"
+    },
+    {
+      "group": "display-settings",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.71,
+      "log": "artifacts\\modular-bridge\\display-managed\\display-settings.log"
+    },
+    {
+      "group": "bridge-merge-origin",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.86,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-merge-origin.log"
+    },
+    {
+      "group": "bridge-history-workflow",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.08,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-history-workflow.log"
+    },
+    {
+      "group": "group-null-identity",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 9.01,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\group-null-identity.log"
+    },
+    {
+      "group": "composite-preview",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.84,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\composite-preview.log"
+    },
+    {
+      "group": "nodal-actions",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.01,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\nodal-actions.log"
+    },
+    {
+      "group": "load-case-identity",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.56,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\load-case-identity.log"
+    },
+    {
+      "group": "merge-node-data",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.52,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\merge-node-data.log"
+    },
+    {
+      "group": "merge-mesh",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.57,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\merge-mesh.log"
+    },
+    {
+      "group": "beam-property-validity",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.35,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\beam-property-validity.log"
+    },
+    {
+      "group": "native-beam-validity",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.25,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\native-beam-validity.log"
+    },
+    {
+      "group": "model-guids",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.09,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\model-guids.log"
+    },
+    {
+      "group": "deep-copies",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.37,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\deep-copies.log"
+    },
+    {
+      "group": "staged-load-cases",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.14,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\staged-load-cases.log"
+    },
+    {
+      "group": "staged-selection",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.4,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\staged-selection.log"
+    },
+    {
+      "group": "merge-plate-connectivity",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.1,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\merge-plate-connectivity.log"
+    },
+    {
+      "group": "indexed-phases",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.93,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\indexed-phases.log"
+    },
+    {
+      "group": "node-index",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.3,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\node-index.log"
+    },
+    {
+      "group": "archived-attribute-updates",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.48,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\archived-attribute-updates.log"
+    },
+    {
+      "group": "plate-point-updates",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.4,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\plate-point-updates.log"
+    },
+    {
+      "group": "incomplete-beam-preview",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.56,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\incomplete-beam-preview.log"
+    },
+    {
+      "group": "preview-bounds",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.95,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\preview-bounds.log"
+    },
+    {
+      "group": "model-preview",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 8.01,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\model-preview.log"
+    },
+    {
+      "group": "bridge-planar-noise",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.99,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-planar-noise.log"
+    },
+    {
+      "group": "bridge-instant-modulus",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.68,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-instant-modulus.log"
+    },
+    {
+      "group": "bridge-example-parameters",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.34,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-example-parameters.log"
+    },
+    {
+      "group": "bridge-detail-archives",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 7.59,
+      "log": "artifacts\\modular-bridge\\regressions-isolated\\bridge-detail-archives.log"
+    },
+    {
+      "group": "bridge-linear-small-loads",
+      "passed": true,
+      "exitCode": 0,
+      "completed": true,
+      "seconds": 11.0,
+      "log": "artifacts\\modular-bridge\\precision-regressions\\bridge-linear-small-loads.log"
+    }
+  ],
+  "optionalViewportCapture": {
+    "passed": false,
+    "attempts": [
+      {
+        "group": "display-settings",
+        "passed": false,
+        "exitCode": 1,
+        "completed": false,
+        "seconds": 7.99,
+        "log": "artifacts\\modular-bridge\\regressions-isolated\\display-settings.log"
+      }
+    ],
+    "error": "Rhino DisplayPipeline.DrawToBitmap raises SEHException in the hidden host; standard display-settings checks pass without viewport capture."
+  },
+  "savedExamples": {
+    "currentDocumentsReopened": 54,
+    "objects": 7772,
+    "connections": 7610,
+    "portableDocumentsSolved": 23,
+    "portableObjects": 586,
+    "portableConnections": 412,
+    "files": [
+      {
+        "file": "example/01-cantilever/01-cantilever.ghx",
+        "originalSHA256": "E4215B91803FF54C074C7C93CE955E62DC97AF95E5C021F350E74D3F9744B678",
+        "currentSHA256": "9AB73DA2E4A0E153508FEAC32ABE96EC05A61288712B97A312D5122F802CF7A1",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/02-simply-supported/02-simply-supported.ghx",
+        "originalSHA256": "BA963B6A21CC9C17FDE91991E8DEAAFF78B2FF718879337E2857CCE95C9816E1",
+        "currentSHA256": "AB1416D2E3097419534726923FC8869DE69046BF04BE8A2CE052EF47C078F961",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/03-plate-patch/03-plate-patch.ghx",
+        "originalSHA256": "F2D4C93CDEEA384F43EDB3E73619C2750B7A17D0D3DC618BB2DE494BB4ED6E61",
+        "currentSHA256": "195E0CBBC0E4060CF56498DE9BB76E4009F2F748996A4B6ED4E6D08E81283A31",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/04-moving-load/04-moving-load.ghx",
+        "originalSHA256": "F2E3F1666E523F6ABA329E0D7B35266C7C6067E890BE517C13D7CA81920E4A2B",
+        "currentSHA256": "C242E70F08EF156A429E9D21B4D369107B4E9DC89D2BCD84ABD059512F053AFA",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/05-nonlinear-increments/05-nonlinear-increments.ghx",
+        "originalSHA256": "F8D1161E7139108E896C4E0054EDAD7DF420931971B1067A1E21E53F014CEA46",
+        "currentSHA256": "F8A50FFB17F66655C82A38700269EBAA0510E67B9CBAB7E0BC365D338B7B99F6",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/06-stage-loading/06-stage-loading.ghx",
+        "originalSHA256": "70FEAD2D91F644F5A8B0042FB03B4AA4776A8F6CA36469C2BED5EB3ACBA3CAA6",
+        "currentSHA256": "23F8BFD254EB4F1BC118D34AB220A10425493821DED7CCC4385E529FAF307C83",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/07-stage-unloading/07-stage-unloading.ghx",
+        "originalSHA256": "267C083F46AF3090D6264667CB29A1B8C979A16721956FE3F0EB1AF2B67F31FE",
+        "currentSHA256": "C9B9C988D04AADDDDD3AB63D1013E83F39851837AF29D0E58F7324B381F7330E",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/08-stage-activation/08-stage-activation.ghx",
+        "originalSHA256": "92C2BC36BFA8C6A16192F2916DA59577BAA019AF55ABB5BDB5D482C843B43F82",
+        "currentSHA256": "9D54C9DA11682F83212E240EBAAB9560D8BF38E652DC00CD8A1D7FA5780DA60F",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/09-stage-removal/09-stage-removal.ghx",
+        "originalSHA256": "FF08663FBC8AACE33C5D10C97BCAB1136108189ADFA84B556A83F0964778CCA0",
+        "currentSHA256": "06D1054CB8B93E7195E76851FCC8943E9AD43B4FD1F394834962862AD9EFEDCC",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/10-stage-selection/10-stage-selection.ghx",
+        "originalSHA256": "764695D8F6903A02CEF4B91BBB2454CB553F39B15A59A3F03713B732340BCD6B",
+        "currentSHA256": "251F0BAA0FA94E27CAC000B7EC0930475B2DBD63948B4D0A8D2288984A80EC28",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/11-ponte-graticcio/11-ponte-graticcio.ghx",
+        "originalSHA256": "1BB3CD54BF4E373ED0F5CC23CE53EA383152AB92A9E27385CAB54485D173EE52",
+        "currentSHA256": "3EF811ABB94920B76669E8FAF48269BDC693D9596E1587BB390710FD43F05A5F",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/12-continuo-2campate/12-continuo-2campate.ghx",
+        "originalSHA256": "C875E68001380A120F40D1DC838D9E0F4BF4ECE3F7B6A45EE7F3CAEB3356C1FF",
+        "currentSHA256": "9AB0460460CA64E4603D87F90E17AE62BE26BA1F9A84463A732956F691B107E7",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/13-continuo-3campate/13-continuo-3campate.ghx",
+        "originalSHA256": "4EEFEAC7364475ECFEBD025F813F62898143370ECED37BDB694747D61A88E5A2",
+        "currentSHA256": "604CF3FC314EE45885FFEE2E20CA4D4F7F9AAF2B629E8742CDB9DEFA091DE63C",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/14-curvo-1campata/14-curvo-1campata.ghx",
+        "originalSHA256": "0F4343DAE395EB2E811A1B4A5FC0BF191FD0AA74C4927468FD62A191CBF90AA5",
+        "currentSHA256": "111E1416607EC2686032DAAE4E2673A954FE3800E95CF13AF6FAB5865C9E6DA5",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/15-curvo-2campate/15-curvo-2campate.ghx",
+        "originalSHA256": "C26E65443041C6FB1ED0F2AB542B7C8F02345B875E3429C78591185498FC8C29",
+        "currentSHA256": "41EE36ACDCC53376EA45ED7D1DB57602C18B9DC9544C962AFD811B9EF3B1CB0F",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/16-spina-1campata/16-spina-1campata.ghx",
+        "originalSHA256": "C56CFEA73A752B4B4AB1663D3C949BD2FE27F86CBAEA9E4FC73C3BF81CA1EDA0",
+        "currentSHA256": "D1E1F73C0B7D993410B593DBBBA6AFEE009D8A03094A8362BE27395E140FE975",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/17-spina-3campate/17-spina-3campate.ghx",
+        "originalSHA256": "BFF81F7C0D615281B654897B3FA6044A8DC8EF7F65B5BCE287030E48CD77C993",
+        "currentSHA256": "AE88D023C6211AD5953C409EE8F82E1DAF9CB19A4C5FC7F382ECA69C496119BE",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/18-spina-curva-2campate/18-spina-curva-2campate.ghx",
+        "originalSHA256": "B50655F22F04FD7D9FA41D11876D8521D62079C1AAA5A52DE50E63070E563AFA",
+        "currentSHA256": "BB5867AE3538A46FAA0DB2538E7DA5438EA40152037297C2B42F303263FFF387",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/19-flusso-acciaio-misto/19-flusso-acciaio-misto_REV003.ghx",
+        "originalSHA256": "6E5941926258AE8D16C3CC4C148913D987ACD9340CA306965703AB91AE2B43E5",
+        "currentSHA256": "754BCABFBFDBBEEE56B3716AFA8002D3DFC72860415AA0E435A99C8DB3047698",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/19-flusso-acciaio-misto/archivio/alias-REV003/19-flusso-acciaio-misto.ghx",
+        "originalSHA256": "D74DF88F54C8A213D53F2571238A992D1573C5E203B18A5CBC6BB9B42F756EF8",
+        "currentSHA256": "63BDE4CDD13FD503B594054D71D61D7AC7840DB6EA2D2C9A1F362E5D1B9E636F",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/19-flusso-acciaio-misto/archivio/REV001/19-flusso-acciaio-misto_REV001.ghx",
+        "originalSHA256": "7775E0C7DB5DF8B80B67279FB96491BC91A5DC12B6E26C4BEF5BF61331989C88",
+        "currentSHA256": "FC1DA8B4096F75E972F336DEAF7BCC37C23425B31D3FE9555E5926E66400B1E5",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/19-flusso-acciaio-misto/archivio/REV002/19-flusso-acciaio-misto_REV002.ghx",
+        "originalSHA256": "75352DF9128F7911ABBEE53EEE621A579F093F91AF75BFDA23607A261D35AD33",
+        "currentSHA256": "6458FC3564E2698A830C15E5A8B4856E5639ECDD6E15158B65515E4FAAA44310",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/20-visualizzatore-grafici/plot-preview.ghx",
+        "originalSHA256": "A83648BCE8D09B28F58DBFE3B851D1233DAC908EA182D36ED3A330D6271802DD",
+        "currentSHA256": "4079695F67EB69C349F8C893857EF7AD65E1983108CDB2793CFD3757D584A838",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/23-audit-modello-fase/23-audit-modello-fase.ghx",
+        "originalSHA256": "7E966FCA28CED2734D1C79E691EF8126D7981085A1B539C0A38CEF5698113BC3",
+        "currentSHA256": "07EF6DA1976B63BF6FB33BD070C645296A570B4C0F441CBBE424A13631928504",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/24-inviluppi-concomitanti/24-inviluppi-concomitanti.ghx",
+        "originalSHA256": "6345950A162D48E5BB3910C0406FD059966AD82A517829331EF68E84BED20AE9",
+        "currentSHA256": "73A1AC6C9F3487BB2AD8A1CEBA16BFE1290CDD7977D9454AC1CFB994AB6500CB",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/25-fasi-combinazioni/25-fasi-combinazioni.ghx",
+        "originalSHA256": "83879DCB557A2B69B32BCB27C6F64A80D5C291E077C7A186BE6F9C4FD2192750",
+        "currentSHA256": "D4C561CA4714B059F1366EA5715575D31083EB87C549E0E6B64DE36A13AC51C5",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/26-riepilogo-verifiche-gpc/26-riepilogo-verifiche-gpc.ghx",
+        "originalSHA256": "92D848B1590C6699DB15F9FC2C60846C0CF1BC861C00F5B3975E748FC93E07AF",
+        "currentSHA256": "47FC75955BBEE0CA5E3D90785BED99BE2782C28E98C4025F747B3CB0E3A0AD47",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/27-ritiro-confronti/27-ritiro-confronti.ghx",
+        "originalSHA256": "A52228059D7983056ACC242E5139420B1911523642200EE8CCDB062A9CE7F483",
+        "currentSHA256": "98FD1CD90A719B98F4BFCA9739AFA59538E4A53F96E37976E25209327E5692D9",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/28-corsie-mobili/28-corsie-mobili.ghx",
+        "originalSHA256": "3CF554B3498E9E6984F66F4E3531A361304AB456317BD7FB89D6AC4405160EA4",
+        "currentSHA256": "5F7678F7F7D1957A5474A78379295CD4ED88F590D34086AE033363E6810C7945",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/29-simple-bridge-pieno/29-simple-bridge-pieno.ghx",
+        "originalSHA256": "AE3BE21998043B96158B30154BFA6EAC447A6A2B9957AE6F41C90CA853FCC9DB",
+        "currentSHA256": "5F7C6F2C4E3B888E39E0F0436B2F1235A475884D3C4276E1FBD2627D41F59DD3",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/30-simple-bridge-pieno-curvo/30-simple-bridge-pieno-curvo.ghx",
+        "originalSHA256": "DF307C2AA4594BE606394ADE98D1D26AEE2F32657F8D0444BDC3DEE13B3BBD09",
+        "currentSHA256": "401F6F82048CF4F19D73A8A4AF8956BB2196C7D6C8BCFEF6ACBB9845172B1BB4",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/31-simple-bridge-reticolare/31-simple-bridge-reticolare.ghx",
+        "originalSHA256": "F520C9F173DC1B5E45B623533E44EF5EDF7D0123BBEFA0CC18D5C12CC1641CDC",
+        "currentSHA256": "09DEC25CC8882034894970627C0CB752AEF69DE1876E3D0A6401E4DB46BCCAE9",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/32-simple-bridge-reticolare-curvo/32-simple-bridge-reticolare-curvo.ghx",
+        "originalSHA256": "A49EC24C87E1A84AB0248BC7F91C726C92E3262AE7CB704A6E2250AD4AADFABB",
+        "currentSHA256": "7FC6D12A0E762AE5BC1EC0877D6FB0BBEDC59E68FC24759773A72212C2BAE571",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/33-consigliatore-campate/33-consigliatore-campate.ghx",
+        "originalSHA256": "C0A0770B7E8666254766006B6187AA7F15CC365C125990728CD84D59560E3C7B",
+        "currentSHA256": "6BFFA9B33D011A6059A567F00FDB8E0D6AE5B388A92F2CD57B65B423EDA0A397",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/34-sezioni-per-progressiva/34-sezioni-per-progressiva.ghx",
+        "originalSHA256": "4CF102BA484C385342F173737149CD28C0C8A68D3849A3A609E0558288A257DC",
+        "currentSHA256": "9D5C5FBC03ECB6F1189D022A20D9152ADDDD58A092A2ABF83B8528F33CCCCA64",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/35-assegnazione-membri/35-assegnazione-membri.ghx",
+        "originalSHA256": "5E51175A507B7D1EAB5BC37503DA501493F4103B53326AA375B8CBF0AB59B7C6",
+        "currentSHA256": "64465AE6D9DD1CC6A2F69790C6022A6932BD57A14777BFB938AB1AF9079C3BD5",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/36-appoggi-orientati/36-appoggi-orientati.ghx",
+        "originalSHA256": "E537EE3155D47102738E411868D4C86B1572ACE1FE1B94C002C251EDDB2D2B9D",
+        "currentSHA256": "ED86D26F40682E944B675110BA34B04C12834060A19B6E134A754AE106D3B785",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/37-connessioni-offset/37-connessioni-offset.ghx",
+        "originalSHA256": "60C8F2A4DE1B217B07D1EC6D6D9E43DA6049AEF735C6E76C9D32E65B61FC6860",
+        "currentSHA256": "6ADD9FC7DA419226BE37D80CA78EC61B939433E716966368DBE676682A7196BD",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/38-controventi-longitudinali/38-controventi-longitudinali.ghx",
+        "originalSHA256": "584992181D8265A259E492035E5E336E12FC3BCF7C2B239B27D359ABDE070F3F",
+        "currentSHA256": "FF66E577C42968E7EFBF62D44BE224BC738BC5292840FBFB1E34F847576AF85A",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/39-soletta-getti/39-soletta-getti.ghx",
+        "originalSHA256": "F18E402F3622FA1FF5E71B0BE3E79F942263D8AAE2DF1A67C1682A4EC371CCB3",
+        "currentSHA256": "8D8FF33D8407BBCBCE9304BD331A180D1D451C140975A2AC3E38D3A50B8DB32B",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/40-sequenza-costruttiva/40-sequenza-costruttiva.ghx",
+        "originalSHA256": "F3D7603B1A68C1D9FF30AA0292DCC1476578F432870BB602B3E89A1E7639D74F",
+        "currentSHA256": "4E958C20F696E072C5B02C64381CB859F05C3EC017083C8A7AF7A79138DAF491",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/41-pioli-irrigidimenti/41-pioli-irrigidimenti.ghx",
+        "originalSHA256": "A3D63BA171BC4491A9F69A599F1A9AF8E7B5F24F25C475B5734213F92A9710E1",
+        "currentSHA256": "8032970CC08255DD854E8B2A95511A86AA1E747F1DC05AB92218AA139554CD7E",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/42-frecce-controfreccia/42-frecce-controfreccia.ghx",
+        "originalSHA256": "485D234954BC0C66A80427B57B5B22EAA2DFBB8AF7618EB6F4916A8A41321B87",
+        "currentSHA256": "FCB01D433AEE5B4810F8AA52AE99233DA8553CB0478EC3AE192447C13D508818",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/43-storie-fatica/43-storie-fatica.ghx",
+        "originalSHA256": "8A14D0C7D17CA57F5933F789710396556DDEA1548459AC23FE316B9F7671A796",
+        "currentSHA256": "8B9570E568AC5CA148B9BAA8F78C04040B8272188C7D680389F7C96D64517B47",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/44-mappa-verifiche/44-mappa-verifiche.ghx",
+        "originalSHA256": "C75C76495F786DB13266DBB20A1631E81EF6F49FB3393ACC67B76749F93DA3D2",
+        "currentSHA256": "2736B06A56F50F71CC14E54BCA42CC2BC93123219ECB0623047519C8823426F6",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/45-ponte-completo-fasi/45-ponte-completo-fasi.ghx",
+        "originalSHA256": "A49954ACE0EF5FFDA91C5F23429738BC1AA45F8210FC88E6F8471CA208C2E205",
+        "currentSHA256": "96928C9A384E1F64796F445F2A81581361C1E406A947E4D90F7FCD76F801240A",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/46-combinazioni-excel/46-combinazioni-excel.ghx",
+        "originalSHA256": "BA4C3476A124C346D0FC7576E04BBEB672CF90A308B357F7A2F3CB2103EACC37",
+        "currentSHA256": "A3CFE38AD78CAE159D2C2315552F8D155924E3030450FEDBC144A205B0544202",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/47-pioli-irrigidimenti-verifiche/47-anteprima-grafici.ghx",
+        "originalSHA256": "1EA7F1DD64F05435EC75134747252605E48E05FDD4EAC5D596CC62B1CDBB4F80",
+        "currentSHA256": "BC2FCE83BD5F409B779F9E6397ECA0140253C7CE98CE29F4CF2C3B49B0985F2A",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/47-pioli-irrigidimenti-verifiche/47-integrazione-modello.ghx",
+        "originalSHA256": "135E5B4B897691155654CDE951249C37A7F855AE60330981D599DF88AF65CAAF",
+        "currentSHA256": "0D53A33E7D867A03D86CAE22F4A9BB55EE3B13161083C907DB30E4014D7005BC",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/47-pioli-irrigidimenti-verifiche/47-pioli-irrigidimenti-verifiche.ghx",
+        "originalSHA256": "EEE0FC8101A9D82026C85D20E82D6AB576871F61A690A2C1C05CF950CA4CB9AA",
+        "currentSHA256": "22615E52CCD40E6AFA8AECF1F2AB81208423A2AADBE8266BA82564C19CF8484D",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/48-report-word/48-report-word.ghx",
+        "originalSHA256": "31F766D77E81B0AC5A669D62E327DAC5A921CCC683BA745490A78733201BF197",
+        "currentSHA256": "62FB81463C97688581CE818C6542D7E3FEAF871C238A21B5F5E4A04A2868ECA6",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/49-ponte-parametrico/49-ponte-parametrico.ghx",
+        "originalSHA256": "E652FFCC2E1918341CEFE282F7FE47DCAD7A3A230B54D3AC04D770D11F533200",
+        "currentSHA256": "2C2CDCACA623F38B7F7C712958FA1C5C1F7207D1FF5C122649746D98A0D840FD",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/49-ponte-parametrico/49-ponte-parametrico(1).ghx",
+        "originalSHA256": "12AB352F3B79C6421FE24EBBF5F203F24446A0C1AB051C0215EFEEA369846BEF",
+        "currentSHA256": "D4E02E4125059E468990ACAA663536275EE367D15ACF5815908AB2AA655B6047",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/50-ponte-quattro-modelli/50-ponte-quattro-modelli_REV001.ghx",
+        "originalSHA256": "A5C6CE5EDF7649E2F9796EA69A8F7820877D55A7BB9C2E4A1B45F84DDDD07DB2",
+        "currentSHA256": "5A28CFE632180DB3954F790EABBDB0F1367367725D7CDFCEC572985AE46FB8FA",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/50-ponte-quattro-modelli/50-ponte-quattro-modelli_REV002.ghx",
+        "originalSHA256": "4A861512804F8EEAA42F758A8D7A46727FDF604DE2E367818002CA03F527FD35",
+        "currentSHA256": "4735BF34E7DC10BC9AC6A0A512E87B6639EC55B88556586790E77D9F73C4AFAA",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/50-ponte-quattro-modelli/50-ponte-quattro-modelli.ghx",
+        "originalSHA256": "74B8F28920BFBC4C217C04147C153019ACAEE4E3BE0565BFE3993D844B3711EA",
+        "currentSHA256": "D8A32079EC28192BBF9093E88FAB30CD2B681BFE34CA23D3769C400743E49CEB",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/99-Ponte completo GPC/flusso-acciaio-misto_REV001.ghx",
+        "originalSHA256": "29AF1A69C7BE92DB3BFCD10C7C477995D0513D00F7B80275FBC69A690E94B04F",
+        "currentSHA256": "D818F702B8A951E141A8C6B21CF26A872249A4CF7CD3534B3AD55BB830630B25",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/99-Ponte completo GPC/REV002/flusso-acciaio-misto_REV002.ghx",
+        "originalSHA256": "D47D6D1F620ECCAEFFEDD4F67E3960029628DE29181D32711FFABCF27DF7E66F",
+        "currentSHA256": "D18C28102E4B89F9A438A42936476B0A1DD0D3F71457E9A3482F02CC055440CE",
+        "geometryComparisons": 0,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/99-Ponte completo GPC/REV003/flusso-acciaio-misto_REV003.ghx",
+        "originalSHA256": "D77F9C83CDE212B60F84F2BCC156CCF91714CBD21355F50C0C99022CC29DA0A5",
+        "currentSHA256": "229310A609ED0C9684452AFA965F4F0CB04219FBAB13C7F77931F0AF59A19733",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      },
+      {
+        "file": "example/99-Ponte completo GPC/REV004/flusso-acciaio-misto_REV004.ghx",
+        "originalSHA256": "4ECEBB8C574EB5108D7FEC5A5B96B7CE0D25DD63CB6A941F1E5A54AE82509E46",
+        "currentSHA256": "818150413D237D262230DFB297E806838FD1A7352D57E8DD0B3CC82F4CBE8B3C",
+        "geometryComparisons": 1,
+        "legacyGeometryComponents": 0
+      }
+    ]
+  },
+  "userWorkbooks": [
+    {
+      "file": "example/50-ponte-quattro-modelli/Sezioni_conci_REV001.xlsx",
+      "SHA256": "E9366A9F6BF67C8B82989A70F6FED68B360214A295C1AB4320B2197CF219F2E3",
+      "unchangedFromUserInput": true
+    },
+    {
+      "file": "example/50-ponte-quattro-modelli/Sezioni_conci_REV002.xlsx",
+      "SHA256": "22AFC379C30FF97A241F517F5356C1E50535CEF1B68F260B4C8DC4083AF41743",
+      "unchangedFromUserInput": true
+    }
+  ],
+  "limitations": [
+    "No mesh-convergence study for the saved bridge.",
+    "Native bridge report inputs checked; no final project report certified.",
+    "Longitudinal checks use N–Mx–Vy; torsion, M2 and V1 excluded.",
+    "Viewport OpenGL screenshot not validated in the hidden Rhino host."
+  ]
+}

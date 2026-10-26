@@ -34,7 +34,7 @@ Dalla root, con SDK .NET 8 o successivo e Python 3:
 .\tools\build.ps1 -Native -Package
 ```
 
-Le DLL gPC devono essere compilate nei repository fratelli `Utilities`, `Geometry`, `Model` e `Checker`. I riferimenti sono espliciti in [GpcReferences.props](build/GpcReferences.props); `RepositoryRoot` permette una disposizione differente. I sorgenti delle librerie non sono modificati.
+Le DLL gPC devono essere compilate nei repository fratelli `Utilities`, `Geometry`, `Model` e `Checker`. I riferimenti sono espliciti in [GpcReferences.props](build/GpcReferences.props); `RepositoryRoot` permette una disposizione differente. Il collaudo corrente usa Concrete **0.24.0.4** e CompositeBridge **1.19.0.4**, con la correzione dei piccoli risultanti nel branch Checker `codex/bridge-small-load-equilibrium`. Versioni, commit e hash del set candidato sono nel [rapporto di validazione](docs/validation-modular-2026-10-26.json).
 
 Output da installare: **`bin/Release/BridGHe.Grasshopper.gha`**, insieme alle DLL nella stessa cartella. L'evento MSBuild `BridGHePostBuild` in `Directory.Build.targets` parte **dopo ogni build riuscita**, sia da Visual Studio sia da `dotnet build`: per il plugin Release copia l'intero output in `bin/Release`, rimuove i file non più prodotti ed elimina le vecchie cartelle di compilazione sparse, comprese le precedenti sottocartelle di `bin`. Funziona anche con build incrementali e compilando direttamente il `.csproj`.
 
@@ -62,7 +62,7 @@ Gli script rigenerano e sovrascrivono gli esempi: salvare separatamente le modif
 
 ## Documentazione
 
-- [Guida operativa Word con procedura completa e ponte REV003](docs/BridGHe_Guida_operativa.docx).
+- [Guida operativa Word: fasi, verifiche, dettagli e nuovo flusso geometrico modulare](docs/BridGHe_Guida_operativa.docx).
 - [Fasi numerate, azioni incrementali e ritiro](docs/FASI-E-AZIONI.md).
 - [Metodi cambiati, rimozioni e compatibilità](docs/MIGRAZIONE.md).
 - [Uso e convenzioni](docs/USO.md).
