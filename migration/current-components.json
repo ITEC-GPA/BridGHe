@@ -240,6 +240,68 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.BeamPropertyOverrideComponent",
+    "guid": "d2a78ee9-b639-49e5-9478-15eb8da3ebd5",
+    "kind": "component",
+    "name": "Beam Property Override",
+    "nickname": "PropertyOverride",
+    "category": "BridGHe",
+    "subcategory": "14-Tools",
+    "description": "Replace properties using explicit original/replacement pairs. Match the current property by exact, case-sensitive name; keep unmatched properties. Copies inputs and clears all output FEM results when any beam is matched.",
+    "inputs": [
+      {
+        "name": "Beams",
+        "nickname": "B",
+        "description": "All beams to process, in output order. No property-to-beam list broadcasting.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Original Properties",
+        "nickname": "P0",
+        "description": "Beam Property objects to find by their exact Name. Paired by index with Replacement Properties; may come from Get Beam Property. Names are case-sensitive.",
+        "access": "list",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Replacement Properties",
+        "nickname": "P1",
+        "description": "One new Beam Property per original property. Its name may differ. Replaces the complete property, including material, density and formulation; no automatic mass correction. Both lists empty: unchanged copies.",
+        "access": "list",
+        "optional": true,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Beams",
+        "nickname": "B",
+        "description": "Copied beams, same order/IDs/geometry/loads/attributes. Unmatched properties are retained. All returned FEM results are cleared if any replacement matched.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Replaced",
+        "nickname": "R",
+        "description": "One flag per output beam: its original property name matched a pair.",
+        "access": "list",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Replacement counts and original property names not found in the supplied beams.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.GetBeamPropertyComponent",
     "guid": "5b890d9d-1629-4591-a02c-07c507f88252",
     "kind": "component",

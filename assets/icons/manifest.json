@@ -76,6 +76,15 @@
       "badge": "edit"
     },
     {
+      "key": "BeamPropertyOverrideComponent",
+      "type": "BridGHe.Grasshopper.Components.BeamPropertyOverrideComponent",
+      "guid": "d2a78ee9-b639-49e5-9478-15eb8da3ebd5",
+      "name": "Beam Property Override",
+      "family": "tool",
+      "glyph": "beam",
+      "badge": "swap"
+    },
+    {
       "key": "GetBeamPropertyComponent",
       "type": "BridGHe.Grasshopper.Components.GetBeamPropertyComponent",
       "guid": "5b890d9d-1629-4591-a02c-07c507f88252",

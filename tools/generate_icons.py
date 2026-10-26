@@ -183,6 +183,7 @@ def badge(kind, accent):
         'arrow': arrow(16,19,22,19,'white'),
         'play': path('M17 16L22 19L17 22Z','white',0,'white'),
         'data': path('M16.5 17H21.5M16.5 19H21.5M16.5 21H20','white',1.2),
+        'swap': path('M16 17H22L20 15M22 21H16L18 23','white',1.2),
         'filter': path('M16 16.5H22L20 19V21L18 22V19Z','white',0,'white'),
         'measure': path('M16 21L21 16M17 20L18 21M19 18L20 19','white',1.3),
         'clock': circle(19,19,2.8,'none','white',1)+path('M19 17V19L21 20','white',1),
@@ -256,6 +257,7 @@ AlignBeamAxesComponent|beam|axes|model
 AlignPlateAxesComponent|plate|axes|model
 BeamFilterComponent|beam|filter|tool
 BeamOverrideComponent|beam|edit|tool
+BeamPropertyOverrideComponent|beam|swap|tool
 GetBeamPropertyComponent|beam|data|tool
 MovingStaticAnalysisComponent|vehicle|play|solver
 StrausR3AnalysisComponent|solver|play|solver

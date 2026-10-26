@@ -774,6 +774,12 @@
         "6962f28d-7b4a-4e37-bf9b-ea7f1f197e04"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/Tools/BeamPropertyOverrideComponent.cs": {
+      "ports": "31627ed3da812f8d64515f2a00fc173c195803a03dbdb6402f9cb36cbcd9ebae",
+      "guids": [
+        "d2a78ee9-b639-49e5-9478-15eb8da3ebd5"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/Tools/ElementFilterComponent.cs": {
       "ports": "b3d563720511369875c8fcda0dcd0d2f9e368b32edf292869d9cd3cb042c05ec",
       "guids": [

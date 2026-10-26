@@ -16,6 +16,24 @@ Il verificatore adottato assume le azioni al **baricentro lordo della sezione de
 
 **Get Beam Property**, in **14-Tools**, riceve `Beam` e restituisce `Property`: la Beam Property completa, con nome, ID, sezione, materiale e formulazione. Collegando una lista o un albero restituisce una proprietà per beam, mantenendo ordine e rami. Le proprietà sono copie indipendenti: modificarle a valle non cambia le beam originali. Le proprietà omogeneizzate conservano anche i dati di preview della sezione mista.
 
+## Sostituire proprietà con coppie esplicite
+
+**Beam Property Override**, in **14-Tools**, ha tre ingressi:
+
+| Ingresso | Contenuto |
+|---|---|
+| `Beams` | Tutte le beam da aggiornare, comprese quelle che devono mantenere la proprietà attuale. |
+| `Original Properties` | Lista di oggetti Beam Property da cercare nelle aste; si può ricavare con Get Beam Property. |
+| `Replacement Properties` | Nuove Beam Property, abbinate per posizione alla lista precedente. I nomi possono essere diversi. |
+
+Per esempio, la coppia `G1-C1_acciaio → G1-C1_n_inf` cambia tutte le beam con proprietà denominata esattamente `G1-C1_acciaio`, anche se sono sparse nella lista. Traversi e altre proprietà non elencate mantengono la propria assegnazione. La ricerca usa il **nome esatto della proprietà originale, distinguendo maiuscole e minuscole**, non l'ID, la posizione della beam o l'identità dell'oggetto in memoria. Le caratteristiche numeriche della proprietà originale non sono un ulteriore filtro.
+
+Le due liste di proprietà devono avere la stessa lunghezza, per ciascun ramo elaborato da GH. Entrambe vuote restituiscono copie invariate. Coppie ripetute identiche sono ammesse; uno stesso nome originale associato a destinazioni diverse, o un nome sostitutivo con definizioni diverse, genera errore. I nomi originali non trovati sono segnalati in `Information` e come avviso. `Replaced` restituisce un booleano per beam nell'ordine dell'uscita `Beams`.
+
+L'assegnazione sostituisce l'intera proprietà, **inclusi materiale, densità e formulazione**. Non applica la correzione di massa prevista da Bridge Segment Override: per le sezioni omogeneizzate preparare la densità voluta nella proprietà sostitutiva. Restano invariati ID, geometria, offset, rotazione, carichi, gruppi e attributi. Gli oggetti in ingresso non vengono modificati.
+
+Se almeno una beam trova una sostituzione, il componente **svuota i risultati FEM di tutte le beam restituite**, comprese quelle con proprietà mantenuta: una variazione di rigidezza può cambiare l'equilibrio dell'intero modello. Riassemblare e ricalcolare il modello. Se non avviene alcuna sostituzione, anche i risultati sono conservati. La preview delle beam viene aggiornata con la proprietà assegnata, comprese le sezioni miste omogeneizzate.
+
 ## Selezione dei risultati
 
 `Linear Static` propone casi ordinari e combinazioni globali. `Nonlinear Static` propone solo le combinazioni che definiscono gli incrementi. `Staged analysis` propone le combinazioni delle fasi nel formato `Combinazione [Fase]`; selezionare il nome completo. Un nome inesistente o ambiguo viene rifiutato prima dell'esportazione. La selezione filtra i risultati letti senza rinumerare gli incrementi del modello.
