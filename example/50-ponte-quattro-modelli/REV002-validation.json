@@ -1,0 +1,19 @@
+{
+  "Source": "50-ponte-quattro-modelli_REV001.ghx",
+  "SourceSha256": "A5C6CE5EDF7649E2F9796EA69A8F7820877D55A7BB9C2E4A1B45F84DDDD07DB2",
+  "SourceWorkbookSha256": "E9366A9F6BF67C8B82989A70F6FED68B360214A295C1AB4320B2197CF219F2E3",
+  "SourceFilesUnmodified": true,
+  "NativeSolverInvoked": false,
+  "SyntheticResultsSaved": false,
+  "Validation": {
+    "GirderFEMBeams": 648,
+    "SectionResults": 9720,
+    "Phases": 4,
+    "Combinations": 5,
+    "MechanicalStates": 2,
+    "ShrinkageUncracked": true,
+    "DetailBranches": 3,
+    "ReportInputsChecked": true
+  },
+  "DefinitionSha256": "1DAE0CDF0B5EBC952D584027EDA5CB762D0B5012A9451B22C95367C919E25F5C"
+}

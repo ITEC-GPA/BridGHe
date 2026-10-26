@@ -450,8 +450,9 @@
     "title": "Ponte parametrico: acciaio, n infinito, n0 e n ritiro",
     "group": "Fasi e combinazioni",
     "readme": "50-ponte-quattro-modelli/README.md",
-    "definition": "50-ponte-quattro-modelli/50-ponte-quattro-modelli_REV001.ghx",
+    "definition": "50-ponte-quattro-modelli/50-ponte-quattro-modelli_REV002.ghx",
     "additionalDefinitions": [
+      "50-ponte-quattro-modelli/50-ponte-quattro-modelli_REV001.ghx",
       "50-ponte-quattro-modelli/50-ponte-quattro-modelli.ghx"
     ],
     "calculations": "50-ponte-quattro-modelli/calcoli"
