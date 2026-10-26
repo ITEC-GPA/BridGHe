@@ -5,7 +5,7 @@ def append_detail_chapters(page, h, p, table, steps, code):
     page(29, "Impostare pioli e irrigidimenti")
     p("L’**esempio 47** contiene due definizioni: 47-pioli-irrigidimenti-verifiche.ghx per imparare il calcolo locale e 47-integrazione-modello.ghx per collegarlo ai risultati Straus del superelemento. I file sono in example/47-pioli-irrigidimenti-verifiche; il README descrive tutti gli input, i limiti e i test.")
     h("Distinguere il disegno dal calcolo")
-    p("Bridge Detail Layout disegna pioli e piatti su una geometria Simple Bridge. Non aggiunge rigidezza o elementi FEM. Le stesse definizioni Bridge Studs, Bridge Intermediate Stiffener e Bridge Support Stiffener alimentano il verificatore GPC. Gli intermedi contribuiscono all’idoneità dei pannelli d’anima; gli irrigidimenti d’appoggio ricevono anche una reazione compressiva esplicitamente assegnata.")
+    p("Bridge Detail Layout disegna pioli e piatti sulla geometria prodotta da Bridge Grillage Mesh. Non aggiunge rigidezza o elementi FEM. Le stesse definizioni Bridge Studs, Bridge Intermediate Stiffener e Bridge Support Stiffener alimentano il verificatore GPC. Gli intermedi contribuiscono all’idoneità dei pannelli d’anima; gli irrigidimenti d’appoggio ricevono anche una reazione compressiva esplicitamente assegnata.")
     table(["Dato del benchmark locale", "Valore"], [
         ("Ponte / zona del dettaglio", "3 travi; campate 30+40+30 m; G2 tra 26 e 34 m"),
         ("Sezione ad H / soletta efficace", "Anima 1330×16; ali 450×30 e 600×40; soletta 2200×250 mm"),
@@ -16,7 +16,7 @@ def append_detail_chapters(page, h, p, table, steps, code):
         ("Saldature / eccentricità", "Gola 6 mm intermedi, 10 mm appoggio; eccentricità nulle"),
     ], [2.65, 4.29])
     steps([
-        "Aprire il primo GHX. I pannelli gialli collegati agli input sono modificabili. Attivare la preview di Simple Bridge per vedere l’intero ponte; Layout mostra il dettaglio G2.",
+        "Aprire il primo GHX. I pannelli gialli collegati agli input sono modificabili. Attivare la preview di Bridge Grillage Mesh per vedere l’intero ponte; Layout mostra il dettaglio G2.",
         "Controllare le quote: asse trave −1500 mm e Steel Top Offset=1250 mm portano la faccia superiore dell’acciaio a −250 mm. I pioli terminano a −70 mm; restano 70 mm fino all’estradosso.",
         "Leggere le quantità: 40 file da due pioli nell’intervallo [26,34) m; due coppie intermedie a 28 e 32 m e una coppia d’appoggio a 30 m. In totale 80 pioli e 6 piatti.",
     ])

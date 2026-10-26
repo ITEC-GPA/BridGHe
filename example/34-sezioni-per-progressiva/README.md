@@ -1,12 +1,14 @@
 # 34 · Sezioni per progressiva e rastremazione
 
+Aggiornamento 26 ottobre 2026: questa definizione usa il [flusso modulare](../../docs/FLUSSO-MODULARE.md). Appoggi, travi, soletta, conci, diaframmi e mesh hanno componenti separati; gli input salvati sono stati conservati. I report precedenti descrivono la geometria di riferimento; il nuovo collaudo è raccolto nella [validazione del refactoring](../../docs/VALIDAZIONE-MODULARE-2026-10-26.md).
+
 [Apri la definizione GHX](34-sezioni-per-progressiva.ghx) · [Report eseguito](validation.json) · [Guida completa](../../docs/BRIDGE-DESIGN.md)
 
 ## Dati e componenti
 
 Ponte 30+40+30 m, tre travi, conci da 12 m. G2 riceve Tapered H nell'intervallo 12.345–45 m e scala verticale da 1 a 1.2.
 
-`Bridge Section Schedule → Bridge Member Assignment`
+`Bridge Section Schedule → Bridge FEM Members`
 
 ## Procedura
 

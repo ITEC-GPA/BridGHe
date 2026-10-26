@@ -1,61 +1,6 @@
-# Simple Bridge: geometria del ponte e gestione dei conci
+# Geometria del ponte e gestione dei conci
 
-In **BridGHe → 06-Model**:
-
-- **Simple Bridge — Solid Diaphragms** genera longitudinali e traversi ad anima piena come assi.
-- **Simple Bridge — Truss Diaphragms** genera longitudinali, correnti, montanti e diagonali.
-- **Bridge Segments** definisce i conci.
-- **Bridge Diaphragms** definisce le posizioni dei traversi e lo schema reticolare.
-
-Sono generatori geometrici per preparare un ponte in misto: non definiscono sezioni, materiali, carichi, appoggi meccanici, rilasci o fasi di attivazione. La soletta è disponibile come mesh chiusa di riferimento e come assi trasversali per un graticcio. Non viene generata una mesh di elementi plate. Gli assi dei traversi pieni non rappresentano lo spessore o i dettagli costruttivi delle loro anime.
-
-## Soletta a graticcio e collegamenti eccentrici
-
-Entrambi i generatori aggiungono questi ingressi, senza spostare quelli esistenti:
-
-| Ingresso | Convenzione |
-|---|---|
-| `Deck Beam Spacing` | Passo massimo lungo il tracciato, mm. Suddivisione uniforme dell'intera lunghezza. Zero usa la griglia longitudinale raffinata. |
-| `Deck Beam Stations` | Lista facoltativa di progressive ordinate. Sostituisce il passo; aggiunge sempre inizio e fine del ponte. |
-| `Deck Beam Level` | Quota lungo la normale locale rispetto all'estradosso, mm. Default `−Deck Thickness/2`. Valore ammesso fra `−Deck Thickness` e zero. |
-
-`Deck Beams` contiene assi ortogonali alla tangente del tracciato, inclinati con la pendenza trasversale e spezzati in corrispondenza di tutte le travi. Include gli sbalzi fino ai bordi. Le travi longitudinali vengono suddivise alle stesse progressive **prima** del raffinamento geometrico: l'attacco non è una proiezione approssimata su una corda già discretizzata. Lo sghembo degli appoggi non ruota le aste della soletta.
-
-`Deck Connections` collega ciascun nodo dell'asse della trave al corrispondente nodo dell'asse della soletta. I percorsi sono `{linea soletta;trave}`, con indici da 1. Collegare queste linee a **Bridge Connections**, ingresso `Connections`, appiattendo la lista se si vuole un unico insieme:
-
-- `Mode=0`: link rigidi cinematici nativi Straus, senza materiale artificialmente rigido;
-- `Mode=1`: aste con la proprietà meccanica esplicitamente assegnata;
-- `Mode=2` del componente esistente applica invece un offset locale alle travi fornite: non va sommato automaticamente ai link, altrimenti si può contare due volte l'eccentricità.
-
-`Deck Strip Widths` ha gli stessi percorsi `{linea soletta;fascia}` di `Deck Beams` e `Deck Member IDs`. Le larghezze tributarie sono misurate lungo il tracciato: internamente `(s[i+1]−s[i−1])/2`, agli estremi metà dell'intervallo adiacente. Per una sezione rettangolare il primo modello è `b = larghezza tributaria`, `h = spessore soletta`. In curva o con sghembi questa suddivisione geometrica non costituisce una calibrazione automatica delle rigidezze flessionali e torsionali del graticcio.
-
-`Bridge Geometry` e `Members` mantengono la carpenteria. `Grillage Geometry` aggiunge le aste della soletta nella **famiglia 8, DeckTransverse**; gruppo = linea soletta, segmento = fascia. La famiglia 8 richiede una proprietà esplicita in **Bridge Member Assignment** o una regola **Bridge Section Schedule**. Il default `−1` per l'acciaio non viene applicato automaticamente alla soletta. I link rimangono separati: aggiungere il risultato di **Bridge Connections** agli elementi di **Build Model**.
-
-La preview mostra gli assi della soletta in verde e i collegamenti eccentrici in viola, oltre alla mesh e alla carpenteria. La quota delle travi rimane un input: il generatore non deduce un baricentro da sezioni non ancora assegnate.
-
-### Inserimento nel flusso a fasi
-
-Nella fase di getto G1 si può usare la sola carpenteria, con il peso del getto fresco applicato come carico. Dopo l'attivazione del misto si aggiungono fasce cls e link, aggiornando le proprietà longitudinali con gli override. Se si impiegano già sezioni longitudinali omogeneizzate, non aggiungere anche una soletta shell longitudinale senza riformulare la rigidezza del modello.
-
-**Build BridGHe Model → Additional Phase Members = true** consente aste aggiuntive nelle sorgenti FEM: le verifiche riguardano le aste del **primo modello di riferimento**. Gli ID, gli estremi e gli assi locali di queste aste devono coincidere in tutte le fasi. Aste mancanti o invertite restano errori. Le aste aggiuntive vengono segnalate in `Diagnostics`; non sono verificate dal checker longitudinale. Per le reazioni utilizzare `Phases` con le sorgenti complete. Il default è false e conserva il controllo di uguaglianza delle topologie.
-
-### Acciaio da armatura
-
-**BridGHe → 02-Materials → Reinforcement Steel B450C** restituisce un `Material` di tipo `Rebar`. Collegarlo a `Reinforcement Material` della proprietà mista; le due file di armatura restano definite nella soletta.
-
-Il componente usa `GPC.Model.Materials.SteelMaterialEN1992`, con i dati del catalogo locale GPC: `E=200000 MPa`, `fyk=450 MPa`, `ftk=540 MPa`, deformazione ultima caratteristica `0.075`, densità `7.85e−9 t/mm³`. Non applica coefficienti di sicurezza al materiale FEM. La deformazione ultima è conservata nell'archivio e nelle conversioni al checker; i materiali precedenti senza questo dato mantengono il valore usato in precedenza. Il catalogo non sostituisce la qualificazione del prodotto impiegato.
-
-## Avvio rapido
-
-1. Disegnare un tracciato aperto in **mm**, anche 3D, continuo in tangente.
-2. Collegarlo ad `Alignment`. Il tracciato rappresenta una linea all'estradosso della soletta.
-3. Collegare `Support Stations`: ad esempio `0; 30000; 70000; 100000` per tre campate di 30, 40 e 30 m.
-4. Collegare `Girder Offsets`: ad esempio `-4000; 0; 4000` per tre travi.
-5. Lasciare inizialmente gli altri ingressi ai valori predefiniti. Si ottengono assi a −1500 mm, soletta larga 12 m e spessa 250 mm, traversi ogni 5 m al massimo, conci lunghi al massimo 12 m.
-6. Collegare i due componenti di configurazione per modificare conci e traversi.
-7. Attivare `Labels` per leggere in viewport i punti di appoggio e i giunti.
-
-Non serve una licenza Straus per questi componenti e per i relativi test.
+L’interfaccia attuale è descritta nel [flusso modulare](FLUSSO-MODULARE.md). Il motore geometrico resta condiviso: Bridge Support Lines, Girder Axes, Slab Layout, Fabrication Segments e Solid/Truss Diaphragms entrano in Geometry Assembly; Bridge Grillage Mesh esegue la discretizzazione con Mesh Settings. I vecchi generatori Simple Bridge sono nascosti.
 
 ## Convenzioni geometriche e unità
 
@@ -73,7 +18,7 @@ L'uscita `Frames` contiene piani con X verso sinistra, Y normale alla soletta e 
 
 `Support Stations` deve contenere almeno due progressive univoche e crescenti. Sono ammessi tratti del tracciato oltre la prima e l'ultima linea di appoggio: vengono conservati come sbalzi.
 
-`Support Skew` accetta un angolo oppure un angolo per appoggio. Zero significa linea trasversale; l'angolo positivo ruota la linea trasversale verso la tangente, nel riferimento locale. Il modulo deve essere inferiore a 75°.
+`Skew Angles` accetta un angolo oppure un angolo per appoggio. Zero significa linea trasversale; l'angolo positivo ruota la linea trasversale verso la tangente, nel riferimento locale. Il modulo deve essere inferiore a 75°.
 
 Il generatore trova l'intersezione della linea/piano sghembo con ciascun asse longitudinale. Queste progressive possono differire fra le travi. I traversi sulle linee di appoggio seguono lo stesso sghembo.
 
@@ -83,7 +28,7 @@ I punti restituiti sono posizioni geometriche: non bloccano traslazioni o rotazi
 
 ## Conci indipendenti da campate e discretizzazione
 
-`Bridge Segments` ha due ingressi:
+`Bridge Fabrication Segments` ha due ingressi:
 
 | Ingresso | Significato |
 |---|---|
@@ -97,7 +42,7 @@ I percorsi di `Joints` sono:
 {2}  18000                                           giunto aggiuntivo solo su G2
 ```
 
-Le travi sono numerate da 1 nell'ordine di `Girder Offsets`, quindi G1 è quella più a destra. I giunti specifici si aggiungono a quelli comuni. Se alla trave si applica almeno un giunto esplicito, `Maximum Length` non aggiunge altri giunti a quella trave. In modalità automatica si suddivide l'intera lunghezza in conci uguali, entro il massimo assegnato.
+Le travi sono numerate da 1 nell'ordine di `Transverse Offsets`, quindi G1 è quella più a destra. I giunti specifici si aggiungono a quelli comuni. Se alla trave si applica almeno un giunto esplicito, `Maximum Length` non aggiunge altri giunti a quella trave. In modalità automatica si suddivide l'intera lunghezza in conci uguali, entro il massimo assegnato.
 
 Un concio fra 24 e 36 m attraversa la pila a 30 m. Il generatore introduce comunque il nodo necessario all'appoggio e conserva lo stesso identificativo di concio sui tratti appartenenti alle due campate.
 
@@ -107,7 +52,7 @@ Un giunto non introduce automaticamente una cerniera, un nodo duplicato o una fa
 
 ## Traversi pieni e reticolari
 
-`Bridge Diaphragms` è comune ai due generatori.
+`Bridge Truss Diaphragms / Bridge Solid Diaphragms` è comune ai due generatori.
 
 | Ingresso | Uso |
 |---|---|

@@ -1,6 +1,6 @@
 # Inventario dei componenti 0.1.0
 
-176 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
+218 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
 
 ## BridGHe / 01-Parameters
 
@@ -32,6 +32,10 @@
 |---|---|---|---|
 | Angle Section | component | Width; Flange thickness; Height; Web thickness; Double Sections; Gap | Section |
 | Brep Section | component | Breps | Section |
+| Bridge Read Section Excel | component | Fabrication Plan; File | Count; Segment IDs; Girder IDs; Counts per Girder; Section Table; File; Information |
+| Bridge Section Excel Template | component | Fabrication Plan; File; Base Property; Overwrite | Count; Segment IDs; Girder IDs; Counts per Girder; Section Table; File; Information |
+| Bridge Segment Excel | component | Fabrication Plan; File; Mode; Base Property; Overwrite | Count; Segment IDs; Girder IDs; Counts per Girder; Section Table; File; Information |
+| Bridge Segment Sections | component | Fabrication Plan; Base Property; Section Table | Schedule; Properties; Sections; Segment IDs; Resolved Table; Top Offsets; Information |
 | C Section | component | Width; Flange thickness; Height; Web thickness; Double Section; Gap | Section |
 | Concrete Slab Section | component | Height; Width; Rebar area; Top concrete cover; Bottom rebar area; Bottom concrete cover | Concrete Slab |
 | Generic Section | component | Area; Second moment 1; Second moment 2; Torsion constant; Shear L1; Shear L2; Shear A1; Shear A2; Bending modulus 1; Bending modulus 2; Offset 1; Offset 2; Angle | Section |
@@ -94,20 +98,51 @@
 |---|---|---|---|
 | Beam | component | Line; Property; Groups; Angle; Offset | Beam |
 | Bridge Action | component | Action ID; Model; Case; Behavior; Beam IDs | Action |
+| Bridge Alignment Curve | component | Length; Radius; Origin; Heading; Custom Alignment | Alignment |
+| Bridge Alignment Inputs | component | Alignment; Support Stations; Span Count; End Supports; Joint Stations; Maximum Segment Length; Maximum Element Length; Station Tolerance | Alignment; Span Lengths; Start Overhang; End Overhang; Support Stations; Support Points; Span Count; Joint Stations; Maximum Segment Length; Maximum Element Length; Length; Information |
+| Bridge Bearing Pattern | component | Support Stations; Girder Offsets; Bearing Types | Bearing Types |
 | Bridge Bearings | component | Bridge Geometry; Supports; Girders; Types; Guide Angle; Translation Stiffness; Rotation Stiffness; Orientation | Nodes; Frames; Labels |
+| Bridge Bracing Stations | component | Alignment; Support Stations; Maximum Panel Length | Bracing Stations |
+| Bridge Connection Beams | component | Connection Axes; Connection Property | Elements; Information |
 | Bridge Connections | component | Mode; Connections; Property; Beams; Offset | Elements; Information |
 | Bridge Construction Sequence | component | Model; Phase; Active Groups; Physical IDs; Active Bearing IDs; Enable Bearings; Girder Property; Load Increments | Phase Model; Native Stage; Phase; Active Physical IDs; Available Groups; Information |
+| Bridge Crossfall Table | component | Crossfall Table | Percentages; Stations |
 | Bridge Deck Mesh | component | Bridge Geometry; Plate Property; Longitudinal Mesh Length; Transverse Mesh Length; Pour Boundaries; Triangles | Bridge Geometry; Mesh; Plates; Connection Lines; Stations; Information |
+| Bridge Deck Widths | component | Girder Offsets; Left Cantilever; Right Cantilever | Side Widths |
+| Bridge Diaphragm Choice | component | Use Truss; Solid Diaphragms; Truss Diaphragms | Diaphragms |
 | Bridge Diaphragms | component | Stations; Maximum Spacing; At Supports; Truss Height; Panels per Bay; Pattern; Connect X | Diaphragms |
+| Bridge FEM Members | component | Bridge Geometry; Family Properties; Section Rules | Beams; Physical IDs; Unassigned; Information |
+| Bridge Fabrication Segments | component | Alignment; Girder Axes; Joint Sets; Maximum Segment Length | Fabrication Plan; Segment Count; Segment IDs; Start Stations; End Stations; Segment Lengths |
+| Bridge Family Property | component | Property; Family | Family Property |
+| Bridge Geometry Assembly | component | Alignment; Support Lines; Girder Axes; Slab Layout; Fabrication Plan; Diaphragms | Bridge Definition |
+| Bridge Girder Axes | component | Transverse Offsets; Axis Levels | Girder Axes; Girder Count |
+| Bridge Grillage Mesh | component | Bridge Definition; Mesh Settings; Labels | Members; Member IDs; Longitudinals; Diaphragm Members; Nodes; Support Points; Joint Points; Deck; Deck Edges; Frames; Stations; Topology; Segment Ranges; Information; Bridge Geometry; Deck Beams; Deck Connections; Deck Beam Stations; Deck Strip Widths; Grillage Geometry; Deck Member IDs |
+| Bridge Joint Stations | component | Joint Stations; Girder IDs | Joint Set |
+| Bridge Joint Tree | component | Joint Tree | Joint Sets |
 | Bridge Longitudinal Bracing | component | Bridge Geometry; Stations; Bays; Pattern; Normal Offset; Connect X; Omitted Panels | Bridge Geometry; Added Members; Information |
 | Bridge Member Assignment | component | Bridge Geometry; Default Properties; Families; Schedule | Beams; Physical IDs; Unassigned; Information |
+| Bridge Mesh Settings | component | Maximum Element Length; Chord Tolerance; Slab Beam Spacing; Slab Beam Stations | Mesh Settings |
+| Bridge Normalize Joint Stations | component | Alignment; Joint Stations; Station Tolerance | Joint Stations |
+| Bridge Parametric Layout | component | Span Count; Span Length; Span Lengths; Girder Count; Girder Spacing; Girder Offsets; Left Overhang; Right Overhang; Start Overhang; End Overhang; Radius; Origin; Heading; Custom Alignment; Bracing Spacing; Bearing Types Override | Alignment; Support Stations; Girder Offsets; Deck Widths; Span Lengths; Bearing Types; Length; Information; Bracing Stations |
 | Bridge Phase | component | Number; Name; Section State; Actions; Day | Phase |
 | Bridge Phase Model | component | Model; Name; Beam IDs; Property; Clear loads | Model |
 | Bridge Phase Table | component | Phases | Phases; Number; Name; Day; Section state; Action ID; Behavior; Source; Case; Strain |
+| Bridge Regular Girders | component | Girder Count; Girder Spacing; Explicit Offsets | Transverse Offsets |
+| Bridge Rigid Links | component | Connection Axes | Elements; Information |
 | Bridge Section Schedule | component | Property; Start; End; Family; Group; Segment; Start Scale; End Scale | Schedule |
+| Bridge Segment Composite | component | Beams; Segment IDs; Composite Properties | Girders; Composite Properties; Segment IDs; Beam IDs |
+| Bridge Segment Override | component | Beams; Segment IDs; Properties; Preserve Mass | Girders; Other Steel; Beam IDs; Information |
 | Bridge Segments | component | Joints; Maximum Length | Segments |
 | Bridge Shrinkage Action | component | Action ID; Model; Case; Strain increment; Beam IDs; Primary Only; Response | Action |
+| Bridge Slab Grillage | component | Grillage Geometry; Concrete Material; Name | Beams; Properties; Strip Widths; Member IDs; Information |
+| Bridge Slab Layout | component | Side Widths; Thickness; Crossfall Percent; Crossfall Stations; Slab Axis Level | Slab Layout |
+| Bridge Solid Diaphragms | component | Stations; Maximum Spacing; At Supports | Diaphragms |
 | Bridge Span Advisor | component | Alignment; Forbidden Regions; Minimum Span; Maximum Span; Target Span; Candidate Grid; Clearance; Alternatives; Pier Penalty; End Span Ratio; Required Supports | Support Stations; Support Points; Span Lengths; Scores; Information |
+| Bridge Span Stations | component | Span Count; Uniform Span Length; Span Lengths; Start Overhang; End Overhang | Support Stations; Span Lengths; Alignment Length |
+| Bridge State Override | component | Beams; Segment IDs; Composite Sections; States; Response; Mixed Policy; Zero Policy; Preserve Mass | Girders; Other Steel; Beam IDs; Information |
+| Bridge Support Lines | component | Alignment; Support Stations; Skew Angles | Support Lines; Span Lengths; Support Centres |
+| Bridge Support Stations | component | Alignment; Support Stations; Equal Span Count; End Supports; Station Tolerance | Alignment; Span Lengths; Start Overhang; End Overhang; Support Stations; Support Points; Span Count; Length; Information |
+| Bridge Truss Diaphragms | component | Stations; Maximum Spacing; At Supports; Truss Height; Panels per Bay; Pattern; Connect X | Diaphragms |
 | Build BridGHe Model | component | Models; Phases; Combinations; Calculation; Additional Phase Members | Model; Phases; Diagnostics |
 | Build Model | component | Elements; Name; Units; Load Combinations; Staged constructions | Model |
 | Composite beam | component | Beam; Section Start; Section End; Groups | Beam |
@@ -115,6 +150,7 @@
 | Merge Model | component | Elements; Tolerance | BridGHe Nodes; BridGHe Beams; BridGHe Plates |
 | Node | component | Point | Node |
 | Plate | component | Mesh; Property; Groups; Angle; Offset | Plate |
+| Simple Bridge | component | Alignment; Support Stations; Girder Offsets; Girder Levels; Deck Widths; Deck Thickness; Crossfall; Segments; Diaphragms; Maximum Element Length; Chord Tolerance; Support Skew; Labels; Deck Beam Spacing; Deck Beam Stations; Deck Beam Level; Truss Diaphragms | Members; Member IDs; Longitudinals; Diaphragm Members; Nodes; Support Points; Joint Points; Deck; Deck Edges; Frames; Stations; Topology; Segment Ranges; Information; Bridge Geometry; Deck Beams; Deck Connections; Deck Beam Stations; Deck Strip Widths; Grillage Geometry; Deck Member IDs |
 | Simple Bridge — Solid Diaphragms | component | Alignment; Support Stations; Girder Offsets; Girder Levels; Deck Widths; Deck Thickness; Crossfall; Segments; Diaphragms; Maximum Element Length; Chord Tolerance; Support Skew; Labels; Deck Beam Spacing; Deck Beam Stations; Deck Beam Level | Members; Member IDs; Longitudinals; Diaphragm Members; Nodes; Support Points; Joint Points; Deck; Deck Edges; Frames; Stations; Topology; Segment Ranges; Information; Bridge Geometry; Deck Beams; Deck Connections; Deck Beam Stations; Deck Strip Widths; Grillage Geometry; Deck Member IDs |
 | Simple Bridge — Truss Diaphragms | component | Alignment; Support Stations; Girder Offsets; Girder Levels; Deck Widths; Deck Thickness; Crossfall; Segments; Diaphragms; Maximum Element Length; Chord Tolerance; Support Skew; Labels; Deck Beam Spacing; Deck Beam Stations; Deck Beam Level | Members; Member IDs; Longitudinals; Diaphragm Members; Nodes; Support Points; Joint Points; Deck; Deck Edges; Frames; Stations; Topology; Segment Ranges; Information; Bridge Geometry; Deck Beams; Deck Connections; Deck Beam Stations; Deck Strip Widths; Grillage Geometry; Deck Member IDs |
 
@@ -126,6 +162,7 @@
 | Beam Releases | component | Beam; Axial N1; Axial N2; Shear 1 N1; Shear 2 N1; Shear 1 N2; Shear 2 N2; Torsion N1; Torsion N2; Moment 1 N1; Moment 2 N1; Moment 1 N2; Moment 2 N2 | Beam |
 | Beam Support | component | Beam; Stiffness; Direction; Compression only; Gap | Beam |
 | Beam Taper | component | Beam; NFromX; NFromY; NToX; NToY; AlignmentX; AlignmentY | Beam |
+| Bridge Beam Offsets | component | Beams; Local Offset | Beams; Information |
 | Element Id | component | Element; ID | Element |
 | Load Patch Type | component | Plate; Type; Edges; Weights | Plate |
 | Plate Support | component | Plate; Stiffness; Compression only; Face | Plate |
@@ -204,6 +241,7 @@
 
 | Nome | Tipo | Ingressi | Uscite |
 |---|---|---|---|
+| Bridge Analysis Cases | component | Model; Required Cases; Solver | Analysis Results; Information |
 | Straus R3 Analysis | component | Model; Solver; Analysis Results; Output Path; Keep Running | Model |
 
 ## BridGHe / 13-Results
@@ -220,6 +258,7 @@
 | Bridge Displacement Envelope | component | Model; Element IDs; Cases; Component; Mode | Element ID; Station; Value; Case; Step; Step type; Concomitant; Result; Coverage; Units |
 | Bridge Fatigue History | component | Values; Model; Beam ID; Station; Ordered Cases; Force Component; Response Factors; Response Units; Exponent; Reference Cycles | History; Sources; Ranges; Means; Cycle Counts; Equivalent Range; Units; Information |
 | Bridge Force Plot | component | BridGHe Model; Super-Element Beam; Results; Quantity; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running | SVG; File; Minimum; Maximum |
+| Bridge Girder Results | component | Beams; Results; Girder | Beams; Results; Stations; Available Girders |
 | Bridge Intermediate Stiffener Plot | component | BridGHe Model; Super-Element Beam; Results; Check; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running; Display; Stations | SVG; File; Minimum; Maximum; Governing checks; Unavailable checks |
 | Bridge Report | component | Results; Template; File; Topics; Model; Title; Project; Author; Revision; SVG; Overwrite | File; Summary; Warnings; Report ID |
 | Bridge Result Cases | component | Model | Cases; Case by step; Step; Step type; Result type; Count; Units |
@@ -243,9 +282,12 @@
 | Align beam axes | component | Beam; Axis; Direction | Beam |
 | Align plate axes | component | Plate; Axis; Direction | Plate |
 | Beam Filter | component | Beams; IDs; Ini Pos; End Pos; Units; Properties name; Groups | Beams; Others |
+| Beam Moment Dispatch | component | Beams; Case; Tolerance; Component; Sign | Positive; Negative; Mixed; Zero; Missing; States; Information |
 | Beam Override | component | Beam; Property; Groups; Angle; Offset | Beam |
+| Beam Property Override | component | Beams; Original Properties; Replacement Properties | Beams; Replaced; Information |
 | Bridge Model Audit | component | Model; Tolerance; Bridge Geometry; Phase Models | No input errors; Severity; Code; Element; Description; Model |
 | Elements Filter | component | Elements; Find | Found; Others |
+| Get Beam Property | component | Beam | Property |
 | Merge Geometry | component | Elements; Tolerance | Points; Curves; Meshes |
 | Node Filter | component | Nodes; IDs; Positions; Units; Groups | Nodes; Others |
 | Plate Filter | component | Plates; IDs; Positions; Units; Properties name; Groups | Plates; Others |

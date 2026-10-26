@@ -2,7 +2,7 @@
 
 Plugin Grasshopper per **Rhino 8 / .NET 8 / Windows x64**: modello parametrico → Straus7 R3 → risultati negli elementi → verifiche e dettagli di ponti misti con gPC.
 
-La versione corrente comprende **153 componenti e 8 parametri**, con 162 GUID distinti incluso il plugin. I contratti aggiornati sono in [COMPONENTI](docs/COMPONENTI.md). Gli strumenti operativi comprendono audit del modello, copie di fase, combinazioni per Action ID, inviluppi concomitanti, riepilogo GPC, confronti numerici, incrementi di ritiro e corsie mobili.
+L'inventario corrente comprende **218 componenti e 8 parametri**, con 227 GUID distinti incluso il plugin; comprende anche gli adattatori storici nascosti dalla barra. I contratti aggiornati sono in [current-components.json](migration/current-components.json). Il [flusso geometrico modulare](docs/FLUSSO-MODULARE.md) separa appoggi, travi, soletta, conci, diaframmi e mesh. Gli strumenti operativi comprendono audit del modello, copie di fase, combinazioni per Action ID, inviluppi concomitanti, riepilogo GPC, confronti numerici, incrementi di ritiro e corsie mobili.
 
 ## Esempi
 
@@ -15,7 +15,7 @@ I nuovi esempi **23–28** mostrano i 12 strumenti operativi; la [guida Word](do
 - [12–15: ponti continui e curvi, tre contributi meccanici più ritiro](example/00-documentazione/ponti-12-18.md).
 - [16–18: spina centrale H2000 e due laterali H1600, una/tre campate o due campate curve](example/00-documentazione/ponti-12-18.md#esempi-aggiuntivi-16-18-spina-centrale-e-due-travi-laterali). Tre fasi più ritiro differenziale, 212 controlli superati.
 
-I modelli sono esempi riproducibili, con ipotesi, unità, confronti analitici e tolleranze dichiarati. Il percorso automatico dei superelementi H rifiuta torsione e flessione minore fuori campo; il nuovo componente nativo gPC gestisce anche geometrie a cassone e anima inclinata. Non equivale a una verifica completa di ogni ponte.
+I modelli sono esempi riproducibili, con ipotesi, unità, confronti analitici e tolleranze dichiarati. Il percorso automatico dei superelementi H adotta la verifica N–Mx–Vy, escludendo torsione, M2 e V1 con ipotesi esplicita; il componente nativo gPC gestisce anche geometrie a cassone e anima inclinata. Non equivale a una verifica completa di ogni ponte. Il [collaudo del 26 ottobre](docs/VALIDAZIONE-MODULARE-2026-10-26.md) distingue prove numeriche, analisi Straus e verifica dei file GHX.
 
 ## Funzioni
 

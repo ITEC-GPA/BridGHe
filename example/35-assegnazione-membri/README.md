@@ -1,18 +1,20 @@
 # 35 · Assegnazione dei membri del ponte
 
+Aggiornamento 26 ottobre 2026: questa definizione usa il [flusso modulare](../../docs/FLUSSO-MODULARE.md). Appoggi, travi, soletta, conci, diaframmi e mesh hanno componenti separati; gli input salvati sono stati conservati. I report precedenti descrivono la geometria di riferimento; il nuovo collaudo è raccolto nella [validazione del refactoring](../../docs/VALIDAZIONE-MODULARE-2026-10-26.md).
+
 [Apri la definizione GHX](35-assegnazione-membri.ghx) · [Report eseguito](validation.json) · [Guida completa](../../docs/BRIDGE-DESIGN.md)
 
 ## Dati e componenti
 
 Ponte curvo R=250 m, tre travi, soletta geometrica 12 m, conci indipendenti dalle campate. Una proprietà H dimostrativa per tutte le famiglie.
 
-`Simple Bridge Solid → Bridge Member Assignment`
+`Bridge Grillage Mesh con diaframmi pieni → Bridge FEM Members`
 
 ## Procedura
 
 Aprire il file con la Release corrente di BridGHe in Rhino 8. Gli input numerici sono in mm e le proprietà FEM in N-mm-MPa. I parametri tipizzati memorizzati sono sostituibili collegando i normali componenti di proprietà/definizione.
 
-Modificare i pannelli del Simple Bridge. Per differenziare travi, traversi e controventi, fornire proprietà distinte e un codice Families per ognuna. -1 è il default generale; le regole Schedule prevalgono sui default.
+Modificare i pannelli delle singole definizioni geometriche. Per differenziare travi, traversi e controventi, usare un Bridge Family Property per ogni proprietà e selezionare la famiglia dalla Value List. Unire le uscite in Family Properties di Bridge FEM Members. All steel families esclude la soletta; le Section Rules prevalgono sui default.
 
 ## Controlli attesi
 

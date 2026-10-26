@@ -1,8 +1,10 @@
 # 49 · Ponte parametrico: dagli input al modello FEM
 
+Aggiornamento 26 ottobre 2026: questa definizione usa il [flusso modulare](../../docs/FLUSSO-MODULARE.md). Appoggi, travi, soletta, conci, diaframmi e mesh hanno componenti separati; gli input salvati sono stati conservati. I report precedenti descrivono la geometria di riferimento; il nuovo collaudo è raccolto nella [validazione del refactoring](../../docs/VALIDAZIONE-MODULARE-2026-10-26.md).
+
 Aprire **[49-ponte-parametrico.ghx](49-ponte-parametrico.ghx)** con Rhino 8 e la Release aggiornata di BridGHe. Non occorre la licenza Straus per generare il modello.
 
-La definizione raccoglie **tutti gli input a sinistra**, i componenti al centro e gli output nominati a destra. I valori assegnati sono esterni: slider, toggle, Value List e pannelli. Anche gli ingressi opzionali hanno un parametro esterno, inizialmente vuoto. Ogni parametro conserva nel tooltip la spiegazione del relativo ingresso.
+La definizione procede **da sinistra a destra per dipendenze**, con gli input nominati a sinistra del componente che li usa e gli output conservati. I valori assegnati sono esterni: slider, toggle, Value List e pannelli. Anche gli ingressi opzionali hanno un parametro esterno, inizialmente vuoto. Ogni parametro conserva nel tooltip la spiegazione del relativo ingresso.
 
 Ogni uscita sulla destra ha il nome completo sia nel parametro sia nella didascalia del relativo gruppo: resta leggibile anche con la visualizzazione a icone di Grasshopper.
 
@@ -37,7 +39,7 @@ Per assegnare una lista a un parametro opzionale: collegare un pannello con un v
 
 ## Una sezione per ogni concio
 
-Il componente **Bridge Segment Sections**, già collegato nell'esempio, genera sezioni a I in acciaio, anche asimmetriche, e le assegna alle travi tramite **Bridge Member Assignment**. Non occorre creare a mano una catena di componenti per ogni concio. Le proprietà geometriche seguono lo stesso calcolo GPC del componente **I Section**.
+Il componente **Bridge Segment Sections**, già collegato nell'esempio, genera sezioni a I in acciaio, anche asimmetriche, e le assegna alle travi tramite **Bridge FEM Members**. Non occorre creare a mano una catena di componenti per ogni concio. Le proprietà geometriche seguono lo stesso calcolo GPC del componente **I Section**.
 
 1. Impostare geometria, giunti e **sezione base** mediante gli slider a sinistra.
 2. Nel gruppo **05b**, aprire con doppio clic il pannello **SEZIONI CONCI [mm]**. È già compilato con una riga per concio. `G1-C2` indica la prima trave e il secondo concio di officina; la numerazione non è quella delle campate né quella delle aste FEM.

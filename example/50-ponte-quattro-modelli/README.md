@@ -1,5 +1,7 @@
 # 50 · Ponte parametrico: quattro modelli, fasi, ritiro e verifiche
 
+Aggiornamento 26 ottobre 2026: questa definizione usa il [flusso modulare](../../docs/FLUSSO-MODULARE.md). Appoggi, travi, soletta, conci, diaframmi e mesh hanno componenti separati; gli input salvati sono stati conservati. I report precedenti descrivono la geometria di riferimento; il nuovo collaudo è raccolto nella [validazione del refactoring](../../docs/VALIDAZIONE-MODULARE-2026-10-26.md).
+
 ## REV002 — stati locali da momento sotto peso proprio
 
 Aprire **[50-ponte-quattro-modelli_REV002.ghx](50-ponte-quattro-modelli_REV002.ghx)** con la Release aggiornata. Deriva dal REV001 effettivamente salvato dall'utente, inclusi tracciato, controlli, sezioni e prove aggiunte al canvas. Il REV001 è conservato. **[Sezioni_conci_REV002.xlsx](Sezioni_conci_REV002.xlsx)** è una copia del suo Excel, con una riga per concio fisico: non occorre aggiungere righe per distinguere rigidezza fessurata e non fessurata.
@@ -18,20 +20,20 @@ La scelta per le aste miste è un'approssimazione di mesh, **non un limite di si
 
 Procedura:
 
-1. Aprire l'Excel REV002, modificare le sezioni se necessario, salvare; usare **Run** sul lettore Excel in modalità **Read**.
+1. Aprire l'Excel REV002, modificare le sezioni se necessario, salvare; usare **Run** su **Bridge Read Section Excel**.
 2. Lanciare **Run** su M01. Il caso `Dead` è incluso nella selezione dei risultati per costruire la mappa; non viene aggiunto automaticamente alle combinazioni già impostate.
 3. Controllare classi, segno, tolleranza e politica per le aste miste. Dopo modifiche a geometria, sezioni, appoggi o carichi, ricalcolare M01.
 4. Lanciare **Run** su M02 e M03, poi M04. M04 conserva solo il caso di deformazione da ritiro: stesso εcs per effetti FEM secondari e primari locali, sezione non fessurata.
 5. **Run** su `Build BridGHe Model`, quindi su `Super Element Check`. Tutte le aste longitudinali confluiscono nelle verifiche di sezione e nei rami pioli/irrigiditori già presenti.
 6. Controllare i grafici e generare il report con **Generate**. Le ipotesi di stato locale e di verifica N–Mx–Vy viaggiano con i risultati. Il documento di destinazione è `Report_50_REV002.docx`; i modelli Straus vanno in `calcoli/REV002`.
 
-Il file distribuito non contiene risultati FEM ed è salvato con **Keep Running=False**. La validazione offline percorre geometria, proprietà, azioni, merge, verifiche, dettagli, grafici e ingressi del report usando risultati controllati in un documento temporaneo, poi li scarta. **Le analisi Straus native e la sensibilità alla mesh devono ancora essere eseguite.** Nessun report di calcolo sintetico viene consegnato come risultato del ponte.
+Il file distribuito non contiene risultati FEM ed è salvato con **Keep Running=False**. La validazione offline percorre geometria, proprietà, azioni, merge, verifiche, dettagli, grafici e ingressi del report usando risultati controllati in un documento temporaneo, poi li scarta. **Il 26 ottobre sono state eseguite le quattro analisi native del REV002 salvato: 498 aste e 488 nodi per modello, equilibrio delle reazioni, merge di cinque combinazioni, 4.560 risultati di sezione, tre rami dettagli e sei grafici.** Resta da svolgere una valutazione di sensibilità della soluzione del ponte alla mesh. Nessun report di calcolo sintetico viene consegnato come risultato del ponte.
 
 Ripetere i controlli con `dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --example50-rev002-check`. Lo script `--example50-rev002` genera una nuova copia dal REV001 e rifiuta di sovrascrivere un REV002 già esistente.
 
 ## REV001 e versione base
 
-La revisione personale **[50-ponte-quattro-modelli_REV001.ghx](50-ponte-quattro-modelli_REV001.ghx)** include ora **Bridge Alignment Inputs** e **Bridge Segment Excel**, collegati al flusso esistente. La **[guida agli input del REV001](INPUT-REV001.md)** spiega progressive degli appoggi e creazione/lettura del foglio **[Sezioni_conci_REV001.xlsx](Sezioni_conci_REV001.xlsx)**. L'integrazione conserva geometria, sezioni e altri dati della revisione salvata dall'utente. I valori dimostrativi descritti sotto si riferiscono alla versione base.
+La revisione personale **[50-ponte-quattro-modelli_REV001.ghx](50-ponte-quattro-modelli_REV001.ghx)** include ora **Bridge Support Stations** e **Bridge Read Section Excel**, collegati al flusso esistente. La **[guida agli input del REV001](INPUT-REV001.md)** spiega progressive degli appoggi e creazione/lettura del foglio **[Sezioni_conci_REV001.xlsx](Sezioni_conci_REV001.xlsx)**. L'integrazione conserva geometria, sezioni e altri dati della revisione salvata dall'utente. I valori dimostrativi descritti sotto si riferiscono alla versione base.
 
 Aprire **[50-ponte-quattro-modelli.ghx](50-ponte-quattro-modelli.ghx)** con la Release aggiornata di BridGHe per Rhino 8. L'esempio deriva da una copia del **49**, che resta invariato. Il flusso si legge **da sinistra a destra**; ogni componente ha i propri input espliciti a sinistra e gli output nominati a destra.
 
@@ -78,7 +80,7 @@ Lo **stesso εcs**, negativo per contrazione, segue due percorsi:
 
 Le azioni riferiscono l'intero modello: **Beam IDs è vuoto**, per conservare le reazioni globali. Le travi da verificare vengono selezionate dopo il Build.
 
-Il sistema di esportazione prevede ancora il caso riservato **Dead**. Preserve Mass mantiene la massa fisica dell'acciaio: ρ_om = ρ_acciaio A_acciaio / A_om, senza modificare E o inerzie. **Dead non entra nelle azioni/combinazioni dell'esempio**; in M04 non è nemmeno richiesto tra i risultati restituiti. La fase ritiro riceve soltanto M04_NSH_RITIRO.
+I valori di questa sezione descrivono la versione base: i REV001/REV002 conservano gli input modificati dall’utente. Il sistema di esportazione prevede ancora il caso riservato **Dead**. Preserve Mass mantiene la massa fisica dell'acciaio: ρ_om = ρ_acciaio A_acciaio / A_om, senza modificare E o inerzie. **Dead non entra nelle azioni/combinazioni dell'esempio**; l’eventuale lettura diagnostica di Dead in M04 non lo inserisce nell’azione ritiro. La fase ritiro riceve soltanto M04_NSH_RITIRO.
 
 ## Build e verifiche
 

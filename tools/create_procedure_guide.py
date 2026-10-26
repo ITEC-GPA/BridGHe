@@ -112,7 +112,7 @@ def make_document():
     sec.header.paragraphs[0].runs[0].font.size = Pt(9)
     foot = sec.footer.paragraphs[0]
     foot.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    foot.add_run("20 ottobre 2026   •   ").font.size = Pt(9)
+    foot.add_run("26 ottobre 2026   •   ").font.size = Pt(9)
     fld = OxmlElement("w:fldSimple")
     fld.set(qn("w:instr"), "PAGE")
     foot._p.append(fld)
@@ -218,9 +218,10 @@ def make_document():
         ("15–16", "Diagnostica, prove e riferimenti riproducibili", "16–17"),
         ("17–21", "Nuovi strumenti operativi ed esempi 23–28", "18–22"),
         ("22–27", "Dal tracciato al modello ed esempi 29–45", "23–28"),
+        ("28–31", "Excel, pioli, irrigidimenti e integrazione dei risultati", "29–32"),
+        ("32–34", "Geometria modulare, conci in Excel e mesh per le fasi", "33–35"),
     ], [1.0, 5.15, .79], centers=(0, 2))
-    p("**Edizione aggiornata:** 20 ottobre 2026, workflow REV003, Simple Bridge e strumenti di modellazione 33–45. Le interfacce precedenti di Build BridGHe Model non sono compatibili con il workflow corrente. La guida distingue controlli offline e analisi Straus.")
-    p("Il percorso produce controlli di sezione nel campo implementato. L’esempio usa azioni e coefficienti didattici; le verifiche di ponte ancora necessarie sono indicate nei capitoli 10, 11 e 14.")
+    p("**Edizione aggiornata:** 26 ottobre 2026. I capitoli 32–34 descrivono il flusso geometrico modulare e l’Excel dei conci prima della mesh. Il 50 REV002 collega il graticcio alle quattro fasi. I controlli offline e le analisi Straus sono distinti.")
 
     # Page 2
     page(1, "Preparare ambiente e unità")
@@ -674,6 +675,8 @@ def make_document():
     p("Non vengono assegnati coefficienti normativi. I nomi come SLU_01 sono etichette e non selezionano lo stato limite: Super Element Check usa attualmente Rare. Il generatore automatico delle combinazioni è previsto come attività successiva.")
     from guide_bridge_details import append_detail_chapters
     append_detail_chapters(page, h, p, table, steps, code)
+    from guide_bridge_modular import append_modular_chapters
+    append_modular_chapters(page, h, p, table, steps, code)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     doc.save(OUTPUT)
     print(OUTPUT)

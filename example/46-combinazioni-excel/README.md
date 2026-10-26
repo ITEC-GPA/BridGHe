@@ -1,5 +1,7 @@
 # 46 — Template Excel delle combinazioni
 
+Aggiornamento 26 ottobre 2026: questa definizione usa il [flusso modulare](../../docs/FLUSSO-MODULARE.md). Appoggi, travi, soletta, conci, diaframmi e mesh hanno componenti separati; gli input salvati sono stati conservati. I report precedenti descrivono la geometria di riferimento; il nuovo collaudo è raccolto nella [validazione del refactoring](../../docs/VALIDAZIONE-MODULARE-2026-10-26.md).
+
 Aprire [46-combinazioni-excel.ghx](46-combinazioni-excel.ghx). Il grafo contiene quattro azioni, tre fasi, due istanze di **Bridge Combination Excel** e **Build BridGHe Model**. I modelli contengono campioni FEM sintetici su due aste: servono a provare lo scambio dati, non costituiscono un'analisi strutturale del ponte.
 
 | Fase | Azione | Comportamento | Caso sorgente |

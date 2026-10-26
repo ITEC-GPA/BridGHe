@@ -1,6 +1,6 @@
 # Dal tracciato al modello di ponte
 
-I dodici nuovi componenti completano la geometria di Simple Bridge con assegnazione, connessioni, fasi e strumenti di lettura. Si trovano nella stessa tab **BridGHe**, nei gruppi Model, Attributes, Checks e Results secondo la funzione. Le quantità geometriche sono in **mm**, le proprietà e i risultati FEM in **N–mm–MPa**; i controlli gPC esistenti indicano separatamente gli ingressi in kN/kNm.
+Il [flusso modulare](FLUSSO-MODULARE.md) separa la definizione geometrica dalla mesh, dall’assegnazione FEM e dalle fasi. Si trovano nella stessa tab **BridGHe**, nei gruppi Model, Attributes, Checks e Results secondo la funzione. Le quantità geometriche sono in **mm**, le proprietà e i risultati FEM in **N–mm–MPa**; i controlli gPC esistenti indicano separatamente gli ingressi in kN/kNm.
 
 Partire dall'[esempio 45](../example/45-ponte-completo-fasi/README.md) per il flusso completo o dal [catalogo degli esempi](../example/README.md) per le prove 33–44. La [guida Word](BridGHe_Guida_operativa.docx) integra questa procedura con il verificatore per fasi già esistente.
 
@@ -14,14 +14,14 @@ La graduatoria minimizza:
 
 End Span Ratio modifica solo l'obiettivo delle campate terminali. Non introduce coefficienti normativi. La procedura cerca fino a dieci soluzioni migliori sulla griglia; griglia più fine significa più candidati e costo di ricerca maggiore. Il test automatico confronta la graduatoria con un'enumerazione esaustiva su un problema piccolo.
 
-L'uscita contiene un ramo per alternativa: selezionare **un solo ramo** prima di collegarlo a Simple Bridge. Il franco controlla la distanza del punto di riferimento; per escludere l'intera fondazione occorre includerne l'ingombro. Un risultato vuoto significa nessuna soluzione sulla griglia corrente. Il componente non dimensiona sezioni, pile, fondazioni o stabilità: propone una distribuzione geometrica compatibile con i limiti scelti dal progettista.
+L'uscita contiene un ramo per alternativa: selezionare **un solo ramo** prima di collegarlo a Bridge Support Lines. Il franco controlla la distanza del punto di riferimento; per escludere l'intera fondazione occorre includerne l'ingombro. Un risultato vuoto significa nessuna soluzione sulla griglia corrente. Il componente non dimensiona sezioni, pile, fondazioni o stabilità: propone una distribuzione geometrica compatibile con i limiti scelti dal progettista.
 
 ## Creare e assegnare la geometria
 
-1. Collegare tracciato, progressive degli appoggi e offsets trasversali a **Simple Bridge Solid/Truss**. Configurare **Bridge Segments**: i conci possono attraversare le pile e differire fra travi.
+1. Collegare tracciato, progressive degli appoggi e offsets trasversali a **Bridge Grillage Mesh con diaframmi pieni/Truss**. Configurare **Bridge Fabrication Segments**: i conci possono attraversare le pile e differire fra travi.
 2. Usare l'uscita tipizzata **Bridge Geometry**. Conserva assi, nodi, progressive, sezioni trasversali, appoggi, conci e identità fisiche. È archiviabile nei GHX.
 3. Aggiungere **Bridge Longitudinal Bracing** prima dell'assegnazione. X, V e Warren generano connessioni ai veri punti delle travi, che vengono divise quando necessario. Un offset normale non nullo aggiunge montanti fisici. Le X sono connesse solo se si intersecano effettivamente in 3D.
-4. Collegare la geometria aggiornata a **Bridge Member Assignment**. Le proprietà default sono abbinate ai codici Families; `-1` si applica a tutte le famiglie. L'uscita Unassigned deve essere vuota.
+4. Collegare la geometria aggiornata a **Bridge FEM Members**. Ogni **Bridge Family Property** associa una proprietà a una famiglia scelta dalla Value List; `-1` comprende tutte le famiglie in acciaio, escludendo la soletta. Unire le definizioni in Family Properties. L'uscita Unassigned deve essere vuota.
 5. Per cambi di sezione usare **Bridge Section Schedule** con famiglia, gruppo/trave, concio e intervallo di progressiva. Gruppo e concio `0` sono selettori generali. Le regole prevalgono sui default, ma non possono sovrapporsi fra loro su uno stesso elemento.
 
 | Famiglia | Codice |
@@ -47,11 +47,11 @@ Gli ID FEM sono numerici. `Physical ID`, per esempio `Girder:2:1`, identifica il
 
 Il tipo 0 rappresenta un appoggio che blocca le traslazioni, **non un incastro rotazionale**. Non sovrapporre altri vincoli globali senza averne valutato l'effetto. La preview usa gli stessi assi assegnati al sistema UCS dell'export.
 
-**Bridge Connections** offre tre rappresentazioni alternative:
+Tre componenti offrono rappresentazioni alternative:
 
-- `0` link rigido spaziale nativo Straus: nodi e attributi di collegamento, senza travi di penalizzazione.
-- `1` asta deformabile: proprietà Beam/Truss esplicita, con rigidezza reale.
-- `2` offset di sezione: copia delle travi, offset locale X/Y impostato al valore fornito e risultati cancellati.
+- **Bridge Rigid Links**: link rigido spaziale nativo Straus: nodi e attributi di collegamento, senza travi di penalizzazione.
+- **Bridge Connection Beams**: asta deformabile: proprietà Beam/Truss esplicita, con rigidezza reale.
+- **Bridge Beam Offsets**: offset di sezione: copia delle travi, offset locale X/Y impostato al valore fornito e risultati cancellati.
 
 Gli estremi dei collegamenti devono coincidere con i vertici FEM previsti. Duplicati, link collassati e target ambigui vengono respinti. Collegare gli elementi in uscita a Build Model insieme agli altri elementi.
 
@@ -59,7 +59,7 @@ Quando questi elementi devono formare un solo modello, impostare **Flatten sull'
 
 ## Soletta con plate oppure sezioni omogeneizzate
 
-**Bridge Deck Mesh** crea plate sulla superficie media, mantiene le colonne in corrispondenza delle travi e separa i getti alle progressive Pour Boundaries. Produce una nuova Bridge Geometry, divisa agli attacchi, da usare per l'assegnazione delle aste. Connection Lines va collegato a Bridge Connections scegliendo consapevolmente la meccanica della connessione. La sovrapposizione in viewport non crea connessioni.
+**Bridge Deck Mesh** crea plate sulla superficie media, mantiene le colonne in corrispondenza delle travi e separa i getti alle progressive Pour Boundaries. Produce una nuova Bridge Geometry, divisa agli attacchi, da usare per l'assegnazione delle aste. Connection Lines va collegato a Bridge Rigid Links oppure Bridge Connection Beams scegliendo consapevolmente la meccanica della connessione. La sovrapposizione in viewport non crea connessioni.
 
 Le mesh triangolari evitano quadrilateri sghembi. MembraneThickness e BendingThickness devono corrispondere allo spessore geometrico; la proprietà LoadPatch è trattata come non strutturale. I gruppi dei plate sono `Deck\Pour1`, `Deck\Pour2`, ecc.
 

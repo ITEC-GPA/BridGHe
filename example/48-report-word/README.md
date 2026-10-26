@@ -1,5 +1,7 @@
 # 48 Report Word da template
 
+Aggiornamento 26 ottobre 2026: questa definizione usa il [flusso modulare](../../docs/FLUSSO-MODULARE.md). Appoggi, travi, soletta, conci, diaframmi e mesh hanno componenti separati; gli input salvati sono stati conservati. I report precedenti descrivono la geometria di riferimento; il nuovo collaudo è raccolto nella [validazione del refactoring](../../docs/VALIDAZIONE-MODULARE-2026-10-26.md).
+
 Aprire [48-report-word.ghx](48-report-word.ghx). Il file estende il flusso dell'esempio 47 con **Bridge Report**, una checklist dei capitoli e i tre grafici di pioli e irrigiditori.
 
 1. Premere Run su **Build BridGHe Model**.

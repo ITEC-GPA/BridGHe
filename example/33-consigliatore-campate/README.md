@@ -1,5 +1,7 @@
 # 33 · Consigliatore delle campate
 
+Aggiornamento 26 ottobre 2026: questa definizione usa il [flusso modulare](../../docs/FLUSSO-MODULARE.md). Appoggi, travi, soletta, conci, diaframmi e mesh hanno componenti separati; gli input salvati sono stati conservati. I report precedenti descrivono la geometria di riferimento; il nuovo collaudo è raccolto nella [validazione del refactoring](../../docs/VALIDAZIONE-MODULARE-2026-10-26.md).
+
 [Apri la definizione GHX](33-consigliatore-campate.ghx) · [Report eseguito](validation.json) · [Guida completa](../../docs/BRIDGE-DESIGN.md)
 
 ## Dati e componenti
@@ -12,7 +14,7 @@ Tracciato di 100 m; regione vietata fra x=40 e 60 m, estesa ±10 m trasversalmen
 
 Aprire il file con la Release corrente di BridGHe in Rhino 8. Gli input numerici sono in mm e le proprietà FEM in N-mm-MPa. I parametri tipizzati memorizzati sono sostituibili collegando i normali componenti di proprietà/definizione.
 
-Modificare Minimum/Maximum/Target Span e Clearance. Leggere ogni ramo di Support Stations come una soluzione distinta e selezionare un solo ramo per Simple Bridge. Required Supports impone progressive aggiuntive. Aumentare Pier Penalty favorisce meno pile.
+Modificare Minimum/Maximum/Target Span e Clearance. Leggere ogni ramo di Support Stations come una soluzione distinta e selezionare un solo ramo per Bridge Support Lines. Required Supports impone progressive aggiuntive. Aumentare Pier Penalty favorisce meno pile.
 
 ## Controlli attesi
 

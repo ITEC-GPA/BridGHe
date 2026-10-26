@@ -1,5 +1,7 @@
 # Esempi BridGHe
 
+[Nuovo flusso modulare](../docs/FLUSSO-MODULARE.md) · [Validazione del 26 ottobre 2026](../docs/VALIDAZIONE-MODULARE-2026-10-26.md)
+
 [Audit degli esempi del 25 ottobre 2026](../docs/REVISIONE-ESEMPI-2026-10-25.md): ipotesi N–Mx–Vy, test offline e allineamento del ritiro e analisi da rifare in 99 REV004.
 
 Un unico punto di ingresso per definizioni Grasshopper, dati, risultati e istruzioni. La numerazione identifica il caso e rimane stabile quando si rigenerano i file.
@@ -69,7 +71,7 @@ I calcoli e i pacchetti nativi rimangono disponibili localmente ma sono esclusi 
 - [27 · Incrementi di ritiro e confronto dei risultati](27-ritiro-confronti/README.md)
 - [28 · Percorsi mobili paralleli](28-corsie-mobili/README.md)
 
-## Geometria parametrica Simple Bridge 29–32
+## Geometria parametrica modulare 29–32
 
 - [29 · Traversi pieni, rettilineo](29-simple-bridge-pieno/README.md)
 - [30 · Traversi pieni, curva](30-simple-bridge-pieno-curvo/README.md)

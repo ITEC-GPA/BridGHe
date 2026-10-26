@@ -7,16 +7,16 @@ def append_design_chapters(page, h, p, table, steps, code):
         "Aprire l’esempio 33. Il tracciato è lungo 100 m; la zona vietata occupa x=40–60 m. Il franco di 2 m esclude il punto di appoggio nell’intervallo 38–62 m.",
         "Impostare Candidate Grid in mm. La griglia e le progressive obbligatorie definiscono i candidati. Gli estremi del tracciato sono sempre appoggi obbligatori.",
         "Leggere un ramo per alternativa in Support Stations. Il costo è la somma degli scarti quadratici normalizzati dalla luce obiettivo, più Pier Penalty per ogni pila interna. End Span Ratio modifica l’obiettivo delle sole campate terminali.",
-        "Selezionare un solo ramo e collegarlo a Support Stations di Simple Bridge Solid o Truss. Aumentare il franco per includere l’ingombro delle fondazioni.",
+        "Selezionare un solo ramo e collegarlo a Support Stations di Bridge Support Lines, insieme al tracciato. Aumentare il franco per includere l’ingombro delle fondazioni.",
     ])
     p("Un risultato vuoto significa nessuna soluzione sulla griglia attuale. Raffinare la griglia può trovare altre posizioni, con un costo di ricerca maggiore. Il test automatico confronta le prime dieci alternative con una ricerca esaustiva su un caso piccolo.")
-    h("Simple Bridge e conci")
-    p("Gli esempi 29–32 mostrano traversi pieni o reticolari su ponti rettilinei e curvi. Definire tracciato alla quota superiore dell’impalcato, offsets trasversali, quote degli assi, larghezza, spessore e pendenza trasversale. Le unità sono mm. Bridge Segments definisce giunti comuni o diversi per trave, indipendenti dalle pile.")
+    h("Flusso modulare e conci")
+    p("Gli esempi 29–32 separano Bridge Support Lines, Girder Axes, Slab Layout, Fabrication Segments e Solid o Truss Diaphragms. Bridge Geometry Assembly riunisce le definizioni; Bridge Grillage Mesh le discretizza usando Mesh Settings. Le unità sono mm. Il capitolo 32 descrive il percorso completo, compreso l’Excel dei conci prima della mesh.")
     p("Usare l’uscita tipizzata **Bridge Geometry**, che conserva topologia, progressive, appoggi e identità dei conci. Una suddivisione non crea una cerniera FEM. Le quote degli assi non vengono dedotte dalle proprietà di sezione.")
 
     page(23, "Assegnare sezioni controventi e appoggi")
     h("Proprietà e regole per progressiva")
-    p("Nell’esempio 35, **Bridge Member Assignment** trasforma la geometria in aste con proprietà, assi locali e gruppi. Le proprietà sono abbinate a Families: −1 vale per tutte; 0 trave longitudinale, 1 traverso pieno, 2/3 correnti, 4/5 montanti e diagonali dei traversi, 6 controventi longitudinali, 7 montanti dei controventi.")
+    p("Nell’esempio 35, **Bridge FEM Members** trasforma la geometria in aste con proprietà, assi locali e gruppi. Ogni **Bridge Family Property** abbina una proprietà a una famiglia selezionata per nome. All steel families esclude la soletta; DeckTransverse la seleziona esplicitamente. Section Rules riceve le sezioni dei conci o le regole per progressiva.")
     p("Nell’esempio 34, **Bridge Section Schedule** assegna una proprietà a G2 fra 12.345 e 45 m, con scala verticale da 1 a 1.2. Le aste vengono divise alle estremità della regola. Regole sovrapposte sulla stessa selezione sono respinte. La rastremazione dimensionale non è disponibile per sezioni generiche/omogeneizzate.")
     p("Gli ID FEM sono numerici. Physical IDs, ad esempio Girder:2:1, identificano il concio anche cambiando la mesh. Unassigned deve essere vuoto prima dell’esportazione. Le sezioni degli esempi sono dimostrative.")
     h("Controventi")
@@ -33,14 +33,14 @@ def append_design_chapters(page, h, p, table, steps, code):
 
     page(24, "Collegare travi e soletta strutturale")
     h("Tre rappresentazioni di connessione")
-    p("Nell’esempio 37, **Bridge Connections** mostra i tre modi disponibili. Mode 0 produce link rigidi spaziali nativi Straus; Mode 1 aste deformabili con proprietà Beam/Truss esplicita; Mode 2 copie di travi con offset locali X/Y. In quest’ultimo caso i risultati precedenti vengono cancellati.")
+    p("Nell’esempio 37, **Bridge Rigid Links** produce link rigidi spaziali nativi Straus. **Bridge Connection Beams** crea aste deformabili con proprietà Beam/Truss esplicita. **Bridge Beam Offsets** modifica copie delle travi con offset locali X/Y, cancellando i risultati precedenti. Ogni operazione ha un componente distinto.")
     p("Collegare a Build Model gli elementi del modo scelto. Non sommare le tre rappresentazioni sulla stessa connessione. I link richiedono estremi univoci coincidenti con i vertici FEM previsti; duplicati, link collassati e target ambigui sono respinti.")
     h("Mesh della soletta")
     steps([
         "Aprire l’esempio 39. Collegare Bridge Geometry a Bridge Deck Mesh e assegnare una proprietà plate con spessore coerente con la soletta.",
         "Impostare dimensioni massime longitudinali e trasversali. Le progressive già presenti nella geometria vengono mantenute. Le colonne comprendono gli attacchi delle travi.",
         "Aggiungere Pour Boundaries: 30 e 70 m nell’esempio. Si ottengono i gruppi Deck\\Pour1, Deck\\Pour2 e Deck\\Pour3.",
-        "Usare la nuova uscita BG per Member Assignment. Collegare Plates a Build Model e Connection Lines a Bridge Connections scegliendo la meccanica del collegamento.",
+        "Usare la nuova uscita BG per Bridge FEM Members. Collegare Plates a Build Model e Connection Lines a Bridge Rigid Links oppure Bridge Connection Beams, secondo la meccanica voluta.",
     ])
     p("I plate giacciono sulla superficie media. Le linee di connessione uniscono gli assi delle travi ai vertici plate. Le mesh triangolari evitano quadrilateri sghembi; la convergenza FEM richiede comunque analisi successive.")
     h("Evitare il doppio conteggio del calcestruzzo")
@@ -77,7 +77,7 @@ def append_design_chapters(page, h, p, table, steps, code):
     p("**Bridge Check Map**, esempio 44, abbina risultati gPC, ID asta, stazione e caso. Grigio significa dati numerici assenti, ambra controlli parziali, rosso rapporto sopra 1. Governing conserva fase/caso/stazione e massimi a pari merito. Le stazioni e gli stati limite non forniti restano fuori dalla mappa.")
 
     page(27, "Eseguire gli esempi del modello completo")
-    p("Aprire **example/45-ponte-completo-fasi/45-ponte-completo-fasi.ghx**. Seguire da sinistra a destra: Simple Bridge, controventi, mesh soletta, assegnazione delle travi, appoggi e connessioni, Build Model, audit e tre snapshot.")
+    p("Aprire **example/45-ponte-completo-fasi/45-ponte-completo-fasi.ghx**. Seguire da sinistra a destra: definizioni geometriche, Geometry Assembly, Grillage Mesh, controventi, mesh soletta, FEM Members, appoggi e connessioni, Build Model, audit e tre snapshot.")
     p("Il ponte curvo ha campate 30+40+30 m, tre travi, conci da 12 m, controventi Warren e soletta shell da 250 mm. Le fasi attivano acciaio, primo getto e soletta completa. Non ci sono carichi o risultati: è un esempio di assemblaggio da completare con dati di progetto e analisi.")
     table(["Esempi", "Funzione da provare"], [
         ("33", "Distribuzione delle campate e zone vietate"),
