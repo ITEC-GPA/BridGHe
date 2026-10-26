@@ -1,0 +1,1007 @@
+{
+  "date": "2026-10-26T23:15:26.0450794+01:00",
+  "candidate": true,
+  "remotePublication": "Pending user authorization for Checker/master push",
+  "libraryRepositories": {
+    "Utilities": {
+      "commit": "e57b440b16a0a311a7bf0af2f9cf4d2681b83491",
+      "branch": "master",
+      "onOriginMaster": true
+    },
+    "Geometry": {
+      "commit": "6734eee1004142576b96759e34c15dec48776e23",
+      "branch": "master",
+      "onOriginMaster": true
+    },
+    "Model": {
+      "commit": "2acc60efad0924b9b05aafdd75588f13842904a1",
+      "branch": "master",
+      "onOriginMaster": true
+    },
+    "Checker": {
+      "commit": "4a1b0090fe4de64de54e28cb9d380c441e79660f",
+      "branch": "codex/coherent-library-release-20261026",
+      "onOriginMaster": false
+    }
+  },
+  "librarySuites": [
+    {
+      "name": "Model.Core.Tests",
+      "repository": "Model",
+      "passed": 34,
+      "failed": 0,
+      "other": 0
+    },
+    {
+      "name": "UnitTest",
+      "repository": "Model",
+      "passed": 1459,
+      "failed": 0,
+      "other": 3
+    },
+    {
+      "name": "GPCChecker.Test.Concrete",
+      "repository": "Checker",
+      "passed": 911,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "GPCChecker.Test.Steel",
+      "repository": "Checker",
+      "passed": 122,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "GPCChecker.Test.CompositeBridge",
+      "repository": "Checker",
+      "passed": 402,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "GPCChecker.Test.Geotechnics",
+      "repository": "Checker",
+      "passed": 196,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "GPCChecker.Test.Calculation",
+      "repository": "Checker",
+      "passed": 175,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "ShallowFoundation.Tests",
+      "repository": "Checker",
+      "passed": 28,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "EmbeddedWalls.Tests",
+      "repository": "Checker",
+      "passed": 99,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "Steel.Members.Tests",
+      "repository": "Checker",
+      "passed": 6423,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "Design.Checks",
+      "repository": "Checker",
+      "passed": 109,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "Design.Checks.net472",
+      "repository": "Checker",
+      "passed": 108,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "ModelChecker.Tests",
+      "repository": "Checker",
+      "passed": 473,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    }
+  ],
+  "modelNotExecuted": [
+    "NativeLinearStaticBenchmark_EquilibriumAndMembraneResultants",
+    "EightNativePairsKeepGeometryAndGlobalActionSigns",
+    "NativeAssignments_LoadsAndGravityBalanceTheSolverReactions"
+  ],
+  "bridghe": {
+    "version": "0.2.0",
+    "releaseDirectory": "BridGHe/bin/Release",
+    "coreChecks": 378,
+    "components": 220,
+    "parameters": 8,
+    "guids": 229,
+    "regressionGroups": 84,
+    "finalFailures": 0,
+    "initialRegressions": [
+      {
+        "group": "bridge-combination-excel",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 14.27,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-combination-excel.log"
+      },
+      {
+        "group": "concrete-shrinkage",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.18,
+        "log": "artifacts\\regressions-integrated-gpc\\concrete-shrinkage.log"
+      },
+      {
+        "group": "bridge-detail-stations",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.8,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-detail-stations.log"
+      },
+      {
+        "group": "bridge-combination-excel-component",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.91,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-combination-excel-component.log"
+      },
+      {
+        "group": "simple-bridge",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.35,
+        "log": "artifacts\\regressions-integrated-gpc\\simple-bridge.log"
+      },
+      {
+        "group": "modular-bridge",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.5,
+        "log": "artifacts\\regressions-integrated-gpc\\modular-bridge.log"
+      },
+      {
+        "group": "bridge-moving-workflow",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.66,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-moving-workflow.log"
+      },
+      {
+        "group": "build-model-parameters",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.79,
+        "log": "artifacts\\regressions-integrated-gpc\\build-model-parameters.log"
+      },
+      {
+        "group": "parametric-bridge",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.28,
+        "log": "artifacts\\regressions-integrated-gpc\\parametric-bridge.log"
+      },
+      {
+        "group": "bridge-segment-sections",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.74,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-segment-sections.log"
+      },
+      {
+        "group": "bridge-segment-excel",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.24,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-segment-excel.log"
+      },
+      {
+        "group": "bridge-alignment-inputs",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.08,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-alignment-inputs.log"
+      },
+      {
+        "group": "bridge-segment-override",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.94,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-segment-override.log"
+      },
+      {
+        "group": "get-beam-property",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.1,
+        "log": "artifacts\\regressions-integrated-gpc\\get-beam-property.log"
+      },
+      {
+        "group": "beam-property-override",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.18,
+        "log": "artifacts\\regressions-integrated-gpc\\beam-property-override.log"
+      },
+      {
+        "group": "bridge-moment-state",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 9.06,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-moment-state.log"
+      },
+      {
+        "group": "bridge-segment-composite",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.35,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-segment-composite.log"
+      },
+      {
+        "group": "bridge-deck-grillage",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 9.94,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-deck-grillage.log"
+      },
+      {
+        "group": "reinforcement-material",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.48,
+        "log": "artifacts\\regressions-integrated-gpc\\reinforcement-material.log"
+      },
+      {
+        "group": "gh-node-merge",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.56,
+        "log": "artifacts\\regressions-integrated-gpc\\gh-node-merge.log"
+      },
+      {
+        "group": "wired-load-schema",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.0,
+        "log": "artifacts\\regressions-integrated-gpc\\wired-load-schema.log"
+      },
+      {
+        "group": "bridge-span-advisor",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.79,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-span-advisor.log"
+      },
+      {
+        "group": "bridge-assignment",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.97,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-assignment.log"
+      },
+      {
+        "group": "bridge-bearings",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.03,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-bearings.log"
+      },
+      {
+        "group": "bridge-connections",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.06,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-connections.log"
+      },
+      {
+        "group": "bridge-bracing",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.15,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-bracing.log"
+      },
+      {
+        "group": "bridge-deck",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 6.97,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-deck.log"
+      },
+      {
+        "group": "bridge-construction",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.93,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-construction.log"
+      },
+      {
+        "group": "bridge-detail-layout",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.02,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-detail-layout.log"
+      },
+      {
+        "group": "bridge-details-example",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.97,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-details-example.log"
+      },
+      {
+        "group": "bridge-details-model-example",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 9.11,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-details-model-example.log"
+      },
+      {
+        "group": "bridge-deflection",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.13,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-deflection.log"
+      },
+      {
+        "group": "bridge-fatigue-history",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.46,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-fatigue-history.log"
+      },
+      {
+        "group": "bridge-check-map",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.93,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-check-map.log"
+      },
+      {
+        "group": "bridge-check-summary",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.86,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-check-summary.log"
+      },
+      {
+        "group": "bridge-result-labels",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.57,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-result-labels.log"
+      },
+      {
+        "group": "bridge-report",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 2.62,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-report.log"
+      },
+      {
+        "group": "bridge-report-component",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 11.37,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-report-component.log"
+      },
+      {
+        "group": "bridge-design-audit",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.92,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-design-audit.log"
+      },
+      {
+        "group": "bridge-design-components",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 24.88,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-design-components.log"
+      },
+      {
+        "group": "simple-bridge-components",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 9.3,
+        "log": "artifacts\\regressions-integrated-gpc\\simple-bridge-components.log"
+      },
+      {
+        "group": "bridge-utilities",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.69,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-utilities.log"
+      },
+      {
+        "group": "bridge-utility-components",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.87,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-utility-components.log"
+      },
+      {
+        "group": "plot-preview",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 12.35,
+        "log": "artifacts\\regressions-integrated-gpc\\plot-preview.log"
+      },
+      {
+        "group": "bridge-workflow",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.12,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-workflow.log"
+      },
+      {
+        "group": "bridge-stations",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.12,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-stations.log"
+      },
+      {
+        "group": "component-layout",
+        "passed": false,
+        "exitCode": 1,
+        "completed": false,
+        "seconds": 7.52,
+        "log": "artifacts\\regressions-integrated-gpc\\component-layout.log"
+      },
+      {
+        "group": "bridge-plots",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.87,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-plots.log"
+      },
+      {
+        "group": "bridge-detail-plots",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.79,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-detail-plots.log"
+      },
+      {
+        "group": "native-bridge-components",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.73,
+        "log": "artifacts\\regressions-integrated-gpc\\native-bridge-components.log"
+      },
+      {
+        "group": "bridge-numerical-baseline",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.63,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-numerical-baseline.log"
+      },
+      {
+        "group": "bridge-linear-small-loads",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.22,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-linear-small-loads.log"
+      },
+      {
+        "group": "archive-before-cleanup",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.44,
+        "log": "artifacts\\regressions-integrated-gpc\\archive-before-cleanup.log"
+      },
+      {
+        "group": "composite-archive",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.68,
+        "log": "artifacts\\regressions-integrated-gpc\\composite-archive.log"
+      },
+      {
+        "group": "composite-component",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.65,
+        "log": "artifacts\\regressions-integrated-gpc\\composite-component.log"
+      },
+      {
+        "group": "slab-reinforcement",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.94,
+        "log": "artifacts\\regressions-integrated-gpc\\slab-reinforcement.log"
+      },
+      {
+        "group": "composite-property-phases",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.54,
+        "log": "artifacts\\regressions-integrated-gpc\\composite-property-phases.log"
+      },
+      {
+        "group": "display-settings",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 6.99,
+        "log": "artifacts\\regressions-integrated-gpc\\display-settings.log"
+      },
+      {
+        "group": "bridge-merge-origin",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.13,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-merge-origin.log"
+      },
+      {
+        "group": "bridge-history-workflow",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.35,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-history-workflow.log"
+      },
+      {
+        "group": "group-null-identity",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.2,
+        "log": "artifacts\\regressions-integrated-gpc\\group-null-identity.log"
+      },
+      {
+        "group": "composite-preview",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 6.84,
+        "log": "artifacts\\regressions-integrated-gpc\\composite-preview.log"
+      },
+      {
+        "group": "nodal-actions",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 6.63,
+        "log": "artifacts\\regressions-integrated-gpc\\nodal-actions.log"
+      },
+      {
+        "group": "load-case-identity",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 6.8,
+        "log": "artifacts\\regressions-integrated-gpc\\load-case-identity.log"
+      },
+      {
+        "group": "merge-node-data",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.1,
+        "log": "artifacts\\regressions-integrated-gpc\\merge-node-data.log"
+      },
+      {
+        "group": "merge-mesh",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.5,
+        "log": "artifacts\\regressions-integrated-gpc\\merge-mesh.log"
+      },
+      {
+        "group": "beam-property-validity",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.37,
+        "log": "artifacts\\regressions-integrated-gpc\\beam-property-validity.log"
+      },
+      {
+        "group": "native-beam-validity",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.02,
+        "log": "artifacts\\regressions-integrated-gpc\\native-beam-validity.log"
+      },
+      {
+        "group": "model-guids",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.88,
+        "log": "artifacts\\regressions-integrated-gpc\\model-guids.log"
+      },
+      {
+        "group": "deep-copies",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.63,
+        "log": "artifacts\\regressions-integrated-gpc\\deep-copies.log"
+      },
+      {
+        "group": "staged-load-cases",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.44,
+        "log": "artifacts\\regressions-integrated-gpc\\staged-load-cases.log"
+      },
+      {
+        "group": "staged-selection",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.65,
+        "log": "artifacts\\regressions-integrated-gpc\\staged-selection.log"
+      },
+      {
+        "group": "merge-plate-connectivity",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.3,
+        "log": "artifacts\\regressions-integrated-gpc\\merge-plate-connectivity.log"
+      },
+      {
+        "group": "indexed-phases",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.51,
+        "log": "artifacts\\regressions-integrated-gpc\\indexed-phases.log"
+      },
+      {
+        "group": "node-index",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.28,
+        "log": "artifacts\\regressions-integrated-gpc\\node-index.log"
+      },
+      {
+        "group": "archived-attribute-updates",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.69,
+        "log": "artifacts\\regressions-integrated-gpc\\archived-attribute-updates.log"
+      },
+      {
+        "group": "plate-point-updates",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.46,
+        "log": "artifacts\\regressions-integrated-gpc\\plate-point-updates.log"
+      },
+      {
+        "group": "incomplete-beam-preview",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.55,
+        "log": "artifacts\\regressions-integrated-gpc\\incomplete-beam-preview.log"
+      },
+      {
+        "group": "preview-bounds",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.68,
+        "log": "artifacts\\regressions-integrated-gpc\\preview-bounds.log"
+      },
+      {
+        "group": "model-preview",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.95,
+        "log": "artifacts\\regressions-integrated-gpc\\model-preview.log"
+      },
+      {
+        "group": "bridge-planar-noise",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.62,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-planar-noise.log"
+      },
+      {
+        "group": "bridge-instant-modulus",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.97,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-instant-modulus.log"
+      },
+      {
+        "group": "bridge-example-parameters",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.03,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-example-parameters.log"
+      },
+      {
+        "group": "bridge-detail-archives",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 7.13,
+        "log": "artifacts\\regressions-integrated-gpc\\bridge-detail-archives.log"
+      }
+    ],
+    "repeatedRegressions": [
+      {
+        "group": "component-layout",
+        "passed": true,
+        "exitCode": 0,
+        "completed": true,
+        "seconds": 8.18,
+        "log": "artifacts\\regressions-integrated-fix\\component-layout.log"
+      }
+    ],
+    "numericalBaseline": {
+      "exactlyEqual": 238,
+      "tolerance": 1E-12,
+      "values": 238
+    },
+    "exampleReopen": {
+      "objects": 8864,
+      "connections": 8724,
+      "documents": 55
+    },
+    "portableExamples": {
+      "objects": 586,
+      "connections": 412,
+      "documents": 23
+    },
+    "rev003Reopen": "Passed on integrated set",
+    "files": [
+      {
+        "file": "BridGHe.Grasshopper.gha",
+        "version": "0.2.0.0",
+        "sha256": "4458507FEF171103EE1B2F7FF7477ACE29B69D8B346992637E60BF6041BD2D0B"
+      },
+      {
+        "file": "BridGHe.Common.dll",
+        "version": "0.2.0.0",
+        "sha256": "512A3E3CC179E71F192521B6EB4401F7A25497183F1614008C32E2928CECC6C0"
+      },
+      {
+        "file": "DelaunayMesh.dll",
+        "version": "2.0.0.14",
+        "sha256": "D18BB08255D23239271C197130515758767291F75CE1A9996F1A92DB55F114BB"
+      },
+      {
+        "file": "GPCChecker.CompositeBridge.dll",
+        "version": "1.19.0.5",
+        "sha256": "FFBCD647E83D365EA7583737CA5ACC6A52315916A4A550154296638C004050AC"
+      },
+      {
+        "file": "GPCChecker.Concrete.dll",
+        "version": "0.25.0.0",
+        "sha256": "F48A89AE768FC03BBD4E62C46D4AD9F3DCF563448340AE8807572494F9ABD8E8"
+      },
+      {
+        "file": "GPCChecker.Steel.dll",
+        "version": "2.118.0.2",
+        "sha256": "CE59432AF0E23121AC92BDDE50E8804933C626565CEC9994C1AABDCACCC59B2D"
+      },
+      {
+        "file": "GPCGeometry.dll",
+        "version": "2.3.0.0",
+        "sha256": "7EF76EDFB4C3736AAE7B6F66B2F3CE30A8BB8DE031C492B03BD52289D6E9D29E"
+      },
+      {
+        "file": "GPCModel.dll",
+        "version": "5.21.0.1",
+        "sha256": "A84BC0DE5AB36B36096BB08930CABF12575B2FCF2EAE30F5F6B9736168411644"
+      },
+      {
+        "file": "GPCUtilities.dll",
+        "version": "3.0.0.0",
+        "sha256": "92031B381F9AA426A5F88B48762C72DB89724F784670FFDA8802203FC52A05E5"
+      }
+    ]
+  },
+  "rebear": {
+    "version": "0.2.2",
+    "commit": "45620d6",
+    "releaseDirectory": "ConcreteSectionChecker/bin",
+    "testGroups": 25,
+    "failures": 0,
+    "components": 61,
+    "verificationCommand": "build/Verify.ps1 -AllowCandidate",
+    "files": [
+      {
+        "file": "ReBear.gha",
+        "version": "0.2.2.0",
+        "sha256": "9C62D209A07370FC555AD0B434733DF937469F5C555F36FAC43B1B483F7F75EC"
+      },
+      {
+        "file": "ConcreteSectionChecker.Adapters.dll",
+        "version": "0.2.2.0",
+        "sha256": "A58937DC7F790F6296ECAEAAAB9B6413C21CF9509EC518593A0CBF367A32EB41"
+      },
+      {
+        "file": "DelaunayMesh.dll",
+        "version": "2.0.0.14",
+        "sha256": "D18BB08255D23239271C197130515758767291F75CE1A9996F1A92DB55F114BB"
+      },
+      {
+        "file": "GPCChecker.Concrete.dll",
+        "version": "0.25.0.0",
+        "sha256": "F48A89AE768FC03BBD4E62C46D4AD9F3DCF563448340AE8807572494F9ABD8E8"
+      },
+      {
+        "file": "GPCGeometry.dll",
+        "version": "2.3.0.0",
+        "sha256": "7EF76EDFB4C3736AAE7B6F66B2F3CE30A8BB8DE031C492B03BD52289D6E9D29E"
+      },
+      {
+        "file": "GPCModel.dll",
+        "version": "5.21.0.1",
+        "sha256": "A84BC0DE5AB36B36096BB08930CABF12575B2FCF2EAE30F5F6B9736168411644"
+      },
+      {
+        "file": "GPCModelData.dll",
+        "version": "0.3.0.2",
+        "sha256": "02AB1FAD861767E5DEB2722AB74CD461B7610A1568C01D6A4975A95E89B49D19"
+      },
+      {
+        "file": "GPCUtilities.dll",
+        "version": "3.0.0.0",
+        "sha256": "92031B381F9AA426A5F88B48762C72DB89724F784670FFDA8802203FC52A05E5"
+      }
+    ]
+  },
+  "commonDlls": [
+    {
+      "file": "DelaunayMesh.dll",
+      "version": "2.0.0.14",
+      "sha256": "D18BB08255D23239271C197130515758767291F75CE1A9996F1A92DB55F114BB"
+    },
+    {
+      "file": "GPCChecker.Concrete.dll",
+      "version": "0.25.0.0",
+      "sha256": "F48A89AE768FC03BBD4E62C46D4AD9F3DCF563448340AE8807572494F9ABD8E8"
+    },
+    {
+      "file": "GPCGeometry.dll",
+      "version": "2.3.0.0",
+      "sha256": "7EF76EDFB4C3736AAE7B6F66B2F3CE30A8BB8DE031C492B03BD52289D6E9D29E"
+    },
+    {
+      "file": "GPCModel.dll",
+      "version": "5.21.0.1",
+      "sha256": "A84BC0DE5AB36B36096BB08930CABF12575B2FCF2EAE30F5F6B9736168411644"
+    },
+    {
+      "file": "GPCUtilities.dll",
+      "version": "3.0.0.0",
+      "sha256": "92031B381F9AA426A5F88B48762C72DB89724F784670FFDA8802203FC52A05E5"
+    }
+  ],
+  "integrityGuardChecks": [
+    "Candidate rejected without explicit opt-in",
+    "Corrupted DLL rejected by SHA-256"
+  ],
+  "rev003Native": {
+    "analyses": 5,
+    "report": "../example/50-ponte-quattro-modelli/REV003-native-validation.json",
+    "sectionChecks": 32832,
+    "plots": 6,
+    "beforeIntegratedLibraryUpdate": true,
+    "detailBranches": 3,
+    "libraries": [
+      {
+        "File": "GPCModel.dll",
+        "Version": "5.21.0.1",
+        "SHA256": "A84BC0DE5AB36B36096BB08930CABF12575B2FCF2EAE30F5F6B9736168411644"
+      },
+      {
+        "File": "GPCChecker.Concrete.dll",
+        "Version": "0.24.0.4",
+        "SHA256": "F623770C6909484FB4AF2C904AA2CF10C8F675765AF30C2AC6285A52FA346A93"
+      },
+      {
+        "File": "GPCChecker.Steel.dll",
+        "Version": "2.118.0.1",
+        "SHA256": "90817A96781E1A9C08DD91314CF64D9EFC132CADD3FBD390DB000CD6B636C5F1"
+      },
+      {
+        "File": "GPCChecker.CompositeBridge.dll",
+        "Version": "1.19.0.4",
+        "SHA256": "02045A57CA472D754F01AB3851864B5D1698249D00AD8415E0CA9BA578C2692F"
+      }
+    ],
+    "combinations": 36,
+    "positions": 31
+  }
+}

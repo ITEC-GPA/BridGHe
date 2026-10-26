@@ -6,7 +6,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Company>gPC</Company>
     <Product>BridGHe</Product>
     <Deterministic>true</Deterministic>
@@ -19,7 +19,6 @@
     <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
     <!-- Ignore legacy generated sources before the cleanup target runs. -->
     <DefaultItemExcludes>$(DefaultItemExcludes);**/bin/**;**/obj/**</DefaultItemExcludes>
-    <RepositoryRoot Condition="'$(RepositoryRoot)' == ''">$(MSBuildThisFileDirectory)..\</RepositoryRoot>
     <RestoreIgnoreFailedSources>true</RestoreIgnoreFailedSources>
     <NuGetAudit>false</NuGetAudit>
   </PropertyGroup>

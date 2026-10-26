@@ -2,6 +2,7 @@
 from collections import defaultdict
 import json
 from pathlib import Path
+from xml.etree import ElementTree
 
 root = Path(__file__).resolve().parents[1]
 items = json.loads((root / 'artifacts/component-runtime.json').read_text(encoding='utf-8'))
@@ -9,7 +10,8 @@ groups = defaultdict(list)
 for item in items:
     groups[item['subcategory']].append(item)
 components = sum(item['kind'] == 'component' for item in items)
-lines = ['# Inventario dei componenti 0.1.0', '',
+version = ElementTree.parse(root / 'Directory.Build.props').findtext('.//Version')
+lines = [f'# Inventario dei componenti {version}', '',
          f'{components} componenti e {len(items)-components} parametri istanziati nel runtime Rhino 8. '
          'GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.', '']
 

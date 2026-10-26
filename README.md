@@ -34,7 +34,9 @@ Dalla root, con SDK .NET 8 o successivo e Python 3:
 .\tools\build.ps1 -Native -Package
 ```
 
-Le DLL gPC devono essere compilate nei repository fratelli `Utilities`, `Geometry`, `Model` e `Checker`. I riferimenti sono espliciti in [GpcReferences.props](build/GpcReferences.props); `RepositoryRoot` permette una disposizione differente. Il collaudo corrente usa Concrete **0.24.0.4** e CompositeBridge **1.19.0.4**, con la correzione dei piccoli risultanti nel branch Checker `codex/bridge-small-load-equilibrium`. Versioni, commit e hash del set candidato sono nel [rapporto di validazione](docs/validation-modular-2026-10-26.json).
+BridGHe **0.2.0** usa le DLL GPC fissate in **`lib/GPC`**, con manifest, versioni e SHA-256. Non occorre compilare i repository fratelli per compilare il plugin. [GpcReferences.props](build/GpcReferences.props) verifica l'integrità del set prima di risolvere i riferimenti; il manifest viene distribuito come `bin/Release/gpc-release-set.json`. Le DLL comuni a BridGHe e ReBear provengono dallo stesso set.
+
+Il set integrato del 26 ottobre comprende Model **5.21.0.1**, Concrete **0.25.0.0**, Steel **2.118.0.2** e CompositeBridge **1.19.0.5**. Per il momento è marcato **candidato**, in attesa della pubblicazione autorizzata di Checker/master: per collaudarlo usare `dotnet build BridGHe.sln -c Release -p:GpcAllowCandidate=true`. Il percorso ordinario rifiuta un candidato. Dettagli e risultati sono in [Integrazione GPC](docs/GPC-INTEGRAZIONE-2026-10-26.md).
 
 Output da installare: **`bin/Release/BridGHe.Grasshopper.gha`**, insieme alle DLL nella stessa cartella. L'evento MSBuild `BridGHePostBuild` in `Directory.Build.targets` parte **dopo ogni build riuscita**, sia da Visual Studio sia da `dotnet build`: per il plugin Release copia l'intero output in `bin/Release`, rimuove i file non più prodotti ed elimina le vecchie cartelle di compilazione sparse, comprese le precedenti sottocartelle di `bin`. Funziona anche con build incrementali e compilando direttamente il `.csproj`.
 

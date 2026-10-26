@@ -88,7 +88,8 @@ try {
     }
     if ($Package) {
         $compiled = Join-Path $projectRoot 'bin\Release'
-        $packageName = 'BridGHe-0.1.0-' + (Get-Date -Format 'yyyyMMdd-HHmmssfff')
+        $version = ([xml](Get-Content -LiteralPath (Join-Path $projectRoot 'Directory.Build.props') -Raw)).Project.PropertyGroup.Version
+        $packageName = 'BridGHe-' + $version + '-' + (Get-Date -Format 'yyyyMMdd-HHmmssfff')
         $packageRoot = Join-Path $projectRoot "obj\packages\$packageName"
         $archiveRoot = Join-Path $projectRoot 'artifacts\releases'
         New-Item -ItemType Directory -Path $archiveRoot -Force | Out-Null
@@ -98,6 +99,7 @@ try {
             $assemblies = @('BridGHe.Grasshopper.gha','BridGHe.Common.dll','GPCUtilities.dll','GPCGeometry.dll','DelaunayMesh.dll',
                 'GPCModel.dll','GPCChecker.Concrete.dll','GPCChecker.Steel.dll','GPCChecker.CompositeBridge.dll','MathNet.Numerics.dll','Svg.dll','ExCSS.dll')
             foreach ($name in $assemblies) { Copy-Item -LiteralPath (Join-Path $compiled $name) -Destination $packageRoot }
+            Copy-Item -LiteralPath (Join-Path $compiled 'gpc-release-set.json') -Destination $packageRoot
             Get-ChildItem -LiteralPath $compiled -Filter 'BridGHe.Grasshopper.*.json' | Copy-Item -Destination $packageRoot
             Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination $packageRoot
             Copy-Item -LiteralPath (Join-Path $projectRoot 'docs') -Destination $packageRoot -Recurse
