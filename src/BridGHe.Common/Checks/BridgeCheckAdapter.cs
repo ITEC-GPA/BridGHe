@@ -189,6 +189,7 @@ namespace BridGHe.Common.Checks
                     BridgeSectionState.Composite => BridgePhaseKind.Composite,
                     _ => BridgePhaseKind.ConcreteExcluded };
                 int before = phases.Count;
+                (BridgePhaseKind Kind, double Phi)? unloadedState = null;
                 foreach (var action in stage.Actions)
                 {
                     var actionKind = action.ConcreteExcludedBeamIds?.Contains(index.BeamId, StringComparer.Ordinal) == true ? BridgePhaseKind.ConcreteExcluded : kind;
@@ -198,11 +199,18 @@ namespace BridGHe.Common.Checks
                     double phi = action.Behavior switch { BridgeActionBehavior.LongTerm => phiInfinite,
                         BridgeActionBehavior.Shrinkage => phiShrinkage, BridgeActionBehavior.ShortTerm => phiInstant, _ => 0 };
                     string name = $"{stage.Order} · {stage.Name} / {action.Key}";
-                    if (action.ForceCase != null && (factor != 0 || action.HasLocalSectionStates))
+                    // Alternative positions with coefficient zero must not consume a GPC
+                    // calculation stage each. Keep one unloaded local activation per run
+                    // of identical states; preserve changes of stiffness and active increments.
+                    var state = (actionKind, phi);
+                    if (action.ForceCase != null && (factor != 0 || action.HasLocalSectionStates && unloadedState != state))
                         phases.Add(Phase(index.ReadForce(action.ForceCase, station, reference, factor), actionKind, phi, name + " / FEM"));
+                    if (action.ForceCase != null)
+                        unloadedState = factor == 0 && action.HasLocalSectionStates ? state : null;
                     double strain = index.ReadStrain(action.StrainCase, strainFactor);
                     if (strain != 0) phases.Add(new BridgePhase { Name = name + " / strain", Kind = BridgePhaseKind.Shrinkage,
                         Phi = phi, ShrinkageMicrostrain = strain * 1e6 });
+                    if (strain != 0) unloadedState = null;
                 }
                 // Activation is a construction event even when every action coefficient is zero.
                 if (phases.Count == before) phases.Add(new BridgePhase { Name = $"{stage.Order} · {stage.Name}", Kind = kind,

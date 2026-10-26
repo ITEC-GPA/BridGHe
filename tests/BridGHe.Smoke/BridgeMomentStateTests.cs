@@ -77,6 +77,22 @@ internal static class BridgeMomentStateTests
         Check(phases.Last().Kind==BridgePhaseKind.Composite,"uncracked shrinkage activation kept separately");
         Check(!contribution.HasConcrete,"cracked mechanical contribution excludes concrete");
         Check(response.Assumptions.Contains(BridgeCheckAdapter.LocalStateAssumption),"local-state assumptions travel into report results");
+        // More than 20 alternative local-state actions must not exceed GPC's stage limit.
+        // Zero-coefficient alternatives preserve activation, not one duplicate stage per position.
+        foreach(var method in new[]{BridgeWorkflowMethod.Compatible,BridgeWorkflowMethod.LinearHistory})
+        {
+            var index=BridgePhaseAssembler.CreateIndex(mb,mb.Length,1e-6);
+            var baseline=adapter.AnalyzeWorkflow(wf with{Method=method},index,0,merged.LoadCombinations[0],phi,0,phi,true);
+            foreach(int activeAt in new[]{0,20,40})
+            {
+                var alternatives=Enumerable.Range(0,40).Select(i=>wf.Phases[1].Actions[0] with{Key="INACTIVE_"+i,ForceCase=wf.Phases[0].Actions[0].ForceCase}).ToList();
+                alternatives.Insert(activeAt,wf.Phases[1].Actions[0]);
+                var expanded=wf with{Method=method,Phases=new[]{wf.Phases[0],wf.Phases[1] with{Actions=alternatives.ToArray()},wf.Phases[2]}};
+                var actual=adapter.AnalyzeWorkflow(expanded,index,0,merged.LoadCombinations[0],phi,0,phi,true);
+                Check(actual.Analysis.Stages.Count<=5,"Inactive local alternatives coalesced; "+method);
+                Check(Math.Abs(actual.Point8_SteelSigma-baseline.Point8_SteelSigma)<1e-8&&Math.Abs(actual.Point1_ConcreteSigma-baseline.Point1_ConcreteSigma)<1e-8,"Alternative count and ordering leave stresses unchanged; "+method);
+            }
+        }
         var edited=ModelArchive.Clone(model1);edited.Beams.First(b=>b.Attributes.OfType<BridgeSectionStateAttributeModel>().Any()).BeamProperty.Material.Modulus=1;
         Reject(()=>BridgeWorkflowBuilder.Build(new[]{model0,edited},new[]{phase0,phase1 with {Actions=new[]{phase1.Actions[0] with {Source=edited}}}},new[]{new[]{"Name","G","Q"},new[]{"SLS","1","1"}},BridgeWorkflowMethod.Compatible,1e-6));
         Console.WriteLine($"MOMENT STATE PASS: {count} assertions; sampled sign, same-concio variants, mass, mesh, archive, per-action checker state and uncracked shrinkage. No native FEM.");

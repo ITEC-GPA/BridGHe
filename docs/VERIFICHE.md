@@ -1,5 +1,11 @@
 # Verifiche della Release
 
+## Alternative mobili e limite delle fasi GPC — 26 ottobre 2026
+
+Il replay nativo del 50 REV003 ha evidenziato che le azioni a coefficiente zero con stato locale venivano trasformate ciascuna in una fase GPC. Con 31 posizioni alternative si superava il limite di 20 fasi, anche se ogni combinazione applicava una sola posizione.
+
+L'adattatore ora accorpa soltanto gli stati scarichi consecutivi con identico tipo di sezione e identico φ, all'interno della stessa fase costruttiva. Conserva le attivazioni, i cambi di stato, tutti gli incrementi attivi e il ritiro. Le analisi FEM e le combinazioni non cambiano. Il test `bridge-moment-state` passa 161 controlli: include 40 alternative inattive e posizione attiva all'inizio, al centro e alla fine, per entrambi i metodi Compatible e LinearHistory. Gli scarti delle tensioni rispetto al caso senza alternative sono inferiori a 10⁻⁸ MPa.
+
 [Revisione corrente degli esempi e limiti dei controlli del 25 ottobre 2026](REVISIONE-ESEMPI-2026-10-25.md).
 
 ## Collaudo con licenza Straus — 20 ottobre 2026
