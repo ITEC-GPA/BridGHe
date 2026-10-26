@@ -19,17 +19,13 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Audit delle porte/GUID non riuscito.' }
     if ($Smoke -or $Native) {
         if ($Configuration -ne 'Release') { throw 'Gli smoke test richiedono Release.' }
-        if ($Native) { & dotnet run --project tests/BridGHe.Smoke -c Release -- --native | Tee-Object -Variable smokeOutput }
-        else { & dotnet run --project tests/BridGHe.Smoke -c Release | Tee-Object -Variable smokeOutput }
+        if ($Native) { & dotnet run --project tests/BridGHe.Smoke -c Release -- --native --core-only | Tee-Object -Variable smokeOutput }
+        else { & dotnet run --project tests/BridGHe.Smoke -c Release -- --core-only | Tee-Object -Variable smokeOutput }
         if ($LASTEXITCODE -ne 0) { throw 'Smoke test non riusciti.' }
         if (-not ($smokeOutput -match '^PASS TOTAL \d+$')) { throw 'Smoke test interrotti prima del riepilogo finale, anche se il processo ha restituito exit code 0.' }
-        # Drawing integrations (including SVG pictures in Word) run in independent Rhino.Inside processes.
-        foreach ($group in @('bridge-plots','plot-preview','bridge-report-component')) {
-            & dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --regression $group --preview-capture | Tee-Object -Variable drawingOutput
-            if ($LASTEXITCODE -ne 0 -or -not ($drawingOutput -match '^REGRESSION TOTAL 1$')) {
-                throw "Test grafico incompleto o fallito: $group"
-            }
-        }
+        # Native Rhino state is isolated for every group, not only drawing tests.
+        & (Join-Path $PSScriptRoot 'test_regressions.ps1') -Configuration Release
+        if ($LASTEXITCODE -ne 0) { throw 'Regressioni isolate incomplete o fallite.' }
         foreach ($replay in @($false, $true)) {
             $exampleArgs = @('--example-layout')
             if ($replay) { $exampleArgs += '--solve-portable' }
