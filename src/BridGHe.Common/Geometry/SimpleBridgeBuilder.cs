@@ -99,14 +99,12 @@ public static class SimpleBridgeBuilder
             joints = new double[levels.Length][]; supports = new double[levels.Length][];
             var stationSet = new List<double> { 0, length };
             stationSet.AddRange(BridgeDeckGrillage.RequestedStations(p, length));
+            var fabrication = BridgeFabricationPlan.Create(length, levels.Length, p.Segments);
             for (int g = 0; g < levels.Length; g++)
             {
-                var explicitJoints = p.Segments.Joints.GetValueOrDefault(0, Array.Empty<double>())
-                    .Concat(p.Segments.Joints.GetValueOrDefault(g + 1, Array.Empty<double>())).ToArray();
-                joints[g] = Canonical(new[] { 0d, length }.Concat(explicitJoints.Length > 0 ? explicitJoints :
-                    Divide(0, length, p.Segments.MaximumLength)));
-                for (int j = 0; j + 1 < joints[g].Length; j++)
-                    output.Segments.Add(new(g + 1, j + 1, joints[g][j], joints[g][j + 1]));
+                var ranges = fabrication.Ranges.Where(s => s.Girder == g + 1).ToArray();
+                joints[g] = ranges.Select(s => s.Start).Append(ranges[^1].End).ToArray();
+                output.Segments.AddRange(ranges);
                 foreach (var (s, j) in joints[g].Skip(1).SkipLast(1).Select((s, j) => (s, j)))
                     output.Joints.Add(new(g + 1, j + 1, s, Girder(g, s)));
                 supports[g] = p.Supports.Select((s, i) => Intersect(g, s, skews[i])).ToArray();

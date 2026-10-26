@@ -21,10 +21,10 @@ public static class BridgeSegmentSections
     public static string Id(BridgeSegmentRange segment) => $"G{segment.Girder}-C{segment.Segment}";
     private static string Number(double value) => value.ToString("0.######", Inv);
 
-    public static BridgeSegmentRange[] Segments(SimpleBridgeGeometry geometry)
+    public static BridgeSegmentRange[] Segments(IBridgeSegments geometry)
     {
-        BridgeGeometryTools.Validate(geometry);
-        var result = geometry.Segments.OrderBy(s => s.Girder).ThenBy(s => s.Segment).ToArray();
+        if (geometry == null) throw new ArgumentNullException(nameof(geometry));
+        var result = geometry.FabricationSegments.OrderBy(s => s.Girder).ThenBy(s => s.Segment).ToArray();
         if (result.Length == 0 || result.Select(Id).Distinct().Count() != result.Length ||
             result.Any(s => s.Girder < 1 || s.Segment < 1 || !double.IsFinite(s.Start) || !double.IsFinite(s.End) || s.Start < 0 || s.End <= s.Start))
             throw new ArgumentException("Bridge Geometry requires distinct, valid girder fabrication segments.");
@@ -67,7 +67,7 @@ public static class BridgeSegmentSections
         string.Join("; ", new[] { Id(s), Number(s.Start), Number(s.End) }.Concat(dimensions.Select(v => v.HasValue ? v.Value.ToString("G", Inv) : "*")));
 
     /// <summary>Explicit refresh preserves only rows whose key AND physical range still match. No file writes.</summary>
-    public static BridgeSegmentTableUpdate Synchronize(SimpleBridgeGeometry geometry, IEnumerable<string> table)
+    public static BridgeSegmentTableUpdate Synchronize(IBridgeSegments geometry, IEnumerable<string> table)
     {
         var segments = Segments(geometry); var old = Parse(table); var changes = new List<string>();
         var lines = new List<string> { Header };
@@ -83,7 +83,7 @@ public static class BridgeSegmentSections
         return new(lines.ToArray(), changes.ToArray());
     }
 
-    public static BridgeSegmentSectionResult Create(SimpleBridgeGeometry geometry, BeamPropertyModel baseProperty, IEnumerable<string> table)
+    public static BridgeSegmentSectionResult Create(IBridgeSegments geometry, BeamPropertyModel baseProperty, IEnumerable<string> table)
     {
         var segments = Segments(geometry);
         if (baseProperty?.IsValid != true || baseProperty.SectionType != SectionModel.SectionTypes.I ||
@@ -117,7 +117,7 @@ public static class BridgeSegmentSections
     }
 
     /// <summary>Validate an explicit table without requiring materials or constructing FEM sections.</summary>
-    public static string[] ValidateTable(SimpleBridgeGeometry geometry, IEnumerable<string> table)
+    public static string[] ValidateTable(IBridgeSegments geometry, IEnumerable<string> table)
     {
         var segments = Segments(geometry);
         var rows = MatchRows(segments, table, false);

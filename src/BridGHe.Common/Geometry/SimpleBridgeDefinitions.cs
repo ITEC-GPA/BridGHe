@@ -67,8 +67,9 @@ public sealed record BridgeJointPoint(int Girder, int Joint, double Station, Poi
 
 /// <summary>Geometric axes only. No FE properties, constraints, releases, links or loads.</summary>
 [Serializable]
-public sealed class SimpleBridgeGeometry
+public sealed class SimpleBridgeGeometry : IBridgeSegments
 {
+    public IReadOnlyList<BridgeSegmentRange> FabricationSegments => Segments;
     public List<BridgeGeometryMember> Members { get; } = new();
     public List<Point3d> Nodes { get; } = new();
     public List<BridgeSupportPoint> Supports { get; } = new();
