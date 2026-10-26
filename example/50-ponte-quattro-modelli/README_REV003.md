@@ -50,6 +50,10 @@ I file Straus sono in `calcoli/REV003`. Il GHX distribuito non contiene risultat
 
 ## Ambito e ripetibilità
 
+Il collaudo nativo del **26 ottobre 2026** ha completato cinque analisi Straus, **31 posizioni mobili**, **36 combinazioni** e **32.832 risultati di sezione**, con tre rami di dettaglio e sei grafici SVG. Sono verificati equilibrio globale nelle sei componenti per ogni posizione, 120 assegnazioni delle forze alle aste di soletta, conservazione delle proprietà n0, associazione alla fase 30, cache dei risultati e invalidazione al cambio del percorso. Nessun errore nei componenti GH; gli ingressi del report coprono i risultati dei dettagli. Il test non genera un report Word del ponte.
+
+Il [resoconto numerico](REV003-native-validation.json) conserva valori, tolleranze e hash del GHX e delle librerie effettivamente usate. Questa esecuzione precede l'integrazione finale del set GPC: Concrete 0.24.0.4 e CompositeBridge 1.19.0.4. I collaudi del set integrato sono documentati separatamente. Le cinque analisi Straus hanno zero errori e zero avvisi; il tempo maggiore è nella rielaborazione GPC di tutte le sezioni per pioli e irrigiditori.
+
 Il checker segue l'ipotesi concordata **N–Mx–Vy**: T, M2 e V1 sono esclusi. L'eccentricità del traffico produce anche effetti esclusi, che richiedono controlli dedicati. Questa prova del flusso non costituisce verifica completa del ponte; mancano inoltre convergenza di mesh/passo mobile, combinazioni normative e verifiche specifiche di fatica e dinamica del traffico.
 
 ```powershell

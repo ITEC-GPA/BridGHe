@@ -1,0 +1,1231 @@
+{
+  "Native": true,
+  "Definition": "50-ponte-quattro-modelli_REV003.ghx",
+  "DefinitionSHA256": "0A49D4E7EAA08B2AB0A059EBBC50BCB9167E74E31CC1544CCC2BF145F484E255",
+  "Analyses": 5,
+  "PhaseCount": 4,
+  "Beams": 498,
+  "Nodes": 488,
+  "MovingPositions": 31,
+  "SlabForceAssignments": 120,
+  "Combinations": 36,
+  "SectionChecks": 32832,
+  "DetailBranches": 3,
+  "Plots": 6,
+  "ReportInputs": true,
+  "CachedRunFalse": true,
+  "ChangedPathInvalidatesResults": true,
+  "ResultsSavedInGHX": false,
+  "Measurements": [
+    {
+      "Label": "Dead Rz [N]",
+      "Actual": 1320134.8700638777,
+      "Expected": 1320134.8700638788,
+      "Tolerance": 0.13201348700638788
+    },
+    {
+      "Label": "M01_ACCIAIO_SOLETTA Rz [N]",
+      "Actual": 4499999.999999994,
+      "Expected": 4500000,
+      "Tolerance": 0.44999999999999996
+    },
+    {
+      "Label": "M01_ACCIAIO_TRAVI Rz [N]",
+      "Actual": 0,
+      "Expected": 0,
+      "Tolerance": 0.01
+    },
+    {
+      "Label": "M01-Solo Acciaio Rz [N]",
+      "Actual": 6150168.587579843,
+      "Expected": 6150168.587579848,
+      "Tolerance": 0.6150168587579848
+    },
+    {
+      "Label": "Dead Rz [N]",
+      "Actual": 1320134.8700638781,
+      "Expected": 1320134.8700638788,
+      "Tolerance": 0.13201348700638788
+    },
+    {
+      "Label": "M02_NINF_SOLETTA Rz [N]",
+      "Actual": 600000.0000000001,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "M02_NINF_TRAVI Rz [N]",
+      "Actual": 180000.00000000012,
+      "Expected": 180000,
+      "Tolerance": 0.018
+    },
+    {
+      "Label": "Dead Rz [N]",
+      "Actual": 1320134.8700638788,
+      "Expected": 1320134.8700638788,
+      "Tolerance": 0.13201348700638788
+    },
+    {
+      "Label": "M03_N0_SOLETTA Rz [N]",
+      "Actual": 600000.0000000001,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "M03_N0_TRAVI Rz [N]",
+      "Actual": 179999.99999999997,
+      "Expected": 180000,
+      "Tolerance": 0.018
+    },
+    {
+      "Label": "Dead Rz [N]",
+      "Actual": 1320134.870063877,
+      "Expected": 1320134.8700638788,
+      "Tolerance": 0.13201348700638788
+    },
+    {
+      "Label": "M04_NSH_RITIRO Rz [N]",
+      "Actual": 2.528395270928735E-10,
+      "Expected": 0,
+      "Tolerance": 0.01
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 1 F0 [N]",
+      "Actual": -2.0605739337042905E-13,
+      "Expected": 0,
+      "Tolerance": 0.03
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 1 M0 [Nmm]",
+      "Actual": 450000000.0000002,
+      "Expected": 450000000,
+      "Tolerance": 1800
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 1 F1 [N]",
+      "Actual": -4.796163466380676E-13,
+      "Expected": 0,
+      "Tolerance": 0.03
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 1 M1 [Nmm]",
+      "Actual": -300000000.00000113,
+      "Expected": -300000000,
+      "Tolerance": 1800
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 1 F2 [N]",
+      "Actual": 299999.9999999998,
+      "Expected": 300000,
+      "Tolerance": 0.03
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 1 M2 [Nmm]",
+      "Actual": 6.297884240780149E-07,
+      "Expected": 0,
+      "Tolerance": 1800
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 2 F0 [N]",
+      "Actual": -2.4349411376078933E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 2 M0 [Nmm]",
+      "Actual": 900000000.0000012,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 2 F1 [N]",
+      "Actual": 9.841016890277388E-13,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 2 M1 [Nmm]",
+      "Actual": -1440000000.000056,
+      "Expected": -1440000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 2 F2 [N]",
+      "Actual": 600000.0000000003,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 2 M2 [Nmm]",
+      "Actual": 9.474091882566427E-06,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 3 F0 [N]",
+      "Actual": -6.101230631827806E-13,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 3 M0 [Nmm]",
+      "Actual": 900000000.0000006,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 3 F1 [N]",
+      "Actual": 1.1361578344804002E-11,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 3 M1 [Nmm]",
+      "Actual": -2639999999.999986,
+      "Expected": -2640000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 3 F2 [N]",
+      "Actual": 599999.9999999999,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 3 M2 [Nmm]",
+      "Actual": 1.3598018312688254E-05,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 4 F0 [N]",
+      "Actual": 2.6290081223123707E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 4 M0 [Nmm]",
+      "Actual": 900000000.0000014,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 4 F1 [N]",
+      "Actual": -8.842704346534447E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 4 M1 [Nmm]",
+      "Actual": -3839999999.9995756,
+      "Expected": -3840000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 4 F2 [N]",
+      "Actual": 599999.9999999994,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 4 M2 [Nmm]",
+      "Actual": 8.502988748659845E-07,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 5 F0 [N]",
+      "Actual": 9.064748951459478E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 5 M0 [Nmm]",
+      "Actual": 900000000.0000005,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 5 F1 [N]",
+      "Actual": 1.815436689867056E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 5 M1 [Nmm]",
+      "Actual": -5039999999.99982,
+      "Expected": -5040000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 5 F2 [N]",
+      "Actual": 599999.9999999995,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 5 M2 [Nmm]",
+      "Actual": 3.7172735574131366E-06,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 6 F0 [N]",
+      "Actual": -3.780087354243736E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 6 M0 [Nmm]",
+      "Actual": 900000000.0000001,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 6 F1 [N]",
+      "Actual": -6.288303211476887E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 6 M1 [Nmm]",
+      "Actual": -6240000000.000156,
+      "Expected": -6240000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 6 F2 [N]",
+      "Actual": 600000.0000000002,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 6 M2 [Nmm]",
+      "Actual": -1.66264786685133E-05,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 7 F0 [N]",
+      "Actual": 4.434230760352875E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 7 M0 [Nmm]",
+      "Actual": 900000000.0000008,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 7 F1 [N]",
+      "Actual": -2.7849722528117127E-11,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 7 M1 [Nmm]",
+      "Actual": -7439999999.999981,
+      "Expected": -7440000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 7 F2 [N]",
+      "Actual": 600000.0000000006,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 7 M2 [Nmm]",
+      "Actual": 1.4117755085862882E-05,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 8 F0 [N]",
+      "Actual": -4.487077376325026E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 8 M0 [Nmm]",
+      "Actual": 899999999.9999996,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 8 F1 [N]",
+      "Actual": 1.5013768006610917E-11,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 8 M1 [Nmm]",
+      "Actual": -8639999999.999485,
+      "Expected": -8640000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 8 F2 [N]",
+      "Actual": 599999.9999999998,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 8 M2 [Nmm]",
+      "Actual": -6.209212415342336E-06,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 9 F0 [N]",
+      "Actual": 7.30437932361383E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 9 M0 [Nmm]",
+      "Actual": 900000000.0000013,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 9 F1 [N]",
+      "Actual": 6.931344387339777E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 9 M1 [Nmm]",
+      "Actual": -9840000000.000206,
+      "Expected": -9840000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 9 F2 [N]",
+      "Actual": 600000.0000000001,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 9 M2 [Nmm]",
+      "Actual": 2.047297596163844E-05,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 10 F0 [N]",
+      "Actual": 3.666400516522104E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 10 M0 [Nmm]",
+      "Actual": 900000000.0000024,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 10 F1 [N]",
+      "Actual": -2.892619477279368E-11,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 10 M1 [Nmm]",
+      "Actual": -11040000000.000637,
+      "Expected": -11040000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 10 F2 [N]",
+      "Actual": 600000.0000000003,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 10 M2 [Nmm]",
+      "Actual": -5.5767231970094144E-06,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 11 F0 [N]",
+      "Actual": 3.5527136787992085E-14,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 11 M0 [Nmm]",
+      "Actual": 899999999.9999995,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 11 F1 [N]",
+      "Actual": 2.3579360686198925E-11,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 11 M1 [Nmm]",
+      "Actual": -12239999999.999853,
+      "Expected": -12240000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 11 F2 [N]",
+      "Actual": 599999.9999999998,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 11 M2 [Nmm]",
+      "Actual": 4.148696655192907E-05,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 12 F0 [N]",
+      "Actual": 7.201350626928615E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 12 M0 [Nmm]",
+      "Actual": 900000000,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 12 F1 [N]",
+      "Actual": -8.810729923425242E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 12 M1 [Nmm]",
+      "Actual": -13440000000.00006,
+      "Expected": -13440000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 12 F2 [N]",
+      "Actual": 600000.0000000008,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 12 M2 [Nmm]",
+      "Actual": 3.846603303259144E-05,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 13 F0 [N]",
+      "Actual": -3.9079850466818536E-14,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 13 M0 [Nmm]",
+      "Actual": 900000000.0000004,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 13 F1 [N]",
+      "Actual": -1.3862688774679555E-11,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 13 M1 [Nmm]",
+      "Actual": -14639999999.999651,
+      "Expected": -14640000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 13 F2 [N]",
+      "Actual": 600000.0000000002,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 13 M2 [Nmm]",
+      "Actual": 4.7667907892900985E-05,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 14 F0 [N]",
+      "Actual": 3.0198066269804258E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 14 M0 [Nmm]",
+      "Actual": 900000000.0000002,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 14 F1 [N]",
+      "Actual": 2.049915792667889E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 14 M1 [Nmm]",
+      "Actual": -15840000000.000265,
+      "Expected": -15840000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 14 F2 [N]",
+      "Actual": 599999.9999999994,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 14 M2 [Nmm]",
+      "Actual": -7.91211618889065E-06,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 15 F0 [N]",
+      "Actual": -2.493838469064261E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 15 M0 [Nmm]",
+      "Actual": 899999999.9999998,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 15 F1 [N]",
+      "Actual": 2.8752111802532454E-11,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 15 M1 [Nmm]",
+      "Actual": -17040000000.000011,
+      "Expected": -17040000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 15 F2 [N]",
+      "Actual": 599999.9999999999,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 15 M2 [Nmm]",
+      "Actual": 4.196265010136813E-06,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 16 F0 [N]",
+      "Actual": -9.469092177027952E-13,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 16 M0 [Nmm]",
+      "Actual": 900000000.0000007,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 16 F1 [N]",
+      "Actual": 4.057199021190172E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 16 M1 [Nmm]",
+      "Actual": -18240000000.000004,
+      "Expected": -18240000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 16 F2 [N]",
+      "Actual": 600000.0000000001,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 16 M2 [Nmm]",
+      "Actual": -7.41873009246774E-07,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 17 F0 [N]",
+      "Actual": 2.7320368189975852E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 17 M0 [Nmm]",
+      "Actual": 899999999.9999995,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 17 F1 [N]",
+      "Actual": 9.00968188943807E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 17 M1 [Nmm]",
+      "Actual": -19440000000.00015,
+      "Expected": -19440000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 17 F2 [N]",
+      "Actual": 599999.9999999998,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 17 M2 [Nmm]",
+      "Actual": -9.037497989083931E-06,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 18 F0 [N]",
+      "Actual": 4.646949491871055E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 18 M0 [Nmm]",
+      "Actual": 900000000.0000004,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 18 F1 [N]",
+      "Actual": 1.6910917111090384E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 18 M1 [Nmm]",
+      "Actual": -20639999999.999714,
+      "Expected": -20640000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 18 F2 [N]",
+      "Actual": 600000.0000000003,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 18 M2 [Nmm]",
+      "Actual": -9.932891089192708E-06,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 19 F0 [N]",
+      "Actual": -1.7621459846850485E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 19 M0 [Nmm]",
+      "Actual": 900000000.0000002,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 19 F1 [N]",
+      "Actual": 6.0254023992456496E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 19 M1 [Nmm]",
+      "Actual": -21840000000.000126,
+      "Expected": -21840000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 19 F2 [N]",
+      "Actual": 599999.9999999995,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 19 M2 [Nmm]",
+      "Actual": -2.570243611899059E-05,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 20 F0 [N]",
+      "Actual": 6.323830348264892E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 20 M0 [Nmm]",
+      "Actual": 900000000.0000006,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 20 F1 [N]",
+      "Actual": -3.510081114654895E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 20 M1 [Nmm]",
+      "Actual": -23039999999.999542,
+      "Expected": -23040000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 20 F2 [N]",
+      "Actual": 600000,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 20 M2 [Nmm]",
+      "Actual": -3.997084587581412E-05,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 21 F0 [N]",
+      "Actual": 1.708855279503041E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 21 M0 [Nmm]",
+      "Actual": 900000000.0000004,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 21 F1 [N]",
+      "Actual": -1.1645795439108042E-11,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 21 M1 [Nmm]",
+      "Actual": -24240000000.00031,
+      "Expected": -24240000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 21 F2 [N]",
+      "Actual": 600000,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 21 M2 [Nmm]",
+      "Actual": -1.750162098801411E-05,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 22 F0 [N]",
+      "Actual": 5.8264504332328215E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 22 M0 [Nmm]",
+      "Actual": 900000000.0000014,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 22 F1 [N]",
+      "Actual": 1.800515292416094E-11,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 22 M1 [Nmm]",
+      "Actual": -25439999999.99993,
+      "Expected": -25440000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 22 F2 [N]",
+      "Actual": 600000.0000000001,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 22 M2 [Nmm]",
+      "Actual": 5.722540663555264E-07,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 23 F0 [N]",
+      "Actual": 2.9274360713316128E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 23 M0 [Nmm]",
+      "Actual": 900000000.0000007,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 23 F1 [N]",
+      "Actual": 1.1198153515579179E-11,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 23 M1 [Nmm]",
+      "Actual": -26639999999.999523,
+      "Expected": -26640000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 23 F2 [N]",
+      "Actual": 600000.0000000005,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 23 M2 [Nmm]",
+      "Actual": -8.019419010452111E-05,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 24 F0 [N]",
+      "Actual": 4.718003765447065E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 24 M0 [Nmm]",
+      "Actual": 899999999.9999996,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 24 F1 [N]",
+      "Actual": 1.4097167877480388E-11,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 24 M1 [Nmm]",
+      "Actual": -27840000000.000122,
+      "Expected": -27840000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 24 F2 [N]",
+      "Actual": 600000,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 24 M2 [Nmm]",
+      "Actual": -3.843028707706253E-06,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 25 F0 [N]",
+      "Actual": -2.8421709430404007E-13,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 25 M0 [Nmm]",
+      "Actual": 900000000.0000014,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 25 F1 [N]",
+      "Actual": 5.6843418860808015E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 25 M1 [Nmm]",
+      "Actual": -29040000000.000404,
+      "Expected": -29040000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 25 F2 [N]",
+      "Actual": 600000,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 25 M2 [Nmm]",
+      "Actual": -1.9638245248643216E-05,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 26 F0 [N]",
+      "Actual": -2.4158453015843406E-13,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 26 M0 [Nmm]",
+      "Actual": 900000000,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 26 F1 [N]",
+      "Actual": 2.2737367544323206E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 26 M1 [Nmm]",
+      "Actual": -30239999999.99983,
+      "Expected": -30240000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 26 F2 [N]",
+      "Actual": 599999.9999999995,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 26 M2 [Nmm]",
+      "Actual": 4.230320223541639E-05,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 27 F0 [N]",
+      "Actual": 1.2079226507921703E-13,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 27 M0 [Nmm]",
+      "Actual": 900000000.0000007,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 27 F1 [N]",
+      "Actual": 5.8122395785176195E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 27 M1 [Nmm]",
+      "Actual": -31439999999.999893,
+      "Expected": -31440000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 27 F2 [N]",
+      "Actual": 599999.9999999998,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 27 M2 [Nmm]",
+      "Actual": -2.1714208742196206E-07,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 28 F0 [N]",
+      "Actual": 1.6129320101754274E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 28 M0 [Nmm]",
+      "Actual": 900000000.0000004,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 28 F1 [N]",
+      "Actual": 5.229594535194337E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 28 M1 [Nmm]",
+      "Actual": -32640000000.00006,
+      "Expected": -32640000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 28 F2 [N]",
+      "Actual": 600000.0000000002,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 28 M2 [Nmm]",
+      "Actual": -2.8427327720237372E-05,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 29 F0 [N]",
+      "Actual": -8.668621376273352E-13,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 29 M0 [Nmm]",
+      "Actual": 900000000.0000008,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 29 F1 [N]",
+      "Actual": 3.637978807091713E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 29 M1 [Nmm]",
+      "Actual": -33840000000.00003,
+      "Expected": -33840000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 29 F2 [N]",
+      "Actual": 600000.0000000003,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 29 M2 [Nmm]",
+      "Actual": 2.1652363102475652E-07,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 30 F0 [N]",
+      "Actual": 1.4708234630234074E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 30 M0 [Nmm]",
+      "Actual": 900000000.0000002,
+      "Expected": 900000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 30 F1 [N]",
+      "Actual": 9.777068044058979E-12,
+      "Expected": 0,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 30 M1 [Nmm]",
+      "Actual": -35039999999.99988,
+      "Expected": -35040000000,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 30 F2 [N]",
+      "Actual": 600000,
+      "Expected": 600000,
+      "Tolerance": 0.06
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 30 M2 [Nmm]",
+      "Actual": -1.4516594433189312E-06,
+      "Expected": 0,
+      "Tolerance": 3600
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 31 F0 [N]",
+      "Actual": 6.565858967633176E-13,
+      "Expected": 0,
+      "Tolerance": 0.03
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 31 M0 [Nmm]",
+      "Actual": 450000000.0000001,
+      "Expected": 450000000,
+      "Tolerance": 1800
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 31 F1 [N]",
+      "Actual": -5.4996007747831754E-12,
+      "Expected": 0,
+      "Tolerance": 0.03
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 31 M1 [Nmm]",
+      "Actual": -17940000000.000008,
+      "Expected": -17940000000,
+      "Tolerance": 1800
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 31 F2 [N]",
+      "Actual": 300000,
+      "Expected": 300000,
+      "Tolerance": 0.03
+    },
+    {
+      "Label": "Path 1 Vehicle 1 Lane 1 Position 31 M2 [Nmm]",
+      "Actual": -1.1408518094668807E-06,
+      "Expected": 0,
+      "Tolerance": 1800
+    }
+  ],
+  "GpcLibrariesAtExecution": [
+    {
+      "File": "GPCModel.dll",
+      "Version": "5.21.0.1",
+      "SHA256": "A84BC0DE5AB36B36096BB08930CABF12575B2FCF2EAE30F5F6B9736168411644"
+    },
+    {
+      "File": "GPCChecker.Concrete.dll",
+      "Version": "0.24.0.4",
+      "SHA256": "F623770C6909484FB4AF2C904AA2CF10C8F675765AF30C2AC6285A52FA346A93"
+    },
+    {
+      "File": "GPCChecker.Steel.dll",
+      "Version": "2.118.0.1",
+      "SHA256": "90817A96781E1A9C08DD91314CF64D9EFC132CADD3FBD390DB000CD6B636C5F1"
+    },
+    {
+      "File": "GPCChecker.CompositeBridge.dll",
+      "Version": "1.19.0.4",
+      "SHA256": "02045A57CA472D754F01AB3851864B5D1698249D00AD8415E0CA9BA578C2692F"
+    }
+  ]
+}
