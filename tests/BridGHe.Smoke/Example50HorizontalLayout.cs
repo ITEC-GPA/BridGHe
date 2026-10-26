@@ -59,11 +59,11 @@ internal static class Example50HorizontalLayout
         if (phase >= 0)
         {
             int lane = type switch {
-                "BridgeSegmentOverrideComponent" or "LoadCaseComponent" => 0,
+                "BridgeSegmentOverrideComponent" or "BridgeStateOverrideComponent" or "LoadCaseComponent" => 0,
                 "BridgeSegmentCompositeComponent" or "CompositeShrinkageActionsComponent" => 1,
                 "BeamDistributedLoadComponent" => 2,
                 "BeamPreLoadComponent" or "BeamGradientLoadComponent" => 2,
-                "BuildModelComponent" or "StrausR3AnalysisComponent" => 3,
+                "BuildModelComponent" or "StrausR3AnalysisComponent" or "BridgeAnalysisCasesComponent" => 3,
                 "BridgeActionComponent" or "BridgeShrinkageActionComponent" => 4,
                 "BridgeConstructionPhaseComponent" => 5,
                 _ => 1 // unit conversion / tributary strip load arithmetic
@@ -71,6 +71,21 @@ internal static class Example50HorizontalLayout
             return (phase + 3, lane);
         }
         return type switch {
+            "BridgeSpanStationsComponent" or "BridgeSupportStationsComponent" => (0,0),
+            "BridgeAlignmentCurveComponent" or "BridgeRegularGirdersComponent" => (0,1),
+            "BridgeSupportLayoutComponent" or "BridgeGirderLayoutComponent" or "BridgeDeckWidthsComponent" or "BridgeCrossfallTreeComponent" => (0,2),
+            "BridgeDeckLayoutComponent" or "BridgeJointSetComponent" or "BridgeJointTreeComponent" or "BridgeNormalizeJointsComponent" => (0,3),
+            "BridgeFabricationSegmentsComponent" or "BridgeSolidDiaphragmsComponent" or "BridgeTrussDiaphragmsComponent" => (0,4),
+            "BridgeDiaphragmChoiceComponent" or "BridgeBracingStationsComponent" => (0,5),
+            "BridgeGeometryAssemblyComponent" or "BridgeMeshSettingsComponent" => (0,6),
+            "BridgeGrillageMeshComponent" => (0,7),
+            "BridgeBearingPatternComponent" => (2,0),
+            "BridgeSectionTemplateComponent" or "BridgeSectionReadComponent" => (1,4),
+            "BridgeFamilyPropertyComponent" => (2,0),
+            "BridgeFemMembersComponent" => (2,1),
+            "BridgeRigidLinksComponent" or "BridgeConnectionBeamsComponent" or "BridgeBeamOffsetsComponent" => (2,2),
+            "BeamPropertyOverrideComponent" or "GetBeamPropertyComponent" => (2,3),
+            "BeamMomentDispatchComponent" => (3,7),
             "BridgeParametricLayoutComponent" => (0, 0),
             "SimpleBridgeConfigurableComponent" => (0, 1),
             "BridgeSegmentsComponent" or "BridgeDiaphragmsComponent" or "BridgeLongitudinalBracingComponent" => (0, 2),
@@ -86,8 +101,8 @@ internal static class Example50HorizontalLayout
             "CreepAndShrinkageConcreteComponent" => (6, 0),
             "BuildBridgeModel" => (7, 1),
             "BridgeModelAuditComponent" or "DisplaySettingsComponent" or "PreviewModelComponent" => (7, 3),
-            "DecomposeModelComponent" => c.NickName.StartsWith("Estrai") ? (8, 0) : (7, 3),
-            "BridgeSegmentCompositeComponent" => (8, 1),
+            "DecomposeModelComponent" => c.NickName.StartsWith("M0 calcolato") ? (3,5) : c.NickName.StartsWith("Estrai") ? (8, 0) : (7, 3),
+            "BridgeSegmentCompositeComponent" => c.NickName.StartsWith("Solo longitudinali") ? (3,6) : (8, 1),
             "CompositeBeamComponent" or "BridgeAnalysisOptionsComponent" or "BridgeStudsComponent" => (8, 2),
             "SuperElementCheckComponent" => (8, 3),
             "BridgeDetailCheckComponent" => (8, c.NickName.StartsWith("Sezioni") ? 4 : 7),
@@ -131,7 +146,10 @@ internal static class Example50HorizontalLayout
             }
             if (!changed) break;
         }
-        if (assigned.Count != cards.Length) throw new InvalidOperationException("Layout has unclassified components: " + string.Join(", ", cards.Except(assigned).Select(c => Type(c.Component))));
+        // User-saved revisions can contain disconnected experimental branches. Keep them visible,
+        // in their own lane, rather than discarding them or treating them as part of the phase chain.
+        foreach(var card in cards.Except(assigned))
+        {card.Stage=2;card.Lane=4;if(!card.Component.NickName.StartsWith("PROVA",StringComparison.Ordinal))card.Component.NickName="PROVA UTENTE | "+card.Component.NickName;}
         // Six complete plot chains, arranged in two horizontal triptychs.
         var plotNames = new[] { "Momento Mx", "Tensioni acciaio sigma 5", "Tau massima", "Pioli Ed e Rd", "Irrigiditori intermedi WR", "Irrigiditori appoggi WR" };
         foreach (var card in cards.Where(c => c.Stage == 9))
@@ -142,14 +160,19 @@ internal static class Example50HorizontalLayout
             card.Order = i % 3;
         }
         var owner = cards.ToDictionary(c => (IGH_DocumentObject)c.Component);
+        IEnumerable<Card> SourceCards(IGH_Param p,HashSet<IGH_Param> visited)
+        {
+            if(!visited.Add(p))yield break;
+            if(outputOwners.TryGetValue(p,out var direct)){yield return direct;yield break;}
+            foreach(var source in p.Sources)foreach(var card in SourceCards(source,visited))yield return card;
+        }
         foreach (var p in objects.OfType<IGH_Param>())
         {
             Card card;
             if (p.SourceCount > 0)
             {
-                var sources = p.Sources.Where(outputOwners.ContainsKey).Select(s => outputOwners[s]).OrderBy(c => c.Stage).ThenBy(c => c.Lane).ToArray();
-                if (sources.Length == 0) throw new InvalidOperationException("Output has no component owner: " + p.NickName);
-                card = sources[0]; card.Outputs.Add(p);
+                var sources = SourceCards(p,new()).Distinct().OrderBy(c => c.Stage).ThenBy(c => c.Lane).ToArray();
+                card = sources.FirstOrDefault() ?? cards.OrderBy(c=>c.Stage).ThenBy(c=>c.Lane).First(); card.Outputs.Add(p);
             }
             else
             {
@@ -159,7 +182,8 @@ internal static class Example50HorizontalLayout
             }
             owner.Add(p, card);
         }
-        if (owner.Count != objects.Length) throw new InvalidOperationException("Layout must account for every document object.");
+        foreach(var note in objects.Where(o=>!owner.ContainsKey(o)))
+        {var first=cards.OrderBy(c=>c.Stage).ThenBy(c=>c.Lane).First();first.Inputs.Add(note);owner.Add(note,first);}
         foreach (var card in cards)
         foreach (var input in card.Component.Params.Input)
         {
@@ -381,13 +405,24 @@ internal static class Example50HorizontalLayout
         Console.WriteLine($"HORIZONTAL LAYOUT PASS: {components} components, {functional.Length} functional objects, {wires} connections; exact input/cache preservation; no overlaps; reopened; no solver invoked.");
         return 0;
     }
-    private static void Capture(GH_Document doc, Stage[] stages, string directory)
+    internal static int CaptureModular()
+    {
+        BridgeExampleMigration.Initialize();
+        string path=Path.Combine(ExamplePaths.Root,"50-ponte-quattro-modelli","50-ponte-quattro-modelli_REV002.ghx");
+        string folder=Path.GetFullPath("artifacts/modular-bridge/canvas");Directory.CreateDirectory(folder);
+        using var doc=GrasshopperBridgeExample.Read(path);
+        var stages=Apply(doc);
+        Capture(doc,stages,folder,new[]{0,1,3,8});
+        File.WriteAllText(Path.Combine(folder,"stages.json"),JsonSerializer.Serialize(stages.Select(s=>new{s.Title,s.Components,s.Bounds.X,s.Bounds.Y,s.Bounds.Width,s.Bounds.Height}),new JsonSerializerOptions{WriteIndented=true}));
+        Console.WriteLine("MODULAR CANVAS CAPTURE PASS: horizontal stages; no GHX written.");return 0;
+    }
+    private static void Capture(GH_Document doc, Stage[] stages, string directory, int[] selected=null)
     {
         GH_Skin.LoadSkin();
         using var canvas = new GH_Canvas();
         canvas.Size = new Size(2200, 1200); canvas.Document = doc;
         foreach (var panel in doc.Objects.OfType<GH_Panel>()) { panel.CollectData(); panel.ComputeData(); }
-        foreach (int index in new[] { 3 })
+        foreach (int index in selected??new[] { 3 })
         {
             var bounds = stages[index].Bounds;
             float zoom = Math.Min(2100 / bounds.Width, 1100 / bounds.Height);

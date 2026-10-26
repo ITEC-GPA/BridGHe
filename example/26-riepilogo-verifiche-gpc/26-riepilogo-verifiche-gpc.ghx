@@ -38,7 +38,7 @@
             <item name="Date" type_name="gh_date" type_code="8">639281994148075954</item>
             <item name="Description" type_name="gh_string" type_code="10"></item>
             <item name="KeepOpen" type_name="gh_bool" type_code="1">false</item>
-            <item name="Name" type_name="gh_string" type_code="10"></item>
+            <item name="Name" type_name="gh_string" type_code="10">26-riepilogo-verifiche-gpc.ghx</item>
           </items>
           <chunks count="3">
             <chunk name="Revisions">
@@ -77,7 +77,7 @@
                 <item name="Author" type_name="gh_string" type_code="10">Robert McNeel &amp; Associates</item>
                 <item name="Id" type_name="gh_guid" type_code="9">00000000-0000-0000-0000-000000000000</item>
                 <item name="Name" type_name="gh_string" type_code="10">Grasshopper</item>
-                <item name="Version" type_name="gh_string" type_code="10">8.35.26251.13001</item>
+                <item name="Version" type_name="gh_string" type_code="10">8.36.26293.11001</item>
               </items>
             </chunk>
             <chunk name="Library" index="1">
@@ -165,10 +165,10 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>0</X>
-                          <Y>0</Y>
-                          <W>150</W>
-                          <H>20</H>
+                          <X>-92</X>
+                          <Y>-142</Y>
+                          <W>177</W>
+                          <H>284</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
                           <X>50</X>
@@ -187,12 +187,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-90</X>
+                              <Y>-140</Y>
+                              <W>125</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-26</X>
+                              <Y>-130</Y>
                             </item>
                           </items>
                         </chunk>
@@ -229,12 +233,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-90</X>
+                              <Y>-120</Y>
+                              <W>125</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-26</X>
+                              <Y>-110</Y>
                             </item>
                           </items>
                         </chunk>
@@ -271,12 +279,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-90</X>
+                              <Y>-100</Y>
+                              <W>125</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-26</X>
+                              <Y>-90</Y>
                             </item>
                           </items>
                         </chunk>
@@ -313,12 +325,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-90</X>
+                              <Y>-80</Y>
+                              <W>125</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-26</X>
+                              <Y>-70</Y>
                             </item>
                           </items>
                         </chunk>
@@ -355,12 +371,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-90</X>
+                              <Y>-60</Y>
+                              <W>125</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-26</X>
+                              <Y>-50</Y>
                             </item>
                           </items>
                         </chunk>
@@ -397,12 +417,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-90</X>
+                              <Y>-40</Y>
+                              <W>125</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-26</X>
+                              <Y>-30</Y>
                             </item>
                           </items>
                         </chunk>
@@ -439,12 +463,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-90</X>
+                              <Y>-20</Y>
+                              <W>125</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-26</X>
+                              <Y>-10</Y>
                             </item>
                           </items>
                         </chunk>
@@ -481,12 +509,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
+                              <X>-90</X>
                               <Y>0</Y>
-                              <W>150</W>
+                              <W>125</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-26</X>
+                              <Y>10</Y>
                             </item>
                           </items>
                         </chunk>
@@ -523,12 +555,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-90</X>
+                              <Y>20</Y>
+                              <W>125</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-26</X>
+                              <Y>30</Y>
                             </item>
                           </items>
                         </chunk>
@@ -565,12 +601,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-90</X>
+                              <Y>40</Y>
+                              <W>125</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-26</X>
+                              <Y>50</Y>
                             </item>
                           </items>
                         </chunk>
@@ -607,12 +647,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-90</X>
+                              <Y>60</Y>
+                              <W>125</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-26</X>
+                              <Y>70</Y>
                             </item>
                           </items>
                         </chunk>
@@ -649,12 +693,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-90</X>
+                              <Y>80</Y>
+                              <W>125</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-26</X>
+                              <Y>90</Y>
                             </item>
                           </items>
                         </chunk>
@@ -691,12 +739,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-90</X>
+                              <Y>100</Y>
+                              <W>125</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-26</X>
+                              <Y>110</Y>
                             </item>
                           </items>
                         </chunk>
@@ -733,12 +785,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-90</X>
+                              <Y>120</Y>
+                              <W>125</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-26</X>
+                              <Y>130</Y>
                             </item>
                           </items>
                         </chunk>
@@ -775,12 +831,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
+                              <X>65</X>
+                              <Y>-140</Y>
+                              <W>18</W>
+                              <H>280</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>74</X>
                               <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
                             </item>
                           </items>
                         </chunk>
@@ -808,10 +868,10 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>0</X>
-                          <Y>0</Y>
-                          <W>150</W>
-                          <H>20</H>
+                          <X>-79</X>
+                          <Y>378</Y>
+                          <W>164</W>
+                          <H>244</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
                           <X>50</X>
@@ -830,12 +890,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-77</X>
+                              <Y>380</Y>
+                              <W>112</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-19.5</X>
+                              <Y>390</Y>
                             </item>
                           </items>
                         </chunk>
@@ -872,12 +936,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-77</X>
+                              <Y>400</Y>
+                              <W>112</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-19.5</X>
+                              <Y>410</Y>
                             </item>
                           </items>
                         </chunk>
@@ -914,12 +982,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-77</X>
+                              <Y>420</Y>
+                              <W>112</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-19.5</X>
+                              <Y>430</Y>
                             </item>
                           </items>
                         </chunk>
@@ -956,12 +1028,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-77</X>
+                              <Y>440</Y>
+                              <W>112</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-19.5</X>
+                              <Y>450</Y>
                             </item>
                           </items>
                         </chunk>
@@ -998,12 +1074,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-77</X>
+                              <Y>460</Y>
+                              <W>112</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-19.5</X>
+                              <Y>470</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1040,12 +1120,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-77</X>
+                              <Y>480</Y>
+                              <W>112</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-19.5</X>
+                              <Y>490</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1082,12 +1166,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-77</X>
+                              <Y>500</Y>
+                              <W>112</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-19.5</X>
+                              <Y>510</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1124,12 +1212,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-77</X>
+                              <Y>520</Y>
+                              <W>112</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-19.5</X>
+                              <Y>530</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1166,12 +1258,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-77</X>
+                              <Y>540</Y>
+                              <W>112</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-19.5</X>
+                              <Y>550</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1208,12 +1304,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-77</X>
+                              <Y>560</Y>
+                              <W>112</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-19.5</X>
+                              <Y>570</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1250,12 +1350,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-77</X>
+                              <Y>580</Y>
+                              <W>112</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-19.5</X>
+                              <Y>590</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1292,12 +1396,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>-77</X>
+                              <Y>600</Y>
+                              <W>112</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>-19.5</X>
+                              <Y>610</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1334,12 +1442,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>65</X>
+                              <Y>380</Y>
+                              <W>18</W>
+                              <H>240</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>74</X>
+                              <Y>500</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1367,10 +1479,10 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>0</X>
-                          <Y>0</Y>
-                          <W>150</W>
-                          <H>20</H>
+                          <X>473</X>
+                          <Y>8</Y>
+                          <W>74</W>
+                          <H>184</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
                           <X>510</X>
@@ -1390,12 +1502,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>475</X>
+                              <Y>10</Y>
+                              <W>20</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>486.5</X>
+                              <Y>20</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1412,12 +1528,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>475</X>
+                              <Y>30</Y>
+                              <W>20</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>486.5</X>
+                              <Y>40</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1435,7 +1555,7 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                                 <chunk name="Item" index="0">
                                   <items count="2">
                                     <item name="Data" type_name="gh_bytearray" type_code="20">
-                                      <stream length="7909">QkdIQTFADU1hdGVyaWFsTW9kZWw/Aklkggg9aHR0cDovL3NjaGVtYXMuZGF0YWNvbnRyYWN0Lm9yZy8yMDA0LzA3L0JyaWRHSGUuQ29tbW9uLk1vZGVscwkBaSlodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZQkBeCBodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYQkBejNodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tLzIwMDMvMTAvU2VyaWFsaXphdGlvbi9AI01hdGVyaWFsTW9kZWxfU0VSSUFMSVpBVElPTl9SRUxFQVNFPwJJZIgCLgR0eXBlmNFhOlQ1Mzc5NzM3NDY1NkQyRTQ5NkU3NDMzMzIyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYNAAklkPwJJZIgDLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTUzNzQ3MjY5NkU2NzJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxmQNDMzBABE5hbWU/A1JlZogDLgNuaWyGCAABQAxNYXRlcmlhbEtpbmQ/AklkiAQuBHR5cGWY8WE6VDQyNzI2OTY0NDc0ODY1MkU0MzZGNkQ2RDZGNkUyRTRENkY2NDY1NkM3MzJFNEQ2MTc0NjU3MjY5NjE2QzRENkY2NDY1NkMyQjRENjE3NDY1NzI2OTYxNkM0QjY5NkU2NDJDMjA0MjcyNjk2NDQ3NDg2NTJFNDM2RjZENkQ2RjZFMkMyMDU2NjU3MjczNjk2RjZFM0QzMDJFMzEyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNENkU3NTZDNkMIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGZCVVuZGVmaW5lZEAHTW9kdWx1cz8CSWSIBS4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFADFBvaXNzb25SYXRpbz8CSWSIBi4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFADFNoZWFyTW9kdWx1cz8CSWSIBy4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFAClVzZVBvaXNzb24/AklkiAguBHR5cGWY1WE6VDUzNzk3Mzc0NjU2RDJFNDI2RjZGNkM2NTYxNkUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYdAB0RlbnNpdHk/AklkiAkuBHR5cGWY02E6VDUzNzk3Mzc0NjU2RDJFNDQ2Rjc1NjI2QzY1MkMyMDUzNzk3Mzc0NjU2RDJFNTA3MjY5NzY2MTc0NjUyRTQzNkY3MjY1NEM2OTYyMkMyMDU2NjU3MjczNjk2RjZFM0QzODJFMzAyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNEMzc2MzY1NjMzODM1NjQzNzYyNjU2MTM3MzczOTM4NjUIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGBQA5WaXNjb3VzRGFtcGluZz8CSWSICi4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFADERhbXBpbmdSYXRpbz8CSWSICy4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFAEFRoZXJtYWxFeHBhbnNpb24/AklkiAwuBHR5cGWY02E6VDUzNzk3Mzc0NjU2RDJFNDQ2Rjc1NjI2QzY1MkMyMDUzNzk3Mzc0NjU2RDJFNTA3MjY5NzY2MTc0NjUyRTQzNkY3MjY1NEM2OTYyMkMyMDU2NjU3MjczNjk2RjZFM0QzODJFMzAyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNEMzc2MzY1NjMzODM1NjQzNzYyNjU2MTM3MzczOTM4NjUIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGBQBFUZW1wZXJhdHVyZU9uVGltZT8CSWSIDS4EdHlwZZoDAWE6VDQyNzI2OTY0NDc0ODY1MkU0MzZGNkQ2RDZGNkUyRTRENkY2NDY1NkM3MzJFNEQ2MTc0NjU3MjY5NjE2QzRENkY2NDY1NkMyQjU0NjU2RDcwNjU3MjYxNzQ3NTcyNjU0RjZFNTQ2OTZENjU1NDc5NzA2NTJDMjA0MjcyNjk2NDQ3NDg2NTJFNDM2RjZENkQ2RjZFMkMyMDU2NjU3MjczNjk2RjZFM0QzMDJFMzEyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNENkU3NTZDNkMIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGZB0VsYXN0aWNADE1hdGVyaWFsTW9kZT8CSWSIDi4EdHlwZZjxYTpUNDI3MjY5NjQ0NzQ4NjUyRTQzNkY2RDZENkY2RTJFNEQ2RjY0NjU2QzczMkU0RDYxNzQ2NTcyNjk2MTZDNEQ2RjY0NjU2QzJCNEQ2MTc0NjU3MjY5NjE2QzRENkY2NDY1MkMyMDQyNzI2OTY0NDc0ODY1MkU0MzZGNkQ2RDZGNkUyQzIwNTY2NTcyNzM2OTZGNkUzRDMwMkUzMTJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0Q2RTc1NkM2QwgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MZkHRWxhc3RpY0AJSGFyZGVuaW5nPwJJZIgPLgR0eXBlmPNhOlQ0MjcyNjk2NDQ3NDg2NTJFNDM2RjZENkQ2RjZFMkU0RDZGNjQ2NTZDNzMyRTRENjE3NDY1NzI2OTYxNkM0RDZGNjQ2NTZDMkI0ODYxNzI2NDY1NkU2OTZFNjc1NDc5NzA2NTJDMjA0MjcyNjk2NDQ3NDg2NTJFNDM2RjZENkQ2RjZFMkMyMDU2NjU3MjczNjk2RjZFM0QzMDJFMzEyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNENkU3NTZDNkMIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGZCUlzb3Ryb3BpY0AMU3BlY2lmaWNIZWF0PwJJZIgQLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAMQ29uZHVjdGl2aXR5PwJJZIgRLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUASTWluaW11bVlpZWxkU3RyZXNzPwJJZIgSLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAUTWluaW11bVRlbnNpbGVTdHJlc3M/AklkiBMuBHR5cGWY02E6VDUzNzk3Mzc0NjU2RDJFNDQ2Rjc1NjI2QzY1MkMyMDUzNzk3Mzc0NjU2RDJFNTA3MjY5NzY2MTc0NjUyRTQzNkY3MjY1NEM2OTYyMkMyMDU2NjU3MjczNjk2RjZFM0QzODJFMzAyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNEMzc2MzY1NjMzODM1NjQzNzYyNjU2MTM3MzczOTM4NjUIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGBQBNFeHBlY3RlZFlpZWxkU3RyZXNzPwJJZIgULgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAVRXhwZWN0ZWRUZW5zaWxlU3RyZXNzPwJJZIgVLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAbU3BlY2lmaWNDb21wcmVzc2l2ZVN0cmVuZ3RoPwJJZIgWLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxiR5AG0V4cGVjdGVkQ29tcHJlc3NpdmVTdHJlbmd0aD8CSWSIFy4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFAC0FsdW1pdW1UeXBlPwJJZIgYLgR0eXBlmPFhOlQ0MjcyNjk2NDQ3NDg2NTJFNDM2RjZENkQ2RjZFMkU0RDZGNjQ2NTZDNzMyRTRENjE3NDY1NzI2OTYxNkM0RDZGNjQ2NTZDMkI0MTZDNzU2RDY5NzU2RDU0Nzk3MDY1NzMyQzIwNDI3MjY5NjQ0NzQ4NjUyRTQzNkY2RDZENkY2RTJDMjA1NjY1NzI3MzY5NkY2RTNEMzAyRTMxMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDZFNzU2QzZDCAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxmQdXcm91Z2h0QAVBbGxveS4DbmlshggAAUAYQ29tcHJlc3NpdmVZaWVsZFN0cmVuZ3RoPwJJZIgZLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAUVGVuc2lsZVlpZWxkU3RyZW5ndGg/AklkiBouBHR5cGWY02E6VDUzNzk3Mzc0NjU2RDJFNDQ2Rjc1NjI2QzY1MkMyMDUzNzk3Mzc0NjU2RDJFNTA3MjY5NzY2MTc0NjUyRTQzNkY3MjY1NEM2OTYyMkMyMDU2NjU3MjczNjk2RjZFM0QzODJFMzAyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNEMzc2MzY1NjMzODM1NjQzNzYyNjU2MTM3MzczOTM4NjUIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGBQBdUZW5zaWxlVWx0aW1hdGVTdHJlbmd0aD8CSWSIGy4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFAFVNoZWFyVWx0aW1hdGVTdHJlbmd0aD8CSWSIHC4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFAEVN0cmVzc1N0cmFpblRhYmxlLgNuaWyGCAABAQ==</stream>
+                                      <stream length="7947">QkdIQTFADU1hdGVyaWFsTW9kZWw/Aklkggg9aHR0cDovL3NjaGVtYXMuZGF0YWNvbnRyYWN0Lm9yZy8yMDA0LzA3L0JyaWRHSGUuQ29tbW9uLk1vZGVscwkBaSlodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZQkBeCBodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYQkBejNodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tLzIwMDMvMTAvU2VyaWFsaXphdGlvbi9AI01hdGVyaWFsTW9kZWxfU0VSSUFMSVpBVElPTl9SRUxFQVNFPwJJZIgCLgR0eXBlmNFhOlQ1Mzc5NzM3NDY1NkQyRTQ5NkU3NDMzMzIyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYNAAklkPwJJZIgDLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTUzNzQ3MjY5NkU2NzJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxmQNDMzBABE5hbWU/A1JlZogDLgNuaWyGCAABQAxNYXRlcmlhbEtpbmQ/AklkiAQuBHR5cGWY8WE6VDQyNzI2OTY0NDc0ODY1MkU0MzZGNkQ2RDZGNkUyRTRENkY2NDY1NkM3MzJFNEQ2MTc0NjU3MjY5NjE2QzRENkY2NDY1NkMyQjRENjE3NDY1NzI2OTYxNkM0QjY5NkU2NDJDMjA0MjcyNjk2NDQ3NDg2NTJFNDM2RjZENkQ2RjZFMkMyMDU2NjU3MjczNjk2RjZFM0QzMDJFMzEyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNENkU3NTZDNkMIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGZCVVuZGVmaW5lZEAHTW9kdWx1cz8CSWSIBS4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFADFBvaXNzb25SYXRpbz8CSWSIBi4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFADFNoZWFyTW9kdWx1cz8CSWSIBy4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFAClVzZVBvaXNzb24/AklkiAguBHR5cGWY1WE6VDUzNzk3Mzc0NjU2RDJFNDI2RjZGNkM2NTYxNkUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYdAB0RlbnNpdHk/AklkiAkuBHR5cGWY02E6VDUzNzk3Mzc0NjU2RDJFNDQ2Rjc1NjI2QzY1MkMyMDUzNzk3Mzc0NjU2RDJFNTA3MjY5NzY2MTc0NjUyRTQzNkY3MjY1NEM2OTYyMkMyMDU2NjU3MjczNjk2RjZFM0QzODJFMzAyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNEMzc2MzY1NjMzODM1NjQzNzYyNjU2MTM3MzczOTM4NjUIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGBQA5WaXNjb3VzRGFtcGluZz8CSWSICi4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFADERhbXBpbmdSYXRpbz8CSWSICy4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFAEFRoZXJtYWxFeHBhbnNpb24/AklkiAwuBHR5cGWY02E6VDUzNzk3Mzc0NjU2RDJFNDQ2Rjc1NjI2QzY1MkMyMDUzNzk3Mzc0NjU2RDJFNTA3MjY5NzY2MTc0NjUyRTQzNkY3MjY1NEM2OTYyMkMyMDU2NjU3MjczNjk2RjZFM0QzODJFMzAyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNEMzc2MzY1NjMzODM1NjQzNzYyNjU2MTM3MzczOTM4NjUIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGBQBFUZW1wZXJhdHVyZU9uVGltZT8CSWSIDS4EdHlwZZoDAWE6VDQyNzI2OTY0NDc0ODY1MkU0MzZGNkQ2RDZGNkUyRTRENkY2NDY1NkM3MzJFNEQ2MTc0NjU3MjY5NjE2QzRENkY2NDY1NkMyQjU0NjU2RDcwNjU3MjYxNzQ3NTcyNjU0RjZFNTQ2OTZENjU1NDc5NzA2NTJDMjA0MjcyNjk2NDQ3NDg2NTJFNDM2RjZENkQ2RjZFMkMyMDU2NjU3MjczNjk2RjZFM0QzMDJFMzEyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNENkU3NTZDNkMIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGZB0VsYXN0aWNADE1hdGVyaWFsTW9kZT8CSWSIDi4EdHlwZZjxYTpUNDI3MjY5NjQ0NzQ4NjUyRTQzNkY2RDZENkY2RTJFNEQ2RjY0NjU2QzczMkU0RDYxNzQ2NTcyNjk2MTZDNEQ2RjY0NjU2QzJCNEQ2MTc0NjU3MjY5NjE2QzRENkY2NDY1MkMyMDQyNzI2OTY0NDc0ODY1MkU0MzZGNkQ2RDZGNkUyQzIwNTY2NTcyNzM2OTZGNkUzRDMwMkUzMTJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0Q2RTc1NkM2QwgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MZkHRWxhc3RpY0AJSGFyZGVuaW5nPwJJZIgPLgR0eXBlmPNhOlQ0MjcyNjk2NDQ3NDg2NTJFNDM2RjZENkQ2RjZFMkU0RDZGNjQ2NTZDNzMyRTRENjE3NDY1NzI2OTYxNkM0RDZGNjQ2NTZDMkI0ODYxNzI2NDY1NkU2OTZFNjc1NDc5NzA2NTJDMjA0MjcyNjk2NDQ3NDg2NTJFNDM2RjZENkQ2RjZFMkMyMDU2NjU3MjczNjk2RjZFM0QzMDJFMzEyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNENkU3NTZDNkMIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGZCUlzb3Ryb3BpY0AMU3BlY2lmaWNIZWF0PwJJZIgQLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAMQ29uZHVjdGl2aXR5PwJJZIgRLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUASTWluaW11bVlpZWxkU3RyZXNzPwJJZIgSLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAUTWluaW11bVRlbnNpbGVTdHJlc3M/AklkiBMuBHR5cGWY02E6VDUzNzk3Mzc0NjU2RDJFNDQ2Rjc1NjI2QzY1MkMyMDUzNzk3Mzc0NjU2RDJFNTA3MjY5NzY2MTc0NjUyRTQzNkY3MjY1NEM2OTYyMkMyMDU2NjU3MjczNjk2RjZFM0QzODJFMzAyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNEMzc2MzY1NjMzODM1NjQzNzYyNjU2MTM3MzczOTM4NjUIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGBQBNFeHBlY3RlZFlpZWxkU3RyZXNzPwJJZIgULgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAVRXhwZWN0ZWRUZW5zaWxlU3RyZXNzPwJJZIgVLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAbU3BlY2lmaWNDb21wcmVzc2l2ZVN0cmVuZ3RoPwJJZIgWLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxiR5AG0V4cGVjdGVkQ29tcHJlc3NpdmVTdHJlbmd0aD8CSWSIFy4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFAC0FsdW1pdW1UeXBlPwJJZIgYLgR0eXBlmPFhOlQ0MjcyNjk2NDQ3NDg2NTJFNDM2RjZENkQ2RjZFMkU0RDZGNjQ2NTZDNzMyRTRENjE3NDY1NzI2OTYxNkM0RDZGNjQ2NTZDMkI0MTZDNzU2RDY5NzU2RDU0Nzk3MDY1NzMyQzIwNDI3MjY5NjQ0NzQ4NjUyRTQzNkY2RDZENkY2RTJDMjA1NjY1NzI3MzY5NkY2RTNEMzAyRTMxMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDZFNzU2QzZDCAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxmQdXcm91Z2h0QAVBbGxveS4DbmlshggAAUAYQ29tcHJlc3NpdmVZaWVsZFN0cmVuZ3RoPwJJZIgZLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAUVGVuc2lsZVlpZWxkU3RyZW5ndGg/AklkiBouBHR5cGWY02E6VDUzNzk3Mzc0NjU2RDJFNDQ2Rjc1NjI2QzY1MkMyMDUzNzk3Mzc0NjU2RDJFNTA3MjY5NzY2MTc0NjUyRTQzNkY3MjY1NEM2OTYyMkMyMDU2NjU3MjczNjk2RjZFM0QzODJFMzAyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNEMzc2MzY1NjMzODM1NjQzNzYyNjU2MTM3MzczOTM4NjUIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGBQBdUZW5zaWxlVWx0aW1hdGVTdHJlbmd0aD8CSWSIGy4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFAFVNoZWFyVWx0aW1hdGVTdHJlbmd0aD8CSWSIHC4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFAG1JlaW5mb3JjZW1lbnRVbHRpbWF0ZVN0cmFpbi4DbmlshggAAUARU3RyZXNzU3RyYWluVGFibGUuA25pbIYIAAEB</stream>
                                     </item>
                                     <item name="TypeName" type_name="gh_string" type_code="10">BridGHe.Grasshopper.DataTypes.Fem.GH_Material</item>
                                   </items>
@@ -1457,12 +1577,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>475</X>
+                              <Y>50</Y>
+                              <W>20</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>486.5</X>
+                              <Y>60</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1480,7 +1604,7 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                                 <chunk name="Item" index="0">
                                   <items count="2">
                                     <item name="Data" type_name="gh_bytearray" type_code="20">
-                                      <stream length="7917">QkdIQTFADU1hdGVyaWFsTW9kZWw/Aklkggg9aHR0cDovL3NjaGVtYXMuZGF0YWNvbnRyYWN0Lm9yZy8yMDA0LzA3L0JyaWRHSGUuQ29tbW9uLk1vZGVscwkBaSlodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZQkBeCBodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYQkBejNodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tLzIwMDMvMTAvU2VyaWFsaXphdGlvbi9AI01hdGVyaWFsTW9kZWxfU0VSSUFMSVpBVElPTl9SRUxFQVNFPwJJZIgCLgR0eXBlmNFhOlQ1Mzc5NzM3NDY1NkQyRTQ5NkU3NDMzMzIyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYNAAklkPwJJZIgDLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTUzNzQ3MjY5NkU2NzJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxmQRTMzU1QAROYW1lPwNSZWaIAy4DbmlshggAAUAMTWF0ZXJpYWxLaW5kPwJJZIgELgR0eXBlmPFhOlQ0MjcyNjk2NDQ3NDg2NTJFNDM2RjZENkQ2RjZFMkU0RDZGNjQ2NTZDNzMyRTRENjE3NDY1NzI2OTYxNkM0RDZGNjQ2NTZDMkI0RDYxNzQ2NTcyNjk2MTZDNEI2OTZFNjQyQzIwNDI3MjY5NjQ0NzQ4NjUyRTQzNkY2RDZENkY2RTJDMjA1NjY1NzI3MzY5NkY2RTNEMzAyRTMxMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDZFNzU2QzZDCAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxmQlVbmRlZmluZWRAB01vZHVsdXM/AklkiAUuBHR5cGWY02E6VDUzNzk3Mzc0NjU2RDJFNDQ2Rjc1NjI2QzY1MkMyMDUzNzk3Mzc0NjU2RDJFNTA3MjY5NzY2MTc0NjUyRTQzNkY3MjY1NEM2OTYyMkMyMDU2NjU3MjczNjk2RjZFM0QzODJFMzAyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNEMzc2MzY1NjMzODM1NjQzNzYyNjU2MTM3MzczOTM4NjUIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGRABRNSEAMUG9pc3NvblJhdGlvPwJJZIgGLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAMU2hlYXJNb2R1bHVzPwJJZIgHLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAKVXNlUG9pc3Nvbj8CSWSICC4EdHlwZZjVYTpUNTM3OTczNzQ2NTZEMkU0MjZGNkY2QzY1NjE2RTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxh0AHRGVuc2l0eT8CSWSICS4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFADlZpc2NvdXNEYW1waW5nPwJJZIgKLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAMRGFtcGluZ1JhdGlvPwJJZIgLLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAQVGhlcm1hbEV4cGFuc2lvbj8CSWSIDC4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFAEVRlbXBlcmF0dXJlT25UaW1lPwJJZIgNLgR0eXBlmgMBYTpUNDI3MjY5NjQ0NzQ4NjUyRTQzNkY2RDZENkY2RTJFNEQ2RjY0NjU2QzczMkU0RDYxNzQ2NTcyNjk2MTZDNEQ2RjY0NjU2QzJCNTQ2NTZENzA2NTcyNjE3NDc1NzI2NTRGNkU1NDY5NkQ2NTU0Nzk3MDY1MkMyMDQyNzI2OTY0NDc0ODY1MkU0MzZGNkQ2RDZGNkUyQzIwNTY2NTcyNzM2OTZGNkUzRDMwMkUzMTJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0Q2RTc1NkM2QwgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MZkHRWxhc3RpY0AMTWF0ZXJpYWxNb2RlPwJJZIgOLgR0eXBlmPFhOlQ0MjcyNjk2NDQ3NDg2NTJFNDM2RjZENkQ2RjZFMkU0RDZGNjQ2NTZDNzMyRTRENjE3NDY1NzI2OTYxNkM0RDZGNjQ2NTZDMkI0RDYxNzQ2NTcyNjk2MTZDNEQ2RjY0NjUyQzIwNDI3MjY5NjQ0NzQ4NjUyRTQzNkY2RDZENkY2RTJDMjA1NjY1NzI3MzY5NkY2RTNEMzAyRTMxMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDZFNzU2QzZDCAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxmQdFbGFzdGljQAlIYXJkZW5pbmc/AklkiA8uBHR5cGWY82E6VDQyNzI2OTY0NDc0ODY1MkU0MzZGNkQ2RDZGNkUyRTRENkY2NDY1NkM3MzJFNEQ2MTc0NjU3MjY5NjE2QzRENkY2NDY1NkMyQjQ4NjE3MjY0NjU2RTY5NkU2NzU0Nzk3MDY1MkMyMDQyNzI2OTY0NDc0ODY1MkU0MzZGNkQ2RDZGNkUyQzIwNTY2NTcyNzM2OTZGNkUzRDMwMkUzMTJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0Q2RTc1NkM2QwgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MZkJSXNvdHJvcGljQAxTcGVjaWZpY0hlYXQ/AklkiBAuBHR5cGWY02E6VDUzNzk3Mzc0NjU2RDJFNDQ2Rjc1NjI2QzY1MkMyMDUzNzk3Mzc0NjU2RDJFNTA3MjY5NzY2MTc0NjUyRTQzNkY3MjY1NEM2OTYyMkMyMDU2NjU3MjczNjk2RjZFM0QzODJFMzAyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNEMzc2MzY1NjMzODM1NjQzNzYyNjU2MTM3MzczOTM4NjUIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGBQAxDb25kdWN0aXZpdHk/AklkiBEuBHR5cGWY02E6VDUzNzk3Mzc0NjU2RDJFNDQ2Rjc1NjI2QzY1MkMyMDUzNzk3Mzc0NjU2RDJFNTA3MjY5NzY2MTc0NjUyRTQzNkY3MjY1NEM2OTYyMkMyMDU2NjU3MjczNjk2RjZFM0QzODJFMzAyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNEMzc2MzY1NjMzODM1NjQzNzYyNjU2MTM3MzczOTM4NjUIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGBQBJNaW5pbXVtWWllbGRTdHJlc3M/AklkiBIuBHR5cGWY02E6VDUzNzk3Mzc0NjU2RDJFNDQ2Rjc1NjI2QzY1MkMyMDUzNzk3Mzc0NjU2RDJFNTA3MjY5NzY2MTc0NjUyRTQzNkY3MjY1NEM2OTYyMkMyMDU2NjU3MjczNjk2RjZFM0QzODJFMzAyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNEMzc2MzY1NjMzODM1NjQzNzYyNjU2MTM3MzczOTM4NjUIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGLYwFAFE1pbmltdW1UZW5zaWxlU3RyZXNzPwJJZIgTLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxi/4BQBNFeHBlY3RlZFlpZWxkU3RyZXNzPwJJZIgULgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAVRXhwZWN0ZWRUZW5zaWxlU3RyZXNzPwJJZIgVLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAbU3BlY2lmaWNDb21wcmVzc2l2ZVN0cmVuZ3RoPwJJZIgWLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAbRXhwZWN0ZWRDb21wcmVzc2l2ZVN0cmVuZ3RoPwJJZIgXLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUALQWx1bWl1bVR5cGU/AklkiBguBHR5cGWY8WE6VDQyNzI2OTY0NDc0ODY1MkU0MzZGNkQ2RDZGNkUyRTRENkY2NDY1NkM3MzJFNEQ2MTc0NjU3MjY5NjE2QzRENkY2NDY1NkMyQjQxNkM3NTZENjk3NTZENTQ3OTcwNjU3MzJDMjA0MjcyNjk2NDQ3NDg2NTJFNDM2RjZENkQ2RjZFMkMyMDU2NjU3MjczNjk2RjZFM0QzMDJFMzEyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNENkU3NTZDNkMIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGZB1dyb3VnaHRABUFsbG95LgNuaWyGCAABQBhDb21wcmVzc2l2ZVlpZWxkU3RyZW5ndGg/AklkiBkuBHR5cGWY02E6VDUzNzk3Mzc0NjU2RDJFNDQ2Rjc1NjI2QzY1MkMyMDUzNzk3Mzc0NjU2RDJFNTA3MjY5NzY2MTc0NjUyRTQzNkY3MjY1NEM2OTYyMkMyMDU2NjU3MjczNjk2RjZFM0QzODJFMzAyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNEMzc2MzY1NjMzODM1NjQzNzYyNjU2MTM3MzczOTM4NjUIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGBQBRUZW5zaWxlWWllbGRTdHJlbmd0aD8CSWSIGi4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFAF1RlbnNpbGVVbHRpbWF0ZVN0cmVuZ3RoPwJJZIgbLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAVU2hlYXJVbHRpbWF0ZVN0cmVuZ3RoPwJJZIgcLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUARU3RyZXNzU3RyYWluVGFibGUuA25pbIYIAAEB</stream>
+                                      <stream length="7955">QkdIQTFADU1hdGVyaWFsTW9kZWw/Aklkggg9aHR0cDovL3NjaGVtYXMuZGF0YWNvbnRyYWN0Lm9yZy8yMDA0LzA3L0JyaWRHSGUuQ29tbW9uLk1vZGVscwkBaSlodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZQkBeCBodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYQkBejNodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tLzIwMDMvMTAvU2VyaWFsaXphdGlvbi9AI01hdGVyaWFsTW9kZWxfU0VSSUFMSVpBVElPTl9SRUxFQVNFPwJJZIgCLgR0eXBlmNFhOlQ1Mzc5NzM3NDY1NkQyRTQ5NkU3NDMzMzIyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYNAAklkPwJJZIgDLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTUzNzQ3MjY5NkU2NzJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxmQRTMzU1QAROYW1lPwNSZWaIAy4DbmlshggAAUAMTWF0ZXJpYWxLaW5kPwJJZIgELgR0eXBlmPFhOlQ0MjcyNjk2NDQ3NDg2NTJFNDM2RjZENkQ2RjZFMkU0RDZGNjQ2NTZDNzMyRTRENjE3NDY1NzI2OTYxNkM0RDZGNjQ2NTZDMkI0RDYxNzQ2NTcyNjk2MTZDNEI2OTZFNjQyQzIwNDI3MjY5NjQ0NzQ4NjUyRTQzNkY2RDZENkY2RTJDMjA1NjY1NzI3MzY5NkY2RTNEMzAyRTMxMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDZFNzU2QzZDCAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxmQlVbmRlZmluZWRAB01vZHVsdXM/AklkiAUuBHR5cGWY02E6VDUzNzk3Mzc0NjU2RDJFNDQ2Rjc1NjI2QzY1MkMyMDUzNzk3Mzc0NjU2RDJFNTA3MjY5NzY2MTc0NjUyRTQzNkY3MjY1NEM2OTYyMkMyMDU2NjU3MjczNjk2RjZFM0QzODJFMzAyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNEMzc2MzY1NjMzODM1NjQzNzYyNjU2MTM3MzczOTM4NjUIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGRABRNSEAMUG9pc3NvblJhdGlvPwJJZIgGLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAMU2hlYXJNb2R1bHVzPwJJZIgHLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAKVXNlUG9pc3Nvbj8CSWSICC4EdHlwZZjVYTpUNTM3OTczNzQ2NTZEMkU0MjZGNkY2QzY1NjE2RTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxh0AHRGVuc2l0eT8CSWSICS4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFADlZpc2NvdXNEYW1waW5nPwJJZIgKLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAMRGFtcGluZ1JhdGlvPwJJZIgLLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAQVGhlcm1hbEV4cGFuc2lvbj8CSWSIDC4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFAEVRlbXBlcmF0dXJlT25UaW1lPwJJZIgNLgR0eXBlmgMBYTpUNDI3MjY5NjQ0NzQ4NjUyRTQzNkY2RDZENkY2RTJFNEQ2RjY0NjU2QzczMkU0RDYxNzQ2NTcyNjk2MTZDNEQ2RjY0NjU2QzJCNTQ2NTZENzA2NTcyNjE3NDc1NzI2NTRGNkU1NDY5NkQ2NTU0Nzk3MDY1MkMyMDQyNzI2OTY0NDc0ODY1MkU0MzZGNkQ2RDZGNkUyQzIwNTY2NTcyNzM2OTZGNkUzRDMwMkUzMTJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0Q2RTc1NkM2QwgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MZkHRWxhc3RpY0AMTWF0ZXJpYWxNb2RlPwJJZIgOLgR0eXBlmPFhOlQ0MjcyNjk2NDQ3NDg2NTJFNDM2RjZENkQ2RjZFMkU0RDZGNjQ2NTZDNzMyRTRENjE3NDY1NzI2OTYxNkM0RDZGNjQ2NTZDMkI0RDYxNzQ2NTcyNjk2MTZDNEQ2RjY0NjUyQzIwNDI3MjY5NjQ0NzQ4NjUyRTQzNkY2RDZENkY2RTJDMjA1NjY1NzI3MzY5NkY2RTNEMzAyRTMxMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDZFNzU2QzZDCAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxmQdFbGFzdGljQAlIYXJkZW5pbmc/AklkiA8uBHR5cGWY82E6VDQyNzI2OTY0NDc0ODY1MkU0MzZGNkQ2RDZGNkUyRTRENkY2NDY1NkM3MzJFNEQ2MTc0NjU3MjY5NjE2QzRENkY2NDY1NkMyQjQ4NjE3MjY0NjU2RTY5NkU2NzU0Nzk3MDY1MkMyMDQyNzI2OTY0NDc0ODY1MkU0MzZGNkQ2RDZGNkUyQzIwNTY2NTcyNzM2OTZGNkUzRDMwMkUzMTJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0Q2RTc1NkM2QwgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MZkJSXNvdHJvcGljQAxTcGVjaWZpY0hlYXQ/AklkiBAuBHR5cGWY02E6VDUzNzk3Mzc0NjU2RDJFNDQ2Rjc1NjI2QzY1MkMyMDUzNzk3Mzc0NjU2RDJFNTA3MjY5NzY2MTc0NjUyRTQzNkY3MjY1NEM2OTYyMkMyMDU2NjU3MjczNjk2RjZFM0QzODJFMzAyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNEMzc2MzY1NjMzODM1NjQzNzYyNjU2MTM3MzczOTM4NjUIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGBQAxDb25kdWN0aXZpdHk/AklkiBEuBHR5cGWY02E6VDUzNzk3Mzc0NjU2RDJFNDQ2Rjc1NjI2QzY1MkMyMDUzNzk3Mzc0NjU2RDJFNTA3MjY5NzY2MTc0NjUyRTQzNkY3MjY1NEM2OTYyMkMyMDU2NjU3MjczNjk2RjZFM0QzODJFMzAyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNEMzc2MzY1NjMzODM1NjQzNzYyNjU2MTM3MzczOTM4NjUIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGBQBJNaW5pbXVtWWllbGRTdHJlc3M/AklkiBIuBHR5cGWY02E6VDUzNzk3Mzc0NjU2RDJFNDQ2Rjc1NjI2QzY1MkMyMDUzNzk3Mzc0NjU2RDJFNTA3MjY5NzY2MTc0NjUyRTQzNkY3MjY1NEM2OTYyMkMyMDU2NjU3MjczNjk2RjZFM0QzODJFMzAyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNEMzc2MzY1NjMzODM1NjQzNzYyNjU2MTM3MzczOTM4NjUIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGLYwFAFE1pbmltdW1UZW5zaWxlU3RyZXNzPwJJZIgTLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxi/4BQBNFeHBlY3RlZFlpZWxkU3RyZXNzPwJJZIgULgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAVRXhwZWN0ZWRUZW5zaWxlU3RyZXNzPwJJZIgVLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAbU3BlY2lmaWNDb21wcmVzc2l2ZVN0cmVuZ3RoPwJJZIgWLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAbRXhwZWN0ZWRDb21wcmVzc2l2ZVN0cmVuZ3RoPwJJZIgXLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUALQWx1bWl1bVR5cGU/AklkiBguBHR5cGWY8WE6VDQyNzI2OTY0NDc0ODY1MkU0MzZGNkQ2RDZGNkUyRTRENkY2NDY1NkM3MzJFNEQ2MTc0NjU3MjY5NjE2QzRENkY2NDY1NkMyQjQxNkM3NTZENjk3NTZENTQ3OTcwNjU3MzJDMjA0MjcyNjk2NDQ3NDg2NTJFNDM2RjZENkQ2RjZFMkMyMDU2NjU3MjczNjk2RjZFM0QzMDJFMzEyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNENkU3NTZDNkMIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGZB1dyb3VnaHRABUFsbG95LgNuaWyGCAABQBhDb21wcmVzc2l2ZVlpZWxkU3RyZW5ndGg/AklkiBkuBHR5cGWY02E6VDUzNzk3Mzc0NjU2RDJFNDQ2Rjc1NjI2QzY1MkMyMDUzNzk3Mzc0NjU2RDJFNTA3MjY5NzY2MTc0NjUyRTQzNkY3MjY1NEM2OTYyMkMyMDU2NjU3MjczNjk2RjZFM0QzODJFMzAyRTMwMkUzMDJDMjA0Mzc1NkM3NDc1NzI2NTNENkU2NTc1NzQ3MjYxNkMyQzIwNTA3NTYyNkM2OTYzNEI2NTc5NTQ2RjZCNjU2RTNEMzc2MzY1NjMzODM1NjQzNzYyNjU2MTM3MzczOTM4NjUIAAkBYRh1cm46Z3BjOmJyaWRnaGU6bW9kZWw6djGBQBRUZW5zaWxlWWllbGRTdHJlbmd0aD8CSWSIGi4EdHlwZZjTYTpUNTM3OTczNzQ2NTZEMkU0NDZGNzU2MjZDNjUyQzIwNTM3OTczNzQ2NTZEMkU1MDcyNjk3NjYxNzQ2NTJFNDM2RjcyNjU0QzY5NjIyQzIwNTY2NTcyNzM2OTZGNkUzRDM4MkUzMDJFMzAyRTMwMkMyMDQzNzU2Qzc0NzU3MjY1M0Q2RTY1NzU3NDcyNjE2QzJDMjA1MDc1NjI2QzY5NjM0QjY1Nzk1NDZGNkI2NTZFM0QzNzYzNjU2MzM4MzU2NDM3NjI2NTYxMzczNzM5Mzg2NQgACQFhGHVybjpncGM6YnJpZGdoZTptb2RlbDp2MYFAF1RlbnNpbGVVbHRpbWF0ZVN0cmVuZ3RoPwJJZIgbLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAVU2hlYXJVbHRpbWF0ZVN0cmVuZ3RoPwJJZIgcLgR0eXBlmNNhOlQ1Mzc5NzM3NDY1NkQyRTQ0NkY3NTYyNkM2NTJDMjA1Mzc5NzM3NDY1NkQyRTUwNzI2OTc2NjE3NDY1MkU0MzZGNzI2NTRDNjk2MjJDMjA1NjY1NzI3MzY5NkY2RTNEMzgyRTMwMkUzMDJFMzAyQzIwNDM3NTZDNzQ3NTcyNjUzRDZFNjU3NTc0NzI2MTZDMkMyMDUwNzU2MjZDNjk2MzRCNjU3OTU0NkY2QjY1NkUzRDM3NjM2NTYzMzgzNTY0Mzc2MjY1NjEzNzM3MzkzODY1CAAJAWEYdXJuOmdwYzpicmlkZ2hlOm1vZGVsOnYxgUAbUmVpbmZvcmNlbWVudFVsdGltYXRlU3RyYWluLgNuaWyGCAABQBFTdHJlc3NTdHJhaW5UYWJsZS4DbmlshggAAQE=</stream>
                                     </item>
                                     <item name="TypeName" type_name="gh_string" type_code="10">BridGHe.Grasshopper.DataTypes.Fem.GH_Material</item>
                                   </items>
@@ -1502,12 +1626,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>475</X>
+                              <Y>70</Y>
+                              <W>20</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>486.5</X>
+                              <Y>80</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1525,12 +1653,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>475</X>
+                              <Y>90</Y>
+                              <W>20</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>486.5</X>
+                              <Y>100</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1590,12 +1722,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>475</X>
+                              <Y>110</Y>
+                              <W>20</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>486.5</X>
+                              <Y>120</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1612,12 +1748,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>475</X>
+                              <Y>130</Y>
+                              <W>20</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>486.5</X>
+                              <Y>140</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1636,12 +1776,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>475</X>
+                              <Y>150</Y>
+                              <W>20</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>486.5</X>
+                              <Y>160</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1658,12 +1802,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>475</X>
+                              <Y>170</Y>
+                              <W>20</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>486.5</X>
+                              <Y>180</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1681,12 +1829,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>525</X>
+                              <Y>10</Y>
+                              <W>20</W>
+                              <H>45</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>535</X>
+                              <Y>32.5</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1704,12 +1856,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>525</X>
+                              <Y>55</Y>
+                              <W>20</W>
+                              <H>45</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>535</X>
+                              <Y>77.5</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1727,12 +1883,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>525</X>
+                              <Y>100</Y>
+                              <W>20</W>
+                              <H>45</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>535</X>
+                              <Y>122.5</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1749,12 +1909,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>525</X>
+                              <Y>145</Y>
+                              <W>20</W>
+                              <H>45</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>535</X>
+                              <Y>167.5</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1783,10 +1947,10 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>0</X>
-                          <Y>0</Y>
-                          <W>150</W>
-                          <H>20</H>
+                          <X>903</X>
+                          <Y>78</Y>
+                          <W>79</W>
+                          <H>44</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
                           <X>950</X>
@@ -1807,12 +1971,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>905</X>
+                              <Y>80</Y>
+                              <W>30</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>929.5</X>
+                              <Y>90</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1830,12 +1998,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="2">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>905</X>
+                              <Y>100</Y>
+                              <W>30</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>929.5</X>
+                              <Y>110</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1873,12 +2045,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>965</X>
+                              <Y>80</Y>
+                              <W>15</W>
+                              <H>40</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>972.5</X>
+                              <Y>100</Y>
                             </item>
                           </items>
                         </chunk>
@@ -1937,10 +2113,10 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>0</X>
-                          <Y>0</Y>
-                          <W>150</W>
-                          <H>20</H>
+                          <X>550</X>
+                          <Y>460</Y>
+                          <W>214</W>
+                          <H>22</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
                           <X>650</X>
@@ -1971,10 +2147,10 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>0</X>
-                          <Y>0</Y>
-                          <W>150</W>
-                          <H>20</H>
+                          <X>1269</X>
+                          <Y>-2</Y>
+                          <W>115</W>
+                          <H>204</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
                           <X>1320</X>
@@ -1995,12 +2171,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
+                              <X>1271</X>
                               <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <W>34</W>
+                              <H>100</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1297.5</X>
+                              <Y>50</Y>
                             </item>
                           </items>
                         </chunk>
@@ -2019,12 +2199,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
-                              <H>20</H>
+                              <X>1271</X>
+                              <Y>100</Y>
+                              <W>34</W>
+                              <H>100</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1297.5</X>
+                              <Y>150</Y>
                             </item>
                           </items>
                         </chunk>
@@ -2042,12 +2226,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
+                              <X>1335</X>
                               <Y>0</Y>
-                              <W>150</W>
+                              <W>47</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1358.5</X>
+                              <Y>10</Y>
                             </item>
                           </items>
                         </chunk>
@@ -2065,12 +2253,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1335</X>
+                              <Y>20</Y>
+                              <W>47</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1358.5</X>
+                              <Y>30</Y>
                             </item>
                           </items>
                         </chunk>
@@ -2088,12 +2280,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1335</X>
+                              <Y>40</Y>
+                              <W>47</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1358.5</X>
+                              <Y>50</Y>
                             </item>
                           </items>
                         </chunk>
@@ -2111,12 +2307,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1335</X>
+                              <Y>60</Y>
+                              <W>47</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1358.5</X>
+                              <Y>70</Y>
                             </item>
                           </items>
                         </chunk>
@@ -2134,12 +2334,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1335</X>
+                              <Y>80</Y>
+                              <W>47</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1358.5</X>
+                              <Y>90</Y>
                             </item>
                           </items>
                         </chunk>
@@ -2157,12 +2361,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1335</X>
+                              <Y>100</Y>
+                              <W>47</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1358.5</X>
+                              <Y>110</Y>
                             </item>
                           </items>
                         </chunk>
@@ -2180,12 +2388,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1335</X>
+                              <Y>120</Y>
+                              <W>47</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1358.5</X>
+                              <Y>130</Y>
                             </item>
                           </items>
                         </chunk>
@@ -2202,12 +2414,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1335</X>
+                              <Y>140</Y>
+                              <W>47</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1358.5</X>
+                              <Y>150</Y>
                             </item>
                           </items>
                         </chunk>
@@ -2224,12 +2440,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1335</X>
+                              <Y>160</Y>
+                              <W>47</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1358.5</X>
+                              <Y>170</Y>
                             </item>
                           </items>
                         </chunk>
@@ -2247,12 +2467,16 @@ Il riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il
                       </items>
                       <chunks count="1">
                         <chunk name="Attributes">
-                          <items count="1">
+                          <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>0</X>
-                              <Y>0</Y>
-                              <W>150</W>
+                              <X>1335</X>
+                              <Y>180</Y>
+                              <W>47</W>
                               <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1358.5</X>
+                              <Y>190</Y>
                             </item>
                           </items>
                         </chunk>

@@ -39,6 +39,9 @@ internal static class Program
     {
         // --pure does not start Rhino, useful for CI and unlicensed environments.
         using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},WindowStyle.Hidden);
+        if(args.Contains("--migrate-bridge-examples")) return BridgeExampleMigration.Run(args.SkipWhile(a=>a!="--migrate-bridge-examples").Skip(1).FirstOrDefault(a=>!a.StartsWith("--")),args.Contains("--publish"));
+        if(args.Contains("--modular-bridge-native")) return NativeModularBridgeTests.Run(args.SkipWhile(a=>a!="--modular-bridge-native").Skip(1).FirstOrDefault());
+        if(args.Contains("--modular-layout-capture")) return Example50HorizontalLayout.CaptureModular();
         if(args.Contains("--example99")) return PersonalBridgeExample.Run(args.SkipWhile(a => a != "--example99").Skip(1).FirstOrDefault() ?? "inspect");
         if(args.Contains("--combination-excel-read")) { BridgeCombinationExcelTests.ReadExternal(args.SkipWhile(a => a != "--combination-excel-read").Skip(1).First()); return 0; }
         if(args.Contains("--capture-bridge-baseline")) { BridgeNumericalBaseline.Capture();return 0; }
@@ -51,9 +54,9 @@ internal static class Program
         if(args.Contains("--workflow-stations-native")) return NativeWorkflowStationTests.Run(args.Contains("--capture-station-fixture"));
         if(args.Contains("--inventory")) { CheckGrasshopper(false,true);return 0; }
         if(args.Contains("--components-only")) { CheckGrasshopper(false);return 0; }
-        if(args.Contains("--simple-bridge-examples")) { SimpleBridgeTests.Run(); SimpleBridgeExamples.Run(true); return 0; }
-        if(args.Contains("--parametric-bridge-example")) return ParametricBridgeExample.Run();
-        if(args.Contains("--parametric-bridge-phases")) return ParametricBridgePhasesExample.Run(args.Contains("--native"));
+        if(args.Contains("--simple-bridge-examples")) { SimpleBridgeTests.Run(); SimpleBridgeExamples.Run(true); return BridgeExampleMigration.UpgradeGenerated(0,"29-","30-","31-","32-"); }
+        if(args.Contains("--parametric-bridge-example")) return BridgeExampleMigration.UpgradeGenerated(ParametricBridgeExample.Run(),"49-");
+        if(args.Contains("--parametric-bridge-phases")) return BridgeExampleMigration.UpgradeGenerated(ParametricBridgePhasesExample.Run(args.Contains("--native")),"50-");
         if(args.Contains("--example50-horizontal")) return Example50HorizontalLayout.Run();
         if(args.Contains("--example50-rev001-inputs")) return BridgeRevisionInputsExample.Run();
         if(args.Contains("--example50-rev002")) return BridgeRevisionStateExample.Run();
@@ -61,8 +64,8 @@ internal static class Program
         if(args.Contains("--saved-bridge-audit")) return SavedBridgeWorkflowAudit.Run();
         if(args.Contains("--prepare99-rev004")) return SavedBridgeWorkflowAudit.Run(true);
         if(args.Contains("--workflow-archived-replay")) return NativeWorkflowStationTests.ReplayArchived();
-        if(args.Contains("--bridge-design-examples")) { BridgeDesignExamples.Run(true); return 0; }
-        if(args.Contains("--bridge-details-example")) { BridgeDetailsExample.Run(true); return 0; }
+        if(args.Contains("--bridge-design-examples")) { BridgeDesignExamples.Run(true); return BridgeExampleMigration.UpgradeGenerated(0,Enumerable.Range(33,13).Select(i=>i+"-").ToArray()); }
+        if(args.Contains("--bridge-details-example")) { BridgeDetailsExample.Run(true); return BridgeExampleMigration.UpgradeGenerated(0,"47-"); }
         if(args.Contains("--bridge-details-model-example")) { BridgeDetailsModelExample.Generate(); return 0; }
         if(args.Contains("--bridge-details-plot-viewer")) { BridgeDetailsModelExample.GeneratePlotViewer(); return 0; }
         if(args.Contains("--bridge-report-example")) { BridgeReportExample.Run(true); return 0; }

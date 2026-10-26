@@ -78,7 +78,12 @@ internal static class BridgeSegmentExcelTests
         Component(folder, geometry, property, filled, edited);
         Console.WriteLine($"SEGMENT EXCEL PASS: {checks} checks; count, workbook edits, analytical area, sorting, mesh independence, stale geometry, invalid inputs, formula caches, file protection and GH round trip.");
     }
-    internal static void Press(GH_Component component) => component.GetType().GetField("run", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(component, true);
+    internal static void Press(GH_Component component)
+    {
+        for(var type=component.GetType();type!=null;type=type.BaseType)
+        {var field=type.GetField("run",BindingFlags.NonPublic|BindingFlags.Instance|BindingFlags.DeclaredOnly);if(field!=null){field.SetValue(component,true);return;}}
+        throw new ArgumentException("Component has no file-operation button: "+component.Name);
+    }
     internal static void Solve(GH_Document doc, bool allowErrors = false)
     {
         GH_Document.EnableSolutions = true; doc.Enabled = true; doc.NewSolution(false, GH_SolutionMode.Silent);
