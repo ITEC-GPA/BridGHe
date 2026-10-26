@@ -62,6 +62,7 @@ internal static class RegressionTests
             ["bridge-detail-plots"] = BridgeDetailPlotTests.Run,
             ["native-bridge-components"] = NativeBridgeComponentTests.Run,
             ["bridge-numerical-baseline"] = BridgeNumericalBaseline.Verify,
+            ["bridge-linear-small-loads"] = BridgeLinearSmallLoadsTests.Run,
             ["archive-before-cleanup"] = ArchiveBeforeCleanup,
             ["composite-archive"] = CompositeArchive,
             ["composite-component"] = CompositeComponentTests.Run,
