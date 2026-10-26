@@ -91,7 +91,7 @@ internal static class NativeModularBridgeTests
         Console.WriteLine($"NATIVE MODULAR BRIDGE PASS: 4 models, {model.LoadCombinations.Count} combinations, {rows.Length} section results, {details.Length} details, {plots.Length} plots, report inputs. GHX files unchanged.");return 0;
     }
     private static string Errors(GH_Document doc)=>string.Join("\n",doc.Objects.OfType<GH_ActiveObject>().SelectMany(c=>c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Select(s=>c.NickName+": "+s)));
-    private static double VerticalLoad(ModelModel model,string name)
+    internal static double VerticalLoad(ModelModel model,string name)
     {
         var combination=model.LoadCombinations.SingleOrDefault(c=>c.Name==name);
         if(combination!=null)return combination.Values.Sum(p=>p.Value*VerticalLoad(model,p.Key.Name));

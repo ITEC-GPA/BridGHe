@@ -61,6 +61,7 @@ internal static class Program
         if(args.Contains("--example50-rev001-inputs")) return BridgeRevisionInputsExample.Run();
         if(args.Contains("--example50-rev002")) return BridgeRevisionStateExample.Run();
         if(args.Contains("--example50-rev002-check")) return BridgeRevisionStateExample.Run(true);
+        if(args.Contains("--example50-rev003")) return BridgeMovingRevisionExample.Run(args);
         if(args.Contains("--saved-bridge-audit")) return SavedBridgeWorkflowAudit.Run();
         if(args.Contains("--prepare99-rev004")) return SavedBridgeWorkflowAudit.Run(true);
         if(args.Contains("--workflow-archived-replay")) return NativeWorkflowStationTests.ReplayArchived();

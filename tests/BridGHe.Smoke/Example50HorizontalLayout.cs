@@ -66,6 +66,12 @@ internal static class Example50HorizontalLayout
                 "BuildModelComponent" or "StrausR3AnalysisComponent" or "BridgeAnalysisCasesComponent" => 3,
                 "BridgeActionComponent" or "BridgeShrinkageActionComponent" => 4,
                 "BridgeConstructionPhaseComponent" => 5,
+                "MovingPointComponent" => 0,
+                "MovingVehicleComponent" => 1,
+                "MovingTemplateComponent" => 2,
+                "BridgeStraightMovingPathComponent" => 3,
+                "AttachMovingPathsComponent" => 4,
+                "MovingStaticAnalysisComponent" => 5,
                 _ => 1 // unit conversion / tributary strip load arithmetic
             };
             return (phase + 3, lane);
@@ -415,6 +421,12 @@ internal static class Example50HorizontalLayout
         Capture(doc,stages,folder,new[]{0,1,3,8});
         File.WriteAllText(Path.Combine(folder,"stages.json"),JsonSerializer.Serialize(stages.Select(s=>new{s.Title,s.Components,s.Bounds.X,s.Bounds.Y,s.Bounds.Width,s.Bounds.Height}),new JsonSerializerOptions{WriteIndented=true}));
         Console.WriteLine("MODULAR CANVAS CAPTURE PASS: horizontal stages; no GHX written.");return 0;
+    }
+    internal static void CaptureMovingRevision(GH_Document doc)
+    {
+        string folder=Path.GetFullPath("artifacts/rev003-canvas");Directory.CreateDirectory(folder);
+        var stages=Apply(doc);Capture(doc,stages,folder,new[]{5,7});
+        Console.WriteLine("REV003 CANVAS CAPTURE PASS: n0 and combinations; no GHX written.");
     }
     private static void Capture(GH_Document doc, Stage[] stages, string directory, int[] selected=null)
     {

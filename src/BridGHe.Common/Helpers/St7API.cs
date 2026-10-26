@@ -134,6 +134,11 @@ namespace St7API
         public const int ipPlateCombPrincipalAngle = 3;
         public const int ipPlateCombVonMises = 4;
         public const int csCartesian = 0;
+        public const int aoForce = 2;
+        public const int aoBeamCFL = 30;
+        public const int aoBeamCFG = 31;
+        public const int ipAttrCase = 2;
+        public const int ipAttrID = 3;
         public const int ttStressStrain = 4;
         public const int ptBeamStressVsStrain = 1011;
         public const int ptPlateStressVsStrain = 2007;
@@ -289,6 +294,8 @@ namespace St7API
         [DllImport("St7API.dll")]
         public static extern int St7GetNodeRestraint6(int uID, int NodeNum, int CaseNum, ref int UCSId, int[] Status, double[] Doubles);
         [DllImport("St7API.dll")]
+        public static extern int St7GetNodeForce3(int uID, int NodeNum, int CaseNum, double[] Doubles);
+        [DllImport("St7API.dll")]
         public static extern int St7GetNodeKTranslation3F(int uID, int NodeNum, int CaseNum, ref int UCSId, double[] Doubles);
         [DllImport("St7API.dll")]
         public static extern int St7SetBeamID(int uID, int BeamNum, int BeamID);
@@ -327,6 +334,8 @@ namespace St7API
         [DllImport("St7API.dll")]
         public static extern int St7GetBeamSupport2(int uID, int BeamNum, int Direction, int CaseNum, ref int Status, double[] Doubles);
         [DllImport("St7API.dll")]
+        public static extern int St7GetBeamPointForceGlobal4ID(int uID, int BeamNum, int CaseNum, int ID, double[] Doubles);
+        [DllImport("St7API.dll")]
         public static extern int St7SetPlateID(int uID, int PlateNum, int PlateID);
         [DllImport("St7API.dll")]
         public static extern int St7SetPlateXAngle1(int uID, int PlateNum, double[] Doubles);
@@ -346,6 +355,10 @@ namespace St7API
         public static extern int St7SetPlateLoadPatch4(int uID, int PlateNum, int PatchType, int EdgeBits, double[] Doubles);
         [DllImport("St7API.dll")]
         public static extern int St7SetEntityGroup(int uID, int Entity, int EntityNum, int GroupID);
+        [DllImport("St7API.dll")]
+        public static extern int St7GetEntityAttributeSequenceCount(int uID, int Entity, int EntityNum, int AttributeOrd, ref int NumSets);
+        [DllImport("St7API.dll")]
+        public static extern int St7GetEntityAttributeSequence(int uID, int Entity, int EntityNum, int AttributeOrd, int MaxSets, int[] Integers);
         [DllImport("St7API.dll")]
         public static extern int St7SetPropertyTable(int uID, int PropTableType, int PropNum, int TableID);
         [DllImport("St7API.dll")]
