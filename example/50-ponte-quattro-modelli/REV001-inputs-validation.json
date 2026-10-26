@@ -1,0 +1,26 @@
+{
+  "SourceSha256": "A84A226E7474FAF494B9695E8238AC201B81F9FEA77240EAEFBD9132C87AF002",
+  "PreservedUserRevision": true,
+  "Reopened": true,
+  "ExistingGeometryAndSectionsUnchanged": true,
+  "ExistingSerializedDataPreserved": true,
+  "NativeSolverInvoked": false,
+  "GeometryOnlyComponents": 66,
+  "NewObjects": 16,
+  "RewiredParameters": [
+    "1869ddca-a256-4338-ba11-30e4cf00e93a",
+    "704549ce-5036-4cd9-8759-3262943bdf23",
+    "56ddbdc1-bc26-40de-9ff0-9cdc8d9aa07c",
+    "244a51b9-6d57-4c9b-ab41-40481a8f0f2f",
+    "6f1f9c63-804a-42dd-8f8a-fd3437373fa6",
+    "b7e3144c-ce92-4e58-b8cb-f5c1d959ee40",
+    "c85bcd36-194f-4ab1-b55c-bd76c075aca4",
+    "fddd4147-08e1-4461-ab27-d5bd28bbee4d",
+    "246fa147-2453-4289-a6dc-4ecd9c721a91"
+  ],
+  "Segments": 24,
+  "Girders": 3,
+  "FEMSteelMembers": 398,
+  "Excel": "Sezioni_conci_REV001.xlsx",
+  "CommonJointPreparationConnected": true
+}

@@ -1,5 +1,7 @@
 # 50 · Ponte parametrico: quattro modelli, fasi, ritiro e verifiche
 
+La revisione personale **[50-ponte-quattro-modelli_REV001.ghx](50-ponte-quattro-modelli_REV001.ghx)** include ora **Bridge Alignment Inputs** e **Bridge Segment Excel**, collegati al flusso esistente. La **[guida agli input del REV001](INPUT-REV001.md)** spiega progressive degli appoggi e creazione/lettura del foglio **[Sezioni_conci_REV001.xlsx](Sezioni_conci_REV001.xlsx)**. L'integrazione conserva geometria, sezioni e altri dati della revisione salvata dall'utente. I valori dimostrativi descritti sotto si riferiscono alla versione base.
+
 Aprire **[50-ponte-quattro-modelli.ghx](50-ponte-quattro-modelli.ghx)** con la Release aggiornata di BridGHe per Rhino 8. L'esempio deriva da una copia del **49**, che resta invariato. Il flusso si legge **da sinistra a destra**; ogni componente ha i propri input espliciti a sinistra e gli output nominati a destra.
 
 ## Organizzazione del canvas
