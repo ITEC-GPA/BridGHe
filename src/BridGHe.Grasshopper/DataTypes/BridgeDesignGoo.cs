@@ -11,7 +11,7 @@ public sealed class BridgeDesignGoo : GH_Goo<object>
 {
     public BridgeDesignGoo() { }
     public BridgeDesignGoo(object value) { Value = value; }
-    public override bool IsValid => Value is BridgeSectionRule;
+    public override bool IsValid => Value is BridgeSectionRule or BridgeFamilyProperty;
     public override string TypeName => "Bridge Design Definition";
     public override string TypeDescription => "Typed bridge assignment and detailing definitions.";
     public override string ToString() => Value?.ToString() ?? "Empty bridge design definition";

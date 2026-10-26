@@ -11,6 +11,7 @@ using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Special;
+using Grasshopper.Kernel.Types;
 
 namespace BridGHe.Grasshopper.Components.Geometry;
 
@@ -23,7 +24,7 @@ public sealed class BridgeSegmentSectionsComponent : BridgeUtilityComponent
     public override Guid ComponentGuid => new Guid("8b33beac-6c81-4285-94ad-4e3dc2351a21");
     protected override void RegisterInputParams(GH_InputParamManager p)
     {
-        p.AddGenericParameter("Bridge Geometry", "BG", "Simple Bridge geometry, also after longitudinal bracing. Segment identity is independent of mesh subdivisions.", GH_ParamAccess.item);
+        p.AddGenericParameter("Fabrication Plan", "C", "Physical segments from Bridge Fabrication Segments, before meshing. Existing Bridge Geometry is also accepted.", GH_ParamAccess.item);
         p.AddGenericParameter("Base Property", "P", "Steel I Section + Beam property. Material and formulation are retained; dimensions marked '*' follow this section.", GH_ParamAccess.item);
         p.AddTextParameter("Section Table", "T", "One row per concio: ID; start; end; b_bottom; b_top; height; t_bottom; t_top; t_web; radius. All dimensions mm. '*' inherits base dimension. Disconnected or header-only = all base; a connected empty source waits for data. Press Tabella conci to fill an attached editable Panel.", GH_ParamAccess.list);
         p[2].Optional = true;
@@ -59,7 +60,7 @@ public sealed class BridgeSegmentSectionsComponent : BridgeUtilityComponent
     public void UpdateTablePanel()
     {
         var document = OnPingDocument() ?? throw new InvalidOperationException("Add this component to a Grasshopper document first.");
-        var geometries = Params.Input[0].VolatileData.AllData(true).Select(g => g?.ScriptVariable()).OfType<SimpleBridgeGeometry>().ToArray();
+        var geometries = Params.Input[0].VolatileData.AllData(true).Select(g => g?.ScriptVariable()).OfType<IBridgeSegments>().ToArray();
         if (geometries.Length != 1) throw new ArgumentException("Connect one solved Bridge Geometry before updating the section table.");
         var input = Params.Input[2];
         if (input.SourceCount > 1 || input.SourceCount == 1 && input.Sources[0] is not GH_Panel)
@@ -85,7 +86,7 @@ public sealed class BridgeSegmentSectionsComponent : BridgeUtilityComponent
     protected override void Solve(IGH_DataAccess da)
     {
         Message = "";
-        BridgeGeometryGoo geometry = null; GH_BeamProperty property = null; var table = new List<string>();
+        IGH_Goo geometry = null; GH_BeamProperty property = null; var table = new List<string>();
         if (!da.GetData(0, ref geometry) || !da.GetData(1, ref property)) return;
         if (Params.Input[0].VolatileDataCount != 1 || Params.Input[1].VolatileDataCount != 1)
             throw new ArgumentException("Connect exactly one Bridge Geometry and one Base Property; use Section Table for multiple segments.");
@@ -96,7 +97,7 @@ public sealed class BridgeSegmentSectionsComponent : BridgeUtilityComponent
             AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The connected Section Table has no data. Read the workbook or supply a valid table before assigning sections. Disconnect the input to use only the base section.");
             return;
         }
-        var result = BridgeSegmentSections.Create(geometry.Value, property.Value, table);
+        var result = BridgeSegmentSections.Create(BridgeDefinitionGoo.Segments(geometry), property.Value, table);
         var properties = result.Rules.Select(r => r.Property).ToArray();
         da.SetDataList(0, result.Rules.Select(r => new BridgeDesignGoo(r)));
         da.SetDataList(1, properties.Select(p => new GH_BeamProperty(p)));

@@ -10,10 +10,11 @@ using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using GH_IO.Serialization;
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Types;
 
 namespace BridGHe.Grasshopper.Components.Geometry;
 
-public sealed class BridgeSegmentExcelComponent : BridgeUtilityComponent
+public class BridgeSegmentExcelComponent : BridgeUtilityComponent
 {
     private bool run;
     private string cachePath;
@@ -21,6 +22,10 @@ public sealed class BridgeSegmentExcelComponent : BridgeUtilityComponent
     public BridgeSegmentExcelComponent() : base("Bridge Segment Excel", "SegmentExcel",
         "Count fabrication segments before assigning sections. Create an Excel template from geometry, then read its dimensions into Bridge Segment Sections. File access only on Run.",
         CategoryNameConstants.SUBCATEGORY_SECTIONS) { }
+    protected BridgeSegmentExcelComponent(string name, string nickname) : base(name, nickname,
+        "Fabrication section workbook, in mm. File access only on Run; counts are available before mesh generation.", CategoryNameConstants.SUBCATEGORY_SECTIONS) { }
+    protected virtual int? FixedMode => null;
+    public override GH_Exposure Exposure => FixedMode == null ? GH_Exposure.hidden : GH_Exposure.primary;
     public override Guid ComponentGuid => new Guid("f9286827-2ca1-4268-a6dc-79c8ba6d1c9f");
     public override void CreateAttributes()
     {
@@ -29,11 +34,14 @@ public sealed class BridgeSegmentExcelComponent : BridgeUtilityComponent
     }
     protected override void RegisterInputParams(GH_InputParamManager p)
     {
-        p.AddGenericParameter("Bridge Geometry", "BG", "Bridge Geometry from Simple Bridge, before section assignment. Counts fabrication segments, not FEM elements.", GH_ParamAccess.item);
+        p.AddGenericParameter("Fabrication Plan", "C", "From Bridge Fabrication Segments. Existing Bridge Geometry is also accepted. No FEM mesh is required.", GH_ParamAccess.item);
         p.AddTextParameter("File", "F", "Excel .xlsx path. Relative to the saved GH definition. Used only on Run; not required for counts.", GH_ParamAccess.item, "Sezioni_conci.xlsx");
-        p.AddIntegerParameter("Mode", "M", "0 Create template; 1 Read completed workbook. Press Run to access the file.", GH_ParamAccess.item, 0);
-        p.AddGenericParameter("Base Property", "P", "Optional steel I Beam Property: prefill numeric dimensions when creating Excel. Without it, '*' inherits Base Property later in Bridge Segment Sections.", GH_ParamAccess.item); p[3].Optional = true;
-        p.AddBooleanParameter("Overwrite", "O", "Allow explicit Create to replace an existing Excel file. False by default. Use a new file after changing geometry to preserve your previous dimensions.", GH_ParamAccess.item, false);
+        if (FixedMode == null) p.AddIntegerParameter("Mode", "M", "0 Create template; 1 Read completed workbook. Press Run to access the file.", GH_ParamAccess.item, 0);
+        if (FixedMode != 1)
+        {
+            p.AddGenericParameter("Base Property", "P", "Optional steel I property to prefill dimensions. Without it, '*' inherits the base section later.", GH_ParamAccess.item); p[FixedMode == null ? 3 : 2].Optional = true;
+            p.AddBooleanParameter("Overwrite", "O", "Explicit permission to replace an existing workbook on Run. Default false.", GH_ParamAccess.item, false);
+        }
     }
     protected override void RegisterOutputParams(GH_OutputParamManager p)
     {
@@ -48,16 +56,22 @@ public sealed class BridgeSegmentExcelComponent : BridgeUtilityComponent
     protected override void Solve(IGH_DataAccess da)
     {
         bool execute = run; run = false;
-        BridgeGeometryGoo geometry = null; GH_BeamProperty property = null;
-        string file = "Sezioni_conci.xlsx"; int mode = 0; bool overwrite = false;
+        IGH_Goo geometry = null; GH_BeamProperty property = null;
+        string file = "Sezioni_conci.xlsx"; int mode = FixedMode ?? 0; bool overwrite = false;
         if (!da.GetData(0, ref geometry)) return;
         if (Params.Input[0].VolatileDataCount != 1) throw new ArgumentException("Connect exactly one Bridge Geometry.");
-        var segments = BridgeSegmentSections.Segments(geometry.Value);
+        var plan = BridgeDefinitionGoo.Segments(geometry);
+        var segments = BridgeSegmentSections.Segments(plan);
         var groups = segments.GroupBy(s => s.Girder).ToArray();
         da.SetData(0, segments.Length); da.SetDataList(1, segments.Select(BridgeSegmentSections.Id));
         da.SetDataList(2, groups.Select(g => g.Key)); da.SetDataList(3, groups.Select(g => g.Count()));
-        da.GetData(1, ref file); da.GetData(2, ref mode); da.GetData(3, ref property); da.GetData(4, ref overwrite);
-        if (Params.Input[3].VolatileDataCount > 1) throw new ArgumentException("Connect at most one Base Property.");
+        da.GetData(1, ref file);
+        if (FixedMode == null) da.GetData(2, ref mode);
+        if (FixedMode != 1)
+        {
+            int pi = FixedMode == null ? 3 : 2; da.GetData(pi, ref property); da.GetData(pi + 1, ref overwrite);
+            if (Params.Input[pi].VolatileDataCount > 1) throw new ArgumentException("Connect at most one Base Property.");
+        }
         var info = new List<string> { $"{segments.Length} fabrication segments across {groups.Length} girders. Counts do not depend on FEM mesh subdivisions.",
             "Excel: one row per ID; dimensions in mm. '*' inherits the corresponding Base Property dimension in Bridge Segment Sections. Blank cells are rejected." };
         try
@@ -73,10 +87,10 @@ public sealed class BridgeSegmentExcelComponent : BridgeUtilityComponent
             if (execute && path == null) throw new ArgumentException("Save the GH definition or supply an absolute .xlsx path before Run.");
             if (mode == 0)
             {
-                var table = BridgeSegmentWorkbook.Template(geometry.Value, property?.Value);
-                if (execute) BridgeSegmentWorkbook.Write(path, geometry.Value, property?.Value, overwrite);
+                var table = BridgeSegmentWorkbook.Template(plan, property?.Value);
+                if (execute) BridgeSegmentWorkbook.Write(path, plan, property?.Value, overwrite);
                 da.SetDataList(4, table);
-                info.Add(execute ? "Created. Edit the yellow cells, save Excel, select Mode=1 and press Run. ID and station columns must remain paired." : "Run creates the file. Section Table currently contains the proposed template, not the contents of an Excel file.");
+                info.Add(execute ? "Created. Edit the yellow cells, save Excel, then press Run on Bridge Read Section Excel. ID and station columns must remain paired." : "Run creates the file. Section Table currently contains the proposed template, not the contents of an Excel file.");
                 Message = segments.Length + (execute ? " | created" : " | template");
             }
             else
@@ -84,18 +98,18 @@ public sealed class BridgeSegmentExcelComponent : BridgeUtilityComponent
                 if (execute)
                 {
                     cache = null; cachePath = null; warnings = Array.Empty<string>();
-                    var result = BridgeSegmentWorkbook.Read(path, geometry.Value);
+                    var result = BridgeSegmentWorkbook.Read(path, plan);
                     cache = result.Table; warnings = result.Warnings; cachePath = path;
                 }
                 if (cache == null || !string.Equals(path, cachePath, StringComparison.OrdinalIgnoreCase))
                 {
                     Message = segments.Length + " | Run: read";
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Press Run in Read mode to supply Section Table. No workbook data have been loaded for this path.");
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Press Run on the reader to supply Section Table. No workbook data have been loaded for this path.");
                 }
                 else
                 {
                     // Validate every time: a changed mesh is allowed; changed fabrication IDs/ranges are rejected.
-                    var table = BridgeSegmentSections.ValidateTable(geometry.Value, cache);
+                    var table = BridgeSegmentSections.ValidateTable(plan, cache);
                     da.SetDataList(4, table); info.AddRange(warnings);
                     info.Add(execute ? "Workbook read. Section Table is ready for Bridge Segment Sections." : "Using the last imported table. To apply Excel edits, recalculate/save Excel and press Run again.");
                     Message = segments.Length + " | " + (execute ? "read" : "cached");

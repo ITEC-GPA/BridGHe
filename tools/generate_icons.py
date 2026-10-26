@@ -213,6 +213,35 @@ def icon_svg(symbol, family, mark, title, parameter=False):
 
 # Each row is an explicit semantic assignment, never a generic unknown icon.
 ROWS = '''
+BridgeAnalysisCasesComponent|case|check|solver
+BridgeSupportLayoutComponent|bridge-bearing|measure|model
+BridgeGirderLayoutComponent|bridge-solid|axes|model
+BridgeRegularGirdersComponent|bridge-solid|add|model
+BridgeDeckLayoutComponent|bridge-deck|measure|model
+BridgeJointSetComponent|bridge-segments|add|model
+BridgeFabricationSegmentsComponent|bridge-segments|data|model
+BridgeSolidDiaphragmsComponent|bridge-diaphragms|shape|model
+BridgeTrussDiaphragmsComponent|bridge-truss|shape|model
+BridgeGeometryAssemblyComponent|model|shape|model
+BridgeMeshSettingsComponent|bridge-deck|edit|model
+BridgeGrillageMeshComponent|bridge-deck|stages|model
+BridgeSectionTemplateComponent|table|export|section
+BridgeSectionReadComponent|table|arrow|section
+BridgeRigidLinksComponent|bridge-connection|link|model
+BridgeConnectionBeamsComponent|bridge-connection|shape|model
+BridgeBeamOffsetsComponent|beam|swap|model
+BridgeSpanStationsComponent|bridge-schedule|parameter|model
+BridgeAlignmentCurveComponent|route|measure|model
+BridgeDeckWidthsComponent|bridge-deck|axes|model
+BridgeBracingStationsComponent|bridge-bracing|measure|model
+BridgeBearingPatternComponent|bridge-bearing|data|model
+BridgeJointTreeComponent|bridge-segments|filter|model
+BridgeCrossfallTreeComponent|table|axes|model
+BridgeSupportStationsComponent|bridge-bearing|filter|model
+BridgeNormalizeJointsComponent|bridge-segments|check|model
+BridgeDiaphragmChoiceComponent|bridge-diaphragms|swap|model
+BridgeFamilyPropertyComponent|bridge-assign|add|model
+BridgeFemMembersComponent|bridge-assign|native|model
 BridgeSpanAdvisorComponent|bridge-advice||model
 BridgeSectionScheduleComponent|bridge-schedule||model
 BridgeMemberAssignmentComponent|bridge-assign||model

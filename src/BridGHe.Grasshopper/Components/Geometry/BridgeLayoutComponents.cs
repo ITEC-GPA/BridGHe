@@ -14,6 +14,7 @@ namespace BridGHe.Grasshopper.Components.Geometry;
 
 public sealed class BridgeSegmentsComponent : BridgeUtilityComponent
 {
+    public override GH_Exposure Exposure => GH_Exposure.hidden;
     public BridgeSegmentsComponent() : base("Bridge Segments", "Segments", "Girder fabrication joints in mm. Independent of supports, FE mesh and construction phases.", CategoryNameConstants.SUBCATEGORY_MODEL) { }
     public override Guid ComponentGuid => new Guid("190346aa-929b-443c-9a38-622dd4a497db");
     protected override void RegisterInputParams(GH_InputParamManager p)
@@ -44,6 +45,7 @@ public sealed class BridgeSegmentsComponent : BridgeUtilityComponent
 
 public sealed class BridgeDiaphragmsComponent : BridgeUtilityComponent
 {
+    public override GH_Exposure Exposure => GH_Exposure.hidden;
     public BridgeDiaphragmsComponent() : base("Bridge Diaphragms", "Diaphragms", "Locations and truss layout for Simple Bridge. All lengths in mm; creates no stiffness or releases.", CategoryNameConstants.SUBCATEGORY_MODEL) { }
     public override Guid ComponentGuid => new Guid("7b70afbe-36b1-4880-9d3e-852628d0dbbc");
     protected override void RegisterInputParams(GH_InputParamManager p)

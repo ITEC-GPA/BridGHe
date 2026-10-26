@@ -8399,6 +8399,136 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeRigidLinksComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f014",
+    "kind": "component",
+    "name": "Bridge Rigid Links",
+    "nickname": "RigidLinks",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Native spatial kinematic links between girder and slab nodes. No artificial penalty stiffness.",
+    "inputs": [
+      {
+        "name": "Connection Axes",
+        "nickname": "L",
+        "description": "Connect Deck Connections from Bridge Grillage Mesh. Endpoints must coincide with FEM nodes, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Line"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Elements",
+        "nickname": "E",
+        "description": "Connect to Build Model.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Mechanical representation.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeConnectionBeamsComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f015",
+    "kind": "component",
+    "name": "Bridge Connection Beams",
+    "nickname": "ConnectionBeams",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Connection members with an explicit beam/truss property. Their stiffness and weight enter the FEM model.",
+    "inputs": [
+      {
+        "name": "Connection Axes",
+        "nickname": "L",
+        "description": "Connect Deck Connections from Bridge Grillage Mesh. Endpoints must coincide with FEM nodes, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Line"
+      },
+      {
+        "name": "Connection Property",
+        "nickname": "P",
+        "description": "Explicit beam/truss property.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Elements",
+        "nickname": "E",
+        "description": "Connect to Build Model.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Mechanical representation.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeBeamOffsetsComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f016",
+    "kind": "component",
+    "name": "Bridge Beam Offsets",
+    "nickname": "BeamOffsets",
+    "category": "BridGHe",
+    "subcategory": "07-Attributes",
+    "description": "Set local section offsets on copied beams. Clears results; reference axes stay unchanged.",
+    "inputs": [
+      {
+        "name": "Beams",
+        "nickname": "B",
+        "description": "Beams to copy and modify.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Local Offset",
+        "nickname": "O",
+        "description": "Local section x/y offsets, mm. Z must be zero. Sets the offset, does not increment it.",
+        "access": "item",
+        "optional": false,
+        "type": "Vector"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Beams",
+        "nickname": "B",
+        "description": "Modified beams with cleared results.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Offset convention.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Geometry.BridgeConnectionsComponent",
     "guid": "66a0d167-4e5b-4ea1-9327-935c772fd97b",
     "kind": "component",
@@ -8705,6 +8835,808 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSupportLayoutComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f001",
+    "kind": "component",
+    "name": "Bridge Support Lines",
+    "nickname": "SupportLines",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Position abutments and piers by distances along the alignment, mm. Geometric lines only; assign restraints separately.",
+    "inputs": [
+      {
+        "name": "Alignment",
+        "nickname": "A",
+        "description": "Deck reference alignment, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Support Stations",
+        "nickname": "S",
+        "description": "Distances along curve, mm. Empty = both ends. Unsorted values are sorted together with their skew angles. End supports are not added when stations are supplied.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Skew Angles",
+        "nickname": "K",
+        "description": "Degrees towards the tangent from the local transverse line. One angle for all supports or one per supplied station.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Support Lines",
+        "nickname": "S",
+        "description": "Geometric support definition; no stiffness or restraints.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Span Lengths",
+        "nickname": "L",
+        "description": "Distances between successive support stations, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Support Centres",
+        "nickname": "P",
+        "description": "Support centres on alignment.",
+        "access": "list",
+        "optional": false,
+        "type": "Point"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeGirderLayoutComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f002",
+    "kind": "component",
+    "name": "Bridge Girder Axes",
+    "nickname": "GirderAxes",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Transverse locations and reference elevations of the longitudinal girder axes, in mm. No sections are assigned.",
+    "inputs": [
+      {
+        "name": "Transverse Offsets",
+        "nickname": "Y",
+        "description": "2..32 increasing offsets from alignment: negative right, positive left, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Axis Levels",
+        "nickname": "Z",
+        "description": "One level for all girders or one per offset, mm along deck normal. Negative below deck top. These are reference axes, not automatically inferred centroids.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Girder Axes",
+        "nickname": "G",
+        "description": "Layout for fabrication and geometry assembly.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Girder Count",
+        "nickname": "N",
+        "description": "Number of girders.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeRegularGirdersComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f003",
+    "kind": "component",
+    "name": "Bridge Regular Girders",
+    "nickname": "RegularGirders",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Create symmetric transverse offsets from girder count and spacing, mm.",
+    "inputs": [
+      {
+        "name": "Girder Count",
+        "nickname": "N",
+        "description": "Number of girders, 2..32.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Girder Spacing",
+        "nickname": "S",
+        "description": "Centre-to-centre spacing, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Explicit Offsets",
+        "nickname": "Y",
+        "description": "Optional increasing transverse offsets, mm, replacing regular spacing.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Transverse Offsets",
+        "nickname": "Y",
+        "description": "Increasing offsets, centred on alignment, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeDeckLayoutComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f004",
+    "kind": "component",
+    "name": "Bridge Slab Layout",
+    "nickname": "SlabLayout",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Slab envelope, crossfall and reference elevation. Meshing is configured separately. All lengths in mm.",
+    "inputs": [
+      {
+        "name": "Side Widths",
+        "nickname": "W",
+        "description": "Left and right distances from alignment to deck edge, mm. One value = symmetric deck.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Thickness",
+        "nickname": "H",
+        "description": "Slab thickness along deck normal, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Crossfall Percent",
+        "nickname": "%",
+        "description": "One constant percentage, or one percentage per Crossfall Station. Positive raises the left edge.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Crossfall Stations",
+        "nickname": "S",
+        "description": "Only for variable crossfall: stations corresponding to percentages, covering the entire alignment, mm.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Slab Axis Level",
+        "nickname": "Z",
+        "description": "Optional level from deck top, mm, within -Thickness..0. Default: slab mid-plane (-Thickness/2).",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Slab Layout",
+        "nickname": "D",
+        "description": "Geometric slab definition. Material and weight are assigned separately.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeJointSetComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f005",
+    "kind": "component",
+    "name": "Bridge Joint Stations",
+    "nickname": "JointStations",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "A list of fabrication joint stations, optionally restricted to selected girders. No tree paths are required.",
+    "inputs": [
+      {
+        "name": "Joint Stations",
+        "nickname": "S",
+        "description": "Distances along alignment, mm. These are physical fabrication joints, not FEM releases.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Girder IDs",
+        "nickname": "G",
+        "description": "Optional IDs starting at 1. Empty or 0 applies to all girders.",
+        "access": "list",
+        "optional": true,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Joint Set",
+        "nickname": "J",
+        "description": "Connect one or several sets to Bridge Fabrication Segments.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeFabricationSegmentsComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f006",
+    "kind": "component",
+    "name": "Bridge Fabrication Segments",
+    "nickname": "Fabrication",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Define physical girder segments BEFORE meshing. IDs and ranges feed Excel and section assignment directly.",
+    "inputs": [
+      {
+        "name": "Alignment",
+        "nickname": "A",
+        "description": "Bridge alignment, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Girder Axes",
+        "nickname": "G",
+        "description": "From Bridge Girder Axes.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Joint Sets",
+        "nickname": "J",
+        "description": "Optional Bridge Joint Stations objects. Explicit stations replace automatic subdivision for the affected girder.",
+        "access": "list",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Maximum Segment Length",
+        "nickname": "L",
+        "description": "Equal subdivision when no explicit joints apply. mm; 0 = one segment per girder. Independent of spans and FEM mesh.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Fabrication Plan",
+        "nickname": "C",
+        "description": "Physical segments, usable by assembly, section template and section reader.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Segment Count",
+        "nickname": "N",
+        "description": "Total count, all girders.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Segment IDs",
+        "nickname": "ID",
+        "description": "G1-C1 etc., ordered by girder and segment.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Start Stations",
+        "nickname": "S0",
+        "description": "mm, same order as IDs.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "End Stations",
+        "nickname": "S1",
+        "description": "mm, same order as IDs.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Segment Lengths",
+        "nickname": "L",
+        "description": "Length along alignment, mm (not chord length).",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSolidDiaphragmsComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f007",
+    "kind": "component",
+    "name": "Bridge Solid Diaphragms",
+    "nickname": "SolidDiaphragms",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Diaphragm stations and geometry, mm. Sections and releases are assigned separately.",
+    "inputs": [
+      {
+        "name": "Stations",
+        "nickname": "S",
+        "description": "Explicit distances along alignment, mm. Empty uses Maximum Spacing.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Maximum Spacing",
+        "nickname": "L",
+        "description": "Automatic spacing within each span/overhang, mm. 0 = explicit and support lines only.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "At Supports",
+        "nickname": "AS",
+        "description": "Include support lines and their skew.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Diaphragms",
+        "nickname": "D",
+        "description": "Connect to Bridge Geometry Assembly.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeTrussDiaphragmsComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f008",
+    "kind": "component",
+    "name": "Bridge Truss Diaphragms",
+    "nickname": "TrussDiaphragms",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Diaphragm stations and geometry, mm. Sections and releases are assigned separately.",
+    "inputs": [
+      {
+        "name": "Stations",
+        "nickname": "S",
+        "description": "Explicit distances along alignment, mm. Empty uses Maximum Spacing.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Maximum Spacing",
+        "nickname": "L",
+        "description": "Automatic spacing within each span/overhang, mm. 0 = explicit and support lines only.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "At Supports",
+        "nickname": "AS",
+        "description": "Include support lines and their skew.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Truss Height",
+        "nickname": "H",
+        "description": "Total height centred on girder axes, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Panels per Bay",
+        "nickname": "P",
+        "description": "Panels between adjacent girders.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Pattern",
+        "nickname": "T",
+        "description": "X, V or Warren.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Connect X",
+        "nickname": "X",
+        "description": "Split intersecting diagonals at their common centre. False = no connection at the crossing.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Diaphragms",
+        "nickname": "D",
+        "description": "Connect to Bridge Geometry Assembly.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeGeometryAssemblyComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f009",
+    "kind": "component",
+    "name": "Bridge Geometry Assembly",
+    "nickname": "BridgeAssembly",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Assemble independent geometric definitions. No mesh, material, load or stiffness is created here.",
+    "inputs": [
+      {
+        "name": "Alignment",
+        "nickname": "A",
+        "description": "Deck top reference alignment, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Support Lines",
+        "nickname": "Support Lines",
+        "description": "Typed definition from the corresponding Bridge component.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Girder Axes",
+        "nickname": "Girder Axes",
+        "description": "Typed definition from the corresponding Bridge component.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Slab Layout",
+        "nickname": "Slab Layout",
+        "description": "Typed definition from the corresponding Bridge component.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Fabrication Plan",
+        "nickname": "Fabrication Plan",
+        "description": "Typed definition from the corresponding Bridge component.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Diaphragms",
+        "nickname": "Diaphragms",
+        "description": "Typed definition from the corresponding Bridge component.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Bridge Definition",
+        "nickname": "B",
+        "description": "Connect to Bridge Grillage Mesh.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeMeshSettingsComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f010",
+    "kind": "component",
+    "name": "Bridge Mesh Settings",
+    "nickname": "MeshSettings",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Control discretization without changing physical fabrication segments. Lengths in mm.",
+    "inputs": [
+      {
+        "name": "Maximum Element Length",
+        "nickname": "L",
+        "description": "Maximum longitudinal chord length, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Chord Tolerance",
+        "nickname": "T",
+        "description": "Maximum deviation used by adaptive curve subdivision, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Slab Beam Spacing",
+        "nickname": "DS",
+        "description": "Maximum transverse slab-beam spacing, mm. 0 uses every refined longitudinal station.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Slab Beam Stations",
+        "nickname": "DX",
+        "description": "Optional explicit slab distances, mm; replaces spacing. Ends are always included.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Mesh Settings",
+        "nickname": "M",
+        "description": "All intersections are resolved by the same mesher.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeGrillageMeshComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f011",
+    "kind": "component",
+    "name": "Bridge Grillage Mesh",
+    "nickname": "GrillageMesh",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Multispan bridge geometry in mm, from a 3D top-of-deck reference alignment. Generates axes, slab, joints and topology; no materials, sections, loads, supports or releases are assigned.",
+    "inputs": [
+      {
+        "name": "Bridge Definition",
+        "nickname": "B",
+        "description": "From Bridge Geometry Assembly.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Mesh Settings",
+        "nickname": "M",
+        "description": "From Bridge Mesh Settings.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Labels",
+        "nickname": "ID",
+        "description": "Show fabrication-joint and support labels in preview.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Members",
+        "nickname": "M",
+        "description": "All member axes. Paths {family;group;segment}. Families: 0 girders, 1 solid diaphragms, 2 top, 3 bottom, 4 posts, 5 diagonals. Connect to Beam with explicit properties.",
+        "access": "tree",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Member IDs",
+        "nickname": "ID",
+        "description": "Same paths/order as Members; deterministic for identical inputs. Connect to Element ID after Beam.",
+        "access": "tree",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Longitudinals",
+        "nickname": "G",
+        "description": "Girder axes, paths {girder;fabrication segment}, one-based. Joints do not imply releases.",
+        "access": "tree",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Diaphragm Members",
+        "nickname": "D",
+        "description": "Paths {family;diaphragm line;bay/girder}. Select families before assigning properties.",
+        "access": "tree",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Nodes",
+        "nickname": "N",
+        "description": "Unique member endpoints. Position in list + 1 is the topology node number.",
+        "access": "list",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Support Points",
+        "nickname": "S",
+        "description": "Paths {support;girder}; actual intersections including skew. Geometric points only.",
+        "access": "tree",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Joint Points",
+        "nickname": "J",
+        "description": "Paths {girder;joint}; fabrication joints, not FE hinges.",
+        "access": "tree",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Deck",
+        "nickname": "DK",
+        "description": "Closed geometric slab mesh; not a plate FEM mesh.",
+        "access": "item",
+        "optional": false,
+        "type": "Mesh"
+      },
+      {
+        "name": "Deck Edges",
+        "nickname": "E",
+        "description": "Left and right top edges.",
+        "access": "list",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Frames",
+        "nickname": "F",
+        "description": "X towards local left, Y deck normal, Z alignment tangent, at Stations.",
+        "access": "list",
+        "optional": false,
+        "type": "Plane"
+      },
+      {
+        "name": "Stations",
+        "nickname": "X",
+        "description": "Physical mm along reference alignment, common refined longitudinal grid.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Topology",
+        "nickname": "TB",
+        "description": "Semicolon table: ID, family, group, segment, span, node1, node2, station1, station2. Span=0 for diaphragm members or start overhang.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Segment Ranges",
+        "nickname": "C",
+        "description": "Girder;segment;start;end in mm. A segment can cross a support.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Geometry counts, conventions and limitations.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Bridge Geometry",
+        "nickname": "BG",
+        "description": "Typed bridge geometry for assignment, bracing, bearings and detailing. mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Deck Beams",
+        "nickname": "DB",
+        "description": "Slab axes at the selected elevation, split at girder axes and deck edges. Paths {station;strip}, one-based. Geometry only.",
+        "access": "tree",
+        "optional": false,
+        "type": "Line"
+      },
+      {
+        "name": "Deck Connections",
+        "nickname": "DC",
+        "description": "Girder axis to slab axis. Paths {station;girder}. Connect to Bridge Rigid Links or Bridge Connection Beams.",
+        "access": "tree",
+        "optional": false,
+        "type": "Line"
+      },
+      {
+        "name": "Deck Beam Stations",
+        "nickname": "DX",
+        "description": "Actual slab stations along the reference alignment, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Deck Strip Widths",
+        "nickname": "DW",
+        "description": "Tributary widths along alignment, mm, same paths as Deck Beams. Half width at ends. Curved/skew deck stiffness needs calibration.",
+        "access": "tree",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Grillage Geometry",
+        "nickname": "GG",
+        "description": "Steel geometry plus slab family 8. Assign an explicit property to family 8 and add Deck Connections separately to the model.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Deck Member IDs",
+        "nickname": "DI",
+        "description": "Geometric IDs, same paths as Deck Beams.",
+        "access": "tree",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Geometry.BridgeDetailLayoutComponent",
     "guid": "1fd6e3a9-14f3-478f-a3a4-d49b5c51d12c",
     "kind": "component",
@@ -8863,6 +9795,114 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeFamilyPropertyComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f027",
+    "kind": "component",
+    "name": "Bridge Family Property",
+    "nickname": "FamilyProperty",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Associate one explicitly named geometric family with a beam property. Sections assigned per concio take precedence.",
+    "inputs": [
+      {
+        "name": "Property",
+        "nickname": "P",
+        "description": "Beam or truss property.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Family",
+        "nickname": "F",
+        "description": "Select the member family from named values. All steel excludes the slab.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Family Property",
+        "nickname": "P",
+        "description": "Connect a list of these definitions to Bridge FEM Members.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeFemMembersComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f028",
+    "kind": "component",
+    "name": "Bridge FEM Members",
+    "nickname": "FEMMembers",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Assign explicit family properties and optional per-concio section rules to the geometric wireframe. Creates no loads or restraints.",
+    "inputs": [
+      {
+        "name": "Bridge Geometry",
+        "nickname": "G",
+        "description": "From Grillage Mesh or Longitudinal Bracing.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Family Properties",
+        "nickname": "P",
+        "description": "Optional list of Bridge Family Property objects. No parallel code/property lists.",
+        "access": "list",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Section Rules",
+        "nickname": "S",
+        "description": "Optional rules from Bridge Segment Sections or Bridge Section Schedule.",
+        "access": "list",
+        "optional": true,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Beams",
+        "nickname": "B",
+        "description": "Beam elements for Build Model, N-mm. Preview available through beam output/Preview BridGHe Model.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Physical IDs",
+        "nickname": "ID",
+        "description": "Mesh-independent family/group/segment identity paired with each beam.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Unassigned",
+        "nickname": "U",
+        "description": "Geometric member IDs without a property; an incomplete assignment must be resolved before export.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Counts, unused rules and assignment conventions.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSegmentsComponent",
     "guid": "190346aa-929b-443c-9a38-622dd4a497db",
     "kind": "component",
@@ -8975,6 +10015,352 @@
         "access": "item",
         "optional": false,
         "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSpanStationsComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f017",
+    "kind": "component",
+    "name": "Bridge Span Stations",
+    "nickname": "SpanStations",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Support stations from span lengths and end overhangs, mm. This helper is optional when stations are supplied directly.",
+    "inputs": [
+      {
+        "name": "Span Count",
+        "nickname": "N",
+        "description": "Number of equal spans if no explicit lengths are supplied.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Uniform Span Length",
+        "nickname": "L",
+        "description": "mm, used with Span Count.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Span Lengths",
+        "nickname": "Ls",
+        "description": "Optional unequal span lengths, mm. Replaces regular spans.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Start Overhang",
+        "nickname": "OS",
+        "description": "mm before first support.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "End Overhang",
+        "nickname": "OE",
+        "description": "mm after last support.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Support Stations",
+        "nickname": "S",
+        "description": "Distances from alignment start, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Span Lengths",
+        "nickname": "L",
+        "description": "Actual span lengths, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Alignment Length",
+        "nickname": "LT",
+        "description": "Total spans plus end overhangs, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeAlignmentCurveComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f018",
+    "kind": "component",
+    "name": "Bridge Alignment Curve",
+    "nickname": "AlignmentCurve",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Generate a straight or circular deck alignment from length, radius, origin and heading. A user-drawn curve can replace this component.",
+    "inputs": [
+      {
+        "name": "Length",
+        "nickname": "L",
+        "description": "Total arc length, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Radius",
+        "nickname": "R",
+        "description": "0 straight; positive left, negative right curve, mm. Arc below 180 degrees.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Origin",
+        "nickname": "O",
+        "description": "Alignment start, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Heading",
+        "nickname": "H",
+        "description": "Initial heading from global X about global Z, degrees.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Custom Alignment",
+        "nickname": "C",
+        "description": "Optional existing curve, replacing the generated curve. Its length must agree with Length. Alternatively connect your curve directly to the layouts.",
+        "access": "item",
+        "optional": true,
+        "type": "Curve"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Alignment",
+        "nickname": "A",
+        "description": "Deck top reference curve.",
+        "access": "item",
+        "optional": false,
+        "type": "Curve"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeDeckWidthsComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f019",
+    "kind": "component",
+    "name": "Bridge Deck Widths",
+    "nickname": "DeckWidths",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Deck edge distances from girder positions and lateral cantilevers, mm.",
+    "inputs": [
+      {
+        "name": "Girder Offsets",
+        "nickname": "Y",
+        "description": "Signed transverse positions, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Left Cantilever",
+        "nickname": "L",
+        "description": "Distance beyond the leftmost girder, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Right Cantilever",
+        "nickname": "R",
+        "description": "Distance beyond the rightmost girder, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Side Widths",
+        "nickname": "W",
+        "description": "Left then right distance from alignment, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeBracingStationsComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f020",
+    "kind": "component",
+    "name": "Bridge Bracing Stations",
+    "nickname": "BracingStations",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Panel stations within spans and overhangs, including all supports, mm.",
+    "inputs": [
+      {
+        "name": "Alignment",
+        "nickname": "A",
+        "description": "Bridge curve.",
+        "access": "item",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Support Stations",
+        "nickname": "S",
+        "description": "Distances along alignment, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Maximum Panel Length",
+        "nickname": "L",
+        "description": "mm; at most 1000 panels.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Bracing Stations",
+        "nickname": "S",
+        "description": "Panel boundaries, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeBearingPatternComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f021",
+    "kind": "component",
+    "name": "Bridge Bearing Pattern",
+    "nickname": "BearingPattern",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Suggested bearing directions: first girder fixed at first support and guided at others; remaining bearings multidirectional. Review this proposal for the actual bridge.",
+    "inputs": [
+      {
+        "name": "Support Stations",
+        "nickname": "S",
+        "description": "One entry per support.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Girder Offsets",
+        "nickname": "G",
+        "description": "One entry per girder.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Bearing Types",
+        "nickname": "T",
+        "description": "Optional override: one or one per support/girder. 0 fixed translations, 1 longitudinal guide, 2 multidirectional, 3 elastic. Rotations are not fixed.",
+        "access": "list",
+        "optional": true,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Bearing Types",
+        "nickname": "T",
+        "description": "Support-major, girder-minor order; connect to Bridge Bearings.",
+        "access": "list",
+        "optional": false,
+        "type": "Integer"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeJointTreeComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f022",
+    "kind": "component",
+    "name": "Bridge Joint Tree",
+    "nickname": "JointTree",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Import an existing joint tree: branch {0} common, {girder ID} additional joints. For manual input use Bridge Joint Stations instead.",
+    "inputs": [
+      {
+        "name": "Joint Tree",
+        "nickname": "J",
+        "description": "Joint stations in mm, paths {0} or {girder ID}.",
+        "access": "tree",
+        "optional": true,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Joint Sets",
+        "nickname": "J",
+        "description": "Typed sets for Bridge Fabrication Segments.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeCrossfallTreeComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f023",
+    "kind": "component",
+    "name": "Bridge Crossfall Table",
+    "nickname": "CrossfallTable",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Convert a station/percentage table to separate profile lists. Direct constant slopes connect straight to Bridge Slab Layout.",
+    "inputs": [
+      {
+        "name": "Crossfall Table",
+        "nickname": "T",
+        "description": "One value for constant slope, or one station/percent pair per branch.",
+        "access": "tree",
+        "optional": true,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Percentages",
+        "nickname": "%",
+        "description": "Crossfall percentages.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Stations",
+        "nickname": "S",
+        "description": "Empty for constant slope, otherwise profile stations, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
       }
     ]
   },
@@ -9287,6 +10673,194 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSectionTemplateComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f012",
+    "kind": "component",
+    "name": "Bridge Section Excel Template",
+    "nickname": "SectionTemplate",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Fabrication section workbook, in mm. File access only on Run; counts are available before mesh generation.",
+    "inputs": [
+      {
+        "name": "Fabrication Plan",
+        "nickname": "C",
+        "description": "From Bridge Fabrication Segments. Existing Bridge Geometry is also accepted. No FEM mesh is required.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "File",
+        "nickname": "F",
+        "description": "Excel .xlsx path. Relative to the saved GH definition. Used only on Run; not required for counts.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Base Property",
+        "nickname": "P",
+        "description": "Optional steel I property to prefill dimensions. Without it, '*' inherits the base section later.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Overwrite",
+        "nickname": "O",
+        "description": "Explicit permission to replace an existing workbook on Run. Default false.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Count",
+        "nickname": "N",
+        "description": "Total fabrication segments, all girders. Available without a section or Excel file.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Segment IDs",
+        "nickname": "ID",
+        "description": "One unique G1-C1 etc. per girder/concio. Ordered by girder then concio.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Girder IDs",
+        "nickname": "G",
+        "description": "Girder IDs, paired with Counts per Girder.",
+        "access": "list",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Counts per Girder",
+        "nickname": "NG",
+        "description": "Number of fabrication segments in each girder, paired with Girder IDs.",
+        "access": "list",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Section Table",
+        "nickname": "T",
+        "description": "Connect to Bridge Segment Sections > Section Table. Create: current template. Read: validated workbook dimensions retained until next Run or invalidation.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "File",
+        "nickname": "F",
+        "description": "Resolved path when available.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Counts, file operation and cache warnings. Dimensions and stations are in mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSectionReadComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f013",
+    "kind": "component",
+    "name": "Bridge Read Section Excel",
+    "nickname": "ReadSections",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "Fabrication section workbook, in mm. File access only on Run; counts are available before mesh generation.",
+    "inputs": [
+      {
+        "name": "Fabrication Plan",
+        "nickname": "C",
+        "description": "From Bridge Fabrication Segments. Existing Bridge Geometry is also accepted. No FEM mesh is required.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "File",
+        "nickname": "F",
+        "description": "Excel .xlsx path. Relative to the saved GH definition. Used only on Run; not required for counts.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Count",
+        "nickname": "N",
+        "description": "Total fabrication segments, all girders. Available without a section or Excel file.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Segment IDs",
+        "nickname": "ID",
+        "description": "One unique G1-C1 etc. per girder/concio. Ordered by girder then concio.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Girder IDs",
+        "nickname": "G",
+        "description": "Girder IDs, paired with Counts per Girder.",
+        "access": "list",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Counts per Girder",
+        "nickname": "NG",
+        "description": "Number of fabrication segments in each girder, paired with Girder IDs.",
+        "access": "list",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Section Table",
+        "nickname": "T",
+        "description": "Connect to Bridge Segment Sections > Section Table. Create: current template. Read: validated workbook dimensions retained until next Run or invalidation.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "File",
+        "nickname": "F",
+        "description": "Resolved path when available.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Counts, file operation and cache warnings. Dimensions and stations are in mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSegmentCompositeComponent",
     "guid": "36a9ed77-8fb7-4348-a783-f1c057a921e4",
     "kind": "component",
@@ -9367,9 +10941,9 @@
     "description": "Count fabrication segments before assigning sections. Create an Excel template from geometry, then read its dimensions into Bridge Segment Sections. File access only on Run.",
     "inputs": [
       {
-        "name": "Bridge Geometry",
-        "nickname": "BG",
-        "description": "Bridge Geometry from Simple Bridge, before section assignment. Counts fabrication segments, not FEM elements.",
+        "name": "Fabrication Plan",
+        "nickname": "C",
+        "description": "From Bridge Fabrication Segments. Existing Bridge Geometry is also accepted. No FEM mesh is required.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -9393,7 +10967,7 @@
       {
         "name": "Base Property",
         "nickname": "P",
-        "description": "Optional steel I Beam Property: prefill numeric dimensions when creating Excel. Without it, '*' inherits Base Property later in Bridge Segment Sections.",
+        "description": "Optional steel I property to prefill dimensions. Without it, '*' inherits the base section later.",
         "access": "item",
         "optional": true,
         "type": "Generic Data"
@@ -9401,7 +10975,7 @@
       {
         "name": "Overwrite",
         "nickname": "O",
-        "description": "Allow explicit Create to replace an existing Excel file. False by default. Use a new file after changing geometry to preserve your previous dimensions.",
+        "description": "Explicit permission to replace an existing workbook on Run. Default false.",
         "access": "item",
         "optional": false,
         "type": "Boolean"
@@ -9555,9 +11129,9 @@
     "description": "Create a steel I section for every girder fabrication segment. An external panel holds editable dimensions; '*' inherits the base section. Press Tabella conci to populate/refresh it.",
     "inputs": [
       {
-        "name": "Bridge Geometry",
-        "nickname": "BG",
-        "description": "Simple Bridge geometry, also after longitudinal bracing. Segment identity is independent of mesh subdivisions.",
+        "name": "Fabrication Plan",
+        "nickname": "C",
+        "description": "Physical segments from Bridge Fabrication Segments, before meshing. Existing Bridge Geometry is also accepted.",
         "access": "item",
         "optional": false,
         "type": "Generic Data"
@@ -9969,6 +11543,224 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSupportStationsComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f024",
+    "kind": "component",
+    "name": "Bridge Support Stations",
+    "nickname": "SupportStations",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Prepare support distances on any open alignment. Optional helper: sort, merge near duplicates and derive spans and overhangs. No fabrication or mesh inputs.",
+    "inputs": [
+      {
+        "name": "Alignment",
+        "nickname": "A",
+        "description": "Open curve, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Support Stations",
+        "nickname": "S",
+        "description": "Distances along curve, mm. Empty = equal spans.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Equal Span Count",
+        "nickname": "N",
+        "description": "Used only if no stations are supplied.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "End Supports",
+        "nickname": "E",
+        "description": "Add both curve ends. False preserves overhangs from explicit stations.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Station Tolerance",
+        "nickname": "T",
+        "description": "Snap to ends and merge duplicates within this distance, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Alignment",
+        "nickname": "A",
+        "description": "Original curve.",
+        "access": "item",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Span Lengths",
+        "nickname": "L",
+        "description": "Actual span lengths, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Start Overhang",
+        "nickname": "OS",
+        "description": "mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "End Overhang",
+        "nickname": "OE",
+        "description": "mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Support Stations",
+        "nickname": "S",
+        "description": "Sorted distances, mm. Connect to Bridge Support Lines.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Support Points",
+        "nickname": "P",
+        "description": "On alignment.",
+        "access": "list",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Span Count",
+        "nickname": "N",
+        "description": "Actual span count.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Length",
+        "nickname": "LT",
+        "description": "Curve length, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Normalization applied.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeNormalizeJointsComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f025",
+    "kind": "component",
+    "name": "Bridge Normalize Joint Stations",
+    "nickname": "NormalizeJoints",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Normalize supplied joint distances: sort, merge near duplicates and omit bridge ends. mm.",
+    "inputs": [
+      {
+        "name": "Alignment",
+        "nickname": "A",
+        "description": "Open curve, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Joint Stations",
+        "nickname": "J",
+        "description": "Distances along curve, mm.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Station Tolerance",
+        "nickname": "T",
+        "description": "Snap and merge distance, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Joint Stations",
+        "nickname": "J",
+        "description": "Internal joint distances, mm; common branch {0}.",
+        "access": "tree",
+        "optional": false,
+        "type": "Number"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeDiaphragmChoiceComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f026",
+    "kind": "component",
+    "name": "Bridge Diaphragm Choice",
+    "nickname": "DiaphragmChoice",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Optional switch between two explicit diaphragm definitions. Both alternatives remain visible on the canvas.",
+    "inputs": [
+      {
+        "name": "Use Truss",
+        "nickname": "T",
+        "description": "False: solid alternative. True: truss alternative.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Solid Diaphragms",
+        "nickname": "S",
+        "description": "From Bridge Solid Diaphragms.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Truss Diaphragms",
+        "nickname": "T",
+        "description": "From Bridge Truss Diaphragms.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Diaphragms",
+        "nickname": "D",
+        "description": "Chosen geometry definition.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Geometry.SimpleBridgeSolidComponent",
     "guid": "e3eeef52-dba7-4bb0-8131-57d6956edf58",
     "kind": "component",
@@ -10239,7 +12031,7 @@
       {
         "name": "Deck Connections",
         "nickname": "DC",
-        "description": "Girder axis to slab axis. Paths {station;girder}. Connect to Bridge Connections: mode 0 rigid links or mode 1 explicit beam properties.",
+        "description": "Girder axis to slab axis. Paths {station;girder}. Connect to Bridge Rigid Links or Bridge Connection Beams.",
         "access": "tree",
         "optional": false,
         "type": "Line"
@@ -10549,7 +12341,7 @@
       {
         "name": "Deck Connections",
         "nickname": "DC",
-        "description": "Girder axis to slab axis. Paths {station;girder}. Connect to Bridge Connections: mode 0 rigid links or mode 1 explicit beam properties.",
+        "description": "Girder axis to slab axis. Paths {station;girder}. Connect to Bridge Rigid Links or Bridge Connection Beams.",
         "access": "tree",
         "optional": false,
         "type": "Line"
@@ -10867,7 +12659,7 @@
       {
         "name": "Deck Connections",
         "nickname": "DC",
-        "description": "Girder axis to slab axis. Paths {station;girder}. Connect to Bridge Connections: mode 0 rigid links or mode 1 explicit beam properties.",
+        "description": "Girder axis to slab axis. Paths {station;girder}. Connect to Bridge Rigid Links or Bridge Connection Beams.",
         "access": "tree",
         "optional": false,
         "type": "Line"
@@ -16077,6 +17869,60 @@
         "access": "item",
         "optional": false,
         "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Analysis.BridgeAnalysisCasesComponent",
+    "guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f029",
+    "kind": "component",
+    "name": "Bridge Analysis Cases",
+    "nickname": "AnalysisCases",
+    "category": "BridGHe",
+    "subcategory": "12-Analysis",
+    "description": "Collect and validate the FEM cases required by downstream actions before analysis. Connect the same case references to this component and to the actions; do not connect action outputs here.",
+    "inputs": [
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "FEM model BEFORE analysis, used to validate available result names.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Required Cases",
+        "nickname": "C",
+        "description": "Case objects or exact names, shared with Bridge Action / Shrinkage Action / Moment Dispatch. No computed results required.",
+        "access": "list",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Solver",
+        "nickname": "S",
+        "description": "Same solver as Straus R3 Analysis: 0 linear, 1 nonlinear, 2 staged.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Analysis Results",
+        "nickname": "R",
+        "description": "Connect to Analysis Results on Straus R3 Analysis. May be combined with additional user-selected results.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Validated required case names.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
       }
     ]
   },

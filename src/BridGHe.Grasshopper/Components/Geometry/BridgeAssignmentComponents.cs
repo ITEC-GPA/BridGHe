@@ -43,11 +43,12 @@ public sealed class BridgeSectionScheduleComponent : BridgeUtilityComponent
     }
 }
 
-public sealed class BridgeMemberAssignmentComponent : BridgeUtilityComponent
+public class BridgeMemberAssignmentComponent : BridgeUtilityComponent
 {
     public BridgeMemberAssignmentComponent() : base("Bridge Member Assignment", "AssignBridge",
         "Convert Bridge Geometry into beams with physical IDs, groups and local section axes. No loads, restraints or analysis.", CategoryNameConstants.SUBCATEGORY_MODEL) { }
     public override Guid ComponentGuid => new Guid("92ef4133-2716-4a81-9b70-ff01db7fd15d");
+    public override GH_Exposure Exposure => GetType() == typeof(BridgeMemberAssignmentComponent) ? GH_Exposure.hidden : GH_Exposure.primary;
     protected override void RegisterInputParams(GH_InputParamManager p)
     {
         p.AddGenericParameter("Bridge Geometry", "BG", "Typed output of Simple Bridge or Bridge Longitudinal Bracing.", GH_ParamAccess.item);
@@ -71,7 +72,11 @@ public sealed class BridgeMemberAssignmentComponent : BridgeUtilityComponent
             throw new ArgumentException("Provide exactly one distinct family code per default property.");
         if (rules.Any(r => r?.Value is not BridgeSectionRule)) throw new ArgumentException("Schedule accepts Bridge Section Schedule entries.");
         var defaults = properties.Select((p, i) => (families[i], p.Value)).ToDictionary(p => p.Item1, p => p.Value);
-        var result = BridgeMemberAssignment.Assign(geometry.Value, defaults, rules.Select(r => (BridgeSectionRule)r.Value).ToArray());
+        Publish(da, geometry.Value, defaults, rules.Select(r => (BridgeSectionRule)r.Value).ToArray());
+    }
+    protected void Publish(IGH_DataAccess da, SimpleBridgeGeometry geometry, Dictionary<int,BeamPropertyModel> defaults, BridgeSectionRule[] rules)
+    {
+        var result = BridgeMemberAssignment.Assign(geometry, defaults, rules);
         if (result.Unassigned.Length > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"{result.Unassigned.Length} members have no property and were not created. Inspect Unassigned.");
         da.SetDataList(0, result.Beams.Select(b => new GH_Beam(b)));
         da.SetDataList(1, result.Beams.Select(b => b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value.PhysicalId));

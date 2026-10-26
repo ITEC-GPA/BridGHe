@@ -15,6 +15,7 @@ namespace BridGHe.Grasshopper.Components.Geometry;
 
 public sealed class BridgeConnectionsComponent : BridgeUtilityComponent
 {
+    public override GH_Exposure Exposure => GH_Exposure.hidden;
     private readonly List<Line> preview = new();
     public BridgeConnectionsComponent() : base("Bridge Connections", "Connections",
         "Create native spatial rigid links, explicitly deformable beam/truss members, or assign beam section offsets. N-mm.", CategoryNameConstants.SUBCATEGORY_MODEL) { }

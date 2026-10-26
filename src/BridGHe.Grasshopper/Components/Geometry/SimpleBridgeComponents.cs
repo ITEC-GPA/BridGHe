@@ -16,6 +16,7 @@ namespace BridGHe.Grasshopper.Components.Geometry;
 
 public abstract class SimpleBridgeComponent : BridgeUtilityComponent
 {
+    public override GH_Exposure Exposure => GetType() == typeof(BridgeGrillageMeshComponent) ? GH_Exposure.primary : GH_Exposure.hidden;
     private readonly bool truss;
     private readonly List<(SimpleBridgeGeometry Geometry, bool Labels)> preview = new();
     private readonly List<Line> deckPreview = new(), linkPreview = new();
@@ -63,7 +64,7 @@ public abstract class SimpleBridgeComponent : BridgeUtilityComponent
         p.AddTextParameter("Information", "I", "Geometry counts, conventions and limitations.", GH_ParamAccess.list);
         p.AddGenericParameter("Bridge Geometry", "BG", "Typed bridge geometry for assignment, bracing, bearings and detailing. mm.", GH_ParamAccess.item);
         p.AddLineParameter("Deck Beams", "DB", "Slab axes at the selected elevation, split at girder axes and deck edges. Paths {station;strip}, one-based. Geometry only.", GH_ParamAccess.tree);
-        p.AddLineParameter("Deck Connections", "DC", "Girder axis to slab axis. Paths {station;girder}. Connect to Bridge Connections: mode 0 rigid links or mode 1 explicit beam properties.", GH_ParamAccess.tree);
+        p.AddLineParameter("Deck Connections", "DC", "Girder axis to slab axis. Paths {station;girder}. Connect to Bridge Rigid Links or Bridge Connection Beams.", GH_ParamAccess.tree);
         p.AddNumberParameter("Deck Beam Stations", "DX", "Actual slab stations along the reference alignment, mm.", GH_ParamAccess.list);
         p.AddNumberParameter("Deck Strip Widths", "DW", "Tributary widths along alignment, mm, same paths as Deck Beams. Half width at ends. Curved/skew deck stiffness needs calibration.", GH_ParamAccess.tree);
         p.AddGenericParameter("Grillage Geometry", "GG", "Steel geometry plus slab family 8. Assign an explicit property to family 8 and add Deck Connections separately to the model.", GH_ParamAccess.item);
@@ -103,6 +104,11 @@ public abstract class SimpleBridgeComponent : BridgeUtilityComponent
             Diaphragms = diaphragms?.Value as BridgeDiaphragms ?? new(), MaximumElementLength = maxLength, ChordTolerance = tolerance, Truss = TrussMode(da),
             DeckBeamSpacing = deckSpacing, DeckBeamStations = deckStations.ToArray(), DeckBeamLevel = hasDeckLevel ? deckLevel : null
         };
+        Publish(da, input, labels);
+    }
+
+    protected void Publish(IGH_DataAccess da, SimpleBridgeInput input, bool labels)
+    {
         var result = SimpleBridgeBuilder.Build(input);
         var grillage = BridgeDeckGrillage.Build(input, result);
         preview.Add((result, labels));

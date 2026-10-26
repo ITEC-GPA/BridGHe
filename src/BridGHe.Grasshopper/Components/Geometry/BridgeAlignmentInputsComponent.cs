@@ -12,6 +12,7 @@ namespace BridGHe.Grasshopper.Components.Geometry;
 
 public sealed class BridgeAlignmentInputsComponent : BridgeUtilityComponent
 {
+    public override GH_Exposure Exposure => GH_Exposure.hidden;
     public BridgeAlignmentInputsComponent() : base("Bridge Alignment Inputs", "AlignmentInputs",
         "Prepare Bridge Parametric Layout from an open alignment and support distances. Sorts stations, merges duplicates and derives spans/overhangs from actual arc length. All lengths in mm.",
         CategoryNameConstants.SUBCATEGORY_MODEL) { }

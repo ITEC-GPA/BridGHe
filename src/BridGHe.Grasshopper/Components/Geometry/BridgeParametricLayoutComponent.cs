@@ -11,6 +11,7 @@ namespace BridGHe.Grasshopper.Components.Geometry;
 
 public sealed class BridgeParametricLayoutComponent : BridgeUtilityComponent
 {
+    public override GH_Exposure Exposure => GH_Exposure.hidden;
     public BridgeParametricLayoutComponent() : base("Bridge Parametric Layout","BridgeLayout",
         "Regular or explicit spans/girders, straight/circular/custom alignment and a suggested bearing pattern. All lengths in mm; no structural sizing.",CategoryNameConstants.SUBCATEGORY_MODEL) { }
     public override Guid ComponentGuid => new Guid("14c68fb0-de0e-4eec-bc39-282e2c5f08b6");
