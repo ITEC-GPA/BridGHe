@@ -948,6 +948,13 @@
         "7a067caf-afd7-466d-869d-0d3cb77ce0b1"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/Utilities/BridgeMovingWorkflowComponents.cs": {
+      "ports": "4a007745f830a4d45d125b96b0be56fb291b074d00fd79c153318f74af4a7116",
+      "guids": [
+        "3fdba0df-48ec-41d3-8b9e-3f2e3663fd32",
+        "9a43a3f7-3d36-4ba1-b7d1-1bfb973d4015"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/Utilities/BridgePhaseModelComponent.cs": {
       "ports": "ca6e20b6f5e13df06fd32bb2cdd73e4e40817d0ac8b05591d4ab37ae29e6d3ad",
       "guids": [

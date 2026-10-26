@@ -284,6 +284,8 @@ BridgeCheckSummaryComponent|bridge|data|result
 BridgeReportComponent|table|export|result
 BridgeResultLabelsComponent|case|edit|result
 BridgeMovingLanesComponent|route|add|moving
+BridgeStraightMovingPathComponent|route|measure|moving
+BridgeMovingCombinationsComponent|template|add|moving
 AlignBeamAxesComponent|beam|axes|model
 AlignPlateAxesComponent|plate|axes|model
 BeamFilterComponent|beam|filter|tool

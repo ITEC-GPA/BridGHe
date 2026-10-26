@@ -1,6 +1,6 @@
 # Inventario dei componenti 0.1.0
 
-218 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
+220 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
 
 ## BridGHe / 01-Parameters
 
@@ -77,6 +77,7 @@
 |---|---|---|---|
 | Bridge Action Combinations | component | Phases; Action IDs; Names; Coefficients | Table; Omitted actions |
 | Bridge Combination Excel | component | Models; Phases; File; Mode; Rows; Overwrite | File; Table; Action IDs; Summary |
+| Bridge Moving Combinations | component | Base table; Moving cases; Base combination; Traffic factor; Isolated positions; Action prefix | Table; Action IDs; Cases; Mapping |
 | Group | component | Name; Parent | Group |
 | Load Case | component | Name; Gravity NSM | LoadCase |
 | Load Combination | component | Name; LoadCases; Coefficients | LoadCombination |
@@ -202,6 +203,7 @@
 | Beam Point Moment | component | Beam; LoadCase; Coordinate System; M1; M2; M3; a | Beam |
 | Beam PreLoad | component | Beam; LoadCase; Type; Value | Beam |
 | Bridge Moving Lanes | component | Prototype; Offsets; Cases | Paths |
+| Bridge Straight Moving Path | component | Grillage Geometry; Template; Case; Lane offset; Divisions | Path; Axis; Step |
 | Composite Beam Strain | component | Beam; LoadCase; Strain | Beam |
 | Composite Shrinkage Actions | component | Composite property; Concrete strain | Straus pre-strain; Axis 2 thermal gradient; Free centroid strain; Free curvature |
 | Moving Centrifugal Data | component | K0; K1; Limit K1; Minimum K1; Maximum K1; Length unit; Force unit | Moving object |

@@ -1574,6 +1574,178 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeStraightMovingPathComponent",
+    "guid": "3fdba0df-48ec-41d3-8b9e-3f2e3663fd32",
+    "kind": "component",
+    "name": "Bridge Straight Moving Path",
+    "nickname": "SlabPath",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "Straight traffic path on the actual transverse slab axes; checks vehicle width and rejects curved/warped geometry.",
+    "inputs": [
+      {
+        "name": "Grillage Geometry",
+        "nickname": "G",
+        "description": "Bridge Grillage Mesh output including transverse slab members.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Template",
+        "nickname": "T",
+        "description": "Explicit one-lane moving template, in model units.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Case",
+        "nickname": "C",
+        "description": "Name of the source moving path.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Lane offset",
+        "nickname": "Y",
+        "description": "Offset from alignment [mm], positive towards the left transverse frame axis.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Divisions",
+        "nickname": "D",
+        "description": "Number of path patches. Refine to assess moving-position convergence.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Path",
+        "nickname": "P",
+        "description": "Native Straus moving path targeting beams.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Axis",
+        "nickname": "C",
+        "description": "Path at the actual slab beam elevation; preview only.",
+        "access": "item",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Step",
+        "nickname": "dx",
+        "description": "Path length / divisions [mm].",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeMovingCombinationsComponent",
+    "guid": "9a43a3f7-3d36-4ba1-b7d1-1bfb973d4015",
+    "kind": "component",
+    "name": "Bridge Moving Combinations",
+    "nickname": "MovingComb",
+    "category": "BridGHe",
+    "subcategory": "04-Definitions",
+    "description": "Append alternative moving positions to an explicit base table. Exactly one position per added combination; no normative coefficients or force envelopes.",
+    "inputs": [
+      {
+        "name": "Base table",
+        "nickname": "T",
+        "description": "Existing combination tree: header and coefficient rows.",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Moving cases",
+        "nickname": "C",
+        "description": "Cases output of Moving Static Analysis, in its original order.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Base combination",
+        "nickname": "B",
+        "description": "Exact existing row to accompany each alternative traffic position.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Traffic factor",
+        "nickname": "F",
+        "description": "Explicit non-negative multiplier; no normative default is implied.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Isolated positions",
+        "nickname": "I",
+        "description": "Also create one traffic-only diagnostic combination per position.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Action prefix",
+        "nickname": "P",
+        "description": "Unique prefix for generated Action IDs.",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Table",
+        "nickname": "T",
+        "description": "Expanded combination tree for Build BridGHe Model.",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Action IDs",
+        "nickname": "IDs",
+        "description": "Connect to Bridge Action / Action ID with Cases in matching order.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Cases",
+        "nickname": "C",
+        "description": "Connect to Bridge Action / Case; no manually typed result names.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Mapping",
+        "nickname": "M",
+        "description": "Action ID = native FEM position.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Utilities.BridgePhaseModelComponent",
     "guid": "6ed9466e-9e5a-4059-a570-ae1461537a36",
     "kind": "component",

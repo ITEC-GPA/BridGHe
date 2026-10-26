@@ -2,7 +2,7 @@
 
 Plugin Grasshopper per **Rhino 8 / .NET 8 / Windows x64**: modello parametrico → Straus7 R3 → risultati negli elementi → verifiche e dettagli di ponti misti con gPC.
 
-L'inventario corrente comprende **218 componenti e 8 parametri**, con 227 GUID distinti incluso il plugin; comprende anche gli adattatori storici nascosti dalla barra. I contratti aggiornati sono in [current-components.json](migration/current-components.json). Il [flusso geometrico modulare](docs/FLUSSO-MODULARE.md) separa appoggi, travi, soletta, conci, diaframmi e mesh. Gli strumenti operativi comprendono audit del modello, copie di fase, combinazioni per Action ID, inviluppi concomitanti, riepilogo GPC, confronti numerici, incrementi di ritiro e corsie mobili.
+L'inventario corrente comprende **220 componenti e 8 parametri**, con 229 GUID distinti incluso il plugin; comprende anche gli adattatori storici nascosti dalla barra. I contratti aggiornati sono in [current-components.json](migration/current-components.json). Il [flusso geometrico modulare](docs/FLUSSO-MODULARE.md) separa appoggi, travi, soletta, conci, diaframmi e mesh. Gli strumenti operativi comprendono audit del modello, copie di fase, combinazioni per Action ID, inviluppi concomitanti, riepilogo GPC, confronti numerici, incrementi di ritiro e corsie mobili.
 
 ## Esempi
 

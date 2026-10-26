@@ -18,6 +18,7 @@ internal static class RegressionTests
             ["bridge-combination-excel-component"] = () => BridgeCombinationExcelExample.Run(),
             ["simple-bridge"] = SimpleBridgeTests.Run,
             ["modular-bridge"] = BridgeDefinitionTests.Run,
+            ["bridge-moving-workflow"] = BridgeMovingWorkflowTests.Run,
             ["build-model-parameters"] = BuildModelParameterTests.Run,
             ["parametric-bridge"] = ParametricBridgeTests.Run,
             ["bridge-segment-sections"] = BridgeSegmentSectionsTests.Run,

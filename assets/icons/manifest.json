@@ -193,6 +193,24 @@
       "badge": "add"
     },
     {
+      "key": "BridgeStraightMovingPathComponent",
+      "type": "BridGHe.Grasshopper.Components.Utilities.BridgeStraightMovingPathComponent",
+      "guid": "3fdba0df-48ec-41d3-8b9e-3f2e3663fd32",
+      "name": "Bridge Straight Moving Path",
+      "family": "moving",
+      "glyph": "route",
+      "badge": "measure"
+    },
+    {
+      "key": "BridgeMovingCombinationsComponent",
+      "type": "BridGHe.Grasshopper.Components.Utilities.BridgeMovingCombinationsComponent",
+      "guid": "9a43a3f7-3d36-4ba1-b7d1-1bfb973d4015",
+      "name": "Bridge Moving Combinations",
+      "family": "moving",
+      "glyph": "template",
+      "badge": "add"
+    },
+    {
       "key": "BridgePhaseModelComponent",
       "type": "BridGHe.Grasshopper.Components.Utilities.BridgePhaseModelComponent",
       "guid": "6ed9466e-9e5a-4059-a570-ae1461537a36",
