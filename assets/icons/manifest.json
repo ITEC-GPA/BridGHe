@@ -1057,6 +1057,15 @@
       "badge": "stress"
     },
     {
+      "key": "BridgeAlignmentInputsComponent",
+      "type": "BridGHe.Grasshopper.Components.Geometry.BridgeAlignmentInputsComponent",
+      "guid": "750d7fac-a9b7-4fbb-8c11-c291e99a5cb8",
+      "name": "Bridge Alignment Inputs",
+      "family": "model",
+      "glyph": "bridge-solid",
+      "badge": "arrow"
+    },
+    {
       "key": "BridgeSectionScheduleComponent",
       "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSectionScheduleComponent",
       "guid": "2cd3635e-8a72-4f8c-bb2f-bf4b76ff136c",
@@ -1163,6 +1172,15 @@
       "family": "model",
       "glyph": "bridge-segments",
       "badge": "link"
+    },
+    {
+      "key": "BridgeSegmentExcelComponent",
+      "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSegmentExcelComponent",
+      "guid": "f9286827-2ca1-4268-a6dc-79c8ba6d1c9f",
+      "name": "Bridge Segment Excel",
+      "family": "section",
+      "glyph": "table",
+      "badge": "native"
     },
     {
       "key": "BridgeSegmentOverrideComponent",

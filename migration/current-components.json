@@ -7757,6 +7757,180 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Geometry.BridgeAlignmentInputsComponent",
+    "guid": "750d7fac-a9b7-4fbb-8c11-c291e99a5cb8",
+    "kind": "component",
+    "name": "Bridge Alignment Inputs",
+    "nickname": "AlignmentInputs",
+    "category": "BridGHe",
+    "subcategory": "06-Model",
+    "description": "Prepare Bridge Parametric Layout from an open alignment and support distances. Sorts stations, merges duplicates and derives spans/overhangs from actual arc length. All lengths in mm.",
+    "inputs": [
+      {
+        "name": "Alignment",
+        "nickname": "A",
+        "description": "Open alignment curve in mm; 3D arc length and curve direction define stations.",
+        "access": "item",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Support Stations",
+        "nickname": "S",
+        "description": "Distances in mm from curve start. Unordered values and duplicates are normalized. Empty: equal spans.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Span Count",
+        "nickname": "N",
+        "description": "Number of equal spans when no Support Stations are given. Ignored with explicit support stations.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "End Supports",
+        "nickname": "E",
+        "description": "Add supports at both curve ends. False: first/last explicit station define the end overhangs. With no stations, equal spans always cover the full curve.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Joint Stations",
+        "nickname": "J",
+        "description": "Optional common fabrication-joint distances in mm. Sorted and merged; curve ends omitted. Empty uses Maximum Segment Length in Bridge Segments.",
+        "access": "list",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Maximum Segment Length",
+        "nickname": "LC",
+        "description": "Forward to Bridge Segments > Maximum Length. Independent of support stations. Zero means a single concio per girder when no joints are given.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Maximum Element Length",
+        "nickname": "LF",
+        "description": "Forward to Simple Bridge > Maximum Element Length. Positive FEM mesh length in mm; it does not count fabrication segments.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Station Tolerance",
+        "nickname": "Tol",
+        "description": "mm: snap near-end stations and merge near duplicates. Does not approximate the calculated span lengths.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Alignment",
+        "nickname": "A",
+        "description": "Connect to Bridge Parametric Layout > Custom Alignment.",
+        "access": "item",
+        "optional": false,
+        "type": "Curve"
+      },
+      {
+        "name": "Span Lengths",
+        "nickname": "L",
+        "description": "Exact derived span lengths; connect to Bridge Parametric Layout > Span Lengths.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Start Overhang",
+        "nickname": "OS",
+        "description": "Connect to Bridge Parametric Layout > Start Overhang, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "End Overhang",
+        "nickname": "OE",
+        "description": "Connect to Bridge Parametric Layout > End Overhang, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Support Stations",
+        "nickname": "S",
+        "description": "Sorted support distances along the curve, mm.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Support Points",
+        "nickname": "P",
+        "description": "Support positions on the reference curve; preview only, not FEM bearing nodes.",
+        "access": "list",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Span Count",
+        "nickname": "N",
+        "description": "Actual number of spans.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Joint Stations",
+        "nickname": "J",
+        "description": "Common joints, mm. Connect to Bridge Segments > Joints; always emits the explicit branch {0}.",
+        "access": "tree",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Maximum Segment Length",
+        "nickname": "LC",
+        "description": "Connect to Bridge Segments > Maximum Length, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Maximum Element Length",
+        "nickname": "LF",
+        "description": "Connect to Simple Bridge > Maximum Element Length, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Length",
+        "nickname": "Ltot",
+        "description": "Full 3D alignment arc length, mm.",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Information",
+        "nickname": "I",
+        "description": "Normalization applied, support convention and units.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Geometry.BridgeSectionScheduleComponent",
     "guid": "2cd3635e-8a72-4f8c-bb2f-bf4b76ff136c",
     "kind": "component",

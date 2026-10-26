@@ -290,6 +290,12 @@
         "fa0981e2-710c-41ed-9a60-98bc102def94"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/Geometry/BridgeAlignmentInputsComponent.cs": {
+      "ports": "ebccaa9f31a0a59cdcbeec0876cd5d87a4fd959e5958f42d89b8ef958aed622b",
+      "guids": [
+        "750d7fac-a9b7-4fbb-8c11-c291e99a5cb8"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/Geometry/BridgeAssignmentComponents.cs": {
       "ports": "5778773c36f46568024319df75d4e2222540c095e0158d5f2b4047eef02eb7d1",
       "guids": [
