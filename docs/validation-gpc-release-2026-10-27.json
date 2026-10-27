@@ -1,0 +1,361 @@
+{
+  "date": "2026-10-27T06:42:57.3849778+01:00",
+  "candidate": false,
+  "checkerPushedCommit": "4a1b0090fe4de64de54e28cb9d380c441e79660f",
+  "sourceRepositories": {
+    "Utilities": {
+      "commit": "e57b440b16a0a311a7bf0af2f9cf4d2681b83491",
+      "branch": "master",
+      "onOriginMaster": true
+    },
+    "Geometry": {
+      "commit": "6734eee1004142576b96759e34c15dec48776e23",
+      "branch": "master",
+      "onOriginMaster": true
+    },
+    "Model": {
+      "commit": "2acc60efad0924b9b05aafdd75588f13842904a1",
+      "branch": "master",
+      "onOriginMaster": true
+    },
+    "Checker": {
+      "commit": "4a1b0090fe4de64de54e28cb9d380c441e79660f",
+      "branch": "master",
+      "onOriginMaster": true
+    }
+  },
+  "librarySuites": [
+    {
+      "name": "Model.Core.Tests",
+      "repository": "Model",
+      "passed": 34,
+      "failed": 0,
+      "other": 0
+    },
+    {
+      "name": "UnitTest",
+      "repository": "Model",
+      "passed": 1459,
+      "failed": 0,
+      "other": 3
+    },
+    {
+      "name": "GPCChecker.Test.Concrete",
+      "repository": "Checker",
+      "passed": 911,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "GPCChecker.Test.Steel",
+      "repository": "Checker",
+      "passed": 122,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "GPCChecker.Test.CompositeBridge",
+      "repository": "Checker",
+      "passed": 402,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "GPCChecker.Test.Geotechnics",
+      "repository": "Checker",
+      "passed": 196,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "GPCChecker.Test.Calculation",
+      "repository": "Checker",
+      "passed": 175,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "ShallowFoundation.Tests",
+      "repository": "Checker",
+      "passed": 28,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "EmbeddedWalls.Tests",
+      "repository": "Checker",
+      "passed": 99,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "Steel.Members.Tests",
+      "repository": "Checker",
+      "passed": 6423,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "Design.Checks",
+      "repository": "Checker",
+      "passed": 109,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "Design.Checks.net472",
+      "repository": "Checker",
+      "passed": 108,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    },
+    {
+      "name": "ModelChecker.Tests",
+      "repository": "Checker",
+      "passed": 473,
+      "failed": 0,
+      "other": 0,
+      "knownFailures": []
+    }
+  ],
+  "manifestSHA256": "344F5D648C83D43A49247692A038DA7E1FFAF51FBC176AF28072F2F9D88A120A",
+  "manifestCopiesIdentical": true,
+  "librariesIdenticalToCandidate": [
+    {
+      "file": "GPCUtilities.dll",
+      "version": "3.0.0.0",
+      "sha256": "92031B381F9AA426A5F88B48762C72DB89724F784670FFDA8802203FC52A05E5",
+      "identical": true
+    },
+    {
+      "file": "GPCGeometry.dll",
+      "version": "2.3.0.0",
+      "sha256": "7EF76EDFB4C3736AAE7B6F66B2F3CE30A8BB8DE031C492B03BD52289D6E9D29E",
+      "identical": true
+    },
+    {
+      "file": "DelaunayMesh.dll",
+      "version": "2.0.0.14",
+      "sha256": "D18BB08255D23239271C197130515758767291F75CE1A9996F1A92DB55F114BB",
+      "identical": true
+    },
+    {
+      "file": "GPCModel.dll",
+      "version": "5.21.0.1",
+      "sha256": "A84BC0DE5AB36B36096BB08930CABF12575B2FCF2EAE30F5F6B9736168411644",
+      "identical": true
+    },
+    {
+      "file": "GPCModelData.dll",
+      "version": "0.3.0.2",
+      "sha256": "02AB1FAD861767E5DEB2722AB74CD461B7610A1568C01D6A4975A95E89B49D19",
+      "identical": true
+    },
+    {
+      "file": "GPC.Model.Persistence.dll",
+      "version": "3.3.0.2",
+      "sha256": "0472B90350B1A28E69F58E3C492C81BA74F0C3D6D24ECEEE97BEDFEC259CAB58",
+      "identical": true
+    },
+    {
+      "file": "GPC.Converter.dll",
+      "version": "2.6.0.2",
+      "sha256": "BEB0DEA66BDDADC126A4AF814EF789038F2296494BBA4D8FDB32B1E361443677",
+      "identical": true
+    },
+    {
+      "file": "GPCChecker.Concrete.dll",
+      "version": "0.25.0.0",
+      "sha256": "F48A89AE768FC03BBD4E62C46D4AD9F3DCF563448340AE8807572494F9ABD8E8",
+      "identical": true
+    },
+    {
+      "file": "GPCChecker.Steel.dll",
+      "version": "2.118.0.2",
+      "sha256": "CE59432AF0E23121AC92BDDE50E8804933C626565CEC9994C1AABDCACCC59B2D",
+      "identical": true
+    },
+    {
+      "file": "GPCChecker.CompositeBridge.dll",
+      "version": "1.19.0.5",
+      "sha256": "FFBCD647E83D365EA7583737CA5ACC6A52315916A4A550154296638C004050AC",
+      "identical": true
+    },
+    {
+      "file": "GPCChecker.Geotechnics.dll",
+      "version": "0.24.0.0",
+      "sha256": "DD0091C8A51EDCBFAE513E20D68C07B491A8A30F2C0DA5358F017F3B4E914F43",
+      "identical": true
+    },
+    {
+      "file": "GPCModelChecker.dll",
+      "version": "2.29.0.4",
+      "sha256": "4BC35129DEAD2942275C1778E27405439509708FEE67EE9AD527EE7181535983",
+      "identical": true
+    },
+    {
+      "file": "GPCChecker.Masonry.dll",
+      "version": "0.10.0.4",
+      "sha256": "301513C8EE1C4D7BC1E39595AFBCD037F48942602D8F3BA335C97D8D6F41FAAC",
+      "identical": true
+    },
+    {
+      "file": "GPC.Design.dll",
+      "version": "0.41.0.4",
+      "sha256": "A7C39C402FE3AFAE08D29F96F2EC7F532156040E0272A7BAFB4D56E529DF117F",
+      "identical": true
+    }
+  ],
+  "bridghe": {
+    "version": "0.2.0",
+    "build": "Release, without GpcAllowCandidate",
+    "coreChecks": 269,
+    "components": 220,
+    "parameters": 8,
+    "baselineValuesExactlyEqual": 238,
+    "rev003Offline": true,
+    "files": [
+      {
+        "file": "BridGHe.Grasshopper.gha",
+        "version": "0.2.0.0",
+        "sha256": "23761F9A4F6D7747B5884D5BA1BB93CF48385A6B691944838EE1889EF2F4CDB6"
+      },
+      {
+        "file": "BridGHe.Common.dll",
+        "version": "0.2.0.0",
+        "sha256": "A5A83BEA7C76A335B6E9B9A0CE287597F5F4709B9AA28F80F782D6CA2E0250BA"
+      },
+      {
+        "file": "DelaunayMesh.dll",
+        "version": "2.0.0.14",
+        "sha256": "D18BB08255D23239271C197130515758767291F75CE1A9996F1A92DB55F114BB"
+      },
+      {
+        "file": "GPCChecker.CompositeBridge.dll",
+        "version": "1.19.0.5",
+        "sha256": "FFBCD647E83D365EA7583737CA5ACC6A52315916A4A550154296638C004050AC"
+      },
+      {
+        "file": "GPCChecker.Concrete.dll",
+        "version": "0.25.0.0",
+        "sha256": "F48A89AE768FC03BBD4E62C46D4AD9F3DCF563448340AE8807572494F9ABD8E8"
+      },
+      {
+        "file": "GPCChecker.Steel.dll",
+        "version": "2.118.0.2",
+        "sha256": "CE59432AF0E23121AC92BDDE50E8804933C626565CEC9994C1AABDCACCC59B2D"
+      },
+      {
+        "file": "GPCGeometry.dll",
+        "version": "2.3.0.0",
+        "sha256": "7EF76EDFB4C3736AAE7B6F66B2F3CE30A8BB8DE031C492B03BD52289D6E9D29E"
+      },
+      {
+        "file": "GPCModel.dll",
+        "version": "5.21.0.1",
+        "sha256": "A84BC0DE5AB36B36096BB08930CABF12575B2FCF2EAE30F5F6B9736168411644"
+      },
+      {
+        "file": "GPCUtilities.dll",
+        "version": "3.0.0.0",
+        "sha256": "92031B381F9AA426A5F88B48762C72DB89724F784670FFDA8802203FC52A05E5"
+      }
+    ]
+  },
+  "rebear": {
+    "version": "0.2.2",
+    "build": "Release, build/Verify.ps1 without AllowCandidate",
+    "checks": 25,
+    "components": 61,
+    "failures": 0,
+    "files": [
+      {
+        "file": "ReBear.gha",
+        "version": "0.2.2.0",
+        "sha256": "750C7B99F0E0E5FF5229B51D8435878FAB237D495B6B8E6BF913A93C5155E355"
+      },
+      {
+        "file": "ConcreteSectionChecker.Adapters.dll",
+        "version": "0.2.2.0",
+        "sha256": "DEE57AD8828E77034ED09D08B9ACA0060206031ED8C0CE906F7AB9DB4568EFD6"
+      },
+      {
+        "file": "DelaunayMesh.dll",
+        "version": "2.0.0.14",
+        "sha256": "D18BB08255D23239271C197130515758767291F75CE1A9996F1A92DB55F114BB"
+      },
+      {
+        "file": "GPCChecker.Concrete.dll",
+        "version": "0.25.0.0",
+        "sha256": "F48A89AE768FC03BBD4E62C46D4AD9F3DCF563448340AE8807572494F9ABD8E8"
+      },
+      {
+        "file": "GPCGeometry.dll",
+        "version": "2.3.0.0",
+        "sha256": "7EF76EDFB4C3736AAE7B6F66B2F3CE30A8BB8DE031C492B03BD52289D6E9D29E"
+      },
+      {
+        "file": "GPCModel.dll",
+        "version": "5.21.0.1",
+        "sha256": "A84BC0DE5AB36B36096BB08930CABF12575B2FCF2EAE30F5F6B9736168411644"
+      },
+      {
+        "file": "GPCModelData.dll",
+        "version": "0.3.0.2",
+        "sha256": "02AB1FAD861767E5DEB2722AB74CD461B7610A1568C01D6A4975A95E89B49D19"
+      },
+      {
+        "file": "GPCUtilities.dll",
+        "version": "3.0.0.0",
+        "sha256": "92031B381F9AA426A5F88B48762C72DB89724F784670FFDA8802203FC52A05E5"
+      }
+    ]
+  },
+  "commonPluginDependencies": [
+    {
+      "file": "DelaunayMesh.dll",
+      "version": "2.0.0.14",
+      "sha256": "D18BB08255D23239271C197130515758767291F75CE1A9996F1A92DB55F114BB"
+    },
+    {
+      "file": "GPCChecker.Concrete.dll",
+      "version": "0.25.0.0",
+      "sha256": "F48A89AE768FC03BBD4E62C46D4AD9F3DCF563448340AE8807572494F9ABD8E8"
+    },
+    {
+      "file": "GPCGeometry.dll",
+      "version": "2.3.0.0",
+      "sha256": "7EF76EDFB4C3736AAE7B6F66B2F3CE30A8BB8DE031C492B03BD52289D6E9D29E"
+    },
+    {
+      "file": "GPCModel.dll",
+      "version": "5.21.0.1",
+      "sha256": "A84BC0DE5AB36B36096BB08930CABF12575B2FCF2EAE30F5F6B9736168411644"
+    },
+    {
+      "file": "GPCUtilities.dll",
+      "version": "3.0.0.0",
+      "sha256": "92031B381F9AA426A5F88B48762C72DB89724F784670FFDA8802203FC52A05E5"
+    }
+  ],
+  "completionProofs": {
+    "bridgheCore": "PASS TOTAL 269",
+    "bridgheComponents": "PASS: GH composite validity, modular ratios and flags preserved",
+    "bridgheBaseline": "NUMERICAL BASELINE: 238 values, 238 exactly equal; relative/absolute tolerance 1e-12.",
+    "bridgheBaselineComplete": "REGRESSION TOTAL 1",
+    "rev003": "REV003 OFFLINE PASS: explicit vehicle, slab path, phase 30, alternative combinations; no solver results saved.",
+    "rebear": "TOTAL: 25 PASS, 0 FAIL"
+  },
+  "previousRegressionEvidence": "validation-gpc-integration-2026-10-26.json",
+  "nativeStrausAnalysesRepeated": false
+}

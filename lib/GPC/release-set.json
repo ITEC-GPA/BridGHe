@@ -1,9 +1,9 @@
 {
   "schema": 1,
   "generator": "Checker/build/Release-Set.ps1",
-  "created": "2026-10-26T22:46:25",
-  "candidate": true,
-  "previous": "C:/Users/g.pacini/Documents/Repository/ConcreteSectionChecker/lib/GPC/release-set.json",
+  "created": "2026-10-27T06:39:28",
+  "candidate": false,
+  "previous": "C:/Users/g.pacini/Documents/Repository/BridGHe/artifacts/gpc-previous-official-20261026.json",
   "repositories": {
     "Utilities": {
       "commit": "e57b440b16a0a311a7bf0af2f9cf4d2681b83491",
@@ -22,8 +22,8 @@
     },
     "Checker": {
       "commit": "4a1b0090fe4de64de54e28cb9d380c441e79660f",
-      "branch": "codex/coherent-library-release-20261026",
-      "onOriginMaster": false
+      "branch": "master",
+      "onOriginMaster": true
     }
   },
   "files": [

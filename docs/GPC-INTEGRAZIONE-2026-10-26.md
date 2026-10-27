@@ -31,7 +31,7 @@ I controlli delle API pubbliche passano. Le firme consumate da BridGHe e ReBear 
 
 Il set è prodotto da `Checker/build/Release-Set.ps1 -Candidate` da checkout puliti: Utilities `e57b440b`, Geometry `6734eee1`, Model `2acc60ef`, Checker `4a1b0090`. Il manifest registra il branch d'integrazione al momento del collaudo; lo stesso commit è poi confluito in master.
 
-**Stato: candidato locale.** Checker/master è 64 commit avanti a origin/master; il push attende autorizzazione. Il manifest mantiene `candidate=true` e non viene presentato come rilascio ufficiale. La configurazione **Release** dei plugin descrive l'ottimizzazione di compilazione, non cambia lo stato del set di librerie.
+**Stato al collaudo del 26 ottobre: candidato locale.** Il 27 ottobre il push autorizzato di Checker/master è stato completato e il set è stato rigenerato con tutte le suite come **rilascio ufficiale**, `candidate=false`. Le 14 DLL hanno gli stessi SHA-256 del candidato. Il JSON del 26 ottobre conserva i dati storici dell'esecuzione; lo stato corrente è nel [resoconto del 27 ottobre](GPC-RILASCIO-2026-10-27.md).
 
 Tutte le suite richieste sono state eseguite: **9.046 test Checker superati** e **1.493 test Model superati**. Nessun fallimento; tre test Model sono `NotExecuted` perché richiedono fixture native facoltative. Concrete e Steel includono net472; Design include net8.0 e net472. La verifica delle versioni rispetto al set precedentemente distribuito da ReBear conferma una versione maggiore per ogni DLL con SHA-256 cambiato.
 
