@@ -126,6 +126,7 @@ internal sealed partial class PersonalBridgeRevision
         SetPlotTitles();
         Solve(true);
         Boolean(report, 10, true); Run(report); Solve(true); Boolean(report, 10, false);
+        ResultFingerprint.Write("example99-" + revision + "-build", doc);
         var results = doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="SuperElementCheckComponent").SelectMany(c=>c.Params.Output[0].VolatileData.AllData(true)).Select(g => (BridgeStressResult)g.ScriptVariable()).ToArray();
         if (results.Length == 0 || supportCheck.Params.Output[0].VolatileDataCount == 0 || intermediateCheck.Params.Output[0].VolatileDataCount == 0)
             throw new Exception("Missing final or local verification results.");
@@ -275,6 +276,7 @@ internal sealed partial class PersonalBridgeRevision
         Solve();Run(C(ExcelId));Solve();Run(C(BuildId));Solve();
         var checks=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="SuperElementCheckComponent").ToArray();
         foreach(var c in checks){Run(c);Solve();} Solve(true);
+        ResultFingerprint.Write("example99-"+revision+"-replay",doc);
         ValidateReactions();
         if (revision == "REV004") ValidateDeckPhaseModels();
         report=doc.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="BridgeReportComponent");

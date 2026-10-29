@@ -27,7 +27,7 @@ internal static class BridgeMovingRevisionNative
         var moving=Find(doc,"MovingStaticAnalysisComponent");Clear(moving);OutputPath(moving,"Output path","M03_N0_MOBILE.st7");
         BridgeSegmentExcelTests.Solve(doc,true);
         foreach(var read in doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeSectionReadComponent")){BridgeSegmentExcelTests.Press(read);read.ExpireSolution(false);}
-        BridgeSegmentExcelTests.Solve(doc,true);
+        BridgeSegmentExcelTests.Solve(doc,true);ResultFingerprint.Mark("REV003 inputs solved");
         var measurements=new List<object>();
         void Near(string label,double actual,double expected,double tolerance)
         {Require(double.IsFinite(actual)&&Math.Abs(actual-expected)<=tolerance,$"{label}: {actual:G17} vs {expected:G17}, tol={tolerance}");measurements.Add(new{Label=label,Actual=actual,Expected=expected,Tolerance=tolerance});}
@@ -77,7 +77,7 @@ internal static class BridgeMovingRevisionNative
         moving.ExpireSolution(false);BridgeSegmentExcelTests.Solve(doc,true);
         Require(Values<ModelModel>(Out(moving,"Model")).SingleOrDefault()?.GeneratedMovingCases.Count==cases.Length&&File.GetLastWriteTimeUtc(resultFile)==written,"Moving result cache lost or solver reran while Run=False.");
         var combo=Find(doc,"BridgeMovingCombinationsComponent");var ids=Values<string>(Out(combo,"Action IDs"));
-        var merge=Find(doc,"BuildBridgeModel");Press(merge);BridgeSegmentExcelTests.Solve(doc,true);
+        ResultFingerprint.Mark("REV003 merge start");var merge=Find(doc,"BuildBridgeModel");Press(merge);BridgeSegmentExcelTests.Solve(doc,true);
         var model=Values<ModelModel>(Out(merge,"Model")).SingleOrDefault();Require(model?.BridgeWorkflow?.Phases.Length==4,"Four-phase merge failed: "+Errors(doc));
         var actions=model.BridgeWorkflow.Phases.Single(p=>p.Order==30).Actions.Where(a=>ids.Contains(a.Key)).ToArray();
         Require(actions.Length==cases.Length&&actions.All(a=>a.Behavior==BridgeActionBehavior.ShortTerm&&cases.Contains(a.SourceCase)),"Moving positions lost their n0 source association.");
@@ -85,13 +85,14 @@ internal static class BridgeMovingRevisionNative
         foreach(var c in model.LoadCombinations)
         {int count=c.Values.Count(v=>ids.Any(id=>v.Key.Name==id+" [FEM]")&&v.Value!=0);Require(count<=1,"Different traffic positions were summed.");active+=count;}
         Require(active==cases.Length,"Each moving position must enter exactly one cumulative combination.");
-        var checker=Find(doc,"SuperElementCheckComponent");Press(checker);BridgeSegmentExcelTests.Solve(doc,true);
+        ResultFingerprint.Mark("REV003 checks start");var checker=Find(doc,"SuperElementCheckComponent");Press(checker);BridgeSegmentExcelTests.Solve(doc,true);
         var rows=Values<BridgeStressResult>(Out(checker,"Tension Check"));Require(rows.Length>0,"No section checks: "+Errors(doc));
         var details=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeDetailCheckComponent").ToArray();
         Require(details.Length==3&&details.All(c=>Out(c,"Section result").VolatileDataCount>0),"Missing detail checks: "+Errors(doc));
         var plots=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name.EndsWith("PlotComponent")).ToArray();Require(plots.Length==6&&plots.All(c=>Out(c,"SVG").VolatileDataCount>0),"Missing SVG plots.");
         Require(In(Find(doc,"BridgeReportComponent"),"Results").VolatileDataCount==details.Sum(c=>Out(c,"Section result").VolatileDataCount),"Report input coverage.");
         Require(Errors(doc).Length==0,Errors(doc));
+        ResultFingerprint.Mark("REV003 checks, details and plots solved");ResultFingerprint.Write("example50-rev003-native",doc);
         // A path change invalidates the cached moving analysis rather than leaking old positions.
         var pathComponent=Find(doc,"BridgeStraightMovingPathComponent");var divisions=(Param_Integer)In(pathComponent,"Divisions");divisions.RemoveAllSources();divisions.SetPersistentData(path.Divisions+1);pathComponent.ExpireSolution(false);BridgeSegmentExcelTests.Solve(doc,true);
         Require(Values<ModelModel>(Out(moving,"Model")).Length==0&&Values<string>(Out(moving,"Cases")).Length==0,"Stale moving results survived changed input.");

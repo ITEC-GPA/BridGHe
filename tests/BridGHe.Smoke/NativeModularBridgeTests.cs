@@ -42,7 +42,7 @@ internal static class NativeModularBridgeTests
         foreach(var report in doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeReportComponent"))report.GetType().GetField("_run",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(report,false);
         BridgeSegmentExcelTests.Solve(doc,true);
         foreach(var read in doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeSectionReadComponent")){BridgeSegmentExcelTests.Press(read);read.ExpireSolution(false);}
-        BridgeSegmentExcelTests.Solve(doc,true);
+        BridgeSegmentExcelTests.Solve(doc,true);ResultFingerprint.Mark("modular inputs solved");
         var summary=new List<object>();
         for(int i=0;i<analyses.Length;i++)
         {
@@ -69,12 +69,14 @@ internal static class NativeModularBridgeTests
             File.WriteAllText(Path.Combine(folder,"progress.json"),JsonSerializer.Serialize(summary,new JsonSerializerOptions{WriteIndented=true}));
             Console.WriteLine("NATIVE MODULAR PASS: "+a.NickName+"; reactions in equilibrium.");
         }
+        ResultFingerprint.Mark("modular merge start");
         // Existing workbooks are read only after their source phases are populated.
         // Never press a Create-mode Excel component in an end-to-end replay.
         foreach(var excel in doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeCombinationExcelComponent"))
             if(Values<int>(Input(excel,"Mode")).SingleOrDefault()==1){Press(excel);BridgeSegmentExcelTests.Solve(doc,true);}
         var merge=doc.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="BuildBridgeModel");Press(merge);BridgeSegmentExcelTests.Solve(doc,true);
         var model=Values<ModelModel>(Output(merge,"Model")).SingleOrDefault();if(model?.BridgeWorkflow?.Phases.Length!=4)throw new Exception("Four-phase merge failed. Inputs: "+string.Join(", ",merge.Params.Input.Select(p=>p.Name+"="+p.VolatileDataCount))+"\n"+Errors(doc));
+        ResultFingerprint.Mark("modular checks start");
         var checks=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="SuperElementCheckComponent").ToArray();
         foreach(var check in checks){Press(check);BridgeSegmentExcelTests.Solve(doc,true);}
         var rows=checks.SelectMany(check=>Values<BridgeStressResult>(Output(check,"Tension Check"))).ToArray();
@@ -86,6 +88,7 @@ internal static class NativeModularBridgeTests
         var reportComponent=doc.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="BridgeReportComponent");
         if(Input(reportComponent,"Results").VolatileDataCount!=details.Sum(c=>Output(c,"Section result").VolatileDataCount))throw new Exception("Incomplete report result input.");
         string errors=Errors(doc);if(errors.Length>0)throw new Exception("Saved graph still has errors:\n"+errors);
+        ResultFingerprint.Mark("modular checks, details and plots solved");ResultFingerprint.Write("modular-"+Path.GetFileNameWithoutExtension(source),doc);
         if(!original.SequenceEqual(File.ReadAllBytes(source))||!migrated.SequenceEqual(File.ReadAllBytes(candidate)))throw new Exception("Native test modified a GHX source.");
         File.WriteAllText(Path.Combine(folder,"validation.json"),JsonSerializer.Serialize(new{Definition=relative,SourceSHA256=Convert.ToHexString(SHA256.HashData(original)),MigratedSHA256=Convert.ToHexString(SHA256.HashData(migrated)),Native=true,Models=summary,Phases=model.BridgeWorkflow.Phases.Length,Combinations=model.LoadCombinations.Count,SectionChecks=rows.Length,DetailBranches=details.Length,Plots=plots.Length,ReportInputs=true,ResultsSavedInGHX=false},new JsonSerializerOptions{WriteIndented=true}));
         Console.WriteLine($"NATIVE MODULAR BRIDGE PASS: 4 models, {model.LoadCombinations.Count} combinations, {rows.Length} section results, {details.Length} details, {plots.Length} plots, report inputs. GHX files unchanged.");return 0;
