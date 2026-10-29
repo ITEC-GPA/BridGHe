@@ -39,6 +39,7 @@ internal static class Program
     {
         // --pure does not start Rhino, useful for CI and unlicensed environments.
         using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},WindowStyle.Hidden);
+        GpcDomainCache.Configure();
         if(args.Contains("--migrate-bridge-examples")) return BridgeExampleMigration.Run(args.SkipWhile(a=>a!="--migrate-bridge-examples").Skip(1).FirstOrDefault(a=>!a.StartsWith("--")),args.Contains("--publish"));
         if(args.Contains("--modular-bridge-native")) return NativeModularBridgeTests.Run(args.SkipWhile(a=>a!="--modular-bridge-native").Skip(1).FirstOrDefault());
         if(args.Contains("--modular-layout-capture")) return Example50HorizontalLayout.CaptureModular();

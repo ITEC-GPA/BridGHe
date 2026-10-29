@@ -110,13 +110,17 @@ foreach ($name in $names) {
     }
     if ($validation.Count) { $ok = $false }
     # gPC profiler times and phase intervals.
-    $times = @()
+    $times = @(); $cacheLines = @()
     foreach ($bs in @(Get-ChildItem -LiteralPath (Join-Path $b.folder 'fingerprint') -Filter '*.summary.json' -ErrorAction SilentlyContinue)) {
         $cs = Join-Path (Join-Path $c.folder 'fingerprint') $bs.Name; if (-not (Test-Path -LiteralPath $cs)) { continue }
         $x = Get-Content -LiteralPath $bs.FullName -Raw | ConvertFrom-Json; $y = Get-Content -LiteralPath $cs -Raw | ConvertFrom-Json
         foreach ($t in @($x.ProcessorTimes | Select-Object -First 12)) {
             $u = @($y.ProcessorTimes | Where-Object { $_.Id -eq $t.Id }) | Select-Object -First 1
             $times += [pscustomobject]@{ summary = $bs.Name; component = "$($t.Type) / $($t.NickName)"; baselineSeconds = [Math]::Round($t.Milliseconds / 1000, 2); candidateSeconds = $(if ($u) { [Math]::Round($u.Milliseconds / 1000, 2) } else { $null }) }
+        }
+        foreach ($side in @(@('baseline', $x), @('candidato', $y))) {
+            $cache = $side[1].DomainCache
+            if ($cache) { $cacheLines += ("- Cache dei domini GPC ($($side[0]), $($bs.Name)): capacita $($cache.Capacity), voci $($cache.Count), hit $($cache.Hits), miss $($cache.Misses), domini calcolati $($cache.Computations), mesh $($cache.MeshBuilds)") }
         }
         $px = Get-Phases $x; $py = Get-Phases $y
         foreach ($k in $px.Keys) { $times += [pscustomobject]@{ summary = $bs.Name; component = "intervallo: $k"; baselineSeconds = [Math]::Round($px[$k], 1); candidateSeconds = $(if ($py.Contains($k)) { [Math]::Round($py[$k], 1) } else { $null }) } }
@@ -129,6 +133,7 @@ foreach ($name in $names) {
         $details.Add("- $($r.file): $($r.identical) righe identiche su $($r.baselineRows) (candidato $($r.candidateRows)); diverse $($r.different), con input diversi $($r.inputsChanged); max |delta| utilizzo $($r.maxAbsUtilizationChange), rapporto verifiche $($r.maxAbsCheckRatioChange)")
         foreach ($d in $r.firstDifferences) { $details.Add("  - ``$($d.key -replace "`t", ' | ')`` $($d.change)$($d.source) $($d.stage) util $($d.maxUtilization) ratio $($d.checkRatio)") }
     }
+    foreach ($line in $cacheLines) { $details.Add($line) }
     if ($validation.Count) { $details.Add('- Valori di validazione diversi:'); foreach ($v in $validation) { $details.Add("  - $($v.file) $($v.field): $($v.baseline) -> $($v.candidate)") } }
     # Straus files embed solution time, CPU time and free scratch space: they differ between identical runs.
     $volatile = @($fileDiff | Where-Object { $_.change -eq 'diverso' -and $_.path -match '\.(st7|lsa|lsl)$' })

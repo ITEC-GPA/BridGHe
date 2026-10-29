@@ -131,11 +131,12 @@ internal static class ResultFingerprint
                 Rows = rows, SerializationErrors = errors, RowsSha256 = Convert.ToHexString(all.Hash), Components = perComponent,
                 MaxStageUtilization = R(maxStage), MaxStageKey = maxStageKey, MaxCheckRatio = R(maxRatio), MaxCheckKey = maxRatioKey,
                 StressPointsOverOne = pointsOver, LocalChecksOverOne = checksOver, LocalCheckStatuses = statuses,
-                LoadedAssemblies = assemblies, ProcessorTimes = times, Marks = marks
+                LoadedAssemblies = assemblies, DomainCache = GpcDomainCache.Statistics(), ProcessorTimes = times, Marks = marks
             };
             // Component Ids identify the profiler rows: keep them in the summary.
             File.WriteAllText(Path.Combine(folder, label + ".summary.json"), JsonSerializer.Serialize(summary, new JsonSerializerOptions { NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals, WriteIndented = true }));
             Console.WriteLine($"FINGERPRINT {label}: {rows} rows, {errors} serialization errors, SHA-256 {Convert.ToHexString(all.Hash)}");
+            if (summary.DomainCache != null) Console.WriteLine("GPC DOMAIN CACHE: " + JsonSerializer.Serialize(summary.DomainCache));
         }
         finally { CultureInfo.CurrentCulture = culture; }
     }
