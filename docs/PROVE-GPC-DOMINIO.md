@@ -16,6 +16,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/compare-gpc-fingerpr
 
 Con Windows PowerShell 5.1 un elenco di `-Runs` richiede `-Command`: con `-File` arriva un solo valore.
 
+Con un set che contiene la cache dei domini di rottura (`FailureDomainCache` in GPCChecker.Concrete), il riepilogo dell'impronta ne riporta i contatori. Per escluderla nello stesso processo impostare `$env:BRIDGHE_GPC_DOMAIN_CACHE_CAPACITY = '0'` prima di lanciare lo script; i processi figli ereditano la variabile.
+
 | Run | Comando dell'harness | Note |
 |---|---|---|
 | `50-check` | `--example50-rev003 --check` | Controllo offline del GHX |
@@ -42,7 +44,9 @@ Per ogni `BridgeStressResult` di **Super Element Check** e **Bridge Detail Check
 
 Il confronto separa quindi le differenze di ingresso (FEM e combinazioni) da quelle prodotte da GPC. I GUID sono esclusi dall'impronta: i materiali GPC ricevono `Guid.NewGuid()` alla costruzione e cambierebbero l'hash dell'ingresso a ogni esecuzione.
 
-Due esecuzioni identiche producono la stessa impronta riga per riga e gli stessi `validation.json`/`progress.json`. Cambiano sempre i file Straus `.st7`, `.LSA` e `.LSL`, che registrano ora, tempo CPU e spazio libero della soluzione: il confronto li segnala a parte.
+Due esecuzioni identiche producono la stessa impronta riga per riga e gli stessi `validation.json`/`progress.json`. Cambiano sempre i file Straus `.st7`, `.LSA` e `.LSL`, che registrano ora, tempo CPU e spazio libero della soluzione: il confronto li segnala a parte. Anche l'Excel rigenerato da `99-rev004` cambia hash pur con le stesse voci: differiscono solo le date del contenitore zip.
+
+I tempi dipendono molto dal carico della macchina: con il set ufficiale, due esecuzioni di `50-native` hanno richiesto 2.338 s e 3.047 s. Per confrontare i tempi conviene ripetere ogni fase almeno due volte.
 
 ## Limiti noti al 29 ottobre 2026
 
