@@ -40,7 +40,9 @@ Con `BRIDGHE_RESULT_DUMP=<cartella>` i runner nativi chiamano `ResultFingerprint
 
 Per ogni `BridgeStressResult` di **Super Element Check** e **Bridge Detail Check** l'impronta conserva provenienza, punti 1–8, τ, lo stadio GPC completo (contributi, punti, taglio, pioli, torsione e relative verifiche) e lo SHA-256 dell'ingresso GPC (`Input`, geometria, materiali). Ogni riga ha il proprio SHA-256; il file `*.rows.jsonl.gz` contiene il dettaglio completo. Il riepilogo `*.summary.json` riporta esiti delle verifiche locali, utilizzi massimi, tempi del profiler GH per componente, marcatori `TIMING` e assembly caricati con percorso e SHA-256.
 
-Il confronto separa quindi le differenze di ingresso (FEM e combinazioni) da quelle prodotte da GPC.
+Il confronto separa quindi le differenze di ingresso (FEM e combinazioni) da quelle prodotte da GPC. I GUID sono esclusi dall'impronta: i materiali GPC ricevono `Guid.NewGuid()` alla costruzione e cambierebbero l'hash dell'ingresso a ogni esecuzione.
+
+Due esecuzioni identiche producono la stessa impronta riga per riga e gli stessi `validation.json`/`progress.json`. Cambiano sempre i file Straus `.st7`, `.LSA` e `.LSL`, che registrano ora, tempo CPU e spazio libero della soluzione: il confronto li segnala a parte.
 
 ## Limiti noti al 29 ottobre 2026
 

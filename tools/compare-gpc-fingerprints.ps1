@@ -130,7 +130,11 @@ foreach ($name in $names) {
         foreach ($d in $r.firstDifferences) { $details.Add("  - ``$($d.key -replace "`t", ' | ')`` $($d.change)$($d.source) $($d.stage) util $($d.maxUtilization) ratio $($d.checkRatio)") }
     }
     if ($validation.Count) { $details.Add('- Valori di validazione diversi:'); foreach ($v in $validation) { $details.Add("  - $($v.file) $($v.field): $($v.baseline) -> $($v.candidate)") } }
-    if ($fileDiff.Count) { $details.Add("- File con hash diverso o presenti in una sola fase ($($fileDiff.Count)):"); foreach ($f in @($fileDiff | Select-Object -First 60)) { $details.Add("  - $($f.path): $($f.change)") } }
+    # Straus files embed solution time, CPU time and free scratch space: they differ between identical runs.
+    $volatile = @($fileDiff | Where-Object { $_.change -eq 'diverso' -and $_.path -match '\.(st7|lsa|lsl)$' })
+    $relevant = @($fileDiff | Where-Object { $volatile -notcontains $_ })
+    if ($volatile.Count) { $details.Add("- File Straus (.st7/.LSA/.LSL) con hash diverso: $($volatile.Count); attesi, contengono data e tempi della soluzione") }
+    if ($relevant.Count) { $details.Add("- Altri file con hash diverso o presenti in una sola fase ($($relevant.Count)):"); foreach ($f in @($relevant | Select-Object -First 60)) { $details.Add("  - $($f.path): $($f.change)") } }
     if ($times.Count) {
         $details.Add(''); $details.Add('| Tempo | Baseline [s] | Candidato [s] | Rapporto |'); $details.Add('|---|---|---|---|')
         foreach ($t in $times) { $details.Add("| $($t.component) | $($t.baselineSeconds) | $($t.candidateSeconds) | $(Format-Ratio $t.baselineSeconds $t.candidateSeconds) |") }

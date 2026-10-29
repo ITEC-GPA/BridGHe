@@ -24,8 +24,15 @@ internal static class ResultFingerprint
     {
         NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
         ReferenceHandler = ReferenceHandler.IgnoreCycles,
-        MaxDepth = 64
+        MaxDepth = 64,
+        // gPC materials receive Guid.NewGuid() at construction: identities, not content.
+        Converters = { new IdentityConverter() }
     };
+    private sealed class IdentityConverter : JsonConverter<Guid>
+    {
+        public override Guid Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options) => throw new NotSupportedException();
+        public override void Write(Utf8JsonWriter writer, Guid value, JsonSerializerOptions options) => writer.WriteStringValue("guid");
+    }
     internal static string Folder => Environment.GetEnvironmentVariable("BRIDGHE_RESULT_DUMP") is { Length: > 0 } f ? Path.GetFullPath(f) : null;
     private static double Seconds => (DateTime.Now - Process.GetCurrentProcess().StartTime).TotalSeconds;
 
@@ -126,7 +133,8 @@ internal static class ResultFingerprint
                 StressPointsOverOne = pointsOver, LocalChecksOverOne = checksOver, LocalCheckStatuses = statuses,
                 LoadedAssemblies = assemblies, ProcessorTimes = times, Marks = marks
             };
-            File.WriteAllText(Path.Combine(folder, label + ".summary.json"), JsonSerializer.Serialize(summary, new JsonSerializerOptions(json) { WriteIndented = true }));
+            // Component Ids identify the profiler rows: keep them in the summary.
+            File.WriteAllText(Path.Combine(folder, label + ".summary.json"), JsonSerializer.Serialize(summary, new JsonSerializerOptions { NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals, WriteIndented = true }));
             Console.WriteLine($"FINGERPRINT {label}: {rows} rows, {errors} serialization errors, SHA-256 {Convert.ToHexString(all.Hash)}");
         }
         finally { CultureInfo.CurrentCulture = culture; }
