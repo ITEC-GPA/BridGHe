@@ -56,11 +56,11 @@ Il banco ripete i calcoli di sezione GPC (`HBridgeSection.Calculate`) di un run 
 2. Ripetizione:
 
 ```powershell
-dotnet obj/bin/BridGHe.Smoke/Release/net8.0-windows/BridGHe.Smoke.dll --gpc-bench <cattura> --rhino [--every N] [--offset K] [--component testo] [--repeat R] [--out righe.tsv] [--dump cartella]
-dotnet obj/bin/BridGHe.Smoke/Release/net8.0-windows/BridGHe.Smoke.dll --gpc-bench <cattura> --rhino --stream [--parallel]
+dotnet obj/bin/BridGHe.Smoke/Release/net8.0-windows/BridGHe.Smoke.dll --gpc-bench <cattura> --rhino [--every N | --station-every N] [--offset K] [--component testo] [--batch] [--repeat R] [--out righe.tsv] [--dump cartella]
+dotnet obj/bin/BridGHe.Smoke/Release/net8.0-windows/BridGHe.Smoke.dll --gpc-bench <cattura> --rhino --stream [--parallel] [--batch]
 ```
 
-La prima forma ricalcola una riga ogni N (tutte per default), R volte. Stampa:
+La prima forma ricalcola una riga ogni N (tutte per default), oppure con `--station-every N` tutte le righe di una stazione ogni N, R volte. Con `--batch` le righe consecutive della stessa stazione (componente, trave e stazione) sono calcolate in un'unica chiamata `HBridgeSection.Calculate(inputs)`, come fanno i componenti. Stampa:
 
 - tempo reale e CPU;
 - millisecondi per sezione (mediana, p90, massimo);
@@ -69,7 +69,7 @@ La prima forma ricalcola una riga ogni N (tutte per default), R volte. Stampa:
 
 `--stream` fa una sola passata su tutta la cattura, a blocchi e con memoria limitata; `--parallel` distribuisce ogni blocco sui processori. L'uscita vale 0 solo se tutte le righe sono identiche. `--dump` scrive il contenuto ricalcolato delle prime differenze, da confrontare con il file `*.rows.jsonl.gz` dell'impronta.
 
-I materiali Model vengono ricostruiti dai loro costruttori. L'hash dell'ingresso, uguale a quello dell'impronta, dimostra che la ricostruzione è fedele.
+I materiali Model vengono ricostruiti dai loro costruttori, un solo oggetto per descrittore come nei run nativi, dove le sezioni di una trave condividono i materiali: il batch raggruppa infatti le combinazioni che hanno gli stessi oggetti materiale. L'hash dell'ingresso, uguale a quello dell'impronta, dimostra che la ricostruzione è fedele.
 
 `--rhino` avvia Rhino come i runner nativi ed è necessario per il confronto bit per bit. Senza Rhino circa il 40 % delle righe del 99 differisce all'ultima cifra (1e-15 relativo), perché il processo con Rhino avviato usa un ambiente numerico diverso. Le opzioni del JIT (`DOTNET_TieredCompilation`, `TieredPGO`, `EnableAVX2`, `EnableHWIntrinsic`) non c'entrano.
 

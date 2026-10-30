@@ -38,10 +38,15 @@ internal static class GpcSectionBench
         new(c.GetType().FullName, c.Name, c.Fck, c.CompressionStressStrainDiagram, c.Ni, c.Density, c.AlfaThermalExpansion, c.CementType);
     private static SteelData Describe(SteelMaterial s) =>
         new(s.GetType().FullName, s.Name, s.ElasticModulusTension, s.Fyk, s.Fu, s.StrainUTension, s.StressStrainCurve, s.SteelType, s.Ni, s.Density, s.AlfaThermalExpansion);
-    private static ConcreteMaterialEN1992 Build(ConcreteData c) =>
+    // One object per material, as in the native runs (the sections of a beam share their materials): equal descriptors give the same object,
+    // so the batches can group the combinations of a station
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<object, object> Materials = new();
+    private static ConcreteMaterialEN1992 Build(ConcreteData c) => (ConcreteMaterialEN1992)Materials.GetOrAdd(c, _ => NewConcrete(c));
+    private static SteelMaterial Build(SteelData s) => (SteelMaterial)Materials.GetOrAdd(s, _ => NewSteel(s));
+    private static ConcreteMaterialEN1992 NewConcrete(ConcreteData c) =>
         c.Type == typeof(ConcreteMaterialEN1992).FullName ? new ConcreteMaterialEN1992(c.Name, c.Fck, c.Diagram, c.Ni, c.Density, c.Alpha, c.Cement)
             : throw new NotSupportedException("Concrete type " + c.Type);
-    private static SteelMaterial Build(SteelData s) => s.Type == typeof(SteelMaterialEN1992).FullName
+    private static SteelMaterial NewSteel(SteelData s) => s.Type == typeof(SteelMaterialEN1992).FullName
         ? new SteelMaterialEN1992(s.Name, s.E, s.Fyk, s.Fu, s.StrainU, s.Curve, s.SteelType, s.Ni, s.Density, s.Alpha)
         : s.Type == typeof(SteelMaterial).FullName ? new SteelMaterial(s.Name, s.E, s.Fyk, s.Fu, s.StrainU, s.Curve, s.SteelType, s.Ni, s.Density, s.Alpha)
         : throw new NotSupportedException("Steel type " + s.Type);
@@ -104,6 +109,8 @@ internal static class GpcSectionBench
         int Int(string name, int fallback) => Arg(name) is { } v ? int.Parse(v, CultureInfo.InvariantCulture) : fallback;
         string file = Arg("--gpc-bench") ?? throw new ArgumentException("--gpc-bench <capture.inputs.jsonl.gz>");
         int every = Int("--every", 1), offset = Int("--offset", 0), repeat = Int("--repeat", 1);
+        // --station-every N: the rows of every N-th station (all its combinations), for the batches
+        int stationEvery = Int("--station-every", 0), stationIndex = -1; string lastStation = null;
         string component = Arg("--component"), output = Arg("--out"), dump = Arg("--dump");
         // --rhino: the gPC calculations inside a started Rhino host, as in the native runners.
         using var rhino = args.Contains("--rhino") ? new Rhino.Runtime.InProcess.RhinoCore(new[] { "/nosplash" }, Rhino.Runtime.InProcess.WindowStyle.Hidden) : null;
@@ -112,14 +119,19 @@ internal static class GpcSectionBench
         {
             foreach (var a in AppDomain.CurrentDomain.GetAssemblies().Where(a => a.GetName().Name.StartsWith("GPC", StringComparison.Ordinal) && !a.IsDynamic).OrderBy(a => a.GetName().Name))
                 Console.WriteLine($"GPC {a.GetName().Name} {a.GetName().Version} {Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(a.Location)))[..12]}");
-            if (args.Contains("--stream")) return Stream(file, every, offset, component, args.Contains("--parallel"));
+            if (args.Contains("--stream")) return Stream(file, every, offset, component, args.Contains("--parallel"), args.Contains("--batch"));
             var rows = new List<Row>(); int read = 0;
             using (var gz = new GZipStream(File.OpenRead(file), CompressionMode.Decompress))
             using (var reader = new StreamReader(gz, Encoding.UTF8))
                 for (string line; (line = reader.ReadLine()) != null; read++)
                 {
-                    if (read % every != offset % every) continue;
+                    if (stationEvery == 0 && read % every != offset % every) continue;
                     var row = JsonSerializer.Deserialize<Row>(line, ResultFingerprint.Json);
+                    if (stationEvery > 0)
+                    {
+                        if (Station(row) != lastStation) { stationIndex++; lastStation = Station(row); }
+                        if (stationIndex % stationEvery != offset % stationEvery) continue;
+                    }
                     if (component == null || (row.Component + "\t" + row.NickName).Contains(component, StringComparison.Ordinal)) rows.Add(row);
                 }
             var inputs = rows.Select(r => r.Input.Deserialize<HBridgeInput>(ResultFingerprint.Json) with
@@ -133,12 +145,13 @@ internal static class GpcSectionBench
                 GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
                 long allocated = GC.GetTotalAllocatedBytes(true); int g0 = GC.CollectionCount(0), g1 = GC.CollectionCount(1), g2 = GC.CollectionCount(2);
                 var cpu = Process.GetCurrentProcess().TotalProcessorTime; var total = Stopwatch.StartNew();
-                for (int i = 0; i < rows.Count; i++)
+                // --batch: one gPC call for the checks of a station; its time is shared by its rows
+                foreach (var station in Stations(rows, args.Contains("--batch")))
                 {
                     long t0 = Stopwatch.GetTimestamp();
-                    var analysis = Calculate(rows[i], inputs[i]);
-                    times[pass][i] = Stopwatch.GetElapsedTime(t0).TotalMilliseconds;
-                    if (pass == 0) analyses[i] = analysis;
+                    var computed = Calculate(station.Select(i => rows[i]).ToArray(), station.Select(i => inputs[i]).ToArray());
+                    double ms = Stopwatch.GetElapsedTime(t0).TotalMilliseconds / station.Length;
+                    for (int k = 0; k < station.Length; k++) { times[pass][station[k]] = ms; if (pass == 0) analyses[station[k]] = computed[k]; }
                 }
                 double seconds = total.Elapsed.TotalSeconds, cpuSeconds = (Process.GetCurrentProcess().TotalProcessorTime - cpu).TotalSeconds;
                 var sorted = times[pass].OrderBy(t => t).ToArray();
@@ -171,27 +184,56 @@ internal static class GpcSectionBench
         finally { CultureInfo.CurrentCulture = culture; }
     }
 
-    private static HBridgeAnalysisResult Calculate(Row r) => Calculate(r, r.Input.Deserialize<HBridgeInput>(ResultFingerprint.Json) with
-        { Materials = new BridgeMaterialSet(Build(r.Materials.Concrete), Build(r.Materials.Steel), Build(r.Materials.Rebar)) });
+    private static HBridgeInput Input(Row r) => r.Input.Deserialize<HBridgeInput>(ResultFingerprint.Json) with
+        { Materials = new BridgeMaterialSet(Build(r.Materials.Concrete), Build(r.Materials.Steel), Build(r.Materials.Rebar)) };
+
+    /// <summary>The station of a row: component, beam and station (the rows of a station are consecutive in the captures)</summary>
+    private static string Station(Row r) => r.Component + "|" + r.NickName + "|" + r.Source?.BeamId + "|" + r.Source?.StationMm.ToString("R", CultureInfo.InvariantCulture);
+
+    /// <summary>The rows calculated together: the consecutive rows of a station with --batch (not the histories), else one by one</summary>
+    private static List<int[]> Stations(IReadOnlyList<Row> rows, bool batch)
+    {
+        var stations = new List<int[]>(); var current = new List<int>();
+        for (int i = 0; i < rows.Count; i++)
+        {
+            if (current.Count > 0 && (!batch || rows[i].History || rows[current[0]].History || Station(rows[i]) != Station(rows[current[0]]))) { stations.Add(current.ToArray()); current.Clear(); }
+            current.Add(i);
+        }
+        if (current.Count > 0) stations.Add(current.ToArray());
+        return stations;
+    }
+
+    /// <summary>The analyses of the rows of a station: one gPC batch call for several rows; an error of a row fails the bench</summary>
+    private static HBridgeAnalysisResult[] Calculate(Row[] rows, HBridgeInput[] inputs)
+    {
+        if (rows.Length == 1) return new[] { Calculate(rows[0], inputs[0]) };
+        return HBridgeSection.Calculate(inputs).Select((r, k) => r.Analysis ?? throw new InvalidOperationException(rows[k].Key + ": " + r.Error!.Message, r.Error)).ToArray();
+    }
     private static HBridgeAnalysisResult Calculate(Row r, HBridgeInput input) =>
         r.History ? HBridgeHistoryResults.Calculate(input, new HBridgeHistoryOptions { MaterialMode = HistoryMaterialMode.Linear }) : HBridgeSection.Calculate(input);
 
     /// <summary>--stream [--parallel]: one pass over the whole capture in blocks, each row compared as soon as it is calculated (bounded memory)</summary>
-    private static int Stream(string file, int every, int offset, string component, bool parallel)
+    private static int Stream(string file, int every, int offset, string component, bool parallel, bool batch)
     {
         int read = 0, rows = 0, same = 0, inputDiff = 0, resultDiff = 0; double seconds = 0; var first = new List<string>();
         var block = new List<Row>();
         void Flush()
         {
             var ok = new int[block.Count]; var input = new bool[block.Count]; var watch = Stopwatch.StartNew();
-            void One(int i)
+            var stations = Stations(block, batch);
+            void One(int s)
             {
-                var r = block[i]; var analysis = Calculate(r);
-                string inputSha = ResultFingerprint.InputSha256(analysis);
-                ok[i] = ResultFingerprint.RowSha256(new BridgeStressResult(analysis, r.Stage, r.Source, r.Assumptions), inputSha) == r.RowSha256 ? 1 : 0;
-                input[i] = inputSha == r.InputSha256;
+                var station = stations[s];
+                var computed = Calculate(station.Select(i => block[i]).ToArray(), station.Select(i => Input(block[i])).ToArray());
+                for (int k = 0; k < station.Length; k++)
+                {
+                    int i = station[k]; var r = block[i]; var analysis = computed[k];
+                    string inputSha = ResultFingerprint.InputSha256(analysis);
+                    ok[i] = ResultFingerprint.RowSha256(new BridgeStressResult(analysis, r.Stage, r.Source, r.Assumptions), inputSha) == r.RowSha256 ? 1 : 0;
+                    input[i] = inputSha == r.InputSha256;
+                }
             }
-            if (parallel) System.Threading.Tasks.Parallel.For(0, block.Count, One); else for (int i = 0; i < block.Count; i++) One(i);
+            if (parallel) System.Threading.Tasks.Parallel.For(0, stations.Count, One); else for (int s = 0; s < stations.Count; s++) One(s);
             seconds += watch.Elapsed.TotalSeconds;
             for (int i = 0; i < block.Count; i++)
             {
@@ -210,8 +252,9 @@ internal static class GpcSectionBench
                 if (read % every != offset % every) continue;
                 var row = JsonSerializer.Deserialize<Row>(line, ResultFingerprint.Json);
                 if (component != null && !(row.Component + "\t" + row.NickName).Contains(component, StringComparison.Ordinal)) continue;
+                // blocks end between stations, so that a batch holds all the checks of its station
+                if (block.Count >= 2000 && Station(row) != Station(block[block.Count - 1])) Flush();
                 block.Add(row);
-                if (block.Count == 2000) Flush();
             }
         if (block.Count > 0) Flush();
         Console.WriteLine($"GPC BENCH STREAM {Path.GetFileName(file)}: {rows} of {read} rows{(parallel ? ", parallel" : "")}, {seconds:F1} s");
