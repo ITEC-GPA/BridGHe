@@ -93,8 +93,23 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
             ("LengthFactor",1.0,"Buckling length factor"),("RigidEndPost",false,"Enable rigid end-post checks"),("EndPostSpacing",300.0,"Two end-post pairs spacing [mm]"),
             ("CheckWelds",true,"Check continuous welds"),("WeldThroat",8.0,"Fillet weld throat [mm]")};
     }
-    public sealed class BridgeDetailCheckComponent:GH_Component
+    /// <summary>
+    /// Task capable: the first pass reads the inputs of every section and starts its gPC calculation in a task (the calculations are
+    /// independent and thread-safe, as in Super Element Check), the second pass sets the outputs and the messages in the order of the
+    /// sections. Without tasks the second pass calculates each section, as before.
+    /// </summary>
+    public sealed class BridgeDetailCheckComponent:GH_TaskCapableComponent<BridgeDetailCheckComponent.Solution>
     {
+        /// <summary>The inputs of one section: the source result, the gPC input with the details and the stage to keep</summary>
+        private sealed class Request
+        {
+            internal BridgeStressResult Result; internal HBridgeInput Input; internal int Stage;
+        }
+        /// <summary>The outputs of one section, or the message of its error</summary>
+        public sealed class Solution
+        {
+            internal BridgeStressResult Updated; internal BridgeLocalCheck[] Checks; internal bool ServiceLimitState; internal string Error;
+        }
         public BridgeDetailCheckComponent():base("Bridge Detail Check","DetailCheck","Recomputes a BridgeChecks section with gPC studs and stiffeners. Retains phase history, materials and limit state. No FEM stiffness change.",Helpers.CategoryNameConstants.CATEGORY_MODEL, Helpers.CategoryNameConstants.SUBCATEGORY_DESIGN) { }
         public override Guid ComponentGuid=>new Guid("ffad5404-7440-47e7-9824-90588810089f");
         protected override System.Drawing.Bitmap Icon=>Properties.ComponentIcons.For(GetType());
@@ -117,36 +132,66 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
         }
         protected override void SolveInstance(IGH_DataAccess da)
         {
+            if(InPreSolve)
+            {
+                // one task for every section, also without data or with an input error, so that the results keep the order of the sections
+                Request request=null;Solution failed=null;
+                try{request=Read(da);}
+                catch(Exception e){failed=new Solution{Error=e.Message};}
+                TaskList.Add(request==null?System.Threading.Tasks.Task.FromResult(failed):System.Threading.Tasks.Task.Run(()=>Calculate(request),CancelToken));
+                return;
+            }
+            if(!GetSolveResults(da,out var solution))
+            {
+                try{var request=Read(da);solution=request==null?null:Calculate(request);}
+                catch(Exception e){solution=new Solution{Error=e.Message};}
+            }
+            if(solution==null)return;
+            if(solution.Error!=null){AddRuntimeMessage(GH_RuntimeMessageLevel.Error,solution.Error);return;}
             try
             {
-                GH_ObjectWrapper wrapper=null;if(!da.GetData(0,ref wrapper))return;
-                if(wrapper.Value is not BridgeStressResult result)throw new ArgumentException("Expected a BridgeChecks BridgeStressResult.");
-                if(result.Stage.GetHistory()!=null)throw new NotSupportedException("Bridge Detail Check does not support LinearHistory results. Recomputing them with the cumulative solver would change their history; use a separately validated detail calculation.");
-                var input=result.Analysis.Input;
-                for(int i=1;i<=3;i++)
-                {
-                    if(Params.Input[i].VolatileDataCount==0)continue;
-                    BridgeDetailGoo detail=null;if(!da.GetData(i,ref detail)||detail==null)throw new ArgumentException("Expected a gPC detail definition at input "+i);
-                    input=i switch {
-                        1 when detail.Value is BridgeStudOptions s=>input with{Studs=s},
-                        2 when detail.Value is BridgeIntermediateStiffener s=>input with{Intermediate=s},
-                        3 when detail.Value is BridgeSupportStiffener s=>input with{Support=s},
-                        _=>throw new ArgumentException("Wrong gPC detail type at input "+i)};
-                }
-                BridgeDetailGoo options=null;
-                if(da.GetData(4,ref options))input=options.Value is BridgeAnalysisOptions o?input with{Options=o}:throw new ArgumentException("Expected Bridge Analysis Options.");
-                var extra=new List<BridgeDetailGoo>();da.GetDataList(5,extra);
-                if(extra.Any(d=>d.Value is not BridgeTransverseReinforcement && d.Value is not BridgeFatigueOptions && d.Value is not BridgeBoxOptions))
-                    throw new ArgumentException("Additional details accepts transverse reinforcement, fatigue and box options only.");
-                input=BridgeGpc.WithDetails(input,extra.Select(d=>d.Value));
-                int stage=result.Analysis.Stages.IndexOf(result.Stage);if(stage<0)throw new ArgumentException("Unknown source stage.");
-                var analysis=HBridgeSection.Calculate(input);var updated=new BridgeStressResult(analysis,stage,result.Source,result.Assumptions);var selected=updated.Stage;
-                var checks=BridgeGpc.Checks(selected).ToArray();
+                var updated=solution.Updated;var selected=updated.Stage;var checks=solution.Checks;
                 da.SetData(0,updated);da.SetDataList(1,checks.Select(c=>c.Name));da.SetDataList(2,checks.Select(c=>c.Demand));da.SetDataList(3,checks.Select(c=>c.Resistance));
                 da.SetDataList(4,checks.Select(c=>c.Unit));da.SetDataList(5,checks.Select(c=>c.Ratio??double.NaN));da.SetDataList(6,checks.Select(c=>c.Status+": "+c.Note));da.SetDataList(7,selected.Warnings.Concat(updated.Assumptions).Distinct());
-                if(input.Options.LimitState!=BridgeLimitState.Ultimate)AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Stato limite del risultato sorgente SLE: gPC lascia senza esito le verifiche che richiedono azioni SLU. Nessun fattore di carico è applicato implicitamente.");
+                if(solution.ServiceLimitState)AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Stato limite del risultato sorgente SLE: gPC lascia senza esito le verifiche che richiedono azioni SLU. Nessun fattore di carico è applicato implicitamente.");
             }
             catch(Exception e){AddRuntimeMessage(GH_RuntimeMessageLevel.Error,e.Message);}
+        }
+        /// <summary>The inputs of the current section (null: no section result); exceptions are the input errors</summary>
+        private Request Read(IGH_DataAccess da)
+        {
+            GH_ObjectWrapper wrapper=null;if(!da.GetData(0,ref wrapper))return null;
+            if(wrapper.Value is not BridgeStressResult result)throw new ArgumentException("Expected a BridgeChecks BridgeStressResult.");
+            if(result.Stage.GetHistory()!=null)throw new NotSupportedException("Bridge Detail Check does not support LinearHistory results. Recomputing them with the cumulative solver would change their history; use a separately validated detail calculation.");
+            var input=result.Analysis.Input;
+            for(int i=1;i<=3;i++)
+            {
+                if(Params.Input[i].VolatileDataCount==0)continue;
+                BridgeDetailGoo detail=null;if(!da.GetData(i,ref detail)||detail==null)throw new ArgumentException("Expected a gPC detail definition at input "+i);
+                input=i switch {
+                    1 when detail.Value is BridgeStudOptions s=>input with{Studs=s},
+                    2 when detail.Value is BridgeIntermediateStiffener s=>input with{Intermediate=s},
+                    3 when detail.Value is BridgeSupportStiffener s=>input with{Support=s},
+                    _=>throw new ArgumentException("Wrong gPC detail type at input "+i)};
+            }
+            BridgeDetailGoo options=null;
+            if(da.GetData(4,ref options))input=options.Value is BridgeAnalysisOptions o?input with{Options=o}:throw new ArgumentException("Expected Bridge Analysis Options.");
+            var extra=new List<BridgeDetailGoo>();da.GetDataList(5,extra);
+            if(extra.Any(d=>d.Value is not BridgeTransverseReinforcement && d.Value is not BridgeFatigueOptions && d.Value is not BridgeBoxOptions))
+                throw new ArgumentException("Additional details accepts transverse reinforcement, fatigue and box options only.");
+            input=BridgeGpc.WithDetails(input,extra.Select(d=>d.Value));
+            int stage=result.Analysis.Stages.IndexOf(result.Stage);if(stage<0)throw new ArgumentException("Unknown source stage.");
+            return new Request{Result=result,Input=input,Stage=stage};
+        }
+        /// <summary>The gPC calculation of a section, without Grasshopper data access (it runs in a task); exceptions are the errors of the result</summary>
+        private static Solution Calculate(Request request)
+        {
+            try
+            {
+                var analysis=HBridgeSection.Calculate(request.Input);var updated=new BridgeStressResult(analysis,request.Stage,request.Result.Source,request.Result.Assumptions);
+                return new Solution{Updated=updated,Checks=BridgeGpc.Checks(updated.Stage).ToArray(),ServiceLimitState=request.Input.Options.LimitState!=BridgeLimitState.Ultimate};
+            }
+            catch(Exception e){return new Solution{Error=e.Message};}
         }
     }
 }
