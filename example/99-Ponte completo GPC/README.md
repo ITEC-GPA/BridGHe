@@ -25,7 +25,7 @@ Le Value List mostrano i nomi delle opzioni. I pannelli contengono testi, percor
 
 L'opzione **Considera calcestruzzo nelle fasi miste** è ora esplicitamente `True`: nel precedente GHX era presente un posto vuoto, interpretato già come `True` dal componente. Il controllo numerico conferma gli stessi risultati. Non vengono modificati gli Excel, i file Straus o il report: [validazione degli input espliciti](REV004/explicit-inputs-validation.json).
 
-### Pulizia del 30 ottobre 2026
+### Pulizia e disposizione del 30 ottobre 2026
 
 Sono stati tolti 37 oggetti da cui non si arrivava a nessun risultato:
 
@@ -35,9 +35,22 @@ Sono stati tolti 37 oggetti da cui non si arrivava a nessun risultato:
 - un `Load Case` isolato, con il suo nome e la gravità sulle masse non strutturali;
 - il ramo `Super Element` → tre `Super Element Filter` → due `Merge`, senza uscita, con i pannelli `ID trave da selezionare`, un `List Length`, un `Series` con i suoi due slider e il pannello `Nome proprietà`.
 
-I gruppi rimasti vuoti sono eliminati. La disposizione dei gruppi `Input | …` non cambia: il flusso andava già da sinistra a destra, e sono stati spostati soltanto gli oggetti dei 5 collegamenti in cui la sorgente sporgeva di poco oltre il bordo sinistro del destinatario. Il contenuto funzionale di tutti gli altri oggetti è identico. I conteggi del paragrafo precedente si riferiscono alla generazione del 22 ottobre. Dettagli in [tidy-validation.json](REV004/tidy-validation.json); strumento `--tidy-example 99`.
+La definizione segue ora le stesse undici fasi dell'esempio 50, da sinistra a destra:
 
-Prova nativa dopo la pulizia (`--modular-bridge-native`, set GPC del 30 ottobre pomeriggio): quattro analisi Straus e 2.736 righe di verifica GPC, con impronta identica bit per bit a quella di riferimento (`8E9756B76EC3EFFE…`).
+1. geometria;
+2. materiali e sezioni;
+3. modello FEM comune;
+4. i quattro modelli **G1**, **G2**, **Q** e **RITIRO**, ciascuno con carichi, FEM, analisi Straus e azioni;
+5. fasi e assemblaggio;
+6. verifiche;
+7. grafici;
+8. report.
+
+Un componente collegato, a monte o a valle, a una sola analisi Straus sta nel blocco di quel modello. Dentro ogni fase le colonne seguono i collegamenti; gli input stanno a sinistra del componente che alimentano, le uscite nominate a destra. Nessun collegamento va da destra a sinistra e nessun oggetto si sovrappone. La tela passa da 39.325 × 17.685 a 82.755 × 6.577. I gruppi `Input | …` e quelli per componente sono sostituiti dai gruppi delle fasi e dei singoli componenti, come nel 50. Le note di testo stanno accanto al componente che avevano vicino.
+
+Cambiano soltanto le posizioni: il contenuto funzionale di tutti gli altri oggetti, compresi dati persistenti e cache, è identico. I conteggi del paragrafo precedente si riferiscono alla generazione del 22 ottobre. Dettagli in [tidy-validation.json](REV004/tidy-validation.json); strumento `--tidy-example 99 [--capture] [--publish]`.
+
+Prova nativa dopo la pulizia e la nuova disposizione (`--modular-bridge-native`, set GPC del 30 ottobre pomeriggio): quattro analisi Straus e 2.736 righe di verifica GPC, con impronta identica bit per bit a quella di riferimento (`8E9756B76EC3EFFE…`).
 
 Il generatore `--example99 rev004` produce già questa configurazione. `--example99 inputs004` aggiorna una REV004 esistente e verifica valori, alberi, riapertura e corrispondenza con il report salvato; se è già aggiornata, la controlla senza riscriverla. Questa revisione richiede anche la Release aggiornata del plugin: è stato corretto il caricamento degli schemi dei carichi distribuiti quando il tipo proviene da un controllo esterno.
 

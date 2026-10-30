@@ -15,16 +15,67 @@ using Grasshopper.Kernel.Special;
 /// </summary>
 internal static class ExampleTidy
 {
-    private sealed record Case(string File, string Validation, bool Stages, string[] Duplicates);
+    private sealed record Case(string File, string Validation, Func<GH_Document, Example50HorizontalLayout.Stage[]> Arrange, string[] Duplicates);
     private static readonly Dictionary<string, Case> Cases = new()
     {
         // REV003 has two identical Excel blocks: the reader 14b78d6a feeds the section table, the other template and
         // the second copy of the Excel note are left over (the unused reader is found by the reachability rule).
-        ["50"] = new("50-ponte-quattro-modelli/50-ponte-quattro-modelli_REV003.ghx", "REV003-tidy-validation.json", true,
+        ["50"] = new("50-ponte-quattro-modelli/50-ponte-quattro-modelli_REV003.ghx", "REV003-tidy-validation.json", Example50HorizontalLayout.Apply,
             new[] { "cdbd7c6f-5758-4bb2-81cd-c800b402df38", "60ca0140-1c40-4d96-8d6d-b1e46b0b8dd7" }),
-        // The personal REV004 already flows left to right in its own groups: only removals and local moves.
-        ["99"] = new("99-Ponte completo GPC/REV004/flusso-acciaio-misto_REV004.ghx", "tidy-validation.json", false, Array.Empty<string>())
+        // The personal REV004 takes the eleven stages of example 50; its user groups are replaced by the stage groups.
+        ["99"] = new("99-Ponte completo GPC/REV004/flusso-acciaio-misto_REV004.ghx", "tidy-validation.json", ArrangeModels, Array.Empty<string>())
     };
+    private static readonly string[] ModelStages = {
+        "01 | GEOMETRIA — appoggi, travi, soletta, conci, diaframmi e mesh",
+        "02 | MATERIALI E SEZIONI — acciaio, calcestruzzo, sezioni e proprietà",
+        "03 | MODELLO FEM COMUNE — famiglie, aste, link e appoggi",
+        null, null, null, null,
+        "08 | FASI E ASSEMBLAGGIO — azioni, fasi, combinazioni e modello BridGHe",
+        "09 | VERIFICHE — sezioni, pioli, irrigiditori e riepilogo",
+        "10 | GRAFICI — diagrammi e anteprime Grasshopper",
+        "11 | REPORT — capitoli, template Word e generazione"
+    };
+
+    /// <summary>
+    /// Stages of a four-model bridge whose components are not named M01–M04: a component wired, upstream or downstream,
+    /// to a single Straus analysis belongs to that model. The models are named and ordered by their output file.
+    /// </summary>
+    private static Example50HorizontalLayout.Stage[] ArrangeModels(GH_Document doc)
+    {
+        var analyses = doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "StrausR3AnalysisComponent").ToArray();
+        if (analyses.Length != 4) throw new InvalidOperationException("Four Straus analyses expected, found " + analyses.Length + ".");
+        string Name(GH_Component a)
+        {
+            string path = a.Params.Input.Single(p => p.Name == "Output Path").Sources.Select(s => s is GH_Panel panel ? panel.UserText
+                : s is Grasshopper.Kernel.Parameters.Param_String text ? text.PersistentData.AllData(true).OfType<Grasshopper.Kernel.Types.GH_String>().FirstOrDefault()?.Value : null)
+                .FirstOrDefault(t => !string.IsNullOrWhiteSpace(t));
+            return path == null ? a.NickName : Path.GetFileNameWithoutExtension(path.Trim());
+        }
+        var models = analyses.Select(a => (Analysis: a, Name: Name(a))).OrderBy(m => m.Name, StringComparer.Ordinal).ToArray();
+        var wires = Wires(doc.Objects.Where(o => o is IGH_Component || o is IGH_Param));
+        var up = wires.ToLookup(w => w.To, w => w.From);
+        var down = wires.ToLookup(w => w.From, w => w.To);
+        HashSet<IGH_DocumentObject> Reach(IGH_DocumentObject start, ILookup<IGH_DocumentObject, IGH_DocumentObject> next)
+        {
+            var seen = new HashSet<IGH_DocumentObject> { start };
+            var queue = new Queue<IGH_DocumentObject>(seen);
+            while (queue.Count > 0) foreach (var o in next[queue.Dequeue()]) if (seen.Add(o)) queue.Enqueue(o);
+            return seen;
+        }
+        var members = models.Select(m => Reach(m.Analysis, up).Concat(Reach(m.Analysis, down)).ToHashSet()).ToArray();
+        int PhaseOf(GH_Component c)
+        {
+            var k = Enumerable.Range(0, models.Length).Where(i => members[i].Contains(c)).ToArray();
+            return k.Length == 1 ? k[0] : -1;
+        }
+        var titles = (string[])ModelStages.Clone();
+        for (int i = 0; i < models.Length; i++)
+        {
+            titles[3 + i] = $"{4 + i:00} | MODELLO {i} · {models[i].Name} — proprietà → carichi → FEM → analisi Straus";
+            Console.WriteLine($"TIDY model {i}: {models[i].Name}, {doc.Objects.OfType<GH_Component>().Count(c => PhaseOf(c) == i)} components");
+        }
+        return Example50HorizontalLayout.Apply(doc, titles, PhaseOf);
+    }
     // End points: what is looked at on the canvas or written to a file.
     private static readonly HashSet<string> Terminals = new() { "Preview BridGHe Model", "Bridge Plot Preview", "Bridge Report", "Bridge Result Labels",
         "Bridge Combination Excel", "Bridge Section Excel Template", "BridGHe Panel", "Bridge Check Summary", "Bridge Model Audit" };
@@ -132,10 +183,10 @@ internal static class ExampleTidy
         var pruned = Without(original, list.Select(o => o.Id).ToHashSet());
         string prunedPath = Path.Combine(artifact, "pruned.ghx"); pruned.Save(prunedPath);
         string runtime = Path.Combine(artifact, "runtime-layout.ghx");
-        using (var doc = GrasshopperBridgeExample.Read(tidy.Stages ? Save(Example50HorizontalLayout.WithoutAnnotations(pruned), Path.Combine(artifact, "layout-input.ghx")) : prunedPath))
+        using (var doc = GrasshopperBridgeExample.Read(Save(Example50HorizontalLayout.WithoutAnnotations(pruned), Path.Combine(artifact, "layout-input.ghx"))))
         {
             Layout(Functional(doc));
-            if (tidy.Stages) Example50HorizontalLayout.Apply(doc);
+            tidy.Arrange(doc);
             Straighten(doc);
             GrasshopperBridgeExample.Write(doc, runtime);
         }

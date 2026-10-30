@@ -48,9 +48,9 @@ Sono stati tolti 13 oggetti che non portavano a nessun risultato:
 
 Resta un solo percorso delle sezioni: `Bridge Read Section Excel` → pannello `SEZIONI CONCI` → `Bridge Segment Sections`.
 
-Le undici fasi restano nello stesso ordine. Dentro ogni fase le colonne seguono i collegamenti: ogni componente sta a destra di quelli da cui legge e all'altezza media delle sue sorgenti. La tabella delle combinazioni mobili passa nella fase n0, dove alimenta le azioni di traffico. I collegamenti da destra a sinistra scendono da 96 a 0 e nessun oggetto si sovrappone. Cambiano soltanto le posizioni: il contenuto funzionale di tutti gli altri oggetti, compresi dati persistenti e cache, è identico. Dettagli e impronta del contenuto in [REV003-tidy-validation.json](REV003-tidy-validation.json).
+Le undici fasi restano nello stesso ordine. Dentro ogni fase le colonne seguono i collegamenti: ogni componente sta a destra di quelli da cui legge e all'altezza media delle sue sorgenti. La tabella delle combinazioni mobili passa nella fase n0, dove alimenta le azioni di traffico. Le note di testo stanno accanto al componente che avevano vicino. I collegamenti da destra a sinistra scendono da 96 a 0 e nessun oggetto si sovrappone. Lo stesso criterio è applicato all'esempio 99 REV004. Cambiano soltanto le posizioni: il contenuto funzionale di tutti gli altri oggetti, compresi dati persistenti e cache, è identico. Dettagli e impronta del contenuto in [REV003-tidy-validation.json](REV003-tidy-validation.json).
 
-Prova nativa dopo la pulizia (`--example50-rev003 --native`, set GPC del 30 ottobre pomeriggio): cinque analisi Straus e 66.960 righe di verifica GPC, con impronta identica bit per bit a quella di riferimento (`C1CF95A069DF8E9D…`), in 418 s.
+Prova nativa dopo la pulizia (`--example50-rev003 --native`, set GPC del 30 ottobre pomeriggio): cinque analisi Straus e 66.960 righe di verifica GPC, con impronta identica bit per bit a quella di riferimento (`C1CF95A069DF8E9D…`), in 343–418 s.
 
 ```powershell
 dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --tidy-example 50 --capture

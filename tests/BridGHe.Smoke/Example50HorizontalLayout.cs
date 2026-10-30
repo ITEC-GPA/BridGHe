@@ -52,9 +52,8 @@ internal static class Example50HorizontalLayout
         return -1;
     }
 
-    private static (int Stage, int Lane)? Classify(GH_Component c)
+    private static (int Stage, int Lane)? Classify(GH_Component c, int phase)
     {
-        int phase = Phase(c.NickName);
         string type = Type(c);
         if (phase >= 0)
         {
@@ -127,18 +126,25 @@ internal static class Example50HorizontalLayout
         };
     }
 
-    internal static Stage[] Apply(GH_Document doc)
+    internal static Stage[] Apply(GH_Document doc) => Apply(doc, Titles, c => Phase(c.NickName));
+    /// <summary>
+    /// The eleven stages of a four-model bridge, from geometry to report. <paramref name="phaseOf"/> gives the model
+    /// (0–3) of a component, or −1 when it is not specific to one model.
+    /// </summary>
+    internal static Stage[] Apply(GH_Document doc, string[] titles, Func<GH_Component, int> phaseOf)
     {
+        if (titles.Length != Colors.Length) throw new ArgumentException("One title per stage.");
         Console.WriteLine("HORIZONTAL LAYOUT: replace annotation groups.");
         foreach (var o in doc.Objects.Where(o => o is GH_Group || o.Name.StartsWith(CaptionPrefix)).Reverse().ToArray()) doc.RemoveObject(o, false);
         Console.WriteLine("HORIZONTAL LAYOUT: classify and arrange graph.");
         var objects = doc.Objects.ToArray();
+        var origin = objects.ToDictionary(o => o, o => o.Attributes.Bounds);
         var cards = objects.OfType<GH_Component>().Select((c, i) => new Card { Component = c, Order = i }).ToArray();
         var outputOwners = cards.SelectMany(c => c.Component.Params.Output.Select(p => (p, c))).ToDictionary(x => x.p, x => x.c);
         var assigned = new HashSet<Card>();
         foreach (var card in cards)
         {
-            var position = Classify(card.Component);
+            var position = Classify(card.Component, phaseOf(card.Component));
             if (position.HasValue) { (card.Stage, card.Lane) = position.Value; assigned.Add(card); }
         }
         IEnumerable<Card> SourceCards(IGH_Param p,HashSet<IGH_Param> visited)
@@ -170,17 +176,17 @@ internal static class Example50HorizontalLayout
                 card.Stage = feeds[card].Select(s => s.Stage).DefaultIfEmpty(2).Max();
         foreach (var card in experimental)
         {if(card.Stage<0)card.Stage=2;if(!card.Component.NickName.StartsWith("PROVA",StringComparison.Ordinal))card.Component.NickName="PROVA UTENTE | "+card.Component.NickName;}
-        // A card read in an earlier stage moves there when its own sources allow it, so no wire runs back to a previous stage.
+        // No wire runs back to a previous stage: a card read in an earlier stage moves there, and its sources follow it
+        // in the next passes. Stages only decrease, so the passes end.
         var readers = cards.ToDictionary(c => c, c => cards.Where(r => feeds[r].Contains(c)).ToArray());
-        for (int pass = 0; pass < cards.Length; pass++)
+        for (bool moved = true; moved;)
         {
-            bool moved = false;
+            moved = false;
             foreach (var card in cards.Where(c => c.Stage != 9))
             {
-                int target = readers[card].Select(r => r.Stage).DefaultIfEmpty(int.MaxValue).Min(), source = feeds[card].Select(s => s.Stage).DefaultIfEmpty(0).Max();
-                if (target < card.Stage && source <= target) { card.Stage = target; moved = true; }
+                int target = readers[card].Select(r => r.Stage).DefaultIfEmpty(int.MaxValue).Min();
+                if (target < card.Stage) { card.Stage = target; moved = true; }
             }
-            if (!moved) break;
         }
         // Lanes follow the wires: inside its stage a card sits one lane after the last card it reads from.
         var depth = new Dictionary<Card, int>();
@@ -192,9 +198,10 @@ internal static class Example50HorizontalLayout
             depth[c] = d; return d;
         }
         foreach (var card in cards) card.Lane = Depth(card, 0);
-        // Six complete plot chains, arranged in two horizontal triptychs.
+        // The six complete plot chains of example 50 are arranged in two horizontal triptychs; other plots follow the wires.
         var plotNames = new[] { "Momento Mx", "Tensioni acciaio sigma 5", "Tau massima", "Pioli Ed e Rd", "Irrigiditori intermedi WR", "Irrigiditori appoggi WR" };
-        foreach (var card in cards.Where(c => c.Stage == 9))
+        bool triptych = cards.Where(c => c.Stage == 9).All(c => plotNames.Any(p => c.Component.NickName.StartsWith(p + " |", StringComparison.Ordinal)));
+        foreach (var card in cards.Where(c => triptych && c.Stage == 9))
         {
             int i = Array.FindIndex(plotNames, p => card.Component.NickName.StartsWith(p + " |", StringComparison.Ordinal));
             if (i < 0) throw new InvalidOperationException("Unknown plot chain " + card.Component.NickName);
@@ -202,6 +209,12 @@ internal static class Example50HorizontalLayout
             card.Order = i % 3;
         }
         var owner = cards.ToDictionary(c => (IGH_DocumentObject)c.Component);
+        // Notes and unwired objects stay beside the component that was nearest to them.
+        Card Nearest(IGH_DocumentObject o)
+        {
+            var b = origin[o];
+            return cards.OrderBy(c => { var a = origin[c.Component]; float dx = a.X + a.Width / 2 - b.X - b.Width / 2, dy = a.Y + a.Height / 2 - b.Y - b.Height / 2; return dx * dx + dy * dy; }).First();
+        }
         foreach (var p in objects.OfType<IGH_Param>())
         {
             Card card;
@@ -213,13 +226,14 @@ internal static class Example50HorizontalLayout
             else
             {
                 card = cards.Where(c => c.Component.Params.Input.Any(i => i.Sources.Contains(p))).OrderBy(c => c.Stage).ThenBy(c => c.Lane).ThenBy(c => c.Order).FirstOrDefault();
-                if (card == null) card = cards.Where(c => c.Stage == (p.NickName.StartsWith("IPOTESI") ? 8 : 0)).OrderBy(c => c.Lane).First();
+                // An input read only through other floating parameters stays with them, at the start of the graph.
+                card ??= objects.OfType<IGH_Param>().Any(q => q.Sources.Contains(p)) ? cards.OrderBy(c => c.Stage).ThenBy(c => c.Lane).First() : Nearest(p);
                 card.Inputs.Add(p);
             }
             owner.Add(p, card);
         }
         foreach(var note in objects.Where(o=>!owner.ContainsKey(o)))
-        {var first=cards.OrderBy(c=>c.Stage).ThenBy(c=>c.Lane).First();first.Inputs.Add(note);owner.Add(note,first);}
+        {var card=Nearest(note);card.Inputs.Add(note);owner.Add(note,card);}
         foreach (var card in cards)
         foreach (var input in card.Component.Params.Input)
         {
@@ -233,13 +247,15 @@ internal static class Example50HorizontalLayout
         }
         var stages = new List<Stage>();
         float x = 100;
-        for (int stage = 0; stage < Titles.Length; stage++)
+        for (int stage = 0; stage < titles.Length; stage++)
         {
             float start = x;
             var stageCards = cards.Where(c => c.Stage == stage).ToArray();
+            if (stageCards.Length == 0) continue;
             var cardGroups = new List<IGH_DocumentObject>();
             // Plot rows share the same baseline and height across filter/plot/preview columns.
-            float plotRowHeight = stage == 9 ? stageCards.Max(Height) + 140 : 0;
+            bool rows = triptych && stage == 9;
+            float plotRowHeight = rows ? stageCards.Max(Height) + 140 : 0;
             // Each card at the mean height of the cards of its stage it reads from, already placed in the lanes on its
             // left; wires between stages are hidden, so they do not pull a card down.
             float? Wish(Card c)
@@ -250,28 +266,29 @@ internal static class Example50HorizontalLayout
             foreach (var lane in stageCards.GroupBy(c => c.Lane).OrderBy(g => g.Key))
             {
                 float width = 0;
-                var ordered = stage == 9 ? lane.OrderBy(c => c.Order).ToList() : lane.OrderBy(c => Wish(c) ?? float.MaxValue).ThenBy(c => c.Order).ToList();
-                var tops = stage == 9 ? ordered.ToDictionary(c => c, c => 480 + c.Order * plotRowHeight) : Stack(ordered, Wish, 480, 150);
+                var ordered = rows ? lane.OrderBy(c => c.Order).ToList() : lane.OrderBy(c => Wish(c) ?? float.MaxValue).ThenBy(c => c.Order).ToList();
+                var tops = rows ? ordered.ToDictionary(c => c, c => 480 + c.Order * plotRowHeight) : Stack(ordered, Wish, 480, 150);
                 // The components of a lane share one column, right of the widest input of the lane.
                 float inputWidth = ordered.SelectMany(c => c.Inputs).Select(o => o.Attributes.Bounds.Width).DefaultIfEmpty(0).Max();
                 foreach (var card in ordered)
                 {
                     Place(card, x, tops[card], inputWidth);
-                    width = Math.Max(width, card.Bounds.Width);
+                    // Measured from the lane: a card without inputs starts at the shared component column.
+                    width = Math.Max(width, card.Bounds.Right - x);
                     cardGroups.Add(AddGroup(doc, card.Component.NickName, Colors[stage], 18, card.Members));
                 }
                 x += width + 200;
             }
             var bounds = Union(stageCards.Select(c => c.Bounds));
-            var title = new GH_Panel { Name = CaptionPrefix + stage, NickName = Titles[stage], UserText = Titles[stage] + "\nInput espliciti a sinistra di ciascun componente; output nominati a destra. Seguire il flusso →" };
+            var title = new GH_Panel { Name = CaptionPrefix + stage, NickName = titles[stage], UserText = titles[stage] + "\nInput espliciti a sinistra di ciascun componente; output nominati a destra. Seguire il flusso →" };
             title.CreateAttributes(); title.Attributes.Pivot = new PointF(start, 100);
             title.Attributes.Bounds = new RectangleF(start, 100, Math.Min(2600, bounds.Width), 150);
             title.Properties.Colour = Color.FromArgb(255, (Colors[stage].R + 510) / 3, (Colors[stage].G + 510) / 3, (Colors[stage].B + 510) / 3);
             title.Properties.Font = new Font("Arial", 24, FontStyle.Bold);
             doc.AddObject(title, false);
             // The outer group contains the cards, without duplicating their memberships.
-            AddGroup(doc, Titles[stage], Colors[stage], 28, cardGroups.Append(title));
-            stages.Add(new Stage(Titles[stage], RectangleF.Union(bounds, title.Attributes.Bounds), stageCards.Length));
+            AddGroup(doc, titles[stage], Colors[stage], 28, cardGroups.Append(title));
+            stages.Add(new Stage(titles[stage], RectangleF.Union(bounds, title.Attributes.Bounds), stageCards.Length));
             x += 500;
         }
         ValidateBounds(objects);
@@ -363,7 +380,8 @@ internal static class Example50HorizontalLayout
         for (int j = i + 1; j < objects.Length; j++)
         {
             var overlap = RectangleF.Intersect(objects[i].Attributes.Bounds, objects[j].Attributes.Bounds);
-            if (overlap.Width > 1 && overlap.Height > 1) throw new InvalidOperationException("Overlapping objects: " + objects[i].NickName + " / " + objects[j].NickName);
+            if (overlap.Width > 1 && overlap.Height > 1) throw new InvalidOperationException(
+                $"Overlapping objects: {objects[i].GetType().Name} '{objects[i].NickName}' {objects[i].Attributes.Bounds} / {objects[j].GetType().Name} '{objects[j].NickName}' {objects[j].Attributes.Bounds}");
         }
     }
 
