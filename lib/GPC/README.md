@@ -6,4 +6,4 @@ Le sette DLL e i relativi PDB sono copiati dal medesimo set coerente. `release-s
 
 Non sostituire una singola DLL con una build esterna: aggiornare insieme binari, PDB e manifest dal set prodotto da `Checker/build/Release-Set.ps1`, poi ripetere i collaudi dei plugin. Le DLL comuni a ReBear devono conservare gli stessi hash. Il manifest distribuito dal post-build è `bin/Release/gpc-release-set.json`.
 
-Il set corrente è ufficiale (`candidate=false`): [rilascio del 30 ottobre 2026](../../docs/GPC-RILASCIO-2026-10-30.md), comune con ReBear. Il [rilascio del 27 ottobre](../../docs/GPC-RILASCIO-2026-10-27.md) e il [collaudo di integrazione del 26 ottobre](../../docs/GPC-INTEGRAZIONE-2026-10-26.md) restano come evidenze dei set precedenti.
+Il set corrente è ufficiale (`candidate=false`): [secondo rilascio del 30 ottobre 2026](../../docs/GPC-RILASCIO-2026-10-30.md#secondo-set-batch-per-stazione), comune con ReBear. Il [rilascio del 27 ottobre](../../docs/GPC-RILASCIO-2026-10-27.md) e il [collaudo di integrazione del 26 ottobre](../../docs/GPC-INTEGRAZIONE-2026-10-26.md) restano come evidenze dei set precedenti.

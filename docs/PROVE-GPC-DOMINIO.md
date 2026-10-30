@@ -75,6 +75,21 @@ I materiali Model vengono ricostruiti dai loro costruttori, un solo oggetto per 
 
 Il banco usa le DLL GPC della propria cartella. Per provare un set senza ricompilare BridGHe basta copiare nella cartella di uscita le sette DLL con i PDB.
 
+## Calcolo parallelo e garbage collector
+
+Super Element Check calcola in parallelo le stazioni; Bridge Detail Check è un componente task-capable che calcola in parallelo le stazioni di elementi consecutivi. Ogni stazione è un solo batch GPC, che calcola una volta le fasi comuni alle combinazioni.
+
+Il guadagno del parallelo dipende dal garbage collector di .NET. Rhino 8 usa quello predefinito (workstation), che ferma tutti i thread a ogni raccolta. Misure del 30 ottobre sulle 32.832 sezioni di Super Element Check dell'esempio 50, eseguite col banco (`--stream --parallel --batch`):
+
+| Configurazione | Tempo |
+|---|---|
+| 1 processore | 123 s |
+| 8 processori, GC workstation | 102 s |
+| 24 processori, GC workstation | 101 s |
+| 24 processori, GC server (`DOTNET_gcServer=1`) | 17 s |
+
+Un budget gen0 più grande (`DOTNET_GCgen0size`) non aiuta. Il GC si sceglie all'avvio del processo e non da un plugin. Chi lancia verifiche molto grandi può avviare Rhino con la variabile d'ambiente `DOTNET_gcServer=1`: occupa più memoria, perché crea un heap per processore, e vale per tutto Rhino. Senza questa variabile conta soprattutto ridurre le allocazioni di GPC per sezione, scese da 16,5 a 6,7 MB con i set del 30 ottobre.
+
 ## Limiti noti al 29 ottobre 2026
 
 Indipendenti dal set GPC, osservati sul master `509fddf` con il set ufficiale del 27 ottobre:
