@@ -20,6 +20,8 @@ internal static class Program
             RhinoInside.Resolver.Initialize(@"C:\Program Files\Rhino 8\System");
             if(args.Contains("--regression") && args.SkipWhile(a=>a!="--regression").Skip(1).FirstOrDefault()=="bridge-report")
                 return RunBridgeReport();
+            // gPC section bench on a capture: no Rhino host, no Straus.
+            if(args.Contains("--gpc-bench")) return GpcSectionBench.Run(args);
             return Run(args);
         }
         catch(Exception ex) { Console.Error.WriteLine(ex);return 1; }

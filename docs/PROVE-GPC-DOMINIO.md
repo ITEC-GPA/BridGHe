@@ -48,6 +48,33 @@ Due esecuzioni identiche producono la stessa impronta riga per riga e gli stessi
 
 I tempi dipendono molto dal carico della macchina: con il set ufficiale, due esecuzioni di `50-native` hanno richiesto 2.338 s e 3.047 s. Per confrontare i tempi conviene ripetere ogni fase almeno due volte.
 
+## Banco delle sezioni GPC
+
+Il banco ripete i calcoli di sezione GPC (`HBridgeSection.Calculate`) di un run nativo senza Straus e senza Grasshopper. Serve per cronometrare un set e confrontarlo bit per bit in pochi minuti.
+
+1. Cattura: con `BRIDGHE_GPC_CAPTURE=<cartella>` i runner nativi scrivono `<etichetta>.inputs.jsonl.gz` subito dopo l'impronta. Per ogni risultato di sezione di **Super Element Check** e **Bridge Detail Check** la riga contiene la chiave dell'impronta, lo stadio, la provenienza, le ipotesi, l'ingresso GPC e gli hash dell'ingresso e della riga. Lo script `prove-gpc-dominio.ps1` passa la variabile ai processi figli.
+2. Ripetizione:
+
+```powershell
+dotnet obj/bin/BridGHe.Smoke/Release/net8.0-windows/BridGHe.Smoke.dll --gpc-bench <cattura> --rhino [--every N] [--offset K] [--component testo] [--repeat R] [--out righe.tsv] [--dump cartella]
+dotnet obj/bin/BridGHe.Smoke/Release/net8.0-windows/BridGHe.Smoke.dll --gpc-bench <cattura> --rhino --stream [--parallel]
+```
+
+La prima forma ricalcola una riga ogni N (tutte per default), R volte. Stampa:
+
+- tempo reale e CPU;
+- millisecondi per sezione (mediana, p90, massimo);
+- memoria allocata e raccolte del GC;
+- il confronto dell'hash di ogni riga con quello catturato.
+
+`--stream` fa una sola passata su tutta la cattura, a blocchi e con memoria limitata; `--parallel` distribuisce ogni blocco sui processori. L'uscita vale 0 solo se tutte le righe sono identiche. `--dump` scrive il contenuto ricalcolato delle prime differenze, da confrontare con il file `*.rows.jsonl.gz` dell'impronta.
+
+I materiali Model vengono ricostruiti dai loro costruttori. L'hash dell'ingresso, uguale a quello dell'impronta, dimostra che la ricostruzione è fedele.
+
+`--rhino` avvia Rhino come i runner nativi ed è necessario per il confronto bit per bit. Senza Rhino circa il 40 % delle righe del 99 differisce all'ultima cifra (1e-15 relativo), perché il processo con Rhino avviato usa un ambiente numerico diverso. Le opzioni del JIT (`DOTNET_TieredCompilation`, `TieredPGO`, `EnableAVX2`, `EnableHWIntrinsic`) non c'entrano.
+
+Il banco usa le DLL GPC della propria cartella. Per provare un set senza ricompilare BridGHe basta copiare nella cartella di uscita le sette DLL con i PDB.
+
 ## Limiti noti al 29 ottobre 2026
 
 Indipendenti dal set GPC, osservati sul master `509fddf` con il set ufficiale del 27 ottobre:

@@ -44,8 +44,49 @@ internal static class ResultFingerprint
         Console.WriteLine(FormattableString.Invariant($"TIMING {s:F3} s: {label}"));
     }
 
-    /// <summary>Write rows, compressed full results and a summary for every section result of the solved document.</summary>
+    /// <summary>Serializer of the fingerprint, also used by <see cref="GpcSectionBench"/>.</summary>
+    internal static JsonSerializerOptions Json => json;
+
+    /// <summary>SHA-256 of the gPC input of an analysis: method, scope, input, geometry and materials.</summary>
+    internal static string InputSha256(GPC.Checkers.CompositeBridge.HBridgeAnalysisResult a) =>
+        Text(() => Hash(JsonSerializer.Serialize(new { a.Method, a.Scope, a.Input, a.Geometry, a.Materials }, json)));
+
+    /// <summary>The compared payload of a section result.</summary>
+    private static string Payload(BridgeStressResult r, string inputSha, GPC.Checkers.CompositeBridge.BridgeLocalCheck[] local, out bool serializationError)
+    {
+        var points = new[] { r.Point1_ConcreteSigma, r.Point1_ConcreteEpsilon, r.Point2_RebarSigma, r.Point3_RebarSigma, r.Point4_ConcreteSigma,
+            r.Point5_SteelSigma, r.Point6_SteelSigma, r.Point7_SteelSigma, r.Point8_SteelSigma };
+        var tau = Try(() => new[] { r.Point6_SteelTau, r.Point7_SteelTau });
+        serializationError = false;
+        try { return JsonSerializer.Serialize(new { Source = r.Source, r.Assumptions, InputSha256 = inputSha, Points = points, Tau = tau, Stage = r.Stage }, json); }
+        catch (Exception e)
+        {
+            // Keep the comparable core when a gPC member cannot be serialized.
+            serializationError = true;
+            return JsonSerializer.Serialize(new { Source = r.Source, r.Assumptions, InputSha256 = inputSha, Points = points, Tau = tau,
+                Stage = new { r.Stage.Name, r.Stage.Iterations, r.Stage.Residual, r.Stage.Points, r.Stage.Warnings, Checks = local }, SerializationError = e.GetType().Name + ": " + e.Message }, json);
+        }
+    }
+
+    /// <summary>The row hash of a section result, as written by <see cref="Write"/>.</summary>
+    internal static string RowSha256(BridgeStressResult r, string inputSha) => Hash(RowPayload(r, inputSha));
+
+    /// <summary>The hashed payload of a section result, as written by <see cref="Write"/>.</summary>
+    internal static string RowPayload(BridgeStressResult r, string inputSha)
+    {
+        try { return Payload(r, inputSha, BridgeGpc.Checks(r.Stage).ToArray(), out _); }
+        catch (Exception e) { return "ERROR " + e.GetType().Name + ": " + e.Message; }
+    }
+
+    /// <summary>Write rows, compressed full results and a summary for every section result of the solved document;
+    /// then the bench capture of <see cref="GpcSectionBench"/>, when asked.</summary>
     internal static void Write(string label, GH_Document doc)
+    {
+        WriteFingerprint(label, doc);
+        GpcSectionBench.Capture(label, doc);
+    }
+
+    private static void WriteFingerprint(string label, GH_Document doc)
     {
         string folder = Folder; if (folder == null) return;
         Mark(label + ": fingerprint start");
@@ -85,7 +126,7 @@ internal static class ResultFingerprint
                             try
                             {
                                 {
-                                    inputSha = inputs.GetValue(r.Analysis, a => Text(() => Hash(JsonSerializer.Serialize(new { r.Analysis.Method, r.Analysis.Scope, r.Analysis.Input, r.Analysis.Geometry, r.Analysis.Materials }, json))));
+                                    inputSha = inputs.GetValue(r.Analysis, a => InputSha256(r.Analysis));
                                     source = r.Source?.Label ?? ""; stage = r.Stage.Name; stageMax = r.Stage.MaxUtilization; p5 = r.Point5_SteelSigma; p8 = r.Point8_SteelSigma;
                                     var local = BridgeGpc.Checks(r.Stage).ToArray(); checks = local.Length;
                                     foreach (var check in local)
@@ -95,17 +136,8 @@ internal static class ResultFingerprint
                                     }
                                     pointsOver += r.Stage.Points.Count(p => p.Utilization > 1);
                                     if (stageMax > maxStage) { maxStage = stageMax; maxStageKey = key + " | " + source; }
-                                    var points = new[] { r.Point1_ConcreteSigma, r.Point1_ConcreteEpsilon, r.Point2_RebarSigma, r.Point3_RebarSigma, r.Point4_ConcreteSigma,
-                                        r.Point5_SteelSigma, r.Point6_SteelSigma, r.Point7_SteelSigma, r.Point8_SteelSigma };
-                                    var tau = Try(() => new[] { r.Point6_SteelTau, r.Point7_SteelTau });
-                                    try { payload = JsonSerializer.Serialize(new { Source = r.Source, r.Assumptions, InputSha256 = inputSha, Points = points, Tau = tau, Stage = r.Stage }, json); }
-                                    catch (Exception e)
-                                    {
-                                        // Keep the comparable core when a gPC member cannot be serialized.
-                                        errors++;
-                                        payload = JsonSerializer.Serialize(new { Source = r.Source, r.Assumptions, InputSha256 = inputSha, Points = points, Tau = tau,
-                                            Stage = new { r.Stage.Name, r.Stage.Iterations, r.Stage.Residual, r.Stage.Points, r.Stage.Warnings, Checks = local }, SerializationError = e.GetType().Name + ": " + e.Message }, json);
-                                    }
+                                    payload = Payload(r, inputSha, local, out bool serializationError);
+                                    if (serializationError) errors++;
                                 }
                             }
                             catch (Exception e) { errors++; payload = "ERROR " + e.GetType().Name + ": " + e.Message; }
@@ -117,7 +149,8 @@ internal static class ResultFingerprint
                     }
                 }
                 componentHash.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
-                perComponent.Add(new { Type = c.GetType().Name, c.NickName, Id = c.InstanceGuid, Items = count, OtherOutputItems = other, Sha256 = Convert.ToHexString(componentHash.Hash) });
+                // UseTasks: null for the components that cannot run their iterations in tasks
+                perComponent.Add(new { Type = c.GetType().Name, c.NickName, Id = c.InstanceGuid, Items = count, OtherOutputItems = other, Sha256 = Convert.ToHexString(componentHash.Hash), UseTasks = (c as IGH_TaskCapableComponent)?.UseTasks });
             }
             all.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
             var assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location))
