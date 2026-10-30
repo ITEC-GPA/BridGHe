@@ -132,16 +132,45 @@ namespace BridGHe.Common.Checks
             if (infinite.Length != count || instant.Length != count || strainInfinite.Length != count || strainInstant.Length != count)
                 throw new ArgumentException("Le serie di fasi e deformazioni devono avere la stessa lunghezza.");
             results = new BridgeStressResult[count]; tauB = new double[count];
+            var analyses = Calculate(Enumerable.Range(0, count).Select(i => (Func<HBridgeInput>)(() => AnalysisInput(phiInfinite, phiInstant, steel[i], infinite[i],
+                instant[i], concrete, rebars, strainInfinite[i], strainInstant[i], phiShrinkage, shrinkageForces?[i]))).ToArray());
             for (int i = 0; i < count; i++)
             {
-                var analysis = Analyze(phiInfinite, phiInstant, steel[i], infinite[i], instant[i], concrete, rebars, strainInfinite[i], strainInstant[i], phiShrinkage, shrinkageForces?[i]);
-                results[i] = Result(analysis, analysis.Stages.Count - 1);
+                results[i] = Result(analyses[i], analyses[i].Stages.Count - 1);
                 tauB[i] = double.NaN;
             }
             return true;
         }
 
+        /// <summary>
+        /// The gPC analyses of the combinations of this section in one batch (<see cref="HBridgeSection.Calculate(IReadOnlyList{HBridgeInput}, System.Threading.CancellationToken)"/>):
+        /// the phases they share are calculated once, with the numbers of separate analyses. An error is raised as the loop of separate analyses
+        /// raised it, the first one in the order of the combinations, from building an input or from its analysis
+        /// </summary>
+        private static HBridgeAnalysisResult[] Calculate(IReadOnlyList<Func<HBridgeInput>> inputs)
+        {
+            int count = inputs.Count, built = count; var data = new List<HBridgeInput>(count); Exception buildError = null;
+            for (int i = 0; i < count; i++)
+            {
+                try { data.Add(inputs[i]()); }
+                catch (Exception e) { buildError = e; built = i; break; }
+            }
+            var calculated = HBridgeSection.Calculate(data);
+            var analyses = new HBridgeAnalysisResult[count];
+            for (int i = 0; i < built; i++)
+            {
+                if (calculated[i].Error != null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(calculated[i].Error).Throw();
+                analyses[i] = calculated[i].Analysis;
+            }
+            if (buildError != null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(buildError).Throw();
+            return analyses;
+        }
+
         private HBridgeAnalysisResult Analyze(double phiInfinite, double phiInstant, ResultBeamForces steel,
+            ResultBeamForces infinite, ResultBeamForces instant, bool concrete, bool rebars, double strainInfinite, double strainInstant, double? phiShrinkage = null, ResultBeamForces shrinkageForces = null) =>
+            HBridgeSection.Calculate(AnalysisInput(phiInfinite, phiInstant, steel, infinite, instant, concrete, rebars, strainInfinite, strainInstant, phiShrinkage, shrinkageForces));
+
+        private HBridgeInput AnalysisInput(double phiInfinite, double phiInstant, ResultBeamForces steel,
             ResultBeamForces infinite, ResultBeamForces instant, bool concrete, bool rebars, double strainInfinite, double strainInstant, double? phiShrinkage = null, ResultBeamForces shrinkageForces = null)
         {
             var data = Input(concrete, rebars, true);
@@ -152,7 +181,7 @@ namespace BridGHe.Common.Checks
             if (!concrete && (strainInfinite != 0 || strainInstant != 0)) throw new NotSupportedException("Ritiro con soletta esclusa: definire prima la sequenza fisica delle fasi.");
             if (strainInfinite != 0) phases.Add(new BridgePhase { Name = "Strain Infinite", Kind = BridgePhaseKind.Shrinkage, Phi = phiShrinkage ?? phiInfinite, ShrinkageMicrostrain = strainInfinite * 1e6 });
             if (strainInstant != 0) phases.Add(new BridgePhase { Name = "Strain Instant", Kind = BridgePhaseKind.Shrinkage, Phi = phiInstant, ShrinkageMicrostrain = strainInstant * 1e6 });
-            return HBridgeSection.Calculate(data with { Phases = phases.ToArray() });
+            return data with { Phases = phases.ToArray() };
         }
 
         public BridgeStressResult GetSelfTension(double strain, double phi)
@@ -176,6 +205,32 @@ namespace BridGHe.Common.Checks
         /// <summary>Per-action local states keep the FEM gross centroid and checker phase consistent.
         /// Compatible uses cumulative contributions, including the explicitly uncracked shrinkage model.</summary>
         public BridgeStressResult AnalyzeWorkflow(BridgeWorkflow workflow, BridgePhaseAssembler.ResultIndex index, double station,
+            LoadCombinationModel combination, double phiInfinite, double phiInstant, double phiShrinkage, bool rebars)
+        {
+            var data = WorkflowInput(workflow, index, station, combination, phiInfinite, phiInstant, phiShrinkage, rebars);
+            return WorkflowResult(workflow, workflow.Method == BridgeWorkflowMethod.LinearHistory
+                ? HBridgeHistoryResults.Calculate(data, new HBridgeHistoryOptions { MaterialMode = HistoryMaterialMode.Linear }) : HBridgeSection.Calculate(data));
+        }
+
+        /// <summary>The workflow of every combination of the station, as <see cref="AnalyzeWorkflow(BridgeWorkflow, BridgePhaseAssembler.ResultIndex, double, LoadCombinationModel, double, double, double, bool)"/>
+        /// of each one in order; the cumulative analyses run in one gPC batch, which calculates their shared phases once</summary>
+        public BridgeStressResult[] AnalyzeWorkflow(BridgeWorkflow workflow, BridgePhaseAssembler.ResultIndex index, double station,
+            IReadOnlyList<LoadCombinationModel> combinations, double phiInfinite, double phiInstant, double phiShrinkage, bool rebars)
+        {
+            if (workflow?.Method == BridgeWorkflowMethod.LinearHistory)
+                return combinations.Select(combination => AnalyzeWorkflow(workflow, index, station, combination, phiInfinite, phiInstant, phiShrinkage, rebars)).ToArray();
+            return Calculate(combinations.Select(combination => (Func<HBridgeInput>)(() => WorkflowInput(workflow, index, station, combination, phiInfinite,
+                phiInstant, phiShrinkage, rebars))).ToArray()).Select(analysis => WorkflowResult(workflow, analysis)).ToArray();
+        }
+
+        private BridgeStressResult WorkflowResult(BridgeWorkflow workflow, HBridgeAnalysisResult analysis)
+        {
+            var result = Result(analysis, analysis.Stages.Count - 1);
+            return workflow.Phases.Any(p => p.Actions.Any(a => a.HasLocalSectionStates))
+                ? new BridgeStressResult(analysis, analysis.Stages.Count - 1, null, result.Assumptions.Append(LocalStateAssumption)) : result;
+        }
+
+        private HBridgeInput WorkflowInput(BridgeWorkflow workflow, BridgePhaseAssembler.ResultIndex index, double station,
             LoadCombinationModel combination, double phiInfinite, double phiInstant, double phiShrinkage, bool rebars)
         {
             if (workflow == null) throw new ArgumentNullException(nameof(workflow));
@@ -216,11 +271,7 @@ namespace BridGHe.Common.Checks
                 if (phases.Count == before) phases.Add(new BridgePhase { Name = $"{stage.Order} · {stage.Name}", Kind = kind,
                     Phi = kind == BridgePhaseKind.SteelOnly ? 0 : phiInstant });
             }
-            var data = Input(true, rebars, true) with { Phases = phases.ToArray() };
-            var analysis = workflow.Method == BridgeWorkflowMethod.LinearHistory ? HBridgeHistoryResults.Calculate(data, new HBridgeHistoryOptions { MaterialMode = HistoryMaterialMode.Linear }) : HBridgeSection.Calculate(data);
-            var result = Result(analysis, analysis.Stages.Count - 1);
-            return workflow.Phases.Any(p => p.Actions.Any(a => a.HasLocalSectionStates))
-                ? new BridgeStressResult(analysis, analysis.Stages.Count - 1, null, result.Assumptions.Append(LocalStateAssumption)) : result;
+            return Input(true, rebars, true) with { Phases = phases.ToArray() };
         }
 
         public static ResultBeamForces Scale(ResultBeamForces f, double factor) => new ResultBeamForces(

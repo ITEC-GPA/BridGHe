@@ -400,14 +400,18 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     StressAnalysisResult[][][] stressAnalysisResults = new StressAnalysisResult[beams.Count][][];
                     double[][][] tauBResults = new double[beams.Count][][];
 
-                    //for (int i = 0; i < beams.Count; i++)
-                    Parallel.For(0, beams.Count, i =>
+                    for (int i = 0; i < beams.Count; i++)
                     {
-                        var beam = beams[i].Value;
-
                         stressAnalysisResults[i] = new StressAnalysisResult[forces[i].Length][];
                         tauBResults[i] = new double[forces[i].Length][];
-                        for (int j = 0; j < forces[i].Length; j++)
+                    }
+                    // One task per station (before, per beam): its combinations are one gPC batch, which calculates their shared phases once.
+                    // Every station writes only its own slots, so the outputs keep their order.
+                    var stationTasks = Enumerable.Range(0, beams.Count).SelectMany(i => Enumerable.Range(0, forces[i].Length).Select(j => (Beam: i, Station: j))).ToArray();
+                    Parallel.For(0, stationTasks.Length, n =>
+                    {
+                        int i = stationTasks[n].Beam, j = stationTasks[n].Station;
+                        var beam = beams[i].Value;
                         {
                             var checker = sectionCheckers[i];
                             double psiInfinite = psis[i][j].psiInfinite;
@@ -419,10 +423,10 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                             if (model.Value.BridgeWorkflow?.Method == BridgeWorkflowMethod.LinearHistory ||
                                 model.Value.BridgeWorkflow?.Phases.Any(p => p.Actions.Any(a => a.HasLocalSectionStates)) == true)
                             {
-                                stressAnalysisResults[i][j] = model.Value.LoadCombinations.Select(combo => checker[j].AnalyzeWorkflow(model.Value.BridgeWorkflow,
-                                    workflowIndexes[i], workflowStations[i][j], combo, psiInfinite, psiInstant, psis[i][j].psiShrinkage, beam.StartBeamProperty.ConsiderRebar)).ToArray();
+                                stressAnalysisResults[i][j] = checker[j].AnalyzeWorkflow(model.Value.BridgeWorkflow,
+                                    workflowIndexes[i], workflowStations[i][j], model.Value.LoadCombinations, psiInfinite, psiInstant, psis[i][j].psiShrinkage, beam.StartBeamProperty.ConsiderRebar);
                                 tauBResults[i][j] = Enumerable.Repeat(double.NaN, model.Value.LoadCombinations.Count).ToArray();
-                                continue;
+                                return;
                             }
                             bool res = checker[j].GetLinearAnalysisResultByStages(out StressAnalysisResult[] result, out double[] tauB, psiInfinite, psiInstant, force.OnlySteel,
                                 force.NInfinite, force.Ninstant, beam.StartBeamProperty.ConsiderConcrete, strainInfinite, strainIstant, beam.StartBeamProperty.ConsiderRebar, psis[i][j].psiShrinkage, force.NShrinkage);

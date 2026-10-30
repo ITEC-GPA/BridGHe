@@ -134,13 +134,21 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
         {
             if(InPreSolve)
             {
-                // one task for every section, also without data or with an input error, so that the results keep the order of the sections
+                // one task for every section, also without data or with an input error, so that the results keep the order of the sections;
+                // the consecutive sections of a station (the combinations of a beam station) are calculated together in one gPC batch
                 Request request=null;Solution failed=null;
                 try{request=Read(da);}
                 catch(Exception e){failed=new Solution{Error=e.Message};}
-                TaskList.Add(request==null?System.Threading.Tasks.Task.FromResult(failed):System.Threading.Tasks.Task.Run(()=>Calculate(request),CancelToken));
+                if(request==null){TaskList.Add(System.Threading.Tasks.Task.FromResult(failed));return;}
+                string station=request.Result.Source is { } source?source.BeamId+"|"+source.StationMm.ToString("R",System.Globalization.CultureInfo.InvariantCulture):null;
+                if(pending.Count>0&&(station==null||station!=pendingStation))StartPending();
+                var completion=new System.Threading.Tasks.TaskCompletionSource<Solution>(System.Threading.Tasks.TaskCreationOptions.RunContinuationsAsynchronously);
+                pending.Add((request,completion));pendingStation=station;
+                if(station==null)StartPending();
+                TaskList.Add(completion.Task);
                 return;
             }
+            StartPending();
             if(!GetSolveResults(da,out var solution))
             {
                 try{var request=Read(da);solution=request==null?null:Calculate(request);}
@@ -183,15 +191,48 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
             int stage=result.Analysis.Stages.IndexOf(result.Stage);if(stage<0)throw new ArgumentException("Unknown source stage.");
             return new Request{Result=result,Input=input,Stage=stage};
         }
-        /// <summary>The gPC calculation of a section, without Grasshopper data access (it runs in a task); exceptions are the errors of the result</summary>
+        /// <summary>The gPC calculation of a section, without Grasshopper data access; exceptions are the errors of the result</summary>
         private static Solution Calculate(Request request)
         {
-            try
-            {
-                var analysis=HBridgeSection.Calculate(request.Input);var updated=new BridgeStressResult(analysis,request.Stage,request.Result.Source,request.Result.Assumptions);
-                return new Solution{Updated=updated,Checks=BridgeGpc.Checks(updated.Stage).ToArray(),ServiceLimitState=request.Input.Options.LimitState!=BridgeLimitState.Ultimate};
-            }
+            try{return Finish(request,HBridgeSection.Calculate(request.Input));}
             catch(Exception e){return new Solution{Error=e.Message};}
+        }
+        /// <summary>The sections of a station in one gPC batch (it runs in a task): each gets the outputs or the error of its own calculation</summary>
+        private static Solution[] Calculate(Request[] requests)
+        {
+            IReadOnlyList<HBridgeBatchResult> analyses;
+            try{analyses=HBridgeSection.Calculate(requests.Select(r=>r.Input).ToArray());}
+            catch(Exception e){return requests.Select(_=>new Solution{Error=e.Message}).ToArray();}
+            return requests.Select((request,k)=>
+            {
+                if(analyses[k].Error!=null)return new Solution{Error=analyses[k].Error.Message};
+                try{return Finish(request,analyses[k].Analysis);}
+                catch(Exception e){return new Solution{Error=e.Message};}
+            }).ToArray();
+        }
+        private static Solution Finish(Request request,HBridgeAnalysisResult analysis)
+        {
+            var updated=new BridgeStressResult(analysis,request.Stage,request.Result.Source,request.Result.Assumptions);
+            return new Solution{Updated=updated,Checks=BridgeGpc.Checks(updated.Stage).ToArray(),ServiceLimitState=request.Input.Options.LimitState!=BridgeLimitState.Ultimate};
+        }
+        /// <summary>The sections of the current station, waiting for the first one of another station (or for the second pass)</summary>
+        private readonly List<(Request Request,System.Threading.Tasks.TaskCompletionSource<Solution> Completion)> pending=new();
+        private string pendingStation;
+        protected override void BeforeSolveInstance(){base.BeforeSolveInstance();pending.Clear();pendingStation=null;}
+        /// <summary>Starts the batch of the pending sections in a task that completes the task of each of them</summary>
+        private void StartPending()
+        {
+            if(pending.Count==0)return;
+            var batch=pending.ToArray();pending.Clear();pendingStation=null;
+            var cancel=CancelToken;
+            System.Threading.Tasks.Task.Run(()=>
+            {
+                if(cancel.IsCancellationRequested){foreach(var b in batch)b.Completion.TrySetCanceled();return;}
+                Solution[] solutions;
+                try{solutions=Calculate(batch.Select(b=>b.Request).ToArray());}
+                catch(Exception e){solutions=batch.Select(_=>new Solution{Error=e.Message}).ToArray();}
+                for(int k=0;k<batch.Length;k++)batch[k].Completion.TrySetResult(solutions[k]);
+            });
         }
     }
 }
