@@ -107,6 +107,8 @@ internal static class Example50HorizontalLayout
             "CreepAndShrinkageConcreteComponent" => (6, 0),
             "BuildBridgeModel" => (7, 1),
             "BridgeModelAuditComponent" or "DisplaySettingsComponent" or "PreviewModelComponent" => (7, 3),
+            // The moving-load combinations become the traffic actions of phase 30 (n0).
+            "BridgeMovingCombinationsComponent" => (5, 0),
             "DecomposeModelComponent" => c.NickName.StartsWith("M0 calcolato") ? (3,5) : c.NickName.StartsWith("Estrai") ? (8, 0) : (7, 3),
             "BridgeSegmentCompositeComponent" => c.NickName.StartsWith("Solo longitudinali") ? (3,6) : (8, 1),
             "CompositeBeamComponent" or "BridgeAnalysisOptionsComponent" or "BridgeStudsComponent" => (8, 2),
@@ -139,23 +141,57 @@ internal static class Example50HorizontalLayout
             var position = Classify(card.Component);
             if (position.HasValue) { (card.Stage, card.Lane) = position.Value; assigned.Add(card); }
         }
+        IEnumerable<Card> SourceCards(IGH_Param p,HashSet<IGH_Param> visited)
+        {
+            if(!visited.Add(p))yield break;
+            if(outputOwners.TryGetValue(p,out var direct)){yield return direct;yield break;}
+            foreach(var source in p.Sources)foreach(var card in SourceCards(source,visited))yield return card;
+        }
+        // Cards each card reads from, also through floating parameters.
+        var feeds = cards.ToDictionary(c => c, c => c.Component.Params.Input.SelectMany(p => p.Sources).SelectMany(p => SourceCards(p, new())).Where(s => s != c).Distinct().ToArray());
         // Standard arithmetic belongs beside its first downstream consumer, including chained operators.
         for (int pass = 0; pass < cards.Length; pass++)
         {
             bool changed = false;
             foreach (var card in cards.Where(c => !assigned.Contains(c)))
             {
-                var next = cards.Where(c => assigned.Contains(c) && c.Component.Params.Input.SelectMany(p => p.Sources)
-                    .Any(p => outputOwners.TryGetValue(p, out var source) && source == card)).OrderBy(c => c.Stage).ThenBy(c => c.Lane).FirstOrDefault();
+                var next = cards.Where(c => assigned.Contains(c) && feeds[c].Contains(card)).OrderBy(c => c.Stage).ThenBy(c => c.Lane).FirstOrDefault();
                 if (next == null) continue;
                 card.Stage = next.Stage; card.Lane = Math.Max(0, next.Lane - 1); assigned.Add(card); changed = true;
             }
             if (!changed) break;
         }
-        // User-saved revisions can contain disconnected experimental branches. Keep them visible,
-        // in their own lane, rather than discarding them or treating them as part of the phase chain.
-        foreach(var card in cards.Except(assigned))
-        {card.Stage=2;card.Lane=4;if(!card.Component.NickName.StartsWith("PROVA",StringComparison.Ordinal))card.Component.NickName="PROVA UTENTE | "+card.Component.NickName;}
+        // User-saved revisions can contain experimental branches. Keep them visible, in the stage of the last card
+        // they read from, rather than discarding them or treating them as part of the phase chain.
+        var experimental = cards.Except(assigned).ToArray();
+        foreach (var card in experimental) card.Stage = -1;
+        for (int pass = 0; pass < cards.Length && experimental.Any(c => c.Stage < 0); pass++)
+            foreach (var card in experimental.Where(c => c.Stage < 0 && feeds[c].All(s => s.Stage >= 0)))
+                card.Stage = feeds[card].Select(s => s.Stage).DefaultIfEmpty(2).Max();
+        foreach (var card in experimental)
+        {if(card.Stage<0)card.Stage=2;if(!card.Component.NickName.StartsWith("PROVA",StringComparison.Ordinal))card.Component.NickName="PROVA UTENTE | "+card.Component.NickName;}
+        // A card read in an earlier stage moves there when its own sources allow it, so no wire runs back to a previous stage.
+        var readers = cards.ToDictionary(c => c, c => cards.Where(r => feeds[r].Contains(c)).ToArray());
+        for (int pass = 0; pass < cards.Length; pass++)
+        {
+            bool moved = false;
+            foreach (var card in cards.Where(c => c.Stage != 9))
+            {
+                int target = readers[card].Select(r => r.Stage).DefaultIfEmpty(int.MaxValue).Min(), source = feeds[card].Select(s => s.Stage).DefaultIfEmpty(0).Max();
+                if (target < card.Stage && source <= target) { card.Stage = target; moved = true; }
+            }
+            if (!moved) break;
+        }
+        // Lanes follow the wires: inside its stage a card sits one lane after the last card it reads from.
+        var depth = new Dictionary<Card, int>();
+        int Depth(Card c, int chain)
+        {
+            if (depth.TryGetValue(c, out int d)) return d;
+            if (chain > cards.Length) throw new InvalidOperationException("Cycle in the example graph.");
+            d = feeds[c].Where(s => s.Stage == c.Stage).Select(s => Depth(s, chain + 1) + 1).DefaultIfEmpty(0).Max();
+            depth[c] = d; return d;
+        }
+        foreach (var card in cards) card.Lane = Depth(card, 0);
         // Six complete plot chains, arranged in two horizontal triptychs.
         var plotNames = new[] { "Momento Mx", "Tensioni acciaio sigma 5", "Tau massima", "Pioli Ed e Rd", "Irrigiditori intermedi WR", "Irrigiditori appoggi WR" };
         foreach (var card in cards.Where(c => c.Stage == 9))
@@ -166,12 +202,6 @@ internal static class Example50HorizontalLayout
             card.Order = i % 3;
         }
         var owner = cards.ToDictionary(c => (IGH_DocumentObject)c.Component);
-        IEnumerable<Card> SourceCards(IGH_Param p,HashSet<IGH_Param> visited)
-        {
-            if(!visited.Add(p))yield break;
-            if(outputOwners.TryGetValue(p,out var direct)){yield return direct;yield break;}
-            foreach(var source in p.Sources)foreach(var card in SourceCards(source,visited))yield return card;
-        }
         foreach (var p in objects.OfType<IGH_Param>())
         {
             Card card;
@@ -210,14 +240,24 @@ internal static class Example50HorizontalLayout
             var cardGroups = new List<IGH_DocumentObject>();
             // Plot rows share the same baseline and height across filter/plot/preview columns.
             float plotRowHeight = stage == 9 ? stageCards.Max(Height) + 140 : 0;
+            // Each card at the mean height of the cards of its stage it reads from, already placed in the lanes on its
+            // left; wires between stages are hidden, so they do not pull a card down.
+            float? Wish(Card c)
+            {
+                var placed = feeds[c].Where(s => s.Stage == c.Stage && !s.Bounds.IsEmpty).ToArray();
+                return placed.Length == 0 ? null : placed.Average(s => s.Bounds.Top + s.Bounds.Height / 2) - Height(c) / 2;
+            }
             foreach (var lane in stageCards.GroupBy(c => c.Lane).OrderBy(g => g.Key))
             {
-                float y = 480, width = 0;
-                foreach (var card in lane.OrderBy(c => c.Order))
+                float width = 0;
+                var ordered = stage == 9 ? lane.OrderBy(c => c.Order).ToList() : lane.OrderBy(c => Wish(c) ?? float.MaxValue).ThenBy(c => c.Order).ToList();
+                var tops = stage == 9 ? ordered.ToDictionary(c => c, c => 480 + c.Order * plotRowHeight) : Stack(ordered, Wish, 480, 150);
+                // The components of a lane share one column, right of the widest input of the lane.
+                float inputWidth = ordered.SelectMany(c => c.Inputs).Select(o => o.Attributes.Bounds.Width).DefaultIfEmpty(0).Max();
+                foreach (var card in ordered)
                 {
-                    Place(card, x, stage == 9 ? 480 + card.Order * plotRowHeight : y);
+                    Place(card, x, tops[card], inputWidth);
                     width = Math.Max(width, card.Bounds.Width);
-                    y = card.Bounds.Bottom + 150;
                     cardGroups.Add(AddGroup(doc, card.Component.NickName, Colors[stage], 18, card.Members));
                 }
                 x += width + 200;
@@ -252,25 +292,64 @@ internal static class Example50HorizontalLayout
         }
         o.Attributes.ExpireLayout(); o.Attributes.PerformLayout();
     }
+    /// <summary>
+    /// Tops closest to the wished ones, in the given order and without overlaps: cards that would overlap form a block
+    /// placed at the mean of their wishes. A card without a wish follows the previous one; nothing goes above <paramref name="top"/>.
+    /// </summary>
+    private static Dictionary<Card, float> Stack(List<Card> lane, Func<Card, float?> wish, float top, float gap)
+    {
+        // Sum = Σ (wished top − offset inside the block), so the block top is Sum / count.
+        var blocks = new List<(List<Card> Cards, float Sum, float Height)>();
+        float Top((List<Card> Cards, float Sum, float Height) b) => b.Sum / b.Cards.Count;
+        foreach (var card in lane)
+        {
+            float next = blocks.Count == 0 ? top : Top(blocks[^1]) + blocks[^1].Height + gap;
+            blocks.Add((new List<Card> { card }, Math.Max(top, wish(card) ?? next), Height(card)));
+            while (blocks.Count > 1 && Top(blocks[^2]) + blocks[^2].Height + gap > Top(blocks[^1]))
+            {
+                var (upper, lower) = (blocks[^2], blocks[^1]);
+                float offset = upper.Height + gap;
+                upper.Cards.AddRange(lower.Cards);
+                blocks[^2] = (upper.Cards, upper.Sum + lower.Sum - offset * lower.Cards.Count, offset + lower.Height);
+                blocks.RemoveAt(blocks.Count - 1);
+            }
+        }
+        var tops = new Dictionary<Card, float>();
+        float y = top;
+        foreach (var block in blocks)
+        {
+            y = Math.Max(y, Top(block));
+            foreach (var card in block.Cards) { tops[card] = y; y += Height(card) + gap; }
+        }
+        return tops;
+    }
     private static float StackHeight(IEnumerable<IGH_DocumentObject> objects) => objects.Sum(o => Math.Max(30, o.Attributes.Bounds.Height) + 35);
     private static float Height(Card c) => Math.Max(c.Component.Attributes.Bounds.Height, Math.Max(StackHeight(c.Inputs), StackHeight(c.Outputs))) + 40;
-    private static void Move(IGH_DocumentObject o, float x, float y)
+    internal static void Move(IGH_DocumentObject o, float x, float y)
     {
         var b = o.Attributes.Bounds; var pivot = o.Attributes.Pivot;
         o.Attributes.Pivot = new PointF(pivot.X + x - b.Left, pivot.Y + y - b.Top);
         o.Attributes.ExpireLayout(); o.Attributes.PerformLayout();
     }
-    private static void Place(Card c, float x, float y)
+    private static void Place(Card c, float x, float y, float inputWidth)
     {
-        float inputWidth = c.Inputs.Select(o => o.Attributes.Bounds.Width).DefaultIfEmpty(0).Max();
         float iy = y;
         foreach (var o in c.Inputs) { Move(o, x, iy); iy += Math.Max(30, o.Attributes.Bounds.Height) + 35; }
         Move(c.Component, x + inputWidth + 100, y + 20);
-        float ox = c.Component.Attributes.Bounds.Right + 120, oy = y;
-        foreach (var o in c.Outputs) { Move(o, ox, oy); oy += Math.Max(30, o.Attributes.Bounds.Height) + 35; }
+        // Outputs that read other outputs of the same card stand one column further right.
+        var columns = new Dictionary<IGH_Param, int>();
+        int Column(IGH_Param p) => columns.TryGetValue(p, out int k) ? k
+            : columns[p] = 1 + p.Sources.Where(s => c.Outputs.Contains(s)).Select(Column).DefaultIfEmpty(0).Max();
+        float ox = c.Component.Attributes.Bounds.Right + 120;
+        foreach (var column in c.Outputs.Cast<IGH_Param>().GroupBy(Column).OrderBy(g => g.Key))
+        {
+            float oy = y, width = 0;
+            foreach (var o in column) { Move(o, ox, oy); oy += Math.Max(30, o.Attributes.Bounds.Height) + 35; width = Math.Max(width, o.Attributes.Bounds.Width); }
+            ox += width + 120;
+        }
         c.Bounds = Union(c.Members.Select(o => o.Attributes.Bounds));
     }
-    private static RectangleF Union(IEnumerable<RectangleF> bounds) => bounds.Aggregate(RectangleF.Union);
+    internal static RectangleF Union(IEnumerable<RectangleF> bounds) => bounds.Aggregate(RectangleF.Union);
     private static GH_Group AddGroup(GH_Document doc, string title, Color color, int alpha, IEnumerable<IGH_DocumentObject> objects)
     {
         var g = new GH_Group { NickName = title, Colour = Color.FromArgb(alpha, color), Border = GH_GroupBorder.Box };
@@ -278,7 +357,7 @@ internal static class Example50HorizontalLayout
         foreach (var o in objects) g.AddObject(o.InstanceGuid);
         return g;
     }
-    private static void ValidateBounds(IGH_DocumentObject[] objects)
+    internal static void ValidateBounds(IGH_DocumentObject[] objects)
     {
         for (int i = 0; i < objects.Length; i++)
         for (int j = i + 1; j < objects.Length; j++)
@@ -288,12 +367,12 @@ internal static class Example50HorizontalLayout
         }
     }
 
-    private static XElement ObjectList(XDocument xml) => xml.Descendants("chunk").Single(c => (string)c.Attribute("name") == "DefinitionObjects").Element("chunks");
-    private static XElement Container(XElement o) => o.Element("chunks").Elements("chunk").Single(c => (string)c.Attribute("name") == "Container");
-    private static string Item(XElement c, string name) => c.Element("items")?.Elements("item").SingleOrDefault(i => (string)i.Attribute("name") == name)?.Value;
-    private static string Identity(XElement o) => Item(Container(o), "InstanceGuid");
-    private static bool Annotation(XElement o) => Item(o, "GUID") == "c552a431-af5b-46a9-a8a4-0fcbc27ef596" || (Item(Container(o), "Name") ?? "").StartsWith(CaptionPrefix);
-    private static string Fingerprint(XDocument xml)
+    internal static XElement ObjectList(XDocument xml) => xml.Descendants("chunk").Single(c => (string)c.Attribute("name") == "DefinitionObjects").Element("chunks");
+    internal static XElement Container(XElement o) => o.Element("chunks").Elements("chunk").Single(c => (string)c.Attribute("name") == "Container");
+    internal static string Item(XElement c, string name) => c.Element("items")?.Elements("item").SingleOrDefault(i => (string)i.Attribute("name") == name)?.Value;
+    internal static string Identity(XElement o) => Item(Container(o), "InstanceGuid");
+    internal static bool Annotation(XElement o) => Item(o, "GUID") == "c552a431-af5b-46a9-a8a4-0fcbc27ef596" || (Item(Container(o), "Name") ?? "").StartsWith(CaptionPrefix);
+    internal static string Fingerprint(XDocument xml)
     {
         var functional = ObjectList(xml).Elements("chunk").Where(o => !Annotation(o)).Select(o => new XElement(o)).ToArray();
         foreach (var o in functional)
@@ -308,7 +387,7 @@ internal static class Example50HorizontalLayout
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)));
     }
     // Retain the original XML for ALL non-layout data, including opaque caches and persistent inputs.
-    private static XDocument PatchOnlyAttributes(XDocument original, XDocument laidOut)
+    internal static XDocument PatchOnlyAttributes(XDocument original, XDocument laidOut)
     {
         var result = new XDocument(original);
         var target = ObjectList(result);
@@ -340,7 +419,7 @@ internal static class Example50HorizontalLayout
         return result;
     }
 
-    private static XDocument WithoutAnnotations(XDocument original)
+    internal static XDocument WithoutAnnotations(XDocument original)
     {
         // Strip presentation groups before deserialization: removing and rebuilding many live
         // groups can retain stale attribute dependencies in the Grasshopper runtime.
@@ -428,7 +507,7 @@ internal static class Example50HorizontalLayout
         var stages=Apply(doc);Capture(doc,stages,folder,new[]{5,7});
         Console.WriteLine("REV003 CANVAS CAPTURE PASS: n0 and combinations; no GHX written.");
     }
-    private static void Capture(GH_Document doc, Stage[] stages, string directory, int[] selected=null)
+    internal static void Capture(GH_Document doc, Stage[] stages, string directory, int[] selected=null)
     {
         GH_Skin.LoadSkin();
         using var canvas = new GH_Canvas();

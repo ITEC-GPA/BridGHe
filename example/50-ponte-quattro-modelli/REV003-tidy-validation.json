@@ -1,0 +1,101 @@
+{
+  "Mode": "tidy: unreachable objects removed, left-to-right layout",
+  "NativeSolverInvoked": false,
+  "Removed": [
+    {
+      "Name": "Beam Override",
+      "NickName": "PROVA REV001 \u2014 non collegata ai modelli",
+      "Id": "f1a81c47-40a1-4676-adba-c99604bfd190"
+    },
+    {
+      "Name": "Bridge Read Section Excel",
+      "NickName": "ReadSections",
+      "Id": "f117db86-2686-429b-9499-8594aa1a12bc"
+    },
+    {
+      "Name": "Bridge Section Excel Template",
+      "NickName": "SectionTemplate",
+      "Id": "cdbd7c6f-5758-4bb2-81cd-c800b402df38"
+    },
+    {
+      "Name": "Data",
+      "NickName": "Collegamenti eccentrici trave-soletta | Beams (opzionale)",
+      "Id": "4189c32e-6061-4840-bb9c-e85c8bbf3844"
+    },
+    {
+      "Name": "Data",
+      "NickName": "Propriet\u00E0 aste di collegamento \u2014 necessaria solo nel modo 1 (opzionale)",
+      "Id": "7be35f8c-2105-4290-a579-f4a43f6499ab"
+    },
+    {
+      "Name": "EXCEL \u2014 Create / Read",
+      "NickName": "EXCEL \u2014 Create / Read",
+      "Id": "9faf1905-d7cf-4ba5-a1b4-803e058bdcda"
+    },
+    {
+      "Name": "EXCEL \u2014 Create / Read",
+      "NickName": "EXCEL \u2014 Create / Read",
+      "Id": "cde5de29-6ba5-4255-b193-a375071345ce"
+    },
+    {
+      "Name": "Number",
+      "NickName": "Giunti [mm] \u2014 rami {0} comuni, {n} trave n (opzionale)",
+      "Id": "d512dd71-82ee-47d6-8162-7395a1a959a4"
+    },
+    {
+      "Name": "Number",
+      "NickName": "Lunghezze campate diverse [mm] \u2014 sostituiscono numero e luce (opzionale)",
+      "Id": "c375f4e9-5e6b-4728-9d70-bd666b805e2e"
+    },
+    {
+      "Name": "Number Slider",
+      "NickName": "Prolungamento dopo ultimo appoggio [mm]",
+      "Id": "61c98d87-3758-4f8b-86ba-6d11d81c2c5c"
+    },
+    {
+      "Name": "Number Slider",
+      "NickName": "Prolungamento prima del primo appoggio [mm]",
+      "Id": "a4850c2a-5956-42cd-8d30-572b6829123b"
+    },
+    {
+      "Name": "Procedura Excel",
+      "NickName": "Procedura Excel",
+      "Id": "60ca0140-1c40-4d96-8d6d-b1e46b0b8dd7"
+    },
+    {
+      "Name": "Value List",
+      "NickName": "Collegamento trave-soletta",
+      "Id": "055d7b4a-510d-4bed-9634-35b06cac3db0"
+    }
+  ],
+  "Components": {
+    "Before": 182,
+    "After": 179
+  },
+  "Objects": {
+    "Before": 888,
+    "After": 875
+  },
+  "Wires": {
+    "Before": 1094,
+    "After": 1087
+  },
+  "RightToLeftWires": {
+    "Before": 96,
+    "After": 0
+  },
+  "Canvas": {
+    "Before": {
+      "Width": 80125,
+      "Height": 4809
+    },
+    "After": {
+      "Width": 94751,
+      "Height": 6315
+    }
+  },
+  "FunctionalContentSha256": "3B41B8688571A2F2E46C287BFE8E0498AC83D9445B949BB67B2435B46C5B24DF",
+  "OtherObjectsUnchanged": true,
+  "NoOverlaps": true,
+  "Reopened": true
+}

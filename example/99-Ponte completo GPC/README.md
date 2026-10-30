@@ -25,6 +25,20 @@ Le Value List mostrano i nomi delle opzioni. I pannelli contengono testi, percor
 
 L'opzione **Considera calcestruzzo nelle fasi miste** è ora esplicitamente `True`: nel precedente GHX era presente un posto vuoto, interpretato già come `True` dal componente. Il controllo numerico conferma gli stessi risultati. Non vengono modificati gli Excel, i file Straus o il report: [validazione degli input espliciti](REV004/explicit-inputs-validation.json).
 
+### Pulizia del 30 ottobre 2026
+
+Sono stati tolti 37 oggetti da cui non si arrivava a nessun risultato:
+
+- comandi scollegati: `CALCOLA 4 MODELLI STRAUS`, `Tipo collegamento eccentrico`, le Value List `Results` e `Super-Element` e tre Value List senza nome;
+- gli input dei traversi reticolari (altezza, pannelli per campo, schema, incrocio delle diagonali), che con i diaframmi pieni non alimentavano niente;
+- tre `Build Model` senza destinatari, con i loro nomi vuoti e sistemi di unità;
+- un `Load Case` isolato, con il suo nome e la gravità sulle masse non strutturali;
+- il ramo `Super Element` → tre `Super Element Filter` → due `Merge`, senza uscita, con i pannelli `ID trave da selezionare`, un `List Length`, un `Series` con i suoi due slider e il pannello `Nome proprietà`.
+
+I gruppi rimasti vuoti sono eliminati. La disposizione dei gruppi `Input | …` non cambia: il flusso andava già da sinistra a destra, e sono stati spostati soltanto gli oggetti dei 5 collegamenti in cui la sorgente sporgeva di poco oltre il bordo sinistro del destinatario. Il contenuto funzionale di tutti gli altri oggetti è identico. I conteggi del paragrafo precedente si riferiscono alla generazione del 22 ottobre. Dettagli in [tidy-validation.json](REV004/tidy-validation.json); strumento `--tidy-example 99`.
+
+Prova nativa dopo la pulizia (`--modular-bridge-native`, set GPC del 30 ottobre pomeriggio): quattro analisi Straus e 2.736 righe di verifica GPC, con impronta identica bit per bit a quella di riferimento (`8E9756B76EC3EFFE…`).
+
 Il generatore `--example99 rev004` produce già questa configurazione. `--example99 inputs004` aggiorna una REV004 esistente e verifica valori, alberi, riapertura e corrispondenza con il report salvato; se è già aggiornata, la controlla senza riscriverla. Questa revisione richiede anche la Release aggiornata del plugin: è stato corretto il caricamento degli schemi dei carichi distribuiti quando il tipo proviene da un controllo esterno.
 
 ### Geometria e fasi della revisione

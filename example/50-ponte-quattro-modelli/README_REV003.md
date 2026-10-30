@@ -38,6 +38,26 @@ Le cinque combinazioni precedenti sono conservate con coefficienti mobili nulli.
 
 Ogni riga contiene **una sola posizione**. Non si sommano posizioni diverse e non si mescolano massimi di sollecitazioni non concomitanti. Il numero delle righe si aggiorna dai casi restituiti da Straus; il pannello `ACTION ID — POSIZIONE` rende consultabile l'associazione. L'opzione delle combinazioni isolate serve per leggere il contributo del solo traffico. La tabella di base e il fattore restano scelte esplicite: il componente non genera automaticamente combinazioni normative.
 
+## Pulizia e disposizione del 30 ottobre 2026
+
+Sono stati tolti 13 oggetti che non portavano a nessun risultato:
+
+- i sette input del generatore parametrico non più collegati: lunghezze campate diverse, prolungamenti prima e dopo gli appoggi, giunti, collegamento trave-soletta e due parametri opzionali delle aste di collegamento;
+- il `Beam Override` di prova non collegato ai modelli;
+- il secondo blocco Excel: un `Bridge Read Section Excel` senza destinatari, un secondo `Bridge Section Excel Template`, i due pulsanti `EXCEL — Create / Read` scollegati e la copia della nota `Procedura Excel`.
+
+Resta un solo percorso delle sezioni: `Bridge Read Section Excel` → pannello `SEZIONI CONCI` → `Bridge Segment Sections`.
+
+Le undici fasi restano nello stesso ordine. Dentro ogni fase le colonne seguono i collegamenti: ogni componente sta a destra di quelli da cui legge e all'altezza media delle sue sorgenti. La tabella delle combinazioni mobili passa nella fase n0, dove alimenta le azioni di traffico. I collegamenti da destra a sinistra scendono da 96 a 0 e nessun oggetto si sovrappone. Cambiano soltanto le posizioni: il contenuto funzionale di tutti gli altri oggetti, compresi dati persistenti e cache, è identico. Dettagli e impronta del contenuto in [REV003-tidy-validation.json](REV003-tidy-validation.json).
+
+Prova nativa dopo la pulizia (`--example50-rev003 --native`, set GPC del 30 ottobre pomeriggio): cinque analisi Straus e 66.960 righe di verifica GPC, con impronta identica bit per bit a quella di riferimento (`C1CF95A069DF8E9D…`), in 418 s.
+
+```powershell
+dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --tidy-example 50 --capture
+```
+
+Senza `--publish` lo strumento scrive solo il candidato e le immagini delle fasi in `artifacts/tidy-examples/50`.
+
 ## Esecuzione
 
 1. **Run** su `Bridge Read Section Excel` per leggere il foglio REV003.

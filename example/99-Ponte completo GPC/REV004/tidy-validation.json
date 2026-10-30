@@ -1,0 +1,221 @@
+{
+  "Mode": "tidy: unreachable objects removed, left-to-right layout",
+  "NativeSolverInvoked": false,
+  "Removed": [
+    {
+      "Name": "Boolean Toggle",
+      "NickName": "CALCOLA 4 MODELLI STRAUS",
+      "Id": "752dcba6-6da0-4775-a2ea-48022ac400f0"
+    },
+    {
+      "Name": "Boolean Toggle",
+      "NickName": "Collega incrocio diagonali",
+      "Id": "deb363b1-043d-4a41-8f6f-1f970bbf44b4"
+    },
+    {
+      "Name": "Boolean Toggle",
+      "NickName": "Gravit\u00E0 su masse non strutturali",
+      "Id": "bf5c41be-8891-4206-9704-27d83ae5beb1"
+    },
+    {
+      "Name": "Build Model",
+      "NickName": "Build Model",
+      "Id": "d820f9e7-ad16-4211-98c6-b1eee47976a3"
+    },
+    {
+      "Name": "Build Model",
+      "NickName": "Build Model",
+      "Id": "3501266e-11a4-4e13-8915-65083b086657"
+    },
+    {
+      "Name": "Build Model",
+      "NickName": "Build Model",
+      "Id": "3f5e711a-8fbf-4746-bcc3-cc335493991b"
+    },
+    {
+      "Name": "List Length",
+      "NickName": "List Length",
+      "Id": "f0cc97c5-97e8-4731-9e25-4b5f68b6a4a3"
+    },
+    {
+      "Name": "Load Case",
+      "NickName": "Load Case",
+      "Id": "5f636a9e-cd54-4240-95f5-430caa65d25a"
+    },
+    {
+      "Name": "Merge",
+      "NickName": "Merge",
+      "Id": "72ba9bed-379e-4507-a11f-000985953e8c"
+    },
+    {
+      "Name": "Merge",
+      "NickName": "Merge",
+      "Id": "76f46d59-e421-4c19-81d9-f820a7cd980c"
+    },
+    {
+      "Name": "Number Slider",
+      "NickName": "Altezza reticolo traversi [mm]",
+      "Id": "ae30ad32-1896-4173-b6c8-a8c02b1c6595"
+    },
+    {
+      "Name": "Number Slider",
+      "NickName": "Incremento serie",
+      "Id": "64527b8f-3669-48d8-88b9-22c5ebe367d6"
+    },
+    {
+      "Name": "Number Slider",
+      "NickName": "Pannelli reticolari per campo",
+      "Id": "5c6fa0c5-b854-44af-b3e6-f032c5dc4aba"
+    },
+    {
+      "Name": "Number Slider",
+      "NickName": "Tipo collegamento eccentrico",
+      "Id": "e1d59178-0b82-44be-802e-788656af1b07"
+    },
+    {
+      "Name": "Number Slider",
+      "NickName": "Valore iniziale serie",
+      "Id": "41b5c7c6-b754-4744-b7a1-61fec3222dcf"
+    },
+    {
+      "Name": "Panel",
+      "NickName": "ID trave da selezionare",
+      "Id": "8420e4fd-201d-4577-9e96-a62ff99a5adb"
+    },
+    {
+      "Name": "Panel",
+      "NickName": "ID trave da selezionare",
+      "Id": "d4b35304-a9c5-440a-8a23-5142e7bbd156"
+    },
+    {
+      "Name": "Panel",
+      "NickName": "ID trave da selezionare",
+      "Id": "da8656cb-6631-4ebd-95f7-ee7ea16c048a"
+    },
+    {
+      "Name": "Panel",
+      "NickName": "Nome caso di carico",
+      "Id": "42b8a8a3-de6b-4f74-842a-f84be78b9f74"
+    },
+    {
+      "Name": "Panel",
+      "NickName": "Nome propriet\u00E0",
+      "Id": "2adf410b-dd42-4cc4-b90f-5f62d6c741e6"
+    },
+    {
+      "Name": "Series",
+      "NickName": "Series",
+      "Id": "922076fc-4349-47df-bb1a-27af7fae6160"
+    },
+    {
+      "Name": "Super Element",
+      "NickName": "Super Element",
+      "Id": "2e450bf8-1c7f-4ca6-81f7-06137798e3d4"
+    },
+    {
+      "Name": "Super Element Filter",
+      "NickName": "Super Element Filter",
+      "Id": "f2236bc2-c2c8-4d80-9e20-98c0f54996e1"
+    },
+    {
+      "Name": "Super Element Filter",
+      "NickName": "Super Element Filter",
+      "Id": "cb253356-b7fc-4ecb-a2d9-5558abf481f8"
+    },
+    {
+      "Name": "Super Element Filter",
+      "NickName": "Super Element Filter",
+      "Id": "999b5e70-e227-4309-988d-185463fd204a"
+    },
+    {
+      "Name": "Text",
+      "NickName": "Nome modello FEM (vuoto)",
+      "Id": "60fde60a-8fbb-4066-9fb8-bc44830d1a63"
+    },
+    {
+      "Name": "Text",
+      "NickName": "Nome modello FEM (vuoto)",
+      "Id": "3b78c1bf-e85f-4174-9535-70153a2ff8cb"
+    },
+    {
+      "Name": "Text",
+      "NickName": "Nome modello FEM (vuoto)",
+      "Id": "ad30ec24-643e-47d8-9000-525bf60b52cf"
+    },
+    {
+      "Name": "Value List",
+      "NickName": "Results",
+      "Id": "a7395fb5-4339-4496-80be-8a4b5dd71613"
+    },
+    {
+      "Name": "Value List",
+      "NickName": "Schema reticolare",
+      "Id": "c6275c11-2025-4a19-afd7-4d17dc88454e"
+    },
+    {
+      "Name": "Value List",
+      "NickName": "Sistema unit\u00E0 di misura",
+      "Id": "224752ba-d6f8-4166-b64a-7f56330cd503"
+    },
+    {
+      "Name": "Value List",
+      "NickName": "Sistema unit\u00E0 di misura",
+      "Id": "10c276bd-402e-4f36-ae88-75a415ea6746"
+    },
+    {
+      "Name": "Value List",
+      "NickName": "Sistema unit\u00E0 di misura",
+      "Id": "672be92c-829f-46d6-aab7-cf9cd010d687"
+    },
+    {
+      "Name": "Value List",
+      "NickName": "Super-Element",
+      "Id": "3b85db1a-9c74-449f-9e0e-617781dc1a1e"
+    },
+    {
+      "Name": "Value List",
+      "NickName": "Value List",
+      "Id": "3015a409-3b70-4578-95a0-7fe063e81725"
+    },
+    {
+      "Name": "Value List",
+      "NickName": "Value List",
+      "Id": "21a01c92-7ae8-4824-bd04-8f0c29ba21ab"
+    },
+    {
+      "Name": "Value List",
+      "NickName": "Value List",
+      "Id": "75e274fa-4791-4d4f-960f-89ab763c9de5"
+    }
+  ],
+  "Components": {
+    "Before": 194,
+    "After": 182
+  },
+  "Objects": {
+    "Before": 787,
+    "After": 750
+  },
+  "Wires": {
+    "Before": 930,
+    "After": 899
+  },
+  "RightToLeftWires": {
+    "Before": 5,
+    "After": 0
+  },
+  "Canvas": {
+    "Before": {
+      "Width": 39325,
+      "Height": 17685
+    },
+    "After": {
+      "Width": 39325,
+      "Height": 17355
+    }
+  },
+  "FunctionalContentSha256": "FDC6ED0286663F14CA69E5BB78C8A1FD7A855DB6A30BC5ABC546CC6FE39C4CDC",
+  "OtherObjectsUnchanged": true,
+  "NoOverlaps": true,
+  "Reopened": true
+}
