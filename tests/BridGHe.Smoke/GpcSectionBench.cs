@@ -99,8 +99,9 @@ internal static class GpcSectionBench
     }
 
     /// <summary>
-    /// --gpc-bench &lt;capture.inputs.jsonl.gz&gt; [--every N] [--offset K] [--component text] [--repeat R] [--out file.tsv]:
-    /// recalculates every N-th row (all by default) R times, then prints times, allocations and the comparison of the row hashes.
+    /// --gpc-bench &lt;capture.inputs.jsonl.gz&gt; [--every N] [--offset K] [--component text] [--repeat R] [--out file.tsv] [--alloc-types]:
+    /// recalculates every N-th row (all by default) R times, then prints times, allocations (with --alloc-types also by type) and the
+    /// comparison of the row hashes; --stream also prints the collections and the pauses of the garbage collector.
     /// Exit code 0 only when every recalculated row has the captured hash.
     /// </summary>
     internal static int Run(string[] args)
@@ -139,10 +140,12 @@ internal static class GpcSectionBench
             Console.WriteLine($"GPC BENCH {Path.GetFileName(file)}: {rows.Count} of {read} rows (every {every}, offset {offset}{(component == null ? "" : ", component " + component)}), {repeat} pass(es)");
             var analyses = new HBridgeAnalysisResult[rows.Count];
             var times = new double[repeat][];
+            using var types = args.Contains("--alloc-types") ? new AllocationTypes() : null;
             for (int pass = 0; pass < repeat; pass++)
             {
                 times[pass] = new double[rows.Count];
                 GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+                types?.Clear();
                 long allocated = GC.GetTotalAllocatedBytes(true); int g0 = GC.CollectionCount(0), g1 = GC.CollectionCount(1), g2 = GC.CollectionCount(2);
                 var cpu = Process.GetCurrentProcess().TotalProcessorTime; var total = Stopwatch.StartNew();
                 // --batch: one gPC call for the checks of a station; its time is shared by its rows
@@ -161,6 +164,7 @@ internal static class GpcSectionBench
                     $"{(GC.GetTotalAllocatedBytes(true) - allocated) / 1048576.0 / Math.Max(1, rows.Count):F2} MB/row allocated, GC {GC.CollectionCount(0) - g0}/{GC.CollectionCount(1) - g1}/{GC.CollectionCount(2) - g2}");
                 foreach (var group in rows.Select((r, i) => (r, i)).GroupBy(x => x.r.Component + " | " + x.r.NickName).OrderBy(g => g.Key, StringComparer.Ordinal))
                     Console.WriteLine($"  {group.Key}: {group.Count()} rows, {group.Sum(x => times[pass][x.i]) / 1000:F2} s, {group.Average(x => times[pass][x.i]):F2} ms/row");
+                types?.Print(rows.Count);
             }
             int same = 0, inputDiff = 0, resultDiff = 0; var first = new List<string>();
             using var tsv = output == null ? null : new StreamWriter(output, false, new UTF8Encoding(false)) { NewLine = "\n" };
@@ -182,6 +186,31 @@ internal static class GpcSectionBench
             return same == rows.Count ? 0 : 2;
         }
         finally { CultureInfo.CurrentCulture = culture; }
+    }
+
+    /// <summary>--alloc-types: the allocated bytes by type, sampled by the allocation ticks of the runtime (one about every 100 KB)</summary>
+    private sealed class AllocationTypes : System.Diagnostics.Tracing.EventListener
+    {
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, long> bytes = new(StringComparer.Ordinal);
+        protected override void OnEventSourceCreated(System.Diagnostics.Tracing.EventSource source)
+        {
+            if (source.Name == "Microsoft-Windows-DotNETRuntime") EnableEvents(source, System.Diagnostics.Tracing.EventLevel.Verbose, (System.Diagnostics.Tracing.EventKeywords)1);
+        }
+        protected override void OnEventWritten(System.Diagnostics.Tracing.EventWrittenEventArgs e)
+        {
+            if (e.EventName == null || !e.EventName.StartsWith("GCAllocationTick", StringComparison.Ordinal) || e.Payload == null) return;
+            int type = e.PayloadNames.IndexOf("TypeName"), amount = e.PayloadNames.IndexOf("AllocationAmount64");
+            if (type < 0 || amount < 0) return;
+            bytes.AddOrUpdate(e.Payload[type] as string ?? "?", _ => (long)Convert.ToUInt64(e.Payload[amount]), (_, b) => b + (long)Convert.ToUInt64(e.Payload[amount]));
+        }
+        internal void Clear() => bytes.Clear();
+        internal void Print(int rows)
+        {
+            long total = bytes.Values.Sum();
+            Console.WriteLine($"  ALLOCATIONS BY TYPE (sampled {total / 1048576.0:F0} MB):");
+            foreach (var (name, b) in bytes.OrderByDescending(p => p.Value).Take(40).Select(p => (p.Key, p.Value)))
+                Console.WriteLine($"    {100.0 * b / Math.Max(1, total),5:F1}%  {b / 1024.0 / Math.Max(1, rows),9:F1} KB/row  {name}");
+        }
     }
 
     private static HBridgeInput Input(Row r) => r.Input.Deserialize<HBridgeInput>(ResultFingerprint.Json) with
@@ -217,6 +246,9 @@ internal static class GpcSectionBench
     {
         int read = 0, rows = 0, same = 0, inputDiff = 0, resultDiff = 0; double seconds = 0; var first = new List<string>();
         var block = new List<Row>();
+        // the garbage collector of the whole run (reading included): collections, pauses and allocated memory
+        int g0 = GC.CollectionCount(0), g1 = GC.CollectionCount(1), g2 = GC.CollectionCount(2);
+        var pause = GC.GetTotalPauseDuration(); long allocated = GC.GetTotalAllocatedBytes(false); var total = Stopwatch.StartNew();
         void Flush()
         {
             var ok = new int[block.Count]; var input = new bool[block.Count]; var watch = Stopwatch.StartNew();
@@ -258,6 +290,8 @@ internal static class GpcSectionBench
             }
         if (block.Count > 0) Flush();
         Console.WriteLine($"GPC BENCH STREAM {Path.GetFileName(file)}: {rows} of {read} rows{(parallel ? ", parallel" : "")}, {seconds:F1} s");
+        Console.WriteLine($"GC: {(System.Runtime.GCSettings.IsServerGC ? "server" : "workstation")}, {GC.CollectionCount(0) - g0}/{GC.CollectionCount(1) - g1}/{GC.CollectionCount(2) - g2} collections, " +
+            $"pauses {(GC.GetTotalPauseDuration() - pause).TotalSeconds:F1} s of {total.Elapsed.TotalSeconds:F1} s, {(GC.GetTotalAllocatedBytes(false) - allocated) / 1073741824.0:F1} GB allocated");
         Console.WriteLine($"COMPARE: {same}/{rows} rows identical, {inputDiff} with a different input hash, {resultDiff} with a different result");
         foreach (string key in first) Console.WriteLine("  DIFF " + key.Replace('\t', ' '));
         return same == rows ? 0 : 2;
