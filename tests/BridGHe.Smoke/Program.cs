@@ -42,6 +42,7 @@ internal static class Program
         // --pure does not start Rhino, useful for CI and unlicensed environments.
         using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},WindowStyle.Hidden);
         if(args.Contains("--gpc-guard")) return GpcReleaseSetTests.Guard(args.SkipWhile(a=>a!="--gpc-guard").Skip(1).First());
+        if(args.Contains("--plugin-check")) return PluginBuildCheckTests.Child(args.SkipWhile(a=>a!="--plugin-check").Skip(1).First());
         GpcDomainCache.Configure();
         if(args.Contains("--tidy-example")) return ExampleTidy.Run(args.SkipWhile(a=>a!="--tidy-example").Skip(1).FirstOrDefault(),args.Contains("--publish"),args.Contains("--capture"));
         if(args.Contains("--migrate-bridge-examples")) return BridgeExampleMigration.Run(args.SkipWhile(a=>a!="--migrate-bridge-examples").Skip(1).FirstOrDefault(a=>!a.StartsWith("--")),args.Contains("--publish"));

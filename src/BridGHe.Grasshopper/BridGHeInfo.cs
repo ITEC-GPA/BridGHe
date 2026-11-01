@@ -23,6 +23,8 @@ namespace BridGHe.Grasshopper
             server.AddCategorySymbolName(Helpers.CategoryNameConstants.CATEGORY_MODEL, 'B');
             Display.DisplayMenu.Initialize();
             Helpers.GpcReleaseGuard.Start();
+            // The GPC libraries are checked against the release set by GpcReleaseGuard.
+            Gpc.PluginChecks.PluginBuildCheck.Start(typeof(BridGHeInfo).Assembly, "BridGHe", sharedLibraries: false);
             return GH_LoadingInstruction.Proceed;
         }
     }

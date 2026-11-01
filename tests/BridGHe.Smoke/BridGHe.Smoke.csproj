@@ -7,5 +7,7 @@
     <PackageReference Include="Rhino.Inside" Version="8.0.7-beta" />
     <PackageReference Include="RhinoCommon" Version="$(RhinoVersion)" ExcludeAssets="runtime" />
     <PackageReference Include="Grasshopper" Version="$(RhinoVersion)" ExcludeAssets="runtime" />
+    <!-- The shared plug-in check is tested from its reference copy. -->
+    <Compile Include="../../src/BridGHe.Grasshopper/Helpers/PluginBuildCheck.cs" Link="PluginBuildCheck.cs" />
   </ItemGroup>
 </Project>
