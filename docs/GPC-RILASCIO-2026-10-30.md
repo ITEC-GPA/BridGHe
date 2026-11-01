@@ -1,6 +1,6 @@
 # Rilasci ufficiali GPC — 30 ottobre 2026
 
-Il 30 ottobre BridGHe e ReBear ricevono due set ufficiali: quello del mattino, dopo il lavoro sull'acciaio, e quello del pomeriggio, che aggiunge i batch per stazione. Il set corrente è il [secondo](#secondo-set-batch-per-stazione).
+Il 30 ottobre BridGHe e ReBear ricevono due set ufficiali: quello del mattino, dopo il lavoro sull'acciaio, e quello del pomeriggio, che aggiunge i batch per stazione. Dal 1° novembre il set corrente è quello del [rilascio del 1° novembre](GPC-RILASCIO-2026-11-01.md).
 
 ## Primo set: lavoro sull'acciaio
 

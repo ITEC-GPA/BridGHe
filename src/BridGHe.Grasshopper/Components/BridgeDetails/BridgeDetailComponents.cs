@@ -191,17 +191,19 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
             int stage=result.Analysis.Stages.IndexOf(result.Stage);if(stage<0)throw new ArgumentException("Unknown source stage.");
             return new Request{Result=result,Input=input,Stage=stage};
         }
-        /// <summary>The gPC calculation of a section, without Grasshopper data access; exceptions are the errors of the result</summary>
+        /// <summary>The gPC calculation of a section, without Grasshopper data access; exceptions are the errors of the result. When only details,
+        /// limit state or unused common elevation change, gPC keeps the converged phase situations of the source analysis and recomputes the
+        /// stress points, shear, studs and details, with the numbers of a full calculation</summary>
         private static Solution Calculate(Request request)
         {
-            try{return Finish(request,HBridgeSection.Calculate(request.Input));}
+            try{return Finish(request,HBridgeSection.Recalculate(request.Result.Analysis,request.Input));}
             catch(Exception e){return new Solution{Error=e.Message};}
         }
         /// <summary>The sections of a station in one gPC batch (it runs in a task): each gets the outputs or the error of its own calculation</summary>
         private static Solution[] Calculate(Request[] requests)
         {
             IReadOnlyList<HBridgeBatchResult> analyses;
-            try{analyses=HBridgeSection.Calculate(requests.Select(r=>r.Input).ToArray());}
+            try{analyses=HBridgeSection.Recalculate(requests.Select(r=>r.Result.Analysis).ToArray(),requests.Select(r=>r.Input).ToArray());}
             catch(Exception e){return requests.Select(_=>new Solution{Error=e.Message}).ToArray();}
             return requests.Select((request,k)=>
             {

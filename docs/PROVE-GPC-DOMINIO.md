@@ -79,6 +79,8 @@ Il banco usa le DLL GPC della propria cartella. Per provare un set senza ricompi
 
 Super Element Check calcola in parallelo le stazioni; Bridge Detail Check è un componente task-capable che calcola in parallelo le stazioni di elementi consecutivi. Ogni stazione è un solo batch GPC, che calcola una volta le fasi comuni alle combinazioni.
 
+Dal 1° novembre Bridge Detail Check non rifà l'analisi per fasi. Pioli, irrigiditori, armatura trasversale, fatica e stato limite non entrano nelle iterazioni delle larghezze efficaci. Quando l'ingresso differisce dal risultato di Super Element solo in questi dati (e nella quota comune, se nessuna fase la usa), `HBridgeSection.Recalculate` di CompositeBridge 1.22.0.1 riprende le situazioni convergenti dell'analisi sorgente. Ricalcola solo punti di tensione, taglio, pioli, torsione e dettagli, con gli stessi numeri del calcolo completo. In ogni altro caso, per esempio con opzioni di analisi diverse, ricalcola tutto come prima. Nel 50 «Sezioni e pioli — tutte le travi» scende da 115 a 20 s con le stesse impronte ([rilascio del 1° novembre](GPC-RILASCIO-2026-11-01.md)).
+
 Il guadagno del parallelo dipende dal garbage collector di .NET. Rhino 8 usa quello predefinito (workstation), che ferma tutti i thread a ogni raccolta. Misure del 30 ottobre sulle 32.832 sezioni di Super Element Check dell'esempio 50, eseguite col banco (`--stream --parallel --batch`):
 
 | Configurazione | Tempo |
