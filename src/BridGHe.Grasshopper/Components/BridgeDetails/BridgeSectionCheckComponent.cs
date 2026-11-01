@@ -35,6 +35,7 @@ public sealed class BridgeSectionCheckComponent:GH_Component
     }
     protected override void SolveInstance(IGH_DataAccess da)
     {
+        Helpers.GpcReleaseGuard.Warn(this);
         try
         {
             BridgeDetailGoo geometry=null,top=null,bottom=null,options=null;

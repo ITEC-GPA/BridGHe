@@ -95,7 +95,8 @@ internal static class RegressionTests
             ["bridge-planar-noise"] = BridgePlanarNoise,
             ["bridge-instant-modulus"] = BridgeInstantModulus,
             ["bridge-example-parameters"] = BridgeExampleParameters,
-            ["bridge-detail-archives"] = BridgeDetailArchives
+            ["bridge-detail-archives"] = BridgeDetailArchives,
+            ["gpc-release-set"] = GpcReleaseSetTests.Run
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;

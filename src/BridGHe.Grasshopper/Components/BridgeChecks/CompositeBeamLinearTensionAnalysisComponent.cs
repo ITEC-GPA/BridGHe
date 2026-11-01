@@ -64,6 +64,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
+            GpcReleaseGuard.Warn(this);
             GH_CompositeBeam beam = null;
             BeamForceResultModel beamForceResultOnlySteel = null;
             BeamForceResultModel beamForceResultInfinite = null;

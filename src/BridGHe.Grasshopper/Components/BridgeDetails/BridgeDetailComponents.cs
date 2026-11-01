@@ -149,6 +149,7 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
                 return;
             }
             StartPending();
+            Helpers.GpcReleaseGuard.Warn(this);
             if(!GetSolveResults(da,out var solution))
             {
                 try{var request=Read(da);solution=request==null?null:Calculate(request);}

@@ -82,6 +82,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         {
             Message = "N–Mx–Vy";
             AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, BridgeCheckAdapter.PlanarAssumption);
+            GpcReleaseGuard.Warn(this);
             GH_Model model = new GH_Model();
             List<GH_CompositeBeam> beams = new List<GH_CompositeBeam>();
             bool topFlangeInstab = false;
