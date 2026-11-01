@@ -92,6 +92,18 @@ Il guadagno del parallelo dipende dal garbage collector di .NET. Rhino 8 usa que
 
 Un budget gen0 più grande (`DOTNET_GCgen0size`) non aiuta. Il GC si sceglie all'avvio del processo e non da un plugin. Chi lancia verifiche molto grandi può avviare Rhino con la variabile d'ambiente `DOTNET_gcServer=1`: occupa più memoria, perché crea un heap per processore, e vale per tutto Rhino. Senza questa variabile conta soprattutto ridurre le allocazioni di GPC per sezione, scese da 16,5 a 6,7 MB con i set del 30 ottobre.
 
+Il [set della sera del 1° novembre](GPC-RILASCIO-2026-11-01-sera.md) le porta a 2,6 MB per sezione, con gli stessi risultati bit per bit. Con 24 processori e il GC workstation lo stesso banco passa da 91–102 s a 63 s. In `--stream` il banco stampa raccolte, pause del GC e memoria allocata dell'intero processo:
+
+| Set | Tempo | Pause GC | Raccolte gen0/gen1/gen2 | Allocato |
+|---|---|---|---|---|
+| 1° novembre, mattina | 91,4 s | 67,0 s | 13.870/3.991/55 | 238 GB |
+| 1° novembre, sera | 63,3 s | 47,8 s | 6.217/2.131/33 | 105 GB |
+| 1° novembre, sera, GC server | 9,8 s | — | — | — |
+
+Le raccolte sono meno della metà, ma ognuna dura di più, perché a ogni pausa i thread hanno in volo gli stessi oggetti vivi. Ridurre ancora la memoria allocata rende sempre meno. Il GC server resta la leva più forte.
+
+`--alloc-types` stampa, per ogni passata, la memoria allocata per tipo, campionata dagli eventi del runtime (uno ogni 100 KB circa). Ha indicato le fonti corrette nel set della sera: punti e vettori di Geometry, numeri «boxed», fattorizzazioni LU di MathNet e cicli paralleli dentro il risolutore di sezione.
+
 ## Limiti noti al 29 ottobre 2026
 
 Indipendenti dal set GPC, osservati sul master `509fddf` con il set ufficiale del 27 ottobre:
