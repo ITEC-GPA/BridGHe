@@ -49,9 +49,11 @@ internal static class NativeModularBridgeTests
             var a=analyses[i];var input=Values<ModelModel>(Input(a,"Model")).SingleOrDefault();
             if(input==null||input.Beams.Count==0)throw new Exception("Phase model missing before analysis: "+a.NickName+"\n"+Errors(doc));
             Console.WriteLine("NATIVE MODULAR: "+a.NickName+"; "+input.Beams.Count+" beams, "+input.Nodes.Count+" nodes.");
+            MigrationCapture.Write($"phase-{i+1:00}-input", input);
             Press(a);BridgeSegmentExcelTests.Solve(doc,true);
             var result=Values<ModelModel>(Output(a,"Model")).SingleOrDefault();
             if(result==null||!result.Beams.Any(b=>b.Results.Count>0))throw new Exception("No native results: "+a.NickName+"\n"+Errors(doc));
+            MigrationCapture.Write($"phase-{i+1:00}-result", result);
             var equilibrium=new List<object>();
             var cases=result.Nodes.SelectMany(n=>n.Results.OfType<NodeReactResultModel>()).Select(r=>r.LoadCase.Name).Distinct().ToArray();
             if(cases.Length==0)throw new Exception("Native reaction results missing.");

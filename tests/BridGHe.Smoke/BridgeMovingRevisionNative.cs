@@ -34,8 +34,10 @@ internal static class BridgeMovingRevisionNative
         foreach(var c in analyses)
         {
             var input=Values<ModelModel>(In(c,"Model")).Single();Console.WriteLine("REV003 NATIVE: "+c.NickName);
+            MigrationCapture.Write(c.NickName.Split(' ')[0]+"-input", input);
             Press(c);BridgeSegmentExcelTests.Solve(doc,true);
             var result=Values<ModelModel>(Out(c,"Model")).Single();Require(result.Beams.Any(b=>b.Results.Count>0),Errors(doc));
+            MigrationCapture.Write(c.NickName.Split(' ')[0]+"-result", result);
             foreach(string name in result.Nodes.SelectMany(n=>n.Results.OfType<NodeReactResultModel>()).Select(r=>r.LoadCase.Name).Distinct())
             {
                 double expected=NativeModularBridgeTests.VerticalLoad(input,name);
