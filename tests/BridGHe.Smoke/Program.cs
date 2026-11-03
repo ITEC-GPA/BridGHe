@@ -25,6 +25,10 @@ internal static class Program
                 return RunBridgeReport();
             // gPC section bench on a capture: no Rhino host, no Straus.
             if(args.Contains("--gpc-bench")) return GpcSectionBench.Run(args);
+#if GPC_PILOT
+            // F6A: legacy FEM inputs -> GPC -> Converter .st7, compared with the former exporter (no Rhino host).
+            if(args.Contains("--legacy-export")) return LegacyExportComparison.Run(args);
+#endif
             return Run(args);
         }
         catch(Exception ex) { Console.Error.WriteLine(ex);return 1; }

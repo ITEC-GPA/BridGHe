@@ -99,6 +99,11 @@ internal static class RegressionTests
             ["gpc-release-set"] = GpcReleaseSetTests.Run,
             ["plugin-build-check"] = PluginBuildCheckTests.Run
         };
+#if GPC_PILOT
+        // F6A: conversions to GPC (lane P2B). Inserted before the release-set guards, which require the pinned lib/GPC set.
+        var gpc = new Dictionary<string, Action> { ["gpc-legacy-import"] = GpcLegacyImportTests.Run };
+        tests = gpc.Concat(tests).ToDictionary(t => t.Key, t => t.Value);
+#endif
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0;
         foreach (var test in tests.Where(t => selection == "all" || t.Key == selection))

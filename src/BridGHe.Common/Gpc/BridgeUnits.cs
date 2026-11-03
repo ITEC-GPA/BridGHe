@@ -1,0 +1,68 @@
+using System;
+using System.ComponentModel;
+
+namespace BridGHe.Common.Gpc
+{
+    /// <summary>Units of a BridGHe definition: the "Units" input of Build Model. Same names, order and descriptions as before,
+    /// so the integer input of existing definitions keeps its meaning.</summary>
+    public enum DefinitionUnits
+    {
+        [Description("kNm (m, kN, T, kPa, s, kJ, C)")]
+        Knm,
+        [Description("SI (m, N, kg, Pa, s, J, C)")]
+        SI,
+        [Description("Nmm (mm, N, T, MPa, s, mJ, C)")]
+        Nmm,
+        [Description("PSI (in, lbf, lb, psi, s, btu, F)")]
+        IPS
+    }
+
+    /// <summary>Factors from the definition units to the GPC domain (N, mm, rad, s, t, °C).
+    /// Upstream of Build Model positions, section dimensions and actions are in the definition units; materials and
+    /// gravity are already N-mm (MPa, t/mm³, mm/s²), as in the former model, and are never scaled.</summary>
+    public readonly struct BridgeUnits
+    {
+        public DefinitionUnits Units { get; }
+        /// <summary>mm per definition length unit.</summary>
+        public double Length { get; }
+        /// <summary>N per definition force unit.</summary>
+        public double Force { get; }
+        public bool Fahrenheit => Units == DefinitionUnits.IPS;
+
+        public BridgeUnits(DefinitionUnits units)
+        {
+            Units = units;
+            switch (units)
+            {
+                case DefinitionUnits.Knm: Length = 1000; Force = 1000; break;
+                case DefinitionUnits.SI: Length = 1000; Force = 1; break;
+                case DefinitionUnits.Nmm: Length = 1; Force = 1; break;
+                case DefinitionUnits.IPS: Length = 25.4; Force = 4.4482216152605; break;
+                default: throw new ArgumentOutOfRangeException(nameof(units));
+            }
+        }
+
+        public bool IsIdentity => Length == 1 && Force == 1;
+        public double ToMm(double length) => length * Length;
+        public double ToN(double force) => force * Force;
+        /// <summary>Force per length (distributed beam actions).</summary>
+        public double ToNPerMm(double value) => IsIdentity ? value : value * Force / Length;
+        /// <summary>Moment (force × length).</summary>
+        public double ToNmm(double value) => IsIdentity ? value : value * Force * Length;
+        /// <summary>Distributed moment (moment per length) has the dimension of a force.</summary>
+        public double ToNmmPerMm(double value) => ToN(value);
+        /// <summary>Pressure (force per area).</summary>
+        public double ToMPa(double value) => IsIdentity ? value : value * Force / (Length * Length);
+        public double ToMm2(double value) => IsIdentity ? value : value * Length * Length;
+        public double ToMm4(double value) => IsIdentity ? value : value * Length * Length * Length * Length;
+        /// <summary>Absolute temperature.</summary>
+        public double ToCelsius(double value) => Fahrenheit ? (value - 32) * 5 / 9 : value;
+        /// <summary>Temperature difference.</summary>
+        public double ToCelsiusDelta(double value) => Fahrenheit ? value * 5 / 9 : value;
+        /// <summary>Temperature gradient (difference per length).</summary>
+        public double ToCelsiusPerMm(double value) => IsIdentity ? value : ToCelsiusDelta(value) / Length;
+
+        public static DefinitionUnits Parse(string name) =>
+            Enum.TryParse<DefinitionUnits>(name, false, out var units) ? units : throw new ArgumentException("UnknownBridgheUnits: " + name);
+    }
+}
