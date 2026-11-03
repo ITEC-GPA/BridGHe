@@ -20,7 +20,20 @@ namespace BridGHe.Common.Helpers
 
         public static bool CreateModelR3(ModelModel model, string outputPath, double tolerance, out int modelId, out List<string> warnings, out List<string> errors)
         {
-            lock (StrausRuntime.Gate) return CreateModelCore(model, outputPath, tolerance, out modelId, out warnings, out errors);
+            // F6A migration diagnostic (removed with this exporter): BRIDGHE_LEGACY_EXPORT_CAPTURE=<folder> keeps every exported
+            // input model and its .st7, so the GPC writer can be compared with this exporter on the existing native suites.
+            string capture = Environment.GetEnvironmentVariable("BRIDGHE_LEGACY_EXPORT_CAPTURE");
+            byte[] input = string.IsNullOrWhiteSpace(capture) ? null : ModelArchive.Write(model);
+            bool written;
+            lock (StrausRuntime.Gate) written = CreateModelCore(model, outputPath, tolerance, out modelId, out warnings, out errors);
+            if (written && input != null)
+            {
+                Directory.CreateDirectory(capture);
+                string stem = Path.Combine(capture, DateTime.Now.ToString("HHmmssfff") + "-" + Guid.NewGuid().ToString("N").Substring(0, 6));
+                File.WriteAllBytes(stem + ".bgmodel", input); File.Copy(Path.GetFullPath(outputPath), stem + ".st7");
+                File.WriteAllText(stem + ".txt", outputPath + Environment.NewLine + tolerance.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+            }
+            return written;
         }
 
         private static bool CreateModelCore(ModelModel model, string outputPath, double tolerance, out int modelId, out List<string> warnings, out List<string> errors)

@@ -29,6 +29,40 @@ internal static class LegacyNativeExamplesComparison
         return failures == 0 ? 0 : 1;
     }
 
+    /// <summary>Folder of pairs captured from the former exporter (BRIDGHE_LEGACY_EXPORT_CAPTURE): stem.bgmodel, stem.st7, stem.txt
+    /// (output path, tolerance). Each pair is converted, written and compared like the examples.</summary>
+    internal static int CompareCapture(string folder)
+    {
+        var summary = new StringBuilder(); int failures = 0, passed = 0; var categories = new System.Collections.Generic.Dictionary<string, int>();
+        foreach (var input in Directory.GetFiles(folder, "*.bgmodel").OrderBy(f => f, StringComparer.Ordinal))
+        {
+            string stem = Path.ChangeExtension(input, null), id = Path.GetFileName(stem); var info = File.ReadAllLines(stem + ".txt");
+            string text;
+            try
+            {
+                var report = new LegacyImportReport();
+                double tolerance = double.Parse(info[1], System.Globalization.CultureInfo.InvariantCulture);
+                var model = LegacyModelImport.Import(LegacyArchive.Read(File.ReadAllBytes(input)), GpcIdentity.Derive(GpcIdentity.NameSpace, "capture:" + id), tolerance, report);
+                GpcPreflight.Require(model);
+                string st7 = stem + ".gpc.st7"; if (File.Exists(st7)) File.Delete(st7);
+                var plan = Straus7ModelWritePlan.Prepare(model);
+                using (var writer = new Straus7NativeWriter(st7, Path.GetDirectoryName(stem))) { plan.Write(writer, model); writer.Save(); }
+                var differences = St7Dump.Compare(St7Dump.Read(stem + ".st7"), St7Dump.Read(st7));
+                File.WriteAllLines(stem + ".differences.tsv", differences.Select(d => d.Key + "\t" + d.A + "\t" + d.B));
+                var kinds = differences.Select(d => St7Dump.CategoryOf(d.Key)).Distinct().ToArray();
+                foreach (var k in kinds) categories[k] = categories.TryGetValue(k, out int n) ? n + 1 : 1;
+                text = $"== {id} ({Path.GetFileName(info[0])}): {differences.Count} differences" + Environment.NewLine + St7Dump.Summary(differences); passed++;
+            }
+            catch (Exception error) { failures++; text = $"== {id} ({Path.GetFileName(info[0])}): NOT CONVERTED {error.GetType().Name}: {error.Message}" + Environment.NewLine; }
+            Console.Write(text); summary.Append(text);
+        }
+        string totals = $"CAPTURE {passed} compared, {failures} not converted; models with difference categories:" + Environment.NewLine
+            + string.Join(Environment.NewLine, categories.OrderBy(c => c.Key, StringComparer.Ordinal).Select(c => $"{c.Value,5}  {c.Key}"));
+        Console.WriteLine(totals); summary.AppendLine(totals);
+        File.WriteAllText(Path.Combine(folder, "summary.txt"), summary.ToString());
+        return 0;
+    }
+
     internal static int Compare(string folder)
     {
         var summary = new StringBuilder(); int failures = 0;

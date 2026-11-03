@@ -151,11 +151,40 @@ namespace BridGHe.Common.Gpc.Legacy
                 foreach (var a in pl.Field("Attributes").Items)
                 {
                     if (a.Is("ElementIdAttributeModel")) report.Carry("Element ID attribute (native user ID: the writer uses the GPC numbering)");
+                    else if (a.Is("LoadPatchTypeAttributeModel"))
+                    {
+                        var edges = new List<int>(); for (int e = 0; a.Has("SelectedEdges" + e); e++) edges.Add(a.Int("SelectedEdges" + e));
+                        var weights = new double[4]; for (int e = 0; e < 4 && a.Has("Weights" + e); e++) weights[e] = a.Double("Weights" + e);
+                        (plate.Assignments.Physical ??= new ShellPhysicalData()).LoadPatch = new LoadPatchDistribution
+                        { Kind = (LoadPatchDistributionKind)(int)Enum.Parse(typeof(PatchKinds), a.Enum("PatchType")), SelectedEdges = edges.ToArray(), EdgeWeights = weights };
+                    }
+                    else if (a.Is("PlateSupportAttributeModel"))
+                    {
+                        // Former exporter: the -Z face, in every load-case number used as freedom case (one freedom case exists).
+                        (plate.Assignments.Physical ??= new ShellPhysicalData()).Supports.Add(new ShellDistributedSupport
+                        {
+                            Stiffness = a.Double("Stiffness") * units.Force / (units.Length * units.Length * units.Length), Gap = 0, Face = ShellFace.NegativeNormal,
+                            Behavior = a.Bool("CompressionOnly") ? DistributedSpringBehavior.CompressionOnly : DistributedSpringBehavior.Bilateral
+                        });
+                        report.Carry("Plate support face " + a.Enum("Face") + " (the former exporter wrote the -Z face)");
+                    }
                     else throw new NotSupportedException("LegacyPlateAttributeNotMappedYet: " + a.ShortType);
                 }
                 foreach (var l in pl.Field("Loads").Items)
                 {
                     var loadCase = cases[l.Field("LoadCase").String("Name")];
+                    if (l.Is("PlatePreStressModel"))
+                    {
+                        var stress = Vector(l["LocalPressure"]);
+                        (plate.Assignments.Physical ??= new ShellPhysicalData()).InitialStresses.Add(new ShellInitialStress { Case = loadCase, Components = new Vector3d(units.ToMPa(stress.X), units.ToMPa(stress.Y), units.ToMPa(stress.Z)) });
+                        continue;
+                    }
+                    if (l.Is("PlateNSMassModel"))
+                    {
+                        if (!units.IsIdentity) throw new NotSupportedException("LegacyPlateNonStructuralMassUnitsRequireNmm");
+                        (plate.Assignments.Physical ??= new ShellPhysicalData()).NonStructuralMasses.Add(new ShellNonStructuralMass { Case = loadCase, MassPerArea = l.Double("Mass"), DynamicFactor = l.Double("DynFactor"), GlobalOffset = Vector(l["Offset"]) });
+                        continue;
+                    }
                     if (!l.Is("PlatePressureModel")) throw new NotSupportedException("LegacyPlateLoadNotMappedYet: " + l.ShortType);
                     var pressure = Vector(l["Pressure"]);
                     // Review L1 B2: local pressure = St7SetPlateNormalPressure2 with one value (the -Z face); global = St7SetPlateGlobalPressure3S.
@@ -292,16 +321,27 @@ namespace BridGHe.Common.Gpc.Legacy
             if (frames.Length > 1 && frames.Skip(1).Any(f => !SamePlane(f, frames[0]))) throw new ArgumentException($"Node {node.Name}: conflicting/invalid restraint coordinate systems.");
             var axes = frames.Length == 0 ? null : Frame(frames[0], units);
             var restraints = attributes.Where(a => a.Is("NodeRestraintAttributeModel")).ToArray();
-            if (restraints.Length != 0)
+            // Former exporter: the first stiffness attribute, in the restraint UCS of freedom case 1 (St7SetNodeKTranslation3F/KRotation3F).
+            var stiffness = attributes.FirstOrDefault(a => a.Is("NodeStiffnessAttributeModel"));
+            if (attributes.Count(a => a.Is("NodeStiffnessAttributeModel")) > 1) report.Warnings.Add($"Node {node.Name}: only the first stiffness attribute was exported");
+            if (restraints.Length != 0 || stiffness != null)
             {
-                var dofs = new[] { "Tx", "Ty", "Tz", "Rx", "Ry", "Rz" }.Select((d, k) => new DofRestrain((GeometryRestrain.DOF)k, restraints.Any(r => r.Bool(d)))).ToList();
                 if (n.Field("Loads").Items.Any(l => l.Is("NodeDisplacementLoadModel"))) throw new NotSupportedException("LegacyPrescribedDisplacementNotMappedYet");
-                node.Assignments.Restrains.Add(new RestrainAssignment { Restrain = new NodeRestrain(node, axes ?? CoordinateSystem.Global, dofs), SourceRecord = "NodeRestraintAttributeModel" });
+                var names = new[] { "Tx", "Ty", "Tz", "Rx", "Ry", "Rz" }; var dofs = new List<DofRestrain>();
+                for (int k = 0; k < 6; k++)
+                {
+                    bool fixedDof = restraints.Any(r => r.Bool(names[k]));
+                    double spring = stiffness == null ? 0 : stiffness.Double(names[k]) * (k < 3 ? units.Force / units.Length : units.Force * units.Length);
+                    if (fixedDof && spring != 0) report.Warnings.Add($"Node {node.Name}: spring on a restrained DOF {names[k]} (the restraint governs)");
+                    dofs.Add(fixedDof || spring == 0 ? new DofRestrain((GeometryRestrain.DOF)k, fixedDof) : new DofRestrain((GeometryRestrain.DOF)k, spring));
+                }
+                node.Assignments.Restrains.Add(new RestrainAssignment { Restrain = new NodeRestrain(node, axes ?? CoordinateSystem.Global, dofs), SourceRecord = "NodeRestraint/StiffnessAttributeModel" });
             }
             foreach (var a in attributes)
             {
                 if (a.Is("NodeCoordinateAttributeModel") || a.Is("NodeRestraintAttributeModel") || a.Is("RigidConnectionAttributeModel")) continue;
                 if (a.Is("ElementIdAttributeModel")) { report.Carry("Element ID attribute (native user ID: the writer uses the GPC numbering)"); continue; }
+                if (a.Is("NodeStiffnessAttributeModel")) continue; // with the restraints above
                 throw new NotSupportedException("LegacyNodeAttributeNotMappedYet: " + a.ShortType);
             }
             var sums = new Dictionary<string, (Vector3d F, Vector3d M)>(StringComparer.Ordinal);
@@ -312,6 +352,12 @@ namespace BridGHe.Common.Gpc.Legacy
                 {
                     sums.TryGetValue(c, out var s); var v = Vector(l); // NodeForceLoadModel/NodeMomentLoadModel store X, Y, Z
                     sums[c] = l.Is("NodeForceLoadModel") ? ((s.F ?? Zero) + v * units.Force, s.M ?? Zero) : (s.F ?? Zero, (s.M ?? Zero) + v * (units.Force * units.Length));
+                }
+                else if (l.Is("NodeTemperatureLoadModel"))
+                {
+                    // The former exporter wrote only the value (St7SetNodeTemperature1): the native default type is the reference temperature.
+                    if (l.Enum("LoadType") != "Reference") report.Warnings.Add($"Node {node.Name}: temperature type {l.Enum("LoadType")} was not exported (reference temperature used, as before)");
+                    (node.Assignments.Physical ??= new NodePhysicalData()).Temperatures.Add(new NodalTemperatureAssignment { Case = cases[c], Kind = NodalTemperatureKind.Reference, Celsius = units.ToCelsius(l.Double("Value")) });
                 }
                 else throw new NotSupportedException("LegacyNodeLoadNotMappedYet: " + l.ShortType);
             }
@@ -331,6 +377,21 @@ namespace BridGHe.Common.Gpc.Legacy
                     case "BridgeSectionStateAttributeModel": report.Carry("Bridge section state (checks input, not exported)"); break;
                     case "BeamOutputStationsModel":
                         (beam.Assignments.Physical ??= new BeamPhysicalData()).MinimumOutputStations = a.Int("MinimumNumberOfStations"); break;
+                    case "BeamReleasesAttributeModel":
+                        if (beam.Attributes.Values.Any(x => x is GPC.Model.Attributes.BeamReleasesAttribute)) throw new ArgumentException($"Cannot assign more than 1 set of releases for beam {beam.Id}");
+                        beam.Attributes.Add(Releases(a, units)); break;
+                    case "BeamSupportAttributeModel":
+                        (beam.Assignments.Physical ??= new BeamPhysicalData()).Supports.Add(Support(a, beam.Assignments.SectionAxes, units)); break;
+                    case "BeamTaperAttributeModel":
+                        if (beam.Assignments.Physical?.Taper != null) throw new ArgumentException("LegacyDuplicateBeamTaper");
+                        (beam.Assignments.Physical ??= new BeamPhysicalData()).Taper = new BeamSectionTaper
+                        {
+                            ScaleI1 = a.Double("NFromX"), ScaleJ1 = a.Double("NToX"), ScaleI2 = a.Double("NFromY"), ScaleJ2 = a.Double("NToY"),
+                            Alignment1 = TaperAlignmentOf(a.Enum("AlignmentX")), Alignment2 = TaperAlignmentOf(a.Enum("AlignmentY")),
+                        };
+                        break;
+                    case "BeamStringGroupAttributeModel":
+                        (beam.Assignments.Physical ??= new BeamPhysicalData()).StringGroup = GpcIdentity.Derive(GpcIdentity.NameSpace, "string-group:" + a.Int("ID")); break;
                     default: throw new NotSupportedException("LegacyBeamAttributeNotMappedYet: " + a.ShortType);
                 }
             }
@@ -443,6 +504,73 @@ namespace BridGHe.Common.Gpc.Legacy
             var property = new ElasticBeamProperty(Unique(model, propertyName), material, section, shear1, shear2);
             model.BeamProperties.Add(property.Name, property);
             return (property, formulation, angle);
+        }
+
+        private enum PatchKinds { Auto1, Auto2, Auto3, Auto4, AngleSplit, Manual }
+
+        /// <summary>Former releases: per end and kind, a released DOF with zero partial value is released, with a value it is a partial
+        /// (absolute) stiffness; the others stay continuous. Beam principal axes, as St7SetBeamTRelease3/RRelease3.</summary>
+        private static GPC.Model.Attributes.BeamReleasesAttribute Releases(LegacyValue a, BridgeUnits units)
+        {
+            var release = new GPC.Model.Attributes.BeamReleasesAttribute { SourceRecord = "BeamReleasesAttributeModel" };
+            void End(GPC.Model.Attributes.BeamDofConnection[] target, string trans, string rot, string transPartial, string rotPartial)
+            {
+                var tp = Vector(a[transPartial]); var rp = Vector(a[rotPartial]);
+                var t = new[] { tp.X, tp.Y, tp.Z }; var r = new[] { rp.X, rp.Y, rp.Z };
+                for (int k = 0; k < 3; k++)
+                {
+                    if (a.Bool(trans + k)) target[k] = t[k] == 0 ? new GPC.Model.Attributes.BeamDofConnection(GPC.Model.Attributes.BeamConnectionKind.Released)
+                        : new GPC.Model.Attributes.BeamDofConnection(GPC.Model.Attributes.BeamConnectionKind.AbsoluteStiffness, t[k] * units.Force / units.Length);
+                    if (a.Bool(rot + k)) target[3 + k] = r[k] == 0 ? new GPC.Model.Attributes.BeamDofConnection(GPC.Model.Attributes.BeamConnectionKind.Released)
+                        : new GPC.Model.Attributes.BeamDofConnection(GPC.Model.Attributes.BeamConnectionKind.AbsoluteStiffness, r[k] * units.Force * units.Length);
+                }
+            }
+            End(release.I, "TransNode1", "RotNode1", "TransN1Partial", "RotN1Partial");
+            End(release.J, "TransNode2", "RotNode2", "TransN2Partial", "RotN2Partial");
+            return release;
+        }
+
+        /// <summary>Former BeamSupportExport: simple springs along +-1/+-2 of the beam axes; tension-only flips the direction.</summary>
+        private static BeamDistributedSupport Support(LegacyValue a, CoordinateSystem axes, BridgeUnits units)
+        {
+            if (a.Enum("SpringType") != "Simple" || a.Enum("SpringTensionOrientation") != "BeamLocalAxis")
+                throw new NotSupportedException("Straus beam supports require simple springs along principal local axes 1 or 2.");
+            double stiffness = a.Double("Stiffness"), gap = a.Double("Gap");
+            if (!(stiffness > 0) || double.IsInfinity(stiffness) || double.IsNaN(gap) || double.IsInfinity(gap)) throw new ArgumentException("Beam support requires finite positive stiffness [F/L2] and finite gap [L].");
+            Vector3d direction;
+            switch (a.Enum("LocalAxisDirection"))
+            {
+                case "negative1Axis": direction = new Vector3d(-1, 0, 0); break;
+                case "positive1Axis": direction = new Vector3d(1, 0, 0); break;
+                case "negative2Axis": direction = new Vector3d(0, -1, 0); break;
+                case "positive2Axis": direction = new Vector3d(0, 1, 0); break;
+                default: throw new NotSupportedException("Straus beam supports accept only +-1 and +-2, not longitudinal axis 3.");
+            }
+            DistributedSpringBehavior behavior;
+            switch (a.Enum("SimpleSpringTypes"))
+            {
+                case "TensionCompression": behavior = DistributedSpringBehavior.Bilateral; break;
+                case "CompressionOnly": behavior = DistributedSpringBehavior.CompressionOnly; break;
+                case "TensionOnly": behavior = DistributedSpringBehavior.TensionOnly; break;
+                default: throw new ArgumentException("Unknown spring behaviour.");
+            }
+            if (behavior == DistributedSpringBehavior.Bilateral && gap != 0) throw new ArgumentException("A gap requires a compression-only spring.");
+            return new BeamDistributedSupport
+            {
+                Stiffness = stiffness * units.Force / (units.Length * units.Length), Gap = units.ToMm(gap), Behavior = behavior,
+                Direction = direction, Axes = new CoordinateSystem(new Point3d(0, 0, 0), axes.V1, axes.V2)
+            };
+        }
+
+        private static TaperAlignment TaperAlignmentOf(string code)
+        {
+            switch (code)
+            {
+                case "Bottom": return TaperAlignment.NegativeSide;
+                case "Center": return TaperAlignment.Symmetric;
+                case "Top": return TaperAlignment.PositiveSide;
+                default: throw new NotSupportedException("LegacyTaperAlignment: " + code);
+            }
         }
 
         private static PlateProperty PlateProperty(LegacyValue p, string name, BridgeUnits units)

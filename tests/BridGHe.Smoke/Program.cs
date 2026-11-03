@@ -28,6 +28,7 @@ internal static class Program
 #if GPC_PILOT
             // F6A: legacy FEM inputs -> GPC -> Converter .st7, compared with the former exporter (no Rhino host).
             if(args.Contains("--legacy-export")) return LegacyExportComparison.Run(args);
+            if(args.Contains("--legacy-capture-compare")) return LegacyNativeExamplesComparison.CompareCapture(args.SkipWhile(a=>a!="--legacy-capture-compare").Skip(1).First());
             if(args.Contains("--legacy-examples-compare")) return LegacyNativeExamplesComparison.Compare(args.SkipWhile(a=>a!="--legacy-examples-compare").Skip(1).First());
 #endif
             return Run(args);

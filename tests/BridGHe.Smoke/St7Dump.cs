@@ -129,7 +129,7 @@ internal sealed class St7Dump
             if (api.ReadAttributes(Straus7Entity.Beam, b, Straus7Attributes.BeamOffset).Length != 0) Values[key + "/offset"] = api.ReadBeamOffset(b);
             foreach (int end in new[] { 1, 2 }) foreach (bool rot in new[] { false, true })
                 if (api.ReadAttributes(Straus7Entity.Beam, b, rot ? Straus7Attributes.BeamREndRelease : Straus7Attributes.BeamTEndRelease).Any(a => a.Local == end))
-                { var r = api.ReadBeamRelease(b, end, rot); Texts[key + "/release" + end + (rot ? "R" : "T")] = string.Join(",", r.Status) + " " + string.Join(",", r.Values.Select(F)); }
+                { var r = api.ReadBeamRelease(b, end, rot); if (r.Status.Any(x => x != 1)) Texts[key + "/release" + end + (rot ? "R" : "T")] = string.Join(",", r.Status) + " " + string.Join(",", r.Values.Select(F)); } // all fixed = no release
             foreach (var a in api.ReadAttributes(Straus7Entity.Beam, b, 26))
             { double v = api.ReadBeamInitialState(b, a.Case, out int kind); Values[key + "/preload/" + caseNames[a.Case]] = new double[] { kind, v }; }
             foreach (var a in api.ReadAttributes(Straus7Entity.Beam, b, Straus7Attributes.BeamTemperatureGradient))
@@ -335,6 +335,7 @@ internal sealed class St7Dump
         return text.ToString();
     }
     private static string Trim(string s) => s.Length > 160 ? s.Substring(0, 160) + "…" : s;
+    internal static string CategoryOf(string key) => Category(key);
     private static string Category(string key)
     {
         var parts = key.Split('/');
