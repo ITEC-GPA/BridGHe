@@ -37,6 +37,9 @@ namespace BridGHe.Common.Gpc.Legacy
         public bool Has(string name) => fields.TryGetValue(name, out var v) && !v.IsNull;
         public LegacyValue this[string name] => fields.TryGetValue(name, out var v) ? v : Null;
         public LegacyValue Get(string name) => this[name];
+        /// <summary>The first present field among the names: types written by ISerializable use the SerializationInfo names,
+        /// [Serializable] types without ISerializable (for example PlatePropertyModel, StagedConstructionModel) their field names.</summary>
+        public LegacyValue Any(params string[] names) { foreach (var n in names) if (fields.TryGetValue(n, out var v)) return v; return Null; }
         public LegacyValue Field(string name) => fields.TryGetValue(name, out var v) ? v : throw new SerializationException("LegacyFieldMissing: " + (Type ?? "?") + "." + name);
 
         public double Double(string name) => Field(name).AsDouble();

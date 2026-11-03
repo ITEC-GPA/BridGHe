@@ -132,6 +132,8 @@ internal static class GpcLegacyImportTests
         var slu = model.Combinations["SLU"]; Assert(slu.GetLoadCaseCoefficient(model.LoadCases["Traffic"]) == 1.35 && slu.GetLoadCaseCoefficient(model.LoadCases["Wind"]) == 0.9, u + ": combination factors");
         Assert(model.Groups.ContainsKey("Girder\\Span1") && model.Groups["Girder\\Span1"].Parent == model.Groups["Girder"], u + ": group path names and hierarchy");
         Assert(report.NotExported.Count == 0 && report.Warnings.Count == 0, u + ": nothing silently dropped");
+        var preflight = GpcPreflight.Run(model);
+        Assert(preflight.Passed && preflight.Warnings.Count == 0, u + ": domain preflight without diagnostics: " + string.Join("; ", preflight.Errors.Concat(preflight.Warnings)));
         var plan = Straus7ModelWritePlan.Prepare(model);
         Assert(plan.IdentityMap.Entries.Count == 8, u + ": the Converter accepts the converted model");
     }

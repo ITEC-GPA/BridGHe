@@ -28,6 +28,7 @@ internal static class Program
 #if GPC_PILOT
             // F6A: legacy FEM inputs -> GPC -> Converter .st7, compared with the former exporter (no Rhino host).
             if(args.Contains("--legacy-export")) return LegacyExportComparison.Run(args);
+            if(args.Contains("--legacy-examples-compare")) return LegacyNativeExamplesComparison.Compare(args.SkipWhile(a=>a!="--legacy-examples-compare").Skip(1).First());
 #endif
             return Run(args);
         }
@@ -54,6 +55,9 @@ internal static class Program
         if(args.Contains("--gpc-pilot")) { try { return GpcPilot.Run(); } catch(Exception error) { Console.Error.WriteLine("F4 BRIDGE FAIL " + error); return 1; } }
 #endif
         GpcDomainCache.Configure();
+#if GPC_PILOT
+        if(args.Contains("--legacy-examples-write")) return LegacyNativeExamplesComparison.Write(args.SkipWhile(a=>a!="--legacy-examples-write").Skip(1).First());
+#endif
         if(args.Contains("--migration-scale")) return MigrationScale.Run();
         if(args.Contains("--tidy-example")) return ExampleTidy.Run(args.SkipWhile(a=>a!="--tidy-example").Skip(1).FirstOrDefault(),args.Contains("--publish"),args.Contains("--capture"));
         if(args.Contains("--migrate-bridge-examples")) return BridgeExampleMigration.Run(args.SkipWhile(a=>a!="--migrate-bridge-examples").Skip(1).FirstOrDefault(a=>!a.StartsWith("--")),args.Contains("--publish"));

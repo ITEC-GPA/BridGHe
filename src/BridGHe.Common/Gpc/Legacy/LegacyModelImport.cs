@@ -45,13 +45,13 @@ namespace BridGHe.Common.Gpc.Legacy
             var elements = legacy.Field("Elements").Items;
             var nodes = elements.Where(e => e.Is("NodeModel")).ToList();
             var beams = elements.Where(e => e.Is("BeamModel")).ToList();
-            var others = elements.Where(e => !e.Is("NodeModel") && !e.Is("BeamModel")).ToList();
+            var plates = elements.Where(e => e.Is("PlateModel")).ToList();
+            var others = elements.Where(e => !e.Is("NodeModel") && !e.Is("BeamModel") && !e.Is("PlateModel")).ToList();
             if (others.Count != 0) throw new NotSupportedException("LegacyElementTypeNotMappedYet: " + string.Join(", ", others.Select(o => o.ShortType).Distinct()));
-            if (legacy.Has("MovingPaths") && legacy.String("MovingPaths") != "[]") throw new NotSupportedException("LegacyMovingPathsNotMappedYet");
-            if (legacy.Has("StagedConstruction") && legacy.Field("StagedConstruction").Items.Count != 0) throw new NotSupportedException("LegacyStagedConstructionNotMappedYet");
+            string movingJson = legacy.Has("MovingPaths") ? legacy.String("MovingPaths") : "[]";
             if (legacy.Has("BridgeWorkflow")) report.Carry("BridgeWorkflow (checks recipe, not exported)");
 
-            var cases = Cases(legacy, model, report);
+            var cases = Cases(legacy, model, MovingCaseNames(movingJson), report);
             var groups = new Dictionary<string, Group>(StringComparer.Ordinal);
             Group GroupOf(LegacyValue g)
             {
@@ -130,6 +130,46 @@ namespace BridGHe.Common.Gpc.Legacy
                 model.BeamElements.Add(beam);
             }
 
+            if (movingJson != "[]") GpcMoving.FromLegacyJson(movingJson, model, cases, units, owner);
+            // Plates: former order and numbering, nodes by tolerance; one property per name as the former exporter.
+            var plateProperties = new Dictionary<string, PlateProperty>(StringComparer.Ordinal);
+            for (int k = 0; k < plates.Count; k++)
+            {
+                var pl = plates[k]; string plateId = pl.String("PlateId") ?? "";
+                int count = pl.Int("NPoints"); if (count != 3 && count != 4) throw new NotSupportedException("LegacyPlateWithMoreThanFourNodes");
+                var connected = Enumerable.Range(0, count).Select(i => { var (n, m) = index.Find(Point(pl["Point" + i], units)); if (m > 1) report.Warnings.Add($"Collapsing {m} nodes at plate {k + 1}"); return gpcNodes[n]; }).ToArray();
+                var pp = pl.Field("PlateProperty"); string ppName = pp.Any("Name", "_name").Text ?? pp.Any("Id", "_id").Text ?? "Plate property";
+                if (!plateProperties.TryGetValue(ppName, out var property)) plateProperties.Add(ppName, property = PlateProperty(pp, ppName, units));
+                if (!model.PlateProperties.ContainsKey(property.Name)) model.PlateProperties.Add(property.Name, property);
+                var plate = new AreaElement(GpcIdentity.Derive(owner, "plate:" + k), null, property, null, plateId, k + 1)
+                { Source = new SourceIdentity(Program, owner.ToString("D"), EntityFamily.Shell, plateId.Length != 0 ? plateId : (k + 1).ToString()) };
+                plate.ConnectNodes(connected);
+                if (pl.Double("Angle") != 0) throw new NotSupportedException("LegacyPlateAngleNotMappedYet");
+                if (pl.Double("Offset") != 0) plate.Assignments.Offset = units.ToMm(pl.Double("Offset"));
+                var pg = pl.Field("Groups").Items; if (pg.Count > 0) plate.AddGroup(GroupOf(pg[0]));
+                if (pg.Count > 1) report.Warnings.Add($"Straus7 allows assigning only one single group to the plate {k + 1}");
+                foreach (var a in pl.Field("Attributes").Items)
+                {
+                    if (a.Is("ElementIdAttributeModel")) report.Carry("Element ID attribute (native user ID: the writer uses the GPC numbering)");
+                    else throw new NotSupportedException("LegacyPlateAttributeNotMappedYet: " + a.ShortType);
+                }
+                foreach (var l in pl.Field("Loads").Items)
+                {
+                    var loadCase = cases[l.Field("LoadCase").String("Name")];
+                    if (!l.Is("PlatePressureModel")) throw new NotSupportedException("LegacyPlateLoadNotMappedYet: " + l.ShortType);
+                    var pressure = Vector(l["Pressure"]);
+                    // Review L1 B2: local pressure = St7SetPlateNormalPressure2 with one value (the -Z face); global = St7SetPlateGlobalPressure3S.
+                    plate.Loads.Add(l["CoordinateSystem"].IsNull
+                        ? ShellFacePressure.Normal(loadCase, ShellFace.NegativeNormal, units.ToMPa(pressure.Z))
+                        : ShellFacePressure.Global(loadCase, l.Enum("Face") == "Top" ? ShellFace.PositiveNormal : ShellFace.NegativeNormal,
+                            new Vector3d(units.ToMPa(pressure.X), units.ToMPa(pressure.Y), units.ToMPa(pressure.Z)),
+                            l.Bool("Projected") ? SurfacePressureProjection.Resultant : SurfacePressureProjection.None));
+                }
+                model.AreaElements.Add(plate);
+            }
+
+            var stages = legacy.Has("StagedConstruction") ? legacy.Field("StagedConstruction").Items : Array.Empty<LegacyValue>();
+            if (stages.Count != 0) Stages(stages, model, cases, groups, report);
             foreach (var c in legacy.Field("LoadCombinations").Items)
             {
                 string cname = c.String("Name");
@@ -145,13 +185,27 @@ namespace BridGHe.Common.Gpc.Legacy
         /// <summary>The former case set: model cases (not generated by moving loads), the cases of element loads and of the
         /// combinations, grouped by name; the default "Dead" case (self weight along −Z, 9806.65 mm/s², structural mass);
         /// numbering by name with Dead first (the writer numbers by ordinal name).</summary>
-        private static Dictionary<string, LoadCaseBase> Cases(LegacyValue legacy, Model model, LegacyImportReport report)
+        private static IEnumerable<string> MovingCaseNames(string json)
         {
+            using var document = System.Text.Json.JsonDocument.Parse(json);
+            return document.RootElement.EnumerateArray().Select(p => p.GetProperty("LoadCaseName").GetString()).ToArray();
+        }
+
+        private static Dictionary<string, LoadCaseBase> Cases(LegacyValue legacy, Model model, IEnumerable<string> movingCases, LegacyImportReport report)
+        {
+            // Static cases generated by a former moving-load analysis are results (recomputed): their names are not input cases.
             var generated = new HashSet<string>(StringComparer.Ordinal);
-            if (legacy.Has("GeneratedMovingCases") && legacy.String("GeneratedMovingCases") != "{}") throw new NotSupportedException("LegacyGeneratedMovingCasesNotMappedYet");
-            var candidates = legacy.Field("LoadCases").Items
+            if (legacy.Has("GeneratedMovingCases") && legacy.String("GeneratedMovingCases") != "{}")
+            {
+                using var document = System.Text.Json.JsonDocument.Parse(legacy.String("GeneratedMovingCases"));
+                foreach (var item in document.RootElement.EnumerateObject()) generated.Add(item.Value.GetString());
+                report.Carry("Generated moving cases of a former analysis (cache, recomputed): " + generated.Count);
+            }
+            var candidates = legacy.Field("LoadCases").Items.Where(c => !generated.Contains(c.String("Name")))
                 .Concat(legacy.Field("Elements").Items.SelectMany(e => e.Field("Loads").Items).Select(l => l.Field("LoadCase")))
-                .Concat(legacy.Field("LoadCombinations").Items.SelectMany(c => c.Field("Keys").Items)).ToList();
+                .Concat(legacy.Field("LoadCombinations").Items.SelectMany(c => c.Field("Keys").Items))
+                .Concat((legacy.Has("StagedConstruction") ? legacy.Field("StagedConstruction").Items : Array.Empty<LegacyValue>())
+                    .SelectMany(st => st.Field("_loadCombinations").Items).SelectMany(c => c.Field("Keys").Items)).ToList();
             var result = new Dictionary<string, LoadCaseBase>(StringComparer.Ordinal);
             var first = new Dictionary<string, LegacyValue>(StringComparer.Ordinal);
             foreach (var c in candidates)
@@ -161,30 +215,69 @@ namespace BridGHe.Common.Gpc.Legacy
                 if (!first.TryGetValue(name, out var known)) first.Add(name, c);
                 else if (!SameCase(known, c)) throw new ArgumentException("Definizioni incompatibili per il caso di carico " + name);
             }
+            foreach (var name in movingCases) if (!first.ContainsKey(name)) first.Add(name, null);
             if (!first.ContainsKey("Dead")) first.Add("Dead", null);
             foreach (var pair in first)
             {
                 var c = pair.Value;
-                bool gravity = c == null || c.Enum("GlobalInertiaLoad") == "Gravity";
+                bool dead = c == null && pair.Key == "Dead";
+                bool gravity = dead || c != null && c.Enum("GlobalInertiaLoad") == "Gravity";
                 if (c != null && c.Enum("GlobalInertiaLoad") != "Gravity" && c.Enum("GlobalInertiaLoad") != "None")
                     throw new NotSupportedException("LegacyInertiaLoadNotMappedYet: " + c.Enum("GlobalInertiaLoad"));
                 if (c != null && (c.Double("Temperature") != 0 || c.Has("Stages") && c.Field("Stages").Items.Count != 0)) report.Carry("Load case temperature or stage list (not exported by the former writer)");
                 LoadCaseBase gpc = gravity ? new LoadCase(GpcIdentity.Case(pair.Key), pair.Key, LoadCase.LoadCaseTypes.SelfWeight)
                     : new LoadCaseBase(GpcIdentity.Case(pair.Key), pair.Key);
-                bool structural = c == null || c.Bool("StructuralMassAcceleration"), nonStructural = c != null && c.Bool("NonStructuralMassAcceleration");
+                bool structural = dead || c != null && c.Bool("StructuralMassAcceleration"), nonStructural = c != null && c.Bool("NonStructuralMassAcceleration");
                 gpc.InertiaMasses = new InertiaMassSelection { Structural = structural, NonStructural = nonStructural };
                 model.LoadCases.Add(gpc.Name, gpc);
                 if (gravity)
                 {
                     // Gravity value in mm/s², already N-mm in the former model (Dead: −9806.65 along Z).
-                    double value = c == null ? -9806.65 : c.Double("GravityValue");
-                    string direction = c == null ? "Z" : c.Enum("GravityDirection");
+                    double value = dead ? -9806.65 : c.Double("GravityValue");
+                    string direction = dead ? "Z" : c.Enum("GravityDirection");
                     var axis = direction == "X" ? Vector3d.XAxis : direction == "Y" ? Vector3d.YAxis : direction == "Z" ? Vector3d.ZAxis : throw new NotSupportedException("LegacyGravityDirection: " + direction);
                     if (value != 0) model.ModelLoads.Add(new ModelGravityLoad(axis, value, gpc, CoordinateSystem.Global, "Gravity " + pair.Key));
                 }
                 result.Add(pair.Key, gpc);
             }
             return result;
+        }
+
+        /// <summary>Former staged construction: one native stage per definition, in order; the listed groups are the complete set of
+        /// active groups (the others are disabled); Morph = birth on deformed coordinates, Rotate = rotate incoming clusters;
+        /// each stage combination is one load increment. Legacy stage groups without elements did not exist natively and are ignored.</summary>
+        private static void Stages(IReadOnlyList<LegacyValue> stages, Model model, Dictionary<string, LoadCaseBase> cases, Dictionary<string, Group> groups, LegacyImportReport report)
+        {
+            var freedom = new GPC.Model.FreedomCases.FreedomCase(GpcIdentity.FreedomCase("Default restraints"), "Default restraints");
+            model.FreedomCases.Add(freedom.Name, freedom);
+            for (int k = 0; k < stages.Count; k++)
+            {
+                // StagedConstructionModel is [Serializable] without ISerializable: field names.
+                var st = stages[k]; string name = st.String("_name");
+                var stage = new GPC.Model.Stages.Stage(GpcIdentity.Stage(name), k + 1, name) { Definition = new GPC.Model.Stages.StageDefinition(k + 1, 0) };
+                var active = new List<Guid>();
+                foreach (var g in st.Field("_groups").Items)
+                {
+                    if (groups.TryGetValue(FullName(g), out var group)) { if (!active.Contains(group.Guid)) active.Add(group.Guid); }
+                    else report.Carry("Stage group without elements (not created natively by the former exporter)");
+                }
+                stage.AnalysisState = new GPC.Model.Stages.StageAnalysisState
+                {
+                    BirthGeometry = st.Bool("_morph") ? GPC.Model.Stages.StageBirthGeometry.DeformedCoordinates : GPC.Model.Stages.StageBirthGeometry.OriginalCoordinates,
+                    MoveRestrainedNodes = false, RotateIncomingClusters = st.Bool("_rotate"),
+                    ActiveGroupGuids = active.ToArray(), ActiveFreedomCaseGuids = new[] { freedom.Guid },
+                    Increments = st.Field("_loadCombinations").Items.Select(c =>
+                    {
+                        var keys = c.Field("Keys").Items; var values = c.Field("Values").Items;
+                        return new GPC.Model.Stages.StageLoadIncrement
+                        {
+                            Name = c.String("Name"),
+                            LoadFactors = keys.Select((key, q) => new GPC.Model.Stages.StageCaseFactor { CaseGuid = cases[key.String("Name")].Guid, Factor = values[q].AsDouble() }).ToArray(),
+                        };
+                    }).ToArray(),
+                };
+                model.Stages.Add(stage);
+            }
         }
 
         private static bool SameCase(LegacyValue a, LegacyValue b) =>
@@ -350,6 +443,26 @@ namespace BridGHe.Common.Gpc.Legacy
             var property = new ElasticBeamProperty(Unique(model, propertyName), material, section, shear1, shear2);
             model.BeamProperties.Add(property.Name, property);
             return (property, formulation, angle);
+        }
+
+        private static PlateProperty PlateProperty(LegacyValue p, string name, BridgeUnits units)
+        {
+            string type = p.Any("PropertyType", "_platePropertyType").Text?.Trim();
+            if (type == "LoadPatch") return new ElasticPlateProperty(name, null, 0, 0, ElasticPlateFormulation.LoadPatch);
+            var m = p.Any("Material", "_material");
+            var material = GpcMaterials.Elastic(m.String("Name"), m.Double("Modulus"), m.Double("PoissonRatio"), m.Double("ShearModulus"), true,
+                m.Double("Density"), m.Double("ThermalExpansion"), m.Double("ViscousDamping"), m.Double("DampingRatio"), m.Double("Conductivity"), m.Double("SpecificHeat"), null);
+            if (!m["StressStrainTable"].IsNull) throw new NotSupportedException("LegacyPlateStressStrainTableNotMappedYet");
+            double membrane = units.ToMm(p.Any("MembraneThickness", "_membraneThickness").AsDouble()), bending = units.ToMm(p.Any("BendingThickness", "_bendingThickness").AsDouble());
+            switch (type)
+            {
+                case "ShellThin": case "ShellThick": case "PlateThin": case "PlateThick":
+                    // The former exporter wrote all four as the native ptPlateShell with the two thicknesses.
+                    return new ElasticPlateProperty(name, material, bending, membrane, ElasticPlateFormulation.Shell);
+                case "Membrane": return new ElasticPlateProperty(name, material, 0, membrane, ElasticPlateFormulation.Membrane);
+                case "ShearPanel": return new ElasticPlateProperty(name, material, bending, membrane, ElasticPlateFormulation.ShearPanel);
+                default: throw new NotSupportedException("LegacyPlatePropertyType: " + type);
+            }
         }
 
         private static string Unique(Model model, string name)

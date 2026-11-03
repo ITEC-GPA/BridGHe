@@ -23,6 +23,11 @@ internal sealed class St7Dump
     [DllImport("kernel32", CharSet = CharSet.Unicode)] private static extern IntPtr GetModuleHandle(string name);
     [DllImport("kernel32", CharSet = CharSet.Ansi)] private static extern IntPtr GetProcAddress(IntPtr module, string name);
     [UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate int IntRefCall(int file, int prop, ref int value);
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate int TwoIntRefCall(int file, int a, int b, ref int value);
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate int OneIntRefCall(int file, int a, ref int value);
+    private static IntPtr Function(string name) => GetProcAddress(GetModuleHandle("St7api.dll"), name);
+    private static int Count(string name, int a) { int v = 0; if (Marshal.GetDelegateForFunctionPointer<OneIntRefCall>(Function(name))(1, a, ref v) != 0) throw new InvalidOperationException(name); return v; }
+    private static int Count(string name, int a, int b) { int v = 0; if (Marshal.GetDelegateForFunctionPointer<TwoIntRefCall>(Function(name))(1, a, b, ref v) != 0) throw new InvalidOperationException(name); return v; }
     private static int ShearModulusMode(int property)
     {
         var call = Marshal.GetDelegateForFunctionPointer<IntRefCall>(GetProcAddress(GetModuleHandle("St7api.dll"), "St7GetBeamShearModulusMode"));
@@ -179,6 +184,63 @@ internal sealed class St7Dump
             for (int f = 1; f <= freedom; f++) Values["nla0/" + name + "/freedom" + f] = new[] { api.ReadStageFactor(0, i, f, true) };
         }
         Values["count/stages"] = new double[] { api.StageCount };
+        // Stages: name, the five flags, enabled groups by path, increments with load and freedom factors by case name, case states.
+        var groupIds = groups.Keys.OrderBy(g => g).ToArray();
+        for (int st = 1; st <= api.StageCount; st++)
+        {
+            var stage = api.ReadStage(st, groupIds); string sk = "stage" + st;
+            Texts[sk + "/name"] = stage.Name;
+            Values[sk + "/flags(morph,moveFixed,rotate,fluid,reset)"] = stage.Data.Select(d => (double)d).ToArray();
+            Texts[sk + "/enabledGroups"] = string.Join(";", stage.EnabledGroups.Select(g => g == root?.Id ? "<root>" : GroupPath(g)).OrderBy(g => g, StringComparer.Ordinal));
+            int stageIncrements = api.ReadStageIncrementCount(st);
+            for (int i = 1; i <= stageIncrements; i++)
+            {
+                string name = api.ReadStageIncrementName(st, i);
+                foreach (var c in caseNames)
+                    if (api.ReadStageCaseEnabled(st, c.Key, false)) Values[sk + "/" + name + "/" + c.Value] = new[] { api.ReadStageFactor(st, i, c.Key, false) };
+                for (int f = 1; f <= freedom; f++)
+                    if (api.ReadStageCaseEnabled(st, f, true)) Values[sk + "/" + name + "/freedom" + f] = new[] { api.ReadStageFactor(st, i, f, true) };
+            }
+            Texts[sk + "/enabledCases"] = string.Join(";", caseNames.Where(c => api.ReadStageCaseEnabled(st, c.Key, false)).Select(c => c.Value).OrderBy(c => c, StringComparer.Ordinal));
+        }
+        // Moving loads: paths (case, template content, shape, surface, target, divisions, coordinates) and templates.
+        int paths = api.Count((Straus7Entity)8);
+        for (int path = 1; path <= paths; path++)
+        {
+            var coordinates = api.ReadMovingPath(path, out var flags); string pk = "path" + path;
+            Values[pk + "/coordinates"] = coordinates; Texts[pk + "/case"] = caseNames.TryGetValue(flags[0], out var pc) ? pc : flags[0].ToString();
+            Values[pk + "/flags(shape,surface,target,divisions,set)"] = flags.Skip(2).Select(v => (double)v).ToArray();
+            int t = flags[1]; var tv = api.ReadMovingTemplate(t, out var tf);
+            Values[pk + "/template/flags(colour,lanes,multilane,transition,lateral)"] = tf.Select(v => (double)v).ToArray(); Values[pk + "/template/values"] = tv;
+            Values[pk + "/template/laneFactors"] = Enumerable.Range(1, tf[1]).Select(l => api.ReadMovingLaneFactor(t, l)).ToArray();
+            int vehicles = Count("St7GetNumLoadPathTemplateVehicles", t);
+            for (int v = 1; v <= vehicles; v++)
+            {
+                var vv = api.ReadMovingVehicle(t, v, out var vf); string vk = pk + "/vehicle" + v;
+                Values[vk + "/flags,values"] = vf.Select(x => (double)x).Concat(vv).ToArray();
+                for (int q = 1; q <= Count("St7GetNumLoadPathTemplatePointForces", t, v); q++)
+                { var d = api.ReadMovingPointForce(t, v, q, out var ff); Values[vk + "/point" + q] = ff.Select(x => (double)x).Concat(d).ToArray(); }
+                for (int q = 1; q <= Count("St7GetNumLoadPathTemplateDistributedForces", t, v); q++)
+                { var d = api.ReadMovingDistributedForce(t, v, q, out var ff); Values[vk + "/distributed" + q] = ff.Select(x => (double)x).Concat(d).ToArray(); }
+            }
+        }
+        // Plates: property formulation/material/thickness, pressures and offsets.
+        for (int pl = 1; pl <= Plates; pl++)
+        {
+            var e = api.ReadElement(Straus7Entity.Plate, pl);
+            string key = "plate/" + string.Join("-", e.Nodes.Select(n => nodeKey[n]));
+            var p = api.ReadProperty(Straus7Entity.Plate, e.Property);
+            Texts[key + "/group"] = GroupPath(e.GroupId); Values[key + "/formulation,materialType"] = new double[] { p.Formulation, p.MaterialType };
+            Values[key + "/material"] = p.Material ?? new double[0];
+            if (api.ReadAttributes(Straus7Entity.Plate, pl, Straus7Attributes.PlateThickness).Length != 0) Values[key + "/thickness"] = api.ReadPlateThickness(pl);
+            Values[key + "/propertyGeometry"] = p.Geometry ?? new double[0];
+            if (api.ReadAttributes(Straus7Entity.Plate, pl, Straus7Attributes.PlateOffset).Length != 0) Values[key + "/offset"] = api.ReadPlateOffset(pl);
+            foreach (var a in api.ReadAttributes(Straus7Entity.Plate, pl, Straus7Attributes.PlateFacePressure)) Values[key + "/normalPressure/" + caseNames[a.Case]] = api.ReadPlateNormalPressure(pl, a.Case);
+            foreach (var a in api.ReadAttributes(Straus7Entity.Plate, pl, Straus7Attributes.PlateGlobalPressure))
+            { var v = api.ReadPlateGlobalPressure(pl, a.Local, a.Case, out int project); Values[key + "/globalPressure/" + caseNames[a.Case] + "/surface" + a.Local] = v.Concat(new double[] { project }).ToArray(); }
+            foreach (int attribute in new[] { 53, 61, 70, 71 })
+                if (api.ReadAttributes(Straus7Entity.Plate, pl, attribute).Length != 0) Texts[key + "/attribute" + attribute] = "present (not dumped)";
+        }
     }
 
     private static double[] Tensor(double[] axes, double v1, double v2)

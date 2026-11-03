@@ -42,6 +42,9 @@ internal static class LegacyExportComparison
             var tree = LegacyArchive.Read(File.ReadAllBytes(Path.Combine(f1, c.Input)));
             var model = LegacyModelImport.Import(tree, GpcIdentity.Derive(GpcIdentity.NameSpace, "f1:" + c.Name), 0.001, report);
             double import = watch.Elapsed.TotalSeconds;
+            // Domain preflight before the export (coordinator note 4/11): errors stop, warnings are reported.
+            var preflight = GpcPreflight.Require(model);
+            foreach (var w in preflight.Warnings) report.Warnings.Add("PREFLIGHT " + w);
             string st7 = Path.Combine(folder, c.Name + ".st7");
             var plan = Straus7ModelWritePlan.Prepare(model);
             bool solve = args.Contains("--solve"); string lsa = null;
