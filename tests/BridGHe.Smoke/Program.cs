@@ -15,6 +15,9 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+#if !GPC_PILOT
+        if(args.Contains("--gpc-pilot")) { Console.Error.WriteLine("F4 requires a build with -p:GpcPilot=true."); return 2; }
+#endif
         try
         {
             RhinoInside.Resolver.Initialize(@"C:\Program Files\Rhino 8\System");
@@ -43,6 +46,9 @@ internal static class Program
         using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},WindowStyle.Hidden);
         if(args.Contains("--gpc-guard")) return GpcReleaseSetTests.Guard(args.SkipWhile(a=>a!="--gpc-guard").Skip(1).First());
         if(args.Contains("--plugin-check")) return PluginBuildCheckTests.Child(args.SkipWhile(a=>a!="--plugin-check").Skip(1).First());
+#if GPC_PILOT
+        if(args.Contains("--gpc-pilot")) { try { return GpcPilot.Run(); } catch(Exception error) { Console.Error.WriteLine("F4 BRIDGE FAIL " + error); return 1; } }
+#endif
         GpcDomainCache.Configure();
         if(args.Contains("--migration-scale")) return MigrationScale.Run();
         if(args.Contains("--tidy-example")) return ExampleTidy.Run(args.SkipWhile(a=>a!="--tidy-example").Skip(1).FirstOrDefault(),args.Contains("--publish"),args.Contains("--capture"));
