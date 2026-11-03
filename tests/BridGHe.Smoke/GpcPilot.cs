@@ -93,6 +93,15 @@ internal static class GpcPilot
             var unsupported=ModelValues.CopyValue(model); unsupported.NodesElements.Values.First().Assignments.Active=false;
             bool rejected=false; try { GpcPilotAdapter.Export(unsupported,out _); } catch(NotSupportedException) { rejected=true; }
             Check(rejected,"unsupported assignment rejected");
+        foreach(Action<Model> addUnsupported in new Action<Model>[] {
+            m=>m.MovingLoads=new GPC.Model.Actions.Moving.MovingLoadDefinition(),
+            m=>m.BeamElements.Values.First().Assignments.Physical=new GPC.Model.Structure.Assignments.BeamPhysicalData {
+                Taper=new GPC.Model.Structure.Assignments.BeamSectionTaper {ScaleJ1=1.5} } })
+        {
+            var extended=ModelValues.CopyValue(model);addUnsupported(extended);bool refused=false;
+            try {GpcPilotAdapter.Export(extended,out _);}catch(NotSupportedException){refused=true;}
+            Check(refused,"F5 data rejected by the limited F4 adapter");
+        }
         var exported=GpcPilotAdapter.Export(model,out var map);
         Mark("gpcCopyAndExportSeconds");
         var solved=StrausAnalysis.Run(exported,Path.Combine(folder,"gpc-"+variant+".st7"),0,new[]{"P"},1e-6,false,out var newWarnings);

@@ -83,7 +83,7 @@ internal static class GpcPilotAdapter
     }
     internal static ModelModel Export(Model model,out SolverIdentityMap map)
     {
-        if(model.FormFinding!=null || model.AreaElements.Count!=0 || model.VolumeElements.Count!=0 || model.Combinations.Count!=0 || model.Stages.Count!=0 || model.Costrains.Count!=0 || model.ModelLoads.Count!=0) throw new NotSupportedException("PilotModelScope");
+        if(model.FormFinding!=null || model.MovingLoads!=null || PhysicalAssignments.HasData(model) || model.AreaElements.Count!=0 || model.VolumeElements.Count!=0 || model.Combinations.Count!=0 || model.Stages.Count!=0 || model.Costrains.Count!=0 || model.ModelLoads.Count!=0) throw new NotSupportedException("PilotModelScope");
         var result=new ModelModel(ModelModel.ModelUnits.Nmm){Name=model.Name};
         var cases=model.LoadCases.Values.ToDictionary(c=>c.Name,c=>new LoadCaseModel(c.Name,c.Name)); result.LoadCases.AddRange(cases.Values);
         var ids=new Dictionary<Guid,int>();
