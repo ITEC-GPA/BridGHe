@@ -6,6 +6,8 @@ using BridGHe.Common.Geometry;
 using BridGHe.Common.Helpers;
 using BridGHe.Common.Models;
 using GPC.Checkers.CompositeBridge;
+using BridgeActionBehavior = BridGHe.Common.Checks.BridgeActionBehavior;
+using BridgeWorkflowMethod = BridGHe.Common.Checks.BridgeWorkflowMethod;
 
 internal static class BridgeMomentStateTests
 {

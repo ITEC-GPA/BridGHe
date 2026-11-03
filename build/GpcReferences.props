@@ -1,16 +1,25 @@
 <Project>
   <PropertyGroup Condition="'$(GpcPilot)' == 'true'"><DefineConstants>$(DefineConstants);GPC_PILOT</DefineConstants></PropertyGroup>
+  <!-- GpcPilot: the plug-in builds against the sibling Model projects (GPCModel, Persistence, Archive, Converter)
+       and against the Checker libraries built in the sibling Checker checkout from the same GPCModel. -->
+  <PropertyGroup Condition="'$(GpcPilot)' == 'true'">
+    <GpcCheckerDir>$(MSBuildThisFileDirectory)..\..\Checker\GPCChecker.CompositeBridge\bin\Release\netstandard2.0\</GpcCheckerDir>
+  </PropertyGroup>
   <ItemGroup Condition="'$(GpcPilot)' == 'true'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\Model\GPC.Model.Persistence\GPC.Model.Persistence.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\Model\GPC Converter\GPC Converter.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="GPCUtilities"><HintPath>$(BridGHeRoot)lib\GPC\GPCUtilities.dll</HintPath><Private>true</Private></Reference>
     <Reference Include="GPCGeometry"><HintPath>$(BridGHeRoot)lib\GPC\GPCGeometry.dll</HintPath><Private>true</Private></Reference>
     <Reference Include="DelaunayMesh"><HintPath>$(BridGHeRoot)lib\GPC\DelaunayMesh.dll</HintPath><Private>true</Private></Reference>
     <Reference Include="GPCModel" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPCModel.dll</HintPath><Private>true</Private></Reference>
-    <Reference Include="GPCChecker.Concrete"><HintPath>$(BridGHeRoot)lib\GPC\GPCChecker.Concrete.dll</HintPath><Private>true</Private></Reference>
-    <Reference Include="GPCChecker.Steel"><HintPath>$(BridGHeRoot)lib\GPC\GPCChecker.Steel.dll</HintPath><Private>true</Private></Reference>
-    <Reference Include="GPCChecker.CompositeBridge"><HintPath>$(BridGHeRoot)lib\GPC\GPCChecker.CompositeBridge.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCChecker.Concrete" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPCChecker.Concrete.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCChecker.Steel" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPCChecker.Steel.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCChecker.CompositeBridge" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPCChecker.CompositeBridge.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCChecker.Concrete" Condition="'$(GpcPilot)' == 'true'"><HintPath>$(GpcCheckerDir)GPCChecker.Concrete.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCChecker.Steel" Condition="'$(GpcPilot)' == 'true'"><HintPath>$(GpcCheckerDir)GPCChecker.Steel.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCChecker.CompositeBridge" Condition="'$(GpcPilot)' == 'true'"><HintPath>$(GpcCheckerDir)GPCChecker.CompositeBridge.dll</HintPath><Private>true</Private></Reference>
     <None Include="$(BridGHeRoot)lib\GPC\release-set.json" Link="gpc-release-set.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <Target Name="CheckGpcLibraries" BeforeTargets="ResolveAssemblyReferences">
