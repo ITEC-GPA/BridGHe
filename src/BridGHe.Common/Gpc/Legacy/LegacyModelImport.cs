@@ -127,6 +127,8 @@ namespace BridGHe.Common.Gpc.Legacy
                 if (bg.Count > 0) beam.AddGroup(GroupOf(bg[0]));
                 if (bg.Count > 1) report.Warnings.Add($"Straus7 allows assigning only one single group to the beam {k + 1}");
                 BeamData(b, beam, principal, globalOffset, cases, units, report);
+                // The former result reader asked Straus7 for at least 5 stations per beam unless the beam had an output-stations attribute.
+                (beam.Assignments.Physical ??= new BeamPhysicalData()).MinimumOutputStations ??= 5;
                 model.BeamElements.Add(beam);
             }
 
