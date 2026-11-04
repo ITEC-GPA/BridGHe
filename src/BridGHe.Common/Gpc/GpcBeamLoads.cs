@@ -64,9 +64,10 @@ namespace BridGHe.Common.Gpc
             return result;
         }
 
-        /// <summary>Load components need a frame with the origin at the global origin: LineLoad.GetGlobalForces subtracts the frame
-        /// origin from the rotated vectors (documented defect kept by the library), so a beam frame with its origin at the start node
-        /// would shift the intensities by the node coordinates.</summary>
+        /// <summary>The frame of the load components: the beam axes with the origin at the global origin. Before GPCModel df660262 (L9,
+        /// decision 8 of 4/11) LineLoad.GetGlobalForces subtracted the frame origin from the rotated vectors, so a beam frame with its
+        /// origin at the start node shifted the intensities; the library is now correct and this frame stays valid (directions only).
+        /// The beam frames could be used directly (open, no change: the archived loads keep this frame).</summary>
         internal static CoordinateSystem ComponentFrame(CoordinateSystem axes) => axes == null ? null : new CoordinateSystem(new Point3d(0, 0, 0), axes.V1, axes.V2);
 
         private static LineLoad Intensity(Vector3d direction, bool moment, double value, Line3d line, LoadCaseBase loadCase, CoordinateSystem axes)

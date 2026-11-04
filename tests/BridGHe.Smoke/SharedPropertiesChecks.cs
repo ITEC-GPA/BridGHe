@@ -94,6 +94,11 @@ internal static class SharedPropertiesChecks
         persistent.GetType().GetMethod("Append", new[] { sectionGoo.GetType() }).Invoke(persistent, new object[] { sectionGoo });
         void Menu(string name, object sender) => sectionParam.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(sectionParam, new[] { sender, EventArgs.Empty });
         Menu("OnSetMirror", null); Menu("OnUnitsClick", new ToolStripMenuItem(nameof(ModelModel.ModelUnits.Knm)));
+        // The parameter shows one stored section, converted once (mm -> m) and mirrored; the upstream section is checked below.
+        // Before: Units appended the section again and converted the shared instance three times (two items, 6e-7 m).
+        var shown = sectionParam.VolatileData.AllData(true).Select(g => (SectionModel)g.GetType().GetProperty("Value").GetValue(g)).ToArray();
+        if (shown.Length != 1 || Math.Abs(shown[0].D - .6) > 1e-12 || Math.Abs(shown[0].T3 - .015) > 1e-12 || shown[0].Mirror != SectionModel.MirrorTypes.Left || ReferenceEquals(shown[0], section))
+            throw new Exception("Section parameter after the Mirror and Units menus: " + string.Join(", ", shown.Select(x => x.D + " " + x.Mirror)) + " (expected 0.6 m, mirrored, a new section).");
 
         // A composite beam on the composite property, and edits of duplicated beams.
         _ = new CompositeBeamModel(Point3d.Origin, new Point3d(8000, 0, 0), composite);

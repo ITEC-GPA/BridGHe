@@ -40,6 +40,24 @@ internal static class Program
             return Run(args);
         }
         catch(Exception ex) { Console.Error.WriteLine(ex);return 1; }
+        finally { ShutdownDispatcher(); }
+    }
+    /// <summary>
+    /// Exit hang of 4/11 (example 50 native, C5 with --rhino): at process exit the finalizer runs SystemEvents.Shutdown, which joins the
+    /// SystemEvents window thread; that thread was raising a system event through DispatcherSynchronizationContext.Send to the WPF
+    /// dispatcher of this thread (created by the Rhino host), which no longer pumps while this thread waits for the exit handlers.
+    /// Shutting the dispatcher down before leaving Main makes such a Send return at once. Test runner only; no dispatcher, nothing done.
+    /// </summary>
+    private static void ShutdownDispatcher()
+    {
+        try
+        {
+            var type = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "WindowsBase")?.GetType("System.Windows.Threading.Dispatcher");
+            var dispatcher = type?.GetMethod("FromThread", new[] { typeof(System.Threading.Thread) })?.Invoke(null, new object[] { System.Threading.Thread.CurrentThread });
+            if (dispatcher != null) type.GetMethod("InvokeShutdown", Type.EmptyTypes)?.Invoke(dispatcher, null);
+        }
+        catch (Exception ex) { Console.Error.WriteLine("Dispatcher shutdown: " + ex.Message); }
+        Console.Out.Flush();
     }
     private static void Assert(bool test,string name) { if(!test)throw new Exception("FAIL: "+name);checks++;Console.WriteLine("PASS: "+name); }
     // Run managed Word packaging tests without initializing the native Rhino host.

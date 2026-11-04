@@ -112,7 +112,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
                     bs.MirrorType = SectionModel.MirrorTypes.Left;
                 else
                     bs.MirrorType = SectionModel.MirrorTypes.None;
-                SetPersistentData(bs);
+                Replace(bs);
                 ExpireSolution(true);
             }
         }
@@ -126,7 +126,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
                     GH_BeamSection bs = Copy(PersistentData.Branches[0][0]);
                     bs.MirrorGapA = gap;
                     bs.IsDBSection = false;
-                    SetPersistentData(bs);
+                    Replace(bs);
                     ExpireSolution(true);
                 }
             }
@@ -156,13 +156,21 @@ namespace BridGHe.Grasshopper.Components.Parameters
                 {
                     bs = Copy(bs);
                     bs.ConvertUnits(prevUnits, _units);
-                    SetPersistentData(bs);
+                    Replace(bs);
                 }
                 ExpireSolution(true);
             }
         }
 
         private static GH_BeamSection Copy(GH_BeamSection section) => new GH_BeamSection(Common.Helpers.ModelArchive.Clone(section.Value));
+
+        /// <summary>The stored section replaced by <paramref name="section"/> (SetPersistentData appends to the stored data: before,
+        /// each menu click added an item).</summary>
+        private void Replace(GH_BeamSection section)
+        {
+            PersistentData.Clear();
+            PersistentData.Append(section);
+        }
 
         protected override GH_BeamSection PreferredCast(object data)
         {
