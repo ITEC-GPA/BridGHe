@@ -73,6 +73,51 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             set { base.Value = value; SynchronizeGuids(); }
         }
 
+        // F6 phase (c), C2: the GPC model of this FEM model, converted once (GpcModels.FromFemm, the legacy reader) and kept with it, or the
+        // analysed GPC model an analysis component attached (results as GPC datasets). It follows Value: a new FEM model gives a new
+        // conversion. Consumers never change it in place (an analysis copies it first); copies of this datum share it.
+        private readonly object gpcLock = new object();
+        private GPC.Model.Models.Model _gpc;
+        private ModelModel _gpcOf;
+        private bool _gpcAttached;
+        private string _gpcError;
+
+        /// <summary>The GPC model (N-mm) of <see cref="Value"/>; null, with the reason in <see cref="GpcError"/>, when it cannot be converted.</summary>
+        public GPC.Model.Models.Model Gpc
+        {
+            get
+            {
+                lock (gpcLock)
+                {
+                    if (Value == null) return null;
+                    if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
+                    _gpcAttached = false; _gpcOf = Value;
+                    try { _gpc = Common.Gpc.GpcModels.FromFemm(Value, Settings.Instance.Tolerance, out _); _gpcError = null; }
+                    catch (Exception ex) when (ex is NotSupportedException || ex is ArgumentException || ex is InvalidOperationException || ex is System.Runtime.Serialization.SerializationException)
+                    { _gpc = null; _gpcError = ex.Message; }
+                    return _gpc;
+                }
+            }
+        }
+
+        /// <summary>Why <see cref="Gpc"/> is null.</summary>
+        public string GpcError { get { lock (gpcLock) return _gpcError; } }
+
+        /// <summary>True when <see cref="Gpc"/> is the analysed model attached by an analysis, not a conversion of <see cref="Value"/>.</summary>
+        public bool HasAnalysedGpc { get { lock (gpcLock) return _gpcAttached && _gpc != null && ReferenceEquals(_gpcOf, Value); } }
+
+        /// <summary>An analysis component: the analysed GPC model of <see cref="Value"/> (with its results).</summary>
+        public void AttachGpc(GPC.Model.Models.Model analysed)
+        {
+            lock (gpcLock) { _gpc = analysed ?? throw new ArgumentNullException(nameof(analysed)); _gpcOf = Value; _gpcAttached = true; _gpcError = null; }
+        }
+
+        private void ShareGpc(GH_Model copy)
+        {
+            lock (gpcLock)
+                if (_gpcAttached && _gpc != null && ReferenceEquals(_gpcOf, Value)) copy.AttachGpc(_gpc);
+        }
+
         public static GH_Model FromModel(ModelModel value, GH_Model source = null)
         {
             var result = new GH_Model { Value = value };
@@ -179,9 +224,15 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             Value = Common.Helpers.ModelArchive.Clone(model.Value);
             SynchronizeGuids(model);
+            model.ShareGpc(this);
         }
 
-        public override IGH_Goo Duplicate() => FromModel(Value == null ? null : new ModelModel(Value), this);
+        public override IGH_Goo Duplicate()
+        {
+            var copy = FromModel(Value == null ? null : new ModelModel(Value), this);
+            ShareGpc(copy);
+            return copy;
+        }
 
         public void AddGuid(ElementModel elementModel, Guid guid)
         {

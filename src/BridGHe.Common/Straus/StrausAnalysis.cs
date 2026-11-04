@@ -13,6 +13,11 @@ namespace BridGHe.Common.Straus
         public static readonly string[] Solvers = { "Linear Static", "Nonlinear Static", "Staged analysis" };
 
         public static ModelModel Run(ModelModel input, string outputPath, int solver, IReadOnlyCollection<string> requested, double tolerance, bool movingOnly, out List<string> warnings)
+            => Run(input, outputPath, solver, requested, tolerance, movingOnly, out warnings, out _);
+
+        /// <param name="analysed">F6 phase (c), C3: the analysed GPC model (results as GPC datasets), for the GH model of the output.</param>
+        public static ModelModel Run(ModelModel input, string outputPath, int solver, IReadOnlyCollection<string> requested, double tolerance, bool movingOnly,
+            out List<string> warnings, out GPC.Model.Models.Model analysed)
         {
             // The native solver accepts only canonical Windows paths when opening
             // its result file, although St7NewFile also accepts forward slashes.
@@ -32,7 +37,7 @@ namespace BridGHe.Common.Straus
             // F6A: the analysis runs through GPC and the GPC Converter (writer, solver, verified result import); the former
             // Straus7 exporter and result reader are no longer used. The FEM model of the components crosses a transitional seam.
             warnings = new List<string>();
-            var result = Gpc.Legacy.FemmAnalysisSeam.Run(model, outputPath, solver, selection, tolerance, movingOnly, warnings);
+            var result = Gpc.Legacy.FemmAnalysisSeam.Run(model, outputPath, solver, selection, tolerance, movingOnly, warnings, out analysed);
             if (string.IsNullOrEmpty(result.Name)) result.Name = Path.GetFileNameWithoutExtension(outputPath);
             return result;
         }

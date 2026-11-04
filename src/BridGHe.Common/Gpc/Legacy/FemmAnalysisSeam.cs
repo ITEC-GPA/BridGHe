@@ -57,7 +57,11 @@ namespace BridGHe.Common.Gpc.Legacy
         }
 
         public static ModelModel Run(ModelModel model, string outputPath, int solver, IReadOnlyCollection<Straus.StrausResultSelection.Entry> selection,
-            double tolerance, bool movingOnly, List<string> warnings)
+            double tolerance, bool movingOnly, List<string> warnings) => Run(model, outputPath, solver, selection, tolerance, movingOnly, warnings, out _);
+
+        /// <param name="analysed">The analysed GPC model (its results as GPC datasets), kept by the GH model of the output (C3).</param>
+        public static ModelModel Run(ModelModel model, string outputPath, int solver, IReadOnlyCollection<Straus.StrausResultSelection.Entry> selection,
+            double tolerance, bool movingOnly, List<string> warnings, out GPC.Model.Models.Model analysed)
         {
             var report = new LegacyImportReport();
             var gpc = Import(model, outputPath, tolerance, report, warnings);
@@ -72,7 +76,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 ? GpcStrausAnalysis.LinearStatic(gpc, output, scratch, nativeSections: report.NativeSections)
                 : GpcStrausAnalysis.Staged(gpc, NonlinearCase, output, scratch, nativeSections: report.NativeSections));
             warnings.AddRange(outcome.Warnings);
-            var solved = outcome.Model;
+            var solved = outcome.Model; analysed = solved;
             if (solver != 0)
             {
                 // Former entries: solver 1 = the combinations as increments; solver 2 = "combination [stage]" per stage increment. Straus7 numbers

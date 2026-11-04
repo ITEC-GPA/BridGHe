@@ -37,9 +37,9 @@ namespace BridGHe.Grasshopper.Components.Analysis
                 if (_run || run)
                 {
                     _run = false;
-                    var model = StrausAnalysis.Run(input.Value, path, 0, Array.Empty<string>(), Settings.Instance.Tolerance, true, out var warnings);
+                    var model = StrausAnalysis.Run(input.Value, path, 0, Array.Empty<string>(), Settings.Instance.Tolerance, true, out var warnings, out var analysed);
                     foreach (string warning in warnings) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
-                    _model = GH_Model.FromModel(model, input); _inputHash = hash;
+                    _model = GH_Model.FromModel(model, input); _model.AttachGpc(analysed); _inputHash = hash;
                 }
                 if (_inputHash != hash)
                 {

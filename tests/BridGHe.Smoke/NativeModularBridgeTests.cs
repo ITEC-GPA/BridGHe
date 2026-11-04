@@ -67,6 +67,16 @@ internal static class NativeModularBridgeTests
                 if(!double.IsFinite(actual)||Math.Abs(actual-expected)>tolerance)throw new Exception($"Vertical equilibrium {lc}: {actual:G17} vs {expected:G17} N; tolerance {tolerance}.");
                 equilibrium.Add(new{Case=lc,ReactionZ_N=actual,Expected_N=expected,Tolerance_N=tolerance});
             }
+            // F6 phase (c), C3: the output GH model keeps the analysed GPC model, whose reactions are those of the FEM results.
+            var goo=Output(a,"Model").VolatileData.AllData(true).Single();
+            var gpc=(GPC.Model.Models.Model)goo.GetType().GetProperty("Gpc").GetValue(goo);
+            if(!(bool)goo.GetType().GetProperty("HasAnalysedGpc").GetValue(goo)||gpc==null||gpc.Datasets.Count==0)throw new Exception("Analysed GPC model missing: "+a.NickName);
+            foreach(string lc in cases)
+            {
+                double femm=result.Nodes.SelectMany(n=>n.Results.OfType<NodeReactResultModel>()).Where(r=>r.LoadCase.Name==lc).Sum(r=>r.Force.Z);
+                double z=gpc.NodesElements.Values.Sum(n=>BridGHe.Common.Gpc.GpcResults.NodeReaction(n,lc)?[2]??0);
+                if(Math.Abs(z-femm)>1e-9*Math.Max(1,Math.Abs(femm)))throw new Exception($"Analysed GPC reactions {lc}: {z:G17} vs {femm:G17} N.");
+            }
             string path=Values<string>(Input(a,"Output Path")).Single();string log=Path.ChangeExtension(path,".LSL");
             if(File.Exists(log)){string text=File.ReadAllText(log);if(text.Contains("*WARNING[")||text.Contains("*ERROR["))throw new Exception("Straus solver warnings: "+log);}
             summary.Add(new{Phase=i,Beams=input.Beams.Count,Nodes=input.Nodes.Count,Equilibrium=equilibrium});
