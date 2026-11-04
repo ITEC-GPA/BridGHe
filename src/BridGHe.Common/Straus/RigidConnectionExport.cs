@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Models;
-using St7API;
 
 namespace BridGHe.Common.Straus;
 
@@ -24,12 +23,5 @@ public static class RigidConnectionExport
                 result.Add((i + 1, target.Number));
             }
         return result.ToArray();
-    }
-    public static void Export(int modelId, ModelModel model, double tolerance)
-    {
-        var links = Resolve(model, tolerance);
-        for (int i = 0; i < links.Length; i++)
-            StrausRuntime.Check(St7.St7SetRigidLink(modelId, i + 1, 1, St7.rlPlaneXYZ,
-                new[] { 2, links[i].From, links[i].To }), "St7SetRigidLink");
     }
 }

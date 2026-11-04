@@ -16,7 +16,6 @@ using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
-using St7API;
 
 internal static class BridgeWorkflowExample
 {

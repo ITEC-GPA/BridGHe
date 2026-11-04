@@ -10,24 +10,11 @@ using BridGHe.Common.Straus;
 using GPC.Converter.Straus7;
 
 /// <summary>F6A gate on the analytic examples 01-10 (nodal loads, distributed loads, plate patch, moving load with static
-/// conversion, nonlinear increments, stages). Two processes, because the former binding keeps St7api.dll loaded:
-/// --legacy-examples-write &lt;folder&gt; writes the input archive and the .st7 of the former exporter;
+/// conversion, nonlinear increments, stages). The former exporter is removed (step 7): the references are the frozen captures it wrote
+/// (P2B/results/examples-1 and capture-1, input archive and .st7 per model, kept as data);
 /// --legacy-examples-compare &lt;folder&gt; converts the archive to GPC, writes it with the Converter and compares the files.</summary>
 internal static class LegacyNativeExamplesComparison
 {
-    internal static int Write(string folder)
-    {
-        StrausRuntime.EnsureInitialized(); Directory.CreateDirectory(folder); int failures = 0;
-        foreach (var example in NativeExamples.Create())
-        {
-            string dir = Path.Combine(folder, example.Id); Directory.CreateDirectory(dir); example.Model.Name = example.Title;
-            File.WriteAllBytes(Path.Combine(dir, "input.bgmodel"), ModelArchive.Write(example.Model));
-            bool ok = StrausR3Helper.CreateModelR3(ModelArchive.Clone(example.Model), Path.Combine(dir, "legacy.st7"), 1e-6, out _, out var warnings, out var errors);
-            File.WriteAllLines(Path.Combine(dir, "legacy-export.txt"), warnings.Select(w => "WARNING " + w).Concat(errors.Select(e => "ERROR " + e)));
-            Console.WriteLine($"LEGACY {example.Id}: {(ok ? "written" : "FAILED " + string.Join(" | ", errors))}"); if (!ok) failures++;
-        }
-        return failures == 0 ? 0 : 1;
-    }
 
     /// <summary>Folder of pairs captured from the former exporter (BRIDGHE_LEGACY_EXPORT_CAPTURE): stem.bgmodel, stem.st7, stem.txt
     /// (output path, tolerance). Each pair is converted, written and compared like the examples.</summary>

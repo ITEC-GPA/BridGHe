@@ -59,7 +59,6 @@ internal static class Program
 #endif
         GpcDomainCache.Configure();
 #if GPC_PILOT
-        if(args.Contains("--legacy-examples-write")) return LegacyNativeExamplesComparison.Write(args.SkipWhile(a=>a!="--legacy-examples-write").Skip(1).First());
 #endif
         if(args.Contains("--migration-scale")) return MigrationScale.Run();
         if(args.Contains("--tidy-example")) return ExampleTidy.Run(args.SkipWhile(a=>a!="--tidy-example").Skip(1).FirstOrDefault(),args.Contains("--publish"),args.Contains("--capture"));
@@ -75,7 +74,6 @@ internal static class Program
         if(args.Contains("--utility-examples")) { BridgeUtilityTests.Run(); BridgeUtilityExamples.Run(true); return 0; }
         if(args.Contains("--combination-excel-example")) { BridgeCombinationExcelExample.Run(true); return 0; }
         if(args.Contains("--bridge-workflow")) return BridgeWorkflowExample.Run(args.Contains("--native"));
-        if(args.Contains("--workflow-stations-native")) return NativeWorkflowStationTests.Run(args.Contains("--capture-station-fixture"));
         if(args.Contains("--inventory")) { CheckGrasshopper(false,true);return 0; }
         if(args.Contains("--components-only")) { CheckGrasshopper(false);return 0; }
         if(args.Contains("--simple-bridge-examples")) { SimpleBridgeTests.Run(); SimpleBridgeExamples.Run(true); return BridgeExampleMigration.UpgradeGenerated(0,"29-","30-","31-","32-"); }

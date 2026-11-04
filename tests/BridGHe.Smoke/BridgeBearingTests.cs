@@ -1,11 +1,11 @@
 using System;
+using System.IO;
 using System.Linq;
 using BridGHe.Common.Geometry;
 using BridGHe.Common.Helpers;
 using BridGHe.Common.Models;
 using BridGHe.Common.Straus;
 using Rhino.Geometry;
-using St7API;
 
 internal static class BridgeBearingTests
 {
@@ -34,29 +34,33 @@ internal static class BridgeBearingTests
         Reject(() => BridgeBearings.Create(geometry, null, null, new[] { 3 }, 0, Vector3d.Zero, Vector3d.Zero));
         Console.WriteLine("BRIDGE BEARINGS PASS: masks, curved guide frames, elastic stiffnesses, archives and conflicting frames.");
     }
+    /// <summary>F6A: the bearing frame, restraint and springs written by the GPC Converter (export component path) and read back with
+    /// the Converter API: UCS orientation, local restraint flags and spring values. No solver run.</summary>
     internal static void Native()
     {
-        lock (StrausRuntime.Gate)
-        {
-            using var model = StrausRuntime.NewTemporaryModel();
-            var frame = new Plane(new Point3d(100, 200, 300), new Vector3d(1, 2, 0), new Vector3d(-2, 1, 0));
-            var node = new NodeModel("N", frame.Origin);
-            node.Attributes.Add(new NodeCoordinateAttributeModel(frame));
-            StrausRuntime.Check(St7.St7SetNodeXYZ(model.Id, 1, new[] { 100d, 200, 300 }), "Set test node");
-            int ucs = NodeCoordinateExport.Create(model.Id, node, 1);
-            var axis = new[] { 1d, 0, 0 };
-            StrausRuntime.Check(St7.St7VectorTransformToXYZ(model.Id, ucs, new[] { 100d, 200, 300 }, axis), "Transform UCS axis");
-            Require(new Vector3d(axis[0], axis[1], axis[2]) * frame.XAxis > 1 - 1e-12, "Vendor UCS X orientation");
-            StrausRuntime.Check(St7.St7SetNodeRestraint6(model.Id, 1, 1, ucs, new[] { 0, 1, 1, 0, 0, 0 }, new double[6]), "Set local guided bearing");
-            int readUcs = 0; var status = new int[6]; var data = new double[6];
-            StrausRuntime.Check(St7.St7GetNodeRestraint6(model.Id, 1, 1, ref readUcs, status, data), "Read local guided bearing");
-            Require(readUcs == ucs && status.SequenceEqual(new[] { 0, 1, 1, 0, 0, 0 }), "Vendor restraint roundtrip");
-            StrausRuntime.Check(St7.St7SetNodeKTranslation3F(model.Id, 1, 1, ucs, new[] { 10d, 20, 30 }), "Set local springs");
-            var k = new double[3];
-            StrausRuntime.Check(St7.St7GetNodeKTranslation3F(model.Id, 1, 1, ref readUcs, k), "Read local springs");
-            Require(readUcs == ucs && k.SequenceEqual(new[] { 10d, 20, 30 }), "Vendor spring roundtrip");
-        }
-        Console.WriteLine("BRIDGE BEARINGS NATIVE PASS: actual Straus R3 UCS, restraints and spring readback; no solver run.");
+        var frame = new Plane(new Point3d(100, 200, 300), new Vector3d(1, 2, 0), new Vector3d(-2, 1, 0));
+        var model = new ModelModel(ModelModel.ModelUnits.Nmm);
+        var node = new NodeModel("N", frame.Origin);
+        node.Attributes.Add(new NodeCoordinateAttributeModel(frame));
+        node.Attributes.Add(new NodeRestraintAttributeModel(false, false, true, false, false, false));
+        // Springs on the free DOFs (on a restrained DOF the restraint governs, as the former exporter).
+        node.Attributes.Add(new NodeStiffnessAttributeModel(10, 20, 0, 0, 0, 0));
+        var end = new NodeModel("M", new Point3d(1100, 200, 300)); end.Attributes.Add(new NodeRestraintAttributeModel(true, true, true, true, true, true));
+        var property = new BeamPropertyModel("P") { Name = "P", PropertyType = BeamPropertyType.Beam, Material = new MaterialModel("S") { Name = "S355", Modulus = 210000, PoissonRatio = .3 },
+            Section = new SectionModel { SectionType = SectionModel.SectionTypes.Generic, SectionArea = 10000, I11 = 1e8, I22 = 1e8, J = 1e7 } };
+        model.AddElements(new ElementModel[] { node, end, new BeamModel("1", node.Position, end.Position, property) });
+        string folder = Path.GetFullPath(Path.Combine("artifacts", "bearings-native", Guid.NewGuid().ToString("N"))); Directory.CreateDirectory(folder);
+        string file = Path.Combine(folder, "bearing.st7");
+        BridGHe.Common.Gpc.Legacy.FemmAnalysisSeam.Export(model, file, 1e-6, new System.Collections.Generic.List<string>());
+        using var api = new GPC.Converter.Straus7.Straus7NativeApi(); api.OpenModelReadOnly(file, folder);
+        var restraint = api.ReadRestraint(1, 1); var ucs = api.ReadUcs(restraint.Ucs).Data;
+        var axis = new Vector3d(ucs[3] - ucs[0], ucs[4] - ucs[1], ucs[5] - ucs[2]); axis.Unitize();
+        Require(restraint.Ucs > 1 && axis * frame.XAxis > 1 - 1e-12, "Vendor UCS X orientation");
+        Require(restraint.Status.SequenceEqual(new[] { 0, 0, 1, 0, 0, 0 }), "Vendor restraint roundtrip");
+        var k = api.ReadNodeStiffness(1, 1, false);
+        Require(k.Ucs == restraint.Ucs && k.Values.SequenceEqual(new[] { 10d, 20, 0 }), $"Vendor spring roundtrip: UCS {k.Ucs} (restraint {restraint.Ucs}), {string.Join(", ", k.Values)}");
+        api.CloseModel();
+        Console.WriteLine("BRIDGE BEARINGS NATIVE PASS: UCS, restraints and springs written by the GPC Converter and read back; no solver run.");
     }
     private static void Require(bool value, string text) { if (!value) throw new InvalidOperationException("BRIDGE BEARINGS: " + text); }
     private static void Reject(Action action)

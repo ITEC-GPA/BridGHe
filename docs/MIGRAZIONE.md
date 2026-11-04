@@ -1,5 +1,11 @@
 # Refactoring BridGHe
 
+## F6: Straus7 attraverso il Converter GPC — 4 novembre 2026
+
+- Analisi, export e sezioni native del plug-in scrivono, risolvono e leggono Straus7 con il Converter GPC (`GPC.Converter.Straus7`), dopo il preflight di dominio GPC. Il binding St7API di BridGHe (`St7API.cs`, `StrausRuntime`), l'exporter (`StrausR3Helper.CreateModelR3`, `MovingLoadExporter`, `StrausBxsGenerator`, le parti native di `NodeCoordinateExport`, `RigidConnectionExport`, `BeamSupportExport`, `StrausSection.Assign`) e il lettore dei risultati (`StrausResultsReader`) sono rimossi, con gli strumenti che rigeneravano o tracciavano il binding (`tools/update_straus_bindings.py`, `tools/capture_straus_api.py`, `-p:BridgheTraceApi`).
+- Verifiche: gli stessi esempi analitici, i nativi e gli esempi 50/99 confrontati con la baseline F1; le riletture native di appoggi, collegamenti, appoggi di trave, assi e bersagli dei carichi mobili usano l'API di lettura del Converter. `--workflow-stations-native` e `--legacy-examples-write` (vecchio binding) non esistono più; i riferimenti dell'exporter precedente restano come dati catturati.
+- GUID e porte dei componenti invariati.
+
 ## Estensione del modello di ponte — 20 ottobre 2026
 
 - Dodici nuovi componenti con GUID nuovi e icone dedicate; inventario in `current-components.json`.

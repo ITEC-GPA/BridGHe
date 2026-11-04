@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies></PropertyGroup>
   <Import Project="../../build/GpcReferences.props" />
-  <ItemGroup><Compile Remove="StrausApiCapture.cs" /></ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/BridGHe.Common/BridGHe.Common.csproj" />
     <ProjectReference Include="../../src/BridGHe.Grasshopper/BridGHe.Grasshopper.csproj" ReferenceOutputAssembly="false" />

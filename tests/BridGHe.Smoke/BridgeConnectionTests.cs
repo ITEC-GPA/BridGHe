@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Geometry;
@@ -6,7 +7,6 @@ using BridGHe.Common.Helpers;
 using BridGHe.Common.Models;
 using BridGHe.Common.Straus;
 using Rhino.Geometry;
-using St7API;
 
 internal static class BridgeConnectionTests
 {
@@ -32,24 +32,20 @@ internal static class BridgeConnectionTests
         Reject(() => RigidConnectionExport.Resolve(bad, 1e-6));
         Console.WriteLine("BRIDGE CONNECTIONS PASS: merged connectivity, archives, real deformable members, isolated offsets and duplicate/collapsed rejection.");
     }
+    /// <summary>F6A: the spatial rigid link written by the GPC Converter (export component path) and read back with the Converter API.</summary>
     internal static void Native()
     {
-        lock (StrausRuntime.Gate)
-        {
-            using var temp = StrausRuntime.NewTemporaryModel();
-            var model = new ModelModel(ModelModel.ModelUnits.Nmm);
-            model.AddElements(BridgeConnections.Create(new[] { new Line(Point3d.Origin, new Point3d(10, 20, 30)) }, true));
-            for (int i = 0; i < model.Nodes.Count; i++)
-            {
-                var p = model.Nodes[i].Position;
-                StrausRuntime.Check(St7.St7SetNodeXYZ(temp.Id, i + 1, new[] { p.X, p.Y, p.Z }), "Set connection node");
-            }
-            RigidConnectionExport.Export(temp.Id, model, 1e-6);
-            int ucs = 0, plane = -1; var connection = new int[3];
-            StrausRuntime.Check(St7.St7GetRigidLink(temp.Id, 1, ref ucs, ref plane, connection), "Read native rigid link");
-            Require(ucs == 1 && plane == St7.rlPlaneXYZ && connection.SequenceEqual(new[] { 2, 1, 2 }), "Vendor rigid link roundtrip");
-        }
-        Console.WriteLine("BRIDGE CONNECTIONS NATIVE PASS: Straus full spatial rigid link readback; no solver run.");
+        var model = new ModelModel(ModelModel.ModelUnits.Nmm);
+        model.AddElements(BridgeConnections.Create(new[] { new Line(Point3d.Origin, new Point3d(10, 20, 30)) }, true));
+        string folder = Path.GetFullPath(Path.Combine("artifacts", "connections-native", Guid.NewGuid().ToString("N"))); Directory.CreateDirectory(folder);
+        string file = Path.Combine(folder, "connection.st7");
+        BridGHe.Common.Gpc.Legacy.FemmAnalysisSeam.Export(model, file, 1e-6, new System.Collections.Generic.List<string>());
+        using var api = new GPC.Converter.Straus7.Straus7NativeApi(); api.OpenModelReadOnly(file, folder);
+        Require(api.Count(GPC.Converter.Straus7.Straus7Entity.Link) == 1, "One native link");
+        var link = api.ReadLink(1);
+        Require(link.Type == 5 && link.Ucs == 1 && link.Plane == 0 && link.Nodes.SequenceEqual(new[] { 1, 2 }), "Vendor rigid link roundtrip");
+        api.CloseModel();
+        Console.WriteLine("BRIDGE CONNECTIONS NATIVE PASS: spatial rigid link written by the GPC Converter and read back; no solver run.");
     }
     private static void Require(bool value, string text) { if (!value) throw new InvalidOperationException("BRIDGE CONNECTIONS: " + text); }
     private static void Reject(Action action)

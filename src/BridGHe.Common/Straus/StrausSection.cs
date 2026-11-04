@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using BridGHe.Common.Models;
 using Rhino.Geometry;
-using St7API;
 
 namespace BridGHe.Common.Straus
 {
@@ -56,45 +55,6 @@ namespace BridGHe.Common.Straus
                     throw new ArgumentException($"{Key}: {name} deve essere positiva.");
             }
             // Geometric admissibility (overlapping walls, radii, taper) is checked by Straus.
-        }
-
-        public void Assign(int modelId, int propertyId)
-        {
-            Validate();
-            if (Key == "BXS" || Key == "BSL" || Key == "BGL")
-            {
-                var units = new int[St7.kLastUnit];
-                StrausRuntime.Check(St7.St7GetUnits(modelId, units), "St7GetUnits");
-                if (units[St7.ipLENGTHU] != LengthUnit)
-                    throw new ArgumentException("Le unità del modello differiscono da quelle usate per leggere la sezione di libreria/BXS. Ricalcolare la sezione nelle unità del modello.");
-            }
-            if (Key == "BSL" || Key == "BGL")
-            {
-                int library = 0, item = 0, type = Key == "BSL" ? St7.lbBeamSection : St7.lbSectionGeometry;
-                StrausRuntime.Check(St7.St7GetLibraryID(type, LibraryName, ref library), "St7GetLibraryID");
-                StrausRuntime.Check(St7.St7GetLibraryItemID(type, library, LibraryItem, ref item), "St7GetLibraryItemID");
-                var flags = new[] { St7.btFalse, St7.btTrue, St7.btFalse, St7.btFalse };
-                StrausRuntime.Check(Key == "BSL" ? St7.St7AssignLibraryBeamSection(modelId, propertyId, library, item, flags)
-                    : St7.St7AssignLibraryBeamSectionBGL(modelId, propertyId, library, item, flags), "Assign library section");
-                return;
-            }
-            if (Key == "BXS")
-            {
-                StrausRuntime.Check(St7.St7AssignBXS(modelId, propertyId, Path.GetFullPath(BxsPath)), "St7AssignBXS");
-                return;
-            }
-            var shape = StrausSectionCatalog.Get(Key);
-            var native = new double[shape.Bgl ? St7.kMaxBGLDimensions : 6];
-            for (int i = 0; i < Dimensions.Length; i++) native[shape.Slots[i]] = Dimensions[i];
-            if (shape.Bgl)
-                StrausRuntime.Check(St7.St7SetBeamSectionGeometryBGL(modelId, propertyId, shape.NativeId, native), "St7SetBeamSectionGeometryBGL");
-            else
-            {
-                StrausRuntime.Check(St7.St7SetBeamSectionGeometry(modelId, propertyId, shape.NativeId, native), "St7SetBeamSectionGeometry");
-                // R3 API: this calculation accepts standard sections only. BGL assignment
-                // already computes its properties and is rejected by this function.
-                StrausRuntime.Check(St7.St7CalculateBeamSectionProperties(modelId, propertyId, St7.btTrue), "St7CalculateBeamSectionProperties");
-            }
         }
 
         /// <summary>Dimensions use the eventual model length unit. No silent unit conversion. F6A: resolved through the GPC Converter
