@@ -66,7 +66,7 @@ namespace BridGHe.Grasshopper.Helpers
             }
             error ??= "File dei risultati non trovato: " + (current ?? _path) + ".";
             _path = null; _hash = null;
-            return error + " Rilanciare Run per i risultati GPC.";
+            return error.Contains("Run") ? error : error + " Rilanciare Run per i risultati GPC.";
         }
 
         public void Write(GH_IWriter writer)

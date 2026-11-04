@@ -60,8 +60,9 @@ internal static class GpcResultsFileNative
             c.ExpireSolution(false); doc.NewSolution(false, GH_SolutionMode.Silent);
             var errors = c.RuntimeMessages(GH_RuntimeMessageLevel.Error); if (errors.Count > 0) throw new Exception(name + ": " + string.Join("; ", errors));
             var model = c.Params.Output[0].VolatileData.AllData(true).SingleOrDefault();
+            string warnings = string.Join(" | ", c.RuntimeMessages(GH_RuntimeMessageLevel.Warning)); // before the removal, which clears them
             doc.RemoveObject(c, false);
-            return (model, string.Join(" | ", c.RuntimeMessages(GH_RuntimeMessageLevel.Warning)));
+            return (model, warnings);
         }
         bool Analysed(object m) => m != null && (bool)m.GetType().GetProperty("HasAnalysedGpc").GetValue(m);
         GPC.Model.Models.Model Gpc(object m) => (GPC.Model.Models.Model)m.GetType().GetProperty("Gpc").GetValue(m);
@@ -73,21 +74,21 @@ internal static class GpcResultsFileNative
         Require(Analysed(model) && Gpc(model).Datasets.Count > 0 && File.Exists(file), name + ": analysed GPC model attached and written next to the .st7");
         var archive = Save(first);
         var (reopened, warnings) = Solve(Make(archive), false);
-        Require(Analysed(reopened) && warnings.Length == 0, name + ": after reopening the GPC results come back from the file");
+        Require(Analysed(reopened) && warnings.Length == 0, name + ": after reopening the GPC results come back from the file" + (Analysed(reopened) && warnings.Length == 0 ? "" : " [analysed " + Analysed(reopened) + ", warnings: " + warnings + "]"));
         Require(GPC.Model.Models.ModelRevisions.AnalysisFingerprint(Gpc(reopened)) == GPC.Model.Models.ModelRevisions.AnalysisFingerprint(Gpc(model))
             && Gpc(reopened).Datasets.Keys.SequenceEqual(Gpc(model).Datasets.Keys), name + ": the same analysed model (fingerprint, datasets)");
         var bytes = File.ReadAllBytes(file); var changed = (byte[])bytes.Clone(); changed[changed.Length - 1] ^= 0x5A; File.WriteAllBytes(file, changed);
         (reopened, warnings) = Solve(Make(archive), false);
-        Require(!Analysed(reopened) && warnings.Contains("cambiato") && warnings.Contains("Run"), name + ": a changed file gives a warning and asks for Run");
+        Require(!Analysed(reopened) && warnings.Contains("cambiato") && warnings.Contains("Run"), name + ": a changed file gives a warning and asks for Run" + " [analysed " + Analysed(reopened) + ", warnings: " + warnings + "]");
         File.WriteAllBytes(file, System.Text.Encoding.ASCII.GetBytes("BGHR1").Concat(new byte[128]).ToArray());
         (reopened, warnings) = Solve(Make(archive), false);
-        Require(!Analysed(reopened) && warnings.Contains("versione precedente"), name + ": a results file of master gives the previous-version message");
+        Require(!Analysed(reopened) && warnings.Contains("versione precedente"), name + ": a results file of master gives the previous-version message" + " [analysed " + Analysed(reopened) + ", warnings: " + warnings + "]");
         File.WriteAllBytes(file, bytes);
         (reopened, warnings) = Solve(Make(archive), false);
-        Require(Analysed(reopened), name + ": the saved file restored is accepted again");
+        Require(Analysed(reopened), name + ": the saved file restored is accepted again" + " [analysed " + Analysed(reopened) + ", warnings: " + warnings + "]");
         File.Delete(file);
         (reopened, warnings) = Solve(Make(archive), false);
-        Require(!Analysed(reopened) && warnings.Contains("non trovato"), name + ": a missing file gives a warning");
+        Require(!Analysed(reopened) && warnings.Contains("non trovato"), name + ": a missing file gives a warning" + " [analysed " + Analysed(reopened) + ", warnings: " + warnings + "]");
     }
 
     private static void Set(GH_Component c, string input, IGH_Goo value)
