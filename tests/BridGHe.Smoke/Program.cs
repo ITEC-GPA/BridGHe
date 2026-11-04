@@ -87,6 +87,7 @@ internal static class Program
         if(args.Contains("--tidy-example")) return ExampleTidy.Run(args.SkipWhile(a=>a!="--tidy-example").Skip(1).FirstOrDefault(),args.Contains("--publish"),args.Contains("--capture"));
         if(args.Contains("--migrate-bridge-examples")) return BridgeExampleMigration.Run(args.SkipWhile(a=>a!="--migrate-bridge-examples").Skip(1).FirstOrDefault(a=>!a.StartsWith("--")),args.Contains("--publish"));
 #if GPC_PILOT
+        if(args.Contains("--gpc-results-native")) return GpcResultsFileNative.Run();
         if(args.Contains("--legacy-beam-results")) { var r=args.SkipWhile(a=>a!="--legacy-beam-results").Skip(1).ToArray(); return LegacySectionDump.BeamResults(r[0],r[1],r.Length>2?r[2]:null); }
 #endif
         if(args.Contains("--modular-bridge-native")) return NativeModularBridgeTests.Run(args.SkipWhile(a=>a!="--modular-bridge-native").Skip(1).FirstOrDefault());

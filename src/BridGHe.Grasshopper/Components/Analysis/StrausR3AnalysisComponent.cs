@@ -19,6 +19,8 @@ namespace BridGHe.Grasshopper.Components.Analysis
     {
         protected bool _run;
         private GH_Model _model;
+        // F6 C4: the analysed GPC model next to the .st7 (BGHR2), restored at the first solution after opening.
+        private readonly Helpers.SavedGpcResults _saved = new Helpers.SavedGpcResults();
         private bool _just_loaded;
 
         /// <summary>
@@ -119,15 +121,17 @@ namespace BridGHe.Grasshopper.Components.Analysis
                     var result = Common.Straus.StrausAnalysis.Run(model.Value, outputPath, solver, requested, Settings.Instance.Tolerance, false, out var warnings, out var analysed);
                     _model = GH_Model.FromModel(result, model); _model.AttachGpc(analysed);
                     foreach (string warning in warnings) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
+                    string saved = _saved.Record(_model, outputPath); if (saved != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, saved);
                     Message = "Done";
                 }
                 catch (Exception ex)
                 {
-                    _model = new GH_Model();
+                    _model = new GH_Model(); _saved.Record(null, null);
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message);
                     Message = "Error";
                 }
             }
+            if (_saved.Pending) { string restored = _saved.Restore(_model, outputPath); if (restored != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, restored); }
             DA.SetData(0, _model);
         }
 
@@ -135,7 +139,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
         {
             base.AppendAdditionalComponentMenuItems(menu);
             Menu_AppendSeparator(menu);
-            Menu_AppendItem(menu, "Reset", (s, e) => _model = new GH_Model());
+            Menu_AppendItem(menu, "Reset", (s, e) => { _model = new GH_Model(); _saved.Record(null, null); });
         }
 
         public override bool Write(GH_IWriter writer)
@@ -145,6 +149,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
                 return false;
 
             _model.Write(writer);
+            _saved.Write(writer);
 
             return true;
         }
@@ -156,6 +161,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
                 return false;
 
             _model.Read(reader);
+            _saved.Read(reader);
             _just_loaded = true;
 
             return true;
