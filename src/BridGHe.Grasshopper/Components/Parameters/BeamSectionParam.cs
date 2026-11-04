@@ -106,11 +106,13 @@ namespace BridGHe.Grasshopper.Components.Parameters
         {
             if (PersistentData.DataCount > 0)
             {
-                GH_BeamSection bs = PersistentData.Branches[0][0];
+                // A changed copy: the stored section may already be shared with the data of downstream components.
+                GH_BeamSection bs = Copy(PersistentData.Branches[0][0]);
                 if (bs.MirrorType == SectionModel.MirrorTypes.None)
                     bs.MirrorType = SectionModel.MirrorTypes.Left;
                 else
                     bs.MirrorType = SectionModel.MirrorTypes.None;
+                SetPersistentData(bs);
                 ExpireSolution(true);
             }
         }
@@ -119,11 +121,12 @@ namespace BridGHe.Grasshopper.Components.Parameters
         {
             if (e.KeyCode == Keys.Enter)
             {
-                GH_BeamSection bs = PersistentData.Branches[0][0];
                 if (double.TryParse(textBox.Text, out double gap))
                 {
+                    GH_BeamSection bs = Copy(PersistentData.Branches[0][0]);
                     bs.MirrorGapA = gap;
                     bs.IsDBSection = false;
+                    SetPersistentData(bs);
                     ExpireSolution(true);
                 }
             }
@@ -146,21 +149,20 @@ namespace BridGHe.Grasshopper.Components.Parameters
                     out bufferF, out bufferM, out bufferP, out bufferT);
 
                 // Recompute with current units
+                // The stored section is converted on a copy (it may be shared downstream). Data from sources belongs to the
+                // upstream components and is never converted in place (before: every volatile item, upstream sections included).
                 bs = PersistentData.get_FirstItem(false);
                 if (bs != null)
                 {
+                    bs = Copy(bs);
                     bs.ConvertUnits(prevUnits, _units);
                     SetPersistentData(bs);
-                    ExpireSolution(true);
                 }
-
-                foreach (GH_BeamSection obj in VolatileData.AllData(true))
-                {
-                    obj.ConvertUnits(prevUnits, _units);
-                    ExpireSolution(true);
-                }
+                ExpireSolution(true);
             }
         }
+
+        private static GH_BeamSection Copy(GH_BeamSection section) => new GH_BeamSection(Common.Helpers.ModelArchive.Clone(section.Value));
 
         protected override GH_BeamSection PreferredCast(object data)
         {

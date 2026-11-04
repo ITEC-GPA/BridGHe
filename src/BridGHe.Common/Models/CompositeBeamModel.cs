@@ -109,11 +109,11 @@ namespace BridGHe.Common.Models
             _beamId = "";
             _pointFrom = pointFrom;
             _pointTo = pointTo;
-            _startBeamProperty = startBeamprop;
-            if (endBeamPro == null)
-                _endBeamProperty = startBeamprop;
-            else
-                _endBeamProperty = endBeamPro;
+            // Copies in one graph, as the copy constructor: the steel sections are calculated below and the given properties belong
+            // to the caller; what the two share (the same property, materials) stays shared in the copies.
+            var properties = Helpers.ModelArchive.Clone(new[] { startBeamprop, endBeamPro ?? startBeamprop });
+            _startBeamProperty = properties[0];
+            _endBeamProperty = properties[1];
             if (grp != null)
                 for (int i = 0; i < grp.Length; i++)
                     _groups.Add(grp[i]);

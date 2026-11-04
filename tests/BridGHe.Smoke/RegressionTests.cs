@@ -26,6 +26,7 @@ internal static class RegressionTests
             ["bridge-alignment-inputs"] = BridgeAlignmentInputsTests.Run,
             ["bridge-segment-override"] = BridgeSegmentOverrideTests.Run,
             ["get-beam-property"] = GetBeamPropertyTests.Run,
+            ["shared-properties"] = SharedPropertiesChecks.Run,
             ["beam-property-override"] = BeamPropertyOverrideTests.Run,
             ["bridge-moment-state"] = BridgeMomentStateTests.Run,
             ["bridge-segment-composite"] = BridgeSegmentCompositeTests.Run,

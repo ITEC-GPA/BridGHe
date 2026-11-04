@@ -429,8 +429,11 @@ namespace BridGHe.Common.Models
             switch (_sectionType)
             {
                 case SectionTypes.GenericShapes:
-                    Geometry.Shapes movedShapes = new Geometry.Shapes(_genericShapes);
+                    // A copy of the shapes, moved and kept by this section: the shapes can be shared with the section they came
+                    // from (Beam Property, copies of GH data), which a move in place would change too.
+                    Geometry.Shapes movedShapes = new Geometry.Shapes(System.Linq.Enumerable.Select(_genericShapes, s => (GPC.Geometry.Shape2d)s.Clone()));
                     movedShapes.MoveToMin();
+                    _genericShapes = movedShapes;
                     return movedShapes;
                 default:
                     GPC.Geometry.Polygon2d border = new GPC.Geometry.Polygon2d();

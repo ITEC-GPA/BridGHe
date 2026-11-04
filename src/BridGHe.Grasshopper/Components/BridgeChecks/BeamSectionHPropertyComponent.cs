@@ -72,6 +72,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input is not a beam or a beam property or a beam section");
                 return;
             }
+            // The input belongs to the upstream component (and to every copy that shares it): calculate a copy.
+            section = Common.Helpers.ModelArchive.Clone(section);
 
             string name = string.Empty;
             double area = 0;
