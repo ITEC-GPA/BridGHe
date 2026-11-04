@@ -167,6 +167,11 @@ namespace BridGHe.Grasshopper.Components.Materials
             material.ThermalExpansion = 1.0E-05;
             material.UsePoisson = true;
             material.Density = 2.549E-09;//t/mm3
+            // F6 E10/E11 (user decisions of 4/11): E is the Ecm of GPC from fck (EN 1992-1-1, the value the checks already used) instead of the
+            // former table, and G = E/2(1+ν), the value the analysis derives from ν (UsePoisson), slab grillage torsion included.
+            material.Modulus = new GPC.Model.Materials.ConcreteMaterialEN1992(name, material.SpecificCompressiveStrength,
+                GPC.Model.Materials.ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle).ElasticModulusCompression;
+            material.ShearModulus = material.Modulus / (2 * (1 + material.PoissonRatio));
 
             DA.SetData(0, new GH_Material(material));
         }

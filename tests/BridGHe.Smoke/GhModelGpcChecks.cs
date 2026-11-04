@@ -107,6 +107,37 @@ internal static class GhModelGpcChecks
         static bool Throws(Action action, string text) { try { action(); return false; } catch (System.IO.InvalidDataException e) { return e.Message.Contains(text); } }
     }
 
+    /// <summary>Regression gpc-materials (F6 E10/E11, user decisions of 4/11): the concrete component gives E = Ecm of GPC (ConcreteMaterialEN1992 from
+    /// fck, bit for bit) and G = E/2(1+0.2) for every grade, with UsePoisson (the analysis derives G from it). Prints the change from the former table.</summary>
+    internal static void Materials()
+    {
+        void Require(bool condition, string what) { if (!condition) throw new Exception("GPC MATERIALS FAIL: " + what); }
+        var assembly = Assembly.LoadFrom(BuildPaths.GrasshopperAssembly);
+        double[] former = { 2.533E+4, 2.709E+4, 2.861E+4, 2.996E+4, 3.148E+4, 3.231E+4, 3.335E+4, 3.408E+4, 3.522E+4, 3.628E+4, 3.728E+4, 3.821E+4, 3.910E+4, 4.074E+4, 4.224E+4, 4.363E+4 };
+        double[] formerG = { 1.055E+4, 1.129E+4, 1.192E+4, 1.248E+4, 1.312E+4, 1.346E+4, 1.389E+4, 1.420E+4, 1.468E+4, 1.512E+4, 1.553E+4, 1.592E+4, 1.629E+4, 1.698E+4, 1.760E+4, 1.818E+4 };
+        using var document = new Grasshopper.Kernel.GH_Document { Enabled = true };
+        Grasshopper.Kernel.GH_Document.EnableSolutions = true;
+        var component = (Grasshopper.Kernel.GH_Component)Activator.CreateInstance(assembly.GetTypes().Single(t => t.Name == "MaterialConcreteComponent"));
+        component.CreateAttributes(); document.AddObject(component, false);
+        ((Grasshopper.Kernel.Parameters.Param_String)component.Params.Input[0]).PersistentData.Append(new GH_String("C"));
+        var grade = (Grasshopper.Kernel.Parameters.Param_Integer)component.Params.Input[1];
+        double worstE = 0, worstG = 0;
+        for (int g = 0; g < former.Length; g++)
+        {
+            grade.PersistentData.Clear(); grade.PersistentData.Append(new GH_Integer(g)); grade.ExpireSolution(false);
+            document.NewSolution(false, Grasshopper.Kernel.GH_SolutionMode.Silent);
+            var goo = component.Params.Output[0].VolatileData.AllData(true).Single();
+            var m = (MaterialModel)goo.GetType().GetProperty("Value").GetValue(goo);
+            double ecm = new GPC.Model.Materials.ConcreteMaterialEN1992("C", m.SpecificCompressiveStrength, GPC.Model.Materials.ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle).ElasticModulusCompression;
+            Require(BitConverter.DoubleToInt64Bits(m.Modulus) == BitConverter.DoubleToInt64Bits(ecm) && m.UsePoisson && m.PoissonRatio == 0.2, $"grade {g}: E = Ecm of GPC ({m.Modulus:R} / {ecm:R})");
+            Require(BitConverter.DoubleToInt64Bits(m.ShearModulus) == BitConverter.DoubleToInt64Bits(ecm / (2 * 1.2)), $"grade {g}: G = E/2(1+0.2)");
+            double dE = m.Modulus / former[g] - 1, dG = m.ShearModulus / formerG[g] - 1;
+            worstE = Math.Max(worstE, Math.Abs(dE)); worstG = Math.Max(worstG, Math.Abs(dG));
+            Console.WriteLine($"E10/E11 fck {m.SpecificCompressiveStrength:G}: E {former[g]:G6} -> {m.Modulus:G9} MPa ({dE:+0.000%;-0.000%}), G {formerG[g]:G6} -> {m.ShearModulus:G9} MPa ({dG:+0.000%;-0.000%})");
+        }
+        Console.WriteLine($"GPC MATERIALS PASS: 16 concrete grades, E = Ecm of GPC and G = E/2(1+nu) bit for bit; change from the former tables at most {worstE:0.000%} (E), {worstG:0.000%} (G).");
+    }
+
     private static ModelModel Cantilever(double length = 1)
     {
         var steel = new MaterialModel("S355") { Name = "S355", Modulus = 210000, PoissonRatio = 0.3, UsePoisson = true, Density = 7.85e-9, ThermalExpansion = 1.2e-5 };
