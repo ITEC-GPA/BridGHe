@@ -26,12 +26,12 @@ internal static class GpcSectionBench
 {
     internal static string Folder => Environment.GetEnvironmentVariable("BRIDGHE_GPC_CAPTURE") is { Length: > 0 } f ? Path.GetFullPath(f) : null;
 
-    private sealed record ConcreteData(string Type, string Name, double Fck, ConcreteMaterial.CompressionStressStrainDiagrams Diagram,
+    internal sealed record ConcreteData(string Type, string Name, double Fck, ConcreteMaterial.CompressionStressStrainDiagrams Diagram,
         double Ni, double Density, double Alpha, ConcreteMaterial.CementTypes Cement);
-    private sealed record SteelData(string Type, string Name, double E, double Fyk, double Fu, double StrainU, SteelMaterial.StressStrainCurveType Curve,
+    internal sealed record SteelData(string Type, string Name, double E, double Fyk, double Fu, double StrainU, SteelMaterial.StressStrainCurveType Curve,
         SteelMaterial.SteelTypes SteelType, double Ni, double Density, double Alpha);
-    private sealed record MaterialData(ConcreteData Concrete, SteelData Steel, SteelData Rebar);
-    private sealed record Row(string Key, string Component, string NickName, int Stage, bool History, BridgeResultSource Source, string[] Assumptions,
+    internal sealed record MaterialData(ConcreteData Concrete, SteelData Steel, SteelData Rebar);
+    internal sealed record Row(string Key, string Component, string NickName, int Stage, bool History, BridgeResultSource Source, string[] Assumptions,
         string InputSha256, string RowSha256, MaterialData Materials, JsonNode Input);
 
     private static ConcreteData Describe(ConcreteMaterialEN1992 c) =>
@@ -213,7 +213,7 @@ internal static class GpcSectionBench
         }
     }
 
-    private static HBridgeInput Input(Row r) => r.Input.Deserialize<HBridgeInput>(ResultFingerprint.Json) with
+    internal static HBridgeInput Input(Row r) => r.Input.Deserialize<HBridgeInput>(ResultFingerprint.Json) with
         { Materials = new BridgeMaterialSet(Build(r.Materials.Concrete), Build(r.Materials.Steel), Build(r.Materials.Rebar)) };
 
     /// <summary>The station of a row: component, beam and station (the rows of a station are consecutive in the captures)</summary>

@@ -83,6 +83,7 @@ internal static class BridgeMovingRevisionNative
         var combo=Find(doc,"BridgeMovingCombinationsComponent");var ids=Values<string>(Out(combo,"Action IDs"));
         ResultFingerprint.Mark("REV003 merge start");var merge=Find(doc,"BuildBridgeModel");Press(merge);BridgeSegmentExcelTests.Solve(doc,true);
         var model=Values<ModelModel>(Out(merge,"Model")).SingleOrDefault();Require(model?.BridgeWorkflow?.Phases.Length==4,"Four-phase merge failed: "+Errors(doc));
+        MergedCapture.Write("example50-rev003",model);
         var actions=model.BridgeWorkflow.Phases.Single(p=>p.Order==30).Actions.Where(a=>ids.Contains(a.Key)).ToArray();
         Require(actions.Length==cases.Length&&actions.All(a=>a.Behavior==BridgeActionBehavior.ShortTerm&&cases.Contains(a.SourceCase)),"Moving positions lost their n0 source association.");
         int active=0;

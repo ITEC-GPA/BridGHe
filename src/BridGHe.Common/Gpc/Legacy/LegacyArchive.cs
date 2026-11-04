@@ -82,10 +82,14 @@ namespace BridGHe.Common.Gpc.Legacy
 
         public static bool IsLegacy(byte[] data) => data != null && data.Length >= Header.Length && data.Take(Header.Length).SequenceEqual(Header);
 
-        public static LegacyValue Read(byte[] data)
+        public static LegacyValue Read(byte[] data) => Read(data, MaximumBytes);
+
+        /// <summary>With another size limit: the former writer had no limit, so a model written in memory (the merged bridge model of
+        /// example 50 captured by the tests, 448 MB) can exceed the limit of the former reader. Tests and diagnostics only.</summary>
+        public static LegacyValue Read(byte[] data, long maximumBytes)
         {
             if (!IsLegacy(data)) throw new SerializationException("NotALegacyBridgheArchive");
-            if (data.Length > MaximumBytes) throw new SerializationException("LegacyBridgheArchiveTooLarge");
+            if (data.Length > maximumBytes) throw new SerializationException("LegacyBridgheArchiveTooLarge");
             var quotas = new XmlDictionaryReaderQuotas { MaxArrayLength = 100000000, MaxStringContentLength = 64000000, MaxDepth = 512, MaxBytesPerRead = 65536, MaxNameTableCharCount = 64000000 };
             using var reader = XmlDictionaryReader.CreateBinaryReader(data, Header.Length, data.Length - Header.Length, quotas);
             var ids = new Dictionary<string, LegacyValue>(StringComparer.Ordinal);

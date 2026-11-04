@@ -79,7 +79,8 @@ internal static class NativeModularBridgeTests
         foreach(var excel in doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeCombinationExcelComponent"))
             if(Values<int>(Input(excel,"Mode")).SingleOrDefault()==1){Press(excel);BridgeSegmentExcelTests.Solve(doc,true);}
         var merge=doc.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="BuildBridgeModel");Press(merge);BridgeSegmentExcelTests.Solve(doc,true);
-        var model=Values<ModelModel>(Output(merge,"Model")).SingleOrDefault();if(model?.BridgeWorkflow?.Phases.Length!=4)throw new Exception("Four-phase merge failed. Inputs: "+string.Join(", ",merge.Params.Input.Select(p=>p.Name+"="+p.VolatileDataCount))+"\n"+Errors(doc));
+        var model=Values<ModelModel>(Output(merge,"Model")).SingleOrDefault();
+        if(model?.BridgeWorkflow?.Phases.Length==4)MergedCapture.Write("modular-"+Path.GetFileNameWithoutExtension(source),model);if(model?.BridgeWorkflow?.Phases.Length!=4)throw new Exception("Four-phase merge failed. Inputs: "+string.Join(", ",merge.Params.Input.Select(p=>p.Name+"="+p.VolatileDataCount))+"\n"+Errors(doc));
         ResultFingerprint.Mark("modular checks start");
         // Diagnostics (BRIDGHE_WATCHDOG=1): every 15 s, the components still computing and the thread count.
         if(Environment.GetEnvironmentVariable("BRIDGHE_WATCHDOG")=="1")
