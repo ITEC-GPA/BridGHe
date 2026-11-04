@@ -77,7 +77,7 @@ namespace BridGHe.Grasshopper.Components.Export
                 var warnings = new List<string>();
                 try
                 {
-                    Common.Gpc.Legacy.FemmAnalysisSeam.Export(model.Value, outputPath, Settings.Instance.Tolerance, warnings);
+                    Common.Gpc.Legacy.FemmAnalysisSeam.Export(model.Value, model.GpcInput, outputPath, Settings.Instance.Tolerance, warnings);
                     Message = "Done";
                 }
                 catch (Exception ex)

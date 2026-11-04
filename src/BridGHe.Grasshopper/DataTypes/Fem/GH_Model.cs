@@ -73,16 +73,19 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             set { base.Value = value; SynchronizeGuids(); }
         }
 
-        // F6 phase (c), C2: the GPC model of this FEM model, converted once (GpcModels.FromFemm, the legacy reader) and kept with it, or the
+        // F6 phase (c), C2: the GPC model of this FEM model, converted once (GpcModels.Convert, the legacy reader) and kept with it, or the
         // analysed GPC model an analysis component attached (results as GPC datasets). It follows Value: a new FEM model gives a new
-        // conversion. Consumers never change it in place (an analysis copies it first); copies of this datum share it.
+        // conversion. Consumers never change it in place (an analysis copies it first); copies of this datum share the analysed model.
+        // C3: the analysis and export components take a copy of the conversion (GpcInput) instead of converting the FEM model again.
         private readonly object gpcLock = new object();
-        private GPC.Model.Models.Model _gpc;
-        private ModelModel _gpcOf;
-        private bool _gpcAttached;
+        private Common.Gpc.GpcModels.Conversion _converted;
+        private ModelModel _convertedOf;
+        private GPC.Model.Models.Model _analysed;
+        private ModelModel _analysedOf;
         private string _gpcError;
 
-        /// <summary>The GPC model (N-mm) of <see cref="Value"/>; null, with the reason in <see cref="GpcError"/>, when it cannot be converted.</summary>
+        /// <summary>The GPC model (N-mm) of <see cref="Value"/>: the analysed model when an analysis attached one, otherwise the conversion;
+        /// null, with the reason in <see cref="GpcError"/>, when it cannot be converted.</summary>
         public GPC.Model.Models.Model Gpc
         {
             get
@@ -90,32 +93,43 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 lock (gpcLock)
                 {
                     if (Value == null) return null;
-                    if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
-                    _gpcAttached = false; _gpcOf = Value;
-                    try { _gpc = Common.Gpc.GpcModels.FromFemm(Value, Settings.Instance.Tolerance, out _); _gpcError = null; }
+                    if (_analysed != null && ReferenceEquals(_analysedOf, Value)) return _analysed;
+                    try { return Conversion().Model; }
                     catch (Exception ex) when (ex is NotSupportedException || ex is ArgumentException || ex is InvalidOperationException || ex is System.Runtime.Serialization.SerializationException)
-                    { _gpc = null; _gpcError = ex.Message; }
-                    return _gpc;
+                    { _gpcError = ex.Message; return null; }
                 }
             }
+        }
+
+        /// <summary>C3: the conversion of <see cref="Value"/> (never the analysed model), with its import report (warnings, resolved native
+        /// sections), at the current model tolerance: the input the analysis and export components copy. Throws when it cannot be converted.</summary>
+        public Common.Gpc.GpcModels.Conversion GpcInput { get { lock (gpcLock) return Value == null ? null : Conversion(); } }
+
+        private Common.Gpc.GpcModels.Conversion Conversion()
+        {
+            double tolerance = Settings.Instance.Tolerance;
+            if (_converted != null && ReferenceEquals(_convertedOf, Value) && _converted.Tolerance == tolerance) return _converted;
+            _converted = null; _convertedOf = Value; _gpcError = null;
+            _converted = Common.Gpc.GpcModels.Convert(Value, tolerance);
+            return _converted;
         }
 
         /// <summary>Why <see cref="Gpc"/> is null.</summary>
         public string GpcError { get { lock (gpcLock) return _gpcError; } }
 
         /// <summary>True when <see cref="Gpc"/> is the analysed model attached by an analysis, not a conversion of <see cref="Value"/>.</summary>
-        public bool HasAnalysedGpc { get { lock (gpcLock) return _gpcAttached && _gpc != null && ReferenceEquals(_gpcOf, Value); } }
+        public bool HasAnalysedGpc { get { lock (gpcLock) return _analysed != null && ReferenceEquals(_analysedOf, Value); } }
 
         /// <summary>An analysis component: the analysed GPC model of <see cref="Value"/> (with its results).</summary>
         public void AttachGpc(GPC.Model.Models.Model analysed)
         {
-            lock (gpcLock) { _gpc = analysed ?? throw new ArgumentNullException(nameof(analysed)); _gpcOf = Value; _gpcAttached = true; _gpcError = null; }
+            lock (gpcLock) { _analysed = analysed ?? throw new ArgumentNullException(nameof(analysed)); _analysedOf = Value; _gpcError = null; }
         }
 
         private void ShareGpc(GH_Model copy)
         {
             lock (gpcLock)
-                if (_gpcAttached && _gpc != null && ReferenceEquals(_gpcOf, Value)) copy.AttachGpc(_gpc);
+                if (_analysed != null && ReferenceEquals(_analysedOf, Value)) copy.AttachGpc(_analysed);
         }
 
         public static GH_Model FromModel(ModelModel value, GH_Model source = null)

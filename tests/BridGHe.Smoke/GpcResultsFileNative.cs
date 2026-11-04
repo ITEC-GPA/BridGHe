@@ -77,6 +77,8 @@ internal static class GpcResultsFileNative
         Require(Analysed(reopened) && warnings.Length == 0, name + ": after reopening the GPC results come back from the file" + (Analysed(reopened) && warnings.Length == 0 ? "" : " [analysed " + Analysed(reopened) + ", warnings: " + warnings + "]"));
         Require(GPC.Model.Models.ModelRevisions.AnalysisFingerprint(Gpc(reopened)) == GPC.Model.Models.ModelRevisions.AnalysisFingerprint(Gpc(model))
             && Gpc(reopened).Datasets.Keys.SequenceEqual(Gpc(model).Datasets.Keys), name + ": the same analysed model (fingerprint, datasets)");
+        // C4: after reopening, the Results components read the GPC model of the file and show the FEM values of the document bit for bit.
+        Require(ResultsComponentsCheck.Verify(reopened, name + " reopened").Values > 0, name + ": the Results components read the reopened GPC results");
         var bytes = File.ReadAllBytes(file); var changed = (byte[])bytes.Clone(); changed[changed.Length - 1] ^= 0x5A; File.WriteAllBytes(file, changed);
         (reopened, warnings) = Solve(Make(archive), false);
         Require(!Analysed(reopened) && warnings.Contains("cambiato") && warnings.Contains("Run"), name + ": a changed file gives a warning and asks for Run" + " [analysed " + Analysed(reopened) + ", warnings: " + warnings + "]");

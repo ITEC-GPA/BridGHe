@@ -62,6 +62,13 @@ namespace BridGHe.Common.Gpc
         /// <summary>Temperature gradient (difference per length).</summary>
         public double ToCelsiusPerMm(double value) => IsIdentity ? value : ToCelsiusDelta(value) / Length;
 
+        // Back to the definition units (results shown by the components). Identity units return the value unchanged, bit for bit.
+        public double FromMm(double length) => IsIdentity ? length : length / Length;
+        public double FromN(double force) => IsIdentity ? force : force / Force;
+        public double FromNmm(double moment) => IsIdentity ? moment : moment / (Force * Length);
+        /// <summary>Force per length (plate direct and transverse shear forces per unit width).</summary>
+        public double FromNPerMm(double value) => IsIdentity ? value : value * Length / Force;
+
         public static DefinitionUnits Parse(string name) =>
             Enum.TryParse<DefinitionUnits>(name, false, out var units) ? units : throw new ArgumentException("UnknownBridgheUnits: " + name);
     }

@@ -9,7 +9,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
     {
         #region Properties
 
-        public override bool IsValid => Value != null && Value.Count > 0;
+        // F6 C4: valid with FEM results or with the analysed GPC element (the Results components read it first).
+        public override bool IsValid => Value != null && Value.Count > 0 || AnalysedGpc != null;
 
         public override string IsValidWhyNot => "Invalid or empty plate results";
 

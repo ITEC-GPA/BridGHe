@@ -15,11 +15,27 @@ namespace BridGHe.Common.Gpc
     /// </summary>
     public static class GpcModels
     {
+        /// <summary>C3: a conversion and what the analysis needs with it: the import report (warnings, resolved native sections by beam
+        /// GUID) and the tolerance used. Immutable by convention: analysis and export copy <see cref="Model"/> before changing it.</summary>
+        public sealed class Conversion
+        {
+            public GPC.Model.Models.Model Model { get; }
+            public LegacyImportReport Report { get; }
+            public double Tolerance { get; }
+            internal Conversion(GPC.Model.Models.Model model, LegacyImportReport report, double tolerance) { Model = model; Report = report; Tolerance = tolerance; }
+        }
+
+        public static Conversion Convert(ModelModel model, double toleranceDefinitionUnits)
+        {
+            var gpc = FromFemm(model, toleranceDefinitionUnits, out var report);
+            return new Conversion(gpc, report, toleranceDefinitionUnits);
+        }
+
         public static GPC.Model.Models.Model FromFemm(ModelModel model, double toleranceDefinitionUnits, out LegacyImportReport report)
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
             byte[] archive = ModelArchive.Write(model);
-            var owner = GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-model:" + Convert.ToHexString(SHA256.HashData(archive)) + ":"
+            var owner = GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-model:" + System.Convert.ToHexString(SHA256.HashData(archive)) + ":"
                 + toleranceDefinitionUnits.ToString("R", CultureInfo.InvariantCulture));
             report = new LegacyImportReport();
             return LegacyModelImport.Import(LegacyArchive.Read(archive), owner, toleranceDefinitionUnits, report);

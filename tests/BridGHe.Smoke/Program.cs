@@ -344,14 +344,17 @@ internal static class Program
     }
 
     /// <summary>F6A: a native Straus7 section in a kN-m model goes through the GPC Converter (re-resolved in mm from the model-unit
-    /// dimensions), with the analytic axial and bending response; a second run on the same path replaces the former files.</summary>
+    /// dimensions), with the analytic axial and bending response; a second run on the same path replaces the former files.
+    /// Materials are N-mm (MPa) in every BridGHe model, as the former exporter assumed; the results come back in the model units (m, kN),
+    /// as before F6 (C4: the GPC N-mm results are converted back; the earlier test gave E in kPa and read the N-mm results, two errors
+    /// of 1000 that cancelled).</summary>
     private static void CheckNativeSectionAnalysis()
     {
-        const double length=3, force=10, modulus=2.1e8, b=0.2, d=0.4;
+        const double length=3, force=10, modulus=2.1e8, b=0.2, d=0.4; // modulus in kN/m2, the model units
         var native=new StrausSection { Key="RectangleSolid",Dimensions=new[]{b,d} }.Calculate();
         Assert(Math.Abs(native.SectionArea-b*d)<=b*d*1e-12,"native section in model units: area B*D");
         var loadCase=new LoadCaseModel("P","P");
-        var material=new MaterialModel("S355") { Name="S355",Modulus=modulus,PoissonRatio=0.3 };
+        var material=new MaterialModel("S355") { Name="S355",Modulus=modulus/1000,PoissonRatio=0.3 }; // MPa
         var property=new BeamPropertyModel("NativeRect") { Name="NativeRect",Material=material,Section=native,PropertyType=BeamPropertyType.Beam };
         var first=new NodeModel("N1",Point3d.Origin);first.Attributes.Add(new NodeRestraintAttributeModel(true,true,true,true,true,true));
         var end=new NodeModel("N2",new Point3d(length,0,0));end.Loads.Add(new NodeForceLoadModel(loadCase,new Vector3d(force,0,-force)));
@@ -361,8 +364,15 @@ internal static class Program
         string path=Path.GetFullPath(Path.Combine(folder,"native-section.st7"));
         for(int run=0;run<2;run++)
         {
-            var result=StrausAnalysis.Run(input,path,0,new[]{"P"},1e-6,false,out _);
+            var result=StrausAnalysis.Run(input,path,0,new[]{"P"},1e-6,false,out _,out var analysed);
             var u=result.Nodes.Single(n=>Math.Abs(n.Position.X-length)<1e-9).Results.OfType<NodeDisplResultModel>().Single().Displacement;
+#if GPC_PILOT
+            // C4: the Results components convert the GPC values to the definition units exactly as the FEM results.
+            ResultsComponentsCheck.Verify(ResultsComponentsCheck.AnalysedGoo(result,analysed),"kN-m native section, run "+(run+1));
+            var fixedEnd=result.Beams[0].Results.OfType<BeamForceResultModel>().OrderBy(r=>r.Station).First();
+            Assert(Math.Abs(Math.Abs(fixedEnd.My)-force*length)<=force*length*1e-5,"kN-m results in model units: fixed-end moment FL [kN m], run "+(run+1));
+            Assert(Math.Abs(result.Beams[0].Results.OfType<BeamForceResultModel>().Max(r=>r.Station)-length)<=1e-9,"kN-m results in model units: stations [m], run "+(run+1));
+#endif
             double axial=force*length/(modulus*b*d);
             // Vertical bending about a principal axis, with the shear deformation of the native shear areas (Timoshenko):
             // FL^3/(3EI) + FL/(G As), with the inertia and shear area pair that the native axes give.

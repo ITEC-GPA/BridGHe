@@ -73,7 +73,18 @@ namespace BridGHe.Grasshopper.Components.Results
             List<Vector2d> shearForces = new List<Vector2d>();
             List<double> sf_max = new List<double>();
             List<double> sf_ang = new List<double>();
-            foreach (ResultModel result in plate.Value)
+            // F6 C4: the analysed GPC element when Decompose Model linked it (the rows the analysis wrote, bit for bit); the FEM results otherwise.
+            var catalog = plate.AnalysedGpc is GPC.Model.Elements.AreaElement ? Common.Gpc.GpcResultCatalog.Of(plate.AnalysedGpcModel) : null;
+            if (catalog != null)
+                foreach (var row in Common.Gpc.GpcResultRows.Plate(catalog, plate.AnalysedGpcModel, (GPC.Model.Elements.AreaElement)plate.AnalysedGpc))
+                {
+                    var v = row.Values;
+                    lc.Add(catalog.Entries[row.Entry].Label); steps.Add(0); nodes.Add(row.Node);
+                    forces.Add(new Vector3d(v[0], v[1], v[2])); fmax.Add(row.ForceMax); fmin.Add(row.ForceMin); fang.Add(row.ForceAngle); fvm.Add(row.ForceVonMises);
+                    moments.Add(new Vector3d(v[5], v[6], v[7])); mmax.Add(row.MomentMax); mmin.Add(row.MomentMin); mang.Add(row.MomentAngle);
+                    shearForces.Add(new Vector2d(v[3], v[4])); sf_max.Add(double.NaN); sf_ang.Add(double.NaN);
+                }
+            else foreach (ResultModel result in plate.Value)
             {
                 lc.Add(result.LoadCase.Name);
                 steps.Add(result.StepNum);

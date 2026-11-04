@@ -59,7 +59,16 @@ namespace BridGHe.Grasshopper.Components.Results
             List<double> stepsF = new List<double>();
             List<Vector3d> forces = new List<Vector3d>();
             List<Vector3d> moments = new List<Vector3d>();
-            foreach (ResultModel result in node.Value)
+            // F6 C4: the analysed GPC element when Decompose Model linked it (the rows the analysis wrote, bit for bit); the FEM results otherwise.
+            var catalog = node.AnalysedGpc is GPC.Model.Elements.NodeElement ? Common.Gpc.GpcResultCatalog.Of(node.AnalysedGpcModel) : null;
+            if (catalog != null)
+                foreach (var row in Common.Gpc.GpcResultRows.Node(catalog, node.AnalysedGpcModel, (GPC.Model.Elements.NodeElement)node.AnalysedGpc))
+                {
+                    string name = catalog.Entries[row.Entry].Label; var d = row.Displacement; var r = row.Reaction;
+                    if (d != null) { lcD.Add(name); stepsD.Add(0); displacements.Add(new Vector3d(d[0], d[1], d[2])); rotations.Add(new Vector3d(d[3], d[4], d[5])); }
+                    if (r != null) { lcF.Add(name); stepsF.Add(0); forces.Add(new Vector3d(r[0], r[1], r[2])); moments.Add(new Vector3d(r[3], r[4], r[5])); }
+                }
+            else foreach (ResultModel result in node.Value)
             {
                 if (result is NodeDisplResultModel displ)
                 {

@@ -52,7 +52,17 @@ internal static class NativeModularBridgeTests
             if(input==null||input.Beams.Count==0)throw new Exception("Phase model missing before analysis: "+a.NickName+"\n"+Errors(doc));
             Console.WriteLine("NATIVE MODULAR: "+a.NickName+"; "+input.Beams.Count+" beams, "+input.Nodes.Count+" nodes.");
             MigrationCapture.Write($"phase-{i+1:00}-input", input);
+#if GPC_PILOT
+            // C3: the analysis copies the conversion of its input GH model and never changes it.
+            var inputGoo=Input(a,"Model").VolatileData.AllData(true).Single();var conversion=inputGoo.GetType().GetProperty("GpcInput").GetValue(inputGoo);
+            var converted=(GPC.Model.Models.Model)conversion.GetType().GetProperty("Model").GetValue(conversion);
+            string before=GPC.Model.Models.ModelRevisions.AnalysisFingerprint(converted);
+#endif
             Press(a);BridgeSegmentExcelTests.Solve(doc,true);
+#if GPC_PILOT
+            if(GPC.Model.Models.ModelRevisions.AnalysisFingerprint(converted)!=before||converted.Datasets.Count!=0)
+                throw new Exception("C3: the analysis changed the conversion of its input: "+a.NickName);
+#endif
             var result=Values<ModelModel>(Output(a,"Model")).SingleOrDefault();
             if(result==null||!result.Beams.Any(b=>b.Results.Count>0))throw new Exception("No native results: "+a.NickName+"\n"+Errors(doc));
             MigrationCapture.Write($"phase-{i+1:00}-result", result);
@@ -78,6 +88,10 @@ internal static class NativeModularBridgeTests
                 double z=gpc.NodesElements.Values.Sum(n=>BridGHe.Common.Gpc.GpcResults.Combined(gpc,lc,c=>BridGHe.Common.Gpc.GpcResults.NodeReaction(n,c))?[2]??0);
                 if(Math.Abs(z-femm)>1e-9*Math.Max(1,Math.Abs(femm)))throw new Exception($"Analysed GPC reactions {lc}: {z:G17} vs {femm:G17} N.");
             }
+#if GPC_PILOT
+            // C4: Node and Beam Results read the analysed GPC elements and show the FEM values bit for bit.
+            ResultsComponentsCheck.Verify(goo,"99 "+a.NickName);
+#endif
             string path=Values<string>(Input(a,"Output Path")).Single();string log=Path.ChangeExtension(path,".LSL");
             if(File.Exists(log)){string text=File.ReadAllText(log);if(text.Contains("*WARNING[")||text.Contains("*ERROR["))throw new Exception("Straus solver warnings: "+log);}
             summary.Add(new{Phase=i,Beams=input.Beams.Count,Nodes=input.Nodes.Count,Equilibrium=equilibrium});

@@ -197,8 +197,13 @@ internal static class NativeExamples
                 // Before canonicalisation St7NewFile succeeded but St7RunSolver
                 // failed with 1029 (cannot write result file).
                 string solverPath=example.Id=="01-cantilever"?Path.GetRelativePath(Environment.CurrentDirectory,Path.Combine(folder,"model.st7")).Replace('\\','/'):Path.Combine(folder,"model.st7");
-                var result=StrausAnalysis.Run(example.Model,solverPath,example.Solver,example.Cases,1e-6,example.Moving,out warnings);
+                var result=StrausAnalysis.Run(example.Model,solverPath,example.Solver,example.Cases,1e-6,example.Moving,out warnings,out var analysed);
                 File.WriteAllBytes(Path.Combine(folder,"results.bgmodel"),ModelArchive.Write(result));example.Verify(result,record);
+#if GPC_PILOT
+                // C4: Node, Beam and Plate Results read the analysed GPC elements and show the FEM values bit for bit (every solver kind).
+                var outcome=ResultsComponentsCheck.Verify(ResultsComponentsCheck.AnalysedGoo(result,analysed),example.Id);
+                record.Near("Results components: values from GPC equal to FEM bit for bit",outcome.Values>0?1:0,1,0,0);
+#endif
                 record.Near("Input remains without results",example.Model.Elements.Sum(e=>e.Results.Count),0,0,0);
             }catch(Exception ex){error=ex.ToString();Console.WriteLine("ERROR: "+error);}
             bool passed=error==null&&record.Measurements.All(m=>m.Passed);if(!passed)failures++;

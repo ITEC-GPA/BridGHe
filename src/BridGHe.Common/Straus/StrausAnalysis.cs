@@ -13,10 +13,16 @@ namespace BridGHe.Common.Straus
         public static readonly string[] Solvers = { "Linear Static", "Nonlinear Static", "Staged analysis" };
 
         public static ModelModel Run(ModelModel input, string outputPath, int solver, IReadOnlyCollection<string> requested, double tolerance, bool movingOnly, out List<string> warnings)
-            => Run(input, outputPath, solver, requested, tolerance, movingOnly, out warnings, out _);
+            => Run(input, null, outputPath, solver, requested, tolerance, movingOnly, out warnings, out _);
 
-        /// <param name="analysed">F6 phase (c), C3: the analysed GPC model (results as GPC datasets), for the GH model of the output.</param>
         public static ModelModel Run(ModelModel input, string outputPath, int solver, IReadOnlyCollection<string> requested, double tolerance, bool movingOnly,
+            out List<string> warnings, out GPC.Model.Models.Model analysed)
+            => Run(input, null, outputPath, solver, requested, tolerance, movingOnly, out warnings, out analysed);
+
+        /// <param name="conversion">F6 phase (c), C3: the GPC conversion the GH model keeps for <paramref name="input"/> (GH_Model.GpcInput), copied by
+        /// the analysis instead of converting again; null converts the FEM model.</param>
+        /// <param name="analysed">F6 phase (c), C3: the analysed GPC model (results as GPC datasets), for the GH model of the output.</param>
+        public static ModelModel Run(ModelModel input, Gpc.GpcModels.Conversion conversion, string outputPath, int solver, IReadOnlyCollection<string> requested, double tolerance, bool movingOnly,
             out List<string> warnings, out GPC.Model.Models.Model analysed)
         {
             // The native solver accepts only canonical Windows paths when opening
@@ -37,7 +43,10 @@ namespace BridGHe.Common.Straus
             // F6A: the analysis runs through GPC and the GPC Converter (writer, solver, verified result import); the former
             // Straus7 exporter and result reader are no longer used. The FEM model of the components crosses a transitional seam.
             warnings = new List<string>();
-            var result = Gpc.Legacy.FemmAnalysisSeam.Run(model, outputPath, solver, selection, tolerance, movingOnly, warnings, out analysed);
+            // C3: the generated cases of an earlier moving analysis are removed from the FEM clone above; the conversion of the GH model still
+            // has them as load cases, so such a model is converted from the clone, as before.
+            if (oldMovingNames.Count != 0) conversion = null;
+            var result = Gpc.Legacy.FemmAnalysisSeam.Run(model, conversion, outputPath, solver, selection, tolerance, movingOnly, warnings, out analysed);
             if (string.IsNullOrEmpty(result.Name)) result.Name = Path.GetFileNameWithoutExtension(outputPath);
             return result;
         }

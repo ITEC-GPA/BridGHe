@@ -118,7 +118,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
                 _run = false;
                 try
                 {
-                    var result = Common.Straus.StrausAnalysis.Run(model.Value, outputPath, solver, requested, Settings.Instance.Tolerance, false, out var warnings, out var analysed);
+                    var result = Common.Straus.StrausAnalysis.Run(model.Value, model.GpcInput, outputPath, solver, requested, Settings.Instance.Tolerance, false, out var warnings, out var analysed);
                     _model = GH_Model.FromModel(result, model); _model.AttachGpc(analysed);
                     foreach (string warning in warnings) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
                     string saved = _saved.Record(_model, outputPath); if (saved != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, saved);

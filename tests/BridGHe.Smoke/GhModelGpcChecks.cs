@@ -34,9 +34,14 @@ internal static class GhModelGpcChecks
         Require(!ReferenceEquals(copied, gpc) && copied.Guid == gpc.Guid && copied.BeamElements[1].Guid == gpc.BeamElements[1].Guid, "a copy converts its own FEM model to the same identities");
         Require(!Analysed(goo) && !Analysed(copy), "no analysed model yet");
 
+        // C3: the input of analysis and export is the conversion (cached, with its report and tolerance), also after an analysis attached its model.
+        object Input(object g) => type.GetProperty("GpcInput").GetValue(g);
+        GPC.Model.Models.Model InputModel(object g) => (GPC.Model.Models.Model)Input(g).GetType().GetProperty("Model").GetValue(Input(g));
+        Require(ReferenceEquals(Input(goo), Input(goo)) && ReferenceEquals(InputModel(goo), gpc), "the conversion is the analysis input, cached");
         var analysed = GPC.Model.Core.ModelValues.Copy(gpc);
         type.GetMethod("AttachGpc").Invoke(goo, new object[] { analysed });
         Require(Analysed(goo) && ReferenceEquals(Gpc(goo), analysed), "analysed model attached");
+        Require(ReferenceEquals(InputModel(goo), gpc), "with an analysed model attached the analysis input is still the conversion");
         var duplicate = ((IGH_Goo)goo).Duplicate();
         Require(Analysed(duplicate) && ReferenceEquals(Gpc(duplicate), analysed), "copies share the analysed model");
 
@@ -72,6 +77,10 @@ internal static class GhModelGpcChecks
     {
         void Require(bool condition, string what) { if (!condition) throw new Exception("GPC RESULTS FILE FAIL: " + what); }
         var model = BridGHe.Common.Gpc.GpcModels.FromFemm(Cantilever(), 0.001, out _);
+        // C4: the results catalog of the Results components travels in the file (a BridGHe record of the analysed model).
+        var entries = new[] { new BridGHe.Common.Gpc.GpcResultCatalog.Entry { Label = "Q_MOV_0001", Case = "Traffic", Step = "1: Q_MOV_0001" }, new BridGHe.Common.Gpc.GpcResultCatalog.Entry { Label = "1.5P", Case = "1.5P" } };
+        BridGHe.Common.Gpc.GpcResultCatalog.Attach(model, BridGHe.Common.Gpc.DefinitionUnits.Knm, entries, new System.Collections.Generic.Dictionary<int, double> { [1] = 0.1 + 0.2 });
+        Require(model.PreservedSourceData.Count(r => r.Kind == BridGHe.Common.Gpc.GpcResultCatalog.Kind) == 1, "one results catalog in the analysed model");
         string folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "bridghe-bghr2-" + Guid.NewGuid().ToString("N")); System.IO.Directory.CreateDirectory(folder);
         try
         {
@@ -82,6 +91,11 @@ internal static class GhModelGpcChecks
             var read = BridGHe.Common.Gpc.GpcResultsFile.Read(path, hash);
             Require(read.Guid == model.Guid && GPC.Model.Models.ModelRevisions.AnalysisFingerprint(read) == GPC.Model.Models.ModelRevisions.AnalysisFingerprint(model)
                 && read.BeamElements[1].Guid == model.BeamElements[1].Guid && read.PhysicalMembers.Count == model.PhysicalMembers.Count, "round trip of the GPC model");
+            var catalog = BridGHe.Common.Gpc.GpcResultCatalog.Of(read);
+            Require(catalog != null && catalog.Units.Units == BridGHe.Common.Gpc.DefinitionUnits.Knm && catalog.Entries.Count == 2 && catalog.Entries[0].Step == "1: Q_MOV_0001" && catalog.Entries[1].Phase == null
+                && catalog.Entries[1].Label == "1.5P" && BitConverter.DoubleToInt64Bits(catalog.BeamAngle(read.BeamElements[1])) == BitConverter.DoubleToInt64Bits(0.1 + 0.2), "the results catalog round trips (entries, units, exact beam angles)");
+            BridGHe.Common.Gpc.GpcResultCatalog.Remove(read);
+            Require(BridGHe.Common.Gpc.GpcResultCatalog.Of(read) == null && read.PreservedSourceData.All(r => r.Kind != BridGHe.Common.Gpc.GpcResultCatalog.Kind), "the catalog is removed before a new analysis");
             var bytes = System.IO.File.ReadAllBytes(path); bytes[bytes.Length - 1] ^= 0x5A; System.IO.File.WriteAllBytes(path, bytes);
             Require(Throws(() => BridGHe.Common.Gpc.GpcResultsFile.Read(path, hash), "cambiato"), "a changed file is refused");
             string master = System.IO.Path.Combine(folder, "master.bghr"); System.IO.File.WriteAllBytes(master, System.Text.Encoding.ASCII.GetBytes("BGHR1").Concat(new byte[64]).ToArray());
@@ -89,7 +103,7 @@ internal static class GhModelGpcChecks
                 "a results file of master is recognised, with the previous-version message");
         }
         finally { try { System.IO.Directory.Delete(folder, true); } catch (System.IO.IOException) { } }
-        Console.WriteLine("GPC RESULTS FILE PASS: BGHR2 next to the .st7, temporary file, hash, round trip, changed file refused, master BGHR1 recognised.");
+        Console.WriteLine("GPC RESULTS FILE PASS: BGHR2 next to the .st7, temporary file, hash, round trip (results catalog included), changed file refused, master BGHR1 recognised.");
         static bool Throws(Action action, string text) { try { action(); return false; } catch (System.IO.InvalidDataException e) { return e.Message.Contains(text); } }
     }
 
