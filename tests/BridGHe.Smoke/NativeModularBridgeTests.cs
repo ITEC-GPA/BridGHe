@@ -122,6 +122,9 @@ internal static class NativeModularBridgeTests
         var reportComponent=doc.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="BridgeReportComponent");
         if(Input(reportComponent,"Results").VolatileDataCount!=details.Sum(c=>Output(c,"Section result").VolatileDataCount))throw new Exception("Incomplete report result input.");
         string errors=Errors(doc);if(errors.Length>0)throw new Exception("Saved graph still has errors:\n"+errors);
+#if GPC_PILOT
+        C5WorkflowComparison.RequireGpcChecks(Output(merge,"Model").VolatileData.AllData(true).Single(),model,checks,true);
+#endif
         ResultFingerprint.Mark("modular checks, details and plots solved");ResultFingerprint.Write("modular-"+Path.GetFileNameWithoutExtension(source),doc);
         if(!original.SequenceEqual(File.ReadAllBytes(source))||!migrated.SequenceEqual(File.ReadAllBytes(candidate)))throw new Exception("Native test modified a GHX source.");
         File.WriteAllText(Path.Combine(folder,"validation.json"),JsonSerializer.Serialize(new{Definition=relative,SourceSHA256=Convert.ToHexString(SHA256.HashData(original)),MigratedSHA256=Convert.ToHexString(SHA256.HashData(migrated)),Native=true,Models=summary,Phases=model.BridgeWorkflow.Phases.Length,Combinations=model.LoadCombinations.Count,SectionChecks=rows.Length,DetailBranches=details.Length,Plots=plots.Length,ReportInputs=true,ResultsSavedInGHX=false},new JsonSerializerOptions{WriteIndented=true}));

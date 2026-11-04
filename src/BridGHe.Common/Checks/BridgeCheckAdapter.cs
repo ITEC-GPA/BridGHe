@@ -85,6 +85,9 @@ namespace BridGHe.Common.Checks
             };
         }
 
+        /// <summary>F6 C5: the section input of this adapter without phases (the GPC workflow executor builds them from the GPC results).</summary>
+        public HBridgeInput SectionInput(bool rebars) => Input(true, rebars, true);
+
         private BridgePhase Phase(ResultBeamForces forces, BridgePhaseKind kind, double phi, string name)
         {
             if (forces == null) throw new ArgumentNullException(nameof(forces));

@@ -92,6 +92,9 @@ internal static class BridgeMovingRevisionNative
         Require(active==cases.Length,"Each moving position must enter exactly one cumulative combination.");
         ResultFingerprint.Mark("REV003 checks start");var checker=Find(doc,"SuperElementCheckComponent");Press(checker);BridgeSegmentExcelTests.Solve(doc,true);
         var rows=Values<BridgeStressResult>(Out(checker,"Tension Check"));Require(rows.Length>0,"No section checks: "+Errors(doc));
+#if GPC_PILOT
+        C5WorkflowComparison.RequireGpcChecks(Out(merge,"Model").VolatileData.AllData(true).Single(),model,new[]{checker},false);
+#endif
         var details=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeDetailCheckComponent").ToArray();
         Require(details.Length==3&&details.All(c=>Out(c,"Section result").VolatileDataCount>0),"Missing detail checks: "+Errors(doc));
         var plots=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name.EndsWith("PlotComponent")).ToArray();Require(plots.Length==6&&plots.All(c=>Out(c,"SVG").VolatileDataCount>0),"Missing SVG plots.");

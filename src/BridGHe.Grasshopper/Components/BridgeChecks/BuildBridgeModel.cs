@@ -51,7 +51,12 @@ public class BuildBridgeModel : GH_Component
             string Cell(IGH_Goo goo) => goo?.ScriptVariable() is IFormattable n ? n.ToString(null, CultureInfo.InvariantCulture) : goo?.ScriptVariable()?.ToString() ?? "";
             var result = BridgeWorkflowBuilder.Build(models.Select(m => m.Value).ToArray(), phases.Select(p => (BridgePhaseDefinition)p.Value),
                 combinations.Branches.Select(b => b.Select(Cell).ToArray()).ToArray(), (BridgeWorkflowMethod)method, Settings.Instance.Tolerance, additional);
-            da.SetData(0, GH_Model.FromModel(result.Model, models[0]));
+            var output = GH_Model.FromModel(result.Model, models[0]);
+            // F6 C5: the GPC bridge model (merged actions as a GPC dataset, GPC recipe) for the checks with the GPC workflow executor.
+            try { output.AttachBridge(Common.Gpc.Legacy.FemmBridgeSeam.Build(result.Model, Settings.Instance.Tolerance)); }
+            catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is InvalidOperationException)
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Modello di ponte GPC non costruito (" + e.Message + "): le verifiche usano il percorso FEM."); }
+            da.SetData(0, output);
             da.SetDataList(1, result.Summary); da.SetDataList(2, result.Warnings);
             foreach (var warning in result.Warnings.Where(w => w.Contains("not active") || w.Contains("primary shrinkage only"))) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
             Message = method == 0 ? "Cumulative" : "Linear history";

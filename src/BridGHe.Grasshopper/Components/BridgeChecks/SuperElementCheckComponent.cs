@@ -406,6 +406,19 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                         stressAnalysisResults[i] = new StressAnalysisResult[forces[i].Length][];
                         tauBResults[i] = new double[forces[i].Length][];
                     }
+                    // F6 C5: with the GPC bridge model of Build Bridge Model the sections are checked by the GPC workflow executor (D3, one prepared plan
+                    // per recipe) on the GPC results; BridGHe's own phases otherwise. D3 has no per-beam "consider concrete" of the cases path: such a
+                    // model stays on BridGHe's phases.
+                    var gpcBridge = model.GpcBridge;
+                    bool workflowPath = model.Value.BridgeWorkflow?.Method == BridgeWorkflowMethod.LinearHistory ||
+                        model.Value.BridgeWorkflow?.Phases.Any(p => p.Actions.Any(a => a.HasLocalSectionStates)) == true;
+                    Common.Checks.GpcBridgeChecks d3 = null;
+                    if (gpcBridge != null && model.Value.BridgeWorkflow != null && (workflowPath || beams.All(b => b.Value.StartBeamProperty.ConsiderConcrete)))
+                    {
+                        d3 = new Common.Checks.GpcBridgeChecks(gpcBridge, model.Value);
+                        if (!beams.All(b => d3.Has(b.Value.BeamId))) d3 = null;
+                    }
+                    if (gpcBridge != null && d3 == null) AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, "Verifiche con le fasi BridGHe: travi fuori dal modello di ponte GPC o calcestruzzo escluso per trave.");
                     // One task per station (before, per beam): its combinations are one gPC batch, which calculates their shared phases once.
                     // Every station writes only its own slots, so the outputs keep their order.
                     var stationTasks = Enumerable.Range(0, beams.Count).SelectMany(i => Enumerable.Range(0, forces[i].Length).Select(j => (Beam: i, Station: j))).ToArray();
@@ -421,6 +434,13 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                             double[] strainInfinite = strains[i][j].StrainInfiniteTime;
 
                             (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage) force = forces[i][j];
+                            if (d3 != null)
+                            {
+                                stressAnalysisResults[i][j] = d3.Calculate(beam.BeamId, workflowStations[i][j], checker[j].SectionInput(beam.StartBeamProperty.ConsiderRebar),
+                                    psiInfinite, psiInstant, psis[i][j].psiShrinkage);
+                                tauBResults[i][j] = Enumerable.Repeat(double.NaN, model.Value.LoadCombinations.Count).ToArray();
+                                return;
+                            }
                             if (model.Value.BridgeWorkflow?.Method == BridgeWorkflowMethod.LinearHistory ||
                                 model.Value.BridgeWorkflow?.Phases.Any(p => p.Actions.Any(a => a.HasLocalSectionStates)) == true)
                             {

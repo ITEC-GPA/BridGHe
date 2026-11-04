@@ -82,6 +82,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         private ModelModel _convertedOf;
         private GPC.Model.Models.Model _analysed;
         private ModelModel _analysedOf;
+        private Common.Gpc.Legacy.FemmBridgeSeam.Bridge _bridge;
         private string _gpcError;
 
         /// <summary>The GPC model (N-mm) of <see cref="Value"/>: the analysed model when an analysis attached one, otherwise the conversion;
@@ -123,13 +124,22 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         /// <summary>An analysis component: the analysed GPC model of <see cref="Value"/> (with its results).</summary>
         public void AttachGpc(GPC.Model.Models.Model analysed)
         {
-            lock (gpcLock) { _analysed = analysed ?? throw new ArgumentNullException(nameof(analysed)); _analysedOf = Value; _gpcError = null; }
+            lock (gpcLock) { _analysed = analysed ?? throw new ArgumentNullException(nameof(analysed)); _analysedOf = Value; _bridge = null; _gpcError = null; }
         }
+
+        /// <summary>C5, Build Bridge Model: the GPC bridge model of <see cref="Value"/> (merged actions as a GPC dataset) with its GPC recipe.</summary>
+        public void AttachBridge(Common.Gpc.Legacy.FemmBridgeSeam.Bridge bridge)
+        {
+            lock (gpcLock) { _analysed = (bridge ?? throw new ArgumentNullException(nameof(bridge))).Model; _analysedOf = Value; _bridge = bridge; _gpcError = null; }
+        }
+
+        /// <summary>The GPC bridge model attached by Build Bridge Model for <see cref="Value"/>, or null.</summary>
+        public Common.Gpc.Legacy.FemmBridgeSeam.Bridge GpcBridge { get { lock (gpcLock) return _bridge != null && ReferenceEquals(_analysedOf, Value) && ReferenceEquals(_analysed, _bridge.Model) ? _bridge : null; } }
 
         private void ShareGpc(GH_Model copy)
         {
             lock (gpcLock)
-                if (_analysed != null && ReferenceEquals(_analysedOf, Value)) copy.AttachGpc(_analysed);
+                if (_analysed != null && ReferenceEquals(_analysedOf, Value)) { if (_bridge != null && ReferenceEquals(_analysed, _bridge.Model)) copy.AttachBridge(_bridge); else copy.AttachGpc(_analysed); }
         }
 
         public static GH_Model FromModel(ModelModel value, GH_Model source = null)
