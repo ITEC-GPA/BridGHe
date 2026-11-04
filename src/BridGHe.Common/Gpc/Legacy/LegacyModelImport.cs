@@ -60,7 +60,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 string full = FullName(g);
                 if (groups.TryGetValue(full, out var known)) return known;
                 var parent = g["Parent"].IsNull ? null : GroupOf(g["Parent"]);
-                var group = new Group(GpcIdentity.Group(full), full);
+                var group = Group.Create(GpcIdentity.Group(full), full);
                 parent?.AddChild(group);
                 groups.Add(full, group); model.Groups.Add(group.Name, group);
                 return group;

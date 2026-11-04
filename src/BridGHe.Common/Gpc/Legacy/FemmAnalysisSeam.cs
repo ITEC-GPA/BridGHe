@@ -182,7 +182,7 @@ namespace BridGHe.Common.Gpc.Legacy
             var ungrouped = gpc.BeamElements.Values.Cast<Element>().Concat(gpc.AreaElements.Values).Where(e => e.Groups.Count == 0).ToArray();
             if (ungrouped.Length != 0)
             {
-                var group = new GPC.Model.Attributes.Group(GpcIdentity.Group(name), name); gpc.Groups.Add(group.Name, group);
+                var group = GPC.Model.Attributes.Group.Create(GpcIdentity.Group(name), name); gpc.Groups.Add(group.Name, group);
                 foreach (var e in ungrouped) e.AddGroup(group);
             }
             var stage = new GPC.Model.Stages.Stage(GpcIdentity.Stage(name), 1, name) { Definition = new GPC.Model.Stages.StageDefinition(1, 0) };
