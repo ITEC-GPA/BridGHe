@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -38,6 +39,59 @@ internal static class MovingLoadBenchmarks
     private static double Displacement(Scenario s,double[] axles,double x)
         => -s.Force*axles.Sum(a=>x<=a ? (Length-a)*x*(Length*Length-(Length-a)*(Length-a)-x*x)
             : a*(Length-x)*(Length*Length-a*a-(Length-x)*(Length-x)))/(6*Length*E*I);
+    /// <summary>
+    /// --centrifugal-probe (native, L10 decision 6 of 4/11): what Straus7 R31 does with a nonzero centrifugal offset together with lane
+    /// factors and adjacency factors. One point force Fz = -1000 N with centrifugal, K0 = 100 N, K1 = 0 (Fc = K0 + K1 Fz per force), on the
+    /// simply supported benchmark beam; per configuration the sums of the support reactions (X, Y, Z) of the first, middle and last
+    /// generated positions, and the GPC offset per vehicle written by the Converter. The force is in path axes (Axis 0): R31 applies no
+    /// centrifugal force to a point force in global axes (the Converter refuses it). A report, not a pass/fail check.
+    /// </summary>
+    internal static int CentrifugalProbe()
+    {
+        string root=Path.Combine(ExamplePaths.Calculations("21-benchmark-carichi-mobili"),"centrifugal-"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfff"));
+        Directory.CreateDirectory(root);
+        var configurations=new (string Id,double[] Lanes,int[] VehicleLanes,bool Adjacent,int MultiLane)[]
+        {
+            ("1-lane-1.0",new[]{1.0},new[]{1},false,0),
+            ("1-lane-0.8",new[]{0.8},new[]{1},false,0),
+            ("2-lanes-lane1",new[]{1.0,0.5},new[]{1},false,0),
+            ("2-lanes-lane2",new[]{1.0,0.5},new[]{2},false,0),
+            ("2-lanes-lane1-adjacent",new[]{1.0,0.5},new[]{1},true,0),
+            ("2-lanes-lane2-adjacent",new[]{1.0,0.5},new[]{2},true,0),
+            ("2-lanes-lane2-adjacent-rule1",new[]{1.0,0.5},new[]{2},true,1),
+        };
+        var report=new List<object>();
+        foreach(var c in configurations)
+        {
+            var model=ModelArchive.Clone(NativeExamples.Create().Single(e=>e.Id=="04-moving-load").Model);
+            model.Name=c.Id;var path=model.MovingPaths.Single();path.LoadCaseName=c.Id;path.Divisions=6;
+            path.Coordinates=new[]{0,0,0,Length,0,0,0,1000,0};
+            path.Template.LaneFactors=c.Lanes;path.Template.MultiLaneType=c.MultiLane;
+            path.Template.Centrifugal=new MovingCentrifugal{K0="100",K1="0",LengthUnit=2,ForceUnit=0};
+            path.Template.Vehicles[0].Lanes=c.VehicleLanes;
+            path.Template.Vehicles[0].Loads=new MovingObject[]{new MovingPointForce{X=0,Axis=0,Centrifugal=true,Adjacent=c.Adjacent,Force=new[]{0.0,0,-1000}}};
+            path.Validate();
+            string folder=Path.Combine(root,c.Id);Directory.CreateDirectory(folder);
+            try
+            {
+                var result=StrausAnalysis.Run(model,Path.Combine(folder,"model.st7"),0,Array.Empty<string>(),1e-6,true,out var warnings,out var analysed);
+                var law=analysed?.MovingLoads?.Paths?.FirstOrDefault()?.Template?.Centrifugal;
+                var cases=result.GeneratedMovingCases.OrderBy(k=>k.Key).Select(k=>k.Value).ToArray();
+                foreach(var name in new[]{cases.First(),cases[cases.Length/2],cases.Last()}.Distinct())
+                {
+                    double Sum(Func<NodeReactResultModel,double> f)=>result.Nodes.SelectMany(n=>n.Results.OfType<NodeReactResultModel>()).Where(r=>r.LoadCase.Name==name).Sum(f);
+                    var row=new{Configuration=c.Id,c.Lanes,c.VehicleLanes,c.Adjacent,MultiLaneType=c.MultiLane,Case=name,
+                        Rx=Sum(r=>r.Force.X),Ry=Sum(r=>r.Force.Y),Rz=Sum(r=>r.Force.Z),GpcOffsetN=law?.OffsetForce,GpcFactorKind=law?.FactorKind.ToString(),Warnings=warnings};
+                    report.Add(row);
+                    Console.WriteLine(FormattableString.Invariant($"CENTRIFUGAL {c.Id} {name}: Rx {row.Rx:G6} Ry {row.Ry:G6} Rz {row.Rz:G6} N; GPC offset {row.GpcOffsetN:G6} N/vehicle ({row.GpcFactorKind})"));
+                }
+            }
+            catch(Exception ex){report.Add(new{Configuration=c.Id,Error=ex.Message});Console.WriteLine("CENTRIFUGAL "+c.Id+": "+ex.GetType().Name+": "+ex.Message);}
+        }
+        File.WriteAllText(Path.Combine(root,"report.json"),JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true}));
+        Console.WriteLine("CENTRIFUGAL PROBE DONE "+Path.Combine(root,"report.json"));return 0;
+    }
+
     internal static int Run(bool native,string selection="all")
     {
         string root=Path.Combine(ExamplePaths.Calculations("21-benchmark-carichi-mobili"),DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfff"));

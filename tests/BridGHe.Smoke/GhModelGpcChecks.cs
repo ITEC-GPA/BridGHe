@@ -47,6 +47,33 @@ internal static class GhModelGpcChecks
         Console.WriteLine("GH MODEL GPC PASS: conversion, cache, identities, analysed model shared by copies and dropped when the FEM model changes.");
     }
 
+    /// <summary>Regression gpc-results-file: the BGHR2 results file next to the .st7 (GpcResultsFile) round trips the GPC model, refuses a
+    /// changed file and recognises a results file of master (BGHR1) with the "previous version" message, never reading it.</summary>
+    internal static void ResultsFile()
+    {
+        void Require(bool condition, string what) { if (!condition) throw new Exception("GPC RESULTS FILE FAIL: " + what); }
+        var model = BridGHe.Common.Gpc.GpcModels.FromFemm(Cantilever(), 0.001, out _);
+        string folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "bridghe-bghr2-" + Guid.NewGuid().ToString("N")); System.IO.Directory.CreateDirectory(folder);
+        try
+        {
+            string path = BridGHe.Common.Gpc.GpcResultsFile.PathFor(System.IO.Path.Combine(folder, "model.st7"));
+            Require(path.EndsWith("model.bghr", StringComparison.OrdinalIgnoreCase), "path next to the .st7");
+            string hash = BridGHe.Common.Gpc.GpcResultsFile.Write(path, model);
+            Require(!System.IO.File.Exists(path + ".tmp") && hash == BridGHe.Common.Gpc.GpcResultsFile.Hash(path), "written through a temporary file, hash of the file");
+            var read = BridGHe.Common.Gpc.GpcResultsFile.Read(path, hash);
+            Require(read.Guid == model.Guid && GPC.Model.Models.ModelRevisions.AnalysisFingerprint(read) == GPC.Model.Models.ModelRevisions.AnalysisFingerprint(model)
+                && read.BeamElements[1].Guid == model.BeamElements[1].Guid && read.PhysicalMembers.Count == model.PhysicalMembers.Count, "round trip of the GPC model");
+            var bytes = System.IO.File.ReadAllBytes(path); bytes[bytes.Length - 1] ^= 0x5A; System.IO.File.WriteAllBytes(path, bytes);
+            Require(Throws(() => BridGHe.Common.Gpc.GpcResultsFile.Read(path, hash), "cambiato"), "a changed file is refused");
+            string master = System.IO.Path.Combine(folder, "master.bghr"); System.IO.File.WriteAllBytes(master, System.Text.Encoding.ASCII.GetBytes("BGHR1").Concat(new byte[64]).ToArray());
+            Require(BridGHe.Common.Gpc.GpcResultsFile.IsPreviousVersion(master) && Throws(() => BridGHe.Common.Gpc.GpcResultsFile.Read(master, BridGHe.Common.Gpc.GpcResultsFile.Hash(master)), "versione precedente"),
+                "a results file of master is recognised, with the previous-version message");
+        }
+        finally { try { System.IO.Directory.Delete(folder, true); } catch (System.IO.IOException) { } }
+        Console.WriteLine("GPC RESULTS FILE PASS: BGHR2 next to the .st7, temporary file, hash, round trip, changed file refused, master BGHR1 recognised.");
+        static bool Throws(Action action, string text) { try { action(); return false; } catch (System.IO.InvalidDataException e) { return e.Message.Contains(text); } }
+    }
+
     private static ModelModel Cantilever(double length = 1)
     {
         var steel = new MaterialModel("S355") { Name = "S355", Modulus = 210000, PoissonRatio = 0.3, UsePoisson = true, Density = 7.85e-9, ThermalExpansion = 1.2e-5 };
