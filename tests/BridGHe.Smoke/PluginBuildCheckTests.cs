@@ -106,17 +106,46 @@ internal static class PluginBuildCheckTests
         Copy(Path.GetDirectoryName(BuildPaths.GrasshopperAssembly), plugin);
         Write(Path.Combine(checkout, ".git", "HEAD"), "ref: refs/heads/master\n");
         Write(Path.Combine(checkout, ".git", "refs", "heads", "master"), C + "\n");
-        var start = new ProcessStartInfo("dotnet") { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, WorkingDirectory = Environment.CurrentDirectory };
-        start.ArgumentList.Add(typeof(PluginBuildCheckTests).Assembly.Location); start.ArgumentList.Add("--plugin-check"); start.ArgumentList.Add(plugin);
-        using var process = Process.Start(start);
-        var output = process.StandardOutput.ReadToEndAsync(); var error = process.StandardError.ReadToEndAsync();
-        if (!process.WaitForExit(300000)) { process.Kill(true); throw new TimeoutException("plugin check process"); }
-        string text = output.Result;
+        var (exitCode, text, error) = RunChild("--plugin-check", plugin);
         string built = PluginBuildCheck.BuildCommit(System.Reflection.Assembly.LoadFrom(BuildPaths.GrasshopperAssembly)).Substring(0, 8);
-        string warning = text.Split('\n').Select(l => l.Trim()).FirstOrDefault(l => l.StartsWith("PLUGIN CHECK WARNING: "));
-        Require(process.ExitCode == 0 && warning != null, "the plugin check process runs: " + text + error.Result);
+        string warning = Line(text, "PLUGIN CHECK WARNING: ");
+        Require(exitCode == 0 && warning != null, "the plugin check process runs: " + text + error);
         Require(warning.Contains("Bin non aggiornato") && warning.Contains("compilato dal commit " + built) && warning.Contains("al commit cccccccc (master)"), "the plugin reports a checkout that moved after the build");
         Require(text.Contains("PLUGIN CHECK COMPONENT WARNINGS 1"), "the warning reaches a component of a document after its solution");
+
+        // The check with the shared libraries (Arachne, Rhino2*), with a copy of CompositeBridge next to the plug-in that is not the loaded one.
+        File.AppendAllText(Path.Combine(plugin, "GPCChecker.CompositeBridge.dll"), "other content");
+        (exitCode, text, error) = RunChild("--plugin-check-load", plugin);
+        Require(text.Contains("PLUGIN CHECK LATE LOAD worker"), "a shared library loaded first by a worker while Rhino's thread waits is checked without a hang: " + text + error);
+        warning = Line(text, "PLUGIN CHECK SHARED WARNING: ");
+        Require(exitCode == 0 && warning != null && warning.Contains("GPCChecker.CompositeBridge") && warning.Contains("con contenuto diverso"), "the library loaded by the worker is reported: " + text + error);
+    }
+
+    private static (int ExitCode, string Output, string Error) RunChild(string mode, string folder)
+    {
+        var start = new ProcessStartInfo("dotnet") { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, WorkingDirectory = Environment.CurrentDirectory };
+        start.ArgumentList.Add(typeof(PluginBuildCheckTests).Assembly.Location); start.ArgumentList.Add(mode); start.ArgumentList.Add(folder);
+        using var process = Process.Start(start);
+        var output = process.StandardOutput.ReadToEndAsync(); var error = process.StandardError.ReadToEndAsync();
+        if (!process.WaitForExit(300000)) { process.Kill(true); throw new TimeoutException("plugin check process " + mode); }
+        return (process.ExitCode, output.Result, error.Result);
+    }
+
+    private static string Line(string text, string prefix) => text.Split('\n').Select(l => l.Trim()).FirstOrDefault(l => l.StartsWith(prefix));
+
+    /// <summary>
+    /// --plugin-check-load: the shared check started with the shared libraries on the plugin in the folder, then CompositeBridge loaded
+    /// first by a worker while Rhino's thread waits for it (Super Element Check, Parallel.For on the solution thread).
+    /// </summary>
+    internal static int LoadChild(string folder)
+    {
+        System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
+        System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
+        var plugin = System.Reflection.Assembly.LoadFrom(Path.Combine(folder, "BridGHe.Grasshopper.gha"));
+        PluginBuildCheck.Start(plugin, "Arachne", true);
+        Console.WriteLine("PLUGIN CHECK LATE LOAD " + GpcReleaseSetTests.LoadOnWorker("GPCChecker.CompositeBridge", "PLUGIN CHECK"));
+        Console.WriteLine("PLUGIN CHECK SHARED WARNING: " + (PluginBuildCheck.Warning ?? "none"));
+        return 0;
     }
 
     /// <summary>--plugin-check: loads the plugin in the folder as Grasshopper does and solves a document with one of its components.</summary>

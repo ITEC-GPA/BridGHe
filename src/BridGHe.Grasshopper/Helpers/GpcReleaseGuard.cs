@@ -81,9 +81,16 @@ namespace BridGHe.Grasshopper.Helpers
             return hash;
         }
 
+        /// <summary>
+        /// Writes on Rhino's thread: at once when called there, otherwise queued to it without waiting. The check of a library
+        /// loaded later runs in AppDomain.AssemblyLoad on the thread that loads it, while the runtime holds that load: the other
+        /// threads that need the library wait, and RhinoApp.WriteLine from a thread other than Rhino's waits for Rhino's thread.
+        /// When Rhino's thread is one of those waiting, neither returns (Super Element Check, 4/11/2026: Parallel.For on the
+        /// solution thread, GPCChecker.Steel loaded first by a worker of the checks, a library not of the set).
+        /// </summary>
         private static void Write(string message)
         {
-            try { Rhino.RhinoApp.WriteLine("BridGHe: " + message); } catch (Exception) { }
+            try { Rhino.RhinoApp.InvokeOnUiThread((Action<string>)Rhino.RhinoApp.WriteLine, "BridGHe: " + message); } catch (Exception) { }
         }
     }
 }

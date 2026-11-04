@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json.Nodes;
+using System.Threading;
+using System.Threading.Tasks;
 using BridGHe.Common.Diagnostics;
 
 /// <summary>The load-time check of the GPC libraries: a bin older than lib/GPC and a set loaded by another plugin.</summary>
@@ -56,6 +58,7 @@ internal static class GpcReleaseSetTests
                 if (!process.WaitForExit(300000)) { process.Kill(true); throw new TimeoutException("GPC guard process"); }
                 string text = output.Result;
                 string warning = text.Split('\n').Select(l => l.Trim()).FirstOrDefault(l => l.StartsWith("GPC GUARD WARNING: "));
+                Require(text.Contains("GPC GUARD LATE LOAD worker"), "a GPC library loaded first by a worker while Rhino's thread waits is checked without a hang: " + text + error.Result);
                 Require(process.ExitCode == 0 && warning != null, "the guard process runs: " + text + error.Result);
                 Require(warning.Contains("Bin non aggiornato") && warning.Contains($"GPCModel {Version("GPCModel.dll")} invece di 9.9.9.9"), "the plugin reports a bin older than lib/GPC at load");
                 Require(warning.Contains($"GPCChecker.CompositeBridge {Version("GPCChecker.CompositeBridge.dll")} invece di 9.9.9.9"), "a GPC library loaded later from another set is reported when it loads");
@@ -80,13 +83,31 @@ internal static class GpcReleaseSetTests
         var plugin = System.Reflection.Assembly.LoadFrom(Path.Combine(folder, "BridGHe.Grasshopper.gha"));
         var guard = plugin.GetType("BridGHe.Grasshopper.Helpers.GpcReleaseGuard", true);
         guard.GetMethod("Start").Invoke(null, null);
-        _ = typeof(GPC.Checkers.CompositeBridge.HBridgeSection).Assembly;
+        // CompositeBridge loaded first by a worker while Rhino's thread waits for it, as in Super Element Check (Parallel.For on the
+        // solution thread): the guard reports it from the worker without waiting for Rhino's thread.
+        Console.WriteLine("GPC GUARD LATE LOAD " + LoadOnWorker("GPCChecker.CompositeBridge", "GPC GUARD"));
         Console.WriteLine("GPC GUARD WARNING: " + (guard.GetProperty("Warning").GetValue(null) ?? "none"));
         var component = (Grasshopper.Kernel.GH_Component)Activator.CreateInstance(plugin.GetType("BridGHe.Grasshopper.Components.BridgeChecks.SuperElementCheckComponent", true));
         var warn = guard.GetMethod("Warn");
         warn.Invoke(null, new object[] { component }); warn.Invoke(null, new object[] { component });
         Console.WriteLine("GPC GUARD COMPONENT WARNINGS " + component.RuntimeMessages(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning).Count);
         return 0;
+    }
+
+    /// <summary>
+    /// Loads the assembly on a worker while this thread, Rhino's, waits without pumping messages, as it waits in the runtime for an
+    /// assembly that another thread is loading. "worker" when the worker loaded it; when the worker does not finish, prints
+    /// "<paramref name="label"/> LATE LOAD hang" and ends the process, whose threads would otherwise never return.
+    /// </summary>
+    internal static string LoadOnWorker(string name, string label)
+    {
+        if (AppDomain.CurrentDomain.GetAssemblies().Any(a => a.GetName().Name == name)) return "already loaded";
+        var load = Task.Run(() => System.Reflection.Assembly.Load(name));
+        if (SpinWait.SpinUntil(() => load.IsCompleted, TimeSpan.FromSeconds(120))) { _ = load.Result; return "worker"; }
+        Console.WriteLine(label + " LATE LOAD hang");
+        Console.Out.Flush();
+        Process.GetCurrentProcess().Kill();
+        return "hang";
     }
 
     private static void Rewrite(string source, string target, string file)

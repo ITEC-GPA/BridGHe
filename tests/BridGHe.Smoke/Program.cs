@@ -54,6 +54,7 @@ internal static class Program
         using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},WindowStyle.Hidden);
         if(args.Contains("--gpc-guard")) return GpcReleaseSetTests.Guard(args.SkipWhile(a=>a!="--gpc-guard").Skip(1).First());
         if(args.Contains("--plugin-check")) return PluginBuildCheckTests.Child(args.SkipWhile(a=>a!="--plugin-check").Skip(1).First());
+        if(args.Contains("--plugin-check-load")) return PluginBuildCheckTests.LoadChild(args.SkipWhile(a=>a!="--plugin-check-load").Skip(1).First());
 #if GPC_PILOT
         if(args.Contains("--gpc-pilot")) { try { return GpcPilot.Run(); } catch(Exception error) { Console.Error.WriteLine("F4 BRIDGE FAIL " + error); return 1; } }
 #endif
