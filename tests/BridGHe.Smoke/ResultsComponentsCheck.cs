@@ -95,8 +95,20 @@ internal static class ResultsComponentsCheck
         // Each element type with elements must have produced values (an empty comparison proves nothing).
         foreach (int k in present)
                 Require(Enumerable.Range(0, femSide[k].Params.Output.Count).Sum(o => femSide[k].Params.Output[o].VolatileData.DataCount) > 0, components[k] + ": FEM results present");
+        // C6: the generated moving cases from the GPC steps and the model audit on the analysed GPC model, equal to the FEM ones.
+        var femModel = (ModelModel)analysedModelGoo.GetType().GetProperty("Value").GetValue(analysedModelGoo);
+        var gpcModel = (GPC.Model.Models.Model)analysedModelGoo.GetType().GetProperty("Gpc").GetValue(analysedModelGoo);
+        var catalog = BridGHe.Common.Gpc.GpcResultCatalog.Of(gpcModel);
+        Require(catalog != null, "the analysed GPC model has its results catalog");
+        var fromGpc = catalog.GeneratedMovingCases().Select(c => c.Number + "|" + c.Name).ToArray();
+        var fromFem = femModel.GeneratedMovingCases.OrderBy(c => c.Key).Select(c => c.Key + "|" + c.Value).ToArray();
+        Require(fromGpc.SequenceEqual(fromFem, StringComparer.Ordinal), $"generated moving cases: {fromGpc.Length} from the GPC steps, {fromFem.Length} FEM");
+        string Issues(BridGHe.Common.Diagnostics.ModelIssue[] issues) => string.Join("\n", issues.Select(i => i.Severity + "|" + i.Code + "|" + i.Element + "|" + i.Description));
+        string auditFem = Issues(BridGHe.Common.Diagnostics.BridgeModelAudit.Inspect(femModel, 1e-6)), auditGpc = Issues(BridGHe.Common.Diagnostics.BridgeModelAudit.Inspect(femModel, 1e-6, analysed: gpcModel));
+        Require(auditFem == auditGpc, "model audit on the analysed GPC model equal to the FEM one:\nFEM\n" + auditFem + "\nGPC\n" + auditGpc);
         var outcome = new Outcome(elements[0].Length, elements[1].Length, elements[2].Length, values);
-        Console.WriteLine($"RESULTS GPC PASS ({label}): {outcome.Nodes} nodes, {outcome.Beams} beams, {outcome.Plates} plates, {outcome.Values} output values identical bit for bit (GPC element vs FEM results).");
+        Console.WriteLine($"RESULTS GPC PASS ({label}): {outcome.Nodes} nodes, {outcome.Beams} beams, {outcome.Plates} plates, {outcome.Values} output values identical bit for bit (GPC element vs FEM results); " +
+            $"{fromGpc.Length} generated moving cases and the model audit equal.");
         return outcome;
     }
 

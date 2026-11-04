@@ -50,8 +50,11 @@ namespace BridGHe.Grasshopper.Components.Analysis
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Run required: no results for the current model, vehicle and path."); Message = "Run required"; return;
                 }
                 if (_saved.Pending) { string restored = _saved.Restore(_model, path); if (restored != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, restored); }
-                da.SetData(0, _model); da.SetDataList(1, _model.Value.GeneratedMovingCases.OrderBy(c => c.Key).Select(c => c.Value));
-                Message = _model.Value.GeneratedMovingCases.Count + " positions";
+                // C6: the generated cases from the GPC steps of the analysed model when it is there, the FEM result otherwise.
+                var catalog = _model.HasAnalysedGpc ? Common.Gpc.GpcResultCatalog.Of(_model.Gpc) : null;
+                var generated = catalog != null ? catalog.GeneratedMovingCases().Select(c => c.Name).ToArray() : _model.Value.GeneratedMovingCases.OrderBy(c => c.Key).Select(c => c.Value).ToArray();
+                da.SetData(0, _model); da.SetDataList(1, generated);
+                Message = generated.Length + " positions";
             }
             catch (Exception ex) { _run = false; _model = new GH_Model(); _inputHash = null; Message = "Error"; AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message); }
         }

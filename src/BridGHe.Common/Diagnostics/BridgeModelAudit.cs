@@ -13,8 +13,10 @@ public sealed record ModelIssue(string Severity, string Code, string Element, st
 /// <summary>Read-only input diagnostics. Geometric connectivity is not a stiffness/stability test.</summary>
 public static class BridgeModelAudit
 {
+    /// <param name="analysed">F6 C6: the analysed GPC model of <paramref name="model"/> (GH_Model.Gpc with HasAnalysedGpc), or null: when it has
+    /// the results catalog, the stored results are checked on it instead of the FEM result objects.</param>
     public static ModelIssue[] Inspect(ModelModel model, double tolerance, SimpleBridgeGeometry expectedGeometry = null,
-        IReadOnlyList<ModelModel> phaseModels = null)
+        IReadOnlyList<ModelModel> phaseModels = null, GPC.Model.Models.Model analysed = null)
     {
         ArgumentNullException.ThrowIfNull(model);
         if (!double.IsFinite(tolerance) || tolerance <= 0) throw new ArgumentException("Tolerance must be finite and positive, in model length units.");
@@ -101,10 +103,14 @@ public static class BridgeModelAudit
         }
         if (!model.Elements.SelectMany(e => e.Attributes).Any(a => a is NodeRestraintAttributeModel or NodeStiffnessAttributeModel or BeamSupportAttributeModel or PlateSupportAttributeModel))
             Add("Warning", "NO_SUPPORT", "Model", "No restraint or elastic support attribute. Stability must be checked in Straus.");
-        foreach (var e in model.Elements)
-            foreach (var result in e.Results)
-                if (result.LoadCase == null || string.IsNullOrWhiteSpace(result.LoadCase.Name) || !double.IsFinite(result.StepNum))
-                    Add("Error", "INVALID_RESULT", "Model", "A stored result has no case identity or a non-finite step.");
+        var catalog = Gpc.GpcResultCatalog.Of(analysed);
+        if (catalog != null)
+        { if (Gpc.GpcResultCatalog.HasInvalidResult(analysed, catalog)) Add("Error", "INVALID_RESULT", "Model", "A stored result has no case identity or a non-finite step."); }
+        else
+            foreach (var e in model.Elements)
+                foreach (var result in e.Results)
+                    if (result.LoadCase == null || string.IsNullOrWhiteSpace(result.LoadCase.Name) || !double.IsFinite(result.StepNum))
+                        Add("Error", "INVALID_RESULT", "Model", "A stored result has no case identity or a non-finite step.");
         if (model.Plates.Any(p => p.PlateProperty?.PropertyType != PlatePropertyType.LoadPatch) &&
             model.Beams.Any(b => b.BeamProperty?.Section?.CompositePreview != null))
             Add("Warning", "POSSIBLE_DOUBLE_CONCRETE", "Model", "Structural plates coexist with composite/homogenized beam properties. Check whether slab stiffness is represented twice.");

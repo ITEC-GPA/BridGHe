@@ -43,6 +43,7 @@ internal static class GpcResultsFileNative
     private static void Component(string typeName, ModelModel input, string output, Action<GH_Component> configure, string pathInput)
     {
         string name = typeName.Split('.').Last();
+        string[] generated = null; // C6: the "Cases" output of Moving Static Analysis at the last solution
         var type = assembly.GetType(typeName, true);
         var goo = (IGH_Goo)assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model", true).GetMethod("FromModel", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { input, null });
         GH_Component Make(GH_Archive archive = null)
@@ -60,6 +61,7 @@ internal static class GpcResultsFileNative
             c.ExpireSolution(false); doc.NewSolution(false, GH_SolutionMode.Silent);
             var errors = c.RuntimeMessages(GH_RuntimeMessageLevel.Error); if (errors.Count > 0) throw new Exception(name + ": " + string.Join("; ", errors));
             var model = c.Params.Output[0].VolatileData.AllData(true).SingleOrDefault();
+            generated = c.Params.Output.Count > 1 && c.Params.Output[1].Name == "Cases" ? c.Params.Output[1].VolatileData.AllData(true).Select(g => g.ToString()).ToArray() : null;
             string warnings = string.Join(" | ", c.RuntimeMessages(GH_RuntimeMessageLevel.Warning)); // before the removal, which clears them
             doc.RemoveObject(c, false);
             return (model, warnings);
@@ -79,6 +81,11 @@ internal static class GpcResultsFileNative
             && Gpc(reopened).Datasets.Keys.SequenceEqual(Gpc(model).Datasets.Keys), name + ": the same analysed model (fingerprint, datasets)");
         // C4: after reopening, the Results components read the GPC model of the file and show the FEM values of the document bit for bit.
         Require(ResultsComponentsCheck.Verify(reopened, name + " reopened").Values > 0, name + ": the Results components read the reopened GPC results");
+        if (generated != null)
+        {
+            var fem = ((ModelModel)reopened.GetType().GetProperty("Value").GetValue(reopened)).GeneratedMovingCases.OrderBy(p => p.Key).Select(p => p.Value).ToArray();
+            Require(fem.Length > 0 && generated.SequenceEqual(fem, StringComparer.Ordinal), name + ": the Cases output (GPC steps of the reopened model) equals the FEM list (" + generated.Length + ")");
+        }
         var bytes = File.ReadAllBytes(file); var changed = (byte[])bytes.Clone(); changed[changed.Length - 1] ^= 0x5A; File.WriteAllBytes(file, changed);
         (reopened, warnings) = Solve(Make(archive), false);
         Require(!Analysed(reopened) && warnings.Contains("cambiato") && warnings.Contains("Run"), name + ": a changed file gives a warning and asks for Run" + " [analysed " + Analysed(reopened) + ", warnings: " + warnings + "]");
