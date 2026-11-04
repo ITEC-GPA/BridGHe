@@ -31,6 +31,8 @@ internal static class GpcLegacyImportTests
         Units(ModelModel.ModelUnits.Knm, 1000, 1000);
         Schemas();
         Archives();
+        BridgeIdentities(ModelModel.ModelUnits.Nmm, 1);
+        BridgeIdentities(ModelModel.ModelUnits.Knm, 1000);
         Console.WriteLine($"GPC LEGACY IMPORT PASS: {checks} checks (units, nodes, restraint frames, rigid links, beam axes, I order, sections, loads, cases, combinations, write plan).");
     }
 
@@ -137,6 +139,49 @@ internal static class GpcLegacyImportTests
         Assert(preflight.Passed && preflight.Warnings.Count == 0, u + ": domain preflight without diagnostics: " + string.Join("; ", preflight.Errors.Concat(preflight.Warnings)));
         var plan = Straus7ModelWritePlan.Prepare(model);
         Assert(plan.IdentityMap.Entries.Count == 8, u + ": the Converter accepts the converted model");
+    }
+
+    /// <summary>C1: Element IDs as GPC labels (nodes, beams, plates), bridge member metadata and super elements as GPC physical members;
+    /// the Straus7 writer accepts the labelled model (labels are descriptive).</summary>
+    private static void BridgeIdentities(ModelModel.ModelUnits units, double length)
+    {
+        string u = units.ToString();
+        var steel = new MaterialModel("S355") { Name = "S355", Modulus = 210000, PoissonRatio = 0.3, UsePoisson = true, Density = 7.85e-9, ThermalExpansion = 1.2e-5 };
+        var rect = new SectionModel { Name = "R", SectionType = SectionModel.SectionTypes.SolidRectangle, B = 0.3, D = 0.5 };
+        var property = new BeamPropertyModel("P") { Name = "P", Material = steel, Section = rect, PropertyType = BeamPropertyType.Beam };
+        var p = Enumerable.Range(0, 4).Select(k => new R.Point3d(10 * k, 0, 0)).ToArray();
+        var nodes = p.Select((x, k) => new NodeModel((k + 1).ToString(), x)).ToArray();
+        nodes[0].Attributes.Add(new NodeRestraintAttributeModel(true, true, true, true, true, true));
+        nodes[3].Attributes.Add(new NodeRestraintAttributeModel(true, true, true, false, false, false));
+        nodes[1].Attributes.Add(new ElementIdAttributeModel("N2"));
+        var group = new GroupModel("Girder");
+        var beams = Enumerable.Range(0, 3).Select(k => new BeamModel(p[k], p[k + 1], property, group, 0) { BeamId = (k + 1).ToString() }).ToArray();
+        for (int k = 0; k < 3; k++)
+        {
+            beams[k].Attributes.Add(new ElementIdAttributeModel("B" + (k + 1)));
+            beams[k].Attributes.Add(new SuperElementAttributeModel(k < 2 ? "G1" : "G2"));
+            beams[k].Attributes.Add(new BridgeMemberAttributeModel(new BridgeMemberMetadata("Girder:1:1", BridGHe.Common.Geometry.BridgeMemberFamily.Girder, 1, 1, 1,
+                10 * k, 10 * (k + 1), new R.Vector3d(0, 0, 1), "Girder:01:01:000" + (k + 1))));
+        }
+        var legacy = new ModelModel(units) { Name = "bridge identities " + u };
+        legacy.AddElements(nodes.Cast<ElementModel>().Concat(beams));
+        var model = Import(legacy, out var report);
+        string Label(GPC.Model.Elements.Element e) => e.Attributes.Values.OfType<GPC.Model.Attributes.ElementLabelAttribute>().SingleOrDefault()?.Label;
+        Assert(Label(model.NodesElements[2]) == "N2" && Label(model.NodesElements[1]) == null, u + ": node Element ID as label");
+        Assert(Enumerable.Range(1, 3).All(k => Label(model.BeamElements[k]) == "B" + k), u + ": beam Element IDs as labels");
+        var member = model.PhysicalMembers["Girder:1:1"];
+        Assert(member.Parts.Select(x => x.BeamId).SequenceEqual(new[] { 1, 2, 3 }) && member.Parts.All(x => x.AlongIJ) && member.Source == "BridGHe bridge member", u + ": bridge member with its FE parts in order");
+        var m2 = member.Parts[1].BridgeMetadata;
+        Assert(m2.PhysicalId == "Girder:1:1" && m2.Family == GPC.Model.Structure.Members.BridgeMemberFamily.Girder && m2.Group == 1 && m2.Segment == 1 && m2.Span == 1
+            && Near(m2.StationFromMm, 10 * length) && Near(m2.StationToMm, 20 * length) && m2.SectionUp.Z == 1 && m2.GeometryId == "Girder:01:01:0002", u + ": part metadata, stations in mm");
+        var g1 = model.PhysicalMembers["SuperElement:G1"]; var g2 = model.PhysicalMembers["SuperElement:G2"];
+        Assert(g1.Name == "G1" && g1.Parts.Select(x => x.BeamId).SequenceEqual(new[] { 1, 2 }) && g2.Parts.Single().BeamId == 3 && g1.Source == "BridGHe super element"
+            && g1.Parts.All(x => x.BridgeMetadata == null), u + ": super elements as named physical members");
+        Assert(report.NotExported.Count == 0 && report.Warnings.Count == 0, u + ": nothing silently dropped: " + string.Join("; ", report.NotExported.Keys.Concat(report.Warnings)));
+        var plan = Straus7ModelWritePlan.Prepare(model);
+        Assert(plan.IdentityMap.Entries.Count == 7, u + ": the writer accepts the labelled model");
+        var copy = GpcGooArchive.ReadModel(GpcGooArchive.Model(model));
+        Assert(copy.PhysicalMembers.Count == 3 && Label(copy.BeamElements[2]) == "B2" && copy.PhysicalMembers["Girder:1:1"].Parts[2].BridgeMetadata.GeometryId == "Girder:01:01:0003", u + ": GPC archive round trip");
     }
 
     /// <summary>The six distributions decomposed into linear pieces: each piece reproduces the native law at its ends.</summary>

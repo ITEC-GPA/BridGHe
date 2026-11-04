@@ -95,6 +95,7 @@ namespace BridGHe.Common.Gpc.Legacy
             // The former exporter created one native property per property name: later properties with the same name used the first.
             var properties = new Dictionary<string, (BeamProperty Property, BeamFormulation Formulation, double Angle, string Signature, GPC.Converter.Straus7.Straus7SectionDefinition Native)>(StringComparer.Ordinal);
             var shearAreas = new Dictionary<string, (double, double)>(StringComparer.Ordinal);
+            var members = new BridgeMembers();
             for (int k = 0; k < beams.Count; k++)
             {
                 var b = beams[k]; string beamId = b.String("BeamId") ?? "";
@@ -129,12 +130,13 @@ namespace BridGHe.Common.Gpc.Legacy
                 var bg = b.Field("Groups").Items;
                 if (bg.Count > 0) beam.AddGroup(GroupOf(bg[0]));
                 if (bg.Count > 1) report.Warnings.Add($"Straus7 allows assigning only one single group to the beam {k + 1}");
-                BeamData(b, beam, principal, globalOffset, cases, units, report);
+                BeamData(b, beam, principal, globalOffset, cases, units, report, members);
                 // The former result reader asked Straus7 for at least 5 stations per beam unless the beam had an output-stations attribute.
                 (beam.Assignments.Physical ??= new BeamPhysicalData()).MinimumOutputStations ??= 5;
                 model.BeamElements.Add(beam);
             }
 
+            members.AddTo(model);
             if (movingJson != "[]") GpcMoving.FromLegacyJson(movingJson, model, cases, units, owner);
             // Plates: former order and numbering, nodes by tolerance; one property per name as the former exporter.
             var plateProperties = new Dictionary<string, PlateProperty>(StringComparer.Ordinal);
@@ -155,7 +157,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 if (pg.Count > 1) report.Warnings.Add($"Straus7 allows assigning only one single group to the plate {k + 1}");
                 foreach (var a in pl.Field("Attributes").Items)
                 {
-                    if (a.Is("ElementIdAttributeModel")) report.Carry("Element ID attribute (native user ID: the writer uses the GPC numbering)");
+                    if (a.Is("ElementIdAttributeModel")) Label(plate, a, report);
                     else if (a.Is("LoadPatchTypeAttributeModel"))
                     {
                         var edges = new List<int>(); for (int e = 0; a.Has("SelectedEdges" + e); e++) edges.Add(a.Int("SelectedEdges" + e));
@@ -345,7 +347,7 @@ namespace BridGHe.Common.Gpc.Legacy
             foreach (var a in attributes)
             {
                 if (a.Is("NodeCoordinateAttributeModel") || a.Is("NodeRestraintAttributeModel") || a.Is("RigidConnectionAttributeModel")) continue;
-                if (a.Is("ElementIdAttributeModel")) { report.Carry("Element ID attribute (native user ID: the writer uses the GPC numbering)"); continue; }
+                if (a.Is("ElementIdAttributeModel")) { Label(node, a, report); continue; }
                 if (a.Is("NodeStiffnessAttributeModel")) continue; // with the restraints above
                 throw new NotSupportedException("LegacyNodeAttributeNotMappedYet: " + a.ShortType);
             }
@@ -370,15 +372,16 @@ namespace BridGHe.Common.Gpc.Legacy
         }
         private static readonly Vector3d Zero = new Vector3d(0, 0, 0);
 
-        private static void BeamData(LegacyValue b, BeamElement beam, CoordinateSystem principal, Vector3d offset, Dictionary<string, LoadCaseBase> cases, BridgeUnits units, LegacyImportReport report)
+        private static void BeamData(LegacyValue b, BeamElement beam, CoordinateSystem principal, Vector3d offset, Dictionary<string, LoadCaseBase> cases, BridgeUnits units, LegacyImportReport report,
+            BridgeMembers members)
         {
             foreach (var a in b.Field("Attributes").Items)
             {
                 switch (a.ShortType)
                 {
-                    case "ElementIdAttributeModel": report.Carry("Element ID attribute (native user ID: the writer uses the GPC numbering)"); break;
-                    case "SuperElementAttributeModel": report.Carry("Super element name (checks input, not exported)"); break;
-                    case "BridgeMemberAttributeModel": report.Carry("Bridge member metadata (checks input, not exported)"); break;
+                    case "ElementIdAttributeModel": Label(beam, a, report); break;
+                    case "SuperElementAttributeModel": members.SuperElement(a.String("Value"), beam); break;
+                    case "BridgeMemberAttributeModel": members.Member(a.Field("BridgeMetadata"), beam, units); break;
                     case "BridgeSectionStateAttributeModel": report.Carry("Bridge section state (checks input, not exported)"); break;
                     case "BeamOutputStationsModel":
                         (beam.Assignments.Physical ??= new BeamPhysicalData()).MinimumOutputStations = a.Int("MinimumNumberOfStations"); break;
@@ -535,6 +538,61 @@ namespace BridGHe.Common.Gpc.Legacy
 
         /// <summary>Former releases: per end and kind, a released DOF with zero partial value is released, with a value it is a partial
         /// (absolute) stiffness; the others stay continuous. Beam principal axes, as St7SetBeamTRelease3/RRelease3.</summary>
+        /// <summary>C1: the former Element ID (ElementIdComponent: the user's identifier of a node, beam or plate) as the GPC element label,
+        /// descriptive (the Straus7 writer does not write it; the former exporter numbered the native elements itself).</summary>
+        private static void Label(Element element, LegacyValue a, LegacyImportReport report)
+        {
+            string value = a.String("Value");
+            if (string.IsNullOrEmpty(value)) { report.Carry("Empty Element ID attribute"); return; }
+            if (element.Attributes.Values.OfType<ElementLabelAttribute>().Any()) { report.Warnings.Add($"Element {element.Name}: only the first Element ID is kept"); return; }
+            element.Attributes.Add(new ElementLabelAttribute(value));
+        }
+
+        /// <summary>
+        /// C1: the bridge identities of the former beams as GPC physical members (no new vocabulary):
+        /// - bridge member metadata (BridgeMemberAttributeModel: one physical member split into FE parts with their own stations, section up
+        ///   and geometry id) → <see cref="GPC.Model.Structure.Members.PhysicalMemberDefinition"/> with the member's PhysicalId, its FE parts
+        ///   in the former order, each <see cref="GPC.Model.Structure.Members.BeamMemberPart"/> with its <see cref="GPC.Model.Structure.Members.BridgeMemberMetadata"/>
+        ///   (stations in mm);
+        /// - super elements (SuperElementAttributeModel: the beams checked together by Super Element Check) → a physical member
+        ///   "SuperElement:&lt;name&gt;" named &lt;name&gt; with its beams in the former order (source "BridGHe super element").
+        /// Parts follow the former element order and the beam direction (AlongIJ); the path is not validated here (no edit session).
+        /// </summary>
+        private sealed class BridgeMembers
+        {
+            public const string SuperElementPrefix = "SuperElement:";
+            private readonly Dictionary<string, List<GPC.Model.Structure.Members.BeamMemberPart>> members = new(StringComparer.Ordinal);
+            private readonly Dictionary<string, List<GPC.Model.Structure.Members.BeamMemberPart>> superElements = new(StringComparer.Ordinal);
+            public void SuperElement(string name, BeamElement beam)
+            {
+                if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("LegacyEmptySuperElementName");
+                if (!superElements.TryGetValue(name, out var parts)) superElements.Add(name, parts = new List<GPC.Model.Structure.Members.BeamMemberPart>());
+                if (parts.All(p => p.BeamId != beam.Id)) parts.Add(new GPC.Model.Structure.Members.BeamMemberPart(beam.Id, true));
+            }
+            public void Member(LegacyValue m, BeamElement beam, BridgeUnits units)
+            {
+                string id = m.String("PhysicalId");
+                if (!Enum.TryParse<GPC.Model.Structure.Members.BridgeMemberFamily>(m.Enum("Family"), false, out var family)) throw new ArgumentException("LegacyBridgeMemberFamily: " + m.Enum("Family"));
+                var up = m.Field("SectionUp");
+                var metadata = new GPC.Model.Structure.Members.BridgeMemberMetadata(id, family, m.Int("Group"), m.Int("Segment"), m.Int("Span"),
+                    units.ToMm(m.Double("StationFrom")), units.ToMm(m.Double("StationTo")), new Vector3d(up.Double("X"), up.Double("Y"), up.Double("Z")), m.String("GeometryId") ?? "");
+                if (!members.TryGetValue(id, out var parts)) members.Add(id, parts = new List<GPC.Model.Structure.Members.BeamMemberPart>());
+                if (parts.Any(p => p.BeamId == beam.Id)) throw new ArgumentException("LegacyDuplicateBridgeMemberAttribute: beam " + beam.Name);
+                parts.Add(new GPC.Model.Structure.Members.BeamMemberPart(beam.Id, true, metadata));
+            }
+            public void AddTo(Model model)
+            {
+                foreach (var (id, parts) in members)
+                    model.PhysicalMembers.Add(id, new GPC.Model.Structure.Members.PhysicalMemberDefinition(id, parts, "NodeToNode", id, "BridGHe bridge member"));
+                foreach (var (name, parts) in superElements)
+                {
+                    string id = SuperElementPrefix + name;
+                    if (model.PhysicalMembers.ContainsKey(id)) throw new ArgumentException("LegacySuperElementIdentityConflict: " + id);
+                    model.PhysicalMembers.Add(id, new GPC.Model.Structure.Members.PhysicalMemberDefinition(id, parts, "NodeToNode", name, "BridGHe super element"));
+                }
+            }
+        }
+
         private static GPC.Model.Attributes.BeamReleasesAttribute Releases(LegacyValue a, BridgeUnits units)
         {
             var release = new GPC.Model.Attributes.BeamReleasesAttribute { SourceRecord = "BeamReleasesAttributeModel" };

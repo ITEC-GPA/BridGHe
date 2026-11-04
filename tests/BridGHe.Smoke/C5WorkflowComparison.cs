@@ -308,6 +308,7 @@ internal static class C5WorkflowComparison
             Console.WriteLine($"BEAM {b.ShortType}: {string.Join(", ", b.Fields.Keys)}");
             foreach (var r in b["Results"].Items.Take(2)) Console.WriteLine("  RESULT " + r.ShortType + ": " + string.Join(", ", r.Fields.Keys) + " case " + r["Case"].String("Name"));
             foreach (var l in b["Loads"].Items.Take(3)) Console.WriteLine("  LOAD " + l.ShortType + ": " + Describe(l, 2));
+            foreach (var t in b["Attributes"].Items) Console.WriteLine("  ATTRIBUTE " + t.ShortType + ": " + Describe(t, 3));
         }
         return 0;
     }
