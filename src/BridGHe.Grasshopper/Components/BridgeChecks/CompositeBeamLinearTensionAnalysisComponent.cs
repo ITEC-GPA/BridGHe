@@ -4,6 +4,7 @@ using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Types;
 using GPC.Checkers.Concrete.Attributes;
 using GPC.Checkers.Concrete.Checkers;
 using GPC.Checkers.Concrete.Results;
@@ -66,9 +67,9 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         {
             GpcReleaseGuard.Warn(this);
             GH_CompositeBeam beam = null;
-            BeamForceResultModel beamForceResultOnlySteel = null;
-            BeamForceResultModel beamForceResultInfinite = null;
-            BeamForceResultModel beamForceResultInstant = null;
+            GH_ObjectWrapper beamForceResultOnlySteel = null;
+            GH_ObjectWrapper beamForceResultInfinite = null;
+            GH_ObjectWrapper beamForceResultInstant = null;
             double homogenizedFactorInfinite = 0;
             double homogenizedFactorInstant = 0;
             bool topFlangeInstab = false;
@@ -182,9 +183,12 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
 
                 GPC.Checkers.CompositeBridge.BridgeAnalysisOptions options = new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare,  WebBuckling = webFlangeInstab, TopFlangeBuckling = topFlangeInstab, BottomFlangeBuckling = bottomFlangeInstab };
 
-                ResultBeamForces resultBeamForcesOnlySteel = Common.Checks.BridgeForceConvention.FromStraus(beamForceResultOnlySteel, cs);
-                ResultBeamForces resultBeamForcesInfinite = Common.Checks.BridgeForceConvention.FromStraus(beamForceResultInfinite, cs);
-                ResultBeamForces resultBeamForcesInstant = Common.Checks.BridgeForceConvention.FromStraus(beamForceResultInstant, cs);
+                // F6 (a)/(b), R10: the forces of the Force component (numbers, no FEM result object).
+                static ResultBeamForces Force(GH_ObjectWrapper goo, CoordinateSystem frame) => goo?.Value is Common.Checks.BridgeForce f
+                    ? Common.Checks.BridgeForceConvention.FromStraus(f.Force, f.Case, frame) : throw new ArgumentException("Connect the output of the Force component.");
+                ResultBeamForces resultBeamForcesOnlySteel = Force(beamForceResultOnlySteel, cs);
+                ResultBeamForces resultBeamForcesInfinite = Force(beamForceResultInfinite, cs);
+                ResultBeamForces resultBeamForcesInstant = Force(beamForceResultInstant, cs);
 
                 BridgeCheckAdapter sectionChecker = new BridgeCheckAdapter(reinforcedConcreteSection, cs, options);
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, BridgeCheckAdapter.PlanarAssumption);

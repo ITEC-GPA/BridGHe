@@ -124,6 +124,8 @@ internal static class NativeModularBridgeTests
         string errors=Errors(doc);if(errors.Length>0)throw new Exception("Saved graph still has errors:\n"+errors);
 #if GPC_PILOT
         C5WorkflowComparison.RequireGpcChecks(Output(merge,"Model").VolatileData.AllData(true).Single(),model,checks,true);
+        GpcMergeCheck.Require(merge,"99");
+        foreach(var check in checks) GpcSecForcesCheck.Require(check,"99");
 #endif
         ResultFingerprint.Mark("modular checks, details and plots solved");ResultFingerprint.Write("modular-"+Path.GetFileNameWithoutExtension(source),doc);
         if(!original.SequenceEqual(File.ReadAllBytes(source))||!migrated.SequenceEqual(File.ReadAllBytes(candidate)))throw new Exception("Native test modified a GHX source.");

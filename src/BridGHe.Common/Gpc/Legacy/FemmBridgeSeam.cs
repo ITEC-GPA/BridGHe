@@ -37,11 +37,25 @@ namespace BridGHe.Common.Gpc.Legacy
             public GPC.Model.Models.Model Model { get; }
             public D3.BridgeWorkflowDefinition Workflow { get; }
             public string Dataset => FemmBridgeSeam.Dataset;
-            internal Bridge(GPC.Model.Models.Model model, D3.BridgeWorkflowDefinition workflow) { Model = model; Workflow = workflow; }
+            /// <summary>F6 (a)/(b), R4: the merged beam actions as numbers, per beam of the bridge model (GPC beam k + 1), in their stored order:
+            /// case name and sample (station mm, BridGHe convention), the numbers of the dataset before its mapping to the section axes.</summary>
+            public IReadOnlyList<(string Case, Checks.BeamForceSample Sample)>[] Samples { get; }
+            private readonly Dictionary<string, int> beams;
+            internal Bridge(GPC.Model.Models.Model model, D3.BridgeWorkflowDefinition workflow, IReadOnlyList<(string Case, Checks.BeamForceSample Sample)>[] samples)
+            {
+                Model = model; Workflow = workflow; Samples = samples;
+                beams = new Dictionary<string, int>(StringComparer.Ordinal);
+                foreach (var b in model.BeamElements) beams.TryAdd(b.Value.Source.OriginalId, b.Key);
+            }
+            /// <summary>The merged samples of a beam by its BridGHe ID, or null when the bridge model has no such beam.</summary>
+            public IReadOnlyList<(string Case, Checks.BeamForceSample Sample)> SamplesOf(string beamId) =>
+                beamId != null && beams.TryGetValue(beamId, out int number) ? Samples[number - 1] : null;
         }
 
         /// <summary>The GPC bridge model of a merged FEM model (Build Bridge Model), N-mm. The merged model is not changed.</summary>
-        public static Bridge Build(ModelModel merged, double tolerance)
+        /// <param name="samples">F6 (a)/(b): the merged beam actions as numbers (<see cref="Checks.BridgeWorkflowBuildResult.Samples"/>), per beam of the
+        /// merged model: the dataset is built from them instead of the result objects (the same numbers); null reads the result objects.</param>
+        public static Bridge Build(ModelModel merged, double tolerance, IReadOnlyList<(string Case, Checks.BeamForceSample Sample)>[] samples = null)
         {
             if (merged == null) throw new ArgumentNullException(nameof(merged));
             if (merged.BridgeWorkflow == null) throw new ArgumentException("BridgeWorkflowMissing");
@@ -64,12 +78,15 @@ namespace BridGHe.Common.Gpc.Legacy
                         RawData = JsonSerializer.Serialize(new Dictionary<string, string> { ["SourceName"] = a.SourceName, ["SourceCase"] = a.SourceCase }),
                         UnitsAndAxes = "", UnsupportedReason = "Former BridGHe action provenance (phase model and case name) kept for the round trip of the port; not a solver input.",
                     });
-            Results(merged, gpc);
-            return new Bridge(gpc, Workflow(merged.BridgeWorkflow, gpc));
+            if (samples != null && samples.Length != merged.Beams.Count) throw new ArgumentException("BridgeMergedSamplesBeamCount");
+            samples ??= merged.Beams.Select(b => (IReadOnlyList<(string, Checks.BeamForceSample)>)b.Results.OfType<BeamForceResultModel>()
+                .Select(r => (r.LoadCase.Name, new Checks.BeamForceSample(r.NormalizedLength ? r.Station * b.Length : r.Station, r.AxialForce, r.Vx, r.Vy, r.Torque, r.Mx, r.My))).ToArray()).ToArray();
+            Results(merged, gpc, samples);
+            return new Bridge(gpc, Workflow(merged.BridgeWorkflow, gpc), samples);
         }
 
         /// <summary>The merged beam actions as one dataset (inverse of <see cref="GpcResults.BeamForces"/>, as the C5 reader of the F1 archives).</summary>
-        private static void Results(ModelModel merged, GPC.Model.Models.Model gpc)
+        private static void Results(ModelModel merged, GPC.Model.Models.Model gpc, IReadOnlyList<(string Case, Checks.BeamForceSample Sample)>[] samples)
         {
             string revision = gpc.Guid.ToString("D");
             var source = new AnalysisSource { Program = LegacyModelImport.Program, SolverVersion = "BridGHe phase merge (Build Bridge Model)", ModelRevision = revision, AnalysisId = Dataset };
@@ -88,14 +105,13 @@ namespace BridGHe.Common.Gpc.Legacy
                 var legacy = merged.Beams[k]; var beam = gpc.BeamElements[k + 1]; string id = beam.Source.OriginalId; var axes = beam.Assignments.SectionAxes;
                 var principal = GpcBeamAxes.Principal(beam.StartPoint, beam.EndPoint, legacy.AngleDeg);
                 double length = beam.Length;
-                foreach (var r in legacy.Results.OfType<BeamForceResultModel>())
+                foreach (var (c, r) in samples[k])
                 {
-                    string c = r.LoadCase.Name;
                     if (!gpc.LoadCases.ContainsKey(c)) throw new ArgumentException("BridgeMergedResultCaseNotInModel: " + c);
-                    double station = r.NormalizedLength ? r.Station : r.Station / length;
+                    double station = r.Station / length;
                     // Inverse of GpcResults.BeamForces.
-                    var shear = principal.V1 * -r.ShearForce.X + principal.V2 * -r.ShearForce.Y;
-                    var bending = principal.V2 * r.BendingMoment.X + principal.V1 * -r.BendingMoment.Y;
+                    var shear = principal.V1 * -r.Shear1 + principal.V2 * -r.Shear2;
+                    var bending = principal.V2 * r.Bending1 + principal.V1 * -r.Bending2;
                     double Dot(Vector3d a, Vector3d b) => a.X * b.X + a.Y * b.Y + a.Z * b.Z;
                     var point = beam.StartPoint + (beam.EndPoint - beam.StartPoint) * station;
                     if (beam.Assignments.OffsetI != null) point += (beam.Assignments.OffsetAxes ?? axes).ToGlobal(beam.Assignments.OffsetI);
@@ -104,7 +120,7 @@ namespace BridGHe.Common.Gpc.Legacy
                     {
                         ElementId = id, Case = c, State = State(c), Axes = at, Station = station, PhysicalDistance = length * station,
                         Body = ActionBody.PositiveSectionFace, StationDomain = "NodeToNode", Record = "bridge beam " + id + " station " + station.ToString("R") + " " + c,
-                        Values = new double?[] { r.AxialForce, Dot(shear, axes.V1), Dot(shear, axes.V2), r.Torque, Dot(bending, axes.V1), Dot(bending, axes.V2) },
+                        Values = new double?[] { r.Axial, Dot(shear, axes.V1), Dot(shear, axes.V2), r.Torque, Dot(bending, axes.V1), Dot(bending, axes.V2) },
                     });
                 }
             }

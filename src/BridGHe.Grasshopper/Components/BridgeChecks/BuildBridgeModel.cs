@@ -53,7 +53,7 @@ public class BuildBridgeModel : GH_Component
                 combinations.Branches.Select(b => b.Select(Cell).ToArray()).ToArray(), (BridgeWorkflowMethod)method, Settings.Instance.Tolerance, additional);
             var output = GH_Model.FromModel(result.Model, models[0]);
             // F6 C5: the GPC bridge model (merged actions as a GPC dataset, GPC recipe) for the checks with the GPC workflow executor.
-            try { output.AttachBridge(Common.Gpc.Legacy.FemmBridgeSeam.Build(result.Model, Settings.Instance.Tolerance)); }
+            try { output.AttachBridge(Common.Gpc.Legacy.FemmBridgeSeam.Build(result.Model, Settings.Instance.Tolerance, result.Samples)); }
             catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is InvalidOperationException)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Modello di ponte GPC non costruito (" + e.Message + "): le verifiche usano il percorso FEM."); }
             da.SetData(0, output);

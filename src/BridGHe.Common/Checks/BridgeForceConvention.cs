@@ -23,5 +23,14 @@ namespace BridGHe.Common.Checks
                 force.My, -force.Mx, CoordinateSystem.Global, name: force.LoadCase?.Name ?? "")
                 .ToCoordinateSystem(reference);
         }
+
+        /// <summary>F6 (a)/(b): the same conversion of a merged sample (BridGHe convention: SF1, SF2, BM1, BM2) of the case <paramref name="caseName"/>.</summary>
+        public static ResultBeamForces FromStraus(BeamForceSample force, string caseName, CoordinateSystem reference)
+        {
+            if (reference == null) throw new ArgumentNullException(nameof(reference));
+            return new ResultBeamForces(force.Axial, force.Shear1, force.Shear2, force.Torque,
+                force.Bending2, -force.Bending1, CoordinateSystem.Global, name: caseName ?? "")
+                .ToCoordinateSystem(reference);
+        }
     }
 }

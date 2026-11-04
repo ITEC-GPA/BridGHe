@@ -48,6 +48,8 @@ namespace BridGHe.Common.Straus
             if (oldMovingNames.Count != 0) conversion = null;
             var result = Gpc.Legacy.FemmAnalysisSeam.Run(model, conversion, outputPath, solver, selection, tolerance, movingOnly, warnings, out analysed);
             if (string.IsNullOrEmpty(result.Name)) result.Name = Path.GetFileNameWithoutExtension(outputPath);
+            // F6 (a)/(b): the analysed GPC model carries the same name (the result consumers show it, e.g. in the fatigue sources).
+            if (analysed != null && analysed.Name != result.Name) analysed.Name = result.Name ?? "";
             return result;
         }
     }

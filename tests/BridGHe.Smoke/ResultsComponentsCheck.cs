@@ -106,9 +106,10 @@ internal static class ResultsComponentsCheck
         string Issues(BridGHe.Common.Diagnostics.ModelIssue[] issues) => string.Join("\n", issues.Select(i => i.Severity + "|" + i.Code + "|" + i.Element + "|" + i.Description));
         string auditFem = Issues(BridGHe.Common.Diagnostics.BridgeModelAudit.Inspect(femModel, 1e-6)), auditGpc = Issues(BridGHe.Common.Diagnostics.BridgeModelAudit.Inspect(femModel, 1e-6, analysed: gpcModel));
         Require(auditFem == auditGpc, "model audit on the analysed GPC model equal to the FEM one:\nFEM\n" + auditFem + "\nGPC\n" + auditGpc);
+        long consumers = ConsumersCheck.Verify(femModel, gpcModel, label);
         var outcome = new Outcome(elements[0].Length, elements[1].Length, elements[2].Length, values);
         Console.WriteLine($"RESULTS GPC PASS ({label}): {outcome.Nodes} nodes, {outcome.Beams} beams, {outcome.Plates} plates, {outcome.Values} output values identical bit for bit (GPC element vs FEM results); " +
-            $"{fromGpc.Length} generated moving cases and the model audit equal.");
+            $"{fromGpc.Length} generated moving cases and the model audit equal; result consumers: {consumers} values equal.");
         return outcome;
     }
 

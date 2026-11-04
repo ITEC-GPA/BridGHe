@@ -121,6 +121,17 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         /// <summary>True when <see cref="Gpc"/> is the analysed model attached by an analysis, not a conversion of <see cref="Value"/>.</summary>
         public bool HasAnalysedGpc { get { lock (gpcLock) return _analysed != null && ReferenceEquals(_analysedOf, Value); } }
 
+        /// <summary>F6 (a)/(b): the analysed GPC model with the results catalog of a BridGHe analysis (what the result consumers read), or
+        /// null: not analysed, analysed before F6 C3, or the bridge model of Build Bridge Model (its merged actions have no catalog).</summary>
+        public GPC.Model.Models.Model GpcResults
+        {
+            get
+            {
+                lock (gpcLock)
+                    return _analysed != null && ReferenceEquals(_analysedOf, Value) && Common.Gpc.GpcResultCatalog.Of(_analysed) != null ? _analysed : null;
+            }
+        }
+
         /// <summary>An analysis component: the analysed GPC model of <see cref="Value"/> (with its results).</summary>
         public void AttachGpc(GPC.Model.Models.Model analysed)
         {

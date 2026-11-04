@@ -18,11 +18,15 @@ namespace BridGHe.Common.Checks
 
         public static ResultIndex CreateIndex(ElementModel beam, double length, double tolerance) => new ResultIndex(beam, length, tolerance);
 
+        /// <summary>F6 (a)/(b), R4: the index of a beam of the GPC bridge model, from its merged samples (case name, station mm, BridGHe
+        /// convention: the numbers of the former result objects). No slab strain: the GPC workflow executor takes the strains from its recipe.</summary>
+        public static ResultIndex CreateIndex(string beamId, IEnumerable<(string Case, BeamForceSample Sample)> samples, double tolerance) => new ResultIndex(beamId, samples, tolerance);
+
         /// <summary>Build once after results are attached, then reuse for every station and combination.</summary>
         public sealed class ResultIndex
         {
             public string BeamId { get; }
-            private readonly Dictionary<string, (double Station, BeamForceResultModel Force)[]> _forces;
+            private readonly Dictionary<string, (double Station, BeamForceSample Force)[]> _forces;
             private readonly Dictionary<string, double> _strains;
             private readonly double _tolerance;
 
@@ -34,7 +38,8 @@ namespace BridGHe.Common.Checks
                 if (!double.IsFinite(tolerance) || tolerance < 0) throw new ArgumentOutOfRangeException(nameof(tolerance));
                 _tolerance = tolerance;
                 _forces = beam.Results.OfType<BeamForceResultModel>().GroupBy(f => f.LoadCase.Name, StringComparer.Ordinal)
-                    .ToDictionary(g => g.Key, g => g.Select(f => (Station: f.NormalizedLength ? f.Station * length : f.Station, Force: f))
+                    .ToDictionary(g => g.Key, g => g.Select(f => (Station: f.NormalizedLength ? f.Station * length : f.Station,
+                        Force: new BeamForceSample(f.Station, f.AxialForce, f.Vx, f.Vy, f.Torque, f.Mx, f.My)))
                         .OrderBy(f => f.Station).ToArray(), StringComparer.Ordinal);
                 if (_forces.Values.SelectMany(f => f).Any(f => !double.IsFinite(f.Station)))
                     throw new ArgumentException("Stazione di risultato non finita.");
@@ -42,10 +47,22 @@ namespace BridGHe.Common.Checks
                     .ToDictionary(g => g.Key, g => g.Sum(l => l.Value.Strain), StringComparer.Ordinal);
             }
 
-            private BeamForceResultModel ForceAt(string name, double station)
+            internal ResultIndex(string beamId, IEnumerable<(string Case, BeamForceSample Sample)> samples, double tolerance)
+            {
+                if (samples == null) throw new ArgumentNullException(nameof(samples));
+                if (!double.IsFinite(tolerance) || tolerance < 0) throw new ArgumentOutOfRangeException(nameof(tolerance));
+                BeamId = beamId; _tolerance = tolerance;
+                _forces = samples.GroupBy(f => f.Case, StringComparer.Ordinal)
+                    .ToDictionary(g => g.Key, g => g.Select(f => (Station: f.Sample.Station, Force: f.Sample)).OrderBy(f => f.Station).ToArray(), StringComparer.Ordinal);
+                if (_forces.Values.SelectMany(f => f).Any(f => !double.IsFinite(f.Station)))
+                    throw new ArgumentException("Stazione di risultato non finita.");
+                _strains = new Dictionary<string, double>(StringComparer.Ordinal);
+            }
+
+            private BeamForceSample ForceAt(string name, double station)
             {
                 int count = 0;
-                BeamForceResultModel result = null;
+                BeamForceSample result = default;
                 if (_forces.TryGetValue(name, out var values))
                 {
                     int low = 0, high = values.Length;
@@ -64,7 +81,7 @@ namespace BridGHe.Common.Checks
 
             public ResultBeamForces ReadForce(string name, double station, CoordinateSystem reference, double coefficient) =>
                 name == null || coefficient == 0 ? new ResultBeamForces(0, 0, 0, 0, 0, 0, reference) :
-                BridgeCheckAdapter.Scale(BridgeForceConvention.FromStraus(ForceAt(name, station), reference), coefficient);
+                BridgeCheckAdapter.Scale(BridgeForceConvention.FromStraus(ForceAt(name, station), name, reference), coefficient);
 
             public double ReadStrain(string name, double coefficient) =>
                 name != null && _strains.TryGetValue(name, out double strain) ? strain * coefficient : 0;
@@ -91,7 +108,7 @@ namespace BridGHe.Common.Checks
                         else strainInstant += strain;
                         continue;
                     }
-                    var force = BridgeCheckAdapter.Scale(BridgeForceConvention.FromStraus(ForceAt(loadCase.Name, station), reference), entry.Value);
+                    var force = BridgeCheckAdapter.Scale(BridgeForceConvention.FromStraus(ForceAt(loadCase.Name, station), loadCase.Name, reference), entry.Value);
                     switch (phase)
                     {
                         case LoadCaseModel.Stage.BridgePhases.OnlySteel: steel += force; break;

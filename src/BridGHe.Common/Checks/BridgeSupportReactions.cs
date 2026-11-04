@@ -36,14 +36,32 @@ public static class BridgeSupportReactions
             var source = action.Source ?? throw new ArgumentException("Missing FEM source for " + action.Key);
             if (source.Units != ModelModel.ModelUnits.Nmm || source.Name != record.SourceName)
                 throw new ArgumentException("The reaction source does not match the assembled action " + action.Key);
-            var nodes = source.Nodes.Where(n => n.Position.DistanceTo(support) <= tolerance).ToArray();
-            if (nodes.Length != 1) throw new ArgumentException($"Action {action.Key}: expected one node at the support, found {nodes.Length}.");
-            var samples = nodes[0].Results.OfType<NodeReactResultModel>().Where(r => r.LoadCase?.Name == action.Case).ToArray();
-            if (samples.Length != 1 || samples[0].StepNum != 0 || !samples[0].Force.IsValid)
+            // F6 (a)/(b), R8: the reaction rows of the analysed GPC model of the action (the numbers the analysis wrote into the FEM results,
+            // zero without sign as the FEM copies of the GH data), when the Bridge Action component attached it; the FEM results otherwise.
+            var forces = action.GpcSource != null ? GpcReactions(action, support, tolerance)
+                : FemReactions(action, source.Nodes.Where(n => n.Position.DistanceTo(support) <= tolerance).ToArray());
+            if (forces.Length != 1 || !forces[0].IsValid)
                 throw new ArgumentException($"Action {action.Key}: expected one finite linear-static reaction for case {action.Case}. Missing/multiple steps are not zero reactions.");
-            reaction += factor * (samples[0].Force * upward);
+            reaction += factor * (forces[0] * upward);
         }
         if (!double.IsFinite(reaction)) throw new ArgumentException("Non-finite combined reaction.");
         return reaction / 1000;
+    }
+
+    /// <summary>The linear-static reactions (step 0) of the action case at the one source node at the support.</summary>
+    private static Vector3d[] FemReactions(BridgeActionDefinition action, NodeModel[] nodes)
+    {
+        if (nodes.Length != 1) throw new ArgumentException($"Action {action.Key}: expected one node at the support, found {nodes.Length}.");
+        var samples = nodes[0].Results.OfType<NodeReactResultModel>().Where(r => r.LoadCase?.Name == action.Case).ToArray();
+        return samples.Length == 1 && samples[0].StepNum != 0 ? new[] { Vector3d.Unset } : samples.Select(r => r.Force).ToArray();
+    }
+
+    private static Vector3d[] GpcReactions(BridgeActionDefinition action, Point3d support, double tolerance)
+    {
+        var gpc = action.GpcSource; var catalog = Gpc.GpcResultCatalog.Of(gpc) ?? throw new ArgumentException("Missing GPC results for " + action.Key);
+        var nodes = gpc.NodesElements.Values.Where(n => new Point3d(n.Position.X, n.Position.Y, n.Position.Z).DistanceTo(support) <= tolerance).ToArray();
+        if (nodes.Length != 1) throw new ArgumentException($"Action {action.Key}: expected one node at the support, found {nodes.Length}.");
+        return Gpc.GpcResultRows.Node(catalog, gpc, nodes[0]).Where(r => r.Reaction != null && catalog.Entries[r.Entry].Label == action.Case)
+            .Select(r => new Vector3d(Gpc.GpcResultRows.Shown(r.Reaction[0]), Gpc.GpcResultRows.Shown(r.Reaction[1]), Gpc.GpcResultRows.Shown(r.Reaction[2]))).ToArray();
     }
 }

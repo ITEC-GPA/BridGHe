@@ -1,6 +1,7 @@
 using BridGHe.Common.Models;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using System;
 
@@ -74,16 +75,8 @@ namespace BridGHe.Grasshopper.Components.Checks
             DA.GetData(n++, ref station);
             DA.GetData(n++, ref norm);
 
-            BeamForceResultModel beamForceResultModel = new BeamForceResultModel(new LoadCaseModel(name, name), station, 0, "")
-            {
-                AxialForce = N,
-                ShearForce = new Vector2d(V3, V2),
-                Torque = T,
-                BendingMoment = new Vector2d(M3, M2),
-                NormalizedLength = norm,
-            };
-
-            DA.SetData(0, beamForceResultModel);
+            // F6 (a)/(b), R10: the force as numbers (the former result object held SF1 = V3, SF2 = V2, BM1 = M3, BM2 = M2).
+            DA.SetData(0, new GH_ObjectWrapper(new Common.Checks.BridgeForce(name, new Common.Checks.BeamForceSample(station, N, V3, V2, T, M3, M2), norm)));
         }
 
         /// <summary>

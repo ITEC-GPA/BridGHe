@@ -32,6 +32,19 @@ internal static class BridgeDeflectionTests
         var normal = BridgeDeflectionCamber.Evaluate(model, geometry, 1, "G1", 0, "", Vector3d.ZAxis, 1, true, 1);
         Require(result.Camber.SequenceEqual(normal.Camber) && result.Absolute.SequenceEqual(normal.Absolute), "Display scale does not modify numerical results");
         Require(result.Deflected.PointAtStart.DistanceTo(normal.Deflected.PointAtStart) > 1, "Display scale affects geometry");
+#if GPC_PILOT
+        // F6 (a)/(b): the same evaluation on the analysed GPC model (girder stations from the physical members, displacements from the
+        // GPC rows) gives the same numbers, curves and source text bit for bit.
+        var analysed = GpcSyntheticResults.Analysed(model);
+        var gpc = BridgeDeflectionCamber.Evaluate(analysed, geometry, 1, "G1", 0, "", Vector3d.ZAxis, 1, true, 10);
+        static bool Same(double[] a, double[] b) => a.Length == b.Length && a.Zip(b).All(p => BitConverter.DoubleToInt64Bits(p.First) == BitConverter.DoubleToInt64Bits(p.Second));
+        static double[] Coordinates(PolylineCurve c) => c.ToPolyline().SelectMany(p => new[] { p.X, p.Y, p.Z }).ToArray();
+        Require(Same(gpc.Stations, result.Stations) && Same(gpc.Absolute, result.Absolute) && Same(gpc.Relative, result.Relative) && Same(gpc.Camber, result.Camber)
+            && Same(Coordinates(gpc.Deflected), Coordinates(result.Deflected)) && Same(Coordinates(gpc.Cambered), Coordinates(result.Cambered))
+            && gpc.Source == result.Source && gpc.Diagnostics.SequenceEqual(result.Diagnostics), "GPC evaluation equal to the FEM one bit for bit");
+        try { BridgeDeflectionCamber.Evaluate(analysed, geometry, 1, "unknown", 0, "", Vector3d.ZAxis, 1, true, 1); throw new InvalidOperationException("GPC: missing displacement case accepted"); }
+        catch (ArgumentException) { }
+#endif
         try { BridgeDeflectionCamber.Evaluate(model, geometry, 1, "unknown", 0, "", Vector3d.ZAxis, 1, true, 1); }
         catch (ArgumentException) { Console.WriteLine("BRIDGE DEFLECTION PASS: analytical deflection, settlement chord, camber sign, display invariance and missing result rejection."); return; }
         throw new InvalidOperationException("Missing displacement case accepted");

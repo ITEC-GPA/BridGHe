@@ -81,8 +81,11 @@ public abstract class BridgePlotComponent : GH_Component
             var names=model.Value.LoadCombinations.Select(c=>c.Name).ToArray();
             if(names.Length==0||names.Distinct(StringComparer.Ordinal).Count()!=names.Length)throw new ArgumentException("Distinct combination names are required.");
             var unknown=selected.Except(names,StringComparer.Ordinal).ToArray();if(unknown.Length>0)throw new ArgumentException("Unknown combinations: "+string.Join(", ",unknown));
-            var stations=beams.Select(b=>b.Value.Results.OfType<BeamForceResultModel>()
-                .Select(f=>Math.Round(f.NormalizedLength?f.Station*b.Value.Length:f.Station,15)).Distinct().OrderBy(x=>x).ToArray()).ToArray();
+            // F6 (a)/(b), R8: the stations of Super Element Check: the merged samples of the GPC bridge model when Build Bridge Model attached it.
+            var bridge=model.GpcBridge;
+            var stations=beams.Select(b=>(bridge?.SamplesOf(b.Value.BeamId)?.Select(s=>Math.Round(s.Sample.Station,15))
+                ??b.Value.Results.OfType<BeamForceResultModel>().Select(f=>Math.Round(f.NormalizedLength?f.Station*b.Value.Length:f.Station,15)))
+                .Distinct().OrderBy(x=>x).ToArray()).ToArray();
             var origins=new double[beams.Count];for(int i=1;i<beams.Count;i++)origins[i]=origins[i-1]+beams[i-1].Value.Length;
             var rows=new List<(int Beam,int Station,double X,Reading[] Readings)>();
             for(int i=0;i<tree.PathCount;i++)

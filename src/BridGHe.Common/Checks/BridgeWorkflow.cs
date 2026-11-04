@@ -14,6 +14,10 @@ public sealed record BridgeActionDefinition
 {
     [DataMember] public string Key { get; init; }
     [DataMember] public ModelModel Source { get; init; }
+    /// <summary>F6 (a)/(b): the analysed GPC model of <see cref="Source"/> with its results catalog (the analysis attached it to the GH
+    /// model), from which Build BridGHe Model merges the action; null for a source analysed before F6 C3 (the FEM results are merged).
+    /// Not persisted: the Bridge Action components set it again from their analysed model.</summary>
+    [IgnoreDataMember] public GPC.Model.Models.Model GpcSource { get; init; }
     [DataMember] public string Case { get; init; }
     [DataMember] public BridgeActionBehavior Behavior { get; init; }
     /// <summary>Concrete eigenstrain increment [dimensionless], contraction negative. Null means absent, zero is an explicit value.</summary>

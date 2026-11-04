@@ -42,7 +42,10 @@ public sealed class BridgeDeflectionCamberComponent : BridgeUtilityComponent
         if (!da.GetData(0, ref model) || !da.GetData(1, ref geometry) || !da.GetData(3, ref loadCase)) return;
         da.GetData(2, ref girder); da.GetData(4, ref step); da.GetData(5, ref type); da.GetData(6, ref direction);
         da.GetData(7, ref factor); da.GetData(8, ref relative); da.GetData(9, ref scale);
-        var r = BridgeDeflectionCamber.Evaluate(model.Value, geometry.Value, girder, loadCase, step, type, direction, factor, relative, scale);
+        // F6 (a)/(b): the analysed GPC model with its results catalog when the analysis attached it; the former FEM results otherwise.
+        var analysed = model.GpcResults;
+        var r = analysed != null ? BridgeDeflectionCamber.Evaluate(analysed, geometry.Value, girder, loadCase, step, type, direction, factor, relative, scale)
+            : BridgeDeflectionCamber.Evaluate(model.Value, geometry.Value, girder, loadCase, step, type, direction, factor, relative, scale);
         da.SetDataList(0, r.Stations); da.SetDataList(1, r.Absolute); da.SetDataList(2, r.Relative); da.SetDataList(3, r.Camber);
         da.SetData(4, r.Deflected); da.SetData(5, r.Cambered); da.SetData(6, r.Source); da.SetDataList(7, r.Diagnostics);
     }

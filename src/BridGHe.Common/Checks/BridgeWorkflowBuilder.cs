@@ -7,7 +7,10 @@ using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Checks;
 
-public sealed record BridgeWorkflowBuildResult(ModelModel Model, string[] Summary, string[] Warnings);
+/// <param name="Samples">F6 (a)/(b): the merged beam actions as numbers, per beam of <see cref="Model"/> (its order), in the order they are
+/// stored on the beam: case name and sample (station mm, BridGHe convention). The same numbers as the result objects of the merged model;
+/// the GPC bridge model takes its dataset from them.</param>
+public sealed record BridgeWorkflowBuildResult(ModelModel Model, string[] Summary, string[] Warnings, IReadOnlyList<(string Case, BeamForceSample Sample)>[] Samples = null);
 
 /// <summary>Joins incremental FEM results by beam identity, preserving FEM samples and resampling different station grids.</summary>
 public static class BridgeWorkflowBuilder
@@ -123,6 +126,9 @@ public static class BridgeWorkflowBuilder
             var strainCase = action.Strain.HasValue ? Case(record.StrainCase, action.Behavior == BridgeActionBehavior.ShortTerm
                 ? LoadCaseModel.Stage.BridgePhases.StrainInstant : LoadCaseModel.Stage.BridgePhases.StrainInfinite) : null;
             int sourceIndex = hasForce ? sources.FindIndex(m => ReferenceEquals(m, action.Source)) : -1;
+            // F6 (a)/(b): the action from the rows of its analysed GPC model (the numbers the analysis wrote into the FEM results), when the
+            // Bridge Action component attached it; the FEM results otherwise.
+            var gpc = hasForce && action.GpcSource != null ? GpcActionSource.Of(action.Source, action.GpcSource) : null;
             for (int i = 0; i < model.Beams.Count; i++)
             {
                 var beam = model.Beams[i];
@@ -130,22 +136,28 @@ public static class BridgeWorkflowBuilder
                 if (strainCase != null && selected) beam.Loads.Add(new CompositeBeamSlabStrainModel(strainCase, new() { Strain = action.Strain.Value }));
                 if (forceCase == null || !selected) continue;
                 var input = aligned[sourceIndex][i];
-                var results = input.Results.OfType<BeamForceResultModel>().Where(r => r.LoadCase?.Name == action.Case).ToArray();
+                BeamForceSample[] results;
+                if (gpc != null) { results = gpc.Forces(input, action.Case); concentratedLoads[(action.Key, beam.BeamId)] = gpc.ConcentratedLoads(input, action.Case); }
+                else
+                {
+                    var stored = input.Results.OfType<BeamForceResultModel>().Where(r => r.LoadCase?.Name == action.Case).ToArray();
+                    if (stored.Select(r => (r.StepNum, r.StepType)).Distinct().Count() > 1)
+                        throw new ArgumentException($"Action {action.Key}, beam {beam.BeamId}: select one FEM step before merging.");
+                    results = stored.Select(r => new BeamForceSample(r.NormalizedLength ? r.Station * input.Length : r.Station, r.AxialForce, r.Vx, r.Vy, r.Torque, r.Mx, r.My)).ToArray();
+                    var sourceCombination = action.Source.LoadCombinations.SingleOrDefault(c => c.Name == action.Case);
+                    var contributingCases = sourceCombination == null ? new[] { action.Case }.ToHashSet(StringComparer.Ordinal) :
+                        sourceCombination.Values.Where(v => v.Value != 0).Select(v => v.Key.Name).ToHashSet(StringComparer.Ordinal);
+                    concentratedLoads[(action.Key, beam.BeamId)] = input.Loads.OfType<BeamPointLoadModel>()
+                        .Where(l => l.LoadCase != null && contributingCases.Contains(l.LoadCase.Name) && l.Value.P.SquareLength > 0)
+                        .Select(l => l.Value.A * input.Length).ToArray();
+                }
                 if (results.Length == 0) throw new ArgumentException($"Phase {phase.Order}, action {action.Key}, beam {beam.BeamId}: no FEM results for '{action.Case}'.");
-                if (results.Select(r => (r.StepNum, r.StepType)).Distinct().Count() != 1)
-                    throw new ArgumentException($"Action {action.Key}, beam {beam.BeamId}: select one FEM step before merging.");
-                var sourceCombination = action.Source.LoadCombinations.SingleOrDefault(c => c.Name == action.Case);
-                var contributingCases = sourceCombination == null ? new[] { action.Case }.ToHashSet(StringComparer.Ordinal) :
-                    sourceCombination.Values.Where(v => v.Value != 0).Select(v => v.Key.Name).ToHashSet(StringComparer.Ordinal);
-                concentratedLoads[(action.Key, beam.BeamId)] = input.Loads.OfType<BeamPointLoadModel>()
-                    .Where(l => l.LoadCase != null && contributingCases.Contains(l.LoadCase.Name) && l.Value.P.SquareLength > 0)
-                    .Select(l => l.Value.A * input.Length).ToArray();
                 foreach (var force in results)
                 {
-                    if (new[] { force.AxialForce, force.Vx, force.Vy, force.Torque, force.Mx, force.My }.Any(v => !double.IsFinite(v)))
+                    if (force.Values.Any(v => !double.IsFinite(v)))
                         throw new ArgumentException($"Action {action.Key}, beam {beam.BeamId}: non-finite FEM forces.");
-                    beam.Results.Add(new BeamForceResultModel(forceCase, force.NormalizedLength ? force.Station * input.Length : force.Station, 0, "", false)
-                    { AxialForce = force.AxialForce, ShearForce = force.ShearForce, Torque = force.Torque, BendingMoment = force.BendingMoment });
+                    beam.Results.Add(new BeamForceResultModel(forceCase, force.Station, 0, "", false)
+                    { AxialForce = force.Axial, Vx = force.Shear1, Vy = force.Shear2, Torque = force.Torque, Mx = force.Bending1, My = force.Bending2 });
                 }
             }
             if (action.PrimaryOnly) warnings.Add($"{action.Key}: primary shrinkage only; global restraint effects explicitly excluded.");
@@ -195,7 +207,10 @@ public static class BridgeWorkflowBuilder
         else warnings.Add("LinearHistory: gPC section N–Mx history; global construction stages must already be analysed in Straus. Shear, studs and stiffeners are not verified by this history method.");
         var summary = model.BridgeWorkflow.Phases.SelectMany(p => new[] { $"{p.Order} | {p.Name} | {p.State}" + (p.Day.HasValue ? $" | day {p.Day:G6}" : "") }
             .Concat(p.Actions.Select(a => $"  {a.Key} | {a.Behavior} | {a.SourceName ?? "local strain"} / {a.SourceCase ?? "—"}" + (a.Strain.HasValue ? $" | Δεcs={a.Strain.Value:G6}" : "")))).ToArray();
-        return new(model, summary, warnings.ToArray());
+        // The merged actions as numbers (the GPC bridge model takes its dataset from them): the same values as the result objects.
+        var merged = model.Beams.Select(b => (IReadOnlyList<(string, BeamForceSample)>)b.Results.OfType<BeamForceResultModel>()
+            .Select(r => (r.LoadCase.Name, new BeamForceSample(r.Station, r.AxialForce, r.Vx, r.Vy, r.Torque, r.Mx, r.My))).ToArray()).ToArray();
+        return new(model, summary, warnings.ToArray(), merged);
     }
 
     private static void BuildCombinations(ModelModel model, IReadOnlyDictionary<string, BridgeWorkflowAction> actions, IReadOnlyList<string[]> rows)
