@@ -188,6 +188,18 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             _guids[elementModel] = guid;
         }
 
+        /// <summary>The GUIDs of the elements, in the order of <see cref="ModelModel.Elements"/>.</summary>
+        public Guid[] ElementGuids() => Value?.Elements.Select(GetGuid).ToArray() ?? Array.Empty<Guid>();
+
+        /// <summary>A model read from a results file, with the element GUIDs saved with it (as <see cref="Read"/>).</summary>
+        public static GH_Model FromSavedResults(ModelModel value, Guid[] guids)
+        {
+            var result = new GH_Model { Value = value };
+            if (value != null && guids != null && guids.Length == value.Elements.Count)
+                for (int i = 0; i < guids.Length; i++) result._guids[value.Elements[i]] = guids[i];
+            return result;
+        }
+
         public override bool Write(GH_IWriter writer)
         {
             try

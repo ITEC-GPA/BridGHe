@@ -42,6 +42,34 @@ I casi presenti solo nelle combinazioni di fase vengono inclusi nel catalogo di 
 
 Gli errori di esportazione impediscono l'avvio dell'analisi. Configurazioni attualmente non rappresentabili, come più casi di cedimenti imposti, rilasci multipli o supporti non gestiti, non vengono accettate come una soluzione parziale.
 
+## Dove restano i risultati delle analisi
+
+Da BridGHe 0.3.0 `Straus R3 Analysis` e `Moving Static Analysis` non salvano più il modello analizzato dentro il documento
+Grasshopper.
+- **Dove vanno.** Alla fine dell'analisi il modello con i risultati viene scritto accanto al file `.st7`, con lo stesso nome ed
+  estensione `.bghr` (per esempio `calcoli/REV003/M03_N0.bghr`). Il documento tiene solo il percorso e l'impronta SHA-256 del file.
+- **Perché.** Prima un'analisi grande entrava tutta nel `.gh`. L'esempio 50 REV003 era passato da 4,9 a 887 MB, e ogni salvataggio
+  automatico di Grasshopper lo riscriveva per intero, con secondi di attesa a ogni modifica.
+- **Alla riapertura.** Il componente legge il file alla prima soluzione, senza rifare l'analisi. Se il file manca o è cambiato dopo il
+  salvataggio, il componente non usa risultati vecchi: lo segnala con un avviso e chiede «Run». `Moving Static Analysis` confronta
+  anche l'impronta del modello in ingresso, come prima.
+- **Documenti salvati prima.** Si aprono con i risultati che contengono. Al primo salvataggio i risultati passano nel file `.bghr`, e il
+  documento torna leggero.
+- **Copiare un progetto.** Il file `.bghr` va copiato con la sua cartella di calcolo. Il componente lo cerca accanto al percorso
+  `.st7` del suo ingresso e, se non lo trova, dove è stato scritto.
+- **Cosa resta nel documento.** Un componente senza risultati, appena creato o azzerato con «Reset», si salva nel documento come
+  prima. Se il file non si può scrivere, per esempio per mancanza di spazio, i risultati restano nel documento e il componente lo
+  segnala con un avviso.
+
+Un documento salvato prima si può anche convertire senza aprirlo in Rhino:
+`dotnet run --project tests/BridGHe.Smoke -c Release -- --results-outside <documento.ghx> <convertito.ghx> [rapporto.json]`.
+Lo strumento scrive i file `.bghr` accanto ai `.st7` dei pannelli collegati ai componenti di analisi. Poi rilegge il documento
+convertito e controlla due cose: i risultati sono identici byte per byte e nient'altro nell'archivio è cambiato. Il documento di
+partenza non viene modificato.
+
+Le cartelle `calcoli` degli esempi non sono versionate. Un esempio salvato con questa versione ha bisogno della sua cartella di
+calcolo, oppure di una nuova analisi, per mostrare i risultati.
+
 ## Sezioni native Straus
 
 I nuovi componenti hanno input dimensionali distinti, un output `Section` compatibile con `Beam Property`, e calcolano le proprietà tramite API R3. Richiedono la licenza API già al calcolo della sezione. Le dimensioni hanno le unità di lunghezza del modello; le aree sono L², le inerzie e J sono L⁴. Gli angoli BGL sono in gradi.

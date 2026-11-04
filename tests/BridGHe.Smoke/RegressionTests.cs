@@ -13,6 +13,7 @@ internal static class RegressionTests
         var tests = new Dictionary<string, Action>
         {
             ["bridge-combination-excel"] = BridgeCombinationExcelTests.Run,
+            ["analysis-results-file"] = AnalysisResultsFileTests.Run,
             ["concrete-shrinkage"] = ConcreteShrinkageTests.Run,
             ["bridge-detail-stations"] = BridgeSupportReactionTests.Run,
             ["bridge-combination-excel-component"] = () => BridgeCombinationExcelExample.Run(),

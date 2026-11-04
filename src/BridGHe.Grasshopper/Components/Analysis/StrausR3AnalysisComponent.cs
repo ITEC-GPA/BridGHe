@@ -21,6 +21,9 @@ namespace BridGHe.Grasshopper.Components.Analysis
         protected bool _run;
         private GH_Model _model;
         private bool _just_loaded;
+        // 4/11/2026: the results stay next to the .st7, the document keeps only their file (SavedAnalysisResults).
+        private readonly SavedAnalysisResults _saved = new SavedAnalysisResults();
+        private string _outputPath;
 
         /// <summary>
         /// Initializes a new instance of the StrausAnalysisComponent class.
@@ -80,11 +83,15 @@ namespace BridGHe.Grasshopper.Components.Analysis
             int solver = 0;
             string outputPath = "";
             bool keepRunning = false;
+            // The output path is kept even without a model (upstream not built yet): saving moves the results next to it.
+            bool hasOutputPath = DA.GetData("Output Path", ref outputPath);
+            if (hasOutputPath && !string.IsNullOrWhiteSpace(outputPath))
+                _outputPath = outputPath;
             if (!DA.GetData("Model", ref model))
                 return;
             if (!DA.GetData("Solver", ref solver))
                 return;
-            if (!DA.GetData("Output Path", ref outputPath))
+            if (!hasOutputPath)
                 return;
             DA.GetData("Keep Running", ref keepRunning);
 
@@ -119,6 +126,8 @@ namespace BridGHe.Grasshopper.Components.Analysis
                 {
                     var result = Common.Straus.StrausAnalysis.Run(model.Value, outputPath, solver, requested, Settings.Instance.Tolerance, false, out var warnings);
                     _model = GH_Model.FromModel(result, model);
+                    string saving = _saved.Record(_model, outputPath);
+                    if (saving != null) warnings.Add(saving);
                     foreach (string warning in warnings) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
                     Message = "Done";
                 }
@@ -127,6 +136,23 @@ namespace BridGHe.Grasshopper.Components.Analysis
                     _model = new GH_Model();
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message);
                     Message = "Error";
+                }
+            }
+            else if (_saved.Pending(_model))
+            {
+                // First solution after opening: the results of the last analysis, from their file.
+                var loaded = _saved.Load(outputPath, out string error);
+                if (loaded == null)
+                {
+                    _model = new GH_Model();
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, error + " Premere Run per rifare l'analisi.");
+                    Message = "Run required";
+                }
+                else
+                {
+                    _model = loaded;
+                    ModelHelper.RestoreModelGuids(model, ref _model);
+                    _just_loaded = false;
                 }
             }
             DA.SetData(0, _model);
@@ -145,7 +171,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
             if (!success)
                 return false;
 
-            _model.Write(writer);
+            _saved.Write(writer, _model, _outputPath, w => _model.Write(w));
 
             return true;
         }
@@ -156,7 +182,10 @@ namespace BridGHe.Grasshopper.Components.Analysis
             if (!success)
                 return false;
 
-            _model.Read(reader);
+            // Results in a file are read at the first solution; a document saved before holds them.
+            var placeholder = _saved.Read(reader);
+            if (placeholder != null) _model = placeholder;
+            else _model.Read(reader);
             _just_loaded = true;
 
             return true;
@@ -165,7 +194,8 @@ namespace BridGHe.Grasshopper.Components.Analysis
         protected override void BeforeSolveInstance()
         {
             base.BeforeSolveInstance();
-            if (_just_loaded)
+            // Results still in their file get their GUIDs when SolveInstance reads them.
+            if (_just_loaded && !_saved.Pending(_model))
             {
                 if (!Params.Input[0].VolatileData.IsEmpty)
                 {
