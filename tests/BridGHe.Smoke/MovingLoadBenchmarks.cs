@@ -46,26 +46,31 @@ internal static class MovingLoadBenchmarks
     /// generated positions, and the GPC offset per vehicle written by the Converter. The force is in path axes (Axis 0): R31 applies no
     /// centrifugal force to a point force in global axes (the Converter refuses it). A report, not a pass/fail check.
     /// </summary>
-    internal static int CentrifugalProbe()
+    internal static int CentrifugalProbe(string only = null)
     {
         string root=Path.Combine(ExamplePaths.Calculations("21-benchmark-carichi-mobili"),"centrifugal-"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfff"));
         Directory.CreateDirectory(root);
-        var configurations=new (string Id,double[] Lanes,int[] VehicleLanes,bool Adjacent,int MultiLane)[]
+        // Straight path: (0,0,0) -> (Length,0,0), plane point (0,1000,0). Circular path (Shape 1, constant radius): the same chord with
+        // the third point (Length/2, 10, 0), a sagitta of 10 mm (radius about 450 m if the point is on the arc).
+        var configurations=new (string Id,double[] Lanes,int[] VehicleLanes,bool Adjacent,int MultiLane,int Shape)[]
         {
-            ("1-lane-1.0",new[]{1.0},new[]{1},false,0),
-            ("1-lane-0.8",new[]{0.8},new[]{1},false,0),
-            ("2-lanes-lane1",new[]{1.0,0.5},new[]{1},false,0),
-            ("2-lanes-lane2",new[]{1.0,0.5},new[]{2},false,0),
-            ("2-lanes-lane1-adjacent",new[]{1.0,0.5},new[]{1},true,0),
-            ("2-lanes-lane2-adjacent",new[]{1.0,0.5},new[]{2},true,0),
-            ("2-lanes-lane2-adjacent-rule1",new[]{1.0,0.5},new[]{2},true,1),
+            ("1-lane-1.0",new[]{1.0},new[]{1},false,0,0),
+            ("1-lane-0.8",new[]{0.8},new[]{1},false,0,0),
+            ("2-lanes-lane1",new[]{1.0,0.5},new[]{1},false,0,0),
+            ("2-lanes-lane2",new[]{1.0,0.5},new[]{2},false,0,0),
+            ("2-lanes-lane1-adjacent",new[]{1.0,0.5},new[]{1},true,0,0),
+            ("2-lanes-lane2-adjacent",new[]{1.0,0.5},new[]{2},true,0,0),
+            ("2-lanes-lane2-adjacent-rule1",new[]{1.0,0.5},new[]{2},true,1,0),
+            ("arc-1-lane-1.0",new[]{1.0},new[]{1},false,0,1),
+            ("arc-2-lanes-lane2-0.5",new[]{1.0,0.5},new[]{2},false,0,1),
         };
+        if(only!=null)configurations=configurations.Where(c=>c.Id.StartsWith(only,StringComparison.Ordinal)).ToArray();
         var report=new List<object>();
         foreach(var c in configurations)
         {
             var model=ModelArchive.Clone(NativeExamples.Create().Single(e=>e.Id=="04-moving-load").Model);
             model.Name=c.Id;var path=model.MovingPaths.Single();path.LoadCaseName=c.Id;path.Divisions=6;
-            path.Coordinates=new[]{0,0,0,Length,0,0,0,1000,0};
+            path.Shape=c.Shape;path.Coordinates=c.Shape==0?new[]{0,0,0,Length,0,0,0,1000,0}:new[]{0,0,0,Length,0,0,Length/2,10,0};
             path.Template.LaneFactors=c.Lanes;path.Template.MultiLaneType=c.MultiLane;
             path.Template.Centrifugal=new MovingCentrifugal{K0="100",K1="0",LengthUnit=2,ForceUnit=0};
             path.Template.Vehicles[0].Lanes=c.VehicleLanes;
