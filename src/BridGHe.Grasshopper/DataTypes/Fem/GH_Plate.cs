@@ -106,7 +106,14 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             _plateProperty = plate._plateProperty == null ? null : (GH_PlateProperty)plate._plateProperty.Duplicate();
             _groups = plate._groups.ConvertAll(g => (GH_Group)g.Duplicate());
             Value = new PlateModel(plate.Value);
+            AnalysedGpc = plate.AnalysedGpc; AnalysedGpcModel = plate.AnalysedGpcModel;
         }
+
+        /// <summary>F6 C4: the analysed GPC element of this element and its analysed model, set by Decompose Model when its model was
+        /// analysed (Straus R3 / Moving Static Analysis); null otherwise. Immutable by convention, so copies share it.</summary>
+        public GPC.Model.Elements.Element AnalysedGpc { get; set; }
+        public GPC.Model.Models.Model AnalysedGpcModel { get; set; }
+
 
         #endregion
 

@@ -111,7 +111,14 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             //_beamProperty = beam._beamProperty;
             //_groups = beam._groups;
             Value = new BeamModel(beam.Value);
+            AnalysedGpc = beam.AnalysedGpc; AnalysedGpcModel = beam.AnalysedGpcModel;
         }
+
+        /// <summary>F6 C4: the analysed GPC element of this element and its analysed model, set by Decompose Model when its model was
+        /// analysed (Straus R3 / Moving Static Analysis); null otherwise. Immutable by convention, so copies share it.</summary>
+        public GPC.Model.Elements.Element AnalysedGpc { get; set; }
+        public GPC.Model.Models.Model AnalysedGpcModel { get; set; }
+
 
         #endregion
 
@@ -232,7 +239,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             GH_Beam copy = new GH_Beam
             {
                 _guid = _guid,
-                Value = Common.Helpers.ModelArchive.Clone(Value)
+                Value = Common.Helpers.ModelArchive.Clone(Value),
+                AnalysedGpc = AnalysedGpc, AnalysedGpcModel = AnalysedGpcModel,
             };
             return copy;
         }

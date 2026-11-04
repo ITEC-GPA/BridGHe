@@ -60,6 +60,18 @@ namespace BridGHe.Grasshopper.Components.Models
                     beams.Add(new GH_Beam(beam, model.GetGuid(beam)));
                 foreach (PlateModel plate in model.Value.Plates)
                     plates.Add(new GH_Plate(plate, model.GetGuid(plate)));
+                // F6 C4: the analysed GPC elements, by the numbering of the legacy reader used by the analysis (FEM order, from 1).
+                if (model.HasAnalysedGpc)
+                {
+                    var gpc = model.Gpc;
+                    if (gpc.NodesElements.Count == nodes.Count && gpc.BeamElements.Count == beams.Count && gpc.AreaElements.Count == plates.Count)
+                    {
+                        for (int i = 0; i < nodes.Count; i++) { nodes[i].AnalysedGpc = gpc.NodesElements[i + 1]; nodes[i].AnalysedGpcModel = gpc; }
+                        for (int i = 0; i < beams.Count; i++) { beams[i].AnalysedGpc = gpc.BeamElements[i + 1]; beams[i].AnalysedGpcModel = gpc; }
+                        for (int i = 0; i < plates.Count; i++) { plates[i].AnalysedGpc = gpc.AreaElements[i + 1]; plates[i].AnalysedGpcModel = gpc; }
+                    }
+                    else AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, "Modello GPC analizzato con un numero di elementi diverso dal modello FEM: risultati GPC non collegati.");
+                }
             }
             catch (Exception e)
             {

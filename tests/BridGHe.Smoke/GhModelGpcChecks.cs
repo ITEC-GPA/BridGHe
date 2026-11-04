@@ -44,7 +44,26 @@ internal static class GhModelGpcChecks
         var changed = Gpc(goo);
         Require(!Analysed(goo) && changed != null && !ReferenceEquals(changed, analysed) && changed.Guid != gpc.Guid, "a new FEM model drops the analysed model and converts again");
         Require(Analysed(duplicate), "the copy keeps its analysed model");
-        Console.WriteLine("GH MODEL GPC PASS: conversion, cache, identities, analysed model shared by copies and dropped when the FEM model changes.");
+        // C4: Decompose Model links each element to its analysed GPC element (FEM order), and results data and copies keep the link.
+        var analysedGoo = Make(Cantilever()); var analysedModel = GPC.Model.Core.ModelValues.Copy(Gpc(analysedGoo));
+        type.GetMethod("AttachGpc").Invoke(analysedGoo, new object[] { analysedModel });
+        using (var document = new Grasshopper.Kernel.GH_Document { Enabled = true })
+        {
+            Grasshopper.Kernel.GH_Document.EnableSolutions = true;
+            var decompose = (Grasshopper.Kernel.GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components.DecomposeModelComponent", false)
+                ?? assembly.GetTypes().Single(t => t.Name == "DecomposeModelComponent"));
+            decompose.CreateAttributes(); document.AddObject(decompose, false);
+            var input = (Grasshopper.Kernel.Parameters.Param_GenericObject)decompose.Params.Input[0]; input.PersistentData.Append((IGH_Goo)analysedGoo); input.ExpireSolution(false);
+            document.NewSolution(false, Grasshopper.Kernel.GH_SolutionMode.Silent);
+            var beamGoo = (IGH_Goo)decompose.Params.Output[1].VolatileData.AllData(true).Single();
+            var nodeGoo = (IGH_Goo)decompose.Params.Output[0].VolatileData.AllData(true).First();
+            object Linked(object g) => g.GetType().GetProperty("AnalysedGpc").GetValue(g);
+            Require(ReferenceEquals(Linked(beamGoo), analysedModel.BeamElements[1]) && ReferenceEquals(Linked(nodeGoo), analysedModel.NodesElements[1]), "Decompose Model links the analysed GPC elements");
+            var results = Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_BeamResults", true), beamGoo);
+            Require(ReferenceEquals(Linked(results), analysedModel.BeamElements[1]) && ReferenceEquals(Linked(((IGH_Goo)results).Duplicate()), analysedModel.BeamElements[1])
+                && ReferenceEquals(Linked(beamGoo.Duplicate()), analysedModel.BeamElements[1]), "beam results and copies keep the link");
+        }
+        Console.WriteLine("GH MODEL GPC PASS: conversion, cache, identities, analysed model shared by copies and dropped when the FEM model changes; Decompose Model links the analysed elements.");
     }
 
     /// <summary>Regression gpc-results-file: the BGHR2 results file next to the .st7 (GpcResultsFile) round trips the GPC model, refuses a

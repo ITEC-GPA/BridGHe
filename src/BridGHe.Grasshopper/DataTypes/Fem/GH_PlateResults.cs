@@ -30,7 +30,14 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             : this()
         {
             Value = new List<ResultModel>(plate.Value.Results);
+            AnalysedGpc = plate.AnalysedGpc; AnalysedGpcModel = plate.AnalysedGpcModel;
         }
+
+        /// <summary>F6 C4: the analysed GPC element of this element and its analysed model, set by Decompose Model when its model was
+        /// analysed (Straus R3 / Moving Static Analysis); null otherwise. Immutable by convention, so copies share it.</summary>
+        public GPC.Model.Elements.Element AnalysedGpc { get; set; }
+        public GPC.Model.Models.Model AnalysedGpcModel { get; set; }
+
 
         #endregion
 
@@ -40,7 +47,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             return new GH_PlateResults
             {
-                Value = Common.Helpers.ModelArchive.Clone(Value)
+                Value = Common.Helpers.ModelArchive.Clone(Value),
+                AnalysedGpc = AnalysedGpc, AnalysedGpcModel = AnalysedGpcModel,
             };
         }
 
