@@ -24,6 +24,8 @@ namespace BridGHe.Common.Gpc.Legacy
     {
         public List<string> Warnings { get; } = new List<string>();
         public Dictionary<string, int> NotExported { get; } = new Dictionary<string, int>(StringComparer.Ordinal);
+        /// <summary>Resolved native Straus7 sections (mm) of the beams with a former native section, for the Converter write plan.</summary>
+        public Dictionary<Guid, GPC.Converter.Straus7.Straus7SectionDefinition> NativeSections { get; } = new Dictionary<Guid, GPC.Converter.Straus7.Straus7SectionDefinition>();
         internal void Carry(string what) { NotExported.TryGetValue(what, out int n); NotExported[what] = n + 1; }
     }
 
@@ -91,7 +93,7 @@ namespace BridGHe.Common.Gpc.Legacy
 
             // Beams: former order and numbering; nodes found by tolerance (StrausNodeIndex semantics).
             // The former exporter created one native property per property name: later properties with the same name used the first.
-            var properties = new Dictionary<string, (BeamProperty Property, BeamFormulation Formulation, double Angle, string Signature)>(StringComparer.Ordinal);
+            var properties = new Dictionary<string, (BeamProperty Property, BeamFormulation Formulation, double Angle, string Signature, GPC.Converter.Straus7.Straus7SectionDefinition Native)>(StringComparer.Ordinal);
             var shearAreas = new Dictionary<string, (double, double)>(StringComparer.Ordinal);
             for (int k = 0; k < beams.Count; k++)
             {
@@ -103,14 +105,15 @@ namespace BridGHe.Common.Gpc.Legacy
                 string propertyName = PropertyName(b["BeamProperty"]); string signature = Signature(b["BeamProperty"]);
                 if (!properties.TryGetValue(propertyName, out var p))
                 {
-                    var (property, formulation, angle) = Property(b["BeamProperty"], propertyName, model, units, shearAreas, report);
-                    properties.Add(propertyName, p = (property, formulation, angle, signature));
+                    var (property, formulation, angle, native) = Property(b["BeamProperty"], propertyName, model, units, shearAreas, report);
+                    properties.Add(propertyName, p = (property, formulation, angle, signature, native));
                 }
                 else if (p.Signature != signature) report.Warnings.Add($"The beam property {propertyName} already exists");
                 var start = gpcNodes[i].Position; var end = gpcNodes[j].Position;
                 var beam = new BeamElement(GpcIdentity.Derive(owner, "beam:" + k), start, end, p.Property, null, beamId, k + 1)
                 { Source = new SourceIdentity(Program, owner.ToString("D"), EntityFamily.Beam, beamId.Length != 0 ? beamId : (k + 1).ToString()) };
                 beam.ConnectNodes(gpcNodes[i], gpcNodes[j]);
+                if (p.Native != null) report.NativeSections.Add(beam.Guid, p.Native);
                 double angleDeg = b.Double("Angle");
                 var section = GpcBeamAxes.Section(start, end, angleDeg, p.Angle);
                 var principal = GpcBeamAxes.Principal(start, end, angleDeg);
@@ -466,7 +469,7 @@ namespace BridGHe.Common.Gpc.Legacy
             return "{" + string.Join(";", v.Fields.Where(f => f.Key != "CompositePreview").OrderBy(f => f.Key, StringComparer.Ordinal).Select(f => f.Key + "=" + Signature(f.Value))) + "}";
         }
 
-        private static (BeamProperty, BeamFormulation, double) Property(LegacyValue p, string propertyName, Model model, BridgeUnits units,
+        private static (BeamProperty, BeamFormulation, double, GPC.Converter.Straus7.Straus7SectionDefinition) Property(LegacyValue p, string propertyName, Model model, BridgeUnits units,
             Dictionary<string, (double, double)> shearAreas, LegacyImportReport report)
         {
             string type = p.Enum("BeamPropertyType");
@@ -475,12 +478,25 @@ namespace BridGHe.Common.Gpc.Legacy
                 : type == "Connection" ? BeamFormulation.Connection : throw new NotSupportedException("LegacyBeamPropertyType: " + type);
             if (formulation == BeamFormulation.CutoffBar) throw new NotSupportedException("LegacyCutoffBarNotMappedYet");
             var m = p.Field("Material"); var s = p.Field("SectionModel");
-            if (!s["NativeSection"].IsNull) throw new NotSupportedException("LegacyNativeSectionNotMappedYet");
             if (s.Enum("MirrorType") != "None") throw new NotSupportedException("LegacyMirroredSectionNotMappedYet");
             var material = GpcMaterials.Elastic(m.String("Name"), m.Double("Modulus"), m.Double("PoissonRatio"), m.Double("ShearModulus"), m.Bool("UsePoisson"),
                 m.Double("Density"), m.Double("ThermalExpansion"), m.Double("ViscousDamping"), m.Double("DampingRatio"), m.Double("Conductivity"), m.Double("SpecificHeat"),
                 StressStrain(m["StressStrainTable"]));
             if (!m["StressStrainTable"].IsNull && type != "Beam" && type != "Truss") material.AnalysisData.StressStrainPairs = null; // former exporter: tables only for beams and trusses
+            if (!s["NativeSection"].IsNull)
+            {
+                // Former exporter: the native section was assigned again in the model units (standard and BGL dimensions as numbers in
+                // the model length unit; BXS and library sections only when read in the model length unit); Straus7 computed the properties.
+                var n = s["NativeSection"]; string nativeKey = n.String("Key");
+                if (GpcNativeSections.IsLibraryOrBxs(nativeKey) && n.Int("LengthUnit") != GpcNativeSections.Straus7LengthUnit(units.Length))
+                    throw new ArgumentException("Le unità del modello differiscono da quelle usate per leggere la sezione di libreria/BXS. Ricalcolare la sezione nelle unità del modello.");
+                var dimensions = n["Dimensions"].IsNull ? Array.Empty<double>() : n["Dimensions"].Items.Select(v => v.AsDouble()).ToArray();
+                var resolved = GpcNativeSections.Resolve(nativeKey, dimensions, n.String("BxsPath"), n.String("LibraryName"), n.String("LibraryItem"), units.Length).Section;
+                var nativeProperty = resolved.ToBeamProperty(Unique(model, propertyName), material);
+                model.BeamProperties.Add(nativeProperty.Name, nativeProperty);
+                report.Carry("Native section preview contours (display only)");
+                return (nativeProperty, formulation, resolved.ReferenceProperties[10], resolved);
+            }
             var kind = (BridgeSectionKind)Enum.Parse(typeof(BridgeSectionKind), s.Enum("SectionType"));
             string sectionName = s.String("Name") ?? ""; double angle = s.Double("AngleX1");
             double L(string f) => units.ToMm(s.Double(f));
@@ -505,7 +521,7 @@ namespace BridGHe.Common.Gpc.Legacy
             }
             var property = new ElasticBeamProperty(Unique(model, propertyName), material, section, shear1, shear2);
             model.BeamProperties.Add(property.Name, property);
-            return (property, formulation, angle);
+            return (property, formulation, angle, null);
         }
 
         private enum PatchKinds { Auto1, Auto2, Auto3, Auto4, AngleSplit, Manual }

@@ -6,7 +6,6 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;
 using Rhino.Geometry;
-using St7API;
 using System;
 using System.Collections.Generic;
 using System.IO;

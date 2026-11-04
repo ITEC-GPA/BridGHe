@@ -97,56 +97,49 @@ namespace BridGHe.Common.Straus
             }
         }
 
-        /// <summary>Dimensions use the eventual model length unit. No silent unit conversion.</summary>
+        /// <summary>Dimensions use the eventual model length unit. No silent unit conversion. F6A: resolved through the GPC Converter
+        /// (<see cref="Gpc.GpcNativeSections"/>); standard and BGL dimensions are taken as numbers (their properties scale with them),
+        /// BXS files and library items are resolved in mm and expressed in <see cref="LengthUnit"/>, as the former model in that unit did.</summary>
         public SectionModel Calculate()
         {
             Validate();
-            lock (StrausRuntime.Gate)
+            var resolved = Gpc.GpcNativeSections.Resolve(Key, Dimensions, BxsPath, LibraryName, LibraryItem, 1);
+            double f = Gpc.GpcNativeSections.IsLibraryOrBxs(Key) ? Gpc.GpcNativeSections.MillimetresPer(LengthUnit) : 1, f2 = f * f, f4 = f2 * f2;
+            // Native section-property slots: A, I11, I22, J, SL1, SL2, SA1, SA2, Xbar, Ybar, principal angle [rad].
+            var data = resolved.Section.ReferenceProperties;
+            double angle = data[10], c = Math.Cos(angle), s = Math.Sin(angle);
+            double area = data[0] / f2, i11 = data[1] / f4, i22 = data[2] / f4;
+            var native = Clone();
+            native.PreviewContours = NativeSectionPreview.Contours(resolved.Vertices, resolved.Faces, 1 / f);
+            return new SectionModel
             {
-                using var model = StrausRuntime.NewTemporaryModel();
-                var units = new int[St7.kLastUnit];
-                StrausRuntime.Check(St7.St7GetUnits(model.Id, units), "St7GetUnits");
-                units[St7.ipLENGTHU] = LengthUnit;
-                StrausRuntime.Check(St7.St7SetUnits(model.Id, units), "St7SetUnits");
-                StrausRuntime.Check(St7.St7NewBeamProperty(model.Id, 1, St7.btBeam, Key), "St7NewBeamProperty");
-                Assign(model.Id, 1);
-                var integers = new int[1];
-                var data = new double[11];
-                StrausRuntime.Check(St7.St7GetBeamSectionPropertyData(model.Id, 1, integers, data), "St7GetBeamSectionPropertyData");
-                double angle = data[St7.ipANGLE], c = Math.Cos(angle), s = Math.Sin(angle);
-                double i11 = data[St7.ipI11], i22 = data[St7.ipI22];
-                // Display tessellation only, after reading the exact mechanical properties.
-                if(Key is "CircularSolid" or "CircularHollow")
-                    StrausRuntime.Check(St7.St7SetBeamSectionCircularDiscretisation(model.Id,1,new[]{6}),"Preview circular divisions");
-                var native=Clone();native.PreviewContours=NativeSectionPreview.Read(model.Id,1);
-                return new SectionModel
-                {
-                    Name = Key,
-                    SectionType = SectionModel.SectionTypes.Generic,
-                    NativeSection = native,
-                    SectionArea = data[St7.ipAREA],
-                    I11 = i11,
-                    I22 = i22,
-                    Ixx = i11 * c * c + i22 * s * s,
-                    Iyy = i11 * s * s + i22 * c * c,
-                    Ixy = (i22 - i11) * s * c,
-                    J = data[St7.ipJ],
-                    ShearL1 = data[St7.ipSL1],
-                    ShearL2 = data[St7.ipSL2],
-                    ShearA1 = data[St7.ipSA1],
-                    ShearA2 = data[St7.ipSA2],
-                    Centroid = new Point2d(data[St7.ipXBAR], data[St7.ipYBAR]),
-                    AngleX1Rad = angle,
-                    IntegrationPoints = integers[0],
-                    Rho11 = Math.Sqrt(i11 / data[St7.ipAREA]),
-                    Rho22 = Math.Sqrt(i22 / data[St7.ipAREA]),
-                    // Native section data does not contain elastic section moduli.
-                    W11 = double.NaN,
-                    W22 = double.NaN,
-                    Wxx = double.NaN,
-                    Wyy = double.NaN
-                };
-            }
+                Name = Key,
+                SectionType = SectionModel.SectionTypes.Generic,
+                NativeSection = native,
+                SectionArea = area,
+                I11 = i11,
+                I22 = i22,
+                Ixx = i11 * c * c + i22 * s * s,
+                Iyy = i11 * s * s + i22 * c * c,
+                Ixy = (i22 - i11) * s * c,
+                J = data[3] / f4,
+                ShearL1 = data[4] / f,
+                ShearL2 = data[5] / f,
+                ShearA1 = data[6] / f2,
+                ShearA2 = data[7] / f2,
+                Centroid = new Point2d(data[8] / f, data[9] / f),
+                AngleX1Rad = angle,
+                // The integration-point count of the former St7GetBeamSectionPropertyData is not part of the resolved definition
+                // (informational, used by no analysis or export).
+                IntegrationPoints = 0,
+                Rho11 = Math.Sqrt(i11 / area),
+                Rho22 = Math.Sqrt(i22 / area),
+                // Native section data does not contain elastic section moduli.
+                W11 = double.NaN,
+                W22 = double.NaN,
+                Wxx = double.NaN,
+                Wyy = double.NaN
+            };
         }
     }
 

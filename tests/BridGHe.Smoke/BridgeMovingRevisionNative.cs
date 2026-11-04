@@ -21,6 +21,8 @@ internal static class BridgeMovingRevisionNative
         byte[] bytes=File.ReadAllBytes(source);
         string folder=Path.GetFullPath("artifacts/rev003-native");Directory.CreateDirectory(folder);
         using var doc=GrasshopperBridgeExample.Read(source);doc.FilePath=source;
+        // Diagnostics (BRIDGHE_SERIAL=1): the task-capable components solve their iterations serially.
+        if(Environment.GetEnvironmentVariable("BRIDGHE_SERIAL")=="1")foreach(var t in doc.Objects.OfType<IGH_TaskCapableComponent>())t.UseTasks=false;
         var analyses=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="StrausR3AnalysisComponent").OrderBy(c=>c.NickName).ToArray();
         void OutputPath(GH_Component c,string port,string file){var p=(Param_String)In(c,port);p.RemoveAllSources();p.SetPersistentData(Path.Combine(folder,file));}
         foreach(var c in analyses){Clear(c);OutputPath(c,"Output Path",c.NickName.Split(' ')[0]+".st7");}
@@ -95,6 +97,19 @@ internal static class BridgeMovingRevisionNative
         Require(In(Find(doc,"BridgeReportComponent"),"Results").VolatileDataCount==details.Sum(c=>Out(c,"Section result").VolatileDataCount),"Report input coverage.");
         Require(Errors(doc).Length==0,Errors(doc));
         ResultFingerprint.Mark("REV003 checks, details and plots solved");ResultFingerprint.Write("example50-rev003-native",doc);
+        // F6A measurement (BRIDGHE_SAVE_TIMING=<folder>): size and time of saving the solved definition as a binary .gh (what Grasshopper
+        // writes on save and autosave), and of reading it back. Measurement only; the delivered definition is not touched.
+        if(Environment.GetEnvironmentVariable("BRIDGHE_SAVE_TIMING") is { Length: > 0 } timing)
+        {
+            Directory.CreateDirectory(timing);string saved=Path.Combine(Path.GetFullPath(timing),"example50-rev003-solved.gh");
+            var clock=System.Diagnostics.Stopwatch.StartNew();var archive=new GH_IO.Serialization.GH_Archive();
+            Require(archive.AppendObject(doc,"Definition"),"Append the solved definition.");var serialized=clock.Elapsed;
+            Require(archive.WriteToFile(saved,true,false),"Write the solved definition.");var writeTime=clock.Elapsed;
+            clock.Restart();var reread=new GH_IO.Serialization.GH_Archive();Require(reread.ReadFromFile(saved),"Read the solved definition.");
+            using(var reopened=new GH_Document())Require(reread.ExtractObject(reopened,"Definition"),"Reopen the solved definition.");var read=clock.Elapsed;
+            string line=$"SAVE TIMING example50-rev003 solved: {new FileInfo(saved).Length} bytes, serialize {serialized.TotalSeconds:F1} s, write {writeTime.TotalSeconds:F1} s, read+reopen {read.TotalSeconds:F1} s";
+            File.WriteAllText(Path.Combine(timing,"save-timing.txt"),line+Environment.NewLine);Console.WriteLine(line);
+        }
         // A path change invalidates the cached moving analysis rather than leaking old positions.
         var pathComponent=Find(doc,"BridgeStraightMovingPathComponent");var divisions=(Param_Integer)In(pathComponent,"Divisions");divisions.RemoveAllSources();divisions.SetPersistentData(path.Divisions+1);pathComponent.ExpireSolution(false);BridgeSegmentExcelTests.Solve(doc,true);
         Require(Values<ModelModel>(Out(moving,"Model")).Length==0&&Values<string>(Out(moving,"Cases")).Length==0,"Stale moving results survived changed input.");

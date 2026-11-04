@@ -26,7 +26,6 @@ internal static class GpcPilot
     static void Near(double a,double b,string name)=>Check(double.IsFinite(a)&&Math.Abs(a-b)<=Math.Max(1e-7,Math.Abs(b)*2e-8),name+" "+a.ToString("G12"));
     internal static int Run()
     {
-        StrausRuntime.EnsureInitialized();
         string reopen=Environment.GetEnvironmentVariable("GPC_PILOT_REOPEN"); if(!string.IsNullOrEmpty(reopen)) { BridgeMergeTests.Initialize(); return ReopenFolder(reopen); }
         string folder=Path.GetFullPath(Path.Combine("artifacts","f4","bridge-"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmss")));Directory.CreateDirectory(folder);
         var first=RunCase(folder,0); var reversed=RunCase(folder,1); Compare(first,reversed,false);

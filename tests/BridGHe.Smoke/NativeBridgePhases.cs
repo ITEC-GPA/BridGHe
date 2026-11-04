@@ -43,14 +43,17 @@ internal static class NativeBridgePhases
         var result=StrausAnalysis.Run(model,Path.Combine(folder,"moments.st7"),0,cases.Take(3).Select(c=>c.Name).ToArray(),1e-6,false,out var warnings);
         var actualBeam=result.Beams.Single();
         var recorder=new NativeExamples.Recorder();
-        int uid=StrausRuntime.AcquireModelId();
+        // F6A: read with the GPC Converter API (the model is written by the Converter; the former St7API binding cannot share the process).
+        string scratch=Path.Combine(Path.GetTempPath(),"bridghe-axes-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(scratch);
         try{
-            StrausRuntime.Check(St7API.St7.St7OpenFile(uid,Path.Combine(folder,"moments.st7"),Path.GetTempPath()),"Open native axes");
-            var axes=new double[9];StrausRuntime.Check(St7API.St7.St7GetBeamAxisSystemInitial(uid,1,axes),"Read native axes");
+            using var api=new GPC.Converter.Straus7.Straus7NativeApi();
+            api.OpenModelReadOnly(Path.GetFullPath(Path.Combine(folder,"moments.st7")),scratch);
+            var axes=api.ReadElement(GPC.Converter.Straus7.Straus7Entity.Beam,1).InitialAxes;
             recorder.Near("Native principal axis 1 along +Y",axes[1],1);
             recorder.Near("Native principal axis 2 along +Z",axes[5],1);
             recorder.Near("Native principal axis 3 along +X",axes[6],1);
-        }finally{St7API.St7.St7CloseFile(uid);StrausRuntime.ReleaseModelId(uid);}
+            api.CloseModel();
+        }finally{try{Directory.Delete(scratch,true);}catch(IOException){}catch(UnauthorizedAccessException){}}
         recorder.Near("Upward deflection for sagging tip couple [mm]",result.Nodes[1].Results.OfType<NodeDisplResultModel>().Single(r=>r.LoadCase.Name=="OnlySteel").Displacement.Z,1e6*3000*3000/(2*es*isSteel));
         actualBeam.Loads.Add(new CompositeBeamSlabStrainModel(cases[3],new(){Strain=-100e-6}));
         actualBeam.Loads.Add(new CompositeBeamSlabStrainModel(cases[4],new(){Strain=-50e-6}));

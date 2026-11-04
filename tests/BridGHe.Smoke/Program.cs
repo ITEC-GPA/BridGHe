@@ -266,7 +266,6 @@ internal static class Program
 
     private static void CheckNativeSections()
     {
-        StrausRuntime.EnsureInitialized();
         var previews=new System.Collections.Generic.List<object>();
         foreach(var shape in StrausSectionCatalog.All)
         {
@@ -314,6 +313,47 @@ internal static class Program
         var fixedEnd=result.Beams[0].Results.OfType<BeamForceResultModel>().OrderBy(r=>r.Station).First();
         Assert(Math.Abs(Math.Abs(fixedEnd.My)-force*length)<=force*length*1e-5,"native plane-2 cantilever moment FL");
         Assert(input.Beams[0].Results.Count==0,"native analysis does not mutate input results");
+        CheckNativeSectionAnalysis();
+        NativeExamples.CheckMovingLibrary();
+    }
+
+    /// <summary>F6A: a native Straus7 section in a kN-m model goes through the GPC Converter (re-resolved in mm from the model-unit
+    /// dimensions), with the analytic axial and bending response; a second run on the same path replaces the former files.</summary>
+    private static void CheckNativeSectionAnalysis()
+    {
+        const double length=3, force=10, modulus=2.1e8, b=0.2, d=0.4;
+        var native=new StrausSection { Key="RectangleSolid",Dimensions=new[]{b,d} }.Calculate();
+        Assert(Math.Abs(native.SectionArea-b*d)<=b*d*1e-12,"native section in model units: area B*D");
+        var loadCase=new LoadCaseModel("P","P");
+        var material=new MaterialModel("S355") { Name="S355",Modulus=modulus,PoissonRatio=0.3 };
+        var property=new BeamPropertyModel("NativeRect") { Name="NativeRect",Material=material,Section=native,PropertyType=BeamPropertyType.Beam };
+        var first=new NodeModel("N1",Point3d.Origin);first.Attributes.Add(new NodeRestraintAttributeModel(true,true,true,true,true,true));
+        var end=new NodeModel("N2",new Point3d(length,0,0));end.Loads.Add(new NodeForceLoadModel(loadCase,new Vector3d(force,0,-force)));
+        var beam=new BeamModel("1",first.Position,end.Position,property);
+        var input=new ModelModel(ModelModel.ModelUnits.Knm);input.LoadCases.Add(loadCase);input.AddElements(new ElementModel[]{first,end,beam});
+        string folder=Path.Combine("artifacts","native",Guid.NewGuid().ToString("N"));Directory.CreateDirectory(folder);
+        string path=Path.GetFullPath(Path.Combine(folder,"native-section.st7"));
+        for(int run=0;run<2;run++)
+        {
+            var result=StrausAnalysis.Run(input,path,0,new[]{"P"},1e-6,false,out _);
+            var u=result.Nodes.Single(n=>Math.Abs(n.Position.X-length)<1e-9).Results.OfType<NodeDisplResultModel>().Single().Displacement;
+            double axial=force*length/(modulus*b*d);
+            // Vertical bending about a principal axis, with the shear deformation of the native shear areas (Timoshenko):
+            // FL^3/(3EI) + FL/(G As), with the inertia and shear area pair that the native axes give.
+            double shearModulus=modulus/(2*1.3);
+            var candidates=new[]{(native.I11,native.ShearA2),(native.I22,native.ShearA1),(native.I11,native.ShearA1),(native.I22,native.ShearA2)}
+                .Select(p=>force*Math.Pow(length,3)/(3*modulus*p.Item1)+force*length/(shearModulus*p.Item2)).ToArray();
+            Assert(Math.Abs(u.X-axial)<=axial*1e-5,"native section axial elongation FL/(EA), run "+(run+1));
+            double match=candidates.OrderBy(c=>Math.Abs(-u.Z-c)).First();
+            Assert(Math.Abs(-u.Z-match)<=match*1e-4,$"native section tip deflection FL^3/(3EI)+FL/(G As) {-u.Z:G9} vs {match:G9} (candidates {string.Join(", ",candidates.Select(c=>c.ToString("G9")))}), run "+(run+1));
+            Assert(Math.Abs(native.I11*native.I22-b*d*d*d/12*d*b*b*b/12)<=1e-12*native.I11*native.I22*1e4,"native section inertias B*D^3/12 and D*B^3/12");
+        }
+        Assert(Directory.GetFiles(folder,"native-section.*").Length>=2,"rerun on the same path replaces the model and result files");
+        var report=new BridGHe.Common.Gpc.Legacy.LegacyImportReport();
+        var gpc=BridGHe.Common.Gpc.Legacy.LegacyModelImport.Import(BridGHe.Common.Gpc.Legacy.LegacyArchive.Read(ModelArchive.Write(input)),Guid.NewGuid(),1e-6,report);
+        var mapped=gpc.BeamElements.Values.Single();
+        Assert(report.NativeSections.TryGetValue(mapped.Guid,out var definition)&&Math.Abs(definition.ReferenceProperties[0]-b*d*1e6)<=b*d*1e6*1e-12,"legacy native section re-resolved in mm from model-unit dimensions");
+        Assert(Math.Abs(((GPC.Model.ElementProperties.ElasticBeamProperty)mapped.BeamProperty).Section.Area-b*d*1e6)<=b*d*1e6*1e-12,"GPC property from the resolved native section");
     }
 
     private static void CheckBridge()

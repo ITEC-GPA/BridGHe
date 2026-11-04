@@ -65,6 +65,28 @@ internal static class NativeExamples
         r.Near(name+" / My reaction [N mm]",Reaction(m,0,name).Moment.Y,-P*L*factor);
         r.Near(name+" / beam |My| [N mm]",Math.Abs(Force(m,0,name).My),P*L*Math.Abs(factor));
     }
+    /// <summary>F6A: a moving template from an installed Straus7 library is expanded by the Converter (N-mm) when the former model is
+    /// converted, as the former exporter assigned it; the export carries the expanded template and the moving analysis runs.</summary>
+    internal static void CheckMovingLibrary()
+    {
+        string library,item;
+        using(var api=new GPC.Converter.Straus7.Straus7NativeApi()){var entry=api.MovingLibraryCatalog().First(p=>p.Value.Length!=0);library=entry.Key;item=entry.Value[0];}
+        const double length=6000;var m=Beam(12,length,true);
+        m.MovingPaths.Add(new MovingPath{LoadCaseName="Traffic",Divisions=13,Target=2,Coordinates=new double[]{0,0,0,length,0,0,0,1000,0},ConvertToStaticCases=true,
+            Template=new MovingTemplate{Name="Library",LibraryName=library,LibraryItem=item}});
+        var report=new BridGHe.Common.Gpc.Legacy.LegacyImportReport();
+        var gpc=BridGHe.Common.Gpc.Legacy.LegacyModelImport.Import(BridGHe.Common.Gpc.Legacy.LegacyArchive.Read(ModelArchive.Write(m)),Guid.NewGuid(),1e-6,report);
+        var expected=GPC.Converter.Straus7.Straus7MovingLibrary.Resolve(library,item,Path.GetTempPath());
+        var template=gpc.MovingLoads.Paths.Single().Template;
+        if(template.Vehicles.Length==0||template.Vehicles.Length!=expected.Template.Vehicles.Length||template.LaneFactors.Length!=expected.Template.LaneFactors.Length)
+            throw new Exception("FAIL: library moving template not expanded: "+library+"/"+item);
+        Console.WriteLine($"PASS: library moving template {library}/{item} expanded by the Converter: {template.Vehicles.Length} vehicles, {template.LaneFactors.Length} lanes");
+        string folder=Path.GetFullPath(Path.Combine("artifacts","native",Guid.NewGuid().ToString("N")));Directory.CreateDirectory(folder);
+        BridGHe.Common.Gpc.Legacy.FemmAnalysisSeam.Export(m,Path.Combine(folder,"library.st7"),1e-6,new List<string>());
+        if(!File.Exists(Path.Combine(folder,"library.st7")))throw new Exception("FAIL: library moving template export");
+        Console.WriteLine("PASS: library moving template exported by the Converter writer");
+    }
+
     internal static IEnumerable<Example> Create()
     {
         {
@@ -162,7 +184,6 @@ internal static class NativeExamples
     }
     internal static int Run(string selected)
     {
-        StrausRuntime.EnsureInitialized();
         string runId=DateTime.Now.ToString("yyyyMMdd-HHmmssfff");
         string root=Path.Combine(ExamplePaths.Validation,"esecuzioni",runId);Directory.CreateDirectory(root);
         var reports=new List<object>();int failures=0,count=0;

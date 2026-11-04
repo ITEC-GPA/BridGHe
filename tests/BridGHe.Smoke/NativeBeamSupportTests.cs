@@ -5,7 +5,6 @@ using BridGHe.Common.Helpers;
 using BridGHe.Common.Models;
 using BridGHe.Common.Straus;
 using Rhino.Geometry;
-using St7API;
 
 internal static class NativeBeamSupportTests
 {
@@ -43,25 +42,25 @@ internal static class NativeBeamSupportTests
         beam.Attributes.Add(Support(BeamSupportAttributeModel.LocalAxisDirection.negative1Axis,30,true,.04));
         beam.Attributes.Add(Support(BeamSupportAttributeModel.LocalAxisDirection.positive2Axis,40,true,.05));
         string file=Path.Combine(folder,"four-directions.st7");
-        if(!StrausR3Helper.CreateModelR3(model,file,1e-6,out _,out _,out var errors))throw new Exception(string.Join(";",errors));
-        lock(StrausRuntime.Gate)
+        // F6A: export by the GPC Converter writer (export component path) and readback with the Converter API.
+        BridGHe.Common.Gpc.Legacy.FemmAnalysisSeam.Export(model,file,1e-6,new System.Collections.Generic.List<string>());
+        string scratch=Path.Combine(Path.GetTempPath(),"bridghe-support-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(scratch);
+        try
         {
-            int uid=StrausRuntime.AcquireModelId();bool open=false;
-            try
+            using var api=new GPC.Converter.Straus7.Straus7NativeApi();
+            api.OpenModelReadOnly(file,scratch);
+            foreach(var support in beam.Attributes.OfType<BeamSupportAttributeModel>())
             {
-                StrausRuntime.Check(St7.St7OpenFile(uid,file,Path.GetTempPath()),"Open support test");open=true;
-                foreach(var support in beam.Attributes.OfType<BeamSupportAttributeModel>())
-                {
-                    var expected=BeamSupportExport.Resolve(support.Value);int status=0;var data=new double[2];
-                    StrausRuntime.Check(St7.St7GetBeamSupport2(uid,1,expected.Direction,1,ref status,data),"Read beam support");
-                    checks.Near($"Direction {expected.Direction} stiffness",data[0],expected.Stiffness,0,0);
-                    checks.Near($"Direction {expected.Direction} gap",data[1],expected.Gap,0,1e-12);
-                    checks.Near($"Direction {expected.Direction} unilateral",status,expected.CompressionOnly?St7.btTrue:St7.btFalse,0,0);
-                    var clone=ModelArchive.Clone(support);if(!clone.Equals(support)||clone.GetHashCode()!=support.GetHashCode())throw new Exception("Support archive/copy lost its value or gap.");
-                }
+                var expected=BeamSupportExport.Resolve(support.Value);
+                var data=((GPC.Converter.Straus7.IStraus7PhysicalReadApi)api).ReadBeamSupport(1,expected.Direction,1,out bool compressionOnly);
+                checks.Near($"Direction {expected.Direction} stiffness",data[0],expected.Stiffness,0,0);
+                checks.Near($"Direction {expected.Direction} gap",data[1],expected.Gap,0,1e-12);
+                checks.Near($"Direction {expected.Direction} unilateral",compressionOnly?1:0,expected.CompressionOnly?1:0,0,0);
+                var clone=ModelArchive.Clone(support);if(!clone.Equals(support)||clone.GetHashCode()!=support.GetHashCode())throw new Exception("Support archive/copy lost its value or gap.");
             }
-            finally{if(open)St7.St7CloseFile(uid);StrausRuntime.ReleaseModelId(uid);}
+            api.CloseModel();
         }
+        finally{try{Directory.Delete(scratch,true);}catch(IOException){}catch(UnauthorizedAccessException){}}
         var invalid=Support(BeamSupportAttributeModel.LocalAxisDirection.positive3Axis,10);bool rejected=false;
         try{BeamSupportExport.Resolve(invalid.Value);}catch(NotSupportedException){rejected=true;}
         if(!rejected)throw new Exception("Longitudinal distributed support must be rejected.");

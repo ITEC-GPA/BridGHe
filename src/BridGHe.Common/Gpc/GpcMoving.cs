@@ -29,13 +29,16 @@ namespace BridGHe.Common.Gpc
                 string caseName = p.GetProperty("LoadCaseName").GetString();
                 if (!cases.TryGetValue(caseName, out var loadCase)) throw new ArgumentException("Caso mobile assente dal modello: " + caseName);
                 var t = p.GetProperty("Template");
-                if (!string.IsNullOrWhiteSpace(Text(t, "LibraryName"))) throw new NotSupportedException("LegacyMovingLibraryTemplateNeedsStraus7Resolution");
+                string library = Text(t, "LibraryName");
+                // Former exporter: a library item replaced the whole template (St7AssignLibraryLoadPathTemplate, values converted by
+                // Straus7 to the model units); here it is expanded once in N-mm by the Converter and stored with the model.
+                var resolved = string.IsNullOrWhiteSpace(library) ? null : ResolveLibrary(library, Text(t, "LibraryItem"));
                 int target = Int(p, "Target");
                 var path = new MovingLoadPath
                 {
                     Id = GpcIdentity.Derive(owner, "moving-path:" + (index++)),
                     CaseGuid = loadCase.Guid,
-                    Template = Template(t, units, model),
+                    Template = resolved == null ? Template(t, units, model) : GPC.Model.Core.ModelValues.CopyValue(resolved.Template),
                     Shape = (MovingPathShape)Range(Int(p, "Shape"), 2, "Shape"),
                     Surface = (MovingPathSurface)Range(Int(p, "Surface"), 1, "Surface"),
                     Target = target == 0 ? MovingPathTarget.AllStructuralElements : target == 2 ? MovingPathTarget.Beams : target == 3 ? MovingPathTarget.Shells
@@ -46,6 +49,18 @@ namespace BridGHe.Common.Gpc
                 if (c.Length != 9) throw new ArgumentException("MovingPathRequiresNineCoordinates");
                 path.Start = new Point3d(c[0], c[1], c[2]); path.End = new Point3d(c[3], c[4], c[5]); path.Reference = new Point3d(c[6], c[7], c[8]);
                 definition.Paths.Add(path);
+                if (resolved != null)
+                {
+                    foreach (var item in resolved.PreservedData)
+                        if (!model.PreservedSourceData.Any(r => r != null && r.Kind == item.Kind && r.SourceRecord == item.SourceRecord))
+                            model.PreservedSourceData.Add(new GPC.Model.Structure.Assignments.PreservedAssignment { Kind = item.Kind, SourceRecord = item.SourceRecord, RawData = item.RawData, UnsupportedReason = item.UnsupportedReason });
+                    stored.Add((path.Id, new Straus7MovingPathOptions
+                    {
+                        Colour = resolved.Options.Colour, TransitionTrailingLoad = resolved.Options.TransitionTrailingLoad, BeamLateralTolerance = resolved.Options.BeamLateralTolerance,
+                        RelativeTolerance = resolved.Options.RelativeTolerance, ConvertToStaticCases = Bool(p, "ConvertToStaticCases"),
+                    }));
+                    continue;
+                }
                 stored.Add((path.Id, new Straus7MovingPathOptions
                 {
                     Colour = Int(t, "Colour", 255), TransitionTrailingLoad = Bool(t, "TransitionLoad"), BeamLateralTolerance = Bool(t, "BeamLateralTolerance"),
@@ -127,6 +142,22 @@ namespace BridGHe.Common.Gpc
             }
             vehicle.PointForces = points.ToArray(); vehicle.DistributedForces = distributed.ToArray(); vehicle.HeatSources = heat.Count == 0 ? null : heat.ToArray();
             return vehicle;
+        }
+
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Straus7ResolvedMovingTemplate> libraries =
+            new System.Collections.Concurrent.ConcurrentDictionary<string, Straus7ResolvedMovingTemplate>(StringComparer.Ordinal);
+
+        /// <summary>Library template expanded by the Converter (one St7API session), cached per process by library and item.</summary>
+        private static Straus7ResolvedMovingTemplate ResolveLibrary(string library, string item)
+        {
+            if (string.IsNullOrWhiteSpace(item)) throw new ArgumentException("Elemento di libreria vuoto.");
+            return libraries.GetOrAdd(library + "|" + item, _ =>
+            {
+                string scratch = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "BridGHe", "moving-" + Guid.NewGuid().ToString("N"));
+                System.IO.Directory.CreateDirectory(scratch);
+                try { return Straus7MovingLibrary.Resolve(library, item, scratch); }
+                finally { try { System.IO.Directory.Delete(scratch, true); } catch (System.IO.IOException) { } catch (UnauthorizedAccessException) { } }
+            });
         }
 
         private static int Range(int value, int max, string name) => value >= 0 && value <= max ? value : throw new ArgumentException("LegacyMovingValueOutOfRange: " + name + "=" + value);

@@ -73,21 +73,21 @@ namespace BridGHe.Grasshopper.Components.Export
 
             if (_run)
             {
-                if (Common.Helpers.StrausR3Helper.CreateModelR3(Common.Helpers.ModelArchive.Clone(model.Value), outputPath, Settings.Instance.Tolerance,
-                        out int modelId, out List<string> warnings, out List<string> errors))
+                // F6A: written by the GPC Converter writer (domain preflight first); the former exporter is no longer used.
+                var warnings = new List<string>();
+                try
                 {
+                    Common.Gpc.Legacy.FemmAnalysisSeam.Export(model.Value, outputPath, Settings.Instance.Tolerance, warnings);
                     Message = "Done";
                 }
-                else
+                catch (Exception ex)
                 {
                     Message = "Error";
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message);
                 }
 
                 foreach (string warning in warnings)
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
-
-                foreach (string error in errors)
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, error);
 
                 _run = false;
             }

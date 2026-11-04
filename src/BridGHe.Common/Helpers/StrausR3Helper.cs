@@ -16,7 +16,7 @@ namespace BridGHe.Common.Helpers
 {
     public static class StrausR3Helper
     {
-        public static string[] Solvers = { "Linear Static", "Nonlinear Static", "Staged analysis" };
+        public static string[] Solvers => StrausAnalysis.Solvers;
 
         public static bool CreateModelR3(ModelModel model, string outputPath, double tolerance, out int modelId, out List<string> warnings, out List<string> errors)
         {

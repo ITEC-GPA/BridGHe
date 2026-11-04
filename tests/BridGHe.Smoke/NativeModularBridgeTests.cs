@@ -36,6 +36,8 @@ internal static class NativeModularBridgeTests
         string folder=Path.GetFullPath("artifacts/modular-bridge/native-"+Path.GetFileNameWithoutExtension(source));Directory.CreateDirectory(folder);
         byte[] original=File.ReadAllBytes(source),migrated=File.ReadAllBytes(candidate);
         using var doc=GrasshopperBridgeExample.Read(candidate);doc.FilePath=source;
+        // Diagnostics (BRIDGHE_SERIAL=1): the task-capable components solve their iterations serially.
+        if(Environment.GetEnvironmentVariable("BRIDGHE_SERIAL")=="1")foreach(var t in doc.Objects.OfType<IGH_TaskCapableComponent>())t.UseTasks=false;
         var analyses=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="StrausR3AnalysisComponent").OrderBy(c=>c.NickName).ToArray();
         if(analyses.Length!=4)throw new Exception("Expected four Straus phase models.");
         for(int i=0;i<analyses.Length;i++){var a=analyses[i];ClearAnalysis(a);SetText(a,"Output Path",Path.Combine(folder,$"{i+1:00}-"+a.NickName.Split(' ')[0]+".st7"));}
@@ -79,6 +81,10 @@ internal static class NativeModularBridgeTests
         var merge=doc.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="BuildBridgeModel");Press(merge);BridgeSegmentExcelTests.Solve(doc,true);
         var model=Values<ModelModel>(Output(merge,"Model")).SingleOrDefault();if(model?.BridgeWorkflow?.Phases.Length!=4)throw new Exception("Four-phase merge failed. Inputs: "+string.Join(", ",merge.Params.Input.Select(p=>p.Name+"="+p.VolatileDataCount))+"\n"+Errors(doc));
         ResultFingerprint.Mark("modular checks start");
+        // Diagnostics (BRIDGHE_WATCHDOG=1): every 15 s, the components still computing and the thread count.
+        if(Environment.GetEnvironmentVariable("BRIDGHE_WATCHDOG")=="1")
+            new System.Threading.Thread(()=>{while(true){System.Threading.Thread.Sleep(15000);try{var busy=doc.Objects.OfType<IGH_ActiveObject>().Where(o=>o.Phase==GH_SolutionPhase.Computing).Select(o=>((IGH_DocumentObject)o).GetType().Name+" '"+((IGH_DocumentObject)o).NickName+"'");
+                Console.WriteLine($"WATCHDOG {DateTime.Now:HH:mm:ss}: threads {System.Diagnostics.Process.GetCurrentProcess().Threads.Count}, pool {System.Threading.ThreadPool.ThreadCount}, pending {System.Threading.ThreadPool.PendingWorkItemCount}, lock contentions {System.Threading.Monitor.LockContentionCount}; computing: {string.Join(", ",busy)}");}catch(Exception e){Console.WriteLine("WATCHDOG "+e.Message);}}}){IsBackground=true}.Start();
         var checks=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="SuperElementCheckComponent").ToArray();
         foreach(var check in checks){Press(check);BridgeSegmentExcelTests.Solve(doc,true);}
         var rows=checks.SelectMany(check=>Values<BridgeStressResult>(Output(check,"Tension Check"))).ToArray();
