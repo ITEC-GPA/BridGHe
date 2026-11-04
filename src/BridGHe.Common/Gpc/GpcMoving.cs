@@ -91,7 +91,9 @@ namespace BridGHe.Common.Gpc
                     ForceUnit = Straus7CentrifugalExpression.ForceUnits[Range(Int(c, "ForceUnit"), 6, "ForceUnit")],
                     LimitFactor = Bool(c, "LimitK1"), MinimumFactor = Double(c, "MinimumK1", 0), MaximumFactor = Double(c, "MaximumK1", 0),
                 };
-                template.Centrifugal = expression.ToDomain(out var record);
+                // With the template (L10, decision 6 of 4/11): the R31 offset per force becomes N per vehicle (the writer writes it back as
+                // "O/measure"); without it a nonzero offset stayed verbatim (adapter-defined).
+                template.Centrifugal = expression.ToDomain(template, out var record);
                 if (record != null && !model.PreservedSourceData.Any(r => r.Kind == record.Kind && r.SourceRecord == record.SourceRecord)) model.PreservedSourceData.Add(record);
             }
             return template;

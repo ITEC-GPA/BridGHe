@@ -74,7 +74,8 @@ internal static class NativeModularBridgeTests
             foreach(string lc in cases)
             {
                 double femm=result.Nodes.SelectMany(n=>n.Results.OfType<NodeReactResultModel>()).Where(r=>r.LoadCase.Name==lc).Sum(r=>r.Force.Z);
-                double z=gpc.NodesElements.Values.Sum(n=>BridGHe.Common.Gpc.GpcResults.NodeReaction(n,lc)?[2]??0);
+                // Combinations by superposition of the primary cases (the datasets hold the primary cases), as the components.
+                double z=gpc.NodesElements.Values.Sum(n=>BridGHe.Common.Gpc.GpcResults.Combined(gpc,lc,c=>BridGHe.Common.Gpc.GpcResults.NodeReaction(n,c))?[2]??0);
                 if(Math.Abs(z-femm)>1e-9*Math.Max(1,Math.Abs(femm)))throw new Exception($"Analysed GPC reactions {lc}: {z:G17} vs {femm:G17} N.");
             }
             string path=Values<string>(Input(a,"Output Path")).Single();string log=Path.ChangeExtension(path,".LSL");
