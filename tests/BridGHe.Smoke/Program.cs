@@ -65,6 +65,9 @@ internal static class Program
         if(args.Contains("--migration-scale")) return MigrationScale.Run();
         if(args.Contains("--tidy-example")) return ExampleTidy.Run(args.SkipWhile(a=>a!="--tidy-example").Skip(1).FirstOrDefault(),args.Contains("--publish"),args.Contains("--capture"));
         if(args.Contains("--migrate-bridge-examples")) return BridgeExampleMigration.Run(args.SkipWhile(a=>a!="--migrate-bridge-examples").Skip(1).FirstOrDefault(a=>!a.StartsWith("--")),args.Contains("--publish"));
+#if GPC_PILOT
+        if(args.Contains("--legacy-beam-results")) { var r=args.SkipWhile(a=>a!="--legacy-beam-results").Skip(1).ToArray(); return LegacySectionDump.BeamResults(r[0],r[1],r.Length>2?r[2]:null); }
+#endif
         if(args.Contains("--modular-bridge-native")) return NativeModularBridgeTests.Run(args.SkipWhile(a=>a!="--modular-bridge-native").Skip(1).FirstOrDefault());
         if(args.Contains("--modular-layout-capture")) return Example50HorizontalLayout.CaptureModular();
         if(args.Contains("--example99")) return PersonalBridgeExample.Run(args.SkipWhile(a => a != "--example99").Skip(1).FirstOrDefault() ?? "inspect");

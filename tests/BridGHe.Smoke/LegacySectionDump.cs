@@ -22,5 +22,20 @@ internal static class LegacySectionDump
         }
         return 0;
     }
+
+    /// <summary>--legacy-beam-results &lt;bgmodel&gt; &lt;beam id&gt; [case]: the beam force results of a former model archive, read as data.</summary>
+    internal static int BeamResults(string path, string beamId, string caseName)
+    {
+        // Diagnostic only (tests): the former FeMM classes read the archive (the data reader limits the size of a payload).
+        var model = BridGHe.Common.Helpers.ModelArchive.Read<BridGHe.Common.Models.ModelModel>(File.ReadAllBytes(path));
+        string G(double v) => v.ToString("R", CultureInfo.InvariantCulture);
+        foreach (var b in model.Beams.Where(b => b.BeamId == beamId))
+        {
+            Console.WriteLine($"BEAM {beamId} length {G(b.PointFrom.DistanceTo(b.PointTo))}");
+            foreach (var r in b.Results.OfType<BridGHe.Common.Models.BeamForceResultModel>().Where(r => caseName == null || r.LoadCase.Name == caseName).OrderBy(r => r.Station))
+                Console.WriteLine($"  {r.LoadCase.Name} station {G(r.Station)} N {G(r.AxialForce)} SF {G(r.ShearForce.X)} {G(r.ShearForce.Y)} BM {G(r.BendingMoment.X)} {G(r.BendingMoment.Y)}");
+        }
+        return 0;
+    }
 }
 #endif
