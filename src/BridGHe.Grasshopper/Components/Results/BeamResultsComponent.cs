@@ -59,17 +59,18 @@ namespace BridGHe.Grasshopper.Components.Results
             List<double> axialForces = new List<double>();
             List<double> torques = new List<double>();
             // F6 C4: the analysed GPC element when Decompose Model linked it (the rows the analysis wrote, bit for bit); the FEM results otherwise.
+            static double Z(double v) => Common.Gpc.GpcResultRows.Shown(v);
             var catalog = beam.AnalysedGpc is GPC.Model.Elements.BeamElement ? Common.Gpc.GpcResultCatalog.Of(beam.AnalysedGpcModel) : null;
             if (catalog != null)
                 foreach (var row in Common.Gpc.GpcResultRows.Beam(catalog, beam.AnalysedGpcModel, (GPC.Model.Elements.BeamElement)beam.AnalysedGpc))
                 {
                     lc.Add(catalog.Entries[row.Entry].Label);
                     steps.Add(0);
-                    stations.Add(row.Station);
-                    shearForces.Add(new Vector2d(row.Shear1, row.Shear2));
-                    bendingMoments.Add(new Vector2d(row.Bending1, row.Bending2));
-                    axialForces.Add(row.Axial);
-                    torques.Add(row.Torque);
+                    stations.Add(Z(row.Station));
+                    shearForces.Add(new Vector2d(Z(row.Shear1), Z(row.Shear2)));
+                    bendingMoments.Add(new Vector2d(Z(row.Bending1), Z(row.Bending2)));
+                    axialForces.Add(Z(row.Axial));
+                    torques.Add(Z(row.Torque));
                 }
             else foreach (BeamForceResultModel result in beam.Value.Where(r => r is BeamForceResultModel).Cast<BeamForceResultModel>())
             {

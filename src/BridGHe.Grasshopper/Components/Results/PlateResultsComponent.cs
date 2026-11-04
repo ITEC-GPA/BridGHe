@@ -74,15 +74,16 @@ namespace BridGHe.Grasshopper.Components.Results
             List<double> sf_max = new List<double>();
             List<double> sf_ang = new List<double>();
             // F6 C4: the analysed GPC element when Decompose Model linked it (the rows the analysis wrote, bit for bit); the FEM results otherwise.
+            static double Z(double v) => Common.Gpc.GpcResultRows.Shown(v);
             var catalog = plate.AnalysedGpc is GPC.Model.Elements.AreaElement ? Common.Gpc.GpcResultCatalog.Of(plate.AnalysedGpcModel) : null;
             if (catalog != null)
                 foreach (var row in Common.Gpc.GpcResultRows.Plate(catalog, plate.AnalysedGpcModel, (GPC.Model.Elements.AreaElement)plate.AnalysedGpc))
                 {
                     var v = row.Values;
                     lc.Add(catalog.Entries[row.Entry].Label); steps.Add(0); nodes.Add(row.Node);
-                    forces.Add(new Vector3d(v[0], v[1], v[2])); fmax.Add(row.ForceMax); fmin.Add(row.ForceMin); fang.Add(row.ForceAngle); fvm.Add(row.ForceVonMises);
-                    moments.Add(new Vector3d(v[5], v[6], v[7])); mmax.Add(row.MomentMax); mmin.Add(row.MomentMin); mang.Add(row.MomentAngle);
-                    shearForces.Add(new Vector2d(v[3], v[4])); sf_max.Add(double.NaN); sf_ang.Add(double.NaN);
+                    forces.Add(new Vector3d(Z(v[0]), Z(v[1]), Z(v[2]))); fmax.Add(Z(row.ForceMax)); fmin.Add(Z(row.ForceMin)); fang.Add(Z(row.ForceAngle)); fvm.Add(Z(row.ForceVonMises));
+                    moments.Add(new Vector3d(Z(v[5]), Z(v[6]), Z(v[7]))); mmax.Add(Z(row.MomentMax)); mmin.Add(Z(row.MomentMin)); mang.Add(Z(row.MomentAngle));
+                    shearForces.Add(new Vector2d(Z(v[3]), Z(v[4]))); sf_max.Add(double.NaN); sf_ang.Add(double.NaN);
                 }
             else foreach (ResultModel result in plate.Value)
             {

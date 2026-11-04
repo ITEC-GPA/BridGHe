@@ -51,7 +51,9 @@ internal static class ResultsComponentsCheck
         string[] components = { "NodeResultsComponent", "BeamResultsComponent", "PlateResultsComponent" };
         string[] types = { "GH_NodeResults", "GH_BeamResults", "GH_PlateResults" };
         var gpcSide = new GH_Component[3]; var femSide = new GH_Component[3];
-        for (int k = 0; k < 3; k++)
+        // A component without input warns that it collected no data: only the element types the model has are checked.
+        var present = Enumerable.Range(0, 3).Where(k => elements[k].Length > 0).ToArray();
+        foreach (int k in present)
         {
             gpcSide[k] = Make(components[k]); femSide[k] = Make(components[k]);
             var resultType = assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem." + types[k], true);
@@ -71,7 +73,7 @@ internal static class ResultsComponentsCheck
             gpcInput.ExpireSolution(false); femInput.ExpireSolution(false);
         }
         document.NewSolution(false, GH_SolutionMode.Silent);
-        for (int k = 0; k < 3; k++)
+        foreach (int k in present)
         {
             foreach (var c in new[] { gpcSide[k], femSide[k] })
                 Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count == 0 && c.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Count == 0,
@@ -91,8 +93,7 @@ internal static class ResultsComponentsCheck
             }
         }
         // Each element type with elements must have produced values (an empty comparison proves nothing).
-        for (int k = 0; k < 3; k++)
-            if (elements[k].Length > 0)
+        foreach (int k in present)
                 Require(Enumerable.Range(0, femSide[k].Params.Output.Count).Sum(o => femSide[k].Params.Output[o].VolatileData.DataCount) > 0, components[k] + ": FEM results present");
         var outcome = new Outcome(elements[0].Length, elements[1].Length, elements[2].Length, values);
         Console.WriteLine($"RESULTS GPC PASS ({label}): {outcome.Nodes} nodes, {outcome.Beams} beams, {outcome.Plates} plates, {outcome.Values} output values identical bit for bit (GPC element vs FEM results).");

@@ -60,13 +60,14 @@ namespace BridGHe.Grasshopper.Components.Results
             List<Vector3d> forces = new List<Vector3d>();
             List<Vector3d> moments = new List<Vector3d>();
             // F6 C4: the analysed GPC element when Decompose Model linked it (the rows the analysis wrote, bit for bit); the FEM results otherwise.
+            static double Z(double v) => Common.Gpc.GpcResultRows.Shown(v);
             var catalog = node.AnalysedGpc is GPC.Model.Elements.NodeElement ? Common.Gpc.GpcResultCatalog.Of(node.AnalysedGpcModel) : null;
             if (catalog != null)
                 foreach (var row in Common.Gpc.GpcResultRows.Node(catalog, node.AnalysedGpcModel, (GPC.Model.Elements.NodeElement)node.AnalysedGpc))
                 {
                     string name = catalog.Entries[row.Entry].Label; var d = row.Displacement; var r = row.Reaction;
-                    if (d != null) { lcD.Add(name); stepsD.Add(0); displacements.Add(new Vector3d(d[0], d[1], d[2])); rotations.Add(new Vector3d(d[3], d[4], d[5])); }
-                    if (r != null) { lcF.Add(name); stepsF.Add(0); forces.Add(new Vector3d(r[0], r[1], r[2])); moments.Add(new Vector3d(r[3], r[4], r[5])); }
+                    if (d != null) { lcD.Add(name); stepsD.Add(0); displacements.Add(new Vector3d(Z(d[0]), Z(d[1]), Z(d[2]))); rotations.Add(new Vector3d(Z(d[3]), Z(d[4]), Z(d[5]))); }
+                    if (r != null) { lcF.Add(name); stepsF.Add(0); forces.Add(new Vector3d(Z(r[0]), Z(r[1]), Z(r[2]))); moments.Add(new Vector3d(Z(r[3]), Z(r[4]), Z(r[5]))); }
                 }
             else foreach (ResultModel result in node.Value)
             {

@@ -121,6 +121,11 @@ namespace BridGHe.Common.Gpc
             public double ForceMax, ForceMin, ForceAngle, ForceVonMises, MomentMax, MomentMin, MomentAngle;
         }
 
+        /// <summary>A value as the Results components showed it from the FEM results, whose copies (the BGHA1 archive of the GH data)
+        /// write −0 as 0: zero without sign, every other value unchanged bit for bit. Only for the component outputs; the analysis writes
+        /// the rows unchanged into the FEM results.</summary>
+        public static double Shown(double value) => value == 0 ? 0.0 : value;
+
         private static bool IsCombination(Model solved, GpcResultCatalog.Entry e) => e.Step == null && e.Phase == null && solved.Combinations.ContainsKey(e.Case);
 
         public static IEnumerable<NodeRow> Node(GpcResultCatalog catalog, Model solved, NodeElement node)
