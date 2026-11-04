@@ -30,6 +30,7 @@ internal static class GpcLegacyImportTests
         Units(ModelModel.ModelUnits.Nmm, 1, 1);
         Units(ModelModel.ModelUnits.Knm, 1000, 1000);
         Schemas();
+        Archives();
         Console.WriteLine($"GPC LEGACY IMPORT PASS: {checks} checks (units, nodes, restraint frames, rigid links, beam axes, I order, sections, loads, cases, combinations, write plan).");
     }
 
@@ -139,6 +140,28 @@ internal static class GpcLegacyImportTests
     }
 
     /// <summary>The six distributions decomposed into linear pieces: each piece reproduces the native law at its ends.</summary>
+    /// <summary>GH data archive (BGHGPC1): GPC values and models round trip with their fingerprint; legacy payloads and foreign or
+    /// corrupted bytes are recognised and refused, never read as GPC data.</summary>
+    private static void Archives()
+    {
+        var material = new GPC.Model.Materials.Material("S355", 210000, 0.3, 7.85e-9, 1.2e-5);
+        var bytes = GpcGooArchive.Value(material); var copy = GpcGooArchive.ReadValue<GPC.Model.Materials.Material>(bytes);
+        Assert(GpcGooArchive.IsGpc(bytes) && !GpcGooArchive.IsLegacy(bytes), "GH archive header");
+        Assert(copy.Name == "S355" && copy.E == 210000 && copy.Ni == 0.3 && copy.Density == 7.85e-9 && copy.AlfaThermalExpansion == 1.2e-5, "GH archive: material values");
+        Assert(GPC.Model.Core.ModelValues.Fingerprint(new object[] { copy }) == GPC.Model.Core.ModelValues.Fingerprint(new object[] { material }), "GH archive: material fingerprint");
+        var legacy = new ModelModel(ModelModel.ModelUnits.Nmm); var node = new NodeModel("1", new R.Point3d(0, 0, 0)); legacy.AddElements(new ElementModel[] { node });
+        var model = Import(legacy, out _); var modelBytes = GpcGooArchive.Model(model); var reopened = GpcGooArchive.ReadModel(modelBytes);
+        Assert(GPC.Model.Models.ModelRevisions.AnalysisFingerprint(reopened) == GPC.Model.Models.ModelRevisions.AnalysisFingerprint(model) && reopened.NodesElements.Count == 1, "GH archive: model fingerprint");
+        bool Refused(Action read) { try { read(); return false; } catch (System.Runtime.Serialization.SerializationException) { return true; } }
+        var payload = ModelArchive.Write(new MaterialModel("M") { Name = "M", Modulus = 1 });
+        Assert(GpcGooArchive.IsLegacy(payload) && Refused(() => GpcGooArchive.ReadValue<GPC.Model.Materials.Material>(payload)), "GH archive: legacy payload recognised and refused");
+        Assert(Refused(() => GpcGooArchive.ReadModel(bytes)), "GH archive: kind mismatch refused");
+        var version = (byte[])bytes.Clone(); version[7] = 9; Assert(Refused(() => GpcGooArchive.ReadValue<GPC.Model.Materials.Material>(version)), "GH archive: unknown version refused");
+        Assert(Refused(() => GpcGooArchive.ReadValue<GPC.Model.Materials.Material>(new byte[] { 1, 2, 3 })), "GH archive: foreign bytes refused");
+        bool Fails(Action read) { try { read(); return false; } catch (Exception) { return true; } }
+        Assert(Fails(() => GpcGooArchive.ReadValue<GPC.Model.Materials.Material>(bytes.Take(bytes.Length / 2).ToArray())), "GH archive: truncated data refused");
+    }
+
     private static void Schemas()
     {
         const double pa = 3, pb = 5, p1 = 1, p2 = 7, a = 0.2, b = 0.3;
