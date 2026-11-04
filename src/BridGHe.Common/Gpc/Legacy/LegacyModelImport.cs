@@ -514,9 +514,14 @@ namespace BridGHe.Common.Gpc.Legacy
             {
                 if (angle != 0) throw new NotSupportedException("LegacyStandardSectionWithPrincipalAngleNotMappedYet");
                 section = GpcSections.Standard(kind, sectionName, L("D"), L("B"), L("B1"), L("B2"), L("T"), L("T1"), L("T2"), L("T3"));
-                // Shear areas from the GPC section geometry (user decision C2; Straus7 no longer derives them).
-                string key = kind + "/" + string.Join(",", new[] { "D", "B", "B1", "B2", "T", "T1", "T2", "T3" }.Select(f => s.Double(f).ToString("R"))) + "/" + material.Ni.ToString("R");
-                if (!shearAreas.TryGetValue(key, out var areas)) shearAreas.Add(key, areas = GPC.Converter.SectionShearAreas.Compute(section, material.Ni));
+                // Shear areas from the GPC section geometry (user decision C2; Straus7 no longer derives them): De Saint Venant at nu = 0
+                // (user decision 4/11, public GPCModel API of L6), so they depend on the geometry only.
+                string key = kind + "/" + string.Join(",", new[] { "D", "B", "B1", "B2", "T", "T1", "T2", "T3" }.Select(f => s.Double(f).ToString("R")));
+                if (!shearAreas.TryGetValue(key, out var areas))
+                {
+                    var computed = GPC.Model.Sections.SectionShearAreas.Compute(section);
+                    shearAreas.Add(key, areas = (computed.Area1, computed.Area2));
+                }
                 (shear1, shear2) = areas;
             }
             var property = new ElasticBeamProperty(Unique(model, propertyName), material, section, shear1, shear2);

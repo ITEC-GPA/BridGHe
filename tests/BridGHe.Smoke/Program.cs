@@ -30,6 +30,7 @@ internal static class Program
             if(args.Contains("--legacy-export")) return LegacyExportComparison.Run(args);
             if(args.Contains("--legacy-results-compare")) return LegacyResultsComparison.Run(args);
             if(args.Contains("--st7-beam")) return St7BeamProbe.Run(args);
+            if(args.Contains("--legacy-sections")) return LegacySectionDump.Run(args.SkipWhile(a=>a!="--legacy-sections").Skip(1).First());
             if(args.Contains("--legacy-capture-compare")) return LegacyNativeExamplesComparison.CompareCapture(args.SkipWhile(a=>a!="--legacy-capture-compare").Skip(1).First());
             if(args.Contains("--legacy-examples-compare")) return LegacyNativeExamplesComparison.Compare(args.SkipWhile(a=>a!="--legacy-examples-compare").Skip(1).First());
 #endif
