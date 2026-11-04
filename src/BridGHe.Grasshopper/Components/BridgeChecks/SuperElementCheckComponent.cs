@@ -142,21 +142,23 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     (double psiInfinite, double psiInstant, double psiShrinkage)[][] psis = new (double psiInfinite, double psiInstant, double psiShrinkage)[beams.Count][];
 
                     // F6 C5: with the GPC bridge model of Build Bridge Model the sections are checked by the GPC workflow executor (D3, one prepared plan
-                    // per recipe) on the GPC results; BridGHe's own phases otherwise. D3 has no per-beam "consider concrete" of the cases path: such a
-                    // model stays on BridGHe's phases (R3, open). F6 (a)/(b), R1/R2/R4: on the D3 path the stations and the forces output come from the
+                    // per recipe) on the GPC results; BridGHe's own phases otherwise. F6 (a)/(b), R3: on the path by cases a composite property with
+                    // "Consider Concrete" off excludes the concrete of its beam in the long-term, short-term and shrinkage increments (a copy of the D3
+                    // recipe with ConcreteExcludedBeamGuids, as BridGHe's phases with concrete off). R1/R2/R4: on the D3 path the stations and the forces output come from the
                     // merged samples of the GPC bridge model (the numbers of the former result objects), never from the FEM results of the beams; a beam
                     // that is not in the GPC bridge model is an error, not a fallback.
                     var gpcBridge = model.GpcBridge;
                     bool workflowPath = model.Value.BridgeWorkflow?.Method == BridgeWorkflowMethod.LinearHistory ||
                         model.Value.BridgeWorkflow?.Phases.Any(p => p.Actions.Any(a => a.HasLocalSectionStates)) == true;
                     Common.Checks.GpcBridgeChecks d3 = null;
-                    if (gpcBridge != null && model.Value.BridgeWorkflow != null && (workflowPath || beams.All(b => b.Value.StartBeamProperty.ConsiderConcrete)))
+                    if (gpcBridge != null && model.Value.BridgeWorkflow != null)
                     {
-                        d3 = new Common.Checks.GpcBridgeChecks(gpcBridge, model.Value);
+                        var excluded = workflowPath ? null : beams.Where(b => !b.Value.StartBeamProperty.ConsiderConcrete).Select(b => b.Value.BeamId).ToArray();
+                        d3 = new Common.Checks.GpcBridgeChecks(gpcBridge, model.Value, excluded);
                         var missing = beams.Where(b => !d3.Has(b.Value.BeamId) || gpcBridge.SamplesOf(b.Value.BeamId) == null).Select(b => b.Value.BeamId).ToArray();
                         if (missing.Length > 0) throw new InvalidOperationException("Travi assenti dal modello di ponte GPC: " + string.Join(", ", missing));
                     }
-                    if (gpcBridge != null && d3 == null) AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, "Verifiche con le fasi BridGHe: calcestruzzo escluso per trave.");
+                    if (gpcBridge != null && d3 == null) AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, "Verifiche con le fasi BridGHe: modello di ponte GPC senza ricetta.");
                     IReadOnlyList<(string Case, BeamForceSample Sample)> GpcSamples(GH_CompositeBeam b) => d3 != null ? gpcBridge.SamplesOf(b.Value.BeamId) : null;
 
                     for (int i = 0; i < beams.Count; i++)

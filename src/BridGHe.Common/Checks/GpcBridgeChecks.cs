@@ -25,6 +25,8 @@ namespace BridGHe.Common.Checks
     public sealed class GpcBridgeChecks
     {
         private static readonly ConditionalWeakTable<BridgeWorkflowDefinition, BridgeWorkflowPlan> plans = new ConditionalWeakTable<BridgeWorkflowDefinition, BridgeWorkflowPlan>();
+        /// <summary>R3: the recipe copies with concrete excluded on given beams, per recipe and set of beams (one plan each).</summary>
+        private static readonly ConditionalWeakTable<BridgeWorkflowDefinition, Dictionary<string, BridgeWorkflowDefinition>> excludedRecipes = new ConditionalWeakTable<BridgeWorkflowDefinition, Dictionary<string, BridgeWorkflowDefinition>>();
         private readonly FemmBridgeSeam.Bridge bridge;
         private readonly BridgeWorkflowPlan plan;
         private readonly Dictionary<string, (BeamElement Beam, CoordinateSystem Principal, double[] Stations, string Fingerprint)> beams;
@@ -32,10 +34,14 @@ namespace BridGHe.Common.Checks
         private readonly IReadOnlyDictionary<Guid, double>[] factors;
         private readonly string[] assumptions;
 
-        public GpcBridgeChecks(FemmBridgeSeam.Bridge bridge, ModelModel merged)
+        /// <param name="concreteExcludedBeamIds">F6 (a)/(b), R3: the beams whose composite property has «Consider Concrete» off on the path by
+        /// cases (Compatible without local states): their long-term, short-term and shrinkage increments are checked on the concrete-excluded
+        /// section, as BridGHe's phases did (BridgeCheckAdapter.GetLinearAnalysisResultByStages with concrete off):
+        /// a copy of the recipe with these beams in <see cref="BridgeWorkflowActionDefinition.ConcreteExcludedBeamGuids"/> of those actions.</param>
+        public GpcBridgeChecks(FemmBridgeSeam.Bridge bridge, ModelModel merged, IReadOnlyCollection<string> concreteExcludedBeamIds = null)
         {
             this.bridge = bridge ?? throw new ArgumentNullException(nameof(bridge));
-            var model = bridge.Model; var workflow = bridge.Workflow;
+            var model = bridge.Model; var workflow = Excluding(bridge.Workflow, model, concreteExcludedBeamIds);
             plan = plans.GetValue(workflow, w => BridgeWorkflowExecutor.Prepare(w, model, new[] { model }));
             var caseName = model.LoadCases.Values.ToDictionary(c => c.Guid, c => c.Name);
             var caseGuid = model.LoadCases.Values.ToDictionary(c => c.Name, c => c.Guid, StringComparer.Ordinal);
@@ -57,6 +63,29 @@ namespace BridGHe.Common.Checks
         }
 
         public bool Has(string beamId) => beams.ContainsKey(beamId);
+
+        private static BridgeWorkflowDefinition Excluding(BridgeWorkflowDefinition workflow, GPC.Model.Models.Model model, IReadOnlyCollection<string> beamIds)
+        {
+            if (beamIds == null || beamIds.Count == 0) return workflow;
+            var ids = beamIds.Distinct(StringComparer.Ordinal).OrderBy(i => i, StringComparer.Ordinal).ToArray();
+            var cache = excludedRecipes.GetValue(workflow, _ => new Dictionary<string, BridgeWorkflowDefinition>(StringComparer.Ordinal));
+            string key = string.Join("|", ids);
+            lock (cache)
+            {
+                if (cache.TryGetValue(key, out var known)) return known;
+                var guids = model.BeamElements.Values.ToDictionary(b => b.Source.OriginalId, b => b.Guid, StringComparer.Ordinal);
+                var excluded = ids.Select(i => guids.TryGetValue(i, out var g) ? g : throw new ArgumentException("GpcBridgeExcludedBeamNotInModel: " + i)).ToHashSet();
+                var copy = BridgeWorkflowDefinition.Read(workflow.Save());
+                foreach (var a in copy.Phases.SelectMany(p => p.Actions))
+                {
+                    if (a.Behavior == GPC.Checkers.CompositeBridge.BridgeActionBehavior.Steel) continue;
+                    var applies = a.BeamGuids.Length == 0 ? excluded : excluded.Where(a.BeamGuids.Contains).ToHashSet();
+                    a.ConcreteExcludedBeamGuids = a.ConcreteExcludedBeamGuids.Union(applies).OrderBy(g => g).ToArray();
+                }
+                cache.Add(key, copy);
+                return copy;
+            }
+        }
 
         /// <summary>The checks of one section for every combination of the merged model, in their order.</summary>
         /// <param name="stationMm">The BridGHe station (distance from the start of the beam); the evaluation uses the dataset station nearest to it.</param>
