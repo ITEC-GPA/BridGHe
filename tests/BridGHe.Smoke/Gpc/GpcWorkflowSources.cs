@@ -9,34 +9,38 @@ using GPC.Model.Elements;
 /// <see cref="BridgeWorkflowTests.Source"/> (two parallel 10 m beams B0 and B1, 2 m apart, case G with axial force and bending at three
 /// stations) and of its variants. They are the analysed GPC models a Bridge Action carries (<c>BridgeActionDefinition.GpcSource</c>), read by
 /// the GPC paths of Build BridGHe Model (merge from the GPC rows) and of the support reactions.
+/// <para>The beams have their end nodes (the GPC result mapper needs them; the FEM fixture has none, and no consumer of these tests reads
+/// them): nodes 1, 2 for B0 and 3, 4 for B1.</para>
 /// </summary>
 internal static class GpcWorkflowSources
 {
-    /// <summary>The GPC form of <see cref="BridgeWorkflowTests.Source"/>: N = force + i, BM2 (My) = force·1000·(1 + x) at x = 0, ½, 1.</summary>
-    /// <param name="reaction">Vertical support reaction of case G at every beam end node (null: no nodes, as the FEM fixture).</param>
-    /// <param name="change">Last changes before the analysis (samples removed or added).</param>
+    /// <summary>The GPC form of <see cref="BridgeWorkflowTests.Source"/>: N = force + i, BM2 (My) = force·1000·(1 + x/L) at x = 0, L/2, L.</summary>
+    /// <param name="reaction">Vertical support reaction of case G at the beam end nodes (null: none, as the FEM fixture).</param>
+    /// <param name="change">Last changes before the analysis (samples or loads added).</param>
+    /// <param name="stations">Stations of the samples (mm from the beam start), the same on both beams.</param>
+    /// <param name="values">The six actions (N, SF1, SF2, T, BM1, BM2) of beam i at station x.</param>
     /// <param name="reactionAt">Nodes (1-based) that get the reaction (null: all).</param>
+    /// <param name="reversed">Beams and samples stored in the reverse order (B1 first, last station first).</param>
     internal static GPC.Model.Models.Model Source(string name, double force, double? reaction = null, Action<GpcTestModel, BeamElement[], NodeElement[]> change = null,
-        IReadOnlyList<double> stations = null, Func<int, double, double[]> values = null, Func<int, bool> reactionAt = null)
+        IReadOnlyList<double> stations = null, Func<int, double, double[]> values = null, Func<int, bool> reactionAt = null, bool reversed = false)
     {
         var test = new GpcTestModel(name); test.Case("G");
         var beams = new BeamElement[2];
         var nodes = new List<NodeElement>();
-        for (int i = 0; i < 2; i++)
+        foreach (int i in reversed ? new[] { 1, 0 } : new[] { 0, 1 })
         {
-            if (reaction.HasValue)
-            {
-                var a = test.Node((nodes.Count + 1).ToString(), 0, i * 2000, 0); nodes.Add(a);
-                var b = test.Node((nodes.Count + 1).ToString(), 10000, i * 2000, 0); nodes.Add(b);
-                beams[i] = test.Beam("B" + i, a, b);
-            }
-            else beams[i] = test.Beam("B" + i, 0, i * 2000, 0, 10000, i * 2000, 0);
-            foreach (double x in stations ?? new[] { 0d, 5000, 10000 })
+            var a = test.Node((nodes.Count + 1).ToString(), 0, i * 2000, 0); nodes.Add(a);
+            var b = test.Node((nodes.Count + 1).ToString(), 10000, i * 2000, 0); nodes.Add(b);
+            beams[i] = test.Beam("B" + i, a, b);
+        }
+        var grid = (stations ?? new[] { 0d, 5000, 10000 }).ToArray();
+        if (reversed) Array.Reverse(grid);
+        foreach (int i in reversed ? new[] { 1, 0 } : new[] { 0, 1 })
+            foreach (double x in grid)
             {
                 var v = values?.Invoke(i, x) ?? new[] { force + i, 0, 0, 0, 0, force * 1000 * (1 + x / 10000) };
                 test.Forces(beams[i], "G", x, v[0], v[1], v[2], v[3], v[4], v[5]);
             }
-        }
         if (reaction.HasValue) foreach (var n in nodes.Where(n => reactionAt?.Invoke(n.Id) ?? true)) test.Reaction(n, "G", 0, 0, reaction.Value);
         change?.Invoke(test, beams, nodes.ToArray());
         return test.Analyse();
