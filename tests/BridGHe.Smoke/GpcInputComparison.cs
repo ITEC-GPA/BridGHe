@@ -49,6 +49,8 @@ internal static class GpcInputComparison
         foreach (var p in model.AreaElements.Values) { expected.AreaElements.TryGetValue(p.Id, out var x); Correspond(p, x, "plate"); }
         if (source != null && model.AllElements.Any(e => !source.Model.AllElements.Any(s => s.Guid == e.Guid))) Fail("an element GUID is not one of the source");
         RequireReport(label, attached.Report, report, g => map.TryGetValue(g, out var m) ? m : g);
+        // L12: the bridge data, beam by beam in numbering order (the keys are the GUIDs of each model).
+        RequireBridge(label, model, attached.Bridge, expected, report.Bridge, false);
         // The fingerprints complete the lazy values the graph writes (e.g. the outline of a section whose shear areas the conversion took from
         // another property with the same dimensions), as Require does before its document.
         model.AnalysisFingerprint(); expected.AnalysisFingerprint();
@@ -157,15 +159,16 @@ internal static class GpcInputComparison
     /// <summary>The owner of the element identities of a converted (or copied) model: the model revision of its element sources.</summary>
     internal static Guid ElementOwner(Model m) => Guid.Parse(m.AllElements.First().Source.ModelRevision);
 
-    /// <param name="canonical">Applied to both models before they are compared (e.g. <see cref="CanonicalSectionStates"/>).</param>
-    internal static string Require(string label, GpcModels.Conversion attached, ModelModel fem, double tolerance, Func<Model, Model> canonical = null)
+    /// <param name="canonicalStates">The local section states compared as current or stale (<see cref="BridgeText"/>).</param>
+    internal static string Require(string label, GpcModels.Conversion attached, ModelModel fem, double tolerance, bool canonicalStates = false)
     {
         void Fail(string what) => throw new Exception("GPC INPUT FAIL (" + label + "): " + what);
         var model = attached.Model; var owner = ElementOwner(model);
         if (owner == model.Guid) Fail("the transformed model has the model GUID of its source");
         var expected = GPC.Model.Core.ModelValues.Copy(Conversion(fem, tolerance, owner, out var report), GPC.Model.Core.ModelCopyOptions.None, model.Guid);
         RequireReport(label, attached.Report, report);
-        if (canonical != null) { model = canonical(model); expected = canonical(expected); }
+        // L12: the bridge data (same beam GUIDs as the conversion with the same owner).
+        RequireBridge(label, model, attached.Bridge, expected, report.Bridge, canonicalStates);
         var parts = GpcBridgeComparison.PartsDiffer(model, expected);
         if (model.AnalysisFingerprint() != expected.AnalysisFingerprint()) Fail("analysis fingerprint differs: " + string.Join("; ", parts.Take(12)));
         if (parts.Count != 0) Fail("parts differ: " + string.Join("; ", parts.Take(12)) + (parts.Count > 12 ? $"; ... {parts.Count} in all" : ""));
@@ -325,20 +328,39 @@ internal static class GpcInputComparison
         return compared;
     }
 
-    /// <summary>A copy of a model whose local section states (Bridge State Override) carry "current" or "stale" (their fingerprint equal or not
-    /// to the D3 fingerprint of the property of the beam) instead of the fingerprint: the stale state of a transformer on GPC keeps the
-    /// fingerprint of the former property, the conversion of the FEM output a stale marker; both are refused by the checks alike.</summary>
-    internal static Model CanonicalSectionStates(Model model)
+    /// <summary>L12: the bridge data of a model as text, beam by beam in numbering order (member metadata with exact doubles, super element,
+    /// local section state, composite section), and the keys that name no beam of the model. With <paramref name="canonicalStates"/> a state
+    /// gives "current" or "stale" (its fingerprint equal or not to the D3 fingerprint of the property of the beam) instead of the fingerprint:
+    /// the stale state of a transformer on GPC keeps the fingerprint of the former property, the conversion of the FEM output a stale marker;
+    /// both are refused by the checks alike.</summary>
+    internal static string BridgeText(Model model, GPC.Checkers.CompositeBridge.BridgeModelData data, bool canonicalStates)
     {
-        var copy = GPC.Model.Core.ModelValues.Copy(model, GPC.Model.Core.ModelCopyOptions.None, model.Guid);
-        foreach (var beam in copy.BeamElements.Values)
-            foreach (var state in beam.Attributes.Values.OfType<GPC.Model.Structure.Bridges.BridgeSectionStateAttribute>().ToList())
-            {
-                bool current = state.PropertyFingerprint == GPC.Checkers.CompositeBridge.BridgeWorkflowDefinition.PropertyFingerprint(beam);
-                beam.Attributes.Remove(state.Id);
-                beam.Attributes.Add(new GPC.Model.Structure.Bridges.BridgeSectionStateAttribute(state.Behavior, state.ConcreteExcluded, state.ModularRatio, state.ClassificationCase, current ? "current" : "stale"));
-            }
-        return copy;
+        string D(double v) => BitConverter.DoubleToInt64Bits(v).ToString("X16");
+        var lines = new List<string>();
+        foreach (var beam in model.BeamElements.Values.OrderBy(b => b.Id))
+        {
+            var d = data.Beam(beam.Guid); if (d == null) continue;
+            var m = d.Member; var s = d.SectionState;
+            string member = m == null ? "-" : $"{m.PhysicalId}|{m.Family}|{m.Group}|{m.Segment}|{m.Span}|{D(m.StationFromMm)}|{D(m.StationToMm)}|{D(m.SectionUp.X)},{D(m.SectionUp.Y)},{D(m.SectionUp.Z)}|{m.GeometryId}";
+            string state = s == null ? "-" : $"{s.Behavior}|{s.ConcreteExcluded}|{D(s.ModularRatio)}|{s.ClassificationCase}|" + (canonicalStates
+                ? (s.PropertyFingerprint == GPC.Checkers.CompositeBridge.BridgeWorkflowDefinition.PropertyFingerprint(beam) ? "current" : "stale") : s.PropertyFingerprint);
+            lines.Add($"{beam.Id}: member {member}; super element {d.SuperElement ?? "-"}; state {state}; composite {(d.CompositeSection == null ? "-" : "yes")}");
+        }
+        var beams = model.BeamElements.Values.Select(b => b.Guid).ToHashSet();
+        lines.AddRange(data.Beams.Where(b => !beams.Contains(b.BeamGuid)).Select(b => "dangling " + b.BeamGuid));
+        return string.Join("\n", lines);
+    }
+
+    /// <summary>The bridge data of two models equal (<see cref="BridgeText"/>).</summary>
+    internal static void RequireBridge(string label, Model actual, GPC.Checkers.CompositeBridge.BridgeModelData actualData, Model expected, GPC.Checkers.CompositeBridge.BridgeModelData expectedData, bool canonicalStates)
+    {
+        string a = BridgeText(actual, actualData, canonicalStates), b = BridgeText(expected, expectedData, canonicalStates);
+        if (a != b)
+        {
+            var x = a.Split('\n'); var y = b.Split('\n');
+            int line = Enumerable.Range(0, Math.Min(x.Length, y.Length)).FirstOrDefault(i => x[i] != y[i], -1);
+            throw new Exception($"GPC INPUT FAIL ({label}): bridge data differ: " + (line < 0 ? $"{x.Length} / {y.Length} beams with data" : $"GPC '{x[line]}' / conversion '{y[line]}'"));
+        }
     }
 
     /// <summary>Coordinator decision 3 (5/11): Bridge Phase Model on beams with local section states runs on GPC (no conversion of the FEM
@@ -375,19 +397,23 @@ internal static class GpcInputComparison
                 var output = BridGHe.Common.Diagnostics.BridgePhaseModel.Create(fem, "Phase states", selection, property, clear);
                 var input = GpcModels.Convert(fem, tolerance);
                 var gpc = GpcModelTransforms.PhaseModel(input, "Phase states", selection, GpcModels.BeamProperty(property, input.Report.Units), clear, GpcIdentity.Derive(GpcIdentity.NameSpace, "test-states:" + label));
-                int stale = gpc.Model.BeamElements.Values.Count(b => CanonicalSectionStates(gpc.Model).BeamElements[b.Id].Attributes.Values.OfType<GPC.Model.Structure.Bridges.BridgeSectionStateAttribute>().Single().PropertyFingerprint == "stale");
-                Console.WriteLine($"GPC INPUT ({label}, {stale} stale states): " + Require(label, gpc, output, tolerance, CanonicalSectionStates)); compared++;
+                int stale = gpc.Model.BeamElements.Values.Count(b => gpc.Bridge.SectionState(b.Guid) is var s && s != null && s.PropertyFingerprint != GPC.Checkers.CompositeBridge.BridgeWorkflowDefinition.PropertyFingerprint(b));
+                Console.WriteLine($"GPC INPUT ({label}, {stale} stale states): " + Require(label, gpc, output, tolerance, canonicalStates: true)); compared++;
             }
             // The listed difference: the first property under another name (equal former signature) on the beams that have it.
             var renamed = BridGHe.Common.Helpers.ModelArchive.Clone(first); renamed.Name = "Same values";
             var same = fem.Beams.Where(b => b.BeamProperty.Name == first.Name).Select(b => b.BeamId).Distinct().ToArray();
-            var femStates = CanonicalSectionStates(GpcModels.Convert(BridGHe.Common.Diagnostics.BridgePhaseModel.Create(fem, "Phase same", same, renamed, false), tolerance).Model);
+            var femStates = GpcModels.Convert(BridGHe.Common.Diagnostics.BridgePhaseModel.Create(fem, "Phase same", same, renamed, false), tolerance);
             var source = GpcModels.Convert(fem, tolerance);
-            var gpcStates = CanonicalSectionStates(GpcModelTransforms.PhaseModel(source, "Phase same", same, GpcModels.BeamProperty(renamed, source.Report.Units), false, GpcIdentity.Derive(GpcIdentity.NameSpace, "test-states-same:" + example.Id)).Model);
-            string State(Model m, int id) => m.BeamElements[id].Attributes.Values.OfType<GPC.Model.Structure.Bridges.BridgeSectionStateAttribute>().Single().PropertyFingerprint;
-            var differ = femStates.BeamElements.Values.Where(b => State(femStates, b.Id) != State(gpcStates, b.Id)).Select(b => b.Name).ToArray();
+            var gpcStates = GpcModelTransforms.PhaseModel(source, "Phase same", same, GpcModels.BeamProperty(renamed, source.Report.Units), false, GpcIdentity.Derive(GpcIdentity.NameSpace, "test-states-same:" + example.Id));
+            string State(GpcModels.Conversion c, int id)
+            {
+                var beam = c.Model.BeamElements[id]; var s = c.Bridge.SectionState(beam.Guid);
+                return s == null ? "-" : s.PropertyFingerprint == GPC.Checkers.CompositeBridge.BridgeWorkflowDefinition.PropertyFingerprint(beam) ? "current" : "stale";
+            }
+            var differ = femStates.Model.BeamElements.Values.Where(b => State(femStates, b.Id) != State(gpcStates, b.Id)).Select(b => b.Name).ToArray();
             var expected = fem.Beams.Where((b, k) => k % 2 == 0 && same.Contains(b.BeamId)).Select(b => b.BeamId).ToArray();
-            if (!differ.OrderBy(s => s).SequenceEqual(expected.OrderBy(s => s)) || differ.Any(n => State(femStates, femStates.BeamElements.Values.First(b => b.Name == n).Id) != "current"))
+            if (!differ.OrderBy(s => s).SequenceEqual(expected.OrderBy(s => s)) || differ.Any(n => State(femStates, femStates.Model.BeamElements.Values.First(b => b.Name == n).Id) != "current"))
                 throw new Exception($"GPC INPUT FAIL ({example.Id} states same values): states differ on [{string.Join(", ", differ)}], expected the current states of the renamed beams [{string.Join(", ", expected)}]");
             Console.WriteLine($"GPC INPUT ({example.Id} states same values): listed difference only, {differ.Length} states current in the FEM path, stale on GPC");
         }
@@ -418,6 +444,7 @@ internal static class GpcInputComparison
                 string.Join(" | ", b.Warnings.Where(w => w.EndsWith(" already exists", StringComparison.Ordinal)).OrderBy(s => s, StringComparer.Ordinal))),
         })
             if (x != y) Fail($"report {what} '{x}' / '{y}'");
+        RequireBridge(label, actual.Model, actual.Bridge, expected.Model, expected.Bridge, false);
         var parts = GpcBridgeComparison.PartsDiffer(actual.Model, expected.Model);
         if (actual.Model.AnalysisFingerprint() != expected.Model.AnalysisFingerprint()) Fail("analysis fingerprint differs: " + string.Join("; ", parts.Take(12)));
         if (parts.Count != 0) Fail("parts differ: " + string.Join("; ", parts.Take(12)));
@@ -457,7 +484,7 @@ internal static class GpcInputComparison
             for (int k = 0; k < fem.Beams.Count; k++) if (string.IsNullOrWhiteSpace(fem.Beams[k].BeamId)) fem.Beams[k].BeamId = "B" + (k + 1);
             var conversion = GpcModels.Convert(fem, tolerance);
             if (conversion.Report.RegisteredCases != conversion.Model.LoadCases.Count) throw new Exception($"GPC INPUT FAIL ({example.Id} from GPC): not every case registered");
-            GpcModels.Conversion Input() => GpcModels.Conversion.FromGpc(GPC.Model.Core.ModelValues.Copy(conversion.Model), conversion.Report.Units, conversion.Report.BeamAngles, tolerance, conversion.Report.NativeSections);
+            GpcModels.Conversion Input() => GpcModels.Conversion.FromGpc(GPC.Model.Core.ModelValues.Copy(conversion.Model), conversion.Report.Units, conversion.Report.BeamAngles, tolerance, conversion.Report.NativeSections, conversion.Bridge);
             Console.WriteLine($"GPC INPUT ({example.Id} from GPC): " + RequireSame(example.Id + " from GPC", Input(), conversion)); compared++;
             var ids = fem.Beams.Select(b => b.BeamId).Distinct().ToArray(); var half = ids.Take(Math.Max(1, ids.Length / 2)).ToArray();
             var variants = new List<(string Label, Func<GpcModels.Conversion, bool, Guid, GpcModels.Conversion> Transform)>

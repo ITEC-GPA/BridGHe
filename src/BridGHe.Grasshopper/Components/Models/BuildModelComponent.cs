@@ -106,6 +106,14 @@ namespace BridGHe.Grasshopper.Components.Models
 
                 GH_Model model = new GH_Model((ModelModel.ModelUnits)units, elements, combinations, stages);
                 model.Value.Name = name;
+                // F6 (L12, lead decision of 5/11): a beam belongs to one super element (bridge data of the beam); two attributes with the same
+                // name are one super element. The archived 99 REV003 (Super Element on all members plus the schedule's G<group>) stops here.
+                foreach (var beam in model.Value.Beams)
+                {
+                    var names = beam.Attributes.OfType<SuperElementAttributeModel>().Select(a => a.Value).Distinct(StringComparer.Ordinal).ToArray();
+                    if (names.Length > 1)
+                        throw new ArgumentException($"Beam {beam.BeamId} is in the super elements '{names[0]}' and '{names[1]}' (LegacyBeamInTwoSuperElements): a beam belongs to one super element. Assign each beam to one Super Element.");
+                }
 
                 DA.SetData(0, model);
                 Message = ((ModelModel.ModelUnits)units).GetDescription();

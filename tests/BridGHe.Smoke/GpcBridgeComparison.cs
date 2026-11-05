@@ -308,7 +308,7 @@ internal static class GpcBridgeComparison
         void Compare(string label, ModelModel[] models, Func<ModelModel, GPC.Model.Models.Model> analysed, BridgePhaseDefinition[] phases, string[][] table)
         {
             var sources = models.Select(m => (Fem: m, Gpc: analysed(m))).ToArray();
-            BridgeActionDefinition Link(BridgeActionDefinition a) => a.Source == null ? a : a with { GpcSource = sources.First(s => ReferenceEquals(s.Fem, a.Source)).Gpc, GpcModel = sources.First(s => ReferenceEquals(s.Fem, a.Source)).Gpc };
+            BridgeActionDefinition Link(BridgeActionDefinition a) => a.Source == null ? a : a with { GpcSource = sources.First(s => ReferenceEquals(s.Fem, a.Source)).Gpc, GpcModel = sources.First(s => ReferenceEquals(s.Fem, a.Source)).Gpc, GpcBridgeData = GpcSyntheticResults.BridgeOf(sources.First(s => ReferenceEquals(s.Fem, a.Source)).Gpc) };
             var linked = phases.Select(p => p with { Actions = p.Actions.Select(Link).ToArray() }).ToArray();
             string femError = null, gpcError = null; BridgeWorkflowBuildResult fem = null; GpcBridgeBuild gpc = null;
             try { fem = BridgeWorkflowBuilder.Build(models, linked, table, BridgeWorkflowMethod.Compatible, tolerance); } catch (ArgumentException e) { femError = e.Message; }
@@ -388,7 +388,7 @@ internal static class GpcBridgeComparison
             Compare("local state on shrinkage", new[] { steel, shrinkStates }, f => GpcSyntheticResults.Analysed(f, tolerance), new[] { p1, p2 with { Actions = new[] { r with { Source = shrinkStates } } } },
                 new[] { new[] { "", "G1", "RITIRO" }, new[] { "SLS", "1", "0.7" } });
             var analysedTraffic = GpcSyntheticResults.Analysed(traffic, tolerance);
-            var linkedQ = q with { GpcSource = analysedTraffic, GpcModel = analysedTraffic };
+            var linkedQ = q with { GpcSource = analysedTraffic, GpcModel = analysedTraffic, GpcBridgeData = GpcSyntheticResults.BridgeOf(analysedTraffic) };
             DuplicateKeepsGpcLinks(linkedQ, p3 with { Actions = new[] { linkedQ, r } });
         }
         {

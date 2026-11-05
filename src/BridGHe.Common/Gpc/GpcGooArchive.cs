@@ -24,7 +24,7 @@ namespace BridGHe.Common.Gpc
         public const int MaximumBytes = 256 * 1024 * 1024;
 
         /// <summary>The kind of an archive: a standalone value or a model.</summary>
-        public enum Kind : byte { Value = 1, Model = 2 }
+        public enum Kind : byte { Value = 1, Model = 2, BridgeModel = 3 }
 
         public const string LegacyCacheMessage = "Dati di una versione precedente di BridGHe (risultati o cache di calcolo): non più letti. Ricalcolare il componente.";
 
@@ -43,6 +43,23 @@ namespace BridGHe.Common.Gpc
         }
 
         public static GModel ReadModel(byte[] data) => Unpack(data, Kind.Model, ModelArchive.Load);
+
+        /// <summary>F6 (L12): a GPC model with its bridge data, in the one stream of <see cref="GPC.Checkers.CompositeBridge.BridgeModel.Save(Stream)"/>
+        /// (no new format: header GPCBRG, the bridge data, then the model archive).</summary>
+        public static byte[] BridgeModel(GPC.Checkers.CompositeBridge.BridgeModel model)
+        {
+            if (model == null) throw new ArgumentNullException(nameof(model));
+            return Pack(Kind.BridgeModel, model.Save);
+        }
+
+        /// <summary>F6 (L12): a GPC model with its bridge data; an archive of a model alone (<see cref="Kind.Model"/>) gives empty bridge data.
+        /// Archives written on the integration branch before L12 with the former bridge attributes do not load (unknown types): stale caches.</summary>
+        public static GPC.Checkers.CompositeBridge.BridgeModel ReadBridgeModel(byte[] data)
+        {
+            if (data != null && IsGpc(data) && data.Length > Header.Length + 1 && data[Header.Length + 1] == (byte)Kind.Model)
+                return new GPC.Checkers.CompositeBridge.BridgeModel(ReadModel(data));
+            return Unpack(data, Kind.BridgeModel, GPC.Checkers.CompositeBridge.BridgeModel.Load);
+        }
 
         public static bool IsGpc(byte[] data) => data != null && data.Length > Header.Length + 2 && data.Take(Header.Length).SequenceEqual(Header);
 

@@ -130,6 +130,22 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             return _converted;
         }
 
+        /// <summary>F6 (L12): the bridge data of <see cref="Gpc"/> (members, super elements, local section states by beam GUID): those of the
+        /// GPC input (an analysed model keeps the element GUIDs of its input); null when it cannot be converted.</summary>
+        public GPC.Checkers.CompositeBridge.BridgeModelData GpcBridgeData
+        {
+            get
+            {
+                lock (gpcLock)
+                {
+                    if (Value == null) return null;
+                    try { return Conversion().Bridge; }
+                    catch (Exception ex) when (ex is NotSupportedException || ex is ArgumentException || ex is InvalidOperationException || ex is System.Runtime.Serialization.SerializationException)
+                    { _gpcError = ex.Message; return null; }
+                }
+            }
+        }
+
         /// <summary>Why <see cref="Gpc"/> is null.</summary>
         public string GpcError { get { lock (gpcLock) return _gpcError; } }
 

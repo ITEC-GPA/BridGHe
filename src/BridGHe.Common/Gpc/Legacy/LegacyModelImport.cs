@@ -54,6 +54,9 @@ namespace BridGHe.Common.Gpc.Legacy
         /// <summary>F6 chain D (Construction Sequence): the warnings of <see cref="Warnings"/> that concern one element (also in
         /// <see cref="Warnings"/>), so that a transformer that removes or renumbers elements gives the warnings of the conversion of its output.</summary>
         public List<LegacyElementWarning> ElementWarnings { get; } = new List<LegacyElementWarning>();
+        /// <summary>F6 (L12, user decision of 5/11): the bridge data of the converted model (member metadata, super element, local section
+        /// state of every beam, by beam GUID), outside the generic GPC model: <c>new BridgeModel(model, Bridge)</c>. Never null.</summary>
+        public GPC.Checkers.CompositeBridge.BridgeModelData Bridge { get; internal set; } = new GPC.Checkers.CompositeBridge.BridgeModelData();
 
         /// <summary>A warning about one element: in <see cref="Warnings"/> and <see cref="ElementWarnings"/>.</summary>
         internal void Warn(GPC.Model.Core.Identity.EntityFamily family, int number, string text, bool numberInText = false, bool restraint = false)
@@ -72,7 +75,7 @@ namespace BridGHe.Common.Gpc.Legacy
         /// <summary>A copy of this report for a model transformed from the converted one (same element identities).</summary>
         internal LegacyImportReport CopyFor(int registeredCases)
         {
-            var copy = new LegacyImportReport { Units = Units, RegisteredCases = registeredCases, Owner = Owner };
+            var copy = new LegacyImportReport { Units = Units, RegisteredCases = registeredCases, Owner = Owner, Bridge = Bridge.Copy() };
             copy.Warnings.AddRange(Warnings);
             copy.ElementLoadCases.AddRange(ElementLoadCases);
             copy.ElementWarnings.AddRange(ElementWarnings);
@@ -129,7 +132,7 @@ namespace BridGHe.Common.Gpc.Legacy
             if (legacy == null || !legacy.Is("ModelModel")) throw new ArgumentException("LegacyModelModelExpected");
             report ??= new LegacyImportReport();
             var units = new BridgeUnits(BridgeUnits.Parse(legacy.Enum("Units")));
-            report.Units = units; report.Owner = owner;
+            report.Units = units; report.Owner = owner; report.Bridge = new GPC.Checkers.CompositeBridge.BridgeModelData();
             string name = legacy.String("Name") ?? "";
             var model = new Model(owner, name);
             var elements = legacy.Field("Elements").Items;
@@ -191,14 +194,14 @@ namespace BridGHe.Common.Gpc.Legacy
             // The former exporter created one native property per property name: later properties with the same name used the first.
             var properties = new Dictionary<string, (BeamProperty Property, BeamFormulation Formulation, double Angle, string Signature, GPC.Converter.Straus7.Straus7SectionDefinition Native)>(StringComparer.Ordinal);
             var shearAreas = new Dictionary<string, (double, double)>(StringComparer.Ordinal);
-            var members = new BridgeMembers();
+            var members = new BridgeMembers(report.Bridge);
             for (int k = 0; k < beams.Count; k++)
             {
                 var b = beams[k]; string beamId = b.String("BeamId") ?? "";
                 var from = Point(b["PointFrom"], units); var to = Point(b["PointTo"], units);
                 var (i, mi) = index.Find(from); var (j, mj) = index.Find(to);
-                if (mi > 1) report.Warnings.Add($"Collapsing {mi} nodes at coordinates {from}");
-                if (mj > 1) report.Warnings.Add($"Collapsing {mj} nodes at coordinates {to}");
+                if (mi > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Beam, k + 1, $"Collapsing {mi} nodes at coordinates {from}");
+                if (mj > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Beam, k + 1, $"Collapsing {mj} nodes at coordinates {to}");
                 string propertyName = PropertyName(b["BeamProperty"]); string signature = Signature(b["BeamProperty"]);
                 if (!properties.TryGetValue(propertyName, out var p))
                 {
@@ -228,7 +231,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 }
                 var bg = b.Field("Groups").Items;
                 if (bg.Count > 0) beam.AddGroup(GroupOf(bg[0]));
-                if (bg.Count > 1) report.Warnings.Add($"Straus7 allows assigning only one single group to the beam {k + 1}");
+                if (bg.Count > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Beam, k + 1, $"Straus7 allows assigning only one single group to the beam {k + 1}", numberInText: true);
                 BeamData(b, beam, principal, globalOffset, cases, units, report, members);
                 // The former result reader asked Straus7 for at least 5 stations per beam unless the beam had an output-stations attribute.
                 (beam.Assignments.Physical ??= new BeamPhysicalData()).MinimumOutputStations ??= 5;
@@ -236,7 +239,6 @@ namespace BridGHe.Common.Gpc.Legacy
                 model.BeamElements.Add(beam);
             }
 
-            members.AddTo(model);
             if (movingJson != "[]") GpcMoving.FromLegacyJson(movingJson, model, cases, units, owner);
             // Plates: former order and numbering, nodes by tolerance; one property per name as the former exporter.
             var plateProperties = new Dictionary<string, PlateProperty>(StringComparer.Ordinal);
@@ -244,7 +246,7 @@ namespace BridGHe.Common.Gpc.Legacy
             {
                 var pl = plates[k]; string plateId = pl.String("PlateId") ?? "";
                 int count = pl.Int("NPoints"); if (count != 3 && count != 4) throw new NotSupportedException("LegacyPlateWithMoreThanFourNodes");
-                var connected = Enumerable.Range(0, count).Select(i => { var (n, m) = index.Find(Point(pl["Point" + i], units)); if (m > 1) report.Warnings.Add($"Collapsing {m} nodes at plate {k + 1}"); return gpcNodes[n]; }).ToArray();
+                var connected = Enumerable.Range(0, count).Select(i => { var (n, m) = index.Find(Point(pl["Point" + i], units)); if (m > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Shell, k + 1, $"Collapsing {m} nodes at plate {k + 1}", numberInText: true); return gpcNodes[n]; }).ToArray();
                 var pp = pl.Field("PlateProperty"); string ppName = pp.Any("Name", "_name").Text ?? pp.Any("Id", "_id").Text ?? "Plate property";
                 if (!plateProperties.TryGetValue(ppName, out var property)) plateProperties.Add(ppName, property = PlateProperty(pp, ppName, units));
                 if (!model.PlateProperties.ContainsKey(property.Name)) model.PlateProperties.Add(property.Name, property);
@@ -254,7 +256,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 if (pl.Double("Angle") != 0) throw new NotSupportedException("LegacyPlateAngleNotMappedYet");
                 if (pl.Double("Offset") != 0) plate.Assignments.Offset = units.ToMm(pl.Double("Offset"));
                 var pg = pl.Field("Groups").Items; if (pg.Count > 0) plate.AddGroup(GroupOf(pg[0]));
-                if (pg.Count > 1) report.Warnings.Add($"Straus7 allows assigning only one single group to the plate {k + 1}");
+                if (pg.Count > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Shell, k + 1, $"Straus7 allows assigning only one single group to the plate {k + 1}", numberInText: true);
                 foreach (var a in pl.Field("Attributes").Items)
                 {
                     if (a.Is("ElementIdAttributeModel")) Label(plate, a, report);
@@ -441,7 +443,7 @@ namespace BridGHe.Common.Gpc.Legacy
             var restraints = attributes.Where(a => a.Is("NodeRestraintAttributeModel")).ToArray();
             // Former exporter: the first stiffness attribute, in the restraint UCS of freedom case 1 (St7SetNodeKTranslation3F/KRotation3F).
             var stiffness = attributes.FirstOrDefault(a => a.Is("NodeStiffnessAttributeModel"));
-            if (attributes.Count(a => a.Is("NodeStiffnessAttributeModel")) > 1) report.Warnings.Add($"Node {node.Name}: only the first stiffness attribute was exported");
+            if (attributes.Count(a => a.Is("NodeStiffnessAttributeModel")) > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Node, node.Id, $"Node {node.Name}: only the first stiffness attribute was exported", restraint: true);
             if (restraints.Length != 0 || stiffness != null)
             {
                 if (n.Field("Loads").Items.Any(l => l.Is("NodeDisplacementLoadModel"))) throw new NotSupportedException("LegacyPrescribedDisplacementNotMappedYet");
@@ -450,7 +452,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 {
                     bool fixedDof = restraints.Any(r => r.Bool(names[k]));
                     double spring = stiffness == null ? 0 : stiffness.Double(names[k]) * (k < 3 ? units.Force / units.Length : units.Force * units.Length);
-                    if (fixedDof && spring != 0) report.Warnings.Add($"Node {node.Name}: spring on a restrained DOF {names[k]} (the restraint governs)");
+                    if (fixedDof && spring != 0) report.Warn(GPC.Model.Core.Identity.EntityFamily.Node, node.Id, $"Node {node.Name}: spring on a restrained DOF {names[k]} (the restraint governs)", restraint: true);
                     dofs.Add(fixedDof || spring == 0 ? new DofRestrain((GeometryRestrain.DOF)k, fixedDof) : new DofRestrain((GeometryRestrain.DOF)k, spring));
                 }
                 node.Assignments.Restrains.Add(new RestrainAssignment { Restrain = new NodeRestrain(node, axes ?? CoordinateSystem.Global, dofs), SourceRecord = "NodeRestraint/StiffnessAttributeModel" });
@@ -474,7 +476,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 else if (l.Is("NodeTemperatureLoadModel"))
                 {
                     // The former exporter wrote only the value (St7SetNodeTemperature1): the native default type is the reference temperature.
-                    if (l.Enum("LoadType") != "Reference") report.Warnings.Add($"Node {node.Name}: temperature type {l.Enum("LoadType")} was not exported (reference temperature used, as before)");
+                    if (l.Enum("LoadType") != "Reference") report.Warn(GPC.Model.Core.Identity.EntityFamily.Node, node.Id, $"Node {node.Name}: temperature type {l.Enum("LoadType")} was not exported (reference temperature used, as before)");
                     (node.Assignments.Physical ??= new NodePhysicalData()).Temperatures.Add(new NodalTemperatureAssignment { Case = cases[c], Kind = NodalTemperatureKind.Reference, Celsius = units.ToCelsius(l.Double("Value")) });
                 }
                 else throw new NotSupportedException("LegacyNodeLoadNotMappedYet: " + l.ShortType);
@@ -674,14 +676,15 @@ namespace BridGHe.Common.Gpc.Legacy
         {
             var states = b.Field("Attributes").Items.Where(a => a.Is("BridgeSectionStateAttributeModel")).ToArray();
             if (states.Length == 0) return;
-            if (states.Length > 1) report.Warnings.Add($"Beam {beam.Name}: only the first bridge section state is kept");
+            if (states.Length > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Beam, beam.Id, $"Beam {beam.Name}: only the first bridge section state is kept");
             var s = states[0].Field("SectionAssignment");
-            if (!Enum.TryParse<GPC.Model.Structure.Bridges.BridgeSectionBehavior>(s.Enum("Behavior"), false, out var behavior))
+            if (!Enum.TryParse<GPC.Checkers.CompositeBridge.BridgeActionBehavior>(s.Enum("Behavior"), false, out var behavior) || behavior == GPC.Checkers.CompositeBridge.BridgeActionBehavior.Steel)
                 throw new ArgumentException("LegacyBridgeSectionStateBehavior: " + s.Enum("Behavior"));
             string signature = s.String("PropertySignature") ?? "";
             bool current = femPropertySignature == null || femPropertySignature(k) == signature;
             string classification = s.String("ClassificationCase");
-            beam.Attributes.Add(new GPC.Model.Structure.Bridges.BridgeSectionStateAttribute(behavior, s.Bool("ConcreteExcluded"), s.Double("ModularRatio"),
+            // L12: the state is bridge data of the beam (by GUID), outside the generic model.
+            report.Bridge.SetSectionState(beam.Guid, new GPC.Checkers.CompositeBridge.BridgeLocalSectionState(behavior, s.Bool("ConcreteExcluded"), s.Double("ModularRatio"),
                 string.IsNullOrEmpty(classification) ? null : classification,
                 current ? GPC.Checkers.CompositeBridge.BridgeWorkflowDefinition.PropertyFingerprint(beam) : StaleSectionStatePrefix + signature));
         }
@@ -694,52 +697,40 @@ namespace BridGHe.Common.Gpc.Legacy
         {
             string value = a.String("Value");
             if (string.IsNullOrEmpty(value)) { report.Carry("Empty Element ID attribute"); return; }
-            if (element.Attributes.Values.OfType<ElementLabelAttribute>().Any()) { report.Warnings.Add($"Element {element.Name}: only the first Element ID is kept"); return; }
+            if (element.Attributes.Values.OfType<ElementLabelAttribute>().Any()) { report.Warn(GPC.Model.Models.Model.FamilyOf(element), element.Id, $"Element {element.Name}: only the first Element ID is kept"); return; }
             element.Attributes.Add(new ElementLabelAttribute(value));
         }
 
         /// <summary>
-        /// C1: the bridge identities of the former beams as GPC physical members (no new vocabulary):
-        /// - bridge member metadata (BridgeMemberAttributeModel: one physical member split into FE parts with their own stations, section up
-        ///   and geometry id) → <see cref="GPC.Model.Structure.Members.PhysicalMemberDefinition"/> with the member's PhysicalId, its FE parts
-        ///   in the former order, each <see cref="GPC.Model.Structure.Members.BeamMemberPart"/> with its <see cref="GPC.Model.Structure.Members.BridgeMemberMetadata"/>
-        ///   (stations in mm);
-        /// - super elements (SuperElementAttributeModel: the beams checked together by Super Element Check) → a physical member
-        ///   "SuperElement:&lt;name&gt;" named &lt;name&gt; with its beams in the former order (source "BridGHe super element").
-        /// Parts follow the former element order and the beam direction (AlongIJ); the path is not validated here (no edit session).
+        /// C1 (L12, user decision of 5/11): the bridge identities of the former beams as bridge data of the beam (by GUID, <see cref="LegacyImportReport.Bridge"/>),
+        /// never in the generic model:
+        /// - bridge member metadata (BridgeMemberAttributeModel: the physical member of the FE part, its stations in mm, section up and geometry
+        ///   id) → <c>SetMember</c>; one member per beam (<c>LegacyDuplicateBridgeMemberAttribute</c>); the parts of a member are its beams in
+        ///   numbering order (<c>BridgeModel.PhysicalMember</c>);
+        /// - super elements (SuperElementAttributeModel: the beams checked together by Super Element Check) → <c>SetSuperElement</c>; two
+        ///   attributes with the same name are one super element, two names are an error (<c>LegacyBeamInTwoSuperElements</c>, lead decision of 5/11).
         /// </summary>
         private sealed class BridgeMembers
         {
-            public const string SuperElementPrefix = "SuperElement:";
-            private readonly Dictionary<string, List<GPC.Model.Structure.Members.BeamMemberPart>> members = new(StringComparer.Ordinal);
-            private readonly Dictionary<string, List<GPC.Model.Structure.Members.BeamMemberPart>> superElements = new(StringComparer.Ordinal);
+            private readonly GPC.Checkers.CompositeBridge.BridgeModelData data;
+            public BridgeMembers(GPC.Checkers.CompositeBridge.BridgeModelData data) { this.data = data; }
             public void SuperElement(string name, BeamElement beam)
             {
                 if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("LegacyEmptySuperElementName");
-                if (!superElements.TryGetValue(name, out var parts)) superElements.Add(name, parts = new List<GPC.Model.Structure.Members.BeamMemberPart>());
-                if (parts.All(p => p.BeamId != beam.Id)) parts.Add(new GPC.Model.Structure.Members.BeamMemberPart(beam.Id, true));
+                string existing = data.SuperElement(beam.Guid);
+                if (existing == null) data.SetSuperElement(beam.Guid, name);
+                else if (!string.Equals(existing, name, StringComparison.Ordinal))
+                    throw new ArgumentException($"LegacyBeamInTwoSuperElements: beam {beam.Name} is in the super elements '{existing}' and '{name}'; a beam belongs to one super element.");
             }
             public void Member(LegacyValue m, BeamElement beam, BridgeUnits units)
             {
                 string id = m.String("PhysicalId");
-                if (!Enum.TryParse<GPC.Model.Structure.Members.BridgeMemberFamily>(m.Enum("Family"), false, out var family)) throw new ArgumentException("LegacyBridgeMemberFamily: " + m.Enum("Family"));
+                if (!Enum.TryParse<GPC.Checkers.CompositeBridge.Layout.BridgeMemberFamily>(m.Enum("Family"), false, out var family)) throw new ArgumentException("LegacyBridgeMemberFamily: " + m.Enum("Family"));
                 var up = m.Field("SectionUp");
-                var metadata = new GPC.Model.Structure.Members.BridgeMemberMetadata(id, family, m.Int("Group"), m.Int("Segment"), m.Int("Span"),
+                var metadata = new GPC.Checkers.CompositeBridge.Layout.BridgeMemberMetadata(id, family, m.Int("Group"), m.Int("Segment"), m.Int("Span"),
                     units.ToMm(m.Double("StationFrom")), units.ToMm(m.Double("StationTo")), new Vector3d(up.Double("X"), up.Double("Y"), up.Double("Z")), m.String("GeometryId") ?? "");
-                if (!members.TryGetValue(id, out var parts)) members.Add(id, parts = new List<GPC.Model.Structure.Members.BeamMemberPart>());
-                if (parts.Any(p => p.BeamId == beam.Id)) throw new ArgumentException("LegacyDuplicateBridgeMemberAttribute: beam " + beam.Name);
-                parts.Add(new GPC.Model.Structure.Members.BeamMemberPart(beam.Id, true, metadata));
-            }
-            public void AddTo(Model model)
-            {
-                foreach (var (id, parts) in members)
-                    model.PhysicalMembers.Add(id, new GPC.Model.Structure.Members.PhysicalMemberDefinition(id, parts, "NodeToNode", id, "BridGHe bridge member"));
-                foreach (var (name, parts) in superElements)
-                {
-                    string id = SuperElementPrefix + name;
-                    if (model.PhysicalMembers.ContainsKey(id)) throw new ArgumentException("LegacySuperElementIdentityConflict: " + id);
-                    model.PhysicalMembers.Add(id, new GPC.Model.Structure.Members.PhysicalMemberDefinition(id, parts, "NodeToNode", name, "BridGHe super element"));
-                }
+                if (data.Member(beam.Guid) != null) throw new ArgumentException("LegacyDuplicateBridgeMemberAttribute: beam " + beam.Name);
+                data.SetMember(beam.Guid, metadata);
             }
         }
 

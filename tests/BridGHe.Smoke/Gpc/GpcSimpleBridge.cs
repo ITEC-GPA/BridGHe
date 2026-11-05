@@ -27,10 +27,10 @@ internal static class GpcSimpleBridge
         {
             var beam = test.Beam((++k).ToString(), nodes[member.NodeFrom - 1], nodes[member.NodeTo - 1]);
             test.Group(beam, $"{member.Family}\\Group{member.Group}\\Segment{member.Segment}");
-            test.Member(beam, Enum.Parse<GPC.Model.Structure.Members.BridgeMemberFamily>(member.Family.ToString()), member.Group, member.Segment, member.Span, member.StationFrom, member.StationTo);
+            test.Member(beam, Enum.Parse<GPC.Checkers.CompositeBridge.Layout.BridgeMemberFamily>(member.Family.ToString()), member.Group, member.Segment, member.Span, member.StationFrom, member.StationTo);
         }
         var model = test.Structure();
-        return GpcModels.Conversion.FromGpc(model, new BridgeUnits(DefinitionUnits.Nmm), test.BeamAngles, 1e-6);
+        return GpcModels.Conversion.FromGpc(model, new BridgeUnits(DefinitionUnits.Nmm), test.BeamAngles, 1e-6, bridge: test.Bridge);
     }
 }
 #endif

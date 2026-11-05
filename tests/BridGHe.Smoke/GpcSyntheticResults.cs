@@ -18,12 +18,21 @@ internal static class GpcSyntheticResults
 {
     internal const string Dataset = "BridGHe synthetic results";
 
-    internal static GPC.Model.Models.Model Analysed(ModelModel fem, double tolerance = 1e-6)
+    internal static GPC.Model.Models.Model Analysed(ModelModel fem, double tolerance = 1e-6) => Analysed(fem, out _, tolerance);
+
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<GPC.Model.Models.Model, GPC.Checkers.CompositeBridge.BridgeModelData> bridges = new();
+    /// <summary>L12: the bridge data of a model <see cref="Analysed(ModelModel, double)"/> gave (its beams' GUIDs), or null.</summary>
+    internal static GPC.Checkers.CompositeBridge.BridgeModelData BridgeOf(GPC.Model.Models.Model analysed) => analysed != null && bridges.TryGetValue(analysed, out var data) ? data : null;
+
+    /// <param name="bridge">L12: the bridge data of the conversion (members, super elements, section states by beam GUID).</param>
+    internal static GPC.Model.Models.Model Analysed(ModelModel fem, out GPC.Checkers.CompositeBridge.BridgeModelData bridge, double tolerance = 1e-6)
     {
         byte[] archive = ModelArchive.Write(fem);
         var owner = GpcIdentity.Derive(GpcIdentity.NameSpace, "synthetic:" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(archive)));
         var legacy = LegacyArchive.Read(archive);
-        var gpc = LegacyModelImport.Import(legacy, owner, tolerance, new LegacyImportReport(), BridGHe.Common.Gpc.GpcModels.SectionStateSignatures(fem));
+        var importReport = new LegacyImportReport();
+        var gpc = LegacyModelImport.Import(legacy, owner, tolerance, importReport, BridGHe.Common.Gpc.GpcModels.SectionStateSignatures(fem));
+        bridge = importReport.Bridge; bridges.AddOrUpdate(gpc, bridge);
         var outcome = LegacyResultsReader.Import(gpc, legacy, owner, Dataset);
         if (outcome.Report.Status != GPC.Converter.ImportStatus.Completed)
             throw new InvalidOperationException("Synthetic results not imported: " + outcome.Report.Status + " " + string.Join("; ", outcome.Report.Diagnostics.Select(d => d.Code + " " + d.Message)));

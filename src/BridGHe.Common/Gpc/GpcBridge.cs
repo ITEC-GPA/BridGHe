@@ -248,9 +248,11 @@ namespace BridGHe.Common.Gpc
         {
             var model = action.GpcModel ?? action.GpcSource; // the GPC model of the source: analysed (with its catalog) or its conversion
             if (action.Source != null && model == null) throw new ArgumentException($"Action {action.Key}: its source has no GPC model; recalculate the analysis.");
-            var assigned = (model == null ? Array.Empty<BeamElement>() : Beams(model))
+            // L12: the states are bridge data of the source by beam GUID (one per beam).
+            var data = action.GpcBridgeData;
+            var assigned = (model == null || data == null ? Array.Empty<BeamElement>() : Beams(model))
                 .Where(b => action.BeamIds.Length == 0 || action.BeamIds.Contains(b.Name, StringComparer.Ordinal))
-                .SelectMany(b => b.Attributes.Values.OfType<GPC.Model.Structure.Bridges.BridgeSectionStateAttribute>().Select(a => (BeamId: b.Name, State: a, Beam: b))).ToArray();
+                .Select(b => (BeamId: b.Name, State: data.SectionState(b.Guid), Beam: b)).Where(a => a.State != null).ToArray();
             if (assigned.Select(a => a.BeamId).Distinct(StringComparer.Ordinal).Count() != assigned.Length ||
                 assigned.Any(a => (BridgeActionBehavior)(int)a.State.Behavior != action.Behavior || phase.State != BridgeSectionState.Composite))
                 throw new ArgumentException($"Action {action.Key}: local FEM section state does not match the mechanical phase. Do not reuse it for shrinkage.");

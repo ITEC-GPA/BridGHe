@@ -25,6 +25,10 @@ namespace BridGHe.Common.Gpc
             public LegacyImportReport Report { get; }
             public double Tolerance { get; }
             internal Conversion(GPC.Model.Models.Model model, LegacyImportReport report, double tolerance) { Model = model; Report = report; Tolerance = tolerance; }
+            /// <summary>L12: the bridge data of <see cref="Model"/> (members, super elements, local section states by beam GUID).</summary>
+            public GPC.Checkers.CompositeBridge.BridgeModelData Bridge => Report.Bridge;
+            /// <summary>L12: <see cref="Model"/> with its bridge data (the data object is shared, not copied).</summary>
+            public GPC.Checkers.CompositeBridge.BridgeModel BridgeModel => new GPC.Checkers.CompositeBridge.BridgeModel(Model, Report.Bridge);
 
             /// <summary>F6 chain D (step 32, P2T): the input of the model transformers (<see cref="GpcModelTransforms"/>) for a model built in GPC
             /// (no FEM model, no conversion). The report: the definition <paramref name="units"/>; owner of the element identities = the model
@@ -32,10 +36,10 @@ namespace BridGHe.Common.Gpc
             /// moving paths where the model refers to the case); the BridGHe angle of every beam by its number (<paramref name="beamAngles"/>);
             /// the data of every beam property by name from its first beam (formulation of that beam, principal angle of the section, native
             /// section of that beam if any, GPC fingerprint of the property: <see cref="BeamProperty(GPC.Model.ElementProperties.BeamProperty, GPC.Model.Structure.Assignments.BeamFormulation, GPC.Converter.Straus7.Straus7SectionDefinition)"/>);
-            /// the resolved native sections by beam GUID (<paramref name="nativeSections"/>, none if null); no warnings. The model is kept, not
-            /// copied: the transformers copy it.</summary>
+            /// the resolved native sections by beam GUID (<paramref name="nativeSections"/>, none if null); the bridge data of the model
+            /// (<paramref name="bridge"/>, L12: none if null; copied); no warnings. The model is kept, not copied: the transformers copy it.</summary>
             public static Conversion FromGpc(GPC.Model.Models.Model model, BridgeUnits units, IReadOnlyDictionary<int, double> beamAngles, double toleranceDefinitionUnits,
-                IReadOnlyDictionary<Guid, GPC.Converter.Straus7.Straus7SectionDefinition> nativeSections = null)
+                IReadOnlyDictionary<Guid, GPC.Converter.Straus7.Straus7SectionDefinition> nativeSections = null, GPC.Checkers.CompositeBridge.BridgeModelData bridge = null)
             {
                 if (model == null) throw new ArgumentNullException(nameof(model));
                 if (beamAngles == null) throw new ArgumentNullException(nameof(beamAngles));
@@ -49,7 +53,8 @@ namespace BridGHe.Common.Gpc
                 var beamGuids = beams.Select(b => b.Guid).ToHashSet();
                 if (natives.Keys.Any(g => !beamGuids.Contains(g))) throw new ArgumentException("GpcInputNativeSectionOfUnknownBeam");
 
-                var report = new LegacyImportReport { Units = units, Owner = model.Guid, RegisteredCases = model.LoadCases.Count };
+                var report = new LegacyImportReport { Units = units, Owner = model.Guid, RegisteredCases = model.LoadCases.Count, Bridge = bridge?.Copy() ?? new GPC.Checkers.CompositeBridge.BridgeModelData() };
+                if (report.Bridge.Beams.Any(b => !beamGuids.Contains(b.BeamGuid))) throw new ArgumentException("GpcInputBridgeDataOfUnknownBeam");
                 foreach (var c in model.LoadCases.Values) report.CaseOrigins[c.Name] = LegacyCaseOrigins.Registered;
                 void Origin(GPC.Model.LoadCases.ILoadCase c, LegacyCaseOrigins origin)
                 {

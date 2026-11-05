@@ -28,7 +28,8 @@ internal static class GhModelGpcChecks
         Require(gpc != null && gpc.NodesElements.Count == 2 && gpc.BeamElements.Count == 1, "converted model: " + type.GetProperty("GpcError").GetValue(goo));
         Require(ReferenceEquals(gpc, Gpc(goo)), "conversion cached");
         Require(gpc.BeamElements[1].Attributes.Values.OfType<GPC.Model.Attributes.ElementLabelAttribute>().Single().Label == "B1"
-            && gpc.PhysicalMembers.ContainsKey("SuperElement:G1"), "C1 identities in the converted model");
+            && new GPC.Checkers.CompositeBridge.BridgeModel(gpc, (GPC.Checkers.CompositeBridge.BridgeModelData)type.GetProperty("GpcBridgeData").GetValue(goo)).SuperElementNames().Contains("G1"),
+            "C1 identities in the converted model (L12: super element in the bridge data)");
         var copy = ((IGH_Goo)goo).Duplicate();
         var copied = Gpc(copy);
         Require(!ReferenceEquals(copied, gpc) && copied.Guid == gpc.Guid && copied.BeamElements[1].Guid == gpc.BeamElements[1].Guid, "a copy converts its own FEM model to the same identities");

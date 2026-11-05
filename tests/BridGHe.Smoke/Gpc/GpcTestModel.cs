@@ -28,7 +28,7 @@ using GPC.Model.Structure.Members;
 /// They are converted once with the inverse of the <see cref="GpcResults"/> conventions (as the TESTS ONLY LegacyResultsReader does for the
 /// former archives), so the consumers read them back bit for bit (exact for beams along the global axes, as in these tests).</para>
 /// <para>Structure: nodes and beams in the definition units (converted to mm), one generic elastic beam property unless another is given,
-/// bridge members as <see cref="Model.PhysicalMembers"/> with their <see cref="BridgeMemberMetadata"/>, as the legacy conversion and the
+/// bridge members as bridge data by beam GUID (<see cref="Bridge"/>, L12: outside the generic model), as the legacy conversion and the
 /// future Build Model write them. Identities are derived from the model name (a rebuild gives the same GUIDs).</para>
 /// </summary>
 internal sealed class GpcTestModel
@@ -41,7 +41,8 @@ internal sealed class GpcTestModel
     private readonly AnalysisSource source;
     private readonly List<string> entries = new();
     private readonly Dictionary<int, double> angles = new();
-    private readonly Dictionary<string, List<BeamMemberPart>> members = new(StringComparer.Ordinal);
+    /// <summary>L12: the bridge data of the model (member metadata of the beams by GUID).</summary>
+    internal GPC.Checkers.CompositeBridge.BridgeModelData Bridge { get; } = new GPC.Checkers.CompositeBridge.BridgeModelData();
     private ElasticBeamProperty generic;
     private bool analysed;
 
@@ -114,12 +115,11 @@ internal sealed class GpcTestModel
     }
 
     /// <summary>A beam that is part of a physical bridge member (stations in the definition units), in the order of the calls.</summary>
-    internal void Member(BeamElement beam, BridgeMemberFamily family, int group, int segment, int span, double stationFrom, double stationTo, string geometryId = "")
+    internal void Member(BeamElement beam, GPC.Checkers.CompositeBridge.Layout.BridgeMemberFamily family, int group, int segment, int span, double stationFrom, double stationTo, string geometryId = "")
     {
         string id = $"{family}:{group}:{segment}";
-        var metadata = new BridgeMemberMetadata(id, family, group, segment, span, units.ToMm(stationFrom), units.ToMm(stationTo), new Vector3d(0, 0, 1), geometryId);
-        if (!members.TryGetValue(id, out var parts)) members.Add(id, parts = new List<BeamMemberPart>());
-        parts.Add(new BeamMemberPart(beam.Id, true, metadata));
+        var metadata = new GPC.Checkers.CompositeBridge.Layout.BridgeMemberMetadata(id, family, group, segment, span, units.ToMm(stationFrom), units.ToMm(stationTo), new Vector3d(0, 0, 1), geometryId);
+        Bridge.SetMember(beam.Guid, metadata);
     }
 
     /// <summary>The group of an element by its full BridGHe name ("Family\Group1\Segment1"), with its ancestors, as the legacy reader
@@ -232,8 +232,6 @@ internal sealed class GpcTestModel
     {
         if (analysed) throw new InvalidOperationException("GpcTestModel already analysed.");
         analysed = true;
-        foreach (var (id, parts) in members)
-            Model.PhysicalMembers.Add(id, new PhysicalMemberDefinition(id, parts, "NodeToNode", id, "BridGHe bridge member"));
     }
 }
 #endif

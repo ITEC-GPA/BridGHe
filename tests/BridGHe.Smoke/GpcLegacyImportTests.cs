@@ -169,19 +169,29 @@ internal static class GpcLegacyImportTests
         string Label(GPC.Model.Elements.Element e) => e.Attributes.Values.OfType<GPC.Model.Attributes.ElementLabelAttribute>().SingleOrDefault()?.Label;
         Assert(Label(model.NodesElements[2]) == "N2" && Label(model.NodesElements[1]) == null, u + ": node Element ID as label");
         Assert(Enumerable.Range(1, 3).All(k => Label(model.BeamElements[k]) == "B" + k), u + ": beam Element IDs as labels");
-        var member = model.PhysicalMembers["Girder:1:1"];
-        Assert(member.Parts.Select(x => x.BeamId).SequenceEqual(new[] { 1, 2, 3 }) && member.Parts.All(x => x.AlongIJ) && member.Source == "BridGHe bridge member", u + ": bridge member with its FE parts in order");
-        var m2 = member.Parts[1].BridgeMetadata;
-        Assert(m2.PhysicalId == "Girder:1:1" && m2.Family == GPC.Model.Structure.Members.BridgeMemberFamily.Girder && m2.Group == 1 && m2.Segment == 1 && m2.Span == 1
+        // L12: the bridge identities are bridge data by beam GUID (BridgeModel), never in the generic model.
+        var bridge = new GPC.Checkers.CompositeBridge.BridgeModel(model, report.Bridge);
+        Assert(model.PhysicalMembers.Count == 0 && bridge.Validate().Count == 0, u + ": no bridge member in the generic model, valid bridge data");
+        var member = bridge.PhysicalMember("Girder:1:1");
+        Assert(member.Select(x => x.Beam.Id).SequenceEqual(new[] { 1, 2, 3 }), u + ": bridge member with its FE parts in order");
+        var m2 = member[1].Metadata;
+        Assert(m2.PhysicalId == "Girder:1:1" && m2.Family == GPC.Checkers.CompositeBridge.Layout.BridgeMemberFamily.Girder && m2.Group == 1 && m2.Segment == 1 && m2.Span == 1
             && Near(m2.StationFromMm, 10 * length) && Near(m2.StationToMm, 20 * length) && m2.SectionUp.Z == 1 && m2.GeometryId == "Girder:01:01:0002", u + ": part metadata, stations in mm");
-        var g1 = model.PhysicalMembers["SuperElement:G1"]; var g2 = model.PhysicalMembers["SuperElement:G2"];
-        Assert(g1.Name == "G1" && g1.Parts.Select(x => x.BeamId).SequenceEqual(new[] { 1, 2 }) && g2.Parts.Single().BeamId == 3 && g1.Source == "BridGHe super element"
-            && g1.Parts.All(x => x.BridgeMetadata == null), u + ": super elements as named physical members");
+        Assert(bridge.SuperElementNames().SequenceEqual(new[] { "G1", "G2" }) && bridge.SuperElement("G1").Select(b => b.Id).SequenceEqual(new[] { 1, 2 })
+            && bridge.SuperElement("G2").Single().Id == 3, u + ": super elements of the beams");
         Assert(report.NotExported.Count == 0 && report.Warnings.Count == 0, u + ": nothing silently dropped: " + string.Join("; ", report.NotExported.Keys.Concat(report.Warnings)));
         var plan = Straus7ModelWritePlan.Prepare(model);
         Assert(plan.IdentityMap.Entries.Count == 7, u + ": the writer accepts the labelled model");
-        var copy = GpcGooArchive.ReadModel(GpcGooArchive.Model(model));
-        Assert(copy.PhysicalMembers.Count == 3 && Label(copy.BeamElements[2]) == "B2" && copy.PhysicalMembers["Girder:1:1"].Parts[2].BridgeMetadata.GeometryId == "Girder:01:01:0003", u + ": GPC archive round trip");
+        var copy = GpcGooArchive.ReadBridgeModel(GpcGooArchive.BridgeModel(bridge));
+        Assert(Label(copy.Model.BeamElements[2]) == "B2" && copy.Data.Fingerprint() == bridge.Data.Fingerprint()
+            && copy.PhysicalMember("Girder:1:1")[2].Metadata.GeometryId == "Girder:01:01:0003", u + ": GPC archive round trip (BridgeModel)");
+        // Lead decision of 5/11: a beam in two super elements is an import error; two attributes with the same name are one super element.
+        var twice = new ModelModel(legacy); twice.Beams[0].Attributes.Add(new SuperElementAttributeModel("G1"));
+        var twiceModel = Import(twice, out var twiceReport);
+        Assert(twiceModel.BeamElements.Count == 3 && twiceReport.Bridge.SuperElement(twiceModel.BeamElements[1].Guid) == "G1", u + ": the same super element twice is one");
+        var two = new ModelModel(legacy); two.Beams[0].Attributes.Add(new SuperElementAttributeModel("G2"));
+        try { Import(two, out _); Assert(false, u + ": a beam in two super elements accepted"); }
+        catch (ArgumentException e) when (e.Message.StartsWith("LegacyBeamInTwoSuperElements", StringComparison.Ordinal)) { }
     }
 
     /// <summary>The six distributions decomposed into linear pieces: each piece reproduces the native law at its ends.</summary>

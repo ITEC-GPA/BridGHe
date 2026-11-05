@@ -24,12 +24,14 @@ internal static class BridgeDeflectionTests
     /// <summary>P2T: the same analytical girder as <see cref="AnalyticModel"/>, built directly in GPC (no FEM model): the nodes of the
     /// geometry, one beam per geometry member with its bridge metadata (physical members, as Bridge Member Assignment and the legacy
     /// conversion give them) and the analytical displacements of case G1 as stored results.</summary>
-    internal static GPC.Model.Models.Model AnalyticGpc(SimpleBridgeGeometry geometry)
+    internal static GPC.Model.Models.Model AnalyticGpc(SimpleBridgeGeometry geometry) => AnalyticGpc(geometry, out _);
+    /// <param name="bridge">L12: the bridge data of the model (member metadata by beam GUID).</param>
+    internal static GPC.Model.Models.Model AnalyticGpc(SimpleBridgeGeometry geometry, out GPC.Checkers.CompositeBridge.BridgeModelData bridge)
     {
         var test = new GpcTestModel("Bridge design test"); test.Case("G1");
         var nodes = geometry.Nodes.Select((p, i) => test.Node((i + 1).ToString(), p.X, p.Y, p.Z)).ToArray();
         foreach (var member in geometry.Members)
-            test.Member(test.Beam(member.Id, nodes[member.NodeFrom - 1], nodes[member.NodeTo - 1]), Enum.Parse<GPC.Model.Structure.Members.BridgeMemberFamily>(member.Family.ToString()),
+            test.Member(test.Beam(member.Id, nodes[member.NodeFrom - 1], nodes[member.NodeTo - 1]), Enum.Parse<GPC.Checkers.CompositeBridge.Layout.BridgeMemberFamily>(member.Family.ToString()),
                 member.Group, member.Segment, member.Span, member.StationFrom, member.StationTo);
         var supports = geometry.Supports.Where(s => s.Girder == 1).Select(s => s.Station).ToArray();
         for (int i = 0; i < nodes.Length; i++)
@@ -39,7 +41,7 @@ internal static class BridgeDeflectionTests
             double t = (s - supports[span]) / (supports[span + 1] - supports[span]);
             test.Displacement(nodes[i], "G1", 0, 0, -5 - .0002 * s - 80 * t * (1 - t));
         }
-        return test.Analyse();
+        bridge = test.Bridge; return test.Analyse();
     }
 #endif
     /// <summary>The analytical assertions of the test, on the FEM or the GPC evaluation (the same meaning on both paths).</summary>
@@ -64,9 +66,9 @@ internal static class BridgeDeflectionTests
 #if GPC_PILOT
         // P2T: the test on the analysed GPC model built in GPC (girder stations from the physical members, displacements from the GPC
         // rows). It stays after the FeMM removal; the FEM part below becomes its parity reference until then.
-        var analysed = AnalyticGpc(geometry);
-        BridgeDeflectionResult Gpc(double scale) => BridgeDeflectionCamber.Evaluate(analysed, geometry, 1, "G1", 0, "", Vector3d.ZAxis, 1, true, scale);
-        Verify(Gpc, () => BridgeDeflectionCamber.Evaluate(analysed, geometry, 1, "unknown", 0, "", Vector3d.ZAxis, 1, true, 1), "GPC: ");
+        var analysed = AnalyticGpc(geometry, out var bridge);
+        BridgeDeflectionResult Gpc(double scale) => BridgeDeflectionCamber.Evaluate(analysed, bridge, geometry, 1, "G1", 0, "", Vector3d.ZAxis, 1, true, scale);
+        Verify(Gpc, () => BridgeDeflectionCamber.Evaluate(analysed, bridge, geometry, 1, "unknown", 0, "", Vector3d.ZAxis, 1, true, 1), "GPC: ");
 #endif
         // FEM path (removed with the FeMM models): the same assertions, and the GPC evaluations equal to it bit for bit.
         var model = AnalyticModel(geometry);
@@ -77,7 +79,7 @@ internal static class BridgeDeflectionTests
         static double[] Coordinates(PolylineCurve c) => c.ToPolyline().SelectMany(p => new[] { p.X, p.Y, p.Z }).ToArray();
         var result = Fem(10);
         // The GPC model built in GPC and the conversion of the FEM model (GpcSyntheticResults, the route of GH_Model.Gpc today).
-        foreach (var (gpc, label) in new[] { (Gpc(10), "GPC model built in GPC"), (BridgeDeflectionCamber.Evaluate(GpcSyntheticResults.Analysed(model), geometry, 1, "G1", 0, "", Vector3d.ZAxis, 1, true, 10), "converted FEM model") })
+        foreach (var (gpc, label) in new[] { (Gpc(10), "GPC model built in GPC"), (BridgeDeflectionCamber.Evaluate(GpcSyntheticResults.Analysed(model, out var syntheticBridge), syntheticBridge, geometry, 1, "G1", 0, "", Vector3d.ZAxis, 1, true, 10), "converted FEM model") })
             Require(Same(gpc.Stations, result.Stations) && Same(gpc.Absolute, result.Absolute) && Same(gpc.Relative, result.Relative) && Same(gpc.Camber, result.Camber)
                 && Same(Coordinates(gpc.Deflected), Coordinates(result.Deflected)) && Same(Coordinates(gpc.Cambered), Coordinates(result.Cambered))
                 && gpc.Source == result.Source && gpc.Diagnostics.SequenceEqual(result.Diagnostics), "GPC evaluation (" + label + ") equal to the FEM one bit for bit");

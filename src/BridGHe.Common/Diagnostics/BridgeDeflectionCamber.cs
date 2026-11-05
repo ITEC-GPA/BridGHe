@@ -32,15 +32,17 @@ public static class BridgeDeflectionCamber
     /// <summary>F6 (a)/(b): the same evaluation on an analysed GPC model (<see cref="GpcResultCatalog"/>): girder stations from the bridge
     /// metadata of its physical members, displacements from the rows the Results components show (catalog label, step 0, no step type,
     /// as the former result objects the analysis wrote from them).</summary>
-    public static BridgeDeflectionResult Evaluate(GpcModel analysed, SimpleBridgeGeometry geometry, int girder, string loadCase,
+    /// <param name="bridge">L12: the bridge data of the model (member metadata by beam GUID), null: none.</param>
+    public static BridgeDeflectionResult Evaluate(GpcModel analysed, GPC.Checkers.CompositeBridge.BridgeModelData bridge, SimpleBridgeGeometry geometry, int girder, string loadCase,
         double step, string stepType, Vector3d direction, double camberFactor, bool relativeCamber, double displayScale)
     {
         ArgumentNullException.ThrowIfNull(analysed); BridgeGeometryTools.Validate(geometry);
         var catalog = GpcResultCatalog.Of(analysed) ?? throw new ArgumentException("The model has no stored results of a BridGHe analysis.");
         if (catalog.Units.Units != DefinitionUnits.Nmm) throw new ArgumentException("Bridge Geometry and analysed model must use N-mm.");
         Arguments(loadCase, step, ref direction, camberFactor, displayScale);
-        var memberStations = analysed.PhysicalMembers.Values.SelectMany(m => m.Parts).Select(p => p.BridgeMetadata)
-            .Where(m => m != null && m.Family == GPC.Model.Structure.Members.BridgeMemberFamily.Girder && m.Group == girder)
+        // The member metadata of the beams in numbering order, as the former model read it from the beams.
+        var memberStations = analysed.BeamElements.Values.OrderBy(b => b.Id).Select(b => bridge?.Member(b.Guid))
+            .Where(m => m != null && m.Family == GPC.Checkers.CompositeBridge.Layout.BridgeMemberFamily.Girder && m.Group == girder)
             .SelectMany(m => new[] { m.StationFromMm, m.StationToMm });
         var nodes = analysed.NodesElements.Values.ToArray();
         using var index = new StrausNodeIndex(nodes.Select(n => new Point3d(n.Position.X, n.Position.Y, n.Position.Z)).ToArray(), 1e-5);

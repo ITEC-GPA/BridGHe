@@ -221,7 +221,7 @@ namespace BridGHe.Common.Gpc
             var source = input.Model; var report = input.Report;
             IEnumerable<GPC.Model.Attributes.Group> Branch(GPC.Model.Attributes.Group g) { for (var x = g; x != null; x = x.Parent) yield return x; }
             var allGroups = source.AllElements.SelectMany(e => e.Groups.Values).SelectMany(Branch).Select(g => g.Name).ToHashSet(StringComparer.Ordinal);
-            var members = GpcBridgeMembers.Of(source);
+            var members = GpcBridgeMembers.Of(source, input.Bridge);
             var allPhysical = members.Values.Select(m => m.PhysicalId).ToHashSet(StringComparer.Ordinal);
             if (activeGroups.Any(g => !allGroups.Contains(g)) || physicalIds.Any(id => !allPhysical.Contains(id)))
                 throw new ArgumentException("Unknown active group/physical member identifier.");
@@ -297,11 +297,11 @@ namespace BridGHe.Common.Gpc
             model.PlateProperties.Clear();
             foreach (var p in plateProperties) if (!model.PlateProperties.ContainsKey(p.Name)) model.PlateProperties.Add(p.Name, p);
 
-            // Physical members and super elements: the parts of the active beams, members before super elements, in the order of their first beam.
+            // Generic physical members (a model built in GPC): the parts of the active beams, in source order (the bridge members and super
+            // elements are bridge data by beam GUID, L12: those of the active beams go with them, below).
             var definitions = model.PhysicalMembers.Values.Where(m => m.Parts.Any(p => beams.Contains(p.BeamId)))
                 .Select(m => m.Parts.All(p => beams.Contains(p.BeamId)) ? m
-                    : new GPC.Model.Structure.Members.PhysicalMemberDefinition(m.Id, m.Parts.Where(p => beams.Contains(p.BeamId)), m.StationDomain, m.Name, m.Source))
-                .OrderBy(m => m.Source == GpcBridgeMembers.SuperElementSource ? 1 : 0).ThenBy(m => m.Parts.Min(p => p.BeamId)).ToList();
+                    : new GPC.Model.Structure.Members.PhysicalMemberDefinition(m.Id, m.Parts.Where(p => beams.Contains(p.BeamId)), m.StationDomain, m.Name, m.Source)).ToList();
             model.PhysicalMembers.Clear(); foreach (var m in definitions) model.PhysicalMembers.Add(m.Id, m);
 
             // Groups in the order the reader meets them: every group of the nodes (output order), then the group of the beams and plates.
@@ -385,6 +385,9 @@ namespace BridGHe.Common.Gpc
                 output.ElementWarnings.Add(renumbered); warnings.Add(renumbered.Text(renumbered.Number));
             }
             output.Warnings.Clear(); output.Warnings.AddRange(warnings);
+            // The bridge data of the active beams (keys are beam GUIDs, unchanged by the numbering).
+            var activeBeams = numbered.BeamElements.Values.Select(b => b.Guid).ToHashSet();
+            foreach (var b in output.Bridge.Beams.ToList()) if (!activeBeams.Contains(b.BeamGuid)) output.Bridge.Remove(b.BeamGuid);
             return new GpcModels.Conversion(numbered, output, input.Tolerance);
         }
 

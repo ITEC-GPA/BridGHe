@@ -76,7 +76,8 @@ internal static class BridgeConstructionTests
         Require(input.Model.BeamElements.Count == beamCount && input.Model.NodesElements.Count == nodeCount && input.Model.BeamElements.Values.All(b => b.BeamProperty.Name == "P"),
             "GPC: Input model isolated");
         var physical = Snapshot(null, new[] { "Girder:2:1" }, new[] { "*" }, "physical");
-        string[] Members(GPC.Model.Models.Model m) => m.PhysicalMembers.Values.SelectMany(d => d.Parts).Where(p => p.BridgeMetadata != null).Select(p => p.BridgeMetadata.PhysicalId).Distinct().ToArray();
+        // L12: the members are bridge data by beam GUID (the snapshot keeps the GUIDs of its source).
+        string[] Members(GPC.Model.Models.Model m) => m.BeamElements.Values.OrderBy(b => b.Id).Select(b => input.Bridge.Member(b.Guid)?.PhysicalId).Where(id => id != null).Distinct().ToArray();
         Require(physical.BeamElements.Count == 40 && Members(physical).Single() == "Girder:2:1", "GPC: Physical selection independent of beam ordering");
         Reject(() => Snapshot(new[] { "missing" }, null, null, "missing group"));
         Reject(() => Snapshot(null, null, new[] { "missing" }, "missing bearing"));
