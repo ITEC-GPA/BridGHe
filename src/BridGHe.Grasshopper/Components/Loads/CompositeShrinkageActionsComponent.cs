@@ -24,7 +24,7 @@ namespace BridGHe.Grasshopper.Components.Loads
         protected override void SolveInstance(IGH_DataAccess da)
         {
             GH_CompositeBeamProperty property=null;double strain=-.0002;if(!da.GetData(0,ref property)||!da.GetData(1,ref strain))return;
-            try{var a=CompositeShrinkageActions.Calculate(property?.Value,strain);da.SetData(0,a.PreStrain);da.SetData(1,a.ThermalGradient);da.SetData(2,a.FreeStrain);da.SetData(3,a.Curvature);}
+            try{if(property?.Value==null)throw new ArgumentException("Shrinkage requires a valid composite section with concrete enabled.");var a=CompositeShrinkageActions.Calculate(property.Definition,strain);da.SetData(0,a.PreStrain);da.SetData(1,a.ThermalGradient);da.SetData(2,a.FreeStrain);da.SetData(3,a.Curvature);}
             catch(Exception ex){AddRuntimeMessage(GH_RuntimeMessageLevel.Error,ex.Message);}
         }
         protected override System.Drawing.Bitmap Icon=>Properties.ComponentIcons.For(GetType());

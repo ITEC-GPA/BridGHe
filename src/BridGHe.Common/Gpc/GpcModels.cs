@@ -151,6 +151,15 @@ namespace BridGHe.Common.Gpc
             if (property == null) throw new ArgumentNullException(nameof(property));
             return LegacyModelImport.BeamProperty(LegacyArchive.Read(ModelArchive.Write(property)), units);
         }
+
+        /// <summary>F6 chain E: a former material (the datum of a Material parameter) as the GPC material of a beam property, with the rule
+        /// of the conversion of a whole model (<see cref="LegacyModelImport.ElasticMaterial"/>; materials are in N-mm-MPa in every unit
+        /// system of the definition).</summary>
+        public static GPC.Model.Materials.Material Material(MaterialModel material)
+        {
+            if (material == null) throw new ArgumentNullException(nameof(material));
+            return LegacyModelImport.ElasticMaterial(LegacyArchive.Read(ModelArchive.Write(material)));
+        }
     }
 
     /// <summary>F6 chain D: the load cases the elements of a GPC model refer to (the element loads of the former model, as the legacy reader

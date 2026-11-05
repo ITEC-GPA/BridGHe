@@ -172,7 +172,7 @@ internal static class GpcCompositeSectionChecks
             throw new Exception("GPC COMPOSITE SECTION FAIL: GH_CompositeBeamProperty.Definition without the rows of the property");
         analysis += CompositeAnalysisPropertyChecks.Compare(g1c1, typed, "GH type");
         Console.WriteLine($"GPC COMPOSITE SECTIONS PASS: {compared} section inputs of the definitions equal bit for bit to the former construction and its adapter (constant and variable sections, with and without bars, 3 option sets); " +
-            $"{analysis} analysis values or variants of {analysed.Count + 1} definitions equal bit for bit to their FEM properties.");
+            $"{analysis} analysis values or variants of {analysed.Count + 1} definitions equal bit for bit to their FEM properties (self tension: {CompositeAnalysisPropertyChecks.EchoedRebarDifferences} results with the echoed rebar material of ultimate strain 0.1 instead of the property one, stresses equal).");
     }
 }
 #endif

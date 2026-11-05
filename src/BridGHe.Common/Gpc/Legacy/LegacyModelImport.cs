@@ -597,6 +597,17 @@ namespace BridGHe.Common.Gpc.Legacy
 
         private static string Digest(string signature) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(signature)));
 
+        /// <summary>The GPC material of a beam property of the former exporter (<see cref="GpcMaterials.Elastic"/>: E, ν, G with Use Poisson,
+        /// density, thermal expansion, damping, conductivity, specific heat, stress-strain table), the one rule of the reader for every beam
+        /// property; chain E: the steel of the analysis properties of a composite section (<c>GpcModels.Material</c>).</summary>
+        public static Material ElasticMaterial(LegacyValue m)
+        {
+            if (m == null || m.IsNull) throw new ArgumentException("LegacyMaterialModelExpected");
+            return GpcMaterials.Elastic(m.String("Name"), m.Double("Modulus"), m.Double("PoissonRatio"), m.Double("ShearModulus"), m.Bool("UsePoisson"),
+                m.Double("Density"), m.Double("ThermalExpansion"), m.Double("ViscousDamping"), m.Double("DampingRatio"), m.Double("Conductivity"), m.Double("SpecificHeat"),
+                StressStrain(m["StressStrainTable"]));
+        }
+
         private static LegacyBeamProperty BeamProperty(LegacyValue p, string propertyName, BridgeUnits units, Dictionary<string, (double, double)> shearAreas, LegacyImportReport report, string signature)
         {
             var (property, formulation, angle, native) = Property(p, propertyName, units, shearAreas, report);
@@ -613,9 +624,7 @@ namespace BridGHe.Common.Gpc.Legacy
             if (formulation == BeamFormulation.CutoffBar) throw new NotSupportedException("LegacyCutoffBarNotMappedYet");
             var m = p.Field("Material"); var s = p.Field("SectionModel");
             if (s.Enum("MirrorType") != "None") throw new NotSupportedException("LegacyMirroredSectionNotMappedYet");
-            var material = GpcMaterials.Elastic(m.String("Name"), m.Double("Modulus"), m.Double("PoissonRatio"), m.Double("ShearModulus"), m.Bool("UsePoisson"),
-                m.Double("Density"), m.Double("ThermalExpansion"), m.Double("ViscousDamping"), m.Double("DampingRatio"), m.Double("Conductivity"), m.Double("SpecificHeat"),
-                StressStrain(m["StressStrainTable"]));
+            var material = ElasticMaterial(m);
             if (!m["StressStrainTable"].IsNull && type != "Beam" && type != "Truss") material.AnalysisData.StressStrainPairs = null; // former exporter: tables only for beams and trusses
             if (!s["NativeSection"].IsNull)
             {

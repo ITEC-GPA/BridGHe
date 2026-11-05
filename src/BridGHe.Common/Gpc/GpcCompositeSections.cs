@@ -59,7 +59,7 @@ namespace BridGHe.Common.Gpc
                 property.VerticalOffset, property.ConcreteMaterial.Name, property.ConcreteMaterial.SpecificCompressiveStrength,
                 property.SteelMaterial.Name, property.SteelMaterial.Modulus, property.SteelMaterial.MinimumYieldStress, property.SteelMaterial.MinimumTensileStress,
                 property.RebarMaterial.Name, property.RebarMaterial.Modulus, property.RebarMaterial.MinimumYieldStress, property.RebarMaterial.MinimumTensileStress,
-                property.NInfinite, property.NInstant, property.NShrinkage, property.ConsiderConcrete, property.ConsiderRebar);
+                property.NInfinite, property.NInstant, property.NShrinkage, property.ConsiderConcrete, property.ConsiderRebar, GpcModels.Material(property.SteelMaterial));
         }
 
         /// <summary>The definition of a variable section at the normalised station <paramref name="station"/> (0 at the start, 1 at the end):
@@ -77,13 +77,14 @@ namespace BridGHe.Common.Gpc
                 concrete.Name, Lm(concrete.SpecificCompressiveStrength, end.ConcreteMaterial.SpecificCompressiveStrength),
                 steel.Name, Lm(steel.Modulus, end.SteelMaterial.Modulus), Lm(steel.MinimumYieldStress, end.SteelMaterial.MinimumYieldStress), Lm(steel.MinimumTensileStress, end.SteelMaterial.MinimumTensileStress),
                 rebar.Name, Lm(rebar.Modulus, end.RebarMaterial.Modulus), Lm(rebar.MinimumYieldStress, end.RebarMaterial.MinimumYieldStress), Lm(rebar.MinimumTensileStress, end.RebarMaterial.MinimumTensileStress),
-                L(start.NInfinite, end.NInfinite), L(start.NInstant, end.NInstant), L(start.NShrinkage, end.NShrinkage), start.ConsiderConcrete, start.ConsiderRebar);
+                L(start.NInfinite, end.NInfinite), L(start.NInstant, end.NInstant), L(start.NShrinkage, end.NShrinkage), start.ConsiderConcrete, start.ConsiderRebar, null);
         }
 
         private static BridgeCompositeSectionDefinition Create(string name, string steelName, double h, double webThickness, double topWidth, double topThickness,
             double bottomWidth, double bottomThickness, double slabWidth, double slabHeight, double topArea, double topCover, double bottomArea, double bottomCover,
             double verticalOffset, string concreteName, double fck, string steelMaterialName, double steelE, double steelFy, double steelFu,
-            string rebarName, double rebarE, double rebarFy, double rebarFu, double nLongTerm, double nShortTerm, double nShrinkage, bool considerConcrete, bool considerRebar)
+            string rebarName, double rebarE, double rebarFy, double rebarFu, double nLongTerm, double nShortTerm, double nShrinkage, bool considerConcrete, bool considerRebar,
+            GPC.Model.Materials.Material analysisSteel)
         {
             var sectionH = new SectionH(h, webThickness, topWidth, topThickness, bottomWidth, bottomThickness, steelName);
             var concrete = new ConcreteMaterialEN1992(concreteName, fck, ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle);
@@ -96,7 +97,10 @@ namespace BridGHe.Common.Gpc
                 sectionH, steel, bottomCover, verticalOffset, name);
             // Chain E step 1 (coordinator, 5/11, option ii): the rows as given, for the one-bar section of the analysis properties.
             var rows = new BridgeCompositeRebarRows(topArea, topCover, bottomArea, bottomCover, BarsPerRow);
-            return new BridgeCompositeSectionDefinition(name, section, rows, nLongTerm, nShortTerm, nShrinkage, verticalOffset, considerConcrete, considerRebar);
+            // Chain E step 2 (coordinator, 5/11, option b): the steel of the analysis properties (constant sections; an interpolated section is
+            // a section of the checks only).
+            return analysisSteel == null ? new BridgeCompositeSectionDefinition(name, section, rows, nLongTerm, nShortTerm, nShrinkage, verticalOffset, considerConcrete, considerRebar)
+                : new BridgeCompositeSectionDefinition(name, section, rows, analysisSteel, nLongTerm, nShortTerm, nShrinkage, verticalOffset, considerConcrete, considerRebar);
         }
 
         /// <summary>

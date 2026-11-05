@@ -63,18 +63,12 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             if (!DA.GetData(2, ref strain))
                 return;
 
-            CompositeBeamPropertyModel compositeBeamPropertyModel = gH_CompositeBeamProperty.Value;
-            ReinforcedConcreteSection reinforcedConcreteSection = compositeBeamPropertyModel.GetReinforcedConcreteSection();
-
-            double phi = CalculateHomogenizedFactorPhi(n, reinforcedConcreteSection.SteelSections.First().Section.SteelMaterial, reinforcedConcreteSection.ConcreteMaterial);
-            var cs = GetCoordinateSystem(reinforcedConcreteSection, phi);
-
-            GPC.Checkers.CompositeBridge.BridgeAnalysisOptions options = new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare };
-
-
-            BridgeCheckAdapter sectionChecker = new BridgeCheckAdapter(reinforcedConcreteSection, cs, options);
-
-            StressAnalysisResult result = sectionChecker.GetSelfTension(strain, phi);
+            // F6 chain E step 2: the analysis section (one bar per row) of the Checker definition the composite property carries; the stresses
+            // are those of the former section of the property bit for bit (gpc-composite-sections, bar ultimate strain 0.1 against 0.075).
+            var definition = gH_CompositeBeamProperty?.Definition;
+            if (definition == null)
+                return;
+            StressAnalysisResult result = CompositeSelfTension.Calculate(definition.AnalysisSection(), n, strain);
 
             DA.SetData(0, result);
         }

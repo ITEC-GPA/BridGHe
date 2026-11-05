@@ -30,6 +30,9 @@ internal static class CompositeAnalysisPropertyChecks
 {
     private static string B(double v) => BitConverter.DoubleToInt64Bits(v).ToString("X16");
 
+    /// <summary>Self-tension results whose echoed rebar material differs (bar ultimate strain of the property other than 0.1).</summary>
+    internal static int EchoedRebarDifferences;
+
     private static string Try(Func<string> value)
     {
         try { return value(); }
@@ -84,7 +87,28 @@ internal static class CompositeAnalysisPropertyChecks
                 });
                 Same($"homogenised property n={n:R} concrete={concrete}", expected, actual);
             }
+            // Composite Beam Self Tension: the stresses of the H bridge engine on the analysis section of the definition (bar ultimate strain
+            // 0.1) and on the former section of the property (the strain of its rebar material, 0.075 for the B450C of BridGHe).
+            // Every value of the result is compared except the rebar material it echoes (the input of the engine): ultimate strains and
+            // hardening modulus Et follow the ultimate strain of the bars (listed difference, counted in EchoedRebarDifferences).
+            foreach (double strain in new[] { -2e-4, -3.5e-4, 1e-4 })
+            {
+                string former = Try(() => GpcCompositeSectionChecks.Dump(BridGHe.Common.Checks.CompositeSelfTension.Calculate(property.GetReinforcedConcreteSection(), n, strain)));
+                string gpc = Try(() => GpcCompositeSectionChecks.Dump(BridGHe.Common.Checks.CompositeSelfTension.Calculate(definition.AnalysisSection(), n, strain)));
+                bool Echo(string line) => line.StartsWith(".Analysis.Input.Materials.Rebar.Et=", StringComparison.Ordinal) || line.StartsWith(".Analysis.Input.Materials.Rebar.StrainU", StringComparison.Ordinal);
+                string Values(string dump) => string.Join("\n", dump.Split('\n').Where(l => !Echo(l)));
+                Same($"self tension n={n:R} strain={strain:R}", Values(former), Values(gpc));
+                if (former != gpc) EchoedRebarDifferences++;
+            }
         }
+        // The analysis steel of the definition: the steel material of the property with the rule of the legacy reader; Composite Shrinkage
+        // Actions from the definition (n,sh, E and α of that steel, analysis section) = from the property.
+        if (definition.AnalysisSteel == null) throw new Exception($"COMPOSITE ANALYSIS PROPERTY FAIL ({label}, {property.Name}): definition without the analysis steel");
+        Same("analysis steel", GPC.Model.Core.ModelValues.Fingerprint(new object[] { GpcModels.Material(property.SteelMaterial) }), GPC.Model.Core.ModelValues.Fingerprint(new object[] { definition.AnalysisSteel }));
+        string Shrinkage(BridGHe.Common.Checks.CompositeShrinkageActions a) => string.Join(" ", new[] { a.FreeStrain, a.Curvature, a.PreStrain, a.ThermalGradient, a.EigenForce, a.EigenMoment, a.Centroid }.Select(B));
+        foreach (double strain in new[] { -2e-4, -3.5e-4, 1e-4, 0 })
+            Same($"shrinkage strain={strain:R}", Try(() => Shrinkage(BridGHe.Common.Checks.CompositeShrinkageActions.Calculate(property, strain))),
+                Try(() => Shrinkage(BridGHe.Common.Checks.CompositeShrinkageActions.Calculate(definition, strain))));
         return compared;
     }
 
@@ -107,7 +131,7 @@ internal static class CompositeAnalysisPropertyChecks
         if (properties == 0) throw new Exception($"COMPOSITE ANALYSIS PROPERTY FAIL ({label}): no composite property in the outputs");
         Console.WriteLine($"COMPOSITE ANALYSIS PROPERTY PASS ({label}): {properties} composite properties, {variants} values or variants of the definition " +
             $"equal bit for bit to the FEM property (analysis section, steel torsion, homogenised values for every choice, homogenised property uncracked " +
-            $"and cracked, at n0, n∞, n,sh, 1 and 15.3); {strains} with a rebar ultimate strain other than 0.1 (not in the homogenised values).");
+            $"and cracked, self tension, shrinkage actions, analysis steel, at n0, n∞, n,sh, 1 and 15.3); {strains} with a rebar ultimate strain other than 0.1 (not in the homogenised values or the stresses; {EchoedRebarDifferences} self-tension results echo the rebar of the definition).");
     }
 }
 #endif

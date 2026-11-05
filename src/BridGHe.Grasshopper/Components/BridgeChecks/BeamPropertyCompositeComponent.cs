@@ -93,6 +93,9 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
 
             if (!double.IsFinite(n0) || n0 <= 0 || !double.IsFinite(ninf) || ninf <= 0 || !double.IsFinite(nShrinkage) || nShrinkage <= 0)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Modular ratios must be finite and positive."); return; }
+            // F6 (0.4.0): the composite section is a GPC definition with a name (no example or archived revision has an empty one, scan of 5/11).
+            if (string.IsNullOrWhiteSpace(name))
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Name required: connect a name for the composite section (it identifies the section in the checks and in the reports)."); return; }
 
             var slab = (concreteSection as GH_Goo<object>)?.Value as SectionConcreteSlabModel;
             if (slab == null || !slab.IsValid || steelSection?.Value == null || steelMaterial?.Value == null || concreteMaterial?.Value == null)
