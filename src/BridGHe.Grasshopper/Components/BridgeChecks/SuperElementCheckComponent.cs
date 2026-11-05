@@ -156,7 +156,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     if (gpcBridge != null && model.Value.BridgeWorkflow != null)
                     {
                         var excluded = workflowPath ? null : beams.Where(b => !b.Value.StartBeamProperty.ConsiderConcrete).Select(b => b.Value.BeamId).ToArray();
-                        d3 = new Common.Checks.GpcBridgeChecks(gpcBridge, model.Value, excluded);
+                        d3 = new Common.Checks.GpcBridgeChecks(gpcBridge, excluded); // P2T request 3: the GPC bridge model alone
                         var missing = beams.Where(b => !d3.Has(b.Value.BeamId) || gpcBridge.SamplesOf(b.Value.BeamId) == null).Select(b => b.Value.BeamId).ToArray();
                         if (missing.Length > 0) throw new InvalidOperationException("Travi assenti dal modello di ponte GPC: " + string.Join(", ", missing));
                     }

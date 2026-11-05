@@ -36,18 +36,32 @@ namespace BridGHe.Common.Gpc
         /// <summary>The merged beam actions as numbers, per beam of the bridge model (GPC beam k + 1), in their stored order: case name and
         /// sample (station in the definition length, BridGHe convention), the numbers of the dataset before its mapping to the section axes.</summary>
         public IReadOnlyList<(string Case, BeamForceSample Sample)>[] Samples { get; }
+        /// <summary>P2T request 3: the records of the merged actions (cases "key [FEM]"/"key [strain]", source name and case, behaviour, strain,
+        /// beams, local section states, concrete-excluded beams), as the former merged FEM model kept them (<c>ModelModel.BridgeWorkflow</c>).</summary>
+        public BridgeWorkflow Records { get; }
+        /// <summary>P2T request 3: the BridGHe angle (degrees) of every beam of the bridge model (beam k + 1), from its reference model.</summary>
+        public IReadOnlyList<double> BeamAngles { get; }
+        /// <summary>P2T request 3: the combination table of Build BridGHe Model (name and coefficients of the merged cases, zero coefficients
+        /// included, in order), as the merged FEM model kept it; the GPC combinations of <see cref="Model"/> keep only the non-zero ones.</summary>
+        public IReadOnlyList<(string Name, IReadOnlyList<(string Case, double Factor)> Factors)> Combinations { get; }
         private readonly Dictionary<string, int> beams;
         private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Model, GpcBridge> registry = new System.Runtime.CompilerServices.ConditionalWeakTable<Model, GpcBridge>();
 
         /// <summary>The bridge of a GPC bridge model (the components that only receive its beams, e.g. Bridge Girder Results), or null.</summary>
         public static GpcBridge Of(Model model) => model != null && registry.TryGetValue(model, out var bridge) ? bridge : null;
 
-        internal GpcBridge(Model model, D3.BridgeWorkflowDefinition workflow, IReadOnlyList<(string Case, BeamForceSample Sample)>[] samples)
+        internal GpcBridge(Model model, D3.BridgeWorkflowDefinition workflow, IReadOnlyList<(string Case, BeamForceSample Sample)>[] samples, BridgeWorkflow records, IReadOnlyList<double> beamAngles,
+            IReadOnlyList<(string Name, IReadOnlyList<(string Case, double Factor)> Factors)> combinations, bool register = true)
         {
-            Model = model; Workflow = workflow; Samples = samples; registry.AddOrUpdate(model, this);
+            Model = model; Workflow = workflow; Samples = samples; Records = records; BeamAngles = beamAngles; Combinations = combinations; if (register) registry.AddOrUpdate(model, this);
             beams = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (var b in model.BeamElements) beams.TryAdd(b.Value.Source.OriginalId, b.Key);
         }
+
+        /// <summary>A variant with another combination table (same model, recipe, samples, records and angles; not registered, so
+        /// <see cref="Of"/> still gives this one): what-if checks on other coefficients (the R3 variant of the native tests).</summary>
+        public GpcBridge WithCombinations(IReadOnlyList<(string Name, IReadOnlyList<(string Case, double Factor)> Factors)> combinations) =>
+            new GpcBridge(Model, Workflow, Samples, Records, BeamAngles, combinations ?? throw new ArgumentNullException(nameof(combinations)), register: false);
 
         /// <summary>The merged samples of a beam by its BridGHe ID, or null when the bridge model has no such beam.</summary>
         public IReadOnlyList<(string Case, BeamForceSample Sample)> SamplesOf(string beamId) =>
@@ -218,7 +232,8 @@ namespace BridGHe.Common.Gpc
                         UnitsAndAxes = "", UnsupportedReason = "Former BridGHe action provenance (phase model and case name) kept for the round trip of the port; not a solver input.",
                     });
             Results(model, reference, samples);
-            return new GpcBridgeBuild(new GpcBridge(model, Recipe(workflow, model), samples), summary, warnings.ToArray());
+            return new GpcBridgeBuild(new GpcBridge(model, Recipe(workflow, model), samples, workflow, beams.Select(b => reference.Angle(b)).ToArray(),
+                table.Select(t => (t.Name, (IReadOnlyList<(string Case, double Factor)>)t.Factors.ToArray())).ToArray()), summary, warnings.ToArray());
         }
 
         /// <summary>The beams of a model in their numbering.</summary>

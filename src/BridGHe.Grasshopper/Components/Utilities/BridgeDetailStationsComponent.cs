@@ -65,7 +65,9 @@ public sealed class BridgeDetailStationsComponent : BridgeUtilityComponent
             if (matches.Length != 1) throw new ArgumentException("Duplicate/overlapping detail locations.");
             int index = matches[0]; matched[index] = true; double reaction = double.NaN;
             if (phases.Length > 0 && !cache.TryGetValue((index, result.Source.Combination), out reaction))
-                cache[(index, result.Source.Combination)] = reaction = BridgeSupportReactions.SignedKN(model.Value, phases, locations[index], result.Source.Combination, up, tolerance);
+                cache[(index, result.Source.Combination)] = reaction = model.GpcBridge != null && phases.All(p => p.Actions.All(a => string.IsNullOrWhiteSpace(a.Case) || a.GpcSource != null))
+                    ? BridgeSupportReactions.SignedKN(model.GpcBridge, phases, locations[index], result.Source.Combination, up, tolerance) // P2T request 3: the GPC bridge model alone
+                    : BridgeSupportReactions.SignedKN(model.Value, phases, locations[index], result.Source.Combination, up, tolerance);
             int neighbours = selectedBeams.Count(b => b.PointFrom.DistanceTo(point) <= tolerance || b.PointTo.DistanceTo(point) <= tolerance);
             int end = neighbours == 1 ? station <= tolerance ? 1 : 2 : 0;
             var path = input.Paths[branch]; output.Append(new GH_ObjectWrapper(result), path);

@@ -38,10 +38,13 @@ internal static class R3ConcreteExclusionCheck
             foreach (var key in combination.Values.Keys.Where(k => actions.Any(x => k.Name == x + " [strain]" || k.Name == x + " [FEM]")).ToArray())
                 if (combination.Values[key] != 0) { combination.Values[key] = 0; strainFactors++; }
         }
+        // P2T request 3: the checks read the combinations of the GPC bridge model (its table), so the variant carries the same coefficients.
+        var variant = ((BridGHe.Common.Gpc.GpcBridge)bridge).WithCombinations(copy.LoadCombinations
+            .Select(c => (c.Name, (IReadOnlyList<(string Case, double Factor)>)c.Values.Select(v => (v.Key.Name, v.Value)).ToArray())).ToArray());
         object Goo(bool withBridge)
         {
             var goo = modelType.GetMethod("FromModel", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { copy, null });
-            if (withBridge) modelType.GetMethod("AttachBridge").Invoke(goo, new[] { bridge });
+            if (withBridge) modelType.GetMethod("AttachBridge").Invoke(goo, new object[] { variant });
             return goo;
         }
         var beamType = assembly.GetType("BridGHe.Grasshopper.DataTypes.GH_CompositeBeam", true);

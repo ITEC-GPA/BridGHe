@@ -38,7 +38,19 @@ namespace BridGHe.Common.Checks
         /// cases (Compatible without local states): their long-term, short-term and shrinkage increments are checked on the concrete-excluded
         /// section, as BridGHe's phases did (BridgeCheckAdapter.GetLinearAnalysisResultByStages with concrete off):
         /// a copy of the recipe with these beams in <see cref="BridgeWorkflowActionDefinition.ConcreteExcludedBeamGuids"/> of those actions.</param>
+        /// <summary>TRANSITIONAL (removed with the FeMM models): the combinations, BridGHe angles and records from the merged FEM model.</summary>
         public GpcBridgeChecks(GpcBridge bridge, ModelModel merged, IReadOnlyCollection<string> concreteExcludedBeamIds = null)
+            : this(bridge, concreteExcludedBeamIds, merged.LoadCombinations.Select(c => c.Values.Select(p => (p.Key.Name, p.Value)).ToArray()).ToArray(),
+                  merged.Beams.Select(b => b.AngleDeg).ToArray(), merged.BridgeWorkflow.Phases.Any(p => p.Actions.Any(a => a.HasLocalSectionStates))) { }
+
+        /// <summary>P2T request 3: the checks on the GPC bridge model alone: the combinations of the bridge model (the table of Build BridGHe Model,
+        /// in its order), the BridGHe angles and the records of the actions kept by <see cref="GpcBridge"/>.</summary>
+        public GpcBridgeChecks(GpcBridge bridge, IReadOnlyCollection<string> concreteExcludedBeamIds = null)
+            : this(bridge ?? throw new ArgumentNullException(nameof(bridge)), concreteExcludedBeamIds,
+                  bridge.Combinations.Select(c => c.Factors.ToArray()).ToArray(),
+                  bridge.BeamAngles.ToArray(), bridge.Records.Phases.Any(p => p.Actions.Any(a => a.HasLocalSectionStates))) { }
+
+        private GpcBridgeChecks(GpcBridge bridge, IReadOnlyCollection<string> concreteExcludedBeamIds, (string Case, double Factor)[][] combinations, double[] angles, bool local)
         {
             this.bridge = bridge ?? throw new ArgumentNullException(nameof(bridge));
             var model = bridge.Model; var workflow = Excluding(bridge.Workflow, model, concreteExcludedBeamIds);
@@ -48,18 +60,31 @@ namespace BridGHe.Common.Checks
             var forceCases = workflow.Phases.SelectMany(p => p.Actions).Where(a => a.ForceCaseGuid.HasValue).Select(a => a.ForceCaseGuid.Value).Distinct().ToArray();
             selections = forceCases.ToDictionary(g => g, g => new ResultSelection { Dataset = bridge.Dataset, Case = caseName[g] });
             Guid Case(string name) => caseGuid.TryGetValue(name, out var g) ? g : throw new ArgumentException("GpcBridgeCombinationCaseNotInModel: " + name);
-            factors = merged.LoadCombinations.Select(c => (IReadOnlyDictionary<Guid, double>)c.Values.ToDictionary(p => Case(p.Key.Name), p => p.Value)).ToArray();
+            factors = combinations.Select(c => (IReadOnlyDictionary<Guid, double>)c.ToDictionary(p => Case(p.Case), p => p.Factor)).ToArray();
             beams = new Dictionary<string, (BeamElement, CoordinateSystem, double[], string)>(StringComparer.Ordinal);
-            for (int k = 0; k < merged.Beams.Count; k++)
+            for (int k = 0; k < angles.Length; k++)
             {
                 var beam = model.BeamElements[k + 1];
                 var stations = forceCases.Length == 0 ? Array.Empty<double>()
                     : ResultQueries.BeamSamples(beam, bridge.Dataset, caseName[forceCases[0]]).Select(s => s.ParametricDistance).Distinct().OrderBy(x => x).ToArray();
-                beams[beam.Source.OriginalId] = (beam, GpcBeamAxes.Principal(beam.StartPoint, beam.EndPoint, merged.Beams[k].AngleDeg), stations, BridgeWorkflowDefinition.PropertyFingerprint(beam));
+                beams[beam.Source.OriginalId] = (beam, GpcBeamAxes.Principal(beam.StartPoint, beam.EndPoint, angles[k]), stations, BridgeWorkflowDefinition.PropertyFingerprint(beam));
             }
             // The assumptions of BridGHe's results (BridgeCheckAdapter): the plane of the check, and the local states when the recipe has them.
-            bool local = merged.BridgeWorkflow.Phases.Any(p => p.Actions.Any(a => a.HasLocalSectionStates));
             assumptions = local ? new[] { BridgeCheckAdapter.PlanarAssumption, BridgeCheckAdapter.LocalStateAssumption } : new[] { BridgeCheckAdapter.PlanarAssumption };
+        }
+
+        /// <summary>Tests: what the constructor derived (combination factors by case GUID, principal frames, stations, property fingerprints,
+        /// assumptions), doubles by their bits, to compare the two constructors bit for bit.</summary>
+        public string Signature()
+        {
+            string Bits(double v) => BitConverter.DoubleToInt64Bits(v).ToString("X16");
+            var text = new System.Text.StringBuilder();
+            foreach (var f in factors) text.Append("C:").Append(string.Join(",", f.Select(p => p.Key + "=" + Bits(p.Value)))).Append('\n');
+            foreach (var (id, (beam, principal, stations, fingerprint)) in beams)
+                text.Append("B:").Append(id).Append(':').Append(beam.Id).Append(':').Append(string.Join(",", new[] { principal.V1, principal.V2, principal.V3 }.SelectMany(v => new[] { v.X, v.Y, v.Z }).Select(Bits)))
+                    .Append(':').Append(string.Join(",", stations.Select(Bits))).Append(':').Append(fingerprint).Append('\n');
+            text.Append("A:").Append(string.Join("|", assumptions));
+            return text.ToString();
         }
 
         public bool Has(string beamId) => beams.ContainsKey(beamId);

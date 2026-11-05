@@ -51,6 +51,8 @@ internal static class GpcMergeCheck
         // R8, BridgeSupportReactions (Bridge Detail Stations): every support of the reference model, every combination, from the GPC rows of
         // the action sources equal to the former FEM reactions (or the same error).
         var stripped = phases.Select(p => p with { Actions = p.Actions.Select(a => a with { GpcSource = null }).ToArray() }).ToArray();
+        var attachedOutput = merge.Params.Output[0].VolatileData.AllData(true).Single();
+        var attachedBridge = (BridGHe.Common.Gpc.GpcBridge)attachedOutput.GetType().GetProperty("GpcBridge").GetValue(attachedOutput) ?? throw new Exception("GPC MERGE FAIL (" + label + "): no GPC bridge model attached");
         var supports = forceActions[0].Source.Nodes.Where(n => n.Results.OfType<NodeReactResultModel>().Any()).Select(n => n.Position).Take(8).ToArray();
         int reactions = 0, computed = 0;
         foreach (var support in supports)
@@ -61,7 +63,10 @@ internal static class GpcMergeCheck
                     try { return Bits(BridgeSupportReactions.SignedKN(gpc.Model, definitions, support, combination.Name, Rhino.Geometry.Vector3d.ZAxis, 1e-3)); }
                     catch (ArgumentException e) { return "error " + e.Message; }
                 }
-                string x = Run(phases), y = Run(stripped);
+                // P2T request 3: the same reaction on the GPC bridge model alone (its records and combinations).
+                string RunBridge() { try { return Bits(BridgeSupportReactions.SignedKN(attachedBridge, phases, support, combination.Name, Rhino.Geometry.Vector3d.ZAxis, 1e-3)); } catch (ArgumentException e) { return "error " + e.Message; } }
+                string x = Run(phases), y = Run(stripped), z = RunBridge();
+                if (x != z) Fail($"support reaction at {support}, combination {combination.Name}: merged FEM model {x} / GPC bridge model {z}");
                 if (x != y) Fail($"support reaction at {support}, combination {combination.Name}: GPC {x} / FEM {y}");
                 reactions++; if (!x.StartsWith("error ", StringComparison.Ordinal)) computed++;
             }

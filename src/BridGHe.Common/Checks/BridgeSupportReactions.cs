@@ -13,16 +13,51 @@ public static class BridgeSupportReactions
         Point3d support, string combination, Vector3d upward, double tolerance)
     {
         if (model?.BridgeWorkflow == null || model.Units != ModelModel.ModelUnits.Nmm) throw new ArgumentException("Supply a Build BridGHe Model result in N-mm.");
+        var combos = model.LoadCombinations.Where(c => c.Name == combination).ToArray();
+        return SignedKN(model.BridgeWorkflow, combos.Select(c => c.Values.Select(v => (v.Key.Name, v.Value))).ToArray(), definitions, support, combination, upward, tolerance,
+            (action, record) =>
+            {
+                var source = action.Source ?? throw new ArgumentException("Missing FEM source for " + action.Key);
+                if (source.Units != ModelModel.ModelUnits.Nmm || source.Name != record.SourceName)
+                    throw new ArgumentException("The reaction source does not match the assembled action " + action.Key);
+                // F6 (a)/(b), R8: the reaction rows of the analysed GPC model of the action (the numbers the analysis wrote into the FEM results,
+                // zero without sign as the FEM copies of the GH data), when the Bridge Action component attached it; the FEM results otherwise.
+                return action.GpcSource != null ? GpcReactions(action, support, tolerance)
+                    : FemReactions(action, source.Nodes.Where(n => n.Position.DistanceTo(support) <= tolerance).ToArray());
+            });
+    }
+
+    /// <summary>P2T request 3: the signed support reaction [kN] of a combination on the GPC bridge model alone (its records and combinations),
+    /// from the reaction rows of the analysed GPC source of every action (same rules and messages as the former reading; the source is the
+    /// analysed GPC model of the action, its name the one the record keeps).</summary>
+    public static double SignedKN(Gpc.GpcBridge bridge, IEnumerable<BridgePhaseDefinition> definitions,
+        Point3d support, string combination, Vector3d upward, double tolerance)
+    {
+        if (bridge?.Records == null) throw new ArgumentException("Supply a Build BridGHe Model result in N-mm.");
+        var combos = bridge.Combinations.Where(c => c.Name == combination).ToArray();
+        return SignedKN(bridge.Records, combos.Select(c => c.Factors.AsEnumerable()).ToArray(), definitions, support, combination, upward, tolerance,
+            (action, record) =>
+            {
+                var source = action.GpcSource ?? throw new ArgumentException("Missing GPC source for " + action.Key);
+                var catalog = Gpc.GpcResultCatalog.Of(source);
+                if (catalog == null || catalog.Units.Units != Gpc.DefinitionUnits.Nmm || source.Name != record.SourceName)
+                    throw new ArgumentException("The reaction source does not match the assembled action " + action.Key);
+                return GpcReactions(action, support, tolerance);
+            });
+    }
+
+    private static double SignedKN(BridgeWorkflow workflow, IEnumerable<(string Case, double Factor)>[] combos, IEnumerable<BridgePhaseDefinition> definitions,
+        Point3d support, string combination, Vector3d upward, double tolerance, Func<BridgeActionDefinition, BridgeWorkflowAction, Vector3d[]> reactions)
+    {
         if (!support.IsValid || !upward.IsValid || !upward.Unitize() || !double.IsFinite(tolerance) || tolerance <= 0)
             throw new ArgumentException("Invalid support point, upward direction or tolerance.");
         var phases = definitions?.ToArray() ?? throw new ArgumentNullException(nameof(definitions));
         var actions = phases.SelectMany(p => p.Actions).ToDictionary(a => a.Key, StringComparer.Ordinal);
-        var records = model.BridgeWorkflow.Phases.SelectMany(p => p.Actions).ToArray();
+        var records = workflow.Phases.SelectMany(p => p.Actions).ToArray();
         if (!actions.Keys.ToHashSet(StringComparer.Ordinal).SetEquals(records.Select(r => r.Key)))
             throw new ArgumentException("Phases do not match the assembled bridge actions.");
-        var combos = model.LoadCombinations.Where(c => c.Name == combination).ToArray();
         if (combos.Length != 1) throw new ArgumentException("Expected one combination named " + combination);
-        var factors = combos[0].Values.ToDictionary(v => v.Key.Name, v => v.Value, StringComparer.Ordinal);
+        var factors = combos[0].ToDictionary(v => v.Case, v => v.Factor, StringComparer.Ordinal);
         double reaction = 0;
         foreach (var record in records)
         {
@@ -33,13 +68,7 @@ public static class BridgeSupportReactions
             if (!factors.TryGetValue(record.ForceCase, out double factor) || factor == 0) continue;
             if (!double.IsFinite(factor)) throw new ArgumentException("Non-finite combination coefficient.");
             if (action.BeamIds.Length != 0) throw new ArgumentException("Global support reactions cannot be apportioned to a subset of beam IDs.");
-            var source = action.Source ?? throw new ArgumentException("Missing FEM source for " + action.Key);
-            if (source.Units != ModelModel.ModelUnits.Nmm || source.Name != record.SourceName)
-                throw new ArgumentException("The reaction source does not match the assembled action " + action.Key);
-            // F6 (a)/(b), R8: the reaction rows of the analysed GPC model of the action (the numbers the analysis wrote into the FEM results,
-            // zero without sign as the FEM copies of the GH data), when the Bridge Action component attached it; the FEM results otherwise.
-            var forces = action.GpcSource != null ? GpcReactions(action, support, tolerance)
-                : FemReactions(action, source.Nodes.Where(n => n.Position.DistanceTo(support) <= tolerance).ToArray());
+            var forces = reactions(action, record);
             if (forces.Length != 1 || !forces[0].IsValid)
                 throw new ArgumentException($"Action {action.Key}: expected one finite linear-static reaction for case {action.Case}. Missing/multiple steps are not zero reactions.");
             reaction += factor * (forces[0] * upward);

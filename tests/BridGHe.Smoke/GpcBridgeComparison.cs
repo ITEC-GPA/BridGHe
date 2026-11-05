@@ -137,6 +137,16 @@ internal static class GpcBridgeComparison
         void Fail(string what) => throw new Exception("GPC BRIDGE FAIL (" + label + "): " + what);
         var bridge = gpc.Bridge;
         if (bridge.Samples.Length != fem.Samples.Length) Fail($"{bridge.Samples.Length} beams on GPC, {fem.Samples.Length} in the FEM merge");
+        // P2T request 3: the checks on the GPC bridge model alone derive what they derived from the merged FEM model (combination factors,
+        // principal frames, stations, property fingerprints, assumptions), bit for bit, or fail the same way.
+        string Checks(Func<GpcBridgeChecks> create) { try { return create().Signature(); } catch (Exception e) when (e is ArgumentException || e is InvalidOperationException) { return "error " + e.Message; } }
+        string withFem = Checks(() => new GpcBridgeChecks(bridge, fem.Model)), alone = Checks(() => new GpcBridgeChecks(bridge));
+        if (withFem != alone)
+        {
+            var x = withFem.Split('\n'); var y = alone.Split('\n'); int line = Enumerable.Range(0, Math.Min(x.Length, y.Length)).FirstOrDefault(i => x[i] != y[i], -1);
+            Fail("the checks on the GPC bridge model alone differ from those with the merged FEM model: " + (line < 0 ? $"{x.Length} / {y.Length} lines"
+                : $"line {line + 1}: FEM '{(x[line].Length > 300 ? x[line].Substring(0, 300) : x[line])}' / GPC '{(y[line].Length > 300 ? y[line].Substring(0, 300) : y[line])}'"));
+        }
         long values = 0;
         for (int k = 0; k < fem.Samples.Length; k++)
         {
