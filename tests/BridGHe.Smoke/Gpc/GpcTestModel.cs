@@ -122,6 +122,30 @@ internal sealed class GpcTestModel
         parts.Add(new BeamMemberPart(beam.Id, true, metadata));
     }
 
+    /// <summary>The group of an element by its full BridGHe name ("Family\Group1\Segment1"), with its ancestors, as the legacy reader
+    /// registers them (GPC name = full name, GUID by name).</summary>
+    internal void Group(Element element, string fullName)
+    {
+        GPC.Model.Attributes.Group Of(string full)
+        {
+            if (Model.Groups.TryGetValue(full, out var known)) return known;
+            int cut = full.LastIndexOf('\\');
+            var parent = cut < 0 ? null : Of(full.Substring(0, cut));
+            var group = GPC.Model.Attributes.Group.Create(GpcIdentity.Group(full), full);
+            parent?.AddChild(group);
+            Model.Groups.Add(group.Name, group); return group;
+        }
+        element.AddGroup(Of(fullName));
+    }
+
+    /// <summary>A global restraint of the node (translations and rotations restrained or free), as Node Restraint.</summary>
+    internal void Restrain(NodeElement node, params bool[] dofs)
+    {
+        var restrains = Enumerable.Range(0, 6).Select(k => new GPC.Model.Restraints.DofRestrain((GPC.Model.Restraints.GeometryRestrain.DOF)k, dofs[k])).ToList();
+        node.Assignments.Restrains.Add(new GPC.Model.Structure.Assignments.RestrainAssignment
+            { Restrain = new GPC.Model.Restraints.NodeRestrain(node, CoordinateSystem.Global, restrains), SourceRecord = "P2T test restraint" });
+    }
+
     private void Entry(string caseName)
     {
         if (!Model.LoadCases.ContainsKey(caseName)) throw new ArgumentException("GpcTestModel: unknown case " + caseName);
