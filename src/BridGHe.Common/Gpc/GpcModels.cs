@@ -49,5 +49,13 @@ namespace BridGHe.Common.Gpc
             report = new LegacyImportReport();
             return LegacyModelImport.Import(LegacyArchive.Read(archive), owner, toleranceDefinitionUnits, report);
         }
+
+        /// <summary>F6 chain D: a former beam property (the datum of a Beam Property parameter) as GPC, with the rules of the conversion of a
+        /// whole model; dimensions in the definition <paramref name="units"/> (those of the model it goes into).</summary>
+        public static LegacyBeamProperty BeamProperty(BeamPropertyModel property, BridgeUnits units)
+        {
+            if (property == null) throw new ArgumentNullException(nameof(property));
+            return LegacyModelImport.BeamProperty(LegacyArchive.Read(ModelArchive.Write(property)), units);
+        }
     }
 }

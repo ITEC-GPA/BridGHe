@@ -286,30 +286,9 @@ namespace BridGHe.Common.Gpc
             if (reference.Datasets.Count != 0 || reference.Analysis != null) throw new ArgumentException("GpcBridgeReferenceNotAnInputModel: " + reference.Name);
             var model = GPC.Model.Core.ModelValues.Copy(reference, GPC.Model.Core.ModelCopyOptions.None, modelIdentity);
             model.Name = BridgeWorkflowBuilder.MergedModelName;
-            model.LoadCases.Clear(); model.Combinations.Clear(); model.Stages.Clear(); model.FreedomCases.Clear(); model.ModelLoads.Clear();
+            model.LoadCases.Clear(); model.Combinations.Clear(); model.Stages.Clear(); model.FreedomCases.Clear();
             model.MovingLoads = null; model.PreservedSourceData.Clear();
-            foreach (var node in model.NodesElements.Values)
-            {
-                node.Loads.Clear();
-                var physical = node.Assignments.Physical;
-                if (physical != null) { physical.Temperatures.Clear(); node.Assignments.Physical = null; }
-            }
-            foreach (var beam in model.BeamElements.Values)
-            {
-                beam.Loads.Clear(); beam.Assignments.Loads.Clear();
-                var physical = beam.Assignments.Physical;
-                if (physical != null) { physical.TemperatureGradients.Clear(); physical.InitialStates.Clear(); }
-            }
-            foreach (var plate in model.AreaElements.Values)
-            {
-                plate.Loads.Clear();
-                var physical = plate.Assignments.Physical;
-                if (physical != null)
-                {
-                    physical.InitialStresses.Clear(); physical.NonStructuralMasses.Clear();
-                    if (physical.LoadPatch == null && physical.Supports.Count == 0) plate.Assignments.Physical = null;
-                }
-            }
+            GpcModelTransforms.StripLoads(model);
             if (model.VolumeElements.Count != 0) throw new NotSupportedException("GpcBridgeVolumeElements");
             void Case(string name)
             {

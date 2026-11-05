@@ -24,6 +24,18 @@ public sealed class BridgePhaseModelComponent : BridgeUtilityComponent
     {
         GH_Model model = null; GH_BeamProperty property = null; string name = null; bool clear = true; var ids = new List<string>();
         if (!da.GetData(0, ref model) || !da.GetData(1, ref name) || !da.GetDataList(2, ids) || !da.GetData(3, ref property) || !da.GetData(4, ref clear)) return;
-        da.SetData(0, GH_Model.FromModel(BridgePhaseModel.Create(model.Value, name, ids, property.Value, clear), model));
+        var output = GH_Model.FromModel(BridgePhaseModel.Create(model.Value, name, ids, property.Value, clear), model);
+        // F6 chain D: the GPC input of the output from the GPC input of the source (the analysis copies it instead of converting the FEM
+        // output); if it cannot be built the analysis converts the FEM output as before.
+        try
+        {
+            var source = model.GpcInput;
+            var replacement = Common.Gpc.GpcModels.BeamProperty(property.Value, source.Report.Units);
+            output.AttachInput(Common.Gpc.GpcModelTransforms.PhaseModel(source, name, ids, replacement, clear,
+                Common.Gpc.GpcIdentity.Derive(InstanceGuid, "phase-model:" + source.Model.Guid.ToString("D") + ":" + da.Iteration.ToString(System.Globalization.CultureInfo.InvariantCulture))));
+        }
+        catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is InvalidOperationException || e is System.Runtime.Serialization.SerializationException)
+        { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "GPC phase model not built (" + e.Message + "): the analysis converts the FEM model."); }
+        da.SetData(0, output);
     }
 }
