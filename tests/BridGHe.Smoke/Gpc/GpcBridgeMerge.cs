@@ -19,8 +19,8 @@ using BridGHe.Common.Gpc;
 /// these tests have beams without nodes, which the legacy reader refuses: the reference gets nodes at the beam ends (no effect on the
 /// merge, which aligns beams by ID and geometry).</item>
 /// </list>
-/// <para>The local section states are read as in the component (<see cref="BridgeWorkflowBuilder.LocalSectionStates"/>, the FEM source beams
-/// until the L11 attribute is lifted; none in these tests).</para>
+/// <para>The local section states are read as in the component (<see cref="GpcBridgeBuilder.LocalSectionStates"/>, the GPC section-state
+/// attributes of the GPC model of the source, P2F 5/11; none in these tests).</para>
 /// </summary>
 internal static class GpcBridgeMerge
 {
@@ -28,7 +28,7 @@ internal static class GpcBridgeMerge
     internal static GpcBridgeBuild Build(IReadOnlyList<(BridGHe.Common.Models.ModelModel Fem, GPC.Model.Models.Model Analysed)> references, IEnumerable<BridgePhaseDefinition> phases,
         IReadOnlyList<string[]> table, string label, BridgeWorkflowMethod method = BridgeWorkflowMethod.Compatible, double tolerance = 1e-6, bool additional = false) =>
         GpcBridgeBuilder.Build(references.Select(r => GpcBridgeSource.Reference(GpcModels.Convert(WithNodes(r.Fem), tolerance), r.Analysed)).ToArray(), phases, table, method, tolerance, additional,
-            GpcIdentity.Derive(GpcIdentity.NameSpace, "p2t-bridge:" + label), BridgeWorkflowBuilder.LocalSectionStates);
+            GpcIdentity.Derive(GpcIdentity.NameSpace, "p2t-bridge:" + label));
 
     /// <summary>A copy of a FEM fixture with nodes at the beam ends when it has none (the legacy reader needs them), without results.</summary>
     private static BridGHe.Common.Models.ModelModel WithNodes(BridGHe.Common.Models.ModelModel fem)

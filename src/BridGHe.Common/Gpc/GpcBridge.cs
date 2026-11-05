@@ -225,14 +225,15 @@ namespace BridGHe.Common.Gpc
         private static BeamElement[] Beams(Model model) => model.BeamElements.Values.OrderBy(b => b.Id).ToArray();
 
         /// <summary>The per-beam local section states of an action (Bridge State Override): the GPC section-state attributes of the beams of the
-        /// GPC model of its source (<see cref="BridgeActionDefinition.GpcModel"/>; the beams of the action, in their numbering), whether any is
+        /// GPC model of its source (<see cref="BridgeActionDefinition.GpcModel"/>, else its analysed <see cref="BridgeActionDefinition.GpcSource"/>; the beams of the action, in their numbering), whether any is
         /// assigned and the beams whose concrete is excluded. The rules and messages of the former FEM reading
         /// (<see cref="BridgeWorkflowBuilder.LocalSectionStates"/>): one state per beam, the behaviour of the action in a composite phase, and
         /// the fingerprint of the beam property the state was computed for (a stale state is refused).</summary>
         public static (bool HasLocalSectionStates, string[] ConcreteExcludedBeamIds) LocalSectionStates(BridgePhaseDefinition phase, BridgeActionDefinition action)
         {
-            if (action.Source != null && action.GpcModel == null) throw new ArgumentException($"Action {action.Key}: its source has no GPC model; recalculate the analysis.");
-            var assigned = (action.GpcModel == null ? Array.Empty<BeamElement>() : Beams(action.GpcModel))
+            var model = action.GpcModel ?? action.GpcSource; // the GPC model of the source: analysed (with its catalog) or its conversion
+            if (action.Source != null && model == null) throw new ArgumentException($"Action {action.Key}: its source has no GPC model; recalculate the analysis.");
+            var assigned = (model == null ? Array.Empty<BeamElement>() : Beams(model))
                 .Where(b => action.BeamIds.Length == 0 || action.BeamIds.Contains(b.Name, StringComparer.Ordinal))
                 .SelectMany(b => b.Attributes.Values.OfType<GPC.Model.Structure.Bridges.BridgeSectionStateAttribute>().Select(a => (BeamId: b.Name, State: a, Beam: b))).ToArray();
             if (assigned.Select(a => a.BeamId).Distinct(StringComparer.Ordinal).Count() != assigned.Length ||
