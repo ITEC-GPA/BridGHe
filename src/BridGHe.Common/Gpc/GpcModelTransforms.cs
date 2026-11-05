@@ -141,10 +141,11 @@ namespace BridGHe.Common.Gpc
                     if (signature == null || signature != entry.Data.Signature) { warnings.Add(string.Format(LegacyImportReport.ExistingPropertyWarning, key)); shadowed.Add(beam.Id); }
                 }
                 if (ReferenceEquals(beam.BeamProperty, entry.Property)) continue;
-                // A local section state names the property it was computed for: whether the former one stays current depends on the former
-                // signature of the new property, which a GPC property does not have (Bridge State Override is applied after Phase Model).
-                if (beam.Attributes.Values.OfType<GPC.Model.Structure.Bridges.BridgeSectionStateAttribute>().Any())
-                    throw new NotSupportedException("PhaseModelOnBeamWithSectionState: " + beam.Name);
+                // A local section state (Bridge State Override) stays as it is: it names the fingerprint of the property it was computed for,
+                // so on a new property it is stale and the checks refuse it ("FEM properties changed after the local section-state
+                // assignment"), as with the former model (coordinator decision 3, 5/11: no conversion of the FEM output for this case). Listed
+                // difference: the former model compared only the former signature of the property (A, I, J, centroid, E, nu, density, type),
+                // so a replacement equal in those values (e.g. the same property under another name) kept the state current there.
                 beam.BeamProperty = entry.Property;
                 beam.Assignments.Formulation = entry.Data.Formulation;
                 var axes = GpcBeamAxes.Section(beam.StartPoint, beam.EndPoint, source.BeamAngles[beam.Id], entry.Data.Angle);
