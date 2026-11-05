@@ -128,13 +128,13 @@ internal static class BridgeStationTests
 
     /// <summary>P2T: the station-grid test on Build BridGHe Model on GPC, with action sources built in GPC (the same grids and diagrams as
     /// <see cref="Source"/>): union of the stations, analytical resampling, identity, endpoint anchoring, no drift, bounds and roundoff, on the
-    /// merged samples of the GPC bridge model; every merge equal bit for bit to the FEM merge of the same grids. The actions still carry the
-    /// FEM source for the shared validation (until the FeMM removal); the merge reads only the GPC rows.</summary>
+    /// merged samples of the GPC bridge model; every merge equal bit for bit to the FEM merge of the same grids. The GPC merge reads GPC data only
+    /// (direct GPC references, actions on their GPC source); the FEM grids are only the parity reference (removed with the FeMM models).</summary>
     private static void Gpc()
     {
-        GPC.Model.Models.Model Grid(string name, double[] stations, Func<int, double, double[]> values = null, bool reversed = false,
+        (GPC.Model.Models.Model Input, GPC.Model.Models.Model Analysed) Grid(string name, double[] stations, Func<int, double, double[]> values = null, bool reversed = false,
             Action<GpcTestModel, GPC.Model.Elements.BeamElement[], GPC.Model.Elements.NodeElement[]> change = null) =>
-            GpcWorkflowSources.Source(name, 0, null, change, stations, values ?? ((_, x) => Diagram(x)), reversed: reversed);
+            GpcWorkflowSources.Pair(name, 0, null, change, stations, values ?? ((_, x) => Diagram(x)), reversed: reversed);
         BridgePhaseDefinition[] Phases(ModelModel a, GPC.Model.Models.Model ga, ModelModel b, GPC.Model.Models.Model gb) => new[]
         {
             new BridgePhaseDefinition { Order = 10, Name = "Steel", State = BridgeSectionState.Steel,
@@ -143,11 +143,11 @@ internal static class BridgeStationTests
                 Actions = new[] { new BridgeActionDefinition { Key = "G2", Source = b, GpcSource = gb, Case = "G", Behavior = BridgeActionBehavior.LongTerm } } }
         };
         var table = new[] { new[] { "", "G1", "G2" }, new[] { "SLS", "1", "1" } };
-        // The FEM fixture of the same grid (validation, and the parity reference until the FeMM removal).
+        // The FEM fixture of the same grid: only the parity reference (removed with the FeMM models).
         int merges = 0;
-        BridGHe.Common.Gpc.GpcBridgeBuild Merge(ModelModel a, GPC.Model.Models.Model ga, ModelModel b, GPC.Model.Models.Model gb, string label, bool parity = true)
+        BridGHe.Common.Gpc.GpcBridgeBuild Merge(ModelModel a, (GPC.Model.Models.Model Input, GPC.Model.Models.Model Analysed) ga, ModelModel b, (GPC.Model.Models.Model Input, GPC.Model.Models.Model Analysed) gb, string label, bool parity = true)
         {
-            var gpc = GpcBridgeMerge.Build(new[] { (a, ga), (b, gb) }, Phases(a, ga, b, gb), table, label);
+            var gpc = GpcBridgeMerge.Build(new[] { ga, gb }, Phases(a, ga.Analysed, b, gb.Analysed), table, label);
             if (parity) GpcBridgeMerge.RequireSame(gpc, Build(a, b), label);
             merges++; return gpc;
         }
@@ -161,7 +161,7 @@ internal static class BridgeStationTests
         double[] gridA = { 0d, 2500, 5000, 7500, 10000 }, gridB = { 0d, 879.044934, 4000, 8500, 10000 };
         var a = Source("A", gridA, true); var b = Source("B", gridB);
         var ga = Grid("A", gridA); var gb = Grid("B", gridB);
-        var before = GpcBridgeMerge.Tokens(new[] { ga, gb }.SelectMany(m => m.BeamElements.Values.Select(beam =>
+        var before = GpcBridgeMerge.Tokens(new[] { ga.Analysed, gb.Analysed }.SelectMany(m => m.BeamElements.Values.Select(beam =>
             (System.Collections.Generic.IReadOnlyList<(string, BeamForceSample)>)BridGHe.Common.Gpc.GpcResultRows.Beam(BridGHe.Common.Gpc.GpcResultCatalog.Of(m), m, beam).Select(r => ("G", BeamForceSample.Of(r))).ToArray())).ToArray()).ToArray();
         var merged = Merge(a, ga, b, gb, "stations");
         for (int k = 0; k < 2; k++)
@@ -179,7 +179,7 @@ internal static class BridgeStationTests
                 Near(f.Bending2, -9000 - 800 * x + .1 * x * x, "GPC: Quadratic M2");
             }
         }
-        var after = GpcBridgeMerge.Tokens(new[] { ga, gb }.SelectMany(m => m.BeamElements.Values.Select(beam =>
+        var after = GpcBridgeMerge.Tokens(new[] { ga.Analysed, gb.Analysed }.SelectMany(m => m.BeamElements.Values.Select(beam =>
             (System.Collections.Generic.IReadOnlyList<(string, BeamForceSample)>)BridGHe.Common.Gpc.GpcResultRows.Beam(BridGHe.Common.Gpc.GpcResultCatalog.Of(m), m, beam).Select(r => ("G", BeamForceSample.Of(r))).ToArray())).ToArray()).ToArray();
         BridgeWorkflowTests.Require(before.SequenceEqual(after), "GPC: Source models mutated.");
         BridgeWorkflowTests.Require(merged.Warnings.Any(w => w.Contains("Station alignment:")), "GPC: Resampling must be reported.");

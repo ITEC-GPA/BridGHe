@@ -7,39 +7,34 @@ using BridGHe.Common.Checks;
 using BridGHe.Common.Gpc;
 
 /// <summary>
-/// P2T (F6, Smoke tests on GPC): Build BridGHe Model on GPC (<see cref="GpcBridgeBuilder"/>) with action sources built in GPC, for the tests
-/// of the merge (stations, resampling, records, combinations, warnings). The actions carry their analysed GPC model (<c>GpcSource</c>): the
-/// merge reads only its GPC rows.
-/// <para>Two FEM dependencies remain until the FeMM removal (chain E), both outside the merge:</para>
-/// <list type="bullet">
-/// <item>the actions also carry their FEM source, because the shared validation of Build BridGHe Model (<c>BridgeWorkflowBuilder.Validate</c>,
-/// «a FEM case needs its source model») still requires it;</item>
-/// <item>the structure of a reference (the input model, without results: <see cref="GpcBridgeSource.Reference"/>) is the conversion of its FEM
-/// model, as <c>GH_Model.GpcInput</c> in the component: <see cref="GpcModels.Conversion"/> has no public constructor. The FEM fixtures of
-/// these tests have beams without nodes, which the legacy reader refuses: the reference gets nodes at the beam ends (no effect on the
-/// merge, which aligns beams by ID and geometry).</item>
-/// </list>
+/// P2T (F6, Smoke tests on GPC): Build BridGHe Model on GPC (<see cref="GpcBridgeBuilder"/>) from GPC data only, for the tests of the merge
+/// (stations, resampling, records, combinations, warnings). Every reference is a GPC input model with its analysed copy built in GPC
+/// (<see cref="GpcBridgeSource.Reference(GPC.Model.Models.Model, BridgeUnits, IReadOnlyDictionary{int, double}, GPC.Model.Models.Model)"/>,
+/// the direct reference of P2F 5/11: units and angles from the results catalog of the analysed copy), and the actions carry only their
+/// analysed GPC model (<c>GpcSource</c>): <see cref="Build"/> drops any FEM source of the actions, accepted by the GPC validation
+/// (<c>BridgeWorkflowBuilder.Validate(..., gpcSources: true)</c>). The FEM fixtures of the tests remain only for the parity with the FEM merge
+/// (<see cref="RequireSame"/>), removed with the FeMM models.
 /// <para>The local section states are read as in the component (<see cref="GpcBridgeBuilder.LocalSectionStates"/>, the GPC section-state
 /// attributes of the GPC model of the source, P2F 5/11; none in these tests).</para>
 /// </summary>
 internal static class GpcBridgeMerge
 {
-    /// <param name="references">The models of the Models input: the FEM model (structure of the reference) and its analysed GPC model.</param>
-    internal static GpcBridgeBuild Build(IReadOnlyList<(BridGHe.Common.Models.ModelModel Fem, GPC.Model.Models.Model Analysed)> references, IEnumerable<BridgePhaseDefinition> phases,
+    /// <param name="references">The models of the Models input: the GPC input model (structure, no results) and its analysed copy.</param>
+    internal static GpcBridgeBuild Build(IReadOnlyList<(GPC.Model.Models.Model Input, GPC.Model.Models.Model Analysed)> references, IEnumerable<BridgePhaseDefinition> phases,
         IReadOnlyList<string[]> table, string label, BridgeWorkflowMethod method = BridgeWorkflowMethod.Compatible, double tolerance = 1e-6, bool additional = false) =>
-        GpcBridgeBuilder.Build(references.Select(r => GpcBridgeSource.Reference(GpcModels.Convert(WithNodes(r.Fem), tolerance), r.Analysed)).ToArray(), phases, table, method, tolerance, additional,
+        GpcBridgeBuilder.Build(references.Select(Reference).ToArray(), GpcOnly(phases), table, method, tolerance, additional,
             GpcIdentity.Derive(GpcIdentity.NameSpace, "p2t-bridge:" + label));
 
-    /// <summary>A copy of a FEM fixture with nodes at the beam ends when it has none (the legacy reader needs them), without results.</summary>
-    private static BridGHe.Common.Models.ModelModel WithNodes(BridGHe.Common.Models.ModelModel fem)
+    /// <summary>The direct GPC reference of an input model and its analysed copy (units and BridGHe angles from the catalog of the copy).</summary>
+    internal static GpcBridgeSource Reference((GPC.Model.Models.Model Input, GPC.Model.Models.Model Analysed) model)
     {
-        var copy = BridGHe.Common.Helpers.ModelArchive.Clone(fem);
-        foreach (var e in copy.Elements) e.Results.Clear();
-        if (copy.Nodes.Count == 0)
-            copy.AddElements(copy.Beams.SelectMany(b => new[] { b.PointFrom, b.PointTo }).Distinct()
-                .Select((p, i) => new BridGHe.Common.Models.NodeModel((i + 1).ToString(CultureInfo.InvariantCulture), p)).ToArray());
-        return copy;
+        var catalog = GpcResultCatalog.Of(model.Analysed) ?? throw new ArgumentException("GpcTestReferenceWithoutResults: " + model.Analysed.Name);
+        return GpcBridgeSource.Reference(model.Input, catalog.Units, model.Input.BeamElements.Values.ToDictionary(b => b.Id, catalog.BeamAngle), model.Analysed);
     }
+
+    /// <summary>The phases with the actions on their GPC source only (the FEM source, if any, removed).</summary>
+    internal static BridgePhaseDefinition[] GpcOnly(IEnumerable<BridgePhaseDefinition> phases) =>
+        phases.Select(p => p with { Actions = p.Actions.Select(a => a with { Source = null }).ToArray() }).ToArray();
 
     /// <summary>The merged samples of beam <paramref name="index"/> of the GPC bridge model, in their stored order.</summary>
     internal static IReadOnlyList<(string Case, BeamForceSample Sample)> Samples(GpcBridgeBuild build, int index) => build.Bridge.Samples[index];

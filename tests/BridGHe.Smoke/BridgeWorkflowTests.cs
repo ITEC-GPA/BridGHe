@@ -93,12 +93,14 @@ internal static class BridgeWorkflowTests
     /// D3 recipe (phase order and identity, strains, beam selection, primary-only actions, behaviors), the combinations of the bridge model,
     /// case identity, the shared validation (same messages), additional members and geometry; every merge equal to the FEM one bit for bit.
     /// The checks of the phase assembly on the merged FEM beams (<c>BridgePhaseAssembler.Assemble</c>, the former BridGHe phases: R1) are
-    /// expressed on the recipe and the combination factors; the GH archive of a phase with its FEM source has no GPC counterpart.</summary>
+    /// expressed on the recipe and the combination factors; the GH archive of a phase with its FEM source has no GPC counterpart.
+    /// The GPC merges read GPC data only (direct GPC references, actions on their GPC source, <see cref="GpcBridgeMerge"/>); the FEM fixtures
+    /// are only the parity reference (removed with the FeMM models).</summary>
     private static void Gpc()
     {
         var steel = Source("Steel", 100); var shrink = Source("Shrinkage", 20);
-        var gSteel = GpcWorkflowSources.Source("Steel", 100); var gShrink = GpcWorkflowSources.Source("Shrinkage", 20);
-        var gpcOf = new System.Collections.Generic.Dictionary<ModelModel, GPC.Model.Models.Model> { [steel] = gSteel, [shrink] = gShrink };
+        var pSteel = GpcWorkflowSources.Pair("Steel", 100); var pShrink = GpcWorkflowSources.Pair("Shrinkage", 20); var gSteel = pSteel.Analysed; var gShrink = pShrink.Analysed;
+        var gpcOf = new System.Collections.Generic.Dictionary<ModelModel, (GPC.Model.Models.Model Input, GPC.Model.Models.Model Analysed)> { [steel] = pSteel, [shrink] = pShrink };
         var a = new BridgeActionDefinition { Key = "G1", Source = steel, GpcSource = gSteel, Case = "G", Behavior = BridgeActionBehavior.Steel };
         var r = new BridgeActionDefinition { Key = "RITIRO", Source = shrink, GpcSource = gShrink, Case = "G", Behavior = BridgeActionBehavior.Shrinkage, Strain = -200e-6 };
         var p1 = new BridgePhaseDefinition { Order = 10, Name = "Getto", State = BridgeSectionState.Steel, Actions = new[] { a } };
@@ -108,7 +110,7 @@ internal static class BridgeWorkflowTests
         BridGHe.Common.Gpc.GpcBridgeBuild Build(BridgePhaseDefinition[] phases = null, ModelModel[] models = null, string[][] table = null, bool additional = false, bool parity = true)
         {
             models ??= new[] { steel, shrink }; phases ??= new[] { p2, p1 }; table ??= combinations;
-            var gpc = GpcBridgeMerge.Build(models.Select(m => (m, gpcOf[m])).ToArray(), phases, table, "workflow " + merges, additional: additional);
+            var gpc = GpcBridgeMerge.Build(models.Select(m => gpcOf[m]).ToArray(), phases, table, "workflow " + merges, additional: additional);
             if (parity)
             {
                 // The FEM merge of the same recipe without the GPC sources (the former path), bit for bit.
@@ -169,16 +171,16 @@ internal static class BridgeWorkflowTests
         var withDeck = ModelArchive.Clone(shrink);
         withDeck.AddElements(new[] { new BeamModel("Deck", new Point3d(0, 0, 1000), new Point3d(0, 2000, 1000), BridgeAssignmentTests.Property()) { BeamId = "Deck" } });
         void AddDeck(GpcTestModel t, GPC.Model.Elements.BeamElement[] beams, GPC.Model.Elements.NodeElement[] nodes) => t.Beam("Deck", t.Node("5", 0, 0, 1000), t.Node("6", 0, 2000, 1000));
-        gpcOf[withDeck] = GpcWorkflowSources.Source("Shrinkage", 20, change: AddDeck);
-        var deckPhase = p2 with { Actions = new[] { r with { Source = withDeck, GpcSource = gpcOf[withDeck] } } };
+        gpcOf[withDeck] = GpcWorkflowSources.Pair("Shrinkage", 20, change: AddDeck);
+        var deckPhase = p2 with { Actions = new[] { r with { Source = withDeck, GpcSource = gpcOf[withDeck].Analysed } } };
         Reject(() => Build(new[] { p1, deckPhase }, new[] { steel, withDeck }, parity: false), "beam count");
         var mixed = Build(new[] { p1, deckPhase }, new[] { steel, withDeck }, additional: true);
         Require(mixed.Bridge.Model.BeamElements.Count == 2 && mixed.Warnings.Any(w => w.Contains("additional phase members")), "GPC: Additional deck members explicitly excluded from longitudinal checking model");
         Require(GpcBridgeMerge.Samples(mixed, 0).Where(s => s.Case == "G1 [FEM]").Select(s => s.Sample.Axial).SequenceEqual(GpcBridgeMerge.Samples(result, 0).Where(s => s.Case == "G1 [FEM]").Select(s => s.Sample.Axial)),
             "GPC: Additional members do not alter stored steel forces");
         var moved = ModelArchive.Clone(withDeck); moved.Beams[0].PointTo += new Vector3d(0, 0, 1);
-        gpcOf[moved] = GpcWorkflowSources.Source("Shrinkage", 20, change: AddDeck, firstEndZ: 1);
-        Reject(() => Build(new[] { p1, p2 with { Actions = new[] { r with { Source = moved, GpcSource = gpcOf[moved] } } } }, new[] { steel, moved }, additional: true, parity: false), "geometry");
+        gpcOf[moved] = GpcWorkflowSources.Pair("Shrinkage", 20, change: AddDeck, firstEndZ: 1);
+        Reject(() => Build(new[] { p1, p2 with { Actions = new[] { r with { Source = moved, GpcSource = gpcOf[moved].Analysed } } } }, new[] { steel, moved }, additional: true, parity: false), "geometry");
         Console.WriteLine($"PASS workflow on GPC: {merges} GPC merges of sources built in GPC (recipe, combinations, case identity, increments, selection, validation, additional members); equal to the FEM merges bit for bit");
     }
 #endif

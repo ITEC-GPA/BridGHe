@@ -97,9 +97,10 @@ internal static class BridgeCombinationExcelTests
             // P2T: the same assembly on Build BridGHe Model on GPC, with the action sources built in GPC (GpcWorkflowSources, the same
             // forces): the combinations of the GPC bridge model from the Excel table equal those of the direct table, the unified shrinkage
             // scales the FEM and strain cases together; both merges equal to the FEM ones bit for bit (samples, summary, warnings).
-            var gpcOf = models.ToDictionary(m => m, m => GpcWorkflowSources.Source(m.Name, m.Beams[0].Results.OfType<BeamForceResultModel>().First().AxialForce));
-            var linked = phases.Select(p => p with { Actions = p.Actions.Select(a => a with { GpcSource = gpcOf[a.Source] }).ToArray() }).ToArray();
-            var references = models.Select(m => (m, gpcOf[m])).ToArray();
+            var gpcOf = models.ToDictionary(m => m, m => GpcWorkflowSources.Pair(m.Name, m.Beams[0].Results.OfType<BeamForceResultModel>().First().AxialForce));
+            // GPC data only on the GPC merge (direct references, actions on their GPC source); the FEM models only for the parity.
+            var linked = phases.Select(p => p with { Actions = p.Actions.Select(a => a with { GpcSource = gpcOf[a.Source].Analysed }).ToArray() }).ToArray();
+            var references = models.Select(m => gpcOf[m]).ToArray();
             var gpcDirect = GpcBridgeMerge.Build(references, linked, Demo, "excel direct");
             var gpcExcel = GpcBridgeMerge.Build(references, linked, read.Table, "excel table");
             GpcBridgeMerge.RequireSame(gpcDirect, BridgeWorkflowBuilder.Build(models, phases, Demo, BridgeWorkflowMethod.Compatible, 1e-6), "excel direct");
