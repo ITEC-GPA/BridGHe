@@ -176,7 +176,120 @@ internal static class GpcInputComparison
         if (compared < 36) throw new Exception($"GPC INPUT FAIL: only {compared} transformations compared");
         int phases = PhaseModels(tolerance, Path);
         int components = PhaseModelComponent(tolerance);
-        Console.WriteLine($"GPC MODEL TRANSFORMS PASS: {compared} Attach Moving Paths and {phases} Bridge Phase Model outputs (chains included), {components} Bridge Phase Model component outputs on GPC equal to the conversion of their FEM output.");
+        int fromGpc = FromGpcRoute(tolerance, Path);
+        Console.WriteLine($"GPC MODEL TRANSFORMS PASS: {compared} Attach Moving Paths and {phases} Bridge Phase Model outputs (chains included), {components} Bridge Phase Model component outputs on GPC equal to the conversion of their FEM output; {fromGpc} transformer outputs from inputs built in GPC (GpcModels.Conversion.FromGpc) equal to those from the conversion.");
+    }
+
+    /// <summary>Two transformed inputs equal bit for bit (analysis fingerprint, parts, XML document) with the same report, but for the
+    /// signatures of the property data (former digest / GPC fingerprint) and the warnings of the conversion (only those of the transformers,
+    /// "already exists", are compared).</summary>
+    internal static string RequireSame(string label, GpcModels.Conversion actual, GpcModels.Conversion expected)
+    {
+        void Fail(string what) => throw new Exception("GPC INPUT FAIL (" + label + "): " + what);
+        string Map<TKey, TValue>(IEnumerable<KeyValuePair<TKey, TValue>> map, Func<TValue, string> text) =>
+            string.Join("; ", map.Select(p => p.Key + "=" + text(p.Value)).OrderBy(s => s, StringComparer.Ordinal));
+        LegacyImportReport a = actual.Report, b = expected.Report;
+        if (a.Units.Units != b.Units.Units || a.RegisteredCases != b.RegisteredCases || a.Owner != b.Owner || actual.Tolerance != expected.Tolerance)
+            Fail($"report: units {a.Units.Units}/{b.Units.Units}, registered cases {a.RegisteredCases}/{b.RegisteredCases}, owner {a.Owner}/{b.Owner}, tolerance {actual.Tolerance}/{expected.Tolerance}");
+        foreach (var (what, x, y) in new[]
+        {
+            ("case origins", Map(a.CaseOrigins, o => o.ToString()), Map(b.CaseOrigins, o => o.ToString())),
+            ("BridGHe angles", Map(a.BeamAngles, d => BitConverter.DoubleToInt64Bits(d).ToString("X16")), Map(b.BeamAngles, d => BitConverter.DoubleToInt64Bits(d).ToString("X16"))),
+            ("native sections", Map(a.NativeSections, s => s == null ? "null" : s.GetType().Name), Map(b.NativeSections, s => s == null ? "null" : s.GetType().Name)),
+            ("beam properties", Map(a.BeamProperties, d => d.Formulation + "/" + BitConverter.DoubleToInt64Bits(d.Angle).ToString("X16") + "/" + (d.Native == null ? "-" : "native")),
+                Map(b.BeamProperties, d => d.Formulation + "/" + BitConverter.DoubleToInt64Bits(d.Angle).ToString("X16") + "/" + (d.Native == null ? "-" : "native"))),
+            ("shadowed beams", string.Join(",", a.ShadowedPropertyBeams.OrderBy(i => i)), string.Join(",", b.ShadowedPropertyBeams.OrderBy(i => i))),
+            ("transformer warnings", string.Join(" | ", a.Warnings.Where(w => w.EndsWith(" already exists", StringComparison.Ordinal)).OrderBy(s => s, StringComparer.Ordinal)),
+                string.Join(" | ", b.Warnings.Where(w => w.EndsWith(" already exists", StringComparison.Ordinal)).OrderBy(s => s, StringComparer.Ordinal))),
+        })
+            if (x != y) Fail($"report {what} '{x}' / '{y}'");
+        var parts = GpcBridgeComparison.PartsDiffer(actual.Model, expected.Model);
+        if (actual.Model.AnalysisFingerprint() != expected.Model.AnalysisFingerprint()) Fail("analysis fingerprint differs: " + string.Join("; ", parts.Take(12)));
+        if (parts.Count != 0) Fail("parts differ: " + string.Join("; ", parts.Take(12)));
+        string p = Document(actual.Model), q = Document(expected.Model);
+        if (p != q) Fail("XML document differs");
+        return $"{actual.Model.NodesElements.Count} nodes, {actual.Model.BeamElements.Count} beams, {actual.Model.LoadCases.Count} cases, XML document equal ({p?.Length ?? 0} characters)";
+    }
+
+    /// <summary>A FEM model with every case it refers to registered (element loads, combinations, stage increments, moving paths and the
+    /// default "Dead"), so that its conversion has every case registered, as an input built in GPC (<see cref="GpcModels.Conversion.FromGpc"/>).</summary>
+    private static ModelModel Registered(ModelModel source)
+    {
+        var fem = new ModelModel(source);
+        var names = fem.LoadCases.Select(c => c.Name).ToHashSet(StringComparer.Ordinal);
+        void Register(LoadCaseModel c) { if (c != null && names.Add(c.Name)) fem.LoadCases.Add(c); }
+        foreach (var load in fem.Elements.SelectMany(e => e.Loads)) Register(load.LoadCase);
+        foreach (var combination in fem.LoadCombinations) foreach (var c in combination.Values.Keys) Register(c);
+        foreach (var stage in fem.StagedConstruction) foreach (var combination in stage.LoadCombinations) foreach (var c in combination.Values.Keys) Register(c);
+        foreach (var path in fem.MovingPaths) if (!names.Contains(path.LoadCaseName)) Register(new LoadCaseModel(path.LoadCaseName, path.LoadCaseName));
+        if (!names.Contains("Dead")) Register(new LoadCaseModel(LoadCaseModel.Dead));
+        return fem;
+    }
+
+    /// <summary>The public input of the transformers for a model built in GPC (step 32, for P2T): on the examples 01–10 with every case
+    /// registered, <see cref="GpcModels.Conversion.FromGpc"/> on a copy of the converted model (units, BridGHe angles and native sections of
+    /// the conversion) gives the report of the conversion (property signatures apart), and Bridge Phase Model (new property with and without
+    /// "Clear loads", generic section with a principal angle, replacement with the name of the property of the first beam), Attach Moving
+    /// Paths (new and existing case) and the chain Phase Model → Attach Moving Paths on it, with the replacement property built in GPC
+    /// (<see cref="GpcModels.BeamProperty(GPC.Model.ElementProperties.BeamProperty, GPC.Model.Structure.Assignments.BeamFormulation, GPC.Converter.Straus7.Straus7SectionDefinition)"/>),
+    /// give the outputs of the same transformers on the conversion bit for bit (or the same error).</summary>
+    private static int FromGpcRoute(double tolerance, Func<string, double, MovingPath> path)
+    {
+        int compared = 0;
+        foreach (var example in NativeExamples.Create())
+        {
+            var fem = Registered(example.Model);
+            for (int k = 0; k < fem.Beams.Count; k++) if (string.IsNullOrWhiteSpace(fem.Beams[k].BeamId)) fem.Beams[k].BeamId = "B" + (k + 1);
+            var conversion = GpcModels.Convert(fem, tolerance);
+            if (conversion.Report.RegisteredCases != conversion.Model.LoadCases.Count) throw new Exception($"GPC INPUT FAIL ({example.Id} from GPC): not every case registered");
+            GpcModels.Conversion Input() => GpcModels.Conversion.FromGpc(GPC.Model.Core.ModelValues.Copy(conversion.Model), conversion.Report.Units, conversion.Report.BeamAngles, tolerance, conversion.Report.NativeSections);
+            Console.WriteLine($"GPC INPUT ({example.Id} from GPC): " + RequireSame(example.Id + " from GPC", Input(), conversion)); compared++;
+            var ids = fem.Beams.Select(b => b.BeamId).Distinct().ToArray(); var half = ids.Take(Math.Max(1, ids.Length / 2)).ToArray();
+            var variants = new List<(string Label, Func<GpcModels.Conversion, bool, Guid, GpcModels.Conversion> Transform)>
+            {
+                ("paths new case", (input, _, id) => GpcModelTransforms.ReplacePaths(input, new[] { path("Traffic GPC", 0) }, id)),
+                ("paths existing case", (input, _, id) => GpcModelTransforms.ReplacePaths(input, new[] { path(fem.LoadCases[0].Name, 100) }, id)),
+            };
+            if (fem.Beams.Count != 0)
+            {
+                var first = fem.Beams[0].BeamProperty;
+                BeamPropertyModel Variant(string name, Action<BeamPropertyModel> change) { var p = BridGHe.Common.Helpers.ModelArchive.Clone(first); p.Name = name; change(p); return p; }
+                var generic = new BeamPropertyModel("Generic phase")
+                {
+                    Name = "Generic phase", Material = BridGHe.Common.Helpers.ModelArchive.Clone(first.Material), PropertyType = BeamPropertyType.Beam,
+                    Section = new SectionModel { SectionType = SectionModel.SectionTypes.Generic, SectionArea = 1.2e4, I11 = 3.1e8, I22 = 4.7e7, J = 1.3e7, ShearA1 = 8e3, ShearA2 = 6e3, AngleX1Rad = 0.3 },
+                };
+                // The replacement: as the components give it (a former property converted), or built in GPC with its GPC fingerprint.
+                LegacyBeamProperty Replacement(BeamPropertyModel femProperty, bool gpc)
+                {
+                    var converted = GpcModels.BeamProperty(femProperty, conversion.Report.Units);
+                    return gpc ? GpcModels.BeamProperty(converted.Property, converted.Data.Formulation, converted.Data.Native) : converted;
+                }
+                foreach (var (label, property, selection, clear) in new (string, BeamPropertyModel, string[], bool)[]
+                {
+                    ("phase clear", Variant("Phase GPC", p => p.Material.Modulus *= 1.5), half, true), ("phase keep", Variant("Phase GPC", p => p.Material.Modulus *= 1.5), half, false),
+                    ("phase generic", generic, half, false), ("phase same name taken", Variant(first.Name, p => p.Material.Modulus *= 2), half, false),
+                })
+                    variants.Add((label, (input, gpc, id) => GpcModelTransforms.PhaseModel(input, "Phase", selection, Replacement(property, gpc), clear, id)));
+                variants.Add(("phase then paths", (input, gpc, id) => GpcModelTransforms.ReplacePaths(
+                    GpcModelTransforms.PhaseModel(input, "Phase", half, Replacement(generic, gpc), false, GpcIdentity.Derive(id, "phase")), new[] { path("Traffic GPC", 0) }, id)));
+            }
+            foreach (var (variant, transform) in variants)
+            {
+                string label = example.Id + " from GPC " + variant; var id = GpcIdentity.Derive(GpcIdentity.NameSpace, "test-from-gpc:" + label);
+                string expectedError = null, actualError = null; GpcModels.Conversion expected = null, actual = null;
+                try { expected = transform(conversion, false, id); } catch (Exception e) when (e is ArgumentException || e is InvalidOperationException || e is NotSupportedException) { expectedError = e.Message; }
+                try { actual = transform(Input(), true, id); } catch (Exception e) when (e is ArgumentException || e is InvalidOperationException || e is NotSupportedException) { actualError = e.Message; }
+                if (expectedError != null || actualError != null)
+                {
+                    if (expectedError != actualError) throw new Exception($"GPC INPUT FAIL ({label}): error from the conversion '{expectedError}', from GPC '{actualError}'");
+                    Console.WriteLine($"GPC INPUT ({label}): same error: {expectedError}"); continue;
+                }
+                Console.WriteLine($"GPC INPUT ({label}): " + RequireSame(label, actual, expected)); compared++;
+            }
+        }
+        if (compared < 60) throw new Exception($"GPC INPUT FAIL: only {compared} outputs from inputs built in GPC compared");
+        return compared;
     }
 
     /// <summary>Bridge Phase Model on the examples 01–10 with beams (IDs given to the beams without one): a new property on half of the beams

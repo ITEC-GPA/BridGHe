@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography;
@@ -24,6 +25,81 @@ namespace BridGHe.Common.Gpc
             public LegacyImportReport Report { get; }
             public double Tolerance { get; }
             internal Conversion(GPC.Model.Models.Model model, LegacyImportReport report, double tolerance) { Model = model; Report = report; Tolerance = tolerance; }
+
+            /// <summary>F6 chain D (step 32, P2T): the input of the model transformers (<see cref="GpcModelTransforms"/>) for a model built in GPC
+            /// (no FEM model, no conversion). The report: the definition <paramref name="units"/>; owner of the element identities = the model
+            /// GUID; every case registered, in the order of the model (origins: registered, plus element loads, combinations, stage increments and
+            /// moving paths where the model refers to the case); the BridGHe angle of every beam by its number (<paramref name="beamAngles"/>);
+            /// the data of every beam property by name from its first beam (formulation of that beam, principal angle of the section, native
+            /// section of that beam if any, GPC fingerprint of the property: <see cref="BeamProperty(GPC.Model.ElementProperties.BeamProperty, GPC.Model.Structure.Assignments.BeamFormulation, GPC.Converter.Straus7.Straus7SectionDefinition)"/>);
+            /// the resolved native sections by beam GUID (<paramref name="nativeSections"/>, none if null); no warnings. The model is kept, not
+            /// copied: the transformers copy it.</summary>
+            public static Conversion FromGpc(GPC.Model.Models.Model model, BridgeUnits units, IReadOnlyDictionary<int, double> beamAngles, double toleranceDefinitionUnits,
+                IReadOnlyDictionary<Guid, GPC.Converter.Straus7.Straus7SectionDefinition> nativeSections = null)
+            {
+                if (model == null) throw new ArgumentNullException(nameof(model));
+                if (beamAngles == null) throw new ArgumentNullException(nameof(beamAngles));
+                if (!double.IsFinite(toleranceDefinitionUnits) || toleranceDefinitionUnits <= 0) throw new ArgumentException("Tolerance must be finite and positive.");
+                if (model.Datasets.Count != 0 || model.Analysis != null || model.AllElements.Any(e => e.Results.Count != 0))
+                    throw new ArgumentException("GpcInputNotAnInputModel: " + model.Name);
+                var beams = model.BeamElements.Values.OrderBy(b => b.Id).ToArray();
+                var missing = beams.Where(b => !beamAngles.TryGetValue(b.Id, out var a) || !double.IsFinite(a)).Select(b => b.Id).ToArray();
+                if (missing.Length != 0) throw new ArgumentException("GpcInputBeamAngleMissing: " + string.Join(", ", missing));
+                var natives = nativeSections ?? new Dictionary<Guid, GPC.Converter.Straus7.Straus7SectionDefinition>();
+                var beamGuids = beams.Select(b => b.Guid).ToHashSet();
+                if (natives.Keys.Any(g => !beamGuids.Contains(g))) throw new ArgumentException("GpcInputNativeSectionOfUnknownBeam");
+
+                var report = new LegacyImportReport { Units = units, Owner = model.Guid, RegisteredCases = model.LoadCases.Count };
+                foreach (var c in model.LoadCases.Values) report.CaseOrigins[c.Name] = LegacyCaseOrigins.Registered;
+                void Origin(GPC.Model.LoadCases.ILoadCase c, LegacyCaseOrigins origin)
+                {
+                    if (c is GPC.Model.LoadCases.LoadCaseBase b && report.CaseOrigins.TryGetValue(b.Name, out var o)) report.CaseOrigins[b.Name] = o | origin;
+                }
+                foreach (var c in GpcModelCases.ElementCases(model)) Origin(c, LegacyCaseOrigins.ElementLoad);
+                foreach (var combination in model.Combinations.Values) foreach (var c in combination.GetLoadCases()) Origin(c, LegacyCaseOrigins.Combination);
+                var byGuid = model.LoadCases.Values.ToDictionary(c => c.Guid);
+                foreach (var stage in model.Stages.Values)
+                    foreach (var increment in stage.AnalysisState?.Increments ?? Array.Empty<GPC.Model.Stages.StageLoadIncrement>())
+                        foreach (var factor in increment.LoadFactors ?? Array.Empty<GPC.Model.Stages.StageCaseFactor>())
+                            if (byGuid.TryGetValue(factor.CaseGuid, out var c)) Origin(c, LegacyCaseOrigins.Stage);
+                if (model.MovingLoads != null)
+                    foreach (var path in model.MovingLoads.Paths) if (byGuid.TryGetValue(path.CaseGuid, out var c)) Origin(c, LegacyCaseOrigins.Moving);
+
+                foreach (var beam in beams)
+                {
+                    report.BeamAngles[beam.Id] = beamAngles[beam.Id];
+                    var property = beam.BeamProperty ?? throw new ArgumentException("GpcInputBeamWithoutProperty: " + beam.Name);
+                    if (!model.BeamProperties.TryGetValue(property.Name, out var registered) || !ReferenceEquals(registered, property))
+                        throw new ArgumentException("GpcInputBeamPropertyNotRegistered: " + property.Name);
+                    natives.TryGetValue(beam.Guid, out var native);
+                    if (report.BeamProperties.TryGetValue(property.Name, out var known))
+                    {
+                        // One datum per property (the transformers apply it to a beam that takes the property): its beams agree.
+                        if (known.Formulation != beam.Assignments.Formulation || !ReferenceEquals(known.Native, native))
+                            throw new ArgumentException("GpcInputBeamPropertyDataDiffer: " + property.Name);
+                        continue;
+                    }
+                    report.BeamProperties.Add(property.Name, GpcModels.BeamProperty(property, beam.Assignments.Formulation, native).Data);
+                }
+                foreach (var p in natives) report.NativeSections.Add(p.Key, p.Value);
+                return new Conversion(model, report, toleranceDefinitionUnits);
+            }
+        }
+
+        /// <summary>F6 chain D (step 32): a beam property built in GPC as the datum of the model transformers (e.g. the replacement of Bridge
+        /// Phase Model): the formulation a beam takes with it, the principal angle of its section (the angle of an explicit section, 0 for a
+        /// standard shape, that of the native section if given) and its signature, the GPC fingerprint of the property ("GPC:" prefix, never
+        /// equal to the digest of a former property).</summary>
+        public static LegacyBeamProperty BeamProperty(GPC.Model.ElementProperties.BeamProperty property, GPC.Model.Structure.Assignments.BeamFormulation formulation,
+            GPC.Converter.Straus7.Straus7SectionDefinition native = null)
+        {
+            if (property == null) throw new ArgumentNullException(nameof(property));
+            if (string.IsNullOrWhiteSpace(property.Name)) throw new ArgumentException("GpcBeamPropertyNameRequired");
+            double angle = native != null ? native.ReferenceProperties[10]
+                : property is GPC.Model.ElementProperties.ElasticBeamProperty elastic && elastic.Section?.GetType() == typeof(GPC.Model.Sections.Section)
+                    ? ((GPC.Model.Sections.Section)elastic.Section).AngleX1 : 0;
+            string signature = "GPC:" + GPC.Model.Core.ModelValues.Fingerprint(new object[] { property });
+            return new LegacyBeamProperty(property, new LegacyBeamPropertyData(formulation, angle, native, signature));
         }
 
         public static Conversion Convert(ModelModel model, double toleranceDefinitionUnits)
@@ -65,6 +141,45 @@ namespace BridGHe.Common.Gpc
         {
             if (property == null) throw new ArgumentNullException(nameof(property));
             return LegacyModelImport.BeamProperty(LegacyArchive.Read(ModelArchive.Write(property)), units);
+        }
+    }
+
+    /// <summary>F6 chain D: the load cases the elements of a GPC model refer to (the element loads of the former model, as the legacy reader
+    /// converts them): element loads, beam load assignments, case-dependent physical data (node temperatures, beam gradients and initial
+    /// states, plate initial stresses and non-structural masses) and prescribed restraints.</summary>
+    internal static class GpcModelCases
+    {
+        internal static IEnumerable<GPC.Model.LoadCases.ILoadCase> ElementCases(GPC.Model.Models.Model model) => model.AllElements.SelectMany(ElementCases);
+
+        internal static IEnumerable<GPC.Model.LoadCases.ILoadCase> ElementCases(GPC.Model.Elements.Element element)
+        {
+            foreach (var load in element.Loads.Values) yield return load.LoadCase;
+            if (element is GPC.Model.Elements.NodeElement node)
+            {
+                foreach (var t in node.Assignments.Physical?.Temperatures ?? new List<GPC.Model.Structure.Assignments.NodalTemperatureAssignment>()) yield return t.Case;
+                foreach (var r in node.Assignments.Restrains) if (r.Case != null) yield return r.Case;
+            }
+            else if (element is GPC.Model.Elements.BeamElement beam)
+            {
+                foreach (var a in beam.Assignments.Loads)
+                    foreach (var value in new GPC.Model.Loads.Load[] { a.Concentrated, a.StartIntensity, a.EndIntensity })
+                        if (value != null) yield return value.LoadCase;
+                var physical = beam.Assignments.Physical;
+                if (physical != null)
+                {
+                    foreach (var g in physical.TemperatureGradients) yield return g.Case;
+                    foreach (var s in physical.InitialStates) yield return s.Case;
+                }
+            }
+            else if (element is GPC.Model.Elements.AreaElement plate)
+            {
+                var physical = plate.Assignments.Physical;
+                if (physical != null)
+                {
+                    foreach (var s in physical.InitialStresses) yield return s.Case;
+                    foreach (var m in physical.NonStructuralMasses) yield return m.Case;
+                }
+            }
         }
     }
 }
