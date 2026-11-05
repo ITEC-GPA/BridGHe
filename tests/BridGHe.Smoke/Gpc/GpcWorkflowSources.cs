@@ -21,8 +21,9 @@ internal static class GpcWorkflowSources
     /// <param name="values">The six actions (N, SF1, SF2, T, BM1, BM2) of beam i at station x.</param>
     /// <param name="reactionAt">Nodes (1-based) that get the reaction (null: all).</param>
     /// <param name="reversed">Beams and samples stored in the reverse order (B1 first, last station first).</param>
+    /// <param name="firstEndZ">Level of the end of B0 (a changed geometry).</param>
     internal static GPC.Model.Models.Model Source(string name, double force, double? reaction = null, Action<GpcTestModel, BeamElement[], NodeElement[]> change = null,
-        IReadOnlyList<double> stations = null, Func<int, double, double[]> values = null, Func<int, bool> reactionAt = null, bool reversed = false)
+        IReadOnlyList<double> stations = null, Func<int, double, double[]> values = null, Func<int, bool> reactionAt = null, bool reversed = false, double firstEndZ = 0)
     {
         var test = new GpcTestModel(name); test.Case("G");
         var beams = new BeamElement[2];
@@ -30,7 +31,7 @@ internal static class GpcWorkflowSources
         foreach (int i in reversed ? new[] { 1, 0 } : new[] { 0, 1 })
         {
             var a = test.Node((nodes.Count + 1).ToString(), 0, i * 2000, 0); nodes.Add(a);
-            var b = test.Node((nodes.Count + 1).ToString(), 10000, i * 2000, 0); nodes.Add(b);
+            var b = test.Node((nodes.Count + 1).ToString(), 10000, i * 2000, i == 0 ? firstEndZ : 0); nodes.Add(b);
             beams[i] = test.Beam("B" + i, a, b);
         }
         var grid = (stations ?? new[] { 0d, 5000, 10000 }).ToArray();

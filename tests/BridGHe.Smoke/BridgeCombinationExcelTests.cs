@@ -92,6 +92,30 @@ internal static class BridgeCombinationExcelTests
             Assert(combo.Values.All(v => expected.Values.Single(e => e.Key.Name == v.Key.Name).Value == v.Value), "Excel changed an assembled coefficient");
         }
         Assert(fromExcel.LoadCombinations[0].Values.Where(v => v.Key.Name.StartsWith("RITIRO", StringComparison.Ordinal)).Count(v => v.Value == .7) == 2, "unified shrinkage must scale FEM and strain together");
+#if GPC_PILOT
+        {
+            // P2T: the same assembly on Build BridGHe Model on GPC, with the action sources built in GPC (GpcWorkflowSources, the same
+            // forces): the combinations of the GPC bridge model from the Excel table equal those of the direct table, the unified shrinkage
+            // scales the FEM and strain cases together; both merges equal to the FEM ones bit for bit (samples, summary, warnings).
+            var gpcOf = models.ToDictionary(m => m, m => GpcWorkflowSources.Source(m.Name, m.Beams[0].Results.OfType<BeamForceResultModel>().First().AxialForce));
+            var linked = phases.Select(p => p with { Actions = p.Actions.Select(a => a with { GpcSource = gpcOf[a.Source] }).ToArray() }).ToArray();
+            var references = models.Select(m => (m, gpcOf[m])).ToArray();
+            var gpcDirect = GpcBridgeMerge.Build(references, linked, Demo, "excel direct");
+            var gpcExcel = GpcBridgeMerge.Build(references, linked, read.Table, "excel table");
+            GpcBridgeMerge.RequireSame(gpcDirect, BridgeWorkflowBuilder.Build(models, phases, Demo, BridgeWorkflowMethod.Compatible, 1e-6), "excel direct");
+            GpcBridgeMerge.RequireSame(gpcExcel, BridgeWorkflowBuilder.Build(models, phases, read.Table, BridgeWorkflowMethod.Compatible, 1e-6), "excel table");
+            static System.Collections.Generic.KeyValuePair<GPC.Model.LoadCases.LoadCaseBase, double>[] Factors(BridGHe.Common.Gpc.GpcBridgeBuild b, string name) =>
+                b.Bridge.Model.Combinations[name].GetLoadCaseCoefficientsPair();
+            foreach (var name in gpcExcel.Bridge.Model.Combinations.Keys)
+            {
+                var expected = Factors(gpcDirect, name);
+                Assert(Factors(gpcExcel, name).All(v => expected.Single(e => e.Key.Name == v.Key.Name).Value == v.Value), "GPC: Excel changed an assembled coefficient");
+            }
+            Assert(gpcExcel.Bridge.Model.Combinations.Keys.SequenceEqual(fromExcel.LoadCombinations.Select(c => c.Name)), "GPC: combinations of the bridge model");
+            Assert(Factors(gpcExcel, gpcExcel.Bridge.Model.Combinations.Keys.First()).Where(v => v.Key.Name.StartsWith("RITIRO", StringComparison.Ordinal)).Count(v => v.Value == .7) == 2,
+                "GPC: unified shrinkage must scale FEM and strain together");
+        }
+#endif
         Assert(ModelArchive.Write(models[0]).SequenceEqual(original), "source model changed");
         var regeneratedGuids = new BridgeCombinationCatalog(models, phases.Select(p => p with { Id = Guid.NewGuid() }));
         Console.WriteLine("EXCEL TEST: source/action metadata validation");
