@@ -59,7 +59,7 @@ internal static class GpcInputComparison
         if (a != b)
         {
             string folder = Path.Combine(Path.GetTempPath(), "bridghe-gpc-input-diff"); Directory.CreateDirectory(folder);
-            File.WriteAllText(Path.Combine(folder, label.Replace(' ', '-') + "-gpc.xml"), a); File.WriteAllText(Path.Combine(folder, label.Replace(' ', '-') + "-conversion.xml"), b);
+            File.WriteAllText(Path.Combine(folder, FileName(label) + "-gpc.xml"), a); File.WriteAllText(Path.Combine(folder, FileName(label) + "-conversion.xml"), b);
             var x = a.Split('\n'); var y = b.Split('\n');
             int line = Enumerable.Range(0, Math.Min(x.Length, y.Length)).FirstOrDefault(i => x[i] != y[i], -1);
             Fail($"XML document differs, both in {folder}: " + (line < 0 ? $"{x.Length} / {y.Length} lines" : $"line {line + 1}: GPC '{x[line].Trim()}' / conversion '{y[line].Trim()}'"));
@@ -160,23 +160,36 @@ internal static class GpcInputComparison
     internal static Guid ElementOwner(Model m) => Guid.Parse(m.AllElements.First().Source.ModelRevision);
 
     /// <param name="canonicalStates">The local section states compared as current or stale (<see cref="BridgeText"/>).</param>
-    internal static string Require(string label, GpcModels.Conversion attached, ModelModel fem, double tolerance, bool canonicalStates = false)
+    /// <param name="buildModel">Chain E (e3): the GPC input of Build Model, whose model GUID is the owner of its element identities (as the
+    /// conversion of a FEM model): compared with the conversion of its FEM output with that owner, GUIDs included.</param>
+    /// <summary>A label as a file name (P2K: a nickname with "|" made the writing of the difference fail).</summary>
+    private static string FileName(string label) => string.Concat(label.Select(c => Path.GetInvalidFileNameChars().Contains(c) || c == ' ' ? '-' : c));
+
+    internal static string Require(string label, GpcModels.Conversion attached, ModelModel fem, double tolerance, bool canonicalStates = false, bool buildModel = false)
     {
         void Fail(string what) => throw new Exception("GPC INPUT FAIL (" + label + "): " + what);
         var model = attached.Model; var owner = ElementOwner(model);
-        if (owner == model.Guid) Fail("the transformed model has the model GUID of its source");
-        var expected = GPC.Model.Core.ModelValues.Copy(Conversion(fem, tolerance, owner, out var report), GPC.Model.Core.ModelCopyOptions.None, model.Guid);
+        if (!buildModel && owner == model.Guid) Fail("the transformed model has the model GUID of its source");
+        if (buildModel && owner != model.Guid) Fail("the model GUID of Build Model is not the owner of its element identities");
+        var converted = Conversion(fem, tolerance, owner, out var report);
+        var expected = buildModel ? converted : GPC.Model.Core.ModelValues.Copy(converted, GPC.Model.Core.ModelCopyOptions.None, model.Guid);
         RequireReport(label, attached.Report, report);
         // L12: the bridge data (same beam GUIDs as the conversion with the same owner).
         RequireBridge(label, model, attached.Bridge, expected, report.Bridge, canonicalStates);
         var parts = GpcBridgeComparison.PartsDiffer(model, expected);
-        if (model.AnalysisFingerprint() != expected.AnalysisFingerprint()) Fail("analysis fingerprint differs: " + string.Join("; ", parts.Take(12)));
+        if (model.AnalysisFingerprint() != expected.AnalysisFingerprint())
+        {
+            // The documents of both, for the difference (as for a document that differs).
+            string folder0 = Path.Combine(Path.GetTempPath(), "bridghe-gpc-input-diff"); Directory.CreateDirectory(folder0);
+            File.WriteAllText(Path.Combine(folder0, FileName(label) + "-gpc.xml"), Document(model) ?? ""); File.WriteAllText(Path.Combine(folder0, FileName(label) + "-conversion.xml"), Document(expected) ?? "");
+            Fail("analysis fingerprint differs: " + string.Join("; ", parts.Take(12)) + "; documents in " + folder0);
+        }
         if (parts.Count != 0) Fail("parts differ: " + string.Join("; ", parts.Take(12)) + (parts.Count > 12 ? $"; ... {parts.Count} in all" : ""));
         string a = Document(model), b = Document(expected);
         if (a != null && a != b)
         {
             string folder = Path.Combine(Path.GetTempPath(), "bridghe-gpc-input-diff"); Directory.CreateDirectory(folder);
-            File.WriteAllText(Path.Combine(folder, label.Replace(' ', '-') + "-gpc.xml"), a); File.WriteAllText(Path.Combine(folder, label.Replace(' ', '-') + "-conversion.xml"), b ?? "");
+            File.WriteAllText(Path.Combine(folder, FileName(label) + "-gpc.xml"), a); File.WriteAllText(Path.Combine(folder, FileName(label) + "-conversion.xml"), b ?? "");
             var x = a.Split('\n'); var y = (b ?? "").Split('\n');
             int line = Enumerable.Range(0, Math.Min(x.Length, y.Length)).FirstOrDefault(i => x[i] != y[i], -1);
             Fail($"XML document differs, both in {folder}: " + (line < 0 ? $"{x.Length} / {y.Length} lines" : $"line {line + 1}: GPC '{x[line].Trim()}' / conversion '{y[line].Trim()}'"));
@@ -189,7 +202,7 @@ internal static class GpcInputComparison
     internal static void RequireComponents(GH_Document doc, string label)
     {
         int count = 0;
-        foreach (var component in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name is "AttachMovingPathsComponent" or "BridgePhaseModelComponent" or "BridgeConstructionSequenceComponent"))
+        foreach (var component in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name is "AttachMovingPathsComponent" or "BridgePhaseModelComponent" or "BridgeConstructionSequenceComponent" or "BuildModelComponent"))
             foreach (var goo in component.Params.Output[0].VolatileData.AllData(true))
             {
                 string name = label + " " + component.GetType().Name.Replace("Component", "") + " '" + component.NickName + "'";
@@ -197,8 +210,9 @@ internal static class GpcInputComparison
                 var attached = (GpcModels.Conversion)goo.GetType().GetProperty("GpcInput").GetValue(goo);
                 var fem = (ModelModel)goo.GetType().GetProperty("Value").GetValue(goo);
                 // The tolerance of the attached input: GpcInput returns it only at the current tolerance of the plug-in.
-                Console.WriteLine($"GPC INPUT PASS ({name}): " + (component.GetType().Name == "BridgeConstructionSequenceComponent"
-                    ? RequireRenumbered(name, attached, fem, attached.Tolerance) : Require(name, attached, fem, attached.Tolerance))); count++;
+                string kind = component.GetType().Name;
+                Console.WriteLine($"GPC INPUT PASS ({name}): " + (kind == "BridgeConstructionSequenceComponent" ? RequireRenumbered(name, attached, fem, attached.Tolerance)
+                    : kind == "BuildModelComponent" ? Require(name, attached, fem, attached.Tolerance, buildModel: true) + "; " + attached.Report.BuildModel : Require(name, attached, fem, attached.Tolerance))); count++;
             }
         Console.WriteLine($"GPC INPUT ({label}): {count} transformer outputs on GPC equal to the conversion of their FEM output.");
     }

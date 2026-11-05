@@ -57,6 +57,8 @@ namespace BridGHe.Common.Gpc.Legacy
         /// <summary>F6 (L12, user decision of 5/11): the bridge data of the converted model (member metadata, super element, local section
         /// state of every beam, by beam GUID), outside the generic GPC model: <c>new BridgeModel(model, Bridge)</c>. Never null.</summary>
         public GPC.Checkers.CompositeBridge.BridgeModelData Bridge { get; internal set; } = new GPC.Checkers.CompositeBridge.BridgeModelData();
+        /// <summary>Chain E (e3): what Build Model on GPC did (merges, re-anchorings), when the model comes from <see cref="LegacyBuildModel.Build"/>; null otherwise.</summary>
+        public LegacyBuildModel.BuildCounts BuildModel { get; internal set; }
 
         /// <summary>A warning about one element: in <see cref="Warnings"/> and <see cref="ElementWarnings"/>.</summary>
         internal void Warn(GPC.Model.Core.Identity.EntityFamily family, int number, string text, bool numberInText = false, bool restraint = false)
@@ -147,6 +149,16 @@ namespace BridGHe.Common.Gpc.Legacy
         /// <summary>The carried text of every plate support, in order (the former face is not in the GPC support).</summary>
         internal readonly List<string> SupportCarryList = new List<string>();
         public IReadOnlyList<string> SupportCarries => SupportCarryList;
+        /// <summary>The value of the first Element ID attribute of the value ("" when it has no value), null when it has none: the BridGHe ID
+        /// Build Model gives the element (former ModelHelper.BuildModel).</summary>
+        public string FirstLabel { get; internal set; }
+        /// <summary>The definition of the case of every former load of the value, parallel to <see cref="LoadRecords"/> (the GPC cases of the
+        /// drafts do not carry gravity, temperature, stage list; coordinator decision 1 of 5/11 evening).</summary>
+        internal readonly List<LegacyCaseData> LoadCaseList = new List<LegacyCaseData>();
+        public IReadOnlyList<LegacyCaseData> LoadCases => LoadCaseList;
+        /// <summary>What the conversion of the beam property of the value carries (the model carries it once per registered property).</summary>
+        internal readonly List<KeyValuePair<string, int>> PropertyCarryList = new List<KeyValuePair<string, int>>();
+        public IReadOnlyList<KeyValuePair<string, int>> PropertyCarries => PropertyCarryList;
         /// <summary>The former loads of the value in order, as (former load type, case name): the k of the beam load records
         /// "BeamLoad/&lt;number&gt;/&lt;k&gt;" is the position here (1-based); the merge by GH GUID walks them in this order.</summary>
         internal readonly List<(string Kind, string Case)> LoadList = new List<(string, string)>();
@@ -155,7 +167,7 @@ namespace BridGHe.Common.Gpc.Legacy
         internal LegacyElementRecords Copy()
         {
             var copy = new LegacyElementRecords { Members = Members, SectionStates = SectionStates, Tapers = Tapers, EmptyLabels = EmptyLabels };
-            copy.SupportCarryList.AddRange(SupportCarryList);
+            copy.SupportCarryList.AddRange(SupportCarryList); copy.LoadCaseList.AddRange(LoadCaseList); copy.PropertyCarryList.AddRange(PropertyCarryList); copy.FirstLabel = FirstLabel;
             copy.LoadList.AddRange(LoadList);
             copy.GroupList.AddRange(GroupList); copy.LabelList.AddRange(LabelList); copy.SuperElementList.AddRange(SuperElementList);
             return copy;
@@ -173,6 +185,30 @@ namespace BridGHe.Common.Gpc.Legacy
 
     /// <summary>Chain E (e1): the GPC draft of one former plate value (<see cref="LegacyModelImport.PlateDraft"/>): the plate without nodes
     /// (definition units), its corners in order (the assembly finds their nodes by tolerance) and the report of the conversion.</summary>
+
+    /// <summary>
+    /// Chain E (e3, coordinator decision 1 of 5/11 evening): a former load case as the reader reads it, the BridGHe record the element drafts,
+    /// combinations and stages carry with their loads and factors (the GPC case keeps its name, self weight and masses, not the gravity, the
+    /// temperature or the stage list): filled from the former case now, from the GH load case on GPC after the removal of FeMM.
+    /// <see cref="HasStageList"/>: the former case had a list of stages (every case of the Load Case component but the copy of the former
+    /// default "Dead"), which its equality compares by reference (<see cref="LegacyBuildModel"/>).
+    /// </summary>
+    public sealed record LegacyCaseData(string Name, double Temperature, bool StructuralMass, bool NonStructuralMass, string Inertia, string GravityDirection, double GravityValue,
+        int Stages, bool HasStageList)
+    {
+        internal static LegacyCaseData From(LegacyValue c) => new LegacyCaseData(c.String("Name"), c.Double("Temperature"), c.Bool("StructuralMassAcceleration"),
+            c.Bool("NonStructuralMassAcceleration"), c.Enum("GlobalInertiaLoad"), c.Enum("GravityDirection"), c.Double("GravityValue"),
+            c.Has("Stages") && !c["Stages"].IsNull ? c.Field("Stages").Items.Count : 0, c.Has("HasStages") ? c.Bool("HasStages") : c.Has("Stages") && !c["Stages"].IsNull);
+        /// <summary>The former reader: one definition per case name (temperature, masses, inertia, gravity).</summary>
+        internal bool Same(LegacyCaseData o) => Temperature == o.Temperature && StructuralMass == o.StructuralMass && NonStructuralMass == o.NonStructuralMass
+            && Inertia == o.Inertia && GravityDirection == o.GravityDirection && GravityValue == o.GravityValue;
+    }
+
+    /// <summary>Chain E (e3): a former load combination by value: name and factors (case definition, factor) in order.</summary>
+    public sealed record LegacyCombinationDraft(string Name, IReadOnlyList<(LegacyCaseData Case, double Factor)> Factors);
+
+    /// <summary>Chain E (e3): a former staged construction by value: name, the full names of its groups, morph, rotate, increments.</summary>
+    public sealed record LegacyStageDraft(string Name, IReadOnlyList<string> Groups, bool Morph, bool Rotate, IReadOnlyList<LegacyCombinationDraft> Increments);
     public sealed record LegacyPlateDraft(AreaElement Plate, IReadOnlyList<Point3d> Corners, LegacyImportReport Report)
     {
         /// <summary>Chain E (e3): the groups and Element IDs of the plate at list level (<see cref="LegacyElementRecords"/>).</summary>
@@ -259,13 +295,11 @@ namespace BridGHe.Common.Gpc.Legacy
             }
 
             var stages = legacy.Has("StagedConstruction") ? legacy.Field("StagedConstruction").Items : Array.Empty<LegacyValue>();
-            if (stages.Count != 0) Stages(stages, model, cases, assembly.Groups, report);
+            if (stages.Count != 0) Stages(stages.Select(StageDraft).ToList(), model, cases, assembly.Groups, report);
             foreach (var c in legacy.Field("LoadCombinations").Items)
             {
-                string cname = c.String("Name");
-                var keys = c.Field("Keys").Items; var values = c.Field("Values").Items;
-                if (keys.Count != values.Count) throw new ArgumentException("InvalidLegacyCombination: " + cname);
-                assembly.AddCombination(cname, keys.Select((key, q) => (key.String("Name"), values[q].AsDouble())));
+                var combination = CombinationDraft(c);
+                assembly.AddCombination(combination.Name, combination.Factors.Select(f => (f.Case.Name, f.Factor)));
             }
             return model;
         }
@@ -284,7 +318,6 @@ namespace BridGHe.Common.Gpc.Legacy
             { Source = new SourceIdentity(Program, owner.ToString("D"), EntityFamily.Node, nodeId.Length != 0 ? nodeId : (i + 1).ToString()) };
             foreach (var g in n.Field("Groups").Items) node.AddGroup(groupOf(g));
             NodeData(n, node, cases, units, report);
-            if (records != null) foreach (var l in n.Field("Loads").Items) records.LoadList.Add((l.ShortType, l.Field("LoadCase").String("Name")));
             if (records != null) records.EmptyLabels = n.Field("Attributes").Items.Count(a => a.Is("ElementIdAttributeModel") && string.IsNullOrEmpty(a.String("Value")));
             foreach (var a in n.Field("Attributes").Items.Where(a => a.Is("RigidConnectionAttributeModel"))) node.Attributes.Add(new RigidConnectionAttribute(Point(a["Target"], units)));
             return node;
@@ -307,7 +340,6 @@ namespace BridGHe.Common.Gpc.Legacy
             // e3: every group at list level (the former exporter wrote the first; the warning comes with the resolution, LegacyAssembly.ResolvePlate).
             var pg = pl.Field("Groups").Items; if (pg.Count > 0) plate.AddGroup(groupOf(pg[0]));
             foreach (var g in pg) records.GroupList.Add(FullName(g));
-            foreach (var l in pl.Field("Loads").Items) records.LoadList.Add((l.ShortType, l.Field("LoadCase").String("Name")));
             foreach (var a in pl.Field("Attributes").Items)
             {
                 if (a.Is("ElementIdAttributeModel")) Label(plate, a, report, records);
@@ -391,7 +423,6 @@ namespace BridGHe.Common.Gpc.Legacy
             var bg = b.Field("Groups").Items;
             if (bg.Count > 0) beam.AddGroup(groupOf(bg[0]));
             foreach (var g in bg) records.GroupList.Add(FullName(g));
-            foreach (var l in b.Field("Loads").Items) records.LoadList.Add((l.ShortType, l.Field("LoadCase").String("Name")));
             BeamData(b, beam, principal, globalOffset, cases, units, report, members, records);
             SectionState(b, k, beam, femPropertySignature, report, records);
             return beam;
@@ -410,9 +441,14 @@ namespace BridGHe.Common.Gpc.Legacy
         {
             if (b == null || b.IsNull || !b.Is("BeamModel")) throw new ArgumentException("LegacyBeamModelExpected");
             var report = new LegacyImportReport { Units = units, Owner = guid, Bridge = new GPC.Checkers.CompositeBridge.BridgeModelData() };
-            var property = BeamProperty(b["BeamProperty"], units);
-            var cases = ElementCases(b, out var groupOf);
             var records = new LegacyElementRecords();
+            var p = b["BeamProperty"];
+            if (p == null || p.IsNull || !p.Is("BeamPropertyModel")) throw new ArgumentException("LegacyBeamPropertyModelExpected");
+            // e3: what the conversion of the property carries goes with the draft (the model carries it when the property is registered).
+            var propertyReport = new LegacyImportReport();
+            var property = BeamProperty(p, PropertyName(p), units, new Dictionary<string, (double, double)>(StringComparer.Ordinal), propertyReport, Signature(p));
+            records.PropertyCarryList.AddRange(propertyReport.NotExported);
+            var cases = ElementCases(b, out var groupOf, records);
             var beam = Beam(b, 0, guid, guid, Point(b["PointFrom"], units), Point(b["PointTo"], units), property.Property, property.Data.Formulation, property.Data.Angle,
                 null, groupOf, cases, units, report, new BridgeMembers(report.Bridge), femPropertySignature == null ? null : _ => femPropertySignature, records);
             return new LegacyBeamDraft(beam, report.Bridge.Beam(beam.Guid), b.Double("Angle"), property.Data, report) { Records = records };
@@ -428,8 +464,8 @@ namespace BridGHe.Common.Gpc.Legacy
         {
             if (n == null || n.IsNull || !n.Is("NodeModel")) throw new ArgumentException("LegacyNodeModelExpected");
             var report = new LegacyImportReport { Units = units, Owner = guid, Bridge = new GPC.Checkers.CompositeBridge.BridgeModelData() };
-            var cases = ElementCases(n, out var groupOf);
             var records = new LegacyElementRecords();
+            var cases = ElementCases(n, out var groupOf, records);
             return new LegacyNodeDraft(Node(n, 0, guid, guid, groupOf, cases, units, report, records), report) { Records = records };
         }
 
@@ -447,14 +483,16 @@ namespace BridGHe.Common.Gpc.Legacy
             var corners = Enumerable.Range(0, count).Select(i => Point(pl["Point" + i], units)).ToArray();
             var pp = pl.Field("PlateProperty"); string ppName = PlatePropertyName(pp);
             var property = PlateProperty(pp, ppName, units);
-            var cases = ElementCases(pl, out var groupOf);
             var records = new LegacyElementRecords();
+            var cases = ElementCases(pl, out var groupOf, records);
             return new LegacyPlateDraft(Plate(pl, 0, guid, guid, property, null, groupOf, cases, units, report, records), corners, report) { Records = records };
         }
 
         /// <summary>The cases of the loads of one former element by name (the rules of the case set of a whole model: a name, one definition
-        /// per name), and the groups of a draft by full name with their parents (no model: the draft keeps them).</summary>
-        private static Dictionary<string, LoadCaseBase> ElementCases(LegacyValue element, out Func<LegacyValue, Group> groupOf)
+        /// per name), and the groups of a draft by full name with their parents (no model: the draft keeps them). e3: the definitions of the
+        /// cases (<see cref="LegacyElementRecords.Cases"/>) and the first Element ID (<see cref="LegacyElementRecords.FirstLabel"/>) go to the
+        /// records of the draft.</summary>
+        private static Dictionary<string, LoadCaseBase> ElementCases(LegacyValue element, out Func<LegacyValue, Group> groupOf, LegacyElementRecords records)
         {
             var groups = new Dictionary<string, Group>(StringComparer.Ordinal);
             Group GroupOf(LegacyValue g)
@@ -468,27 +506,29 @@ namespace BridGHe.Common.Gpc.Legacy
                 return group;
             }
             groupOf = GroupOf;
-            var first = new Dictionary<string, LegacyValue>(StringComparer.Ordinal);
-            foreach (var c in element.Field("Loads").Items.Select(l => l.Field("LoadCase")))
+            var first = new Dictionary<string, LegacyCaseData>(StringComparer.Ordinal);
+            foreach (var c in element.Field("Loads").Items.Select(l => LegacyCaseData.From(l.Field("LoadCase"))))
             {
-                string name = c.String("Name");
-                if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Caso di carico nullo o senza nome.");
-                if (!first.TryGetValue(name, out var known)) first.Add(name, c);
-                else if (!SameCase(known, c)) throw new ArgumentException("Definizioni incompatibili per il caso di carico " + name);
+                if (string.IsNullOrWhiteSpace(c.Name)) throw new ArgumentException("Caso di carico nullo o senza nome.");
+                if (!first.TryGetValue(c.Name, out var known)) first.Add(c.Name, c);
+                else if (!known.Same(c)) throw new ArgumentException("Definizioni incompatibili per il caso di carico " + c.Name);
             }
+            foreach (var l in element.Field("Loads").Items) { records.LoadList.Add((l.ShortType, l.Field("LoadCase").String("Name"))); records.LoadCaseList.Add(LegacyCaseData.From(l.Field("LoadCase"))); }
+            var label = element.Field("Attributes").Items.FirstOrDefault(a => a.Is("ElementIdAttributeModel"));
+            records.FirstLabel = label == null ? null : label.String("Value") ?? "";
             return first.ToDictionary(pair => pair.Key, pair => Case(pair.Key, pair.Value), StringComparer.Ordinal);
         }
 
         /// <summary>The GPC case of a former load case (null: the default "Dead" case): self weight with gravity, the masses of its inertia
         /// loads; the identity by name. Model loads (gravity) are added by the caller.</summary>
-        private static LoadCaseBase Case(string name, LegacyValue c)
+        private static LoadCaseBase Case(string name, LegacyCaseData c)
         {
             bool dead = c == null && name == "Dead";
-            bool gravity = dead || c != null && c.Enum("GlobalInertiaLoad") == "Gravity";
-            if (c != null && c.Enum("GlobalInertiaLoad") != "Gravity" && c.Enum("GlobalInertiaLoad") != "None")
-                throw new NotSupportedException("LegacyInertiaLoadNotMappedYet: " + c.Enum("GlobalInertiaLoad"));
+            bool gravity = dead || c != null && c.Inertia == "Gravity";
+            if (c != null && c.Inertia != "Gravity" && c.Inertia != "None")
+                throw new NotSupportedException("LegacyInertiaLoadNotMappedYet: " + c.Inertia);
             LoadCaseBase gpc = gravity ? new LoadCase(GpcIdentity.Case(name), name, LoadCase.LoadCaseTypes.SelfWeight) : new LoadCaseBase(GpcIdentity.Case(name), name);
-            bool structural = dead || c != null && c.Bool("StructuralMassAcceleration"), nonStructural = c != null && c.Bool("NonStructuralMassAcceleration");
+            bool structural = dead || c != null && c.StructuralMass, nonStructural = c != null && c.NonStructuralMass;
             gpc.InertiaMasses = new InertiaMassSelection { Structural = structural, NonStructural = nonStructural };
             return gpc;
         }
@@ -512,30 +552,40 @@ namespace BridGHe.Common.Gpc.Legacy
                 foreach (var item in document.RootElement.EnumerateObject()) generated.Add(item.Value.GetString());
                 report.Carry("Generated moving cases of a former analysis (cache, recomputed): " + generated.Count);
             }
-            var candidates = legacy.Field("LoadCases").Items.Where(c => !generated.Contains(c.String("Name")))
-                .Concat(legacy.Field("Elements").Items.SelectMany(e => e.Field("Loads").Items).Select(l => l.Field("LoadCase")))
-                .Concat(legacy.Field("LoadCombinations").Items.SelectMany(c => c.Field("Keys").Items))
-                .Concat((legacy.Has("StagedConstruction") ? legacy.Field("StagedConstruction").Items : Array.Empty<LegacyValue>())
-                    .SelectMany(st => st.Field("_loadCombinations").Items).SelectMany(c => c.Field("Keys").Items)).ToList();
+            return CaseSet(legacy.Field("LoadCases").Items.Where(c => !generated.Contains(c.String("Name"))).Select(LegacyCaseData.From).ToList(),
+                legacy.Field("Elements").Items.SelectMany(e => e.Field("Loads").Items).Select(l => LegacyCaseData.From(l.Field("LoadCase"))).ToList(),
+                legacy.Field("LoadCombinations").Items.SelectMany(c => c.Field("Keys").Items).Select(LegacyCaseData.From).ToList(),
+                (legacy.Has("StagedConstruction") ? legacy.Field("StagedConstruction").Items : Array.Empty<LegacyValue>())
+                    .SelectMany(st => st.Field("_loadCombinations").Items).SelectMany(c => c.Field("Keys").Items).Select(LegacyCaseData.From).ToList(),
+                movingCases, report);
+        }
+
+        /// <summary>
+        /// The case set of the former reader from the definitions of the cases (e3: shared by the conversion of a whole model and by Build
+        /// Model on the drafts): the registered cases, the cases of the element loads in the order of the elements and of their loads, of the
+        /// combination factors, of the stage increments, then the moving cases and the default "Dead"; the first definition of a name wins and a
+        /// different one is refused; the origins, the registered count, the carried temperatures and stage lists, the gravity loads.
+        /// </summary>
+        internal static List<LegacyCase> CaseSet(IReadOnlyList<LegacyCaseData> registered, IReadOnlyList<LegacyCaseData> elementLoads, IReadOnlyList<LegacyCaseData> combinations,
+            IReadOnlyList<LegacyCaseData> stages, IEnumerable<string> movingCases, LegacyImportReport report)
+        {
             var result = new List<LegacyCase>();
-            var first = new Dictionary<string, LegacyValue>(StringComparer.Ordinal);
-            foreach (var c in candidates)
+            var first = new Dictionary<string, LegacyCaseData>(StringComparer.Ordinal);
+            foreach (var c in registered.Concat(elementLoads).Concat(combinations).Concat(stages))
             {
-                string name = c.String("Name");
-                if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Caso di carico nullo o senza nome.");
-                if (!first.TryGetValue(name, out var known)) first.Add(name, c);
-                else if (!SameCase(known, c)) throw new ArgumentException("Definizioni incompatibili per il caso di carico " + name);
+                if (string.IsNullOrWhiteSpace(c.Name)) throw new ArgumentException("Caso di carico nullo o senza nome.");
+                if (!first.TryGetValue(c.Name, out var known)) first.Add(c.Name, c);
+                else if (!known.Same(c)) throw new ArgumentException("Definizioni incompatibili per il caso di carico " + c.Name);
             }
             // F6 chain D: the cases registered in the former model come first (its LoadCases, without generated moving cases).
-            report.RegisteredCases = legacy.Field("LoadCases").Items.Select(c => c.String("Name")).Where(n => !generated.Contains(n)).Distinct(StringComparer.Ordinal).Count();
+            report.RegisteredCases = registered.Select(c => c.Name).Distinct(StringComparer.Ordinal).Count();
             // F6 chain D: every origin of every case, for the model transformers.
             var origins = report.CaseOrigins; origins.Clear();
             void Origin(string name, LegacyCaseOrigins origin) { origins.TryGetValue(name, out var o); origins[name] = o | origin; }
-            foreach (var c in legacy.Field("LoadCases").Items.Where(c => !generated.Contains(c.String("Name")))) Origin(c.String("Name"), LegacyCaseOrigins.Registered);
-            foreach (var l in legacy.Field("Elements").Items.SelectMany(e => e.Field("Loads").Items)) Origin(l.Field("LoadCase").String("Name"), LegacyCaseOrigins.ElementLoad);
-            foreach (var k in legacy.Field("LoadCombinations").Items.SelectMany(c => c.Field("Keys").Items)) Origin(k.String("Name"), LegacyCaseOrigins.Combination);
-            foreach (var k in (legacy.Has("StagedConstruction") ? legacy.Field("StagedConstruction").Items : Array.Empty<LegacyValue>())
-                .SelectMany(st => st.Field("_loadCombinations").Items).SelectMany(c => c.Field("Keys").Items)) Origin(k.String("Name"), LegacyCaseOrigins.Stage);
+            foreach (var c in registered) Origin(c.Name, LegacyCaseOrigins.Registered);
+            foreach (var c in elementLoads) Origin(c.Name, LegacyCaseOrigins.ElementLoad);
+            foreach (var c in combinations) Origin(c.Name, LegacyCaseOrigins.Combination);
+            foreach (var c in stages) Origin(c.Name, LegacyCaseOrigins.Stage);
             foreach (var name in movingCases) Origin(name, LegacyCaseOrigins.Moving);
             foreach (var name in movingCases) if (!first.ContainsKey(name)) first.Add(name, null);
             if (!first.ContainsKey("Dead")) { first.Add("Dead", null); Origin("Dead", LegacyCaseOrigins.DefaultDead); }
@@ -543,15 +593,15 @@ namespace BridGHe.Common.Gpc.Legacy
             {
                 var c = pair.Value;
                 bool dead = c == null && pair.Key == "Dead";
-                bool gravity = dead || c != null && c.Enum("GlobalInertiaLoad") == "Gravity";
+                bool gravity = dead || c != null && c.Inertia == "Gravity";
                 var gpc = Case(pair.Key, c);
-                if (c != null && (c.Double("Temperature") != 0 || c.Has("Stages") && c.Field("Stages").Items.Count != 0)) report.Carry("Load case temperature or stage list (not exported by the former writer)");
+                if (c != null && (c.Temperature != 0 || c.Stages != 0)) report.Carry("Load case temperature or stage list (not exported by the former writer)");
                 ModelGravityLoad gravityLoad = null;
                 if (gravity)
                 {
                     // Gravity value in mm/s², already N-mm in the former model (Dead: −9806.65 along Z).
-                    double value = dead ? -9806.65 : c.Double("GravityValue");
-                    string direction = dead ? "Z" : c.Enum("GravityDirection");
+                    double value = dead ? -9806.65 : c.GravityValue;
+                    string direction = dead ? "Z" : c.GravityDirection;
                     var axis = direction == "X" ? Vector3d.XAxis : direction == "Y" ? Vector3d.YAxis : direction == "Z" ? Vector3d.ZAxis : throw new NotSupportedException("LegacyGravityDirection: " + direction);
                     if (value != 0) gravityLoad = new ModelGravityLoad(axis, value, gpc, CoordinateSystem.Global, "Gravity " + pair.Key);
                 }
@@ -560,48 +610,60 @@ namespace BridGHe.Common.Gpc.Legacy
             return result;
         }
 
+        /// <summary>Chain E (e3): a former load combination by value (the datum of a Load Combinations parameter, or one of a former model):
+        /// its name and its factors with the definitions of their cases, in order.</summary>
+        public static LegacyCombinationDraft CombinationDraft(LegacyValue c)
+        {
+            string name = c.String("Name");
+            var keys = c.Field("Keys").Items; var values = c.Field("Values").Items;
+            if (keys.Count != values.Count) throw new ArgumentException("InvalidLegacyCombination: " + name);
+            return new LegacyCombinationDraft(name, keys.Select((key, q) => (LegacyCaseData.From(key), values[q].AsDouble())).ToArray());
+        }
+
+        /// <summary>Chain E (e3): a former staged construction by value: name, the full names of its groups, morph and rotate, its increments
+        /// (one per combination, with the definitions of their cases).</summary>
+        public static LegacyStageDraft StageDraft(LegacyValue st)
+        {
+            // StagedConstructionModel is [Serializable] without ISerializable: field names.
+            return new LegacyStageDraft(st.String("_name"), st.Field("_groups").Items.Select(FullName).ToArray(), st.Bool("_morph"), st.Bool("_rotate"),
+                st.Field("_loadCombinations").Items.Select(c =>
+                {
+                    var keys = c.Field("Keys").Items; var values = c.Field("Values").Items;
+                    return new LegacyCombinationDraft(c.String("Name"), keys.Select((key, q) => (LegacyCaseData.From(key), values[q].AsDouble())).ToArray());
+                }).ToArray());
+        }
+
         /// <summary>Former staged construction: one native stage per definition, in order; the listed groups are the complete set of
         /// active groups (the others are disabled); Morph = birth on deformed coordinates, Rotate = rotate incoming clusters;
         /// each stage combination is one load increment. Legacy stage groups without elements did not exist natively and are ignored.</summary>
-        private static void Stages(IReadOnlyList<LegacyValue> stages, Model model, Dictionary<string, LoadCaseBase> cases, Dictionary<string, Group> groups, LegacyImportReport report)
+        internal static void Stages(IReadOnlyList<LegacyStageDraft> stages, Model model, Dictionary<string, LoadCaseBase> cases, Dictionary<string, Group> groups, LegacyImportReport report)
         {
             var freedom = new GPC.Model.FreedomCases.FreedomCase(GpcIdentity.FreedomCase("Default restraints"), "Default restraints");
             model.FreedomCases.Add(freedom.Name, freedom);
             for (int k = 0; k < stages.Count; k++)
             {
-                // StagedConstructionModel is [Serializable] without ISerializable: field names.
-                var st = stages[k]; string name = st.String("_name");
+                var st = stages[k]; string name = st.Name;
                 var stage = new GPC.Model.Stages.Stage(GpcIdentity.Stage(name), k + 1, name) { Definition = new GPC.Model.Stages.StageDefinition(k + 1, 0) };
                 var active = new List<Guid>();
-                foreach (var g in st.Field("_groups").Items)
+                foreach (var g in st.Groups)
                 {
-                    if (groups.TryGetValue(FullName(g), out var group)) { if (!active.Contains(group.Guid)) active.Add(group.Guid); }
+                    if (groups.TryGetValue(g, out var group)) { if (!active.Contains(group.Guid)) active.Add(group.Guid); }
                     else report.Carry("Stage group without elements (not created natively by the former exporter)");
                 }
                 stage.AnalysisState = new GPC.Model.Stages.StageAnalysisState
                 {
-                    BirthGeometry = st.Bool("_morph") ? GPC.Model.Stages.StageBirthGeometry.DeformedCoordinates : GPC.Model.Stages.StageBirthGeometry.OriginalCoordinates,
-                    MoveRestrainedNodes = false, RotateIncomingClusters = st.Bool("_rotate"),
+                    BirthGeometry = st.Morph ? GPC.Model.Stages.StageBirthGeometry.DeformedCoordinates : GPC.Model.Stages.StageBirthGeometry.OriginalCoordinates,
+                    MoveRestrainedNodes = false, RotateIncomingClusters = st.Rotate,
                     ActiveGroupGuids = active.ToArray(), ActiveFreedomCaseGuids = new[] { freedom.Guid },
-                    Increments = st.Field("_loadCombinations").Items.Select(c =>
+                    Increments = st.Increments.Select(c => new GPC.Model.Stages.StageLoadIncrement
                     {
-                        var keys = c.Field("Keys").Items; var values = c.Field("Values").Items;
-                        return new GPC.Model.Stages.StageLoadIncrement
-                        {
-                            Name = c.String("Name"),
-                            LoadFactors = keys.Select((key, q) => new GPC.Model.Stages.StageCaseFactor { CaseGuid = cases[key.String("Name")].Guid, Factor = values[q].AsDouble() }).ToArray(),
-                        };
+                        Name = c.Name,
+                        LoadFactors = c.Factors.Select(f => new GPC.Model.Stages.StageCaseFactor { CaseGuid = cases[f.Case.Name].Guid, Factor = f.Factor }).ToArray(),
                     }).ToArray(),
                 };
                 model.Stages.Add(stage);
             }
         }
-
-        private static bool SameCase(LegacyValue a, LegacyValue b) =>
-            a.Double("Temperature") == b.Double("Temperature") && a.Bool("StructuralMassAcceleration") == b.Bool("StructuralMassAcceleration")
-            && a.Bool("NonStructuralMassAcceleration") == b.Bool("NonStructuralMassAcceleration") && a.Enum("GlobalInertiaLoad") == b.Enum("GlobalInertiaLoad")
-            && a.Enum("GravityDirection") == b.Enum("GravityDirection") && a.Double("GravityValue") == b.Double("GravityValue");
-
         /// <summary>
         /// Chain E (e3, coordinator decision 2 of 5/11): the data of a former node as records of its draft, one per former attribute and
         /// load, in their order, never resolved: what a component appends to a node and what Build Model merges by GH GUID before the

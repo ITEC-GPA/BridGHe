@@ -152,6 +152,22 @@ namespace BridGHe.Common.Gpc
             return LegacyModelImport.BeamProperty(LegacyArchive.Read(ModelArchive.Write(property)), units);
         }
 
+        /// <summary>Chain E (e3): a former load combination (the datum of a Load Combinations parameter) by value, with the definitions of
+        /// its cases, as Build Model on GPC takes it (<see cref="LegacyModelImport.CombinationDraft"/>).</summary>
+        public static LegacyCombinationDraft CombinationDraft(LoadCombinationModel combination)
+        {
+            if (combination == null) throw new ArgumentNullException(nameof(combination));
+            return LegacyModelImport.CombinationDraft(LegacyArchive.Read(ModelArchive.Write(combination)));
+        }
+
+        /// <summary>Chain E (e3): a former staged construction (the datum of the Staged constructions input of Build Model) by value
+        /// (<see cref="LegacyModelImport.StageDraft"/>).</summary>
+        public static LegacyStageDraft StageDraft(StagedConstructionModel stage)
+        {
+            if (stage == null) throw new ArgumentNullException(nameof(stage));
+            return LegacyModelImport.StageDraft(LegacyArchive.Read(ModelArchive.Write(stage)));
+        }
+
         /// <summary>F6 chain E: a former material (the datum of a Material parameter) as the GPC material of a beam property, with the rule
         /// of the conversion of a whole model (<see cref="LegacyModelImport.ElasticMaterial"/>; materials are in N-mm-MPa in every unit
         /// system of the definition).</summary>

@@ -115,6 +115,32 @@ namespace BridGHe.Grasshopper.Components.Models
                         throw new ArgumentException($"Beam {beam.BeamId} is in the super elements '{names[0]}' and '{names[1]}' (LegacyBeamInTwoSuperElements): a beam belongs to one super element. Assign each beam to one Super Element.");
                 }
 
+                // F6 chain E (e3, point 4): the GPC input of the model from the drafts of the GH types (Build Model on GPC, the rules of the
+                // former BuildModel and of the legacy reader), compared bit for bit with the conversion of the FEM model by the runners. Until
+                // the normalisation of point 5 only N-mm models: in other units the conversion of the FEM model stays the input (bridge).
+                if ((ModelModel.ModelUnits)units == ModelModel.ModelUnits.Nmm)
+                {
+                    try
+                    {
+                        Helpers.ModelHelper.ParseElements(elements, out List<GH_Node> nodes, out List<GH_Beam> beams, out List<GH_Plate> plates);
+                        var input = Common.Gpc.Legacy.LegacyBuildModel.Build(name, new Common.Gpc.BridgeUnits(Common.Gpc.BridgeUnits.Parse(((ModelModel.ModelUnits)units).ToString())), Settings.Instance.Tolerance,
+                            nodes.Select(n => (n.Guid, n.Gpc)).ToList(),
+                            // Bridge until the removal of FeMM: a draft built on GPC (Bridge State Override) signs its property with the GPC
+                            // fingerprint, the conversion of a FEM value with the digest of the former content; the registry of the properties
+                            // compares the signatures, so here the draft takes the data of the conversion of its FEM value (same property,
+                            // checked bit for bit by gpc-state-override). After the removal every draft signs with the GPC fingerprint.
+                            beams.Select(b => (b.Guid, b.HasAttachedGpc ? Common.Gpc.GpcBeamDrafts.With(b.Gpc, b.Gpc.Beam, b.Gpc.Bridge, Common.Gpc.GpcBeamDrafts.FromFemm(b.Value).Property) : b.Gpc)).ToList(),
+                            plates.Select(p => (p.Guid, p.Gpc)).ToList(),
+                            combinations.Select(c => Common.Gpc.GpcModels.CombinationDraft(c.Value)).ToList(), stages.Select(s => Common.Gpc.GpcModels.StageDraft(s.Value)).ToList());
+                        model.AttachInput(input);
+                    }
+                    catch (Exception ex) when (ex is NotSupportedException || ex is ArgumentException || ex is InvalidOperationException || ex is System.Runtime.Serialization.SerializationException)
+                    {
+                        // The same error comes from the conversion of the FEM model, which stays the input (temporary bridge, removed with FeMM).
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, "GPC Build Model: " + ex.Message);
+                    }
+                }
+
                 DA.SetData(0, model);
                 Message = ((ModelModel.ModelUnits)units).GetDescription();
             }
