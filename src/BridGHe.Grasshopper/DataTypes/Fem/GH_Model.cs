@@ -131,7 +131,9 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         }
 
         /// <summary>F6 (L12): the bridge data of <see cref="Gpc"/> (members, super elements, local section states by beam GUID): those of the
-        /// GPC input (an analysed model keeps the element GUIDs of its input); null when it cannot be converted.</summary>
+        /// GPC input of <see cref="Value"/>; for an attached analysed (or bridge) model, the same data on its beams by number (the analysed
+        /// model of an analysis has the numbering of the input it copied, but the GUIDs of the input of the analysis, not those of the
+        /// conversion of this FEM output: found by the native 50, s60). Null when it cannot be converted.</summary>
         public GPC.Checkers.CompositeBridge.BridgeModelData GpcBridgeData
         {
             get
@@ -139,12 +141,27 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 lock (gpcLock)
                 {
                     if (Value == null) return null;
-                    try { return Conversion().Bridge; }
+                    Common.Gpc.GpcModels.Conversion conversion;
+                    try { conversion = Conversion(); }
                     catch (Exception ex) when (ex is NotSupportedException || ex is ArgumentException || ex is InvalidOperationException || ex is System.Runtime.Serialization.SerializationException)
                     { _gpcError = ex.Message; return null; }
+                    if (_analysed == null || !ReferenceEquals(_analysedOf, Value) || ReferenceEquals(_analysed, conversion.Model)) return conversion.Bridge;
+                    if (_analysedBridge != null && ReferenceEquals(_analysedBridgeOf, _analysed) && ReferenceEquals(_analysedBridgeFrom, conversion)) return _analysedBridge;
+                    var data = new GPC.Checkers.CompositeBridge.BridgeModelData { Workflow = conversion.Bridge.Workflow };
+                    foreach (var beam in conversion.Model.BeamElements.Values)
+                    {
+                        var d = conversion.Bridge.Beam(beam.Guid);
+                        if (d != null && _analysed.BeamElements.TryGetValue(beam.Id, out var target))
+                            data.Set(new GPC.Checkers.CompositeBridge.BridgeBeamData(target.Guid, d.Member, d.SuperElement, d.SectionState, d.CompositeSection));
+                    }
+                    _analysedBridge = data; _analysedBridgeOf = _analysed; _analysedBridgeFrom = conversion;
+                    return data;
                 }
             }
         }
+        private GPC.Checkers.CompositeBridge.BridgeModelData _analysedBridge;
+        private GPC.Model.Models.Model _analysedBridgeOf;
+        private Common.Gpc.GpcModels.Conversion _analysedBridgeFrom;
 
         /// <summary>Why <see cref="Gpc"/> is null.</summary>
         public string GpcError { get { lock (gpcLock) return _gpcError; } }
