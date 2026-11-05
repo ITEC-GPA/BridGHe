@@ -361,7 +361,7 @@ namespace BridGHe.Common.Gpc.Legacy
         ///   node lookup in mm, beams on the nodes found with the registered property (re-anchored: <see cref="LegacyAssembly.PlaceBeam"/>),
         ///   plates, stages, combinations, the carried data of the drafts and of the registered properties.
         /// Identity: the model GUID (owner of the element identities) from the drafts, the merges and the inputs, so the same inputs give the same
-        /// GUIDs. Units: the drafts are in the units of the model (identity for N-mm; point 5 normalises).
+        /// GUIDs. Units: the drafts are in the definition units, normalised to N-mm by the assembly (e3 point 5, coordinator decision 1).
         /// </summary>
         /// <summary>A new string instance for an ID made from a number: .NET shares the strings of small numbers, and the archive of a model
         /// writes a shared string once (found by the 50: a node "255" and the colour "255" of a moving path); the former reader read every ID
@@ -460,6 +460,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 stages.SelectMany(s => s.Increments).SelectMany(c => c.Factors).Select(f => f.Case).ToList(), Array.Empty<string>(), report));
             void Carry(LegacyImportReport draft) { foreach (var p in draft.NotExported) for (int q = 0; q < p.Value; q++) report.Carry(p.Key); }
             assembly.RequireTolerance();
+            bool Moved(GPC.Geometry.Point3d n, double x, double y, double z) => n.X != units.ToMm(x) || n.Y != units.ToMm(y) || n.Z != units.ToMm(z);
             var placedNodes = new List<GPC.Model.Elements.NodeElement>();
             for (int i = 0; i < kept.Count; i++) { Carry(kept[i].Draft.Report); placedNodes.Add(assembly.PlaceNode(kept[i].Draft, i, kept[i].Id)); }
             assembly.AddNodes(placedNodes);
@@ -468,16 +469,17 @@ namespace BridGHe.Common.Gpc.Legacy
                 var (draft, id, start, end) = beamEnds[k];
                 var (i, j) = assembly.BeamEnds(new GPC.Geometry.Point3d(units.ToMm(start.X), units.ToMm(start.Y), units.ToMm(start.Z)), new GPC.Geometry.Point3d(units.ToMm(end.X), units.ToMm(end.Y), units.ToMm(end.Z)), k + 1);
                 var ni = assembly.Node(i); var nj = assembly.Node(j);
-                if (ni.Position.X != start.X || ni.Position.Y != start.Y || ni.Position.Z != start.Z) counts.ReaderMoved++;
-                if (nj.Position.X != end.X || nj.Position.Y != end.Y || nj.Position.Z != end.Z) counts.ReaderMoved++;
+                // The counters compare in mm: the nodes of the model are normalised (e3 point 5), the RTree points and the drafts are not.
+                if (Moved(ni.Position, start.X, start.Y, start.Z)) counts.ReaderMoved++;
+                if (Moved(nj.Position, end.X, end.Y, end.Z)) counts.ReaderMoved++;
                 var d = draft.Beam;
-                if (ni.Position.X != d.StartPoint.X || ni.Position.Y != d.StartPoint.Y || ni.Position.Z != d.StartPoint.Z || nj.Position.X != d.EndPoint.X || nj.Position.Y != d.EndPoint.Y || nj.Position.Z != d.EndPoint.Z) counts.Reanchored++;
+                if (Moved(ni.Position, d.StartPoint.X, d.StartPoint.Y, d.StartPoint.Z) || Moved(nj.Position, d.EndPoint.X, d.EndPoint.Y, d.EndPoint.Z)) counts.Reanchored++;
                 var property = d.BeamProperty ?? throw new ArgumentException("GpcBuildModelBeamWithoutProperty: beam " + id);
                 var p = assembly.BeamProperty(property.Name, draft.Property.Signature, k + 1, unique =>
                 {
                     if (unique != property.Name) throw new NotSupportedException("GpcBuildModelPropertyNameTaken: the beam property '" + property.Name + "' would be renamed '" + unique + "'");
                     foreach (var c in draft.Records.PropertyCarries) for (int q = 0; q < c.Value; q++) report.Carry(c.Key);
-                    return new LegacyBeamProperty(property, draft.Property);
+                    return assembly.NormaliseBeamProperty(property, draft.Property);
                 });
                 Carry(draft.Report);
                 assembly.AddBeam(assembly.PlaceBeam(draft, k, id, ni, nj, p), p.Native);
@@ -486,9 +488,9 @@ namespace BridGHe.Common.Gpc.Legacy
             {
                 var (draft, id, corners) = plateCorners[k];
                 var connected = assembly.PlateNodes(corners.Select(c => new GPC.Geometry.Point3d(units.ToMm(c.X), units.ToMm(c.Y), units.ToMm(c.Z))), k + 1);
-                for (int q = 0; q < corners.Length; q++) if (connected[q].Position.X != corners[q].X || connected[q].Position.Y != corners[q].Y || connected[q].Position.Z != corners[q].Z) counts.ReaderMoved++;
-                if (connected.Where((n, q) => n.Position.X != draft.Corners[q].X || n.Position.Y != draft.Corners[q].Y || n.Position.Z != draft.Corners[q].Z).Any()) counts.Reanchored++;
-                var property = assembly.PlateProperty(draft.Plate.PlateProperty.Name, () => draft.Plate.PlateProperty);
+                for (int q = 0; q < corners.Length; q++) if (Moved(connected[q].Position, corners[q].X, corners[q].Y, corners[q].Z)) counts.ReaderMoved++;
+                if (connected.Where((n, q) => Moved(n.Position, draft.Corners[q].X, draft.Corners[q].Y, draft.Corners[q].Z)).Any()) counts.Reanchored++;
+                var property = assembly.PlateProperty(draft.Plate.PlateProperty.Name, () => assembly.NormalisePlateProperty(draft.Plate.PlateProperty));
                 Carry(draft.Report);
                 assembly.AddPlate(assembly.PlacePlate(draft, k, id, property, connected));
             }

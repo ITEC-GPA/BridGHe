@@ -30,8 +30,11 @@ namespace BridGHe.Common.Gpc.Legacy
     /// - the property registries: one beam property per former name (the first wins; a later different one gives the warning "already
     ///   exists" and the beam takes the first), one plate property per name;
     /// - the beams and plates in their order, the moving paths, the stages and the combinations.
-    /// The units: the element drafts of a conversion are converted with the units of the model (the per-quantity factors of
-    /// <see cref="BridgeUnits"/>), so their numbers are already N-mm; Build Model (e3) gives drafts converted with the units of its input.
+    /// The units: the element drafts of a conversion of a whole former model are converted with the units of the model (the per-quantity
+    /// factors of <see cref="BridgeUnits"/>), so their numbers are already N-mm. The drafts of the GH types are in the definition units
+    /// (<see cref="GpcBeamDrafts.DraftUnits"/>): Build Model on GPC normalises them here, in one place (<see cref="PlaceNode"/>,
+    /// <see cref="PlaceBeam"/>, <see cref="PlacePlate"/>, <see cref="NormaliseBeamProperty"/>, <see cref="NormalisePlateProperty"/>; coordinator
+    /// decision 1 of 5/11, e3 point 5).
     /// </summary>
     public sealed class LegacyAssembly
     {
@@ -291,26 +294,97 @@ namespace BridGHe.Common.Gpc.Legacy
         /// (its attributes cloned: two strings).</summary>
         private static string Distinct(string s) => s.Length == 0 ? s : new string(s.ToCharArray());
 
+        // ---------------------------------------------------------------------------------------------------------------------------------
+        // Units: the normalisation of the drafts of the GH types, in one place (coordinator decision 1 of 5/11, e3 point 5).
+        // A draft keeps the numbers of the definition as written (identity factors, GpcBeamDrafts.DraftUnits); here they take the factors of
+        // the units of the model, with the operations of the reader (LegacyModelImport): positions, offsets, gaps, thicknesses, stations and
+        // rigid-link targets ToMm; node springs a·(F/L) or a·(F·L); release stiffnesses (t·F)/L or (r·F)·L; beam supports (s·F)/(L·L), plate
+        // supports (s·F)/(L·L·L); node forces ·F, moments ·(F·L); concentrated beam actions ·F or ·(F·L); distributed beam actions per
+        // component ·ToNPerMm(1) or ·ToNmmPerMm(1) (the reader scales the value before the 0/±1 direction: the same bits); prestrain forces
+        // ToN; gradients ToCelsiusPerMm; temperatures ToCelsius; pressures and plate prestress ToMPa; the sections from their definition in the
+        // definition units (LegacySectionRecipe, LegacyModelImport.SectionProperty); a plate non-structural mass only in N-mm (former error).
+        // The derived values (section and principal axes, eccentricities, load lines and points, support axes) are computed on the model in mm
+        // (re-anchoring). Every factor is 1 in N-mm, where the operations above are exact: N-mm models stay bit for bit (decision 1 (a)). In
+        // other units the only value the draft keeps derived is a restraint frame away from the global origin, built again from its three unit
+        // axes (unitised again by the constructor: exact on the measured corpus, one unit in the last place possible; with the cross product of
+        // two axes it differed by 2.1E-16). The measure of decision 1 (b) is in the notes (P2B, step 47): no difference on the corpus.
+        // ---------------------------------------------------------------------------------------------------------------------------------
+
+        private Point3d Mm(Point3d p) => new Point3d(Units.ToMm(p.X), Units.ToMm(p.Y), Units.ToMm(p.Z));
+        /// <summary>A vector of a draft times a factor of the units (the reader: <c>Vector3d × factor</c>); unchanged in N-mm.</summary>
+        private Vector3d Scaled(double x, double y, double z, double factor) => Units.IsIdentity ? new Vector3d(x, y, z) : new Vector3d(x, y, z) * factor;
+        /// <summary>A restraint frame of a draft with its origin in mm (axes as they are; a new frame only for an origin away from zero).</summary>
+        private CoordinateSystem Frame(CoordinateSystem cs)
+        {
+            if (cs == null) return null;
+            var o = cs.Origin;
+            if (Units.IsIdentity || o.X == 0 && o.Y == 0 && o.Z == 0) return Copy(cs);
+            // The three axes of the draft (the reader computed the third from the former plane axes; a cross product of the unit axes would
+            // differ in its last bits): unitised again by the constructor, exact for most unit vectors.
+            return new CoordinateSystem(Mm(o), cs.V1, cs.V2, cs.V3, cs.Name);
+        }
+        /// <summary>A spring of a node stiffness record in N-mm (the reader: a·(F/L) for translations, a·(F·L) for rotations).</summary>
+        private DofRestrain Spring(DofRestrain d)
+        {
+            if (Units.IsIdentity || !d.HasStiffness) return GPC.Model.Core.ModelValues.CopyValue(d);
+            return new DofRestrain(d.Dof, d.Stiffness * ((int)d.Dof < 3 ? Units.Force / Units.Length : Units.Force * Units.Length));
+        }
+        /// <summary>A release of a draft in N-mm (the reader: (t·F)/L for translations, (r·F)·L for rotations).</summary>
+        private BeamDofConnection Release(BeamDofConnection c, int dof)
+        {
+            if (Units.IsIdentity || c == null || c.Kind != BeamConnectionKind.AbsoluteStiffness) return c;
+            return new BeamDofConnection(BeamConnectionKind.AbsoluteStiffness, dof < 3 ? c.Value * Units.Force / Units.Length : c.Value * Units.Force * Units.Length);
+        }
+
         /// <summary>
-        /// Chain E (e3, P2K): node <paramref name="i"/> (0-based) of the model from a node draft at list level (definition units = the units of
-        /// the model), as the former reader builds it (<c>LegacyModelImport.Node</c>): identity of the model, BridGHe ID <paramref name="name"/>,
+        /// Chain E (e3 point 5): the beam property of a draft in N-mm, registered by Build Model. The length unit of a library or BXS section
+        /// is checked against the units of the model (former error); in N-mm the property of the draft is the one of the model; in other units
+        /// the section is built again from its definition in the definition units (<see cref="LegacyBeamPropertyData.Section"/>) with the
+        /// operations of the reader (<see cref="LegacyModelImport.SectionProperty"/>), on a copy of the material of the draft (N-mm, never
+        /// scaled). A property built on GPC has no such definition: refused outside N-mm.
+        /// </summary>
+        internal LegacyBeamProperty NormaliseBeamProperty(BeamProperty draft, LegacyBeamPropertyData data)
+        {
+            var r = data.Section;
+            if (r?.NativeKey != null && GpcNativeSections.IsLibraryOrBxs(r.NativeKey) && r.NativeLengthUnit != GpcNativeSections.Straus7LengthUnit(Units.Length))
+                throw new ArgumentException(LegacyModelImport.LibraryUnitsMessage);
+            if (Units.IsIdentity) return new LegacyBeamProperty(draft, data);
+            if (r == null) throw new NotSupportedException("GpcBuildModelPropertyWithoutSectionDefinition: the beam property '" + draft.Name + "' was built on GPC, without a section in the definition units; Build Model takes it only in N-mm.");
+            if (!(draft is ElasticBeamProperty elastic)) throw new NotSupportedException("GpcBuildModelPropertyKind: " + draft.GetType().Name);
+            var (property, angle, native) = LegacyModelImport.SectionProperty(r, draft.Name, GPC.Model.Core.ModelValues.CopyValue(elastic.Material), Units,
+                new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport());
+            return new LegacyBeamProperty(property, data with { Angle = angle, Native = native });
+        }
+
+        /// <summary>Chain E (e3 point 5): the plate property of a draft in N-mm (the reader: the thicknesses ToMm, the material N-mm).</summary>
+        internal PlateProperty NormalisePlateProperty(PlateProperty draft)
+        {
+            if (Units.IsIdentity) return draft;
+            if (!(draft is ElasticPlateProperty e)) throw new NotSupportedException("GpcBuildModelPlatePropertyKind: " + draft.GetType().Name);
+            return new ElasticPlateProperty(e.Name, e.Material == null ? null : GPC.Model.Core.ModelValues.CopyValue(e.Material), Units.ToMm(e.BendingThickness), Units.ToMm(e.MembraneThickness), e.Formulation);
+        }
+
+        /// <summary>
+        /// Chain E (e3, P2K): node <paramref name="i"/> (0-based) of the model from a node draft at list level (definition units, normalised
+        /// here), as the former reader builds it (<c>LegacyModelImport.Node</c>): identity of the model, BridGHe ID <paramref name="name"/>,
         /// groups of the model by full name, the records (coordinate systems, restraints, stiffnesses, Element IDs, forces, moments, temperatures)
         /// with the cases of the model, then the rigid connections; resolved (<see cref="ResolveNode"/>).
         /// </summary>
         internal NodeElement PlaceNode(LegacyNodeDraft draft, int i, string name)
         {
             var d = draft.Node;
-            var node = new NodeElement(GpcIdentity.Derive(Owner, "node:" + i), new Point3d(d.Position.X, d.Position.Y, d.Position.Z), null, name, i + 1)
+            var node = new NodeElement(GpcIdentity.Derive(Owner, "node:" + i), Mm(d.Position), null, name, i + 1)
             { Source = new GPC.Model.Core.Identity.SourceIdentity(LegacyModelImport.Program, Owner.ToString("D"), GPC.Model.Core.Identity.EntityFamily.Node, name.Length != 0 ? name : (i + 1).ToString()) };
             foreach (var g in d.Groups.Values) node.AddGroup(GroupOf(g));
             foreach (var r in d.Assignments.Restrains)
-                node.Assignments.Restrains.Add(new RestrainAssignment { Restrain = new NodeRestrain(node, Copy(r.Restrain.CoordinateSystem), r.Restrain.Restrains.Select(GPC.Model.Core.ModelValues.CopyValue).ToList()), SourceRecord = r.SourceRecord });
+                node.Assignments.Restrains.Add(new RestrainAssignment { Restrain = new NodeRestrain(node, Frame(r.Restrain.CoordinateSystem),
+                    r.Restrain.Restrains.Select(x => r.SourceRecord == LegacyModelImport.StiffnessRecord ? Spring(x) : GPC.Model.Core.ModelValues.CopyValue(x)).ToList()), SourceRecord = r.SourceRecord });
             foreach (var a in d.Attributes.Values) if (a is ElementLabelAttribute label) node.Attributes.Add(new ElementLabelAttribute(Distinct(label.Label)));
             foreach (var l in d.Loads.Values.OfType<PointLoad>())
-                node.Loads.Add(new PointLoad(new Vector3d(l.F1, l.F2, l.F3), new Vector3d(l.M1, l.M2, l.M3), node.Position, CaseOf(l.LoadCase)) { Name = l.Name });
+                node.Loads.Add(new PointLoad(Scaled(l.F1, l.F2, l.F3, Units.Force), Scaled(l.M1, l.M2, l.M3, Units.Force * Units.Length), node.Position, CaseOf(l.LoadCase)) { Name = l.Name });
             foreach (var t in d.Assignments.Physical?.Temperatures ?? new List<NodalTemperatureAssignment>())
-                (node.Assignments.Physical ??= new NodePhysicalData()).Temperatures.Add(new NodalTemperatureAssignment { Case = CaseOf(t.Case), Kind = t.Kind, Celsius = t.Celsius });
-            foreach (var a in d.Attributes.Values) if (a is RigidConnectionAttribute rigid) node.Attributes.Add(new RigidConnectionAttribute(new Point3d(rigid.TargetMm.X, rigid.TargetMm.Y, rigid.TargetMm.Z)));
+                (node.Assignments.Physical ??= new NodePhysicalData()).Temperatures.Add(new NodalTemperatureAssignment { Case = CaseOf(t.Case), Kind = t.Kind, Celsius = Units.ToCelsius(t.Celsius) });
+            foreach (var a in d.Attributes.Values) if (a is RigidConnectionAttribute rigid) node.Attributes.Add(new RigidConnectionAttribute(Mm(rigid.TargetMm)));
             if (d.Attributes.Values.Any(a => !(a is ElementLabelAttribute) && !(a is RigidConnectionAttribute)) || d.Loads.Values.Any(l => !(l is PointLoad)))
                 throw new ArgumentException("LegacyNodeDraftRecordUnknown: node " + name);
             return ResolveNode(node, Report);
@@ -338,7 +412,7 @@ namespace BridGHe.Common.Gpc.Legacy
             var principal = GpcBeamAxes.Principal(start, end, draft.AngleDeg);
             beam.Assignments.Formulation = p.Formulation;
             beam.Assignments.SectionAxes = section;
-            double ox = d.Assignments.OffsetI?.X ?? 0, oy = d.Assignments.OffsetI?.Y ?? 0;
+            double ox = Units.ToMm(d.Assignments.OffsetI?.X ?? 0), oy = Units.ToMm(d.Assignments.OffsetI?.Y ?? 0);
             var globalOffset = principal.V1 * ox + principal.V2 * oy;
             if (ox != 0 || oy != 0)
             {
@@ -352,8 +426,8 @@ namespace BridGHe.Common.Gpc.Legacy
                 else if (a is BeamReleasesAttribute r)
                 {
                     var copy = new BeamReleasesAttribute { CoordinateSystem = Copy(r.CoordinateSystem), Phase = r.Phase, SourceRecord = r.SourceRecord };
-                    for (int q = 0; q < r.I.Length; q++) copy.I[q] = r.I[q];
-                    for (int q = 0; q < r.J.Length; q++) copy.J[q] = r.J[q];
+                    for (int q = 0; q < r.I.Length; q++) copy.I[q] = Release(r.I[q], q);
+                    for (int q = 0; q < r.J.Length; q++) copy.J[q] = Release(r.J[q], q);
                     beam.Attributes.Add(copy);
                 }
                 else throw new ArgumentException("LegacyBeamDraftRecordUnknown: beam " + name + ", " + a.GetType().Name);
@@ -363,10 +437,10 @@ namespace BridGHe.Common.Gpc.Legacy
             {
                 var bp = beam.Assignments.Physical = new BeamPhysicalData { MinimumOutputStations = dp.MinimumOutputStations, StringGroup = dp.StringGroup, Taper = dp.Taper == null ? null : GPC.Model.Core.ModelValues.CopyValue(dp.Taper) };
                 foreach (var s in dp.Supports)
-                    bp.Supports.Add(new BeamDistributedSupport { Stiffness = s.Stiffness, Gap = s.Gap, Behavior = s.Behavior, Direction = new Vector3d(s.Direction.X, s.Direction.Y, s.Direction.Z),
-                        Axes = new CoordinateSystem(new Point3d(0, 0, 0), section.V1, section.V2) });
-                foreach (var s in dp.InitialStates) bp.InitialStates.Add(new BeamInitialState { Case = CaseOf(s.Case), Kind = s.Kind, Value = s.Value });
-                foreach (var g in dp.TemperatureGradients) bp.TemperatureGradients.Add(new BeamTemperatureGradient { Case = CaseOf(g.Case), Axis1 = g.Axis1, Axis2 = g.Axis2 });
+                    bp.Supports.Add(new BeamDistributedSupport { Stiffness = Units.IsIdentity ? s.Stiffness : s.Stiffness * Units.Force / (Units.Length * Units.Length), Gap = Units.ToMm(s.Gap), Behavior = s.Behavior,
+                        Direction = new Vector3d(s.Direction.X, s.Direction.Y, s.Direction.Z), Axes = new CoordinateSystem(new Point3d(0, 0, 0), section.V1, section.V2) });
+                foreach (var s in dp.InitialStates) bp.InitialStates.Add(new BeamInitialState { Case = CaseOf(s.Case), Kind = s.Kind, Value = s.Kind == BeamInitialStateKind.AxialForce ? Units.ToN(s.Value) : s.Value });
+                foreach (var g in dp.TemperatureGradients) bp.TemperatureGradients.Add(new BeamTemperatureGradient { Case = CaseOf(g.Case), Axis1 = Units.ToCelsiusPerMm(g.Axis1), Axis2 = Units.ToCelsiusPerMm(g.Axis2) });
             }
             string from = LegacyBuildModel.BeamLoadRecord(d.Id, 0), to = LegacyBuildModel.BeamLoadRecord(k + 1, 0);
             from = from.Substring(0, from.Length - 1); to = to.Substring(0, to.Length - 1);
@@ -386,8 +460,8 @@ namespace BridGHe.Common.Gpc.Legacy
                     double station = a.Start;
                     var point = new Point3d(start.X + (end.X - start.X) * station, start.Y + (end.Y - start.Y) * station, start.Z + (end.Z - start.Z) * station);
                     var axes = Local(c) ? GpcBeamLoads.ComponentFrame(principal) : null;
-                    placed.Concentrated = axes == null ? new PointLoad(new Vector3d(c.F1, c.F2, c.F3), new Vector3d(c.M1, c.M2, c.M3), point, CaseOf(c.LoadCase))
-                        : new PointLoad(new Vector3d(c.F1, c.F2, c.F3), new Vector3d(c.M1, c.M2, c.M3), point, CaseOf(c.LoadCase), axes);
+                    var f = Scaled(c.F1, c.F2, c.F3, Units.Force); var m = Scaled(c.M1, c.M2, c.M3, Units.Force * Units.Length);
+                    placed.Concentrated = axes == null ? new PointLoad(f, m, point, CaseOf(c.LoadCase)) : new PointLoad(f, m, point, CaseOf(c.LoadCase), axes);
                 }
                 else
                 {
@@ -395,15 +469,20 @@ namespace BridGHe.Common.Gpc.Legacy
                     LineLoad Line(LineLoad l)
                     {
                         var axes = Local(l) ? GpcBeamLoads.ComponentFrame(principal) : null;
-                        return axes == null ? new LineLoad(new Vector3d(l.F1, l.F2, l.F3), new Vector3d(l.M1, l.M2, l.M3), line, CaseOf(l.LoadCase))
-                            : new LineLoad(new Vector3d(l.F1, l.F2, l.F3), new Vector3d(l.M1, l.M2, l.M3), line, CaseOf(l.LoadCase), axes);
+                        var f = Scaled(l.F1, l.F2, l.F3, Units.ToNPerMm(1)); var m = Scaled(l.M1, l.M2, l.M3, Units.ToNmmPerMm(1));
+                        return axes == null ? new LineLoad(f, m, line, CaseOf(l.LoadCase)) : new LineLoad(f, m, line, CaseOf(l.LoadCase), axes);
                     }
                     placed.StartIntensity = Line((LineLoad)a.StartIntensity); placed.EndIntensity = Line((LineLoad)a.EndIntensity);
                 }
                 beam.Assignments.Loads.Add(placed);
             }
             var bridge = draft.Bridge;
-            if (bridge?.Member != null) Report.Bridge.SetMember(beam.Guid, bridge.Member);
+            if (bridge?.Member != null)
+            {
+                var m = bridge.Member;
+                Report.Bridge.SetMember(beam.Guid, Units.IsIdentity ? m : new GPC.Checkers.CompositeBridge.Layout.BridgeMemberMetadata(m.PhysicalId, m.Family, m.Group, m.Segment, m.Span,
+                    Units.ToMm(m.StationFromMm), Units.ToMm(m.StationToMm), m.SectionUp, m.GeometryId));
+            }
             if (bridge?.SuperElement != null) Report.Bridge.SetSuperElement(beam.Guid, bridge.SuperElement);
             ResolveBeam(beam, draft.Records, Report);
             if (bridge?.SectionState != null)
@@ -429,7 +508,7 @@ namespace BridGHe.Common.Gpc.Legacy
             var plate = new AreaElement(GpcIdentity.Derive(Owner, "plate:" + k), null, property, null, name, k + 1)
             { Source = new GPC.Model.Core.Identity.SourceIdentity(LegacyModelImport.Program, Owner.ToString("D"), GPC.Model.Core.Identity.EntityFamily.Shell, name.Length != 0 ? name : (k + 1).ToString()) };
             plate.ConnectNodes(corners);
-            if (d.Assignments.Offset.HasValue) plate.Assignments.Offset = d.Assignments.Offset;
+            if (d.Assignments.Offset.HasValue) plate.Assignments.Offset = Units.IsIdentity ? d.Assignments.Offset : Units.ToMm(d.Assignments.Offset.Value);
             if (d.Groups.Count != 0) plate.AddGroup(GroupOf(d.Groups.Values.First()));
             foreach (var a in d.Attributes.Values)
             {
@@ -440,16 +519,23 @@ namespace BridGHe.Common.Gpc.Legacy
             if (dp != null)
             {
                 var pp = plate.Assignments.Physical = new ShellPhysicalData { LoadPatch = dp.LoadPatch == null ? null : GPC.Model.Core.ModelValues.CopyValue(dp.LoadPatch) };
-                foreach (var s in dp.Supports) pp.Supports.Add(GPC.Model.Core.ModelValues.CopyValue(s));
-                foreach (var s in dp.InitialStresses) pp.InitialStresses.Add(new ShellInitialStress { Case = CaseOf(s.Case), Components = new Vector3d(s.Components.X, s.Components.Y, s.Components.Z) });
+                foreach (var s in dp.Supports)
+                {
+                    var support = GPC.Model.Core.ModelValues.CopyValue(s);
+                    if (!Units.IsIdentity) support.Stiffness = s.Stiffness * Units.Force / (Units.Length * Units.Length * Units.Length);
+                    pp.Supports.Add(support);
+                }
+                foreach (var s in dp.InitialStresses) pp.InitialStresses.Add(new ShellInitialStress { Case = CaseOf(s.Case), Components = new Vector3d(Units.ToMPa(s.Components.X), Units.ToMPa(s.Components.Y), Units.ToMPa(s.Components.Z)) });
+                // The former reader converted a non-structural mass only in N-mm.
+                if (dp.NonStructuralMasses.Count != 0 && !Units.IsIdentity) throw new NotSupportedException("LegacyPlateNonStructuralMassUnitsRequireNmm");
                 foreach (var m in dp.NonStructuralMasses)
                     pp.NonStructuralMasses.Add(new ShellNonStructuralMass { Case = CaseOf(m.Case), MassPerArea = m.MassPerArea, DynamicFactor = m.DynamicFactor, GlobalOffset = new Vector3d(m.GlobalOffset.X, m.GlobalOffset.Y, m.GlobalOffset.Z) });
             }
             foreach (var l in d.Loads.Values)
             {
                 if (!(l is ShellFacePressure s)) throw new ArgumentException("LegacyPlateDraftRecordUnknown: plate " + name + ", " + l.GetType().Name);
-                plate.Loads.Add(s.NormalPressure.HasValue ? ShellFacePressure.Normal(CaseOf(s.LoadCase), s.Face, s.NormalPressure.Value)
-                    : ShellFacePressure.Global(CaseOf(s.LoadCase), s.Face, new Vector3d(s.GlobalPressure.X, s.GlobalPressure.Y, s.GlobalPressure.Z), s.Projection));
+                plate.Loads.Add(s.NormalPressure.HasValue ? ShellFacePressure.Normal(CaseOf(s.LoadCase), s.Face, Units.ToMPa(s.NormalPressure.Value))
+                    : ShellFacePressure.Global(CaseOf(s.LoadCase), s.Face, new Vector3d(Units.ToMPa(s.GlobalPressure.X), Units.ToMPa(s.GlobalPressure.Y), Units.ToMPa(s.GlobalPressure.Z)), s.Projection));
             }
             return ResolvePlate(plate, draft.Records, Report);
         }

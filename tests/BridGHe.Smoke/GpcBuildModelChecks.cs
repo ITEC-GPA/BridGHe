@@ -23,7 +23,54 @@ internal static class GpcBuildModelChecks
 {
     private const string Captures = @"C:\Users\g.pacini\Documents\Repository\gpc-f6-claude\P2B\results\capture-1";
 
-    internal static void Regression()
+    /// <summary>
+    /// Chain E (e3 point 5, coordinator decision 1 (b) of 5/11): the GPC input of Build Model in units other than N-mm against the conversion
+    /// of its FEM output by the legacy reader: the same report and bridge data, the same graph (every element name, attribute and non-numeric
+    /// text equal), and the maximum relative difference of the numbers per class (geometry, loads, section values: by the names of the
+    /// elements above each number). Zero everywhere: bit for bit.
+    /// </summary>
+    internal static string Measure(string label, GpcModels.Conversion attached, ModelModel fem, double tolerance, out double[] maxima)
+    {
+        void Fail(string what) => throw new Exception("GPC BUILD MODEL UNITS FAIL (" + label + "): " + what);
+        var model = attached.Model; var owner = GpcInputComparison.ElementOwner(model);
+        if (owner != model.Guid) Fail("the model GUID of Build Model is not the owner of its element identities");
+        var converted = GpcInputComparison.Conversion(fem, tolerance, owner, out var report);
+        GpcInputComparison.RequireReport(label, attached.Report, report);
+        GpcInputComparison.RequireBridge(label, model, attached.Bridge, converted, report.Bridge, false);
+        var x = System.Xml.Linq.XDocument.Parse(GpcInputComparison.Document(model)).Descendants().ToArray();
+        var y = System.Xml.Linq.XDocument.Parse(GpcInputComparison.Document(converted)).Descendants().ToArray();
+        if (x.Length != y.Length) Fail($"{x.Length} / {y.Length} elements in the documents");
+        string[] classes = { "geometry", "loads", "section values" }; maxima = new double[3]; int differing = 0;
+        static int Class(System.Xml.Linq.XElement e)
+        {
+            string path = string.Join("/", e.AncestorsAndSelf().Select(a => a.Name.LocalName));
+            if (path.Contains("Propert") || path.Contains("Section") || path.Contains("Material")) return 2;
+            if (path.Contains("Load") || path.Contains("Pressure") || path.Contains("Temperature") || path.Contains("Stress") || path.Contains("Gradient") || path.Contains("InitialState")) return 1;
+            return 0;
+        }
+        for (int i = 0; i < x.Length; i++)
+        {
+            string where = string.Join("/", x[i].AncestorsAndSelf().Reverse().Select(a => a.Name.LocalName));
+            if (x[i].Name != y[i].Name) Fail($"element {i}: {where} / {y[i].Name.LocalName}");
+            string Attributes(System.Xml.Linq.XElement e) => string.Join(" ", e.Attributes().Select(a => a.Name + "=" + a.Value));
+            if (Attributes(x[i]) != Attributes(y[i])) Fail($"attributes of {where}: '{Attributes(x[i])}' / '{Attributes(y[i])}'");
+            if (x[i].HasElements || y[i].HasElements || x[i].Value == y[i].Value) continue;
+            const System.Globalization.NumberStyles Float = System.Globalization.NumberStyles.Float;
+            if (!double.TryParse(x[i].Value, Float, System.Globalization.CultureInfo.InvariantCulture, out double p) || !double.TryParse(y[i].Value, Float, System.Globalization.CultureInfo.InvariantCulture, out double q))
+                Fail($"text of {where}: '{x[i].Value}' / '{y[i].Value}'");
+            double relative = Math.Abs(p - q) / Math.Max(Math.Abs(p), Math.Abs(q));
+            int c = Class(x[i]); maxima[c] = Math.Max(maxima[c], relative); differing++;
+            Console.WriteLine($"GPC BUILD MODEL UNITS ({label}): {classes[c]} {where} GPC {x[i].Value} / conversion {y[i].Value} (relative {relative:E2})");
+        }
+        return $"{x.Length} elements, {differing} numbers differ; maximum relative difference: geometry {maxima[0]:E2}, loads {maxima[1]:E2}, section values {maxima[2]:E2}";
+    }
+
+    /// <summary>The kN-m native section of core-native (<c>Program.CheckNativeSectionAnalysis</c>) through Build Model, measured as above.</summary>
+    internal static void Single(string label, ModelModel fem) => Run(label, fem);
+
+    internal static void Regression() => Run(null, null);
+
+    private static void Run(string singleLabel, ModelModel singleModel)
     {
         var plugin = BridgeMergeTests.Initialize();
         var settings = plugin.GetType("BridGHe.Grasshopper.Settings");
@@ -31,7 +78,7 @@ internal static class GpcBuildModelChecks
         var toleranceProperty = settings.GetProperty("Tolerance");
         // The tolerance of the plug-in (the model tolerance of the active Rhino document, 0.001 without one), the same for both paths.
         double pluginTolerance = (double)toleranceProperty.GetValue(instance);
-        int compared = 0; var totals = new List<string>();
+        int compared = 0, measured = 0; var totals = new List<string>(); var unitMaxima = new double[3];
         IGH_Goo Goo(string type, object value, Guid? guid = null)
         {
             var goo = (IGH_Goo)Activator.CreateInstance(plugin.GetType("BridGHe.Grasshopper.DataTypes.Fem." + type));
@@ -40,7 +87,8 @@ internal static class GpcBuildModelChecks
             return goo;
         }
         IGH_Goo Element(ElementModel e, Guid? guid = null) => e switch { NodeModel n => Goo("GH_Node", n, guid), BeamModel b => Goo("GH_Beam", b, guid), PlateModel p => Goo("GH_Plate", p, guid), _ => throw new NotSupportedException(e.GetType().Name) };
-        void Build(string label, IEnumerable<IGH_Goo> elements, IEnumerable<LoadCombinationModel> combinations, IEnumerable<StagedConstructionModel> stages, double unused)
+        void Build(string label, IEnumerable<IGH_Goo> elements, IEnumerable<LoadCombinationModel> combinations, IEnumerable<StagedConstructionModel> stages, double unused,
+            ModelModel.ModelUnits modelUnits = ModelModel.ModelUnits.Nmm)
         {
             double tolerance = pluginTolerance;
             using var doc = new GH_Document();
@@ -49,7 +97,7 @@ internal static class GpcBuildModelChecks
             var input = (Param_GenericObject)component.Params.Input[0];
             foreach (var e in elements) input.PersistentData.Append(e);
             var name = (Param_String)component.Params.Input[1]; name.PersistentData.Clear(); name.SetPersistentData(label);
-            var units = (Param_Integer)component.Params.Input[2]; units.PersistentData.Clear(); units.SetPersistentData(2);
+            var units = (Param_Integer)component.Params.Input[2]; units.PersistentData.Clear(); units.SetPersistentData((int)modelUnits);
             foreach (var c in combinations) ((dynamic)component.Params.Input[3]).PersistentData.Append((dynamic)Goo("GH_LoadCombination", c));
             foreach (var s in stages) ((Param_GenericObject)component.Params.Input[4]).PersistentData.Append(Goo("GH_StagedConstruction", s));
             GH_Document.EnableSolutions = true; doc.Enabled = true; doc.NewSolution(false, GH_SolutionMode.Silent);
@@ -71,6 +119,14 @@ internal static class GpcBuildModelChecks
             }
             var attached = (GpcModels.Conversion)output.GetType().GetProperty("GpcInput").GetValue(output);
             var fem = (ModelModel)output.GetType().GetProperty("Value").GetValue(output);
+            if (modelUnits != ModelModel.ModelUnits.Nmm)
+            {
+                // Decision 1 (b): measured, not required bit for bit (the N-mm models are).
+                string measure = Measure(label, attached, fem, tolerance, out var maxima);
+                for (int c = 0; c < 3; c++) unitMaxima[c] = Math.Max(unitMaxima[c], maxima[c]);
+                Console.WriteLine($"GPC BUILD MODEL UNITS PASS ({label}, {modelUnits}): {measure}; {attached.Report.BuildModel}"); measured++; compared++;
+                return;
+            }
             string result = GpcInputComparison.Require(label, attached, fem, tolerance, buildModel: true);
             totals.Add(attached.Report.BuildModel.ToString());
             compared++;
@@ -79,18 +135,40 @@ internal static class GpcBuildModelChecks
         {
             void Model(string label, ModelModel fem, double tolerance)
             {
-                if (fem.Units != ModelModel.ModelUnits.Nmm) return;
                 if (fem.Elements.Any(e => e.Results.Count != 0)) { fem = new ModelModel(fem); foreach (var e in fem.Elements) e.Results.Clear(); }
                 if (fem.MovingPaths.Count != 0) return; // moving paths come after Build Model (Attach Moving Paths)
-                Build(label, fem.Elements.Select(e => Element(e)), fem.LoadCombinations, fem.StagedConstruction, tolerance);
+                Build(label, fem.Elements.Select(e => Element(e)), fem.LoadCombinations, fem.StagedConstruction, tolerance, fem.Units);
             }
-            Model("nodes", ImportDump.NodeData(ModelModel.ModelUnits.Nmm), 1e-3);
-            Model("nodes-labelled-rigid", ImportDump.NodeData(ModelModel.ModelUnits.Nmm, true), 1e-3);
-            Model("beams", ImportDump.BeamData(ModelModel.ModelUnits.Nmm, null), 1e-3);
-            // The former copy of a load patch reads four edges (the import-dump corpus writes two): four here.
-            var plateData = ImportDump.PlateData(ModelModel.ModelUnits.Nmm);
-            foreach (var patch in plateData.Plates.SelectMany(p => p.Attributes).OfType<LoadPatchTypeAttributeModel>()) patch.Value.SelectedEdges = new[] { 1, 3, 0, 0 };
-            Model("plates", plateData, 1e-3);
+            if (singleModel != null)
+            {
+                Model(singleLabel, singleModel, 0);
+                Console.WriteLine($"GPC BUILD MODEL UNITS ({singleLabel}): maximum relative difference geometry {unitMaxima[0]:E2}, loads {unitMaxima[1]:E2}, section values {unitMaxima[2]:E2}");
+                return;
+            }
+            // e3 point 5: the node, beam and plate data in every unit system (N-mm bit for bit, the others measured).
+            foreach (ModelModel.ModelUnits u in Enum.GetValues(typeof(ModelModel.ModelUnits)))
+            {
+                string suffix = u == ModelModel.ModelUnits.Nmm ? "" : "-" + u;
+                Model("nodes" + suffix, ImportDump.NodeData(u), 1e-3);
+                Model("nodes-labelled-rigid" + suffix, ImportDump.NodeData(u, true), 1e-3);
+                Model("beams" + suffix, ImportDump.BeamData(u, null), 1e-3);
+                // The former copy of a load patch reads four edges (the import-dump corpus writes two): four here.
+                var plateData = ImportDump.PlateData(u);
+                foreach (var patch in plateData.Plates.SelectMany(p => p.Attributes).OfType<LoadPatchTypeAttributeModel>()) patch.Value.SelectedEdges = new[] { 1, 3, 0, 0 };
+                Model("plates" + suffix, plateData, 1e-3);
+            }
+            // e3 point 5: what the corpus lacks outside N-mm: a restraint frame away from the global origin (its axes unitised again by the
+            // normalisation) and an explicit section with shear-centre offsets and a principal angle (built from its definition), kN-m.
+            {
+                var fem = ImportDump.BeamData(ModelModel.ModelUnits.Knm, null);
+                var generic = new SectionModel { Name = "G", SectionType = SectionModel.SectionTypes.Generic, SectionArea = 0.012, I11 = 3.1e-4, I22 = 7.7e-5, J = 2.3e-6, Centroid = new R.Point2d(0.01, -0.02),
+                    ShearL1 = 0.013, ShearL2 = -0.007, ShearA1 = 0.005, ShearA2 = 0.004, AngleX1Rad = 0.3 };
+                fem.Beams.Last().BeamProperty = new BeamPropertyModel("PG") { Name = "PG", Material = fem.Beams.First().BeamProperty.Material, Section = generic, PropertyType = BeamPropertyType.Beam };
+                var node = fem.Nodes[2];
+                node.Attributes.Add(new NodeCoordinateAttributeModel(new R.Plane(node.Position, new R.Vector3d(1, 2, 0), new R.Vector3d(-2, 1, 0.5))));
+                node.Attributes.Add(new NodeRestraintAttributeModel(false, false, true, false, false, false));
+                Model("synthetic units", fem, 1e-3);
+            }
 
             // Synthetic merges and re-anchoring.
             var beamModel = ImportDump.BeamData(ModelModel.ModelUnits.Nmm, null);
@@ -138,7 +216,8 @@ internal static class GpcBuildModelChecks
         string x = System.Text.Encoding.UTF8.GetString(Save()), y = System.Text.Encoding.UTF8.GetString(Save());
         if (v4.Replace(x, "v4") != v4.Replace(y, "v4")) throw new Exception("GPC BUILD MODEL FAIL: BridgeModelData.Save differs beyond the GUIDs of the geometry values");
         Console.WriteLine($"GPC BUILD MODEL: BridgeModelData.Save of equal data {(x == y ? "identical" : "different only by the version 4 GUIDs of the geometry values")} ({v4.Matches(x).Count} in the archive)");
-        Console.WriteLine($"GPC BUILD MODEL PASS: {compared} Build Model runs, the GPC input equal to the conversion of the FEM output bit for bit (or the same error)");
+        Console.WriteLine($"GPC BUILD MODEL UNITS: {measured} runs in units other than N-mm, maximum relative difference geometry {unitMaxima[0]:E2}, loads {unitMaxima[1]:E2}, section values {unitMaxima[2]:E2}");
+        Console.WriteLine($"GPC BUILD MODEL PASS: {compared} Build Model runs, the GPC input equal to the conversion of the FEM output bit for bit in N-mm, measured in the other units (or the same error)");
     }
 }
 #endif

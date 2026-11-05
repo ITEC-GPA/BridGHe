@@ -116,9 +116,8 @@ namespace BridGHe.Grasshopper.Components.Models
                 }
 
                 // F6 chain E (e3, point 4): the GPC input of the model from the drafts of the GH types (Build Model on GPC, the rules of the
-                // former BuildModel and of the legacy reader), compared bit for bit with the conversion of the FEM model by the runners. Until
-                // the normalisation of point 5 only N-mm models: in other units the conversion of the FEM model stays the input (bridge).
-                if ((ModelModel.ModelUnits)units == ModelModel.ModelUnits.Nmm)
+                // former BuildModel and of the legacy reader), compared bit for bit with the conversion of the FEM model by the runners. Every
+                // unit system (e3 point 5): the drafts are in the definition units, the assembly normalises them (coordinator decision 1 of 5/11).
                 {
                     try
                     {

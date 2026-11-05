@@ -394,6 +394,11 @@ internal static class Program
         var mapped=gpc.BeamElements.Values.Single();
         Assert(report.NativeSections.TryGetValue(mapped.Guid,out var definition)&&Math.Abs(definition.ReferenceProperties[0]-b*d*1e6)<=b*d*1e6*1e-12,"legacy native section re-resolved in mm from model-unit dimensions");
         Assert(Math.Abs(((GPC.Model.ElementProperties.ElasticBeamProperty)mapped.BeamProperty).Section.Area-b*d*1e6)<=b*d*1e6*1e-12,"GPC property from the resolved native section");
+#if GPC_PILOT
+        // e3 point 5 (coordinator decision 1 (b)): the kN-m case through Build Model on GPC (drafts in the definition units, normalised by
+        // the assembly) against the conversion of its FEM output, measured.
+        GpcBuildModelChecks.Single("kN-m native section",input);
+#endif
     }
 
     private static void CheckBridge()
