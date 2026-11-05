@@ -78,8 +78,8 @@ internal static class BridgeHistoryWorkflowTests
     /// former BridGHe phases (<paramref name="fem1"/>, …) are the parity reference until the FeMM removal (same tolerance as the test).
     /// <para>D3 reads the stations of a section from the force cases of the dataset: the two shrinkage-only workflows of the FEM test get a
     /// steel action with zero forces (no stress), which gives the dataset its stations. The GPC bridge model is built from GPC data only
-    /// (direct GPC references, actions on their GPC source); the checks still take the merged FEM model of Build BridGHe Model (combinations,
-    /// beam angles, local states), as Super Element Check today, until <c>GpcBridgeChecks</c> takes the GPC bridge model only (P2F).</para></summary>
+    /// (direct GPC references, actions on their GPC source) and the checks run on it alone (<c>GpcBridgeChecks(bridge)</c>, P2F request 3:
+    /// records, beam angles and combinations from the GPC bridge model). The merged FEM model is only the parity reference of the merge.</para></summary>
     private static void Gpc(BridgeCheckAdapter checker, BridgeStressResult fem1, BridgeStressResult femActivation, BridgeStressResult femPlanar, double concreteOracle, double steelOracle)
     {
         void Near(double actual, double expected, string label) => BridgeWorkflowTests.Require(double.IsFinite(actual) && Math.Abs(actual - expected) <= 1e-8 * Math.Max(1, Math.Abs(expected)), "GPC: " + label + $": {actual:G17} != {expected:G17}");
@@ -95,7 +95,7 @@ internal static class BridgeHistoryWorkflowTests
             var merged = BridgeWorkflowBuilder.Build(new[] { fem }, phases, table, BridgeWorkflowMethod.LinearHistory, 1e-6);
             var bridge = GpcBridgeMerge.Build(new[] { gpc }, linked, table, "history " + solved++, BridgeWorkflowMethod.LinearHistory);
             GpcBridgeMerge.RequireSame(bridge, merged, "history " + solved);
-            return new GpcBridgeChecks(bridge.Bridge, merged.Model).Calculate("B0", 0, checker.SectionInput(false), 2, 0, 1)[0];
+            return new GpcBridgeChecks(bridge.Bridge).Calculate("B0", 0, checker.SectionInput(false), 2, 0, 1)[0];
         }
         BridgeActionDefinition Shrink(string key, double increment) => new() { Key = key, Behavior = BridgeActionBehavior.Shrinkage, Strain = increment, PrimaryOnly = true };
         BridgePhaseDefinition Phase(int order, BridgeSectionState state, params BridgeActionDefinition[] actions) => new() { Order = order, Name = "Step " + order, State = state, Actions = actions };

@@ -14,8 +14,9 @@ internal static class BridgeSupportReactionTests
     {
         var fem = Run(false);
 #if GPC_PILOT
-        // P2T: the same test with the analysed GPC models built in GPC on the actions (GpcSource): the merge and the reactions read the GPC
-        // rows. The FEM sources stay only because Build BridGHe Model still validates them (until the FeMM removal); parity bit for bit.
+        // P2T: the same test on the GPC path: the GPC bridge model from GPC data only and the reactions read on it alone (SignedKN on
+        // GpcBridge); the FEM path is the parity reference, bit for bit (removed with the FeMM models). In the component part the GH model
+        // still carries the merged FEM model as its value (chain E).
         var gpc = Run(true);
         Require(fem.Select(BitConverter.DoubleToInt64Bits).SequenceEqual(gpc.Select(BitConverter.DoubleToInt64Bits)), "GPC reactions equal to the FEM ones bit for bit");
 #endif
@@ -37,19 +38,31 @@ internal static class BridgeSupportReactionTests
         }
         var a = new BridgeActionDefinition { Key = "G1", Source = steel, Case = "G", Behavior = BridgeActionBehavior.Steel };
         var b = new BridgeActionDefinition { Key = "R", Source = shrink, Case = "G", Behavior = BridgeActionBehavior.Shrinkage, Strain = -200e-6 };
-#if GPC_PILOT
-        if (gpcSources)
-        {
-            a = a with { GpcSource = GpcWorkflowSources.Source("Steel", 100, 1000) };
-            b = b with { GpcSource = GpcWorkflowSources.Source("Shrinkage", 20, -200) };
-        }
-#endif
         BridgePhaseDefinition[] Phases(BridgeActionDefinition shrinkage) => new[] { new BridgePhaseDefinition { Order = 10, Name = "Steel", State = BridgeSectionState.Steel, Actions = new[] { a } },
             new BridgePhaseDefinition { Order = 20, Name = "Shrinkage", State = BridgeSectionState.Composite, Actions = new[] { shrinkage } } };
+        var table = new[] { new[] { "Combination", "G1", "R" }, new[] { "ALL", "1.5", "2" }, new[] { "G", "1", "0" } };
         var phases = Phases(b);
-        var built = BridgeWorkflowBuilder.Build(new[] { steel, shrink }, phases,
-            new[] { new[] { "Combination", "G1", "R" }, new[] { "ALL", "1.5", "2" }, new[] { "G", "1", "0" } }, BridgeWorkflowMethod.Compatible, 1e-6).Model;
-        double Read(string combo = "ALL", Vector3d? up = null, BridgePhaseDefinition[] definitions = null) => BridgeSupportReactions.SignedKN(built, definitions ?? phases, Point3d.Origin, combo, up ?? Vector3d.ZAxis, 1e-6);
+        // The merged FEM model: the FEM path (removed with the FeMM models) and, on the GPC path, only the carrier of the GH model of the
+        // component part (GH_Model is still a FEM datum: chain E).
+        var built = BridgeWorkflowBuilder.Build(new[] { steel, shrink }, phases, table, BridgeWorkflowMethod.Compatible, 1e-6).Model;
+#if GPC_PILOT
+        // P2T, GPC path: the GPC bridge model of Build BridGHe Model from GPC data only (direct references and actions on their GPC source,
+        // built in GPC with the same reactions) and the reactions read on it alone (SignedKN on GpcBridge, P2F request 3).
+        BridGHe.Common.Gpc.GpcBridge bridge = null;
+        if (gpcSources)
+        {
+            var pSteel = GpcWorkflowSources.Pair("Steel", 100, 1000); var pShrink = GpcWorkflowSources.Pair("Shrinkage", 20, -200);
+            a = new BridgeActionDefinition { Key = "G1", GpcSource = pSteel.Analysed, Case = "G", Behavior = BridgeActionBehavior.Steel };
+            b = new BridgeActionDefinition { Key = "R", GpcSource = pShrink.Analysed, Case = "G", Behavior = BridgeActionBehavior.Shrinkage, Strain = -200e-6 };
+            phases = Phases(b);
+            bridge = GpcBridgeMerge.Build(new[] { pSteel, pShrink }, phases, table, "support reactions").Bridge;
+        }
+#endif
+        double Read(string combo = "ALL", Vector3d? up = null, BridgePhaseDefinition[] definitions = null) =>
+#if GPC_PILOT
+            bridge != null ? BridgeSupportReactions.SignedKN(bridge, definitions ?? phases, Point3d.Origin, combo, up ?? Vector3d.ZAxis, 1e-6) :
+#endif
+            BridgeSupportReactions.SignedKN(built, definitions ?? phases, Point3d.Origin, combo, up ?? Vector3d.ZAxis, 1e-6);
         var read = new[] { Read(), Read(up: -Vector3d.ZAxis), Read("G"), Read("G", -Vector3d.ZAxis) };
         Require(Math.Abs(Read() - 1.1) < 1e-12, "Combination applied twice, incorrect sign or N/kN conversion");
         Require(Math.Abs(Read(up: -Vector3d.ZAxis) + 1.1) < 1e-12, "Uplift must retain its sign");
@@ -76,8 +89,8 @@ internal static class BridgeSupportReactionTests
         }
 #endif
 
-        // The component part: the phases go in as persistent data, whose copies (BridgeWorkflowGoo.Duplicate, an archive round trip) drop
-        // the GPC source ([IgnoreDataMember]); here the component reads the FEM sources on both paths.
+        // The component part. On the GPC path the GH model carries the GPC bridge model (AttachBridge, as Build BridGHe Model) and the phases
+        // their GPC sources (kept by BridgeWorkflowGoo.Duplicate since P2F 5/11): the component reads the reactions on the GPC bridge model.
         var plugin = BridgeMergeTests.Initialize(); using var doc = new GH_Document();
         var c = (GH_Component)Activator.CreateInstance(plugin.GetTypes().Single(t => t.Name == "BridgeDetailStationsComponent"));
         c.CreateAttributes(); doc.AddObject(c, false);
@@ -87,7 +100,11 @@ internal static class BridgeSupportReactionTests
             if (type == "Fem.GH_Model") { var g = (IGH_Goo)Activator.CreateInstance(t); t.GetProperty("Value").SetValue(g, value); return g; }
             return (IGH_Goo)Activator.CreateInstance(t, value);
         }
-        ((Param_GenericObject)c.Params.Input[0]).PersistentData.Append(Wrap("Fem.GH_Model", built));
+        var modelGoo = Wrap("Fem.GH_Model", built);
+#if GPC_PILOT
+        if (bridge != null) modelGoo.GetType().GetMethod("AttachBridge").Invoke(modelGoo, new object[] { bridge });
+#endif
+        ((Param_GenericObject)c.Params.Input[0]).PersistentData.Append(modelGoo);
         var fixture = BridgeCheckSummaryTests.SampleResult();
         var input = (Param_GenericObject)c.Params.Input[1];
         foreach (double station in new[] { 0d, 5000, 10000 })
