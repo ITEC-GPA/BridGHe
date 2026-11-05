@@ -39,7 +39,7 @@ internal static class GpcBridgeComparison
         try
         {
             foreach (var e in merged.Elements) e.Results.Clear();
-            gpc = LegacyModelImport.Import(LegacyArchive.Read(BridGHe.Common.Helpers.ModelArchive.Write(merged)), owner, tolerance, new LegacyImportReport());
+            gpc = LegacyModelImport.Import(LegacyArchive.Read(BridGHe.Common.Helpers.ModelArchive.Write(merged)), owner, tolerance, new LegacyImportReport(), GpcModels.SectionStateSignatures(merged));
         }
         finally { for (int i = 0; i < results.Length; i++) { var list = merged.Elements[i].Results; list.Clear(); foreach (var r in results[i]) list.Add(r); } }
         // The bridge model has its own model identity and the element identities of the reference (L11 copy under a new identity).
@@ -200,6 +200,53 @@ internal static class GpcBridgeComparison
         return $"{bridge.Model.BeamElements.Count} beams, {bridge.Model.LoadCases.Count} cases, {bridge.Model.Combinations.Count} combinations, {fem.Samples.Sum(s => s.Count)} merged samples ({values} numbers), {results} stored results, parts equal, {xml}, recipe {bridge.Workflow.Phases.Sum(p => p.Actions.Length)} actions";
     }
 
+    /// <summary>Native (99, 50), finding 1 of P2T: every action with a FEM case that reaches a component (Build BridGHe Model, Bridge Detail
+    /// Stations, ...) on a wire, alone or in a phase, carries its analysed GPC source and the GPC model of its source (the same model): no
+    /// consumer falls back to the FEM results silently.</summary>
+    internal static void RequireGpcLinks(GH_Document doc, string label)
+    {
+        int actions = 0, components = 0;
+        foreach (var c in doc.Objects.OfType<GH_Component>())
+        {
+            bool any = false;
+            foreach (var p in c.Params.Input)
+                foreach (var goo in p.VolatileData.AllData(true).Where(g => g?.GetType().Name == "BridgeWorkflowGoo"))
+                {
+                    var value = goo.ScriptVariable();
+                    var list = value is BridgePhaseDefinition phase ? phase.Actions : value is BridgeActionDefinition a ? new[] { a } : Array.Empty<BridgeActionDefinition>();
+                    foreach (var action in list.Where(x => !string.IsNullOrWhiteSpace(x.Case)))
+                    {
+                        if (action.GpcSource == null || action.GpcModel == null || !ReferenceEquals(action.GpcSource, action.GpcModel))
+                            throw new Exception($"GPC BRIDGE FAIL ({label}): {c.Name} '{c.NickName}', input {p.Name}: action {action.Key} without its GPC source/model");
+                        actions++; any = true;
+                    }
+                }
+            if (any) components++;
+        }
+        if (actions == 0) throw new Exception($"GPC BRIDGE FAIL ({label}): no action with a FEM case on the wires");
+        Console.WriteLine($"GPC LINKS PASS ({label}): {actions} actions with a FEM case on the inputs of {components} components, all with their GPC source and model.");
+    }
+
+    /// <summary>Regression, finding 1 of P2T: a duplicated action or phase (GH copy) keeps the GPC links of its actions by reference.</summary>
+    private static void DuplicateKeepsGpcLinks(BridgeActionDefinition action, BridgePhaseDefinition phase)
+    {
+        var plugin = BridgeMergeTests.Initialize();
+        var type = plugin.GetTypes().Single(t => t.Name == "BridgeWorkflowGoo");
+        foreach (var value in new object[] { action, phase })
+        {
+            var goo = (IGH_Goo)Activator.CreateInstance(type, new[] { value });
+            var copy = goo.Duplicate().ScriptVariable();
+            var pairs = value is BridgePhaseDefinition p ? p.Actions.Zip(((BridgePhaseDefinition)copy).Actions) : new[] { ((BridgeActionDefinition)value, (BridgeActionDefinition)copy) };
+            foreach (var (s, d) in pairs)
+            {
+                if (ReferenceEquals(s, d) || ReferenceEquals(s.Source, d.Source) && s.Source != null) throw new Exception("GPC BRIDGE FAIL (duplicate): the copy is not a copy");
+                if (!ReferenceEquals(s.GpcSource, d.GpcSource) || !ReferenceEquals(s.GpcModel, d.GpcModel) || d.GpcSource == null && s.Key == action.Key)
+                    throw new Exception($"GPC BRIDGE FAIL (duplicate): the copy of {s.Key} lost its GPC source or model");
+            }
+        }
+        Console.WriteLine("GPC BRIDGE (duplicate): a duplicated action and phase keep the GPC source and model of their actions.");
+    }
+
     /// <summary>Native (99, 50): the GPC bridge model attached by Build BridGHe Model, rebuilt from the inputs of the component on GPC and
     /// compared bit for bit with the former seam on the FEM merge (see the class); the attached one has the same fingerprints.</summary>
     internal static void RequireComponent(GH_Component merge, string label)
@@ -214,8 +261,21 @@ internal static class GpcBridgeComparison
         var method = (BridgeWorkflowMethod)((GH_Integer)merge.Params.Input[3].VolatileData.AllData(true).Single()).Value;
         bool additional = merge.Params.Input[4].VolatileData.AllData(true).Cast<GH_Boolean>().SingleOrDefault()?.Value ?? false;
         double tolerance = global::Rhino.RhinoDoc.ActiveDoc?.ModelAbsoluteTolerance ?? 0.001; // Settings.Tolerance of the plug-in
+        // L11: the local section states of every action read from the GPC section-state attributes equal the former FEM reading.
+        int withStates = 0, excludedBeams = 0;
+        foreach (var phase in phases)
+            foreach (var a in phase.Actions)
+            {
+                string femError = null, gpcError = null; (bool Has, string[] Excluded) f = default, g = default;
+                try { f = BridgeWorkflowBuilder.LocalSectionStates(phase, a); } catch (ArgumentException e) { femError = e.Message; }
+                try { g = GpcBridgeBuilder.LocalSectionStates(phase, a); } catch (ArgumentException e) { gpcError = e.Message; }
+                if (femError != gpcError || f.Has != g.Has || !(f.Excluded ?? Array.Empty<string>()).SequenceEqual(g.Excluded ?? Array.Empty<string>(), StringComparer.Ordinal))
+                    throw new Exception($"GPC BRIDGE FAIL ({label}): local section states of {a.Key}: FEM {f.Has}/{f.Excluded?.Length} '{femError}', GPC {g.Has}/{g.Excluded?.Length} '{gpcError}'");
+                if (g.Has) { withStates++; excludedBeams += g.Excluded.Length; }
+            }
+        Console.WriteLine($"GPC BRIDGE ({label}): local section states from the GPC attributes equal to the FEM reading: {withStates} actions with states, {excludedBeams} concrete-excluded beams.");
         var started = DateTime.UtcNow;
-        var gpc = GpcBridgeBuilder.Build(references, phases, table, method, tolerance, additional, GpcIdentity.Derive(merge.InstanceGuid, "bridge-model"), BridgeWorkflowBuilder.LocalSectionStates);
+        var gpc = GpcBridgeBuilder.Build(references, phases, table, method, tolerance, additional, GpcIdentity.Derive(merge.InstanceGuid, "bridge-model"));
         double seconds = (DateTime.UtcNow - started).TotalSeconds;
         var fem = BridgeWorkflowBuilder.Build(models, phases, table, method, tolerance, additional);
         string summary = Require(label, gpc, fem, tolerance);
@@ -238,14 +298,14 @@ internal static class GpcBridgeComparison
         void Compare(string label, ModelModel[] models, Func<ModelModel, GPC.Model.Models.Model> analysed, BridgePhaseDefinition[] phases, string[][] table)
         {
             var sources = models.Select(m => (Fem: m, Gpc: analysed(m))).ToArray();
-            BridgeActionDefinition Link(BridgeActionDefinition a) => a.Source == null ? a : a with { GpcSource = sources.First(s => ReferenceEquals(s.Fem, a.Source)).Gpc };
+            BridgeActionDefinition Link(BridgeActionDefinition a) => a.Source == null ? a : a with { GpcSource = sources.First(s => ReferenceEquals(s.Fem, a.Source)).Gpc, GpcModel = sources.First(s => ReferenceEquals(s.Fem, a.Source)).Gpc };
             var linked = phases.Select(p => p with { Actions = p.Actions.Select(Link).ToArray() }).ToArray();
             string femError = null, gpcError = null; BridgeWorkflowBuildResult fem = null; GpcBridgeBuild gpc = null;
             try { fem = BridgeWorkflowBuilder.Build(models, linked, table, BridgeWorkflowMethod.Compatible, tolerance); } catch (ArgumentException e) { femError = e.Message; }
             try
             {
                 var references = sources.Select(s => GpcBridgeSource.Reference(GpcModels.Convert(s.Fem, tolerance), s.Gpc)).ToArray();
-                gpc = GpcBridgeBuilder.Build(references, linked, table, BridgeWorkflowMethod.Compatible, tolerance, false, GpcIdentity.Derive(GpcIdentity.NameSpace, "test-bridge:" + label), BridgeWorkflowBuilder.LocalSectionStates);
+                gpc = GpcBridgeBuilder.Build(references, linked, table, BridgeWorkflowMethod.Compatible, tolerance, false, GpcIdentity.Derive(GpcIdentity.NameSpace, "test-bridge:" + label));
             }
             catch (ArgumentException e) { gpcError = e.Message; }
             if (femError != null || gpcError != null)
@@ -292,6 +352,34 @@ internal static class GpcBridgeComparison
             // The same FEM increment on overlapping beams: the same error on both paths.
             Compare("reused increment", new[] { steel, shrink, traffic }, f => GpcSyntheticResults.Analysed(f, tolerance), new[] { p1, p2, p3 with { Actions = new[] { q with { Case = "G", Source = steel, Behavior = BridgeActionBehavior.ShortTerm, BeamIds = Array.Empty<string>() } } } },
                 new[] { new[] { "", "G1", "RITIRO", "Q1" }, new[] { "SLS", "1", "1", "1" } });
+            // L11: local section states (Bridge State Override) on the beams of the traffic source, read from the GPC section-state attributes:
+            // current states (one cracked, one uncracked), a stale state (property changed after the assignment), a state of another behaviour,
+            // a state on a shrinkage source; the same records (HasLocalSectionStates, concrete-excluded beams) or the same error.
+            ModelModel WithStates(Func<BeamModel, int, BridgeSectionAssignment> state)
+            {
+                var m = new ModelModel(traffic);
+                for (int k = 0; k < m.Beams.Count; k++) { var s = state(m.Beams[k], k); if (s != null) m.Beams[k].Attributes.Add(new BridgeSectionStateAttributeModel(s)); }
+                return m;
+            }
+            var all = q with { BeamIds = Array.Empty<string>() };
+            foreach (var (variant, states, action) in new (string, ModelModel, BridgeActionDefinition)[]
+            {
+                ("states", WithStates((b, k) => new BridgeSectionAssignment(BridgeActionBehavior.ShortTerm, k % 2 == 1, 6.2 + k, "G", BridgeSectionAssignment.Signature(b.BeamProperty))), all),
+                ("states selection", WithStates((b, k) => new BridgeSectionAssignment(BridgeActionBehavior.ShortTerm, true, 6.2, null, BridgeSectionAssignment.Signature(b.BeamProperty))), q),
+                ("stale state", WithStates((b, k) => k == 1 ? new BridgeSectionAssignment(BridgeActionBehavior.ShortTerm, true, 6.2, "G", "changed") : null), all),
+                ("state of another behaviour", WithStates((b, k) => k == 0 ? new BridgeSectionAssignment(BridgeActionBehavior.LongTerm, false, 18, "G", BridgeSectionAssignment.Signature(b.BeamProperty)) : null), all),
+            })
+            {
+                var linkedAction = action with { Source = states };
+                Compare("local " + variant, new[] { steel, shrink, states }, f => GpcSyntheticResults.Analysed(f, tolerance), new[] { p1, p2, p3 with { Actions = new[] { linkedAction } } },
+                    new[] { new[] { "", "G1", "RITIRO", "Q1" }, new[] { "SLS", "1", "1", "1" } });
+            }
+            var shrinkStates = WithStates((b, k) => new BridgeSectionAssignment(BridgeActionBehavior.ShortTerm, false, 6.2, "G", BridgeSectionAssignment.Signature(b.BeamProperty)));
+            Compare("local state on shrinkage", new[] { steel, shrinkStates }, f => GpcSyntheticResults.Analysed(f, tolerance), new[] { p1, p2 with { Actions = new[] { r with { Source = shrinkStates } } } },
+                new[] { new[] { "", "G1", "RITIRO" }, new[] { "SLS", "1", "0.7" } });
+            var analysedTraffic = GpcSyntheticResults.Analysed(traffic, tolerance);
+            var linkedQ = q with { GpcSource = analysedTraffic, GpcModel = analysedTraffic };
+            DuplicateKeepsGpcLinks(linkedQ, p3 with { Actions = new[] { linkedQ, r } });
         }
         {
             var m = NativeExamples.Create().Single(e => e.Id == "02-simply-supported").Model;

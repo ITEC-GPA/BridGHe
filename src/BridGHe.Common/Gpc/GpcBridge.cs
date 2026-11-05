@@ -83,8 +83,18 @@ namespace BridGHe.Common.Gpc
         public static GpcBridgeSource Reference(GpcModels.Conversion input, Model analysed)
         {
             if (input == null) throw new ArgumentNullException(nameof(input));
-            var angles = input.Report.BeamAngles;
-            return new GpcBridgeSource(input.Model, input.Report.Units,
+            return Reference(input.Model, input.Report.Units, input.Report.BeamAngles, analysed);
+        }
+
+        /// <summary>A reference model given directly as GPC (finding 3 of P2T; chain E: the input model of a GH model on GPC): the input model
+        /// (N-mm, without datasets), its definition units, the BridGHe angle (degrees) of every beam by its number and, when it was analysed,
+        /// the analysed GPC model of the same datum (same numbering).</summary>
+        public static GpcBridgeSource Reference(Model input, BridgeUnits units, IReadOnlyDictionary<int, double> beamAngles, Model analysed)
+        {
+            if (input == null) throw new ArgumentNullException(nameof(input));
+            if (beamAngles == null) throw new ArgumentNullException(nameof(beamAngles));
+            var angles = new Dictionary<int, double>(beamAngles);
+            return new GpcBridgeSource(input, units,
                 b => angles.TryGetValue(b.Id, out var a) ? a : throw new KeyNotFoundException("GpcBridgeBeamAngleMissing: " + b.Id), analysed);
         }
 
@@ -110,16 +120,14 @@ namespace BridGHe.Common.Gpc
     /// records, combinations, summary and warnings are those of <see cref="BridgeWorkflowBuilder"/> (same messages).
     /// <para>Identity: the bridge model has its own model GUID (<c>modelIdentity</c>, from the component), the copy keeps the element identities
     /// of the reference input model (the same physical elements: D3 and the excluded-concrete beams refer to them); cases and combinations by name.</para>
-    /// <para>Local section states (Bridge State Override) come from <paramref name="localSectionStates"/> of <see cref="Build"/>: the FEM
-    /// source beams until the GPC section-state attribute of lane L11.</para>
+    /// <para>Local section states (Bridge State Override): the GPC section-state attributes of the beams of the GPC model of every action
+    /// (<see cref="LocalSectionStates"/>, L11), with the rules and messages of the former FEM reading.</para>
     /// </summary>
     public static class GpcBridgeBuilder
     {
         public static GpcBridgeBuild Build(IReadOnlyList<GpcBridgeSource> references, IEnumerable<BridgePhaseDefinition> definitions, IReadOnlyList<string[]> combinations,
-            BridgeWorkflowMethod method, double tolerance, bool allowAdditionalMembers, Guid modelIdentity,
-            Func<BridgePhaseDefinition, BridgeActionDefinition, (bool HasLocalSectionStates, string[] ConcreteExcludedBeamIds)> localSectionStates)
+            BridgeWorkflowMethod method, double tolerance, bool allowAdditionalMembers, Guid modelIdentity)
         {
-            if (localSectionStates == null) throw new ArgumentNullException(nameof(localSectionStates));
             var (phases, actions) = BridgeWorkflowBuilder.Validate(definitions, method, tolerance);
             var sources = new List<GpcBridgeSource>(references ?? Array.Empty<GpcBridgeSource>());
             if (sources.Any(m => m == null)) throw new ArgumentException("Null reference model.");
@@ -149,7 +157,7 @@ namespace BridGHe.Common.Gpc
                 }
             foreach (var (phase, action) in actions)
             {
-                var record = BridgeWorkflowBuilder.Record(phase, action, action.GpcSource?.Name ?? action.Source?.Name, localSectionStates(phase, action));
+                var record = BridgeWorkflowBuilder.Record(phase, action, action.GpcSource?.Name ?? action.Source?.Name, LocalSectionStates(phase, action));
                 records.Add(action.Key, record);
                 if (record.ForceCase != null)
                 {
@@ -215,6 +223,25 @@ namespace BridGHe.Common.Gpc
 
         /// <summary>The beams of a model in their numbering.</summary>
         private static BeamElement[] Beams(Model model) => model.BeamElements.Values.OrderBy(b => b.Id).ToArray();
+
+        /// <summary>The per-beam local section states of an action (Bridge State Override): the GPC section-state attributes of the beams of the
+        /// GPC model of its source (<see cref="BridgeActionDefinition.GpcModel"/>; the beams of the action, in their numbering), whether any is
+        /// assigned and the beams whose concrete is excluded. The rules and messages of the former FEM reading
+        /// (<see cref="BridgeWorkflowBuilder.LocalSectionStates"/>): one state per beam, the behaviour of the action in a composite phase, and
+        /// the fingerprint of the beam property the state was computed for (a stale state is refused).</summary>
+        public static (bool HasLocalSectionStates, string[] ConcreteExcludedBeamIds) LocalSectionStates(BridgePhaseDefinition phase, BridgeActionDefinition action)
+        {
+            if (action.Source != null && action.GpcModel == null) throw new ArgumentException($"Action {action.Key}: its source has no GPC model; recalculate the analysis.");
+            var assigned = (action.GpcModel == null ? Array.Empty<BeamElement>() : Beams(action.GpcModel))
+                .Where(b => action.BeamIds.Length == 0 || action.BeamIds.Contains(b.Name, StringComparer.Ordinal))
+                .SelectMany(b => b.Attributes.Values.OfType<GPC.Model.Structure.Bridges.BridgeSectionStateAttribute>().Select(a => (BeamId: b.Name, State: a, Beam: b))).ToArray();
+            if (assigned.Select(a => a.BeamId).Distinct(StringComparer.Ordinal).Count() != assigned.Length ||
+                assigned.Any(a => (BridgeActionBehavior)(int)a.State.Behavior != action.Behavior || phase.State != BridgeSectionState.Composite))
+                throw new ArgumentException($"Action {action.Key}: local FEM section state does not match the mechanical phase. Do not reuse it for shrinkage.");
+            if (assigned.Any(a => a.State.PropertyFingerprint != D3.BridgeWorkflowDefinition.PropertyFingerprint(a.Beam)))
+                throw new ArgumentException($"Action {action.Key}: FEM properties changed after the local section-state assignment. Reapply Bridge State Override and recalculate.");
+            return (assigned.Length > 0, assigned.Where(a => a.State.ConcreteExcluded).Select(a => a.BeamId).ToArray());
+        }
 
         /// <summary>The beams of every model aligned to those of the first by BridGHe ID (GPC name), with the same end points, BridGHe angle and
         /// offsets (as the former FEM alignment, same messages; distances in the definition units).</summary>

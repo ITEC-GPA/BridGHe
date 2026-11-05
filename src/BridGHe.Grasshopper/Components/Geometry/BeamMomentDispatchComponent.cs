@@ -31,7 +31,9 @@ public sealed class BeamMomentDispatchComponent : BridgeUtilityComponent
     {
         var beams=new List<GH_Beam>(); string lc=""; double tol=1000; int component=1,sign=1;
         if(!da.GetDataList(0,beams)||!da.GetData(1,ref lc)||!da.GetData(2,ref tol)||!da.GetData(3,ref component)||!da.GetData(4,ref sign))return;
-        var states=BeamMomentClassification.Classify(beams.Select(b=>b?.Value).ToArray(),lc,tol,component,sign);
+        // F6 (a)/(b): the beams of an analysed model (Decompose Model) carry their analysed GPC beam: classified from its GPC results.
+        var analysed=beams.Select(b=>b?.AnalysedGpc is GPC.Model.Elements.BeamElement e&&Common.Gpc.GpcResultCatalog.Of(b.AnalysedGpcModel) is Common.Gpc.GpcResultCatalog c?(c,b.AnalysedGpcModel,e):((Common.Gpc.GpcResultCatalog,GPC.Model.Models.Model,GPC.Model.Elements.BeamElement))default).ToArray();
+        var states=BeamMomentClassification.Classify(beams.Select(b=>b?.Value).ToArray(),analysed,lc,tol,component,sign);
         for(int k=0;k<5;k++) da.SetDataList(k,beams.Where((b,i)=>(int)states[i].Sign==k));
         da.SetDataList(5,states);da.SetDataList(6,states.Select(s=>s.ToString()).Prepend("Sampled sign only. Request adequate result stations/extrema; this does not determine code cracking zones or split the mesh."));
         if(states.Any(s=>s.Sign==BeamMomentSign.Missing))AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Some beams have no results for this case. Recalculate the reference model including the selected case.");

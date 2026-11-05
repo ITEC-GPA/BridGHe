@@ -69,7 +69,7 @@ public sealed class BridgeActionComponent : GH_Component
         try
         {
             if (string.IsNullOrWhiteSpace(key) || model?.Value == null || behavior < 0 || behavior > 2) throw new ArgumentException("Supply an action ID, an analysed model and a behavior from 0 to 2.");
-            da.SetData(0, new BridgeWorkflowGoo(new BridgeActionDefinition { Key = key, Source = model.Value, GpcSource = model.GpcResults, Case = WorkflowInputs.Case(lc), Behavior = (BridgeActionBehavior)behavior, BeamIds = ids.ToArray() }));
+            da.SetData(0, new BridgeWorkflowGoo(new BridgeActionDefinition { Key = key, Source = model.Value, GpcSource = model.GpcResults, GpcModel = model.Gpc, Case = WorkflowInputs.Case(lc), Behavior = (BridgeActionBehavior)behavior, BeamIds = ids.ToArray() }));
             Message = key;
         }
         catch (ArgumentException e) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message); }
@@ -108,7 +108,7 @@ public sealed class BridgeShrinkageActionComponent : GH_Component
             if (!primary && (model?.Value == null || lc == null)) throw new ArgumentException("Connect secondary FEM results, or explicitly enable Primary Only.");
             if (primary && lc != null) throw new ArgumentException("Primary Only cannot contain a FEM case.");
             if (primary) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Only section autostresses: global restraint effects are excluded.");
-            da.SetData(0, new BridgeWorkflowGoo(new BridgeActionDefinition { Key = key, Source = model?.Value, GpcSource = model?.GpcResults, Case = lc == null ? null : WorkflowInputs.Case(lc),
+            da.SetData(0, new BridgeWorkflowGoo(new BridgeActionDefinition { Key = key, Source = model?.Value, GpcSource = model?.GpcResults, GpcModel = model?.Gpc, Case = lc == null ? null : WorkflowInputs.Case(lc),
                 Behavior = response == 0 ? BridgeActionBehavior.Shrinkage : BridgeActionBehavior.ShortTerm, Strain = strain, BeamIds = ids.ToArray(), PrimaryOnly = primary }));
             Message = key;
         }

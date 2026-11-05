@@ -28,7 +28,7 @@ internal static class GpcInputComparison
     {
         if (fem.Elements.Any(e => e.Results.Count != 0)) { fem = new ModelModel(fem); foreach (var e in fem.Elements) e.Results.Clear(); }
         report = new LegacyImportReport();
-        return LegacyModelImport.Import(LegacyArchive.Read(BridGHe.Common.Helpers.ModelArchive.Write(fem)), owner, tolerance, report);
+        return LegacyModelImport.Import(LegacyArchive.Read(BridGHe.Common.Helpers.ModelArchive.Write(fem)), owner, tolerance, report, GpcModels.SectionStateSignatures(fem));
     }
 
     /// <summary>The report of a transformed input against the report of the conversion of the FEM output: what the analysis and the next

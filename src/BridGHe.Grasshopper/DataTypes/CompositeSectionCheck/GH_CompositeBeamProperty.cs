@@ -31,6 +31,21 @@ namespace BridGHe.Grasshopper.DataTypes
 
         public override string TypeDescription => "Define a beam property";
 
+        /// <summary>F6 (L11): the GPC contract of this composite property (<see cref="GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition"/>,
+        /// the section of the checks with the rules of Super Element Check, <see cref="Common.Gpc.GpcCompositeSections"/>): the datum this type
+        /// carries once the FEM value goes (chain E); meanwhile built from the FEM value, once per value.</summary>
+        public GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition Definition
+        {
+            get
+            {
+                if (Value == null) return null;
+                if (!ReferenceEquals(_definitionOf, Value)) { _definition = Common.Gpc.GpcCompositeSections.Definition(Value, Value.Name); _definitionOf = Value; }
+                return _definition;
+            }
+        }
+        private GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition _definition;
+        private CompositeBeamPropertyModel _definitionOf;
+
         #endregion
 
         public override IGH_Goo Duplicate()

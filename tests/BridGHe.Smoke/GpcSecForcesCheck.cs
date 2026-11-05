@@ -57,6 +57,38 @@ internal static class GpcSecForcesCheck
         if (branches != output.PathCount) Fail($"{output.PathCount} output branches, {branches} stations from the FEM results");
         Console.WriteLine($"GPC SEC FORCES PASS ({label} {check.NickName}): {beams.Length} beams, {branches} stations, forces from the GPC bridge samples equal to the former FEM output ({values} values).");
     }
+    /// <summary>Beam Moment Dispatch (chain B): with the beams of an analysed model (their analysed GPC beam) the "States" output, classified from
+    /// the GPC results, equals bit for bit the classification of the same beams from their FEM results (sign, extrema, case); every beam must
+    /// be on the GPC path.</summary>
+    internal static void RequireMomentDispatch(GH_Document doc, string label)
+    {
+        int components = 0, beamsCompared = 0;
+        foreach (var c in doc.Objects.OfType<GH_Component>().Where(o => o.GetType().Name == "BeamMomentDispatchComponent"))
+        {
+            void Fail(string what) => throw new Exception("GPC MOMENT DISPATCH FAIL (" + label + " " + c.NickName + "): " + what);
+            var goos = c.Params.Input[0].VolatileData.AllData(true).ToArray();
+            if (goos.Length == 0) continue;
+            if (goos.Any(g => !(g.GetType().GetProperty("AnalysedGpc").GetValue(g) is GPC.Model.Elements.BeamElement))) Fail("beams without their analysed GPC beam");
+            var fem = goos.Select(g => (BeamModel)((IGH_Goo)g).ScriptVariable()).ToArray();
+            string lc = c.Params.Input[1].VolatileData.AllData(true).Cast<Grasshopper.Kernel.Types.GH_String>().Single().Value;
+            double tol = c.Params.Input[2].VolatileData.AllData(true).Cast<Grasshopper.Kernel.Types.GH_Number>().Single().Value;
+            int component = c.Params.Input[3].VolatileData.AllData(true).Cast<GH_Integer>().Single().Value, sign = c.Params.Input[4].VolatileData.AllData(true).Cast<GH_Integer>().Single().Value;
+            var expected = BridGHe.Common.Geometry.BeamMomentClassification.Classify(fem, lc, tol, component, sign);
+            var actual = c.Params.Output[5].VolatileData.AllData(true).Select(g => (BridGHe.Common.Geometry.BeamMomentState)((IGH_Goo)g).ScriptVariable()).ToArray();
+            if (actual.Length != expected.Length) Fail($"{actual.Length} states, {expected.Length} expected");
+            for (int i = 0; i < actual.Length; i++)
+            {
+                var a = actual[i]; var e = expected[i];
+                if (!ReferenceEquals(a.Source, e.Source) || a.Sign != e.Sign || a.Case != e.Case || BitConverter.DoubleToInt64Bits(a.Minimum) != BitConverter.DoubleToInt64Bits(e.Minimum)
+                    || BitConverter.DoubleToInt64Bits(a.Maximum) != BitConverter.DoubleToInt64Bits(e.Maximum))
+                    Fail($"beam {e.Source.BeamId}: GPC {a} / FEM {e}");
+            }
+            components++; beamsCompared += actual.Length;
+        }
+        if (components == 0) throw new Exception("GPC MOMENT DISPATCH FAIL (" + label + "): no Beam Moment Dispatch with analysed beams");
+        Console.WriteLine($"GPC MOMENT DISPATCH PASS ({label}): {components} components, {beamsCompared} beams classified from the GPC results equal to the FEM classification.");
+    }
+
     /// <summary>R8, Bridge Girder Results: with composite beams linked to the GPC bridge model the "Stations" output (from the merged samples)
     /// equals bit for bit the one recomputed from the FEM results of the beams (the former logic); every component must be on the GPC path.</summary>
     internal static void RequireGirders(GH_Document doc, string label)

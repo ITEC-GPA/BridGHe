@@ -42,7 +42,7 @@ namespace BridGHe.Common.Gpc.Legacy
         private static GPC.Model.Models.Model Import(ModelModel model, string outputPath, double tolerance, LegacyImportReport report, List<string> warnings)
         {
             var owner = GpcIdentity.Derive(GpcIdentity.NameSpace, "analysis:" + Path.GetFullPath(outputPath).ToUpperInvariant());
-            var gpc = LegacyModelImport.Import(LegacyArchive.Read(ModelArchive.Write(model)), owner, tolerance, report);
+            var gpc = LegacyModelImport.Import(LegacyArchive.Read(ModelArchive.Write(model)), owner, tolerance, report, GpcModels.SectionStateSignatures(model));
             warnings.AddRange(report.Warnings);
             return gpc;
         }

@@ -141,6 +141,10 @@ namespace BridGHe.Common.Gpc
                     if (signature == null || signature != entry.Data.Signature) { warnings.Add(string.Format(LegacyImportReport.ExistingPropertyWarning, key)); shadowed.Add(beam.Id); }
                 }
                 if (ReferenceEquals(beam.BeamProperty, entry.Property)) continue;
+                // A local section state names the property it was computed for: whether the former one stays current depends on the former
+                // signature of the new property, which a GPC property does not have (Bridge State Override is applied after Phase Model).
+                if (beam.Attributes.Values.OfType<GPC.Model.Structure.Bridges.BridgeSectionStateAttribute>().Any())
+                    throw new NotSupportedException("PhaseModelOnBeamWithSectionState: " + beam.Name);
                 beam.BeamProperty = entry.Property;
                 beam.Assignments.Formulation = entry.Data.Formulation;
                 var axes = GpcBeamAxes.Section(beam.StartPoint, beam.EndPoint, source.BeamAngles[beam.Id], entry.Data.Angle);

@@ -18,6 +18,10 @@ public sealed record BridgeActionDefinition
     /// model), from which Build BridGHe Model merges the action; null for a source analysed before F6 C3 (the FEM results are merged).
     /// Not persisted: the Bridge Action components set it again from their analysed model.</summary>
     [IgnoreDataMember] public GPC.Model.Models.Model GpcSource { get; init; }
+    /// <summary>F6 (L11): the GPC model of <see cref="Source"/> (the analysed one when it was analysed, else its conversion), whose beams
+    /// carry the local section states (<see cref="GPC.Model.Structure.Bridges.BridgeSectionStateAttribute"/>) Build BridGHe Model reads.
+    /// Not persisted, as <see cref="GpcSource"/>.</summary>
+    [IgnoreDataMember] public GPC.Model.Models.Model GpcModel { get; init; }
     [DataMember] public string Case { get; init; }
     [DataMember] public BridgeActionBehavior Behavior { get; init; }
     /// <summary>Concrete eigenstrain increment [dimensionless], contraction negative. Null means absent, zero is an explicit value.</summary>

@@ -47,7 +47,16 @@ namespace BridGHe.Common.Gpc
             var owner = GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-model:" + System.Convert.ToHexString(SHA256.HashData(archive)) + ":"
                 + toleranceDefinitionUnits.ToString("R", CultureInfo.InvariantCulture));
             report = new LegacyImportReport();
-            return LegacyModelImport.Import(LegacyArchive.Read(archive), owner, toleranceDefinitionUnits, report);
+            return LegacyModelImport.Import(LegacyArchive.Read(archive), owner, toleranceDefinitionUnits, report, SectionStateSignatures(model));
+        }
+
+        /// <summary>F6 (L11): the former section-state signature of the property of every former beam (by index), for the legacy reader to
+        /// tell a current local section state from a stale one (the former checks compared them).</summary>
+        public static Func<int, string> SectionStateSignatures(ModelModel model)
+        {
+            if (model == null) throw new ArgumentNullException(nameof(model));
+            var beams = model.Beams.ToArray();
+            return k => BridgeSectionAssignment.Signature(beams[k].BeamProperty);
         }
 
         /// <summary>F6 chain D: a former beam property (the datum of a Beam Property parameter) as GPC, with the rules of the conversion of a

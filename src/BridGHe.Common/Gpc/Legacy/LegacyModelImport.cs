@@ -87,7 +87,10 @@ namespace BridGHe.Common.Gpc.Legacy
     {
         public const string Program = "BridGHe";
 
-        public static Model Import(LegacyValue legacy, Guid owner, double toleranceDefinitionUnits, LegacyImportReport report)
+        /// <param name="femPropertySignature">F6 (L11): the former section-state signature (<c>BridgeSectionAssignment.Signature</c>) of the
+        /// property of the former beam k (0-based), when the former model is at hand (<see cref="GpcModels"/>); a section state whose
+        /// signature differs is stale (the property changed after Bridge State Override). Null: every state is taken as current.</param>
+        public static Model Import(LegacyValue legacy, Guid owner, double toleranceDefinitionUnits, LegacyImportReport report, Func<int, string> femPropertySignature = null)
         {
             if (legacy == null || !legacy.Is("ModelModel")) throw new ArgumentException("LegacyModelModelExpected");
             report ??= new LegacyImportReport();
@@ -187,6 +190,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 BeamData(b, beam, principal, globalOffset, cases, units, report, members);
                 // The former result reader asked Straus7 for at least 5 stations per beam unless the beam had an output-stations attribute.
                 (beam.Assignments.Physical ??= new BeamPhysicalData()).MinimumOutputStations ??= 5;
+                SectionState(b, k, beam, femPropertySignature, report);
                 model.BeamElements.Add(beam);
             }
 
@@ -447,7 +451,7 @@ namespace BridGHe.Common.Gpc.Legacy
                     case "ElementIdAttributeModel": Label(beam, a, report); break;
                     case "SuperElementAttributeModel": members.SuperElement(a.String("Value"), beam); break;
                     case "BridgeMemberAttributeModel": members.Member(a.Field("BridgeMetadata"), beam, units); break;
-                    case "BridgeSectionStateAttributeModel": report.Carry("Bridge section state (checks input, not exported)"); break;
+                    case "BridgeSectionStateAttributeModel": break; // after the beam is complete (SectionState)
                     case "BeamOutputStationsModel":
                         (beam.Assignments.Physical ??= new BeamPhysicalData()).MinimumOutputStations = a.Int("MinimumNumberOfStations"); break;
                     case "BeamReleasesAttributeModel":
@@ -614,6 +618,31 @@ namespace BridGHe.Common.Gpc.Legacy
         }
 
         private enum PatchKinds { Auto1, Auto2, Auto3, Auto4, AngleSplit, Manual }
+
+        /// <summary>The fingerprint of a section state the former property no longer matches (stale: never equal to a property fingerprint).</summary>
+        public const string StaleSectionStatePrefix = "BridGHe stale section state: ";
+
+        /// <summary>F6 (L11): the former local section state of a beam (Bridge State Override, a checks input) as the descriptive GPC
+        /// <see cref="GPC.Model.Structure.Bridges.BridgeSectionStateAttribute"/> (skipped by the Straus7 writer, outside the analysis fingerprint):
+        /// behaviour, concrete excluded, modular ratio, classification case (empty: none) and the fingerprint of the GPC property of the beam
+        /// (<see cref="GPC.Checkers.CompositeBridge.BridgeWorkflowDefinition.PropertyFingerprint"/>, the one D3 uses) when the former state was
+        /// current for its property, else a stale marker (the checks refuse it, as the former ones refused the stale signature). Only the first
+        /// state of a beam is kept (Bridge State Override writes one).</summary>
+        private static void SectionState(LegacyValue b, int k, BeamElement beam, Func<int, string> femPropertySignature, LegacyImportReport report)
+        {
+            var states = b.Field("Attributes").Items.Where(a => a.Is("BridgeSectionStateAttributeModel")).ToArray();
+            if (states.Length == 0) return;
+            if (states.Length > 1) report.Warnings.Add($"Beam {beam.Name}: only the first bridge section state is kept");
+            var s = states[0].Field("SectionAssignment");
+            if (!Enum.TryParse<GPC.Model.Structure.Bridges.BridgeSectionBehavior>(s.Enum("Behavior"), false, out var behavior))
+                throw new ArgumentException("LegacyBridgeSectionStateBehavior: " + s.Enum("Behavior"));
+            string signature = s.String("PropertySignature") ?? "";
+            bool current = femPropertySignature == null || femPropertySignature(k) == signature;
+            string classification = s.String("ClassificationCase");
+            beam.Attributes.Add(new GPC.Model.Structure.Bridges.BridgeSectionStateAttribute(behavior, s.Bool("ConcreteExcluded"), s.Double("ModularRatio"),
+                string.IsNullOrEmpty(classification) ? null : classification,
+                current ? GPC.Checkers.CompositeBridge.BridgeWorkflowDefinition.PropertyFingerprint(beam) : StaleSectionStatePrefix + signature));
+        }
 
         /// <summary>Former releases: per end and kind, a released DOF with zero partial value is released, with a value it is a partial
         /// (absolute) stiffness; the others stay continuous. Beam principal axes, as St7SetBeamTRelease3/RRelease3.</summary>

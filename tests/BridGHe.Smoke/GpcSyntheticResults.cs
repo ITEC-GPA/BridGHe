@@ -23,7 +23,7 @@ internal static class GpcSyntheticResults
         byte[] archive = ModelArchive.Write(fem);
         var owner = GpcIdentity.Derive(GpcIdentity.NameSpace, "synthetic:" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(archive)));
         var legacy = LegacyArchive.Read(archive);
-        var gpc = LegacyModelImport.Import(legacy, owner, tolerance, new LegacyImportReport());
+        var gpc = LegacyModelImport.Import(legacy, owner, tolerance, new LegacyImportReport(), BridGHe.Common.Gpc.GpcModels.SectionStateSignatures(fem));
         var outcome = LegacyResultsReader.Import(gpc, legacy, owner, Dataset);
         if (outcome.Report.Status != GPC.Converter.ImportStatus.Completed)
             throw new InvalidOperationException("Synthetic results not imported: " + outcome.Report.Status + " " + string.Join("; ", outcome.Report.Diagnostics.Select(d => d.Code + " " + d.Message)));

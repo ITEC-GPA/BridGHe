@@ -139,6 +139,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                         (double[] StrainInfiniteTime, double[] StrainIstantTime)[beams.Count][];
 
                     BridgeCheckAdapter[][] sectionCheckers = new BridgeCheckAdapter[beams.Count][];
+                    var definitions = new GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition[beams.Count][];
+                    var analysisOptions = new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard = GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState = GPC.Checkers.CompositeBridge.BridgeLimitState.Rare, WebBuckling = webFlangeInstab, TopFlangeBuckling = topFlangeInstab, BottomFlangeBuckling = bottomFlangeInstab };
                     (double psiInfinite, double psiInstant, double psiShrinkage)[][] psis = new (double psiInfinite, double psiInstant, double psiShrinkage)[beams.Count][];
 
                     // F6 C5: with the GPC bridge model of Build Bridge Model the sections are checked by the GPC workflow executor (D3, one prepared plan
@@ -165,69 +167,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     {
                         GH_CompositeBeam beam = beams[i];
 
-                        bool constantSection = false;
-
-                        double start_bfw = beam.Value.StartBeamProperty.SteelSection.B1;       // bottom flange width
-                        double start_tfw = beam.Value.StartBeamProperty.SteelSection.B2;       // top flange width
-                        double start_h = beam.Value.StartBeamProperty.SteelSection.D;          // heigth
-                        double start_bft = beam.Value.StartBeamProperty.SteelSection.T1;       // Bottom flange thickness
-                        double start_tft = beam.Value.StartBeamProperty.SteelSection.T2;        // Top flange thickness
-                        double start_wt = beam.Value.StartBeamProperty.SteelSection.T3;        // Web thickness
-
-                        double start_hh = beam.Value.StartBeamProperty.ConcreteSection.Height;      // heigth
-                        double start_b = beam.Value.StartBeamProperty.ConcreteSection.Width;       // base
-                        double start_topRebarsAreaTot = beam.Value.StartBeamProperty.ConcreteSection.TopRebarArea;
-                        double start_topRebarsCover = beam.Value.StartBeamProperty.ConcreteSection.TopCover;
-                        double start_bottomRebarsAreaTot = beam.Value.StartBeamProperty.ConcreteSection.BottomRebarArea;
-                        double start_bottomRebarsCover = beam.Value.StartBeamProperty.ConcreteSection.BottomCover;
-
-                        double start_verticalOffset = beam.Value.StartBeamProperty.VerticalOffset;
-                        double start_NInst = beam.Value.StartBeamProperty.NInstant;
-                        double start_NInf = beam.Value.StartBeamProperty.NInfinite;
-                        bool start_considerConcrete = beam.Value.StartBeamProperty.ConsiderConcrete;
-                        bool start_considerRebar = beam.Value.StartBeamProperty.ConsiderRebar;
-
-                        MaterialModel start_concreteModel = beam.Value.StartBeamProperty.ConcreteMaterial;
-                        MaterialModel start_steelModel = beam.Value.StartBeamProperty.SteelMaterial;
-                        MaterialModel start_rebarModel = beam.Value.StartBeamProperty.RebarMaterial;
-
-                        double end_bfw = beam.Value.EndBeamProperty.SteelSection.B1;       // bottom flange width
-                        double end_tfw = beam.Value.EndBeamProperty.SteelSection.B2;       // top flange width
-                        double end_h = beam.Value.EndBeamProperty.SteelSection.D;          // heigth
-                        double end_bft = beam.Value.EndBeamProperty.SteelSection.T1;       // Bottom flange thickness
-                        double end_tft = beam.Value.EndBeamProperty.SteelSection.T2;        // Top flange thickness
-                        double end_wt = beam.Value.EndBeamProperty.SteelSection.T3;        // Web thickness
-
-                        double end_hh = beam.Value.EndBeamProperty.ConcreteSection.Height;      // heigth
-                        double end_b = beam.Value.EndBeamProperty.ConcreteSection.Width;       // base
-                        double end_topRebarsAreaTot = beam.Value.EndBeamProperty.ConcreteSection.TopRebarArea;
-                        double end_topRebarsCover = beam.Value.EndBeamProperty.ConcreteSection.TopCover;
-                        double end_bottomRebarsAreaTot = beam.Value.EndBeamProperty.ConcreteSection.BottomRebarArea;
-                        double end_bottomRebarsCover = beam.Value.EndBeamProperty.ConcreteSection.BottomCover;
-
-                        double end_verticalOffset = beam.Value.EndBeamProperty.VerticalOffset;
-                        double end_NInst = beam.Value.EndBeamProperty.NInstant;
-                        double end_NInf = beam.Value.EndBeamProperty.NInfinite;
-                        bool end_considerConcrete = beam.Value.EndBeamProperty.ConsiderConcrete;
-                        bool end_considerRebar = beam.Value.EndBeamProperty.ConsiderRebar;
-
-                        MaterialModel end_concreteModel = beam.Value.EndBeamProperty.ConcreteMaterial;
-                        MaterialModel end_steelModel = beam.Value.EndBeamProperty.SteelMaterial;
-                        MaterialModel end_rebarModel = beam.Value.EndBeamProperty.RebarMaterial;
-
-                        double homogenizedFactorInfinite = beam.Value.StartBeamProperty.NInfinite;
-                        double homogenizedFactorInstant = beam.Value.StartBeamProperty.NInstant;
-
-                        if (start_bfw == end_bfw && start_tfw == end_tfw && start_h == end_h && start_bft == end_bft && start_tft == end_tft && start_wt == end_wt)
-                        {
-                            if (start_hh == end_hh && start_b == end_b && start_topRebarsAreaTot == end_topRebarsAreaTot && start_topRebarsCover == end_topRebarsCover &&
-                    start_bottomRebarsAreaTot == end_bottomRebarsAreaTot && start_bottomRebarsCover == end_bottomRebarsCover &&
-                                start_verticalOffset == end_verticalOffset && start_NInst == end_NInst && start_NInf == end_NInf && beam.Value.StartBeamProperty.NShrinkage == beam.Value.EndBeamProperty.NShrinkage)
-                            {
-                                if (start_concreteModel == end_concreteModel && start_steelModel == end_steelModel && start_rebarModel == end_rebarModel)
-                                    constantSection = true;
-                            }
-                        }
+                        bool constantSection = Common.Gpc.GpcCompositeSections.IsConstant(beam.Value.StartBeamProperty, beam.Value.EndBeamProperty);
 
                         var samples = GpcSamples(beam);
                         var normStationsSet = (samples != null ? samples.Select(s => Math.Clamp(s.Sample.Station / beam.Value.Length, 0, 1))
@@ -239,113 +179,29 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
 
                         psis[i] = new (double psiInfinite, double psiInstant, double psiShrinkage)[stations.Count];
                         sectionCheckers[i] = new BridgeCheckAdapter[stations.Count];
-
-                        if (constantSection)
+                        definitions[i] = new GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition[stations.Count];
+                        // F6 (L11): the section of the checks as the GPC contract of the Checker (BridgeCompositeSectionDefinition, built with the
+                        // rules of this component by GpcCompositeSections); the D3 path takes the input of the H bridge engine from it
+                        // (SectionInput), BridGHe's phases (fallback) an adapter on the same section.
+                        try
                         {
-                            try
-                            {
-                                SectionH sectionH = new SectionH(start_h, start_wt, start_tfw, start_tft, start_bfw, start_bft, beam.Value.BeamId);
-
-                                ConcreteMaterialEN1992 concreteMaterialEN1992 = new ConcreteMaterialEN1992(start_concreteModel.Name, start_concreteModel.SpecificCompressiveStrength,
-                                    ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle);
-                                SteelMaterialEN1992 steelMaterialEN1992 = new SteelMaterialEN1992(start_steelModel.Name, start_steelModel.Modulus, start_steelModel.MinimumYieldStress, start_steelModel.MinimumTensileStress,
-                                    0.1, SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic, SteelMaterial.SteelTypes.Structural);
-                                SteelMaterialEN1992 rebarMaterial = new SteelMaterialEN1992(start_rebarModel.Name, start_rebarModel.Modulus, start_rebarModel.MinimumYieldStress, start_rebarModel.MinimumTensileStress,
-                                    0.1, SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic, SteelMaterial.SteelTypes.Rebar);
-
-                                int numberRebars = 3;
-                                double rebarAreaTop = start_topRebarsAreaTot / numberRebars;
-                                double rebarDiameterTop = Math.Sqrt(rebarAreaTop * 4 / Math.PI);
-
-                                RebarSectionCircular rebarTop = rebarDiameterTop != 0 ? new RebarSectionCircular("", rebarDiameterTop, rebarMaterial) : null;
-                                double rebarDiameterBottom = Math.Sqrt(start_bottomRebarsAreaTot / numberRebars * 4 / Math.PI);
-                                RebarSectionCircular rebarBottom = rebarDiameterBottom != 0 ? new RebarSectionCircular("", rebarDiameterBottom, rebarMaterial) : null;
-
-
-                                double phiInfinite = CalculateHomogenizedFactorPhi(homogenizedFactorInfinite, steelMaterialEN1992, concreteMaterialEN1992);
-                                double phiInstant = CalculateHomogenizedFactorPhi(homogenizedFactorInstant, steelMaterialEN1992, concreteMaterialEN1992);
-
-                                ReinforcedConcreteSection reinforcedConcreteSection = BridGHe.Common.Checks.CompositeSectionFactory.Create(start_b, start_hh, concreteMaterialEN1992, rebarTop, start_b / numberRebars,
-                                    start_topRebarsCover, rebarBottom, start_b / numberRebars, sectionH, steelMaterialEN1992, start_bottomRebarsCover, start_verticalOffset, beam.Value.StartBeamProperty.Name);
-
-                                CoordinateSystem cs = GetCoordinateSystem(reinforcedConcreteSection);
-
-                                GPC.Checkers.CompositeBridge.BridgeAnalysisOptions options = new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare,  WebBuckling = webFlangeInstab, TopFlangeBuckling = topFlangeInstab, BottomFlangeBuckling = bottomFlangeInstab };
-
-                                for (int k = 0; k < stations.Count; k++)
-                                {
-                                    psis[i][k] = (phiInfinite, phiInstant, CalculateHomogenizedFactorPhi(beam.Value.StartBeamProperty.NShrinkage, steelMaterialEN1992, concreteMaterialEN1992));
-                                    sectionCheckers[i][k] = new BridgeCheckAdapter(reinforcedConcreteSection, cs, options);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                throw new InvalidOperationException($"Sezione del superelemento {beam.Value.BeamId}: {ex.Message}", ex);
-                            }
-                        }
-                        else
-                        {
+                            var constant = constantSection ? Common.Gpc.GpcCompositeSections.Definition(beam.Value.StartBeamProperty, beam.Value.BeamId) : null;
                             for (int k = 0; k < stations.Count; k++)
                             {
-                                double currentStation = stations[k];
-                                double width = Interpolation.GetLinearInterpolation(0, 1, start_b, end_b, currentStation);
-                                double slabHeight = Interpolation.GetLinearInterpolation(0, 1, start_hh, end_hh, currentStation);
-                                double cover = Interpolation.GetLinearInterpolation(0, 1, start_topRebarsCover, end_topRebarsCover, currentStation);
-                                double offset = Interpolation.GetLinearInterpolation(0, 1, start_verticalOffset, end_verticalOffset, currentStation);
-                                double nInfinite = Interpolation.GetLinearInterpolation(0, 1, beam.Value.StartBeamProperty.NInfinite, beam.Value.EndBeamProperty.NInfinite, currentStation);
-                                double nInstant = Interpolation.GetLinearInterpolation(0, 1, beam.Value.StartBeamProperty.NInstant, beam.Value.EndBeamProperty.NInstant, currentStation);
-                                double h = Interpolation.GetLinearInterpolation(0, 1.0, start_h, end_h, currentStation);
-                                double wt = Interpolation.GetLinearInterpolation(0, 1.0, start_wt, end_wt, currentStation);
-                                double tfw = Interpolation.GetLinearInterpolation(0, 1.0, start_tfw, end_tfw, currentStation);
-                                double tft = Interpolation.GetLinearInterpolation(0, 1.0, start_tft, end_tft, currentStation);
-                                double bfw = Interpolation.GetLinearInterpolation(0, 1.0, start_bfw, end_bfw, currentStation);
-                                double bft = Interpolation.GetLinearInterpolation(0, 1.0, start_bft, end_bft, currentStation);
-
-                                SectionH sectionH = new SectionH(h, wt, tfw, tft, bfw, bft, beam.Value.BeamId);
-
-                                double fck = Interpolation.GetLinearInterpolation(0, 1.0, start_concreteModel.SpecificCompressiveStrength, end_concreteModel.SpecificCompressiveStrength, currentStation);
-                                double mysS = Interpolation.GetLinearInterpolation(0, 1.0, start_steelModel.MinimumYieldStress, end_steelModel.MinimumYieldStress, currentStation);
-                                double mtsS = Interpolation.GetLinearInterpolation(0, 1.0, start_steelModel.MinimumTensileStress, end_steelModel.MinimumTensileStress, currentStation);
-                                double eS = Interpolation.GetLinearInterpolation(0, 1.0, start_steelModel.Modulus, end_steelModel.Modulus, currentStation);
-                                double mysR = Interpolation.GetLinearInterpolation(0, 1.0, start_rebarModel.MinimumYieldStress, end_rebarModel.MinimumYieldStress, currentStation);
-                                double mtsR = Interpolation.GetLinearInterpolation(0, 1.0, start_rebarModel.MinimumTensileStress, end_rebarModel.MinimumTensileStress, currentStation);
-                                double eR = Interpolation.GetLinearInterpolation(0, 1.0, start_rebarModel.Modulus, end_rebarModel.Modulus, currentStation);
-
-                                ConcreteMaterialEN1992 concreteMaterialEN1992 = new ConcreteMaterialEN1992(start_concreteModel.Name, fck,
-                                    ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle);
-                                SteelMaterialEN1992 steelMaterialEN1992 = new SteelMaterialEN1992(start_steelModel.Name, eS, mysS, mtsS,
-                                    0.1, SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic, SteelMaterial.SteelTypes.Structural);
-                                SteelMaterialEN1992 rebarMaterial = new SteelMaterialEN1992(start_rebarModel.Name, eR, mysR, mtsR,
-                                    0.1, SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic, SteelMaterial.SteelTypes.Rebar);
-
-                                double rebarsArea = Interpolation.GetLinearInterpolation(0, 1.0, start_topRebarsAreaTot, end_topRebarsAreaTot, currentStation);
-
-                                int numberRebars = 3;
-                                double rebarArea = rebarsArea / numberRebars;
-                                double rebarDiameter = Math.Sqrt(rebarArea * 4 / Math.PI);
-
-                                RebarSectionCircular rebarTop = rebarDiameter != 0 ? new RebarSectionCircular("", rebarDiameter, rebarMaterial) : null;
-                                double bottomArea = Interpolation.GetLinearInterpolation(0, 1, start_bottomRebarsAreaTot, end_bottomRebarsAreaTot, currentStation);
-                                double bottomCover = Interpolation.GetLinearInterpolation(0, 1, start_bottomRebarsCover, end_bottomRebarsCover, currentStation);
-                                double rebarDiameterBottom = Math.Sqrt(bottomArea / numberRebars * 4 / Math.PI);
-                                RebarSectionCircular rebarBottom = rebarDiameterBottom != 0 ? new RebarSectionCircular("", rebarDiameterBottom, rebarMaterial) : null;
-
-
-                                double phiInfinite = CalculateHomogenizedFactorPhi(nInfinite, steelMaterialEN1992, concreteMaterialEN1992);
-                                double phiInstant = CalculateHomogenizedFactorPhi(nInstant, steelMaterialEN1992, concreteMaterialEN1992);
-
-                                ReinforcedConcreteSection reinforcedConcreteSection = BridGHe.Common.Checks.CompositeSectionFactory.Create(width, slabHeight, concreteMaterialEN1992, rebarTop, width / numberRebars,
-                                    cover, rebarBottom, width / numberRebars, sectionH, steelMaterialEN1992, bottomCover, offset, beam.Value.StartBeamProperty.Name);
-
-                                CoordinateSystem cs = GetCoordinateSystem(reinforcedConcreteSection);
-
-                                GPC.Checkers.CompositeBridge.BridgeAnalysisOptions options = new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare,  WebBuckling = webFlangeInstab, TopFlangeBuckling = topFlangeInstab, BottomFlangeBuckling = bottomFlangeInstab };
-
-                                double nShrinkage = Interpolation.GetLinearInterpolation(0, 1, beam.Value.StartBeamProperty.NShrinkage, beam.Value.EndBeamProperty.NShrinkage, currentStation);
-                                psis[i][k] = (phiInfinite, phiInstant, CalculateHomogenizedFactorPhi(nShrinkage, steelMaterialEN1992, concreteMaterialEN1992));
-                                sectionCheckers[i][k] = new BridgeCheckAdapter(reinforcedConcreteSection, cs, options);
+                                var definition = constant ?? Common.Gpc.GpcCompositeSections.Definition(beam.Value.StartBeamProperty, beam.Value.EndBeamProperty, stations[k], beam.Value.BeamId);
+                                var section = definition.Section;
+                                var steel = section.SteelSections[0].Section.SteelMaterial; var concrete = section.ConcreteMaterial;
+                                psis[i][k] = (CalculateHomogenizedFactorPhi(definition.NLongTerm, steel, concrete), CalculateHomogenizedFactorPhi(definition.NShortTerm, steel, concrete),
+                                    CalculateHomogenizedFactorPhi(definition.NShrinkage, steel, concrete));
+                                definitions[i][k] = definition;
+                                sectionCheckers[i][k] = new BridgeCheckAdapter(section, GetCoordinateSystem(section), analysisOptions);
                             }
                         }
+                        catch (Exception ex) when (constantSection)
+                        {
+                            throw new InvalidOperationException($"Sezione del superelemento {beam.Value.BeamId}: {ex.Message}", ex);
+                        }
+
                     }
 
                     for (int i = 0; i < beams.Count; i++)
@@ -450,7 +306,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                             (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage) force = forces[i][j];
                             if (d3 != null)
                             {
-                                stressAnalysisResults[i][j] = d3.Calculate(beam.BeamId, workflowStations[i][j], checker[j].SectionInput(beam.StartBeamProperty.ConsiderRebar),
+                                stressAnalysisResults[i][j] = d3.Calculate(beam.BeamId, workflowStations[i][j], definitions[i][j].SectionInput(beam.StartBeamProperty.ConsiderRebar, analysisOptions),
                                     psiInfinite, psiInstant, psis[i][j].psiShrinkage);
                                 tauBResults[i][j] = Enumerable.Repeat(double.NaN, model.Value.LoadCombinations.Count).ToArray();
                                 return;
