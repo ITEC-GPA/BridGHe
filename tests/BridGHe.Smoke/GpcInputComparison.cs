@@ -71,10 +71,15 @@ internal static class GpcInputComparison
         return document.ToString();
     }
 
+    /// <summary>The owner of the element identities of a converted (or copied) model: the model revision of its element sources.</summary>
+    internal static Guid ElementOwner(Model m) => Guid.Parse(m.AllElements.First().Source.ModelRevision);
+
     internal static string Require(string label, GpcModels.Conversion attached, ModelModel fem, double tolerance)
     {
         void Fail(string what) => throw new Exception("GPC INPUT FAIL (" + label + "): " + what);
-        var model = attached.Model; var expected = Conversion(fem, tolerance, model.Guid);
+        var model = attached.Model; var owner = ElementOwner(model);
+        if (owner == model.Guid) Fail("the transformed model has the model GUID of its source");
+        var expected = GPC.Model.Core.ModelValues.Copy(Conversion(fem, tolerance, owner), GPC.Model.Core.ModelCopyOptions.None, model.Guid);
         var parts = GpcBridgeComparison.PartsDiffer(model, expected);
         if (model.AnalysisFingerprint() != expected.AnalysisFingerprint()) Fail("analysis fingerprint differs: " + string.Join("; ", parts.Take(12)));
         if (parts.Count != 0) Fail("parts differ: " + string.Join("; ", parts.Take(12)) + (parts.Count > 12 ? $"; ... {parts.Count} in all" : ""));
@@ -128,7 +133,7 @@ internal static class GpcInputComparison
             {
                 string label = example.Id + " " + variant; string femError = null, gpcError = null; ModelModel output = null; GpcModels.Conversion gpc = null;
                 try { output = MovingModelBuilder.ReplacePaths(fem, paths); } catch (Exception e) when (e is ArgumentException || e is InvalidOperationException) { femError = e.Message; }
-                try { gpc = GpcModelTransforms.ReplacePaths(GpcModels.Convert(fem, tolerance), paths); } catch (Exception e) when (e is ArgumentException || e is InvalidOperationException) { gpcError = e.Message; }
+                try { gpc = GpcModelTransforms.ReplacePaths(GpcModels.Convert(fem, tolerance), paths, GpcIdentity.Derive(GpcIdentity.NameSpace, "test-paths:" + label)); } catch (Exception e) when (e is ArgumentException || e is InvalidOperationException) { gpcError = e.Message; }
                 if (femError != null || gpcError != null)
                 {
                     if (femError != gpcError) throw new Exception($"GPC INPUT FAIL ({label}): FEM error '{femError}', GPC error '{gpcError}'");

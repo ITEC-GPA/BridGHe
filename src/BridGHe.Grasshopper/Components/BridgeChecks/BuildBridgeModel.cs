@@ -60,7 +60,7 @@ public class BuildBridgeModel : GH_Component
             {
                 var references = models.Select(m => Common.Gpc.GpcBridgeSource.Reference(m.GpcInput, m.GpcResults)).ToArray();
                 output.AttachBridge(Common.Gpc.GpcBridgeBuilder.Build(references, definitions, table, (BridgeWorkflowMethod)method, Settings.Instance.Tolerance, additional,
-                    BridgeWorkflowBuilder.LocalSectionStates).Bridge);
+                    Common.Gpc.GpcIdentity.Derive(InstanceGuid, "bridge-model"), BridgeWorkflowBuilder.LocalSectionStates).Bridge);
             }
             catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is InvalidOperationException || e is KeyNotFoundException || e is System.Runtime.Serialization.SerializationException)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Modello di ponte GPC non costruito (" + e.Message + "): le verifiche usano il percorso FEM."); }

@@ -32,7 +32,7 @@ using D3 = GPC.Checkers.CompositeBridge;
 internal static class GpcBridgeComparison
 {
     /// <summary>TESTS ONLY: the former seam on the merged FEM model, with an explicit identity.</summary>
-    internal static (Model Model, D3.BridgeWorkflowDefinition Workflow) Legacy(ModelModel merged, double tolerance, IReadOnlyList<(string Case, BeamForceSample Sample)>[] samples, Guid owner)
+    internal static (Model Model, D3.BridgeWorkflowDefinition Workflow) Legacy(ModelModel merged, double tolerance, IReadOnlyList<(string Case, BeamForceSample Sample)>[] samples, Guid owner, Guid modelIdentity)
     {
         var results = merged.Elements.Select(e => e.Results.ToList()).ToArray();
         Model gpc;
@@ -42,6 +42,8 @@ internal static class GpcBridgeComparison
             gpc = LegacyModelImport.Import(LegacyArchive.Read(BridGHe.Common.Helpers.ModelArchive.Write(merged)), owner, tolerance, new LegacyImportReport());
         }
         finally { for (int i = 0; i < results.Length; i++) { var list = merged.Elements[i].Results; list.Clear(); foreach (var r in results[i]) list.Add(r); } }
+        // The bridge model has its own model identity and the element identities of the reference (L11 copy under a new identity).
+        gpc = GPC.Model.Core.ModelValues.Copy(gpc, GPC.Model.Core.ModelCopyOptions.None, modelIdentity);
         foreach (var phase in merged.BridgeWorkflow.Phases)
             foreach (var a in phase.Actions)
                 gpc.PreservedSourceData.Add(new PreservedAssignment
@@ -56,12 +58,13 @@ internal static class GpcBridgeComparison
 
     private static void LegacyResults(ModelModel merged, Model gpc, IReadOnlyList<(string Case, BeamForceSample Sample)>[] samples)
     {
-        string revision = gpc.Guid.ToString("D");
+        // The element sources of the bridge model are those of the reference input (its element identities); the bridge has its own GUID.
+        string revision = gpc.BeamElements.Values.First().Source.ModelRevision;
         var source = new AnalysisSource { Program = LegacyModelImport.Program, SolverVersion = "BridGHe phase merge (Build Bridge Model)", ModelRevision = revision, AnalysisId = GpcBridge.DatasetName };
         gpc.AnalysisSource = source;
         var batch = new ResultImportBatch
         {
-            Source = source, DatasetId = GpcBridge.DatasetName, SourceHash = "bridge-merge/" + revision, ExpectedInputFingerprint = ModelRevisions.AnalysisFingerprint(gpc),
+            Source = source, DatasetId = GpcBridge.DatasetName, SourceHash = "bridge-merge/" + gpc.Guid.ToString("D"), ExpectedInputFingerprint = ModelRevisions.AnalysisFingerprint(gpc),
             Units = new ResultUnits(1, 1, 1), ShellDenominatorLengthToMm = 1,
             ResolvedConvention = "Merged BridGHe beam actions: former principal frame, SF1 = -V1, SF2 = -V2, BM1 = M2, BM2 = -M1.",
             ReaderVersion = "BridGHe.Common.FemmBridgeSeam/1", Semantics = AnalysisSemantics.LinearStatic, IsSynthetic = false,
@@ -149,7 +152,9 @@ internal static class GpcBridgeComparison
         }
         if (!gpc.Summary.SequenceEqual(fem.Summary)) Fail("summary: GPC [" + string.Join(" / ", gpc.Summary) + "] FEM [" + string.Join(" / ", fem.Summary) + "]");
         if (!gpc.Warnings.SequenceEqual(fem.Warnings)) Fail("warnings: GPC [" + string.Join(" / ", gpc.Warnings) + "] FEM [" + string.Join(" / ", fem.Warnings) + "]");
-        var (model, workflow) = Legacy(fem.Model, tolerance, fem.Samples, bridge.Model.Guid);
+        var owner = GpcInputComparison.ElementOwner(bridge.Model);
+        if (owner == bridge.Model.Guid) Fail("the bridge model has the model GUID of its reference");
+        var (model, workflow) = Legacy(fem.Model, tolerance, fem.Samples, owner, bridge.Model.Guid);
         List<string> Parts() => PartsDiffer(bridge.Model, model);
         if (bridge.Model.AnalysisFingerprint() != model.AnalysisFingerprint()) Fail("analysis fingerprint differs: " + string.Join("; ", Parts().Take(12)));
         // Every part of the model by its content fingerprint (cases, combinations, model loads, freedom cases, stages, groups, members,
@@ -210,7 +215,7 @@ internal static class GpcBridgeComparison
         bool additional = merge.Params.Input[4].VolatileData.AllData(true).Cast<GH_Boolean>().SingleOrDefault()?.Value ?? false;
         double tolerance = global::Rhino.RhinoDoc.ActiveDoc?.ModelAbsoluteTolerance ?? 0.001; // Settings.Tolerance of the plug-in
         var started = DateTime.UtcNow;
-        var gpc = GpcBridgeBuilder.Build(references, phases, table, method, tolerance, additional, BridgeWorkflowBuilder.LocalSectionStates);
+        var gpc = GpcBridgeBuilder.Build(references, phases, table, method, tolerance, additional, GpcIdentity.Derive(merge.InstanceGuid, "bridge-model"), BridgeWorkflowBuilder.LocalSectionStates);
         double seconds = (DateTime.UtcNow - started).TotalSeconds;
         var fem = BridgeWorkflowBuilder.Build(models, phases, table, method, tolerance, additional);
         string summary = Require(label, gpc, fem, tolerance);
@@ -240,7 +245,7 @@ internal static class GpcBridgeComparison
             try
             {
                 var references = sources.Select(s => GpcBridgeSource.Reference(GpcModels.Convert(s.Fem, tolerance), s.Gpc)).ToArray();
-                gpc = GpcBridgeBuilder.Build(references, linked, table, BridgeWorkflowMethod.Compatible, tolerance, false, BridgeWorkflowBuilder.LocalSectionStates);
+                gpc = GpcBridgeBuilder.Build(references, linked, table, BridgeWorkflowMethod.Compatible, tolerance, false, GpcIdentity.Derive(GpcIdentity.NameSpace, "test-bridge:" + label), BridgeWorkflowBuilder.LocalSectionStates);
             }
             catch (ArgumentException e) { gpcError = e.Message; }
             if (femError != null || gpcError != null)

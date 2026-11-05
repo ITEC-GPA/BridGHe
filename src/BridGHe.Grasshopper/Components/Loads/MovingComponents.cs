@@ -172,7 +172,7 @@ namespace BridGHe.Grasshopper.Components.Loads
                 var output = GH_Model.FromModel(model, input);
                 // F6 chain D: the GPC input of the output from the GPC input of the source (the analysis copies it instead of converting the
                 // FEM output); if it cannot be built the analysis converts the FEM output as before.
-                try { output.AttachInput(Common.Gpc.GpcModelTransforms.ReplacePaths(input.GpcInput, selected)); }
+                try { var source = input.GpcInput; output.AttachInput(Common.Gpc.GpcModelTransforms.ReplacePaths(source, selected, Common.Gpc.GpcIdentity.Derive(InstanceGuid, "model:" + source.Model.Guid.ToString("D")))); }
                 catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is InvalidOperationException || e is System.Runtime.Serialization.SerializationException)
                 { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Modello GPC dei percorsi non costruito (" + e.Message + "): l'analisi converte il modello FEM."); }
                 da.SetData(0, output);

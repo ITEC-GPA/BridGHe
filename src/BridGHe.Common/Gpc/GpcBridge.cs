@@ -108,14 +108,15 @@ namespace BridGHe.Common.Gpc
     /// from the analysed GPC models of their sources (the rows of the Results components): beams aligned by BridGHe ID and GPC geometry
     /// (end points, BridGHe angle, offsets), the union of the stations of every beam, each action resampled from its own grid. Validation,
     /// records, combinations, summary and warnings are those of <see cref="BridgeWorkflowBuilder"/> (same messages).
-    /// <para>Identity: the copy keeps the GUIDs of the reference input model (model and elements); cases and combinations by name.</para>
+    /// <para>Identity: the bridge model has its own model GUID (<c>modelIdentity</c>, from the component), the copy keeps the element identities
+    /// of the reference input model (the same physical elements: D3 and the excluded-concrete beams refer to them); cases and combinations by name.</para>
     /// <para>Local section states (Bridge State Override) come from <paramref name="localSectionStates"/> of <see cref="Build"/>: the FEM
     /// source beams until the GPC section-state attribute of lane L11.</para>
     /// </summary>
     public static class GpcBridgeBuilder
     {
         public static GpcBridgeBuild Build(IReadOnlyList<GpcBridgeSource> references, IEnumerable<BridgePhaseDefinition> definitions, IReadOnlyList<string[]> combinations,
-            BridgeWorkflowMethod method, double tolerance, bool allowAdditionalMembers,
+            BridgeWorkflowMethod method, double tolerance, bool allowAdditionalMembers, Guid modelIdentity,
             Func<BridgePhaseDefinition, BridgeActionDefinition, (bool HasLocalSectionStates, string[] ConcreteExcludedBeamIds)> localSectionStates)
         {
             if (localSectionStates == null) throw new ArgumentNullException(nameof(localSectionStates));
@@ -199,7 +200,7 @@ namespace BridGHe.Common.Gpc
             var table = BridgeWorkflowBuilder.Combinations(records, combinations);
             var summary = BridgeWorkflowBuilder.Finish(phases, method, records, table, workflow, warnings);
 
-            var model = Structure(reference.Model, records, table);
+            var model = Structure(reference.Model, records, table, modelIdentity);
             foreach (var phase in workflow.Phases)
                 foreach (var a in phase.Actions)
                     model.PreservedSourceData.Add(new PreservedAssignment
@@ -280,10 +281,10 @@ namespace BridGHe.Common.Gpc
         /// case-dependent physical data, model loads), cases, combinations, stages, freedom cases, moving loads and source records; the action
         /// cases in the order of the actions; the default "Dead" case of the former model (self weight along −Z, 9806.65 mm/s², structural
         /// mass), which the former bridge model had from the legacy reader (the bridge model is never solved); the combinations of the table.</summary>
-        private static Model Structure(Model reference, IReadOnlyDictionary<string, BridgeWorkflowAction> records, IReadOnlyList<(string Name, List<(string Case, double Factor)> Factors)> table)
+        private static Model Structure(Model reference, IReadOnlyDictionary<string, BridgeWorkflowAction> records, IReadOnlyList<(string Name, List<(string Case, double Factor)> Factors)> table, Guid modelIdentity)
         {
             if (reference.Datasets.Count != 0 || reference.Analysis != null) throw new ArgumentException("GpcBridgeReferenceNotAnInputModel: " + reference.Name);
-            var model = GPC.Model.Core.ModelValues.Copy(reference);
+            var model = GPC.Model.Core.ModelValues.Copy(reference, GPC.Model.Core.ModelCopyOptions.None, modelIdentity);
             model.Name = BridgeWorkflowBuilder.MergedModelName;
             model.LoadCases.Clear(); model.Combinations.Clear(); model.Stages.Clear(); model.FreedomCases.Clear(); model.ModelLoads.Clear();
             model.MovingLoads = null; model.PreservedSourceData.Clear();
@@ -335,12 +336,13 @@ namespace BridGHe.Common.Gpc
         /// <summary>The merged beam actions as one dataset (inverse of <see cref="GpcResults.BeamForces"/>, as the C5 reader of the F1 archives).</summary>
         private static void Results(Model gpc, GpcBridgeSource reference, IReadOnlyList<(string Case, BeamForceSample Sample)>[] samples)
         {
-            string revision = gpc.Guid.ToString("D");
+            // The element sources of the bridge model are those of the reference input (its element identities); the bridge has its own GUID.
+        string revision = gpc.BeamElements.Values.First().Source.ModelRevision;
             var source = new AnalysisSource { Program = Legacy.LegacyModelImport.Program, SolverVersion = "BridGHe phase merge (Build Bridge Model)", ModelRevision = revision, AnalysisId = GpcBridge.DatasetName };
             gpc.AnalysisSource = source;
             var batch = new ResultImportBatch
             {
-                Source = source, DatasetId = GpcBridge.DatasetName, SourceHash = "bridge-merge/" + revision, ExpectedInputFingerprint = ModelRevisions.AnalysisFingerprint(gpc),
+                Source = source, DatasetId = GpcBridge.DatasetName, SourceHash = "bridge-merge/" + gpc.Guid.ToString("D"), ExpectedInputFingerprint = ModelRevisions.AnalysisFingerprint(gpc),
                 Units = new ResultUnits(1, 1, 1), ShellDenominatorLengthToMm = 1,
                 ResolvedConvention = "Merged BridGHe beam actions: former principal frame, SF1 = -V1, SF2 = -V2, BM1 = M2, BM2 = -M1.",
                 // The reader version of the former seam, kept: the dataset metadata stay those of the 99/50 reference fingerprints.
