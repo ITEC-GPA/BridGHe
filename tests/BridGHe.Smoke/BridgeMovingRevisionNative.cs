@@ -96,6 +96,7 @@ internal static class BridgeMovingRevisionNative
         C5WorkflowComparison.RequireGpcChecks(Out(merge,"Model").VolatileData.AllData(true).Single(),model,new[]{checker},false);
         GpcMergeCheck.Require(merge,"50");
         GpcBridgeComparison.RequireComponent(merge,"50");
+        GpcInputComparison.RequireComponents(doc,"50");
         GpcSecForcesCheck.Require(checker,"50");
         GpcSecForcesCheck.RequireGirders(doc,"50");
 #endif

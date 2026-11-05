@@ -31,6 +31,20 @@ namespace BridGHe.Common.Gpc.Legacy
         /// <summary>F6 chain C: the BridGHe angle (degrees) of every converted beam by its GPC number, the principal frame of its actions
         /// (<see cref="GpcBeamAxes.Principal"/>), as the results catalog of an analysis keeps it.</summary>
         public Dictionary<int, double> BeamAngles { get; } = new Dictionary<int, double>();
+        /// <summary>F6 chain D: how many of the first cases of the conversion were registered in the cases of the former model (the others
+        /// come from element loads, combinations, stages, moving paths, or are the default "Dead" case).</summary>
+        public int RegisteredCases { get; internal set; }
+
+        /// <summary>A copy of this report for a model transformed from the converted one (same element identities).</summary>
+        internal LegacyImportReport CopyFor(int registeredCases)
+        {
+            var copy = new LegacyImportReport { Units = Units, RegisteredCases = registeredCases };
+            copy.Warnings.AddRange(Warnings);
+            foreach (var p in NotExported) copy.NotExported.Add(p.Key, p.Value);
+            foreach (var p in NativeSections) copy.NativeSections.Add(p.Key, p.Value);
+            foreach (var p in BeamAngles) copy.BeamAngles.Add(p.Key, p.Value);
+            return copy;
+        }
         internal void Carry(string what) { NotExported.TryGetValue(what, out int n); NotExported[what] = n + 1; }
     }
 
@@ -258,6 +272,8 @@ namespace BridGHe.Common.Gpc.Legacy
                 if (!first.TryGetValue(name, out var known)) first.Add(name, c);
                 else if (!SameCase(known, c)) throw new ArgumentException("Definizioni incompatibili per il caso di carico " + name);
             }
+            // F6 chain D: the cases registered in the former model come first (its LoadCases, without generated moving cases).
+            report.RegisteredCases = legacy.Field("LoadCases").Items.Select(c => c.String("Name")).Where(n => !generated.Contains(n)).Distinct(StringComparer.Ordinal).Count();
             foreach (var name in movingCases) if (!first.ContainsKey(name)) first.Add(name, null);
             if (!first.ContainsKey("Dead")) first.Add("Dead", null);
             foreach (var pair in first)

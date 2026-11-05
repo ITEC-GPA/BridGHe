@@ -106,9 +106,24 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         /// sections), at the current model tolerance: the input the analysis and export components copy. Throws when it cannot be converted.</summary>
         public Common.Gpc.GpcModels.Conversion GpcInput { get { lock (gpcLock) return Value == null ? null : Conversion(); } }
 
+        /// <summary>F6 chain D: the GPC input a model transformer (Attach Moving Paths, ...) built from the GPC input of its source, used in
+        /// place of a conversion of <see cref="Value"/> while Value and the tolerance are those it was built for (the same model as the
+        /// conversion of Value, checked bit for bit by the tests). Copies of this datum keep it.</summary>
+        public void AttachInput(Common.Gpc.GpcModels.Conversion input)
+        {
+            lock (gpcLock) { _input = input ?? throw new ArgumentNullException(nameof(input)); _inputOf = Value; }
+        }
+
+        /// <summary>True when <see cref="GpcInput"/> is the input attached by a model transformer, not a conversion of <see cref="Value"/>.</summary>
+        public bool HasAttachedInput { get { lock (gpcLock) return _input != null && ReferenceEquals(_inputOf, Value) && _input.Tolerance == Settings.Instance.Tolerance; } }
+
+        private Common.Gpc.GpcModels.Conversion _input;
+        private ModelModel _inputOf;
+
         private Common.Gpc.GpcModels.Conversion Conversion()
         {
             double tolerance = Settings.Instance.Tolerance;
+            if (_input != null && ReferenceEquals(_inputOf, Value) && _input.Tolerance == tolerance) return _input;
             if (_converted != null && ReferenceEquals(_convertedOf, Value) && _converted.Tolerance == tolerance) return _converted;
             _converted = null; _convertedOf = Value; _gpcError = null;
             _converted = Common.Gpc.GpcModels.Convert(Value, tolerance);
@@ -150,7 +165,10 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         private void ShareGpc(GH_Model copy)
         {
             lock (gpcLock)
+            {
                 if (_analysed != null && ReferenceEquals(_analysedOf, Value)) { if (_bridge != null && ReferenceEquals(_analysed, _bridge.Model)) copy.AttachBridge(_bridge); else copy.AttachGpc(_analysed); }
+                if (_input != null && ReferenceEquals(_inputOf, Value)) copy.AttachInput(_input);
+            }
         }
 
         public static GH_Model FromModel(ModelModel value, GH_Model source = null)

@@ -150,29 +150,7 @@ internal static class GpcBridgeComparison
         if (!gpc.Summary.SequenceEqual(fem.Summary)) Fail("summary: GPC [" + string.Join(" / ", gpc.Summary) + "] FEM [" + string.Join(" / ", fem.Summary) + "]");
         if (!gpc.Warnings.SequenceEqual(fem.Warnings)) Fail("warnings: GPC [" + string.Join(" / ", gpc.Warnings) + "] FEM [" + string.Join(" / ", fem.Warnings) + "]");
         var (model, workflow) = Legacy(fem.Model, tolerance, fem.Samples, bridge.Model.Guid);
-        List<string> Parts()
-        {
-            var m = bridge.Model; var e = model; var lines = new List<string>();
-            void Same(string what, object x, object y) { string fx = Fp(x), fy = Fp(y); if (fx != fy) lines.Add(what); }
-            Same("name/guid", new object[] { m.Name, m.Guid }, new object[] { e.Name, e.Guid });
-            Same("load cases", m.LoadCases.Values.ToArray(), e.LoadCases.Values.ToArray());
-            Same("combinations", m.Combinations.Values.ToArray(), e.Combinations.Values.ToArray());
-            Same("model loads", m.ModelLoads.Values.ToArray(), e.ModelLoads.Values.ToArray());
-            Same("freedom cases/stages", new object[] { m.FreedomCases.Values.ToArray(), m.Stages.Values.ToArray() }, new object[] { e.FreedomCases.Values.ToArray(), e.Stages.Values.ToArray() });
-            Same("groups", m.Groups.Values.Select(g => new object[] { g.Guid, g.Name, g.Parent?.Guid }).ToArray(), e.Groups.Values.Select(g => new object[] { g.Guid, g.Name, g.Parent?.Guid }).ToArray());
-            Same("physical members", m.PhysicalMembers.Values.ToArray(), e.PhysicalMembers.Values.ToArray());
-            Same("preserved", m.PreservedSourceData.ToArray(), e.PreservedSourceData.ToArray());
-            Same("constraints", m.Costrains.Values.ToArray(), e.Costrains.Values.ToArray());
-            Same("datasets", new object[] { m.Datasets.Keys.ToArray(), m.AnalysisSource }, new object[] { e.Datasets.Keys.ToArray(), e.AnalysisSource });
-            if (m.NodesElements.Count != e.NodesElements.Count || m.BeamElements.Count != e.BeamElements.Count || m.AreaElements.Count != e.AreaElements.Count) lines.Add("element counts");
-            else
-            {
-                foreach (var n in m.NodesElements.Values) { var o = e.NodesElements[n.Id]; Same("node " + n.Id, new object[] { n.Guid, n.Position, n.Loads, n.Attributes, n.Assignments.Physical, n.Assignments.Restrains.Select(r => r.Restrain.Restrains).ToArray() }, new object[] { o.Guid, o.Position, o.Loads, o.Attributes, o.Assignments.Physical, o.Assignments.Restrains.Select(r => r.Restrain.Restrains).ToArray() }); }
-                foreach (var b in m.BeamElements.Values) { var o = e.BeamElements[b.Id]; Same("beam " + b.Id, new object[] { b.Guid, b.Source, b.StartPoint, b.EndPoint, b.Loads, b.Attributes, b.Assignments.Physical, b.Assignments.Loads.ToArray(), b.Assignments.SectionAxes, b.BeamProperty }, new object[] { o.Guid, o.Source, o.StartPoint, o.EndPoint, o.Loads, o.Attributes, o.Assignments.Physical, o.Assignments.Loads.ToArray(), o.Assignments.SectionAxes, o.BeamProperty }); }
-                foreach (var p in m.AreaElements.Values) { var o = e.AreaElements[p.Id]; Same("plate " + p.Id, new object[] { p.Guid, p.Loads, p.Attributes, p.Assignments.Physical }, new object[] { o.Guid, o.Loads, o.Attributes, o.Assignments.Physical }); }
-            }
-            return lines;
-        }
+        List<string> Parts() => PartsDiffer(bridge.Model, model);
         if (bridge.Model.AnalysisFingerprint() != model.AnalysisFingerprint()) Fail("analysis fingerprint differs: " + string.Join("; ", Parts().Take(12)));
         // Every part of the model by its content fingerprint (cases, combinations, model loads, freedom cases, stages, groups, members,
         // source records, constraints, dataset metadata, every element): always, also where the XML document cannot be written.
@@ -196,11 +174,7 @@ internal static class GpcBridgeComparison
         // of GPC (points, vectors, frames) carry a new version-4 GUID each time they are built, so two constructions are never byte-identical;
         // every deterministic identity (model, elements, cases, combinations, groups) stays in the comparison. Not writable beyond the
         // 2,000,000 objects of the serializer (example 50 with its 118k merged samples): there the parts and the results above decide.
-        string Document(Model m)
-        {
-            using var stream = new MemoryStream(); GPC.Model.Persistence.ModelArchive.SaveDocument(m, stream);
-            return RandomGuid.Replace(System.Text.Encoding.UTF8.GetString(stream.ToArray()), "v4");
-        }
+        string Document(Model m) => GpcInputComparison.Document(m); // canonical: random GUIDs masked, references inlined
         string document = null, expected = null, xml;
         try { document = Document(bridge.Model); expected = Document(model); }
         catch (System.Runtime.Serialization.SerializationException e) when (e.Message.Contains("Maximum number of items")) { document = expected = null; }
@@ -322,6 +296,32 @@ internal static class GpcBridgeComparison
         }
         if (compared < 10) throw new Exception($"GPC BRIDGE FAIL: only {compared} workflows compared ({errors} errors)");
         Console.WriteLine($"GPC BRIDGE MODEL PASS: {compared} workflows bit for bit, {errors} with the same error on both paths.");
+    }
+
+    /// <summary>The parts of two models whose content fingerprints differ (cases, combinations, model loads, freedom cases, stages, groups,
+    /// members, source records, constraints, dataset metadata, every element).</summary>
+    internal static List<string> PartsDiffer(Model m, Model e)
+    {
+        var lines = new List<string>();
+            void Same(string what, object x, object y) { string fx = Fp(x), fy = Fp(y); if (fx != fy) lines.Add(what); }
+            Same("name/guid", new object[] { m.Name, m.Guid }, new object[] { e.Name, e.Guid });
+            Same("load cases [" + string.Join(", ", m.LoadCases.Keys) + "] / [" + string.Join(", ", e.LoadCases.Keys) + "]", m.LoadCases.Values.ToArray(), e.LoadCases.Values.ToArray());
+            Same("combinations", m.Combinations.Values.ToArray(), e.Combinations.Values.ToArray());
+            Same("model loads", m.ModelLoads.Values.ToArray(), e.ModelLoads.Values.ToArray());
+            Same("freedom cases/stages", new object[] { m.FreedomCases.Values.ToArray(), m.Stages.Values.ToArray() }, new object[] { e.FreedomCases.Values.ToArray(), e.Stages.Values.ToArray() });
+            Same("groups", m.Groups.Values.Select(g => new object[] { g.Guid, g.Name, g.Parent?.Guid }).ToArray(), e.Groups.Values.Select(g => new object[] { g.Guid, g.Name, g.Parent?.Guid }).ToArray());
+            Same("physical members", m.PhysicalMembers.Values.ToArray(), e.PhysicalMembers.Values.ToArray());
+            Same("preserved", m.PreservedSourceData.ToArray(), e.PreservedSourceData.ToArray());
+            Same("constraints", m.Costrains.Values.ToArray(), e.Costrains.Values.ToArray());
+            Same("datasets", new object[] { m.Datasets.Keys.ToArray(), m.AnalysisSource }, new object[] { e.Datasets.Keys.ToArray(), e.AnalysisSource });
+            if (m.NodesElements.Count != e.NodesElements.Count || m.BeamElements.Count != e.BeamElements.Count || m.AreaElements.Count != e.AreaElements.Count) lines.Add("element counts");
+            else
+            {
+                foreach (var n in m.NodesElements.Values) { var o = e.NodesElements[n.Id]; Same("node " + n.Id, new object[] { n.Guid, n.Position, n.Loads, n.Attributes, n.Assignments.Physical, n.Assignments.Restrains.Select(r => r.Restrain.Restrains).ToArray() }, new object[] { o.Guid, o.Position, o.Loads, o.Attributes, o.Assignments.Physical, o.Assignments.Restrains.Select(r => r.Restrain.Restrains).ToArray() }); }
+                foreach (var b in m.BeamElements.Values) { var o = e.BeamElements[b.Id]; Same("beam " + b.Id, new object[] { b.Guid, b.Source, b.StartPoint, b.EndPoint, b.Loads, b.Attributes, b.Assignments.Physical, b.Assignments.Loads.ToArray(), b.Assignments.SectionAxes, b.BeamProperty }, new object[] { o.Guid, o.Source, o.StartPoint, o.EndPoint, o.Loads, o.Attributes, o.Assignments.Physical, o.Assignments.Loads.ToArray(), o.Assignments.SectionAxes, o.BeamProperty }); }
+                foreach (var p in m.AreaElements.Values) { var o = e.AreaElements[p.Id]; Same("plate " + p.Id, new object[] { p.Guid, p.Loads, p.Attributes, p.Assignments.Physical }, new object[] { o.Guid, o.Loads, o.Attributes, o.Assignments.Physical }); }
+            }
+            return lines;
     }
 }
 #endif
