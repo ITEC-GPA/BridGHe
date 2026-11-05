@@ -22,8 +22,10 @@ internal static class GpcWorkflowSources
     /// <param name="reactionAt">Nodes (1-based) that get the reaction (null: all).</param>
     /// <param name="reversed">Beams and samples stored in the reverse order (B1 first, last station first).</param>
     /// <param name="firstEndZ">Level of the end of B0 (a changed geometry).</param>
+    /// <param name="analyse">False: the input model (structure only, <see cref="GpcTestModel.Structure"/>), the reference of Build BridGHe Model.</param>
     internal static GPC.Model.Models.Model Source(string name, double force, double? reaction = null, Action<GpcTestModel, BeamElement[], NodeElement[]> change = null,
-        IReadOnlyList<double> stations = null, Func<int, double, double[]> values = null, Func<int, bool> reactionAt = null, bool reversed = false, double firstEndZ = 0)
+        IReadOnlyList<double> stations = null, Func<int, double, double[]> values = null, Func<int, bool> reactionAt = null, bool reversed = false, double firstEndZ = 0,
+        bool analyse = true)
     {
         var test = new GpcTestModel(name); test.Case("G");
         var beams = new BeamElement[2];
@@ -44,7 +46,14 @@ internal static class GpcWorkflowSources
             }
         if (reaction.HasValue) foreach (var n in nodes.Where(n => reactionAt?.Invoke(n.Id) ?? true)) test.Reaction(n, "G", 0, 0, reaction.Value);
         change?.Invoke(test, beams, nodes.ToArray());
-        return test.Analyse();
+        return analyse ? test.Analyse() : test.Structure();
     }
+
+    /// <summary>A model of the Models input of Build BridGHe Model as GPC data: its input model and its analysed copy (the same datum).</summary>
+    internal static (GPC.Model.Models.Model Input, GPC.Model.Models.Model Analysed) Pair(string name, double force, double? reaction = null,
+        Action<GpcTestModel, BeamElement[], NodeElement[]> change = null, IReadOnlyList<double> stations = null, Func<int, double, double[]> values = null,
+        Func<int, bool> reactionAt = null, bool reversed = false, double firstEndZ = 0) =>
+        (Source(name, force, reaction, change, stations, values, reactionAt, reversed, firstEndZ, analyse: false),
+         Source(name, force, reaction, change, stations, values, reactionAt, reversed, firstEndZ));
 }
 #endif

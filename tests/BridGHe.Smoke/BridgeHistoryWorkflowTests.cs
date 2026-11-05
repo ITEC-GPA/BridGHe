@@ -77,22 +77,23 @@ internal static class BridgeHistoryWorkflowTests
     /// equilibrium of the history, shear not verified, planar response, and the Detail Check guard on the D3 history. The FEM results of the
     /// former BridGHe phases (<paramref name="fem1"/>, …) are the parity reference until the FeMM removal (same tolerance as the test).
     /// <para>D3 reads the stations of a section from the force cases of the dataset: the two shrinkage-only workflows of the FEM test get a
-    /// steel action with zero forces (no stress), which gives the dataset its stations. The checks still need the merged FEM model of Build
-    /// BridGHe Model (combinations, beam angles, local states) and the actions their FEM source, as Super Element Check today (R1/R5).</para></summary>
+    /// steel action with zero forces (no stress), which gives the dataset its stations. The GPC bridge model is built from GPC data only
+    /// (direct GPC references, actions on their GPC source); the checks still take the merged FEM model of Build BridGHe Model (combinations,
+    /// beam angles, local states), as Super Element Check today, until <c>GpcBridgeChecks</c> takes the GPC bridge model only (P2F).</para></summary>
     private static void Gpc(BridgeCheckAdapter checker, BridgeStressResult fem1, BridgeStressResult femActivation, BridgeStressResult femPlanar, double concreteOracle, double steelOracle)
     {
         void Near(double actual, double expected, string label) => BridgeWorkflowTests.Require(double.IsFinite(actual) && Math.Abs(actual - expected) <= 1e-8 * Math.Max(1, Math.Abs(expected)), "GPC: " + label + $": {actual:G17} != {expected:G17}");
         var zero = BridgeWorkflowTests.Source("Zero", 0); foreach (var f in zero.Beams.SelectMany(b => b.Results).OfType<BeamForceResultModel>()) { f.AxialForce = 0; f.My = 0; }
-        var gZero = GpcWorkflowSources.Source("Zero", 0, values: (_, _) => new double[6]);
+        var gZero = GpcWorkflowSources.Pair("Zero", 0, values: (_, _) => new double[6]);
         var source = BridgeWorkflowTests.Source("Reference", 100000); foreach (var f in source.Beams.SelectMany(b => b.Results).OfType<BeamForceResultModel>()) f.My = 0;
-        var gSource = GpcWorkflowSources.Source("Reference", 100000, values: (i, _) => new[] { 100000d + i, 0, 0, 0, 0, 0 });
+        var gSource = GpcWorkflowSources.Pair("Reference", 100000, values: (i, _) => new[] { 100000d + i, 0, 0, 0, 0, 0 });
         int solved = 0;
-        BridgeStressResult Solve(ModelModel fem, GPC.Model.Models.Model gpc, BridgePhaseDefinition[] phases, params string[] keys)
+        BridgeStressResult Solve(ModelModel fem, (GPC.Model.Models.Model Input, GPC.Model.Models.Model Analysed) gpc, BridgePhaseDefinition[] phases, params string[] keys)
         {
             var table = new[] { new[] { "" }.Concat(keys).ToArray(), new[] { "SLS" }.Concat(keys.Select(k => "1")).ToArray() };
-            var linked = phases.Select(p => p with { Actions = p.Actions.Select(a => a.Source == null ? a : a with { GpcSource = gpc }).ToArray() }).ToArray();
+            var linked = phases.Select(p => p with { Actions = p.Actions.Select(a => a.Source == null ? a : a with { GpcSource = gpc.Analysed }).ToArray() }).ToArray();
             var merged = BridgeWorkflowBuilder.Build(new[] { fem }, phases, table, BridgeWorkflowMethod.LinearHistory, 1e-6);
-            var bridge = GpcBridgeMerge.Build(new[] { (fem, gpc) }, linked, table, "history " + solved++, BridgeWorkflowMethod.LinearHistory);
+            var bridge = GpcBridgeMerge.Build(new[] { gpc }, linked, table, "history " + solved++, BridgeWorkflowMethod.LinearHistory);
             GpcBridgeMerge.RequireSame(bridge, merged, "history " + solved);
             return new GpcBridgeChecks(bridge.Bridge, merged.Model).Calculate("B0", 0, checker.SectionInput(false), 2, 0, 1)[0];
         }
@@ -116,7 +117,7 @@ internal static class BridgeHistoryWorkflowTests
         Near(final.ForceResidual, 0, "History force residual");
         BridgeWorkflowTests.Require(double.IsNaN(activation.Point6_SteelTau), "GPC: History exposes unverified shear as a calculated stress.");
         Near(activation.Point8_SteelSigma, femActivation.Point8_SteelSigma, "D3 activation equal to the BridGHe phases, steel");
-        var planarSource = GpcWorkflowSources.Source("Reference", 100000, values: (i, _) => new[] { 100000d + i, 3e6, 0, 8e8, -4e8, 0 });
+        var planarSource = GpcWorkflowSources.Pair("Reference", 100000, values: (i, _) => new[] { 100000d + i, 3e6, 0, 8e8, -4e8, 0 });
         foreach (var f in source.Beams.SelectMany(b => b.Results).OfType<BeamForceResultModel>()) { f.Torque = 8e8; f.Mx = -4e8; f.Vx = 3e6; }
         var planar = Solve(source, planarSource, new[] { Phase(10, BridgeSectionState.Steel, load), Phase(20, BridgeSectionState.Composite) }, "G");
         Near(planar.Point8_SteelSigma, activation.Point8_SteelSigma, "LinearHistory retains N-M response while excluding T, weak-axis bending and transverse shear");

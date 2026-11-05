@@ -140,8 +140,8 @@ internal static class PlotTests
     }
 #if GPC_PILOT
     /// <summary>P2T: the merged FEM model and the GPC bridge model of Build Bridge Model for one 3 m beam B0 with samples at 0, 1000 and
-    /// 3000 mm and the combinations Positive and Negative, the action source built in GPC (the FEM source stays for the shared validation and
-    /// the reference structure until the FeMM removal; GpcBridgeMerge).</summary>
+    /// 3000 mm and the combinations Positive and Negative. The GPC bridge model from GPC data only (direct reference, action on its GPC source;
+    /// GpcBridgeMerge); the FEM source only for the merged FEM model that the GH model still carries (chain E) and the parity.</summary>
     private static (BridGHe.Common.Models.ModelModel Merged, BridGHe.Common.Gpc.GpcBridge Bridge) GpcPlotBridge()
     {
         var fem=new BridGHe.Common.Models.ModelModel(BridGHe.Common.Models.ModelModel.ModelUnits.Nmm){Name="Plot source"};
@@ -149,16 +149,21 @@ internal static class PlotTests
         var femBeam=new BridGHe.Common.Models.BeamModel("B0",Rhino.Geometry.Point3d.Origin,new Rhino.Geometry.Point3d(3000,0,0),BridgeGrillageExample.LongProperty(new(),0)){BeamId="B0"};
         foreach(double s in new[]{0d,1000,3000})femBeam.Results.Add(new BridGHe.Common.Models.BeamForceResultModel(g,s,0,"",false){AxialForce=s});
         fem.AddElements(new[]{femBeam});
-        var test=new GpcTestModel("Plot source");test.Case("G");
-        var beam=test.Beam("B0",test.Node("1",0,0,0),test.Node("2",3000,0,0));
-        foreach(double s in new[]{0d,1000,3000})test.Forces(beam,"G",s,s);
-        var gpc=test.Analyse();
+        // The GPC input model and its analysed copy (the same calls), the direct reference of the GPC merge.
+        GPC.Model.Models.Model Gpc(bool analyse)
+        {
+            var test=new GpcTestModel("Plot source");test.Case("G");
+            var beam=test.Beam("B0",test.Node("1",0,0,0),test.Node("2",3000,0,0));
+            foreach(double s in new[]{0d,1000,3000})test.Forces(beam,"G",s,s);
+            return analyse?test.Analyse():test.Structure();
+        }
+        var input=Gpc(false);var gpc=Gpc(true);
         var phases=new[]{new BridGHe.Common.Checks.BridgePhaseDefinition{Order=10,Name="Steel",State=BridGHe.Common.Checks.BridgeSectionState.Steel,
             Actions=new[]{new BridGHe.Common.Checks.BridgeActionDefinition{Key="G1",Source=fem,GpcSource=gpc,Case="G",Behavior=BridGHe.Common.Checks.BridgeActionBehavior.Steel}}}};
         var table=new[]{new[]{"","G1"},new[]{"Positive","1"},new[]{"Negative","1"}};
         var femPhases=phases.Select(p=>p with{Actions=p.Actions.Select(a=>a with{GpcSource=null}).ToArray()}).ToArray();
         var merged=BridGHe.Common.Checks.BridgeWorkflowBuilder.Build(new[]{fem},femPhases,table,BridGHe.Common.Checks.BridgeWorkflowMethod.Compatible,1e-6);
-        var bridge=GpcBridgeMerge.Build(new[]{(fem,gpc)},phases,table,"plot");
+        var bridge=GpcBridgeMerge.Build(new[]{(input,gpc)},phases,table,"plot");
         GpcBridgeMerge.RequireSame(bridge,merged,"plot");
         if(!bridge.Bridge.SamplesOf("B0").Select(s=>s.Sample.Station).Distinct().SequenceEqual(new[]{0d,1000,3000}))throw new Exception("GPC: plot bridge stations");
         return (merged.Model,bridge.Bridge);

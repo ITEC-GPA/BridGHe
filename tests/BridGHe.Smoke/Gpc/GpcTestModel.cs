@@ -179,10 +179,7 @@ internal sealed class GpcTestModel
     /// <summary>The analysed model: physical members, the result dataset (Converter result mapper) and the results catalog. Once.</summary>
     internal Model Analyse()
     {
-        if (analysed) throw new InvalidOperationException("GpcTestModel already analysed.");
-        analysed = true;
-        foreach (var (id, parts) in members)
-            Model.PhysicalMembers.Add(id, new PhysicalMemberDefinition(id, parts, "NodeToNode", id, "BridGHe bridge member"));
+        Members();
         Model.AnalysisSource = source;
         batch.ExpectedInputFingerprint = ModelRevisions.AnalysisFingerprint(Model);
         if (batch.NodeDisplacements.Count + batch.NodeForces.Count + batch.Beams.Count > 0)
@@ -193,6 +190,26 @@ internal sealed class GpcTestModel
         }
         GpcResultCatalog.Attach(Model, units.Units, entries.Select(c => new GpcResultCatalog.Entry { Label = c, Case = c }).ToArray(), angles);
         return Model;
+    }
+
+    /// <summary>The input model (structure with the physical members, no result, no catalog): the reference of Build BridGHe Model, as the
+    /// input GPC model of a GH model. The same calls on a second builder with the same name give its analysed copy (same identities and
+    /// numbering). Once.</summary>
+    internal Model Structure()
+    {
+        Members();
+        return Model;
+    }
+
+    /// <summary>The BridGHe angle (degrees) of every beam, by its GPC number.</summary>
+    internal IReadOnlyDictionary<int, double> BeamAngles => angles;
+
+    private void Members()
+    {
+        if (analysed) throw new InvalidOperationException("GpcTestModel already analysed.");
+        analysed = true;
+        foreach (var (id, parts) in members)
+            Model.PhysicalMembers.Add(id, new PhysicalMemberDefinition(id, parts, "NodeToNode", id, "BridGHe bridge member"));
     }
 }
 #endif

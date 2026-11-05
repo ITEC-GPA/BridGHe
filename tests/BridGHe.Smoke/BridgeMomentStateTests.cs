@@ -33,6 +33,9 @@ internal static class BridgeMomentStateTests
         Reject(()=>BeamMomentClassification.Classify(new[]{beams[0],beams[0]},"Dead"));
         var bad=ModelArchive.Clone(beams[0]);bad.Results.RemoveAt(0);Reject(()=>BeamMomentClassification.Classify(new[]{bad},"Dead"));
         bad=ModelArchive.Clone(beams[0]);bad.Results.Add(bad.Results[0]);Reject(()=>BeamMomentClassification.Classify(new[]{bad},"Dead"));
+#if GPC_PILOT
+        Gpc(beams,states,Check,Reject);
+#endif
         var ids=schedule.Rules.Select(r=>$"G{r.Group}-C{r.Segment}").ToArray();
         var props=ids.Select(id=>{var p=BridgeGrillageExample.Composite(new());p.SteelSection=ModelArchive.Clone(steel.Section);p.ConsiderRebar=true;p.ConcreteSection=new(250,3000,1600,40);return p;}).ToArray();
         BridgeSegmentOverrideResult Apply(IReadOnlyList<BeamMomentState> s,int mix=2)=>BridgeStateOverride.Apply(all,ids,props,s,BridgeActionBehavior.LongTerm,mix);
@@ -99,4 +102,61 @@ internal static class BridgeMomentStateTests
         Reject(()=>BridgeWorkflowBuilder.Build(new[]{model0,edited},new[]{phase0,phase1 with {Actions=new[]{phase1.Actions[0] with {Source=edited}}}},new[]{new[]{"Name","G","Q"},new[]{"SLS","1","1"}},BridgeWorkflowMethod.Compatible,1e-6));
         Console.WriteLine($"MOMENT STATE PASS: {count} assertions; sampled sign, same-concio variants, mass, mesh, archive, per-action checker state and uncracked shrinkage. No native FEM.");
     }
+#if GPC_PILOT
+    /// <summary>P2T: the sampled-sign classification of Beam Moment Dispatch on the GPC path (F6, P2F 5/11): the girders carry their analysed
+    /// GPC beam, built in GPC with the same «Dead» samples as the FEM fixture (five classes, BM1 −1e8, girder 5 without results), and the
+    /// classification reads the rows of the Results components. Same assertions and rejections; the signs equal to the FEM classification of
+    /// <paramref name="femStates"/> on every girder, the extrema within 1e-9 (the GPC rows pass through the section axes of the beam angle).
+    /// Mixed until chain E: the beams are still identified by their FEM beams (the type of the GH datum).
+    /// The rest of the file (Bridge State Override, a FEM transformer of chain B) stays «dopo».</summary>
+    private static void Gpc(BeamModel[] beams, BeamMomentState[] femStates, Action<bool, string> check, Action<Action> reject)
+    {
+        (BridGHe.Common.Gpc.GpcResultCatalog Catalog, GPC.Model.Models.Model Model, GPC.Model.Elements.BeamElement Beam)[] Analysed(string name,
+            Action<GpcTestModel, GPC.Model.Elements.BeamElement[]> change = null, bool firstStart = true)
+        {
+            var test = new GpcTestModel(name); test.Case("Dead");
+            var nodes = new Dictionary<Rhino.Geometry.Point3d, GPC.Model.Elements.NodeElement>();
+            GPC.Model.Elements.NodeElement Node(Rhino.Geometry.Point3d p)
+            {
+                if (!nodes.TryGetValue(p, out var n)) nodes.Add(p, n = test.Node((nodes.Count + 1).ToString(), p.X, p.Y, p.Z));
+                return n;
+            }
+            var gpcBeams = beams.Select(b => test.Beam(b.BeamId, Node(b.PointFrom), Node(b.PointTo), b.AngleDeg)).ToArray();
+            for (int i = 0; i < beams.Length; i++)
+            {
+                if (i == 4) continue; // the girder without results of the FEM fixture
+                foreach (double s in new[] { 0d, .5, 1d })
+                {
+                    if (i == 0 && s == 0 && !firstStart) continue;
+                    double bm2 = (i % 5) switch { 0 => 1e8, 1 => -1e8, 2 => (s - .5) * 2e8, 3 => 500, _ => 1e8 };
+                    test.Forces(gpcBeams[i], "Dead", s * gpcBeams[i].Length, 0, bm1: -1e8, bm2: bm2);
+                }
+            }
+            change?.Invoke(test, gpcBeams);
+            var model = test.Analyse(); var catalog = BridGHe.Common.Gpc.GpcResultCatalog.Of(model);
+            return gpcBeams.Select(g => (catalog, model, g)).ToArray();
+        }
+        var analysed = Analysed("Moment state girders");
+        var states = BeamMomentClassification.Classify(beams, analysed, "Dead");
+        check(states.Take(5).Select(s => s.Sign).SequenceEqual(new[] { BeamMomentSign.Positive, BeamMomentSign.Negative, BeamMomentSign.Mixed, BeamMomentSign.Zero, BeamMomentSign.Missing }),
+            "GPC: five classes, tolerance and BM2 default");
+        check(BeamMomentClassification.Classify(beams, analysed, "Dead", component: 0)[0].Sign == BeamMomentSign.Negative, "GPC: BM1 selection independent");
+        check(BeamMomentClassification.Classify(beams, analysed, "Dead", sign: -1)[0].Sign == BeamMomentSign.Negative, "GPC: orientation sign explicit");
+        reject(() => BeamMomentClassification.Classify(beams, analysed, "Dead", -1));
+        reject(() => BeamMomentClassification.Classify(new[] { beams[0], beams[0] }, new[] { analysed[0], analysed[0] }, "Dead"));
+        reject(() => BeamMomentClassification.Classify(beams, analysed.Take(2).ToArray(), "Dead"));
+        var withoutStart = Analysed("Moment state girders, no start sample", firstStart: false);
+        reject(() => BeamMomentClassification.Classify(new[] { beams[0] }, new[] { withoutStart[0] }, "Dead"));
+        // A duplicate sample never reaches the classification (rejected by the result mapper or by the classification).
+        bool duplicate = false;
+        try { var twice = Analysed("Moment state girders, duplicate", (t, g) => t.Forces(g[0], "Dead", 0, 0, bm1: -1e8, bm2: 1e8)); BeamMomentClassification.Classify(new[] { beams[0] }, new[] { twice[0] }, "Dead"); }
+        catch (ArgumentException) { duplicate = true; }
+        catch (InvalidOperationException e) when (e.Message.StartsWith("GpcTestModel results not imported")) { duplicate = true; }
+        check(duplicate, "GPC: duplicate sample rejected");
+        // Parity (removed with the FeMM models): the same classes on every girder as the FEM classification, the same extrema.
+        static bool Near(double a, double b) => double.IsNaN(a) ? double.IsNaN(b) : Math.Abs(a - b) <= 1e-9 * Math.Max(1, Math.Abs(b));
+        check(states.Length == femStates.Length && states.Zip(femStates).All(p => p.First.Sign == p.Second.Sign && ReferenceEquals(p.First.Source, p.Second.Source)
+            && Near(p.First.Minimum, p.Second.Minimum) && Near(p.First.Maximum, p.Second.Maximum) && p.First.Case == p.Second.Case), "GPC classification equal to the FEM one");
+    }
+#endif
 }
