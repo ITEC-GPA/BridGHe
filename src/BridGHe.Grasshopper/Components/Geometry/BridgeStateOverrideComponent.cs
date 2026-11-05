@@ -40,7 +40,19 @@ public sealed class BridgeStateOverrideComponent : BridgeUtilityComponent
         if(!da.GetDataList(0,beams)||!da.GetDataList(1,ids)||!da.GetDataList(2,props)||!da.GetDataList(3,states)||!da.GetData(4,ref response)||!da.GetData(5,ref mixed)||!da.GetData(6,ref zero)||!da.GetData(7,ref mass))return;
         if(states.Count==0 || states.Any(s=>s.Sign==BeamMomentSign.Missing)){AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Waiting for reference FEM results on every girder.");return;}
         var result=BridgeStateOverride.Apply(beams.Select(b=>b.Value).ToArray(),ids,props.Select(p=>p.Value).ToArray(),states,(BridgeActionBehavior)response,mixed,zero,mass);
-        da.SetDataList(0,result.Girders.Select(b=>new GH_Beam(b)));da.SetDataList(1,result.OtherMembers.Select(b=>new GH_Beam(b)));da.SetDataList(2,result.Girders.Select(b=>b.BeamId));
+        var girders=result.Girders.Select(b=>new GH_Beam(b)).ToArray();var others=result.OtherMembers.Select(b=>new GH_Beam(b)).ToArray();
+        // Chain E (d): the same override on GPC (the drafts of the beams, the definitions of the composite sections, the states classified
+        // from the analysed GPC beams), attached to the outputs: the drafts Build Model will read. The FEM outputs stay for the FEM consumers.
+        try
+        {
+            var gpc=Common.Gpc.GpcStateOverride.Apply(beams.Select(b=>b.Gpc).ToArray(),ids,props.Select(p=>p.Definition).ToArray(),states,(BridgeActionBehavior)response,mixed,zero,mass);
+            if(gpc.Girders.Length!=girders.Length||gpc.OtherMembers.Length!=others.Length)throw new InvalidOperationException("GpcStateOverrideCountMismatch");
+            for(int i=0;i<girders.Length;i++)girders[i].AttachGpc(gpc.Girders[i]);
+            for(int i=0;i<others.Length;i++)others[i].AttachGpc(gpc.OtherMembers[i]);
+        }
+        catch(Exception ex) when(ex is ArgumentException or NotSupportedException or InvalidOperationException)
+        {AddRuntimeMessage(GH_RuntimeMessageLevel.Remark,"Bridge State Override on GPC not applied ("+ex.Message+"): the GPC beams are the conversion of the FEM outputs.");}
+        da.SetDataList(0,girders);da.SetDataList(1,others);da.SetDataList(2,result.Girders.Select(b=>b.BeamId));
         da.SetDataList(3,result.Girders.Select(b=>$"{b.BeamId} | {b.BeamProperty.Name} | {(b.Attributes.OfType<BridgeSectionStateAttributeModel>().Single().Value.ConcreteExcluded ? "cracked: steel + rebar" : "uncracked")}"));
         if(states.Any(s=>s.Sign==BeamMomentSign.Mixed))AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Mixed-sign beams assigned uniformly by explicit policy. Check sensitivity to common mesh refinement; this choice is not a general safety bound.");
     }

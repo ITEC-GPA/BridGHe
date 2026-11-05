@@ -11,6 +11,10 @@ public enum BeamMomentSign { Positive, Negative, Mixed, Zero, Missing }
 /// <summary>Classification of sampled FEM moments, not an automatic code cracking assessment.</summary>
 public sealed record BeamMomentState(BeamModel Source, BeamMomentSign Sign, double Minimum, double Maximum, string Case)
 {
+    /// <summary>Chain E (d): the analysed GPC beam the state was classified from (its analysed model with the results catalog), when the
+    /// beam had it (Decompose Model of an analysed model); the reference of Bridge State Override on GPC. Default otherwise.</summary>
+    public (BridGHe.Common.Gpc.GpcResultCatalog Catalog, GPC.Model.Models.Model Model, GPC.Model.Elements.BeamElement Beam) Analysed { get; init; }
+
     public override string ToString() => $"{Source.BeamId} | {Sign} | {Minimum:G6} .. {Maximum:G6} N mm | {Case}";
 }
 
@@ -38,7 +42,7 @@ public static class BeamMomentClassification
             {
                 // The rows of the case (the former written-back objects all had step 0 and no step type: one step).
                 var rows = Gpc.GpcResultRows.Beam(gpc.Catalog, gpc.Model, gpc.Beam).Where(r => gpc.Catalog.Entries[r.Entry].Label == loadCase).ToArray();
-                if (rows.Length == 0) return new BeamMomentState(b, BeamMomentSign.Missing, double.NaN, double.NaN, loadCase);
+                if (rows.Length == 0) return new BeamMomentState(b, BeamMomentSign.Missing, double.NaN, double.NaN, loadCase) { Analysed = gpc };
                 length = gpc.Catalog.Units.FromMm(gpc.Beam.Length);
                 stations = rows.Select(r => r.Station).OrderBy(s => s).ToArray();
                 moments = rows.Select(r => sign * (component == 1 ? r.Bending2 : r.Bending1)).ToArray();
@@ -60,7 +64,7 @@ public static class BeamMomentClassification
             double min = moments.Min(), max = moments.Max();
             var state = min < -tolerance ? (max > tolerance ? BeamMomentSign.Mixed : BeamMomentSign.Negative) :
                 max > tolerance ? BeamMomentSign.Positive : BeamMomentSign.Zero;
-            return new BeamMomentState(b, state, min, max, loadCase);
+            return new BeamMomentState(b, state, min, max, loadCase) { Analysed = gpc.Catalog != null && gpc.Beam != null ? gpc : default };
         }).ToArray();
     }
 }

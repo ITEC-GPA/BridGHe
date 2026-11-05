@@ -119,6 +119,35 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public GPC.Model.Elements.Element AnalysedGpc { get; set; }
         public GPC.Model.Models.Model AnalysedGpcModel { get; set; }
 
+        /// <summary>
+        /// Chain E (d): the GPC draft of this beam (L12 §5.4: the <see cref="GPC.Model.Elements.BeamElement"/> and its
+        /// <see cref="GPC.Checkers.CompositeBridge.BridgeBeamData"/>, definition units, no nodes): the one a GPC component attached to this FEM
+        /// value (<see cref="AttachGpc"/>, e.g. Bridge State Override on GPC), otherwise the per-value conversion of the FEM value
+        /// (<see cref="Common.Gpc.GpcBeamDrafts.FromFemm(BeamModel)"/>), once per value. A new FEM value (a modified copy) drops the attached
+        /// draft. Immutable by convention: whoever changes it makes a copy (<see cref="GPC.Model.Core.ModelValues.CopyValue{T}(T)"/>).
+        /// </summary>
+        public Common.Gpc.Legacy.LegacyBeamDraft Gpc
+        {
+            get
+            {
+                if (Value == null) return null;
+                if (_gpc == null || !ReferenceEquals(_gpcOf, Value)) { _gpc = Common.Gpc.GpcBeamDrafts.FromFemm(Value); _gpcOf = Value; HasAttachedGpc = false; }
+                return _gpc;
+            }
+        }
+
+        /// <summary>True when <see cref="Gpc"/> is a draft attached by a GPC component (not the conversion of the FEM value).</summary>
+        public bool HasAttachedGpc { get; private set; }
+
+        /// <summary>Attaches the GPC draft built on GPC for the current FEM value (it must describe it: the native gates compare the two).</summary>
+        public void AttachGpc(Common.Gpc.Legacy.LegacyBeamDraft draft)
+        {
+            _gpc = draft ?? throw new ArgumentNullException(nameof(draft)); _gpcOf = Value; HasAttachedGpc = true;
+        }
+
+        private Common.Gpc.Legacy.LegacyBeamDraft _gpc;
+        private BeamModel _gpcOf;
+
 
         #endregion
 

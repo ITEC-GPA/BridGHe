@@ -116,6 +116,11 @@ namespace BridGHe.Common.Gpc.Legacy
     /// <summary>F6 chain D: a former beam property converted on its own (<see cref="LegacyModelImport.BeamProperty"/>).</summary>
     public sealed record LegacyBeamProperty(BeamProperty Property, LegacyBeamPropertyData Data);
 
+    /// <summary>Chain E (d): the GPC draft of one former beam value (<see cref="LegacyModelImport.BeamDraft"/>): the beam (no nodes, definition
+    /// units), its bridge data (null: none), its BridGHe angle (degrees), the data of its property (formulation, principal angle, native section,
+    /// signature) and the report of the conversion (warnings, data carried but not converted).</summary>
+    public sealed record LegacyBeamDraft(BeamElement Beam, GPC.Checkers.CompositeBridge.BridgeBeamData Bridge, double AngleDeg, LegacyBeamPropertyData Property, LegacyImportReport Report);
+
     /// <summary>Converts a former BridGHe FEM model (BGHA1 archive, read as data by <see cref="LegacyArchive"/>) into a GPC
     /// model in N-mm with the semantics of the former Straus7 exporter: node order and numbering, node merging by tolerance
     /// at the beam and link ends, load-case set with the default "Dead" self-weight case, one group per element.
@@ -211,31 +216,9 @@ namespace BridGHe.Common.Gpc.Legacy
                     properties.Add(propertyName, p = (converted.Property, converted.Data.Formulation, converted.Data.Angle, signature, converted.Data.Native));
                 }
                 else if (p.Signature != signature) { report.Warnings.Add(string.Format(LegacyImportReport.ExistingPropertyWarning, propertyName)); report.ShadowedPropertyBeams.Add(k + 1); }
-                var start = gpcNodes[i].Position; var end = gpcNodes[j].Position;
-                var beam = new BeamElement(GpcIdentity.Derive(owner, "beam:" + k), start, end, p.Property, null, beamId, k + 1)
-                { Source = new SourceIdentity(Program, owner.ToString("D"), EntityFamily.Beam, beamId.Length != 0 ? beamId : (k + 1).ToString()) };
-                beam.ConnectNodes(gpcNodes[i], gpcNodes[j]);
+                var beam = Beam(b, k, GpcIdentity.Derive(owner, "beam:" + k), owner, gpcNodes[i].Position, gpcNodes[j].Position, p.Property, p.Formulation, p.Angle,
+                    created => created.ConnectNodes(gpcNodes[i], gpcNodes[j]), GroupOf, cases, units, report, members, femPropertySignature);
                 if (p.Native != null) report.NativeSections.Add(beam.Guid, p.Native);
-                double angleDeg = b.Double("Angle");
-                report.BeamAngles[k + 1] = angleDeg;
-                var section = GpcBeamAxes.Section(start, end, angleDeg, p.Angle);
-                var principal = GpcBeamAxes.Principal(start, end, angleDeg);
-                beam.Assignments.Formulation = p.Formulation;
-                beam.Assignments.SectionAxes = section;
-                var offset = b["Offset"]; double ox = units.ToMm(offset.Double("X")), oy = units.ToMm(offset.Double("Y"));
-                var globalOffset = principal.V1 * ox + principal.V2 * oy;
-                if (ox != 0 || oy != 0)
-                {
-                    beam.Assignments.OffsetAxes = principal;
-                    beam.Assignments.OffsetI = new Vector3d(ox, oy, 0); beam.Assignments.OffsetJ = new Vector3d(ox, oy, 0);
-                }
-                var bg = b.Field("Groups").Items;
-                if (bg.Count > 0) beam.AddGroup(GroupOf(bg[0]));
-                if (bg.Count > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Beam, k + 1, $"Straus7 allows assigning only one single group to the beam {k + 1}", numberInText: true);
-                BeamData(b, beam, principal, globalOffset, cases, units, report, members);
-                // The former result reader asked Straus7 for at least 5 stations per beam unless the beam had an output-stations attribute.
-                (beam.Assignments.Physical ??= new BeamPhysicalData()).MinimumOutputStations ??= 5;
-                SectionState(b, k, beam, femPropertySignature, report);
                 model.BeamElements.Add(beam);
             }
 
@@ -320,6 +303,96 @@ namespace BridGHe.Common.Gpc.Legacy
             return model;
         }
 
+        /// <summary>
+        /// One former beam as a GPC beam (the body of the beam loop of <see cref="Import"/>, chain E (d): also the conversion of a single beam
+        /// value, <see cref="BeamDraft"/>): on the given ends and property, connected by <paramref name="connect"/> right after its creation;
+        /// formulation, section axes from the BridGHe angle and the principal angle of the property, offsets in the principal axes, the first
+        /// group, attributes, loads in its assignments, physical data, at least 5 output stations, the local section state.
+        /// </summary>
+        private static BeamElement Beam(LegacyValue b, int k, Guid guid, Guid owner, Point3d start, Point3d end, BeamProperty property, BeamFormulation formulation,
+            double principalAngle, Action<BeamElement> connect, Func<LegacyValue, Group> groupOf, Dictionary<string, LoadCaseBase> cases, BridgeUnits units,
+            LegacyImportReport report, BridgeMembers members, Func<int, string> femPropertySignature)
+        {
+            string beamId = b.String("BeamId") ?? "";
+            var beam = new BeamElement(guid, start, end, property, null, beamId, k + 1)
+            { Source = new SourceIdentity(Program, owner.ToString("D"), EntityFamily.Beam, beamId.Length != 0 ? beamId : (k + 1).ToString()) };
+            connect?.Invoke(beam);
+            double angleDeg = b.Double("Angle");
+            report.BeamAngles[k + 1] = angleDeg;
+            var section = GpcBeamAxes.Section(start, end, angleDeg, principalAngle);
+            var principal = GpcBeamAxes.Principal(start, end, angleDeg);
+            beam.Assignments.Formulation = formulation;
+            beam.Assignments.SectionAxes = section;
+            var offset = b["Offset"]; double ox = units.ToMm(offset.Double("X")), oy = units.ToMm(offset.Double("Y"));
+            var globalOffset = principal.V1 * ox + principal.V2 * oy;
+            if (ox != 0 || oy != 0)
+            {
+                beam.Assignments.OffsetAxes = principal;
+                beam.Assignments.OffsetI = new Vector3d(ox, oy, 0); beam.Assignments.OffsetJ = new Vector3d(ox, oy, 0);
+            }
+            var bg = b.Field("Groups").Items;
+            if (bg.Count > 0) beam.AddGroup(groupOf(bg[0]));
+            if (bg.Count > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Beam, k + 1, $"Straus7 allows assigning only one single group to the beam {k + 1}", numberInText: true);
+            BeamData(b, beam, principal, globalOffset, cases, units, report, members);
+            // The former result reader asked Straus7 for at least 5 stations per beam unless the beam had an output-stations attribute.
+            (beam.Assignments.Physical ??= new BeamPhysicalData()).MinimumOutputStations ??= 5;
+            SectionState(b, k, beam, femPropertySignature, report);
+            return beam;
+        }
+
+        /// <summary>
+        /// Chain E (d): the draft of one former beam value (a <c>GH_Beam</c> datum upstream of Build Model): the GPC beam with the rules of the
+        /// conversion of a whole model (<see cref="Beam"/>), without nodes (its own ends), number 1, its property converted on its own
+        /// (<see cref="BeamProperty(LegacyValue, BridgeUnits)"/>: name as given), its groups by full name (<see cref="GpcIdentity.Group"/>, with
+        /// their parents), the cases of its loads by name (<see cref="GpcIdentity.Case"/>, as the cases of a whole model), and its bridge data
+        /// (member, super element, local section state; L12) in <see cref="LegacyBeamDraft.Bridge"/>. Dimensions in the definition
+        /// <paramref name="units"/> (identity for a draft: Build Model normalises). <paramref name="femPropertySignature"/>: the former section-state
+        /// signature of its property (a state whose signature differs is stale); null: a state is current.
+        /// </summary>
+        public static LegacyBeamDraft BeamDraft(LegacyValue b, BridgeUnits units, Guid guid, string femPropertySignature = null)
+        {
+            if (b == null || b.IsNull || !b.Is("BeamModel")) throw new ArgumentException("LegacyBeamModelExpected");
+            var report = new LegacyImportReport { Units = units, Owner = guid, Bridge = new GPC.Checkers.CompositeBridge.BridgeModelData() };
+            var property = BeamProperty(b["BeamProperty"], units);
+            var groups = new Dictionary<string, Group>(StringComparer.Ordinal);
+            Group GroupOf(LegacyValue g)
+            {
+                string full = FullName(g);
+                if (groups.TryGetValue(full, out var known)) return known;
+                var parent = g["Parent"].IsNull ? null : GroupOf(g["Parent"]);
+                var group = Group.Create(GpcIdentity.Group(full), full);
+                parent?.AddChild(group);
+                groups.Add(full, group);
+                return group;
+            }
+            var first = new Dictionary<string, LegacyValue>(StringComparer.Ordinal);
+            foreach (var c in b.Field("Loads").Items.Select(l => l.Field("LoadCase")))
+            {
+                string name = c.String("Name");
+                if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Caso di carico nullo o senza nome.");
+                if (!first.TryGetValue(name, out var known)) first.Add(name, c);
+                else if (!SameCase(known, c)) throw new ArgumentException("Definizioni incompatibili per il caso di carico " + name);
+            }
+            var cases = first.ToDictionary(pair => pair.Key, pair => Case(pair.Key, pair.Value), StringComparer.Ordinal);
+            var beam = Beam(b, 0, guid, guid, Point(b["PointFrom"], units), Point(b["PointTo"], units), property.Property, property.Data.Formulation, property.Data.Angle,
+                null, GroupOf, cases, units, report, new BridgeMembers(report.Bridge), femPropertySignature == null ? null : _ => femPropertySignature);
+            return new LegacyBeamDraft(beam, report.Bridge.Beam(beam.Guid), b.Double("Angle"), property.Data, report);
+        }
+
+        /// <summary>The GPC case of a former load case (null: the default "Dead" case): self weight with gravity, the masses of its inertia
+        /// loads; the identity by name. Model loads (gravity) are added by the caller.</summary>
+        private static LoadCaseBase Case(string name, LegacyValue c)
+        {
+            bool dead = c == null && name == "Dead";
+            bool gravity = dead || c != null && c.Enum("GlobalInertiaLoad") == "Gravity";
+            if (c != null && c.Enum("GlobalInertiaLoad") != "Gravity" && c.Enum("GlobalInertiaLoad") != "None")
+                throw new NotSupportedException("LegacyInertiaLoadNotMappedYet: " + c.Enum("GlobalInertiaLoad"));
+            LoadCaseBase gpc = gravity ? new LoadCase(GpcIdentity.Case(name), name, LoadCase.LoadCaseTypes.SelfWeight) : new LoadCaseBase(GpcIdentity.Case(name), name);
+            bool structural = dead || c != null && c.Bool("StructuralMassAcceleration"), nonStructural = c != null && c.Bool("NonStructuralMassAcceleration");
+            gpc.InertiaMasses = new InertiaMassSelection { Structural = structural, NonStructural = nonStructural };
+            return gpc;
+        }
+
         /// <summary>The former case set: model cases (not generated by moving loads), the cases of element loads and of the
         /// combinations, grouped by name; the default "Dead" case (self weight along −Z, 9806.65 mm/s², structural mass);
         /// numbering by name with Dead first (the writer numbers by ordinal name).</summary>
@@ -371,13 +444,8 @@ namespace BridGHe.Common.Gpc.Legacy
                 var c = pair.Value;
                 bool dead = c == null && pair.Key == "Dead";
                 bool gravity = dead || c != null && c.Enum("GlobalInertiaLoad") == "Gravity";
-                if (c != null && c.Enum("GlobalInertiaLoad") != "Gravity" && c.Enum("GlobalInertiaLoad") != "None")
-                    throw new NotSupportedException("LegacyInertiaLoadNotMappedYet: " + c.Enum("GlobalInertiaLoad"));
+                var gpc = Case(pair.Key, c);
                 if (c != null && (c.Double("Temperature") != 0 || c.Has("Stages") && c.Field("Stages").Items.Count != 0)) report.Carry("Load case temperature or stage list (not exported by the former writer)");
-                LoadCaseBase gpc = gravity ? new LoadCase(GpcIdentity.Case(pair.Key), pair.Key, LoadCase.LoadCaseTypes.SelfWeight)
-                    : new LoadCaseBase(GpcIdentity.Case(pair.Key), pair.Key);
-                bool structural = dead || c != null && c.Bool("StructuralMassAcceleration"), nonStructural = c != null && c.Bool("NonStructuralMassAcceleration");
-                gpc.InertiaMasses = new InertiaMassSelection { Structural = structural, NonStructural = nonStructural };
                 model.LoadCases.Add(gpc.Name, gpc);
                 if (gravity)
                 {
