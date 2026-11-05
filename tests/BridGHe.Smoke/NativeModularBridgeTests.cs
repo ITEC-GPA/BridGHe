@@ -126,7 +126,7 @@ internal static class NativeModularBridgeTests
         C5WorkflowComparison.RequireGpcChecks(Output(merge,"Model").VolatileData.AllData(true).Single(),model,checks,true);
         GpcMergeCheck.Require(merge,"99");
         GpcBridgeComparison.RequireComponent(merge,"99");
-        GpcBridgeComparison.RequireGpcLinks(doc,"99");
+        GpcBridgeComparison.RequireGpcLinks(doc,"99"); BarLayoutMeasurement.Report(doc,"99");
         foreach(var check in checks) GpcSecForcesCheck.Require(check,"99");
 #endif
         ResultFingerprint.Mark("modular checks, details and plots solved");ResultFingerprint.Write("modular-"+Path.GetFileNameWithoutExtension(source),doc);
