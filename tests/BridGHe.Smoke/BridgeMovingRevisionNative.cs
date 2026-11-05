@@ -98,7 +98,7 @@ internal static class BridgeMovingRevisionNative
         GpcBridgeComparison.RequireComponent(merge,"50");
         GpcBridgeComparison.RequireGpcLinks(doc,"50");
         GpcInputComparison.RequireComponents(doc,"50");
-        GpcSecForcesCheck.Require(checker,"50");
+        GpcSecForcesCheck.Require(checker,"50"); GpcCompositeSectionChecks.RequireSuperElementCheck(checker,"50");
         GpcSecForcesCheck.RequireGirders(doc,"50");
         GpcSecForcesCheck.RequireMomentDispatch(doc,"50"); BarLayoutMeasurement.Report(doc,"50"); CompositeAnalysisPropertyChecks.Require(doc,"50");
 #endif

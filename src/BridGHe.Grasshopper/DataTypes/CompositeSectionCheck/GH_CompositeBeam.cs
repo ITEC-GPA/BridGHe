@@ -112,12 +112,43 @@ namespace BridGHe.Grasshopper.DataTypes
             //_groups = beam._groups;
             Value = new CompositeBeamModel(beam.Value);
             AnalysedGpc = beam.AnalysedGpc; AnalysedGpcModel = beam.AnalysedGpcModel;
+            _startDefinition = beam._startDefinition; _endDefinition = beam._endDefinition;
         }
 
         /// <summary>F6 (a)/(b), chain C: the beam of the GPC bridge model this composite beam was made from and that model (set by Composite
         /// Beam from a beam of Super Element Filter or Decompose Model of a Build BridGHe Model output); null otherwise. Shared by copies.</summary>
         public GPC.Model.Elements.Element AnalysedGpc { get; set; }
         public GPC.Model.Models.Model AnalysedGpcModel { get; set; }
+
+        /// <summary>
+        /// Chain E (c): the composite sections of the start and of the end of the beam as the GPC contracts of the Checker
+        /// (<see cref="GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition"/>), what Super Element Check, Composite Beam Linear Tension
+        /// Analysis and the preview read (the FEM properties of <see cref="GH_Goo{T}.Value"/> go with the FeMM models). Composite Beam sets them
+        /// to the definitions of its two <see cref="GH_CompositeBeamProperty"/> inputs (<see cref="GH_CompositeBeamProperty.Definition"/>);
+        /// without them (a beam read from a document or made elsewhere) they are built once from the FEM properties with the same rule (steel H
+        /// named by the property). Shared by copies (the definitions are values).
+        /// </summary>
+        public GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition StartDefinition
+        {
+            get => _startDefinition ??= Value?.StartBeamProperty == null ? null : Common.Gpc.GpcCompositeSections.Definition(Value.StartBeamProperty, Value.StartBeamProperty.Name);
+            set => _startDefinition = value;
+        }
+
+        /// <inheritdoc cref="StartDefinition"/>
+        public GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition EndDefinition
+        {
+            get
+            {
+                if (_endDefinition != null) return _endDefinition;
+                if (Value?.EndBeamProperty == null) return null;
+                // The same property at both ends (Composite Beam without Section End): the same definition.
+                return _endDefinition = ReferenceEquals(Value.EndBeamProperty, Value.StartBeamProperty) ? StartDefinition
+                    : Common.Gpc.GpcCompositeSections.Definition(Value.EndBeamProperty, Value.EndBeamProperty.Name);
+            }
+            set => _endDefinition = value;
+        }
+
+        private GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition _startDefinition, _endDefinition;
 
         #endregion
 
@@ -132,7 +163,17 @@ namespace BridGHe.Grasshopper.DataTypes
 
         public void DrawViewportWires(GH_PreviewWireArgs args)
         {
-            if (Display.ModelPreview.Automatic) Display.ModelPreview.Wires(Value,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current);
+            if (Display.ModelPreview.Automatic) Display.ModelPreview.SectionWires(Value,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current,PreviewSections);
+        }
+
+        /// <summary>Chain E (c): the definitions the preview draws (none when they cannot be built: the preview then reads the FEM value).</summary>
+        public Display.ModelPreview.CompositeSections PreviewSections
+        {
+            get
+            {
+                try { return new Display.ModelPreview.CompositeSections(StartDefinition, EndDefinition); }
+                catch (Exception ex) when (ex is ArgumentException or NotSupportedException or InvalidOperationException) { return default; }
+            }
         }
 
         #endregion
@@ -189,7 +230,7 @@ namespace BridGHe.Grasshopper.DataTypes
             GH_CompositeBeam copy = new GH_CompositeBeam
             {
                 _guid = this._guid, AnalysedGpc = AnalysedGpc, AnalysedGpcModel = AnalysedGpcModel,
-                Value = Common.Helpers.ModelArchive.Clone(Value)
+                Value = Common.Helpers.ModelArchive.Clone(Value), _startDefinition = _startDefinition, _endDefinition = _endDefinition
             };
             return copy;
         }
@@ -209,7 +250,7 @@ namespace BridGHe.Grasshopper.DataTypes
 
         public override bool Read(GH_IReader reader)
         {
-            try { _guid = reader.GetGuid("Guid"); Value = Common.Helpers.ModelArchive.Read<CompositeBeamModel>(reader.GetByteArray("Data")); return true; }
+            try { _guid = reader.GetGuid("Guid"); Value = Common.Helpers.ModelArchive.Read<CompositeBeamModel>(reader.GetByteArray("Data")); _startDefinition = _endDefinition = null; return true; }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
         }
 

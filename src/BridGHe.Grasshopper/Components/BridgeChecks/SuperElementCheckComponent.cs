@@ -155,7 +155,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     Common.Checks.GpcBridgeChecks d3 = null;
                     if (gpcBridge != null && model.Value.BridgeWorkflow != null)
                     {
-                        var excluded = workflowPath ? null : beams.Where(b => !b.Value.StartBeamProperty.ConsiderConcrete).Select(b => b.Value.BeamId).ToArray();
+                        var excluded = workflowPath ? null : beams.Where(b => !Start(b).ConsiderConcrete).Select(b => b.Value.BeamId).ToArray();
                         d3 = new Common.Checks.GpcBridgeChecks(gpcBridge, excluded); // P2T request 3: the GPC bridge model alone
                         var missing = beams.Where(b => !d3.Has(b.Value.BeamId) || gpcBridge.SamplesOf(b.Value.BeamId) == null).Select(b => b.Value.BeamId).ToArray();
                         if (missing.Length > 0) throw new InvalidOperationException("Travi assenti dal modello di ponte GPC: " + string.Join(", ", missing));
@@ -166,8 +166,6 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     for (int i = 0; i < beams.Count; i++)
                     {
                         GH_CompositeBeam beam = beams[i];
-
-                        bool constantSection = Common.Gpc.GpcCompositeSections.IsConstant(beam.Value.StartBeamProperty, beam.Value.EndBeamProperty);
 
                         var samples = GpcSamples(beam);
                         var normStationsSet = (samples != null ? samples.Select(s => Math.Clamp(s.Sample.Station / beam.Value.Length, 0, 1))
@@ -182,13 +180,19 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                         definitions[i] = new GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition[stations.Count];
                         // F6 (L11): the section of the checks as the GPC contract of the Checker (BridgeCompositeSectionDefinition, built with the
                         // rules of this component by GpcCompositeSections); the D3 path takes the input of the H bridge engine from it
-                        // (SectionInput), BridGHe's phases (fallback) an adapter on the same section.
+                        // (SectionInput), BridGHe's phases (fallback) an adapter on the same section. Chain E (c): from the definitions the
+                        // composite beam carries (start and end): a constant section is the start definition itself (steel H named by the
+                        // composite property; the H name is not in the input of the engine nor in the results), a variable one interpolated
+                        // from the two definitions at each station.
+                        bool constantSection = false;
                         try
                         {
-                            var constant = constantSection ? Common.Gpc.GpcCompositeSections.Definition(beam.Value.StartBeamProperty, beam.Value.BeamId) : null;
+                            var start = Start(beam); var end = End(beam);
+                            constantSection = Common.Gpc.GpcCompositeSections.IsConstant(start, end);
+                            var constant = constantSection ? start : null;
                             for (int k = 0; k < stations.Count; k++)
                             {
-                                var definition = constant ?? Common.Gpc.GpcCompositeSections.Definition(beam.Value.StartBeamProperty, beam.Value.EndBeamProperty, stations[k], beam.Value.BeamId);
+                                var definition = constant ?? Common.Gpc.GpcCompositeSections.Definition(start, end, stations[k]);
                                 var section = definition.Section;
                                 var steel = section.SteelSections[0].Section.SteelMaterial; var concrete = section.ConcreteMaterial;
                                 psis[i][k] = (CalculateHomogenizedFactorPhi(definition.NLongTerm, steel, concrete), CalculateHomogenizedFactorPhi(definition.NShortTerm, steel, concrete),
@@ -296,6 +300,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     {
                         int i = stationTasks[n].Beam, j = stationTasks[n].Station;
                         var beam = beams[i].Value;
+                        var startSection = Start(beams[i]); // the choices (Consider Concrete / Rebar) of the start, as before
                         {
                             var checker = sectionCheckers[i];
                             double psiInfinite = psis[i][j].psiInfinite;
@@ -306,7 +311,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                             (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage) force = forces[i][j];
                             if (d3 != null)
                             {
-                                stressAnalysisResults[i][j] = d3.Calculate(beam.BeamId, workflowStations[i][j], definitions[i][j].SectionInput(beam.StartBeamProperty.ConsiderRebar, analysisOptions),
+                                stressAnalysisResults[i][j] = d3.Calculate(beam.BeamId, workflowStations[i][j], definitions[i][j].SectionInput(startSection.ConsiderRebar, analysisOptions),
                                     psiInfinite, psiInstant, psis[i][j].psiShrinkage);
                                 tauBResults[i][j] = Enumerable.Repeat(double.NaN, model.Value.LoadCombinations.Count).ToArray();
                                 return;
@@ -315,12 +320,12 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                                 model.Value.BridgeWorkflow?.Phases.Any(p => p.Actions.Any(a => a.HasLocalSectionStates)) == true)
                             {
                                 stressAnalysisResults[i][j] = checker[j].AnalyzeWorkflow(model.Value.BridgeWorkflow,
-                                    workflowIndexes[i], workflowStations[i][j], model.Value.LoadCombinations, psiInfinite, psiInstant, psis[i][j].psiShrinkage, beam.StartBeamProperty.ConsiderRebar);
+                                    workflowIndexes[i], workflowStations[i][j], model.Value.LoadCombinations, psiInfinite, psiInstant, psis[i][j].psiShrinkage, startSection.ConsiderRebar);
                                 tauBResults[i][j] = Enumerable.Repeat(double.NaN, model.Value.LoadCombinations.Count).ToArray();
                                 return;
                             }
                             bool res = checker[j].GetLinearAnalysisResultByStages(out StressAnalysisResult[] result, out double[] tauB, psiInfinite, psiInstant, force.OnlySteel,
-                                force.NInfinite, force.Ninstant, beam.StartBeamProperty.ConsiderConcrete, strainInfinite, strainIstant, beam.StartBeamProperty.ConsiderRebar, psis[i][j].psiShrinkage, force.NShrinkage);
+                                force.NInfinite, force.Ninstant, startSection.ConsiderConcrete, strainInfinite, strainIstant, startSection.ConsiderRebar, psis[i][j].psiShrinkage, force.NShrinkage);
 
                             if (res)
                             {
@@ -392,6 +397,16 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             }
 
             _run = false;
+        }
+
+        /// <summary>Chain E (c): the composite section of the start (end) of the beam as the definition it carries; a definition that cannot be
+        /// built is the error of the section of the super element, as before.</summary>
+        private static GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition Start(GH_CompositeBeam beam) => Section(beam, true);
+        private static GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition End(GH_CompositeBeam beam) => Section(beam, false);
+        private static GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition Section(GH_CompositeBeam beam, bool start)
+        {
+            try { return (start ? beam.StartDefinition : beam.EndDefinition) ?? throw new InvalidOperationException("composite beam without its composite sections"); }
+            catch (Exception ex) { throw new InvalidOperationException($"Sezione del superelemento {beam.Value?.BeamId}: {ex.Message}", ex); }
         }
 
         protected double CalculateHomogenizedFactorPhi(double n, SteelMaterial steelMaterial, ConcreteMaterial concreteMaterial)

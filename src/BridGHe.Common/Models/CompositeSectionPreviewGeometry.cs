@@ -18,6 +18,22 @@ namespace BridGHe.Common.Models
             Slab = Helpers.ModelArchive.Clone(property.ConcreteSection);
         }
 
+        /// <summary>Chain E (c): the outlines of a composite section from its definition (the steel H, the slab, the rows of bars as given), the
+        /// preview of a composite beam that carries its definitions: the same outlines and bar lines as from the composite property
+        /// (<c>gpc-composite-sections</c> compares them bit for bit).</summary>
+        public CompositeSectionPreviewGeometry(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition definition)
+        {
+            if (definition == null) throw new ArgumentNullException(nameof(definition));
+            var section = definition.Section; var h = (GPC.Model.Sections.SectionH)section.SteelSections[0].Section.SectionShape; var rows = definition.RebarRows;
+            Steel = new SectionModel(h.Name)
+            {
+                Name = h.Name, SectionType = SectionModel.SectionTypes.I, D = h.Height, B1 = h.LenghtBottomFlange, T1 = h.ThicknessBottomFlange,
+                B2 = h.LenghtTopFlange, T2 = h.ThicknessTopFlange, T3 = h.ThicknessWeb,
+            };
+            Steel.CalculateSection();
+            Slab = new SectionConcreteSlabModel(section.Height, section.Width, rows?.TopAreaMm2 ?? 0, rows?.TopCoverMm ?? 0, rows?.BottomAreaMm2 ?? 0, rows?.BottomCoverMm ?? 0);
+        }
+
         public CompositeSectionPreviewGeometry Clone() => Helpers.ModelArchive.Clone(this);
 
         public IEnumerable<PolylineCurve> Outlines()

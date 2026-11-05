@@ -42,18 +42,20 @@ namespace BridGHe.Grasshopper.Components.Preview
     public sealed class PreviewModelComponent : GH_Component
     {
         private readonly List<object> values=new();
+        // Chain E (c): the definitions of the composite beams previewed (their GH type), by value.
+        private readonly Dictionary<object,ModelPreview.CompositeSections> composites=new(ReferenceEqualityComparer.Instance);
         private DisplayOptions local;
         public PreviewModelComponent():base("Preview BridGHe Model","Preview","Preview models or individual elements with optional local settings. Disable automatic preview in the BridGHe menu to avoid overlapping upstream previews.",CategoryNameConstants.CATEGORY_MODEL,CategoryNameConstants.SUBCATEGORY_PREVIEW){}
         protected override void RegisterInputParams(GH_InputParamManager p){p.AddGenericParameter("Model / elements","M","Models, beams, composite beams, nodes, plates or moving paths",GH_ParamAccess.list);p.AddGenericParameter("Settings","S","Optional local Display Settings; otherwise follows global settings",GH_ParamAccess.item);p[1].Optional=true;}
         protected override void RegisterOutputParams(GH_OutputParamManager p)=>p.AddTextParameter("Info","I","Preview item count (does not alter model data)",GH_ParamAccess.item);
-        protected override void BeforeSolveInstance(){values.Clear();local=null;}
+        protected override void BeforeSolveInstance(){values.Clear();composites.Clear();local=null;}
         protected override void SolveInstance(IGH_DataAccess da)
         {
             var goos=new List<IGH_Goo>();if(!da.GetDataList(0,goos))return;
             object settings=null;da.GetData(1,ref settings);if(settings is IGH_Goo g)settings=g.ScriptVariable();
             if(settings!=null && settings is not DisplayOptions){AddRuntimeMessage(GH_RuntimeMessageLevel.Error,"Connect Display Settings.");return;}
             local=(DisplayOptions)settings;
-            foreach(var goo in goos){var value=goo?.ScriptVariable();if(value is ModelModel or ElementModel or MovingPath)values.Add(value);else AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Unsupported preview value: "+goo?.TypeName);}
+            foreach(var goo in goos){var value=goo?.ScriptVariable();if(goo is DataTypes.GH_CompositeBeam composite && value!=null)composites[value]=composite.PreviewSections;if(value is ModelModel or ElementModel or MovingPath)values.Add(value);else AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Unsupported preview value: "+goo?.TypeName);}
             da.SetData(0,$"{values.Count} objects; physical section outlines and schematic reinforcement rows.");
         }
         public override bool IsPreviewCapable=>true;
@@ -65,7 +67,7 @@ namespace BridGHe.Grasshopper.Components.Preview
         public override void DrawViewportWires(IGH_PreviewArgs args)
         {
             if(Hidden || Locked)return;var options=local??DisplayPreferences.Current;
-            foreach(var value in values){foreach(var e in ModelPreview.Elements(value))ModelPreview.Wires(e,args.Display,args.Viewport,args.WireColour,options);foreach(var path in Paths(value))ModelPreview.Moving(path,args.Display,args.WireColour,options);}
+            foreach(var value in values){foreach(var e in ModelPreview.Elements(value))ModelPreview.SectionWires(e,args.Display,args.Viewport,args.WireColour,options,composites.TryGetValue(e,out var sections)?sections:default);foreach(var path in Paths(value))ModelPreview.Moving(path,args.Display,args.WireColour,options);}
         }
         public override void DrawViewportMeshes(IGH_PreviewArgs args)
         {if(Hidden || Locked)return;foreach(var value in values)foreach(var e in ModelPreview.Elements(value))ModelPreview.Meshes(e,args.Display,local??DisplayPreferences.Current);}

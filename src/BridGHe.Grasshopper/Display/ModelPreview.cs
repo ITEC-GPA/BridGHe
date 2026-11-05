@@ -14,7 +14,14 @@ namespace BridGHe.Grasshopper.Display
 {
     public static class ModelPreview
     {
-        private sealed class Cached { public long Revision=-1; public CompositeSectionPreviewGeometry Start, End; public BeamModel Beam; }
+        private sealed class Cached { public long Revision=-1; public object StartKey, EndKey; public CompositeSectionPreviewGeometry Start, End; public BeamModel Beam; }
+        /// <summary>Chain E (c): the composite sections of a composite beam (its definitions), what the preview of the beam reads; without them
+        /// (a composite beam value without its GH type) the FEM properties of the value, until the FeMM models go.</summary>
+        public readonly record struct CompositeSections(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition Start, GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition End)
+        {
+            public bool Complete => Start != null && End != null;
+        }
+        private static readonly MaterialModel previewMaterial = new MaterialModel("BridGHe preview");
         private static readonly ConditionalWeakTable<CompositeBeamModel,Cached> composites=new();
         public static bool Automatic => DisplayPreferences.Current.Enabled && DisplayPreferences.Current.Automatic;
         public static Brep[] Shapes(ElementModel element) => element switch
@@ -28,38 +35,45 @@ namespace BridGHe.Grasshopper.Display
             switch(element){case NodeModel n:box.Union(n.Position);break;case BeamModel b:box.Union(b.PointFrom);box.Union(b.PointTo);break;case CompositeBeamModel b:box.Union(b.PointFrom);box.Union(b.PointTo);break;}
             return box;
         }
-        private static Cached Cache(CompositeBeamModel beam)
+        private static bool HasSections(CompositeBeamModel beam,CompositeSections sections)=>sections.Complete || beam.StartBeamProperty!=null && beam.EndBeamProperty!=null;
+        private static Cached Cache(CompositeBeamModel beam,CompositeSections sections)
         {
             var c=composites.GetOrCreateValue(beam);
-            if(c.Revision!=beam.GeometryRevision)
+            object startKey=sections.Complete?sections.Start:beam.StartBeamProperty, endKey=sections.Complete?sections.End:beam.EndBeamProperty;
+            if(c.Revision!=beam.GeometryRevision || !ReferenceEquals(c.StartKey,startKey) || !ReferenceEquals(c.EndKey,endKey))
             {
-                c.Start=new(beam.StartBeamProperty);c.End=new(beam.EndBeamProperty);
-                c.Beam=new BeamModel(beam.BeamId,beam.PointFrom,beam.PointTo,new BeamPropertyModel{Section=c.Start.Steel,Material=beam.StartBeamProperty.SteelMaterial,PropertyType=BeamPropertyType.Beam});
-                c.Revision=beam.GeometryRevision;
+                if(sections.Complete){c.Start=new(sections.Start);c.End=ReferenceEquals(sections.Start,sections.End)?c.Start:new(sections.End);}
+                else{c.Start=new(beam.StartBeamProperty);c.End=new(beam.EndBeamProperty);}
+                // The beam that draws the loads and the attributes: its axes and ends (the material is not drawn).
+                c.Beam=new BeamModel(beam.BeamId,beam.PointFrom,beam.PointTo,new BeamPropertyModel{Section=c.Start.Steel,Material=previewMaterial,PropertyType=BeamPropertyType.Beam});
+                c.Revision=beam.GeometryRevision;c.StartKey=startKey;c.EndKey=endKey;
             }
             return c;
         }
-        public static Line[] ReinforcementLines(ElementModel element)
+        public static Line[] ReinforcementLines(ElementModel element) => SectionReinforcementLines(element,default);
+        public static Line[] SectionReinforcementLines(ElementModel element,CompositeSections sections)
         {
             CompositeSectionPreviewGeometry start,end;Transform transform;Vector3d length;Vector2d offset=Vector2d.Zero;
             if(element is BeamModel b && b.BeamProperty?.Section?.CompositePreview is {} preview)
             {start=end=preview;b.GetLocalAxes(false,out _,out _,out _,out transform);length=b.PointTo-b.PointFrom;offset=b.Offset;}
-            else if(element is CompositeBeamModel c && c.StartBeamProperty!=null && c.EndBeamProperty!=null)
-            {var cache=Cache(c);start=cache.Start;end=cache.End;c.GetLocalAxes(out _,out _,out _,out transform);length=c.PointTo-c.PointFrom;}
+            else if(element is CompositeBeamModel c && HasSections(c,sections))
+            {var cache=Cache(c,sections);start=cache.Start;end=cache.End;c.GetLocalAxes(out _,out _,out _,out transform);length=c.PointTo-c.PointFrom;}
             else return Array.Empty<Line>();
             var lines=new List<Line>();
             foreach(bool top in new[]{true,false})if(start.HasRow(top)||end.HasRow(top))for(int i=0;i<3;i++)
             {var a=start.RebarPoint(top,i);var z=end.RebarPoint(top,i);a+=new Vector3d(offset.X,offset.Y,0);z+=new Vector3d(offset.X,offset.Y,0);a.Transform(transform);z.Transform(transform);z+=length;lines.Add(new Line(a,z));}
             return lines.ToArray();
         }
-        public static void Wires(ElementModel element,DisplayPipeline pipeline,RhinoViewport viewport,Color color,DisplayOptions options)
+        public static void Wires(ElementModel element,DisplayPipeline pipeline,RhinoViewport viewport,Color color,DisplayOptions options) => SectionWires(element,pipeline,viewport,color,options,default);
+        /// <summary>Chain E (c): <see cref="Wires(ElementModel, DisplayPipeline, RhinoViewport, Color, DisplayOptions)"/> of a composite beam with its definitions.</summary>
+        public static void SectionWires(ElementModel element,DisplayPipeline pipeline,RhinoViewport viewport,Color color,DisplayOptions options,CompositeSections sections)
         {
             if(element==null || !options.Enabled || !DisplayPreferences.Current.Enabled)return;
             if(options.Geometry)element.DrawWireframe(pipeline,viewport,color);
             bool composite=element is CompositeBeamModel || element is BeamModel cb && cb.BeamProperty?.Section?.CompositePreview!=null;
             if(options.Sections){var shapes=Shapes(element);for(int i=0;i<shapes.Length;i++)if(shapes[i]!=null)pipeline.DrawBrepWires(shapes[i],composite?(i==0?Color.SteelBlue:Color.DarkGray):color);}
-            if(options.Reinforcement)foreach(var line in ReinforcementLines(element))pipeline.DrawLine(line,Color.DarkOrange,2);
-            var drawElement=element is CompositeBeamModel c && c.StartBeamProperty!=null && c.EndBeamProperty!=null?Cache(c).Beam:element;
+            if(options.Reinforcement)foreach(var line in SectionReinforcementLines(element,sections))pipeline.DrawLine(line,Color.DarkOrange,2);
+            var drawElement=element is CompositeBeamModel c && HasSections(c,sections)?Cache(c,sections).Beam:element;
             if(options.Loads)using(DrawingHelper.Scale(options.LoadScale))foreach(var load in element.Loads)
                 if(options.Matches(load.LoadCase?.Name))load.Draw(pipeline,viewport,Color.OrangeRed,drawElement);
             using(DrawingHelper.Scale(options.SymbolScale))foreach(var attribute in element.Attributes)

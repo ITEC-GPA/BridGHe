@@ -80,6 +80,81 @@ namespace BridGHe.Common.Gpc
                 L(start.NInfinite, end.NInfinite), L(start.NInstant, end.NInstant), L(start.NShrinkage, end.NShrinkage), start.ConsiderConcrete, start.ConsiderRebar, null);
         }
 
+        /// <summary>
+        /// Chain E (c): the constant-section rule of Super Element Check on the definitions a composite beam carries (start and end): the same
+        /// steel H, slab, rows of bars, vertical offset and modular ratios, and the same materials by value (name and fck of the concrete; name,
+        /// E, fy and fu of the steel and of the bars, none when the section has no bars). The FEM rule (<see cref="IsConstant(CompositeBeamPropertyModel, CompositeBeamPropertyModel)"/>)
+        /// compared the material instances: two properties with equal materials in different instances were variable, and their interpolation
+        /// gave at every station the values of the constant section (the linear interpolation of equal ends is that value); by value they are
+        /// constant (one definition instead of one per station, the same sections).
+        /// </summary>
+        public static bool IsConstant(BridgeCompositeSectionDefinition start, BridgeCompositeSectionDefinition end)
+        {
+            if (start == null || end == null) throw new ArgumentNullException(start == null ? nameof(start) : nameof(end));
+            if (ReferenceEquals(start, end)) return true;
+            SectionH s = SteelH(start), e = SteelH(end); var cs = start.Section; var ce = end.Section; var rs = Rows(start); var re = Rows(end);
+            return s.Height == e.Height && s.ThicknessWeb == e.ThicknessWeb && s.LenghtTopFlange == e.LenghtTopFlange && s.ThicknessTopFlange == e.ThicknessTopFlange
+                && s.LenghtBottomFlange == e.LenghtBottomFlange && s.ThicknessBottomFlange == e.ThicknessBottomFlange
+                && cs.Width == ce.Width && cs.Height == ce.Height
+                && rs.TopAreaMm2 == re.TopAreaMm2 && rs.TopCoverMm == re.TopCoverMm && rs.BottomAreaMm2 == re.BottomAreaMm2 && rs.BottomCoverMm == re.BottomCoverMm && rs.BarsPerRow == re.BarsPerRow
+                && start.VerticalOffsetMm == end.VerticalOffsetMm && start.NShortTerm == end.NShortTerm && start.NLongTerm == end.NLongTerm && start.NShrinkage == end.NShrinkage
+                && SameConcrete(Concrete(start), Concrete(end)) && SameSteel(Steel(start), Steel(end)) && SameSteel(Rebar(start), Rebar(end));
+        }
+
+        /// <summary>
+        /// Chain E (c): the definition of a variable section at the normalised station <paramref name="station"/> (0 at the start, 1 at the end)
+        /// from the definitions a composite beam carries, with the rules of <see cref="Definition(CompositeBeamPropertyModel, CompositeBeamPropertyModel, double, string)"/>:
+        /// every dimension, row, ratio and material value interpolated linearly; the names, the choices and the material names of the start;
+        /// the steel H named <paramref name="steelName"/>; no analysis steel (a section of the checks only). The values are read back from the
+        /// definitions (steel H, slab, <see cref="BridgeCompositeSectionDefinition.RebarRows"/>, fck, E, fy, fu of the EN 1992 materials): the
+        /// interpolation of the definitions of two properties equals bit for bit that of the properties (<c>gpc-composite-sections</c>, natives
+        /// of 50 and 99). The material of the bars is that of the start; when the start has no bars, that of the end (and the reverse): a
+        /// definition carries the material of its bars only (listed difference: a FEM property without bars still interpolated its own rebar
+        /// material with that of the other end).
+        /// </summary>
+        public static BridgeCompositeSectionDefinition Definition(BridgeCompositeSectionDefinition start, BridgeCompositeSectionDefinition end, double station, string steelName)
+        {
+            if (start == null || end == null) throw new ArgumentNullException(start == null ? nameof(start) : nameof(end));
+            double L(double a, double b) => Interpolation.GetLinearInterpolation(0, 1, a, b, station);
+            SectionH s = SteelH(start), e = SteelH(end); var cs = start.Section; var ce = end.Section; var rs = Rows(start); var re = Rows(end);
+            ConcreteMaterialEN1992 concrete = Concrete(start), concreteEnd = Concrete(end);
+            SteelMaterial steel = Steel(start), steelEnd = Steel(end);
+            SteelMaterial rebar = Rebar(start) ?? Rebar(end), rebarEnd = Rebar(end) ?? rebar;
+            // No bars at either end: no bars at any station (the rebar material is not used); the values of the structural steel keep the
+            // constructor of the (unused) rebar material valid.
+            string rebarName = rebar?.Name ?? ""; double rebarE = (rebar ?? steel).ElasticModulusTension, rebarEEnd = (rebarEnd ?? steelEnd).ElasticModulusTension;
+            double rebarFy = (rebar ?? steel).Fyk, rebarFyEnd = (rebarEnd ?? steelEnd).Fyk, rebarFu = (rebar ?? steel).Fu, rebarFuEnd = (rebarEnd ?? steelEnd).Fu;
+            return Create(start.Name, steelName, L(s.Height, e.Height), L(s.ThicknessWeb, e.ThicknessWeb), L(s.LenghtTopFlange, e.LenghtTopFlange), L(s.ThicknessTopFlange, e.ThicknessTopFlange),
+                L(s.LenghtBottomFlange, e.LenghtBottomFlange), L(s.ThicknessBottomFlange, e.ThicknessBottomFlange),
+                L(cs.Width, ce.Width), L(cs.Height, ce.Height), L(rs.TopAreaMm2, re.TopAreaMm2), L(rs.TopCoverMm, re.TopCoverMm),
+                L(rs.BottomAreaMm2, re.BottomAreaMm2), L(rs.BottomCoverMm, re.BottomCoverMm), L(start.VerticalOffsetMm, end.VerticalOffsetMm),
+                concrete.Name, L(-concrete.Fck, -concreteEnd.Fck),
+                steel.Name, L(steel.ElasticModulusTension, steelEnd.ElasticModulusTension), L(steel.Fyk, steelEnd.Fyk), L(steel.Fu, steelEnd.Fu),
+                rebarName, L(rebarE, rebarEEnd), L(rebarFy, rebarFyEnd), L(rebarFu, rebarFuEnd),
+                L(start.NLongTerm, end.NLongTerm), L(start.NShortTerm, end.NShortTerm), L(start.NShrinkage, end.NShrinkage), start.ConsiderConcrete, start.ConsiderRebar, null);
+        }
+
+        /// <summary>Chain E (c): <see cref="Definition(BridgeCompositeSectionDefinition, BridgeCompositeSectionDefinition, double, string)"/> with
+        /// the steel H named as that of the start definition (the composite property: <c>GH_CompositeBeamProperty.Definition</c>), the rule of
+        /// Super Element Check and Composite Beam Linear Tension Analysis on the definitions. The name is not in the input of the H bridge
+        /// engine nor in the results (the former checks named the H by the BridGHe ID of the beam: fingerprints of 50 and 99 unchanged).</summary>
+        public static BridgeCompositeSectionDefinition Definition(BridgeCompositeSectionDefinition start, BridgeCompositeSectionDefinition end, double station) =>
+            Definition(start, end, station, SteelH(start ?? throw new ArgumentNullException(nameof(start))).Name);
+
+        private static BridgeCompositeRebarRows Rows(BridgeCompositeSectionDefinition definition) =>
+            definition.RebarRows ?? throw new InvalidOperationException($"BridgeCompositeSectionWithoutRebarRows: the composite section '{definition.Name}' has no rows of bars (made by GpcCompositeSections)");
+
+        private static ConcreteMaterialEN1992 Concrete(BridgeCompositeSectionDefinition definition) => (ConcreteMaterialEN1992)definition.Section.ConcreteMaterial;
+
+        private static SteelMaterial Steel(BridgeCompositeSectionDefinition definition) => definition.Section.SteelSections[0].Section.SteelMaterial;
+
+        private static SteelMaterial Rebar(BridgeCompositeSectionDefinition definition) => definition.Section.Rebars.FirstOrDefault()?.RebarSection.RebarMaterial as SteelMaterial;
+
+        private static bool SameConcrete(ConcreteMaterialEN1992 a, ConcreteMaterialEN1992 b) => ReferenceEquals(a, b) || a.Name == b.Name && a.Fck == b.Fck;
+
+        private static bool SameSteel(SteelMaterial a, SteelMaterial b) => ReferenceEquals(a, b)
+            || a != null && b != null && a.Name == b.Name && a.ElasticModulusTension == b.ElasticModulusTension && a.Fyk == b.Fyk && a.Fu == b.Fu;
+
         private static BridgeCompositeSectionDefinition Create(string name, string steelName, double h, double webThickness, double topWidth, double topThickness,
             double bottomWidth, double bottomThickness, double slabWidth, double slabHeight, double topArea, double topCover, double bottomArea, double bottomCover,
             double verticalOffset, string concreteName, double fck, string steelMaterialName, double steelE, double steelFy, double steelFu,

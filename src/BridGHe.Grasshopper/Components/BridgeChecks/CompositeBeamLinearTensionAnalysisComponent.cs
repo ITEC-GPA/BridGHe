@@ -101,79 +101,19 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
 
 
 
-            bool constantSection = false;
-
-            double start_bfw = beam.Value.StartBeamProperty.SteelSection.B1;       // bottom flange width
-            double start_tfw = beam.Value.StartBeamProperty.SteelSection.B2;       // top flange width
-            double start_h = beam.Value.StartBeamProperty.SteelSection.D;          // heigth
-            double start_bft = beam.Value.StartBeamProperty.SteelSection.T1;       // Bottom flange thickness
-            double start_tft = beam.Value.StartBeamProperty.SteelSection.T2;        // Top flange thickness
-            double start_wt = beam.Value.StartBeamProperty.SteelSection.T3;        // Web thickness
-
-            double start_hh = beam.Value.StartBeamProperty.ConcreteSection.Height;      // heigth
-            double start_b = beam.Value.StartBeamProperty.ConcreteSection.Width;       // base
-            double start_topRebarsAreaTot = beam.Value.StartBeamProperty.ConcreteSection.TopRebarArea;
-            double start_topRebarsCover = beam.Value.StartBeamProperty.ConcreteSection.TopCover;
-            double start_bottomRebarsAreaTot = beam.Value.StartBeamProperty.ConcreteSection.BottomRebarArea;
-            double start_bottomRebarsCover = beam.Value.StartBeamProperty.ConcreteSection.BottomCover;
-
-            double start_verticalOffset = beam.Value.StartBeamProperty.VerticalOffset;
-
-            MaterialModel start_concreteModel = beam.Value.StartBeamProperty.ConcreteMaterial;
-            MaterialModel start_steelModel = beam.Value.StartBeamProperty.SteelMaterial;
-            MaterialModel start_rebarModel = beam.Value.StartBeamProperty.RebarMaterial;
-
-            double end_bfw = beam.Value.EndBeamProperty.SteelSection.B1;       // bottom flange width
-            double end_tfw = beam.Value.EndBeamProperty.SteelSection.B2;       // top flange width
-            double end_h = beam.Value.EndBeamProperty.SteelSection.D;          // heigth
-            double end_bft = beam.Value.EndBeamProperty.SteelSection.T1;       // Bottom flange thickness
-            double end_tft = beam.Value.EndBeamProperty.SteelSection.T2;        // Top flange thickness
-            double end_wt = beam.Value.EndBeamProperty.SteelSection.T3;        // Web thickness
-
-            double end_hh = beam.Value.EndBeamProperty.ConcreteSection.Height;      // heigth
-            double end_b = beam.Value.EndBeamProperty.ConcreteSection.Width;       // base
-            double end_topRebarsAreaTot = beam.Value.EndBeamProperty.ConcreteSection.TopRebarArea;
-            double end_topRebarsCover = beam.Value.EndBeamProperty.ConcreteSection.TopCover;
-            double end_bottomRebarsAreaTot = beam.Value.EndBeamProperty.ConcreteSection.BottomRebarArea;
-            double end_bottomRebarsCover = beam.Value.EndBeamProperty.ConcreteSection.BottomCover;
-
-            double end_verticalOffset = beam.Value.EndBeamProperty.VerticalOffset;
-
-            MaterialModel end_concreteModel = beam.Value.EndBeamProperty.ConcreteMaterial;
-            MaterialModel end_steelModel = beam.Value.EndBeamProperty.SteelMaterial;
-            MaterialModel end_rebarModel = beam.Value.EndBeamProperty.RebarMaterial;
-
-            if (start_bfw == end_bfw && start_tfw == end_tfw && start_h == end_h && start_bft == end_bft && start_tft == end_tft && start_wt == end_wt)
-            {
-                if (start_hh == end_hh && start_b == end_b && start_topRebarsAreaTot == end_topRebarsAreaTot && start_topRebarsCover == end_topRebarsCover &&
-                    start_bottomRebarsAreaTot == end_bottomRebarsAreaTot && start_bottomRebarsCover == end_bottomRebarsCover &&
-                    start_verticalOffset == end_verticalOffset)
-                {
-                    if (start_concreteModel == end_concreteModel && start_steelModel == end_steelModel && start_rebarModel == end_rebarModel)
-                        constantSection = true;
-                }
-            }
+            // Chain E (c): the composite sections from the definitions the composite beam carries (start and end), with the constant-section
+            // rule of Super Element Check (GpcCompositeSections.IsConstant by value; the former rule compared the material instances); the section
+            // of a constant beam is that of its start definition: three bars per row of a third of the area at the pitch of a third of the width,
+            // EN 1992 materials from fck, E, fy, fu with an ultimate strain of 0.1 (the former construction of this component; the steel H is
+            // named by the composite property instead of the beam, a name that is not in the results).
+            var startDefinition = beam.StartDefinition; var endDefinition = beam.EndDefinition;
+            bool constantSection = startDefinition != null && endDefinition != null && Common.Gpc.GpcCompositeSections.IsConstant(startDefinition, endDefinition);
 
             if (constantSection)
             {
-                SectionH sectionH = new SectionH(start_h, start_wt, start_tfw, start_tft, start_bfw, start_bft, beam.Value.BeamId);
-
-                ConcreteMaterialEN1992 concreteMaterialEN1992 = new ConcreteMaterialEN1992(start_concreteModel.Name, start_concreteModel.SpecificCompressiveStrength,
-                    ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle);
-                SteelMaterialEN1992 steelMaterialEN1992 = new SteelMaterialEN1992(start_steelModel.Name, start_steelModel.Modulus, start_steelModel.MinimumYieldStress, start_steelModel.MinimumTensileStress,
-                    0.1, SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic, SteelMaterial.SteelTypes.Structural);
-                SteelMaterialEN1992 rebarMaterial = new SteelMaterialEN1992(start_rebarModel.Name, start_rebarModel.Modulus, start_rebarModel.MinimumYieldStress, start_rebarModel.MinimumTensileStress,
-                    0.1, SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic, SteelMaterial.SteelTypes.Rebar);
-
-                int numberRebars = 3;
-                double rebarAreaTop = start_topRebarsAreaTot / numberRebars;
-                double rebarDiameterTop = Math.Sqrt(rebarAreaTop * 4 / Math.PI);
-
-                RebarSectionCircular rebarTop = rebarDiameterTop != 0 ? new RebarSectionCircular("", rebarDiameterTop, rebarMaterial) : null;
-                double rebarDiameterBottom = Math.Sqrt(start_bottomRebarsAreaTot / numberRebars * 4 / Math.PI);
-                RebarSectionCircular rebarBottom = rebarDiameterBottom != 0 ? new RebarSectionCircular("", rebarDiameterBottom, rebarMaterial) : null;
-                ReinforcedConcreteSection reinforcedConcreteSection = BridGHe.Common.Checks.CompositeSectionFactory.Create(start_b, start_hh, concreteMaterialEN1992, rebarTop, start_b / numberRebars,
-                    start_topRebarsCover, rebarBottom, start_b / numberRebars, sectionH, steelMaterialEN1992, start_bottomRebarsCover, start_verticalOffset, beam.Value.StartBeamProperty.Name);
+                ReinforcedConcreteSection reinforcedConcreteSection = startDefinition.Section;
+                SteelMaterial steelMaterialEN1992 = reinforcedConcreteSection.SteelSections[0].Section.SteelMaterial;
+                ConcreteMaterial concreteMaterialEN1992 = reinforcedConcreteSection.ConcreteMaterial;
 
 
                 double phiInfinite = CalculateHomogenizedFactorPhi(homogenizedFactorInfinite, steelMaterialEN1992, concreteMaterialEN1992);

@@ -86,7 +86,12 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             for (int i = 0; i < bb.Results.Count; i++)
                 compositeBeamModel.Results.Add(bb.Results[i]);
 
+            // Chain E (c): the beam carries the definitions of its two composite properties (what Super Element Check reads). A property
+            // that is not a valid definition (e.g. a vertical offset) leaves them to the beam, which builds them when a check reads them and
+            // fails there, as the checks did before.
             GH_CompositeBeam ms_beam = new GH_CompositeBeam(compositeBeamModel) { AnalysedGpc = gH_Beam.AnalysedGpc, AnalysedGpcModel = gH_Beam.AnalysedGpcModel };
+            try { ms_beam.StartDefinition = startSection.Definition; ms_beam.EndDefinition = endSection.Definition; }
+            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or InvalidOperationException) { ms_beam.StartDefinition = ms_beam.EndDefinition = null; }
 
             DA.SetData(0, ms_beam);
         }
