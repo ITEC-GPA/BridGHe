@@ -42,6 +42,15 @@ internal static class GhModelGpcChecks
         var analysed = GPC.Model.Core.ModelValues.Copy(gpc);
         type.GetMethod("AttachGpc").Invoke(goo, new object[] { analysed });
         Require(Analysed(goo) && ReferenceEquals(Gpc(goo), analysed), "analysed model attached");
+        // L12 (0022c38, coordinator 5/11): the bridge data of an analysed model on its beams by number, one to one or a loud error.
+        GPC.Checkers.CompositeBridge.BridgeModelData BridgeData(object g) => (GPC.Checkers.CompositeBridge.BridgeModelData)type.GetProperty("GpcBridgeData").GetValue(g);
+        Require(BridgeData(goo).SuperElement(analysed.BeamElements[1].Guid) == "G1", "bridge data on the beams of the analysed model");
+        var renumbered = GPC.Model.Core.ModelValues.Copy(gpc); renumbered.RemoveElement(renumbered.BeamElements[1]);
+        var mismatch = Make(femm); Gpc(mismatch); type.GetMethod("AttachGpc").Invoke(mismatch, new object[] { renumbered });
+        string mismatchError = null;
+        try { BridgeData(mismatch); } catch (TargetInvocationException e) when (e.InnerException is InvalidOperationException) { mismatchError = e.InnerException.Message; }
+        Require(mismatchError != null && mismatchError.StartsWith("GpcBridgeDataNumberingMismatch", StringComparison.Ordinal) && mismatchError.Contains("first beam number on one side only: 1"),
+            "a numbering mismatch between the analysed model and the input fails loudly with the first number: " + mismatchError);
         Require(ReferenceEquals(InputModel(goo), gpc), "with an analysed model attached the analysis input is still the conversion");
         var duplicate = ((IGH_Goo)goo).Duplicate();
         Require(Analysed(duplicate) && ReferenceEquals(Gpc(duplicate), analysed), "copies share the analysed model");

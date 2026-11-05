@@ -147,12 +147,17 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                     { _gpcError = ex.Message; return null; }
                     if (_analysed == null || !ReferenceEquals(_analysedOf, Value) || ReferenceEquals(_analysed, conversion.Model)) return conversion.Bridge;
                     if (_analysedBridge != null && ReferenceEquals(_analysedBridgeOf, _analysed) && ReferenceEquals(_analysedBridgeFrom, conversion)) return _analysedBridge;
+                    // The map by number must be one to one (coordinator, 5/11): a partial map would lose bridge data silently (no section state).
+                    var from = conversion.Model.BeamElements; var to = _analysed.BeamElements;
+                    int missing = from.Keys.Where(k => !to.ContainsKey(k)).Concat(to.Keys.Where(k => !from.ContainsKey(k))).DefaultIfEmpty(0).Min();
+                    if (from.Count != to.Count || missing != 0)
+                        throw new InvalidOperationException($"GpcBridgeDataNumberingMismatch: the analysed GPC model has {to.Count} beams, the GPC input of the FEM model {from.Count}"
+                            + (missing != 0 ? $"; first beam number on one side only: {missing}" : "") + ". Recalculate the analysis.");
                     var data = new GPC.Checkers.CompositeBridge.BridgeModelData { Workflow = conversion.Bridge.Workflow };
-                    foreach (var beam in conversion.Model.BeamElements.Values)
+                    foreach (var beam in from.Values)
                     {
                         var d = conversion.Bridge.Beam(beam.Guid);
-                        if (d != null && _analysed.BeamElements.TryGetValue(beam.Id, out var target))
-                            data.Set(new GPC.Checkers.CompositeBridge.BridgeBeamData(target.Guid, d.Member, d.SuperElement, d.SectionState, d.CompositeSection));
+                        if (d != null) data.Set(new GPC.Checkers.CompositeBridge.BridgeBeamData(to[beam.Id].Guid, d.Member, d.SuperElement, d.SectionState, d.CompositeSection));
                     }
                     _analysedBridge = data; _analysedBridgeOf = _analysed; _analysedBridgeFrom = conversion;
                     return data;
