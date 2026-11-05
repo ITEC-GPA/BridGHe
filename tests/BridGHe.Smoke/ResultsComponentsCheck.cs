@@ -13,8 +13,10 @@ using Grasshopper.Kernel.Types;
 /// <summary>
 /// F6 C4 (native): Node, Beam and Plate Results read the analysed GPC element that Decompose Model links, and their outputs equal bit for
 /// bit those of the FEM results the analysis wrote (the former component logic). For every element of an analysed GH model: Decompose
-/// Model, then each Results component on two data built from the decomposed element, one with only the GPC link (no FEM result) and one
-/// with only the FEM results (no link); every output (names, numbers, vectors) is compared bit for bit, branch by branch.
+/// Model, then each Results component on a datum with only the GPC link (no FEM result); every output (names, numbers, vectors) is compared
+/// bit for bit, branch by branch, with the former FEM branch of the component on the FEM results of the element (F6 R7: the components have
+/// no FEM fallback any more; <see cref="FemOutputs"/> keeps that branch in the test until the FeMM removal), and a datum with only FEM
+/// results gives no result and the warning.
 /// </summary>
 internal static class ResultsComponentsCheck
 {
@@ -50,51 +52,66 @@ internal static class ResultsComponentsCheck
         long values = 0;
         string[] components = { "NodeResultsComponent", "BeamResultsComponent", "PlateResultsComponent" };
         string[] types = { "GH_NodeResults", "GH_BeamResults", "GH_PlateResults" };
-        var gpcSide = new GH_Component[3]; var femSide = new GH_Component[3];
+        var gpcSide = new GH_Component[3];
+        // F6 R7: the components read only the GPC link; the FEM reference is the former component branch on the FEM results the analysis
+        // wrote (FemOutputs, removed with the FeMM models), as the tokens of the goo the output parameter holds.
+        var expected = new Dictionary<int, List<string>[]>[3];
         // A component without input warns that it collected no data: only the element types the model has are checked.
         var present = Enumerable.Range(0, 3).Where(k => elements[k].Length > 0).ToArray();
         foreach (int k in present)
         {
-            gpcSide[k] = Make(components[k]); femSide[k] = Make(components[k]);
+            gpcSide[k] = Make(components[k]); expected[k] = new Dictionary<int, List<string>[]>();
             var resultType = assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem." + types[k], true);
-            var gpcInput = (Param_GenericObject)gpcSide[k].Params.Input[0]; var femInput = (Param_GenericObject)femSide[k].Params.Input[0];
+            var gpcInput = (Param_GenericObject)gpcSide[k].Params.Input[0];
             for (int i = 0; i < elements[k].Length; i++)
             {
                 var element = elements[k][i]; var t = element.GetType();
                 object link = t.GetProperty("AnalysedGpc").GetValue(element), model = t.GetProperty("AnalysedGpcModel").GetValue(element);
                 Require(link != null && model != null, types[k] + " " + i + ": linked to its analysed GPC element");
                 var femResults = ((ElementModel)t.GetProperty("Value").GetValue(element)).Results;
-                var gpc = (IGH_Goo)Activator.CreateInstance(resultType); var fem = (IGH_Goo)Activator.CreateInstance(resultType);
+                var gpc = (IGH_Goo)Activator.CreateInstance(resultType);
                 resultType.GetProperty("Value").SetValue(gpc, new List<ResultModel>());
                 resultType.GetProperty("AnalysedGpc").SetValue(gpc, link); resultType.GetProperty("AnalysedGpcModel").SetValue(gpc, model);
-                resultType.GetProperty("Value").SetValue(fem, new List<ResultModel>(femResults));
-                gpcInput.PersistentData.Append(gpc, new GH_Path(i)); femInput.PersistentData.Append(fem, new GH_Path(i));
+                gpcInput.PersistentData.Append(gpc, new GH_Path(i));
+                expected[k][i] = FemOutputs(k, femResults);
             }
-            gpcInput.ExpireSolution(false); femInput.ExpireSolution(false);
+            gpcInput.ExpireSolution(false);
         }
         document.NewSolution(false, GH_SolutionMode.Silent);
         foreach (int k in present)
         {
-            foreach (var c in new[] { gpcSide[k], femSide[k] })
-                Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count == 0 && c.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Count == 0,
-                    components[k] + " without messages: " + string.Join("; ", c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Concat(c.RuntimeMessages(GH_RuntimeMessageLevel.Warning))));
-            for (int o = 0; o < gpcSide[k].Params.Output.Count; o++)
+            var c = gpcSide[k];
+            Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count == 0 && c.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Count == 0,
+                components[k] + " without messages: " + string.Join("; ", c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Concat(c.RuntimeMessages(GH_RuntimeMessageLevel.Warning))));
+            long femValues = 0;
+            for (int o = 0; o < c.Params.Output.Count; o++)
             {
-                var a = Branches(gpcSide[k].Params.Output[o].VolatileData); var b = Branches(femSide[k].Params.Output[o].VolatileData);
-                string output = components[k] + " / " + gpcSide[k].Params.Output[o].Name;
+                var a = Branches(c.Params.Output[o].VolatileData);
+                string output = components[k] + " / " + c.Params.Output[o].Name;
                 for (int i = 0; i < elements[k].Length; i++)
                 {
-                    var x = a.TryGetValue(i, out var xa) ? xa : new List<string>(); var y = b.TryGetValue(i, out var yb) ? yb : new List<string>();
+                    var x = a.TryGetValue(i, out var xa) ? xa : new List<string>(); var y = expected[k][i][o];
                     Require(x.Count == y.Count, $"{output}, element {i}: {x.Count} values from GPC, {y.Count} from FEM");
                     for (int j = 0; j < x.Count; j++) Require(x[j] == y[j], $"{output}, element {i}, value {j}: GPC {x[j]} vs FEM {y[j]}");
-                    values += x.Count;
+                    values += x.Count; femValues += y.Count;
                 }
-                Require(a.Keys.All(i => i < elements[k].Length) && b.Keys.All(i => i < elements[k].Length), output + ": no branch beyond the elements");
+                Require(a.Keys.All(i => i < elements[k].Length), output + ": no branch beyond the elements");
             }
+            // Each element type with elements must have produced values (an empty comparison proves nothing).
+            Require(femValues > 0, components[k] + ": FEM results present");
         }
-        // Each element type with elements must have produced values (an empty comparison proves nothing).
-        foreach (int k in present)
-                Require(Enumerable.Range(0, femSide[k].Params.Output.Count).Sum(o => femSide[k].Params.Output[o].VolatileData.DataCount) > 0, components[k] + ": FEM results present");
+        // R7: an element without an analysed GPC model gives no FEM result any more, only the warning.
+        if (present.Length != 0)
+        {
+            int k = present[0];
+            var probe = Make(components[k]); var resultType = assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem." + types[k], true);
+            var element = elements[k][0]; var femOnly = (IGH_Goo)Activator.CreateInstance(resultType);
+            resultType.GetProperty("Value").SetValue(femOnly, new List<ResultModel>(((ElementModel)element.GetType().GetProperty("Value").GetValue(element)).Results));
+            ((Param_GenericObject)probe.Params.Input[0]).PersistentData.Append(femOnly);
+            document.NewSolution(false, GH_SolutionMode.Silent);
+            Require(probe.Params.Output.All(p => p.VolatileData.DataCount == 0) && probe.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Contains(BridGHe.Common.Gpc.GpcResultCatalog.NoAnalysedResultsMessage),
+                components[k] + ": FEM results without the GPC link give no result and the warning");
+        }
         // C6: the generated moving cases from the GPC steps and the model audit on the analysed GPC model, equal to the FEM ones.
         var femModel = (ModelModel)analysedModelGoo.GetType().GetProperty("Value").GetValue(analysedModelGoo);
         var gpcModel = (GPC.Model.Models.Model)analysedModelGoo.GetType().GetProperty("Gpc").GetValue(analysedModelGoo);
@@ -124,6 +141,34 @@ internal static class ResultsComponentsCheck
             foreach (var item in data.get_Branch(b)) list.Add(Token(item));
         }
         return result;
+    }
+
+    /// <summary>FEM path (removed with the FeMM models): the outputs of the former Node (k = 0), Beam (1) and Plate (2) Results branch on
+    /// the FEM results of an element, in output order, as the tokens of the goo the output parameters hold (text, number, vector; a 2D
+    /// vector as the 3D vector of the parameter, z = 0).</summary>
+    private static List<string>[] FemOutputs(int k, IEnumerable<ResultModel> results)
+    {
+        string S(string v) => Token(new GH_String(v)); string N(double v) => Token(new GH_Number(v));
+        string V(Rhino.Geometry.Vector3d v) => Token(new GH_Vector(v)); string V2(Rhino.Geometry.Vector2d v) => Token(new GH_Vector(new Rhino.Geometry.Vector3d(v.X, v.Y, 0)));
+        var o = Enumerable.Range(0, k == 0 ? 8 : k == 1 ? 7 : 15).Select(_ => new List<string>()).ToArray();
+        foreach (var result in results)
+        {
+            if (k == 0 && result is NodeDisplResultModel d) { o[0].Add(S(result.LoadCase.Name)); o[1].Add(N(result.StepNum)); o[2].Add(V(d.Displacement)); o[3].Add(V(d.Rotation)); }
+            else if (k == 0 && result is NodeReactResultModel r) { o[4].Add(S(result.LoadCase.Name)); o[5].Add(N(result.StepNum)); o[6].Add(V(r.Force)); o[7].Add(V(r.Moment)); }
+            else if (k == 1 && result is BeamForceResultModel b)
+            { o[0].Add(S(b.LoadCase.Name)); o[1].Add(N(b.Station)); o[2].Add(N(b.StepNum)); o[3].Add(V2(b.ShearForce)); o[4].Add(V2(b.BendingMoment)); o[5].Add(N(b.AxialForce)); o[6].Add(N(b.Torque)); }
+            else if (k == 2)
+            {
+                o[0].Add(S(result.LoadCase.Name)); o[2].Add(N(result.StepNum));
+                if (result is PlateForceResultModel p)
+                {
+                    o[1].Add(S(p.NodeId)); o[3].Add(V(p.Force)); o[4].Add(N(p.ForceMax)); o[5].Add(N(p.ForceMin)); o[6].Add(N(p.ForceAngle)); o[7].Add(N(p.ForceVonMises));
+                    o[8].Add(V(p.Moment)); o[9].Add(N(p.MomentMax)); o[10].Add(N(p.MomentMin)); o[11].Add(N(p.MomentAngle));
+                    o[12].Add(V2(p.TransverseShearForce)); o[13].Add(N(p.TransverseShearForceMax)); o[14].Add(N(p.TransverseShearForceAng));
+                }
+            }
+        }
+        return o;
     }
 
     private static string Token(object item)

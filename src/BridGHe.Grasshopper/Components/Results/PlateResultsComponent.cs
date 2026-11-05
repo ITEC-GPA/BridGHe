@@ -73,7 +73,7 @@ namespace BridGHe.Grasshopper.Components.Results
             List<Vector2d> shearForces = new List<Vector2d>();
             List<double> sf_max = new List<double>();
             List<double> sf_ang = new List<double>();
-            // F6 C4: the analysed GPC element when Decompose Model linked it (the rows the analysis wrote, bit for bit); the FEM results otherwise.
+            // F6 C4/R7: the rows of the analysed GPC element Decompose Model linked (the results catalog of a BridGHe analysis); no FEM results.
             static double Z(double v) => Common.Gpc.GpcResultRows.Shown(v);
             var catalog = plate.AnalysedGpc is GPC.Model.Elements.AreaElement ? Common.Gpc.GpcResultCatalog.Of(plate.AnalysedGpcModel) : null;
             if (catalog != null)
@@ -85,27 +85,7 @@ namespace BridGHe.Grasshopper.Components.Results
                     moments.Add(new Vector3d(Z(v[5]), Z(v[6]), Z(v[7]))); mmax.Add(Z(row.MomentMax)); mmin.Add(Z(row.MomentMin)); mang.Add(Z(row.MomentAngle));
                     shearForces.Add(new Vector2d(Z(v[3]), Z(v[4]))); sf_max.Add(double.NaN); sf_ang.Add(double.NaN);
                 }
-            else foreach (ResultModel result in plate.Value)
-            {
-                lc.Add(result.LoadCase.Name);
-                steps.Add(result.StepNum);
-                if (result is PlateForceResultModel force)
-                {
-                    nodes.Add(force.NodeId);
-                    forces.Add(force.Force);
-                    fmax.Add(force.ForceMax);
-                    fmin.Add(force.ForceMin);
-                    fang.Add(force.ForceAngle);
-                    fvm.Add(force.ForceVonMises);
-                    moments.Add(force.Moment);
-                    mmax.Add(force.MomentMax);
-                    mmin.Add(force.MomentMin);
-                    mang.Add(force.MomentAngle);
-                    shearForces.Add(force.TransverseShearForce);
-                    sf_max.Add(force.TransverseShearForceMax);
-                    sf_ang.Add(force.TransverseShearForceAng);
-                }
-            }
+            else AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, Common.Gpc.GpcResultCatalog.NoAnalysedResultsMessage);
 
             DA.SetDataList(0, lc);
             DA.SetDataList(1, nodes);

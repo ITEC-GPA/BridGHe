@@ -58,7 +58,7 @@ namespace BridGHe.Grasshopper.Components.Results
             List<Vector2d> bendingMoments = new List<Vector2d>();
             List<double> axialForces = new List<double>();
             List<double> torques = new List<double>();
-            // F6 C4: the analysed GPC element when Decompose Model linked it (the rows the analysis wrote, bit for bit); the FEM results otherwise.
+            // F6 C4/R7: the rows of the analysed GPC element Decompose Model linked (the results catalog of a BridGHe analysis); no FEM results.
             static double Z(double v) => Common.Gpc.GpcResultRows.Shown(v);
             var catalog = beam.AnalysedGpc is GPC.Model.Elements.BeamElement ? Common.Gpc.GpcResultCatalog.Of(beam.AnalysedGpcModel) : null;
             if (catalog != null)
@@ -72,16 +72,7 @@ namespace BridGHe.Grasshopper.Components.Results
                     axialForces.Add(Z(row.Axial));
                     torques.Add(Z(row.Torque));
                 }
-            else foreach (BeamForceResultModel result in beam.Value.Where(r => r is BeamForceResultModel).Cast<BeamForceResultModel>())
-            {
-                lc.Add(result.LoadCase.Name);
-                steps.Add(result.StepNum);
-                stations.Add(result.Station);
-                shearForces.Add(result.ShearForce);
-                bendingMoments.Add(result.BendingMoment);
-                axialForces.Add(result.AxialForce);
-                torques.Add(result.Torque);
-            }
+            else AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, Common.Gpc.GpcResultCatalog.NoAnalysedResultsMessage);
 
             DA.SetDataList(0, lc);
             DA.SetDataList(1, stations);
