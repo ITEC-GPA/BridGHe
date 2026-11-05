@@ -49,12 +49,20 @@ public class BuildBridgeModel : GH_Component
         {
             if (models.Any(m => m?.Value == null) || phases.Any(p => p?.Value is not BridgePhaseDefinition)) throw new ArgumentException("Connect models and Bridge Phase objects to their corresponding inputs.");
             string Cell(IGH_Goo goo) => goo?.ScriptVariable() is IFormattable n ? n.ToString(null, CultureInfo.InvariantCulture) : goo?.ScriptVariable()?.ToString() ?? "";
-            var result = BridgeWorkflowBuilder.Build(models.Select(m => m.Value).ToArray(), phases.Select(p => (BridgePhaseDefinition)p.Value),
-                combinations.Branches.Select(b => b.Select(Cell).ToArray()).ToArray(), (BridgeWorkflowMethod)method, Settings.Instance.Tolerance, additional);
+            var definitions = phases.Select(p => (BridgePhaseDefinition)p.Value).ToArray();
+            var table = combinations.Branches.Select(b => b.Select(Cell).ToArray()).ToArray();
+            var result = BridgeWorkflowBuilder.Build(models.Select(m => m.Value).ToArray(), definitions, table, (BridgeWorkflowMethod)method, Settings.Instance.Tolerance, additional);
             var output = GH_Model.FromModel(result.Model, models[0]);
-            // F6 C5: the GPC bridge model (merged actions as a GPC dataset, GPC recipe) for the checks with the GPC workflow executor.
-            try { output.AttachBridge(Common.Gpc.Legacy.FemmBridgeSeam.Build(result.Model, Settings.Instance.Tolerance, result.Samples)); }
-            catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is InvalidOperationException)
+            // F6 chain C: the GPC bridge model (merged actions as a GPC dataset, D3 recipe) for the checks with the GPC workflow executor, built
+            // from the GPC models only: the input model of every reference, the analysed GPC model of every action source. The merged FEM model
+            // above stays the Model output for the components that still read it (until the GH types carry GPC objects).
+            try
+            {
+                var references = models.Select(m => Common.Gpc.GpcBridgeSource.Reference(m.GpcInput, m.GpcResults)).ToArray();
+                output.AttachBridge(Common.Gpc.GpcBridgeBuilder.Build(references, definitions, table, (BridgeWorkflowMethod)method, Settings.Instance.Tolerance, additional,
+                    BridgeWorkflowBuilder.LocalSectionStates).Bridge);
+            }
+            catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is InvalidOperationException || e is KeyNotFoundException || e is System.Runtime.Serialization.SerializationException)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Modello di ponte GPC non costruito (" + e.Message + "): le verifiche usano il percorso FEM."); }
             da.SetData(0, output);
             da.SetDataList(1, result.Summary); da.SetDataList(2, result.Warnings);

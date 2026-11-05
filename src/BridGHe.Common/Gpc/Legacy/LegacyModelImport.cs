@@ -26,6 +26,11 @@ namespace BridGHe.Common.Gpc.Legacy
         public Dictionary<string, int> NotExported { get; } = new Dictionary<string, int>(StringComparer.Ordinal);
         /// <summary>Resolved native Straus7 sections (mm) of the beams with a former native section, for the Converter write plan.</summary>
         public Dictionary<Guid, GPC.Converter.Straus7.Straus7SectionDefinition> NativeSections { get; } = new Dictionary<Guid, GPC.Converter.Straus7.Straus7SectionDefinition>();
+        /// <summary>F6 chain C: the definition units of the converted model (BridGHe data; the GPC model is N-mm).</summary>
+        public BridgeUnits Units { get; internal set; }
+        /// <summary>F6 chain C: the BridGHe angle (degrees) of every converted beam by its GPC number, the principal frame of its actions
+        /// (<see cref="GpcBeamAxes.Principal"/>), as the results catalog of an analysis keeps it.</summary>
+        public Dictionary<int, double> BeamAngles { get; } = new Dictionary<int, double>();
         internal void Carry(string what) { NotExported.TryGetValue(what, out int n); NotExported[what] = n + 1; }
     }
 
@@ -42,6 +47,7 @@ namespace BridGHe.Common.Gpc.Legacy
             if (legacy == null || !legacy.Is("ModelModel")) throw new ArgumentException("LegacyModelModelExpected");
             report ??= new LegacyImportReport();
             var units = new BridgeUnits(BridgeUnits.Parse(legacy.Enum("Units")));
+            report.Units = units;
             string name = legacy.String("Name") ?? "";
             var model = new Model(owner, name);
             var elements = legacy.Field("Elements").Items;
@@ -116,6 +122,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 beam.ConnectNodes(gpcNodes[i], gpcNodes[j]);
                 if (p.Native != null) report.NativeSections.Add(beam.Guid, p.Native);
                 double angleDeg = b.Double("Angle");
+                report.BeamAngles[k + 1] = angleDeg;
                 var section = GpcBeamAxes.Section(start, end, angleDeg, p.Angle);
                 var principal = GpcBeamAxes.Principal(start, end, angleDeg);
                 beam.Assignments.Formulation = p.Formulation;

@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Linq;
 using System.Security.Cryptography;
 using BridGHe.Common.Gpc.Legacy;
 using BridGHe.Common.Helpers;
@@ -34,6 +35,14 @@ namespace BridGHe.Common.Gpc
         public static GPC.Model.Models.Model FromFemm(ModelModel model, double toleranceDefinitionUnits, out LegacyImportReport report)
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
+            // F6 chain C: the results of an analysed model are never converted, so they are not archived either: the conversion reads a copy
+            // without them. The identity does not depend on the results, and the size limit of the legacy reader concerns the input only (the
+            // analysed phase models of example 50, the references of Build BridGHe Model, exceed 256 MB with their results).
+            if (model.Elements.Any(e => e.Results.Count != 0))
+            {
+                model = new ModelModel(model);
+                foreach (var e in model.Elements) e.Results.Clear();
+            }
             byte[] archive = ModelArchive.Write(model);
             var owner = GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-model:" + System.Convert.ToHexString(SHA256.HashData(archive)) + ":"
                 + toleranceDefinitionUnits.ToString("R", CultureInfo.InvariantCulture));

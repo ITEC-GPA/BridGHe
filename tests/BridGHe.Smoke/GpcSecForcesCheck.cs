@@ -25,7 +25,7 @@ internal static class GpcSecForcesCheck
         var model = (ModelModel)goo.GetType().GetProperty("Value").GetValue(goo);
         var beams = check.Params.Input[1].VolatileData.AllData(true).Select(g => (CompositeBeamModel)((IGH_Goo)g).ScriptVariable()).ToArray();
         var output = check.Params.Output[2].VolatileData;
-        var bridge = (BridGHe.Common.Gpc.Legacy.FemmBridgeSeam.Bridge)goo.GetType().GetProperty("GpcBridge").GetValue(goo) ?? throw new Exception("GPC SEC FORCES FAIL (" + label + "): no GPC bridge model");
+        var bridge = (BridGHe.Common.Gpc.GpcBridge)goo.GetType().GetProperty("GpcBridge").GetValue(goo) ?? throw new Exception("GPC SEC FORCES FAIL (" + label + "): no GPC bridge model");
         static string Bits(double v) => BitConverter.DoubleToInt64Bits(v == 0 ? 0.0 : v).ToString("X16", CultureInfo.InvariantCulture);
         static string Token(ResultBeamForces f) => string.Join(",", new[] { f.N, f.V1, f.V2, f.T, f.M1, f.M2 }.Select(Bits));
         var cs = new CoordinateSystem(Point3d.Origin, new Vector3d(-1, 0, 0), new Vector3d(0, -1, 0));

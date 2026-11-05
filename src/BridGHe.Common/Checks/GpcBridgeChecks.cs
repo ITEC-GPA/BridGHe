@@ -16,7 +16,7 @@ namespace BridGHe.Common.Checks
 {
     /// <summary>
     /// F6 C5: the section checks of Super Element Check with the GPC workflow executor (D3) on the GPC bridge model of Build Bridge Model
-    /// (<see cref="FemmBridgeSeam"/>), as <c>--c5-compare</c> verified them against BridGHe's own phases (50: every total bit for bit;
+    /// (<see cref="GpcBridge"/>, built by <see cref="GpcBridgeBuilder"/>), as <c>--c5-compare</c> verified them against BridGHe's own phases (50: every total bit for bit;
     /// 99: within 2e-6 MPa, the start of the class-4 iterations changes with one increment per action). One plan per workflow
     /// (<see cref="BridgeWorkflowExecutor.Prepare"/>, cached by the recipe object: a new bridge model gives a new recipe and a new plan); for every
     /// section the BridGHe section input without phases, and per combination an evaluation at the station of the dataset, in BridGHe's
@@ -27,7 +27,7 @@ namespace BridGHe.Common.Checks
         private static readonly ConditionalWeakTable<BridgeWorkflowDefinition, BridgeWorkflowPlan> plans = new ConditionalWeakTable<BridgeWorkflowDefinition, BridgeWorkflowPlan>();
         /// <summary>R3: the recipe copies with concrete excluded on given beams, per recipe and set of beams (one plan each).</summary>
         private static readonly ConditionalWeakTable<BridgeWorkflowDefinition, Dictionary<string, BridgeWorkflowDefinition>> excludedRecipes = new ConditionalWeakTable<BridgeWorkflowDefinition, Dictionary<string, BridgeWorkflowDefinition>>();
-        private readonly FemmBridgeSeam.Bridge bridge;
+        private readonly GpcBridge bridge;
         private readonly BridgeWorkflowPlan plan;
         private readonly Dictionary<string, (BeamElement Beam, CoordinateSystem Principal, double[] Stations, string Fingerprint)> beams;
         private readonly IReadOnlyDictionary<Guid, ResultSelection> selections;
@@ -38,7 +38,7 @@ namespace BridGHe.Common.Checks
         /// cases (Compatible without local states): their long-term, short-term and shrinkage increments are checked on the concrete-excluded
         /// section, as BridGHe's phases did (BridgeCheckAdapter.GetLinearAnalysisResultByStages with concrete off):
         /// a copy of the recipe with these beams in <see cref="BridgeWorkflowActionDefinition.ConcreteExcludedBeamGuids"/> of those actions.</param>
-        public GpcBridgeChecks(FemmBridgeSeam.Bridge bridge, ModelModel merged, IReadOnlyCollection<string> concreteExcludedBeamIds = null)
+        public GpcBridgeChecks(GpcBridge bridge, ModelModel merged, IReadOnlyCollection<string> concreteExcludedBeamIds = null)
         {
             this.bridge = bridge ?? throw new ArgumentNullException(nameof(bridge));
             var model = bridge.Model; var workflow = Excluding(bridge.Workflow, model, concreteExcludedBeamIds);

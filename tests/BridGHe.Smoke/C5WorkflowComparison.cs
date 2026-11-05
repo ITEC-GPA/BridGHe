@@ -214,7 +214,7 @@ internal static class C5WorkflowComparison
     /// Check used the GPC workflow executor (no remark of BridGHe's phases).</summary>
     internal static void RequireGpcChecks(object mergedGoo, BridGHe.Common.Models.ModelModel merged, IEnumerable<Grasshopper.Kernel.GH_Component> checks, bool compareArchive)
     {
-        var bridge = (FemmBridgeSeam.Bridge)mergedGoo.GetType().GetProperty("GpcBridge").GetValue(mergedGoo);
+        var bridge = (BridGHe.Common.Gpc.GpcBridge)mergedGoo.GetType().GetProperty("GpcBridge").GetValue(mergedGoo);
         if (bridge == null) throw new Exception("C5: Build Bridge Model gave no GPC bridge model.");
         bridge.Workflow.Validate(bridge.Model); bridge.Workflow.ValidateSources(bridge.Model, new[] { bridge.Model });
         if (compareArchive)

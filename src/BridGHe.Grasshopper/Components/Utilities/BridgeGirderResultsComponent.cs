@@ -49,7 +49,7 @@ public sealed class BridgeGirderResultsComponent : BridgeUtilityComponent
         for (int i = 1; i < origins.Length; i++) origins[i] = origins[i - 1] + beams[selected[i - 1]].Value.Length;
         // F6 (a)/(b), R8: the stations of Super Element Check, from the merged samples of the GPC bridge model when the composite beam is
         // linked to it (Composite Beam from Super Element Filter or Decompose Model of a Build BridGHe Model output); the FEM results otherwise.
-        var stations = beams.Select(b => (Common.Gpc.Legacy.FemmBridgeSeam.Bridge.Of(b.AnalysedGpcModel)?.SamplesOf(b.Value.BeamId)?.Select(s => Math.Round(s.Sample.Station, 15))
+        var stations = beams.Select(b => (Common.Gpc.GpcBridge.Of(b.AnalysedGpcModel)?.SamplesOf(b.Value.BeamId)?.Select(s => Math.Round(s.Sample.Station, 15))
             ?? b.Value.Results.OfType<BeamForceResultModel>().Select(r => Math.Round(r.NormalizedLength ? r.Station * b.Value.Length : r.Station, 15)))
             .Distinct().OrderBy(s => s).ToArray()).ToArray();
         var output = new GH_Structure<IGH_Goo>(); var positions = new SortedSet<double>();

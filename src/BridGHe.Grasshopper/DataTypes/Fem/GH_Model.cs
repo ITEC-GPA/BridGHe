@@ -82,7 +82,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         private ModelModel _convertedOf;
         private GPC.Model.Models.Model _analysed;
         private ModelModel _analysedOf;
-        private Common.Gpc.Legacy.FemmBridgeSeam.Bridge _bridge;
+        private Common.Gpc.GpcBridge _bridge;
         private string _gpcError;
 
         /// <summary>The GPC model (N-mm) of <see cref="Value"/>: the analysed model when an analysis attached one, otherwise the conversion;
@@ -139,13 +139,13 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         }
 
         /// <summary>C5, Build Bridge Model: the GPC bridge model of <see cref="Value"/> (merged actions as a GPC dataset) with its GPC recipe.</summary>
-        public void AttachBridge(Common.Gpc.Legacy.FemmBridgeSeam.Bridge bridge)
+        public void AttachBridge(Common.Gpc.GpcBridge bridge)
         {
             lock (gpcLock) { _analysed = (bridge ?? throw new ArgumentNullException(nameof(bridge))).Model; _analysedOf = Value; _bridge = bridge; _gpcError = null; }
         }
 
         /// <summary>The GPC bridge model attached by Build Bridge Model for <see cref="Value"/>, or null.</summary>
-        public Common.Gpc.Legacy.FemmBridgeSeam.Bridge GpcBridge { get { lock (gpcLock) return _bridge != null && ReferenceEquals(_analysedOf, Value) && ReferenceEquals(_analysed, _bridge.Model) ? _bridge : null; } }
+        public Common.Gpc.GpcBridge GpcBridge { get { lock (gpcLock) return _bridge != null && ReferenceEquals(_analysedOf, Value) && ReferenceEquals(_analysed, _bridge.Model) ? _bridge : null; } }
 
         private void ShareGpc(GH_Model copy)
         {
