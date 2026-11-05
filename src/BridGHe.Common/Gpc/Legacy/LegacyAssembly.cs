@@ -95,16 +95,19 @@ namespace BridGHe.Common.Gpc.Legacy
         {
             foreach (var node in drafts) { nodes.Add(node); Model.NodesElements.Add(node); }
             index = new NodeLookup(nodes, Units.ToMm(Tolerance));
+            // The rigid connections leave every node before the first link: Model.AddCostrain registers both nodes again (Model.AddNode),
+            // which refuses a node attribute whose name is not a case name (found by gpc-legacy-import, p2j2).
+            var targets = nodes.Select(n => n.Attributes.Values.OfType<RigidConnectionAttribute>().ToArray()).ToArray();
+            for (int i = 0; i < nodes.Count; i++) foreach (var a in targets[i]) nodes[i].Attributes.Remove(a);
             var pairs = new HashSet<(int, int)>();
             for (int i = 0; i < nodes.Count; i++)
-                foreach (var a in nodes[i].Attributes.Values.OfType<RigidConnectionAttribute>().ToArray())
+                foreach (var a in targets[i])
                 {
                     var (target, matches) = index.Find(a.TargetMm);
                     if (matches != 1) throw new ArgumentException("Rigid link target matches more than one FEM node. Merge nodes before export.");
                     if (target == i) throw new ArgumentException("Rigid link collapses to the same node within model tolerance.");
                     if (!pairs.Add((Math.Min(i, target), Math.Max(i, target)))) throw new ArgumentException("Duplicate rigid link after node merging.");
                     Model.AddCostrains(new[] { new RigidLink(nodes[i], nodes[target]) });
-                    nodes[i].Attributes.Remove(a);
                 }
         }
 
