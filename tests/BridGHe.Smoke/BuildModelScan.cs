@@ -34,10 +34,7 @@ internal static class BuildModelScan
         BridgeExampleMigration.Initialize();
         bool native = args.Contains("--native");
         var files = args.SkipWhile(a => a != "--build-model-scan").Skip(1).Where(a => !a.StartsWith("--")).Select(a => Path.GetFullPath(Path.Combine(ExamplePaths.Root, a))).ToList();
-        if (files.Count == 0)
-            files = Directory.GetDirectories(ExamplePaths.Root).Where(d => Scope.Any(p => Path.GetFileName(d).StartsWith(p, StringComparison.Ordinal)))
-                .SelectMany(d => Directory.GetFiles(d, "*.gh*", SearchOption.AllDirectories)).Where(f => (f.EndsWith(".gh") || f.EndsWith(".ghx")) && !f.Contains(Path.DirectorySeparatorChar + "calcoli" + Path.DirectorySeparatorChar))
-                .OrderBy(f => f, StringComparer.Ordinal).ToList();
+        if (files.Count == 0) files = ScopeFiles();
         var total = new Counts(); int failures = 0;
         foreach (var file in files)
         {
@@ -81,6 +78,12 @@ internal static class BuildModelScan
         Console.WriteLine($"BUILD MODEL SCAN TOTAL {files.Count} files, {failures} failed: " + total);
         return failures == 0 && total.CountFailures == 0 ? 0 : 1;
     }
+
+    /// <summary>The definitions of the scope of L12 in the worktree (every .gh and .ghx, archives included, outputs folders excluded).</summary>
+    internal static List<string> ScopeFiles() =>
+        Directory.GetDirectories(ExamplePaths.Root).Where(d => Scope.Any(p => Path.GetFileName(d).StartsWith(p, StringComparison.Ordinal)))
+            .SelectMany(d => Directory.GetFiles(d, "*.gh*", SearchOption.AllDirectories)).Where(f => (f.EndsWith(".gh") || f.EndsWith(".ghx")) && !f.Contains(Path.DirectorySeparatorChar + "calcoli" + Path.DirectorySeparatorChar))
+            .OrderBy(f => f, StringComparer.Ordinal).ToList();
 
     internal sealed class Counts
     {

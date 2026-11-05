@@ -905,6 +905,87 @@ namespace BridGHe.Common.Gpc.Legacy
                 StressStrain(m["StressStrainTable"]));
         }
 
+        /// <summary>
+        /// M1 (coordinator, 6/11; §1bis, row <c>GH_Material</c>): the GPC material of a former material by kind, the datum of a Material
+        /// parameter (<see cref="GpcMaterials.FromFemm"/> reads the archive of a FEM value with this function; a BGHA1 payload is read with it
+        /// as data). Steel and rebar (B450C): <see cref="SteelMaterialEN1992"/> with E, fy = minimum yield, fu = minimum tensile, εu = the
+        /// reinforcement ultimate strain or 0.1, elastic perfectly plastic, structural or rebar; concrete: <see cref="ConcreteMaterialEN1992"/>
+        /// from fck (parabola-rectangle); aluminium: <see cref="AluminiumMaterialEN1999"/> (fo = tensile yield, fu = tensile ultimate, as
+        /// stored); undefined (custom without a kind, table, the materials of the example generators): the generic material of <see cref="ElasticMaterial"/>, with the characteristic strengths the former check builders read in its stresses. Every typed material also
+        /// carries the analysis values of the former material (ν, density, thermal expansion, and in <see cref="Material.AnalysisData"/> the
+        /// G without Use Poisson, damping, conductivity, specific heat and table, as <see cref="ElasticMaterial"/>) and its declared values
+        /// (<see cref="MaterialDeclarations"/>: every declared value of the former material: expected strengths, aluminium strengths, alloy and form), so that
+        /// <see cref="GpcMaterials.Analysis"/> gives back the analysis material bit for bit; the check materials are built from it by
+        /// <see cref="GpcMaterials.StructuralSteel"/>, <see cref="GpcMaterials.Reinforcement"/> and <see cref="GpcMaterials.Concrete"/> with the
+        /// rules of the former builders (their ν, density and thermal expansion are the defaults of the GPC types, as before). A concrete whose
+        /// E is not the Ecm of its fck (a custom concrete, a value saved before E10) keeps its E for the analysis (the checks use fck, as before).
+        /// A kind whose strength data the GPC type refuses is the generic material too (the analysis is unchanged; the checks read the same values).
+        /// Not carried (unused, decision M4): identifier, temperature-on-time, mode and hardening of the former material, the dead shear
+        /// ultimate field (its property reads the tensile ultimate strength), strengths of another kind.
+        /// </summary>
+        public static Material Material(LegacyValue m)
+        {
+            var elastic = ElasticMaterial(m);
+            string kind = m.Enum("MaterialKind"), name = m.String("Name");
+            double E = m.Double("Modulus"), nu = m.Double("PoissonRatio"), rho = m.Double("Density"), alpha = m.Double("ThermalExpansion");
+            double fy = m.Double("MinimumYieldStress"), fu = m.Double("MinimumTensileStress"), fck = m.Double("SpecificCompressiveStrength");
+            double? strainU = m.Has("ReinforcementUltimateStrain") ? m.Double("ReinforcementUltimateStrain") : (double?)null;
+            Material typed = null;
+            try
+            {
+                switch (kind)
+                {
+                    case "Steel":
+                    case "Rebar":
+                        typed = new SteelMaterialEN1992(name, E, fy, fu, strainU ?? 0.1, SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic,
+                            kind == "Rebar" ? SteelMaterial.SteelTypes.Rebar : SteelMaterial.SteelTypes.Structural, nu, rho, alpha);
+                        break;
+                    case "Concrete":
+                        var concrete = new ConcreteMaterialEN1992(name, fck, ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle, nu, rho, alpha);
+                        if (concrete.ElasticModulusCompression != E || concrete.ElasticModulusTension != E) { concrete.ElasticModulusCompression = E; concrete.ElasticModulusTension = E; }
+                        typed = concrete;
+                        break;
+                    case "Aluminium":
+                        typed = new AluminiumMaterialEN1999(name, E, m.Double("TensileYieldStrength"), m.Double("TensileUltimateStrength"), poisson: nu, density: rho, alfaThermalExpansion: alpha);
+                        break;
+                }
+            }
+            catch (Exception e) when (e is ArgumentException || e is NotSupportedException) { typed = null; }
+            if (typed == null)
+            {
+                // A former material without a kind (or a kind whose strengths the GPC type refuses): the generic material, with the
+                // characteristic strengths the former builders of the checks read in its stresses (yield and ultimate in tension, compressive
+                // as a negative stress) and the reinforcement ultimate strain: the example generators internalise such steels and concretes.
+                typed = elastic;
+                // The name as given, as the typed materials and the former builders (the analysis material names a blank one "Material"); a
+                // former material without a name keeps the name of the analysis.
+                if (name != null && typed.Name != name) typed.Name = name;
+                if (fy != 0) typed.StressYTension = fy;
+                if (fu != 0) typed.StressUTension = fu;
+                if (fck != 0) typed.StressYCompression = -fck;
+                if (strainU.HasValue) typed.StrainUTension = strainU.Value;
+            }
+            else typed.AnalysisData = elastic.AnalysisData;
+            static double? Declared(double v) => v == 0 ? (double?)null : v;
+            string form = kind == "Aluminium" ? m.Enum("AlumiumType") : null;
+            var declared = new MaterialDeclarations
+            {
+                ExpectedYieldStress = Declared(m.Double("ExpectedYieldStress")), ExpectedTensileStrength = Declared(m.Double("ExpectedTensileStress")),
+                ExpectedCompressiveStrength = Declared(m.Double("ExpectedCompressiveStrength")),
+                CompressiveYieldStrength = Declared(m.Double("CompressiveYieldStrength")), TensileYieldStrength = Declared(m.Double("TensileYieldStrength")),
+                // The former ShearUltimateStrength property reads (and writes) the tensile ultimate field: the values at the ports.
+                TensileUltimateStrength = Declared(m.Double("TensileUltimateStrength")), ShearUltimateStrength = Declared(m.Double("TensileUltimateStrength")),
+                Alloy = m.String("Alloy"),
+                AluminiumForm = form == null ? AluminiumManufacturingForm.Unspecified : form == "CastMold" ? AluminiumManufacturingForm.CastMold
+                    : form == "CastSand" ? AluminiumManufacturingForm.CastSand : AluminiumManufacturingForm.Wrought,
+            };
+            bool anyDeclared = declared.ExpectedYieldStress.HasValue || declared.ExpectedTensileStrength.HasValue || declared.ExpectedCompressiveStrength.HasValue
+                || declared.CompressiveYieldStrength.HasValue || declared.TensileYieldStrength.HasValue || declared.TensileUltimateStrength.HasValue
+                || declared.ShearUltimateStrength.HasValue || declared.Alloy != null || form != null;
+            typed.Declarations = anyDeclared ? declared : null;
+            return typed;
+        }
+
         /// <param name="checkLengthUnit">False for a draft (definition units, identity factors): the length unit of a library or BXS section
         /// is checked against the units of the model by the assembly (<see cref="LegacyAssembly.NormaliseBeamProperty"/>).</param>
         private static LegacyBeamProperty BeamProperty(LegacyValue p, string propertyName, BridgeUnits units, Dictionary<string, (double, double)> shearAreas, LegacyImportReport report, string signature,
