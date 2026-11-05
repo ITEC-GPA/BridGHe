@@ -46,7 +46,20 @@ public sealed class BridgeConstructionSequenceComponent : BridgeUtilityComponent
         da.GetData(6, ref property); da.GetDataList(7, increments);
         var result = BridgeConstructionSequence.Create(model.Value, definition, groups, ids, enabled ? bearings : Array.Empty<string>(),
             property?.Value, increments.Select(c => c.Value).ToArray());
-        da.SetData(0, new GH_Model { Value = result.Model }); if (result.Stage != null) da.SetData(1, new GH_StagedConstruction(result.Stage));
+        var output = new GH_Model { Value = result.Model };
+        // F6 chain D: the GPC input of the snapshot from the GPC input of the source (renumbered 1..n as the conversion of the FEM output);
+        // if it cannot be built the analysis converts the FEM output as before.
+        try
+        {
+            var source = model.GpcInput;
+            var replacement = property?.Value == null ? null : Common.Gpc.GpcModels.BeamProperty(property.Value, source.Report.Units);
+            output.AttachInput(Common.Gpc.GpcModelTransforms.ConstructionSequence(source, definition.Order, definition.Name, definition.Day, groups, ids,
+                enabled ? bearings : Array.Empty<string>(), replacement,
+                Common.Gpc.GpcIdentity.Derive(InstanceGuid, "construction:" + source.Model.Guid.ToString("D") + ":" + da.Iteration.ToString(System.Globalization.CultureInfo.InvariantCulture))));
+        }
+        catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is InvalidOperationException || e is System.Runtime.Serialization.SerializationException)
+        { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "GPC construction phase not built (" + e.Message + "): the analysis converts the FEM model."); }
+        da.SetData(0, output); if (result.Stage != null) da.SetData(1, new GH_StagedConstruction(result.Stage));
         da.SetData(2, phase); da.SetDataList(3, result.ActivePhysicalIds);
         da.SetDataList(4, model.Value.Elements.SelectMany(e => e.Groups).SelectMany(BridGHe.Common.Models.GroupModel.GetBranch).Select(g => g.FullName).Distinct());
         da.SetDataList(5, result.Diagnostics);

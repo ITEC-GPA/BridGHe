@@ -114,22 +114,57 @@ namespace BridGHe.Common.Gpc
 
             // Beam properties as the legacy reader registers them on the FEM output (one per name, first in beam order).
             var selected = beamIds.ToHashSet(StringComparer.Ordinal);
-            var registry = new Dictionary<string, (GPC.Model.ElementProperties.BeamProperty Property, LegacyBeamPropertyData Data, bool Replacement)>(StringComparer.Ordinal);
             var nativeSections = new Dictionary<Guid, GPC.Converter.Straus7.Straus7SectionDefinition>(source.NativeSections);
             var shadowed = new HashSet<int>();
+            var registry = RegisterBeamProperties(model, source, b => selected.Contains(b.Name), property, warnings, nativeSections, shadowed, "PhaseModel");
+
+            var report = source.CopyFor(clearLoads ? 0 : source.RegisteredCases);
+            Replace(report.CaseOrigins, origins);
+            report.Warnings.Clear(); report.Warnings.AddRange(warnings);
+            report.NativeSections.Clear(); foreach (var p in nativeSections) report.NativeSections.Add(p.Key, p.Value);
+            report.BeamProperties.Clear(); foreach (var p in registry) report.BeamProperties.Add(p.Key, p.Value.Data);
+            report.ShadowedPropertyBeams.Clear(); report.ShadowedPropertyBeams.UnionWith(shadowed);
+            if (clearLoads)
+            {
+                // Every element load goes with "Clear loads", and the warnings of the conversion about loads with them.
+                var cleared = report.ElementLoadCases.Select(e => e with { Cases = Array.Empty<string>() }).ToList();
+                report.ElementLoadCases.Clear(); report.ElementLoadCases.AddRange(cleared);
+                report.ElementWarnings.RemoveAll(w => w.Format.Contains(": temperature type ", StringComparison.Ordinal));
+            }
+            return new GpcModels.Conversion(model, report, input.Tolerance);
+        }
+
+        private static bool IsExistingPropertyWarning(string warning) =>
+            warning.StartsWith("The beam property ", StringComparison.Ordinal) && warning.EndsWith(" already exists", StringComparison.Ordinal);
+
+        /// <summary>The beam properties of a transformed model registered as the legacy reader registers them on the FEM output: one per name,
+        /// the first in beam order (the former exporter: a replacement with the name of another property takes or gives that property, with
+        /// the warning "already exists"); the properties no longer used go. A beam for which <paramref name="replaced"/> is true takes
+        /// <paramref name="property"/>; a beam that changes property takes its formulation, its section axes (BridGHe angle of the beam,
+        /// principal angle of the section; the axes of its distributed supports with them) and its native section. A local section state
+        /// (Bridge State Override) stays as it is: it names the fingerprint of the property it was computed for, so on a new property it is
+        /// stale and the checks refuse it ("FEM properties changed after the local section-state assignment"), as with the former model
+        /// (coordinator decision 3, 5/11). Listed difference: the former model compared only the former signature of the property (A, I, J,
+        /// centroid, E, nu, density, type), so a replacement equal in those values (e.g. the same property under another name) kept the state
+        /// current there. The beams are those of <paramref name="model"/> with the numbers of <paramref name="source"/>.</summary>
+        private static Dictionary<string, (GPC.Model.ElementProperties.BeamProperty Property, LegacyBeamPropertyData Data, bool Replacement)> RegisterBeamProperties(
+            GPC.Model.Models.Model model, LegacyImportReport source, Func<GPC.Model.Elements.BeamElement, bool> replaced, LegacyBeamProperty property, List<string> warnings,
+            Dictionary<Guid, GPC.Converter.Straus7.Straus7SectionDefinition> nativeSections, HashSet<int> shadowed, string code)
+        {
+            var registry = new Dictionary<string, (GPC.Model.ElementProperties.BeamProperty Property, LegacyBeamPropertyData Data, bool Replacement)>(StringComparer.Ordinal);
             foreach (var beam in model.BeamElements.Values.OrderBy(b => b.Id))
             {
-                bool replaced = selected.Contains(beam.Name);
+                bool replace = property != null && replaced(beam);
                 string own = beam.BeamProperty.Name;
-                if (!replaced && !source.BeamProperties.ContainsKey(own)) throw new NotSupportedException("PhaseModelSourcePropertyUnknown: " + own);
-                string key = replaced ? property.Property.Name : own;
+                if (!replace && !source.BeamProperties.ContainsKey(own)) throw new NotSupportedException(code + "SourcePropertyUnknown: " + own);
+                string key = replace ? property.Property.Name : own;
                 // The digest of the former content of the property of this beam in the FEM output (unknown for a beam the source shadowed).
-                string signature = replaced ? property.Data.Signature : source.ShadowedPropertyBeams.Contains(beam.Id) ? null : source.BeamProperties[own].Signature;
+                string signature = replace ? property.Data.Signature : source.ShadowedPropertyBeams.Contains(beam.Id) ? null : source.BeamProperties[own].Signature;
                 if (!registry.TryGetValue(key, out var entry))
                 {
                     // The first beam of a name registers its own content: unknown for a beam the source shadowed.
-                    if (signature == null) throw new NotSupportedException("PhaseModelShadowedBeamProperty: " + beam.Name);
-                    entry = replaced ? (property.Property, property.Data, true) : (beam.BeamProperty, source.BeamProperties[own], false);
+                    if (signature == null) throw new NotSupportedException(code + "ShadowedBeamProperty: " + beam.Name);
+                    entry = replace ? (property.Property, property.Data, true) : (beam.BeamProperty, source.BeamProperties[own], false);
                     registry.Add(key, entry);
                 }
                 else
@@ -137,15 +172,10 @@ namespace BridGHe.Common.Gpc
                     // A later beam of the name takes the registered property; the reader warns when its own content differs. A beam the
                     // source shadowed differs from the source property of its name (registered again here unless the replacement took the
                     // name: its own content is then unknown).
-                    if (signature == null && entry.Replacement) throw new NotSupportedException("PhaseModelShadowedBeamProperty: " + beam.Name);
+                    if (signature == null && entry.Replacement) throw new NotSupportedException(code + "ShadowedBeamProperty: " + beam.Name);
                     if (signature == null || signature != entry.Data.Signature) { warnings.Add(string.Format(LegacyImportReport.ExistingPropertyWarning, key)); shadowed.Add(beam.Id); }
                 }
                 if (ReferenceEquals(beam.BeamProperty, entry.Property)) continue;
-                // A local section state (Bridge State Override) stays as it is: it names the fingerprint of the property it was computed for,
-                // so on a new property it is stale and the checks refuse it ("FEM properties changed after the local section-state
-                // assignment"), as with the former model (coordinator decision 3, 5/11: no conversion of the FEM output for this case). Listed
-                // difference: the former model compared only the former signature of the property (A, I, J, centroid, E, nu, density, type),
-                // so a replacement equal in those values (e.g. the same property under another name) kept the state current there.
                 beam.BeamProperty = entry.Property;
                 beam.Assignments.Formulation = entry.Data.Formulation;
                 var axes = GpcBeamAxes.Section(beam.StartPoint, beam.EndPoint, source.BeamAngles[beam.Id], entry.Data.Angle);
@@ -158,18 +188,222 @@ namespace BridGHe.Common.Gpc
             }
             model.BeamProperties.Clear();
             foreach (var entry in registry.Values) model.BeamProperties.Add(entry.Property.Name, entry.Property);
-
-            var report = source.CopyFor(clearLoads ? 0 : source.RegisteredCases);
-            Replace(report.CaseOrigins, origins);
-            report.Warnings.Clear(); report.Warnings.AddRange(warnings);
-            report.NativeSections.Clear(); foreach (var p in nativeSections) report.NativeSections.Add(p.Key, p.Value);
-            report.BeamProperties.Clear(); foreach (var p in registry) report.BeamProperties.Add(p.Key, p.Value.Data);
-            report.ShadowedPropertyBeams.Clear(); report.ShadowedPropertyBeams.UnionWith(shadowed);
-            return new GpcModels.Conversion(model, report, input.Tolerance);
+            return registry;
         }
 
-        private static bool IsExistingPropertyWarning(string warning) =>
-            warning.StartsWith("The beam property ", StringComparison.Ordinal) && warning.EndsWith(" already exists", StringComparison.Ordinal);
+        /// <summary>Bridge Construction Sequence (former <see cref="Geometry.BridgeConstructionSequence.Create"/>): one phase snapshot, an
+        /// independent copy named "{order:D2}-{name}" with the beams and plates of the active groups (descendants included) or physical members
+        /// (both empty: all), the nodes they touch within the tolerance and, repeatedly, the nodes whose rigid links reach a retained point (and
+        /// the targets of those links); the restraints of the nodes not in <paramref name="bearingIds"/> removed ("*": all kept, empty: none);
+        /// the girders (Bridge Member Assignment) on <paramref name="girderOverride"/> (property registry as <see cref="PhaseModel"/>); stages
+        /// and their freedom case go, loads and combinations stay. As the conversion of the former output:
+        /// <list type="bullet">
+        /// <item>numbering (coordinator decision 2, 5/11): nodes, beams and plates renumbered 1..n (<see cref="GPC.Model.Core.ModelValues.Renumber"/>)
+        /// in the order of the former output: beams and plates in the order of the source, nodes in the order the retention found them (the
+        /// order of the source unless rigid links bring in earlier nodes in a later pass); the element identities (GUIDs) of the source kept,
+        /// the source identity of an element without BridGHe ID takes its new number;</item>
+        /// <item>rigid links in the order of their nodes in the output; groups registered in the order the reader meets them; physical members
+        /// and super elements with the parts of the active beams, in the order of their first beam;</item>
+        /// <item>cases: registered, of the loads of the active elements (in the order of the elements of the former output), of the
+        /// combinations, of the moving paths, then "Dead"; the report renumbered (BridGHe angles, shadowed beams, element cases and warnings,
+        /// without the warnings of the elements that go and the restraint warnings of the nodes whose restraints go).</item>
+        /// </list>
+        /// Listed differences: the retention reads the nodes of the beams and plates and the nodes at the end of the rigid links (the former
+        /// transformer read the points of the former elements and of the links, within the tolerance of the nodes); a GPC beam has one group
+        /// (the first of the former beam: the legacy reader warns of the others).</summary>
+        public static GpcModels.Conversion ConstructionSequence(GpcModels.Conversion input, int order, string name, double? day, IReadOnlyList<string> activeGroups,
+            IReadOnlyList<string> physicalIds, IReadOnlyList<string> bearingIds, LegacyBeamProperty girderOverride, Guid modelIdentity)
+        {
+            if (input == null) throw new ArgumentNullException(nameof(input));
+            if (order < 0 || string.IsNullOrWhiteSpace(name) || day is double d && (!double.IsFinite(d) || d < 0))
+                throw new ArgumentException("Phase needs a nonnegative number/day and a name.");
+            activeGroups ??= Array.Empty<string>(); physicalIds ??= Array.Empty<string>(); bearingIds ??= new[] { "*" };
+            var source = input.Model; var report = input.Report;
+            IEnumerable<GPC.Model.Attributes.Group> Branch(GPC.Model.Attributes.Group g) { for (var x = g; x != null; x = x.Parent) yield return x; }
+            var allGroups = source.AllElements.SelectMany(e => e.Groups.Values).SelectMany(Branch).Select(g => g.Name).ToHashSet(StringComparer.Ordinal);
+            var members = GpcBridgeMembers.Of(source);
+            var allPhysical = members.Values.Select(m => m.PhysicalId).ToHashSet(StringComparer.Ordinal);
+            if (activeGroups.Any(g => !allGroups.Contains(g)) || physicalIds.Any(id => !allPhysical.Contains(id)))
+                throw new ArgumentException("Unknown active group/physical member identifier.");
+            var supported = source.NodesElements.Values.Where(n => n.Assignments.Restrains.Count != 0).Select(n => n.Name).ToHashSet(StringComparer.Ordinal);
+            if (bearingIds.Any(id => id != "*" && !supported.Contains(id)) || bearingIds.Contains("*") && bearingIds.Count != 1)
+                throw new ArgumentException("Active bearings require exact supported Node IDs, '*' for all, or an empty list for none.");
+            if (girderOverride != null && (girderOverride.Property == null || girderOverride.Data == null)) throw new ArgumentException("Invalid girder override property.");
+            bool all = activeGroups.Count == 0 && physicalIds.Count == 0;
+            bool Active(GPC.Model.Elements.Element e) => all || e.Groups.Values.SelectMany(Branch).Any(g => activeGroups.Contains(g.Name))
+                || e is GPC.Model.Elements.BeamElement b && members.TryGetValue(b.Id, out var m) && physicalIds.Contains(m.PhysicalId);
+            var beams = source.BeamElements.Values.Where(Active).Select(b => b.Id).ToHashSet();
+            var plates = source.AreaElements.Values.Where(Active).Select(p => p.Id).ToHashSet();
+            if (beams.Count + plates.Count == 0) throw new ArgumentException("The selected construction phase has no structural elements.");
+            if (source.Costrains.Values.Any(c => !(c is GPC.Model.Constraints.RigidLink) || c.EndNodes.Length != 1)) throw new NotSupportedException("ConstructionSequenceConstraintNotRigidLink");
+
+            // Retention, as the former transformer: the points of the active elements, then the nodes that touch a retained point or whose
+            // rigid links reach one (their link targets become retained points), repeated until nothing changes; nodes in source order.
+            var points = new PointGrid(report.Units.ToMm(input.Tolerance));
+            foreach (var b in source.BeamElements.Values.Where(b => beams.Contains(b.Id))) { points.Add(b.NodeI.Position); points.Add(b.NodeJ.Position); }
+            foreach (var p in source.AreaElements.Values.Where(p => plates.Contains(p.Id))) foreach (var n in p.Nodes) points.Add(n.Position);
+            var links = source.Costrains.Values.Cast<GPC.Model.Constraints.RigidLink>().ToList();
+            var outgoing = links.ToLookup(l => l.StartNode.Guid);
+            var retained = new List<GPC.Model.Elements.NodeElement>(); var kept = new HashSet<Guid>();
+            bool changed;
+            do
+            {
+                changed = false;
+                foreach (var node in source.NodesElements.Values)
+                    if (!kept.Contains(node.Guid) && (points.Touches(node.Position) || outgoing[node.Guid].Any(l => points.Touches(l.EndNodes[0].Position))))
+                    {
+                        kept.Add(node.Guid); retained.Add(node); points.Add(node.Position);
+                        foreach (var l in outgoing[node.Guid]) points.Add(l.EndNodes[0].Position);
+                        changed = true;
+                    }
+            } while (changed);
+
+            var model = GPC.Model.Core.ModelValues.Copy(source, GPC.Model.Core.ModelCopyOptions.None, modelIdentity);
+            model.Name = $"{order:D2}-{name}";
+            foreach (var b in model.BeamElements.Values.Where(b => !beams.Contains(b.Id)).ToList()) model.RemoveElement(b);
+            foreach (var p in model.AreaElements.Values.Where(p => !plates.Contains(p.Id)).ToList()) model.RemoveElement(p);
+            var nodes = model.NodesElements.Values.ToDictionary(n => n.Guid);
+            // Rigid links in the order of their nodes in the output (the reader writes them node by node), between retained nodes.
+            var copiedLinks = model.Costrains.Values.Cast<GPC.Model.Constraints.RigidLink>().ToList(); model.Costrains.Clear();
+            foreach (var n in model.NodesElements.Values.Where(n => !kept.Contains(n.Guid)).ToList()) model.RemoveNodeChecked(n.Id);
+            foreach (var node in retained)
+                foreach (var l in copiedLinks.Where(l => l.StartNode.Guid == node.Guid))
+                    if (kept.Contains(l.EndNodes[0].Guid)) model.AddCostrain(new GPC.Model.Constraints.RigidLink(nodes[node.Guid], nodes[l.EndNodes[0].Guid]));
+            // Bearings: the restraints (and springs) of the nodes not chosen go.
+            var unsupported = new HashSet<int>();
+            if (!bearingIds.Contains("*"))
+                foreach (var node in model.NodesElements.Values)
+                    if (!bearingIds.Contains(node.Name) && node.Assignments.Restrains.Count != 0) { node.Assignments.Restrains.Clear(); unsupported.Add(node.Id); }
+            // Girders on the override property (the former check of a dimensional taper on a generic section first).
+            var girders = new HashSet<int>();
+            if (girderOverride != null)
+            {
+                girders.UnionWith(model.BeamElements.Values.Where(b => members.TryGetValue(b.Id, out var m) && m.Girder).Select(b => b.Id));
+                if (girders.Count == 0) throw new ArgumentException("Girder property override requires members produced by Bridge Member Assignment.");
+                bool generic = girderOverride.Property is GPC.Model.ElementProperties.ElasticBeamProperty e && e.Section?.GetType() == typeof(GPC.Model.Sections.Section);
+                if (generic && model.BeamElements.Values.Any(b => girders.Contains(b.Id) && b.Assignments.Physical?.Taper != null))
+                    throw new ArgumentException("Cannot retain a dimensional taper when overriding with generic/homogenized properties. Use matching per-segment properties.");
+            }
+            var warnings = report.Warnings.ToList();
+            foreach (var w in report.ElementWarnings) warnings.Remove(w.Text(w.Number));
+            warnings.RemoveAll(IsExistingPropertyWarning);
+            var activeGuids = model.BeamElements.Values.Select(b => b.Guid).ToHashSet();
+            var nativeSections = report.NativeSections.Where(p => activeGuids.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value);
+            var shadowed = new HashSet<int>();
+            var registry = RegisterBeamProperties(model, report, b => girders.Contains(b.Id), girderOverride, warnings, nativeSections, shadowed, "ConstructionSequence");
+            model.Stages.Clear(); model.FreedomCases.Clear();
+            // Plate properties as the reader registers them: those of the active plates, in the order of their first plate.
+            var plateProperties = model.AreaElements.Values.OrderBy(p => p.Id).Select(p => p.PlateProperty).ToList();
+            model.PlateProperties.Clear();
+            foreach (var p in plateProperties) if (!model.PlateProperties.ContainsKey(p.Name)) model.PlateProperties.Add(p.Name, p);
+
+            // Physical members and super elements: the parts of the active beams, members before super elements, in the order of their first beam.
+            var definitions = model.PhysicalMembers.Values.Where(m => m.Parts.Any(p => beams.Contains(p.BeamId)))
+                .Select(m => m.Parts.All(p => beams.Contains(p.BeamId)) ? m
+                    : new GPC.Model.Structure.Members.PhysicalMemberDefinition(m.Id, m.Parts.Where(p => beams.Contains(p.BeamId)), m.StationDomain, m.Name, m.Source))
+                .OrderBy(m => m.Source == GpcBridgeMembers.SuperElementSource ? 1 : 0).ThenBy(m => m.Parts.Min(p => p.BeamId)).ToList();
+            model.PhysicalMembers.Clear(); foreach (var m in definitions) model.PhysicalMembers.Add(m.Id, m);
+
+            // Groups in the order the reader meets them: every group of the nodes (output order), then the group of the beams and plates.
+            var groups = new Dictionary<string, GPC.Model.Attributes.Group>(StringComparer.Ordinal);
+            GPC.Model.Attributes.Group GroupOf(GPC.Model.Attributes.Group g)
+            {
+                if (groups.TryGetValue(g.Name, out var known)) return known;
+                var parent = g.Parent == null ? null : GroupOf(g.Parent);
+                var group = GPC.Model.Attributes.Group.Create(g.Guid, g.Name);
+                parent?.AddChild(group);
+                groups.Add(g.Name, group);
+                return group;
+            }
+            void Regroup(GPC.Model.Elements.Element e)
+            {
+                var own = e.Groups.Values.ToArray();
+                e.Groups = new GPC.Model.Collections.UniqueNameCollection<GPC.Model.Attributes.Group>();
+                foreach (var g in own) e.AddGroup(GroupOf(g));
+            }
+            foreach (var node in retained) Regroup(nodes[node.Guid]);
+            foreach (var b in model.BeamElements.Values) Regroup(b);
+            foreach (var p in model.AreaElements.Values) Regroup(p);
+            model.Groups.Clear(); foreach (var g in groups.Values) model.Groups.Add(g.Name, g);
+
+            // Numbers of the output: nodes in retention order, beams and plates in source order.
+            var rank = retained.Select((n, i) => (n.Guid, i)).ToDictionary(p => p.Guid, p => (long)p.i);
+            // An assembled source (built in GPC): its map names the elements that went; every element of the snapshot is its own identity.
+            if (model.AssemblyMap != null) GPC.Model.Models.ModelAssembly.RefreshIdentityMap(model);
+            var numbered = GPC.Model.Core.ModelValues.Renumber(model, e => e is GPC.Model.Elements.NodeElement ? rank[e.Guid] : e.Id);
+            var number = new Dictionary<(GPC.Model.Core.Identity.EntityFamily, int), int>();
+            var byGuid = numbered.AllElements.ToDictionary(e => e.Guid);
+            foreach (var e in model.AllElements) number[(GPC.Model.Models.Model.FamilyOf(e), e.Id)] = byGuid[e.Guid].Id;
+            var oldIds = model.AllElements.ToDictionary(e => e.Guid, e => e.Id);
+            foreach (var e in numbered.AllElements)
+            {
+                var s = e.Source; int old = oldIds[e.Guid];
+                if (s != null && string.IsNullOrEmpty(e.Name) && s.OriginalId == old.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                    e.Source = new GPC.Model.Core.Identity.SourceIdentity(s.Program, s.ModelRevision, s.Family, e.Id.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                // The records of the beam loads name the beam by number ("BeamLoad/<beam>/<load>", the legacy reader).
+                if (e is GPC.Model.Elements.BeamElement beam && old != beam.Id)
+                {
+                    string before = "BeamLoad/" + old.ToString(System.Globalization.CultureInfo.InvariantCulture) + "/", after = "BeamLoad/" + beam.Id.ToString(System.Globalization.CultureInfo.InvariantCulture) + "/";
+                    string Renamed(string record) => record != null && record.StartsWith(before, StringComparison.Ordinal) ? after + record.Substring(before.Length) : record;
+                    foreach (var a in beam.Assignments.Loads) { a.OriginalAssignmentId = Renamed(a.OriginalAssignmentId); a.SourceRecord = Renamed(a.SourceRecord); }
+                }
+            }
+            bool Kept(GPC.Model.Core.Identity.EntityFamily f, int n) => number.ContainsKey((f, n));
+
+            // Cases in the order of the reader on the former output.
+            var elementCases = report.ElementLoadCases.Where(c => c.Family != GPC.Model.Core.Identity.EntityFamily.Node && Kept(c.Family, c.Number))
+                .Concat(retained.Select(n => report.ElementLoadCases.FirstOrDefault(c => c.Family == GPC.Model.Core.Identity.EntityFamily.Node && c.Number == n.Id)).Where(c => c != null)).ToList();
+            Origins(report); // a report with the case origins (refused otherwise)
+            var names = new List<string>(); var origins = new Dictionary<string, LegacyCaseOrigins>(StringComparer.Ordinal);
+            void Name(string caseName, LegacyCaseOrigins origin)
+            {
+                if (!names.Contains(caseName)) names.Add(caseName);
+                origins.TryGetValue(caseName, out var o); origins[caseName] = o | origin;
+            }
+            var cases = numbered.LoadCases.Values.ToList();
+            foreach (var c in cases.Take(Math.Min(report.RegisteredCases, cases.Count))) Name(c.Name, LegacyCaseOrigins.Registered);
+            foreach (var c in elementCases) foreach (var caseName in c.Cases) Name(caseName, LegacyCaseOrigins.ElementLoad);
+            foreach (var combination in numbered.Combinations.Values) foreach (var c in combination.GetLoadCases()) Name(c.Name, LegacyCaseOrigins.Combination);
+            if (numbered.MovingLoads != null)
+                foreach (var path in numbered.MovingLoads.Paths) { var c = cases.FirstOrDefault(x => x.Guid == path.CaseGuid); if (c != null) Name(c.Name, LegacyCaseOrigins.Moving); }
+            if (names.Any(n => !numbered.LoadCases.ContainsKey(n))) throw new NotSupportedException("ConstructionSequenceCaseOfAFormerLoadUnknown: " + string.Join(", ", names.Where(n => !numbered.LoadCases.ContainsKey(n))));
+
+            SetCases(numbered, names.Select(n => numbered.LoadCases[n]).ToList(), origins);
+
+            var output = report.CopyFor(report.RegisteredCases);
+            Replace(output.CaseOrigins, origins);
+            output.BeamAngles.Clear(); foreach (var p in report.BeamAngles.Where(p => Kept(GPC.Model.Core.Identity.EntityFamily.Beam, p.Key))) output.BeamAngles.Add(number[(GPC.Model.Core.Identity.EntityFamily.Beam, p.Key)], p.Value);
+            output.NativeSections.Clear(); foreach (var p in nativeSections) output.NativeSections.Add(p.Key, p.Value);
+            output.BeamProperties.Clear(); foreach (var p in registry) output.BeamProperties.Add(p.Key, p.Value.Data);
+            output.ShadowedPropertyBeams.Clear(); output.ShadowedPropertyBeams.UnionWith(shadowed.Select(k => number[(GPC.Model.Core.Identity.EntityFamily.Beam, k)]));
+            output.ElementLoadCases.Clear(); output.ElementLoadCases.AddRange(elementCases.Select(c => c with { Number = number[(c.Family, c.Number)] }));
+            output.ElementWarnings.Clear();
+            foreach (var w in report.ElementWarnings)
+            {
+                if (!Kept(w.Family, w.Number) || w.Restraint && w.Family == GPC.Model.Core.Identity.EntityFamily.Node && unsupported.Contains(w.Number)) continue;
+                var renumbered = w with { Number = number[(w.Family, w.Number)] };
+                output.ElementWarnings.Add(renumbered); warnings.Add(renumbered.Text(renumbered.Number));
+            }
+            output.Warnings.Clear(); output.Warnings.AddRange(warnings);
+            return new GpcModels.Conversion(numbered, output, input.Tolerance);
+        }
+
+        /// <summary>Points within a tolerance (the sphere search of the former RTree): a grid of cells of the tolerance.</summary>
+        private sealed class PointGrid
+        {
+            private readonly double tolerance; private readonly Dictionary<(long, long, long), List<GPC.Geometry.Point3d>> cells = new Dictionary<(long, long, long), List<GPC.Geometry.Point3d>>();
+            internal PointGrid(double tolerance) { if (!(tolerance > 0) || double.IsInfinity(tolerance)) throw new ArgumentException("Tolerance must be finite and positive."); this.tolerance = tolerance; }
+            private (long, long, long) Cell(GPC.Geometry.Point3d p) => ((long)Math.Floor(p.X / tolerance), (long)Math.Floor(p.Y / tolerance), (long)Math.Floor(p.Z / tolerance));
+            internal void Add(GPC.Geometry.Point3d p) { var c = Cell(p); if (!cells.TryGetValue(c, out var list)) cells.Add(c, list = new List<GPC.Geometry.Point3d>()); list.Add(p); }
+            internal bool Touches(GPC.Geometry.Point3d p)
+            {
+                var c = Cell(p);
+                for (long x = c.Item1 - 1; x <= c.Item1 + 1; x++) for (long y = c.Item2 - 1; y <= c.Item2 + 1; y++) for (long z = c.Item3 - 1; z <= c.Item3 + 1; z++)
+                            if (cells.TryGetValue((x, y, z), out var list))
+                                foreach (var q in list) { double dx = q.X - p.X, dy = q.Y - p.Y, dz = q.Z - p.Z; if (Math.Sqrt(dx * dx + dy * dy + dz * dz) <= tolerance) return true; }
+                return false;
+            }
+        }
 
         /// <summary>The loads of a model removed: element loads and load assignments, case-dependent physical data (node temperatures, beam
         /// gradients and initial states, plate initial stresses and non-structural masses) and model loads; the physical data of nodes and

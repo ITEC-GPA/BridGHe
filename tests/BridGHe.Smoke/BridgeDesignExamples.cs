@@ -246,6 +246,10 @@ internal static class BridgeDesignExamples
             var snapshots = d.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "BridgeConstructionSequenceComponent")
                 .Select(c => (ModelModel)Output(c, 0).Single()).OrderBy(m => m.Beams.Count).ToArray();
             Require(snapshots.Length == 3 && snapshots[0].Beams.Count < snapshots[1].Beams.Count && snapshots[1].Beams.Count < snapshots[2].Beams.Count, "Three independent activation snapshots");
+#if GPC_PILOT
+            // F6 chain D: every Bridge Construction Sequence attached its GPC snapshot, renumbered as the conversion of its FEM output.
+            GpcInputComparison.RequireComponents(d, "40-sequenza-costruttiva");
+#endif
         });
     }
     private static void Details()
@@ -351,6 +355,10 @@ internal static class BridgeDesignExamples
                 .Select(c => (ModelModel)Output(c, 0).Single()).OrderBy(m => m.Plates.Count).ToArray();
             Require(phases[0].Plates.Count == 0 && phases[1].Plates.Count > 0 && phases[2].Plates.Count == model.Plates.Count, "Steel/first pour/full deck snapshots");
             Require(phases.All(m => m.Elements.All(e => e.Results.Count == 0)), "Unanalysed snapshots contain no invented results");
+#if GPC_PILOT
+            // F6 chain D: every Bridge Construction Sequence attached its GPC snapshot, renumbered as the conversion of its FEM output.
+            GpcInputComparison.RequireComponents(d, "45-ponte-completo-fasi");
+#endif
         });
     }
 }

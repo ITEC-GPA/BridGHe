@@ -56,6 +56,10 @@ namespace BridGHe.Common.Gpc
                     if (c is GPC.Model.LoadCases.LoadCaseBase b && report.CaseOrigins.TryGetValue(b.Name, out var o)) report.CaseOrigins[b.Name] = o | origin;
                 }
                 foreach (var c in GpcModelCases.ElementCases(model)) Origin(c, LegacyCaseOrigins.ElementLoad);
+                // The cases of the loads of every element, nodes, beams and plates in number order (Construction Sequence orders its cases from them).
+                foreach (var e in model.NodesElements.Values.Cast<GPC.Model.Elements.Element>().Concat(model.BeamElements.Values).Concat(model.AreaElements.Values))
+                    report.ElementLoadCases.Add(new LegacyElementCases(GPC.Model.Models.Model.FamilyOf(e), e.Id,
+                        GpcModelCases.ElementCases(e).OfType<GPC.Model.LoadCases.LoadCaseBase>().Select(c => c.Name).ToArray()));
                 foreach (var combination in model.Combinations.Values) foreach (var c in combination.GetLoadCases()) Origin(c, LegacyCaseOrigins.Combination);
                 var byGuid = model.LoadCases.Values.ToDictionary(c => c.Guid);
                 foreach (var stage in model.Stages.Values)

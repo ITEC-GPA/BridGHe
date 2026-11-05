@@ -47,12 +47,35 @@ namespace BridGHe.Common.Gpc.Legacy
         /// <summary>F6 chain D: the beams (GPC numbers) whose former property had the name of an earlier, different property: they got the earlier
         /// one, as with the former exporter ("The beam property ... already exists"); their own content is not in the conversion.</summary>
         public HashSet<int> ShadowedPropertyBeams { get; } = new HashSet<int>();
+        /// <summary>F6 chain D (Construction Sequence): the load cases of the former loads of every element, by element, in the order of the
+        /// elements of the former model (the order in which the legacy reader meets the cases of the element loads); a transformer that keeps
+        /// a subset of the elements orders the cases of its output from it.</summary>
+        public List<LegacyElementCases> ElementLoadCases { get; } = new List<LegacyElementCases>();
+        /// <summary>F6 chain D (Construction Sequence): the warnings of <see cref="Warnings"/> that concern one element (also in
+        /// <see cref="Warnings"/>), so that a transformer that removes or renumbers elements gives the warnings of the conversion of its output.</summary>
+        public List<LegacyElementWarning> ElementWarnings { get; } = new List<LegacyElementWarning>();
+
+        /// <summary>A warning about one element: in <see cref="Warnings"/> and <see cref="ElementWarnings"/>.</summary>
+        internal void Warn(GPC.Model.Core.Identity.EntityFamily family, int number, string text, bool numberInText = false, bool restraint = false)
+        {
+            Warnings.Add(text);
+            string format = text.Replace("{", "{{").Replace("}", "}}");
+            if (numberInText)
+            {
+                string suffix = number.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                if (!text.EndsWith(suffix, StringComparison.Ordinal)) throw new InvalidOperationException("LegacyElementWarningWithoutNumber: " + text);
+                format = text.Substring(0, text.Length - suffix.Length).Replace("{", "{{").Replace("}", "}}") + "{0}";
+            }
+            ElementWarnings.Add(new LegacyElementWarning(family, number, format, restraint));
+        }
 
         /// <summary>A copy of this report for a model transformed from the converted one (same element identities).</summary>
         internal LegacyImportReport CopyFor(int registeredCases)
         {
             var copy = new LegacyImportReport { Units = Units, RegisteredCases = registeredCases, Owner = Owner };
             copy.Warnings.AddRange(Warnings);
+            copy.ElementLoadCases.AddRange(ElementLoadCases);
+            copy.ElementWarnings.AddRange(ElementWarnings);
             foreach (var p in NotExported) copy.NotExported.Add(p.Key, p.Value);
             foreach (var p in NativeSections) copy.NativeSections.Add(p.Key, p.Value);
             foreach (var p in BeamAngles) copy.BeamAngles.Add(p.Key, p.Value);
@@ -75,6 +98,17 @@ namespace BridGHe.Common.Gpc.Legacy
     /// element in GPC), the principal angle of the section (as <see cref="GpcBeamAxes.Section"/> takes it), the resolved native Straus7 section (or
     /// null) and the SHA-256 digest of the former content (the former exporter kept the first property of a name).</summary>
     public sealed record LegacyBeamPropertyData(BeamFormulation Formulation, double Angle, GPC.Converter.Straus7.Straus7SectionDefinition Native, string Signature);
+
+    /// <summary>F6 chain D: the load cases of the former loads of one element (GPC family and number), in load order.</summary>
+    public sealed record LegacyElementCases(GPC.Model.Core.Identity.EntityFamily Family, int Number, IReadOnlyList<string> Cases);
+
+    /// <summary>F6 chain D: a warning of the conversion about one element (GPC family and number): its text is
+    /// <c>string.Format(Format, number)</c> (the number in the text when the warning names it); <see cref="Restraint"/>: a warning about the
+    /// restraints of a node (it goes with them).</summary>
+    public sealed record LegacyElementWarning(GPC.Model.Core.Identity.EntityFamily Family, int Number, string Format, bool Restraint)
+    {
+        public string Text(int number) => string.Format(System.Globalization.CultureInfo.InvariantCulture, Format, number);
+    }
 
     /// <summary>F6 chain D: a former beam property converted on its own (<see cref="LegacyModelImport.BeamProperty"/>).</summary>
     public sealed record LegacyBeamProperty(BeamProperty Property, LegacyBeamPropertyData Data);
@@ -104,6 +138,14 @@ namespace BridGHe.Common.Gpc.Legacy
             var plates = elements.Where(e => e.Is("PlateModel")).ToList();
             var others = elements.Where(e => !e.Is("NodeModel") && !e.Is("BeamModel") && !e.Is("PlateModel")).ToList();
             if (others.Count != 0) throw new NotSupportedException("LegacyElementTypeNotMappedYet: " + string.Join(", ", others.Select(o => o.ShortType).Distinct()));
+            // F6 chain D: the cases of the former loads of every element, in the order of the former elements (numbers as below).
+            int nodeCount = 0, beamCount = 0, plateCount = 0;
+            foreach (var e in elements)
+            {
+                var family = e.Is("NodeModel") ? GPC.Model.Core.Identity.EntityFamily.Node : e.Is("BeamModel") ? GPC.Model.Core.Identity.EntityFamily.Beam : GPC.Model.Core.Identity.EntityFamily.Shell;
+                int number = family == GPC.Model.Core.Identity.EntityFamily.Node ? ++nodeCount : family == GPC.Model.Core.Identity.EntityFamily.Beam ? ++beamCount : ++plateCount;
+                report.ElementLoadCases.Add(new LegacyElementCases(family, number, e.Field("Loads").Items.Select(l => l.Field("LoadCase").String("Name")).ToArray()));
+            }
             string movingJson = legacy.Has("MovingPaths") ? legacy.String("MovingPaths") : "[]";
             if (legacy.Has("BridgeWorkflow")) report.Carry("BridgeWorkflow (checks recipe, not exported)");
 

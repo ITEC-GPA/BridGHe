@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using BridGHe.Common.Checks;
+using BridGHe.Common.Geometry;
 using BridGHe.Common.Gpc;
 using BridGHe.Common.Gpc.Legacy;
 using BridGHe.Common.Models;
@@ -20,6 +22,48 @@ using Grasshopper.Kernel.Types;
 internal static class GpcInputComparison
 {
     private static readonly System.Text.RegularExpressions.Regex RandomGuid = new System.Text.RegularExpressions.Regex("[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}", System.Text.RegularExpressions.RegexOptions.Compiled);
+    private static readonly System.Text.RegularExpressions.Regex AnyGuid = new System.Text.RegularExpressions.Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    /// <summary>Bridge Construction Sequence: the renumbered snapshot on GPC against the conversion of the FEM output with the identity of the
+    /// snapshot (owner of the element identities and model GUID). The snapshot keeps the GUIDs of the elements of its source and the
+    /// conversion derives them from the new numbers, so the elements correspond by family and number (and must have the same name and
+    /// position): the report with the GUIDs mapped (numbers, BridGHe angles, native sections, property data, shadowed beams, element cases
+    /// and warnings, warnings) and the XML document of the model with the element GUIDs mapped, bit for bit: numbering and every index.
+    /// With <paramref name="source"/>: the element GUIDs are those of the source.</summary>
+    internal static string RequireRenumbered(string label, GpcModels.Conversion attached, ModelModel fem, double tolerance, GpcModels.Conversion source = null)
+    {
+        void Fail(string what) => throw new Exception("GPC INPUT FAIL (" + label + "): " + what);
+        var model = attached.Model; var owner = ElementOwner(model);
+        if (owner == model.Guid) Fail("the transformed model has the model GUID of its source");
+        var expected = GPC.Model.Core.ModelValues.Copy(Conversion(fem, tolerance, owner, out var report), GPC.Model.Core.ModelCopyOptions.None, model.Guid);
+        if (model.NodesElements.Count != expected.NodesElements.Count || model.BeamElements.Count != expected.BeamElements.Count || model.AreaElements.Count != expected.AreaElements.Count)
+            Fail($"element counts {model.NodesElements.Count}/{model.BeamElements.Count}/{model.AreaElements.Count} / {expected.NodesElements.Count}/{expected.BeamElements.Count}/{expected.AreaElements.Count}");
+        var map = new Dictionary<Guid, Guid>();
+        void Correspond(GPC.Model.Elements.Element a, GPC.Model.Elements.Element b, string what)
+        {
+            if (b == null || a.Name != b.Name) Fail($"{what} {a.Id}: '{a.Name}' / '{b?.Name}'");
+            map.Add(a.Guid, b.Guid);
+        }
+        foreach (var n in model.NodesElements.Values) { expected.NodesElements.TryGetValue(n.Id, out var x); Correspond(n, x, "node"); if (n.Position.X != x.Position.X || n.Position.Y != x.Position.Y || n.Position.Z != x.Position.Z) Fail($"node {n.Id} position"); }
+        foreach (var beam in model.BeamElements.Values) { expected.BeamElements.TryGetValue(beam.Id, out var x); Correspond(beam, x, "beam"); }
+        foreach (var p in model.AreaElements.Values) { expected.AreaElements.TryGetValue(p.Id, out var x); Correspond(p, x, "plate"); }
+        if (source != null && model.AllElements.Any(e => !source.Model.AllElements.Any(s => s.Guid == e.Guid))) Fail("an element GUID is not one of the source");
+        RequireReport(label, attached.Report, report, g => map.TryGetValue(g, out var m) ? m : g);
+        // The fingerprints complete the lazy values the graph writes (e.g. the outline of a section whose shear areas the conversion took from
+        // another property with the same dimensions), as Require does before its document.
+        model.AnalysisFingerprint(); expected.AnalysisFingerprint();
+        string a = Document(model, map), b = Document(expected);
+        if (a == null || b == null) Fail("XML document beyond the serializer limit");
+        if (a != b)
+        {
+            string folder = Path.Combine(Path.GetTempPath(), "bridghe-gpc-input-diff"); Directory.CreateDirectory(folder);
+            File.WriteAllText(Path.Combine(folder, label.Replace(' ', '-') + "-gpc.xml"), a); File.WriteAllText(Path.Combine(folder, label.Replace(' ', '-') + "-conversion.xml"), b);
+            var x = a.Split('\n'); var y = b.Split('\n');
+            int line = Enumerable.Range(0, Math.Min(x.Length, y.Length)).FirstOrDefault(i => x[i] != y[i], -1);
+            Fail($"XML document differs, both in {folder}: " + (line < 0 ? $"{x.Length} / {y.Length} lines" : $"line {line + 1}: GPC '{x[line].Trim()}' / conversion '{y[line].Trim()}'"));
+        }
+        return $"{model.NodesElements.Count} nodes, {model.BeamElements.Count} beams, {model.AreaElements.Count} plates, {model.Costrains.Count} rigid links, {model.LoadCases.Count} cases, {model.Groups.Count} groups, {model.PhysicalMembers.Count} members, renumbered XML document equal ({a.Length} characters)";
+    }
 
     /// <summary>The conversion of a FEM model with an explicit identity (the results are never converted: archived without them).</summary>
     internal static Model Conversion(ModelModel fem, double tolerance, Guid owner) => Conversion(fem, tolerance, owner, out _);
@@ -34,11 +78,17 @@ internal static class GpcInputComparison
     /// <summary>The report of a transformed input against the report of the conversion of the FEM output: what the analysis and the next
     /// transformers read (units, registered cases, case origins, BridGHe angles, native sections, beam property data, shadowed beams) and the
     /// warnings (as a multiset).</summary>
-    internal static void RequireReport(string label, LegacyImportReport actual, LegacyImportReport expected)
+    /// <param name="guid">The element GUID of <paramref name="expected"/> for an element GUID of <paramref name="actual"/> (a renumbered
+    /// snapshot keeps the GUIDs of its source; null: the same GUIDs).</param>
+    internal static void RequireReport(string label, LegacyImportReport actual, LegacyImportReport expected, Func<Guid, Guid> guid = null)
     {
         void Fail(string what) => throw new Exception("GPC INPUT FAIL (" + label + "): report " + what);
         string Map<TKey, TValue>(IEnumerable<KeyValuePair<TKey, TValue>> map, Func<TValue, string> text) =>
-            string.Join("; ", map.Select(p => p.Key + "=" + text(p.Value)).OrderBy(s => s, StringComparer.Ordinal));
+            string.Join("; ", map.Select(p => (p.Key is Guid g && guid != null ? guid(g).ToString() : p.Key.ToString()) + "=" + text(p.Value)).OrderBy(s => s, StringComparer.Ordinal));
+        string Cases(LegacyImportReport r) => string.Join(" | ", r.ElementLoadCases.Select(c => c.Family + ":" + c.Number + ":" + string.Join(",", c.Cases)));
+        if (Cases(actual) != Cases(expected)) Fail($"element cases '{Cases(actual)}' / '{Cases(expected)}'");
+        string Warnings(LegacyImportReport r) => string.Join(" | ", r.ElementWarnings.Select(w => w.Family + ":" + w.Number + ":" + w.Restraint + ":" + w.Text(w.Number)).OrderBy(s => s, StringComparer.Ordinal));
+        if (Warnings(actual) != Warnings(expected)) Fail($"element warnings '{Warnings(actual)}' / '{Warnings(expected)}'");
         if (actual.Units.Units != expected.Units.Units) Fail($"units {actual.Units.Units} / {expected.Units.Units}");
         if (actual.RegisteredCases != expected.RegisteredCases) Fail($"registered cases {actual.RegisteredCases} / {expected.RegisteredCases}");
         if (actual.Owner != expected.Owner) Fail($"owner {actual.Owner} / {expected.Owner}");
@@ -60,13 +110,16 @@ internal static class GpcInputComparison
     /// <summary>The XML document of a model in a canonical form (null beyond the 2,000,000 objects of the serializer): random (version 4)
     /// GUIDs masked; a reference of the DataContract graph (z:Ref) to a value (string, number) replaced by the value, object references
     /// renumbered by the order of the objects, value ids dropped: two equal graphs compare equal whether or not equal values are shared.</summary>
-    internal static string Document(Model m)
+    internal static string Document(Model m, IReadOnlyDictionary<Guid, Guid> replace = null)
     {
         string text;
         try
         {
             using var stream = new MemoryStream(); GPC.Model.Persistence.ModelArchive.SaveDocument(m, stream);
-            text = RandomGuid.Replace(System.Text.Encoding.UTF8.GetString(stream.ToArray()), "v4");
+            text = System.Text.Encoding.UTF8.GetString(stream.ToArray());
+            // The element GUIDs of a renumbered snapshot written as those of the conversion they correspond to, before the masking.
+            if (replace != null) text = AnyGuid.Replace(text, g => replace.TryGetValue(Guid.Parse(g.Value), out var to) ? to.ToString("D") : g.Value);
+            text = RandomGuid.Replace(text, "v4");
         }
         catch (System.Runtime.Serialization.SerializationException e) when (e.Message.Contains("Maximum number of items")) { return null; }
         System.Xml.Linq.XNamespace z = "http://schemas.microsoft.com/2003/10/Serialization/", xsi = "http://www.w3.org/2001/XMLSchema-instance";
@@ -133,7 +186,7 @@ internal static class GpcInputComparison
     internal static void RequireComponents(GH_Document doc, string label)
     {
         int count = 0;
-        foreach (var component in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name is "AttachMovingPathsComponent" or "BridgePhaseModelComponent"))
+        foreach (var component in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name is "AttachMovingPathsComponent" or "BridgePhaseModelComponent" or "BridgeConstructionSequenceComponent"))
             foreach (var goo in component.Params.Output[0].VolatileData.AllData(true))
             {
                 string name = label + " " + component.GetType().Name.Replace("Component", "") + " '" + component.NickName + "'";
@@ -141,7 +194,8 @@ internal static class GpcInputComparison
                 var attached = (GpcModels.Conversion)goo.GetType().GetProperty("GpcInput").GetValue(goo);
                 var fem = (ModelModel)goo.GetType().GetProperty("Value").GetValue(goo);
                 // The tolerance of the attached input: GpcInput returns it only at the current tolerance of the plug-in.
-                Console.WriteLine($"GPC INPUT PASS ({name}): " + Require(name, attached, fem, attached.Tolerance)); count++;
+                Console.WriteLine($"GPC INPUT PASS ({name}): " + (component.GetType().Name == "BridgeConstructionSequenceComponent"
+                    ? RequireRenumbered(name, attached, fem, attached.Tolerance) : Require(name, attached, fem, attached.Tolerance))); count++;
             }
         Console.WriteLine($"GPC INPUT ({label}): {count} transformer outputs on GPC equal to the conversion of their FEM output.");
     }
@@ -180,7 +234,95 @@ internal static class GpcInputComparison
         int components = PhaseModelComponent(tolerance);
         int fromGpc = FromGpcRoute(tolerance, Path);
         int states = PhaseModelSectionStates(tolerance);
-        Console.WriteLine($"GPC MODEL TRANSFORMS PASS: {compared} Attach Moving Paths and {phases} Bridge Phase Model outputs (chains included), {components} Bridge Phase Model component outputs on GPC equal to the conversion of their FEM output; {fromGpc} transformer outputs from inputs built in GPC (GpcModels.Conversion.FromGpc) equal to those from the conversion; {states} Bridge Phase Model outputs on beams with local section states.");
+        int sequences = ConstructionSequences(tolerance, Path);
+        Console.WriteLine($"GPC MODEL TRANSFORMS PASS: {compared} Attach Moving Paths and {phases} Bridge Phase Model outputs (chains included), {components} Bridge Phase Model component outputs on GPC equal to the conversion of their FEM output; {fromGpc} transformer outputs from inputs built in GPC (GpcModels.Conversion.FromGpc) equal to those from the conversion; {states} Bridge Phase Model outputs on beams with local section states; {sequences} Bridge Construction Sequence snapshots renumbered as the conversion of their FEM output.");
+    }
+
+    /// <summary>Bridge Construction Sequence (coordinator decision 2, 5/11: renumbered 1..n): the GPC snapshot against the conversion of the
+    /// FEM snapshot (<see cref="RequireRenumbered"/>), or the same error. Sources: the examples 01–10 (half of the beams and plates in a group
+    /// "PhaseA", the rest in "PhaseB": all, no bearings, group A with and without bearings, group B, a rigid link from an inactive node onto an
+    /// active one, chained after Attach Moving Paths and before Bridge Phase Model) and the simple bridge of the construction tests (girders of
+    /// Bridge Member Assignment, groups Girder\GroupN\SegmentM, restrained abutment: a group with the girder override and no bearings, a parent
+    /// group, a physical member, everything with the override, unknown identifiers, override without members).</summary>
+    private static int ConstructionSequences(double tolerance, Func<string, double, MovingPath> path)
+    {
+        int compared = 0;
+        void Run(string label, ModelModel fem, Func<ModelModel> femSnapshot, Func<GpcModels.Conversion, GpcModels.Conversion> gpcSnapshot)
+        {
+            string femError = null, gpcError = null; ModelModel output = null; GpcModels.Conversion gpc = null; var source = GpcModels.Convert(fem, tolerance);
+            try { output = femSnapshot(); } catch (ArgumentException e) { femError = e.Message; }
+            try { gpc = gpcSnapshot(source); } catch (ArgumentException e) { gpcError = e.Message; }
+            if (femError != null || gpcError != null)
+            {
+                if (femError != gpcError) throw new Exception($"GPC INPUT FAIL ({label}): FEM error '{femError}', GPC error '{gpcError}'");
+                Console.WriteLine($"GPC INPUT ({label}): same error: {femError}"); return;
+            }
+            Console.WriteLine($"GPC INPUT ({label}): " + RequireRenumbered(label, gpc, output, tolerance, source)); compared++;
+        }
+        BridgePhaseDefinition Phase(int order, string name) => new BridgePhaseDefinition { Order = order, Name = name, Day = 7 };
+        GpcModels.Conversion Snapshot(GpcModels.Conversion input, BridgePhaseDefinition phase, string[] groups, string[] ids, string[] bearings, BeamPropertyModel property, string key) =>
+            GpcModelTransforms.ConstructionSequence(input, phase.Order, phase.Name, phase.Day, groups, ids, bearings, property == null ? null : GpcModels.BeamProperty(property, input.Report.Units),
+                GpcIdentity.Derive(GpcIdentity.NameSpace, "test-construction:" + key));
+        ModelModel Fem(ModelModel input, BridgePhaseDefinition phase, string[] groups, string[] ids, string[] bearings, BeamPropertyModel property) =>
+            BridgeConstructionSequence.Create(input, phase, groups, ids, bearings, property, null).Model;
+
+        foreach (var example in NativeExamples.Create())
+        {
+            var fem = new ModelModel(example.Model);
+            var structure = fem.Elements.Where(e => e is BeamModel || e is PlateModel).ToList();
+            for (int k = 0; k < structure.Count; k++) { structure[k].Groups.Clear(); structure[k].Groups.Add(new GroupModel(k < (structure.Count + 1) / 2 ? "PhaseA" : "PhaseB")); }
+            var supported = fem.Nodes.Where(n => n.Attributes.Any(a => a is NodeRestraintAttributeModel || a is NodeStiffnessAttributeModel)).Select(n => n.NodeId).ToArray();
+            var variants = new List<(string, string[], string[])> { ("all", null, new[] { "*" }), ("no bearings", null, Array.Empty<string>()), ("group A", new[] { "PhaseA" }, new[] { "*" }),
+                ("group A no bearings", new[] { "PhaseA" }, Array.Empty<string>()), ("group B", new[] { "PhaseB" }, new[] { "*" }), ("unknown group", new[] { "Missing" }, new[] { "*" }) };
+            if (supported.Length != 0 && supported.All(id => !string.IsNullOrEmpty(id))) variants.Add(("group A first bearing", new[] { "PhaseA" }, new[] { supported[0] }));
+            foreach (var (variant, groups, bearings) in variants)
+            {
+                var phase = Phase(10, "Phase " + variant); string label = example.Id + " construction " + variant;
+                Run(label, fem, () => Fem(fem, phase, groups, null, bearings, null), input => Snapshot(input, phase, groups, null, bearings, null, label));
+            }
+            // A rigid link from the last node (inactive with group A when it is not on an active element) onto the first node.
+            if (fem.Nodes.Count >= 2)
+            {
+                var linked = new ModelModel(fem); var last = linked.Nodes[linked.Nodes.Count - 1];
+                last.Attributes.Add(new RigidConnectionAttributeModel(linked.Nodes[0].Position));
+                var phase = Phase(20, "Linked"); string label = example.Id + " construction rigid link";
+                Run(label, linked, () => Fem(linked, phase, new[] { "PhaseA" }, null, new[] { "*" }, null), input => Snapshot(input, phase, new[] { "PhaseA" }, null, new[] { "*" }, null, label));
+            }
+            // Chains: Attach Moving Paths, then the snapshot, then Bridge Phase Model on the snapshot (beams with IDs).
+            {
+                var named = new ModelModel(fem); for (int k = 0; k < named.Beams.Count; k++) if (string.IsNullOrWhiteSpace(named.Beams[k].BeamId)) named.Beams[k].BeamId = "B" + (k + 1);
+                var moving = new[] { path("Traffic GPC", 0) }; var phase = Phase(30, "Chain"); string label = example.Id + " construction chain";
+                var stiffer = named.Beams.Count == 0 ? null : BridGHe.Common.Helpers.ModelArchive.Clone(named.Beams[0].BeamProperty);
+                if (stiffer != null) { stiffer.Name = "Chain phase"; stiffer.Material.Modulus *= 1.5; }
+                Run(label, named, () =>
+                {
+                    var snapshot = Fem(MovingModelBuilder.ReplacePaths(named, moving), phase, new[] { "PhaseA" }, null, new[] { "*" }, null);
+                    return stiffer == null || snapshot.Beams.Count == 0 ? snapshot : BridGHe.Common.Diagnostics.BridgePhaseModel.Create(snapshot, "Chain phase", new[] { snapshot.Beams[0].BeamId }, stiffer, false);
+                }, input =>
+                {
+                    var paths = GpcModelTransforms.ReplacePaths(input, moving, GpcIdentity.Derive(GpcIdentity.NameSpace, "test-construction-paths:" + label));
+                    var snapshot = Snapshot(paths, phase, new[] { "PhaseA" }, null, new[] { "*" }, null, label);
+                    return stiffer == null || snapshot.Model.BeamElements.Count == 0 ? snapshot : GpcModelTransforms.PhaseModel(snapshot, "Chain phase", new[] { snapshot.Model.BeamElements[1].Name },
+                        GpcModels.BeamProperty(stiffer, snapshot.Report.Units), false, GpcIdentity.Derive(GpcIdentity.NameSpace, "test-construction-phase:" + label));
+                });
+            }
+        }
+
+        // The simple bridge of the construction tests: girders with physical members, nested groups, restrained abutment.
+        var bridge = BridgeConstructionTests.Model(SimpleBridgeBuilder.Build(SimpleBridgeTests.Input()));
+        var composite = BridgeAssignmentTests.Property("Composite phase"); composite.Material.Modulus *= 1.2;
+        foreach (var (variant, groups, ids, bearings, property) in new (string, string[], string[], string[], BeamPropertyModel)[]
+        {
+            ("group override", new[] { "Girder\\Group1" }, null, Array.Empty<string>(), composite), ("parent group", new[] { "Girder" }, null, new[] { "*" }, null),
+            ("physical member", null, new[] { "Girder:2:1" }, new[] { "*" }, null), ("all override", null, null, new[] { "*" }, composite),
+            ("group and member", new[] { "Girder\\Group1" }, new[] { "Girder:2:1" }, new[] { "*" }, null), ("unknown member", null, new[] { "Girder:9:9" }, new[] { "*" }, null),
+        })
+        {
+            var phase = Phase(2, "Bridge " + variant); string label = "simple bridge construction " + variant;
+            Run(label, bridge, () => Fem(bridge, phase, groups, ids, bearings, property), input => Snapshot(input, phase, groups, ids, bearings, property, label));
+        }
+        if (compared < 70) throw new Exception($"GPC INPUT FAIL: only {compared} Bridge Construction Sequence snapshots compared");
+        return compared;
     }
 
     /// <summary>A copy of a model whose local section states (Bridge State Override) carry "current" or "stale" (their fingerprint equal or not
