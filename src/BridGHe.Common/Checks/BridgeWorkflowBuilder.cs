@@ -141,9 +141,10 @@ public static class BridgeWorkflowBuilder
     public const string MergedModelName = "BridGHe phase model";
 
     /// <summary>The phases ordered by number and their actions in order, validated (phase numbers, identities, days, section states,
-    /// behaviours, strains, cases, beam selections, unique action keys). Shared by the FEM merge and the GPC bridge model.</summary>
+    /// behaviours, strains, cases, beam selections, unique action keys). Shared by the FEM merge and the GPC bridge model; with
+    /// <paramref name="gpcSources"/> (the GPC bridge model, finding 2 of P2T) an action with a case needs its FEM source or its analysed GPC source.</summary>
     internal static (BridgePhaseDefinition[] Phases, List<(BridgePhaseDefinition Phase, BridgeActionDefinition Action)> Actions) Validate(
-        IEnumerable<BridgePhaseDefinition> definitions, BridgeWorkflowMethod method, double tolerance)
+        IEnumerable<BridgePhaseDefinition> definitions, BridgeWorkflowMethod method, double tolerance, bool gpcSources = false)
     {
         if (!Enum.IsDefined(method)) throw new ArgumentException("Unknown workflow method.");
         if (!double.IsFinite(tolerance) || tolerance < 0) throw new ArgumentException("Invalid geometry tolerance.");
@@ -183,7 +184,7 @@ public static class BridgeWorkflowBuilder
                 {
                     if (!action.Strain.HasValue || !action.PrimaryOnly) throw new ArgumentException($"{label}: supply the analysed FEM case, or explicitly select Primary Only for shrinkage.");
                 }
-                else if (action.Source == null || action.PrimaryOnly)
+                else if ((gpcSources ? action.Source == null && action.GpcSource == null : action.Source == null) || action.PrimaryOnly)
                     throw new ArgumentException($"{label}: a FEM case needs its source model and cannot be Primary Only.");
                 if (action.BeamIds == null || action.BeamIds.Any(string.IsNullOrWhiteSpace) || action.BeamIds.Distinct(StringComparer.Ordinal).Count() != action.BeamIds.Length)
                     throw new ArgumentException($"{label}: beam IDs must be non-empty and unique.");

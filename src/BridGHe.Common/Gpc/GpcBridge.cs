@@ -128,7 +128,7 @@ namespace BridGHe.Common.Gpc
         public static GpcBridgeBuild Build(IReadOnlyList<GpcBridgeSource> references, IEnumerable<BridgePhaseDefinition> definitions, IReadOnlyList<string[]> combinations,
             BridgeWorkflowMethod method, double tolerance, bool allowAdditionalMembers, Guid modelIdentity)
         {
-            var (phases, actions) = BridgeWorkflowBuilder.Validate(definitions, method, tolerance);
+            var (phases, actions) = BridgeWorkflowBuilder.Validate(definitions, method, tolerance, gpcSources: true);
             var sources = new List<GpcBridgeSource>(references ?? Array.Empty<GpcBridgeSource>());
             if (sources.Any(m => m == null)) throw new ArgumentException("Null reference model.");
             int referenceCount = sources.Count;
