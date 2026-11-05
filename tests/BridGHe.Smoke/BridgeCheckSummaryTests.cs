@@ -112,13 +112,39 @@ internal static class BridgeCheckSummaryTests
                 "Summary error handling: " + string.Join("; ", errors));
         }
     }
+    /// <summary>The materials of the sample section: C30 and S355 (no rebar material: the structural steel), EN 1992.</summary>
+    private static BridgeMaterialSet FemMaterials() => BridgeGpc.Materials(new MaterialModel("C30") { Name = "C30", SpecificCompressiveStrength = 30 },
+        new MaterialModel("S355") { Name = "S355", Modulus = 210000, MinimumYieldStress = 355, MinimumTensileStress = 510 }, null);
+#if GPC_PILOT
+    /// <summary>P2U (F6): the same materials built directly in GPC, the input the H bridge engine reads (concrete EN 1992 from fck,
+    /// parabola-rectangle; structural steel from E, fy, fu with an ultimate strain of 0.1, elastic-perfectly plastic; without a rebar
+    /// material the structural steel again). Parity (removed with the FeMM models): every value equal to the conversion of the FEM materials
+    /// (<see cref="BridgeGpc.Materials"/>), once per process.</summary>
+    private static BridgeMaterialSet GpcMaterials()
+    {
+        GPC.Model.Materials.SteelMaterialEN1992 Steel() => new("S355", 210000, 355, 510, .1, GPC.Model.Materials.SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic,
+            GPC.Model.Materials.SteelMaterial.SteelTypes.Structural);
+        var materials = new BridgeMaterialSet(new GPC.Model.Materials.ConcreteMaterialEN1992("C30", 30, GPC.Model.Materials.ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle),
+            Steel(), Steel());
+        if (!materialsCompared)
+        {
+            Require(GpcCompositeSectionChecks.Dump(materials) == GpcCompositeSectionChecks.Dump(FemMaterials()), "GPC: the sample materials differ from the conversion of the FEM materials.");
+            materialsCompared = true;
+        }
+        return materials;
+    }
+    private static bool materialsCompared;
+#endif
     internal static BridgeStressResult SampleResult()
     {
         var analysis = HBridgeSection.Calculate(new HBridgeInput
         {
             Geometry = BridgeDetailLayoutTests.Section(),
-            Materials = BridgeGpc.Materials(new MaterialModel("C30") { Name = "C30", SpecificCompressiveStrength = 30 },
-                new MaterialModel("S355") { Name = "S355", Modulus = 210000, MinimumYieldStress = 355, MinimumTensileStress = 510 }, null),
+#if GPC_PILOT
+            Materials = GpcMaterials(),
+#else
+            Materials = FemMaterials(),
+#endif
             TopRebars = new BridgeRebarRow { Enabled = false }, BottomRebars = new BridgeRebarRow { Enabled = false },
             Options = new BridgeAnalysisOptions { Standard = BridgeStandard.Eurocode4, LimitState = BridgeLimitState.Ultimate },
             Phases = new[] { new BridgePhase { Name = "Steel", Kind = BridgePhaseKind.SteelOnly, MomentKNm = 100, ShearKN = 50 },

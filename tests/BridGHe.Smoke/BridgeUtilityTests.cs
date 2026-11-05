@@ -229,6 +229,9 @@ internal static class BridgeUtilityTests
         Assert(table[0].SequenceEqual(new[] { "Combination", "G1", "CS" }) && table[1].SequenceEqual(new[] { "SLS", "1", "0.7" }), "Combination keys reordered incorrectly.");
         var built = BridgeWorkflowBuilder.Build(new[] { model }, new[] { p2, p1 }, table, BridgeWorkflowMethod.Compatible, 1e-6);
         Assert(built.Model.LoadCombinations.Single().Values.Any(v => Math.Abs(v.Value - .7) < 1e-15), "Generated table not accepted by builder.");
+#if GPC_PILOT
+        BuilderGpc(new[] { p2, p1 }, table, built);
+#endif
         Assert(BridgeWorkflowTools.CombinationTable(new[] { p1, p2 }, new[] { "G1" }, new[] { "SLS" }, new[] { new[] { 1d } })[1][2] == "0", "Omitted action not zero.");
         Reject(() => BridgeWorkflowTools.Ordered(new[] { p1, p2 with { Order = 10 } }), "duplicate phase");
         Reject(() => BridgeWorkflowTools.Ordered(new[] { p1, p2 with { Day = 0 } }), "backward day");
@@ -252,6 +255,20 @@ internal static class BridgeUtilityTests
         Assert(ModelArchive.Write(model).SequenceEqual(before), "Utilities mutated source model.");
         Console.WriteLine($"BRIDGE UTILITIES PASS: {checks} checks; no Straus solver invoked.");
     }
+#if GPC_PILOT
+    /// <summary>P2U: the combination table of the workflow tools accepted by Build BridGHe Model on GPC (<c>GpcBridgeBuilder</c>, chain C) with
+    /// the action on the GPC source built in GPC (<see cref="SourceGpc"/>, direct GPC reference, GPC-only validation): the combination of the
+    /// GPC bridge model carries the 0.7 of the shrinkage action. Parity (removed with the FeMM models): the samples, summary and warnings
+    /// of the FEM merge <paramref name="fem"/>.</summary>
+    private static void BuilderGpc(BridgePhaseDefinition[] phases, string[][] table, BridgeWorkflowBuildResult fem)
+    {
+        var input = SourceGpc(analyse: false); var analysed = SourceGpc();
+        var linked = phases.Select(p => p with { Actions = p.Actions.Select(a => a.Source == null ? a : a with { GpcSource = analysed }).ToArray() }).ToArray();
+        var bridge = GpcBridgeMerge.Build(new[] { (input, analysed) }, linked, table, "utilities builder");
+        Assert(bridge.Bridge.Combinations.Single().Factors.Any(f => Math.Abs(f.Factor - .7) < 1e-15), "GPC: Generated table not accepted by builder.");
+        GpcBridgeMerge.RequireSame(bridge, fem, "utilities builder");
+    }
+#endif
     private static double SectionAreaForTest(this BeamModel beam) => beam.BeamProperty.SectionArea;
     private static void ClearForTest(this MovingObject[] loads) { loads[0] = new MovingHeatSource { SizeX = 1, SizeY = 1, Heat = 10 }; }
 }
