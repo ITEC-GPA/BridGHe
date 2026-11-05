@@ -173,31 +173,16 @@ namespace BridGHe.Common.Models
             };
         }
 
-        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, SectionShearAreaProperties> homogenisedShearAreas =
-            new System.Collections.Concurrent.ConcurrentDictionary<string, SectionShearAreaProperties>(StringComparer.Ordinal);
-
         /// <summary>The shear areas, in steel units, of the steel I with (when the concrete is considered) the slab on its top flange with the
         /// modular ratio <paramref name="n"/>, in the principal axes of the homogenised section (axis 1 horizontal, as its I11): GPCModel
         /// SectionShearAreas.ComputeHomogenised. The reinforcing bars are embedded in the slab, not regions of their own: they are in the area and
-        /// the inertias, not in the shear areas. Cached per process by geometry and n.</summary>
+        /// the inertias, not in the shear areas. Cached per process by geometry and n (<see cref="Gpc.GpcCompositeSections.HomogenisedShearAreas(double, double, double, double, double, double, double, double, bool, double, string)"/>,
+        /// the same function as the definition of the property).</summary>
         public SectionShearAreaProperties HomogenisedShearAreas(double n)
         {
             if (!double.IsFinite(n) || n <= 0) throw new ArgumentOutOfRangeException(nameof(n));
-            double b1 = _steelSection.B1, b2 = _steelSection.B2, d = _steelSection.D, t1 = _steelSection.T1, t2 = _steelSection.T2, tw = _steelSection.T3;
-            double w = _concreteSection?.Width ?? 0, h = _concreteSection?.Height ?? 0; bool concrete = ConsiderConcrete && w > 0 && h > 0;
-            string key = string.Join("|", new[] { b1, b2, d, t1, t2, tw, concrete ? w : 0, concrete ? h : 0, concrete ? n : 0 }.Select(v => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture)));
-            return homogenisedShearAreas.GetOrAdd(key, _ =>
-            {
-                GPC.Geometry.Shape2d Outline(params (double x, double y)[] v) => new GPC.Geometry.Shape2d(new GPC.Geometry.Polygon2d(v.Select(p => new GPC.Geometry.Point2d(p.x, p.y)).ToArray()));
-                // B1/T1 bottom flange, B2/T2 top flange, T3 web; the slab on the top flange, centred (CompositeSectionFactory).
-                var parts = new System.Collections.Generic.List<(GPC.Geometry.Shape2d, double)>
-                {
-                    (Outline((-b1 / 2, 0), (b1 / 2, 0), (b1 / 2, t1), (tw / 2, t1), (tw / 2, d - t2), (b2 / 2, d - t2), (b2 / 2, d), (-b2 / 2, d),
-                        (-b2 / 2, d - t2), (-tw / 2, d - t2), (-tw / 2, t1), (-b1 / 2, t1)), 1)
-                };
-                if (concrete) parts.Add((Outline((-w / 2, d), (w / 2, d), (w / 2, d + h), (-w / 2, d + h)), n));
-                return SectionShearAreas.ComputeHomogenised(parts, 0, Name);
-            });
+            return Gpc.GpcCompositeSections.HomogenisedShearAreas(_steelSection.B1, _steelSection.B2, _steelSection.D, _steelSection.T1, _steelSection.T2, _steelSection.T3,
+                _concreteSection?.Width ?? 0, _concreteSection?.Height ?? 0, ConsiderConcrete, n, Name);
         }
 
         public ReinforcedConcreteSection GetReinforcedConcreteSection()

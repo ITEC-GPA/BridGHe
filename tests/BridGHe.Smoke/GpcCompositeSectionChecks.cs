@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Gpc;
+using BridGHe.Common.Helpers;
 using BridGHe.Common.Models;
 using GPC.Checkers.CompositeBridge;
 using GPC.Geometry;
@@ -150,7 +151,28 @@ internal static class GpcCompositeSectionChecks
         if (Dump(typed.SectionInput(true, options[0])) != Dump(GpcCompositeSections.Definition(g1c1, "any").SectionInput(true, options[0])) || typed.Name != g1c1.Name)
             throw new Exception("GPC COMPOSITE SECTION FAIL: GH_CompositeBeamProperty.Definition");
         if (compared != 36) throw new Exception($"GPC COMPOSITE SECTION FAIL: {compared} inputs compared instead of 36");
-        Console.WriteLine($"GPC COMPOSITE SECTIONS PASS: {compared} section inputs of the definitions equal bit for bit to the former construction and its adapter (constant and variable sections, with and without bars, 3 option sets).");
+        // Chain E step 1: the analysis properties (one bar per row) from the definition = those of the FEM property, on the same properties
+        // and on variants of the rows, of the choices and of the rebar material (B450C of BridGHe: ultimate strain 0.075, not in the values).
+        CompositeBeamPropertyModel Variant(CompositeBeamPropertyModel p, Action<CompositeBeamPropertyModel> change) { var copy = ModelArchive.Clone(p); change(copy); return copy; }
+        var analysed = new List<(string, CompositeBeamPropertyModel)>
+        {
+            ("50 G1-C1", g1c1), ("99", p99), ("99 end", p99End),
+            ("top row only", Variant(g1c1, x => x.ConcreteSection = new SectionConcreteSlabModel(300, 3000, 3500, 45, 0, 50))),
+            ("bottom row only", Variant(p99, x => x.ConcreteSection = new SectionConcreteSlabModel(250, 2500, 0, 50, 2711.3, 62.5))),
+            ("different covers", Variant(p99End, x => x.ConcreteSection = new SectionConcreteSlabModel(320, 2700, 4021.24, 47.5, 1884.96, 70))),
+            ("no bars", Variant(g1c1, x => x.ConcreteSection = new SectionConcreteSlabModel(300, 3000, 0, 50, 0, 50))),
+            ("rebars not considered", Variant(g1c1, x => x.ConsiderRebar = false)),
+            ("concrete not considered", Variant(p99, x => x.ConsiderConcrete = false)),
+            ("B450C of BridGHe", Variant(g1c1, x => x.RebarMaterial = ReinforcementMaterials.B450C())),
+        };
+        int analysis = 0;
+        foreach (var (label, p) in analysed) analysis += CompositeAnalysisPropertyChecks.Compare(p, GpcCompositeSections.Definition(p, p.Name), label);
+        // The definition of the GH type carries the rows.
+        if (typed.RebarRows == null || typed.RebarRows.BarsPerRow != GpcCompositeSections.BarsPerRow || BitConverter.DoubleToInt64Bits(typed.RebarRows.TopAreaMm2) != BitConverter.DoubleToInt64Bits(g1c1.ConcreteSection.TopRebarArea))
+            throw new Exception("GPC COMPOSITE SECTION FAIL: GH_CompositeBeamProperty.Definition without the rows of the property");
+        analysis += CompositeAnalysisPropertyChecks.Compare(g1c1, typed, "GH type");
+        Console.WriteLine($"GPC COMPOSITE SECTIONS PASS: {compared} section inputs of the definitions equal bit for bit to the former construction and its adapter (constant and variable sections, with and without bars, 3 option sets); " +
+            $"{analysis} analysis values or variants of {analysed.Count + 1} definitions equal bit for bit to their FEM properties.");
     }
 }
 #endif

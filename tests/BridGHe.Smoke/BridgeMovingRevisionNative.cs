@@ -100,7 +100,7 @@ internal static class BridgeMovingRevisionNative
         GpcInputComparison.RequireComponents(doc,"50");
         GpcSecForcesCheck.Require(checker,"50");
         GpcSecForcesCheck.RequireGirders(doc,"50");
-        GpcSecForcesCheck.RequireMomentDispatch(doc,"50"); BarLayoutMeasurement.Report(doc,"50");
+        GpcSecForcesCheck.RequireMomentDispatch(doc,"50"); BarLayoutMeasurement.Report(doc,"50"); CompositeAnalysisPropertyChecks.Require(doc,"50");
 #endif
         var details=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeDetailCheckComponent").ToArray();
         Require(details.Length==3&&details.All(c=>Out(c,"Section result").VolatileDataCount>0),"Missing detail checks: "+Errors(doc));
