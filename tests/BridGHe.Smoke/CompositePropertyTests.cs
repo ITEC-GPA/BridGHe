@@ -43,6 +43,10 @@ internal static class CompositePropertyTests
         void Solve(){c.ExpireSolution(false);GH_Document.EnableSolutions=true;doc.Enabled=true;doc.NewSolution(false,GH_SolutionMode.Silent);Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count==0,string.Join(";",c.RuntimeMessages(GH_RuntimeMessageLevel.Error)));}
         BeamPropertyModel Output(int i)=>(BeamPropertyModel)c.Params.Output[i].VolatileData.AllData(true).Single().ScriptVariable();
         int ShrinkagePort()=>c.Params.Input.FindIndex(p=>p.Name=="n ritiro");
+        // F6 (0.4.0): the name is required (the composite section is a GPC definition with a name).
+        c.ExpireSolution(false);GH_Document.EnableSolutions=true;doc.Enabled=true;doc.NewSolution(false,GH_SolutionMode.Silent);
+        Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(m=>m.StartsWith("Name required",StringComparison.Ordinal)) && !c.Params.Output[0].VolatileData.AllData(true).Any(),"An empty composite section name must be an error: "+string.Join(";",c.RuntimeMessages(GH_RuntimeMessageLevel.Error)));
+        {var p=(Param_String)c.Params.Input[0];p.PersistentData.Clear();p.SetPersistentData("Composite test");p.ExpireSolution(false);}
         Solve();Require(c.Params.Input.Count==11 && c.Params.Output.Count==5 && c.Params.Input[ShrinkagePort()].Optional,"Shrinkage port count or optionality changed.");
         Near(Output(3).SectionArea,Output(4).SectionArea);Near(Output(3).I11,Output(4).I11);
         var old0=Output(2);var oldInf=Output(3);Number(ShrinkagePort(),12);Solve();
