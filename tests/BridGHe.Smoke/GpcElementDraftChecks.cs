@@ -41,6 +41,8 @@ internal static class GpcElementDraftChecks
                 if (e.Is("NodeModel"))
                 {
                     var draft = LegacyModelImport.NodeDraft(e, units, Guid.NewGuid()); var x = model.NodesElements[++n];
+                    // The draft keeps one record per former attribute and load; Build Model resolves them (e3).
+                    LegacyAssembly.ResolveNode(draft.Node, new LegacyImportReport());
                     rigid += draft.Node.Attributes.Values.OfType<RigidConnectionAttribute>().Count();
                     Node(id, draft.Node, x);
                 }

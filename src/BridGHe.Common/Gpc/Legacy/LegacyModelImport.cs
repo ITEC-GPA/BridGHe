@@ -174,7 +174,7 @@ namespace BridGHe.Common.Gpc.Legacy
             // Nodes: former order and numbering; their groups are organizational metadata (Straus7 nodes have no group; the writer creates
             // the groups, as the former exporter); rigid links in node order, as the former RigidConnectionExport.
             assembly.RequireTolerance();
-            assembly.AddNodes(nodes.Select((n, i) => Node(n, i, GpcIdentity.Derive(owner, "node:" + i), owner, assembly.GroupOf, cases, units, report)).ToList());
+            assembly.AddNodes(nodes.Select((n, i) => LegacyAssembly.ResolveNode(Node(n, i, GpcIdentity.Derive(owner, "node:" + i), owner, assembly.GroupOf, cases, units, report), report)).ToList());
 
             // Beams: former order and numbering; nodes found by tolerance (StrausNodeIndex semantics).
             // The former exporter created one native property per property name: later properties with the same name used the first.
@@ -540,56 +540,68 @@ namespace BridGHe.Common.Gpc.Legacy
             && a.Bool("NonStructuralMassAcceleration") == b.Bool("NonStructuralMassAcceleration") && a.Enum("GlobalInertiaLoad") == b.Enum("GlobalInertiaLoad")
             && a.Enum("GravityDirection") == b.Enum("GravityDirection") && a.Double("GravityValue") == b.Double("GravityValue");
 
+        /// <summary>
+        /// Chain E (e3, coordinator decision 2 of 5/11): the data of a former node as records of its draft, one per former attribute and
+        /// load, in their order, never resolved: what a component appends to a node and what Build Model merges by GH GUID before the
+        /// resolution (<see cref="LegacyAssembly.ResolveNode"/>): coordinate systems, restraints and stiffnesses as
+        /// <see cref="RestrainAssignment"/> records (<see cref="FrameRecord"/>, <see cref="RestraintRecord"/>, <see cref="StiffnessRecord"/>),
+        /// every Element ID as <see cref="ElementLabelAttribute"/>, forces and moments as one <see cref="PointLoad"/> each
+        /// (<see cref="ForceRecord"/>, <see cref="MomentRecord"/>), temperatures with their own kind. The checks of one value stay here
+        /// (coordinate systems of the value, prescribed displacements, data not mapped yet).
+        /// </summary>
         private static void NodeData(LegacyValue n, NodeElement node, Dictionary<string, LoadCaseBase> cases, BridgeUnits units, LegacyImportReport report)
         {
             var attributes = n.Field("Attributes").Items;
             var frames = attributes.Where(a => a.Is("NodeCoordinateAttributeModel")).Select(a => a["Frame"]).ToArray();
             if (frames.Length > 1 && frames.Skip(1).Any(f => !SamePlane(f, frames[0]))) throw new ArgumentException($"Node {node.Name}: conflicting/invalid restraint coordinate systems.");
-            var axes = frames.Length == 0 ? null : Frame(frames[0], units);
-            var restraints = attributes.Where(a => a.Is("NodeRestraintAttributeModel")).ToArray();
-            // Former exporter: the first stiffness attribute, in the restraint UCS of freedom case 1 (St7SetNodeKTranslation3F/KRotation3F).
-            var stiffness = attributes.FirstOrDefault(a => a.Is("NodeStiffnessAttributeModel"));
-            if (attributes.Count(a => a.Is("NodeStiffnessAttributeModel")) > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Node, node.Id, $"Node {node.Name}: only the first stiffness attribute was exported", restraint: true);
-            if (restraints.Length != 0 || stiffness != null)
-            {
-                if (n.Field("Loads").Items.Any(l => l.Is("NodeDisplacementLoadModel"))) throw new NotSupportedException("LegacyPrescribedDisplacementNotMappedYet");
-                var names = new[] { "Tx", "Ty", "Tz", "Rx", "Ry", "Rz" }; var dofs = new List<DofRestrain>();
-                for (int k = 0; k < 6; k++)
-                {
-                    bool fixedDof = restraints.Any(r => r.Bool(names[k]));
-                    double spring = stiffness == null ? 0 : stiffness.Double(names[k]) * (k < 3 ? units.Force / units.Length : units.Force * units.Length);
-                    if (fixedDof && spring != 0) report.Warn(GPC.Model.Core.Identity.EntityFamily.Node, node.Id, $"Node {node.Name}: spring on a restrained DOF {names[k]} (the restraint governs)", restraint: true);
-                    dofs.Add(fixedDof || spring == 0 ? new DofRestrain((GeometryRestrain.DOF)k, fixedDof) : new DofRestrain((GeometryRestrain.DOF)k, spring));
-                }
-                node.Assignments.Restrains.Add(new RestrainAssignment { Restrain = new NodeRestrain(node, axes ?? CoordinateSystem.Global, dofs), SourceRecord = "NodeRestraint/StiffnessAttributeModel" });
-            }
+            bool restrained = attributes.Any(a => a.Is("NodeRestraintAttributeModel") || a.Is("NodeStiffnessAttributeModel"));
+            if (restrained && n.Field("Loads").Items.Any(l => l.Is("NodeDisplacementLoadModel"))) throw new NotSupportedException("LegacyPrescribedDisplacementNotMappedYet");
+            var names = new[] { "Tx", "Ty", "Tz", "Rx", "Ry", "Rz" };
             foreach (var a in attributes)
             {
-                if (a.Is("NodeCoordinateAttributeModel") || a.Is("NodeRestraintAttributeModel") || a.Is("RigidConnectionAttributeModel")) continue;
-                if (a.Is("ElementIdAttributeModel")) { Label(node, a, report); continue; }
-                if (a.Is("NodeStiffnessAttributeModel")) continue; // with the restraints above
-                throw new NotSupportedException("LegacyNodeAttributeNotMappedYet: " + a.ShortType);
+                if (a.Is("RigidConnectionAttributeModel")) continue; // the rigid connections after the attributes (Node)
+                if (a.Is("NodeCoordinateAttributeModel"))
+                    node.Assignments.Restrains.Add(new RestrainAssignment { Restrain = new NodeRestrain(node, Frame(a["Frame"], units), Enumerable.Range(0, 6).Select(k => new DofRestrain((GeometryRestrain.DOF)k, false)).ToList()), SourceRecord = FrameRecord });
+                else if (a.Is("NodeRestraintAttributeModel"))
+                    node.Assignments.Restrains.Add(new RestrainAssignment { Restrain = new NodeRestrain(node, CoordinateSystem.Global, Enumerable.Range(0, 6).Select(k => new DofRestrain((GeometryRestrain.DOF)k, a.Bool(names[k]))).ToList()), SourceRecord = RestraintRecord });
+                else if (a.Is("NodeStiffnessAttributeModel"))
+                    node.Assignments.Restrains.Add(new RestrainAssignment
+                    {
+                        Restrain = new NodeRestrain(node, CoordinateSystem.Global, Enumerable.Range(0, 6).Select(k =>
+                        {
+                            double spring = a.Double(names[k]) * (k < 3 ? units.Force / units.Length : units.Force * units.Length);
+                            return spring == 0 ? new DofRestrain((GeometryRestrain.DOF)k, false) : new DofRestrain((GeometryRestrain.DOF)k, spring);
+                        }).ToList()),
+                        SourceRecord = StiffnessRecord
+                    });
+                else if (a.Is("ElementIdAttributeModel"))
+                {
+                    string value = a.String("Value");
+                    if (string.IsNullOrEmpty(value)) report.Carry("Empty Element ID attribute"); else node.Attributes.Add(new ElementLabelAttribute(value));
+                }
+                else throw new NotSupportedException("LegacyNodeAttributeNotMappedYet: " + a.ShortType);
             }
-            var sums = new Dictionary<string, (Vector3d F, Vector3d M)>(StringComparer.Ordinal);
             foreach (var l in n.Field("Loads").Items)
             {
-                string c = l.Field("LoadCase").String("Name");
-                if (l.Is("NodeForceLoadModel") || l.Is("NodeMomentLoadModel"))
-                {
-                    sums.TryGetValue(c, out var s); var v = Vector(l); // NodeForceLoadModel/NodeMomentLoadModel store X, Y, Z
-                    sums[c] = l.Is("NodeForceLoadModel") ? ((s.F ?? Zero) + v * units.Force, s.M ?? Zero) : (s.F ?? Zero, (s.M ?? Zero) + v * (units.Force * units.Length));
-                }
+                var c = cases[l.Field("LoadCase").String("Name")];
+                if (l.Is("NodeForceLoadModel")) node.Loads.Add(new PointLoad(Vector(l) * units.Force, Zero, node.Position, c) { Name = ForceRecord });
+                else if (l.Is("NodeMomentLoadModel")) node.Loads.Add(new PointLoad(Zero, Vector(l) * (units.Force * units.Length), node.Position, c) { Name = MomentRecord });
                 else if (l.Is("NodeTemperatureLoadModel"))
                 {
-                    // The former exporter wrote only the value (St7SetNodeTemperature1): the native default type is the reference temperature.
-                    if (l.Enum("LoadType") != "Reference") report.Warn(GPC.Model.Core.Identity.EntityFamily.Node, node.Id, $"Node {node.Name}: temperature type {l.Enum("LoadType")} was not exported (reference temperature used, as before)");
-                    (node.Assignments.Physical ??= new NodePhysicalData()).Temperatures.Add(new NodalTemperatureAssignment { Case = cases[c], Kind = NodalTemperatureKind.Reference, Celsius = units.ToCelsius(l.Double("Value")) });
+                    string type = l.Enum("LoadType");
+                    var kind = type == "Reference" ? NodalTemperatureKind.Reference : type == "Fixed" ? NodalTemperatureKind.Prescribed : type == "Initial" ? NodalTemperatureKind.Initial
+                        : throw new NotSupportedException("LegacyNodeTemperatureType: " + type);
+                    (node.Assignments.Physical ??= new NodePhysicalData()).Temperatures.Add(new NodalTemperatureAssignment { Case = c, Kind = kind, Celsius = units.ToCelsius(l.Double("Value")) });
                 }
                 else throw new NotSupportedException("LegacyNodeLoadNotMappedYet: " + l.ShortType);
             }
-            foreach (var s in sums) node.Loads.Add(new PointLoad(s.Value.F, s.Value.M, node.Position, cases[s.Key]));
         }
-        private static readonly Vector3d Zero = new Vector3d(0, 0, 0);
+
+        /// <summary>The kinds of the records of a node draft (<see cref="NodeData"/>): the <see cref="RestrainAssignment.SourceRecord"/> of its
+        /// coordinate systems, restraints and stiffnesses, and the name of its force and moment loads.</summary>
+        internal const string FrameRecord = "NodeCoordinateAttributeModel", RestraintRecord = "NodeRestraintAttributeModel", StiffnessRecord = "NodeStiffnessAttributeModel",
+            ForceRecord = "NodeForceLoadModel", MomentRecord = "NodeMomentLoadModel";
+        internal static readonly Vector3d Zero = new Vector3d(0, 0, 0);
 
         private static void BeamData(LegacyValue b, BeamElement beam, CoordinateSystem principal, Vector3d offset, Dictionary<string, LoadCaseBase> cases, BridgeUnits units, LegacyImportReport report,
             BridgeMembers members)

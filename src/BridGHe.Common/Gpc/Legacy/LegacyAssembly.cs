@@ -10,6 +10,8 @@ using GPC.Model.Elements;
 using GPC.Model.LoadCases;
 using GPC.Model.Loads;
 using GPC.Model.Models;
+using GPC.Model.Restraints;
+using GPC.Model.Structure.Assignments;
 
 namespace BridGHe.Common.Gpc.Legacy
 {
@@ -31,7 +33,7 @@ namespace BridGHe.Common.Gpc.Legacy
     /// The units: the element drafts of a conversion are converted with the units of the model (the per-quantity factors of
     /// <see cref="BridgeUnits"/>), so their numbers are already N-mm; Build Model (e3) gives drafts converted with the units of its input.
     /// </summary>
-    internal sealed class LegacyAssembly
+    public sealed class LegacyAssembly
     {
         internal Model Model { get; }
         internal LegacyImportReport Report { get; }
@@ -97,8 +99,12 @@ namespace BridGHe.Common.Gpc.Legacy
             index = new NodeLookup(nodes, Units.ToMm(Tolerance));
             // The rigid connections leave every node before the first link: Model.AddCostrain registers both nodes again (Model.AddNode),
             // which refuses a node attribute whose name is not a case name (found by gpc-legacy-import, p2j2).
+            // The same holds for the Element ID of a node (ElementLabelAttribute, no case name): the F6 reader refused a labelled node with
+            // a rigid link (found by the e3 corpus of --import-dump, P2J; the former exporter accepted it). The other attributes leave the
+            // nodes while the links are made and come back with their ids.
             var targets = nodes.Select(n => n.Attributes.Values.OfType<RigidConnectionAttribute>().ToArray()).ToArray();
-            for (int i = 0; i < nodes.Count; i++) foreach (var a in targets[i]) nodes[i].Attributes.Remove(a);
+            var kept = targets.Any(t => t.Length != 0) ? nodes.Select(n => n.Attributes.Values.Where(a => !(a is RigidConnectionAttribute)).ToArray()).ToArray() : null;
+            if (kept != null) foreach (var node in nodes) if (node.Attributes.Count != 0) Keep(node.Attributes, a => false);
             var pairs = new HashSet<(int, int)>();
             for (int i = 0; i < nodes.Count; i++)
                 foreach (var a in targets[i])
@@ -109,7 +115,82 @@ namespace BridGHe.Common.Gpc.Legacy
                     if (!pairs.Add((Math.Min(i, target), Math.Max(i, target)))) throw new ArgumentException("Duplicate rigid link after node merging.");
                     Model.AddCostrains(new[] { new RigidLink(nodes[i], nodes[target]) });
                 }
+            if (kept != null) for (int i = 0; i < nodes.Count; i++) foreach (var a in kept[i]) nodes[i].Attributes.Add(a);
         }
+
+        /// <summary>
+        /// Chain E (e3, coordinator decision 2 of 5/11): the resolution of a node draft whose records (<see cref="LegacyModelImport"/> NodeData:
+        /// one per former attribute and load, possibly merged from several GH data with the same GUID) give the node of the former exporter,
+        /// with the warnings in the former order:
+        /// - coordinate systems: all the same (else the former error), the first is the frame of the restraint;
+        /// - one restraint: a DOF fixed if any restraint record fixes it, the springs of the first stiffness record ("only the first stiffness
+        ///   attribute was exported" for the others), the restraint governing a spring on a fixed DOF (warning);
+        /// - the first Element ID ("only the first Element ID is kept" for each other);
+        /// - forces and moments summed per case in the order of the records (the arithmetic of the former reader: the records are never summed
+        ///   before), one point load per case in the order of the first record of each case;
+        /// - temperatures: the reference temperature for every kind, as the former exporter (warning for the others).
+        /// The node is changed in place: a draft of a GH datum is copied first.
+        /// </summary>
+        public static NodeElement ResolveNode(NodeElement node, LegacyImportReport report)
+        {
+            var records = node.Assignments.Restrains.ToArray();
+            var frames = records.Where(r => r.SourceRecord == LegacyModelImport.FrameRecord).Select(r => r.Restrain.CoordinateSystem).ToArray();
+            if (frames.Length > 1 && frames.Skip(1).Any(f => !SameFrame(f, frames[0]))) throw new ArgumentException($"Node {node.Name}: conflicting/invalid restraint coordinate systems.");
+            var axes = frames.Length == 0 ? null : frames[0];
+            var restraints = records.Where(r => r.SourceRecord == LegacyModelImport.RestraintRecord).ToArray();
+            var stiffness = records.Where(r => r.SourceRecord == LegacyModelImport.StiffnessRecord).ToArray();
+            if (records.Length != frames.Length + restraints.Length + stiffness.Length) throw new ArgumentException($"Node {node.Name}: restraint record of an unknown kind.");
+            node.Assignments.Restrains.Clear();
+            if (stiffness.Length > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Node, node.Id, $"Node {node.Name}: only the first stiffness attribute was exported", restraint: true);
+            if (restraints.Length != 0 || stiffness.Length != 0)
+            {
+                var names = new[] { "Tx", "Ty", "Tz", "Rx", "Ry", "Rz" }; var dofs = new List<DofRestrain>();
+                for (int k = 0; k < 6; k++)
+                {
+                    bool fixedDof = restraints.Any(r => r.Restrain.Restrains[k].IsRestrained);
+                    var first = stiffness.Length == 0 ? null : stiffness[0].Restrain.Restrains[k];
+                    double spring = first == null || !first.HasStiffness ? 0 : first.Stiffness;
+                    if (fixedDof && spring != 0) report.Warn(GPC.Model.Core.Identity.EntityFamily.Node, node.Id, $"Node {node.Name}: spring on a restrained DOF {names[k]} (the restraint governs)", restraint: true);
+                    dofs.Add(fixedDof || spring == 0 ? new DofRestrain((GeometryRestrain.DOF)k, fixedDof) : new DofRestrain((GeometryRestrain.DOF)k, spring));
+                }
+                node.Assignments.Restrains.Add(new RestrainAssignment { Restrain = new NodeRestrain(node, axes ?? CoordinateSystem.Global, dofs), SourceRecord = "NodeRestraint/StiffnessAttributeModel" });
+            }
+            var labels = node.Attributes.Values.OfType<ElementLabelAttribute>().ToArray();
+            for (int k = 1; k < labels.Length; k++) report.Warn(Model.FamilyOf(node), node.Id, $"Element {node.Name}: only the first Element ID is kept");
+            if (labels.Length > 1) Keep(node.Attributes, a => !labels.Skip(1).Any(x => ReferenceEquals(x, a)));
+            var sums = new Dictionary<string, (Vector3d F, Vector3d M, LoadCaseBase Case)>(StringComparer.Ordinal);
+            var loads = node.Loads.Values.ToArray();
+            foreach (var load in loads)
+            {
+                if (!(load is PointLoad l) || l.Name != LegacyModelImport.ForceRecord && l.Name != LegacyModelImport.MomentRecord) throw new ArgumentException($"Node {node.Name}: load record of an unknown kind.");
+                var c = (LoadCaseBase)l.LoadCase; sums.TryGetValue(c.Name, out var s);
+                sums[c.Name] = l.Name == LegacyModelImport.ForceRecord ? ((s.F ?? LegacyModelImport.Zero) + new Vector3d(l.F1, l.F2, l.F3), s.M ?? LegacyModelImport.Zero, s.Case ?? c)
+                    : (s.F ?? LegacyModelImport.Zero, (s.M ?? LegacyModelImport.Zero) + new Vector3d(l.M1, l.M2, l.M3), s.Case ?? c);
+            }
+            node.Loads.Clear();
+            foreach (var t in node.Assignments.Physical?.Temperatures ?? new List<NodalTemperatureAssignment>())
+                if (t.Kind != NodalTemperatureKind.Reference)
+                {
+                    report.Warn(GPC.Model.Core.Identity.EntityFamily.Node, node.Id, $"Node {node.Name}: temperature type {(t.Kind == NodalTemperatureKind.Prescribed ? "Fixed" : t.Kind.ToString())} was not exported (reference temperature used, as before)");
+                    t.Kind = NodalTemperatureKind.Reference;
+                }
+            foreach (var s in sums) node.Loads.Add(new PointLoad(s.Value.F, s.Value.M, node.Position, s.Value.Case));
+            return node;
+        }
+
+        /// <summary>Keeps the items of an id collection that pass <paramref name="keep"/>, with their ids, as if the others had never been added:
+        /// <see cref="GPC.Model.Collections.UniqueIdCollection{T}.Remove(T)"/> keeps the removed ids counted, and the counter is archived
+        /// with the element (<c>AttributesMaxId</c>), so a removal would change the document of the model.</summary>
+        private static void Keep<T>(GPC.Model.Collections.UniqueIdCollection<T> items, Func<T, bool> keep) where T : GPC.Model.ModelObjectId, System.Runtime.Serialization.ISerializable
+        {
+            var kept = items.Values.Where(keep).ToArray();
+            items.Clear();
+            foreach (var item in kept) items.Add(item);
+        }
+
+        private static bool SameFrame(CoordinateSystem a, CoordinateSystem b) => Same(a.Origin, b.Origin) && Same(a.V1, b.V1) && Same(a.V2, b.V2) && Same(a.V3, b.V3);
+        private static bool Same(Point3d a, Point3d b) => a.X == b.X && a.Y == b.Y && a.Z == b.Z;
+        private static bool Same(Vector3d a, Vector3d b) => a.X == b.X && a.Y == b.Y && a.Z == b.Z;
 
         /// <summary>The node <paramref name="i"/> (0-based) of the model.</summary>
         internal NodeElement Node(int i) => nodes[i];
