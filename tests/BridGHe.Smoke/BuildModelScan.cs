@@ -26,9 +26,13 @@ internal static class BuildModelScan
 {
     internal static readonly string[] Scope = Enumerable.Range(1, 10).Concat(new[] { 19 }).Concat(Enumerable.Range(29, 21)).Concat(new[] { 50, 99 }).Select(i => i.ToString("00") + "-").ToArray();
 
+    /// <summary>The folder of the analyses the native scan runs (never the folders their definitions name).</summary>
+    private static readonly string ScanFiles = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "bridghe-build-model-scan"));
+
     internal static int Run(string[] args)
     {
         BridgeExampleMigration.Initialize();
+        bool native = args.Contains("--native");
         var files = args.SkipWhile(a => a != "--build-model-scan").Skip(1).Where(a => !a.StartsWith("--")).Select(a => Path.GetFullPath(Path.Combine(ExamplePaths.Root, a))).ToList();
         if (files.Count == 0)
             files = Directory.GetDirectories(ExamplePaths.Root).Where(d => Scope.Any(p => Path.GetFileName(d).StartsWith(p, StringComparison.Ordinal)))
@@ -52,13 +56,30 @@ internal static class BuildModelScan
                 }
                 foreach (var b in builds) Up(b);
                 foreach (var o in doc.Objects.OfType<IGH_ActiveObject>()) if (!upstream.Contains(o)) o.Locked = true;
+                // e3 point 6 (--native, with the Straus7 key): the analyses upstream of a Build Model run (the Run button), so that the Build
+                // Model runs behind them (the archived 19 REV003) get their data.
+                // The Output Path of every analysis pressed is redirected (in memory, the definition is never saved) to a folder of the scan:
+                // the archived definitions name absolute paths in the main checkout of BridGHe (p2l5/p2l8 wrote 52 ignored files there, P2L).
+                if (native)
+                    foreach (var c in doc.Objects.OfType<GH_Component>().Where(c => upstream.Contains(c) && c.GetType().Name == "StrausR3AnalysisComponent").ToArray())
+                    {
+                        var output = (Grasshopper.Kernel.Parameters.Param_String)c.Params.Input.Single(p => p.Name == "Output Path");
+                        string folder = Path.Combine(ScanFiles, string.Concat(label.Select(ch => Path.GetInvalidFileNameChars().Contains(ch) || ch == ' ' ? '-' : ch)));
+                        Directory.CreateDirectory(folder);
+                        string target = Path.Combine(folder, c.InstanceGuid.ToString("N") + ".st7");
+                        foreach (var s in output.Sources.ToArray()) output.RemoveSource(s);
+                        output.PersistentData.Clear(); output.SetPersistentData(target);
+                        if (!Path.GetFullPath(target).StartsWith(ScanFiles, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("BuildModelScanOutputOutsideTheScanFolder: " + target);
+                        c.GetType().GetField("_run", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(c, true);
+                        Console.WriteLine($"BUILD MODEL SCAN {label}: Run of '{c.NickName}' pressed, output {target}");
+                    }
                 BridgeSegmentExcelTests.Solve(doc, true);
                 total.Add(Print(doc, label));
             }
             catch (Exception e) { failures++; Console.WriteLine($"BUILD MODEL SCAN {label}: FAILED {e.GetType().Name}: {e.Message}"); }
         }
         Console.WriteLine($"BUILD MODEL SCAN TOTAL {files.Count} files, {failures} failed: " + total);
-        return failures == 0 ? 0 : 1;
+        return failures == 0 && total.CountFailures == 0 ? 0 : 1;
     }
 
     internal sealed class Counts
@@ -67,10 +88,12 @@ internal static class BuildModelScan
         internal int[] Merges = new int[3], SameGoo = new int[3], SameContent = new int[3], OtherContent = new int[3];
         internal int LoadsAppended, LoadsSkipped, AttributesAppended, AttributesSkipped, GroupsAppended;
         internal int PositionMerges, EndsMoved, EndNodes, ZeroLength, CornersMoved, CornerNodes, ReaderEndsMoved, ReaderCornersMoved;
+        /// <summary>e3 point 6: runs whose GPC counters equal the 0.3.0 counts, and runs where they differ (or no GPC input).</summary>
+        internal int CountsEqual, CountFailures, NoOutput;
         internal readonly List<string> Details = new List<string>();
         internal void Add(Counts c)
         {
-            Runs += c.Runs; Empty += c.Empty; Nodes += c.Nodes; Beams += c.Beams; Plates += c.Plates;
+            Runs += c.Runs; Empty += c.Empty; Nodes += c.Nodes; Beams += c.Beams; Plates += c.Plates; CountsEqual += c.CountsEqual; CountFailures += c.CountFailures; NoOutput += c.NoOutput;
             for (int f = 0; f < 3; f++) { Merges[f] += c.Merges[f]; SameGoo[f] += c.SameGoo[f]; SameContent[f] += c.SameContent[f]; OtherContent[f] += c.OtherContent[f]; }
             LoadsAppended += c.LoadsAppended; LoadsSkipped += c.LoadsSkipped; AttributesAppended += c.AttributesAppended; AttributesSkipped += c.AttributesSkipped; GroupsAppended += c.GroupsAppended;
             PositionMerges += c.PositionMerges; EndsMoved += c.EndsMoved; EndNodes += c.EndNodes; ZeroLength += c.ZeroLength; CornersMoved += c.CornersMoved; CornerNodes += c.CornerNodes;
@@ -81,7 +104,7 @@ internal static class BuildModelScan
             + $"(same goo {string.Join("/", SameGoo)}, same content {string.Join("/", SameContent)}, other content {string.Join("/", OtherContent)}); "
             + $"Merge appended {LoadsAppended} loads, {AttributesAppended} attributes, {GroupsAppended} groups, skipped (Contains) {LoadsSkipped} loads, {AttributesSkipped} attributes; "
             + $"position merges {PositionMerges}, beam ends moved {EndsMoved}, end nodes {EndNodes}, zero-length beams {ZeroLength}, plate corners moved {CornersMoved}, corner nodes {CornerNodes}; "
-            + $"reader moved {ReaderEndsMoved} beam ends, {ReaderCornersMoved} plate corners";
+            + $"reader moved {ReaderEndsMoved} beam ends, {ReaderCornersMoved} plate corners; GPC counters equal in {CountsEqual} runs, different or missing in {CountFailures}, runs without a model (FEM refused) {NoOutput}";
     }
 
     private static object Get(object o, string property) => o.GetType().GetProperty(property, BindingFlags.Public | BindingFlags.Instance).GetValue(o);
@@ -104,28 +127,53 @@ internal static class BuildModelScan
                 var items = input.get_Branch(path).Cast<object>().Where(g => g != null).ToArray();
                 if (items.Length == 0) { run.Empty = 1; counts.Add(run); Console.WriteLine($"BUILD MODEL SCAN {label} '{build.NickName}' {path}: no data"); continue; }
                 Scan(items, tol, run, $"{label} '{build.NickName}' {build.InstanceGuid:N} {path}");
-                // The reader: the conversion of the output against its FEM beams (N-mm models only).
-                var output = outputs.PathExists(path) ? outputs.get_Branch(path).Cast<object>().FirstOrDefault(o => o != null) : null;
-                if (output != null && ((ModelModel)Get(output, "Value")).Units == ModelModel.ModelUnits.Nmm)
+                // The reader: the GPC input of the output against its FEM beams (in mm: e3 point 5, every unit system).
+                // The output at the path of the input, else the output branch in the same position (a grafted output: input {0}, output {0;0}).
+                var outPath = outputs.PathExists(path) ? path : outputs.PathCount == input.PathCount ? outputs.Paths[input.Paths.IndexOf(path)] : null;
+                var output = outPath != null ? outputs.get_Branch(outPath).Cast<object>().FirstOrDefault(o => o != null) : null;
+                if (output == null)
+                {
+                    // No model: the FEM path refused the input (the GPC path is not attached then); the messages of the component say why.
+                    run.NoOutput++;
+                    run.Details.Add($"NO OUTPUT (locked {build.Locked}, output paths {string.Join(",", outputs.Paths)}, input paths {string.Join(",", input.Paths)}, phase {build.Phase}): " + string.Join(" | ", build.RuntimeMessages(GH_RuntimeMessageLevel.Error).Concat(build.RuntimeMessages(GH_RuntimeMessageLevel.Warning))
+                        .Concat(build.RuntimeMessages(GH_RuntimeMessageLevel.Remark))));
+                }
+                else
                 {
                     try
                     {
                         var fem = (ModelModel)Get(output, "Value"); var gpc = ((BridGHe.Common.Gpc.GpcModels.Conversion)Get(output, "GpcInput")).Model;
+                        var u = new BridGHe.Common.Gpc.BridgeUnits(BridGHe.Common.Gpc.BridgeUnits.Parse(fem.Units.ToString()));
+                        bool SameMm(GPC.Geometry.Point3d a, Point3d b) => a.X == u.ToMm(b.X) && a.Y == u.ToMm(b.Y) && a.Z == u.ToMm(b.Z);
                         var beams = fem.Beams.ToArray();
                         for (int k = 0; k < beams.Length; k++)
                         {
                             var g = gpc.BeamElements[k + 1];
-                            if (!Same(g.StartPoint, beams[k].PointFrom)) run.ReaderEndsMoved++;
-                            if (!Same(g.EndPoint, beams[k].PointTo)) run.ReaderEndsMoved++;
+                            if (!SameMm(g.StartPoint, beams[k].PointFrom)) run.ReaderEndsMoved++;
+                            if (!SameMm(g.EndPoint, beams[k].PointTo)) run.ReaderEndsMoved++;
                         }
                         var plates = fem.Plates.ToArray();
                         for (int k = 0; k < plates.Length; k++)
                         {
                             var nodes = gpc.AreaElements[k + 1].Nodes;
-                            for (int j = 0; j < plates[k].Points.Count; j++) if (!Same(nodes[j].Position, plates[k].Points[j])) run.ReaderCornersMoved++;
+                            for (int j = 0; j < plates[k].Points.Count; j++) if (!SameMm(nodes[j].Position, plates[k].Points[j])) run.ReaderCornersMoved++;
                         }
                     }
                     catch (Exception e) { run.Details.Add("reader comparison not available: " + e.Message); }
+                    // e3 point 6: the counters of Build Model on GPC (the report of the attached input) equal to the 0.3.0 rule measured above on
+                    // the FEM values (a self-merge on GPC: the same draft or a copy with the same content, as the same goo or the same archive here).
+                    if (!(bool)Get(output, "HasAttachedInput")) { run.CountFailures++; run.Details.Add("GPC COUNTS FAIL: no GPC input attached"); }
+                    else
+                    {
+                        var b = ((BridGHe.Common.Gpc.GpcModels.Conversion)Get(output, "GpcInput")).Report.BuildModel;
+                        string Text(int[] merges, IEnumerable<int> self, int position, int endsMoved, int endNodes, int zero, int cornersMoved, int cornerNodes, int reader) =>
+                            $"merges {string.Join("/", merges)} (self {string.Join("/", self)}), position merges {position}, ends moved {endsMoved}, end nodes {endNodes}, zero-length {zero}, corners moved {cornersMoved}, corner nodes {cornerNodes}, reader moved {reader}";
+                        string gpcText = b == null ? "none" : Text(b.Merges, b.SelfMerges, b.PositionMerges, b.EndsMoved, b.EndNodes, b.ZeroLength, b.CornersMoved, b.CornerNodes, b.ReaderMoved);
+                        string femText = Text(run.Merges, run.SameGoo.Zip(run.SameContent, (x, y) => x + y), run.PositionMerges, run.EndsMoved, run.EndNodes, run.ZeroLength, run.CornersMoved, run.CornerNodes,
+                            run.ReaderEndsMoved + run.ReaderCornersMoved);
+                        if (gpcText == femText) { run.CountsEqual++; run.Details.Add("GPC COUNTS EQUAL: " + gpcText + ", re-anchored " + b.Reanchored); }
+                        else { run.CountFailures++; run.Details.Add("GPC COUNTS FAIL: GPC " + gpcText + " / 0.3.0 " + femText); }
+                    }
                 }
                 Console.WriteLine($"BUILD MODEL SCAN {label} '{build.NickName}' {path}: " + run);
                 foreach (var d in run.Details) Console.WriteLine("  " + d);
