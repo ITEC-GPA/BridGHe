@@ -86,7 +86,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             for (int i = 0; i < bb.Results.Count; i++)
                 compositeBeamModel.Results.Add(bb.Results[i]);
 
-            GH_CompositeBeam ms_beam = new GH_CompositeBeam(compositeBeamModel);
+            GH_CompositeBeam ms_beam = new GH_CompositeBeam(compositeBeamModel) { AnalysedGpc = gH_Beam.AnalysedGpc, AnalysedGpcModel = gH_Beam.AnalysedGpcModel };
 
             DA.SetData(0, ms_beam);
         }

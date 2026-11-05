@@ -96,6 +96,7 @@ internal static class BridgeMovingRevisionNative
         C5WorkflowComparison.RequireGpcChecks(Out(merge,"Model").VolatileData.AllData(true).Single(),model,new[]{checker},false);
         GpcMergeCheck.Require(merge,"50");
         GpcSecForcesCheck.Require(checker,"50");
+        GpcSecForcesCheck.RequireGirders(doc,"50");
 #endif
         var details=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeDetailCheckComponent").ToArray();
         Require(details.Length==3&&details.All(c=>Out(c,"Section result").VolatileDataCount>0),"Missing detail checks: "+Errors(doc));

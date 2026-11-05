@@ -35,7 +35,11 @@ public sealed class BridgeSegmentCompositeComponent : BridgeUtilityComponent
         if (beams.Count == 0) { Message = "Awaiting beams"; return; }
         Message = "";
         var mapped = BridgeSegmentComposite.Map(beams.Select(b => b?.Value).ToArray(), ids, props.Select(p => p?.Value).ToArray());
-        da.SetDataList(0, mapped.Girders.Select(b => new GH_Beam(b))); da.SetDataList(1, mapped.Properties.Select(p => new GH_CompositeBeamProperty(p)));
+        // F6 (a)/(b), chain C: the girders keep the link to their beam of the GPC bridge model (Decompose Model of Build BridGHe Model).
+        var links = new Dictionary<Common.Models.BeamModel, GH_Beam>(ReferenceEqualityComparer.Instance);
+        foreach (var b in beams) if (b?.Value != null) links.TryAdd(b.Value, b);
+        da.SetDataList(0, mapped.Girders.Select(b => links.TryGetValue(b, out var source)
+            ? new GH_Beam(b) { AnalysedGpc = source.AnalysedGpc, AnalysedGpcModel = source.AnalysedGpcModel } : new GH_Beam(b))); da.SetDataList(1, mapped.Properties.Select(p => new GH_CompositeBeamProperty(p)));
         da.SetDataList(2, mapped.SegmentIds); da.SetDataList(3, mapped.Girders.Select(b => b.BeamId));
     }
 }

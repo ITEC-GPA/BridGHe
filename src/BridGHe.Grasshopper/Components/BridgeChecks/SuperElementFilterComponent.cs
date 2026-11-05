@@ -90,12 +90,15 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             }
 
             List<GH_Beam> super_beam = new List<GH_Beam>();
+            // F6 (a)/(b), chain C: the beams keep the link to their beam of the GPC bridge model (FEM beam i is GPC beam i + 1, the numbering
+            // of the conversion), as Decompose Model does for an analysed model.
+            var bridge = model.GpcBridge?.Model;
             for (int i = 0; i < model.Value.Beams.Count; i++)
             {
                 BeamModel b = model.Value.Beams[i];
                 if (b.HasAttribute(typeof(SuperElementAttributeModel)) && SuperElementAttributeModel.GetSuperElement(b) == super_element)
                 {
-                    super_beam.Add(new GH_Beam(b));
+                    super_beam.Add(new GH_Beam(b) { AnalysedGpc = bridge?.BeamElements[i + 1], AnalysedGpcModel = bridge });
                 }
             }
 

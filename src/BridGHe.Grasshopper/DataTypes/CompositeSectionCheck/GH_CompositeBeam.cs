@@ -111,7 +111,13 @@ namespace BridGHe.Grasshopper.DataTypes
             //_beamProperty = beam._beamProperty;
             //_groups = beam._groups;
             Value = new CompositeBeamModel(beam.Value);
+            AnalysedGpc = beam.AnalysedGpc; AnalysedGpcModel = beam.AnalysedGpcModel;
         }
+
+        /// <summary>F6 (a)/(b), chain C: the beam of the GPC bridge model this composite beam was made from and that model (set by Composite
+        /// Beam from a beam of Super Element Filter or Decompose Model of a Build BridGHe Model output); null otherwise. Shared by copies.</summary>
+        public GPC.Model.Elements.Element AnalysedGpc { get; set; }
+        public GPC.Model.Models.Model AnalysedGpcModel { get; set; }
 
         #endregion
 
@@ -182,7 +188,7 @@ namespace BridGHe.Grasshopper.DataTypes
         {
             GH_CompositeBeam copy = new GH_CompositeBeam
             {
-                _guid = this._guid,
+                _guid = this._guid, AnalysedGpc = AnalysedGpc, AnalysedGpcModel = AnalysedGpcModel,
                 Value = Common.Helpers.ModelArchive.Clone(Value)
             };
             return copy;

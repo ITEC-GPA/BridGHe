@@ -57,5 +57,37 @@ internal static class GpcSecForcesCheck
         if (branches != output.PathCount) Fail($"{output.PathCount} output branches, {branches} stations from the FEM results");
         Console.WriteLine($"GPC SEC FORCES PASS ({label} {check.NickName}): {beams.Length} beams, {branches} stations, forces from the GPC bridge samples equal to the former FEM output ({values} values).");
     }
+    /// <summary>R8, Bridge Girder Results: with composite beams linked to the GPC bridge model the "Stations" output (from the merged samples)
+    /// equals bit for bit the one recomputed from the FEM results of the beams (the former logic); every component must be on the GPC path.</summary>
+    internal static void RequireGirders(GH_Document doc, string label)
+    {
+        static string Bits(double v) => BitConverter.DoubleToInt64Bits(v == 0 ? 0.0 : v).ToString("X16", CultureInfo.InvariantCulture);
+        int components = 0, stations = 0;
+        foreach (var c in doc.Objects.OfType<GH_Component>().Where(o => o.GetType().Name == "BridgeGirderResultsComponent"))
+        {
+            void Fail(string what) => throw new Exception("GPC GIRDER RESULTS FAIL (" + label + " " + c.NickName + "): " + what);
+            var goos = c.Params.Input[0].VolatileData.AllData(true).ToArray();
+            if (goos.Length == 0) continue;
+            if (goos.Any(g => g.GetType().GetProperty("AnalysedGpcModel").GetValue(g) == null)) Fail("composite beams without the link to the GPC bridge model");
+            var beams = goos.Select(g => (CompositeBeamModel)((IGH_Goo)g).ScriptVariable()).ToArray();
+            int girder = c.Params.Input[2].VolatileData.AllData(true).OfType<GH_Integer>().Single().Value;
+            var tree = c.Params.Input[1].VolatileData;
+            var fem = beams.Select(b => b.Results.OfType<BeamForceResultModel>().Select(r => Math.Round(r.NormalizedLength ? r.Station * b.Length : r.Station, 15)).Distinct().OrderBy(x => x).ToArray()).ToArray();
+            var meta = beams.Select(b => b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value).ToArray();
+            var selected = Enumerable.Range(0, beams.Length).Where(i => meta[i].Group == girder).OrderBy(i => meta[i].StationFrom).ToArray();
+            var origins = new double[selected.Length]; for (int i = 1; i < origins.Length; i++) origins[i] = origins[i - 1] + beams[selected[i - 1]].Length;
+            var expected = new System.Collections.Generic.SortedSet<double>();
+            for (int p = 0; p < tree.PathCount; p++)
+            {
+                var path = tree.get_Path(p).Indices; int index = Array.IndexOf(selected, path[0]);
+                if (index >= 0) expected.Add((origins[index] + fem[path[0]][path[1]]) / 1000);
+            }
+            var actual = c.Params.Output[2].VolatileData.AllData(true).OfType<GH_Number>().Select(n => n.Value).ToArray();
+            if (!actual.Select(Bits).SequenceEqual(expected.Select(Bits))) Fail($"stations: {actual.Length} from GPC, {expected.Count} from the FEM results, or values differ");
+            components++; stations += actual.Length;
+        }
+        if (components == 0) throw new Exception("GPC GIRDER RESULTS FAIL (" + label + "): no Bridge Girder Results with data");
+        Console.WriteLine($"GPC GIRDER RESULTS PASS ({label}): {components} components on the GPC bridge samples, {stations} stations equal to the former FEM ones.");
+    }
 }
 #endif

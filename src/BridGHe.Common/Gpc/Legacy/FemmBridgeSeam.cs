@@ -41,9 +41,12 @@ namespace BridGHe.Common.Gpc.Legacy
             /// case name and sample (station mm, BridGHe convention), the numbers of the dataset before its mapping to the section axes.</summary>
             public IReadOnlyList<(string Case, Checks.BeamForceSample Sample)>[] Samples { get; }
             private readonly Dictionary<string, int> beams;
+            private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<GPC.Model.Models.Model, Bridge> registry = new System.Runtime.CompilerServices.ConditionalWeakTable<GPC.Model.Models.Model, Bridge>();
+            /// <summary>The bridge of a GPC bridge model (the components that only receive its beams, e.g. Bridge Girder Results), or null.</summary>
+            public static Bridge Of(GPC.Model.Models.Model model) => model != null && registry.TryGetValue(model, out var bridge) ? bridge : null;
             internal Bridge(GPC.Model.Models.Model model, D3.BridgeWorkflowDefinition workflow, IReadOnlyList<(string Case, Checks.BeamForceSample Sample)>[] samples)
             {
-                Model = model; Workflow = workflow; Samples = samples;
+                Model = model; Workflow = workflow; Samples = samples; registry.AddOrUpdate(model, this);
                 beams = new Dictionary<string, int>(StringComparer.Ordinal);
                 foreach (var b in model.BeamElements) beams.TryAdd(b.Value.Source.OriginalId, b.Key);
             }
