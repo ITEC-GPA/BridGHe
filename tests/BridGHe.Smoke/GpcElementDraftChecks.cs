@@ -49,6 +49,8 @@ internal static class GpcElementDraftChecks
                 else if (e.Is("BeamModel"))
                 {
                     var draft = LegacyModelImport.BeamDraft(e, units, Guid.NewGuid(), signature(b)); var x = model.BeamElements[++b];
+                    // e3: the draft keeps the groups, Element IDs and bridge records at list level; Build Model resolves them.
+                    LegacyAssembly.ResolveBeam(draft.Beam, draft.Records, new LegacyImportReport());
                     // A beam whose former property was shadowed by an earlier one with the same name takes that one in the model.
                     // An end merged onto a node at another position within the tolerance: the model builds the beam on the node (its axes and
                     // loads follow), the draft on its own ends; counted, not compared.
@@ -58,6 +60,7 @@ internal static class GpcElementDraftChecks
                 else if (e.Is("PlateModel"))
                 {
                     var draft = LegacyModelImport.PlateDraft(e, units, Guid.NewGuid()); var x = model.AreaElements[++p];
+                    LegacyAssembly.ResolvePlate(draft.Plate, draft.Records, new LegacyImportReport());
                     if (draft.Corners.Where((c, q) => !Coincide(c, x.Nodes[q].Position)).Any()) snapped++;
                     else Plate(id, draft, x);
                 }

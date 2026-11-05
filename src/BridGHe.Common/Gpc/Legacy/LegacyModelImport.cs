@@ -119,16 +119,65 @@ namespace BridGHe.Common.Gpc.Legacy
     /// <summary>Chain E (d): the GPC draft of one former beam value (<see cref="LegacyModelImport.BeamDraft"/>): the beam (no nodes, definition
     /// units), its bridge data (null: none), its BridGHe angle (degrees), the data of its property (formulation, principal angle, native section,
     /// signature) and the report of the conversion (warnings, data carried but not converted).</summary>
-    public sealed record LegacyBeamDraft(BeamElement Beam, GPC.Checkers.CompositeBridge.BridgeBeamData Bridge, double AngleDeg, LegacyBeamPropertyData Property, LegacyImportReport Report);
+    public sealed record LegacyBeamDraft(BeamElement Beam, GPC.Checkers.CompositeBridge.BridgeBeamData Bridge, double AngleDeg, LegacyBeamPropertyData Property, LegacyImportReport Report)
+    {
+        /// <summary>Chain E (e3): the data of the beam at list level that the GPC beam keeps one of (<see cref="LegacyElementRecords"/>).</summary>
+        public LegacyElementRecords Records { get; init; } = new LegacyElementRecords();
+    }
+
+    /// <summary>
+    /// Chain E (e3, P2K, coordinator decision 2 of 5/11): what a beam or plate draft holds at list level besides its GPC element, which keeps
+    /// one of each: every group (full names, in order; the element has the first), every Element ID value (the element has the first as its
+    /// label), the super element names (distinct, in order; the bridge data have the first), and how many bridge member, section state and
+    /// taper records and former loads the value had. The merge by GH GUID appends to these lists (<see cref="LegacyAssembly.Merge(LegacyBeamDraft, LegacyBeamDraft)"/>),
+    /// the resolution (<see cref="LegacyAssembly.ResolveBeam"/>, <see cref="LegacyAssembly.ResolvePlate"/>) gives the warnings and errors of
+    /// the former reader with the number and the name the element has in the model. Immutable by convention (a merge copies them).
+    /// </summary>
+    public sealed class LegacyElementRecords
+    {
+        internal readonly List<string> GroupList = new List<string>(), LabelList = new List<string>(), SuperElementList = new List<string>();
+        public IReadOnlyList<string> Groups => GroupList;
+        public IReadOnlyList<string> Labels => LabelList;
+        public IReadOnlyList<string> SuperElements => SuperElementList;
+        public int Members { get; internal set; }
+        public int SectionStates { get; internal set; }
+        public int Tapers { get; internal set; }
+        /// <summary>Element IDs without a value (carried, not converted).</summary>
+        public int EmptyLabels { get; internal set; }
+        /// <summary>The carried text of every plate support, in order (the former face is not in the GPC support).</summary>
+        internal readonly List<string> SupportCarryList = new List<string>();
+        public IReadOnlyList<string> SupportCarries => SupportCarryList;
+        /// <summary>The former loads of the value in order, as (former load type, case name): the k of the beam load records
+        /// "BeamLoad/&lt;number&gt;/&lt;k&gt;" is the position here (1-based); the merge by GH GUID walks them in this order.</summary>
+        internal readonly List<(string Kind, string Case)> LoadList = new List<(string, string)>();
+        public IReadOnlyList<(string Kind, string Case)> LoadRecords => LoadList;
+        public int Loads => LoadList.Count;
+        internal LegacyElementRecords Copy()
+        {
+            var copy = new LegacyElementRecords { Members = Members, SectionStates = SectionStates, Tapers = Tapers, EmptyLabels = EmptyLabels };
+            copy.SupportCarryList.AddRange(SupportCarryList);
+            copy.LoadList.AddRange(LoadList);
+            copy.GroupList.AddRange(GroupList); copy.LabelList.AddRange(LabelList); copy.SuperElementList.AddRange(SuperElementList);
+            return copy;
+        }
+    }
 
     /// <summary>Chain E (e1): the GPC draft of one former node value (<see cref="LegacyModelImport.NodeDraft"/>): the node (definition units),
     /// with its rigid links as <see cref="GPC.Model.Attributes.RigidConnectionAttribute"/> (target points; the assembly makes the links), and the
     /// report of the conversion.</summary>
-    public sealed record LegacyNodeDraft(NodeElement Node, LegacyImportReport Report);
+    public sealed record LegacyNodeDraft(NodeElement Node, LegacyImportReport Report)
+    {
+        /// <summary>Chain E (e3): the former loads of the node in order (<see cref="LegacyElementRecords.LoadRecords"/>), for the merge by GH GUID.</summary>
+        public LegacyElementRecords Records { get; init; } = new LegacyElementRecords();
+    }
 
     /// <summary>Chain E (e1): the GPC draft of one former plate value (<see cref="LegacyModelImport.PlateDraft"/>): the plate without nodes
     /// (definition units), its corners in order (the assembly finds their nodes by tolerance) and the report of the conversion.</summary>
-    public sealed record LegacyPlateDraft(AreaElement Plate, IReadOnlyList<Point3d> Corners, LegacyImportReport Report);
+    public sealed record LegacyPlateDraft(AreaElement Plate, IReadOnlyList<Point3d> Corners, LegacyImportReport Report)
+    {
+        /// <summary>Chain E (e3): the groups and Element IDs of the plate at list level (<see cref="LegacyElementRecords"/>).</summary>
+        public LegacyElementRecords Records { get; init; } = new LegacyElementRecords();
+    }
 
     /// <summary>Converts a former BridGHe FEM model (BGHA1 archive, read as data by <see cref="LegacyArchive"/>) into a GPC
     /// model in N-mm with the semantics of the former Straus7 exporter: node order and numbering, node merging by tolerance
@@ -187,8 +236,10 @@ namespace BridGHe.Common.Gpc.Legacy
                 string signature = Signature(b["BeamProperty"]);
                 var p = assembly.BeamProperty(PropertyName(b["BeamProperty"]), signature, k + 1, name => BeamProperty(b["BeamProperty"], name, units, shearAreas, report, signature));
                 var ni = assembly.Node(i); var nj = assembly.Node(j);
+                var records = new LegacyElementRecords();
                 var beam = Beam(b, k, GpcIdentity.Derive(owner, "beam:" + k), owner, ni.Position, nj.Position, p.Property, p.Formulation, p.Angle,
-                    created => created.ConnectNodes(ni, nj), assembly.GroupOf, cases, units, report, members, femPropertySignature);
+                    created => created.ConnectNodes(ni, nj), assembly.GroupOf, cases, units, report, members, femPropertySignature, records);
+                LegacyAssembly.ResolveBeam(beam, records, report);
                 assembly.AddBeam(beam, p.Native);
             }
 
@@ -201,7 +252,10 @@ namespace BridGHe.Common.Gpc.Legacy
                 var connected = assembly.PlateNodes(Enumerable.Range(0, count).Select(i => Point(pl["Point" + i], units)), k + 1);
                 var pp = pl.Field("PlateProperty"); string ppName = PlatePropertyName(pp);
                 var property = assembly.PlateProperty(ppName, () => PlateProperty(pp, ppName, units));
-                assembly.AddPlate(Plate(pl, k, GpcIdentity.Derive(owner, "plate:" + k), owner, property, created => created.ConnectNodes(connected), assembly.GroupOf, cases, units, report));
+                var records = new LegacyElementRecords();
+                var plate = Plate(pl, k, GpcIdentity.Derive(owner, "plate:" + k), owner, property, created => created.ConnectNodes(connected), assembly.GroupOf, cases, units, report, records);
+                LegacyAssembly.ResolvePlate(plate, records, report);
+                assembly.AddPlate(plate);
             }
 
             var stages = legacy.Has("StagedConstruction") ? legacy.Field("StagedConstruction").Items : Array.Empty<LegacyValue>();
@@ -223,13 +277,15 @@ namespace BridGHe.Common.Gpc.Legacy
         /// the target point, after its own attributes (L12 §5.1; the assembly makes the <see cref="RigidLink"/> and removes them).
         /// </summary>
         private static NodeElement Node(LegacyValue n, int i, Guid guid, Guid owner, Func<LegacyValue, Group> groupOf, Dictionary<string, LoadCaseBase> cases,
-            BridgeUnits units, LegacyImportReport report)
+            BridgeUnits units, LegacyImportReport report, LegacyElementRecords records = null)
         {
             string nodeId = n.String("NodeId") ?? "";
             var node = new NodeElement(guid, Point(n["Position"], units), null, nodeId, i + 1)
             { Source = new SourceIdentity(Program, owner.ToString("D"), EntityFamily.Node, nodeId.Length != 0 ? nodeId : (i + 1).ToString()) };
             foreach (var g in n.Field("Groups").Items) node.AddGroup(groupOf(g));
             NodeData(n, node, cases, units, report);
+            if (records != null) foreach (var l in n.Field("Loads").Items) records.LoadList.Add((l.ShortType, l.Field("LoadCase").String("Name")));
+            if (records != null) records.EmptyLabels = n.Field("Attributes").Items.Count(a => a.Is("ElementIdAttributeModel") && string.IsNullOrEmpty(a.String("Value")));
             foreach (var a in n.Field("Attributes").Items.Where(a => a.Is("RigidConnectionAttributeModel"))) node.Attributes.Add(new RigidConnectionAttribute(Point(a["Target"], units)));
             return node;
         }
@@ -240,7 +296,7 @@ namespace BridGHe.Common.Gpc.Legacy
         /// the first group, Element ID, load patch, supports, prestress, non-structural masses and pressures.
         /// </summary>
         private static AreaElement Plate(LegacyValue pl, int k, Guid guid, Guid owner, PlateProperty property, Action<AreaElement> connect, Func<LegacyValue, Group> groupOf,
-            Dictionary<string, LoadCaseBase> cases, BridgeUnits units, LegacyImportReport report)
+            Dictionary<string, LoadCaseBase> cases, BridgeUnits units, LegacyImportReport report, LegacyElementRecords records)
         {
             string plateId = pl.String("PlateId") ?? "";
             var plate = new AreaElement(guid, null, property, null, plateId, k + 1)
@@ -248,11 +304,13 @@ namespace BridGHe.Common.Gpc.Legacy
             connect?.Invoke(plate);
             if (pl.Double("Angle") != 0) throw new NotSupportedException("LegacyPlateAngleNotMappedYet");
             if (pl.Double("Offset") != 0) plate.Assignments.Offset = units.ToMm(pl.Double("Offset"));
+            // e3: every group at list level (the former exporter wrote the first; the warning comes with the resolution, LegacyAssembly.ResolvePlate).
             var pg = pl.Field("Groups").Items; if (pg.Count > 0) plate.AddGroup(groupOf(pg[0]));
-            if (pg.Count > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Shell, k + 1, $"Straus7 allows assigning only one single group to the plate {k + 1}", numberInText: true);
+            foreach (var g in pg) records.GroupList.Add(FullName(g));
+            foreach (var l in pl.Field("Loads").Items) records.LoadList.Add((l.ShortType, l.Field("LoadCase").String("Name")));
             foreach (var a in pl.Field("Attributes").Items)
             {
-                if (a.Is("ElementIdAttributeModel")) Label(plate, a, report);
+                if (a.Is("ElementIdAttributeModel")) Label(plate, a, report, records);
                 else if (a.Is("LoadPatchTypeAttributeModel"))
                 {
                     var edges = new List<int>(); for (int e = 0; a.Has("SelectedEdges" + e); e++) edges.Add(a.Int("SelectedEdges" + e));
@@ -269,6 +327,7 @@ namespace BridGHe.Common.Gpc.Legacy
                         Behavior = a.Bool("CompressionOnly") ? DistributedSpringBehavior.CompressionOnly : DistributedSpringBehavior.Bilateral
                     });
                     report.Carry("Plate support face " + a.Enum("Face") + " (the former exporter wrote the -Z face)");
+                    records.SupportCarryList.Add("Plate support face " + a.Enum("Face") + " (the former exporter wrote the -Z face)");
                 }
                 else throw new NotSupportedException("LegacyPlateAttributeNotMappedYet: " + a.ShortType);
             }
@@ -309,7 +368,7 @@ namespace BridGHe.Common.Gpc.Legacy
         /// </summary>
         private static BeamElement Beam(LegacyValue b, int k, Guid guid, Guid owner, Point3d start, Point3d end, BeamProperty property, BeamFormulation formulation,
             double principalAngle, Action<BeamElement> connect, Func<LegacyValue, Group> groupOf, Dictionary<string, LoadCaseBase> cases, BridgeUnits units,
-            LegacyImportReport report, BridgeMembers members, Func<int, string> femPropertySignature)
+            LegacyImportReport report, BridgeMembers members, Func<int, string> femPropertySignature, LegacyElementRecords records)
         {
             string beamId = b.String("BeamId") ?? "";
             var beam = new BeamElement(guid, start, end, property, null, beamId, k + 1)
@@ -328,13 +387,13 @@ namespace BridGHe.Common.Gpc.Legacy
                 beam.Assignments.OffsetAxes = principal;
                 beam.Assignments.OffsetI = new Vector3d(ox, oy, 0); beam.Assignments.OffsetJ = new Vector3d(ox, oy, 0);
             }
+            // e3: every group at list level (the former exporter wrote the first; the warning comes with the resolution, LegacyAssembly.ResolveBeam).
             var bg = b.Field("Groups").Items;
             if (bg.Count > 0) beam.AddGroup(groupOf(bg[0]));
-            if (bg.Count > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Beam, k + 1, $"Straus7 allows assigning only one single group to the beam {k + 1}", numberInText: true);
-            BeamData(b, beam, principal, globalOffset, cases, units, report, members);
-            // The former result reader asked Straus7 for at least 5 stations per beam unless the beam had an output-stations attribute.
-            (beam.Assignments.Physical ??= new BeamPhysicalData()).MinimumOutputStations ??= 5;
-            SectionState(b, k, beam, femPropertySignature, report);
+            foreach (var g in bg) records.GroupList.Add(FullName(g));
+            foreach (var l in b.Field("Loads").Items) records.LoadList.Add((l.ShortType, l.Field("LoadCase").String("Name")));
+            BeamData(b, beam, principal, globalOffset, cases, units, report, members, records);
+            SectionState(b, k, beam, femPropertySignature, report, records);
             return beam;
         }
 
@@ -353,9 +412,10 @@ namespace BridGHe.Common.Gpc.Legacy
             var report = new LegacyImportReport { Units = units, Owner = guid, Bridge = new GPC.Checkers.CompositeBridge.BridgeModelData() };
             var property = BeamProperty(b["BeamProperty"], units);
             var cases = ElementCases(b, out var groupOf);
+            var records = new LegacyElementRecords();
             var beam = Beam(b, 0, guid, guid, Point(b["PointFrom"], units), Point(b["PointTo"], units), property.Property, property.Data.Formulation, property.Data.Angle,
-                null, groupOf, cases, units, report, new BridgeMembers(report.Bridge), femPropertySignature == null ? null : _ => femPropertySignature);
-            return new LegacyBeamDraft(beam, report.Bridge.Beam(beam.Guid), b.Double("Angle"), property.Data, report);
+                null, groupOf, cases, units, report, new BridgeMembers(report.Bridge), femPropertySignature == null ? null : _ => femPropertySignature, records);
+            return new LegacyBeamDraft(beam, report.Bridge.Beam(beam.Guid), b.Double("Angle"), property.Data, report) { Records = records };
         }
 
         /// <summary>
@@ -369,7 +429,8 @@ namespace BridGHe.Common.Gpc.Legacy
             if (n == null || n.IsNull || !n.Is("NodeModel")) throw new ArgumentException("LegacyNodeModelExpected");
             var report = new LegacyImportReport { Units = units, Owner = guid, Bridge = new GPC.Checkers.CompositeBridge.BridgeModelData() };
             var cases = ElementCases(n, out var groupOf);
-            return new LegacyNodeDraft(Node(n, 0, guid, guid, groupOf, cases, units, report), report);
+            var records = new LegacyElementRecords();
+            return new LegacyNodeDraft(Node(n, 0, guid, guid, groupOf, cases, units, report, records), report) { Records = records };
         }
 
         /// <summary>
@@ -387,7 +448,8 @@ namespace BridGHe.Common.Gpc.Legacy
             var pp = pl.Field("PlateProperty"); string ppName = PlatePropertyName(pp);
             var property = PlateProperty(pp, ppName, units);
             var cases = ElementCases(pl, out var groupOf);
-            return new LegacyPlateDraft(Plate(pl, 0, guid, guid, property, null, groupOf, cases, units, report), corners, report);
+            var records = new LegacyElementRecords();
+            return new LegacyPlateDraft(Plate(pl, 0, guid, guid, property, null, groupOf, cases, units, report, records), corners, report) { Records = records };
         }
 
         /// <summary>The cases of the loads of one former element by name (the rules of the case set of a whole model: a name, one definition
@@ -603,26 +665,32 @@ namespace BridGHe.Common.Gpc.Legacy
             ForceRecord = "NodeForceLoadModel", MomentRecord = "NodeMomentLoadModel";
         internal static readonly Vector3d Zero = new Vector3d(0, 0, 0);
 
+        /// <summary>
+        /// The attributes and loads of a former beam at list level (chain E, e3): every Element ID in <see cref="LegacyElementRecords.Labels"/>
+        /// (the first as the label of the beam), super element names and bridge members counted in the records (the bridge data have the
+        /// first), the output stations of the last record (without the default of 5), every release set and prestrain kept, tapers counted
+        /// (the beam has the first); the resolution (<see cref="LegacyAssembly.ResolveBeam"/>) gives the former warnings and refuses the
+        /// duplicates with the former messages, with the number and name of the beam in the model.
+        /// </summary>
         private static void BeamData(LegacyValue b, BeamElement beam, CoordinateSystem principal, Vector3d offset, Dictionary<string, LoadCaseBase> cases, BridgeUnits units, LegacyImportReport report,
-            BridgeMembers members)
+            BridgeMembers members, LegacyElementRecords records)
         {
             foreach (var a in b.Field("Attributes").Items)
             {
                 switch (a.ShortType)
                 {
-                    case "ElementIdAttributeModel": Label(beam, a, report); break;
-                    case "SuperElementAttributeModel": members.SuperElement(a.String("Value"), beam); break;
-                    case "BridgeMemberAttributeModel": members.Member(a.Field("BridgeMetadata"), beam, units); break;
+                    case "ElementIdAttributeModel": Label(beam, a, report, records); break;
+                    case "SuperElementAttributeModel": members.SuperElement(a.String("Value"), beam, records); break;
+                    case "BridgeMemberAttributeModel": members.Member(a.Field("BridgeMetadata"), beam, units, records); break;
                     case "BridgeSectionStateAttributeModel": break; // after the beam is complete (SectionState)
                     case "BeamOutputStationsModel":
                         (beam.Assignments.Physical ??= new BeamPhysicalData()).MinimumOutputStations = a.Int("MinimumNumberOfStations"); break;
                     case "BeamReleasesAttributeModel":
-                        if (beam.Attributes.Values.Any(x => x is GPC.Model.Attributes.BeamReleasesAttribute)) throw new ArgumentException($"Cannot assign more than 1 set of releases for beam {beam.Id}");
                         beam.Attributes.Add(Releases(a, units)); break;
                     case "BeamSupportAttributeModel":
                         (beam.Assignments.Physical ??= new BeamPhysicalData()).Supports.Add(Support(a, beam.Assignments.SectionAxes, units)); break;
                     case "BeamTaperAttributeModel":
-                        if (beam.Assignments.Physical?.Taper != null) throw new ArgumentException("LegacyDuplicateBeamTaper");
+                        if (++records.Tapers > 1) break;
                         (beam.Assignments.Physical ??= new BeamPhysicalData()).Taper = new BeamSectionTaper
                         {
                             ScaleI1 = a.Double("NFromX"), ScaleJ1 = a.Double("NToX"), ScaleI2 = a.Double("NFromY"), ScaleJ2 = a.Double("NToY"),
@@ -634,7 +702,7 @@ namespace BridGHe.Common.Gpc.Legacy
                     default: throw new NotSupportedException("LegacyBeamAttributeNotMappedYet: " + a.ShortType);
                 }
             }
-            int loadIndex = 0; var preLoadCases = new HashSet<string>(StringComparer.Ordinal);
+            int loadIndex = 0;
             foreach (var l in b.Field("Loads").Items)
             {
                 var loadCase = cases[l.Field("LoadCase").String("Name")]; string source = "BeamLoad/" + beam.Id + "/" + (++loadIndex);
@@ -643,7 +711,7 @@ namespace BridGHe.Common.Gpc.Legacy
                     case "BeamDistributedLoadModel": beam.Assignments.Loads.AddRange(Distributed(l, beam, principal, offset, loadCase, units, source)); break;
                     case "BeamPointLoadModel": beam.Assignments.Loads.Add(PointLoad(l, beam, principal, offset, loadCase, units, source)); break;
                     case "BeamPreLoadModel":
-                        if (!preLoadCases.Add(loadCase.Name)) throw new ArgumentException("Beam " + beam.Id + " has multiple prestrain in loadcase " + loadCase.Name);
+                        // Two prestrains in one case: refused by the resolution (LegacyAssembly.ResolveBeam), with the number of the beam.
                         bool strain = l.Enum("LoadType") == "Strain";
                         (beam.Assignments.Physical ??= new BeamPhysicalData()).InitialStates.Add(new BeamInitialState
                         { Case = loadCase, Kind = strain ? BeamInitialStateKind.AxialStrain : BeamInitialStateKind.AxialForce, Value = strain ? l.Double("Value") : units.ToN(l.Double("Value")) });
@@ -657,6 +725,7 @@ namespace BridGHe.Common.Gpc.Legacy
                     default: throw new NotSupportedException("LegacyBeamLoadNotMappedYet: " + l.ShortType);
                 }
             }
+
         }
 
         private static IEnumerable<GPC.Model.Loads.Assignments.BeamLoadAssignment> Distributed(LegacyValue l, BeamElement beam, CoordinateSystem principal, Vector3d offset,
@@ -799,11 +868,12 @@ namespace BridGHe.Common.Gpc.Legacy
         /// (<see cref="GPC.Checkers.CompositeBridge.BridgeWorkflowDefinition.PropertyFingerprint"/>, the one D3 uses) when the former state was
         /// current for its property, else a stale marker (the checks refuse it, as the former ones refused the stale signature). Only the first
         /// state of a beam is kept (Bridge State Override writes one).</summary>
-        private static void SectionState(LegacyValue b, int k, BeamElement beam, Func<int, string> femPropertySignature, LegacyImportReport report)
+        private static void SectionState(LegacyValue b, int k, BeamElement beam, Func<int, string> femPropertySignature, LegacyImportReport report, LegacyElementRecords records)
         {
             var states = b.Field("Attributes").Items.Where(a => a.Is("BridgeSectionStateAttributeModel")).ToArray();
             if (states.Length == 0) return;
-            if (states.Length > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Beam, beam.Id, $"Beam {beam.Name}: only the first bridge section state is kept");
+            // e3: the states counted at list level; the warning for the others comes with the resolution (LegacyAssembly.ResolveBeam).
+            records.SectionStates = states.Length;
             var s = states[0].Field("SectionAssignment");
             if (!Enum.TryParse<GPC.Checkers.CompositeBridge.BridgeActionBehavior>(s.Enum("Behavior"), false, out var behavior) || behavior == GPC.Checkers.CompositeBridge.BridgeActionBehavior.Steel)
                 throw new ArgumentException("LegacyBridgeSectionStateBehavior: " + s.Enum("Behavior"));
@@ -820,12 +890,14 @@ namespace BridGHe.Common.Gpc.Legacy
         /// (absolute) stiffness; the others stay continuous. Beam principal axes, as St7SetBeamTRelease3/RRelease3.</summary>
         /// <summary>C1: the former Element ID (ElementIdComponent: the user's identifier of a node, beam or plate) as the GPC element label,
         /// descriptive (the Straus7 writer does not write it; the former exporter numbered the native elements itself).</summary>
-        private static void Label(Element element, LegacyValue a, LegacyImportReport report)
+        /// <remarks>e3: every value at list level (<see cref="LegacyElementRecords.Labels"/>); the element takes the first as its label, the
+        /// warning for each other comes with the resolution.</remarks>
+        private static void Label(Element element, LegacyValue a, LegacyImportReport report, LegacyElementRecords records)
         {
             string value = a.String("Value");
-            if (string.IsNullOrEmpty(value)) { report.Carry("Empty Element ID attribute"); return; }
-            if (element.Attributes.Values.OfType<ElementLabelAttribute>().Any()) { report.Warn(GPC.Model.Models.Model.FamilyOf(element), element.Id, $"Element {element.Name}: only the first Element ID is kept"); return; }
-            element.Attributes.Add(new ElementLabelAttribute(value));
+            if (string.IsNullOrEmpty(value)) { report.Carry("Empty Element ID attribute"); records.EmptyLabels++; return; }
+            records.LabelList.Add(value);
+            if (records.LabelList.Count == 1) element.Attributes.Add(new ElementLabelAttribute(value));
         }
 
         /// <summary>
@@ -841,16 +913,18 @@ namespace BridGHe.Common.Gpc.Legacy
         {
             private readonly GPC.Checkers.CompositeBridge.BridgeModelData data;
             public BridgeMembers(GPC.Checkers.CompositeBridge.BridgeModelData data) { this.data = data; }
-            public void SuperElement(string name, BeamElement beam)
+            /// <remarks>e3: the distinct names at list level; two names are refused by the resolution (<see cref="LegacyAssembly.ResolveBeam"/>).</remarks>
+            public void SuperElement(string name, BeamElement beam, LegacyElementRecords records)
             {
                 if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("LegacyEmptySuperElementName");
-                string existing = data.SuperElement(beam.Guid);
-                if (existing == null) data.SetSuperElement(beam.Guid, name);
-                else if (!string.Equals(existing, name, StringComparison.Ordinal))
-                    throw new ArgumentException($"LegacyBeamInTwoSuperElements: beam {beam.Name} is in the super elements '{existing}' and '{name}'; a beam belongs to one super element.");
+                if (records.SuperElementList.Contains(name, StringComparer.Ordinal)) return;
+                records.SuperElementList.Add(name);
+                if (records.SuperElementList.Count == 1) data.SetSuperElement(beam.Guid, name);
             }
-            public void Member(LegacyValue m, BeamElement beam, BridgeUnits units)
+            /// <remarks>e3: counted at list level (the bridge data keep the first); a second is refused by the resolution.</remarks>
+            public void Member(LegacyValue m, BeamElement beam, BridgeUnits units, LegacyElementRecords records)
             {
+                if (++records.Members > 1) return;
                 string id = m.String("PhysicalId");
                 if (!Enum.TryParse<GPC.Checkers.CompositeBridge.Layout.BridgeMemberFamily>(m.Enum("Family"), false, out var family)) throw new ArgumentException("LegacyBridgeMemberFamily: " + m.Enum("Family"));
                 var up = m.Field("SectionUp");

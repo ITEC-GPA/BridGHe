@@ -56,6 +56,6 @@ namespace BridGHe.Common.Gpc
 
         /// <summary>A copy of a draft with another beam and bridge data (the report and the property data of the draft are kept).</summary>
         public static LegacyBeamDraft With(LegacyBeamDraft draft, GPC.Model.Elements.BeamElement beam, GPC.Checkers.CompositeBridge.BridgeBeamData bridge, LegacyBeamPropertyData property = null) =>
-            new LegacyBeamDraft(beam, bridge, draft.AngleDeg, property ?? draft.Property, draft.Report);
+            new LegacyBeamDraft(beam, bridge, draft.AngleDeg, property ?? draft.Property, draft.Report) { Records = draft.Records };
     }
 }

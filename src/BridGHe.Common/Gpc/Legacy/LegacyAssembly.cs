@@ -178,6 +178,41 @@ namespace BridGHe.Common.Gpc.Legacy
             return node;
         }
 
+        /// <summary>
+        /// Chain E (e3, P2K, coordinator decision 2 of 5/11): the resolution of a beam draft at list level (<see cref="LegacyElementRecords"/>,
+        /// possibly merged from several GH data with the same GUID) into the beam of the former exporter, with its number and name in the
+        /// model, in the order of the former reader: the first group (warning for more), the first Element ID (warning for each other), one
+        /// super element (two names: <c>LegacyBeamInTwoSuperElements</c>), one bridge member, one release set, one taper, one prestrain per case
+        /// (the former errors), at least 5 output stations unless a record gives them, the first section state (warning for more).
+        /// The beam is changed in place: a draft of a GH datum is copied first.
+        /// </summary>
+        public static BeamElement ResolveBeam(BeamElement beam, LegacyElementRecords records, LegacyImportReport report)
+        {
+            if (records.Groups.Count > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Beam, beam.Id, $"Straus7 allows assigning only one single group to the beam {beam.Id}", numberInText: true);
+            for (int k = 1; k < records.Labels.Count; k++) report.Warn(Model.FamilyOf(beam), beam.Id, $"Element {beam.Name}: only the first Element ID is kept");
+            if (records.SuperElements.Count > 1)
+                throw new ArgumentException($"LegacyBeamInTwoSuperElements: beam {beam.Name} is in the super elements '{records.SuperElements[0]}' and '{records.SuperElements[1]}'; a beam belongs to one super element.");
+            if (records.Members > 1) throw new ArgumentException("LegacyDuplicateBridgeMemberAttribute: beam " + beam.Name);
+            if (beam.Attributes.Values.OfType<BeamReleasesAttribute>().Count() > 1) throw new ArgumentException($"Cannot assign more than 1 set of releases for beam {beam.Id}");
+            if (records.Tapers > 1) throw new ArgumentException("LegacyDuplicateBeamTaper");
+            var prestrained = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var s in beam.Assignments.Physical?.InitialStates ?? new List<BeamInitialState>())
+                if (!prestrained.Add(((LoadCaseBase)s.Case).Name)) throw new ArgumentException("Beam " + beam.Id + " has multiple prestrain in loadcase " + ((LoadCaseBase)s.Case).Name);
+            // The former result reader asked Straus7 for at least 5 stations per beam unless the beam had an output-stations attribute.
+            (beam.Assignments.Physical ??= new BeamPhysicalData()).MinimumOutputStations ??= 5;
+            if (records.SectionStates > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Beam, beam.Id, $"Beam {beam.Name}: only the first bridge section state is kept");
+            return beam;
+        }
+
+        /// <summary>Chain E (e3): the resolution of a plate draft at list level: the first group (warning for more) and the first Element ID
+        /// (warning for each other), with the number and name of the plate in the model, in the order of the former reader.</summary>
+        public static AreaElement ResolvePlate(AreaElement plate, LegacyElementRecords records, LegacyImportReport report)
+        {
+            if (records.Groups.Count > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Shell, plate.Id, $"Straus7 allows assigning only one single group to the plate {plate.Id}", numberInText: true);
+            for (int k = 1; k < records.Labels.Count; k++) report.Warn(Model.FamilyOf(plate), plate.Id, $"Element {plate.Name}: only the first Element ID is kept");
+            return plate;
+        }
+
         /// <summary>Keeps the items of an id collection that pass <paramref name="keep"/>, with their ids, as if the others had never been added:
         /// <see cref="GPC.Model.Collections.UniqueIdCollection{T}.Remove(T)"/> keeps the removed ids counted, and the counter is archived
         /// with the element (<c>AttributesMaxId</c>), so a removal would change the document of the model.</summary>
