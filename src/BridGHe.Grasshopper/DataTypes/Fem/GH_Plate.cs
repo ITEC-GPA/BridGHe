@@ -114,6 +114,34 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public GPC.Model.Elements.Element AnalysedGpc { get; set; }
         public GPC.Model.Models.Model AnalysedGpcModel { get; set; }
 
+        /// <summary>
+        /// Chain E (e1): the GPC draft of this plate (definition units, see <see cref="Common.Gpc.Legacy.LegacyPlateDraft"/>): the one a GPC component
+        /// attached to this FEM value (<see cref="AttachGpc"/>), otherwise the per-value conversion of the FEM value
+        /// (<see cref="Common.Gpc.GpcBeamDrafts.FromFemm(PlateModel, System.Guid?)"/>), once per value. A new FEM value (a modified copy) drops the
+        /// attached draft. Immutable by convention: whoever changes it makes a copy (<see cref="GPC.Model.Core.ModelValues.CopyValue{T}(T)"/>).
+        /// </summary>
+        public Common.Gpc.Legacy.LegacyPlateDraft Gpc
+        {
+            get
+            {
+                if (Value == null) return null;
+                if (_gpc == null || !ReferenceEquals(_gpcOf, Value)) { _gpc = Common.Gpc.GpcBeamDrafts.FromFemm(Value); _gpcOf = Value; HasAttachedGpc = false; }
+                return _gpc;
+            }
+        }
+
+        /// <summary>True when <see cref="Gpc"/> is a draft attached by a GPC component (not the conversion of the FEM value).</summary>
+        public bool HasAttachedGpc { get; private set; }
+
+        /// <summary>Attaches the GPC draft built on GPC for the current FEM value (it must describe it: the gates compare the two).</summary>
+        public void AttachGpc(Common.Gpc.Legacy.LegacyPlateDraft draft)
+        {
+            _gpc = draft ?? throw new System.ArgumentNullException(nameof(draft)); _gpcOf = Value; HasAttachedGpc = true;
+        }
+
+        private Common.Gpc.Legacy.LegacyPlateDraft _gpc;
+        private PlateModel _gpcOf;
+
 
         #endregion
 

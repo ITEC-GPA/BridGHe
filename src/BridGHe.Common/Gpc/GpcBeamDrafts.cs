@@ -32,6 +32,28 @@ namespace BridGHe.Common.Gpc
             return LegacyModelImport.BeamDraft(LegacyArchive.Read(archive), DraftUnits, guid, signature);
         }
 
+        /// <summary>Chain E (e1): the draft of a FEM node value (the rules of the conversion of a whole model, definition units, rigid links as
+        /// GPC rigid connections); identity from the content of the value, or the one given. Results are never converted.</summary>
+        public static LegacyNodeDraft FromFemm(NodeModel node, Guid? identity = null)
+        {
+            if (node == null) throw new ArgumentNullException(nameof(node));
+            if (node.Results.Count != 0) { node = ModelArchive.Clone(node); node.Results.Clear(); }
+            byte[] archive = ModelArchive.Write(node);
+            var guid = identity ?? GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-node:" + Convert.ToHexString(SHA256.HashData(archive)));
+            return LegacyModelImport.NodeDraft(LegacyArchive.Read(archive), DraftUnits, guid);
+        }
+
+        /// <summary>Chain E (e1): the draft of a FEM plate value (the rules of the conversion of a whole model, definition units, no nodes: its
+        /// corners); identity from the content of the value, or the one given. Results are never converted.</summary>
+        public static LegacyPlateDraft FromFemm(PlateModel plate, Guid? identity = null)
+        {
+            if (plate == null) throw new ArgumentNullException(nameof(plate));
+            if (plate.Results.Count != 0) { plate = ModelArchive.Clone(plate); plate.Results.Clear(); }
+            byte[] archive = ModelArchive.Write(plate);
+            var guid = identity ?? GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-plate:" + Convert.ToHexString(SHA256.HashData(archive)));
+            return LegacyModelImport.PlateDraft(LegacyArchive.Read(archive), DraftUnits, guid);
+        }
+
         /// <summary>A copy of a draft with another beam and bridge data (the report and the property data of the draft are kept).</summary>
         public static LegacyBeamDraft With(LegacyBeamDraft draft, GPC.Model.Elements.BeamElement beam, GPC.Checkers.CompositeBridge.BridgeBeamData bridge, LegacyBeamPropertyData property = null) =>
             new LegacyBeamDraft(beam, bridge, draft.AngleDeg, property ?? draft.Property, draft.Report);

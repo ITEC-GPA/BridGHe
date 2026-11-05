@@ -121,6 +121,15 @@ namespace BridGHe.Common.Gpc.Legacy
     /// signature) and the report of the conversion (warnings, data carried but not converted).</summary>
     public sealed record LegacyBeamDraft(BeamElement Beam, GPC.Checkers.CompositeBridge.BridgeBeamData Bridge, double AngleDeg, LegacyBeamPropertyData Property, LegacyImportReport Report);
 
+    /// <summary>Chain E (e1): the GPC draft of one former node value (<see cref="LegacyModelImport.NodeDraft"/>): the node (definition units),
+    /// with its rigid links as <see cref="GPC.Model.Attributes.RigidConnectionAttribute"/> (target points; the assembly makes the links), and the
+    /// report of the conversion.</summary>
+    public sealed record LegacyNodeDraft(NodeElement Node, LegacyImportReport Report);
+
+    /// <summary>Chain E (e1): the GPC draft of one former plate value (<see cref="LegacyModelImport.PlateDraft"/>): the plate without nodes
+    /// (definition units), its corners in order (the assembly finds their nodes by tolerance) and the report of the conversion.</summary>
+    public sealed record LegacyPlateDraft(AreaElement Plate, IReadOnlyList<Point3d> Corners, LegacyImportReport Report);
+
     /// <summary>Converts a former BridGHe FEM model (BGHA1 archive, read as data by <see cref="LegacyArchive"/>) into a GPC
     /// model in N-mm with the semantics of the former Straus7 exporter: node order and numbering, node merging by tolerance
     /// at the beam and link ends, load-case set with the default "Dead" self-weight case, one group per element.
@@ -137,9 +146,11 @@ namespace BridGHe.Common.Gpc.Legacy
             if (legacy == null || !legacy.Is("ModelModel")) throw new ArgumentException("LegacyModelModelExpected");
             report ??= new LegacyImportReport();
             var units = new BridgeUnits(BridgeUnits.Parse(legacy.Enum("Units")));
-            report.Units = units; report.Owner = owner; report.Bridge = new GPC.Checkers.CompositeBridge.BridgeModelData();
-            string name = legacy.String("Name") ?? "";
-            var model = new Model(owner, name);
+            // Chain E (e2): the model part (cases, groups, node merge, rigid links, property registries, moving paths, stages, combinations) is
+            // the assembly; the elements are the drafts of the former values, built here with the identities and numbers of the model and the
+            // units of the model (N-mm), as Build Model builds them from the GH types (e3).
+            var assembly = new LegacyAssembly(legacy.String("Name") ?? "", units, owner, toleranceDefinitionUnits, report);
+            var model = assembly.Model;
             var elements = legacy.Field("Elements").Items;
             var nodes = elements.Where(e => e.Is("NodeModel")).ToList();
             var beams = elements.Where(e => e.Is("BeamModel")).ToList();
@@ -157,151 +168,138 @@ namespace BridGHe.Common.Gpc.Legacy
             string movingJson = legacy.Has("MovingPaths") ? legacy.String("MovingPaths") : "[]";
             if (legacy.Has("BridgeWorkflow")) report.Carry("BridgeWorkflow (checks recipe, not exported)");
 
-            var cases = Cases(legacy, model, MovingCaseNames(movingJson), report);
-            var groups = new Dictionary<string, Group>(StringComparer.Ordinal);
-            Group GroupOf(LegacyValue g)
-            {
-                string full = FullName(g);
-                if (groups.TryGetValue(full, out var known)) return known;
-                var parent = g["Parent"].IsNull ? null : GroupOf(g["Parent"]);
-                var group = Group.Create(GpcIdentity.Group(full), full);
-                parent?.AddChild(group);
-                groups.Add(full, group); model.Groups.Add(group.Name, group);
-                return group;
-            }
+            assembly.RegisterCases(Cases(legacy, MovingCaseNames(movingJson), report));
+            var cases = assembly.Cases;
 
-            // Nodes: former order and numbering.
-            var gpcNodes = new List<NodeElement>();
-            for (int i = 0; i < nodes.Count; i++)
-            {
-                var n = nodes[i]; string nodeId = n.String("NodeId") ?? "";
-                var node = new NodeElement(GpcIdentity.Derive(owner, "node:" + i), Point(n["Position"], units), null, nodeId, i + 1)
-                { Source = new SourceIdentity(Program, owner.ToString("D"), EntityFamily.Node, nodeId.Length != 0 ? nodeId : (i + 1).ToString()) };
-                gpcNodes.Add(node); model.NodesElements.Add(node);
-            }
-            // Node groups: organizational metadata (Straus7 nodes have no group; the writer creates the groups, as the former exporter).
-            for (int i = 0; i < nodes.Count; i++) foreach (var g in nodes[i].Field("Groups").Items) gpcNodes[i].AddGroup(GroupOf(g));
-            var index = new NodeLookup(gpcNodes, units.ToMm(toleranceDefinitionUnits));
-            for (int i = 0; i < nodes.Count; i++) NodeData(nodes[i], gpcNodes[i], cases, units, report);
-            // Rigid links in node order, as the former RigidConnectionExport.
-            var pairs = new HashSet<(int, int)>();
-            for (int i = 0; i < nodes.Count; i++)
-                foreach (var a in nodes[i].Field("Attributes").Items.Where(a => a.Is("RigidConnectionAttributeModel")))
-                {
-                    var (target, matches) = index.Find(Point(a["Target"], units));
-                    if (matches != 1) throw new ArgumentException("Rigid link target matches more than one FEM node. Merge nodes before export.");
-                    if (target == i) throw new ArgumentException("Rigid link collapses to the same node within model tolerance.");
-                    if (!pairs.Add((Math.Min(i, target), Math.Max(i, target)))) throw new ArgumentException("Duplicate rigid link after node merging.");
-                    model.AddCostrains(new[] { new RigidLink(gpcNodes[i], gpcNodes[target]) });
-                }
+            // Nodes: former order and numbering; their groups are organizational metadata (Straus7 nodes have no group; the writer creates
+            // the groups, as the former exporter); rigid links in node order, as the former RigidConnectionExport.
+            assembly.RequireTolerance();
+            assembly.AddNodes(nodes.Select((n, i) => Node(n, i, GpcIdentity.Derive(owner, "node:" + i), owner, assembly.GroupOf, cases, units, report)).ToList());
 
             // Beams: former order and numbering; nodes found by tolerance (StrausNodeIndex semantics).
             // The former exporter created one native property per property name: later properties with the same name used the first.
-            var properties = new Dictionary<string, (BeamProperty Property, BeamFormulation Formulation, double Angle, string Signature, GPC.Converter.Straus7.Straus7SectionDefinition Native)>(StringComparer.Ordinal);
             var shearAreas = new Dictionary<string, (double, double)>(StringComparer.Ordinal);
             var members = new BridgeMembers(report.Bridge);
             for (int k = 0; k < beams.Count; k++)
             {
-                var b = beams[k]; string beamId = b.String("BeamId") ?? "";
-                var from = Point(b["PointFrom"], units); var to = Point(b["PointTo"], units);
-                var (i, mi) = index.Find(from); var (j, mj) = index.Find(to);
-                if (mi > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Beam, k + 1, $"Collapsing {mi} nodes at coordinates {from}");
-                if (mj > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Beam, k + 1, $"Collapsing {mj} nodes at coordinates {to}");
-                string propertyName = PropertyName(b["BeamProperty"]); string signature = Signature(b["BeamProperty"]);
-                if (!properties.TryGetValue(propertyName, out var p))
-                {
-                    var converted = BeamProperty(b["BeamProperty"], Unique(model, propertyName), units, shearAreas, report, signature);
-                    model.BeamProperties.Add(converted.Property.Name, converted.Property);
-                    report.BeamProperties[propertyName] = converted.Data;
-                    properties.Add(propertyName, p = (converted.Property, converted.Data.Formulation, converted.Data.Angle, signature, converted.Data.Native));
-                }
-                else if (p.Signature != signature) { report.Warnings.Add(string.Format(LegacyImportReport.ExistingPropertyWarning, propertyName)); report.ShadowedPropertyBeams.Add(k + 1); }
-                var beam = Beam(b, k, GpcIdentity.Derive(owner, "beam:" + k), owner, gpcNodes[i].Position, gpcNodes[j].Position, p.Property, p.Formulation, p.Angle,
-                    created => created.ConnectNodes(gpcNodes[i], gpcNodes[j]), GroupOf, cases, units, report, members, femPropertySignature);
-                if (p.Native != null) report.NativeSections.Add(beam.Guid, p.Native);
-                model.BeamElements.Add(beam);
+                var b = beams[k];
+                var (i, j) = assembly.BeamEnds(Point(b["PointFrom"], units), Point(b["PointTo"], units), k + 1);
+                string signature = Signature(b["BeamProperty"]);
+                var p = assembly.BeamProperty(PropertyName(b["BeamProperty"]), signature, k + 1, name => BeamProperty(b["BeamProperty"], name, units, shearAreas, report, signature));
+                var ni = assembly.Node(i); var nj = assembly.Node(j);
+                var beam = Beam(b, k, GpcIdentity.Derive(owner, "beam:" + k), owner, ni.Position, nj.Position, p.Property, p.Formulation, p.Angle,
+                    created => created.ConnectNodes(ni, nj), assembly.GroupOf, cases, units, report, members, femPropertySignature);
+                assembly.AddBeam(beam, p.Native);
             }
 
-            if (movingJson != "[]") GpcMoving.FromLegacyJson(movingJson, model, cases, units, owner);
+            assembly.AddMovingPaths(movingJson);
             // Plates: former order and numbering, nodes by tolerance; one property per name as the former exporter.
-            var plateProperties = new Dictionary<string, PlateProperty>(StringComparer.Ordinal);
             for (int k = 0; k < plates.Count; k++)
             {
-                var pl = plates[k]; string plateId = pl.String("PlateId") ?? "";
+                var pl = plates[k];
                 int count = pl.Int("NPoints"); if (count != 3 && count != 4) throw new NotSupportedException("LegacyPlateWithMoreThanFourNodes");
-                var connected = Enumerable.Range(0, count).Select(i => { var (n, m) = index.Find(Point(pl["Point" + i], units)); if (m > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Shell, k + 1, $"Collapsing {m} nodes at plate {k + 1}", numberInText: true); return gpcNodes[n]; }).ToArray();
-                var pp = pl.Field("PlateProperty"); string ppName = pp.Any("Name", "_name").Text ?? pp.Any("Id", "_id").Text ?? "Plate property";
-                if (!plateProperties.TryGetValue(ppName, out var property)) plateProperties.Add(ppName, property = PlateProperty(pp, ppName, units));
-                if (!model.PlateProperties.ContainsKey(property.Name)) model.PlateProperties.Add(property.Name, property);
-                var plate = new AreaElement(GpcIdentity.Derive(owner, "plate:" + k), null, property, null, plateId, k + 1)
-                { Source = new SourceIdentity(Program, owner.ToString("D"), EntityFamily.Shell, plateId.Length != 0 ? plateId : (k + 1).ToString()) };
-                plate.ConnectNodes(connected);
-                if (pl.Double("Angle") != 0) throw new NotSupportedException("LegacyPlateAngleNotMappedYet");
-                if (pl.Double("Offset") != 0) plate.Assignments.Offset = units.ToMm(pl.Double("Offset"));
-                var pg = pl.Field("Groups").Items; if (pg.Count > 0) plate.AddGroup(GroupOf(pg[0]));
-                if (pg.Count > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Shell, k + 1, $"Straus7 allows assigning only one single group to the plate {k + 1}", numberInText: true);
-                foreach (var a in pl.Field("Attributes").Items)
-                {
-                    if (a.Is("ElementIdAttributeModel")) Label(plate, a, report);
-                    else if (a.Is("LoadPatchTypeAttributeModel"))
-                    {
-                        var edges = new List<int>(); for (int e = 0; a.Has("SelectedEdges" + e); e++) edges.Add(a.Int("SelectedEdges" + e));
-                        var weights = new double[4]; for (int e = 0; e < 4 && a.Has("Weights" + e); e++) weights[e] = a.Double("Weights" + e);
-                        (plate.Assignments.Physical ??= new ShellPhysicalData()).LoadPatch = new LoadPatchDistribution
-                        { Kind = (LoadPatchDistributionKind)(int)Enum.Parse(typeof(PatchKinds), a.Enum("PatchType")), SelectedEdges = edges.ToArray(), EdgeWeights = weights };
-                    }
-                    else if (a.Is("PlateSupportAttributeModel"))
-                    {
-                        // Former exporter: the -Z face, in every load-case number used as freedom case (one freedom case exists).
-                        (plate.Assignments.Physical ??= new ShellPhysicalData()).Supports.Add(new ShellDistributedSupport
-                        {
-                            Stiffness = a.Double("Stiffness") * units.Force / (units.Length * units.Length * units.Length), Gap = 0, Face = ShellFace.NegativeNormal,
-                            Behavior = a.Bool("CompressionOnly") ? DistributedSpringBehavior.CompressionOnly : DistributedSpringBehavior.Bilateral
-                        });
-                        report.Carry("Plate support face " + a.Enum("Face") + " (the former exporter wrote the -Z face)");
-                    }
-                    else throw new NotSupportedException("LegacyPlateAttributeNotMappedYet: " + a.ShortType);
-                }
-                foreach (var l in pl.Field("Loads").Items)
-                {
-                    var loadCase = cases[l.Field("LoadCase").String("Name")];
-                    if (l.Is("PlatePreStressModel"))
-                    {
-                        var stress = Vector(l["LocalPressure"]);
-                        (plate.Assignments.Physical ??= new ShellPhysicalData()).InitialStresses.Add(new ShellInitialStress { Case = loadCase, Components = new Vector3d(units.ToMPa(stress.X), units.ToMPa(stress.Y), units.ToMPa(stress.Z)) });
-                        continue;
-                    }
-                    if (l.Is("PlateNSMassModel"))
-                    {
-                        if (!units.IsIdentity) throw new NotSupportedException("LegacyPlateNonStructuralMassUnitsRequireNmm");
-                        (plate.Assignments.Physical ??= new ShellPhysicalData()).NonStructuralMasses.Add(new ShellNonStructuralMass { Case = loadCase, MassPerArea = l.Double("Mass"), DynamicFactor = l.Double("DynFactor"), GlobalOffset = Vector(l["Offset"]) });
-                        continue;
-                    }
-                    if (!l.Is("PlatePressureModel")) throw new NotSupportedException("LegacyPlateLoadNotMappedYet: " + l.ShortType);
-                    var pressure = Vector(l["Pressure"]);
-                    // Review L1 B2: local pressure = St7SetPlateNormalPressure2 with one value (the -Z face); global = St7SetPlateGlobalPressure3S.
-                    plate.Loads.Add(l["CoordinateSystem"].IsNull
-                        ? ShellFacePressure.Normal(loadCase, ShellFace.NegativeNormal, units.ToMPa(pressure.Z))
-                        : ShellFacePressure.Global(loadCase, l.Enum("Face") == "Top" ? ShellFace.PositiveNormal : ShellFace.NegativeNormal,
-                            new Vector3d(units.ToMPa(pressure.X), units.ToMPa(pressure.Y), units.ToMPa(pressure.Z)),
-                            l.Bool("Projected") ? SurfacePressureProjection.Resultant : SurfacePressureProjection.None));
-                }
-                model.AreaElements.Add(plate);
+                var connected = assembly.PlateNodes(Enumerable.Range(0, count).Select(i => Point(pl["Point" + i], units)), k + 1);
+                var pp = pl.Field("PlateProperty"); string ppName = PlatePropertyName(pp);
+                var property = assembly.PlateProperty(ppName, () => PlateProperty(pp, ppName, units));
+                assembly.AddPlate(Plate(pl, k, GpcIdentity.Derive(owner, "plate:" + k), owner, property, created => created.ConnectNodes(connected), assembly.GroupOf, cases, units, report));
             }
 
             var stages = legacy.Has("StagedConstruction") ? legacy.Field("StagedConstruction").Items : Array.Empty<LegacyValue>();
-            if (stages.Count != 0) Stages(stages, model, cases, groups, report);
+            if (stages.Count != 0) Stages(stages, model, cases, assembly.Groups, report);
             foreach (var c in legacy.Field("LoadCombinations").Items)
             {
                 string cname = c.String("Name");
-                var combination = new Combination(cname, GpcIdentity.Combination(cname));
                 var keys = c.Field("Keys").Items; var values = c.Field("Values").Items;
                 if (keys.Count != values.Count) throw new ArgumentException("InvalidLegacyCombination: " + cname);
-                for (int q = 0; q < keys.Count; q++) combination.AddLoadCaseCoefficient(cases[keys[q].String("Name")], values[q].AsDouble());
-                model.Combinations.Add(combination.Name, combination);
+                assembly.AddCombination(cname, keys.Select((key, q) => (key.String("Name"), values[q].AsDouble())));
             }
             return model;
         }
+
+        /// <summary>
+        /// One former node as a GPC node (the body of the node loop of <see cref="Import"/>, chain E (e1): also the conversion of a single node
+        /// value, <see cref="NodeDraft"/>): position, name (BridGHe node ID), source, groups (all, by full name), restraints, springs, Element ID,
+        /// loads and temperatures (<see cref="NodeData"/>), and the rigid links of the former node as <see cref="RigidConnectionAttribute"/> with
+        /// the target point, after its own attributes (L12 §5.1; the assembly makes the <see cref="RigidLink"/> and removes them).
+        /// </summary>
+        private static NodeElement Node(LegacyValue n, int i, Guid guid, Guid owner, Func<LegacyValue, Group> groupOf, Dictionary<string, LoadCaseBase> cases,
+            BridgeUnits units, LegacyImportReport report)
+        {
+            string nodeId = n.String("NodeId") ?? "";
+            var node = new NodeElement(guid, Point(n["Position"], units), null, nodeId, i + 1)
+            { Source = new SourceIdentity(Program, owner.ToString("D"), EntityFamily.Node, nodeId.Length != 0 ? nodeId : (i + 1).ToString()) };
+            foreach (var g in n.Field("Groups").Items) node.AddGroup(groupOf(g));
+            NodeData(n, node, cases, units, report);
+            foreach (var a in n.Field("Attributes").Items.Where(a => a.Is("RigidConnectionAttributeModel"))) node.Attributes.Add(new RigidConnectionAttribute(Point(a["Target"], units)));
+            return node;
+        }
+
+        /// <summary>
+        /// One former plate as a GPC plate (the body of the plate loop of <see cref="Import"/>, chain E (e1): also the conversion of a single
+        /// plate value, <see cref="PlateDraft"/>): on the given property, connected by <paramref name="connect"/> right after its creation; offset,
+        /// the first group, Element ID, load patch, supports, prestress, non-structural masses and pressures.
+        /// </summary>
+        private static AreaElement Plate(LegacyValue pl, int k, Guid guid, Guid owner, PlateProperty property, Action<AreaElement> connect, Func<LegacyValue, Group> groupOf,
+            Dictionary<string, LoadCaseBase> cases, BridgeUnits units, LegacyImportReport report)
+        {
+            string plateId = pl.String("PlateId") ?? "";
+            var plate = new AreaElement(guid, null, property, null, plateId, k + 1)
+            { Source = new SourceIdentity(Program, owner.ToString("D"), EntityFamily.Shell, plateId.Length != 0 ? plateId : (k + 1).ToString()) };
+            connect?.Invoke(plate);
+            if (pl.Double("Angle") != 0) throw new NotSupportedException("LegacyPlateAngleNotMappedYet");
+            if (pl.Double("Offset") != 0) plate.Assignments.Offset = units.ToMm(pl.Double("Offset"));
+            var pg = pl.Field("Groups").Items; if (pg.Count > 0) plate.AddGroup(groupOf(pg[0]));
+            if (pg.Count > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Shell, k + 1, $"Straus7 allows assigning only one single group to the plate {k + 1}", numberInText: true);
+            foreach (var a in pl.Field("Attributes").Items)
+            {
+                if (a.Is("ElementIdAttributeModel")) Label(plate, a, report);
+                else if (a.Is("LoadPatchTypeAttributeModel"))
+                {
+                    var edges = new List<int>(); for (int e = 0; a.Has("SelectedEdges" + e); e++) edges.Add(a.Int("SelectedEdges" + e));
+                    var weights = new double[4]; for (int e = 0; e < 4 && a.Has("Weights" + e); e++) weights[e] = a.Double("Weights" + e);
+                    (plate.Assignments.Physical ??= new ShellPhysicalData()).LoadPatch = new LoadPatchDistribution
+                    { Kind = (LoadPatchDistributionKind)(int)Enum.Parse(typeof(PatchKinds), a.Enum("PatchType")), SelectedEdges = edges.ToArray(), EdgeWeights = weights };
+                }
+                else if (a.Is("PlateSupportAttributeModel"))
+                {
+                    // Former exporter: the -Z face, in every load-case number used as freedom case (one freedom case exists).
+                    (plate.Assignments.Physical ??= new ShellPhysicalData()).Supports.Add(new ShellDistributedSupport
+                    {
+                        Stiffness = a.Double("Stiffness") * units.Force / (units.Length * units.Length * units.Length), Gap = 0, Face = ShellFace.NegativeNormal,
+                        Behavior = a.Bool("CompressionOnly") ? DistributedSpringBehavior.CompressionOnly : DistributedSpringBehavior.Bilateral
+                    });
+                    report.Carry("Plate support face " + a.Enum("Face") + " (the former exporter wrote the -Z face)");
+                }
+                else throw new NotSupportedException("LegacyPlateAttributeNotMappedYet: " + a.ShortType);
+            }
+            foreach (var l in pl.Field("Loads").Items)
+            {
+                var loadCase = cases[l.Field("LoadCase").String("Name")];
+                if (l.Is("PlatePreStressModel"))
+                {
+                    var stress = Vector(l["LocalPressure"]);
+                    (plate.Assignments.Physical ??= new ShellPhysicalData()).InitialStresses.Add(new ShellInitialStress { Case = loadCase, Components = new Vector3d(units.ToMPa(stress.X), units.ToMPa(stress.Y), units.ToMPa(stress.Z)) });
+                    continue;
+                }
+                if (l.Is("PlateNSMassModel"))
+                {
+                    if (!units.IsIdentity) throw new NotSupportedException("LegacyPlateNonStructuralMassUnitsRequireNmm");
+                    (plate.Assignments.Physical ??= new ShellPhysicalData()).NonStructuralMasses.Add(new ShellNonStructuralMass { Case = loadCase, MassPerArea = l.Double("Mass"), DynamicFactor = l.Double("DynFactor"), GlobalOffset = Vector(l["Offset"]) });
+                    continue;
+                }
+                if (!l.Is("PlatePressureModel")) throw new NotSupportedException("LegacyPlateLoadNotMappedYet: " + l.ShortType);
+                var pressure = Vector(l["Pressure"]);
+                // Review L1 B2: local pressure = St7SetPlateNormalPressure2 with one value (the -Z face); global = St7SetPlateGlobalPressure3S.
+                plate.Loads.Add(l["CoordinateSystem"].IsNull
+                    ? ShellFacePressure.Normal(loadCase, ShellFace.NegativeNormal, units.ToMPa(pressure.Z))
+                    : ShellFacePressure.Global(loadCase, l.Enum("Face") == "Top" ? ShellFace.PositiveNormal : ShellFace.NegativeNormal,
+                        new Vector3d(units.ToMPa(pressure.X), units.ToMPa(pressure.Y), units.ToMPa(pressure.Z)),
+                        l.Bool("Projected") ? SurfacePressureProjection.Resultant : SurfacePressureProjection.None));
+            }
+            return plate;
+        }
+
+        private static string PlatePropertyName(LegacyValue pp) => pp.Any("Name", "_name").Text ?? pp.Any("Id", "_id").Text ?? "Plate property";
 
         /// <summary>
         /// One former beam as a GPC beam (the body of the beam loop of <see cref="Import"/>, chain E (d): also the conversion of a single beam
@@ -354,6 +352,48 @@ namespace BridGHe.Common.Gpc.Legacy
             if (b == null || b.IsNull || !b.Is("BeamModel")) throw new ArgumentException("LegacyBeamModelExpected");
             var report = new LegacyImportReport { Units = units, Owner = guid, Bridge = new GPC.Checkers.CompositeBridge.BridgeModelData() };
             var property = BeamProperty(b["BeamProperty"], units);
+            var cases = ElementCases(b, out var groupOf);
+            var beam = Beam(b, 0, guid, guid, Point(b["PointFrom"], units), Point(b["PointTo"], units), property.Property, property.Data.Formulation, property.Data.Angle,
+                null, groupOf, cases, units, report, new BridgeMembers(report.Bridge), femPropertySignature == null ? null : _ => femPropertySignature);
+            return new LegacyBeamDraft(beam, report.Bridge.Beam(beam.Guid), b.Double("Angle"), property.Data, report);
+        }
+
+        /// <summary>
+        /// Chain E (e1): the draft of one former node value (a <c>GH_Node</c> datum upstream of Build Model): the GPC node with the rules of the
+        /// conversion of a whole model (<see cref="Node"/>), number 1, its groups by full name (with their parents), the cases of its loads by
+        /// name, its rigid links as <see cref="RigidConnectionAttribute"/> (target point in the draft units). Dimensions in the definition
+        /// <paramref name="units"/> (identity for a draft).
+        /// </summary>
+        public static LegacyNodeDraft NodeDraft(LegacyValue n, BridgeUnits units, Guid guid)
+        {
+            if (n == null || n.IsNull || !n.Is("NodeModel")) throw new ArgumentException("LegacyNodeModelExpected");
+            var report = new LegacyImportReport { Units = units, Owner = guid, Bridge = new GPC.Checkers.CompositeBridge.BridgeModelData() };
+            var cases = ElementCases(n, out var groupOf);
+            return new LegacyNodeDraft(Node(n, 0, guid, guid, groupOf, cases, units, report), report);
+        }
+
+        /// <summary>
+        /// Chain E (e1): the draft of one former plate value (a <c>GH_Plate</c> datum upstream of Build Model): the GPC plate with the rules of
+        /// the conversion of a whole model (<see cref="Plate"/>) without nodes, number 1, its corners (<see cref="LegacyPlateDraft.Corners"/>, in
+        /// order), its property converted on its own (name as given), its first group by full name (with its parents), the cases of its loads by
+        /// name. Dimensions in the definition <paramref name="units"/> (identity for a draft).
+        /// </summary>
+        public static LegacyPlateDraft PlateDraft(LegacyValue pl, BridgeUnits units, Guid guid)
+        {
+            if (pl == null || pl.IsNull || !pl.Is("PlateModel")) throw new ArgumentException("LegacyPlateModelExpected");
+            var report = new LegacyImportReport { Units = units, Owner = guid, Bridge = new GPC.Checkers.CompositeBridge.BridgeModelData() };
+            int count = pl.Int("NPoints"); if (count != 3 && count != 4) throw new NotSupportedException("LegacyPlateWithMoreThanFourNodes");
+            var corners = Enumerable.Range(0, count).Select(i => Point(pl["Point" + i], units)).ToArray();
+            var pp = pl.Field("PlateProperty"); string ppName = PlatePropertyName(pp);
+            var property = PlateProperty(pp, ppName, units);
+            var cases = ElementCases(pl, out var groupOf);
+            return new LegacyPlateDraft(Plate(pl, 0, guid, guid, property, null, groupOf, cases, units, report), corners, report);
+        }
+
+        /// <summary>The cases of the loads of one former element by name (the rules of the case set of a whole model: a name, one definition
+        /// per name), and the groups of a draft by full name with their parents (no model: the draft keeps them).</summary>
+        private static Dictionary<string, LoadCaseBase> ElementCases(LegacyValue element, out Func<LegacyValue, Group> groupOf)
+        {
             var groups = new Dictionary<string, Group>(StringComparer.Ordinal);
             Group GroupOf(LegacyValue g)
             {
@@ -365,18 +405,16 @@ namespace BridGHe.Common.Gpc.Legacy
                 groups.Add(full, group);
                 return group;
             }
+            groupOf = GroupOf;
             var first = new Dictionary<string, LegacyValue>(StringComparer.Ordinal);
-            foreach (var c in b.Field("Loads").Items.Select(l => l.Field("LoadCase")))
+            foreach (var c in element.Field("Loads").Items.Select(l => l.Field("LoadCase")))
             {
                 string name = c.String("Name");
                 if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Caso di carico nullo o senza nome.");
                 if (!first.TryGetValue(name, out var known)) first.Add(name, c);
                 else if (!SameCase(known, c)) throw new ArgumentException("Definizioni incompatibili per il caso di carico " + name);
             }
-            var cases = first.ToDictionary(pair => pair.Key, pair => Case(pair.Key, pair.Value), StringComparer.Ordinal);
-            var beam = Beam(b, 0, guid, guid, Point(b["PointFrom"], units), Point(b["PointTo"], units), property.Property, property.Data.Formulation, property.Data.Angle,
-                null, GroupOf, cases, units, report, new BridgeMembers(report.Bridge), femPropertySignature == null ? null : _ => femPropertySignature);
-            return new LegacyBeamDraft(beam, report.Bridge.Beam(beam.Guid), b.Double("Angle"), property.Data, report);
+            return first.ToDictionary(pair => pair.Key, pair => Case(pair.Key, pair.Value), StringComparer.Ordinal);
         }
 
         /// <summary>The GPC case of a former load case (null: the default "Dead" case): self weight with gravity, the masses of its inertia
@@ -402,7 +440,7 @@ namespace BridGHe.Common.Gpc.Legacy
             return document.RootElement.EnumerateArray().Select(p => p.GetProperty("LoadCaseName").GetString()).ToArray();
         }
 
-        private static Dictionary<string, LoadCaseBase> Cases(LegacyValue legacy, Model model, IEnumerable<string> movingCases, LegacyImportReport report)
+        private static List<LegacyCase> Cases(LegacyValue legacy, IEnumerable<string> movingCases, LegacyImportReport report)
         {
             // Static cases generated by a former moving-load analysis are results (recomputed): their names are not input cases.
             var generated = new HashSet<string>(StringComparer.Ordinal);
@@ -417,7 +455,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 .Concat(legacy.Field("LoadCombinations").Items.SelectMany(c => c.Field("Keys").Items))
                 .Concat((legacy.Has("StagedConstruction") ? legacy.Field("StagedConstruction").Items : Array.Empty<LegacyValue>())
                     .SelectMany(st => st.Field("_loadCombinations").Items).SelectMany(c => c.Field("Keys").Items)).ToList();
-            var result = new Dictionary<string, LoadCaseBase>(StringComparer.Ordinal);
+            var result = new List<LegacyCase>();
             var first = new Dictionary<string, LegacyValue>(StringComparer.Ordinal);
             foreach (var c in candidates)
             {
@@ -446,16 +484,16 @@ namespace BridGHe.Common.Gpc.Legacy
                 bool gravity = dead || c != null && c.Enum("GlobalInertiaLoad") == "Gravity";
                 var gpc = Case(pair.Key, c);
                 if (c != null && (c.Double("Temperature") != 0 || c.Has("Stages") && c.Field("Stages").Items.Count != 0)) report.Carry("Load case temperature or stage list (not exported by the former writer)");
-                model.LoadCases.Add(gpc.Name, gpc);
+                ModelGravityLoad gravityLoad = null;
                 if (gravity)
                 {
                     // Gravity value in mm/s², already N-mm in the former model (Dead: −9806.65 along Z).
                     double value = dead ? -9806.65 : c.Double("GravityValue");
                     string direction = dead ? "Z" : c.Enum("GravityDirection");
                     var axis = direction == "X" ? Vector3d.XAxis : direction == "Y" ? Vector3d.YAxis : direction == "Z" ? Vector3d.ZAxis : throw new NotSupportedException("LegacyGravityDirection: " + direction);
-                    if (value != 0) model.ModelLoads.Add(new ModelGravityLoad(axis, value, gpc, CoordinateSystem.Global, "Gravity " + pair.Key));
+                    if (value != 0) gravityLoad = new ModelGravityLoad(axis, value, gpc, CoordinateSystem.Global, "Gravity " + pair.Key);
                 }
-                result.Add(pair.Key, gpc);
+                result.Add(new LegacyCase(pair.Key, gpc, gravityLoad));
             }
             return result;
         }
@@ -894,12 +932,6 @@ namespace BridGHe.Common.Gpc.Legacy
             }
         }
 
-        private static string Unique(Model model, string name)
-        {
-            if (!model.BeamProperties.ContainsKey(name)) return name;
-            for (int k = 2; ; k++) if (!model.BeamProperties.ContainsKey(name + " #" + k)) return name + " #" + k;
-        }
-
         private static (double stress, double strain)[] StressStrain(LegacyValue table)
         {
             if (table.IsNull) return null;
@@ -925,36 +957,5 @@ namespace BridGHe.Common.Gpc.Legacy
         private static bool IsGlobal(LegacyValue cs) =>
             Vector(cs["Origin"]).Equals(new Vector3d(0, 0, 0)) && Vector(cs["Point1"]).Equals(new Vector3d(1, 0, 0)) && Vector(cs["Point2"]).Equals(new Vector3d(0, 1, 0));
 
-        /// <summary>Former StrausNodeIndex: among the nodes within the tolerance the lowest by (X, Y, Z), then by number.</summary>
-        private sealed class NodeLookup
-        {
-            private readonly List<NodeElement> nodes; private readonly double tolerance; private readonly Dictionary<(long, long, long), List<int>> cells = new Dictionary<(long, long, long), List<int>>();
-            internal NodeLookup(List<NodeElement> nodes, double tolerance)
-            {
-                if (!(tolerance > 0)) throw new ArgumentOutOfRangeException(nameof(tolerance));
-                this.nodes = nodes; this.tolerance = tolerance;
-                for (int i = 0; i < nodes.Count; i++) { var key = Cell(nodes[i].Position); if (!cells.TryGetValue(key, out var list)) cells.Add(key, list = new List<int>()); list.Add(i); }
-            }
-            private (long, long, long) Cell(Point3d p) => ((long)Math.Floor(p.X / tolerance), (long)Math.Floor(p.Y / tolerance), (long)Math.Floor(p.Z / tolerance));
-            internal (int Index, int Matches) Find(Point3d p)
-            {
-                var c = Cell(p); int found = -1, matches = 0;
-                for (long x = c.Item1 - 1; x <= c.Item1 + 1; x++) for (long y = c.Item2 - 1; y <= c.Item2 + 1; y++) for (long z = c.Item3 - 1; z <= c.Item3 + 1; z++)
-                    {
-                        if (!cells.TryGetValue((x, y, z), out var list)) continue;
-                        foreach (int i in list)
-                        {
-                            var q = nodes[i].Position; double dx = q.X - p.X, dy = q.Y - p.Y, dz = q.Z - p.Z;
-                            if (Math.Sqrt(dx * dx + dy * dy + dz * dz) >= tolerance) continue;
-                            matches++;
-                            int order = found < 0 ? -1 : Compare(q, nodes[found].Position);
-                            if (order < 0 || order == 0 && i < found) found = i;
-                        }
-                    }
-                if (found < 0) throw new InvalidOperationException($"Nessun nodo FEM entro tolleranza alle coordinate {p}.");
-                return (found, matches);
-            }
-            private static int Compare(Point3d a, Point3d b) { int r = a.X.CompareTo(b.X); if (r != 0) return r; r = a.Y.CompareTo(b.Y); return r != 0 ? r : a.Z.CompareTo(b.Z); }
-        }
     }
 }

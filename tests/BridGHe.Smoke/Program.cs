@@ -83,6 +83,9 @@ internal static class Program
         GpcDomainCache.Configure();
 #if GPC_PILOT
 #endif
+#if GPC_PILOT
+        if(args.Contains("--import-dump")) return ImportDump.Run(args);
+#endif
         if(args.Contains("--migration-scale")) return MigrationScale.Run();
         if(args.Contains("--tidy-example")) return ExampleTidy.Run(args.SkipWhile(a=>a!="--tidy-example").Skip(1).FirstOrDefault(),args.Contains("--publish"),args.Contains("--capture"));
         if(args.Contains("--migrate-bridge-examples")) return BridgeExampleMigration.Run(args.SkipWhile(a=>a!="--migrate-bridge-examples").Skip(1).FirstOrDefault(a=>!a.StartsWith("--")),args.Contains("--publish"));
