@@ -148,6 +148,94 @@ internal static class GpcDraftCapture
         return GuidPattern.Replace(text, m => { if (!seen.TryGetValue(m.Value, out int n)) seen[m.Value] = n = seen.Count + 1; return "G" + n; });
     }
 
+    /// <summary>
+    /// R6.2 part C (P2N, 6/11): the declared differences of the comparison with the capture, by name (the capture is never rewritten).
+    /// <para><b>Float tokens of <see cref="LegacyArchive"/></b> (finding A of P2U, fix approved by the coordinator on 6/11): the binary XML
+    /// writer stores a double that a float represents exactly as a float token, and the reader took its text, the float's shortest string, which
+    /// reads to another double. Fixed, the content text of a former value spells the exact double where the two differ. In the three captures
+    /// one content changes: the FEM section of the beam property «Montanti» (examples 49 and 50: RHS 200×200×8, Steel «Acciaio carpenteria»),
+    /// whose <c>_iyy</c> and <c>I22</c> are 37814272, spelled 37814270 before. The reader reads its GPC section from the recipe (dimensions):
+    /// only the content digest of the property (<see cref="LegacyBeamProperty.Signature"/>) changes, in the property (6 files, keyed by content),
+    /// in the 288 beam drafts that carry it (49(1), two Build Model) and in the two Build Model outputs, where the owner identity, made from the
+    /// content of the drafts, renames the GUIDs (a bijection) and so re-keys the bridge data (BRIDGE BEAM lines in GUID order, the fingerprint
+    /// of the bridge data). No number of any datum changes.</para>
+    /// </summary>
+    internal static readonly (string Before, string After, string Name)[] DeclaredDigests =
+    {
+        ("99963D9A269D94D5DA579C570F9BCAFBE86E0376200E7C921F422E4914E96491", "9CFA2B863B914CA80C45F54595AC7E7BB3931CA939F5365C6F107059A017EAD2",
+            "float tokens: content digest of the beam property Montanti (_iyy, I22 = 37814272 read as 37814270 before the fix)"),
+    };
+
+    /// <summary>The captured text with the declared digests replaced, and their names (none: the text unchanged).</summary>
+    private static (string Text, List<string> Names) WithDeclaredDigests(string captured)
+    {
+        var names = new List<string>();
+        foreach (var (before, after, name) in DeclaredDigests)
+            if (captured.Contains(before, StringComparison.Ordinal)) { captured = captured.Replace(before, after, StringComparison.Ordinal); names.Add(name); }
+        return (captured, names);
+    }
+
+    private static readonly Regex BridgeFingerprintLine = new Regex("^bridge ([0-9]+) [0-9A-F]{64}$", RegexOptions.Compiled);
+
+    /// <summary>
+    /// True when <paramref name="now"/> is <paramref name="before"/> with its GUIDs renamed by a bijection, read from the lines whose text
+    /// without GUIDs is unique in both, as a set of lines, but for the fingerprint line of the bridge data (<c>bridge n fingerprint</c>, the
+    /// same n), which hashes data keyed by beam GUID: the proof of passo 53 that an owner identity renamed the GUIDs only.
+    /// </summary>
+    internal static bool RenamedOnly(string before, string now, out string detail)
+    {
+        detail = null;
+        var a = before.Split('\n'); var b = now.Split('\n');
+        if (a.Length != b.Length) return false;
+        static string Mask(string l) => GuidPattern.Replace(l, "G");
+        // The mapping from the lines aligned by their text without GUIDs (each side sorted, stable); a conflict refuses. Whatever the
+        // alignment, the check below accepts only a bijection under which the two texts are the same lines.
+        var sa = a.OrderBy(Mask, StringComparer.Ordinal).ToArray(); var sb = b.OrderBy(Mask, StringComparer.Ordinal).ToArray();
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase); var image = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        for (int k = 0; k < sa.Length; k++)
+        {
+            if (Mask(sa[k]) != Mask(sb[k])) continue;
+            var ga = GuidPattern.Matches(sa[k]); var gb = GuidPattern.Matches(sb[k]);
+            if (ga.Count != gb.Count) return false;
+            for (int i = 0; i < ga.Count; i++)
+            {
+                string x = ga[i].Value.ToLowerInvariant(), y = gb[i].Value.ToLowerInvariant();
+                if (map.TryGetValue(x, out var m) && m != y) return false;
+                if (image.TryGetValue(y, out var back) && back != x) return false;
+                map[x] = y; image[y] = x;
+            }
+        }
+        var renamed = a.Select(l => GuidPattern.Replace(l, m => map.TryGetValue(m.Value, out var y) ? y : m.Value.ToLowerInvariant())).ToList();
+        var current = b.Select(l => GuidPattern.Replace(l, m => m.Value.ToLowerInvariant())).ToList();
+        var left = renamed.GroupBy(l => l, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.Count(), StringComparer.Ordinal);
+        foreach (var l in current) { if (!left.TryGetValue(l, out int c)) { left[l] = -1; continue; } left[l] = c - 1; }
+        var onlyBefore = left.Where(p => p.Value > 0).SelectMany(p => Enumerable.Repeat(p.Key, p.Value)).ToList();
+        var onlyNow = left.Where(p => p.Value < 0).SelectMany(p => Enumerable.Repeat(p.Key, -p.Value)).ToList();
+        if (onlyBefore.Count > 1 || onlyNow.Count != onlyBefore.Count) return false;
+        if (onlyBefore.Count == 1)
+        {
+            var mb = BridgeFingerprintLine.Match(onlyBefore[0]); var mn = BridgeFingerprintLine.Match(onlyNow[0]);
+            if (!mb.Success || !mn.Success || mb.Groups[1].Value != mn.Groups[1].Value) return false;
+        }
+        // Only the bridge data (keyed by beam GUID) may move: the BRIDGE lines and the fingerprint line.
+        var movedLines = renamed.Zip(current, (x, y) => (x, y)).Where(p => p.x != p.y).ToList();
+        if (movedLines.Any(p => !(p.x.StartsWith("BRIDGE ", StringComparison.Ordinal) || BridgeFingerprintLine.IsMatch(p.x)))) return false;
+        int moved = movedLines.Count;
+        detail = $"{map.Count(p => p.Key != p.Value)} GUIDs renamed of {map.Count} (a bijection), {moved} lines of the bridge data in another place{(onlyBefore.Count == 1 ? ", the bridge-data fingerprint" : "")}";
+        return true;
+    }
+
+    /// <summary>True when the captured text differs from the text now only by a declared difference (<see cref="DeclaredDigests"/>).</summary>
+    internal static bool Declared(string captured, string now, out string why)
+    {
+        why = null;
+        var (text, names) = WithDeclaredDigests(captured);
+        if (names.Count == 0) return false;
+        if (text == now) { why = string.Join("; ", names); return true; }
+        if (RenamedOnly(text, now, out string detail)) { why = string.Join("; ", names) + "; owner identity from the content of the drafts: " + detail; return true; }
+        return false;
+    }
+
     private static byte[] Deflate(string text)
     {
         using var output = new MemoryStream();
@@ -171,7 +259,9 @@ internal static class GpcDraftCapture
         private readonly Dictionary<string, Entry> reference;
         private readonly HashSet<string> seen = new HashSet<string>(StringComparer.Ordinal);
         private readonly Dictionary<string, int> counts = new Dictionary<string, int>(StringComparer.Ordinal);
-        private readonly List<string> failures = new List<string>(), identityOnly = new List<string>();
+        private readonly List<string> failures = new List<string>(), identityOnly = new List<string>(), declared = new List<string>();
+        // R6.2 part C: a captured entry keyed by its content (file|kind|SHA of the text) whose text holds a declared digest: the key it takes now.
+        private readonly Dictionary<string, string> declaredKeys = new Dictionary<string, string>(StringComparer.Ordinal);
         private int entries, readBack, readBackFailures; private long bytes;
 
         internal Session(string source, string folder, bool writing)
@@ -206,7 +296,13 @@ internal static class GpcDraftCapture
                 {
                     readBack++;
                     string text = null;
-                    try { text = ReadBack(p.Value.Kind, p.Value.Data, p.Value.Records, Inflate(p.Value.Text)); }
+                    string capturedText = Inflate(p.Value.Text);
+                    if (p.Key.EndsWith("|" + p.Value.Sha, StringComparison.Ordinal))
+                    {
+                        var (declaredText, names) = WithDeclaredDigests(capturedText);
+                        if (names.Count > 0) declaredKeys[p.Key.Substring(0, p.Key.Length - p.Value.Sha.Length) + Sha(declaredText)] = p.Key;
+                    }
+                    try { text = ReadBack(p.Value.Kind, p.Value.Data, p.Value.Records, capturedText); }
                     catch (Exception x) { readBackFailures++; if (failures.Count < 30) failures.Add($"{p.Key}: captured {p.Value.Kind} not read back: {x.GetType().Name}: {x.Message}"); continue; }
                     if (Sha(text) != p.Value.Sha) { readBackFailures++; if (failures.Count < 30) failures.Add($"{p.Key}: captured {p.Value.Kind} read back to another text\n" + GpcDraftArchiveChecks.FirstDifference(Inflate(p.Value.Text), text)); }
                 }
@@ -214,6 +310,16 @@ internal static class GpcDraftCapture
         }
 
         private void Count(string what) { counts.TryGetValue(what, out int c); counts[what] = c + 1; }
+
+        // The declared differences by reason (counted), every entry whose reason carries a detail (a renamed owner) listed, the others up to 5 by reason.
+        private readonly Dictionary<string, int> declaredReasons = new Dictionary<string, int>(StringComparer.Ordinal);
+        private void Declare(string key, string why)
+        {
+            int cut = why.IndexOf("; owner identity", StringComparison.Ordinal);
+            string reason = cut < 0 ? why : why.Substring(0, cut) + "; owner GUIDs renamed";
+            declaredReasons.TryGetValue(reason, out int c); declaredReasons[reason] = c + 1;
+            if (cut >= 0 || c < 5) declared.Add(key + ": " + why);
+        }
 
         /// <summary>Records one datum at a location; the n-th repetition of a location takes the key <c>location#n</c>.</summary>
         internal void Record(string location, object datum)
@@ -234,10 +340,20 @@ internal static class GpcDraftCapture
                 return;
             }
             seen.Add(key);
-            if (!reference.TryGetValue(key, out var e)) { Count("new"); if (failures.Count < 30) failures.Add(key + ": not in the capture (" + datum.GetType().Name + ")"); return; }
+            if (!reference.TryGetValue(key, out var e))
+            {
+                // A content key that a declared digest moved: compared with the captured entry of the former key.
+                if (declaredKeys.TryGetValue(key, out var former) && !seen.Contains(former))
+                {
+                    seen.Add(former);
+                    if (Declared(Inflate(reference[former].Text), text, out string because)) { Count("declared"); Declare(former + " -> " + key, because); return; }
+                }
+                Count("new"); if (failures.Count < 30) failures.Add(key + ": not in the capture (" + datum.GetType().Name + ")"); return;
+            }
             if (Sha(text) == e.Sha) { Count("equal"); return; }
             string captured = Inflate(e.Text);
             if (WithoutGuids(captured) == WithoutGuids(text)) { Count("equal but for GUIDs"); if (identityOnly.Count < 30) identityOnly.Add(key); return; }
+            if (Declared(captured, text, out string why)) { Count("declared"); Declare(key, why); return; }
             Count("different"); if (failures.Count < 30) failures.Add(key + ": differs from the capture (GUIDs replaced by their ordinals)\n" + GpcDraftArchiveChecks.FirstDifference(WithoutGuids(captured), WithoutGuids(text)));
         }
 
@@ -253,6 +369,8 @@ internal static class GpcDraftCapture
             foreach (var k in reference.Keys.Where(k => !seen.Contains(k)).Take(Math.Max(0, 30 - failures.Count))) failures.Add(k + ": captured, not recorded now");
             foreach (var f in failures) Console.WriteLine("  " + f);
             foreach (var k in identityOnly) Console.WriteLine("  GUIDs only: " + k);
+            foreach (var d in declared) Console.WriteLine("  declared: " + d);
+            foreach (var r in declaredReasons.OrderBy(r => r.Key, StringComparer.Ordinal)) Console.WriteLine($"  DECLARED {source}: {r.Value} x {r.Key}");
             counts.TryGetValue("different", out int different); counts.TryGetValue("new", out int added);
             bool failed = different != 0 || added != 0 || missing != 0 || readBackFailures != 0;
             if (failed) Failed = true;

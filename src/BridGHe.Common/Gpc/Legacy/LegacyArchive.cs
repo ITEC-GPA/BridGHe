@@ -135,7 +135,17 @@ namespace BridGHe.Common.Gpc.Legacy
                         else value.fields[name] = child;
                         break;
                     case XmlNodeType.Text: case XmlNodeType.CDATA: case XmlNodeType.SignificantWhitespace: case XmlNodeType.Whitespace:
-                        text.Append(reader.ReadContentAsString()); break;
+                        // Finding of P2U (6/11): the binary writer stores a double that a float represents exactly as a float token, whose text is the
+                        // float's shortest string (9.95351E-08 for 9.953510016202927E-08): the value is the float widened to the double. The text is
+                        // kept where it already reads to that double (most values, e.g. 2.264576E+09), so the digests of the contents do not move.
+                        if (reader.ValueType == typeof(float))
+                        {
+                            string s = reader.Value; double exact = XmlConvert.ToSingle(s);
+                            text.Append(XmlConvert.ToDouble(s).Equals(exact) ? s : XmlConvert.ToString(exact));
+                            reader.Read();
+                        }
+                        else text.Append(reader.ReadContentAsString());
+                        break;
                     default: reader.Read(); break;
                 }
             }

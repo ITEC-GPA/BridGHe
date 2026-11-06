@@ -124,42 +124,12 @@ namespace BridGHe.Grasshopper.Components.Materials
             fk = UnitsConvert.ConvertToDefaultUnits(fk, pressureUnits, 1);
             ftk = UnitsConvert.ConvertToDefaultUnits(ftk, pressureUnits, 1);
 
-            MaterialModel material = new MaterialModel
-            {
-                Kind = (MaterialModel.MaterialKind)kind,
-                Name = name,
-                Modulus = modulus,
-                PoissonRatio = ni,
-                ThermalExpansion = alpha,
-                ShearModulus = g,
-                UsePoisson = use_poisson,
-                Density = rho
-            };
-
-            switch (material.Kind)
-            {
-                case MaterialModel.MaterialKind.Aluminium:
-                    //material.MinimumYieldStress = mys;
-                    //material.MinimumTensileStress = mts;
-                    //material.ExpectedYieldStress = eys;
-                    //material.ExpectedTensileStress = ets;
-                    break;
-                case MaterialModel.MaterialKind.Concrete:
-                    material.SpecificCompressiveStrength = fk;
-                    break;
-                case MaterialModel.MaterialKind.Steel:
-                    material.MinimumYieldStress = fk;
-                    material.MinimumTensileStress = ftk;
-                    material.ExpectedYieldStress = 1.1 * fk;
-                    material.ExpectedTensileStress = 1.1 * ftk;
-                    break;
-                case MaterialModel.MaterialKind.Undefined:
-                    break;
-                default:
-                    throw new NotSupportedException();
-            }
-
-            DA.SetData(0, new GH_Material(material));
+            var recipe = Common.Gpc.Builders.GpcMaterialBuilders.Custom(kind, name, modulus, ni, alpha, g, use_poisson, rho, fk, ftk);
+            // R6.2 part C (§1bis, regola doppia): the GPC material by kind from the recipe of the component, attached to the FEM value made from
+            // the same recipe (transitional until R6.5).
+            var goo = new GH_Material(Common.Gpc.Builders.GpcMaterialBuilders.Femm(recipe));
+            goo.AttachGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe));
+            DA.SetData(0, goo);
         }
 
         private void UpdateInputDescriptions(ModelModel.ModelUnits units)

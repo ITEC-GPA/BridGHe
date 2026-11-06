@@ -22,7 +22,11 @@ public sealed class MaterialRebarComponent : BridgeUtilityComponent
     protected override void Solve(IGH_DataAccess da)
     {
         string name = "B450C"; if (!da.GetData(0, ref name)) return;
-        da.SetData(0, new GH_Material(ReinforcementMaterials.B450C(name)));
+        // R6.2 part C (§1bis, regola doppia): the GPC rebar from the recipe, attached to the FEM value made from the same recipe (until R6.5).
+        var recipe = Common.Gpc.Builders.GpcMaterialBuilders.Rebar(name);
+        var goo = new GH_Material(Common.Gpc.Builders.GpcMaterialBuilders.Femm(recipe));
+        goo.AttachGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe));
+        da.SetData(0, goo);
         da.SetDataList(1, new[] { "B450C | E=200000 MPa | fyk=450 MPa | ftk=540 MPa | epsilon_uk=0.075",
             "nu=0.30 | density=7.85e-9 t/mm3 | alpha=1.2e-5 /K",
             "GPC elastic-perfectly-plastic reinforcement law. Characteristic strengths: safety factors belong to checks, not the FEM material.",

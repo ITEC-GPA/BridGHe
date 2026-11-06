@@ -67,6 +67,28 @@ internal static class GpcMaterialKindChecks
         static string Text(object v) => v switch { null => "null", double d => B(d), IEnumerable e when !(e is string) => "[" + string.Join(",", e.Cast<object>().Select(Text)) + "]", _ => v.ToString() };
     }
 
+    /// <summary>R6.2 part C, the declared difference of the Aluminium component (user decision of 6/11): the GPC material of the
+    /// component has fu = 262 MPa where the conversion of its FEM value (0.3.0) has 165.5, every other value equal, the declared shear
+    /// ultimate strength 165.5 on both. True when the two materials differ by that only (every value of <see cref="Dump"/>).</summary>
+    internal static bool DeclaredAluminium(Material gpc, Material fem)
+    {
+        if (!(gpc is AluminiumMaterial) || !(fem is AluminiumMaterial)) return false;
+        string old = B(165.5), fixedFu = B(262), oldC = B(-165.5), fixedC = B(-262);
+        string a = Dump(gpc), f = Dump(fem);
+        if (!a.Contains("|aluminium ") || !f.Contains(old)) return false;
+        // The declared shear ultimate strength (7th declared value) is 165.5 on both: masked before 165.5 becomes 262 in the conversion.
+        static string MaskShear(string d)
+        {
+            int i = d.IndexOf("|declared=", StringComparison.Ordinal); if (i < 0) return d;
+            int end = d.IndexOf('|', i + 1); if (end < 0) end = d.Length;
+            var parts = d.Substring(i + 10, end - i - 10).Split(' ');
+            if (parts.Length > 6) parts[6] = "SHEAR"; else return d;
+            return d.Substring(0, i + 10) + string.Join(" ", parts) + d.Substring(end);
+        }
+        // fu and the compressive ultimate stress (−fu) of the GPC aluminium, in the values and in the tables.
+        return MaskShear(a) == MaskShear(f).Replace(old, fixedFu).Replace(oldC, fixedC);
+    }
+
     private static string Without(string dump, string part) => string.Join("|", dump.Split('|').Where(p => !p.StartsWith(part + "=", StringComparison.Ordinal)));
 
     /// <summary>The checks of one material and their counts (shared by the regression and by <c>--material-scan</c>).</summary>
@@ -163,7 +185,7 @@ internal static class GpcMaterialKindChecks
         var assembly = Assembly.LoadFrom(BuildPaths.GrasshopperAssembly);
         using var document = new Grasshopper.Kernel.GH_Document { Enabled = true };
         Grasshopper.Kernel.GH_Document.EnableSolutions = true;
-        int componentSamples = 0, attached = 0;
+        int componentSamples = 0, attached = 0, aluminiumDeclared = 0;
         void Component(string type, params (int input, Func<IGH_Goo> value)[][] runs)
         {
             var component = (Grasshopper.Kernel.GH_Component)Activator.CreateInstance(assembly.GetTypes().Single(t => t.Name == type));
@@ -187,7 +209,9 @@ internal static class GpcMaterialKindChecks
                 var m = (MaterialModel)goo.GetType().GetProperty("Value").GetValue(goo);
                 var gpc = (Material)goo.GetType().GetProperty("Gpc").GetValue(goo);
                 if ((bool)goo.GetType().GetProperty("HasAttachedGpc").GetValue(goo)) attached++;
-                Require(Dump(gpc) == Dump(GpcMaterials.FromFemm(m)), label + ": GH_Material.Gpc = FromFemm of its value");
+                // R6.2 part C: the Aluminium component gives fu = 262 on GPC (user decision of 6/11): the declared difference, by name.
+                if (type == "MaterialAluminiumComponent") { Require(DeclaredAluminium(gpc, GpcMaterials.FromFemm(m)), label + ": GH_Material.Gpc = FromFemm of its value but fu 165.5 -> 262 (declared)"); aluminiumDeclared++; }
+                else Require(Dump(gpc) == Dump(GpcMaterials.FromFemm(m)), label + ": GH_Material.Gpc = FromFemm of its value");
                 var copy = (IGH_Goo)goo.Duplicate();
                 Require(ReferenceEquals(copy.GetType().GetProperty("Gpc").GetValue(copy), gpc), label + ": a copy shares the GPC material");
                 Check(label, m, null); componentSamples++;
@@ -241,7 +265,7 @@ internal static class GpcMaterialKindChecks
         if (failures.Count > 0) throw new Exception("GPC MATERIAL KINDS FAIL:\n" + string.Join("\n", failures));
         if (componentSamples < 59 || corpusModels < 90) throw new Exception($"GPC MATERIAL KINDS FAIL: only {componentSamples} component outputs and {corpusModels} models");
         Console.WriteLine($"GPC MATERIAL KINDS PASS: {tally.samples} materials ({componentSamples} from the six components, {corpusSamples} from {corpusModels} models of the import-dump corpus; " +
-            $"{attached} attached by a GPC builder), {tally.Summary}.");
+            $"{attached} attached by a GPC builder; {aluminiumDeclared} Aluminium outputs with the declared difference fu 165.5 -> 262), {tally.Summary}.");
     }
 
     /// <summary>
@@ -251,9 +275,55 @@ internal static class GpcMaterialKindChecks
     /// every parameter, persistent (internalised) and volatile, walked for former materials (Material parameters, beam, plate and composite
     /// properties). Exit 1 on a difference.
     /// </summary>
+    /// <summary>
+    /// R6.2 part C (P2N, 6/11), with <c>BRIDGHE_FLOAT_TOKENS=1</c>: the census of the float tokens of the FEM values of the scan (the finding A
+    /// of P2U on the values the components compute, beside its measurement on the payloads of the files): every distinct FEM value of the
+    /// BridGHe types in the parameters, written as the GH types write it for the reader (BGHA1), its doubles that the binary writer stores as
+    /// float tokens, and those whose text (the float's shortest string) reads to another double: the values <see cref="LegacyArchive"/>
+    /// read differently before its fix. By element and text, with the files.
+    /// </summary>
+    internal sealed class FloatTokenCensus
+    {
+        private readonly HashSet<object> seen = new HashSet<object>(ReferenceEqualityComparer.Instance);
+        private readonly SortedDictionary<string, (int data, SortedSet<string> files)> wrong = new SortedDictionary<string, (int, SortedSet<string>)>(StringComparer.Ordinal);
+        private int data, withFloats, tokens, wrongTokens, dataWithWrong;
+        private static readonly MethodInfo Write = typeof(BridGHe.Common.Helpers.ModelArchive).GetMethod("Write");
+        internal static FloatTokenCensus Open() => Environment.GetEnvironmentVariable("BRIDGHE_FLOAT_TOKENS") == "1" ? new FloatTokenCensus() : null;
+
+        internal void Add(string file, object value)
+        {
+            if (!seen.Add(value)) return;
+            byte[] bytes;
+            try { bytes = (byte[])Write.MakeGenericMethod(value.GetType()).Invoke(null, new[] { value }); }
+            catch (TargetInvocationException) { return; }
+            data++;
+            var quotas = new System.Xml.XmlDictionaryReaderQuotas { MaxArrayLength = 100000000, MaxStringContentLength = 64000000, MaxDepth = 512, MaxBytesPerRead = 65536, MaxNameTableCharCount = 64000000 };
+            using var r = System.Xml.XmlDictionaryReader.CreateBinaryReader(bytes, 5, bytes.Length - 5, quotas);
+            string element = ""; int here = 0, hereWrong = 0; var keys = new HashSet<string>(StringComparer.Ordinal);
+            while (r.Read())
+            {
+                if (r.NodeType == System.Xml.XmlNodeType.Element) element = r.LocalName;
+                else if (r.NodeType == System.Xml.XmlNodeType.Text && r.ValueType == typeof(float))
+                {
+                    here++; string text = r.Value; double exact = System.Xml.XmlConvert.ToSingle(text);
+                    if (!System.Xml.XmlConvert.ToDouble(text).Equals(exact)) { hereWrong++; keys.Add($"{value.GetType().Name} {element} {text} -> {exact.ToString("R", CultureInfo.InvariantCulture)}"); }
+                }
+            }
+            tokens += here; wrongTokens += hereWrong; if (here > 0) withFloats++; if (hereWrong > 0) dataWithWrong++;
+            foreach (var k in keys) { wrong.TryGetValue(k, out var w); w.files ??= new SortedSet<string>(StringComparer.Ordinal); w.files.Add(file); wrong[k] = (w.data + 1, w.files); }
+        }
+
+        internal void Print()
+        {
+            Console.WriteLine($"FLOAT TOKENS scan: {data} distinct FEM values written for the reader, {withFloats} with float tokens ({tokens} tokens), {dataWithWrong} with {wrongTokens} tokens whose text reads to another double before the fix of LegacyArchive:");
+            foreach (var w in wrong) Console.WriteLine($"  {w.Key}: in {w.Value.data} values, files {string.Join(", ", w.Value.files)}");
+        }
+    }
+
     internal static int Scan(string[] args)
     {
         BridgeExampleMigration.Initialize();
+        var census = FloatTokenCensus.Open();
         var files = args.SkipWhile(a => a != "--material-scan").Skip(1).Where(a => !a.StartsWith("--")).Select(a => Path.GetFullPath(Path.Combine(ExamplePaths.Root, a))).ToList();
         if (files.Count == 0) files = BuildModelScan.ScopeFiles();
         var tally = new Tally(); int failed = 0, internalised = 0, volatileData = 0;
@@ -301,6 +371,7 @@ internal static class GpcMaterialKindChecks
                         {
                             var value = goo?.GetType().GetProperty("Value")?.GetValue(goo);
                             if (value == null || value.GetType().Namespace?.StartsWith("BridGHe.Common", StringComparison.Ordinal) != true) continue;
+                            census?.Add(label, value);
                             foreach (var (m, role, path) in Materials(value))
                             {
                                 if (!seen.Add(m)) continue;
@@ -361,6 +432,7 @@ internal static class GpcMaterialKindChecks
         Console.WriteLine($"MATERIAL SCAN TOTAL {files.Count} files, {failed} failed, {tally.samples} materials ({internalised} internalised, {volatileData} computed), {tally.failures.Count} differences: {tally.Summary}");
         foreach (var d in drafts.Failures) Console.WriteLine("  " + d);
         Console.WriteLine($"DRAFT SCAN TOTAL (BGHGPC1 (i), the drafts of the Build Model inputs and the GPC materials): {drafts.Summary}; {drafts.Failures.Count} differences");
+        census?.Print();
         capture?.Dispose();
         return failed == 0 && tally.failures.Count == 0 && drafts.Failures.Count == 0 && !GpcDraftCapture.Failed ? 0 : 1;
     }

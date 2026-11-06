@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using BridGHe.Common.Helpers;
 using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes;
@@ -85,26 +86,12 @@ namespace BridGHe.Grasshopper.Components.Materials
             if (stresses.Count == strains.Count)
             {
 
-                MaterialModel material = new MaterialModel
-                {
-                    Name = name,
-                    PoissonRatio = ni,
-                    ThermalExpansion = alpha,
-                    ShearModulus = g,
-                    UsePoisson = usePoisson,
-                    Density = rho
-                };
-
-                List<(double stress, double strain)> stressStrainTable = new List<(double stress, double strain)>();
-
-                for (int i = 0; i < stresses.Count; i++)
-                {
-                    stressStrainTable.Add((stresses[i], strains[i]));
-                }
-
-                material.StressStrainTable = stressStrainTable.ToArray();
-
-                DA.SetData(0, new GH_Material(material));
+                var recipe = Common.Gpc.Builders.GpcMaterialBuilders.Table(name, usePoisson, ni, g, alpha, rho, stresses.Select((stress, i) => (stress, strains[i])).ToList());
+                // R6.2 part C (§1bis, regola doppia): the GPC material by kind from the recipe of the component, attached to the FEM value made from
+                // the same recipe (transitional until R6.5).
+                var goo = new GH_Material(Common.Gpc.Builders.GpcMaterialBuilders.Femm(recipe));
+                goo.AttachGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe));
+                DA.SetData(0, goo);
             }
             else
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Stress list length != strain list length");

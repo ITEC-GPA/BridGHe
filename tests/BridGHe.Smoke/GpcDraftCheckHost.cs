@@ -31,6 +31,13 @@ internal static class GpcDraftCheckHost
             datum = GpcBeamDrafts.WithPropertyOf(b, f);
             type += " (GPC property: the property data of the conversion, bridge 3)";
         }
+        // R6.2 part C: the Aluminium component (user decision of 6/11): fu 262 on GPC, 165.5 in the conversion of its FEM value (0.3.0), a declared
+        // difference by name; every other value of the material compared.
+        if (datum is GPC.Model.Materials.AluminiumMaterial && fem is GPC.Model.Materials.Material fm && GpcMaterialKindChecks.DeclaredAluminium((GPC.Model.Materials.Material)datum, fm))
+        {
+            lock (Gate) { string t = type + " (Aluminium: fu 165.5 -> 262, declared)"; Equal.TryGetValue(t, out int c); Equal[t] = c + 1; }
+            return;
+        }
         string attached = GpcDraftCapture.Text(datum), converted = fem == null ? "REFUSED" : GpcDraftCapture.Text(fem);
         lock (Gate)
         {

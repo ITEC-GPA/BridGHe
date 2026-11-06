@@ -19,6 +19,43 @@ using GPC.Model.Structure.Assignments;
 namespace BridGHe.Common.Gpc.Legacy
 {
     /// <summary>R6.1 (lanes of R6.2): the readers of the former beam and plate properties, sections and materials.</summary>
+    /// <summary>
+    /// R6.2 part C (P2N): the data of a material as the former material value held them (N-mm-MPa, t/mm³, 1/°C), the input of the one rule
+    /// that makes the GPC material by kind (<see cref="LegacyModelImport.Material(LegacyMaterialRecipe)"/>) and the analysis material
+    /// (<see cref="LegacyModelImport.ElasticMaterial(LegacyMaterialRecipe)"/>): read from a former payload (<see cref="LegacyModelImport.MaterialRecipe"/>)
+    /// or filled by the GPC builders of the material components. Kind: "Undefined", "Steel", "Rebar", "Concrete", "Aluminium" (the former
+    /// names); aluminium type: "Wrought", "CastMold", "CastSand". Defaults: those of the former material value (zeros, Use Poisson).
+    /// </summary>
+    public sealed class LegacyMaterialRecipe
+    {
+        public string Kind { get; set; } = "Undefined";
+        public string Name { get; set; }
+        public double Modulus { get; set; }
+        public double PoissonRatio { get; set; }
+        public double ShearModulus { get; set; }
+        public bool UsePoisson { get; set; } = true;
+        public double Density { get; set; }
+        public double ThermalExpansion { get; set; }
+        public double ViscousDamping { get; set; }
+        public double DampingRatio { get; set; }
+        public double Conductivity { get; set; }
+        public double SpecificHeat { get; set; }
+        public (double stress, double strain)[] StressStrainTable { get; set; }
+        public double MinimumYieldStress { get; set; }
+        public double MinimumTensileStress { get; set; }
+        public double SpecificCompressiveStrength { get; set; }
+        public double? ReinforcementUltimateStrain { get; set; }
+        public double ExpectedYieldStress { get; set; }
+        public double ExpectedTensileStress { get; set; }
+        public double ExpectedCompressiveStrength { get; set; }
+        public double CompressiveYieldStrength { get; set; }
+        public double TensileYieldStrength { get; set; }
+        public double TensileUltimateStrength { get; set; }
+        public double ShearUltimateStrength { get; set; }
+        public string Alloy { get; set; }
+        public string AluminiumType { get; set; }
+    }
+
     public static partial class LegacyModelImport
     {
         private static string PlatePropertyName(LegacyValue pp) => pp.Any("Name", "_name").Text ?? pp.Any("Id", "_id").Text ?? "Plate property";
@@ -46,12 +83,45 @@ namespace BridGHe.Common.Gpc.Legacy
         /// <summary>The GPC material of a beam property of the former exporter (<see cref="GpcMaterials.Elastic"/>: E, ν, G with Use Poisson,
         /// density, thermal expansion, damping, conductivity, specific heat, stress-strain table), the one rule of the reader for every beam
         /// property; chain E: the steel of the analysis properties of a composite section (<c>GpcModels.Material</c>).</summary>
-        public static Material ElasticMaterial(LegacyValue m)
+        public static Material ElasticMaterial(LegacyValue m) => ElasticMaterial(ElasticRecipe(m));
+
+        /// <summary>R6.2 part C: the analysis material of a material recipe (the elastic fields; the rule of <see cref="ElasticMaterial(LegacyValue)"/>).</summary>
+        public static Material ElasticMaterial(LegacyMaterialRecipe r)
+        {
+            if (r == null) throw new ArgumentNullException(nameof(r));
+            return GpcMaterials.Elastic(r.Name, r.Modulus, r.PoissonRatio, r.ShearModulus, r.UsePoisson, r.Density, r.ThermalExpansion, r.ViscousDamping, r.DampingRatio,
+                r.Conductivity, r.SpecificHeat, r.StressStrainTable);
+        }
+
+        /// <summary>The elastic fields of a former material, read in the order of the former reader.</summary>
+        private static LegacyMaterialRecipe ElasticRecipe(LegacyValue m)
         {
             if (m == null || m.IsNull) throw new ArgumentException("LegacyMaterialModelExpected");
-            return GpcMaterials.Elastic(m.String("Name"), m.Double("Modulus"), m.Double("PoissonRatio"), m.Double("ShearModulus"), m.Bool("UsePoisson"),
-                m.Double("Density"), m.Double("ThermalExpansion"), m.Double("ViscousDamping"), m.Double("DampingRatio"), m.Double("Conductivity"), m.Double("SpecificHeat"),
-                StressStrain(m["StressStrainTable"]));
+            return new LegacyMaterialRecipe
+            {
+                Name = m.String("Name"), Modulus = m.Double("Modulus"), PoissonRatio = m.Double("PoissonRatio"), ShearModulus = m.Double("ShearModulus"), UsePoisson = m.Bool("UsePoisson"),
+                Density = m.Double("Density"), ThermalExpansion = m.Double("ThermalExpansion"), ViscousDamping = m.Double("ViscousDamping"), DampingRatio = m.Double("DampingRatio"),
+                Conductivity = m.Double("Conductivity"), SpecificHeat = m.Double("SpecificHeat"), StressStrainTable = StressStrain(m["StressStrainTable"]),
+            };
+        }
+
+        /// <summary>R6.2 part C: every field of a former material the reader reads (<see cref="Material(LegacyValue)"/>). The former
+        /// <c>ShearUltimateStrength</c> property read the tensile ultimate field: a payload gives that value as the shear ultimate strength
+        /// (the value at the ports of 0.3.0), as it is stored.</summary>
+        public static LegacyMaterialRecipe MaterialRecipe(LegacyValue m)
+        {
+            var r = ElasticRecipe(m);
+            r.Kind = m.Enum("MaterialKind");
+            r.MinimumYieldStress = m.Double("MinimumYieldStress"); r.MinimumTensileStress = m.Double("MinimumTensileStress");
+            r.SpecificCompressiveStrength = m.Double("SpecificCompressiveStrength");
+            r.ReinforcementUltimateStrain = m.Has("ReinforcementUltimateStrain") ? m.Double("ReinforcementUltimateStrain") : (double?)null;
+            r.ExpectedYieldStress = m.Double("ExpectedYieldStress"); r.ExpectedTensileStress = m.Double("ExpectedTensileStress");
+            r.ExpectedCompressiveStrength = m.Double("ExpectedCompressiveStrength");
+            r.CompressiveYieldStrength = m.Double("CompressiveYieldStrength"); r.TensileYieldStrength = m.Double("TensileYieldStrength");
+            r.TensileUltimateStrength = m.Double("TensileUltimateStrength"); r.ShearUltimateStrength = r.TensileUltimateStrength;
+            r.Alloy = m.String("Alloy");
+            r.AluminiumType = r.Kind == "Aluminium" ? m.Enum("AlumiumType") : null;
+            return r;
         }
 
         /// <summary>
@@ -72,13 +142,18 @@ namespace BridGHe.Common.Gpc.Legacy
         /// Not carried (unused, decision M4): identifier, temperature-on-time, mode and hardening of the former material, the dead shear
         /// ultimate field (its property reads the tensile ultimate strength), strengths of another kind.
         /// </summary>
-        public static Material Material(LegacyValue m)
+        public static Material Material(LegacyValue m) => Material(MaterialRecipe(m));
+
+        /// <summary>R6.2 part C: the GPC material by kind of a material recipe (the rule of <see cref="Material(LegacyValue)"/>, shared by the
+        /// reader of the former payloads and the GPC builders of the material components).</summary>
+        public static Material Material(LegacyMaterialRecipe r)
         {
-            var elastic = ElasticMaterial(m);
-            string kind = m.Enum("MaterialKind"), name = m.String("Name");
-            double E = m.Double("Modulus"), nu = m.Double("PoissonRatio"), rho = m.Double("Density"), alpha = m.Double("ThermalExpansion");
-            double fy = m.Double("MinimumYieldStress"), fu = m.Double("MinimumTensileStress"), fck = m.Double("SpecificCompressiveStrength");
-            double? strainU = m.Has("ReinforcementUltimateStrain") ? m.Double("ReinforcementUltimateStrain") : (double?)null;
+            if (r == null) throw new ArgumentNullException(nameof(r));
+            var elastic = ElasticMaterial(r);
+            string kind = r.Kind, name = r.Name;
+            double E = r.Modulus, nu = r.PoissonRatio, rho = r.Density, alpha = r.ThermalExpansion;
+            double fy = r.MinimumYieldStress, fu = r.MinimumTensileStress, fck = r.SpecificCompressiveStrength;
+            double? strainU = r.ReinforcementUltimateStrain;
             Material typed = null;
             try
             {
@@ -95,7 +170,7 @@ namespace BridGHe.Common.Gpc.Legacy
                         typed = concrete;
                         break;
                     case "Aluminium":
-                        typed = new AluminiumMaterialEN1999(name, E, m.Double("TensileYieldStrength"), m.Double("TensileUltimateStrength"), poisson: nu, density: rho, alfaThermalExpansion: alpha);
+                        typed = new AluminiumMaterialEN1999(name, E, r.TensileYieldStrength, r.TensileUltimateStrength, poisson: nu, density: rho, alfaThermalExpansion: alpha);
                         break;
                 }
             }
@@ -116,15 +191,15 @@ namespace BridGHe.Common.Gpc.Legacy
             }
             else typed.AnalysisData = elastic.AnalysisData;
             static double? Declared(double v) => v == 0 ? (double?)null : v;
-            string form = kind == "Aluminium" ? m.Enum("AlumiumType") : null;
+            string form = kind == "Aluminium" ? r.AluminiumType : null;
             var declared = new MaterialDeclarations
             {
-                ExpectedYieldStress = Declared(m.Double("ExpectedYieldStress")), ExpectedTensileStrength = Declared(m.Double("ExpectedTensileStress")),
-                ExpectedCompressiveStrength = Declared(m.Double("ExpectedCompressiveStrength")),
-                CompressiveYieldStrength = Declared(m.Double("CompressiveYieldStrength")), TensileYieldStrength = Declared(m.Double("TensileYieldStrength")),
-                // The former ShearUltimateStrength property reads (and writes) the tensile ultimate field: the values at the ports.
-                TensileUltimateStrength = Declared(m.Double("TensileUltimateStrength")), ShearUltimateStrength = Declared(m.Double("TensileUltimateStrength")),
-                Alloy = m.String("Alloy"),
+                ExpectedYieldStress = Declared(r.ExpectedYieldStress), ExpectedTensileStrength = Declared(r.ExpectedTensileStress),
+                ExpectedCompressiveStrength = Declared(r.ExpectedCompressiveStrength),
+                CompressiveYieldStrength = Declared(r.CompressiveYieldStrength), TensileYieldStrength = Declared(r.TensileYieldStrength),
+                // A former payload: the ShearUltimateStrength property read (and wrote) the tensile ultimate field (MaterialRecipe gives that value).
+                TensileUltimateStrength = Declared(r.TensileUltimateStrength), ShearUltimateStrength = Declared(r.ShearUltimateStrength),
+                Alloy = r.Alloy,
                 AluminiumForm = form == null ? AluminiumManufacturingForm.Unspecified : form == "CastMold" ? AluminiumManufacturingForm.CastMold
                     : form == "CastSand" ? AluminiumManufacturingForm.CastSand : AluminiumManufacturingForm.Wrought,
             };
