@@ -116,6 +116,9 @@ namespace BridGHe.Grasshopper.Components.Loads
             BeamPointLoadModel load = new BeamPointLoadModel(lc.Value, load_value, BeamPointLoadModel.LoadType.Force);
             GH_Beam newBeam = new GH_Beam(beam);
             newBeam.Value.Loads.Add(load);
+            // R6.2 (lane B): the GPC draft built on GPC from the drafts of the inputs (identity of the conversion of the FEM output until R6.5);
+            // in the principal axes whatever the coordinate system (the former archive did not store it).
+            GpcBeamInputs.Attach(newBeam, id => Common.Gpc.Builders.GpcBeamBuilders.WithPointLoad(beam.Gpc, lc.Gpc, false, a, new GPC.Geometry.Vector3d(p1, p2, p3), id));
             DA.SetData(0, newBeam);
         }
 

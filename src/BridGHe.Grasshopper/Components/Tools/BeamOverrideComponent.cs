@@ -87,6 +87,9 @@ namespace BridGHe.Grasshopper.Components
             {
                 new_beam.Value.Offset = new Vector2d(offset.X, offset.Y);
             }
+            // R6.2 (lane B): the GPC draft built on GPC from the drafts of the inputs (identity of the conversion of the FEM output until R6.5).
+            GpcBeamInputs.Attach(new_beam, id => Common.Gpc.Builders.GpcBeamBuilders.Override(beam.Gpc, has_property && bp.IsValid ? bp.Gpc : null,
+                has_groups ? GpcBeamInputs.GroupChains(groups) : null, has_angle ? a : (double?)null, has_offset ? (offset.X, offset.Y) : ((double, double)?)null, id));
             DA.SetData(0, new_beam);
         }
 

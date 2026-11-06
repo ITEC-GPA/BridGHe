@@ -44,14 +44,15 @@ public sealed class BridgeConnectionsComponent : BridgeUtilityComponent
         {
             if (lines.Count > 0 || property != null) throw new ArgumentException("Offset mode accepts Beams and Offset only.");
             elements = BridgeConnections.Offset(beams.Select(b => b.Value).ToArray(), new(offset.X, offset.Y));
+            da.SetDataList(0, GpcConnections.Offsets((BeamModel[])elements, beams, offset));
         }
         else
         {
             if (beams.Count > 0 || offset != Vector3d.Zero || mode == 0 && property != null)
                 throw new ArgumentException("Connection mode accepts lines and, for deformable members only, Property.");
             elements = BridgeConnections.Create(lines, mode == 0, property?.Value); preview.AddRange(lines);
+            da.SetDataList(0, GpcConnections.Elements(elements, lines, mode == 0, property));
         }
-        da.SetDataList(0, elements.Select(e => e is NodeModel n ? (IGH_Goo)new GH_Node(n) : new GH_Beam((BeamModel)e)));
         da.SetData(1, mode == 0 ? "Native full spatial rigid links (kinematic constraints), without artificial penalty stiffness." :
             mode == 1 ? "Deformable beam/truss members with the explicitly assigned property." : "Local section offsets assigned; input beams unchanged and copied results cleared.");
     }

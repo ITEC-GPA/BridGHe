@@ -96,6 +96,12 @@ namespace BridGHe.Grasshopper.Components.Attributes
             };
             BeamReleasesAttributeModel attr = new BeamReleasesAttributeModel(data);
             new_beam.Value.Attributes.Add(attr);
+            // R6.2 (lane B): the GPC draft built on GPC from the draft of the input (identity of the conversion of the FEM output until R6.5).
+            GpcBeamInputs.Attach(new_beam, id => Common.Gpc.Builders.GpcBeamBuilders.WithReleases(beam.Gpc,
+                new[] { has_values["shear1N1"], has_values["shear2N1"], has_values["axialN1"] }, new GPC.Geometry.Vector3d(shear1N1, shear2N1, axialN1),
+                new[] { has_values["moment1N1"], has_values["moment2N1"], has_values["torsionN1"] }, new GPC.Geometry.Vector3d(moment1N1, moment2N1, torsionN1),
+                new[] { has_values["shear1N2"], has_values["shear2N2"], has_values["axialN2"] }, new GPC.Geometry.Vector3d(shear1N2, shear2N2, axialN2),
+                new[] { has_values["moment1N2"], has_values["moment2N2"], has_values["torsionN2"] }, new GPC.Geometry.Vector3d(moment1N2, moment2N2, torsionN2), id));
 
             DA.SetData("Beam", new_beam);
         }

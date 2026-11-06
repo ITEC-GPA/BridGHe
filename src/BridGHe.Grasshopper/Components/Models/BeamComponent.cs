@@ -64,6 +64,10 @@ namespace BridGHe.Grasshopper.Components.Models
                 beam.Value.AngleDeg = angle;
             if (has_offset)
                 beam.Value.Offset = new Vector2d(offset.X, offset.Y);
+            // R6.2 (lane B): the GPC draft built on GPC from the property datum of the input (identity of the conversion of the FEM output
+            // until R6.5): an angle of zero leaves the former angle at its default, as above.
+            GpcBeamInputs.Attach(beam, id => Common.Gpc.Builders.GpcBeamBuilders.New(GpcBeamInputs.Point(line.PointAtStart), GpcBeamInputs.Point(line.PointAtEnd), bp.Gpc,
+                GpcBeamInputs.GroupChains(groups), angle != 0 ? angle : 0, has_offset ? offset.X : 0, has_offset ? offset.Y : 0, id));
 
             DA.SetData("Beam", beam);
         }

@@ -54,12 +54,16 @@ namespace BridGHe.Grasshopper.Components.Attributes
             {
                 GH_Beam new_beam = new GH_Beam(beam);
                 new_beam.Value.Attributes.Add(se);
+                // R6.2 (lane B): the GPC draft built on GPC from the draft of the input (identity of the conversion of the FEM output until R6.5).
+                GpcBeamInputs.Attach(new_beam, id => Common.Gpc.Builders.GpcBeamBuilders.WithSuperElement(beam.Gpc, name, id));
                 DA.SetData(0, new_beam);
             }
             else if (element is GH_Plate plate)
             {
                 GH_Plate new_plate = new GH_Plate(plate);
                 new_plate.Value.Attributes.Add(se);
+                // R6.2 (lane B): no GPC datum: the reader refuses a super element on a plate (LegacyPlateAttributeNotMappedYet), so the GPC
+                // builder does too (GpcBeamBuilders.PlateWithSuperElement); the GH type converts its FEM value, refused the same way, as before.
                 DA.SetData(0, new_plate);
             }
             else

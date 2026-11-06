@@ -37,9 +37,20 @@ public sealed class BridgeSectionScheduleComponent : BridgeUtilityComponent
         if (!da.GetData(0, ref property) || !da.GetData(1, ref start) || !da.GetData(2, ref end)) return;
         da.GetData(3, ref family); da.GetData(4, ref group); da.GetData(5, ref segment); da.GetData(6, ref sf); da.GetData(7, ref se);
         if (sf.Z != 0 || se.Z != 0) throw new ArgumentException("Section scales use X/Y only; Z must be zero.");
+        // R6.2 (lane B): the GPC datum of the property goes with it to Bridge Member Assignment.
+        TryAttach(property);
         var rule = new BridgeSectionRule { Property = property.Value, Start = start, End = end, Family = family, Group = group,
             Segment = segment, ScaleFrom = new(sf.X, sf.Y), ScaleTo = new(se.X, se.Y) };
         rule.Validate(); da.SetData(0, new BridgeDesignGoo(rule));
+    }
+
+    /// <summary>R6.2 (lane B): the GPC datum of a GH property for the bridge generators (<see cref="BridgeGpcProperties"/>); a datum the reader
+    /// refuses is not attached (the generators convert the FEM property, refused the same way).</summary>
+    internal static void TryAttach(GH_BeamProperty property)
+    {
+        if (property?.Value == null) return;
+        try { BridgeGpcProperties.Attach(property.Value, property.Gpc); }
+        catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException) { }
     }
 }
 
@@ -72,13 +83,17 @@ public class BridgeMemberAssignmentComponent : BridgeUtilityComponent
             throw new ArgumentException("Provide exactly one distinct family code per default property.");
         if (rules.Any(r => r?.Value is not BridgeSectionRule)) throw new ArgumentException("Schedule accepts Bridge Section Schedule entries.");
         var defaults = properties.Select((p, i) => (families[i], p.Value)).ToDictionary(p => p.Item1, p => p.Value);
+        foreach (var p in properties) BridgeSectionScheduleComponent.TryAttach(p);
         Publish(da, geometry.Value, defaults, rules.Select(r => (BridgeSectionRule)r.Value).ToArray());
     }
     protected void Publish(IGH_DataAccess da, SimpleBridgeGeometry geometry, Dictionary<int,BeamPropertyModel> defaults, BridgeSectionRule[] rules)
     {
         var result = BridgeMemberAssignment.Assign(geometry, defaults, rules);
         if (result.Unassigned.Length > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"{result.Unassigned.Length} members have no property and were not created. Inspect Unassigned.");
-        da.SetDataList(0, result.Beams.Select(b => new GH_Beam(b)));
+        // R6.2 (lane B): every beam with its GPC draft built on GPC from its plan (identity of the conversion of the FEM output until R6.5).
+        var outputs = result.Beams.Select(b => new GH_Beam(b)).ToArray();
+        for (int i = 0; i < outputs.Length; i++) { var plan = result.Plans[i]; GpcBeamInputs.Attach(outputs[i], id => Common.Gpc.Builders.GpcBridgeGeometryBuilders.Assigned(plan, id)); }
+        da.SetDataList(0, outputs);
         da.SetDataList(1, result.Beams.Select(b => b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value.PhysicalId));
         da.SetDataList(2, result.Unassigned); da.SetDataList(3, result.Diagnostics);
     }

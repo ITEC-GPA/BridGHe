@@ -60,6 +60,9 @@ namespace BridGHe.Grasshopper.Components.Attributes
             {
                 GH_Beam newBeam = new GH_Beam(listBeams[i]);
                 newBeam.Value.Attributes.Add(sg);
+                // R6.2 (lane B): the GPC draft built on GPC from the draft of the input (identity of the conversion of the FEM output until R6.5).
+                var input = listBeams[i];
+                GpcBeamInputs.Attach(newBeam, gid => Common.Gpc.Builders.GpcBeamBuilders.WithStringGroup(input.Gpc, id, gid));
                 newBeams.Add(newBeam);
             }
 

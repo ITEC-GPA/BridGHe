@@ -41,7 +41,97 @@ public sealed record BridgeSectionRule
     public override string ToString() => $"Section schedule: {Property?.Id}, family {Family}, group {Group}, segment {Segment}, {Start:G7}..{End:G7} mm";
 }
 
-public sealed record BridgeAssignment(BeamModel[] Beams, string[] Unassigned, string[] Diagnostics);
+public sealed record BridgeAssignment(BeamModel[] Beams, string[] Unassigned, string[] Diagnostics)
+{
+    /// <summary>R6.2 (lane B): what the GPC drafts of <see cref="Beams"/> are built from, one per beam in the same order
+    /// (<c>GpcBridgeGeometryBuilders.Assigned</c>).</summary>
+    public BridgeMemberPlan[] Plans { get; init; } = Array.Empty<BridgeMemberPlan>();
+}
+
+/// <summary>
+/// R6.2 (lane B): one beam of Bridge Member Assignment without FEM values: its ends, its property (the GPC datum of the FEM property it was
+/// assigned, <see cref="BridgeGpcProperties"/>), its export ID (the Element ID of the beam; <see cref="Label"/> false: removed, as Bridge Slab
+/// Grillage does), its group (family, group, segment), super element (girders), bridge member (stations <see cref="StationFrom"/>,
+/// <see cref="StationTo"/>, geometric ID), the frame of the deck at its mid station (the desired section y) and the taper scales (none: null).
+/// The BridGHe angle and the section up vector are computed on GPC data (<see cref="BridgeBeamFrames"/>) with the principal angle of the GPC
+/// property, as the FEM path computes them on the former beam.
+/// </summary>
+public sealed record BridgeMemberPlan(Point3d From, Point3d To, Func<Gpc.Legacy.LegacyBeamProperty> Property, string SolverId, bool Label, BridgeMemberFamily Family,
+    int Group, int Segment, int Span, string PhysicalId, double StationFrom, double StationTo, string GeometryId, Vector3d DeckY, Vector3d DeckX, Vector2d? ScaleFrom, Vector2d? ScaleTo);
+
+/// <summary>
+/// R6.2 (lane B): the GPC datum of the FEM beam properties the bridge generators are given (keyed by the FEM instance: Bridge Section
+/// Schedule, Bridge Family Property, Bridge Segment Sections and the default properties of Bridge Member Assignment attach the datum of their
+/// GH input, or the one they build), until those records carry GPC properties (R6.5). A FEM property without one (a record read from a file)
+/// gives the conversion of its FEM value, as a <c>GH_BeamProperty</c> without an attached datum does.
+/// </summary>
+public static class BridgeGpcProperties
+{
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<BeamPropertyModel, Gpc.Legacy.LegacyBeamProperty> Table = new();
+
+    public static BeamPropertyModel Attach(BeamPropertyModel property, Gpc.Legacy.LegacyBeamProperty gpc)
+    {
+        if (property != null && gpc != null) Table.AddOrUpdate(property, gpc);
+        return property;
+    }
+
+    public static Gpc.Legacy.LegacyBeamProperty Of(BeamPropertyModel property) =>
+        property == null ? throw new ArgumentNullException(nameof(property))
+        : Table.TryGetValue(property, out var gpc) ? gpc : Gpc.GpcModels.BeamProperty(property, Gpc.GpcBeamDrafts.DraftUnits);
+
+    /// <summary>The signature of the conversion of a FEM property (the digest of its former content): until R6.3/R6.5 the signature of a GPC
+    /// property a generator builds (passo 53: the signature of the conversion of the FEM value), then the GPC fingerprint.</summary>
+    public static string FormerSignature(BeamPropertyModel property) => Gpc.GpcModels.BeamProperty(property, Gpc.GpcBeamDrafts.DraftUnits).Data.Signature;
+}
+
+/// <summary>
+/// R6.2 (lane B): the local axes of a beam without the FEM beam (<c>BeamModel.GetLocalAxes</c>, the same Rhino operations one for one): axis 3
+/// along the beam, axis 1 = Z × axis 3 (horizontal) or, for a vertical beam, axis 2 = axis 3 × Y; the frame rotated by the BridGHe angle
+/// (principal) and back by the principal angle of the section (section axes).
+/// </summary>
+public static class BridgeBeamFrames
+{
+    public static void LocalAxes(Point3d from, Point3d to, double angleDeg, double principalAngleRad, bool getPrincipal, out Vector3d axes1, out Vector3d axes2, out Vector3d axes3)
+    {
+        double r = angleDeg / 180 * Math.PI;
+        if (!getPrincipal) r -= principalAngleRad;
+        axes3 = to - from;
+        axes3.Unitize();
+        Vector3d v = to - from; v.Unitize();
+        if (!(Vector3d.CrossProduct(Vector3d.ZAxis, v).Length < 1.0E-12))
+        {
+            axes1 = Vector3d.CrossProduct(Vector3d.ZAxis, axes3);
+            axes1.Unitize();
+            axes2 = Vector3d.CrossProduct(axes3, axes1);
+            axes2.Unitize();
+        }
+        else
+        {
+            axes2 = Vector3d.CrossProduct(axes3, Vector3d.YAxis);
+            axes2.Unitize();
+            axes1 = Vector3d.CrossProduct(axes2, axes3);
+            axes1.Unitize();
+        }
+        Plane pl = new Plane(from, axes1, axes2);
+        pl.Rotate(r, pl.Normal);
+        axes1 = pl.XAxis;
+        axes2 = pl.YAxis;
+    }
+
+    /// <summary>Bridge Member Assignment: the BridGHe angle (degrees, from a beam at angle 0) and the unit section up vector of a beam whose
+    /// section y follows <paramref name="deckY"/> (or <paramref name="deckX"/> when the beam is nearly along it), as the FEM path computes them.</summary>
+    public static (double AngleDeg, Vector3d Up) Orientation(Point3d from, Point3d to, double principalAngleRad, Vector3d deckY, Vector3d deckX)
+    {
+        var desiredUp = deckY;
+        var direction = to - from; direction.Unitize();
+        if (Math.Abs(direction * desiredUp) > .9999) desiredUp = deckX;
+        LocalAxes(from, to, 0, principalAngleRad, false, out _, out var oldUp, out var axis);
+        var up = desiredUp - (desiredUp * axis) * axis; up.Unitize();
+        double angle = 0;
+        angle += Math.Atan2(up * Vector3d.CrossProduct(axis, oldUp), up * oldUp) * 180 / Math.PI;
+        return (angle, up);
+    }
+}
 
 public static class BridgeMemberAssignment
 {
@@ -63,6 +153,7 @@ public static class BridgeMemberAssignment
         var properties = defaults.Values.Concat(schedule.Select(r => r.Property)).Distinct()
             .ToDictionary(p => p, ModelArchive.Clone);
         var beams = new List<BeamModel>(); var missing = new List<string>(); var used = new HashSet<BridgeSectionRule>();
+        var plans = new List<BridgeMemberPlan>();
         foreach (var member in geometry.Members)
         {
             var applicable = schedule.Where(r => r.Selects(member)).ToArray();
@@ -110,14 +201,22 @@ public static class BridgeMemberAssignment
                 beam.AngleDeg += Math.Atan2(up * Vector3d.CrossProduct(axis, oldUp), up * oldUp) * 180 / Math.PI;
                 beam.Attributes.Add(new BridgeMemberAttributeModel(new(member.PhysicalId, member.Family, member.Group,
                     member.Segment, member.Span, a, b, up, id)));
+                Vector2d? scaleFrom = null, scaleTo = null;
                 if (rule != null)
                 {
                     var sf = rule.Scale(a); var st = rule.Scale(b);
                     if (sf != new Vector2d(1, 1) || st != new Vector2d(1, 1))
+                    {
                         beam.Attributes.Add(new BeamTaperAttributeModel(new BeamTaperAttributeModel.AttributeData
                         { NFromX = sf.X, NFromY = sf.Y, NToX = st.X, NToY = st.Y }));
+                        scaleFrom = sf; scaleTo = st;
+                    }
                 }
                 beams.Add(beam);
+                // R6.2 (lane B): the same beam without FEM values, for its GPC draft (the property: the GPC datum of the one assigned).
+                var source = property;
+                plans.Add(new BridgeMemberPlan(member.Axis.PointAt(t0), member.Axis.PointAt(t1), () => BridgeGpcProperties.Of(source), solverId, true, member.Family,
+                    member.Group, member.Segment, member.Span, member.PhysicalId, a, b, id, frame.YAxis, frame.XAxis, scaleFrom, scaleTo));
             }
         }
         return new(beams.ToArray(), missing.ToArray(), new[]
@@ -127,6 +226,6 @@ public static class BridgeMemberAssignment
             "Each beam has one hierarchical Straus group (family/group/physical segment) and an integer export ID; geometric IDs are retained in metadata.",
             "Section changes split existing geometric chords. Fabrication segment IDs remain independent of this FEM subdivision.",
             "Scale interpolation tapers the dimensional section about its centre; it is not interpolation of arbitrary section properties."
-        });
+        }) { Plans = plans.ToArray() };
     }
 }

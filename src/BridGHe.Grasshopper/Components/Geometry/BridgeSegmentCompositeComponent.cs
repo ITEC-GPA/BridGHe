@@ -38,8 +38,23 @@ public sealed class BridgeSegmentCompositeComponent : BridgeUtilityComponent
         // F6 (a)/(b), chain C: the girders keep the link to their beam of the GPC bridge model (Decompose Model of Build BridGHe Model).
         var links = new Dictionary<Common.Models.BeamModel, GH_Beam>(ReferenceEqualityComparer.Instance);
         foreach (var b in beams) if (b?.Value != null) links.TryAdd(b.Value, b);
-        da.SetDataList(0, mapped.Girders.Select(b => links.TryGetValue(b, out var source)
-            ? new GH_Beam(b) { AnalysedGpc = source.AnalysedGpc, AnalysedGpcModel = source.AnalysedGpcModel } : new GH_Beam(b))); da.SetDataList(1, mapped.Properties.Select(p => new GH_CompositeBeamProperty(p)));
+        // R6.2 (lane B): the girders keep the GPC draft of their input (the same value: a copy with the identity of the output), the composite
+        // properties the datum of theirs.
+        da.SetDataList(0, mapped.Girders.Select(b =>
+        {
+            if (!links.TryGetValue(b, out var source)) return new GH_Beam(b);
+            var girder = new GH_Beam(b) { AnalysedGpc = source.AnalysedGpc, AnalysedGpcModel = source.AnalysedGpcModel };
+            GpcBeamInputs.Attach(girder, id => Common.Gpc.GpcDrafts.Reidentify(Common.Gpc.GpcDrafts.Copy(source.Gpc), id));
+            return girder;
+        }));
+        var composites = new Dictionary<Common.Models.CompositeBeamPropertyModel, GH_CompositeBeamProperty>(ReferenceEqualityComparer.Instance);
+        foreach (var p in props) if (p?.Value != null) composites.TryAdd(p.Value, p);
+        da.SetDataList(1, mapped.Properties.Select(p =>
+        {
+            var output = new GH_CompositeBeamProperty(p);
+            if (composites.TryGetValue(p, out var source)) GpcSegmentSections.TryAttach(output, source);
+            return output;
+        }));
         da.SetDataList(2, mapped.SegmentIds); da.SetDataList(3, mapped.Girders.Select(b => b.BeamId));
     }
 }

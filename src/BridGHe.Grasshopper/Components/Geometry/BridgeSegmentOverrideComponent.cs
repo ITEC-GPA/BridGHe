@@ -34,7 +34,9 @@ public sealed class BridgeSegmentOverrideComponent : BridgeUtilityComponent
         bool mass=true;
         if (!da.GetDataList(0, beams) || !da.GetDataList(1, ids) || !da.GetDataList(2, properties) || !da.GetData(3,ref mass)) return;
         var result = BridgeSegmentOverride.Apply(beams.Select(b => b?.Value).ToArray(), ids, properties.Select(p => p?.Value).ToArray(),mass);
-        da.SetDataList(0, result.Girders.Select(b => new GH_Beam(b))); da.SetDataList(1, result.OtherMembers.Select(b => new GH_Beam(b)));
+        // R6.2 (lane B): the girders and the other members with their GPC drafts built on GPC (GpcSegmentSections.Override).
+        var (girders, others) = GpcSegmentSections.Override(result, beams, ids, properties, mass);
+        da.SetDataList(0, girders); da.SetDataList(1, others);
         da.SetDataList(2, result.Girders.Select(b => b.BeamId));
         da.SetData(3, "One keyed property per concio. Geometry, offsets and loads are preserved; all results are cleared. Homogenized properties must use the intended reference-axis convention. Preserve Mass adjusts only density to retain original mass per length.");
     }
