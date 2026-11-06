@@ -39,6 +39,28 @@ namespace BridGHe.Common.Gpc.Builders
         /// the section; the shapes are not part of the recipe).</summary>
         public static LegacySectionRecipe Shapes() => new LegacySectionRecipe { Kind = BridgeSectionKind.GenericShapes, Name = "" };
 
+        /// <summary>
+        /// R6.2 part C: the units menu of the Beam Section parameter (the former <c>GH_BeamSection.ConvertUnits</c>): the lengths of the
+        /// recipe converted with the length factor of GPCUtilities (dimensions and centroid ^1, area and shear areas ^2, inertias and torsion
+        /// ^4), the angle kept; a native section unchanged (its native data were not converted); a mirrored section is refused by the reader
+        /// before (no recipe).
+        /// </summary>
+        public static LegacySectionRecipe ConvertUnits(LegacySectionRecipe r, GPC.Utilities.Units.UnitsConvert.LengthUnits from, GPC.Utilities.Units.UnitsConvert.LengthUnits to)
+        {
+            if (r == null) throw new ArgumentNullException(nameof(r));
+            if (r.NativeKey != null) return r;
+            double C(double v, int e) => GPC.Utilities.Units.UnitsConvert.Convert(v, from, to, e);
+            return new LegacySectionRecipe
+            {
+                Kind = r.Kind, Name = r.Name, Angle = r.Angle, D = C(r.D, 1), B = C(r.B, 1), B1 = C(r.B1, 1), B2 = C(r.B2, 1), T = C(r.T, 1), T1 = C(r.T1, 1), T2 = C(r.T2, 1), T3 = C(r.T3, 1),
+                Area = C(r.Area, 2), I11 = C(r.I11, 4), I22 = C(r.I22, 4), J = C(r.J, 4), CentroidX = C(r.CentroidX, 1), CentroidY = C(r.CentroidY, 1),
+                ShearL1 = C(r.ShearL1, 1), ShearL2 = C(r.ShearL2, 1), ShearA1 = C(r.ShearA1, 2), ShearA2 = C(r.ShearA2, 2), CompositePreview = r.CompositePreview,
+            };
+        }
+
+        /// <summary>R6.2 part C: a mirrored section (the mirror menu of the Beam Section parameter): refused as the reader refuses it.</summary>
+        public static LegacySectionRecipe Mirrored() => throw new NotSupportedException("LegacyMirroredSectionNotMappedYet");
+
         /// <summary>A native Straus7 section (standard or BGL dimensions, BXS file, library item): the key and the data of the former
         /// native section; the length unit only for library and BXS sections (the reader reads it only for those).</summary>
         public static LegacySectionRecipe Native(string key, IReadOnlyList<double> dimensions, string bxsPath, string libraryName, string libraryItem, int lengthUnit) =>

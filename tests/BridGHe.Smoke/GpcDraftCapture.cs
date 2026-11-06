@@ -79,6 +79,7 @@ internal static class GpcDraftCapture
         GpcDraftArchiveChecks.ModelDatum m => GpcDraftArchiveChecks.Text(m.Model, m.Units),
         GpcModels.Conversion c => ConversionText(c),
         GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition c => GpcDraftArchiveChecks.Text(c),
+        LegacyGroupChain g => "GROUP " + g.Names.Count + "\n" + string.Join("\n", g.Names.Select(n => n == null ? "<null>" : "'" + n + "'")),
         Refused r => "REFUSED " + r.Kind + " " + r.Message,
         Nothing n => "NOTHING " + n.Kind + " " + n.Why,
         _ => throw new ArgumentException("Not a capturable datum: " + datum?.GetType().Name),

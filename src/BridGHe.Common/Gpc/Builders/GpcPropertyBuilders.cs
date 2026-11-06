@@ -39,6 +39,58 @@ namespace BridGHe.Common.Gpc.Builders
             return new LegacyBeamProperty(property, new LegacyBeamPropertyData(formulation, angle, native, signature) { Section = recipe });
         }
 
+        /// <summary>
+        /// R6.2 part C (P2N): the composite section of the Composite Beam Property component (output 0), the definition of the Checker built
+        /// on the GPC data of its inputs with the rule of the conversion of the former property (<see cref="GpcCompositeSections.Definition(Models.CompositeBeamPropertyModel, string)"/>):
+        /// the steel I from the dimensions of the recipe of the steel section (D, T3, B2, T2, B1, T1 as written), the slab and its rows as
+        /// given, no vertical offset (the component gives none), the steel named as the property; the values of the materials by role
+        /// (<see cref="GpcMaterials.ConcreteValues"/>, <see cref="GpcMaterials.SteelValues"/>: the name and fck of the concrete, the name, E,
+        /// fy, fu of the steel and of the bars; the bars of the steel when the component has no reinforcement material); the analysis steel of
+        /// the steel material (<see cref="GpcMaterials.Analysis"/>). A material of another kind in a role is refused (listed difference 5 of
+        /// the pre-removal point: the former property read zeros). The numbers of the slab and the ratios as given: the conversion reads the
+        /// fields of the former property, not an archive (no −0 → +0).
+        /// </summary>
+        public static GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition Composite(string name, LegacySectionRecipe steel, double slabWidth, double slabHeight,
+            double topArea, double topCover, double bottomArea, double bottomCover, Material concrete, Material steelMaterial, Material rebar,
+            double n0, double nInfinite, double nShrinkage, bool considerConcrete, bool considerRebar)
+        {
+            if (steel == null) throw new ArgumentNullException(nameof(steel));
+            var c = GpcMaterials.ConcreteValues(concrete); var s = GpcMaterials.SteelValues(steelMaterial); var r = GpcMaterials.SteelValues(rebar ?? steelMaterial);
+            return GpcCompositeSections.Create(name, name, steel.D, steel.T3, steel.B2, steel.T2, steel.B1, steel.T1, slabWidth, slabHeight, topArea, topCover,
+                bottomArea, bottomCover, 0, c.Name, c.Fck, s.Name, s.E, s.Fy, s.Fu, r.Name, r.E, r.Fy, r.Fu, nInfinite, n0, nShrinkage,
+                considerConcrete, considerRebar, GpcMaterials.Analysis(steelMaterial));
+        }
+
+        /// <summary>R6.2 part C: the «Only Steel Property» of Composite Beam Property: a beam property named <c>name + "OnlySteel"</c> on the I
+        /// section the former component made of the dimensions of its steel section (a standard I with its principal angle, no name).</summary>
+        public static LegacyBeamProperty OnlySteel(string name, LegacySectionRecipe steel, Material steelMaterial, string signature)
+        {
+            if (steel == null) throw new ArgumentNullException(nameof(steel));
+            var section = GpcSectionBuilders.Standard(BridgeSectionKind.I, steel.D, b1: steel.B1, b2: steel.B2, t1: steel.T1, t2: steel.T2, t3: steel.T3);
+            return Beam(name + "OnlySteel", 5, section, steelMaterial, signature);
+        }
+
+        /// <summary>
+        /// R6.2 part C: a homogenised analysis property of Composite Beam Property (outputs n0, n∞, n ritiro): the generic section of the former
+        /// <c>CreateHomogenizedProperty</c> from the definition (<see cref="GpcCompositeSections.Homogenised"/> with its Consider Concrete:
+        /// area and inertias divided by n, torsion of the steel alone, shear areas, centroid, angle 0, the composite preview), named
+        /// <c>name + suffix</c>, a beam of the analysis material of the steel.
+        /// </summary>
+        public static LegacyBeamProperty Homogenised(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition definition, double n, string suffix, Material steelMaterial, string signature)
+        {
+            if (definition == null) throw new ArgumentNullException(nameof(definition));
+            if (steelMaterial == null) throw new ArgumentNullException(nameof(steelMaterial));
+            var h = GpcCompositeSections.Homogenised(definition, n, definition.ConsiderConcrete);
+            var recipe = new LegacySectionRecipe
+            {
+                Kind = BridgeSectionKind.Generic, Name = "", Angle = 0, Area = h.Area, I11 = h.I11, I22 = h.I22, J = h.J, CentroidX = h.CentroidX, CentroidY = h.CentroidY,
+                ShearA1 = h.ShearArea1, ShearA2 = h.ShearArea2, CompositePreview = true,
+            };
+            var (property, angle, native) = LegacyModelImport.SectionProperty(recipe, definition.Name + suffix, GpcMaterials.Analysis(steelMaterial), GpcBeamDrafts.DraftUnits,
+                new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport());
+            return new LegacyBeamProperty(property, new LegacyBeamPropertyData(BeamFormulation.StraightTwoNode, angle, native, signature) { Section = recipe });
+        }
+
         /// <summary>The section a former Beam Property made of its input section (see the class).</summary>
         public static LegacySectionRecipe PropertySection(LegacySectionRecipe s)
         {

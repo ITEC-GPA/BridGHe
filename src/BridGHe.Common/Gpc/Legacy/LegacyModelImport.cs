@@ -254,6 +254,9 @@ namespace BridGHe.Common.Gpc.Legacy
     /// <summary>Chain E (e3): a former load combination by value: name and factors (case definition, factor) in order.</summary>
     public sealed record LegacyCombinationDraft(string Name, IReadOnlyList<(LegacyCaseData Case, double Factor)> Factors);
 
+    /// <summary>R6.2 part C: the GPC datum of a GH group as a capturable record (the draft check): the chain of names from the root.</summary>
+    public sealed record LegacyGroupChain(IReadOnlyList<string> Names);
+
     /// <summary>Chain E (e3): a former staged construction by value: name, the full names of its groups, morph, rotate, increments.</summary>
     public sealed record LegacyStageDraft(string Name, IReadOnlyList<string> Groups, bool Morph, bool Rotate, IReadOnlyList<LegacyCombinationDraft> Increments);
     public sealed record LegacyPlateDraft(AreaElement Plate, IReadOnlyList<Point3d> Corners, LegacyImportReport Report)

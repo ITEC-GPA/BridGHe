@@ -27,7 +27,7 @@ namespace BridGHe.Grasshopper.Helpers
 
         internal static IReadOnlyList<IReadOnlyList<string>> GroupChains(IEnumerable<GroupModel> groups) => groups.Select(GroupChain).ToArray();
 
-        internal static IReadOnlyList<IReadOnlyList<string>> GroupChains(IEnumerable<GH_Group> groups) => groups.Select(g => GroupChain(g.Value)).ToArray();
+        internal static IReadOnlyList<IReadOnlyList<string>> GroupChains(IEnumerable<GH_Group> groups) => groups.Select(GpcBuilderAttach.GroupChain).ToArray(); // R6.2 part C: the GPC datum of the GH group
 
         /// <summary>The coordinate system of a load: null without one (principal axes), otherwise whether it is the global one (the rule of the
         /// reader: origin 0, first point (1, 0, 0), second point (0, 1, 0)).</summary>

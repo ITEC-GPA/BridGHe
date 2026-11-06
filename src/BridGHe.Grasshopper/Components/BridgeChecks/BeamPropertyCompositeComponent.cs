@@ -140,11 +140,31 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             };
             GH_BeamProperty steelSectionProp = new GH_BeamProperty(onlySteelBeamPropModel);
 
+            // R6.2 part C (P2N, dual rule of §1bis until R6.5): the five outputs built on the GPC data of the inputs (the recipe of the steel
+            // section, the GPC materials by kind; the slab is its numbers); the signatures of the properties from the conversion of their FEM
+            // values until R6.3.
+            var units = Common.Gpc.GpcBeamDrafts.DraftUnits;
+            var steelRecipe = (Func<Common.Gpc.Legacy.LegacySectionRecipe>)(() => steelSection.Gpc);
+            var definition = Helpers.GpcBuilderAttach.Composite(section, () => Common.Gpc.Builders.GpcPropertyBuilders.Composite(name, steelRecipe(), slab.Width, slab.Height,
+                slab.TopRebarArea, slab.TopCover, slab.BottomRebarArea, slab.BottomCover, concreteMaterial.Gpc, steelMaterial.Gpc, rebarMaterial?.Gpc, n0, ninf, nShrinkage,
+                considerConcrete, considerRebars));
+            Helpers.GpcBuilderAttach.BeamProperty(steelSectionProp, () => Common.Gpc.Builders.GpcPropertyBuilders.OnlySteel(name, steelRecipe(), steelMaterial.Gpc,
+                Common.Gpc.GpcModels.BeamProperty(onlySteelBeamPropModel, units).Data.Signature));
+            GH_BeamProperty Homogenised(double n, string suffix)
+            {
+                var model = compositeBeamPropertyModel.CreateHomogenizedProperty(n, suffix);
+                var output = new GH_BeamProperty(model);
+                if (definition != null)
+                    Helpers.GpcBuilderAttach.BeamProperty(output, () => Common.Gpc.Builders.GpcPropertyBuilders.Homogenised(definition, n, suffix, steelMaterial.Gpc,
+                        Common.Gpc.GpcModels.BeamProperty(model, units).Data.Signature));
+                return output;
+            }
+
             DA.SetData(0, section);
             DA.SetData(1, steelSectionProp);
-            DA.SetData(2, !considerConcrete && !considerRebars ? steelSectionProp : new GH_BeamProperty(compositeBeamPropertyModel.CreateHomogenizedProperty(n0, "_N0_istant")));
-            DA.SetData(3, !considerConcrete && !considerRebars ? steelSectionProp : new GH_BeamProperty(compositeBeamPropertyModel.CreateHomogenizedProperty(ninf, "_N_infinite")));
-            DA.SetData(4, !considerConcrete && !considerRebars ? steelSectionProp : new GH_BeamProperty(compositeBeamPropertyModel.CreateHomogenizedProperty(nShrinkage, "_N_shrinkage")));
+            DA.SetData(2, !considerConcrete && !considerRebars ? steelSectionProp : Homogenised(n0, "_N0_istant"));
+            DA.SetData(3, !considerConcrete && !considerRebars ? steelSectionProp : Homogenised(ninf, "_N_infinite"));
+            DA.SetData(4, !considerConcrete && !considerRebars ? steelSectionProp : Homogenised(nShrinkage, "_N_shrinkage"));
         }
 
         public override bool Read(GH_IReader reader)

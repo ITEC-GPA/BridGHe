@@ -173,7 +173,8 @@ namespace BridGHe.Common.Gpc
         private static bool SameSteel(SteelMaterial a, SteelMaterial b) => ReferenceEquals(a, b)
             || a != null && b != null && a.Name == b.Name && a.ElasticModulusTension == b.ElasticModulusTension && a.Fyk == b.Fyk && a.Fu == b.Fu;
 
-        private static BridgeCompositeSectionDefinition Create(string name, string steelName, double h, double webThickness, double topWidth, double topThickness,
+        /// <summary>R6.2 part C: also the builder of the Composite Beam Property component (<see cref="Builders.GpcPropertyBuilders.Composite"/>).</summary>
+        internal static BridgeCompositeSectionDefinition Create(string name, string steelName, double h, double webThickness, double topWidth, double topThickness,
             double bottomWidth, double bottomThickness, double slabWidth, double slabHeight, double topArea, double topCover, double bottomArea, double bottomCover,
             double verticalOffset, string concreteName, double fck, string steelMaterialName, double steelE, double steelFy, double steelFu,
             string rebarName, double rebarE, double rebarFy, double rebarFu, double nLongTerm, double nShortTerm, double nShrinkage, bool considerConcrete, bool considerRebar,

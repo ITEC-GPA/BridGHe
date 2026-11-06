@@ -112,6 +112,9 @@ namespace BridGHe.Grasshopper.Components.Parameters
                     bs.MirrorType = SectionModel.MirrorTypes.Left;
                 else
                     bs.MirrorType = SectionModel.MirrorTypes.None;
+                // R6.2 part C (dual rule until R6.5): a mirrored section has no recipe (the reader refuses it); an unmirrored one keeps the
+                // conversion of its value (its mirrored input had no recipe to build from).
+                if (bs.MirrorType != SectionModel.MirrorTypes.None) GpcBuilderAttach.Section(bs, Common.Gpc.Builders.GpcSectionBuilders.Mirrored);
                 Replace(bs);
                 ExpireSolution(true);
             }
@@ -126,6 +129,8 @@ namespace BridGHe.Grasshopper.Components.Parameters
                     GH_BeamSection bs = Copy(PersistentData.Branches[0][0]);
                     bs.MirrorGapA = gap;
                     bs.IsDBSection = false;
+                    // R6.2 part C: the gap of a mirrored section (the reader refuses a mirrored section: no recipe).
+                    if (bs.MirrorType != SectionModel.MirrorTypes.None) GpcBuilderAttach.Section(bs, Common.Gpc.Builders.GpcSectionBuilders.Mirrored);
                     Replace(bs);
                     ExpireSolution(true);
                 }
@@ -154,8 +159,12 @@ namespace BridGHe.Grasshopper.Components.Parameters
                 bs = PersistentData.get_FirstItem(false);
                 if (bs != null)
                 {
+                    var input = bs;
                     bs = Copy(bs);
                     bs.ConvertUnits(prevUnits, _units);
+                    // R6.2 part C (dual rule until R6.5): the recipe of the input converted on GPC (a mirrored input has no recipe: refused).
+                    GpcBuilderAttach.Section(bs, () => Common.Gpc.Builders.GpcSectionBuilders.ConvertUnits(input.Gpc ?? throw new NotSupportedException("LegacySectionWithoutRecipe"),
+                        prevLengthCode, lengthUnits));
                     Replace(bs);
                 }
                 ExpireSolution(true);

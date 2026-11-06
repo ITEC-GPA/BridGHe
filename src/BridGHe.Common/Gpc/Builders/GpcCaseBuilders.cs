@@ -31,5 +31,15 @@ namespace BridGHe.Common.Gpc.Builders
             return nonStructuralMass ? new LegacyCaseData(name, 0, false, true, "Gravity", "Z", Gravity, 0, true)
                 : new LegacyCaseData(name, 0, false, false, "None", "X", 0, 0, true);
         }
+
+        /// <summary>R6.2 part C: the group of the Group component (and of a text cast by the Group parameter): the chain of names of its
+        /// parent (from the root; none: a root group) followed by its name, as given (the former group kept the name as given).</summary>
+        public static System.Collections.Generic.IReadOnlyList<string> Group(string name, System.Collections.Generic.IReadOnlyList<string> parent)
+        {
+            var chain = new System.Collections.Generic.List<string>();
+            if (parent != null) chain.AddRange(parent);
+            chain.Add(name);
+            return chain.ToArray();
+        }
     }
 }

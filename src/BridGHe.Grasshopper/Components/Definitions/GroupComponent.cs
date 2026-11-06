@@ -49,7 +49,10 @@ namespace BridGHe.Grasshopper.Components.Definitions
             Message = name;
 
             GroupModel group = new GroupModel(name, haveParent ? parent.Value : null);
-            DA.SetData(0, new GH_Group(group));
+            var output = new GH_Group(group);
+            // R6.2 part C (dual rule until R6.5): the chain of names built on the GPC datum of the parent.
+            GpcBuilderAttach.Group(output, () => Common.Gpc.Builders.GpcCaseBuilders.Group(name, haveParent ? parent.Gpc : null));
+            DA.SetData(0, output);
         }
 
         /// <summary>

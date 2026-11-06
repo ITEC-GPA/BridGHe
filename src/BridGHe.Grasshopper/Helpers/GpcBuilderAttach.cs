@@ -66,6 +66,23 @@ namespace BridGHe.Grasshopper.Helpers
             if (record != null) target.AttachGpc(record);
         }
 
+        /// <summary>R6.2 part C (P2N): the composite section of Composite Beam Property, with the same refusal rule; the definition attached
+        /// (null when refused), for the homogenised properties built from it.</summary>
+        internal static GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition Composite(DataTypes.GH_CompositeBeamProperty target,
+            Func<GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition> build)
+        {
+            var definition = Build(build, () => GpcCompositeSections.Definition(target.Value, target.Value.Name));
+            if (definition != null) target.AttachGpc(definition);
+            return definition;
+        }
+
+        /// <summary>R6.2 part C (P2N): the chain of names of the group of Group and of the Group parameter (from the root).</summary>
+        internal static void Group(GH_Group target, Func<System.Collections.Generic.IReadOnlyList<string>> build)
+        {
+            var chain = Build(build, () => target.Value == null ? null : GH_Group.Chain(target.Value));
+            if (chain != null) target.AttachGpc(chain);
+        }
+
         private static T Build<T>(Func<T> build, Func<object> conversion) where T : class
         {
             try { return build(); }
@@ -81,14 +98,10 @@ namespace BridGHe.Grasshopper.Helpers
             }
         }
 
-        /// <summary>The names of a group from the root to the group (its parents first), as the reader joins them into the full name (a group of
-        /// a GH datum: GH_Group has no GPC datum until part C).</summary>
-        internal static System.Collections.Generic.IReadOnlyList<string> GroupChain(GH_Group group)
-        {
-            var names = new System.Collections.Generic.List<string>();
-            for (var g = group?.Value; g != null; g = g.Parent) names.Insert(0, g.Name);
-            return names;
-        }
+        /// <summary>The names of a group from the root to the group (its parents first), as the reader joins them into the full name: the GPC
+        /// datum of the GH group (R6.2 part C, <see cref="GH_Group.Gpc"/>); no group: an empty chain.</summary>
+        internal static System.Collections.Generic.IReadOnlyList<string> GroupChain(GH_Group group) =>
+            group?.Gpc ?? (System.Collections.Generic.IReadOnlyList<string>)Array.Empty<string>();
 
         /// <summary>The refusals of the reader (and of the builders, which use its pieces and messages).</summary>
         internal static bool Refusal(Exception x) => x is ArgumentException || x is NotSupportedException;

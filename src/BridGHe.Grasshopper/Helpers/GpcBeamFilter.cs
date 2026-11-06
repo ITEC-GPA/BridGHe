@@ -20,7 +20,7 @@ namespace BridGHe.Grasshopper.Helpers
         internal static bool[] Select(IReadOnlyList<GH_Beam> beams, IReadOnlyList<string> ids, IReadOnlyList<Rhino.Geometry.Point3d> starts, IReadOnlyList<Rhino.Geometry.Point3d> ends,
             IReadOnlyList<string> properties, IReadOnlyList<GH_Group> groups, double tolerance)
         {
-            var names = groups.Select(g => Common.Gpc.Builders.GpcBeamBuilders.FullName(GpcBeamInputs.GroupChain(g.Value))).ToArray();
+            var names = groups.Select(g => Common.Gpc.Builders.GpcBeamBuilders.FullName(GpcBuilderAttach.GroupChain(g))).ToArray(); // R6.2 part C: the GPC datum of the GH group
             var drafts = new LegacyBeamDraft[beams.Count];
             try { for (int i = 0; i < beams.Count; i++) drafts[i] = beams[i].Gpc; }
             catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException) { return null; }

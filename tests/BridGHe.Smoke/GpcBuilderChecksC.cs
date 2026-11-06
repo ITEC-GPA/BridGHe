@@ -61,7 +61,72 @@ internal static class GpcBuilderChecksC
             One(h, "PlatePropertyComponent", (0, "Plate " + type), (1, type), (2, 250.0), (3, 220.0), (4, concrete));
         One(h, "PlatePropertyComponent", (0, "Patch"), (1, 5));
         One(h, "PlatePropertyComponent", (0, "Steel plate"), (1, 0), (2, 20.0), (3, 20.0), (4, steel));
-        h.Finish(39);
+
+        // R6.2 part C, rest: Composite Beam Property (its five outputs) on Concrete Slab Section, the I section and the material components;
+        // variants: both rows of bars with the reinforcement material and n,sh; one row without n,sh (n∞); no bars without the reinforcement
+        // material (the bars of the steel); without concrete; without concrete and bars (the steel property at every output).
+        var rebar = GpcBuilderChecks.Output(h.Run("MaterialRebarComponent", new[] { 0 }, (0, "B450C test")), 0);
+        var girder = One(h, "BeamSectionIComponent", (0, 600.0), (1, 400.0), (2, 2500.0), (3, 30.0), (4, 25.0), (5, 16.0), (6, 0.0));
+        IGH_Goo Slab(params (int Input, object Value)[] inputs) => GpcBuilderChecks.Output(h.Run("BeamSectionConcreteSlabComponent", new int[0], inputs), 0);
+        var slabBoth = Slab((0, 300.0), (1, 3000.0), (2, 4000.0), (3, 50.0), (4, 3000.0), (5, 45.0));
+        var slabTop = Slab((0, 250.0), (1, 2400.5), (2, 2500.0), (3, 60.0));
+        var slabNone = Slab((0, 280.0), (1, 2800.0));
+        var all = new[] { 0, 1, 2, 3, 4 };
+        h.Run("BeamPropertyCompositeComponent", all, (0, "G1 composite"), (1, slabBoth), (2, girder), (3, concrete), (4, steel), (5, rebar), (6, 6.0), (7, 18.0), (8, 15.5));
+        h.Run("BeamPropertyCompositeComponent", all, (0, "G2 composite"), (1, slabTop), (2, i), (3, concrete), (4, steel), (5, rebar), (6, 6.2), (7, 17.75));
+        h.Run("BeamPropertyCompositeComponent", all, (0, "G3 no bars"), (1, slabNone), (2, girder), (3, concrete), (4, steel), (6, 6.0), (7, 18.0), (8, 16.0));
+        h.Run("BeamPropertyCompositeComponent", all, (0, "G4 cracked"), (1, slabBoth), (2, girder), (3, concrete), (4, steel), (5, rebar), (6, 6.0), (7, 18.0), (8, 15.5), (9, false), (10, true));
+        var steelOnly = h.Run("BeamPropertyCompositeComponent", all, (0, "G5 steel"), (1, slabBoth), (2, girder), (3, concrete), (4, steel), (5, rebar), (6, 6.0), (7, 18.0), (9, false), (10, false));
+        if (Enumerable.Range(2, 3).Any(o => !ReferenceEquals(steelOnly[o].First(), steelOnly[1].First()))) h.Failures.Add("C Composite Beam Property: without concrete and bars every property output is the steel property");
+
+        // Group: a root group, a child, a grandchild (the chain of names of the parents); the Group parameter casts a text with its separator.
+        var deck = One(h, "GroupComponent", (0, "Deck"));
+        var pour = One(h, "GroupComponent", (0, "Pour 1"), (1, deck));
+        One(h, "GroupComponent", (0, "Segment A"), (1, pour));
+        GroupCast(h, "Deck::Pour 1::Segment A", 3);
+        GroupCast(h, "Spalle", 1);
+
+        // Beam Section parameter: the units menu converts the internalised section on GPC (a standard and a generic section, two units);
+        // the mirror menu gives a section without recipe (the reader refuses it).
+        SectionMenu(h, rect, "Knm");
+        SectionMenu(h, i, "Knm");
+        SectionMenu(h, generic, "Knm");
+        SectionMenu(h, generic, "IPS");
+        SectionMenu(h, One(h, "BeamSectionCComponent", (0, 100.0), (1, 10.0), (2, 300.0), (3, 8.0)), null);
+        h.Finish(60);
+    }
+
+    /// <summary>The Group parameter casting a text (its protected PreferredCast): the deepest group carries the chain built on GPC.</summary>
+    private static void GroupCast(GpcBuilderChecks h, string text, int depth)
+    {
+        var param = (Grasshopper.Kernel.IGH_Param)Activator.CreateInstance(System.Reflection.Assembly.LoadFrom(BuildPaths.GrasshopperAssembly).GetTypes().Single(t => t.Name == "GroupParam"));
+        var cast = param.GetType().GetMethod("PreferredCast", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var group = (IGH_Goo)cast.Invoke(param, new object[] { new GH_String(text) });
+        h.Runs++;
+        var chain = (IReadOnlyList<string>)group?.GetType().GetProperty("Gpc").GetValue(group);
+        if (group == null || !(bool)group.GetType().GetProperty("HasAttachedGpc").GetValue(group) || chain.Count != depth)
+            h.Failures.Add("C Group parameter cast '" + text + "': no chain built on GPC of " + depth + " names");
+        else h.Attached++;
+    }
+
+    /// <summary>The menus of the Beam Section parameter on an internalised section (their private handlers): <paramref name="units"/>
+    /// converts it from N-mm (the datum built on GPC), null sets the mirror (no datum: refused, as the conversion).</summary>
+    private static void SectionMenu(GpcBuilderChecks h, IGH_Goo section, string units)
+    {
+        var type = System.Reflection.Assembly.LoadFrom(BuildPaths.GrasshopperAssembly).GetTypes().Single(t => t.Name == "BeamSectionParam");
+        var param = (Grasshopper.Kernel.IGH_Param)Activator.CreateInstance(type);
+        var data = param.GetType().GetProperty("PersistentData").GetValue(param);
+        data.GetType().GetMethods().First(m => m.Name == "Append" && m.GetParameters().Length == 1).Invoke(data, new object[] { section });
+        const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        if (units != null) type.GetMethod("OnUnitsClick", F).Invoke(param, new object[] { new System.Windows.Forms.ToolStripMenuItem(units), EventArgs.Empty });
+        else type.GetMethod("OnSetMirror", F).Invoke(param, new object[] { null, EventArgs.Empty });
+        h.Runs++;
+        var result = (IGH_Goo)data.GetType().GetMethod("get_FirstItem").Invoke(data, new object[] { false });
+        bool attached = (bool)result.GetType().GetProperty("HasAttachedGpc").GetValue(result);
+        if (ReferenceEquals(result, section)) h.Failures.Add("C Beam Section menu " + (units ?? "mirror") + ": the section was not replaced");
+        else if (units != null && !attached) h.Failures.Add("C Beam Section menu " + units + ": no recipe built on GPC");
+        else if (units == null && attached) h.Failures.Add("C Beam Section menu mirror: a mirrored section carries a recipe");
+        else if (units != null) h.Attached++;
     }
 }
 #endif

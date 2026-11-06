@@ -77,10 +77,14 @@ namespace BridGHe.Grasshopper.Components.Parameters
                 {
                     if (!string.IsNullOrEmpty(a[i]))
                     {
+                        var parent = group;
                         if (i == 0)
                             group = new GH_Group(new Common.Models.GroupModel(a[i]));
                         else
                             group = new GH_Group(new Common.Models.GroupModel(a[i], group.Value));
+                        // R6.2 part C (dual rule until R6.5): the chain of names built on the GPC datum of the parent.
+                        string name = a[i];
+                        GpcBuilderAttach.Group(group, () => Common.Gpc.Builders.GpcCaseBuilders.Group(name, parent?.Gpc));
                     }
                 }
 
