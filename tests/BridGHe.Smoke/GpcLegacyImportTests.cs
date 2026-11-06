@@ -156,15 +156,27 @@ internal static partial class GpcLegacyImportTests
 
     /// <summary>Every frozen payload read by the reader now: the outcome recorded when it was written (accepted, or refused with the same
     /// error type and message). The number of refusals.</summary>
+    /// <para>Declared by name (P2N, merge of R62A and P2U, 6/11; the frozen index is not rewritten): prescribed node displacements are refused
+    /// on every node with the message of 0.4.0 (user decision of 6/11, lane A), where the reader of the fixtures' commit gave the two former
+    /// messages (restrained and free node).</para>
+    private static readonly Dictionary<string, (string Recorded, string Now)> DeclaredOutcomes = new Dictionary<string, (string, string)>(StringComparer.Ordinal)
+    {
+        ["refusal-prescribed-restrained"] = ("REFUSED NotSupportedException: LegacyPrescribedDisplacementNotMappedYet", "REFUSED NotSupportedException: " + LegacyModelImport.PrescribedDisplacementNotSupported),
+        ["refusal-prescribed-free"] = ("REFUSED NotSupportedException: LegacyNodeLoadNotMappedYet: NodeDisplacementLoadModel", "REFUSED NotSupportedException: " + LegacyModelImport.PrescribedDisplacementNotSupported),
+    };
+
     private static int Outcomes()
     {
-        int refusals = 0;
+        int refusals = 0, declared = 0;
         foreach (var e in LegacyPayloadFixtures.Index())
         {
             string now = LegacyPayloadFixtures.Outcome(e.Name, LegacyPayloadFixtures.Bytes(e.Name));
+            if (DeclaredOutcomes.TryGetValue(e.Name, out var d) && e.Outcome == d.Recorded && now == d.Now) { declared++; refusals++; continue; }
             Assert(now == e.Outcome, $"{e.Name}: the reader gives '{now}', recorded '{e.Outcome}'");
             if (e.Outcome != "ACCEPTED") refusals++;
         }
+        Assert(declared == DeclaredOutcomes.Count, $"the declared outcomes of 0.4.0 (prescribed displacements): {declared} of {DeclaredOutcomes.Count}");
+        Console.WriteLine($"GPC LEGACY IMPORT DECLARED: {declared} frozen payloads refused with the 0.4.0 message of prescribed displacements (user decision of 6/11), recorded with the former messages");
         return refusals;
     }
     /// <summary>The first BGHA1 payload of the example definition <paramref name="file"/> (relative to the example folder) whose root is a
