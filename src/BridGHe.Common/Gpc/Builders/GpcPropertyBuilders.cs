@@ -13,8 +13,7 @@ namespace BridGHe.Common.Gpc.Builders
     /// <para>The section of the property is the one the former component made: a copy of the input section without its name, recomputed
     /// (standard shapes: the same principal angle; a generic section: its explicit values; a native Straus7 section: the explicit values the
     /// former section held, computed from the native section as <c>StrausSection.Calculate</c> did, without the native definition).</para>
-    /// <para>Signature (§1bis, until R6.5): the digest of the former content, that of the conversion of the FEM output, given by the
-    /// component (like the identity of the element drafts); R6.3 moves every draft to the GPC fingerprint.</para>
+    /// <para>Signature (R6.3): the GPC fingerprint of the property (<see cref="LegacyModelImport.PropertySignature"/>), as every draft.</para>
     /// </summary>
     public static class GpcPropertyBuilders
     {
@@ -22,7 +21,7 @@ namespace BridGHe.Common.Gpc.Builders
         private static readonly string[] Types = { "SpringDamper", "Cable", "Truss", "CutoffBar", "PointContact", "Beam", "UserDefined", "Pipe", "Connection" };
 
         /// <summary>The Beam Property component (type index of the former enum; material: the GPC material by kind of the input).</summary>
-        public static LegacyBeamProperty Beam(string name, int type, LegacySectionRecipe section, Material material, string signature)
+        public static LegacyBeamProperty Beam(string name, int type, LegacySectionRecipe section, Material material)
         {
             if (section == null) throw new ArgumentNullException(nameof(section));
             if (material == null) throw new ArgumentNullException(nameof(material));
@@ -36,7 +35,7 @@ namespace BridGHe.Common.Gpc.Builders
             var recipe = PropertySection(section);
             var units = GpcBeamDrafts.DraftUnits;
             var (property, angle, native) = LegacyModelImport.SectionProperty(recipe, name ?? "Property", analysis, units, new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport());
-            return new LegacyBeamProperty(property, new LegacyBeamPropertyData(formulation, angle, native, signature) { Section = recipe });
+            return new LegacyBeamProperty(property, new LegacyBeamPropertyData(formulation, angle, native, LegacyModelImport.PropertySignature(property)) { Section = recipe });
         }
 
         /// <summary>
@@ -63,11 +62,11 @@ namespace BridGHe.Common.Gpc.Builders
 
         /// <summary>R6.2 part C: the «Only Steel Property» of Composite Beam Property: a beam property named <c>name + "OnlySteel"</c> on the I
         /// section the former component made of the dimensions of its steel section (a standard I with its principal angle, no name).</summary>
-        public static LegacyBeamProperty OnlySteel(string name, LegacySectionRecipe steel, Material steelMaterial, string signature)
+        public static LegacyBeamProperty OnlySteel(string name, LegacySectionRecipe steel, Material steelMaterial)
         {
             if (steel == null) throw new ArgumentNullException(nameof(steel));
             var section = GpcSectionBuilders.Standard(BridgeSectionKind.I, steel.D, b1: steel.B1, b2: steel.B2, t1: steel.T1, t2: steel.T2, t3: steel.T3);
-            return Beam(name + "OnlySteel", 5, section, steelMaterial, signature);
+            return Beam(name + "OnlySteel", 5, section, steelMaterial);
         }
 
         /// <summary>
@@ -76,7 +75,7 @@ namespace BridGHe.Common.Gpc.Builders
         /// area and inertias divided by n, torsion of the steel alone, shear areas, centroid, angle 0, the composite preview), named
         /// <c>name + suffix</c>, a beam of the analysis material of the steel.
         /// </summary>
-        public static LegacyBeamProperty Homogenised(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition definition, double n, string suffix, Material steelMaterial, string signature)
+        public static LegacyBeamProperty Homogenised(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition definition, double n, string suffix, Material steelMaterial)
         {
             if (definition == null) throw new ArgumentNullException(nameof(definition));
             if (steelMaterial == null) throw new ArgumentNullException(nameof(steelMaterial));
@@ -88,7 +87,7 @@ namespace BridGHe.Common.Gpc.Builders
             };
             var (property, angle, native) = LegacyModelImport.SectionProperty(recipe, definition.Name + suffix, GpcMaterials.Analysis(steelMaterial), GpcBeamDrafts.DraftUnits,
                 new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport());
-            return new LegacyBeamProperty(property, new LegacyBeamPropertyData(BeamFormulation.StraightTwoNode, angle, native, signature) { Section = recipe });
+            return new LegacyBeamProperty(property, new LegacyBeamPropertyData(BeamFormulation.StraightTwoNode, angle, native, LegacyModelImport.PropertySignature(property)) { Section = recipe });
         }
 
         /// <summary>The section a former Beam Property made of its input section (see the class).</summary>

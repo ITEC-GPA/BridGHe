@@ -46,7 +46,7 @@ public static class BridgeSlabGrillage
             if(analysisMaterial!=null)
                 BridgeGpcProperties.Attach(property,Gpc.Builders.GpcBridgeGeometryBuilders.StandardProperty(property.Name,
                     Gpc.Builders.GpcBridgeGeometryBuilders.StandardSection(Gpc.BridgeSectionKind.SolidRectangle,"",d:thickness,b:b-a),analysisMaterial,
-                    GPC.Model.Structure.Assignments.BeamFormulation.StraightTwoNode,BridgeGpcProperties.FormerSignature(property)));
+                    GPC.Model.Structure.Assignments.BeamFormulation.StraightTwoNode));
         }
         var assignment=BridgeMemberAssignment.Assign(subset,new Dictionary<int,BeamPropertyModel>(),rules);
         if(assignment.Unassigned.Length!=0) throw new InvalidOperationException("Unassigned transverse slab members.");

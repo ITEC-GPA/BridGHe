@@ -89,7 +89,7 @@ namespace BridGHe.Common.Gpc.Legacy
             // e3: what the conversion of the property carries goes with the draft (the model carries it when the property is registered).
             var propertyReport = new LegacyImportReport();
             // e3 point 5: the length unit of a library or BXS section is checked by the assembly, against the units of the model.
-            var property = BeamProperty(p, PropertyName(p), units, new Dictionary<string, (double, double)>(StringComparer.Ordinal), propertyReport, Signature(p), checkLengthUnit: false);
+            var property = BeamProperty(p, PropertyName(p), units, new Dictionary<string, (double, double)>(StringComparer.Ordinal), propertyReport, checkLengthUnit: false);
             records.PropertyCarryList.AddRange(propertyReport.NotExported);
             var cases = ElementCases(b, out var groupOf, records);
             var beam = Beam(b, 0, guid, guid, Point(b["PointFrom"], units), Point(b["PointTo"], units), property.Property, property.Data.Formulation, property.Data.Angle,

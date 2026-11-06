@@ -368,6 +368,29 @@ namespace BridGHe.Common.Gpc.Legacy
         /// from the archive of the FEM model, a string of its own.</summary>
         private static string Fresh(string s) => new string(s.ToCharArray());
 
+        /// <summary>
+        /// R6.3: the load cases of Build Model from the case records of the drafts (the former <c>ModelHelper.GetLoadCases</c> on the FEM
+        /// values): the case of every former load of the nodes, then of the beams, then of the plates, one per name (the first), «Dead» added
+        /// when absent (a «Dead» with another definition is refused, «Dead load case error»), sorted as the former cases sorted («Dead» first,
+        /// then by name with the comparison of the current culture). They check the cases of the combinations and fill the case menus of the
+        /// Load Combinations parameter and of Staged Construction.
+        /// </summary>
+        public static IReadOnlyList<LegacyCaseData> Cases(IEnumerable<LegacyElementRecords> nodes, IEnumerable<LegacyElementRecords> beams, IEnumerable<LegacyElementRecords> plates)
+        {
+            var cases = new List<LegacyCaseData>();
+            foreach (var records in nodes.Concat(beams).Concat(plates))
+                foreach (var c in records.LoadCases)
+                    if (!cases.Any(k => k.Name == c.Name)) cases.Add(c);
+            var dead = Builders.GpcCaseBuilders.Case(Builders.GpcCaseBuilders.Dead, false);
+            var given = cases.FirstOrDefault(k => k.Name == dead.Name);
+            if (given == null) cases.Add(dead);
+            else if (given.Inertia != dead.Inertia || given.GravityDirection != dead.GravityDirection || given.GravityValue != dead.GravityValue
+                || given.StructuralMass != dead.StructuralMass || given.NonStructuralMass != dead.NonStructuralMass)
+                throw new NotSupportedException("Dead load case error");
+            cases.Sort((a, b) => a.Name == b.Name ? 0 : a.Name == dead.Name ? -1 : b.Name == dead.Name ? 1 : string.Compare(a.Name, b.Name));
+            return cases;
+        }
+
         public static GpcModels.Conversion Build(string name, BridgeUnits units, double toleranceDefinitionUnits, IReadOnlyList<(Guid Gh, LegacyNodeDraft Draft)> nodes,
             IReadOnlyList<(Guid Gh, LegacyBeamDraft Draft)> beams, IReadOnlyList<(Guid Gh, LegacyPlateDraft Draft)> plates, IReadOnlyList<LegacyCombinationDraft> combinations,
             IReadOnlyList<LegacyStageDraft> stages, BuildCounts counts = null)

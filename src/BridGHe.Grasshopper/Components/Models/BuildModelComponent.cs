@@ -73,15 +73,23 @@ namespace BridGHe.Grasshopper.Components.Models
                 if (!DA.GetData(2, ref units))
                     return;
 
+                // R6.3: Build Model on the GPC data of the GH types: the drafts of the elements (as attached by the GPC builders, read from a
+                // file or converted from the FEM value), the combinations and stages by value; the FEM model is still built beside them for
+                // the consumers not yet on GPC (until R6.4/R6.5).
+                Helpers.ModelHelper.ParseElements(elements, out List<GH_Node> nodes, out List<GH_Beam> beams, out List<GH_Plate> plates);
+                var nodeDrafts = nodes.Select(n => (n.Guid, n.Gpc)).ToList();
+                var beamDrafts = beams.Select(b => (b.Guid, b.Gpc)).ToList();
+                var plateDrafts = plates.Select(p => (p.Guid, p.Gpc)).ToList();
+                var cases = Common.Gpc.Legacy.LegacyBuildModel.Cases(nodeDrafts.Select(d => d.Gpc.Records), beamDrafts.Select(d => d.Gpc.Records), plateDrafts.Select(d => d.Gpc.Records));
                 Helpers.ModelHelper.GetLoadCases(elements, out List<LoadCaseModel> loadCases);
 
                 if (DA.GetDataList(3, combinations))
                 {
-                    // Check the load cases names if the combinatoin is provided by a TextPanel
-                    IEnumerable<string> lcases = combinations.SelectMany(c => c.LoadCases).Select(lc => lc.Name).Distinct();
+                    // Check the load cases names if the combinatoin is provided by a TextPanel (R6.3: on the case records of the drafts)
+                    IEnumerable<string> lcases = combinations.SelectMany(c => c.Gpc.Factors).Select(f => f.Case.Name).Distinct();
                     foreach (string lcase in lcases)
                     {
-                        if (loadCases.Count(lc => lc.Name == lcase) == 0)
+                        if (cases.Count(lc => lc.Name == lcase) == 0)
                         {
                             AddRuntimeMessage(GH_RuntimeMessageLevel.Error, $"The load case {lcase} does not exists.");
                             return;
@@ -92,52 +100,37 @@ namespace BridGHe.Grasshopper.Components.Models
                 // Connect the LoadCombinationsComponent
                 IEnumerable<IGH_Param> combinations_params = Params.Input[3].Sources.Where(s => s.GetType() == typeof(LoadCombinationsParam));
                 foreach (LoadCombinationsParam param in combinations_params)
-                    param.UpdateLoadCases(loadCases);
+                    param.UpdateLoadCases(loadCases, cases);
 
 
                 // Set the load cases in the StagedConstructionComponent
                 foreach (IGH_Param param in Params.Input[4].Sources)
                 {
                     if (param.Attributes.GetTopLevel.DocObject is StagedConstructionComponent scc)
-                        scc.SetLoadCases(loadCases);
+                        scc.SetLoadCases(loadCases, cases);
                 }
 
                 DA.GetDataList(4, stages);
 
                 GH_Model model = new GH_Model((ModelModel.ModelUnits)units, elements, combinations, stages);
                 model.Value.Name = name;
-                // F6 (L12, lead decision of 5/11): a beam belongs to one super element (bridge data of the beam); two attributes with the same
-                // name are one super element. The archived 99 REV003 (Super Element on all members plus the schedule's G<group>) stops here.
-                foreach (var beam in model.Value.Beams)
-                {
-                    var names = beam.Attributes.OfType<SuperElementAttributeModel>().Select(a => a.Value).Distinct(StringComparer.Ordinal).ToArray();
-                    if (names.Length > 1)
-                        throw new ArgumentException($"Beam {beam.BeamId} is in the super elements '{names[0]}' and '{names[1]}' (LegacyBeamInTwoSuperElements): a beam belongs to one super element. Assign each beam to one Super Element.");
-                }
 
                 // F6 chain E (e3, point 4): the GPC input of the model from the drafts of the GH types (Build Model on GPC, the rules of the
-                // former BuildModel and of the legacy reader), compared bit for bit with the conversion of the FEM model by the runners. Every
-                // unit system (e3 point 5): the drafts are in the definition units, the assembly normalises them (coordinator decision 1 of 5/11).
+                // former BuildModel and of the legacy reader). Every unit system (e3 point 5): the drafts are in the definition units, the
+                // assembly normalises them (coordinator decision 1 of 5/11). R6.3: bridges 2 and 3 removed: an error of the GPC assembly is the
+                // error of Build Model (no model; before, a remark and the conversion of the FEM model, which the analysis refused with the same
+                // message), and every draft takes its own property data (all drafts sign with the GPC fingerprint).
+                try
                 {
-                    try
-                    {
-                        Helpers.ModelHelper.ParseElements(elements, out List<GH_Node> nodes, out List<GH_Beam> beams, out List<GH_Plate> plates);
-                        var input = Common.Gpc.Legacy.LegacyBuildModel.Build(name, new Common.Gpc.BridgeUnits(Common.Gpc.BridgeUnits.Parse(((ModelModel.ModelUnits)units).ToString())), Settings.Instance.Tolerance,
-                            nodes.Select(n => (n.Guid, n.Gpc)).ToList(),
-                            // Bridge until the removal of FeMM: a draft built on GPC (Bridge State Override) signs its property with the GPC
-                            // fingerprint, the conversion of a FEM value with the digest of the former content; the registry of the properties
-                            // compares the signatures, so here the draft takes the data of the conversion of its FEM value (same property,
-                            // checked bit for bit by gpc-state-override). After the removal every draft signs with the GPC fingerprint.
-                            beams.Select(b => (b.Guid, b.HasAttachedGpc ? Common.Gpc.GpcBeamDrafts.With(b.Gpc, b.Gpc.Beam, b.Gpc.Bridge, Common.Gpc.GpcBeamDrafts.FromFemm(b.Value).Property) : b.Gpc)).ToList(),
-                            plates.Select(p => (p.Guid, p.Gpc)).ToList(),
-                            combinations.Select(c => Common.Gpc.GpcModels.CombinationDraft(c.Value)).ToList(), stages.Select(s => Common.Gpc.GpcModels.StageDraft(s.Value)).ToList());
-                        model.AttachInput(input);
-                    }
-                    catch (Exception ex) when (ex is NotSupportedException || ex is ArgumentException || ex is InvalidOperationException || ex is System.Runtime.Serialization.SerializationException)
-                    {
-                        // The same error comes from the conversion of the FEM model, which stays the input (temporary bridge, removed with FeMM).
-                        AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, "GPC Build Model: " + ex.Message);
-                    }
+                    var input = Common.Gpc.Legacy.LegacyBuildModel.Build(name, new Common.Gpc.BridgeUnits(Common.Gpc.BridgeUnits.Parse(((ModelModel.ModelUnits)units).ToString())), Settings.Instance.Tolerance,
+                        nodeDrafts, beamDrafts, plateDrafts, combinations.Select(c => c.Gpc).ToList(), stages.Select(s => s.Gpc).ToList());
+                    model.AttachInput(input);
+                }
+                catch (ArgumentException x) when (x.Data[Common.Gpc.Legacy.LegacyAssembly.TwoSuperElementsKey] is string[] two)
+                {
+                    // F6 (L12, lead decision of 5/11): a beam belongs to one super element (bridge data of the beam); two attributes with the same
+                    // name are one super element. The archived 99 REV003 (Super Element on all members plus the schedule's G<group>) stops here.
+                    throw new ArgumentException($"Beam {two[0]} is in the super elements '{two[1]}' and '{two[2]}' (LegacyBeamInTwoSuperElements): a beam belongs to one super element. Assign each beam to one Super Element.");
                 }
 
                 DA.SetData(0, model);

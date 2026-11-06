@@ -14,6 +14,9 @@ namespace BridGHe.Grasshopper.Components.Definitions
     public class StagedConstructionComponent : GH_Component
     {
         protected List<LoadCaseModel> _loadCases;
+        // R6.3: the case records Build Model gives (null after a file is opened: the conversion of the stored FEM cases, until R6.5).
+        private IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> _caseRecords;
+        private IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> CaseRecords => _caseRecords ??= _loadCases.Select(Common.Gpc.GpcModels.CaseDraft).ToArray();
 
         /// <summary>
         /// Initializes a new instance of the StagedConstructionComponent class.
@@ -73,7 +76,7 @@ namespace BridGHe.Grasshopper.Components.Definitions
             // Connect the LoadCombinationsComponent
             IEnumerable<IGH_Param> combinations_params = Params.Input[2].Sources.Where(s => s.GetType() == typeof(LoadCombinationsParam));
             foreach (LoadCombinationsParam param in combinations_params)
-                param.UpdateLoadCases(_loadCases);
+                param.UpdateLoadCases(_loadCases, CaseRecords);
 
             if (combinations.Count == 0)
             {
@@ -90,13 +93,19 @@ namespace BridGHe.Grasshopper.Components.Definitions
             sc.AddGroups(groups.Select(g => g.Value));
             sc.AddLoadCombinations(combinations.Select(c => c.Value));
 
-            DA.SetData(0, new GH_StagedConstruction(sc));
+            var output = new GH_StagedConstruction(sc);
+            // R6.3 (dual rule until R6.5): the stage built on the GPC data of the groups and of the combinations.
+            GpcBuilderAttach.Stage(output, () => Common.Gpc.Builders.GpcCaseBuilders.Stage(name, groups.Select(GpcBuilderAttach.GroupChain).ToArray(),
+                combinations.Select(c => c.Gpc).ToArray(), morph, rotate));
+            DA.SetData(0, output);
         }
 
-        public void SetLoadCases(IEnumerable<LoadCaseModel> loadCases)
+        /// <summary>R6.3: the cases of Build Model, FEM values (until R6.5) and case records.</summary>
+        public void SetLoadCases(IEnumerable<LoadCaseModel> loadCases, IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
         {
             _loadCases.Clear();
             _loadCases.AddRange(loadCases);
+            _caseRecords = caseRecords;
         }
 
         public override bool Write(GH_IWriter writer)
@@ -111,6 +120,7 @@ namespace BridGHe.Grasshopper.Components.Definitions
             if (!base.Read(reader)) return false;
             _loadCases.Clear();
             if (reader.ItemExists("LoadCases")) _loadCases.AddRange(Common.Helpers.ModelArchive.Read<List<LoadCaseModel>>(reader.GetByteArray("LoadCases")));
+            _caseRecords = null;
             return true;
         }
 

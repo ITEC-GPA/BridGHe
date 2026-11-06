@@ -107,7 +107,7 @@ namespace BridGHe.Common.Gpc
             double angle = native != null ? native.ReferenceProperties[10]
                 : property is GPC.Model.ElementProperties.ElasticBeamProperty elastic && elastic.Section?.GetType() == typeof(GPC.Model.Sections.Section)
                     ? ((GPC.Model.Sections.Section)elastic.Section).AngleX1 : 0;
-            string signature = "GPC:" + GPC.Model.Core.ModelValues.Fingerprint(new object[] { property });
+            string signature = Legacy.LegacyModelImport.PropertySignature(property);
             return new LegacyBeamProperty(property, new LegacyBeamPropertyData(formulation, angle, native, signature));
         }
 

@@ -64,6 +64,8 @@ namespace BridGHe.Grasshopper.Components.Definitions
                 }
             }
 
+            // R6.3 (dual rule until R6.5): the combination built on the case records of the inputs.
+            GpcBuilderAttach.Combination(loadCombination, () => Common.Gpc.Builders.GpcCaseBuilders.Combination(name, System.Linq.Enumerable.ToList(System.Linq.Enumerable.Select(loadCases, lc => lc.Gpc)), values));
             DA.SetData(0, loadCombination);
         }
 

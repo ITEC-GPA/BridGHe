@@ -75,10 +75,18 @@ namespace BridGHe.Common.Gpc.Legacy
         public static LegacyBeamProperty BeamProperty(LegacyValue property, BridgeUnits units)
         {
             if (property == null || property.IsNull || !property.Is("BeamPropertyModel")) throw new ArgumentException("LegacyBeamPropertyModelExpected");
-            return BeamProperty(property, PropertyName(property), units, new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport(), Signature(property));
+            return BeamProperty(property, PropertyName(property), units, new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport());
         }
 
-        private static string Digest(string signature) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(signature)));
+        /// <summary>
+        /// R6.3 (bridge 3 removed, decision 4 of the pre-removal point): the signature of a beam property in the drafts, the reports and the
+        /// registry of Build Model: the GPC fingerprint of the property ("GPC:" prefix), one rule for the reader, the GPC builders and the model
+        /// transformers (before: the digest of the former content for a former value, the GPC fingerprint for a property built in GPC, so that
+        /// Build Model took the property data of the conversion of the FEM value of the drafts of Bridge State Override).
+        /// </summary>
+        public static string PropertySignature(BeamProperty property) =>
+            // On a copy: the fingerprint reads the lazy members of a section (its shape), which would change the property it signs.
+            "GPC:" + GPC.Model.Core.ModelValues.Fingerprint(new object[] { GPC.Model.Core.ModelValues.CopyValue(property ?? throw new ArgumentNullException(nameof(property))) });
 
         /// <summary>The GPC material of a beam property of the former exporter (<see cref="GpcMaterials.Elastic"/>: E, ν, G with Use Poisson,
         /// density, thermal expansion, damping, conductivity, specific heat, stress-strain table), the one rule of the reader for every beam
@@ -212,11 +220,11 @@ namespace BridGHe.Common.Gpc.Legacy
 
         /// <param name="checkLengthUnit">False for a draft (definition units, identity factors): the length unit of a library or BXS section
         /// is checked against the units of the model by the assembly (<see cref="LegacyAssembly.NormaliseBeamProperty"/>).</param>
-        private static LegacyBeamProperty BeamProperty(LegacyValue p, string propertyName, BridgeUnits units, Dictionary<string, (double, double)> shearAreas, LegacyImportReport report, string signature,
+        private static LegacyBeamProperty BeamProperty(LegacyValue p, string propertyName, BridgeUnits units, Dictionary<string, (double, double)> shearAreas, LegacyImportReport report,
             bool checkLengthUnit = true)
         {
             var (property, formulation, angle, native, recipe) = Property(p, propertyName, units, shearAreas, report, checkLengthUnit);
-            return new LegacyBeamProperty(property, new LegacyBeamPropertyData(formulation, angle, native, Digest(signature)) { Section = recipe });
+            return new LegacyBeamProperty(property, new LegacyBeamPropertyData(formulation, angle, native, PropertySignature(property)) { Section = recipe });
         }
 
         private static (BeamProperty, BeamFormulation, double, GPC.Converter.Straus7.Straus7SectionDefinition, LegacySectionRecipe) Property(LegacyValue p, string propertyName, BridgeUnits units,

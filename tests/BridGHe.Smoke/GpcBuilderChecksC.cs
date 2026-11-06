@@ -46,9 +46,10 @@ internal static class GpcBuilderChecksC
         One(h, "BeamSectionGenericComponent", (0, 9000.0), (1, 3.0e8), (2, 1.0e7), (3, 2.0e6), (4, 0.0), (5, 0.0), (6, 4000.0), (7, 3000.0), (8, 5.0e5), (9, 1.0e5), (10, -0.0), (11, 300.0), (12, 0.25));
 
         // Load cases: a named case, with the non-structural mass, the default «Dead».
-        One(h, "LoadCaseComponent", (0, "Traffic"), (1, false));
-        One(h, "LoadCaseComponent", (0, "Permanent NSM"), (1, true));
-        One(h, "LoadCaseComponent", (0, "Dead"), (1, false));
+        var traffic = One(h, "LoadCaseComponent", (0, "Traffic"), (1, false));
+        var nsm = One(h, "LoadCaseComponent", (0, "Permanent NSM"), (1, true));
+        var dead = One(h, "LoadCaseComponent", (0, "Dead"), (1, false));
+        var traffic2 = One(h, "LoadCaseComponent", (0, "Traffic"), (1, false));
 
         // Beam and plate properties on the outputs of the material and section components.
         var steel = GpcBuilderChecks.Output(h.Run("MaterialSteelComponent", new[] { 0 }, (0, "S355 test"), (1, 2)), 0);
@@ -93,7 +94,44 @@ internal static class GpcBuilderChecksC
         SectionMenu(h, generic, "Knm");
         SectionMenu(h, generic, "IPS");
         SectionMenu(h, One(h, "BeamSectionCComponent", (0, 100.0), (1, 10.0), (2, 300.0), (3, 8.0)), null);
+
+        // R6.3: Load Combination (factors in order; a missing factor 0; the same case twice adds; the same name from another Load Case is
+        // another case; two «Dead» from two components are the same definition), Staged Construction (groups and combinations), the case
+        // update of the Load Combinations parameter (Build Model and Staged Construction: cases removed and added).
+        var c1 = One(h, "LoadCombinationComponent", (0, "ULS 1"), (1, new[] { dead, traffic, nsm }), (2, new[] { 1.35, 1.5, 1.35 }));
+        One(h, "LoadCombinationComponent", (0, "ULS 2"), (1, new[] { dead, traffic, traffic }), (2, new[] { 1.0, 0.75, 0.5 }));
+        One(h, "LoadCombinationComponent", (0, "SLS"), (1, new[] { dead, traffic, nsm }), (2, new[] { 1.0 }));
+        One(h, "LoadCombinationComponent", (0, "Two traffic"), (1, new[] { traffic, traffic2 }), (2, new[] { 1.0, 2.0 }));
+        var deadAgain = One(h, "LoadCaseComponent", (0, "Dead"), (1, false));
+        var c2 = One(h, "LoadCombinationComponent", (0, "Two dead"), (1, new[] { dead, deadAgain, traffic }), (2, new[] { 1.0, 0.35, 1.5 }));
+        One(h, "StagedConstructionComponent", (0, "Stage 1"), (1, new[] { deck, pour }), (2, new[] { c1, c2 }), (3, true), (4, false));
+        One(h, "StagedConstructionComponent", (0, "Stage 2"), (1, new[] { deck }), (2, new[] { c2 }));
+        CombinationUpdate(h, new[] { c1, c2 }, new[] { dead, traffic });
+        CombinationUpdate(h, new[] { c1 }, new[] { dead, nsm, traffic2, One(h, "LoadCaseComponent", (0, "Wind"), (1, false)) });
         h.Finish(60);
+    }
+
+    /// <summary>R6.3: the case update of the Load Combinations parameter (its public UpdateLoadCases, the call of Build Model) on internalised
+    /// copies of combinations: every combination it changes carries the combination built on the case records.</summary>
+    private static void CombinationUpdate(GpcBuilderChecks h, IGH_Goo[] combinations, IGH_Goo[] cases)
+    {
+        var type = System.Reflection.Assembly.LoadFrom(BuildPaths.GrasshopperAssembly).GetTypes().Single(t => t.Name == "LoadCombinationsParam");
+        var param = (Grasshopper.Kernel.IGH_Param)Activator.CreateInstance(type);
+        var data = param.GetType().GetProperty("PersistentData").GetValue(param);
+        foreach (var c in combinations) data.GetType().GetMethods().First(m => m.Name == "Append" && m.GetParameters().Length == 1).Invoke(data, new object[] { c.Duplicate() });
+        using var doc = new Grasshopper.Kernel.GH_Document { Enabled = true };
+        param.CreateAttributes(); doc.AddObject(param, false); doc.NewSolution(false, Grasshopper.Kernel.GH_SolutionMode.Silent);
+        var fem = cases.Select(c => c.GetType().GetProperty("Value").GetValue(c)).ToList();
+        var femList = (System.Collections.IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(fem[0].GetType()));
+        foreach (var f in fem) femList.Add(f);
+        var records = cases.Select(c => (BridGHe.Common.Gpc.Legacy.LegacyCaseData)c.GetType().GetProperty("Gpc").GetValue(c)).ToArray();
+        var updated = param.VolatileData.AllData(true).ToList();
+        if (updated.Count != combinations.Length) h.Failures.Add("C Load Combinations update: " + updated.Count + " combinations collected of " + combinations.Length);
+        type.GetMethod("UpdateLoadCases").Invoke(param, new object[] { femList, records });
+        h.Runs++;
+        foreach (var goo in updated)
+            if (!(bool)goo.GetType().GetProperty("HasAttachedGpc").GetValue(goo)) h.Failures.Add("C Load Combinations update: a changed combination carries no combination built on GPC");
+            else h.Attached++;
     }
 
     /// <summary>The Group parameter casting a text (its protected PreferredCast): the deepest group carries the chain built on GPC.</summary>

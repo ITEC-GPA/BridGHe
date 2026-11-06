@@ -141,22 +141,18 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             GH_BeamProperty steelSectionProp = new GH_BeamProperty(onlySteelBeamPropModel);
 
             // R6.2 part C (P2N, dual rule of §1bis until R6.5): the five outputs built on the GPC data of the inputs (the recipe of the steel
-            // section, the GPC materials by kind; the slab is its numbers); the signatures of the properties from the conversion of their FEM
-            // values until R6.3.
-            var units = Common.Gpc.GpcBeamDrafts.DraftUnits;
+            // section, the GPC materials by kind; the slab is its numbers); R6.3: the properties signed with their GPC fingerprints.
             var steelRecipe = (Func<Common.Gpc.Legacy.LegacySectionRecipe>)(() => steelSection.Gpc);
             var definition = Helpers.GpcBuilderAttach.Composite(section, () => Common.Gpc.Builders.GpcPropertyBuilders.Composite(name, steelRecipe(), slab.Width, slab.Height,
                 slab.TopRebarArea, slab.TopCover, slab.BottomRebarArea, slab.BottomCover, concreteMaterial.Gpc, steelMaterial.Gpc, rebarMaterial?.Gpc, n0, ninf, nShrinkage,
                 considerConcrete, considerRebars));
-            Helpers.GpcBuilderAttach.BeamProperty(steelSectionProp, () => Common.Gpc.Builders.GpcPropertyBuilders.OnlySteel(name, steelRecipe(), steelMaterial.Gpc,
-                Common.Gpc.GpcModels.BeamProperty(onlySteelBeamPropModel, units).Data.Signature));
+            Helpers.GpcBuilderAttach.BeamProperty(steelSectionProp, () => Common.Gpc.Builders.GpcPropertyBuilders.OnlySteel(name, steelRecipe(), steelMaterial.Gpc));
             GH_BeamProperty Homogenised(double n, string suffix)
             {
                 var model = compositeBeamPropertyModel.CreateHomogenizedProperty(n, suffix);
                 var output = new GH_BeamProperty(model);
                 if (definition != null)
-                    Helpers.GpcBuilderAttach.BeamProperty(output, () => Common.Gpc.Builders.GpcPropertyBuilders.Homogenised(definition, n, suffix, steelMaterial.Gpc,
-                        Common.Gpc.GpcModels.BeamProperty(model, units).Data.Signature));
+                    Helpers.GpcBuilderAttach.BeamProperty(output, () => Common.Gpc.Builders.GpcPropertyBuilders.Homogenised(definition, n, suffix, steelMaterial.Gpc));
                 return output;
             }
 

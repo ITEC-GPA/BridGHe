@@ -282,9 +282,8 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
 
             GH_BeamProperty gh_bp = new GH_BeamProperty(bp);
             // R6.2 part C (§1bis, regola doppia): the property built on GPC from the GPC data of the inputs, attached to the FEM value (until R6.5);
-            // the signature of the conversion of the FEM output until R6.5 (like the identity of the element drafts).
-            Helpers.GpcBuilderAttach.BeamProperty(gh_bp, () => Common.Gpc.Builders.GpcPropertyBuilders.Beam(name, type, section.Gpc, material.Gpc,
-                Common.Gpc.GpcModels.BeamProperty(bp, Common.Gpc.GpcBeamDrafts.DraftUnits).Data.Signature));
+            // R6.3: signed with the GPC fingerprint of the property.
+            Helpers.GpcBuilderAttach.BeamProperty(gh_bp, () => Common.Gpc.Builders.GpcPropertyBuilders.Beam(name, type, section.Gpc, material.Gpc));
             DA.SetData(0, gh_bp);
         }
 

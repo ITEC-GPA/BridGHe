@@ -320,7 +320,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 var b = beams[k];
                 var (i, j) = assembly.BeamEnds(Point(b["PointFrom"], units), Point(b["PointTo"], units), k + 1);
                 string signature = Signature(b["BeamProperty"]);
-                var p = assembly.BeamProperty(PropertyName(b["BeamProperty"]), signature, k + 1, name => BeamProperty(b["BeamProperty"], name, units, shearAreas, report, signature));
+                var p = assembly.BeamProperty(PropertyName(b["BeamProperty"]), signature, k + 1, name => BeamProperty(b["BeamProperty"], name, units, shearAreas, report));
                 var ni = assembly.Node(i); var nj = assembly.Node(j);
                 var records = new LegacyElementRecords();
                 var beam = Beam(b, k, GpcIdentity.Derive(owner, "beam:" + k), owner, ni.Position, nj.Position, p.Property, p.Formulation, p.Angle,

@@ -79,9 +79,6 @@ public static class BridgeGpcProperties
         property == null ? throw new ArgumentNullException(nameof(property))
         : Table.TryGetValue(property, out var gpc) ? gpc : Gpc.GpcModels.BeamProperty(property, Gpc.GpcBeamDrafts.DraftUnits);
 
-    /// <summary>The signature of the conversion of a FEM property (the digest of its former content): until R6.3/R6.5 the signature of a GPC
-    /// property a generator builds (passo 53: the signature of the conversion of the FEM value), then the GPC fingerprint.</summary>
-    public static string FormerSignature(BeamPropertyModel property) => Gpc.GpcModels.BeamProperty(property, Gpc.GpcBeamDrafts.DraftUnits).Data.Signature;
 }
 
 /// <summary>

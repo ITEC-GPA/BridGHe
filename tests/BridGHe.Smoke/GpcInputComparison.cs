@@ -104,9 +104,34 @@ internal static class GpcInputComparison
         a = Map(actual.BeamProperties, Property); b = Map(expected.BeamProperties, Property);
         if (a != b) Fail($"beam properties '{a}' / '{b}'");
         a = string.Join(",", actual.ShadowedPropertyBeams.OrderBy(i => i)); b = string.Join(",", expected.ShadowedPropertyBeams.OrderBy(i => i));
-        if (a != b) Fail($"shadowed beams '{a}' / '{b}'");
-        a = string.Join(" | ", actual.Warnings.OrderBy(s => s, StringComparer.Ordinal)); b = string.Join(" | ", expected.Warnings.OrderBy(s => s, StringComparer.Ordinal));
+        var expectedWarnings = expected.Warnings.ToList();
+        if (a != b)
+        {
+            // R6.3, declared by name (ShadowRule): the registry of Build Model compares the GPC signatures of the drafts; beams whose property
+            // has the name of a registered one and the same GPC property (the former content differed in data the GPC property does not hold)
+            // are not shadowed and give no warning; the conversion of the FEM model compares the former content. The beam property data of
+            // every name are the same (compared above), so the beams take the same property either way.
+            var extra = expected.ShadowedPropertyBeams.Except(actual.ShadowedPropertyBeams).ToList();
+            if (actual.ShadowedPropertyBeams.Except(expected.ShadowedPropertyBeams).Any() || extra.Count == 0) Fail($"shadowed beams '{a}' / '{b}'");
+            var remaining = expectedWarnings.ToList();
+            foreach (var w in actual.Warnings) remaining.Remove(w);
+            if (remaining.Count == 0 || remaining.Count > extra.Count || remaining.Any(w => !System.Text.RegularExpressions.Regex.IsMatch(w, "^The beam property .* already exists$")))
+                Fail($"shadowed beams '{a}' / '{b}' (warnings not those of the property registry)");
+            expectedWarnings = expectedWarnings.Where(w => actual.Warnings.Contains(w)).ToList();
+            lock (Shadowed) { Shadowed.TryGetValue(label, out int n); Shadowed[label] = n + extra.Count; }
+        }
+        a = string.Join(" | ", actual.Warnings.OrderBy(s => s, StringComparer.Ordinal)); b = string.Join(" | ", expectedWarnings.OrderBy(s => s, StringComparer.Ordinal));
         if (a != b) Fail($"warnings '{a}' / '{b}'");
+    }
+
+    /// <summary>R6.3 (ShadowRule): the beams not shadowed by Build Model where the conversion of the FEM model shadows them, by label.</summary>
+    internal static readonly Dictionary<string, int> Shadowed = new Dictionary<string, int>(StringComparer.Ordinal);
+    internal const string ShadowRule = "R6.3: the registry of Build Model compares the GPC signatures: same-name properties equal in GPC are one property, without the warning «already exists»";
+
+    /// <summary>Prints the declared shadowing differences (one line), if any.</summary>
+    internal static void PrintShadowed()
+    {
+        lock (Shadowed) if (Shadowed.Count > 0) Console.WriteLine($"DECLARED shadowing: {Shadowed.Values.Sum()} beams in {Shadowed.Count} models x {ShadowRule} ({string.Join(", ", Shadowed.Select(p => p.Key + " " + p.Value))})");
     }
 
     /// <summary>The XML document of a model in a canonical form (null beyond the 2,000,000 objects of the serializer): random (version 4)

@@ -167,10 +167,59 @@ internal static class GpcDraftCapture
             "float tokens: content digest of the beam property Montanti (_iyy, I22 = 37814272 read as 37814270 before the fix)"),
     };
 
+    /// <summary>
+    /// R6.3 (bridges 2 and 3 removed, decision 4 of the pre-removal point): every draft signs its beam property with the GPC fingerprint of
+    /// the property (<c>LegacyModelImport.PropertySignature</c>) instead of the digest of the former content. The digests of the capture map
+    /// to the fingerprints of the GPC properties read back from the captured bytes by the current final reader (beam drafts, beam properties,
+    /// the registered properties of the conversions): in the captured text a digest is replaced by its fingerprint (a declared difference by
+    /// name, the capture is not regenerated); the rest of the text is compared as it is (and the owner GUIDs, made from the content of the
+    /// drafts, by <see cref="RenamedOnly"/>).
+    /// </summary>
+    internal const string SignatureRule = "R6.3: the signature of a beam property is the GPC fingerprint of the property (was the digest of the former content)";
+
+    private static readonly Regex DigestToken = new Regex("(?<![0-9A-F:])[0-9A-F]{64}(?![0-9A-F])", RegexOptions.Compiled);
+
+    /// <summary>The fingerprint of every digest of the reference (filled when a capture is opened for comparison).</summary>
+    private static readonly Dictionary<string, string> SignatureOf = new Dictionary<string, string>(StringComparer.Ordinal);
+
+    private static void MapSignature(string digest, GPC.Model.ElementProperties.BeamProperty property)
+    {
+        if (digest == null || property == null || digest.StartsWith("GPC:", StringComparison.Ordinal)) return;
+        string now = LegacyModelImport.PropertySignature(property);
+        lock (SignatureOf)
+        {
+            if (SignatureOf.TryGetValue(digest, out var known) && known != now) throw new InvalidDataException("Two GPC fingerprints for the digest " + digest + ": " + known + ", " + now);
+            SignatureOf[digest] = now;
+        }
+    }
+
+    /// <summary>R6.3: the digests of the captured entries mapped to the fingerprints of their GPC properties (read back).</summary>
+    private static void MapSignatures(string kind, byte[] data, byte[] records)
+    {
+        switch (kind)
+        {
+            case "beam": { var d = GpcDraftArchive.ReadBeam(data, records); MapSignature(d.Property?.Signature, d.Beam.BeamProperty); break; }
+            case "beam-property": { var p = GpcDraftArchive.ReadBeamProperty(data, records); MapSignature(p.Data.Signature, p.Property); break; }
+            case "conversion":
+            {
+                var c = GpcDraftArchive.ReadConversion(data, records);
+                foreach (var r in c.Report.BeamProperties)
+                    if (c.Model.BeamProperties.TryGetValue(r.Key, out var property)) MapSignature(r.Value.Signature, property);
+                break;
+            }
+        }
+    }
+
     /// <summary>The captured text with the declared digests replaced, and their names (none: the text unchanged).</summary>
     private static (string Text, List<string> Names) WithDeclaredDigests(string captured)
     {
         var names = new List<string>();
+        if (SignatureOf.Count > 0)
+        {
+            bool any = false;
+            captured = DigestToken.Replace(captured, m => SignatureOf.TryGetValue(m.Value, out var now) ? (any = true, now).now : m.Value);
+            if (any) names.Add(SignatureRule);
+        }
         foreach (var (before, after, name) in DeclaredDigests)
             if (captured.Contains(before, StringComparison.Ordinal)) { captured = captured.Replace(before, after, StringComparison.Ordinal); names.Add(name); }
         return (captured, names);
@@ -227,6 +276,49 @@ internal static class GpcDraftCapture
     }
 
     /// <summary>True when the captured text differs from the text now only by a declared difference (<see cref="DeclaredDigests"/>).</summary>
+    /// <summary>
+    /// R6.3 (bridge 3 removed): Build Model takes the drafts as they are; the owner identity of the model, made from the keys of the drafts
+    /// with their signatures, renames the GUIDs (<see cref="SignatureRule"/>), so the bridge data of the model, keyed by beam GUID, come in
+    /// another order (the BRIDGE lines of the report) and their fingerprint changes (and the drafts' bridge records are shared by the model,
+    /// no longer copied through the bridge path: references in the graph the fingerprint reads). Declared for a Build Model output when its
+    /// text, the GUIDs replaced by their ordinals (a bijection in the order of the text), is the captured one but for the BRIDGE lines (the
+    /// same multiset) and the bridge-data fingerprint line, and the bridge data have the same values beam by beam (<see cref="BridgeValues"/>:
+    /// member, super element, section state and the canonical texts of the start and end composite definitions, as a multiset, read back
+    /// from the captured bytes).
+    /// </summary>
+    internal const string SharedCompositeRule = "R6.3: Build Model output: owner GUIDs from the GPC signatures, the bridge data in another GUID order (BRIDGE lines, bridge-data fingerprint), the bridge values equal beam by beam";
+
+    private static bool OnlyBridgeFingerprint(string before, string now, out string detail)
+    {
+        detail = null;
+        var a = before.Split('\n'); var b = now.Split('\n');
+        if (a.Length != b.Length) return false;
+        int differing = 0; var bridgeA = new List<string>(); var bridgeB = new List<string>();
+        for (int i = 0; i < a.Length; i++)
+        {
+            bool la = a[i].StartsWith("BRIDGE ", StringComparison.Ordinal), lb = b[i].StartsWith("BRIDGE ", StringComparison.Ordinal);
+            if (la != lb) return false;
+            if (la) { bridgeA.Add(a[i]); bridgeB.Add(b[i]); continue; }
+            if (a[i] == b[i]) continue;
+            var ma = BridgeFingerprintLine.Match(a[i]); var mb = BridgeFingerprintLine.Match(b[i]);
+            if (!ma.Success || !mb.Success || ma.Groups[1].Value != mb.Groups[1].Value || ++differing > 1) return false;
+        }
+        bridgeA.Sort(StringComparer.Ordinal); bridgeB.Sort(StringComparer.Ordinal);
+        if (!bridgeA.SequenceEqual(bridgeB, StringComparer.Ordinal)) return false;
+        detail = $"the text equal with the GUIDs replaced by their ordinals, {bridgeA.Count} BRIDGE lines in another order{(differing == 1 ? ", the bridge-data fingerprint" : "")}";
+        return true;
+    }
+
+    internal static List<string> BridgeValues(GPC.Checkers.CompositeBridge.BridgeModelData data)
+    {
+        string Def(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition d) => d == null ? "-" : Sha(GpcDraftArchiveChecks.Text(d));
+        var list = data.Beams.Select(b => string.Join("|", b.Member == null ? "-" : GPC.Model.Core.ModelValues.Fingerprint(new object[] { b.Member }), b.SuperElement ?? "-",
+            b.SectionState == null ? "-" : $"{b.SectionState.Behavior} {b.SectionState.ConcreteExcluded} {b.SectionState.ModularRatio:R} {b.SectionState.ClassificationCase} {b.SectionState.PropertyFingerprint}",
+            b.CompositeSection == null ? "-" : Def(b.CompositeSection.Start) + " " + Def(b.CompositeSection.End))).ToList();
+        list.Sort(StringComparer.Ordinal);
+        return list;
+    }
+
     internal static bool Declared(string captured, string now, out string why)
     {
         why = null;
@@ -292,6 +384,13 @@ internal static class GpcDraftCapture
                     n = r.ReadInt32(); e.Text = r.ReadBytes(n);
                     reference.Add(key, e);
                 }
+                // R6.3: the digests of the reference mapped to the fingerprints of their GPC properties (declared signature rule).
+                foreach (var p in reference)
+                {
+                    try { MapSignatures(p.Value.Kind, p.Value.Data, p.Value.Records); }
+                    catch (InvalidDataException) { throw; }
+                    catch (Exception) { /* not read back: counted by the loop below */ }
+                }
                 // (i) on the frozen bytes: every captured entry read back by the current final reader gives the captured text.
                 foreach (var p in reference)
                 {
@@ -308,6 +407,19 @@ internal static class GpcDraftCapture
                     if (Sha(text) != p.Value.Sha) { readBackFailures++; if (failures.Count < 30) failures.Add($"{p.Key}: captured {p.Value.Kind} read back to another text\n" + GpcDraftArchiveChecks.FirstDifference(Inflate(p.Value.Text), text)); }
                 }
             }
+        }
+
+        // Diagnostic (P2N, R6.3): BRIDGHE_CAPTURE_BRIDGE_DIFF=<folder> writes the bridge data of the first differing conversions, now and as
+        // captured (read back), for a comparison of their XML.
+        private int bridgeDumps;
+        private void DumpBridge(object datum, Entry e)
+        {
+            string dir = Environment.GetEnvironmentVariable("BRIDGHE_CAPTURE_BRIDGE_DIFF");
+            if (string.IsNullOrEmpty(dir) || bridgeDumps >= 2 || !(datum is GpcModels.Conversion c) || e.Kind != "conversion") return;
+            bridgeDumps++;
+            Directory.CreateDirectory(dir);
+            File.WriteAllBytes(Path.Combine(dir, bridgeDumps + "-now.xml"), c.Report.Bridge.Save());
+            File.WriteAllBytes(Path.Combine(dir, bridgeDumps + "-captured.xml"), GpcDraftArchive.ReadConversion(e.Data, e.Records).Report.Bridge.Save());
         }
 
         private void Count(string what) { counts.TryGetValue(what, out int c); counts[what] = c + 1; }
@@ -353,8 +465,16 @@ internal static class GpcDraftCapture
             }
             if (Sha(text) == e.Sha) { Count("equal"); return; }
             string captured = Inflate(e.Text);
+            DumpBridge(datum, e);
             if (WithoutGuids(captured) == WithoutGuids(text)) { Count("equal but for GUIDs"); if (identityOnly.Count < 30) identityOnly.Add(key); return; }
             if (Declared(captured, text, out string why)) { Count("declared"); Declare(key, why); return; }
+            // R6.3: a Build Model output (SharedCompositeRule): the GUIDs renamed, the bridge-data fingerprint changed, the bridge values equal.
+            var bridgeNow = datum is GpcModels.Conversion cn && e.Kind == "conversion" ? cn.Report.Bridge
+                : datum is GpcDraftArchiveChecks.ModelDatum mn && e.Kind == "model" ? mn.Model.Data : null;
+            if (bridgeNow != null && OnlyBridgeFingerprint(WithoutGuids(WithDeclaredDigests(captured).Text), WithoutGuids(text), out string renamed)
+                && BridgeValues(bridgeNow).SequenceEqual(BridgeValues(e.Kind == "conversion" ? GpcDraftArchive.ReadConversion(e.Data, e.Records).Report.Bridge
+                    : GpcDraftArchive.ReadModel(e.Data, e.Records).Item1.Data), StringComparer.Ordinal))
+            { Count("declared"); Declare(key, SharedCompositeRule + "; owner identity from the content of the drafts: " + renamed); return; }
             Count("different"); if (failures.Count < 30) failures.Add(key + ": differs from the capture (GUIDs replaced by their ordinals)\n" + GpcDraftArchiveChecks.FirstDifference(WithoutGuids(captured), WithoutGuids(text)));
         }
 

@@ -50,6 +50,7 @@ namespace BridGHe.Common.Gpc
             var definitionOf = girderDrafts.Select((b, i) => (b.Beam.Name, Definition: mappedDefinitions[i])).ToDictionary(p => p.Name, p => p.Definition, StringComparer.Ordinal);
             var girders = new List<LegacyBeamDraft>(); var others = new List<LegacyBeamDraft>();
             var variants = new Dictionary<(string Segment, bool Cracked, double Mass), ElasticBeamProperty>();
+            var recipes = new Dictionary<(string Segment, bool Cracked, double Mass), HomogenisedAnalysisProperty>();
             foreach (var draft in beams)
             {
                 var b = draft.Beam;
@@ -78,7 +79,7 @@ namespace BridGHe.Common.Gpc
                     replacement = new ElasticBeamProperty(segment + full.Name + $"_{behavior}_{(cracked ? "C" : "U")}", material, section, values.ShearArea1, values.ShearArea2);
                     if (preserveMass) material.Density = mass / values.Area;
                     if (!double.IsFinite(material.Density) || material.Density < 0) throw new ArgumentException("Invalid physical mass per length.");
-                    variants.Add(key, replacement);
+                    variants.Add(key, replacement); recipes.Add(key, values);
                 }
                 var beam = GPC.Model.Core.ModelValues.CopyValue(b);
                 beam.BeamProperty = replacement;
@@ -94,7 +95,18 @@ namespace BridGHe.Common.Gpc
                 // R6.1 (found by GpcDraftCheck on the native 50): the former component replaces every section state record of the beam with one
                 // (BridgeStateOverride.cs), so the records of the draft count one state, as the reader counts it on the former output.
                 var records = draft.Records.Copy(); records.SectionStates = 1;
-                girders.Add(GpcBeamDrafts.With(draft, beam, bridge, new LegacyBeamPropertyData(BeamFormulation.StraightTwoNode, 0, null, "GPC:" + GPC.Model.Core.ModelValues.Fingerprint(new object[] { replacement }))) with { Records = records });
+                // R6.3 (bridge 3 removed): the data of the property as the reader reads them from the former replacement (the generic section
+                // of the former homogenised property, with its composite preview: the recipe and what it carries), signed with the GPC
+                // fingerprint as every draft; before, Build Model took them from the conversion of the FEM value of the beam.
+                var hv = recipes[key];
+                var recipe = new LegacySectionRecipe
+                {
+                    Kind = BridgeSectionKind.Generic, Name = "", Angle = 0, Area = hv.Area, I11 = hv.I11, I22 = hv.I22, J = hv.J,
+                    CentroidX = hv.CentroidX, CentroidY = hv.CentroidY, ShearA1 = hv.ShearArea1, ShearA2 = hv.ShearArea2, CompositePreview = true,
+                };
+                var data = new LegacyBeamPropertyData(BeamFormulation.StraightTwoNode, 0, null, LegacyModelImport.PropertySignature(replacement)) { Section = recipe };
+                records.PropertyCarryList.Clear(); records.PropertyCarryList.AddRange(Builders.GpcBeamBuilders.PropertyCarries(data));
+                girders.Add(GpcBeamDrafts.With(draft, beam, bridge, data) with { Records = records });
             }
             return new GpcStateOverrideResult(girders.ToArray(), others.ToArray());
         }

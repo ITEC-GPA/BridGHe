@@ -27,7 +27,9 @@ namespace BridGHe.Grasshopper.Components.Parameters
             _loadCases = new List<LoadCaseModel>();
         }
 
-        public void UpdateLoadCases(IEnumerable<LoadCaseModel> loadCases)
+        /// <summary>R6.3: the cases of Build Model or Staged Construction, FEM values (until R6.5) and case records: the combinations of the
+        /// parameter follow them (the FEM value in place, the GPC datum built on the case records, <c>GpcCaseBuilders.UpdatedCombination</c>).</summary>
+        public void UpdateLoadCases(IEnumerable<LoadCaseModel> loadCases, IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
         {
             // Recreate the LoadCase names list
             _loadCases.Clear();
@@ -46,6 +48,9 @@ namespace BridGHe.Grasshopper.Components.Parameters
 
             foreach (GH_LoadCombination combo in combinations)
             {
+                // R6.3: the GPC datum before the change (null when the reader refuses it: the conversion follows the value).
+                Common.Gpc.Legacy.LegacyCombinationDraft before;
+                try { before = combo.Gpc; } catch (Exception x) when (GpcBuilderAttach.Refusal(x)) { before = null; }
                 // Remove the non existing values
                 LoadCaseModel[] to_remove = combo.Value.Values.
                     Where(v => !loadCases.Contains(v.Key, new Common.Helpers.LoadCaseModelsEqualityComparer())).
@@ -62,7 +67,11 @@ namespace BridGHe.Grasshopper.Components.Parameters
                     { combo.Value.Values.Add(loadCase, 1); added = true; }
                 }
                 // R6.1: the FEM value changed in place: its GPC datum follows it.
-                if (added || to_remove.Length > 0) combo.ValueChanged();
+                if (added || to_remove.Length > 0)
+                {
+                    combo.ValueChanged();
+                    if (before != null) GpcBuilderAttach.Combination(combo, () => Common.Gpc.Builders.GpcCaseBuilders.UpdatedCombination(before, caseRecords) ?? before);
+                }
             }
 
             if (changed)

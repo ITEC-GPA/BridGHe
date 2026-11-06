@@ -217,6 +217,7 @@ internal static class GpcBuildModelChecks
         if (v4.Replace(x, "v4") != v4.Replace(y, "v4")) throw new Exception("GPC BUILD MODEL FAIL: BridgeModelData.Save differs beyond the GUIDs of the geometry values");
         Console.WriteLine($"GPC BUILD MODEL: BridgeModelData.Save of equal data {(x == y ? "identical" : "different only by the version 4 GUIDs of the geometry values")} ({v4.Matches(x).Count} in the archive)");
         Console.WriteLine($"GPC BUILD MODEL UNITS: {measured} runs in units other than N-mm, maximum relative difference geometry {unitMaxima[0]:E2}, loads {unitMaxima[1]:E2}, section values {unitMaxima[2]:E2}");
+        GpcInputComparison.PrintShadowed();
         Console.WriteLine($"GPC BUILD MODEL PASS: {compared} Build Model runs, the GPC input equal to the conversion of the FEM output bit for bit in N-mm, measured in the other units (or the same error)");
     }
 }

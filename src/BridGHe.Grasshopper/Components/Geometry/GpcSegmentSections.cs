@@ -34,7 +34,7 @@ internal static class GpcSegmentSections
         {
             var (name, v) = result.Sections[i]; var rule = result.Rules[i];
             var recipe = GpcBridgeGeometryBuilders.StandardSection(BridgeSectionKind.I, name, d: v[2], b1: v[0], b2: v[1], t1: v[3], t2: v[4], t3: v[5]);
-            var property = GpcBridgeGeometryBuilders.StandardProperty(rule.Property.Name, recipe, material, basis.Data.Formulation, BridgeGpcProperties.FormerSignature(rule.Property));
+            var property = GpcBridgeGeometryBuilders.StandardProperty(rule.Property.Name, recipe, material, basis.Data.Formulation);
             BridgeGpcProperties.Attach(rule.Property, property);
             built[i] = (property, recipe);
         }
@@ -62,7 +62,7 @@ internal static class GpcSegmentSections
             string key = Key(d.Bridge.Member); var fem = result.Girders[g++].BeamProperty;
             if (replacements.ContainsKey(key)) continue;
             int k = ids.ToList().IndexOf(key); var source = d.Beam.BeamProperty; var input = properties[k];
-            replacements.Add(key, () => GpcBridgeGeometryBuilders.Replacement(input.Gpc, source, preserveMass, BridgeGpcProperties.FormerSignature(fem)));
+            replacements.Add(key, () => GpcBridgeGeometryBuilders.Replacement(input.Gpc, source, preserveMass));
         }
         g = 0; int o = 0;
         foreach (var d in drafts)

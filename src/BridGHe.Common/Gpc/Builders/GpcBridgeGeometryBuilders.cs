@@ -72,15 +72,16 @@ namespace BridGHe.Common.Gpc.Builders
 
         /// <summary>
         /// Bridge Slab Grillage and Bridge Segment Sections: a beam property on a standard section of the definition units (its recipe, the
-        /// numbers as written: <see cref="LegacySectionRecipe"/>), with the analysis material given (N-mm), the formulation and the signature
-        /// given; the section and its shear areas as the reader builds them from the recipe (<c>LegacyModelImport.SectionProperty</c>).
+        /// numbers as written: <see cref="LegacySectionRecipe"/>), with the analysis material given (N-mm) and the formulation; the section and
+        /// its shear areas as the reader builds them from the recipe (<c>LegacyModelImport.SectionProperty</c>); R6.3: the signature is the GPC
+        /// fingerprint of the property (<see cref="LegacyModelImport.PropertySignature"/>).
         /// </summary>
-        public static LegacyBeamProperty StandardProperty(string propertyName, LegacySectionRecipe recipe, Material analysisMaterial, BeamFormulation formulation, string signature)
+        public static LegacyBeamProperty StandardProperty(string propertyName, LegacySectionRecipe recipe, Material analysisMaterial, BeamFormulation formulation)
         {
             if (recipe == null) throw new ArgumentNullException(nameof(recipe));
             var (property, angle, native) = LegacyModelImport.SectionProperty(recipe, propertyName, GPC.Model.Core.ModelValues.CopyValue(analysisMaterial ?? throw new ArgumentNullException(nameof(analysisMaterial))),
                 GpcBeamDrafts.DraftUnits, new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport(), checkLengthUnit: false);
-            return new LegacyBeamProperty(property, new LegacyBeamPropertyData(formulation, angle, native, signature) { Section = recipe });
+            return new LegacyBeamProperty(property, new LegacyBeamPropertyData(formulation, angle, native, LegacyModelImport.PropertySignature(property)) { Section = recipe });
         }
 
         /// <summary>The recipe of a standard section given by its dimensions (the others 0), as the reader reads a former SectionModel.</summary>
@@ -91,17 +92,17 @@ namespace BridGHe.Common.Gpc.Builders
         /// <summary>
         /// Bridge Segment Override: the replacement property of a concio, the datum of the input property with, when Preserve Mass is on, the
         /// density of its material set to the mass per length of the source girder over the area of the replacement (the areas of the former
-        /// sections, <see cref="GpcSectionMass.LegacyArea"/>), and the signature given (the content changes with the density).
+        /// sections, <see cref="GpcSectionMass.LegacyArea"/>); R6.3: the signature is the GPC fingerprint of the property (it follows the density).
         /// </summary>
-        public static LegacyBeamProperty Replacement(LegacyBeamProperty replacement, BeamProperty source, bool preserveMass, string signature)
+        public static LegacyBeamProperty Replacement(LegacyBeamProperty replacement, BeamProperty source, bool preserveMass)
         {
             if (replacement == null) throw new ArgumentNullException(nameof(replacement));
-            if (!preserveMass) return new LegacyBeamProperty(replacement.Property, replacement.Data with { Signature = signature });
+            if (!preserveMass) return new LegacyBeamProperty(replacement.Property, replacement.Data with { Signature = LegacyModelImport.PropertySignature(replacement.Property) });
             var property = GPC.Model.Core.ModelValues.CopyValue((ElasticBeamProperty)replacement.Property);
             var from = (ElasticBeamProperty)source;
             double mass = from.Material.Density * GpcSectionMass.LegacyArea(from.Section);
             property.Material.Density = GpcBeamBuilders.Z(mass / GpcSectionMass.LegacyArea(property.Section));
-            return new LegacyBeamProperty(property, replacement.Data with { Signature = signature });
+            return new LegacyBeamProperty(property, replacement.Data with { Signature = LegacyModelImport.PropertySignature(property) });
         }
     }
 }

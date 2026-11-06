@@ -76,6 +76,20 @@ namespace BridGHe.Grasshopper.Helpers
             return definition;
         }
 
+        /// <summary>R6.3 (P2N): the combination of Load Combination and of the Load Combinations parameter, with the same refusal rule.</summary>
+        internal static void Combination(GH_LoadCombination target, Func<LegacyCombinationDraft> build)
+        {
+            var combination = Build(build, () => GpcModels.CombinationDraft(target.Value));
+            if (combination != null) target.AttachGpc(combination);
+        }
+
+        /// <summary>R6.3 (P2N): the stage of Staged Construction, with the same refusal rule.</summary>
+        internal static void Stage(GH_StagedConstruction target, Func<LegacyStageDraft> build)
+        {
+            var stage = Build(build, () => GpcModels.StageDraft(target.Value));
+            if (stage != null) target.AttachGpc(stage);
+        }
+
         /// <summary>R6.2 part C (P2N): the chain of names of the group of Group and of the Group parameter (from the root).</summary>
         internal static void Group(GH_Group target, Func<System.Collections.Generic.IReadOnlyList<string>> build)
         {

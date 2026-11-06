@@ -66,17 +66,6 @@ namespace BridGHe.Common.Gpc
             return LegacyModelImport.PlateDraft(LegacyArchive.Read(archive), DraftUnits, guid);
         }
 
-        /// <summary>Bridge 3 (until R6.3), for the check of the attached drafts (<see cref="GpcDraftCheck"/>): a draft built on GPC with a GPC
-        /// property (signature "GPC:") with the property data of the conversion of its FEM value and what that property carries (the former
-        /// section carried its composite preview geometry); the rest of the draft as it is. Build Model takes the property data the same way.</summary>
-        public static LegacyBeamDraft WithPropertyOf(LegacyBeamDraft draft, LegacyBeamDraft conversion)
-        {
-            if (draft == null) throw new ArgumentNullException(nameof(draft));
-            if (conversion == null) throw new ArgumentNullException(nameof(conversion));
-            var records = draft.Records.Copy(); records.PropertyCarryList.Clear(); records.PropertyCarryList.AddRange(conversion.Records.PropertyCarries);
-            return With(draft, draft.Beam, draft.Bridge, conversion.Property) with { Records = records };
-        }
-
         /// <summary>A copy of a draft with another beam and bridge data (the report and the property data of the draft are kept).</summary>
         /// <remarks>R6.1 (found by GpcDraftCheck on the native 50): the bridge data of the report follow the bridge data given (the report of the
         /// conversion of a beam value holds the data of that beam), so the copy describes its beam as the conversion would; the rest of the report

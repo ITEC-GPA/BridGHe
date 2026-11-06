@@ -38,6 +38,17 @@ namespace BridGHe.Common.Gpc.Legacy
     /// </summary>
     public sealed class LegacyAssembly
     {
+        /// <summary>R6.3: the key of <see cref="Exception.Data"/> of the refusal of a beam in two super elements: (beam name, first, second), for
+        /// the former message of Build Model (the refusal stays an <see cref="ArgumentException"/> with the message of the reader).</summary>
+        public const string TwoSuperElementsKey = "LegacyBeamInTwoSuperElements";
+
+        private static ArgumentException TwoSuperElements(string beam, string first, string second)
+        {
+            var x = new ArgumentException($"LegacyBeamInTwoSuperElements: beam {beam} is in the super elements '{first}' and '{second}'; a beam belongs to one super element.");
+            x.Data[TwoSuperElementsKey] = new[] { beam, first, second };
+            return x;
+        }
+
         internal Model Model { get; }
         internal LegacyImportReport Report { get; }
         internal BridgeUnits Units { get; }
@@ -194,7 +205,7 @@ namespace BridGHe.Common.Gpc.Legacy
             if (records.Groups.Count > 1) report.Warn(GPC.Model.Core.Identity.EntityFamily.Beam, beam.Id, $"Straus7 allows assigning only one single group to the beam {beam.Id}", numberInText: true);
             for (int k = 1; k < records.Labels.Count; k++) report.Warn(Model.FamilyOf(beam), beam.Id, $"Element {beam.Name}: only the first Element ID is kept");
             if (records.SuperElements.Count > 1)
-                throw new ArgumentException($"LegacyBeamInTwoSuperElements: beam {beam.Name} is in the super elements '{records.SuperElements[0]}' and '{records.SuperElements[1]}'; a beam belongs to one super element.");
+                throw TwoSuperElements(beam.Name, records.SuperElements[0], records.SuperElements[1]);
             if (records.Members > 1) throw new ArgumentException("LegacyDuplicateBridgeMemberAttribute: beam " + beam.Name);
             if (beam.Attributes.Values.OfType<BeamReleasesAttribute>().Count() > 1) throw new ArgumentException($"Cannot assign more than 1 set of releases for beam {beam.Id}");
             if (records.Tapers > 1) throw new ArgumentException("LegacyDuplicateBeamTaper");
@@ -353,7 +364,9 @@ namespace BridGHe.Common.Gpc.Legacy
             if (!(draft is ElasticBeamProperty elastic)) throw new NotSupportedException("GpcBuildModelPropertyKind: " + draft.GetType().Name);
             var (property, angle, native) = LegacyModelImport.SectionProperty(r, draft.Name, GPC.Model.Core.ModelValues.CopyValue(elastic.Material), Units,
                 new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport());
-            return new LegacyBeamProperty(property, data with { Angle = angle, Native = native });
+            // R6.3: the signature of the property in the model is the GPC fingerprint of the normalised property (the conversion of the FEM
+            // model reads it in N-mm); the drafts compare their signatures in the definition units (the registry, one unit system).
+            return new LegacyBeamProperty(property, data with { Angle = angle, Native = native, Signature = LegacyModelImport.PropertySignature(property) });
         }
 
         /// <summary>Chain E (e3 point 5): the plate property of a draft in N-mm (the reader: the thicknesses ToMm, the material N-mm).</summary>
@@ -606,3 +619,4 @@ namespace BridGHe.Common.Gpc.Legacy
         private static int Compare(Point3d a, Point3d b) { int r = a.X.CompareTo(b.X); if (r != 0) return r; r = a.Y.CompareTo(b.Y); return r != 0 ? r : a.Z.CompareTo(b.Z); }
     }
 }
+

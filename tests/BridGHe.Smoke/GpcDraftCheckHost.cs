@@ -23,14 +23,8 @@ internal static class GpcDraftCheckHost
         object fem;
         try { fem = conversion(); }
         catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException) { fem = null; }
-        // Bridge 3 (until R6.3): a beam draft built on GPC with a GPC property (Bridge State Override: signature "GPC:", no section recipe)
-        // takes, in Build Model, the property data of the conversion of its FEM value; the rest of the draft is compared as it is.
-        if (datum is BridGHe.Common.Gpc.Legacy.LegacyBeamDraft b && b.Property?.Signature?.StartsWith("GPC:", StringComparison.Ordinal) == true
-            && fem is BridGHe.Common.Gpc.Legacy.LegacyBeamDraft f)
-        {
-            datum = GpcBeamDrafts.WithPropertyOf(b, f);
-            type += " (GPC property: the property data of the conversion, bridge 3)";
-        }
+        // R6.3: bridge 3 removed (the drafts of Bridge State Override carry their own property data, signed with the GPC fingerprint as
+        // every draft): compared as they are.
         // R6.2 part C: the Aluminium component (user decision of 6/11): fu 262 on GPC, 165.5 in the conversion of its FEM value (0.3.0), a declared
         // difference by name; every other value of the material compared.
         if (datum is GPC.Model.Materials.AluminiumMaterial && fem is GPC.Model.Materials.Material fm && GpcMaterialKindChecks.DeclaredAluminium((GPC.Model.Materials.Material)datum, fm))

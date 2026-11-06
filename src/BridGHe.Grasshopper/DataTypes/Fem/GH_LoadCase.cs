@@ -65,7 +65,9 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         /// <summary>R6.1: a copy (<c>Duplicate</c>) keeps the datum attached or read and the former payload, for its copy of the same value.</summary>
         private void CarryGpcTo(GH_LoadCase copy)
         {
-            if (_gpc != null && HasAttachedGpc && ReferenceEquals(_gpcOf, Value)) { copy._gpc = _gpc; copy._gpcOf = copy.Value; copy.HasAttachedGpc = true; }
+            // R6.3: the copy of the value is another case (the former copy made a new list of stages, and a case with a list of stages is
+            // compared by reference): the copy carries a copy of the record, the same values in another instance.
+            if (_gpc != null && HasAttachedGpc && ReferenceEquals(_gpcOf, Value)) { copy._gpc = _gpc.HasStageList ? _gpc with { } : _gpc; copy._gpcOf = copy.Value; copy.HasAttachedGpc = true; }
             if (_legacy != null && ReferenceEquals(_legacyOf, Value)) { copy._legacy = _legacy; copy._legacyOf = copy.Value; }
         }
 
