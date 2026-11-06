@@ -45,7 +45,15 @@ public sealed class BridgeBearingsComponent : BridgeUtilityComponent
         da.GetData(5, ref kt); da.GetData(6, ref kr); bool hasFrame = da.GetData(7, ref frame);
         var result = BridgeBearings.Create(g.Value, supports, girders, kinds, angle, kt, kr, hasFrame ? frame : null);
         preview.AddRange(result.Frames.Zip(result.Labels, (f, l) => (f, l)));
-        da.SetDataList(0, result.Nodes.Select(n => new GH_Node(n))); da.SetDataList(1, result.Frames); da.SetDataList(2, result.Labels);
+        // R6.2 lane A (dual rule until R6.5): every node carries its GPC draft, built on GPC by the generator, with the identity of the conversion of
+        // the FEM value of its GH datum (a copy of the generated value).
+        da.SetDataList(0, result.Nodes.Select((n, i) =>
+        {
+            var node = new GH_Node(n);
+            GpcBuilderAttach.Node(node, () => Common.Gpc.GpcDrafts.Reidentify(result.Drafts[i], Common.Gpc.GpcBeamDrafts.Identity(node.Value)));
+            return node;
+        }));
+        da.SetDataList(1, result.Frames); da.SetDataList(2, result.Labels);
     }
     public override BoundingBox ClippingBox
     { get { var b = BoundingBox.Empty; foreach (var p in preview) { b.Union(p.Frame.Origin + new Vector3d(500, 500, 500)); b.Union(p.Frame.Origin - new Vector3d(500, 500, 500)); } return b; } }

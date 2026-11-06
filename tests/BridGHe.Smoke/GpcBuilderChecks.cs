@@ -83,18 +83,8 @@ internal static class GpcBuilderChecksA
     internal static void Regression()
     {
         using var h = new GpcBuilderChecks("A");
-        var p = new Rhino.Geometry.Point3d(1000, 2000, 3000);
-        var dead = GpcBuilderChecks.Output(h.Run("LoadCaseComponent", new int[0], (0, "Dead")), 0);
-        var live = GpcBuilderChecks.Output(h.Run("LoadCaseComponent", new int[0], (0, "Live"), (1, true)), 0);
-        var node = h.Goo("GH_Node", p);
-        // Node Load: one force, a second one in the same case and one in another case (the case instance shared by name), and on a
-        // restrained node (the restraint before the loads in the reader).
-        var one = GpcBuilderChecks.Output(h.Run("NodeLoadComponent", new[] { 0 }, (0, node), (1, dead), (2, new Rhino.Geometry.Vector3d(0, 0, -10000))), 0);
-        var two = GpcBuilderChecks.Output(h.Run("NodeLoadComponent", new[] { 0 }, (0, one), (1, dead), (2, new Rhino.Geometry.Vector3d(1.5, 0, 0))), 0);
-        h.Run("NodeLoadComponent", new[] { 0 }, (0, two), (1, live), (2, new Rhino.Geometry.Vector3d(0, 3e-7, 1e9)));
-        var restrained = GpcBuilderChecks.Output(h.Run("NodeRestraintsComponent", new int[0], (0, h.Goo("GH_Node", p)), (1, new[] { true, true, true }), (2, new[] { false, false, false })), 0);
-        h.Run("NodeLoadComponent", new[] { 0 }, (0, restrained), (1, live), (2, new Rhino.Geometry.Vector3d(-1, -2, -3)));
-        h.Finish(4);
+        // R6.2 lane A (R62A): the runs, the worked example (Node Load) included, are in GpcBuilderChecksA.cs.
+        GpcBuilderChecksARuns.Run(h);
     }
 }
 
