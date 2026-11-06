@@ -1,3 +1,4 @@
 *.bgha1 binary
 *.tsv -text
 *.md -text
+.gitattributes -text
