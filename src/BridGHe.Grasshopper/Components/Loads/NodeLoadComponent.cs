@@ -54,6 +54,9 @@ namespace BridGHe.Grasshopper.Components.Loads
             NodeForceLoadModel load = new NodeForceLoadModel(lc.Value, new Vector3d(force.X, force.Y, force.Z));
             GH_Node newNode = new GH_Node(node);
             newNode.Value.Loads.Add(load);
+            // R6.2 (worked example of the frozen API, §1bis): the GPC draft built on GPC from the draft of the input, with the identity of the
+            // conversion of the FEM output (until R6.5, when the FEM value goes).
+            newNode.AttachGpc(Common.Gpc.Builders.GpcNodeBuilders.WithForce(node.Gpc, lc.Gpc, force.X, force.Y, force.Z, Common.Gpc.GpcBeamDrafts.Identity(newNode.Value)));
             DA.SetData("Node", newNode);
         }
 

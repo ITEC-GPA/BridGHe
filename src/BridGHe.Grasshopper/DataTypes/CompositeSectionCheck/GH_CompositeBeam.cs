@@ -244,13 +244,21 @@ namespace BridGHe.Grasshopper.DataTypes
 
         public override bool Write(GH_IWriter writer)
         {
-            try { writer.SetGuid("Guid", _guid); writer.SetByteArray("Data", Common.Helpers.ModelArchive.Write(Value)); return true; }
+            // R6.1 (§1bis): a composite beam is a reference into an analysed bridge model, not persisted; until R6.5 its FEM value goes in the
+            // transitional chunk only (copies and undo), never in Data.
+            try { writer.SetGuid("Guid", _guid); if (Value != null) writer.SetByteArray(GpcGooPersistence.Femm, Common.Helpers.ModelArchive.Write(Value)); return true; }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
         }
 
         public override bool Read(GH_IReader reader)
         {
-            try { _guid = reader.GetGuid("Guid"); Value = Common.Helpers.ModelArchive.Read<CompositeBeamModel>(reader.GetByteArray("Data")); _startDefinition = _endDefinition = null; return true; }
+            try
+            {
+                _guid = reader.GetGuid("Guid"); _startDefinition = _endDefinition = null;
+                // R6.1: a former payload (0.3.0, Data) is a cache of an analysed model: dropped (Common.Gpc.GpcGooArchive.LegacyCacheMessage).
+                if (!reader.ItemExists(GpcGooPersistence.Femm)) { System.Diagnostics.Debug.WriteLine(Common.Gpc.GpcGooArchive.LegacyCacheMessage); return false; }
+                Value = Common.Helpers.ModelArchive.Read<CompositeBeamModel>(reader.GetByteArray(GpcGooPersistence.Femm)); return true;
+            }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
         }
 

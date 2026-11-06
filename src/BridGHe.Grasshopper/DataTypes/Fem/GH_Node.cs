@@ -105,8 +105,11 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             get
             {
+                // R6.1: the datum attached or read (BGHGPC1), the former payload read by value (BGHA1), otherwise the conversion of the FEM value.
+                if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
+                if (_legacy != null && ReferenceEquals(_legacyOf, Value)) { _gpc = Common.Gpc.GpcLegacyPayloads.Node(_legacy); _gpcOf = Value; HasAttachedGpc = false; return _gpc; }
                 if (Value == null) return null;
-                if (_gpc == null || !ReferenceEquals(_gpcOf, Value)) { _gpc = Common.Gpc.GpcBeamDrafts.FromFemm(Value); _gpcOf = Value; HasAttachedGpc = false; }
+                _gpc = Common.Gpc.GpcBeamDrafts.FromFemm(Value); _gpcOf = Value; HasAttachedGpc = false;
                 return _gpc;
             }
         }
@@ -118,10 +121,23 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public void AttachGpc(Common.Gpc.Legacy.LegacyNodeDraft draft)
         {
             _gpc = draft ?? throw new System.ArgumentNullException(nameof(draft)); _gpcOf = Value; HasAttachedGpc = true;
+            // R6.1 (frozen API for R6.2): the gates compare the attached draft with the conversion of the FEM value, same identity.
+            if (Value != null) { var value = Value; Common.Gpc.GpcDraftCheck.Attached("GH_Node", draft, () => Common.Gpc.GpcBeamDrafts.FromFemm(value, draft.Node.Guid)); }
         }
 
         private Common.Gpc.Legacy.LegacyNodeDraft _gpc;
         private NodeModel _gpcOf;
+        // R6.1: a former payload (BGHA1) read from a file, converted by value on first use while the FEM value read with it is current.
+        private byte[] _legacy;
+        private NodeModel _legacyOf;
+
+        /// <summary>R6.1: a copy of the same content (<c>DuplicateGeometry</c>) keeps the datum attached or read and the former payload;
+        /// a conversion of the FEM value is recomputed. The copy constructor (a copy that a component changes) keeps nothing.</summary>
+        private void CarryGpcTo(GH_Node copy)
+        {
+            if (_gpc != null && HasAttachedGpc && ReferenceEquals(_gpcOf, Value)) { copy._gpc = _gpc; copy._gpcOf = copy.Value; copy.HasAttachedGpc = true; }
+            if (_legacy != null && ReferenceEquals(_legacyOf, Value)) { copy._legacy = _legacy; copy._legacyOf = copy.Value; }
+        }
 
 
         #endregion
@@ -239,6 +255,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 Value = Common.Helpers.ModelArchive.Clone(Value),
                 AnalysedGpc = AnalysedGpc, AnalysedGpcModel = AnalysedGpcModel,
             };
+            CarryGpcTo(copy);
             return copy;
         }
 
@@ -255,13 +272,33 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override bool Write(GH_IWriter writer)
         {
-            try { writer.SetGuid("Guid", _guid); writer.SetByteArray("Data", Common.Helpers.ModelArchive.Write(Value)); return true; }
+            try
+            {
+                writer.SetGuid("Guid", _guid);
+                GpcGooPersistence.Write(writer, () => Common.Gpc.GpcDraftArchive.Write(Gpc), Value == null ? null : Common.Helpers.ModelArchive.Write(Value));
+                return true;
+            }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
         }
 
         public override bool Read(GH_IReader reader)
         {
-            try { _guid = reader.GetGuid("Guid"); Value = Common.Helpers.ModelArchive.Read<NodeModel>(reader.GetByteArray("Data")); return true; }
+            try
+            {
+                _guid = reader.GetGuid("Guid");
+                switch (GpcGooPersistence.Read(reader, out var data, out var records, out var femm))
+                {
+                    case GpcGooPersistence.Kind.Gpc:
+                        var draft = Common.Gpc.GpcDraftArchive.ReadNode(data, records);
+                        Value = femm == null ? null : Common.Helpers.ModelArchive.Read<NodeModel>(femm);
+                        _gpc = draft; _gpcOf = Value; HasAttachedGpc = true; return true;
+                    case GpcGooPersistence.Kind.Legacy:
+                        Value = Common.Helpers.ModelArchive.Read<NodeModel>(femm); _legacy = femm; _legacyOf = Value; return true;
+                    case GpcGooPersistence.Kind.FemmOnly:
+                        Value = Common.Helpers.ModelArchive.Read<NodeModel>(femm); return true;
+                    default: return false;
+                }
+            }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
         }
 

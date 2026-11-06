@@ -31,15 +31,13 @@ public sealed class BridgeWorkflowGoo : GH_Goo<object>
             _ => throw new InvalidOperationException("BridgeWorkflowCopyShapeChanged"),
         };
     }
-    public override bool Write(GH_IWriter writer)
-    {
-        if (!IsValid) return false;
-        writer.SetByteArray("Workflow", ModelArchive.Write(Value)); return true;
-    }
+    // R6.1 (§1bis): the workflow objects are references to analysed models (a cache), not persisted; a former payload ("Workflow", BGHA1
+    // with the FEM source model) is dropped (Common.Gpc.GpcGooArchive.LegacyCacheMessage): the Bridge Action and Phase components rebuild them.
+    public override bool Write(GH_IWriter writer) => true;
     public override bool Read(GH_IReader reader)
     {
         Value = null;
-        if (!reader.ItemExists("Workflow")) return false;
-        Value = ModelArchive.Read<object>(reader.GetByteArray("Workflow")); return IsValid;
+        if (reader.ItemExists("Workflow")) System.Diagnostics.Debug.WriteLine(Common.Gpc.GpcGooArchive.LegacyCacheMessage);
+        return false;
     }
 }

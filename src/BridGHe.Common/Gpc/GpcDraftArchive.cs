@@ -126,6 +126,67 @@ namespace BridGHe.Common.Gpc
             return (GpcGooArchive.ReadBridgeModel(data), new BridgeUnits((DefinitionUnits)r.Units));
         }
 
+        /// <summary>R6.0/R6.1: a model with its conversion report (<c>GH_Model</c> after the removal of FeMM: what the analysis, the export and
+        /// the transformers read besides the model: warnings, carried data, resolved native sections by beam GUID, BridGHe angles, registered
+        /// cases, owner, case origins, data of the registered beam properties, shadowed properties, element load cases, element warnings) and
+        /// the tolerance of the conversion. A native section shared by a beam and a property is written once (the report shares it again).
+        /// The counters of Build Model (<see cref="LegacyImportReport.BuildModel"/>) are diagnostics of one run: not written.</summary>
+        public static (byte[] Data, byte[] Records) Write(GpcModels.Conversion conversion)
+        {
+            if (conversion == null) throw new ArgumentNullException(nameof(conversion));
+            var report = conversion.Report;
+            var r = DraftRecords.Of("model", new LegacyElementRecords(), Without(report));
+            r.HasReport = true; r.Tolerance = conversion.Tolerance; r.RegisteredCases = report.RegisteredCases;
+            var natives = new List<GPC.Converter.Straus7.Straus7SectionDefinition>();
+            int Native(GPC.Converter.Straus7.Straus7SectionDefinition n)
+            {
+                if (n == null) return -1;
+                int i = natives.FindIndex(x => ReferenceEquals(x, n)); if (i >= 0) return i;
+                natives.Add(n); return natives.Count - 1;
+            }
+            r.NativeSections = report.NativeSections.Select(p => new NativeRecord { Beam = p.Key, Index = Native(p.Value) }).ToList();
+            r.CaseOrigins = report.CaseOrigins.Select(p => new CountRecord { Key = p.Key, Count = (int)p.Value }).ToList();
+            r.BeamProperties = report.BeamProperties.Select(p =>
+            {
+                var record = PropertyRecord.Of(p.Value with { Native = null }); record.NativeIndex = Native(p.Value.Native);
+                return new NamedPropertyRecord { Name = p.Key, Property = record };
+            }).ToList();
+            r.ShadowedPropertyBeams = report.ShadowedPropertyBeams.ToList();
+            r.ElementLoadCases = report.ElementLoadCases.Select(c => new ElementCasesRecord { Family = (int)c.Family, Number = c.Number, Cases = c.Cases.ToList() }).ToList();
+            r.Natives = natives.Select(n => n.Save()).ToList();
+            return (GpcGooArchive.BridgeModel(conversion.BridgeModel), Save(r));
+        }
+
+        /// <summary>The conversion of <see cref="Write(GpcModels.Conversion)"/>: the model, its bridge data, the report and the tolerance.</summary>
+        public static GpcModels.Conversion ReadConversion(byte[] data, byte[] records)
+        {
+            var r = Load(records, "model");
+            if (!r.HasReport) throw new SerializationException("BridgheDraftRecordsModelWithoutReport");
+            var model = GpcGooArchive.ReadBridgeModel(data);
+            var report = r.Report(model.Data);
+            report.RegisteredCases = r.RegisteredCases;
+            var natives = (r.Natives ?? new List<byte[]>()).Select(GPC.Converter.Straus7.Straus7SectionDefinition.Load).ToList();
+            GPC.Converter.Straus7.Straus7SectionDefinition Native(int i) => i < 0 ? null : i < natives.Count ? natives[i] : throw new SerializationException("BridgheDraftRecordsNativeIndex");
+            foreach (var n in r.NativeSections ?? new List<NativeRecord>()) report.NativeSections.Add(n.Beam, Native(n.Index));
+            foreach (var o in r.CaseOrigins ?? new List<CountRecord>()) report.CaseOrigins.Add(o.Key, (LegacyCaseOrigins)o.Count);
+            foreach (var p in r.BeamProperties ?? new List<NamedPropertyRecord>()) report.BeamProperties.Add(p.Name, p.Property.Data() with { Native = Native(p.Property.NativeIndex) });
+            report.ShadowedPropertyBeams.UnionWith(r.ShadowedPropertyBeams ?? new List<int>());
+            foreach (var c in r.ElementLoadCases ?? new List<ElementCasesRecord>())
+                report.ElementLoadCases.Add(new LegacyElementCases((GPC.Model.Core.Identity.EntityFamily)c.Family, c.Number, (c.Cases ?? new List<string>()).ToArray()));
+            return new GpcModels.Conversion(model.Model, report, r.Tolerance);
+        }
+
+        /// <summary>A report with the element-level data of a model only (for <see cref="DraftRecords.Of"/>, which refuses model data).</summary>
+        private static LegacyImportReport Without(LegacyImportReport report)
+        {
+            var r = new LegacyImportReport { Units = report.Units, Owner = report.Owner };
+            r.Warnings.AddRange(report.Warnings);
+            foreach (var p in report.NotExported) r.NotExported.Add(p.Key, p.Value);
+            r.ElementWarnings.AddRange(report.ElementWarnings);
+            foreach (var p in report.BeamAngles) r.BeamAngles.Add(p.Key, p.Value);
+            return r;
+        }
+
         /// <summary>A composite property (<c>GH_CompositeBeamProperty</c>): its definition in the contract of the Checker (a bridge data set of
         /// one record, <see cref="GPC.Checkers.CompositeBridge.BridgeModelData.Save"/>).</summary>
         public static byte[] Write(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition definition)
@@ -207,6 +268,17 @@ namespace BridGHe.Common.Gpc
         /// <summary>The BridGHe angle of the beam by its number in the report of a beam draft (number 1).</summary>
         [DataMember(Order = 27)] public List<double[]> BeamAngles;
         [DataMember(Order = 28)] public string PlateType;
+        // Model (R6.0/R6.1): the conversion report besides the fields above (units, owner, warnings, carried, element warnings, angles).
+        [DataMember(Order = 29)] public bool HasReport;
+        [DataMember(Order = 30)] public double Tolerance;
+        [DataMember(Order = 31)] public int RegisteredCases;
+        [DataMember(Order = 32)] public List<NativeRecord> NativeSections;
+        [DataMember(Order = 33)] public List<CountRecord> CaseOrigins;
+        [DataMember(Order = 34)] public List<NamedPropertyRecord> BeamProperties;
+        [DataMember(Order = 35)] public List<int> ShadowedPropertyBeams;
+        [DataMember(Order = 36)] public List<ElementCasesRecord> ElementLoadCases;
+        /// <summary>The distinct native sections of the model in their own format (<see cref="GPC.Converter.Straus7.Straus7SectionDefinition.Save"/>).</summary>
+        [DataMember(Order = 37)] public List<byte[]> Natives;
 
         internal static DraftRecords Of(string kind, LegacyElementRecords records, LegacyImportReport report)
         {
@@ -317,6 +389,15 @@ namespace BridGHe.Common.Gpc
     [DataContract(Name = "Load", Namespace = DraftRecords.Ns)]
     internal sealed class LoadRecord { [DataMember(Order = 0)] public string Kind; [DataMember(Order = 1)] public string Case; }
 
+    [DataContract(Name = "Native", Namespace = DraftRecords.Ns)]
+    internal sealed class NativeRecord { [DataMember(Order = 0)] public Guid Beam; [DataMember(Order = 1)] public int Index; }
+
+    [DataContract(Name = "NamedProperty", Namespace = DraftRecords.Ns)]
+    internal sealed class NamedPropertyRecord { [DataMember(Order = 0)] public string Name; [DataMember(Order = 1)] public PropertyRecord Property; }
+
+    [DataContract(Name = "ElementCases", Namespace = DraftRecords.Ns)]
+    internal sealed class ElementCasesRecord { [DataMember(Order = 0)] public int Family; [DataMember(Order = 1)] public int Number; [DataMember(Order = 2)] public List<string> Cases; }
+
     [DataContract(Name = "Warning", Namespace = DraftRecords.Ns)]
     internal sealed class WarningRecord
     {
@@ -333,6 +414,8 @@ namespace BridGHe.Common.Gpc
         [DataMember(Order = 2)] public byte[] Native;
         [DataMember(Order = 3)] public string Signature;
         [DataMember(Order = 4)] public SectionRecord Section;
+        /// <summary>In a model: the index of the native section in <see cref="DraftRecords.Natives"/> (-1: none; <see cref="Native"/> is then null).</summary>
+        [DataMember(Order = 5)] public int NativeIndex = -1;
 
         internal static PropertyRecord Of(LegacyBeamPropertyData p) => p == null ? null : new PropertyRecord
         {

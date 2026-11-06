@@ -168,6 +168,18 @@ namespace BridGHe.Common.Gpc
             return LegacyModelImport.StageDraft(LegacyArchive.Read(ModelArchive.Write(stage)));
         }
 
+        /// <summary>R6.1: a former load case (the datum of a Load Case parameter) as its case record (<see cref="LegacyModelImport.CaseDraft"/>).</summary>
+        public static LegacyCaseData CaseDraft(LoadCaseModel loadCase) =>
+            LegacyModelImport.CaseDraft(LegacyArchive.Read(ModelArchive.Write(loadCase ?? throw new ArgumentNullException(nameof(loadCase)))));
+
+        /// <summary>R6.1: a former section (the datum of a Beam Section parameter) as its recipe in the definition units (<see cref="LegacyModelImport.SectionDraft"/>).</summary>
+        public static LegacySectionRecipe SectionDraft(SectionModel section) =>
+            LegacyModelImport.SectionDraft(LegacyArchive.Read(ModelArchive.Write(section ?? throw new ArgumentNullException(nameof(section)))));
+
+        /// <summary>R6.1: a former plate property (the datum of a Plate Property parameter) as GPC, definition units (<see cref="LegacyModelImport.PlatePropertyDraft"/>).</summary>
+        public static GPC.Model.ElementProperties.PlateProperty PlatePropertyDraft(PlatePropertyModel property) =>
+            LegacyModelImport.PlatePropertyDraft(LegacyArchive.Read(ModelArchive.Write(property ?? throw new ArgumentNullException(nameof(property)))), GpcBeamDrafts.DraftUnits);
+
         /// <summary>F6 chain E: a former material (the datum of a Material parameter) as the GPC material of a beam property, with the rule
         /// of the conversion of a whole model (<see cref="LegacyModelImport.ElasticMaterial"/>; materials are in N-mm-MPa in every unit
         /// system of the definition).</summary>

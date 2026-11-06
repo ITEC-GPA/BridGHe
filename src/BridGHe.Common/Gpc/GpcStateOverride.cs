@@ -91,7 +91,10 @@ namespace BridGHe.Common.Gpc
                 var sectionState = new BridgeLocalSectionState((GPC.Checkers.CompositeBridge.BridgeActionBehavior)Enum.Parse(typeof(GPC.Checkers.CompositeBridge.BridgeActionBehavior), behavior.ToString()), cracked, n, string.IsNullOrEmpty(state.Case) ? null : state.Case, BridgeWorkflowDefinition.PropertyFingerprint(beam));
                 var bridge = (draft.Bridge ?? new BridgeBeamData(beam.Guid)).WithSectionState(sectionState);
                 // The data of the new property: formulation, principal angle 0, no native section, the GPC content signature (a FEM property had the digest of its former content).
-                girders.Add(GpcBeamDrafts.With(draft, beam, bridge, new LegacyBeamPropertyData(BeamFormulation.StraightTwoNode, 0, null, "GPC:" + GPC.Model.Core.ModelValues.Fingerprint(new object[] { replacement }))));
+                // R6.1 (found by GpcDraftCheck on the native 50): the former component replaces every section state record of the beam with one
+                // (BridgeStateOverride.cs), so the records of the draft count one state, as the reader counts it on the former output.
+                var records = draft.Records.Copy(); records.SectionStates = 1;
+                girders.Add(GpcBeamDrafts.With(draft, beam, bridge, new LegacyBeamPropertyData(BeamFormulation.StraightTwoNode, 0, null, "GPC:" + GPC.Model.Core.ModelValues.Fingerprint(new object[] { replacement }))) with { Records = records });
             }
             return new GpcStateOverrideResult(girders.ToArray(), others.ToArray());
         }

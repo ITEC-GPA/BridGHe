@@ -22,11 +22,25 @@ namespace BridGHe.Common.Gpc
 
         public static LegacyBeamDraft FromFemm(BeamModel beam) => FromFemm(beam, null);
 
+        /// <summary>R6.1 (frozen API for R6.2): the identity the conversion of a FEM value gives its draft (<see cref="FromFemm(BeamModel, Guid?)"/>
+        /// without an identity), for the draft a GPC builder attaches to that value while the FEM value is still built beside it (until R6.5:
+        /// then the identity comes from the GPC draft itself, one change listed in the notes).</summary>
+        public static Guid Identity(BeamModel beam) => GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-beam:" + Convert.ToHexString(SHA256.HashData(Archive(beam))));
+        public static Guid Identity(NodeModel node) => GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-node:" + Convert.ToHexString(SHA256.HashData(Archive(node))));
+        public static Guid Identity(PlateModel plate) => GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-plate:" + Convert.ToHexString(SHA256.HashData(Archive(plate))));
+
+        /// <summary>The archive of a FEM value without its results (the conversion never reads them).</summary>
+        private static byte[] Archive<T>(T value) where T : ElementModel
+        {
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (value.Results.Count != 0) { value = ModelArchive.Clone(value); value.Results.Clear(); }
+            return ModelArchive.Write(value);
+        }
+
         public static LegacyBeamDraft FromFemm(BeamModel beam, Guid? identity)
         {
             if (beam == null) throw new ArgumentNullException(nameof(beam));
-            if (beam.Results.Count != 0) { beam = ModelArchive.Clone(beam); beam.Results.Clear(); }
-            byte[] archive = ModelArchive.Write(beam);
+            byte[] archive = Archive(beam);
             var guid = identity ?? GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-beam:" + Convert.ToHexString(SHA256.HashData(archive)));
             string signature = beam.BeamProperty == null ? null : BridgeSectionAssignment.Signature(beam.BeamProperty);
             return LegacyModelImport.BeamDraft(LegacyArchive.Read(archive), DraftUnits, guid, signature);
@@ -37,8 +51,7 @@ namespace BridGHe.Common.Gpc
         public static LegacyNodeDraft FromFemm(NodeModel node, Guid? identity = null)
         {
             if (node == null) throw new ArgumentNullException(nameof(node));
-            if (node.Results.Count != 0) { node = ModelArchive.Clone(node); node.Results.Clear(); }
-            byte[] archive = ModelArchive.Write(node);
+            byte[] archive = Archive(node);
             var guid = identity ?? GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-node:" + Convert.ToHexString(SHA256.HashData(archive)));
             return LegacyModelImport.NodeDraft(LegacyArchive.Read(archive), DraftUnits, guid);
         }
@@ -48,14 +61,27 @@ namespace BridGHe.Common.Gpc
         public static LegacyPlateDraft FromFemm(PlateModel plate, Guid? identity = null)
         {
             if (plate == null) throw new ArgumentNullException(nameof(plate));
-            if (plate.Results.Count != 0) { plate = ModelArchive.Clone(plate); plate.Results.Clear(); }
-            byte[] archive = ModelArchive.Write(plate);
+            byte[] archive = Archive(plate);
             var guid = identity ?? GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-plate:" + Convert.ToHexString(SHA256.HashData(archive)));
             return LegacyModelImport.PlateDraft(LegacyArchive.Read(archive), DraftUnits, guid);
         }
 
+        /// <summary>Bridge 3 (until R6.3), for the check of the attached drafts (<see cref="GpcDraftCheck"/>): a draft built on GPC with a GPC
+        /// property (signature "GPC:") with the property data of the conversion of its FEM value and what that property carries (the former
+        /// section carried its composite preview geometry); the rest of the draft as it is. Build Model takes the property data the same way.</summary>
+        public static LegacyBeamDraft WithPropertyOf(LegacyBeamDraft draft, LegacyBeamDraft conversion)
+        {
+            if (draft == null) throw new ArgumentNullException(nameof(draft));
+            if (conversion == null) throw new ArgumentNullException(nameof(conversion));
+            var records = draft.Records.Copy(); records.PropertyCarryList.Clear(); records.PropertyCarryList.AddRange(conversion.Records.PropertyCarries);
+            return With(draft, draft.Beam, draft.Bridge, conversion.Property) with { Records = records };
+        }
+
         /// <summary>A copy of a draft with another beam and bridge data (the report and the property data of the draft are kept).</summary>
+        /// <remarks>R6.1 (found by GpcDraftCheck on the native 50): the bridge data of the report follow the bridge data given (the report of the
+        /// conversion of a beam value holds the data of that beam), so the copy describes its beam as the conversion would; the rest of the report
+        /// is kept. Nothing reads the bridge data of a draft report (the assembly takes the bridge data of the draft): no number changes.</remarks>
         public static LegacyBeamDraft With(LegacyBeamDraft draft, GPC.Model.Elements.BeamElement beam, GPC.Checkers.CompositeBridge.BridgeBeamData bridge, LegacyBeamPropertyData property = null) =>
-            new LegacyBeamDraft(beam, bridge, draft.AngleDeg, property ?? draft.Property, draft.Report) { Records = draft.Records };
+            new LegacyBeamDraft(beam, bridge, draft.AngleDeg, property ?? draft.Property, GpcDrafts.WithBridge(draft.Report, bridge)) { Records = draft.Records };
     }
 }

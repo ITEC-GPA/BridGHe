@@ -126,8 +126,28 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             if (_input != null && ReferenceEquals(_inputOf, Value) && _input.Tolerance == tolerance) return _input;
             if (_converted != null && ReferenceEquals(_convertedOf, Value) && _converted.Tolerance == tolerance) return _converted;
             _converted = null; _convertedOf = Value; _gpcError = null;
-            _converted = Common.Gpc.GpcModels.Convert(Value, tolerance);
+            // R6.1 (decision 1 of 6/11): a model read from a former payload (internalised, or the cache of an analysis component) is converted
+            // by value, without its results, whether it was analysed or not; the conversion of the FEM value otherwise (until R6.5).
+            _converted = _legacy != null && ReferenceEquals(_legacyOf, Value)
+                ? Common.Gpc.GpcLegacyPayloads.Model(_legacy, tolerance, out _) ?? throw new InvalidOperationException("GpcLegacyModelWithoutModel")
+                : Common.Gpc.GpcModels.Convert(Value, tolerance);
             return _converted;
+        }
+
+        // R6.1: the former payload (BGHA1) this model was read from, while the FEM value read with it is current.
+        private byte[] _legacy;
+        private ModelModel _legacyOf;
+
+        /// <summary>R6.1 (decision 1 of 6/11): the warning of a model read from a former payload that carried results (they are not read:
+        /// <see cref="Common.Gpc.GpcLegacyPayloads.ResultsDroppedMessage"/>), or null. The components that read this model show it.</summary>
+        public string LegacyNotice
+        {
+            get
+            {
+                lock (gpcLock)
+                    return _legacy != null && Value != null && ReferenceEquals(_legacyOf, Value) && Value.Elements.Any(e => e.Results != null && e.Results.Count != 0)
+                        ? Common.Gpc.GpcLegacyPayloads.ResultsDroppedMessage : null;
+            }
         }
 
         /// <summary>F6 (L12): the bridge data of <see cref="Gpc"/> (members, super elements, local section states by beam GUID): those of the
@@ -206,6 +226,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             {
                 if (_analysed != null && ReferenceEquals(_analysedOf, Value)) { if (_bridge != null && ReferenceEquals(_analysed, _bridge.Model)) copy.AttachBridge(_bridge); else copy.AttachGpc(_analysed); }
                 if (_input != null && ReferenceEquals(_inputOf, Value)) copy.AttachInput(_input);
+                if (_legacy != null && ReferenceEquals(_legacyOf, Value)) lock (copy.gpcLock) { copy._legacy = _legacy; copy._legacyOf = copy.Value; }
             }
         }
 
@@ -334,7 +355,9 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             try
             {
-                writer.SetByteArray("Data", Common.Helpers.ModelArchive.Write(Value));
+                // R6.1: the GPC input with its report (BGHGPC1, GpcDraftArchive.Write(Conversion)); the analysed results stay in the sidecar of
+                // the analysis components. Until R6.5 the FEM model too (transitional chunk) with the GUIDs of its elements.
+                DataTypes.GpcGooPersistence.Write(writer, () => Common.Gpc.GpcDraftArchive.Write(GpcInput), Value == null ? null : Common.Helpers.ModelArchive.Write(Value));
                 writer.SetString("ElementGuids", JsonSerializer.Serialize(Value?.Elements.Select(GetGuid).ToArray() ?? Array.Empty<Guid>()));
                 return true;
             }
@@ -345,7 +368,22 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             try
             {
-                Value = Common.Helpers.ModelArchive.Read<ModelModel>(reader.GetByteArray("Data"));
+                switch (DataTypes.GpcGooPersistence.Read(reader, out var data, out var records, out var femm))
+                {
+                    case DataTypes.GpcGooPersistence.Kind.Gpc:
+                    {
+                        var input = Common.Gpc.GpcDraftArchive.ReadConversion(data, records);
+                        Value = femm == null ? null : Common.Helpers.ModelArchive.Read<ModelModel>(femm);
+                        AttachInput(input); break;
+                    }
+                    case DataTypes.GpcGooPersistence.Kind.Legacy:
+                        Value = Common.Helpers.ModelArchive.Read<ModelModel>(femm);
+                        lock (gpcLock) { _legacy = femm; _legacyOf = Value; }
+                        break;
+                    case DataTypes.GpcGooPersistence.Kind.FemmOnly:
+                        Value = Common.Helpers.ModelArchive.Read<ModelModel>(femm); break;
+                    default: return false;
+                }
                 if (reader.ItemExists("ElementGuids"))
                 {
                     var guids = JsonSerializer.Deserialize<Guid[]>(reader.GetString("ElementGuids"));

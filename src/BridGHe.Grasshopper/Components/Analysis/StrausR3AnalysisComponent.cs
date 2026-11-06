@@ -132,6 +132,8 @@ namespace BridGHe.Grasshopper.Components.Analysis
                 }
             }
             if (_saved.Pending) { string restored = _saved.Restore(_model, outputPath); if (restored != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, restored); }
+            // R6.1 (decision 1 of 6/11): the analysed model of a former file is read without its results.
+            if (_model.LegacyNotice != null && !_model.HasAnalysedGpc) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, _model.LegacyNotice);
             DA.SetData(0, _model);
         }
 

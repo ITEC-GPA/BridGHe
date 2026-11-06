@@ -55,11 +55,14 @@ namespace BridGHe.Grasshopper.Components.Parameters
                 if (to_remove.Length > 0)
                     changed = true;
 
+                bool added = false;
                 foreach (LoadCaseModel loadCase in loadCases)
                 {
                     if (!combo.Value.Values.Keys.Contains(loadCase, new Common.Helpers.LoadCaseModelsEqualityComparer()))
-                        combo.Value.Values.Add(loadCase, 1);
+                    { combo.Value.Values.Add(loadCase, 1); added = true; }
                 }
+                // R6.1: the FEM value changed in place: its GPC datum follows it.
+                if (added || to_remove.Length > 0) combo.ValueChanged();
             }
 
             if (changed)

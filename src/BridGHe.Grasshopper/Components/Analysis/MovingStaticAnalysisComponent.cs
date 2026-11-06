@@ -50,6 +50,8 @@ namespace BridGHe.Grasshopper.Components.Analysis
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Run required: no results for the current model, vehicle and path."); Message = "Run required"; return;
                 }
                 if (_saved.Pending) { string restored = _saved.Restore(_model, path); if (restored != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, restored); }
+                // R6.1 (decision 1 of 6/11): the analysed model of a former file is read without its results.
+                if (_model.LegacyNotice != null && !_model.HasAnalysedGpc) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, _model.LegacyNotice);
                 // C6: the generated cases from the GPC steps of the analysed model when it is there, the FEM result otherwise.
                 var catalog = _model.HasAnalysedGpc ? Common.Gpc.GpcResultCatalog.Of(_model.Gpc) : null;
                 var generated = catalog != null ? catalog.GeneratedMovingCases().Select(c => c.Name).ToArray() : _model.Value.GeneratedMovingCases.OrderBy(c => c.Key).Select(c => c.Value).ToArray();

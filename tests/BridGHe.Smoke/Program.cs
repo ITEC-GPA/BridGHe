@@ -37,7 +37,13 @@ internal static class Program
             if(args.Contains("--legacy-capture-compare")) return LegacyNativeExamplesComparison.CompareCapture(args.SkipWhile(a=>a!="--legacy-capture-compare").Skip(1).First());
             if(args.Contains("--legacy-examples-compare")) return LegacyNativeExamplesComparison.Compare(args.SkipWhile(a=>a!="--legacy-examples-compare").Skip(1).First());
 #endif
+#if GPC_PILOT
+            // R6.1: every GPC datum attached to a GH type is compared with the conversion of its FEM value (GpcDraftCheckHost).
+            GpcDraftCheckHost.Install();
+            return GpcDraftCheckHost.Finish(Run(args));
+#else
             return Run(args);
+#endif
         }
         catch(Exception ex) { Console.Error.WriteLine(ex);return 1; }
         finally { ShutdownDispatcher(); }
