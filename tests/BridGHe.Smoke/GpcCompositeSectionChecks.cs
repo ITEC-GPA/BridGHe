@@ -318,15 +318,19 @@ internal static partial class GpcCompositeSectionChecks
     }
 
     /// <summary>R6.6 native capture (<see cref="NativeParityCapture"/>): the canonical text of the definition of a composite beam at a station,
-    /// as its SHA-256 form: <see cref="DefinitionValues"/>, the section with the steel H named <c>'#'</c> (the lines under
-    /// <c>.SteelSections[</c> whose value is <paramref name="steelName"/>: the former checks named it by the beam, the definitions by the
-    /// composite property) and the input of the H bridge engine for every option set with and without bars.</summary>
+    /// as its SHA-256 form: <see cref="DefinitionValues"/>, the section with the steel H named <c>'#'</c> (only the two name lines of the H,
+    /// <c>.SteelSections[i].Section.Name</c> and <c>.SteelSections[i].Section.SectionShape.Name</c>, when their value is
+    /// <paramref name="steelName"/>: the former checks named it by the beam, the definitions by the composite property; any other line, e.g.
+    /// <c>.SteelMaterial.Name</c>, as it is, even when its value happens to be that name) and the input of the H bridge engine for every option
+    /// set with and without bars.</summary>
+    private static readonly System.Text.RegularExpressions.Regex SteelNamePath = new(@"^\.SteelSections\[\d+\]\.Section(\.SectionShape)?\.Name$");
+
     internal static string Canonical(BridgeCompositeSectionDefinition d, string steelName, BridgeAnalysisOptions[] options)
     {
         var text = new StringBuilder(DefinitionValues(d)).Append('\n');
         string named = "='" + steelName + "'";
         foreach (var line in Dump(d.Section).Split('\n'))
-            text.Append(line.StartsWith(".SteelSections[", StringComparison.Ordinal) && line.EndsWith(named, StringComparison.Ordinal) ? line.Substring(0, line.Length - named.Length) + "='#'" : line).Append('\n');
+            text.Append(line.EndsWith(named, StringComparison.Ordinal) && SteelNamePath.IsMatch(line.Substring(0, line.Length - named.Length)) ? line.Substring(0, line.Length - named.Length) + "='#'" : line).Append('\n');
         foreach (var o in options)
             foreach (bool rebars in new[] { true, false })
                 text.Append(Dump(d.SectionInput(rebars, o)));
