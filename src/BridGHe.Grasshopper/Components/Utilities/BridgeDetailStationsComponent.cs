@@ -41,13 +41,18 @@ public sealed class BridgeDetailStationsComponent : BridgeUtilityComponent
         if (!da.GetData(0, ref model) || !da.GetDataTree(1, out GH_Structure<IGH_Goo> input) || !da.GetDataList(2, locations)
             || !da.GetData(4, ref up) || !da.GetData(5, ref tolerance)) return;
         da.GetDataList(3, phaseGoos);
-        if (model?.Value == null || model.Value.Units != BridGHe.Common.Models.ModelModel.ModelUnits.Nmm) throw new ArgumentException("Model must use N-mm.");
+        // R6.4 (6): with the GPC bridge model of Build BridGHe Model (N-mm by construction) the beams are its beams (ID, ends, length); the
+        // FEM model otherwise (the FEM path of the checks, left to the open decision). Until R6.5 the test host compares the beams of the two.
+        var bridge = model?.GpcBridge;
+        if (model?.Value == null || bridge == null && model.Value.Units != BridGHe.Common.Models.ModelModel.ModelUnits.Nmm) throw new ArgumentException("Model must use N-mm.");
         if (!double.IsFinite(tolerance) || tolerance <= 0 || locations.Count == 0 || locations.Any(p => !p.IsValid)) throw new ArgumentException("Supply valid detail points and positive tolerance.");
         if (phaseGoos.Any(g => g.Value is not BridgePhaseDefinition)) throw new ArgumentException("Phases requires Bridge Phase objects.");
         var phases = phaseGoos.Select(g => (BridgePhaseDefinition)g.Value).ToArray();
         var results = input.AllData(true).Select(g => g?.ScriptVariable() as BridgeStressResult ?? throw new ArgumentException("Expected section results.")).ToArray();
         if (results.Any(r => r.Source == null || r.Stage.GetHistory() != null)) throw new ArgumentException("Use final cumulative results with FEM provenance.");
-        var beams = model.Value.Beams.ToDictionary(b => b.BeamId, StringComparer.Ordinal);
+        var beams = bridge != null ? GpcBeams(bridge) : model.Value.Beams.ToDictionary(b => b.BeamId, b => new Beam(b.PointFrom, b.PointTo, b.Length), StringComparer.Ordinal);
+        if (bridge != null) Common.Gpc.GpcDraftCheck.Attached("Bridge Detail Stations beams", Text(beams),
+            () => Text(model.Value.Beams.ToDictionary(b => b.BeamId, b => new Beam(b.PointFrom, b.PointTo, b.Length), StringComparer.Ordinal)));
         if (results.Any(r => !beams.ContainsKey(r.Source.BeamId))) throw new ArgumentException("Result beam IDs do not belong to this model.");
         var selectedBeams = results.Select(r => r.Source.BeamId).Distinct().Select(id => beams[id]).ToArray();
         var output = new GH_Structure<GH_ObjectWrapper>(); var compression = new GH_Structure<GH_Number>();
@@ -79,4 +84,17 @@ public sealed class BridgeDetailStationsComponent : BridgeUtilityComponent
         da.SetDataTree(0, output); da.SetDataTree(1, compression); da.SetDataTree(2, signed); da.SetDataTree(3, endTypes); da.SetDataTree(4, points);
         if (uplift) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Uplift exists: compression is zero there; bearing anchorage requires a separate check. See Signed reaction.");
     }
+    /// <summary>A beam as the component reads it: its ends and its length (mm).</summary>
+    private sealed record Beam(Point3d PointFrom, Point3d PointTo, double Length);
+
+    /// <summary>R6.4 (6): the beams of the GPC bridge model by their BridGHe ID (the original ID of their source), ends and length as the FEM beam
+    /// gave them (the distance of Rhino between the ends).</summary>
+    private static Dictionary<string, Beam> GpcBeams(Common.Gpc.GpcBridge bridge) => bridge.Model.BeamElements.Values.OrderBy(b => b.Id).ToDictionary(b => b.Source.OriginalId, b =>
+    {
+        var from = new Point3d(b.StartPoint.X, b.StartPoint.Y, b.StartPoint.Z); var to = new Point3d(b.EndPoint.X, b.EndPoint.Y, b.EndPoint.Z);
+        return new Beam(from, to, from.DistanceTo(to));
+    }, StringComparer.Ordinal);
+
+    private static string Text(Dictionary<string, Beam> beams) => string.Join("\n", beams.Select(p => p.Key + " " + R(p.Value.PointFrom) + " " + R(p.Value.PointTo) + " " + p.Value.Length.ToString("R", System.Globalization.CultureInfo.InvariantCulture)));
+    private static string R(Point3d p) => string.Join(",", new[] { p.X, p.Y, p.Z }.Select(v => BitConverter.DoubleToInt64Bits(v).ToString("X16")));
 }
