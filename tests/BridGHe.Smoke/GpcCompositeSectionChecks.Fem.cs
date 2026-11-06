@@ -147,6 +147,13 @@ internal static partial class GpcCompositeSectionChecks
             var former = FormerBeamDefinitions(fem.StartBeamProperty, fem.EndBeamProperty, at, fem.BeamId);
             var now = BeamDefinitions(start, end, at);
             compared += CompareBeam($"{label} {fem.BeamId}", former, now, fem.BeamId, options);
+            // R6.6 native capture: the former definitions of the FEM path, station by station (the rule of the FEM constant section is FEM only).
+            string beamKey = $"definitions|{check.NickName}|{fem.BeamId}";
+            NativeParityCapture.Datum(label, beamKey + "|fem-constant", femConstant.ToString(), null);
+            string stationList = string.Join(",", at.Select(NativeParityCapture.Bits));
+            NativeParityCapture.Datum(label, beamKey + "|stations", stationList, stationList);
+            for (int k = 0; k < at.Length; k++)
+                NativeParityCapture.Datum(label, $"{beamKey}|{k}", Canonical(former[k], fem.BeamId, options), Canonical(now[k], ((SectionH)now[k].Section.SteelSections[0].Section.SectionShape).Name, options));
             nameLines += SteelNameLines($"{label} {fem.BeamId}", former[0].Section, now[0].Section, fem.BeamId, ((SectionH)now[0].Section.SteelSections[0].Section.SectionShape).Name);
             beams++; stations += at.Length;
         }

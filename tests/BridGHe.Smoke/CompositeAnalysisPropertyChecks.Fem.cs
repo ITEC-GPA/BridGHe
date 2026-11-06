@@ -19,12 +19,14 @@ internal static partial class CompositeAnalysisPropertyChecks
 {
     /// <summary>Compares the analysis values of the FEM <paramref name="property"/> with those of its definition; the number of variants
     /// compared (an exception with the first difference otherwise).</summary>
-    internal static int CompareFem(CompositeBeamPropertyModel property, BridgeCompositeSectionDefinition definition, string label)
+    /// <param name="datum">Called with every value compared (what, FEM, definition): the native capture of R6.6.</param>
+    internal static int CompareFem(CompositeBeamPropertyModel property, BridgeCompositeSectionDefinition definition, string label, Action<string, string, string> datum = null)
     {
         int compared = 0;
         void Same(string what, string expected, string actual)
         {
             if (expected != actual) throw new Exception($"COMPOSITE ANALYSIS PROPERTY FAIL ({label}, {property.Name}, {what}): FEM '{expected}' / definition '{actual}'");
+            datum?.Invoke(what, expected, actual);
             compared++;
         }
         if (definition.RebarRows == null) throw new Exception($"COMPOSITE ANALYSIS PROPERTY FAIL ({label}, {property.Name}): definition without rows");
@@ -79,7 +81,9 @@ internal static partial class CompositeAnalysisPropertyChecks
                     if (goo.GetType().GetProperty("Value")?.GetValue(goo) is not CompositeBeamPropertyModel p || p.ConcreteSection?.IsValid != true) continue;
                     if (!seen.Add(Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(ModelArchive.Write(p))))) continue;
                     var definition = (BridgeCompositeSectionDefinition)goo.GetType().GetProperty("Definition").GetValue(goo);
-                    variants += CompareFem(p, definition, label); properties++;
+                    // R6.6 native capture: the FEM values by the fingerprint of the definition (the GPC datum of the property after R6.5).
+                    string key = "composite|" + definition.Fingerprint() + "|";
+                    variants += CompareFem(p, definition, label, (what, fem, gpc) => NativeParityCapture.Datum(label, key + what, NativeParityCapture.Value(fem), NativeParityCapture.Value(gpc))); properties++;
                     if ((p.RebarMaterial?.ReinforcementUltimateStrain ?? 0.1) != 0.1) strains++;
                 }
         if (properties == 0) throw new Exception($"COMPOSITE ANALYSIS PROPERTY FAIL ({label}): no composite property in the outputs");

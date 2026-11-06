@@ -123,11 +123,11 @@ internal static class NativeModularBridgeTests
         if(Input(reportComponent,"Results").VolatileDataCount!=details.Sum(c=>Output(c,"Section result").VolatileDataCount))throw new Exception("Incomplete report result input.");
         string errors=Errors(doc);if(errors.Length>0)throw new Exception("Saved graph still has errors:\n"+errors);
 #if GPC_PILOT
-        C5WorkflowComparison.RequireGpcChecks(Output(merge,"Model").VolatileData.AllData(true).Single(),model,checks,true);
+        C5WorkflowComparison.RequireGpcChecks(Output(merge,"Model").VolatileData.AllData(true).Single(),model,checks,true,"99");
         GpcMergeCheck.Require(merge,"99");
         GpcBridgeComparison.RequireComponent(merge,"99");
         GpcBridgeComparison.RequireGpcLinks(doc,"99"); BuildModelScan.Print(doc,"99"); GpcInputComparison.RequireComponents(doc,"99"); BarLayoutMeasurement.Report(doc,"99"); CompositeAnalysisPropertyChecks.Require(doc,"99"); GpcStateOverrideChecks.MeasureModelAreas(doc,"99");
-        foreach(var check in checks){ GpcSecForcesCheck.Require(check,"99"); GpcCompositeSectionChecks.RequireSuperElementCheck(check,"99"); }
+        foreach(var check in checks){ GpcSecForcesCheck.Require(check,"99"); GpcCompositeSectionChecks.RequireSuperElementCheck(check,"99"); } NativeParityCapture.Close();
 #endif
         ResultFingerprint.Mark("modular checks, details and plots solved");ResultFingerprint.Write("modular-"+Path.GetFileNameWithoutExtension(source),doc);
 #if GPC_PILOT

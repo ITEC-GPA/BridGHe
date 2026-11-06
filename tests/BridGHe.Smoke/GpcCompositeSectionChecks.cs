@@ -309,19 +309,41 @@ internal static partial class GpcCompositeSectionChecks
         return differences;
     }
 
+    /// <summary>The ratios, the offset, the choices, the name and the rows of a definition (doubles by their bits).</summary>
+    internal static string DefinitionValues(BridgeCompositeSectionDefinition d)
+    {
+        static string B(double v) => BitConverter.DoubleToInt64Bits(v).ToString("X16");
+        return string.Join(" ", new[] { d.NLongTerm, d.NShortTerm, d.NShrinkage, d.VerticalOffsetMm }.Select(B))
+            + $" {d.ConsiderConcrete} {d.ConsiderRebar} '{d.Name}' " + (d.RebarRows == null ? "-" : string.Join(" ", new[] { d.RebarRows.TopAreaMm2, d.RebarRows.TopCoverMm, d.RebarRows.BottomAreaMm2, d.RebarRows.BottomCoverMm }.Select(B)) + " " + d.RebarRows.BarsPerRow);
+    }
+
+    /// <summary>R6.6 native capture (<see cref="NativeParityCapture"/>): the canonical text of the definition of a composite beam at a station,
+    /// as its SHA-256 form: <see cref="DefinitionValues"/>, the section with the steel H named <c>'#'</c> (the lines under
+    /// <c>.SteelSections[</c> whose value is <paramref name="steelName"/>: the former checks named it by the beam, the definitions by the
+    /// composite property) and the input of the H bridge engine for every option set with and without bars.</summary>
+    internal static string Canonical(BridgeCompositeSectionDefinition d, string steelName, BridgeAnalysisOptions[] options)
+    {
+        var text = new StringBuilder(DefinitionValues(d)).Append('\n');
+        string named = "='" + steelName + "'";
+        foreach (var line in Dump(d.Section).Split('\n'))
+            text.Append(line.StartsWith(".SteelSections[", StringComparison.Ordinal) && line.EndsWith(named, StringComparison.Ordinal) ? line.Substring(0, line.Length - named.Length) + "='#'" : line).Append('\n');
+        foreach (var o in options)
+            foreach (bool rebars in new[] { true, false })
+                text.Append(Dump(d.SectionInput(rebars, o)));
+        return NativeParityCapture.Sha(text.ToString());
+    }
+
     /// <summary>Compares the definitions of one composite beam per station (former rules / definitions), bit for bit: modular ratios, choices,
     /// rows, the section (but the name of the steel H) and the input of the H bridge engine for every option set, with and without bars. The
     /// number of comparisons.</summary>
     internal static int CompareBeam(string label, BridgeCompositeSectionDefinition[] former, BridgeCompositeSectionDefinition[] gpc, string formerName, BridgeAnalysisOptions[] options)
     {
         if (former.Length != gpc.Length) throw new Exception($"GPC COMPOSITE BEAM FAIL ({label}): {former.Length} / {gpc.Length} stations");
-        static string B(double v) => BitConverter.DoubleToInt64Bits(v).ToString("X16");
         int compared = 0;
         for (int k = 0; k < former.Length; k++)
         {
             BridgeCompositeSectionDefinition a = former[k], b = gpc[k];
-            string Values(BridgeCompositeSectionDefinition d) => string.Join(" ", new[] { d.NLongTerm, d.NShortTerm, d.NShrinkage, d.VerticalOffsetMm }.Select(B))
-                + $" {d.ConsiderConcrete} {d.ConsiderRebar} '{d.Name}' " + (d.RebarRows == null ? "-" : string.Join(" ", new[] { d.RebarRows.TopAreaMm2, d.RebarRows.TopCoverMm, d.RebarRows.BottomAreaMm2, d.RebarRows.BottomCoverMm }.Select(B)) + " " + d.RebarRows.BarsPerRow);
+            string Values(BridgeCompositeSectionDefinition d) => DefinitionValues(d);
             if (Values(a) != Values(b)) throw new Exception($"GPC COMPOSITE BEAM FAIL ({label}, station {k}): ratios, choices or rows: former '{Values(a)}' / GPC '{Values(b)}'");
             string gpcName = ((SectionH)b.Section.SteelSections[0].Section.SectionShape).Name;
             SteelNameLines($"{label}, station {k}", a.Section, b.Section, formerName, gpcName);

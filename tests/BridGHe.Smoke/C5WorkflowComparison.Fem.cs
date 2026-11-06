@@ -11,7 +11,9 @@ internal static partial class C5WorkflowComparison
     /// <summary>C5 in the native runners: Build Bridge Model attached the GPC bridge model, whose recipe (read from the merged objects) is the one the
     /// C1 reader reads from the merged archive (when <paramref name="compareArchive"/>: 8.6 MB for 99, 448 MB for 50), and every Super Element
     /// Check used the GPC workflow executor (no remark of BridGHe's phases).</summary>
-    internal static void RequireGpcChecks(object mergedGoo, BridGHe.Common.Models.ModelModel merged, IEnumerable<Grasshopper.Kernel.GH_Component> checks, bool compareArchive)
+    /// <param name="label">The label of the native run (50, 99): the file of the native capture (<see cref="NativeParityCapture"/>, key
+    /// <c>c5|recipe</c>: the fingerprint of the recipe the C1 reader reads from the FEM merged archive).</param>
+    internal static void RequireGpcChecks(object mergedGoo, BridGHe.Common.Models.ModelModel merged, IEnumerable<Grasshopper.Kernel.GH_Component> checks, bool compareArchive, string label)
     {
         var bridge = (BridGHe.Common.Gpc.GpcBridge)mergedGoo.GetType().GetProperty("GpcBridge").GetValue(mergedGoo);
         if (bridge == null) throw new Exception("C5: Build Bridge Model gave no GPC bridge model.");
@@ -20,6 +22,7 @@ internal static partial class C5WorkflowComparison
         {
             var legacy = LegacyWorkflowImport.Import(LegacyArchive.Read(BridGHe.Common.Helpers.ModelArchive.Write(merged), int.MaxValue), bridge.Model);
             if (legacy.Fingerprint() != bridge.Workflow.Fingerprint()) throw new Exception("C5: the recipe of the merged objects differs from the one of the merged archive.");
+            NativeParityCapture.Datum(label, "c5|recipe", legacy.Fingerprint(), bridge.Workflow.Fingerprint());
         }
         var phases = checks.SelectMany(c => c.RuntimeMessages(Grasshopper.Kernel.GH_RuntimeMessageLevel.Remark)).Where(m => m.StartsWith("Verifiche con le fasi BridGHe", StringComparison.Ordinal)).ToArray();
         if (phases.Length != 0) throw new Exception("C5: a Super Element Check used BridGHe's phases: " + phases[0]);

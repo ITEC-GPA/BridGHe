@@ -38,6 +38,8 @@ internal static class GpcSecForcesCheck
             // The stations of the plots and of Super Element Check from the merged samples of the GPC bridge model: the FEM stations, bit for bit.
             var fromSamples = bridge.SamplesOf(beam.BeamId)?.Select(x => Math.Round(x.Sample.Station, 15)).Distinct().OrderBy(x => x).ToArray();
             if (fromSamples == null || !fromSamples.Select(Bits).SequenceEqual(stations.Select(Bits))) Fail($"beam {beam.BeamId}: stations of the GPC bridge samples differ from the FEM stations");
+            string beamKey = $"forces|{check.NickName}|{i}:{beam.BeamId}";
+            NativeParityCapture.Datum(label, beamKey + "|stations", string.Join(",", stations.Select(Bits)), string.Join(",", fromSamples.Select(Bits)));
             for (int j = 0; j < stations.Length; j++)
             {
                 var path = new GH_Path(i, j); int b = output.Paths.IndexOf(path);
@@ -49,12 +51,14 @@ internal static class GpcSecForcesCheck
                     var a = index.Assemble(stations[j], model.LoadCombinations[c], cs);
                     var total = a.Steel + a.Infinite + a.Instant; if (a.Shrinkage != null) total += a.Shrinkage;
                     if (Token(total) != Token(items[c])) Fail($"{path}, combination {model.LoadCombinations[c].Name}: FEM {Token(total)} / GPC {Token(items[c])}");
+                    NativeParityCapture.Datum(label, $"{beamKey}|{j}|{c}:{model.LoadCombinations[c].Name}", Token(total), Token(items[c]));
                     values += 6;
                 }
                 branches++;
             }
         }
         if (branches != output.PathCount) Fail($"{output.PathCount} output branches, {branches} stations from the FEM results");
+        NativeParityCapture.Datum(label, $"forces|{check.NickName}|branches", branches.ToString(CultureInfo.InvariantCulture), output.PathCount.ToString(CultureInfo.InvariantCulture));
         Console.WriteLine($"GPC SEC FORCES PASS ({label} {check.NickName}): {beams.Length} beams, {branches} stations, forces from the GPC bridge samples equal to the former FEM output ({values} values).");
     }
     /// <summary>Beam Moment Dispatch (chain B): with the beams of an analysed model (their analysed GPC beam) the "States" output, classified from
@@ -76,12 +80,16 @@ internal static class GpcSecForcesCheck
             var expected = BridGHe.Common.Geometry.BeamMomentClassification.Classify(fem, lc, tol, component, sign);
             var actual = c.Params.Output[5].VolatileData.AllData(true).Select(g => (BridGHe.Common.Geometry.BeamMomentState)((IGH_Goo)g).ScriptVariable()).ToArray();
             if (actual.Length != expected.Length) Fail($"{actual.Length} states, {expected.Length} expected");
+            string key = $"dispatch|{components}:{c.NickName}";
+            NativeParityCapture.Datum(label, key + "|count", expected.Length.ToString(CultureInfo.InvariantCulture), actual.Length.ToString(CultureInfo.InvariantCulture));
+            static string State(BridGHe.Common.Geometry.BeamMomentState s) => $"{s.Source.BeamId}|{s.Sign}|{s.Case}|{NativeParityCapture.Bits(s.Minimum)}|{NativeParityCapture.Bits(s.Maximum)}";
             for (int i = 0; i < actual.Length; i++)
             {
                 var a = actual[i]; var e = expected[i];
                 if (!ReferenceEquals(a.Source, e.Source) || a.Sign != e.Sign || a.Case != e.Case || BitConverter.DoubleToInt64Bits(a.Minimum) != BitConverter.DoubleToInt64Bits(e.Minimum)
                     || BitConverter.DoubleToInt64Bits(a.Maximum) != BitConverter.DoubleToInt64Bits(e.Maximum))
                     Fail($"beam {e.Source.BeamId}: GPC {a} / FEM {e}");
+                NativeParityCapture.Datum(label, $"{key}|{i}", State(e), State(a));
             }
             components++; beamsCompared += actual.Length;
         }
@@ -116,6 +124,7 @@ internal static class GpcSecForcesCheck
             }
             var actual = c.Params.Output[2].VolatileData.AllData(true).OfType<GH_Number>().Select(n => n.Value).ToArray();
             if (!actual.Select(Bits).SequenceEqual(expected.Select(Bits))) Fail($"stations: {actual.Length} from GPC, {expected.Count} from the FEM results, or values differ");
+            NativeParityCapture.Datum(label, $"girders|{components}:{c.NickName}|stations", string.Join(",", expected.Select(Bits)), string.Join(",", actual.Select(Bits)));
             components++; stations += actual.Length;
         }
         if (components == 0) throw new Exception("GPC GIRDER RESULTS FAIL (" + label + "): no Bridge Girder Results with data");
