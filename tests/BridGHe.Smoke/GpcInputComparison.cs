@@ -121,9 +121,23 @@ internal static class GpcInputComparison
             text = System.Text.Encoding.UTF8.GetString(stream.ToArray());
             // The element GUIDs of a renumbered snapshot written as those of the conversion they correspond to, before the masking.
             if (replace != null) text = AnyGuid.Replace(text, g => replace.TryGetValue(Guid.Parse(g.Value), out var to) ? to.ToString("D") : g.Value);
-            text = RandomGuid.Replace(text, "v4");
         }
         catch (System.Runtime.Serialization.SerializationException e) when (e.Message.Contains("Maximum number of items")) { return null; }
+        return Canonical(text);
+    }
+
+    /// <summary>P2M (BGHGPC1 (i)): the document of one standalone GPC value (<see cref="GPC.Model.Persistence.ModelValueArchive"/>, root
+    /// <typeparamref name="T"/>), canonical as <see cref="Document"/>.</summary>
+    internal static string ValueDocument<T>(T value) where T : class
+    {
+        using var stream = new MemoryStream(); GPC.Model.Persistence.ModelValueArchive.Save(value, stream);
+        return Canonical(System.Text.Encoding.UTF8.GetString(stream.ToArray()));
+    }
+
+    /// <summary>A DataContract XML document with the random (version 4) GUIDs masked and the references linearised (see <see cref="Document"/>).</summary>
+    internal static string Canonical(string text)
+    {
+        text = RandomGuid.Replace(text, "v4");
         System.Xml.Linq.XNamespace z = "http://schemas.microsoft.com/2003/10/Serialization/", xsi = "http://www.w3.org/2001/XMLSchema-instance";
         var document = System.Xml.Linq.XDocument.Parse(text.TrimStart((char)0xFEFF));
         // Linear: a reference to a value without child elements (a string, a number) is replaced by the value; a reference to an object

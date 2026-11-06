@@ -1236,6 +1236,28 @@ namespace BridGHe.Common.Gpc.Legacy
             }
         }
 
+        /// <summary>BGHGPC1 (ii): a former load case by value (the datum of a Load Case parameter), the record the drafts carry.</summary>
+        public static LegacyCaseData CaseDraft(LegacyValue c)
+        {
+            if (c == null || c.IsNull || !c.Is("LoadCaseModel")) throw new ArgumentException("LegacyLoadCaseModelExpected");
+            return LegacyCaseData.From(c);
+        }
+
+        /// <summary>BGHGPC1 (ii): a former section by value (the datum of a Beam Section parameter): its recipe, the numbers as written.</summary>
+        public static LegacySectionRecipe SectionDraft(LegacyValue s)
+        {
+            if (s == null || s.IsNull || !s.Is("SectionModel")) throw new ArgumentException("LegacySectionModelExpected");
+            if (s.Enum("MirrorType") != "None") throw new NotSupportedException("LegacyMirroredSectionNotMappedYet");
+            return SectionRecipe(s);
+        }
+
+        /// <summary>BGHGPC1 (ii): a former plate property by value (the datum of a Plate Property parameter), with the rule of the plate drafts.</summary>
+        public static PlateProperty PlatePropertyDraft(LegacyValue p, BridgeUnits units)
+        {
+            if (p == null || p.IsNull || !p.Is("PlatePropertyModel")) throw new ArgumentException("LegacyPlatePropertyModelExpected");
+            return PlateProperty(p, PlatePropertyName(p), units);
+        }
+
         private static PlateProperty PlateProperty(LegacyValue p, string name, BridgeUnits units)
         {
             string type = p.Any("PropertyType", "_platePropertyType").Text?.Trim();

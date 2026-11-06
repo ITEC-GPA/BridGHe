@@ -257,6 +257,7 @@ internal static class GpcMaterialKindChecks
         var files = args.SkipWhile(a => a != "--material-scan").Skip(1).Where(a => !a.StartsWith("--")).Select(a => Path.GetFullPath(Path.Combine(ExamplePaths.Root, a))).ToList();
         if (files.Count == 0) files = BuildModelScan.ScopeFiles();
         var tally = new Tally(); int failed = 0, internalised = 0, volatileData = 0;
+        var drafts = new GpcDraftArchiveChecks.Tally(); var materials = new HashSet<Material>(ReferenceEqualityComparer.Instance);
         foreach (var file in files)
         {
             string label = Path.GetRelativePath(ExamplePaths.Root, file);
@@ -298,6 +299,35 @@ internal static class GpcMaterialKindChecks
                         }
                     }
                 }
+                // BGHGPC1 (i): the drafts of the Build Model inputs (and the GPC material of every Material datum) through the final writer and reader.
+                foreach (var build in doc.Objects.OfType<Grasshopper.Kernel.IGH_Component>().Where(c => c.GetType().Name == "BuildModelComponent"))
+                    foreach (var p in build.Params.Input)
+                        foreach (var goo in p.VolatileData.AllData(true))
+                        {
+                            var gpc = goo?.GetType().GetProperty("Gpc")?.GetValue(goo);
+                            if (gpc is LegacyNodeDraft || gpc is LegacyBeamDraft || gpc is LegacyPlateDraft) drafts.Check($"{label}:{build.NickName}/{p.NickName}", gpc);
+                        }
+                foreach (var build in doc.Objects.OfType<Grasshopper.Kernel.IGH_Component>().Where(c => c.GetType().Name == "BuildModelComponent"))
+                    foreach (var goo in build.Params.Output[0].VolatileData.AllData(true))
+                        if (goo?.GetType().GetProperty("GpcInput")?.GetValue(goo) is GpcModels.Conversion conversion)
+                            drafts.Check($"{label}:{build.NickName}/model", new GpcDraftArchiveChecks.ModelDatum(conversion.BridgeModel, conversion.Report.Units));
+                foreach (var p in doc.Objects.SelectMany(o => o is Grasshopper.Kernel.IGH_Component c ? c.Params.Input.Concat(c.Params.Output) : o is Grasshopper.Kernel.IGH_Param q ? new[] { q } : Enumerable.Empty<Grasshopper.Kernel.IGH_Param>()))
+                    foreach (var goo in p.VolatileData.AllData(true))
+                        if (goo?.GetType().Name == "GH_Material" && goo.GetType().GetProperty("Gpc")?.GetValue(goo) is Material material && materials.Add(material))
+                            drafts.Check($"{label}:{p.NickName}", material);
+                // The other GH types of the definition (cases, combinations, stages, beam, plate and composite properties, sections), every datum
+                // as its GH type would carry it, through the final writer and reader.
+                var others = new HashSet<object>(ReferenceEqualityComparer.Instance);
+                foreach (var p in doc.Objects.SelectMany(o => o is Grasshopper.Kernel.IGH_Component c ? c.Params.Input.Concat(c.Params.Output) : o is Grasshopper.Kernel.IGH_Param q ? new[] { q } : Enumerable.Empty<Grasshopper.Kernel.IGH_Param>()))
+                    foreach (var goo in p.VolatileData.AllData(true))
+                    {
+                        var value = goo?.GetType().GetProperty("Value")?.GetValue(goo);
+                        if (!(value is LoadCaseModel || value is LoadCombinationModel || value is StagedConstructionModel || value is BeamPropertyBaseModel || value is PlatePropertyModel || value is SectionModel) || !others.Add(value)) continue;
+                        object draft;
+                        try { draft = GpcDraftArchiveChecks.DraftOf(value); }
+                        catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException) { drafts.Count(value.GetType().Name + " refused by the reader"); continue; }
+                        if (draft != null) drafts.Check($"{label}:{p.NickName}", draft);
+                    }
                 Console.WriteLine($"MATERIAL SCAN {label}: {tally.samples - before} materials");
             }
             catch (Exception e) { failed++; Console.WriteLine($"MATERIAL SCAN {label}: FAILED {e.GetType().Name}: {e.Message}"); }
@@ -305,7 +335,9 @@ internal static class GpcMaterialKindChecks
         Console.WriteLine("Material kinds: " + tally.Kinds);
         foreach (var f in tally.failures) Console.WriteLine("  " + f);
         Console.WriteLine($"MATERIAL SCAN TOTAL {files.Count} files, {failed} failed, {tally.samples} materials ({internalised} internalised, {volatileData} computed), {tally.failures.Count} differences: {tally.Summary}");
-        return failed == 0 && tally.failures.Count == 0 ? 0 : 1;
+        foreach (var d in drafts.Failures) Console.WriteLine("  " + d);
+        Console.WriteLine($"DRAFT SCAN TOTAL (BGHGPC1 (i), the drafts of the Build Model inputs and the GPC materials): {drafts.Summary}; {drafts.Failures.Count} differences");
+        return failed == 0 && tally.failures.Count == 0 && drafts.Failures.Count == 0 ? 0 : 1;
     }
 
     /// <summary>Every former material reachable from a FEM model (beam, plate and composite properties), distinct instances, with the role of

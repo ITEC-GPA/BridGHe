@@ -62,6 +62,24 @@ namespace BridGHe.Common.Gpc
                 property.NInfinite, property.NInstant, property.NShrinkage, property.ConsiderConcrete, property.ConsiderRebar, GpcModels.Material(property.SteelMaterial));
         }
 
+        /// <summary>BGHGPC1 (ii): the definition of a former composite property by value (a BGHA1 payload of a Composite Beam Property
+        /// parameter, read as data), with the rule of <see cref="Definition(CompositeBeamPropertyModel, string)"/> and the name of the property
+        /// as the name of the steel (as <c>GH_CompositeBeam</c>); n,sh absent or NaN: n∞, as the former property.</summary>
+        public static BridgeCompositeSectionDefinition Definition(Legacy.LegacyValue p)
+        {
+            if (p == null || p.IsNull || !p.Is("CompositeBeamPropertyModel")) throw new ArgumentException("LegacyCompositeBeamPropertyModelExpected");
+            var s = p.Field("_steelSection"); var c = p.Field("_concreteSection");
+            var concrete = p.Field("_concreteMaterial"); var steel = p.Field("_steelMaterial"); var rebar = p.Field("_rebarMaterial");
+            string name = p.String("Name");
+            double nInfinite = p.Double("NInfinite"), nShrinkage = p.Has("NShrinkage") ? p.Double("NShrinkage") : double.NaN;
+            if (double.IsNaN(nShrinkage)) nShrinkage = nInfinite;
+            return Create(name, name, s.Double("D"), s.Double("T3"), s.Double("B2"), s.Double("T2"), s.Double("B1"), s.Double("T1"), c.Double("_width"), c.Double("_height"),
+                c.Double("_topRebarArea"), c.Double("_topCover"), c.Double("_bottomRebarArea"), c.Double("_bottomCover"), p.Double("_verticalOffset"),
+                concrete.String("Name"), concrete.Double("SpecificCompressiveStrength"), steel.String("Name"), steel.Double("Modulus"), steel.Double("MinimumYieldStress"),
+                steel.Double("MinimumTensileStress"), rebar.String("Name"), rebar.Double("Modulus"), rebar.Double("MinimumYieldStress"), rebar.Double("MinimumTensileStress"),
+                nInfinite, p.Double("NInstant"), nShrinkage, p.Bool("ConsiderConcrete"), p.Bool("ConsiderRebar"), Legacy.LegacyModelImport.ElasticMaterial(steel));
+        }
+
         /// <summary>The definition of a variable section at the normalised station <paramref name="station"/> (0 at the start, 1 at the end):
         /// every dimension, ratio and material value interpolated linearly, the names, the choices and the material names of the start.</summary>
         public static BridgeCompositeSectionDefinition Definition(CompositeBeamPropertyModel start, CompositeBeamPropertyModel end, double station, string steelName)
