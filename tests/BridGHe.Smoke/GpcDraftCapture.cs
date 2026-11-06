@@ -181,43 +181,53 @@ internal static class GpcDraftCapture
 
     /// <summary>The fingerprint of every digest of the reference (filled when a capture is opened for comparison).</summary>
     private static readonly Dictionary<string, string> SignatureOf = new Dictionary<string, string>(StringComparer.Ordinal);
+    // A digest of the former content does not know the units of the draft (the same former property in kN-m and in N-mm drafts): the
+    // fingerprints of the properties of an entry first (by key), the global map only for a digest with one fingerprint.
+    private static readonly Dictionary<string, Dictionary<string, string>> SignatureOfEntry = new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
+    private static readonly HashSet<string> Ambiguous = new HashSet<string>(StringComparer.Ordinal);
 
-    private static void MapSignature(string digest, GPC.Model.ElementProperties.BeamProperty property)
+    private static void MapSignature(string key, string digest, GPC.Model.ElementProperties.BeamProperty property)
     {
         if (digest == null || property == null || digest.StartsWith("GPC:", StringComparison.Ordinal)) return;
         string now = LegacyModelImport.PropertySignature(property);
         lock (SignatureOf)
         {
-            if (SignatureOf.TryGetValue(digest, out var known) && known != now) throw new InvalidDataException("Two GPC fingerprints for the digest " + digest + ": " + known + ", " + now);
+            if (!SignatureOfEntry.TryGetValue(key, out var local)) SignatureOfEntry[key] = local = new Dictionary<string, string>(StringComparer.Ordinal);
+            if (local.TryGetValue(digest, out var mine) && mine != now) throw new InvalidDataException("Two GPC fingerprints for the digest " + digest + " in " + key + ": " + mine + ", " + now);
+            local[digest] = now;
+            if (SignatureOf.TryGetValue(digest, out var known) && known != now) Ambiguous.Add(digest);
             SignatureOf[digest] = now;
         }
     }
 
     /// <summary>R6.3: the digests of the captured entries mapped to the fingerprints of their GPC properties (read back).</summary>
-    private static void MapSignatures(string kind, byte[] data, byte[] records)
+    private static void MapSignatures(string key, string kind, byte[] data, byte[] records)
     {
         switch (kind)
         {
-            case "beam": { var d = GpcDraftArchive.ReadBeam(data, records); MapSignature(d.Property?.Signature, d.Beam.BeamProperty); break; }
-            case "beam-property": { var p = GpcDraftArchive.ReadBeamProperty(data, records); MapSignature(p.Data.Signature, p.Property); break; }
+            case "beam": { var d = GpcDraftArchive.ReadBeam(data, records); MapSignature(key, d.Property?.Signature, d.Beam.BeamProperty); break; }
+            case "beam-property": { var p = GpcDraftArchive.ReadBeamProperty(data, records); MapSignature(key, p.Data.Signature, p.Property); break; }
             case "conversion":
             {
                 var c = GpcDraftArchive.ReadConversion(data, records);
                 foreach (var r in c.Report.BeamProperties)
-                    if (c.Model.BeamProperties.TryGetValue(r.Key, out var property)) MapSignature(r.Value.Signature, property);
+                    if (c.Model.BeamProperties.TryGetValue(r.Key, out var property)) MapSignature(key, r.Value.Signature, property);
                 break;
             }
         }
     }
 
     /// <summary>The captured text with the declared digests replaced, and their names (none: the text unchanged).</summary>
-    private static (string Text, List<string> Names) WithDeclaredDigests(string captured)
+    private static (string Text, List<string> Names) WithDeclaredDigests(string captured, string key = null)
     {
         var names = new List<string>();
         if (SignatureOf.Count > 0)
         {
             bool any = false;
-            captured = DigestToken.Replace(captured, m => SignatureOf.TryGetValue(m.Value, out var now) ? (any = true, now).now : m.Value);
+            Dictionary<string, string> local = null;
+            if (key != null) SignatureOfEntry.TryGetValue(key, out local);
+            captured = DigestToken.Replace(captured, m => local != null && local.TryGetValue(m.Value, out var mine) ? (any = true, mine).mine
+                : !Ambiguous.Contains(m.Value) && SignatureOf.TryGetValue(m.Value, out var now) ? (any = true, now).now : m.Value);
             if (any) names.Add(SignatureRule);
         }
         foreach (var (before, after, name) in DeclaredDigests)
@@ -319,10 +329,10 @@ internal static class GpcDraftCapture
         return list;
     }
 
-    internal static bool Declared(string captured, string now, out string why)
+    internal static bool Declared(string captured, string now, out string why, string key = null)
     {
         why = null;
-        var (text, names) = WithDeclaredDigests(captured);
+        var (text, names) = WithDeclaredDigests(captured, key);
         if (names.Count == 0) return false;
         if (text == now) { why = string.Join("; ", names); return true; }
         if (RenamedOnly(text, now, out string detail)) { why = string.Join("; ", names) + "; owner identity from the content of the drafts: " + detail; return true; }
@@ -387,7 +397,7 @@ internal static class GpcDraftCapture
                 // R6.3: the digests of the reference mapped to the fingerprints of their GPC properties (declared signature rule).
                 foreach (var p in reference)
                 {
-                    try { MapSignatures(p.Value.Kind, p.Value.Data, p.Value.Records); }
+                    try { MapSignatures(p.Key, p.Value.Kind, p.Value.Data, p.Value.Records); }
                     catch (InvalidDataException) { throw; }
                     catch (Exception) { /* not read back: counted by the loop below */ }
                 }
@@ -399,7 +409,7 @@ internal static class GpcDraftCapture
                     string capturedText = Inflate(p.Value.Text);
                     if (p.Key.EndsWith("|" + p.Value.Sha, StringComparison.Ordinal))
                     {
-                        var (declaredText, names) = WithDeclaredDigests(capturedText);
+                        var (declaredText, names) = WithDeclaredDigests(capturedText, p.Key);
                         if (names.Count > 0) declaredKeys[p.Key.Substring(0, p.Key.Length - p.Value.Sha.Length) + Sha(declaredText)] = p.Key;
                     }
                     try { text = ReadBack(p.Value.Kind, p.Value.Data, p.Value.Records, capturedText); }
@@ -459,7 +469,7 @@ internal static class GpcDraftCapture
                 if (declaredKeys.TryGetValue(key, out var former) && !seen.Contains(former))
                 {
                     seen.Add(former);
-                    if (Declared(Inflate(reference[former].Text), text, out string because)) { Count("declared"); Declare(former + " -> " + key, because); return; }
+                    if (Declared(Inflate(reference[former].Text), text, out string because, former)) { Count("declared"); Declare(former + " -> " + key, because); return; }
                 }
                 Count("new"); if (failures.Count < 30) failures.Add(key + ": not in the capture (" + datum.GetType().Name + ")"); return;
             }
@@ -467,11 +477,11 @@ internal static class GpcDraftCapture
             string captured = Inflate(e.Text);
             DumpBridge(datum, e);
             if (WithoutGuids(captured) == WithoutGuids(text)) { Count("equal but for GUIDs"); if (identityOnly.Count < 30) identityOnly.Add(key); return; }
-            if (Declared(captured, text, out string why)) { Count("declared"); Declare(key, why); return; }
+            if (Declared(captured, text, out string why, key)) { Count("declared"); Declare(key, why); return; }
             // R6.3: a Build Model output (SharedCompositeRule): the GUIDs renamed, the bridge-data fingerprint changed, the bridge values equal.
             var bridgeNow = datum is GpcModels.Conversion cn && e.Kind == "conversion" ? cn.Report.Bridge
                 : datum is GpcDraftArchiveChecks.ModelDatum mn && e.Kind == "model" ? mn.Model.Data : null;
-            if (bridgeNow != null && OnlyBridgeFingerprint(WithoutGuids(WithDeclaredDigests(captured).Text), WithoutGuids(text), out string renamed)
+            if (bridgeNow != null && OnlyBridgeFingerprint(WithoutGuids(WithDeclaredDigests(captured, key).Text), WithoutGuids(text), out string renamed)
                 && BridgeValues(bridgeNow).SequenceEqual(BridgeValues(e.Kind == "conversion" ? GpcDraftArchive.ReadConversion(e.Data, e.Records).Report.Bridge
                     : GpcDraftArchive.ReadModel(e.Data, e.Records).Item1.Data), StringComparer.Ordinal))
             { Count("declared"); Declare(key, SharedCompositeRule + "; owner identity from the content of the drafts: " + renamed); return; }
