@@ -33,6 +33,13 @@ namespace BridGHe.Common.Gpc.Builders
         public static readonly IReadOnlyList<string> TaperAlignments = new[] { "Top", "Center", "Bottom" };
 
         /// <summary>The former name of an enum value by its integer (out of range: the integer as text, as the former archive wrote it).</summary>
+        /// <summary>A number as the reader reads it from a former archive: the binary XML of the archive writes a zero without its sign, so a
+        /// −0 of the component reads +0 (found by gpc-builders-b on the curved bridge: the section up of the diaphragms). Every raw number a
+        /// builder takes goes through it.</summary>
+        public static double Z(double v) => v == 0 ? 0.0 : v;
+        public static Point3d Z(Point3d p) => new Point3d(Z(p.X), Z(p.Y), Z(p.Z));
+        public static Vector3d Z(Vector3d v) => new Vector3d(Z(v.X), Z(v.Y), Z(v.Z));
+
         public static string Code(IReadOnlyList<string> names, int value) => value >= 0 && value < names.Count ? names[value] : value.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
         // -------------------------------------------------------------------------------------------------------------------------------------
@@ -57,6 +64,7 @@ namespace BridGHe.Common.Gpc.Builders
             Guid identity, string beamId)
         {
             if (property == null) throw new ArgumentNullException(nameof(property));
+            from = Z(from); to = Z(to); angleDeg = Z(angleDeg); offsetX = Z(offsetX); offsetY = Z(offsetY);
             var units = GpcBeamDrafts.DraftUnits;
             var report = new LegacyImportReport { Units = units, Owner = identity, Bridge = new GPC.Checkers.CompositeBridge.BridgeModelData() };
             var records = new LegacyElementRecords();
@@ -105,7 +113,7 @@ namespace BridGHe.Common.Gpc.Builders
         /// <summary>Beam Releases: per end, translations along 1, 2, 3 and rotations about 1, 2, 3 released (true) with their partial values.</summary>
         public static LegacyBeamDraft WithReleases(LegacyBeamDraft beam, bool[] transI, Vector3d transIPartial, bool[] rotI, Vector3d rotIPartial,
             bool[] transJ, Vector3d transJPartial, bool[] rotJ, Vector3d rotJPartial, Guid identity) =>
-            Change(beam, identity, w => w.Beam.Attributes.Add(LegacyModelImport.Releases(transI, transIPartial, rotI, rotIPartial, transJ, transJPartial, rotJ, rotJPartial, w.Units)));
+            Change(beam, identity, w => w.Beam.Attributes.Add(LegacyModelImport.Releases(transI, Z(transIPartial), rotI, Z(rotIPartial), transJ, Z(transJPartial), rotJ, Z(rotJPartial), w.Units)));
 
         /// <summary>Beam String Group.</summary>
         public static LegacyBeamDraft WithStringGroup(LegacyBeamDraft beam, int id, Guid identity) =>
@@ -114,11 +122,11 @@ namespace BridGHe.Common.Gpc.Builders
         /// <summary>Beam Support: a simple spring along a principal local axis (former direction code and spring type names).</summary>
         public static LegacyBeamDraft WithSupport(LegacyBeamDraft beam, double stiffness, double gap, string localAxisDirection, string springType, Guid identity) =>
             Change(beam, identity, w => (w.Beam.Assignments.Physical ??= new GPC.Model.Structure.Assignments.BeamPhysicalData()).Supports.Add(
-                LegacyModelImport.Support(stiffness, gap, () => localAxisDirection, () => springType, w.Beam.Assignments.SectionAxes, w.Units)));
+                LegacyModelImport.Support(Z(stiffness), Z(gap), () => localAxisDirection, () => springType, w.Beam.Assignments.SectionAxes, w.Units)));
 
         /// <summary>Beam Taper (former alignment names: Top, Center, Bottom).</summary>
         public static LegacyBeamDraft WithTaper(LegacyBeamDraft beam, double fromX, double fromY, double toX, double toY, string alignmentX, string alignmentY, Guid identity) =>
-            Change(beam, identity, w => LegacyModelImport.Taper(w.Beam, w.Records, fromX, toX, fromY, toY, () => LegacyModelImport.TaperAlignmentOf(alignmentX), () => LegacyModelImport.TaperAlignmentOf(alignmentY)));
+            Change(beam, identity, w => LegacyModelImport.Taper(w.Beam, w.Records, Z(fromX), Z(toX), Z(fromY), Z(toY), () => LegacyModelImport.TaperAlignmentOf(alignmentX), () => LegacyModelImport.TaperAlignmentOf(alignmentY)));
 
         /// <summary>Super Element on a beam.</summary>
         public static LegacyBeamDraft WithSuperElement(LegacyBeamDraft beam, string name, Guid identity) =>
@@ -133,19 +141,19 @@ namespace BridGHe.Common.Gpc.Builders
         public static LegacyBeamDraft WithDistributedLoad(LegacyBeamDraft beam, LegacyCaseData loadCase, BridgeLoadSchema schema, bool moment, string direction,
             double pa, double pb, double p1, double p2, double a, double b, bool? globalSystem, Guid identity) =>
             Change(beam, identity, w => w.Load("BeamDistributedLoadModel", loadCase, (c, source) => w.Beam.Assignments.Loads.AddRange(LegacyModelImport.Distributed(schema, moment, direction,
-                pa, pb, p1, p2, a, b, globalSystem.HasValue ? () => globalSystem.Value : (Func<bool>)null, w.Beam, w.Principal, w.Offset, c, w.Units, source))));
+                Z(pa), Z(pb), Z(p1), Z(p2), Z(a), Z(b), globalSystem.HasValue ? () => globalSystem.Value : (Func<bool>)null, w.Beam, w.Principal, w.Offset, c, w.Units, source))));
 
         /// <summary>Beam Point Load / Moment: the components at the normalised station <paramref name="a"/>, in the principal axes.</summary>
         public static LegacyBeamDraft WithPointLoad(LegacyBeamDraft beam, LegacyCaseData loadCase, bool moment, double a, Vector3d value, Guid identity) =>
-            Change(beam, identity, w => w.Load("BeamPointLoadModel", loadCase, (c, source) => w.Beam.Assignments.Loads.Add(LegacyModelImport.PointLoad(moment, a, value, w.Beam, w.Principal, w.Offset, c, w.Units, source))));
+            Change(beam, identity, w => w.Load("BeamPointLoadModel", loadCase, (c, source) => w.Beam.Assignments.Loads.Add(LegacyModelImport.PointLoad(moment, Z(a), Z(value), w.Beam, w.Principal, w.Offset, c, w.Units, source))));
 
         /// <summary>Beam Pre Load: an initial tension (force) or strain.</summary>
         public static LegacyBeamDraft WithPreLoad(LegacyBeamDraft beam, LegacyCaseData loadCase, bool strain, double value, Guid identity) =>
-            Change(beam, identity, w => w.Load("BeamPreLoadModel", loadCase, (c, _) => LegacyModelImport.PreLoad(w.Beam, c, strain, value, w.Units)));
+            Change(beam, identity, w => w.Load("BeamPreLoadModel", loadCase, (c, _) => LegacyModelImport.PreLoad(w.Beam, c, strain, Z(value), w.Units)));
 
         /// <summary>Beam Gradient Load.</summary>
         public static LegacyBeamDraft WithGradient(LegacyBeamDraft beam, LegacyCaseData loadCase, double axis1, double axis2, Guid identity) =>
-            Change(beam, identity, w => w.Load("BeamGradientLoadModel", loadCase, (c, _) => LegacyModelImport.Gradient(w.Beam, c, axis1, axis2, w.Units)));
+            Change(beam, identity, w => w.Load("BeamGradientLoadModel", loadCase, (c, _) => LegacyModelImport.Gradient(w.Beam, c, Z(axis1), Z(axis2), w.Units)));
 
         // -------------------------------------------------------------------------------------------------------------------------------------
         // Overrides
@@ -168,8 +176,8 @@ namespace BridGHe.Common.Gpc.Builders
             if (property != null && state != null && !state.PropertyFingerprint.StartsWith(LegacyModelImport.StaleSectionStatePrefix, StringComparison.Ordinal)
                 && property.Data.Signature != c.Property?.Signature)
                 throw new NotSupportedException("GpcBeamOverrideOfASectionState: the property of a beam with a section state changes; the stale marker needs the former signature of the state.");
-            double angle = angleDeg ?? c.AngleDeg;
-            double ox = offset.HasValue ? units.ToMm(offset.Value.X) : old.Assignments.OffsetI?.X ?? 0, oy = offset.HasValue ? units.ToMm(offset.Value.Y) : old.Assignments.OffsetI?.Y ?? 0;
+            double angle = angleDeg.HasValue ? Z(angleDeg.Value) : c.AngleDeg;
+            double ox = offset.HasValue ? units.ToMm(Z(offset.Value.X)) : old.Assignments.OffsetI?.X ?? 0, oy = offset.HasValue ? units.ToMm(Z(offset.Value.Y)) : old.Assignments.OffsetI?.Y ?? 0;
             var records = c.Records;
             Func<Group> firstGroup; IEnumerable<string> names;
             if (groups != null)

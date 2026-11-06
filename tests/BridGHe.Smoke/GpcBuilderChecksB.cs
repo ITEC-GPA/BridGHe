@@ -188,6 +188,8 @@ internal static class GpcBuilderChecksB
         var fem = Run("BridgeFemMembersComponent", one, (0, geometry), (1, new[] { family, crossFamily }), (2, new[] { schedule, tapered }));
         Run("BridgeFemMembersComponent", one, (0, geometry), (1, new[] { family }));
         Run("BridgeMemberAssignmentComponent", one, (0, geometry), (1, new[] { baseProperty, gProperty }), (2, new[] { 0, -1 }), (3, new[] { tapered }));
+        // The curved bridge: section up vectors with a −0 component (the former archive writes a zero without its sign).
+        Run("BridgeMemberAssignmentComponent", one, (0, h.Goo("BridgeGeometryGoo", BridGHe.Common.Geometry.SimpleBridgeBuilder.Build(SimpleBridgeTests.Input(false, true)))), (1, new[] { baseProperty }));
         // Bridge Segment Sections (the base and a changed table) feeding Bridge FEM Members, then Bridge Segment Override (with and without
         // Preserve Mass) and Bridge Segment Composite.
         var sections = Run("BridgeSegmentSectionsComponent", none, (0, geometry), (1, baseProperty));
@@ -224,5 +226,6 @@ internal static class GpcBuilderChecksB
         Console.WriteLine("GPC BUILDERS B RUNS " + string.Join(", ", PerComponent.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => p.Key + " " + p.Value)) + $"; refused alike {refused}");
         h.Finish(150);
     }
+
 }
 #endif
