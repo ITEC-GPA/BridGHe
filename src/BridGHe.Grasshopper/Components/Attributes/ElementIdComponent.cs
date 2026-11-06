@@ -57,40 +57,43 @@ namespace BridGHe.Grasshopper.Components.Attributes
             }
 
             ElementIdAttributeModel se = new ElementIdAttributeModel(id);
+            // R6.2 lane A: "already has an ID" on the GPC draft (the first Element ID of its records: null when the value has none, "" for an empty
+            // one, as the former attribute value in the message); the FEM value is the bridge for a refused draft until R6.5. The output takes the
+            // GPC draft built on GPC from the draft of the input (identity of the conversion of the FEM output).
             if (element is GH_Beam beam)
             {
-                ElementIdAttributeModel other = GetOtherId(beam.Value);
-                if (other != null)
+                if (OtherId(() => beam.Gpc.Records.FirstLabel, beam.Value, out string other))
                 {
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Beam " + other.Value + " has already an ID");
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Beam " + other + " has already an ID");
                     return;
                 }
                 GH_Beam new_beam = new GH_Beam(beam);
                 new_beam.Value.Attributes.Add(se);
+                GpcBuilderAttach.Beam(new_beam, () => Common.Gpc.Builders.GpcElementBuilders.WithLabel(beam.Gpc, id, Common.Gpc.GpcBeamDrafts.Identity(new_beam.Value)));
                 DA.SetData(0, new_beam);
             }
             else if (element is GH_Plate plate)
             {
-                ElementIdAttributeModel other = GetOtherId(plate.Value);
-                if (other != null)
+                if (OtherId(() => plate.Gpc.Records.FirstLabel, plate.Value, out string other))
                 {
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Plate " + other.Value + " has already an ID");
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Plate " + other + " has already an ID");
                     return;
                 }
                 GH_Plate new_plate = new GH_Plate(plate);
                 new_plate.Value.Attributes.Add(se);
+                GpcBuilderAttach.Plate(new_plate, () => Common.Gpc.Builders.GpcPlateBuilders.WithLabel(plate.Gpc, id, Common.Gpc.GpcBeamDrafts.Identity(new_plate.Value)));
                 DA.SetData(0, new_plate);
             }
             else if (element is GH_Node node)
             {
-                ElementIdAttributeModel other = GetOtherId(node.Value);
-                if (other != null)
+                if (OtherId(() => node.Gpc.Records.FirstLabel, node.Value, out string other))
                 {
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Node " + other.Value + " has already an ID");
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Node " + other + " has already an ID");
                     return;
                 }
                 GH_Node new_node = new GH_Node(node);
                 new_node.Value.Attributes.Add(se);
+                GpcBuilderAttach.Node(new_node, () => Common.Gpc.Builders.GpcNodeBuilders.WithLabel(node.Gpc, id, Common.Gpc.GpcBeamDrafts.Identity(new_node.Value)));
                 DA.SetData(0, new_node);
             }
             else
@@ -99,7 +102,17 @@ namespace BridGHe.Grasshopper.Components.Attributes
             }
         }
 
-        private ElementIdAttributeModel GetOtherId(ElementModel el)
+        /// <summary>R6.2 lane A: whether the element has an Element ID already, and its value for the message, on the GPC draft (the FEM value
+        /// for a refused draft, and the check of the two under the Smoke host).</summary>
+        private static bool OtherId(Func<string> firstLabel, ElementModel el, out string other)
+        {
+            string label = null;
+            bool has = GpcBuilderAttach.Decide(() => (label = firstLabel()) != null, () => GetOtherId(el) != null, "Element ID already given");
+            other = label ?? GetOtherId(el)?.Value;
+            return has;
+        }
+
+        private static ElementIdAttributeModel GetOtherId(ElementModel el)
         {
             return (ElementIdAttributeModel)el.Attributes.FirstOrDefault(a => a is ElementIdAttributeModel);
         }

@@ -44,7 +44,11 @@ namespace BridGHe.Grasshopper.Components.Models
             if (!DA.GetData("Point", ref point))
                 return;
 
-            DA.SetData("Node", new GH_Node(point));
+            var node = new GH_Node(point);
+            // R6.2 lane A (dual rule until R6.5): the GPC draft of a new node built on GPC (position, no ID, no groups), identity of the
+            // conversion of the FEM output.
+            GpcBuilderAttach.Node(node, () => Common.Gpc.Builders.GpcNodeBuilders.Create(point.X, point.Y, point.Z, "", null, Common.Gpc.GpcBeamDrafts.Identity(node.Value)));
+            DA.SetData("Node", node);
         }
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;

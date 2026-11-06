@@ -107,6 +107,10 @@ namespace BridGHe.Grasshopper.Components.Loads
             PlatePressureModel load = new PlatePressureModel(lc.Value, load_value);
             GH_Plate newPlate = new GH_Plate(plate);
             newPlate.Value.Loads.Add(load);
+            // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the drafts of the inputs (local without a coordinate system, global
+            // on the former face by name with one), identity of the conversion of the FEM output.
+            GpcBuilderAttach.Plate(newPlate, () => Common.Gpc.Builders.GpcPlateBuilders.WithPressure(plate.Gpc, lc.Gpc, load_value.CoordinateSystem != null, load_value.Face.ToString(),
+                value.X, value.Y, value.Z, projected, Common.Gpc.GpcBeamDrafts.Identity(newPlate.Value)));
             DA.SetData(0, newPlate);
         }
 

@@ -1,5 +1,4 @@
 using System;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -62,11 +61,10 @@ namespace BridGHe.Grasshopper.Components.Loads
                 return;
             }
 
-            NodeDisplacementLoadModel load = new NodeDisplacementLoadModel(lc.Value,
-                            new NodeDisplacementLoadModel.LoadData(translation, rotation));
-            GH_Node newNode = new GH_Node(node);
-            newNode.Value.Loads.Add(load);
-            DA.SetData("Node", newNode);
+            // R6.2 lane A (user decision of 6/11): prescribed displacements are refused in 0.4.0. The component keeps its GUID and ports only to
+            // open the existing files and gives no output (no FEM value either): the 0.3.0 exporter applied them on restrained nodes only, from a
+            // single case, to every linear case; the correct behaviour (a displacement acting only in its load case) comes after the release.
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Error, Common.Gpc.Legacy.LegacyModelImport.PrescribedDisplacementNotSupported);
         }
 
         /// <summary>

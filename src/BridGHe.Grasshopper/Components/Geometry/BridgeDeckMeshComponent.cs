@@ -38,9 +38,20 @@ public sealed class BridgeDeckMeshComponent : BridgeUtilityComponent
         BridgeGeometryGoo geometry = null; GH_PlateProperty property = null; double length = 2500, width = 1500; bool triangles = true; var pours = new List<double>();
         if (!da.GetData(0, ref geometry) || !da.GetData(1, ref property)) return;
         da.GetData(2, ref length); da.GetData(3, ref width); da.GetDataList(4, pours); da.GetData(5, ref triangles);
-        var result = BridgeDeckMesh.Create(geometry.Value, property.Value, length, width, pours, triangles);
+        // R6.2 lane A (dual rule until R6.5): the plates carry their GPC drafts, built on GPC from the GPC property of the input (a refused
+        // property gives no drafts: the plates are converted as before).
+        GPC.Model.ElementProperties.PlateProperty gpcProperty = null;
+        try { gpcProperty = property.Gpc; } catch (Exception x) when (GpcBuilderAttach.Refusal(x)) { }
+        var result = BridgeDeckMesh.Create(geometry.Value, property.Value, length, width, pours, triangles, gpcProperty);
         da.SetData(0, new BridgeGeometryGoo(result.Geometry)); da.SetData(1, result.Mesh);
-        da.SetDataList(2, result.Plates.Select(p => new GH_Plate(p))); da.SetDataList(3, result.Connections);
+        da.SetDataList(2, result.Plates.Select((p, i) =>
+        {
+            // GH_Plate(PlateModel) keeps the generated value: the identity of the draft is that of its conversion.
+            var plate = new GH_Plate(p);
+            if (result.Drafts != null) GpcBuilderAttach.Plate(plate, () => result.Drafts[i]);
+            return plate;
+        }));
+        da.SetDataList(3, result.Connections);
         da.SetDataList(4, result.Stations); da.SetDataList(5, result.Diagnostics);
     }
 }

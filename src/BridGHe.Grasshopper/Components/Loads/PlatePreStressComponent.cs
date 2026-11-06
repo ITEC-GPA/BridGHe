@@ -71,6 +71,8 @@ namespace BridGHe.Grasshopper.Components.Loads
             PlatePreStressModel load = new PlatePreStressModel(lc.Value, load_value);
             GH_Plate newPlate = new GH_Plate(plate);
             newPlate.Value.Loads.Add(load);
+            // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the drafts of the inputs, identity of the conversion of the FEM output.
+            GpcBuilderAttach.Plate(newPlate, () => Common.Gpc.Builders.GpcPlateBuilders.WithPrestress(plate.Gpc, lc.Gpc, px, py, pz, Common.Gpc.GpcBeamDrafts.Identity(newPlate.Value)));
             DA.SetData(0, newPlate);
         }
 

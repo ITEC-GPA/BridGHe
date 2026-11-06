@@ -30,9 +30,7 @@ namespace BridGHe.Common.Gpc.Legacy
         private static NodeElement Node(LegacyValue n, int i, Guid guid, Guid owner, Func<LegacyValue, Group> groupOf, Dictionary<string, LoadCaseBase> cases,
             BridgeUnits units, LegacyImportReport report, LegacyElementRecords records = null)
         {
-            string nodeId = n.String("NodeId") ?? "";
-            var node = new NodeElement(guid, Point(n["Position"], units), null, nodeId, i + 1)
-            { Source = new SourceIdentity(Program, owner.ToString("D"), EntityFamily.Node, nodeId.Length != 0 ? nodeId : (i + 1).ToString()) };
+            var node = NewNode(guid, Point(n["Position"], units), n.String("NodeId") ?? "", i + 1, owner);
             foreach (var g in n.Field("Groups").Items) node.AddGroup(groupOf(g));
             NodeData(n, node, cases, units, report);
             if (records != null) records.EmptyLabels = n.Field("Attributes").Items.Count(a => a.Is("ElementIdAttributeModel") && string.IsNullOrEmpty(a.String("Value")));
@@ -67,28 +65,21 @@ namespace BridGHe.Common.Gpc.Legacy
         private static void NodeData(LegacyValue n, NodeElement node, Dictionary<string, LoadCaseBase> cases, BridgeUnits units, LegacyImportReport report)
         {
             var attributes = n.Field("Attributes").Items;
+            // R6.2 lane A (user decision of 6/11 via the coordinator): prescribed displacements are refused in 0.4.0, on every node (the former
+            // exporter applied them only on restrained nodes, from one case, to every linear case); the correct behaviour comes after the release.
+            if (n.Field("Loads").Items.Any(l => l.Is("NodeDisplacementLoadModel"))) throw new NotSupportedException(PrescribedDisplacementNotSupported);
             var frames = attributes.Where(a => a.Is("NodeCoordinateAttributeModel")).Select(a => a["Frame"]).ToArray();
             if (frames.Length > 1 && frames.Skip(1).Any(f => !SamePlane(f, frames[0]))) throw new ArgumentException($"Node {node.Name}: conflicting/invalid restraint coordinate systems.");
-            bool restrained = attributes.Any(a => a.Is("NodeRestraintAttributeModel") || a.Is("NodeStiffnessAttributeModel"));
-            if (restrained && n.Field("Loads").Items.Any(l => l.Is("NodeDisplacementLoadModel"))) throw new NotSupportedException("LegacyPrescribedDisplacementNotMappedYet");
             var names = new[] { "Tx", "Ty", "Tz", "Rx", "Ry", "Rz" };
             foreach (var a in attributes)
             {
                 if (a.Is("RigidConnectionAttributeModel")) continue; // the rigid connections after the attributes (Node)
                 if (a.Is("NodeCoordinateAttributeModel"))
-                    node.Assignments.Restrains.Add(new RestrainAssignment { Restrain = new NodeRestrain(node, Frame(a["Frame"], units), Enumerable.Range(0, 6).Select(k => new DofRestrain((GeometryRestrain.DOF)k, false)).ToList()), SourceRecord = FrameRecord });
+                    node.Assignments.Restrains.Add(FrameAssignment(node, Frame(a["Frame"], units)));
                 else if (a.Is("NodeRestraintAttributeModel"))
-                    node.Assignments.Restrains.Add(new RestrainAssignment { Restrain = new NodeRestrain(node, CoordinateSystem.Global, Enumerable.Range(0, 6).Select(k => new DofRestrain((GeometryRestrain.DOF)k, a.Bool(names[k]))).ToList()), SourceRecord = RestraintRecord });
+                    node.Assignments.Restrains.Add(RestraintAssignment(node, names.Select(x => a.Bool(x)).ToArray()));
                 else if (a.Is("NodeStiffnessAttributeModel"))
-                    node.Assignments.Restrains.Add(new RestrainAssignment
-                    {
-                        Restrain = new NodeRestrain(node, CoordinateSystem.Global, Enumerable.Range(0, 6).Select(k =>
-                        {
-                            double spring = a.Double(names[k]) * (k < 3 ? units.Force / units.Length : units.Force * units.Length);
-                            return spring == 0 ? new DofRestrain((GeometryRestrain.DOF)k, false) : new DofRestrain((GeometryRestrain.DOF)k, spring);
-                        }).ToList()),
-                        SourceRecord = StiffnessRecord
-                    });
+                    node.Assignments.Restrains.Add(StiffnessAssignment(node, names.Select(x => a.Double(x)).ToArray(), units));
                 else if (a.Is("ElementIdAttributeModel"))
                 {
                     string value = a.String("Value");
@@ -99,15 +90,9 @@ namespace BridGHe.Common.Gpc.Legacy
             foreach (var l in n.Field("Loads").Items)
             {
                 var c = cases[l.Field("LoadCase").String("Name")];
-                if (l.Is("NodeForceLoadModel")) node.Loads.Add(new PointLoad(Vector(l) * units.Force, Zero, node.Position, c) { Name = ForceRecord });
-                else if (l.Is("NodeMomentLoadModel")) node.Loads.Add(new PointLoad(Zero, Vector(l) * (units.Force * units.Length), node.Position, c) { Name = MomentRecord });
-                else if (l.Is("NodeTemperatureLoadModel"))
-                {
-                    string type = l.Enum("LoadType");
-                    var kind = type == "Reference" ? NodalTemperatureKind.Reference : type == "Fixed" ? NodalTemperatureKind.Prescribed : type == "Initial" ? NodalTemperatureKind.Initial
-                        : throw new NotSupportedException("LegacyNodeTemperatureType: " + type);
-                    (node.Assignments.Physical ??= new NodePhysicalData()).Temperatures.Add(new NodalTemperatureAssignment { Case = c, Kind = kind, Celsius = units.ToCelsius(l.Double("Value")) });
-                }
+                if (l.Is("NodeForceLoadModel")) node.Loads.Add(ForceLoad(node, Vector(l), c, units));
+                else if (l.Is("NodeMomentLoadModel")) node.Loads.Add(MomentLoad(node, Vector(l), c, units));
+                else if (l.Is("NodeTemperatureLoadModel")) AddTemperature(node, Temperature(c, l.Enum("LoadType"), l.Double("Value"), units));
                 else throw new NotSupportedException("LegacyNodeLoadNotMappedYet: " + l.ShortType);
             }
         }
@@ -115,6 +100,66 @@ namespace BridGHe.Common.Gpc.Legacy
         /// <summary>The kinds of the records of a node draft (<see cref="NodeData"/>): the <see cref="RestrainAssignment.SourceRecord"/> of its
         /// coordinate systems, restraints and stiffnesses, and the name of its force and moment loads.</summary>
         internal const string FrameRecord = "NodeCoordinateAttributeModel", RestraintRecord = "NodeRestraintAttributeModel", StiffnessRecord = "NodeStiffnessAttributeModel",
-            ForceRecord = "NodeForceLoadModel", MomentRecord = "NodeMomentLoadModel";
+            ForceRecord = "NodeForceLoadModel", MomentRecord = "NodeMomentLoadModel", TemperatureRecord = "NodeTemperatureLoadModel";
+
+        /// <summary>
+        /// R6.2 lane A (user decision of 6/11, through the coordinator): the message of the refusal of prescribed node displacements in 0.4.0,
+        /// given by the Node Displacement component (kept, with its GUID and ports, only to open the existing files) and by the reader of a
+        /// former node (an internalized 0.3.0 value, a whole former model) with a <c>NodeDisplacementLoadModel</c>.
+        /// </summary>
+        public const string PrescribedDisplacementNotSupported = "Prescribed node displacements are not supported by BridGHe 0.4.0: the Node Displacement component is kept only to open existing files; the correct behaviour (a displacement acting only in its own load case) comes in a later version.";
+
+        // R6.2 lane A: the pieces of a former node shared by the reader (NodeData, Node) and the GPC builders of the node drafts
+        // (GpcNodeBuilders): the same expressions on the same numbers, so a builder gives the draft the reader gives the changed value.
+
+        /// <summary>A GPC node as the reader creates it: GUID, position, name = BridGHe node ID, number, source (the node ID, or the number when empty).</summary>
+        internal static NodeElement NewNode(Guid guid, Point3d position, string nodeId, int number, Guid owner) =>
+            new NodeElement(guid, position, null, nodeId, number)
+            { Source = new SourceIdentity(Program, owner.ToString("D"), EntityFamily.Node, nodeId.Length != 0 ? nodeId : number.ToString()) };
+
+        /// <summary>A former coordinate system of the restraints of a node (<c>NodeCoordinateAttributeModel</c>): six free DOFs in the frame.</summary>
+        internal static RestrainAssignment FrameAssignment(NodeElement node, CoordinateSystem frame) =>
+            new RestrainAssignment { Restrain = new NodeRestrain(node, frame, Enumerable.Range(0, 6).Select(k => new DofRestrain((GeometryRestrain.DOF)k, false)).ToList()), SourceRecord = FrameRecord };
+
+        /// <summary>A former restraint of a node (<c>NodeRestraintAttributeModel</c>): Tx, Ty, Tz, Rx, Ry, Rz fixed or free, global axes.</summary>
+        internal static RestrainAssignment RestraintAssignment(NodeElement node, IReadOnlyList<bool> dofs) =>
+            new RestrainAssignment { Restrain = new NodeRestrain(node, CoordinateSystem.Global, Enumerable.Range(0, 6).Select(k => new DofRestrain((GeometryRestrain.DOF)k, dofs[k])).ToList()), SourceRecord = RestraintRecord };
+
+        /// <summary>A former stiffness of a node (<c>NodeStiffnessAttributeModel</c>): Tx, Ty, Tz (force/length), Rx, Ry, Rz (force·length) in the
+        /// units given; a zero spring is a free DOF.</summary>
+        internal static RestrainAssignment StiffnessAssignment(NodeElement node, IReadOnlyList<double> values, BridgeUnits units) =>
+            new RestrainAssignment
+            {
+                Restrain = new NodeRestrain(node, CoordinateSystem.Global, Enumerable.Range(0, 6).Select(k =>
+                {
+                    double spring = values[k] * (k < 3 ? units.Force / units.Length : units.Force * units.Length);
+                    return spring == 0 ? new DofRestrain((GeometryRestrain.DOF)k, false) : new DofRestrain((GeometryRestrain.DOF)k, spring);
+                }).ToList()),
+                SourceRecord = StiffnessRecord
+            };
+
+        /// <summary>A former node force (<c>NodeForceLoadModel</c>, global X, Y, Z in force units) as a point load at the node.</summary>
+        internal static PointLoad ForceLoad(NodeElement node, Vector3d value, LoadCaseBase c, BridgeUnits units) =>
+            new PointLoad(value * units.Force, Zero, node.Position, c) { Name = ForceRecord };
+
+        /// <summary>A former node moment (<c>NodeMomentLoadModel</c>, global X, Y, Z in force·length units) as a point load at the node.</summary>
+        internal static PointLoad MomentLoad(NodeElement node, Vector3d value, LoadCaseBase c, BridgeUnits units) =>
+            new PointLoad(Zero, value * (units.Force * units.Length), node.Position, c) { Name = MomentRecord };
+
+        /// <summary>A former node temperature (<c>NodeTemperatureLoadModel</c>) by the name of its former type: Reference, Fixed (prescribed),
+        /// Initial; another name is refused.</summary>
+        internal static NodalTemperatureAssignment Temperature(LoadCaseBase c, string type, double value, BridgeUnits units)
+        {
+            var kind = type == "Reference" ? NodalTemperatureKind.Reference : type == "Fixed" ? NodalTemperatureKind.Prescribed : type == "Initial" ? NodalTemperatureKind.Initial
+                : throw new NotSupportedException("LegacyNodeTemperatureType: " + type);
+            return new NodalTemperatureAssignment { Case = c, Kind = kind, Celsius = units.ToCelsius(value) };
+        }
+
+        internal static void AddTemperature(NodeElement node, NodalTemperatureAssignment temperature) => (node.Assignments.Physical ??= new NodePhysicalData()).Temperatures.Add(temperature);
+
+        /// <summary>A former coordinate system (Rhino plane: origin, X and Y axes) as the reader reads it (<c>Frame</c>): the origin in mm with the
+        /// units given, the axes as written.</summary>
+        internal static CoordinateSystem FrameOf(double ox, double oy, double oz, Vector3d xAxis, Vector3d yAxis, BridgeUnits u) =>
+            new CoordinateSystem(new Point3d(u.ToMm(ox), u.ToMm(oy), u.ToMm(oz)), xAxis, yAxis);
     }
 }

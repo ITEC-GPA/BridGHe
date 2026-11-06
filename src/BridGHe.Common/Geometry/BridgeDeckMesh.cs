@@ -7,12 +7,20 @@ using Rhino.Geometry;
 
 namespace BridGHe.Common.Geometry;
 
-public sealed record BridgeDeckResult(SimpleBridgeGeometry Geometry, Mesh Mesh, PlateModel[] Plates, Line[] Connections, double[] Stations, string[] Diagnostics);
+public sealed record BridgeDeckResult(SimpleBridgeGeometry Geometry, Mesh Mesh, PlateModel[] Plates, Line[] Connections, double[] Stations, string[] Diagnostics)
+{
+    /// <summary>R6.2 lane A (dual rule until R6.5): the GPC draft of every plate (when the GPC property is given), built on GPC with the plate
+    /// builders from the same data (corners, property, pour group under Deck, plate ID), with the identity of the conversion of its FEM value.</summary>
+    public BridGHe.Common.Gpc.Legacy.LegacyPlateDraft[] Drafts { get; init; }
+}
 
 public static class BridgeDeckMesh
 {
+    /// <param name="gpcProperty">R6.2 lane A: the GPC property of the Plate Property datum (its <c>Gpc</c>); when given the result has the GPC
+    /// drafts of the plates.</param>
     public static BridgeDeckResult Create(SimpleBridgeGeometry source, PlatePropertyModel property,
-        double maximumLongitudinal, double maximumTransverse, IReadOnlyList<double> pourBoundaries, bool triangles)
+        double maximumLongitudinal, double maximumTransverse, IReadOnlyList<double> pourBoundaries, bool triangles,
+        GPC.Model.ElementProperties.PlateProperty gpcProperty = null)
     {
         BridgeGeometryTools.Validate(source);
         if (!double.IsFinite(source.DeckThickness) || source.DeckThickness <= 0 || source.LeftEdge.Count != source.Stations.Count ||
@@ -57,6 +65,7 @@ public static class BridgeDeckMesh
         using var editor = new BridgeGeometryEditor(source);
         var mesh = new Mesh(); mesh.Vertices.UseDoublePrecisionVertices = true;
         var connectors = new List<Line>(); var plates = new List<PlateModel>(); var pp = ModelArchive.Clone(property);
+        var drafts = gpcProperty == null ? null : new List<BridGHe.Common.Gpc.Legacy.LegacyPlateDraft>();
         Point3d Edge(Polyline edge, double station)
         {
             int index = source.Stations.BinarySearch(station);
@@ -86,6 +95,9 @@ public static class BridgeDeckMesh
             if (indices.Length == 3) mesh.Faces.AddFace(indices[0], indices[1], indices[2]);
             else mesh.Faces.AddFace(indices[0], indices[1], indices[2], indices[3]);
             var p = new PlateModel(points, pp, new GroupModel($"Pour{pour}", new GroupModel("Deck"))) { PlateId = $"Deck{plates.Count + 1}" };
+            // R6.2 lane A: the same plate on GPC (the reader of the former plate: corners, property, the group Deck\Pour<n> with its parent, plate ID).
+            drafts?.Add(BridGHe.Common.Gpc.Builders.GpcPlateBuilders.Create(points.Select(q => (q.X, q.Y, q.Z)).ToArray(), gpcProperty,
+                new[] { new[] { "Deck", $"Pour{pour}" } }, 0, 0, p.PlateId, BridGHe.Common.Gpc.GpcBeamDrafts.Identity(p)));
             plates.Add(p);
         }
         for (int row = 0; row < rowStations.Count - 1; row++)
@@ -107,6 +119,6 @@ public static class BridgeDeckMesh
             property.PropertyType == PlatePropertyType.LoadPatch ? "Load-patch deck property: no structural slab stiffness is intended." :
                 "Structural deck plates: assign steel-only beam properties to avoid counting concrete stiffness twice.",
             "No automatic beam/plate connection is implied by visual overlap. Triangles are recommended for warped decks; mesh convergence remains a separate analysis."
-        });
+        }) { Drafts = drafts?.ToArray() };
     }
 }

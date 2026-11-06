@@ -64,6 +64,10 @@ namespace BridGHe.Grasshopper.Components.Loads
             NodeTemperatureLoadModel load = new NodeTemperatureLoadModel(lc.Value, value, (NodeTemperatureLoadModel.LoadType)type);
             GH_Node newNode = new GH_Node(node);
             newNode.Value.Loads.Add(load);
+            // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the drafts of the inputs (the former type by name), identity of the
+            // conversion of the FEM output.
+            GpcBuilderAttach.Node(newNode, () => Common.Gpc.Builders.GpcNodeBuilders.WithTemperature(node.Gpc, lc.Gpc, ((NodeTemperatureLoadModel.LoadType)type).ToString(), value,
+                Common.Gpc.GpcBeamDrafts.Identity(newNode.Value)));
             DA.SetData("Node", newNode);
         }
 

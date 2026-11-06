@@ -7,6 +7,7 @@ using Grasshopper.Kernel.Parameters;
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BridGHe.Grasshopper.Components.Tools
 {
@@ -87,9 +88,39 @@ namespace BridGHe.Grasshopper.Components.Tools
             List<GH_Plate> others = new List<GH_Plate>();
             double tol = Helpers.ModelHelper.GetTolerance();
 
+            // R6.2 lane A: the filter decides on the GPC drafts (first Element ID, groups by full name, property name, corners in the definition
+            // units); the FEM value is the bridge for a refused draft until R6.5, and under the Smoke host the two decisions must agree.
+            var groupNames = groups.Select(g => string.Join("\\", GpcBuilderAttach.GroupChain(g))).ToList();
             for (int i = 0; i < plates.Count; i++)
             {
                 GH_Plate p = plates[i];
+                bool add = GpcBuilderAttach.Decide(() => Matches(p.Gpc, ids, groupNames, props, positions, tol), () => FemMatches(p, ids, groups, props, positions, tol), "Plate Filter");
+                if (add)
+                    filtered.Add(p);
+                else
+                    others.Add(p);
+            }
+
+            DA.SetDataList(0, filtered);
+            DA.SetDataList(1, others);
+        }
+
+        /// <summary>R6.2 lane A: the selection on the GPC draft of a plate: its first Element ID is one of the IDs, or one of its groups (all, at
+        /// list level) has one of the full names, or its property has one of the names, or one of its corners is within the tolerance of one of
+        /// the positions (the distance of Rhino, as before).</summary>
+        private static bool Matches(Common.Gpc.Legacy.LegacyPlateDraft d, List<string> ids, List<string> groupNames, List<string> props, List<Point3d> positions, double tol)
+        {
+            string label = d.Records.FirstLabel;
+            if (label != null && ids.Any(id => label.Equals(id))) return true;
+            if (groupNames.Any(name => d.Records.Groups.Contains(name, StringComparer.Ordinal))) return true;
+            if (props.Any(name => name == d.Plate.PlateProperty?.Name)) return true;
+            return positions.Any(point => d.Corners.Any(c => new Point3d(c.X, c.Y, c.Z).DistanceTo(point) < tol));
+        }
+
+        /// <summary>The selection on the FEM value (until R6.5).</summary>
+        private static bool FemMatches(GH_Plate p, List<string> ids, List<GH_Group> groups, List<string> props, List<Point3d> positions, double tol)
+        {
+            {
                 bool add = false;
                 for (int j = 0; j < ids.Count; j++)
                 {
@@ -141,14 +172,8 @@ namespace BridGHe.Grasshopper.Components.Tools
                         }
                     }
                 }
-                if (add)
-                    filtered.Add(p);
-                else
-                    others.Add(p);
+                return add;
             }
-
-            DA.SetDataList(0, filtered);
-            DA.SetDataList(1, others);
         }
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;

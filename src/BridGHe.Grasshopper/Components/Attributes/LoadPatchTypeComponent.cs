@@ -153,6 +153,10 @@ namespace BridGHe.Grasshopper.Components.Attributes
 
             GH_Plate newPlate = new GH_Plate(plate);
             newPlate.Value.Attributes.Add(attr);
+            // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the draft of the input (type by name, the four edges and weights
+            // the former attribute writes), identity of the conversion of the FEM output.
+            GpcBuilderAttach.Plate(newPlate, () => Common.Gpc.Builders.GpcPlateBuilders.WithLoadPatch(plate.Gpc, value.PatchType.ToString(), value.SelectedEdges, value.Weights,
+                Common.Gpc.GpcBeamDrafts.Identity(newPlate.Value)));
             DA.SetData(0, newPlate);
         }
 

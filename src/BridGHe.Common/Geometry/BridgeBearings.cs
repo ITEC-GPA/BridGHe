@@ -7,7 +7,12 @@ using Rhino.Geometry;
 namespace BridGHe.Common.Geometry;
 
 public enum BridgeBearingKind { FixedTranslation, GuidedLongitudinal, Multidirectional, Elastic }
-public sealed record BridgeBearingLayout(NodeModel[] Nodes, Plane[] Frames, string[] Labels);
+public sealed record BridgeBearingLayout(NodeModel[] Nodes, Plane[] Frames, string[] Labels)
+{
+    /// <summary>R6.2 lane A (dual rule until R6.5): the GPC draft of every node, built on GPC with the node builders from the same data (node ID,
+    /// point, group, frame, restraint or stiffness), with the identity of the conversion of its FEM value.</summary>
+    public BridGHe.Common.Gpc.Legacy.LegacyNodeDraft[] Drafts { get; init; }
+}
 
 public static class BridgeBearings
 {
@@ -32,7 +37,7 @@ public static class BridgeBearings
         if (!kinds.Contains(3) && (translationStiffness.Length != 0 || rotationStiffness.Length != 0))
             throw new ArgumentException("Nonzero stiffness inputs require an Elastic bearing; they are not silently ignored.");
         if (orientation.HasValue && !orientation.Value.IsValid) throw new ArgumentException("Invalid bearing orientation.");
-        var nodes = new List<NodeModel>(); var frames = new List<Plane>(); var labels = new List<string>();
+        var nodes = new List<NodeModel>(); var frames = new List<Plane>(); var labels = new List<string>(); var drafts = new List<BridGHe.Common.Gpc.Legacy.LegacyNodeDraft>();
         for (int i = 0; i < points.Length; i++)
         {
             var point = points[i]; var frame = orientation ?? Plane.WorldXY;
@@ -56,7 +61,19 @@ public static class BridgeBearings
                 node.Attributes.Add(new NodeRestraintAttributeModel(kind == BridgeBearingKind.FixedTranslation,
                     kind is BridgeBearingKind.FixedTranslation or BridgeBearingKind.GuidedLongitudinal, true, false, false, false));
             nodes.Add(node); frames.Add(frame); labels.Add(label);
+            // R6.2 lane A: the same node on GPC (the reader of the former node: groups, then the frame, then the restraint or the stiffness).
+            var identity = BridGHe.Common.Gpc.GpcBeamDrafts.Identity(node);
+            var draft = BridGHe.Common.Gpc.Builders.GpcNodeBuilders.Create(point.Point.X, point.Point.Y, point.Point.Z, label,
+                new[] { new[] { $"Bearing/S{point.Support}/G{point.Girder}" } }, identity);
+            draft = BridGHe.Common.Gpc.Builders.GpcNodeBuilders.WithFrame(draft, frame.Origin.X, frame.Origin.Y, frame.Origin.Z,
+                frame.XAxis.X, frame.XAxis.Y, frame.XAxis.Z, frame.YAxis.X, frame.YAxis.Y, frame.YAxis.Z, identity);
+            draft = kind == BridgeBearingKind.Elastic
+                ? BridGHe.Common.Gpc.Builders.GpcNodeBuilders.WithStiffness(draft, translationStiffness.X, translationStiffness.Y, translationStiffness.Z,
+                    rotationStiffness.X, rotationStiffness.Y, rotationStiffness.Z, identity)
+                : BridGHe.Common.Gpc.Builders.GpcNodeBuilders.WithRestraint(draft, kind == BridgeBearingKind.FixedTranslation,
+                    kind is BridgeBearingKind.FixedTranslation or BridgeBearingKind.GuidedLongitudinal, true, false, false, false, identity);
+            drafts.Add(draft);
         }
-        return new(nodes.ToArray(), frames.ToArray(), labels.ToArray());
+        return new(nodes.ToArray(), frames.ToArray(), labels.ToArray()) { Drafts = drafts.ToArray() };
     }
 }
