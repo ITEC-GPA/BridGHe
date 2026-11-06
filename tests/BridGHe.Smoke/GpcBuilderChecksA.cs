@@ -57,16 +57,17 @@ internal static class GpcBuilderChecksARuns
     }
 
     /// <summary>A run whose output the reader refuses: the output as before, no draft attached, its conversion refused with <paramref name="message"/>.</summary>
-    private static void Refused(GpcBuilderChecks h, string type, string message, params (int Input, object Value)[] inputs)
+    private static IGH_Goo Refused(GpcBuilderChecks h, string type, string message, params (int Input, object Value)[] inputs)
     {
         var outputs = Run(h, type, new int[0], inputs);
         var goo = outputs[0].FirstOrDefault();
-        if (goo == null) { h.Failures.Add($"A {type}: no output for a refused value"); return; }
+        if (goo == null) { h.Failures.Add($"A {type}: no output for a refused value"); return null; }
         if ((bool)goo.GetType().GetProperty("HasAttachedGpc").GetValue(goo)) h.Failures.Add($"A {type}: a draft attached to a value the reader refuses");
         string got;
         try { goo.GetType().GetProperty("Gpc").GetValue(goo); got = "converted"; }
         catch (System.Reflection.TargetInvocationException x) { got = x.InnerException?.Message; }
         if (got != message) h.Failures.Add($"A {type}: the conversion of the refused output gives \"{got}\", the builder \"{message}\"");
+        return goo;
     }
 
     private static object Gpc(IGH_Goo goo) => goo.GetType().GetProperty("Gpc").GetValue(goo);
@@ -97,6 +98,14 @@ internal static class GpcBuilderChecksARuns
         Run(h, "NodeLoadComponent", new[] { 0 }, (0, two), (1, live), (2, new Vector3d(0, 3e-7, 1e9)));
         var restrained = One(h, "NodeRestraintsComponent", (0, h.Goo("GH_Node", p)), (1, new[] { true, true, true }), (2, new[] { false, false, false }));
         Run(h, "NodeLoadComponent", new[] { 0 }, (0, restrained), (1, live), (2, new Vector3d(-1, -2, -3)));
+
+        // Node (R62A-2, coordinator 6/11): a new node at a point (no ID, no groups): positive, negative and fractional coordinates, the origin,
+        // large values; its output carries the draft into Node Restraints and Node Load.
+        var made = One(h, "NodeComponent", (0, p));
+        One(h, "NodeComponent", (0, new Point3d(-12.5, 0.1, 1e-7)));
+        One(h, "NodeComponent", (0, Point3d.Origin));
+        One(h, "NodeComponent", (0, new Point3d(1.5e6, -2.25e6, 987654.321)));
+        One(h, "NodeLoadComponent", (0, One(h, "NodeRestraintsComponent", (0, made), (1, new[] { true, true, true }))), (1, dead), (2, new Vector3d(0, 0, -1)));
 
         // Node Restraints: translations, partial lists, rotations, text values, a second restraint on a restrained node, after loads.
         One(h, "NodeRestraintsComponent", (0, node), (1, new[] { false, true }), (2, new[] { true, false, true }));
@@ -208,6 +217,32 @@ internal static class GpcBuilderChecksARuns
         var release = new BeamReleasesAttributeModel.AttributeData(); release.RotNode2[1] = true; releasedModel.Attributes.Add(new BeamReleasesAttributeModel(release));
         One(h, "ElementIdComponent", (0, h.Goo("GH_Beam", releasedModel, null)), (1, "B3"));
 
+        // Align Plate Axes (R62A-2, coordinator 6/11): axis 3 (Blue) against the normal reverses the corners (quadrangle, triangle, the plate with
+        // everything and an ID: attributes and loads unchanged), along the normal nothing changes; axes 1 (Red) and 2 (Green) already aligned
+        // (an increment of 0, also with a direction out of the plane) keep the plate; along the normal: the warning, the plate unchanged; a
+        // turn (an angle the reader refuses): the output as before, no draft; an input plate with an angle (refused) stays refused.
+        Point3d e = new Point3d(0, 0, 0), f = new Point3d(1000, 0, 0), g = new Point3d(1000, 500, 0), k = new Point3d(0, 500, 0);
+        // The directions come from the local axes of each input (the corners of the Plate component follow the naked edge of the mesh).
+        var flat = One(h, "PlateComponent", (0, Face(e, f, g, k)), (1, shell), (2, new[] { pour }));
+        var (f1, f2, f3) = Axes(flat);
+        var flipped = Align(h, true, flat, 2, -f3);
+        Align(h, true, flipped, 2, f3 + 0.3 * f1 - 0.2 * f2);
+        Align(h, false, flat, 2, 5 * f3);
+        Align(h, true, tri, 2, -Axes(tri).A3);
+        var (q1, q2, q3) = Axes(idPlate);
+        Align(h, true, idPlate, 2, q1 + q2 - q3);
+        Align(h, false, quad, 2, 0.1 * Axes(quad).A2 + Axes(quad).A3);
+        Align(h, false, flat, 0, f1);
+        Align(h, false, flat, 0, 5 * f1 + 3 * f3);
+        Align(h, false, flat, 1, 2 * f2);
+        var (g1, g2, g3) = Axes(flipped);
+        Align(h, false, flipped, 1, 2 * g2 + 7 * g3);
+        Align(h, false, flat, 0, f3);
+        Refused(h, "AlignPlateAxesComponent", "LegacyPlateAngleNotMappedYet", (0, flat), (1, 0), (2, f1 + f2));
+        Refused(h, "AlignPlateAxesComponent", "LegacyPlateAngleNotMappedYet", (0, quad), (1, 1), (2, Axes(quad).A1 - 2 * Axes(quad).A2));
+        var angled = new PlateModel(new[] { e, f, g, k }, BridgeMeshTests.DeckProperty()) { AngleDeg = 30 };
+        Refused(h, "AlignPlateAxesComponent", "LegacyPlateAngleNotMappedYet", (0, h.Goo("GH_Plate", angled, null)), (1, 2), (2, new Vector3d(0, 0, -1)));
+
         // Node Filter and Plate Filter: by ID, group, position, property name; a node whose draft the reader refuses (a former displacement,
         // decided on the FEM value); the host checks each decision on the FEM value. Element Filter: unchanged (GH GUIDs only), one run.
         var grouped = new NodeModel("G", new Point3d(10, 20, 30)); grouped.Groups.Add(new GroupModel("Pour1", new GroupModel("Deck")));
@@ -248,6 +283,26 @@ internal static class GpcBuilderChecksARuns
 
         h.Finish(Counts.Values.Sum(v => v.Runs));
         Console.WriteLine("GPC BUILDERS A COUNTS: " + string.Join(", ", Counts.Select(c => $"{c.Key} {c.Value.Runs} runs/{c.Value.Attached} drafts")));
+    }
+
+    /// <summary>An Align Plate Axes run with a draft: the corners of the output draft are those of the input draft, reversed when
+    /// <paramref name="reversed"/> (the host compares the rest with the conversion of the FEM output).</summary>
+    private static IGH_Goo Align(GpcBuilderChecks h, bool reversed, IGH_Goo plate, int axis, Vector3d direction)
+    {
+        var output = One(h, "AlignPlateAxesComponent", (0, plate), (1, axis), (2, direction));
+        var angle = ((PlateModel)output.GetType().GetProperty("Value").GetValue(output)).AngleDeg;
+        if (angle != 0) { h.Failures.Add($"A AlignPlateAxesComponent: axis {axis}, direction {direction}: angle {angle:R} where 0"); return output; }
+        var before = ((LegacyPlateDraft)Gpc(plate)).Corners; var after = ((LegacyPlateDraft)Gpc(output)).Corners;
+        var expected = reversed ? before.Reverse().ToList() : before.ToList();
+        if (!after.SequenceEqual(expected)) h.Failures.Add($"A AlignPlateAxesComponent: axis {axis}, direction {direction}: corners {(reversed ? "not reversed" : "changed")}");
+        return output;
+    }
+
+    /// <summary>The local axes of the FEM value of a plate datum (the expressions of the former component).</summary>
+    private static (Vector3d A1, Vector3d A2, Vector3d A3) Axes(IGH_Goo plate)
+    {
+        ((PlateModel)plate.GetType().GetProperty("Value").GetValue(plate)).GetLocalAxes(out var a1, out var a2, out var a3);
+        return (a1, a2, a3);
     }
 
     /// <summary>A filter run: the outputs are the inputs partitioned (each decision taken on the GPC draft and checked on the FEM value by the host).</summary>

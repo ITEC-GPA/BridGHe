@@ -102,6 +102,74 @@ namespace BridGHe.Common.Gpc.Builders
             return GpcDrafts.Reidentify(d, identity);
         }
 
+        /// <summary>Align Plate Axes: the draft the reader gives the former plate after the component, decided on the corners of the draft with
+        /// the expressions of the former component and of the former local axes (Straus7 orientation): axis 2 (Blue) with a normal against the
+        /// direction reverses the corners (nothing else changes: the reader reads the reversed points with the same attributes and loads); axes 0
+        /// (Red) and 1 (Green) turn the local axis angle of the plate by the increment that aligns the axis with the direction projected on the
+        /// plane, refused as the reader refuses a plate with a non-zero angle; a direction along the normal leaves the plate unchanged (the
+        /// warning of the component). The draft of a plate has angle 0 (the reader refuses another), so the angle after the component is the
+        /// increment.</summary>
+        public static LegacyPlateDraft AlignAxes(LegacyPlateDraft plate, int axis, double dx, double dy, double dz, Guid identity)
+        {
+            var d = GpcDrafts.Copy(plate ?? throw new ArgumentNullException(nameof(plate)));
+            if (axis < 0 || axis > 2) throw new ArgumentException("GpcPlateBuilderAlignAxisOutOfRange");
+            var dir = Unit((dx, dy, dz));
+            var p = d.Corners.Select(c => (c.X, c.Y, c.Z)).ToArray();
+            LocalAxes(p, out var axes1, out var axes2, out var axes3);
+            if (axis == 2)
+            {
+                if (Dot(axes3, dir) < 0) d = d with { Corners = d.Corners.Reverse().ToArray() };
+                return GpcDrafts.Reidentify(d, identity);
+            }
+            var start = Unit(axis == 0 ? axes1 : axes2);
+            if (Math.Abs(Dot(axes3, dir)) > 0.99999) return GpcDrafts.Reidentify(d, identity);
+            var orto = Unit(Cross(axes3, dir));
+            var newDir = Unit(Cross(orto, axes3));
+            if (Dot(newDir, dir) < 0) newDir = (-newDir.X, -newDir.Y, -newDir.Z);
+            orto = Cross(axes3, start);
+            double increment = Math.Atan2(Dot(newDir, orto), Dot(newDir, start)) * 180.0 / Math.PI;
+            if (increment != 0) throw new NotSupportedException("LegacyPlateAngleNotMappedYet");
+            return GpcDrafts.Reidentify(d, identity);
+        }
+
+        /// <summary>The local axes of a former plate of 3 or 4 corners (<c>PlateModel.GetLocalAxes</c>, Straus7 orientation), same expressions.</summary>
+        private static void LocalAxes((double X, double Y, double Z)[] p, out (double X, double Y, double Z) axes1, out (double X, double Y, double Z) axes2, out (double X, double Y, double Z) axes3)
+        {
+            if (p.Length == 3)
+            {
+                var from2To3 = Sub(p[2], p[1]);
+                var mid23 = Add(p[1], Scale(0.5, from2To3));
+                axes1 = Unit(Sub(mid23, p[0]));
+                axes3 = Unit(Cross(Sub(p[1], p[0]), Sub(p[2], p[1])));
+                axes2 = Unit(Cross(axes3, axes1));
+                return;
+            }
+            var from1To4 = Sub(p[3], p[0]);
+            var mid14 = Add(p[0], Scale(0.5, from1To4));
+            var mid23q = Add(p[1], Scale(0.5, Sub(p[2], p[1])));
+            axes1 = Unit(Sub(mid23q, mid14));
+            var dir0 = Unit(Sub(p[1], p[0]));
+            var dir1 = Unit(Sub(p[2], p[1]));
+            if (Dot(dir0, dir1) > 0.99999) dir1 = Unit(from1To4);
+            axes3 = Cross(dir0, dir1);
+            axes2 = Unit(Cross(axes3, axes1));
+            axes3 = Unit(Cross(axes1, axes2));
+        }
+
+        private static (double X, double Y, double Z) Sub((double X, double Y, double Z) a, (double X, double Y, double Z) b) => (a.X - b.X, a.Y - b.Y, a.Z - b.Z);
+        private static (double X, double Y, double Z) Add((double X, double Y, double Z) a, (double X, double Y, double Z) b) => (a.X + b.X, a.Y + b.Y, a.Z + b.Z);
+        private static (double X, double Y, double Z) Scale(double s, (double X, double Y, double Z) a) => (s * a.X, s * a.Y, s * a.Z);
+        private static double Dot((double X, double Y, double Z) a, (double X, double Y, double Z) b) => a.X * b.X + a.Y * b.Y + a.Z * b.Z;
+        private static (double X, double Y, double Z) Cross((double X, double Y, double Z) a, (double X, double Y, double Z) b) =>
+            (a.Y * b.Z - b.Y * a.Z, a.Z * b.X - b.Z * a.X, a.X * b.Y - b.X * a.Y);
+
+        /// <summary>A unit vector as Rhino's <c>Unitize</c> (a zero vector stays as is).</summary>
+        private static (double X, double Y, double Z) Unit((double X, double Y, double Z) a)
+        {
+            double length = Math.Sqrt(a.X * a.X + a.Y * a.Y + a.Z * a.Z);
+            return length > 0 ? (a.X / length, a.Y / length, a.Z / length) : a;
+        }
+
         /// <summary>The records of a new former load (kind, case) and the definition of its case, after the loads of the draft.</summary>
         private static void Record(LegacyPlateDraft d, string kind, LegacyCaseData loadCase)
         {
