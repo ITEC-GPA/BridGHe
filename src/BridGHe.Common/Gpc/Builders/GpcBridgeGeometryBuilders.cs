@@ -56,21 +56,18 @@ namespace BridGHe.Common.Gpc.Builders
         /// <summary>
         /// Bridge Rigid Links: a node with its BridGHe ID and, for the first node of a link, its rigid connection to the target point (a
         /// <see cref="GPC.Model.Attributes.RigidConnectionAttribute"/>; the assembly makes the link), as the reader gives the former node.
-        /// <para>Private node builder of lane B, «da sostituire dopo il merge di R62A» (the node builders are of lane A).</para>
+        /// <para>R6.2 (P2N, after the merge of R62A): the node of lane A (<see cref="GpcNodeBuilders.Create"/>: position, ID, no groups) with the
+        /// rigid connection the reader adds after the attributes; every number as the reader reads it (<see cref="GpcBeamBuilders.Z"/>).</para>
         /// </summary>
         public static LegacyNodeDraft RigidNode(Rhino.Geometry.Point3d position, string nodeId, Rhino.Geometry.Point3d? target, Guid identity)
         {
-            var units = GpcBeamDrafts.DraftUnits;
-            var report = new LegacyImportReport { Units = units, Owner = identity, Bridge = new GPC.Checkers.CompositeBridge.BridgeModelData() };
-            nodeId ??= "";
-            var node = new NodeElement(identity, new GPC.Geometry.Point3d(units.ToMm(GpcBeamBuilders.Z(position.X)), units.ToMm(GpcBeamBuilders.Z(position.Y)), units.ToMm(GpcBeamBuilders.Z(position.Z))), null, nodeId, 1)
-            { Source = new SourceIdentity(LegacyModelImport.Program, identity.ToString("D"), EntityFamily.Node, nodeId.Length != 0 ? nodeId : "1") };
+            var draft = GpcNodeBuilders.Create(GpcBeamBuilders.Z(position.X), GpcBeamBuilders.Z(position.Y), GpcBeamBuilders.Z(position.Z), nodeId ?? "", null, identity);
             if (target.HasValue)
             {
-                var t = target.Value;
-                node.Attributes.Add(new GPC.Model.Attributes.RigidConnectionAttribute(new GPC.Geometry.Point3d(units.ToMm(GpcBeamBuilders.Z(t.X)), units.ToMm(GpcBeamBuilders.Z(t.Y)), units.ToMm(GpcBeamBuilders.Z(t.Z)))));
+                var units = GpcBeamDrafts.DraftUnits; var t = target.Value;
+                draft.Node.Attributes.Add(new GPC.Model.Attributes.RigidConnectionAttribute(new GPC.Geometry.Point3d(units.ToMm(GpcBeamBuilders.Z(t.X)), units.ToMm(GpcBeamBuilders.Z(t.Y)), units.ToMm(GpcBeamBuilders.Z(t.Z)))));
             }
-            return new LegacyNodeDraft(node, report) { Records = new LegacyElementRecords() };
+            return draft;
         }
 
         /// <summary>
