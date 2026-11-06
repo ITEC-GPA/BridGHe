@@ -23,17 +23,26 @@ internal static class LegacySectionDump
         return 0;
     }
 
-    /// <summary>--legacy-beam-results &lt;bgmodel&gt; &lt;beam id&gt; [case]: the beam force results of a former model archive, read as data.</summary>
+    /// <summary>--legacy-beam-results &lt;bgmodel&gt; &lt;beam id&gt; [case]: the beam force results of a former model archive, read as data
+    /// (R6.6: without the FeMM classes; the size limit of the former reader lifted, as for the merged models of the native captures, 448 MB
+    /// for example 50): the beams of that BridGHe ID in the order of the elements, their length (the distance of the two points, as RhinoCommon
+    /// computes it), their force results of the case (all when none is given) by station.</summary>
     internal static int BeamResults(string path, string beamId, string caseName)
     {
-        // Diagnostic only (tests): the former FeMM classes read the archive (the data reader limits the size of a payload).
-        var model = BridGHe.Common.Helpers.ModelArchive.Read<BridGHe.Common.Models.ModelModel>(File.ReadAllBytes(path));
+        var model = LegacyArchive.Read(File.ReadAllBytes(path), int.MaxValue);
         string G(double v) => v.ToString("R", CultureInfo.InvariantCulture);
-        foreach (var b in model.Beams.Where(b => b.BeamId == beamId))
+        // Rhino points and vectors: their components X, Y (and Z), or the fields m_x, m_y (m_z) of a [Serializable] struct.
+        double C(LegacyValue v, string axis) => v.Any(axis, "m_" + axis.ToLowerInvariant()).AsDouble();
+        Rhino.Geometry.Point3d P(LegacyValue v) => new Rhino.Geometry.Point3d(C(v, "X"), C(v, "Y"), C(v, "Z"));
+        foreach (var b in model.Field("Elements").Items.Where(e => e.Is("BeamModel") && e.String("BeamId") == beamId))
         {
-            Console.WriteLine($"BEAM {beamId} length {G(b.PointFrom.DistanceTo(b.PointTo))}");
-            foreach (var r in b.Results.OfType<BridGHe.Common.Models.BeamForceResultModel>().Where(r => caseName == null || r.LoadCase.Name == caseName).OrderBy(r => r.Station))
-                Console.WriteLine($"  {r.LoadCase.Name} station {G(r.Station)} N {G(r.AxialForce)} SF {G(r.ShearForce.X)} {G(r.ShearForce.Y)} BM {G(r.BendingMoment.X)} {G(r.BendingMoment.Y)}");
+            Console.WriteLine($"BEAM {beamId} length {G(P(b.Field("PointFrom")).DistanceTo(P(b.Field("PointTo"))))}");
+            var results = b["Results"].IsNull ? Enumerable.Empty<LegacyValue>() : b["Results"].Items;
+            foreach (var r in results.Where(r => r.Is("BeamForceResultModel") && (caseName == null || r["Case"].String("Name") == caseName)).OrderBy(r => r.Double("Station")))
+            {
+                var shear = r.Field("ShearForce"); var moment = r.Field("BendingMoment");
+                Console.WriteLine($"  {r["Case"].String("Name")} station {G(r.Double("Station"))} N {G(r.Double("AxialForce"))} SF {G(C(shear, "X"))} {G(C(shear, "Y"))} BM {G(C(moment, "X"))} {G(C(moment, "Y"))}");
+            }
         }
         return 0;
     }

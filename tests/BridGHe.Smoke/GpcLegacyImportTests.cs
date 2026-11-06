@@ -1,11 +1,10 @@
 #if GPC_PILOT
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using BridGHe.Common.Gpc;
 using BridGHe.Common.Gpc.Legacy;
-using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using GPC.Converter.Straus7;
 using GPC.Model.ElementProperties;
 using GPC.Model.LoadCases;
@@ -16,74 +15,56 @@ using R = Rhino.Geometry;
 using G = GPC.Geometry;
 
 /// <summary>F6A conversions: former FEM payloads (BGHA1) read as data and converted to GPC with the semantics of the former
-/// Straus7 exporter. The FeMM classes are used here only as the reference that writes the payloads and computes the axes.</summary>
-internal static class GpcLegacyImportTests
+/// Straus7 exporter.
+/// <para>R6.6 (P2U): this file has no FeMM class. The former FEM models of the tests are the frozen payloads of
+/// <c>tests/BridGHe.Smoke/Fixtures/legacy-payloads</c> (<see cref="LegacyPayloadFixtures"/>, written once by the FEM writer: every unit
+/// system, the refusals of the reader), the former local axes of their beams the frozen ones of the same folder; the GH data archive takes its
+/// former payloads from the example definitions saved by BridGHe 0.3.0 (the locations the R6.0 capture <c>payloads</c> lists). While the
+/// FEM models exist, <c>GpcLegacyImportTests.Fem.cs</c> checks the fixtures against the FEM writer (and writes them once, with
+/// <c>BRIDGHE_LEGACY_FIXTURES=write:&lt;folder&gt;</c>).</para></summary>
+internal static partial class GpcLegacyImportTests
 {
     private static int checks;
     private static void Assert(bool condition, string name) { if (!condition) throw new Exception("GPC LEGACY IMPORT FAIL: " + name); checks++; }
     private static bool Near(double a, double b, double tolerance = 1e-12) => Math.Abs(a - b) <= tolerance * Math.Max(1, Math.Max(Math.Abs(a), Math.Abs(b)));
+    private static bool Near(G.Vector3d a, (double X, double Y, double Z) b, double tolerance = 1e-12) => Near(a.X, b.X, tolerance) && Near(a.Y, b.Y, tolerance) && Near(a.Z, b.Z, tolerance);
     private static bool Near(G.Vector3d a, R.Vector3d b, double tolerance = 1e-12) => Near(a.X, b.X, tolerance) && Near(a.Y, b.Y, tolerance) && Near(a.Z, b.Z, tolerance);
+
+    /// <summary>The checks of the fixtures against the FEM writer while it exists (<c>GpcLegacyImportTests.Fem.cs</c>; it also writes the
+    /// fixtures once); the call disappears with that file.</summary>
+    static partial void FemCases();
+
+    /// <summary>The factors of the unit systems (mm and N per definition unit; IPS in Fahrenheit), as the tests state them.</summary>
+    private static readonly (string Units, double Length, double Force, bool Fahrenheit)[] UnitSystems =
+        { ("Nmm", 1, 1, false), ("Knm", 1000, 1000, false), ("SI", 1000, 1, false), ("IPS", 25.4, 4.4482216152605, true) };
 
     internal static void Run()
     {
         checks = 0;
-        Units(ModelModel.ModelUnits.Nmm, 1, 1);
-        Units(ModelModel.ModelUnits.Knm, 1000, 1000);
+        FemCases();
+        foreach (var u in UnitSystems) Units(u.Units, u.Length, u.Force, u.Fahrenheit);
         Schemas();
         Archives();
-        BridgeIdentities(ModelModel.ModelUnits.Nmm, 1);
-        BridgeIdentities(ModelModel.ModelUnits.Knm, 1000);
-        Console.WriteLine($"GPC LEGACY IMPORT PASS: {checks} checks (units, nodes, restraint frames, rigid links, beam axes, I order, sections, loads, cases, combinations, write plan).");
+        foreach (var u in UnitSystems) BridgeIdentities(u.Units, u.Length);
+        int refusals = Outcomes();
+        Console.WriteLine($"GPC LEGACY IMPORT PASS: {checks} checks (units Nmm, Knm, SI, IPS, nodes, restraint frames, rigid links, beam axes, I order, sections, loads, cases, combinations, write plan; " +
+            $"{LegacyPayloadFixtures.Index().Count} frozen payloads, {refusals} refusals of the reader as recorded).");
     }
 
-    private static GPC.Model.Models.Model Import(ModelModel legacy, out LegacyImportReport report)
+    private static GPC.Model.Models.Model Import(string fixture, out LegacyImportReport report)
     {
         report = new LegacyImportReport();
-        var tree = LegacyArchive.Read(ModelArchive.Write(legacy));
+        var tree = LegacyArchive.Read(LegacyPayloadFixtures.Bytes(fixture));
         Assert(tree.Is("ModelModel"), "legacy payload read as data");
         return LegacyModelImport.Import(tree, GpcIdentity.Derive(GpcIdentity.NameSpace, "test"), 1e-3, report);
     }
 
-    private static void Units(ModelModel.ModelUnits units, double length, double force)
+    /// <summary>The units model (<c>units-&lt;units&gt;</c>, see <c>LegacyPayloadFixtures.Units</c>): its numbers are those below.</summary>
+    private static void Units(string u, double length, double force, bool fahrenheit)
     {
-        string u = units.ToString();
-        var steel = new MaterialModel("S355") { Name = "S355", Modulus = 210000, PoissonRatio = 0.3, UsePoisson = true, Density = 7.85e-9, ThermalExpansion = 1.2e-5 };
-        // Asymmetric I: B1/T1 is the bottom flange in the native order of the former exporter.
-        var i = new SectionModel { Name = "I", SectionType = SectionModel.SectionTypes.I, D = 0.5, B1 = 0.3, B2 = 0.1, T1 = 0.02, T2 = 0.01, T3 = 0.005 };
-        var rect = new SectionModel { Name = "R", SectionType = SectionModel.SectionTypes.SolidRectangle, B = 0.3, D = 0.5 };
-        var generic = new SectionModel { Name = "G", SectionType = SectionModel.SectionTypes.Generic, SectionArea = 0.02, I11 = 3e-4, I22 = 1e-4, J = 2e-5, ShearA1 = 0.01, ShearA2 = 0.015, Centroid = new R.Point2d(0.1, 0.2) };
-        BeamPropertyModel Property(string name, SectionModel s) => new BeamPropertyModel(name) { Name = name, Material = steel, Section = s, PropertyType = BeamPropertyType.Beam };
-        var pi = Property("PI", i); var pr = Property("PR", rect); var pg = Property("PG", generic);
-        var traffic = new LoadCaseModel("2", "Traffic"); var wind = new LoadCaseModel("3", "Wind");
         var p = new[] { new R.Point3d(0, 0, 0), new R.Point3d(10, 0, 0), new R.Point3d(20, 5, 1), new R.Point3d(10, 0, 4), new R.Point3d(10, 0, -3) };
-        var nodes = p.Select((x, k) => new NodeModel((k + 1).ToString(), x)).ToArray();
         var frame = new R.Plane(p[0], new R.Vector3d(1, 1, 0), new R.Vector3d(-1, 1, 0));
-        nodes[0].Attributes.Add(new NodeRestraintAttributeModel(true, true, true, false, false, true));
-        nodes[0].Attributes.Add(new NodeCoordinateAttributeModel(frame));
-        nodes[2].Attributes.Add(new NodeRestraintAttributeModel(true, true, true, true, true, true));
-        nodes[1].Loads.Add(new NodeForceLoadModel(traffic, new R.Vector3d(1, 2, -3)));
-        nodes[1].Attributes.Add(new RigidConnectionAttributeModel(p[4]));
-        var girder = new GroupModel("Girder"); var span = new GroupModel("Span1", girder); var bearing = new GroupModel("Bearing/S1");
-        nodes[0].Groups.Add(bearing);
-        var beams = new[]
-        {
-            new BeamModel(p[0], p[1], pi, span, 0) { BeamId = "1" },
-            new BeamModel(p[1], p[2], pr, span, 30) { BeamId = "2" },
-            new BeamModel(p[1], p[3], pg, girder, 0) { BeamId = "3", Offset = new R.Vector2d(0.05, -0.1) },
-        };
-        beams[0].Loads.Add(new BeamDistributedLoadModel(traffic, new BeamDistributedLoadModel.LoadData { LoadSchema = BeamDistributedLoadModel.LoadSchema.Uniform, CoordinateSystem = CoordinateSystemModel.Global,
-            LoadDirection = BeamDistributedLoadModel.LoadDirection.Gravity, PA = 10 }, BeamDistributedLoadModel.LoadType.Force));
-        beams[1].Loads.Add(new BeamDistributedLoadModel(wind, new BeamDistributedLoadModel.LoadData { LoadSchema = BeamDistributedLoadModel.LoadSchema.Keystone, CoordinateSystem = null,
-            LoadDirection = BeamDistributedLoadModel.LoadDirection.Y, PA = 2, PB = 4, A = 0.25, B = 0.25 }, BeamDistributedLoadModel.LoadType.Force));
-        beams[1].Loads.Add(new BeamDistributedLoadModel(wind, new BeamDistributedLoadModel.LoadData { LoadSchema = BeamDistributedLoadModel.LoadSchema.Uniform, CoordinateSystem = CoordinateSystemModel.Global,
-            LoadDirection = BeamDistributedLoadModel.LoadDirection.Z_Projected, PA = 3 }, BeamDistributedLoadModel.LoadType.Force));
-        beams[2].Loads.Add(new BeamPreLoadModel(traffic, 7, BeamPreLoadModel.LoadType.Tension));
-        beams[2].Loads.Add(new BeamGradientLoadModel(wind, new BeamGradientLoadModel.LoadData { Axis1 = 0.5, Axis2 = -0.25 }));
-        var legacy = new ModelModel(units) { Name = "units " + u };
-        legacy.AddElements(nodes.Cast<ElementModel>().Concat(beams));
-        var combination = new LoadCombinationModel("SLU"); combination.Values.Add(traffic, 1.35); combination.Values.Add(wind, 0.9); legacy.AddLoadCombinations(new[] { combination });
-
-        var model = Import(legacy, out var report);
+        var model = Import("units-" + u, out var report);
         Assert(model.NodesElements.Count == 5 && model.BeamElements.Count == 3, u + ": nodes and beams in the former order");
         for (int k = 0; k < 5; k++)
         {
@@ -100,9 +81,9 @@ internal static class GpcLegacyImportTests
         Assert(f[0] == 1 * force && f[1] == 2 * force && f[2] == -3 * force, u + ": nodal force in N");
         for (int k = 0; k < 3; k++)
         {
-            beams[k].GetLocalAxes(true, out var v1, out var v2, out var v3, out _);
+            var axes = LegacyPayloadFixtures.Axes(u, k + 1);
             var a = model.BeamElements[k + 1].Assignments.SectionAxes;
-            Assert(Near(a.V1, v1, 1e-12) && Near(a.V2, v2, 1e-12) && Near(a.V3, v3, 1e-12), u + ": beam axes equal the former local axes " + (k + 1));
+            Assert(Near(a.V1, axes.V1, 1e-12) && Near(a.V2, axes.V2, 1e-12) && Near(a.V3, axes.V3, 1e-12), u + ": beam axes equal the former local axes " + (k + 1));
         }
         var h = (SectionH)((ElasticBeamProperty)model.BeamElements[1].BeamProperty).Section;
         Assert(Near(h.LenghtBottomFlange, 0.3 * length) && Near(h.ThicknessBottomFlange, 0.02 * length) && Near(h.LenghtTopFlange, 0.1 * length)
@@ -118,15 +99,16 @@ internal static class GpcLegacyImportTests
         Assert(gravity.Start == 0 && gravity.End == 1 && g0[0] == 0 && g0[1] == 0 && Near(g0[2], -10 * force / length), u + ": gravity load acts along -Z, N/mm");
         Assert(Near(gravity.Eccentricity.X, 0) && gravity.LengthConvention == GPC.Model.Loads.Assignments.BeamLoadLengthConvention.ActualLength, u + ": no eccentricity without offset");
         var local = model.BeamElements[2].Assignments.Loads.Where(l => l.LengthConvention == GPC.Model.Loads.Assignments.BeamLoadLengthConvention.ActualLength).Single();
-        beams[1].GetLocalAxes(true, out _, out var axis2, out _, out _);
+        var axis2 = LegacyPayloadFixtures.Axes(u, 2).V2;
         var l0 = local.StartIntensity.GetGlobalForces(); var l1 = local.EndIntensity.GetGlobalForces();
-        Assert(local.Start == 0.25 && local.End == 0.75 && Near(l0[0], 2 * axis2.X * force / length, 1e-12) && Near(l0[2], 2 * axis2.Z * force / length, 1e-12)
-            && Near(l1[1], 4 * axis2.Y * force / length, 1e-12), u + ": local keystone along principal axis 2, independent of the beam position");
+        Assert(local.Start == 0.25 && local.End == 0.75 && Near(l0[0], 2 * axis2.Item1 * force / length, 1e-12) && Near(l0[2], 2 * axis2.Item3 * force / length, 1e-12)
+            && Near(l1[1], 4 * axis2.Item2 * force / length, 1e-12), u + ": local keystone along principal axis 2, independent of the beam position");
         var projected = model.BeamElements[2].Assignments.Loads.Single(l => l.LengthConvention == GPC.Model.Loads.Assignments.BeamLoadLengthConvention.ProjectedLength);
         Assert(projected.ProjectionPlaneNormal.Z == 1 && Near(projected.StartIntensity.GetGlobalForces()[2], 3 * force / length), u + ": projected global load");
         var eccentric = model.BeamElements[3].Assignments.Physical;
         Assert(eccentric.InitialStates.Single().Value == 7 * force && eccentric.InitialStates.Single().Kind == BeamInitialStateKind.AxialForce, u + ": pre-tension in N");
-        Assert(Near(eccentric.TemperatureGradients.Single().Axis1, 0.5 / length) && Near(eccentric.TemperatureGradients.Single().Axis2, -0.25 / length), u + ": gradients in °C/mm");
+        double delta(double v) => fahrenheit ? v * 5 / 9 : v;
+        Assert(Near(eccentric.TemperatureGradients.Single().Axis1, delta(0.5) / length) && Near(eccentric.TemperatureGradients.Single().Axis2, delta(-0.25) / length), u + ": gradients in °C/mm");
         var dead = model.LoadCases["Dead"];
         Assert(dead is LoadCase lc && lc.LoadCaseType == LoadCase.LoadCaseTypes.SelfWeight && dead.InertiaMasses.Structural && !dead.InertiaMasses.NonStructural, u + ": default Dead case with structural mass");
         var weight = (ModelGravityLoad)model.ModelLoads.Values.Single();
@@ -142,30 +124,10 @@ internal static class GpcLegacyImportTests
     }
 
     /// <summary>C1: Element IDs as GPC labels (nodes, beams, plates), bridge member metadata and super elements as GPC physical members;
-    /// the Straus7 writer accepts the labelled model (labels are descriptive).</summary>
-    private static void BridgeIdentities(ModelModel.ModelUnits units, double length)
+    /// the Straus7 writer accepts the labelled model (labels are descriptive). The fixtures <c>bridge-identities[-twice|-two]-&lt;units&gt;</c>.</summary>
+    private static void BridgeIdentities(string u, double length)
     {
-        string u = units.ToString();
-        var steel = new MaterialModel("S355") { Name = "S355", Modulus = 210000, PoissonRatio = 0.3, UsePoisson = true, Density = 7.85e-9, ThermalExpansion = 1.2e-5 };
-        var rect = new SectionModel { Name = "R", SectionType = SectionModel.SectionTypes.SolidRectangle, B = 0.3, D = 0.5 };
-        var property = new BeamPropertyModel("P") { Name = "P", Material = steel, Section = rect, PropertyType = BeamPropertyType.Beam };
-        var p = Enumerable.Range(0, 4).Select(k => new R.Point3d(10 * k, 0, 0)).ToArray();
-        var nodes = p.Select((x, k) => new NodeModel((k + 1).ToString(), x)).ToArray();
-        nodes[0].Attributes.Add(new NodeRestraintAttributeModel(true, true, true, true, true, true));
-        nodes[3].Attributes.Add(new NodeRestraintAttributeModel(true, true, true, false, false, false));
-        nodes[1].Attributes.Add(new ElementIdAttributeModel("N2"));
-        var group = new GroupModel("Girder");
-        var beams = Enumerable.Range(0, 3).Select(k => new BeamModel(p[k], p[k + 1], property, group, 0) { BeamId = (k + 1).ToString() }).ToArray();
-        for (int k = 0; k < 3; k++)
-        {
-            beams[k].Attributes.Add(new ElementIdAttributeModel("B" + (k + 1)));
-            beams[k].Attributes.Add(new SuperElementAttributeModel(k < 2 ? "G1" : "G2"));
-            beams[k].Attributes.Add(new BridgeMemberAttributeModel(new BridgeMemberMetadata("Girder:1:1", BridGHe.Common.Geometry.BridgeMemberFamily.Girder, 1, 1, 1,
-                10 * k, 10 * (k + 1), new R.Vector3d(0, 0, 1), "Girder:01:01:000" + (k + 1))));
-        }
-        var legacy = new ModelModel(units) { Name = "bridge identities " + u };
-        legacy.AddElements(nodes.Cast<ElementModel>().Concat(beams));
-        var model = Import(legacy, out var report);
+        var model = Import("bridge-identities-" + u, out var report);
         string Label(GPC.Model.Elements.Element e) => e.Attributes.Values.OfType<GPC.Model.Attributes.ElementLabelAttribute>().SingleOrDefault()?.Label;
         Assert(Label(model.NodesElements[2]) == "N2" && Label(model.NodesElements[1]) == null, u + ": node Element ID as label");
         Assert(Enumerable.Range(1, 3).All(k => Label(model.BeamElements[k]) == "B" + k), u + ": beam Element IDs as labels");
@@ -186,17 +148,52 @@ internal static class GpcLegacyImportTests
         Assert(Label(copy.Model.BeamElements[2]) == "B2" && copy.Data.Fingerprint() == bridge.Data.Fingerprint()
             && copy.PhysicalMember("Girder:1:1")[2].Metadata.GeometryId == "Girder:01:01:0003", u + ": GPC archive round trip (BridgeModel)");
         // Lead decision of 5/11: a beam in two super elements is an import error; two attributes with the same name are one super element.
-        var twice = new ModelModel(legacy); twice.Beams[0].Attributes.Add(new SuperElementAttributeModel("G1"));
-        var twiceModel = Import(twice, out var twiceReport);
+        var twiceModel = Import("bridge-identities-twice-" + u, out var twiceReport);
         Assert(twiceModel.BeamElements.Count == 3 && twiceReport.Bridge.SuperElement(twiceModel.BeamElements[1].Guid) == "G1", u + ": the same super element twice is one");
-        var two = new ModelModel(legacy); two.Beams[0].Attributes.Add(new SuperElementAttributeModel("G2"));
-        try { Import(two, out _); Assert(false, u + ": a beam in two super elements accepted"); }
+        try { Import("bridge-identities-two-" + u, out _); Assert(false, u + ": a beam in two super elements accepted"); }
         catch (ArgumentException e) when (e.Message.StartsWith("LegacyBeamInTwoSuperElements", StringComparison.Ordinal)) { }
     }
 
-    /// <summary>The six distributions decomposed into linear pieces: each piece reproduces the native law at its ends.</summary>
+    /// <summary>Every frozen payload read by the reader now: the outcome recorded when it was written (accepted, or refused with the same
+    /// error type and message). The number of refusals.</summary>
+    private static int Outcomes()
+    {
+        int refusals = 0;
+        foreach (var e in LegacyPayloadFixtures.Index())
+        {
+            string now = LegacyPayloadFixtures.Outcome(e.Name, LegacyPayloadFixtures.Bytes(e.Name));
+            Assert(now == e.Outcome, $"{e.Name}: the reader gives '{now}', recorded '{e.Outcome}'");
+            if (e.Outcome != "ACCEPTED") refusals++;
+        }
+        return refusals;
+    }
+    /// <summary>The first BGHA1 payload of the example definition <paramref name="file"/> (relative to the example folder) whose root is a
+    /// <paramref name="rootType"/>, as BridGHe 0.3.0 saved it, with its location; the R6.0 capture <c>payloads</c> must list that location.</summary>
+    internal static (byte[] Bytes, string Location) ExamplePayload(string file, string rootType)
+    {
+        var archive = new GH_IO.Serialization.GH_Archive();
+        string path = Path.Combine(ExamplePaths.Root, file);
+        if (!archive.ReadFromFile(path)) throw new Exception("GPC LEGACY IMPORT FAIL: example not readable: " + path);
+        byte[] found = null; string location = null;
+        void Walk(GH_IO.Serialization.GH_IChunk chunk, string where)
+        {
+            foreach (var item in chunk.Items)
+            {
+                if (found != null || item.Type != GH_IO.Types.GH_Types.gh_bytearray || !LegacyArchive.IsLegacy(item._bytearray)) continue;
+                if (LegacyArchive.Read(item._bytearray).ShortType == rootType) { found = item._bytearray; location = file + ":" + where + "/" + item.Name; }
+            }
+            foreach (var c in chunk.Chunks) if (found == null) Walk(c, where + "/" + c.Name + (c.Index > 0 ? "[" + c.Index + "]" : ""));
+        }
+        Walk(archive.GetRootNode, "");
+        if (found == null) throw new Exception($"GPC LEGACY IMPORT FAIL: no {rootType} payload in {file}");
+        string index = Path.Combine(GpcCompositeSectionChecks.CaptureFolder(), "payloads.tsv");
+        if (!File.ReadLines(index).Any(l => l.StartsWith(location + "\t", StringComparison.Ordinal))) throw new Exception($"GPC LEGACY IMPORT FAIL: {location} is not in the R6.0 capture ({index})");
+        return (found, location);
+    }
+
     /// <summary>GH data archive (BGHGPC1): GPC values and models round trip with their fingerprint; legacy payloads and foreign or
-    /// corrupted bytes are recognised and refused, never read as GPC data.</summary>
+    /// corrupted bytes are recognised and refused, never read as GPC data. The former payloads: a steel material of example 19 and the
+    /// internalized model of example 01, as BridGHe 0.3.0 saved them.</summary>
     private static void Archives()
     {
         var material = new GPC.Model.Materials.Material("S355", 210000, 0.3, 7.85e-9, 1.2e-5);
@@ -204,12 +201,16 @@ internal static class GpcLegacyImportTests
         Assert(GpcGooArchive.IsGpc(bytes) && !GpcGooArchive.IsLegacy(bytes), "GH archive header");
         Assert(copy.Name == "S355" && copy.E == 210000 && copy.Ni == 0.3 && copy.Density == 7.85e-9 && copy.AlfaThermalExpansion == 1.2e-5, "GH archive: material values");
         Assert(GPC.Model.Core.ModelValues.Fingerprint(new object[] { copy }) == GPC.Model.Core.ModelValues.Fingerprint(new object[] { material }), "GH archive: material fingerprint");
-        var legacy = new ModelModel(ModelModel.ModelUnits.Nmm); var node = new NodeModel("1", new R.Point3d(0, 0, 0)); legacy.AddElements(new ElementModel[] { node });
-        var model = Import(legacy, out _); var modelBytes = GpcGooArchive.Model(model); var reopened = GpcGooArchive.ReadModel(modelBytes);
-        Assert(GPC.Model.Models.ModelRevisions.AnalysisFingerprint(reopened) == GPC.Model.Models.ModelRevisions.AnalysisFingerprint(model) && reopened.NodesElements.Count == 1, "GH archive: model fingerprint");
+        var (saved, where) = ExamplePayload(Path.Combine("01-cantilever", "01-cantilever.ghx"), "ModelModel");
+        var tree = LegacyArchive.Read(saved);
+        Assert(tree.Is("ModelModel"), "legacy payload read as data (" + where + ")");
+        var model = LegacyModelImport.Import(tree, GpcIdentity.Derive(GpcIdentity.NameSpace, "test"), 1e-3, new LegacyImportReport());
+        var modelBytes = GpcGooArchive.Model(model); var reopened = GpcGooArchive.ReadModel(modelBytes);
+        Assert(model.NodesElements.Count > 0 && GPC.Model.Models.ModelRevisions.AnalysisFingerprint(reopened) == GPC.Model.Models.ModelRevisions.AnalysisFingerprint(model)
+            && reopened.NodesElements.Count == model.NodesElements.Count, "GH archive: model fingerprint (" + where + ")");
         bool Refused(Action read) { try { read(); return false; } catch (System.Runtime.Serialization.SerializationException) { return true; } }
-        var payload = ModelArchive.Write(new MaterialModel("M") { Name = "M", Modulus = 1 });
-        Assert(GpcGooArchive.IsLegacy(payload) && Refused(() => GpcGooArchive.ReadValue<GPC.Model.Materials.Material>(payload)), "GH archive: legacy payload recognised and refused");
+        var (payload, payloadWhere) = ExamplePayload(Path.Combine("19-flusso-acciaio-misto", "19-flusso-acciaio-misto_REV003.ghx"), "MaterialModel");
+        Assert(GpcGooArchive.IsLegacy(payload) && Refused(() => GpcGooArchive.ReadValue<GPC.Model.Materials.Material>(payload)), "GH archive: legacy payload recognised and refused (" + payloadWhere + ")");
         Assert(Refused(() => GpcGooArchive.ReadModel(bytes)), "GH archive: kind mismatch refused");
         var version = (byte[])bytes.Clone(); version[7] = 9; Assert(Refused(() => GpcGooArchive.ReadValue<GPC.Model.Materials.Material>(version)), "GH archive: unknown version refused");
         Assert(Refused(() => GpcGooArchive.ReadValue<GPC.Model.Materials.Material>(new byte[] { 1, 2, 3 })), "GH archive: foreign bytes refused");
@@ -217,6 +218,7 @@ internal static class GpcLegacyImportTests
         Assert(Fails(() => GpcGooArchive.ReadValue<GPC.Model.Materials.Material>(bytes.Take(bytes.Length / 2).ToArray())), "GH archive: truncated data refused");
     }
 
+    /// <summary>The six distributions decomposed into linear pieces: each piece reproduces the native law at its ends.</summary>
     private static void Schemas()
     {
         const double pa = 3, pb = 5, p1 = 1, p2 = 7, a = 0.2, b = 0.3;
