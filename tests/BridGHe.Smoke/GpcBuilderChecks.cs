@@ -88,13 +88,5 @@ internal static class GpcBuilderChecksA
     }
 }
 
-/// <summary>R6.2, lane B (sections, properties, materials, bridge geometry): the runs of the converted producer components (none yet).</summary>
-internal static class GpcBuilderChecksB
-{
-    internal static void Regression()
-    {
-        using var h = new GpcBuilderChecks("B");
-        h.Finish(0);
-    }
-}
+// R6.2, lane B (beams): GpcBuilderChecksB is in its own file (GpcBuilderChecksB.cs).
 #endif

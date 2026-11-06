@@ -59,6 +59,8 @@ namespace BridGHe.Grasshopper.Components.Attributes
             };
             BeamOutputStationsModel attr = new BeamOutputStationsModel(attributeData);
             newBeam.Value.Attributes.Add(attr);
+            // R6.2 (lane B): the GPC draft built on GPC from the draft of the input (identity of the conversion of the FEM output until R6.5).
+            GpcBeamInputs.Attach(newBeam, id => Common.Gpc.Builders.GpcBeamBuilders.WithOutputStations(beam.Gpc, stations, id));
 
             DA.SetData("Beam", newBeam);
         }

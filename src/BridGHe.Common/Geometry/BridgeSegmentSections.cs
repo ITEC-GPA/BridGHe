@@ -8,7 +8,11 @@ using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Geometry;
 
-public sealed record BridgeSegmentSectionResult(BridgeSectionRule[] Rules, string[] Table, string[] ResolvedTable);
+public sealed record BridgeSegmentSectionResult(BridgeSectionRule[] Rules, string[] Table, string[] ResolvedTable)
+{
+    /// <summary>R6.2 (lane B): the I section of every rule without FEM values (same order): its name and its dimensions B1, B2, D, T1, T2, T3, R.</summary>
+    public (string Name, double[] Dimensions)[] Sections { get; init; } = Array.Empty<(string, double[])>();
+}
 public sealed record BridgeSegmentTableUpdate(string[] Table, string[] Changes);
 
 /// <summary>Editable, keyed section dimensions. Mesh refinement never determines section identity.</summary>
@@ -92,6 +96,7 @@ public static class BridgeSegmentSections
             throw new ArgumentException("Base Property must be an unmirrored I Section with Steel Material and Beam formulation.");
         var rows = MatchRows(segments, table, true);
         var rules = new List<BridgeSectionRule>(); var normalized = new List<string> { Header }; var resolved = new List<string> { Header };
+        var sections = new List<(string, double[])>();
         double[] defaults = { baseProperty.B1, baseProperty.B2, baseProperty.D, baseProperty.T1, baseProperty.T2, baseProperty.T3, baseProperty.R };
         foreach (var s in segments)
         {
@@ -110,10 +115,10 @@ public static class BridgeSegmentSections
             var property = ModelArchive.Clone(baseProperty);
             property.Id = "Concio " + Id(s); property.Name = property.Id; property.Section = section;
             var rule = new BridgeSectionRule { Family = 0, Group = s.Girder, Segment = s.Segment, Start = s.Start, End = s.End, Property = property };
-            rule.Validate(); rules.Add(rule);
+            rule.Validate(); rules.Add(rule); sections.Add((section.Name, v));
             normalized.Add(Line(s, row.Dimensions)); resolved.Add(Line(s, v.Select(value => (double?)value)));
         }
-        return new(rules.ToArray(), normalized.ToArray(), resolved.ToArray());
+        return new(rules.ToArray(), normalized.ToArray(), resolved.ToArray()) { Sections = sections.ToArray() };
     }
 
     /// <summary>Validate an explicit table without requiring materials or constructing FEM sections.</summary>

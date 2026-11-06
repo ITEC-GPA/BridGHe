@@ -21,7 +21,9 @@ public sealed class BridgeFamilyPropertyComponent : BridgeDefinitionComponent
     }
     protected override void RegisterOutputParams(GH_OutputParamManager p)=>p.AddGenericParameter("Family Property","P","Connect a list of these definitions to Bridge FEM Members.",GH_ParamAccess.item);
     protected override void Solve(IGH_DataAccess da)
-    {GH_BeamProperty p=null;int f=-1;if(!da.GetData(0,ref p))return;da.GetData(1,ref f);if(f< -1||f>8||p?.Value?.IsValid!=true)throw new ArgumentException("A valid beam property and member family are required.");da.SetData(0,new BridgeDesignGoo(new BridgeFamilyProperty(f,p.Value)));}
+    {GH_BeamProperty p=null;int f=-1;if(!da.GetData(0,ref p))return;da.GetData(1,ref f);if(f< -1||f>8||p?.Value?.IsValid!=true)throw new ArgumentException("A valid beam property and member family are required.");
+        // R6.2 (lane B): the GPC datum of the property goes with it to Bridge FEM Members.
+        BridgeSectionScheduleComponent.TryAttach(p);da.SetData(0,new BridgeDesignGoo(new BridgeFamilyProperty(f,p.Value)));}
 }
 
 public sealed class BridgeFemMembersComponent : BridgeMemberAssignmentComponent

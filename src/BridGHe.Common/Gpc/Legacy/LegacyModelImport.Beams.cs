@@ -31,30 +31,43 @@ namespace BridGHe.Common.Gpc.Legacy
             double principalAngle, Action<BeamElement> connect, Func<LegacyValue, Group> groupOf, Dictionary<string, LoadCaseBase> cases, BridgeUnits units,
             LegacyImportReport report, BridgeMembers members, Func<int, string> femPropertySignature, LegacyElementRecords records)
         {
-            string beamId = b.String("BeamId") ?? "";
+            var offset = b["Offset"];
+            // e3: every group at list level (the former exporter wrote the first; the warning comes with the resolution, LegacyAssembly.ResolveBeam).
+            var bg = b.Field("Groups").Items;
+            var (beam, principal, globalOffset) = NewBeam(guid, owner, k, b.String("BeamId") ?? "", start, end, property, formulation, principalAngle, b.Double("Angle"),
+                units.ToMm(offset.Double("X")), units.ToMm(offset.Double("Y")), connect, bg.Count > 0 ? () => groupOf(bg[0]) : null, bg.Select(FullName), report, records);
+            BeamData(b, beam, principal, globalOffset, cases, units, report, members, records);
+            SectionState(b, k, beam, femPropertySignature, report, records);
+            return beam;
+        }
+
+        /// <summary>
+        /// R6.2 (lane B): the start of <see cref="Beam"/> on plain data (also the start of a beam built on GPC, <c>GpcBeamBuilders.New</c>): the
+        /// beam <paramref name="k"/> (0-based) on its ends and property, connected right after its creation, its BridGHe angle in the report,
+        /// formulation, section axes, the offset in the principal axes, the first group (<paramref name="firstGroup"/>, null: none) and the full
+        /// names of every group in the records. Returns the beam, its principal axes and the global eccentricity of its loads (the offset).
+        /// </summary>
+        internal static (BeamElement Beam, CoordinateSystem Principal, Vector3d GlobalOffset) NewBeam(Guid guid, Guid owner, int k, string beamId, Point3d start, Point3d end,
+            BeamProperty property, BeamFormulation formulation, double principalAngle, double angleDeg, double ox, double oy, Action<BeamElement> connect,
+            Func<Group> firstGroup, IEnumerable<string> groupFullNames, LegacyImportReport report, LegacyElementRecords records)
+        {
             var beam = new BeamElement(guid, start, end, property, null, beamId, k + 1)
             { Source = new SourceIdentity(Program, owner.ToString("D"), EntityFamily.Beam, beamId.Length != 0 ? beamId : (k + 1).ToString()) };
             connect?.Invoke(beam);
-            double angleDeg = b.Double("Angle");
             report.BeamAngles[k + 1] = angleDeg;
             var section = GpcBeamAxes.Section(start, end, angleDeg, principalAngle);
             var principal = GpcBeamAxes.Principal(start, end, angleDeg);
             beam.Assignments.Formulation = formulation;
             beam.Assignments.SectionAxes = section;
-            var offset = b["Offset"]; double ox = units.ToMm(offset.Double("X")), oy = units.ToMm(offset.Double("Y"));
             var globalOffset = principal.V1 * ox + principal.V2 * oy;
             if (ox != 0 || oy != 0)
             {
                 beam.Assignments.OffsetAxes = principal;
                 beam.Assignments.OffsetI = new Vector3d(ox, oy, 0); beam.Assignments.OffsetJ = new Vector3d(ox, oy, 0);
             }
-            // e3: every group at list level (the former exporter wrote the first; the warning comes with the resolution, LegacyAssembly.ResolveBeam).
-            var bg = b.Field("Groups").Items;
-            if (bg.Count > 0) beam.AddGroup(groupOf(bg[0]));
-            foreach (var g in bg) records.GroupList.Add(FullName(g));
-            BeamData(b, beam, principal, globalOffset, cases, units, report, members, records);
-            SectionState(b, k, beam, femPropertySignature, report, records);
-            return beam;
+            if (firstGroup != null) beam.AddGroup(firstGroup());
+            foreach (var g in groupFullNames) records.GroupList.Add(g);
+            return (beam, principal, globalOffset);
         }
 
         /// <summary>
@@ -102,43 +115,28 @@ namespace BridGHe.Common.Gpc.Legacy
                     case "SuperElementAttributeModel": members.SuperElement(a.String("Value"), beam, records); break;
                     case "BridgeMemberAttributeModel": members.Member(a.Field("BridgeMetadata"), beam, units, records); break;
                     case "BridgeSectionStateAttributeModel": break; // after the beam is complete (SectionState)
-                    case "BeamOutputStationsModel":
-                        (beam.Assignments.Physical ??= new BeamPhysicalData()).MinimumOutputStations = a.Int("MinimumNumberOfStations"); break;
+                    case "BeamOutputStationsModel": OutputStations(beam, a.Int("MinimumNumberOfStations")); break;
                     case "BeamReleasesAttributeModel":
                         beam.Attributes.Add(Releases(a, units)); break;
                     case "BeamSupportAttributeModel":
                         (beam.Assignments.Physical ??= new BeamPhysicalData()).Supports.Add(Support(a, beam.Assignments.SectionAxes, units)); break;
                     case "BeamTaperAttributeModel":
-                        if (++records.Tapers > 1) break;
-                        (beam.Assignments.Physical ??= new BeamPhysicalData()).Taper = new BeamSectionTaper
-                        {
-                            ScaleI1 = a.Double("NFromX"), ScaleJ1 = a.Double("NToX"), ScaleI2 = a.Double("NFromY"), ScaleJ2 = a.Double("NToY"),
-                            Alignment1 = TaperAlignmentOf(a.Enum("AlignmentX")), Alignment2 = TaperAlignmentOf(a.Enum("AlignmentY")),
-                        };
+                        Taper(beam, records, a.Double("NFromX"), a.Double("NToX"), a.Double("NFromY"), a.Double("NToY"), () => TaperAlignmentOf(a.Enum("AlignmentX")), () => TaperAlignmentOf(a.Enum("AlignmentY")));
                         break;
-                    case "BeamStringGroupAttributeModel":
-                        (beam.Assignments.Physical ??= new BeamPhysicalData()).StringGroup = GpcIdentity.Derive(GpcIdentity.NameSpace, "string-group:" + a.Int("ID")); break;
+                    case "BeamStringGroupAttributeModel": StringGroup(beam, a.Int("ID")); break;
                     default: throw new NotSupportedException("LegacyBeamAttributeNotMappedYet: " + a.ShortType);
                 }
             }
             int loadIndex = 0;
             foreach (var l in b.Field("Loads").Items)
             {
-                var loadCase = cases[l.Field("LoadCase").String("Name")]; string source = "BeamLoad/" + beam.Id + "/" + (++loadIndex);
+                var loadCase = cases[l.Field("LoadCase").String("Name")]; string source = BeamLoadSource(beam, ++loadIndex);
                 switch (l.ShortType)
                 {
                     case "BeamDistributedLoadModel": beam.Assignments.Loads.AddRange(Distributed(l, beam, principal, offset, loadCase, units, source)); break;
                     case "BeamPointLoadModel": beam.Assignments.Loads.Add(PointLoad(l, beam, principal, offset, loadCase, units, source)); break;
-                    case "BeamPreLoadModel":
-                        // Two prestrains in one case: refused by the resolution (LegacyAssembly.ResolveBeam), with the number of the beam.
-                        bool strain = l.Enum("LoadType") == "Strain";
-                        (beam.Assignments.Physical ??= new BeamPhysicalData()).InitialStates.Add(new BeamInitialState
-                        { Case = loadCase, Kind = strain ? BeamInitialStateKind.AxialStrain : BeamInitialStateKind.AxialForce, Value = strain ? l.Double("Value") : units.ToN(l.Double("Value")) });
-                        break;
-                    case "BeamGradientLoadModel":
-                        (beam.Assignments.Physical ??= new BeamPhysicalData()).TemperatureGradients.Add(new BeamTemperatureGradient
-                        { Case = loadCase, Axis1 = units.ToCelsiusPerMm(l.Double("Axis1")), Axis2 = units.ToCelsiusPerMm(l.Double("Axis2")) });
-                        break;
+                    case "BeamPreLoadModel": PreLoad(beam, loadCase, l.Enum("LoadType") == "Strain", l.Double("Value"), units); break;
+                    case "BeamGradientLoadModel": Gradient(beam, loadCase, l.Double("Axis1"), l.Double("Axis2"), units); break;
                     // The slab eigenstrain of a composite beam: a checks input (the strain of the workflow shrinkage action), not an FE load.
                     case "CompositeBeamSlabStrainModel": report.Carry("Composite slab strain (checks input: the strain of the workflow shrinkage action)"); break;
                     default: throw new NotSupportedException("LegacyBeamLoadNotMappedYet: " + l.ShortType);
@@ -147,14 +145,72 @@ namespace BridGHe.Common.Gpc.Legacy
 
         }
 
+        // R6.2 (lane B): every former beam attribute and load on plain data, the one rule of the reader (BeamData) and of the GPC builders of
+        // the producer components (GpcBeamBuilders): same collections, same order, same values.
+
+        /// <summary>R6.2 (lane B): an Element ID of a beam built on GPC by a generator, with the rule of <c>Label</c> (Elements.cs) on its value:
+        /// an empty value is carried, the first value is the label of the beam, every value is in the records; the first value (empty: "")
+        /// is the BridGHe ID Build Model gives the beam (<see cref="LegacyElementRecords.FirstLabel"/>).</summary>
+        internal static void BeamLabel(BeamElement beam, string value, LegacyImportReport report, LegacyElementRecords records)
+        {
+            if (records.FirstLabel == null && records.LabelList.Count == 0 && records.EmptyLabels == 0) records.FirstLabel = value ?? "";
+            if (string.IsNullOrEmpty(value)) { report.Carry("Empty Element ID attribute"); records.EmptyLabels++; return; }
+            records.LabelList.Add(value);
+            if (records.LabelList.Count == 1) beam.Attributes.Add(new ElementLabelAttribute(value));
+        }
+
+        /// <summary>The record of the k-th former load (1-based) of a beam: "BeamLoad/&lt;number&gt;/&lt;k&gt;".</summary>
+        internal static string BeamLoadSource(BeamElement beam, int k) => "BeamLoad/" + beam.Id + "/" + k;
+
+        /// <summary>Beam Output Stations: the minimum number of stations of the last record (no default here: the resolution adds it).</summary>
+        internal static void OutputStations(BeamElement beam, int stations) => (beam.Assignments.Physical ??= new BeamPhysicalData()).MinimumOutputStations = stations;
+
+        /// <summary>Beam Taper: the first taper of a beam (the others are counted and refused by the resolution); the alignments are read only
+        /// for the first.</summary>
+        internal static void Taper(BeamElement beam, LegacyElementRecords records, double fromX, double toX, double fromY, double toY, Func<TaperAlignment> alignmentX, Func<TaperAlignment> alignmentY)
+        {
+            if (++records.Tapers > 1) return;
+            (beam.Assignments.Physical ??= new BeamPhysicalData()).Taper = new BeamSectionTaper
+            {
+                ScaleI1 = fromX, ScaleJ1 = toX, ScaleI2 = fromY, ScaleJ2 = toY,
+                Alignment1 = alignmentX(), Alignment2 = alignmentY(),
+            };
+        }
+
+        /// <summary>Beam String Group: the string group of its ID (the last record).</summary>
+        internal static void StringGroup(BeamElement beam, int id) => (beam.Assignments.Physical ??= new BeamPhysicalData()).StringGroup = GpcIdentity.Derive(GpcIdentity.NameSpace, "string-group:" + id);
+
+        /// <summary>Beam Pre Load: an initial axial force (force units) or strain in a case; two in one case are refused by the resolution
+        /// (<see cref="LegacyAssembly.ResolveBeam"/>), with the number of the beam.</summary>
+        internal static void PreLoad(BeamElement beam, LoadCaseBase loadCase, bool strain, double value, BridgeUnits units) =>
+            (beam.Assignments.Physical ??= new BeamPhysicalData()).InitialStates.Add(new BeamInitialState
+            { Case = loadCase, Kind = strain ? BeamInitialStateKind.AxialStrain : BeamInitialStateKind.AxialForce, Value = strain ? value : units.ToN(value) });
+
+        /// <summary>Beam Gradient Load: the temperature gradients along the principal axes 1 and 2 in a case.</summary>
+        internal static void Gradient(BeamElement beam, LoadCaseBase loadCase, double axis1, double axis2, BridgeUnits units) =>
+            (beam.Assignments.Physical ??= new BeamPhysicalData()).TemperatureGradients.Add(new BeamTemperatureGradient
+            { Case = loadCase, Axis1 = units.ToCelsiusPerMm(axis1), Axis2 = units.ToCelsiusPerMm(axis2) });
+
         private static IEnumerable<GPC.Model.Loads.Assignments.BeamLoadAssignment> Distributed(LegacyValue l, BeamElement beam, CoordinateSystem principal, Vector3d offset,
             LoadCaseBase loadCase, BridgeUnits units, string source)
         {
             var schema = (BridgeLoadSchema)Enum.Parse(typeof(BridgeLoadSchema), l.Enum("LoadSchema"));
-            bool moment = l.Enum("LoadType") == "Moment"; string direction = l.Enum("LoadDirection");
-            double pa = l.Double("PA"), pb = l.Double("PB"), p1 = l.Double("P1"), p2 = l.Double("P2"), a = l.Double("A"), b = l.Double("B");
+            var cs = l["CoordinateSystem"];
+            return Distributed(schema, l.Enum("LoadType") == "Moment", l.Enum("LoadDirection"), l.Double("PA"), l.Double("PB"), l.Double("P1"), l.Double("P2"), l.Double("A"), l.Double("B"),
+                cs.IsNull ? (Func<bool>)null : () => IsGlobal(cs), beam, principal, offset, loadCase, units, source);
+        }
+
+        /// <summary>
+        /// Beam Distributed Load / Moment on plain data: the schema, a moment or a force, the former direction name (local X, Y, Z: the principal
+        /// axes 1, 2, 3; global X, Y, Z, their projected forms and gravity), the intensities and the positions; <paramref name="globalSystem"/>
+        /// null: no coordinate system (local), otherwise whether the coordinate system of the load is the global one (any other is refused, as
+        /// the former exporter ignored it).
+        /// </summary>
+        internal static IEnumerable<GPC.Model.Loads.Assignments.BeamLoadAssignment> Distributed(BridgeLoadSchema schema, bool moment, string direction, double pa, double pb, double p1, double p2,
+            double a, double b, Func<bool> globalSystem, BeamElement beam, CoordinateSystem principal, Vector3d offset, LoadCaseBase loadCase, BridgeUnits units, string source)
+        {
             double scale = moment ? units.ToNmmPerMm(1) : units.ToNPerMm(1);
-            if (l["CoordinateSystem"].IsNull)
+            if (globalSystem == null)
             {
                 // Principal (local) axes: X, Y, Z are the beam principal axes 1, 2, 3.
                 var axis = direction == "X" ? Vector3d.XAxis : direction == "Y" ? Vector3d.YAxis : direction == "Z" ? Vector3d.ZAxis : throw new NotSupportedException("LegacyLocalLoadDirection: " + direction);
@@ -162,7 +218,7 @@ namespace BridGHe.Common.Gpc.Legacy
             }
             // The former exporter wrote every global distributed action as a global force (also LoadType = Moment).
             if (moment) throw new NotSupportedException("LegacyGlobalDistributedMomentWasExportedAsForce");
-            if (!IsGlobal(l["CoordinateSystem"])) throw new NotSupportedException("LegacyNonGlobalLoadCoordinateSystemWasIgnored");
+            if (!globalSystem()) throw new NotSupportedException("LegacyNonGlobalLoadCoordinateSystemWasIgnored");
             bool gravity = direction.StartsWith("Gravity", StringComparison.Ordinal);
             bool projected = direction.EndsWith("_Projected", StringComparison.Ordinal);
             string d = gravity ? "Z" : direction.Substring(0, 1);
@@ -178,10 +234,14 @@ namespace BridGHe.Common.Gpc.Legacy
         {
             // The former archive did not store the coordinate system of a beam point load ("TODO" in BeamPointLoadModel), so every
             // analysis (which cloned the model first) exported it in the principal axes: read it as such.
-            bool moment = l.Enum("LoadType") == "Moment";
-            return GpcBeamLoads.Concentrated(loadCase, beam.StartPoint, beam.EndPoint, l.Double("A"), Vector(l["Force"]), moment,
-                principal, offset, moment ? units.Force * units.Length : units.Force, source);
+            return PointLoad(l.Enum("LoadType") == "Moment", l.Double("A"), Vector(l["Force"]), beam, principal, offset, loadCase, units, source);
         }
+
+        /// <summary>Beam Point Load / Moment on plain data: a force or a moment at the normalised station <paramref name="a"/>, in the principal
+        /// axes whatever coordinate system the component was given (the former archive did not store it).</summary>
+        internal static GPC.Model.Loads.Assignments.BeamLoadAssignment PointLoad(bool moment, double a, Vector3d value, BeamElement beam, CoordinateSystem principal, Vector3d offset,
+            LoadCaseBase loadCase, BridgeUnits units, string source) =>
+            GpcBeamLoads.Concentrated(loadCase, beam.StartPoint, beam.EndPoint, a, value, moment, principal, offset, moment ? units.Force * units.Length : units.Force, source);
 
         /// <summary>The fingerprint of a section state the former property no longer matches (stale: never equal to a property fingerprint).</summary>
         public const string StaleSectionStatePrefix = "BridGHe stale section state: ";
@@ -219,7 +279,7 @@ namespace BridGHe.Common.Gpc.Legacy
         /// - super elements (SuperElementAttributeModel: the beams checked together by Super Element Check) → <c>SetSuperElement</c>; two
         ///   attributes with the same name are one super element, two names are an error (<c>LegacyBeamInTwoSuperElements</c>, lead decision of 5/11).
         /// </summary>
-        private sealed class BridgeMembers
+        internal sealed class BridgeMembers
         {
             private readonly GPC.Checkers.CompositeBridge.BridgeModelData data;
             public BridgeMembers(GPC.Checkers.CompositeBridge.BridgeModelData data) { this.data = data; }
@@ -235,11 +295,17 @@ namespace BridGHe.Common.Gpc.Legacy
             public void Member(LegacyValue m, BeamElement beam, BridgeUnits units, LegacyElementRecords records)
             {
                 if (++records.Members > 1) return;
-                string id = m.String("PhysicalId");
-                if (!Enum.TryParse<GPC.Checkers.CompositeBridge.Layout.BridgeMemberFamily>(m.Enum("Family"), false, out var family)) throw new ArgumentException("LegacyBridgeMemberFamily: " + m.Enum("Family"));
                 var up = m.Field("SectionUp");
-                var metadata = new GPC.Checkers.CompositeBridge.Layout.BridgeMemberMetadata(id, family, m.Int("Group"), m.Int("Segment"), m.Int("Span"),
-                    units.ToMm(m.Double("StationFrom")), units.ToMm(m.Double("StationTo")), new Vector3d(up.Double("X"), up.Double("Y"), up.Double("Z")), m.String("GeometryId") ?? "");
+                Member(m.String("PhysicalId"), m.Enum("Family"), m.Int("Group"), m.Int("Segment"), m.Int("Span"), m.Double("StationFrom"), m.Double("StationTo"),
+                    () => new Vector3d(up.Double("X"), up.Double("Y"), up.Double("Z")), () => m.String("GeometryId") ?? "", beam, units);
+            }
+            /// <summary>R6.2 (lane B): the first bridge member of a beam on plain data (the former family name, stations in the definition units).</summary>
+            internal void Member(string id, string familyName, int group, int segment, int span, double stationFrom, double stationTo, Func<Vector3d> sectionUp,
+                Func<string> geometryId, BeamElement beam, BridgeUnits units)
+            {
+                if (!Enum.TryParse<GPC.Checkers.CompositeBridge.Layout.BridgeMemberFamily>(familyName, false, out var family)) throw new ArgumentException("LegacyBridgeMemberFamily: " + familyName);
+                var metadata = new GPC.Checkers.CompositeBridge.Layout.BridgeMemberMetadata(id, family, group, segment, span,
+                    units.ToMm(stationFrom), units.ToMm(stationTo), sectionUp(), geometryId());
                 if (data.Member(beam.Guid) != null) throw new ArgumentException("LegacyDuplicateBridgeMemberAttribute: beam " + beam.Name);
                 data.SetMember(beam.Guid, metadata);
             }
@@ -247,21 +313,30 @@ namespace BridGHe.Common.Gpc.Legacy
 
         private static GPC.Model.Attributes.BeamReleasesAttribute Releases(LegacyValue a, BridgeUnits units)
         {
+            bool[] Flags(string name) => new[] { a.Bool(name + 0), a.Bool(name + 1), a.Bool(name + 2) };
+            return Releases(Flags("TransNode1"), Vector(a["TransN1Partial"]), Flags("RotNode1"), Vector(a["RotN1Partial"]),
+                Flags("TransNode2"), Vector(a["TransN2Partial"]), Flags("RotNode2"), Vector(a["RotN2Partial"]), units);
+        }
+
+        /// <summary>Beam Releases on plain data: per end and kind (translations along 1, 2, 3, rotations about 1, 2, 3) a released DOF with a zero
+        /// partial value is released, with a value it is a partial (absolute) stiffness; the others stay continuous.</summary>
+        internal static GPC.Model.Attributes.BeamReleasesAttribute Releases(bool[] transI, Vector3d transIPartial, bool[] rotI, Vector3d rotIPartial,
+            bool[] transJ, Vector3d transJPartial, bool[] rotJ, Vector3d rotJPartial, BridgeUnits units)
+        {
             var release = new GPC.Model.Attributes.BeamReleasesAttribute { SourceRecord = "BeamReleasesAttributeModel" };
-            void End(GPC.Model.Attributes.BeamDofConnection[] target, string trans, string rot, string transPartial, string rotPartial)
+            void End(GPC.Model.Attributes.BeamDofConnection[] target, bool[] trans, bool[] rot, Vector3d tp, Vector3d rp)
             {
-                var tp = Vector(a[transPartial]); var rp = Vector(a[rotPartial]);
                 var t = new[] { tp.X, tp.Y, tp.Z }; var r = new[] { rp.X, rp.Y, rp.Z };
                 for (int k = 0; k < 3; k++)
                 {
-                    if (a.Bool(trans + k)) target[k] = t[k] == 0 ? new GPC.Model.Attributes.BeamDofConnection(GPC.Model.Attributes.BeamConnectionKind.Released)
+                    if (trans[k]) target[k] = t[k] == 0 ? new GPC.Model.Attributes.BeamDofConnection(GPC.Model.Attributes.BeamConnectionKind.Released)
                         : new GPC.Model.Attributes.BeamDofConnection(GPC.Model.Attributes.BeamConnectionKind.AbsoluteStiffness, t[k] * units.Force / units.Length);
-                    if (a.Bool(rot + k)) target[3 + k] = r[k] == 0 ? new GPC.Model.Attributes.BeamDofConnection(GPC.Model.Attributes.BeamConnectionKind.Released)
+                    if (rot[k]) target[3 + k] = r[k] == 0 ? new GPC.Model.Attributes.BeamDofConnection(GPC.Model.Attributes.BeamConnectionKind.Released)
                         : new GPC.Model.Attributes.BeamDofConnection(GPC.Model.Attributes.BeamConnectionKind.AbsoluteStiffness, r[k] * units.Force * units.Length);
                 }
             }
-            End(release.I, "TransNode1", "RotNode1", "TransN1Partial", "RotN1Partial");
-            End(release.J, "TransNode2", "RotNode2", "TransN2Partial", "RotN2Partial");
+            End(release.I, transI, rotI, transIPartial, rotIPartial);
+            End(release.J, transJ, rotJ, transJPartial, rotJPartial);
             return release;
         }
 
@@ -270,10 +345,17 @@ namespace BridGHe.Common.Gpc.Legacy
         {
             if (a.Enum("SpringType") != "Simple" || a.Enum("SpringTensionOrientation") != "BeamLocalAxis")
                 throw new NotSupportedException("Straus beam supports require simple springs along principal local axes 1 or 2.");
-            double stiffness = a.Double("Stiffness"), gap = a.Double("Gap");
+            return Support(a.Double("Stiffness"), a.Double("Gap"), () => a.Enum("LocalAxisDirection"), () => a.Enum("SimpleSpringTypes"), axes, units);
+        }
+
+        /// <summary>Beam Support on plain data (a simple spring along a principal local axis): stiffness [F/L²], gap [L], the former direction
+        /// code (negative1Axis, positive1Axis, negative2Axis, positive2Axis) and spring type (TensionCompression, CompressionOnly, TensionOnly),
+        /// the section axes of the beam; the checks and messages of the former exporter, in its order.</summary>
+        internal static BeamDistributedSupport Support(double stiffness, double gap, Func<string> localAxisDirection, Func<string> springType, CoordinateSystem axes, BridgeUnits units)
+        {
             if (!(stiffness > 0) || double.IsInfinity(stiffness) || double.IsNaN(gap) || double.IsInfinity(gap)) throw new ArgumentException("Beam support requires finite positive stiffness [F/L2] and finite gap [L].");
             Vector3d direction;
-            switch (a.Enum("LocalAxisDirection"))
+            switch (localAxisDirection())
             {
                 case "negative1Axis": direction = new Vector3d(-1, 0, 0); break;
                 case "positive1Axis": direction = new Vector3d(1, 0, 0); break;
@@ -282,7 +364,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 default: throw new NotSupportedException("Straus beam supports accept only +-1 and +-2, not longitudinal axis 3.");
             }
             DistributedSpringBehavior behavior;
-            switch (a.Enum("SimpleSpringTypes"))
+            switch (springType())
             {
                 case "TensionCompression": behavior = DistributedSpringBehavior.Bilateral; break;
                 case "CompressionOnly": behavior = DistributedSpringBehavior.CompressionOnly; break;
@@ -297,7 +379,7 @@ namespace BridGHe.Common.Gpc.Legacy
             };
         }
 
-        private static TaperAlignment TaperAlignmentOf(string code)
+        internal static TaperAlignment TaperAlignmentOf(string code)
         {
             switch (code)
             {

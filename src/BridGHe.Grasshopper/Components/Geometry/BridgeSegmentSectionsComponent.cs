@@ -99,9 +99,12 @@ public sealed class BridgeSegmentSectionsComponent : BridgeUtilityComponent
         }
         var result = BridgeSegmentSections.Create(BridgeDefinitionGoo.Segments(geometry), property.Value, table);
         var properties = result.Rules.Select(r => r.Property).ToArray();
+        // R6.2 (lane B): the section and the property of every concio also built on GPC (the dimensions of the table on the material and
+        // formulation of the GPC datum of the base property); the rules carry the property datum to Bridge Member Assignment.
+        var gpc = GpcSegmentSections.Build(result, property);
         da.SetDataList(0, result.Rules.Select(r => new BridgeDesignGoo(r)));
-        da.SetDataList(1, properties.Select(p => new GH_BeamProperty(p)));
-        da.SetDataList(2, properties.Select(p => new GH_BeamSection(p.Section)));
+        da.SetDataList(1, properties.Select((p, i) => { var goo = new GH_BeamProperty(p); if (gpc != null) goo.AttachGpc(gpc[i].Property); return goo; }));
+        da.SetDataList(2, properties.Select((p, i) => { var goo = new GH_BeamSection(p.Section); if (gpc != null) goo.AttachGpc(gpc[i].Section); return goo; }));
         da.SetDataList(3, result.Rules.Select(r => $"G{r.Group}-C{r.Segment}"));
         da.SetDataList(4, result.ResolvedTable);
         da.SetDataList(5, properties.Select(p => p.D - p.Centroid.Y));

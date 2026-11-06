@@ -97,6 +97,10 @@ namespace BridGHe.Grasshopper.Components.Attributes
             };
             BeamTaperAttributeModel attr = new BeamTaperAttributeModel(data);
             new_beam.Value.Attributes.Add(attr);
+            // R6.2 (lane B): the GPC draft built on GPC from the draft of the input (identity of the conversion of the FEM output until R6.5).
+            GpcBeamInputs.Attach(new_beam, id => Common.Gpc.Builders.GpcBeamBuilders.WithTaper(beam.Gpc, nFromX, nFromY, nToX, nToY,
+                Common.Gpc.Builders.GpcBeamBuilders.Code(Common.Gpc.Builders.GpcBeamBuilders.TaperAlignments, alignmentX),
+                Common.Gpc.Builders.GpcBeamBuilders.Code(Common.Gpc.Builders.GpcBeamBuilders.TaperAlignments, alignmentY), id));
 
             DA.SetData("Beam", new_beam);
         }

@@ -36,7 +36,11 @@ public sealed class BeamSupportComponent:GH_Component
                 Stiffness=stiffness,Gap=gap
             };
             BeamSupportExport.Resolve(value);
-            var output=new GH_Beam(beam);output.Value.Attributes.Add(new BeamSupportAttributeModel(value));da.SetData(0,output);
+            var output=new GH_Beam(beam);output.Value.Attributes.Add(new BeamSupportAttributeModel(value));
+            // R6.2 (lane B): the GPC draft built on GPC from the draft of the input (identity of the conversion of the FEM output until R6.5).
+            string axis=direction switch{0=>"negative1Axis",1=>"positive1Axis",2=>"negative2Axis",_=>"positive2Axis"};
+            Helpers.GpcBeamInputs.Attach(output,id=>Common.Gpc.Builders.GpcBeamBuilders.WithSupport(beam.Gpc,stiffness,gap,axis,compression?"CompressionOnly":"TensionCompression",id));
+            da.SetData(0,output);
         }
         catch(Exception e){AddRuntimeMessage(GH_RuntimeMessageLevel.Error,e.Message);}
     }

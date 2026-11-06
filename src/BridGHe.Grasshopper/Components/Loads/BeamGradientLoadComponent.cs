@@ -62,6 +62,8 @@ namespace BridGHe.Grasshopper.Components.Loads
             BeamGradientLoadModel load = new BeamGradientLoadModel(lc.Value, load_value);
             GH_Beam newBeam = new GH_Beam(beam);
             newBeam.Value.Loads.Add(load);
+            // R6.2 (lane B): the GPC draft built on GPC from the drafts of the inputs (identity of the conversion of the FEM output until R6.5).
+            GpcBeamInputs.Attach(newBeam, id => Common.Gpc.Builders.GpcBeamBuilders.WithGradient(beam.Gpc, lc.Gpc, a1, a2, id));
             DA.SetData(0, newBeam);
         }
 

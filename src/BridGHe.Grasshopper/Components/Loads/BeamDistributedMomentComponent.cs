@@ -243,6 +243,9 @@ namespace BridGHe.Grasshopper.Components.Loads
             BeamDistributedLoadModel load = new BeamDistributedLoadModel(lc.Value, load_value, BeamDistributedLoadModel.LoadType.Moment);
             GH_Beam newBeam = new GH_Beam(beam);
             newBeam.Value.Loads.Add(load);
+            // R6.2 (lane B): the GPC draft built on GPC from the drafts of the inputs (identity of the conversion of the FEM output until R6.5).
+            GpcBeamInputs.Attach(newBeam, id => Common.Gpc.Builders.GpcBeamBuilders.WithDistributedLoad(beam.Gpc, lc.Gpc, (Common.Gpc.BridgeLoadSchema)schema, true,
+                Common.Gpc.Builders.GpcBeamBuilders.Code(Common.Gpc.Builders.GpcBeamBuilders.LoadDirections, dir), pa, pb, p1, p2, a, b, null, id));
             DA.SetData(0, newBeam);
         }
 

@@ -33,9 +33,20 @@ public sealed class BridgeSlabGrillageComponent : BridgeUtilityComponent
     {
         BridgeGeometryGoo g=null; GH_Material m=null; string name="Soletta trasversale";
         if(!da.GetData(0,ref g)||!da.GetData(1,ref m)) return; da.GetData(2,ref name);
-        var result=BridgeSlabGrillage.Create(g.Value,m.Value,name);
-        da.SetDataList(0,result.Beams.Select(b=>new GH_Beam(b)));
-        da.SetDataList(1,result.Beams.Select(b=>new GH_BeamProperty(b.BeamProperty)));
+        // R6.2 (lane B): the strip properties and beams also built on GPC (the analysis material of the GPC datum of the material).
+        GPC.Model.Materials.Material analysis=null;
+        try{analysis=Common.Gpc.GpcMaterials.Analysis(m.Gpc);}catch(Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException){}
+        var result=BridgeSlabGrillage.Create(g.Value,m.Value,name,analysis);
+        var beams=result.Beams.Select(b=>new GH_Beam(b)).ToArray();
+        var properties=result.Beams.Select(b=>new GH_BeamProperty(b.BeamProperty)).ToArray();
+        for(int i=0;i<beams.Length;i++)
+        {
+            var plan=result.Plans[i];
+            GpcBeamInputs.Attach(beams[i],id=>Common.Gpc.Builders.GpcBridgeGeometryBuilders.Assigned(plan,id));
+            if(analysis!=null) properties[i].AttachGpc(plan.Property());
+        }
+        da.SetDataList(0,beams);
+        da.SetDataList(1,properties);
         da.SetDataList(2,result.Widths);
         da.SetDataList(3,result.Beams.Select(b=>b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value.GeometryId));
         da.SetData(4,"Transverse rectangular strips only; section y follows slab normal. Widths are measured along alignment. Curved/skew grillage stiffness requires calibration. Add eccentric links separately; longitudinal composite action belongs to girder section/phase properties.");

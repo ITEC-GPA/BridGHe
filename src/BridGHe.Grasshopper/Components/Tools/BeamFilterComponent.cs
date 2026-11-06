@@ -7,6 +7,7 @@ using Grasshopper.Kernel.Parameters;
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BridGHe.Grasshopper.Components
 {
@@ -151,6 +152,16 @@ namespace BridGHe.Grasshopper.Components
                     filtered.Add(b);
                 else
                     others.Add(b);
+            }
+
+            // R6.2 (lane B): the same partition read from the GPC drafts of the beams (GpcBeamFilter): it is the output; with the draft check on
+            // (the tests) it must equal the partition of the FEM values above, which stays the output only for a beam whose draft is refused.
+            var gpc = GpcBeamFilter.Select(beams, ids, iniPositions, endPositions, props, groups, tol);
+            if (gpc != null)
+            {
+                if (Common.Gpc.GpcDraftCheck.Verify != null && !gpc.SequenceEqual(beams.Select(b => filtered.Contains(b))))
+                    throw new InvalidOperationException("GpcBeamFilterDifference: the partition of the GPC drafts differs from the partition of the FEM values.");
+                filtered = beams.Where((b, i) => gpc[i]).ToList(); others = beams.Where((b, i) => !gpc[i]).ToList();
             }
 
             DA.SetDataList(0, filtered);
