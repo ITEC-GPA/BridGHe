@@ -35,7 +35,8 @@ namespace BridGHe.Grasshopper.Components.Analysis
             if (input?.Value == null || input.Value.Beams.Count == 0) { _model = new GH_Model(); _inputHash = null; return; }
             try
             {
-                string hash = Convert.ToHexString(SHA256.HashData(ModelArchive.Write(input.Value)));
+                // R6.4 (1): the fingerprint of the GPC input (a fingerprint of the former FEM archive, saved by an earlier version, asks for a Run).
+                string hash = Common.Gpc.GpcResultSelection.InputHash(input.GpcInput);
                 if (_run || run)
                 {
                     _run = false;

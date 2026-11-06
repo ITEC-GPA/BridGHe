@@ -96,7 +96,8 @@ namespace BridGHe.Grasshopper.Components.Analysis
             }
 
             List<string> names;
-            try { names = Common.Straus.StrausResultSelection.Catalog(model.Value, solver).Select(e => e.Case.Name).ToList(); }
+            // R6.4 (1): the result names from the GPC input of the model (an input that cannot be converted gives its error here).
+            try { names = Common.Gpc.GpcResultSelection.Catalog(model.GpcInput?.Model, solver).Select(e => e.Name).ToList(); }
             catch (Exception ex) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message); return; }
 
             // Connect the ValueList component on the analysis results input item

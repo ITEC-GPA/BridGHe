@@ -75,6 +75,9 @@ namespace BridGHe.Common.Gpc.Legacy
             double tolerance, bool movingOnly, List<string> warnings, out GPC.Model.Models.Model analysed)
         {
             var (gpc, report) = Input(model, conversion, outputPath, tolerance, warnings);
+            // R6.4 (1): the results asked of the solver come from the GPC catalogue of the input (GpcResultSelection), before the input is
+            // prepared for the solver; until R6.5 the former catalogue of the FEM model gives the former result objects, and the two must agree.
+            var gpcSelection = movingOnly ? Array.Empty<GpcResultSelection.Entry>() : GpcSelection(gpc, model, solver, selection);
             // Only the static cases generated from the paths are read by a moving-only analysis; otherwise the generated cases are not.
             if (gpc.MovingLoads != null)
                 foreach (var path in gpc.MovingLoads.Paths) if (path.Options != null && !movingOnly) path.Options.ConvertToStaticCases = false;
@@ -94,19 +97,16 @@ namespace BridGHe.Common.Gpc.Legacy
             {
                 // Former entries: solver 1 = the combinations as increments; solver 2 = "combination [stage]" per stage increment. Straus7 numbers
                 // the increments across the stages ("<number>: <increment>"), as the former entries did.
+                int k = 0;
                 foreach (var entry in selection)
                 {
-                    string phase = null, step = null;
-                    if (solver == 1) { phase = UnstagedPhase; step = entry.Case.Name; }
-                    else
-                    {
-                        int count = 0;
-                        foreach (var stage in model.StagedConstruction) foreach (var c in stage.LoadCombinations) if (++count == entry.Increment) { phase = stage.Name; step = c.Name; }
-                        if (phase == null) throw new InvalidOperationException("Indice di incremento senza fase: " + entry.Increment);
-                    }
-                    step = entry.Increment.ToString(System.Globalization.CultureInfo.InvariantCulture) + ": " + step;
+                    // R6.4 (1): the stage and the combination of a staged increment from the GPC catalogue (the stage increments of the input).
+                    var g = gpcSelection[k++];
+                    string phase = solver == 1 ? UnstagedPhase : g.Stage, step = solver == 1 ? g.Name : g.Combination;
+                    if (phase == null) throw new InvalidOperationException("Indice di incremento senza fase: " + g.Increment);
+                    step = g.Increment.ToString(System.Globalization.CultureInfo.InvariantCulture) + ": " + step;
                     RequireNonlinear(solved, entry.Case, NonlinearCase, phase, step);
-                    entries.Add(new GpcResultCatalog.Entry { Label = entry.Case.Name, Case = NonlinearCase, Step = step, Phase = phase }); caseModels.Add(entry.Case);
+                    entries.Add(new GpcResultCatalog.Entry { Label = g.Name, Case = NonlinearCase, Step = step, Phase = phase }); caseModels.Add(entry.Case);
                 }
             }
             else if (movingOnly)
@@ -122,11 +122,28 @@ namespace BridGHe.Common.Gpc.Legacy
                 }
             }
             else
-                foreach (var entry in selection) { entries.Add(new GpcResultCatalog.Entry { Label = entry.Case.Name, Case = entry.Case.Name }); caseModels.Add(entry.Case); }
+            {
+                int k = 0;
+                foreach (var entry in selection) { var g = gpcSelection[k++]; entries.Add(new GpcResultCatalog.Entry { Label = g.Name, Case = g.Name }); caseModels.Add(entry.Case); }
+            }
             var units = BridgeUnits.Parse(model.Units.ToString());
             var catalog = GpcResultCatalog.Attach(solved, units, entries, Enumerable.Range(0, model.Beams.Count).ToDictionary(k => k + 1, k => model.Beams[k].AngleDeg));
             WriteBack(model, solved, catalog, caseModels);
             return model;
+        }
+
+        /// <summary>R6.4 (1): the selection of the GPC catalogue of the input (<see cref="GpcResultSelection"/>) for the former selection on the FEM
+        /// model; until R6.5 the two whole catalogues must be equal, entry by entry (increment and name), on every analysis.</summary>
+        private static GpcResultSelection.Entry[] GpcSelection(GPC.Model.Models.Model gpc, ModelModel model, int solver, IReadOnlyCollection<Straus.StrausResultSelection.Entry> selection)
+        {
+            var fem = Straus.StrausResultSelection.Catalog(model, solver);
+            var catalog = GpcResultSelection.Catalog(gpc, solver);
+            for (int i = 0; i < Math.Max(fem.Count, catalog.Count); i++)
+                if (i >= fem.Count || i >= catalog.Count || fem[i].Increment != catalog[i].Increment || fem[i].Case.Name != catalog[i].Name)
+                    throw new InvalidOperationException("GpcResultSelectionMismatch: result " + (i + 1) + ", FEM '" + (i < fem.Count ? fem[i].Increment + " " + fem[i].Case.Name : "-")
+                        + "', GPC '" + (i < catalog.Count ? catalog[i].Increment + " " + catalog[i].Name : "-") + "'");
+            var byName = catalog.ToDictionary(e => e.Name, StringComparer.Ordinal);
+            return selection.Select(e => byName[e.Case.Name]).ToArray();
         }
 
         private static string MovingStep(int number, string name) => number.ToString(System.Globalization.CultureInfo.InvariantCulture) + ": " + name;
