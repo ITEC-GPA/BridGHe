@@ -16,7 +16,8 @@ using R = Rhino.Geometry;
 /// generated cases of an earlier moving analysis): the same entries (increment and name, in order) or the same error; the selection of all
 /// the names, of a missing name and of none: the same entries or the same message. The input fingerprint of Moving Static Analysis
 /// (<see cref="GpcResultSelection.InputHash"/>): the same for two conversions of a model and after the BGHGPC1 round trip of its GPC input,
-/// different when a load, the tolerance or a moving path changes. Declared by name: <see cref="Declared"/>.
+/// different when a load, the tolerance or a moving path changes. R6.4 (3): the super elements of Super Element Filter from the bridge data
+/// of the GPC input against the FEM attributes, on the same models. Declared by name: <see cref="Declared"/>.
 /// </summary>
 internal static class GpcResultSelectionChecks
 {
@@ -46,7 +47,7 @@ internal static class GpcResultSelectionChecks
     internal static void Regression()
     {
         BridgeMergeTests.Initialize();
-        int models = 0, catalogues = 0, errors = 0, selections = 0, hashes = 0, declared = 0; var seen = new HashSet<string>(StringComparer.Ordinal);
+        int models = 0, catalogues = 0, errors = 0, selections = 0, hashes = 0, declared = 0, superElements = 0; var seen = new HashSet<string>(StringComparer.Ordinal);
         void Fail(string label, string what) => throw new Exception("GPC RESULT SELECTION FAIL (" + label + "): " + what);
         void Check(string label, ModelModel fem, double tolerance)
         {
@@ -84,6 +85,17 @@ internal static class GpcResultSelectionChecks
             var (data, records) = GpcDraftArchive.Write(conversion);
             if (GpcResultSelection.InputHash(GpcDraftArchive.ReadConversion(data, records)) != hash) Fail(label, "the input fingerprint after the BGHGPC1 round trip differs");
             hashes++;
+            // R6.4 (3): the super elements of Super Element Filter from the bridge data of the GPC input (names in the order of the beams, the
+            // super element of every beam) against the FEM attributes (names of every element, the first attribute of every beam).
+            {
+                var beams = conversion.Model.BeamElements.Values.OrderBy(b => b.Id).ToArray();
+                var of = beams.Select(b => conversion.Bridge.Beam(b.Guid)?.SuperElement).ToArray();
+                string g = string.Join("\n", of.Where(s => s != null).Distinct(StringComparer.Ordinal)) + "\n--\n" + string.Join("\n", of.Select(s => s ?? "-"));
+                string f = string.Join("\n", BridGHe.Common.Helpers.ModelHelper.GetSuperElements(fem).Select(a => a.Value)) + "\n--\n"
+                    + string.Join("\n", fem.Beams.Select(b => SuperElementAttributeModel.GetSuperElement(b) ?? "-"));
+                if (g != f) Fail(label, "super elements: former\n" + f + "\nGPC\n" + g);
+                if (of.Any(s => s != null)) superElements++;
+            }
             if (models % 20 == 0 || label.StartsWith("synthetic", StringComparison.Ordinal)) Console.WriteLine($"GPC RESULT SELECTION PASS ({label}): catalogues of the three solvers equal, input fingerprint stable");
         }
 
@@ -150,7 +162,7 @@ internal static class GpcResultSelectionChecks
             if (GpcResultSelection.InputHash(GpcModels.Convert(other, 1e-6)) == m0) throw new Exception("GPC RESULT SELECTION FAIL: the input fingerprint does not see a moving path");
             Console.WriteLine("GPC RESULT SELECTION: the input fingerprint changes with a load, the tolerance and a moving path");
         }
-        Console.WriteLine($"GPC RESULT SELECTION PASS: {models} models, {catalogues} catalogues equal ({errors} the same error), {selections} selections equal, {hashes} input fingerprints stable, {declared} declared ({string.Join("; ", Declared.Keys)})");
+        Console.WriteLine($"GPC RESULT SELECTION PASS: {models} models, {catalogues} catalogues equal ({errors} the same error), {selections} selections equal, {hashes} input fingerprints stable, super elements equal ({superElements} models with super elements), {declared} declared ({string.Join("; ", Declared.Keys)})");
     }
 }
 #endif

@@ -58,11 +58,19 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 return;
             }
 
-            // Retrieve all te super elements used in the model
-            List<SuperElementAttributeModel> superElementsBuffer = Common.Helpers.ModelHelper.GetSuperElements(model.Value);
-            List<string> superElementsName = new List<string>();
-            for (int i = 0; i < superElementsBuffer.Count; i++)
-                superElementsName.Add(superElementsBuffer[i].Value);
+            // R6.4 (3): the super elements of the model and the super element of every beam from the GPC input of the model (the bridge data
+            // of its beams, one super element per beam, L12), the beams in the numbering of the conversion (FEM beam i = GPC beam i + 1); the
+            // names in the order of the beams. Until R6.5 the test host compares them with the FEM attributes on every run (GpcDraftCheck).
+            Common.Gpc.GpcModels.Conversion input;
+            try { input = model.GpcInput; }
+            catch (Exception ex) when (ex is ArgumentException || ex is NotSupportedException || ex is InvalidOperationException) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message); Message = "Error"; return; }
+            var gpcBeams = input.Model.BeamElements.Values.OrderBy(b => b.Id).ToArray();
+            if (gpcBeams.Length != model.Value.Beams.Count) throw new InvalidOperationException($"GpcSuperElementFilterNumbering: {gpcBeams.Length} GPC beams, {model.Value.Beams.Count} FEM beams.");
+            string[] superElementOf = gpcBeams.Select(b => input.Bridge.Beam(b.Guid)?.SuperElement).ToArray();
+            List<string> superElementsName = superElementOf.Where(s => s != null).Distinct(StringComparer.Ordinal).ToList();
+            Common.Gpc.GpcDraftCheck.Attached("Super Element Filter", string.Join("\n", superElementsName) + "\n--\n" + string.Join("\n", superElementOf.Select(s => s ?? "-")),
+                () => string.Join("\n", Common.Helpers.ModelHelper.GetSuperElements(model.Value).Select(a => a.Value)) + "\n--\n"
+                    + string.Join("\n", model.Value.Beams.Select(b => SuperElementAttributeModel.GetSuperElement(b) ?? "-")));
 
 
             // Connect the ValueList component on the analysis results input item
@@ -96,7 +104,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             for (int i = 0; i < model.Value.Beams.Count; i++)
             {
                 BeamModel b = model.Value.Beams[i];
-                if (b.HasAttribute(typeof(SuperElementAttributeModel)) && SuperElementAttributeModel.GetSuperElement(b) == super_element)
+                if (superElementOf[i] == super_element)
                 {
                     super_beam.Add(new GH_Beam(b) { AnalysedGpc = bridge?.BeamElements[i + 1], AnalysedGpcModel = bridge });
                 }

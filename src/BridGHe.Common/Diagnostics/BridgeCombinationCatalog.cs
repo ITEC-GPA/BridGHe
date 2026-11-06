@@ -16,11 +16,47 @@ public sealed class BridgeCombinationCatalog
     public string[][] ReferenceRows { get; }
     public string[] Warnings { get; }
 
+    /// <summary>The source of an action as the catalogue reads it: its name, whether it is N-mm, every case name it knows and the names of its
+    /// stored results.</summary>
+    private sealed record Source(string Name, bool Nmm, HashSet<string> Cases, HashSet<string> Results);
+
     public BridgeCombinationCatalog(IReadOnlyList<ModelModel> models, IEnumerable<BridgePhaseDefinition> definitions)
+        : this(models == null ? null : models.Select(m => m == null ? (bool?)null : m.Units == ModelModel.ModelUnits.Nmm).ToArray(), definitions, a => a.Source, FemSource) { }
+
+    /// <summary>
+    /// F6 R6.4 (3): the catalogue on the GPC data: the units of the reference models from their GPC inputs, and every action read from its
+    /// analysed GPC source (<see cref="BridgeActionDefinition.GpcSource"/>): its name, the units of its results catalogue, the names of its
+    /// load cases, combinations and stored results (the catalogue labels). The same rows, warnings and messages as the FEM catalogue (the
+    /// GPC source knows every case of the FEM source: the reader registers the cases of the element loads, combinations, stages and moving
+    /// paths), compared by the test host until R6.5.
+    /// </summary>
+    public static BridgeCombinationCatalog FromGpc(IReadOnlyList<Gpc.GpcModels.Conversion> references, IEnumerable<BridgePhaseDefinition> definitions) =>
+        new BridgeCombinationCatalog(references == null ? null : references.Select(r => r == null ? (bool?)null : r.Report.Units.Units == Gpc.DefinitionUnits.Nmm).ToArray(),
+            definitions, a => a.GpcSource, GpcSource);
+
+    private static Source FemSource(object value)
     {
-        if (models == null || models.Count == 0 || models.Any(m => m == null))
+        var source = (ModelModel)value;
+        var results = source.Elements.SelectMany(e => e.Results).Select(r => r.LoadCase?.Name).Where(n => n != null).ToHashSet(StringComparer.Ordinal);
+        var cases = source.LoadCases.Select(c => c.Name).Concat(source.LoadCombinations.Select(c => c.Name))
+            .Concat(source.Elements.SelectMany(e => e.Loads).Select(l => l.LoadCase?.Name)).Concat(results).Where(n => n != null).ToHashSet(StringComparer.Ordinal);
+        return new Source(source.Name, source.Units == ModelModel.ModelUnits.Nmm, cases, results);
+    }
+
+    private static Source GpcSource(object value)
+    {
+        var source = (GPC.Model.Models.Model)value;
+        var catalog = Gpc.GpcResultCatalog.Of(source) ?? throw new ArgumentException($"The source '{source.Name}' has no analysed GPC model (analysed before F6); recalculate the analysis.");
+        var results = catalog.Entries.Select(e => e.Label).Where(n => n != null).ToHashSet(StringComparer.Ordinal);
+        var cases = source.LoadCases.Values.Select(c => c.Name).Concat(source.Combinations.Values.Select(c => c.Name)).Concat(results).Where(n => n != null).ToHashSet(StringComparer.Ordinal);
+        return new Source(source.Name, catalog.Units.Units == Gpc.DefinitionUnits.Nmm, cases, results);
+    }
+
+    private BridgeCombinationCatalog(IReadOnlyList<bool?> referencesNmm, IEnumerable<BridgePhaseDefinition> definitions, Func<BridgeActionDefinition, object> sourceOf, Func<object, Source> read)
+    {
+        if (referencesNmm == null || referencesNmm.Count == 0 || referencesNmm.Any(m => m == null))
             throw new ArgumentException("Supply at least one reference Model and valid Phases.");
-        if (models.Any(m => m.Units != ModelModel.ModelUnits.Nmm))
+        if (referencesNmm.Any(m => m != true))
             throw new ArgumentException("Build BridGHe Model requires N-mm-MPa models.");
         phases = BridgeWorkflowTools.Ordered(definitions);
         ActionIds = phases.SelectMany(p => p.Actions).Select(a => a.Key).ToArray();
@@ -28,42 +64,38 @@ public sealed class BridgeCombinationCatalog
             throw new ArgumentException("The workbook requires between 1 and 512 actions.");
         var rows = new List<string[]> { new[] { "Action ID", "Phase number", "Phase", "Section state", "Day", "Source model", "Source case", "Behavior", "Strain [-]", "Beam IDs", "Primary only" } };
         var warnings = new List<string>();
-        var sources = new Dictionary<ModelModel, HashSet<string>>(ReferenceEqualityComparer.Instance);
-        var resultCases = new Dictionary<ModelModel, HashSet<string>>(ReferenceEqualityComparer.Instance);
+        var sources = new Dictionary<object, Source>(ReferenceEqualityComparer.Instance);
         foreach (var phase in phases)
         foreach (var action in phase.Actions)
         {
             if (!Enum.IsDefined(action.Behavior) || action.Strain is double strain && !double.IsFinite(strain))
                 throw new ArgumentException($"Action {action.Key}: invalid behavior or non-finite strain.");
+            var value = sourceOf(action);
+            Source source = null;
             if (action.PrimaryOnly)
             {
-                if (!action.Strain.HasValue || action.Source != null || !string.IsNullOrEmpty(action.Case))
+                if (!action.Strain.HasValue || value != null || !string.IsNullOrEmpty(action.Case))
                     throw new ArgumentException($"Action {action.Key}: Primary Only requires a strain and no FEM source/case.");
             }
             else
             {
-                var source = action.Source;
-                if (source == null || string.IsNullOrWhiteSpace(action.Case))
+                if (value == null || string.IsNullOrWhiteSpace(action.Case))
                     throw new ArgumentException($"Action {action.Key}: specify its Source and exact Case, or use Primary Only for an imposed strain.");
-                if (source.Units != ModelModel.ModelUnits.Nmm)
+                if (!sources.TryGetValue(value, out source)) sources.Add(value, source = read(value));
+                if (!source.Nmm)
                     throw new ArgumentException($"Action {action.Key}: source must use N-mm-MPa.");
-                if (!sources.TryGetValue(source, out var cases))
-                {
-                    var results = source.Elements.SelectMany(e => e.Results).Select(r => r.LoadCase?.Name).Where(n => n != null).ToHashSet(StringComparer.Ordinal);
-                    resultCases.Add(source, results);
-                    cases = source.LoadCases.Select(c => c.Name).Concat(source.LoadCombinations.Select(c => c.Name))
-                        .Concat(source.Elements.SelectMany(e => e.Loads).Select(l => l.LoadCase?.Name)).Concat(results).Where(n => n != null).ToHashSet(StringComparer.Ordinal);
-                    sources.Add(source, cases);
-                }
-                if (!cases.Contains(action.Case)) throw new ArgumentException($"Action {action.Key}: source case '{action.Case}' was not found in '{source.Name}'.");
-                if (!resultCases[source].Contains(action.Case)) warnings.Add($"{action.Key}: case is defined but has no FEM results yet; analyse it before Build BridGHe Model.");
+                if (!source.Cases.Contains(action.Case)) throw new ArgumentException($"Action {action.Key}: source case '{action.Case}' was not found in '{source.Name}'.");
+                if (!source.Results.Contains(action.Case)) warnings.Add($"{action.Key}: case is defined but has no FEM results yet; analyse it before Build BridGHe Model.");
             }
             rows.Add(new[] { action.Key, Number(phase.Order), phase.Name, phase.State.ToString(), Number(phase.Day),
-                action.Source?.Name ?? "", action.Case ?? "", action.Behavior.ToString(), Number(action.Strain),
+                source?.Name ?? (value == null ? "" : read(value).Name), action.Case ?? "", action.Behavior.ToString(), Number(action.Strain),
                 JsonSerializer.Serialize((action.BeamIds ?? Array.Empty<string>()).OrderBy(x => x, StringComparer.Ordinal)), action.PrimaryOnly ? "Yes" : "No" });
         }
         ReferenceRows = rows.ToArray(); Warnings = warnings.ToArray();
     }
+
+    /// <summary>R6.4: the canonical text of the catalogue (actions, rows, warnings), for the comparison of the GPC and the FEM catalogues.</summary>
+    public string Text() => string.Join("|", ActionIds) + "\n" + string.Join("\n", ReferenceRows.Select(r => string.Join("|", r))) + "\n--\n" + string.Join("\n", Warnings);
 
     private static string Number(double? value) => value?.ToString("R", CultureInfo.InvariantCulture) ?? "";
 

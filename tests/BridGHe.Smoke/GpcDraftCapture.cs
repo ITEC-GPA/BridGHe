@@ -82,6 +82,8 @@ internal static class GpcDraftCapture
         LegacyGroupChain g => "GROUP " + g.Names.Count + "\n" + string.Join("\n", g.Names.Select(n => n == null ? "<null>" : "'" + n + "'")),
         Refused r => "REFUSED " + r.Kind + " " + r.Message,
         Nothing n => "NOTHING " + n.Kind + " " + n.Why,
+        // R6.4: a text the GPC path gives beside the FEM path (the summary and diagnostics of Build BridGHe Model), compared as it is.
+        string t => "TEXT\n" + t,
         _ => throw new ArgumentException("Not a capturable datum: " + datum?.GetType().Name),
     };
 

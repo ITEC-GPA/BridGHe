@@ -62,7 +62,16 @@ public sealed class BridgeCombinationExcelComponent : GH_Component
                 path = Path.Combine(Path.GetDirectoryName(documentPath), path);
             }
             path = BridgeCombinationWorkbook.FilePath(path);
-            var catalog = new BridgeCombinationCatalog(models.Select(m => m.Value).ToArray(), phases.Select(p => (BridgePhaseDefinition)p.Value));
+            // R6.4 (3): the catalogue on the GPC data (the GPC inputs of the reference models, the analysed GPC source of every action) when
+            // every action with a case has one; the FEM catalogue otherwise (until R6.5). The test host compares the two on every run.
+            var definitions = phases.Select(p => (BridgePhaseDefinition)p.Value).ToArray();
+            BridgeCombinationCatalog catalog;
+            if (definitions.SelectMany(d => d.Actions).All(a => a.PrimaryOnly || a.GpcSource != null))
+            {
+                catalog = BridgeCombinationCatalog.FromGpc(models.Select(m => m.GpcInput).ToArray(), definitions);
+                Common.Gpc.GpcDraftCheck.Attached("Bridge Combination Excel catalogue", catalog.Text(), () => new BridgeCombinationCatalog(models.Select(m => m.Value).ToArray(), definitions).Text());
+            }
+            else catalog = new BridgeCombinationCatalog(models.Select(m => m.Value).ToArray(), definitions);
             da.SetData(0, path); da.SetDataList(2, catalog.ActionIds);
             var summary = catalog.ReferenceRows.Skip(1).Select(r => $"{r[0]} | phase {r[1]} {r[2]} | {r[5]} / {r[6]} | {r[7]} | strain {r[8]}").ToList();
             var warnings = catalog.Warnings;

@@ -56,17 +56,24 @@ public class BuildBridgeModel : GH_Component
             // F6 chain C: the GPC bridge model (merged actions as a GPC dataset, D3 recipe) for the checks with the GPC workflow executor, built
             // from the GPC models only: the input model of every reference, the analysed GPC model of every action source. The merged FEM model
             // above stays the Model output for the components that still read it (until the GH types carry GPC objects).
+            // R6.4 (4): the summary and the diagnostics of the GPC build when it is built (the same rows as the FEM build, compared by the
+            // regression gpc-bridge-model); those of the FEM build when it is not (the FEM path of the checks, until the decision on it).
+            string[] summary = result.Summary, warnings = result.Warnings;
             try
             {
                 var references = models.Select(m => Common.Gpc.GpcBridgeSource.Reference(m.GpcInput, m.GpcResults)).ToArray();
-                output.AttachBridge(Common.Gpc.GpcBridgeBuilder.Build(references, definitions, table, (BridgeWorkflowMethod)method, Settings.Instance.Tolerance, additional,
-                    Common.Gpc.GpcIdentity.Derive(InstanceGuid, "bridge-model")).Bridge);
+                var built = Common.Gpc.GpcBridgeBuilder.Build(references, definitions, table, (BridgeWorkflowMethod)method, Settings.Instance.Tolerance, additional,
+                    Common.Gpc.GpcIdentity.Derive(InstanceGuid, "bridge-model"));
+                output.AttachBridge(built.Bridge); summary = built.Summary; warnings = built.Warnings;
+                // Until R6.5 the test host compares them with those of the FEM build on every run (GpcDraftCheck).
+                Common.Gpc.GpcDraftCheck.Attached("Build BridGHe Model summary", string.Join("\n", summary) + "\n--\n" + string.Join("\n", warnings),
+                    () => string.Join("\n", result.Summary) + "\n--\n" + string.Join("\n", result.Warnings));
             }
             catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is InvalidOperationException || e is KeyNotFoundException || e is System.Runtime.Serialization.SerializationException)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Modello di ponte GPC non costruito (" + e.Message + "): le verifiche usano il percorso FEM."); }
             da.SetData(0, output);
-            da.SetDataList(1, result.Summary); da.SetDataList(2, result.Warnings);
-            foreach (var warning in result.Warnings.Where(w => w.Contains("not active") || w.Contains("primary shrinkage only"))) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
+            da.SetDataList(1, summary); da.SetDataList(2, warnings);
+            foreach (var warning in warnings.Where(w => w.Contains("not active") || w.Contains("primary shrinkage only"))) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
             Message = method == 0 ? "Cumulative" : "Linear history";
         }
         catch (Exception e) { Message = "Error"; AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message); }
