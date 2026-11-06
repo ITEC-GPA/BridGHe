@@ -97,6 +97,8 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
             Message = pp.PropertyType.GetDescription();
 
             GH_PlateProperty gh_pp = new GH_PlateProperty(pp);
+            // R6.2 part C (§1bis, regola doppia): the plate property built on GPC from the GPC data of the inputs, attached to the FEM value (until R6.5).
+            Helpers.GpcBuilderAttach.PlateProperty(gh_pp, () => Common.Gpc.Builders.GpcPropertyBuilders.Plate(name, type, material?.Gpc, mem_thick, ben_thick));
             DA.SetData(0, gh_pp);
         }
 

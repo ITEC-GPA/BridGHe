@@ -27,7 +27,7 @@ namespace BridGHe.Grasshopper.Components.Sections
         {
             var dimensions = new double[StrausSectionCatalog.Get(ShapeKey).Dimensions.Length];
             for (int i = 0; i < dimensions.Length; i++) if (!da.GetData(i, ref dimensions[i])) return;
-            try { da.SetData(0, new GH_BeamSection(new StrausSection { Key = ShapeKey, Dimensions = dimensions }.Calculate())); }
+            try { var native = new StrausSection { Key = ShapeKey, Dimensions = dimensions }; var goo = new GH_BeamSection(native.Calculate()); Helpers.GpcBuilderAttach.Section(goo, () => Common.Gpc.Builders.GpcSectionBuilders.Native(native.Key, native.Dimensions, native.BxsPath, native.LibraryName, native.LibraryItem, native.LengthUnit)); da.SetData(0, goo); }
             catch (Exception ex) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message); }
         }
     }
@@ -45,7 +45,7 @@ namespace BridGHe.Grasshopper.Components.Sections
         protected override void SolveInstance(IGH_DataAccess da)
         {
             string file = null; int unit = 2; if (!da.GetData(0, ref file) || !da.GetData(1, ref unit)) return;
-            try { da.SetData(0, new GH_BeamSection(new StrausSection { Key = "BXS", BxsPath = file, LengthUnit = unit }.Calculate())); }
+            try { var native = new StrausSection { Key = "BXS", BxsPath = file, LengthUnit = unit }; var goo = new GH_BeamSection(native.Calculate()); Helpers.GpcBuilderAttach.Section(goo, () => Common.Gpc.Builders.GpcSectionBuilders.Native(native.Key, native.Dimensions, native.BxsPath, native.LibraryName, native.LibraryItem, native.LengthUnit)); da.SetData(0, goo); }
             catch (Exception ex) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message); }
         }
         public override Guid ComponentGuid => new Guid("ce4934d8-7d81-4b8e-b04d-5b765c9af5a1");
@@ -67,7 +67,7 @@ namespace BridGHe.Grasshopper.Components.Sections
         {
             string library = null, item = null; bool bgl = false; int unit = 2;
             if (!da.GetData(0, ref library) || !da.GetData(1, ref item) || !da.GetData(2, ref bgl) || !da.GetData(3, ref unit)) return;
-            try { da.SetData(0, new GH_BeamSection(new StrausSection { Key = bgl ? "BGL" : "BSL", LibraryName = library, LibraryItem = item, LengthUnit = unit }.Calculate())); }
+            try { var native = new StrausSection { Key = bgl ? "BGL" : "BSL", LibraryName = library, LibraryItem = item, LengthUnit = unit }; var goo = new GH_BeamSection(native.Calculate()); Helpers.GpcBuilderAttach.Section(goo, () => Common.Gpc.Builders.GpcSectionBuilders.Native(native.Key, native.Dimensions, native.BxsPath, native.LibraryName, native.LibraryItem, native.LengthUnit)); da.SetData(0, goo); }
             catch (Exception ex) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message); }
         }
         public override Guid ComponentGuid => new Guid("31a5ba10-c508-4de9-8704-d311243bb845");

@@ -78,7 +78,10 @@ namespace BridGHe.Grasshopper.Components.Definitions
 
             Message = name;
 
-            DA.SetData(0, new GH_LoadCase(lc));
+            // R6.2 part C (§1bis, regola doppia): the case record built on GPC from the inputs, attached to the FEM value (until R6.5).
+            var goo = new GH_LoadCase(lc);
+            Helpers.GpcBuilderAttach.Case(goo, () => Common.Gpc.Builders.GpcCaseBuilders.Case(name, nsm));
+            DA.SetData(0, goo);
         }
 
         protected override System.Drawing.Bitmap Icon => Properties.ComponentIcons.For(GetType());

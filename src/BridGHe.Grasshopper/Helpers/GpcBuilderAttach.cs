@@ -38,6 +38,34 @@ namespace BridGHe.Grasshopper.Helpers
             if (draft != null) target.AttachGpc(draft);
         }
 
+        /// <summary>R6.2 part C (P2N): the recipe of a section component, with the same refusal rule.</summary>
+        internal static void Section(GH_BeamSection target, Func<LegacySectionRecipe> build)
+        {
+            var recipe = Build(build, () => GpcModels.SectionDraft(target.Value));
+            if (recipe != null) target.AttachGpc(recipe);
+        }
+
+        /// <summary>R6.2 part C (P2N): the property of the Beam Property component, with the same refusal rule.</summary>
+        internal static void BeamProperty(GH_BeamProperty target, Func<LegacyBeamProperty> build)
+        {
+            var property = Build(build, () => GpcModels.BeamProperty(target.Value, GpcBeamDrafts.DraftUnits));
+            if (property != null) target.AttachGpc(property);
+        }
+
+        /// <summary>R6.2 part C (P2N): the property of the Plate Property component, with the same refusal rule.</summary>
+        internal static void PlateProperty(GH_PlateProperty target, Func<GPC.Model.ElementProperties.PlateProperty> build)
+        {
+            var property = Build(build, () => GpcModels.PlatePropertyDraft(target.Value));
+            if (property != null) target.AttachGpc(property);
+        }
+
+        /// <summary>R6.2 part C (P2N): the case record of the Load Case component, with the same refusal rule.</summary>
+        internal static void Case(GH_LoadCase target, Func<LegacyCaseData> build)
+        {
+            var record = Build(build, () => GpcModels.CaseDraft(target.Value));
+            if (record != null) target.AttachGpc(record);
+        }
+
         private static T Build<T>(Func<T> build, Func<object> conversion) where T : class
         {
             try { return build(); }

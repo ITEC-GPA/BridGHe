@@ -94,6 +94,8 @@ namespace BridGHe.Grasshopper.Components.Sections
             };
 
             GH_BeamSection section = new GH_BeamSection(sectionModel);
+            // R6.2 part C (§1bis, regola doppia): the recipe built on GPC from the inputs, attached to the FEM value (transitional until R6.5).
+            Helpers.GpcBuilderAttach.Section(section, () => Common.Gpc.Builders.GpcSectionBuilders.Generic(area, i11, i22, j, sl1, sl2, sa1, sa2, x, y, ang));
             DA.SetData(0, section);
         }
 
