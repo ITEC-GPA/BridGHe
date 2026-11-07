@@ -110,12 +110,17 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             // F6 (a)/(b), chain C: the beams keep the link to their beam of the GPC bridge model (FEM beam i is GPC beam i + 1, the numbering
             // of the conversion), as Decompose Model does for an analysed model.
             var bridge = model.GpcBridge?.Model;
+            // R6.4 (2), extension (α): the drafts the model carries for its beams, with the identity of the conversion of every FEM value until
+            // R6.5; none: the conversion of the FEM values, as before.
+            var drafts = GpcModelDraftsAttach.Of(model);
             for (int i = 0; i < model.Value.Beams.Count; i++)
             {
                 BeamModel b = model.Value.Beams[i];
                 if (superElementOf[i] == super_element)
                 {
-                    super_beam.Add(new GH_Beam(b) { AnalysedGpc = bridge?.BeamElements[i + 1], AnalysedGpcModel = bridge });
+                    var goo = new GH_Beam(b) { AnalysedGpc = bridge?.BeamElements[i + 1], AnalysedGpcModel = bridge };
+                    if (drafts != null) GpcModelDraftsAttach.Attach(goo, drafts.Beams[i]);
+                    super_beam.Add(goo);
                 }
             }
 

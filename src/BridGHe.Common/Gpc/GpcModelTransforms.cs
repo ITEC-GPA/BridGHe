@@ -60,7 +60,8 @@ namespace BridGHe.Common.Gpc
                 GpcMoving.FromLegacyJson(JsonSerializer.Serialize(clones), model, model.LoadCases.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal), input.Report.Units, input.Report.Owner);
             var report = input.Report.CopyFor(registeredCount);
             Replace(report.CaseOrigins, origins);
-            return new GpcModels.Conversion(model, report, input.Tolerance);
+            // R6.4 (2), extension (α): the elements do not change (the former transformer replaced the paths only): the drafts of the input.
+            return new GpcModels.Conversion(model, report, input.Tolerance, input.Drafts);
         }
 
         /// <summary>Bridge Phase Model (former <see cref="Diagnostics.BridgePhaseModel.Create"/>): an independent copy named <paramref name="name"/>

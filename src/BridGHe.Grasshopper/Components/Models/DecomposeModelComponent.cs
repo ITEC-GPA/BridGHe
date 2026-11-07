@@ -60,6 +60,15 @@ namespace BridGHe.Grasshopper.Components.Models
                     beams.Add(new GH_Beam(beam, model.GetGuid(beam)));
                 foreach (PlateModel plate in model.Value.Plates)
                     plates.Add(new GH_Plate(plate, model.GetGuid(plate)));
+                // R6.4 (2), extension (α): the drafts the model carries for its elements (Build Model, the analysis, a file, ...), with the
+                // identity of the conversion of every FEM value until R6.5; none: the conversion of the FEM values, as before.
+                var drafts = GpcModelDraftsAttach.Of(model);
+                if (drafts != null)
+                {
+                    for (int i = 0; i < nodes.Count; i++) GpcModelDraftsAttach.Attach(nodes[i], drafts.Nodes[i]);
+                    for (int i = 0; i < beams.Count; i++) GpcModelDraftsAttach.Attach(beams[i], drafts.Beams[i]);
+                    for (int i = 0; i < plates.Count; i++) GpcModelDraftsAttach.Attach(plates[i], drafts.Plates[i]);
+                }
                 // F6 C4: the analysed GPC elements, by the numbering of the legacy reader used by the analysis (FEM order, from 1).
                 if (model.HasAnalysedGpc)
                 {

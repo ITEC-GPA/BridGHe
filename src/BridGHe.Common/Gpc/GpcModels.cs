@@ -24,7 +24,20 @@ namespace BridGHe.Common.Gpc
             public GPC.Model.Models.Model Model { get; }
             public LegacyImportReport Report { get; }
             public double Tolerance { get; }
-            internal Conversion(GPC.Model.Models.Model model, LegacyImportReport report, double tolerance) { Model = model; Report = report; Tolerance = tolerance; }
+            /// <summary>R6.4 (2), extension (α) of §1bis (coordinator, 7/11): the drafts of the elements of the model in the order of the elements
+            /// of its FEM model (<see cref="GpcModelDrafts"/>); null when the producer does not carry them (a conversion of a FEM value).</summary>
+            public GpcModelDrafts Drafts => _drafts?.Value;
+            private readonly Lazy<GpcModelDrafts> _drafts;
+            internal Conversion(GPC.Model.Models.Model model, LegacyImportReport report, double tolerance, GpcModelDrafts drafts = null)
+                : this(model, report, tolerance, drafts == null ? null : new Lazy<GpcModelDrafts>(drafts)) { }
+            /// <summary>The drafts read on first use (a former model read by value: its elements are read again one by one only when a
+            /// component gives them back).</summary>
+            internal Conversion(GPC.Model.Models.Model model, LegacyImportReport report, double tolerance, Lazy<GpcModelDrafts> drafts)
+            { Model = model; Report = report; Tolerance = tolerance; _drafts = drafts; }
+
+            /// <summary>R6.4 (2): this input with the drafts of the elements given (the model and the report shared, as the transformers share
+            /// what they do not change).</summary>
+            public Conversion WithDrafts(GpcModelDrafts drafts) => new Conversion(Model, Report, Tolerance, drafts);
             /// <summary>L12: the bridge data of <see cref="Model"/> (members, super elements, local section states by beam GUID).</summary>
             public GPC.Checkers.CompositeBridge.BridgeModelData Bridge => Report.Bridge;
             /// <summary>L12: <see cref="Model"/> with its bridge data (the data object is shared, not copied).</summary>
@@ -37,9 +50,11 @@ namespace BridGHe.Common.Gpc
             /// the data of every beam property by name from its first beam (formulation of that beam, principal angle of the section, native
             /// section of that beam if any, GPC fingerprint of the property: <see cref="BeamProperty(GPC.Model.ElementProperties.BeamProperty, GPC.Model.Structure.Assignments.BeamFormulation, GPC.Converter.Straus7.Straus7SectionDefinition)"/>);
             /// the resolved native sections by beam GUID (<paramref name="nativeSections"/>, none if null); the bridge data of the model
-            /// (<paramref name="bridge"/>, L12: none if null; copied); no warnings. The model is kept, not copied: the transformers copy it.</summary>
+            /// (<paramref name="bridge"/>, L12: none if null; copied); the drafts of its elements (<paramref name="drafts"/>, R6.4 (2): none if null);
+            /// no warnings. The model is kept, not copied: the transformers copy it.</summary>
             public static Conversion FromGpc(GPC.Model.Models.Model model, BridgeUnits units, IReadOnlyDictionary<int, double> beamAngles, double toleranceDefinitionUnits,
-                IReadOnlyDictionary<Guid, GPC.Converter.Straus7.Straus7SectionDefinition> nativeSections = null, GPC.Checkers.CompositeBridge.BridgeModelData bridge = null)
+                IReadOnlyDictionary<Guid, GPC.Converter.Straus7.Straus7SectionDefinition> nativeSections = null, GPC.Checkers.CompositeBridge.BridgeModelData bridge = null,
+                GpcModelDrafts drafts = null)
             {
                 if (model == null) throw new ArgumentNullException(nameof(model));
                 if (beamAngles == null) throw new ArgumentNullException(nameof(beamAngles));
@@ -91,7 +106,7 @@ namespace BridGHe.Common.Gpc
                     report.BeamProperties.Add(property.Name, GpcModels.BeamProperty(property, beam.Assignments.Formulation, native).Data);
                 }
                 foreach (var p in natives) report.NativeSections.Add(p.Key, p.Value);
-                return new Conversion(model, report, toleranceDefinitionUnits);
+                return new Conversion(model, report, toleranceDefinitionUnits, drafts);
             }
         }
 

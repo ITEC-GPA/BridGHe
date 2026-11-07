@@ -138,6 +138,45 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         private byte[] _legacy;
         private ModelModel _legacyOf;
 
+        // R6.4 (2), extension (α): the drafts of the elements attached apart from the GPC input (an analysis: those of its input; a file: the
+        // drafts chunk), while the FEM value they were attached for is current.
+        private Common.Gpc.GpcModelDrafts _drafts;
+        private ModelModel _draftsOf;
+
+        /// <summary>
+        /// R6.4 (2), extension (α) of §1bis (coordinator, 7/11): the drafts of the elements of this model, in the order of the elements of
+        /// <see cref="Value"/> (<see cref="Common.Gpc.GpcModelDrafts"/>): those of the GPC input a producer attached (Build Model, Attach Moving
+        /// Paths), those attached apart (<see cref="AttachDrafts"/>: an analysis, a file), those of a former payload read by value; null when
+        /// none is carried (the conversion of the FEM value: its elements keep the conversion of their FEM values until R6.5). Never converts
+        /// the FEM value.
+        /// </summary>
+        public Common.Gpc.GpcModelDrafts GpcDrafts
+        {
+            get
+            {
+                lock (gpcLock)
+                {
+                    if (Value == null) return null;
+                    if (_input != null && ReferenceEquals(_inputOf, Value) && _input.Tolerance == Settings.Instance.Tolerance && _input.Drafts != null) return _input.Drafts;
+                    if (_drafts != null && ReferenceEquals(_draftsOf, Value)) return _drafts;
+                    if (_legacy != null && ReferenceEquals(_legacyOf, Value))
+                    {
+                        try { return Conversion().Drafts; }
+                        catch (Exception ex) when (ex is NotSupportedException || ex is ArgumentException || ex is InvalidOperationException || ex is System.Runtime.Serialization.SerializationException)
+                        { _gpcError = ex.Message; return null; }
+                    }
+                    return null;
+                }
+            }
+        }
+
+        /// <summary>R6.4 (2): the drafts of the elements of the current <see cref="Value"/> (an analysis: the drafts of its input, whose elements
+        /// its output keeps; a file: the drafts it saved). Copies of this datum keep them.</summary>
+        public void AttachDrafts(Common.Gpc.GpcModelDrafts drafts)
+        {
+            lock (gpcLock) { _drafts = drafts ?? throw new ArgumentNullException(nameof(drafts)); _draftsOf = Value; }
+        }
+
         /// <summary>R6.1 (decision 1 of 6/11): the warning of a model read from a former payload that carried results (they are not read:
         /// <see cref="Common.Gpc.GpcLegacyPayloads.ResultsDroppedMessage"/>), or null. The components that read this model show it.</summary>
         public string LegacyNotice
@@ -227,6 +266,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 if (_analysed != null && ReferenceEquals(_analysedOf, Value)) { if (_bridge != null && ReferenceEquals(_analysed, _bridge.Model)) copy.AttachBridge(_bridge); else copy.AttachGpc(_analysed); }
                 if (_input != null && ReferenceEquals(_inputOf, Value)) copy.AttachInput(_input);
                 if (_legacy != null && ReferenceEquals(_legacyOf, Value)) lock (copy.gpcLock) { copy._legacy = _legacy; copy._legacyOf = copy.Value; }
+                if (_drafts != null && ReferenceEquals(_draftsOf, Value)) copy.AttachDrafts(_drafts);
             }
         }
 
@@ -359,6 +399,11 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 // the analysis components. Until R6.5 the FEM model too (transitional chunk) with the GUIDs of its elements.
                 DataTypes.GpcGooPersistence.Write(writer, () => Common.Gpc.GpcDraftArchive.Write(GpcInput), Value == null ? null : Common.Helpers.ModelArchive.Write(Value));
                 writer.SetString("ElementGuids", JsonSerializer.Serialize(Value?.Elements.Select(GetGuid).ToArray() ?? Array.Empty<Guid>()));
+                // R6.4 (2), extension (α): the drafts of the elements, in a chunk of their own beside the GPC input (none when the model carries
+                // none). Until R6.5 drafts that cannot be written are left out, as a GPC input (the elements read back keep the conversion of
+                // their FEM values).
+                try { var drafts = GpcDrafts; if (drafts != null) writer.SetByteArray(Common.Gpc.GpcModelDrafts.Chunk, Common.Gpc.GpcModelDrafts.Write(drafts)); }
+                catch (Exception ex) when (Value != null && (ex is ArgumentException || ex is NotSupportedException || ex is InvalidOperationException || ex is System.Runtime.Serialization.SerializationException)) { }
                 return true;
             }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
@@ -390,6 +435,11 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                     if (guids == null || guids.Length != (Value?.Elements.Count ?? 0)) return false;
                     for (int i = 0; i < guids.Length; i++) _guids[Value.Elements[i]] = guids[i];
                 }
+                // R6.4 (2): the drafts of the elements saved with the model (BGHGPC1 of the GH_Model, extended; absent in former files).
+                // Until R6.5 drafts that cannot be read are left out (the elements keep the conversion of their FEM values).
+                if (reader.ItemExists(Common.Gpc.GpcModelDrafts.Chunk) && Value != null)
+                    try { AttachDrafts(Common.Gpc.GpcModelDrafts.Read(reader.GetByteArray(Common.Gpc.GpcModelDrafts.Chunk))); }
+                    catch (Exception ex) when (ex is System.Runtime.Serialization.SerializationException || ex is InvalidDataException || ex is EndOfStreamException || ex is ArgumentException) { }
                 return true;
             }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }

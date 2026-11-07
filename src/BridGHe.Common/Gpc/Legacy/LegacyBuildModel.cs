@@ -453,6 +453,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 else { kept[foundId] = (MergeCoincident(kept[foundId].Draft, draft), kept[foundId].Id, kept[foundId].Position); counts.PositionMerges++; }
             }
             int newNode = nextNode;
+            var createdNodes = new HashSet<int>();
             Rhino.Geometry.Point3d Anchor(Rhino.Geometry.Point3d p, bool end)
             {
                 bool found = false; int foundId = -1;
@@ -460,7 +461,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 if (found && foundId != -1) { if (kept[foundId].Position != p) { if (end) counts.EndsMoved++; else counts.CornersMoved++; } return kept[foundId].Position; }
                 string nodeName = Fresh((newNode++).ToString());
                 var created = new GPC.Model.Elements.NodeElement(GpcIdentity.Derive(GpcIdentity.NameSpace, "gpc-build-model-node:" + nodeName), new GPC.Geometry.Point3d(p.X, p.Y, p.Z), null, nodeName, 1);
-                kept.Add((new LegacyNodeDraft(created, new LegacyImportReport { Units = units }), nodeName, p)); tree.Insert(p, kept.Count - 1);
+                kept.Add((new LegacyNodeDraft(created, new LegacyImportReport { Units = units }), nodeName, p)); tree.Insert(p, kept.Count - 1); createdNodes.Add(kept.Count - 1);
                 if (end) counts.EndNodes++; else counts.CornerNodes++;
                 return p;
             }
@@ -520,7 +521,100 @@ namespace BridGHe.Common.Gpc.Legacy
             if (stages.Count != 0) LegacyModelImport.Stages(stages, assembly.Model, assembly.Cases, assembly.Groups, report);
             foreach (var c in combinations) assembly.AddCombination(c.Name, c.Factors.Select(f => (f.Case.Name, f.Factor)));
             report.BuildModel = counts;
-            return new GpcModels.Conversion(assembly.Model, report, toleranceDefinitionUnits);
+            // R6.4 (2), extension (α) of §1bis (coordinator, 7/11): the drafts of the elements of the output, in the order of the former output
+            // (the kept nodes, then those created at the beam ends and plate corners; the beams by ID without those of zero length; the plates
+            // by ID): the drafts the reader gives the former values of the output (<see cref="OutputDrafts"/>).
+            var drafts = OutputDrafts(kept, createdNodes, beamEnds, plateCorners);
+            return new GpcModels.Conversion(assembly.Model, report, toleranceDefinitionUnits, drafts);
+        }
+
+        /// <summary>
+        /// R6.4 (2), extension (α): the drafts of the elements of the output of Build Model, as the reader gives the former values of its FEM
+        /// output (former <c>ModelHelper.BuildModel</c>): a kept node, its draft after the merges with the BridGHe ID as name (source: the ID, or
+        /// the number 1 when the ID is empty); a node created at a beam end or plate corner, the draft of a former node with that ID and position
+        /// and nothing else (<see cref="Builders.GpcNodeBuilders.Create"/>); a beam, its draft after the merges with the ID and the ends on the
+        /// nodes found (<see cref="Builders.GpcBeamBuilders.Placed"/>, re-anchored); a plate, its draft after the merges with the ID and the
+        /// corners on the nodes found. Definition units; the identity of the first datum of each (a created node: its own).
+        /// </summary>
+        private static GpcModelDrafts OutputDrafts(List<(LegacyNodeDraft Draft, string Id, Rhino.Geometry.Point3d Position)> kept, HashSet<int> createdNodes,
+            List<(LegacyBeamDraft Draft, string Id, Rhino.Geometry.Point3d Start, Rhino.Geometry.Point3d End)> beamEnds,
+            List<(LegacyPlateDraft Draft, string Id, Rhino.Geometry.Point3d[] Corners)> plateCorners)
+        {
+            static GPC.Geometry.Point3d G(Rhino.Geometry.Point3d p) => new GPC.Geometry.Point3d(p.X, p.Y, p.Z);
+            // The source of a renamed element (the reader: the ID, the same string as the name, or the number 1 when the ID is empty). The name
+            // keeps its string when it is equal already: the source takes that one (the archive of the draft writes a shared string once).
+            static GPC.Model.Core.Identity.SourceIdentity Source(GPC.Model.Core.Identity.SourceIdentity s, LegacyImportReport report, GPC.Model.Core.Identity.EntityFamily family, string name) =>
+                new GPC.Model.Core.Identity.SourceIdentity(s?.Program ?? LegacyModelImport.Program, s?.ModelRevision ?? report.Owner.ToString("D"), family, name.Length != 0 ? name : 1.ToString());
+            var nodes = kept.Select((n, i) =>
+            {
+                if (createdNodes.Contains(i)) return Builders.GpcNodeBuilders.Create(n.Position.X, n.Position.Y, n.Position.Z, n.Id, null, n.Draft.Node.Guid);
+                var d = GpcDrafts.Copy(n.Draft);
+                d.Node.Name = n.Id; d.Node.Source = Source(d.Node.Source, d.Report, GPC.Model.Core.Identity.EntityFamily.Node, d.Node.Name);
+                ShareCases(d.Node);
+                return d;
+            }).ToList();
+            // The property of a beam or plate of the former output is a copy of its own (the former copy of a beam or plate value clones its
+            // property apart from the rest of the value): no string of it is shared with the element (the archive of the draft shows sharing:
+            // found by the captures, a group and a property both named "Beam").
+            var beams = beamEnds.Select(b =>
+            {
+                var d = Builders.GpcBeamBuilders.Placed(b.Draft, b.Id, G(b.Start), G(b.End));
+                ShareCases(d.Beam); d.Beam.BeamProperty = d.Beam.BeamProperty is GPC.Model.ElementProperties.ElasticBeamProperty e ? Isolated(e) : Isolated(d.Beam.BeamProperty);
+                return d;
+            }).ToList();
+            var plates = plateCorners.Select(p =>
+            {
+                var d = GpcDrafts.Copy(p.Draft);
+                d.Plate.Name = p.Id; d.Plate.Source = Source(d.Plate.Source, d.Report, GPC.Model.Core.Identity.EntityFamily.Shell, d.Plate.Name);
+                ShareCases(d.Plate); d.Plate.PlateProperty = d.Plate.PlateProperty switch { GPC.Model.ElementProperties.ElasticPlateProperty e => Isolated(e), GPC.Model.ElementProperties.MembranePlateProperty m => Isolated(m), var other => Isolated(other) };
+                return d with { Corners = p.Corners.Select(G).ToArray() };
+            }).ToList();
+            return new GpcModelDrafts(nodes, beams, plates);
+        }
+
+        /// <summary>R6.4 (2): a copy of a value through its XML archive (<see cref="GPC.Model.Persistence.ModelValueArchive"/>): its strings are new
+        /// (the contract copy shares them with the source), shared inside the value as in the source, as the former copy of a value clones its
+        /// property (<c>ModelArchive.Clone</c>).</summary>
+        private static T Isolated<T>(T value) where T : class
+        {
+            if (value == null) return null;
+            using var stream = new System.IO.MemoryStream();
+            GPC.Model.Persistence.ModelValueArchive.Save(value, stream);
+            stream.Position = 0;
+            return GPC.Model.Persistence.ModelValueArchive.Load<T>(stream);
+        }
+
+        /// <summary>R6.4 (2): one case instance per case name in an element (the first in the order of <see cref="GpcModelCases.ElementCases(GPC.Model.Elements.Element)"/>),
+        /// as the reader gives one former value (one case per name for all its loads): a merge takes the loads of the other datum with the case
+        /// instances of that datum (the assembly takes the cases of the model by name: the model does not see it; the draft does).</summary>
+        private static void ShareCases(GPC.Model.Elements.Element element)
+        {
+            var first = new Dictionary<string, LoadCaseBase>(StringComparer.Ordinal);
+            foreach (var c in GpcModelCases.ElementCases(element).OfType<LoadCaseBase>()) first.TryAdd(c.Name, c);
+            LoadCaseBase One(ILoadCase c) => c is LoadCaseBase b && first.TryGetValue(b.Name, out var f) ? f : (LoadCaseBase)c;
+            foreach (var l in element.Loads.Values) l.LoadCase = One(l.LoadCase);
+            switch (element)
+            {
+                case GPC.Model.Elements.NodeElement n:
+                    foreach (var t in n.Assignments.Physical?.Temperatures ?? new List<NodalTemperatureAssignment>()) t.Case = One(t.Case);
+                    break;
+                case GPC.Model.Elements.BeamElement b:
+                    foreach (var a in b.Assignments.Loads)
+                        foreach (var v in new Load[] { a.Concentrated, a.StartIntensity, a.EndIntensity }) if (v != null) v.LoadCase = One(v.LoadCase);
+                    if (b.Assignments.Physical != null)
+                    {
+                        foreach (var g in b.Assignments.Physical.TemperatureGradients) g.Case = One(g.Case);
+                        foreach (var s in b.Assignments.Physical.InitialStates) s.Case = One(s.Case);
+                    }
+                    break;
+                case GPC.Model.Elements.AreaElement p:
+                    if (p.Assignments.Physical != null)
+                    {
+                        foreach (var s in p.Assignments.Physical.InitialStresses) s.Case = One(s.Case);
+                        foreach (var m in p.Assignments.Physical.NonStructuralMasses) m.Case = One(m.Case);
+                    }
+                    break;
+            }
         }
     }
 }

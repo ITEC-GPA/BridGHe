@@ -167,7 +167,22 @@ namespace BridGHe.Common.Gpc.Builders
         /// reader holds the former signature of the state, which the draft does not carry (until R6.3, when the states take the GPC fingerprint).
         /// </summary>
         public static LegacyBeamDraft Override(LegacyBeamDraft beam, LegacyBeamProperty property, IReadOnlyList<IReadOnlyList<string>> groups, double? angleDeg, (double X, double Y)? offset,
-            Guid identity)
+            Guid identity) => GpcDrafts.Reidentify(Rebuild(beam, property, groups, angleDeg, offset, null, null, null), identity);
+
+        /// <summary>
+        /// R6.4 (2), extension (α): Build Model: the beam of its FEM output, with the BridGHe ID <paramref name="beamId"/> and its ends on the
+        /// nodes found (<paramref name="start"/>, <paramref name="end"/>, definition units): the beam the reader gives that value, the ends and
+        /// what depends on them re-anchored with the reader's formulas (<see cref="Override"/>: section and offset axes, the global eccentricity of
+        /// every load, the points and lines of the loads, the axes of the supports, the fingerprint of a current section state); property,
+        /// groups, angle, offset, attributes, physical data, loads and bridge data kept in order; the identity of the draft kept.
+        /// </summary>
+        public static LegacyBeamDraft Placed(LegacyBeamDraft beam, string beamId, Point3d start, Point3d end) =>
+            Rebuild(beam, null, null, null, null, beamId ?? throw new ArgumentNullException(nameof(beamId)), start ?? throw new ArgumentNullException(nameof(start)),
+                end ?? throw new ArgumentNullException(nameof(end)));
+
+        /// <summary>The body of <see cref="Override"/> and <see cref="Placed"/>: the changed beam the reader gives (null: unchanged), not re-identified.</summary>
+        private static LegacyBeamDraft Rebuild(LegacyBeamDraft beam, LegacyBeamProperty property, IReadOnlyList<IReadOnlyList<string>> groups, double? angleDeg, (double X, double Y)? offset,
+            string newName, Point3d newStart, Point3d newEnd)
         {
             if (beam == null) throw new ArgumentNullException(nameof(beam));
             var c = GpcDrafts.Copy(beam);
@@ -195,7 +210,7 @@ namespace BridGHe.Common.Gpc.Builders
             var formulation = property == null ? old.Assignments.Formulation : property.Data.Formulation;
             var data = property?.Data ?? c.Property;
             if (property != null) { records.PropertyCarryList.Clear(); records.PropertyCarryList.AddRange(PropertyCarries(property.Data)); }
-            var (placed, principal, globalOffset) = LegacyModelImport.NewBeam(old.Guid, c.Report.Owner, old.Id - 1, old.Name ?? "", old.StartPoint, old.EndPoint, gpcProperty, formulation,
+            var (placed, principal, globalOffset) = LegacyModelImport.NewBeam(old.Guid, c.Report.Owner, old.Id - 1, newName ?? old.Name ?? "", newStart ?? old.StartPoint, newEnd ?? old.EndPoint, gpcProperty, formulation,
                 data.Angle, angle, ox, oy, null, firstGroup, names, c.Report, records);
             foreach (var a in old.Attributes.Values) placed.Attributes.Add(a);
             var physical = old.Assignments.Physical;
@@ -237,7 +252,7 @@ namespace BridGHe.Common.Gpc.Builders
                 placed.Assignments.Loads.Add(load);
             }
             var w = new Work(new LegacyBeamDraft(placed, c.Bridge, angle, data, c.Report) { Records = records });
-            return GpcDrafts.Reidentify(Finish(w), identity);
+            return Finish(w);
         }
 
         /// <summary>A load of a draft in the beam axes (the frame <see cref="GpcBeamLoads.ComponentFrame"/>) or global (a load built without a

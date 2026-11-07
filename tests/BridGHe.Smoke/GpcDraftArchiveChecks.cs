@@ -551,6 +551,7 @@ internal static class GpcDraftArchiveChecks
         catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException || x is System.Runtime.Serialization.SerializationException) { byValue = "REFUSED " + x.Message; }
         if (byType != byValue) { count(name + " read differs from by value"); fail(where + ": " + name + " Read differs from the datum by value\n" + FirstDifference(byValue, byType)); return; }
         count(name + " read = by value");
+        string drafts = type == "ModelModel" ? ModelDrafts(t, goo, where, count, fail) : null;
         if (byType.StartsWith("REFUSED", StringComparison.Ordinal) || byType.StartsWith("NO ", StringComparison.Ordinal)) return;
         // The final writer of the GH type and its reader.
         var written = new GH_IO.Serialization.GH_LooseChunk("Item");
@@ -563,6 +564,40 @@ internal static class GpcDraftArchiveChecks
         if (again != byType) { count(name + " round trip differs"); fail(where + ": " + name + " BGHGPC1 round trip differs\n" + FirstDifference(byType, again)); return; }
         if ((t.GetProperty("Value").GetValue(goo) == null) != (t.GetProperty("Value").GetValue(back) == null)) { count(name + " FEM value lost"); fail(where + ": " + name + " transitional FEM value lost"); return; }
         count(name + " BGHGPC1 round trip equal");
+        // R6.4 (2): the drafts of the elements saved with the model (chunk BridGHeDrafts) read back equal.
+        if (drafts != null)
+        {
+            string again2 = t.GetProperty("GpcDrafts").GetValue(back) is GpcModelDrafts d ? DraftsText(d) : "NO DRAFTS";
+            if (again2 != drafts) { count(name + " drafts round trip differs"); fail(where + ": " + name + " drafts round trip differs\n" + FirstDifference(drafts, again2)); return; }
+            count(name + " drafts round trip equal");
+        }
+    }
+
+    private static string DraftsText(GpcModelDrafts d) => string.Join("\n--\n", d.Nodes.Select(x => GpcDraftCapture.Text(x)).Concat(d.Beams.Select(x => GpcDraftCapture.Text(x))).Concat(d.Plates.Select(x => GpcDraftCapture.Text(x))));
+
+    /// <summary>R6.4 (2), extension (α): the drafts a model read from a former payload carries (by value, <see cref="GpcModelDrafts"/>) against
+    /// the conversion of every element of its FEM value with the same identity (the DRAFT CHECK of Decompose Model), by the canonical texts of
+    /// the capture; returns the text of the drafts for the round trip (null: none, or a difference).</summary>
+    private static string ModelDrafts(Type t, object goo, string where, Action<string> count, Action<string> fail)
+    {
+        GpcModelDrafts drafts;
+        try { drafts = t.GetProperty("GpcDrafts").GetValue(goo) as GpcModelDrafts; }
+        catch (TargetInvocationException x) { count("GH_Model drafts refused"); fail(where + ": GH_Model drafts refused: " + x.InnerException?.Message); return null; }
+        var fem = (ModelModel)t.GetProperty("Value").GetValue(goo);
+        if (drafts == null) { count("GH_Model drafts: none"); return null; }
+        if (!drafts.Fits(fem.Nodes.Count, fem.Beams.Count, fem.Plates.Count) || fem.Elements.Count != fem.Nodes.Count + fem.Beams.Count + fem.Plates.Count)
+        { count("GH_Model drafts: FEM elements merged by ID (not compared)"); return DraftsText(drafts); }
+        bool Same(string kind, int i, object draft, object conversion)
+        {
+            string a = GpcDraftCapture.Text(draft), c = GpcDraftCapture.Text(conversion);
+            if (a == c) return true;
+            count("GH_Model drafts differ"); fail(where + ": the draft of " + kind + " " + (i + 1) + " differs from the conversion of its FEM value\n" + FirstDifference(c, a)); return false;
+        }
+        for (int i = 0; i < fem.Nodes.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Nodes[i]); if (!Same("node", i, GpcDrafts.Reidentify(drafts.Nodes[i], id), GpcBeamDrafts.FromFemm(fem.Nodes[i], id))) return null; }
+        for (int i = 0; i < fem.Beams.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Beams[i]); if (!Same("beam", i, GpcDrafts.Reidentify(drafts.Beams[i], id), GpcBeamDrafts.FromFemm(fem.Beams[i], id))) return null; }
+        for (int i = 0; i < fem.Plates.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Plates[i]); if (!Same("plate", i, GpcDrafts.Reidentify(drafts.Plates[i], id), GpcBeamDrafts.FromFemm(fem.Plates[i], id))) return null; }
+        count("GH_Model drafts equal to the conversion of the FEM values");
+        return DraftsText(drafts);
     }
 }
 #endif

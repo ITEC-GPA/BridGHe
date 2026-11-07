@@ -251,9 +251,28 @@ internal static class GpcInputComparison
                 // The tolerance of the attached input: GpcInput returns it only at the current tolerance of the plug-in.
                 string kind = component.GetType().Name;
                 Console.WriteLine($"GPC INPUT PASS ({name}): " + (kind == "BridgeConstructionSequenceComponent" ? RequireRenumbered(name, attached, fem, attached.Tolerance)
-                    : kind == "BuildModelComponent" ? Require(name, attached, fem, attached.Tolerance, buildModel: true) + "; " + attached.Report.BuildModel : Require(name, attached, fem, attached.Tolerance))); count++;
+                    : kind == "BuildModelComponent" ? Require(name, attached, fem, attached.Tolerance, buildModel: true) + "; " + attached.Report.BuildModel : Require(name, attached, fem, attached.Tolerance))
+                    + "; " + RequireDrafts(name, attached.Drafts, fem)); count++;
             }
         Console.WriteLine($"GPC INPUT ({label}): {count} transformer outputs on GPC equal to the conversion of their FEM output.");
+    }
+
+    /// <summary>R6.4 (2), extension (α): the drafts of the elements a GPC input carries against the conversion of every element of its FEM
+    /// model with the same identity (the identity of the conversion, as Decompose Model gives them), by the canonical texts of the capture.</summary>
+    internal static string RequireDrafts(string label, GpcModelDrafts drafts, ModelModel fem)
+    {
+        if (drafts == null) return "no drafts";
+        if (!drafts.Fits(fem.Nodes.Count, fem.Beams.Count, fem.Plates.Count) || fem.Elements.Count != fem.Nodes.Count + fem.Beams.Count + fem.Plates.Count)
+            return "drafts of a FEM model merged by ID (not compared)";
+        void Same(string kind, int i, object draft, object conversion)
+        {
+            string a = GpcDraftCapture.Text(draft), c = GpcDraftCapture.Text(conversion);
+            if (a != c) throw new Exception($"GPC INPUT FAIL ({label}): the draft of {kind} {i + 1} differs from the conversion of its FEM value\n" + GpcDraftArchiveChecks.FirstDifference(c, a));
+        }
+        for (int i = 0; i < fem.Nodes.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Nodes[i]); Same("node", i, GpcDrafts.Reidentify(drafts.Nodes[i], id), GpcBeamDrafts.FromFemm(fem.Nodes[i], id)); }
+        for (int i = 0; i < fem.Beams.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Beams[i]); Same("beam", i, GpcDrafts.Reidentify(drafts.Beams[i], id), GpcBeamDrafts.FromFemm(fem.Beams[i], id)); }
+        for (int i = 0; i < fem.Plates.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Plates[i]); Same("plate", i, GpcDrafts.Reidentify(drafts.Plates[i], id), GpcBeamDrafts.FromFemm(fem.Plates[i], id)); }
+        return $"drafts of {fem.Nodes.Count} nodes, {fem.Beams.Count} beams, {fem.Plates.Count} plates equal";
     }
 
     /// <summary>Regression (not native) <c>gpc-model-transforms</c>: Attach Moving Paths on the examples 01–10 (node, beam and plate loads,

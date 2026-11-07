@@ -43,6 +43,8 @@ namespace BridGHe.Grasshopper.Components.Analysis
                     var model = StrausAnalysis.Run(input.Value, input.GpcInput, path, 0, Array.Empty<string>(), Settings.Instance.Tolerance, true, out var warnings, out var analysed);
                     foreach (string warning in warnings) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
                     _model = GH_Model.FromModel(model, input); _model.AttachGpc(analysed); _inputHash = hash;
+                    // R6.4 (2), extension (α): the output keeps the elements of its input (with results): it carries the drafts of the input.
+                    var drafts = input.GpcDrafts; if (drafts != null) _model.AttachDrafts(drafts);
                     string saved = _saved.Record(_model, path); if (saved != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, saved);
                 }
                 if (_inputHash != hash)

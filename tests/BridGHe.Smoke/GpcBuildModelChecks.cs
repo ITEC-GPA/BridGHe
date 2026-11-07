@@ -79,6 +79,32 @@ internal static class GpcBuildModelChecks
         // The tolerance of the plug-in (the model tolerance of the active Rhino document, 0.001 without one), the same for both paths.
         double pluginTolerance = (double)toleranceProperty.GetValue(instance);
         int compared = 0, measured = 0; var totals = new List<string>(); var unitMaxima = new double[3];
+        int draftModels = 0, draftNodes = 0, draftBeams = 0, draftPlates = 0, draftsNotFitting = 0;
+        // R6.4 (2), extension (α): the drafts of the elements of the output (LegacyBuildModel) against the conversion of every element of the
+        // FEM output with the same identity (the identity of the conversion, as Decompose Model gives them), by the canonical texts of the
+        // capture, in every unit system: equal, every element. A FEM output whose elements merged by ID (ModelModel.AddElements) has no
+        // element lists the drafts describe: counted (Decompose Model then keeps the conversion of the FEM values).
+        void Drafts(string label, GpcModels.Conversion attached, ModelModel fem)
+        {
+            var d = attached.Drafts ?? throw new Exception($"GPC BUILD MODEL FAIL ({label}): the GPC input carries no drafts of its elements");
+            if (!d.Fits(fem.Nodes.Count, fem.Beams.Count, fem.Plates.Count) || fem.Elements.Count != fem.Nodes.Count + fem.Beams.Count + fem.Plates.Count)
+            {
+                draftsNotFitting++;
+                Console.WriteLine($"GPC BUILD MODEL DRAFTS ({label}): {d.Nodes.Count}/{d.Beams.Count}/{d.Plates.Count} drafts, FEM output {fem.Nodes.Count}/{fem.Beams.Count}/{fem.Plates.Count} of {fem.Elements.Count} elements (merged by ID): not compared");
+                return;
+            }
+            void Same(string kind, int i, object draft, object conversion)
+            {
+                string a = GpcDraftCapture.Text(draft), c = GpcDraftCapture.Text(conversion);
+                if (a != c && Environment.GetEnvironmentVariable("BRIDGHE_DRAFT_DIFF") is string dump && dump.Length != 0)
+                { Directory.CreateDirectory(dump); File.WriteAllText(Path.Combine(dump, "draft.txt"), a); File.WriteAllText(Path.Combine(dump, "conversion.txt"), c); }
+                if (a != c) throw new Exception($"GPC BUILD MODEL FAIL ({label}): the draft of {kind} {i + 1} of the output differs from the conversion of its FEM value\n" + GpcDraftArchiveChecks.FirstDifference(c, a));
+            }
+            for (int i = 0; i < fem.Nodes.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Nodes[i]); Same("node", i, GpcDrafts.Reidentify(d.Nodes[i], id), GpcBeamDrafts.FromFemm(fem.Nodes[i], id)); }
+            for (int i = 0; i < fem.Beams.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Beams[i]); Same("beam", i, GpcDrafts.Reidentify(d.Beams[i], id), GpcBeamDrafts.FromFemm(fem.Beams[i], id)); }
+            for (int i = 0; i < fem.Plates.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Plates[i]); Same("plate", i, GpcDrafts.Reidentify(d.Plates[i], id), GpcBeamDrafts.FromFemm(fem.Plates[i], id)); }
+            draftModels++; draftNodes += fem.Nodes.Count; draftBeams += fem.Beams.Count; draftPlates += fem.Plates.Count;
+        }
         IGH_Goo Goo(string type, object value, Guid? guid = null)
         {
             var goo = (IGH_Goo)Activator.CreateInstance(plugin.GetType("BridGHe.Grasshopper.DataTypes.Fem." + type));
@@ -119,6 +145,7 @@ internal static class GpcBuildModelChecks
             }
             var attached = (GpcModels.Conversion)output.GetType().GetProperty("GpcInput").GetValue(output);
             var fem = (ModelModel)output.GetType().GetProperty("Value").GetValue(output);
+            Drafts(label, attached, fem);
             if (modelUnits != ModelModel.ModelUnits.Nmm)
             {
                 // Decision 1 (b): measured, not required bit for bit (the N-mm models are).
@@ -218,6 +245,7 @@ internal static class GpcBuildModelChecks
         Console.WriteLine($"GPC BUILD MODEL: BridgeModelData.Save of equal data {(x == y ? "identical" : "different only by the version 4 GUIDs of the geometry values")} ({v4.Matches(x).Count} in the archive)");
         Console.WriteLine($"GPC BUILD MODEL UNITS: {measured} runs in units other than N-mm, maximum relative difference geometry {unitMaxima[0]:E2}, loads {unitMaxima[1]:E2}, section values {unitMaxima[2]:E2}");
         GpcInputComparison.PrintShadowed();
+        Console.WriteLine($"GPC BUILD MODEL DRAFTS: {draftModels} outputs, drafts of {draftNodes} nodes, {draftBeams} beams, {draftPlates} plates equal to the conversion of their FEM values; {draftsNotFitting} outputs merged by ID (not compared)");
         Console.WriteLine($"GPC BUILD MODEL PASS: {compared} Build Model runs, the GPC input equal to the conversion of the FEM output bit for bit in N-mm, measured in the other units (or the same error)");
     }
 }

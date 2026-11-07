@@ -71,7 +71,14 @@ namespace BridGHe.Common.Gpc
             var identities = owner ?? ModelOwner(payload, toleranceDefinitionUnits);
             var report = new LegacyImportReport();
             var model = LegacyModelImport.Import(root, identities, toleranceDefinitionUnits, report);
-            return new GpcModels.Conversion(model, report, toleranceDefinitionUnits);
+            // R6.4 (2), extension (α): the drafts of its elements, each read by value as the element payloads are, on first use; a payload whose
+            // elements the reader of one value refuses gives none (its elements keep the conversion of their FEM values until R6.5).
+            var drafts = new Lazy<GpcModelDrafts>(() =>
+            {
+                try { return GpcModelDrafts.FromLegacy(root, identities); }
+                catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException || x is System.Collections.Generic.KeyNotFoundException) { return null; }
+            });
+            return new GpcModels.Conversion(model, report, toleranceDefinitionUnits, drafts);
         }
     }
 }

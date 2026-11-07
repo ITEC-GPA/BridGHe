@@ -121,6 +121,8 @@ namespace BridGHe.Grasshopper.Components.Analysis
                 {
                     var result = Common.Straus.StrausAnalysis.Run(model.Value, model.GpcInput, outputPath, solver, requested, Settings.Instance.Tolerance, false, out var warnings, out var analysed);
                     _model = GH_Model.FromModel(result, model); _model.AttachGpc(analysed);
+                    // R6.4 (2), extension (α): the output keeps the elements of its input (with results): it carries the drafts of the input.
+                    var drafts = model.GpcDrafts; if (drafts != null) _model.AttachDrafts(drafts);
                     foreach (string warning in warnings) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
                     string saved = _saved.Record(_model, outputPath); if (saved != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, saved);
                     Message = "Done";
