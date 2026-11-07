@@ -65,6 +65,10 @@ public class BuildBridgeModel : GH_Component
                 var built = Common.Gpc.GpcBridgeBuilder.Build(references, definitions, table, (BridgeWorkflowMethod)method, Settings.Instance.Tolerance, additional,
                     Common.Gpc.GpcIdentity.Derive(InstanceGuid, "bridge-model"));
                 output.AttachBridge(built.Bridge); summary = built.Summary; warnings = built.Warnings;
+                // R6.4 (2), extension (α): the drafts of the elements of the merged model (those of the first reference model without their
+                // loads, with the slab strains of the strain actions), for Decompose Model and Super Element Filter.
+                var drafts = Common.Gpc.GpcBridgeBuilder.ModelDrafts(models[0].GpcDrafts, built.Bridge.Records);
+                if (drafts != null) output.AttachDrafts(drafts);
                 // Until R6.5 the test host compares them with those of the FEM build on every run (GpcDraftCheck).
                 Common.Gpc.GpcDraftCheck.Attached("Build BridGHe Model summary", string.Join("\n", summary) + "\n--\n" + string.Join("\n", warnings),
                     () => string.Join("\n", result.Summary) + "\n--\n" + string.Join("\n", result.Warnings));

@@ -64,7 +64,7 @@ internal static class GpcInputComparison
             int line = Enumerable.Range(0, Math.Min(x.Length, y.Length)).FirstOrDefault(i => x[i] != y[i], -1);
             Fail($"XML document differs, both in {folder}: " + (line < 0 ? $"{x.Length} / {y.Length} lines" : $"line {line + 1}: GPC '{x[line].Trim()}' / conversion '{y[line].Trim()}'"));
         }
-        return $"{model.NodesElements.Count} nodes, {model.BeamElements.Count} beams, {model.AreaElements.Count} plates, {model.Costrains.Count} rigid links, {model.LoadCases.Count} cases, {model.Groups.Count} groups, {model.PhysicalMembers.Count} members, renumbered XML document equal ({a.Length} characters)";
+        return $"{model.NodesElements.Count} nodes, {model.BeamElements.Count} beams, {model.AreaElements.Count} plates, {model.Costrains.Count} rigid links, {model.LoadCases.Count} cases, {model.Groups.Count} groups, {model.PhysicalMembers.Count} members, renumbered XML document equal ({a.Length} characters); " + RequireDrafts(label, attached.Drafts, fem);
     }
 
     /// <summary>The conversion of a FEM model with an explicit identity (the results are never converted: archived without them).</summary>
@@ -234,7 +234,7 @@ internal static class GpcInputComparison
             Fail($"XML document differs, both in {folder}: " + (line < 0 ? $"{x.Length} / {y.Length} lines" : $"line {line + 1}: GPC '{x[line].Trim()}' / conversion '{y[line].Trim()}'"));
         }
         return $"{model.NodesElements.Count} nodes, {model.BeamElements.Count} beams, {model.AreaElements.Count} plates, {model.LoadCases.Count} cases, {model.MovingLoads?.Paths.Count ?? 0} moving paths, parts equal, "
-            + (a == null ? "XML document beyond the serializer limit" : $"XML document equal ({a.Length} characters)");
+            + (a == null ? "XML document beyond the serializer limit" : $"XML document equal ({a.Length} characters)") + (buildModel ? "" : "; " + RequireDrafts(label, attached.Drafts, fem));
     }
 
     /// <summary>Native runners: every model transformer of the definition attached its GPC input, equal to the conversion of its FEM output.</summary>
@@ -251,14 +251,21 @@ internal static class GpcInputComparison
                 // The tolerance of the attached input: GpcInput returns it only at the current tolerance of the plug-in.
                 string kind = component.GetType().Name;
                 Console.WriteLine($"GPC INPUT PASS ({name}): " + (kind == "BridgeConstructionSequenceComponent" ? RequireRenumbered(name, attached, fem, attached.Tolerance)
-                    : kind == "BuildModelComponent" ? Require(name, attached, fem, attached.Tolerance, buildModel: true) + "; " + attached.Report.BuildModel : Require(name, attached, fem, attached.Tolerance))
-                    + "; " + RequireDrafts(name, attached.Drafts, fem)); count++;
+                    : kind == "BuildModelComponent" ? Require(name, attached, fem, attached.Tolerance, buildModel: true) + "; " + attached.Report.BuildModel + "; " + RequireDrafts(name, attached.Drafts, fem) : Require(name, attached, fem, attached.Tolerance))); count++;
             }
         Console.WriteLine($"GPC INPUT ({label}): {count} transformer outputs on GPC equal to the conversion of their FEM output.");
     }
 
     /// <summary>R6.4 (2), extension (α): the drafts of the elements a GPC input carries against the conversion of every element of its FEM
     /// model with the same identity (the identity of the conversion, as Decompose Model gives them), by the canonical texts of the capture.</summary>
+    /// <summary>R6.4 (2): the conversion of a FEM model with the drafts of its elements (the conversion of every FEM value), the input of the
+    /// transformers here, so that their outputs carry the drafts the comparisons check (<see cref="RequireDrafts"/>).</summary>
+    internal static GpcModels.Conversion ConvertWithDrafts(ModelModel fem, double tolerance) => GpcModels.Convert(fem, tolerance).WithDrafts(FemmDrafts(fem));
+
+    /// <summary>The drafts of the elements of a FEM model: the conversion of every FEM value (identity from its content).</summary>
+    internal static GpcModelDrafts FemmDrafts(ModelModel fem) => new GpcModelDrafts(
+        fem.Nodes.Select(n => GpcBeamDrafts.FromFemm(n)), fem.Beams.Select(b => GpcBeamDrafts.FromFemm(b)), fem.Plates.Select(p => GpcBeamDrafts.FromFemm(p)));
+
     internal static string RequireDrafts(string label, GpcModelDrafts drafts, ModelModel fem)
     {
         if (drafts == null) return "no drafts";
@@ -295,7 +302,7 @@ internal static class GpcInputComparison
             {
                 string label = example.Id + " " + variant; string femError = null, gpcError = null; ModelModel output = null; GpcModels.Conversion gpc = null;
                 try { output = MovingModelBuilder.ReplacePaths(fem, paths); } catch (Exception e) when (e is ArgumentException || e is InvalidOperationException) { femError = e.Message; }
-                try { gpc = GpcModelTransforms.ReplacePaths(GpcModels.Convert(fem, tolerance), paths, GpcIdentity.Derive(GpcIdentity.NameSpace, "test-paths:" + label)); } catch (Exception e) when (e is ArgumentException || e is InvalidOperationException) { gpcError = e.Message; }
+                try { gpc = GpcModelTransforms.ReplacePaths(ConvertWithDrafts(fem, tolerance), paths, GpcIdentity.Derive(GpcIdentity.NameSpace, "test-paths:" + label)); } catch (Exception e) when (e is ArgumentException || e is InvalidOperationException) { gpcError = e.Message; }
                 if (femError != null || gpcError != null)
                 {
                     if (femError != gpcError) throw new Exception($"GPC INPUT FAIL ({label}): FEM error '{femError}', GPC error '{gpcError}'");
@@ -324,7 +331,7 @@ internal static class GpcInputComparison
         int compared = 0;
         void Run(string label, ModelModel fem, Func<ModelModel> femSnapshot, Func<GpcModels.Conversion, GpcModels.Conversion> gpcSnapshot)
         {
-            string femError = null, gpcError = null; ModelModel output = null; GpcModels.Conversion gpc = null; var source = GpcModels.Convert(fem, tolerance);
+            string femError = null, gpcError = null; ModelModel output = null; GpcModels.Conversion gpc = null; var source = ConvertWithDrafts(fem, tolerance);
             try { output = femSnapshot(); } catch (ArgumentException e) { femError = e.Message; }
             try { gpc = gpcSnapshot(source); } catch (ArgumentException e) { gpcError = e.Message; }
             if (femError != null || gpcError != null)
@@ -467,7 +474,7 @@ internal static class GpcInputComparison
             {
                 string label = example.Id + " states " + variant;
                 var output = BridGHe.Common.Diagnostics.BridgePhaseModel.Create(fem, "Phase states", selection, property, clear);
-                var input = GpcModels.Convert(fem, tolerance);
+                var input = ConvertWithDrafts(fem, tolerance);
                 var gpc = GpcModelTransforms.PhaseModel(input, "Phase states", selection, GpcModels.BeamProperty(property, input.Report.Units), clear, GpcIdentity.Derive(GpcIdentity.NameSpace, "test-states:" + label));
                 int stale = gpc.Model.BeamElements.Values.Count(b => gpc.Bridge.SectionState(b.Guid) is var s && s != null && s.PropertyFingerprint != GPC.Checkers.CompositeBridge.BridgeWorkflowDefinition.PropertyFingerprint(b));
                 Console.WriteLine($"GPC INPUT ({label}, {stale} stale states): " + Require(label, gpc, output, tolerance, canonicalStates: true)); compared++;
@@ -476,7 +483,7 @@ internal static class GpcInputComparison
             var renamed = BridGHe.Common.Helpers.ModelArchive.Clone(first); renamed.Name = "Same values";
             var same = fem.Beams.Where(b => b.BeamProperty.Name == first.Name).Select(b => b.BeamId).Distinct().ToArray();
             var femStates = GpcModels.Convert(BridGHe.Common.Diagnostics.BridgePhaseModel.Create(fem, "Phase same", same, renamed, false), tolerance);
-            var source = GpcModels.Convert(fem, tolerance);
+            var source = ConvertWithDrafts(fem, tolerance);
             var gpcStates = GpcModelTransforms.PhaseModel(source, "Phase same", same, GpcModels.BeamProperty(renamed, source.Report.Units), false, GpcIdentity.Derive(GpcIdentity.NameSpace, "test-states-same:" + example.Id));
             string State(GpcModels.Conversion c, int id)
             {
@@ -554,7 +561,7 @@ internal static class GpcInputComparison
         {
             var fem = Registered(example.Model);
             for (int k = 0; k < fem.Beams.Count; k++) if (string.IsNullOrWhiteSpace(fem.Beams[k].BeamId)) fem.Beams[k].BeamId = "B" + (k + 1);
-            var conversion = GpcModels.Convert(fem, tolerance);
+            var conversion = ConvertWithDrafts(fem, tolerance);
             if (conversion.Report.RegisteredCases != conversion.Model.LoadCases.Count) throw new Exception($"GPC INPUT FAIL ({example.Id} from GPC): not every case registered");
             GpcModels.Conversion Input() => GpcModels.Conversion.FromGpc(GPC.Model.Core.ModelValues.Copy(conversion.Model), conversion.Report.Units, conversion.Report.BeamAngles, tolerance, conversion.Report.NativeSections, conversion.Bridge);
             Console.WriteLine($"GPC INPUT ({example.Id} from GPC): " + RequireSame(example.Id + " from GPC", Input(), conversion)); compared++;
@@ -641,7 +648,7 @@ internal static class GpcInputComparison
                 try { output = BridGHe.Common.Diagnostics.BridgePhaseModel.Create(fem, name, selection, property, clear); } catch (ArgumentException e) { femError = e.Message; }
                 try
                 {
-                    var input = GpcModels.Convert(fem, tolerance);
+                    var input = ConvertWithDrafts(fem, tolerance);
                     gpc = GpcModelTransforms.PhaseModel(input, name, selection, GpcModels.BeamProperty(property, input.Report.Units), clear, GpcIdentity.Derive(GpcIdentity.NameSpace, "test-phase:" + label));
                 }
                 catch (ArgumentException e) { gpcError = e.Message; }
@@ -658,16 +665,16 @@ internal static class GpcInputComparison
             var chains = new (string Label, Func<ModelModel> Fem, Func<GpcModels.Conversion> Gpc)[]
             {
                 ("paths then phase", () => BridGHe.Common.Diagnostics.BridgePhaseModel.Create(MovingModelBuilder.ReplacePaths(fem, moving), "Phase", half, stiffer, false),
-                    () => { var p = GpcModelTransforms.ReplacePaths(GpcModels.Convert(fem, tolerance), moving, GpcIdentity.Derive(GpcIdentity.NameSpace, "chain-1a:" + example.Id));
+                    () => { var p = GpcModelTransforms.ReplacePaths(ConvertWithDrafts(fem, tolerance), moving, GpcIdentity.Derive(GpcIdentity.NameSpace, "chain-1a:" + example.Id));
                             return GpcModelTransforms.PhaseModel(p, "Phase", half, GpcModels.BeamProperty(stiffer, p.Report.Units), false, GpcIdentity.Derive(GpcIdentity.NameSpace, "chain-1b:" + example.Id)); }),
                 ("phase then paths", () => MovingModelBuilder.ReplacePaths(BridGHe.Common.Diagnostics.BridgePhaseModel.Create(fem, "Phase", half, stiffer, false), traffic),
-                    () => { var p = GpcModelTransforms.PhaseModel(GpcModels.Convert(fem, tolerance), "Phase", half, GpcModels.BeamProperty(stiffer, units), false, GpcIdentity.Derive(GpcIdentity.NameSpace, "chain-2a:" + example.Id));
+                    () => { var p = GpcModelTransforms.PhaseModel(ConvertWithDrafts(fem, tolerance), "Phase", half, GpcModels.BeamProperty(stiffer, units), false, GpcIdentity.Derive(GpcIdentity.NameSpace, "chain-2a:" + example.Id));
                             return GpcModelTransforms.ReplacePaths(p, traffic, GpcIdentity.Derive(GpcIdentity.NameSpace, "chain-2b:" + example.Id)); }),
                 ("cleared phase then paths", () => MovingModelBuilder.ReplacePaths(BridGHe.Common.Diagnostics.BridgePhaseModel.Create(fem, "Phase", ids, generic, true), traffic),
-                    () => { var p = GpcModelTransforms.PhaseModel(GpcModels.Convert(fem, tolerance), "Phase", ids, GpcModels.BeamProperty(generic, units), true, GpcIdentity.Derive(GpcIdentity.NameSpace, "chain-3a:" + example.Id));
+                    () => { var p = GpcModelTransforms.PhaseModel(ConvertWithDrafts(fem, tolerance), "Phase", ids, GpcModels.BeamProperty(generic, units), true, GpcIdentity.Derive(GpcIdentity.NameSpace, "chain-3a:" + example.Id));
                             return GpcModelTransforms.ReplacePaths(p, traffic, GpcIdentity.Derive(GpcIdentity.NameSpace, "chain-3b:" + example.Id)); }),
                 ("phase then phase", () => BridGHe.Common.Diagnostics.BridgePhaseModel.Create(BridGHe.Common.Diagnostics.BridgePhaseModel.Create(fem, "Phase", half, sameName, false), "Phase 2", ids, generic, false),
-                    () => { var p = GpcModelTransforms.PhaseModel(GpcModels.Convert(fem, tolerance), "Phase", half, GpcModels.BeamProperty(sameName, units), false, GpcIdentity.Derive(GpcIdentity.NameSpace, "chain-4a:" + example.Id));
+                    () => { var p = GpcModelTransforms.PhaseModel(ConvertWithDrafts(fem, tolerance), "Phase", half, GpcModels.BeamProperty(sameName, units), false, GpcIdentity.Derive(GpcIdentity.NameSpace, "chain-4a:" + example.Id));
                             return GpcModelTransforms.PhaseModel(p, "Phase 2", ids, GpcModels.BeamProperty(generic, p.Report.Units), false, GpcIdentity.Derive(GpcIdentity.NameSpace, "chain-4b:" + example.Id)); }),
             };
             foreach (var (chain, femChain, gpcChain) in chains)

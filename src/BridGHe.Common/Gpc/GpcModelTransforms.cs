@@ -132,7 +132,40 @@ namespace BridGHe.Common.Gpc
                 report.ElementLoadCases.Clear(); report.ElementLoadCases.AddRange(cleared);
                 report.ElementWarnings.RemoveAll(w => w.Format.Contains(": temperature type ", StringComparison.Ordinal));
             }
-            return new GpcModels.Conversion(model, report, input.Tolerance);
+            // R6.4 (2), extension (α): the drafts of the elements, those of the input changed as the former transformer changed the values.
+            return new GpcModels.Conversion(model, report, input.Tolerance, PhaseDrafts(input, selected, property, clearLoads));
+        }
+
+        /// <summary>R6.4 (2), extension (α): the drafts of the elements of a phase model from those of its input: the beams chosen on the
+        /// replacement property (<see cref="Builders.GpcBeamBuilders.Override"/>, as Beam Override: the former transformer set the property of the
+        /// beam), every load removed with "Clear loads" (<see cref="Builders.GpcDraftTransforms"/>). None when the input carries none, or when a
+        /// beam with a current section state changes property (the builder refuses it).</summary>
+        private static GpcModelDrafts PhaseDrafts(GpcModels.Conversion input, HashSet<string> selected, LegacyBeamProperty property, bool clearLoads)
+        {
+            var d = NumberedDrafts(input);
+            if (d == null) return null;
+            try
+            {
+                return new GpcModelDrafts(
+                    d.Nodes.Select(n => clearLoads ? Builders.GpcDraftTransforms.WithoutLoads(n) : n),
+                    d.Beams.Select((b, k) =>
+                    {
+                        var x = selected.Contains(input.Model.BeamElements[k + 1].Name) ? Builders.GpcBeamBuilders.Override(b, property, null, null, null, b.Beam.Guid) : b;
+                        return clearLoads ? Builders.GpcDraftTransforms.WithoutLoads(x) : x;
+                    }),
+                    d.Plates.Select(p => clearLoads ? Builders.GpcDraftTransforms.WithoutLoads(p) : p));
+            }
+            catch (NotSupportedException) { return null; }
+        }
+
+        /// <summary>R6.4 (2): the drafts of an input when they describe its GPC model element by element (every family numbered 1..n in the
+        /// order of the drafts, as the conversion and Build Model number them); null otherwise.</summary>
+        private static GpcModelDrafts NumberedDrafts(GpcModels.Conversion input)
+        {
+            var d = input.Drafts; var m = input.Model;
+            if (d == null || !d.Fits(m.NodesElements.Count, m.BeamElements.Count, m.AreaElements.Count)) return null;
+            static bool Numbered(IEnumerable<int> ids) { var sorted = ids.OrderBy(i => i).ToArray(); return sorted.SequenceEqual(Enumerable.Range(1, sorted.Length)); }
+            return Numbered(m.NodesElements.Values.Select(n => n.Id)) && Numbered(m.BeamElements.Values.Select(b => b.Id)) && Numbered(m.AreaElements.Values.Select(p => p.Id)) ? d : null;
         }
 
         private static bool IsExistingPropertyWarning(string warning) =>
@@ -389,7 +422,30 @@ namespace BridGHe.Common.Gpc
             // The bridge data of the active beams (keys are beam GUIDs, unchanged by the numbering).
             var activeBeams = numbered.BeamElements.Values.Select(b => b.Guid).ToHashSet();
             foreach (var b in output.Bridge.Beams.ToList()) if (!activeBeams.Contains(b.BeamGuid)) output.Bridge.Remove(b.BeamGuid);
-            return new GpcModels.Conversion(numbered, output, input.Tolerance);
+            // R6.4 (2), extension (α): the drafts of the elements of the snapshot, those of the source changed as the former transformer.
+            return new GpcModels.Conversion(numbered, output, input.Tolerance, SequenceDrafts(input, retained, beams, plates, bearingIds, girders, girderOverride));
+        }
+
+        /// <summary>R6.4 (2), extension (α): the drafts of the elements of a phase snapshot from those of its source, in the order of the former
+        /// output (the retained nodes in retention order, the active beams and plates in source order): a node that is not an active bearing
+        /// without its restraints and springs (<see cref="Builders.GpcDraftTransforms.WithoutRestraints"/>), the girders on the override property
+        /// (<see cref="Builders.GpcBeamBuilders.Override"/>); the rest as in the source (a draft has number 1: the renumbering does not touch it).
+        /// None when the source carries none, or when a girder with a current section state changes property.</summary>
+        private static GpcModelDrafts SequenceDrafts(GpcModels.Conversion input, List<GPC.Model.Elements.NodeElement> retained, HashSet<int> beams, HashSet<int> plates,
+            IReadOnlyList<string> bearingIds, HashSet<int> girders, LegacyBeamProperty girderOverride)
+        {
+            var d = NumberedDrafts(input);
+            if (d == null) return null;
+            bool all = bearingIds.Contains("*");
+            try
+            {
+                return new GpcModelDrafts(
+                    retained.Select(n => all || bearingIds.Contains(n.Name) ? d.Nodes[n.Id - 1] : Builders.GpcDraftTransforms.WithoutRestraints(d.Nodes[n.Id - 1])),
+                    input.Model.BeamElements.Values.OrderBy(b => b.Id).Where(b => beams.Contains(b.Id)).Select(b =>
+                        girders.Contains(b.Id) ? Builders.GpcBeamBuilders.Override(d.Beams[b.Id - 1], girderOverride, null, null, null, d.Beams[b.Id - 1].Beam.Guid) : d.Beams[b.Id - 1]),
+                    input.Model.AreaElements.Values.OrderBy(p => p.Id).Where(p => plates.Contains(p.Id)).Select(p => d.Plates[p.Id - 1]));
+            }
+            catch (NotSupportedException) { return null; }
         }
 
         /// <summary>Points within a tolerance (the sphere search of the former RTree): a grid of cells of the tolerance.</summary>

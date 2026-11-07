@@ -302,7 +302,9 @@ internal static class GpcBridgeComparison
         if (attached.Model.AnalysisFingerprint() != gpc.Bridge.Model.AnalysisFingerprint() || attached.Workflow.Fingerprint() != gpc.Bridge.Workflow.Fingerprint()
             || attached.Model.Datasets.Count != gpc.Bridge.Model.Datasets.Count)
             throw new Exception("GPC BRIDGE FAIL (" + label + "): the attached GPC bridge model differs from the one rebuilt from the inputs");
-        Console.WriteLine($"GPC BRIDGE PASS ({label}): the GPC bridge model built from the GPC models ({seconds:F1} s) equals bit for bit the former seam on the FEM merge with the reference identity: {summary}; the attached one is the same.");
+        // R6.4 (2), extension (α): the drafts the merged model carries against the conversion of its FEM elements.
+        string drafts = GpcInputComparison.RequireDrafts(label, (GpcModelDrafts)output.GetType().GetProperty("GpcDrafts").GetValue(output), (ModelModel)output.GetType().GetProperty("Value").GetValue(output));
+        Console.WriteLine($"GPC BRIDGE PASS ({label}): the GPC bridge model built from the GPC models ({seconds:F1} s) equals bit for bit the former seam on the FEM merge with the reference identity: {summary}; the attached one is the same; merged model {drafts}.");
     }
 
     /// <summary>Regression (not native) <c>gpc-bridge-model</c>: the examples 01–10 (node, beam and plate loads, combinations, moving loads,
@@ -331,7 +333,9 @@ internal static class GpcBridgeComparison
                 if (femError != gpcError) throw new Exception($"GPC BRIDGE FAIL ({label}): FEM error '{femError}', GPC error '{gpcError}'");
                 Console.WriteLine($"GPC BRIDGE ({label}): same error on both paths: {femError}"); errors++; return;
             }
-            Console.WriteLine($"GPC BRIDGE ({label}): " + Require(label, gpc, fem, tolerance)); compared++;
+            // R6.4 (2), extension (α): the drafts of the merged model (from the drafts of the first reference) against its FEM elements.
+            string drafts = GpcInputComparison.RequireDrafts(label, GpcBridgeBuilder.ModelDrafts(GpcInputComparison.FemmDrafts(models[0]), gpc.Bridge.Records), fem.Model);
+            Console.WriteLine($"GPC BRIDGE ({label}): " + Require(label, gpc, fem, tolerance) + "; merged model " + drafts); compared++;
         }
         var shrinkage = new BridgeActionDefinition { Key = "RIT", Behavior = BridgeActionBehavior.Shrinkage, Strain = -2e-4, PrimaryOnly = true };
         foreach (var example in NativeExamples.Create())

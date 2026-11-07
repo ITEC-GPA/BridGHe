@@ -236,6 +236,28 @@ namespace BridGHe.Common.Gpc
                 table.Select(t => (t.Name, (IReadOnlyList<(string Case, double Factor)>)t.Factors.ToArray())).ToArray()), summary, warnings.ToArray());
         }
 
+        /// <summary>
+        /// R6.4 (2), extension (α): the drafts of the elements of the merged model of Build BridGHe Model (its <c>Model</c> output: the elements of
+        /// the first reference model without their loads, a composite slab strain on every beam a strain action acts on, in the order of the
+        /// phases and of their actions, in the strain case of the action: a case with one stage and no inertia), from the drafts of the first
+        /// reference model and the records of the workflow; null when the reference carries none.
+        /// </summary>
+        public static GpcModelDrafts ModelDrafts(GpcModelDrafts reference, BridgeWorkflow workflow)
+        {
+            if (reference == null) return null;
+            if (workflow == null) throw new ArgumentNullException(nameof(workflow));
+            var beams = reference.Beams.Select(Builders.GpcDraftTransforms.WithoutLoads).ToArray();
+            foreach (var phase in workflow.Phases)
+                foreach (var a in phase.Actions)
+                {
+                    if (!a.Strain.HasValue || a.StrainCase == null) continue;
+                    var strainCase = Builders.GpcCaseBuilders.Case(a.StrainCase, false) with { Stages = 1 };
+                    for (int i = 0; i < beams.Length; i++)
+                        if (a.BeamIds.Length == 0 || a.BeamIds.Contains(beams[i].Beam.Name, StringComparer.Ordinal)) beams[i] = Builders.GpcDraftTransforms.WithSlabStrain(beams[i], strainCase);
+                }
+            return new GpcModelDrafts(reference.Nodes.Select(Builders.GpcDraftTransforms.WithoutLoads), beams, reference.Plates.Select(Builders.GpcDraftTransforms.WithoutLoads));
+        }
+
         /// <summary>The beams of a model in their numbering.</summary>
         private static BeamElement[] Beams(Model model) => model.BeamElements.Values.OrderBy(b => b.Id).ToArray();
 
