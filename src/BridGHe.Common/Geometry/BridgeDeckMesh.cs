@@ -12,6 +12,10 @@ public sealed record BridgeDeckResult(SimpleBridgeGeometry Geometry, Mesh Mesh, 
     /// <summary>R6.2 lane A (dual rule until R6.5): the GPC draft of every plate (when the GPC property is given), built on GPC with the plate
     /// builders from the same data (corners, property, pour group under Deck, plate ID), with the identity of the conversion of its FEM value.</summary>
     public BridGHe.Common.Gpc.Legacy.LegacyPlateDraft[] Drafts { get; init; }
+
+    /// <summary>R6.5 P1 lane 1b: what every plate is built from besides the GPC property, in the order of <see cref="Plates"/>: its corners,
+    /// its group (from the root) and its plate ID (the parameters of its identity by content without a FEM value).</summary>
+    public (Point3d[] Corners, string[] Group, string PlateId)[] Plans { get; init; }
 }
 
 public static class BridgeDeckMesh
@@ -66,6 +70,7 @@ public static class BridgeDeckMesh
         var mesh = new Mesh(); mesh.Vertices.UseDoublePrecisionVertices = true;
         var connectors = new List<Line>(); var plates = new List<PlateModel>(); var pp = ModelArchive.Clone(property);
         var drafts = gpcProperty == null ? null : new List<BridGHe.Common.Gpc.Legacy.LegacyPlateDraft>();
+        var plans = new List<(Point3d[], string[], string)>();
         Point3d Edge(Polyline edge, double station)
         {
             int index = source.Stations.BinarySearch(station);
@@ -98,6 +103,7 @@ public static class BridgeDeckMesh
             // R6.2 lane A: the same plate on GPC (the reader of the former plate: corners, property, the group Deck\Pour<n> with its parent, plate ID).
             drafts?.Add(BridGHe.Common.Gpc.Builders.GpcPlateBuilders.Create(points.Select(q => (q.X, q.Y, q.Z)).ToArray(), gpcProperty,
                 new[] { new[] { "Deck", $"Pour{pour}" } }, 0, 0, p.PlateId, BridGHe.Common.Gpc.GpcBeamDrafts.Identity(p)));
+            plans.Add((points, new[] { "Deck", $"Pour{pour}" }, p.PlateId));
             plates.Add(p);
         }
         for (int row = 0; row < rowStations.Count - 1; row++)
@@ -119,6 +125,6 @@ public static class BridgeDeckMesh
             property.PropertyType == PlatePropertyType.LoadPatch ? "Load-patch deck property: no structural slab stiffness is intended." :
                 "Structural deck plates: assign steel-only beam properties to avoid counting concrete stiffness twice.",
             "No automatic beam/plate connection is implied by visual overlap. Triangles are recommended for warped decks; mesh convergence remains a separate analysis."
-        }) { Drafts = drafts?.ToArray() };
+        }) { Drafts = drafts?.ToArray(), Plans = plans.ToArray() };
     }
 }

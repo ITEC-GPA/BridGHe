@@ -30,12 +30,32 @@ namespace BridGHe.Grasshopper.Helpers
         internal static Guid Identity(Guid inputDraft, Guid component, int output, params object[] parameters) =>
             GpcIdentity.Derive(inputDraft, component.ToString("D") + ":" + output.ToString(CultureInfo.InvariantCulture) + ":" + Canonical(parameters));
 
+        /// <summary>R6.5 P1 lane 1b (coordinator decision 1, 7/11): the identity of an element built without an input element (a bridge
+        /// generator from curves, numbers and properties; in P2 also Node, Beam and Plate from geometry), the one rule for all of them:
+        /// <see cref="GpcIdentity.Derive"/> of <see cref="GpcIdentity.NameSpace"/> and <c>"&lt;component&gt;:&lt;output index&gt;:" +</c> the
+        /// canonical parameters of the builder of the element (<see cref="Canonical"/>). By content, as the identity of the conversion of a FEM
+        /// value is: two equal elements of the same component share a GUID.</summary>
+        internal static Guid ContentIdentity(Guid component, int output, params object[] parameters) =>
+            GpcIdentity.Derive(GpcIdentity.NameSpace, component.ToString("D") + ":" + output.ToString(CultureInfo.InvariantCulture) + ":" + Canonical(parameters));
+
         /// <summary>R6.5 P1 lane 1b: the bridge generators that build elements without an input element (Bridge Bearings, Rigid Links,
         /// Connection Beams, Connections, Deck Mesh, Slab Grillage, Member Assignment, FEM Members) give them by their GPC drafts alone (no FEM
-        /// value): the path that stays in P2. Off (always, outside the lane test <c>gpc-only-generators</c>) they give the FEM value with its
-        /// draft, the dual rule of R6.2, so nothing changes with the inputs of today. Removed in P2 with the FEM path (the generators then
-        /// always take the path it selects).</summary>
+        /// value, <see cref="ContentIdentity"/>): the path that stays in P2. Off (always, outside the lane test <c>gpc-only-generators</c>) they
+        /// give the FEM value with its draft, the dual rule of R6.2, so nothing changes with the inputs of today. Removed in P2 with the FEM
+        /// path (the generators then always take the path it selects).</summary>
         public static bool GeneratorsWithoutFem { get; set; }
+
+        /// <summary>The draft of a generator without a FEM value, or null after an error on the component (a refusal of the reader: without a
+        /// FEM value there is no conversion to fall back on).</summary>
+        internal static T Generated<T>(GH_Component component, Func<T> build) where T : class
+        {
+            try { return build(); }
+            catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException)
+            {
+                component.AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The GPC datum of the generated element is refused: " + x.Message);
+                return null;
+            }
+        }
 
         /// <summary>The canonical text of the parameters of a builder: invariant, the exact doubles (round trip, −0 as 0), strings quoted,
         /// lists in brackets, a case record by the SHA-256 of its record archive (data contract XML, uncompressed), a beam property by its
@@ -62,6 +82,10 @@ namespace BridGHe.Grasshopper.Helpers
             GPC.Geometry.Point3d v => "(" + One(v.X) + "," + One(v.Y) + "," + One(v.Z) + ")",
             Rhino.Geometry.Vector3d v => "(" + One(v.X) + "," + One(v.Y) + "," + One(v.Z) + ")",
             Rhino.Geometry.Point3d v => "(" + One(v.X) + "," + One(v.Y) + "," + One(v.Z) + ")",
+            // R6.5 P1 lane 1b: the parameters of the bridge generators (taper scales, bearing frames, the GPC property of a deck plate).
+            Rhino.Geometry.Vector2d v => "(" + One(v.X) + "," + One(v.Y) + ")",
+            Rhino.Geometry.Plane f => "plane:" + One(f.Origin) + One(f.XAxis) + One(f.YAxis),
+            GPC.Model.ElementProperties.PlateProperty pp => "plate-property:" + GPC.Model.Core.ModelValues.Fingerprint(new object[] { GPC.Model.Core.ModelValues.CopyValue(pp) }),
             LegacyCaseData c => "case:" + Digest(GpcDraftArchive.Write(c)),
             LegacyBeamProperty bp => "property:" + One(bp.Data?.Signature) + ":" + One(bp.Data?.Formulation.ToString()) + ":" + One(bp.Data?.Angle ?? 0)
                 + ":" + (bp.Data?.Section == null ? "null" : Digest(GpcDraftArchive.Write(bp.Data.Section))),

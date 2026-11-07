@@ -90,11 +90,35 @@ public class BridgeMemberAssignmentComponent : BridgeUtilityComponent
     {
         var result = BridgeMemberAssignment.Assign(geometry, defaults, rules);
         if (result.Unassigned.Length > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"{result.Unassigned.Length} members have no property and were not created. Inspect Unassigned.");
+        // R6.5 P1 lane 1b: the beams by their GPC drafts alone (identity by content of the plan), the physical IDs from the plans.
+        if (GpcOnlyElements.GeneratorsWithoutFem)
+        {
+            da.SetDataList(0, GpcOnly(this, 0, result.Plans));
+            da.SetDataList(1, result.Plans.Select(p => p.PhysicalId));
+            da.SetDataList(2, result.Unassigned); da.SetDataList(3, result.Diagnostics);
+            return;
+        }
         // R6.2 (lane B): every beam with its GPC draft built on GPC from its plan (identity of the conversion of the FEM output until R6.5).
         var outputs = result.Beams.Select(b => new GH_Beam(b)).ToArray();
         for (int i = 0; i < outputs.Length; i++) { var plan = result.Plans[i]; GpcBeamInputs.Attach(outputs[i], id => Common.Gpc.Builders.GpcBridgeGeometryBuilders.Assigned(plan, id)); }
         da.SetDataList(0, outputs);
         da.SetDataList(1, result.Beams.Select(b => b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value.PhysicalId));
         da.SetDataList(2, result.Unassigned); da.SetDataList(3, result.Diagnostics);
+    }
+
+    /// <summary>R6.5 P1 lane 1b: the beams of plans by their GPC drafts alone (<c>GpcBridgeGeometryBuilders.Assigned</c>), each with the
+    /// identity by content of its plan (every field: ends, the GPC property, export ID and label, family, group, segment, span, physical
+    /// and geometric IDs, stations, deck frame, taper scales); a refused one gives an error and is left out. Also Bridge Slab Grillage.</summary>
+    internal static List<GH_Beam> GpcOnly(GH_Component component, int output, IEnumerable<BridgeMemberPlan> plans)
+    {
+        var beams = new List<GH_Beam>();
+        foreach (var plan in plans)
+        {
+            var draft = GpcOnlyElements.Generated(component, () => Common.Gpc.Builders.GpcBridgeGeometryBuilders.Assigned(plan, GpcOnlyElements.ContentIdentity(component.ComponentGuid, output,
+                plan.From, plan.To, GpcOnlyElements.Lazy(() => plan.Property()), plan.SolverId, plan.Label, plan.Family, plan.Group, plan.Segment, plan.Span, plan.PhysicalId,
+                plan.StationFrom, plan.StationTo, plan.GeometryId, plan.DeckY, plan.DeckX, plan.ScaleFrom, plan.ScaleTo)));
+            if (draft != null) beams.Add(GH_Beam.FromGpc(draft));
+        }
+        return beams;
     }
 }

@@ -28,7 +28,7 @@ public abstract class BridgeConnectionComponent : BridgeUtilityComponent
     {
         var current=new List<Line>(); GH_BeamProperty p=null;if(!da.GetDataList(0,current)||!rigid&&!da.GetData(1,ref p))return;
         var elements=BridgeConnections.Create(current,rigid,p?.Value);lines.AddRange(current);
-        da.SetDataList(0,GpcConnections.Elements(elements,current,rigid,p));
+        da.SetDataList(0,GpcConnections.Elements(this,elements,current,rigid,p));
         da.SetData(1,rigid?"Native spatial kinematic rigid links.":"Deformable connection beams with explicit property.");
     }
     public override BoundingBox ClippingBox=>new BoundingBox(lines.SelectMany(l=>new[]{l.From,l.To}));

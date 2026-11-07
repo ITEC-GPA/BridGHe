@@ -37,6 +37,9 @@ public sealed class BridgeSlabGrillageComponent : BridgeUtilityComponent
         GPC.Model.Materials.Material analysis=null;
         try{analysis=Common.Gpc.GpcMaterials.Analysis(m.Gpc);}catch(Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException){}
         var result=BridgeSlabGrillage.Create(g.Value,m.Value,name,analysis);
+        // R6.5 P1 lane 1b: the beams by their GPC drafts alone (identity by content of the plan), the member IDs from the plans; the strip
+        // properties as before (a property kind: lane 2).
+        bool only=GpcOnlyElements.GeneratorsWithoutFem;
         var beams=result.Beams.Select(b=>new GH_Beam(b)).ToArray();
         var properties=result.Beams.Select(b=>new GH_BeamProperty(b.BeamProperty)).ToArray();
         for(int i=0;i<beams.Length;i++)
@@ -45,10 +48,10 @@ public sealed class BridgeSlabGrillageComponent : BridgeUtilityComponent
             GpcBeamInputs.Attach(beams[i],id=>Common.Gpc.Builders.GpcBridgeGeometryBuilders.Assigned(plan,id));
             if(analysis!=null) properties[i].AttachGpc(plan.Property());
         }
-        da.SetDataList(0,beams);
+        if(only) da.SetDataList(0,BridgeMemberAssignmentComponent.GpcOnly(this,0,result.Plans)); else da.SetDataList(0,beams);
         da.SetDataList(1,properties);
         da.SetDataList(2,result.Widths);
-        da.SetDataList(3,result.Beams.Select(b=>b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value.GeometryId));
+        da.SetDataList(3,only?result.Plans.Select(p=>p.GeometryId):result.Beams.Select(b=>b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value.GeometryId));
         da.SetData(4,"Transverse rectangular strips only; section y follows slab normal. Widths are measured along alignment. Curved/skew grillage stiffness requires calibration. Add eccentric links separately; longitudinal composite action belongs to girder section/phase properties.");
     }
 }

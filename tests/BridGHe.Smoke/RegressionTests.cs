@@ -106,6 +106,7 @@ internal static class RegressionTests
         gpc["remade-examples"] = ExampleRemake04.Replay; // P2S (7/11): the five examples remade in 0.4.0 form
         gpc["gpc-null-values"] = GpcNullValueChecks.Regression; // R6.5 P0 (7/11): the GH types given by their GPC datum alone
         gpc["gpc-only-elements"] = GpcOnlyReplay.Elements; // R6.5 P1 lane 1a (7/11): the element components replayed with GPC-only inputs
+        gpc["gpc-only-generators"] = GpcOnlyReplay.Generators; // R6.5 P1 lane 1b (7/11): the bridge generators replayed with GPC-only inputs and outputs
         tests = gpc.Concat(tests).ToDictionary(t => t.Key, t => t.Value);
 #endif
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);

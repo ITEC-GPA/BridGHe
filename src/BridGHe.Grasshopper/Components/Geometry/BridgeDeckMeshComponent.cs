@@ -40,10 +40,26 @@ public sealed class BridgeDeckMeshComponent : BridgeUtilityComponent
         da.GetData(2, ref length); da.GetData(3, ref width); da.GetDataList(4, pours); da.GetData(5, ref triangles);
         // R6.2 lane A (dual rule until R6.5): the plates carry their GPC drafts, built on GPC from the GPC property of the input (a refused
         // property gives no drafts: the plates are converted as before).
-        GPC.Model.ElementProperties.PlateProperty gpcProperty = null;
-        try { gpcProperty = property.Gpc; } catch (Exception x) when (GpcBuilderAttach.Refusal(x)) { }
+        GPC.Model.ElementProperties.PlateProperty gpcProperty = null; Exception refused = null;
+        try { gpcProperty = property.Gpc; } catch (Exception x) when (GpcBuilderAttach.Refusal(x)) { refused = x; }
         var result = BridgeDeckMesh.Create(geometry.Value, property.Value, length, width, pours, triangles, gpcProperty);
         da.SetData(0, new BridgeGeometryGoo(result.Geometry)); da.SetData(1, result.Mesh);
+        // R6.5 P1 lane 1b: the plates by their GPC drafts alone, identity by content (corners, GPC property, group, plate ID); a refused
+        // property gives an error and no plates (no FEM value to fall back on).
+        if (GpcOnlyElements.GeneratorsWithoutFem)
+        {
+            if (result.Drafts == null) GpcOnlyElements.Generated<object>(this, () => throw refused ?? new ArgumentException("The plate property has no GPC datum."));
+            else da.SetDataList(2, result.Drafts.Select((d, i) =>
+            {
+                var plan = result.Plans[i];
+                var draft = GpcOnlyElements.Generated(this, () => Common.Gpc.GpcDrafts.Reidentify(d, GpcOnlyElements.ContentIdentity(ComponentGuid, 2,
+                    plan.Corners, gpcProperty, plan.Group, plan.PlateId)));
+                return draft == null ? null : GH_Plate.FromGpc(draft);
+            }).Where(p => p != null));
+            da.SetDataList(3, result.Connections);
+            da.SetDataList(4, result.Stations); da.SetDataList(5, result.Diagnostics);
+            return;
+        }
         da.SetDataList(2, result.Plates.Select((p, i) =>
         {
             // GH_Plate(PlateModel) keeps the generated value: the identity of the draft is that of its conversion.
