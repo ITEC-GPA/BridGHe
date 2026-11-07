@@ -32,7 +32,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public GH_BeamResults(GH_Beam beam)
             : this()
         {
-            Value = new List<ResultModel>(beam.Value.Results);
+            // R6.5 P0: an element without FEM value has no FEM results (its analysed GPC element is read).
+            Value = beam.Value == null ? new List<ResultModel>() : new List<ResultModel>(beam.Value.Results);
             AnalysedGpc = beam.AnalysedGpc; AnalysedGpcModel = beam.AnalysedGpcModel;
         }
 
@@ -50,14 +51,14 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             return new GH_BeamResults
             {
-                Value = Common.Helpers.ModelArchive.Clone(Value),
+                Value = Value == null ? null : Common.Helpers.ModelArchive.Clone(Value),
                 AnalysedGpc = AnalysedGpc, AnalysedGpcModel = AnalysedGpcModel,
             };
         }
 
         public override string ToString()
         {
-            return Value.ToString();
+            return Value == null ? "Null Beam results" : Value.ToString();
         }
 
         #endregion

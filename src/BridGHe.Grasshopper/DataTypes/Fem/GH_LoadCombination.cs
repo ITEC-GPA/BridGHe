@@ -14,7 +14,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
     {
         public List<LoadCaseModel> LoadCases => Value.Values.Keys.ToList();
 
-        public override bool IsValid => Value.Name != string.Empty && Value.Values.Count > 0;
+        // R6.5 P0: without a FEM value the combination is its record.
+        public override bool IsValid => Value == null ? !string.IsNullOrEmpty(Gpc?.Name) && Gpc.Factors.Count > 0 : Value.Name != string.Empty && Value.Values.Count > 0;
 
         public override string IsValidWhyNot => "Not propely defined";
 
@@ -109,6 +110,16 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             if (_legacy != null && ReferenceEquals(_legacyOf, Value)) { copy._legacy = _legacy; copy._legacyOf = copy.Value; }
         }
 
+        /// <summary>R6.5 P0 (coordinator, 7/11): a load combination given by its GPC datum alone, with no FEM value: <see cref="Gpc"/> is the datum and
+        /// validity, copies, persistence and text read it.</summary>
+        public static GH_LoadCombination FromGpc(Common.Gpc.Legacy.LegacyCombinationDraft datum)
+        {
+            var goo = new GH_LoadCombination();
+            goo.Value = null;
+            goo._gpc = datum ?? throw new System.ArgumentNullException(nameof(datum)); goo._gpcOf = null; goo.HasAttachedGpc = true;
+            return goo;
+        }
+
         public override IGH_Goo Duplicate()
         {
             var copy = DuplicateValue();
@@ -118,6 +129,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         private GH_LoadCombination DuplicateValue()
         {
+            if (Value == null) return new GH_LoadCombination();
             GH_LoadCombination value = new GH_LoadCombination(Value.Name);
             foreach (KeyValuePair<LoadCaseModel, double> item in Value.Values)
                 value.Value.Values.Add(item.Key, item.Value);
@@ -152,6 +164,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override string ToString()
         {
+            if (Value == null)
+                return Gpc == null ? "Null Load Combination" : $"{Gpc.Name} = " + string.Join(" + ", Gpc.Factors.Select(f => $"{f.Case.Name}*{f.Factor}")) + "\nGPC datum (no FEM value)";
             string str = $"{Value.Name} = ";
 
             bool first = true;

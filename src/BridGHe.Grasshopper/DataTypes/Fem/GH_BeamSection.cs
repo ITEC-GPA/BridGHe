@@ -198,7 +198,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             set => Value.GenericShapes = value;
         }
 
-        public override bool IsValid => SectionType != SectionModel.SectionTypes.Undefined;
+        // R6.5 P0: without a FEM value the section is its recipe.
+        public override bool IsValid => Value == null ? Gpc != null : SectionType != SectionModel.SectionTypes.Undefined;
 
         public override string IsValidWhyNot => "The section type is not defined";
 
@@ -750,6 +751,16 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             if (_legacy != null && ReferenceEquals(_legacyOf, Value)) { copy._legacy = _legacy; copy._legacyOf = copy.Value; }
         }
 
+        /// <summary>R6.5 P0 (coordinator, 7/11): a section given by its GPC recipe alone, with no FEM value: <see cref="Gpc"/> is the recipe and
+        /// validity, copies, persistence and text read it (the dimension properties of the type read the FEM value until P1).</summary>
+        public static GH_BeamSection FromGpc(Common.Gpc.Legacy.LegacySectionRecipe recipe)
+        {
+            var goo = new GH_BeamSection();
+            goo.Value = null;
+            goo._gpc = recipe ?? throw new ArgumentNullException(nameof(recipe)); goo._gpcOf = null; goo.HasAttachedGpc = true;
+            return goo;
+        }
+
         public override IGH_Goo Duplicate()
         {
             var copy = DuplicateValue();
@@ -865,6 +876,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override string ToString()
         {
+            if (Value == null)
+                return Gpc == null ? "Null Section" : $"{Gpc.Kind}: {Gpc.Name} (D {Gpc.D}, B {Gpc.B}, A {Gpc.Area})\nGPC datum (no FEM value)";
             string text;
             if (SectionType == SectionModel.SectionTypes.GenericShapes)
             {

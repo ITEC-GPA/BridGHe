@@ -12,7 +12,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 {
     public class GH_Group : GH_Goo<GroupModel>
     {
-        public override bool IsValid => Value == null ? false : Value.Name != string.Empty;
+        // R6.5 P0: without a FEM value the group is its chain of names.
+        public override bool IsValid => Value == null ? Gpc != null && Gpc.Count > 0 && Gpc[Gpc.Count - 1].Length != 0 : Value.Name != string.Empty;
 
         public override string IsValidWhyNot => "Not propely defined";
 
@@ -31,7 +32,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public GH_Group(GH_Group grp)
         {
-            Value = new GroupModel(grp.Value);
+            Value = grp.Value == null ? null : new GroupModel(grp.Value);
         }
 
         /// <summary>
@@ -73,6 +74,16 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         private IReadOnlyList<string> _gpc;
         private GroupModel _gpcOf;
 
+        /// <summary>R6.5 P0 (coordinator, 7/11): a group given by its GPC datum alone, with no FEM value: <see cref="Gpc"/> is the datum and
+        /// validity, copies, persistence and text read it.</summary>
+        public static GH_Group FromGpc(IReadOnlyList<string> datum)
+        {
+            var goo = new GH_Group();
+            goo.Value = null;
+            goo._gpc = (datum ?? throw new System.ArgumentNullException(nameof(datum))).ToArray(); goo._gpcOf = null; goo.HasAttachedGpc = true;
+            return goo;
+        }
+
         public override IGH_Goo Duplicate()
         {
             var copy = new GH_Group(this);
@@ -84,7 +95,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public override string ToString()
         {
             if (Value == null)
-                return "Null Group property";
+                return Gpc == null ? "Null Group property" : $"BridGHe Group: {string.Join("\\", Gpc)}\nGPC datum (no FEM value)";
             else
                 return Value.ToString();
         }

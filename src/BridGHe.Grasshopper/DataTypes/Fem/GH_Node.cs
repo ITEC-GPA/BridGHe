@@ -23,14 +23,15 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public Guid Guid => _guid;
 
-        public override bool IsValid => Value == null ? false : Value.IsValid;
+        // R6.5 P0: without a FEM value the node is its GPC draft.
+        public override bool IsValid => Value == null ? Gpc?.Node != null : Value.IsValid;
 
         public override string IsValidWhyNot
         {
             get
             {
                 if (Value == null)
-                    return "No internal NodeModel instance";
+                    return Gpc?.Node != null ? string.Empty : "No internal NodeModel instance";
                 if (Value.IsValid)
                     return string.Empty;
                 return "Invalid NodeModel instance";
@@ -46,7 +47,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             get
             {
                 if (Value == null)
-                    return BoundingBox.Empty;
+                    return GpcDraftGeometry.Bounds(Gpc);
                 if (Value.Position == Point3d.Unset)
                     return BoundingBox.Empty;
                 return new BoundingBox(Value.Position, Value.Position);
@@ -86,8 +87,19 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public GH_Node(GH_Node node) : this()
         {
             _guid = node.Guid;
-            Value = new NodeModel(node.Value);
+            // R6.5 P0: a node without a FEM value is its draft: the copy keeps it (a component that changes the copy attaches its own).
+            if (node.Value == null) { if (node.Gpc is { } draft) { _gpc = draft; _gpcOf = null; HasAttachedGpc = true; } }
+            else Value = new NodeModel(node.Value);
             AnalysedGpc = node.AnalysedGpc; AnalysedGpcModel = node.AnalysedGpcModel;
+        }
+
+        /// <summary>R6.5 P0 (coordinator, 7/11): a node given by its GPC draft alone, with no FEM value: <see cref="Gpc"/> is the draft and
+        /// every member of the type (validity, bounding box, preview, bake, cast, transforms, copies, persistence, text) reads it.</summary>
+        public static GH_Node FromGpc(Common.Gpc.Legacy.LegacyNodeDraft draft, Guid? guid = null)
+        {
+            var node = new GH_Node { _gpc = draft ?? throw new System.ArgumentNullException(nameof(draft)), HasAttachedGpc = true };
+            if (guid.HasValue) node._guid = guid.Value;
+            return node;
         }
 
         /// <summary>F6 C4: the analysed GPC element of this element and its analysed model, set by Decompose Model when its model was
@@ -153,7 +165,9 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public void DrawViewportWires(GH_PreviewWireArgs args)
         {
-            if (Display.ModelPreview.Automatic) Display.ModelPreview.Wires(Value,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current);
+            if (!Display.ModelPreview.Automatic) return;
+            if (Value == null) Display.ModelPreview.DraftWires(Gpc,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current);
+            else Display.ModelPreview.Wires(Value,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current);
         }
 
         #endregion
@@ -163,7 +177,13 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public override IGH_GeometricGoo Morph(SpaceMorph xmorph)
         {
             if (Value == null)
-                return null;
+            {
+                // R6.5 P0: the position of the draft, as a point (a node is rebuilt by the components).
+                var at = GpcDraftGeometry.Position(Gpc);
+                if (!at.IsValid) return null;
+                var morphed = new Point(at); xmorph.Morph(morphed);
+                return new GH_Point(morphed.Location);
+            }
             if (Value.Position == Point3d.Unset)
                 return null;
 
@@ -179,7 +199,12 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             //In this example, I'll convert the shell to a brep.
             //Perhaps you will want to check for translations/rotations only, operations that make sense.
             if (Value == null)
-                return null;
+            {
+                var at = GpcDraftGeometry.Position(Gpc);
+                if (!at.IsValid) return null;
+                var moved = new GH_Point(at); moved.Transform(xform);
+                return moved;
+            }
             if (Value.Position == Point3d.Unset)
                 return null;
 
@@ -194,6 +219,12 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public bool BakeGeometry(RhinoDoc doc, ObjectAttributes att, out Guid obj_guid)
         {
+            if (Value == null)
+            {
+                var at = GpcDraftGeometry.Position(Gpc);
+                obj_guid = at.IsValid ? doc.Objects.AddPoint(at, att) : Guid.Empty;
+                return obj_guid != Guid.Empty;
+            }
             obj_guid = doc.Objects.AddPoint(Value.Position, att);
             return obj_guid != Guid.Empty;
         }
@@ -206,6 +237,17 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             try
             {
+                // R6.5 P0: the position of the draft; results come with the FEM value until the components give them on GPC.
+                if (Value == null && typeof(Q).IsAssignableFrom(typeof(GH_Point)) && GpcDraftGeometry.Position(Gpc) is { IsValid: true } at)
+                {
+                    target = (Q)(object)new GH_Point(at);
+                    return true;
+                }
+                if (Value == null && typeof(Q).IsAssignableFrom(typeof(GH_NodeResults)) && AnalysedGpc != null)
+                {
+                    target = (Q)(object)new GH_NodeResults(this);
+                    return true;
+                }
                 if (Value != null && Value.IsValid)
                 {
                     if (typeof(Q).IsAssignableFrom(typeof(GH_Point)))
@@ -252,7 +294,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             GH_Node copy = new GH_Node
             {
                 _guid = _guid,
-                Value = Common.Helpers.ModelArchive.Clone(Value),
+                Value = Value == null ? null : Common.Helpers.ModelArchive.Clone(Value),
                 AnalysedGpc = AnalysedGpc, AnalysedGpcModel = AnalysedGpcModel,
             };
             CarryGpcTo(copy);
@@ -262,7 +304,11 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public override BoundingBox GetBoundingBox(Transform xform)
         {
             if (Value == null)
-                return BoundingBox.Empty;
+            {
+                var box = Boundingbox;
+                if (box.IsValid) box.Transform(xform);
+                return box;
+            }
             if (Value.Position == Point3d.Unset)
                 return BoundingBox.Empty;
             BoundingBox bb = Boundingbox;
@@ -305,7 +351,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public override string ToString()
         {
             if (Value == null)
-                return "Null Node";
+                return GpcDraftGeometry.Text(Gpc);
             else
                 return Value.ToString();
         }

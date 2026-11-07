@@ -30,7 +30,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public GH_PlateResults(GH_Plate plate)
             : this()
         {
-            Value = new List<ResultModel>(plate.Value.Results);
+            // R6.5 P0: an element without FEM value has no FEM results (its analysed GPC element is read).
+            Value = plate.Value == null ? new List<ResultModel>() : new List<ResultModel>(plate.Value.Results);
             AnalysedGpc = plate.AnalysedGpc; AnalysedGpcModel = plate.AnalysedGpcModel;
         }
 
@@ -48,14 +49,14 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             return new GH_PlateResults
             {
-                Value = Common.Helpers.ModelArchive.Clone(Value),
+                Value = Value == null ? null : Common.Helpers.ModelArchive.Clone(Value),
                 AnalysedGpc = AnalysedGpc, AnalysedGpcModel = AnalysedGpcModel,
             };
         }
 
         public override string ToString()
         {
-            return Value.ToString();
+            return Value == null ? "Null Plate results" : Value.ToString();
         }
 
         #endregion

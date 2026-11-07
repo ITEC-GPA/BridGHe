@@ -29,7 +29,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public GH_NodeResults(GH_Node node)
             : this()
         {
-            Value = new List<ResultModel>(node.Value.Results);
+            // R6.5 P0: an element without FEM value has no FEM results (its analysed GPC element is read).
+            Value = node.Value == null ? new List<ResultModel>() : new List<ResultModel>(node.Value.Results);
             AnalysedGpc = node.AnalysedGpc; AnalysedGpcModel = node.AnalysedGpcModel;
         }
 
@@ -47,7 +48,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             return new GH_NodeResults
             {
-                Value = Common.Helpers.ModelArchive.Clone(Value),
+                Value = Value == null ? null : Common.Helpers.ModelArchive.Clone(Value),
                 AnalysedGpc = AnalysedGpc, AnalysedGpcModel = AnalysedGpcModel,
             };
         }
@@ -65,7 +66,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override string ToString()
         {
-            return Value.ToString();
+            return Value == null ? "Null Node results" : Value.ToString();
         }
 
         #endregion

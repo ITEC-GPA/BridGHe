@@ -101,6 +101,27 @@ namespace BridGHe.Grasshopper.Display
             var shapes=Shapes(element);for(int i=0;i<shapes.Length;i++)if(shapes[i]!=null)
             {using var material=new DisplayMaterial(composite?(i==0?Color.SteelBlue:Color.LightGray):Color.CadetBlue,options.Transparency);pipeline.DrawBrepShaded(shapes[i],material);}
         }
+        /// <summary>R6.5 P0 (coordinator, 7/11): the preview of an element given by its GPC draft alone (no FEM value): the geometry (point,
+        /// axis, outline) and the label; sections, loads and attributes are drawn from the FEM value until the components draw them on GPC.</summary>
+        public static void DraftWires(object draft,DisplayPipeline pipeline,RhinoViewport viewport,Color color,DisplayOptions options)
+        {
+            if(draft==null || !options.Enabled || !DisplayPreferences.Current.Enabled)return;
+            if(options.Geometry)switch(draft)
+            {
+                case Common.Gpc.Legacy.LegacyNodeDraft n:{var p=DataTypes.GpcDraftGeometry.Position(n);if(p.IsValid)pipeline.DrawPoint(p,color);break;}
+                case Common.Gpc.Legacy.LegacyBeamDraft b:{var l=DataTypes.GpcDraftGeometry.Axis(b);if(l.IsValid)pipeline.DrawLine(l,color);break;}
+                case Common.Gpc.Legacy.LegacyPlateDraft p:{var outline=DataTypes.GpcDraftGeometry.Outline(p);if(outline!=null)pipeline.DrawCurve(outline,color);break;}
+            }
+            var bounds=DataTypes.GpcDraftGeometry.Bounds(draft);
+            if(options.Labels && bounds.IsValid){string label=DataTypes.GpcDraftGeometry.Label(draft);if(label.Length!=0)pipeline.DrawDot(bounds.Center,label,color,Color.White);}
+        }
+        /// <summary>R6.5 P0: the shaded preview of a plate given by its GPC draft alone (its flat mesh).</summary>
+        public static void DraftMeshes(object draft,DisplayPipeline pipeline,DisplayOptions options)
+        {
+            if(!options.Enabled || !DisplayPreferences.Current.Enabled || !options.Sections || !options.Shaded)return;
+            if(draft is Common.Gpc.Legacy.LegacyPlateDraft p && DataTypes.GpcDraftGeometry.FlatMesh(p) is {} mesh)
+            {using var material=new DisplayMaterial(Color.CadetBlue,options.Transparency);pipeline.DrawMeshShaded(mesh,material);}
+        }
         public static void Moving(MovingPath path,DisplayPipeline pipeline,Color color,DisplayOptions options)
         {
             if(!options.Enabled || !DisplayPreferences.Current.Enabled || !options.Loads || !options.Matches(path.LoadCaseName) || path.Coordinates?.Length!=9 || path.Coordinates.Any(x=>!double.IsFinite(x)))return;

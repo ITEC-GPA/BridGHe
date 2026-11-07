@@ -23,9 +23,21 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         private readonly ConditionalWeakTable<ElementModel, IGH_PreviewData> previews = new();
         private readonly ConditionalWeakTable<Common.MovingLoads.MovingPath, MovingGoo> movingPreviews = new();
 
+        private readonly ConditionalWeakTable<object, IGH_PreviewData> draftPreviews = new();
+
+        /// <summary>R6.5 P0: the element types of the drafts of a model without FEM value (none without drafts).</summary>
+        private IEnumerable<IGH_GeometricGoo> DraftElements()
+        {
+            var drafts = GpcDrafts;
+            if (drafts == null) yield break;
+            foreach (var n in drafts.Nodes) yield return (IGH_GeometricGoo)draftPreviews.GetValue(n, d => GH_Node.FromGpc((Common.Gpc.Legacy.LegacyNodeDraft)d));
+            foreach (var b in drafts.Beams) yield return (IGH_GeometricGoo)draftPreviews.GetValue(b, d => GH_Beam.FromGpc((Common.Gpc.Legacy.LegacyBeamDraft)d));
+            foreach (var p in drafts.Plates) yield return (IGH_GeometricGoo)draftPreviews.GetValue(p, d => GH_Plate.FromGpc((Common.Gpc.Legacy.LegacyPlateDraft)d));
+        }
+
         private IEnumerable<IGH_PreviewData> PreviewElements()
         {
-            if (Value == null) yield break;
+            if (Value == null) { foreach (var e in DraftElements()) yield return (IGH_PreviewData)e; yield break; }
             foreach (var element in Value.Elements)
             {
                 if (element is not NodeModel && element is not BeamModel && element is not PlateModel && element is not CompositeBeamModel) continue;
@@ -78,10 +90,16 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         // conversion. Consumers never change it in place (an analysis copies it first); copies of this datum share the analysed model.
         // C3: the analysis and export components take a copy of the conversion (GpcInput) instead of converting the FEM model again.
         private readonly object gpcLock = new object();
+
+        // R6.5 P0 (coordinator, 7/11): the owner of the GPC state (input, conversion, analysed model, drafts, linked results, former payload):
+        // the FEM value while the model has one (as before), otherwise the GPC input it was given (FromGpc, a file without the FEM chunk). A
+        // new FEM value or a new GPC input of a model without FEM value gives new state.
+        private object StateKey => (object)Value ?? _gpcOnly;
+        private Common.Gpc.GpcModels.Conversion _gpcOnly;
         private Common.Gpc.GpcModels.Conversion _converted;
-        private ModelModel _convertedOf;
+        private object _convertedOf;
         private GPC.Model.Models.Model _analysed;
-        private ModelModel _analysedOf;
+        private object _analysedOf;
         private Common.Gpc.GpcBridge _bridge;
         private string _gpcError;
 
@@ -93,8 +111,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             {
                 lock (gpcLock)
                 {
-                    if (Value == null) return null;
-                    if (_analysed != null && ReferenceEquals(_analysedOf, Value)) return _analysed;
+                    if (StateKey == null) return null;
+                    if (_analysed != null && ReferenceEquals(_analysedOf, StateKey)) return _analysed;
                     try { return Conversion().Model; }
                     catch (Exception ex) when (ex is NotSupportedException || ex is ArgumentException || ex is InvalidOperationException || ex is System.Runtime.Serialization.SerializationException)
                     { _gpcError = ex.Message; return null; }
@@ -104,31 +122,33 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         /// <summary>C3: the conversion of <see cref="Value"/> (never the analysed model), with its import report (warnings, resolved native
         /// sections), at the current model tolerance: the input the analysis and export components copy. Throws when it cannot be converted.</summary>
-        public Common.Gpc.GpcModels.Conversion GpcInput { get { lock (gpcLock) return Value == null ? null : Conversion(); } }
+        public Common.Gpc.GpcModels.Conversion GpcInput { get { lock (gpcLock) return StateKey == null ? null : Conversion(); } }
 
         /// <summary>F6 chain D: the GPC input a model transformer (Attach Moving Paths, ...) built from the GPC input of its source, used in
         /// place of a conversion of <see cref="Value"/> while Value and the tolerance are those it was built for (the same model as the
         /// conversion of Value, checked bit for bit by the tests). Copies of this datum keep it.</summary>
         public void AttachInput(Common.Gpc.GpcModels.Conversion input)
         {
-            lock (gpcLock) { _input = input ?? throw new ArgumentNullException(nameof(input)); _inputOf = Value; }
+            lock (gpcLock) { _input = input ?? throw new ArgumentNullException(nameof(input)); if (Value == null) _gpcOnly = input; _inputOf = StateKey; }
         }
 
         /// <summary>True when <see cref="GpcInput"/> is the input attached by a model transformer, not a conversion of <see cref="Value"/>.</summary>
-        public bool HasAttachedInput { get { lock (gpcLock) return _input != null && ReferenceEquals(_inputOf, Value) && _input.Tolerance == Settings.Instance.Tolerance; } }
+        public bool HasAttachedInput { get { lock (gpcLock) return _input != null && ReferenceEquals(_inputOf, StateKey) && (Value == null || _input.Tolerance == Settings.Instance.Tolerance); } }
 
         private Common.Gpc.GpcModels.Conversion _input;
-        private ModelModel _inputOf;
+        private object _inputOf;
 
         private Common.Gpc.GpcModels.Conversion Conversion()
         {
+            // R6.5 P0: a model without FEM value is its GPC input (made at its own tolerance; a new tolerance is a new input from its producer).
+            if (Value == null) return _gpcOnly ?? throw new InvalidOperationException("GpcModelWithoutInput");
             double tolerance = Settings.Instance.Tolerance;
-            if (_input != null && ReferenceEquals(_inputOf, Value) && _input.Tolerance == tolerance) return _input;
-            if (_converted != null && ReferenceEquals(_convertedOf, Value) && _converted.Tolerance == tolerance) return _converted;
-            _converted = null; _convertedOf = Value; _gpcError = null;
+            if (_input != null && ReferenceEquals(_inputOf, StateKey) && _input.Tolerance == tolerance) return _input;
+            if (_converted != null && ReferenceEquals(_convertedOf, StateKey) && _converted.Tolerance == tolerance) return _converted;
+            _converted = null; _convertedOf = StateKey; _gpcError = null;
             // R6.1 (decision 1 of 6/11): a model read from a former payload (internalised, or the cache of an analysis component) is converted
             // by value, without its results, whether it was analysed or not; the conversion of the FEM value otherwise (until R6.5).
-            _converted = _legacy != null && ReferenceEquals(_legacyOf, Value)
+            _converted = _legacy != null && ReferenceEquals(_legacyOf, StateKey)
                 ? Common.Gpc.GpcLegacyPayloads.Model(_legacy, tolerance, out _) ?? throw new InvalidOperationException("GpcLegacyModelWithoutModel")
                 : Common.Gpc.GpcModels.Convert(Value, tolerance);
             return _converted;
@@ -136,12 +156,12 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         // R6.1: the former payload (BGHA1) this model was read from, while the FEM value read with it is current.
         private byte[] _legacy;
-        private ModelModel _legacyOf;
+        private object _legacyOf;
 
         // R6.4 (2), extension (α): the drafts of the elements attached apart from the GPC input (an analysis: those of its input; a file: the
         // drafts chunk), while the FEM value they were attached for is current.
         private Common.Gpc.GpcModelDrafts _drafts;
-        private ModelModel _draftsOf;
+        private object _draftsOf;
 
         /// <summary>
         /// R6.4 (2), extension (α) of §1bis (coordinator, 7/11): the drafts of the elements of this model, in the order of the elements of
@@ -156,10 +176,10 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             {
                 lock (gpcLock)
                 {
-                    if (Value == null) return null;
-                    if (_input != null && ReferenceEquals(_inputOf, Value) && _input.Tolerance == Settings.Instance.Tolerance && _input.Drafts != null) return _input.Drafts;
-                    if (_drafts != null && ReferenceEquals(_draftsOf, Value)) return _drafts;
-                    if (_legacy != null && ReferenceEquals(_legacyOf, Value))
+                    if (StateKey == null) return null;
+                    if (_input != null && ReferenceEquals(_inputOf, StateKey) && (Value == null || _input.Tolerance == Settings.Instance.Tolerance) && _input.Drafts != null) return _input.Drafts;
+                    if (_drafts != null && ReferenceEquals(_draftsOf, StateKey)) return _drafts;
+                    if (_legacy != null && ReferenceEquals(_legacyOf, StateKey))
                     {
                         try { return Conversion().Drafts; }
                         catch (Exception ex) when (ex is NotSupportedException || ex is ArgumentException || ex is InvalidOperationException || ex is System.Runtime.Serialization.SerializationException)
@@ -174,7 +194,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         /// its output keeps; a file: the drafts it saved). Copies of this datum keep them.</summary>
         public void AttachDrafts(Common.Gpc.GpcModelDrafts drafts)
         {
-            lock (gpcLock) { _drafts = drafts ?? throw new ArgumentNullException(nameof(drafts)); _draftsOf = Value; }
+            lock (gpcLock) { _drafts = drafts ?? throw new ArgumentNullException(nameof(drafts)); _draftsOf = StateKey; }
         }
 
         /// <summary>R6.1 (decision 1 of 6/11): the warning of a model read from a former payload that carried results (they are not read:
@@ -184,7 +204,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             get
             {
                 lock (gpcLock)
-                    return _legacy != null && Value != null && ReferenceEquals(_legacyOf, Value) && Value.Elements.Any(e => e.Results != null && e.Results.Count != 0)
+                    return _legacy != null && Value != null && ReferenceEquals(_legacyOf, StateKey) && Value.Elements.Any(e => e.Results != null && e.Results.Count != 0)
                         ? Common.Gpc.GpcLegacyPayloads.ResultsDroppedMessage : null;
             }
         }
@@ -199,12 +219,12 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             {
                 lock (gpcLock)
                 {
-                    if (Value == null) return null;
+                    if (StateKey == null) return null;
                     Common.Gpc.GpcModels.Conversion conversion;
                     try { conversion = Conversion(); }
                     catch (Exception ex) when (ex is NotSupportedException || ex is ArgumentException || ex is InvalidOperationException || ex is System.Runtime.Serialization.SerializationException)
                     { _gpcError = ex.Message; return null; }
-                    if (_analysed == null || !ReferenceEquals(_analysedOf, Value) || ReferenceEquals(_analysed, conversion.Model)) return conversion.Bridge;
+                    if (_analysed == null || !ReferenceEquals(_analysedOf, StateKey) || ReferenceEquals(_analysed, conversion.Model)) return conversion.Bridge;
                     if (_analysedBridge != null && ReferenceEquals(_analysedBridgeOf, _analysed) && ReferenceEquals(_analysedBridgeFrom, conversion)) return _analysedBridge;
                     // The map by number must be one to one (coordinator, 5/11): a partial map would lose bridge data silently (no section state).
                     var from = conversion.Model.BeamElements; var to = _analysed.BeamElements;
@@ -231,7 +251,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public string GpcError { get { lock (gpcLock) return _gpcError; } }
 
         /// <summary>True when <see cref="Gpc"/> is the analysed model attached by an analysis, not a conversion of <see cref="Value"/>.</summary>
-        public bool HasAnalysedGpc { get { lock (gpcLock) return _analysed != null && ReferenceEquals(_analysedOf, Value); } }
+        public bool HasAnalysedGpc { get { lock (gpcLock) return _analysed != null && ReferenceEquals(_analysedOf, StateKey); } }
 
         /// <summary>F6 (a)/(b): the analysed GPC model with the results catalog of a BridGHe analysis (what the result consumers read), or
         /// null: not analysed, analysed before F6 C3, or the bridge model of Build Bridge Model (its merged actions have no catalog).</summary>
@@ -240,20 +260,20 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             get
             {
                 lock (gpcLock)
-                    return _analysed != null && ReferenceEquals(_analysedOf, Value) && Common.Gpc.GpcResultCatalog.Of(_analysed) != null ? _analysed : null;
+                    return _analysed != null && ReferenceEquals(_analysedOf, StateKey) && Common.Gpc.GpcResultCatalog.Of(_analysed) != null ? _analysed : null;
             }
         }
 
         /// <summary>An analysis component: the analysed GPC model of <see cref="Value"/> (with its results).</summary>
         public void AttachGpc(GPC.Model.Models.Model analysed)
         {
-            lock (gpcLock) { _analysed = analysed ?? throw new ArgumentNullException(nameof(analysed)); _analysedOf = Value; _bridge = null; _gpcError = null; }
+            lock (gpcLock) { _analysed = analysed ?? throw new ArgumentNullException(nameof(analysed)); _analysedOf = StateKey; _bridge = null; _gpcError = null; }
         }
 
         /// <summary>C5, Build Bridge Model: the GPC bridge model of <see cref="Value"/> (merged actions as a GPC dataset) with its GPC recipe.</summary>
         public void AttachBridge(Common.Gpc.GpcBridge bridge)
         {
-            lock (gpcLock) { _analysed = (bridge ?? throw new ArgumentNullException(nameof(bridge))).Model; _analysedOf = Value; _bridge = bridge; _gpcError = null; }
+            lock (gpcLock) { _analysed = (bridge ?? throw new ArgumentNullException(nameof(bridge))).Model; _analysedOf = StateKey; _bridge = bridge; _gpcError = null; }
         }
 
         /// <summary>
@@ -263,33 +283,44 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         /// <see cref="Value"/>: Build BridGHe Model reads the actions of such a model from it by BridGHe ID (the same beams, the same results).
         /// Never <see cref="GpcResults"/> (whose numbering is that of this model). Not persisted; copies of this datum keep it.
         /// </summary>
-        public GPC.Model.Models.Model LinkedGpcResults { get { lock (gpcLock) return _linked != null && ReferenceEquals(_linkedOf, Value) ? _linked : null; } }
+        public GPC.Model.Models.Model LinkedGpcResults { get { lock (gpcLock) return _linked != null && ReferenceEquals(_linkedOf, StateKey) ? _linked : null; } }
 
         /// <summary>Build Model: the analysed GPC model every beam of <see cref="Value"/> comes from (<see cref="LinkedGpcResults"/>).</summary>
         public void AttachLinkedResults(GPC.Model.Models.Model analysed)
         {
             if (Common.Gpc.GpcResultCatalog.Of(analysed ?? throw new ArgumentNullException(nameof(analysed))) == null) throw new ArgumentException("GpcLinkedModelWithoutResults: " + analysed.Name);
-            lock (gpcLock) { _linked = analysed; _linkedOf = Value; }
+            lock (gpcLock) { _linked = analysed; _linkedOf = StateKey; }
         }
         private GPC.Model.Models.Model _linked;
-        private ModelModel _linkedOf;
+        private object _linkedOf;
 
         /// <summary>The analysed GPC model the actions of this model are read from: <see cref="GpcResults"/>, else <see cref="LinkedGpcResults"/>.</summary>
         public GPC.Model.Models.Model GpcActionResults => GpcResults ?? LinkedGpcResults;
 
         /// <summary>The GPC bridge model attached by Build Bridge Model for <see cref="Value"/>, or null.</summary>
-        public Common.Gpc.GpcBridge GpcBridge { get { lock (gpcLock) return _bridge != null && ReferenceEquals(_analysedOf, Value) && ReferenceEquals(_analysed, _bridge.Model) ? _bridge : null; } }
+        public Common.Gpc.GpcBridge GpcBridge { get { lock (gpcLock) return _bridge != null && ReferenceEquals(_analysedOf, StateKey) && ReferenceEquals(_analysed, _bridge.Model) ? _bridge : null; } }
 
         private void ShareGpc(GH_Model copy)
         {
             lock (gpcLock)
             {
-                if (_analysed != null && ReferenceEquals(_analysedOf, Value)) { if (_bridge != null && ReferenceEquals(_analysed, _bridge.Model)) copy.AttachBridge(_bridge); else copy.AttachGpc(_analysed); }
-                if (_input != null && ReferenceEquals(_inputOf, Value)) copy.AttachInput(_input);
-                if (_legacy != null && ReferenceEquals(_legacyOf, Value)) lock (copy.gpcLock) { copy._legacy = _legacy; copy._legacyOf = copy.Value; }
-                if (_drafts != null && ReferenceEquals(_draftsOf, Value)) copy.AttachDrafts(_drafts);
-                if (_linked != null && ReferenceEquals(_linkedOf, Value)) lock (copy.gpcLock) { copy._linked = _linked; copy._linkedOf = copy.Value; }
+                // R6.5 P0: a copy without FEM value owns the same GPC input first.
+                if (Value == null && copy.Value == null && _gpcOnly != null) lock (copy.gpcLock) copy._gpcOnly = _gpcOnly;
+                if (_analysed != null && ReferenceEquals(_analysedOf, StateKey)) { if (_bridge != null && ReferenceEquals(_analysed, _bridge.Model)) copy.AttachBridge(_bridge); else copy.AttachGpc(_analysed); }
+                if (_input != null && ReferenceEquals(_inputOf, StateKey)) copy.AttachInput(_input);
+                if (_legacy != null && ReferenceEquals(_legacyOf, StateKey)) lock (copy.gpcLock) { copy._legacy = _legacy; copy._legacyOf = copy.StateKey; }
+                if (_drafts != null && ReferenceEquals(_draftsOf, StateKey)) copy.AttachDrafts(_drafts);
+                if (_linked != null && ReferenceEquals(_linkedOf, StateKey)) lock (copy.gpcLock) { copy._linked = _linked; copy._linkedOf = copy.StateKey; }
             }
+        }
+
+        /// <summary>R6.5 P0 (coordinator, 7/11): a model given by its GPC input alone (no FEM value): <see cref="GpcInput"/> is the input, the
+        /// state (analysed model, drafts, linked results) belongs to it, and validity, preview, bake, copies, persistence and text read it.</summary>
+        public static GH_Model FromGpc(Common.Gpc.GpcModels.Conversion input)
+        {
+            var model = new GH_Model();
+            model.AttachInput(input ?? throw new ArgumentNullException(nameof(input)));
+            return model;
         }
 
         public static GH_Model FromModel(ModelModel value, GH_Model source = null)
@@ -339,7 +370,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             }
         }
 
-        public override bool IsValid => Value != null && Value.Elements != null && Value.Elements.Count() > 0;
+        public override bool IsValid => Value != null ? Value.Elements != null && Value.Elements.Count() > 0 : (_gpcOnly?.Model.AllElements.Count() ?? 0) > 0;
 
         public override string TypeName => "FEM Model";
 
@@ -396,7 +427,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public GH_Model(GH_Model model) : this()
         {
-            Value = Common.Helpers.ModelArchive.Clone(model.Value);
+            Value = model.Value == null ? null : Common.Helpers.ModelArchive.Clone(model.Value);
             SynchronizeGuids(model);
             model.ShareGpc(this);
         }
@@ -457,7 +488,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                     }
                     case DataTypes.GpcGooPersistence.Kind.Legacy:
                         Value = Common.Helpers.ModelArchive.Read<ModelModel>(femm);
-                        lock (gpcLock) { _legacy = femm; _legacyOf = Value; }
+                        lock (gpcLock) { _legacy = femm; _legacyOf = StateKey; }
                         break;
                     case DataTypes.GpcGooPersistence.Kind.FemmOnly:
                         Value = Common.Helpers.ModelArchive.Read<ModelModel>(femm); break;
@@ -472,10 +503,10 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 // R6.4 (2): the drafts of the elements saved with the model (BGHGPC1 of the GH_Model, extended; absent in former files).
                 // Until R6.5 drafts that cannot be read are left out (the elements keep the conversion of their FEM values).
                 // R6.4 (coordinator, 7/11): an internalised model with its results (0.4.0 form).
-                if (reader.ItemExists(Common.Gpc.GpcResultsFile.Chunk) && Value != null)
+                if (reader.ItemExists(Common.Gpc.GpcResultsFile.Chunk) && StateKey != null)
                     try { AttachGpc(Common.Gpc.GpcResultsFile.FromBytes(reader.GetByteArray(Common.Gpc.GpcResultsFile.Chunk))); }
                     catch (Exception ex) when (ex is System.IO.InvalidDataException || ex is ArgumentException || ex is NotSupportedException || ex is System.Runtime.Serialization.SerializationException) { System.Diagnostics.Debug.WriteLine(ex); }
-                if (reader.ItemExists(Common.Gpc.GpcModelDrafts.Chunk) && Value != null)
+                if (reader.ItemExists(Common.Gpc.GpcModelDrafts.Chunk) && StateKey != null)
                     try { AttachDrafts(Common.Gpc.GpcModelDrafts.Read(reader.GetByteArray(Common.Gpc.GpcModelDrafts.Chunk))); }
                     catch (Exception ex) when (ex is System.Runtime.Serialization.SerializationException || ex is InvalidDataException || ex is EndOfStreamException || ex is ArgumentException) { }
                 return true;
@@ -486,16 +517,33 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public bool BakeGeometry(RhinoDoc doc, ObjectAttributes att, out Guid obj_guid)
         {
             obj_guid = Guid.Empty;
+            if (Value == null)
+            {
+                foreach (var e in DraftElements()) ((IGH_BakeAwareData)e).BakeGeometry(doc, att, out obj_guid);
+                return obj_guid != Guid.Empty;
+            }
             foreach (var node in Value.Nodes) new GH_Node(node).BakeGeometry(doc, att, out obj_guid);
             foreach (var beam in Value.Beams) new GH_Beam(beam).BakeGeometry(doc, att, out obj_guid);
             foreach (var plate in Value.Plates) new GH_Plate(plate).BakeGeometry(doc, att, out obj_guid);
             return obj_guid != Guid.Empty;
         }
 
+        // R6.5 P0: the text of a model without FEM value (the layout of the FEM text, with what the GPC input has).
+        private static string GpcText(Common.Gpc.GpcModels.Conversion input)
+        {
+            var m = input.Model;
+            if (!m.AllElements.Any()) return "Empty Model";
+            string text = $"BridGHe Model {m.Name}";
+            text += $"\nNodes: {m.NodesElements.Count}, beams: {m.BeamElements.Count}, plates: {m.AreaElements.Count}";
+            text += $"\nLoad cases: {m.LoadCases.Count}, combinations: {m.Combinations.Count}";
+            text += "\nGPC datum (no FEM value)";
+            return text;
+        }
+
         public override string ToString()
         {
             if (Value == null)
-                return "Null Model";
+                return _gpcOnly == null ? "Null Model" : GpcText(_gpcOnly);
             else if (Value.Elements.Count() == 0)
                 return "Empty Model";
             else

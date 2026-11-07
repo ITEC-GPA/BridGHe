@@ -8,7 +8,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 {
     public class GH_LoadCase : GH_Goo<LoadCaseModel>
     {
-        public override bool IsValid => Value == null ? false : Value.Name != string.Empty;
+        // R6.5 P0: without a FEM value the case is its record.
+        public override bool IsValid => Value == null ? !string.IsNullOrEmpty(Gpc?.Name) : Value.Name != string.Empty;
 
         public override string IsValidWhyNot => "Not propely defined";
 
@@ -27,7 +28,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public GH_LoadCase(GH_LoadCase lc)
         {
-            Value = new LoadCaseModel(lc.Value);
+            Value = lc.Value == null ? null : new LoadCaseModel(lc.Value);
         }
 
         /// <summary>
@@ -71,6 +72,16 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             if (_legacy != null && ReferenceEquals(_legacyOf, Value)) { copy._legacy = _legacy; copy._legacyOf = copy.Value; }
         }
 
+        /// <summary>R6.5 P0 (coordinator, 7/11): a load case given by its GPC datum alone, with no FEM value: <see cref="Gpc"/> is the datum and
+        /// validity, copies, persistence and text read it.</summary>
+        public static GH_LoadCase FromGpc(Common.Gpc.Legacy.LegacyCaseData datum)
+        {
+            var goo = new GH_LoadCase();
+            goo.Value = null;
+            goo._gpc = datum ?? throw new System.ArgumentNullException(nameof(datum)); goo._gpcOf = null; goo.HasAttachedGpc = true;
+            return goo;
+        }
+
         public override IGH_Goo Duplicate()
         {
             var copy = DuplicateValue();
@@ -112,7 +123,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public override string ToString()
         {
             if (Value == null)
-                return "Null LoadCase property";
+                return Gpc == null ? "Null LoadCase property" : $"BridGHe LoadCase: {Gpc.Name}\nGPC datum (no FEM value)";
             else
                 return Value.ToString();
         }

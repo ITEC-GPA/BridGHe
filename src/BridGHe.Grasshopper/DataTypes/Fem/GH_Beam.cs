@@ -23,14 +23,15 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public Guid Guid => _guid;
 
-        public override bool IsValid => Value == null ? false : Value.IsValid;
+        // R6.5 P0: without a FEM value the beam is its GPC draft.
+        public override bool IsValid => Value == null ? Gpc?.Beam != null : Value.IsValid;
 
         public override string IsValidWhyNot
         {
             get
             {
                 if (Value == null)
-                    return "No internal BeamModel instance";
+                    return Gpc?.Beam != null ? string.Empty : "No internal BeamModel instance";
                 if (Value.IsValid)
                     return string.Empty;
                 return "Invalid BeamModel instance";
@@ -45,7 +46,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             get
             {
-                if (m_value == null) return BoundingBox.Empty;
+                if (m_value == null) return GpcDraftGeometry.Bounds(Gpc);
                 if (!ReferenceEquals(_boundedModel, m_value) || _boundedRevision != m_value.GeometryRevision)
                 {
                     _boundingBox = BoundingBox.Empty;
@@ -110,8 +111,19 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             _guid = beam._guid;
             //_beamProperty = beam._beamProperty;
             //_groups = beam._groups;
-            Value = new BeamModel(beam.Value);
+            // R6.5 P0: a beam without a FEM value is its draft: the copy keeps it (a component that changes the copy attaches its own).
+            if (beam.Value == null) { if (beam.Gpc is { } draft) { _gpc = draft; _gpcOf = null; HasAttachedGpc = true; } }
+            else Value = new BeamModel(beam.Value);
             AnalysedGpc = beam.AnalysedGpc; AnalysedGpcModel = beam.AnalysedGpcModel;
+        }
+
+        /// <summary>R6.5 P0 (coordinator, 7/11): a beam given by its GPC draft alone, with no FEM value: <see cref="Gpc"/> is the draft and
+        /// every member of the type (validity, bounding box, preview, bake, cast, copies, persistence, text) reads it.</summary>
+        public static GH_Beam FromGpc(Common.Gpc.Legacy.LegacyBeamDraft draft, Guid? guid = null)
+        {
+            var beam = new GH_Beam { _gpc = draft ?? throw new ArgumentNullException(nameof(draft)), HasAttachedGpc = true };
+            if (guid.HasValue) beam._guid = guid.Value;
+            return beam;
         }
 
         /// <summary>F6 C4: the analysed GPC element of this element and its analysed model, set by Decompose Model when its model was
@@ -178,7 +190,9 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public void DrawViewportWires(GH_PreviewWireArgs args)
         {
-            if (Display.ModelPreview.Automatic) Display.ModelPreview.Wires(Value,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current);
+            if (!Display.ModelPreview.Automatic) return;
+            if (Value == null) Display.ModelPreview.DraftWires(Gpc,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current);
+            else Display.ModelPreview.Wires(Value,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current);
         }
 
         #endregion
@@ -226,6 +240,12 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public bool BakeGeometry(RhinoDoc doc, ObjectAttributes att, out Guid obj_guid)
         {
+            if (Value == null)
+            {
+                var axis = GpcDraftGeometry.Axis(Gpc);
+                obj_guid = axis.IsValid ? doc.Objects.AddLine(axis.From, axis.To, att) : Guid.Empty;
+                return obj_guid != Guid.Empty;
+            }
             obj_guid = doc.Objects.AddLine(Value.PointFrom, Value.PointTo, att);
             return obj_guid != Guid.Empty;
         }
@@ -236,6 +256,15 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override bool CastTo<Q>(out Q target)
         {
+            if (Value == null)
+            {
+                // R6.5 P0: the axis of the draft; shapes and results come with the FEM value until the components give them on GPC.
+                var axis = GpcDraftGeometry.Axis(Gpc);
+                if (typeof(Q) == typeof(GH_Curve) && axis.IsValid) { target = (Q)(object)new GH_Curve(new LineCurve(axis)); return true; }
+                if (typeof(Q).IsAssignableFrom(typeof(GH_BeamResults)) && AnalysedGpc != null) { target = (Q)(object)new GH_BeamResults(this); return true; }
+                target = default;
+                return false;
+            }
             if (typeof(Q) == typeof(GH_Curve))
             {
                 LineCurve line = new LineCurve(Value.PointFrom, Value.PointTo);
@@ -284,7 +313,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             GH_Beam copy = new GH_Beam
             {
                 _guid = _guid,
-                Value = Common.Helpers.ModelArchive.Clone(Value),
+                Value = Value == null ? null : Common.Helpers.ModelArchive.Clone(Value),
                 AnalysedGpc = AnalysedGpc, AnalysedGpcModel = AnalysedGpcModel,
             };
             CarryGpcTo(copy);
@@ -333,7 +362,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public override string ToString()
         {
             if (Value == null)
-                return "Null Beam";
+                return GpcDraftGeometry.Text(Gpc);
             else
                 return Value.ToString();
         }

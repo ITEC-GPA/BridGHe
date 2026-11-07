@@ -20,11 +20,22 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             Value = material;
         }
 
-        public override bool IsValid => Value == null ? false : Value.IsValid;
+        // R6.5 P0: without a FEM value the material is its GPC material.
+        public override bool IsValid => Value == null ? Gpc != null : Value.IsValid;
 
         public override string TypeName => "Material";
 
         public override string TypeDescription => "Material definition";
+
+        /// <summary>R6.5 P0 (coordinator, 7/11): a material given by its GPC datum alone, with no FEM value: <see cref="Gpc"/> is the datum and
+        /// validity, copies, persistence and text read it.</summary>
+        public static GH_Material FromGpc(GPC.Model.Materials.Material datum)
+        {
+            var goo = new GH_Material();
+            goo.Value = null;
+            goo._gpc = datum ?? throw new System.ArgumentNullException(nameof(datum)); goo._gpcOf = null; goo.HasAttachedGpc = true;
+            return goo;
+        }
 
         public override IGH_Goo Duplicate()
         {
@@ -100,7 +111,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public override string ToString()
         {
             if (Value == null)
-                return "Null Material";
+                return Gpc == null ? "Null Material" : $"BridGHe Material {Gpc.Name}\nGPC datum (no FEM value)";
             else
                 return Value.ToString();
         }

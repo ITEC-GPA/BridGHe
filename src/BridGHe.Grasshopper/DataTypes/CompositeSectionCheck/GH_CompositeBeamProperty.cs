@@ -25,7 +25,8 @@ namespace BridGHe.Grasshopper.DataTypes
 
         #region Properties
 
-        public override bool IsValid => Value == null ? false : Value.IsValid;
+        // R6.5 P0: without a FEM value the composite property is its GPC definition.
+        public override bool IsValid => Value == null ? Gpc != null : Value.IsValid;
 
         public override string TypeName => "BeamProperty";
 
@@ -77,6 +78,16 @@ namespace BridGHe.Grasshopper.DataTypes
             if (_legacy != null && ReferenceEquals(_legacyOf, Value)) { copy._legacy = _legacy; copy._legacyOf = copy.Value; }
         }
 
+        /// <summary>R6.5 P0 (coordinator, 7/11): a composite property given by its GPC definition alone, with no FEM value: <see cref="Gpc"/>
+        /// is the definition and validity, copies, persistence and text read it.</summary>
+        public static GH_CompositeBeamProperty FromGpc(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition definition)
+        {
+            var goo = new GH_CompositeBeamProperty();
+            goo.Value = null;
+            goo._gpc = definition ?? throw new System.ArgumentNullException(nameof(definition)); goo._gpcOf = null; goo.HasAttachedGpc = true;
+            return goo;
+        }
+
         public override IGH_Goo Duplicate()
         {
             var copy = DuplicateValue();
@@ -86,7 +97,7 @@ namespace BridGHe.Grasshopper.DataTypes
 
         private GH_CompositeBeamProperty DuplicateValue()
         {
-            return new GH_CompositeBeamProperty(Common.Helpers.ModelArchive.Clone(Value));
+            return Value == null ? new GH_CompositeBeamProperty() : new GH_CompositeBeamProperty(Common.Helpers.ModelArchive.Clone(Value));
         }
 
         public override bool Write(GH_IWriter writer)
@@ -118,7 +129,7 @@ namespace BridGHe.Grasshopper.DataTypes
         public override string ToString()
         {
             if (Value == null)
-                return "Null Beam property";
+                return Gpc == null ? "Null Beam property" : $"BridGHe composite beam Property {Gpc.Name}\nGPC datum (no FEM value)";
             else
                 return Value.ToString();
         }

@@ -23,14 +23,15 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public List<GH_Group> Groups => _groups;
 
-        public override bool IsValid => Value == null ? false : Value.IsValid;
+        // R6.5 P0: without a FEM value the plate is its GPC draft.
+        public override bool IsValid => Value == null ? Gpc?.Plate != null : Value.IsValid;
 
         public override string IsValidWhyNot
         {
             get
             {
                 if (Value == null)
-                    return "No internal PlateModel instance";
+                    return Gpc?.Plate != null ? string.Empty : "No internal PlateModel instance";
                 if (Value.IsValid)
                     return string.Empty;
                 return "Invalid PlateModel instance";
@@ -46,7 +47,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             get
             {
                 if (Value == null)
-                    return BoundingBox.Empty;
+                    return GpcDraftGeometry.Bounds(Gpc);
                 if (!Value.IsValid)
                     return BoundingBox.Empty;
                 return Value.Shape.GetBoundingBox(true);
@@ -105,8 +106,19 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             _guid = plate._guid;
             _plateProperty = plate._plateProperty == null ? null : (GH_PlateProperty)plate._plateProperty.Duplicate();
             _groups = plate._groups.ConvertAll(g => (GH_Group)g.Duplicate());
-            Value = new PlateModel(plate.Value);
+            // R6.5 P0: a plate without a FEM value is its draft: the copy keeps it (a component that changes the copy attaches its own).
+            if (plate.Value == null) { if (plate.Gpc is { } draft) { _gpc = draft; _gpcOf = null; HasAttachedGpc = true; } }
+            else Value = new PlateModel(plate.Value);
             AnalysedGpc = plate.AnalysedGpc; AnalysedGpcModel = plate.AnalysedGpcModel;
+        }
+
+        /// <summary>R6.5 P0 (coordinator, 7/11): a plate given by its GPC draft alone, with no FEM value: <see cref="Gpc"/> is the draft and
+        /// every member of the type (validity, bounding box, preview, bake, cast, copies, persistence, text) reads it.</summary>
+        public static GH_Plate FromGpc(Common.Gpc.Legacy.LegacyPlateDraft draft, Guid? guid = null)
+        {
+            var plate = new GH_Plate { _gpc = draft ?? throw new System.ArgumentNullException(nameof(draft)), HasAttachedGpc = true };
+            if (guid.HasValue) plate._guid = guid.Value;
+            return plate;
         }
 
         /// <summary>F6 C4: the analysed GPC element of this element and its analysed model, set by Decompose Model when its model was
@@ -167,12 +179,16 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public void DrawViewportMeshes(GH_PreviewMeshArgs args)
         {
-            if (Display.ModelPreview.Automatic && Value != null) Display.ModelPreview.Meshes(Value,args.Pipeline,Display.DisplayPreferences.Current);
+            if (!Display.ModelPreview.Automatic) return;
+            if (Value == null) Display.ModelPreview.DraftMeshes(Gpc,args.Pipeline,Display.DisplayPreferences.Current);
+            else Display.ModelPreview.Meshes(Value,args.Pipeline,Display.DisplayPreferences.Current);
         }
 
         public void DrawViewportWires(GH_PreviewWireArgs args)
         {
-            if (Display.ModelPreview.Automatic) Display.ModelPreview.Wires(Value,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current);
+            if (!Display.ModelPreview.Automatic) return;
+            if (Value == null) Display.ModelPreview.DraftWires(Gpc,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current);
+            else Display.ModelPreview.Wires(Value,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current);
         }
 
         #endregion
@@ -213,6 +229,12 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public bool BakeGeometry(RhinoDoc doc, ObjectAttributes att, out Guid obj_guid)
         {
+            if (Value == null)
+            {
+                var flat = GpcDraftGeometry.FlatMesh(Gpc);
+                obj_guid = flat == null ? Guid.Empty : doc.Objects.AddMesh(flat, att);
+                return obj_guid != Guid.Empty;
+            }
             var mesh = new Mesh();
             mesh.Vertices.AddVertices(Value.Points);
             for (int i = 1; i < Value.Points.Count - 1; i++) mesh.Faces.AddFace(0, i, i + 1);
@@ -226,6 +248,15 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override bool CastTo<Q>(out Q target)
         {
+            if (Value == null)
+            {
+                // R6.5 P0: the outline and the flat mesh of the draft; the shape and results come with the FEM value until P1.
+                if (typeof(Q) == typeof(GH_Curve) && GpcDraftGeometry.Outline(Gpc) is { } outline) { target = (Q)(object)new GH_Curve(outline); return true; }
+                if (typeof(Q) == typeof(GH_Mesh) && GpcDraftGeometry.FlatMesh(Gpc) is { } flat) { target = (Q)(object)new GH_Mesh(flat); return true; }
+                if (typeof(Q).IsAssignableFrom(typeof(GH_PlateResults)) && AnalysedGpc != null) { target = (Q)(object)new GH_PlateResults(this); return true; }
+                target = default;
+                return false;
+            }
             if (typeof(Q) == typeof(GH_Curve))
             {
                 PolylineCurve pline = new PolylineCurve(Value.Points);
@@ -264,7 +295,11 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public override BoundingBox GetBoundingBox(Transform xform)
         {
             if (Value == null)
-                return BoundingBox.Empty;
+            {
+                var box = Boundingbox;
+                if (box.IsValid) box.Transform(xform);
+                return box;
+            }
             if (!Value.IsValid)
                 return BoundingBox.Empty;
             return Value.Shape.GetBoundingBox(xform);
@@ -273,7 +308,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public override string ToString()
         {
             if (Value == null)
-                return "Null Plate";
+                return GpcDraftGeometry.Text(Gpc);
             else
                 return Value.ToString();
         }
