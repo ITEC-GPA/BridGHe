@@ -44,6 +44,10 @@ namespace BridGHe.Common.Gpc
         /// <summary>P2T request 3: the combination table of Build BridGHe Model (name and coefficients of the merged cases, zero coefficients
         /// included, in order), as the merged FEM model kept it; the GPC combinations of <see cref="Model"/> keep only the non-zero ones.</summary>
         public IReadOnlyList<(string Name, IReadOnlyList<(string Case, double Factor)> Factors)> Combinations { get; }
+        /// <summary>R6.4 (6): the bridge data of the beams of <see cref="Model"/> (member metadata, super element, local section state, by beam
+        /// GUID: the bridge model keeps the element identities of its first reference model), those of the GPC input of that reference; empty
+        /// when it has none. What the components that only receive its beams read (Bridge Girder Results: the member metadata).</summary>
+        public GPC.Checkers.CompositeBridge.BridgeModelData Data { get; }
         private readonly Dictionary<string, int> beams;
         private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Model, GpcBridge> registry = new System.Runtime.CompilerServices.ConditionalWeakTable<Model, GpcBridge>();
 
@@ -51,9 +55,10 @@ namespace BridGHe.Common.Gpc
         public static GpcBridge Of(Model model) => model != null && registry.TryGetValue(model, out var bridge) ? bridge : null;
 
         internal GpcBridge(Model model, D3.BridgeWorkflowDefinition workflow, IReadOnlyList<(string Case, BeamForceSample Sample)>[] samples, BridgeWorkflow records, IReadOnlyList<double> beamAngles,
-            IReadOnlyList<(string Name, IReadOnlyList<(string Case, double Factor)> Factors)> combinations, bool register = true)
+            IReadOnlyList<(string Name, IReadOnlyList<(string Case, double Factor)> Factors)> combinations, GPC.Checkers.CompositeBridge.BridgeModelData data, bool register = true)
         {
-            Model = model; Workflow = workflow; Samples = samples; Records = records; BeamAngles = beamAngles; Combinations = combinations; if (register) registry.AddOrUpdate(model, this);
+            Model = model; Workflow = workflow; Samples = samples; Records = records; BeamAngles = beamAngles; Combinations = combinations;
+            Data = data ?? new GPC.Checkers.CompositeBridge.BridgeModelData(); if (register) registry.AddOrUpdate(model, this);
             beams = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (var b in model.BeamElements) beams.TryAdd(b.Value.Source.OriginalId, b.Key);
         }
@@ -61,7 +66,7 @@ namespace BridGHe.Common.Gpc
         /// <summary>A variant with another combination table (same model, recipe, samples, records and angles; not registered, so
         /// <see cref="Of"/> still gives this one): what-if checks on other coefficients (the R3 variant of the native tests).</summary>
         public GpcBridge WithCombinations(IReadOnlyList<(string Name, IReadOnlyList<(string Case, double Factor)> Factors)> combinations) =>
-            new GpcBridge(Model, Workflow, Samples, Records, BeamAngles, combinations ?? throw new ArgumentNullException(nameof(combinations)), register: false);
+            new GpcBridge(Model, Workflow, Samples, Records, BeamAngles, combinations ?? throw new ArgumentNullException(nameof(combinations)), Data, register: false);
 
         /// <summary>The merged samples of a beam by its BridGHe ID, or null when the bridge model has no such beam.</summary>
         public IReadOnlyList<(string Case, BeamForceSample Sample)> SamplesOf(string beamId) =>
@@ -85,10 +90,12 @@ namespace BridGHe.Common.Gpc
         public BridgeUnits Units { get; }
         /// <summary>The analysed model of the same GH datum as a reference (the source of its actions), or null.</summary>
         public Model Analysed { get; }
+        /// <summary>R6.4 (6): the bridge data of a reference model (those of its GPC input), or null.</summary>
+        public GPC.Checkers.CompositeBridge.BridgeModelData Bridge { get; }
         private readonly Func<BeamElement, double> angle;
 
-        private GpcBridgeSource(Model model, BridgeUnits units, Func<BeamElement, double> angle, Model analysed)
-        { Model = model; Units = units; this.angle = angle; Analysed = analysed; }
+        private GpcBridgeSource(Model model, BridgeUnits units, Func<BeamElement, double> angle, Model analysed, GPC.Checkers.CompositeBridge.BridgeModelData bridge = null)
+        { Model = model; Units = units; this.angle = angle; Analysed = analysed; Bridge = bridge; }
 
         /// <summary>The BridGHe angle (degrees) of a beam of <see cref="Model"/>.</summary>
         public double Angle(BeamElement beam) => angle(beam);
@@ -97,19 +104,20 @@ namespace BridGHe.Common.Gpc
         public static GpcBridgeSource Reference(GpcModels.Conversion input, Model analysed)
         {
             if (input == null) throw new ArgumentNullException(nameof(input));
-            return Reference(input.Model, input.Report.Units, input.Report.BeamAngles, analysed);
+            return Reference(input.Model, input.Report.Units, input.Report.BeamAngles, analysed, input.Bridge);
         }
 
         /// <summary>A reference model given directly as GPC (finding 3 of P2T; chain E: the input model of a GH model on GPC): the input model
         /// (N-mm, without datasets), its definition units, the BridGHe angle (degrees) of every beam by its number and, when it was analysed,
         /// the analysed GPC model of the same datum (same numbering).</summary>
-        public static GpcBridgeSource Reference(Model input, BridgeUnits units, IReadOnlyDictionary<int, double> beamAngles, Model analysed)
+        public static GpcBridgeSource Reference(Model input, BridgeUnits units, IReadOnlyDictionary<int, double> beamAngles, Model analysed,
+            GPC.Checkers.CompositeBridge.BridgeModelData bridge = null)
         {
             if (input == null) throw new ArgumentNullException(nameof(input));
             if (beamAngles == null) throw new ArgumentNullException(nameof(beamAngles));
             var angles = new Dictionary<int, double>(beamAngles);
             return new GpcBridgeSource(input, units,
-                b => angles.TryGetValue(b.Id, out var a) ? a : throw new KeyNotFoundException("GpcBridgeBeamAngleMissing: " + b.Id), analysed);
+                b => angles.TryGetValue(b.Id, out var a) ? a : throw new KeyNotFoundException("GpcBridgeBeamAngleMissing: " + b.Id), analysed, bridge);
         }
 
         /// <summary>An action source: the analysed GPC model with its results catalog (units and angles from the catalog).</summary>
@@ -232,8 +240,11 @@ namespace BridGHe.Common.Gpc
                         UnitsAndAxes = "", UnsupportedReason = "Former BridGHe action provenance (phase model and case name) kept for the round trip of the port; not a solver input.",
                     });
             Results(model, reference, samples);
+            // R6.4 (6): the bridge data of the beams of the bridge model (the element identities of the reference), from the reference.
+            var data = new GPC.Checkers.CompositeBridge.BridgeModelData();
+            if (reference.Bridge != null) foreach (var b in model.BeamElements.Values.OrderBy(b => b.Id)) { var d = reference.Bridge.Beam(b.Guid); if (d != null) data.Set(d); }
             return new GpcBridgeBuild(new GpcBridge(model, Recipe(workflow, model), samples, workflow, beams.Select(b => reference.Angle(b)).ToArray(),
-                table.Select(t => (t.Name, (IReadOnlyList<(string Case, double Factor)>)t.Factors.ToArray())).ToArray()), summary, warnings.ToArray());
+                table.Select(t => (t.Name, (IReadOnlyList<(string Case, double Factor)>)t.Factors.ToArray())).ToArray(), data), summary, warnings.ToArray());
         }
 
         /// <summary>
