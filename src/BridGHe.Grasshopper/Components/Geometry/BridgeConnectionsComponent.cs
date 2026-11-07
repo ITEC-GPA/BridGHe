@@ -43,8 +43,8 @@ public sealed class BridgeConnectionsComponent : BridgeUtilityComponent
         if (mode == 2)
         {
             if (lines.Count > 0 || property != null) throw new ArgumentException("Offset mode accepts Beams and Offset only.");
-            elements = BridgeConnections.Offset(beams.Select(b => b.Value).ToArray(), new(offset.X, offset.Y));
-            da.SetDataList(0, GpcConnections.Offsets((BeamModel[])elements, beams, offset));
+            // R6.5 P1 lane 1b: a beam given by its draft alone gets the offset on GPC (GpcConnections.Offsets checks as BridgeConnections.Offset).
+            da.SetDataList(0, GpcConnections.Offsets(this, beams, offset));
         }
         else
         {

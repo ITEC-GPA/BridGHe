@@ -95,6 +95,16 @@ namespace BridGHe.Grasshopper.Helpers
             return copy;
         }
 
+        /// <summary>R6.5 P1 lane 1b: the beam output of a component that gives a new beam from its input (Bridge Beam Offsets, Bridge Segment
+        /// Override: the FEM path gives a new copy with its results cleared), for a beam given by its draft alone: the draft built on GPC with
+        /// the identity derived from the input draft (<see cref="Identity"/>), a new GH GUID and no analysed element (null: refused, with the
+        /// error on the component).</summary>
+        internal static GH_Beam NewBeam(GH_Component component, int output, GH_Beam input, Func<Guid, LegacyBeamDraft> build, params object[] parameters)
+        {
+            var draft = Build(component, input.Gpc, () => build(Identity(input.Gpc.Beam.Guid, component.ComponentGuid, output, parameters)));
+            return draft == null ? null : GH_Beam.FromGpc(draft);
+        }
+
         /// <summary>The same for a node.</summary>
         internal static GH_Node Node(GH_Component component, int output, GH_Node input, Func<Guid, LegacyNodeDraft> build, params object[] parameters)
         {

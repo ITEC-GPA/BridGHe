@@ -47,5 +47,5 @@ public sealed class BridgeBeamOffsetsComponent : BridgeUtilityComponent
     protected override void RegisterOutputParams(GH_OutputParamManager p)
     {p.AddGenericParameter("Beams","B","Modified beams with cleared results.",GH_ParamAccess.list);p.AddTextParameter("Information","I","Offset convention.",GH_ParamAccess.item);}
     protected override void Solve(IGH_DataAccess da)
-    {var beams=new List<GH_Beam>();var o=Vector3d.Zero;if(!da.GetDataList(0,beams))return;da.GetData(1,ref o);if(o.Z!=0)throw new ArgumentException("Local offset Z must be zero.");da.SetDataList(0,GpcConnections.Offsets(BridgeConnections.Offset(beams.Select(b=>b.Value).ToArray(),new(o.X,o.Y)),beams,o));da.SetData(1,"Local section offsets assigned; source beams unchanged, results cleared.");}
+    {var beams=new List<GH_Beam>();var o=Vector3d.Zero;if(!da.GetDataList(0,beams))return;da.GetData(1,ref o);if(o.Z!=0)throw new ArgumentException("Local offset Z must be zero.");da.SetDataList(0,GpcConnections.Offsets(this,beams,o)); /* R6.5 P1 lane 1b: a beam given by its draft alone gets the offset on GPC */da.SetData(1,"Local section offsets assigned; source beams unchanged, results cleared.");}
 }
