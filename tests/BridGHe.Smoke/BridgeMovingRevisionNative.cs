@@ -19,7 +19,9 @@ internal static class BridgeMovingRevisionNative
     internal static int Run(string source)
     {
         byte[] bytes=File.ReadAllBytes(source);
-        string folder=Path.GetFullPath("artifacts/rev003-native");Directory.CreateDirectory(folder);
+        // P2S: the capture input writes into artifacts/rev003-native as before; another REV003 (--input) next to its copy, never in the worktree.
+        bool capture=string.Equals(Path.GetFullPath(source),CaptureInput,StringComparison.OrdinalIgnoreCase);
+        string folder=capture?Path.GetFullPath("artifacts/rev003-native"):Path.Combine(Path.GetDirectoryName(Path.GetFullPath(source)),"rev003-native");Directory.CreateDirectory(folder);
         using var doc=GrasshopperBridgeExample.Read(source);doc.FilePath=source;
         // Diagnostics (BRIDGHE_SERIAL=1): the task-capable components solve their iterations serially.
         if(Environment.GetEnvironmentVariable("BRIDGHE_SERIAL")=="1")foreach(var t in doc.Objects.OfType<IGH_TaskCapableComponent>())t.UseTasks=false;
@@ -133,7 +135,7 @@ internal static class BridgeMovingRevisionNative
         Require(Values<ModelModel>(Out(moving,"Model")).Length==0&&Values<string>(Out(moving,"Cases")).Length==0,"Stale moving results survived changed input.");
         Require(bytes.SequenceEqual(File.ReadAllBytes(source)),"Native replay modified the delivered GHX.");
         var report=new{Native=true,Definition=Path.GetFileName(source),DefinitionSHA256=Convert.ToHexString(SHA256.HashData(bytes)),Analyses=5,PhaseCount=4,Beams=n0.Beams.Count,Nodes=n0.Nodes.Count,MovingPositions=cases.Length,SlabForceAssignments=slabAssignments,Combinations=model.LoadCombinations.Count,SectionChecks=rows.Length,DetailBranches=details.Length,Plots=plots.Length,ReportInputs=true,CachedRunFalse=true,ChangedPathInvalidatesResults=true,ResultsSavedInGHX=false,Measurements=measurements};
-        string json=JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true});File.WriteAllText(Path.Combine(folder,"validation.json"),json);File.WriteAllText(Path.Combine(Path.GetDirectoryName(source),"REV003-native-validation.json"),json);
+        string json=JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true});File.WriteAllText(Path.Combine(folder,"validation.json"),json);if(!capture)File.WriteAllText(Path.Combine(Path.GetDirectoryName(source),"REV003-native-validation.json"),json);
         Console.WriteLine($"REV003 NATIVE PASS: 5 analyses, {cases.Length} moving positions, {model.LoadCombinations.Count} combinations, {rows.Length} section checks, 3 details, 6 plots.");return 0;
     }
 #if GPC_PILOT

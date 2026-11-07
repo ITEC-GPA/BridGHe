@@ -19,6 +19,11 @@ using Grasshopper.Kernel.Types;
 internal static class BridgeMovingRevisionExample
 {
     internal const string FileName="50-ponte-quattro-modelli_REV003.ghx";
+    /// <summary>P2S (coordinator, 7/11): the frozen input of the native 50 capture (35.552 keys, 99FA70F1): REV003 as the branch had it
+    /// before the merge with master, with the section workbook and the report template it reads beside it. The shipped example REV003 is
+    /// the user's file (their save of 2/11, master 95ab7c3) and may change; this copy never does (never regenerated).</summary>
+    internal static readonly string CaptureFolder=Path.GetFullPath(Path.Combine("tests","BridGHe.Smoke","Fixtures","example50-rev003"));
+    internal static string CaptureInput=>Path.Combine(CaptureFolder,FileName);
     internal static IGH_Param In(GH_Component c,string name)=>c.Params.Input.Single(p=>p.Name==name);
     internal static IGH_Param Out(GH_Component c,string name)=>c.Params.Output.Single(p=>p.Name==name);
     internal static T[] Values<T>(IGH_Param p)=>p.VolatileData.AllData(true).Select(g=>g?.ScriptVariable()).OfType<T>().ToArray();
@@ -50,7 +55,8 @@ internal static class BridgeMovingRevisionExample
         string folder=Path.Combine(ExamplePaths.Root,"50-ponte-quattro-modelli"),target=Path.Combine(folder,FileName);
         if(args.Contains("--capture")){using var capture=GrasshopperBridgeExample.Read(target);Example50HorizontalLayout.CaptureMovingRevision(capture);return 0;}
         if(args.Contains("--loads")){BridgeMovingSlabTargets.Run(Path.GetFullPath("artifacts/rev003-native"));return 0;}
-        if(args.Contains("--native"))return BridgeMovingRevisionNative.Run(target);
+        // P2S: the native replay of the capture input; --input <copy> replays another REV003 (e.g. a copy of the shipped example in TEMP).
+        if(args.Contains("--native"))return BridgeMovingRevisionNative.Run(args.SkipWhile(a=>a!="--input").Skip(1).FirstOrDefault() is string input?Path.GetFullPath(input):CaptureInput);
         if(args.Contains("--check")){Validate(target);return 0;}
         string source=Path.Combine(folder,"50-ponte-quattro-modelli_REV002.ghx"),sourceBook=Path.Combine(folder,"Sezioni_conci_REV002.xlsx"),book=Path.Combine(folder,"Sezioni_conci_REV003.xlsx");
         byte[] original=File.ReadAllBytes(source),originalBook=File.ReadAllBytes(sourceBook);

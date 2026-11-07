@@ -42,7 +42,7 @@ $ghx99 = '99-Ponte completo GPC\REV004\flusso-acciaio-misto_REV004.ghx'
 $definitions = @{
     '50-check'      = @{ Args = @('--example50-rev003', '--check'); Moved = @(); Restore = @() }
     '50-regression' = @{ Args = @('--regression', 'bridge-moving-workflow'); Moved = @(); Restore = @() }
-    '50-native'     = @{ Args = @('--example50-rev003', '--native'); Moved = @('artifacts\rev003-native'); Restore = @("$ex50\REV003-native-validation.json") }
+    '50-native'     = @{ Args = @('--example50-rev003', '--native'); Moved = @('artifacts\rev003-native'); Restore = @() }
     '99-replay'     = @{ Args = @('--example99', 'replay004'); Moved = @(); Restore = @($ex99) }
     '99-native'     = @{ Args = @('--modular-bridge-native', $ghx99.Replace('\', '/')); Moved = @('artifacts\modular-bridge\native-flusso-acciaio-misto_REV004'); Restore = @(); Candidate = $ghx99 }
     '99-rev004'     = @{ Args = @('--example99', 'rev004'); Moved = @(); Restore = @($ex99) }
