@@ -66,9 +66,12 @@ public sealed class BridgeCombinationExcelComponent : GH_Component
             // every action with a case has one; the FEM catalogue otherwise (until R6.5). The test host compares the two on every run.
             var definitions = phases.Select(p => (BridgePhaseDefinition)p.Value).ToArray();
             BridgeCombinationCatalog catalog;
-            if (definitions.SelectMany(d => d.Actions).All(a => a.PrimaryOnly || a.GpcSource != null))
+            Common.Gpc.GpcModels.Conversion[] inputs = null;
+            try { inputs = models.Select(m => m.GpcInput).ToArray(); }
+            catch (Exception ex) when (ex is ArgumentException || ex is NotSupportedException || ex is InvalidOperationException) { inputs = null; } // a reference without a GPC input: the FEM catalogue, as before
+            if (inputs != null && definitions.SelectMany(d => d.Actions).All(a => a.PrimaryOnly || a.GpcSource != null))
             {
-                catalog = BridgeCombinationCatalog.FromGpc(models.Select(m => m.GpcInput).ToArray(), definitions);
+                catalog = BridgeCombinationCatalog.FromGpc(inputs, definitions);
                 Common.Gpc.GpcDraftCheck.Attached("Bridge Combination Excel catalogue", catalog.Text(), () => new BridgeCombinationCatalog(models.Select(m => m.Value).ToArray(), definitions).Text());
             }
             else catalog = new BridgeCombinationCatalog(models.Select(m => m.Value).ToArray(), definitions);

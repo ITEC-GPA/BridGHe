@@ -60,17 +60,26 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
 
             // R6.4 (3): the super elements of the model and the super element of every beam from the GPC input of the model (the bridge data
             // of its beams, one super element per beam, L12), the beams in the numbering of the conversion (FEM beam i = GPC beam i + 1); the
-            // names in the order of the beams. Until R6.5 the test host compares them with the FEM attributes on every run (GpcDraftCheck).
-            Common.Gpc.GpcModels.Conversion input;
+            // names in the order of the beams. Until R6.5 the test host compares them with the FEM attributes on every run (GpcDraftCheck); a
+            // model whose GPC input cannot be made (e.g. beams without nodes, upstream of Build Model: bridge-details-model-example) is read from
+            // its FEM attributes, as before, until R6.5.
+            Common.Gpc.GpcModels.Conversion input = null;
             try { input = model.GpcInput; }
-            catch (Exception ex) when (ex is ArgumentException || ex is NotSupportedException || ex is InvalidOperationException) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message); Message = "Error"; return; }
-            var gpcBeams = input.Model.BeamElements.Values.OrderBy(b => b.Id).ToArray();
-            if (gpcBeams.Length != model.Value.Beams.Count) throw new InvalidOperationException($"GpcSuperElementFilterNumbering: {gpcBeams.Length} GPC beams, {model.Value.Beams.Count} FEM beams.");
-            string[] superElementOf = gpcBeams.Select(b => input.Bridge.Beam(b.Guid)?.SuperElement).ToArray();
-            List<string> superElementsName = superElementOf.Where(s => s != null).Distinct(StringComparer.Ordinal).ToList();
-            Common.Gpc.GpcDraftCheck.Attached("Super Element Filter", string.Join("\n", superElementsName) + "\n--\n" + string.Join("\n", superElementOf.Select(s => s ?? "-")),
-                () => string.Join("\n", Common.Helpers.ModelHelper.GetSuperElements(model.Value).Select(a => a.Value)) + "\n--\n"
-                    + string.Join("\n", model.Value.Beams.Select(b => SuperElementAttributeModel.GetSuperElement(b) ?? "-")));
+            catch (Exception ex) when (ex is ArgumentException || ex is NotSupportedException || ex is InvalidOperationException) { input = null; }
+            string[] FemOf() => model.Value.Beams.Select(b => SuperElementAttributeModel.GetSuperElement(b)).ToArray();
+            List<string> FemNames() => Common.Helpers.ModelHelper.GetSuperElements(model.Value).Select(a => a.Value).ToList();
+            string[] superElementOf; List<string> superElementsName;
+            if (input != null)
+            {
+                var gpcBeams = input.Model.BeamElements.Values.OrderBy(b => b.Id).ToArray();
+                if (gpcBeams.Length != model.Value.Beams.Count) throw new InvalidOperationException($"GpcSuperElementFilterNumbering: {gpcBeams.Length} GPC beams, {model.Value.Beams.Count} FEM beams.");
+                superElementOf = gpcBeams.Select(b => input.Bridge.Beam(b.Guid)?.SuperElement).ToArray();
+                superElementsName = superElementOf.Where(s => s != null).Distinct(StringComparer.Ordinal).ToList();
+                var of = superElementOf; var names = superElementsName;
+                Common.Gpc.GpcDraftCheck.Attached("Super Element Filter", string.Join("\n", names) + "\n--\n" + string.Join("\n", of.Select(s => s ?? "-")),
+                    () => string.Join("\n", FemNames()) + "\n--\n" + string.Join("\n", FemOf().Select(s => s ?? "-")));
+            }
+            else { superElementOf = FemOf(); superElementsName = FemNames(); }
 
 
             // Connect the ValueList component on the analysis results input item
