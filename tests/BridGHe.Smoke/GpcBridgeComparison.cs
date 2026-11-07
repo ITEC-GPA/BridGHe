@@ -162,7 +162,15 @@ internal static class GpcBridgeComparison
         }
         if (!gpc.Summary.SequenceEqual(fem.Summary)) Fail("summary: GPC [" + string.Join(" / ", gpc.Summary) + "] FEM [" + string.Join(" / ", fem.Summary) + "]");
         if (!gpc.Warnings.SequenceEqual(fem.Warnings)) Fail("warnings: GPC [" + string.Join(" / ", gpc.Warnings) + "] FEM [" + string.Join(" / ", fem.Warnings) + "]");
-        var owner = GpcInputComparison.ElementOwner(bridge.Model);
+        // R6.4 (6): the model of Bridge Report from the GPC bridge model against the merged FEM model (name, units, counts, action records,
+        // combination table, the length of every beam and of an unknown ID).
+        {
+            var ids = fem.Model.Beams.Select(b => b.BeamId).Append("no such beam").ToArray();
+            string x = BridGHe.Common.Reports.BridgeReportData.Text(BridGHe.Common.Reports.BridgeReportData.Source(bridge), ids);
+            string y = BridGHe.Common.Reports.BridgeReportData.Text(BridGHe.Common.Reports.BridgeReportData.Source(fem.Model), ids);
+            if (x != y) Fail("report model: " + GpcDraftArchiveChecks.FirstDifference(y, x));
+        }
+        var owner =GpcInputComparison.ElementOwner(bridge.Model);
         if (owner == bridge.Model.Guid) Fail("the bridge model has the model GUID of its reference");
         var (model, workflow) = Legacy(fem.Model, tolerance, fem.Samples, owner, bridge.Model.Guid);
         List<string> Parts() => PartsDiffer(bridge.Model, model);
