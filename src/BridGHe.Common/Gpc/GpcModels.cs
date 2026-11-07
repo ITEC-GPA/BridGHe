@@ -144,7 +144,7 @@ namespace BridGHe.Common.Gpc
                 foreach (var e in model.Elements) e.Results.Clear();
             }
             byte[] archive = ModelArchive.Write(model);
-            var owner = GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-model:" + System.Convert.ToHexString(SHA256.HashData(archive)) + ":"
+            var owner = GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-model:" + GpcIdentity.ArchiveDigest(archive) + ":"
                 + toleranceDefinitionUnits.ToString("R", CultureInfo.InvariantCulture));
             report = new LegacyImportReport();
             return LegacyModelImport.Import(LegacyArchive.Read(archive), owner, toleranceDefinitionUnits, report, SectionStateSignatures(model));
