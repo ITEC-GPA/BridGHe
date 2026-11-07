@@ -29,13 +29,23 @@ namespace BridGHe.Common.Gpc
         public const string DataChunk = "Data", RecordsChunk = "BridGHeRecords";
         public const int MaximumRecordBytes = 64 * 1024 * 1024;
 
-        public static (byte[] Data, byte[] Records) Write(LegacyNodeDraft draft)
+        public static (byte[] Data, byte[] Records) Write(LegacyNodeDraft draft) => Write(draft, GpcGooArchive.Value);
+        public static (byte[] Data, byte[] Records) Write(LegacyBeamDraft draft) => Write(draft, GpcGooArchive.Value);
+        public static (byte[] Data, byte[] Records) Write(LegacyPlateDraft draft) => Write(draft, GpcGooArchive.Value);
+
+        /// <summary>The two chunks of a draft with the value of its element not compressed and without the BGHGPC1 header
+        /// (<see cref="GpcGooArchive.RawValue{T}"/>): the drafts of a model compress them in one stream (<see cref="GpcModelDrafts.Write"/>).</summary>
+        internal static (byte[] Value, byte[] Records) WriteRaw(LegacyNodeDraft draft) => Write(draft, GpcGooArchive.RawValue);
+        internal static (byte[] Value, byte[] Records) WriteRaw(LegacyBeamDraft draft) => Write(draft, GpcGooArchive.RawValue);
+        internal static (byte[] Value, byte[] Records) WriteRaw(LegacyPlateDraft draft) => Write(draft, GpcGooArchive.RawValue);
+
+        private static (byte[] Data, byte[] Records) Write(LegacyNodeDraft draft, Func<NodeElement, byte[]> value)
         {
             if (draft == null) throw new ArgumentNullException(nameof(draft));
-            return (GpcGooArchive.Value(draft.Node), Save(DraftRecords.Of("node", draft.Records, draft.Report)));
+            return (value(draft.Node), Save(DraftRecords.Of("node", draft.Records, draft.Report)));
         }
 
-        public static (byte[] Data, byte[] Records) Write(LegacyBeamDraft draft)
+        private static (byte[] Data, byte[] Records) Write(LegacyBeamDraft draft, Func<BeamElement, byte[]> value)
         {
             if (draft == null) throw new ArgumentNullException(nameof(draft));
             var r = DraftRecords.Of("beam", draft.Records, draft.Report);
@@ -44,36 +54,45 @@ namespace BridGHe.Common.Gpc
             {
                 var one = new GPC.Checkers.CompositeBridge.BridgeModelData(); one.Set(draft.Bridge); r.Bridge = one.Save();
             }
-            return (GpcGooArchive.Value(draft.Beam), Save(r));
+            return (value(draft.Beam), Save(r));
         }
 
-        public static (byte[] Data, byte[] Records) Write(LegacyPlateDraft draft)
+        private static (byte[] Data, byte[] Records) Write(LegacyPlateDraft draft, Func<AreaElement, byte[]> value)
         {
             if (draft == null) throw new ArgumentNullException(nameof(draft));
             var r = DraftRecords.Of("plate", draft.Records, draft.Report);
             r.Corners = draft.Corners.Select(c => new double[] { c.X, c.Y, c.Z }).ToList();
-            return (GpcGooArchive.Value(draft.Plate), Save(r));
+            return (value(draft.Plate), Save(r));
         }
 
         public static byte[] Write(Material material) => GpcGooArchive.Value(material ?? throw new ArgumentNullException(nameof(material)));
 
-        public static LegacyNodeDraft ReadNode(byte[] data, byte[] records)
+        public static LegacyNodeDraft ReadNode(byte[] data, byte[] records) => Node(GpcGooArchive.ReadValue<NodeElement>(data), records);
+        public static LegacyBeamDraft ReadBeam(byte[] data, byte[] records) => Beam(GpcGooArchive.ReadValue<BeamElement>(data), records);
+        public static LegacyPlateDraft ReadPlate(byte[] data, byte[] records) => Plate(GpcGooArchive.ReadValue<AreaElement>(data), records);
+
+        /// <summary>The readers of <see cref="WriteRaw(LegacyNodeDraft)"/> and the others.</summary>
+        internal static LegacyNodeDraft ReadNodeRaw(byte[] value, byte[] records) => Node(GpcGooArchive.ReadRawValue<NodeElement>(value), records);
+        internal static LegacyBeamDraft ReadBeamRaw(byte[] value, byte[] records) => Beam(GpcGooArchive.ReadRawValue<BeamElement>(value), records);
+        internal static LegacyPlateDraft ReadPlateRaw(byte[] value, byte[] records) => Plate(GpcGooArchive.ReadRawValue<AreaElement>(value), records);
+
+        private static LegacyNodeDraft Node(NodeElement node, byte[] records)
         {
-            var node = GpcGooArchive.ReadValue<NodeElement>(data); var r = Load(records, "node");
+            var r = Load(records, "node");
             return new LegacyNodeDraft(node, r.Report(null)) { Records = r.Records() };
         }
 
-        public static LegacyBeamDraft ReadBeam(byte[] data, byte[] records)
+        private static LegacyBeamDraft Beam(BeamElement beam, byte[] records)
         {
-            var beam = GpcGooArchive.ReadValue<BeamElement>(data); var r = Load(records, "beam");
+            var r = Load(records, "beam");
             var bridge = r.Bridge == null ? null : GPC.Checkers.CompositeBridge.BridgeModelData.Read(r.Bridge);
             var report = r.Report(bridge);
             return new LegacyBeamDraft(beam, bridge?.Beam(beam.Guid), r.AngleDeg, r.Property?.Data(), report) { Records = r.Records() };
         }
 
-        public static LegacyPlateDraft ReadPlate(byte[] data, byte[] records)
+        private static LegacyPlateDraft Plate(AreaElement plate, byte[] records)
         {
-            var plate = GpcGooArchive.ReadValue<AreaElement>(data); var r = Load(records, "plate");
+            var r = Load(records, "plate");
             var corners = (r.Corners ?? new List<double[]>()).Select(c => c != null && c.Length == 3 ? new GPC.Geometry.Point3d(c[0], c[1], c[2])
                 : throw new SerializationException("BridgheDraftRecordsInvalidCorner")).ToList();
             return new LegacyPlateDraft(plate, corners, r.Report(null)) { Records = r.Records() };

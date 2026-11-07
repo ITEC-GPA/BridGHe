@@ -1,4 +1,6 @@
 using System;
+using System.Buffers;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -68,40 +70,84 @@ namespace BridGHe.Common.Gpc
         // -------------------------------------------------------------------------------------------------------------------------------------
         // Persistence (BGHGPC1 of the GH_Model, extended)
 
-        /// <summary>The chunk of the <c>GH_Model</c> that holds the drafts of its elements (beside the two chunks of its GPC input).</summary>
+        /// <summary>The chunk of the <c>GH_Model</c> that holds the drafts of its elements (beside the two chunks of its GPC input). The
+        /// analysis components do not save it with the model they keep (option 1 of P2Q, coordinator 7/11): they attach the drafts of their
+        /// input again at the first solution after opening (<c>Helpers.AnalysisDrafts</c> of the plug-in).</summary>
         public const string Chunk = "BridGHeDrafts";
-        private static readonly byte[] Header = Encoding.ASCII.GetBytes("BGHDRF1");
+        private static readonly byte[] Header = Encoding.ASCII.GetBytes("BGHDRF2");
         private const byte Version = 1;
+        /// <summary>BGHDRF1 (R6.4 (2), 41d4947 to 64cee6b of the integration branch, never released): read, no longer written.</summary>
+        private static readonly byte[] Header1 = Encoding.ASCII.GetBytes("BGHDRF1");
+        private const byte Version1 = 1;
         private const int MaximumBytes = GpcGooArchive.MaximumBytes;
+        /// <summary>Brotli of the BCL (net8), quality 5 and window 24 (2^24 bytes): measured by P2Q on the drafts of the example 50 (q4–q6:
+        /// −81…83% against BGHDRF1, 0.03–0.12 s a model, read 0.01 s; q11 4.6–6.8 s a model).</summary>
+        private const int BrotliQuality = 5, BrotliWindow = 24;
 
-        /// <summary>The drafts as one chunk: header BGHDRF1, a version, then deflated: the three counts and, for every draft in order (nodes,
-        /// beams, plates), its two chunks of the final writer (<see cref="GpcDraftArchive.Write(LegacyNodeDraft)"/> and the others: the BGHGPC1
-        /// value of its element and its BridGHe records), each with its length. No BinaryFormatter, no NRBF.</summary>
+        /// <summary>The drafts as one chunk (BGHDRF2, option 2 of P2Q, coordinator 7/11): header BGHDRF2, a version, the length of the stream
+        /// (Int32, little endian), then the stream compressed with Brotli in one piece: the three counts and, for every draft in order (nodes,
+        /// beams, plates), the GPC archive of the value of its element not compressed (<see cref="GpcGooArchive.RawValue{T}"/>, the bytes the
+        /// final writer deflates) and its BridGHe records (<see cref="GpcDraftArchive.WriteRaw(LegacyNodeDraft)"/> and the others), each with
+        /// its length. Compressing the values together removes what the drafts of one model repeat (properties, sections, materials,
+        /// coordinate systems, restraints). No BinaryFormatter, no NRBF.</summary>
         public static byte[] Write(GpcModelDrafts drafts)
         {
             if (drafts == null) throw new ArgumentNullException(nameof(drafts));
-            using var output = new MemoryStream();
-            output.Write(Header, 0, Header.Length); output.WriteByte(Version);
-            using (var deflate = new DeflateStream(output, CompressionLevel.Fastest, true))
-            using (var writer = new BinaryWriter(deflate, Encoding.UTF8, true))
+            using var raw = new MemoryStream();
+            using (var writer = new BinaryWriter(raw, Encoding.UTF8, true))
             {
                 writer.Write(drafts.Nodes.Count); writer.Write(drafts.Beams.Count); writer.Write(drafts.Plates.Count);
-                void Pair((byte[] Data, byte[] Records) chunks) { writer.Write(chunks.Data.Length); writer.Write(chunks.Data); writer.Write(chunks.Records.Length); writer.Write(chunks.Records); }
-                foreach (var d in drafts.Nodes) Pair(GpcDraftArchive.Write(d));
-                foreach (var d in drafts.Beams) Pair(GpcDraftArchive.Write(d));
-                foreach (var d in drafts.Plates) Pair(GpcDraftArchive.Write(d));
+                void Pair((byte[] Value, byte[] Records) chunks)
+                {
+                    writer.Write(chunks.Value.Length); writer.Write(chunks.Value); writer.Write(chunks.Records.Length); writer.Write(chunks.Records);
+                    if (raw.Length > MaximumBytes) throw new SerializationException("BridgheModelDraftsTooLarge");
+                }
+                foreach (var d in drafts.Nodes) Pair(GpcDraftArchive.WriteRaw(d));
+                foreach (var d in drafts.Beams) Pair(GpcDraftArchive.WriteRaw(d));
+                foreach (var d in drafts.Plates) Pair(GpcDraftArchive.WriteRaw(d));
             }
-            if (output.Length > MaximumBytes) throw new SerializationException("BridgheModelDraftsTooLarge");
-            return output.ToArray();
+            var source = new ReadOnlySpan<byte>(raw.GetBuffer(), 0, (int)raw.Length);
+            int start = Header.Length + 1 + sizeof(int);
+            var packed = new byte[start + BrotliEncoder.GetMaxCompressedLength(source.Length)];
+            Header.CopyTo(packed, 0); packed[Header.Length] = Version;
+            BinaryPrimitives.WriteInt32LittleEndian(packed.AsSpan(Header.Length + 1), source.Length);
+            if (!BrotliEncoder.TryCompress(source, packed.AsSpan(start), out int written, BrotliQuality, BrotliWindow))
+                throw new SerializationException("BridgheModelDraftsNotCompressed");
+            if (start + written > MaximumBytes) throw new SerializationException("BridgheModelDraftsTooLarge");
+            Array.Resize(ref packed, start + written);
+            return packed;
         }
 
+        /// <summary>The drafts of a chunk BGHDRF2 (<see cref="Write"/>) or BGHDRF1 (the integration branch before BGHDRF2).</summary>
         public static GpcModelDrafts Read(byte[] data)
         {
-            if (data == null || data.Length < Header.Length + 1 || !data.Take(Header.Length).SequenceEqual(Header)) throw new SerializationException("NotBridgheModelDrafts");
+            if (Starts(data, Header1))
+            {
+                if (data[Header1.Length] != Version1) throw new SerializationException("UnsupportedBridgheModelDraftsVersion: " + data[Header1.Length]);
+                using var input = new MemoryStream(data, Header1.Length + 1, data.Length - Header1.Length - 1, false);
+                using var deflate = new DeflateStream(input, CompressionMode.Decompress);
+                return Read(deflate, GpcDraftArchive.ReadNode, GpcDraftArchive.ReadBeam, GpcDraftArchive.ReadPlate);
+            }
+            int start = Header.Length + 1 + sizeof(int);
+            if (!Starts(data, Header) || data.Length < start) throw new SerializationException("NotBridgheModelDrafts");
             if (data[Header.Length] != Version) throw new SerializationException("UnsupportedBridgheModelDraftsVersion: " + data[Header.Length]);
-            using var input = new MemoryStream(data, Header.Length + 1, data.Length - Header.Length - 1, false);
-            using var deflate = new DeflateStream(input, CompressionMode.Decompress);
-            using var reader = new BinaryReader(deflate, Encoding.UTF8);
+            int length = BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(Header.Length + 1, sizeof(int)));
+            if (length < 3 * sizeof(int) || length > MaximumBytes) throw new SerializationException("BridgheModelDraftsInvalidLength");
+            var raw = new byte[length];
+            using (var decoder = new BrotliDecoder())
+            {
+                var status = decoder.Decompress(data.AsSpan(start), raw, out int consumed, out int inflated);
+                if (status != OperationStatus.Done || inflated != length || consumed != data.Length - start) throw new SerializationException("BridgheModelDraftsTruncated");
+            }
+            using var stream = new MemoryStream(raw, false);
+            return Read(stream, GpcDraftArchive.ReadNodeRaw, GpcDraftArchive.ReadBeamRaw, GpcDraftArchive.ReadPlateRaw);
+        }
+
+        private static bool Starts(byte[] data, byte[] header) => data != null && data.Length > header.Length && data.AsSpan(0, header.Length).SequenceEqual(header);
+
+        private static GpcModelDrafts Read(Stream stream, Func<byte[], byte[], LegacyNodeDraft> node, Func<byte[], byte[], LegacyBeamDraft> beam, Func<byte[], byte[], LegacyPlateDraft> plate)
+        {
+            using var reader = new BinaryReader(stream, Encoding.UTF8, true);
             long total = 0;
             byte[] Bytes()
             {
@@ -114,9 +160,9 @@ namespace BridGHe.Common.Gpc
             int Count() { int n = reader.ReadInt32(); if (n < 0 || n > 10_000_000) throw new SerializationException("BridgheModelDraftsInvalidCount"); return n; }
             int nodes = Count(), beams = Count(), plates = Count();
             var n = new List<LegacyNodeDraft>(nodes); var b = new List<LegacyBeamDraft>(beams); var p = new List<LegacyPlateDraft>(plates);
-            for (int i = 0; i < nodes; i++) n.Add(GpcDraftArchive.ReadNode(Bytes(), Bytes()));
-            for (int i = 0; i < beams; i++) b.Add(GpcDraftArchive.ReadBeam(Bytes(), Bytes()));
-            for (int i = 0; i < plates; i++) p.Add(GpcDraftArchive.ReadPlate(Bytes(), Bytes()));
+            for (int i = 0; i < nodes; i++) n.Add(node(Bytes(), Bytes()));
+            for (int i = 0; i < beams; i++) b.Add(beam(Bytes(), Bytes()));
+            for (int i = 0; i < plates; i++) p.Add(plate(Bytes(), Bytes()));
             return new GpcModelDrafts(n, b, p);
         }
     }

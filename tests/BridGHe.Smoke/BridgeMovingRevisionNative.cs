@@ -117,8 +117,15 @@ internal static class BridgeMovingRevisionNative
             Require(archive.AppendObject(doc,"Definition"),"Append the solved definition.");var serialized=clock.Elapsed;
             Require(archive.WriteToFile(saved,true,false),"Write the solved definition.");var writeTime=clock.Elapsed;
             clock.Restart();var reread=new GH_IO.Serialization.GH_Archive();Require(reread.ReadFromFile(saved),"Read the solved definition.");
-            using(var reopened=new GH_Document())Require(reread.ExtractObject(reopened,"Definition"),"Reopen the solved definition.");var read=clock.Elapsed;
-            string line=$"SAVE TIMING example50-rev003 solved: {new FileInfo(saved).Length} bytes, serialize {serialized.TotalSeconds:F1} s, write {writeTime.TotalSeconds:F1} s, read+reopen {read.TotalSeconds:F1} s";
+            TimeSpan read;string drafts="";
+            using(var reopened=new GH_Document())
+            {
+                Require(reread.ExtractObject(reopened,"Definition"),"Reopen the solved definition.");read=clock.Elapsed;
+#if GPC_PILOT
+                drafts=", "+AnalysisDraftsAfterReopen(doc,reopened);
+#endif
+            }
+            string line=$"SAVE TIMING example50-rev003 solved: {new FileInfo(saved).Length} bytes, serialize {serialized.TotalSeconds:F1} s, write {writeTime.TotalSeconds:F1} s, read+reopen {read.TotalSeconds:F1} s{drafts}";
             File.WriteAllText(Path.Combine(timing,"save-timing.txt"),line+Environment.NewLine);Console.WriteLine(line);
         }
         // A path change invalidates the cached moving analysis rather than leaking old positions.
@@ -129,4 +136,30 @@ internal static class BridgeMovingRevisionNative
         string json=JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true});File.WriteAllText(Path.Combine(folder,"validation.json"),json);File.WriteAllText(Path.Combine(Path.GetDirectoryName(source),"REV003-native-validation.json"),json);
         Console.WriteLine($"REV003 NATIVE PASS: 5 analyses, {cases.Length} moving positions, {model.LoadCombinations.Count} combinations, {rows.Length} section checks, 3 details, 6 plots.");return 0;
     }
+#if GPC_PILOT
+    /// <summary>R6.4 (2), option 1 of P2Q (BRIDGHE_SAVE_TIMING): in the definition saved and reopened, every analysis component keeps its model
+    /// without the drafts of its elements and with the fingerprint of its input; at the first solution the drafts of the input of the solved
+    /// definition (the same input) are attached again, equal to those of the run.</summary>
+    private static string AnalysisDraftsAfterReopen(GH_Document solved,GH_Document reopened)
+    {
+        const BindingFlags all=BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance;int components=0,attached=0;
+        foreach(var c in reopened.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name is "StrausR3AnalysisComponent" or "MovingStaticAnalysisComponent"))
+        {
+            var t=c.GetType();var original=(GH_Component)solved.FindObject(c.InstanceGuid,true);
+            var model=t.GetField("_model",all).GetValue(c);var helper=t.GetField("_drafts",all).GetValue(c);var property=model.GetType().GetProperty("GpcDrafts");
+            var run=property.GetValue(t.GetField("_model",all).GetValue(original)) as BridGHe.Common.Gpc.GpcModelDrafts;
+            Require(property.GetValue(model)==null,$"{c.NickName} ({c.InstanceGuid}): drafts saved with the analysed model.");
+            bool pending=(bool)helper.GetType().GetProperty("Pending").GetValue(helper);
+            Require(pending==(run!=null),$"{c.NickName} ({c.InstanceGuid}): fingerprint of the input saved: {pending}, drafts of the run: {run!=null}.");
+            components++;if(!pending)continue;
+            var input=original.Params.Input[0].VolatileData.AllData(true).Single();
+            var warning=helper.GetType().GetMethod("Restore").Invoke(helper,new object[]{input,model,null});
+            var back=property.GetValue(model) as BridGHe.Common.Gpc.GpcModelDrafts;
+            Require(warning==null&&back!=null&&GpcDraftArchiveChecks.DraftsText(back)==GpcDraftArchiveChecks.DraftsText(run),$"{c.NickName} ({c.InstanceGuid}): drafts attached again after reopening: {warning ?? "different"}.");
+            attached++;
+        }
+        Require(components==5,"Analysis components in the reopened definition: "+components);
+        return $"{components} analysis components saved without drafts, {attached} attached again equal";
+    }
+#endif
 }

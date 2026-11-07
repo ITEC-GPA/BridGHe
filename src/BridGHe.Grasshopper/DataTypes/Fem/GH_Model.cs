@@ -391,7 +391,11 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             _guids[elementModel] = guid;
         }
 
-        public override bool Write(GH_IWriter writer)
+        public override bool Write(GH_IWriter writer) => Write(writer, true);
+
+        /// <summary>The datum with or without the drafts of its elements: the analysis components leave them out of the model they keep
+        /// (option 1 of P2Q, coordinator 7/11: <see cref="Helpers.AnalysisDrafts"/> attaches those of their input again after opening).</summary>
+        public bool Write(GH_IWriter writer, bool drafts)
         {
             try
             {
@@ -402,7 +406,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 // R6.4 (2), extension (α): the drafts of the elements, in a chunk of their own beside the GPC input (none when the model carries
                 // none). Until R6.5 drafts that cannot be written are left out, as a GPC input (the elements read back keep the conversion of
                 // their FEM values).
-                try { var drafts = GpcDrafts; if (drafts != null) writer.SetByteArray(Common.Gpc.GpcModelDrafts.Chunk, Common.Gpc.GpcModelDrafts.Write(drafts)); }
+                if (drafts)
+                    try { var carried = GpcDrafts; if (carried != null) writer.SetByteArray(Common.Gpc.GpcModelDrafts.Chunk, Common.Gpc.GpcModelDrafts.Write(carried)); }
                 catch (Exception ex) when (Value != null && (ex is ArgumentException || ex is NotSupportedException || ex is InvalidOperationException || ex is System.Runtime.Serialization.SerializationException)) { }
                 return true;
             }

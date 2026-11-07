@@ -12,6 +12,8 @@ namespace BridGHe.Grasshopper.Components.Analysis
     public sealed class MovingStaticAnalysisComponent : GH_Component
     {
         private bool _run;
+        // R6.4 (2), option 1 of P2Q: the drafts of the analysed model are those of the input, attached again after opening (not saved).
+        private readonly Helpers.AnalysisDrafts _drafts = new Helpers.AnalysisDrafts();
         private GH_Model _model = new GH_Model();
         private string _inputHash;
         // F6 C4: the analysed GPC model next to the .st7 (BGHR2), restored at the first solution after opening.
@@ -32,7 +34,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
         {
             GH_Model input = null; string path = null; bool run = false;
             if (!da.GetData(0, ref input) || !da.GetData(1, ref path) || !da.GetData(2, ref run)) return;
-            if (input?.Value == null || input.Value.Beams.Count == 0) { _model = new GH_Model(); _inputHash = null; return; }
+            if (input?.Value == null || input.Value.Beams.Count == 0) { _model = new GH_Model(); _inputHash = null; _drafts.Clear(); return; }
             try
             {
                 // R6.4 (1): the fingerprint of the GPC input (a fingerprint of the former FEM archive, saved by an earlier version, asks for a Run).
@@ -44,15 +46,16 @@ namespace BridGHe.Grasshopper.Components.Analysis
                     foreach (string warning in warnings) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
                     _model = GH_Model.FromModel(model, input); _model.AttachGpc(analysed); _inputHash = hash;
                     // R6.4 (2), extension (α): the output keeps the elements of its input (with results): it carries the drafts of the input.
-                    var drafts = input.GpcDrafts; if (drafts != null) _model.AttachDrafts(drafts);
+                    _drafts.Record(input, _model, hash);
                     string saved = _saved.Record(_model, path); if (saved != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, saved);
                 }
                 if (_inputHash != hash)
                 {
-                    _model = new GH_Model(); _inputHash = null;
+                    _model = new GH_Model(); _inputHash = null; _drafts.Clear();
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Run required: no results for the current model, vehicle and path."); Message = "Run required"; return;
                 }
                 if (_saved.Pending) { string restored = _saved.Restore(_model, path); if (restored != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, restored); }
+                if (_drafts.Pending) { string changed = _drafts.Restore(input, _model, hash); if (changed != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, changed); }
                 // R6.1 (decision 1 of 6/11): the analysed model of a former file is read without its results.
                 if (_model.LegacyNotice != null && !_model.HasAnalysedGpc) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, _model.LegacyNotice);
                 // C6: the generated cases from the GPC steps of the analysed model when it is there, the FEM result otherwise.
@@ -61,19 +64,19 @@ namespace BridGHe.Grasshopper.Components.Analysis
                 da.SetData(0, _model); da.SetDataList(1, generated);
                 Message = generated.Length + " positions";
             }
-            catch (Exception ex) { _run = false; _model = new GH_Model(); _inputHash = null; Message = "Error"; AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message); }
+            catch (Exception ex) { _run = false; _model = new GH_Model(); _inputHash = null; _drafts.Clear(); Message = "Error"; AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message); }
         }
         public override bool Write(GH_IWriter writer)
         {
             bool ok = base.Write(writer);
-            if (ok && _inputHash != null) { writer.SetString("InputHash", _inputHash); var chunk = writer.CreateChunk("MovingResults"); _model.Write(chunk); _saved.Write(chunk); }
+            if (ok && _inputHash != null) { writer.SetString("InputHash", _inputHash); var chunk = writer.CreateChunk("MovingResults"); _model.Write(chunk, false); _saved.Write(chunk); _drafts.Write(chunk); }
             return ok;
         }
         public override bool Read(GH_IReader reader)
         {
-            bool ok = base.Read(reader); _run = false; _model = new GH_Model(); _inputHash = null;
+            bool ok = base.Read(reader); _run = false; _model = new GH_Model(); _inputHash = null; _drafts.Clear();
             if (ok && reader.ItemExists("InputHash") && reader.ChunkExists("MovingResults"))
-            { var chunk = reader.FindChunk("MovingResults"); if (_model.Read(chunk)) { _inputHash = reader.GetString("InputHash"); _saved.Read(chunk); } }
+            { var chunk = reader.FindChunk("MovingResults"); if (_model.Read(chunk)) { _inputHash = reader.GetString("InputHash"); _saved.Read(chunk); _drafts.Read(chunk); } }
             return ok;
         }
         public override Guid ComponentGuid => new Guid("b6edaa43-c87c-40b4-8ce7-03260a524fd4");

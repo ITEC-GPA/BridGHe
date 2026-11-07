@@ -573,7 +573,7 @@ internal static class GpcDraftArchiveChecks
         }
     }
 
-    private static string DraftsText(GpcModelDrafts d) => string.Join("\n--\n", d.Nodes.Select(x => GpcDraftCapture.Text(x)).Concat(d.Beams.Select(x => GpcDraftCapture.Text(x))).Concat(d.Plates.Select(x => GpcDraftCapture.Text(x))));
+    internal static string DraftsText(GpcModelDrafts d) => string.Join("\n--\n", d.Nodes.Select(x => GpcDraftCapture.Text(x)).Concat(d.Beams.Select(x => GpcDraftCapture.Text(x))).Concat(d.Plates.Select(x => GpcDraftCapture.Text(x))));
 
     /// <summary>R6.4 (2), extension (α): the drafts a model read from a former payload carries (by value, <see cref="GpcModelDrafts"/>) against
     /// the conversion of every element of its FEM value with the same identity (the DRAFT CHECK of Decompose Model), by the canonical texts of

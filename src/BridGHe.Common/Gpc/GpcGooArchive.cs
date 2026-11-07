@@ -36,6 +36,27 @@ namespace BridGHe.Common.Gpc
 
         public static T ReadValue<T>(byte[] data) where T : class => Unpack(data, Kind.Value, ModelValueArchive.Load<T>);
 
+        /// <summary>The GPC archive of a value without the BGHGPC1 header and not compressed (the bytes <see cref="Value{T}"/> deflates): the
+        /// drafts of a model compress all their values in one stream (<see cref="GpcModelDrafts.Write"/>, BGHDRF2).</summary>
+        internal static byte[] RawValue<T>(T value) where T : class
+        {
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            using (var output = new MemoryStream())
+            {
+                ModelValueArchive.Save(value, output);
+                if (output.Length > MaximumBytes) throw new SerializationException("BridgheGpcArchiveTooLarge");
+                return output.ToArray();
+            }
+        }
+
+        /// <summary>A value from <see cref="RawValue{T}"/>; the root type is chosen by the reader.</summary>
+        internal static T ReadRawValue<T>(byte[] raw) where T : class
+        {
+            if (raw == null) throw new ArgumentNullException(nameof(raw));
+            if (raw.Length > MaximumBytes) throw new SerializationException("BridgheGpcArchiveTooLarge");
+            using (var input = new MemoryStream(raw, false)) return ModelValueArchive.Load<T>(input);
+        }
+
         public static byte[] Model(GModel model)
         {
             if (model == null) throw new ArgumentNullException(nameof(model));

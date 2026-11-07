@@ -21,6 +21,8 @@ namespace BridGHe.Grasshopper.Components.Analysis
         private GH_Model _model;
         // F6 C4: the analysed GPC model next to the .st7 (BGHR2), restored at the first solution after opening.
         private readonly Helpers.SavedGpcResults _saved = new Helpers.SavedGpcResults();
+        // R6.4 (2), option 1 of P2Q: the drafts of the analysed model are those of the input, attached again after opening (not saved).
+        private readonly Helpers.AnalysisDrafts _drafts = new Helpers.AnalysisDrafts();
         private bool _just_loaded;
 
         /// <summary>
@@ -122,19 +124,20 @@ namespace BridGHe.Grasshopper.Components.Analysis
                     var result = Common.Straus.StrausAnalysis.Run(model.Value, model.GpcInput, outputPath, solver, requested, Settings.Instance.Tolerance, false, out var warnings, out var analysed);
                     _model = GH_Model.FromModel(result, model); _model.AttachGpc(analysed);
                     // R6.4 (2), extension (α): the output keeps the elements of its input (with results): it carries the drafts of the input.
-                    var drafts = model.GpcDrafts; if (drafts != null) _model.AttachDrafts(drafts);
+                    _drafts.Record(model, _model);
                     foreach (string warning in warnings) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
                     string saved = _saved.Record(_model, outputPath); if (saved != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, saved);
                     Message = "Done";
                 }
                 catch (Exception ex)
                 {
-                    _model = new GH_Model(); _saved.Record(null, null);
+                    _model = new GH_Model(); _saved.Record(null, null); _drafts.Clear();
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message);
                     Message = "Error";
                 }
             }
             if (_saved.Pending) { string restored = _saved.Restore(_model, outputPath); if (restored != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, restored); }
+            if (_drafts.Pending) { string changed = _drafts.Restore(model, _model); if (changed != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, changed); }
             // R6.1 (decision 1 of 6/11): the analysed model of a former file is read without its results.
             if (_model.LegacyNotice != null && !_model.HasAnalysedGpc) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, _model.LegacyNotice);
             DA.SetData(0, _model);
@@ -144,7 +147,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
         {
             base.AppendAdditionalComponentMenuItems(menu);
             Menu_AppendSeparator(menu);
-            Menu_AppendItem(menu, "Reset", (s, e) => { _model = new GH_Model(); _saved.Record(null, null); });
+            Menu_AppendItem(menu, "Reset", (s, e) => { _model = new GH_Model(); _saved.Record(null, null); _drafts.Clear(); });
         }
 
         public override bool Write(GH_IWriter writer)
@@ -153,8 +156,9 @@ namespace BridGHe.Grasshopper.Components.Analysis
             if (!success)
                 return false;
 
-            _model.Write(writer);
+            _model.Write(writer, false);
             _saved.Write(writer);
+            _drafts.Write(writer);
 
             return true;
         }
@@ -167,6 +171,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
 
             _model.Read(reader);
             _saved.Read(reader);
+            _drafts.Read(reader);
             _just_loaded = true;
 
             return true;
