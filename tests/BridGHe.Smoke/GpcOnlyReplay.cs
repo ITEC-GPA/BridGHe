@@ -35,6 +35,17 @@ internal static class GpcOnlyReplay
         "MergeGeometryComponent", "NodeFilterComponent", "PlateFilterComponent",
     };
 
+    /// <summary>Lane 1b, bridge generators (passo 73): the components of <c>Components/Geometry</c> that build or take nodes, beams and plates.
+    /// The generators without an input element (bearings, links, connection beams, deck mesh, slab grillage, member assignment) are replayed
+    /// with <c>GpcOnlyElements.GeneratorsWithoutFem</c> on in the GPC-only copy: they give their elements by their drafts alone (the path of
+    /// P2). The others (Beam Moment Dispatch, Beam Offsets, Segment Override, Connections in mode 2) take beams given by their drafts alone.</summary>
+    internal static readonly string[] Lane1bTypes =
+    {
+        "BeamMomentDispatchComponent", "BridgeBeamOffsetsComponent", "BridgeBearingsComponent", "BridgeConnectionBeamsComponent", "BridgeConnectionsComponent",
+        "BridgeDeckMeshComponent", "BridgeFemMembersComponent", "BridgeMemberAssignmentComponent", "BridgeRigidLinksComponent", "BridgeSegmentOverrideComponent",
+        "BridgeSlabGrillageComponent",
+    };
+
     /// <summary>The GH element types converted to their GPC data alone in lane 1.</summary>
     internal static readonly string[] ElementGoo = { "GH_Node", "GH_Beam", "GH_Plate" };
 
@@ -127,15 +138,23 @@ internal static class GpcOnlyReplay
         internal int FemOutputs;
     }
 
-    private static Run Solve(GH_Component original, Func<IGH_Goo, IGH_Goo> map, ISet<string> kinds)
+    /// <summary>Lane 1b: the switch of the generators without FEM values (<c>GpcOnlyElements.GeneratorsWithoutFem</c>), on for the GPC-only
+    /// copies of the generators lane only.</summary>
+    private static PropertyInfo generators;
+    private static bool generatorsLane;
+
+    private static Run Solve(GH_Component original, Func<IGH_Goo, IGH_Goo> map, ISet<string> kinds, bool gpcOnly = false)
     {
         var doc = new GH_Document();
+        bool on = gpcOnly && generatorsLane;
         try
         {
             var copy = Copy(original, doc);
             for (int i = 0; i < original.Params.Input.Count; i++)
                 SetInput(copy.Params.Input[i], original.Params.Input[i].VolatileData, map);
-            doc.Enabled = true; doc.NewSolution(false, GH_SolutionMode.Silent);
+            if (on) generators.SetValue(null, true);
+            try { doc.Enabled = true; doc.NewSolution(false, GH_SolutionMode.Silent); }
+            finally { if (on) generators.SetValue(null, false); }
             var run = new Run();
             foreach (var level in new[] { GH_RuntimeMessageLevel.Error, GH_RuntimeMessageLevel.Warning, GH_RuntimeMessageLevel.Remark })
                 foreach (var m in copy.RuntimeMessages(level)) run.Messages.Add(level + ": " + m);
@@ -168,7 +187,7 @@ internal static class GpcOnlyReplay
         Run fem, gpc, again;
         try { fem = Solve(c, g => g.Duplicate(), kinds); }
         catch (Exception ex) { failures.Add(where + ": the copy with the inputs of today fails: " + ex.Message); return; }
-        try { gpc = Solve(c, g => GpcOnly(g, kinds), kinds); again = Solve(c, g => GpcOnly(g, kinds), kinds); }
+        try { gpc = Solve(c, g => GpcOnly(g, kinds), kinds, true); again = Solve(c, g => GpcOnly(g, kinds), kinds, true); }
         catch (Exception ex) { failures.Add(where + ": the copy with GPC-only inputs fails: " + ex.GetBaseException().Message); return; }
         var (n, items) = byType.TryGetValue(c.GetType().Name, out var v) ? v : (0, 0);
         byType[c.GetType().Name] = (n + 1, items + fem.Outputs.Count);
@@ -208,6 +227,7 @@ internal static class GpcOnlyReplay
         string s => new GH_String(s),
         Rhino.Geometry.Vector3d x => new GH_Vector(x),
         Rhino.Geometry.Point3d p => new GH_Point(p),
+        Rhino.Geometry.Line l => new GH_Line(l),
         _ => throw new ArgumentException("GPC-ONLY REPLAY: no goo for " + v?.GetType().Name),
     };
 
@@ -268,10 +288,38 @@ internal static class GpcOnlyReplay
         return cases;
     }
 
-    private static void InMemory(ISet<string> kinds, IDictionary<string, (int Instances, int Items)> byType, List<string> failures, out int count)
+    /// <summary>The in-memory cases of lane 1b: the hidden components no example uses (Bridge Member Assignment, Bridge Connections in its
+    /// three modes) and the cases the examples do not reach (elastic and mixed bearings, beams given by their drafts alone through Beam
+    /// Offsets and Moment Dispatch), on the Simple Bridge of the Smoke (<c>SimpleBridgeTests.Input</c>) and the beams of the example 02.</summary>
+    private static List<(string Type, string Label, Dictionary<int, object> Inputs)> Lane1bCases()
+    {
+        var examples = NativeExamples.Create().ToDictionary(e => e.Id, e => e.Model);
+        var m2 = examples["02-simply-supported"];
+        var beam = Make("Fem.GH_Beam", m2.Beams[1]); var loaded = Make("Fem.GH_Beam", m2.Beams[0]);
+        var geometry = Make("BridgeGeometryGoo", BridGHe.Common.Geometry.SimpleBridgeBuilder.Build(SimpleBridgeTests.Input()));
+        var steel = Make("Fem.GH_BeamProperty", BridgeAssignmentTests.Property());
+        var lines = new object[] { new Rhino.Geometry.Line(0, 0, 0, 0, 0, 400), new Rhino.Geometry.Line(1000, 0, 0, 1000, 0, 400) };
+        return new List<(string, string, Dictionary<int, object>)>
+        {
+            ("BridgeMemberAssignmentComponent", "one default property", new Dictionary<int, object> { [0] = geometry, [1] = new object[] { steel }, [2] = new object[] { -1 } }),
+            ("BridgeMemberAssignmentComponent", "girders only (unassigned members)", new Dictionary<int, object> { [0] = geometry, [1] = new object[] { steel }, [2] = new object[] { 0 } }),
+            ("BridgeConnectionsComponent", "mode 0, rigid links", new Dictionary<int, object> { [0] = 0, [1] = lines }),
+            ("BridgeConnectionsComponent", "mode 1, deformable members", new Dictionary<int, object> { [0] = 1, [1] = lines, [2] = steel }),
+            ("BridgeConnectionsComponent", "mode 2, beam offsets", new Dictionary<int, object> { [0] = 2, [3] = new object[] { beam, loaded }, [4] = new Rhino.Geometry.Vector3d(12, -20, 0) }),
+            ("BridgeBeamOffsetsComponent", "two beams", new Dictionary<int, object> { [0] = new object[] { beam, loaded }, [1] = new Rhino.Geometry.Vector3d(0, 35, 0) }),
+            ("BridgeRigidLinksComponent", "two links", new Dictionary<int, object> { [0] = lines }),
+            ("BridgeConnectionBeamsComponent", "two members", new Dictionary<int, object> { [0] = lines, [1] = steel }),
+            ("BridgeBearingsComponent", "elastic bearings on support 1", new Dictionary<int, object> { [0] = geometry, [1] = new object[] { 1 }, [3] = new object[] { 3 },
+                [5] = new Rhino.Geometry.Vector3d(10, 20, 30), [6] = new Rhino.Geometry.Vector3d(0, 4, 0) }),
+            ("BridgeBearingsComponent", "mixed types, guide angle", new Dictionary<int, object> { [0] = geometry, [2] = new object[] { 2 }, [3] = new object[] { 0, 1, 2 }, [4] = 23.0 }),
+            ("BeamMomentDispatchComponent", "beams without results (Missing)", new Dictionary<int, object> { [0] = new object[] { beam, loaded }, [1] = "Dead" }),
+        };
+    }
+
+    private static void InMemory(string lane, ISet<string> kinds, IDictionary<string, (int Instances, int Items)> byType, List<string> failures, out int count)
     {
         count = 0;
-        foreach (var (type, label, inputs) in Lane1Cases())
+        foreach (var (type, label, inputs) in lane == "generators" ? Lane1bCases() : Lane1Cases())
         {
             using var doc = new GH_Document();
             var c = BridgeSegmentExcelTests.Add(doc, type);
@@ -290,10 +338,13 @@ internal static class GpcOnlyReplay
 
     internal static int Regression(string lane)
     {
-        var types = lane switch { "elements" => Lane1Types, _ => throw new ArgumentException("Unknown lane: " + lane) };
-        var kinds = new HashSet<string>(lane switch { "elements" => ElementGoo, _ => Array.Empty<string>() }, StringComparer.Ordinal);
+        var types = lane switch { "elements" => Lane1Types, "generators" => Lane1bTypes, _ => throw new ArgumentException("Unknown lane: " + lane) };
+        var kinds = new HashSet<string>(lane switch { "elements" or "generators" => ElementGoo, _ => Array.Empty<string>() }, StringComparer.Ordinal);
         BridgeExampleMigration.Initialize();
         plugin = BridgeMergeTests.Initialize();
+        generatorsLane = lane == "generators";
+        generators = plugin.GetType("BridGHe.Grasshopper.Helpers.GpcOnlyElements", true).GetProperty("GeneratorsWithoutFem", BindingFlags.Public | BindingFlags.Static)
+            ?? throw new Exception("GPC-ONLY REPLAY: GpcOnlyElements.GeneratorsWithoutFem not found");
         var byType = new SortedDictionary<string, (int Instances, int Items)>(StringComparer.Ordinal);
         var failures = new List<string>();
         int files = 0;
@@ -311,13 +362,14 @@ internal static class GpcOnlyReplay
             foreach (var c in doc.Objects.OfType<GH_Component>().Where(c => types.Contains(c.GetType().Name)).ToArray())
             {
                 bool converted = c.Params.Input.Any(p => p.VolatileData.AllData(true).Any(g => g != null && kinds.Contains(g.GetType().Name)));
-                if (!converted) continue;
+                // Lane 1b: every instance with data (a generator has no element input; its GPC-only copy runs with the switch on).
+                if (!converted && !(generatorsLane && c.Params.Input.Any(p => !p.VolatileData.IsEmpty))) continue;
                 Replay(c, $"{label}: {c.Name} [{c.NickName}]", kinds, byType, failures);
             }
         }
         var fromExamples = new HashSet<string>(byType.Keys, StringComparer.Ordinal);
         int cases = 0;
-        if (lane == "elements") InMemory(kinds, byType, failures, out cases);
+        if (lane is "elements" or "generators") InMemory(lane, kinds, byType, failures, out cases);
         foreach (var t in types.Where(t => !fromExamples.Contains(t))) Console.WriteLine("GPC-ONLY " + lane + ": not met in the examples (in-memory cases only): " + t);
         foreach (var t in types.Where(t => !byType.ContainsKey(t))) failures.Add("no case for " + t);
         foreach (var p in byType) Console.WriteLine($"GPC-ONLY {lane}: {p.Key} {p.Value.Instances} instances, {p.Value.Items} output lines");
@@ -330,6 +382,9 @@ internal static class GpcOnlyReplay
 
     /// <summary>The regression of lane 1 (<c>gpc-only-elements</c>).</summary>
     internal static void Elements() => Regression("elements");
+
+    /// <summary>The regression of lane 1b (<c>gpc-only-generators</c>).</summary>
+    internal static void Generators() => Regression("generators");
 
     /// <summary>The first differing lines of two texts (at most six), with their numbers.</summary>
     private static string Differences(string a, string b)

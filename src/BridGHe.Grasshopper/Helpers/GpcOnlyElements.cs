@@ -30,6 +30,13 @@ namespace BridGHe.Grasshopper.Helpers
         internal static Guid Identity(Guid inputDraft, Guid component, int output, params object[] parameters) =>
             GpcIdentity.Derive(inputDraft, component.ToString("D") + ":" + output.ToString(CultureInfo.InvariantCulture) + ":" + Canonical(parameters));
 
+        /// <summary>R6.5 P1 lane 1b: the bridge generators that build elements without an input element (Bridge Bearings, Rigid Links,
+        /// Connection Beams, Connections, Deck Mesh, Slab Grillage, Member Assignment, FEM Members) give them by their GPC drafts alone (no FEM
+        /// value): the path that stays in P2. Off (always, outside the lane test <c>gpc-only-generators</c>) they give the FEM value with its
+        /// draft, the dual rule of R6.2, so nothing changes with the inputs of today. Removed in P2 with the FEM path (the generators then
+        /// always take the path it selects).</summary>
+        public static bool GeneratorsWithoutFem { get; set; }
+
         /// <summary>The canonical text of the parameters of a builder: invariant, the exact doubles (round trip, −0 as 0), strings quoted,
         /// lists in brackets, a case record by the SHA-256 of its record archive (data contract XML, uncompressed), a beam property by its
         /// signature (the GPC fingerprint of the property), formulation, angle and the record archive of its section recipe.</summary>
