@@ -340,7 +340,13 @@ internal static class GpcOnlyReplay
     {
         var types = lane switch { "elements" => Lane1Types, "generators" => Lane1bTypes, _ => throw new ArgumentException("Unknown lane: " + lane) };
         var kinds = new HashSet<string>(lane switch { "elements" or "generators" => ElementGoo, _ => Array.Empty<string>() }, StringComparer.Ordinal);
-        BridgeExampleMigration.Initialize();
+        // The Grasshopper libraries are parsed only when they are not registered yet (P2W, 8/11): in regression all (p2w1a2) the parse again of
+        // BridgeExampleMigration.Initialize, in gpc-only-generators right after gpc-only-elements, threw from Grasshopper's own upgrader
+        // Upgrade_PolygonCenterComponent2.Version of CurveComponents.gha (new DateTime(2013, 23, 9, 10, 45, 0)). Registered (an earlier group
+        // parsed them in this process): the solutions are only disabled again before reading the definitions, as Initialize does.
+        if (Grasshopper.Instances.ComponentServer.ObjectProxies.Any(p => p.Location?.EndsWith("CurveComponents.gha", StringComparison.OrdinalIgnoreCase) == true))
+            GH_Document.EnableSolutions = false;
+        else BridgeExampleMigration.Initialize();
         plugin = BridgeMergeTests.Initialize();
         generatorsLane = lane == "generators";
         generators = plugin.GetType("BridGHe.Grasshopper.Helpers.GpcOnlyElements", true).GetProperty("GeneratorsWithoutFem", BindingFlags.Public | BindingFlags.Static)
