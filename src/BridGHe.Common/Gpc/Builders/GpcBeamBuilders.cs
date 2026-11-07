@@ -330,12 +330,5 @@ namespace BridGHe.Common.Gpc.Builders
             internal void Taper(double fromX, double fromY, double toX, double toY, string alignmentX, string alignmentY) =>
                 LegacyModelImport.Taper(Beam, Records, fromX, toX, fromY, toY, () => LegacyModelImport.TaperAlignmentOf(alignmentX), () => LegacyModelImport.TaperAlignmentOf(alignmentY));
         }
-
-        // -------------------------------------------------------------------------------------------------------------------------------------
-        // Plates (Super Element on a plate)
-
-        /// <summary>Super Element on a plate: the reader refuses it (<c>LegacyPlateAttributeNotMappedYet</c>), so the builder does too.</summary>
-        public static LegacyPlateDraft PlateWithSuperElement(LegacyPlateDraft plate, string name, Guid identity) =>
-            throw new NotSupportedException("LegacyPlateAttributeNotMappedYet: SuperElementAttributeModel");
     }
 }

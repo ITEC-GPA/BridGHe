@@ -74,7 +74,7 @@ public class BuildBridgeModel : GH_Component
                     () => string.Join("\n", result.Summary) + "\n--\n" + string.Join("\n", result.Warnings));
             }
             catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is InvalidOperationException || e is KeyNotFoundException || e is System.Runtime.Serialization.SerializationException)
-            { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Modello di ponte GPC non costruito (" + e.Message + "): le verifiche usano il percorso FEM."); }
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Modello di ponte GPC non costruito (" + e.Message + "): Super Element Check richiede il modello di ponte GPC e non verifica questo modello."); }
             da.SetData(0, output);
             da.SetDataList(1, summary); da.SetDataList(2, warnings);
             foreach (var warning in warnings.Where(w => w.Contains("not active") || w.Contains("primary shrinkage only"))) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);

@@ -77,7 +77,10 @@ internal static class GpcBuilderChecksB
         Run("SuperElementComponent", one, (0, se), (1, "SE-A"));
         var plate = h.Goo("GH_Plate", new PlateModel("", new[] { new R.Point3d(0, 0, 0), new R.Point3d(1000, 0, 0), new R.Point3d(1000, 1000, 0) },
             new PlatePropertyModel("PP") { Name = "PP", Material = steel, MembraneThickness = 200, BendingThickness = 200 }), null);
-        Run("SuperElementComponent", none, (0, plate), (1, "SE-P"));
+        // Decision of the user (7/11): a super element takes only beams; a plate is an error with no output.
+        var refusedPlate = Run("SuperElementComponent", none, (0, plate), (1, "SE-P"));
+        h.ExpectError("A Super-Element takes only beams");
+        if (refusedPlate[0].Count != 0) h.Failures.Add("B SuperElementComponent: a plate gave an output");
         // Chained attributes: two output stations records, two tapers (counted), string group after supports.
         var chain = Out(Run("BeamOutputStationsComponent", one, (0, b1), (1, 3)));
         chain = Out(Run("BeamTaperComponent", one, (0, chain), (1, 1.1), (2, 1.0), (3, 1.0), (4, 1.0), (5, 1), (6, 1)));

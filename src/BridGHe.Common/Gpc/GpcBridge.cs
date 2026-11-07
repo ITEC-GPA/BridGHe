@@ -72,6 +72,9 @@ namespace BridGHe.Common.Gpc
         public IReadOnlyList<(string Case, BeamForceSample Sample)> SamplesOf(string beamId) =>
             beamId != null && beams.TryGetValue(beamId, out int number) ? Samples[number - 1] : null;
 
+        /// <summary>R6.4 (3): the beam of the bridge model with a BridGHe ID (the original ID of its source), or null.</summary>
+        public BeamElement Beam(string beamId) => beamId != null && beams.TryGetValue(beamId, out int number) ? Model.BeamElements[number] : null;
+
         /// <summary>The former provenance of an action (phase model and case name), or null.</summary>
         public static (string SourceName, string SourceCase)? SourceOf(Model gpc, string actionKey)
         {

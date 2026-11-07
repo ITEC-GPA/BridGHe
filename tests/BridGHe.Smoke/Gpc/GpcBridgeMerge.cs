@@ -21,15 +21,19 @@ internal static class GpcBridgeMerge
 {
     /// <param name="references">The models of the Models input: the GPC input model (structure, no results) and its analysed copy.</param>
     internal static GpcBridgeBuild Build(IReadOnlyList<(GPC.Model.Models.Model Input, GPC.Model.Models.Model Analysed)> references, IEnumerable<BridgePhaseDefinition> phases,
-        IReadOnlyList<string[]> table, string label, BridgeWorkflowMethod method = BridgeWorkflowMethod.Compatible, double tolerance = 1e-6, bool additional = false) =>
-        GpcBridgeBuilder.Build(references.Select(Reference).ToArray(), GpcOnly(phases), table, method, tolerance, additional,
+        IReadOnlyList<string[]> table, string label, BridgeWorkflowMethod method = BridgeWorkflowMethod.Compatible, double tolerance = 1e-6, bool additional = false,
+        GPC.Checkers.CompositeBridge.BridgeModelData bridge = null) =>
+        GpcBridgeBuilder.Build(references.Select((r, i) => Reference(r, i == 0 ? bridge : null)).ToArray(), GpcOnly(phases), table, method, tolerance, additional,
             GpcIdentity.Derive(GpcIdentity.NameSpace, "p2t-bridge:" + label));
 
     /// <summary>The direct GPC reference of an input model and its analysed copy (units and BridGHe angles from the catalog of the copy).</summary>
-    internal static GpcBridgeSource Reference((GPC.Model.Models.Model Input, GPC.Model.Models.Model Analysed) model)
+    /// <param name="bridge">P2S: the bridge data of the input model (super elements, members, local states: those of the GPC input of a model of
+    /// Build Model), or none.</param>
+    internal static GpcBridgeSource Reference((GPC.Model.Models.Model Input, GPC.Model.Models.Model Analysed) model) => Reference(model, null);
+    internal static GpcBridgeSource Reference((GPC.Model.Models.Model Input, GPC.Model.Models.Model Analysed) model, GPC.Checkers.CompositeBridge.BridgeModelData bridge)
     {
         var catalog = GpcResultCatalog.Of(model.Analysed) ?? throw new ArgumentException("GpcTestReferenceWithoutResults: " + model.Analysed.Name);
-        return GpcBridgeSource.Reference(model.Input, catalog.Units, model.Input.BeamElements.Values.ToDictionary(b => b.Id, catalog.BeamAngle), model.Analysed);
+        return GpcBridgeSource.Reference(model.Input, catalog.Units, model.Input.BeamElements.Values.ToDictionary(b => b.Id, catalog.BeamAngle), model.Analysed, bridge);
     }
 
     /// <summary>The phases with the actions on their GPC source only (the FEM source, if any, removed).</summary>

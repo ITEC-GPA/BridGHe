@@ -58,19 +58,15 @@ namespace BridGHe.Grasshopper.Components.Attributes
                 GpcBeamInputs.Attach(new_beam, id => Common.Gpc.Builders.GpcBeamBuilders.WithSuperElement(beam.Gpc, name, id));
                 DA.SetData(0, new_beam);
             }
-            else if (element is GH_Plate plate)
-            {
-                GH_Plate new_plate = new GH_Plate(plate);
-                new_plate.Value.Attributes.Add(se);
-                // R6.2 (lane B): no GPC datum: the reader refuses a super element on a plate (LegacyPlateAttributeNotMappedYet), so the GPC
-                // builder does too (GpcBeamBuilders.PlateWithSuperElement); the GH type converts its FEM value, refused the same way, as before.
-                DA.SetData(0, new_plate);
-            }
             else
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Unsupported element type");
+                // Decision of the user (7/11): a super element takes only beams; any other element (a plate, a node) is an error, with no output.
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, OnlyBeams);
             }
         }
+
+        /// <summary>The error for an element that is not a beam (decision of the user, 7/11: a super element takes only beams).</summary>
+        public const string OnlyBeams = Common.Gpc.Legacy.LegacyModelImport.SuperElementOnlyBeams;
 
         public override GH_Exposure Exposure => GH_Exposure.quarternary;
 

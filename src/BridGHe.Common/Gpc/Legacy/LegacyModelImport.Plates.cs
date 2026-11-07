@@ -47,6 +47,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 }
                 else if (a.Is("PlateSupportAttributeModel"))
                     AddSupport(plate, a.Double("Stiffness"), a.Bool("CompressionOnly"), a.Enum("Face"), units, report, records);
+                else if (a.Is("SuperElementAttributeModel")) throw new NotSupportedException(SuperElementNotOnBeam); // decision of the user (7/11)
                 else throw new NotSupportedException("LegacyPlateAttributeNotMappedYet: " + a.ShortType);
             }
             foreach (var l in pl.Field("Loads").Items)

@@ -64,6 +64,14 @@ internal sealed class GpcBuilderChecks : IDisposable
         return outputs;
     }
 
+    /// <summary>P2S: the last run had to fail with this error (a refused input, no output): its failure is the expected one.</summary>
+    internal void ExpectError(string text)
+    {
+        int last = Failures.Count - 1;
+        if (last >= 0 && Failures[last].Contains(text, StringComparison.Ordinal)) Failures.RemoveAt(last);
+        else Failures.Add(lane + " run " + Runs + ": expected the error " + text);
+    }
+
     /// <summary>The first datum of an output of a run (the input of the next).</summary>
     internal static IGH_Goo Output(List<IGH_Goo>[] outputs, int index) => outputs[index].First();
 

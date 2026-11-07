@@ -48,29 +48,30 @@ internal static class SlabReinforcementTests
             Number(2,2000);Number(3,40);Number(4,1500);Number(5,55);Solve(doc,c);
             Require(((SectionConcreteSlabModel)c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable()).BottomCover==55 && c.Params.Input.Skip(2).All(p=>p.Optional),"GH bottom ports or optional flags invalid.");
         }
-        foreach(bool tapered in new[]{false,true})
+        // Decision (i) = A of the user (7/11): Super Element Check runs only on the GPC bridge model of Build BridGHe Model; without it a clear
+        // error and no outputs. The former BridGHe phases on the FEM results of the composite beam (checked here on a merged FEM fixture, and the
+        // reference of the parity of the D3 path below) are gone with that decision.
         {
             using var doc=new GH_Document();var c=Component(doc,"SuperElementCheckComponent");
-            var start=BridgeGrillageExample.Composite(new());start.ConsiderRebar=true;start.ConcreteSection=slab;start.NShrinkage=12;
-            var end=ModelArchive.Clone(start);if(tapered){end.ConcreteSection.BottomRebarArea=2500;end.ConcreteSection.BottomCover=65;end.NShrinkage=14;}
-            var beam=new CompositeBeamModel(Point3d.Origin,new Point3d(10000,0,0),start,null,end){BeamId="B1"};
+            var start=BridgeGrillageExample.Composite(new());start.ConcreteSection=slab;
+            var beam=new CompositeBeamModel(Point3d.Origin,new Point3d(10000,0,0),start,null,start){BeamId="B1"};
             var source=new BeamModel("B1",Point3d.Origin,new Point3d(10000,0,0),BridgeGrillageExample.LongProperty(new(),0));source.Attributes.Add(new SuperElementAttributeModel("Main"));
             var model=new ModelModel(ModelModel.ModelUnits.Nmm);model.AddElements(new[]{source});
-            var combo=new LoadCombinationModel("Test");model.LoadCombinations.Add(combo);
-            for(int phase=0;phase<3;phase++){var lc=BridgeGrillageExample.Case("Phase"+phase,phase);model.LoadCases.Add(lc);combo.Values.Add(lc,1);foreach(double x in new[]{0.0,0.5,1.0})beam.Results.Add(new BeamForceResultModel(lc,x,0,""){NormalizedLength=true,My=1e7});}
-            var shrinkFem=new LoadCaseModel("Shrink FEM","Shrink FEM"){Stages=new(){new("Shrink FEM"){BridgePhase=LoadCaseModel.Stage.BridgePhases.NShrinkage}}};combo.Values.Add(shrinkFem,1);
-            foreach(double x in new[]{0.0,.5,1.0})beam.Results.Add(new BeamForceResultModel(shrinkFem,x,0,"",true){My=5e6});
-            var shrink=new LoadCaseModel("Shrink","Shrink"){Stages=new(){new("Shrink"){BridgePhase=LoadCaseModel.Stage.BridgePhases.StrainInfinite}}};
-            combo.Values.Add(shrink,1);beam.Loads.Add(new CompositeBeamSlabStrainModel(shrink,new(){Strain=-0.0002}));
-            Set(c,0,Wrap("Fem.GH_Model",model));Set(c,1,Wrap("GH_CompositeBeam",beam));Solve(doc,c,true);
-            var results=c.Params.Output[0].VolatileData.AllData(true).Select(g=>(BridgeStressResult)g.ScriptVariable()).ToArray();Require(results.Length==3,"Expected three checked stations.");
-            for(int i=0;i<3;i++){var input=results[i].Analysis.Input;var row=input.BottomRebars;Require(row.Enabled,"Bottom row lost before gPC checker.");Require(results[i].Analysis.Stages.Count==5,"Expected steel, long, instant, shrinkage FEM and autostress contributions.");Near(results[i].Stage.Contributions[3].HomogenizationN,12+(tapered?i:0));Near(results[i].Stage.Contributions.Last().HomogenizationN,12+(tapered?i:0));Near(row.AxisDistance,55+(tapered?5*i:0));Near(Math.PI*row.Diameter*row.Diameter/4*input.Geometry.SlabWidth/row.Pitch,1500+(tapered?500*i:0));}
+            Set(c,0,Wrap("Fem.GH_Model",model));Set(c,1,Wrap("GH_CompositeBeam",beam));
+            c.GetType().GetField("_run",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(c,true);c.ExpireSolution(false);GH_Document.EnableSolutions=true;doc.Enabled=true;doc.NewSolution(false,GH_SolutionMode.Silent);
+            Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(m=>m.Contains("Build BridGHe Model"))&&c.Params.Output.All(o=>o.VolatileData.IsEmpty),
+                "Super Element Check without the GPC bridge model of Build BridGHe Model: expected its error and no outputs.");
+        }
+        foreach(bool tapered in new[]{false,true})
+        {
+            var start=BridgeGrillageExample.Composite(new());start.ConsiderRebar=true;start.ConcreteSection=slab;start.NShrinkage=12;
+            var end=ModelArchive.Clone(start);if(tapered){end.ConcreteSection.BottomRebarArea=2500;end.ConcreteSection.BottomCover=65;end.NShrinkage=14;}
 #if GPC_PILOT
-            GpcSuperElement(assembly,tapered,start,end,results,Require,Near);
+            GpcSuperElement(assembly,tapered,start,end,Require,Near);
 #endif
         }
 #if GPC_PILOT
-        Console.WriteLine($"SLAB REINFORCEMENT GPC PASS: {gpcChecks} checks on definitions built in GPC (rows of bars, analysis section, invalid rows) and on Super Element Check with D3 on a GPC bridge model, equal to the FEM path.");
+        Console.WriteLine($"SLAB REINFORCEMENT GPC PASS: {gpcChecks} checks on definitions built in GPC (rows of bars, analysis section, invalid rows) and on Super Element Check with D3 on a GPC bridge model; without it, the error of decision (i) = A and no outputs.");
 #endif
     }
 #if GPC_PILOT
@@ -81,6 +82,12 @@ internal static class SlabReinforcementTests
     // Still FEM until chain E: the slab type of Beam Section Concrete Slab (SectionConcreteSlabModel, its archive and its component), the
     // values of the composite beam and of the GH model (the merged FEM model carries the combinations).
     private static int gpcChecks;
+
+    /// <summary>The composite beam of the fixture, made from the beam B1 of the super element «Main» (Composite Beam copies its attributes).</summary>
+    private static CompositeBeamModel Composite(CompositeBeamPropertyModel start,CompositeBeamPropertyModel end)
+    {
+        var beam=new CompositeBeamModel(Point3d.Origin,new Point3d(10000,0,0),start,null,end){BeamId="B1"};beam.Attributes.Add(new SuperElementAttributeModel("Main"));return beam;
+    }
 
     private static GpcCompositeDefinitions.Numbers Numbers(CompositeBeamPropertyModel p)
     {
@@ -125,7 +132,7 @@ internal static class SlabReinforcementTests
     /// enabled at its interpolated cover and area, five stages (steel, long, instant, shrinkage FEM, autostress), n,sh of the shrinkage
     /// contributions. Parity: the same stages, ratios, rows and stresses as the BridGHe phases of the FEM fixture.
     /// </summary>
-    private static void GpcSuperElement(System.Reflection.Assembly assembly,bool tapered,CompositeBeamPropertyModel start,CompositeBeamPropertyModel end,BridgeStressResult[] fem,
+    private static void GpcSuperElement(System.Reflection.Assembly assembly,bool tapered,CompositeBeamPropertyModel start,CompositeBeamPropertyModel end,
         Action<bool,string> require,Action<double,double> near)
     {
         var stations=new[]{0d,5000,10000};var phaseCases=new[]{"Phase0","Phase1","Phase2"};
@@ -155,7 +162,9 @@ internal static class SlabReinforcementTests
         var table=new[]{new[]{"","G","L","I","R"},new[]{"Test","1","1","1","1"}};
         var femPhases=phases.Select(p=>p with{Actions=p.Actions.Select(a=>a with{GpcSource=null}).ToArray()}).ToArray();
         var merged=BridgeWorkflowBuilder.Build(new[]{source},femPhases,table,BridgeWorkflowMethod.Compatible,1e-6);
-        var bridge=GpcBridgeMerge.Build(new[]{(input,gpc)},phases,table,"slab reinforcement "+tapered);
+        // The super element of the beam, as the bridge data of the GPC input of a model of Build Model carry it (Super Element Check reads it there).
+        var data=new GPC.Checkers.CompositeBridge.BridgeModelData();data.SetSuperElement(input.BeamElements.Values.Single().Guid,"Main");
+        var bridge=GpcBridgeMerge.Build(new[]{(input,gpc)},phases,table,"slab reinforcement "+tapered,bridge:data);
         GpcBridgeMerge.RequireSame(bridge,merged,"slab reinforcement "+tapered);
         // The composite beam: FEM properties as its value until chain E, the definitions built in GPC (parity: those of the FEM properties).
         var startDefinition=GpcCompositeDefinitions.Create(Numbers(start));var endDefinition=tapered?GpcCompositeDefinitions.Create(Numbers(end)):startDefinition;
@@ -164,7 +173,7 @@ internal static class SlabReinforcementTests
         IGH_Goo Wrap(string name,object value){var t=assembly.GetType("BridGHe.Grasshopper.DataTypes."+name,true);var g=(IGH_Goo)Activator.CreateInstance(t);t.GetProperty("Value").SetValue(g,value);return g;}
         var model=Wrap("Fem.GH_Model",merged.Model);model.GetType().GetMethod("AttachBridge").Invoke(model,new object[]{bridge.Bridge});
         var beam=(IGH_Goo)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.DataTypes.GH_CompositeBeam",true),
-            new object[]{new CompositeBeamModel(Point3d.Origin,new Point3d(10000,0,0),start,null,end){BeamId="B1"},null});
+            new object[]{Composite(start,end),null});
         beam.GetType().GetProperty("StartDefinition").SetValue(beam,startDefinition);beam.GetType().GetProperty("EndDefinition").SetValue(beam,endDefinition);
         using var doc=new GH_Document();
         var c=(GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components.BridgeChecks.SuperElementCheckComponent",true));c.CreateAttributes();doc.AddObject(c,false);
@@ -173,7 +182,6 @@ internal static class SlabReinforcementTests
         c.GetType().GetField("_run",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(c,true);c.ExpireSolution(false);
         GH_Document.EnableSolutions=true;doc.Enabled=true;doc.NewSolution(false,GH_SolutionMode.Silent);
         require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count==0,"GPC: "+string.Join("; ",c.RuntimeMessages(GH_RuntimeMessageLevel.Error)));
-        require(!c.RuntimeMessages(GH_RuntimeMessageLevel.Remark).Any(m=>m.Contains("fasi BridGHe")),"GPC: Super Element Check fell back to the BridGHe phases.");
         var results=c.Params.Output[0].VolatileData.AllData(true).Select(g=>(BridgeStressResult)g.ScriptVariable()).ToArray();require(results.Length==3,"GPC: Expected three checked stations.");
         for(int i=0;i<3;i++)
         {
@@ -181,12 +189,8 @@ internal static class SlabReinforcementTests
             require(results[i].Analysis.Stages.Count==5,"GPC: Expected steel, long, instant, shrinkage FEM and autostress contributions: "+results[i].Analysis.Stages.Count);
             near(results[i].Stage.Contributions[3].HomogenizationN,12+(tapered?i:0));near(results[i].Stage.Contributions.Last().HomogenizationN,12+(tapered?i:0));
             near(row.AxisDistance,55+(tapered?5*i:0));near(Math.PI*row.Diameter*row.Diameter/4*input3.Geometry.SlabWidth/row.Pitch,1500+(tapered?500*i:0));
-            // Parity (removed with the FeMM models): the BridGHe phases of the FEM fixture.
-            var f=fem[i];
-            require(results[i].Stage.Contributions.Select(x=>x.HomogenizationN).SequenceEqual(f.Stage.Contributions.Select(x=>x.HomogenizationN)),"GPC: modular ratios of the contributions differ from the BridGHe phases.");
-            near(results[i].Point1_ConcreteSigma,f.Point1_ConcreteSigma);near(results[i].Point8_SteelSigma,f.Point8_SteelSigma);
         }
-        gpcChecks+=3+3*9;
+        gpcChecks+=3+3*6;
     }
 #endif
 }

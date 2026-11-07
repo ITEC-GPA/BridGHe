@@ -120,6 +120,69 @@ namespace BridGHe.Common.Checks
                 }
                 return new BridgePhaseActions(steel, infinite, instant, strainInfinite, strainInstant, shrinkage);
             }
+
+            /// <summary>R6.4 (5), decision (i) = A: the actions of a combination of the GPC bridge model at a station, from its combination table
+            /// (<see cref="Gpc.GpcBridge.Combinations"/>: case names and coefficients in order, zeros included) and the phase of every merged
+            /// case from the records of the recipe (<see cref="Gpc.GpcBridge.Records"/>: "key [FEM]" in the behaviour of its action, "key
+            /// [strain]" a strain increment), with the same sums in the same order as <see cref="Assemble(double, LoadCombinationModel, CoordinateSystem)"/>
+            /// on the merged FEM model (whose cases had these phases as their one stage).</summary>
+            public BridgePhaseActions Assemble(double station, IEnumerable<(string Case, double Factor)> factors, IReadOnlyDictionary<string, BridgeCasePhase> phases, CoordinateSystem reference)
+            {
+                if (!double.IsFinite(station)) throw new ArgumentOutOfRangeException(nameof(station));
+                if (factors == null) throw new ArgumentNullException(nameof(factors));
+                if (phases == null) throw new ArgumentNullException(nameof(phases));
+                ResultBeamForces Zero() => new ResultBeamForces(0, 0, 0, 0, 0, 0, reference);
+                var steel = Zero(); var infinite = Zero(); var instant = Zero();
+                ResultBeamForces shrinkage = null;
+                double strainInfinite = 0, strainInstant = 0;
+                foreach (var (name, factor) in factors)
+                {
+                    if (factor == 0) continue;
+                    if (name == null || !phases.TryGetValue(name, out var phase)) throw new InvalidOperationException($"Fase non assegnata per il caso {name}.");
+                    if (phase == BridgeCasePhase.StrainInfinite || phase == BridgeCasePhase.StrainInstant)
+                    {
+                        _strains.TryGetValue(name, out double unscaledStrain);
+                        double strain = unscaledStrain * factor;
+                        if (phase == BridgeCasePhase.StrainInfinite) strainInfinite += strain;
+                        else strainInstant += strain;
+                        continue;
+                    }
+                    var force = BridgeCheckAdapter.Scale(BridgeForceConvention.FromStraus(ForceAt(name, station), name, reference), factor);
+                    switch (phase)
+                    {
+                        case BridgeCasePhase.OnlySteel: steel += force; break;
+                        case BridgeCasePhase.NInfinite: infinite += force; break;
+                        case BridgeCasePhase.NInstant: instant += force; break;
+                        case BridgeCasePhase.NShrinkage: shrinkage = (shrinkage ?? Zero()) + force; break;
+                        default: throw new InvalidOperationException($"Fase non assegnata per il caso {name}.");
+                    }
+                }
+                return new BridgePhaseActions(steel, infinite, instant, strainInfinite, strainInstant, shrinkage);
+            }
+        }
+
+        /// <summary>R6.4 (5): the phase of every merged case of a bridge recipe, as <see cref="BridgeWorkflowBuilder"/> gave the cases of the
+        /// merged FEM model: the force case of an action in its behaviour (steel, long term, short term, shrinkage), its strain case a strain
+        /// increment (short term: instantaneous, otherwise long term).</summary>
+        public static IReadOnlyDictionary<string, BridgeCasePhase> CasePhases(BridgeWorkflow records)
+        {
+            if (records == null) throw new ArgumentNullException(nameof(records));
+            var phases = new Dictionary<string, BridgeCasePhase>(StringComparer.Ordinal);
+            foreach (var a in records.Phases.SelectMany(p => p.Actions))
+            {
+                if (a.ForceCase != null) phases[a.ForceCase] = a.Behavior switch
+                {
+                    BridgeActionBehavior.Steel => BridgeCasePhase.OnlySteel,
+                    BridgeActionBehavior.LongTerm => BridgeCasePhase.NInfinite,
+                    BridgeActionBehavior.ShortTerm => BridgeCasePhase.NInstant,
+                    _ => BridgeCasePhase.NShrinkage,
+                };
+                if (a.StrainCase != null) phases[a.StrainCase] = a.Behavior == BridgeActionBehavior.ShortTerm ? BridgeCasePhase.StrainInstant : BridgeCasePhase.StrainInfinite;
+            }
+            return phases;
         }
     }
+
+    /// <summary>R6.4 (5): the phase of a merged case of the bridge recipe (the former BridgePhases of its FEM case).</summary>
+    public enum BridgeCasePhase { OnlySteel, NInfinite, NInstant, NShrinkage, StrainInfinite, StrainInstant }
 }

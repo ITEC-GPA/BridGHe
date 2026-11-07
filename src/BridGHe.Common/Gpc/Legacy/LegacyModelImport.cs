@@ -273,6 +273,11 @@ namespace BridGHe.Common.Gpc.Legacy
     {
         public const string Program = "BridGHe";
 
+        /// <summary>Decision of the user (7/11): a super element takes only beams. The message of the Super Element component for an element that
+        /// is not a beam, and (with its code) the refusal of the reader for a plate or a node with a super element in a former file or payload.</summary>
+        public const string SuperElementOnlyBeams = "A Super-Element takes only beams: connect Beam elements (plates, nodes and other elements cannot belong to a Super-Element).";
+        internal const string SuperElementNotOnBeam = "LegacySuperElementNotOnBeam: " + SuperElementOnlyBeams;
+
         /// <param name="femPropertySignature">F6 (L11): the former section-state signature (<c>BridgeSectionAssignment.Signature</c>) of the
         /// property of the former beam k (0-based), when the former model is at hand (<see cref="GpcModels"/>); a section state whose
         /// signature differs is stale (the property changed after Bridge State Override). Null: every state is taken as current.</param>

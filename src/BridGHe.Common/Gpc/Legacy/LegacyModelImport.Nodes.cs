@@ -85,6 +85,7 @@ namespace BridGHe.Common.Gpc.Legacy
                     string value = a.String("Value");
                     if (string.IsNullOrEmpty(value)) report.Carry("Empty Element ID attribute"); else node.Attributes.Add(new ElementLabelAttribute(value));
                 }
+                else if (a.Is("SuperElementAttributeModel")) throw new NotSupportedException(SuperElementNotOnBeam); // decision of the user (7/11)
                 else throw new NotSupportedException("LegacyNodeAttributeNotMappedYet: " + a.ShortType);
             }
             foreach (var l in n.Field("Loads").Items)
