@@ -209,6 +209,28 @@ internal static partial class LegacyPayloadFixtures
             + (skipped.Count == 0 ? "" : "; skipped: " + string.Join("; ", skipped)));
     }
 
+    /// <summary>The version of BridGHe.Common that wrote the fixtures.</summary>
+    // Frozen: the parity must not depend on the assembly version (the fixtures are never regenerated for a new version).
+    private const string FixtureVersion = "0.2.0.0";
+
+    /// <summary>P2S (7/11, master dry run): the FEM archive names its types by their assembly-qualified name (hexadecimal), with the version of
+    /// BridGHe.Common; the fixtures were written by <see cref="FixtureVersion"/>. A fixture as the writer of the current version gives it: the
+    /// same bytes but for that version, replaced in the hexadecimal names (the same length, so no length prefix changes).</summary>
+    private static byte[] SameVersion(byte[] fixture)
+    {
+        static byte[] Hex(string s) => Encoding.ASCII.GetBytes(Convert.ToHexString(Encoding.UTF8.GetBytes(s)));
+        var from = Hex("BridGHe.Common, Version=" + FixtureVersion); var to = Hex("BridGHe.Common, Version=" + typeof(ModelArchive).Assembly.GetName().Version);
+        if (from.AsSpan().SequenceEqual(to)) return fixture;
+        if (from.Length != to.Length) throw new Exception("LEGACY PAYLOAD FIXTURES FAIL: a version of another length: " + typeof(ModelArchive).Assembly.GetName().Version);
+        var result = (byte[])fixture.Clone();
+        for (int i = result.AsSpan().IndexOf(from); i >= 0; )
+        {
+            to.CopyTo(result, i);
+            int next = result.AsSpan(i + from.Length).IndexOf(from); i = next < 0 ? -1 : i + from.Length + next;
+        }
+        return result;
+    }
+
     /// <summary>Parity until R6.5: every fixture equals the payload the FEM writer gives now (byte for byte), the outcome of the reader is
     /// the recorded one, and the former local axes are the recorded ones. The number of checks.</summary>
     internal static int Parity()
@@ -218,7 +240,7 @@ internal static partial class LegacyPayloadFixtures
         foreach (var f in Index())
         {
             if (!builders.TryGetValue(f.Name, out var build)) throw new Exception("LEGACY PAYLOAD FIXTURES FAIL: no builder for " + f.Name);
-            if (!ModelArchive.Write(build()).AsSpan().SequenceEqual(Bytes(f.Name))) throw new Exception("LEGACY PAYLOAD FIXTURES FAIL: the FEM writer gives other bytes now for " + f.Name);
+            if (!ModelArchive.Write(build()).AsSpan().SequenceEqual(SameVersion(Bytes(f.Name)))) throw new Exception("LEGACY PAYLOAD FIXTURES FAIL: the FEM writer gives other bytes now for " + f.Name);
             checks++;
         }
         foreach (var u in AllUnits)
