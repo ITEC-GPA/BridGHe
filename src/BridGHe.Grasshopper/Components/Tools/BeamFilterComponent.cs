@@ -87,6 +87,17 @@ namespace BridGHe.Grasshopper.Components
             List<GH_Beam> others = new List<GH_Beam>();
             double tol = Helpers.ModelHelper.GetTolerance();
 
+            // R6.5 P1 lane 1a: when a beam is given by its GPC draft alone, the partition is the one of the GPC drafts only (there is no FEM
+            // partition to compare with, nor to fall back on for a refused draft).
+            if (beams.Any(b => b.Value == null))
+            {
+                var only = GpcBeamFilter.Select(beams, ids, iniPositions, endPositions, props, groups, tol);
+                if (only == null) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The GPC datum of a beam is refused: the beams cannot be filtered."); return; }
+                DA.SetDataList(0, beams.Where((b, i) => only[i]).ToList());
+                DA.SetDataList(1, beams.Where((b, i) => !only[i]).ToList());
+                return;
+            }
+
             for (int i = 0; i < beams.Count; i++)
             {
                 GH_Beam b = beams[i];

@@ -121,9 +121,12 @@ namespace BridGHe.Grasshopper.Helpers
         internal static bool Refusal(Exception x) => x is ArgumentException || x is NotSupportedException;
 
         /// <summary>A decision taken on the GPC draft of an input (<paramref name="gpc"/>, null when the draft of the input is refused: then the
-        /// decision on the FEM value, the bridge until R6.5). Under a check host the decision on the FEM value is computed too and must agree.</summary>
+        /// decision on the FEM value, the bridge until R6.5). Under a check host the decision on the FEM value is computed too and must agree.
+        /// R6.5 P1 lane 1a: <paramref name="fem"/> null for an input without a FEM value (given by its GPC draft alone): the decision on the
+        /// draft is the only one (a refusal of the draft is rethrown, there is no FEM value to fall back on).</summary>
         internal static bool Decide(Func<bool> gpc, Func<bool> fem, string what)
         {
+            if (fem == null) return gpc();
             bool? onGpc;
             try { onGpc = gpc(); } catch (Exception x) when (Refusal(x)) { onGpc = null; }
             if (onGpc == null) return fem();

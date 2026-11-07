@@ -94,7 +94,7 @@ namespace BridGHe.Grasshopper.Components.Tools
             for (int i = 0; i < plates.Count; i++)
             {
                 GH_Plate p = plates[i];
-                bool add = GpcBuilderAttach.Decide(() => Matches(p.Gpc, ids, groupNames, props, positions, tol), () => FemMatches(p, ids, groups, props, positions, tol), "Plate Filter");
+                bool add = GpcBuilderAttach.Decide(() => Matches(p.Gpc, ids, groupNames, props, positions, tol), p.Value == null ? null : () => FemMatches(p, ids, groups, props, positions, tol), "Plate Filter"); // R6.5 P1 lane 1a: a plate without FEM value on its draft alone
                 if (add)
                     filtered.Add(p);
                 else
