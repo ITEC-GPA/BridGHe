@@ -555,7 +555,7 @@ internal static class GpcDraftArchiveChecks
         if (byType.StartsWith("REFUSED", StringComparison.Ordinal) || byType.StartsWith("NO ", StringComparison.Ordinal)) return;
         // The final writer of the GH type and its reader.
         var written = new GH_IO.Serialization.GH_LooseChunk("Item");
-        if (!(bool)t.GetMethod("Write").Invoke(goo, new object[] { written })) { count(name + " not written"); fail(where + ": " + name + " Write returned false"); return; }
+        if (!(bool)t.GetMethod("Write", new[] { typeof(GH_IO.Serialization.GH_IWriter) }).Invoke(goo, new object[] { written })) { count(name + " not written"); fail(where + ": " + name + " Write returned false"); return; }
         if (!written.ItemExists("BridGHeRecords") && !(written.ItemExists("Data") && BridGHe.Common.Gpc.GpcGooArchive.IsGpc(written.GetByteArray("Data"))) && type != "CompositeBeamPropertyModel")
         { count(name + " written without the datum"); fail(where + ": " + name + " written without BGHGPC1 or records"); return; }
         var back = Activator.CreateInstance(t);
