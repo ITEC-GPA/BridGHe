@@ -35,7 +35,14 @@ internal static class BridgeMergeTests
         IGH_Goo Model(ModelModel model)
         {
             var type = assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model", true); var goo = (IGH_Goo)Activator.CreateInstance(type);
+#if GPC_PILOT
+            // R6.4 (6) (P2S, 7/11): the workflow components read the analysed GPC model only: the GPC results of the same samples, on the model with
+            // its beam end nodes (a beam without nodes does not convert).
+            model = ExampleRemake04.WithEndNodes(model, out _);
+            type.GetProperty("Value").SetValue(goo, model); type.GetMethod("AttachGpc").Invoke(goo, new object[] { GpcSyntheticResults.Analysed(model) }); return goo;
+#else
             type.GetProperty("Value").SetValue(goo, model); return goo;
+#endif
         }
         void Generic(GH_Component c, int i, IGH_Goo value) => ((Param_GenericObject)c.Params.Input[i]).PersistentData.Append(value);
         void Text(GH_Component c, int i, string value) { var p = (Param_String)c.Params.Input[i]; p.PersistentData.Clear(); p.SetPersistentData(value); }
@@ -64,7 +71,8 @@ internal static class BridgeMergeTests
         var list = new GH_ValueList { ListMode = GH_ValueListMode.DropDown }; list.CreateAttributes(); list.ListItems.Clear();
         list.ListItems.Add(new GH_ValueListItem("G", "\"G\"") { Selected = true }); list.ListItems.Add(new GH_ValueListItem("Obsolete strain case", "\"Obsolete\"")); doc.AddObject(list, false);
         g.Params.Input[2].AddSource(list); g.ExpireSolution(false); Solve(doc, build); Solve(doc, build);
-        BridgeWorkflowTests.Require(list.ListItems.Count == 1 && list.SelectedItems.Single().Name == "G", "FEM case selector lost or mixed its selection.");
+        // R6.4 (6): the list holds the GPC cases of the source (with the default "Dead"), keeps the selection and drops the obsolete item.
+        BridgeWorkflowTests.Require(list.ListItems.Any(i => i.Name == "G") && list.ListItems.All(i => i.Name != "Obsolete strain case") && list.SelectedItems.Single().Name == "G", "FEM case selector lost or mixed its selection.");
         Int(phase1, 0, 5); phase1.ExpireSolution(false); Solve(doc, build);
         var renamed = (ModelModel)build.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
         BridgeWorkflowTests.Require(renamed.LoadCases.Select(c => c.Name).SequenceEqual(merged.LoadCases.Select(c => c.Name)), "GH renumbering changed combination keys.");

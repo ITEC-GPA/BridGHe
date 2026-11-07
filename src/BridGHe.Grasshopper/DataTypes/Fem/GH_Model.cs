@@ -256,6 +256,27 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             lock (gpcLock) { _analysed = (bridge ?? throw new ArgumentNullException(nameof(bridge))).Model; _analysedOf = Value; _bridge = bridge; _gpcError = null; }
         }
 
+        /// <summary>
+        /// R6.4 (5), decision (i) = A, examples 11–19 (coordinator, 7/11): the analysed GPC model (with the results catalog of a BridGHe analysis)
+        /// that every beam of this model comes from, when Build Model built it from beams linked to one analysed model (Super Element Filter or
+        /// Decompose Model on the output of an analysis) and nothing else; null otherwise. Its numbering is that of the analysis, not of
+        /// <see cref="Value"/>: Build BridGHe Model reads the actions of such a model from it by BridGHe ID (the same beams, the same results).
+        /// Never <see cref="GpcResults"/> (whose numbering is that of this model). Not persisted; copies of this datum keep it.
+        /// </summary>
+        public GPC.Model.Models.Model LinkedGpcResults { get { lock (gpcLock) return _linked != null && ReferenceEquals(_linkedOf, Value) ? _linked : null; } }
+
+        /// <summary>Build Model: the analysed GPC model every beam of <see cref="Value"/> comes from (<see cref="LinkedGpcResults"/>).</summary>
+        public void AttachLinkedResults(GPC.Model.Models.Model analysed)
+        {
+            if (Common.Gpc.GpcResultCatalog.Of(analysed ?? throw new ArgumentNullException(nameof(analysed))) == null) throw new ArgumentException("GpcLinkedModelWithoutResults: " + analysed.Name);
+            lock (gpcLock) { _linked = analysed; _linkedOf = Value; }
+        }
+        private GPC.Model.Models.Model _linked;
+        private ModelModel _linkedOf;
+
+        /// <summary>The analysed GPC model the actions of this model are read from: <see cref="GpcResults"/>, else <see cref="LinkedGpcResults"/>.</summary>
+        public GPC.Model.Models.Model GpcActionResults => GpcResults ?? LinkedGpcResults;
+
         /// <summary>The GPC bridge model attached by Build Bridge Model for <see cref="Value"/>, or null.</summary>
         public Common.Gpc.GpcBridge GpcBridge { get { lock (gpcLock) return _bridge != null && ReferenceEquals(_analysedOf, Value) && ReferenceEquals(_analysed, _bridge.Model) ? _bridge : null; } }
 
@@ -267,6 +288,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 if (_input != null && ReferenceEquals(_inputOf, Value)) copy.AttachInput(_input);
                 if (_legacy != null && ReferenceEquals(_legacyOf, Value)) lock (copy.gpcLock) { copy._legacy = _legacy; copy._legacyOf = copy.Value; }
                 if (_drafts != null && ReferenceEquals(_draftsOf, Value)) copy.AttachDrafts(_drafts);
+                if (_linked != null && ReferenceEquals(_linkedOf, Value)) lock (copy.gpcLock) { copy._linked = _linked; copy._linkedOf = copy.Value; }
             }
         }
 
@@ -391,11 +413,17 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             _guids[elementModel] = guid;
         }
 
-        public override bool Write(GH_IWriter writer) => Write(writer, true);
+        public override bool Write(GH_IWriter writer) => Write(writer, true, true);
 
         /// <summary>The datum with or without the drafts of its elements: the analysis components leave them out of the model they keep
-        /// (option 1 of P2Q, coordinator 7/11: <see cref="Helpers.AnalysisDrafts"/> attaches those of their input again after opening).</summary>
-        public bool Write(GH_IWriter writer, bool drafts)
+        /// (option 1 of P2Q, coordinator 7/11: <see cref="Helpers.AnalysisDrafts"/> attaches those of their input again after opening), and
+        /// without its results (they keep them in the results file next to the .st7).</summary>
+        public bool Write(GH_IWriter writer, bool drafts) => Write(writer, drafts, false);
+
+        /// <summary>R6.4 (coordinator, 7/11): <paramref name="results"/> writes the analysed GPC model with its results (<see cref="GpcResults"/>)
+        /// in the item <see cref="Common.Gpc.GpcResultsFile.Chunk"/>: a model internalised in a parameter (a model analysed, or with synthetic
+        /// results, in 0.4.0 form) keeps them; read back, they are attached again. Never the bridge model of Build BridGHe Model (no catalog).</summary>
+        public bool Write(GH_IWriter writer, bool drafts, bool results)
         {
             try
             {
@@ -409,6 +437,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 if (drafts)
                     try { var carried = GpcDrafts; if (carried != null) writer.SetByteArray(Common.Gpc.GpcModelDrafts.Chunk, Common.Gpc.GpcModelDrafts.Write(carried)); }
                 catch (Exception ex) when (Value != null && (ex is ArgumentException || ex is NotSupportedException || ex is InvalidOperationException || ex is System.Runtime.Serialization.SerializationException)) { }
+                if (results && GpcResults is GPC.Model.Models.Model analysed) writer.SetByteArray(Common.Gpc.GpcResultsFile.Chunk, Common.Gpc.GpcResultsFile.ToBytes(analysed));
                 return true;
             }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
@@ -442,6 +471,10 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 }
                 // R6.4 (2): the drafts of the elements saved with the model (BGHGPC1 of the GH_Model, extended; absent in former files).
                 // Until R6.5 drafts that cannot be read are left out (the elements keep the conversion of their FEM values).
+                // R6.4 (coordinator, 7/11): an internalised model with its results (0.4.0 form).
+                if (reader.ItemExists(Common.Gpc.GpcResultsFile.Chunk) && Value != null)
+                    try { AttachGpc(Common.Gpc.GpcResultsFile.FromBytes(reader.GetByteArray(Common.Gpc.GpcResultsFile.Chunk))); }
+                    catch (Exception ex) when (ex is System.IO.InvalidDataException || ex is ArgumentException || ex is NotSupportedException || ex is System.Runtime.Serialization.SerializationException) { System.Diagnostics.Debug.WriteLine(ex); }
                 if (reader.ItemExists(Common.Gpc.GpcModelDrafts.Chunk) && Value != null)
                     try { AttachDrafts(Common.Gpc.GpcModelDrafts.Read(reader.GetByteArray(Common.Gpc.GpcModelDrafts.Chunk))); }
                     catch (Exception ex) when (ex is System.Runtime.Serialization.SerializationException || ex is InvalidDataException || ex is EndOfStreamException || ex is ArgumentException) { }

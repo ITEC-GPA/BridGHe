@@ -31,7 +31,15 @@ internal static class BridgeDesignExamples
         var type = plugin.GetTypes().Single(t => t.Name == typeName);
         if (typeName == "GH_Beam") return (IGH_Goo)Activator.CreateInstance(type, new object[] { value, null });
         if (typeName != "GH_Model") return (IGH_Goo)Activator.CreateInstance(type, new[] { value });
-        var goo = (IGH_Goo)Activator.CreateInstance(type); type.GetProperty("Value").SetValue(goo, value); return goo;
+        var goo = (IGH_Goo)Activator.CreateInstance(type); type.GetProperty("Value").SetValue(goo, value);
+#if GPC_PILOT
+        // R6.4 (6) (P2S, 7/11): the result utilities read the analysed GPC model only: a model with stored results gets the GPC results of the
+        // same samples (GpcSyntheticResults, as the remade examples 24, 42, 43); a model the GPC reader refuses keeps none.
+        if (value is ModelModel fem && fem.Elements.Any(e => e.Results.Count != 0))
+            try { type.GetMethod("AttachGpc").Invoke(goo, new object[] { GpcSyntheticResults.Analysed(fem) }); }
+            catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is InvalidOperationException) { }
+#endif
+        return goo;
     }
     private static GH_Panel Panel(GH_Document doc, string name, string text, float x, float y, int width = 300, int height = 115)
     {
@@ -283,7 +291,7 @@ internal static class BridgeDesignExamples
         using var doc = new GH_Document(); Header(doc, "43 | STORIE PER FATICA", "Storia ordinata dimostrativa 0,10,2,8,0: cicli di ampiezza 10 e 6.\nA sinistra valori diretti in MPa; a destra stessa storia da campioni FEM SINTETICI N. Nessuna curva S-N o danno automatico.");
         var direct = Add(doc, "BridgeFatigueHistoryComponent", 450, 50); Input(doc, direct, 0, 0, 10, 2, 8, 0); Info(doc, direct, 5, 850, 50);
         var fem = Add(doc, "BridgeFatigueHistoryComponent", 1500, 50);
-        Data(doc, fem, 1, "Transito sintetico, non Straus", Goo("GH_Model", BridgeFatigueTests.HistoryModel()));
+        Data(doc, fem, 1, "Transito sintetico, non Straus", Goo("GH_Model", ExampleRemake04.WithEndNodes(BridgeFatigueTests.HistoryModel(), out _)));
         Text(fem, 2, "1"); Number(fem, 3, 500); Int(fem, 5, 0); Input(doc, fem, 4, "Q0", "Q1", "Q2", "Q3", "Q4"); Info(doc, fem, 1, 1900, 50);
         Save(doc, "43-storie-fatica", d =>
         {

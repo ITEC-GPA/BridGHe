@@ -109,7 +109,11 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             List<GH_Beam> super_beam = new List<GH_Beam>();
             // F6 (a)/(b), chain C: the beams keep the link to their beam of the GPC bridge model (FEM beam i is GPC beam i + 1, the numbering
             // of the conversion), as Decompose Model does for an analysed model.
+            // R6.4 (5) (coordinator, 7/11; examples 11–19): on the output of an analysis the beams keep their analysed GPC beam too, by the same
+            // numbering, as Decompose Model does (Build Model then knows the analysis a model rebuilt from them comes from; Beam Results reads them).
             var bridge = model.GpcBridge?.Model;
+            if (bridge == null && model.HasAnalysedGpc && model.Gpc is GPC.Model.Models.Model analysedModel && analysedModel.BeamElements.Count == model.Value.Beams.Count)
+                bridge = analysedModel;
             // R6.4 (2), extension (α): the drafts the model carries for its beams, with the identity of the conversion of every FEM value until
             // R6.5; none: the conversion of the FEM values, as before.
             var drafts = GpcModelDraftsAttach.Of(model);

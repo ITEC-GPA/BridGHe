@@ -103,10 +103,11 @@ internal static class RegressionTests
 #if GPC_PILOT
         // F6A: conversions to GPC (lane P2B). Inserted before the release-set guards, which require the pinned lib/GPC set.
         var gpc = new Dictionary<string, Action> { ["gpc-legacy-import"] = GpcLegacyImportTests.Run, ["gh-model-gpc"] = GhModelGpcChecks.Run, ["gpc-results-file"] = GhModelGpcChecks.ResultsFile, ["gpc-materials"] = GhModelGpcChecks.Materials, ["gpc-bridge-model"] = GpcBridgeComparison.Regression, ["gpc-model-transforms"] = GpcInputComparison.Regression, ["gpc-composite-sections"] = GpcCompositeSectionChecks.Regression, ["gpc-state-override"] = GpcStateOverrideChecks.Regression, ["gpc-element-drafts"] = GpcElementDraftChecks.Regression, ["gpc-draft-merge"] = GpcDraftMergeChecks.Regression, ["gpc-build-model"] = GpcBuildModelChecks.Regression, ["gpc-material-kinds"] = GpcMaterialKindChecks.Regression, ["gpc-draft-archive"] = GpcDraftArchiveChecks.Regression, ["gpc-builders-a"] = GpcBuilderChecksA.Regression, ["gpc-builders-b"] = GpcBuilderChecksB.Regression, ["gpc-builders-c"] = GpcBuilderChecksC.Regression, ["gpc-result-selection"] = GpcResultSelectionChecks.Regression, ["gpc-analysis-drafts"] = GpcAnalysisDraftsChecks.Regression };
+        gpc["remade-examples"] = ExampleRemake04.Replay; // P2S (7/11): the five examples remade in 0.4.0 form
         tests = gpc.Concat(tests).ToDictionary(t => t.Key, t => t.Value);
 #endif
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
-        int count = 0;
+        int count = 0, failed = 0;
         foreach (var test in tests.Where(t => selection == "all" || t.Key == selection))
         {
             if (selection == "all" && test.Key is "plot-preview" or "bridge-plots" or "bridge-report-component") { Console.WriteLine("SEPARATE HOST: " + test.Key + " (executed by tools/build.ps1 -Smoke)"); continue; }
@@ -118,12 +119,14 @@ internal static class RegressionTests
                 // while unwinding, hiding the managed failure and returning exit code zero.
                 Console.Error.WriteLine("FAIL REGRESSION: " + test.Key + "\n" + error);
                 Console.Error.Flush();
-                return 1;
+                // P2S (7/11): BRIDGHE_REGRESSION_CONTINUE=1 runs the rest and fails at the end (diagnostics; the gates stop at the first).
+                if (Environment.GetEnvironmentVariable("BRIDGHE_REGRESSION_CONTINUE") != "1") return 1;
+                failed++; continue;
             }
             count++; Console.WriteLine("PASS REGRESSION: " + test.Key);
         }
-        Console.WriteLine($"REGRESSION TOTAL {count}");
-        return 0;
+        Console.WriteLine($"REGRESSION TOTAL {count}" + (failed > 0 ? $", {failed} FAILED" : ""));
+        return failed > 0 ? 1 : 0;
     }
 
     private static void ArchiveBeforeCleanup()

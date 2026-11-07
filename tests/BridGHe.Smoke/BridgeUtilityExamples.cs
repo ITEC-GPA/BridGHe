@@ -29,7 +29,15 @@ internal static class BridgeUtilityExamples
     {
         var type = plugin.GetTypes().Single(t => t.Name == name);
         if (name != "GH_Model") return (IGH_Goo)Activator.CreateInstance(type, new[] { value });
-        var goo = (IGH_Goo)Activator.CreateInstance(type); type.GetProperty("Value").SetValue(goo, value); return goo;
+        var goo = (IGH_Goo)Activator.CreateInstance(type); type.GetProperty("Value").SetValue(goo, value);
+#if GPC_PILOT
+        // R6.4 (6) (P2S, 7/11): the result utilities read the analysed GPC model only: a model with stored results gets the GPC results of the
+        // same samples (GpcSyntheticResults, as the remade examples 24, 42, 43); a model the GPC reader refuses keeps none.
+        if (value is ModelModel fem && fem.Elements.Any(e => e.Results.Count != 0))
+            try { type.GetMethod("AttachGpc").Invoke(goo, new object[] { GpcSyntheticResults.Analysed(fem) }); }
+            catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is InvalidOperationException) { }
+#endif
+        return goo;
     }
     private static void Generic(GH_Component c, int port, params IGH_Goo[] values)
     { var p = (Param_GenericObject)c.Params.Input[port]; p.PersistentData.Clear(); foreach (var v in values) p.PersistentData.Append(v); }
@@ -93,10 +101,11 @@ internal static class BridgeUtilityExamples
     }
     private static void Envelopes()
     {
-        using var doc = new GH_Document(); Header(doc, "24 | INVILUPPI CONCOMITANTI\nCampioni numerici controllati, non una soluzione FEM: G e Q con passo mobile 2. Unità N mm.\nM3 minimo Q conserva N=-50, V2=13, V3=-17, T=19, M2=-23 dello stesso campione. Reazione Fz=-120; spostamento Uz=-10.");
-        var model = Goo("GH_Model", BridgeUtilityTests.Source());
+        using var doc = new GH_Document(); Header(doc, "24 | INVILUPPI CONCOMITANTI\nCampioni numerici controllati, non una soluzione FEM: G e Q (Q era al passo mobile 2; i risultati GPC della 0.4.0 non hanno passi: Step 0). Unità N mm.\nM3 minimo Q conserva N=-50, V2=13, V3=-17, T=19, M2=-23 dello stesso campione. Reazione Fz=-120; spostamento Uz=-10.");
+        // R6.4 (6) (P2S): the GPC results of the same samples need the beam end nodes; the node envelopes then select the support node A.
+        var model = Goo("GH_Model", ExampleRemake04.WithEndNodes(BridgeUtilityTests.Source(), out _));
         string[] types = { "BridgeResultCasesComponent", "BridgeBeamEnvelopeComponent", "BridgeBearingEnvelopeComponent", "BridgeDisplacementEnvelopeComponent" };
-        for (int i = 0; i < types.Length; i++) { var c = Add(doc, types[i], 80 + i * 340, 80); Generic(c, 0, model); Panel(doc, c, i == 0 ? 0 : 2, 50 + i * 340, 460); }
+        for (int i = 0; i < types.Length; i++) { var c = Add(doc, types[i], 80 + i * 340, 80); Generic(c, 0, model); if (i >= 2) Text(c, 1, "A"); Panel(doc, c, i == 0 ? 0 : 2, 50 + i * 340, 460); }
         Save(doc, "24-inviluppi-concomitanti", d =>
         {
             BridgeUtilityTests.Assert(Output(Find(d, types[1]), 2).Cast<double>().All(v => v < 0), "GH beam signed envelope failed.");

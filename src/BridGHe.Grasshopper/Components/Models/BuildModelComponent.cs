@@ -125,6 +125,13 @@ namespace BridGHe.Grasshopper.Components.Models
                     var input = Common.Gpc.Legacy.LegacyBuildModel.Build(name, new Common.Gpc.BridgeUnits(Common.Gpc.BridgeUnits.Parse(((ModelModel.ModelUnits)units).ToString())), Settings.Instance.Tolerance,
                         nodeDrafts, beamDrafts, plateDrafts, combinations.Select(c => c.Gpc).ToList(), stages.Select(s => s.Gpc).ToList());
                     model.AttachInput(input);
+                    // R6.4 (5), decision (i) = A (coordinator, 7/11; examples 11–19): a model rebuilt from beams that all come from one analysed GPC
+                    // model (Super Element Filter or Decompose Model on the output of an analysis), and nothing else, keeps that model: Build
+                    // BridGHe Model reads its actions from it by BridGHe ID, as the FEM merge read the results the beams carried.
+                    var analysed = beams.Count == 0 || nodes.Count != 0 || plates.Count != 0 ? null : beams[0].AnalysedGpcModel;
+                    if (analysed != null && Common.Gpc.GpcResultCatalog.Of(analysed) != null
+                        && beams.All(b => b.AnalysedGpc is GPC.Model.Elements.BeamElement e && ReferenceEquals(b.AnalysedGpcModel, analysed) && analysed.BeamElements.TryGetValue(e.Id, out var own) && ReferenceEquals(own, e)))
+                        model.AttachLinkedResults(analysed);
                 }
                 catch (ArgumentException x) when (x.Data[Common.Gpc.Legacy.LegacyAssembly.TwoSuperElementsKey] is string[] two)
                 {

@@ -58,6 +58,29 @@ namespace BridGHe.Common.Gpc
             return stream.Read(head, 0, head.Length) == head.Length && head.SequenceEqual(PreviousHeader);
         }
 
+        /// <summary>R6.4 (coordinator, 7/11): the bytes of a results file of <paramref name="model"/> (the same format), for a model internalised
+        /// with its results in a Grasshopper document (<c>GH_Model</c>, chunk <see cref="Chunk"/>).</summary>
+        public static byte[] ToBytes(GPC.Model.Models.Model model)
+        {
+            if (model == null) throw new ArgumentNullException(nameof(model));
+            using var stream = new MemoryStream();
+            stream.Write(Header, 0, Header.Length); stream.WriteByte(Version);
+            ModelArchive.Save(model, stream, ModelArchiveFormat.Compact);
+            return stream.ToArray();
+        }
+
+        /// <summary>The model of <see cref="ToBytes"/>.</summary>
+        public static GPC.Model.Models.Model FromBytes(byte[] bytes)
+        {
+            if (bytes == null || bytes.Length <= Header.Length + 1 || !bytes.AsSpan(0, Header.Length).SequenceEqual(Header)) throw new InvalidDataException("Formato dei risultati non riconosciuto.");
+            if (bytes[Header.Length] != Version) throw new InvalidDataException("Versione dei risultati non supportata.");
+            using var stream = new MemoryStream(bytes, Header.Length + 1, bytes.Length - Header.Length - 1, false);
+            return ModelArchive.Load(stream);
+        }
+
+        /// <summary>The item of an internalised <c>GH_Model</c> with the analysed GPC model and its results (<see cref="ToBytes"/>).</summary>
+        public const string Chunk = "BridGHeResults";
+
         /// <summary>Reads the model only when the SHA-256 of the file is still <paramref name="hash"/>.</summary>
         public static GPC.Model.Models.Model Read(string path, string hash)
         {

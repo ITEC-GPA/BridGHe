@@ -19,22 +19,24 @@ internal static class WorkflowInputs
         GH_String s => s.Value, string s => s,
         GH_ObjectWrapper w => Case(w.Value), _ => throw new ArgumentException("Connect a load case or its exact name.") };
     /// <summary>F6 (a)/(b), R8: true when the model has stored beam results (the analysed GPC model, else the former FEM results).</summary>
-    internal static bool HasBeamResults(GH_Model model) => model?.GpcResults != null
-        ? model.GpcResults.BeamElements.Count > 0 && Common.Gpc.GpcResultCatalog.Of(model.GpcResults).Entries.Count > 0
-        : model?.Value?.Beams.Any(b => b.Results.OfType<BeamForceResultModel>().Any()) == true;
+    /// R6.4 (6): the analysed GPC model only (its own, or the one the beams of a Build Model output come from: <see cref="GH_Model.GpcActionResults"/>).
+    internal static bool HasBeamResults(GH_Model model) => model?.GpcActionResults is GPC.Model.Models.Model analysed
+        && analysed.BeamElements.Count > 0 && Common.Gpc.GpcResultCatalog.Of(analysed).Entries.Count > 0;
     internal static void Catalogue(GH_Component component, int port, GH_Model goo)
     {
-        var model = goo?.Value;
-        if (model == null) return;
-        // F6 (a)/(b), R8: the result cases of the analysed GPC model (its catalog labels) when the analysis attached it.
-        var analysed = goo.GpcResults;
-        var stored = analysed != null ? Common.Gpc.GpcResultCatalog.Of(analysed).Entries.Select(e => e.Label)
-            : model.Beams.SelectMany(b => b.Results).OfType<BeamForceResultModel>().Select(f => f.LoadCase.Name);
-        var names = stored
-            .Concat(model.LoadCases.Select(c=>c.Name)).Concat(model.LoadCombinations.Select(c=>c.Name))
-            .Concat(model.Elements.SelectMany(e=>e.Loads).Select(l=>l.LoadCase?.Name))
+        var lists = component.Params.Input[port].Sources.OfType<GH_ValueList>().ToArray();
+        if (goo?.Value == null || lists.Length == 0) return;
+        // F6 (a)/(b), R8, R6.4 (6): the result cases of the analysed GPC model the actions are read from (its catalog labels), the cases and the
+        // combinations of the GPC input of the model; no FEM data.
+        var analysed = goo.GpcActionResults;
+        GPC.Model.Models.Model input = null;
+        try { input = goo.GpcInput?.Model; }
+        catch (Exception ex) when (ex is ArgumentException || ex is NotSupportedException || ex is InvalidOperationException) { input = null; }
+        var stored = analysed != null ? Common.Gpc.GpcResultCatalog.Of(analysed).Entries.Select(e => e.Label) : Enumerable.Empty<string>();
+        var names = stored.Concat(input?.LoadCases.Keys ?? Enumerable.Empty<string>()).Concat(input?.Combinations.Keys ?? Enumerable.Empty<string>())
             .Where(n=>!string.IsNullOrWhiteSpace(n)).Distinct().OrderBy(n => n).ToList();
-        foreach (var list in component.Params.Input[port].Sources.OfType<GH_ValueList>())
+        if (names.Count == 0) return; // a model without GPC data: the lists keep what they have
+        foreach (var list in lists)
         {
             list.ListMode = GH_ValueListMode.DropDown; ComponentsHelper.SetValueList(list, names);
         }
@@ -69,7 +71,7 @@ public sealed class BridgeActionComponent : GH_Component
         try
         {
             if (string.IsNullOrWhiteSpace(key) || model?.Value == null || behavior < 0 || behavior > 2) throw new ArgumentException("Supply an action ID, an analysed model and a behavior from 0 to 2.");
-            da.SetData(0, new BridgeWorkflowGoo(new BridgeActionDefinition { Key = key, Source = model.Value, GpcSource = model.GpcResults, GpcModel = model.Gpc, GpcBridgeData = model.GpcBridgeData, Case = WorkflowInputs.Case(lc), Behavior = (BridgeActionBehavior)behavior, BeamIds = ids.ToArray() }));
+            da.SetData(0, new BridgeWorkflowGoo(new BridgeActionDefinition { Key = key, Source = model.Value, GpcSource = model.GpcActionResults, GpcModel = model.Gpc, GpcBridgeData = model.GpcBridgeData, Case = WorkflowInputs.Case(lc), Behavior = (BridgeActionBehavior)behavior, BeamIds = ids.ToArray() }));
             Message = key;
         }
         catch (ArgumentException e) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message); }
@@ -108,7 +110,7 @@ public sealed class BridgeShrinkageActionComponent : GH_Component
             if (!primary && (model?.Value == null || lc == null)) throw new ArgumentException("Connect secondary FEM results, or explicitly enable Primary Only.");
             if (primary && lc != null) throw new ArgumentException("Primary Only cannot contain a FEM case.");
             if (primary) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Only section autostresses: global restraint effects are excluded.");
-            da.SetData(0, new BridgeWorkflowGoo(new BridgeActionDefinition { Key = key, Source = model?.Value, GpcSource = model?.GpcResults, GpcModel = model?.Gpc, GpcBridgeData = model?.GpcBridgeData, Case = lc == null ? null : WorkflowInputs.Case(lc),
+            da.SetData(0, new BridgeWorkflowGoo(new BridgeActionDefinition { Key = key, Source = model?.Value, GpcSource = model?.GpcActionResults, GpcModel = model?.Gpc, GpcBridgeData = model?.GpcBridgeData, Case = lc == null ? null : WorkflowInputs.Case(lc),
                 Behavior = response == 0 ? BridgeActionBehavior.Shrinkage : BridgeActionBehavior.ShortTerm, Strain = strain, BeamIds = ids.ToArray(), PrimaryOnly = primary }));
             Message = key;
         }

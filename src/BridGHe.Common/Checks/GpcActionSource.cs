@@ -24,10 +24,20 @@ internal sealed class GpcActionSource
     {
         this.gpc = gpc;
         catalog = GpcResultCatalog.Of(gpc) ?? throw new ArgumentException("GpcActionSourceWithoutResults: " + fem.Name);
-        if (gpc.BeamElements.Count != fem.Beams.Count || fem.Beams.Select((b, k) => (b, k)).Any(p => gpc.BeamElements[p.k + 1].Name != (p.b.BeamId ?? "")))
-            throw new ArgumentException("GpcActionSourceNotTheAnalysedModel: " + fem.Name);
         numbers = new Dictionary<BeamModel, int>(ReferenceEqualityComparer.Instance);
-        for (int k = 0; k < fem.Beams.Count; k++) numbers.Add(fem.Beams[k], k + 1);
+        if (gpc.BeamElements.Count == fem.Beams.Count && fem.Beams.Select((b, k) => (b, k)).All(p => gpc.BeamElements[p.k + 1].Name == (p.b.BeamId ?? "")))
+            for (int k = 0; k < fem.Beams.Count; k++) numbers.Add(fem.Beams[k], k + 1);
+        else
+        {
+            // R6.4 (5) (coordinator, 7/11; examples 11–19): the analysed model the beams of a Build Model output come from (GH_Model.LinkedGpcResults),
+            // numbered by the analysis: every FEM beam is its one GPC beam with that BridGHe ID.
+            var byName = gpc.BeamElements.Values.GroupBy(b => b.Name, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.ToArray(), StringComparer.Ordinal);
+            foreach (var b in fem.Beams)
+            {
+                if (!byName.TryGetValue(b.BeamId ?? "", out var same) || same.Length != 1) throw new ArgumentException("GpcActionSourceNotTheAnalysedModel: " + fem.Name);
+                numbers.Add(b, same[0].Id);
+            }
+        }
     }
 
     internal static GpcActionSource Of(ModelModel fem, Model gpc) => new GpcActionSource(fem ?? throw new ArgumentNullException(nameof(fem)), gpc ?? throw new ArgumentNullException(nameof(gpc)));

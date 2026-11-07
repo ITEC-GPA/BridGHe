@@ -61,7 +61,7 @@ public class BuildBridgeModel : GH_Component
             string[] summary = result.Summary, warnings = result.Warnings;
             try
             {
-                var references = models.Select(m => Common.Gpc.GpcBridgeSource.Reference(m.GpcInput, m.GpcResults)).ToArray();
+                var references = models.Select(m => Common.Gpc.GpcBridgeSource.Reference(m.GpcInput, m.GpcActionResults)).ToArray();
                 var built = Common.Gpc.GpcBridgeBuilder.Build(references, definitions, table, (BridgeWorkflowMethod)method, Settings.Instance.Tolerance, additional,
                     Common.Gpc.GpcIdentity.Derive(InstanceGuid, "bridge-model"));
                 output.AttachBridge(built.Bridge); summary = built.Summary; warnings = built.Warnings;

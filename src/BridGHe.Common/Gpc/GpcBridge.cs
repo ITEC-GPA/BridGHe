@@ -131,6 +131,20 @@ namespace BridGHe.Common.Gpc
             return new GpcBridgeSource(analysed, catalog.Units, catalog.BeamAngle, null);
         }
 
+        /// <summary>R6.4 (5) (coordinator, 7/11; examples 11–19): an action source whose GH model was rebuilt by Build Model from beams of an
+        /// analysis: its GPC model (the conversion, the beams of the action, aligned as the FEM merge aligned its FEM beams) and the analysed
+        /// model the beams come from (the forces, by BridGHe ID; units and angles from its catalog, by the same ID).</summary>
+        public static GpcBridgeSource Linked(Model input, Model analysed)
+        {
+            if (input == null) throw new ArgumentNullException(nameof(input));
+            if (analysed == null) throw new ArgumentNullException(nameof(analysed));
+            var catalog = GpcResultCatalog.Of(analysed) ?? throw new ArgumentException("GpcActionSourceWithoutResults: " + analysed.Name);
+            var byName = analysed.BeamElements.Values.GroupBy(b => b.Name, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.ToArray(), StringComparer.Ordinal);
+            BeamElement Own(BeamElement b) => byName.TryGetValue(b.Name ?? "", out var same) && same.Length == 1 ? same[0]
+                : throw new ArgumentException("GpcActionSourceNotTheAnalysedModel: " + analysed.Name + ", beam " + b.Name);
+            return new GpcBridgeSource(input, catalog.Units, b => catalog.BeamAngle(Own(b)), analysed);
+        }
+
         internal bool Is(Model model) => ReferenceEquals(Model, model) || ReferenceEquals(Analysed, model);
     }
 
@@ -161,7 +175,11 @@ namespace BridGHe.Common.Gpc
             {
                 if (!string.IsNullOrWhiteSpace(a.Case) && a.GpcSource == null)
                     throw new ArgumentException($"Action {a.Key}: its source has no analysed GPC model (analysed before F6); recalculate the analysis.");
-                if (a.GpcSource != null && sources.FindIndex(s => s.Is(a.GpcSource)) < 0) sources.Add(GpcBridgeSource.Analysis(a.GpcSource));
+                // R6.4 (5): the source of an action whose GH model was rebuilt from the beams of an analysis is that model with the analysis
+                // (its GPC model is the conversion, not the analysed model); any other one is its analysed model.
+                if (a.GpcSource != null && sources.FindIndex(s => s.Is(a.GpcSource)) < 0)
+                    sources.Add(a.GpcModel != null && !ReferenceEquals(a.GpcModel, a.GpcSource) && a.GpcModel.Datasets.Count == 0 && GpcResultCatalog.Of(a.GpcModel) == null
+                        ? GpcBridgeSource.Linked(a.GpcModel, a.GpcSource) : GpcBridgeSource.Analysis(a.GpcSource));
             }
             if (referenceCount == 0) throw new ArgumentException("A reference model is required, including for strain-only workflows.");
             if (sources[0].Units.Units != DefinitionUnits.Nmm) throw new ArgumentException("Bridge checks require N-mm-MPa models.");
@@ -182,7 +200,9 @@ namespace BridGHe.Common.Gpc
                 }
             foreach (var (phase, action) in actions)
             {
-                var record = BridgeWorkflowBuilder.Record(phase, action, action.GpcSource?.Name ?? action.Source?.Name, LocalSectionStates(phase, action));
+                // The name of the source model: that of the GH model of the action (its GPC model: the analysed one, or the conversion of a model
+                // whose beams come from an analysis, R6.4 (5)), as the FEM merge named it.
+                var record = BridgeWorkflowBuilder.Record(phase, action, action.GpcModel?.Name ?? action.GpcSource?.Name ?? action.Source?.Name, LocalSectionStates(phase, action));
                 records.Add(action.Key, record);
                 if (record.ForceCase != null)
                 {
@@ -192,7 +212,7 @@ namespace BridGHe.Common.Gpc
                     {
                         string id = beams[i].Name;
                         if (action.BeamIds.Length != 0 && !action.BeamIds.Contains(id, StringComparer.Ordinal)) continue;
-                        var input = SourceBeam(gpc, aligned[sourceIndex][i]);
+                        var input = SourceBeam(gpc, aligned[sourceIndex][i], reference.Units, tolerance);
                         var results = Forces(catalog, gpc, input, action.Case);
                         concentratedLoads[(action.Key, id)] = ConcentratedLoads(catalog, gpc, input, action.Case);
                         BridgeWorkflowBuilder.RequireForces(phase, action, id, results);
@@ -330,12 +350,19 @@ namespace BridGHe.Common.Gpc
         }
 
         /// <summary>The beam of the analysed model of an action for an aligned beam: the same beam when the alignment used that model, else the
-        /// beam with its number in the analysed copy of the reference input (same BridGHe ID required).</summary>
-        private static BeamElement SourceBeam(Model analysed, BeamElement aligned)
+        /// beam with its number in the analysed copy of the reference input (same BridGHe ID required); R6.4 (5): else (the analysed model the
+        /// beams of a Build Model output come from, <c>GH_Model.LinkedGpcResults</c>, numbered by the analysis) its one beam with that BridGHe ID,
+        /// with the same ends within the tolerance.</summary>
+        private static BeamElement SourceBeam(Model analysed, BeamElement aligned, BridgeUnits units, double tolerance)
         {
             if (analysed.BeamElements.TryGetValue(aligned.Id, out var beam) && ReferenceEquals(beam, aligned)) return beam;
-            if (beam == null || beam.Name != aligned.Name) throw new ArgumentException("GpcActionSourceNotTheAnalysedModel: " + analysed.Name);
-            return beam;
+            if (beam != null && beam.Name == aligned.Name) return beam;
+            var named = analysed.BeamElements.Values.Where(b => b.Name == aligned.Name).ToArray();
+            if (named.Length != 1) throw new ArgumentException("GpcActionSourceNotTheAnalysedModel: " + analysed.Name + (named.Length > 1 ? ", beam " + aligned.Name + " more than once" : ", no beam " + aligned.Name));
+            static double Distance(Point3d a, Point3d b) => Math.Sqrt((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y) + (a.Z - b.Z) * (a.Z - b.Z));
+            if (units.FromMm(Distance(named[0].StartPoint, aligned.StartPoint)) > tolerance || units.FromMm(Distance(named[0].EndPoint, aligned.EndPoint)) > tolerance)
+                throw new ArgumentException($"GpcActionSourceBeamGeometryDiffers: beam {aligned.Name} of {analysed.Name} has other ends than the reference beam.");
+            return named[0];
         }
 
         /// <summary>The stored forces of a case (catalog label) of a beam, station in the definition length, zero without sign (the numbers of

@@ -20,6 +20,9 @@ namespace BridGHe.Common.Gpc
         /// <summary>F6 R7: the message of a Results component whose element has no analysed GPC model with a results catalog (not analysed,
         /// analysed by a version before F6, or an element of the bridge model of Build BridGHe Model, whose merged actions have no catalog).</summary>
         public const string NoAnalysedResultsMessage = "Nessun risultato di un'analisi BridGHe per questo elemento (modello non analizzato, analizzato con una versione precedente o modello di ponte): ricalcolare l'analisi.";
+        /// <summary>R6.4 (6): the message of a result utility (envelopes, result cases, deflection and camber, fatigue history) whose model has no
+        /// analysed GPC model with a results catalog; a model of a former file shows its own notice instead.</summary>
+        public const string NoAnalysedModelMessage = "Nessun risultato di un'analisi BridGHe per questo modello (modello non analizzato, analizzato con una versione precedente o modello di ponte): collegare l'uscita di Straus R3 Analysis o di Moving Static Analysis e premere Run.";
 
         public sealed class Entry
         {
