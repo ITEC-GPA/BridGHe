@@ -93,6 +93,7 @@ internal static class Program
         if(args.Contains("--import-dump")) return ImportDump.Run(args);
         if(args.Contains("--build-model-scan")) return BuildModelScan.Run(args);
         if(args.Contains("--material-scan")) return GpcMaterialKindChecks.Scan(args);
+        if(args.Contains("--gpc-only")) return GpcOnlyReplay.Regression(args.SkipWhile(a=>a!="--gpc-only").Skip(1).First()); // R6.5 P1 (P2S)
         if(args.Contains("--legacy-payload-scan")) return GpcDraftArchiveChecks.PayloadScan(args);
 #endif
         if(args.Contains("--migration-scale")) return MigrationScale.Run();

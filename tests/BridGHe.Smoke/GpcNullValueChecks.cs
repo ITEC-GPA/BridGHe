@@ -41,7 +41,7 @@ internal static class GpcNullValueChecks
 
     private static int checks;
 
-    private static string TextOf(object datum) => datum switch
+    internal static string TextOf(object datum) => datum switch
     {
         BridGHe.Common.Gpc.Legacy.LegacyNodeDraft n => GpcDraftArchiveChecks.Text(n),
         BridGHe.Common.Gpc.Legacy.LegacyBeamDraft b => GpcDraftArchiveChecks.Text(b),
