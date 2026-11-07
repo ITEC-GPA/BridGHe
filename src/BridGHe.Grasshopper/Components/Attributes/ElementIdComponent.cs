@@ -67,9 +67,12 @@ namespace BridGHe.Grasshopper.Components.Attributes
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Beam " + other + " has already an ID");
                     return;
                 }
+                Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = gid => Common.Gpc.Builders.GpcElementBuilders.WithLabel(beam.Gpc, id, gid);
+                // R6.5 P1 lane 1a: an element given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
+                if (beam.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, id)); return; }
                 GH_Beam new_beam = new GH_Beam(beam);
                 new_beam.Value.Attributes.Add(se);
-                GpcBuilderAttach.Beam(new_beam, () => Common.Gpc.Builders.GpcElementBuilders.WithLabel(beam.Gpc, id, Common.Gpc.GpcBeamDrafts.Identity(new_beam.Value)));
+                GpcBuilderAttach.Beam(new_beam, () => build(Common.Gpc.GpcBeamDrafts.Identity(new_beam.Value)));
                 DA.SetData(0, new_beam);
             }
             else if (element is GH_Plate plate)
@@ -79,9 +82,11 @@ namespace BridGHe.Grasshopper.Components.Attributes
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Plate " + other + " has already an ID");
                     return;
                 }
+                Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = gid => Common.Gpc.Builders.GpcPlateBuilders.WithLabel(plate.Gpc, id, gid);
+                if (plate.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, id)); return; }
                 GH_Plate new_plate = new GH_Plate(plate);
                 new_plate.Value.Attributes.Add(se);
-                GpcBuilderAttach.Plate(new_plate, () => Common.Gpc.Builders.GpcPlateBuilders.WithLabel(plate.Gpc, id, Common.Gpc.GpcBeamDrafts.Identity(new_plate.Value)));
+                GpcBuilderAttach.Plate(new_plate, () => build(Common.Gpc.GpcBeamDrafts.Identity(new_plate.Value)));
                 DA.SetData(0, new_plate);
             }
             else if (element is GH_Node node)
@@ -91,9 +96,11 @@ namespace BridGHe.Grasshopper.Components.Attributes
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Node " + other + " has already an ID");
                     return;
                 }
+                Func<Guid, Common.Gpc.Legacy.LegacyNodeDraft> build = gid => Common.Gpc.Builders.GpcNodeBuilders.WithLabel(node.Gpc, id, gid);
+                if (node.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Node(this, 0, node, build, id)); return; }
                 GH_Node new_node = new GH_Node(node);
                 new_node.Value.Attributes.Add(se);
-                GpcBuilderAttach.Node(new_node, () => Common.Gpc.Builders.GpcNodeBuilders.WithLabel(node.Gpc, id, Common.Gpc.GpcBeamDrafts.Identity(new_node.Value)));
+                GpcBuilderAttach.Node(new_node, () => build(Common.Gpc.GpcBeamDrafts.Identity(new_node.Value)));
                 DA.SetData(0, new_node);
             }
             else
@@ -107,8 +114,9 @@ namespace BridGHe.Grasshopper.Components.Attributes
         private static bool OtherId(Func<string> firstLabel, ElementModel el, out string other)
         {
             string label = null;
-            bool has = GpcBuilderAttach.Decide(() => (label = firstLabel()) != null, () => GetOtherId(el) != null, "Element ID already given");
-            other = label ?? GetOtherId(el)?.Value;
+            // R6.5 P1 lane 1a: an element without a FEM value is decided on its draft alone.
+            bool has = GpcBuilderAttach.Decide(() => (label = firstLabel()) != null, el == null ? null : () => GetOtherId(el) != null, "Element ID already given");
+            other = label ?? (el == null ? null : GetOtherId(el)?.Value);
             return has;
         }
 

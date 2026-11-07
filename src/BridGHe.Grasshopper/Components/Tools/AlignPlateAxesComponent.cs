@@ -68,6 +68,17 @@ namespace BridGHe.Grasshopper.Components
             Vector3d given = dir;
             dir.Unitize();
 
+            Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.AlignAxes(plate.Gpc, axis, given.X, given.Y, given.Z, id);
+            // R6.5 P1 lane 1a: a plate given by its GPC draft alone: the same decisions on the corners of the draft (the warning of a direction
+            // along the normal included), identity derived from the input draft; a turned local axis angle is refused, as the reader refuses it.
+            if (plate.Value == null)
+            {
+                if (ax != "3 Blue" && plate.Gpc != null && Common.Gpc.Builders.GpcPlateBuilders.AlignAxesAlongNormal(plate.Gpc, given.X, given.Y, given.Z))
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Unable to riorient the plate");
+                GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, axis, given));
+                return;
+            }
+
             GH_Plate newPlate = new GH_Plate(plate);
 
             plate.Value.GetLocalAxes(out Vector3d axes1, out Vector3d axes2, out Vector3d axes3);

@@ -58,11 +58,19 @@ namespace BridGHe.Grasshopper.Components.Attributes
 
             for (int i = 0; i < listBeams.Count; i++)
             {
-                GH_Beam newBeam = new GH_Beam(listBeams[i]);
+                var input = listBeams[i];
+                Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = gid => Common.Gpc.Builders.GpcBeamBuilders.WithStringGroup(input.Gpc, id, gid);
+                // R6.5 P1 lane 1a: a beam given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
+                if (input.Value == null)
+                {
+                    var only = GpcOnlyElements.Beam(this, 0, input, build, id);
+                    if (only != null) newBeams.Add(only);
+                    continue;
+                }
+                GH_Beam newBeam = new GH_Beam(input);
                 newBeam.Value.Attributes.Add(sg);
                 // R6.2 (lane B): the GPC draft built on GPC from the draft of the input (identity of the conversion of the FEM output until R6.5).
-                var input = listBeams[i];
-                GpcBeamInputs.Attach(newBeam, gid => Common.Gpc.Builders.GpcBeamBuilders.WithStringGroup(input.Gpc, id, gid));
+                GpcBeamInputs.Attach(newBeam, build);
                 newBeams.Add(newBeam);
             }
 

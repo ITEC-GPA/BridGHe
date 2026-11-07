@@ -80,11 +80,13 @@ namespace BridGHe.Grasshopper.Components.Attributes
             {
                 throw new NotSupportedException();
             }
+            Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.WithSupport(plate.Gpc, attr.Stiffness, attr.CompressionOnly, attr.Face.ToString(), id);
+            // R6.5 P1 lane 1a: a plate given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
+            if (plate.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, attr.Stiffness, attr.CompressionOnly, attr.Face.ToString())); return; }
             newPlate.Value.Attributes.Add(new PlateSupportAttributeModel(attr));
             // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the draft of the input, identity of the conversion of the FEM output
             // (the former face carried by the name of its type).
-            GpcBuilderAttach.Plate(newPlate, () => Common.Gpc.Builders.GpcPlateBuilders.WithSupport(plate.Gpc, attr.Stiffness, attr.CompressionOnly, attr.Face.ToString(),
-                Common.Gpc.GpcBeamDrafts.Identity(newPlate.Value)));
+            GpcBuilderAttach.Plate(newPlate, () => build(Common.Gpc.GpcBeamDrafts.Identity(newPlate.Value)));
 
             DA.SetData("Plate", newPlate);
         }

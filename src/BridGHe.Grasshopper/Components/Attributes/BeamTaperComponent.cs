@@ -77,6 +77,13 @@ namespace BridGHe.Grasshopper.Components.Attributes
             if (!DA.GetData(6, ref alignmentY))
                 return;
 
+            string alignX = Common.Gpc.Builders.GpcBeamBuilders.Code(Common.Gpc.Builders.GpcBeamBuilders.TaperAlignments, alignmentX);
+            string alignY = Common.Gpc.Builders.GpcBeamBuilders.Code(Common.Gpc.Builders.GpcBeamBuilders.TaperAlignments, alignmentY);
+            Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithTaper(beam.Gpc, nFromX, nFromY, nToX, nToY, alignX, alignY, id);
+            // R6.5 P1 lane 1a: a beam given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft). A GPC
+            // draft has no mirrored section (the reader refuses one: LegacyMirroredSectionNotMappedYet), so the check below has nothing to refuse.
+            if (beam.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, nFromX, nFromY, nToX, nToY, alignX, alignY)); return; }
+
             //Taper cannot be applied to beams with mirrors, like st7
             if (beam.Value.BeamProperty.Mirror != SectionModel.MirrorTypes.None)
             {
@@ -98,9 +105,7 @@ namespace BridGHe.Grasshopper.Components.Attributes
             BeamTaperAttributeModel attr = new BeamTaperAttributeModel(data);
             new_beam.Value.Attributes.Add(attr);
             // R6.2 (lane B): the GPC draft built on GPC from the draft of the input (identity of the conversion of the FEM output until R6.5).
-            GpcBeamInputs.Attach(new_beam, id => Common.Gpc.Builders.GpcBeamBuilders.WithTaper(beam.Gpc, nFromX, nFromY, nToX, nToY,
-                Common.Gpc.Builders.GpcBeamBuilders.Code(Common.Gpc.Builders.GpcBeamBuilders.TaperAlignments, alignmentX),
-                Common.Gpc.Builders.GpcBeamBuilders.Code(Common.Gpc.Builders.GpcBeamBuilders.TaperAlignments, alignmentY), id));
+            GpcBeamInputs.Attach(new_beam, build);
 
             DA.SetData("Beam", new_beam);
         }

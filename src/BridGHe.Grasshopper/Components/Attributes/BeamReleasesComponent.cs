@@ -81,6 +81,20 @@ namespace BridGHe.Grasshopper.Components.Attributes
                 { "moment2N2", DA.GetData(12, ref moment2N2) }
             };
 
+            // The data of the GPC builder (the same for the FEM-backed and the GPC-only paths).
+            bool[] transI = { has_values["shear1N1"], has_values["shear2N1"], has_values["axialN1"] }, rotI = { has_values["moment1N1"], has_values["moment2N1"], has_values["torsionN1"] };
+            bool[] transJ = { has_values["shear1N2"], has_values["shear2N2"], has_values["axialN2"] }, rotJ = { has_values["moment1N2"], has_values["moment2N2"], has_values["torsionN2"] };
+            var transIPartial = new GPC.Geometry.Vector3d(shear1N1, shear2N1, axialN1); var rotIPartial = new GPC.Geometry.Vector3d(moment1N1, moment2N1, torsionN1);
+            var transJPartial = new GPC.Geometry.Vector3d(shear1N2, shear2N2, axialN2); var rotJPartial = new GPC.Geometry.Vector3d(moment1N2, moment2N2, torsionN2);
+            Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithReleases(beam.Gpc, transI, transIPartial, rotI, rotIPartial,
+                transJ, transJPartial, rotJ, rotJPartial, id);
+            // R6.5 P1 lane 1a: a beam given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
+            if (beam.Value == null)
+            {
+                GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, transI, transIPartial, rotI, rotIPartial, transJ, transJPartial, rotJ, rotJPartial));
+                return;
+            }
+
             GH_Beam new_beam = new GH_Beam(beam);
 
             BeamReleasesAttributeModel.AttributeData data = new BeamReleasesAttributeModel.AttributeData()
@@ -97,11 +111,7 @@ namespace BridGHe.Grasshopper.Components.Attributes
             BeamReleasesAttributeModel attr = new BeamReleasesAttributeModel(data);
             new_beam.Value.Attributes.Add(attr);
             // R6.2 (lane B): the GPC draft built on GPC from the draft of the input (identity of the conversion of the FEM output until R6.5).
-            GpcBeamInputs.Attach(new_beam, id => Common.Gpc.Builders.GpcBeamBuilders.WithReleases(beam.Gpc,
-                new[] { has_values["shear1N1"], has_values["shear2N1"], has_values["axialN1"] }, new GPC.Geometry.Vector3d(shear1N1, shear2N1, axialN1),
-                new[] { has_values["moment1N1"], has_values["moment2N1"], has_values["torsionN1"] }, new GPC.Geometry.Vector3d(moment1N1, moment2N1, torsionN1),
-                new[] { has_values["shear1N2"], has_values["shear2N2"], has_values["axialN2"] }, new GPC.Geometry.Vector3d(shear1N2, shear2N2, axialN2),
-                new[] { has_values["moment1N2"], has_values["moment2N2"], has_values["torsionN2"] }, new GPC.Geometry.Vector3d(moment1N2, moment2N2, torsionN2), id));
+            GpcBeamInputs.Attach(new_beam, build);
 
             DA.SetData("Beam", new_beam);
         }

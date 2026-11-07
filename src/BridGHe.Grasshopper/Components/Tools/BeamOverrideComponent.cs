@@ -67,6 +67,15 @@ namespace BridGHe.Grasshopper.Components
                 return;
             }
 
+            Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.Override(beam.Gpc, has_property && bp.IsValid ? bp.Gpc : null,
+                has_groups ? GpcBeamInputs.GroupChains(groups) : null, has_angle ? a : (double?)null, has_offset ? (offset.X, offset.Y) : ((double, double)?)null, id);
+            // R6.5 P1 lane 1a: a beam given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
+            if (beam.Value == null)
+            {
+                GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => has_property && bp.IsValid ? bp.Gpc : null), GpcOnlyElements.Lazy(() => has_groups ? GpcBeamInputs.GroupChains(groups) : null), has_angle, has_angle ? a : 0, has_offset, has_offset ? offset.X : 0, has_offset ? offset.Y : 0));
+                return;
+            }
+
             GH_Beam new_beam = new GH_Beam(beam);
             //new_beam.Value.Loads.Add(load);
             if (has_property && bp.IsValid)
@@ -88,8 +97,7 @@ namespace BridGHe.Grasshopper.Components
                 new_beam.Value.Offset = new Vector2d(offset.X, offset.Y);
             }
             // R6.2 (lane B): the GPC draft built on GPC from the drafts of the inputs (identity of the conversion of the FEM output until R6.5).
-            GpcBeamInputs.Attach(new_beam, id => Common.Gpc.Builders.GpcBeamBuilders.Override(beam.Gpc, has_property && bp.IsValid ? bp.Gpc : null,
-                has_groups ? GpcBeamInputs.GroupChains(groups) : null, has_angle ? a : (double?)null, has_offset ? (offset.X, offset.Y) : ((double, double)?)null, id));
+            GpcBeamInputs.Attach(new_beam, build);
             DA.SetData(0, new_beam);
         }
 

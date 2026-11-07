@@ -132,6 +132,15 @@ namespace BridGHe.Common.Gpc.Builders
             return GpcDrafts.Reidentify(d, identity);
         }
 
+        /// <summary>R6.5 P1 lane 1a: whether Align Plate Axes on axis 0 or 1 leaves the plate unchanged because the direction is along its
+        /// normal (the warning of the component), decided on the corners of the draft with the expressions of <see cref="AlignAxes"/>.</summary>
+        public static bool AlignAxesAlongNormal(LegacyPlateDraft plate, double dx, double dy, double dz)
+        {
+            if (plate == null) throw new ArgumentNullException(nameof(plate));
+            LocalAxes(plate.Corners.Select(c => (c.X, c.Y, c.Z)).ToArray(), out _, out _, out var axes3);
+            return Math.Abs(Dot(axes3, Unit((dx, dy, dz)))) > 0.99999;
+        }
+
         /// <summary>The local axes of a former plate of 3 or 4 corners (<c>PlateModel.GetLocalAxes</c>, Straus7 orientation), same expressions.</summary>
         private static void LocalAxes((double X, double Y, double Z)[] p, out (double X, double Y, double Z) axes1, out (double X, double Y, double Z) axes2, out (double X, double Y, double Z) axes3)
         {

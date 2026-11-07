@@ -97,12 +97,14 @@ namespace BridGHe.Grasshopper.Components.Attributes
 
             SetTypeImage(type);
 
-            if (edges.Count > plate.Value.Points.Count)
+            // R6.5 P1 lane 1a: the corners of the plate from its FEM value, or from its GPC draft when it has none (the same points).
+            int corners = plate.Value != null ? plate.Value.Points.Count : plate.Gpc?.Corners.Count ?? 0;
+            if (edges.Count > corners)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The number of the Edges can't be greater of the plate edges number");
                 return;
             }
-            if (weights.Count > plate.Value.Points.Count)
+            if (weights.Count > corners)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The number of the Weights can't be greater of the plate edges number");
                 return;
@@ -118,7 +120,7 @@ namespace BridGHe.Grasshopper.Components.Attributes
                 return;
             }
             if ((lpt == LoadPatchTypeAttributeModel.PatchType.Auto3 ||
-                lpt == LoadPatchTypeAttributeModel.PatchType.AngleSplit) && plate.Value.Type == PlateModel.PlateType.Tri3)
+                lpt == LoadPatchTypeAttributeModel.PatchType.AngleSplit) && corners == 3) // PlateModel.PlateType.Tri3
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "This type of load patch is not applicable to Tri3 elements");
                 return;
@@ -149,14 +151,16 @@ namespace BridGHe.Grasshopper.Components.Attributes
             for (int i = 0; i < weights.Count; i++)
                 value.Weights[i] = weights[i];
 
+            Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.WithLoadPatch(plate.Gpc, value.PatchType.ToString(), value.SelectedEdges, value.Weights, id);
+            if (plate.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, value.PatchType.ToString(), value.SelectedEdges, value.Weights)); return; }
+
             LoadPatchTypeAttributeModel attr = new LoadPatchTypeAttributeModel(value);
 
             GH_Plate newPlate = new GH_Plate(plate);
             newPlate.Value.Attributes.Add(attr);
             // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the draft of the input (type by name, the four edges and weights
             // the former attribute writes), identity of the conversion of the FEM output.
-            GpcBuilderAttach.Plate(newPlate, () => Common.Gpc.Builders.GpcPlateBuilders.WithLoadPatch(plate.Gpc, value.PatchType.ToString(), value.SelectedEdges, value.Weights,
-                Common.Gpc.GpcBeamDrafts.Identity(newPlate.Value)));
+            GpcBuilderAttach.Plate(newPlate, () => build(Common.Gpc.GpcBeamDrafts.Identity(newPlate.Value)));
             DA.SetData(0, newPlate);
         }
 

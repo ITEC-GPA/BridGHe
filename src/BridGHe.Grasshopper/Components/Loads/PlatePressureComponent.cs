@@ -105,12 +105,14 @@ namespace BridGHe.Grasshopper.Components.Loads
                 Projected = projected
             };
             PlatePressureModel load = new PlatePressureModel(lc.Value, load_value);
+            Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.WithPressure(plate.Gpc, lc.Gpc, load_value.CoordinateSystem != null, load_value.Face.ToString(), value.X, value.Y, value.Z, projected, id);
+            // R6.5 P1 lane 1a: a plate given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
+            if (plate.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, GpcOnlyElements.Lazy(() => lc.Gpc), load_value.CoordinateSystem != null, load_value.Face.ToString(), value.X, value.Y, value.Z, projected)); return; }
             GH_Plate newPlate = new GH_Plate(plate);
             newPlate.Value.Loads.Add(load);
             // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the drafts of the inputs (local without a coordinate system, global
             // on the former face by name with one), identity of the conversion of the FEM output.
-            GpcBuilderAttach.Plate(newPlate, () => Common.Gpc.Builders.GpcPlateBuilders.WithPressure(plate.Gpc, lc.Gpc, load_value.CoordinateSystem != null, load_value.Face.ToString(),
-                value.X, value.Y, value.Z, projected, Common.Gpc.GpcBeamDrafts.Identity(newPlate.Value)));
+            GpcBuilderAttach.Plate(newPlate, () => build(Common.Gpc.GpcBeamDrafts.Identity(newPlate.Value)));
             DA.SetData(0, newPlate);
         }
 

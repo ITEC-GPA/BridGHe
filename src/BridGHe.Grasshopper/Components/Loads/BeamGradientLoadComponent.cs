@@ -60,10 +60,13 @@ namespace BridGHe.Grasshopper.Components.Loads
             };
 
             BeamGradientLoadModel load = new BeamGradientLoadModel(lc.Value, load_value);
+            Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithGradient(beam.Gpc, lc.Gpc, a1, a2, id);
+            // R6.5 P1 lane 1a: a beam given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
+            if (beam.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), a1, a2)); return; }
             GH_Beam newBeam = new GH_Beam(beam);
             newBeam.Value.Loads.Add(load);
             // R6.2 (lane B): the GPC draft built on GPC from the drafts of the inputs (identity of the conversion of the FEM output until R6.5).
-            GpcBeamInputs.Attach(newBeam, id => Common.Gpc.Builders.GpcBeamBuilders.WithGradient(beam.Gpc, lc.Gpc, a1, a2, id));
+            GpcBeamInputs.Attach(newBeam, build);
             DA.SetData(0, newBeam);
         }
 

@@ -36,10 +36,14 @@ public sealed class BeamSupportComponent:GH_Component
                 Stiffness=stiffness,Gap=gap
             };
             BeamSupportExport.Resolve(value);
+            string axis=direction switch{0=>"negative1Axis",1=>"positive1Axis",2=>"negative2Axis",_=>"positive2Axis"};
+            string spring=compression?"CompressionOnly":"TensionCompression";
+            Func<Guid,Common.Gpc.Legacy.LegacyBeamDraft> build=id=>Common.Gpc.Builders.GpcBeamBuilders.WithSupport(beam.Gpc,stiffness,gap,axis,spring,id);
+            // R6.5 P1 lane 1a: a beam given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
+            if(beam.Value==null){Helpers.GpcOnlyElements.Set(da,0,Helpers.GpcOnlyElements.Beam(this,0,beam,build,stiffness,gap,axis,spring));return;}
             var output=new GH_Beam(beam);output.Value.Attributes.Add(new BeamSupportAttributeModel(value));
             // R6.2 (lane B): the GPC draft built on GPC from the draft of the input (identity of the conversion of the FEM output until R6.5).
-            string axis=direction switch{0=>"negative1Axis",1=>"positive1Axis",2=>"negative2Axis",_=>"positive2Axis"};
-            Helpers.GpcBeamInputs.Attach(output,id=>Common.Gpc.Builders.GpcBeamBuilders.WithSupport(beam.Gpc,stiffness,gap,axis,compression?"CompressionOnly":"TensionCompression",id));
+            Helpers.GpcBeamInputs.Attach(output,build);
             da.SetData(0,output);
         }
         catch(Exception e){AddRuntimeMessage(GH_RuntimeMessageLevel.Error,e.Message);}

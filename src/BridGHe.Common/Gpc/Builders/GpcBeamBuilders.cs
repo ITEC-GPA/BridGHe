@@ -180,6 +180,18 @@ namespace BridGHe.Common.Gpc.Builders
             Rebuild(beam, null, null, null, null, beamId ?? throw new ArgumentNullException(nameof(beamId)), start ?? throw new ArgumentNullException(nameof(start)),
                 end ?? throw new ArgumentNullException(nameof(end)));
 
+        /// <summary>
+        /// R6.5 P1 lane 1a: Align Beam Axes on axis 3 against the direction: the beam with its ends swapped, the beam the reader gives the former
+        /// value with <c>PointFrom</c> and <c>PointTo</c> exchanged: the ends and what depends on them re-anchored with the reader's formulas
+        /// (<see cref="Override"/>), the stations of the loads and the attributes kept as the former value kept them (from the new start);
+        /// property, groups, angle, offset, physical data and bridge data kept; the identity given.
+        /// </summary>
+        public static LegacyBeamDraft Reversed(LegacyBeamDraft beam, Guid identity)
+        {
+            if (beam == null) throw new ArgumentNullException(nameof(beam));
+            return GpcDrafts.Reidentify(Rebuild(beam, null, null, null, null, null, beam.Beam.EndPoint, beam.Beam.StartPoint), identity);
+        }
+
         /// <summary>The body of <see cref="Override"/> and <see cref="Placed"/>: the changed beam the reader gives (null: unchanged), not re-identified.</summary>
         private static LegacyBeamDraft Rebuild(LegacyBeamDraft beam, LegacyBeamProperty property, IReadOnlyList<IReadOnlyList<string>> groups, double? angleDeg, (double X, double Y)? offset,
             string newName, Point3d newStart, Point3d newEnd)

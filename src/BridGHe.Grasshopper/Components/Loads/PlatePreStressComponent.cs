@@ -69,10 +69,13 @@ namespace BridGHe.Grasshopper.Components.Loads
                 LocalPressure = value
             };
             PlatePreStressModel load = new PlatePreStressModel(lc.Value, load_value);
+            Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.WithPrestress(plate.Gpc, lc.Gpc, px, py, pz, id);
+            // R6.5 P1 lane 1a: a plate given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
+            if (plate.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, GpcOnlyElements.Lazy(() => lc.Gpc), px, py, pz)); return; }
             GH_Plate newPlate = new GH_Plate(plate);
             newPlate.Value.Loads.Add(load);
             // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the drafts of the inputs, identity of the conversion of the FEM output.
-            GpcBuilderAttach.Plate(newPlate, () => Common.Gpc.Builders.GpcPlateBuilders.WithPrestress(plate.Gpc, lc.Gpc, px, py, pz, Common.Gpc.GpcBeamDrafts.Identity(newPlate.Value)));
+            GpcBuilderAttach.Plate(newPlate, () => build(Common.Gpc.GpcBeamDrafts.Identity(newPlate.Value)));
             DA.SetData(0, newPlate);
         }
 

@@ -53,10 +53,13 @@ namespace BridGHe.Grasshopper.Components.Loads
                 return;
 
             NodeMomentLoadModel load = new NodeMomentLoadModel(lc.Value, new Vector3d(moment.X, moment.Y, moment.Z));
+            Func<Guid, Common.Gpc.Legacy.LegacyNodeDraft> build = id => Common.Gpc.Builders.GpcNodeBuilders.WithMoment(node.Gpc, lc.Gpc, moment.X, moment.Y, moment.Z, id);
+            // R6.5 P1 lane 1a: a node given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
+            if (node.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Node(this, 0, node, build, GpcOnlyElements.Lazy(() => lc.Gpc), moment.X, moment.Y, moment.Z)); return; }
             GH_Node newNode = new GH_Node(node);
             newNode.Value.Loads.Add(load);
             // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the drafts of the inputs, identity of the conversion of the FEM output.
-            GpcBuilderAttach.Node(newNode, () => Common.Gpc.Builders.GpcNodeBuilders.WithMoment(node.Gpc, lc.Gpc, moment.X, moment.Y, moment.Z, Common.Gpc.GpcBeamDrafts.Identity(newNode.Value)));
+            GpcBuilderAttach.Node(newNode, () => build(Common.Gpc.GpcBeamDrafts.Identity(newNode.Value)));
             DA.SetData("Node", newNode);
         }
 

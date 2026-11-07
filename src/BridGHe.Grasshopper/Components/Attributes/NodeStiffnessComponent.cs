@@ -77,10 +77,12 @@ namespace BridGHe.Grasshopper.Components.Attributes
                 attr.Rz = rot.Z;
             }
 
+            Func<Guid, Common.Gpc.Legacy.LegacyNodeDraft> build = id => Common.Gpc.Builders.GpcNodeBuilders.WithStiffness(node.Gpc, attr.Tx, attr.Ty, attr.Tz, attr.Rx, attr.Ry, attr.Rz, id);
+            // R6.5 P1 lane 1a: a node given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
+            if (node.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Node(this, 0, node, build, attr.Tx, attr.Ty, attr.Tz, attr.Rx, attr.Ry, attr.Rz)); return; }
             newNode.Value.Attributes.Add(new NodeStiffnessAttributeModel(attr));
             // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the draft of the input, identity of the conversion of the FEM output.
-            GpcBuilderAttach.Node(newNode, () => Common.Gpc.Builders.GpcNodeBuilders.WithStiffness(node.Gpc, attr.Tx, attr.Ty, attr.Tz, attr.Rx, attr.Ry, attr.Rz,
-                Common.Gpc.GpcBeamDrafts.Identity(newNode.Value)));
+            GpcBuilderAttach.Node(newNode, () => build(Common.Gpc.GpcBeamDrafts.Identity(newNode.Value)));
 
             DA.SetData("Node", newNode);
         }

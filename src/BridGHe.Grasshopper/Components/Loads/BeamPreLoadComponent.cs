@@ -66,10 +66,13 @@ namespace BridGHe.Grasshopper.Components.Loads
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The connected LoadCase have the Non-structural mass flag set to on");
 
             BeamPreLoadModel load = new BeamPreLoadModel(lc.Value, value, type == 0 ? BeamPreLoadModel.LoadType.Tension : BeamPreLoadModel.LoadType.Strain);
+            Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithPreLoad(beam.Gpc, lc.Gpc, type != 0, value, id);
+            // R6.5 P1 lane 1a: a beam given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
+            if (beam.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), type != 0, value)); return; }
             GH_Beam newBeam = new GH_Beam(beam);
             newBeam.Value.Loads.Add(load);
             // R6.2 (lane B): the GPC draft built on GPC from the drafts of the inputs (identity of the conversion of the FEM output until R6.5).
-            GpcBeamInputs.Attach(newBeam, id => Common.Gpc.Builders.GpcBeamBuilders.WithPreLoad(beam.Gpc, lc.Gpc, type != 0, value, id));
+            GpcBeamInputs.Attach(newBeam, build);
             DA.SetData(0, newBeam);
         }
 
