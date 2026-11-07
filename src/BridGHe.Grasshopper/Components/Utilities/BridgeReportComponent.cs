@@ -91,7 +91,17 @@ public sealed class BridgeReportComponent : GH_Component
                 if (value is not BridgeStressResult r) throw new ArgumentException("Results must contain BridgeStressResult objects.");
                 entries.Add(new(r, tree.Paths[b] + "[" + i + "]"));
             }
-            var data = BridgeReportData.Create(entries, new(title, project, author, revision), model?.Value);
+            // R6.4 (6): with the GPC bridge model of Build BridGHe Model the report model comes from it (name, counts, action records, combination
+            // table, beam lengths); the merged FEM model otherwise (the FEM path of the checks, left to the open decision). Until R6.5 the test
+            // host compares the two on every run.
+            var bridge = model?.Value == null ? null : model.GpcBridge;
+            var source = bridge != null ? BridgeReportData.Source(bridge) : BridgeReportData.Source(model?.Value);
+            if (bridge != null)
+            {
+                var ids = entries.Where(e => e.Result.Source != null).Select(e => e.Result.Source.BeamId).Distinct(StringComparer.Ordinal).ToArray();
+                Common.Gpc.GpcDraftCheck.Attached("Bridge Report model", BridgeReportData.Text(source, ids), () => BridgeReportData.Text(BridgeReportData.Source(model.Value), ids));
+            }
+            var data = BridgeReportData.Create(entries, new(title, project, author, revision), source);
             var figures = new List<BridgeReportFigure>();
             if (topics.Contains((int)BridgeReportTopic.Plots) && da.GetDataTree(9, out GH_Structure<GH_String> svgs))
                 foreach (var item in svgs.AllData(true))

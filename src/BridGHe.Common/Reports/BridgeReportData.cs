@@ -59,12 +59,48 @@ public sealed record BridgeReportData(string Id, DateTimeOffset Created, BridgeR
         return string.Join(", ", ids);
     }
 
-    public static BridgeReportData Create(IEnumerable<BridgeReportEntry> entries, BridgeReportMetadata metadata, ModelModel model = null)
+    /// <summary>F6 R6.4 (6): the model of a report as <see cref="Create(IEnumerable{BridgeReportEntry}, BridgeReportMetadata, ReportModelSource)"/>
+    /// reads it: whether it is N-mm, the length of a beam by its BridGHe ID (null: no such beam), the combination names, and the report model.</summary>
+    public sealed record ReportModelSource(bool Nmm, Func<string, double?> BeamLength, IReadOnlyCollection<string> Combinations, BridgeReportModel Model);
+
+    /// <summary>The model of a report from the merged FEM model (until R6.5).</summary>
+    public static ReportModelSource Source(ModelModel model)
+    {
+        if (model == null) return null;
+        var beams = model.Beams.GroupBy(b => b.BeamId, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.ToArray(), StringComparer.Ordinal);
+        return new ReportModelSource(model.Units == ModelModel.ModelUnits.Nmm, id => id != null && beams.TryGetValue(id, out var b) ? b.Length == 1 ? b[0].Length : throw new InvalidOperationException("Sequence contains more than one matching element") : null,
+            model.LoadCombinations.Select(c => c.Name).ToArray(),
+            new BridgeReportModel(model.Name, model.Units.ToString(), model.Nodes.Count, model.Beams.Count, model.Plates.Count, model.BridgeWorkflow,
+                model.LoadCombinations.Select(c => new BridgeReportCombination(c.Name, c.Values.Select(v => new BridgeReportFactor(v.Key.Name, v.Value)).ToArray())).ToArray()));
+    }
+
+    /// <summary>F6 R6.4 (6): the model of a report from the GPC bridge model of Build BridGHe Model (N-mm by construction): its name and counts,
+    /// the records of its actions and its combination table with the zero coefficients (<see cref="Gpc.GpcBridge.Records"/>,
+    /// <see cref="Gpc.GpcBridge.Combinations"/>, as the merged FEM model kept them), the length of a beam as the distance of Rhino between its ends.</summary>
+    public static ReportModelSource Source(Gpc.GpcBridge bridge)
+    {
+        if (bridge == null) return null;
+        var m = bridge.Model;
+        var beams = m.BeamElements.Values.GroupBy(b => b.Source?.OriginalId ?? b.Name, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.ToArray(), StringComparer.Ordinal);
+        static double Length(GPC.Model.Elements.BeamElement b) => new Rhino.Geometry.Point3d(b.StartPoint.X, b.StartPoint.Y, b.StartPoint.Z).DistanceTo(new Rhino.Geometry.Point3d(b.EndPoint.X, b.EndPoint.Y, b.EndPoint.Z));
+        return new ReportModelSource(true, id => id != null && beams.TryGetValue(id, out var b) ? b.Length == 1 ? Length(b[0]) : throw new InvalidOperationException("Sequence contains more than one matching element") : null,
+            bridge.Combinations.Select(c => c.Name).ToArray(),
+            new BridgeReportModel(m.Name, ModelModel.ModelUnits.Nmm.ToString(), m.NodesElements.Count, m.BeamElements.Count, m.AreaElements.Count, bridge.Records,
+                bridge.Combinations.Select(c => new BridgeReportCombination(c.Name, c.Factors.Select(f => new BridgeReportFactor(f.Case, f.Factor)).ToArray())).ToArray()));
+    }
+
+    /// <summary>R6.4: the canonical text of the model of a report (for the comparison of the GPC and the FEM sources until R6.5).</summary>
+    public static string Text(ReportModelSource source, IEnumerable<string> beamIds) => source == null ? "null" : source.Nmm + "\n" + Serialize(source.Model) + "\n"
+        + string.Join("|", source.Combinations) + "\n" + string.Join("|", beamIds.Select(id => id + "=" + (source.BeamLength(id) is double l ? BitConverter.DoubleToInt64Bits(l).ToString("X16") : "-")));
+
+    public static BridgeReportData Create(IEnumerable<BridgeReportEntry> entries, BridgeReportMetadata metadata, ModelModel model = null) => Create(entries, metadata, Source(model));
+
+    public static BridgeReportData Create(IEnumerable<BridgeReportEntry> entries, BridgeReportMetadata metadata, ReportModelSource model)
     {
         if (metadata == null || string.IsNullOrWhiteSpace(metadata.Title)) throw new ArgumentException("Supply a report title.");
         var input = entries?.ToArray() ?? throw new ArgumentNullException(nameof(entries));
         if (input.Length == 0 || input.Any(e => e?.Result == null)) throw new ArgumentException("Supply at least one bridge verification result.");
-        if (model != null && model.Units != ModelModel.ModelUnits.Nmm) throw new ArgumentException("Report model must use N-mm units, as the bridge checker.");
+        if (model != null && !model.Nmm) throw new ArgumentException("Report model must use N-mm units, as the bridge checker.");
         var sections = new Dictionary<string, BridgeReportSection>();
         var samples = new List<BridgeReportSample>(); var warnings = new List<string>();
         foreach (var entry in input)
@@ -95,9 +131,9 @@ public sealed record BridgeReportData(string Id, DateTimeOffset Created, BridgeR
             if (r.Source == null) warnings.Add(id + ": provenienza FEM assente; identificazione tramite percorso GH " + entry.TreePosition + ".");
             else if (model != null)
             {
-                var beam = model.Beams.SingleOrDefault(b => b.BeamId == r.Source.BeamId);
-                if (beam == null || !double.IsFinite(r.Source.StationMm) || r.Source.StationMm < -1e-6 || r.Source.StationMm > beam.Length + 1e-6
-                    || !model.LoadCombinations.Any(c => c.Name == r.Source.Combination))
+                var length = model.BeamLength(r.Source.BeamId);
+                if (length == null || !double.IsFinite(r.Source.StationMm) || r.Source.StationMm < -1e-6 || r.Source.StationMm > length.Value + 1e-6
+                    || !model.Combinations.Any(c => c == r.Source.Combination))
                     throw new ArgumentException(id + ": beam/station/combination does not belong to the supplied report model.");
             }
             if (!checks.Any(c => c.Active)) warnings.Add(id + ": nessuna verifica attiva disponibile.");
@@ -113,9 +149,7 @@ public sealed record BridgeReportData(string Id, DateTimeOffset Created, BridgeR
             .Select(g => ResultIds(g.Select(w => w.Id)) + ": " + g.Key));
         if (model == null) warnings.Add("Modello non fornito: nessuna ricostruzione di geometria globale, casi e coefficienti delle combinazioni.");
         else warnings.Add("Associazione al modello controllata per ID trave, stazione e combinazione; i risultati non contengono un'impronta FEM sorgente per certificare la revisione del modello.");
-        var reportModel = model == null ? null : new BridgeReportModel(model.Name, model.Units.ToString(), model.Nodes.Count, model.Beams.Count, model.Plates.Count,
-            model.BridgeWorkflow, model.LoadCombinations.Select(c => new BridgeReportCombination(c.Name,
-                c.Values.Select(v => new BridgeReportFactor(v.Key.Name, v.Value)).ToArray())).ToArray());
+        var reportModel = model?.Model;
         // Round-trip once to detach all nested arrays/records from the caller's mutable collections.
         var data = new BridgeReportData(Guid.NewGuid().ToString("N"), DateTimeOffset.Now, metadata, "",
             typeof(BridgeReportData).Assembly.GetName().Version.ToString(), typeof(HBridgeSection).Assembly.GetName().Version.ToString(), reportModel,
