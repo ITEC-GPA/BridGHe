@@ -122,8 +122,13 @@ namespace BridGHe.Grasshopper.Components.Models
                 // message), and every draft takes its own property data (all drafts sign with the GPC fingerprint).
                 try
                 {
+                    var buildCounts = new Common.Gpc.Legacy.LegacyBuildModel.BuildCounts();
                     var input = Common.Gpc.Legacy.LegacyBuildModel.Build(name, new Common.Gpc.BridgeUnits(Common.Gpc.BridgeUnits.Parse(((ModelModel.ModelUnits)units).ToString())), Settings.Instance.Tolerance,
-                        nodeDrafts, beamDrafts, plateDrafts, combinations.Select(c => c.Gpc).ToList(), stages.Select(s => s.Gpc).ToList());
+                        nodeDrafts, beamDrafts, plateDrafts, combinations.Select(c => c.Gpc).ToList(), stages.Select(s => s.Gpc).ToList(), buildCounts);
+                    // R6.5 (coordinator, 7/11): the copies of an element with the same ID and the same data are kept once, and named.
+                    foreach (var (family, word) in new[] { (1, "beams"), (2, "plates") })
+                        if (buildCounts.DroppedCopies[family].Count > 0)
+                            AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, $"Elements given more than once with the same data, kept once: {word} {string.Join(", ", buildCounts.DroppedCopies[family].Distinct())}.");
                     model.AttachInput(input);
                     // R6.4 (5), decision (i) = A (coordinator, 7/11; examples 11–19): a model rebuilt from beams that all come from one analysed GPC
                     // model (Super Element Filter or Decompose Model on the output of an analysis), and nothing else, keeps that model: Build

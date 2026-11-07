@@ -224,6 +224,21 @@ internal static class GpcBuilderChecksB
         Run("BridgeConnectionsComponent", one, (0, 1), (1, links), (2, iProperty));
         Run("BridgeConnectionsComponent", one, (0, 2), (3, new[] { b1, loaded, moved }), (4, new R.Vector3d(15, 25, 0)));
 
+        // R6.5 (coordinator, 7/11): Build Model with two GH data of the same beam ID (the FEM model merged them by ID): the same data is kept
+        // once, other data with the same ID is an error naming the ID.
+        {
+            var copyA = Out(Run("ElementIdComponent", one, (0, Out(Run("BeamComponent", one, (0, axisX), (1, iProperty)))), (1, "SAME")));
+            var copyB = Out(Run("ElementIdComponent", one, (0, Out(Run("BeamComponent", one, (0, axisX), (1, iProperty)))), (1, "SAME")));
+            var otherData = Out(Run("ElementIdComponent", one, (0, Out(Run("BeamComponent", one, (0, axisX), (1, gProperty)))), (1, "SAME")));
+            if (copyA.GetType().GetProperty("Guid").GetValue(copyA).Equals(copyB.GetType().GetProperty("Guid").GetValue(copyB))) h.Failures.Add("B same ID: the two copies share a GH GUID");
+            var built = Out(Run("BuildModelComponent", none, (0, new[] { copyA, copyB })));
+            var conversion = built.GetType().GetProperty("GpcInput").GetValue(built);
+            var gpc = (GPC.Model.Models.Model)conversion.GetType().GetProperty("Model").GetValue(conversion);
+            if (gpc.BeamElements.Count != 1 || gpc.BeamElements.Values.Single().Name != "SAME") h.Failures.Add("B same ID: identical copies not kept once (" + gpc.BeamElements.Count + " beams)");
+            Run("BuildModelComponent", none, (0, new[] { copyA, otherData }));
+            h.ExpectError("Beam ID SAME is given by two elements with different data");
+        }
+
         int refused = Refused() - refusedBefore;
         if (refused != 1) h.Failures.Add("B: expected 1 output refused by the reader and the builder alike (distributed load in a non-global system), got " + refused);
         Console.WriteLine("GPC BUILDERS B RUNS " + string.Join(", ", PerComponent.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => p.Key + " " + p.Value)) + $"; refused alike {refused}");

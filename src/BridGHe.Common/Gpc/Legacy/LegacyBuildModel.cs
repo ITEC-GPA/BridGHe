@@ -343,9 +343,12 @@ namespace BridGHe.Common.Gpc.Legacy
             public int CornerNodes { get; internal set; }
             public int ReaderMoved { get; internal set; }
             public int Reanchored { get; internal set; }
+            /// <summary>R6.5 (coordinator, 7/11): the IDs of beams (family 1) and plates (family 2) given again by another GH datum with the same
+            /// data, kept once (the copy dropped), in input order.</summary>
+            public List<string>[] DroppedCopies { get; } = { new List<string>(), new List<string>(), new List<string>() };
             public override string ToString() => "merges by GH GUID nodes/beams/plates " + string.Join("/", Merges) + " (self-merges " + string.Join("/", SelfMerges) + "), position merges " + PositionMerges
                 + ", ends moved " + EndsMoved + ", end nodes " + EndNodes + ", zero-length beams " + ZeroLength + ", corners moved " + CornersMoved + ", corner nodes " + CornerNodes
-                + ", reader moved " + ReaderMoved + ", re-anchored " + Reanchored;
+                + ", reader moved " + ReaderMoved + ", re-anchored " + Reanchored + ", copies of the same ID dropped beams/plates " + DroppedCopies[1].Count + "/" + DroppedCopies[2].Count;
         }
 
         /// <summary>
@@ -403,6 +406,7 @@ namespace BridGHe.Common.Gpc.Legacy
             List<(T Draft, string Id)> Family<T>(IReadOnlyList<(Guid Gh, T Draft)> data, int family, Func<T, LegacyElementRecords> recordsOf, Func<T, T, T> merge, Func<T, string> key) where T : class
             {
                 var result = new List<(T Draft, string Id)>(); var first = new Dictionary<Guid, (int Index, T Draft)>();
+                var byId = new Dictionary<string, int>(StringComparer.Ordinal);
                 var used = data.Select(d => recordsOf(d.Draft).FirstLabel).Where(l => l != null).ToList();
                 int next = 1;
                 for (int i = 0; i < data.Count; i++)
@@ -418,6 +422,17 @@ namespace BridGHe.Common.Gpc.Legacy
                     }
                     string id = recordsOf(draft).FirstLabel;
                     if (id == null) { while (used.Contains(next.ToString())) next++; id = Fresh(next.ToString()); next++; }
+                    // R6.5 (coordinator, 7/11): a beam or plate whose ID another GH datum already gave (the FEM model merged them by ID): the same
+                    // data (the same draft content) is kept once and named in a remark; other data with the same ID is an error naming the ID.
+                    if (family != 0 && byId.TryGetValue(id, out int other))
+                    {
+                        if (key(result[other].Draft) != key(draft))
+                            throw new ArgumentException($"{(family == 1 ? "Beam" : "Plate")} ID {id} is given by two elements with different data (LegacyElementIdGivenTwice): give each element its own Element ID, or connect it once.");
+                        counts.DroppedCopies[family].Add(id);
+                        identity.Append("|d").Append(family).Append(':').Append(id);
+                        continue;
+                    }
+                    if (family != 0) byId[id] = result.Count;
                     first.Add(gh, (result.Count, draft)); result.Add((draft, id));
                     identity.Append("|e").Append(family).Append(':').Append(key(draft));
                 }
