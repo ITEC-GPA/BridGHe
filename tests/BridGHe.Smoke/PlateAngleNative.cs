@@ -21,10 +21,15 @@ using Rhino.Geometry;
 /// which must solve (its layer axes carry the Straus7 normal, <c>GpcPlateBuilders.StrausAxes</c>; with the normal of the former plate the writer
 /// refused it, PlateMaterialAxesNormalMismatch, where 0.3.0 solved it). Its comparison with 0.3.0 is in passo 74 (the warping couples
 /// membrane and bending at the level of rounding, whose principal angles are not comparable by this criterion).</para>
+/// <para>P2Y (coordinator decision on passo 74): Force Von Mises is the value of 0.3.0 again, Straus7's combined value with the transverse
+/// shears (<c>GpcResultRows.Plate</c>), and is compared everywhere, the bent plates of "Pressure" included. <c>combination</c>: the same model
+/// with the combination "Both" = 1.0 Pressure + 0.5 Prestress also solved and shown (a Straus7 combination case in 0.3.0, summed by the GPC
+/// rows), against its own frozen reference (<see cref="CombinationReference"/>, Plate Results of 0.3.0 written once by the P2Y host).</para>
 /// </summary>
 internal static class PlateAngleNative
 {
     internal static readonly string Reference = Path.GetFullPath(Path.Combine("tests", "BridGHe.Smoke", "Fixtures", "plate-angle-030", "plate-results.tsv"));
+    internal static readonly string CombinationReference = Path.GetFullPath(Path.Combine("tests", "BridGHe.Smoke", "Fixtures", "plate-angle-030", "plate-results-combination.tsv"));
 
     private static IGH_Param In(GH_Component c, string name) => c.Params.Input.Single(p => p.Name == name);
     private static IGH_Param Out(GH_Component c, string name) => c.Params.Output.Single(p => p.Name == name);
@@ -58,7 +63,7 @@ internal static class PlateAngleNative
 
     /// <summary>Builds and solves the definition (the analysis writes <paramref name="st7"/>); the rows of Plate Results (output, branch, index,
     /// value) and the error messages of the document.</summary>
-    internal static (Dictionary<(string, string, int), string> Rows, string[] Errors) Solve(string st7, bool warped = false)
+    internal static (Dictionary<(string, string, int), string> Rows, string[] Errors) Solve(string st7, bool warped = false, bool combination = false)
     {
         using var doc = new GH_Document();
         GH_Component Add(string type) => BridgeSegmentExcelTests.Add(doc, type);
@@ -91,9 +96,16 @@ internal static class PlateAngleNative
         var build = Add("BuildModelComponent");
         Wire(build, "Elements", Out(restraints, "Node"), Out(prestress, "Plate")); In(build, "Elements").DataMapping = GH_DataMapping.Flatten;
         Set(build, "Name", new GH_String("Plate angle"));
+        if (combination)
+        {
+            var both = Add("LoadCombinationComponent"); Set(both, "Name", new GH_String("Both"));
+            Wire(both, "LoadCases", Out(pressureCase, "LoadCase"), Out(prestressCase, "LoadCase")); Set(both, "Coefficients", new GH_Number(1.0), new GH_Number(0.5));
+            Wire(build, "Load Combinations", Out(both, "LoadCombination"));
+        }
         var analysis = Add("StrausR3AnalysisComponent");
         Wire(analysis, "Model", Out(build, "Model")); Set(analysis, "Solver", new GH_Integer(0));
-        Set(analysis, "Analysis Results", new GH_String("Pressure"), new GH_String("Prestress"));
+        if (combination) Set(analysis, "Analysis Results", new GH_String("Pressure"), new GH_String("Prestress"), new GH_String("Both"));
+        else Set(analysis, "Analysis Results", new GH_String("Pressure"), new GH_String("Prestress"));
         Set(analysis, "Output Path", new GH_String(st7)); Set(analysis, "Keep Running", new GH_Boolean(true));
         var parts = Add("DecomposeModelComponent"); Wire(parts, "Model", Out(analysis, "Model"));
         var results = Add("PlateResultsComponent"); Wire(results, "Plate", Out(parts, "Plates"));
@@ -117,19 +129,17 @@ internal static class PlateAngleNative
         File.ReadLines(file).Skip(1).Select(l => l.Split('\t', 4)).Where(f => f[0] != "plate").ToDictionary(f => (f[0], f[1], int.Parse(f[2], CultureInfo.InvariantCulture)), f => f[3]);
 
     /// <summary>The worst relative difference of the comparison (passo 1 criterion), or an exception on a different row, case or node.
-    /// <para>Not compared, a difference independent of the angle (passo 74, the same without angles): Force Von Mises where the transverse
-    /// shears are not zero. 0.3.0 showed the Straus7 combined value √(Nxx² − Nxx·Nyy + Nyy² + 3(Nxy² + Qxz² + Qyz²)) (stPlateCombined), the GPC
-    /// rows since R6.4 the in-plane one √(Nxx² − Nxx·Nyy + Nyy² + 3·Nxy²) (<c>GpcResultRows.Plate</c>): equal where Qxz = Qyz = 0 (compared).
-    /// <paramref name="skipped"/> counts the values left out.</para></summary>
-    internal static double Compare(Dictionary<(string, string, int), string> reference, Dictionary<(string, string, int), string> actual, out int values, out int skipped)
+    /// Every value is compared (P2Y: Force Von Mises too, the 0.3.0 value with the transverse shears); <paramref name="bent"/> counts the
+    /// Force Von Mises values where the transverse shears are not zero (where the in-plane value of R6.4 differed from 0.3.0).</summary>
+    internal static double Compare(Dictionary<(string, string, int), string> reference, Dictionary<(string, string, int), string> actual, out int values, out int bent)
     {
         if (!reference.Keys.OrderBy(k => k).SequenceEqual(actual.Keys.OrderBy(k => k))) throw new Exception($"PLATE ANGLE NATIVE: rows {actual.Count} where {reference.Count} (0.3.0)");
         var labels = new HashSet<string> { "Load cases", "Nodes", "Steps" }; var angles = new HashSet<string> { "Force Angle", "Moment Angle", "Shear Force Angle" };
-        var scale = new Dictionary<(string, string), double>(); var diff = new Dictionary<(string, string), double>(); values = 0; skipped = 0;
+        var scale = new Dictionary<(string, string), double>(); var diff = new Dictionary<(string, string), double>(); values = 0; bent = 0;
         foreach (var (k, v) in reference)
         {
             if (labels.Contains(k.Item1)) { if (actual[k] != v) throw new Exception($"PLATE ANGLE NATIVE: {k}: {actual[k]} where {v} (0.3.0)"); continue; }
-            if (k.Item1 == "Force Von Mises" && reference.TryGetValue(("Shear Force", k.Item2, k.Item3), out var shear) && shear.Split(' ').Any(t => double.Parse(t, CultureInfo.InvariantCulture) != 0)) { skipped++; continue; }
+            if (k.Item1 == "Force Von Mises" && reference.TryGetValue(("Shear Force", k.Item2, k.Item3), out var shear) && shear.Split(' ').Any(t => double.Parse(t, CultureInfo.InvariantCulture) != 0)) bent++;
             string @case = reference.TryGetValue(("Load cases", k.Item2, k.Item3), out var c) ? c : "?";
             var x = v.Split(' ').Select(t => double.Parse(t, CultureInfo.InvariantCulture)).ToArray(); var y = actual[k].Split(' ').Select(t => double.Parse(t, CultureInfo.InvariantCulture)).ToArray();
             for (int j = 0; j < x.Length; j++)

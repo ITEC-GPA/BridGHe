@@ -198,12 +198,18 @@ namespace BridGHe.Common.Gpc
                     yield return new PlateRow
                     {
                         Entry = i, Node = row.Node.ToString(CultureInfo.InvariantCulture), Values = v,
-                        ForceMax = fMax, ForceMin = fMin, ForceAngle = fAngle, ForceVonMises = Math.Sqrt(v[0] * v[0] - v[0] * v[1] + v[1] * v[1] + 3 * v[2] * v[2]),
+                        ForceMax = fMax, ForceMin = fMin, ForceAngle = fAngle, ForceVonMises = VonMises(v[0], v[1], v[2], v[3], v[4]),
                         MomentMax = mMax, MomentMin = mMin, MomentAngle = mAngle,
                     };
                 }
             }
         }
+
+        /// <summary>The Von Mises force per length that BridGHe 0.3.0 showed (Straus7 combined plate force, <c>stPlateCombined</c>
+        /// <c>ipPlateCombVonMises</c>): the membrane forces and the transverse shears, √(Nxx² − Nxx·Nyy + Nyy² + 3(Nxy² + Qxz² + Qyz²)).
+        /// Equal to the in-plane value where Qxz = Qyz = 0.</summary>
+        private static double VonMises(double xx, double yy, double xy, double xz, double yz) =>
+            Math.Sqrt(xx * xx - xx * yy + yy * yy + 3 * (xy * xy + xz * xz + yz * yz));
 
         /// <summary>Principal values and angle (degrees from local x) of an in-plane tensor, as Straus7 combined them before.</summary>
         private static (double Max, double Min, double AngleDeg) Principal(double xx, double yy, double xy)

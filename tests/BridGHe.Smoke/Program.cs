@@ -314,9 +314,16 @@ internal static class Program
         var (rows,errors)=PlateAngleNative.Solve(Path.GetFullPath(Path.Combine(folder,"plate-angle.st7")));
         PlateAngleNative.Write(Path.Combine(folder,"plate-results.tsv"),rows);
         Assert(errors.Length==0,"plate angle native: no error ("+string.Join(" | ",errors)+")");
-        double worst=PlateAngleNative.Compare(PlateAngleNative.Read(PlateAngleNative.Reference),rows,out int values,out int skipped);
-        Console.WriteLine($"PLATE ANGLE NATIVE: {values} values of Plate Results, worst relative difference from 0.3.0 {worst:R} (criterion of passo 1, 1e-9); {skipped} Force Von Mises with transverse shears not compared (0.3.0: Straus7 combined value)");
-        Assert(worst<=1e-9,"plate local axis angle: Plate Results of the turned plates equal to 0.3.0");
+        double worst=PlateAngleNative.Compare(PlateAngleNative.Read(PlateAngleNative.Reference),rows,out int values,out int bent);
+        Console.WriteLine($"PLATE ANGLE NATIVE: {values} values of Plate Results, worst relative difference from 0.3.0 {worst:R} (criterion of passo 1, 1e-9); {bent} of them Force Von Mises with transverse shears (P2Y: the 0.3.0 value, compared)");
+        Assert(worst<=1e-9 && bent>0,"plate local axis angle: Plate Results of the turned plates equal to 0.3.0, Force Von Mises of the bent plates included");
+        // P2Y: the combination "Both" (1.0 Pressure + 0.5 Prestress) against its 0.3.0 reference, Force Von Mises of the combined tensor with its shears.
+        var (combined,combinedErrors)=PlateAngleNative.Solve(Path.GetFullPath(Path.Combine(folder,"plate-angle-combination.st7")),combination:true);
+        PlateAngleNative.Write(Path.Combine(folder,"plate-results-combination.tsv"),combined);
+        Assert(combinedErrors.Length==0,"plate angle native, combination: no error ("+string.Join(" | ",combinedErrors)+")");
+        double worstCombined=PlateAngleNative.Compare(PlateAngleNative.Read(PlateAngleNative.CombinationReference),combined,out int combinedValues,out int combinedBent);
+        Console.WriteLine($"PLATE ANGLE NATIVE (combination): {combinedValues} values of Plate Results, worst relative difference from 0.3.0 {worstCombined:R}; {combinedBent} Force Von Mises with transverse shears");
+        Assert(worstCombined<=1e-9 && combinedBent>0,"plate Force Von Mises of a combination with transverse shears equal to 0.3.0 (Straus7 combined value)");
         var (warped,warpedErrors)=PlateAngleNative.Solve(Path.GetFullPath(Path.Combine(folder,"plate-angle-warped.st7")),true);
         PlateAngleNative.Write(Path.Combine(folder,"plate-results-warped.tsv"),warped);
         Console.WriteLine($"PLATE ANGLE NATIVE (warped): {warped.Count} rows of Plate Results; errors: {string.Join(" | ",warpedErrors)}");
