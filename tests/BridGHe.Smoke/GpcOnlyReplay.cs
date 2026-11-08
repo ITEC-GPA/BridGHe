@@ -213,6 +213,15 @@ internal static class GpcOnlyReplay
     /// compare a renamed Build Model output (R6.3).</para></summary>
     private static string Text(IGH_Goo goo)
     {
+        // PAR (A08): the texts of the replay compare a stale section state as stale (see GpcDraftArchiveChecks.CompareStaleAsStale).
+        bool before = GpcDraftArchiveChecks.CompareStaleAsStale;
+        GpcDraftArchiveChecks.CompareStaleAsStale = true;
+        try { return TextOf(goo); }
+        finally { GpcDraftArchiveChecks.CompareStaleAsStale = before; }
+    }
+
+    private static string TextOf(IGH_Goo goo)
+    {
         if (goo == null) return "null";
         // L2B: a bridge rule by its data and the GPC datum of its beam property (of its FEM value, or given alone).
         if (goo.GetType().Name == "BridgeDesignGoo" && DesignProperty(goo) is var (fem, gpcProperty) && (fem != null || gpcProperty != null))

@@ -46,15 +46,19 @@ internal static class GpcDraftArchiveChecks
         "element warnings " + string.Join(" | ", r.ElementWarnings.Select(w => $"{w.Family}:{w.Number}:{w.Format}:{w.Restraint}")),
         "angles " + string.Join(",", r.BeamAngles.Select(a => a.Key + "=" + B(a.Value))),
         $"model data {r.NativeSections.Count} {r.CaseOrigins.Count} {r.BeamProperties.Count} {r.ShadowedPropertyBeams.Count} {r.ElementLoadCases.Count}",
-        "bridge " + (r.Bridge == null ? "null" : r.Bridge.Count + " " + StaleAsStale(r.Bridge).Fingerprint()),
+        "bridge " + (r.Bridge == null ? "null" : r.Bridge.Count + " " + (CompareStaleAsStale ? StaleAsStale(r.Bridge) : r.Bridge).Fingerprint()),
     });
 
     private static string Bridge(GPC.Checkers.CompositeBridge.BridgeBeamData d)
     {
         if (d == null) return "bridge none";
-        var one = new GPC.Checkers.CompositeBridge.BridgeModelData(); one.Set(StaleAsStale(d));
+        var one = new GPC.Checkers.CompositeBridge.BridgeModelData(); one.Set(CompareStaleAsStale ? StaleAsStale(d) : d);
         return "bridge " + d.BeamGuid + " " + one.Fingerprint();
     }
+
+    /// <summary>PAR (A08): true while the DRAFT CHECK and the GPC-only replay compute their texts: a stale section state is then compared as
+    /// stale. False otherwise: the texts of the captures (R6.0) and of the round trips keep the marker as it is (never regenerated).</summary>
+    [ThreadStatic] internal static bool CompareStaleAsStale;
 
     /// <summary>PAR (A08): a stale section state compared as stale: its marker holds the signature the state was computed for (the FEM signature
     /// of the former value for the reader of a FEM output, the GPC fingerprint for a builder; neither ever equals a property fingerprint). The
