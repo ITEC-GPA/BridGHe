@@ -33,6 +33,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public GH_Group(GH_Group grp)
         {
             Value = grp.Value == null ? null : new GroupModel(grp.Value);
+            // R6.5 P1 lane 2a (revisione ChatGPT R65-2): the copy keeps the datum attached or given alone, as Duplicate does.
+            if (grp._gpc != null && grp.HasAttachedGpc && ReferenceEquals(grp._gpcOf, grp.Value)) { _gpc = grp._gpc; _gpcOf = Value; HasAttachedGpc = true; }
         }
 
         /// <summary>

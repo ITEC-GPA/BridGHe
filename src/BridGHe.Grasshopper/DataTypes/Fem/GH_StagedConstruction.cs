@@ -30,6 +30,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public GH_StagedConstruction(GH_StagedConstruction stagedConstruction)
         {
             Value = stagedConstruction.Value == null ? null : new StagedConstructionModel(stagedConstruction.Value);
+            // R6.5 P1 lane 2a (revisione ChatGPT R65-2): the copy keeps the datum attached or given alone and the former payload, as Duplicate does.
+            stagedConstruction.CarryGpcTo(this);
         }
 
         /// <summary>

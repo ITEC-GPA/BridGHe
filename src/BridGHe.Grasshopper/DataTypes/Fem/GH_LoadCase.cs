@@ -29,6 +29,9 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public GH_LoadCase(GH_LoadCase lc)
         {
             Value = lc.Value == null ? null : new LoadCaseModel(lc.Value);
+            // R6.5 P1 lane 2a (revisione ChatGPT R65-2): the copy keeps the record attached or given alone and the former payload, as
+            // Duplicate does (a record with a list of stages as another instance, CarryGpcTo).
+            lc.CarryGpcTo(this);
         }
 
         /// <summary>

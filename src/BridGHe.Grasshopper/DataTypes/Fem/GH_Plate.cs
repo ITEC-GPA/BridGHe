@@ -209,8 +209,14 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override IGH_GeometricGoo Morph(SpaceMorph xmorph)
         {
+            // R6.5 P1 lane 2a (revisione ChatGPT R65-1): a plate given by its draft alone morphs the solid of its draft, as the FEM plate its shape.
             if (Value == null)
-                return null;
+            {
+                var shape = GpcDraftGeometry.Shape(Gpc);
+                if (shape == null) return null;
+                xmorph.Morph(shape);
+                return new GH_Brep(shape);
+            }
             if (!Value.IsValid)
                 return null;
 
@@ -225,8 +231,14 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             //It might not be easy/make sense to apply scaling/rotations, shears etc.
             //In this example, I'll convert the shell to a brep.
             //Perhaps you will want to check for translations/rotations only, operations that make sense.
+            // R6.5 P1 lane 2a (revisione ChatGPT R65-1): a plate given by its draft alone transforms the solid of its draft.
             if (Value == null)
-                return null;
+            {
+                var shape = GpcDraftGeometry.Shape(Gpc);
+                if (shape == null) return null;
+                shape.Transform(xform);
+                return new GH_Brep(shape);
+            }
             if (!Value.IsValid)
                 return null;
 

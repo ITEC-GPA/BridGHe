@@ -96,8 +96,30 @@ internal static class GpcNullValueChecks
         checks++;
     }
 
+    /// <summary>P2Z (revisione ChatGPT R65-1): a morph that bends and shears (a plate keeps no plane under it).</summary>
+    private sealed class Bend : SpaceMorph
+    {
+        public override Point3d MorphPoint(Point3d p) => new Point3d(p.X + 0.25 * p.Z, p.Y + 1e-4 * p.X * p.X, p.Z + 0.5 * p.Y);
+    }
+
+    /// <summary>P2Z (R65-1): two solids with the same vertices, edges and faces, bit for bit.</summary>
+    private static bool SameBrep(Brep a, Brep b) => a != null && b != null && a.Faces.Count == b.Faces.Count && a.Edges.Count == b.Edges.Count
+        && a.Vertices.Select(v => v.Location).SequenceEqual(b.Vertices.Select(v => v.Location));
+
+    /// <summary>P2Z (R65-1): a translation and a morph of a plate given by its draft alone give the solid of the FEM plate.</summary>
+    private static void Moved(string what, IGH_GeometricGoo fem, IGH_GeometricGoo gpc)
+    {
+        var move = Transform.Translation(120, -45, 30);
+        Require(fem.Transform(move) is GH_Brep f && gpc.Transform(move) is GH_Brep g && SameBrep(f.Value, g.Value), what + ": translated, the solid of the FEM plate (R65-1)");
+        Require(fem.Morph(new Bend()) is GH_Brep fm && gpc.Morph(new Bend()) is GH_Brep gm && SameBrep(fm.Value, gm.Value), what + ": morphed, the solid of the FEM plate (R65-1)");
+        checks += 2; moved++;
+    }
+
+    private static int moved, copied;
+
     internal static void Regression()
     {
+        moved = 0; copied = 0;
         plugin = BridgeMergeTests.Initialize();
         Type node = T("Fem.GH_Node"), beam = T("Fem.GH_Beam"), plate = T("Fem.GH_Plate"), model = T("Fem.GH_Model");
         Type material = T("Fem.GH_Material"), beamProperty = T("Fem.GH_BeamProperty"), plateProperty = T("Fem.GH_PlateProperty"), section = T("Fem.GH_BeamSection");
@@ -119,6 +141,15 @@ internal static class GpcNullValueChecks
             var fem = Make(type, value);
             Common(what, fem, type, Gpc, (IGH_Goo)FromGpc(type, Gpc(fem)), type != group);
             data++;
+            // P2Z (revisione ChatGPT R65-2): the public copy constructor of a group, case or stage keeps the GPC datum, of a datum alone too.
+            if (type == group || type == loadCase || type == stage)
+            {
+                var only = (IGH_Goo)FromGpc(type, Gpc(fem));
+                var copy = (IGH_Goo)Activator.CreateInstance(type, only);
+                Require(copy.IsValid && Prop(copy, "Value") == null && TextOf(Gpc(copy)) == TextOf(Gpc(only)), what + ": the copy constructor keeps the datum alone (R65-2)");
+                Require(TextOf(Gpc(Activator.CreateInstance(type, fem))) == TextOf(Gpc(fem)), what + ": the copy constructor of the FEM-backed type, the same datum (R65-2)");
+                checks += 2; copied++;
+            }
         }
         foreach (var example in NativeExamples.Create())
         {
@@ -156,6 +187,10 @@ internal static class GpcNullValueChecks
                         Box($"{id} plate {p.PlateId}", new BoundingBox(p.Points), g.Boundingbox);
                         Require(g.CastTo(out GH_Curve outline) && outline.Value.IsClosed, id + ": plate cast to its outline");
                         Data($"{id} plate property {p.PlateProperty?.Name}", plateProperty, p.PlateProperty);
+                        // P2Z (R65-1): the plate and the triangle on three of its corners, moved and morphed.
+                        Moved($"{id} plate {p.PlateId}", f, g);
+                        var tf = (IGH_GeometricGoo)Make(plate, new PlateModel(p.PlateId + "t", p.Points.Take(3).ToArray(), p.PlateProperty));
+                        Moved($"{id} triangle on plate {p.PlateId}", tf, (IGH_GeometricGoo)FromGpc(plate, Gpc(tf), Prop(tf, "Guid")));
                         break;
                     }
                     default: continue;
@@ -183,6 +218,16 @@ internal static class GpcNullValueChecks
             checks += 5; models++;
         }
         Require(elements >= 60 && data >= 60 && models == 10, $"too few cases: {elements} elements, {data} data, {models} models");
+        // P2Z (revisione ChatGPT R65-1/R65-2): the cases of the GPC-only plate geometry and of the copy constructors.
+        var stageValue = new StagedConstructionModel { Name = "Stage R65", Marph = false, Rotate = true };
+        stageValue.AddGroups(new[] { new GroupModel("Deck") });
+        var comboValue = new LoadCombinationModel("ULS R65"); comboValue.Values.Add(new LoadCaseModel("R65", "R65"), 1.35);
+        stageValue.AddLoadCombinations(new[] { comboValue });
+        Data("in memory: stage", stage, stageValue);
+        Data("in memory: group with a parent", group, new GroupModel("Pour1", new GroupModel("Deck")));
+        Data("in memory: case", loadCase, new LoadCaseModel("R65 case", "R65 case"));
+        Require(moved >= 2 && copied >= 3, $"too few R65 cases: {moved} plates moved, {copied} copies");
+        Console.WriteLine($"GPC NULL VALUES (R65): {moved} plates given by their drafts alone translated and morphed as the FEM plates, {copied} groups, cases and stages copied by their copy constructors");
         Console.WriteLine($"GPC NULL VALUES PASS: {elements} elements, {data} properties, materials, sections, groups, cases, combinations and stages, {models} models " +
             $"of the examples 01-10 given by their GPC datum alone ({checks} checks: validity, datum, bounding box and casts, text, copies, persistence without FemmR6, state of the model)");
     }
