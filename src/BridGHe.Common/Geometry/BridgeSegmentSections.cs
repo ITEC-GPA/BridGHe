@@ -131,24 +131,26 @@ public static class BridgeSegmentSections
     /// material and formulation of the base property (<see cref="Gpc.Builders.GpcBridgeGeometryBuilders.StandardSection"/> and
     /// <see cref="Gpc.Builders.GpcBridgeGeometryBuilders.StandardProperty"/>, the builders of the dual rule), carried by the rule as its GPC
     /// property (<see cref="BridgeSectionRule.GpcProperty"/>). The calculated values are those of the shapes of the recipe
-    /// (<see cref="Gpc.GpcSectionGeometry.Of"/>, the expressions of the former CalculateSection). Not in the GPC datum of the base property
-    /// (open for lane 2c): the fillet radius of its section (a '*' radius resolves to 0; the GPC sections have no fillets) and the kind of its
-    /// material (a base property that is not steel is not refused).
+    /// (<see cref="Gpc.GpcSectionGeometry.Of"/>, the expressions of the former CalculateSection). L2C (limits (a) and (b) of passo 77, as in
+    /// 0.3.0): a '*' radius resolves to the fillet radius of the base section (its recipe), in the resolved table and in the fillet check, and
+    /// the conci carry it; a base property whose material is not steel is refused (the kind recorded with the property; a property recorded
+    /// before lane 2c, without it, is not refused, as before).
     /// </summary>
     public static BridgeSegmentSectionResult CreateGpc(IBridgeSegments geometry, Gpc.Legacy.LegacyBeamProperty baseProperty, IEnumerable<string> table)
     {
         var segments = Segments(geometry);
         var recipe = baseProperty?.Data?.Section;
         var material = (baseProperty?.Property as GPC.Model.ElementProperties.ElasticBeamProperty)?.Material;
-        // The material of a GPC beam property is its analysis material (GpcMaterials.Analysis: no kind), so the steel kind of the base material
-        // cannot be checked on the datum (open for lane 2c, with the data the recipe lacks): every other check is the one of Create.
+        // L2C: the material of a GPC beam property is its analysis material (no kind): the steel check reads the kind recorded with the
+        // property (LegacyBeamPropertyData.MaterialKind); the mirror of the base section, as Create.
         if (baseProperty?.Property == null || recipe == null || material == null || recipe.Kind != Gpc.BridgeSectionKind.I || recipe.NativeKey != null ||
+            recipe.Mirror != Gpc.Legacy.LegacySectionRecipe.NoMirror || baseProperty.Data.MaterialKind is { } kind && kind != "Steel" ||
             baseProperty.Data.Formulation != GPC.Model.Structure.Assignments.BeamFormulation.StraightTwoNode)
             throw new ArgumentException("Base Property must be an unmirrored I Section with Steel Material and Beam formulation.");
         var rows = MatchRows(segments, table, true);
         var rules = new List<BridgeSectionRule>(); var normalized = new List<string> { Header }; var resolved = new List<string> { Header };
         var sections = new List<(string, double[])>(); var recipes = new List<Gpc.Legacy.LegacySectionRecipe>(); var tops = new List<double>();
-        double[] defaults = { recipe.B1, recipe.B2, recipe.D, recipe.T1, recipe.T2, recipe.T3, 0 };
+        double[] defaults = { recipe.B1, recipe.B2, recipe.D, recipe.T1, recipe.T2, recipe.T3, recipe.R };
         foreach (var s in segments)
         {
             var row = rows[Id(s)];
@@ -161,8 +163,8 @@ public static class BridgeSegmentSections
             if (!double.IsFinite(values.Area) || values.Area <= 0 || !double.IsFinite(values.Ixx) || values.Ixx <= 0 ||
                 !double.IsFinite(values.Iyy) || values.Iyy <= 0) throw new ArgumentException($"{Id(s)}: invalid calculated section properties.");
             string name = "Sezione " + Id(s);
-            var section = Gpc.Builders.GpcBridgeGeometryBuilders.StandardSection(Gpc.BridgeSectionKind.I, name, d: v[2], b1: v[0], b2: v[1], t1: v[3], t2: v[4], t3: v[5]);
-            var property = Gpc.Builders.GpcBridgeGeometryBuilders.StandardProperty("Concio " + Id(s), section, material, baseProperty.Data.Formulation);
+            var section = Gpc.Builders.GpcBridgeGeometryBuilders.StandardSection(Gpc.BridgeSectionKind.I, name, d: v[2], b1: v[0], b2: v[1], t1: v[3], t2: v[4], t3: v[5], r: v[6]);
+            var property = Gpc.Builders.GpcBridgeGeometryBuilders.StandardProperty("Concio " + Id(s), section, material, baseProperty.Data.Formulation, baseProperty.Data.MaterialKind);
             var rule = new BridgeSectionRule { Family = 0, Group = s.Girder, Segment = s.Segment, Start = s.Start, End = s.End, GpcProperty = property };
             rule.Validate(); rules.Add(rule); sections.Add((name, v)); recipes.Add(section); tops.Add(v[2] - values.YG);
             normalized.Add(Line(s, row.Dimensions)); resolved.Add(Line(s, v.Select(value => (double?)value)));

@@ -21,6 +21,9 @@ namespace BridGHe.Grasshopper.Components.Parameters
 
         public List<LoadCaseModel> LoadCaseList => _loadCases;
 
+        /// <summary>R65-C2-05: the case records given with the cases (the columns of the form for combinations given by their GPC datum alone).</summary>
+        public IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> CaseRecordList { get; private set; } = Array.Empty<Common.Gpc.Legacy.LegacyCaseData>();
+
         public LoadCombinationsParam()
             : base("Load Combinations", "LCS", "The load combinations definition", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
         {
@@ -32,6 +35,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
         public void UpdateLoadCases(IEnumerable<LoadCaseModel> loadCases, IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
         {
             // Recreate the LoadCase names list
+            CaseRecordList = caseRecords ?? Array.Empty<Common.Gpc.Legacy.LegacyCaseData>();
             _loadCases.Clear();
             foreach (LoadCaseModel loadCase in loadCases)
             {
@@ -54,12 +58,15 @@ namespace BridGHe.Grasshopper.Components.Parameters
                 try { before = combo.Gpc; } catch (Exception x) when (GpcBuilderAttach.Refusal(x)) { before = null; }
                 // R6.5 P1 lane 2a: a combination given by its GPC datum alone follows the case records alone (the same rule as the FEM value
                 // below: the factors of the cases no longer present removed, the new cases added with 1), replaced by the updated one.
+                // R65-C2-06 (review of lane 2, 8/11): changed in place, as the FEM value below (the stage that collected the combination sees the
+                // new cases, the persistent data with it), and the solution expired on a removal only, as the FEM path (before: a new item, so the
+                // stage kept the old combination and the persistent data were not updated on additions).
                 if (combo.Value == null)
                 {
                     if (before == null) continue;
                     if (before.Factors.Any(f => !caseRecords.Any(c => c.Name == f.Case.Name))) changed = true;
                     var updated = Common.Gpc.Builders.GpcCaseBuilders.UpdatedCombination(before, caseRecords);
-                    if (updated != null) combinations[k] = GH_LoadCombination.FromGpc(updated);
+                    if (updated != null) combo.AttachGpc(updated);
                     continue;
                 }
                 // Remove the non existing values
@@ -212,7 +219,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
                 List<GH_LoadCombination> list = null;
                 if (!Owner.VolatileData.IsEmpty)
                     list = (List<GH_LoadCombination>)Owner.VolatileData.get_Branch(0);
-                LoadCombinationsForm form = new LoadCombinationsForm(Owner.LoadCaseList.ToArray(), list);
+                LoadCombinationsForm form = new LoadCombinationsForm(Owner.LoadCaseList.ToArray(), list, Owner.CaseRecordList); // R65-C2-05: with the case records
                 GH_WindowsFormUtil.CenterFormOnCursor(form, true);
                 if (form.ShowDialog(Instances.DocumentEditor) == DialogResult.OK)
                 {

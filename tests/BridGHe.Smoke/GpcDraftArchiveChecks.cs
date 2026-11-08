@@ -61,9 +61,32 @@ internal static class GpcDraftArchiveChecks
         if (p == null) return "property none";
         var s = p.Section;
         string section = s == null ? "none" : $"{s.Kind} {s.Name} " + string.Join(",", new[] { s.Angle, s.D, s.B, s.B1, s.B2, s.T, s.T1, s.T2, s.T3, s.Area, s.I11, s.I22, s.J, s.CentroidX, s.CentroidY, s.ShearL1, s.ShearL2, s.ShearA1, s.ShearA2 }.Select(B))
-            + $" {s.CompositePreview} {s.NativeKey ?? "null"} [{(s.NativeDimensions == null ? "null" : string.Join(",", s.NativeDimensions.Select(B)))}] {s.BxsPath ?? "null"} {s.LibraryName ?? "null"} {s.LibraryItem ?? "null"} {s.NativeLengthUnit}";
+            + $" {s.CompositePreview} {s.NativeKey ?? "null"} [{(s.NativeDimensions == null ? "null" : string.Join(",", s.NativeDimensions.Select(B)))}] {s.BxsPath ?? "null"} {s.LibraryName ?? "null"} {s.LibraryItem ?? "null"} {s.NativeLengthUnit}"
+            + (s == null ? "" : Lane2c(s));
         return $"property {p.Formulation} {B(p.Angle)} native {Hex(p.Native?.Save())} signature {p.Signature ?? "null"} section {section}";
     }
+
+    /// <summary>L2C (lane 2c): the data of the recipe added in lane 2c, only where the section has them (the texts of the sections without them,
+    /// the captures, are unchanged): the fillet radius, the section moduli, the shapes of a Brep section, the mirror and its gaps.</summary>
+    private static string Lane2c(LegacySectionRecipe s)
+    {
+        var text = new System.Text.StringBuilder();
+        if (s.R != 0) text.Append(" R ").Append(B(s.R));
+        if (s.W11 != 0 || s.W22 != 0 || double.IsNaN(s.W11) || double.IsNaN(s.W22)) text.Append(" W ").Append(B(s.W11)).Append(',').Append(B(s.W22));
+        if (s.Shapes != null)
+            text.Append(" shapes ").Append(s.Shapes.Count).Append(' ').Append(string.Join(" | ", s.Shapes.Select(h => string.Join(",", h.Fill.Select(B))
+                + string.Concat(h.Holes.Select(o => " hole " + string.Join(",", o.Select(B)))))));
+        if (s.Mirror != LegacySectionRecipe.NoMirror || s.MirrorGapA != 0 || s.MirrorGapB != 0) text.Append(" mirror ").Append(s.Mirror).Append(' ').Append(B(s.MirrorGapA)).Append(',').Append(B(s.MirrorGapB));
+        return text.ToString();
+    }
+
+    /// <summary>L2C (lane 2c): the BridGHe data beside a GPC datum that the canonical texts (the captures) do not carry, for the checks that
+    /// compare two data of today (the draft check of the attached data, the GPC-only replay): the material kind recorded with a beam property.</summary>
+    internal static string Extras(object datum) => datum switch
+    {
+        LegacyBeamProperty p => "\nmaterial kind " + (p.Data?.MaterialKind ?? "null"),
+        _ => "",
+    };
 
     internal static string Text(LegacyNodeDraft d) => "NODE\n" + GpcInputComparison.ValueDocument(d.Node) + "\n" + Records(d.Records) + "\n" + Report(d.Report);
     internal static string Text(LegacyBeamDraft d) => "BEAM\n" + GpcInputComparison.ValueDocument(d.Beam) + "\n" + Bridge(d.Bridge) + "\nangle " + B(d.AngleDeg) + "\n" + Property(d.Property)

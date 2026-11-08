@@ -94,13 +94,14 @@ namespace BridGHe.Grasshopper.Components.Sections
             };
 
             GH_BeamSection section = new GH_BeamSection(sectionModel);
+            // L2C (lane 2c): the recipe with the section moduli S11/S22, as the former section held them.
             // R6.2 part C (§1bis, regola doppia): the recipe built on GPC from the inputs, attached to the FEM value (transitional until R6.5).
             // R6.5 P1 lane 2a: with the switch of the property producers the section by its recipe alone (the path of P2; a refused recipe gives
             // an error and no section).
-            if (Helpers.GpcOnlyElements.PropertiesWithoutFem) Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.Section(this, () => Common.Gpc.Builders.GpcSectionBuilders.Generic(area, i11, i22, j, sl1, sl2, sa1, sa2, x, y, ang)));
+            if (Helpers.GpcOnlyElements.PropertiesWithoutFem) Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.Section(this, () => Common.Gpc.Builders.GpcSectionBuilders.Generic(area, i11, i22, j, sl1, sl2, sa1, sa2, x, y, ang, w11, w22)));
             else
             {
-                Helpers.GpcBuilderAttach.Section(section, () => Common.Gpc.Builders.GpcSectionBuilders.Generic(area, i11, i22, j, sl1, sl2, sa1, sa2, x, y, ang));
+                Helpers.GpcBuilderAttach.Section(section, () => Common.Gpc.Builders.GpcSectionBuilders.Generic(area, i11, i22, j, sl1, sl2, sa1, sa2, x, y, ang, w11, w22));
                 DA.SetData(0, section);
             }
         }

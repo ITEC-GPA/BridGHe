@@ -30,12 +30,16 @@ namespace BridGHe.Common.Gpc.Builders
                 : typeName == "CutoffBar" ? BeamFormulation.CutoffBar : typeName == "PointContact" ? BeamFormulation.PointContact : typeName == "Pipe" ? BeamFormulation.Pipe
                 : typeName == "Connection" ? BeamFormulation.Connection : throw new NotSupportedException("LegacyBeamPropertyType: " + typeName);
             if (formulation == BeamFormulation.CutoffBar) throw new NotSupportedException("LegacyCutoffBarNotMappedYet");
+            // L2C: a mirrored section (now a recipe) is refused as the reader refuses a property on it, in the order of the reader.
+            if (section.Mirror != LegacySectionRecipe.NoMirror) throw new NotSupportedException("LegacyMirroredSectionNotMappedYet");
             var analysis = GpcMaterials.Analysis(material);
             if (analysis.AnalysisData?.StressStrainPairs != null && typeName != "Beam" && typeName != "Truss") analysis.AnalysisData.StressStrainPairs = null; // former exporter: tables only for beams and trusses
             var recipe = PropertySection(section);
             var units = GpcBeamDrafts.DraftUnits;
             var (property, angle, native) = LegacyModelImport.SectionProperty(recipe, name ?? "Property", analysis, units, new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport());
-            return new LegacyBeamProperty(property, new LegacyBeamPropertyData(formulation, angle, native, LegacyModelImport.PropertySignature(property)) { Section = recipe });
+            // L2C (limit (b) of passo 77): the kind of the input material (the former property kept the material, with its kind).
+            return new LegacyBeamProperty(property, new LegacyBeamPropertyData(formulation, angle, native, LegacyModelImport.PropertySignature(property))
+                { Section = recipe, MaterialKind = GpcMaterials.KindOf(material) });
         }
 
         /// <summary>
@@ -87,10 +91,15 @@ namespace BridGHe.Common.Gpc.Builders
             };
             var (property, angle, native) = LegacyModelImport.SectionProperty(recipe, definition.Name + suffix, GpcMaterials.Analysis(steelMaterial), GpcBeamDrafts.DraftUnits,
                 new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport());
-            return new LegacyBeamProperty(property, new LegacyBeamPropertyData(BeamFormulation.StraightTwoNode, angle, native, LegacyModelImport.PropertySignature(property)) { Section = recipe });
+            // L2C: the kind of the steel material (the former homogenised property had the steel material of the composite property).
+            return new LegacyBeamProperty(property, new LegacyBeamPropertyData(BeamFormulation.StraightTwoNode, angle, native, LegacyModelImport.PropertySignature(property))
+                { Section = recipe, MaterialKind = GpcMaterials.KindOf(steelMaterial) });
         }
 
-        /// <summary>The section a former Beam Property made of its input section (see the class).</summary>
+        /// <summary>The section a former Beam Property made of its input section (see the class). L2C (lane 2c): the former component did not
+        /// copy the fillet radius (the property section has R 0), copied the section moduli of a Generic section (NaN for a native Straus7
+        /// section, as <c>StrausSection.Calculate</c> gave them) and the shapes of a Brep section; a mirrored section is refused before
+        /// (<see cref="Beam"/>).</summary>
         public static LegacySectionRecipe PropertySection(LegacySectionRecipe s)
         {
             if (s.NativeKey != null)
@@ -103,16 +112,18 @@ namespace BridGHe.Common.Gpc.Builders
                 {
                     Kind = BridgeSectionKind.Generic, Name = "", Angle = Z(data[10]), Area = Z(data[0] / f2), I11 = Z(data[1] / f4), I22 = Z(data[2] / f4), J = Z(data[3] / f4),
                     CentroidX = Z(data[8] / f), CentroidY = Z(data[9] / f), ShearL1 = Z(data[4] / f), ShearL2 = Z(data[5] / f), ShearA1 = Z(data[6] / f2), ShearA2 = Z(data[7] / f2),
+                    W11 = double.NaN, W22 = double.NaN,
                 };
             }
             if (s.Kind == BridgeSectionKind.Generic)
                 return new LegacySectionRecipe
                 {
                     Kind = s.Kind, Name = "", Angle = s.Angle, Area = s.Area, I11 = s.I11, I22 = s.I22, J = s.J, CentroidX = s.CentroidX, CentroidY = s.CentroidY,
-                    ShearL1 = s.ShearL1, ShearL2 = s.ShearL2, ShearA1 = s.ShearA1, ShearA2 = s.ShearA2,
+                    ShearL1 = s.ShearL1, ShearL2 = s.ShearL2, ShearA1 = s.ShearA1, ShearA2 = s.ShearA2, W11 = s.W11, W22 = s.W22,
                 };
             if (s.Kind == BridgeSectionKind.Composite) return new LegacySectionRecipe { Kind = s.Kind, Name = "", Angle = s.Angle };
-            return new LegacySectionRecipe { Kind = s.Kind, Name = "", Angle = s.Angle, D = s.D, B = s.B, B1 = s.B1, B2 = s.B2, T = s.T, T1 = s.T1, T2 = s.T2, T3 = s.T3 };
+            return new LegacySectionRecipe { Kind = s.Kind, Name = "", Angle = s.Angle, D = s.D, B = s.B, B1 = s.B1, B2 = s.B2, T = s.T, T1 = s.T1, T2 = s.T2, T3 = s.T3, Shapes = s.Shapes,
+                MirrorGapA = s.MirrorGapA, MirrorGapB = s.MirrorGapB };
         }
 
         // The former PlatePropertyType, by its value (the Type input of Plate Property).
@@ -148,6 +159,14 @@ namespace BridGHe.Common.Gpc.Builders
                 case "ShearPanel": return new GPC.Model.ElementProperties.ElasticPlateProperty(propertyName, plateMaterial, bending, membrane, GPC.Model.ElementProperties.ElasticPlateFormulation.ShearPanel);
                 default: throw new NotSupportedException("LegacyPlatePropertyType: " + typeName);
             }
+        }
+
+        /// <summary>L2C (lane 2c): the bending thickness a former membrane property held (N-mm, as the thicknesses of the GPC property), the
+        /// BridGHe datum beside the GPC membrane (which has none): Bridge Deck Mesh checks it against the slab, as before; 0 for another type.</summary>
+        public static double PlateMembraneBending(int type, double bendingThickness)
+        {
+            string typeName = type >= 0 && type < PlateTypes.Length ? PlateTypes[type] : null;
+            return typeName == "Membrane" ? GpcBeamDrafts.DraftUnits.ToMm(Z(bendingThickness)) : 0;
         }
 
         private static double Z(double v) => GpcBeamBuilders.Z(v);

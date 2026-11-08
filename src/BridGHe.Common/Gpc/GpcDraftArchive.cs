@@ -122,18 +122,27 @@ namespace BridGHe.Common.Gpc
         public static LegacyBeamProperty ReadBeamProperty(byte[] data, byte[] records) =>
             new LegacyBeamProperty(GpcGooArchive.ReadValue<GPC.Model.ElementProperties.ElasticBeamProperty>(data), Load(records, "beam-property").Property?.Data());
 
-        public static (byte[] Data, byte[] Records) Write(GPC.Model.ElementProperties.PlateProperty p) => p switch
+        /// <param name="membraneBending">L2C: the bending thickness of a membrane property, beside the GPC property (<see cref="DraftRecords.MembraneBending"/>).</param>
+        public static (byte[] Data, byte[] Records) Write(GPC.Model.ElementProperties.PlateProperty p, double membraneBending = 0) => p switch
         {
-            GPC.Model.ElementProperties.ElasticPlateProperty e => (GpcGooArchive.Value(e), Save(new DraftRecords { Kind = "plate-property", PlateType = "elastic" })),
-            GPC.Model.ElementProperties.MembranePlateProperty m => (GpcGooArchive.Value(m), Save(new DraftRecords { Kind = "plate-property", PlateType = "membrane" })),
+            GPC.Model.ElementProperties.ElasticPlateProperty e => (GpcGooArchive.Value(e), Save(new DraftRecords { Kind = "plate-property", PlateType = "elastic", MembraneBending = membraneBending })),
+            GPC.Model.ElementProperties.MembranePlateProperty m => (GpcGooArchive.Value(m), Save(new DraftRecords { Kind = "plate-property", PlateType = "membrane", MembraneBending = membraneBending })),
             _ => throw new NotSupportedException("BridghePlatePropertyType: " + p?.GetType().Name),
         };
-        public static GPC.Model.ElementProperties.PlateProperty ReadPlateProperty(byte[] data, byte[] records) => Load(records, "plate-property").PlateType switch
+        public static GPC.Model.ElementProperties.PlateProperty ReadPlateProperty(byte[] data, byte[] records) => ReadPlateProperty(data, records, out _);
+
+        /// <summary>L2C: the plate property and the bending thickness of a membrane written beside it (0: none, or a record written before).</summary>
+        public static GPC.Model.ElementProperties.PlateProperty ReadPlateProperty(byte[] data, byte[] records, out double membraneBending)
         {
-            "elastic" => GpcGooArchive.ReadValue<GPC.Model.ElementProperties.ElasticPlateProperty>(data),
-            "membrane" => GpcGooArchive.ReadValue<GPC.Model.ElementProperties.MembranePlateProperty>(data),
-            var t => throw new SerializationException("BridgheDraftRecordsUnknownPlateType: " + t),
-        };
+            var r = Load(records, "plate-property");
+            membraneBending = r.MembraneBending;
+            return r.PlateType switch
+            {
+                "elastic" => GpcGooArchive.ReadValue<GPC.Model.ElementProperties.ElasticPlateProperty>(data),
+                "membrane" => GpcGooArchive.ReadValue<GPC.Model.ElementProperties.MembranePlateProperty>(data),
+                var t => throw new SerializationException("BridgheDraftRecordsUnknownPlateType: " + t),
+            };
+        }
 
         /// <summary>A model (<c>GH_Model</c>): the GPC model with its bridge data (<see cref="GpcGooArchive.BridgeModel"/>) and the definition units.</summary>
         public static (byte[] Data, byte[] Records) Write(GPC.Checkers.CompositeBridge.BridgeModel model, BridgeUnits units) =>
@@ -299,6 +308,9 @@ namespace BridGHe.Common.Gpc
         [DataMember(Order = 36)] public List<ElementCasesRecord> ElementLoadCases;
         /// <summary>The distinct native sections of the model in their own format (<see cref="GPC.Converter.Straus7.Straus7SectionDefinition.Save"/>).</summary>
         [DataMember(Order = 37)] public List<byte[]> Natives;
+        /// <summary>L2C (lane 2c): the bending thickness of a membrane plate property (the former property held it; the GPC membrane has
+        /// none): Bridge Deck Mesh checks it against the slab as before. Not written at 0 (the records written before read it as 0).</summary>
+        [DataMember(Order = 38, EmitDefaultValue = false)] public double MembraneBending;
 
         internal static DraftRecords Of(string kind, LegacyElementRecords records, LegacyImportReport report)
         {
@@ -436,14 +448,17 @@ namespace BridGHe.Common.Gpc
         [DataMember(Order = 4)] public SectionRecord Section;
         /// <summary>In a model: the index of the native section in <see cref="DraftRecords.Natives"/> (-1: none; <see cref="Native"/> is then null).</summary>
         [DataMember(Order = 5)] public int NativeIndex = -1;
+        /// <summary>L2C (limit (b) of passo 77): the kind of the material of the former property (<see cref="LegacyBeamPropertyData.MaterialKind"/>;
+        /// not written when null, so a record written before reads it as not recorded).</summary>
+        [DataMember(Order = 6, EmitDefaultValue = false)] public string MaterialKind;
 
         internal static PropertyRecord Of(LegacyBeamPropertyData p) => p == null ? null : new PropertyRecord
         {
-            Formulation = (int)p.Formulation, Angle = p.Angle, Native = p.Native?.Save(), Signature = p.Signature, Section = SectionRecord.Of(p.Section),
+            Formulation = (int)p.Formulation, Angle = p.Angle, Native = p.Native?.Save(), Signature = p.Signature, Section = SectionRecord.Of(p.Section), MaterialKind = p.MaterialKind,
         };
 
         internal LegacyBeamPropertyData Data() => new LegacyBeamPropertyData((GPC.Model.Structure.Assignments.BeamFormulation)Formulation, Angle,
-            Native == null ? null : GPC.Converter.Straus7.Straus7SectionDefinition.Load(Native), Signature) { Section = Section?.Recipe() };
+            Native == null ? null : GPC.Converter.Straus7.Straus7SectionDefinition.Load(Native), Signature) { Section = Section?.Recipe(), MaterialKind = MaterialKind };
     }
 
     [DataContract(Name = "Section", Namespace = DraftRecords.Ns)]
@@ -459,6 +474,16 @@ namespace BridGHe.Common.Gpc
         [DataMember(Order = 7)] public string LibraryName;
         [DataMember(Order = 8)] public string LibraryItem;
         [DataMember(Order = 9)] public int NativeLengthUnit;
+        // L2C (lane 2c): the data the former section held besides its recipe (additions of schema 1, not written at their defaults, so a
+        // record of a section without them is the record written before, and a record written before reads them as 0, none, no mirror).
+        [DataMember(Order = 10, EmitDefaultValue = false)] public double R;
+        [DataMember(Order = 11, EmitDefaultValue = false)] public double W11;
+        [DataMember(Order = 12, EmitDefaultValue = false)] public double W22;
+        [DataMember(Order = 13, EmitDefaultValue = false)] public List<ShapeRecord> Shapes;
+        /// <summary>The mirror (former MirrorTypes value), null for none.</summary>
+        [DataMember(Order = 14, EmitDefaultValue = false)] public int? Mirror;
+        [DataMember(Order = 15, EmitDefaultValue = false)] public double MirrorGapA;
+        [DataMember(Order = 16, EmitDefaultValue = false)] public double MirrorGapB;
 
         internal static SectionRecord Of(LegacySectionRecipe s) => s == null ? null : new SectionRecord
         {
@@ -466,6 +491,8 @@ namespace BridGHe.Common.Gpc
             Values = new[] { s.Angle, s.D, s.B, s.B1, s.B2, s.T, s.T1, s.T2, s.T3, s.Area, s.I11, s.I22, s.J, s.CentroidX, s.CentroidY, s.ShearL1, s.ShearL2, s.ShearA1, s.ShearA2 },
             CompositePreview = s.CompositePreview, NativeKey = s.NativeKey, NativeDimensions = s.NativeDimensions?.ToArray(), BxsPath = s.BxsPath,
             LibraryName = s.LibraryName, LibraryItem = s.LibraryItem, NativeLengthUnit = s.NativeLengthUnit,
+            R = s.R, W11 = s.W11, W22 = s.W22, Shapes = s.Shapes?.Select(ShapeRecord.Of).ToList(),
+            Mirror = s.Mirror == LegacySectionRecipe.NoMirror ? null : s.Mirror, MirrorGapA = s.MirrorGapA, MirrorGapB = s.MirrorGapB,
         };
 
         internal LegacySectionRecipe Recipe()
@@ -478,7 +505,22 @@ namespace BridGHe.Common.Gpc
                 Area = v[9], I11 = v[10], I22 = v[11], J = v[12], CentroidX = v[13], CentroidY = v[14], ShearL1 = v[15], ShearL2 = v[16], ShearA1 = v[17], ShearA2 = v[18],
                 CompositePreview = CompositePreview, NativeKey = NativeKey, NativeDimensions = NativeDimensions, BxsPath = BxsPath, LibraryName = LibraryName,
                 LibraryItem = LibraryItem, NativeLengthUnit = NativeLengthUnit,
+                R = R, W11 = W11, W22 = W22, Shapes = Shapes?.Select(s => s.Shape()).ToArray(), Mirror = Mirror ?? LegacySectionRecipe.NoMirror, MirrorGapA = MirrorGapA, MirrorGapB = MirrorGapB,
             };
+        }
+    }
+
+    /// <summary>L2C: one shape of a Brep section (<see cref="LegacySectionShape"/>): the x, y pairs of its fill and of its holes.</summary>
+    [DataContract(Name = "Shape", Namespace = DraftRecords.Ns)]
+    internal sealed class ShapeRecord
+    {
+        [DataMember(Order = 0)] public double[] Fill;
+        [DataMember(Order = 1)] public List<double[]> Holes;
+        internal static ShapeRecord Of(LegacySectionShape s) => new ShapeRecord { Fill = s.Fill.ToArray(), Holes = s.Holes.Select(h => h.ToArray()).ToList() };
+        internal LegacySectionShape Shape()
+        {
+            if (Fill == null || Fill.Length % 2 != 0 || (Holes ?? new List<double[]>()).Any(h => h == null || h.Length % 2 != 0)) throw new SerializationException("BridgheDraftRecordsInvalidShape");
+            return new LegacySectionShape { Fill = Fill, Holes = (Holes ?? new List<double[]>()).Select(h => (IReadOnlyList<double>)h).ToArray() };
         }
     }
 }

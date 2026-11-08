@@ -32,7 +32,8 @@ internal static class GpcDraftCheckHost
             lock (Gate) { string t = type + " (Aluminium: fu 165.5 -> 262, declared)"; Equal.TryGetValue(t, out int c); Equal[t] = c + 1; }
             return;
         }
-        string attached = GpcDraftCapture.Text(datum), converted = fem == null ? "REFUSED" : GpcDraftCapture.Text(fem);
+        // L2C: with the BridGHe data beside the datum that the canonical texts do not carry (the material kind of a beam property).
+        string attached = GpcDraftCapture.Text(datum) + GpcDraftArchiveChecks.Extras(datum), converted = fem == null ? "REFUSED" : GpcDraftCapture.Text(fem) + GpcDraftArchiveChecks.Extras(fem);
         lock (Gate)
         {
             if (attached == converted) { Equal.TryGetValue(type, out int n); Equal[type] = n + 1; return; }

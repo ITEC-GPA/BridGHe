@@ -33,7 +33,9 @@ namespace BridGHe.Grasshopper.Helpers
         /// 2b: read from its GPC frame (<see cref="GpcLoadFrames.IsGlobal"/>: origin 0, axes 1 and 2 along X and Y), also for a system given by
         /// its frame alone; for the global system of the parameter the rule of the reader on the former points (origin 0, first point
         /// (1, 0, 0), second point (0, 1, 0)).</summary>
-        internal static bool? GlobalSystem(GH_CoordinateSystem cs) => cs == null ? null : GpcLoadFrames.IsGlobal(cs.Gpc);
+        /// <remarks>R65-C2-01 (review of lane 2): a system with a FEM value keeps the rule of the reader on its points (the frame is normalised,
+        /// so a system with the points (2, 0, 0) and (0, 3, 0) would pass as global); the frame rule only for a system given by its frame alone.</remarks>
+        internal static bool? GlobalSystem(GH_CoordinateSystem cs) => cs == null ? null : cs.Value != null ? GpcLoadFrames.IsGlobal(cs.Value) : GpcLoadFrames.IsGlobal(cs.Gpc);
 
         internal static GPC.Geometry.Point3d Point(Rhino.Geometry.Point3d p) => new GPC.Geometry.Point3d(p.X, p.Y, p.Z);
         internal static GPC.Geometry.Vector3d Vector(Rhino.Geometry.Point3d p) => new GPC.Geometry.Vector3d(p.X, p.Y, p.Z);

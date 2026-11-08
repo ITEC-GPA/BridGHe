@@ -76,18 +76,22 @@ namespace BridGHe.Common.Gpc.Builders
         /// its shear areas as the reader builds them from the recipe (<c>LegacyModelImport.SectionProperty</c>); R6.3: the signature is the GPC
         /// fingerprint of the property (<see cref="LegacyModelImport.PropertySignature"/>).
         /// </summary>
-        public static LegacyBeamProperty StandardProperty(string propertyName, LegacySectionRecipe recipe, Material analysisMaterial, BeamFormulation formulation)
+        /// <param name="materialKind">L2C (limit (b) of passo 77): the kind of the former material of the property (Segment Sections: that of the
+        /// base property; Slab Grillage: the concrete), recorded beside the GPC property.</param>
+        public static LegacyBeamProperty StandardProperty(string propertyName, LegacySectionRecipe recipe, Material analysisMaterial, BeamFormulation formulation, string materialKind = null)
         {
             if (recipe == null) throw new ArgumentNullException(nameof(recipe));
             var (property, angle, native) = LegacyModelImport.SectionProperty(recipe, propertyName, GPC.Model.Core.ModelValues.CopyValue(analysisMaterial ?? throw new ArgumentNullException(nameof(analysisMaterial))),
                 GpcBeamDrafts.DraftUnits, new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport(), checkLengthUnit: false);
-            return new LegacyBeamProperty(property, new LegacyBeamPropertyData(formulation, angle, native, LegacyModelImport.PropertySignature(property)) { Section = recipe });
+            return new LegacyBeamProperty(property, new LegacyBeamPropertyData(formulation, angle, native, LegacyModelImport.PropertySignature(property)) { Section = recipe, MaterialKind = materialKind });
         }
 
-        /// <summary>The recipe of a standard section given by its dimensions (the others 0), as the reader reads a former SectionModel.</summary>
-        public static LegacySectionRecipe StandardSection(BridgeSectionKind kind, string name, double d = 0, double b = 0, double b1 = 0, double b2 = 0, double t = 0, double t1 = 0, double t2 = 0, double t3 = 0) =>
+        /// <summary>The recipe of a standard section given by its dimensions (the others 0), as the reader reads a former SectionModel; L2C:
+        /// with the fillet radius <paramref name="r"/> (the conci of Bridge Segment Sections).</summary>
+        public static LegacySectionRecipe StandardSection(BridgeSectionKind kind, string name, double d = 0, double b = 0, double b1 = 0, double b2 = 0, double t = 0, double t1 = 0, double t2 = 0, double t3 = 0,
+            double r = 0) =>
             new LegacySectionRecipe { Kind = kind, Name = name ?? "", Angle = 0, D = GpcBeamBuilders.Z(d), B = GpcBeamBuilders.Z(b), B1 = GpcBeamBuilders.Z(b1), B2 = GpcBeamBuilders.Z(b2),
-                T = GpcBeamBuilders.Z(t), T1 = GpcBeamBuilders.Z(t1), T2 = GpcBeamBuilders.Z(t2), T3 = GpcBeamBuilders.Z(t3) };
+                T = GpcBeamBuilders.Z(t), T1 = GpcBeamBuilders.Z(t1), T2 = GpcBeamBuilders.Z(t2), T3 = GpcBeamBuilders.Z(t3), R = GpcBeamBuilders.Z(r) };
 
         /// <summary>
         /// Bridge Segment Override: the replacement property of a concio, the datum of the input property with, when Preserve Mass is on, the

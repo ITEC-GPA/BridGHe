@@ -41,6 +41,19 @@ namespace BridGHe.Common.Gpc
             return Legacy.LegacyModelImport.Material(Legacy.LegacyArchive.Read(Helpers.ModelArchive.Write(material)));
         }
 
+        /// <summary>L2C (limit (b) of passo 77): the former kind of the material of a Material parameter (the name of the former
+        /// <c>MaterialKind</c>) from its GPC material by kind (<see cref="Legacy.LegacyModelImport.Material(Legacy.LegacyMaterialRecipe)"/>): a
+        /// structural steel "Steel", a reinforcement "Rebar", a concrete "Concrete", an aluminium "Aluminium", the generic material
+        /// "Undefined" (a former material without a kind). The beam properties record it (their GPC material is the analysis one).</summary>
+        public static string KindOf(Material material) => material switch
+        {
+            null => throw new ArgumentNullException(nameof(material)),
+            SteelMaterial s => s.SteelType == SteelMaterial.SteelTypes.Rebar ? "Rebar" : "Steel",
+            ConcreteMaterial => "Concrete",
+            AluminiumMaterial => "Aluminium",
+            _ => "Undefined",
+        };
+
         /// <summary>M1: the analysis material of a beam or plate property from the GPC material of a Material parameter: the generic elastic
         /// material of <see cref="Elastic"/> (name, E, ν, density, thermal expansion, analysis data), bit for bit the one the reader builds from
         /// the former material (<see cref="Legacy.LegacyModelImport.ElasticMaterial"/>; regression <c>gpc-material-kinds</c>). The strength data

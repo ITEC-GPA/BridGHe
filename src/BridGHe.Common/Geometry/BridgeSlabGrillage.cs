@@ -49,7 +49,7 @@ public static class BridgeSlabGrillage
                 // R6.5 P1 lane 2a: the strip property by its GPC datum alone (the same builder as the dual rule below).
                 rules.Add(new BridgeSectionRule { Family=8,Group=groups[i].Key,Start=0,End=length,GpcProperty=Gpc.Builders.GpcBridgeGeometryBuilders.StandardProperty($"{name} S{groups[i].Key}",
                     Gpc.Builders.GpcBridgeGeometryBuilders.StandardSection(Gpc.BridgeSectionKind.SolidRectangle,"",d:thickness,b:b-a),analysisMaterial,
-                    GPC.Model.Structure.Assignments.BeamFormulation.StraightTwoNode) });
+                    GPC.Model.Structure.Assignments.BeamFormulation.StraightTwoNode, "Concrete") }); // L2C: the kind of the concrete (both paths require one)
                 continue;
             }
             var section=new SectionModel { SectionType=SectionModel.SectionTypes.SolidRectangle,D=thickness,B=b-a };
@@ -61,7 +61,7 @@ public static class BridgeSlabGrillage
             if(analysisMaterial!=null)
                 BridgeGpcProperties.Attach(property,Gpc.Builders.GpcBridgeGeometryBuilders.StandardProperty(property.Name,
                     Gpc.Builders.GpcBridgeGeometryBuilders.StandardSection(Gpc.BridgeSectionKind.SolidRectangle,"",d:thickness,b:b-a),analysisMaterial,
-                    GPC.Model.Structure.Assignments.BeamFormulation.StraightTwoNode));
+                    GPC.Model.Structure.Assignments.BeamFormulation.StraightTwoNode, "Concrete")); // L2C: the kind of the concrete
         }
         var assignment=BridgeMemberAssignment.Assign(subset,new Dictionary<int,BeamPropertyModel>(),rules);
         if(assignment.Unassigned.Length!=0) throw new InvalidOperationException("Unassigned transverse slab members.");

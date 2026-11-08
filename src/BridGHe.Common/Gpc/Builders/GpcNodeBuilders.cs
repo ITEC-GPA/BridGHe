@@ -145,7 +145,11 @@ namespace BridGHe.Common.Gpc.Builders
             string full = FullName(chain.Take(count).ToArray());
             if (groups.TryGetValue(full, out var known)) return known;
             var parent = count == 1 ? null : Of(chain, count - 1);
-            var group = GPC.Model.Attributes.Group.Create(GpcIdentity.Group(full), full);
+            // L2C (lane 2c, passo 76): the name as a string of its own. The full name of a group of one name is that name, the same string as
+            // the input; the archive writes a string met twice as a reference to the first, so a property or a label named as the group (one
+            // text given to both) was written as a reference to the group name and its record had another XML form than the record the reader
+            // gives (its strings are its own). One form only: the record of the reader.
+            var group = GPC.Model.Attributes.Group.Create(GpcIdentity.Group(full), new string(full.AsSpan()));
             parent?.AddChild(group);
             groups.Add(full, group);
             return group;

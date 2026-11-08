@@ -24,8 +24,21 @@ namespace BridGHe.Common.Gpc
 
         /// <summary>Whether a frame is the global one: origin 0 and axes 1, 2 along X, Y, exactly. For every system the plug-in makes (the
         /// global system of the parameter) the rule of the reader on the former points (<c>LegacyModelImport.IsGlobal</c>).</summary>
+        /// <remarks>R65-C2-01 (review of lane 2, 8/11): the GPC frame is normalised and orthogonalised by its constructor, so a former system with
+        /// the points (2, 0, 0) and (0, 3, 0) has the global frame. Until P2 a system with a FEM value keeps the rule of the reader on its points
+        /// (<see cref="IsGlobal(CoordinateSystemModel)"/>); this rule is the one of a system given by its frame alone (in P2 the only one, declared
+        /// once, also for the reader of the 0.3.0 files).</remarks>
         public static bool IsGlobal(CoordinateSystem frame) =>
             frame != null && frame.Origin.X == 0 && frame.Origin.Y == 0 && frame.Origin.Z == 0
             && frame.V1.X == 1 && frame.V1.Y == 0 && frame.V1.Z == 0 && frame.V2.X == 0 && frame.V2.Y == 1 && frame.V2.Z == 0;
+
+        /// <summary>R65-C2-01: the rule of the reader on the points of a former system (<c>LegacyModelImport.IsGlobal</c>): origin (0, 0, 0),
+        /// first point (1, 0, 0), second point (0, 1, 0).</summary>
+        public static bool IsGlobal(CoordinateSystemModel cs)
+        {
+            if (cs == null) return false;
+            static Vector3d V(Rhino.Geometry.Point3d p) => new Vector3d(p.X, p.Y, p.Z);
+            return V(cs.Origin).Equals(new Vector3d(0, 0, 0)) && V(cs.Point1).Equals(new Vector3d(1, 0, 0)) && V(cs.Point2).Equals(new Vector3d(0, 1, 0));
+        }
     }
 }

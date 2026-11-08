@@ -224,7 +224,9 @@ namespace BridGHe.Common.Gpc.Legacy
             bool checkLengthUnit = true)
         {
             var (property, formulation, angle, native, recipe) = Property(p, propertyName, units, shearAreas, report, checkLengthUnit);
-            return new LegacyBeamProperty(property, new LegacyBeamPropertyData(formulation, angle, native, PropertySignature(property)) { Section = recipe });
+            // L2C (limit (b) of passo 77): the kind of the former material, beside the GPC property (its material is the analysis one).
+            return new LegacyBeamProperty(property, new LegacyBeamPropertyData(formulation, angle, native, PropertySignature(property))
+                { Section = recipe, MaterialKind = p.Field("Material").Enum("MaterialKind") });
         }
 
         private static (BeamProperty, BeamFormulation, double, GPC.Converter.Straus7.Straus7SectionDefinition, LegacySectionRecipe) Property(LegacyValue p, string propertyName, BridgeUnits units,
@@ -259,7 +261,11 @@ namespace BridGHe.Common.Gpc.Legacy
             }
             var kind = (BridgeSectionKind)Enum.Parse(typeof(BridgeSectionKind), s.Enum("SectionType"));
             string name = s.String("Name") ?? ""; double angle = s.Double("AngleX1");
-            if (kind == BridgeSectionKind.Composite) return new LegacySectionRecipe { Kind = kind, Name = name, Angle = angle };
+            // L2C (lane 2c): the mirror of the section and its gaps (a beam property refuses a mirrored section before reading its recipe); the
+            // gaps also without a mirror (the menu keeps them when it removes the mirror, and gives them back when it sets it again).
+            int mirror = MirrorCode(s.Enum("MirrorType"));
+            double gapA = s.Double("MirrorGapA", 0), gapB = s.Double("MirrorGapB", 0);
+            if (kind == BridgeSectionKind.Composite) return new LegacySectionRecipe { Kind = kind, Name = name, Angle = angle, Mirror = mirror, MirrorGapA = gapA, MirrorGapB = gapB };
             if (kind == BridgeSectionKind.Generic)
             {
                 var c = s["Centroid"];
@@ -267,12 +273,48 @@ namespace BridGHe.Common.Gpc.Legacy
                 {
                     Kind = kind, Name = name, Angle = angle, Area = s.Double("Area"), I11 = s.Double("I11"), I22 = s.Double("I22"), J = s.Double("J"), CentroidX = c.Double("X"), CentroidY = c.Double("Y"),
                     ShearL1 = s.Double("ShearL1"), ShearL2 = s.Double("ShearL2"), ShearA1 = s.Double("ShearA1"), ShearA2 = s.Double("ShearA2"), CompositePreview = !s["CompositePreview"].IsNull,
+                    // L2C: the section moduli of the Generic section (inputs S11/S22), as the former value held them (0 before its release 1).
+                    W11 = s.Double("W11", 0), W22 = s.Double("W22", 0), Mirror = mirror, MirrorGapA = gapA, MirrorGapB = gapB,
                 };
             }
             return new LegacySectionRecipe
             {
                 Kind = kind, Name = name, Angle = angle, D = s.Double("D"), B = s.Double("B"), B1 = s.Double("B1"), B2 = s.Double("B2"), T = s.Double("T"), T1 = s.Double("T1"), T2 = s.Double("T2"), T3 = s.Double("T3"),
+                // L2C (limit (a) of passo 77): the fillet radius (0 before its release 3); the shapes of a Brep section; the mirror.
+                R = s.Double("R", 0), Shapes = kind == BridgeSectionKind.GenericShapes ? SectionShapes(s["GenericShapes"]) : null, Mirror = mirror, MirrorGapA = gapA, MirrorGapB = gapB,
             };
+        }
+
+        /// <summary>L2C: the former <c>MirrorTypes</c> by name as its value (−1 None, 0 Top, 1 Bottom, 2 Left, 3 Right).</summary>
+        internal static int MirrorCode(string name) => name switch
+        {
+            null or "None" => LegacySectionRecipe.NoMirror, "Top" => 0, "Bottom" => 1, "Left" => 2, "Right" => 3,
+            _ => throw new NotSupportedException("LegacySectionMirrorType: " + name),
+        };
+
+        /// <summary>L2C (lane 2c): the shapes of a former Brep section (<c>Utilities.Shapes</c> of <c>Shape2d</c>: the fill and the holes, each a
+        /// polygon of points), as stored; a shape with shapes inside its holes is refused (no section component makes one). Null: no shapes.</summary>
+        private static IReadOnlyList<LegacySectionShape> SectionShapes(LegacyValue shapes)
+        {
+            if (shapes.IsNull) return null;
+            var items = shapes["Utilities.Shapes/_items"];
+            if (items.IsNull) return null;
+            static double[] Polygon(LegacyValue p)
+            {
+                int count = p.Int("Count"); var xy = new double[2 * count];
+                for (int i = 0; i < count; i++) { var point = p.Field("Point" + i.ToString(System.Globalization.CultureInfo.InvariantCulture)); xy[2 * i] = point.Double("X"); xy[2 * i + 1] = point.Double("Y"); }
+                return xy;
+            }
+            return items.Items.Select(shape =>
+            {
+                if (shape.Int("ChildsCount", 0) != 0) throw new NotSupportedException("LegacySectionShapeWithChildren");
+                int holes = shape.Int("HolesCount", 0);
+                return new LegacySectionShape
+                {
+                    Fill = Polygon(shape.Field("Fill")),
+                    Holes = Enumerable.Range(0, holes).Select(i => (IReadOnlyList<double>)Polygon(shape.Field("Hole" + i.ToString(System.Globalization.CultureInfo.InvariantCulture)))).ToArray(),
+                };
+            }).ToArray();
         }
 
         /// <summary>The message of a library or BXS section read in a length unit other than that of the model (former exporter).</summary>
@@ -331,7 +373,8 @@ namespace BridGHe.Common.Gpc.Legacy
         public static LegacySectionRecipe SectionDraft(LegacyValue s)
         {
             if (s == null || s.IsNull || !s.Is("SectionModel")) throw new ArgumentException("LegacySectionModelExpected");
-            if (s.Enum("MirrorType") != "None") throw new NotSupportedException("LegacyMirroredSectionNotMappedYet");
+            // L2C (lane 2c): a mirrored section is a recipe with its mirror and gaps (the menu of the Beam Section parameter, as in 0.3.0);
+            // a beam property refuses it (Property), as before.
             return SectionRecipe(s);
         }
 
@@ -340,6 +383,14 @@ namespace BridGHe.Common.Gpc.Legacy
         {
             if (p == null || p.IsNull || !p.Is("PlatePropertyModel")) throw new ArgumentException("LegacyPlatePropertyModelExpected");
             return PlateProperty(p, PlatePropertyName(p), units);
+        }
+
+        /// <summary>L2C (lane 2c): the bending thickness a former membrane plate property held (the GPC membrane has none), in the units of the
+        /// thicknesses of the GPC property (<paramref name="units"/> to mm); 0 for another type. Bridge Deck Mesh checks it as before.</summary>
+        public static double PlatePropertyMembraneBending(LegacyValue p, BridgeUnits units)
+        {
+            if (p == null || p.IsNull || !p.Is("PlatePropertyModel")) throw new ArgumentException("LegacyPlatePropertyModelExpected");
+            return p.Any("PropertyType", "_platePropertyType").Text?.Trim() == "Membrane" ? units.ToMm(p.Any("BendingThickness", "_bendingThickness").AsDouble()) : 0;
         }
 
         private static PlateProperty PlateProperty(LegacyValue p, string name, BridgeUnits units)

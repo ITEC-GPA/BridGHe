@@ -44,7 +44,9 @@ public sealed class BridgeDeckMeshComponent : BridgeUtilityComponent
         try { gpcProperty = property.Gpc; } catch (Exception x) when (GpcBuilderAttach.Refusal(x)) { refused = x; }
         // R6.5 P1 lane 2a: a property given by its GPC datum alone is checked on it and gives the plates by their drafts alone (rule of passo 75).
         bool gpcOnlyProperty = GpcOnlyProperties.WithoutFem(property);
-        var result = BridgeDeckMesh.Create(geometry.Value, gpcOnlyProperty ? null : property.Value, length, width, pours, triangles, gpcProperty);
+        // L2C: a membrane given by its datum alone is checked with its bending thickness (beside the GPC property), as before.
+        var result = BridgeDeckMesh.Create(geometry.Value, gpcOnlyProperty ? null : property.Value, length, width, pours, triangles, gpcProperty,
+            gpcOnlyProperty ? property.GpcMembraneBending : 0);
         da.SetData(0, new BridgeGeometryGoo(result.Geometry)); da.SetData(1, result.Mesh);
         // R6.5 P1 lane 1b: the plates by their GPC drafts alone, identity by content (corners, GPC property, group, plate ID); a refused
         // property gives an error and no plates (no FEM value to fall back on).

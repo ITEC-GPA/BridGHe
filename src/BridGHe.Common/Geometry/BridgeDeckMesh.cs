@@ -22,17 +22,18 @@ public static class BridgeDeckMesh
 {
     /// <param name="gpcProperty">R6.2 lane A: the GPC property of the Plate Property datum (its <c>Gpc</c>); when given the result has the GPC
     /// drafts of the plates.</param>
+    /// <param name="gpcMembraneBending">L2C: the bending thickness of a membrane given by its datum alone (beside the GPC membrane, which has none).</param>
     public static BridgeDeckResult Create(SimpleBridgeGeometry source, PlatePropertyModel property,
         double maximumLongitudinal, double maximumTransverse, IReadOnlyList<double> pourBoundaries, bool triangles,
-        GPC.Model.ElementProperties.PlateProperty gpcProperty = null)
+        GPC.Model.ElementProperties.PlateProperty gpcProperty = null, double gpcMembraneBending = 0)
     {
         BridgeGeometryTools.Validate(source);
         if (!double.IsFinite(source.DeckThickness) || source.DeckThickness <= 0 || source.LeftEdge.Count != source.Stations.Count ||
             source.RightEdge.Count != source.Stations.Count)
             throw new ArgumentException("Bridge Geometry needs current slab thickness and edge data; recompute Simple Bridge.");
         // R6.5 P1 lane 2a: a property given by its GPC datum alone (property null, gpcProperty given) is checked on the datum, with the same
-        // messages: its formulation and its thicknesses (N-mm, as the draft units); a membrane has no bending thickness in the datum, so only
-        // its membrane thickness is compared. No FEM plates are made then (only the drafts and the plans).
+        // messages: its formulation and its thicknesses (N-mm, as the draft units). L2C (lane 2c, as in 0.3.0): the bending thickness of a
+        // membrane is the one recorded beside its datum (the GPC membrane has none). No FEM plates are made then (only the drafts and the plans).
         bool gpcOnly = property == null && gpcProperty != null, loadPatch;
         if (gpcOnly)
         {
@@ -40,7 +41,7 @@ public static class BridgeDeckMesh
                 throw new ArgumentException("Provide a valid plate property in N-mm.");
             loadPatch = elastic.Formulation == GPC.Model.ElementProperties.ElasticPlateFormulation.LoadPatch;
             if (!loadPatch && (Math.Abs(elastic.MembraneThickness - source.DeckThickness) > 1e-6 ||
-                elastic.Formulation != GPC.Model.ElementProperties.ElasticPlateFormulation.Membrane && Math.Abs(elastic.BendingThickness - source.DeckThickness) > 1e-6))
+                Math.Abs((elastic.Formulation == GPC.Model.ElementProperties.ElasticPlateFormulation.Membrane ? gpcMembraneBending : elastic.BendingThickness) - source.DeckThickness) > 1e-6))
                 throw new ArgumentException("Structural deck membrane/bending thickness must match the geometric slab. Use explicit properties consistent with the model.");
         }
         else

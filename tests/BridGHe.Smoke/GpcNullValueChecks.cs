@@ -142,7 +142,10 @@ internal static class GpcNullValueChecks
         {
             if (value == null || !seen.Add(value)) return;
             var fem = Make(type, value);
-            Common(what, fem, type, Gpc, (IGH_Goo)FromGpc(type, Gpc(fem)), type != group);
+            var gpcOnly = (IGH_Goo)FromGpc(type, Gpc(fem));
+            // L2C: a plate property given by its datum alone with the bending thickness of a membrane beside it (written in its records).
+            if (type.GetProperty("GpcMembraneBending") is { CanWrite: true } bending) bending.SetValue(gpcOnly, bending.GetValue(fem));
+            Common(what, fem, type, Gpc, gpcOnly, type != group);
             data++;
             // P2Z (revisione ChatGPT R65-2): the public copy constructor of a group, case or stage keeps the GPC datum, of a datum alone too.
             if (type == group || type == loadCase || type == stage)
@@ -234,6 +237,15 @@ internal static class GpcNullValueChecks
         var system = T("Fem.GH_CoordinateSystem");
         var global = (IGH_Goo)Activator.CreateInstance(system);
         Common("in memory: global coordinate system", global, system, Gpc, (IGH_Goo)FromGpc(system, Gpc(global)), false);
+        // R65-C2-01 (review of lane 2, 8/11): a system with a FEM value keeps the rule of the reader on its points: (2, 0, 0) and (0, 3, 0) is not
+        // the global one (its normalised frame is: the rule of a system given by its frame alone, the only one in P2).
+        var stretched = new CoordinateSystemModel("R65-C2-01", "Stretched") { Origin = new Point3d(0, 0, 0), Point1 = new Point3d(2, 0, 0), Point2 = new Point3d(0, 3, 0) };
+        var globalSystem = plugin.GetType("BridGHe.Grasshopper.Helpers.GpcBeamInputs", true).GetMethod("GlobalSystem", BindingFlags.NonPublic | BindingFlags.Static);
+        var stretchedGoo = (IGH_Goo)Activator.CreateInstance(system, stretched);
+        Require((bool?)globalSystem.Invoke(null, new object[] { stretchedGoo }) == false, "a FEM system with the points (2, 0, 0) and (0, 3, 0): not global (R65-C2-01)");
+        Require((bool?)globalSystem.Invoke(null, new object[] { global }) == true, "the FEM global system: global (R65-C2-01)");
+        Require((bool?)globalSystem.Invoke(null, new object[] { FromGpc(system, Gpc(stretchedGoo)) }) == true, "its frame alone (normalised): global, the rule of P2 (R65-C2-01)");
+        checks += 3;
         int rules = 0;
         var designType = plugin.GetTypes().Single(t => t.Name == "BridgeDesignGoo");
         var gpcProperty = BridGHe.Common.Geometry.BridgeGpcProperties.Of(BridgeAssignmentTests.Property("L2B"));
@@ -254,6 +266,20 @@ internal static class GpcNullValueChecks
             Require(archive.ExtractObject(read, "datum") && read.IsValid && RuleText(read) is { } text && GpcDraftCapture.WithoutGuids(text) == GpcDraftCapture.WithoutGuids(RuleText(goo)),
                 "bridge rule by its GPC property alone: read back with the datum, without FEM property");
             checks += 3; rules++;
+            // R65-C2-02 (review of lane 2, 8/11): a rule without its FEM property and with a GPC chunk missing or truncated is not read (before:
+            // valid with no property, or the partial rule kept after the exception).
+            foreach (var (label, change) in new (string, Action<GH_Chunk>)[] {
+                ("missing GPC records", c => c.RemoveItem("DesignGpcRecords")),
+                ("missing GPC data", c => c.RemoveItem("DesignGpcData")),
+                ("truncated GPC records", c => { var b = c.GetByteArray("DesignGpcRecords"); c.RemoveItem("DesignGpcRecords"); c.SetByteArray("DesignGpcRecords", b.Take(b.Length / 2).ToArray()); }) })
+            {
+                Written(goo, out var broken);
+                change((GH_Chunk)broken.GetRootNode.FindChunk("datum"));
+                var bad = (IGH_Goo)Activator.CreateInstance(designType);
+                _ = broken.ExtractObject(bad, "datum");
+                Require(!bad.IsValid && Prop(bad, "Value") == null, "bridge rule by its GPC property alone, " + label + ": not read, no value (R65-C2-02)");
+                checks++;
+            }
         }
         Console.WriteLine($"GPC NULL VALUES (L2B): the global coordinate system by its GPC frame alone, {rules} bridge rules by their GPC property alone copied and read back");
         Require(moved >= 2 && copied >= 3, $"too few R65 cases: {moved} plates moved, {copied} copies");

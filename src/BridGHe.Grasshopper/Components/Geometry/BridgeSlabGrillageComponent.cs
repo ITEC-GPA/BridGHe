@@ -42,7 +42,9 @@ public sealed class BridgeSlabGrillageComponent : BridgeUtilityComponent
         var result=BridgeSlabGrillage.Create(g.Value,gpcOnlyMaterial?null:m.Value,name,analysis,gpcOnlyMaterial?m.Gpc:null);
         if(gpcOnlyMaterial)
         {
-            da.SetDataList(0,BridgeMemberAssignmentComponent.GpcOnly(this,0,result.Plans));
+            var onlyBeams=BridgeMemberAssignmentComponent.GpcOnly(this,0,result.Plans); // R65-C2-08: a refused plan, no outputs
+            if(onlyBeams==null) return;
+            da.SetDataList(0,onlyBeams);
             da.SetDataList(1,result.Plans.Select(p=>GpcOnlyProperties.BeamProperty(this,p.Property)).Where(p=>p!=null));
             da.SetDataList(2,result.Widths);
             da.SetDataList(3,result.Plans.Select(p=>p.GeometryId));
@@ -60,7 +62,7 @@ public sealed class BridgeSlabGrillageComponent : BridgeUtilityComponent
             GpcBeamInputs.Attach(beams[i],id=>Common.Gpc.Builders.GpcBridgeGeometryBuilders.Assigned(plan,id));
             if(analysis!=null) properties[i].AttachGpc(plan.Property());
         }
-        if(only) da.SetDataList(0,BridgeMemberAssignmentComponent.GpcOnly(this,0,result.Plans)); else da.SetDataList(0,beams);
+        if(only) { var onlyBeams=BridgeMemberAssignmentComponent.GpcOnly(this,0,result.Plans); if(onlyBeams==null) return; da.SetDataList(0,onlyBeams); } else da.SetDataList(0,beams);
         // R6.5 P1 lane 2a: with the switch of the property producers the strip properties by their GPC data alone.
         if(GpcOnlyElements.PropertiesWithoutFem) da.SetDataList(1,result.Plans.Select(p=>GpcOnlyProperties.BeamProperty(this,p.Property)).Where(p=>p!=null)); else da.SetDataList(1,properties);
         da.SetDataList(2,result.Widths);

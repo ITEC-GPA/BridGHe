@@ -61,9 +61,15 @@ public sealed class BeamPropertyOverrideComponent : BridgeUtilityComponent
 
     /// <summary>R6.5 P1 lane 2b: <see cref="BeamPropertyReplacement.Apply"/> on the GPC data (the same checks, order and messages): the pairs by
     /// the exact names of the GPC properties, two replacements with one name the same only when their GPC data are (the canonical text of the
-    /// property: signature, formulation, angle and section recipe); every beam a new beam by its draft alone with the GH GUID of its input
+    /// property: signature, formulation, angle and section recipe; L2C, limit (c) of passo 77: the recipe with the fillet radius, the section
+    /// moduli, the shapes and the mirror, and the material kind recorded with the property, so that two properties that differ in any datum
+    /// the former content held are refused, as the FEM path refused them); every beam a new beam by its draft alone with the GH GUID of its input
     /// and no analysed element (the FEM path gives copies with their results cleared): a matched one with the replacement property (Beam
     /// Override of the property), the others a copy of their draft; the identity derived from the input draft. Null beams: refused.</summary>
+    /// <summary>L2C: the definition two replacements with one name are compared by: the canonical text of the property (its section recipe
+    /// with the data of lane 2c by its record) and the material kind recorded with it.</summary>
+    private static string Definition(Common.Gpc.Legacy.LegacyBeamProperty p) => GpcOnlyElements.Canonical(p) + "|kind:" + (p?.Data?.MaterialKind ?? "null");
+
     private (List<GH_Beam> Beams, bool[] Replaced, string[] Unused) GpcOnly(List<GH_Beam> beams, List<GH_BeamProperty> originals, List<GH_BeamProperty> replacements)
     {
         var drafts = beams.Select(b => b?.Gpc).ToArray();
@@ -80,8 +86,8 @@ public sealed class BeamPropertyOverrideComponent : BridgeUtilityComponent
                 throw new ArgumentException($"Pair {i + 1}: supply valid, named original and replacement Beam Property objects.");
             var datum = replacement.Gpc; string name = Name(replacement);
             // Repeated identical properties from Get Beam Property are harmless. Conflicting names are not.
-            if (!definitions.TryGetValue(name, out var definition)) { definition = (datum, GpcOnlyElements.Canonical(datum)); definitions.Add(name, definition); }
-            else if (!ReferenceEquals(definition.Property, datum) && definition.Data != GpcOnlyElements.Canonical(datum))
+            if (!definitions.TryGetValue(name, out var definition)) { definition = (datum, Definition(datum)); definitions.Add(name, definition); }
+            else if (!ReferenceEquals(definition.Property, datum) && definition.Data != Definition(datum))
                 throw new ArgumentException($"Replacement name '{name}' has different definitions. Give different properties distinct names.");
             if (pairs.TryGetValue(Name(original), out var previous) && previous.Property.Name != definition.Property.Property.Name)
                 throw new ArgumentException($"Original name '{Name(original)}' is paired with more than one replacement.");
@@ -98,7 +104,11 @@ public sealed class BeamPropertyOverrideComponent : BridgeUtilityComponent
                 ? Common.Gpc.Builders.GpcBeamBuilders.Override(draft, replacement, null, null, null, identity)
                 : Common.Gpc.GpcDrafts.Reidentify(Common.Gpc.GpcDrafts.Copy(draft), identity));
             if (built == null) return (null, null, null);
-            outputs.Add(GH_Beam.FromGpc(built, beams[i].Guid));
+            var output = GH_Beam.FromGpc(built, beams[i].Guid);
+            // R65-C2-07 (review of lane 2, 8/11): as the FEM path, the results stay when no beam is matched (the links to the analysed GPC
+            // element and model of the input) and go from every output when one is (before: always gone).
+            if (!replaced.Any(v => v)) { output.AnalysedGpc = beams[i].AnalysedGpc; output.AnalysedGpcModel = beams[i].AnalysedGpcModel; }
+            outputs.Add(output);
         }
         return (outputs, replaced, pairs.Keys.Where(name => !used.Contains(name)).ToArray());
     }

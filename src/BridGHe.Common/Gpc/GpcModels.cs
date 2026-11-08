@@ -195,6 +195,10 @@ namespace BridGHe.Common.Gpc
         public static GPC.Model.ElementProperties.PlateProperty PlatePropertyDraft(PlatePropertyModel property) =>
             LegacyModelImport.PlatePropertyDraft(LegacyArchive.Read(ModelArchive.Write(property ?? throw new ArgumentNullException(nameof(property)))), GpcBeamDrafts.DraftUnits);
 
+        /// <summary>L2C: the bending thickness of a former membrane plate property, beside its GPC property (<see cref="LegacyModelImport.PlatePropertyMembraneBending"/>).</summary>
+        public static double PlatePropertyMembraneBending(PlatePropertyModel property) =>
+            LegacyModelImport.PlatePropertyMembraneBending(LegacyArchive.Read(ModelArchive.Write(property ?? throw new ArgumentNullException(nameof(property)))), GpcBeamDrafts.DraftUnits);
+
         /// <summary>F6 chain E: a former material (the datum of a Material parameter) as the GPC material of a beam property, with the rule
         /// of the conversion of a whole model (<see cref="LegacyModelImport.ElasticMaterial"/>; materials are in N-mm-MPa in every unit
         /// system of the definition).</summary>

@@ -76,13 +76,14 @@ namespace BridGHe.Grasshopper.Components.Sections
             }
 
             GH_BeamSection section = new GH_BeamSection(sectionModel);
+            // L2C (lane 2c, as in 0.3.0): Double Sections gives the mirrored section (Left, with its gap) as a recipe.
             // R6.2 part C (§1bis, regola doppia): the recipe built on GPC from the inputs, attached to the FEM value (transitional until R6.5).
             // R6.5 P1 lane 2a: with the switch of the property producers the section by its recipe alone (the path of P2; a refused recipe gives
             // an error and no section).
-            if (Helpers.GpcOnlyElements.PropertiesWithoutFem) Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.Section(this, () => Common.Gpc.Builders.GpcSectionBuilders.Standard(Common.Gpc.BridgeSectionKind.C, d, b, t1: t1, t2: t2, mirrored: mirrored)));
+            if (Helpers.GpcOnlyElements.PropertiesWithoutFem) Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.Section(this, () => Common.Gpc.Builders.GpcSectionBuilders.Standard(Common.Gpc.BridgeSectionKind.C, d, b, t1: t1, t2: t2, mirror: mirrored ? 2 : Common.Gpc.Legacy.LegacySectionRecipe.NoMirror, gapA: mirrored ? gap : 0)));
             else
             {
-                Helpers.GpcBuilderAttach.Section(section, () => Common.Gpc.Builders.GpcSectionBuilders.Standard(Common.Gpc.BridgeSectionKind.C, d, b, t1: t1, t2: t2, mirrored: mirrored));
+                Helpers.GpcBuilderAttach.Section(section, () => Common.Gpc.Builders.GpcSectionBuilders.Standard(Common.Gpc.BridgeSectionKind.C, d, b, t1: t1, t2: t2, mirror: mirrored ? 2 : Common.Gpc.Legacy.LegacySectionRecipe.NoMirror, gapA: mirrored ? gap : 0));
                 DA.SetData(0, section);
             }
         }

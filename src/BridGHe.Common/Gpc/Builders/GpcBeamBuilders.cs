@@ -96,7 +96,8 @@ namespace BridGHe.Common.Gpc.Builders
             for (int i = 0; i < chain.Count; i++)
             {
                 string full = FullName(chain.Take(i + 1).ToArray());
-                group = Group.Create(GpcIdentity.Group(full), full);
+                // L2C: the name as a string of its own, as in DraftGroups (one XML form of the records: that of the reader).
+                group = Group.Create(GpcIdentity.Group(full), new string(full.AsSpan()));
                 parent?.AddChild(group);
                 parent = group;
             }

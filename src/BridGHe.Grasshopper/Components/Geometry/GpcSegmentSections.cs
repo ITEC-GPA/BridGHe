@@ -33,8 +33,10 @@ internal static class GpcSegmentSections
         for (int i = 0; i < built.Length; i++)
         {
             var (name, v) = result.Sections[i]; var rule = result.Rules[i];
-            var recipe = GpcBridgeGeometryBuilders.StandardSection(BridgeSectionKind.I, name, d: v[2], b1: v[0], b2: v[1], t1: v[3], t2: v[4], t3: v[5]);
-            var property = GpcBridgeGeometryBuilders.StandardProperty(rule.Property.Name, recipe, material, basis.Data.Formulation);
+            // L2C (limits (a) and (b) of passo 77): the fillet radius of the concio and the material kind of the base property, as the former
+            // property (a copy of the base property on the section of the concio) held them.
+            var recipe = GpcBridgeGeometryBuilders.StandardSection(BridgeSectionKind.I, name, d: v[2], b1: v[0], b2: v[1], t1: v[3], t2: v[4], t3: v[5], r: v[6]);
+            var property = GpcBridgeGeometryBuilders.StandardProperty(rule.Property.Name, recipe, material, basis.Data.Formulation, basis.Data.MaterialKind);
             BridgeGpcProperties.Attach(rule.Property, property);
             built[i] = (property, recipe);
         }

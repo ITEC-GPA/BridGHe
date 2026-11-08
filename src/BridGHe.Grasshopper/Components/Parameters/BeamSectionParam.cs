@@ -26,8 +26,8 @@ namespace BridGHe.Grasshopper.Components.Parameters
                 if (PersistentData.DataCount > 0)
                 {
                     GH_BeamSection bs = PersistentData.Branches[0][0];
-                    // R6.5 P1 lane 2a: a section given by its recipe alone cannot be mirrored (the reader refuses a mirrored section: no recipe).
-                    if (bs.Value == null) return false;
+                    // L2C (lane 2c, as in 0.3.0): a section given by its recipe alone is mirrored on its recipe (C and angle sections).
+                    if (bs.Value == null) return bs.Gpc is { NativeKey: null } r && (r.Kind == Common.Gpc.BridgeSectionKind.C || r.Kind == Common.Gpc.BridgeSectionKind.Angle);
                     return bs.SectionType == SectionModel.SectionTypes.C || bs.SectionType == SectionModel.SectionTypes.Angle;
                 }
                 return false;
@@ -41,7 +41,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
                 if (PersistentData.DataCount > 0)
                 {
                     GH_BeamSection bs = PersistentData.Branches[0][0];
-                    if (bs.Value == null) return false; // R6.5 P1 lane 2a: a recipe is never mirrored
+                    if (bs.Value == null) return bs.Gpc != null && bs.Gpc.Mirror != Common.Gpc.Legacy.LegacySectionRecipe.NoMirror; // L2C: the mirror of the recipe
                     return bs.MirrorType != SectionModel.MirrorTypes.None;
                 }
                 return false;
@@ -83,8 +83,9 @@ namespace BridGHe.Grasshopper.Components.Parameters
             if (PersistentData.DataCount > 0)
             {
                 GH_BeamSection bs = PersistentData.Branches[0][0];
-                if (bs.MirrorGapA > 0)
-                    gap_text = bs.MirrorGapA.ToString();
+                double gapA = bs.Value == null ? bs.Gpc?.MirrorGapA ?? 0 : bs.MirrorGapA; // L2C: the gap of the recipe
+                if (gapA > 0)
+                    gap_text = gapA.ToString();
             }
             Menu_AppendTextItem(menu, gap_text, new GH_MenuTextBox.KeyDownEventHandler(OnGapKeyDown), null, IsMirror, 0, true);
 
@@ -107,17 +108,26 @@ namespace BridGHe.Grasshopper.Components.Parameters
 
         private void OnSetMirror(object sender, EventArgs e)
         {
-            if (PersistentData.DataCount > 0 && PersistentData.Branches[0][0].Value != null) // R6.5 P1 lane 2a: no mirror for a recipe alone
+            // L2C (lane 2c, as in 0.3.0): a section given by its recipe alone is mirrored on its recipe (the same toggle; a refused recipe gives
+            // an error and the stored section stays).
+            if (PersistentData.DataCount > 0 && PersistentData.Branches[0][0].Value == null)
             {
+                var stored = PersistentData.Branches[0][0];
+                try { Replace(GH_BeamSection.FromGpc(Common.Gpc.Builders.GpcSectionBuilders.Mirrored(stored.Gpc ?? throw new NotSupportedException("LegacySectionWithoutRecipe")))); ExpireSolution(true); }
+                catch (Exception x) when (GpcBuilderAttach.Refusal(x)) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, GpcOnlyProperties.Refused + x.Message); }
+                return;
+            }
+            if (PersistentData.DataCount > 0)
+            {
+                var input = PersistentData.Branches[0][0];
                 // A changed copy: the stored section may already be shared with the data of downstream components.
                 GH_BeamSection bs = Copy(PersistentData.Branches[0][0]);
                 if (bs.MirrorType == SectionModel.MirrorTypes.None)
                     bs.MirrorType = SectionModel.MirrorTypes.Left;
                 else
                     bs.MirrorType = SectionModel.MirrorTypes.None;
-                // R6.2 part C (dual rule until R6.5): a mirrored section has no recipe (the reader refuses it); an unmirrored one keeps the
-                // conversion of its value (its mirrored input had no recipe to build from).
-                if (bs.MirrorType != SectionModel.MirrorTypes.None) GpcBuilderAttach.Section(bs, Common.Gpc.Builders.GpcSectionBuilders.Mirrored);
+                // R6.2 part C (dual rule until R6.5); L2C: the recipe of the input with the mirror changed (a mirrored section is a recipe).
+                GpcBuilderAttach.Section(bs, () => Common.Gpc.Builders.GpcSectionBuilders.Mirrored(input.Gpc ?? throw new NotSupportedException("LegacySectionWithoutRecipe")));
                 Replace(bs);
                 ExpireSolution(true);
             }
@@ -127,13 +137,22 @@ namespace BridGHe.Grasshopper.Components.Parameters
         {
             if (e.KeyCode == Keys.Enter)
             {
-                if (double.TryParse(textBox.Text, out double gap) && PersistentData.Branches[0][0].Value != null) // R6.5 P1 lane 2a: no gap for a recipe alone
+                // L2C (lane 2c, as in 0.3.0): the gap of a section given by its recipe alone, on its recipe.
+                if (double.TryParse(textBox.Text, out double recipeGap) && PersistentData.Branches[0][0].Value == null)
                 {
-                    GH_BeamSection bs = Copy(PersistentData.Branches[0][0]);
+                    var stored = PersistentData.Branches[0][0];
+                    try { Replace(GH_BeamSection.FromGpc(Common.Gpc.Builders.GpcSectionBuilders.Gap(stored.Gpc ?? throw new NotSupportedException("LegacySectionWithoutRecipe"), recipeGap))); ExpireSolution(true); }
+                    catch (Exception x) when (GpcBuilderAttach.Refusal(x)) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, GpcOnlyProperties.Refused + x.Message); }
+                    return;
+                }
+                if (double.TryParse(textBox.Text, out double gap))
+                {
+                    var input = PersistentData.Branches[0][0];
+                    GH_BeamSection bs = Copy(input);
                     bs.MirrorGapA = gap;
                     bs.IsDBSection = false;
-                    // R6.2 part C: the gap of a mirrored section (the reader refuses a mirrored section: no recipe).
-                    if (bs.MirrorType != SectionModel.MirrorTypes.None) GpcBuilderAttach.Section(bs, Common.Gpc.Builders.GpcSectionBuilders.Mirrored);
+                    // R6.2 part C (dual rule); L2C: the recipe of the input with the gap (a mirrored section is a recipe).
+                    GpcBuilderAttach.Section(bs, () => Common.Gpc.Builders.GpcSectionBuilders.Gap(input.Gpc ?? throw new NotSupportedException("LegacySectionWithoutRecipe"), gap));
                     Replace(bs);
                     ExpireSolution(true);
                 }

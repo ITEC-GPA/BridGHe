@@ -53,10 +53,11 @@ namespace BridGHe.Grasshopper.Helpers
         }
 
         /// <summary>R6.2 part C (P2N): the property of the Plate Property component, with the same refusal rule.</summary>
-        internal static void PlateProperty(GH_PlateProperty target, Func<GPC.Model.ElementProperties.PlateProperty> build)
+        /// <param name="membraneBending">L2C: the bending thickness of a membrane (<see cref="GH_PlateProperty.GpcMembraneBending"/>).</param>
+        internal static void PlateProperty(GH_PlateProperty target, Func<GPC.Model.ElementProperties.PlateProperty> build, double membraneBending = 0)
         {
             var property = Build(build, () => GpcModels.PlatePropertyDraft(target.Value));
-            if (property != null) target.AttachGpc(property);
+            if (property != null) target.AttachGpc(property, membraneBending);
         }
 
         /// <summary>R6.2 part C (P2N): the case record of the Load Case component, with the same refusal rule.</summary>

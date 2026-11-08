@@ -14,8 +14,10 @@ namespace BridGHe.Grasshopper.Helpers
     /// <list type="bullet">
     /// <item>A producer gives its output by the GPC datum alone with <see cref="GpcOnlyElements.PropertiesWithoutFem"/> (the path that stays in
     /// P2; on only in the lane test <c>gpc-only-properties</c>) and whenever an input of these kinds is given by its GPC datum alone.</item>
-    /// <item>The rule of passo 75 for every component: an input of these kinds given by its GPC datum alone gives an output by its GPC datum
-    /// alone (an element output too: <see cref="GpcOnlyElements"/>); no FEM value is made from a null <c>Value</c>.</item>
+    /// <item>The rule of passo 75 for every component that makes or changes an output: an input of these kinds given by its GPC datum alone
+    /// gives an output by its GPC datum alone (an element output too: <see cref="GpcOnlyElements"/>); no FEM value is made from a null
+    /// <c>Value</c>. R65-C2-04 (review of lane 2): the selectors and filters (Beam, Node and Plate Filter by group) pass their input objects
+    /// through unchanged (an input with a FEM value stays one).</item>
     /// <item>The datum is the one the GPC builder of the component builds, the one the dual rule of R6.2 attaches to the FEM value
     /// (<see cref="GpcBuilderAttach"/>). A builder that refuses gives an error on the component and no output: there is no conversion of a FEM
     /// value to fall back on (decision 2 of passo 73).</item>
@@ -75,7 +77,8 @@ namespace BridGHe.Grasshopper.Helpers
 
         internal static GH_BeamSection Section(GH_Component c, Func<LegacySectionRecipe> build) => Datum(c, build) is { } d ? GH_BeamSection.FromGpc(d) : null;
         internal static GH_BeamProperty BeamProperty(GH_Component c, Func<LegacyBeamProperty> build) => Datum(c, build) is { } d ? GH_BeamProperty.FromGpc(d) : null;
-        internal static GH_PlateProperty PlateProperty(GH_Component c, Func<GPC.Model.ElementProperties.PlateProperty> build) => Datum(c, build) is { } d ? GH_PlateProperty.FromGpc(d) : null;
+        internal static GH_PlateProperty PlateProperty(GH_Component c, Func<GPC.Model.ElementProperties.PlateProperty> build, double membraneBending = 0) =>
+            Datum(c, build) is { } d ? GH_PlateProperty.FromGpc(d).WithMembraneBending(membraneBending) : null; // L2C: with the bending of a membrane
         internal static GH_Material Material(GH_Component c, Func<GPC.Model.Materials.Material> build) => Datum(c, build) is { } d ? GH_Material.FromGpc(d) : null;
         internal static GH_LoadCase Case(GH_Component c, Func<LegacyCaseData> build) => Datum(c, build) is { } d ? GH_LoadCase.FromGpc(d) : null;
         internal static GH_LoadCombination Combination(GH_Component c, Func<LegacyCombinationDraft> build) => Datum(c, build) is { } d ? GH_LoadCombination.FromGpc(d) : null;

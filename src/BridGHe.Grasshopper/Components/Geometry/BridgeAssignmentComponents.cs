@@ -109,7 +109,11 @@ public class BridgeMemberAssignmentComponent : BridgeUtilityComponent
         // R6.5 P1 lane 2a: the same when a property is given by its GPC datum alone (an assignment on GPC only has no FEM beams).
         if (GpcOnlyElements.GeneratorsWithoutFem || gpcDefaults is { Count: > 0 } || rules.Any(r => r.Property == null && r.GpcProperty != null))
         {
-            da.SetDataList(0, GpcOnly(this, 0, result.Plans));
+            // R65-C2-08 (review of lane 2, 8/11): every draft first; a refused plan gives the error and no outputs (rule of passo 75; before, the
+            // beams without the refused plans beside the IDs of every plan, two lists of other lengths).
+            var beams = GpcOnly(this, 0, result.Plans);
+            if (beams == null) return;
+            da.SetDataList(0, beams);
             da.SetDataList(1, result.Plans.Select(p => p.PhysicalId));
             da.SetDataList(2, result.Unassigned); da.SetDataList(3, result.Diagnostics);
             return;
@@ -124,17 +128,18 @@ public class BridgeMemberAssignmentComponent : BridgeUtilityComponent
 
     /// <summary>R6.5 P1 lane 1b: the beams of plans by their GPC drafts alone (<c>GpcBridgeGeometryBuilders.Assigned</c>), each with the
     /// identity by content of its plan (every field: ends, the GPC property, export ID and label, family, group, segment, span, physical
-    /// and geometric IDs, stations, deck frame, taper scales); a refused one gives an error and is left out. Also Bridge Slab Grillage.</summary>
+    /// and geometric IDs, stations, deck frame, taper scales). Also Bridge Slab Grillage. R65-C2-08: a refused one gives an error and the
+    /// result is null (no outputs: the rule of passo 75); before, it was left out of the list.</summary>
     internal static List<GH_Beam> GpcOnly(GH_Component component, int output, IEnumerable<BridgeMemberPlan> plans)
     {
-        var beams = new List<GH_Beam>();
+        var beams = new List<GH_Beam>(); bool refused = false;
         foreach (var plan in plans)
         {
             var draft = GpcOnlyElements.Generated(component, () => Common.Gpc.Builders.GpcBridgeGeometryBuilders.Assigned(plan, GpcOnlyElements.ContentIdentity(component.ComponentGuid, output,
                 plan.From, plan.To, GpcOnlyElements.Lazy(() => plan.Property()), plan.SolverId, plan.Label, plan.Family, plan.Group, plan.Segment, plan.Span, plan.PhysicalId,
                 plan.StationFrom, plan.StationTo, plan.GeometryId, plan.DeckY, plan.DeckX, plan.ScaleFrom, plan.ScaleTo)));
-            if (draft != null) beams.Add(GH_Beam.FromGpc(draft));
+            if (draft != null) beams.Add(GH_Beam.FromGpc(draft)); else refused = true;
         }
-        return beams;
+        return refused ? null : beams;
     }
 }

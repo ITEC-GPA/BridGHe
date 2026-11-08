@@ -12,6 +12,9 @@ namespace BridGHe.Grasshopper.Forms
     {
         protected LoadCaseModel[] _loadCases;
         protected List<GH_LoadCombination> _values;
+        // R65-C2-05: the case records and whether the combinations are made by their GPC datum alone (LoadCombinationRows).
+        private readonly IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> _caseRecords;
+        private readonly bool _gpcOnly;
 
         public List<GH_LoadCombination> Values => _values;
 
@@ -20,67 +23,54 @@ namespace BridGHe.Grasshopper.Forms
         /// </summary>
         /// <param name="loadCases">The load cases names array to use for creating the columns of the DataGrid</param>
         /// <param name="values">The previous values to restore as rows of the DataGrid</param>
-        public LoadCombinationsForm(LoadCaseModel[] loadCases, List<GH_LoadCombination> values = null)
+        /// <param name="caseRecords">R65-C2-05: the case records of the parameter (the columns when the combinations are given by their GPC datum alone).</param>
+        public LoadCombinationsForm(LoadCaseModel[] loadCases, List<GH_LoadCombination> values = null, IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords = null)
         {
             Owner = Instances.DocumentEditor;
             InitializeComponent();
             _loadCases = loadCases;
+            _caseRecords = caseRecords;
+            _gpcOnly = LoadCombinationRows.GpcOnly(values, loadCases, caseRecords);
+            string[] columns = LoadCombinationRows.Columns(_gpcOnly, loadCases, caseRecords);
 
-            dataGridView.ColumnCount = loadCases.Length + 1;
+            dataGridView.ColumnCount = columns.Length + 1;
             dataGridView.Columns[0].Name = "Combo Name";
             dataGridView.Columns[0].ValueType = typeof(string);
-            for (int i = 0; i < loadCases.Length; i++)
+            for (int i = 0; i < columns.Length; i++)
             {
-                dataGridView.Columns[i + 1].Name = loadCases[i].Name;
+                dataGridView.Columns[i + 1].Name = columns[i];
                 dataGridView.Columns[i + 1].ValueType = typeof(double);
             }
 
-            // Fill the current values
+            // Fill the current values (R65-C2-05: a combination given by its GPC datum alone from its datum).
             if (values != null)
             {
-                dataGridView.RowCount = values.Count + 1;
-                for (int i = 0; i < values.Count; i++)
+                var rows = LoadCombinationRows.Of(values);
+                dataGridView.RowCount = rows.Count + 1;
+                for (int i = 0; i < rows.Count; i++)
                 {
-                    dataGridView.Rows[i].Cells[0].Value = values[i].Value.Name;
-                    foreach (KeyValuePair<LoadCaseModel, double> item in values[i].Value.Values)
-                        dataGridView.Rows[i].Cells[item.Key.Name].Value = item.Value;
+                    dataGridView.Rows[i].Cells[0].Value = rows[i].Name;
+                    foreach (var item in rows[i].Factors)
+                        if (dataGridView.Columns.Contains(item.Key)) dataGridView.Rows[i].Cells[item.Key].Value = item.Value;
                 }
             }
         }
 
         private void OkButton_Click(object sender, EventArgs e)
         {
-            _values = new List<GH_LoadCombination>();
+            // R65-C2-05: the combinations of the rows (LoadCombinationRows: the same checks and messages; by their GPC datum alone when the
+            // inputs are).
+            var rows = new List<(string, IReadOnlyList<object>)>();
             for (int i = 0; i < dataGridView.RowCount - 1; i++)
+                rows.Add((dataGridView.Rows[i].Cells[0].Value.ToString(), Enumerable.Range(1, dataGridView.ColumnCount - 1).Select(j => dataGridView.Rows[i].Cells[j].Value).ToArray()));
+            var columns = Enumerable.Range(1, dataGridView.ColumnCount - 1).Select(j => dataGridView.Columns[j].Name).ToArray();
+            var (values, error) = LoadCombinationRows.Combinations(rows, columns, _loadCases, _caseRecords, _gpcOnly);
+            if (error != null)
             {
-                string name = dataGridView.Rows[i].Cells[0].Value.ToString();
-
-                if (_loadCases.Count(lc => lc.Name == name) > 0)
-                {
-                    MessageBox.Show($"The combination names {name} is invalid. The name must be different to the load cases names",
-                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Hand);
-                    return;
-                }
-
-
-                if (_values.FirstOrDefault(c => c.Value.Name == name) != null)
-                {
-                    MessageBox.Show($"The combination name {name} is used more than one time",
-                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Hand);
-                    return;
-                }
-
-                GH_LoadCombination combo = new GH_LoadCombination(name);
-                for (int j = 0; j < dataGridView.ColumnCount - 1; j++)
-                {
-                    string lcase_name = dataGridView.Columns[j + 1].Name;
-                    double incr = Convert.ToDouble(dataGridView.Rows[i].Cells[j + 1].Value);
-                    LoadCaseModel lcase = _loadCases.Single(lc => lc.Name == lcase_name);
-                    combo.Value.Values.Add(lcase, incr);
-                }
-                _values.Add(combo);
+                MessageBox.Show(error, "Error", MessageBoxButtons.OK, MessageBoxIcon.Hand);
+                return;
             }
-
+            _values = values;
             DialogResult = DialogResult.OK;
         }
 

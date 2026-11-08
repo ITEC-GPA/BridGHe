@@ -55,6 +55,9 @@ namespace BridGHe.Common.Gpc
 
         public static GPC.Model.ElementProperties.PlateProperty PlateProperty(byte[] payload) => LegacyModelImport.PlatePropertyDraft(Root(payload), GpcBeamDrafts.DraftUnits);
 
+        /// <summary>L2C: the bending thickness of a former membrane plate property (<see cref="LegacyModelImport.PlatePropertyMembraneBending"/>).</summary>
+        public static double PlatePropertyMembraneBending(byte[] payload) => LegacyModelImport.PlatePropertyMembraneBending(Root(payload), GpcBeamDrafts.DraftUnits);
+
         public static GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition Composite(byte[] payload) => GpcCompositeSections.Definition(Root(payload));
 
         /// <summary>A former model (<c>GH_Model</c>, internalised or the cache of an analysis component) by value, at the tolerance given

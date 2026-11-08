@@ -76,7 +76,10 @@ public sealed class BridgeStateOverrideComponent : BridgeUtilityComponent
         var stated=states.Select(Common.Gpc.GpcStateOverride.StateId).ToHashSet(StringComparer.Ordinal);
         var girderInputs=beams.Where((b,i)=>stated.Contains(drafts[i].Beam.Name)).ToArray();var otherInputs=beams.Where((b,i)=>!stated.Contains(drafts[i].Beam.Name)).ToArray();
         if(gpc.Girders.Length!=girderInputs.Length||gpc.OtherMembers.Length!=otherInputs.Length)throw new InvalidOperationException("GpcStateOverrideCountMismatch");
-        var girders=gpc.Girders.Select((d,i)=>GpcOnlyElements.NewBeam(this,0,girderInputs[i],id=>Common.Gpc.GpcDrafts.Reidentify(d,id),response,mixed,zero,mass,d.Property?.Signature)).ToArray();
+        // R65-C2-03 (review of lane 2, 8/11): the identity of a girder also by its section state beyond its property (the classification case,
+        // the behaviour, cracked or not, the modular ratio): two states of the same sign from two cases gave the same GUID (GPC-only path only).
+        var girders=gpc.Girders.Select((d,i)=>GpcOnlyElements.NewBeam(this,0,girderInputs[i],id=>Common.Gpc.GpcDrafts.Reidentify(d,id),response,mixed,zero,mass,d.Property?.Signature,
+            d.Bridge?.SectionState?.ClassificationCase,d.Bridge?.SectionState?.Behavior.ToString(),d.Bridge?.SectionState?.ConcreteExcluded,d.Bridge?.SectionState?.ModularRatio)).ToArray();
         var others=gpc.OtherMembers.Select((d,i)=>GpcOnlyElements.NewBeam(this,1,otherInputs[i],id=>Common.Gpc.GpcDrafts.Reidentify(d,id),response,mixed,zero,mass)).ToArray();
         if(girders.Any(g=>g==null)||others.Any(o=>o==null))return;
         da.SetDataList(0,girders);da.SetDataList(1,others);da.SetDataList(2,gpc.Girders.Select(d=>d.Beam.Name));

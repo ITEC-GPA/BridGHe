@@ -174,6 +174,26 @@ namespace BridGHe.Common.Gpc
             return new Shapes(new[] { shape });
         }
 
+        /// <summary>L2C (lane 2c): the mirror the former values of a section were computed with (as in 0.3.0): the Angle component sets the
+        /// mirror of Double Sections before <c>CalculateSection</c> (the values of the double angle), the C component after it (the values of
+        /// one channel, the mirror only in the data). The mirror menu of the Beam Section parameter did not compute again: its values stayed
+        /// those of the section before the change (listed difference of lane 2c: the recipe gives the values of this rule).</summary>
+        public static int ValuesMirror(BridgeSectionKind kind, int mirror) => kind == BridgeSectionKind.C ? Legacy.LegacySectionRecipe.NoMirror : mirror;
+
+        /// <summary>L2C (lane 2c): the shapes of a mirrored section as the former <c>CalculateSection</c> made them: every shape and its mirror
+        /// about the line x = −gap/2 (any mirror type, as before); the shapes given when there is no mirror.</summary>
+        public static Shapes Mirrored(Shapes shapes, int mirror, double gapA)
+        {
+            if (mirror == Legacy.LegacySectionRecipe.NoMirror) return shapes;
+            var list = new System.Collections.Generic.List<GPC.Geometry.Shape2d>();
+            foreach (GPC.Geometry.Shape2d main in shapes)
+            {
+                list.Add(main);
+                list.Add(main.Mirror2d(-1, 0, -gapA / 2.0));
+            }
+            return new Shapes(list);
+        }
+
         /// <summary>R6.5 P1 lane 2a: what the geometric property components (Section Geometric Property, Beam Geometric Property) read from the
         /// former section value of a section component: name, area, centroid, Ixx, Iyy, principal angle, I11, I22, W11, W22, ρ11, ρ22, J.</summary>
         public sealed record FormerValues(string Name, double Area, double XG, double YG, double Ixx, double Iyy, double AngleX1Rad, double I11, double I22,
@@ -187,10 +207,17 @@ namespace BridGHe.Common.Gpc
         /// them: the section moduli of a generic section (inputs W11/W22 of Generic Section, not part of the recipe), the shapes of a Brep
         /// section, the values of a native Straus7 section (Straus7 computes them) and a composite section (its composite property, lane 2b).
         /// </summary>
+        /// <remarks>L2C (lane 2c, coordinator answers of 8/11: as in 0.3.0): a Generic section gives its explicit values with its section
+        /// moduli (now in the recipe) and zeros for Ixx, Iyy and the radii of gyration, as the former value of Generic Section held them; a
+        /// Brep section gives zeros with its name (the former Brep component did not compute the section: its value held zeros); a native
+        /// Straus7 section the values the former value held, computed again by Straus7 from its native data (<see cref="FormerNative"/>); a
+        /// mirrored section the values of its mirrored shapes (the components with Double Sections computed them so). A composite section
+        /// (no section component of 0.3.0 makes one, only the payloads of earlier versions) is still refused: its values are not in its
+        /// recipe.</remarks>
         public static FormerValues Former(Legacy.LegacySectionRecipe r)
         {
             if (r == null) throw new ArgumentNullException(nameof(r));
-            if (r.NativeKey != null) throw new NotSupportedException("GpcSectionValuesNative: the values of a native Straus7 section are computed by Straus7, not held by its recipe.");
+            if (r.NativeKey != null) return FormerNative(r);
             string name = string.IsNullOrEmpty(r.Name) ? null : r.Name;
             double d = r.D, t = r.T;
             switch (r.Kind)
@@ -208,15 +235,33 @@ namespace BridGHe.Common.Gpc
                 case BridgeSectionKind.Composite:
                     throw new NotSupportedException("GpcSectionValuesComposite: a composite section has its values in its composite property (lane 2b).");
                 case BridgeSectionKind.Generic:
-                    throw new NotSupportedException("GpcSectionModuliNotInRecipe: the section moduli W11 and W22 of a Generic section are not part of its GPC recipe.");
+                    return new FormerValues(name, r.Area, r.CentroidX, r.CentroidY, 0, 0, r.Angle, r.I11, r.I22, r.W11, r.W22, 0, 0, r.J);
                 case BridgeSectionKind.GenericShapes:
-                    throw new NotSupportedException("GpcSectionShapesNotInRecipe: the shapes of a Brep section are not part of its GPC recipe.");
+                    return new FormerValues(name, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
                 default:
                 {
-                    var v = Of(StandardShapes(r.Kind, r.D, r.B, r.B1, r.B2, r.T1, r.T2, r.T3, 0), false);
+                    var v = Of(Mirrored(StandardShapes(r.Kind, r.D, r.B, r.B1, r.B2, r.T1, r.T2, r.T3, 0), ValuesMirror(r.Kind, r.Mirror), r.MirrorGapA), false);
                     return new FormerValues(name, v.Area, v.XG, v.YG, v.Ixx, v.Iyy, v.Angle, v.I11, v.I22, v.W11, v.W22, v.Rho11, v.Rho22, r.J);
                 }
             }
+        }
+
+        /// <summary>L2C (lane 2c): the values the former value of a native Straus7 section held, computed again from its native data with the
+        /// expressions of the former <c>StrausSection.Calculate</c> (Straus7 resolves the section; library and BXS sections in the length unit
+        /// they were read in): name = the key, area, centroid, Ixx and Iyy from I11, I22 and the principal angle, J, the radii of gyration;
+        /// no section moduli (NaN, as before). Native: needs the Straus7 API, as the section component did.</summary>
+        public static FormerValues FormerNative(Legacy.LegacySectionRecipe r)
+        {
+            if (r?.NativeKey == null) throw new ArgumentException("GpcSectionValuesNativeExpected");
+            var dimensions = new double[r.NativeDimensions?.Count ?? 0];
+            for (int i = 0; i < dimensions.Length; i++) dimensions[i] = r.NativeDimensions[i];
+            var resolved = GpcNativeSections.Resolve(r.NativeKey, dimensions, r.BxsPath, r.LibraryName, r.LibraryItem, 1);
+            double f = GpcNativeSections.IsLibraryOrBxs(r.NativeKey) ? GpcNativeSections.MillimetresPer(r.NativeLengthUnit) : 1, f2 = f * f, f4 = f2 * f2;
+            var data = resolved.Section.ReferenceProperties;
+            double angle = data[10], c = Math.Cos(angle), s = Math.Sin(angle);
+            double area = data[0] / f2, i11 = data[1] / f4, i22 = data[2] / f4;
+            return new FormerValues(r.NativeKey, area, data[8] / f, data[9] / f, i11 * c * c + i22 * s * s, i11 * s * s + i22 * c * c, angle, i11, i22, double.NaN, double.NaN,
+                Math.Sqrt(i11 / area), Math.Sqrt(i22 / area), data[3] / f4);
         }
 
         /// <summary>The values of shapes as the former <c>CalculateSection</c> computes them (moved to the minimum; generic shapes always

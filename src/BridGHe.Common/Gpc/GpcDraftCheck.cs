@@ -20,4 +20,8 @@ namespace BridGHe.Common.Gpc
             if (verify != null && datum != null && conversion != null) verify(type, datum, conversion);
         }
     }
+
+    /// <summary>L2C (lane 2c): the datum of a Plate Property parameter as the check compares it: the GPC property and the bending thickness of
+    /// a membrane beside it (<c>GH_PlateProperty.GpcMembraneBending</c>; the GPC membrane has none).</summary>
+    public sealed record GpcPlatePropertyDatum(GPC.Model.ElementProperties.PlateProperty Property, double MembraneBending);
 }

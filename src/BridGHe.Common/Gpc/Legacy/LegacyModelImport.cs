@@ -107,6 +107,20 @@ namespace BridGHe.Common.Gpc.Legacy
         /// <summary>Chain E (e3 point 5): the section of the property in the definition units (null: a property built on GPC, without one),
         /// from which Build Model builds the section in N-mm (<see cref="LegacyAssembly.NormaliseBeamProperty"/>).</summary>
         public LegacySectionRecipe Section { get; init; }
+
+        /// <summary>L2C (lane 2c, limit (b) of passo 77): the kind of the material of the former property (the former
+        /// <c>MaterialModel.MaterialKind</c> by name: Steel, Concrete, Aluminium, Rebar, Undefined), a BridGHe datum beside the GPC property,
+        /// whose material is the analysis material (no kind): Bridge Segment Sections refuses a base property that is not steel, as before.
+        /// Null: not recorded (the records saved before lane 2c, the data of a model report).</summary>
+        public string MaterialKind { get; init; }
+    }
+
+    /// <summary>L2C (lane 2c): one shape of a Brep section (former <c>GenericShapes</c>): the vertices of its fill and of each hole, as stored
+    /// by the former shape (<c>Shape2d</c>), in the definition units, as x, y pairs.</summary>
+    public sealed class LegacySectionShape
+    {
+        public IReadOnlyList<double> Fill { get; init; } = Array.Empty<double>();
+        public IReadOnlyList<IReadOnlyList<double>> Holes { get; init; } = Array.Empty<IReadOnlyList<double>>();
     }
 
     /// <summary>
@@ -149,6 +163,23 @@ namespace BridGHe.Common.Gpc.Legacy
         public string LibraryItem { get; init; }
         /// <summary>The Straus7 length unit a library or BXS section was read in (only for those).</summary>
         public int NativeLengthUnit { get; init; }
+
+        // L2C (lane 2c, coordinator answers of 8/11: the GPC path becomes the only one, so the data the former section held go into the recipe,
+        // additions of the records of schema 1 read as before by the records saved earlier: 0, null, none).
+        /// <summary>The fillet radius of a standard section (the former <c>R</c>: the I section component, Bridge Segment Sections); not in the
+        /// GPC section (no fillets), as before: it enters the tables and the fillet check of the segment sections.</summary>
+        public double R { get; init; }
+        /// <summary>The section moduli of a Generic section (the inputs S11/S22 of Generic Section, as the former value held them).</summary>
+        public double W11 { get; init; }
+        public double W22 { get; init; }
+        /// <summary>The shapes of a Brep section (former <c>GenericShapes</c>); null: none (another kind, or a record saved before lane 2c).</summary>
+        public IReadOnlyList<LegacySectionShape> Shapes { get; init; }
+        /// <summary>The mirror of a C or angle section (the menu of the Beam Section parameter): the former <c>MirrorTypes</c> value
+        /// (−1 None, 0 Top, 1 Bottom, 2 Left, 3 Right), with its gaps. A mirrored section is a recipe; a beam property refuses it, as before.</summary>
+        public int Mirror { get; init; } = NoMirror;
+        public double MirrorGapA { get; init; }
+        public double MirrorGapB { get; init; }
+        public const int NoMirror = -1;
     }
 
     /// <summary>F6 chain D: the load cases of the former loads of one element (GPC family and number), in load order.</summary>

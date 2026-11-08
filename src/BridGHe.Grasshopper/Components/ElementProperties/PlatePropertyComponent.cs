@@ -90,7 +90,9 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
             if (Helpers.GpcOnlyProperties.On(material))
             {
                 Message = ((PlatePropertyType)type).GetDescription();
-                Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.PlateProperty(this, () => Common.Gpc.Builders.GpcPropertyBuilders.Plate(name, type, material?.Gpc, mem_thick, ben_thick)));
+                // L2C: with the bending thickness of a membrane beside the GPC property (Bridge Deck Mesh checks it, as before).
+                Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.PlateProperty(this, () => Common.Gpc.Builders.GpcPropertyBuilders.Plate(name, type, material?.Gpc, mem_thick, ben_thick),
+                    Common.Gpc.Builders.GpcPropertyBuilders.PlateMembraneBending(type, ben_thick)));
                 return;
             }
 
@@ -107,7 +109,8 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
 
             GH_PlateProperty gh_pp = new GH_PlateProperty(pp);
             // R6.2 part C (§1bis, regola doppia): the plate property built on GPC from the GPC data of the inputs, attached to the FEM value (until R6.5).
-            Helpers.GpcBuilderAttach.PlateProperty(gh_pp, () => Common.Gpc.Builders.GpcPropertyBuilders.Plate(name, type, material?.Gpc, mem_thick, ben_thick));
+            Helpers.GpcBuilderAttach.PlateProperty(gh_pp, () => Common.Gpc.Builders.GpcPropertyBuilders.Plate(name, type, material?.Gpc, mem_thick, ben_thick),
+                Common.Gpc.Builders.GpcPropertyBuilders.PlateMembraneBending(type, ben_thick));
             DA.SetData(0, gh_pp);
         }
 
