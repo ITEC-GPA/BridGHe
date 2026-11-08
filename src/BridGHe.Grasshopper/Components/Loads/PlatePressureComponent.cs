@@ -105,10 +105,12 @@ namespace BridGHe.Grasshopper.Components.Loads
                 Projected = projected
             };
             PlatePressureModel load = new PlatePressureModel(lc.Value, load_value);
-            Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.WithPressure(plate.Gpc, lc.Gpc, load_value.CoordinateSystem != null, load_value.Face.ToString(), value.X, value.Y, value.Z, projected, id);
+            Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.WithPressure(plate.Gpc, lc.Gpc, cs != null, load_value.Face.ToString(), value.X, value.Y, value.Z, projected, id);
             // R6.5 P1 lane 1a: a plate given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
             // R6.5 P1 lane 2a: a load case given by its record alone gives the same output, without the FEM value (rule of passo 75).
-            if (plate.Value == null || lc.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, GpcOnlyElements.Lazy(() => lc.Gpc), load_value.CoordinateSystem != null, load_value.Face.ToString(), value.X, value.Y, value.Z, projected)); return; }
+            // R6.5 P1 lane 2b: the same for a coordinate system given by its GPC frame alone (rule of passo 75); whether a system is given is
+            // read from the input (the FEM value of the load copies it).
+            if (plate.Value == null || lc.Value == null || GpcOnlyProperties.WithoutFem(cs)) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, GpcOnlyElements.Lazy(() => lc.Gpc), cs != null, load_value.Face.ToString(), value.X, value.Y, value.Z, projected)); return; }
             GH_Plate newPlate = new GH_Plate(plate);
             newPlate.Value.Loads.Add(load);
             // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the drafts of the inputs (local without a coordinate system, global

@@ -56,6 +56,9 @@ internal static class GpcNullValueChecks
         // P2Y (lane 2 replay): the composite section of Composite Beam Property, Segment Composite and State Override.
         GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition d => GpcDraftArchiveChecks.Text(d),
         BridGHe.Common.Gpc.GpcModels.Conversion c => GpcDraftCapture.ConversionText(c),
+        // L2B (lane 2b): the coordinate system of the loads, its GPC frame (name, origin, axes; exact doubles).
+        GPC.Geometry.CoordinateSystem f => "frame \"" + f.Name + "\" " + string.Join(" ", new[] { f.Origin.X, f.Origin.Y, f.Origin.Z, f.V1.X, f.V1.Y, f.V1.Z, f.V2.X, f.V2.Y, f.V2.Z, f.V3.X, f.V3.Y, f.V3.Z }
+            .Select(v => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture))),
         IEnumerable<string> g => string.Join("\\", g),
         _ => throw new Exception("GPC NULL VALUES FAIL: no text for " + datum?.GetType().Name),
     };
@@ -226,6 +229,33 @@ internal static class GpcNullValueChecks
         Data("in memory: stage", stage, stageValue);
         Data("in memory: group with a parent", group, new GroupModel("Pour1", new GroupModel("Deck")));
         Data("in memory: case", loadCase, new LoadCaseModel("R65 case", "R65 case"));
+        // L2B (lane 2b): the coordinate system of the loads by its GPC frame alone (no persistence of its own, as before), and the bridge rules
+        // whose beam property is given by its GPC datum alone: a copy keeps the datum, a read back gives it again (but for GUIDs), no FEM property.
+        var system = T("Fem.GH_CoordinateSystem");
+        var global = (IGH_Goo)Activator.CreateInstance(system);
+        Common("in memory: global coordinate system", global, system, Gpc, (IGH_Goo)FromGpc(system, Gpc(global)), false);
+        int rules = 0;
+        var designType = plugin.GetTypes().Single(t => t.Name == "BridgeDesignGoo");
+        var gpcProperty = BridGHe.Common.Geometry.BridgeGpcProperties.Of(BridgeAssignmentTests.Property("L2B"));
+        string RuleText(IGH_Goo g) => Prop(g, "Value") switch
+        {
+            BridGHe.Common.Geometry.BridgeSectionRule { Property: null, GpcProperty: { } p } => "rule " + TextOf(p),
+            BridGHe.Common.Geometry.BridgeFamilyProperty { Property: null, GpcProperty: { } p } => "family " + TextOf(p),
+            _ => null,
+        };
+        foreach (var value in new object[] { new BridGHe.Common.Geometry.BridgeSectionRule { Start = 0, End = 1000, GpcProperty = gpcProperty },
+            new BridGHe.Common.Geometry.BridgeFamilyProperty(0, null) { GpcProperty = gpcProperty } })
+        {
+            var goo = (IGH_Goo)Activator.CreateInstance(designType, value);
+            Require(goo.IsValid && RuleText(goo) != null, "bridge rule by its GPC property alone: valid");
+            Require(RuleText(goo.Duplicate()) == RuleText(goo), "bridge rule by its GPC property alone: a copy keeps the datum");
+            Written(goo, out var archive);
+            var read = (IGH_Goo)Activator.CreateInstance(designType);
+            Require(archive.ExtractObject(read, "datum") && read.IsValid && RuleText(read) is { } text && GpcDraftCapture.WithoutGuids(text) == GpcDraftCapture.WithoutGuids(RuleText(goo)),
+                "bridge rule by its GPC property alone: read back with the datum, without FEM property");
+            checks += 3; rules++;
+        }
+        Console.WriteLine($"GPC NULL VALUES (L2B): the global coordinate system by its GPC frame alone, {rules} bridge rules by their GPC property alone copied and read back");
         Require(moved >= 2 && copied >= 3, $"too few R65 cases: {moved} plates moved, {copied} copies");
         Console.WriteLine($"GPC NULL VALUES (R65): {moved} plates given by their drafts alone translated and morphed as the FEM plates, {copied} groups, cases and stages copied by their copy constructors");
         Console.WriteLine($"GPC NULL VALUES PASS: {elements} elements, {data} properties, materials, sections, groups, cases, combinations and stages, {models} models " +

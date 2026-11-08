@@ -43,6 +43,9 @@ namespace BridGHe.Grasshopper.Helpers
             GH_LoadCombination c => c.Value == null,
             GH_StagedConstruction s => s.Value == null,
             GH_Group g => g.Value == null,
+            // R6.5 P1 lane 2b: the composite properties and the coordinate systems of the loads.
+            DataTypes.GH_CompositeBeamProperty c => c.Value == null,
+            GH_CoordinateSystem c => c.Value == null,
             string _ => false,
             IEnumerable list => list.Cast<object>().Any(WithoutFem),
             _ => false,

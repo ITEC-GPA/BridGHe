@@ -54,9 +54,10 @@ internal static class GpcOnlyReplay
     /// the GPC-only copy: they give their data by the GPC datum alone, the path of P2), and the consumers of those kinds in the files of
     /// lanes 1a and 1b (their property, material, case and group inputs only: the element inputs stay FEM-backed). Lane 3 (Build Model,
     /// analyses, checks, Construction Sequence, Composite Shrinkage Actions, Moving) is not here.
-    /// <para>P2Z (coordinator, 8/11): lane 2 in two sub-lanes. The regression <c>gpc-only-properties</c> replays lane 2a
-    /// (<see cref="Lane2aTypes"/>: definitions, materials, sections, beam and plate properties and their consumers); the types of lane 2b
-    /// (<see cref="Lane2bTypes"/>: composite and bridge properties, State Override) are declared pending and listed, not replayed.</para></summary>
+    /// <para>P2Z (coordinator, 8/11): lane 2 in two sub-lanes, 2a (<see cref="Lane2aTypes"/>: definitions, materials, sections, beam and
+    /// plate properties and their consumers) and 2b (<see cref="Lane2bTypes"/>: composite and bridge properties, State Override). L2B (8/11):
+    /// the regression <c>gpc-only-properties</c> replays both (no type declared pending), with the composite properties, the coordinate
+    /// systems of the loads and the bridge rules among the converted kinds (<see cref="PropertyGoo"/>).</para></summary>
     internal static readonly string[] Lane2Producers =
     {
         // Components/Definitions
@@ -82,6 +83,8 @@ internal static class GpcOnlyReplay
         // Components/Geometry (sections, workbooks, composite sections, state overrides)
         "BridgeSegmentSectionsComponent", "BridgeSegmentExcelComponent", "BridgeSectionTemplateComponent", "BridgeSectionReadComponent",
         "BridgeSegmentCompositeComponent", "BridgeStateOverrideComponent",
+        // L2B (coordinator, 8/11): the producers of the bridge rules of Bridge FEM Members.
+        "BridgeFamilyPropertyComponent", "BridgeSectionScheduleComponent",
     };
 
     /// <summary>Lane 2: the consumers of the lane-2 kinds in the files of lanes 1a and 1b (only their property, material, case and group
@@ -98,10 +101,9 @@ internal static class GpcOnlyReplay
 
     internal static readonly string[] Lane2Types = Lane2Producers.Concat(Lane2Consumers).ToArray();
 
-    /// <summary>P2Z: lane 2b, declared pending (not replayed by <c>gpc-only-properties</c> yet): the composite and bridge property components
-    /// and State Override (coordinator, 8/11), Get Beam Property and Beam Property Override (they read and change bridge properties), and
-    /// Bridge FEM Members with the producers of its Bridge Design data (Bridge Family Property, Bridge Section Schedule: the bridge rules carry
-    /// a FEM property; FEM Members has no input of the lane-2a kinds).</summary>
+    /// <summary>P2Z: lane 2b: the composite and bridge property components and State Override (coordinator, 8/11), Get Beam Property and
+    /// Beam Property Override (they read and change bridge properties), and Bridge FEM Members with the producers of its Bridge Design data
+    /// (Bridge Family Property, Bridge Section Schedule). L2B (8/11): replayed by <c>gpc-only-properties</c> with lane 2a.</summary>
     internal static readonly string[] Lane2bTypes =
     {
         "BeamPropertyOverrideComponent", "GetBeamPropertyComponent",
@@ -115,25 +117,54 @@ internal static class GpcOnlyReplay
     /// <summary>P2Z: lane 2a, the types of <c>gpc-only-properties</c>: lane 2 without <see cref="Lane2bTypes"/>.</summary>
     internal static readonly string[] Lane2aTypes = Lane2Types.Where(t => !Lane2bTypes.Contains(t)).ToArray();
 
-    /// <summary>The GH types of properties and data converted to their GPC data alone in lane 2.</summary>
+    /// <summary>The GH types of properties and data converted to their GPC data alone in lane 2. L2B (lane 2b): also the coordinate system of
+    /// the loads (coordinator, 8/11) and the bridge rules (<c>BridgeDesignGoo</c>: a section rule or a family property whose beam property
+    /// is given by its GPC datum alone, <see cref="DesignGpcOnly"/>).</summary>
     internal static readonly string[] PropertyGoo =
     {
         "GH_BeamSection", "GH_BeamProperty", "GH_PlateProperty", "GH_Material", "GH_LoadCase", "GH_LoadCombination", "GH_StagedConstruction", "GH_Group",
-        "GH_CompositeBeamProperty",
+        "GH_CompositeBeamProperty", "GH_CoordinateSystem", "BridgeDesignGoo",
     };
 
-    /// <summary>P2Z: the kinds of lane 2a (<see cref="PropertyGoo"/> without the composite beam property of lane 2b).</summary>
-    internal static readonly string[] PropertyGoo2a = PropertyGoo.Where(k => k != "GH_CompositeBeamProperty").ToArray();
+    /// <summary>P2Z: the kinds of lane 2a (<see cref="PropertyGoo"/> without the kinds of lane 2b).</summary>
+    internal static readonly string[] PropertyGoo2a = PropertyGoo.Where(k => k is not ("GH_CompositeBeamProperty" or "GH_CoordinateSystem" or "BridgeDesignGoo")).ToArray();
 
     private static object Prop(object o, string name) => o?.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance)?.GetValue(o);
 
     /// <summary>A GH type with a FEM value. P2Y: <c>GH_BeamSection.ScriptVariable</c> is always null, so a section is read by its value.</summary>
-    private static bool HasFem(IGH_Goo goo) => goo.ScriptVariable() != null || (goo.GetType().Name == "GH_BeamSection" && Prop(goo, "Value") != null);
+    private static bool HasFem(IGH_Goo goo) => goo.GetType().Name == "BridgeDesignGoo" ? DesignProperty(goo).Fem != null
+        : goo.ScriptVariable() != null || (goo.GetType().Name == "GH_BeamSection" && Prop(goo, "Value") != null);
+
+    /// <summary>L2B: the beam property of a bridge rule (a section rule or a family property): its FEM value and its GPC datum alone.</summary>
+    private static (BeamPropertyModel Fem, BridGHe.Common.Gpc.Legacy.LegacyBeamProperty Gpc) DesignProperty(IGH_Goo goo) => Prop(goo, "Value") switch
+    {
+        BridGHe.Common.Geometry.BridgeSectionRule r => (r.Property, r.GpcProperty),
+        BridGHe.Common.Geometry.BridgeFamilyProperty f => (f.Property, f.GpcProperty),
+        _ => (null, null),
+    };
+
+    /// <summary>L2B: a bridge rule with its beam property given by its GPC datum alone (the datum the generators read from the FEM property,
+    /// <see cref="BridGHe.Common.Geometry.BridgeGpcProperties.Of"/>), the form the producers give on the path of P2.</summary>
+    private static IGH_Goo DesignGpcOnly(IGH_Goo goo)
+    {
+        object value = Prop(goo, "Value") switch
+        {
+            BridGHe.Common.Geometry.BridgeSectionRule r when r.Property != null => r with { Property = null, GpcProperty = BridGHe.Common.Geometry.BridgeGpcProperties.Of(r.Property) },
+            BridGHe.Common.Geometry.BridgeFamilyProperty f when f.Property != null => f with { Property = null, GpcProperty = BridGHe.Common.Geometry.BridgeGpcProperties.Of(f.Property) },
+            _ => null,
+        };
+        return value == null ? goo : (IGH_Goo)Activator.CreateInstance(goo.GetType(), value);
+    }
 
     /// <summary>The GH type made from the GPC datum alone of a FEM-backed one, or the same goo (another kind, or no datum).</summary>
     private static IGH_Goo GpcOnly(IGH_Goo goo, ISet<string> kinds)
     {
+        // L2B (note (1) of passo 73): in lane 2 a moment state with a FEM source is given as the state of a beam given by its draft alone (its
+        // BridGHe ID and analysed GPC beam, no FEM source), the state Bridge State Override takes on the path of P2.
+        if (goo is GH_ObjectWrapper { Value: BridGHe.Common.Geometry.BeamMomentState { Source: not null } state } && kinds.Contains("GH_CompositeBeamProperty"))
+            return new GH_ObjectWrapper(state with { Source = null, BeamId = state.BeamId ?? state.Source.BeamId });
         if (goo == null || !kinds.Contains(goo.GetType().Name) || !HasFem(goo)) return goo;
+        if (goo.GetType().Name == "BridgeDesignGoo") return DesignGpcOnly(goo);
         var datum = Prop(goo, "Gpc");
         if (datum == null) return goo;
         var from = goo.GetType().GetMethod("FromGpc", BindingFlags.Public | BindingFlags.Static);
@@ -182,6 +213,17 @@ internal static class GpcOnlyReplay
     private static string Text(IGH_Goo goo)
     {
         if (goo == null) return "null";
+        // L2B: a bridge rule by its data and the GPC datum of its beam property (of its FEM value, or given alone).
+        if (goo.GetType().Name == "BridgeDesignGoo" && DesignProperty(goo) is var (fem, gpcProperty) && (fem != null || gpcProperty != null))
+        {
+            string rule = Prop(goo, "Value") switch
+            {
+                BridGHe.Common.Geometry.BridgeSectionRule r => FormattableString.Invariant($"rule {r.Family} {r.Group} {r.Segment} {r.Start:R} {r.End:R} {r.ScaleFrom.X:R} {r.ScaleFrom.Y:R} {r.ScaleTo.X:R} {r.ScaleTo.Y:R}"),
+                BridGHe.Common.Geometry.BridgeFamilyProperty f => "family " + f.Family,
+                _ => "",
+            };
+            return goo.GetType().Name + " " + rule + Environment.NewLine + GpcDraftCapture.WithoutGuids(GpcNullValueChecks.TextOf(gpcProperty ?? BridGHe.Common.Geometry.BridgeGpcProperties.Of(fem)));
+        }
         var datum = Prop(goo, "Gpc");
         if (datum == null) return goo.GetType().Name + " " + goo;
         string text = GpcNullValueChecks.TextOf(datum);
@@ -314,6 +356,7 @@ internal static class GpcOnlyReplay
         Rhino.Geometry.Mesh m => new GH_Mesh(m), // P2Z
         Rhino.Geometry.Curve c => new GH_Curve(c), // P2Z
         Rhino.Geometry.Brep b => new GH_Brep(b), // P2Z
+        BridGHe.Common.Geometry.BeamMomentState s => new GH_ObjectWrapper(s), // L2B
         _ => throw new ArgumentException("GPC-ONLY REPLAY: no goo for " + v?.GetType().Name),
     };
 
@@ -490,6 +533,82 @@ internal static class GpcOnlyReplay
         };
     }
 
+    /// <summary>L2B (lane 2b): the in-memory cases of the lane-2b types that no example of the scope uses (and of the paths the examples do
+    /// not reach). Their lane-2 inputs come from the producer components solved in memory, as in <see cref="Lane2aCases"/>.</summary>
+    private static List<(string Type, string Label, Dictionary<int, object> Inputs)> Lane2bCases()
+    {
+        var examples = NativeExamples.Create().ToDictionary(e => e.Id, e => e.Model);
+        var m2 = examples["02-simply-supported"];
+        var beam = Make("Fem.GH_Beam", m2.Beams[1]); var loaded = Make("Fem.GH_Beam", m2.Beams[0]);
+        var original = Make("Fem.GH_BeamProperty", m2.Beams[1].BeamProperty);
+        var steel = Produce("MaterialSteelComponent", new Dictionary<int, object> { [0] = "S355", [1] = 2 });
+        var concrete = Produce("MaterialConcreteComponent", new Dictionary<int, object> { [0] = "C35/45", [1] = 7 });
+        var rebar = Produce("MaterialRebarComponent", new Dictionary<int, object> { [0] = "B450C" });
+        var section = Produce("BeamSectionIComponent", new Dictionary<int, object> { [0] = 300.0, [1] = 250.0, [2] = 800.0, [3] = 20.0, [4] = 16.0, [5] = 12.0 });
+        var circle = Produce("BeamSectionHollowCircleComponent", new Dictionary<int, object> { [0] = 323.9, [1] = 10.0 });
+        var girder = Produce("BeamPropertyComponent", new Dictionary<int, object> { [0] = "Girder", [1] = 5, [2] = section, [3] = steel });
+        var slab = Produce("BeamSectionConcreteSlabComponent", new Dictionary<int, object> { [0] = 250.0, [1] = 2500.0, [2] = 1000.0, [3] = 50.0, [4] = 800.0, [5] = 50.0 });
+        var compositeInputs = new Dictionary<int, object> { [0] = "CB", [1] = slab, [2] = section, [3] = concrete, [4] = steel, [5] = rebar };
+        var composite = Produce("BeamPropertyCompositeComponent", compositeInputs);
+        var geometry = Make("BridgeGeometryGoo", BridGHe.Common.Geometry.SimpleBridgeBuilder.Build(SimpleBridgeTests.Input() with
+            { Segments = new BridGHe.Common.Geometry.BridgeSegments { MaximumLength = 12000 } }));
+        var family = Produce("BridgeFamilyPropertyComponent", new Dictionary<int, object> { [0] = girder, [1] = 0 });
+        var schedule = Produce("BridgeSectionScheduleComponent", new Dictionary<int, object> { [0] = girder, [1] = 0.0, [2] = 10000.0, [3] = 0, [4] = 1, [5] = 0 });
+        return new List<(string, string, Dictionary<int, object>)>
+        {
+            ("GetBeamPropertyComponent", "a beam of the example 02", new Dictionary<int, object> { [0] = beam }),
+            ("BeamPropertyOverrideComponent", "one pair, the beams of its property matched", new Dictionary<int, object> { [0] = new object[] { beam, loaded }, [1] = new object[] { original }, [2] = new object[] { girder } }),
+            ("BeamPropertyOverrideComponent", "an original name not found (warning)", new Dictionary<int, object> { [0] = new object[] { beam }, [1] = new object[] { girder }, [2] = new object[] { girder } }),
+            ("BeamPropertyOverrideComponent", "two names, conflicting replacements (error)", new Dictionary<int, object> { [0] = new object[] { beam }, [1] = new object[] { original, girder },
+                [2] = new object[] { girder, Produce("BeamPropertyComponent", new Dictionary<int, object> { [0] = "Girder", [1] = 5, [2] = circle, [3] = steel }) } }),
+            ("BeamSectionHPropertyComponent", "I section", new Dictionary<int, object> { [0] = section }),
+            ("BeamSectionHPropertyComponent", "I property", new Dictionary<int, object> { [0] = girder }),
+            ("BeamSectionHPropertyComponent", "not an I section (error)", new Dictionary<int, object> { [0] = circle }),
+            ("BeamPropertyCompositeComponent", "slab, I steel and three materials", compositeInputs),
+            ("BeamPropertyCompositeComponent", "steel only (no concrete, no rebars)", new Dictionary<int, object>(compositeInputs) { [9] = false, [10] = false }),
+            ("CompositeSectionGeometricPropertyComponent", "n0 with concrete and rebars", new Dictionary<int, object> { [0] = composite, [1] = 6.0 }),
+            ("BridgeSectionTemplateComponent", "template on a base property", new Dictionary<int, object> { [0] = geometry, [2] = girder }),
+            ("BridgeSegmentExcelComponent", "template mode on a base property", new Dictionary<int, object> { [0] = geometry, [2] = 0, [3] = girder }),
+            ("BridgeSegmentSectionsComponent", "base property, no table", new Dictionary<int, object> { [0] = geometry, [1] = girder }),
+            ("BridgeSegmentSectionsComponent", "base property not an I section (error)", new Dictionary<int, object> { [0] = geometry, [1] = original }),
+            ("BridgeFamilyPropertyComponent", "girders", new Dictionary<int, object> { [0] = girder, [1] = 0 }),
+            ("BridgeSectionScheduleComponent", "girder 1, 0..10 m", new Dictionary<int, object> { [0] = girder, [1] = 0.0, [2] = 10000.0, [3] = 0, [4] = 1, [5] = 0 }),
+            ("BridgeFemMembersComponent", "a family property and a section rule", new Dictionary<int, object> { [0] = geometry, [1] = new object[] { family }, [2] = new object[] { schedule } }),
+            ("BridgeFemMembersComponent", "a family property only", new Dictionary<int, object> { [0] = geometry, [1] = new object[] { family } }),
+        }.Concat(StateOverrideCases()).ToList();
+    }
+
+    /// <summary>L2B (note (1) of passo 73): Bridge State Override on the reference of <c>gpc-state-override</c> (the girders of the simple bridge
+    /// of the design tests on the steel reference, moment states classified from its GPC conversion with synthetic results, all signs; one
+    /// composite section per segment): an override and two refusals (a missing state, a mixed sign with policy 0). The replay gives the
+    /// composite sections by their definitions and the states without their FEM source (their BridGHe ID and analysed GPC beam).</summary>
+    private static IEnumerable<(string Type, string Label, Dictionary<int, object> Inputs)> StateOverrideCases()
+    {
+        var steel = BridgeSegmentSectionsTests.BaseProperty(); steel.Material.Density = 7.85e-9;
+        var geometry = BridGHe.Common.Geometry.SimpleBridgeBuilder.Build(SimpleBridgeTests.Input());
+        var schedule = BridGHe.Common.Geometry.BridgeSegmentSections.Create(geometry, steel, null);
+        var all = BridGHe.Common.Geometry.BridgeMemberAssignment.Assign(geometry, new Dictionary<int, BeamPropertyModel> { [-1] = steel }, schedule.Rules).Beams;
+        var lc = new LoadCaseModel("Dead", "Dead");
+        var girders = all.Where(b => b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value.Family == BridGHe.Common.Geometry.BridgeMemberFamily.Girder).ToArray();
+        for (int i = 0; i < girders.Length; i++) foreach (double s in new[] { 0d, .5, 1d })
+            girders[i].Results.Add(new BeamForceResultModel(lc, s, 0, "", true) { My = (i % 4) switch { 0 => 1e8, 1 => -1e8, 2 => (s - .5) * 2e8, _ => 500 }, Mx = -1e8 });
+        var reference = new ModelModel(ModelModel.ModelUnits.Nmm) { Name = "State override reference" };
+        reference.AddElements(all); reference.AddElements(geometry.Nodes.Select((p, i) => new NodeModel((i + 1).ToString(), p)).ToArray()); reference.LoadCases.Add(lc);
+        var analysed = GpcSyntheticResults.Analysed(reference);
+        var catalog = BridGHe.Common.Gpc.GpcResultCatalog.Of(analysed) ?? throw new Exception("GPC-ONLY REPLAY: no results catalog");
+        var femBeams = reference.Beams.ToList();
+        var states = BridGHe.Common.Geometry.BeamMomentClassification.Classify(girders, girders.Select(b => (catalog, analysed, analysed.BeamElements[femBeams.IndexOf(b) + 1])).ToArray(), "Dead");
+        var ids = schedule.Rules.Select(r => $"G{r.Group}-C{r.Segment}").ToArray();
+        var composites = ids.Select(id => { var p = BridgeGrillageExample.Composite(new()); p.Name = "CS " + id; p.SteelSection = BridGHe.Common.Helpers.ModelArchive.Clone(steel.Section);
+            p.ConsiderRebar = true; p.ConcreteSection = new(250, 3000, 1600, 40); return (object)Make("GH_CompositeBeamProperty", p); }).ToArray();
+        var beams = all.Select(b => (object)Make("Fem.GH_Beam", b)).ToArray();
+        Dictionary<int, object> Inputs(IEnumerable<BridGHe.Common.Geometry.BeamMomentState> s, int mixed) =>
+            new() { [0] = beams, [1] = ids.Cast<object>().ToArray(), [2] = composites, [3] = s.Cast<object>().ToArray(), [4] = 1, [5] = mixed, [6] = 0, [7] = true };
+        yield return ("BridgeStateOverrideComponent", "long term, mixed uncracked, all signs", Inputs(states, 1));
+        yield return ("BridgeStateOverrideComponent", "a missing state (error)", Inputs(states.Skip(1), 1));
+        yield return ("BridgeStateOverrideComponent", "a mixed sign with policy 0 (error)", Inputs(states, 0));
+    }
+
     /// <summary>P2Z (lane 2a, native): the Straus7 section components (21 shapes and the library section), replayed in memory under the
     /// native host (<c>--core-only --native</c>): Straus7 computes the section on both paths, the GPC-only copy gives the recipe alone. The
     /// dimensions of <c>CheckNativeSections</c>.</summary>
@@ -541,8 +660,11 @@ internal static class GpcOnlyReplay
             ("BeamSectionParam", "units menu (Nmm to Knm)", section, null, p => p.GetType().GetMethod("OnUnitsClick", BindingFlags.NonPublic | BindingFlags.Instance)
                 .Invoke(p, new object[] { new System.Windows.Forms.ToolStripMenuItem("Knm"), EventArgs.Empty })),
             ("LoadCombinationsParam", "cases updated (Traffic removed, Wind added)", combo, null, p => p.GetType().GetMethod("UpdateLoadCases").Invoke(p, new object[] { femCases, records })),
+            // L2B: the coordinate system of the loads, stored (the global one of today) and set by the «Global» menu.
+            ("CoordinateSystemParam", "stored global system", (IGH_Goo)Activator.CreateInstance(T("Fem.GH_CoordinateSystem")), null, null),
+            ("CoordinateSystemParam", "the Global menu", null, null, p => p.GetType().GetMethod("SetGlobal", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(p, null)),
         };
-        foreach (var (type, label, stored, text, act) in parameters)
+        foreach (var (type, label, stored, text, act) in parameters.Where(p => Selected(p.Type)))
         {
             string where = "in memory: parameter " + type + " (" + label + ")";
             Run Once(bool gpcOnly)
@@ -623,19 +745,21 @@ internal static class GpcOnlyReplay
             ?? throw new Exception("GPC-ONLY REPLAY: GpcOnlyElements." + switchName + " not found");
     }
 
-    /// <summary>P2Z: the parameters of lane 2a replayed by <see cref="ParameterCases"/> (in memory only).</summary>
-    internal static readonly string[] Lane2aParameters = { "MaterialParam", "GroupParam", "BeamSectionParam", "LoadCombinationsParam" };
+    /// <summary>P2Z: the parameters of lane 2 replayed by <see cref="ParameterCases"/> (in memory only; L2B: and the coordinate system of
+    /// the loads).</summary>
+    internal static readonly string[] Lane2aParameters = { "MaterialParam", "GroupParam", "BeamSectionParam", "LoadCombinationsParam", "CoordinateSystemParam" };
 
     private static void InMemory(string lane, ISet<string> kinds, IDictionary<string, (int Instances, int Items)> byType, List<string> failures, out int count)
     {
         count = 0;
         // P2Z (lane 2a): the cases of lanes 1a and 1b of the lane-2a types with an input of the lane-2a kinds (a load case, a property), and
         // the cases of lane 2a; the Straus7 sections only under the native host (NativeSections).
-        bool OfLane2a((string Type, string Label, Dictionary<int, object> Inputs) c) => Lane2aTypes.Contains(c.Type) && !NativeTypes.Contains(c.Type)
+        // L2B: the same for the types of lane 2b, and the cases of lane 2b.
+        bool OfLane2((string Type, string Label, Dictionary<int, object> Inputs) c) => Lane2Types.Contains(c.Type) && !NativeTypes.Contains(c.Type)
             && c.Inputs.Values.SelectMany(v => v is object[] l ? l : new[] { v }).Any(v => v is IGH_Goo g && kinds.Contains(g.GetType().Name));
-        var all = lane == "native" ? NativeSectionCases() : lane == "properties" ? Lane1Cases().Concat(Lane1bCases()).Where(OfLane2a).Concat(Lane2aCases()).ToList()
+        var all = lane == "native" ? NativeSectionCases() : lane == "properties" ? Lane1Cases().Concat(Lane1bCases()).Where(OfLane2).Concat(Lane2aCases()).Concat(Lane2bCases()).ToList()
             : lane == "generators" ? Lane1bCases() : Lane1Cases();
-        foreach (var (type, label, inputs) in all)
+        foreach (var (type, label, inputs) in all.Where(c => Selected(c.Type)))
         {
             using var doc = new GH_Document();
             var c = BridgeSegmentExcelTests.Add(doc, type);
@@ -652,10 +776,18 @@ internal static class GpcOnlyReplay
         }
     }
 
+    /// <summary>L2B: the component types named by <c>BRIDGHE_GPC_ONLY_TYPES</c> (a comma list; diagnosis of a lane in progress only: the
+    /// regression replays every type), or all.</summary>
+    private static HashSet<string> selected;
+    private static bool Selected(string type) => selected == null || selected.Contains(type);
+
     internal static int Regression(string lane)
     {
-        var types = lane switch { "elements" => Lane1Types, "generators" => Lane1bTypes, "properties" => Lane2aTypes, _ => throw new ArgumentException("Unknown lane: " + lane) };
-        var kinds = new HashSet<string>(lane switch { "elements" or "generators" => ElementGoo, "properties" => PropertyGoo2a, _ => Array.Empty<string>() }, StringComparer.Ordinal);
+        // L2B: lane 2 replays 2a and 2b together (no type declared pending).
+        var types = lane switch { "elements" => Lane1Types, "generators" => Lane1bTypes, "properties" => Lane2Types, _ => throw new ArgumentException("Unknown lane: " + lane) };
+        var kinds = new HashSet<string>(lane switch { "elements" or "generators" => ElementGoo, "properties" => PropertyGoo, _ => Array.Empty<string>() }, StringComparer.Ordinal);
+        selected = Environment.GetEnvironmentVariable("BRIDGHE_GPC_ONLY_TYPES") is { Length: > 0 } named ? new HashSet<string>(named.Split(','), StringComparer.Ordinal) : null;
+        types = types.Where(Selected).ToArray();
         // The Grasshopper libraries are parsed only when they are not registered yet (P2W, 8/11): in regression all (p2w1a2) the parse again of
         // BridgeExampleMigration.Initialize, in gpc-only-generators right after gpc-only-elements, threw from Grasshopper's own upgrader
         // Upgrade_PolygonCenterComponent2.Version of CurveComponents.gha (new DateTime(2013, 23, 9, 10, 45, 0)). Registered (an earlier group
@@ -685,7 +817,7 @@ internal static class GpcOnlyReplay
             files++;
             foreach (var c in doc.Objects.OfType<GH_Component>().Where(c => types.Contains(c.GetType().Name)).ToArray())
             {
-                bool converted = c.Params.Input.Any(p => p.VolatileData.AllData(true).Any(g => g != null && kinds.Contains(g.GetType().Name)));
+                bool converted = c.Params.Input.Any(p => p.VolatileData.AllData(true).Any(g => g != null && (kinds.Contains(g.GetType().Name) || !ReferenceEquals(GpcOnly(g, kinds), g))));
                 // Lane 1b: every instance with data (a generator has no element input; its GPC-only copy runs with the switch on).
                 // Lane 2: the same for the producers of lane 2 (a material or a section has no input of the lane-2 kinds).
                 bool producer = generatorsLane || producers.Contains(c.GetType().Name);
@@ -698,10 +830,9 @@ internal static class GpcOnlyReplay
         if (lane is "elements" or "generators" or "properties") InMemory(lane, kinds, byType, failures, out cases);
         if (lane == "properties") ParameterCases(kinds, byType, failures, ref cases);
         foreach (var t in types.Where(t => !fromExamples.Contains(t))) Console.WriteLine("GPC-ONLY " + lane + ": not met in the examples (in-memory cases only): " + t);
-        if (lane == "properties") foreach (var t in Lane2bTypes) Console.WriteLine("GPC-ONLY properties: lane 2b, declared pending (not replayed): " + t);
         foreach (var t in types.Where(t => !byType.ContainsKey(t) && !(lane == "properties" && NativeTypes.Contains(t)))) failures.Add("no case for " + t);
-        if (lane == "properties") foreach (var t in Lane2aParameters.Where(t => !byType.ContainsKey(t))) failures.Add("no case for " + t);
-        if (lane == "properties") foreach (var t in NativeTypes) Console.WriteLine("GPC-ONLY properties: Straus7 section, in-memory cases under the native host only (core-native): " + t);
+        if (lane == "properties") foreach (var t in Lane2aParameters.Where(t => Selected(t) && !byType.ContainsKey(t))) failures.Add("no case for " + t);
+        if (lane == "properties") foreach (var t in NativeTypes.Where(Selected)) Console.WriteLine("GPC-ONLY properties: Straus7 section, in-memory cases under the native host only (core-native): " + t);
         foreach (var p in byType) Console.WriteLine($"GPC-ONLY {lane}: {p.Key} {p.Value.Instances} instances, {p.Value.Items} output lines");
         foreach (var f in failures.Take(60)) Console.WriteLine("  " + f);
         // P2Y: every failure in a file named by BRIDGHE_GPC_ONLY_REPORT (diagnosis of a lane in progress; the console keeps the first 60).

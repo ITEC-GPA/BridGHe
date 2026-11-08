@@ -99,7 +99,7 @@ namespace BridGHe.Grasshopper.Components.Loads
             bool p3_has_value = DA.GetData("M3", ref p3);
             bool a_has_value = DA.GetData("a", ref a);
 
-            Message = string.Format("Coordinate System: {0}", cs == null ? "Local" : cs.Value.Name);
+            Message = string.Format("Coordinate System: {0}", cs == null ? "Local" : cs.Name);
 
             if (GpcOnlyProperties.NonStructuralMass(lc))
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The connected LoadCase have the Non-structural mass flag set to on");
@@ -114,7 +114,8 @@ namespace BridGHe.Grasshopper.Components.Loads
             Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithPointLoad(beam.Gpc, lc.Gpc, true, a, new GPC.Geometry.Vector3d(p1, p2, p3), id);
             // R6.5 P1 lane 1a: a beam given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
             // R6.5 P1 lane 2a: a load case given by its record alone gives the same output, without the FEM value (rule of passo 75).
-            if (beam.Value == null || lc.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), true, a, p1, p2, p3)); return; }
+            // R6.5 P1 lane 2b: the same for a coordinate system given by its GPC frame alone (rule of passo 75).
+            if (beam.Value == null || lc.Value == null || GpcOnlyProperties.WithoutFem(cs)) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), true, a, p1, p2, p3)); return; }
             GH_Beam newBeam = new GH_Beam(beam);
             newBeam.Value.Loads.Add(load);
             // R6.2 (lane B): the GPC draft built on GPC from the drafts of the inputs (identity of the conversion of the FEM output until R6.5);

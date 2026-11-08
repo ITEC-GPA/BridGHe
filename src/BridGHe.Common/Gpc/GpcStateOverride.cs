@@ -42,11 +42,14 @@ namespace BridGHe.Common.Gpc
                 throw new ArgumentException("Only mechanical n infinity/n0 states are supported; shrinkage remains a separate uncracked model.");
             if (beams == null || beams.Any(b => b?.Beam?.BeamProperty is not ElasticBeamProperty || !(b.Beam.Length > 0))) throw new ArgumentException("Provide valid steel reference beams and properties.");
             var (girderDrafts, mappedDefinitions, _) = Map(beams, ids, definitions);
-            if (states == null || states.Any(s => s?.Source?.IsValid != true || !Enum.IsDefined(s.Sign) || string.IsNullOrWhiteSpace(s.Case)) ||
-                states.Select(s => s.Case).Distinct(StringComparer.Ordinal).Count() != 1 || states.Select(s => s.Source.BeamId).Distinct(StringComparer.Ordinal).Count() != states.Count ||
-                !girderDrafts.Select(b => b.Beam.Name).ToHashSet(StringComparer.Ordinal).SetEquals(states.Select(s => s.Source.BeamId)))
+            // R6.5 P1 lane 2b (note (1) of passo 73, ChatGPT review R65-3): a state is known by its BridGHe ID (BeamMomentState.BeamId), also for a
+            // beam given by its draft alone (Source null), in the check, the ID dictionary and the set equality; a state with a FEM source keeps
+            // the check of its source. The stale results are checked on the analysed GPC beam of the state (Reference).
+            if (states == null || states.Any(s => s == null || string.IsNullOrWhiteSpace(StateId(s)) || s.Source != null && !s.Source.IsValid || !Enum.IsDefined(s.Sign) || string.IsNullOrWhiteSpace(s.Case)) ||
+                states.Select(s => s.Case).Distinct(StringComparer.Ordinal).Count() != 1 || states.Select(StateId).Distinct(StringComparer.Ordinal).Count() != states.Count ||
+                !girderDrafts.Select(b => b.Beam.Name).ToHashSet(StringComparer.Ordinal).SetEquals(states.Select(StateId)))
                 throw new ArgumentException("One moment state is required for each girder FEM ID, without additional beams.");
-            var map = states.ToDictionary(s => s.Source.BeamId, StringComparer.Ordinal);
+            var map = states.ToDictionary(StateId, StringComparer.Ordinal);
             var definitionOf = girderDrafts.Select((b, i) => (b.Beam.Name, Definition: mappedDefinitions[i])).ToDictionary(p => p.Name, p => p.Definition, StringComparer.Ordinal);
             var girders = new List<LegacyBeamDraft>(); var others = new List<LegacyBeamDraft>();
             var variants = new Dictionary<(string Segment, bool Cracked, double Mass), ElasticBeamProperty>();
@@ -110,6 +113,9 @@ namespace BridGHe.Common.Gpc
             }
             return new GpcStateOverrideResult(girders.ToArray(), others.ToArray());
         }
+
+        /// <summary>R6.5 P1 lane 2b: the BridGHe ID of the beam of a moment state (<see cref="BeamMomentState.BeamId"/>, or that of its FEM source).</summary>
+        public static string StateId(BeamMomentState state) => state.BeamId ?? state.Source?.BeamId;
 
         /// <summary>The girders of the drafts (bridge member of family Girder) in the order of their group and station, the definition of the
         /// segment of each and the segment IDs (<c>BridgeSegmentComposite.Map</c> on the drafts, same messages).</summary>

@@ -18,11 +18,13 @@ public static class BridgeStateOverride
             throw new ArgumentException("Only mechanical n infinity/n0 states are supported; shrinkage remains a separate uncracked model.");
         if (beams == null || beams.Any(b => b?.IsValid != true)) throw new ArgumentException("Provide valid steel reference beams and properties.");
         var mapped = BridgeSegmentComposite.Map(beams, ids, properties);
-        if (states == null || states.Any(s => s?.Source?.IsValid != true || !Enum.IsDefined(s.Sign) || string.IsNullOrWhiteSpace(s.Case)) ||
-            states.Select(s => s.Case).Distinct(StringComparer.Ordinal).Count() != 1 || states.Select(s => s.Source.BeamId).Distinct(StringComparer.Ordinal).Count() != states.Count ||
-            !mapped.Girders.Select(b => b.BeamId).ToHashSet(StringComparer.Ordinal).SetEquals(states.Select(s => s.Source.BeamId)))
+        // R6.5 P1 lane 2b (note (1) of passo 73, ChatGPT review R65-3): the IDs of the states from BeamMomentState.BeamId (as on GPC,
+        // Gpc.GpcStateOverride.StateId); this FEM path still needs the FEM source of every state (its reference check reads it).
+        if (states == null || states.Any(s => s?.Source?.IsValid != true || string.IsNullOrWhiteSpace(Gpc.GpcStateOverride.StateId(s)) || !Enum.IsDefined(s.Sign) || string.IsNullOrWhiteSpace(s.Case)) ||
+            states.Select(s => s.Case).Distinct(StringComparer.Ordinal).Count() != 1 || states.Select(Gpc.GpcStateOverride.StateId).Distinct(StringComparer.Ordinal).Count() != states.Count ||
+            !mapped.Girders.Select(b => b.BeamId).ToHashSet(StringComparer.Ordinal).SetEquals(states.Select(Gpc.GpcStateOverride.StateId)))
             throw new ArgumentException("One moment state is required for each girder FEM ID, without additional beams.");
-        var map = states.ToDictionary(s => s.Source.BeamId, StringComparer.Ordinal);
+        var map = states.ToDictionary(Gpc.GpcStateOverride.StateId, StringComparer.Ordinal);
         var original = ModelArchive.Clone(beams.ToArray()); // one graph clone preserves shared load cases
         var propertyMap = mapped.Girders.Select((b,i) => (b.BeamId, Property: mapped.Properties[i])).ToDictionary(p => p.BeamId, p => p.Property);
         var girders = new List<BeamModel>(); var others = new List<BeamModel>();

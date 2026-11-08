@@ -13,7 +13,7 @@ namespace BridGHe.Grasshopper.Helpers
     /// (<c>GH_Beam.Gpc</c>, <c>GH_BeamProperty.Gpc</c>, <c>GH_LoadCase.Gpc</c>), and how they attach the result.
     /// <para>Inputs without a GPC datum in the frozen contract of R6.2 (§1bis): <c>GH_Group</c> (the chain of names of its group) and
     /// <c>GH_CoordinateSystem</c> (whether it is the global one). Their FEM values are read only here, to replace when those GH types carry a
-    /// GPC group and coordinate system (R6.5).</para>
+    /// GPC group and coordinate system (R6.5). R6.5 P1 lane 2b: the coordinate system is read from its GPC frame.</para>
     /// </summary>
     internal static class GpcBeamInputs
     {
@@ -29,14 +29,11 @@ namespace BridGHe.Grasshopper.Helpers
 
         internal static IReadOnlyList<IReadOnlyList<string>> GroupChains(IEnumerable<GH_Group> groups) => groups.Select(GpcBuilderAttach.GroupChain).ToArray(); // R6.2 part C: the GPC datum of the GH group
 
-        /// <summary>The coordinate system of a load: null without one (principal axes), otherwise whether it is the global one (the rule of the
-        /// reader: origin 0, first point (1, 0, 0), second point (0, 1, 0)).</summary>
-        internal static bool? GlobalSystem(GH_CoordinateSystem cs)
-        {
-            if (cs?.Value == null) return null;
-            var v = cs.Value;
-            return Vector(v.Origin).Equals(new GPC.Geometry.Vector3d(0, 0, 0)) && Vector(v.Point1).Equals(new GPC.Geometry.Vector3d(1, 0, 0)) && Vector(v.Point2).Equals(new GPC.Geometry.Vector3d(0, 1, 0));
-        }
+        /// <summary>The coordinate system of a load: null without one (principal axes), otherwise whether it is the global one. R6.5 P1 lane
+        /// 2b: read from its GPC frame (<see cref="GpcLoadFrames.IsGlobal"/>: origin 0, axes 1 and 2 along X and Y), also for a system given by
+        /// its frame alone; for the global system of the parameter the rule of the reader on the former points (origin 0, first point
+        /// (1, 0, 0), second point (0, 1, 0)).</summary>
+        internal static bool? GlobalSystem(GH_CoordinateSystem cs) => cs == null ? null : GpcLoadFrames.IsGlobal(cs.Gpc);
 
         internal static GPC.Geometry.Point3d Point(Rhino.Geometry.Point3d p) => new GPC.Geometry.Point3d(p.X, p.Y, p.Z);
         internal static GPC.Geometry.Vector3d Vector(Rhino.Geometry.Point3d p) => new GPC.Geometry.Vector3d(p.X, p.Y, p.Z);

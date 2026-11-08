@@ -39,6 +39,10 @@ public sealed class BridgeStateOverrideComponent : BridgeUtilityComponent
         var beams=new List<GH_Beam>();var ids=new List<string>();var props=new List<GH_CompositeBeamProperty>();var states=new List<BeamMomentState>();int response=1,mixed=0,zero=0;bool mass=true;
         if(!da.GetDataList(0,beams)||!da.GetDataList(1,ids)||!da.GetDataList(2,props)||!da.GetDataList(3,states)||!da.GetData(4,ref response)||!da.GetData(5,ref mixed)||!da.GetData(6,ref zero)||!da.GetData(7,ref mass))return;
         if(states.Count==0 || states.Any(s=>s.Sign==BeamMomentSign.Missing)){AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Waiting for reference FEM results on every girder.");return;}
+        // R6.5 P1 lane 2b: a beam given by its draft alone, a composite section given by its GPC definition alone or a state of such a beam
+        // (no FEM source) gives the outputs by their GPC drafts alone; also with the switch of the property producers (the path of P2).
+        if(GpcOnlyElements.PropertiesWithoutFem||beams.Any(b=>b?.Value==null)||props.Any(GpcOnlyProperties.WithoutFem)||states.Any(s=>s?.Source==null))
+        {SolveGpcOnly(da,beams,ids,props,states,response,mixed,zero,mass);return;}
         var result=BridgeStateOverride.Apply(beams.Select(b=>b.Value).ToArray(),ids,props.Select(p=>p.Value).ToArray(),states,(BridgeActionBehavior)response,mixed,zero,mass);
         var girders=result.Girders.Select(b=>new GH_Beam(b)).ToArray();var others=result.OtherMembers.Select(b=>new GH_Beam(b)).ToArray();
         // Chain E (d): the same override on GPC (the drafts of the beams, the definitions of the composite sections, the states classified
@@ -54,6 +58,29 @@ public sealed class BridgeStateOverrideComponent : BridgeUtilityComponent
         {AddRuntimeMessage(GH_RuntimeMessageLevel.Remark,"Bridge State Override on GPC not applied ("+ex.Message+"): the GPC beams are the conversion of the FEM outputs.");}
         da.SetDataList(0,girders);da.SetDataList(1,others);da.SetDataList(2,result.Girders.Select(b=>b.BeamId));
         da.SetDataList(3,result.Girders.Select(b=>$"{b.BeamId} | {b.BeamProperty.Name} | {(b.Attributes.OfType<BridgeSectionStateAttributeModel>().Single().Value.ConcreteExcluded ? "cracked: steel + rebar" : "uncracked")}"));
-        if(states.Any(s=>s.Sign==BeamMomentSign.Mixed))AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Mixed-sign beams assigned uniformly by explicit policy. Check sensitivity to common mesh refinement; this choice is not a general safety bound.");
+        if(states.Any(s=>s.Sign==BeamMomentSign.Mixed))AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,MixedWarning);
+    }
+
+    private const string MixedWarning="Mixed-sign beams assigned uniformly by explicit policy. Check sensitivity to common mesh refinement; this choice is not a general safety bound.";
+
+    /// <summary>R6.5 P1 lane 2b: Bridge State Override on GPC alone (<see cref="Common.Gpc.GpcStateOverride.Apply"/>: the rules and messages of the
+    /// FEM path, the reference check on the analysed GPC beam of each state). The girders and the other members are new beams without FEM value
+    /// (the FEM path gives new copies with their results cleared), each with the identity derived from its input draft (output 0 the girders,
+    /// 1 the others; the parameters of the override and the signature of the new property); the IDs and the states from the drafts.</summary>
+    private void SolveGpcOnly(IGH_DataAccess da,List<GH_Beam> beams,List<string> ids,List<GH_CompositeBeamProperty> props,List<BeamMomentState> states,int response,int mixed,int zero,bool mass)
+    {
+        if(beams.Any(b=>b==null))throw new ArgumentException("Provide valid steel reference beams and properties.");
+        var drafts=beams.Select(b=>b.Gpc??throw new ArgumentException(GpcOnlyElements.NoDraft)).ToArray();
+        var gpc=Common.Gpc.GpcStateOverride.Apply(drafts,ids,props.Select(p=>p?.Definition).ToArray(),states,(BridgeActionBehavior)response,mixed,zero,mass);
+        // The partition of Apply: the beams with a state are the girders, in input order; the others keep their order.
+        var stated=states.Select(Common.Gpc.GpcStateOverride.StateId).ToHashSet(StringComparer.Ordinal);
+        var girderInputs=beams.Where((b,i)=>stated.Contains(drafts[i].Beam.Name)).ToArray();var otherInputs=beams.Where((b,i)=>!stated.Contains(drafts[i].Beam.Name)).ToArray();
+        if(gpc.Girders.Length!=girderInputs.Length||gpc.OtherMembers.Length!=otherInputs.Length)throw new InvalidOperationException("GpcStateOverrideCountMismatch");
+        var girders=gpc.Girders.Select((d,i)=>GpcOnlyElements.NewBeam(this,0,girderInputs[i],id=>Common.Gpc.GpcDrafts.Reidentify(d,id),response,mixed,zero,mass,d.Property?.Signature)).ToArray();
+        var others=gpc.OtherMembers.Select((d,i)=>GpcOnlyElements.NewBeam(this,1,otherInputs[i],id=>Common.Gpc.GpcDrafts.Reidentify(d,id),response,mixed,zero,mass)).ToArray();
+        if(girders.Any(g=>g==null)||others.Any(o=>o==null))return;
+        da.SetDataList(0,girders);da.SetDataList(1,others);da.SetDataList(2,gpc.Girders.Select(d=>d.Beam.Name));
+        da.SetDataList(3,gpc.Girders.Select(d=>$"{d.Beam.Name} | {d.Beam.BeamProperty.Name} | {(d.Bridge?.SectionState?.ConcreteExcluded==true ? "cracked: steel + rebar" : "uncracked")}"));
+        if(states.Any(s=>s.Sign==BeamMomentSign.Mixed))AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,MixedWarning);
     }
 }

@@ -37,6 +37,17 @@ public sealed class BridgeSectionScheduleComponent : BridgeUtilityComponent
         if (!da.GetData(0, ref property) || !da.GetData(1, ref start) || !da.GetData(2, ref end)) return;
         da.GetData(3, ref family); da.GetData(4, ref group); da.GetData(5, ref segment); da.GetData(6, ref sf); da.GetData(7, ref se);
         if (sf.Z != 0 || se.Z != 0) throw new ArgumentException("Section scales use X/Y only; Z must be zero.");
+        // R6.5 P1 lane 2b: a property given by its GPC datum alone gives the rule with the datum alone (rule of passo 75); also with the switch
+        // of the property producers (the path of P2).
+        if (GpcOnlyElements.PropertiesWithoutFem || GpcOnlyProperties.WithoutFem(property))
+        {
+            var datum = property?.IsValid == true ? GpcOnlyProperties.Datum(this, () => property.Gpc) : null;
+            if (property?.IsValid == true && datum == null) return;
+            var gpcRule = new BridgeSectionRule { GpcProperty = datum, Start = start, End = end, Family = family, Group = group,
+                Segment = segment, ScaleFrom = new(sf.X, sf.Y), ScaleTo = new(se.X, se.Y) };
+            gpcRule.Validate(); da.SetData(0, new BridgeDesignGoo(gpcRule));
+            return;
+        }
         // R6.2 (lane B): the GPC datum of the property goes with it to Bridge Member Assignment.
         TryAttach(property);
         var rule = new BridgeSectionRule { Property = property.Value, Start = start, End = end, Family = family, Group = group,

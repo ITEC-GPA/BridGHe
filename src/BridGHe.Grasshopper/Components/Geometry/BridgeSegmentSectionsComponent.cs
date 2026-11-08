@@ -97,6 +97,9 @@ public sealed class BridgeSegmentSectionsComponent : BridgeUtilityComponent
             AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The connected Section Table has no data. Read the workbook or supply a valid table before assigning sections. Disconnect the input to use only the base section.");
             return;
         }
+        // R6.5 P1 lane 2b: a base property given by its GPC datum alone gives the rules, properties and sections by their GPC data alone (rule of
+        // passo 75); also with the switch of the property producers (the path of P2).
+        if (GpcOnlyElements.PropertiesWithoutFem || GpcOnlyProperties.WithoutFem(property)) { SolveGpcOnly(da, geometry, property, table); return; }
         var result = BridgeSegmentSections.Create(BridgeDefinitionGoo.Segments(geometry), property.Value, table);
         var properties = result.Rules.Select(r => r.Property).ToArray();
         // R6.2 (lane B): the section and the property of every concio also built on GPC (the dimensions of the table on the material and
@@ -108,14 +111,38 @@ public sealed class BridgeSegmentSectionsComponent : BridgeUtilityComponent
         da.SetDataList(3, result.Rules.Select(r => $"G{r.Group}-C{r.Segment}"));
         da.SetDataList(4, result.ResolvedTable);
         da.SetDataList(5, properties.Select(p => p.D - p.Centroid.Y));
-        var info = new List<string> { $"{properties.Length} sections; one property per concio. Units N, mm, MPa. '*' follows the base section sliders.",
+        double top = property.Value.D - property.Value.Centroid.Y;
+        Inform(da, properties.Length, properties.Any(p => Math.Abs(p.D - p.Centroid.Y - top) > BridgeSegmentSections.StationTolerance));
+    }
+
+    /// <summary>R6.5 P1 lane 2b: the outputs on the GPC datum of the base property alone (<see cref="BridgeSegmentSections.CreateGpc"/>: the
+    /// same checks, tables and messages); the top of the base section from its recipe (<c>GpcSectionGeometry.Former</c>).</summary>
+    private void SolveGpcOnly(IGH_DataAccess da, IGH_Goo geometry, GH_BeamProperty property, List<string> table)
+    {
+        var basis = GpcOnlyProperties.Datum(this, () => property.Gpc);
+        if (basis == null) return;
+        var result = BridgeSegmentSections.CreateGpc(BridgeDefinitionGoo.Segments(geometry), basis, table);
+        da.SetDataList(0, result.Rules.Select(r => new BridgeDesignGoo(r)));
+        da.SetDataList(1, result.Rules.Select(r => GH_BeamProperty.FromGpc(r.GpcProperty)));
+        da.SetDataList(2, result.Recipes.Select(GH_BeamSection.FromGpc));
+        da.SetDataList(3, result.Rules.Select(r => $"G{r.Group}-C{r.Segment}"));
+        da.SetDataList(4, result.ResolvedTable);
+        da.SetDataList(5, result.Tops);
+        var former = GpcOnlyProperties.Datum(this, () => Common.Gpc.GpcSectionGeometry.Former(basis.Data.Section));
+        if (former == null) return;
+        double top = basis.Data.Section.D - former.YG;
+        Inform(da, result.Rules.Length, result.Tops.Any(t => Math.Abs(t - top) > BridgeSegmentSections.StationTolerance));
+    }
+
+    private void Inform(IGH_DataAccess da, int count, bool topsDiffer)
+    {
+        var info = new List<string> { $"{count} sections; one property per concio. Units N, mm, MPa. '*' follows the base section sliders.",
             "Table: ID; start; end; bottom width; top width; height; bottom thickness; top thickness; web thickness; radius.",
             "Tabella conci preserves rows with the same ID and range; new/changed segments reset to '*'. Undo restores an edited panel.",
             "Beam axes and eccentric links remain defined by geometry. Use Top Offsets when changing section height/centroid; this is not an automatic top-flange alignment." };
-        double top = property.Value.D - property.Value.Centroid.Y;
-        if (properties.Any(p => Math.Abs(p.D - p.Centroid.Y - top) > BridgeSegmentSections.StationTolerance))
+        if (topsDiffer)
             AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Section top offsets differ from the base section. Check girder reference axes and slab eccentricities; the section table does not realign them.");
         info.AddRange(tableChanges); da.SetDataList(6, info);
-        Message = properties.Length + " conci";
+        Message = count + " conci";
     }
 }

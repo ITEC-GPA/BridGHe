@@ -21,6 +21,15 @@ public sealed class GetBeamPropertyComponent : BridgeUtilityComponent
     {
         GH_Beam beam = null;
         if (!da.GetData(0, ref beam)) return;
+        // R6.5 P1 lane 2b: a beam given by its draft alone gives the property of its draft (the GPC property and the data of the former
+        // property the draft carries), by its GPC datum alone; also with the switch of the property producers (the path of P2).
+        if (GpcOnlyElements.PropertiesWithoutFem || beam?.Value == null)
+        {
+            var draft = beam?.Gpc;
+            if (draft?.Beam?.BeamProperty == null || draft.Property == null) throw new ArgumentException("The beam must have a valid assigned Beam Property.");
+            da.SetData(0, GH_BeamProperty.FromGpc(new Common.Gpc.Legacy.LegacyBeamProperty(GPC.Model.Core.ModelValues.CopyValue(draft.Beam.BeamProperty), draft.Property)));
+            return;
+        }
         if (beam?.Value?.BeamProperty?.IsValid != true) throw new ArgumentException("The beam must have a valid assigned Beam Property.");
         da.SetData(0, new GH_BeamProperty(ModelArchive.Clone(beam.Value.BeamProperty)));
     }

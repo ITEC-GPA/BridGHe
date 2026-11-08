@@ -42,7 +42,8 @@ public sealed record BridgeSectionRule
         double t = Math.Clamp((station - Start) / (End - Start), 0, 1);
         return new Vector2d(ScaleFrom.X + t * (ScaleTo.X - ScaleFrom.X), ScaleFrom.Y + t * (ScaleTo.Y - ScaleFrom.Y));
     }
-    public override string ToString() => $"Section schedule: {Property?.Id}, family {Family}, group {Group}, segment {Segment}, {Start:G7}..{End:G7} mm";
+    // R6.5 P1 lane 2b: a property given by its GPC datum alone by its name.
+    public override string ToString() => $"Section schedule: {Property?.Id ?? GpcProperty?.Property?.Name}, family {Family}, group {Group}, segment {Segment}, {Start:G7}..{End:G7} mm";
 }
 
 public sealed record BridgeAssignment(BeamModel[] Beams, string[] Unassigned, string[] Diagnostics)

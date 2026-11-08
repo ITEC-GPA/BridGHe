@@ -22,10 +22,18 @@ public static class BridgeSegmentWorkbook
         ? BridgeSegmentSections.Synchronize(geometry, null).Table
         : BridgeSegmentSections.Create(geometry, property, null).ResolvedTable;
 
-    public static void Write(string path, IBridgeSegments geometry, BeamPropertyModel property = null, bool overwrite = false, IEnumerable<string> initialTable = null)
+    /// <summary>R6.5 P1 lane 2b: the template on a base property given by its GPC datum (<see cref="BridgeSegmentSections.CreateGpc"/>).</summary>
+    public static string[] TemplateGpc(IBridgeSegments geometry, Gpc.Legacy.LegacyBeamProperty property) => property == null
+        ? BridgeSegmentSections.Synchronize(geometry, null).Table
+        : BridgeSegmentSections.CreateGpc(geometry, property, null).ResolvedTable;
+
+    /// <summary>Writes the workbook of the template (or of <paramref name="initialTable"/>); R6.5 P1 lane 2b: <paramref name="template"/>, a
+    /// template already made (<see cref="TemplateGpc"/>), instead of the one of <paramref name="property"/>.</summary>
+    public static void Write(string path, IBridgeSegments geometry, BeamPropertyModel property = null, bool overwrite = false, IEnumerable<string> initialTable = null,
+        string[] template = null)
     {
         path = BridgeCombinationWorkbook.FilePath(path);
-        var table = initialTable == null ? Template(geometry, property) : BridgeSegmentSections.ValidateTable(geometry, initialTable);
+        var table = template ?? (initialTable == null ? Template(geometry, property) : BridgeSegmentSections.ValidateTable(geometry, initialTable));
         if (table.Length > 100001) throw new ArgumentException("Maximum 100000 fabrication segments per workbook.");
         if (File.Exists(path) && !overwrite) throw new IOException("File already exists. Use Read, choose another filename, or explicitly enable Overwrite.");
         Directory.CreateDirectory(Path.GetDirectoryName(path));
