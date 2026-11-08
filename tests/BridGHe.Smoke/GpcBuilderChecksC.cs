@@ -39,9 +39,10 @@ internal static class GpcBuilderChecksC
         One(h, "BeamSectionTComponent", (0, 300.0), (1, 20.0), (2, 500.0), (3, 12.0));
         var angle = One(h, "BeamSectionAngleComponent", (0, 150.0), (1, 12.0), (2, 100.0), (3, 10.0));
         One(h, "BeamSectionAngleComponent", (0, 120.0), (1, 12.0), (2, 120.0), (3, 12.0));
-        Refused(h, "BeamSectionAngleComponent", (0, 150.0), (1, 12.0), (2, 100.0), (3, 10.0), (4, true), (5, 10.0));
+        // L2C (lane 2c, as in 0.3.0): the double sections (Double Sections) are recipes with their mirror and gap (before: refused).
+        One(h, "BeamSectionAngleComponent", (0, 150.0), (1, 12.0), (2, 100.0), (3, 10.0), (4, true), (5, 10.0));
         One(h, "BeamSectionCComponent", (0, 100.0), (1, 10.0), (2, 300.0), (3, 8.0));
-        Refused(h, "BeamSectionCComponent", (0, 100.0), (1, 10.0), (2, 300.0), (3, 8.0), (4, true), (5, 20.0));
+        One(h, "BeamSectionCComponent", (0, 100.0), (1, 10.0), (2, 300.0), (3, 8.0), (4, true), (5, 20.0));
         var generic = One(h, "BeamSectionGenericComponent", (0, 12000.0), (1, 4.5e8), (2, 2.1e7), (3, 3.3e6), (4, 1.0), (5, 2.0), (6, 5000.0), (7, 6000.0), (8, 1.0e6), (9, 2.0e5), (10, 150.0), (11, 450.0), (12, 0.0));
         One(h, "BeamSectionGenericComponent", (0, 9000.0), (1, 3.0e8), (2, 1.0e7), (3, 2.0e6), (4, 0.0), (5, 0.0), (6, 4000.0), (7, 3000.0), (8, 5.0e5), (9, 1.0e5), (10, -0.0), (11, 300.0), (12, 0.25));
 
@@ -88,7 +89,7 @@ internal static class GpcBuilderChecksC
         GroupCast(h, "Spalle", 1);
 
         // Beam Section parameter: the units menu converts the internalised section on GPC (a standard and a generic section, two units);
-        // the mirror menu gives a section without recipe (the reader refuses it).
+        // the mirror menu gives the mirrored recipe (L2C, as in 0.3.0; before: a section without recipe, the reader refused it).
         SectionMenu(h, rect, "Knm");
         SectionMenu(h, i, "Knm");
         SectionMenu(h, generic, "Knm");
@@ -148,7 +149,7 @@ internal static class GpcBuilderChecksC
     }
 
     /// <summary>The menus of the Beam Section parameter on an internalised section (their private handlers): <paramref name="units"/>
-    /// converts it from N-mm (the datum built on GPC), null sets the mirror (no datum: refused, as the conversion).</summary>
+    /// converts it from N-mm (the datum built on GPC), null sets the mirror (L2C: the mirrored recipe, as the conversion reads it).</summary>
     private static void SectionMenu(GpcBuilderChecks h, IGH_Goo section, string units)
     {
         var type = System.Reflection.Assembly.LoadFrom(BuildPaths.GrasshopperAssembly).GetTypes().Single(t => t.Name == "BeamSectionParam");
@@ -162,9 +163,8 @@ internal static class GpcBuilderChecksC
         var result = (IGH_Goo)data.GetType().GetMethod("get_FirstItem").Invoke(data, new object[] { false });
         bool attached = (bool)result.GetType().GetProperty("HasAttachedGpc").GetValue(result);
         if (ReferenceEquals(result, section)) h.Failures.Add("C Beam Section menu " + (units ?? "mirror") + ": the section was not replaced");
-        else if (units != null && !attached) h.Failures.Add("C Beam Section menu " + units + ": no recipe built on GPC");
-        else if (units == null && attached) h.Failures.Add("C Beam Section menu mirror: a mirrored section carries a recipe");
-        else if (units != null) h.Attached++;
+        else if (!attached) h.Failures.Add("C Beam Section menu " + (units ?? "mirror") + ": no recipe built on GPC");
+        else h.Attached++;
     }
 }
 #endif
