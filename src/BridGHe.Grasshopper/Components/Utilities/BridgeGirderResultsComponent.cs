@@ -35,13 +35,18 @@ public sealed class BridgeGirderResultsComponent : BridgeUtilityComponent
     {
         var beams = new List<GH_CompositeBeam>(); int girder = 1;
         if (!da.GetDataList(0, beams) || !da.GetDataTree(1, out GH_Structure<IGH_Goo> input) || !da.GetData(2, ref girder)) return;
-        if (beams.Any(b => b?.Value == null)) throw new ArgumentException("Valid composite beams are required.");
+        // R6.5 P1 lane 3a: a composite beam given by its GPC datum alone is valid; it is read on the GPC bridge model only (below).
+        if (beams.Any(b => b?.Value == null && b?.Gpc == null)) throw new ArgumentException("Valid composite beams are required.");
+        bool gpcOnly = GpcOnlyModels.Any(beams);
         // R6.4 (6): with composite beams linked to the GPC bridge model (Composite Beam from Super Element Filter or Decompose Model of a Build
         // BridGHe Model output) the ID, the member metadata, the ends and the length of every beam come from it (its beams and their bridge
         // data, N-mm by construction); the FEM values otherwise, until R6.5. Until then the test host compares the two on every run.
         var gpc = GpcGirders(beams);
+        // R6.5 P1 lane 3a: composite beams given by their GPC data alone and not linked to a GPC bridge model have no member metadata and no
+        // stations to read (those of the FEM path are the FEM attributes and results): an error, no output.
+        if (gpc == null && gpcOnly) throw GpcOnlyModels.Refused(GpcOnlyModels.RequiresBridgeModel);
         var members = gpc ?? FemGirders(beams);
-        if (gpc != null) Common.Gpc.GpcDraftCheck.Attached("Bridge Girder Results beams", Text(gpc), () => Text(FemGirders(beams)));
+        if (gpc != null && !gpcOnly) Common.Gpc.GpcDraftCheck.Attached("Bridge Girder Results beams", Text(gpc), () => Text(FemGirders(beams)));
         if (members.Any(m => !m.Girder)) throw new ArgumentException("Supply the longitudinal Composite beam list with physical girder metadata.");
         var selected = Enumerable.Range(0, beams.Count).Where(i => members[i].Group == girder)
             .OrderBy(i => members[i].StationFrom).ToArray();
@@ -54,8 +59,9 @@ public sealed class BridgeGirderResultsComponent : BridgeUtilityComponent
         for (int i = 1; i < origins.Length; i++) origins[i] = origins[i - 1] + members[selected[i - 1]].Length;
         // F6 (a)/(b), R8: the stations of Super Element Check, from the merged samples of the GPC bridge model when the composite beam is
         // linked to it (Composite Beam from Super Element Filter or Decompose Model of a Build BridGHe Model output); the FEM results otherwise.
-        var stations = beams.Select(b => (Common.Gpc.GpcBridge.Of(b.AnalysedGpcModel)?.SamplesOf(b.Value.BeamId)?.Select(s => Math.Round(s.Sample.Station, 15))
-            ?? b.Value.Results.OfType<BeamForceResultModel>().Select(r => Math.Round(r.NormalizedLength ? r.Station * b.Value.Length : r.Station, 15)))
+        var stations = beams.Select(b => (Common.Gpc.GpcBridge.Of(b.AnalysedGpcModel)?.SamplesOf(b.BeamId)?.Select(s => Math.Round(s.Sample.Station, 15))
+            ?? (b.Value == null ? throw GpcOnlyModels.Refused(GpcOnlyModels.RequiresBridgeModel)
+            : b.Value.Results.OfType<BeamForceResultModel>().Select(r => Math.Round(r.NormalizedLength ? r.Station * b.Value.Length : r.Station, 15))))
             .Distinct().OrderBy(s => s).ToArray()).ToArray();
         var output = new GH_Structure<IGH_Goo>(); var positions = new SortedSet<double>();
         for (int i = 0; i < input.PathCount; i++)

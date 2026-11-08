@@ -78,23 +78,28 @@ public abstract class BridgePlotComponent : GH_Component
             // the beam lengths from the linked GPC beams; the FEM model otherwise (the FEM path of the checks, left to the open decision). Until
             // R6.5 the test host compares them with the FEM ones on every run.
             var bridge=model?.GpcBridge;
-            if(model?.Value==null||bridge==null&&model.Value.Units!=ModelModel.ModelUnits.Nmm)throw new ArgumentException("Plot inputs require an N-mm model.");
+            // R6.5 P1 lane 3a: a model or composite beams given by their GPC data alone are read on the GPC bridge model only (the stations of
+            // the FEM results of a composite beam have no GPC equivalent): without it an error and no output.
+            bool gpcOnly=Helpers.GpcOnlyModels.Any(model,beams);
+            if(gpcOnly&&bridge==null)throw Helpers.GpcOnlyModels.Refused(Helpers.GpcOnlyModels.RequiresBridgeModel);
+            if(!gpcOnly&&(model?.Value==null||bridge==null&&model.Value.Units!=ModelModel.ModelUnits.Nmm))throw new ArgumentException("Plot inputs require an N-mm model.");
             if(quantity<0||quantity>=Quantities.Length)throw new ArgumentOutOfRangeException(nameof(quantity));
             BeforeRead(da,quantity);
             levels.AddRange(FixedLevels(quantity));
             var names=bridge!=null?bridge.Combinations.Select(c=>c.Name).ToArray():model.Value.LoadCombinations.Select(c=>c.Name).ToArray();
-            if(bridge!=null)Common.Gpc.GpcDraftCheck.Attached("Bridge Plot combinations",string.Join("|",names),()=>string.Join("|",model.Value.LoadCombinations.Select(c=>c.Name)));
+            if(bridge!=null&&model.Value!=null)Common.Gpc.GpcDraftCheck.Attached("Bridge Plot combinations",string.Join("|",names),()=>string.Join("|",model.Value.LoadCombinations.Select(c=>c.Name)));
             if(names.Length==0||names.Distinct(StringComparer.Ordinal).Count()!=names.Length)throw new ArgumentException("Distinct combination names are required.");
             var unknown=selected.Except(names,StringComparer.Ordinal).ToArray();if(unknown.Length>0)throw new ArgumentException("Unknown combinations: "+string.Join(", ",unknown));
             // F6 (a)/(b), R8: the stations of Super Element Check: the merged samples of the GPC bridge model when Build Bridge Model attached it.
-            var stations=beams.Select(b=>(bridge?.SamplesOf(b.Value.BeamId)?.Select(s=>Math.Round(s.Sample.Station,15))
-                ??b.Value.Results.OfType<BeamForceResultModel>().Select(f=>Math.Round(f.NormalizedLength?f.Station*b.Value.Length:f.Station,15)))
+            var stations=beams.Select(b=>(bridge?.SamplesOf(b.BeamId)?.Select(s=>Math.Round(s.Sample.Station,15))
+                ??(b.Value==null?throw Helpers.GpcOnlyModels.Refused(Helpers.GpcOnlyModels.RequiresBridgeModel)
+                :b.Value.Results.OfType<BeamForceResultModel>().Select(f=>Math.Round(f.NormalizedLength?f.Station*b.Value.Length:f.Station,15))))
                 .Distinct().OrderBy(x=>x).ToArray()).ToArray();
             static double Length(GPC.Model.Elements.BeamElement b)=>new Rhino.Geometry.Point3d(b.StartPoint.X,b.StartPoint.Y,b.StartPoint.Z).DistanceTo(new Rhino.Geometry.Point3d(b.EndPoint.X,b.EndPoint.Y,b.EndPoint.Z));
             var lengths=bridge!=null&&beams.All(b=>b.AnalysedGpc is GPC.Model.Elements.BeamElement&&ReferenceEquals(b.AnalysedGpcModel,bridge.Model))
                 ?beams.Select(b=>Length((GPC.Model.Elements.BeamElement)b.AnalysedGpc)).ToArray()
-                :beams.Select(b=>b.Value.Length).ToArray();
-            if(bridge!=null)Common.Gpc.GpcDraftCheck.Attached("Bridge Plot lengths",string.Join("|",lengths.Select(l=>BitConverter.DoubleToInt64Bits(l).ToString("X16"))),
+                :beams.Select(b=>b.Value?.Length??GpcLength(b)).ToArray();
+            if(bridge!=null&&beams.All(b=>b.Value!=null))Common.Gpc.GpcDraftCheck.Attached("Bridge Plot lengths",string.Join("|",lengths.Select(l=>BitConverter.DoubleToInt64Bits(l).ToString("X16"))),
                 ()=>string.Join("|",beams.Select(b=>BitConverter.DoubleToInt64Bits(b.Value.Length).ToString("X16"))));
             var origins=new double[beams.Count];for(int i=1;i<beams.Count;i++)origins[i]=origins[i-1]+lengths[i-1];
             var rows=new List<(int Beam,int Station,double X,Reading[] Readings)>();
@@ -144,7 +149,7 @@ public abstract class BridgePlotComponent : GH_Component
                 }
             var values=series.SelectMany(s=>s.Points).Where(p=>double.IsFinite(p.Y)).ToArray();
             if(values.Length==0)throw new ArgumentException("No finite values in the selected combinations.");
-            var boundaries=origins.Concat(beams.Count>0?new[]{origins[^1]+beams[^1].Value.Length}:Array.Empty<double>()).Select(x=>x/1000.0).ToArray();
+            var boundaries=origins.Concat(beams.Count>0?new[]{origins[^1]+(beams[^1].Value?.Length??lengths[^1])}:Array.Empty<double>()).Select(x=>x/1000.0).ToArray();
             // A single discrete stiffener still needs a visible WR=1 line over the complete element.
             double referenceStart=DiscreteSamples?boundaries.First():values.Min(p=>p.X),referenceEnd=DiscreteSamples?boundaries.Last():values.Max(p=>p.X);
             foreach(double level in levels)series.Add(new PlotSeries("Reference "+level.ToString("G5",System.Globalization.CultureInfo.InvariantCulture),new[]{new PlotPoint(referenceStart,level),new PlotPoint(referenceEnd,level)}));
@@ -165,4 +170,7 @@ public abstract class BridgePlotComponent : GH_Component
         }
         catch(Exception e){AddRuntimeMessage(GH_RuntimeMessageLevel.Error,e.Message);}
     }
+    /// <summary>R6.5 P1 lane 3a: the length of a composite beam given by its GPC datum alone and not linked to the GPC bridge model: the distance
+    /// of Rhino between the ends of the draft of its beam (definition units, N-mm with the bridge model), as the FEM length.</summary>
+    private static double GpcLength(GH_CompositeBeam b)=>DataTypes.GpcDraftGeometry.Axis(b.Gpc?.Beam).Length;
 }

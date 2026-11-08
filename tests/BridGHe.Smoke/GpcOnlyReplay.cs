@@ -133,6 +133,7 @@ internal static class GpcOnlyReplay
 
     /// <summary>A GH type with a FEM value. P2Y: <c>GH_BeamSection.ScriptVariable</c> is always null, so a section is read by its value.</summary>
     private static bool HasFem(IGH_Goo goo) => goo.GetType().Name == "BridgeDesignGoo" ? DesignProperty(goo).Fem != null
+        : goo.GetType().Name == "BridgeWorkflowGoo" ? WorkflowHasFem(goo) // L3a
         : goo.ScriptVariable() != null || (goo.GetType().Name == "GH_BeamSection" && Prop(goo, "Value") != null);
 
     /// <summary>L2B: the beam property of a bridge rule (a section rule or a family property): its FEM value and its GPC datum alone.</summary>
@@ -165,6 +166,9 @@ internal static class GpcOnlyReplay
             return new GH_ObjectWrapper(state with { Source = null, BeamId = state.BeamId ?? state.Source.BeamId });
         if (goo == null || !kinds.Contains(goo.GetType().Name) || !HasFem(goo)) return goo;
         if (goo.GetType().Name == "BridgeDesignGoo") return DesignGpcOnly(goo);
+        // L3a (section «models»): a model by its GPC input and state, a workflow object without its FEM sources.
+        if (goo.GetType().Name == "GH_Model") return ModelOnly(goo);
+        if (goo.GetType().Name == "BridgeWorkflowGoo") return WorkflowOnly(goo);
         var datum = Prop(goo, "Gpc");
         if (datum == null) return goo;
         var from = goo.GetType().GetMethod("FromGpc", BindingFlags.Public | BindingFlags.Static);
@@ -213,6 +217,7 @@ internal static class GpcOnlyReplay
     private static string Text(IGH_Goo goo)
     {
         if (goo == null) return "null";
+        if (ModelsText(goo, false) is { } models) return models; // L3a: the model kinds and the section results
         // L2B: a bridge rule by its data and the GPC datum of its beam property (of its FEM value, or given alone).
         if (goo.GetType().Name == "BridgeDesignGoo" && DesignProperty(goo) is var (fem, gpcProperty) && (fem != null || gpcProperty != null))
         {
@@ -278,8 +283,11 @@ internal static class GpcOnlyReplay
         try
         {
             var copy = Copy(original, doc);
+            // L3a: the inputs converted in the GPC-only copies of the section «models», by kind (reported).
+            Func<IGH_Goo, IGH_Goo> mapped = modelsLane && gpcOnly ? g => { var r = map(g); if (g != null && !ReferenceEquals(r, g)) convertedKinds[g.GetType().Name] = convertedKinds.GetValueOrDefault(g.GetType().Name) + 1; return r; } : map;
             for (int i = 0; i < original.Params.Input.Count; i++)
-                SetInput(copy.Params.Input[i], original.Params.Input[i].VolatileData, map);
+                SetInput(copy.Params.Input[i], original.Params.Input[i].VolatileData, mapped);
+            if (modelsLane) PrepareModels(copy, original); // L3a: buttons pressed, output paths in TEMP
             if (on) generators.SetValue(null, true);
             try { doc.Enabled = true; doc.NewSolution(false, GH_SolutionMode.Silent); }
             finally { if (on) generators.SetValue(null, false); }
@@ -296,9 +304,11 @@ internal static class GpcOnlyReplay
                     foreach (var item in branch)
                     {
                         var goo = item as IGH_Goo;
+                        // L3a (declared rule): the ID of a report is new at every generation (BridgeReportData.Create): masked.
+                        if (modelsLane && p.Name == "Report ID" && copy.GetType().Name == "BridgeReportComponent") { run.Outputs.Add("Report ID <new per generation>"); run.Raw.Add(run.Outputs[^1]); continue; }
                         run.Outputs.Add(Text(goo));
                         var datum = goo == null ? null : Prop(goo, "Gpc");
-                        run.Raw.Add(datum == null ? run.Outputs[^1] : goo.GetType().Name + " " + GpcNullValueChecks.TextOf(datum));
+                        run.Raw.Add(ModelsText(goo, true) ?? (datum == null ? run.Outputs[^1] : goo.GetType().Name + " " + GpcNullValueChecks.TextOf(datum)));
                         if (goo != null && kinds.Contains(goo.GetType().Name) && HasFem(goo)) run.FemOutputs++;
                     }
                 }
@@ -319,6 +329,8 @@ internal static class GpcOnlyReplay
         catch (Exception ex) { failures.Add(where + ": the copy with GPC-only inputs fails: " + ex.GetBaseException().Message + Frame(ex)); return; }
         var (n, items) = byType.TryGetValue(c.GetType().Name, out var v) ? v : (0, 0);
         byType[c.GetType().Name] = (n + 1, items + fem.Outputs.Count);
+        // L3a: BRIDGHE_GPC_ONLY_TRACE=1 prints the messages of every instance (diagnosis of a lane in progress only).
+        if (Environment.GetEnvironmentVariable("BRIDGHE_GPC_ONLY_TRACE") == "1") Console.WriteLine("TRACE " + where + ": " + fem.Outputs.Count + " lines; " + string.Join(" / ", fem.Messages));
         if (!fem.Messages.SequenceEqual(gpc.Messages)) failures.Add(where + ": messages " + string.Join(" / ", fem.Messages) + " -> " + string.Join(" / ", gpc.Messages));
         int diff = fem.Outputs.Zip(gpc.Outputs).Count(p => p.First != p.Second);
         if (fem.Outputs.Count != gpc.Outputs.Count || diff != 0)
@@ -961,6 +973,304 @@ internal static class GpcOnlyReplay
         return failures.Count;
     }
 
+    // -----------------------------------------------------------------------------------------------------------------------------------------
+    // L3a (R6.5 P1 lane 3, coordinator decisions 2-3 of 8/11): the section «models» (--gpc-only models, regression gpc-only-models, a gate step
+    // of its own with its limit of 5,400 s, outside regression all). Every kind is converted: the elements, the properties and data, and the
+    // model kinds (GH_Model, GH_CompositeBeam, BridgeWorkflowGoo). The button components are pressed by reflection (as ExampleRemake04.Replay).
+    // The scope is a list of its own (ModelsScopeFiles: the scope of Build Model, the examples 11-18 and the remade examples), so the counts of
+    // the scan and of the import do not move. Later sub-lanes of lane 3 add their types and cases here.
+
+    /// <summary>L3a: the components of sub-lane 3a (checks, results, report, preview, Composite Beam). L3a part 1: Bridge Model Audit
+    /// (<c>Inspect</c> on GPC) is declared pending (part 2 of 3a): not replayed yet.</summary>
+    internal static readonly string[] Lane3aTypes =
+    {
+        "SuperElementCheckComponent", "BridgeShearPlotComponent", "BridgeStudPlotComponent", "BridgeForcePlotComponent", "BridgeResultPlotComponent",
+        "BridgeIntermediateStiffenerPlotComponent", "BridgeSupportStiffenerPlotComponent", "CompositeBeamComponent", "CompositeShrinkageActionsComponent",
+        "BridgeSectionCheckComponent", "BridgeGirderResultsComponent", "BridgeDetailStationsComponent", "BridgeReportComponent", "BridgeCheckMapComponent",
+        "PreviewModelComponent",
+    };
+
+    /// <summary>L3a: the consumers of the converted kinds that read no FEM value (list 1.3 of corsia3-elenco.md), replayed with them.</summary>
+    internal static readonly string[] Lane3Consumers =
+    {
+        "BeamResultsComponent", "NodeResultsComponent", "PlateResultsComponent", "BridgeBeamEnvelopeComponent", "BridgeBearingEnvelopeComponent",
+        "BridgeDisplacementEnvelopeComponent", "BridgeResultCasesComponent", "BridgeDeflectionCamberComponent", "BridgeFatigueHistoryComponent",
+        "CompositeBeamSelfTensionComponent", "CompositeBeamLinearTensionAnalysisComponent_OBSOLETE", "BridgeConstructionPhaseComponent",
+    };
+
+    /// <summary>L3a: the types of the section whose inputs exist only after a native analysis (no remade example has plates): replayed by the
+    /// natives of lane 3e (the analyses), not required here.</summary>
+    internal static readonly string[] ModelsNativeOnly = { "PlateResultsComponent" };
+
+    /// <summary>L3a: the model kinds converted by the section «models» (with <see cref="ElementGoo"/> and <see cref="PropertyGoo"/>).</summary>
+    internal static readonly string[] ModelGoo = { "GH_Model", "GH_CompositeBeam", "BridgeWorkflowGoo" };
+
+    private static bool modelsLane;
+    private static readonly SortedDictionary<string, int> convertedKinds = new SortedDictionary<string, int>(StringComparer.Ordinal);
+
+    /// <summary>L3a: the definitions of the section: the scope of Build Model (<see cref="BuildModelScan.ScopeFiles"/>), the examples 11-18 and
+    /// the remade examples (<see cref="ExampleRemake04.Files"/>, internalised models with GPC results).</summary>
+    internal static List<string> ModelsScopeFiles()
+    {
+        var more = Directory.GetDirectories(ExamplePaths.Root).Where(d => Enumerable.Range(11, 8).Any(i => Path.GetFileName(d).StartsWith(i.ToString("00") + "-", StringComparison.Ordinal)))
+            .SelectMany(d => Directory.GetFiles(d, "*.gh*", SearchOption.AllDirectories)).Where(f => (f.EndsWith(".gh") || f.EndsWith(".ghx")) && !f.Contains(Path.DirectorySeparatorChar + "calcoli" + Path.DirectorySeparatorChar));
+        return BuildModelScan.ScopeFiles().Concat(more).Concat(ExampleRemake04.Files.Select(f => Path.GetFullPath(Path.Combine(ExamplePaths.Root, f))))
+            .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(f => f, StringComparer.Ordinal).ToList();
+    }
+
+    /// <summary>L3a: a model given by its GPC input alone, as the producers give it on the path of P2 (<c>GH_Model.FromGpc</c>): the GPC input of
+    /// the FEM-backed model with its state (the GPC bridge model of Build BridGHe Model, the analysed model, the drafts, the linked results).
+    /// A model whose GPC input cannot be made has no GPC datum: the same goo.</summary>
+    private static IGH_Goo ModelOnly(IGH_Goo goo)
+    {
+        if (goo.ScriptVariable() == null) return goo;
+        var t = goo.GetType();
+        BridGHe.Common.Gpc.GpcModels.Conversion input;
+        try { input = Prop(goo, "GpcInput") as BridGHe.Common.Gpc.GpcModels.Conversion; }
+        catch (TargetInvocationException) { return goo; }
+        if (input == null) return goo;
+        var only = (IGH_Goo)t.GetMethod("FromGpc", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { input });
+        if (Prop(goo, "GpcBridge") is { } bridge) t.GetMethod("AttachBridge").Invoke(only, new[] { bridge });
+        else if (Prop(goo, "HasAnalysedGpc") is true) t.GetMethod("AttachGpc").Invoke(only, new[] { Prop(goo, "Gpc") });
+        if (input.Drafts == null && Prop(goo, "GpcDrafts") is { } drafts) t.GetMethod("AttachDrafts").Invoke(only, new[] { drafts });
+        if (Prop(goo, "LinkedGpcResults") is { } linked) t.GetMethod("AttachLinkedResults").Invoke(only, new[] { linked });
+        return only;
+    }
+
+    /// <summary>L3a: a workflow object without the FEM sources of its actions (their GPC links kept), as on the path of P2.</summary>
+    private static IGH_Goo WorkflowOnly(IGH_Goo goo)
+    {
+        object only = Prop(goo, "Value") switch
+        {
+            BridGHe.Common.Checks.BridgeActionDefinition a when a.Source != null => a with { Source = null },
+            BridGHe.Common.Checks.BridgePhaseDefinition p when p.Actions.Any(a => a.Source != null) => p with { Actions = p.Actions.Select(a => a with { Source = null }).ToArray() },
+            _ => null,
+        };
+        return only == null ? goo : (IGH_Goo)Activator.CreateInstance(goo.GetType(), only);
+    }
+
+    /// <summary>L3a: a workflow object with a FEM source in an action.</summary>
+    private static bool WorkflowHasFem(IGH_Goo goo) => Prop(goo, "Value") switch
+    {
+        BridGHe.Common.Checks.BridgeActionDefinition a => a.Source != null,
+        BridGHe.Common.Checks.BridgePhaseDefinition p => p.Actions.Any(a => a.Source != null),
+        _ => false,
+    };
+
+    /// <summary>L3a: the text of an output of the model kinds and of a section result (null: another kind). A model by the text of its GPC input
+    /// and its state; a composite beam by its datum (the draft of its beam, its two definitions, its groups, its analysed beam) and, raw, its GH
+    /// GUID (the derived identity); a section result by its provenance, stage, stress points and local checks (exact doubles).</summary>
+    private static string ModelsText(IGH_Goo goo, bool raw)
+    {
+        static string N(double? v) => v is double d ? d.ToString("R", System.Globalization.CultureInfo.InvariantCulture) : "-";
+        string text;
+        switch (goo?.GetType().Name)
+        {
+            case "GH_Model":
+            {
+                BridGHe.Common.Gpc.GpcModels.Conversion input;
+                try { input = Prop(goo, "GpcInput") as BridGHe.Common.Gpc.GpcModels.Conversion; }
+                catch (TargetInvocationException ex) { return "GH_Model without GPC input: " + ex.GetBaseException().Message; }
+                text = "GH_Model " + (input == null ? "null" : GpcDraftCapture.ConversionText(input)) + "\nanalysed " + Prop(goo, "HasAnalysedGpc") + " bridge " + (Prop(goo, "GpcBridge") != null)
+                    + " results " + (Prop(goo, "GpcResults") != null) + " linked " + (Prop(goo, "LinkedGpcResults") != null);
+                break;
+            }
+            case "GH_CompositeBeam":
+            {
+                if (Prop(goo, "Gpc") is not { } datumObject) return null;
+                var beam = (BridGHe.Common.Gpc.Legacy.LegacyBeamDraft)Prop(datumObject, "Beam");
+                var start = (GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition)Prop(datumObject, "Start");
+                var end = (GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition)Prop(datumObject, "End");
+                var groups = (IReadOnlyList<string>)Prop(datumObject, "Groups");
+                text = "GH_CompositeBeam " + GpcNullValueChecks.TextOf(beam) + "\nstart " + (start == null ? "null" : GpcNullValueChecks.TextOf(start))
+                    + "\nend " + (end == null ? "null" : GpcNullValueChecks.TextOf(end)) + "\ngroups " + string.Join("|", groups ?? Array.Empty<string>())
+                    + "\nanalysed " + (Prop(goo, "AnalysedGpc") is GPC.Model.Elements.Element e ? e.Id + " " + e.Name : "none")
+                    + (raw ? "\nguid " + Prop(goo, "Guid") : "");
+                break;
+            }
+            case "GH_ObjectWrapper" when modelsLane && Prop(goo, "Value") is BridGHe.Common.Checks.BridgeStressResult r:
+                return "GH_ObjectWrapper BridgeStressResult " + r.Source + " " + r.Stage.Name + " " + r.Analysis.Geometry.SectionType
+                    + string.Concat(r.Stage.Points.Select(p => "\n  point " + p.Name + " " + N(p.Stress) + " " + N(p.Limit) + " " + N(p.Utilization) + " " + p.Active))
+                    + string.Concat(BridGHe.Common.Checks.BridgeGpc.Checks(r.Stage).Select(c => "\n  check " + c.Name + " " + N(c.Demand) + " " + N(c.Resistance) + " " + N(c.Ratio) + " " + c.Status));
+            default: return null;
+        }
+        return raw ? text : GpcDraftCapture.WithoutGuids(text);
+    }
+
+    /// <summary>L3a: the copy of a component of the section, before it is solved: the buttons pressed (Super Element Check, the plots, Bridge
+    /// Report), the output paths redirected into TEMP (a plot writes no file; the report writes one file there, overwritten; its template
+    /// resolved against the definition the component comes from).</summary>
+    private static void PrepareModels(GH_Component copy, GH_Component original)
+    {
+        static FieldInfo Field(Type t, string name)
+        {
+            for (; t != null; t = t.BaseType) if (t.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic) is { } f) return f;
+            return null;
+        }
+        void Set(string name, IGH_Goo value)
+        {
+            var param = copy.Params.Input.FirstOrDefault(p => p.Name == name) ?? throw new Exception("GPC-ONLY REPLAY: no input " + name + " on " + copy.Name);
+            var tree = new GH_Structure<IGH_Goo>();
+            if (value != null) tree.Append(value, new GH_Path(0));
+            SetInput(param, tree, g => g);
+        }
+        switch (copy.GetType().Name)
+        {
+            case "SuperElementCheckComponent": Field(copy.GetType(), "_run").SetValue(copy, true); break;
+            case "BridgeReportComponent":
+            {
+                Field(copy.GetType(), "_run").SetValue(copy, true);
+                string folder = Path.Combine(Path.GetTempPath(), "bridghe-gpc-only-models"); Directory.CreateDirectory(folder);
+                Set("File", new GH_String(Path.Combine(folder, "report.docx"))); Set("Overwrite", new GH_Boolean(true));
+                var template = original.Params.Input[1].VolatileData.AllData(true).FirstOrDefault()?.ScriptVariable() as string;
+                string definition = original.OnPingDocument()?.FilePath;
+                if (template != null && !Path.IsPathRooted(template) && !string.IsNullOrEmpty(definition))
+                    Set("Template", new GH_String(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(definition), template))));
+                break;
+            }
+            default:
+                if (Field(copy.GetType(), "run") is { } run && copy.GetType().IsSubclassOf(plugin.GetType("BridGHe.Grasshopper.Components.BridgeChecks.BridgePlotComponent", true)))
+                { run.SetValue(copy, true); Set("File Path", null); }
+                break;
+        }
+    }
+
+    /// <summary>L3a: the button components of a definition of the section pressed once, upstream first (Build BridGHe Model, then Super Element
+    /// Check), as <see cref="ExampleRemake04.Replay"/> does: their outputs feed the components of the section. No other button (plots, Report,
+    /// Combination Excel write files) and no analysis.</summary>
+    private static void PressModels(GH_Document doc)
+    {
+        foreach (var name in new[] { "BuildBridgeModel", "SuperElementCheckComponent" })
+            foreach (var c in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == name))
+            {
+                c.GetType().GetField("_run", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(c, true);
+                c.ExpireSolution(false); BridgeSegmentExcelTests.Solve(doc, true);
+            }
+    }
+
+    /// <summary>L3a: derived instances on a solved definition whose Super Element Check has results on the GPC bridge model (the remade 47 and
+    /// 48): Bridge Girder Results (girder 1), Bridge Detail Stations (two result points, without and with the phases of Build BridGHe Model)
+    /// and Bridge Check Map (one row per result, at most 40), wired to the outputs of the definition in memory (never saved). Outside the natives
+    /// no example of the scope reaches these components with data (their examples 50 and 99 analyse first). Returns the instances added.</summary>
+    private static int DeriveModels(GH_Document doc)
+    {
+        int added = 0;
+        foreach (var check in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "SuperElementCheckComponent").ToArray())
+        {
+            var output = check.Params.Output[0];
+            var results = output.VolatileData.AllData(true).Select(g => (g as GH_ObjectWrapper)?.Value as BridGHe.Common.Checks.BridgeStressResult).Where(r => r?.Source != null).ToArray();
+            var models = check.Params.Input[0].Sources; var beams = check.Params.Input[1].Sources;
+            if (results.Length == 0 || models.Count == 0 || beams.Count == 0) continue;
+            var bridge = Prop(check.Params.Input[0].VolatileData.AllData(true).FirstOrDefault(), "GpcBridge") as BridGHe.Common.Gpc.GpcBridge;
+            if (bridge == null) continue;
+            void Persistent(IGH_Param param, IEnumerable<IGH_Goo> values)
+            {
+                var tree = new GH_Structure<IGH_Goo>(); foreach (var v in values) tree.Append(v, new GH_Path(0));
+                SetInput(param, tree, g => g);
+            }
+            // Bridge Girder Results on the beams and results of the check.
+            var girder = BridgeSegmentExcelTests.Add(doc, "BridgeGirderResultsComponent");
+            foreach (var s in beams) girder.Params.Input[0].AddSource(s);
+            girder.Params.Input[1].AddSource(output);
+            // Bridge Detail Stations at two result points (the points of the stations on the axes of the beams of the bridge model, as the
+            // component computes them), selection only and with the phases of Build BridGHe Model.
+            var axes = bridge.Model.BeamElements.Values.GroupBy(b => b.Source.OriginalId, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
+            var points = results.Select(r => r.Source).Where(s => axes.ContainsKey(s.BeamId)).Select(s =>
+            {
+                var b = axes[s.BeamId];
+                var from = new Rhino.Geometry.Point3d(b.StartPoint.X, b.StartPoint.Y, b.StartPoint.Z); var to = new Rhino.Geometry.Point3d(b.EndPoint.X, b.EndPoint.Y, b.EndPoint.Z);
+                return from + (to - from) * (s.StationMm / from.DistanceTo(to));
+            }).Distinct().Take(2).ToArray();
+            var build = models[0].Attributes?.GetTopLevel?.DocObject as GH_Component;
+            foreach (bool phases in new[] { false, true })
+            {
+                if (phases && build?.GetType().Name != "BuildBridgeModel") continue;
+                var stations = BridgeSegmentExcelTests.Add(doc, "BridgeDetailStationsComponent");
+                foreach (var s in models) stations.Params.Input[0].AddSource(s);
+                stations.Params.Input[1].AddSource(output);
+                Persistent(stations.Params.Input[2], points.Select(p => (IGH_Goo)new GH_Point(p)));
+                if (phases) foreach (var s in build.Params.Input[1].Sources) stations.Params.Input[3].AddSource(s);
+                added++;
+            }
+            // The stress, force and shear plots on the results of the check (its forces output for the force plot).
+            foreach (var (type, from) in new[] { ("BridgeResultPlotComponent", 0), ("BridgeForcePlotComponent", 2), ("BridgeShearPlotComponent", 0) })
+            {
+                var plot = BridgeSegmentExcelTests.Add(doc, type);
+                foreach (var s in models) plot.Params.Input[0].AddSource(s);
+                foreach (var s in beams) plot.Params.Input[1].AddSource(s);
+                plot.Params.Input[2].AddSource(check.Params.Output[from]);
+                added++;
+            }
+            // Bridge Check Map, one row per result.
+            var map = BridgeSegmentExcelTests.Add(doc, "BridgeCheckMapComponent");
+            foreach (var s in models) map.Params.Input[0].AddSource(s);
+            var rows = results.Take(40).ToArray();
+            Persistent(map.Params.Input[1], rows.Select(r => (IGH_Goo)new GH_ObjectWrapper(r)));
+            Persistent(map.Params.Input[2], rows.Select(r => (IGH_Goo)new GH_String(r.Source.BeamId)));
+            Persistent(map.Params.Input[3], rows.Select(r => (IGH_Goo)new GH_Number(r.Source.StationMm)));
+            Persistent(map.Params.Input[4], rows.Select(r => (IGH_Goo)new GH_String(r.Source.Combination)));
+            added += 2;
+        }
+        // Beam, Node and Plate Results on the first three elements of each kind of the first internalised model with GPC results (the remade
+        // examples), through Decompose Model (its FEM path: elements with their analysed GPC elements).
+        var analysed = doc.Objects.OfType<IGH_Param>().Concat(doc.Objects.OfType<GH_Component>().SelectMany(c => c.Params.Input))
+            .FirstOrDefault(p => (p.GetType().GetProperty("PersistentData")?.GetValue(p) as IGH_Structure)?.AllData(true).Any(g => g?.GetType().Name == "GH_Model" && Prop(g, "GpcResults") != null) == true);
+        if (analysed != null)
+        {
+            var decompose = BridgeSegmentExcelTests.Add(doc, "DecomposeModelComponent");
+            decompose.Params.Input[0].AddSource(analysed);
+            BridgeSegmentExcelTests.Solve(doc, true);
+            foreach (var (type, output) in new[] { ("NodeResultsComponent", 0), ("BeamResultsComponent", 1), ("PlateResultsComponent", 2) })
+            {
+                var items = decompose.Params.Output[output].VolatileData.AllData(true).Take(3).ToArray();
+                if (items.Length == 0) continue;
+                var results = BridgeSegmentExcelTests.Add(doc, type);
+                var tree = new GH_Structure<IGH_Goo>(); foreach (var g in items) tree.Append(g, new GH_Path(0));
+                SetInput(results.Params.Input[0], tree, g => g);
+                added++;
+            }
+        }
+        if (added > 0) BridgeSegmentExcelTests.Solve(doc, true);
+        return added;
+    }
+
+    /// <summary>L3a: the regression of the section «models» (<c>gpc-only-models</c>).</summary>
+    internal static void Models() => Regression("models");
+
+    /// <summary>L3a: the in-memory cases of the section: the types no example of the scope reaches with data (Composite Beam Self Tension and
+    /// Composite Beam Linear Tension Analysis are in no example) and the paths the examples do not reach (Composite Beam with an end section and
+    /// a group, the preview of elements). Their inputs come from the producer components solved in memory (FEM-backed with the datum attached,
+    /// as in the examples): a beam of the example 02, the composite property of lane 2b.</summary>
+    private static List<(string Type, string Label, Dictionary<int, object> Inputs)> ModelsCases()
+    {
+        var examples = NativeExamples.Create().ToDictionary(e => e.Id, e => e.Model);
+        var m2 = examples["02-simply-supported"]; var m3 = examples["03-plate-patch"];
+        var beam = Make("Fem.GH_Beam", m2.Beams[1]); var node = Make("Fem.GH_Node", m2.Nodes.First()); var plate = Make("Fem.GH_Plate", m3.Plates.Single());
+        var steel = Produce("MaterialSteelComponent", new Dictionary<int, object> { [0] = "S355", [1] = 2 });
+        var concrete = Produce("MaterialConcreteComponent", new Dictionary<int, object> { [0] = "C35/45", [1] = 7 });
+        var rebar = Produce("MaterialRebarComponent", new Dictionary<int, object> { [0] = "B450C" });
+        var section = Produce("BeamSectionIComponent", new Dictionary<int, object> { [0] = 300.0, [1] = 250.0, [2] = 800.0, [3] = 20.0, [4] = 16.0, [5] = 12.0 });
+        var deeper = Produce("BeamSectionIComponent", new Dictionary<int, object> { [0] = 300.0, [1] = 250.0, [2] = 1000.0, [3] = 20.0, [4] = 16.0, [5] = 12.0 });
+        var slab = Produce("BeamSectionConcreteSlabComponent", new Dictionary<int, object> { [0] = 250.0, [1] = 2500.0, [2] = 1000.0, [3] = 50.0, [4] = 800.0, [5] = 50.0 });
+        var composite = Produce("BeamPropertyCompositeComponent", new Dictionary<int, object> { [0] = "CB", [1] = slab, [2] = section, [3] = concrete, [4] = steel, [5] = rebar });
+        var end = Produce("BeamPropertyCompositeComponent", new Dictionary<int, object> { [0] = "CB2", [1] = slab, [2] = deeper, [3] = concrete, [4] = steel, [5] = rebar });
+        var group = Produce("GroupComponent", new Dictionary<int, object> { [0] = "Deck" });
+        var compositeBeam = Produce("CompositeBeamComponent", new Dictionary<int, object> { [0] = beam, [1] = composite });
+        // The forces of the Force component (N, mm): axial, shear 2, bending 3 at mid-span.
+        IGH_Goo Force(string name, double n, double v, double m) => Produce("ForceComponent", new Dictionary<int, object> { [0] = name, [1] = n, [2] = v, [6] = m, [7] = 0.5 });
+        var steelForces = Force("G1", -1.2e5, 8.0e4, 3.5e8); var longForces = Force("G2", -2.0e5, 6.0e4, 2.1e8); var shortForces = Force("Q", -0.5e5, 9.0e4, 4.4e8);
+        return new List<(string, string, Dictionary<int, object>)>
+        {
+            ("CompositeBeamComponent", "a beam of the example 02 and a composite property", new Dictionary<int, object> { [0] = beam, [1] = composite }),
+            ("CompositeBeamComponent", "start and end sections and a group", new Dictionary<int, object> { [0] = beam, [1] = composite, [2] = end, [3] = new object[] { group } }),
+            ("CompositeBeamSelfTensionComponent", "composite property, n 15, slab strain", new Dictionary<int, object> { [0] = composite, [1] = 15.0, [2] = -0.0002 }),
+            ("CompositeShrinkageActionsComponent", "composite property, shrinkage strain", new Dictionary<int, object> { [0] = composite, [1] = -0.0003 }),
+            ("CompositeBeamLinearTensionAnalysisComponent_OBSOLETE", "a composite beam and three phases", new Dictionary<int, object> { [0] = compositeBeam, [1] = steelForces, [2] = longForces,
+                [3] = shortForces, [4] = 18.0, [5] = 7.0 }),
+            ("PreviewModelComponent", "a node, a beam, a plate and a composite beam", new Dictionary<int, object> { [0] = new object[] { node, beam, plate, compositeBeam } }),
+        };
+    }
+
     /// <summary>The plug-in and the switch of the lane (<c>GpcOnlyElements.GeneratorsWithoutFem</c> or <c>PropertiesWithoutFem</c>).</summary>
     private static void Init(string lane)
     {
@@ -985,7 +1295,7 @@ internal static class GpcOnlyReplay
             && c.Inputs.Values.SelectMany(v => v is object[] l ? l : new[] { v }).Any(v => v is IGH_Goo g && kinds.Contains(g.GetType().Name));
         // L2C: and the cases of lane 2c.
         var all = lane == "native" ? NativeSectionCases() : lane == "properties" ? Lane1Cases().Concat(Lane1bCases()).Where(OfLane2).Concat(Lane2aCases()).Concat(Lane2bCases()).Concat(Lane2cCases()).ToList()
-            : lane == "generators" ? Lane1bCases() : Lane1Cases();
+            : lane == "generators" ? Lane1bCases() : lane == "models" ? ModelsCases() : Lane1Cases();
         foreach (var (type, label, inputs) in all.Where(c => Selected(c.Type)))
         {
             using var doc = new GH_Document();
@@ -1011,8 +1321,11 @@ internal static class GpcOnlyReplay
     internal static int Regression(string lane)
     {
         // L2B: lane 2 replays 2a and 2b together (no type declared pending).
-        var types = lane switch { "elements" => Lane1Types, "generators" => Lane1bTypes, "properties" => Lane2Types, _ => throw new ArgumentException("Unknown lane: " + lane) };
-        var kinds = new HashSet<string>(lane switch { "elements" or "generators" => ElementGoo, "properties" => PropertyGoo, _ => Array.Empty<string>() }, StringComparer.Ordinal);
+        // L3a: the section «models» (lane 3) converts every kind.
+        var types = lane switch { "elements" => Lane1Types, "generators" => Lane1bTypes, "properties" => Lane2Types, "models" => Lane3aTypes.Concat(Lane3Consumers).ToArray(),
+            _ => throw new ArgumentException("Unknown lane: " + lane) };
+        var kinds = new HashSet<string>(lane switch { "elements" or "generators" => ElementGoo, "properties" => PropertyGoo, "models" => ElementGoo.Concat(PropertyGoo).Concat(ModelGoo).ToArray(),
+            _ => Array.Empty<string>() }, StringComparer.Ordinal);
         selected = Environment.GetEnvironmentVariable("BRIDGHE_GPC_ONLY_TYPES") is { Length: > 0 } named ? new HashSet<string>(named.Split(','), StringComparer.Ordinal) : null;
         types = types.Where(Selected).ToArray();
         // The Grasshopper libraries are parsed only when they are not registered yet (P2W, 8/11): in regression all (p2w1a2) the parse again of
@@ -1027,13 +1340,14 @@ internal static class GpcOnlyReplay
             GH_Document.EnableSolutions = false;
         else BridgeExampleMigration.Initialize();
         Init(lane);
+        modelsLane = lane == "models";
         var producers = new HashSet<string>(propertiesLane ? Lane2Producers : Array.Empty<string>(), StringComparer.Ordinal);
         var byType = new SortedDictionary<string, (int Instances, int Items)>(StringComparer.Ordinal);
         var failures = new List<string>();
-        int files = 0;
+        int files = 0, derived = 0;
         // A substring of the definitions to replay (diagnosis only; the regression replays them all).
         string only = Environment.GetEnvironmentVariable("BRIDGHE_GPC_ONLY_FILES");
-        foreach (var file in BuildModelScan.ScopeFiles().Where(f => string.IsNullOrEmpty(only) || f.Contains(only, StringComparison.OrdinalIgnoreCase)))
+        foreach (var file in (modelsLane ? ModelsScopeFiles() : BuildModelScan.ScopeFiles()).Where(f => string.IsNullOrEmpty(only) || f.Contains(only, StringComparison.OrdinalIgnoreCase)))
         {
             string label = Path.GetRelativePath(ExamplePaths.Root, file);
             using var doc = GrasshopperBridgeExample.Read(file); doc.FilePath = file;
@@ -1041,6 +1355,7 @@ internal static class GpcOnlyReplay
             foreach (var o in doc.Objects.OfType<IGH_ActiveObject>())
                 if (o.GetType().Name is "StrausR3AnalysisComponent" or "MovingStaticAnalysisComponent") o.Locked = true;
             BridgeSegmentExcelTests.Solve(doc, true);
+            if (modelsLane) { PressModels(doc); derived += DeriveModels(doc); } // L3a
             files++;
             foreach (var c in doc.Objects.OfType<GH_Component>().Where(c => types.Contains(c.GetType().Name)).ToArray())
             {
@@ -1053,16 +1368,19 @@ internal static class GpcOnlyReplay
             }
         }
         var fromExamples = new HashSet<string>(byType.Keys, StringComparer.Ordinal);
+        if (modelsLane) Console.WriteLine($"GPC-ONLY models: {derived} derived instances (on the results of Super Element Check and the analysed models of the remade examples)");
         int cases = 0;
-        if (lane is "elements" or "generators" or "properties") InMemory(lane, kinds, byType, failures, out cases);
+        if (lane is "elements" or "generators" or "properties" or "models") InMemory(lane, kinds, byType, failures, out cases);
         if (lane == "properties") ParameterCases(kinds, byType, failures, ref cases);
         // L2C: the checks of the review of lane 2 (R65-C2).
         if (lane == "properties" && (selected == null || selected.Contains("Review"))) ReviewChecks(kinds, failures, ref cases);
         foreach (var t in types.Where(t => !fromExamples.Contains(t))) Console.WriteLine("GPC-ONLY " + lane + ": not met in the examples (in-memory cases only): " + t);
-        foreach (var t in types.Where(t => !byType.ContainsKey(t) && !(lane == "properties" && NativeTypes.Contains(t)))) failures.Add("no case for " + t);
+        foreach (var t in types.Where(t => !byType.ContainsKey(t) && !(lane == "properties" && NativeTypes.Contains(t)) && !(lane == "models" && ModelsNativeOnly.Contains(t)))) failures.Add("no case for " + t);
+        if (lane == "models") foreach (var t in ModelsNativeOnly.Where(t => Selected(t) && !byType.ContainsKey(t))) Console.WriteLine("GPC-ONLY models: inputs only after a native analysis (lane 3e): " + t);
         if (lane == "properties") foreach (var t in Lane2aParameters.Where(t => Selected(t) && !byType.ContainsKey(t))) failures.Add("no case for " + t);
         if (lane == "properties") foreach (var t in NativeTypes.Where(Selected)) Console.WriteLine("GPC-ONLY properties: Straus7 section, in-memory cases under the native host only (core-native): " + t);
         foreach (var p in byType) Console.WriteLine($"GPC-ONLY {lane}: {p.Key} {p.Value.Instances} instances, {p.Value.Items} output lines");
+        if (modelsLane) Console.WriteLine("GPC-ONLY models: inputs given by their GPC data alone in the GPC-only copies: " + string.Join(", ", convertedKinds.Select(k => k.Key + " " + k.Value)));
         foreach (var f in failures.Take(60)) Console.WriteLine("  " + f);
         // P2Y: every failure in a file named by BRIDGHE_GPC_ONLY_REPORT (diagnosis of a lane in progress; the console keeps the first 60).
         if (Environment.GetEnvironmentVariable("BRIDGHE_GPC_ONLY_REPORT") is { Length: > 0 } report) File.WriteAllLines(report, failures);

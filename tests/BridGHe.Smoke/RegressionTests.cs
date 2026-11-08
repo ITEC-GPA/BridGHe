@@ -108,6 +108,7 @@ internal static class RegressionTests
         gpc["gpc-only-elements"] = GpcOnlyReplay.Elements; // R6.5 P1 lane 1a (7/11): the element components replayed with GPC-only inputs
         gpc["gpc-only-generators"] = GpcOnlyReplay.Generators; // R6.5 P1 lane 1b (7/11): the bridge generators replayed with GPC-only inputs and outputs
         gpc["gpc-only-properties"] = GpcOnlyReplay.Properties; // R6.5 P1 lane 2a (P2Z, 8/11): properties and data replayed with GPC-only inputs and outputs; L2B (8/11): with lane 2b (composite and bridge properties, State Override, coordinate systems)
+        gpc["gpc-only-models"] = GpcOnlyReplay.Models; // R6.5 P1 lane 3a (L3a, 8/11): models, composite beams and workflow objects GPC-only; a gate step of its own (limit 5,400 s), not in regression all
         tests = gpc.Concat(tests).ToDictionary(t => t.Key, t => t.Value);
 #endif
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
@@ -115,6 +116,7 @@ internal static class RegressionTests
         foreach (var test in tests.Where(t => selection == "all" || t.Key == selection))
         {
             if (selection == "all" && test.Key is "plot-preview" or "bridge-plots" or "bridge-report-component") { Console.WriteLine("SEPARATE HOST: " + test.Key + " (executed by tools/build.ps1 -Smoke)"); continue; }
+            if (selection == "all" && test.Key == "gpc-only-models") { Console.WriteLine("SEPARATE GATE STEP: gpc-only-models (--regression gpc-only-models, limit 5,400 s)"); continue; } // L3a (coordinator decision 3, 8/11)
             Console.WriteLine("RUN REGRESSION: " + test.Key);
             try { test.Value(); }
             catch (Exception error)
