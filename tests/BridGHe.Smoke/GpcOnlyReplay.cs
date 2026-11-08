@@ -49,6 +49,59 @@ internal static class GpcOnlyReplay
     /// <summary>The GH element types converted to their GPC data alone in lane 1.</summary>
     internal static readonly string[] ElementGoo = { "GH_Node", "GH_Beam", "GH_Plate" };
 
+    /// <summary>Lane 2, properties and data (passo 75, P2Y): the producers of sections, properties, materials, cases, combinations, stages
+    /// and groups (<see cref="Lane2Producers"/>, every instance with data, replayed with <c>GpcOnlyElements.PropertiesWithoutFem</c> on in
+    /// the GPC-only copy: they give their data by the GPC datum alone, the path of P2), and the consumers of those kinds in the files of
+    /// lanes 1a and 1b (their property, material, case and group inputs only: the element inputs stay FEM-backed). Lane 3 (Build Model,
+    /// analyses, checks, Construction Sequence, Composite Shrinkage Actions, Moving) is not here.</summary>
+    internal static readonly string[] Lane2Producers =
+    {
+        // Components/Definitions
+        "GroupComponent", "LoadCaseComponent", "LoadCombinationComponent", "StagedConstructionComponent",
+        // Components/Materials
+        "MaterialAluminiumComponent", "MaterialConcreteComponent", "MaterialCustomComponent", "MaterialRebarComponent", "MaterialSteelComponent", "MaterialTableComponent",
+        // Components/Sections
+        "BeamSectionAngleComponent", "BeamSectionBrepComponent", "BeamSectionCComponent", "BeamSectionGenericComponent", "BeamSectionHollowCircleComponent",
+        "BeamSectionHollowRectComponent", "BeamSectionIComponent", "BeamSectionSolidCircleComponent", "BeamSectionSolidRectComponent", "BeamSectionTComponent",
+        "SectionGeometricPropertyComponent", "StrausBxsSectionComponent", "StrausLibrarySectionComponent",
+        "StrausCircularSolidSectionComponent", "StrausCircularHollowSectionComponent", "StrausRectangleSolidSectionComponent", "StrausRectangleHollowSectionComponent",
+        "StrausLipChannelSectionComponent", "StrausTopHatSectionComponent", "StrausISectionComponent", "StrausTSectionComponent", "StrausAngleSectionComponent",
+        "StrausZSectionComponent", "StrausTrapezoidSolidSectionComponent", "StrausTrapezoidHollowSectionComponent", "StrausTriangleSolidSectionComponent",
+        "StrausTriangleHollowSectionComponent", "StrausCruciformSectionComponent", "StrausBglRectangleSectionComponent", "StrausBglISectionComponent",
+        "StrausBglChannelSectionComponent", "StrausBglTSectionComponent", "StrausBglAngleSectionComponent", "StrausBglBulbSectionComponent",
+        // Components/ElementProperties
+        "BeamGeometricPropertyComponent", "BeamPropertyComponent", "PlatePropertyComponent",
+        // Components/Tools (properties)
+        "BeamPropertyOverrideComponent", "GetBeamPropertyComponent",
+        // Components/BridgeChecks (property components)
+        "BeamPropertyCompositeComponent", "BeamSectionConcreteSlabComponent", "BeamSectionHPropertyComponent", "CompositeSectionGeometricPropertyComponent",
+        "CreepAndShrinkageConcreteComponent",
+        // Components/Geometry (sections, workbooks, composite sections, state overrides)
+        "BridgeSegmentSectionsComponent", "BridgeSegmentExcelComponent", "BridgeSectionTemplateComponent", "BridgeSectionReadComponent",
+        "BridgeSegmentCompositeComponent", "BridgeStateOverrideComponent",
+    };
+
+    /// <summary>Lane 2: the consumers of the lane-2 kinds in the files of lanes 1a and 1b (only their property, material, case and group
+    /// inputs are given by the GPC datum alone in the replay).</summary>
+    internal static readonly string[] Lane2Consumers =
+    {
+        "BeamComponent", "PlateComponent", "BeamOverrideComponent", "BeamFilterComponent", "NodeFilterComponent", "PlateFilterComponent",
+        "BeamDistributedLoadComponent", "BeamDistributedMomentComponent", "BeamGradientLoadComponent", "BeamPointLoadComponent", "BeamPointMomentComponent",
+        "BeamPreLoadComponent", "NodeDisplacementLoadComponent", "NodeLoadComponent", "NodeMomentComponent", "NodeTemperatureComponent",
+        "PlateNSMassComponent", "PlatePreStressComponent", "PlatePressureComponent",
+        "BridgeConnectionBeamsComponent", "BridgeConnectionsComponent", "BridgeDeckMeshComponent", "BridgeSlabGrillageComponent",
+        "BridgeMemberAssignmentComponent", "BridgeFemMembersComponent", "BridgeSegmentOverrideComponent",
+    };
+
+    internal static readonly string[] Lane2Types = Lane2Producers.Concat(Lane2Consumers).ToArray();
+
+    /// <summary>The GH types of properties and data converted to their GPC data alone in lane 2.</summary>
+    internal static readonly string[] PropertyGoo =
+    {
+        "GH_BeamSection", "GH_BeamProperty", "GH_PlateProperty", "GH_Material", "GH_LoadCase", "GH_LoadCombination", "GH_StagedConstruction", "GH_Group",
+        "GH_CompositeBeamProperty",
+    };
+
     private static object Prop(object o, string name) => o?.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance)?.GetValue(o);
 
     /// <summary>The GH type made from the GPC datum alone of a FEM-backed one, or the same goo (another kind, or no datum).</summary>
@@ -143,10 +196,14 @@ internal static class GpcOnlyReplay
     private static PropertyInfo generators;
     private static bool generatorsLane;
 
+    /// <summary>Lane 2: the switch of the producers of properties and data without FEM values (<c>GpcOnlyElements.PropertiesWithoutFem</c>),
+    /// on for the GPC-only copies of lane 2 only (the producers of lane 2 replayed with every instance with data).</summary>
+    private static bool propertiesLane;
+
     private static Run Solve(GH_Component original, Func<IGH_Goo, IGH_Goo> map, ISet<string> kinds, bool gpcOnly = false)
     {
         var doc = new GH_Document();
-        bool on = gpcOnly && generatorsLane;
+        bool on = gpcOnly && (generatorsLane || propertiesLane);
         try
         {
             var copy = Copy(original, doc);
@@ -347,8 +404,8 @@ internal static class GpcOnlyReplay
 
     internal static int Regression(string lane)
     {
-        var types = lane switch { "elements" => Lane1Types, "generators" => Lane1bTypes, _ => throw new ArgumentException("Unknown lane: " + lane) };
-        var kinds = new HashSet<string>(lane switch { "elements" or "generators" => ElementGoo, _ => Array.Empty<string>() }, StringComparer.Ordinal);
+        var types = lane switch { "elements" => Lane1Types, "generators" => Lane1bTypes, "properties" => Lane2Types, _ => throw new ArgumentException("Unknown lane: " + lane) };
+        var kinds = new HashSet<string>(lane switch { "elements" or "generators" => ElementGoo, "properties" => PropertyGoo, _ => Array.Empty<string>() }, StringComparer.Ordinal);
         // The Grasshopper libraries are parsed only when they are not registered yet (P2W, 8/11): in regression all (p2w1a2) the parse again of
         // BridgeExampleMigration.Initialize, in gpc-only-generators right after gpc-only-elements, threw from Grasshopper's own upgrader
         // Upgrade_PolygonCenterComponent2.Version of CurveComponents.gha (new DateTime(2013, 23, 9, 10, 45, 0)). Registered (an earlier group
@@ -361,9 +418,11 @@ internal static class GpcOnlyReplay
             GH_Document.EnableSolutions = false;
         else BridgeExampleMigration.Initialize();
         plugin = BridgeMergeTests.Initialize();
-        generatorsLane = lane == "generators";
-        generators = plugin.GetType("BridGHe.Grasshopper.Helpers.GpcOnlyElements", true).GetProperty("GeneratorsWithoutFem", BindingFlags.Public | BindingFlags.Static)
-            ?? throw new Exception("GPC-ONLY REPLAY: GpcOnlyElements.GeneratorsWithoutFem not found");
+        generatorsLane = lane == "generators"; propertiesLane = lane == "properties";
+        string switchName = propertiesLane ? "PropertiesWithoutFem" : "GeneratorsWithoutFem";
+        generators = plugin.GetType("BridGHe.Grasshopper.Helpers.GpcOnlyElements", true).GetProperty(switchName, BindingFlags.Public | BindingFlags.Static)
+            ?? throw new Exception("GPC-ONLY REPLAY: GpcOnlyElements." + switchName + " not found");
+        var producers = new HashSet<string>(propertiesLane ? Lane2Producers : Array.Empty<string>(), StringComparer.Ordinal);
         var byType = new SortedDictionary<string, (int Instances, int Items)>(StringComparer.Ordinal);
         var failures = new List<string>();
         int files = 0;
@@ -382,7 +441,9 @@ internal static class GpcOnlyReplay
             {
                 bool converted = c.Params.Input.Any(p => p.VolatileData.AllData(true).Any(g => g != null && kinds.Contains(g.GetType().Name)));
                 // Lane 1b: every instance with data (a generator has no element input; its GPC-only copy runs with the switch on).
-                if (!converted && !(generatorsLane && c.Params.Input.Any(p => !p.VolatileData.IsEmpty))) continue;
+                // Lane 2: the same for the producers of lane 2 (a material or a section has no input of the lane-2 kinds).
+                bool producer = generatorsLane || producers.Contains(c.GetType().Name);
+                if (!converted && !(producer && c.Params.Input.Any(p => !p.VolatileData.IsEmpty))) continue;
                 Replay(c, $"{label}: {c.Name} [{c.NickName}]", kinds, byType, failures);
             }
         }
@@ -393,6 +454,8 @@ internal static class GpcOnlyReplay
         foreach (var t in types.Where(t => !byType.ContainsKey(t))) failures.Add("no case for " + t);
         foreach (var p in byType) Console.WriteLine($"GPC-ONLY {lane}: {p.Key} {p.Value.Instances} instances, {p.Value.Items} output lines");
         foreach (var f in failures.Take(60)) Console.WriteLine("  " + f);
+        // P2Y: every failure in a file named by BRIDGHE_GPC_ONLY_REPORT (diagnosis of a lane in progress; the console keeps the first 60).
+        if (Environment.GetEnvironmentVariable("BRIDGHE_GPC_ONLY_REPORT") is { Length: > 0 } report) File.WriteAllLines(report, failures);
         if (failures.Count != 0) throw new Exception($"GPC-ONLY {lane} FAIL: {failures.Count} differences or failures (first: {failures[0]})");
         Console.WriteLine($"GPC-ONLY {lane} PASS: {files} definitions and {cases} in-memory cases, {byType.Sum(p => p.Value.Instances)} instances of {byType.Count} components " +
             "replayed with GPC-only inputs: the same outputs modulo GUIDs and the same messages, no FEM value, deterministic identities");
@@ -404,6 +467,9 @@ internal static class GpcOnlyReplay
 
     /// <summary>The regression of lane 1b (<c>gpc-only-generators</c>).</summary>
     internal static void Generators() => Regression("generators");
+
+    /// <summary>The regression of lane 2 (<c>gpc-only-properties</c>; P2Y: run by <c>--gpc-only properties</c> only until the lane is green).</summary>
+    internal static void Properties() => Regression("properties");
 
     /// <summary>The first differing lines of two texts (at most six), with their numbers.</summary>
     private static string Differences(string a, string b)

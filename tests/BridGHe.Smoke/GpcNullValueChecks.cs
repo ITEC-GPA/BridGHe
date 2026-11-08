@@ -53,6 +53,8 @@ internal static class GpcNullValueChecks
         BridGHe.Common.Gpc.Legacy.LegacySectionRecipe r => GpcDraftArchiveChecks.Text(r),
         BridGHe.Common.Gpc.Legacy.LegacyBeamProperty bp => GpcDraftArchiveChecks.Text(bp),
         GPC.Model.ElementProperties.PlateProperty pp => GpcDraftArchiveChecks.Text(pp),
+        // P2Y (lane 2 replay): the composite section of Composite Beam Property, Segment Composite and State Override.
+        GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition d => GpcDraftArchiveChecks.Text(d),
         BridGHe.Common.Gpc.GpcModels.Conversion c => GpcDraftCapture.ConversionText(c),
         IEnumerable<string> g => string.Join("\\", g),
         _ => throw new Exception("GPC NULL VALUES FAIL: no text for " + datum?.GetType().Name),
