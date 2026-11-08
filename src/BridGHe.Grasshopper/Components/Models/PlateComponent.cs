@@ -80,7 +80,7 @@ namespace BridGHe.Grasshopper.Components.Models
 
             // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the corners, the GPC property of the Plate Property datum and the
             // groups by name (each with its parents), identity of the conversion of the FEM output; a plate the reader refuses (more than four
-            // corners, a local axis angle) gets none, as its conversion.
+            // corners) gets none, as its conversion. P2X: the local axis angle is mapped on the layer axes of the draft, as the reader maps it.
             GpcBuilderAttach.Plate(plate, () => Common.Gpc.Builders.GpcPlateBuilders.Create(vertexes.Select(v => (v.X, v.Y, v.Z)).ToArray(), pp.Gpc,
                 groups.Select(g => GpcBuilderAttach.GroupChain(g)).ToArray(), angle, offset, "", Common.Gpc.GpcBeamDrafts.Identity(plate.Value)));
 

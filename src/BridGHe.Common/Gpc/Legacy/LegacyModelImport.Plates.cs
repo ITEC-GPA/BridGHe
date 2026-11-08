@@ -24,14 +24,18 @@ namespace BridGHe.Common.Gpc.Legacy
         /// <summary>
         /// One former plate as a GPC plate (the body of the plate loop of <see cref="Import"/>, chain E (e1): also the conversion of a single
         /// plate value, <see cref="PlateDraft"/>): on the given property, connected by <paramref name="connect"/> right after its creation; offset,
-        /// the first group, Element ID, load patch, supports, prestress, non-structural masses and pressures.
+        /// the first group, Element ID, load patch, supports, prestress, non-structural masses and pressures. P2X (user decision of 8/11,
+        /// «Mappalo come nella 0.3.0»): the local axis angle as the layer axes of the plate turned by it (<see cref="Builders.GpcPlateBuilders.LayerAxes"/>)
+        /// on <paramref name="corners"/> (a single plate value: its corners), or on its nodes (a whole model: <paramref name="corners"/> null).
         /// </summary>
         private static AreaElement Plate(LegacyValue pl, int k, Guid guid, Guid owner, PlateProperty property, Action<AreaElement> connect, Func<LegacyValue, Group> groupOf,
-            Dictionary<string, LoadCaseBase> cases, BridgeUnits units, LegacyImportReport report, LegacyElementRecords records)
+            Dictionary<string, LoadCaseBase> cases, BridgeUnits units, LegacyImportReport report, LegacyElementRecords records, IReadOnlyList<Point3d> corners = null)
         {
             var plate = NewPlate(guid, property, pl.String("PlateId") ?? "", k + 1, owner);
             connect?.Invoke(plate);
-            if (pl.Double("Angle") != 0) throw new NotSupportedException("LegacyPlateAngleNotMappedYet");
+            double angle = pl.Double("Angle");
+            if (!double.IsFinite(angle)) throw new ArgumentException("LegacyPlateAngleNotFinite");
+            if (angle != 0) plate.Assignments.LayerAxes = Builders.GpcPlateBuilders.LayerAxes(corners ?? plate.Points, angle);
             if (pl.Double("Offset") != 0) plate.Assignments.Offset = units.ToMm(pl.Double("Offset"));
             // e3: every group at list level (the former exporter wrote the first; the warning comes with the resolution, LegacyAssembly.ResolvePlate).
             var pg = pl.Field("Groups").Items; if (pg.Count > 0) plate.AddGroup(groupOf(pg[0]));
@@ -79,7 +83,7 @@ namespace BridGHe.Common.Gpc.Legacy
             var property = PlateProperty(pp, ppName, units);
             var records = new LegacyElementRecords();
             var cases = ElementCases(pl, out var groupOf, records);
-            return new LegacyPlateDraft(Plate(pl, 0, guid, guid, property, null, groupOf, cases, units, report, records), corners, report) { Records = records };
+            return new LegacyPlateDraft(Plate(pl, 0, guid, guid, property, null, groupOf, cases, units, report, records, corners), corners, report) { Records = records, AngleDeg = pl.Double("Angle") };
         }
 
         private enum PatchKinds { Auto1, Auto2, Auto3, Auto4, AngleSplit, Manual }

@@ -37,7 +37,7 @@ namespace BridGHe.Common.Gpc
         public static LegacyPlateDraft Copy(LegacyPlateDraft draft)
         {
             if (draft == null) throw new ArgumentNullException(nameof(draft));
-            return new LegacyPlateDraft(GPC.Model.Core.ModelValues.CopyValue(draft.Plate), draft.Corners.ToArray(), Copy(draft.Report, draft.Report.Owner, null)) { Records = draft.Records.Copy() };
+            return new LegacyPlateDraft(GPC.Model.Core.ModelValues.CopyValue(draft.Plate), draft.Corners.ToArray(), Copy(draft.Report, draft.Report.Owner, null)) { Records = draft.Records.Copy(), AngleDeg = draft.AngleDeg };
         }
 
         /// <summary>The draft with another identity: the GUID of the element, the owner of its source identity and of the report, and the key
@@ -61,7 +61,7 @@ namespace BridGHe.Common.Gpc
         {
             if (draft == null) throw new ArgumentNullException(nameof(draft));
             var plate = Reidentify(draft.Plate, draft.Plate.Guid, identity);
-            return new LegacyPlateDraft(plate, draft.Corners.ToArray(), Copy(draft.Report, identity, null)) { Records = draft.Records.Copy() };
+            return new LegacyPlateDraft(plate, draft.Corners.ToArray(), Copy(draft.Report, identity, null)) { Records = draft.Records.Copy(), AngleDeg = draft.AngleDeg };
         }
 
         /// <summary>An element with another GUID: its contract archive with the old GUID (the element and the owner of its source identity, both

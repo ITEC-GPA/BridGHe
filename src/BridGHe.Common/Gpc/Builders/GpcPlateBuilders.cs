@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Gpc.Legacy;
+using GPC.Utilities.Extensions;
+using R = Rhino.Geometry;
 
 namespace BridGHe.Common.Gpc.Builders
 {
@@ -17,8 +19,8 @@ namespace BridGHe.Common.Gpc.Builders
     {
         /// <summary>Plate (and the plates of Bridge Deck Mesh): the draft the reader gives a former plate with these corners (definition units, in
         /// order: 3 or 4), property (the GPC property of the Plate Property datum, copied), groups (each a chain of names from the root; the plate
-        /// takes the first, the records all), local axis angle (only 0: the reader refuses another), offset and plate ID; number 1, the identity as
-        /// GUID and owner.</summary>
+        /// takes the first, the records all), local axis angle (P2X: mapped as the reader maps it, <see cref="WithAngle"/>), offset and plate ID;
+        /// number 1, the identity as GUID and owner.</summary>
         public static LegacyPlateDraft Create(IReadOnlyList<(double X, double Y, double Z)> corners, GPC.Model.ElementProperties.PlateProperty property,
             IReadOnlyList<IReadOnlyList<string>> groups, double angleDeg, double offset, string plateId, Guid identity)
         {
@@ -30,12 +32,70 @@ namespace BridGHe.Common.Gpc.Builders
             var points = corners.Select(c => new GPC.Geometry.Point3d(units.ToMm(c.X), units.ToMm(c.Y), units.ToMm(c.Z))).ToArray();
             var records = new LegacyElementRecords();
             var plate = LegacyModelImport.NewPlate(identity, GPC.Model.Core.ModelValues.CopyValue(property), plateId ?? "", 1, identity);
-            if (angleDeg != 0) throw new NotSupportedException("LegacyPlateAngleNotMappedYet");
             if (offset != 0) plate.Assignments.Offset = units.ToMm(offset);
             groups ??= Array.Empty<IReadOnlyList<string>>();
             if (groups.Count > 0) plate.AddGroup(new DraftGroups().Of(groups[0]));
             foreach (var chain in groups) records.GroupList.Add(DraftGroups.FullName(chain));
-            return new LegacyPlateDraft(plate, points, report) { Records = records };
+            return WithAngle(new LegacyPlateDraft(plate, points, report) { Records = records }, angleDeg);
+        }
+
+        /// <summary>P2X (user decision of 8/11, «Mappalo come nella 0.3.0»): the draft with this local axis angle (degrees, as the former
+        /// <c>PlateModel.AngleDeg</c>): <see cref="LegacyPlateDraft.AngleDeg"/> and the local axes of the plate turned by it in
+        /// <c>Assignments.LayerAxes</c> (<see cref="LayerAxes"/> on the corners of the draft); 0: no layer axes (the plate keeps the Straus7 axes
+        /// of its nodes, as the former exporter wrote no angle). It changes the draft given (a builder calls it on its own copy).</summary>
+        public static LegacyPlateDraft WithAngle(LegacyPlateDraft draft, double angleDeg)
+        {
+            if (draft == null) throw new ArgumentNullException(nameof(draft));
+            if (!double.IsFinite(angleDeg)) throw new ArgumentException("LegacyPlateAngleNotFinite");
+            draft.Plate.Assignments.LayerAxes = LayerAxes(draft.Corners, angleDeg);
+            return draft with { AngleDeg = angleDeg };
+        }
+
+        /// <summary>P2X: the GPC layer axes of a plate of 3 or 4 corners turned by its local axis angle: origin at the first corner; the initial
+        /// axes Straus7 gives the plate (<see cref="StrausAxes"/>) turned by the angle about their normal, V1 = cos·x + sin·y, V2 = V3 × V1, V3 the
+        /// normal; null for the angle 0. The Straus7 writer of the Converter gives them to Straus7 as the angle of V1 from the initial axis 1 of
+        /// the plate (<c>SetPlateAxes</c>: the normal must be the initial one within 1e-8, then <c>St7SetPlateXAngle1</c>), which is the angle the
+        /// former exporter wrote. On a planar plate these are the turned local axes of the former plate (<see cref="LocalAxes"/>) to the last
+        /// digits; on a quadrangle slightly out of plane (within the planarity of GPC) only the Straus7 normal passes the check of the writer.</summary>
+        public static GPC.Geometry.CoordinateSystem LayerAxes(IReadOnlyList<GPC.Geometry.Point3d> corners, double angleDeg)
+        {
+            if (corners == null) throw new ArgumentNullException(nameof(corners));
+            if (angleDeg == 0) return null;
+            StrausAxes(corners, out var x, out var y, out var z);
+            double radAngle = angleDeg * Math.PI / 180d, cos = Math.Cos(radAngle), sin = Math.Sin(radAngle);
+            var v1 = new GPC.Geometry.Vector3d(cos * x.X + sin * y.X, cos * x.Y + sin * y.Y, cos * x.Z + sin * y.Z);
+            var v2 = new GPC.Geometry.Vector3d(z.Y * v1.Z - z.Z * v1.Y, z.Z * v1.X - z.X * v1.Z, z.X * v1.Y - z.Y * v1.X);
+            var o = corners[0];
+            return new GPC.Geometry.CoordinateSystem(new GPC.Geometry.Point3d(o.X, o.Y, o.Z), v1, v2, z);
+        }
+
+        /// <summary>P2X: the initial axes Straus7 gives a plate of 3 or 4 corners (<c>St7GetPlateAxisSystemInitial</c>, before any angle), measured
+        /// natively in P2X (passo 74) on a quadrangle with a corner out of plane: a triangle x from corner 1 to the middle of edge 2-3, z normal
+        /// to edges 1-2 and 2-3; a quadrangle x from the middle of edge 4-1 to the middle of edge 2-3 (as the former plate), z = x × (middle of
+        /// edge 1-2 → middle of edge 3-4), which is the normal of the diagonals (the former plate took edges 1-2 and 2-3: the same on a planar
+        /// plate, 2.5e-6 apart on that quadrangle); y = z × x. Unit vectors.</summary>
+        public static void StrausAxes(IReadOnlyList<GPC.Geometry.Point3d> corners, out GPC.Geometry.Vector3d x, out GPC.Geometry.Vector3d y, out GPC.Geometry.Vector3d z)
+        {
+            if (corners == null) throw new ArgumentNullException(nameof(corners));
+            static GPC.Geometry.Vector3d V(double a, double b, double c) => new GPC.Geometry.Vector3d(a, b, c);
+            static GPC.Geometry.Vector3d Unit(GPC.Geometry.Vector3d v) { double l = Math.Sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z); return V(v.X / l, v.Y / l, v.Z / l); }
+            static GPC.Geometry.Vector3d Cross(GPC.Geometry.Vector3d a, GPC.Geometry.Vector3d b) => V(a.Y * b.Z - a.Z * b.Y, a.Z * b.X - a.X * b.Z, a.X * b.Y - a.Y * b.X);
+            static GPC.Geometry.Vector3d Mid(GPC.Geometry.Point3d a, GPC.Geometry.Point3d b) => V((a.X + b.X) / 2, (a.Y + b.Y) / 2, (a.Z + b.Z) / 2);
+            static GPC.Geometry.Vector3d Sub(GPC.Geometry.Vector3d a, GPC.Geometry.Vector3d b) => V(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
+            static GPC.Geometry.Vector3d P(GPC.Geometry.Point3d a) => V(a.X, a.Y, a.Z);
+            var c = corners;
+            if (c.Count == 3)
+            {
+                x = Unit(Sub(Mid(c[1], c[2]), P(c[0])));
+                z = Unit(Cross(Sub(P(c[1]), P(c[0])), Sub(P(c[2]), P(c[1]))));
+            }
+            else if (c.Count == 4)
+            {
+                x = Unit(Sub(Mid(c[1], c[2]), Mid(c[3], c[0])));
+                z = Unit(Cross(x, Sub(Mid(c[2], c[3]), Mid(c[0], c[1]))));
+            }
+            else throw new NotSupportedException("LegacyPlateWithMoreThanFourNodes");
+            y = Cross(z, x);
         }
 
         /// <summary>Element ID on a plate: a former <c>ElementIdAttributeModel</c> after the attributes (the plate takes the first value as its label).</summary>
@@ -102,34 +162,36 @@ namespace BridGHe.Common.Gpc.Builders
             return GpcDrafts.Reidentify(d, identity);
         }
 
-        /// <summary>Align Plate Axes: the draft the reader gives the former plate after the component, decided on the corners of the draft with
-        /// the expressions of the former component and of the former local axes (Straus7 orientation): axis 2 (Blue) with a normal against the
-        /// direction reverses the corners (nothing else changes: the reader reads the reversed points with the same attributes and loads); axes 0
-        /// (Red) and 1 (Green) turn the local axis angle of the plate by the increment that aligns the axis with the direction projected on the
-        /// plane, refused as the reader refuses a plate with a non-zero angle; a direction along the normal leaves the plate unchanged (the
-        /// warning of the component). The draft of a plate has angle 0 (the reader refuses another), so the angle after the component is the
-        /// increment.</summary>
+        /// <summary>Align Plate Axes: the draft the reader gives the former plate after the component, decided on the corners and the local axis
+        /// angle of the draft with the expressions of the former component on the former local axes (<see cref="LocalAxes"/>, turned by the
+        /// angle): axis 2 (Blue) with a normal against the direction reverses the corners (the angle stays; the layer axes follow the reversed
+        /// corners, as the former local axes did); axes 0 (Red) and 1 (Green) turn the local axis angle by the increment that aligns the turned axis
+        /// with the direction projected on the plane (P2X: mapped as the reader maps the angle of the former output, <see cref="WithAngle"/>); a
+        /// direction along the normal leaves the plate unchanged (the warning of the component).</summary>
         public static LegacyPlateDraft AlignAxes(LegacyPlateDraft plate, int axis, double dx, double dy, double dz, Guid identity)
         {
             var d = GpcDrafts.Copy(plate ?? throw new ArgumentNullException(nameof(plate)));
             if (axis < 0 || axis > 2) throw new ArgumentException("GpcPlateBuilderAlignAxisOutOfRange");
-            var dir = Unit((dx, dy, dz));
-            var p = d.Corners.Select(c => (c.X, c.Y, c.Z)).ToArray();
-            LocalAxes(p, out var axes1, out var axes2, out var axes3);
+            var dir = new R.Vector3d(dx, dy, dz); dir.Unitize();
+            LocalAxes(d.Corners, d.AngleDeg, out var axes1, out var axes2, out var axes3);
             if (axis == 2)
             {
-                if (Dot(axes3, dir) < 0) d = d with { Corners = d.Corners.Reverse().ToArray() };
+                if (axes3 * dir < 0) d = WithAngle(d with { Corners = d.Corners.Reverse().ToArray() }, d.AngleDeg);
                 return GpcDrafts.Reidentify(d, identity);
             }
-            var start = Unit(axis == 0 ? axes1 : axes2);
-            if (Math.Abs(Dot(axes3, dir)) > 0.99999) return GpcDrafts.Reidentify(d, identity);
-            var orto = Unit(Cross(axes3, dir));
-            var newDir = Unit(Cross(orto, axes3));
-            if (Dot(newDir, dir) < 0) newDir = (-newDir.X, -newDir.Y, -newDir.Z);
-            orto = Cross(axes3, start);
-            double increment = Math.Atan2(Dot(newDir, orto), Dot(newDir, start)) * 180.0 / Math.PI;
-            if (increment != 0) throw new NotSupportedException("LegacyPlateAngleNotMappedYet");
-            return GpcDrafts.Reidentify(d, identity);
+            var start = axis == 0 ? axes1 : axes2;
+            start.Unitize();
+            if (Math.Abs(axes3 * dir) > 0.99999) return GpcDrafts.Reidentify(d, identity);
+            var orto = R.Vector3d.CrossProduct(axes3, dir);
+            orto.Unitize();
+            var newDir = R.Vector3d.CrossProduct(orto, axes3);
+            newDir.Unitize();
+            if (newDir * dir < 0) newDir.Reverse();
+            orto = R.Vector3d.CrossProduct(axes3, start);
+            double x = newDir * start;
+            double y = newDir * orto;
+            double increment = Math.Atan2(y, x).ToDegrees();
+            return GpcDrafts.Reidentify(WithAngle(d, d.AngleDeg + increment), identity);
         }
 
         /// <summary>R6.5 P1 lane 1a: whether Align Plate Axes on axis 0 or 1 leaves the plate unchanged because the direction is along its
@@ -137,46 +199,71 @@ namespace BridGHe.Common.Gpc.Builders
         public static bool AlignAxesAlongNormal(LegacyPlateDraft plate, double dx, double dy, double dz)
         {
             if (plate == null) throw new ArgumentNullException(nameof(plate));
-            LocalAxes(plate.Corners.Select(c => (c.X, c.Y, c.Z)).ToArray(), out _, out _, out var axes3);
-            return Math.Abs(Dot(axes3, Unit((dx, dy, dz)))) > 0.99999;
+            var dir = new R.Vector3d(dx, dy, dz); dir.Unitize();
+            LocalAxes(plate.Corners, plate.AngleDeg, out _, out _, out var axes3);
+            return Math.Abs(axes3 * dir) > 0.99999;
         }
 
-        /// <summary>The local axes of a former plate of 3 or 4 corners (<c>PlateModel.GetLocalAxes</c>, Straus7 orientation), same expressions.</summary>
-        private static void LocalAxes((double X, double Y, double Z)[] p, out (double X, double Y, double Z) axes1, out (double X, double Y, double Z) axes2, out (double X, double Y, double Z) axes3)
+        /// <summary>The local axes of a former plate of 3 or 4 corners (<c>PlateModel.GetLocalAxes</c>: Straus7 orientation, then turned by the local
+        /// axis angle about axis 3), the same Rhino and GPC operations one for one on the corners (definition units for a draft, mm for the nodes of a
+        /// model: the axes do not depend on the unit). P2X: also the axes of the preview of a plate draft.</summary>
+        public static void LocalAxes(IReadOnlyList<GPC.Geometry.Point3d> corners, double angleDeg, out R.Vector3d axes1, out R.Vector3d axes2, out R.Vector3d axes3)
         {
+            if (corners == null) throw new ArgumentNullException(nameof(corners));
+            var p = corners.Select(c => new R.Point3d(c.X, c.Y, c.Z)).ToArray();
             if (p.Length == 3)
             {
-                var from2To3 = Sub(p[2], p[1]);
-                var mid23 = Add(p[1], Scale(0.5, from2To3));
-                axes1 = Unit(Sub(mid23, p[0]));
-                axes3 = Unit(Cross(Sub(p[1], p[0]), Sub(p[2], p[1])));
-                axes2 = Unit(Cross(axes3, axes1));
-                return;
+                //   3
+                //1     2: x from 1 to mid 23
+                R.Vector3d from2To3 = p[2] - p[1];
+                R.Point3d mid23 = p[1] + 0.5 * from2To3;
+                axes1 = mid23 - p[0];
+                axes1.Unitize();
+                R.Vector3d dir0 = p[1] - p[0];
+                R.Vector3d dir1 = p[2] - p[1];
+                axes3 = R.Vector3d.CrossProduct(dir0, dir1);
+                axes3.Unitize();
+                axes2 = R.Vector3d.CrossProduct(axes3, axes1);
+                axes2.Unitize();
             }
-            var from1To4 = Sub(p[3], p[0]);
-            var mid14 = Add(p[0], Scale(0.5, from1To4));
-            var mid23q = Add(p[1], Scale(0.5, Sub(p[2], p[1])));
-            axes1 = Unit(Sub(mid23q, mid14));
-            var dir0 = Unit(Sub(p[1], p[0]));
-            var dir1 = Unit(Sub(p[2], p[1]));
-            if (Dot(dir0, dir1) > 0.99999) dir1 = Unit(from1To4);
-            axes3 = Cross(dir0, dir1);
-            axes2 = Unit(Cross(axes3, axes1));
-            axes3 = Unit(Cross(axes1, axes2));
-        }
-
-        private static (double X, double Y, double Z) Sub((double X, double Y, double Z) a, (double X, double Y, double Z) b) => (a.X - b.X, a.Y - b.Y, a.Z - b.Z);
-        private static (double X, double Y, double Z) Add((double X, double Y, double Z) a, (double X, double Y, double Z) b) => (a.X + b.X, a.Y + b.Y, a.Z + b.Z);
-        private static (double X, double Y, double Z) Scale(double s, (double X, double Y, double Z) a) => (s * a.X, s * a.Y, s * a.Z);
-        private static double Dot((double X, double Y, double Z) a, (double X, double Y, double Z) b) => a.X * b.X + a.Y * b.Y + a.Z * b.Z;
-        private static (double X, double Y, double Z) Cross((double X, double Y, double Z) a, (double X, double Y, double Z) b) =>
-            (a.Y * b.Z - b.Y * a.Z, a.Z * b.X - b.Z * a.X, a.X * b.Y - b.X * a.Y);
-
-        /// <summary>A unit vector as Rhino's <c>Unitize</c> (a zero vector stays as is).</summary>
-        private static (double X, double Y, double Z) Unit((double X, double Y, double Z) a)
-        {
-            double length = Math.Sqrt(a.X * a.X + a.Y * a.Y + a.Z * a.Z);
-            return length > 0 ? (a.X / length, a.Y / length, a.Z / length) : a;
+            else if (p.Length == 4)
+            {
+                //4      3
+                //1      2: x from mid 14 to mid 23
+                R.Vector3d from1To4 = p[3] - p[0];
+                R.Vector3d from2To3 = p[2] - p[1];
+                R.Point3d mid14 = p[0] + 0.5 * from1To4;
+                R.Point3d mid23 = p[1] + 0.5 * from2To3;
+                axes1 = mid23 - mid14;
+                axes1.Unitize();
+                R.Vector3d dir0 = p[1] - p[0];
+                dir0.Unitize();
+                R.Vector3d dir1 = p[2] - p[1];
+                dir1.Unitize();
+                if (R.Vector3d.Multiply(dir0, dir1) > 0.99999)
+                {
+                    from1To4.Unitize();
+                    dir1 = from1To4;
+                }
+                axes3 = R.Vector3d.CrossProduct(dir0, dir1);
+                axes2 = R.Vector3d.CrossProduct(axes3, axes1);
+                axes2.Unitize();
+                // need a recalculation of zdir, points could not be on a plane
+                axes3 = R.Vector3d.CrossProduct(axes1, axes2);
+                axes3.Unitize();
+            }
+            else throw new NotSupportedException("LegacyPlateWithMoreThanFourNodes");
+            // Rotating of angle
+            if (angleDeg != 0)
+            {
+                double radAngle = angleDeg * System.Math.PI / 180d;
+                GPC.Geometry.Point3d pOnX = new GPC.Geometry.Point3d(axes1.X, axes1.Y, axes1.Z);
+                GPC.Geometry.Point3d pOnY = new GPC.Geometry.Point3d(axes2.X, axes2.Y, axes2.Z);
+                GPC.Geometry.CoordinateSystem trans = new GPC.Geometry.CoordinateSystem(GPC.Geometry.Point3d.Origin, pOnX, pOnY);
+                GPC.Geometry.Point3d newDirX = trans.ToGlobal(new GPC.Geometry.Point3d(Math.Cos(radAngle), Math.Sin(radAngle), 0));
+                axes1 = new R.Vector3d(newDirX.X, newDirX.Y, newDirX.Z);
+                axes2 = R.Vector3d.CrossProduct(axes3, axes1);
+            }
         }
 
         /// <summary>The records of a new former load (kind, case) and the definition of its case, after the loads of the draft.</summary>

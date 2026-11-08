@@ -304,6 +304,23 @@ internal static class Program
     {
         CheckNativeSections();
         CheckNativeCantilever();
+        CheckNativePlateAngle();
+    }
+
+    /// <summary>P2X (user decision of 8/11): the plate local axis angle natively, Plate Results equal to BridGHe 0.3.0 (<see cref="PlateAngleNative"/>).</summary>
+    private static void CheckNativePlateAngle()
+    {
+        string folder=Path.Combine("artifacts","native",Guid.NewGuid().ToString("N"));Directory.CreateDirectory(folder);
+        var (rows,errors)=PlateAngleNative.Solve(Path.GetFullPath(Path.Combine(folder,"plate-angle.st7")));
+        PlateAngleNative.Write(Path.Combine(folder,"plate-results.tsv"),rows);
+        Assert(errors.Length==0,"plate angle native: no error ("+string.Join(" | ",errors)+")");
+        double worst=PlateAngleNative.Compare(PlateAngleNative.Read(PlateAngleNative.Reference),rows,out int values,out int skipped);
+        Console.WriteLine($"PLATE ANGLE NATIVE: {values} values of Plate Results, worst relative difference from 0.3.0 {worst:R} (criterion of passo 1, 1e-9); {skipped} Force Von Mises with transverse shears not compared (0.3.0: Straus7 combined value)");
+        Assert(worst<=1e-9,"plate local axis angle: Plate Results of the turned plates equal to 0.3.0");
+        var (warped,warpedErrors)=PlateAngleNative.Solve(Path.GetFullPath(Path.Combine(folder,"plate-angle-warped.st7")),true);
+        PlateAngleNative.Write(Path.Combine(folder,"plate-results-warped.tsv"),warped);
+        Console.WriteLine($"PLATE ANGLE NATIVE (warped): {warped.Count} rows of Plate Results; errors: {string.Join(" | ",warpedErrors)}");
+        Assert(warpedErrors.Length==0 && warped.Count==PlateAngleNative.Read(PlateAngleNative.Reference).Count,"plate local axis angle on a quadrangle out of plane (within the planarity of GPC): solved, as 0.3.0");
     }
 
     private static void CheckNativeSections()

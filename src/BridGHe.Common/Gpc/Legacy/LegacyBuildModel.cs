@@ -324,7 +324,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 }
                 if (otherPhysical.LoadPatch != null && (p.LoadPatch == null || Fp(p.LoadPatch) != Fp(otherPhysical.LoadPatch))) p.LoadPatch = ModelValues.CopyValue(otherPhysical.LoadPatch);
             }
-            return new LegacyPlateDraft(plate, first.Corners, report) { Records = records };
+            return new LegacyPlateDraft(plate, first.Corners, report) { Records = records, AngleDeg = first.AngleDeg };
         }
 
         /// <summary>Chain E (e3, P2K): what Build Model on GPC did, for the runners (merges by GH GUID per family node/beam/plate, of them the

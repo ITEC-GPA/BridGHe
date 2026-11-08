@@ -243,6 +243,8 @@ internal static class GpcOnlyReplay
         var quad = m3.Plates.Single();
         var plate = Make("Fem.GH_Plate", quad);
         var tri = Make("Fem.GH_Plate", new PlateModel("2", quad.Points.Take(3).ToArray(), quad.PlateProperty));
+        // P2X: the plate of 03 with a local axis angle (the datum of an internalized 0.3.0 plate: its draft is the conversion of the value).
+        var angled = Make("Fem.GH_Plate", new PlateModel("3", quad.Points.ToArray(), quad.PlateProperty) { AngleDeg = 30 });
         var lc = Make("Fem.GH_LoadCase", new LoadCaseModel("Replay", "Replay"));
         var along = m2.Beams[1].PointTo - m2.Beams[1].PointFrom;
         var cases = new List<(string, string, Dictionary<int, object>)>
@@ -277,6 +279,13 @@ internal static class GpcOnlyReplay
             ("AlignPlateAxesComponent", "axis 3 along the normal", new Dictionary<int, object> { [0] = plate, [1] = 2, [2] = new Rhino.Geometry.Vector3d(0, 0, 1) }),
             ("AlignPlateAxesComponent", "axis 1 along the normal (warning)", new Dictionary<int, object> { [0] = plate, [1] = 0, [2] = new Rhino.Geometry.Vector3d(0, 0, 1) }),
             ("AlignPlateAxesComponent", "axis 1 already aligned", new Dictionary<int, object> { [0] = plate, [1] = 0, [2] = new Rhino.Geometry.Vector3d(1, 0, 0) }),
+            // P2X (user decision of 8/11, «Mappalo come nella 0.3.0»): the local axis angle on GPC.
+            ("AlignPlateAxesComponent", "axis 1 turned by an increment", new Dictionary<int, object> { [0] = plate, [1] = 0, [2] = new Rhino.Geometry.Vector3d(1, 1, 0) }),
+            ("AlignPlateAxesComponent", "axis 2 turned by an increment", new Dictionary<int, object> { [0] = plate, [1] = 1, [2] = new Rhino.Geometry.Vector3d(1, -2, 0.5) }),
+            ("AlignPlateAxesComponent", "axis 1 on a plate with an angle", new Dictionary<int, object> { [0] = angled, [1] = 0, [2] = new Rhino.Geometry.Vector3d(0, 1, 0) }),
+            ("AlignPlateAxesComponent", "axis 3 on a plate with an angle (reversed)", new Dictionary<int, object> { [0] = angled, [1] = 2, [2] = new Rhino.Geometry.Vector3d(0, 0, -1) }),
+            ("PlatePreStressComponent", "prestress on a plate with an angle", new Dictionary<int, object> { [0] = angled, [1] = lc, [2] = 1.0, [3] = 2.0, [4] = 0.0 }),
+            ("ElementIdComponent", "a plate with an angle", new Dictionary<int, object> { [0] = angled, [1] = "P8" }),
             ("ElementFilterComponent", "find a beam and a node", new Dictionary<int, object> { [0] = new object[] { node, beam, plate, node2 }, [1] = new object[] { beam, node2 } }),
             ("MergeGeometryComponent", "elements (no geometry)", new Dictionary<int, object> { [0] = new object[] { beam, node } }),
             ("NodeFilterComponent", "by position", new Dictionary<int, object> { [0] = new object[] { node, node2 }, [2] = new object[] { m1.Nodes.Last().Position }, [3] = 0 }),
@@ -344,7 +353,11 @@ internal static class GpcOnlyReplay
         // BridgeExampleMigration.Initialize, in gpc-only-generators right after gpc-only-elements, threw from Grasshopper's own upgrader
         // Upgrade_PolygonCenterComponent2.Version of CurveComponents.gha (new DateTime(2013, 23, 9, 10, 45, 0)). Registered (an earlier group
         // parsed them in this process): the solutions are only disabled again before reading the definitions, as Initialize does.
-        if (Grasshopper.Instances.ComponentServer.ObjectProxies.Any(p => p.Location?.EndsWith("CurveComponents.gha", StringComparison.OrdinalIgnoreCase) == true))
+        // P2X: the server is read from its field, never through Instances.ComponentServer: in a process of its own (--gpc-only) that property
+        // creates Grasshopper's default server, which loads the installed plug-ins (BridGHe of the main checkout among them) before the one under
+        // test, and the load of the plug-in under test then failed («Assembly with same name is already loaded»).
+        var registered = typeof(Grasshopper.Instances).GetField("m_comServer", BindingFlags.NonPublic | BindingFlags.Static)?.GetValue(null) as GH_ComponentServer;
+        if (registered != null && registered.ObjectProxies.Any(p => p.Location?.EndsWith("CurveComponents.gha", StringComparison.OrdinalIgnoreCase) == true))
             GH_Document.EnableSolutions = false;
         else BridgeExampleMigration.Initialize();
         plugin = BridgeMergeTests.Initialize();

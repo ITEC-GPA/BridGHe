@@ -102,7 +102,8 @@ namespace BridGHe.Grasshopper.Display
             {using var material=new DisplayMaterial(composite?(i==0?Color.SteelBlue:Color.LightGray):Color.CadetBlue,options.Transparency);pipeline.DrawBrepShaded(shapes[i],material);}
         }
         /// <summary>R6.5 P0 (coordinator, 7/11): the preview of an element given by its GPC draft alone (no FEM value): the geometry (point,
-        /// axis, outline) and the label; sections, loads and attributes are drawn from the FEM value until the components draw them on GPC.</summary>
+        /// axis, outline), the label and (P2X) the local axes of a plate; sections, loads and attributes are drawn from the FEM value until the
+        /// components draw them on GPC.</summary>
         public static void DraftWires(object draft,DisplayPipeline pipeline,RhinoViewport viewport,Color color,DisplayOptions options)
         {
             if(draft==null || !options.Enabled || !DisplayPreferences.Current.Enabled)return;
@@ -113,6 +114,12 @@ namespace BridGHe.Grasshopper.Display
                 case Common.Gpc.Legacy.LegacyPlateDraft p:{var outline=DataTypes.GpcDraftGeometry.Outline(p);if(outline!=null)pipeline.DrawCurve(outline,color);break;}
             }
             var bounds=DataTypes.GpcDraftGeometry.Bounds(draft);
+            // P2X: the local axes of a plate draft (turned by its local axis angle), drawn as the FEM preview draws those of a plate.
+            if(options.Axes && bounds.IsValid && draft is Common.Gpc.Legacy.LegacyPlateDraft pd && pd.Corners!=null && (pd.Corners.Count==3 || pd.Corners.Count==4))
+            {
+                Common.Gpc.Builders.GpcPlateBuilders.LocalAxes(pd.Corners,pd.AngleDeg,out var x,out var y,out var z);
+                using(DrawingHelper.Scale(options.SymbolScale)){double size=DrawingHelper.GetScaleFactor(viewport,bounds.Center)*2;pipeline.DrawArrow(new Line(bounds.Center,bounds.Center+x*size),Color.Red);pipeline.DrawArrow(new Line(bounds.Center,bounds.Center+y*size),Color.Green);pipeline.DrawArrow(new Line(bounds.Center,bounds.Center+z*size),Color.Blue);}
+            }
             if(options.Labels && bounds.IsValid){string label=DataTypes.GpcDraftGeometry.Label(draft);if(label.Length!=0)pipeline.DrawDot(bounds.Center,label,color,Color.White);}
         }
         /// <summary>R6.5 P0: the shaded preview of a plate given by its GPC draft alone (its flat mesh).</summary>

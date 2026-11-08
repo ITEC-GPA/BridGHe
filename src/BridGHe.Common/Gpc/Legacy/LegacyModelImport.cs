@@ -263,6 +263,12 @@ namespace BridGHe.Common.Gpc.Legacy
     {
         /// <summary>Chain E (e3): the groups and Element IDs of the plate at list level (<see cref="LegacyElementRecords"/>).</summary>
         public LegacyElementRecords Records { get; init; } = new LegacyElementRecords();
+
+        /// <summary>P2X (user decision of 8/11, «Mappalo come nella 0.3.0»): the local axis angle of the plate in degrees, as the former plate
+        /// (<c>PlateModel.AngleDeg</c>), exact. Not 0: the plate carries its local axes turned by it in <c>Assignments.LayerAxes</c>
+        /// (<see cref="Builders.GpcPlateBuilders.LayerAxes"/> on the corners); Build Model turns the axes of the plate on its nodes by it, and the
+        /// Straus7 writer of the Converter gives them to Straus7 as <c>St7SetPlateXAngle1</c>, as the former exporter gave the angle.</summary>
+        public double AngleDeg { get; init; }
     }
 
     /// <summary>Converts a former BridGHe FEM model (BGHA1 archive, read as data by <see cref="LegacyArchive"/>) into a GPC

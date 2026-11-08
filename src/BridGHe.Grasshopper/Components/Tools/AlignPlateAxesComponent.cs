@@ -69,8 +69,9 @@ namespace BridGHe.Grasshopper.Components
             dir.Unitize();
 
             Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.AlignAxes(plate.Gpc, axis, given.X, given.Y, given.Z, id);
-            // R6.5 P1 lane 1a: a plate given by its GPC draft alone: the same decisions on the corners of the draft (the warning of a direction
-            // along the normal included), identity derived from the input draft; a turned local axis angle is refused, as the reader refuses it.
+            // R6.5 P1 lane 1a: a plate given by its GPC draft alone: the same decisions on the corners and the angle of the draft (the warning of
+            // a direction along the normal included), identity derived from the input draft; P2X: the turned local axis angle is mapped on the
+            // layer axes of the draft, as the reader maps it.
             if (plate.Value == null)
             {
                 if (ax != "3 Blue" && plate.Gpc != null && Common.Gpc.Builders.GpcPlateBuilders.AlignAxesAlongNormal(plate.Gpc, given.X, given.Y, given.Z))
@@ -131,12 +132,11 @@ namespace BridGHe.Grasshopper.Components
             }
 
             // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the draft of the input plate, the same decisions taken on its
-            // corners (GpcPlateBuilders.AlignAxes), identity of the conversion of the FEM output; a plate the reader refuses gets none, as its
-            // conversion (an angle after the component). A plate with an angle that the component brings back to 0 has an input draft the reader
-            // refuses and an output it converts: no draft is attached, its conversion is the bridge until R6.5 (the angle is not in the drafts).
-            if (!(plate.Value.AngleDeg != 0 && newPlate.Value.AngleDeg == 0))
-                GpcBuilderAttach.Plate(newPlate, () => Common.Gpc.Builders.GpcPlateBuilders.AlignAxes(plate.Gpc, axis, given.X, given.Y, given.Z,
-                    Common.Gpc.GpcBeamDrafts.Identity(newPlate.Value)));
+            // corners and its local axis angle (GpcPlateBuilders.AlignAxes), identity of the conversion of the FEM output; a plate the reader
+            // refuses gets none, as its conversion. P2X: the angle is in the drafts (LegacyPlateDraft.AngleDeg, mapped on the layer axes), so a
+            // plate the component turns, or brings back to 0, gets its draft like any other.
+            GpcBuilderAttach.Plate(newPlate, () => Common.Gpc.Builders.GpcPlateBuilders.AlignAxes(plate.Gpc, axis, given.X, given.Y, given.Z,
+                Common.Gpc.GpcBeamDrafts.Identity(newPlate.Value)));
 
             DA.SetData(0, newPlate);
         }

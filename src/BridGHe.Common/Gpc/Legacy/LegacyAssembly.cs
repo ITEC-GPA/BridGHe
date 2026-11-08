@@ -521,6 +521,9 @@ namespace BridGHe.Common.Gpc.Legacy
             var plate = new AreaElement(GpcIdentity.Derive(Owner, "plate:" + k), null, property, null, name, k + 1)
             { Source = new GPC.Model.Core.Identity.SourceIdentity(LegacyModelImport.Program, Owner.ToString("D"), GPC.Model.Core.Identity.EntityFamily.Shell, name.Length != 0 ? name : (k + 1).ToString()) };
             plate.ConnectNodes(corners);
+            // P2X (user decision of 8/11, «Mappalo come nella 0.3.0»): the local axis angle of the draft turns the axes of the plate on its nodes
+            // (mm), as Straus7 turned the initial axes of the element by the angle of the former exporter (St7SetPlateXAngle1).
+            if (draft.AngleDeg != 0) plate.Assignments.LayerAxes = Builders.GpcPlateBuilders.LayerAxes(plate.Points, draft.AngleDeg);
             if (d.Assignments.Offset.HasValue) plate.Assignments.Offset = Units.IsIdentity ? d.Assignments.Offset : Units.ToMm(d.Assignments.Offset.Value);
             if (d.Groups.Count != 0) plate.AddGroup(GroupOf(d.Groups.Values.First()));
             foreach (var a in d.Attributes.Values)

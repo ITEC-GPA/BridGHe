@@ -82,6 +82,7 @@ namespace BridGHe.Grasshopper.DataTypes
             text += $"\nProperty: {d.Plate.PlateProperty?.Name}";
             text += "\nGroups: " + Groups(d.Records);
             text += "\nPoints: " + string.Join("; ", Corners(d));
+            text += "\nAngle: " + d.AngleDeg.ToString(CultureInfo.CurrentCulture); // P2X: the local axis angle, as the FEM text
             return text + NoFem;
         }
 

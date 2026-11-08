@@ -1,0 +1,546 @@
+output	path	index	value
+Load cases	{0;0;0}	0	Pressure
+Load cases	{0;0;0}	1	Pressure
+Load cases	{0;0;0}	2	Pressure
+Load cases	{0;0;0}	3	Pressure
+Load cases	{0;0;0}	4	Prestress
+Load cases	{0;0;0}	5	Prestress
+Load cases	{0;0;0}	6	Prestress
+Load cases	{0;0;0}	7	Prestress
+Load cases	{0;0;1}	0	Pressure
+Load cases	{0;0;1}	1	Pressure
+Load cases	{0;0;1}	2	Pressure
+Load cases	{0;0;1}	3	Prestress
+Load cases	{0;0;1}	4	Prestress
+Load cases	{0;0;1}	5	Prestress
+Load cases	{0;0;2}	0	Pressure
+Load cases	{0;0;2}	1	Pressure
+Load cases	{0;0;2}	2	Pressure
+Load cases	{0;0;2}	3	Prestress
+Load cases	{0;0;2}	4	Prestress
+Load cases	{0;0;2}	5	Prestress
+Load cases	{0;0;3}	0	Pressure
+Load cases	{0;0;3}	1	Pressure
+Load cases	{0;0;3}	2	Pressure
+Load cases	{0;0;3}	3	Pressure
+Load cases	{0;0;3}	4	Prestress
+Load cases	{0;0;3}	5	Prestress
+Load cases	{0;0;3}	6	Prestress
+Load cases	{0;0;3}	7	Prestress
+Load cases	{0;0;4}	0	Pressure
+Load cases	{0;0;4}	1	Pressure
+Load cases	{0;0;4}	2	Pressure
+Load cases	{0;0;4}	3	Pressure
+Load cases	{0;0;4}	4	Prestress
+Load cases	{0;0;4}	5	Prestress
+Load cases	{0;0;4}	6	Prestress
+Load cases	{0;0;4}	7	Prestress
+Nodes	{0;0;0}	0	3
+Nodes	{0;0;0}	1	2
+Nodes	{0;0;0}	2	1
+Nodes	{0;0;0}	3	4
+Nodes	{0;0;0}	4	3
+Nodes	{0;0;0}	5	2
+Nodes	{0;0;0}	6	1
+Nodes	{0;0;0}	7	4
+Nodes	{0;0;1}	0	5
+Nodes	{0;0;1}	1	6
+Nodes	{0;0;1}	2	7
+Nodes	{0;0;1}	3	5
+Nodes	{0;0;1}	4	6
+Nodes	{0;0;1}	5	7
+Nodes	{0;0;2}	0	8
+Nodes	{0;0;2}	1	6
+Nodes	{0;0;2}	2	5
+Nodes	{0;0;2}	3	8
+Nodes	{0;0;2}	4	6
+Nodes	{0;0;2}	5	5
+Nodes	{0;0;3}	0	9
+Nodes	{0;0;3}	1	10
+Nodes	{0;0;3}	2	4
+Nodes	{0;0;3}	3	6
+Nodes	{0;0;3}	4	9
+Nodes	{0;0;3}	5	10
+Nodes	{0;0;3}	6	4
+Nodes	{0;0;3}	7	6
+Nodes	{0;0;4}	0	8
+Nodes	{0;0;4}	1	3
+Nodes	{0;0;4}	2	10
+Nodes	{0;0;4}	3	9
+Nodes	{0;0;4}	4	8
+Nodes	{0;0;4}	5	3
+Nodes	{0;0;4}	6	10
+Nodes	{0;0;4}	7	9
+Steps	{0;0;0}	0	0
+Steps	{0;0;0}	1	0
+Steps	{0;0;0}	2	0
+Steps	{0;0;0}	3	0
+Steps	{0;0;0}	4	0
+Steps	{0;0;0}	5	0
+Steps	{0;0;0}	6	0
+Steps	{0;0;0}	7	0
+Steps	{0;0;1}	0	0
+Steps	{0;0;1}	1	0
+Steps	{0;0;1}	2	0
+Steps	{0;0;1}	3	0
+Steps	{0;0;1}	4	0
+Steps	{0;0;1}	5	0
+Steps	{0;0;2}	0	0
+Steps	{0;0;2}	1	0
+Steps	{0;0;2}	2	0
+Steps	{0;0;2}	3	0
+Steps	{0;0;2}	4	0
+Steps	{0;0;2}	5	0
+Steps	{0;0;3}	0	0
+Steps	{0;0;3}	1	0
+Steps	{0;0;3}	2	0
+Steps	{0;0;3}	3	0
+Steps	{0;0;3}	4	0
+Steps	{0;0;3}	5	0
+Steps	{0;0;3}	6	0
+Steps	{0;0;3}	7	0
+Steps	{0;0;4}	0	0
+Steps	{0;0;4}	1	0
+Steps	{0;0;4}	2	0
+Steps	{0;0;4}	3	0
+Steps	{0;0;4}	4	0
+Steps	{0;0;4}	5	0
+Steps	{0;0;4}	6	0
+Steps	{0;0;4}	7	0
+Force	{0;0;0}	0	0 0 0
+Force	{0;0;0}	1	0 0 0
+Force	{0;0;0}	2	0 0 0
+Force	{0;0;0}	3	0 0 0
+Force	{0;0;0}	4	15.61264905431424 16.70882650424964 9.437795828044377
+Force	{0;0;0}	5	-8.812871804245432 -25.71444741203178 -6.148714816982503
+Force	{0;0;0}	6	-16.164109924966127 -18.363209291208502 -10.39295412491914
+Force	{0;0;0}	7	8.261410933593545 24.060064625072922 5.193556520107742
+Force	{0;0;1}	0	0 0 0
+Force	{0;0;1}	1	0 0 0
+Force	{0;0;1}	2	0 0 0
+Force	{0;0;1}	3	2.35090929699993 1.0248454066283372 -1.552197988154332
+Force	{0;0;1}	4	2.35090929699993 1.0248454066283372 -1.5521979881543315
+Force	{0;0;1}	5	2.35090929699993 1.0248454066283372 -1.5521979881543317
+Force	{0;0;2}	0	0 0 0
+Force	{0;0;2}	1	0 0 0
+Force	{0;0;2}	2	0 0 0
+Force	{0;0;2}	3	41.46602462999425 2.3149635737612186 13.250930711978686
+Force	{0;0;2}	4	41.46602462999427 2.3149635737612178 13.250930711978686
+Force	{0;0;2}	5	41.466024629994266 2.3149635737612186 13.25093071197868
+Force	{0;0;3}	0	0 0 0
+Force	{0;0;3}	1	0 0 0
+Force	{0;0;3}	2	0 0 0
+Force	{0;0;3}	3	0 0 0
+Force	{0;0;3}	4	23.718295034405887 -74.87711108961798 -0.00011546218728276476
+Force	{0;0;3}	5	56.89210993384781 35.702271908521816 -8.488478661718291
+Force	{0;0;3}	6	0.6784878074492262 18.838185270602235 0.00011544907866462706
+Force	{0;0;3}	7	-32.49532709199272 -91.74119772753758 8.48847864860967
+Force	{0;0;4}	0	0 0 0
+Force	{0;0;4}	1	0 0 0
+Force	{0;0;4}	2	0 0 0
+Force	{0;0;4}	3	0 0 0
+Force	{0;0;4}	4	-35.23140596513605 -18.254448578164382 -43.0411658713186
+Force	{0;0;4}	5	45.133556148138894 45.13378713610257 -4.338381840826538
+Force	{0;0;4}	6	-4.986448334218402 -21.963405783351185 27.220094382737972
+Force	{0;0;4}	7	-85.35141044749336 -85.35164149761812 -11.482689647754068
+Force Max	{0;0;0}	0	0
+Force Max	{0;0;0}	1	0
+Force Max	{0;0;0}	2	0
+Force Max	{0;0;0}	3	0
+Force Max	{0;0;0}	4	25.614435010645366
+Force Max	{0;0;0}	5	-6.812702311937947
+Force Max	{0;0;0}	6	-6.812702477358778
+Force Max	{0;0;0}	7	25.614435148266583
+Force Max	{0;0;1}	0	0
+Force Max	{0;0;1}	1	0
+Force Max	{0;0;1}	2	0
+Force Max	{0;0;1}	3	3.3757547036283038
+Force Max	{0;0;1}	4	3.3757547036283038
+Force Max	{0;0;1}	5	3.3757547036283038
+Force Max	{0;0;2}	0	0
+Force Max	{0;0;2}	1	0
+Force Max	{0;0;2}	2	0
+Force Max	{0;0;2}	3	45.52920303851134
+Force Max	{0;0;2}	4	45.52920303851137
+Force Max	{0;0;2}	5	45.529203038511355
+Force Max	{0;0;3}	0	0
+Force Max	{0;0;3}	1	0
+Force Max	{0;0;3}	2	0
+Force Max	{0;0;3}	3	0
+Force Max	{0;0;3}	4	23.7182950345411
+Force Max	{0;0;3}	5	59.87314683137157
+Force Max	{0;0;3}	6	18.838185271336194
+Force Max	{0;0;3}	7	-31.303127060251732
+Force Max	{0;0;4}	0	0
+Force Max	{0;0;4}	1	0
+Force Max	{0;0;4}	2	0
+Force Max	{0;0;4}	3	0
+Force Max	{0;0;4}	4	17.127293038853395
+Force Max	{0;0;4}	5	49.472053484484576
+Force Max	{0;0;4}	6	15.038014025266492
+Force Max	{0;0;4}	7	-73.86883632422054
+Force Min	{0;0;0}	0	0
+Force Min	{0;0;0}	1	0
+Force Min	{0;0;0}	2	0
+Force Min	{0;0;0}	3	0
+Force Min	{0;0;0}	4	6.707040547918508
+Force Min	{0;0;0}	5	-27.714616904339266
+Force Min	{0;0;0}	6	-27.714616738815856
+Force Min	{0;0;0}	7	6.70704041039988
+Force Min	{0;0;1}	0	0
+Force Min	{0;0;1}	1	0
+Force Min	{0;0;1}	2	0
+Force Min	{0;0;1}	3	-3.6637359812630166E-14
+Force Min	{0;0;1}	4	-3.6193270602780103E-14
+Force Min	{0;0;1}	5	-3.6415315207705135E-14
+Force Min	{0;0;2}	0	0
+Force Min	{0;0;2}	1	0
+Force Min	{0;0;2}	2	0
+Force Min	{0;0;2}	3	-1.7482148347558741
+Force Min	{0;0;2}	4	-1.7482148347558741
+Force Min	{0;0;2}	5	-1.7482148347558706
+Force Min	{0;0;3}	0	0
+Force Min	{0;0;3}	1	0
+Force Min	{0;0;3}	2	0
+Force Min	{0;0;3}	3	0
+Force Min	{0;0;3}	4	-74.8771110897532
+Force Min	{0;0;3}	5	32.72123501099806
+Force Min	{0;0;3}	6	0.6784878067152658
+Force Min	{0;0;3}	7	-92.93339775927856
+Force Min	{0;0;4}	0	0
+Force Min	{0;0;4}	1	0
+Force Min	{0;0;4}	2	0
+Force Min	{0;0;4}	3	0
+Force Min	{0;0;4}	4	-70.61314758215383
+Force Min	{0;0;4}	5	40.79528979975689
+Force Min	{0;0;4}	6	-41.98786814283608
+Force Min	{0;0;4}	7	-96.83421562089096
+Force Angle	{0;0;0}	0	0
+Force Angle	{0;0;0}	1	0
+Force Angle	{0;0;0}	2	0
+Force Angle	{0;0;0}	3	0
+Force Angle	{0;0;0}	4	46.66182546633931
+Force Angle	{0;0;0}	5	161.98035581780633
+Force Angle	{0;0;0}	6	138.01964520303807
+Force Angle	{0;0;0}	7	73.3381753635802
+Force Angle	{0;0;1}	0	0
+Force Angle	{0;0;1}	1	0
+Force Angle	{0;0;1}	2	0
+Force Angle	{0;0;1}	3	146.56504044684434
+Force Angle	{0;0;1}	4	146.56504044684434
+Force Angle	{0;0;1}	5	146.56504044684434
+Force Angle	{0;0;2}	0	0
+Force Angle	{0;0;2}	1	0
+Force Angle	{0;0;2}	2	0
+Force Angle	{0;0;2}	3	17.04729062217798
+Force Angle	{0;0;2}	4	17.04729062217797
+Force Angle	{0;0;2}	5	17.047290622177968
+Force Angle	{0;0;3}	0	0
+Force Angle	{0;0;3}	1	0
+Force Angle	{0;0;3}	2	0
+Force Angle	{0;0;3}	3	0
+Force Angle	{0;0;3}	4	179.99993290259368
+Force Angle	{0;0;3}	5	160.649426971745
+Force Angle	{0;0;3}	6	89.99963574586145
+Force Angle	{0;0;3}	7	7.994851322477552
+Force Angle	{0;0;4}	0	0
+Force Angle	{0;0;4}	1	0
+Force Angle	{0;0;4}	2	0
+Force Angle	{0;0;4}	3	0
+Force Angle	{0;0;4}	4	129.4217166477597
+Force Angle	{0;0;4}	5	134.9992373518561
+Force Angle	{0;0;4}	6	36.3400585755769
+Force Angle	{0;0;4}	7	135.0002882207351
+Force Von Mises	{0;0;0}	0	49.30420043047226
+Force Von Mises	{0;0;0}	1	49.30420043047227
+Force Von Mises	{0;0;0}	2	49.30420043047227
+Force Von Mises	{0;0;0}	3	49.30420043047227
+Force Von Mises	{0;0;0}	4	23.006230017053557
+Force Von Mises	{0;0;0}	5	25.014025431479553
+Force Von Mises	{0;0;0}	6	25.014025224039468
+Force Von Mises	{0;0;0}	7	23.006230186679872
+Force Von Mises	{0;0;1}	0	9.05510129135018
+Force Von Mises	{0;0;1}	1	9.05510129135018
+Force Von Mises	{0;0;1}	2	9.055101291350184
+Force Von Mises	{0;0;1}	3	3.3757547036283224
+Force Von Mises	{0;0;1}	4	3.375754703628322
+Force Von Mises	{0;0;1}	5	3.3757547036283224
+Force Von Mises	{0;0;2}	0	11.452302780536993
+Force Von Mises	{0;0;2}	1	11.452302780536993
+Force Von Mises	{0;0;2}	2	11.452302780536993
+Force Von Mises	{0;0;2}	3	46.42800246184397
+Force Von Mises	{0;0;2}	4	46.42800246184398
+Force Von Mises	{0;0;2}	5	46.42800246184397
+Force Von Mises	{0;0;3}	0	48.254228525381706
+Force Von Mises	{0;0;3}	1	48.254228525381706
+Force Von Mises	{0;0;3}	2	48.254228525381706
+Force Von Mises	{0;0;3}	3	48.254228525381706
+Force Von Mises	{0;0;3}	4	89.13527189981333
+Force Von Mises	{0;0;3}	5	51.92638658542149
+Force Von Mises	{0;0;3}	6	18.508270881252102
+Force Von Mises	{0;0;3}	7	81.89869488969244
+Force Von Mises	{0;0;4}	0	48.31352409029282
+Force Von Mises	{0;0;4}	1	48.31352409029282
+Force Von Mises	{0;0;4}	2	48.31352409029282
+Force Von Mises	{0;0;4}	3	48.31352409029282
+Force Von Mises	{0;0;4}	4	80.5541609684636
+Force Von Mises	{0;0;4}	5	45.754923089534635
+Force Von Mises	{0;0;4}	6	51.19118173110784
+Force Von Mises	{0;0;4}	7	87.63811653911681
+Moment	{0;0;0}	0	-12768.143323072069 -4230.80962454042 10845.103127647653
+Moment	{0;0;0}	1	-35614.774619981996 -22871.7144792125 14503.728596992982
+Moment	{0;0;0}	2	-38633.386393444336 -19880.124507365814 12777.133361612961
+Moment	{0;0;0}	3	-15738.656749413574 -1240.2754683895328 9075.939138566642
+Moment	{0;0;0}	4	0 0 0
+Moment	{0;0;0}	5	0 0 0
+Moment	{0;0;0}	6	0 0 0
+Moment	{0;0;0}	7	0 0 0
+Moment	{0;0;1}	0	442.5054292845667 -1242.7055619115627 728.005611125689
+Moment	{0;0;1}	1	-313.0349042734482 -3956.1957876540323 177.60815722267813
+Moment	{0;0;1}	2	587.4466042054303 689.1017102424923 234.01668964858993
+Moment	{0;0;1}	3	0 0 0
+Moment	{0;0;1}	4	0 0 0
+Moment	{0;0;1}	5	0 0 0
+Moment	{0;0;2}	0	-635.6630381960508 -4784.841686319372 1388.5343213769843
+Moment	{0;0;2}	1	486.15557564111504 -2226.217155668925 1042.7911250832885
+Moment	{0;0;2}	2	872.1337186255535 643.1280529718829 1287.976565627349
+Moment	{0;0;2}	3	0 0 0
+Moment	{0;0;2}	4	0 0 0
+Moment	{0;0;2}	5	0 0 0
+Moment	{0;0;3}	0	-12614.86074175181 1856.082388397247 11110.010780795232
+Moment	{0;0;3}	1	17387.58801447929 2371.6431287358064 -11620.589699976255
+Moment	{0;0;3}	2	-57298.45917096354 3655.3495695479187 -10186.070641993292
+Moment	{0;0;3}	3	2233.106570103715 -1889.3527976862222 12544.529838778193
+Moment	{0;0;3}	4	0 0 0
+Moment	{0;0;3}	5	0 0 0
+Moment	{0;0;3}	6	0 0 0
+Moment	{0;0;3}	7	0 0 0
+Moment	{0;0;4}	0	-11850.682295332375 12880.546351991306 -2479.234128841425
+Moment	{0;0;4}	1	-16779.197946585755 -37041.31379226774 30564.012232342768
+Moment	{0;0;4}	2	21472.536996990173 -1723.9171307671368 -7510.8293251387595
+Moment	{0;0;4}	3	-16272.528720806014 5524.361644442353 7238.328447341273
+Moment	{0;0;4}	4	0 0 0
+Moment	{0;0;4}	5	0 0 0
+Moment	{0;0;4}	6	0 0 0
+Moment	{0;0;4}	7	0 0 0
+Moment Max	{0;0;0}	0	3155.4700519970356
+Moment Max	{0;0;0}	1	-13401.699844201596
+Moment Max	{0;0;0}	2	-13408.211517841291
+Moment Max	{0;0;0}	3	3126.188680625075
+Moment Max	{0;0;0}	4	0
+Moment Max	{0;0;0}	5	0
+Moment Max	{0;0;0}	6	0
+Moment Max	{0;0;0}	7	0
+Moment Max	{0;0;1}	0	713.442115663704
+Moment Max	{0;0;1}	1	-304.39678987251887
+Moment Max	{0;0;1}	2	877.7470182749289
+Moment Max	{0;0;1}	3	0
+Moment Max	{0;0;1}	4	0
+Moment Max	{0;0;1}	5	0
+Moment Max	{0;0;2}	0	-213.86528787352017
+Moment Max	{0;0;2}	1	840.7160612008041
+Moment Max	{0;0;2}	2	2050.687161577383
+Moment Max	{0;0;2}	3	0
+Moment Max	{0;0;2}	4	0
+Moment Max	{0;0;2}	5	0
+Moment Max	{0;0;3}	0	7878.981323440308
+Moment Max	{0;0;3}	1	23714.63473235018
+Moment Max	{0;0;3}	2	5312.504001712256
+Moment Max	{0;0;3}	3	12884.622328707239
+Moment Max	{0;0;3}	4	0
+Moment Max	{0;0;3}	5	0
+Moment Max	{0;0;3}	6	0
+Moment Max	{0;0;3}	7	0
+Moment Max	{0;0;4}	0	13126.63371633188
+Moment Max	{0;0;4}	1	5289.079191638684
+Moment Max	{0;0;4}	2	23692.10382999143
+Moment Max	{0;0;4}	3	7709.092915197303
+Moment Max	{0;0;4}	4	0
+Moment Max	{0;0;4}	5	0
+Moment Max	{0;0;4}	6	0
+Moment Max	{0;0;4}	7	0
+Moment Min	{0;0;0}	0	-20154.422999609524
+Moment Min	{0;0;0}	1	-45084.7892549929
+Moment Min	{0;0;0}	2	-45105.29938296886
+Moment Min	{0;0;0}	3	-20105.120898428184
+Moment Min	{0;0;0}	4	0
+Moment Min	{0;0;0}	5	0
+Moment Min	{0;0;0}	6	0
+Moment Min	{0;0;0}	7	0
+Moment Min	{0;0;1}	0	-1513.6422482907
+Moment Min	{0;0;1}	1	-3964.833902054962
+Moment Min	{0;0;1}	2	398.8012961729937
+Moment Min	{0;0;1}	3	0
+Moment Min	{0;0;1}	4	0
+Moment Min	{0;0;1}	5	0
+Moment Min	{0;0;2}	0	-5206.639436641902
+Moment Min	{0;0;2}	1	-2580.777641228614
+Moment Min	{0;0;2}	2	-535.4253899799468
+Moment Min	{0;0;2}	3	0
+Moment Min	{0;0;2}	4	0
+Moment Min	{0;0;2}	5	0
+Moment Min	{0;0;3}	0	-18637.75967679487
+Moment Min	{0;0;3}	1	-3955.403589135083
+Moment Min	{0;0;3}	2	-58955.61360312787
+Moment Min	{0;0;3}	3	-12540.868556289744
+Moment Min	{0;0;3}	4	0
+Moment Min	{0;0;3}	5	0
+Moment Min	{0;0;3}	6	0
+Moment Min	{0;0;3}	7	0
+Moment Min	{0;0;4}	0	-12096.76965967295
+Moment Min	{0;0;4}	1	-59109.59093049218
+Moment Min	{0;0;4}	2	-3943.483963768389
+Moment Min	{0;0;4}	3	-18457.259991560964
+Moment Min	{0;0;4}	4	0
+Moment Min	{0;0;4}	5	0
+Moment Min	{0;0;4}	6	0
+Moment Min	{0;0;4}	7	0
+Moment Angle	{0;0;0}	0	55.74237780288866
+Moment Angle	{0;0;0}	1	56.8580117387841
+Moment Angle	{0;0;0}	2	63.13673350982836
+Moment Angle	{0;0;0}	3	64.30763977414757
+Moment Angle	{0;0;0}	4	0
+Moment Angle	{0;0;0}	5	0
+Moment Angle	{0;0;0}	6	0
+Moment Angle	{0;0;0}	7	0
+Moment Angle	{0;0;1}	0	20.41339997101972
+Moment Angle	{0;0;1}	1	2.784431853862256
+Moment Angle	{0;0;1}	2	51.12705156727594
+Moment Angle	{0;0;1}	3	0
+Moment Angle	{0;0;1}	4	0
+Moment Angle	{0;0;1}	5	0
+Moment Angle	{0;0;2}	0	16.897309067187336
+Moment Angle	{0;0;2}	1	18.778599758618633
+Moment Angle	{0;0;2}	2	42.459842383660856
+Moment Angle	{0;0;2}	3	0
+Moment Angle	{0;0;2}	4	0
+Moment Angle	{0;0;2}	5	0
+Moment Angle	{0;0;3}	0	61.53723279129474
+Moment Angle	{0;0;3}	1	151.43309370277913
+Moment Angle	{0;0;3}	2	99.24039670155571
+Moment Angle	{0;0;3}	3	40.334468262892905
+Moment Angle	{0;0;3}	4	0
+Moment Angle	{0;0;3}	5	0
+Moment Angle	{0;0;3}	6	0
+Moment Angle	{0;0;3}	7	0
+Moment Angle	{0;0;4}	0	95.66857859452216
+Moment Angle	{0;0;4}	1	35.83059088162016
+Moment Angle	{0;0;4}	2	163.53677074101302
+Moment Angle	{0;0;4}	3	73.20470769579534
+Moment Angle	{0;0;4}	4	0
+Moment Angle	{0;0;4}	5	0
+Moment Angle	{0;0;4}	6	0
+Moment Angle	{0;0;4}	7	0
+Shear Force	{0;0;0}	0	-24.657534659261344 14.223479809457759 0
+Shear Force	{0;0;0}	1	-24.657534659261344 14.22347980945776 0
+Shear Force	{0;0;0}	2	-24.657534659261344 14.22347980945776 0
+Shear Force	{0;0;0}	3	-24.657534659261344 14.22347980945776 0
+Shear Force	{0;0;0}	4	0 0 0
+Shear Force	{0;0;0}	5	0 0 0
+Shear Force	{0;0;0}	6	0 0 0
+Shear Force	{0;0;0}	7	0 0 0
+Shear Force	{0;0;1}	0	-0.09682599890278616 5.227068444626207 0
+Shear Force	{0;0;1}	1	-0.09682599890278616 5.227068444626207 0
+Shear Force	{0;0;1}	2	-0.09682599890278618 5.22706844462621 0
+Shear Force	{0;0;1}	3	0 0 0
+Shear Force	{0;0;1}	4	0 0 0
+Shear Force	{0;0;1}	5	0 0 0
+Shear Force	{0;0;2}	0	0.5961538793743222 6.585059874023322 0
+Shear Force	{0;0;2}	1	0.5961538793743222 6.585059874023322 0
+Shear Force	{0;0;2}	2	0.5961538793743224 6.585059874023322 0
+Shear Force	{0;0;2}	3	0 0 0
+Shear Force	{0;0;2}	4	0 0 0
+Shear Force	{0;0;2}	5	0 0 0
+Shear Force	{0;0;3}	0	-11.895520376452156 -25.192329226042837 0
+Shear Force	{0;0;3}	1	-11.895520376452154 -25.192329226042837 0
+Shear Force	{0;0;3}	2	-11.895520376452158 -25.192329226042837 0
+Shear Force	{0;0;3}	3	-11.895520376452158 -25.192329226042837 0
+Shear Force	{0;0;3}	4	0 0 0
+Shear Force	{0;0;3}	5	0 0 0
+Shear Force	{0;0;3}	6	0 0 0
+Shear Force	{0;0;3}	7	0 0 0
+Shear Force	{0;0;4}	0	-9.004184809509963 -26.400571823175053 0
+Shear Force	{0;0;4}	1	-9.004184809509962 -26.400571823175056 0
+Shear Force	{0;0;4}	2	-9.004184809509962 -26.400571823175056 0
+Shear Force	{0;0;4}	3	-9.004184809509962 -26.400571823175056 0
+Shear Force	{0;0;4}	4	0 0 0
+Shear Force	{0;0;4}	5	0 0 0
+Shear Force	{0;0;4}	6	0 0 0
+Shear Force	{0;0;4}	7	0 0 0
+Shear Force Max	{0;0;0}	0	NaN
+Shear Force Max	{0;0;0}	1	NaN
+Shear Force Max	{0;0;0}	2	NaN
+Shear Force Max	{0;0;0}	3	NaN
+Shear Force Max	{0;0;0}	4	NaN
+Shear Force Max	{0;0;0}	5	NaN
+Shear Force Max	{0;0;0}	6	NaN
+Shear Force Max	{0;0;0}	7	NaN
+Shear Force Max	{0;0;1}	0	NaN
+Shear Force Max	{0;0;1}	1	NaN
+Shear Force Max	{0;0;1}	2	NaN
+Shear Force Max	{0;0;1}	3	NaN
+Shear Force Max	{0;0;1}	4	NaN
+Shear Force Max	{0;0;1}	5	NaN
+Shear Force Max	{0;0;2}	0	NaN
+Shear Force Max	{0;0;2}	1	NaN
+Shear Force Max	{0;0;2}	2	NaN
+Shear Force Max	{0;0;2}	3	NaN
+Shear Force Max	{0;0;2}	4	NaN
+Shear Force Max	{0;0;2}	5	NaN
+Shear Force Max	{0;0;3}	0	NaN
+Shear Force Max	{0;0;3}	1	NaN
+Shear Force Max	{0;0;3}	2	NaN
+Shear Force Max	{0;0;3}	3	NaN
+Shear Force Max	{0;0;3}	4	NaN
+Shear Force Max	{0;0;3}	5	NaN
+Shear Force Max	{0;0;3}	6	NaN
+Shear Force Max	{0;0;3}	7	NaN
+Shear Force Max	{0;0;4}	0	NaN
+Shear Force Max	{0;0;4}	1	NaN
+Shear Force Max	{0;0;4}	2	NaN
+Shear Force Max	{0;0;4}	3	NaN
+Shear Force Max	{0;0;4}	4	NaN
+Shear Force Max	{0;0;4}	5	NaN
+Shear Force Max	{0;0;4}	6	NaN
+Shear Force Max	{0;0;4}	7	NaN
+Shear Force Angle	{0;0;0}	0	NaN
+Shear Force Angle	{0;0;0}	1	NaN
+Shear Force Angle	{0;0;0}	2	NaN
+Shear Force Angle	{0;0;0}	3	NaN
+Shear Force Angle	{0;0;0}	4	NaN
+Shear Force Angle	{0;0;0}	5	NaN
+Shear Force Angle	{0;0;0}	6	NaN
+Shear Force Angle	{0;0;0}	7	NaN
+Shear Force Angle	{0;0;1}	0	NaN
+Shear Force Angle	{0;0;1}	1	NaN
+Shear Force Angle	{0;0;1}	2	NaN
+Shear Force Angle	{0;0;1}	3	NaN
+Shear Force Angle	{0;0;1}	4	NaN
+Shear Force Angle	{0;0;1}	5	NaN
+Shear Force Angle	{0;0;2}	0	NaN
+Shear Force Angle	{0;0;2}	1	NaN
+Shear Force Angle	{0;0;2}	2	NaN
+Shear Force Angle	{0;0;2}	3	NaN
+Shear Force Angle	{0;0;2}	4	NaN
+Shear Force Angle	{0;0;2}	5	NaN
+Shear Force Angle	{0;0;3}	0	NaN
+Shear Force Angle	{0;0;3}	1	NaN
+Shear Force Angle	{0;0;3}	2	NaN
+Shear Force Angle	{0;0;3}	3	NaN
+Shear Force Angle	{0;0;3}	4	NaN
+Shear Force Angle	{0;0;3}	5	NaN
+Shear Force Angle	{0;0;3}	6	NaN
+Shear Force Angle	{0;0;3}	7	NaN
+Shear Force Angle	{0;0;4}	0	NaN
+Shear Force Angle	{0;0;4}	1	NaN
+Shear Force Angle	{0;0;4}	2	NaN
+Shear Force Angle	{0;0;4}	3	NaN
+Shear Force Angle	{0;0;4}	4	NaN
+Shear Force Angle	{0;0;4}	5	NaN
+Shear Force Angle	{0;0;4}	6	NaN
+Shear Force Angle	{0;0;4}	7	NaN
+plate	-	-	BridGHe Plate #1 | Property: BridGHe plate Property Name: Shell 20; BridGHe Material Name: S355;  | Kind: Steel; | Minimum yielding stress:355; | Minimum ultimate stress:510; | Elastic Modulus:210000; | Poisson ratio:0.3; | Id:; |  | Groups:  | Points: 1000,1000,0; 0,1000,0; 0,0,0; 1000,0,0 | Angle: 30 | Offset: 0 | Loads:  |  - BridGHe Pressure load: Load Case: BridGHe LoadCase: Pressure, V=0,0,0.01 Local |  - BridGHe PreStress load: Load Case: BridGHe LoadCase: Prestress, PreStress=5,-2,0 Local |  | With results
+plate	-	-	BridGHe Plate #2 | Property: BridGHe plate Property Name: Shell 20; BridGHe Material Name: S355;  | Kind: Steel; | Minimum yielding stress:355; | Minimum ultimate stress:510; | Elastic Modulus:210000; | Poisson ratio:0.3; | Id:; |  | Groups:  | Points: 3000,1000,0; 2000,0,0; 3000,0,0 | Angle: 15 | Offset: 0 | Loads:  |  - BridGHe Pressure load: Load Case: BridGHe LoadCase: Pressure, V=0,0,0.01 Local |  - BridGHe PreStress load: Load Case: BridGHe LoadCase: Prestress, PreStress=5,-2,0 Local |  | With results
+plate	-	-	BridGHe Plate #3 | Property: BridGHe plate Property Name: Shell 20; BridGHe Material Name: S355;  | Kind: Steel; | Minimum yielding stress:355; | Minimum ultimate stress:510; | Elastic Modulus:210000; | Poisson ratio:0.3; | Id:; |  | Groups:  | Points: 2000,1000,0; 2000,0,0; 3000,1000,0 | Angle: -60 | Offset: 0 | Loads:  |  - BridGHe Pressure load: Load Case: BridGHe LoadCase: Pressure, V=0,0,0.01 Local |  - BridGHe PreStress load: Load Case: BridGHe LoadCase: Prestress, PreStress=5,-2,0 Local |  | With results
+plate	-	-	BridGHe Plate #4 | Property: BridGHe plate Property Name: Shell 20; BridGHe Material Name: S355;  | Kind: Steel; | Minimum yielding stress:355; | Minimum ultimate stress:510; | Elastic Modulus:210000; | Poisson ratio:0.3; | Id:; |  | Groups:  | Points: 2000,500,0; 1000,500,0; 1000,0,0; 2000,0,0 | Angle: 0 | Offset: 0 | Loads:  |  - BridGHe Pressure load: Load Case: BridGHe LoadCase: Pressure, V=0,0,0.01 Local |  - BridGHe PreStress load: Load Case: BridGHe LoadCase: Prestress, PreStress=5,-2,0 Local |  | With results
+plate	-	-	BridGHe Plate #5 | Property: BridGHe plate Property Name: Shell 20; BridGHe Material Name: S355;  | Kind: Steel; | Minimum yielding stress:355; | Minimum ultimate stress:510; | Elastic Modulus:210000; | Poisson ratio:0.3; | Id:; |  | Groups:  | Points: 2000,1000,0; 1000,1000,0; 1000,500,0; 2000,500,0 | Angle: -135 | Offset: 0 | Loads:  |  - BridGHe Pressure load: Load Case: BridGHe LoadCase: Pressure, V=0,0,0.01 Local |  - BridGHe PreStress load: Load Case: BridGHe LoadCase: Prestress, PreStress=5,-2,0 Local |  | With results

@@ -69,6 +69,8 @@ internal static class GpcDraftArchiveChecks
     internal static string Text(LegacyBeamDraft d) => "BEAM\n" + GpcInputComparison.ValueDocument(d.Beam) + "\n" + Bridge(d.Bridge) + "\nangle " + B(d.AngleDeg) + "\n" + Property(d.Property)
         + "\n" + Records(d.Records) + "\n" + Report(d.Report);
     internal static string Text(LegacyPlateDraft d) => "PLATE\n" + GpcInputComparison.ValueDocument(d.Plate) + "\ncorners " + string.Join(",", d.Corners.Select(c => B(c.X) + " " + B(c.Y) + " " + B(c.Z)))
+        // P2X: the local axis angle of the plate, only when it has one (the texts of the plates without, the captures, are unchanged).
+        + (d.AngleDeg != 0 ? "\nangle " + B(d.AngleDeg) : "")
         + "\n" + Records(d.Records) + "\n" + Report(d.Report);
     internal static string Text(Material m) => "MATERIAL\n" + GpcMaterialKindChecks.Dump(m) + "\n" + GpcInputComparison.ValueDocument(m);
     private static string Case(LegacyCaseData c) => c == null ? "null" : $"{c.Name}~{B(c.Temperature)}~{c.StructuralMass}~{c.NonStructuralMass}~{c.Inertia}~{c.GravityDirection}~{B(c.GravityValue)}~{c.Stages}~{c.HasStageList}";

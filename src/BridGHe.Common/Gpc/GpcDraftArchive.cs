@@ -62,6 +62,7 @@ namespace BridGHe.Common.Gpc
             if (draft == null) throw new ArgumentNullException(nameof(draft));
             var r = DraftRecords.Of("plate", draft.Records, draft.Report);
             r.Corners = draft.Corners.Select(c => new double[] { c.X, c.Y, c.Z }).ToList();
+            r.AngleDeg = draft.AngleDeg; // P2X: the local axis angle of the plate (the member of the beam angle; 0 as before for a plate without one)
             return (value(draft.Plate), Save(r));
         }
 
@@ -95,7 +96,7 @@ namespace BridGHe.Common.Gpc
             var r = Load(records, "plate");
             var corners = (r.Corners ?? new List<double[]>()).Select(c => c != null && c.Length == 3 ? new GPC.Geometry.Point3d(c[0], c[1], c[2])
                 : throw new SerializationException("BridgheDraftRecordsInvalidCorner")).ToList();
-            return new LegacyPlateDraft(plate, corners, r.Report(null)) { Records = r.Records() };
+            return new LegacyPlateDraft(plate, corners, r.Report(null)) { Records = r.Records(), AngleDeg = r.AngleDeg };
         }
 
         public static Material ReadMaterial(byte[] data) => GpcGooArchive.ReadValue<Material>(data);
@@ -271,7 +272,7 @@ namespace BridGHe.Common.Gpc
         [DataMember(Order = 16)] public List<string> Warnings;
         [DataMember(Order = 17)] public List<CountRecord> NotExported;
         [DataMember(Order = 18)] public List<WarningRecord> ElementWarnings;
-        // Beam
+        // Beam (P2X: AngleDeg also the local axis angle of a plate draft, always written: 0 for every plate before)
         [DataMember(Order = 19)] public double AngleDeg;
         [DataMember(Order = 20)] public PropertyRecord Property;
         /// <summary>The bridge data of the beam: a <see cref="GPC.Checkers.CompositeBridge.BridgeModelData"/> of one record, in its own
