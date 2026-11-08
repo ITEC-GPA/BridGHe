@@ -104,10 +104,13 @@ internal static class GpcOnlyReplay
 
     private static object Prop(object o, string name) => o?.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance)?.GetValue(o);
 
+    /// <summary>A GH type with a FEM value. P2Y: <c>GH_BeamSection.ScriptVariable</c> is always null, so a section is read by its value.</summary>
+    private static bool HasFem(IGH_Goo goo) => goo.ScriptVariable() != null || (goo.GetType().Name == "GH_BeamSection" && Prop(goo, "Value") != null);
+
     /// <summary>The GH type made from the GPC datum alone of a FEM-backed one, or the same goo (another kind, or no datum).</summary>
     private static IGH_Goo GpcOnly(IGH_Goo goo, ISet<string> kinds)
     {
-        if (goo == null || !kinds.Contains(goo.GetType().Name) || goo.ScriptVariable() == null) return goo;
+        if (goo == null || !kinds.Contains(goo.GetType().Name) || !HasFem(goo)) return goo;
         var datum = Prop(goo, "Gpc");
         if (datum == null) return goo;
         var from = goo.GetType().GetMethod("FromGpc", BindingFlags.Public | BindingFlags.Static);
@@ -228,7 +231,7 @@ internal static class GpcOnlyReplay
                         run.Outputs.Add(Text(goo));
                         var datum = goo == null ? null : Prop(goo, "Gpc");
                         run.Raw.Add(datum == null ? run.Outputs[^1] : goo.GetType().Name + " " + GpcNullValueChecks.TextOf(datum));
-                        if (goo != null && kinds.Contains(goo.GetType().Name) && goo.ScriptVariable() != null) run.FemOutputs++;
+                        if (goo != null && kinds.Contains(goo.GetType().Name) && HasFem(goo)) run.FemOutputs++;
                     }
                 }
             }
