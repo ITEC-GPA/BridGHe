@@ -30,12 +30,29 @@ public static class BridgeDeckMesh
         if (!double.IsFinite(source.DeckThickness) || source.DeckThickness <= 0 || source.LeftEdge.Count != source.Stations.Count ||
             source.RightEdge.Count != source.Stations.Count)
             throw new ArgumentException("Bridge Geometry needs current slab thickness and edge data; recompute Simple Bridge.");
-        if (property?.IsValid != true || !Enum.IsDefined(property.PropertyType) || property.PropertyType == PlatePropertyType.Undefined)
-            throw new ArgumentException("Provide a valid plate property in N-mm.");
-        if (property.PropertyType != PlatePropertyType.LoadPatch &&
-            (Math.Abs(property.MembraneThickness - source.DeckThickness) > 1e-6 ||
-            Math.Abs(property.BendingThickness - source.DeckThickness) > 1e-6))
-            throw new ArgumentException("Structural deck membrane/bending thickness must match the geometric slab. Use explicit properties consistent with the model.");
+        // R6.5 P1 lane 2a: a property given by its GPC datum alone (property null, gpcProperty given) is checked on the datum, with the same
+        // messages: its formulation and its thicknesses (N-mm, as the draft units); a membrane has no bending thickness in the datum, so only
+        // its membrane thickness is compared. No FEM plates are made then (only the drafts and the plans).
+        bool gpcOnly = property == null && gpcProperty != null, loadPatch;
+        if (gpcOnly)
+        {
+            if (gpcProperty is not GPC.Model.ElementProperties.ElasticPlateProperty elastic)
+                throw new ArgumentException("Provide a valid plate property in N-mm.");
+            loadPatch = elastic.Formulation == GPC.Model.ElementProperties.ElasticPlateFormulation.LoadPatch;
+            if (!loadPatch && (Math.Abs(elastic.MembraneThickness - source.DeckThickness) > 1e-6 ||
+                elastic.Formulation != GPC.Model.ElementProperties.ElasticPlateFormulation.Membrane && Math.Abs(elastic.BendingThickness - source.DeckThickness) > 1e-6))
+                throw new ArgumentException("Structural deck membrane/bending thickness must match the geometric slab. Use explicit properties consistent with the model.");
+        }
+        else
+        {
+            if (property?.IsValid != true || !Enum.IsDefined(property.PropertyType) || property.PropertyType == PlatePropertyType.Undefined)
+                throw new ArgumentException("Provide a valid plate property in N-mm.");
+            if (property.PropertyType != PlatePropertyType.LoadPatch &&
+                (Math.Abs(property.MembraneThickness - source.DeckThickness) > 1e-6 ||
+                Math.Abs(property.BendingThickness - source.DeckThickness) > 1e-6))
+                throw new ArgumentException("Structural deck membrane/bending thickness must match the geometric slab. Use explicit properties consistent with the model.");
+            loadPatch = property.PropertyType == PlatePropertyType.LoadPatch;
+        }
         if (!double.IsFinite(maximumLongitudinal) || !double.IsFinite(maximumTransverse) || maximumLongitudinal <= 0 || maximumTransverse <= 0)
             throw new ArgumentException("Mesh lengths must be finite and positive, mm.");
         pourBoundaries ??= Array.Empty<double>();
@@ -68,7 +85,7 @@ public static class BridgeDeckMesh
             throw new ArgumentException("Deck mesh exceeds 100000 plates; increase mesh spacing.");
         using var editor = new BridgeGeometryEditor(source);
         var mesh = new Mesh(); mesh.Vertices.UseDoublePrecisionVertices = true;
-        var connectors = new List<Line>(); var plates = new List<PlateModel>(); var pp = ModelArchive.Clone(property);
+        var connectors = new List<Line>(); var plates = new List<PlateModel>(); var pp = gpcOnly ? null : ModelArchive.Clone(property);
         var drafts = gpcProperty == null ? null : new List<BridGHe.Common.Gpc.Legacy.LegacyPlateDraft>();
         var plans = new List<(Point3d[], string[], string)>();
         Point3d Edge(Polyline edge, double station)
@@ -101,8 +118,10 @@ public static class BridgeDeckMesh
             else mesh.Faces.AddFace(indices[0], indices[1], indices[2], indices[3]);
             var p = new PlateModel(points, pp, new GroupModel($"Pour{pour}", new GroupModel("Deck"))) { PlateId = $"Deck{plates.Count + 1}" };
             // R6.2 lane A: the same plate on GPC (the reader of the former plate: corners, property, the group Deck\Pour<n> with its parent, plate ID).
+            // R6.5 P1 lane 2a: without a FEM property the draft takes a provisional identity of its plate ID here (the component gives it the
+            // identity by content of lane 1b).
             drafts?.Add(BridGHe.Common.Gpc.Builders.GpcPlateBuilders.Create(points.Select(q => (q.X, q.Y, q.Z)).ToArray(), gpcProperty,
-                new[] { new[] { "Deck", $"Pour{pour}" } }, 0, 0, p.PlateId, BridGHe.Common.Gpc.GpcBeamDrafts.Identity(p)));
+                new[] { new[] { "Deck", $"Pour{pour}" } }, 0, 0, p.PlateId, gpcOnly ? BridGHe.Common.Gpc.GpcIdentity.Derive(BridGHe.Common.Gpc.GpcIdentity.NameSpace, "BridgeDeckMesh:" + p.PlateId) : BridGHe.Common.Gpc.GpcBeamDrafts.Identity(p)));
             plans.Add((points, new[] { "Deck", $"Pour{pour}" }, p.PlateId));
             plates.Add(p);
         }
@@ -122,7 +141,7 @@ public static class BridgeDeckMesh
         {
             $"{plates.Count} plates at slab mid-surface, {pourBoundaries.Count + 1} pour groups, {connectors.Count} beam/deck connection lines.",
             "Connection lines are geometry only: feed them to Bridge Connections and deliberately choose rigid or deformable mechanics.",
-            property.PropertyType == PlatePropertyType.LoadPatch ? "Load-patch deck property: no structural slab stiffness is intended." :
+            loadPatch ? "Load-patch deck property: no structural slab stiffness is intended." :
                 "Structural deck plates: assign steel-only beam properties to avoid counting concrete stiffness twice.",
             "No automatic beam/plate connection is implied by visual overlap. Triangles are recommended for warped decks; mesh convergence remains a separate analysis."
         }) { Drafts = drafts?.ToArray(), Plans = plans.ToArray() };

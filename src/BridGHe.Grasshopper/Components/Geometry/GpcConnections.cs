@@ -24,7 +24,8 @@ internal static class GpcConnections
 {
     internal static List<IGH_Goo> Elements(GH_Component component, IReadOnlyList<ElementModel> elements, IReadOnlyList<Line> lines, bool rigid, GH_BeamProperty property)
     {
-        if (GpcOnlyElements.GeneratorsWithoutFem) return GpcOnly(component, elements.Count, lines, rigid, property);
+        // R6.5 P1 lane 2a: the same for a property given by its GPC datum alone (rule of passo 75).
+        if (GpcOnlyElements.GeneratorsWithoutFem || GpcOnlyProperties.WithoutFem(property)) return GpcOnly(component, elements.Count, lines, rigid, property);
         var goos = elements.Select(e => e is NodeModel n ? (IGH_Goo)new GH_Node(n) : new GH_Beam((BeamModel)e)).ToList();
         for (int e = 0; e < goos.Count; e++)
         {

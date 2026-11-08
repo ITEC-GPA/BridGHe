@@ -26,6 +26,8 @@ namespace BridGHe.Grasshopper.Components.Parameters
                 if (PersistentData.DataCount > 0)
                 {
                     GH_BeamSection bs = PersistentData.Branches[0][0];
+                    // R6.5 P1 lane 2a: a section given by its recipe alone cannot be mirrored (the reader refuses a mirrored section: no recipe).
+                    if (bs.Value == null) return false;
                     return bs.SectionType == SectionModel.SectionTypes.C || bs.SectionType == SectionModel.SectionTypes.Angle;
                 }
                 return false;
@@ -39,6 +41,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
                 if (PersistentData.DataCount > 0)
                 {
                     GH_BeamSection bs = PersistentData.Branches[0][0];
+                    if (bs.Value == null) return false; // R6.5 P1 lane 2a: a recipe is never mirrored
                     return bs.MirrorType != SectionModel.MirrorTypes.None;
                 }
                 return false;
@@ -104,7 +107,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
 
         private void OnSetMirror(object sender, EventArgs e)
         {
-            if (PersistentData.DataCount > 0)
+            if (PersistentData.DataCount > 0 && PersistentData.Branches[0][0].Value != null) // R6.5 P1 lane 2a: no mirror for a recipe alone
             {
                 // A changed copy: the stored section may already be shared with the data of downstream components.
                 GH_BeamSection bs = Copy(PersistentData.Branches[0][0]);
@@ -124,7 +127,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
         {
             if (e.KeyCode == Keys.Enter)
             {
-                if (double.TryParse(textBox.Text, out double gap))
+                if (double.TryParse(textBox.Text, out double gap) && PersistentData.Branches[0][0].Value != null) // R6.5 P1 lane 2a: no gap for a recipe alone
                 {
                     GH_BeamSection bs = Copy(PersistentData.Branches[0][0]);
                     bs.MirrorGapA = gap;
@@ -157,7 +160,14 @@ namespace BridGHe.Grasshopper.Components.Parameters
                 // The stored section is converted on a copy (it may be shared downstream). Data from sources belongs to the
                 // upstream components and is never converted in place (before: every volatile item, upstream sections included).
                 bs = PersistentData.get_FirstItem(false);
-                if (bs != null)
+                // R6.5 P1 lane 2a: a section given by its recipe alone is converted on its recipe alone (the same builder as below; a refused
+                // recipe gives an error and the stored section stays).
+                if (bs != null && bs.Value == null)
+                {
+                    try { Replace(GH_BeamSection.FromGpc(Common.Gpc.Builders.GpcSectionBuilders.ConvertUnits(bs.Gpc, prevLengthCode, lengthUnits))); }
+                    catch (Exception x) when (GpcBuilderAttach.Refusal(x)) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, GpcOnlyProperties.Refused + x.Message); }
+                }
+                else if (bs != null)
                 {
                     var input = bs;
                     bs = Copy(bs);

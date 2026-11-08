@@ -70,7 +70,8 @@ namespace BridGHe.Grasshopper.Components
             Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.Override(beam.Gpc, has_property && bp.IsValid ? bp.Gpc : null,
                 has_groups ? GpcBeamInputs.GroupChains(groups) : null, has_angle ? a : (double?)null, has_offset ? (offset.X, offset.Y) : ((double, double)?)null, id);
             // R6.5 P1 lane 1a: a beam given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
-            if (beam.Value == null)
+            // R6.5 P1 lane 2a: the same for a property or a group given by its GPC datum alone (rule of passo 75: no FEM value from a null value).
+            if (beam.Value == null || has_property && GpcOnlyProperties.WithoutFem(bp) || has_groups && GpcOnlyProperties.WithoutFem(groups))
             {
                 GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => has_property && bp.IsValid ? bp.Gpc : null), GpcOnlyElements.Lazy(() => has_groups ? GpcBeamInputs.GroupChains(groups) : null), has_angle, has_angle ? a : 0, has_offset, has_offset ? offset.X : 0, has_offset ? offset.Y : 0));
                 return;

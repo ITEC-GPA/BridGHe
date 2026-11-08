@@ -37,6 +37,12 @@ internal static class GpcDraftCheckHost
         {
             if (attached == converted) { Equal.TryGetValue(type, out int n); Equal[type] = n + 1; return; }
             different++;
+            // P2Z: the two texts of the first difference in the folder named by BRIDGHE_DRAFT_DIFF (diagnosis).
+            if (different == 1 && Environment.GetEnvironmentVariable("BRIDGHE_DRAFT_DIFF") is { Length: > 0 } dump)
+            {
+                System.IO.Directory.CreateDirectory(dump);
+                System.IO.File.WriteAllText(System.IO.Path.Combine(dump, "converted.txt"), converted); System.IO.File.WriteAllText(System.IO.Path.Combine(dump, "attached.txt"), attached);
+            }
             Console.WriteLine("DRAFT CHECK DIFFERENCE " + type + ": the attached GPC datum differs from the conversion of its FEM value\n"
                 + GpcDraftArchiveChecks.FirstDifference(converted, attached));
         }

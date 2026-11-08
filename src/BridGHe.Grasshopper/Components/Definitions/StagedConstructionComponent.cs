@@ -84,6 +84,14 @@ namespace BridGHe.Grasshopper.Components.Definitions
                 return;
             }
 
+            // R6.5 P1 lane 2a: with the switch, or a group or combination given by its GPC datum alone, the stage by its GPC datum alone (rule
+            // of passo 75).
+            if (GpcOnlyProperties.On(groups, combinations))
+            {
+                GpcOnlyElements.Set(DA, 0, GpcOnlyProperties.Stage(this, () => Common.Gpc.Builders.GpcCaseBuilders.Stage(name, groups.Select(GpcBuilderAttach.GroupChain).ToArray(),
+                    combinations.Select(c => c.Gpc).ToArray(), morph, rotate)));
+                return;
+            }
             StagedConstructionModel sc = new StagedConstructionModel
             {
                 Name = name,

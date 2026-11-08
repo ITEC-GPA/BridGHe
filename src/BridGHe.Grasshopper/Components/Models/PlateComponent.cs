@@ -70,6 +70,20 @@ namespace BridGHe.Grasshopper.Components.Models
             for (int i = 0; i < edges.Count - 1; i++)
                 vertexes[i] = edges[i];
 
+            // R6.5 P1 lane 2a: a property or a group given by its GPC datum alone gives the plate by its draft alone (rule of passo 75: no FEM
+            // value from a null value), with the identity by content of the generators (decision 1 of passo 73: the one rule shared with P2;
+            // the parameters of the builder: corners, property, groups, angle, offset). A refused plate or property gives an error and no plate.
+            if (GpcOnlyProperties.WithoutFem(pp) || GpcOnlyProperties.WithoutFem(groups))
+            {
+                var draft = GpcOnlyElements.Generated(this, () =>
+                {
+                    var chains = groups.Select(g => GpcBuilderAttach.GroupChain(g)).ToArray();
+                    return Common.Gpc.Builders.GpcPlateBuilders.Create(vertexes.Select(v => (v.X, v.Y, v.Z)).ToArray(), pp.Gpc, chains, angle, offset, "",
+                        GpcOnlyElements.ContentIdentity(ComponentGuid, 0, vertexes, pp.Gpc, chains, angle, offset));
+                });
+                if (draft != null) DA.SetData("Plate", GH_Plate.FromGpc(draft));
+                return;
+            }
             GH_Plate plate = new GH_Plate(vertexes, pp, groups.ToArray());
 
             if (angle != 0)

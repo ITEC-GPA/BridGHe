@@ -42,6 +42,13 @@ namespace BridGHe.Grasshopper.Components.Definitions
             if (!DA.GetDataList(2, values))
                 return;
 
+            // R6.5 P1 lane 2a: with the switch, or a case given by its record alone, the combination by its GPC datum alone (rule of passo 75).
+            if (Helpers.GpcOnlyProperties.On(loadCases))
+            {
+                Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.Combination(this, () => Common.Gpc.Builders.GpcCaseBuilders.Combination(name,
+                    System.Linq.Enumerable.ToList(System.Linq.Enumerable.Select(loadCases, lc => lc.Gpc)), values)));
+                return;
+            }
             GH_LoadCombination loadCombination = new GH_LoadCombination(name);
             Dictionary<LoadCaseModel, double> loadComboValues = loadCombination.Value.Values;
 

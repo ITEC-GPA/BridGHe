@@ -50,7 +50,7 @@ public sealed class BridgeConnectionsComponent : BridgeUtilityComponent
         {
             if (beams.Count > 0 || offset != Vector3d.Zero || mode == 0 && property != null)
                 throw new ArgumentException("Connection mode accepts lines and, for deformable members only, Property.");
-            elements = BridgeConnections.Create(lines, mode == 0, property?.Value); preview.AddRange(lines);
+            elements = BridgeConnections.Create(lines, mode == 0, property?.Value, GpcOnlyProperties.BeamOrTrussWithoutFem(property)); preview.AddRange(lines);
             da.SetDataList(0, GpcConnections.Elements(this, elements, lines, mode == 0, property));
         }
         da.SetData(1, mode == 0 ? "Native full spatial rigid links (kinematic constraints), without artificial penalty stiffness." :

@@ -16,17 +16,21 @@ public sealed record BridgeSectionRule
     public double Start { get; init; }
     public double End { get; init; }
     public BeamPropertyModel Property { get; init; }
+    /// <summary>R6.5 P1 lane 2a: the property given by its GPC datum alone (<see cref="Property"/> null): Bridge Slab Grillage on a material
+    /// given by its GPC datum alone. Assignments with such a rule give their beams by their plans alone (<see cref="BridgeAssignment.Plans"/>).</summary>
+    [field: NonSerialized] public Gpc.Legacy.LegacyBeamProperty GpcProperty { get; init; }
     public Vector2d ScaleFrom { get; init; } = new(1, 1);
     public Vector2d ScaleTo { get; init; } = new(1, 1);
     public void Validate()
     {
         if (!Enum.IsDefined(typeof(BridgeMemberFamily), Family) || Group < 0 || Segment < 0 ||
-            !double.IsFinite(Start) || !double.IsFinite(End) || Start < 0 || End <= Start || Property?.IsValid != true)
+            !double.IsFinite(Start) || !double.IsFinite(End) || Start < 0 || End <= Start || !(Property?.IsValid == true || Property == null && GpcProperty?.Property != null))
             throw new ArgumentException("Section schedule requires a valid family/property, nonnegative selectors and 0 <= Start < End.");
         if (new[] { ScaleFrom.X, ScaleFrom.Y, ScaleTo.X, ScaleTo.Y }.Any(x => !double.IsFinite(x) || x <= 0))
             throw new ArgumentException("Section scale factors must be finite and positive.");
-        if ((ScaleFrom != new Vector2d(1, 1) || ScaleTo != new Vector2d(1, 1)) &&
-            Property.SectionType is SectionModel.SectionTypes.Generic or SectionModel.SectionTypes.GenericShapes)
+        if ((ScaleFrom != new Vector2d(1, 1) || ScaleTo != new Vector2d(1, 1)) && (Property != null
+            ? Property.SectionType is SectionModel.SectionTypes.Generic or SectionModel.SectionTypes.GenericShapes
+            : GpcProperty.Data?.Section?.Kind is Gpc.BridgeSectionKind.Generic or Gpc.BridgeSectionKind.GenericShapes))
             throw new ArgumentException("Taper scales require a dimensional Straus section, not generic/homogenized properties.");
         if (Family != 0 && ScaleFrom != ScaleTo)
             throw new ArgumentException("Station-based variable taper is supported on longitudinal girders only.");
@@ -132,11 +136,19 @@ public static class BridgeBeamFrames
 
 public static class BridgeMemberAssignment
 {
+    /// <param name="gpcDefaults">R6.5 P1 lane 2a: default properties given by their GPC datum alone (no FEM value), paired with families as
+    /// <paramref name="defaults"/>. With one of them, or a rule with a GPC property alone, the assignment is on GPC only (rule of passo 75): no
+    /// FEM beams, only the plans (<see cref="BridgeAssignment.Plans"/>), with the same checks, messages and diagnostics.</param>
     public static BridgeAssignment Assign(SimpleBridgeGeometry geometry, IReadOnlyDictionary<int, BeamPropertyModel> defaults,
-        IReadOnlyList<BridgeSectionRule> schedule)
+        IReadOnlyList<BridgeSectionRule> schedule, IReadOnlyDictionary<int, Gpc.Legacy.LegacyBeamProperty> gpcDefaults = null)
     {
         BridgeGeometryTools.Validate(geometry);
         defaults ??= new Dictionary<int, BeamPropertyModel>(); schedule ??= Array.Empty<BridgeSectionRule>();
+        gpcDefaults ??= new Dictionary<int, Gpc.Legacy.LegacyBeamProperty>();
+        bool gpcOnly = gpcDefaults.Count > 0 || schedule.Any(r => r != null && r.Property == null && r.GpcProperty != null);
+        foreach (var entry in gpcDefaults)
+            if ((entry.Key != -1 && !Enum.IsDefined(typeof(BridgeMemberFamily), entry.Key)) || entry.Value?.Property == null)
+                throw new ArgumentException("Default properties require valid family codes (-1 = all) and valid beam properties.");
         foreach (var entry in defaults)
             if ((entry.Key != -1 && !Enum.IsDefined(typeof(BridgeMemberFamily), entry.Key)) || entry.Value?.IsValid != true)
                 throw new ArgumentException("Default properties require valid family codes (-1 = all) and valid beam properties.");
@@ -147,7 +159,7 @@ public static class BridgeMemberAssignment
             if (rule.End > geometry.Stations[^1] + 1e-6) throw new ArgumentException("Section schedule extends beyond Bridge Geometry.");
         }
         // Clone each property once, retaining normal sharing within the output but never mutating inputs.
-        var properties = defaults.Values.Concat(schedule.Select(r => r.Property)).Distinct()
+        var properties = gpcOnly ? new Dictionary<BeamPropertyModel, BeamPropertyModel>() : defaults.Values.Concat(schedule.Select(r => r.Property)).Distinct()
             .ToDictionary(p => p, ModelArchive.Clone);
         var beams = new List<BeamModel>(); var missing = new List<string>(); var used = new HashSet<BridgeSectionRule>();
         var plans = new List<BridgeMemberPlan>();
@@ -173,15 +185,33 @@ public static class BridgeMemberAssignment
                     Math.Abs(mid - geometry.Stations[^1]) < 1e-7 && Math.Abs(r.End - mid) < 1e-7)).ToArray();
                 if (matches.Length > 1) throw new ArgumentException($"Overlapping section schedule on {member.Id} at {mid:G9} mm.");
                 var rule = matches.SingleOrDefault();
-                var property = rule?.Property ?? defaults.GetValueOrDefault((int)member.Family) ??
-                    (member.Family == BridgeMemberFamily.DeckTransverse ? null : defaults.GetValueOrDefault(-1));
+                // R6.5 P1 lane 2a: a property is the FEM one or, on GPC only, its GPC datum alone (the same precedence).
+                object property = rule != null ? (object)rule.Property ?? rule.GpcProperty
+                    : (object)defaults.GetValueOrDefault((int)member.Family) ?? gpcDefaults.GetValueOrDefault((int)member.Family) ??
+                    (member.Family == BridgeMemberFamily.DeckTransverse ? null : (object)defaults.GetValueOrDefault(-1) ?? gpcDefaults.GetValueOrDefault(-1));
                 string id = parts == 1 ? member.Id : $"{member.Id}/P{part + 1}";
                 if (property == null) { missing.Add(id); continue; }
                 if (rule != null) used.Add(rule);
                 double t0 = member.Family == BridgeMemberFamily.Girder ? (a - member.StationFrom) / (member.StationTo - member.StationFrom) : 0;
                 double t1 = member.Family == BridgeMemberFamily.Girder ? (b - member.StationFrom) / (member.StationTo - member.StationFrom) : 1;
-                string solverId = (beams.Count + 1).ToString(System.Globalization.CultureInfo.InvariantCulture);
-                var beam = new BeamModel(solverId, member.Axis.PointAt(t0), member.Axis.PointAt(t1), properties[property]) { BeamId = solverId };
+                string solverId = (plans.Count + 1).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                var frame = BridgeGeometryTools.FrameAt(geometry, mid);
+                Vector2d? scaleFrom = null, scaleTo = null;
+                if (rule != null)
+                {
+                    var sf = rule.Scale(a); var st = rule.Scale(b);
+                    if (sf != new Vector2d(1, 1) || st != new Vector2d(1, 1)) { scaleFrom = sf; scaleTo = st; }
+                }
+                Func<Gpc.Legacy.LegacyBeamProperty> planProperty = property is BeamPropertyModel femProperty ? () => BridgeGpcProperties.Of(femProperty)
+                    : () => (Gpc.Legacy.LegacyBeamProperty)property;
+                // R6.5 P1 lane 2a: on GPC only the plan alone (the FEM beam reads its FEM property).
+                if (gpcOnly)
+                {
+                    plans.Add(new BridgeMemberPlan(member.Axis.PointAt(t0), member.Axis.PointAt(t1), planProperty, solverId, true, member.Family,
+                        member.Group, member.Segment, member.Span, member.PhysicalId, a, b, id, frame.YAxis, frame.XAxis, scaleFrom, scaleTo));
+                    continue;
+                }
+                var beam = new BeamModel(solverId, member.Axis.PointAt(t0), member.Axis.PointAt(t1), properties[(BeamPropertyModel)property]) { BeamId = solverId };
                 var familyGroup = new GroupModel(member.Family.ToString());
                 var memberGroup = new GroupModel($"Group{member.Group}", familyGroup);
                 beam.Groups.Add(new GroupModel($"Segment{member.Segment}", memberGroup));
@@ -189,7 +219,6 @@ public static class BridgeMemberAssignment
                 {
                     beam.Attributes.Add(new SuperElementAttributeModel($"G{member.Group}"));
                 }
-                var frame = BridgeGeometryTools.FrameAt(geometry, mid);
                 var desiredUp = frame.YAxis;
                 var direction = beam.ToVector(); direction.Unitize();
                 if (Math.Abs(direction * desiredUp) > .9999) desiredUp = frame.XAxis;
@@ -198,27 +227,18 @@ public static class BridgeMemberAssignment
                 beam.AngleDeg += Math.Atan2(up * Vector3d.CrossProduct(axis, oldUp), up * oldUp) * 180 / Math.PI;
                 beam.Attributes.Add(new BridgeMemberAttributeModel(new(member.PhysicalId, member.Family, member.Group,
                     member.Segment, member.Span, a, b, up, id)));
-                Vector2d? scaleFrom = null, scaleTo = null;
-                if (rule != null)
-                {
-                    var sf = rule.Scale(a); var st = rule.Scale(b);
-                    if (sf != new Vector2d(1, 1) || st != new Vector2d(1, 1))
-                    {
-                        beam.Attributes.Add(new BeamTaperAttributeModel(new BeamTaperAttributeModel.AttributeData
-                        { NFromX = sf.X, NFromY = sf.Y, NToX = st.X, NToY = st.Y }));
-                        scaleFrom = sf; scaleTo = st;
-                    }
-                }
+                if (scaleFrom != null)
+                    beam.Attributes.Add(new BeamTaperAttributeModel(new BeamTaperAttributeModel.AttributeData
+                    { NFromX = scaleFrom.Value.X, NFromY = scaleFrom.Value.Y, NToX = scaleTo.Value.X, NToY = scaleTo.Value.Y }));
                 beams.Add(beam);
                 // R6.2 (lane B): the same beam without FEM values, for its GPC draft (the property: the GPC datum of the one assigned).
-                var source = property;
-                plans.Add(new BridgeMemberPlan(member.Axis.PointAt(t0), member.Axis.PointAt(t1), () => BridgeGpcProperties.Of(source), solverId, true, member.Family,
+                plans.Add(new BridgeMemberPlan(member.Axis.PointAt(t0), member.Axis.PointAt(t1), planProperty, solverId, true, member.Family,
                     member.Group, member.Segment, member.Span, member.PhysicalId, a, b, id, frame.YAxis, frame.XAxis, scaleFrom, scaleTo));
             }
         }
         return new(beams.ToArray(), missing.ToArray(), new[]
         {
-            $"{beams.Count} beam elements, {missing.Count} unassigned, {schedule.Count - used.Count} unused schedule entries.",
+            $"{plans.Count} beam elements, {missing.Count} unassigned, {schedule.Count - used.Count} unused schedule entries.",
             "N-mm properties required. Local section y follows projected deck normal; vertical posts use deck transverse direction.",
             "Each beam has one hierarchical Straus group (family/group/physical segment) and an integer export ID; geometric IDs are retained in metadata.",
             "Section changes split existing geometric chords. Fabrication segment IDs remain independent of this FEM subdivision.",

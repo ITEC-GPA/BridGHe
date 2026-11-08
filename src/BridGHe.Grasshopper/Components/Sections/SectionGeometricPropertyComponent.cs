@@ -46,6 +46,16 @@ namespace BridGHe.Grasshopper.Components.Sections
             pManager.AddNumberParameter("J", "J", "Torsional moment of area", GH_ParamAccess.item);
         }
 
+        /// <summary>R6.5 P1 lane 2a: the outputs from the values of the former section value (<c>GpcSectionGeometry.Former</c>), in the order of
+        /// the outputs.</summary>
+        private static void SetFormer(IGH_DataAccess DA, Common.Gpc.GpcSectionGeometry.FormerValues v)
+        {
+            int item = 0;
+            DA.SetData(item++, v.Name); DA.SetData(item++, v.Area); DA.SetData(item++, v.XG); DA.SetData(item++, v.YG); DA.SetData(item++, v.Ixx);
+            DA.SetData(item++, v.Iyy); DA.SetData(item++, v.AngleX1Rad); DA.SetData(item++, v.I11); DA.SetData(item++, v.I22); DA.SetData(item++, v.W11);
+            DA.SetData(item++, v.W22); DA.SetData(item++, v.Rho11); DA.SetData(item++, v.Rho22); DA.SetData(item++, v.J);
+        }
+
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
@@ -56,6 +66,15 @@ namespace BridGHe.Grasshopper.Components.Sections
 
             if (!DA.GetData(0, ref gH_BeamProperty))
                 return;
+
+            // R6.5 P1 lane 2a: a section given by its recipe alone gives the values the former section value held, from the recipe (rule of
+            // passo 75); a recipe without them (generic moduli, Brep shapes, native, composite) gives an error and no outputs.
+            if (Helpers.GpcOnlyProperties.WithoutFem(gH_BeamProperty))
+            {
+                var former = Helpers.GpcOnlyProperties.Datum(this, () => Common.Gpc.GpcSectionGeometry.Former(gH_BeamProperty.Gpc));
+                if (former != null) SetFormer(DA, former);
+                return;
+            }
 
             SectionModel section = gH_BeamProperty.Value;
 

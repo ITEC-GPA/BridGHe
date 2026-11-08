@@ -88,8 +88,9 @@ namespace BridGHe.Grasshopper.Components
             double tol = Helpers.ModelHelper.GetTolerance();
 
             // R6.5 P1 lane 1a: when a beam is given by its GPC draft alone, the partition is the one of the GPC drafts only (there is no FEM
-            // partition to compare with, nor to fall back on for a refused draft).
-            if (beams.Any(b => b.Value == null))
+            // partition to compare with, nor to fall back on for a refused draft). R6.5 P1 lane 2a: the same for a group given by its GPC datum
+            // alone (no FEM group to decide on: rule of passo 75).
+            if (beams.Any(b => b.Value == null) || GpcOnlyProperties.WithoutFem(groups))
             {
                 var only = GpcBeamFilter.Select(beams, ids, iniPositions, endPositions, props, groups, tol);
                 if (only == null) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The GPC datum of a beam is refused: the beams cannot be filtered."); return; }

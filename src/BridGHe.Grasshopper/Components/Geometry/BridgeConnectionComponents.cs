@@ -27,7 +27,7 @@ public abstract class BridgeConnectionComponent : BridgeUtilityComponent
     protected override void Solve(IGH_DataAccess da)
     {
         var current=new List<Line>(); GH_BeamProperty p=null;if(!da.GetDataList(0,current)||!rigid&&!da.GetData(1,ref p))return;
-        var elements=BridgeConnections.Create(current,rigid,p?.Value);lines.AddRange(current);
+        var elements=BridgeConnections.Create(current,rigid,p?.Value,GpcOnlyProperties.BeamOrTrussWithoutFem(p));lines.AddRange(current);
         da.SetDataList(0,GpcConnections.Elements(this,elements,current,rigid,p));
         da.SetData(1,rigid?"Native spatial kinematic rigid links.":"Deformable connection beams with explicit property.");
     }

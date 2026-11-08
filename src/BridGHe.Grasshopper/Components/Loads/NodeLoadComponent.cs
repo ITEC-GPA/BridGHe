@@ -54,7 +54,8 @@ namespace BridGHe.Grasshopper.Components.Loads
             NodeForceLoadModel load = new NodeForceLoadModel(lc.Value, new Vector3d(force.X, force.Y, force.Z));
             Func<Guid, Common.Gpc.Legacy.LegacyNodeDraft> build = id => Common.Gpc.Builders.GpcNodeBuilders.WithForce(node.Gpc, lc.Gpc, force.X, force.Y, force.Z, id);
             // R6.5 P1 lane 1a: a node given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
-            if (node.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Node(this, 0, node, build, GpcOnlyElements.Lazy(() => lc.Gpc), force.X, force.Y, force.Z)); return; }
+            // R6.5 P1 lane 2a: a load case given by its record alone gives the same output, without the FEM value (rule of passo 75).
+            if (node.Value == null || lc.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Node(this, 0, node, build, GpcOnlyElements.Lazy(() => lc.Gpc), force.X, force.Y, force.Z)); return; }
             GH_Node newNode = new GH_Node(node);
             newNode.Value.Loads.Add(load);
             // R6.2 (worked example of the frozen API, §1bis): the GPC draft built on GPC from the draft of the input, with the identity of the

@@ -127,7 +127,7 @@ namespace BridGHe.Grasshopper.Components.Loads
 
             Message = string.Format("Direction: Local axis {0}", dir + 1);
 
-            if (lc.Value.NonStructuralMassAcceleration)
+            if (GpcOnlyProperties.NonStructuralMass(lc))
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The connected LoadCase have the Non-structural mass flag set to on");
 
             bool input_errors = false;
@@ -244,7 +244,8 @@ namespace BridGHe.Grasshopper.Components.Loads
             string direction = Common.Gpc.Builders.GpcBeamBuilders.Code(Common.Gpc.Builders.GpcBeamBuilders.LoadDirections, dir);
             Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithDistributedLoad(beam.Gpc, lc.Gpc, (Common.Gpc.BridgeLoadSchema)schema, true, direction, pa, pb, p1, p2, a, b, null, id);
             // R6.5 P1 lane 1a: a beam given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
-            if (beam.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), schema, true, direction, pa, pb, p1, p2, a, b, null)); return; }
+            // R6.5 P1 lane 2a: a load case given by its record alone gives the same output, without the FEM value (rule of passo 75).
+            if (beam.Value == null || lc.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), schema, true, direction, pa, pb, p1, p2, a, b, null)); return; }
             GH_Beam newBeam = new GH_Beam(beam);
             newBeam.Value.Loads.Add(load);
             // R6.2 (lane B): the GPC draft built on GPC from the drafts of the inputs (identity of the conversion of the FEM output until R6.5).

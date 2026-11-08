@@ -48,6 +48,12 @@ namespace BridGHe.Grasshopper.Components.Definitions
 
             Message = name;
 
+            // R6.5 P1 lane 2a: with the switch, or a parent given by its GPC datum alone, the group by its chain of names alone (rule of passo 75).
+            if (GpcOnlyProperties.On(haveParent ? parent : null))
+            {
+                GpcOnlyElements.Set(DA, 0, GpcOnlyProperties.Group(this, () => Common.Gpc.Builders.GpcCaseBuilders.Group(name, haveParent ? parent.Gpc : null)));
+                return;
+            }
             GroupModel group = new GroupModel(name, haveParent ? parent.Value : null);
             var output = new GH_Group(group);
             // R6.2 part C (dual rule until R6.5): the chain of names built on the GPC datum of the parent.

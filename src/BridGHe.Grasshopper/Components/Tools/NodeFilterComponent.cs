@@ -87,7 +87,7 @@ namespace BridGHe.Grasshopper.Components.Tools
             for (int i = 0; i < nodes.Count; i++)
             {
                 GH_Node n = nodes[i];
-                bool add = GpcBuilderAttach.Decide(() => Matches(n.Gpc, ids, groupNames, positions, tol), n.Value == null ? null : () => FemMatches(n, ids, groups, positions, tol), "Node Filter"); // R6.5 P1 lane 1a: a node without FEM value on its draft alone
+                bool add = GpcBuilderAttach.Decide(() => Matches(n.Gpc, ids, groupNames, positions, tol), n.Value == null || GpcOnlyProperties.WithoutFem(groups) ? null : () => FemMatches(n, ids, groups, positions, tol), "Node Filter"); // R6.5 P1 lane 1a: a node without FEM value on its draft alone
                 if (add)
                     filtered.Add(n);
                 else

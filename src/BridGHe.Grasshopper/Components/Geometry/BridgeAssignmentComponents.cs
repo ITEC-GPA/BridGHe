@@ -82,16 +82,21 @@ public class BridgeMemberAssignmentComponent : BridgeUtilityComponent
         if (properties.Count > 0 && (families.Count != properties.Count || families.Distinct().Count() != families.Count))
             throw new ArgumentException("Provide exactly one distinct family code per default property.");
         if (rules.Any(r => r?.Value is not BridgeSectionRule)) throw new ArgumentException("Schedule accepts Bridge Section Schedule entries.");
-        var defaults = properties.Select((p, i) => (families[i], p.Value)).ToDictionary(p => p.Item1, p => p.Value);
+        // R6.5 P1 lane 2a: a default property given by its GPC datum alone is assigned by its datum (rule of passo 75): the beams then are
+        // given by their plans alone.
+        var defaults = properties.Select((p, i) => (families[i], p)).Where(p => !GpcOnlyProperties.WithoutFem(p.p)).ToDictionary(p => p.Item1, p => p.p.Value);
+        var gpcDefaults = properties.Select((p, i) => (families[i], p)).Where(p => GpcOnlyProperties.WithoutFem(p.p)).ToDictionary(p => p.Item1, p => p.p.Gpc);
         foreach (var p in properties) BridgeSectionScheduleComponent.TryAttach(p);
-        Publish(da, geometry.Value, defaults, rules.Select(r => (BridgeSectionRule)r.Value).ToArray());
+        Publish(da, geometry.Value, defaults, rules.Select(r => (BridgeSectionRule)r.Value).ToArray(), gpcDefaults);
     }
-    protected void Publish(IGH_DataAccess da, SimpleBridgeGeometry geometry, Dictionary<int,BeamPropertyModel> defaults, BridgeSectionRule[] rules)
+    protected void Publish(IGH_DataAccess da, SimpleBridgeGeometry geometry, Dictionary<int,BeamPropertyModel> defaults, BridgeSectionRule[] rules,
+        Dictionary<int, Common.Gpc.Legacy.LegacyBeamProperty> gpcDefaults = null)
     {
-        var result = BridgeMemberAssignment.Assign(geometry, defaults, rules);
+        var result = BridgeMemberAssignment.Assign(geometry, defaults, rules, gpcDefaults);
         if (result.Unassigned.Length > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"{result.Unassigned.Length} members have no property and were not created. Inspect Unassigned.");
         // R6.5 P1 lane 1b: the beams by their GPC drafts alone (identity by content of the plan), the physical IDs from the plans.
-        if (GpcOnlyElements.GeneratorsWithoutFem)
+        // R6.5 P1 lane 2a: the same when a property is given by its GPC datum alone (an assignment on GPC only has no FEM beams).
+        if (GpcOnlyElements.GeneratorsWithoutFem || gpcDefaults is { Count: > 0 } || rules.Any(r => r.Property == null && r.GpcProperty != null))
         {
             da.SetDataList(0, GpcOnly(this, 0, result.Plans));
             da.SetDataList(1, result.Plans.Select(p => p.PhysicalId));

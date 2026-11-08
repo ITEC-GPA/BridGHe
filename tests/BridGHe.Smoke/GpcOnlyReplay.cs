@@ -53,7 +53,10 @@ internal static class GpcOnlyReplay
     /// and groups (<see cref="Lane2Producers"/>, every instance with data, replayed with <c>GpcOnlyElements.PropertiesWithoutFem</c> on in
     /// the GPC-only copy: they give their data by the GPC datum alone, the path of P2), and the consumers of those kinds in the files of
     /// lanes 1a and 1b (their property, material, case and group inputs only: the element inputs stay FEM-backed). Lane 3 (Build Model,
-    /// analyses, checks, Construction Sequence, Composite Shrinkage Actions, Moving) is not here.</summary>
+    /// analyses, checks, Construction Sequence, Composite Shrinkage Actions, Moving) is not here.
+    /// <para>P2Z (coordinator, 8/11): lane 2 in two sub-lanes. The regression <c>gpc-only-properties</c> replays lane 2a
+    /// (<see cref="Lane2aTypes"/>: definitions, materials, sections, beam and plate properties and their consumers); the types of lane 2b
+    /// (<see cref="Lane2bTypes"/>: composite and bridge properties, State Override) are declared pending and listed, not replayed.</para></summary>
     internal static readonly string[] Lane2Producers =
     {
         // Components/Definitions
@@ -95,12 +98,32 @@ internal static class GpcOnlyReplay
 
     internal static readonly string[] Lane2Types = Lane2Producers.Concat(Lane2Consumers).ToArray();
 
+    /// <summary>P2Z: lane 2b, declared pending (not replayed by <c>gpc-only-properties</c> yet): the composite and bridge property components
+    /// and State Override (coordinator, 8/11), Get Beam Property and Beam Property Override (they read and change bridge properties), and
+    /// Bridge FEM Members with the producers of its Bridge Design data (Bridge Family Property, Bridge Section Schedule: the bridge rules carry
+    /// a FEM property; FEM Members has no input of the lane-2a kinds).</summary>
+    internal static readonly string[] Lane2bTypes =
+    {
+        "BeamPropertyOverrideComponent", "GetBeamPropertyComponent",
+        "BeamPropertyCompositeComponent", "BeamSectionConcreteSlabComponent", "BeamSectionHPropertyComponent", "CompositeSectionGeometricPropertyComponent",
+        "CreepAndShrinkageConcreteComponent",
+        "BridgeSegmentSectionsComponent", "BridgeSegmentExcelComponent", "BridgeSectionTemplateComponent", "BridgeSectionReadComponent",
+        "BridgeSegmentCompositeComponent", "BridgeStateOverrideComponent",
+        "BridgeFemMembersComponent", "BridgeFamilyPropertyComponent", "BridgeSectionScheduleComponent",
+    };
+
+    /// <summary>P2Z: lane 2a, the types of <c>gpc-only-properties</c>: lane 2 without <see cref="Lane2bTypes"/>.</summary>
+    internal static readonly string[] Lane2aTypes = Lane2Types.Where(t => !Lane2bTypes.Contains(t)).ToArray();
+
     /// <summary>The GH types of properties and data converted to their GPC data alone in lane 2.</summary>
     internal static readonly string[] PropertyGoo =
     {
         "GH_BeamSection", "GH_BeamProperty", "GH_PlateProperty", "GH_Material", "GH_LoadCase", "GH_LoadCombination", "GH_StagedConstruction", "GH_Group",
         "GH_CompositeBeamProperty",
     };
+
+    /// <summary>P2Z: the kinds of lane 2a (<see cref="PropertyGoo"/> without the composite beam property of lane 2b).</summary>
+    internal static readonly string[] PropertyGoo2a = PropertyGoo.Where(k => k != "GH_CompositeBeamProperty").ToArray();
 
     private static object Prop(object o, string name) => o?.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance)?.GetValue(o);
 
@@ -246,9 +269,9 @@ internal static class GpcOnlyReplay
     {
         Run fem, gpc, again;
         try { fem = Solve(c, g => g.Duplicate(), kinds); }
-        catch (Exception ex) { failures.Add(where + ": the copy with the inputs of today fails: " + ex.Message); return; }
+        catch (Exception ex) { failures.Add(where + ": the copy with the inputs of today fails: " + ex.GetBaseException().Message + Frame(ex)); return; }
         try { gpc = Solve(c, g => GpcOnly(g, kinds), kinds, true); again = Solve(c, g => GpcOnly(g, kinds), kinds, true); }
-        catch (Exception ex) { failures.Add(where + ": the copy with GPC-only inputs fails: " + ex.GetBaseException().Message); return; }
+        catch (Exception ex) { failures.Add(where + ": the copy with GPC-only inputs fails: " + ex.GetBaseException().Message + Frame(ex)); return; }
         var (n, items) = byType.TryGetValue(c.GetType().Name, out var v) ? v : (0, 0);
         byType[c.GetType().Name] = (n + 1, items + fem.Outputs.Count);
         if (!fem.Messages.SequenceEqual(gpc.Messages)) failures.Add(where + ": messages " + string.Join(" / ", fem.Messages) + " -> " + string.Join(" / ", gpc.Messages));
@@ -288,6 +311,9 @@ internal static class GpcOnlyReplay
         Rhino.Geometry.Vector3d x => new GH_Vector(x),
         Rhino.Geometry.Point3d p => new GH_Point(p),
         Rhino.Geometry.Line l => new GH_Line(l),
+        Rhino.Geometry.Mesh m => new GH_Mesh(m), // P2Z
+        Rhino.Geometry.Curve c => new GH_Curve(c), // P2Z
+        Rhino.Geometry.Brep b => new GH_Brep(b), // P2Z
         _ => throw new ArgumentException("GPC-ONLY REPLAY: no goo for " + v?.GetType().Name),
     };
 
@@ -385,10 +411,231 @@ internal static class GpcOnlyReplay
         };
     }
 
+    /// <summary>P2Z: the first item of output <paramref name="output"/> of a component solved in memory (the data of today: FEM-backed with
+    /// its GPC datum attached, as the examples have them).</summary>
+    private static IGH_Goo Produce(string type, Dictionary<int, object> inputs, int output = 0)
+    {
+        using var doc = new GH_Document();
+        var c = BridgeSegmentExcelTests.Add(doc, type);
+        foreach (var input in inputs)
+        {
+            var tree = new GH_Structure<IGH_Goo>();
+            foreach (var v in input.Value is object[] list ? list : new[] { input.Value }) tree.Append(Goo(v), new GH_Path(0));
+            SetInput(c.Params.Input[input.Key], tree, g => g);
+        }
+        BridgeSegmentExcelTests.Solve(doc, true);
+        var item = c.Params.Output[output].VolatileData.AllData(true).FirstOrDefault()
+            ?? throw new Exception("GPC-ONLY REPLAY: " + type + " gives no output (" + string.Join(" / ", c.RuntimeMessages(GH_RuntimeMessageLevel.Error)) + ")");
+        return item.Duplicate();
+    }
+
+    /// <summary>P2Z (lane 2a): the in-memory cases of the lane-2a types that no example of the scope uses (and of the paths the examples do
+    /// not reach): sections, materials, groups, stages, plate properties, the geometric property components, Plate from geometry, the node
+    /// and plate filters by group. Their lane-2a inputs come from the producer components solved in memory (FEM-backed with the attached
+    /// datum, as in the examples); the replay gives them by their GPC data alone.</summary>
+    private static List<(string Type, string Label, Dictionary<int, object> Inputs)> Lane2aCases()
+    {
+        var examples = NativeExamples.Create().ToDictionary(e => e.Id, e => e.Model);
+        var m1 = examples["01-cantilever"]; var m3 = examples["03-plate-patch"];
+        var node = Make("Fem.GH_Node", m1.Nodes.Last()); var node2 = Make("Fem.GH_Node", m1.Nodes.First());
+        var plate = Make("Fem.GH_Plate", m3.Plates.Single());
+        var steel = Produce("MaterialSteelComponent", new Dictionary<int, object> { [0] = "S355", [1] = 2 });
+        var concrete = Produce("MaterialConcreteComponent", new Dictionary<int, object> { [0] = "C35/45", [1] = 7 });
+        var section = Produce("BeamSectionIComponent", new Dictionary<int, object> { [0] = 300.0, [1] = 250.0, [2] = 800.0, [3] = 20.0, [4] = 16.0, [5] = 12.0 });
+        var circle = Produce("BeamSectionHollowCircleComponent", new Dictionary<int, object> { [0] = 323.9, [1] = 10.0 });
+        var deck = Produce("GroupComponent", new Dictionary<int, object> { [0] = "Deck" });
+        var pour = Produce("GroupComponent", new Dictionary<int, object> { [0] = "Pour1", [1] = deck });
+        var lc = Produce("LoadCaseComponent", new Dictionary<int, object> { [0] = "Replay", [1] = false });
+        var lc2 = Produce("LoadCaseComponent", new Dictionary<int, object> { [0] = "Traffic", [1] = false });
+        var combo = Produce("LoadCombinationComponent", new Dictionary<int, object> { [0] = "ULS", [1] = new object[] { lc, lc2 }, [2] = new object[] { 1.35, 1.5 } });
+        var property = Produce("BeamPropertyComponent", new Dictionary<int, object> { [0] = "Girder", [1] = 5, [2] = section, [3] = steel });
+        var tube = Produce("BeamPropertyComponent", new Dictionary<int, object> { [0] = "Tube", [1] = 5, [2] = circle, [3] = steel });
+        var shell = Produce("PlatePropertyComponent", new Dictionary<int, object> { [0] = "Deck", [1] = 0, [2] = 250.0, [3] = 250.0, [4] = concrete });
+        var q = m3.Plates.Single().Points;
+        var mesh = new Rhino.Geometry.Mesh(); foreach (var p in q) mesh.Vertices.Add(p); mesh.Faces.AddFace(0, 1, 2, 3);
+        var brep = Rhino.Geometry.Brep.CreatePlanarBreps(new Rhino.Geometry.Rectangle3d(Rhino.Geometry.Plane.WorldXY, 200, 400).ToNurbsCurve(), 1e-6).Single();
+        return new List<(string, string, Dictionary<int, object>)>
+        {
+            ("GroupComponent", "root group", new Dictionary<int, object> { [0] = "Deck" }),
+            ("GroupComponent", "with a parent", new Dictionary<int, object> { [0] = "Pour2", [1] = pour }),
+            ("StagedConstructionComponent", "one stage", new Dictionary<int, object> { [0] = "Stage 1", [1] = new object[] { deck, pour }, [2] = new object[] { combo }, [3] = false, [4] = true }),
+            ("MaterialAluminiumComponent", "wrought alloy", new Dictionary<int, object> { [0] = "Al", [1] = 0, [2] = "EN AW-6082 T6" }),
+            ("MaterialTableComponent", "stress-strain table", new Dictionary<int, object> { [0] = "Table", [1] = true, [2] = 0.3, [3] = 80000.0, [4] = 1.2e-5, [5] = 7.85e-9,
+                [6] = new object[] { -355.0, 0.0, 355.0 }, [7] = new object[] { -0.002, 0.0, 0.002 } }),
+            ("BeamSectionAngleComponent", "angle", new Dictionary<int, object> { [0] = 100.0, [1] = 10.0, [2] = 150.0, [3] = 8.0 }),
+            ("BeamSectionCComponent", "channel", new Dictionary<int, object> { [0] = 90.0, [1] = 12.0, [2] = 260.0, [3] = 9.0 }),
+            ("BeamSectionGenericComponent", "explicit values", new Dictionary<int, object> { [0] = 9000.0, [1] = 1.2e8, [2] = 4e7, [3] = 5e5, [4] = 0.0, [5] = 0.0, [6] = 4000.0,
+                [7] = 3000.0, [8] = 8e5, [9] = 4e5, [10] = 0.0, [11] = 10.0, [12] = 0.1 }),
+            ("BeamSectionHollowCircleComponent", "tube", new Dictionary<int, object> { [0] = 323.9, [1] = 10.0 }),
+            ("BeamSectionSolidCircleComponent", "bar", new Dictionary<int, object> { [0] = 60.0 }),
+            ("BeamSectionTComponent", "tee", new Dictionary<int, object> { [0] = 200.0, [1] = 15.0, [2] = 300.0, [3] = 10.0 }),
+            ("BeamSectionBrepComponent", "planar shape", new Dictionary<int, object> { [0] = brep }),
+            ("SectionGeometricPropertyComponent", "tube", new Dictionary<int, object> { [0] = circle }),
+            ("SectionGeometricPropertyComponent", "I section", new Dictionary<int, object> { [0] = section }),
+            ("BeamGeometricPropertyComponent", "I property", new Dictionary<int, object> { [0] = property }),
+            ("BeamGeometricPropertyComponent", "tube property", new Dictionary<int, object> { [0] = tube }),
+            ("PlatePropertyComponent", "thin shell", new Dictionary<int, object> { [0] = "Deck", [1] = 0, [2] = 250.0, [3] = 250.0, [4] = concrete }),
+            ("PlatePropertyComponent", "membrane", new Dictionary<int, object> { [0] = "Web", [1] = 4, [2] = 12.0, [3] = 12.0, [4] = steel }),
+            ("PlatePropertyComponent", "load patch (no material)", new Dictionary<int, object> { [0] = "Patch", [1] = 5 }),
+            // The plate property of the example 03 (its datum the conversion of its value): with the property of Plate Property (its datum
+            // attached) the FEM path of Plate has a DRAFT CHECK difference of its own, the XML form of the property name inside the plate
+            // draft (passo 76).
+            ("PlateComponent", "quadrilateral with property and groups", new Dictionary<int, object> { [0] = mesh, [1] = Make("Fem.GH_PlateProperty", m3.Plates.Single().PlateProperty),
+                [2] = new object[] { deck, pour }, [3] = 15.0, [4] = 5.0 }),
+            ("BeamComponent", "line with property and group", new Dictionary<int, object> { [0] = new Rhino.Geometry.LineCurve(new Rhino.Geometry.Point3d(0, 0, 0), new Rhino.Geometry.Point3d(5000, 0, 0)), [1] = property, [2] = new object[] { pour } }),
+            ("NodeFilterComponent", "by group", new Dictionary<int, object> { [0] = new object[] { node, node2 }, [4] = new object[] { deck } }),
+            ("PlateFilterComponent", "by group", new Dictionary<int, object> { [0] = new object[] { plate }, [5] = new object[] { deck } }),
+            ("BeamOverrideComponent", "property and group", new Dictionary<int, object> { [0] = Make("Fem.GH_Beam", examples["02-simply-supported"].Beams[1]), [1] = tube, [2] = new object[] { deck } }),
+            ("StrausBxsSectionComponent", "missing file (the same error on both paths)", new Dictionary<int, object> { [0] = Path.Combine(Path.GetTempPath(), "p2z-missing.bxs"), [1] = 2 }),
+        };
+    }
+
+    /// <summary>P2Z (lane 2a, native): the Straus7 section components (21 shapes and the library section), replayed in memory under the
+    /// native host (<c>--core-only --native</c>): Straus7 computes the section on both paths, the GPC-only copy gives the recipe alone. The
+    /// dimensions of <c>CheckNativeSections</c>.</summary>
+    private static List<(string Type, string Label, Dictionary<int, object> Inputs)> NativeSectionCases()
+    {
+        var cases = new List<(string, string, Dictionary<int, object>)>();
+        foreach (var shape in BridGHe.Common.Straus.StrausSectionCatalog.All)
+        {
+            double Dimension(string n) => n.StartsWith("R") || n.StartsWith("alpha") ? 0 : n == "D" ? 400 : n == "B2" ? 100 : n.StartsWith("B") ? 200 : n == "L" ? 20 : 10;
+            var dimensions = shape.Key == "BglBulb" ? new double[] { 200, 50, 10, 10, 0, 5, 0, 0, 30 } : shape.Dimensions.Select(Dimension).ToArray();
+            var type = plugin.GetTypes().Single(t => !t.IsAbstract && t.Name.StartsWith("Straus") && t.Name.EndsWith("SectionComponent") && t.BaseType?.Name == "StrausSectionComponent"
+                && (string)t.GetProperty("ShapeKey", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(Activator.CreateInstance(t)) == shape.Key).Name;
+            cases.Add((type, shape.Key, dimensions.Select((d, i) => (d, i)).ToDictionary(p => p.i, p => (object)p.d)));
+        }
+        cases.Add(("StrausLibrarySectionComponent", "an item not in the library (the same error on both paths)", new Dictionary<int, object> { [0] = "P2Z-none", [1] = "none", [2] = false, [3] = 2 }));
+        return cases;
+    }
+
+    /// <summary>P2Z: the Straus7 section components, replayed only by <see cref="NativeSections"/>.</summary>
+    internal static readonly string[] NativeTypes =
+    {
+        "StrausCircularSolidSectionComponent", "StrausCircularHollowSectionComponent", "StrausRectangleSolidSectionComponent", "StrausRectangleHollowSectionComponent",
+        "StrausLipChannelSectionComponent", "StrausTopHatSectionComponent", "StrausISectionComponent", "StrausTSectionComponent", "StrausAngleSectionComponent",
+        "StrausZSectionComponent", "StrausTrapezoidSolidSectionComponent", "StrausTrapezoidHollowSectionComponent", "StrausTriangleSolidSectionComponent",
+        "StrausTriangleHollowSectionComponent", "StrausCruciformSectionComponent", "StrausBglRectangleSectionComponent", "StrausBglISectionComponent",
+        "StrausBglChannelSectionComponent", "StrausBglTSectionComponent", "StrausBglAngleSectionComponent", "StrausBglBulbSectionComponent",
+        "StrausLibrarySectionComponent",
+    };
+
+    /// <summary>P2Z (coordinator, 8/11: «in-memory cases ... so they repeat in every gate»): the four parameters with modules, in memory. Each
+    /// parameter is solved twice, with its stored data of today (FEM-backed) and with the same data by its GPC datum alone (the switch of the
+    /// property producers on), and must give the same data modulo GUIDs and no FEM value: Material (stored), Group (the text cast by names),
+    /// Beam Section (the units menu), Load Combinations (the update of its cases by Staged Construction and Build Model).</summary>
+    private static void ParameterCases(ISet<string> kinds, IDictionary<string, (int Instances, int Items)> byType, List<string> failures, ref int count)
+    {
+        var steel = Produce("MaterialSteelComponent", new Dictionary<int, object> { [0] = "S355", [1] = 2 });
+        var section = Produce("BeamSectionIComponent", new Dictionary<int, object> { [0] = 300.0, [1] = 250.0, [2] = 800.0, [3] = 20.0, [4] = 16.0, [5] = 12.0 });
+        var lc = Produce("LoadCaseComponent", new Dictionary<int, object> { [0] = "Replay", [1] = false });
+        var lc2 = Produce("LoadCaseComponent", new Dictionary<int, object> { [0] = "Traffic", [1] = false });
+        var lc3 = Produce("LoadCaseComponent", new Dictionary<int, object> { [0] = "Wind", [1] = false });
+        var combo = Produce("LoadCombinationComponent", new Dictionary<int, object> { [0] = "ULS", [1] = new object[] { lc, lc2 }, [2] = new object[] { 1.35, 1.5 } });
+        var cases = new[] { lc, lc3 };
+        var femCases = cases.Select(c => (LoadCaseModel)Prop(c, "Value")).ToList();
+        var records = cases.Select(c => (BridGHe.Common.Gpc.Legacy.LegacyCaseData)Prop(c, "Gpc")).ToList();
+        var parameters = new (string Type, string Label, IGH_Goo Stored, string Text, Action<IGH_Param> Act)[]
+        {
+            ("MaterialParam", "stored material", steel, null, null),
+            ("GroupParam", "names cast from a text", null, "Deck::Pour1", null),
+            ("BeamSectionParam", "units menu (Nmm to Knm)", section, null, p => p.GetType().GetMethod("OnUnitsClick", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(p, new object[] { new System.Windows.Forms.ToolStripMenuItem("Knm"), EventArgs.Empty })),
+            ("LoadCombinationsParam", "cases updated (Traffic removed, Wind added)", combo, null, p => p.GetType().GetMethod("UpdateLoadCases").Invoke(p, new object[] { femCases, records })),
+        };
+        foreach (var (type, label, stored, text, act) in parameters)
+        {
+            string where = "in memory: parameter " + type + " (" + label + ")";
+            Run Once(bool gpcOnly)
+            {
+                using var doc = new GH_Document();
+                var param = (IGH_Param)Activator.CreateInstance(plugin.GetTypes().Single(t => t.Name == type));
+                param.CreateAttributes(); doc.AddObject(param, false);
+                if (text != null)
+                {
+                    var source = new Grasshopper.Kernel.Parameters.Param_String(); source.CreateAttributes(); doc.AddObject(source, false);
+                    source.PersistentData.Append(new GH_String(text)); param.AddSource(source);
+                }
+                if (stored != null)
+                {
+                    var tree = new GH_Structure<IGH_Goo>(); tree.Append(gpcOnly ? GpcOnly(stored, kinds) : stored.Duplicate(), new GH_Path(0));
+                    SetInput(param, tree, g => g);
+                }
+                if (gpcOnly) generators.SetValue(null, true);
+                try
+                {
+                    doc.Enabled = true; doc.NewSolution(false, GH_SolutionMode.Silent);
+                    if (act != null) { act(param); doc.NewSolution(false, GH_SolutionMode.Silent); }
+                }
+                finally { if (gpcOnly) generators.SetValue(null, false); }
+                var run = new Run();
+                foreach (var level in new[] { GH_RuntimeMessageLevel.Error, GH_RuntimeMessageLevel.Warning, GH_RuntimeMessageLevel.Remark })
+                    foreach (var m in param.RuntimeMessages(level)) run.Messages.Add(level + ": " + m);
+                foreach (var item in param.VolatileData.AllData(true))
+                {
+                    run.Outputs.Add(Text(item));
+                    var datum = item == null ? null : Prop(item, "Gpc");
+                    run.Raw.Add(datum == null ? run.Outputs[^1] : item.GetType().Name + " " + GpcNullValueChecks.TextOf(datum));
+                    if (item != null && kinds.Contains(item.GetType().Name) && HasFem(item)) run.FemOutputs++;
+                }
+                return run;
+            }
+            Run fem, gpc, again;
+            try { fem = Once(false); gpc = Once(true); again = Once(true); }
+            catch (Exception ex) { failures.Add(where + ": " + ex.GetBaseException().Message); continue; }
+            var (n, items) = byType.TryGetValue(type, out var v) ? v : (0, 0);
+            byType[type] = (n + 1, items + fem.Outputs.Count);
+            if (fem.Outputs.Count == 0) failures.Add(where + ": no data with the inputs of today");
+            if (!fem.Messages.SequenceEqual(gpc.Messages)) failures.Add(where + ": messages " + string.Join(" / ", fem.Messages) + " -> " + string.Join(" / ", gpc.Messages));
+            if (!fem.Outputs.SequenceEqual(gpc.Outputs))
+            {
+                var first = fem.Outputs.Zip(gpc.Outputs).FirstOrDefault(p => p.First != p.Second);
+                failures.Add($"{where}: data {fem.Outputs.Count} -> {gpc.Outputs.Count}; first (FEM-backed -> GPC-only):" + Environment.NewLine + Differences(first.First ?? "<none>", first.Second ?? "<none>"));
+            }
+            if (gpc.FemOutputs != 0) failures.Add($"{where}: {gpc.FemOutputs} data with a FEM value from GPC-only data");
+            if (!gpc.Raw.SequenceEqual(again.Raw)) failures.Add($"{where}: two GPC-only copies give other GUIDs");
+            count++;
+        }
+    }
+
+    /// <summary>P2Z (lane 2a): the native part of <c>gpc-only-properties</c>, run by the native host (<c>--core-only --native</c>): the
+    /// Straus7 section components replayed in memory (<see cref="NativeSectionCases"/>), Straus7 computing the sections on both paths. The
+    /// number of differences (0: the same outputs modulo GUIDs and messages, no FEM value, deterministic).</summary>
+    internal static int NativeSections()
+    {
+        Init("properties");
+        var kinds = new HashSet<string>(PropertyGoo2a, StringComparer.Ordinal);
+        var byType = new SortedDictionary<string, (int Instances, int Items)>(StringComparer.Ordinal);
+        var failures = new List<string>();
+        InMemory("native", kinds, byType, failures, out int cases);
+        foreach (var t in NativeTypes.Where(t => !byType.ContainsKey(t))) failures.Add("no case for " + t);
+        foreach (var f in failures.Take(60)) Console.WriteLine("  " + f);
+        Console.WriteLine($"GPC-ONLY properties (native): {cases} in-memory cases of {byType.Count} Straus7 section components replayed with the switch of the property producers, {failures.Count} differences");
+        return failures.Count;
+    }
+
+    /// <summary>The plug-in and the switch of the lane (<c>GpcOnlyElements.GeneratorsWithoutFem</c> or <c>PropertiesWithoutFem</c>).</summary>
+    private static void Init(string lane)
+    {
+        plugin = BridgeMergeTests.Initialize();
+        generatorsLane = lane == "generators"; propertiesLane = lane == "properties";
+        string switchName = propertiesLane ? "PropertiesWithoutFem" : "GeneratorsWithoutFem";
+        generators = plugin.GetType("BridGHe.Grasshopper.Helpers.GpcOnlyElements", true).GetProperty(switchName, BindingFlags.Public | BindingFlags.Static)
+            ?? throw new Exception("GPC-ONLY REPLAY: GpcOnlyElements." + switchName + " not found");
+    }
+
+    /// <summary>P2Z: the parameters of lane 2a replayed by <see cref="ParameterCases"/> (in memory only).</summary>
+    internal static readonly string[] Lane2aParameters = { "MaterialParam", "GroupParam", "BeamSectionParam", "LoadCombinationsParam" };
+
     private static void InMemory(string lane, ISet<string> kinds, IDictionary<string, (int Instances, int Items)> byType, List<string> failures, out int count)
     {
         count = 0;
-        foreach (var (type, label, inputs) in lane == "generators" ? Lane1bCases() : Lane1Cases())
+        // P2Z (lane 2a): the cases of lanes 1a and 1b of the lane-2a types with an input of the lane-2a kinds (a load case, a property), and
+        // the cases of lane 2a; the Straus7 sections only under the native host (NativeSections).
+        bool OfLane2a((string Type, string Label, Dictionary<int, object> Inputs) c) => Lane2aTypes.Contains(c.Type) && !NativeTypes.Contains(c.Type)
+            && c.Inputs.Values.SelectMany(v => v is object[] l ? l : new[] { v }).Any(v => v is IGH_Goo g && kinds.Contains(g.GetType().Name));
+        var all = lane == "native" ? NativeSectionCases() : lane == "properties" ? Lane1Cases().Concat(Lane1bCases()).Where(OfLane2a).Concat(Lane2aCases()).ToList()
+            : lane == "generators" ? Lane1bCases() : Lane1Cases();
+        foreach (var (type, label, inputs) in all)
         {
             using var doc = new GH_Document();
             var c = BridgeSegmentExcelTests.Add(doc, type);
@@ -407,8 +654,8 @@ internal static class GpcOnlyReplay
 
     internal static int Regression(string lane)
     {
-        var types = lane switch { "elements" => Lane1Types, "generators" => Lane1bTypes, "properties" => Lane2Types, _ => throw new ArgumentException("Unknown lane: " + lane) };
-        var kinds = new HashSet<string>(lane switch { "elements" or "generators" => ElementGoo, "properties" => PropertyGoo, _ => Array.Empty<string>() }, StringComparer.Ordinal);
+        var types = lane switch { "elements" => Lane1Types, "generators" => Lane1bTypes, "properties" => Lane2aTypes, _ => throw new ArgumentException("Unknown lane: " + lane) };
+        var kinds = new HashSet<string>(lane switch { "elements" or "generators" => ElementGoo, "properties" => PropertyGoo2a, _ => Array.Empty<string>() }, StringComparer.Ordinal);
         // The Grasshopper libraries are parsed only when they are not registered yet (P2W, 8/11): in regression all (p2w1a2) the parse again of
         // BridgeExampleMigration.Initialize, in gpc-only-generators right after gpc-only-elements, threw from Grasshopper's own upgrader
         // Upgrade_PolygonCenterComponent2.Version of CurveComponents.gha (new DateTime(2013, 23, 9, 10, 45, 0)). Registered (an earlier group
@@ -420,11 +667,7 @@ internal static class GpcOnlyReplay
         if (registered != null && registered.ObjectProxies.Any(p => p.Location?.EndsWith("CurveComponents.gha", StringComparison.OrdinalIgnoreCase) == true))
             GH_Document.EnableSolutions = false;
         else BridgeExampleMigration.Initialize();
-        plugin = BridgeMergeTests.Initialize();
-        generatorsLane = lane == "generators"; propertiesLane = lane == "properties";
-        string switchName = propertiesLane ? "PropertiesWithoutFem" : "GeneratorsWithoutFem";
-        generators = plugin.GetType("BridGHe.Grasshopper.Helpers.GpcOnlyElements", true).GetProperty(switchName, BindingFlags.Public | BindingFlags.Static)
-            ?? throw new Exception("GPC-ONLY REPLAY: GpcOnlyElements." + switchName + " not found");
+        Init(lane);
         var producers = new HashSet<string>(propertiesLane ? Lane2Producers : Array.Empty<string>(), StringComparer.Ordinal);
         var byType = new SortedDictionary<string, (int Instances, int Items)>(StringComparer.Ordinal);
         var failures = new List<string>();
@@ -452,9 +695,13 @@ internal static class GpcOnlyReplay
         }
         var fromExamples = new HashSet<string>(byType.Keys, StringComparer.Ordinal);
         int cases = 0;
-        if (lane is "elements" or "generators") InMemory(lane, kinds, byType, failures, out cases);
+        if (lane is "elements" or "generators" or "properties") InMemory(lane, kinds, byType, failures, out cases);
+        if (lane == "properties") ParameterCases(kinds, byType, failures, ref cases);
         foreach (var t in types.Where(t => !fromExamples.Contains(t))) Console.WriteLine("GPC-ONLY " + lane + ": not met in the examples (in-memory cases only): " + t);
-        foreach (var t in types.Where(t => !byType.ContainsKey(t))) failures.Add("no case for " + t);
+        if (lane == "properties") foreach (var t in Lane2bTypes) Console.WriteLine("GPC-ONLY properties: lane 2b, declared pending (not replayed): " + t);
+        foreach (var t in types.Where(t => !byType.ContainsKey(t) && !(lane == "properties" && NativeTypes.Contains(t)))) failures.Add("no case for " + t);
+        if (lane == "properties") foreach (var t in Lane2aParameters.Where(t => !byType.ContainsKey(t))) failures.Add("no case for " + t);
+        if (lane == "properties") foreach (var t in NativeTypes) Console.WriteLine("GPC-ONLY properties: Straus7 section, in-memory cases under the native host only (core-native): " + t);
         foreach (var p in byType) Console.WriteLine($"GPC-ONLY {lane}: {p.Key} {p.Value.Instances} instances, {p.Value.Items} output lines");
         foreach (var f in failures.Take(60)) Console.WriteLine("  " + f);
         // P2Y: every failure in a file named by BRIDGHE_GPC_ONLY_REPORT (diagnosis of a lane in progress; the console keeps the first 60).
@@ -471,8 +718,11 @@ internal static class GpcOnlyReplay
     /// <summary>The regression of lane 1b (<c>gpc-only-generators</c>).</summary>
     internal static void Generators() => Regression("generators");
 
-    /// <summary>The regression of lane 2 (<c>gpc-only-properties</c>; P2Y: run by <c>--gpc-only properties</c> only until the lane is green).</summary>
+    /// <summary>The regression of lane 2 (<c>gpc-only-properties</c>; P2Z: lane 2a, in <c>regression all</c>; lane 2b declared pending).</summary>
     internal static void Properties() => Regression("properties");
+
+    /// <summary>P2Z: where an exception of a replay comes from (the first frames of its base exception), for the report.</summary>
+    private static string Frame(Exception ex) => " [" + string.Join(" < ", (ex.GetBaseException().StackTrace ?? "").Split('\n').Take(4).Select(l => l.Trim())) + "]";
 
     /// <summary>The first differing lines of two texts (at most six), with their numbers.</summary>
     private static string Differences(string a, string b)

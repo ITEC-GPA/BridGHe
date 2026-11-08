@@ -65,7 +65,8 @@ namespace BridGHe.Grasshopper.Components.Loads
             string kind = ((NodeTemperatureLoadModel.LoadType)type).ToString();
             Func<Guid, Common.Gpc.Legacy.LegacyNodeDraft> build = id => Common.Gpc.Builders.GpcNodeBuilders.WithTemperature(node.Gpc, lc.Gpc, kind, value, id);
             // R6.5 P1 lane 1a: a node given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
-            if (node.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Node(this, 0, node, build, GpcOnlyElements.Lazy(() => lc.Gpc), kind, value)); return; }
+            // R6.5 P1 lane 2a: a load case given by its record alone gives the same output, without the FEM value (rule of passo 75).
+            if (node.Value == null || lc.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Node(this, 0, node, build, GpcOnlyElements.Lazy(() => lc.Gpc), kind, value)); return; }
             GH_Node newNode = new GH_Node(node);
             newNode.Value.Loads.Add(load);
             // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the drafts of the inputs (the former type by name), identity of the

@@ -79,6 +79,8 @@ namespace BridGHe.Grasshopper.Components.Definitions
             Message = name;
 
             // R6.2 part C (§1bis, regola doppia): the case record built on GPC from the inputs, attached to the FEM value (until R6.5).
+            // R6.5 P1 lane 2a: with the switch of the property producers the case by its record alone (the path of P2).
+            if (GpcOnlyProperties.On()) { GpcOnlyElements.Set(DA, 0, GpcOnlyProperties.Case(this, () => Common.Gpc.Builders.GpcCaseBuilders.Case(name, nsm))); return; }
             var goo = new GH_LoadCase(lc);
             Helpers.GpcBuilderAttach.Case(goo, () => Common.Gpc.Builders.GpcCaseBuilders.Case(name, nsm));
             DA.SetData(0, goo);

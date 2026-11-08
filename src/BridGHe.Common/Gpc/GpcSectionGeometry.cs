@@ -174,6 +174,51 @@ namespace BridGHe.Common.Gpc
             return new Shapes(new[] { shape });
         }
 
+        /// <summary>R6.5 P1 lane 2a: what the geometric property components (Section Geometric Property, Beam Geometric Property) read from the
+        /// former section value of a section component: name, area, centroid, Ixx, Iyy, principal angle, I11, I22, W11, W22, ρ11, ρ22, J.</summary>
+        public sealed record FormerValues(string Name, double Area, double XG, double YG, double Ixx, double Iyy, double AngleX1Rad, double I11, double I22,
+            double W11, double W22, double Rho11, double Rho22, double J);
+
+        /// <summary>
+        /// R6.5 P1 lane 2a: the values of <see cref="FormerValues"/> of a section given by its recipe alone (no FEM value), as the former value
+        /// made by the section component held them (<c>SectionModel.CalculateSection</c>, the same expressions): the circles by their formulas
+        /// (area, I11 = I22, W11 = W22; the rest 0), a shape section by <see cref="Of"/> of its shapes (no J: the former components computed
+        /// none), Refused, because the recipe does not hold
+        /// them: the section moduli of a generic section (inputs W11/W22 of Generic Section, not part of the recipe), the shapes of a Brep
+        /// section, the values of a native Straus7 section (Straus7 computes them) and a composite section (its composite property, lane 2b).
+        /// </summary>
+        public static FormerValues Former(Legacy.LegacySectionRecipe r)
+        {
+            if (r == null) throw new ArgumentNullException(nameof(r));
+            if (r.NativeKey != null) throw new NotSupportedException("GpcSectionValuesNative: the values of a native Straus7 section are computed by Straus7, not held by its recipe.");
+            string name = string.IsNullOrEmpty(r.Name) ? null : r.Name;
+            double d = r.D, t = r.T;
+            switch (r.Kind)
+            {
+                case BridgeSectionKind.SolidCircle:
+                {
+                    double area = Math.Pow(d / 2, 2) * Math.PI, i11 = Math.PI * Math.Pow(d, 4) / 64, w11 = i11 / (d * 0.5);
+                    return new FormerValues(name, area, 0, 0, 0, 0, 0, i11, i11, w11, w11, 0, 0, r.J);
+                }
+                case BridgeSectionKind.HollowCircle:
+                {
+                    double area = Math.Pow(d / 2, 2) * Math.PI - Math.Pow(d / 2 - t, 2) * Math.PI, i11 = Math.PI * (Math.Pow(d, 4) - Math.Pow(d - t * 2, 4)) / 64, w11 = i11 / (d * 0.5);
+                    return new FormerValues(name, area, 0, 0, 0, 0, 0, i11, i11, w11, w11, 0, 0, r.J);
+                }
+                case BridgeSectionKind.Composite:
+                    throw new NotSupportedException("GpcSectionValuesComposite: a composite section has its values in its composite property (lane 2b).");
+                case BridgeSectionKind.Generic:
+                    throw new NotSupportedException("GpcSectionModuliNotInRecipe: the section moduli W11 and W22 of a Generic section are not part of its GPC recipe.");
+                case BridgeSectionKind.GenericShapes:
+                    throw new NotSupportedException("GpcSectionShapesNotInRecipe: the shapes of a Brep section are not part of its GPC recipe.");
+                default:
+                {
+                    var v = Of(StandardShapes(r.Kind, r.D, r.B, r.B1, r.B2, r.T1, r.T2, r.T3, 0), false);
+                    return new FormerValues(name, v.Area, v.XG, v.YG, v.Ixx, v.Iyy, v.Angle, v.I11, v.I22, v.W11, v.W22, v.Rho11, v.Rho22, r.J);
+                }
+            }
+        }
+
         /// <summary>The values of shapes as the former <c>CalculateSection</c> computes them (moved to the minimum; generic shapes always
         /// with the major axes and the angle brought into (−0.01, π]).</summary>
         public static Values Of(Shapes shapes, bool genericShapes)

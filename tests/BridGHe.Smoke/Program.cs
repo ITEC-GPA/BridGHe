@@ -305,6 +305,14 @@ internal static class Program
         CheckNativeSections();
         CheckNativeCantilever();
         CheckNativePlateAngle();
+        CheckNativeGpcOnlySections();
+    }
+
+    /// <summary>P2Z (R6.5 P1 lane 2a): the Straus7 section components replayed in memory with the switch of the property producers, Straus7
+    /// computing the sections (the native part of the regression gpc-only-properties, <see cref="GpcOnlyReplay.NativeSections"/>).</summary>
+    private static void CheckNativeGpcOnlySections()
+    {
+        Assert(GpcOnlyReplay.NativeSections()==0,"Straus7 section components with the property producers on GPC only: the recipe alone, the same outputs modulo GUIDs and messages, no FEM value");
     }
 
     /// <summary>P2X (user decision of 8/11): the plate local axis angle natively, Plate Results equal to BridGHe 0.3.0 (<see cref="PlateAngleNative"/>).</summary>

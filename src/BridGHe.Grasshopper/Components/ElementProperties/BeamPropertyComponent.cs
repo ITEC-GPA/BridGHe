@@ -210,6 +210,14 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
                     return;
             }
 
+            // R6.5 P1 lane 2a: with the switch, or a section or material given by its GPC datum alone, the property by its GPC datum alone (rule
+            // of passo 75; a refused property gives an error and no output).
+            if (GpcOnlyProperties.On(section, material))
+            {
+                GpcOnlyElements.Set(DA, 0, GpcOnlyProperties.BeamProperty(this, () => Common.Gpc.Builders.GpcPropertyBuilders.Beam(name, type, section.Gpc, material.Gpc)));
+                return;
+            }
+
             SectionModel sectionModel = new SectionModel();
 
             if (section.SectionType != SectionModel.SectionTypes.Generic)

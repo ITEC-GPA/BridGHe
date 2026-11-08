@@ -117,11 +117,14 @@ namespace BridGHe.Grasshopper.Helpers
         internal const string NoDraft = "The element has neither a FEM value nor a GPC datum.";
 
         /// <summary>The beam output <paramref name="output"/> of <paramref name="component"/> for a beam given by its draft alone (null: refused,
-        /// with the error on the component).</summary>
+        /// with the error on the component). R6.5 P1 lane 2a: also for a beam with a FEM value when another input of the component (a load
+        /// case, a property, a group) is given by its GPC datum alone: the output is then the copy without the FEM value (rule of passo 75).</summary>
         internal static GH_Beam Beam(GH_Component component, int output, GH_Beam input, Func<Guid, LegacyBeamDraft> build, params object[] parameters)
         {
             var draft = Build(component, input.Gpc, () => build(Identity(input.Gpc.Beam.Guid, component.ComponentGuid, output, parameters)));
             if (draft == null) return null;
+            // R6.5 P1 lane 2a: an input with a FEM value (another input is given by its GPC datum alone) gives the copy without it.
+            if (input.Value != null) return input.WithDraftOnly(draft);
             var copy = new GH_Beam(input); copy.AttachGpc(draft);
             return copy;
         }
@@ -141,6 +144,8 @@ namespace BridGHe.Grasshopper.Helpers
         {
             var draft = Build(component, input.Gpc, () => build(Identity(input.Gpc.Node.Guid, component.ComponentGuid, output, parameters)));
             if (draft == null) return null;
+            // R6.5 P1 lane 2a: an input with a FEM value (another input is given by its GPC datum alone) gives the copy without it.
+            if (input.Value != null) return input.WithDraftOnly(draft);
             var copy = new GH_Node(input); copy.AttachGpc(draft);
             return copy;
         }
@@ -150,6 +155,8 @@ namespace BridGHe.Grasshopper.Helpers
         {
             var draft = Build(component, input.Gpc, () => build(Identity(input.Gpc.Plate.Guid, component.ComponentGuid, output, parameters)));
             if (draft == null) return null;
+            // R6.5 P1 lane 2a: an input with a FEM value (another input is given by its GPC datum alone) gives the copy without it.
+            if (input.Value != null) return input.WithDraftOnly(draft);
             var copy = new GH_Plate(input); copy.AttachGpc(draft);
             return copy;
         }

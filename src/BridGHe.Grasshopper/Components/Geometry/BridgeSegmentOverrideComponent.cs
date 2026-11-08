@@ -34,8 +34,9 @@ public sealed class BridgeSegmentOverrideComponent : BridgeUtilityComponent
         bool mass=true;
         if (!da.GetDataList(0, beams) || !da.GetDataList(1, ids) || !da.GetDataList(2, properties) || !da.GetData(3,ref mass)) return;
         // R6.5 P1 lane 1b: a list with a beam given by its draft alone is overridden on GPC (GpcSegmentSections.GpcOnly): the outputs have no
-        // FEM value, the Beam IDs are those of the drafts.
-        if (beams.Any(b => b != null && b.Value == null))
+        // FEM value, the Beam IDs are those of the drafts. R6.5 P1 lane 2a: the same for a replacement property given by its GPC datum alone
+        // (rule of passo 75).
+        if (beams.Any(b => b != null && b.Value == null) || GpcOnlyProperties.WithoutFem(properties))
         {
             var (onlyGirders, onlyOthers, beamIds) = GpcSegmentSections.GpcOnly(this, beams, ids, properties, mass);
             da.SetDataList(0, onlyGirders); da.SetDataList(1, onlyOthers); da.SetDataList(2, beamIds);

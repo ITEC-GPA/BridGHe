@@ -46,11 +46,22 @@ namespace BridGHe.Grasshopper.Components.Parameters
             bool changed = false;
             List<GH_LoadCombination> combinations = (List<GH_LoadCombination>)VolatileData.get_Branch(0);
 
-            foreach (GH_LoadCombination combo in combinations)
+            for (int k = 0; k < combinations.Count; k++)
             {
+                GH_LoadCombination combo = combinations[k];
                 // R6.3: the GPC datum before the change (null when the reader refuses it: the conversion follows the value).
                 Common.Gpc.Legacy.LegacyCombinationDraft before;
                 try { before = combo.Gpc; } catch (Exception x) when (GpcBuilderAttach.Refusal(x)) { before = null; }
+                // R6.5 P1 lane 2a: a combination given by its GPC datum alone follows the case records alone (the same rule as the FEM value
+                // below: the factors of the cases no longer present removed, the new cases added with 1), replaced by the updated one.
+                if (combo.Value == null)
+                {
+                    if (before == null) continue;
+                    if (before.Factors.Any(f => !caseRecords.Any(c => c.Name == f.Case.Name))) changed = true;
+                    var updated = Common.Gpc.Builders.GpcCaseBuilders.UpdatedCombination(before, caseRecords);
+                    if (updated != null) combinations[k] = GH_LoadCombination.FromGpc(updated);
+                    continue;
+                }
                 // Remove the non existing values
                 LoadCaseModel[] to_remove = combo.Value.Values.
                     Where(v => !loadCases.Contains(v.Key, new Common.Helpers.LoadCaseModelsEqualityComparer())).

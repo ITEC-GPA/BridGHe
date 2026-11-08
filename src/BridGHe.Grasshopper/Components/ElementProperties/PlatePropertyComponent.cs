@@ -85,6 +85,15 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
                     return;
             }
 
+            // R6.5 P1 lane 2a: with the switch, or a material given by its GPC datum alone, the property by its GPC datum alone (rule of passo
+            // 75; a refused property gives an error and no output). The message is the type, as below.
+            if (Helpers.GpcOnlyProperties.On(material))
+            {
+                Message = ((PlatePropertyType)type).GetDescription();
+                Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.PlateProperty(this, () => Common.Gpc.Builders.GpcPropertyBuilders.Plate(name, type, material?.Gpc, mem_thick, ben_thick)));
+                return;
+            }
+
             PlatePropertyModel pp = new PlatePropertyModel
             {
                 Name = name,

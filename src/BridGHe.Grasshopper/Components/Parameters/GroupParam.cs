@@ -71,6 +71,16 @@ namespace BridGHe.Grasshopper.Components.Parameters
                 string strValue = str.Value;
                 var a = strValue.Split(new string[] { _separator }, StringSplitOptions.RemoveEmptyEntries);
 
+                // R6.5 P1 lane 2a: with the switch of the property producers the group by its chain of names alone (the path of P2), the same
+                // builder as below.
+                if (GpcOnlyElements.PropertiesWithoutFem)
+                {
+                    System.Collections.Generic.IReadOnlyList<string> chain = null;
+                    foreach (string name in a)
+                        if (!string.IsNullOrEmpty(name)) chain = Common.Gpc.Builders.GpcCaseBuilders.Group(name, chain);
+                    return chain == null ? null : GH_Group.FromGpc(chain);
+                }
+
                 GH_Group group = null;
 
                 for (int i = 0; i < a.Length; i++)

@@ -126,6 +126,16 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             return beam;
         }
 
+        /// <summary>R6.5 P1 lane 2a (rule of passo 75): the copy of this beam (its GUID and analysed element, as the copy constructor keeps
+        /// them) given by <paramref name="draft"/> alone, without the FEM value: the output of a component whose beam has a FEM value but
+        /// another input (a load case, a property, a group) is given by its GPC datum alone.</summary>
+        internal GH_Beam WithDraftOnly(Common.Gpc.Legacy.LegacyBeamDraft draft)
+        {
+            var copy = FromGpc(draft, _guid);
+            copy.AnalysedGpc = AnalysedGpc; copy.AnalysedGpcModel = AnalysedGpcModel;
+            return copy;
+        }
+
         /// <summary>F6 C4: the analysed GPC element of this element and its analysed model, set by Decompose Model when its model was
         /// analysed (Straus R3 / Moving Static Analysis); null otherwise. Immutable by convention, so copies share it.</summary>
         public GPC.Model.Elements.Element AnalysedGpc { get; set; }

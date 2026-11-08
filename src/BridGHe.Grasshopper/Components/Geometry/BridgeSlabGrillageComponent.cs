@@ -36,7 +36,19 @@ public sealed class BridgeSlabGrillageComponent : BridgeUtilityComponent
         // R6.2 (lane B): the strip properties and beams also built on GPC (the analysis material of the GPC datum of the material).
         GPC.Model.Materials.Material analysis=null;
         try{analysis=Common.Gpc.GpcMaterials.Analysis(m.Gpc);}catch(Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException){}
-        var result=BridgeSlabGrillage.Create(g.Value,m.Value,name,analysis);
+        // R6.5 P1 lane 2a: a material given by its GPC datum alone is checked on it; the beams and the strip properties are then given by their
+        // GPC data alone (rule of passo 75), as with the switch of the property producers.
+        bool gpcOnlyMaterial=GpcOnlyProperties.WithoutFem(m);
+        var result=BridgeSlabGrillage.Create(g.Value,gpcOnlyMaterial?null:m.Value,name,analysis,gpcOnlyMaterial?m.Gpc:null);
+        if(gpcOnlyMaterial)
+        {
+            da.SetDataList(0,BridgeMemberAssignmentComponent.GpcOnly(this,0,result.Plans));
+            da.SetDataList(1,result.Plans.Select(p=>GpcOnlyProperties.BeamProperty(this,p.Property)).Where(p=>p!=null));
+            da.SetDataList(2,result.Widths);
+            da.SetDataList(3,result.Plans.Select(p=>p.GeometryId));
+            da.SetData(4,Information);
+            return;
+        }
         // R6.5 P1 lane 1b: the beams by their GPC drafts alone (identity by content of the plan), the member IDs from the plans; the strip
         // properties as before (a property kind: lane 2).
         bool only=GpcOnlyElements.GeneratorsWithoutFem;
@@ -49,9 +61,11 @@ public sealed class BridgeSlabGrillageComponent : BridgeUtilityComponent
             if(analysis!=null) properties[i].AttachGpc(plan.Property());
         }
         if(only) da.SetDataList(0,BridgeMemberAssignmentComponent.GpcOnly(this,0,result.Plans)); else da.SetDataList(0,beams);
-        da.SetDataList(1,properties);
+        // R6.5 P1 lane 2a: with the switch of the property producers the strip properties by their GPC data alone.
+        if(GpcOnlyElements.PropertiesWithoutFem) da.SetDataList(1,result.Plans.Select(p=>GpcOnlyProperties.BeamProperty(this,p.Property)).Where(p=>p!=null)); else da.SetDataList(1,properties);
         da.SetDataList(2,result.Widths);
         da.SetDataList(3,only?result.Plans.Select(p=>p.GeometryId):result.Beams.Select(b=>b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value.GeometryId));
-        da.SetData(4,"Transverse rectangular strips only; section y follows slab normal. Widths are measured along alignment. Curved/skew grillage stiffness requires calibration. Add eccentric links separately; longitudinal composite action belongs to girder section/phase properties.");
+        da.SetData(4,Information);
     }
+    private const string Information="Transverse rectangular strips only; section y follows slab normal. Widths are measured along alignment. Curved/skew grillage stiffness requires calibration. Add eccentric links separately; longitudinal composite action belongs to girder section/phase properties.";
 }

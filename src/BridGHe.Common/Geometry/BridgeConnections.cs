@@ -9,15 +9,17 @@ namespace BridGHe.Common.Geometry;
 
 public static class BridgeConnections
 {
-    public static ElementModel[] Create(IReadOnlyList<Line> lines, bool rigid, BeamPropertyModel property = null)
+    /// <param name="beamOrTrussOnGpc">R6.5 P1 lane 2a: for a property given by its GPC datum alone (no FEM value), whether it is a valid Beam
+    /// or Truss property, read from the datum by the caller; the members then carry no FEM property (only the GPC path reads them).</param>
+    public static ElementModel[] Create(IReadOnlyList<Line> lines, bool rigid, BeamPropertyModel property = null, bool? beamOrTrussOnGpc = null)
     {
         if (lines == null || lines.Count == 0 || lines.Any(l => !l.IsValid || l.Length <= SimpleBridgeBuilder.JoinTolerance))
             throw new ArgumentException("Provide nonzero connection lines in mm.");
-        if (!rigid && (property?.IsValid != true || property.PropertyType is not (BeamPropertyType.Beam or BeamPropertyType.Truss)))
+        if (!rigid && !(beamOrTrussOnGpc ?? (property?.IsValid == true && property.PropertyType is BeamPropertyType.Beam or BeamPropertyType.Truss)))
             throw new ArgumentException("Deformable connections require an explicit valid Beam or Truss property in N-mm.");
         var unique = new HashSet<(Point3d, Point3d)>();
         var result = new List<ElementModel>();
-        var copiedProperty = rigid ? null : ModelArchive.Clone(property);
+        var copiedProperty = rigid || beamOrTrussOnGpc != null ? null : ModelArchive.Clone(property);
         foreach (var (line, i) in lines.Select((l, i) => (l, i)))
         {
             if (unique.Contains((line.From, line.To)) || unique.Contains((line.To, line.From)))
