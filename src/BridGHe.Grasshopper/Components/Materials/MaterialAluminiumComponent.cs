@@ -63,11 +63,11 @@ namespace BridGHe.Grasshopper.Components.Materials
             // R6.2 part C (§1bis, regola doppia): the GPC material by kind from the recipe of the component, attached to the FEM value made from
             // the same recipe (transitional until R6.5).
             // R6.5 P1 lane 2a: with the switch of the property producers the material by its GPC datum alone (the path of P2).
-            if (Helpers.GpcOnlyElements.PropertiesWithoutFem) DA.SetData(0, GH_Material.FromGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe)));
+            if (Helpers.GpcOnlyElements.PropertiesWithoutFem) DA.SetData(0, GH_Material.FromGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe), recipe.Kind));
             else
             {
                 var goo = new GH_Material(Common.Gpc.Builders.GpcMaterialBuilders.Femm(recipe));
-                goo.AttachGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe));
+                goo.AttachGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe), recipe.Kind);
                 DA.SetData(0, goo);
             }
         }

@@ -46,14 +46,33 @@ internal static class GpcDraftArchiveChecks
         "element warnings " + string.Join(" | ", r.ElementWarnings.Select(w => $"{w.Family}:{w.Number}:{w.Format}:{w.Restraint}")),
         "angles " + string.Join(",", r.BeamAngles.Select(a => a.Key + "=" + B(a.Value))),
         $"model data {r.NativeSections.Count} {r.CaseOrigins.Count} {r.BeamProperties.Count} {r.ShadowedPropertyBeams.Count} {r.ElementLoadCases.Count}",
-        "bridge " + (r.Bridge == null ? "null" : r.Bridge.Count + " " + r.Bridge.Fingerprint()),
+        "bridge " + (r.Bridge == null ? "null" : r.Bridge.Count + " " + StaleAsStale(r.Bridge).Fingerprint()),
     });
 
     private static string Bridge(GPC.Checkers.CompositeBridge.BridgeBeamData d)
     {
         if (d == null) return "bridge none";
-        var one = new GPC.Checkers.CompositeBridge.BridgeModelData(); one.Set(d);
+        var one = new GPC.Checkers.CompositeBridge.BridgeModelData(); one.Set(StaleAsStale(d));
         return "bridge " + d.BeamGuid + " " + one.Fingerprint();
+    }
+
+    /// <summary>PAR (A08): a stale section state compared as stale: its marker holds the signature the state was computed for (the FEM signature
+    /// of the former value for the reader of a FEM output, the GPC fingerprint for a builder; neither ever equals a property fingerprint). The
+    /// data of a beam, and the bridge data of a report with every stale marker so; the others as they are.</summary>
+    internal static GPC.Checkers.CompositeBridge.BridgeBeamData StaleAsStale(GPC.Checkers.CompositeBridge.BridgeBeamData d)
+    {
+        var s = d?.SectionState;
+        if (s == null || !s.PropertyFingerprint.StartsWith(LegacyModelImport.StaleSectionStatePrefix, StringComparison.Ordinal)) return d;
+        return new GPC.Checkers.CompositeBridge.BridgeBeamData(d.BeamGuid, d.Member, d.SuperElement, new GPC.Checkers.CompositeBridge.BridgeLocalSectionState(s.Behavior, s.ConcreteExcluded,
+            s.ModularRatio, s.ClassificationCase, LegacyModelImport.StaleSectionStatePrefix + "(stale)"), d.CompositeSection);
+    }
+
+    internal static GPC.Checkers.CompositeBridge.BridgeModelData StaleAsStale(GPC.Checkers.CompositeBridge.BridgeModelData data)
+    {
+        if (!data.Beams.Any(b => !ReferenceEquals(StaleAsStale(b), b))) return data;
+        var copy = data.Copy();
+        foreach (var b in data.Beams.ToArray()) { var n = StaleAsStale(b); if (!ReferenceEquals(n, b)) copy.Set(n); }
+        return copy;
     }
 
     internal static string Property(LegacyBeamPropertyData p)

@@ -376,7 +376,7 @@ namespace BridGHe.Common.Gpc.Legacy
             for (int k = 0; k < plates.Count; k++)
             {
                 var pl = plates[k];
-                int count = pl.Int("NPoints"); if (count != 3 && count != 4) throw new NotSupportedException("LegacyPlateWithMoreThanFourNodes");
+                int count = pl.Int("NPoints"); if (count != 3 && count != 4) throw new NotSupportedException(Builders.GpcPlateBuilders.MoreThanFourNodes); // PAR (A07)
                 var connected = assembly.PlateNodes(Enumerable.Range(0, count).Select(i => Point(pl["Point" + i], units)), k + 1);
                 var pp = pl.Field("PlateProperty"); string ppName = PlatePropertyName(pp);
                 var property = assembly.PlateProperty(ppName, () => PlateProperty(pp, ppName, units));

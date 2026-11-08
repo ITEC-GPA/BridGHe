@@ -61,8 +61,14 @@ namespace BridGHe.Grasshopper.Components.Models
 
             if (face.Vertices.Count < 3)
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Mesh with less than 3 vertices");
+            // PAR (A07, user decision of 8/11, «Sì, come proponi»): a plate takes one face of 3 or 4 vertices, on both paths (FEM and GPC): an error
+            // and no output (0.3.0 warned and made a plate of the first naked edge, of 6, 8 or 9 nodes: no longer, the Converter writes plates of
+            // 3 or 4 nodes).
             if (face.Vertices.Count > 4)
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Warning: Mesh have more than 4 vertices");
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, Common.Gpc.Builders.GpcPlateBuilders.MoreThanFourNodes);
+                return;
+            }
 
             Polyline edges = face.GetNakedEdges().FirstOrDefault();
 

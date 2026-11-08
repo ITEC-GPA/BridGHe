@@ -68,6 +68,11 @@ namespace BridGHe.Common.Gpc
 
         public static byte[] Write(Material material) => GpcGooArchive.Value(material ?? throw new ArgumentNullException(nameof(material)));
 
+        /// <summary>PAR (A10): a material and the kind it declares; the records only when the kind is not the kind of its GPC type
+        /// (<see cref="GpcMaterials.KindOf"/>): every material saved so far is written as before (no records).</summary>
+        public static (byte[] Data, byte[] Records) Write(Material material, string kind) =>
+            (Write(material), kind == null || kind == GpcMaterials.KindOf(material) ? null : Save(new DraftRecords { Kind = "material", MaterialKind = kind }));
+
         public static LegacyNodeDraft ReadNode(byte[] data, byte[] records) => Node(GpcGooArchive.ReadValue<NodeElement>(data), records);
         public static LegacyBeamDraft ReadBeam(byte[] data, byte[] records) => Beam(GpcGooArchive.ReadValue<BeamElement>(data), records);
         public static LegacyPlateDraft ReadPlate(byte[] data, byte[] records) => Plate(GpcGooArchive.ReadValue<AreaElement>(data), records);
@@ -100,6 +105,13 @@ namespace BridGHe.Common.Gpc
         }
 
         public static Material ReadMaterial(byte[] data) => GpcGooArchive.ReadValue<Material>(data);
+
+        /// <summary>PAR (A10): a material and the kind written beside it (null: none written, the kind of its GPC type).</summary>
+        public static Material ReadMaterial(byte[] data, byte[] records, out string kind)
+        {
+            kind = records == null ? null : Load(records, "material").MaterialKind;
+            return ReadMaterial(data);
+        }
 
         // The GH types whose datum is a BridGHe record today (no GPC object of their own yet: the assembly builds the GPC case, combination
         // and stage from them, the property builds the section): the records chunk only.
@@ -311,6 +323,9 @@ namespace BridGHe.Common.Gpc
         /// <summary>L2C (lane 2c): the bending thickness of a membrane plate property (the former property held it; the GPC membrane has
         /// none): Bridge Deck Mesh checks it against the slab as before. Not written at 0 (the records written before read it as 0).</summary>
         [DataMember(Order = 38, EmitDefaultValue = false)] public double MembraneBending;
+        /// <summary>PAR (A10): the kind a material declares when it is not the kind of its GPC type (a Custom material of kind Steel whose
+        /// strengths the GPC steel type refuses). Written only then.</summary>
+        [DataMember(Order = 39, EmitDefaultValue = false)] public string MaterialKind;
 
         internal static DraftRecords Of(string kind, LegacyElementRecords records, LegacyImportReport report)
         {

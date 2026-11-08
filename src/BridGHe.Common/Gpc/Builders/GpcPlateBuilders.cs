@@ -17,6 +17,11 @@ namespace BridGHe.Common.Gpc.Builders
     /// </summary>
     public static class GpcPlateBuilders
     {
+        /// <summary>PAR (A07, user decision of 8/11): the error of a plate with more than four nodes (Plate component, builders and the reader
+        /// of the former files): BridGHe 0.4.0 makes plates of 3 or 4 nodes only.</summary>
+        public const string MoreThanFourNodes = "LegacyPlateWithMoreThanFourNodes: a plate takes one face of 3 or 4 vertices (BridGHe 0.4.0 has no plates of 6, 8 or 9 nodes); " +
+            "give one triangle or quadrangle per plate (for example, split the mesh into its faces).";
+
         /// <summary>Plate (and the plates of Bridge Deck Mesh): the draft the reader gives a former plate with these corners (definition units, in
         /// order: 3 or 4), property (the GPC property of the Plate Property datum, copied), groups (each a chain of names from the root; the plate
         /// takes the first, the records all), local axis angle (P2X: mapped as the reader maps it, <see cref="WithAngle"/>), offset and plate ID;
@@ -28,7 +33,7 @@ namespace BridGHe.Common.Gpc.Builders
             if (property == null) throw new ArgumentNullException(nameof(property));
             var units = GpcBeamDrafts.DraftUnits;
             var report = new LegacyImportReport { Units = units, Owner = identity, Bridge = new GPC.Checkers.CompositeBridge.BridgeModelData() };
-            if (corners.Count != 3 && corners.Count != 4) throw new NotSupportedException("LegacyPlateWithMoreThanFourNodes");
+            if (corners.Count != 3 && corners.Count != 4) throw new NotSupportedException(MoreThanFourNodes);
             var points = corners.Select(c => new GPC.Geometry.Point3d(units.ToMm(c.X), units.ToMm(c.Y), units.ToMm(c.Z))).ToArray();
             var records = new LegacyElementRecords();
             var plate = LegacyModelImport.NewPlate(identity, GPC.Model.Core.ModelValues.CopyValue(property), plateId ?? "", 1, identity);

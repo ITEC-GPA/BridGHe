@@ -364,6 +364,12 @@ namespace BridGHe.Common.Gpc.Legacy
             if (!(draft is ElasticBeamProperty elastic)) throw new NotSupportedException("GpcBuildModelPropertyKind: " + draft.GetType().Name);
             var (property, angle, native) = LegacyModelImport.SectionProperty(r, draft.Name, GPC.Model.Core.ModelValues.CopyValue(elastic.Material), Units,
                 new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport());
+            // PAR (A01): the cutoff law of a draft holds its limits in the definition force unit (the former exporter wrote them in the model
+            // unit): in N here, as the reader converts them.
+            var law = elastic.CutoffLaw;
+            if (law != null)
+                ((ElasticBeamProperty)property).CutoffLaw = new GPC.Model.ElementProperties.BeamCutoffLaw
+                    { Failure = law.Failure, TensionLimit = Units.ToN(law.TensionLimit), CompressionLimit = Units.ToN(law.CompressionLimit), KeepMass = law.KeepMass };
             // R6.3: the signature of the property in the model is the GPC fingerprint of the normalised property (the conversion of the FEM
             // model reads it in N-mm); the drafts compare their signatures in the definition units (the registry, one unit system).
             return new LegacyBeamProperty(property, data with { Angle = angle, Native = native, Signature = LegacyModelImport.PropertySignature(property) });

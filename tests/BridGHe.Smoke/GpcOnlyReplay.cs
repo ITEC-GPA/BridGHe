@@ -168,7 +168,8 @@ internal static class GpcOnlyReplay
         var datum = Prop(goo, "Gpc");
         if (datum == null) return goo;
         var from = goo.GetType().GetMethod("FromGpc", BindingFlags.Public | BindingFlags.Static);
-        var args = from.GetParameters().Length == 2 ? new[] { datum, Prop(goo, "Guid") } : new[] { datum };
+        // PAR (A10): a material by its datum with the kind it declares.
+        var args = goo.GetType().Name == "GH_Material" ? new[] { datum, Prop(goo, "GpcKind") } : from.GetParameters().Length == 2 ? new[] { datum, Prop(goo, "Guid") } : new[] { datum };
         var only = (IGH_Goo)from.Invoke(null, args);
         foreach (var name in new[] { "AnalysedGpc", "AnalysedGpcModel", "GpcMembraneBending" }) // L2C: the bending thickness of a membrane
             if (goo.GetType().GetProperty(name) is { CanWrite: true } p) p.SetValue(only, p.GetValue(goo));
@@ -232,7 +233,7 @@ internal static class GpcOnlyReplay
             + (Prop(goo, "GpcMembraneBending") is double bending && bending != 0 ? "\nmembrane bending " + bending.ToString("R", System.Globalization.CultureInfo.InvariantCulture) : "");
         if (datum is BridGHe.Common.Gpc.Legacy.LegacyBeamDraft { Bridge: { } bridge })
         {
-            var one = new GPC.Checkers.CompositeBridge.BridgeModelData(); one.Set(bridge);
+            var one = new GPC.Checkers.CompositeBridge.BridgeModelData(); one.Set(GpcDraftArchiveChecks.StaleAsStale(bridge)); // PAR: a stale state as stale
             string line = "bridge " + bridge.BeamGuid + " " + one.Fingerprint();
             if (text.Contains(line, StringComparison.Ordinal))
                 text = text.Replace(line, "bridge " + bridge.BeamGuid + " values " + string.Join(" ; ", GpcDraftCapture.BridgeValues(one)));
@@ -243,12 +244,16 @@ internal static class GpcOnlyReplay
             BridGHe.Common.Gpc.Legacy.LegacyBeamDraft b => b.Report, BridGHe.Common.Gpc.Legacy.LegacyNodeDraft n => n.Report,
             BridGHe.Common.Gpc.Legacy.LegacyPlateDraft p => p.Report, _ => null,
         };
-        if (report?.Bridge is { } data)
+        if (report?.Bridge is { } reportBridge)
         {
+            var data = GpcDraftArchiveChecks.StaleAsStale(reportBridge); // PAR: a stale state as stale
             string line = "bridge " + data.Count + " " + data.Fingerprint();
             if (text.Contains(line, StringComparison.Ordinal))
                 text = text.Replace(line, "bridge " + data.Count + " values " + string.Join(" ; ", GpcDraftCapture.BridgeValues(data)));
         }
+        // PAR (A08): a stale section state as stale (its marker holds the signature it was computed for: of the FEM value or of the GPC datum).
+        text = System.Text.RegularExpressions.Regex.Replace(text, System.Text.RegularExpressions.Regex.Escape(BridGHe.Common.Gpc.Legacy.LegacyModelImport.StaleSectionStatePrefix) + "[0-9A-Za-z:]+",
+            BridGHe.Common.Gpc.Legacy.LegacyModelImport.StaleSectionStatePrefix + "(stale)");
         return goo.GetType().Name + " " + GpcDraftCapture.WithoutGuids(text);
     }
 
@@ -762,18 +767,19 @@ internal static class GpcOnlyReplay
         Check(Analysed(girder) != null, "R65-C2-07: no beam matched: the analysed element kept (" + lastInfo + ")");
         Check(Analysed(own) == null, "R65-C2-07: a beam matched: the analysed element gone");
         count++;
-        // R65-C2-08: Bridge Member Assignment with a family given by a GPC-only property and the others by a CutoffBar property (refused by the
-        // reader): the error and no outputs.
+        // R65-C2-08: Bridge Member Assignment with a family given by a GPC-only property and the others by a property the reader refuses: the
+        // error and no outputs. PAR: a cutoff bar is no longer refused (A01); a property on an Omega section (no 0.3.0 component makes one) is.
         {
             using var doc = new GH_Document();
             var c = BridgeSegmentExcelTests.Add(doc, "BridgeMemberAssignmentComponent");
-            var cutoff = Produce("BeamPropertyComponent", new Dictionary<int, object> { [0] = "Bar", [1] = 3, [2] = section, [3] = steel });
+            var cutoff = Make("Fem.GH_BeamProperty", new BeamPropertyModel("Bar") { Name = "Bar", Material = (MaterialModel)Prop(steel, "Value"), PropertyType = BeamPropertyType.Beam,
+                Section = new SectionModel { SectionType = SectionModel.SectionTypes.Omega, B = 100, D = 200, T1 = 8, T2 = 8 } });
             var geometry = Make("BridgeGeometryGoo", BridGHe.Common.Geometry.SimpleBridgeBuilder.Build(SimpleBridgeTests.Input()));
             foreach (var (k, v) in new (int, object[])[] { (0, new object[] { geometry }), (1, new object[] { Only(girder), cutoff }), (2, new object[] { 0, -1 }) })
             { var t = new GH_Structure<IGH_Goo>(); foreach (var x in v) t.Append(Goo(x), new GH_Path(0)); SetInput(c.Params.Input[k], t, g => g); }
             BridgeSegmentExcelTests.Solve(doc, true);
             var errors = c.RuntimeMessages(GH_RuntimeMessageLevel.Error);
-            Check(errors.Any(e => e.Contains("LegacyCutoffBarNotMappedYet")) && c.Params.Output[0].VolatileDataCount == 0 && c.Params.Output[1].VolatileDataCount == 0,
+            Check(errors.Any(e => e.Contains("BridgeSectionKindNotMappedYet")) && c.Params.Output[0].VolatileDataCount == 0 && c.Params.Output[1].VolatileDataCount == 0,
                 "R65-C2-08: a refused plan, the error and no outputs: " + string.Join(" / ", errors) + $"; {c.Params.Output[0].VolatileDataCount} beams, {c.Params.Output[1].VolatileDataCount} IDs");
         }
         count++;
@@ -833,6 +839,166 @@ internal static class GpcOnlyReplay
         cases.Add(("SectionGeometricPropertyComponent", "native section " + first.Item2 + " (the values of Straus7)", new Dictionary<int, object> { [0] = Produce(first.Item1, first.Item3) }));
         return cases;
     }
+
+    #region PAR (R6.5 P1): the 0.3.0 parity on the GPC path (A01, A02, A02c, A04, A07, A08, A10)
+
+    /// <summary>PAR (user decision of 8/11, «Sì, come proponi»: what 0.3.0 exported from the UI comes back on the GPC path): the in-memory
+    /// cases of the data the GPC path refused (inventory of ChatGPT task 20): a cutoff bar (A01, with the inputs not shown: zeros, brittle), a
+    /// Brep section on Beam Property (A02c), a material with a stress-strain table on the four shell and plate types and the refusal on a
+    /// membrane and a shear panel (A04), a plate from a mesh of five vertices (A07: an error and no output on both paths), Beam Override and
+    /// Beam Property Override of a beam with a current section state (A08: the new property, the state stale).</summary>
+    private static List<(string Type, string Label, Dictionary<int, object> Inputs)> ParityCases()
+    {
+        var steel = Produce("MaterialSteelComponent", new Dictionary<int, object> { [0] = "S355", [1] = 2 });
+        var section = Produce("BeamSectionIComponent", new Dictionary<int, object> { [0] = 300.0, [1] = 250.0, [2] = 800.0, [3] = 20.0, [4] = 16.0, [5] = 12.0 });
+        var brep = Produce("BeamSectionBrepComponent", new Dictionary<int, object> { [0] = Rhino.Geometry.Brep.CreatePlanarBreps(new[] {
+            new Rhino.Geometry.Rectangle3d(Rhino.Geometry.Plane.WorldXY, 200, 400).ToNurbsCurve(),
+            new Rhino.Geometry.Rectangle3d(new Rhino.Geometry.Plane(new Rhino.Geometry.Point3d(50, 50, 0), Rhino.Geometry.Vector3d.ZAxis), 100, 300).ToNurbsCurve() }, 1e-6).Single() });
+        // A04: a material with E and a stress-strain table (a former value; the Table Material component gives E = 0, which the GPC elastic
+        // material refuses: library question of PAR).
+        var table = TableMaterial();
+        var pentagon = new Rhino.Geometry.Mesh();
+        foreach (var (x, y) in new[] { (0.0, 0.0), (1000.0, 0.0), (1500.0, 500.0), (1000.0, 1000.0), (0.0, 1000.0) }) pentagon.Vertices.Add(x, y, 0);
+        pentagon.Faces.AddFace(0, 1, 3, 4); pentagon.Faces.AddFace(1, 2, 3);
+        var shell = Produce("PlatePropertyComponent", new Dictionary<int, object> { [0] = "Deck", [1] = 0, [2] = 250.0, [3] = 250.0, [4] = steel });
+        var cases = new List<(string, string, Dictionary<int, object>)>
+        {
+            ("BeamPropertyComponent", "A01: cutoff bar, the cutoff inputs not shown (zeros, brittle)", new Dictionary<int, object> { [0] = "Bar", [1] = 3, [2] = section, [3] = steel }),
+            ("BeamPropertyComponent", "A02c: Brep section with a hole", new Dictionary<int, object> { [0] = "Brep", [1] = 5, [2] = brep, [3] = steel }),
+            ("PlateComponent", "A07: a mesh of five vertices (error, no output)", new Dictionary<int, object> { [0] = pentagon, [1] = shell }),
+        };
+        foreach (var (type, name) in new[] { (0, "ShellThin"), (1, "ShellThick"), (2, "PlateThin"), (3, "PlateThick") })
+            cases.Add(("PlatePropertyComponent", "A04: " + name + " of a material with a stress-strain table", new Dictionary<int, object> { [0] = "Table plate", [1] = type, [2] = 20.0, [3] = 20.0, [4] = table }));
+        // A08: a girder of Bridge State Override (a current section state) given another property.
+        var (stateType, _, stateInputs) = StateOverrideCases().First();
+        var stated = ProduceAll(stateType, stateInputs).First(g => ((BridGHe.Common.Gpc.Legacy.LegacyBeamDraft)Prop(g, "Gpc")).Bridge?.SectionState != null);
+        var other = Produce("BeamPropertyComponent", new Dictionary<int, object> { [0] = "Other", [1] = 5, [2] = section, [3] = steel });
+        var former = Make("Fem.GH_BeamProperty", ((BeamModel)Prop(stated, "Value")).BeamProperty);
+        cases.Add(("BeamOverrideComponent", "A08: a beam with a current section state, another property (the state stale)", new Dictionary<int, object> { [0] = stated, [1] = other }));
+        cases.Add(("BeamPropertyOverrideComponent", "A08: a beam with a current section state, another property (the state stale)",
+            new Dictionary<int, object> { [0] = new object[] { stated }, [1] = new object[] { former }, [2] = new object[] { other } }));
+        return cases;
+    }
+
+    /// <summary>PAR (A02, A03): Beam Property on the T, C (single) and angle sections of the components of 0.3.0, under the native host: the
+    /// property is the native Straus7 section 0.3.0 wrote, resolved by Straus7 (its values and principal angle).</summary>
+    private static List<(string Type, string Label, Dictionary<int, object> Inputs)> ParityNativeCases()
+    {
+        var steel = Produce("MaterialSteelComponent", new Dictionary<int, object> { [0] = "S355", [1] = 2 });
+        var cases = new List<(string, string, Dictionary<int, object>)>();
+        foreach (var (type, label) in new[] { ("BeamSectionTComponent", "T"), ("BeamSectionCComponent", "C"), ("BeamSectionAngleComponent", "angle") })
+        {
+            var s = Produce(type, new Dictionary<int, object> { [0] = 150.0, [1] = 10.0, [2] = 300.0, [3] = 12.0 });
+            cases.Add(("BeamPropertyComponent", "A02: " + label + " section (the native section of 0.3.0)", new Dictionary<int, object> { [0] = "PAR " + label, [1] = 5, [2] = s, [3] = steel }));
+        }
+        return cases;
+    }
+
+    /// <summary>PAR (A04): a former material with E and a stress-strain table (strain, stress pairs of 0.3.0), FEM-backed.</summary>
+    private static IGH_Goo TableMaterial() => Make("Fem.GH_Material", new MaterialModel("Table") { Name = "Table", Modulus = 210000, PoissonRatio = 0.3, Density = 7.85e-9,
+        StressStrainTable = new[] { (stress: 0.0, strain: 0.0), (stress: 235.0, strain: 0.00112), (stress: 360.0, strain: 0.15) } });
+
+    /// <summary>PAR: every item of output <paramref name="output"/> of a component solved in memory (as <see cref="Produce"/>).</summary>
+    private static List<IGH_Goo> ProduceAll(string type, Dictionary<int, object> inputs, int output = 0)
+    {
+        using var doc = new GH_Document();
+        var c = BridgeSegmentExcelTests.Add(doc, type);
+        foreach (var input in inputs)
+        {
+            var tree = new GH_Structure<IGH_Goo>();
+            foreach (var v in input.Value is object[] list ? list : new[] { input.Value }) tree.Append(Goo(v), new GH_Path(0));
+            SetInput(c.Params.Input[input.Key], tree, g => g);
+        }
+        BridgeSegmentExcelTests.Solve(doc, true);
+        return c.Params.Output[output].VolatileData.AllData(true).Select(g => g.Duplicate()).ToList();
+    }
+
+    /// <summary>PAR: the checks of the parity beyond a replay: a cutoff bar with its four inputs (A01: the law of the inputs, replayed); the
+    /// stale state of A08 (its marker, refused by the checks as before); the kind a material declares (A10: a generic GPC material declared
+    /// Steel is Steel for Segment Sections, and it is saved with the material).</summary>
+    private static void ParityChecks(ISet<string> kinds, List<string> failures, ref int count)
+    {
+        void Check(bool ok, string what) { if (!ok) failures.Add("in memory: parity " + what); }
+        var steel = Produce("MaterialSteelComponent", new Dictionary<int, object> { [0] = "S355", [1] = 2 });
+        var section = Produce("BeamSectionIComponent", new Dictionary<int, object> { [0] = 300.0, [1] = 250.0, [2] = 800.0, [3] = 20.0, [4] = 16.0, [5] = 12.0 });
+        // A01: Beam Property of type Cutoff Bar shows the four inputs (its menu); with them the property carries their law, replayed.
+        {
+            using var doc = new GH_Document();
+            var c = BridgeSegmentExcelTests.Add(doc, "BeamPropertyComponent");
+            foreach (var (k, v) in new (int, object)[] { (0, "Bar"), (1, 3), (2, section), (3, steel) }) { var t = new GH_Structure<IGH_Goo>(); t.Append(Goo(v), new GH_Path(0)); SetInput(c.Params.Input[k], t, g => g); }
+            c.ExpireSolution(false);
+            Check(c.Params.Input.Count == 8, "A01: Beam Property of type Cutoff Bar shows the cutoff inputs (" + c.Params.Input.Count + " inputs)");
+            if (c.Params.Input.Count == 8)
+            {
+                foreach (var (k, v) in new (int, object)[] { (4, 1.5e5), (5, 2.5e5), (6, 1), (7, true) }) { var t = new GH_Structure<IGH_Goo>(); t.Append(Goo(v), new GH_Path(0)); SetInput(c.Params.Input[k], t, g => g); }
+                BridgeSegmentExcelTests.Solve(doc, true);
+                var p = c.Params.Output[0].VolatileData.AllData(true).FirstOrDefault();
+                var law = (p == null ? null : (GPC.Model.ElementProperties.ElasticBeamProperty)((BridGHe.Common.Gpc.Legacy.LegacyBeamProperty)Prop(p, "Gpc")).Property)?.CutoffLaw;
+                Check(law != null && law.Failure == GPC.Model.ElementProperties.BeamCutoffFailure.Ductile && law.KeepMass && law.TensionLimit == 1.5e5 && law.CompressionLimit == 2.5e5,
+                    "A01: the cutoff law of the inputs (" + (law == null ? "none" : $"{law.Failure} {law.KeepMass} {law.TensionLimit} {law.CompressionLimit}") + ")");
+                Replay(c, "in memory: BeamPropertyComponent (A01: cutoff bar with its inputs)", kinds, new SortedDictionary<string, (int, int)>(), failures);
+            }
+        }
+        count++;
+        // A08: the stale marker, as the reader marks a former state whose property changed; the checks refuse it with the former message.
+        {
+            var (stateType, _, stateInputs) = StateOverrideCases().First();
+            var stated = ProduceAll(stateType, stateInputs).First(g => ((BridGHe.Common.Gpc.Legacy.LegacyBeamDraft)Prop(g, "Gpc")).Bridge?.SectionState != null);
+            var other = Produce("BeamPropertyComponent", new Dictionary<int, object> { [0] = "Other", [1] = 5, [2] = section, [3] = steel });
+            var before = ((BridGHe.Common.Gpc.Legacy.LegacyBeamDraft)Prop(stated, "Gpc")).Bridge.SectionState.PropertyFingerprint;
+            var overridden = ProduceAll("BeamOverrideComponent", new Dictionary<int, object> { [0] = GpcOnly(stated, kinds), [1] = GpcOnly(other, kinds) }).SingleOrDefault();
+            var draft = overridden == null ? null : (BridGHe.Common.Gpc.Legacy.LegacyBeamDraft)Prop(overridden, "Gpc");
+            var after = draft?.Bridge?.SectionState?.PropertyFingerprint;
+            Check(after == BridGHe.Common.Gpc.Legacy.LegacyModelImport.StaleSectionStatePrefix + before && draft.Beam.BeamProperty.Name == "Other"
+                && after != GPC.Checkers.CompositeBridge.BridgeWorkflowDefinition.PropertyFingerprint(draft.Beam),
+                "A08: Beam Override (GPC-only) gives the new property and the state stale with its former fingerprint (" + (after ?? "no state") + ")");
+        }
+        count++;
+        // A10: a material given by its GPC datum with a declared kind: Steel for Beam Property and Segment Sections even when its GPC type is
+        // the generic material (a kind whose strengths the GPC type refused), Undefined without the declaration; saved with the material.
+        {
+            var generic = new GPC.Model.Materials.Material("Custom S", 210000, 0.3, 7.85e-9, 1.2e-5);
+            var declared = T("Fem.GH_Material").GetMethod("FromGpc").Invoke(null, new object[] { generic, "Steel" });
+            var undeclared = T("Fem.GH_Material").GetMethod("FromGpc").Invoke(null, new object[] { generic, null });
+            Check((string)Prop(declared, "GpcKind") == "Steel" && (string)Prop(undeclared, "GpcKind") == "Undefined", "A10: the declared kind of the material");
+            var (data, records) = BridGHe.Common.Gpc.GpcDraftArchive.Write(generic, "Steel");
+            BridGHe.Common.Gpc.GpcDraftArchive.ReadMaterial(data, records, out var readKind);
+            Check(records != null && readKind == "Steel" && BridGHe.Common.Gpc.GpcDraftArchive.Write(generic, "Undefined").Records == null, "A10: the declared kind saved with the material (only when not the kind of its GPC type)");
+            string KindOf(object material)
+            {
+                var p = ProduceAll("BeamPropertyComponent", new Dictionary<int, object> { [0] = "Girder", [1] = 5, [2] = GpcOnly(section, kinds), [3] = material }).SingleOrDefault();
+                return p == null ? null : ((BridGHe.Common.Gpc.Legacy.LegacyBeamProperty)Prop(p, "Gpc")).Data.MaterialKind;
+            }
+            Check(KindOf(declared) == "Steel" && KindOf(undeclared) == "Undefined", $"A10: Beam Property records the declared kind ({KindOf(declared)}, {KindOf(undeclared)})");
+            var geometry = Make("BridgeGeometryGoo", BridGHe.Common.Geometry.SimpleBridgeBuilder.Build(SimpleBridgeTests.Input() with { Segments = new BridGHe.Common.Geometry.BridgeSegments { MaximumLength = 12000 } }));
+            bool Accepted(object material)
+            {
+                var p = ProduceAll("BeamPropertyComponent", new Dictionary<int, object> { [0] = "Girder", [1] = 5, [2] = GpcOnly(section, kinds), [3] = material }).Single();
+                using var doc = new GH_Document();
+                var c = BridgeSegmentExcelTests.Add(doc, "BridgeSegmentSectionsComponent");
+                foreach (var (k, v) in new (int, object)[] { (0, geometry), (1, p) }) { var t = new GH_Structure<IGH_Goo>(); t.Append(Goo(v), new GH_Path(0)); SetInput(c.Params.Input[k], t, g => g); }
+                BridgeSegmentExcelTests.Solve(doc, true);
+                return c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count == 0 && c.Params.Output[1].VolatileDataCount > 0;
+            }
+            Check(Accepted(declared) && !Accepted(undeclared), "A10: Segment Sections accepts the generic material declared Steel, refuses it undeclared (as 0.3.0 by the kind of the value)");
+        }
+        count++;
+        // A04 (B01): a table on a membrane or a shear panel: by the GPC datum alone, the error with the reason and no output.
+        foreach (var type in new[] { 4, 6 })
+        {
+            using var doc = new GH_Document();
+            var c = BridgeSegmentExcelTests.Add(doc, "PlatePropertyComponent");
+            foreach (var (k, v) in new (int, object)[] { (0, "Table plate"), (1, type), (2, 20.0), (3, 20.0), (4, GpcOnly(TableMaterial(), kinds)) }) { var t = new GH_Structure<IGH_Goo>(); t.Append(Goo(v), new GH_Path(0)); SetInput(c.Params.Input[k], t, g => g); }
+            BridgeSegmentExcelTests.Solve(doc, true);
+            var errors = c.RuntimeMessages(GH_RuntimeMessageLevel.Error);
+            Check(errors.Any(e => e.Contains(BridGHe.Common.Gpc.Legacy.LegacyModelImport.PlateTableRefused)) && !c.Params.Output[0].VolatileData.AllData(true).Any(g => g != null),
+                $"A04: a table on plate type {type} by the GPC datum alone: the error with the reason, no output ({string.Join(" / ", errors)})");
+        }
+        count++;
+        Console.WriteLine("GPC-ONLY properties (parity PAR): 4 in-memory checks (cutoff bar with its inputs, stale state after Beam Override, declared material kind, table on a membrane and a shear panel)");
+    }
+
+    #endregion
 
     /// <summary>P2Z: the Straus7 section components, replayed only by <see cref="NativeSections"/>.</summary>
     internal static readonly string[] NativeTypes =
@@ -984,7 +1150,8 @@ internal static class GpcOnlyReplay
         bool OfLane2((string Type, string Label, Dictionary<int, object> Inputs) c) => Lane2Types.Contains(c.Type) && !NativeTypes.Contains(c.Type)
             && c.Inputs.Values.SelectMany(v => v is object[] l ? l : new[] { v }).Any(v => v is IGH_Goo g && kinds.Contains(g.GetType().Name));
         // L2C: and the cases of lane 2c.
-        var all = lane == "native" ? NativeSectionCases() : lane == "properties" ? Lane1Cases().Concat(Lane1bCases()).Where(OfLane2).Concat(Lane2aCases()).Concat(Lane2bCases()).Concat(Lane2cCases()).ToList()
+        // PAR: and the cases of the 0.3.0 parity (ParityCases; the T, C and angle properties under the native host, ParityNativeCases).
+        var all = lane == "native" ? NativeSectionCases().Concat(ParityNativeCases()).ToList() : lane == "properties" ? Lane1Cases().Concat(Lane1bCases()).Where(OfLane2).Concat(Lane2aCases()).Concat(Lane2bCases()).Concat(Lane2cCases()).Concat(ParityCases()).ToList()
             : lane == "generators" ? Lane1bCases() : Lane1Cases();
         foreach (var (type, label, inputs) in all.Where(c => Selected(c.Type)))
         {
@@ -1058,6 +1225,8 @@ internal static class GpcOnlyReplay
         if (lane == "properties") ParameterCases(kinds, byType, failures, ref cases);
         // L2C: the checks of the review of lane 2 (R65-C2).
         if (lane == "properties" && (selected == null || selected.Contains("Review"))) ReviewChecks(kinds, failures, ref cases);
+        // PAR: the checks of the 0.3.0 parity that need more than a list of inputs.
+        if (lane == "properties" && (selected == null || selected.Contains("Parity"))) ParityChecks(kinds, failures, ref cases);
         foreach (var t in types.Where(t => !fromExamples.Contains(t))) Console.WriteLine("GPC-ONLY " + lane + ": not met in the examples (in-memory cases only): " + t);
         foreach (var t in types.Where(t => !byType.ContainsKey(t) && !(lane == "properties" && NativeTypes.Contains(t)))) failures.Add("no case for " + t);
         if (lane == "properties") foreach (var t in Lane2aParameters.Where(t => Selected(t) && !byType.ContainsKey(t))) failures.Add("no case for " + t);
