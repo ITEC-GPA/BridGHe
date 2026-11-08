@@ -95,6 +95,7 @@ internal static class Program
         if(args.Contains("--material-scan")) return GpcMaterialKindChecks.Scan(args);
         if(args.Contains("--gpc-only")) return GpcOnlyReplay.Regression(args.SkipWhile(a=>a!="--gpc-only").Skip(1).First()); // R6.5 P1 (P2S)
         if(args.Contains("--legacy-payload-scan")) return GpcDraftArchiveChecks.PayloadScan(args);
+        if(args.Contains("--composite-texts")) return CompositeTextDump.Run(args.SkipWhile(a=>a!="--composite-texts").Skip(1).First()); // P2X: evidence of the steel capture rule
 #endif
         if(args.Contains("--migration-scale")) return MigrationScale.Run();
         if(args.Contains("--tidy-example")) return ExampleTidy.Run(args.SkipWhile(a=>a!="--tidy-example").Skip(1).FirstOrDefault(),args.Contains("--publish"),args.Contains("--capture"));

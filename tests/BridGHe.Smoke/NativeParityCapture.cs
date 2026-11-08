@@ -78,7 +78,51 @@ internal static class NativeParityCapture
             foreach (var p in sessions) missing += p.Value.Close(p.Key);
             sessions.Clear();
         }
-        if (missing != 0) throw new Exception($"NATIVE CAPTURE FAIL: {missing} captured keys not seen in this run");
+        if (missing != 0) throw new Exception($"NATIVE CAPTURE FAIL: {missing} captured keys not seen or different in this run");
+    }
+
+    /// <summary>
+    /// P2X, the declared rule «F7d CompositeBridge 1.31» (the only one; user decision of 8/11: Checker <c>3b40e2a0</c>, the steel consolidation,
+    /// joins the release, «accetta se spiegate ma riportamelo come cambio di comportamento»). GPCChecker.CompositeBridge 1.26 → 1.31.0.1 solves
+    /// the elastic fields of the H bridge engine directly (commit <c>1092c29f</c>, with <c>7b726fc8</c> and <c>87985942</c>; correzioni-F7d.md §7.2):
+    /// the stresses of Composite Beam Self Tension change in the last digits (relative differences measured in passo 74 of correzioni-P2B.md, within
+    /// the rounding F7d measured; no outcome depends on them). Their capture values are SHA-256 of the canonical texts, so the rule is an explicit
+    /// list, never a bound: <c>Fixtures/native-capture-rules/F7d-CompositeBridge-1.31.tsv</c> (label, key, captured value, value with
+    /// <c>3b40e2a0</c>; only <c>composite|…|self tension …</c> keys, written from the texts of <c>--composite-texts</c> before and after). A captured value
+    /// that differs is accepted only for a listed key, with exactly the listed value before and both the FEM and the GPC value equal to the value
+    /// after. The capture itself is never rewritten.
+    /// <para>The same rule explains the new SHA-256 of the result fingerprints of the two native runs (<c>ResultFingerprint</c>, compared by the
+    /// gates, not by code): 50 <c>99FA70F1…</c> → <c>F9426C0A…</c>, 99 <c>CB903536…</c> → <c>C9517DC7…</c>; their rows, compared field by field in
+    /// passo 74: numbers only, no row, text, class or utilisation across 1 changed; the equilibrium residuals of the H engine fall to rounding
+    /// (99: at most 3.2e-6 before, 1.8e-16 now) and twelve unloaded flanges of 99 (stress exactly 0 before, ±1e-15 now) count as compressed, with
+    /// ρ = 1 and the same effective width.</para>
+    /// </summary>
+    internal static class SteelRule
+    {
+        internal const string Name = "F7d CompositeBridge 1.31";
+        internal static readonly string File = Path.GetFullPath(Path.Combine("tests", "BridGHe.Smoke", "Fixtures", "native-capture-rules", "F7d-CompositeBridge-1.31.tsv"));
+        private static Dictionary<(string Label, string Key), (string Before, string After)> entries;
+
+        private static Dictionary<(string Label, string Key), (string Before, string After)> Entries()
+        {
+            if (entries != null) return entries;
+            var e = new Dictionary<(string Label, string Key), (string Before, string After)>();
+            foreach (var line in System.IO.File.ReadLines(File).Skip(1))
+            {
+                var f = line.Split('\t');
+                if (f.Length != 4 || !f[1].StartsWith("composite|", StringComparison.Ordinal) || !f[1].Contains("|self tension ", StringComparison.Ordinal))
+                    throw new InvalidDataException($"NATIVE CAPTURE: the rule «{Name}» lists only composite self-tension keys: {line}");
+                e.Add((f[0], f[1]), (f[2], f[3]));
+            }
+            return entries = e;
+        }
+
+        /// <summary>Whether the rule lists this difference: the key of this run, the captured value before, FEM and GPC values (where given) after.</summary>
+        internal static bool Accepts(string label, string key, string captured, string fem, string gpc) =>
+            Entries().TryGetValue((label, key), out var v) && v.Before == captured && (fem == null || fem == v.After) && (gpc == null || gpc == v.After) && (fem ?? gpc) != null;
+
+        /// <summary>The keys the rule lists for a run.</summary>
+        internal static int Listed(string label) => Entries().Keys.Count(k => k.Label == label);
     }
 
     private sealed class Session
@@ -86,7 +130,9 @@ internal static class NativeParityCapture
         private readonly bool write; private readonly string path;
         private readonly StreamWriter output; private readonly Dictionary<string, string> captured, recorded = new(StringComparer.Ordinal);
         private readonly HashSet<string> seen = new(StringComparer.Ordinal);
-        private int equal, femOnly; private bool closed;
+        private int equal, femOnly, different, ruled; private bool closed;
+        /// <summary>The label of the run (the name of the capture file: 50, 99).</summary>
+        private string Label => Path.GetFileNameWithoutExtension(path);
 
         internal Session(string path, bool write)
         {
@@ -120,8 +166,15 @@ internal static class NativeParityCapture
             }
             seen.Add(key);
             if (!captured.TryGetValue(key, out var value)) throw new Exception("NATIVE CAPTURE FAIL: not in the capture: " + key);
-            if (fem != null && fem != value) throw new Exception($"NATIVE CAPTURE FAIL: {key}: FEM '{fem}' / captured '{value}'");
-            if (gpc != null && gpc != value) throw new Exception($"NATIVE CAPTURE FAIL: {key}: GPC '{gpc}' / captured '{value}'");
+            if ((fem != null && fem != value) || (gpc != null && gpc != value))
+            {
+                // P2X: a difference the declared steel rule lists (this key, the captured value before, both values now the one after) is
+                // accepted and counted apart; any other is listed (all of them, the run goes on) and fails the run at the end (Close).
+                if (SteelRule.Accepts(Label, key, value, fem, gpc)) { ruled++; return; }
+                different++;
+                Console.WriteLine($"NATIVE CAPTURE DIFF {key}: captured '{value}' / FEM '{fem}' / GPC '{gpc}'");
+                return;
+            }
             if (gpc == null) femOnly++; else equal++;
         }
 
@@ -135,9 +188,13 @@ internal static class NativeParityCapture
                 return 0;
             }
             int missing = captured.Keys.Count(k => !seen.Contains(k));
-            Console.WriteLine($"NATIVE CAPTURE COMPARE {label}: {seen.Count} of {captured.Count} keys seen, {equal} GPC values equal to the captured ones, {femOnly} FEM-only data, {missing} missing" + (missing == 0 ? "" : " FAIL"));
+            int listed = SteelRule.Listed(label), unused = listed - ruled;
+            Console.WriteLine($"NATIVE CAPTURE COMPARE {label}: {seen.Count} of {captured.Count} keys seen, {equal} GPC values equal to the captured ones, {femOnly} FEM-only data, {missing} missing"
+                + (ruled == 0 ? "" : $", {ruled} by the declared rule «{SteelRule.Name}» ({listed} listed)") + (different == 0 ? "" : $", {different} different")
+                + (missing == 0 && different == 0 ? "" : " FAIL"));
+            if (unused != 0) Console.WriteLine($"NATIVE CAPTURE NOTE {label}: {unused} keys of the rule «{SteelRule.Name}» not applied (the captured value came back or the key was not seen)");
             if (missing != 0) foreach (var k in captured.Keys.Where(k => !seen.Contains(k)).Take(20)) Console.WriteLine("  missing: " + k);
-            return missing;
+            return missing + different;
         }
     }
 }

@@ -70,9 +70,11 @@ internal static partial class CompositeAnalysisPropertyChecks
 
     /// <summary>Native gate: every composite property among the outputs of the components of the solved <paramref name="doc"/>, with the
     /// definition its GH type carries (<c>GH_CompositeBeamProperty.Definition</c>).</summary>
-    internal static void Require(GH_Document doc, string label)
+    /// <summary>The composite properties among the outputs of the components of the solved <paramref name="doc"/> (each once), with the
+    /// definition their GH type carries.</summary>
+    internal static IEnumerable<(CompositeBeamPropertyModel Property, BridgeCompositeSectionDefinition Definition)> Properties(GH_Document doc)
     {
-        var seen = new HashSet<string>(StringComparer.Ordinal); int properties = 0, variants = 0, strains = 0;
+        var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (var component in doc.Objects.OfType<GH_Component>())
             foreach (var output in component.Params.Output)
                 foreach (var goo in output.VolatileData.AllData(true))
@@ -80,12 +82,34 @@ internal static partial class CompositeAnalysisPropertyChecks
                     if (goo == null || goo.GetType().Name != "GH_CompositeBeamProperty") continue;
                     if (goo.GetType().GetProperty("Value")?.GetValue(goo) is not CompositeBeamPropertyModel p || p.ConcreteSection?.IsValid != true) continue;
                     if (!seen.Add(Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(ModelArchive.Write(p))))) continue;
-                    var definition = (BridgeCompositeSectionDefinition)goo.GetType().GetProperty("Definition").GetValue(goo);
-                    // R6.6 native capture: the FEM values by the fingerprint of the definition (the GPC datum of the property after R6.5).
-                    string key = "composite|" + definition.Fingerprint() + "|";
-                    variants += CompareFem(p, definition, label, (what, fem, gpc) => NativeParityCapture.Datum(label, key + what, NativeParityCapture.Value(fem), NativeParityCapture.Value(gpc))); properties++;
-                    if ((p.RebarMaterial?.ReinforcementUltimateStrain ?? 0.1) != 0.1) strains++;
+                    yield return (p, (BridgeCompositeSectionDefinition)goo.GetType().GetProperty("Definition").GetValue(goo));
                 }
+    }
+
+    /// <summary>P2X: the canonical texts (not hashed) of the values of the native capture of the composite properties of <paramref name="doc"/>,
+    /// by their key (<c>composite|&lt;definition&gt;|&lt;what&gt;</c>): (key, FEM text, definition text). The evidence of a declared capture
+    /// rule (<see cref="NativeParityCapture"/>): the capture keeps only the SHA-256 of a long text.</summary>
+    internal static int Texts(GH_Document doc, string label, Action<string, string, string> text)
+    {
+        int count = 0;
+        foreach (var (p, definition) in Properties(doc))
+        {
+            string key = "composite|" + definition.Fingerprint() + "|";
+            count += CompareFem(p, definition, label, (what, fem, gpc) => text(key + what, fem, gpc));
+        }
+        return count;
+    }
+
+    internal static void Require(GH_Document doc, string label)
+    {
+        int properties = 0, variants = 0, strains = 0;
+        foreach (var (p, definition) in Properties(doc))
+        {
+            // R6.6 native capture: the FEM values by the fingerprint of the definition (the GPC datum of the property after R6.5).
+            string key = "composite|" + definition.Fingerprint() + "|";
+            variants += CompareFem(p, definition, label, (what, fem, gpc) => NativeParityCapture.Datum(label, key + what, NativeParityCapture.Value(fem), NativeParityCapture.Value(gpc))); properties++;
+            if ((p.RebarMaterial?.ReinforcementUltimateStrain ?? 0.1) != 0.1) strains++;
+        }
         if (properties == 0) throw new Exception($"COMPOSITE ANALYSIS PROPERTY FAIL ({label}): no composite property in the outputs");
         Console.WriteLine($"COMPOSITE ANALYSIS PROPERTY PASS ({label}): {properties} composite properties, {variants} values or variants of the definition " +
             $"equal bit for bit to the FEM property (analysis section, steel torsion, homogenised values for every choice, homogenised property uncracked " +
