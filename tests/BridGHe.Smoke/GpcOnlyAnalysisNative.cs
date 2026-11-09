@@ -197,7 +197,11 @@ internal static class GpcOnlyAnalysisNative
     /// <summary>A05 and A06 in the units of a definition: the two data written by the two paths and read back, against the 0.3.0 calls.</summary>
     private static void MassAndHeat(ModelModel.ModelUnits units, string folder, Action<bool, string> check)
     {
-        var m = ImportDump.PlateData(units); m.Name = "a05-a06-" + units;
+        // The plate of example 03 (ImportDump.PlateData has an attribute the FEM archive does not copy): the geometry is not what is compared.
+        var example = NativeExamples.Create().Single(e => e.Id == "03-plate-patch").Model;
+        var m = new ModelModel(units) { Name = "a05-a06-" + units };
+        foreach (var lc in example.LoadCases) m.LoadCases.Add(lc);
+        m.AddElements(example.Nodes.Cast<ElementModel>().Concat(example.Plates));
         double[] mass = { 0.2, 1.1, 0.01, -0.02, 0.03 }, heat = { 0.1, 0.2, 0.3, 0.4, 5 };
         var dead = new LoadCaseModel(LoadCaseModel.Dead);
         m.Plates[0].Loads.Add(new PlateNSMassModel(dead, new PlateNSMassModel.LoadData { Mass = mass[0], DynFactor = mass[1], Offset = new Vector3d(mass[2], mass[3], mass[4]) }));
@@ -212,7 +216,7 @@ internal static class GpcOnlyAnalysisNative
         {
             string file = Path.Combine(folder, "a05-" + units + "-" + name + ".st7");
             var r = Solve("BridGHe.Grasshopper.Components.Export.StrausR3ExportComponent", c => { Set(c, "Model", model); Set(c, "Output Path", new GH_String(file)); });
-            if (r.Errors.Length != 0 || !File.Exists(file)) { check(false, $"A05/A06 {units} {name}: {r.Errors}"); return; }
+            if (r.Errors.Length != 0 || !File.Exists(file)) { Console.WriteLine($"L3E NATIVE A05/A06 {units} {name}: ERROR {r.Errors}"); check(false, $"A05/A06 {units} {name}: {r.Errors}"); return; }
             using var api = new Straus7NativeApi();
             api.OpenModelReadOnly(file, folder);
             try { read[name] = (api.ReadPlateNonStructuralMass(1, 1, 1).Take(5).ToArray(), api.ReadMovingHeatSource(1, 1, 1)); }
@@ -270,7 +274,7 @@ internal static class GpcOnlyAnalysisNative
         nodes[0].Attributes.Add(new NodeRestraintAttributeModel(true, true, true, true, true, true));
         var first = Property("Same", 210000); var second = Property("Same", 315000);
         fem.AddElements(nodes);
-        fem.AddElements(new ElementModel[] { new BeamModel("B1", points[0], points[1], first), new BeamModel("B2", points[1], points[2], second), new BeamModel("B3", points[2], points[3], second) });
+        fem.AddElements(new ElementModel[] { new BeamModel("B1", points[0], points[1], first) { BeamId = "B1" }, new BeamModel("B2", points[1], points[2], second) { BeamId = "B2" }, new BeamModel("B3", points[2], points[3], second) { BeamId = "B3" } });
         var replacement = Property("Stiff", 420000);
         const double tolerance = 1e-6;
         var names = new[] { fem.Beams[0].BeamId };

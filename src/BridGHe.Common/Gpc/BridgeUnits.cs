@@ -63,7 +63,7 @@ namespace BridGHe.Common.Gpc
         /// <summary>R6.5 P1 lane 3e (A06): the power of a moving heat source (energy per second in the energy unit of the Straus7 files of
         /// BridGHe 0.3.0: J for kNm, SI and Nmm, BTU for PSI) in N mm/s.</summary>
         public double ToNmmPerSecond(double power) => power * (Units == DefinitionUnits.IPS ? BtuInJoule : 1) * 1000;
-        private const double BtuInJoule = 1055.05585262;
+        private const double BtuInJoule = 1055.056; // the BTU of Straus7 (St7ConvertUnits): the file of 0.3.0 and the N-mm file of the GPC path agree
         /// <summary>Absolute temperature.</summary>
         public double ToCelsius(double value) => Fahrenheit ? (value - 32) * 5 / 9 : value;
         /// <summary>Temperature difference.</summary>

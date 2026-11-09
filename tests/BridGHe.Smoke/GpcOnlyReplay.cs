@@ -1764,7 +1764,7 @@ internal static class GpcOnlyReplay
     private static void Lane3eChecks(List<string> failures, ref int count)
     {
         foreach (var (units, length, mass, power) in new[] { (ModelModel.ModelUnits.Nmm, 1.0, 1.0, 1000.0), (ModelModel.ModelUnits.Knm, 1000.0, 1e-6, 1000.0), (ModelModel.ModelUnits.SI, 1000.0, 1e-9, 1000.0),
-            (ModelModel.ModelUnits.IPS, 25.4, 4.5359237e-4 / (25.4 * 25.4), 1055.05585262 * 1000) })
+            (ModelModel.ModelUnits.IPS, 25.4, 4.5359237e-4 / (25.4 * 25.4), 1055.056 * 1000) })
         {
             const double tolerance = 1e-6;
             var fem = MassHeatModel(units); var path = HeatPath(); fem.MovingPaths.Add(path);
@@ -1788,8 +1788,8 @@ internal static class GpcOnlyReplay
     /// <summary>L3e: where the analyses of the rehearsal write (null outside the rehearsal: the analyses are never pressed).</summary>
     private static string rehearsalFolder;
 
-    /// <summary>L3e: the analysed GPC models of two outputs compared: fingerprint, datasets and the serialized model with its results, catalog and values
-    /// (<see cref="BridGHe.Common.Gpc.GpcResultsFile"/>). Null when equal, otherwise the first difference.</summary>
+    /// <summary>L3e: the analysed GPC models of two outputs compared: fingerprint, name, datasets, catalog and every result row the components read, in exact
+    /// text (the serialized files differ in the dataset GUIDs of each import). Null when equal, otherwise the first difference.</summary>
     internal static string ResultsDifference(object fem, object gpc)
     {
         var a = Prop(fem, "GpcResults") as GPC.Model.Models.Model; var b = Prop(gpc, "GpcResults") as GPC.Model.Models.Model;
@@ -1797,10 +1797,31 @@ internal static class GpcOnlyReplay
         if (GPC.Model.Models.ModelRevisions.AnalysisFingerprint(a) != GPC.Model.Models.ModelRevisions.AnalysisFingerprint(b)) return "the analysis fingerprint";
         if (a.Name != b.Name) return "the name: '" + a.Name + "' -> '" + b.Name + "'";
         if (!a.Datasets.Keys.SequenceEqual(b.Datasets.Keys)) return "the dataset keys";
-        byte[] x = BridGHe.Common.Gpc.GpcResultsFile.ToBytes(a), y = BridGHe.Common.Gpc.GpcResultsFile.ToBytes(b);
-        if (x.Length != y.Length) return "the size of the results: " + x.Length + " -> " + y.Length;
-        int at = Enumerable.Range(0, x.Length).FirstOrDefault(i => x[i] != y[i], -1);
-        return at < 0 ? null : "the results bytes at " + at + " of " + x.Length;
+        var p = BridGHe.Common.Gpc.GpcResultCatalog.Of(a); var q = BridGHe.Common.Gpc.GpcResultCatalog.Of(b);
+        static string E(BridGHe.Common.Gpc.GpcResultCatalog c) => c.Units.Units + " " + string.Join(";", c.Entries.Select(e => e.Label + "|" + e.Case + "|" + e.Step + "|" + e.Phase));
+        if (E(p) != E(q)) return "the catalog: " + E(p) + " -> " + E(q);
+        var first = ResultRows(p, a).GetEnumerator(); var second = ResultRows(q, b).GetEnumerator(); long rows = 0;
+        while (true)
+        {
+            bool one = first.MoveNext(), two = second.MoveNext();
+            if (one != two) return "the number of result rows, after " + rows;
+            if (!one) return rows == 0 ? "no result rows" : null;
+            rows++;
+            if (first.Current != second.Current) return "result row " + rows + ": " + first.Current + " -> " + second.Current;
+        }
+    }
+
+    /// <summary>L3e: every result row the components read, in exact text (the angles of the beams come from the catalog).</summary>
+    private static IEnumerable<string> ResultRows(BridGHe.Common.Gpc.GpcResultCatalog c, GPC.Model.Models.Model m)
+    {
+        static string V(double v) => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+        static string Vs(IEnumerable<double> v) => v == null ? "-" : string.Join(" ", v.Select(V));
+        foreach (var n in m.NodesElements.Values.OrderBy(e => e.Id)) foreach (var r in BridGHe.Common.Gpc.GpcResultRows.Node(c, m, n))
+            yield return "N " + n.Id + " " + r.Entry + " " + Vs(r.Displacement) + " / " + Vs(r.Reaction);
+        foreach (var b in m.BeamElements.Values.OrderBy(e => e.Id)) foreach (var r in BridGHe.Common.Gpc.GpcResultRows.Beam(c, m, b))
+            yield return "B " + b.Id + " " + r.Entry + " " + V(r.Station) + " " + Vs(new[] { r.Axial, r.Shear1, r.Shear2, r.Torque, r.Bending1, r.Bending2 });
+        foreach (var s in m.AreaElements.Values.OrderBy(e => e.Id)) foreach (var r in BridGHe.Common.Gpc.GpcResultRows.Plate(c, m, s))
+            yield return "P " + s.Id + " " + r.Entry + " " + r.Node + " " + Vs(r.Values) + " " + Vs(new[] { r.ForceMax, r.ForceMin, r.ForceAngle, r.ForceVonMises, r.MomentMax, r.MomentMin, r.MomentAngle });
     }
 
     /// <summary>L3e: Node, Beam and Plate Results replayed on the elements of an analysed FEM-backed model (real results): GPC-only inputs, the same outputs.</summary>
