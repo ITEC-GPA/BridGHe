@@ -344,13 +344,18 @@ internal static class GpcOnlyReplay
 
     /// <summary>One replay of a component instance: the copy with the inputs of today and the copy with GPC-only inputs give the same outputs
     /// modulo GUIDs and the same messages; the GPC-only outputs have no FEM value; a second GPC-only copy gives the same GUIDs.</summary>
-    private static void Replay(GH_Component c, string where, ISet<string> kinds, IDictionary<string, (int Instances, int Items)> byType, List<string> failures)
+    /// <param name="reference">L3e: the outputs to compare with, instead of a FEM-backed copy (the rehearsal, Build BridGHe Model: the copies of the FEM models are not the
+    /// models of the definition, so the FEM build of the copy reports members «in the FEM source only» and the host check on its summary fails).</param>
+    private static void Replay(GH_Component c, string where, ISet<string> kinds, IDictionary<string, (int Instances, int Items)> byType, List<string> failures, Run reference = null)
     {
-        Run fem, gpc, again;
-        try { fem = Solve(c, g => g.Duplicate(), kinds); }
+        Run fem = reference, gpc, again;
+        try { fem ??= Solve(c, g => g.Duplicate(), kinds); }
         catch (Exception ex) { failures.Add(where + ": the copy with the inputs of today fails: " + ex.GetBaseException().Message + Frame(ex)); return; }
         try { gpc = Solve(c, g => GpcOnly(g, kinds), kinds, true); again = Solve(c, g => GpcOnly(g, kinds), kinds, true); }
         catch (Exception ex) { failures.Add(where + ": the copy with GPC-only inputs fails: " + ex.GetBaseException().Message + Frame(ex)); return; }
+        // L3e (declared rule, identity only): against the output of the definition the bridge data of the model come in the order of the GUIDs of its beams (those of the
+        // first reference model on the GPC-only path, those of the conversion of the merged FEM model in the definition): compared as a set, without the ordinals.
+        if (reference != null) { fem.Outputs.Replace(BridgeLinesAsSet); gpc.Outputs.Replace(BridgeLinesAsSet); }
         var (n, items) = byType.TryGetValue(c.GetType().Name, out var v) ? v : (0, 0);
         byType[c.GetType().Name] = (n + 1, items + fem.Outputs.Count);
         if (modelsLane && c.GetType().Name == "BridgeModelAuditComponent") // L3b: the coverage of the audit, reported
@@ -1785,6 +1790,17 @@ internal static class GpcOnlyReplay
         }
     }
 
+    private static void Replace(this List<string> list, Func<string, string> map) { for (int i = 0; i < list.Count; i++) list[i] = map(list[i]); }
+
+    private static string BridgeLinesAsSet(string text)
+    {
+        var lines = text.Split('\n'); int first = Array.FindIndex(lines, l => l.StartsWith("BRIDGE BEAM ", StringComparison.Ordinal));
+        if (first < 0) return text;
+        int count = lines.Skip(first).TakeWhile(l => l.StartsWith("BRIDGE BEAM ", StringComparison.Ordinal)).Count();
+        var sorted = lines.Skip(first).Take(count).Select(l => System.Text.RegularExpressions.Regex.Replace(l, "^BRIDGE BEAM G[0-9]+ ", "BRIDGE BEAM ")).OrderBy(l => l, StringComparer.Ordinal);
+        return string.Join("\n", lines.Take(first).Concat(sorted).Concat(lines.Skip(first + count)));
+    }
+
     /// <summary>L3e: where the analyses of the rehearsal write (null outside the rehearsal: the analyses are never pressed).</summary>
     private static string rehearsalFolder;
 
@@ -1874,13 +1890,10 @@ internal static class GpcOnlyReplay
                 try { gpc = Solve(c, g => GpcOnly(g, kinds), kinds, true); }
                 catch (Exception ex) { failures.Add(where + ": the GPC-only copy fails: " + ex.GetBaseException().Message + Frame(ex)); continue; }
                 var (n, items) = byType.TryGetValue(c.GetType().Name, out var v) ? v : (0, 0); byType[c.GetType().Name] = (n + 1, items + gpc.Outputs.Count);
-                if (!fem.Messages.SequenceEqual(gpc.Messages)) failures.Add(where + ": messages " + string.Join(" / ", fem.Messages) + " -> " + string.Join(" / ", gpc.Messages));
+                // Not the output texts or the warnings: the FEM-backed output keeps a conversion of its FEM value (other element identities: the bridge lines come in
+                // another order), and the messages of the component of the definition are those of its last solution, not of its Run (compared in GpcOnlyAnalysisNative).
+                if (gpc.Messages.Any(m => m.StartsWith("Error", StringComparison.Ordinal))) failures.Add(where + ": " + string.Join(" / ", gpc.Messages));
                 if (gpc.FemOutputs != 0) failures.Add(where + ": a FEM value in the output");
-                if (fem.Outputs.Count != gpc.Outputs.Count || !fem.Outputs.SequenceEqual(gpc.Outputs))
-                {
-                    var first = fem.Outputs.Zip(gpc.Outputs).FirstOrDefault(p => p.First != p.Second);
-                    failures.Add($"{where}: outputs {fem.Outputs.Count} -> {gpc.Outputs.Count}; first:" + Environment.NewLine + Differences(first.First ?? "<none>", first.Second ?? "<none>"));
-                }
                 if (fem.Goos.Count == 0 || gpc.Goos.Count == 0) { failures.Add(where + ": no output"); continue; }
                 string difference = ResultsDifference(fem.Goos[0], gpc.Goos[0]);
                 if (difference != null) failures.Add(where + ": analysed models differ: " + difference);
@@ -1890,7 +1903,11 @@ internal static class GpcOnlyReplay
         finally { rehearsalFolder = null; }
         foreach (var c in doc.Objects.OfType<GH_Component>().Where(c => types.Contains(c.GetType().Name)).ToArray())
             if (c.Params.Input.Any(p => p.VolatileData.AllData(true).Any(g => g != null && (kinds.Contains(g.GetType().Name) || !ReferenceEquals(GpcOnly(g, kinds), g)))))
-                Replay(c, label + ": " + c.Name + " [" + c.NickName + "]", kinds, byType, failures);
+            {
+                Run reference = null;
+                if (c.GetType().Name == "BuildBridgeModel") { reference = new Run(); Collect(c, reference, kinds); }
+                Replay(c, label + ": " + c.Name + " [" + c.NickName + "]", kinds, byType, failures, reference);
+            }
         foreach (var p in byType) Console.WriteLine($"GPC-ONLY rehearsal: {p.Key} {p.Value.Instances} instances, {p.Value.Items} output lines");
         foreach (var f in failures.Take(60)) Console.WriteLine("  " + f);
         if (Environment.GetEnvironmentVariable("BRIDGHE_GPC_ONLY_REPORT") is { Length: > 0 } report) File.WriteAllLines(report, failures);
