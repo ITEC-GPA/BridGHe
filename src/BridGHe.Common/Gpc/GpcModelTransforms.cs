@@ -212,7 +212,7 @@ namespace BridGHe.Common.Gpc
                 if (ReferenceEquals(beam.BeamProperty, entry.Property)) continue;
                 beam.BeamProperty = entry.Property;
                 beam.Assignments.Formulation = entry.Data.Formulation;
-                var axes = GpcBeamAxes.Section(beam.StartPoint, beam.EndPoint, source.BeamAngles[beam.Id], entry.Data.Angle);
+                var axes = GpcBeamAxes.Section(beam.StartPoint, beam.EndPoint, source.BeamAngles[beam.Id] + LegacyModelImport.AxesRotationDeg(entry.Data.Native), entry.Data.Angle);
                 beam.Assignments.SectionAxes = axes;
                 if (beam.Assignments.Physical != null)
                     foreach (var support in beam.Assignments.Physical.Supports)

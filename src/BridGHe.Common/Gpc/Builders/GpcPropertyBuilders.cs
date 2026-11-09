@@ -34,8 +34,9 @@ namespace BridGHe.Common.Gpc.Builders
             var formulation = typeName == "Beam" ? BeamFormulation.StraightTwoNode : typeName == "Truss" ? BeamFormulation.Truss : typeName == "Cable" ? BeamFormulation.Cable
                 : typeName == "CutoffBar" ? BeamFormulation.CutoffBar : typeName == "PointContact" ? BeamFormulation.PointContact : typeName == "Pipe" ? BeamFormulation.Pipe
                 : typeName == "Connection" ? BeamFormulation.Connection : throw new NotSupportedException("LegacyBeamPropertyType: " + typeName);
-            // L2C: a mirrored section (now a recipe) is refused as the reader refuses a property on it, in the order of the reader.
-            if (section.Mirror != LegacySectionRecipe.NoMirror) throw new NotSupportedException("LegacyMirroredSectionNotMappedYet");
+            // LIB (A02b, as in 0.3.0): the double C and the double angle are the native section with its mirror; a mirror on any other section
+            // (no component or menu of 0.3.0 makes one) is refused as the reader refuses it, in the order of the reader.
+            if (section.Mirror != LegacySectionRecipe.NoMirror && !LegacyModelImport.CanBeDouble(section)) throw new NotSupportedException("LegacyMirroredSectionNotMappedYet");
             var analysis = GpcMaterials.Analysis(material);
             if (analysis.AnalysisData?.StressStrainPairs != null && typeName != "Beam" && typeName != "Truss") analysis.AnalysisData.StressStrainPairs = null; // former exporter: tables only for beams and trusses
             var recipe = PropertySection(section);
@@ -108,8 +109,8 @@ namespace BridGHe.Common.Gpc.Builders
 
         /// <summary>The section a former Beam Property made of its input section (see the class). L2C (lane 2c): the former component did not
         /// copy the fillet radius (the property section has R 0), copied the section moduli of a Generic section (NaN for a native Straus7
-        /// section, as <c>StrausSection.Calculate</c> gave them) and the shapes of a Brep section; a mirrored section is refused before
-        /// (<see cref="Beam"/>).</summary>
+        /// section, as <c>StrausSection.Calculate</c> gave them) and the shapes of a Brep section. LIB (A02b): and the mirror (with its gaps,
+        /// as the former component copied them); a mirror on a section that cannot be double is refused before (<see cref="Beam"/>).</summary>
         public static LegacySectionRecipe PropertySection(LegacySectionRecipe s)
         {
             if (s.NativeKey != null)
@@ -133,7 +134,7 @@ namespace BridGHe.Common.Gpc.Builders
                 };
             if (s.Kind == BridgeSectionKind.Composite) return new LegacySectionRecipe { Kind = s.Kind, Name = "", Angle = s.Angle };
             return new LegacySectionRecipe { Kind = s.Kind, Name = "", Angle = s.Angle, D = s.D, B = s.B, B1 = s.B1, B2 = s.B2, T = s.T, T1 = s.T1, T2 = s.T2, T3 = s.T3, Shapes = s.Shapes,
-                MirrorGapA = s.MirrorGapA, MirrorGapB = s.MirrorGapB };
+                Mirror = s.Mirror, MirrorGapA = s.MirrorGapA, MirrorGapB = s.MirrorGapB };
         }
 
         // The former PlatePropertyType, by its value (the Type input of Plate Property).

@@ -237,7 +237,10 @@ namespace BridGHe.Common.Gpc.Legacy
                 : type == "CutoffBar" ? BeamFormulation.CutoffBar : type == "PointContact" ? BeamFormulation.PointContact : type == "Pipe" ? BeamFormulation.Pipe
                 : type == "Connection" ? BeamFormulation.Connection : throw new NotSupportedException("LegacyBeamPropertyType: " + type);
             var m = p.Field("Material"); var s = p.Field("SectionModel");
-            if (s.Enum("MirrorType") != "None") throw new NotSupportedException("LegacyMirroredSectionNotMappedYet");
+            // LIB (A02b, as in 0.3.0): the double C and the double angle are the native section with its mirror (SectionProperty). No component or
+            // menu of 0.3.0 mirrors any other section (Double Sections of the C and Angle components, the mirror menu of Beam Section on them).
+            if (s.Enum("MirrorType") != "None" && !(s["NativeSection"].IsNull && (s.Enum("SectionType") == "C" || s.Enum("SectionType") == "Angle")))
+                throw new NotSupportedException("LegacyMirroredSectionNotMappedYet");
             var material = ElasticMaterial(m);
             if (!m["StressStrainTable"].IsNull && type != "Beam" && type != "Truss") material.AnalysisData.StressStrainPairs = null; // former exporter: tables only for beams and trusses
             var recipe = SectionRecipe(s);
@@ -269,6 +272,19 @@ namespace BridGHe.Common.Gpc.Legacy
 
         /// <summary>PAR (A02): the section kinds the former exporter wrote as a native Straus7 section whose properties Straus7 computed.</summary>
         internal static bool IsStandardNative(BridgeSectionKind kind) => kind == BridgeSectionKind.T || kind == BridgeSectionKind.C || kind == BridgeSectionKind.Angle;
+
+        /// <summary>LIB (A02b): the sections a mirror can reach on a beam property: a C or angle section of the components (not a native section).</summary>
+        internal static bool CanBeDouble(LegacySectionRecipe r) => r.NativeKey == null && (r.Kind == BridgeSectionKind.C || r.Kind == BridgeSectionKind.Angle);
+
+        /// <summary>LIB (A02b): the native mirror the former exporter wrote: <c>St7SetBeamMirrorOption(mtLeft, btFalse, {gap A, gap B})</c>, mtLeft
+        /// whatever the mirror of the section.</summary>
+        private const int MirrorLeft = 3;
+
+        /// <summary>LIB (A02b, former <c>StrausR3Helper.RotateOf90Deg</c>): the former exporter added 90° to the Straus7 reference angle of a beam
+        /// of a double angle: the axes of the beam (section, principal, offsets, loads, supports) are turned by it. The angle of the beam
+        /// (<see cref="LegacyImportReport.BeamAngles"/>) stays the one given: the former results reader turned the beam forces of such a beam
+        /// back to it, as <see cref="GpcBeamAxes.Principal"/> of that angle projects them.</summary>
+        internal static double AxesRotationDeg(GPC.Converter.Straus7.Straus7SectionDefinition native) => native != null && native.Shape == 9 && native.MirrorType != 0 ? 90 : 0;
 
         /// <summary>Chain E (e3 point 5): the section of a former SectionModel in the definition units (the numbers as written, nothing derived).</summary>
         private static LegacySectionRecipe SectionRecipe(LegacyValue s)
@@ -383,7 +399,10 @@ namespace BridGHe.Common.Gpc.Legacy
                 // centroid and principal angle from the geometry, and those stayed in the model. The same native section, resolved by Straus7
                 // in mm from the dimensions in the model units, gives the property and its principal angle together (as a native section).
                 var (key, dimensions) = StandardNative(r);
-                var resolved = GpcNativeSections.Resolve(key, dimensions, null, null, null, units.Length).Section;
+                // LIB (A02b, as in 0.3.0): the double C and the double angle: the single section with the mirror of the former exporter, in the
+                // same order (geometry, mirror, calculation), so Straus7 gives the values of the double section and its principal angle.
+                var resolved = GpcNativeSections.Resolve(key, dimensions, null, null, null, units.Length,
+                    r.Mirror == LegacySectionRecipe.NoMirror ? 0 : MirrorLeft, new[] { r.MirrorGapA, r.MirrorGapB }).Section;
                 var nativeProperty = resolved.ToBeamProperty(propertyName, material);
                 report.Carry("Native section preview contours (display only)");
                 return (nativeProperty, resolved.ReferenceProperties[10], resolved);
@@ -424,7 +443,7 @@ namespace BridGHe.Common.Gpc.Legacy
         {
             if (r.Shapes == null || r.Shapes.Count == 0) throw new NotSupportedException("LegacyBrepSectionWithoutShapes: the Brep section has no shapes.");
             if (r.Shapes.Count != 1)
-                throw new NotSupportedException("LegacyBrepSectionOfSeveralShapesNotMappedYet: the Brep section has " + r.Shapes.Count + " separate regions; give one closed region (with its holes) per section.");
+                throw new NotSupportedException("LegacyBrepSectionOfSeveralShapes: the Brep section has " + r.Shapes.Count + " separate regions; give one closed region (with its holes) per section.");
             GPC.Geometry.Polygon2d Polygon(IReadOnlyList<double> xy)
             {
                 var p = new GPC.Geometry.Polygon2d();

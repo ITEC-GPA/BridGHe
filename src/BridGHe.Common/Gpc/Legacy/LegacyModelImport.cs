@@ -366,7 +366,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 var ni = assembly.Node(i); var nj = assembly.Node(j);
                 var records = new LegacyElementRecords();
                 var beam = Beam(b, k, GpcIdentity.Derive(owner, "beam:" + k), owner, ni.Position, nj.Position, p.Property, p.Formulation, p.Angle,
-                    created => created.ConnectNodes(ni, nj), assembly.GroupOf, cases, units, report, members, femPropertySignature, records);
+                    created => created.ConnectNodes(ni, nj), assembly.GroupOf, cases, units, report, members, femPropertySignature, records, AxesRotationDeg(p.Native));
                 LegacyAssembly.ResolveBeam(beam, records, report);
                 assembly.AddBeam(beam, p.Native);
             }
