@@ -97,6 +97,10 @@ namespace BridGHe.Common.Gpc
         public GPC.Checkers.CompositeBridge.BridgeModelData Bridge { get; }
         private readonly Func<BeamElement, double> angle;
 
+        /// <summary>L3b: the import report of a reference model (native sections by beam GUID: the bridge model keeps its element identities; the data of its
+        /// beam properties, the section recipes), or null.</summary>
+        public Legacy.LegacyImportReport Report { get; private init; }
+
         private GpcBridgeSource(Model model, BridgeUnits units, Func<BeamElement, double> angle, Model analysed, GPC.Checkers.CompositeBridge.BridgeModelData bridge = null)
         { Model = model; Units = units; this.angle = angle; Analysed = analysed; Bridge = bridge; }
 
@@ -107,7 +111,8 @@ namespace BridGHe.Common.Gpc
         public static GpcBridgeSource Reference(GpcModels.Conversion input, Model analysed)
         {
             if (input == null) throw new ArgumentNullException(nameof(input));
-            return Reference(input.Model, input.Report.Units, input.Report.BeamAngles, analysed, input.Bridge);
+            var source = Reference(input.Model, input.Report.Units, input.Report.BeamAngles, analysed, input.Bridge);
+            return new GpcBridgeSource(source.Model, source.Units, source.angle, source.Analysed, source.Bridge) { Report = input.Report };
         }
 
         /// <summary>A reference model given directly as GPC (finding 3 of P2T; chain E: the input model of a GH model on GPC): the input model
@@ -148,7 +153,9 @@ namespace BridGHe.Common.Gpc
         internal bool Is(Model model) => ReferenceEquals(Model, model) || ReferenceEquals(Analysed, model);
     }
 
-    public sealed record GpcBridgeBuild(GpcBridge Bridge, string[] Summary, string[] Warnings);
+    /// <param name="Input">L3b: the GPC input of the bridge model (its structure, cases and combinations, no dataset), for a <c>GH_Model</c> given by
+    /// its GPC data alone; null unless asked for.</param>
+    public sealed record GpcBridgeBuild(GpcBridge Bridge, string[] Summary, string[] Warnings, GpcModels.Conversion Input = null);
 
     /// <summary>
     /// F6 chain C: Build BridGHe Model on GPC. The bridge model is a copy of the input GPC model of the first reference without its loads,
@@ -164,8 +171,11 @@ namespace BridGHe.Common.Gpc
     /// </summary>
     public static class GpcBridgeBuilder
     {
+        private const string LoadCaseStageList = "Load case temperature or stage list (not exported by the former writer)", WorkflowCarry = "BridgeWorkflow (checks recipe, not exported)",
+            StageGroupCarry = "Stage group without elements (not created natively by the former exporter)";
+
         public static GpcBridgeBuild Build(IReadOnlyList<GpcBridgeSource> references, IEnumerable<BridgePhaseDefinition> definitions, IReadOnlyList<string[]> combinations,
-            BridgeWorkflowMethod method, double tolerance, bool allowAdditionalMembers, Guid modelIdentity)
+            BridgeWorkflowMethod method, double tolerance, bool allowAdditionalMembers, Guid modelIdentity, bool structureInput = false)
         {
             var (phases, actions) = BridgeWorkflowBuilder.Validate(definitions, method, tolerance, gpcSources: true);
             var sources = new List<GpcBridgeSource>(references ?? Array.Empty<GpcBridgeSource>());
@@ -173,6 +183,13 @@ namespace BridGHe.Common.Gpc
             int referenceCount = sources.Count;
             foreach (var a in actions.Select(a => a.Action))
             {
+                // L3b: a source given by its GPC input alone that was not analysed takes part in the alignment, as its FEM source does, and has no
+                // results: «no FEM results» for its first beam below, the message of the FEM path.
+                if (!string.IsNullOrWhiteSpace(a.Case) && a.GpcSource == null && a.Source == null && a.GpcInput != null)
+                {
+                    if (sources.FindIndex(s => s.Is(a.GpcInput.Model)) < 0) sources.Add(GpcBridgeSource.Reference(a.GpcInput, null));
+                    continue;
+                }
                 if (!string.IsNullOrWhiteSpace(a.Case) && a.GpcSource == null)
                     throw new ArgumentException($"Action {a.Key}: its source has no analysed GPC model (analysed before F6); recalculate the analysis.");
                 // R6.4 (5): the source of an action whose GH model was rebuilt from the beams of an analysis is that model with the analysis
@@ -186,7 +203,7 @@ namespace BridGHe.Common.Gpc
             var aligned = Align(sources, tolerance, allowAdditionalMembers);
             var reference = sources[0]; var beams = Beams(reference.Model);
             BridgeWorkflowBuilder.RequireKnownBeams(actions, beams.Select(b => b.Name));
-            BridgeWorkflowBuilder.RejectReusedIncrements(actions, a => a.GpcSource);
+            BridgeWorkflowBuilder.RejectReusedIncrements(actions, a => (object)a.GpcSource ?? a.GpcInput?.Model);
 
             var records = new Dictionary<string, BridgeWorkflowAction>(StringComparer.Ordinal);
             var raw = beams.Select(_ => new List<(string Case, BeamForceSample Sample)>()).ToArray();
@@ -206,6 +223,8 @@ namespace BridGHe.Common.Gpc
                 records.Add(action.Key, record);
                 if (record.ForceCase != null)
                 {
+                    if (action.GpcSource == null) // L3b: a source that was not analysed, GPC-only path (above)
+                        BridgeWorkflowBuilder.RequireForces(phase, action, beams.First(b => action.BeamIds.Length == 0 || action.BeamIds.Contains(b.Name, StringComparer.Ordinal)).Name, Array.Empty<BeamForceSample>());
                     int sourceIndex = sources.FindIndex(s => s.Is(action.GpcSource));
                     var gpc = action.GpcSource; var catalog = GpcResultCatalog.Of(gpc) ?? throw new ArgumentException("GpcActionSourceWithoutResults: " + gpc.Name);
                     for (int i = 0; i < beams.Length; i++)
@@ -254,6 +273,11 @@ namespace BridGHe.Common.Gpc
             var summary = BridgeWorkflowBuilder.Finish(phases, method, records, table, workflow, warnings);
 
             var model = Structure(reference.Model, records, table, modelIdentity);
+            // R6.4 (6): the bridge data of the beams of the bridge model (the element identities of the reference), from the reference.
+            var data = new GPC.Checkers.CompositeBridge.BridgeModelData();
+            if (reference.Bridge != null) foreach (var b in model.BeamElements.Values.OrderBy(b => b.Id)) { var d = reference.Bridge.Beam(b.Guid); if (d != null) data.Set(d); }
+            // L3b: the structure of the bridge model as a GPC input, before the merged actions are added (a GPC input has no dataset).
+            var structure = structureInput ? StructureInput(model, reference, tolerance, data, records.Values) : null;
             foreach (var phase in workflow.Phases)
                 foreach (var a in phase.Actions)
                     model.PreservedSourceData.Add(new PreservedAssignment
@@ -263,11 +287,47 @@ namespace BridGHe.Common.Gpc
                         UnitsAndAxes = "", UnsupportedReason = "Former BridGHe action provenance (phase model and case name) kept for the round trip of the port; not a solver input.",
                     });
             Results(model, reference, samples);
-            // R6.4 (6): the bridge data of the beams of the bridge model (the element identities of the reference), from the reference.
-            var data = new GPC.Checkers.CompositeBridge.BridgeModelData();
-            if (reference.Bridge != null) foreach (var b in model.BeamElements.Values.OrderBy(b => b.Id)) { var d = reference.Bridge.Beam(b.Guid); if (d != null) data.Set(d); }
             return new GpcBridgeBuild(new GpcBridge(model, Recipe(workflow, model), samples, workflow, beams.Select(b => reference.Angle(b)).ToArray(),
-                table.Select(t => (t.Name, (IReadOnlyList<(string Case, double Factor)>)t.Factors.ToArray())).ToArray(), data), summary, warnings.ToArray());
+                table.Select(t => (t.Name, (IReadOnlyList<(string Case, double Factor)>)t.Factors.ToArray())).ToArray(), data), summary, warnings.ToArray(), structure);
+        }
+
+        /// <summary>L3b: the GPC input of the bridge model, a copy of its structure (same identities, no dataset): definition units and angles of
+        /// the reference, its native sections, the bridge data of its beams.</summary>
+        private static GpcModels.Conversion StructureInput(Model model, GpcBridgeSource reference, double tolerance, GPC.Checkers.CompositeBridge.BridgeModelData data, IReadOnlyCollection<BridgeWorkflowAction> records)
+        {
+            var copy = GPC.Model.Core.ModelValues.Copy(model, GPC.Model.Core.ModelCopyOptions.None, model.Guid);
+            var angles = copy.BeamElements.Values.ToDictionary(b => b.Id, b => reference.Angle(reference.Model.BeamElements[b.Id]));
+            var input = GpcModels.Conversion.FromGpc(copy, reference.Units, angles, tolerance, reference.Report?.NativeSections, data);
+            // The data of the properties as the reference has them (the section recipes, the signatures).
+            if (reference.Report != null)
+                foreach (var name in input.Report.BeamProperties.Keys.ToArray()) if (reference.Report.BeamProperties.TryGetValue(name, out var known)) input.Report.BeamProperties[name] = known;
+            // The report of the bridge model as it is, where it says what the model does not carry: the merged cases are its registered cases (the default
+            // «Dead» case is not one of them), each with its stage list; the workflow and the slab strains are checks data; what the elements carry is that of the reference.
+            var report = input.Report;
+            int merged = records.Sum(r => (r.ForceCase != null ? 1 : 0) + (r.StrainCase != null ? 1 : 0));
+            report.RegisteredCases = merged;
+            report.CaseOrigins["Dead"] = Legacy.LegacyCaseOrigins.DefaultDead;
+            var carried = new[] { LoadCaseStageList, WorkflowCarry, Builders.GpcDraftTransforms.SlabStrainCarry, StageGroupCarry };
+            if (reference.Report != null)
+                foreach (var p in reference.Report.NotExported.Where(p => !carried.Contains(p.Key) && !p.Key.StartsWith("Generated moving cases", StringComparison.Ordinal))) report.NotExported[p.Key] = p.Value;
+            report.NotExported[WorkflowCarry] = 1;
+            report.NotExported[LoadCaseStageList] = merged;
+            int beams = copy.BeamElements.Count;
+            int strains = records.Where(r => r.StrainCase != null).Sum(r => r.BeamIds.Length == 0 ? beams : r.BeamIds.Length);
+            if (strains != 0) report.NotExported[Builders.GpcDraftTransforms.SlabStrainCarry] = strains;
+            // The slab strains are element loads of their cases: the cases of the elements in the order of the elements of the reference.
+            foreach (var r in records.Where(r => r.StrainCase != null)) report.CaseOrigins[r.StrainCase] |= Legacy.LegacyCaseOrigins.ElementLoad;
+            if (reference.Report != null && reference.Report.ElementLoadCases.Count == report.ElementLoadCases.Count)
+            {
+                report.ElementLoadCases.Clear();
+                foreach (var e in reference.Report.ElementLoadCases)
+                {
+                    string name = e.Family == GPC.Model.Core.Identity.EntityFamily.Beam ? copy.BeamElements[e.Number].Name : null;
+                    report.ElementLoadCases.Add(new Legacy.LegacyElementCases(e.Family, e.Number, name == null ? Array.Empty<string>()
+                        : records.Where(r => r.StrainCase != null && (r.BeamIds.Length == 0 || r.BeamIds.Contains(name, StringComparer.Ordinal))).Select(r => r.StrainCase).ToArray()));
+                }
+            }
+            return input;
         }
 
         /// <summary>

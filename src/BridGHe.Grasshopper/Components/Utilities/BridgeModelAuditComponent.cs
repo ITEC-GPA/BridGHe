@@ -32,7 +32,10 @@ public sealed class BridgeModelAuditComponent : BridgeUtilityComponent
         if (!da.GetData(0, ref model) || !da.GetData(1, ref tolerance)) return;
         BridgeGeometryGoo geometry = null; var phases = new List<GH_Model>();
         da.GetData(2, ref geometry); da.GetDataList(3, phases);
-        var items = BridgeModelAudit.Inspect(model?.Value, tolerance, geometry?.Value, phases.Select(p => p?.Value).ToArray(), model != null && model.HasAnalysedGpc ? model.Gpc : null);
+        // L3a part 2: a model or a phase given by its GPC input alone: the audit on the GPC data.
+        var items = GpcOnlyModels.Any(model, phases)
+            ? BridgeModelAudit.Inspect(model?.GpcInput, tolerance, geometry?.Value, phases.Select(p => p?.GpcInput).ToArray(), model != null && model.HasAnalysedGpc ? model.Gpc : null)
+            : BridgeModelAudit.Inspect(model?.Value, tolerance, geometry?.Value, phases.Select(p => p?.Value).ToArray(), model != null && model.HasAnalysedGpc ? model.Gpc : null);
         da.SetData(0, !items.Any(i => i.Severity == "Error")); da.SetDataList(1, items.Select(i => i.Severity));
         da.SetDataList(2, items.Select(i => i.Code)); da.SetDataList(3, items.Select(i => i.Element)); da.SetDataList(4, items.Select(i => i.Description)); da.SetData(5, model);
         if (items.Length > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"{items.Length} diagnostics: inspect the report outputs.");

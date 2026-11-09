@@ -28,7 +28,7 @@ public sealed class BridgePhaseTableComponent : BridgeUtilityComponent
         var ordered = BridgeWorkflowTools.Ordered(values.Select(v => (BridgePhaseDefinition)v.Value));
         da.SetDataList(0, ordered.Select(p => new BridgeWorkflowGoo(p)));
         var rows = ordered.SelectMany(p => (p.Actions.Length == 0 ? new BridgeActionDefinition[] { null } : p.Actions).Select(a => new[] {
-            p.Order.ToString(), p.Name, p.Day?.ToString("G", System.Globalization.CultureInfo.InvariantCulture) ?? "", p.State.ToString(), a?.Key ?? "", a?.Behavior.ToString() ?? "", a?.Source?.Name ?? "", a?.Case ?? "", a?.Strain?.ToString("G", System.Globalization.CultureInfo.InvariantCulture) ?? "" })).ToArray();
+            p.Order.ToString(), p.Name, p.Day?.ToString("G", System.Globalization.CultureInfo.InvariantCulture) ?? "", p.State.ToString(), a?.Key ?? "", a?.Behavior.ToString() ?? "", (a?.Source?.Name ?? a?.GpcModel?.Name ?? a?.GpcSource?.Name) ?? "", a?.Case ?? "", a?.Strain?.ToString("G", System.Globalization.CultureInfo.InvariantCulture) ?? "" })).ToArray();
         for (int i = 0; i < 9; i++) da.SetDataList(i + 1, rows.Select(r => r[i]));
     }
 }

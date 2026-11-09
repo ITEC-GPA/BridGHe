@@ -11,7 +11,7 @@ namespace BridGHe.Common.Gpc.Builders
     /// </summary>
     internal static class GpcDraftTransforms
     {
-        private const string SlabStrainRecord = "CompositeBeamSlabStrainModel", SlabStrainCarry = "Composite slab strain (checks input: the strain of the workflow shrinkage action)";
+        internal const string SlabStrainRecord = "CompositeBeamSlabStrainModel", SlabStrainCarry = "Composite slab strain (checks input: the strain of the workflow shrinkage action)";
 
         /// <summary>A node without its loads (former <c>Loads.Clear()</c>): forces, moments, temperatures and their records; the reader gives
         /// physical data to a node only for its temperatures.</summary>

@@ -47,10 +47,22 @@ public class BuildBridgeModel : GH_Component
         _run = false;
         try
         {
-            if (models.Any(m => m?.Value == null) || phases.Any(p => p?.Value is not BridgePhaseDefinition)) throw new ArgumentException("Connect models and Bridge Phase objects to their corresponding inputs.");
+            if (models.Any(m => !WorkflowInputs.HasModel(m)) || phases.Any(p => p?.Value is not BridgePhaseDefinition)) throw new ArgumentException("Connect models and Bridge Phase objects to their corresponding inputs.");
             string Cell(IGH_Goo goo) => goo?.ScriptVariable() is IFormattable n ? n.ToString(null, CultureInfo.InvariantCulture) : goo?.ScriptVariable()?.ToString() ?? "";
             var definitions = phases.Select(p => (BridgePhaseDefinition)p.Value).ToArray();
             var table = combinations.Branches.Select(b => b.Select(Cell).ToArray()).ToArray();
+            // L3b: a model given by its GPC input alone, or an action without a FEM source: the bridge model on the GPC data alone; the output is
+            // given by the input of its structure with the bridge attached; a build that fails is the error of the component, with no output.
+            if (GpcOnlyModels.Any(models) || definitions.SelectMany(d => d.Actions).Any(a => a.Source == null && !string.IsNullOrWhiteSpace(a.Case)))
+            {
+                var gpcBuilt = Common.Gpc.GpcBridgeBuilder.Build(models.Select(m => Common.Gpc.GpcBridgeSource.Reference(m.GpcInput, m.GpcActionResults)).ToArray(), definitions, table,
+                    (BridgeWorkflowMethod)method, Settings.Instance.Tolerance, additional, Common.Gpc.GpcIdentity.Derive(InstanceGuid, "bridge-model"), structureInput: true);
+                var only = GH_Model.FromGpc(gpcBuilt.Input); only.AttachBridge(gpcBuilt.Bridge);
+                var onlyDrafts = Common.Gpc.GpcBridgeBuilder.ModelDrafts(models[0].GpcDrafts, gpcBuilt.Bridge.Records);
+                if (onlyDrafts != null) only.AttachDrafts(onlyDrafts);
+                Finish(da, only, gpcBuilt.Summary, gpcBuilt.Warnings, method);
+                return;
+            }
             var result = BridgeWorkflowBuilder.Build(models.Select(m => m.Value).ToArray(), definitions, table, (BridgeWorkflowMethod)method, Settings.Instance.Tolerance, additional);
             var output = GH_Model.FromModel(result.Model, models[0]);
             // F6 chain C: the GPC bridge model (merged actions as a GPC dataset, D3 recipe) for the checks with the GPC workflow executor, built
@@ -75,11 +87,16 @@ public class BuildBridgeModel : GH_Component
             }
             catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is InvalidOperationException || e is KeyNotFoundException || e is System.Runtime.Serialization.SerializationException)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Modello di ponte GPC non costruito (" + e.Message + "): Super Element Check richiede il modello di ponte GPC e non verifica questo modello."); }
-            da.SetData(0, output);
-            da.SetDataList(1, summary); da.SetDataList(2, warnings);
-            foreach (var warning in warnings.Where(w => w.Contains("not active") || w.Contains("primary shrinkage only"))) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
-            Message = method == 0 ? "Cumulative" : "Linear history";
+            Finish(da, output, summary, warnings, method);
         }
         catch (Exception e) { Message = "Error"; AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message); }
+    }
+
+    private void Finish(IGH_DataAccess da, GH_Model output, string[] summary, string[] warnings, int method)
+    {
+        da.SetData(0, output);
+        da.SetDataList(1, summary); da.SetDataList(2, warnings);
+        foreach (var warning in warnings.Where(w => w.Contains("not active") || w.Contains("primary shrinkage only"))) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
+        Message = method == 0 ? "Cumulative" : "Linear history";
     }
 }

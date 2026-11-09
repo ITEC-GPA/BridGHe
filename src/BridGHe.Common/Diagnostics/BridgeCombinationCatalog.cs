@@ -32,7 +32,7 @@ public sealed class BridgeCombinationCatalog
     /// </summary>
     public static BridgeCombinationCatalog FromGpc(IReadOnlyList<Gpc.GpcModels.Conversion> references, IEnumerable<BridgePhaseDefinition> definitions) =>
         new BridgeCombinationCatalog(references == null ? null : references.Select(r => r == null ? (bool?)null : r.Report.Units.Units == Gpc.DefinitionUnits.Nmm).ToArray(),
-            definitions, a => a.GpcSource, GpcSource);
+            definitions, a => (object)a.GpcSource ?? a.GpcInput, GpcSource); // L3b: a source that was not analysed: its GPC input (GPC-only path)
 
     private static Source FemSource(object value)
     {
@@ -45,6 +45,10 @@ public sealed class BridgeCombinationCatalog
 
     private static Source GpcSource(object value)
     {
+        // L3b: a source given by its GPC input alone, not analysed: its cases and no stored result (the FEM warning «no FEM results yet»).
+        if (value is Gpc.GpcModels.Conversion input)
+            return new Source(input.Model.Name, input.Report.Units.Units == Gpc.DefinitionUnits.Nmm,
+                input.Model.LoadCases.Values.Select(c => c.Name).Concat(input.Model.Combinations.Values.Select(c => c.Name)).Where(n => n != null).ToHashSet(StringComparer.Ordinal), new HashSet<string>(StringComparer.Ordinal));
         var source = (GPC.Model.Models.Model)value;
         var catalog = Gpc.GpcResultCatalog.Of(source) ?? throw new ArgumentException($"The source '{source.Name}' has no analysed GPC model (analysed before F6); recalculate the analysis.");
         var results = catalog.Entries.Select(e => e.Label).Where(n => n != null).ToHashSet(StringComparer.Ordinal);

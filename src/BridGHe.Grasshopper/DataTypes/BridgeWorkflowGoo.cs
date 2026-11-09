@@ -23,7 +23,7 @@ public sealed class BridgeWorkflowGoo : GH_Goo<object>
     /// <summary>The GPC links of <paramref name="source"/> (an action, or the actions of a phase in their order) on its copy <paramref name="copy"/>.</summary>
     internal static object WithGpcLinks(object copy, object source)
     {
-        static BridgeActionDefinition Link(BridgeActionDefinition c, BridgeActionDefinition s) => c with { GpcSource = s.GpcSource, GpcModel = s.GpcModel, GpcBridgeData = s.GpcBridgeData };
+        static BridgeActionDefinition Link(BridgeActionDefinition c, BridgeActionDefinition s) => c with { GpcSource = s.GpcSource, GpcModel = s.GpcModel, GpcBridgeData = s.GpcBridgeData, GpcInput = s.GpcInput };
         return (copy, source) switch
         {
             (BridgeActionDefinition c, BridgeActionDefinition s) => Link(c, s),

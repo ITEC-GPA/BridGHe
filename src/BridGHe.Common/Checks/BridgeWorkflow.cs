@@ -24,6 +24,10 @@ public sealed record BridgeActionDefinition
     /// <summary>F6 (L12): the bridge data of the GPC model of <see cref="Source"/> (by beam GUID: the analysed model keeps the GUIDs of its
     /// conversion), with the local section states (Bridge State Override). Not persisted, as <see cref="GpcSource"/>.</summary>
     [IgnoreDataMember] public GPC.Checkers.CompositeBridge.BridgeModelData GpcBridgeData { get; init; }
+    /// <summary>L3b: the GPC input of the model of the action (units, angles and cases of its source, before and without an analysis): what the
+    /// GPC-only path reads of a source that was not analysed (no <see cref="GpcSource"/>), where the FEM path reads <see cref="Source"/>. Not
+    /// persisted, as <see cref="GpcSource"/>.</summary>
+    [IgnoreDataMember] public Gpc.GpcModels.Conversion GpcInput { get; init; }
     [DataMember] public string Case { get; init; }
     [DataMember] public BridgeActionBehavior Behavior { get; init; }
     /// <summary>Concrete eigenstrain increment [dimensionless], contraction negative. Null means absent, zero is an explicit value.</summary>

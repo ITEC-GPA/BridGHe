@@ -184,7 +184,7 @@ public static class BridgeWorkflowBuilder
                 {
                     if (!action.Strain.HasValue || !action.PrimaryOnly) throw new ArgumentException($"{label}: supply the analysed FEM case, or explicitly select Primary Only for shrinkage.");
                 }
-                else if ((gpcSources ? action.Source == null && action.GpcSource == null : action.Source == null) || action.PrimaryOnly)
+                else if ((gpcSources ? action.Source == null && action.GpcSource == null && action.GpcInput == null : action.Source == null) || action.PrimaryOnly)
                     throw new ArgumentException($"{label}: a FEM case needs its source model and cannot be Primary Only.");
                 if (action.BeamIds == null || action.BeamIds.Any(string.IsNullOrWhiteSpace) || action.BeamIds.Distinct(StringComparer.Ordinal).Count() != action.BeamIds.Length)
                     throw new ArgumentException($"{label}: beam IDs must be non-empty and unique.");
