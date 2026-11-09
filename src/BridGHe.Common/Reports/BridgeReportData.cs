@@ -89,6 +89,22 @@ public sealed record BridgeReportData(string Id, DateTimeOffset Created, BridgeR
                 bridge.Combinations.Select(c => new BridgeReportCombination(c.Name, c.Factors.Select(f => new BridgeReportFactor(f.Case, f.Factor)).ToArray())).ToArray()));
     }
 
+    /// <summary>R6.5 P1 lane 3a (coordinator, 8/11): the model of a report from the GPC input of a model given by it alone, without the GPC bridge
+    /// model (a model of Build Model or of an analysis): the units of the input, its name and counts, no bridge workflow (the FEM model has one
+    /// only as the merged model of Build BridGHe Model), its combinations with their cases and factors in order, the length of a beam by its BridGHe ID (the
+    /// original ID of its source) as the distance of Rhino between its ends (N-mm: the coordinates of the FEM model).</summary>
+    public static ReportModelSource Source(Gpc.GpcModels.Conversion input)
+    {
+        if (input == null) return null;
+        var m = input.Model; var units = input.Report.Units.Units;
+        var beams = m.BeamElements.Values.GroupBy(b => b.Source?.OriginalId ?? b.Name, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.ToArray(), StringComparer.Ordinal);
+        static double Length(GPC.Model.Elements.BeamElement b) => new Rhino.Geometry.Point3d(b.StartPoint.X, b.StartPoint.Y, b.StartPoint.Z).DistanceTo(new Rhino.Geometry.Point3d(b.EndPoint.X, b.EndPoint.Y, b.EndPoint.Z));
+        var combinations = m.Combinations.Values.Select(c => new BridgeReportCombination(c.Name, c.GetLoadCaseCoefficientsPair().Select(f => new BridgeReportFactor(f.Key.Name, f.Value)).ToArray())).ToArray();
+        return new ReportModelSource(units == Gpc.DefinitionUnits.Nmm, id => id != null && beams.TryGetValue(id, out var b) ? b.Length == 1 ? Length(b[0]) : throw new InvalidOperationException("Sequence contains more than one matching element") : null,
+            combinations.Select(c => c.Name).ToArray(),
+            new BridgeReportModel(m.Name, units.ToString(), m.NodesElements.Count, m.BeamElements.Count, m.AreaElements.Count, null, combinations));
+    }
+
     /// <summary>R6.4: the canonical text of the model of a report (for the comparison of the GPC and the FEM sources until R6.5).</summary>
     public static string Text(ReportModelSource source, IEnumerable<string> beamIds) => source == null ? "null" : source.Nmm + "\n" + Serialize(source.Model) + "\n"
         + string.Join("|", source.Combinations) + "\n" + string.Join("|", beamIds.Select(id => id + "=" + (source.BeamLength(id) is double l ? BitConverter.DoubleToInt64Bits(l).ToString("X16") : "-")));

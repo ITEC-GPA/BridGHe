@@ -162,8 +162,10 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     // of the bridge model.
                     var lengths = ids.Select(id => Length(gpcBridge.Beam(id))).ToArray();
                     var beamSuperElements = ids.Select(id => gpcBridge.Data.SuperElement(gpcBridge.Beam(id).Guid) ?? "").ToArray();
-                    Common.Gpc.GpcDraftCheck.Attached("Super Element Check beams", BeamsText(ids, lengths, beamSuperElements), () => BeamsText(beams.Select(b => b.Value?.BeamId).ToArray(),
-                        beams.Select(b => b.Value?.Length ?? double.NaN).ToArray(), beams.Select(b => FemSuperElement(b.Value)).ToArray()));
+                    // R6.5 P1 lane 3a: composite beams given by their GPC data alone have no FEM reading to compare with.
+                    if (beams.All(b => b?.Value != null))
+                        Common.Gpc.GpcDraftCheck.Attached("Super Element Check beams", BeamsText(ids, lengths, beamSuperElements), () => BeamsText(beams.Select(b => b.Value?.BeamId).ToArray(),
+                            beams.Select(b => b.Value?.Length ?? double.NaN).ToArray(), beams.Select(b => FemSuperElement(b.Value)).ToArray()));
 
                     for (int i = 0; i < beams.Count; i++)
                     {
@@ -318,8 +320,9 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         }
 
         /// <summary>R6.4 (3): the BridGHe ID of a composite beam: the original ID of the GPC beam it is linked to (Composite Beam from Super Element
-        /// Filter or Decompose Model, Bridge Segment Composite), else (a composite beam made without a GPC beam) that of its value, until R6.5.</summary>
-        private static string BeamId(GH_CompositeBeam beam) => beam?.AnalysedGpc is GPC.Model.Elements.BeamElement b ? b.Source.OriginalId : beam?.Value?.BeamId;
+        /// Filter or Decompose Model, Bridge Segment Composite), else (a composite beam made without a GPC beam) that of its value, until R6.5.
+        /// R6.5 P1 lane 3a: without a FEM value, that of its GPC datum (<see cref="GH_CompositeBeam.BeamId"/>).</summary>
+        private static string BeamId(GH_CompositeBeam beam) => beam?.AnalysedGpc is GPC.Model.Elements.BeamElement b ? b.Source.OriginalId : beam?.BeamId;
 
         /// <summary>The length of a beam of the GPC bridge model: the distance of Rhino between its ends (N-mm), as the FEM length.</summary>
         private static double Length(GPC.Model.Elements.BeamElement beam) =>
@@ -350,7 +353,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         private static GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition Section(GH_CompositeBeam beam, bool start)
         {
             try { return (start ? beam.StartDefinition : beam.EndDefinition) ?? throw new InvalidOperationException("composite beam without its composite sections"); }
-            catch (Exception ex) { throw new InvalidOperationException($"Sezione del superelemento {beam.Value?.BeamId}: {ex.Message}", ex); }
+            catch (Exception ex) { throw new InvalidOperationException($"Sezione del superelemento {beam?.BeamId}: {ex.Message}", ex); }
         }
 
         protected double CalculateHomogenizedFactorPhi(double n, SteelMaterial steelMaterial, ConcreteMaterial concreteMaterial)

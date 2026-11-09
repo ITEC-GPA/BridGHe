@@ -49,9 +49,10 @@ public sealed class BridgeSectionCheckComponent:GH_Component
                 TopRebars=Definition(top,new BridgeRebarRow()),BottomRebars=Definition(bottom,new BridgeRebarRow()),
                 Options=Definition(options,new BridgeAnalysisOptions{Standard=BridgeStandard.Eurocode4,LimitState=BridgeLimitState.Rare}),
                 Phases=phases.Select(p=>Definition<BridgePhase>(p,null)??throw new ArgumentException("Phase required.")).Where(p=>p.Active).ToArray(),
-                Materials=BridgeGpc.Materials(concrete.Value,steel.Value,rebar?.Value)
+                // R6.5 P1 lane 3a: a material given by its GPC datum alone gives the set from the GPC materials (BridgeGpc.Materials(Material…)).
+                Materials=Helpers.GpcOnlyModels.Any(concrete,steel,rebar)?BridgeGpc.Materials(concrete?.Gpc,steel?.Gpc,rebar?.Gpc):BridgeGpc.Materials(concrete.Value,steel.Value,rebar?.Value)
             };
-            if((input.TopRebars.Enabled||input.BottomRebars.Enabled)&&rebar?.Value==null)throw new ArgumentException("Reinforcement material required for enabled reinforcement rows.");
+            if((input.TopRebars.Enabled||input.BottomRebars.Enabled)&&rebar?.Value==null&&rebar?.Gpc==null)throw new ArgumentException("Reinforcement material required for enabled reinforcement rows.");
             input=BridgeGpc.WithDetails(input,details.Select(d=>d.Value));
             var result=HBridgeSection.Calculate(input);
             da.SetDataList(0,Enumerable.Range(0,result.Stages.Count).Select(i=>new BridgeStressResult(result,i)));

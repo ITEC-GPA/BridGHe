@@ -18,6 +18,15 @@ public static class BridgeGpc
             ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle),Steel(steel,false),Steel(rebar??steel,rebar!=null));
     }
 
+    /// <summary>R6.5 P1 lane 3a: the same set from the GPC materials (materials given by their GPC data alone): the rule of the former builders
+    /// (<see cref="Gpc.GpcMaterials.Concrete"/>, <see cref="Gpc.GpcMaterials.StructuralSteel"/>, <see cref="Gpc.GpcMaterials.Reinforcement"/>);
+    /// without a rebar material the structural steel stands for it, as on the FEM path.</summary>
+    public static BridgeMaterialSet Materials(Material concrete,Material steel,Material rebar)
+    {
+        if(concrete==null||steel==null)throw new ArgumentException("Concrete and structural steel materials are required.");
+        return new BridgeMaterialSet(Gpc.GpcMaterials.Concrete(concrete),Gpc.GpcMaterials.StructuralSteel(steel),rebar==null?Gpc.GpcMaterials.StructuralSteel(steel):Gpc.GpcMaterials.Reinforcement(rebar));
+    }
+
     public static HBridgeInput WithDetails(HBridgeInput input,IEnumerable<object> definitions)
     {
         var types=new HashSet<Type>();

@@ -5,6 +5,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -12,6 +13,19 @@ using System.Text.Json;
 
 namespace BridGHe.Grasshopper.DataTypes
 {
+    /// <summary>
+    /// R6.5 P1 lane 3a (coordinator, 8/11): the GPC datum of a composite beam: the draft of its beam (<see cref="Beam"/>, the input of Composite
+    /// Beam as it was given: its identity, ends, BridGHe ID, bridge data), the composite sections of its start and of its end as the GPC
+    /// contracts of the Checker (null: a composite property that is not a valid definition, the error of the checks that read it, as on the FEM
+    /// path) and the full names of its groups (those of the beam, then those of the Groups input that it has not). Immutable by convention.
+    /// </summary>
+    public sealed record GpcCompositeBeam(Common.Gpc.Legacy.LegacyBeamDraft Beam, GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition Start,
+        GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition End, IReadOnlyList<string> Groups)
+    {
+        /// <summary>The BridGHe ID of the beam (the name of the beam of the draft, the ID Build Model gave it), as the FEM value copies it.</summary>
+        public string BeamId => Beam?.Beam?.Name;
+    }
+
     public class GH_CompositeBeam : GH_GeometricGoo<CompositeBeamModel>, IGH_PreviewData
     {
         protected Guid _guid;
@@ -23,14 +37,15 @@ namespace BridGHe.Grasshopper.DataTypes
 
         public Guid Guid => _guid;
 
-        public override bool IsValid => Value == null ? false : Value.IsValid;
+        // R6.5 P1 lane 3a: without a FEM value the composite beam is its GPC datum.
+        public override bool IsValid => Value == null ? Gpc?.Beam?.Beam != null : Value.IsValid;
 
         public override string IsValidWhyNot
         {
             get
             {
                 if (Value == null)
-                    return "No internal BeamModel instance";
+                    return Gpc?.Beam?.Beam != null ? string.Empty : "No internal BeamModel instance";
                 if (Value.IsValid)
                     return string.Empty;
                 return "Invalid BeamModel instance";
@@ -45,7 +60,7 @@ namespace BridGHe.Grasshopper.DataTypes
         {
             get
             {
-                if (m_value == null) return BoundingBox.Empty;
+                if (m_value == null) return GpcDraftGeometry.Bounds(Gpc?.Beam);
                 if (!ReferenceEquals(_boundedModel, m_value) || _boundedRevision != m_value.GeometryRevision)
                 {
                     _boundingBox = BoundingBox.Empty;
@@ -58,6 +73,9 @@ namespace BridGHe.Grasshopper.DataTypes
                 return _boundingBox;
             }
         }
+
+        /// <summary>R6.5 P1 lane 3a: the BridGHe ID of the beam: that of the FEM value, or of the GPC datum without one.</summary>
+        public string BeamId => Value != null ? Value.BeamId : Gpc?.BeamId;
 
         #endregion
 
@@ -110,10 +128,39 @@ namespace BridGHe.Grasshopper.DataTypes
             _guid = beam._guid;
             //_beamProperty = beam._beamProperty;
             //_groups = beam._groups;
-            Value = new CompositeBeamModel(beam.Value);
+            // R6.5 P1 lane 3a: a composite beam without a FEM value is its datum: the copy keeps it.
+            if (beam.Value == null) { _gpc = beam.Gpc; _gpcOf = null; }
+            else Value = new CompositeBeamModel(beam.Value);
             AnalysedGpc = beam.AnalysedGpc; AnalysedGpcModel = beam.AnalysedGpcModel;
             _startDefinition = beam._startDefinition; _endDefinition = beam._endDefinition;
         }
+
+        /// <summary>R6.5 P1 lane 3a (coordinator, 8/11): a composite beam given by its GPC datum alone, with no FEM value: <see cref="Gpc"/> is
+        /// the datum, the definitions are those of the datum, and validity, bounding box, preview, cast, copies and text read it. Not persisted
+        /// (R6.1: a composite beam is a reference into an analysed bridge model; Composite Beam makes it again).</summary>
+        public static GH_CompositeBeam FromGpc(GpcCompositeBeam datum, Guid? guid = null)
+        {
+            var beam = new GH_CompositeBeam { _gpc = datum ?? throw new ArgumentNullException(nameof(datum)), _gpcOf = null };
+            beam._startDefinition = datum.Start; beam._endDefinition = datum.End;
+            if (guid.HasValue) beam._guid = guid.Value;
+            return beam;
+        }
+
+        /// <summary>
+        /// R6.5 P1 lane 3a: the GPC datum of this composite beam: the one Composite Beam attached to the current FEM value (the dual rule of R6.2:
+        /// the draft of its input beam, its two definitions, its groups) or the one it was made of (<see cref="FromGpc"/>); null for a composite
+        /// beam made from its FEM value alone (a value read from a document, a composite beam of a FEM model).
+        /// </summary>
+        public GpcCompositeBeam Gpc => _gpc != null && ReferenceEquals(_gpcOf, Value) ? _gpc : null;
+
+        /// <summary>Composite Beam: the GPC datum built for the current FEM value.</summary>
+        public void AttachGpc(GpcCompositeBeam datum)
+        {
+            _gpc = datum ?? throw new ArgumentNullException(nameof(datum)); _gpcOf = Value;
+        }
+
+        private GpcCompositeBeam _gpc;
+        private CompositeBeamModel _gpcOf;
 
         /// <summary>F6 (a)/(b), chain C: the beam of the GPC bridge model this composite beam was made from and that model (set by Composite
         /// Beam from a beam of Super Element Filter or Decompose Model of a Build BridGHe Model output); null otherwise. Shared by copies.</summary>
@@ -126,7 +173,7 @@ namespace BridGHe.Grasshopper.DataTypes
         /// Analysis and the preview read (the FEM properties of <see cref="GH_Goo{T}.Value"/> go with the FeMM models). Composite Beam sets them
         /// to the definitions of its two <see cref="GH_CompositeBeamProperty"/> inputs (<see cref="GH_CompositeBeamProperty.Definition"/>);
         /// without them (a beam read from a document or made elsewhere) they are built once from the FEM properties with the same rule (steel H
-        /// named by the property). Shared by copies (the definitions are values).
+        /// named by the property). Shared by copies (the definitions are values). R6.5 P1 lane 3a: without a FEM value, those of the datum.
         /// </summary>
         public GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition StartDefinition
         {
@@ -163,7 +210,10 @@ namespace BridGHe.Grasshopper.DataTypes
 
         public void DrawViewportWires(GH_PreviewWireArgs args)
         {
-            if (Display.ModelPreview.Automatic) Display.ModelPreview.SectionWires(Value,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current,PreviewSections);
+            if (!Display.ModelPreview.Automatic) return;
+            // R6.5 P1 lane 3a: without a FEM value the draft of the beam (its axis, label), as a beam given by its draft alone.
+            if (Value == null) Display.ModelPreview.DraftWires(Gpc?.Beam,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current);
+            else Display.ModelPreview.SectionWires(Value,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current,PreviewSections);
         }
 
         /// <summary>Chain E (c): the definitions the preview draws (none when they cannot be built: the preview then reads the FEM value).</summary>
@@ -182,6 +232,14 @@ namespace BridGHe.Grasshopper.DataTypes
 
         public override bool CastTo<Q>(out Q target)
         {
+            if (Value == null)
+            {
+                // R6.5 P1 lane 3a: the axis of the draft of the beam; the shapes come with the FEM value.
+                var axis = GpcDraftGeometry.Axis(Gpc?.Beam);
+                if (typeof(Q) == typeof(GH_Curve) && axis.IsValid) { target = (Q)(object)new GH_Curve(new LineCurve(axis)); return true; }
+                target = default;
+                return false;
+            }
             if (typeof(Q) == typeof(GH_Curve))
             {
                 LineCurve line = new LineCurve(Value.PointFrom, Value.PointTo);
@@ -230,8 +288,10 @@ namespace BridGHe.Grasshopper.DataTypes
             GH_CompositeBeam copy = new GH_CompositeBeam
             {
                 _guid = this._guid, AnalysedGpc = AnalysedGpc, AnalysedGpcModel = AnalysedGpcModel,
-                Value = Common.Helpers.ModelArchive.Clone(Value), _startDefinition = _startDefinition, _endDefinition = _endDefinition
+                Value = Value == null ? null : Common.Helpers.ModelArchive.Clone(Value), _startDefinition = _startDefinition, _endDefinition = _endDefinition
             };
+            // R6.5 P1 lane 3a: a copy of the same content keeps the datum (attached to the copy of the value, or the datum alone).
+            if (Gpc is { } datum) { copy._gpc = datum; copy._gpcOf = copy.Value; }
             return copy;
         }
 
@@ -245,7 +305,7 @@ namespace BridGHe.Grasshopper.DataTypes
         public override bool Write(GH_IWriter writer)
         {
             // R6.1 (§1bis): a composite beam is a reference into an analysed bridge model, not persisted; until R6.5 its FEM value goes in the
-            // transitional chunk only (copies and undo), never in Data.
+            // transitional chunk only (copies and undo), never in Data. R6.5 P1 lane 3a: without a FEM value only its GUID (not persisted).
             try { writer.SetGuid("Guid", _guid); if (Value != null) writer.SetByteArray(GpcGooPersistence.Femm, Common.Helpers.ModelArchive.Write(Value)); return true; }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
         }
@@ -254,7 +314,7 @@ namespace BridGHe.Grasshopper.DataTypes
         {
             try
             {
-                _guid = reader.GetGuid("Guid"); _startDefinition = _endDefinition = null;
+                _guid = reader.GetGuid("Guid"); _startDefinition = _endDefinition = null; _gpc = null; _gpcOf = null;
                 // R6.1: a former payload (0.3.0, Data) is a cache of an analysed model: dropped (Common.Gpc.GpcGooArchive.LegacyCacheMessage).
                 if (!reader.ItemExists(GpcGooPersistence.Femm)) { System.Diagnostics.Debug.WriteLine(Common.Gpc.GpcGooArchive.LegacyCacheMessage); return false; }
                 Value = Common.Helpers.ModelArchive.Read<CompositeBeamModel>(reader.GetByteArray(GpcGooPersistence.Femm)); return true;
@@ -265,7 +325,9 @@ namespace BridGHe.Grasshopper.DataTypes
         public override string ToString()
         {
             if (Value == null)
-                return "Null Beam";
+                return Gpc == null ? "Null Beam" : "BridGHe Composite Beam" + (string.IsNullOrEmpty(Gpc.BeamId) ? "" : " #" + Gpc.BeamId)
+                    + "\nSections: " + (Gpc.Start?.Name ?? "-") + ", " + (Gpc.End?.Name ?? "-") + "\nGroups: " + string.Join(", ", Gpc.Groups ?? Array.Empty<string>())
+                    + "\nGPC datum (no FEM value)";
             else
                 return Value.ToString();
         }
