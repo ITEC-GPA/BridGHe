@@ -91,14 +91,7 @@ public static class BridgeConstructionSequence
             stage.AddGroups(structure.SelectMany(e => e.Groups).SelectMany(GroupModel.GetBranch).Distinct());
             stage.AddLoadCombinations(clonedIncrements);
         }
-        return new(model, stage, model.Beams.SelectMany(b => b.Attributes.OfType<BridgeMemberAttributeModel>()).Select(a => a.Value.PhysicalId).Distinct().ToArray(), new[]
-        {
-            $"Phase {phase.Order} {phase.Name}: {structure.Count} active elements, {removed} omitted; day={phase.Day?.ToString("G9") ?? "unset"}.",
-            "Phase Model is an independent analysis snapshot. Previous forces/deformations, creep or activation history are not automatically transferred.",
-            "Apply the intended incremental actions to each snapshot, solve it, then use Bridge Action/Bridge Shrinkage Action and the existing phase workflow.",
-            stage != null ? "Native Stage available: only element group activation and supplied load increments; connect ordered stages to the original full model." :
-                "Native Stage omitted: requires load increments, exact whole-group selection (one group per element), unchanged bearings/properties, and no rigid links. Use explicit phase snapshots for the selected configuration.",
-            "Section State and Day are workflow metadata; section properties change only through the explicit Girder Property input."
-        });
+        return new(model, stage, model.Beams.SelectMany(b => b.Attributes.OfType<BridgeMemberAttributeModel>()).Select(a => a.Value.PhysicalId).Distinct().ToArray(),
+            BridGHe.Common.Gpc.GpcModelTransforms.ConstructionDiagnostics(phase.Order, phase.Name, structure.Count, removed, phase.Day, stage != null));
     }
 }

@@ -1204,6 +1204,10 @@ internal static class GpcOnlyReplay
         "BuildModelComponent", "DecomposeModelComponent", "MergeModelComponent", "NodeComponent", "SuperElementFilterComponent", "CompositeBeamSlabStrainComponent",
     };
 
+    /// <summary>L3d: the components of sub-lane 3d: the model transformers. Bridge Phase Model is only in the example 23, outside the scope of the section (its model has
+    /// a beam end without a node, no GPC input): in-memory cases.</summary>
+    internal static readonly string[] Lane3dTypes = { "AttachMovingPathsComponent", "BridgePhaseModelComponent", "BridgeConstructionSequenceComponent" };
+
     /// <summary>L3c: the producers of the section without an input of the converted kinds (every instance with data; their GPC-only copy runs with
     /// <c>GpcOnlyElements.GeneratorsWithoutFem</c> on, as the generators of lane 1b).</summary>
     internal static readonly string[] ModelsProducers = { "NodeComponent" };
@@ -1801,6 +1805,91 @@ internal static class GpcOnlyReplay
         };
     }
 
+    /// <summary>L3d: the in-memory cases of sub-lane 3d: Bridge Phase Model and Bridge Construction Sequence (N-mm and kN-m, the refusals, native stages and the
+    /// reasons they are omitted, a beam in two groups, rigid links, the girders of Bridge Member Assignment) and A09 (properties with the same name and other content,
+    /// through Build Model, whose model carries the drafts).</summary>
+    private static List<(string Type, string Label, Dictionary<int, object> Inputs)> Lane3dCases()
+    {
+        const string phaseModel = "BridgePhaseModelComponent", sequence = "BridgeConstructionSequenceComponent";
+        var examples = NativeExamples.Create().ToDictionary(e => e.Id, e => e.Model);
+        var m2 = examples["02-simply-supported"]; var m3 = examples["03-plate-patch"];
+        IGH_Goo Gh(ModelModel value) => (IGH_Goo)T("Fem.GH_Model").GetMethod("FromModel", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { value, null });
+        IGH_Goo Property(BeamPropertyModel p) => Make("Fem.GH_BeamProperty", p);
+        BeamPropertyModel Variant(BeamPropertyModel p, string name, double factor) { var c = BridGHe.Common.Helpers.ModelArchive.Clone(p); c.Name = name; c.Material.Modulus *= factor; return c; }
+        var phase = Produce("BridgeConstructionPhaseComponent", new Dictionary<int, object> { [0] = 10, [1] = "Cast", [2] = 0, [4] = 7.0 });
+        var noDay = Produce("BridgeConstructionPhaseComponent", new Dictionary<int, object> { [0] = 20, [1] = "Open", [2] = 0 });
+        static Rhino.Geometry.Point3d P(double x, double y) => new Rhino.Geometry.Point3d(x, y, 0);
+
+        // Phase Model: the beams of the example 02 with IDs; kN-m through the dimensions of the reader.
+        var named = new ModelModel(m2); for (int k = 0; k < named.Beams.Count; k++) named.Beams[k].BeamId = "B" + (k + 1);
+        var stiff = Property(Variant(named.Beams[0].BeamProperty, "Stiff", 1.25));
+        var knmValue = ImportDump.BeamData(ModelModel.ModelUnits.Knm, null);
+        var knmStiff = Property(Variant(knmValue.Beams[1].BeamProperty, "Stiff kN-m", 1.25));
+
+        // Construction Sequence: three beams (a group, its child, another) and a plate, a registered case, an increment.
+        var a = new GroupModel("A"); var child = new GroupModel("Child", a); var b = new GroupModel("B");
+        var property = m2.Beams[1].BeamProperty; var plateProperty = m3.Plates.Single().PlateProperty;
+        ModelModel Mixed(params GroupModel[][] groups)
+        {
+            var model = new ModelModel(ModelModel.ModelUnits.Nmm);
+            var elements = new ElementModel[]
+            {
+                new BeamModel(P(0, 0), P(5000, 0), property) { BeamId = "B1" }, new BeamModel(P(5000, 0), P(10000, 0), property) { BeamId = "B2" }, new BeamModel(P(10000, 0), P(15000, 0), property) { BeamId = "B3" },
+                new PlateModel("P1", new[] { P(15000, 0), P(20000, 0), P(20000, 4000), P(15000, 4000) }, plateProperty) { PlateId = "P1" },
+            };
+            for (int k = 0; k < elements.Length; k++) foreach (var g in groups[k]) elements[k].Groups.Add(g);
+            model.AddElements(new[] { P(0, 0), P(5000, 0), P(10000, 0), P(15000, 0), P(20000, 0), P(20000, 4000), P(15000, 4000) }.Select((n, k) => (ElementModel)new NodeModel(n) { NodeId = "N" + (k + 1) }));
+            model.AddElements(elements); model.AddLoadCases(new[] { new LoadCaseModel("Q", "Q") });
+            return model;
+        }
+        var mixed = Gh(Mixed(new[] { a }, new[] { child }, new[] { b }, new[] { b }));
+        var twoGroups = Gh(Mixed(new[] { a, b }, new[] { child }, new[] { b }, new[] { b }));
+        var ungrouped = Gh(Mixed(new[] { a }, Array.Empty<GroupModel>(), new[] { b }, new[] { b }));
+        var q = Make("Fem.GH_LoadCase", new LoadCaseModel("Q", "Q")); var other = Make("Fem.GH_LoadCase", new LoadCaseModel("Other", "Other"));
+        var increment = Produce("LoadCombinationComponent", new Dictionary<int, object> { [0] = "Cast", [1] = new object[] { q }, [2] = new object[] { 1.35 } });
+        var unknownIncrement = Produce("LoadCombinationComponent", new Dictionary<int, object> { [0] = "Cast", [1] = new object[] { other }, [2] = new object[] { 1.0 } });
+        var linked = new ModelModel(m2); linked.Nodes.First().Attributes.Add(new RigidConnectionAttributeModel(linked.Nodes.Last().Position));
+        var supported = m2.Nodes.First(n => n.Attributes.Any(x => x is NodeRestraintAttributeModel or NodeStiffnessAttributeModel)).NodeId;
+        var bridge = Gh(BridgeConstructionTests.Model(BridGHe.Common.Geometry.SimpleBridgeBuilder.Build(SimpleBridgeTests.Input())));
+        var composite = Property(BridgeAssignmentTests.Property("Composite phase"));
+
+        // A09: the first beam of a name and two beams with the name and other content; through Build Model (the model carries the drafts).
+        var first = Variant(property, "Same", 1.0); var second = Variant(property, "Same", 1.5);
+        IGH_Goo Beam(string id, Rhino.Geometry.Point3d s, Rhino.Geometry.Point3d e, BeamPropertyModel p, GroupModel g) { var v = new BeamModel(id, s, e, p); v.Groups.Add(g); return Make("Fem.GH_Beam", v); }
+        var shadowed = Produce("BuildModelComponent", new Dictionary<int, object> { [0] = new object[] { Beam("B1", P(0, 0), P(5000, 0), first, a), Beam("B2", P(5000, 0), P(10000, 0), second, b), Beam("B3", P(10000, 0), P(15000, 0), second, b) }, [1] = "Shadowed", [2] = 2 });
+
+        return new List<(string, string, Dictionary<int, object>)>
+        {
+            (phaseModel, "a beam on a replacement, loads cleared", new Dictionary<int, object> { [0] = Gh(named), [1] = "Phase", [2] = new object[] { "B1" }, [3] = stiff, [4] = true }),
+            (phaseModel, "every beam, loads kept", new Dictionary<int, object> { [0] = Gh(named), [1] = "Phase", [2] = named.Beams.Select(x => (object)x.BeamId).ToArray(), [3] = stiff, [4] = false }),
+            (phaseModel, "kN-m", new Dictionary<int, object> { [0] = Gh(knmValue), [1] = "Phase kN-m", [2] = new object[] { "2" }, [3] = knmStiff, [4] = false }),
+            (phaseModel, "no name (error)", new Dictionary<int, object> { [0] = Gh(named), [1] = " ", [2] = new object[] { "B1" }, [3] = stiff, [4] = true }),
+            (phaseModel, "a beam twice (error)", new Dictionary<int, object> { [0] = Gh(named), [1] = "Phase", [2] = new object[] { "B1", "B1" }, [3] = stiff, [4] = true }),
+            (phaseModel, "an unknown beam (error)", new Dictionary<int, object> { [0] = Gh(named), [1] = "Phase", [2] = new object[] { "B99" }, [3] = stiff, [4] = true }),
+            (sequence, "everything, no increments", new Dictionary<int, object> { [0] = mixed, [1] = phase }),
+            (sequence, "everything with an increment: native stage", new Dictionary<int, object> { [0] = mixed, [1] = phase, [7] = new object[] { increment } }),
+            (sequence, "a parent group with an increment: native stage", new Dictionary<int, object> { [0] = mixed, [1] = noDay, [2] = new object[] { "A" }, [7] = new object[] { increment } }),
+            (sequence, "a group of a beam and a plate", new Dictionary<int, object> { [0] = mixed, [1] = phase, [2] = new object[] { "B" }, [7] = new object[] { increment } }),
+            (sequence, "a child group: part of a parent", new Dictionary<int, object> { [0] = mixed, [1] = phase, [2] = new object[] { "A\\Child" }, [7] = new object[] { increment } }),
+            (sequence, "a beam in two groups: no native stage", new Dictionary<int, object> { [0] = twoGroups, [1] = phase, [7] = new object[] { increment } }),
+            (sequence, "a beam without a group: no native stage", new Dictionary<int, object> { [0] = ungrouped, [1] = phase, [7] = new object[] { increment } }),
+            (sequence, "an increment of an unknown case (error)", new Dictionary<int, object> { [0] = mixed, [1] = phase, [7] = new object[] { unknownIncrement } }),
+            (sequence, "an unknown group (error)", new Dictionary<int, object> { [0] = mixed, [1] = phase, [2] = new object[] { "Z" } }),
+            (sequence, "an unknown physical member (error)", new Dictionary<int, object> { [0] = mixed, [1] = phase, [3] = new object[] { "Girder:9:9" } }),
+            (sequence, "an override without members (error)", new Dictionary<int, object> { [0] = mixed, [1] = phase, [6] = stiff }),
+            (sequence, "bearings kept: every one", new Dictionary<int, object> { [0] = Gh(m2), [1] = phase }),
+            (sequence, "bearings: one", new Dictionary<int, object> { [0] = Gh(m2), [1] = phase, [4] = new object[] { supported } }),
+            (sequence, "bearings: disabled", new Dictionary<int, object> { [0] = Gh(m2), [1] = phase, [5] = false }),
+            (sequence, "an unknown bearing (error)", new Dictionary<int, object> { [0] = Gh(m2), [1] = phase, [4] = new object[] { "Nope" } }),
+            (sequence, "a rigid link: no native stage", new Dictionary<int, object> { [0] = Gh(linked), [1] = phase }),
+            (sequence, "girders of Bridge Member Assignment: a group, override, no bearings", new Dictionary<int, object> { [0] = bridge, [1] = phase, [2] = new object[] { "Girder\\Group1" }, [5] = false, [6] = composite }),
+            (sequence, "girders of Bridge Member Assignment: a physical member", new Dictionary<int, object> { [0] = bridge, [1] = phase, [3] = new object[] { "Girder:2:1" } }),
+            (phaseModel, "A09: the first beam of a name replaced: the next registers its own property", new Dictionary<int, object> { [0] = shadowed, [1] = "A09", [2] = new object[] { "B1" }, [3] = stiff, [4] = false }),
+            (phaseModel, "A09: the replacement takes the name", new Dictionary<int, object> { [0] = shadowed, [1] = "A09", [2] = new object[] { "B1" }, [3] = Property(Variant(property, "Same", 1.25)), [4] = false }),
+            (sequence, "A09: the first beam of a name inactive", new Dictionary<int, object> { [0] = shadowed, [1] = phase, [2] = new object[] { "B" } }),
+        };
+    }
+
     /// <summary>The plug-in and the switch of the lane (<c>GpcOnlyElements.GeneratorsWithoutFem</c> or <c>PropertiesWithoutFem</c>).</summary>
     private static void Init(string lane)
     {
@@ -1826,7 +1915,7 @@ internal static class GpcOnlyReplay
         // L2C: and the cases of lane 2c.
         // PAR: and the cases of the 0.3.0 parity (ParityCases; the T, C and angle properties under the native host, ParityNativeCases).
         var all = lane == "native" ? NativeSectionCases().Concat(ParityNativeCases()).ToList() : lane == "properties" ? Lane1Cases().Concat(Lane1bCases()).Where(OfLane2).Concat(Lane2aCases()).Concat(Lane2bCases()).Concat(Lane2cCases()).Concat(ParityCases()).ToList()
-            : lane == "generators" ? Lane1bCases() : lane == "models" ? ModelsCases().Concat(Lane3cCases()).ToList() : Lane1Cases();
+            : lane == "generators" ? Lane1bCases() : lane == "models" ? ModelsCases().Concat(Lane3cCases()).Concat(Lane3dCases()).ToList() : Lane1Cases();
         foreach (var (type, label, inputs) in all.Where(c => Selected(c.Type)))
         {
             using var doc = new GH_Document();
@@ -1853,7 +1942,7 @@ internal static class GpcOnlyReplay
     {
         // L2B: lane 2 replays 2a and 2b together (no type declared pending).
         // L3a: the section «models» (lane 3) converts every kind.
-        var types = lane switch { "elements" => Lane1Types, "generators" => Lane1bTypes, "properties" => Lane2Types, "models" => Lane3aTypes.Concat(Lane3bTypes).Concat(Lane3cTypes).Concat(Lane3Consumers).ToArray(),
+        var types = lane switch { "elements" => Lane1Types, "generators" => Lane1bTypes, "properties" => Lane2Types, "models" => Lane3aTypes.Concat(Lane3bTypes).Concat(Lane3cTypes).Concat(Lane3dTypes).Concat(Lane3Consumers).ToArray(),
             _ => throw new ArgumentException("Unknown lane: " + lane) };
         var kinds = new HashSet<string>(lane switch { "elements" or "generators" => ElementGoo, "properties" => PropertyGoo, "models" => ElementGoo.Concat(PropertyGoo).Concat(ModelGoo).ToArray(),
             _ => Array.Empty<string>() }, StringComparer.Ordinal);

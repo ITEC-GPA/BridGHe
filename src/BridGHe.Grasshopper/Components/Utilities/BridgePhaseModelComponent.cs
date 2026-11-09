@@ -24,6 +24,15 @@ public sealed class BridgePhaseModelComponent : BridgeUtilityComponent
     {
         GH_Model model = null; GH_BeamProperty property = null; string name = null; bool clear = true; var ids = new List<string>();
         if (!da.GetData(0, ref model) || !da.GetData(1, ref name) || !da.GetDataList(2, ids) || !da.GetData(3, ref property) || !da.GetData(4, ref clear)) return;
+        // R6.5 P1 lane 3d: GPC-only input gives GPC-only output; a refusal gives an error and no output (no FEM model to convert).
+        if (GpcOnlyModels.Any(model, property))
+        {
+            var input = GpcOnlyModels.InputOf(model);
+            if (property.Gpc == null) throw new ArgumentException("A valid replacement beam property is required.");
+            da.SetData(0, GpcOnlyModels.SameElements(Common.Gpc.GpcModelTransforms.PhaseModel(input, name, ids, Common.Gpc.GpcModelTransforms.ReplacementProperty(input, property.Gpc), clear,
+                Common.Gpc.GpcIdentity.Derive(InstanceGuid, "phase-model:" + input.Model.Guid.ToString("D") + ":" + da.Iteration.ToString(System.Globalization.CultureInfo.InvariantCulture)), property.Gpc), model, input));
+            return;
+        }
         var output = GH_Model.FromModel(BridgePhaseModel.Create(model.Value, name, ids, property.Value, clear), model);
         // F6 chain D: the GPC input of the output from the GPC input of the source (the analysis copies it instead of converting the FEM
         // output); if it cannot be built the analysis converts the FEM output as before.

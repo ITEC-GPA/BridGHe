@@ -75,8 +75,10 @@ namespace BridGHe.Common.Gpc
         /// <item>a beam that changes property takes its formulation, its section axes (BridGHe angle of the beam, principal angle of the
         /// section; the axes of its distributed supports with them) and its native section;</item>
         /// <item>cases: registered, of element loads, then of the moving paths only, then "Dead".</item>
-        /// </list></summary>
-        public static GpcModels.Conversion PhaseModel(GpcModels.Conversion input, string name, IReadOnlyList<string> beamIds, LegacyBeamProperty property, bool clearLoads, Guid modelIdentity)
+        /// </list>
+        /// <paramref name="draftProperty"/> (R6.5 P1 lane 3d): the replacement in the definition units, for the drafts of the output (outside N-mm a draft holds the
+        /// property as given, <paramref name="property"/> is normalised); <paramref name="property"/> when omitted.</summary>
+        public static GpcModels.Conversion PhaseModel(GpcModels.Conversion input, string name, IReadOnlyList<string> beamIds, LegacyBeamProperty property, bool clearLoads, Guid modelIdentity, LegacyBeamProperty draftProperty = null)
         {
             if (input == null) throw new ArgumentNullException(nameof(input));
             if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Phase model name is required.");
@@ -117,7 +119,7 @@ namespace BridGHe.Common.Gpc
             var selected = beamIds.ToHashSet(StringComparer.Ordinal);
             var nativeSections = new Dictionary<Guid, GPC.Converter.Straus7.Straus7SectionDefinition>(source.NativeSections);
             var shadowed = new HashSet<int>();
-            var registry = RegisterBeamProperties(model, source, b => selected.Contains(b.Name), property, warnings, nativeSections, shadowed, "PhaseModel");
+            var registry = RegisterBeamProperties(model, source, b => selected.Contains(b.Name), property, warnings, nativeSections, shadowed, "PhaseModel", NumberedDrafts(input));
 
             var report = source.CopyFor(clearLoads ? 0 : source.RegisteredCases);
             Replace(report.CaseOrigins, origins);
@@ -133,13 +135,14 @@ namespace BridGHe.Common.Gpc
                 report.ElementWarnings.RemoveAll(w => w.Format.Contains(": temperature type ", StringComparison.Ordinal));
             }
             // R6.4 (2), extension (α): the drafts of the elements, those of the input changed as the former transformer changed the values.
-            return new GpcModels.Conversion(model, report, input.Tolerance, PhaseDrafts(input, selected, property, clearLoads));
+            return new GpcModels.Conversion(model, report, input.Tolerance, PhaseDrafts(input, selected, draftProperty ?? property, clearLoads));
         }
 
         /// <summary>R6.4 (2), extension (α): the drafts of the elements of a phase model from those of its input: the beams chosen on the
         /// replacement property (<see cref="Builders.GpcBeamBuilders.Override"/>, as Beam Override: the former transformer set the property of the
-        /// beam), every load removed with "Clear loads" (<see cref="Builders.GpcDraftTransforms"/>). None when the input carries none, or when a
-        /// beam with a current section state changes property (the builder refuses it).</summary>
+        /// beam), every load removed with "Clear loads" (<see cref="Builders.GpcDraftTransforms"/>). None when the input carries none. A beam
+        /// with a current section state that changes property keeps its state, stale, as on the former model (A08, lane PAR): the drafts exist and
+        /// the checks refuse the state ("FEM properties changed after the local section-state assignment").</summary>
         private static GpcModelDrafts PhaseDrafts(GpcModels.Conversion input, HashSet<string> selected, LegacyBeamProperty property, bool clearLoads)
         {
             var d = NumberedDrafts(input);
@@ -180,10 +183,15 @@ namespace BridGHe.Common.Gpc
         /// stale and the checks refuse it ("FEM properties changed after the local section-state assignment"), as with the former model
         /// (coordinator decision 3, 5/11). Listed difference: the former model compared only the former signature of the property (A, I, J,
         /// centroid, E, nu, density, type), so a replacement equal in those values (e.g. the same property under another name) kept the state
-        /// current there. The beams are those of <paramref name="model"/> with the numbers of <paramref name="source"/>.</summary>
+        /// current there. The beams are those of <paramref name="model"/> with the numbers of <paramref name="source"/>.
+        /// <para>A09 (R6.5 P1 lane 3d, user decision of 8/11): a beam the source shadowed (a property with the name of another and other content:
+        /// the GPC model holds the property registered first) takes its own property from its draft (<paramref name="drafts"/>, the property
+        /// normalised as Build Model registers it): it registers the name when it is the first beam left with it, as the former transformer kept
+        /// every beam on its own property and the exporter of 0.3.0 wrote the first of each name. Without drafts (the conversion of a FEM value)
+        /// its content is unknown: the refusal stays, there the analysis converts the FEM output.</para></summary>
         private static Dictionary<string, (GPC.Model.ElementProperties.BeamProperty Property, LegacyBeamPropertyData Data, bool Replacement)> RegisterBeamProperties(
             GPC.Model.Models.Model model, LegacyImportReport source, Func<GPC.Model.Elements.BeamElement, bool> replaced, LegacyBeamProperty property, List<string> warnings,
-            Dictionary<Guid, GPC.Converter.Straus7.Straus7SectionDefinition> nativeSections, HashSet<int> shadowed, string code)
+            Dictionary<Guid, GPC.Converter.Straus7.Straus7SectionDefinition> nativeSections, HashSet<int> shadowed, string code, GpcModelDrafts drafts)
         {
             var registry = new Dictionary<string, (GPC.Model.ElementProperties.BeamProperty Property, LegacyBeamPropertyData Data, bool Replacement)>(StringComparer.Ordinal);
             foreach (var beam in model.BeamElements.Values.OrderBy(b => b.Id))
@@ -192,13 +200,16 @@ namespace BridGHe.Common.Gpc
                 string own = beam.BeamProperty.Name;
                 if (!replace && !source.BeamProperties.ContainsKey(own)) throw new NotSupportedException(code + "SourcePropertyUnknown: " + own);
                 string key = replace ? property.Property.Name : own;
-                // The digest of the former content of the property of this beam in the FEM output (unknown for a beam the source shadowed).
-                string signature = replace ? property.Data.Signature : source.ShadowedPropertyBeams.Contains(beam.Id) ? null : source.BeamProperties[own].Signature;
+                // A09: the own property of a beam the source shadowed, from its draft.
+                bool wasShadowed = !replace && source.ShadowedPropertyBeams.Contains(beam.Id);
+                var ownProperty = wasShadowed && drafts != null ? Normalised(source, drafts.Beams[beam.Id - 1].Beam.BeamProperty, drafts.Beams[beam.Id - 1].Property) : null;
+                // The digest of the former content of the property of this beam in the FEM output (unknown for a beam the source shadowed, without its draft).
+                string signature = replace ? property.Data.Signature : ownProperty != null ? ownProperty.Data.Signature : wasShadowed ? null : source.BeamProperties[own].Signature;
                 if (!registry.TryGetValue(key, out var entry))
                 {
                     // The first beam of a name registers its own content: unknown for a beam the source shadowed.
                     if (signature == null) throw new NotSupportedException(code + "ShadowedBeamProperty: " + beam.Name);
-                    entry = replace ? (property.Property, property.Data, true) : (beam.BeamProperty, source.BeamProperties[own], false);
+                    entry = replace ? (property.Property, property.Data, true) : ownProperty != null ? (ownProperty.Property, ownProperty.Data, false) : (beam.BeamProperty, source.BeamProperties[own], false);
                     registry.Add(key, entry);
                 }
                 else
@@ -225,6 +236,92 @@ namespace BridGHe.Common.Gpc
             return registry;
         }
 
+        /// <summary>A beam property of a draft (definition units) as Build Model registers it in a model of the units of <paramref name="report"/>
+        /// (<see cref="LegacyAssembly.NormaliseBeamProperty"/>).</summary>
+        private static LegacyBeamProperty Normalised(LegacyImportReport report, GPC.Model.ElementProperties.BeamProperty property, LegacyBeamPropertyData data) =>
+            new LegacyAssembly("", report.Units, GpcIdentity.NameSpace, 0, new LegacyImportReport()).NormaliseBeamProperty(property, data);
+
+        /// <summary>R6.5 P1 lane 3d: the replacement beam property of Bridge Phase Model and Bridge Construction Sequence on the GPC-only path: the
+        /// datum of a Beam Property parameter (<c>GH_BeamProperty.Gpc</c>, definition units) as Build Model registers it in the model of
+        /// <paramref name="input"/>.</summary>
+        public static LegacyBeamProperty ReplacementProperty(GpcModels.Conversion input, LegacyBeamProperty datum)
+        {
+            if (input == null) throw new ArgumentNullException(nameof(input));
+            if (datum == null) throw new ArgumentNullException(nameof(datum));
+            return Normalised(input.Report, datum.Property, datum.Data);
+        }
+
+        /// <summary>R6.5 P1 lane 3d: what Bridge Construction Sequence gives beside the model of the snapshot, read on GPC: the native stage (null
+        /// when not available), the physical members active in the snapshot, the groups of the source with their parents, the information.</summary>
+        public sealed record ConstructionSnapshotInfo(LegacyStageDraft Stage, string[] ActivePhysicalIds, string[] AvailableGroups, string[] Diagnostics);
+
+        private static IEnumerable<GPC.Model.Attributes.Group> BranchFromRoot(GPC.Model.Attributes.Group group)
+        {
+            var branch = new List<GPC.Model.Attributes.Group>();
+            for (var g = group; g != null; g = g.Parent) branch.Insert(0, g);
+            return branch;
+        }
+
+        /// <summary>R6.5 P1 lane 3d: the groups (full names) of a beam or plate beyond the first, the one its GPC element keeps: in the records of its draft
+        /// (<see cref="LegacyElementRecords.Groups"/>); none when the source carries no drafts.</summary>
+        private static IEnumerable<string> OtherGroups(GpcModelDrafts drafts, GPC.Model.Elements.Element element)
+        {
+            if (drafts == null) return Array.Empty<string>();
+            if (element is GPC.Model.Elements.BeamElement) return drafts.Beams[element.Id - 1].Records.Groups.Skip(1);
+            if (element is GPC.Model.Elements.AreaElement) return drafts.Plates[element.Id - 1].Records.Groups.Skip(1);
+            return Array.Empty<string>();
+        }
+
+        /// <summary>A group full name with those of its parents, the root first.</summary>
+        private static IEnumerable<string> BranchOfFullName(string fullName)
+        {
+            for (int i = fullName.IndexOf('\\'); i >= 0; i = fullName.IndexOf('\\', i + 1)) yield return fullName.Substring(0, i);
+            yield return fullName;
+        }
+
+        /// <summary>R6.5 P1 lane 3d: the outputs of Bridge Construction Sequence beside the model, from the GPC data of its source
+        /// <paramref name="input"/> and of the snapshot <paramref name="output"/> (<see cref="ConstructionSequence"/>), with the rules of the former
+        /// transformer: the increments only of cases registered in the source; the native stage only for whole-group activation (one group per
+        /// beam and plate, read in the drafts when the source carries them: a GPC beam keeps the first), unchanged bearings and properties, no rigid
+        /// links and at least one increment. Thrown as the former transformer threw it.</summary>
+        public static ConstructionSnapshotInfo ConstructionSequenceInfo(GpcModels.Conversion input, GpcModels.Conversion output, int order, string name, double? day,
+            IReadOnlyList<string> bearingIds, bool girderOverride, IReadOnlyList<LegacyCombinationDraft> increments)
+        {
+            if (input == null) throw new ArgumentNullException(nameof(input));
+            if (output == null) throw new ArgumentNullException(nameof(output));
+            bearingIds ??= new[] { "*" }; increments ??= Array.Empty<LegacyCombinationDraft>();
+            var source = input.Model;
+            var registered = source.LoadCases.Values.Take(Math.Min(input.Report.RegisteredCases, source.LoadCases.Count)).Select(c => c.Name).ToHashSet(StringComparer.Ordinal);
+            if (increments.Any(c => c == null || c.Factors.Any(f => f.Case == null || !registered.Contains(f.Case.Name) || !double.IsFinite(f.Factor))))
+                throw new ArgumentException("Construction increments contain unknown cases or non-finite coefficients.");
+
+            var kept = output.Model.AllElements.Select(e => e.Guid).ToHashSet();
+            var all = source.BeamElements.Values.OrderBy(b => b.Id).Cast<GPC.Model.Elements.Element>().Concat(source.AreaElements.Values.OrderBy(p => p.Id)).ToList();
+            var structure = all.Where(e => kept.Contains(e.Guid)).ToList();
+            var drafts = NumberedDrafts(input);
+            int GroupCount(GPC.Model.Elements.Element e) => drafts == null ? e.Groups.Count : e is GPC.Model.Elements.BeamElement ? drafts.Beams[e.Id - 1].Records.Groups.Count : drafts.Plates[e.Id - 1].Records.Groups.Count;
+            var selected = structure.SelectMany(e => e.Groups.Values).Select(g => g.Name).ToHashSet(StringComparer.Ordinal);
+            bool exactGroups = all.All(e => GroupCount(e) == 1 && kept.Contains(e.Guid) == selected.Contains(e.Groups.Values.First().Name));
+            bool eligible = !girderOverride && bearingIds.SequenceEqual(new[] { "*" }) && exactGroups && !source.Costrains.Values.Any();
+            LegacyStageDraft stage = !eligible || increments.Count == 0 ? null : new LegacyStageDraft(output.Model.Name,
+                structure.SelectMany(e => e.Groups.Values).SelectMany(BranchFromRoot).Select(g => g.Name).Distinct(StringComparer.Ordinal).ToArray(), false, false, increments.ToArray());
+
+            var physical = GpcBridgeMembers.Of(output.Model, output.Bridge).OrderBy(p => p.Key).Select(p => p.Value.PhysicalId).Distinct(StringComparer.Ordinal).ToArray();
+            var groups = source.AllElements.SelectMany(e => e.Groups.Values.SelectMany(BranchFromRoot).Select(g => g.Name).Concat(OtherGroups(drafts, e).SelectMany(BranchOfFullName))).Distinct(StringComparer.Ordinal).ToArray();
+            return new ConstructionSnapshotInfo(stage, physical, groups, ConstructionDiagnostics(order, name, structure.Count, all.Count - structure.Count, day, stage != null));
+        }
+
+        /// <summary>The Information output of Bridge Construction Sequence (both paths).</summary>
+        public static string[] ConstructionDiagnostics(int order, string name, int active, int omitted, double? day, bool nativeStage) => new[]
+        {
+            $"Phase {order} {name}: {active} active elements, {omitted} omitted; day={day?.ToString("G9") ?? "unset"}.",
+            "Phase Model is an independent analysis snapshot. Previous forces/deformations, creep or activation history are not automatically transferred.",
+            "Apply the intended incremental actions to each snapshot, solve it, then use Bridge Action/Bridge Shrinkage Action and the existing phase workflow.",
+            nativeStage ? "Native Stage available: only element group activation and supplied load increments; connect ordered stages to the original full model." :
+                "Native Stage omitted: requires load increments, exact whole-group selection (one group per element), unchanged bearings/properties, and no rigid links. Use explicit phase snapshots for the selected configuration.",
+            "Section State and Day are workflow metadata; section properties change only through the explicit Girder Property input."
+        };
+
         /// <summary>Bridge Construction Sequence (former <see cref="Geometry.BridgeConstructionSequence.Create"/>): one phase snapshot, an
         /// independent copy named "{order:D2}-{name}" with the beams and plates of the active groups (descendants included) or physical members
         /// (both empty: all), the nodes they touch within the tolerance and, repeatedly, the nodes whose rigid links reach a retained point (and
@@ -244,9 +341,10 @@ namespace BridGHe.Common.Gpc
         /// </list>
         /// Listed differences: the retention reads the nodes of the beams and plates and the nodes at the end of the rigid links (the former
         /// transformer read the points of the former elements and of the links, within the tolerance of the nodes); a GPC beam has one group
-        /// (the first of the former beam: the legacy reader warns of the others).</summary>
+        /// (the first of the former beam: the legacy reader warns of the others), and the others count only when the source carries the drafts.
+        /// <paramref name="draftOverride"/>: as <c>draftProperty</c> of <see cref="PhaseModel"/>.</summary>
         public static GpcModels.Conversion ConstructionSequence(GpcModels.Conversion input, int order, string name, double? day, IReadOnlyList<string> activeGroups,
-            IReadOnlyList<string> physicalIds, IReadOnlyList<string> bearingIds, LegacyBeamProperty girderOverride, Guid modelIdentity)
+            IReadOnlyList<string> physicalIds, IReadOnlyList<string> bearingIds, LegacyBeamProperty girderOverride, Guid modelIdentity, LegacyBeamProperty draftOverride = null)
         {
             if (input == null) throw new ArgumentNullException(nameof(input));
             if (order < 0 || string.IsNullOrWhiteSpace(name) || day is double d && (!double.IsFinite(d) || d < 0))
@@ -254,7 +352,10 @@ namespace BridGHe.Common.Gpc
             activeGroups ??= Array.Empty<string>(); physicalIds ??= Array.Empty<string>(); bearingIds ??= new[] { "*" };
             var source = input.Model; var report = input.Report;
             IEnumerable<GPC.Model.Attributes.Group> Branch(GPC.Model.Attributes.Group g) { for (var x = g; x != null; x = x.Parent) yield return x; }
-            var allGroups = source.AllElements.SelectMany(e => e.Groups.Values).SelectMany(Branch).Select(g => g.Name).ToHashSet(StringComparer.Ordinal);
+            // R6.5 P1 lane 3d: the groups of a beam or plate beyond the first are in the records of its draft (the former transformer read them all).
+            var groupDrafts = NumberedDrafts(input);
+            IEnumerable<string> GroupNames(GPC.Model.Elements.Element e) => e.Groups.Values.SelectMany(Branch).Select(g => g.Name).Concat(OtherGroups(groupDrafts, e).SelectMany(BranchOfFullName));
+            var allGroups = source.AllElements.SelectMany(GroupNames).ToHashSet(StringComparer.Ordinal);
             var members = GpcBridgeMembers.Of(source, input.Bridge);
             var allPhysical = members.Values.Select(m => m.PhysicalId).ToHashSet(StringComparer.Ordinal);
             if (activeGroups.Any(g => !allGroups.Contains(g)) || physicalIds.Any(id => !allPhysical.Contains(id)))
@@ -264,7 +365,7 @@ namespace BridGHe.Common.Gpc
                 throw new ArgumentException("Active bearings require exact supported Node IDs, '*' for all, or an empty list for none.");
             if (girderOverride != null && (girderOverride.Property == null || girderOverride.Data == null)) throw new ArgumentException("Invalid girder override property.");
             bool all = activeGroups.Count == 0 && physicalIds.Count == 0;
-            bool Active(GPC.Model.Elements.Element e) => all || e.Groups.Values.SelectMany(Branch).Any(g => activeGroups.Contains(g.Name))
+            bool Active(GPC.Model.Elements.Element e) => all || GroupNames(e).Any(activeGroups.Contains)
                 || e is GPC.Model.Elements.BeamElement b && members.TryGetValue(b.Id, out var m) && physicalIds.Contains(m.PhysicalId);
             var beams = source.BeamElements.Values.Where(Active).Select(b => b.Id).ToHashSet();
             var plates = source.AreaElements.Values.Where(Active).Select(p => p.Id).ToHashSet();
@@ -324,7 +425,7 @@ namespace BridGHe.Common.Gpc
             var activeGuids = model.BeamElements.Values.Select(b => b.Guid).ToHashSet();
             var nativeSections = report.NativeSections.Where(p => activeGuids.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value);
             var shadowed = new HashSet<int>();
-            var registry = RegisterBeamProperties(model, report, b => girders.Contains(b.Id), girderOverride, warnings, nativeSections, shadowed, "ConstructionSequence");
+            var registry = RegisterBeamProperties(model, report, b => girders.Contains(b.Id), girderOverride, warnings, nativeSections, shadowed, "ConstructionSequence", NumberedDrafts(input));
             model.Stages.Clear(); model.FreedomCases.Clear();
             // Plate properties as the reader registers them: those of the active plates, in the order of their first plate.
             var plateProperties = model.AreaElements.Values.OrderBy(p => p.Id).Select(p => p.PlateProperty).ToList();
@@ -423,14 +524,14 @@ namespace BridGHe.Common.Gpc
             var activeBeams = numbered.BeamElements.Values.Select(b => b.Guid).ToHashSet();
             foreach (var b in output.Bridge.Beams.ToList()) if (!activeBeams.Contains(b.BeamGuid)) output.Bridge.Remove(b.BeamGuid);
             // R6.4 (2), extension (α): the drafts of the elements of the snapshot, those of the source changed as the former transformer.
-            return new GpcModels.Conversion(numbered, output, input.Tolerance, SequenceDrafts(input, retained, beams, plates, bearingIds, girders, girderOverride));
+            return new GpcModels.Conversion(numbered, output, input.Tolerance, SequenceDrafts(input, retained, beams, plates, bearingIds, girders, draftOverride ?? girderOverride));
         }
 
         /// <summary>R6.4 (2), extension (α): the drafts of the elements of a phase snapshot from those of its source, in the order of the former
         /// output (the retained nodes in retention order, the active beams and plates in source order): a node that is not an active bearing
         /// without its restraints and springs (<see cref="Builders.GpcDraftTransforms.WithoutRestraints"/>), the girders on the override property
         /// (<see cref="Builders.GpcBeamBuilders.Override"/>); the rest as in the source (a draft has number 1: the renumbering does not touch it).
-        /// None when the source carries none, or when a girder with a current section state changes property.</summary>
+        /// None when the source carries none. A girder with a current section state keeps it, stale (A08, as <see cref="PhaseDrafts"/>).</summary>
         private static GpcModelDrafts SequenceDrafts(GpcModels.Conversion input, List<GPC.Model.Elements.NodeElement> retained, HashSet<int> beams, HashSet<int> plates,
             IReadOnlyList<string> bearingIds, HashSet<int> girders, LegacyBeamProperty girderOverride)
         {

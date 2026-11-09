@@ -44,6 +44,8 @@ public sealed class BridgeConstructionSequenceComponent : BridgeUtilityComponent
         if (phase.Value is not BridgePhaseDefinition definition) throw new ArgumentException("Phase requires a Bridge Phase object.");
         da.GetDataList(2, groups); da.GetDataList(3, ids); da.GetDataList(4, bearings); da.GetData(5, ref enabled);
         da.GetData(6, ref property); da.GetDataList(7, increments);
+        // R6.5 P1 lane 3d: GPC-only input gives GPC-only output; a refusal gives an error and no output (no FEM model to convert).
+        if (GpcOnlyModels.Any(model, property, increments)) { SolveGpcOnly(da, model, phase, definition, groups, ids, enabled ? bearings : Array.Empty<string>(), property, increments); return; }
         var result = BridgeConstructionSequence.Create(model.Value, definition, groups, ids, enabled ? bearings : Array.Empty<string>(),
             property?.Value, increments.Select(c => c.Value).ToArray());
         var output = new GH_Model { Value = result.Model };
@@ -63,5 +65,21 @@ public sealed class BridgeConstructionSequenceComponent : BridgeUtilityComponent
         da.SetData(2, phase); da.SetDataList(3, result.ActivePhysicalIds);
         da.SetDataList(4, model.Value.Elements.SelectMany(e => e.Groups).SelectMany(BridGHe.Common.Models.GroupModel.GetBranch).Select(g => g.FullName).Distinct());
         da.SetDataList(5, result.Diagnostics);
+    }
+
+    /// <summary>R6.5 P1 lane 3d: the snapshot from the GPC input of the model; the native stage, the physical members, the groups and the information are
+    /// read on GPC (<see cref="Common.Gpc.GpcModelTransforms.ConstructionSequenceInfo"/>).</summary>
+    private void SolveGpcOnly(IGH_DataAccess da, GH_Model model, BridgeWorkflowGoo phase, BridgePhaseDefinition definition, List<string> groups, List<string> ids, IReadOnlyList<string> bearings,
+        GH_BeamProperty property, List<GH_LoadCombination> increments)
+    {
+        var input = GpcOnlyModels.InputOf(model);
+        var replacement = property == null ? null : Common.Gpc.GpcModelTransforms.ReplacementProperty(input, property.Gpc ?? throw new ArgumentException("Invalid girder override property."));
+        var snapshot = Common.Gpc.GpcModelTransforms.ConstructionSequence(input, definition.Order, definition.Name, definition.Day, groups, ids, bearings, replacement,
+            Common.Gpc.GpcIdentity.Derive(InstanceGuid, "construction:" + input.Model.Guid.ToString("D") + ":" + da.Iteration.ToString(System.Globalization.CultureInfo.InvariantCulture)), property?.Gpc);
+        var info = Common.Gpc.GpcModelTransforms.ConstructionSequenceInfo(input, snapshot, definition.Order, definition.Name, definition.Day, bearings, replacement != null, increments.Select(c => c?.Gpc).ToArray());
+        da.SetData(0, GH_Model.FromGpc(snapshot)); if (info.Stage != null) da.SetData(1, GH_StagedConstruction.FromGpc(info.Stage));
+        da.SetData(2, phase); da.SetDataList(3, info.ActivePhysicalIds);
+        da.SetDataList(4, info.AvailableGroups);
+        da.SetDataList(5, info.Diagnostics);
     }
 }

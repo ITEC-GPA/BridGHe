@@ -322,6 +322,7 @@ internal static class GpcInputComparison
         int fromGpc = FromGpcRoute(tolerance, Path);
         int states = PhaseModelSectionStates(tolerance);
         int sequences = ConstructionSequences(tolerance, Path);
+        Console.WriteLine($"GPC MODEL TRANSFORMS A09: {ShadowedProperties(tolerance)} outputs with beam properties of the same name equal to the conversion of their FEM output.");
         Console.WriteLine($"GPC MODEL TRANSFORMS PASS: {compared} Attach Moving Paths and {phases} Bridge Phase Model outputs (chains included), {components} Bridge Phase Model component outputs on GPC equal to the conversion of their FEM output; {fromGpc} transformer outputs from inputs built in GPC (GpcModels.Conversion.FromGpc) equal to those from the conversion; {states} Bridge Phase Model outputs on beams with local section states; {sequences} Bridge Construction Sequence snapshots renumbered as the conversion of their FEM output.");
     }
 
@@ -409,6 +410,43 @@ internal static class GpcInputComparison
             Run(label, bridge, () => Fem(bridge, phase, groups, ids, bearings, property), input => Snapshot(input, phase, groups, ids, bearings, property, label));
         }
         if (compared < 70) throw new Exception($"GPC INPUT FAIL: only {compared} Bridge Construction Sequence snapshots compared");
+        return compared;
+    }
+
+    /// <summary>A09 (R6.5 P1 lane 3d, user decision of 8/11): properties with the same name and other content, with the drafts of the input (the conversion of a FEM
+    /// value has none, and the transformer refuses as before): the GPC output of Bridge Phase Model and Bridge Construction Sequence equals the conversion of the FEM
+    /// output, which keeps the first property of each name in beam order. N-mm and kN-m.</summary>
+    private static int ShadowedProperties(double tolerance)
+    {
+        int compared = 0;
+        void Run(string label, ModelModel fem, BeamPropertyModel replacement)
+        {
+            var input = ConvertWithDrafts(fem, tolerance);
+            if (input.Report.ShadowedPropertyBeams.Count == 0) throw new Exception("GPC INPUT FAIL (A09 " + label + "): no beam is shadowed");
+            var name = new[] { fem.Beams[0].BeamId };
+            var id = GpcIdentity.Derive(GpcIdentity.NameSpace, "test-a09:" + label);
+            Console.WriteLine("GPC INPUT (A09 " + label + "): " + Require("A09 " + label, GpcModelTransforms.PhaseModel(input, "A09", name, GpcModels.BeamProperty(replacement, input.Report.Units), false, id, GpcModels.BeamProperty(replacement, GpcBeamDrafts.DraftUnits)),
+                BridGHe.Common.Diagnostics.BridgePhaseModel.Create(fem, "A09", name, replacement, false), tolerance)); compared++;
+            var definition = new BridgePhaseDefinition { Order = 3, Name = "A09", Day = 7 };
+            var groups = new[] { fem.Beams[1].Groups[0].FullName };
+            Console.WriteLine("GPC INPUT (A09 " + label + " sequence): " + RequireRenumbered("A09 sequence " + label, GpcModelTransforms.ConstructionSequence(input, definition.Order, definition.Name, definition.Day, groups, null, new[] { "*" }, null, id),
+                BridgeConstructionSequence.Create(fem, definition, groups, null, new[] { "*" }, null, null).Model, tolerance)); compared++;
+        }
+        ModelModel Shadowed(ModelModel source)
+        {
+            var fem = new ModelModel(source);
+            for (int k = 0; k < fem.Beams.Count; k++) { fem.Beams[k].BeamId = "A" + (k + 1); fem.Beams[k].Groups.Clear(); fem.Beams[k].Groups.Add(new GroupModel(k == 0 ? "First" : "Rest")); }
+            var first = BridGHe.Common.Helpers.ModelArchive.Clone(fem.Beams[0].BeamProperty); first.Name = "Same";
+            var second = BridGHe.Common.Helpers.ModelArchive.Clone(first); second.Material.Modulus *= 1.5;
+            for (int k = 0; k < fem.Beams.Count; k++) fem.Beams[k].BeamProperty = k == 0 ? first : second;
+            return fem;
+        }
+        BeamPropertyModel Replacement(ModelModel fem, string name) { var p = BridGHe.Common.Helpers.ModelArchive.Clone(fem.Beams[0].BeamProperty); p.Name = name; p.Material.Modulus *= 1.25; return p; }
+        var nmm = Shadowed(NativeExamples.Create().First(e => e.Model.Beams.Count >= 3).Model);
+        Run("N-mm, another name", nmm, Replacement(nmm, "Replacement"));
+        Run("N-mm, the same name", nmm, Replacement(nmm, "Same"));
+        var knm = Shadowed(ImportDump.BeamData(ModelModel.ModelUnits.Knm, null));
+        Run("kN-m, another name", knm, Replacement(knm, "Replacement"));
         return compared;
     }
 

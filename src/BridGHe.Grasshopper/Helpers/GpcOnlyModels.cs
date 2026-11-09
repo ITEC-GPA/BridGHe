@@ -43,6 +43,24 @@ namespace BridGHe.Grasshopper.Helpers
             _ => GpcOnlyProperties.WithoutFem(input),
         };
 
+        /// <summary>L3d: the GPC input of a model for a model transformer on the GPC-only path: with the drafts the model carries, also when they are
+        /// attached apart (Build BridGHe Model): the drafts of the output and A09 read them.</summary>
+        internal static Common.Gpc.GpcModels.Conversion InputOf(GH_Model model)
+        {
+            var input = model.GpcInput ?? throw Refused("the model has no GPC input.");
+            var drafts = model.GpcDrafts;
+            return input.Drafts != null || drafts == null ? input : input.WithDrafts(drafts);
+        }
+
+        /// <summary>L3d: the output of a model transformer that keeps the elements of its source one to one (Attach Moving Paths, Bridge Phase Model) on
+        /// the GPC-only path: the GPC model alone, with the GH GUIDs of the elements of the source (the former path: <c>GH_Model.FromModel(value, source)</c>).</summary>
+        internal static GH_Model SameElements(Common.Gpc.GpcModels.Conversion output, GH_Model source, Common.Gpc.GpcModels.Conversion input)
+        {
+            var model = GH_Model.FromGpc(output);
+            if (input.Drafts != null && output.Drafts != null) model.AttachElementGuids(source.ElementGuidsOf(input.Drafts));
+            return model;
+        }
+
         /// <summary>The error of a reading that exists only on the FEM data, on the GPC-only path (no output).</summary>
         internal static Exception Refused(string reading) => new ArgumentException(RefusedPrefix + reading);
 
