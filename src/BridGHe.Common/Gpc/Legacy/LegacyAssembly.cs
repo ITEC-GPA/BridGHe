@@ -427,8 +427,9 @@ namespace BridGHe.Common.Gpc.Legacy
             beam.ConnectNodes(ni, nj);
             Report.BeamAngles[k + 1] = draft.AngleDeg;
             var start = beam.StartPoint; var end = beam.EndPoint;
-            var section = GpcBeamAxes.Section(start, end, draft.AngleDeg, p.Angle);
-            var principal = GpcBeamAxes.Principal(start, end, draft.AngleDeg);
+            double axesAngle = draft.AngleDeg + LegacyModelImport.AxesRotationDeg(p.Native); // LIB (A02b): the turn of the axes of a double angle
+            var section = GpcBeamAxes.Section(start, end, axesAngle, p.Angle);
+            var principal = GpcBeamAxes.Principal(start, end, axesAngle);
             beam.Assignments.Formulation = p.Formulation;
             beam.Assignments.SectionAxes = section;
             double ox = Units.ToMm(d.Assignments.OffsetI?.X ?? 0), oy = Units.ToMm(d.Assignments.OffsetI?.Y ?? 0);

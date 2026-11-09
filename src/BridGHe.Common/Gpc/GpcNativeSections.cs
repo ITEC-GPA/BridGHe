@@ -44,7 +44,9 @@ namespace BridGHe.Common.Gpc
 
         /// <param name="scale">Millimetres per unit of the standard/BGL dimensions (angles are not scaled). BXS files and library
         /// items carry their own units and are resolved in mm.</param>
-        public static Resolved Resolve(string key, double[] dimensions, string bxsPath, string library, string item, double scale)
+        /// <param name="mirrorType">LIB (A02b): the native mirror option of a standard shape (0: none; 1-4: the Straus7 mt* values).</param>
+        /// <param name="mirrorGaps">LIB (A02b): the two gaps of the mirror, in the units of the dimensions; unused without a mirror.</param>
+        public static Resolved Resolve(string key, double[] dimensions, string bxsPath, string library, string item, double scale, int mirrorType = 0, double[] mirrorGaps = null)
         {
             if (!(scale > 0) || double.IsInfinity(scale)) throw new ArgumentOutOfRangeException(nameof(scale));
             string id; Func<string, Straus7SectionMesh> run;
@@ -67,8 +69,15 @@ namespace BridGHe.Common.Gpc
                 if (dimensions == null || dimensions.Length != names.Length) throw new ArgumentException(key + ": attese " + names.Length + " dimensioni.");
                 var values = dimensions.Select((d, i) => names[i].StartsWith("alpha", StringComparison.Ordinal) ? d : d * scale).ToArray();
                 id = key + "|" + string.Join(",", values.Select(v => BitConverter.DoubleToInt64Bits(v).ToString("X16")));
+                var definition = shape.Create(values);
+                if (mirrorType != 0)
+                {
+                    var gaps = mirrorGaps.Select(g => g * scale).ToArray();
+                    definition = Straus7SectionDefinition.Standard(definition.Shape, definition.Dimensions, mirrorType, gaps);
+                    id += "|mirror" + mirrorType + "|" + string.Join(",", gaps.Select(v => BitConverter.DoubleToInt64Bits(v).ToString("X16")));
+                }
                 // Display discretisation of the circular shapes as the former preview (properties are read before it).
-                run = scratch => Straus7SectionLibrary.Mesh(shape.Create(values), scratch, 6);
+                run = scratch => Straus7SectionLibrary.Mesh(definition, scratch, 6);
             }
             return cache.GetOrAdd(id, _ => Run(run));
         }

@@ -29,13 +29,13 @@ namespace BridGHe.Common.Gpc.Legacy
         /// </summary>
         private static BeamElement Beam(LegacyValue b, int k, Guid guid, Guid owner, Point3d start, Point3d end, BeamProperty property, BeamFormulation formulation,
             double principalAngle, Action<BeamElement> connect, Func<LegacyValue, Group> groupOf, Dictionary<string, LoadCaseBase> cases, BridgeUnits units,
-            LegacyImportReport report, BridgeMembers members, Func<int, string> femPropertySignature, LegacyElementRecords records)
+            LegacyImportReport report, BridgeMembers members, Func<int, string> femPropertySignature, LegacyElementRecords records, double axesRotationDeg = 0)
         {
             var offset = b["Offset"];
             // e3: every group at list level (the former exporter wrote the first; the warning comes with the resolution, LegacyAssembly.ResolveBeam).
             var bg = b.Field("Groups").Items;
             var (beam, principal, globalOffset) = NewBeam(guid, owner, k, b.String("BeamId") ?? "", start, end, property, formulation, principalAngle, b.Double("Angle"),
-                units.ToMm(offset.Double("X")), units.ToMm(offset.Double("Y")), connect, bg.Count > 0 ? () => groupOf(bg[0]) : null, bg.Select(FullName), report, records);
+                units.ToMm(offset.Double("X")), units.ToMm(offset.Double("Y")), connect, bg.Count > 0 ? () => groupOf(bg[0]) : null, bg.Select(FullName), report, records, axesRotationDeg);
             BeamData(b, beam, principal, globalOffset, cases, units, report, members, records);
             SectionState(b, k, beam, femPropertySignature, report, records);
             return beam;
@@ -46,17 +46,18 @@ namespace BridGHe.Common.Gpc.Legacy
         /// beam <paramref name="k"/> (0-based) on its ends and property, connected right after its creation, its BridGHe angle in the report,
         /// formulation, section axes, the offset in the principal axes, the first group (<paramref name="firstGroup"/>, null: none) and the full
         /// names of every group in the records. Returns the beam, its principal axes and the global eccentricity of its loads (the offset).
+        /// <paramref name="axesRotationDeg"/>: LIB (A02b, <see cref="AxesRotationDeg"/>): the turn of the axes of the beam, 0 but for a double angle.
         /// </summary>
         internal static (BeamElement Beam, CoordinateSystem Principal, Vector3d GlobalOffset) NewBeam(Guid guid, Guid owner, int k, string beamId, Point3d start, Point3d end,
             BeamProperty property, BeamFormulation formulation, double principalAngle, double angleDeg, double ox, double oy, Action<BeamElement> connect,
-            Func<Group> firstGroup, IEnumerable<string> groupFullNames, LegacyImportReport report, LegacyElementRecords records)
+            Func<Group> firstGroup, IEnumerable<string> groupFullNames, LegacyImportReport report, LegacyElementRecords records, double axesRotationDeg = 0)
         {
             var beam = new BeamElement(guid, start, end, property, null, beamId, k + 1)
             { Source = new SourceIdentity(Program, owner.ToString("D"), EntityFamily.Beam, beamId.Length != 0 ? beamId : (k + 1).ToString()) };
             connect?.Invoke(beam);
             report.BeamAngles[k + 1] = angleDeg;
-            var section = GpcBeamAxes.Section(start, end, angleDeg, principalAngle);
-            var principal = GpcBeamAxes.Principal(start, end, angleDeg);
+            var section = GpcBeamAxes.Section(start, end, angleDeg + axesRotationDeg, principalAngle);
+            var principal = GpcBeamAxes.Principal(start, end, angleDeg + axesRotationDeg);
             beam.Assignments.Formulation = formulation;
             beam.Assignments.SectionAxes = section;
             var globalOffset = principal.V1 * ox + principal.V2 * oy;
@@ -93,7 +94,7 @@ namespace BridGHe.Common.Gpc.Legacy
             records.PropertyCarryList.AddRange(propertyReport.NotExported);
             var cases = ElementCases(b, out var groupOf, records);
             var beam = Beam(b, 0, guid, guid, Point(b["PointFrom"], units), Point(b["PointTo"], units), property.Property, property.Data.Formulation, property.Data.Angle,
-                null, groupOf, cases, units, report, new BridgeMembers(report.Bridge), femPropertySignature == null ? null : _ => femPropertySignature, records);
+                null, groupOf, cases, units, report, new BridgeMembers(report.Bridge), femPropertySignature == null ? null : _ => femPropertySignature, records, AxesRotationDeg(property.Data.Native));
             return new LegacyBeamDraft(beam, report.Bridge.Beam(beam.Guid), b.Double("Angle"), property.Data, report) { Records = records };
         }
 

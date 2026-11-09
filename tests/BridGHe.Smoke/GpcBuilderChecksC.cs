@@ -59,7 +59,8 @@ internal static class GpcBuilderChecksC
             One(h, "BeamPropertyComponent", (0, "P " + type), (1, type), (2, section), (3, steel));
         One(h, "BeamPropertyComponent", (0, ""), (1, 5), (2, rect), (3, concrete));
         // PAR (A02): a property on an angle section is no longer refused: it is the native Straus7 section of 0.3.0, resolved by Straus7, so it
-        // is checked under the native host (ParityNative and the native part of gpc-only-properties), not here.
+        // is checked under the native host (ParityNative and the native part of gpc-only-properties), not here. LIB (A02b): the same for the
+        // double C and double angle sections (the native section with its mirror).
         foreach (int type in new[] { 0, 1, 2, 3, 4, 6 })
             One(h, "PlatePropertyComponent", (0, "Plate " + type), (1, type), (2, 250.0), (3, 220.0), (4, concrete));
         One(h, "PlatePropertyComponent", (0, "Patch"), (1, 5));

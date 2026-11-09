@@ -881,9 +881,13 @@ internal static class GpcOnlyReplay
         var brep = Produce("BeamSectionBrepComponent", new Dictionary<int, object> { [0] = Rhino.Geometry.Brep.CreatePlanarBreps(new[] {
             new Rhino.Geometry.Rectangle3d(Rhino.Geometry.Plane.WorldXY, 200, 400).ToNurbsCurve(),
             new Rhino.Geometry.Rectangle3d(new Rhino.Geometry.Plane(new Rhino.Geometry.Point3d(50, 50, 0), Rhino.Geometry.Vector3d.ZAxis), 100, 300).ToNurbsCurve() }, 1e-6).Single() });
-        // A04: a material with E and a stress-strain table (a former value; the Table Material component gives E = 0, which the GPC elastic
-        // material refuses: library question of PAR).
+        // A04: a material with E and a stress-strain table (a former value).
         var table = TableMaterial();
+        // A04 (LIB, with GPC.Model 5.51): a material of the Table Material component (E = 0 and the table). As in 0.3.0 the component reads the
+        // stresses only without Thermal Expansion and Density (nested ifs, passo 80, observation 3): the case that works.
+        var stresses = new object[] { 0.0, 235.0, 360.0 }; var strains = new object[] { 0.0, 0.00112, 0.15 };
+        var tableInputs = new Dictionary<int, object> { [0] = "Table E0", [1] = true, [2] = 0.3, [3] = 80000.0, [6] = stresses, [7] = strains };
+        var tableOnly = Produce("MaterialTableComponent", tableInputs);
         var pentagon = new Rhino.Geometry.Mesh();
         foreach (var (x, y) in new[] { (0.0, 0.0), (1000.0, 0.0), (1500.0, 500.0), (1000.0, 1000.0), (0.0, 1000.0) }) pentagon.Vertices.Add(x, y, 0);
         pentagon.Faces.AddFace(0, 1, 3, 4); pentagon.Faces.AddFace(1, 2, 3);
@@ -893,6 +897,10 @@ internal static class GpcOnlyReplay
             ("BeamPropertyComponent", "A01: cutoff bar, the cutoff inputs not shown (zeros, brittle)", new Dictionary<int, object> { [0] = "Bar", [1] = 3, [2] = section, [3] = steel }),
             ("BeamPropertyComponent", "A02c: Brep section with a hole", new Dictionary<int, object> { [0] = "Brep", [1] = 5, [2] = brep, [3] = steel }),
             ("PlateComponent", "A07: a mesh of five vertices (error, no output)", new Dictionary<int, object> { [0] = pentagon, [1] = shell }),
+            ("MaterialTableComponent", "A04: the table without Thermal Expansion and Density (E = 0)", tableInputs),
+            ("BeamPropertyComponent", "A04: a Beam of a Table Material material (E = 0)", new Dictionary<int, object> { [0] = "Table beam", [1] = 5, [2] = section, [3] = tableOnly }),
+            ("BeamPropertyComponent", "A04: a Truss of a Table Material material (E = 0)", new Dictionary<int, object> { [0] = "Table truss", [1] = 2, [2] = section, [3] = tableOnly }),
+            ("PlatePropertyComponent", "A04: a ShellThin of a Table Material material (E = 0)", new Dictionary<int, object> { [0] = "Table shell", [1] = 0, [2] = 20.0, [3] = 20.0, [4] = tableOnly }),
         };
         foreach (var (type, name) in new[] { (0, "ShellThin"), (1, "ShellThick"), (2, "PlateThin"), (3, "PlateThick") })
             cases.Add(("PlatePropertyComponent", "A04: " + name + " of a material with a stress-strain table", new Dictionary<int, object> { [0] = "Table plate", [1] = type, [2] = 20.0, [3] = 20.0, [4] = table }));
@@ -918,6 +926,18 @@ internal static class GpcOnlyReplay
             var s = Produce(type, new Dictionary<int, object> { [0] = 150.0, [1] = 10.0, [2] = 300.0, [3] = 12.0 });
             cases.Add(("BeamPropertyComponent", "A02: " + label + " section (the native section of 0.3.0)", new Dictionary<int, object> { [0] = "PAR " + label, [1] = 5, [2] = s, [3] = steel }));
         }
+        // LIB (A02b): the double C and double angle (the native section with the mirror of 0.3.0), a beam of the double angle (the axes of 0.3.0,
+        // turned by 90°; angle and offset given) and the taper refused on it (the former message, both paths).
+        var doubleL = Produce("BeamSectionAngleComponent", new Dictionary<int, object> { [0] = 150.0, [1] = 10.0, [2] = 100.0, [3] = 12.0, [4] = true, [5] = 8.0 });
+        var doubleC = Produce("BeamSectionCComponent", new Dictionary<int, object> { [0] = 100.0, [1] = 10.0, [2] = 300.0, [3] = 8.0, [4] = true, [5] = 12.0 });
+        var propertyL = Produce("BeamPropertyComponent", new Dictionary<int, object> { [0] = "PAR 2L", [1] = 5, [2] = doubleL, [3] = steel });
+        var line = new Rhino.Geometry.LineCurve(new Rhino.Geometry.Point3d(0, 0, 0), new Rhino.Geometry.Point3d(3000, 0, 0));
+        var beamInputs = new Dictionary<int, object> { [0] = line, [1] = propertyL, [3] = 30.0, [4] = new Rhino.Geometry.Vector3d(5, 7, 0) };
+        var beam = Produce("BeamComponent", beamInputs);
+        cases.Add(("BeamPropertyComponent", "A02b: double C (the native section with its mirror)", new Dictionary<int, object> { [0] = "PAR 2C", [1] = 5, [2] = doubleC, [3] = steel }));
+        cases.Add(("BeamPropertyComponent", "A02b: double angle (the native section with its mirror)", new Dictionary<int, object> { [0] = "PAR 2L", [1] = 5, [2] = doubleL, [3] = steel }));
+        cases.Add(("BeamComponent", "A02b: a beam of a double angle (the axes turned by 90°)", beamInputs));
+        cases.Add(("BeamTaperComponent", "A02b: taper on a double angle (error, no output)", new Dictionary<int, object> { [0] = beam, [1] = 1.0, [2] = 0.8, [3] = 0.5, [4] = 0.6, [5] = 0, [6] = 2 }));
         return cases;
     }
 
