@@ -130,6 +130,9 @@ internal static class BridgeMovingRevisionNative
             string line=$"SAVE TIMING example50-rev003 solved: {new FileInfo(saved).Length} bytes, serialize {serialized.TotalSeconds:F1} s, write {writeTime.TotalSeconds:F1} s, read+reopen {read.TotalSeconds:F1} s{drafts}";
             File.WriteAllText(Path.Combine(timing,"save-timing.txt"),line+Environment.NewLine);Console.WriteLine(line);
         }
+#if GPC_PILOT
+        GpcOnlyReplay.Rehearsal(doc,"50"); // L3e: only with BRIDGHE_GPC_ONLY_REHEARSAL=1
+#endif
         // A path change invalidates the cached moving analysis rather than leaking old positions.
         var pathComponent=Find(doc,"BridgeStraightMovingPathComponent");var divisions=(Param_Integer)In(pathComponent,"Divisions");divisions.RemoveAllSources();divisions.SetPersistentData(path.Divisions+1);pathComponent.ExpireSolution(false);BridgeSegmentExcelTests.Solve(doc,true);
         Require(Values<ModelModel>(Out(moving,"Model")).Length==0&&Values<string>(Out(moving,"Cases")).Length==0,"Stale moving results survived changed input.");

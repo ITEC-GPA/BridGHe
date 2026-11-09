@@ -90,6 +90,8 @@ namespace BridGHe.Grasshopper.Components.Export
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
 
                 _run = false;
+                // R6.5 P1 lane 3: on a GPC-only input a refusal gives an error and no output.
+                if (Message == "Error" && GpcOnlyModels.WithoutFem(model)) return;
             }
 
             DA.SetData(0, Message);

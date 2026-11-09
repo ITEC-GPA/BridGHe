@@ -273,7 +273,7 @@ internal static class GpcOnlyAnalysisNative
         fem.AddElements(new ElementModel[] { new BeamModel("B1", points[0], points[1], first), new BeamModel("B2", points[1], points[2], second), new BeamModel("B3", points[2], points[3], second) });
         var replacement = Property("Stiff", 420000);
         const double tolerance = 1e-6;
-        var names = new[] { "B1" };
+        var names = new[] { fem.Beams[0].BeamId };
         var input = GpcInputComparison.ConvertWithDrafts(fem, tolerance);
         var output = GpcModelTransforms.PhaseModel(input, "A09", names, GpcModels.BeamProperty(replacement, input.Report.Units), false,
             GpcIdentity.Derive(GpcIdentity.NameSpace, "test-a09-native"), GpcModels.BeamProperty(replacement, GpcBeamDrafts.DraftUnits));

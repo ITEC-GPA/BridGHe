@@ -102,6 +102,7 @@ internal static class Program
         if(args.Contains("--migrate-bridge-examples")) return BridgeExampleMigration.Run(args.SkipWhile(a=>a!="--migrate-bridge-examples").Skip(1).FirstOrDefault(a=>!a.StartsWith("--")),args.Contains("--publish"));
 #if GPC_PILOT
         if(args.Contains("--gpc-results-native")) return GpcResultsFileNative.Run();
+        if(args.Contains("--gpc-only-analysis-native")) return GpcOnlyAnalysisNative.Run(); // L3e: targeted (the same cases run under --core-only --native)
         if(args.Contains("--remake-examples-04")) return ExampleRemake04.Run(args.Contains("write"));
         if(args.Contains("--phase-examples-native")) return NativePhaseExamples.Run(args.SkipWhile(a=>a!="--phase-examples-native").Skip(1).FirstOrDefault(a=>!a.StartsWith("--")));
         if(args.Contains("--legacy-beam-results")) { var r=args.SkipWhile(a=>a!="--legacy-beam-results").Skip(1).ToArray(); return LegacySectionDump.BeamResults(r[0],r[1],r.Length>2?r[2]:null); }
