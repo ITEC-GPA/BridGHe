@@ -1731,6 +1731,60 @@ internal static class GpcOnlyReplay
     /// <summary>L3a: the regression of the section «models» (<c>gpc-only-models</c>).</summary>
     internal static void Models() => Regression("models");
 
+    /// <summary>L3e (A05): a model of plates with a non-structural mass, and (A06) a moving path with a heat source, in the units of the definition.</summary>
+    private static ModelModel MassHeatModel(ModelModel.ModelUnits units)
+    {
+        var m = ImportDump.PlateData(units); m.Name = "L3e " + units;
+        m.Plates[0].Loads.Add(new PlateNSMassModel(new LoadCaseModel(LoadCaseModel.Dead), new PlateNSMassModel.LoadData { Mass = 0.2, DynFactor = 1.1, Offset = new Rhino.Geometry.Vector3d(0.01, -0.02, 0.03) }));
+        return m;
+    }
+
+    private static BridGHe.Common.MovingLoads.MovingPath HeatPath() => new BridGHe.Common.MovingLoads.MovingPath
+    {
+        LoadCaseName = "Traffic", Divisions = 5, Target = 2, Coordinates = new double[] { 0, 0, 0, 1, 0, 0, 0, 1, 0 },
+        Template = new BridGHe.Common.MovingLoads.MovingTemplate { Name = "Heat", Vehicles = new[] { new BridGHe.Common.MovingLoads.MovingVehicle { Name = "H", Loads = new BridGHe.Common.MovingLoads.MovingObject[]
+            { new BridGHe.Common.MovingLoads.MovingPointForce { Force = new double[] { 0, 0, -1 } }, new BridGHe.Common.MovingLoads.MovingHeatSource { X = 0.1, Y = 0.2, SizeX = 0.3, SizeY = 0.4, Heat = 5 } } } } },
+    };
+
+    /// <summary>L3e (A05): Build Model of plates with a non-structural mass outside N-mm: the GPC-only path and the conversion of the FEM value give the same model.</summary>
+    private static List<(string Type, string Label, Dictionary<int, object> Inputs)> Lane3eCases()
+    {
+        var cases = new List<(string, string, Dictionary<int, object>)>();
+        foreach (var (units, index) in new[] { (ModelModel.ModelUnits.Knm, 0), (ModelModel.ModelUnits.SI, 1), (ModelModel.ModelUnits.IPS, 3) })
+        {
+            var plate = NativeExamples.Create().Single(e => e.Id == "03-plate-patch").Model.Plates.Single();
+            plate.Loads.Add(new PlateNSMassModel(new LoadCaseModel(LoadCaseModel.Dead), new PlateNSMassModel.LoadData { Mass = 0.2, DynFactor = 1.1, Offset = new Rhino.Geometry.Vector3d(0.01, -0.02, 0.03) }));
+            cases.Add(("BuildModelComponent", "A05 " + units, new Dictionary<int, object> { [0] = new object[] { Make("Fem.GH_Plate", plate) }, [1] = "A05", [2] = index }));
+        }
+        return cases;
+    }
+
+    /// <summary>L3e (A05, A06): the values in N, mm, t of the plate non-structural mass and of the moving heat source, as 0.3.0 wrote them in the units of its files,
+    /// on the conversion of the FEM value and through the drafts (Attach Moving Paths).</summary>
+    private static void Lane3eChecks(List<string> failures, ref int count)
+    {
+        foreach (var (units, length, mass, power) in new[] { (ModelModel.ModelUnits.Nmm, 1.0, 1.0, 1000.0), (ModelModel.ModelUnits.Knm, 1000.0, 1e-6, 1000.0), (ModelModel.ModelUnits.SI, 1000.0, 1e-9, 1000.0),
+            (ModelModel.ModelUnits.IPS, 25.4, 4.5359237e-4 / (25.4 * 25.4), 1055.05585262 * 1000) })
+        {
+            const double tolerance = 1e-6;
+            var fem = MassHeatModel(units); var path = HeatPath(); fem.MovingPaths.Add(path);
+            var converted = BridGHe.Common.Gpc.GpcModels.Convert(fem, tolerance);
+            var plain = MassHeatModel(units);
+            var attached = BridGHe.Common.Gpc.GpcModelTransforms.ReplacePaths(GpcInputComparison.ConvertWithDrafts(plain, tolerance), new[] { HeatPath() }, BridGHe.Common.Gpc.GpcIdentity.Derive(BridGHe.Common.Gpc.GpcIdentity.NameSpace, "test-l3e:" + units));
+            foreach (var (name, input) in new[] { ("conversion", converted), ("Attach Moving Paths", attached) })
+            {
+                var m = input.Model.AreaElements[1].Assignments.Physical.NonStructuralMasses.Single();
+                var h = input.Model.MovingLoads.Paths.Single().Template.Vehicles.Single().HeatSources.Single();
+                bool Near(double a, double b) => Math.Abs(a - b) <= 1e-12 * Math.Abs(b);
+                if (!Near(m.MassPerArea, 0.2 * mass) || !Near(m.GlobalOffset.X, 0.01 * length) || !Near(m.GlobalOffset.Y, -0.02 * length) || !Near(m.GlobalOffset.Z, 0.03 * length) || m.DynamicFactor != 1.1)
+                    failures.Add($"A05 {units} ({name}): {m.MassPerArea} {m.DynamicFactor} {m.GlobalOffset}");
+                if (!Near(h.X, 0.1 * length) || !Near(h.Y, 0.2 * length) || !Near(h.SizeX, 0.3 * length) || !Near(h.SizeY, 0.4 * length) || !Near(h.Power, 5 * power))
+                    failures.Add($"A06 {units} ({name}): {h.X} {h.Y} {h.SizeX} {h.SizeY} {h.Power}");
+                count++;
+            }
+        }
+    }
+
     /// <summary>L3e: where the analyses of the rehearsal write (null outside the rehearsal: the analyses are never pressed).</summary>
     private static string rehearsalFolder;
 
@@ -2026,7 +2080,7 @@ internal static class GpcOnlyReplay
         // L2C: and the cases of lane 2c.
         // PAR: and the cases of the 0.3.0 parity (ParityCases; the T, C and angle properties under the native host, ParityNativeCases).
         var all = lane == "native" ? NativeSectionCases().Concat(ParityNativeCases()).ToList() : lane == "properties" ? Lane1Cases().Concat(Lane1bCases()).Where(OfLane2).Concat(Lane2aCases()).Concat(Lane2bCases()).Concat(Lane2cCases()).Concat(ParityCases()).ToList()
-            : lane == "generators" ? Lane1bCases() : lane == "models" ? ModelsCases().Concat(Lane3cCases()).Concat(Lane3dCases()).ToList() : Lane1Cases();
+            : lane == "generators" ? Lane1bCases() : lane == "models" ? ModelsCases().Concat(Lane3cCases()).Concat(Lane3dCases()).Concat(Lane3eCases()).ToList() : Lane1Cases();
         foreach (var (type, label, inputs) in all.Where(c => Selected(c.Type)))
         {
             using var doc = new GH_Document();
@@ -2111,6 +2165,7 @@ internal static class GpcOnlyReplay
         int cases = 0;
         if (lane is "elements" or "generators" or "properties" or "models") InMemory(lane, kinds, byType, failures, out cases);
         if (lane == "models") ModelsChecks(kinds, failures, ref cases); // L3b
+        if (lane == "models" && Selected("Lane3e")) Lane3eChecks(failures, ref cases); // L3e
         if (lane == "properties") ParameterCases(kinds, byType, failures, ref cases);
         // L2C: the checks of the review of lane 2 (R65-C2).
         if (lane == "properties" && (selected == null || selected.Contains("Review"))) ReviewChecks(kinds, failures, ref cases);
