@@ -76,7 +76,7 @@ namespace BridGHe.Grasshopper.Components.Definitions
             // Connect the LoadCombinationsComponent
             IEnumerable<IGH_Param> combinations_params = Params.Input[2].Sources.Where(s => s.GetType() == typeof(LoadCombinationsParam));
             foreach (LoadCombinationsParam param in combinations_params)
-                param.UpdateLoadCases(_loadCases, CaseRecords);
+                param.UpdateLoadCases(_caseRecordsOnly ? null : _loadCases, CaseRecords);
 
             if (combinations.Count == 0)
             {
@@ -108,11 +108,15 @@ namespace BridGHe.Grasshopper.Components.Definitions
             DA.SetData(0, output);
         }
 
+        private bool _caseRecordsOnly;
+
         /// <summary>R6.3: the cases of Build Model, FEM values (until R6.5) and case records.</summary>
         public void SetLoadCases(IEnumerable<LoadCaseModel> loadCases, IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
         {
             _loadCases.Clear();
-            _loadCases.AddRange(loadCases);
+            // R6.5 P1 lane 3c: null: Build Model on elements given by their GPC data alone (only the case records).
+            _caseRecordsOnly = loadCases == null;
+            if (loadCases != null) _loadCases.AddRange(loadCases);
             _caseRecords = caseRecords;
         }
 

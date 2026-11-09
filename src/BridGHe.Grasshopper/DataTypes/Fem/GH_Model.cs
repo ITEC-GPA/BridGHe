@@ -204,8 +204,12 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             get
             {
                 lock (gpcLock)
-                    return _legacy != null && Value != null && ReferenceEquals(_legacyOf, StateKey) && Value.Elements.Any(e => e.Results != null && e.Results.Count != 0)
-                        ? Common.Gpc.GpcLegacyPayloads.ResultsDroppedMessage : null;
+                {
+                    if (_legacy == null || !ReferenceEquals(_legacyOf, StateKey)) return null;
+                    // R6.5 P1 lane 3c: without a FEM value the results of the former payload are read from the payload itself.
+                    bool results = Value != null ? Value.Elements.Any(e => e.Results != null && e.Results.Count != 0) : Common.Gpc.GpcLegacyPayloads.ModelHadResults(_legacy);
+                    return results ? Common.Gpc.GpcLegacyPayloads.ResultsDroppedMessage : null;
+                }
             }
         }
 
@@ -300,6 +304,27 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         /// <summary>The GPC bridge model attached by Build Bridge Model for <see cref="Value"/>, or null.</summary>
         public Common.Gpc.GpcBridge GpcBridge { get { lock (gpcLock) return _bridge != null && ReferenceEquals(_analysedOf, StateKey) && ReferenceEquals(_analysed, _bridge.Model) ? _bridge : null; } }
 
+        // R6.5 P1 lane 3c: the GH GUIDs of the elements of a model without FEM value (the FEM-backed path has _guids), in the order of its drafts.
+        private Guid[] _draftGuids;
+        private object _draftGuidsOf;
+
+        /// <summary>R6.5 P1 lane 3c: the GH GUIDs of the elements of a model without FEM value, in the order of its drafts (nodes, beams, plates):
+        /// those Build Model was given. Copies of this datum keep them; saved with the model (item <c>ElementGuids</c>).</summary>
+        public void AttachElementGuids(IEnumerable<Guid> guids)
+        {
+            lock (gpcLock) { _draftGuids = (guids ?? throw new ArgumentNullException(nameof(guids))).ToArray(); _draftGuidsOf = StateKey; }
+        }
+
+        /// <summary>R6.5 P1 lane 3c: the GH GUID of every element of a model without FEM value, in the order of <paramref name="drafts"/>: the GUIDs
+        /// attached (<see cref="AttachElementGuids"/>), otherwise (none attached, or for other drafts) the GUIDs of the drafts.</summary>
+        public Guid[] ElementGuidsOf(Common.Gpc.GpcModelDrafts drafts)
+        {
+            int count = drafts.Nodes.Count + drafts.Beams.Count + drafts.Plates.Count;
+            lock (gpcLock)
+                if (_draftGuids != null && ReferenceEquals(_draftGuidsOf, StateKey) && _draftGuids.Length == count) return _draftGuids.ToArray();
+            return drafts.Nodes.Select(d => d.Node.Guid).Concat(drafts.Beams.Select(d => d.Beam.Guid)).Concat(drafts.Plates.Select(d => d.Plate.Guid)).ToArray();
+        }
+
         private void ShareGpc(GH_Model copy)
         {
             lock (gpcLock)
@@ -311,6 +336,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 if (_legacy != null && ReferenceEquals(_legacyOf, StateKey)) lock (copy.gpcLock) { copy._legacy = _legacy; copy._legacyOf = copy.StateKey; }
                 if (_drafts != null && ReferenceEquals(_draftsOf, StateKey)) copy.AttachDrafts(_drafts);
                 if (_linked != null && ReferenceEquals(_linkedOf, StateKey)) lock (copy.gpcLock) { copy._linked = _linked; copy._linkedOf = copy.StateKey; }
+                if (_draftGuids != null && ReferenceEquals(_draftGuidsOf, StateKey)) copy.AttachElementGuids(_draftGuids);
             }
         }
 
@@ -461,7 +487,9 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 // R6.1: the GPC input with its report (BGHGPC1, GpcDraftArchive.Write(Conversion)); the analysed results stay in the sidecar of
                 // the analysis components. Until R6.5 the FEM model too (transitional chunk) with the GUIDs of its elements.
                 DataTypes.GpcGooPersistence.Write(writer, () => Common.Gpc.GpcDraftArchive.Write(GpcInput), Value == null ? null : Common.Helpers.ModelArchive.Write(Value));
-                writer.SetString("ElementGuids", JsonSerializer.Serialize(Value?.Elements.Select(GetGuid).ToArray() ?? Array.Empty<Guid>()));
+                // R6.5 P1 lane 3c: a model without FEM value writes the GH GUIDs attached to its drafts, and reads them back below.
+                bool draftGuids = Value == null && _draftGuids != null && ReferenceEquals(_draftGuidsOf, StateKey);
+                writer.SetString("ElementGuids", JsonSerializer.Serialize(Value?.Elements.Select(GetGuid).ToArray() ?? (draftGuids ? _draftGuids : Array.Empty<Guid>())));
                 // R6.4 (2), extension (α): the drafts of the elements, in a chunk of their own beside the GPC input (none when the model carries
                 // none). Until R6.5 drafts that cannot be written are left out, as a GPC input (the elements read back keep the conversion of
                 // their FEM values).
@@ -494,11 +522,17 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                         Value = Common.Helpers.ModelArchive.Read<ModelModel>(femm); break;
                     default: return false;
                 }
+                Guid[] savedDraftGuids = null;
                 if (reader.ItemExists("ElementGuids"))
                 {
                     var guids = JsonSerializer.Deserialize<Guid[]>(reader.GetString("ElementGuids"));
-                    if (guids == null || guids.Length != (Value?.Elements.Count ?? 0)) return false;
-                    for (int i = 0; i < guids.Length; i++) _guids[Value.Elements[i]] = guids[i];
+                    if (guids == null) return false;
+                    if (Value != null)
+                    {
+                        if (guids.Length != Value.Elements.Count) return false;
+                        for (int i = 0; i < guids.Length; i++) _guids[Value.Elements[i]] = guids[i];
+                    }
+                    else if (guids.Length != 0) savedDraftGuids = guids; // R6.5 P1 lane 3c: attached once the drafts are read
                 }
                 // R6.4 (2): the drafts of the elements saved with the model (BGHGPC1 of the GH_Model, extended; absent in former files).
                 // Until R6.5 drafts that cannot be read are left out (the elements keep the conversion of their FEM values).
@@ -509,6 +543,12 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 if (reader.ItemExists(Common.Gpc.GpcModelDrafts.Chunk) && StateKey != null)
                     try { AttachDrafts(Common.Gpc.GpcModelDrafts.Read(reader.GetByteArray(Common.Gpc.GpcModelDrafts.Chunk))); }
                     catch (Exception ex) when (ex is System.Runtime.Serialization.SerializationException || ex is InvalidDataException || ex is EndOfStreamException || ex is ArgumentException) { }
+                // R6.5 P1 lane 3c: the GUIDs of a model without FEM value belong to its drafts: another count is a damaged datum (as for the FEM elements).
+                if (savedDraftGuids != null)
+                {
+                    if (GpcDrafts is Common.Gpc.GpcModelDrafts read && savedDraftGuids.Length != read.Nodes.Count + read.Beams.Count + read.Plates.Count) return false;
+                    AttachElementGuids(savedDraftGuids);
+                }
                 return true;
             }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }

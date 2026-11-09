@@ -9,7 +9,7 @@ namespace BridGHe.Common.Gpc.Builders
     /// Sequence), on the drafts of the elements the source carries: the draft the reader gives the changed former value, as every builder of
     /// §1bis (point 6). Never changes its input (a copy); the identity of the draft kept.
     /// </summary>
-    internal static class GpcDraftTransforms
+    public static class GpcDraftTransforms
     {
         internal const string SlabStrainRecord = "CompositeBeamSlabStrainModel", SlabStrainCarry = "Composite slab strain (checks input: the strain of the workflow shrinkage action)";
 
@@ -63,7 +63,7 @@ namespace BridGHe.Common.Gpc.Builders
 
         /// <summary>A beam with a composite slab strain in a case (the merged model of Build BridGHe Model: the strain of a workflow action on
         /// the beams it acts on, a checks input): the reader records the load and its case and carries it (no GPC load).</summary>
-        internal static LegacyBeamDraft WithSlabStrain(LegacyBeamDraft draft, LegacyCaseData loadCase)
+        public static LegacyBeamDraft WithSlabStrain(LegacyBeamDraft draft, LegacyCaseData loadCase)
         {
             var d = GpcDrafts.Copy(draft ?? throw new ArgumentNullException(nameof(draft)));
             d.Records.LoadList.Add((SlabStrainRecord, loadCase.Name)); d.Records.LoadCaseList.Add(loadCase);

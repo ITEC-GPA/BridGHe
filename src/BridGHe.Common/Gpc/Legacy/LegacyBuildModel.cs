@@ -346,6 +346,9 @@ namespace BridGHe.Common.Gpc.Legacy
             /// <summary>R6.5 (coordinator, 7/11): the IDs of beams (family 1) and plates (family 2) given again by another GH datum with the same
             /// data, kept once (the copy dropped), in input order.</summary>
             public List<string>[] DroppedCopies { get; } = { new List<string>(), new List<string>(), new List<string>() };
+            /// <summary>R6.5 P1 lane 3c: the GH GUID of every element of the output, in the order of its drafts (nodes, beams, plates): that of its
+            /// first datum; a node created at a beam end or plate corner, the GUID of its draft (on the FEM path it gets a new GUID at every solution).</summary>
+            public IReadOnlyList<Guid> ElementGuids { get; internal set; } = Array.Empty<Guid>();
             public override string ToString() => "merges by GH GUID nodes/beams/plates " + string.Join("/", Merges) + " (self-merges " + string.Join("/", SelfMerges) + "), position merges " + PositionMerges
                 + ", ends moved " + EndsMoved + ", end nodes " + EndNodes + ", zero-length beams " + ZeroLength + ", corners moved " + CornersMoved + ", corner nodes " + CornerNodes
                 + ", reader moved " + ReaderMoved + ", re-anchored " + Reanchored + ", copies of the same ID dropped beams/plates " + DroppedCopies[1].Count + "/" + DroppedCopies[2].Count;
@@ -403,9 +406,9 @@ namespace BridGHe.Common.Gpc.Legacy
             identity.Append(name).Append('|').Append(units.Units).Append('|').Append(toleranceDefinitionUnits.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
             int nextNode = 1;
             // IDs and merges by GH GUID, per family (former ModelHelper.BuildModel).
-            List<(T Draft, string Id)> Family<T>(IReadOnlyList<(Guid Gh, T Draft)> data, int family, Func<T, LegacyElementRecords> recordsOf, Func<T, T, T> merge, Func<T, string> key) where T : class
+            List<(T Draft, string Id, Guid Gh)> Family<T>(IReadOnlyList<(Guid Gh, T Draft)> data, int family, Func<T, LegacyElementRecords> recordsOf, Func<T, T, T> merge, Func<T, string> key) where T : class
             {
-                var result = new List<(T Draft, string Id)>(); var first = new Dictionary<Guid, (int Index, T Draft)>();
+                var result = new List<(T Draft, string Id, Guid Gh)>(); var first = new Dictionary<Guid, (int Index, T Draft)>();
                 var byId = new Dictionary<string, int>(StringComparer.Ordinal);
                 var used = data.Select(d => recordsOf(d.Draft).FirstLabel).Where(l => l != null).ToList();
                 int next = 1;
@@ -416,7 +419,7 @@ namespace BridGHe.Common.Gpc.Legacy
                     {
                         // A self-merge: the same datum (the same draft, or a copy of it: the GUID of a draft comes from its content).
                         counts.Merges[family]++; if (ReferenceEquals(known.Draft, draft) || key(known.Draft) == key(draft)) counts.SelfMerges[family]++;
-                        result[known.Index] = (merge(result[known.Index].Draft, draft), result[known.Index].Id);
+                        result[known.Index] = (merge(result[known.Index].Draft, draft), result[known.Index].Id, result[known.Index].Gh);
                         identity.Append("|m").Append(family).Append(':').Append(known.Index).Append(':').Append(key(draft));
                         continue;
                     }
@@ -433,7 +436,7 @@ namespace BridGHe.Common.Gpc.Legacy
                         continue;
                     }
                     if (family != 0) byId[id] = result.Count;
-                    first.Add(gh, (result.Count, draft)); result.Add((draft, id));
+                    first.Add(gh, (result.Count, draft)); result.Add((draft, id, gh));
                     identity.Append("|e").Append(family).Append(':').Append(key(draft));
                 }
                 if (family == 0) nextNode = next;
@@ -455,8 +458,9 @@ namespace BridGHe.Common.Gpc.Legacy
             // Node merge by position, beam ends, plate corners (former ModelHelper.BuildModel, RTree of Rhino).
             static Rhino.Geometry.Point3d R(GPC.Geometry.Point3d p) => new Rhino.Geometry.Point3d(p.X, p.Y, p.Z);
             var kept = new List<(LegacyNodeDraft Draft, string Id, Rhino.Geometry.Point3d Position)>();
+            var keptGuids = new List<Guid>();
             using var tree = new Rhino.Geometry.RTree();
-            foreach (var (draft, id) in nodeList)
+            foreach (var (draft, id, gh) in nodeList)
             {
                 var pt = R(draft.Node.Position); bool found = false; int foundId = -1; double nearest = double.PositiveInfinity;
                 tree.Search(new Rhino.Geometry.Sphere(pt, toleranceDefinitionUnits), (s, e) =>
@@ -464,7 +468,7 @@ namespace BridGHe.Common.Gpc.Legacy
                     double distance = kept[e.Id].Position.DistanceToSquared(pt);
                     if (distance < nearest || distance == nearest && e.Id < foundId) { found = true; foundId = e.Id; nearest = distance; }
                 });
-                if (!found) { kept.Add((draft, id, pt)); tree.Insert(pt, kept.Count - 1); }
+                if (!found) { kept.Add((draft, id, pt)); keptGuids.Add(gh); tree.Insert(pt, kept.Count - 1); }
                 else { kept[foundId] = (MergeCoincident(kept[foundId].Draft, draft), kept[foundId].Id, kept[foundId].Position); counts.PositionMerges++; }
             }
             int newNode = nextNode;
@@ -476,15 +480,15 @@ namespace BridGHe.Common.Gpc.Legacy
                 if (found && foundId != -1) { if (kept[foundId].Position != p) { if (end) counts.EndsMoved++; else counts.CornersMoved++; } return kept[foundId].Position; }
                 string nodeName = Fresh((newNode++).ToString());
                 var created = new GPC.Model.Elements.NodeElement(GpcIdentity.Derive(GpcIdentity.NameSpace, "gpc-build-model-node:" + nodeName), new GPC.Geometry.Point3d(p.X, p.Y, p.Z), null, nodeName, 1);
-                kept.Add((new LegacyNodeDraft(created, new LegacyImportReport { Units = units }), nodeName, p)); tree.Insert(p, kept.Count - 1); createdNodes.Add(kept.Count - 1);
+                kept.Add((new LegacyNodeDraft(created, new LegacyImportReport { Units = units }), nodeName, p)); keptGuids.Add(created.Guid); tree.Insert(p, kept.Count - 1); createdNodes.Add(kept.Count - 1);
                 if (end) counts.EndNodes++; else counts.CornerNodes++;
                 return p;
             }
-            var beamEnds = new List<(LegacyBeamDraft Draft, string Id, Rhino.Geometry.Point3d Start, Rhino.Geometry.Point3d End)>();
-            foreach (var (draft, id) in beamList) { var a = Anchor(R(draft.Beam.StartPoint), true); var b = Anchor(R(draft.Beam.EndPoint), true); beamEnds.Add((draft, id, a, b)); }
+            var beamEnds = new List<(LegacyBeamDraft Draft, string Id, Rhino.Geometry.Point3d Start, Rhino.Geometry.Point3d End, Guid Gh)>();
+            foreach (var (draft, id, gh) in beamList) { var a = Anchor(R(draft.Beam.StartPoint), true); var b = Anchor(R(draft.Beam.EndPoint), true); beamEnds.Add((draft, id, a, b, gh)); }
             int before = beamEnds.Count; beamEnds = beamEnds.Where(b => b.Start != b.End).ToList(); counts.ZeroLength = before - beamEnds.Count;
-            var plateCorners = new List<(LegacyPlateDraft Draft, string Id, Rhino.Geometry.Point3d[] Corners)>();
-            foreach (var (draft, id) in plateList) plateCorners.Add((draft, id, draft.Corners.Select(c => Anchor(R(c), false)).ToArray()));
+            var plateCorners = new List<(LegacyPlateDraft Draft, string Id, Rhino.Geometry.Point3d[] Corners, Guid Gh)>();
+            foreach (var (draft, id, gh) in plateList) plateCorners.Add((draft, id, draft.Corners.Select(c => Anchor(R(c), false)).ToArray(), gh));
 
             // The assembly, as the legacy reader converts the FEM output of Build Model.
             var owner = GpcIdentity.Derive(GpcIdentity.NameSpace, "gpc-build-model:" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(identity.ToString()))));
@@ -505,7 +509,7 @@ namespace BridGHe.Common.Gpc.Legacy
             assembly.AddNodes(placedNodes);
             for (int k = 0; k < beamEnds.Count; k++)
             {
-                var (draft, id, start, end) = beamEnds[k];
+                var (draft, id, start, end, _) = beamEnds[k];
                 var (i, j) = assembly.BeamEnds(new GPC.Geometry.Point3d(units.ToMm(start.X), units.ToMm(start.Y), units.ToMm(start.Z)), new GPC.Geometry.Point3d(units.ToMm(end.X), units.ToMm(end.Y), units.ToMm(end.Z)), k + 1);
                 var ni = assembly.Node(i); var nj = assembly.Node(j);
                 // The counters compare in mm: the nodes of the model are normalised (e3 point 5), the RTree points and the drafts are not.
@@ -525,7 +529,7 @@ namespace BridGHe.Common.Gpc.Legacy
             }
             for (int k = 0; k < plateCorners.Count; k++)
             {
-                var (draft, id, corners) = plateCorners[k];
+                var (draft, id, corners, _) = plateCorners[k];
                 var connected = assembly.PlateNodes(corners.Select(c => new GPC.Geometry.Point3d(units.ToMm(c.X), units.ToMm(c.Y), units.ToMm(c.Z))), k + 1);
                 for (int q = 0; q < corners.Length; q++) if (Moved(connected[q].Position, corners[q].X, corners[q].Y, corners[q].Z)) counts.ReaderMoved++;
                 if (connected.Where((n, q) => Moved(n.Position, draft.Corners[q].X, draft.Corners[q].Y, draft.Corners[q].Z)).Any()) counts.Reanchored++;
@@ -536,6 +540,7 @@ namespace BridGHe.Common.Gpc.Legacy
             if (stages.Count != 0) LegacyModelImport.Stages(stages, assembly.Model, assembly.Cases, assembly.Groups, report);
             foreach (var c in combinations) assembly.AddCombination(c.Name, c.Factors.Select(f => (f.Case.Name, f.Factor)));
             report.BuildModel = counts;
+            counts.ElementGuids = keptGuids.Concat(beamEnds.Select(b => b.Gh)).Concat(plateCorners.Select(p => p.Gh)).ToArray();
             // R6.4 (2), extension (α) of §1bis (coordinator, 7/11): the drafts of the elements of the output, in the order of the former output
             // (the kept nodes, then those created at the beam ends and plate corners; the beams by ID without those of zero length; the plates
             // by ID): the drafts the reader gives the former values of the output (<see cref="OutputDrafts"/>).
@@ -552,8 +557,8 @@ namespace BridGHe.Common.Gpc.Legacy
         /// corners on the nodes found. Definition units; the identity of the first datum of each (a created node: its own).
         /// </summary>
         private static GpcModelDrafts OutputDrafts(List<(LegacyNodeDraft Draft, string Id, Rhino.Geometry.Point3d Position)> kept, HashSet<int> createdNodes,
-            List<(LegacyBeamDraft Draft, string Id, Rhino.Geometry.Point3d Start, Rhino.Geometry.Point3d End)> beamEnds,
-            List<(LegacyPlateDraft Draft, string Id, Rhino.Geometry.Point3d[] Corners)> plateCorners)
+            List<(LegacyBeamDraft Draft, string Id, Rhino.Geometry.Point3d Start, Rhino.Geometry.Point3d End, Guid Gh)> beamEnds,
+            List<(LegacyPlateDraft Draft, string Id, Rhino.Geometry.Point3d[] Corners, Guid Gh)> plateCorners)
         {
             static GPC.Geometry.Point3d G(Rhino.Geometry.Point3d p) => new GPC.Geometry.Point3d(p.X, p.Y, p.Z);
             // The source of a renamed element (the reader: the ID, the same string as the name, or the number 1 when the ID is empty). The name
@@ -602,7 +607,7 @@ namespace BridGHe.Common.Gpc.Legacy
         /// <summary>R6.4 (2): one case instance per case name in an element (the first in the order of <see cref="GpcModelCases.ElementCases(GPC.Model.Elements.Element)"/>),
         /// as the reader gives one former value (one case per name for all its loads): a merge takes the loads of the other datum with the case
         /// instances of that datum (the assembly takes the cases of the model by name: the model does not see it; the draft does).</summary>
-        private static void ShareCases(GPC.Model.Elements.Element element)
+        internal static void ShareCases(GPC.Model.Elements.Element element)
         {
             var first = new Dictionary<string, LoadCaseBase>(StringComparer.Ordinal);
             foreach (var c in GpcModelCases.ElementCases(element).OfType<LoadCaseBase>()) first.TryAdd(c.Name, c);

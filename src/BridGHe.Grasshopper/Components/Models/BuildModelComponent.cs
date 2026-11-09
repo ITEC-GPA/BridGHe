@@ -81,7 +81,9 @@ namespace BridGHe.Grasshopper.Components.Models
                 var beamDrafts = beams.Select(b => (b.Guid, b.Gpc)).ToList();
                 var plateDrafts = plates.Select(p => (p.Guid, p.Gpc)).ToList();
                 var cases = Common.Gpc.Legacy.LegacyBuildModel.Cases(nodeDrafts.Select(d => d.Gpc.Records), beamDrafts.Select(d => d.Gpc.Records), plateDrafts.Select(d => d.Gpc.Records));
-                Helpers.ModelHelper.GetLoadCases(elements, out List<LoadCaseModel> loadCases);
+                // R6.5 P1 lane 3c: an element given by its GPC draft alone has no FEM cases (the menus follow the case records, null: see UpdateLoadCases).
+                List<LoadCaseModel> loadCases = null;
+                if (!GpcOnlyModels.Any(elements)) Helpers.ModelHelper.GetLoadCases(elements, out loadCases);
 
                 if (DA.GetDataList(3, combinations))
                 {
@@ -112,8 +114,13 @@ namespace BridGHe.Grasshopper.Components.Models
 
                 DA.GetDataList(4, stages);
 
-                GH_Model model = new GH_Model((ModelModel.ModelUnits)units, elements, combinations, stages);
-                model.Value.Name = name;
+                // R6.5 P1 lane 3c: an element, a combination or a stage given by its GPC datum alone: the model by its GPC input alone (no FEM value is built).
+                GH_Model model = null;
+                if (!GpcOnlyModels.Any(elements, combinations, stages))
+                {
+                    model = new GH_Model((ModelModel.ModelUnits)units, elements, combinations, stages);
+                    model.Value.Name = name;
+                }
 
                 // F6 chain E (e3, point 4): the GPC input of the model from the drafts of the GH types (Build Model on GPC, the rules of the
                 // former BuildModel and of the legacy reader). Every unit system (e3 point 5): the drafts are in the definition units, the
@@ -129,7 +136,12 @@ namespace BridGHe.Grasshopper.Components.Models
                     foreach (var (family, word) in new[] { (1, "beams"), (2, "plates") })
                         if (buildCounts.DroppedCopies[family].Count > 0)
                             AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, $"Elements given more than once with the same data, kept once: {word} {string.Join(", ", buildCounts.DroppedCopies[family].Distinct())}.");
-                    model.AttachInput(input);
+                    if (model != null) model.AttachInput(input);
+                    else
+                    {
+                        model = GH_Model.FromGpc(input);
+                        model.AttachElementGuids(buildCounts.ElementGuids);
+                    }
                     // R6.4 (5), decision (i) = A (coordinator, 7/11; examples 11–19): a model rebuilt from beams that all come from one analysed GPC
                     // model (Super Element Filter or Decompose Model on the output of an analysis), and nothing else, keeps that model: Build
                     // BridGHe Model reads its actions from it by BridGHe ID, as the FEM merge read the results the beams carried.

@@ -45,7 +45,8 @@ namespace BridGHe.Grasshopper.Components.Models
             if (!DA.GetData("Model", ref model))
                 return;
 
-            if (model.Value == null)
+            bool gpcOnly = GpcOnlyModels.WithoutFem(model); // R6.5 P1 lane 3c
+            if (model.Value == null && !gpcOnly)
                 return;
 
             List<GH_Node> nodes = new List<GH_Node>();
@@ -54,20 +55,34 @@ namespace BridGHe.Grasshopper.Components.Models
 
             try
             {
-                foreach (NodeModel node in model.Value.Nodes)
-                    nodes.Add(new GH_Node(node, model.GetGuid(node)));
-                foreach (BeamModel beam in model.Value.Beams)
-                    beams.Add(new GH_Beam(beam, model.GetGuid(beam)));
-                foreach (PlateModel plate in model.Value.Plates)
-                    plates.Add(new GH_Plate(plate, model.GetGuid(plate)));
-                // R6.4 (2), extension (α): the drafts the model carries for its elements (Build Model, the analysis, a file, ...), with the
-                // identity of the conversion of every FEM value until R6.5; none: the conversion of the FEM values, as before.
-                var drafts = GpcModelDraftsAttach.Of(model);
-                if (drafts != null)
+                if (gpcOnly)
                 {
-                    for (int i = 0; i < nodes.Count; i++) GpcModelDraftsAttach.Attach(nodes[i], drafts.Nodes[i]);
-                    for (int i = 0; i < beams.Count; i++) GpcModelDraftsAttach.Attach(beams[i], drafts.Beams[i]);
-                    for (int i = 0; i < plates.Count; i++) GpcModelDraftsAttach.Attach(plates[i], drafts.Plates[i]);
+                    // R6.5 P1 lane 3c: the elements by the drafts the model carries, with their identity, and the GH GUIDs of the model (those Build Model
+                    // was given; Element Filter, downstream, filters by them).
+                    var carried = GpcModelDraftsAttach.OfGpcOnly(model);
+                    var guids = model.ElementGuidsOf(carried);
+                    int g = 0;
+                    foreach (var d in carried.Nodes) nodes.Add(GH_Node.FromGpc(d, guids[g++]));
+                    foreach (var d in carried.Beams) beams.Add(GH_Beam.FromGpc(d, guids[g++]));
+                    foreach (var d in carried.Plates) plates.Add(GH_Plate.FromGpc(d, guids[g++]));
+                }
+                else
+                {
+                    foreach (NodeModel node in model.Value.Nodes)
+                        nodes.Add(new GH_Node(node, model.GetGuid(node)));
+                    foreach (BeamModel beam in model.Value.Beams)
+                        beams.Add(new GH_Beam(beam, model.GetGuid(beam)));
+                    foreach (PlateModel plate in model.Value.Plates)
+                        plates.Add(new GH_Plate(plate, model.GetGuid(plate)));
+                    // R6.4 (2), extension (α): the drafts the model carries for its elements (Build Model, the analysis, a file, ...), with the
+                    // identity of the conversion of every FEM value until R6.5; none: the conversion of the FEM values, as before.
+                    var drafts = GpcModelDraftsAttach.Of(model);
+                    if (drafts != null)
+                    {
+                        for (int i = 0; i < nodes.Count; i++) GpcModelDraftsAttach.Attach(nodes[i], drafts.Nodes[i]);
+                        for (int i = 0; i < beams.Count; i++) GpcModelDraftsAttach.Attach(beams[i], drafts.Beams[i]);
+                        for (int i = 0; i < plates.Count; i++) GpcModelDraftsAttach.Attach(plates[i], drafts.Plates[i]);
+                    }
                 }
                 // F6 C4: the analysed GPC elements, by the numbering of the legacy reader used by the analysis (FEM order, from 1).
                 if (model.HasAnalysedGpc)

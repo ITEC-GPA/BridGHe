@@ -21,6 +21,11 @@ namespace BridGHe.Grasshopper.Helpers
                 && value.Elements.Count == value.Nodes.Count + value.Beams.Count + value.Plates.Count ? drafts : null;
         }
 
+        /// <summary>R6.5 P1 lane 3c: the drafts of a model given by its GPC input alone: they keep their own identity (no conversion of a FEM value to
+        /// follow). A model without them has no elements to give: the error of the component and no output.</summary>
+        internal static Common.Gpc.GpcModelDrafts OfGpcOnly(GH_Model model) =>
+            model.GpcDrafts ?? throw GpcOnlyModels.Refused("the model carries no drafts of its elements: connect the output of Build Model or of the component that made the model.");
+
         internal static void Attach(GH_Node node, Common.Gpc.Legacy.LegacyNodeDraft draft) =>
             node.AttachGpc(Common.Gpc.GpcDrafts.Reidentify(draft, Common.Gpc.GpcBeamDrafts.Identity(node.Value)));
 

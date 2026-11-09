@@ -37,7 +37,8 @@ namespace BridGHe.Grasshopper.Components.Parameters
             // Recreate the LoadCase names list
             CaseRecordList = caseRecords ?? Array.Empty<Common.Gpc.Legacy.LegacyCaseData>();
             _loadCases.Clear();
-            foreach (LoadCaseModel loadCase in loadCases)
+            // R6.5 P1 lane 3c: null: the cases of Build Model on elements given by their GPC data alone have no FEM value (only the case records).
+            foreach (LoadCaseModel loadCase in loadCases ?? Array.Empty<LoadCaseModel>())
             {
                 if (_loadCases.Count(lc => lc.Name == loadCase.Name) == 0)
                     _loadCases.Add(loadCase);
@@ -69,6 +70,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
                     if (updated != null) combo.AttachGpc(updated);
                     continue;
                 }
+                if (loadCases == null) continue; // R6.5 P1 lane 3c: without the FEM cases a FEM-backed combination stays as it is
                 // Remove the non existing values
                 LoadCaseModel[] to_remove = combo.Value.Values.
                     Where(v => !loadCases.Contains(v.Key, new Common.Helpers.LoadCaseModelsEqualityComparer())).

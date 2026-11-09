@@ -294,7 +294,7 @@ internal static class GpcOnlyReplay
     private static Run Solve(GH_Component original, Func<IGH_Goo, IGH_Goo> map, ISet<string> kinds, bool gpcOnly = false)
     {
         var doc = new GH_Document();
-        bool on = gpcOnly && (generatorsLane || propertiesLane);
+        bool on = gpcOnly && (generatorsLane || propertiesLane || modelsLane && ModelsProducers.Contains(original.GetType().Name)); // L3c: Node
         try
         {
             var copy = Copy(original, doc);
@@ -1178,6 +1178,16 @@ internal static class GpcOnlyReplay
         "BridgePhaseTableComponent", "BridgeModelAuditComponent",
     };
 
+    /// <summary>L3c: the components of sub-lane 3c: Build Model, Decompose Model, Merge Model, Node, Super Element Filter, Composite Beam Strain.</summary>
+    internal static readonly string[] Lane3cTypes =
+    {
+        "BuildModelComponent", "DecomposeModelComponent", "MergeModelComponent", "NodeComponent", "SuperElementFilterComponent", "CompositeBeamSlabStrainComponent",
+    };
+
+    /// <summary>L3c: the producers of the section without an input of the converted kinds (every instance with data; their GPC-only copy runs with
+    /// <c>GpcOnlyElements.GeneratorsWithoutFem</c> on, as the generators of lane 1b).</summary>
+    internal static readonly string[] ModelsProducers = { "NodeComponent" };
+
     /// <summary>L3a: the consumers of the converted kinds that read no FEM value (list 1.3 of corsia3-elenco.md), replayed with them.</summary>
     internal static readonly string[] Lane3Consumers =
     {
@@ -1192,6 +1202,14 @@ internal static class GpcOnlyReplay
 
     /// <summary>L3a: the model kinds converted by the section «models» (with <see cref="ElementGoo"/> and <see cref="PropertyGoo"/>).</summary>
     internal static readonly string[] ModelGoo = { "GH_Model", "GH_CompositeBeam", "BridgeWorkflowGoo" };
+
+    /// <summary>L3c (declared, coordinator 9/11): the definitions of the section with a model that has no GPC input, and why. They stay FEM-backed in the replay, like
+    /// the actions on them; any other definition with such a model is a failure of the section. Example 46 has no Build Model: its model is internalised and a
+    /// rigid link has a target without a node, which the GPC assembly refuses (Build Model gives the same error: in-memory case of <see cref="Lane3cCases"/>). P2 remakes it.</summary>
+    internal static readonly (string File, string Reason)[] ModelsWithoutGpcInput =
+    {
+        ("46-combinazioni-excel", "its internalised model has a rigid link whose target has no node (the GPC assembly refuses it, and so did the Straus7 export of the FEM model); P2 remakes the example"),
+    };
 
     private static bool modelsLane;
     /// <summary>L3b: inputs of the section without any GPC datum (a model whose GPC input cannot be made and its actions): they stay FEM-backed, and so may their outputs.</summary>
@@ -1223,9 +1241,22 @@ internal static class GpcOnlyReplay
         var only = (IGH_Goo)t.GetMethod("FromGpc", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { input });
         if (Prop(goo, "GpcBridge") is { } bridge) t.GetMethod("AttachBridge").Invoke(only, new[] { bridge });
         else if (Prop(goo, "HasAnalysedGpc") is true) t.GetMethod("AttachGpc").Invoke(only, new[] { Prop(goo, "Gpc") });
-        if (input.Drafts == null && Prop(goo, "GpcDrafts") is { } drafts) t.GetMethod("AttachDrafts").Invoke(only, new[] { drafts });
+        if (input.Drafts == null && (Prop(goo, "GpcDrafts") ?? DraftsOfFem(goo)) is { } drafts) t.GetMethod("AttachDrafts").Invoke(only, new[] { drafts });
         if (Prop(goo, "LinkedGpcResults") is { } linked) t.GetMethod("AttachLinkedResults").Invoke(only, new[] { linked });
         return only;
+    }
+
+    /// <summary>L3c: the drafts of the elements of a FEM-backed model that carries none (the conversion of its FEM value): what Decompose Model and Super
+    /// Element Filter give on the FEM path, so the producers of P2 (which always carry them) are compared with them. Null when an element is refused.</summary>
+    private static BridGHe.Common.Gpc.GpcModelDrafts DraftsOfFem(IGH_Goo goo)
+    {
+        var value = (ModelModel)Prop(goo, "Value");
+        try
+        {
+            return new BridGHe.Common.Gpc.GpcModelDrafts(value.Nodes.Select(n => BridGHe.Common.Gpc.GpcBeamDrafts.FromFemm(n)), value.Beams.Select(b => BridGHe.Common.Gpc.GpcBeamDrafts.FromFemm(b)),
+                value.Plates.Select(p => BridGHe.Common.Gpc.GpcBeamDrafts.FromFemm(p)));
+        }
+        catch (Exception ex) when (ex is ArgumentException || ex is NotSupportedException || ex is InvalidOperationException) { return null; }
     }
 
     /// <summary>L3a: a workflow object without the FEM sources of its actions (their GPC links kept), as on the path of P2.</summary>
@@ -1542,7 +1573,117 @@ internal static class GpcOnlyReplay
             Console.WriteLine($"GPC-ONLY models: Check Map in kN-m: {a.Length} beams, axes within {worst:G3} of the FEM reading (tolerance 1e-6, the station check of Evaluate)");
             count++;
         }
+        Lane3cChecks(kinds, failures, ref count, examples);
         cases += count;
+    }
+
+    /// <summary>L3c: what the replay of two copies does not see: the GH GUIDs of a GPC-only model (Build Model gives them, Decompose Model gives them back, written
+    /// and read together), the notice of a former payload without a FEM value, a check that meets a beam with a stale section state (A08), the declared
+    /// material kind in Composite Beam Property.</summary>
+    private static void Lane3cChecks(ISet<string> kinds, List<string> failures, ref int count, IDictionary<string, ModelModel> examples)
+    {
+        void Check(bool ok, string what) { if (!ok) failures.Add("L3c: " + what); }
+        var m2 = examples["02-simply-supported"];
+        if (Selected("BuildModelComponent") || Selected("DecomposeModelComponent"))
+        {
+            var node = GpcOnly(Make("Fem.GH_Node", m2.Nodes.First()), kinds); var beam = GpcOnly(Make("Fem.GH_Beam", m2.Beams[1]), kinds);
+            var built = Produce("BuildModelComponent", new Dictionary<int, object> { [0] = new object[] { node, beam }, [1] = "Guids", [2] = 2 });
+            dynamic model = built;
+            Check(Prop(built, "Value") == null, "Build Model on GPC-only elements gives no FEM value");
+            BridGHe.Common.Gpc.GpcModelDrafts drafts = model.GpcDrafts;
+            Guid[] guids = model.ElementGuidsOf(drafts);
+            int nodeIndex = drafts.Nodes.ToList().FindIndex(d => d.Node.Guid == ((BridGHe.Common.Gpc.Legacy.LegacyNodeDraft)Prop(node, "Gpc")).Node.Guid);
+            Check(nodeIndex >= 0 && guids[nodeIndex] == (Guid)Prop(node, "Guid"), "the GH GUID of a node of Build Model is the one it was given");
+            Check(guids[drafts.Nodes.Count] == (Guid)Prop(beam, "Guid"), "the GH GUID of a beam of Build Model is the one it was given");
+            var created = Enumerable.Range(0, drafts.Nodes.Count).Where(i => i != nodeIndex).ToArray();
+            Check(created.Length > 0 && created.All(i => guids[i] == drafts.Nodes[i].Node.Guid), "a node created at a beam end has the GUID of its draft");
+            var chunk = new GH_IO.Serialization.GH_LooseChunk("model");
+            Check(model.Write(chunk), "a GPC-only model is written with its element GUIDs");
+            var binary = chunk.Serialize_Binary();
+            GH_IO.Serialization.GH_LooseChunk Reader() { var c = new GH_IO.Serialization.GH_LooseChunk("read"); c.Deserialize_Binary(binary); return c; }
+            dynamic read = Activator.CreateInstance(built.GetType());
+            Check(read.Read(Reader()) && read.Value == null, "a GPC-only model read back has no FEM value");
+            Guid[] again = read.ElementGuidsOf((BridGHe.Common.Gpc.GpcModelDrafts)read.GpcDrafts);
+            Check(again.SequenceEqual(guids), "the element GUIDs of a GPC-only model are read back with it");
+            var beams = ProduceAll("DecomposeModelComponent", new Dictionary<int, object> { [0] = read }, 1);
+            Check(beams.Count == 1 && (Guid)Prop(beams[0], "Guid") == (Guid)Prop(beam, "Guid"), "Decompose Model gives the GH GUIDs of the model back");
+            var damaged = Reader(); damaged.RemoveItem("ElementGuids"); damaged.SetString("ElementGuids", "[\"" + Guid.NewGuid() + "\"]");
+            dynamic refused = Activator.CreateInstance(built.GetType());
+            Check(!refused.Read(damaged), "a saved list of element GUIDs of another length is refused");
+            count++;
+            // A model given by its input alone without the drafts of its elements (no producer gives one): the error of the components and no output.
+            var bare = (IGH_Goo)built.GetType().GetMethod("FromGpc").Invoke(null, new object[] { BridGHe.Common.Gpc.GpcModels.Convert(m2, 1e-6) });
+            foreach (var type in new[] { "DecomposeModelComponent", "SuperElementFilterComponent" })
+            {
+                using var doc = new GH_Document();
+                var c = BridgeSegmentExcelTests.Add(doc, type);
+                var tree = new GH_Structure<IGH_Goo>(); tree.Append(bare, new GH_Path(0));
+                SetInput(c.Params.Input[0], tree, g => g);
+                if (c.Params.Input.Count > 1) { var name = new GH_Structure<IGH_Goo>(); name.Append(new GH_String("x"), new GH_Path(0)); SetInput(c.Params.Input[1], name, g => g); }
+                BridgeSegmentExcelTests.Solve(doc, true);
+                Check(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(e => e.StartsWith("GPC-only input: ", StringComparison.Ordinal)), type + ": a model without drafts is an error");
+                Check(!c.Params.Output.Any(p => p.VolatileData.AllData(true).Any()), type + ": no output for a model without drafts");
+                count++;
+            }
+        }
+        // The notice of a former payload, read from the payload when the model has no FEM value (P2 removes the FEM value read with it).
+        if (selected == null)
+        {
+            var fem = new ModelModel(m2);
+            var type = T("Fem.GH_Model");
+            string Notice(byte[] payload)
+            {
+                var input = BridGHe.Common.Gpc.GpcLegacyPayloads.Model(payload, 1e-6, out _);
+                var goo = type.GetMethod("FromGpc").Invoke(null, new object[] { input });
+                type.GetField("_legacy", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(goo, payload);
+                type.GetField("_legacyOf", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(goo, input);
+                return (string)Prop(goo, "LegacyNotice");
+            }
+            Check(Notice(BridGHe.Common.Helpers.ModelArchive.Write(fem)) == null, "a former payload without results has no notice");
+            fem.Beams[0].Results.Add(new BeamForceResultModel(new LoadCaseModel("Dead", "Dead"), 0, 0, "", true) { My = 1 });
+            Check(Notice(BridGHe.Common.Helpers.ModelArchive.Write(fem)) == BridGHe.Common.Gpc.GpcLegacyPayloads.ResultsDroppedMessage, "a former payload with results has the notice, without a FEM value");
+            count++;
+        }
+        var steel = Produce("MaterialSteelComponent", new Dictionary<int, object> { [0] = "S355", [1] = 2 });
+        var section = Produce("BeamSectionIComponent", new Dictionary<int, object> { [0] = 300.0, [1] = 250.0, [2] = 800.0, [3] = 20.0, [4] = 16.0, [5] = 12.0 });
+        // A08 (PAR did not run it): a beam whose property changed after Bridge State Override meets the checks: the same refusal as on the FEM path, from the marker of the builder.
+        if (Selected("BuildBridgeModel"))
+        {
+            var (stateType, _, stateInputs) = StateOverrideCases().First();
+            var stated = ProduceAll(stateType, stateInputs).First(g => ((BridGHe.Common.Gpc.Legacy.LegacyBeamDraft)Prop(g, "Gpc")).Bridge?.SectionState != null);
+            var other = Produce("BeamPropertyComponent", new Dictionary<int, object> { [0] = "Other", [1] = 5, [2] = section, [3] = steel });
+            var stale = ProduceAll("BeamOverrideComponent", new Dictionary<int, object> { [0] = GpcOnly(stated, kinds), [1] = GpcOnly(other, kinds) }).Single();
+            var state = ((BridGHe.Common.Gpc.Legacy.LegacyBeamDraft)Prop(stale, "Gpc")).Bridge.SectionState;
+            var model = Produce("BuildModelComponent", new Dictionary<int, object> { [0] = new object[] { stale }, [1] = "Stale", [2] = 2 });
+            var action = Produce("BridgeActionComponent", new Dictionary<int, object> { [0] = "Q", [1] = model, [2] = "Dead", [3] = (int)state.Behavior });
+            var phase = Produce("BridgeConstructionPhaseComponent", new Dictionary<int, object> { [0] = 10, [1] = "Composite", [2] = 1, [3] = new object[] { action } });
+            using var doc = new GH_Document();
+            var c = BridgeSegmentExcelTests.Add(doc, "BuildBridgeModel");
+            void Input(int k, params IGH_Goo[] values) { var tree = new GH_Structure<IGH_Goo>(); foreach (var v in values) tree.Append(v, new GH_Path(0)); SetInput(c.Params.Input[k], tree, g => g); }
+            Input(0, model); Input(1, phase); Input(2, new GH_String("x"), new GH_String("Q"));
+            c.GetType().GetField("_run", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(c, true);
+            BridgeSegmentExcelTests.Solve(doc, true);
+            string expected = "Action Q: FEM properties changed after the local section-state assignment. Reapply Bridge State Override and recalculate.";
+            var errors = c.RuntimeMessages(GH_RuntimeMessageLevel.Error).ToArray();
+            Check(errors.Contains(expected), "A08: a stale section state met by the checks gives the message of the FEM path (" + string.Join(" / ", errors) + ")");
+            Check(!c.Params.Output[0].VolatileData.AllData(true).Any(), "A08: no model on the refusal of a stale section state");
+            count++;
+        }
+        // PAR (A10): Composite Beam Property records the kind the steel material declares (as Beam Property).
+        if (Selected("BeamPropertyCompositeComponent"))
+        {
+            var concrete = Produce("MaterialConcreteComponent", new Dictionary<int, object> { [0] = "C35/45", [1] = 7 });
+            var rebar = Produce("MaterialRebarComponent", new Dictionary<int, object> { [0] = "B450C" });
+            var slab = Produce("BeamSectionConcreteSlabComponent", new Dictionary<int, object> { [0] = 250.0, [1] = 2500.0, [2] = 1000.0, [3] = 50.0, [4] = 800.0, [5] = 50.0 });
+            var declared = (IGH_Goo)T("Fem.GH_Material").GetMethod("FromGpc").Invoke(null, new object[] { Prop(steel, "Gpc"), "Undefined" });
+            for (int output = 1; output <= 4; output++)
+            {
+                var p = Produce("BeamPropertyCompositeComponent", new Dictionary<int, object> { [0] = "CB", [1] = slab, [2] = section, [3] = concrete, [4] = declared, [5] = rebar }, output);
+                var kind = p == null ? null : ((BridGHe.Common.Gpc.Legacy.LegacyBeamProperty)Prop(p, "Gpc")).Data.MaterialKind;
+                Check(kind == "Undefined", $"Composite Beam Property, output {output}: the declared kind of the steel material ({kind ?? "no output"})");
+            }
+            count++;
+        }
     }
 
     /// <summary>L3a: the regression of the section «models» (<c>gpc-only-models</c>).</summary>
@@ -1594,6 +1735,52 @@ internal static class GpcOnlyReplay
         };
     }
 
+    /// <summary>L3c: the in-memory cases of sub-lane 3c: Merge Model (in no example: node merges with loads and Element IDs, ends and corners moved onto
+    /// nodes or creating them, a beam of zero length, a plate with coincident corners and one with too few, a plate with an angle), Composite Beam Strain,
+    /// Build Model (the same node given twice, created nodes, a combination and a stage, an unknown case).</summary>
+    private static List<(string Type, string Label, Dictionary<int, object> Inputs)> Lane3cCases()
+    {
+        var examples = NativeExamples.Create().ToDictionary(e => e.Id, e => e.Model);
+        var m2 = examples["02-simply-supported"]; var m3 = examples["03-plate-patch"];
+        var beamProperty = m2.Beams[1].BeamProperty; var plateProperty = m3.Plates.Single().PlateProperty;
+        var lc = Make("Fem.GH_LoadCase", new LoadCaseModel("Merge", "Merge")); var lc2 = Make("Fem.GH_LoadCase", new LoadCaseModel("Other", "Other"));
+        static Rhino.Geometry.Point3d P(double x, double y) => new Rhino.Geometry.Point3d(x, y, 0);
+        IGH_Goo N(double x, double y) => Make("Fem.GH_Node", new NodeModel(P(x, y)));
+        IGH_Goo B(string id, Rhino.Geometry.Point3d a, Rhino.Geometry.Point3d b) => Make("Fem.GH_Beam", new BeamModel(id, a, b, beamProperty));
+        IGH_Goo Q(string id, params Rhino.Geometry.Point3d[] c) => Make("Fem.GH_Plate", new PlateModel(id, c, plateProperty));
+        var loaded = Produce("ElementIdComponent", new Dictionary<int, object> { [0] = Produce("NodeLoadComponent", new Dictionary<int, object> { [0] = N(0, 0), [1] = lc, [2] = new Rhino.Geometry.Vector3d(1, 0, -5) }), [1] = "N1" });
+        var near = Produce("ElementIdComponent", new Dictionary<int, object> { [0] = Produce("NodeMomentComponent", new Dictionary<int, object> { [0] = N(0.4, 0), [1] = lc, [2] = new Rhino.Geometry.Vector3d(0, 2, 0) }), [1] = "N2" });
+        var other = N(5000, 0);
+        var beam = Produce("BeamPointLoadComponent", new Dictionary<int, object> { [0] = B("B1", P(0.5, 0), P(5000, 0.3)), [1] = lc, [3] = 1.5, [5] = -2.0, [6] = 0.25 });
+        var zero = B("B2", P(0, 0), P(0.4, 0)); var far = B("B3", P(5000, 4000), P(10000, 0));
+        var quad = Q("P1", P(0, 0), P(5000, 0), P(5000, 4000), P(0, 4000));
+        var triangle = Q("P2", P(5000.2, 0), P(10000, 0), P(5000, 4000), P(5000.1, 4000));
+        var removed = Q("P3", P(0, 0), P(0.4, 0), P(0.2, 0.3));
+        var angled = Make("Fem.GH_Plate", new PlateModel("P4", new[] { P(0.3, 0), P(5000, 0.2), P(5000, 4000), P(0, 4000) }, plateProperty) { AngleDeg = 30 });
+        var all = new object[] { loaded, near, other, beam, zero, far, quad, triangle, removed, angled };
+        // The reason of the example 46 (ModelsWithoutGpcInput): a rigid link whose target has no node.
+        var linkedNode = new NodeModel(P(1000, 0)); linkedNode.Attributes.Add(new RigidConnectionAttributeModel(P(7777, 0)));
+        var linked = Make("Fem.GH_Node", linkedNode);
+        var strained = Produce("CompositeBeamSlabStrainComponent", new Dictionary<int, object> { [0] = beam, [1] = lc, [2] = -2e-4 });
+        var combination = Produce("LoadCombinationComponent", new Dictionary<int, object> { [0] = "ULS", [1] = new object[] { lc }, [2] = new object[] { 1.35 } });
+        var unknown = Produce("LoadCombinationComponent", new Dictionary<int, object> { [0] = "ULS", [1] = new object[] { lc2 }, [2] = new object[] { 1.0 } });
+        var group = Produce("GroupComponent", new Dictionary<int, object> { [0] = "Deck" });
+        var stage = Produce("StagedConstructionComponent", new Dictionary<int, object> { [0] = "Stage 1", [1] = new object[] { group }, [2] = new object[] { combination }, [3] = false, [4] = true });
+        return new List<(string, string, Dictionary<int, object>)>
+        {
+            ("MergeModelComponent", "merges, ends and corners moved, new nodes, zero length, coincident corners", new Dictionary<int, object> { [0] = all, [1] = 1.0 }),
+            ("MergeModelComponent", "a small tolerance: new nodes only", new Dictionary<int, object> { [0] = all, [1] = 1e-6 }),
+            ("MergeModelComponent", "a negative tolerance (error)", new Dictionary<int, object> { [0] = all, [1] = -1.0 }),
+            ("MergeModelComponent", "beams only", new Dictionary<int, object> { [0] = new object[] { beam, far, zero }, [1] = 1.0 }),
+            ("CompositeBeamSlabStrainComponent", "a loaded beam, a case and a strain", new Dictionary<int, object> { [0] = beam, [1] = lc, [2] = -2e-4 }),
+            ("CompositeBeamSlabStrainComponent", "a second strain, in another case", new Dictionary<int, object> { [0] = strained, [1] = lc2, [2] = -1e-4 }),
+            ("BuildModelComponent", "the same node twice, created nodes, a combination", new Dictionary<int, object> { [0] = new object[] { loaded, loaded, beam, far, angled }, [1] = "Merged", [2] = 2, [3] = new object[] { combination } }),
+            ("BuildModelComponent", "a rigid link whose target has no node (error, as example 46)", new Dictionary<int, object> { [0] = new object[] { linked, beam }, [1] = "Link", [2] = 2 }),
+            ("BuildModelComponent", "a stage", new Dictionary<int, object> { [0] = new object[] { loaded, beam }, [1] = "Staged", [2] = 2, [3] = new object[] { combination }, [4] = new object[] { stage } }),
+            ("BuildModelComponent", "a combination of a case the elements do not have (error)", new Dictionary<int, object> { [0] = new object[] { loaded, beam }, [1] = "Unknown", [2] = 2, [3] = new object[] { unknown } }),
+        };
+    }
+
     /// <summary>The plug-in and the switch of the lane (<c>GpcOnlyElements.GeneratorsWithoutFem</c> or <c>PropertiesWithoutFem</c>).</summary>
     private static void Init(string lane)
     {
@@ -1619,7 +1806,7 @@ internal static class GpcOnlyReplay
         // L2C: and the cases of lane 2c.
         // PAR: and the cases of the 0.3.0 parity (ParityCases; the T, C and angle properties under the native host, ParityNativeCases).
         var all = lane == "native" ? NativeSectionCases().Concat(ParityNativeCases()).ToList() : lane == "properties" ? Lane1Cases().Concat(Lane1bCases()).Where(OfLane2).Concat(Lane2aCases()).Concat(Lane2bCases()).Concat(Lane2cCases()).Concat(ParityCases()).ToList()
-            : lane == "generators" ? Lane1bCases() : lane == "models" ? ModelsCases() : Lane1Cases();
+            : lane == "generators" ? Lane1bCases() : lane == "models" ? ModelsCases().Concat(Lane3cCases()).ToList() : Lane1Cases();
         foreach (var (type, label, inputs) in all.Where(c => Selected(c.Type)))
         {
             using var doc = new GH_Document();
@@ -1646,7 +1833,7 @@ internal static class GpcOnlyReplay
     {
         // L2B: lane 2 replays 2a and 2b together (no type declared pending).
         // L3a: the section «models» (lane 3) converts every kind.
-        var types = lane switch { "elements" => Lane1Types, "generators" => Lane1bTypes, "properties" => Lane2Types, "models" => Lane3aTypes.Concat(Lane3bTypes).Concat(Lane3Consumers).ToArray(),
+        var types = lane switch { "elements" => Lane1Types, "generators" => Lane1bTypes, "properties" => Lane2Types, "models" => Lane3aTypes.Concat(Lane3bTypes).Concat(Lane3cTypes).Concat(Lane3Consumers).ToArray(),
             _ => throw new ArgumentException("Unknown lane: " + lane) };
         var kinds = new HashSet<string>(lane switch { "elements" or "generators" => ElementGoo, "properties" => PropertyGoo, "models" => ElementGoo.Concat(PropertyGoo).Concat(ModelGoo).ToArray(),
             _ => Array.Empty<string>() }, StringComparer.Ordinal);
@@ -1665,7 +1852,7 @@ internal static class GpcOnlyReplay
         else BridgeExampleMigration.Initialize();
         Init(lane);
         modelsLane = lane == "models";
-        var producers = new HashSet<string>(propertiesLane ? Lane2Producers : Array.Empty<string>(), StringComparer.Ordinal);
+        var producers = new HashSet<string>(propertiesLane ? Lane2Producers : modelsLane ? ModelsProducers : Array.Empty<string>(), StringComparer.Ordinal); // L3c: Node
         var byType = new SortedDictionary<string, (int Instances, int Items)>(StringComparer.Ordinal);
         var failures = new List<string>();
         int files = 0, derived = 0;
@@ -1681,6 +1868,7 @@ internal static class GpcOnlyReplay
             BridgeSegmentExcelTests.Solve(doc, true);
             if (modelsLane) { PressModels(doc); derived += DeriveModels(doc); } // L3a
             files++;
+            int unconvertedBefore = unconverted; // L3c
             foreach (var c in doc.Objects.OfType<GH_Component>().Where(c => types.Contains(c.GetType().Name)).ToArray())
             {
                 bool converted = c.Params.Input.Any(p => p.VolatileData.AllData(true).Any(g => g != null && (kinds.Contains(g.GetType().Name) || !ReferenceEquals(GpcOnly(g, kinds), g))));
@@ -1689,6 +1877,13 @@ internal static class GpcOnlyReplay
                 bool producer = generatorsLane || producers.Contains(c.GetType().Name);
                 if (!converted && !(producer && c.Params.Input.Any(p => !p.VolatileData.IsEmpty))) continue;
                 Replay(c, $"{label}: {c.Name} [{c.NickName}]", kinds, byType, failures);
+            }
+            // L3c: a model without GPC input must be declared.
+            if (modelsLane && unconverted != unconvertedBefore)
+            {
+                var declared = ModelsWithoutGpcInput.FirstOrDefault(d => label.Contains(d.File, StringComparison.OrdinalIgnoreCase));
+                if (declared.File == null) failures.Add(label + ": a model without GPC input, not declared in ModelsWithoutGpcInput");
+                else Console.WriteLine("GPC-ONLY models: declared without GPC input: " + label + ": " + declared.Reason);
             }
         }
         var fromExamples = new HashSet<string>(byType.Keys, StringComparer.Ordinal);

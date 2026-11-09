@@ -51,7 +51,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             if (!DA.GetData(n++, ref model))
                 return;
 
-            if (model.Value == null)
+            bool gpcOnly = GpcOnlyModels.WithoutFem(model); // R6.5 P1 lane 3c: the model by its GPC input alone: names, beams and order from its drafts
+            if (model.Value == null && !gpcOnly)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Awaiting a model from the upstream component");
                 Message = "Error";
@@ -69,14 +70,21 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             string[] FemOf() => model.Value.Beams.Select(b => SuperElementAttributeModel.GetSuperElement(b)).ToArray();
             List<string> FemNames() => Common.Helpers.ModelHelper.GetSuperElements(model.Value).Select(a => a.Value).ToList();
             string[] superElementOf; List<string> superElementsName;
+            Common.Gpc.GpcModelDrafts carried = null;
+            if (gpcOnly)
+            {
+                try { carried = GpcModelDraftsAttach.OfGpcOnly(model); }
+                catch (ArgumentException ex) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message); Message = "Error"; return; }
+            }
+            int beamCount = gpcOnly ? carried.Beams.Count : model.Value.Beams.Count;
             if (input != null)
             {
                 var gpcBeams = input.Model.BeamElements.Values.OrderBy(b => b.Id).ToArray();
-                if (gpcBeams.Length != model.Value.Beams.Count) throw new InvalidOperationException($"GpcSuperElementFilterNumbering: {gpcBeams.Length} GPC beams, {model.Value.Beams.Count} FEM beams.");
+                if (gpcBeams.Length != beamCount) throw new InvalidOperationException($"GpcSuperElementFilterNumbering: {gpcBeams.Length} GPC beams, {beamCount} FEM beams.");
                 superElementOf = gpcBeams.Select(b => input.Bridge.Beam(b.Guid)?.SuperElement).ToArray();
                 superElementsName = superElementOf.Where(s => s != null).Distinct(StringComparer.Ordinal).ToList();
                 var of = superElementOf; var names = superElementsName;
-                Common.Gpc.GpcDraftCheck.Attached("Super Element Filter", string.Join("\n", names) + "\n--\n" + string.Join("\n", of.Select(s => s ?? "-")),
+                if (!gpcOnly) Common.Gpc.GpcDraftCheck.Attached("Super Element Filter", string.Join("\n", names) + "\n--\n" + string.Join("\n", of.Select(s => s ?? "-")),
                     () => string.Join("\n", FemNames()) + "\n--\n" + string.Join("\n", FemOf().Select(s => s ?? "-")));
             }
             else { superElementOf = FemOf(); superElementsName = FemNames(); }
@@ -112,51 +120,33 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             // R6.4 (5) (coordinator, 7/11; examples 11–19): on the output of an analysis the beams keep their analysed GPC beam too, by the same
             // numbering, as Decompose Model does (Build Model then knows the analysis a model rebuilt from them comes from; Beam Results reads them).
             var bridge = model.GpcBridge?.Model;
-            if (bridge == null && model.HasAnalysedGpc && model.Gpc is GPC.Model.Models.Model analysedModel && analysedModel.BeamElements.Count == model.Value.Beams.Count)
+            if (bridge == null && model.HasAnalysedGpc && model.Gpc is GPC.Model.Models.Model analysedModel && analysedModel.BeamElements.Count == beamCount)
                 bridge = analysedModel;
             // R6.4 (2), extension (α): the drafts the model carries for its beams, with the identity of the conversion of every FEM value until
             // R6.5; none: the conversion of the FEM values, as before.
-            var drafts = GpcModelDraftsAttach.Of(model);
-            for (int i = 0; i < model.Value.Beams.Count; i++)
+            // R6.5 P1 lane 3c: on the GPC-only path the beam by its draft alone, with its identity and a new GH GUID at every solution, as on the FEM path.
+            var drafts = gpcOnly ? null : GpcModelDraftsAttach.Of(model);
+            for (int i = 0; i < beamCount; i++)
             {
-                BeamModel b = model.Value.Beams[i];
                 if (superElementOf[i] == super_element)
                 {
-                    var goo = new GH_Beam(b) { AnalysedGpc = bridge?.BeamElements[i + 1], AnalysedGpcModel = bridge };
+                    var goo = gpcOnly ? GH_Beam.FromGpc(carried.Beams[i]) : new GH_Beam(model.Value.Beams[i]);
+                    goo.AnalysedGpc = bridge?.BeamElements[i + 1]; goo.AnalysedGpcModel = bridge;
                     if (drafts != null) GpcModelDraftsAttach.Attach(goo, drafts.Beams[i]);
                     super_beam.Add(goo);
                 }
             }
 
             //var ordered = super_beam.OrderBy(i => ((ElementIdAttributeModel)i.Value.Attributes.FirstOrDefault(at => at is ElementIdAttributeModel)).Value).ToList();
-            super_beam.Sort((a, b) =>
+            // The first Element ID that is a number (the attributes on the FEM path, the Element IDs of the records of the draft on the GPC-only path); none: last.
+            static int Order(GH_Beam beam)
             {
-                var idA = int.MaxValue;
-                var idB = int.MaxValue;
-                for (int i = 0; i < a.Value.Attributes.Count; i++)
-                {
-                    if (a.Value.Attributes[i] is ElementIdAttributeModel elementIdAttributeModel)
-                    {
-                        if (int.TryParse(elementIdAttributeModel.Value, out int id))
-                        {
-                            idA = id;
-                            break;
-                        }
-                    }
-                }
-                for (int i = 0; i < b.Value.Attributes.Count; i++)
-                {
-                    if (b.Value.Attributes[i] is ElementIdAttributeModel elementIdAttributeModel)
-                    {
-                        if (int.TryParse(elementIdAttributeModel.Value, out int id))
-                        {
-                            idB = id;
-                            break;
-                        }
-                    }
-                }
-                return idA.CompareTo(idB);
-            });
+                IEnumerable<string> labels = beam.Value != null ? beam.Value.Attributes.OfType<ElementIdAttributeModel>().Select(a => a.Value) : beam.Gpc.Records.Labels;
+                foreach (var value in labels)
+                    if (int.TryParse(value, out int id)) return id;
+                return int.MaxValue;
+            }
+            super_beam.Sort((a, b) => Order(a).CompareTo(Order(b)));
             DA.SetDataList(0, super_beam);
         }
 

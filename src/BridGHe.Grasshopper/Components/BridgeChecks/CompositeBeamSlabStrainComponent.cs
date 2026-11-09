@@ -56,6 +56,15 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
                 "Obsolete component retained for existing definitions. For the phase workflow use Bridge Shrinkage Action -> Bridge Phase -> Build BridGHe Model.");
 
+            // R6.5 P1 lane 3c: a beam or a load case given by its GPC datum alone: the output by its draft alone (the record of the load and of its case,
+            // carried, as the reader reads the FEM load; identity derived from the input draft). A refusal is an error and no output.
+            if (GpcOnlyModels.Any(beam, lc))
+            {
+                GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, id => Common.Gpc.GpcDrafts.Reidentify(Common.Gpc.Builders.GpcDraftTransforms.WithSlabStrain(beam.Gpc, lc.Gpc), id),
+                    GpcOnlyElements.Lazy(() => lc.Gpc), strain));
+                return;
+            }
+
             CompositeBeamSlabStrainModel.LoadData load_value = new CompositeBeamSlabStrainModel.LoadData()
             {
                 Strain = strain,

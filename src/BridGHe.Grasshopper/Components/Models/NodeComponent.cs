@@ -44,6 +44,14 @@ namespace BridGHe.Grasshopper.Components.Models
             if (!DA.GetData("Point", ref point))
                 return;
 
+            // R6.5 P1 lane 3c: with the switch of the generators (the path of P2) the node by its draft alone, identity by content (decision 1 of passo 73).
+            if (GpcOnlyElements.GeneratorsWithoutFem)
+            {
+                var alone = GpcOnlyElements.Generated(this, () => Common.Gpc.Builders.GpcNodeBuilders.Create(point.X, point.Y, point.Z, "", null, GpcOnlyElements.ContentIdentity(ComponentGuid, 0, point)));
+                if (alone != null) DA.SetData("Node", GH_Node.FromGpc(alone));
+                return;
+            }
+
             var node = new GH_Node(point);
             // R6.2 lane A (dual rule until R6.5): the GPC draft of a new node built on GPC (position, no ID, no groups), identity of the
             // conversion of the FEM output.

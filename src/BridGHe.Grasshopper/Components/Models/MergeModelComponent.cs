@@ -6,6 +6,7 @@ using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BridGHe.Grasshopper.Components.Models
 {
@@ -52,6 +53,19 @@ namespace BridGHe.Grasshopper.Components.Models
                 if (!DA.GetDataList(0, elements))
                     return;
                 DA.GetData(1, ref tolerance);
+
+                // R6.5 P1 lane 3c: an element given by its GPC draft alone: the merge on the drafts of the inputs (the FEM-backed ones too), the outputs
+                // by their drafts alone, identities by content; a refusal is the error of the component.
+                if (GpcOnlyModels.Any(elements))
+                {
+                    Helpers.ModelHelper.ParseElements(elements.Where(e => e != null), out List<GH_Node> gpcNodes, out List<GH_Beam> gpcBeams, out List<GH_Plate> gpcPlates);
+                    var merged = Common.Gpc.Builders.GpcDraftMerge.Merge(gpcNodes.Select(n => n.Gpc).ToArray(), gpcBeams.Select(b => b.Gpc).ToArray(), gpcPlates.Select(p => p.Gpc).ToArray(), tolerance,
+                        (output, parameters) => GpcOnlyElements.ContentIdentity(ComponentGuid, output, parameters));
+                    DA.SetDataList(0, merged.Nodes.Select(d => GH_Node.FromGpc(d)));
+                    DA.SetDataList(1, merged.Beams.Select(d => GH_Beam.FromGpc(d)));
+                    DA.SetDataList(2, merged.Plates.Select(d => GH_Plate.FromGpc(d)));
+                    return;
+                }
 
                 List<NodeModel> modelnodes = new List<NodeModel>();
                 List<BeamModel> modelbeams = new List<BeamModel>();

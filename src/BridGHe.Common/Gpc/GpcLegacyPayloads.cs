@@ -60,6 +60,12 @@ namespace BridGHe.Common.Gpc
 
         public static GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition Composite(byte[] payload) => GpcCompositeSections.Definition(Root(payload));
 
+        /// <summary>R6.5 P1 lane 3c: the payload of a former model carried results (the notice of a model read from it, without its FEM value).</summary>
+        public static bool ModelHadResults(byte[] payload) => HadResults(Root(payload));
+
+        private static bool HadResults(LegacyValue root) => !root.IsNull && root.Is("ModelModel") && root.Has("Elements")
+            && root.Field("Elements").Items.Any(e => !e.IsNull && e.Has("Results") && e.Field("Results").Items.Count != 0);
+
         /// <summary>A former model (<c>GH_Model</c>, internalised or the cache of an analysis component) by value, at the tolerance given
         /// (definition units): the model without its results, the owner of its identities from the stored bytes and the tolerance; null when
         /// 0.3.0 reads no model from it (null value or no element list). <paramref name="hadResults"/>: the payload carried results.
@@ -70,7 +76,7 @@ namespace BridGHe.Common.Gpc
             var root = Root(payload);
             hadResults = false;
             if (root.IsNull || !root.Is("ModelModel") || !root.Has("Elements")) return null;
-            hadResults = root.Field("Elements").Items.Any(e => !e.IsNull && e.Has("Results") && e.Field("Results").Items.Count != 0);
+            hadResults = HadResults(root);
             var identities = owner ?? ModelOwner(payload, toleranceDefinitionUnits);
             var report = new LegacyImportReport();
             var model = LegacyModelImport.Import(root, identities, toleranceDefinitionUnits, report);

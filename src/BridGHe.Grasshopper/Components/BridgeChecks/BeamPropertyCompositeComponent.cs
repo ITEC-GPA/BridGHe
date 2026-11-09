@@ -153,13 +153,13 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             var definition = Helpers.GpcBuilderAttach.Composite(section, () => Common.Gpc.Builders.GpcPropertyBuilders.Composite(name, steelRecipe(), slab.Width, slab.Height,
                 slab.TopRebarArea, slab.TopCover, slab.BottomRebarArea, slab.BottomCover, concreteMaterial.Gpc, steelMaterial.Gpc, rebarMaterial?.Gpc, n0, ninf, nShrinkage,
                 considerConcrete, considerRebars));
-            Helpers.GpcBuilderAttach.BeamProperty(steelSectionProp, () => Common.Gpc.Builders.GpcPropertyBuilders.OnlySteel(name, steelRecipe(), steelMaterial.Gpc));
+            Helpers.GpcBuilderAttach.BeamProperty(steelSectionProp, () => Common.Gpc.Builders.GpcPropertyBuilders.OnlySteel(name, steelRecipe(), steelMaterial.Gpc, steelMaterial.GpcKind));
             GH_BeamProperty Homogenised(double n, string suffix)
             {
                 var model = compositeBeamPropertyModel.CreateHomogenizedProperty(n, suffix);
                 var output = new GH_BeamProperty(model);
                 if (definition != null)
-                    Helpers.GpcBuilderAttach.BeamProperty(output, () => Common.Gpc.Builders.GpcPropertyBuilders.Homogenised(definition, n, suffix, steelMaterial.Gpc));
+                    Helpers.GpcBuilderAttach.BeamProperty(output, () => Common.Gpc.Builders.GpcPropertyBuilders.Homogenised(definition, n, suffix, steelMaterial.Gpc, steelMaterial.GpcKind));
                 return output;
             }
 
@@ -185,10 +185,10 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 slab.TopRebarArea, slab.TopCover, slab.BottomRebarArea, slab.BottomCover, concreteMaterial.Gpc, steelMaterial.Gpc, rebarMaterial?.Gpc, n0, ninf, nShrinkage,
                 considerConcrete, considerRebars));
             if (definition == null) return;
-            var steel = Helpers.GpcOnlyProperties.BeamProperty(this, () => Common.Gpc.Builders.GpcPropertyBuilders.OnlySteel(name, steelSection.Gpc, steelMaterial.Gpc));
+            var steel = Helpers.GpcOnlyProperties.BeamProperty(this, () => Common.Gpc.Builders.GpcPropertyBuilders.OnlySteel(name, steelSection.Gpc, steelMaterial.Gpc, steelMaterial.GpcKind));
             if (steel == null) return;
             GH_BeamProperty Homogenised(double n, string suffix) => !considerConcrete && !considerRebars ? steel
-                : Helpers.GpcOnlyProperties.BeamProperty(this, () => Common.Gpc.Builders.GpcPropertyBuilders.Homogenised(definition, n, suffix, steelMaterial.Gpc));
+                : Helpers.GpcOnlyProperties.BeamProperty(this, () => Common.Gpc.Builders.GpcPropertyBuilders.Homogenised(definition, n, suffix, steelMaterial.Gpc, steelMaterial.GpcKind));
             var outputs = new[] { Homogenised(n0, "_N0_istant"), Homogenised(ninf, "_N_infinite"), Homogenised(nShrinkage, "_N_shrinkage") };
             if (outputs.Any(o => o == null)) return;
             DA.SetData(0, GH_CompositeBeamProperty.FromGpc(definition));
