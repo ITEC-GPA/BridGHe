@@ -273,7 +273,12 @@ internal static class GpcInputComparison
             return "drafts of a FEM model merged by ID (not compared)";
         void Same(string kind, int i, object draft, object conversion)
         {
-            string a = GpcDraftCapture.Text(draft), c = GpcDraftCapture.Text(conversion);
+            // PAR (A08): a stale section state compared as stale, as in the DRAFT CHECK (the draft of a beam whose property changed after Bridge
+            // State Override carries the GPC fingerprint of its state, the conversion of the FEM value the FEM signature).
+            string a, c;
+            GpcDraftArchiveChecks.CompareStaleAsStale = true;
+            try { a = GpcDraftCapture.Text(draft); c = GpcDraftCapture.Text(conversion); }
+            finally { GpcDraftArchiveChecks.CompareStaleAsStale = false; }
             if (a != c) throw new Exception($"GPC INPUT FAIL ({label}): the draft of {kind} {i + 1} differs from the conversion of its FEM value\n" + GpcDraftArchiveChecks.FirstDifference(c, a));
         }
         for (int i = 0; i < fem.Nodes.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Nodes[i]); Same("node", i, GpcDrafts.Reidentify(drafts.Nodes[i], id), GpcBeamDrafts.FromFemm(fem.Nodes[i], id)); }

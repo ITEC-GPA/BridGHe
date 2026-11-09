@@ -236,15 +236,39 @@ namespace BridGHe.Common.Gpc.Legacy
             var formulation = type == "Beam" ? BeamFormulation.StraightTwoNode : type == "Truss" ? BeamFormulation.Truss : type == "Cable" ? BeamFormulation.Cable
                 : type == "CutoffBar" ? BeamFormulation.CutoffBar : type == "PointContact" ? BeamFormulation.PointContact : type == "Pipe" ? BeamFormulation.Pipe
                 : type == "Connection" ? BeamFormulation.Connection : throw new NotSupportedException("LegacyBeamPropertyType: " + type);
-            if (formulation == BeamFormulation.CutoffBar) throw new NotSupportedException("LegacyCutoffBarNotMappedYet");
             var m = p.Field("Material"); var s = p.Field("SectionModel");
             if (s.Enum("MirrorType") != "None") throw new NotSupportedException("LegacyMirroredSectionNotMappedYet");
             var material = ElasticMaterial(m);
             if (!m["StressStrainTable"].IsNull && type != "Beam" && type != "Truss") material.AnalysisData.StressStrainPairs = null; // former exporter: tables only for beams and trusses
             var recipe = SectionRecipe(s);
             var (property, angle, native) = SectionProperty(recipe, propertyName, material, units, shearAreas, report, checkLengthUnit);
+            // PAR (A01, as in 0.3.0): the four data of a cutoff bar as the former property held them (St7SetCutoffBarData), forces to N.
+            if (formulation == BeamFormulation.CutoffBar)
+                ((ElasticBeamProperty)property).CutoffLaw = CutoffLaw(p.Double("MaxTension"), p.Double("MaxCompression"), p.Enum("CutoffType") == "Brittle", p.Bool("KeepMass"), units);
             return (property, formulation, angle, native, recipe);
         }
+
+        /// <summary>PAR (A01): the cutoff law the former exporter wrote (<c>St7SetCutoffBarData</c>): the cut-off type (Brittle → cbBrittle,
+        /// any other value → cbDuctile, as the former test <c>CutoffType == Brittle</c>), keep mass, the maximum tension and compression as
+        /// given (Straus7 read them in the force unit of the model: here converted to N, the unit of the GPC law).</summary>
+        internal static BeamCutoffLaw CutoffLaw(double maxTension, double maxCompression, bool brittle, bool keepMass, BridgeUnits units) => new BeamCutoffLaw
+        {
+            Failure = brittle ? BeamCutoffFailure.Brittle : BeamCutoffFailure.Ductile, TensionLimit = units.ToN(maxTension), CompressionLimit = units.ToN(maxCompression), KeepMass = keepMass,
+        };
+
+        /// <summary>PAR (A02): the native Straus7 section the former exporter wrote for a T, C (single) and angle section (former
+        /// <c>StrausR3Helper</c>: <c>bsTSection</c> {B, D, L, T1, T2, T3}, <c>bsLipChannel</c> {B, D, L, T1, T2, T3}, <c>bsLSection</c>
+        /// {B, D, -, T1, T2, -}; L = 0, as every section component of 0.3.0 left it), with the catalog key of the Converter.</summary>
+        internal static (string Key, double[] Dimensions) StandardNative(LegacySectionRecipe r) => r.Kind switch
+        {
+            BridgeSectionKind.T => ("T", new[] { r.B, r.D, 0, r.T1, r.T2, r.T3 }),
+            BridgeSectionKind.C => ("LipChannel", new[] { r.B, r.D, 0, r.T1, r.T2, r.T3 }),
+            BridgeSectionKind.Angle => ("Angle", new[] { r.B, r.D, r.T1, r.T2 }),
+            _ => throw new ArgumentException("LegacyStandardNativeSectionExpected: " + r.Kind),
+        };
+
+        /// <summary>PAR (A02): the section kinds the former exporter wrote as a native Straus7 section whose properties Straus7 computed.</summary>
+        internal static bool IsStandardNative(BridgeSectionKind kind) => kind == BridgeSectionKind.T || kind == BridgeSectionKind.C || kind == BridgeSectionKind.Angle;
 
         /// <summary>Chain E (e3 point 5): the section of a former SectionModel in the definition units (the numbers as written, nothing derived).</summary>
         private static LegacySectionRecipe SectionRecipe(LegacyValue s)
@@ -351,6 +375,30 @@ namespace BridGHe.Common.Gpc.Legacy
                 shear1 = units.ToMm2(r.ShearA1); shear2 = units.ToMm2(r.ShearA2);
                 if (r.CompositePreview) report.Carry("Composite preview geometry (preview and checks input, not exported)");
             }
+            else if (IsStandardNative(kind))
+            {
+                // PAR (A02, A03; as in 0.3.0): the former exporter wrote the native geometry (bsTSection, bsLipChannel, bsLSection), the section
+                // data of the former value (its angle 0: GetGeometricalDatas of a standard shape has no product of inertia) and then
+                // St7CalculateBeamSectionProperties with the shear: Straus7 computed area, inertias, torsion, shear centre, shear areas,
+                // centroid and principal angle from the geometry, and those stayed in the model. The same native section, resolved by Straus7
+                // in mm from the dimensions in the model units, gives the property and its principal angle together (as a native section).
+                var (key, dimensions) = StandardNative(r);
+                var resolved = GpcNativeSections.Resolve(key, dimensions, null, null, null, units.Length).Section;
+                var nativeProperty = resolved.ToBeamProperty(propertyName, material);
+                report.Carry("Native section preview contours (display only)");
+                return (nativeProperty, resolved.ReferenceProperties[10], resolved);
+            }
+            else if (kind == BridgeSectionKind.GenericShapes)
+            {
+                // PAR (A02c, as in 0.3.0): the former exporter wrote a BXS meshed from the shapes of the section (StrausBxsGenerator: the
+                // initial Delaunay mesh, St7GenerateBXS, St7AssignBXS) and no section data. The GPC section of the shapes (in mm) goes the same
+                // way through the Converter (the initial mesh of its outline, St7GenerateBXS, St7AssignBXS), with the GPC values of the
+                // section as for every meshed section (listed difference: torsion and shear areas from GPC, as for the I sections, E1/E12).
+                section = BrepSection(r, sectionName, units);
+                var computed = GPC.Model.Sections.SectionShearAreas.Compute(section);
+                (shear1, shear2) = (computed.Area1, computed.Area2);
+                angle = section.AngleX1;
+            }
             else
             {
                 if (angle != 0) throw new NotSupportedException("LegacyStandardSectionWithPrincipalAngleNotMappedYet");
@@ -367,6 +415,27 @@ namespace BridGHe.Common.Gpc.Legacy
             }
             var property = new ElasticBeamProperty(propertyName, material, section, shear1, shear2);
             return (property, angle, null);
+        }
+
+        /// <summary>PAR (A02c): the GPC section of the shapes of a Brep section (fill and holes as stored, in mm). One shape: the former
+        /// components give one shape per closed region; several regions in one section are refused (the Converter keeps the parts of a
+        /// section as separate bodies, the former BXS meshed them together).</summary>
+        private static Section BrepSection(LegacySectionRecipe r, string name, BridgeUnits units)
+        {
+            if (r.Shapes == null || r.Shapes.Count == 0) throw new NotSupportedException("LegacyBrepSectionWithoutShapes: the Brep section has no shapes.");
+            if (r.Shapes.Count != 1)
+                throw new NotSupportedException("LegacyBrepSectionOfSeveralShapesNotMappedYet: the Brep section has " + r.Shapes.Count + " separate regions; give one closed region (with its holes) per section.");
+            GPC.Geometry.Polygon2d Polygon(IReadOnlyList<double> xy)
+            {
+                var p = new GPC.Geometry.Polygon2d();
+                for (int i = 0; i + 1 < xy.Count; i += 2) p.Add(units.ToMm(xy[i]), units.ToMm(xy[i + 1]));
+                return p;
+            }
+            var s = r.Shapes[0];
+            var shape = new GPC.Geometry.Shape2d(Polygon(s.Fill), s.Holes.Count == 0 ? null : s.Holes.Select(Polygon).ToArray());
+            var section = new Section(shape, name ?? "");
+            section.SetMechanicalProperties();
+            return section;
         }
 
         /// <summary>BGHGPC1 (ii): a former section by value (the datum of a Beam Section parameter): its recipe, the numbers as written.</summary>
@@ -393,14 +462,22 @@ namespace BridGHe.Common.Gpc.Legacy
             return p.Any("PropertyType", "_platePropertyType").Text?.Trim() == "Membrane" ? units.ToMm(p.Any("BendingThickness", "_bendingThickness").AsDouble()) : 0;
         }
 
+        /// <summary>PAR (A04, B01): the refusal of a stress-strain table on a Membrane or Shear Panel plate property, with the reason.</summary>
+        public const string PlateTableRefused = "LegacyPlateStressStrainTableOnMembraneOrShearPanel: the material of a Membrane or Shear Panel plate property has a " +
+            "stress-strain table. BridGHe 0.3.0 wrote the table only for the Shell and Plate types and exported these two types without it, so the table had no " +
+            "effect; give a material without a table, or a Shell or Plate type.";
+
         private static PlateProperty PlateProperty(LegacyValue p, string name, BridgeUnits units)
         {
             string type = p.Any("PropertyType", "_platePropertyType").Text?.Trim();
             if (type == "LoadPatch") return new ElasticPlateProperty(name, null, 0, 0, ElasticPlateFormulation.LoadPatch);
             var m = p.Any("Material", "_material");
+            // PAR (A04, as in 0.3.0): the stress-strain table of the material on the four shell and plate types (the former exporter wrote it
+            // with St7NewTableType and St7SetPropertyTable(ptPlateStressVsStrain) only for them); on a membrane or shear panel it is refused.
+            var table = StressStrain(m["StressStrainTable"]);
+            if (table != null && (type == "Membrane" || type == "ShearPanel")) throw new NotSupportedException(PlateTableRefused);
             var material = GpcMaterials.Elastic(m.String("Name"), m.Double("Modulus"), m.Double("PoissonRatio"), m.Double("ShearModulus"), true,
-                m.Double("Density"), m.Double("ThermalExpansion"), m.Double("ViscousDamping"), m.Double("DampingRatio"), m.Double("Conductivity"), m.Double("SpecificHeat"), null);
-            if (!m["StressStrainTable"].IsNull) throw new NotSupportedException("LegacyPlateStressStrainTableNotMappedYet");
+                m.Double("Density"), m.Double("ThermalExpansion"), m.Double("ViscousDamping"), m.Double("DampingRatio"), m.Double("Conductivity"), m.Double("SpecificHeat"), table);
             double membrane = units.ToMm(p.Any("MembraneThickness", "_membraneThickness").AsDouble()), bending = units.ToMm(p.Any("BendingThickness", "_bendingThickness").AsDouble());
             switch (type)
             {

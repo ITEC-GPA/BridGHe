@@ -77,7 +77,7 @@ namespace BridGHe.Common.Gpc.Legacy
         {
             if (pl == null || pl.IsNull || !pl.Is("PlateModel")) throw new ArgumentException("LegacyPlateModelExpected");
             var report = new LegacyImportReport { Units = units, Owner = guid, Bridge = new GPC.Checkers.CompositeBridge.BridgeModelData() };
-            int count = pl.Int("NPoints"); if (count != 3 && count != 4) throw new NotSupportedException("LegacyPlateWithMoreThanFourNodes");
+            int count = pl.Int("NPoints"); if (count != 3 && count != 4) throw new NotSupportedException(Builders.GpcPlateBuilders.MoreThanFourNodes); // PAR (A07)
             var corners = Enumerable.Range(0, count).Select(i => Point(pl["Point" + i], units)).ToArray();
             var pp = pl.Field("PlateProperty"); string ppName = PlatePropertyName(pp);
             var property = PlateProperty(pp, ppName, units);

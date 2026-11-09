@@ -33,7 +33,11 @@ internal static class GpcDraftCheckHost
             return;
         }
         // L2C: with the BridGHe data beside the datum that the canonical texts do not carry (the material kind of a beam property).
-        string attached = GpcDraftCapture.Text(datum) + GpcDraftArchiveChecks.Extras(datum), converted = fem == null ? "REFUSED" : GpcDraftCapture.Text(fem) + GpcDraftArchiveChecks.Extras(fem);
+        // PAR (A08): a stale section state compared as stale (the reader marks it with the FEM signature, a builder with the GPC fingerprint).
+        string attached, converted;
+        GpcDraftArchiveChecks.CompareStaleAsStale = true;
+        try { attached = GpcDraftCapture.Text(datum) + GpcDraftArchiveChecks.Extras(datum); converted = fem == null ? "REFUSED" : GpcDraftCapture.Text(fem) + GpcDraftArchiveChecks.Extras(fem); }
+        finally { GpcDraftArchiveChecks.CompareStaleAsStale = false; }
         lock (Gate)
         {
             if (attached == converted) { Equal.TryGetValue(type, out int n); Equal[type] = n + 1; return; }

@@ -21,7 +21,12 @@ namespace BridGHe.Common.Gpc.Builders
         private static readonly string[] Types = { "SpringDamper", "Cable", "Truss", "CutoffBar", "PointContact", "Beam", "UserDefined", "Pipe", "Connection" };
 
         /// <summary>The Beam Property component (type index of the former enum; material: the GPC material by kind of the input).</summary>
-        public static LegacyBeamProperty Beam(string name, int type, LegacySectionRecipe section, Material material)
+        /// <param name="materialKind">PAR (A10): the kind the material declares (the BridGHe record of the material, <c>GH_Material.GpcKind</c>);
+        /// null: the kind of the GPC type (<see cref="GpcMaterials.KindOf"/>).</param>
+        /// <param name="cutoff">PAR (A01): the four inputs of a cutoff bar (Max tension, Max compression, Cut off type, Keep mass) as the
+        /// component read them (zeros and false when the inputs are not shown, as the former value took them); used only for Cutoff Bar.</param>
+        public static LegacyBeamProperty Beam(string name, int type, LegacySectionRecipe section, Material material, string materialKind = null,
+            (double MaxTension, double MaxCompression, int Type, bool KeepMass) cutoff = default)
         {
             if (section == null) throw new ArgumentNullException(nameof(section));
             if (material == null) throw new ArgumentNullException(nameof(material));
@@ -29,7 +34,6 @@ namespace BridGHe.Common.Gpc.Builders
             var formulation = typeName == "Beam" ? BeamFormulation.StraightTwoNode : typeName == "Truss" ? BeamFormulation.Truss : typeName == "Cable" ? BeamFormulation.Cable
                 : typeName == "CutoffBar" ? BeamFormulation.CutoffBar : typeName == "PointContact" ? BeamFormulation.PointContact : typeName == "Pipe" ? BeamFormulation.Pipe
                 : typeName == "Connection" ? BeamFormulation.Connection : throw new NotSupportedException("LegacyBeamPropertyType: " + typeName);
-            if (formulation == BeamFormulation.CutoffBar) throw new NotSupportedException("LegacyCutoffBarNotMappedYet");
             // L2C: a mirrored section (now a recipe) is refused as the reader refuses a property on it, in the order of the reader.
             if (section.Mirror != LegacySectionRecipe.NoMirror) throw new NotSupportedException("LegacyMirroredSectionNotMappedYet");
             var analysis = GpcMaterials.Analysis(material);
@@ -37,9 +41,14 @@ namespace BridGHe.Common.Gpc.Builders
             var recipe = PropertySection(section);
             var units = GpcBeamDrafts.DraftUnits;
             var (property, angle, native) = LegacyModelImport.SectionProperty(recipe, name ?? "Property", analysis, units, new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport());
-            // L2C (limit (b) of passo 77): the kind of the input material (the former property kept the material, with its kind).
+            // PAR (A01, as in 0.3.0): the cutoff data of the inputs (the former component set them on the value; the former CutoffType of the
+            // input index: 0 Brittle, any other Ductile, as the former exporter tested it).
+            if (formulation == BeamFormulation.CutoffBar)
+                ((GPC.Model.ElementProperties.ElasticBeamProperty)property).CutoffLaw = LegacyModelImport.CutoffLaw(Z(cutoff.MaxTension), Z(cutoff.MaxCompression), cutoff.Type == 0, cutoff.KeepMass, units);
+            // L2C (limit (b) of passo 77): the kind of the input material (the former property kept the material, with its kind); PAR (A10): the
+            // kind the material declares.
             return new LegacyBeamProperty(property, new LegacyBeamPropertyData(formulation, angle, native, LegacyModelImport.PropertySignature(property))
-                { Section = recipe, MaterialKind = GpcMaterials.KindOf(material) });
+                { Section = recipe, MaterialKind = materialKind ?? GpcMaterials.KindOf(material) });
         }
 
         /// <summary>
@@ -66,11 +75,11 @@ namespace BridGHe.Common.Gpc.Builders
 
         /// <summary>R6.2 part C: the «Only Steel Property» of Composite Beam Property: a beam property named <c>name + "OnlySteel"</c> on the I
         /// section the former component made of the dimensions of its steel section (a standard I with its principal angle, no name).</summary>
-        public static LegacyBeamProperty OnlySteel(string name, LegacySectionRecipe steel, Material steelMaterial)
+        public static LegacyBeamProperty OnlySteel(string name, LegacySectionRecipe steel, Material steelMaterial, string steelKind = null)
         {
             if (steel == null) throw new ArgumentNullException(nameof(steel));
             var section = GpcSectionBuilders.Standard(BridgeSectionKind.I, steel.D, b1: steel.B1, b2: steel.B2, t1: steel.T1, t2: steel.T2, t3: steel.T3);
-            return Beam(name + "OnlySteel", 5, section, steelMaterial);
+            return Beam(name + "OnlySteel", 5, section, steelMaterial, steelKind);
         }
 
         /// <summary>
@@ -79,7 +88,8 @@ namespace BridGHe.Common.Gpc.Builders
         /// area and inertias divided by n, torsion of the steel alone, shear areas, centroid, angle 0, the composite preview), named
         /// <c>name + suffix</c>, a beam of the analysis material of the steel.
         /// </summary>
-        public static LegacyBeamProperty Homogenised(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition definition, double n, string suffix, Material steelMaterial)
+        public static LegacyBeamProperty Homogenised(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition definition, double n, string suffix, Material steelMaterial,
+            string steelKind = null)
         {
             if (definition == null) throw new ArgumentNullException(nameof(definition));
             if (steelMaterial == null) throw new ArgumentNullException(nameof(steelMaterial));
@@ -93,7 +103,7 @@ namespace BridGHe.Common.Gpc.Builders
                 new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport());
             // L2C: the kind of the steel material (the former homogenised property had the steel material of the composite property).
             return new LegacyBeamProperty(property, new LegacyBeamPropertyData(BeamFormulation.StraightTwoNode, angle, native, LegacyModelImport.PropertySignature(property))
-                { Section = recipe, MaterialKind = GpcMaterials.KindOf(steelMaterial) });
+                { Section = recipe, MaterialKind = steelKind ?? GpcMaterials.KindOf(steelMaterial) });
         }
 
         /// <summary>The section a former Beam Property made of its input section (see the class). L2C (lane 2c): the former component did not
@@ -131,8 +141,9 @@ namespace BridGHe.Common.Gpc.Builders
 
         /// <summary>
         /// The Plate Property component: the plate property of the reader (<see cref="LegacyModelImport.PlatePropertyDraft"/>): a load patch
-        /// without material; otherwise the elastic material of the reader for plates (the analysis material of the input with Use Poisson, no
-        /// stress-strain table: a table is refused as the reader refuses it) and the thicknesses in the definition units.
+        /// without material; otherwise the elastic material of the reader for plates (the analysis material of the input with Use Poisson;
+        /// PAR (A04): its stress-strain table on the shell and plate types, refused on a membrane or shear panel as the reader refuses it) and
+        /// the thicknesses in the definition units.
         /// </summary>
         public static GPC.Model.ElementProperties.PlateProperty Plate(string name, int type, Material material, double membraneThickness, double bendingThickness)
         {
@@ -141,13 +152,15 @@ namespace BridGHe.Common.Gpc.Builders
             if (typeName == "LoadPatch") return new GPC.Model.ElementProperties.ElasticPlateProperty(propertyName, null, 0, 0, GPC.Model.ElementProperties.ElasticPlateFormulation.LoadPatch);
             if (material == null) throw new ArgumentNullException(nameof(material));
             var plateMaterial = GpcMaterials.Analysis(material);
-            if (plateMaterial.AnalysisData?.StressStrainPairs != null) throw new NotSupportedException("LegacyPlateStressStrainTableNotMappedYet");
-            // The reader makes the plate material with Use Poisson: no beam shear modulus, analysis data only for damping and thermal data.
+            if (plateMaterial.AnalysisData?.StressStrainPairs != null && (typeName == "Membrane" || typeName == "ShearPanel"))
+                throw new NotSupportedException(LegacyModelImport.PlateTableRefused);
+            // The reader makes the plate material with Use Poisson: no beam shear modulus, analysis data only for damping, thermal data and
+            // (PAR, A04) the stress-strain table.
             var a = plateMaterial.AnalysisData;
             if (a != null)
             {
                 a.BeamShearModulus = null;
-                if (a.ViscousDampingDensity == 0 && a.ModalDampingRatio == 0 && a.ThermalConductivity == 0 && a.SpecificHeat == 0) plateMaterial.AnalysisData = null;
+                if (a.ViscousDampingDensity == 0 && a.ModalDampingRatio == 0 && a.ThermalConductivity == 0 && a.SpecificHeat == 0 && a.StressStrainPairs == null) plateMaterial.AnalysisData = null;
             }
             var units = GpcBeamDrafts.DraftUnits;
             double membrane = units.ToMm(Z(membraneThickness)), bending = units.ToMm(Z(bendingThickness));

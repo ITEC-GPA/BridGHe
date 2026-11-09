@@ -29,18 +29,40 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         /// <summary>R6.5 P0 (coordinator, 7/11): a material given by its GPC datum alone, with no FEM value: <see cref="Gpc"/> is the datum and
         /// validity, copies, persistence and text read it.</summary>
-        public static GH_Material FromGpc(GPC.Model.Materials.Material datum)
+        /// <param name="kind">PAR (A10): the kind the material component declares (the former <c>MaterialKind</c> by name: Undefined, Steel,
+        /// Concrete, Aluminium, Rebar); null: the kind of the GPC type (<see cref="GpcKind"/>).</param>
+        public static GH_Material FromGpc(GPC.Model.Materials.Material datum, string kind = null)
         {
             var goo = new GH_Material();
             goo.Value = null;
             goo._gpc = datum ?? throw new System.ArgumentNullException(nameof(datum)); goo._gpcOf = null; goo.HasAttachedGpc = true;
+            goo._kind = kind; goo._kindOf = null;
             return goo;
+        }
+
+        /// <summary>
+        /// PAR (A10, coordinator 8/11): the kind of the material as the user declared it, a BridGHe datum beside the GPC material (as lane 2c
+        /// keeps the kind of a beam property in its record): the kind given by the material component (a Custom material of kind Steel whose
+        /// strengths the GPC steel type refuses is the generic GPC material, and still Steel here, as the former value was), else the kind of
+        /// the FEM value, else the kind of the GPC type (<see cref="Common.Gpc.GpcMaterials.KindOf"/>). Saved in the records of the datum only
+        /// when it is not the kind of the GPC type (a material saved before reads the kind of its GPC type, as before).
+        /// </summary>
+        public string GpcKind
+        {
+            get
+            {
+                var gpc = Gpc;
+                if (gpc == null) return null;
+                if (_kind != null && ReferenceEquals(_kindOf, Value)) return _kind;
+                if (Value != null) return Value.Kind.ToString();
+                return Common.Gpc.GpcMaterials.KindOf(gpc);
+            }
         }
 
         public override IGH_Goo Duplicate()
         {
             // The value is shared (materials are immutable by convention, §1bis), and with it its GPC material.
-            return new GH_Material(Value) { _gpc = _gpc, _gpcOf = _gpcOf, HasAttachedGpc = HasAttachedGpc, _legacy = _legacy, _legacyOf = _legacyOf };
+            return new GH_Material(Value) { _gpc = _gpc, _gpcOf = _gpcOf, HasAttachedGpc = HasAttachedGpc, _legacy = _legacy, _legacyOf = _legacyOf, _kind = _kind, _kindOf = _kindOf };
         }
 
         /// <summary>
@@ -69,9 +91,10 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public bool HasAttachedGpc { get; private set; }
 
         /// <summary>Attaches the GPC material built on GPC for the current FEM value (it must describe it: regression <c>gpc-material-kinds</c>).</summary>
-        public void AttachGpc(GPC.Model.Materials.Material material)
+        public void AttachGpc(GPC.Model.Materials.Material material, string kind = null)
         {
             _gpc = material ?? throw new ArgumentNullException(nameof(material)); _gpcOf = Value; HasAttachedGpc = true;
+            _kind = kind; _kindOf = Value;
             // R6.1 (frozen API for R6.2): the gates compare the attached material with the conversion of the FEM value.
             if (Value != null) { var value = Value; Common.Gpc.GpcDraftCheck.Attached("GH_Material", material, () => Common.Gpc.GpcMaterials.FromFemm(value)); }
         }
@@ -81,10 +104,13 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         // R6.1: a former payload (BGHA1) read from a file, converted by value on first use while the FEM value read with it is current.
         private byte[] _legacy;
         private MaterialModel _legacyOf;
+        // PAR (A10): the declared kind given with the GPC material (null: none) and the FEM value it was given for.
+        private string _kind;
+        private MaterialModel _kindOf;
 
         public override bool Write(GH_IWriter writer)
         {
-            try { GpcGooPersistence.Write(writer, () => (Common.Gpc.GpcDraftArchive.Write(Gpc), (byte[])null), Value == null ? null : Common.Helpers.ModelArchive.Write(Value)); return true; }
+            try { GpcGooPersistence.Write(writer, () => Common.Gpc.GpcDraftArchive.Write(Gpc, GpcKind), Value == null ? null : Common.Helpers.ModelArchive.Write(Value)); return true; }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
         }
 
@@ -95,9 +121,9 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 switch (GpcGooPersistence.Read(reader, out var data, out var records, out var femm))
                 {
                     case GpcGooPersistence.Kind.Gpc:
-                        var material = Common.Gpc.GpcDraftArchive.ReadMaterial(data);
+                        var material = Common.Gpc.GpcDraftArchive.ReadMaterial(data, records, out var kind);
                         Value = femm == null ? null : Common.Helpers.ModelArchive.Read<MaterialModel>(femm);
-                        _gpc = material; _gpcOf = Value; HasAttachedGpc = true; return true;
+                        _gpc = material; _gpcOf = Value; HasAttachedGpc = true; _kind = kind; _kindOf = Value; return true;
                     case GpcGooPersistence.Kind.Legacy:
                         Value = Common.Helpers.ModelArchive.Read<MaterialModel>(femm); _legacy = femm; _legacyOf = Value; return true;
                     case GpcGooPersistence.Kind.FemmOnly:

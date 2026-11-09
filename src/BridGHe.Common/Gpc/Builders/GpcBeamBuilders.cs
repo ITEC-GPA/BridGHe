@@ -163,9 +163,12 @@ namespace BridGHe.Common.Gpc.Builders
         /// Beam Override and Bridge Beam Offsets: another property, groups, BridGHe angle or offset (null: unchanged). The beam the reader gives
         /// the changed value: the axes of the new angle and property, the offset in the new principal axes, and what depends on them re-anchored
         /// with the reader's formulas (as Build Model re-anchors a moved beam: section and offset axes, the global eccentricity of every load,
-        /// the frame of the local loads, the axes of the supports); attributes, physical data, loads and bridge data kept in order. A beam with a
-        /// current section state whose property changes content is refused (<see cref="NotSupportedException"/>): the stale marker of the
-        /// reader holds the former signature of the state, which the draft does not carry (until R6.3, when the states take the GPC fingerprint).
+        /// the frame of the local loads, the axes of the supports); attributes, physical data, loads and bridge data kept in order. PAR (A08, as
+        /// in 0.3.0): a beam with a current section state whose property changes content takes the new property, and its state keeps the former
+        /// fingerprint as a stale marker (<see cref="LegacyModelImport.StaleSectionStatePrefix"/> + the fingerprint the state was computed for, as
+        /// the reader marks a former state whose property changed): the model exports the new property and the checks refuse the stale state
+        /// with the message of the former checks ("FEM properties changed after the local section-state assignment. Reapply Bridge State
+        /// Override and recalculate."). Before, the builder refused the change.
         /// </summary>
         public static LegacyBeamDraft Override(LegacyBeamDraft beam, LegacyBeamProperty property, IReadOnlyList<IReadOnlyList<string>> groups, double? angleDeg, (double X, double Y)? offset,
             Guid identity) => GpcDrafts.Reidentify(Rebuild(beam, property, groups, angleDeg, offset, null, null, null), identity);
@@ -203,7 +206,11 @@ namespace BridGHe.Common.Gpc.Builders
             var state = c.Bridge?.SectionState;
             if (property != null && state != null && !state.PropertyFingerprint.StartsWith(LegacyModelImport.StaleSectionStatePrefix, StringComparison.Ordinal)
                 && property.Data.Signature != c.Property?.Signature)
-                throw new NotSupportedException("GpcBeamOverrideOfASectionState: the property of a beam with a section state changes; the stale marker needs the former signature of the state.");
+            {
+                // PAR (A08): the state goes stale with the fingerprint it was computed for (Finish keeps a stale marker as it is).
+                c.Report.Bridge.SetSectionState(old.Guid, new GPC.Checkers.CompositeBridge.BridgeLocalSectionState(state.Behavior, state.ConcreteExcluded, state.ModularRatio,
+                    state.ClassificationCase, LegacyModelImport.StaleSectionStatePrefix + state.PropertyFingerprint));
+            }
             double angle = angleDeg.HasValue ? Z(angleDeg.Value) : c.AngleDeg;
             double ox = offset.HasValue ? units.ToMm(Z(offset.Value.X)) : old.Assignments.OffsetI?.X ?? 0, oy = offset.HasValue ? units.ToMm(Z(offset.Value.Y)) : old.Assignments.OffsetI?.Y ?? 0;
             var records = c.Records;

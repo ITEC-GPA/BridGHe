@@ -214,7 +214,7 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
             // of passo 75; a refused property gives an error and no output).
             if (GpcOnlyProperties.On(section, material))
             {
-                GpcOnlyElements.Set(DA, 0, GpcOnlyProperties.BeamProperty(this, () => Common.Gpc.Builders.GpcPropertyBuilders.Beam(name, type, section.Gpc, material.Gpc)));
+                GpcOnlyElements.Set(DA, 0, GpcOnlyProperties.BeamProperty(this, () => Common.Gpc.Builders.GpcPropertyBuilders.Beam(name, type, section.Gpc, material.Gpc, material.GpcKind, (maxTensionCB, maxCompressionCB, cutOffTypeCB, keepMassCB))));
                 return;
             }
 
@@ -291,7 +291,7 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
             GH_BeamProperty gh_bp = new GH_BeamProperty(bp);
             // R6.2 part C (§1bis, regola doppia): the property built on GPC from the GPC data of the inputs, attached to the FEM value (until R6.5);
             // R6.3: signed with the GPC fingerprint of the property.
-            Helpers.GpcBuilderAttach.BeamProperty(gh_bp, () => Common.Gpc.Builders.GpcPropertyBuilders.Beam(name, type, section.Gpc, material.Gpc));
+            Helpers.GpcBuilderAttach.BeamProperty(gh_bp, () => Common.Gpc.Builders.GpcPropertyBuilders.Beam(name, type, section.Gpc, material.Gpc, material.GpcKind, (maxTensionCB, maxCompressionCB, cutOffTypeCB, keepMassCB)));
             DA.SetData(0, gh_bp);
         }
 

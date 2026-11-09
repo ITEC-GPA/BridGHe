@@ -306,6 +306,7 @@ internal static class Program
         CheckNativeCantilever();
         CheckNativePlateAngle();
         CheckNativeGpcOnlySections();
+        Assert(ParityNative.Run()==0,"PAR (R6.5 P1): T, C, angle and Brep sections, cutoff bar and shell table written through the GPC path as BridGHe 0.3.0 wrote them");
     }
 
     /// <summary>P2Z (R6.5 P1 lane 2a): the Straus7 section components replayed in memory with the switch of the property producers, Straus7

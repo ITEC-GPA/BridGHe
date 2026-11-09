@@ -160,7 +160,8 @@ internal static class GpcBuilderChecksARuns
         var angledTri = Turned(h, One(h, "PlateComponent", (0, Face(a, b, c)), (1, shell), (2, new[] { pour }), (3, -45.0), (4, 2.5)));
         // A quadrangle 0.005 mm out of plane (within the planarity of GPC): the layer axes carry the Straus7 normal, not the former one.
         var warped = Turned(h, One(h, "PlateComponent", (0, Face(new Point3d(5000, 0, 0), new Point3d(6000, 0, 0), new Point3d(6000, 1000, 0.005), new Point3d(5000, 1000, 0))), (1, shell), (3, 30.0)));
-        Refused(h, "PlateComponent", "LegacyPlateWithMoreThanFourNodes", (0, Face(a, b, new Point3d(2500, 700, 100), c, d)), (1, shell));
+        // PAR (A07, user decision of 8/11): more than four vertices: the error and no output (0.3.0 warned and made a plate of 6, 8 or 9 nodes).
+        Error(h, "PlateComponent", "LegacyPlateWithMoreThanFourNodes", (0, Face(a, b, new Point3d(2500, 700, 100), c, d)), (1, shell));
 
         // Plate Support: top and bottom faces (carried), compression only or not, the same support twice (carried twice), after loads.
         var s1 = One(h, "PlateSupportComponent", (0, quad), (1, 1.5e-3), (2, false), (3, 0));
