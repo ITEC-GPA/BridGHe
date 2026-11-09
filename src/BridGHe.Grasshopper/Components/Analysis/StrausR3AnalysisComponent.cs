@@ -116,13 +116,26 @@ namespace BridGHe.Grasshopper.Components.Analysis
 
             var requested = new List<string>();
             DA.GetDataList("Analysis Results", requested);
+            // R6.5 P1 lane 3e: a model given by its GPC input alone is analysed from it and gives a GPC-only model with the analysed GPC model.
+            bool gpcOnly = GpcOnlyModels.WithoutFem(model);
             if (_run || keepRunning)
             {
                 _run = false;
                 try
                 {
-                    var result = Common.Straus.StrausAnalysis.Run(model.Value, model.GpcInput, outputPath, solver, requested, Settings.Instance.Tolerance, false, out var warnings, out var analysed);
-                    _model = GH_Model.FromModel(result, model); _model.AttachGpc(analysed);
+                    List<string> warnings; GPC.Model.Models.Model analysed;
+                    if (gpcOnly)
+                    {
+                        var input = GpcOnlyModels.InputOf(model);
+                        analysed = Common.Straus.StrausAnalysis.Run(input, outputPath, solver, requested, false, out warnings);
+                        _model = GpcOnlyModels.SameElements(input, model, input);
+                    }
+                    else
+                    {
+                        var result = Common.Straus.StrausAnalysis.Run(model.Value, model.GpcInput, outputPath, solver, requested, Settings.Instance.Tolerance, false, out warnings, out analysed);
+                        _model = GH_Model.FromModel(result, model);
+                    }
+                    _model.AttachGpc(analysed);
                     // R6.4 (2), extension (α): the output keeps the elements of its input (with results): it carries the drafts of the input.
                     _drafts.Record(model, _model);
                     foreach (string warning in warnings) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
@@ -134,6 +147,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
                     _model = new GH_Model(); _saved.Record(null, null); _drafts.Clear();
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message);
                     Message = "Error";
+                    if (gpcOnly) return; // lane 3: a refusal gives an error and no output
                 }
             }
             if (_saved.Pending) { string restored = _saved.Restore(_model, outputPath); if (restored != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, restored); }

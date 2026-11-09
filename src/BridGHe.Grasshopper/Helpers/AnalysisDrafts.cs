@@ -30,7 +30,7 @@ namespace BridGHe.Grasshopper.Helpers
         {
             _pending = false; _hash = null;
             var drafts = input?.GpcDrafts;
-            if (drafts == null || output?.Value == null) return;
+            if (drafts == null || !HasModel(output)) return;
             output.AttachDrafts(drafts);
             _hash = hash ?? Fingerprint(input);
         }
@@ -54,13 +54,21 @@ namespace BridGHe.Grasshopper.Helpers
         {
             if (!_pending) return null;
             _pending = false;
-            if (output?.Value == null) { _hash = null; return null; }
-            string current = input?.Value == null ? null : hash ?? Fingerprint(input);
+            if (!HasModel(output)) { _hash = null; return null; }
+            string current = !HasModel(input) ? null : hash ?? Fingerprint(input);
             if (current == null || current != _hash) { _hash = null; return ChangedMessage; }
             var drafts = input.GpcDrafts;
-            if (drafts != null) output.AttachDrafts(drafts);
+            if (drafts != null)
+            {
+                output.AttachDrafts(drafts);
+                // R6.5 P1 lane 3e: the GH GUIDs of the elements of a GPC-only output are those of its input, as the FEM path restores them.
+                if (output.Value == null) output.AttachElementGuids(input.ElementGuidsOf(drafts));
+            }
             return null;
         }
+
+        /// <summary>R6.5 P1 lane 3e: a model with its FEM value, or given by its GPC input alone.</summary>
+        private static bool HasModel(GH_Model model) => model?.Value != null || GpcOnlyModels.WithoutFem(model);
 
         /// <summary>The fingerprint of the GPC input of a model, or null when it has none (an input that cannot be converted).</summary>
         private static string Fingerprint(GH_Model model)

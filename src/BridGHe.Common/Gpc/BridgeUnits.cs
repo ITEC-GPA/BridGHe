@@ -27,6 +27,9 @@ namespace BridGHe.Common.Gpc
         public double Length { get; }
         /// <summary>N per definition force unit.</summary>
         public double Force { get; }
+        /// <summary>R6.5 P1 lane 3e (A05): tonnes per definition mass unit: the mass unit of the Straus7 files of BridGHe 0.3.0 for these units
+        /// (t for kNm and Nmm, kg for SI, lb for PSI).</summary>
+        public double Mass { get; }
         public bool Fahrenheit => Units == DefinitionUnits.IPS;
 
         public BridgeUnits(DefinitionUnits units)
@@ -34,10 +37,10 @@ namespace BridGHe.Common.Gpc
             Units = units;
             switch (units)
             {
-                case DefinitionUnits.Knm: Length = 1000; Force = 1000; break;
-                case DefinitionUnits.SI: Length = 1000; Force = 1; break;
-                case DefinitionUnits.Nmm: Length = 1; Force = 1; break;
-                case DefinitionUnits.IPS: Length = 25.4; Force = 4.4482216152605; break;
+                case DefinitionUnits.Knm: Length = 1000; Force = 1000; Mass = 1; break;
+                case DefinitionUnits.SI: Length = 1000; Force = 1; Mass = 1e-3; break;
+                case DefinitionUnits.Nmm: Length = 1; Force = 1; Mass = 1; break;
+                case DefinitionUnits.IPS: Length = 25.4; Force = 4.4482216152605; Mass = 4.5359237e-4; break;
                 default: throw new ArgumentOutOfRangeException(nameof(units));
             }
         }
@@ -55,6 +58,12 @@ namespace BridGHe.Common.Gpc
         public double ToMPa(double value) => IsIdentity ? value : value * Force / (Length * Length);
         public double ToMm2(double value) => IsIdentity ? value : value * Length * Length;
         public double ToMm4(double value) => IsIdentity ? value : value * Length * Length * Length * Length;
+        /// <summary>R6.5 P1 lane 3e (A05): a mass per area (definition mass unit per definition area, as 0.3.0 wrote it) in t/mm².</summary>
+        public double ToTonnePerMm2(double value) => IsIdentity ? value : value * Mass / (Length * Length);
+        /// <summary>R6.5 P1 lane 3e (A06): the power of a moving heat source (energy per second in the energy unit of the Straus7 files of
+        /// BridGHe 0.3.0: J for kNm, SI and Nmm, BTU for PSI) in N mm/s.</summary>
+        public double ToNmmPerSecond(double power) => power * (Units == DefinitionUnits.IPS ? BtuInJoule : 1) * 1000;
+        private const double BtuInJoule = 1055.05585262;
         /// <summary>Absolute temperature.</summary>
         public double ToCelsius(double value) => Fahrenheit ? (value - 32) * 5 / 9 : value;
         /// <summary>Temperature difference.</summary>

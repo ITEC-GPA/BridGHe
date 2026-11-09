@@ -34,7 +34,9 @@ namespace BridGHe.Common.Gpc.Legacy
         /// <summary>C3: a private copy of the conversion of the GH model when given (no second conversion), otherwise the conversion of the FEM model.</summary>
         private static (GPC.Model.Models.Model, LegacyImportReport) Input(ModelModel model, GpcModels.Conversion conversion, string outputPath, double tolerance, List<string> warnings)
         {
-            if (conversion == null || conversion.Tolerance != tolerance) { var report = new LegacyImportReport(); return (Import(model, outputPath, tolerance, report, warnings), report); }
+            // R6.5 P1 lane 3e: a model without FEM value is its GPC input, at the tolerance of its producer (no conversion to make).
+            if (model == null && conversion == null) throw new ArgumentException("GPC-only input: the model has no GPC input.");
+            if (conversion == null || (model != null && conversion.Tolerance != tolerance)) { var report = new LegacyImportReport(); return (Import(model, outputPath, tolerance, report, warnings), report); }
             warnings.AddRange(conversion.Report.Warnings);
             return (GPC.Model.Core.ModelValues.Copy(conversion.Model), conversion.Report);
         }
@@ -78,6 +80,37 @@ namespace BridGHe.Common.Gpc.Legacy
             // R6.4 (1): the results asked of the solver come from the GPC catalogue of the input (GpcResultSelection), before the input is
             // prepared for the solver; until R6.5 the former catalogue of the FEM model gives the former result objects, and the two must agree.
             var gpcSelection = movingOnly ? Array.Empty<GpcResultSelection.Entry>() : GpcSelection(gpc, model, solver, selection);
+            var solved = Solve(gpc, report, outputPath, solver, gpcSelection, movingOnly, warnings, out var entries, out var generated); analysed = solved;
+            // The former result objects: the cases of the requested results in their order, the generated cases of a moving-only analysis.
+            var caseModels = new List<CaseModel>();
+            if (movingOnly)
+            {
+                model.GeneratedMovingCases = generated;
+                foreach (var g in generated.OrderBy(p => p.Key)) { var c = new LoadCaseModel(g.Key.ToString(), g.Value); model.LoadCases.Add(c); caseModels.Add(c); }
+            }
+            else caseModels.AddRange(selection.Select(e => e.Case));
+            var units = BridgeUnits.Parse(model.Units.ToString());
+            var catalog = GpcResultCatalog.Attach(solved, units, entries, Enumerable.Range(0, model.Beams.Count).ToDictionary(k => k + 1, k => model.Beams[k].AngleDeg));
+            WriteBack(model, solved, catalog, caseModels);
+            return model;
+        }
+
+        /// <summary>R6.5 P1 lane 3e: the analysis of a model given by its GPC input alone: a copy of the input is written, solved and read by the
+        /// Converter as on the FEM path, and the catalog of the requested results is attached to the analysed model with the units and the beam
+        /// angles of the input's report. No FEM result object is written: the analysed model is the output.</summary>
+        public static GPC.Model.Models.Model Run(GpcModels.Conversion input, string outputPath, int solver, IReadOnlyList<GpcResultSelection.Entry> selection, bool movingOnly, List<string> warnings)
+        {
+            var (gpc, report) = Input(null, input ?? throw new ArgumentNullException(nameof(input)), outputPath, input.Tolerance, warnings);
+            var solved = Solve(gpc, report, outputPath, solver, selection, movingOnly, warnings, out var entries, out _);
+            GpcResultCatalog.Attach(solved, report.Units.Units, entries, report.BeamAngles);
+            return solved;
+        }
+
+        /// <summary>The solution of a private copy of the input and the entries of the results catalog, common to the two paths (R6.4 and C4):
+        /// the requested results in their order, or the generated cases of a moving-only analysis (<paramref name="generated"/>).</summary>
+        private static GPC.Model.Models.Model Solve(GPC.Model.Models.Model gpc, LegacyImportReport report, string outputPath, int solver, IReadOnlyList<GpcResultSelection.Entry> selection, bool movingOnly,
+            List<string> warnings, out List<GpcResultCatalog.Entry> entries, out Dictionary<int, string> generated)
+        {
             // Only the static cases generated from the paths are read by a moving-only analysis; otherwise the generated cases are not.
             if (gpc.MovingLoads != null)
                 foreach (var path in gpc.MovingLoads.Paths) if (path.Options != null && !movingOnly) path.Options.ConvertToStaticCases = false;
@@ -89,47 +122,34 @@ namespace BridGHe.Common.Gpc.Legacy
                 ? GpcStrausAnalysis.LinearStatic(gpc, output, scratch, nativeSections: report.NativeSections)
                 : GpcStrausAnalysis.Staged(gpc, NonlinearCase, output, scratch, nativeSections: report.NativeSections));
             warnings.AddRange(outcome.Warnings);
-            var solved = outcome.Model; analysed = solved;
-            // C4: the requested results in their order, kept in the analysed model (GpcResultCatalog), and the former result objects written
-            // from it with the same row functions as the Results components (GpcResultRows), in the definition units.
-            var entries = new List<GpcResultCatalog.Entry>(); var caseModels = new List<CaseModel>();
+            var solved = outcome.Model;
+            // C4: the requested results in their order, kept in the analysed model (GpcResultCatalog); the FEM path writes the former result
+            // objects from it with the same row functions as the Results components (GpcResultRows), in the definition units.
+            entries = new List<GpcResultCatalog.Entry>(); generated = null;
             if (solver != 0)
             {
                 // Former entries: solver 1 = the combinations as increments; solver 2 = "combination [stage]" per stage increment. Straus7 numbers
                 // the increments across the stages ("<number>: <increment>"), as the former entries did.
-                int k = 0;
-                foreach (var entry in selection)
+                foreach (var g in selection)
                 {
                     // R6.4 (1): the stage and the combination of a staged increment from the GPC catalogue (the stage increments of the input).
-                    var g = gpcSelection[k++];
                     string phase = solver == 1 ? UnstagedPhase : g.Stage, step = solver == 1 ? g.Name : g.Combination;
                     if (phase == null) throw new InvalidOperationException("Indice di incremento senza fase: " + g.Increment);
                     step = g.Increment.ToString(System.Globalization.CultureInfo.InvariantCulture) + ": " + step;
-                    RequireNonlinear(solved, entry.Case, NonlinearCase, phase, step);
-                    entries.Add(new GpcResultCatalog.Entry { Label = g.Name, Case = NonlinearCase, Step = step, Phase = phase }); caseModels.Add(entry.Case);
+                    RequireNonlinear(solved, g.Name, NonlinearCase, phase, step);
+                    entries.Add(new GpcResultCatalog.Entry { Label = g.Name, Case = NonlinearCase, Step = step, Phase = phase });
                 }
             }
             else if (movingOnly)
             {
-                model.GeneratedMovingCases = outcome.Run.GeneratedCases.ToDictionary(p => p.Key, p => p.Value);
+                generated = outcome.Run.GeneratedCases.ToDictionary(p => p.Key, p => p.Value);
                 // A generated moving step carries the results of its parent moving case, with the native case name as step.
-                string parent = model.GeneratedMovingCases.Count == 0 ? null
+                string parent = generated.Count == 0 ? null
                     : solved.LoadCases.Values.Single(l => solved.MovingLoads.Paths.Select(p => p.CaseGuid).Distinct().Single() == l.Guid).Name;
-                foreach (var generated in model.GeneratedMovingCases.OrderBy(p => p.Key))
-                {
-                    var c = new LoadCaseModel(generated.Key.ToString(), generated.Value); model.LoadCases.Add(c);
-                    entries.Add(new GpcResultCatalog.Entry { Label = c.Name, Case = parent, Step = MovingStep(generated.Key, generated.Value) }); caseModels.Add(c);
-                }
+                foreach (var g in generated.OrderBy(p => p.Key)) entries.Add(new GpcResultCatalog.Entry { Label = g.Value, Case = parent, Step = MovingStep(g.Key, g.Value) });
             }
-            else
-            {
-                int k = 0;
-                foreach (var entry in selection) { var g = gpcSelection[k++]; entries.Add(new GpcResultCatalog.Entry { Label = g.Name, Case = g.Name }); caseModels.Add(entry.Case); }
-            }
-            var units = BridgeUnits.Parse(model.Units.ToString());
-            var catalog = GpcResultCatalog.Attach(solved, units, entries, Enumerable.Range(0, model.Beams.Count).ToDictionary(k => k + 1, k => model.Beams[k].AngleDeg));
-            WriteBack(model, solved, catalog, caseModels);
-            return model;
+            else foreach (var g in selection) entries.Add(new GpcResultCatalog.Entry { Label = g.Name, Case = g.Name });
+            return solved;
         }
 
         /// <summary>R6.4 (1): the selection of the GPC catalogue of the input (<see cref="GpcResultSelection"/>) for the former selection on the FEM
@@ -203,11 +223,11 @@ namespace BridGHe.Common.Gpc.Legacy
             gpc.Combinations.Clear();
         }
 
-        private static void RequireNonlinear(GPC.Model.Models.Model solved, CaseModel caseModel, string outputCase, string phase, string step)
+        private static void RequireNonlinear(GPC.Model.Models.Model solved, string caseName, string outputCase, string phase, string step)
         {
             if (solved.NodesElements.Values.Any(n => GpcResults.NodeDisplacement(n, outputCase, step, phase) != null)) return;
             var states = solved.NodesElements.Values.SelectMany(n => n.Results).SelectMany(r => r.Results).Select(l => l.Case?.Name + " | " + l.State?.Phase + " | " + l.State?.Step).Distinct();
-            throw new InvalidOperationException("Risultati non lineari assenti per " + caseModel.Name + " (" + phase + " | " + step + "); stati: " + string.Join("; ", states));
+            throw new InvalidOperationException("Risultati non lineari assenti per " + caseName + " (" + phase + " | " + step + "); stati: " + string.Join("; ", states));
         }
     }
 }

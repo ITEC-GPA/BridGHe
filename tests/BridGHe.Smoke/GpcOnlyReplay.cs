@@ -274,6 +274,7 @@ internal static class GpcOnlyReplay
 
     private sealed class Run
     {
+        public readonly List<IGH_Goo> Goos = new List<IGH_Goo>();
         internal List<string> Outputs = new List<string>();
         /// <summary>The same texts with their GUIDs (the determinism of the identities derived without a FEM value).</summary>
         internal List<string> Raw = new List<string>();
@@ -308,30 +309,37 @@ internal static class GpcOnlyReplay
             try { doc.Enabled = true; doc.NewSolution(false, GH_SolutionMode.Silent); }
             finally { if (on) generators.SetValue(null, false); }
             var run = new Run { Unconverted = unconverted != unconvertedBefore };
-            foreach (var level in new[] { GH_RuntimeMessageLevel.Error, GH_RuntimeMessageLevel.Warning, GH_RuntimeMessageLevel.Remark })
-                foreach (var m in copy.RuntimeMessages(level)) run.Messages.Add(level + ": " + m);
-            foreach (var p in copy.Params.Output)
-            {
-                var data = p.VolatileData;
-                for (int b = 0; b < data.PathCount; b++)
-                {
-                    var branch = data.get_Branch(b);
-                    run.Outputs.Add($"{p.Name} {data.get_Path(b)} {branch.Count}"); run.Raw.Add(run.Outputs[^1]);
-                    foreach (var item in branch)
-                    {
-                        var goo = item as IGH_Goo;
-                        // L3a (declared rule): the ID of a report is new at every generation (BridgeReportData.Create): masked.
-                        if (modelsLane && p.Name == "Report ID" && copy.GetType().Name == "BridgeReportComponent") { run.Outputs.Add("Report ID <new per generation>"); run.Raw.Add(run.Outputs[^1]); continue; }
-                        run.Outputs.Add(Text(goo));
-                        var datum = goo == null ? null : Prop(goo, "Gpc");
-                        run.Raw.Add(ModelsText(goo, true) ?? (datum == null ? run.Outputs[^1] : goo.GetType().Name + " " + GpcNullValueChecks.TextOf(datum)));
-                        if (goo != null && kinds.Contains(goo.GetType().Name) && HasFem(goo)) run.FemOutputs++;
-                    }
-                }
-            }
+            Collect(copy, run, kinds);
             return run;
         }
         finally { doc.Dispose(); }
+    }
+
+    /// <summary>The messages and the outputs of a solved component (L3e: also of the component of the definition, for the rehearsal).</summary>
+    private static void Collect(GH_Component copy, Run run, ISet<string> kinds)
+    {
+        foreach (var level in new[] { GH_RuntimeMessageLevel.Error, GH_RuntimeMessageLevel.Warning, GH_RuntimeMessageLevel.Remark })
+            foreach (var m in copy.RuntimeMessages(level)) run.Messages.Add(level + ": " + m);
+        foreach (var p in copy.Params.Output)
+        {
+            var data = p.VolatileData;
+            for (int b = 0; b < data.PathCount; b++)
+            {
+                var branch = data.get_Branch(b);
+                run.Outputs.Add($"{p.Name} {data.get_Path(b)} {branch.Count}"); run.Raw.Add(run.Outputs[^1]);
+                foreach (var item in branch)
+                {
+                    var goo = item as IGH_Goo;
+                    // L3a (declared rule): the ID of a report is new at every generation (BridgeReportData.Create): masked.
+                    if (modelsLane && p.Name == "Report ID" && copy.GetType().Name == "BridgeReportComponent") { run.Outputs.Add("Report ID <new per generation>"); run.Raw.Add(run.Outputs[^1]); continue; }
+                    run.Outputs.Add(Text(goo));
+                    var datum = goo == null ? null : Prop(goo, "Gpc");
+                    run.Raw.Add(ModelsText(goo, true) ?? (datum == null ? run.Outputs[^1] : goo.GetType().Name + " " + GpcNullValueChecks.TextOf(datum)));
+                    if (goo != null && kinds.Contains(goo.GetType().Name) && HasFem(goo)) run.FemOutputs++;
+                    if (goo != null) run.Goos.Add(goo);
+                }
+            }
+        }
     }
 
     /// <summary>One replay of a component instance: the copy with the inputs of today and the copy with GPC-only inputs give the same outputs
@@ -1254,7 +1262,7 @@ internal static class GpcOnlyReplay
     /// <summary>L3a: a model given by its GPC input alone, as the producers give it on the path of P2 (<c>GH_Model.FromGpc</c>): the GPC input of
     /// the FEM-backed model with its state (the GPC bridge model of Build BridGHe Model, the analysed model, the drafts, the linked results).
     /// A model whose GPC input cannot be made has no GPC datum: the same goo.</summary>
-    private static IGH_Goo ModelOnly(IGH_Goo goo)
+    internal static IGH_Goo ModelOnly(IGH_Goo goo)
     {
         if (goo.ScriptVariable() == null) return goo;
         var t = goo.GetType();
@@ -1373,6 +1381,16 @@ internal static class GpcOnlyReplay
         switch (copy.GetType().Name)
         {
             case "SuperElementCheckComponent": case "BuildBridgeModel": Field(copy.GetType(), "_run").SetValue(copy, true); break; // L3b: Build BridGHe Model
+            case "StrausR3AnalysisComponent": case "MovingStaticAnalysisComponent":
+                // L3e: pressed only in the rehearsal with Straus7, the output in a folder of its own (same file name: the name of the analysed model comes from it).
+                if (rehearsalFolder != null)
+                {
+                    var path = copy.Params.Input.First(p => p.Name.Equals("Output Path", StringComparison.OrdinalIgnoreCase));
+                    string own = Path.Combine(rehearsalFolder, Guid.NewGuid().ToString("N")); Directory.CreateDirectory(own);
+                    string given = original.Params.Input.First(p => p.Name.Equals("Output Path", StringComparison.OrdinalIgnoreCase)).VolatileData.AllData(true).Single().ScriptVariable() as string;
+                    Field(copy.GetType(), "_run").SetValue(copy, true); Set(path.Name, new GH_String(Path.Combine(own, Path.GetFileName(given))));
+                }
+                break;
             case "BridgeCombinationExcelComponent":
             {
                 // L3b: Create writes a workbook in TEMP only (overwritten); Read reads the workbook of the example, resolved against the definition.
@@ -1712,6 +1730,99 @@ internal static class GpcOnlyReplay
 
     /// <summary>L3a: the regression of the section «models» (<c>gpc-only-models</c>).</summary>
     internal static void Models() => Regression("models");
+
+    /// <summary>L3e: where the analyses of the rehearsal write (null outside the rehearsal: the analyses are never pressed).</summary>
+    private static string rehearsalFolder;
+
+    /// <summary>L3e: the analysed GPC models of two outputs compared: fingerprint, datasets and the serialized model with its results, catalog and values
+    /// (<see cref="BridGHe.Common.Gpc.GpcResultsFile"/>). Null when equal, otherwise the first difference.</summary>
+    internal static string ResultsDifference(object fem, object gpc)
+    {
+        var a = Prop(fem, "GpcResults") as GPC.Model.Models.Model; var b = Prop(gpc, "GpcResults") as GPC.Model.Models.Model;
+        if (a == null || b == null) return "an output without results catalog: FEM-backed " + (a != null) + ", GPC-only " + (b != null);
+        if (GPC.Model.Models.ModelRevisions.AnalysisFingerprint(a) != GPC.Model.Models.ModelRevisions.AnalysisFingerprint(b)) return "the analysis fingerprint";
+        if (a.Name != b.Name) return "the name: '" + a.Name + "' -> '" + b.Name + "'";
+        if (!a.Datasets.Keys.SequenceEqual(b.Datasets.Keys)) return "the dataset keys";
+        byte[] x = BridGHe.Common.Gpc.GpcResultsFile.ToBytes(a), y = BridGHe.Common.Gpc.GpcResultsFile.ToBytes(b);
+        if (x.Length != y.Length) return "the size of the results: " + x.Length + " -> " + y.Length;
+        int at = Enumerable.Range(0, x.Length).FirstOrDefault(i => x[i] != y[i], -1);
+        return at < 0 ? null : "the results bytes at " + at + " of " + x.Length;
+    }
+
+    /// <summary>L3e: Node, Beam and Plate Results replayed on the elements of an analysed FEM-backed model (real results): GPC-only inputs, the same outputs.</summary>
+    internal static void ResultsNative(IGH_Goo analysed, string label, Action<bool, string> check, ref int replayed)
+    {
+        Init("models"); modelsLane = true;
+        var kinds = new HashSet<string>(ElementGoo.Concat(PropertyGoo).Concat(ModelGoo), StringComparer.Ordinal);
+        var byType = new SortedDictionary<string, (int Instances, int Items)>(StringComparer.Ordinal); var failures = new List<string>();
+        using (var doc = new GH_Document())
+        {
+            var decompose = BridgeSegmentExcelTests.Add(doc, "DecomposeModelComponent");
+            var input = new GH_Structure<IGH_Goo>(); input.Append(analysed, new GH_Path(0));
+            SetInput(decompose.Params.Input[0], input, g => g);
+            BridgeSegmentExcelTests.Solve(doc, true);
+            string[] components = { "NodeResultsComponent", "BeamResultsComponent", "PlateResultsComponent" };
+            for (int k = 0; k < components.Length; k++)
+                foreach (var element in decompose.Params.Output[k].VolatileData.AllData(true).Take(3).ToArray())
+                {
+                    var c = BridgeSegmentExcelTests.Add(doc, components[k]);
+                    var tree = new GH_Structure<IGH_Goo>(); tree.Append(element, new GH_Path(0));
+                    SetInput(c.Params.Input[0], tree, g => g);
+                    BridgeSegmentExcelTests.Solve(doc, true);
+                    Replay(c, label + ": " + c.Name, kinds, byType, failures); replayed++;
+                }
+        }
+        foreach (var f in failures) check(false, f);
+        modelsLane = false;
+    }
+
+    /// <summary>L3e: the rehearsal of P2 with real results on a definition analysed by Straus7 (native 99 or 50, with BRIDGHE_GPC_ONLY_REHEARSAL=1; never in
+    /// the gate): every component of the section replayed with GPC-only inputs, and every analysis pressed again on its GPC-only input and compared with the
+    /// analysis of the definition (outputs, messages, the analysed model and its results, bit for bit).</summary>
+    internal static void Rehearsal(GH_Document doc, string label)
+    {
+        if (Environment.GetEnvironmentVariable("BRIDGHE_GPC_ONLY_REHEARSAL") != "1") return;
+        Init("models"); modelsLane = true;
+        selected = Environment.GetEnvironmentVariable("BRIDGHE_GPC_ONLY_TYPES") is { Length: > 0 } named ? new HashSet<string>(named.Split(','), StringComparer.Ordinal) : null;
+        var kinds = new HashSet<string>(ElementGoo.Concat(PropertyGoo).Concat(ModelGoo), StringComparer.Ordinal);
+        var types = Lane3aTypes.Concat(Lane3bTypes).Concat(Lane3cTypes).Concat(Lane3dTypes).Concat(Lane3Consumers).Where(Selected).ToHashSet(StringComparer.Ordinal);
+        var analyses = new[] { "StrausR3AnalysisComponent", "MovingStaticAnalysisComponent" };
+        var byType = new SortedDictionary<string, (int Instances, int Items)>(StringComparer.Ordinal); var failures = new List<string>();
+        rehearsalFolder = Path.Combine(Path.GetTempPath(), "bridghe-gpc-only-rehearsal-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(rehearsalFolder);
+        try
+        {
+            foreach (var c in doc.Objects.OfType<GH_Component>().Where(c => analyses.Contains(c.GetType().Name) && Selected(c.GetType().Name)).ToArray())
+            {
+                string where = label + ": " + c.Name + " [" + c.NickName + "]";
+                var fem = new Run(); Collect(c, fem, kinds);
+                Run gpc;
+                try { gpc = Solve(c, g => GpcOnly(g, kinds), kinds, true); }
+                catch (Exception ex) { failures.Add(where + ": the GPC-only copy fails: " + ex.GetBaseException().Message + Frame(ex)); continue; }
+                var (n, items) = byType.TryGetValue(c.GetType().Name, out var v) ? v : (0, 0); byType[c.GetType().Name] = (n + 1, items + gpc.Outputs.Count);
+                if (!fem.Messages.SequenceEqual(gpc.Messages)) failures.Add(where + ": messages " + string.Join(" / ", fem.Messages) + " -> " + string.Join(" / ", gpc.Messages));
+                if (gpc.FemOutputs != 0) failures.Add(where + ": a FEM value in the output");
+                if (fem.Outputs.Count != gpc.Outputs.Count || !fem.Outputs.SequenceEqual(gpc.Outputs))
+                {
+                    var first = fem.Outputs.Zip(gpc.Outputs).FirstOrDefault(p => p.First != p.Second);
+                    failures.Add($"{where}: outputs {fem.Outputs.Count} -> {gpc.Outputs.Count}; first:" + Environment.NewLine + Differences(first.First ?? "<none>", first.Second ?? "<none>"));
+                }
+                if (fem.Goos.Count == 0 || gpc.Goos.Count == 0) { failures.Add(where + ": no output"); continue; }
+                string difference = ResultsDifference(fem.Goos[0], gpc.Goos[0]);
+                if (difference != null) failures.Add(where + ": analysed models differ: " + difference);
+                Console.WriteLine("GPC-ONLY rehearsal " + where + ": analysed, " + ((GPC.Model.Models.Model)Prop(gpc.Goos[0], "Gpc")).Datasets.Count + " datasets" + (difference == null ? ", equal" : ", DIFFERENT"));
+            }
+        }
+        finally { rehearsalFolder = null; }
+        foreach (var c in doc.Objects.OfType<GH_Component>().Where(c => types.Contains(c.GetType().Name)).ToArray())
+            if (c.Params.Input.Any(p => p.VolatileData.AllData(true).Any(g => g != null && (kinds.Contains(g.GetType().Name) || !ReferenceEquals(GpcOnly(g, kinds), g)))))
+                Replay(c, label + ": " + c.Name + " [" + c.NickName + "]", kinds, byType, failures);
+        foreach (var p in byType) Console.WriteLine($"GPC-ONLY rehearsal: {p.Key} {p.Value.Instances} instances, {p.Value.Items} output lines");
+        foreach (var f in failures.Take(60)) Console.WriteLine("  " + f);
+        if (Environment.GetEnvironmentVariable("BRIDGHE_GPC_ONLY_REPORT") is { Length: > 0 } report) File.WriteAllLines(report, failures);
+        modelsLane = false;
+        if (failures.Count != 0) throw new Exception($"GPC-ONLY rehearsal {label} FAIL: {failures.Count} differences or failures (first: {failures[0]})");
+        Console.WriteLine($"GPC-ONLY rehearsal {label} PASS: {byType.Sum(p => p.Value.Instances)} instances of {byType.Count} components replayed with GPC-only inputs on real Straus7 results");
+    }
 
     /// <summary>L3a: the in-memory cases of the section: the types no example of the scope reaches with data (Composite Beam Self Tension and
     /// Composite Beam Linear Tension Analysis are in no example) and the paths the examples do not reach (Composite Beam with an end section and

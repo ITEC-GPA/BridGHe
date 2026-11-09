@@ -119,11 +119,12 @@ namespace BridGHe.Common.Gpc.Legacy
         internal static void AddPrestress(AreaElement plate, LoadCaseBase loadCase, Vector3d stress, BridgeUnits units) =>
             (plate.Assignments.Physical ??= new ShellPhysicalData()).InitialStresses.Add(new ShellInitialStress { Case = loadCase, Components = new Vector3d(units.ToMPa(stress.X), units.ToMPa(stress.Y), units.ToMPa(stress.Z)) });
 
-        /// <summary>A former plate non-structural mass (<c>PlateNSMassModel</c>): only in N-mm (the mass per area as written).</summary>
+        /// <summary>A former plate non-structural mass (<c>PlateNSMassModel</c>): A05 (L3e): the mass per area and the offset in the definition
+        /// units, as 0.3.0 wrote them.</summary>
         internal static void AddNonStructuralMass(AreaElement plate, LoadCaseBase loadCase, double mass, double dynamicFactor, Vector3d offset, BridgeUnits units)
         {
-            if (!units.IsIdentity) throw new NotSupportedException("LegacyPlateNonStructuralMassUnitsRequireNmm");
-            (plate.Assignments.Physical ??= new ShellPhysicalData()).NonStructuralMasses.Add(new ShellNonStructuralMass { Case = loadCase, MassPerArea = mass, DynamicFactor = dynamicFactor, GlobalOffset = offset });
+            var global = units.IsIdentity ? offset : new Vector3d(units.ToMm(offset.X), units.ToMm(offset.Y), units.ToMm(offset.Z));
+            (plate.Assignments.Physical ??= new ShellPhysicalData()).NonStructuralMasses.Add(new ShellNonStructuralMass { Case = loadCase, MassPerArea = units.ToTonnePerMm2(mass), DynamicFactor = dynamicFactor, GlobalOffset = global });
         }
 
         /// <summary>A former plate pressure (<c>PlatePressureModel</c>). Review L1 B2: without a coordinate system a local pressure =

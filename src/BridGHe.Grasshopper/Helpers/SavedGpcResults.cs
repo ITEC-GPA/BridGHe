@@ -57,7 +57,7 @@ namespace BridGHe.Grasshopper.Helpers
                 {
                     if (GpcResultsFile.IsPreviousVersion(path)) { error = GpcResultsFile.PreviousVersionMessage; continue; }
                     var analysed = GpcResultsFile.Read(path, _hash);
-                    if (model?.Value == null) return "Risultati GPC senza modello FEM nel documento: rilanciare Run.";
+                    if (model?.Value == null && !GpcOnlyModels.WithoutFem(model)) return "Risultati GPC senza modello FEM nel documento: rilanciare Run.";
                     model.AttachGpc(analysed); _path = path;
                     return null;
                 }

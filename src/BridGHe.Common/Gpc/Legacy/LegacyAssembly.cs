@@ -549,10 +549,9 @@ namespace BridGHe.Common.Gpc.Legacy
                     pp.Supports.Add(support);
                 }
                 foreach (var s in dp.InitialStresses) pp.InitialStresses.Add(new ShellInitialStress { Case = CaseOf(s.Case), Components = new Vector3d(Units.ToMPa(s.Components.X), Units.ToMPa(s.Components.Y), Units.ToMPa(s.Components.Z)) });
-                // The former reader converted a non-structural mass only in N-mm.
-                if (dp.NonStructuralMasses.Count != 0 && !Units.IsIdentity) throw new NotSupportedException("LegacyPlateNonStructuralMassUnitsRequireNmm");
+                // A05 (L3e): the mass per area and the offset of the draft in the definition units, as 0.3.0 wrote them.
                 foreach (var m in dp.NonStructuralMasses)
-                    pp.NonStructuralMasses.Add(new ShellNonStructuralMass { Case = CaseOf(m.Case), MassPerArea = m.MassPerArea, DynamicFactor = m.DynamicFactor, GlobalOffset = new Vector3d(m.GlobalOffset.X, m.GlobalOffset.Y, m.GlobalOffset.Z) });
+                    pp.NonStructuralMasses.Add(new ShellNonStructuralMass { Case = CaseOf(m.Case), MassPerArea = Units.ToTonnePerMm2(m.MassPerArea), DynamicFactor = m.DynamicFactor, GlobalOffset = new Vector3d(Units.ToMm(m.GlobalOffset.X), Units.ToMm(m.GlobalOffset.Y), Units.ToMm(m.GlobalOffset.Z)) });
             }
             foreach (var l in d.Loads.Values)
             {

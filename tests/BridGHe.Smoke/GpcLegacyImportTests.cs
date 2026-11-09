@@ -163,6 +163,8 @@ internal static partial class GpcLegacyImportTests
     {
         ["refusal-prescribed-restrained"] = ("REFUSED NotSupportedException: LegacyPrescribedDisplacementNotMappedYet", "REFUSED NotSupportedException: " + LegacyModelImport.PrescribedDisplacementNotSupported),
         ["refusal-prescribed-free"] = ("REFUSED NotSupportedException: LegacyNodeLoadNotMappedYet: NodeDisplacementLoadModel", "REFUSED NotSupportedException: " + LegacyModelImport.PrescribedDisplacementNotSupported),
+        // L3e (A05, user decision of 8/11): the plate non-structural mass outside N-mm is read as 0.3.0 wrote it (the frozen index is not rewritten).
+        ["refusal-plate-mass-Knm"] = ("REFUSED NotSupportedException: LegacyPlateNonStructuralMassUnitsRequireNmm", "ACCEPTED"),
     };
 
     private static int Outcomes()
@@ -175,8 +177,8 @@ internal static partial class GpcLegacyImportTests
             Assert(now == e.Outcome, $"{e.Name}: the reader gives '{now}', recorded '{e.Outcome}'");
             if (e.Outcome != "ACCEPTED") refusals++;
         }
-        Assert(declared == DeclaredOutcomes.Count, $"the declared outcomes of 0.4.0 (prescribed displacements): {declared} of {DeclaredOutcomes.Count}");
-        Console.WriteLine($"GPC LEGACY IMPORT DECLARED: {declared} frozen payloads refused with the 0.4.0 message of prescribed displacements (user decision of 6/11), recorded with the former messages");
+        Assert(declared == DeclaredOutcomes.Count, $"the declared outcomes of 0.4.0 (prescribed displacements, A05): {declared} of {DeclaredOutcomes.Count}");
+        Console.WriteLine($"GPC LEGACY IMPORT DECLARED: {declared} frozen payloads with a declared outcome (prescribed displacements, user decision of 6/11, the 0.4.0 message; A05, user decision of 8/11, accepted)");
         return refusals;
     }
     /// <summary>The first BGHA1 payload of the example definition <paramref name="file"/> (relative to the example folder) whose root is a

@@ -28,12 +28,10 @@ namespace BridGHe.Common.Straus
             // The native solver accepts only canonical Windows paths when opening
             // its result file, although St7NewFile also accepts forward slashes.
             outputPath = Path.GetFullPath(outputPath);
-            if (solver < 0 || solver > 2) throw new ArgumentOutOfRangeException(nameof(solver));
-            if (!string.Equals(Path.GetExtension(outputPath), ".st7", StringComparison.OrdinalIgnoreCase)) throw new ArgumentException("Estensione richiesta: .st7");
-            if (movingOnly && solver != 0) throw new ArgumentException("Moving Static Analysis richiede il solutore lineare.");
-            if (movingOnly && !input.MovingPaths.Any(p => p.ConvertToStaticCases)) throw new ArgumentException("Nessun percorso configurato per generare casi statici.");
+            CheckRequest(outputPath, solver, movingOnly);
+            if (movingOnly && !input.MovingPaths.Any(p => p.ConvertToStaticCases)) throw new ArgumentException(NoStaticCasesMessage);
             if (movingOnly && input.MovingPaths.Any(p => p.Template.Vehicles.Any(v => v.Loads.Any(l => l is MovingLoads.MovingHeatSource))))
-                throw new NotSupportedException("Moving Static Analysis è strutturale. Le sorgenti termiche vanno esportate e risolte con il solutore termico Straus.");
+                throw new NotSupportedException(HeatSourceMessage);
             var model = ModelArchive.Clone(input);
             var oldMovingNames = new HashSet<string>(model.GeneratedMovingCases.Values);
             model.LoadCases.RemoveAll(c => oldMovingNames.Contains(c.Name));
@@ -51,6 +49,33 @@ namespace BridGHe.Common.Straus
             // F6 (a)/(b): the analysed GPC model carries the same name (the result consumers show it, e.g. in the fatigue sources).
             if (analysed != null && analysed.Name != result.Name) analysed.Name = result.Name ?? "";
             return result;
+        }
+
+        /// <summary>R6.5 P1 lane 3e: the analysis of a model given by its GPC input alone, with the same requests and refusals as the FEM path: the
+        /// paths and result names come from the input, and the analysed GPC model (with the results catalog) is returned; no FEM value is made.</summary>
+        public static GPC.Model.Models.Model Run(Gpc.GpcModels.Conversion input, string outputPath, int solver, IReadOnlyCollection<string> requested, bool movingOnly, out List<string> warnings)
+        {
+            if (input == null) throw new ArgumentNullException(nameof(input));
+            outputPath = Path.GetFullPath(outputPath);
+            CheckRequest(outputPath, solver, movingOnly);
+            var paths = input.Model.MovingLoads?.Paths ?? new List<GPC.Model.Actions.Moving.MovingLoadPath>();
+            if (movingOnly && !paths.Any(p => p.Options?.ConvertToStaticCases == true)) throw new ArgumentException(NoStaticCasesMessage);
+            if (movingOnly && paths.Any(p => p.Template.Vehicles.Any(v => v.HeatSources?.Length > 0))) throw new NotSupportedException(HeatSourceMessage);
+            var selection = movingOnly ? Array.Empty<Gpc.GpcResultSelection.Entry>() : Gpc.GpcResultSelection.Select(input.Model, solver, requested);
+            warnings = new List<string>();
+            var analysed = Gpc.Legacy.FemmAnalysisSeam.Run(input, outputPath, solver, selection, movingOnly, warnings);
+            if (string.IsNullOrEmpty(analysed.Name)) analysed.Name = Path.GetFileNameWithoutExtension(outputPath);
+            return analysed;
+        }
+
+        private const string NoStaticCasesMessage = "Nessun percorso configurato per generare casi statici.";
+        private const string HeatSourceMessage = "Moving Static Analysis è strutturale. Le sorgenti termiche vanno esportate e risolte con il solutore termico Straus.";
+
+        private static void CheckRequest(string outputPath, int solver, bool movingOnly)
+        {
+            if (solver < 0 || solver > 2) throw new ArgumentOutOfRangeException(nameof(solver));
+            if (!string.Equals(Path.GetExtension(outputPath), ".st7", StringComparison.OrdinalIgnoreCase)) throw new ArgumentException("Estensione richiesta: .st7");
+            if (movingOnly && solver != 0) throw new ArgumentException("Moving Static Analysis richiede il solutore lineare.");
         }
     }
 }

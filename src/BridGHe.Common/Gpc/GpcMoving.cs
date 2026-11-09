@@ -135,9 +135,9 @@ namespace BridGHe.Common.Gpc
                         });
                         break;
                     case "heat":
-                        if (!units.IsIdentity) throw new NotSupportedException("LegacyMovingHeatSourceUnitsRequireNmm");
-                        // Former value in J/s (native energy unit J); GPC power in N mm/s.
-                        heat.Add(new GPC.Model.Actions.Moving.MovingHeatSource { X = Double(load, "X", 0), Y = Double(load, "Y", 0), SizeX = Double(load, "SizeX", 0), SizeY = Double(load, "SizeY", 0), Power = Double(load, "Heat", 0) * 1000 });
+                        // A06 (L3e): position and size in the definition lengths; the former value in energy per second in the native energy unit of the
+                        // file of 0.3.0 (J, BTU for PSI); GPC power in N mm/s.
+                        heat.Add(new GPC.Model.Actions.Moving.MovingHeatSource { X = units.ToMm(Double(load, "X", 0)), Y = units.ToMm(Double(load, "Y", 0)), SizeX = units.ToMm(Double(load, "SizeX", 0)), SizeY = units.ToMm(Double(load, "SizeY", 0)), Power = units.ToNmmPerSecond(Double(load, "Heat", 0)) });
                         break;
                     default: throw new NotSupportedException("LegacyMovingLoadKind: " + kind);
                 }

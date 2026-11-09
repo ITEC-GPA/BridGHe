@@ -133,6 +133,9 @@ internal static class NativeModularBridgeTests
 #if GPC_PILOT
         R3ConcreteExclusionCheck.Run(doc,checks[0],Output(merge,"Model").VolatileData.AllData(true).Single(),"99");
 #endif
+#if GPC_PILOT
+        GpcOnlyReplay.Rehearsal(doc,"99"); // L3e: only with BRIDGHE_GPC_ONLY_REHEARSAL=1
+#endif
         if(!original.SequenceEqual(File.ReadAllBytes(source))||!migrated.SequenceEqual(File.ReadAllBytes(candidate)))throw new Exception("Native test modified a GHX source.");
         File.WriteAllText(Path.Combine(folder,"validation.json"),JsonSerializer.Serialize(new{Definition=relative,SourceSHA256=Convert.ToHexString(SHA256.HashData(original)),MigratedSHA256=Convert.ToHexString(SHA256.HashData(migrated)),Native=true,Models=summary,Phases=model.BridgeWorkflow.Phases.Length,Combinations=model.LoadCombinations.Count,SectionChecks=rows.Length,DetailBranches=details.Length,Plots=plots.Length,ReportInputs=true,ResultsSavedInGHX=false},new JsonSerializerOptions{WriteIndented=true}));
         Console.WriteLine($"NATIVE MODULAR BRIDGE PASS: 4 models, {model.LoadCombinations.Count} combinations, {rows.Length} section results, {details.Length} details, {plots.Length} plots, report inputs. GHX files unchanged.");return 0;
