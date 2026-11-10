@@ -50,16 +50,14 @@ internal static class GpcReleaseSetTests
             // for GPCModel, and a CompositeBridge loaded after the start that is not the one of the shipped set.
             Rewrite(Manifest, Path.Combine(root, "lib", "GPC", "release-set.json"), "GPCModel.dll");
             Rewrite(Manifest, Path.Combine(plugin, GpcReleaseSet.ShippedManifest), "GPCChecker.CompositeBridge.dll");
-            var start = new ProcessStartInfo("dotnet") { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, WorkingDirectory = Environment.CurrentDirectory };
-            start.ArgumentList.Add(typeof(GpcReleaseSetTests).Assembly.Location); start.ArgumentList.Add("--gpc-guard"); start.ArgumentList.Add(plugin);
-            using (var process = Process.Start(start))
+            Console.WriteLine("GPC GUARD CHILD START");
+            Console.Out.Flush();
             {
-                var output = process.StandardOutput.ReadToEndAsync(); var error = process.StandardError.ReadToEndAsync();
-                if (!process.WaitForExit(300000)) { process.Kill(true); throw new TimeoutException("GPC guard process"); }
-                string text = output.Result;
+                var (exitCode, text, error) = SmokeChildProcess.Run("--gpc-guard", plugin);
+                Console.WriteLine("GPC GUARD CHILD EXIT: " + exitCode);
                 string warning = text.Split('\n').Select(l => l.Trim()).FirstOrDefault(l => l.StartsWith("GPC GUARD WARNING: "));
-                Require(text.Contains("GPC GUARD LATE LOAD worker"), "a GPC library loaded first by a worker while Rhino's thread waits is checked without a hang: " + text + error.Result);
-                Require(process.ExitCode == 0 && warning != null, "the guard process runs: " + text + error.Result);
+                Require(text.Contains("GPC GUARD LATE LOAD worker"), "a GPC library loaded first by a worker while Rhino's thread waits is checked without a hang: " + text + error);
+                Require(exitCode == 0 && warning != null, "the guard process runs: " + text + error);
                 Require(warning.Contains("Bin non aggiornato") && warning.Contains($"GPCModel {Version("GPCModel.dll")} invece di 9.9.9.9"), "the plugin reports a bin older than lib/GPC at load");
                 Require(warning.Contains($"GPCChecker.CompositeBridge {Version("GPCChecker.CompositeBridge.dll")} invece di 9.9.9.9"), "a GPC library loaded later from another set is reported when it loads");
                 Require(text.Contains("GPC GUARD COMPONENT WARNINGS 1"), "the warning appears once on Super Element Check");
@@ -78,19 +76,24 @@ internal static class GpcReleaseSetTests
     /// <summary>--gpc-guard: starts the guard of the plugin in the folder, as Grasshopper does, and prints what a component shows.</summary>
     internal static int Guard(string folder)
     {
+        SmokeTrace.Write("GPC GUARD ENTER");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
         var plugin = System.Reflection.Assembly.LoadFrom(Path.Combine(folder, "BridGHe.Grasshopper.gha"));
         var guard = plugin.GetType("BridGHe.Grasshopper.Helpers.GpcReleaseGuard", true);
+        SmokeTrace.Write("GPC GUARD START");
         guard.GetMethod("Start").Invoke(null, null);
+        SmokeTrace.Write("GPC GUARD STARTED");
         // CompositeBridge loaded first by a worker while Rhino's thread waits for it, as in Super Element Check (Parallel.For on the
         // solution thread): the guard reports it from the worker without waiting for Rhino's thread.
         Console.WriteLine("GPC GUARD LATE LOAD " + LoadOnWorker("GPCChecker.CompositeBridge", "GPC GUARD"));
+        SmokeTrace.Write("GPC WORKER LOADED");
         Console.WriteLine("GPC GUARD WARNING: " + (guard.GetProperty("Warning").GetValue(null) ?? "none"));
         var component = (Grasshopper.Kernel.GH_Component)Activator.CreateInstance(plugin.GetType("BridGHe.Grasshopper.Components.BridgeChecks.SuperElementCheckComponent", true));
         var warn = guard.GetMethod("Warn");
         warn.Invoke(null, new object[] { component }); warn.Invoke(null, new object[] { component });
         Console.WriteLine("GPC GUARD COMPONENT WARNINGS " + component.RuntimeMessages(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning).Count);
+        SmokeTrace.Write("GPC GUARD COMPLETE");
         return 0;
     }
 
@@ -128,5 +131,7 @@ internal static class GpcReleaseSetTests
     private static void Require(bool condition, string message)
     {
         if (!condition) throw new InvalidOperationException("GPC RELEASE SET: " + message);
+        Console.WriteLine("PASS GPC RELEASE SET: " + message);
+        Console.Out.Flush();
     }
 }

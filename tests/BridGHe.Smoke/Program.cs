@@ -17,14 +17,18 @@ internal static class Program
     {
         try
         {
+            SmokeTrace.Write("MAIN " + Environment.ProcessPath + " " + string.Join(" ", args));
+            AppDomain.CurrentDomain.ProcessExit += (_, _) => SmokeTrace.Write("PROCESS EXIT " + Environment.ExitCode);
+            AppDomain.CurrentDomain.UnhandledException += (_, e) => SmokeTrace.Write("UNHANDLED " + e.ExceptionObject);
             RhinoInside.Resolver.Initialize(@"C:\Program Files\Rhino 8\System");
+            SmokeTrace.Write("RESOLVER READY");
             if(args.Contains("--regression") && args.SkipWhile(a=>a!="--regression").Skip(1).FirstOrDefault()=="bridge-report")
                 return RunBridgeReport();
             // gPC section bench on a capture: no Rhino host, no Straus.
             if(args.Contains("--gpc-bench")) return GpcSectionBench.Run(args);
             return Run(args);
         }
-        catch(Exception ex) { Console.Error.WriteLine(ex);return 1; }
+        catch(Exception ex) { SmokeTrace.Write("MAIN ERROR " + ex); Console.Error.WriteLine(ex);return 1; }
     }
     private static void Assert(bool test,string name) { if(!test)throw new Exception("FAIL: "+name);checks++;Console.WriteLine("PASS: "+name); }
     // Run managed Word packaging tests without initializing the native Rhino host.
@@ -39,11 +43,13 @@ internal static class Program
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static int Run(string[] args)
     {
+        string childMode = args.FirstOrDefault(SmokeChildProcess.IsChildMode);
+        if (childMode != null)
+            return SmokeChildProcess.RunHost(childMode, args.SkipWhile(a => a != childMode).Skip(1).First());
         // --pure does not start Rhino, useful for CI and unlicensed environments.
+        SmokeTrace.Write("RHINO INIT");
         using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},WindowStyle.Hidden);
-        if(args.Contains("--gpc-guard")) return GpcReleaseSetTests.Guard(args.SkipWhile(a=>a!="--gpc-guard").Skip(1).First());
-        if(args.Contains("--plugin-check")) return PluginBuildCheckTests.Child(args.SkipWhile(a=>a!="--plugin-check").Skip(1).First());
-        if(args.Contains("--plugin-check-load")) return PluginBuildCheckTests.LoadChild(args.SkipWhile(a=>a!="--plugin-check-load").Skip(1).First());
+        SmokeTrace.Write("RHINO READY");
         GpcDomainCache.Configure();
         if(args.Contains("--tidy-example")) return ExampleTidy.Run(args.SkipWhile(a=>a!="--tidy-example").Skip(1).FirstOrDefault(),args.Contains("--publish"),args.Contains("--capture"));
         if(args.Contains("--results-outside")) { var o=args.SkipWhile(a=>a!="--results-outside").Skip(1).ToArray(); return AnalysisResultsMigration.Run(o[0],o[1],o.Length>2?o[2]:null); }
@@ -59,7 +65,17 @@ internal static class Program
         if(args.Contains("--utility-examples")) { BridgeUtilityTests.Run(); BridgeUtilityExamples.Run(true); return 0; }
         if(args.Contains("--combination-excel-example")) { BridgeCombinationExcelExample.Run(true); return 0; }
         if(args.Contains("--bridge-workflow")) return BridgeWorkflowExample.Run(args.Contains("--native"));
-        if(args.Contains("--workflow-stations-native")) return NativeWorkflowStationTests.Run(args.Contains("--capture-station-fixture"));
+        if(args.Contains("--workflow-stations-native"))
+        {
+            try { return NativeWorkflowStationTests.Run(args.Contains("--capture-station-fixture")); }
+            catch(Exception error)
+            {
+                // Preserve the original failure before native Rhino teardown.
+                Console.Error.WriteLine("NATIVE STATION REPLAY FAIL: " + error);
+                Console.Error.Flush();
+                return 1;
+            }
+        }
         if(args.Contains("--inventory")) { CheckGrasshopper(false,true);return 0; }
         if(args.Contains("--components-only")) { CheckGrasshopper(false);return 0; }
         if(args.Contains("--simple-bridge-examples")) { SimpleBridgeTests.Run(); SimpleBridgeExamples.Run(true); return BridgeExampleMigration.UpgradeGenerated(0,"29-","30-","31-","32-"); }
@@ -250,7 +266,10 @@ internal static class Program
 
     private static void CheckNativeSections()
     {
+        Console.WriteLine("NATIVE: initializing Straus7 API");
+        Console.Out.Flush();
         StrausRuntime.EnsureInitialized();
+        Console.WriteLine("NATIVE: Straus7 API initialized");
         var previews=new System.Collections.Generic.List<object>();
         foreach(var shape in StrausSectionCatalog.All)
         {

@@ -97,23 +97,27 @@ try {
         New-Item -ItemType Directory -Path $packageRoot -Force | Out-Null
         try {
             $assemblies = @('BridGHe.Grasshopper.gha','BridGHe.Common.dll','GPCUtilities.dll','GPCGeometry.dll','DelaunayMesh.dll',
-                'GPCModel.dll','GPCChecker.Concrete.dll','GPCChecker.Steel.dll','GPCChecker.CompositeBridge.dll','MathNet.Numerics.dll','Svg.dll','ExCSS.dll')
+                'GPCModel.dll','GPCModelData.dll','GPCChecker.Concrete.dll','GPCChecker.Steel.dll','GPCChecker.CompositeBridge.dll',
+                'MathNet.Numerics.dll','Svg.dll','ExCSS.dll','System.Text.Json.dll','System.Text.Encodings.Web.dll','System.IO.Pipelines.dll')
             foreach ($name in $assemblies) { Copy-Item -LiteralPath (Join-Path $compiled $name) -Destination $packageRoot }
             Copy-Item -LiteralPath (Join-Path $compiled 'gpc-release-set.json') -Destination $packageRoot
             Get-ChildItem -LiteralPath $compiled -Filter 'BridGHe.Grasshopper.*.json' | Copy-Item -Destination $packageRoot
             Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination $packageRoot
             Copy-Item -LiteralPath (Join-Path $projectRoot 'docs') -Destination $packageRoot -Recurse
             Copy-Item -LiteralPath (Join-Path $projectRoot 'migration') -Destination $packageRoot -Recurse
-            # Ship definitions and documentation; native runs and historical packages
-            # stay beside their examples locally, but must not bloat the plugin package.
+            # Ship definitions and documentation. Copy only their referenced .bghr
+            # results below; native solver outputs and historical packages stay local.
             $exampleRoot = Join-Path $projectRoot 'example'
             foreach ($file in Get-ChildItem -LiteralPath $exampleRoot -File -Recurse) {
                 $relative = [IO.Path]::GetRelativePath($exampleRoot, $file.FullName)
-                if ($relative -match '(^|[\\/])(calcoli|archivio-pacchetti|esecuzioni|backup-prima-fasi)([\\/]|$)' -or $file.Name.StartsWith('~$')) { continue }
+                if ($relative -match '(^|[\\/])(calcoli|archivio-pacchetti|esecuzioni|backup-prima-fasi|Straus File)([\\/]|$)' -or
+                    $file.Extension -in @('.st7','.LSA','.LSL','.NLA','.NLL','.bghr') -or $file.Name.StartsWith('~$')) { continue }
                 $target = Join-Path (Join-Path $packageRoot 'example') $relative
                 New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
                 Copy-Item -LiteralPath $file.FullName -Destination $target
             }
+            & py (Join-Path $PSScriptRoot 'package_results.py') $exampleRoot (Join-Path $packageRoot 'example')
+            if ($LASTEXITCODE -ne 0) { throw 'Risultati esterni degli esempi mancanti o non coerenti: pacchetto non creato.' }
             $packageAssets = Join-Path $packageRoot 'assets'
             New-Item -ItemType Directory -Path $packageAssets -Force | Out-Null
             Copy-Item -LiteralPath (Join-Path $projectRoot 'assets\icons') -Destination $packageAssets -Recurse

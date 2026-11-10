@@ -1,4 +1,6 @@
 using System;
+using BridgeActionBehavior = BridGHe.Common.Checks.BridgeActionBehavior;
+using BridgeWorkflowMethod = BridGHe.Common.Checks.BridgeWorkflowMethod;
 using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Checks;

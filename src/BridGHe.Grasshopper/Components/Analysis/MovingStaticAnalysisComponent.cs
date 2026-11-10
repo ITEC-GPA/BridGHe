@@ -69,8 +69,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
                     var loaded = _saved.Load(path, out string error);
                     if (loaded == null)
                     {
-                        _model = new GH_Model(); _inputHash = null;
-                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, error + " Run required."); Message = "Run required"; return;
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, error + " Restore the file and recompute, or Run again."); Message = "Run required"; return;
                     }
                     _model = loaded;
                 }

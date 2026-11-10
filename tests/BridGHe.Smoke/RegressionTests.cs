@@ -98,6 +98,7 @@ internal static class RegressionTests
             ["bridge-example-parameters"] = BridgeExampleParameters,
             ["bridge-detail-archives"] = BridgeDetailArchives,
             ["gpc-release-set"] = GpcReleaseSetTests.Run,
+            ["rhino-child-lifecycle"] = RhinoChildLifecycleTests.Run,
             ["plugin-build-check"] = PluginBuildCheckTests.Run
         };
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);

@@ -1,5 +1,15 @@
 # Verifiche della Release
 
+## Stato corrente — 10 novembre 2026
+
+Consultare il [resoconto di stabilizzazione](STABILIZZAZIONE-2026-11-10.md) per ambiente, correzioni, controlli rieseguiti e limiti ancora aperti. Le sezioni seguenti conservano le evidenze delle rispettive date: i loro conteggi e gli esiti nativi non vanno attribuiti automaticamente alla build corrente.
+
+Adottato e poi mantenuto fisso il **set ufficiale ReBear dell'8 novembre**: Model 5.50.0.2, ModelData 0.3.0.30, Concrete 0.37.0.1, Steel 2.134.0.0 e CompositeBridge 1.31.0.1. La suite completa `tools/build.ps1 -Native` passa **378 controlli core/nativi e 88 gruppi di regressione**, con zero fallimenti. Passano anche la riapertura di 55 GHX, il replay di 23 esempi portabili, nove suite native estese, 8 test Python e 21 + 9 controlli del sistema di build.
+
+La baseline passa 238 confronti con la tolleranza originaria `1e-12`: 163 valori identici e 75 con scarti entro tolleranza, senza cambiare la fixture. Il replay API dell'esempio 19 passa 12.552 confronti e produce 399 risultati di sezione senza errori GH; il test ora seleziona il caso di risultato per nome, perché i file presenti includono anche `Dead`. I file nativi restano invariati. Conteggi, scarti, provenienza ed evidenze sono nel resoconto.
+
+`gpc-release-set`, `plugin-build-check` e `rhino-child-lifecycle` passano nella suite completa: la correzione del teardown Rhino dei figli mantiene visibili errori e marcatori finali. Il caricamento simultaneo reale degli altri plugin resta un controllo distinto.
+
 ## Alternative mobili e limite delle fasi GPC — 26 ottobre 2026
 
 Il replay nativo del 50 REV003 ha evidenziato che le azioni a coefficiente zero con stato locale venivano trasformate ciascuna in una fase GPC. Con 31 posizioni alternative si superava il limite di 20 fasi, anche se ogni combinazione applicava una sola posizione.

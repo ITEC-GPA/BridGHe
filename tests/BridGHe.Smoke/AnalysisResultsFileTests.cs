@@ -29,6 +29,9 @@ internal static class AnalysisResultsFileTests
             FileRoundTrip(folder);
             StrausComponent(folder);
             MovingComponent(folder);
+            MissingResultsRecovery(folder, "StrausR3AnalysisComponent");
+            MissingResultsRecovery(folder, "MovingStaticAnalysisComponent");
+            WriteFailureFallsBack(folder);
         }
         finally { try { Directory.Delete(folder, true); } catch (IOException) { } }
     }
@@ -50,6 +53,59 @@ internal static class AnalysisResultsFileTests
     }
 
     private static string Archive(ModelModel model) => Convert.ToHexString(SHA256.HashData(ModelArchive.Write(model)));
+
+    private static void WriteFailureFallsBack(string folder)
+    {
+        var assembly = Plugin();
+        string blocked = Path.Combine(folder, "not-a-directory");
+        File.WriteAllText(blocked, "keep");
+        using var document = new GH_Document();
+        var component = Component(assembly, document, "StrausR3AnalysisComponent", Goo(assembly, Model(false)),
+            Path.Combine(blocked, "M01.st7"));
+        Solve(document);
+        Seed(component, Goo(assembly, Model(true)));
+        var saved = Saved(component);
+        Require(saved.ItemExists("Data") && !saved.ItemExists("ResultsHash") && File.ReadAllText(blocked) == "keep",
+            "failed external write keeps embedded results and preserves the blocking file");
+    }
+
+    private static void MissingResultsRecovery(string folder, string type)
+    {
+        var assembly = Plugin();
+        var input = Goo(assembly, Model(false));
+        string output = Path.Combine(folder, type, "recover.st7");
+        string file = AnalysisResultsFile.PathFor(output);
+        using var original = new GH_Document();
+        var component = Component(assembly, original, type, input, output);
+        Solve(original);
+        Seed(component, Goo(assembly, Model(true)));
+        if (type == "MovingStaticAnalysisComponent")
+        {
+            var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            component.GetType().GetField("_inputHash", flags).SetValue(component,
+                component.GetType().GetField("_hashedValue", flags).GetValue(component));
+        }
+        var saved = Saved(component);
+        byte[] bytes = File.ReadAllBytes(file);
+        File.Delete(file);
+        var reopened = Reopened(assembly, type, saved, input, output, out var document);
+        using (document)
+        {
+            Solve(document);
+            Require(Output(reopened)?.Elements.Count is null or 0, type + ": missing results never delivered");
+            var unavailable = Saved(reopened);
+            Require(unavailable.ItemExists("ResultsHash") && unavailable.GetString("ResultsHash") == saved.GetString("ResultsHash"),
+                type + ": saving with missing results preserves the reference");
+            // Recover through a new location, with the original file still absent.
+            string moved = Path.Combine(folder, "moved", type, "recover.st7");
+            Directory.CreateDirectory(Path.GetDirectoryName(moved));
+            File.WriteAllBytes(AnalysisResultsFile.PathFor(moved), bytes);
+            Inputs(reopened, input, moved);
+            reopened.ExpireSolution(false); Solve(document);
+            Require(Output(reopened) is { } restored && AnalysisResultsFile.HasResults(restored),
+                type + ": restoring at a new output path recovers results without Run");
+        }
+    }
 
     private static void FileRoundTrip(string folder)
     {
@@ -162,6 +218,8 @@ internal static class AnalysisResultsFileTests
         Solve(doc3);
         Require(Output(stale)?.Elements.Count is null or 0 && stale.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Any(m => m.Contains("Run")),
             "a results file changed after saving is not used, and the component asks for Run");
+        Require(Saved(stale).GetString("ResultsHash") == migrated.GetString("ResultsHash"),
+            "a changed results file does not erase the saved reference");
         Seed(stale, Goo(assembly, Model(false)));
         var noResults = Saved(stale);
         Require(noResults.ItemExists("Data") && !noResults.ItemExists("ResultsHash"), "a model without results is written in the document, as before");

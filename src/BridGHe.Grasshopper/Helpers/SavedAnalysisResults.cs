@@ -49,7 +49,6 @@ namespace BridGHe.Grasshopper.Helpers
         public GH_Model Load(string outputPath, out string error)
         {
             error = null;
-            _placeholder = null;
             string current = null;
             try { if (!string.IsNullOrWhiteSpace(outputPath)) current = AnalysisResultsFile.PathFor(outputPath); }
             catch (Exception ex) { error = ex.Message; }
@@ -59,13 +58,17 @@ namespace BridGHe.Grasshopper.Helpers
                 try
                 {
                     var value = AnalysisResultsFile.Read(path, _hash, out var guids);
+                    var loaded = GH_Model.FromSavedResults(value, guids);
                     _path = path;
-                    return _saved = GH_Model.FromSavedResults(value, guids);
+                    _placeholder = null;
+                    return _saved = loaded;
                 }
                 catch (Exception ex) { error = ex.Message; }
             }
             error ??= "File dei risultati non trovato: " + (current ?? _path) + ".";
-            _saved = null; _path = null; _hash = null;
+            // Keep the unresolved reference across saves and retries. A temporarily
+            // unavailable file must not turn an autosave into permanent result loss.
+            _saved = null;
             return null;
         }
 

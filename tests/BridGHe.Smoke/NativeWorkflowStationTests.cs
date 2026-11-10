@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Helpers;
@@ -31,7 +33,23 @@ internal static class NativeWorkflowStationTests
     internal const string FixturePath = "tests/BridGHe.Smoke/Fixtures/bridge-stations-19.json";
     private static Sample SampleOf(BeamForceResultModel f) => new(f.Station, f.AxialForce, f.Vx, f.Vy, f.Torque, f.Mx, f.My);
 
-    private static T Open<T>(string path, Func<int, T> read)
+    // Read the names of the result cases, not their load-case indices: a saved
+    // model can contain an additional Dead case before the requested action.
+    [DllImport("kernel32", CharSet = CharSet.Unicode)]
+    private static extern IntPtr GetModuleHandle(string name);
+    [UnmanagedFunctionPointer(CallingConvention.Winapi, CharSet = CharSet.Ansi)]
+    private delegate int GetResultCaseName(int id, int index, StringBuilder name, int capacity);
+
+    private static int SelectResultCase(IReadOnlyList<string> names, string expected)
+    {
+        var matches = Enumerable.Range(0, names.Count).Where(i =>
+            names[i] == expected || names[i] == $"{i + 1}: {expected}").ToArray();
+        if (matches.Length != 1)
+            throw new InvalidOperationException($"Expected exactly one result case '{expected}', found {matches.Length}: {string.Join(", ", names)}");
+        return matches[0] + 1;
+    }
+
+    private static T Open<T>(string path, string expectedCase, Func<int, int, T> read)
     {
         lock (StrausRuntime.Gate)
         {
@@ -43,8 +61,17 @@ internal static class NativeWorkflowStationTests
                 StrausRuntime.Check(St7.St7OpenResultFile(id, Path.GetFullPath(Path.ChangeExtension(path, ".LSA")), null,
                     St7.btTrue, ref primary, ref secondary), "Open existing results");
                 results = true;
-                BridgeWorkflowTests.Require(primary == 1, "Example replay expects one incremental case per file.");
-                return read(id);
+                var handle = GetModuleHandle("St7API.dll"); // AcquireModelId already initialized the vendor DLL.
+                var getName = Marshal.GetDelegateForFunctionPointer<GetResultCaseName>(NativeLibrary.GetExport(handle, "St7GetResultCaseName"));
+                var names = Enumerable.Range(1, primary).Select(index =>
+                {
+                    var name = new StringBuilder(1024);
+                    StrausRuntime.Check(getName(id, index, name, name.Capacity), "Read result case name");
+                    return name.ToString();
+                }).ToArray();
+                int selected = SelectResultCase(names, expectedCase);
+                Console.WriteLine($"NATIVE STATION CASE: {Path.GetFileName(path)} / {selected}: {expectedCase} ({primary} primary cases)");
+                return read(id, selected);
             }
             finally
             {
@@ -74,6 +101,16 @@ internal static class NativeWorkflowStationTests
 
     internal static int Run(bool captureFixture)
     {
+        BridgeWorkflowTests.Require(SelectResultCase(new[] { "1: G1" }, "G1") == 1 &&
+            SelectResultCase(new[] { "1: Dead", "2: G1" }, "G1") == 2 &&
+            SelectResultCase(new[] { "G1", "Dead" }, "G1") == 1,
+            "Result case selection follows the exact name, including an additional Dead case.");
+        foreach (var invalid in new[] { Array.Empty<string>(), new[] { "1: Other" }, new[] { "1: G1", "2: G1" } })
+        {
+            bool rejected = false;
+            try { SelectResultCase(invalid, "G1"); } catch (InvalidOperationException) { rejected = true; }
+            BridgeWorkflowTests.Require(rejected, "Missing or ambiguous result cases must be rejected.");
+        }
         string root = ExamplePaths.Calculations("19-flusso-acciaio-misto");
         string[] names = { "G1_GETTO", "G2_PERMANENTI", "Q_TRAFFICO", "RITIRO_FEM" };
         string[] keys = { "G1", "G2", "Q", "RITIRO" };
@@ -87,9 +124,9 @@ internal static class NativeWorkflowStationTests
             ModelHelper.GetLoadCases(m, out var cases);
             var loadCase = cases.Single(c => c.Name == name);
             m.LoadCases.Clear(); m.LoadCases.Add(loadCase);
-            Open(Path.Combine(root, "REV003-" + name + ".st7"), id =>
+            Open(Path.Combine(root, "REV003-" + name + ".st7"), name, (id, resultCase) =>
             {
-                StrausResultsReader.Read(id, 1, loadCase, m);
+                StrausResultsReader.Read(id, resultCase, loadCase, m);
                 return true;
             });
             return m;
@@ -103,7 +140,7 @@ internal static class NativeWorkflowStationTests
         for (int phase = 0; phase < models.Length; phase++)
         {
             var model = models[phase];
-            Open(Path.Combine(root, "REV003-" + names[phase] + ".st7"), id =>
+            Open(Path.Combine(root, "REV003-" + names[phase] + ".st7"), names[phase], (id, resultCase) =>
             {
                 for (int i = 0; i < model.Beams.Count; i++)
                 {
@@ -112,7 +149,7 @@ internal static class NativeWorkflowStationTests
                         .Where(f => f.LoadCase.Name == keys[phase] + " [FEM]").OrderBy(f => f.Station).ToArray();
                     var stations = actual.Select(f => f.Station).ToArray();
                     int columns = 0; var raw = new double[St7.kMaxBeamResult];
-                    StrausRuntime.Check(St7.St7GetBeamResultArrayPos(id, St7.rtBeamForce, St7.stBeamPrincipal, i + 1, 1,
+                    StrausRuntime.Check(St7.St7GetBeamResultArrayPos(id, St7.rtBeamForce, St7.stBeamPrincipal, i + 1, resultCase,
                         stations.Length, stations, ref columns, raw), "Independent native sampling");
                     var native = new List<Sample>();
                     for (int s = 0; s < stations.Length; s++)

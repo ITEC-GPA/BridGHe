@@ -38,7 +38,7 @@ BridGHe **0.3.0** usa le DLL GPC fissate in **`lib/GPC`**, con manifest, version
 
 Al caricamento in Grasshopper il plugin controlla le librerie GPC con cui calcola. Se gira dal `bin/Release` di un checkout, confronta le DLL accanto al plugin con `lib/GPC`: un `bin` non ricompilato dopo un aggiornamento del set viene segnalato. Confronta inoltre le DLL GPC caricate in Rhino con `gpc-release-set.json`: un altro plugin, per esempio ReBear, può aver caricato prima un set diverso. Le differenze compaiono nella riga di comando di Rhino e come avviso su Super Element Check, Bridge Detail Check, Bridge Section Check e sugli altri componenti che calcolano con GPC; un set non verificabile è segnalato solo nella riga di comando. Il controllo è provato dalla regressione `gpc-release-set` del progetto Smoke.
 
-Il **set ufficiale del 2 novembre 2026**, con `candidate=false`, comprende Model **5.37.0.2**, Concrete **0.35.0.5**, Steel **2.129.0.4** e CompositeBridge **1.23.0.6**, dai commit pubblicati Model `15587299` e Checker `742f45f3`; è comune con ReBear. GPCModel 5.37 costruisce e copia i modelli senza scansioni quadratiche, con le verifiche di sezione identiche bit per bit al set precedente. Super Element Check e Bridge Detail Check calcolano ogni stazione in un batch GPC. Bridge Detail Check riprende l'analisi per fasi del risultato di Super Element e ricalcola solo tensioni, taglio, pioli e dettagli. Rispetto al set della mattina, le verifiche di sezione allocano circa il 60% di memoria in meno con gli stessi risultati bit per bit. La compilazione ordinaria non richiede opzioni per candidati. Provenienza e controlli sono nel [resoconto di rilascio](docs/GPC-RILASCIO-2026-11-02.md); i set precedenti sono descritti nei resoconti del [1° novembre (sera)](docs/GPC-RILASCIO-2026-11-01-sera.md), del [1° novembre (mattina)](docs/GPC-RILASCIO-2026-11-01.md), del [30 ottobre](docs/GPC-RILASCIO-2026-10-30.md) e del [27 ottobre](docs/GPC-RILASCIO-2026-10-27.md).
+Il **set ufficiale dell'8 novembre 2026**, con `candidate=false`, comprende Model **5.50.0.2**, ModelData **0.3.0.30**, Concrete **0.37.0.1**, Steel **2.134.0.0** e CompositeBridge **1.31.0.1**, dai commit Model `ff318f87` e Checker `9e513417`. È stato adottato il 10 novembre per allineare le DLL comuni a ReBear; Utilities, Geometry e DelaunayMesh mantengono i binari precedenti. La build aggiunge System.Text.Json **10.0.13** e le relative dipendenze .NET 8. Non occorrono opzioni per candidati. Provenienza e collaudo corrente sono nel [resoconto di stabilizzazione](docs/STABILIZZAZIONE-2026-11-10.md); il [rilascio del 2 novembre](docs/GPC-RILASCIO-2026-11-02.md) documenta il set precedente e i suoi confronti prestazionali.
 
 Output da installare: **`bin/Release/BridGHe.Grasshopper.gha`**, insieme alle DLL nella stessa cartella. L'evento MSBuild `BridGHePostBuild` in `Directory.Build.targets` parte **dopo ogni build riuscita**, sia da Visual Studio sia da `dotnet build`: per il plugin Release copia l'intero output in `bin/Release`, rimuove i file non più prodotti ed elimina le vecchie cartelle di compilazione sparse, comprese le precedenti sottocartelle di `bin`. Funziona anche con build incrementali e compilando direttamente il `.csproj`.
 
@@ -57,12 +57,26 @@ Chiudere Rhino, estrarre il pacchetto sotto la cartella Libraries di Grasshopper
 
 ## Riprodurre le verifiche
 
+Il [resoconto di stabilizzazione del 10 novembre 2026](docs/STABILIZZAZIONE-2026-11-10.md) distingue i controlli rieseguiti dagli esiti storici e descrive il recupero dei risultati esterni. I conteggi nei paragrafi storici non certificano automaticamente il checkout corrente.
+
+Gli esempi GHX con risultati esterni richiedono anche i file `.bghr`: il pacchetto include quelli referenziati, dopo verifica SHA-256, e rifiuta riferimenti mancanti o alterati. I file nativi Straus restano esclusi. Dopo il trasferimento su un altro computer, aggiornare gli input `Output Path` dei componenti di analisi al percorso `.st7` nella nuova cartella `calcoli`, accanto al `.bghr` corrispondente, quindi ricalcolare Grasshopper con `Run` disattivato. Il percorso `.st7` serve a individuare il `.bghr`; non occorre il file `.st7` per rileggere i risultati archiviati. Il resto del grafo può comunque richiedere Straus, ad esempio per calcolare sezioni native.
+
+Se un `.bghr` manca o non coincide con l'hash salvato, il componente non restituisce quei risultati e conserva il riferimento anche nei successivi salvataggi. Ripristinare il file corretto, oppure aggiornare `Output Path`, e ricalcolare; `Run` esegue invece una nuova analisi. Un nuovo modello o un reset esplicito possono invalidare i risultati precedenti.
+
 ```powershell
 .\tools\build.ps1 -Native -Examples -BridgeGrillage -BridgeSuite -BridgeSpine -Package
 dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --beam-support
 ```
 
 Gli script rigenerano e sovrascrivono gli esempi: salvare separatamente le modifiche manuali. I test Grasshopper usano un server componenti isolato per non caricare i plugin estranei installati nel profilo utente.
+
+Per le correzioni di salvataggio e packaging, dopo la compilazione dei test:
+
+```powershell
+dotnet build tests/BridGHe.Smoke -c Release
+.\tools\test_regressions.ps1 -Groups analysis-results-file
+py -m unittest discover -s tools -p test_package_results.py
+```
 
 ## Documentazione
 

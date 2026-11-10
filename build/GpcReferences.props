@@ -4,10 +4,12 @@
     <Reference Include="GPCGeometry"><HintPath>$(BridGHeRoot)lib\GPC\GPCGeometry.dll</HintPath><Private>true</Private></Reference>
     <Reference Include="DelaunayMesh"><HintPath>$(BridGHeRoot)lib\GPC\DelaunayMesh.dll</HintPath><Private>true</Private></Reference>
     <Reference Include="GPCModel"><HintPath>$(BridGHeRoot)lib\GPC\GPCModel.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCModelData"><HintPath>$(BridGHeRoot)lib\GPC\GPCModelData.dll</HintPath><Private>true</Private></Reference>
     <Reference Include="GPCChecker.Concrete"><HintPath>$(BridGHeRoot)lib\GPC\GPCChecker.Concrete.dll</HintPath><Private>true</Private></Reference>
     <Reference Include="GPCChecker.Steel"><HintPath>$(BridGHeRoot)lib\GPC\GPCChecker.Steel.dll</HintPath><Private>true</Private></Reference>
     <Reference Include="GPCChecker.CompositeBridge"><HintPath>$(BridGHeRoot)lib\GPC\GPCChecker.CompositeBridge.dll</HintPath><Private>true</Private></Reference>
     <None Include="$(BridGHeRoot)lib\GPC\release-set.json" Link="gpc-release-set.json" CopyToOutputDirectory="PreserveNewest" />
+    <PackageReference Include="System.Text.Json" Version="10.0.13" />
   </ItemGroup>
   <Target Name="CheckGpcLibraries" BeforeTargets="ResolveAssemblyReferences">
     <PropertyGroup>

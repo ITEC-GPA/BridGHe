@@ -144,8 +144,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
                 var loaded = _saved.Load(outputPath, out string error);
                 if (loaded == null)
                 {
-                    _model = new GH_Model();
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, error + " Premere Run per rifare l'analisi.");
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, error + " Ripristinare il file e ricalcolare, oppure premere Run per rifare l'analisi.");
                     Message = "Run required";
                 }
                 else
