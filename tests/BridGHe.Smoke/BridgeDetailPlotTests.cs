@@ -57,19 +57,16 @@ internal static class BridgeDetailPlotTests
         Require(BridgeStiffenerPlotChecks.Read(missing,StiffenerPlotRole.Intermediate,"Intermedio · A",CheckPlotDisplay.Utilization).Value==.5,"Available individual WR was lost.");
         Require(double.IsNaN(BridgeStiffenerPlotChecks.Read(missing,StiffenerPlotRole.Support,null,CheckPlotDisplay.Utilization).Value),"Absent stiffener became zero.");
         Require(double.IsNaN(BridgeStiffenerPlotChecks.Read(WithChecks(new BridgeLocalCheck("Intermedio · A",1,0,"MPa",double.PositiveInfinity)),StiffenerPlotRole.Intermediate,null,CheckPlotDisplay.Utilization).Value),"Non-finite WR accepted.");
-        var femSvgs=Components(result,missing,false);
 #if GPC_PILOT
-        // P2U: the same component tests with the stations of the GPC bridge model (the merged samples, F6 R8) of a source built in GPC, the
-        // composite beam without FEM results; every chart equal to the FEM one. Mixed until chain E: the components read the combinations from
-        // the merged FEM model of the GH model.
-        var gpcSvgs=Components(result,missing,true);
-        Require(gpcSvgs.Length==femSvgs.Length && gpcSvgs.Zip(femSvgs).All(p=>p.First==p.Second),"GPC: the detail plots from the GPC bridge stations differ from the FEM ones.");
+        // R6.6 R2b: the component tests on GPC data alone: the stations of the GPC bridge model (the merged samples) of a source built in GPC,
+        // the GH model given by the GPC input of the bridge model, the composite beam by its GPC datum; the explicit checks of every chart
+        // replace the former parity with the FEM charts.
+        Components(result,missing,true);
+        Console.WriteLine($"DETAIL PLOTS PASS: {assertions} assertions; native WR, ties, missing checks, discrete locations, units, paired curves and automatic selectors (components on the stations of the GPC bridge model, GPC data alone).");
+#else
+        Components(result,missing,false);
+        Console.WriteLine($"DETAIL PLOTS PASS: {assertions} assertions; native WR, ties, missing checks, discrete locations, units, paired curves and automatic selectors.");
 #endif
-        Console.WriteLine($"DETAIL PLOTS PASS: {assertions} assertions; native WR, ties, missing checks, discrete locations, units, paired curves and automatic selectors"
-#if GPC_PILOT
-            +" (components also on the stations of the GPC bridge model)"
-#endif
-            +".");
     }
 
     /// <param name="gpc">P2U: the stations come from the merged samples of a GPC bridge model attached to the GH model (Build Bridge Model on
@@ -80,28 +77,29 @@ internal static class BridgeDetailPlotTests
     {
         var plugin=BridgeMergeTests.Initialize();
         using var doc=new GH_Document{Enabled=true};
-        var model=new ModelModel(ModelModel.ModelUnits.Nmm);
-        model.AddElements(new[]{new NodeModel("1",Point3d.Origin)});
-        model.AddLoadCombinations(new[]{new LoadCombinationModel("C1"),new LoadCombinationModel("C2")});
-        var beam=new CompositeBeamModel{PointFrom=Point3d.Origin,PointTo=new Point3d(3000,0,0)};
         var modelGoo=(IGH_Goo)Activator.CreateInstance(plugin.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model",true));
         var svgs=new System.Collections.Generic.List<string>();
+        IGH_Goo beamGoo;
 #if GPC_PILOT
-        if(gpc)
         {
-            var (merged,bridge)=GpcDetailBridge();
-            modelGoo.GetType().GetProperty("Value").SetValue(modelGoo,merged);
-            modelGoo.GetType().GetMethod("AttachBridge").Invoke(modelGoo,new object[]{bridge});
-            beam.BeamId="B0";
+            // The GH model given by the GPC input of the bridge model with the bridge attached; the composite beam B0 by its GPC datum.
+            modelGoo=R2bFixtures.Model(GpcDetailBridge());
+            var draft=BridGHe.Common.Gpc.Builders.GpcBeamBuilders.New(new GPC.Geometry.Point3d(0,0,0),new GPC.Geometry.Point3d(3000,0,0),GpcFixtures.RectangleProperty(),null,0,0,0,
+                BridGHe.Common.Gpc.GpcIdentity.Derive(BridGHe.Common.Gpc.GpcIdentity.NameSpace,"r66-r2b-detail-plot-beam"),"B0");
+            beamGoo=R2aDesignFixtures.Goo("GH_CompositeBeam",Activator.CreateInstance(plugin.GetType("BridGHe.Grasshopper.DataTypes.GpcCompositeBeam",true),draft,null,null,Array.Empty<string>()));
         }
-        else
-#endif
+#else
         {
+            var model=new ModelModel(ModelModel.ModelUnits.Nmm);
+            model.AddElements(new[]{new NodeModel("1",Point3d.Origin)});
+            model.AddLoadCombinations(new[]{new LoadCombinationModel("C1"),new LoadCombinationModel("C2")});
+            var beam=new CompositeBeamModel{PointFrom=Point3d.Origin,PointTo=new Point3d(3000,0,0)};
             var load=new LoadCaseModel("Q","Q");
             foreach(double station in new[]{0.0,1000,2000,3000})beam.Results.Add(new BeamForceResultModel(load,station,0,""));
             modelGoo.GetType().GetProperty("Value").SetValue(modelGoo,model);
+            beamGoo=(IGH_Goo)Activator.CreateInstance(plugin.GetType("BridGHe.Grasshopper.DataTypes.GH_CompositeBeam",true),new object[]{beam,null});
         }
-        var beamGoo=(IGH_Goo)Activator.CreateInstance(plugin.GetType("BridGHe.Grasshopper.DataTypes.GH_CompositeBeam",true),new object[]{beam,null});
+#endif
         string folder = Path.GetFullPath(Path.Combine("artifacts/detail-plots", Guid.NewGuid().ToString("N")));
         Directory.CreateDirectory(folder);
         XNamespace ns="http://www.w3.org/2000/svg";
@@ -190,18 +188,11 @@ internal static class BridgeDetailPlotTests
         return svgs.ToArray();
     }
 #if GPC_PILOT
-    /// <summary>P2U: the merged FEM model and the GPC bridge model of Build Bridge Model for one 3 m beam B0 with samples at 0, 1000, 2000
-    /// and 3000 mm and the combinations C1 and C2 (as PlotTests). The GPC bridge model from GPC data only (direct reference, action on its GPC
-    /// source; GpcBridgeMerge); the FEM source only for the merged FEM model that the GH model still carries (chain E) and the parity.</summary>
-    private static (ModelModel Merged, BridGHe.Common.Gpc.GpcBridge Bridge) GpcDetailBridge()
+    /// <summary>R6.6 R2b: Build Bridge Model on GPC data alone for one 3 m beam B0 with samples at 0, 1000, 2000 and 3000 mm (N = station) and
+    /// the combinations C1 and C2: the GPC bridge model with its GPC input (direct reference, action on its GPC source; no FEM source).</summary>
+    private static BridGHe.Common.Gpc.GpcBridgeBuild GpcDetailBridge()
     {
         var stations=new[]{0d,1000,2000,3000};
-        var fem=new ModelModel(ModelModel.ModelUnits.Nmm){Name="Detail plot source"};
-        var g=new LoadCaseModel("G","G");fem.LoadCases.Add(g);
-        var femBeam=new BeamModel("B0",Point3d.Origin,new Point3d(3000,0,0),BridgeGrillageExample.LongProperty(new(),0)){BeamId="B0"};
-        foreach(double s in stations)femBeam.Results.Add(new BeamForceResultModel(g,s,0,"",false){AxialForce=s});
-        fem.AddElements(new[]{femBeam});
-        // The GPC input model and its analysed copy (the same calls), the direct reference of the GPC merge.
         GPC.Model.Models.Model Gpc(bool analyse)
         {
             var test=new GpcTestModel("Detail plot source");test.Case("G");
@@ -211,15 +202,12 @@ internal static class BridgeDetailPlotTests
         }
         var input=Gpc(false);var gpc=Gpc(true);
         var phases=new[]{new BridgePhaseDefinition{Order=10,Name="Steel",State=BridgeSectionState.Steel,
-            Actions=new[]{new BridgeActionDefinition{Key="G1",Source=fem,GpcSource=gpc,Case="G",Behavior=BridGHe.Common.Checks.BridgeActionBehavior.Steel}}}};
+            Actions=new[]{new BridgeActionDefinition{Key="G1",GpcSource=gpc,Case="G",Behavior=BridGHe.Common.Checks.BridgeActionBehavior.Steel}}}};
         var table=new[]{new[]{"","G1"},new[]{"C1","1"},new[]{"C2","1"}};
-        var femPhases=phases.Select(p=>p with{Actions=p.Actions.Select(a=>a with{GpcSource=null}).ToArray()}).ToArray();
-        var merged=BridgeWorkflowBuilder.Build(new[]{fem},femPhases,table,BridGHe.Common.Checks.BridgeWorkflowMethod.Compatible,1e-6);
-        var bridge=GpcBridgeMerge.Build(new[]{(input,gpc)},phases,table,"detail plot");
-        GpcBridgeMerge.RequireSame(bridge,merged,"detail plot");
+        var bridge=R2bFixtures.Bridge(new[]{(input,gpc)},phases,table,"detail plot");
         Require(bridge.Bridge.SamplesOf("B0").Select(s=>s.Sample.Station).Distinct().SequenceEqual(stations),"GPC: detail plot bridge stations");
-        Require(merged.Model.LoadCombinations.Select(c=>c.Name).SequenceEqual(new[]{"C1","C2"}),"GPC: detail plot combinations");
-        return (merged.Model,bridge.Bridge);
+        Require(bridge.Bridge.Combinations.Select(c=>c.Name).SequenceEqual(new[]{"C1","C2"}),"GPC: detail plot combinations");
+        return bridge;
     }
 #endif
 }
