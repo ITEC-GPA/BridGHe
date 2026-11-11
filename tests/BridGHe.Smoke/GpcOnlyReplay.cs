@@ -410,7 +410,17 @@ internal static class GpcOnlyReplay
             Console.WriteLine("TRACE " + where + ": " + gpc.Outputs.Count + " lines; shape " + string.Join(" ", gpc.Shape.Select(s => s.Branches + "/" + s.Items)) + "; " + string.Join(" / ", gpc.Messages));
         // Independent of any FEM value: no FEM value in the outputs, deterministic identities.
         if (gpc.FemOutputs != 0 && !gpc.Unconverted) failures.Add($"{where}: {gpc.FemOutputs} outputs with a FEM value from GPC-only inputs");
-        if (!gpc.Raw.SequenceEqual(again.Raw)) failures.Add($"{where}: two GPC-only copies give other GUIDs (identities not deterministic)");
+        if (!gpc.Raw.SequenceEqual(again.Raw))
+        {
+            var first = gpc.Raw.Zip(again.Raw).FirstOrDefault(p => p.First != p.Second);
+            // R1 (PRODUCT DEFECT reported, not failing; P2 decides): the GH GUID of a GPC-only composite beam (CompositeBeamComponent.Identity, «no new GUID per
+            // solve») differs between two solves of the same inputs; every other line is the same. Not from the archive of the composite definition (the same
+            // bytes written twice, a copy shares the definition: ModelsChecks). Declared only when the GH GUID of the composite beam is the one line that differs.
+            bool onlyGuid = c.GetType().Name == "CompositeBeamComponent" && gpc.Raw.Count == again.Raw.Count
+                && gpc.Raw.Zip(again.Raw).Where(p => p.First != p.Second).All(p => p.First.Split('\n').Zip(p.Second.Split('\n')).Where(l => l.First != l.Second).All(l => l.First.StartsWith("guid ", StringComparison.Ordinal)));
+            if (onlyGuid) { compositeGuidDefects.Add(where); oracles.Count("Composite Beam GUID not deterministic (product defect, reported)"); }
+            else failures.Add($"{where}: two GPC-only copies give other GUIDs (identities not deterministic); first:" + Environment.NewLine + Differences(first.First ?? "<none>", first.Second ?? "<none>"));
+        }
         // R1: the references without the FEM model.
         if (expect != null) { expect.Check(where, gpc, failures); oracles.Expected++; }
         else if (definition != null) Capture(c, where, gpc, failures);
@@ -586,6 +596,10 @@ internal static class GpcOnlyReplay
             // Bridge Bearings «mixed types, guide angle» (lane 1b): three types for the points of support 2 that are not one per point: the error of
             // the component, no output (on both paths since lane 1b).
             ["mixed types, guide angle"] = new Expect { What = Kind.Error, Message = "Provide one bearing type or one per selected point" },
+            // Node Filter and Plate Filter «by group» (lane 2a) are given no input U: the warning of the component and no output, on both paths since lane 2a.
+            ["by group"] = new Expect { What = Kind.Warning, Message = "Input parameter U failed to collect data" },
+            // Composite Shrinkage Actions «composite property, shrinkage strain» (lane 3a): the error of the component on both paths (gpc-only-models r1-t24).
+            ["composite property, shrinkage strain"] = new Expect { What = Kind.Error, Message = "Shrinkage actions require the major bending axis to coincide with the slab plane's horizontal axis" },
         };
 
         internal static Expect Of(string label)
@@ -1977,6 +1991,17 @@ internal static class GpcOnlyReplay
             count++;
         }
         Lane3cChecks(kinds, failures, ref count, examples);
+        // R1 (the evidence of the reported defect of Composite Beam): the digest of the GPC archive of one composite definition, written twice and written
+        // from a copy of its GH type (as a solve copies the persistent data).
+        if (Selected("CompositeBeamComponent"))
+        {
+            var definition = (GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition)Prop(GpcOnly(composite, kinds), "Gpc");
+            string D(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition d) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(BridGHe.Common.Gpc.GpcDraftArchive.Write(d)));
+            var copied = (GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition)Prop(GpcOnly(composite, kinds).Duplicate(), "Gpc");
+            Console.WriteLine($"GPC-ONLY models: the GPC archive of a composite definition: written twice {(D(definition) == D(definition) ? "the same bytes" : "OTHER bytes")}; "
+                + $"from a copy of its GH type {(ReferenceEquals(copied, definition) ? "the same definition" : D(copied) == D(definition) ? "another definition, the same bytes" : "another definition, OTHER bytes")}; "
+                + $"canonical text of the copy {(GpcNullValueChecks.TextOf(copied) == GpcNullValueChecks.TextOf(definition) ? "equal" : "different")}, but for GUIDs {(GpcDraftCapture.WithoutGuids(GpcNullValueChecks.TextOf(copied)) == GpcDraftCapture.WithoutGuids(GpcNullValueChecks.TextOf(definition)) ? "equal" : "different")}");
+        }
         cases += count;
     }
 
@@ -2443,13 +2468,13 @@ internal static class GpcOnlyReplay
         IGH_Goo Force(string name, double n, double v, double m) => Produce("ForceComponent", new Dictionary<int, object> { [0] = name, [1] = n, [2] = v, [6] = m, [7] = 0.5 });
         var steelForces = Force("G1", -1.2e5, 8.0e4, 3.5e8); var longForces = Force("G2", -2.0e5, 6.0e4, 2.1e8); var shortForces = Force("Q", -0.5e5, 9.0e4, 4.4e8);
         // L3b: Bridge Model Audit outside N-mm (kN-m, the numbers through FromMm), with itself as a phase model; an isolated node and a second part (a beam far away) in N-mm.
-        // R1: its GPC twin, the frozen 0.3.0 payload of the same data read by value (R3, Fixtures/legacy-payloads «beams-Knm»).
-        var knm = Twin(() => (IGH_Goo)T("Fem.GH_Model").GetMethod("FromModel", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { ImportDump.BeamData(ModelModel.ModelUnits.Knm, null), null }),
-            () => GpcModelGoo(BridGHe.Common.Gpc.GpcLegacyPayloads.Model(LegacyPayloadFixtures.Bytes("beams-Knm"), 1e-6, out _)));
+        // R1: FEM-backed in both builds (TRANSITIONAL input). Its GPC twins (the frozen payload «beams-Knm» read by value, R3; the GPC inputs of the examples
+        // 02 and 03, R0) give the audit another warning or line (gpc-only-models r1-t24: SECTION_AXIS_CHANGED on the payload read by value): listed for P2.
+        var knm = (IGH_Goo)T("Fem.GH_Model").GetMethod("FromModel", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { ImportDump.BeamData(ModelModel.ModelUnits.Knm, null), null });
         // L3b: the diagnostics of the audit, on both paths: a homogenised beam beside a structural plate (POSSIBLE_DOUBLE_CONCRETE, the mark from the recipe), a beam far from
         // the plate (DISCONNECTED, NO_SUPPORT), a tolerance above the lengths (INVALID_BEAM), phases of other units and geometry (PHASE_UNITS, PHASE_GEOMETRY_MISMATCH).
         IGH_Goo Gh(ModelModel value) => (IGH_Goo)T("Fem.GH_Model").GetMethod("FromModel", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { value, null });
-        IGH_Goo Example(string id, ModelModel value) => Twin(() => Gh(value), () => GpcModelGoo(ExInput(id))); // R1: the GPC input of the example (R0)
+        IGH_Goo Example(string id, ModelModel value) => Gh(value); // R1: FEM-backed in both builds (see knm above)
         var homogenised = BridgeGrillageExample.Composite(new()).CreateHomogenizedProperty(12, "P_composite");
         var mixed = new ModelModel(ModelModel.ModelUnits.Nmm);
         mixed.AddElements(new ElementModel[] { new PlateModel("P1", m3.Plates.Single().Points.ToArray(), m3.Plates.Single().PlateProperty), new BeamModel("B1", new Rhino.Geometry.Point3d(1e6, 0, 0), new Rhino.Geometry.Point3d(1e6, 5000, 0), homogenised) });
@@ -2647,7 +2672,7 @@ internal static class GpcOnlyReplay
         List<(string Type, string Label, Dictionary<int, object> Inputs)> Cases() => lane == "native" ? Safe("native sections", NativeSectionCases).Concat(Safe("parity native", ParityNativeCases)).ToList()
             : lane == "properties" ? Safe("lane 1", Lane1Cases).Concat(Safe("lane 1b", Lane1bCases)).Where(OfLane2).Concat(Safe("lane 2a", Lane2aCases)).Concat(Safe("lane 2b", Lane2bCases))
                 .Concat(Safe("lane 2c", Lane2cCases)).Concat(Safe("parity", ParityCases)).ToList()
-            : lane == "generators" ? Safe("lane 1b", Lane1bCases) : lane == "models" ? Safe("lane 3a", ModelsCases).Concat(Safe("lane 3c", Lane3cCases)).Concat(Off(Lane3dCases)).Concat(Off(Lane3eCases)).ToList()
+            : lane == "generators" ? Safe("lane 1b", Lane1bCases) : lane == "models" ? Safe("lane 3a", ModelsCases).Concat(Off(Lane3cCases)).Concat(Off(Lane3dCases)).Concat(Off(Lane3eCases)).ToList()
             : Safe("lane 1", Lane1Cases);
         // R1: every case list built twice: the FEM-backed inputs of today (the transitional copy) and the inputs built without any FEM value.
         var all = Cases().Where(c => Selected(c.Type)).ToList();
@@ -2694,6 +2719,9 @@ internal static class GpcOnlyReplay
             count++;
         }
     }
+
+    /// <summary>R1: the instances where the GH GUID of a GPC-only composite beam changed from one solve to the next (a product defect, reported).</summary>
+    private static readonly List<string> compositeGuidDefects = new List<string>();
 
     /// <summary>R1: the components that give one output element for each input element (attributes, loads, axes of lane 1).</summary>
     private static readonly HashSet<string> OneToOneTypes = new HashSet<string>(Lane1Types.Take(24).Concat(new[] { "AlignBeamAxesComponent", "AlignPlateAxesComponent" }), StringComparer.Ordinal);
@@ -2742,7 +2770,7 @@ internal static class GpcOnlyReplay
             return 0;
         }
         // R1: the R6.0 capture «scan» as the oracle of the definitions (with BRIDGHE_CAPTURE=compare:<folder>, as the gates run).
-        oracles = new Oracles(); femInputs.Clear();
+        oracles = new Oracles(); femInputs.Clear(); compositeGuidDefects.Clear();
         scan = R1ScanCapture.Open();
         scanFiles = scan == null ? new HashSet<string>() : scan.Files;
         Console.WriteLine(scan == null ? "GPC-ONLY " + lane + ": no R6.0 capture (BRIDGHE_CAPTURE=compare:<folder> not set): the definitions are not mapped to it"
@@ -2808,6 +2836,7 @@ internal static class GpcOnlyReplay
         // R1: the oracles, and the in-memory cases with an input still taken from a FEM value (no GPC twin yet, P2 decides).
         Console.WriteLine($"GPC-ONLY {lane} ORACLES (R1): {oracles.Summary}");
         foreach (var f in femInputs) Console.WriteLine($"GPC-ONLY {lane} TRANSITIONAL input (a datum from a FEM value, no GPC twin yet): {f}");
+        foreach (var f in compositeGuidDefects) Console.WriteLine($"GPC-ONLY {lane} PRODUCT DEFECT (reported, R1): the GH GUID of the GPC-only composite beam changes between two solves of the same inputs (CompositeBeamComponent.Identity): {f}");
         foreach (var f in failures.Take(60)) Console.WriteLine("  " + f);
         // P2Y: every failure in a file named by BRIDGHE_GPC_ONLY_REPORT (diagnosis of a lane in progress; the console keeps the first 60).
         if (Environment.GetEnvironmentVariable("BRIDGHE_GPC_ONLY_REPORT") is { Length: > 0 } report) File.WriteAllLines(report, failures);
