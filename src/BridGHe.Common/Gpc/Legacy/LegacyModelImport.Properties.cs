@@ -242,7 +242,8 @@ namespace BridGHe.Common.Gpc.Legacy
             if (s.Enum("MirrorType") != "None" && !(s["NativeSection"].IsNull && (s.Enum("SectionType") == "C" || s.Enum("SectionType") == "Angle")))
                 throw new NotSupportedException("LegacyMirroredSectionNotMappedYet");
             var material = ElasticMaterial(m);
-            if (!m["StressStrainTable"].IsNull && type != "Beam" && type != "Truss") material.AnalysisData.StressStrainPairs = null; // former exporter: tables only for beams and trusses
+            // Former exporter: tables only for beams and trusses. C3: the table removed with its law (GpcMaterials.WithoutTable).
+            if (!m["StressStrainTable"].IsNull && type != "Beam" && type != "Truss") GpcMaterials.WithoutTable(material);
             var recipe = SectionRecipe(s);
             var (property, angle, native) = SectionProperty(recipe, propertyName, material, units, shearAreas, report, checkLengthUnit);
             // PAR (A01, as in 0.3.0): the four data of a cutoff bar as the former property held them (St7SetCutoffBarData), forces to N.

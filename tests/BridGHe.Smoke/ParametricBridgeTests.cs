@@ -30,10 +30,10 @@ internal static class ParametricBridgeTests
         var input=SimpleBridgeTests.Input() with { DeckBeamStations=new[]{0d,10000,25000,60000,100000},DeckBeamSpacing=0 };
         var steel=SimpleBridgeBuilder.Build(input); var grillage=BridgeDeckGrillage.Build(input,steel);
 #if GPC_PILOT
-        // R6.6 R2a: the strips on a concrete given by its GPC datum alone (Custom concrete E 34000, G 14000 with Use Poisson, the default of
-        // the former material: the path of P2): the plans of the strips and their drafts as the component builds them; the same assertions on
-        // the GPC data of the drafts.
-        var concrete=BridGHe.Common.Gpc.Builders.GpcMaterialBuilders.Material(BridGHe.Common.Gpc.Builders.GpcMaterialBuilders.Custom(1,"Test C",34000,0,0,14000,true,0,0,0));
+        // R6.6 R2a: the strips on a concrete given by its GPC datum alone (the path of P2): the plans of the strips and their drafts as the
+        // component builds them; the same assertions on the GPC data of the drafts. C3 (11/11): the real case of R2a, a Custom concrete E 34000
+        // with Use Poisson off and G 14000 (R2a turned Use Poisson on to get past the refusal of GpcMaterials.Elastic, fixed by C3).
+        var concrete=BridGHe.Common.Gpc.Builders.GpcMaterialBuilders.Material(BridGHe.Common.Gpc.Builders.GpcMaterialBuilders.Custom(1,"Test C",34000,0,0,14000,false,0,0,0));
         var analysis=BridGHe.Common.Gpc.GpcMaterials.Analysis(concrete);
         var slab=BridgeSlabGrillage.Create(grillage.Geometry,null,"Test slab",analysis,concrete);
         var strips=R2aGeneratorFixtures.Drafts(slab.Plans,"slab");
@@ -43,6 +43,8 @@ internal static class ParametricBridgeTests
         {
             var b=strips[i]; var meta=R2aGeneratorFixtures.Member(b);
             Require(Math.Abs(R2aGeneratorFixtures.Elastic(b).Section.Area-slab.Widths[i]*input.DeckThickness)<1e-6,"Analytical strip area b*h");
+            var stripMaterial=R2aGeneratorFixtures.Elastic(b).Material; // C3: the explicit G of the concrete on the strip, with the linear elastic law
+            Require(stripMaterial.AnalysisData?.BeamShearModulus==14000 && stripMaterial.AnalysisData.StressStrainPairs==null && stripMaterial.AnalysisData.NonlinearResponse==GPC.Model.Materials.MaterialNonlinearResponse.NonlinearElastic,"Strip material keeps the explicit G 14000");
             Require(R2aGeneratorFixtures.Dot(R2aGeneratorFixtures.Up(b),meta.SectionUp)>1-1e-10 && R2aGeneratorFixtures.SamePoint(b.Beam.StartPoint,grillage.Strips[i].Member.Axis.From),"Strip axes and section normal");
         }
         Require(grillage.Geometry.Members.Count>strips.Length && steel.Members.Count+strips.Length==grillage.Geometry.Members.Count,"Input geometry preserved");
