@@ -314,6 +314,7 @@ internal static class GpcNativeExamples
                 // R6.6 R0 (replaces the C4 check against the FEM results): Node, Beam and Plate Results on the GPC-only model show the reader rows.
                 long values = ComponentsCheck(example.Input, analysed, example.Id);
                 record.Near("Results components on the GPC-only model: outputs equal to the GPC reader rows bit for bit", values > 0 ? 1 : 0, 1, 0, 0);
+                record.Near("Result consumers on the reader rows, requested result names and model audit as the structure", ConsumersCheck.Verify(analysed, example.Id, example.Cases, example.Input, example.Id == "04-moving-load" ? 13 : 0) > 0 ? 1 : 0, 1, 0, 0); // R6.6 R2b (R0 point 1)
                 record.Near("Input remains without results", example.Input.Model.AllElements.Sum(e => e.Results.Count) + example.Input.Model.Datasets.Count, 0, 0, 0);
             }
             catch (Exception ex) { error = ex.ToString(); Console.WriteLine("ERROR: " + error); }
