@@ -7,7 +7,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using BridGHe.Common.Gpc;
-using BridGHe.Common.Models;
 using GH_IO.Serialization;
 
 /// <summary>
@@ -20,6 +19,10 @@ using GH_IO.Serialization;
 /// <item>option 2: the chunk BridGHeDrafts of every other GH_Model is BGHDRF2 (one Brotli stream) and reads back equal; a chunk BGHDRF1 of
 /// the integration branch reads back equal; a truncated chunk is refused.</item>
 /// </list>
+/// R6.6 lane R3 (11/11): with no FEM class. The models are the examples 01–10 built in GPC (<see cref="GpcNativeExamples"/>, the GPC input of
+/// Build Model with the drafts of its elements), given by their GPC input alone (<c>GH_Model.FromGpc</c>, the drafts attached apart); the
+/// analysed model a component keeps reads back as its GPC input without FEM value (before: the FEM catalogue, <c>FromModel</c> and the drafts
+/// of the FEM values, the FEM value read back).
 /// </summary>
 internal static class GpcAnalysisDraftsChecks
 {
@@ -31,9 +34,10 @@ internal static class GpcAnalysisDraftsChecks
         var assembly = Assembly.LoadFrom(BuildPaths.GrasshopperAssembly);
         var goo = assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model", true);
         var helper = assembly.GetType("BridGHe.Grasshopper.Helpers.AnalysisDrafts", true);
-        object Model(ModelModel fem, GpcModelDrafts drafts)
+        object Model(GpcModels.Conversion source, GpcModelDrafts drafts)
         {
-            var g = goo.GetMethod("FromModel", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { fem, null });
+            // R3: a model given by its GPC input alone (FromGpc), its drafts attached apart (the input without them).
+            var g = goo.GetMethod("FromGpc", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { source.WithDrafts(null) });
             if (drafts != null) goo.GetMethod("AttachDrafts").Invoke(g, new object[] { drafts });
             return g;
         }
@@ -42,13 +46,13 @@ internal static class GpcAnalysisDraftsChecks
             target.GetType().GetMethods(Instance).Single(m => m.Name == name && m.GetParameters().Length == args.Length).Invoke(target, args);
         string changedMessage = (string)helper.GetField("ChangedMessage", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
 
-        var examples = NativeExamples.Create().ToArray();
+        var examples = GpcNativeExamples.Create().ToArray();
         int compared = 0; long v1 = 0, v2 = 0;
         for (int k = 0; k < examples.Length; k++)
         {
-            var example = examples[k]; var fem = example.Model; string label = "example " + example.Id;
-            var drafts = GpcInputComparison.FemmDrafts(fem); string text = GpcDraftArchiveChecks.DraftsText(drafts);
-            var input = Model(fem, drafts);
+            var example = examples[k]; var source = example.Input; string label = "example " + example.Id;
+            var drafts = source.Drafts ?? throw new Exception("GPC ANALYSIS DRAFTS FAIL: " + label + ": the GPC input of Build Model carries no drafts"); string text = GpcDraftArchiveChecks.DraftsText(drafts);
+            var input = Model(source, drafts);
 
             // Option 2: BGHDRF2 written by the GH_Model, read back equal; BGHDRF1 of the integration branch read back equal; truncated refused.
             var plain = new GH_LooseChunk("Model"); Require((bool)goo.GetMethod("Write", new[] { typeof(GH_IWriter) }).Invoke(input, new object[] { plain }), label + ": GH_Model written");
@@ -64,7 +68,7 @@ internal static class GpcAnalysisDraftsChecks
             v1 += former.Length; v2 += chunk.Length;
 
             // Option 1, the helper: a run records the drafts of the input and its fingerprint.
-            var output = Model(fem, null);
+            var output = Model(source, null);
             var recorder = Activator.CreateInstance(helper, true);
             Call(recorder, "Record", input, output, null);
             Require(ReferenceEquals(Drafts(output), drafts), label + ": a run attaches the drafts of the input");
@@ -80,14 +84,14 @@ internal static class GpcAnalysisDraftsChecks
             Require(Drafts(reopened) == null, label + ": no drafts read with the analysed model");
             var restorer = Activator.CreateInstance(helper, true); Call(restorer, "Read", saved);
             Require((bool)helper.GetProperty("Pending").GetValue(restorer), label + ": pending after reading");
-            Require(Call(restorer, "Restore", Model(fem, drafts), reopened, null) == null, label + ": same input, no warning");
+            Require(Call(restorer, "Restore", Model(source, drafts), reopened, null) == null, label + ": same input, no warning");
             Require(Drafts(reopened) is GpcModelDrafts d1 && GpcDraftArchiveChecks.DraftsText(d1) == text, label + ": the drafts attached again are those of the run");
             Require(!(bool)helper.GetProperty("Pending").GetValue(restorer) && Call(restorer, "Restore", input, reopened, null) == null, label + ": restored once");
 
-            var other = examples[(k + 1) % examples.Length].Model;
+            var other = examples[(k + 1) % examples.Length].Input;
             var changed = Activator.CreateInstance(goo); goo.GetMethod("Read").Invoke(changed, new object[] { saved });
             var second = Activator.CreateInstance(helper, true); Call(second, "Read", saved);
-            Require((string)Call(second, "Restore", Model(other, GpcInputComparison.FemmDrafts(other)), changed, null) == changedMessage && Drafts(changed) == null,
+            Require((string)Call(second, "Restore", Model(other, other.Drafts), changed, null) == changedMessage && Drafts(changed) == null,
                 label + ": another input attaches no drafts and warns");
             var rewritten = new GH_LooseChunk("Again"); Call(second, "Write", rewritten);
             Require(!rewritten.ItemExists("DraftsInputHash"), label + ": after a changed input no fingerprint is saved again");
@@ -102,7 +106,7 @@ internal static class GpcAnalysisDraftsChecks
             {
                 var type = assembly.GetTypes().Single(t => t.Name == name);
                 var component = (Grasshopper.Kernel.GH_Component)Activator.CreateInstance(type);
-                var analysed = Model(fem, null);
+                var analysed = Model(source, null);
                 var recorded = type.GetField("_drafts", Instance).GetValue(component);
                 Call(recorded, "Record", input, analysed, name.StartsWith("Moving") ? hash : null);
                 type.GetField("_model", Instance).SetValue(component, analysed);
@@ -113,7 +117,7 @@ internal static class GpcAnalysisDraftsChecks
                 var copy = (Grasshopper.Kernel.GH_Component)Activator.CreateInstance(type);
                 Require(copy.Read(root), label + ": " + name + " read");
                 var kept = type.GetField("_model", Instance).GetValue(copy); var pending = type.GetField("_drafts", Instance).GetValue(copy);
-                Require(goo.GetProperty("Value").GetValue(kept) != null && Drafts(kept) == null && (bool)helper.GetProperty("Pending").GetValue(pending), label + ": " + name + " read back without drafts, pending");
+                Require(goo.GetProperty("Value").GetValue(kept) == null && goo.GetProperty("GpcInput").GetValue(kept) != null && Drafts(kept) == null && (bool)helper.GetProperty("Pending").GetValue(pending), label + ": " + name + " read back without drafts, pending");
                 Require(Call(pending, "Restore", input, kept, name.StartsWith("Moving") ? hash : null) == null && Drafts(kept) is GpcModelDrafts d2 && GpcDraftArchiveChecks.DraftsText(d2) == text,
                     label + ": " + name + " attaches the drafts of the input again");
             }

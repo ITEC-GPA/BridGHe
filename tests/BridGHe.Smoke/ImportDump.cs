@@ -19,26 +19,29 @@ using GPC.Model.Models;
 /// (<c>results/capture-1</c>, with their tolerance), the examples 01–10 captured with it (<c>results/examples-1</c>) and the examples 01–10
 /// built in memory (<see cref="NativeExamples.Create"/>). Not native, writes only into the given folder.
 /// Usage: <c>--import-dump &lt;output folder&gt;</c>.
+/// <para>R6.6 lane R3 (11/11): every model is read as bytes (<see cref="R3LegacyCorpus"/>), with no FEM class: the captures and the captured
+/// examples from their files, the node, beam and plate data and the refused duplicates from their frozen payloads (the bytes the FEM writer
+/// gave for <see cref="NodeData"/>, <see cref="BeamData"/>, <see cref="PlateData"/>, same ids), the former section-state signatures from the
+/// fixture (<see cref="R3LegacyCorpus.Signatures"/>). Transitional, until P2: the examples 01–10 built in memory (<c>memory-*</c>, the FEM
+/// catalogue written by the FEM writer; no frozen payload holds them: <see cref="MemoryExamples"/>), and the FEM builders of the frozen
+/// data, kept for their other callers.</para>
 /// </summary>
 internal static class ImportDump
 {
-    private const string Results = @"C:\Users\g.pacini\Documents\Repository\gpc-f6-claude\P2B\results";
-
     internal static int Run(string[] args)
     {
         string output = args.SkipWhile(a => a != "--import-dump").Skip(1).FirstOrDefault() ?? throw new ArgumentException("--import-dump <output folder>");
         string only = args.SkipWhile(a => a != "--import-dump").Skip(2).FirstOrDefault(a => !a.StartsWith("--"));
         Directory.CreateDirectory(output);
         int written = 0, failed = 0;
-        void Dump(string id, byte[] archive, ModelModel fem, double tolerance) { if (only == null || id.StartsWith(only, StringComparison.Ordinal)) DumpOne(id, archive, fem, tolerance); }
-        void DumpOne(string id, byte[] archive, ModelModel fem, double tolerance)
+        void Dump(string id, byte[] archive, Func<int, string> signatures, double tolerance) { if (only == null || id.StartsWith(only, StringComparison.Ordinal)) DumpOne(id, archive, signatures, tolerance); }
+        void DumpOne(string id, byte[] archive, Func<int, string> signatures, double tolerance)
         {
             var report = new LegacyImportReport();
             string text;
             try
             {
-                var model = LegacyModelImport.Import(LegacyArchive.Read(archive), GpcIdentity.Derive(GpcIdentity.NameSpace, "import-dump:" + id), tolerance, report,
-                    fem == null ? null : GpcModels.SectionStateSignatures(fem));
+                var model = LegacyModelImport.Import(LegacyArchive.Read(archive), GpcIdentity.Derive(GpcIdentity.NameSpace, "import-dump:" + id), tolerance, report, signatures);
                 string fingerprint = model.AnalysisFingerprint();
                 text = "FINGERPRINT " + fingerprint + "\n" + Report(report) + "\nDOCUMENT\n" + (GpcInputComparison.Document(model) ?? "beyond the serializer limit");
             }
@@ -46,51 +49,33 @@ internal static class ImportDump
             File.WriteAllText(Path.Combine(output, id + ".txt"), text);
             written++;
         }
-        foreach (var file in Directory.GetFiles(Path.Combine(Results, "capture-1"), "*.bgmodel").OrderBy(f => f, StringComparer.Ordinal))
-        {
-            string info = Path.ChangeExtension(file, ".txt");
-            double tolerance = File.Exists(info) ? double.Parse(File.ReadAllLines(info)[1], CultureInfo.InvariantCulture) : 1e-6;
-            var bytes = File.ReadAllBytes(file);
-            Dump("capture-" + Path.GetFileNameWithoutExtension(file), bytes, BridGHe.Common.Helpers.ModelArchive.Read<ModelModel>(bytes), tolerance);
-        }
-        foreach (var file in Directory.GetFiles(Path.Combine(Results, "examples-1"), "*.bgmodel", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
-        {
-            var bytes = File.ReadAllBytes(file);
-            Dump("examples-" + Path.GetFileName(Path.GetDirectoryName(file)) + "-" + Path.GetFileNameWithoutExtension(file), bytes, BridGHe.Common.Helpers.ModelArchive.Read<ModelModel>(bytes), 1e-6);
-        }
-        foreach (var example in NativeExamples.Create())
-            Dump("memory-" + example.Id, BridGHe.Common.Helpers.ModelArchive.Write(example.Model), example.Model, 1e-6);
+        void Item(R3LegacyCorpus.Item item) => Dump(item.Id, item.Bytes, item.Signatures, item.Tolerance);
+        foreach (var item in R3LegacyCorpus.Captures()) Item(item);
+        foreach (var item in R3LegacyCorpus.Examples()) Item(item);
+        MemoryExamples(Dump);
         // e3 (P2J): node data the corpus above lacks (rigid links, a labelled node with a rigid link, two labels, restraints with springs
-        // and a coordinate system, two stiffnesses, forces and moments in one case, temperature kinds), in every unit system.
-        foreach (ModelModel.ModelUnits units in Enum.GetValues(typeof(ModelModel.ModelUnits)))
-        {
-            var fem = NodeData(units);
-            Dump("nodes-" + units, BridGHe.Common.Helpers.ModelArchive.Write(fem), fem, 1e-3);
-            // A labelled node with a rigid link: the F6 reader refused it (Model.AddCostrain -> AddNode wants case names for node attributes).
-            var labelled = NodeData(units, true);
-            Dump("nodes-labelled-rigid-" + units, BridGHe.Common.Helpers.ModelArchive.Write(labelled), labelled, 1e-3);
-        }
+        // and a coordinate system, two stiffnesses, forces and moments in one case, temperature kinds), in every unit system; a labelled node
+        // with a rigid link: the F6 reader refused it (Model.AddCostrain -> AddNode wants case names for node attributes).
         // e3 (P2K): beam and plate data at list level (two Element IDs before another attribute, groups, stations, releases, taper, string
         // group, supports, super elements, bridge members, section states, every beam load kind, plate supports, load patch, pressures,
-        // prestress), in every unit system, and one model per refused duplicate.
-        foreach (ModelModel.ModelUnits units in Enum.GetValues(typeof(ModelModel.ModelUnits)))
-        {
-            var fem = BeamData(units, null);
-            Dump("beams-" + units, BridGHe.Common.Helpers.ModelArchive.Write(fem), fem, 1e-3);
-            var plates = PlateData(units);
-            Dump("plates-" + units, BridGHe.Common.Helpers.ModelArchive.Write(plates), plates, 1e-3);
-        }
-        foreach (var duplicate in new[] { "releases", "taper", "super-elements", "members", "prestrain" })
-        {
-            var fem = BeamData(ModelModel.ModelUnits.Nmm, duplicate);
-            Dump("beams-duplicate-" + duplicate, BridGHe.Common.Helpers.ModelArchive.Write(fem), fem, 1e-3);
-        }
+        // prestress), in every unit system, and one model per refused duplicate. R3: their frozen payloads.
+        foreach (var item in R3LegacyCorpus.Fixtures()) Item(item);
         Console.WriteLine($"IMPORT DUMP: {written} conversions written to {output} ({failed} with the same kind of error text)");
         return 0;
     }
 
+    /// <summary>Transitional (R3, until P2: the FEM catalogue goes with the FEM classes; the captured examples <c>examples-*</c> are the same
+    /// ten examples as 0.3.0 saved them, which differ from these by the model name and the type annotations of the document): the examples
+    /// 01–10 built in memory by the FEM catalogue, written by the FEM writer.</summary>
+    private static void MemoryExamples(Action<string, byte[], Func<int, string>, double> dump)
+    {
+        foreach (var example in NativeExamples.Create())
+            dump("memory-" + example.Id, BridGHe.Common.Helpers.ModelArchive.Write(example.Model), GpcModels.SectionStateSignatures(example.Model), 1e-6);
+    }
+
     /// <summary>A FEM model with the beam data of the e3 corpus (see <see cref="Run"/>), coordinates in the given units; with
-    /// <paramref name="duplicate"/>: the second beam also has a second record of that kind (a conversion error).</summary>
+    /// <paramref name="duplicate"/>: the second beam also has a second record of that kind (a conversion error). Transitional (R3): the
+    /// regressions of lane R3 read its frozen payloads (<c>beams-*</c>, <c>beams-duplicate-*</c>); kept for the other callers until P2.</summary>
     internal static ModelModel BeamData(ModelModel.ModelUnits units, string duplicate)
     {
         var steel = new MaterialModel("S355") { Name = "S355", Modulus = 210000, PoissonRatio = 0.3, UsePoisson = true, Density = 7.85e-9, ThermalExpansion = 1.2e-5 };
