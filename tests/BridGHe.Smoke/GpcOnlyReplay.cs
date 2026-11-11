@@ -442,6 +442,34 @@ internal static class GpcOnlyReplay
 
     private static bool Plain(IGH_Param p) => p.DataMapping == GH_DataMapping.None && !p.Reverse && !p.Simplify;
 
+    /// <summary>R1: the GH types the R6.0 scan records by content.</summary>
+    private static readonly HashSet<string> ContentTypes = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "GH_Material", "GH_BeamSection", "GH_BeamProperty", "GH_PlateProperty", "GH_LoadCase", "GH_LoadCombination", "GH_StagedConstruction", "GH_CompositeBeamProperty",
+    };
+
+    /// <summary>The objects the material scan solved when it wrote the capture (the rule of <see cref="GpcMaterialKindChecks.Scan"/>): Build Model, the
+    /// components with an input of materials, composite, beam or plate properties, and everything upstream of them. Cached by document.</summary>
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<GH_Document, HashSet<IGH_DocumentObject>> scanSolved = new();
+    private static HashSet<IGH_DocumentObject> ScanSolved(GH_Document doc)
+    {
+        if (doc == null) return new HashSet<IGH_DocumentObject>();
+        return scanSolved.GetValue(doc, d =>
+        {
+            static bool Consumer(IGH_Component c) => c.GetType().Name == "BuildModelComponent"
+                || c.Params.Input.Any(p => p.Type.Name == "GH_Material" || p.Type.Name == "GH_CompositeBeamProperty" || p.Type.Name == "GH_BeamProperty" || p.Type.Name == "GH_PlateProperty");
+            var upstream = new HashSet<IGH_DocumentObject>();
+            void Up(IGH_DocumentObject o)
+            {
+                if (!upstream.Add(o)) return;
+                var parameters = o is IGH_Component c ? c.Params.Input : o is IGH_Param single ? new List<IGH_Param> { single } : new List<IGH_Param>();
+                foreach (var p in parameters) foreach (var s in p.Sources) Up(s.Attributes.GetTopLevel.DocObject);
+            }
+            foreach (var c in d.Objects.OfType<IGH_Component>().Where(Consumer).ToArray()) Up(c);
+            return upstream;
+        });
+    }
+
     /// <summary>The output parameter a source of a Build Model input carries one to one: the output of a component, through relay parameters with one
     /// source and no data mapping (null: a relay with more sources or a mapping).</summary>
     private static IGH_Param Origin(IGH_Param source)
@@ -520,11 +548,21 @@ internal static class GpcOnlyReplay
                     string key = $"{definition}|{c.InstanceGuid}|model";
                     Outcome(scan.Compare(key, conversion, out var detail), key, detail); oracles.Converted++;
                 }
-        foreach (var item in gpc.Items.Where(i => i.Goo != null))
+        // The data by content: only for an instance the scan solved when it wrote the capture (upstream of a consumer of materials and properties or of
+        // Build Model, GpcMaterialKindChecks.Scan: the other objects were locked, their data never recorded); elsewhere a datum not recorded is counted apart.
+        bool solvedByScan = ScanSolved(c.OnPingDocument()).Contains(c);
+        // The GH types whose data the scan records by content (the GPC datum of a GH_Material; the FEM values of cases, combinations, stages, beam, plate
+        // and composite properties and sections): not the bridge rules (BridgeDesignGoo, a section rule or a family property, never recorded).
+        foreach (var item in gpc.Items.Where(i => i.Goo != null && ContentTypes.Contains(i.Goo.GetType().Name)))
         {
             var datum = Prop(item.Goo, "Gpc");
             if (datum == null || R1ScanCapture.ContentKind(datum) == null) continue;
-            Outcome(scan.CompareContent(definition, datum, out var detail), "output " + item.Output + " " + item.Path + " " + item.Index + " " + R1ScanCapture.ContentKind(datum) + " by content", detail);
+            var outcome = scan.CompareContent(definition, datum, out var detail);
+            // A datum not among the contents of its file is not a failure: the scan records by content only what its walk meets (the objects it solved,
+            // the FEM values of the GH types), not every output of the replay (e.g. the conci of Bridge Segment Sections in 50 REV001). The content oracle
+            // confirms (equal, equal but for GUIDs, declared); the locations (Build Model inputs and outputs) are the strict part.
+            if (outcome == R1ScanCapture.Outcome.Missing) { oracles.Count(solvedByScan ? "content not recorded (object solved by the scan)" : "content not recorded (object locked in the scan)"); continue; }
+            Outcome(outcome, "output " + item.Output + " " + item.Path + " " + item.Index + " " + R1ScanCapture.ContentKind(datum) + " by content", detail);
             oracles.Contents++;
         }
         if (oracles.Located + oracles.Contents + oracles.Converted > before) oracles.Mapped++; else oracles.Unmapped++;

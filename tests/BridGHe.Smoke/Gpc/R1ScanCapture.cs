@@ -235,15 +235,25 @@ internal sealed class R1ScanCapture
         if (kind == null) return Outcome.Missing;
         string text = GpcDraftCapture.Text(datum), fileKind = file + "|" + kind;
         if (entries.ContainsKey(fileKind + "|" + Sha(text))) return Outcome.Equal;
+        // A material is recorded as «material» (the datum of a GH_Material) or as «check-material» (the material of a property, by the same text).
+        if (kind == "material" && entries.ContainsKey(file + "|check-material|" + Sha(text))) return Outcome.Equal;
         if (declaredKeys.TryGetValue(fileKind + "|" + Sha(text), out var former)) { detail = "declared digest of " + former; return Outcome.Declared; }
-        if (!contents.TryGetValue(fileKind, out var keys)) return Outcome.Missing;
-        var best = Outcome.Missing;
+        var keys = (contents.TryGetValue(fileKind, out var own) ? own : new List<string>())
+            .Concat(kind == "material" && contents.TryGetValue(file + "|check-material", out var checks) ? checks : Enumerable.Empty<string>()).ToList();
+        if (keys.Count == 0) return Outcome.Missing;
+        string nearest = null; int fewest = int.MaxValue;
+        var now = GpcDraftCapture.WithoutGuids(text).Split('\n');
         foreach (var key in keys)
         {
             var outcome = Against(key, entries[key], datum, text, out string why);
             if (outcome == Outcome.GuidsOnly || outcome == Outcome.Declared) { detail = why; return outcome; }
+            // For the report: the captured content of the file and kind nearest to the datum (the fewest differing lines).
+            var before = GpcDraftCapture.WithoutGuids(WithDeclaredDigests(Inflate(entries[key].Text), key).Text).Split('\n');
+            int differ = before.Length != now.Length ? int.MaxValue - 1 : before.Zip(now).Count(p => p.First != p.Second);
+            if (differ < fewest) { fewest = differ; nearest = key + $" ({differ} lines differ)\n" + GpcDraftArchiveChecks.FirstDifference(string.Join("\n", before), string.Join("\n", now)); }
         }
-        return best;
+        detail = nearest == null ? null : "nearest captured content " + nearest;
+        return Outcome.Missing;
     }
 
     /// <summary>The number of entries (the PASS line).</summary>
