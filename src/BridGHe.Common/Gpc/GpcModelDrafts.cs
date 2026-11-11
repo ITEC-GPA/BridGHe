@@ -163,6 +163,8 @@ namespace BridGHe.Common.Gpc
             for (int i = 0; i < nodes; i++) n.Add(node(Bytes(), Bytes()));
             for (int i = 0; i < beams; i++) b.Add(beam(Bytes(), Bytes()));
             for (int i = 0; i < plates; i++) p.Add(plate(Bytes(), Bytes()));
+            // P30-04 (C1, 11/11): the drafts end the stream (counts smaller than the drafts written, or bytes after them, are damage).
+            if (stream.ReadByte() != -1) throw new SerializationException("BridgheModelDraftsTrailingData");
             return new GpcModelDrafts(n, b, p);
         }
     }

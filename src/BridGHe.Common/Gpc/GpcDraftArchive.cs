@@ -131,8 +131,11 @@ namespace BridGHe.Common.Gpc
             return (GpcGooArchive.Value(p.Property as GPC.Model.ElementProperties.ElasticBeamProperty ?? throw new NotSupportedException("BridgheBeamPropertyType: " + p.Property?.GetType().Name)), Save(new DraftRecords { Kind = "beam-property", Property = PropertyRecord.Of(p.Data) }));
         }
 
+        /// <summary>P30-02 (C1, 11/11): a record without the data of the property is refused, as the other kinds without their datum (before, a
+        /// beam property with null data was given).</summary>
         public static LegacyBeamProperty ReadBeamProperty(byte[] data, byte[] records) =>
-            new LegacyBeamProperty(GpcGooArchive.ReadValue<GPC.Model.ElementProperties.ElasticBeamProperty>(data), Load(records, "beam-property").Property?.Data());
+            new LegacyBeamProperty(GpcGooArchive.ReadValue<GPC.Model.ElementProperties.ElasticBeamProperty>(data),
+                Load(records, "beam-property").Property?.Data() ?? throw new SerializationException("BridgheDraftRecordsMissingBeamProperty"));
 
         /// <param name="membraneBending">L2C: the bending thickness of a membrane property, beside the GPC property (<see cref="DraftRecords.MembraneBending"/>).</param>
         public static (byte[] Data, byte[] Records) Write(GPC.Model.ElementProperties.PlateProperty p, double membraneBending = 0) => p switch
@@ -259,6 +262,11 @@ namespace BridGHe.Common.Gpc
             var quotas = new XmlDictionaryReaderQuotas { MaxDepth = 64, MaxStringContentLength = MaximumRecordBytes, MaxArrayLength = MaximumRecordBytes, MaxBytesPerRead = 4096, MaxNameTableCharCount = 16384 };
             using var reader = XmlDictionaryReader.CreateTextReader(bytes, quotas);
             var records = (DraftRecords)Serializer().ReadObject(reader);
+            // P30-04 (C1, 11/11): the records end the chunk (the writer writes the root element alone): anything after it is damage.
+            bool end;
+            try { end = reader.ReadState == ReadState.EndOfFile || reader.NodeType == XmlNodeType.None && !reader.Read(); }
+            catch (XmlException) { end = false; }
+            if (!end) throw new SerializationException("BridgheDraftRecordsTrailingData");
             if (records == null || records.Schema != DraftRecords.CurrentSchema) throw new SerializationException("BridgheDraftRecordsUnsupportedSchema");
             if (records.Kind != kind) throw new SerializationException("BridgheDraftRecordsWrongKind: " + records.Kind);
             return records;
