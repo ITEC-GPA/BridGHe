@@ -112,28 +112,37 @@ internal static class BridgeCheckSummaryTests
                 "Summary error handling: " + string.Join("; ", errors));
         }
     }
+#if !GPC_PILOT
     /// <summary>The materials of the sample section: C30 and S355 (no rebar material: the structural steel), EN 1992.</summary>
     private static BridgeMaterialSet FemMaterials() => BridgeGpc.Materials(new MaterialModel("C30") { Name = "C30", SpecificCompressiveStrength = 30 },
         new MaterialModel("S355") { Name = "S355", Modulus = 210000, MinimumYieldStress = 355, MinimumTensileStress = 510 }, null);
+#endif
 #if GPC_PILOT
     /// <summary>P2U (F6): the same materials built directly in GPC, the input the H bridge engine reads (concrete EN 1992 from fck,
     /// parabola-rectangle; structural steel from E, fy, fu with an ultimate strain of 0.1, elastic-perfectly plastic; without a rebar
-    /// material the structural steel again). Parity (removed with the FeMM models): every value equal to the conversion of the FEM materials
-    /// (<see cref="BridgeGpc.Materials"/>), once per process.</summary>
+    /// material the structural steel again). R6.6 R2a: the parity with the conversion of the FEM materials (<c>BridgeGpc.Materials</c>,
+    /// retired with the FEM model) is replaced by the explicit values, once per process: |fck| 30 and Ecm = 22000 ((fck + 8) / 10)^0.3 of
+    /// EN 1992-1-1 Table 3.1 (32836.568… MPa), the steel and the bars E 210000, fy 355, fu 510, εu 0.1, structural.</summary>
     private static BridgeMaterialSet GpcMaterials()
     {
         GPC.Model.Materials.SteelMaterialEN1992 Steel() => new("S355", 210000, 355, 510, .1, GPC.Model.Materials.SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic,
             GPC.Model.Materials.SteelMaterial.SteelTypes.Structural);
-        var materials = new BridgeMaterialSet(new GPC.Model.Materials.ConcreteMaterialEN1992("C30", 30, GPC.Model.Materials.ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle),
-            Steel(), Steel());
-        if (!materialsCompared)
+        var concrete = new GPC.Model.Materials.ConcreteMaterialEN1992("C30", 30, GPC.Model.Materials.ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle);
+        GPC.Model.Materials.SteelMaterialEN1992 steel = Steel(), bars = Steel();
+        var materials = new BridgeMaterialSet(concrete, steel, bars);
+        if (!materialsChecked)
         {
-            Require(GpcCompositeSectionChecks.Dump(materials) == GpcCompositeSectionChecks.Dump(FemMaterials()), "GPC: the sample materials differ from the conversion of the FEM materials.");
-            materialsCompared = true;
+            double ecm = 22000 * Math.Pow((30 + 8) / 10.0, 0.3);
+            Require(concrete.Name == "C30" && Math.Abs(concrete.Fck) == 30 && Math.Abs(concrete.ElasticModulusCompression / ecm - 1) < 1e-12,
+                "GPC: the sample concrete is not C30 with Ecm = 22000 ((fck + 8) / 10)^0.3.");
+            foreach (var s in new[] { steel, bars })
+                Require(s.Name == "S355" && s.ElasticModulusTension == 210000 && s.Fyk == 355 && s.Fu == 510 && s.StrainUTension == .1
+                    && s.SteelType == GPC.Model.Materials.SteelMaterial.SteelTypes.Structural, "GPC: the sample steel is not S355 E 210000, fy 355, fu 510, εu 0.1.");
+            materialsChecked = true;
         }
         return materials;
     }
-    private static bool materialsCompared;
+    private static bool materialsChecked;
 #endif
     internal static BridgeStressResult SampleResult()
     {
