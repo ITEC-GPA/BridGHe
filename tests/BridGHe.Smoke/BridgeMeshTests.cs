@@ -43,6 +43,45 @@ internal static class BridgeMeshTests
     }
     internal static void Deck()
     {
+#if GPC_PILOT
+        DeckGpc();
+    }
+
+    /// <summary>R6.6 R2a: Bridge Deck Mesh on a plate property given by its GPC datum alone (<see cref="R2aDesignFixtures.DeckProperty"/>, the
+    /// path of P2: no FEM plates read, the plates by their drafts): the persistence of the GH property made from the datum alone and the same
+    /// assertions on the mesh, the connectors and the plate drafts (corners, groups).</summary>
+    private static void DeckGpc()
+    {
+        var plugin = BridgeMergeTests.Initialize();
+        var type = plugin.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_PlateProperty", true);
+        var goo = R2aDesignFixtures.PlateProperty(R2aDesignFixtures.DeckProperty());
+        var archive = new GH_IO.Serialization.GH_Archive();
+        Require(archive.AppendObject(goo, "property"), "Persistent shell property writes");
+        var restored = (Grasshopper.Kernel.Types.IGH_Goo)Activator.CreateInstance(type);
+        Require(archive.ExtractObject(restored, "property") && restored.IsValid && !R2aDesignFixtures.HasFem(restored) &&
+            R2aDesignFixtures.Datum<GPC.Model.ElementProperties.ElasticPlateProperty>(restored)?.MembraneThickness == 250, "Persistent shell property can be instantiated and restored");
+        var source = SimpleBridgeBuilder.Build(SimpleBridgeTests.Input());
+        int sourceCount = source.Members.Count;
+        var result = BridgeDeckMesh.Create(source, null, 2500, 1500, new[] { 17321d, 60000 }, true, R2aDesignFixtures.DeckProperty());
+        using var area = AreaMassProperties.Compute(result.Mesh);
+        Require(Math.Abs(area.Area - 1.2e9) < 1, "Analytical rectangular deck area");
+        Require(result.Mesh.IsValid && !result.Mesh.IsClosed, "Open valid FEM mid-surface");
+        Require(result.Mesh.Vertices.ToPoint3dArray().All(p => Math.Abs(p.Z + 125) < 1e-8), "Slab mid-surface at -125 mm");
+        Require(result.Stations.Contains(17321) && result.Drafts.SelectMany(p => p.Records.Groups).Distinct().Count() == 3, "Pour boundary splits mesh and groups");
+        Require(result.Drafts.Length == result.Mesh.Faces.Count && result.Mesh.Faces.All(f => f.IsTriangle) && result.Drafts.All(d => d.Corners.Count == 3), "Actual triangular plate topology");
+        Require(result.Connections.Length == result.Stations.Length * 3, "One beam/deck connector per girder and row");
+        foreach (var c in result.Connections)
+        {
+            Require(result.Geometry.Members.Any(m => m.Axis.From.DistanceTo(c.From) < 1e-5 || m.Axis.To.DistanceTo(c.From) < 1e-5), "Connector starts at actual FEM beam node");
+            Require(result.Mesh.Vertices.ToPoint3dArray().Any(p => p.DistanceTo(c.To) < 1e-5), "Connector ends at actual FEM plate node");
+        }
+        Require(source.Members.Count == sourceCount, "Deck remeshing does not mutate source");
+        var curved = BridgeDeckMesh.Create(SimpleBridgeBuilder.Build(SimpleBridgeTests.Input(curved: true)), null, 5000, 2500, null, true, R2aDesignFixtures.DeckProperty());
+        Require(curved.Mesh.IsValid && curved.Drafts.Length > 0, "Curved deck mesh");
+        Reject(() => BridgeDeckMesh.Create(source, null, 2500, 1500, null, true, R2aDesignFixtures.DeckProperty(200)));
+        Reject(() => BridgeDeckMesh.Create(source, null, 0, 1500, null, true, R2aDesignFixtures.DeckProperty()));
+        Console.WriteLine("BRIDGE DECK PASS: analytical area, midsurface, pour groups, curved mesh, plate connectivity and input isolation.");
+#else
         var plugin = BridgeMergeTests.Initialize();
         var type = plugin.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_PlateProperty", true);
         var goo = (Grasshopper.Kernel.Types.IGH_Goo)Activator.CreateInstance(type, DeckProperty());
@@ -73,6 +112,7 @@ internal static class BridgeMeshTests
         Reject(() => BridgeDeckMesh.Create(source, badProperty, 2500, 1500, null, true));
         Reject(() => BridgeDeckMesh.Create(source, DeckProperty(), 0, 1500, null, true));
         Console.WriteLine("BRIDGE DECK PASS: analytical area, midsurface, pour groups, curved mesh, plate connectivity and input isolation.");
+#endif
     }
     private static void Require(bool value, string text) { if (!value) throw new InvalidOperationException("BRIDGE MESH: " + text); }
     private static void Reject(Action action)
