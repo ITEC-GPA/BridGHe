@@ -38,7 +38,8 @@ namespace BridGHe.Common.Gpc.Builders
             // (no component or menu of 0.3.0 makes one) is refused as the reader refuses it, in the order of the reader.
             if (section.Mirror != LegacySectionRecipe.NoMirror && !LegacyModelImport.CanBeDouble(section)) throw new NotSupportedException("LegacyMirroredSectionNotMappedYet");
             var analysis = GpcMaterials.Analysis(material);
-            if (analysis.AnalysisData?.StressStrainPairs != null && typeName != "Beam" && typeName != "Truss") analysis.AnalysisData.StressStrainPairs = null; // former exporter: tables only for beams and trusses
+            // Former exporter: tables only for beams and trusses. C3: the table removed with its law, as the reader (GpcMaterials.WithoutTable).
+            if (typeName != "Beam" && typeName != "Truss") GpcMaterials.WithoutTable(analysis);
             var recipe = PropertySection(section);
             var units = GpcBeamDrafts.DraftUnits;
             var (property, angle, native) = LegacyModelImport.SectionProperty(recipe, name ?? "Property", analysis, units, new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport());

@@ -103,6 +103,7 @@ internal static class Program
 #if GPC_PILOT
         if(args.Contains("--gpc-results-native")) return GpcResultsFileNative.Run();
         if(args.Contains("--gpc-only-analysis-native")) return GpcOnlyAnalysisNative.Run(); // L3e: targeted (the same cases run under --core-only --native)
+        if(args.Contains("--c3")) return C3Checks.Native(); // C3: materials readback, native-section preview
         if(args.Contains("--c1")) return args.Contains("--native") ? GpcReviewFixesC1Native.Run() : GpcReviewFixesC1.Scan(args.SkipWhile(a=>a!="--c1").Skip(1).First()); // C1: Table Material readback, BGHGPC1 scan
         if(args.Contains("--c2-parity-native")) return C2ParityNative.Run(); // C2: targeted (the same cases run under --core-only --native)
         if(args.Contains("--remake-examples-04")) return ExampleRemake04.Run(args.Contains("write"));
@@ -313,6 +314,7 @@ internal static class Program
         Assert(GpcOnlyAnalysisNative.Run()==0,"L3E (R6.5 P1): analysis and Export on GPC-only input; A05, A06 and A09 written as BridGHe 0.3.0 wrote them");
         Assert(GpcReviewFixesC1Native.Run()==0,"C1 (11/11): Table Material with α and ρ written to Straus7 with its table, α and ρ");
         Assert(C2ParityNative.Run()==0,"C2 (P26-01...07): labels, plate properties, cases solved, solver settings and combinations of Straus7 as BridGHe 0.3.0");
+        Assert(C3Checks.Native()==0,"C3 (11/11): materials with explicit G, damping, thermal data or a table written through the GPC-only path as 0.3.0 wrote them; preview of the native sections");
     }
 
     /// <summary>P2Z (R6.5 P1 lane 2a): the Straus7 section components replayed in memory with the switch of the property producers, Straus7

@@ -106,6 +106,7 @@ internal static class RegressionTests
         gpc["remade-examples"] = ExampleRemake04.Replay; // P2S (7/11): the five examples remade in 0.4.0 form
         gpc["gpc-null-values"] = GpcNullValueChecks.Regression; // R6.5 P0 (7/11): the GH types given by their GPC datum alone
         gpc["gpc-build-model-legacy"] = R3LegacyBuildModel.Regression; // R6.6 lane R3 (11/11): Build Model on the drafts of the 0.3.0 models read by value = the import of the reader (the FEM-input coverage of gpc-build-model)
+        gpc["gpc-c3"] = C3Checks.Regression; // C3 (11/11): materials with analysis data and no table; preview of the GPC drafts (gaps 1 and 2 of R2a)
         gpc["gpc-review-fixes"] = GpcReviewFixesC1.Regression; // C1 (11/11): the product fixes of the ChatGPT reviews (R65-C3-01/02, R25-01, P30-01/02/04, Table Material)
         gpc["gpc-only-elements"] = GpcOnlyReplay.Elements; // R6.5 P1 lane 1a (7/11): the element components replayed with GPC-only inputs
         gpc["gpc-only-generators"] = GpcOnlyReplay.Generators; // R6.5 P1 lane 1b (7/11): the bridge generators replayed with GPC-only inputs and outputs

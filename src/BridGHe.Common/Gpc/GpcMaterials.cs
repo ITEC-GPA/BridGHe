@@ -27,10 +27,25 @@ namespace BridGHe.Common.Gpc
                     SpecificHeat = specificHeat * 1000,
                     // The former tables were exported with the native default response (elastoplastic): review L2, question 3.
                     StressStrainPairs = stressStrain?.SelectMany(p => new[] { p.strain, p.stress }).ToArray(),
-                    NonlinearResponse = MaterialNonlinearResponse.Elastoplastic,
+                    // C3 (11/11): elastoplastic only with a table. Without one (explicit G, damping or thermal data alone) the law is the linear
+                    // elastic one of the library (NonlinearElastic, Isotropic): GPC refuses any other law without a table
+                    // (MaterialLawRequiresStressStrainTable), so every property on such a material was refused; 0.3.0 wrote no law without a table.
+                    NonlinearResponse = stressStrain != null ? MaterialNonlinearResponse.Elastoplastic : MaterialNonlinearResponse.NonlinearElastic,
                 };
             }
             return material;
+        }
+
+        /// <summary>C3 (11/11): the analysis material of a property type the former exporter wrote without the stress-strain table (the beam
+        /// types other than Beam and Truss): the table and its law removed (the linear elastic law of the library, as <see cref="Elastic"/>
+        /// without a table), and no analysis data left when nothing else remains (the material <see cref="Elastic"/> makes of the same values
+        /// without the table). Before, the table alone was removed and the elastoplastic law stayed, which GPC refuses without a table.</summary>
+        public static void WithoutTable(Material material)
+        {
+            var a = material?.AnalysisData;
+            if (a?.StressStrainPairs == null) return;
+            a.StressStrainPairs = null; a.NonlinearResponse = MaterialNonlinearResponse.NonlinearElastic; a.Hardening = MaterialHardening.Isotropic;
+            if (a.BeamShearModulus == null && a.ViscousDampingDensity == 0 && a.ModalDampingRatio == 0 && a.ThermalConductivity == 0 && a.SpecificHeat == 0) material.AnalysisData = null;
         }
 
         /// <summary>M1 (coordinator, 6/11): the GPC material by kind of a former material (§1bis): the archive of the FEM value read by

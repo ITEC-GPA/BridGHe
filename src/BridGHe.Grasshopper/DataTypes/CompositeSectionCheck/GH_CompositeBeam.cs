@@ -201,18 +201,23 @@ namespace BridGHe.Grasshopper.DataTypes
 
         #region PreviewData methods
 
-        public BoundingBox ClippingBox => Boundingbox;
+        // C3 (11/11): without a FEM value, the box of the beam with the solids of its two definitions.
+        public BoundingBox ClippingBox => Value == null ? Display.ModelPreview.DraftBounds(Gpc) : Boundingbox;
 
         public void DrawViewportMeshes(GH_PreviewMeshArgs args)
         {
-            if (Display.ModelPreview.Automatic && Value != null) Display.ModelPreview.Meshes(Value,args.Pipeline,Display.DisplayPreferences.Current);
+            if (!Display.ModelPreview.Automatic) return;
+            // C3 (11/11): without a FEM value, the solids of the datum shaded (steel and slab), as the FEM composite beam.
+            if (Value == null) Display.ModelPreview.DraftMeshes(Gpc,args.Pipeline,Display.DisplayPreferences.Current);
+            else Display.ModelPreview.Meshes(Value,args.Pipeline,Display.DisplayPreferences.Current);
         }
 
         public void DrawViewportWires(GH_PreviewWireArgs args)
         {
             if (!Display.ModelPreview.Automatic) return;
-            // R6.5 P1 lane 3a: without a FEM value the draft of the beam (its axis, label), as a beam given by its draft alone.
-            if (Value == null) Display.ModelPreview.DraftWires(Gpc?.Beam,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current);
+            // R6.5 P1 lane 3a: without a FEM value the draft of the beam (its axis, label), as a beam given by its draft alone; C3 (11/11): with
+            // the solids and the bar lines of its two definitions (the datum).
+            if (Value == null) Display.ModelPreview.DraftWires(Gpc,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current);
             else Display.ModelPreview.SectionWires(Value,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current,PreviewSections);
         }
 

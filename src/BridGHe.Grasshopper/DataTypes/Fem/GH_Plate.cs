@@ -187,7 +187,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         #region PreviewData methods
 
-        public BoundingBox ClippingBox => Boundingbox;
+        // C3 (11/11): without a FEM value, the box of the draft with its solid.
+        public BoundingBox ClippingBox => Value == null ? Display.ModelPreview.DraftBounds(Gpc) : Boundingbox;
 
         public void DrawViewportMeshes(GH_PreviewMeshArgs args)
         {

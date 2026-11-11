@@ -101,32 +101,75 @@ namespace BridGHe.Grasshopper.Display
             var shapes=Shapes(element);for(int i=0;i<shapes.Length;i++)if(shapes[i]!=null)
             {using var material=new DisplayMaterial(composite?(i==0?Color.SteelBlue:Color.LightGray):Color.CadetBlue,options.Transparency);pipeline.DrawBrepShaded(shapes[i],material);}
         }
+        /// <summary>C3 (11/11): the section solids and the bar lines of a draft given by its GPC data alone, made once per draft (the drafts and
+        /// the composite datum are immutable by convention): a beam (<see cref="Common.Gpc.GpcDraftShapes.Beam"/>), a composite beam from its
+        /// two definitions (<see cref="Common.Gpc.GpcDraftShapes.Composite"/> and its bars), a plate (its solid,
+        /// <see cref="DataTypes.GpcDraftGeometry.Shape"/>), as the FEM value drew them.</summary>
+        private sealed class DraftGeometry { public Brep[] Shapes=Array.Empty<Brep>(); public Line[] Bars=Array.Empty<Line>(); public bool Composite; }
+        private static readonly ConditionalWeakTable<object,DraftGeometry> draftGeometry=new();
+        private static DraftGeometry Draft(object draft)=>draft==null?new DraftGeometry():draftGeometry.GetValue(draft,d=>
+        {
+            // The preview never throws: a draft whose geometry cannot be made (an invalid section) draws its axis and label only.
+            try
+            {
+                return d switch
+                {
+                    Common.Gpc.Legacy.LegacyBeamDraft b=>new DraftGeometry{Shapes=Common.Gpc.GpcDraftShapes.Beam(b)},
+                    DataTypes.GpcCompositeBeam c=>new DraftGeometry{Shapes=Common.Gpc.GpcDraftShapes.Composite(c.Beam,c.Start,c.End),Bars=Common.Gpc.GpcDraftShapes.CompositeBars(c.Beam,c.Start,c.End),Composite=true},
+                    Common.Gpc.Legacy.LegacyPlateDraft p=>new DraftGeometry{Shapes=DataTypes.GpcDraftGeometry.Shape(p) is {} s?new[]{s}:Array.Empty<Brep>()},
+                    _=>new DraftGeometry(),
+                };
+            }
+            catch(Exception){return new DraftGeometry();}
+        });
+        /// <summary>C3: the section solids of a draft (<see cref="Draft"/>), in the order the FEM preview drew them.</summary>
+        public static Brep[] DraftShapes(object draft)=>Draft(draft).Shapes;
+        /// <summary>C3: the schematic bar lines of a draft (a composite beam given by its GPC datum alone).</summary>
+        public static Line[] DraftReinforcementLines(object draft)=>Draft(draft).Bars;
+        /// <summary>C3: the bounding box of a draft with its solids, as <see cref="Bounds(ElementModel)"/> of the FEM value (the beam of a
+        /// composite datum).</summary>
+        public static BoundingBox DraftBounds(object draft)
+        {
+            var box=DataTypes.GpcDraftGeometry.Bounds(draft is DataTypes.GpcCompositeBeam c?c.Beam:draft);
+            foreach(var shape in DraftShapes(draft))if(shape!=null)box.Union(shape.GetBoundingBox(true));
+            return box;
+        }
         /// <summary>R6.5 P0 (coordinator, 7/11): the preview of an element given by its GPC draft alone (no FEM value): the geometry (point,
-        /// axis, outline), the label and (P2X) the local axes of a plate; sections, loads and attributes are drawn from the FEM value until the
-        /// components draw them on GPC.</summary>
+        /// axis, outline), the label and (P2X) the local axes of a plate; C3 (11/11): the section solids of beams and plates and the solids and
+        /// bars of a composite beam (its GPC datum, <see cref="DataTypes.GpcCompositeBeam"/>), with the colours of the FEM preview; loads and
+        /// attributes are drawn from the FEM value until the components draw them on GPC.</summary>
         public static void DraftWires(object draft,DisplayPipeline pipeline,RhinoViewport viewport,Color color,DisplayOptions options)
         {
             if(draft==null || !options.Enabled || !DisplayPreferences.Current.Enabled)return;
-            if(options.Geometry)switch(draft)
+            var element=draft is DataTypes.GpcCompositeBeam cb?cb.Beam:draft;
+            if(element==null)return;
+            if(options.Geometry)switch(element)
             {
                 case Common.Gpc.Legacy.LegacyNodeDraft n:{var p=DataTypes.GpcDraftGeometry.Position(n);if(p.IsValid)pipeline.DrawPoint(p,color);break;}
                 case Common.Gpc.Legacy.LegacyBeamDraft b:{var l=DataTypes.GpcDraftGeometry.Axis(b);if(l.IsValid)pipeline.DrawLine(l,color);break;}
                 case Common.Gpc.Legacy.LegacyPlateDraft p:{var outline=DataTypes.GpcDraftGeometry.Outline(p);if(outline!=null)pipeline.DrawCurve(outline,color);break;}
             }
-            var bounds=DataTypes.GpcDraftGeometry.Bounds(draft);
+            var geometry=Draft(draft);
+            if(options.Sections)for(int i=0;i<geometry.Shapes.Length;i++)if(geometry.Shapes[i]!=null)pipeline.DrawBrepWires(geometry.Shapes[i],geometry.Composite?(i==0?Color.SteelBlue:Color.DarkGray):color);
+            if(options.Reinforcement)foreach(var line in geometry.Bars)pipeline.DrawLine(line,Color.DarkOrange,2);
+            var bounds=DraftBounds(draft);
             // P2X: the local axes of a plate draft (turned by its local axis angle), drawn as the FEM preview draws those of a plate.
-            if(options.Axes && bounds.IsValid && draft is Common.Gpc.Legacy.LegacyPlateDraft pd && pd.Corners!=null && (pd.Corners.Count==3 || pd.Corners.Count==4))
+            if(options.Axes && bounds.IsValid && element is Common.Gpc.Legacy.LegacyPlateDraft pd && pd.Corners!=null && (pd.Corners.Count==3 || pd.Corners.Count==4))
             {
                 Common.Gpc.Builders.GpcPlateBuilders.LocalAxes(pd.Corners,pd.AngleDeg,out var x,out var y,out var z);
                 using(DrawingHelper.Scale(options.SymbolScale)){double size=DrawingHelper.GetScaleFactor(viewport,bounds.Center)*2;pipeline.DrawArrow(new Line(bounds.Center,bounds.Center+x*size),Color.Red);pipeline.DrawArrow(new Line(bounds.Center,bounds.Center+y*size),Color.Green);pipeline.DrawArrow(new Line(bounds.Center,bounds.Center+z*size),Color.Blue);}
             }
-            if(options.Labels && bounds.IsValid){string label=DataTypes.GpcDraftGeometry.Label(draft);if(label.Length!=0)pipeline.DrawDot(bounds.Center,label,color,Color.White);}
+            if(options.Labels && bounds.IsValid){string label=DataTypes.GpcDraftGeometry.Label(element);if(label.Length!=0)pipeline.DrawDot(bounds.Center,label,color,Color.White);}
         }
-        /// <summary>R6.5 P0: the shaded preview of a plate given by its GPC draft alone (its flat mesh).</summary>
+        /// <summary>R6.5 P0: the shaded preview of an element given by its GPC draft alone; C3 (11/11): its solids with the colours of the FEM
+        /// preview (<see cref="Meshes"/>), a plate without a solid by its flat mesh as before.</summary>
         public static void DraftMeshes(object draft,DisplayPipeline pipeline,DisplayOptions options)
         {
-            if(!options.Enabled || !DisplayPreferences.Current.Enabled || !options.Sections || !options.Shaded)return;
-            if(draft is Common.Gpc.Legacy.LegacyPlateDraft p && DataTypes.GpcDraftGeometry.FlatMesh(p) is {} mesh)
+            if(draft==null || !options.Enabled || !DisplayPreferences.Current.Enabled || !options.Sections || !options.Shaded)return;
+            var geometry=Draft(draft);
+            for(int i=0;i<geometry.Shapes.Length;i++)if(geometry.Shapes[i]!=null)
+            {using var material=new DisplayMaterial(geometry.Composite?(i==0?Color.SteelBlue:Color.LightGray):Color.CadetBlue,options.Transparency);pipeline.DrawBrepShaded(geometry.Shapes[i],material);}
+            if(geometry.Shapes.Length==0 && draft is Common.Gpc.Legacy.LegacyPlateDraft p && DataTypes.GpcDraftGeometry.FlatMesh(p) is {} mesh)
             {using var material=new DisplayMaterial(Color.CadetBlue,options.Transparency);pipeline.DrawMeshShaded(mesh,material);}
         }
         public static void Moving(MovingPath path,DisplayPipeline pipeline,Color color,DisplayOptions options)
