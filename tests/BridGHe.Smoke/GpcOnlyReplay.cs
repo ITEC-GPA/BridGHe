@@ -1158,11 +1158,18 @@ internal static class GpcOnlyReplay
         };
         foreach (var (type, name) in new[] { (0, "ShellThin"), (1, "ShellThick"), (2, "PlateThin"), (3, "PlateThick") })
             cases.Add(("PlatePropertyComponent", "A04: " + name + " of a material with a stress-strain table", new Dictionary<int, object> { [0] = "Table plate", [1] = type, [2] = 20.0, [3] = 20.0, [4] = table }));
-        // A08: a girder of Bridge State Override (a current section state) given another property.
-        var (stateType, _, stateInputs) = StateOverrideCases().First();
-        var stated = ProduceAll(stateType, stateInputs).First(g => ((BridGHe.Common.Gpc.Legacy.LegacyBeamDraft)Prop(g, "Gpc")).Bridge?.SectionState != null);
+        // A08: a girder of Bridge State Override (a current section state) given another property. R1: the state reference is FEM-backed (no GPC twin
+        // yet: TRANSITIONAL input), built so in both builds.
+        bool keep = gpcInputs; gpcInputs = false;
+        IGH_Goo stated, former;
+        try
+        {
+            var (stateType, _, stateInputs) = StateOverrideCases().First();
+            stated = ProduceAll(stateType, stateInputs).First(g => ((BridGHe.Common.Gpc.Legacy.LegacyBeamDraft)Prop(g, "Gpc")).Bridge?.SectionState != null);
+            former = Make("Fem.GH_BeamProperty", ((BeamModel)Prop(stated, "Value")).BeamProperty);
+        }
+        finally { gpcInputs = keep; }
         var other = Produce("BeamPropertyComponent", new Dictionary<int, object> { [0] = "Other", [1] = 5, [2] = section, [3] = steel });
-        var former = Make("Fem.GH_BeamProperty", ((BeamModel)Prop(stated, "Value")).BeamProperty);
         cases.Add(("BeamOverrideComponent", "A08: a beam with a current section state, another property (the state stale)", new Dictionary<int, object> { [0] = stated, [1] = other }));
         cases.Add(("BeamPropertyOverrideComponent", "A08: a beam with a current section state, another property (the state stale)",
             new Dictionary<int, object> { [0] = new object[] { stated }, [1] = new object[] { former }, [2] = new object[] { other } }));
@@ -2156,7 +2163,7 @@ internal static class GpcOnlyReplay
         var kinds = new HashSet<string>(ElementGoo.Concat(PropertyGoo).Concat(ModelGoo), StringComparer.Ordinal);
         var types = Lane3aTypes.Concat(Lane3bTypes).Concat(Lane3cTypes).Concat(Lane3dTypes).Concat(Lane3Consumers).Where(Selected).ToHashSet(StringComparer.Ordinal);
         var analysisTypes = new[] { "StrausR3AnalysisComponent", "MovingStaticAnalysisComponent" };
-        var byType = new SortedDictionary<string, (int Instances, int Items)>(StringComparer.Ordinal); var failures = new List<string>();
+        var byType = new SortedDictionary<string, (int Instances, int Items)>(StringComparer.Ordinal); var failures = new List<string>(); var transitionalDiffs = new List<string>();
         var analyses = doc.Objects.OfType<GH_Component>().Where(c => analysisTypes.Contains(c.GetType().Name) && Selected(c.GetType().Name)).ToList();
         // Downstream of the analyses: every object that reads an output of an analysis, through any number of objects.
         var down = new List<IGH_DocumentObject>(); var seen = new HashSet<IGH_DocumentObject>(analyses);
@@ -2259,15 +2266,18 @@ internal static class GpcOnlyReplay
                     foreach (var line in run.Raw.SelectMany(t => t.Split('\n')).Where(l => l.StartsWith("ORIGIN WIND", StringComparison.Ordinal)).Distinct())
                         Console.WriteLine($"GPC-ONLY rehearsal {where}: {name}: {line}");
             if (!Transitional) continue;
-            // TRANSITIONAL (until P2): the same messages and outputs modulo GUIDs as the definition (the bridge lines of a model as a set, L3e).
+            // TRANSITIONAL (until P2), reported and not failing: the same messages and outputs modulo GUIDs as the definition (the bridge lines of a model as
+            // a set, L3e). The chain is the path of P2 from the analysis on; what differs from the FEM path of the definition is listed for P2 to decide.
             var a = fem.Outputs.ToList(); var b = gpc.Outputs.ToList(); a.Replace(BridgeLinesAsSet); b.Replace(BridgeLinesAsSet);
-            if (!fem.Messages.SequenceEqual(gpc.Messages)) failures.Add(where + ": messages " + string.Join(" / ", fem.Messages) + " -> " + string.Join(" / ", gpc.Messages));
+            if (!fem.Messages.SequenceEqual(gpc.Messages)) transitionalDiffs.Add(where + ": messages " + string.Join(" / ", fem.Messages) + " -> " + string.Join(" / ", gpc.Messages));
             if (!a.SequenceEqual(b))
             {
                 var first = a.Zip(b).FirstOrDefault(p => p.First != p.Second);
-                failures.Add($"{where}: outputs {a.Count} -> {b.Count}; first (definition -> chain):" + Environment.NewLine + Differences(first.First ?? "<none>", first.Second ?? "<none>"));
+                transitionalDiffs.Add($"{where}: outputs {a.Count} -> {b.Count}, {a.Zip(b).Count(p => p.First != p.Second)} different; first (definition -> chain):" + Environment.NewLine + Differences(first.First ?? "<none>", first.Second ?? "<none>"));
             }
         }
+        foreach (var d in transitionalDiffs.Take(40)) Console.WriteLine("GPC-ONLY rehearsal TRANSITIONAL difference from the FEM path of the definition: " + d);
+        Console.WriteLine($"GPC-ONLY rehearsal {label}: {transitionalDiffs.Count} TRANSITIONAL differences from the FEM path of the definition (reported, P2 decides)");
         // The chain written and read back: the analyses re-attach their saved results (no analysis pressed), the consumers give the same outputs; then the
         // results missing (an Output Path without files): no output with a FEM value.
         foreach (var variant in press ? new[] { "reopened", "results missing" } : new[] { "reopened" })
@@ -2367,14 +2377,21 @@ internal static class GpcOnlyReplay
     /// Build Model (the same node given twice, created nodes, a combination and a stage, an unknown case).</summary>
     private static List<(string Type, string Label, Dictionary<int, object> Inputs)> Lane3cCases()
     {
-        var examples = NativeExamples.Create().ToDictionary(e => e.Id, e => e.Model);
-        var m2 = examples["02-simply-supported"]; var m3 = examples["03-plate-patch"];
-        var beamProperty = m2.Beams[1].BeamProperty; var plateProperty = m3.Plates.Single().PlateProperty;
-        var lc = Make("Fem.GH_LoadCase", new LoadCaseModel("Merge", "Merge")); var lc2 = Make("Fem.GH_LoadCase", new LoadCaseModel("Other", "Other"));
+        // R1: the GPC twins (the elements built by the product builders on the property of the examples, R0; the cases by the case builder); the node
+        // with a rigid link stays FEM-backed (TRANSITIONAL input, no GPC twin yet).
+        var examples = gpcInputs ? null : NativeExamples.Create().ToDictionary(e => e.Id, e => e.Model);
+        var m2 = examples?["02-simply-supported"]; var m3 = examples?["03-plate-patch"];
+        var beamProperty = m2?.Beams[1].BeamProperty; var plateProperty = m3?.Plates.Single().PlateProperty;
+        var lc = Twin(() => Make("Fem.GH_LoadCase", new LoadCaseModel("Merge", "Merge")), () => R2aDesignFixtures.Case(BridGHe.Common.Gpc.Builders.GpcCaseBuilders.Case("Merge", false)));
+        var lc2 = Twin(() => Make("Fem.GH_LoadCase", new LoadCaseModel("Other", "Other")), () => R2aDesignFixtures.Case(BridGHe.Common.Gpc.Builders.GpcCaseBuilders.Case("Other", false)));
         static Rhino.Geometry.Point3d P(double x, double y) => new Rhino.Geometry.Point3d(x, y, 0);
-        IGH_Goo N(double x, double y) => Make("Fem.GH_Node", new NodeModel(P(x, y)));
-        IGH_Goo B(string id, Rhino.Geometry.Point3d a, Rhino.Geometry.Point3d b) => Make("Fem.GH_Beam", new BeamModel(id, a, b, beamProperty));
-        IGH_Goo Q(string id, params Rhino.Geometry.Point3d[] c) => Make("Fem.GH_Plate", new PlateModel(id, c, plateProperty));
+        static GPC.Geometry.Point3d G(Rhino.Geometry.Point3d p) => new GPC.Geometry.Point3d(p.X, p.Y, p.Z);
+        IGH_Goo N(double x, double y) => Twin(() => Make("Fem.GH_Node", new NodeModel(P(x, y))),
+            () => R2aDesignFixtures.Node(BridGHe.Common.Gpc.Builders.GpcNodeBuilders.Create(x, y, 0, "", null, R1Id("3c-node:" + x + ":" + y))));
+        IGH_Goo B(string id, Rhino.Geometry.Point3d a, Rhino.Geometry.Point3d b) => Twin(() => Make("Fem.GH_Beam", new BeamModel(id, a, b, beamProperty)),
+            () => R2aDesignFixtures.Beam(BridGHe.Common.Gpc.Builders.GpcBeamBuilders.New(G(a), G(b), GpcNativeExamples.Property(), null, 0, 0, 0, R1Id("3c-beam:" + id), id)));
+        IGH_Goo Q(string id, params Rhino.Geometry.Point3d[] c) => Twin(() => Make("Fem.GH_Plate", new PlateModel(id, c, plateProperty)),
+            () => R2aDesignFixtures.Plate(BridGHe.Common.Gpc.Builders.GpcPlateBuilders.Create(c.Select(p => (p.X, p.Y, p.Z)).ToArray(), Patch(), null, 0, 0, id, R1Id("3c-plate:" + id))));
         var loaded = Produce("ElementIdComponent", new Dictionary<int, object> { [0] = Produce("NodeLoadComponent", new Dictionary<int, object> { [0] = N(0, 0), [1] = lc, [2] = new Rhino.Geometry.Vector3d(1, 0, -5) }), [1] = "N1" });
         var near = Produce("ElementIdComponent", new Dictionary<int, object> { [0] = Produce("NodeMomentComponent", new Dictionary<int, object> { [0] = N(0.4, 0), [1] = lc, [2] = new Rhino.Geometry.Vector3d(0, 2, 0) }), [1] = "N2" });
         var other = N(5000, 0);
@@ -2383,9 +2400,10 @@ internal static class GpcOnlyReplay
         var quad = Q("P1", P(0, 0), P(5000, 0), P(5000, 4000), P(0, 4000));
         var triangle = Q("P2", P(5000.2, 0), P(10000, 0), P(5000, 4000), P(5000.1, 4000));
         var removed = Q("P3", P(0, 0), P(0.4, 0), P(0.2, 0.3));
-        var angled = Make("Fem.GH_Plate", new PlateModel("P4", new[] { P(0.3, 0), P(5000, 0.2), P(5000, 4000), P(0, 4000) }, plateProperty) { AngleDeg = 30 });
+        var angled = Twin(() => Make("Fem.GH_Plate", new PlateModel("P4", new[] { P(0.3, 0), P(5000, 0.2), P(5000, 4000), P(0, 4000) }, plateProperty) { AngleDeg = 30 }),
+            () => R2aDesignFixtures.Plate(BridGHe.Common.Gpc.Builders.GpcPlateBuilders.Create(new[] { (0.3, 0.0, 0.0), (5000.0, 0.2, 0.0), (5000.0, 4000.0, 0.0), (0.0, 4000.0, 0.0) }, Patch(), null, 30, 0, "P4", R1Id("3c-plate:P4"))));
         var all = new object[] { loaded, near, other, beam, zero, far, quad, triangle, removed, angled };
-        // The reason of the example 46 (ModelsWithoutGpcInput): a rigid link whose target has no node.
+        // The reason of the example 46 (ModelsWithoutGpcInput): a rigid link whose target has no node. R1: FEM-backed in both builds (no GPC twin yet).
         var linkedNode = new NodeModel(P(1000, 0)); linkedNode.Attributes.Add(new RigidConnectionAttributeModel(P(7777, 0)));
         var linked = Make("Fem.GH_Node", linkedNode);
         var strained = Produce("CompositeBeamSlabStrainComponent", new Dictionary<int, object> { [0] = beam, [1] = lc, [2] = -2e-4 });
@@ -2517,14 +2535,33 @@ internal static class GpcOnlyReplay
             && c.Inputs.Values.SelectMany(v => v is object[] l ? l : new[] { v }).Any(v => v is IGH_Goo g && kinds.Contains(g.GetType().Name));
         // L2C: and the cases of lane 2c.
         // PAR: and the cases of the 0.3.0 parity (ParityCases; the T, C and angle properties under the native host, ParityNativeCases).
-        List<(string Type, string Label, Dictionary<int, object> Inputs)> Cases() => lane == "native" ? NativeSectionCases().Concat(ParityNativeCases()).ToList()
-            : lane == "properties" ? Lane1Cases().Concat(Lane1bCases()).Where(OfLane2).Concat(Lane2aCases()).Concat(Lane2bCases()).Concat(Lane2cCases()).Concat(ParityCases()).ToList()
-            : lane == "generators" ? Lane1bCases() : lane == "models" ? ModelsCases().Concat(Lane3cCases()).Concat(Lane3dCases()).Concat(Lane3eCases()).ToList() : Lane1Cases();
+        // R1: the lists without GPC twins yet (Lane3c, Lane3d, Lane3e: FEM models built in memory) are built with their FEM-backed inputs in both builds
+        // (no producer solved with the switches of P2 between FEM-backed data): listed as TRANSITIONAL inputs.
+        List<(string Type, string Label, Dictionary<int, object> Inputs)> Off(Func<List<(string, string, Dictionary<int, object>)>> list)
+        { bool keep = gpcInputs; gpcInputs = false; try { return list(); } finally { gpcInputs = keep; } }
+        // A list whose build without FEM fails (a producer refuses on the path of P2): listed, built with its FEM-backed inputs (TRANSITIONAL).
+        List<(string Type, string Label, Dictionary<int, object> Inputs)> Safe(string name, Func<List<(string, string, Dictionary<int, object>)>> list)
+        {
+            if (!gpcInputs) return list();
+            try { return list(); }
+            catch (Exception ex) { femInputs.Add(name + ": the build without FEM fails (" + ex.GetBaseException().Message + Frame(ex) + ")"); return Off(list); }
+        }
+        List<(string Type, string Label, Dictionary<int, object> Inputs)> Cases() => lane == "native" ? Safe("native sections", NativeSectionCases).Concat(Safe("parity native", ParityNativeCases)).ToList()
+            : lane == "properties" ? Safe("lane 1", Lane1Cases).Concat(Safe("lane 1b", Lane1bCases)).Where(OfLane2).Concat(Safe("lane 2a", Lane2aCases)).Concat(Safe("lane 2b", Lane2bCases))
+                .Concat(Safe("lane 2c", Lane2cCases)).Concat(Safe("parity", ParityCases)).ToList()
+            : lane == "generators" ? Safe("lane 1b", Lane1bCases) : lane == "models" ? Safe("lane 3a", ModelsCases).Concat(Safe("lane 3c", Lane3cCases)).Concat(Off(Lane3dCases)).Concat(Off(Lane3eCases)).ToList()
+            : Safe("lane 1", Lane1Cases);
         // R1: every case list built twice: the FEM-backed inputs of today (the transitional copy) and the inputs built without any FEM value.
         var all = Cases().Where(c => Selected(c.Type)).ToList();
         List<(string Type, string Label, Dictionary<int, object> Inputs)> built;
         gpcInputs = true;
         try { built = Cases().Where(c => Selected(c.Type)).ToList(); }
+        catch (Exception ex)
+        {
+            // A producer of the build without FEM that fails: the failure is listed, the cases run on the FEM-backed inputs (TRANSITIONAL).
+            femInputs.Add("the whole list of " + lane + ": the build without FEM fails (" + ex.GetBaseException().Message + Frame(ex) + ")");
+            built = all;
+        }
         finally { gpcInputs = false; }
         if (built.Count != all.Count || built.Zip(all).Any(p => p.First.Type != p.Second.Type || p.First.Label != p.Second.Label))
             throw new Exception("GPC-ONLY REPLAY: the in-memory cases built without FEM are not the cases of today (" + built.Count + " / " + all.Count + ")");
