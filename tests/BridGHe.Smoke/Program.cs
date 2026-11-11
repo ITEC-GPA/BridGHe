@@ -103,6 +103,7 @@ internal static class Program
 #if GPC_PILOT
         if(args.Contains("--gpc-results-native")) return GpcResultsFileNative.Run();
         if(args.Contains("--gpc-only-analysis-native")) return GpcOnlyAnalysisNative.Run(); // L3e: targeted (the same cases run under --core-only --native)
+        if(args.Contains("--c1")) return args.Contains("--native") ? GpcReviewFixesC1Native.Run() : GpcReviewFixesC1.Scan(args.SkipWhile(a=>a!="--c1").Skip(1).First()); // C1: Table Material readback, BGHGPC1 scan
         if(args.Contains("--remake-examples-04")) return ExampleRemake04.Run(args.Contains("write"));
         if(args.Contains("--phase-examples-native")) return NativePhaseExamples.Run(args.SkipWhile(a=>a!="--phase-examples-native").Skip(1).FirstOrDefault(a=>!a.StartsWith("--")));
         if(args.Contains("--legacy-beam-results")) { var r=args.SkipWhile(a=>a!="--legacy-beam-results").Skip(1).ToArray(); return LegacySectionDump.BeamResults(r[0],r[1],r.Length>2?r[2]:null); }
@@ -309,6 +310,7 @@ internal static class Program
         CheckNativeGpcOnlySections();
         Assert(ParityNative.Run()==0,"PAR (R6.5 P1): T, C, angle and Brep sections, cutoff bar and shell table written through the GPC path as BridGHe 0.3.0 wrote them");
         Assert(GpcOnlyAnalysisNative.Run()==0,"L3E (R6.5 P1): analysis and Export on GPC-only input; A05, A06 and A09 written as BridGHe 0.3.0 wrote them");
+        Assert(GpcReviewFixesC1Native.Run()==0,"C1 (11/11): Table Material with α and ρ written to Straus7 with its table, α and ρ");
     }
 
     /// <summary>P2Z (R6.5 P1 lane 2a): the Straus7 section components replayed in memory with the switch of the property producers, Straus7

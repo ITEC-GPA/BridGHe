@@ -74,11 +74,13 @@ namespace BridGHe.Grasshopper.Components.Materials
             if (!DA.GetData(3, ref g))
                 return;
 
-            if (!DA.GetData(4, ref alpha))
-                if (!DA.GetData(5, ref rho))
+            // C1 (user decision of 11/11): α and ρ are optional and the table is always read. 0.3.0 nested the three reads, so the stresses were
+            // read only when α and ρ were both missing: with either of them the table was empty and the component gave the length error.
+            DA.GetData(4, ref alpha);
+            DA.GetData(5, ref rho);
 
-                    if (!DA.GetDataList("Stresses", stresses))
-                        return;
+            if (!DA.GetDataList("Stresses", stresses))
+                return;
 
             if (!DA.GetDataList("Strains", strains))
                 return;

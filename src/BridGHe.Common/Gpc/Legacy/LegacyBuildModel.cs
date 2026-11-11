@@ -347,7 +347,8 @@ namespace BridGHe.Common.Gpc.Legacy
             /// data, kept once (the copy dropped), in input order.</summary>
             public List<string>[] DroppedCopies { get; } = { new List<string>(), new List<string>(), new List<string>() };
             /// <summary>R6.5 P1 lane 3c: the GH GUID of every element of the output, in the order of its drafts (nodes, beams, plates): that of its
-            /// first datum; a node created at a beam end or plate corner, the GUID of its draft (on the FEM path it gets a new GUID at every solution).</summary>
+            /// first datum; a node created at a beam end or plate corner, the GUID of its draft (on the FEM path it gets a new GUID at every solution;
+            /// on the GPC-only path derived from the owner of the model, R65-C3-01: <see cref="CreatedNodeIdentity"/>).</summary>
             public IReadOnlyList<Guid> ElementGuids { get; internal set; } = Array.Empty<Guid>();
             public override string ToString() => "merges by GH GUID nodes/beams/plates " + string.Join("/", Merges) + " (self-merges " + string.Join("/", SelfMerges) + "), position merges " + PositionMerges
                 + ", ends moved " + EndsMoved + ", end nodes " + EndNodes + ", zero-length beams " + ZeroLength + ", corners moved " + CornersMoved + ", corner nodes " + CornerNodes
@@ -375,6 +376,16 @@ namespace BridGHe.Common.Gpc.Legacy
         private static string Fresh(string s) => new string(s.ToCharArray());
 
         /// <summary>
+        /// R65-C3-01 (C1, 11/11): the identity of a node Build Model creates at a beam end or plate corner (<paramref name="name"/>: its BridGHe
+        /// ID). On the GPC-only path it is derived from the owner of the model (<paramref name="owner"/>, made from the content of the inputs, which
+        /// fixes the position of every created node): the same inputs give the same GUID, two models never share one (their GH GUIDs became one
+        /// in 3c, and a third Build Model fed by both decompositions merged them by GH GUID at the position of the first). Null (the FEM path,
+        /// until P2): the former identity by name alone.
+        /// </summary>
+        internal static Guid CreatedNodeIdentity(Guid? owner, string name) =>
+            GpcIdentity.Derive(owner ?? GpcIdentity.NameSpace, "gpc-build-model-node:" + name);
+
+        /// <summary>
         /// R6.3: the load cases of Build Model from the case records of the drafts (the former <c>ModelHelper.GetLoadCases</c> on the FEM
         /// values): the case of every former load of the nodes, then of the beams, then of the plates, one per name (the first), «Dead» added
         /// when absent (a «Dead» with another definition is refused, «Dead load case error»), sorted as the former cases sorted («Dead» first,
@@ -397,9 +408,13 @@ namespace BridGHe.Common.Gpc.Legacy
             return cases;
         }
 
+        /// <param name="gpcOnly">R65-C3-01 (C1, 11/11): Build Model on GPC-only input (no FEM value): a node created at a beam end or plate
+        /// corner takes the identity of the model (<see cref="CreatedNodeIdentity"/>) for its draft and its GH GUID, so the created nodes of two
+        /// models never share a GUID; false (the FEM path, until P2): the identity of 0.4.0 before C1, by name alone (its GH GUID is the new one of
+        /// the FEM value, the draft keeps the former GUID: nothing changes with the FEM value present).</param>
         public static GpcModels.Conversion Build(string name, BridgeUnits units, double toleranceDefinitionUnits, IReadOnlyList<(Guid Gh, LegacyNodeDraft Draft)> nodes,
             IReadOnlyList<(Guid Gh, LegacyBeamDraft Draft)> beams, IReadOnlyList<(Guid Gh, LegacyPlateDraft Draft)> plates, IReadOnlyList<LegacyCombinationDraft> combinations,
-            IReadOnlyList<LegacyStageDraft> stages, BuildCounts counts = null)
+            IReadOnlyList<LegacyStageDraft> stages, BuildCounts counts = null, bool gpcOnly = false)
         {
             counts ??= new BuildCounts();
             var identity = new System.Text.StringBuilder();
@@ -454,6 +469,9 @@ namespace BridGHe.Common.Gpc.Legacy
             foreach (var s in stages)
                 identity.Append("|s").Append(s.Name).Append(';').Append(string.Join(",", s.Groups)).Append(';').Append(s.Morph).Append(s.Rotate)
                     .Append(string.Concat(s.Increments.Select(c => ";" + c.Name + string.Concat(c.Factors.Select(f => ":" + f.Case + "=" + f.Factor.ToString("R", System.Globalization.CultureInfo.InvariantCulture))))));
+            // The owner of the element identities, from the inputs (complete here: the merges by position and the nodes created below follow from
+            // them and the tolerance). R65-C3-01: computed before the nodes are created, which take it on the GPC-only path.
+            var owner = GpcIdentity.Derive(GpcIdentity.NameSpace, "gpc-build-model:" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(identity.ToString()))));
 
             // Node merge by position, beam ends, plate corners (former ModelHelper.BuildModel, RTree of Rhino).
             static Rhino.Geometry.Point3d R(GPC.Geometry.Point3d p) => new Rhino.Geometry.Point3d(p.X, p.Y, p.Z);
@@ -479,7 +497,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 tree.Search(new Rhino.Geometry.Sphere(p, toleranceDefinitionUnits), (s, e) => { found = true; foundId = e.Id; });
                 if (found && foundId != -1) { if (kept[foundId].Position != p) { if (end) counts.EndsMoved++; else counts.CornersMoved++; } return kept[foundId].Position; }
                 string nodeName = Fresh((newNode++).ToString());
-                var created = new GPC.Model.Elements.NodeElement(GpcIdentity.Derive(GpcIdentity.NameSpace, "gpc-build-model-node:" + nodeName), new GPC.Geometry.Point3d(p.X, p.Y, p.Z), null, nodeName, 1);
+                var created = new GPC.Model.Elements.NodeElement(CreatedNodeIdentity(gpcOnly ? owner : (Guid?)null, nodeName), new GPC.Geometry.Point3d(p.X, p.Y, p.Z), null, nodeName, 1);
                 kept.Add((new LegacyNodeDraft(created, new LegacyImportReport { Units = units }), nodeName, p)); keptGuids.Add(created.Guid); tree.Insert(p, kept.Count - 1); createdNodes.Add(kept.Count - 1);
                 if (end) counts.EndNodes++; else counts.CornerNodes++;
                 return p;
@@ -491,7 +509,6 @@ namespace BridGHe.Common.Gpc.Legacy
             foreach (var (draft, id, gh) in plateList) plateCorners.Add((draft, id, draft.Corners.Select(c => Anchor(R(c), false)).ToArray(), gh));
 
             // The assembly, as the legacy reader converts the FEM output of Build Model.
-            var owner = GpcIdentity.Derive(GpcIdentity.NameSpace, "gpc-build-model:" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(identity.ToString()))));
             var report = new LegacyImportReport();
             var assembly = new LegacyAssembly(name ?? "", units, owner, toleranceDefinitionUnits, report);
             int nodeCount = 0, beamCount = 0, plateCount = 0;

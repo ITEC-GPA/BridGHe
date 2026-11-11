@@ -48,6 +48,8 @@ namespace BridGHe.Grasshopper.Components.Models
             bool gpcOnly = GpcOnlyModels.WithoutFem(model); // R6.5 P1 lane 3c
             if (model.Value == null && !gpcOnly)
                 return;
+            // P30-01 (C1, 11/11): the results saved with the model could not be read: its elements come without them, Run is needed.
+            if (model.ResultsNotice != null && !model.HasAnalysedGpc) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, model.ResultsNotice);
 
             List<GH_Node> nodes = new List<GH_Node>();
             List<GH_Beam> beams = new List<GH_Beam>();

@@ -115,8 +115,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         }
 
         /// <summary>R6.5 P1 lane 3a: the composite beam by its GPC datum alone: the draft of the beam, the definitions of the two composite
-        /// properties (null when a property is not a valid definition, as on the FEM path: the checks that read it give the error), the groups.
-        /// No beam draft or no start definition datum: the error of the FEM path, no output.</summary>
+        /// properties, the groups. No beam draft or no start definition datum: the error of the FEM path, no output. R25-01 (C1, 11/11): a
+        /// property that is not a valid definition gives its error and no output (before, both definitions null and a datum called valid).</summary>
         private void SolveGpc(IGH_DataAccess DA, GH_Beam beam, GH_CompositeBeamProperty start, GH_CompositeBeamProperty end, List<GH_Group> groups)
         {
             Common.Gpc.Legacy.LegacyBeamDraft draft = null;
@@ -126,9 +126,15 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "A beam and a valid start section are required.");
                 return;
             }
-            GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition s, e;
+            // R25-01 (C1, 11/11): a composite property that is not a valid definition is refused here, with the message of the definition, and
+            // nothing is given (without a FEM value there is no composite beam the checks could refuse later; the FEM path keeps its rule above).
+            GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition s = null, e = null;
             try { s = start.Definition; e = end.Definition; }
-            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or InvalidOperationException) { s = e = null; }
+            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or InvalidOperationException)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, (s == null ? "Section Start" : "Section End") + ": the composite section is refused: " + ex.Message);
+                return;
+            }
             var datum = new GpcCompositeBeam(draft, s, e, Groups(draft, groups));
             var output = GH_CompositeBeam.FromGpc(datum, Identity(beam, datum.Start, datum.End, datum.Groups));
             output.AnalysedGpc = beam.AnalysedGpc; output.AnalysedGpcModel = beam.AnalysedGpcModel;

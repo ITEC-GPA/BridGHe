@@ -74,7 +74,7 @@ public sealed class BridgeActionComponent : GH_Component
         if (!WorkflowInputs.HasBeams(model))
         { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Awaiting a source FEM model."); return; }
         if(!WorkflowInputs.HasBeamResults(model))
-            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Action defined without FEM results. Analyse the source model before Build BridGHe Model.");
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,model.ResultsNotice ?? "Action defined without FEM results. Analyse the source model before Build BridGHe Model."); // P30-01 (C1): saved results unreadable
         WorkflowInputs.Catalogue(this, 2, model);
         if (!da.GetData(2, ref lc) || !da.GetData(3, ref behavior)) return;
         da.GetDataList(4, ids);
@@ -112,7 +112,7 @@ public sealed class BridgeShrinkageActionComponent : GH_Component
         if (!primary && model != null && !WorkflowInputs.HasBeams(model))
         { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Awaiting the secondary shrinkage FEM model."); return; }
         if(!primary && WorkflowInputs.HasModel(model) && !WorkflowInputs.HasBeamResults(model))
-            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Shrinkage action defined without secondary FEM results. Run Straus before Build BridGHe Model.");
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,model.ResultsNotice ?? "Shrinkage action defined without secondary FEM results. Run Straus before Build BridGHe Model."); // P30-01 (C1): saved results unreadable
         try
         {
             if (string.IsNullOrWhiteSpace(key) || !double.IsFinite(strain) || strain > 0) throw new ArgumentException("Supply a stable ID and a finite, non-positive concrete shrinkage increment.");
