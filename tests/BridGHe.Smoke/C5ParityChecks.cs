@@ -295,8 +295,8 @@ internal static class C5ParityChecks
                 Console.WriteLine($"C5 {label} beam {b.BeamId}: 0.3.0 (native {n7}) reference angle {R(expected.Reference)} axes {expected.Axes}; {expected.Releases}");
                 Check(actual.Mechanics == expected.Mechanics, $"native {label} beam {b.BeamId}: the releases of the .st7 at end 1 and 2, translations and rotations, as 0.3.0 wrote them (no attribute = fixed)\n    0.4.0 {actual.Mechanics}\n    0.3.0 {expected.Mechanics}");
                 // 0.3.0 wrote a release attribute only for an end and kind with a flag set; the Converter writes the four (NodesBeams.cs, the loop
-                // of SetBeamRelease), so an end and kind without a flag holds the attribute «fixed, no value» where 0.3.0 held none: the same
-                // mechanics, a file difference of every beam with releases (not of C5), declared and counted.
+                // of SetBeamRelease), those without a flag as «fixed, no value». R31 keeps no attribute for that call (read back: DataNotFound, as
+                // the 0.3.0 file; measured on 11/11: 0 differences); should it keep one, it is the same mechanics, declared and counted here.
                 var differences = actual.Releases.Split("; ").Zip(expected.Releases.Split("; ")).Where(p => p.First != p.Second).ToArray();
                 Check(differences.All(p => p.Second.EndsWith(" " + NoRelease, StringComparison.Ordinal) && p.First.EndsWith(" 1 1 1 [0,0,0]", StringComparison.Ordinal)),
                     $"native {label} beam {b.BeamId}: the only file differences are the all-fixed attributes where 0.3.0 wrote none\n    0.4.0 {actual.Releases}\n    0.3.0 {expected.Releases}");
