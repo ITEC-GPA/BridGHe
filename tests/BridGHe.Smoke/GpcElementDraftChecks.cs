@@ -1,11 +1,9 @@
 #if GPC_PILOT
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using BridGHe.Common.Gpc;
 using BridGHe.Common.Gpc.Legacy;
-using BridGHe.Common.Models;
 using GPC.Model.Attributes;
 using GPC.Model.Elements;
 using GPC.Model.Models;
@@ -16,25 +14,27 @@ using GPC.Model.Models;
 /// the conversion of the whole model (<see cref="LegacyModelImport.Import"/>), element by element: everything but the identity (GUID, source,
 /// number: the model gives them) and the connectivity (the model finds the nodes): position or ends or corners, name, loads, assignments,
 /// attributes, physical data, axes, offsets, formulation, groups, property, bridge data; the rigid connections of the node drafts are the
-/// rigid links of the model. Regression <c>gpc-element-drafts</c> (not native): the examples 01–10 built in memory and the 77 FEM inputs
-/// captured from the former exporter (<c>results/capture-1</c>), when present.
+/// rigid links of the model. Regression <c>gpc-element-drafts</c> (not native).
+/// <para>R6.6 lane R3 (11/11): the 0.3.0 models read as bytes, with no FEM class (<see cref="R3LegacyCorpus"/>): the 77 FEM inputs captured
+/// from the former exporter (<c>results/capture-1</c>), the examples 01–10 captured with it (<c>results/examples-1</c>: before, the same
+/// examples built in memory by the FEM catalogue and written by the FEM writer), and the frozen node, beam and plate data in the four unit
+/// systems (rigid links, a labelled node with a rigid link, section states current and stale: new in this regression). The former
+/// section-state signatures from the fixture (<see cref="R3LegacyCorpus.Signatures"/>).</para>
 /// </summary>
 internal static class GpcElementDraftChecks
 {
     private static string Fp(params object[] values) => GPC.Model.Core.ModelValues.Fingerprint(values);
-    private const string Captures = @"C:\Users\g.pacini\Documents\Repository\gpc-f6-claude\P2B\results\capture-1";
 
     internal static void Regression()
     {
-        int models = 0, nodes = 0, beams = 0, plates = 0, links = 0, snapped = 0;
+        int models = 0, nodes = 0, beams = 0, plates = 0, links = 0, snapped = 0, stale = 0;
         static bool Coincide(GPC.Geometry.Point3d a, GPC.Geometry.Point3d b) => a.X == b.X && a.Y == b.Y && a.Z == b.Z;
-        void Model(string id, ModelModel fem, double tolerance)
+        void Model(string id, LegacyValue legacy, Func<int, string> signature, double tolerance)
         {
-            if (fem.Elements.Any(e => e.Results.Count != 0)) { fem = new ModelModel(fem); foreach (var e in fem.Elements) e.Results.Clear(); }
-            var legacy = LegacyArchive.Read(BridGHe.Common.Helpers.ModelArchive.Write(fem));
             var report = new LegacyImportReport();
-            var model = LegacyModelImport.Import(legacy, GpcIdentity.Derive(GpcIdentity.NameSpace, "drafts:" + id), tolerance, report, GpcModels.SectionStateSignatures(fem));
-            var units = report.Units; var elements = legacy.Field("Elements").Items; var signature = GpcModels.SectionStateSignatures(fem);
+            var model = LegacyModelImport.Import(legacy, GpcIdentity.Derive(GpcIdentity.NameSpace, "drafts:" + id), tolerance, report, signature);
+            var units = report.Units; var elements = legacy.Field("Elements").Items;
+            stale += model.BeamElements.Values.Count(b => report.Bridge.SectionState(b.Guid)?.PropertyFingerprint.StartsWith(LegacyModelImport.StaleSectionStatePrefix, StringComparison.Ordinal) == true);
             int n = 0, b = 0, p = 0, rigid = 0;
             foreach (var e in elements)
             {
@@ -48,7 +48,7 @@ internal static class GpcElementDraftChecks
                 }
                 else if (e.Is("BeamModel"))
                 {
-                    var draft = LegacyModelImport.BeamDraft(e, units, Guid.NewGuid(), signature(b)); var x = model.BeamElements[++b];
+                    var draft = LegacyModelImport.BeamDraft(e, units, Guid.NewGuid(), signature?.Invoke(b)); var x = model.BeamElements[++b];
                     // e3: the draft keeps the groups, Element IDs and bridge records at list level; Build Model resolves them.
                     LegacyAssembly.ResolveBeam(draft.Beam, draft.Records, new LegacyImportReport());
                     // A beam whose former property was shadowed by an earlier one with the same name takes that one in the model.
@@ -68,16 +68,10 @@ internal static class GpcElementDraftChecks
             if (rigid != model.Costrains.Count) throw new Exception($"GPC ELEMENT DRAFTS FAIL ({id}): {rigid} rigid connections on the node drafts, {model.Costrains.Count} rigid links in the model");
             models++; nodes += n; beams += b; plates += p; links += rigid;
         }
-        foreach (var example in NativeExamples.Create()) Model("memory-" + example.Id, example.Model, 1e-6);
-        if (Directory.Exists(Captures))
-            foreach (var file in Directory.GetFiles(Captures, "*.bgmodel").OrderBy(f => f, StringComparer.Ordinal))
-            {
-                string info = Path.ChangeExtension(file, ".txt");
-                double tolerance = File.Exists(info) ? double.Parse(File.ReadAllLines(info)[1], System.Globalization.CultureInfo.InvariantCulture) : 1e-6;
-                Model("capture-" + Path.GetFileNameWithoutExtension(file), BridGHe.Common.Helpers.ModelArchive.Read<ModelModel>(File.ReadAllBytes(file)), tolerance);
-            }
-        if (models < 10) throw new Exception("GPC ELEMENT DRAFTS FAIL: only " + models + " models");
-        Console.WriteLine($"GPC ELEMENT DRAFTS PASS: {models} models, {nodes} node, {beams} beam and {plates} plate drafts equal to the elements of the conversion of the whole model ({links} rigid connections = rigid links; {snapped} beams and plates with an end merged onto a node at another position, not compared)");
+        foreach (var item in R3LegacyCorpus.Examples().Concat(R3LegacyCorpus.Captures()).Concat(R3LegacyCorpus.Fixtures(duplicates: false)))
+            Model(item.Id, item.Root, item.Signatures, item.Tolerance);
+        if (models < 100) throw new Exception("GPC ELEMENT DRAFTS FAIL: only " + models + " models");
+        Console.WriteLine($"GPC ELEMENT DRAFTS PASS: {models} models read by value, {nodes} node, {beams} beam and {plates} plate drafts equal to the elements of the conversion of the whole model ({links} rigid connections = rigid links; {stale} stale section states; {snapped} beams and plates with an end merged onto a node at another position, not compared)");
     }
 
     private static void Same(string id, Element element, string what, object x, object y)
