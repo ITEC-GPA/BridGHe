@@ -223,17 +223,44 @@ namespace BridGHe.Common.Gpc
                 if (ReferenceEquals(beam.BeamProperty, entry.Property)) continue;
                 beam.BeamProperty = entry.Property;
                 beam.Assignments.Formulation = entry.Data.Formulation;
-                var axes = GpcBeamAxes.Section(beam.StartPoint, beam.EndPoint, source.BeamAngles[beam.Id] + LegacyModelImport.AxesRotationDeg(entry.Data.Native), entry.Data.Angle);
+                double turn = LegacyModelImport.AxesRotationDeg(entry.Data.Native);
+                var axes = GpcBeamAxes.Section(beam.StartPoint, beam.EndPoint, source.BeamAngles[beam.Id] + turn, entry.Data.Angle);
                 beam.Assignments.SectionAxes = axes;
                 if (beam.Assignments.Physical != null)
                     foreach (var support in beam.Assignments.Physical.Supports)
                         support.Axes = new GPC.Geometry.CoordinateSystem(new GPC.Geometry.Point3d(0, 0, 0), axes.V1, axes.V2);
+                // R65-C3-02 (C1, 11/11): the principal axes turn with the registered property when it adds or takes the turn of a double angle.
+                nativeSections.TryGetValue(beam.Guid, out var formerNative);
+                if (turn != LegacyModelImport.AxesRotationDeg(formerNative)) Reorient(beam, GpcBeamAxes.Principal(beam.StartPoint, beam.EndPoint, source.BeamAngles[beam.Id] + turn));
                 nativeSections.Remove(beam.Guid);
                 if (entry.Data.Native != null) nativeSections.Add(beam.Guid, entry.Data.Native);
             }
             model.BeamProperties.Clear();
             foreach (var entry in registry.Values) model.BeamProperties.Add(entry.Property.Name, entry.Property);
             return registry;
+        }
+
+        /// <summary>
+        /// R65-C3-02 (C1, 11/11): what hangs on the principal axes of a beam, rebuilt on <paramref name="principal"/> (the axes of the property it now
+        /// has, with the one turn of a double angle) with the formulas of the reader and of Build Model (<see cref="LegacyModelImport.NewBeam"/>,
+        /// <see cref="LegacyAssembly.PlaceBeam"/>): the offset axes (the offset stays in the principal axes, as given), the global eccentricity of
+        /// every load (the offset in global axes) and the frame of the local loads. Called only when the turn changes (to or from a double
+        /// angle): on the same turn every datum is already on these axes, bit for bit.
+        /// </summary>
+        private static void Reorient(GPC.Model.Elements.BeamElement beam, GPC.Geometry.CoordinateSystem principal)
+        {
+            var a = beam.Assignments;
+            double ox = a.OffsetI?.X ?? 0, oy = a.OffsetI?.Y ?? 0;
+            var globalOffset = principal.V1 * ox + principal.V2 * oy;
+            if (ox != 0 || oy != 0) a.OffsetAxes = principal;
+            static bool Local(GPC.Model.Loads.Load l) => l != null && l.CoordinateSystem != null && l.CoordinateSystem.Name != GPC.Geometry.CoordinateSystem.Global.Name;
+            foreach (var load in a.Loads)
+            {
+                load.Eccentricity = globalOffset;
+                if (load.Concentrated is PointLoad p && Local(p)) p.CoordinateSystem = GpcBeamLoads.ComponentFrame(principal);
+                if (load.StartIntensity is LineLoad s && Local(s)) s.CoordinateSystem = GpcBeamLoads.ComponentFrame(principal);
+                if (load.EndIntensity is LineLoad e && Local(e)) e.CoordinateSystem = GpcBeamLoads.ComponentFrame(principal);
+            }
         }
 
         /// <summary>A beam property of a draft (definition units) as Build Model registers it in a model of the units of <paramref name="report"/>
