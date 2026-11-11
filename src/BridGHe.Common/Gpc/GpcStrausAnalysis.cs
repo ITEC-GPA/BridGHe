@@ -50,6 +50,9 @@ namespace BridGHe.Common.Gpc
         /// not a native section of the Native Section component, a Brep, Generic or Composite section), the material name of every plate property,
         /// one native plate property per Plate Property, named as it. The kind comes from the recipe of the beam property in the report; a property
         /// built in GPC without a recipe takes the label of its GPC shape (the five shapes the writer writes with St7SetBeamSectionGeometry).
+        /// C4 (user decision of 11/11: as 0.3.0): the supports, temperature gradients and tapers of a beam with a principal angle (an angle, a
+        /// double angle) on the native axes 1 and 2 as 0.3.0 wrote them (StrausR3Helper.cs:956-1020, :1225-1230, BeamSupportExport), and the
+        /// nonlinear increments of a model without stages in the order of its combinations (StrausR3Helper.cs:666-709).
         /// </summary>
         public static Straus7WriteOptions LegacyWriteOptions(Model gpc, Legacy.LegacyImportReport report)
         {
@@ -62,7 +65,8 @@ namespace BridGHe.Common.Gpc
                 string label = data?.Section != null ? (data.Section.NativeKey != null ? null : SectionLabel(data.Section.Kind)) : ShapeLabel(beam.BeamProperty);
                 if (label != null) labels.Add(beam.Guid, label);
             }
-            return new Straus7WriteOptions { BeamSectionLabels = labels, PlateMaterialNames = true, PlatePropertiesByProperty = true };
+            return new Straus7WriteOptions { BeamSectionLabels = labels, PlateMaterialNames = true, PlatePropertiesByProperty = true,
+                SectionAxisDataOnNativeAxes = true, NonlinearIncrementsInModelOrder = true };
         }
 
         /// <summary>The label 0.3.0 wrote for a section kind (null: none).</summary>
@@ -111,6 +115,27 @@ namespace BridGHe.Common.Gpc
             var preflight = GpcPreflight.Require(model);
             var plan = Straus7ModelWritePlan.Prepare(model, null, null, nativeSections, writeOptions);
             var run = plan.RunStagedNonlinear(model, output.Guid, System.IO.Path.GetFullPath(outputPath), System.IO.Path.GetFullPath(scratchPath), nonlinear ?? Straus7NonlinearRunOptions.Explicit());
+            // Plate results at the plate nodes (no averaging), as the former reader returned them.
+            var report = run.ImportResults(model, datasetId, false, model.AreaElements.Count != 0);
+            if (report.Status != ImportStatus.Completed)
+                throw new InvalidOperationException("StrausResultImport" + report.Status + ": " + string.Join("; ", report.Diagnostics.Select(d => d.Code + " " + d.Message)));
+            return new Outcome { Model = model, Run = run, Import = report, Warnings = preflight.Warnings.Concat(report.Diagnostics.Select(d => d.Code + " " + d.Message)).ToArray() };
+        }
+
+        /// <summary>C4 (point 3, user decision of 11/11: as 0.3.0): the nonlinear increments of a model without stages (solver 1) solved as 0.3.0
+        /// solved them (StrausAnalysis.cs:64-77 of 0.3.0): every combination is an increment of stage 0, the NLA solver runs with the staged flag
+        /// off. The totals of every increment are attached to the declared output case with Phase = <paramref name="phase"/> and Step = the native
+        /// increment ("k: name"), as the one-stage run they replace. The increments follow the order of the write options
+        /// (<see cref="Straus7WriteOptions.NonlinearIncrementsInModelOrder"/>).</summary>
+        public static Outcome Unstaged(Model input, string outputCaseName, string phase, string outputPath, string scratchPath, string datasetId = "BridGHe staged nonlinear",
+            IReadOnlyDictionary<Guid, Straus7SectionDefinition> nativeSections = null, Straus7WriteOptions writeOptions = null, Straus7NonlinearRunOptions nonlinear = null)
+        {
+            if (input == null) throw new ArgumentNullException(nameof(input));
+            var model = ModelValues.Copy(input);
+            var output = model.LoadCases.Values.Single(c => c.Name == outputCaseName);
+            var preflight = GpcPreflight.Require(model);
+            var plan = Straus7ModelWritePlan.Prepare(model, null, null, nativeSections, writeOptions);
+            var run = plan.RunUnstagedNonlinear(model, output.Guid, System.IO.Path.GetFullPath(outputPath), System.IO.Path.GetFullPath(scratchPath), nonlinear ?? Straus7NonlinearRunOptions.Explicit(), phase);
             // Plate results at the plate nodes (no averaging), as the former reader returned them.
             var report = run.ImportResults(model, datasetId, false, model.AreaElements.Count != 0);
             if (report.Status != ImportStatus.Completed)
