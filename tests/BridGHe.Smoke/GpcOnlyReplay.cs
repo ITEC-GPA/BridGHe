@@ -1071,7 +1071,55 @@ internal static class GpcOnlyReplay
     /// composite section per segment): an override and two refusals (a missing state, a mixed sign with policy 0). The replay gives the
     /// composite sections by their definitions and the states without their FEM source (their BridGHe ID and analysed GPC beam).</summary>
     /// <param name="caseName">L2C (R65-C2-03): the classification case given to every state (null: that of the classification).</param>
-    private static IEnumerable<(string Type, string Label, Dictionary<int, object> Inputs)> StateOverrideCases(string caseName = null)
+    private static IEnumerable<(string Type, string Label, Dictionary<int, object> Inputs)> StateOverrideCases(string caseName = null) =>
+        gpcInputs ? StateOverrideCasesGpc(caseName) : StateOverrideCasesFem(caseName);
+
+    /// <summary>R1: the GPC twin of the reference of <see cref="StateOverrideCasesFem"/>, built as R2a builds it in <c>gpc-state-override</c>: the beams of
+    /// Bridge Member Assignment on the GPC base property (I 600/600/2500/30/30/16, S355 with density), the analysed GPC reference of
+    /// <see cref="GpcTestModel"/> with the same synthetic moments (BM1 −1E8; BM2 1E8, −1E8, mixed, 500 by girder), the states classified from it (no FEM
+    /// source), one composite definition per segment from the numbers of the former fixture (<see cref="GpcCompositeDefinitions"/>).</summary>
+    private static IEnumerable<(string Type, string Label, Dictionary<int, object> Inputs)> StateOverrideCasesGpc(string caseName)
+    {
+        var steel = R2aDesignFixtures.BaseProperty("Base", 7.85e-9);
+        var geometry = BridGHe.Common.Geometry.SimpleBridgeBuilder.Build(SimpleBridgeTests.Input());
+        var schedule = BridGHe.Common.Geometry.BridgeSegmentSections.CreateGpc(geometry, steel, null);
+        var plans = BridGHe.Common.Geometry.BridgeMemberAssignment.Assign(geometry, null, schedule.Rules, new Dictionary<int, BridGHe.Common.Gpc.Legacy.LegacyBeamProperty> { [-1] = steel }).Plans;
+        var all = plans.Select(p => BridGHe.Common.Gpc.Builders.GpcBridgeGeometryBuilders.Assigned(p, R1Id("state override:" + p.SolverId))).ToArray();
+        var girders = all.Where(b => b.Bridge?.Member?.Family == GPC.Checkers.CompositeBridge.Layout.BridgeMemberFamily.Girder).ToArray();
+        double Moment(int i, double s) => (i % 4) switch { 0 => 1e8, 1 => -1e8, 2 => (s - .5) * 2e8, _ => 500 };
+        var test = new GpcTestModel("State override reference"); test.Case("Dead");
+        var reference = new Dictionary<string, GPC.Model.Elements.BeamElement>(StringComparer.Ordinal);
+        for (int k = 0; k < all.Length; k++)
+        {
+            var b = all[k].Beam; var property = GPC.Model.Core.ModelValues.CopyValue((GPC.Model.ElementProperties.ElasticBeamProperty)b.BeamProperty);
+            reference[b.Name] = test.Beam(b.Name, test.Node("a" + k, b.StartPoint.X, b.StartPoint.Y, b.StartPoint.Z), test.Node("b" + k, b.EndPoint.X, b.EndPoint.Y, b.EndPoint.Z), all[k].AngleDeg, property);
+        }
+        for (int i = 0; i < girders.Length; i++)
+        {
+            var a = reference[girders[i].Beam.Name];
+            foreach (double s in new[] { 0d, .5, 1d }) test.Forces(a, "Dead", s * a.Length, 0, bm1: -1e8, bm2: Moment(i, s));
+        }
+        var analysed = test.Analyse();
+        var catalog = BridGHe.Common.Gpc.GpcResultCatalog.Of(analysed) ?? throw new Exception("GPC-ONLY REPLAY: no results catalog");
+        var states = BridGHe.Common.Geometry.BeamMomentClassification.Classify(girders.Select(g => g.Beam.Name).ToArray(), new BeamModel[girders.Length],
+            girders.Select(g => (catalog, analysed, reference[g.Beam.Name])).ToArray(), "Dead");
+        if (caseName != null) states = states.Select(s => s with { Case = caseName }).ToArray();
+        var ids = schedule.Rules.Select(r => $"G{r.Group}-C{r.Segment}").ToArray();
+        GpcCompositeDefinitions.Numbers Numbers(string id) => GpcCompositeDefinitions.Grillage(new BridgeGrillageExample.Parameters()) with
+        {
+            Name = "CS " + id, Height = 2500, Web = 16, TopWidth = 600, TopThickness = 30, BottomWidth = 600, BottomThickness = 30,
+            SlabWidth = 3000, SlabHeight = 250, TopArea = 1600, TopCover = 40, ConsiderRebar = true,
+        };
+        var composites = ids.Select(id => (object)R2aDesignFixtures.Composite(GpcCompositeDefinitions.Create(Numbers(id)))).ToArray();
+        var beams = all.Select(b => (object)R2aDesignFixtures.Beam(b)).ToArray();
+        Dictionary<int, object> Inputs(IEnumerable<BridGHe.Common.Geometry.BeamMomentState> s, int mixed) =>
+            new() { [0] = beams, [1] = ids.Cast<object>().ToArray(), [2] = composites, [3] = s.Cast<object>().ToArray(), [4] = 1, [5] = mixed, [6] = 0, [7] = true };
+        yield return ("BridgeStateOverrideComponent", "long term, mixed uncracked, all signs", Inputs(states, 1));
+        yield return ("BridgeStateOverrideComponent", "a missing state (error)", Inputs(states.Skip(1), 1));
+        yield return ("BridgeStateOverrideComponent", "a mixed sign with policy 0 (error)", Inputs(states, 0));
+    }
+
+    private static IEnumerable<(string Type, string Label, Dictionary<int, object> Inputs)> StateOverrideCasesFem(string caseName)
     {
         var steel = BridgeSegmentSectionsTests.BaseProperty(); steel.Material.Density = 7.85e-9;
         var geometry = BridGHe.Common.Geometry.SimpleBridgeBuilder.Build(SimpleBridgeTests.Input());
@@ -2588,10 +2636,17 @@ internal static class GpcOnlyReplay
             // The inputs of the GPC-only copy: built without FEM, or (listed) a datum still taken from a FEM value (its GPC-only form by GpcOnly).
             var fem = g.Params.Input.SelectMany(p => p.VolatileData.AllData(true)).Where(x => x != null && allKinds.Contains(x.GetType().Name) && HasFem(x)).Select(x => x.GetType().Name).Distinct().ToList();
             if (fem.Count == 0) oracles.GpcBuilt++; else femInputs.Add(c.Name + " (" + label + "): " + string.Join(", ", fem));
-            Replay(c, "in memory: " + c.Name + " (" + label + ")", kinds, byType, failures, expect: Expect.Of(label), gpcSource: g);
+            // The element attributes, loads and axes (lane 1): one output element for each input element (explicit, from the inputs of the case).
+            var expect = Expect.Of(label);
+            if (expect.What == Expect.Kind.Output && OneToOneTypes.Contains(type) && inputs.TryGetValue(0, out var first))
+                expect = new Expect { What = expect.What, Message = expect.Message, Outputs = new[] { first is object[] list ? list.Length : 1 } };
+            Replay(c, "in memory: " + c.Name + " (" + label + ")", kinds, byType, failures, expect: expect, gpcSource: g);
             count++;
         }
     }
+
+    /// <summary>R1: the components that give one output element for each input element (attributes, loads, axes of lane 1).</summary>
+    private static readonly HashSet<string> OneToOneTypes = new HashSet<string>(Lane1Types.Take(24).Concat(new[] { "AlignBeamAxesComponent", "AlignPlateAxesComponent" }), StringComparer.Ordinal);
 
     /// <summary>R1: the in-memory cases whose inputs still carry a FEM value in the build without FEM (no GPC twin yet: the GPC-only copy takes
     /// their datum by <see cref="GpcOnly"/>), listed in the report.</summary>

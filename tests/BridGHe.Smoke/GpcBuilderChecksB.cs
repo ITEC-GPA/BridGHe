@@ -19,10 +19,17 @@ internal static class GpcBuilderChecksB
     internal static void Regression()
     {
         using var h = new GpcBuilderChecks("B");
+        var beamLoads = new HashSet<string>(StringComparer.Ordinal) { "BeamDistributedLoadComponent", "BeamDistributedMomentComponent", "BeamGradientLoadComponent", "BeamPointLoadComponent",
+            "BeamPointMomentComponent", "BeamPreLoadComponent" };
+        static int Loads(object goo) { try { return goo is IGH_Goo g && g.GetType().GetProperty("Gpc")?.GetValue(g) is BridGHe.Common.Gpc.Legacy.LegacyBeamDraft d ? d.Beam.Assignments.Loads.Count : -1; } catch (Exception) { return -1; } }
         List<IGH_Goo>[] Run(string type, int[] attached, params (int, object)[] inputs)
         {
             PerComponent.TryGetValue(type, out int n); PerComponent[type] = n + 1;
-            return h.Run(type, attached, inputs);
+            var outputs = h.Run(type, attached, inputs);
+            // R1 (explicit, from the inputs): a beam load component gives the beam with one load more than the beam it takes.
+            if (beamLoads.Contains(type) && inputs.FirstOrDefault(i => i.Item1 == 0).Item2 is IGH_Goo beam && Loads(beam) >= 0 && outputs[0].FirstOrDefault() is { } loaded && Loads(loaded) >= 0)
+                h.Expect(Loads(loaded) == Loads(beam) + 1, $"{type}: {Loads(beam)} loads in, {Loads(loaded)} out (one more expected)");
+            return outputs;
         }
         IGH_Goo Out(List<IGH_Goo>[] o, int i = 0) => GpcBuilderChecks.Output(o, i);
         var one = new[] { 0 }; var none = new int[0];
