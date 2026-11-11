@@ -112,23 +112,30 @@ namespace BridGHe.Common.Gpc.Legacy
         private static GPC.Model.Models.Model Solve(GPC.Model.Models.Model gpc, LegacyImportReport report, string outputPath, int solver, IReadOnlyList<GpcResultSelection.Entry> selection, bool movingOnly,
             List<string> warnings, out List<GpcResultCatalog.Entry> entries, out Dictionary<int, string> generated)
         {
-            // Only the static cases generated from the paths are read by a moving-only analysis; otherwise the generated cases are not.
+            // Only the static cases generated from the paths are read by a moving-only analysis. C4 (point 2, user decision of 11/11: as 0.3.0,
+            // StrausR3Helper.cs:1536 and StrausAnalysis.cs:56-59 of 0.3.0): an ordinary run (linear, or nonlinear increments without stages) writes
+            // them in the file too and does not solve them (LinearOptions: SolveGeneratedMovingCases false); a staged run writes the paths without
+            // them (GPC refuses generated cases with stages: GeneratedMovingCasesNeedExplicitStageFactors).
             if (gpc.MovingLoads != null)
-                foreach (var path in gpc.MovingLoads.Paths) if (path.Options != null && !movingOnly) path.Options.ConvertToStaticCases = false;
+                foreach (var path in gpc.MovingLoads.Paths) if (path.Options != null && !movingOnly && solver == 2) path.Options.ConvertToStaticCases = false;
             GpcStrausAnalysis.Outcome outcome;
             const string NonlinearCase = "BridGHe NLA results", UnstagedPhase = "BridGHe NLA";
             // C2 (user decision of 11/11: Straus7 as 0.3.0): the metadata of the 0.3.0 exporter (P26-01/02/03); the linear run solves only the
             // requested cases and the cases of the requested combinations, and only the generated cases in a moving-only run (P26-04,
             // StrausAnalysis.cs:34-58 of 0.3.0), reads the requested combinations from Straus7 (P26-07); every run keeps the solver settings
             // of the new file (P26-06: 0.3.0 set none).
+            // C4 (point 3, user decision of 11/11: as 0.3.0): solver 1 solves the combinations as the increments of stage 0 with the staged flag
+            // off (before: one explicit stage with every element active, staged flag on), in the order of the combinations (the write options).
             var writeOptions = GpcStrausAnalysis.LegacyWriteOptions(gpc, report);
             var linear = solver == 0 ? LinearOptions(gpc, selection, movingOnly) : null;
-            if (solver == 1) Unstaged(gpc, UnstagedPhase);
+            if (solver == 1 && gpc.Stages.Count != 0) throw new InvalidOperationException("Solver 1 con fasi definite: usare il solutore per fasi.");
             if (solver != 0) gpc.LoadCases.Add(NonlinearCase, new GPC.Model.Stages.StageResultCase(NonlinearCase, "NLA"));
+            var fileDefaults = GPC.Converter.Straus7.Straus7NonlinearRunOptions.OfFile();
             outcome = InPrivateFolder(outputPath, (output, scratch) => solver == 0
                 ? GpcStrausAnalysis.LinearStatic(gpc, output, scratch, nativeSections: report.NativeSections, writeOptions: writeOptions, runOptions: linear)
-                : GpcStrausAnalysis.Staged(gpc, NonlinearCase, output, scratch, nativeSections: report.NativeSections, writeOptions: writeOptions,
-                    nonlinear: GPC.Converter.Straus7.Straus7NonlinearRunOptions.OfFile()));
+                : solver == 1
+                ? GpcStrausAnalysis.Unstaged(gpc, NonlinearCase, UnstagedPhase, output, scratch, nativeSections: report.NativeSections, writeOptions: writeOptions, nonlinear: fileDefaults)
+                : GpcStrausAnalysis.Staged(gpc, NonlinearCase, output, scratch, nativeSections: report.NativeSections, writeOptions: writeOptions, nonlinear: fileDefaults));
             warnings.AddRange(outcome.Warnings);
             var solved = outcome.Model;
             // C4: the requested results in their order, kept in the analysed model (GpcResultCatalog); the FEM path writes the former result
@@ -217,34 +224,6 @@ namespace BridGHe.Common.Gpc.Legacy
                         TransverseShearForce = new R.Vector2d(v[3], v[4]), TransverseShearForceMax = double.NaN, TransverseShearForceAng = double.NaN
                     });
                 }
-        }
-
-        /// <summary>Solver 1 (nonlinear increments without stages) as one explicit stage with every element active and the combinations as
-        /// increments, mechanically the same analysis; ungrouped beams and plates get a group of the stage (the native groups gain it).</summary>
-        private static void Unstaged(GPC.Model.Models.Model gpc, string name)
-        {
-            if (gpc.Stages.Count != 0) throw new InvalidOperationException("Solver 1 con fasi definite: usare il solutore per fasi.");
-            if (gpc.FreedomCases.Count == 0)
-            { var fc = new GPC.Model.FreedomCases.FreedomCase(GpcIdentity.FreedomCase("Default restraints"), "Default restraints"); gpc.FreedomCases.Add(fc.Name, fc); }
-            var ungrouped = gpc.BeamElements.Values.Cast<Element>().Concat(gpc.AreaElements.Values).Where(e => e.Groups.Count == 0).ToArray();
-            if (ungrouped.Length != 0)
-            {
-                var group = GPC.Model.Attributes.Group.Create(GpcIdentity.Group(name), name); gpc.Groups.Add(group.Name, group);
-                foreach (var e in ungrouped) e.AddGroup(group);
-            }
-            var stage = new GPC.Model.Stages.Stage(GpcIdentity.Stage(name), 1, name) { Definition = new GPC.Model.Stages.StageDefinition(1, 0) };
-            stage.AnalysisState = new GPC.Model.Stages.StageAnalysisState
-            {
-                BirthGeometry = GPC.Model.Stages.StageBirthGeometry.OriginalCoordinates,
-                ActiveGroupGuids = gpc.Groups.Values.Select(g => g.Guid).ToArray(), ActiveFreedomCaseGuids = gpc.FreedomCases.Values.Select(f => f.Guid).ToArray(),
-                Increments = gpc.Combinations.Values.Select(c => new GPC.Model.Stages.StageLoadIncrement
-                {
-                    Name = c.Name,
-                    LoadFactors = c.GetLoadCaseCoefficientsPair().Select(p => new GPC.Model.Stages.StageCaseFactor { CaseGuid = p.Key.Guid, Factor = p.Value }).ToArray(),
-                }).ToArray(),
-            };
-            gpc.Stages.Add(stage);
-            gpc.Combinations.Clear();
         }
 
         private static void RequireNonlinear(GPC.Model.Models.Model solved, string caseName, string outputCase, string phase, string step)
