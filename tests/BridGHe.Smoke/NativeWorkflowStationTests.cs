@@ -12,7 +12,12 @@ using BridGHe.Common.Straus;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Special;
 
-/// <summary>Read-only replay of example 19 native files; independently asks Straus for union stations.</summary>
+/// <summary>Read-only replay of example 19 native files; independently asks Straus for union stations.
+/// <para>R6.6 lane R4b: <c>--workflow-archived-replay</c> stays <b>transitional</b> (FEM): it reads the 0.3.0 FEM result archives of 19 REV003
+/// (<c>calcoli/REV003-*-results.bgmodel</c>, ignored by git: absent from the worktrees) into the analysis components; no gate runs it. On GPC data
+/// the same archives read by value (<c>LegacyArchive.Read</c>, <c>LegacyModelImport.Import</c>, <c>LegacyResultsReader.Import</c>) would seed the
+/// components with <c>GH_Model.FromGpc</c> and the analysed model (see the report of R4b). The fixture records stay for
+/// <see cref="BridgeStationTests"/> (its GPC replay, R2b); <see cref="Merge"/> (FEM) for its FEM replay.</para></summary>
 internal static class NativeWorkflowStationTests
 {
     internal static int ReplayArchived()

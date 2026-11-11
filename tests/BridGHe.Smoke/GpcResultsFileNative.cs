@@ -4,19 +4,19 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using BridGHe.Common.Gpc;
-using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using GH_IO.Serialization;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
-using Rhino.Geometry;
 
 /// <summary>
-/// --gpc-results-native (F6 C4, native): the analysed GPC model of Straus R3 Analysis and Moving Static Analysis goes to the BGHR2 file
-/// next to the .st7 and comes back after saving and reopening the component (archive round trip), only when the file is the one saved:
-/// a changed file and a results file of master (BGHR1) give a warning and no GPC results; the FEM results stay in the document as before.
-/// The ideas of master's regression analysis-results-file (d7e4092), on the GPC payload.
+/// --gpc-results-native (F6 C4, native; R6.6 lane R4b: on GPC data alone): the analysed GPC model of Straus R3 Analysis and Moving Static Analysis
+/// on a model given by its GPC input alone (<c>GH_Model.FromGpc</c> of the input of Build Model on GPC, no FEM value) goes to the BGHR2 file next to
+/// the .st7 and comes back after saving and reopening the component (archive round trip), only when the file is the one saved: a changed file and a
+/// results file of master (BGHR1) give a warning and no GPC results, a missing file a warning. After reopening, Node, Beam and Plate Results read the
+/// GPC model of the file (every output equal to the GPC reader rows bit for bit) and the Cases output of Moving Static Analysis is the list of the
+/// generated cases of that model, one per position of the path. The ideas of master's regression analysis-results-file (d7e4092), on the GPC
+/// payload. Inputs: the cantilever of <see cref="R4bInputs.ResultsCantilever"/> and example 04 of <see cref="GpcNativeExamples"/>.
 /// </summary>
 internal static class GpcResultsFileNative
 {
@@ -29,29 +29,26 @@ internal static class GpcResultsFileNative
         string folder = Path.Combine(Path.GetTempPath(), "bridghe-gpc-results-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(folder);
         try
         {
-            Component("BridGHe.Grasshopper.Components.Analysis.StrausR3AnalysisComponent", Cantilever(), Path.Combine(folder, "cantilever.st7"), static c =>
-            { Set(c, "Solver", new GH_Integer(0)); Set(c, "Analysis Results", new GH_String("P")); Set(c, "Keep Running", new GH_Boolean(false)); }, "Output Path");
-            var moving = ModelArchive.Clone(NativeExamples.Create().Single(e => e.Id == "04-moving-load").Model);
-            Component("BridGHe.Grasshopper.Components.Analysis.MovingStaticAnalysisComponent", moving, Path.Combine(folder, "moving.st7"), static c =>
-            { Set(c, "Run", new GH_Boolean(false)); }, "Output path");
-            // R6.5 P1 lane 3e: the same on a model given by its GPC input alone (cache without FEM value, .bghr, drafts and GUIDs after reopening).
-            Component("BridGHe.Grasshopper.Components.Analysis.StrausR3AnalysisComponent", Cantilever(), Path.Combine(folder, "cantilever-gpc.st7"), static c =>
-            { Set(c, "Solver", new GH_Integer(0)); Set(c, "Analysis Results", new GH_String("P")); Set(c, "Keep Running", new GH_Boolean(false)); }, "Output Path", gpcOnly: true);
-            Component("BridGHe.Grasshopper.Components.Analysis.MovingStaticAnalysisComponent", ModelArchive.Clone(moving), Path.Combine(folder, "moving-gpc.st7"), static c =>
-            { Set(c, "Run", new GH_Boolean(false)); }, "Output path", gpcOnly: true);
+            // R6.6 R4b: the models given by their GPC input alone (before: the FEM-backed models, and since R6.5 P1 lane 3e their GPC-only copies).
+            Component("BridGHe.Grasshopper.Components.Analysis.StrausR3AnalysisComponent", R4bInputs.ResultsCantilever(), Path.Combine(folder, "cantilever-gpc.st7"), static c =>
+            { Set(c, "Solver", new GH_Integer(0)); Set(c, "Analysis Results", new GH_String("P")); Set(c, "Keep Running", new GH_Boolean(false)); }, "Output Path", 0);
+            var moving = GpcNativeExamples.Create().Single(e => e.Id == "04-moving-load");
+            Component("BridGHe.Grasshopper.Components.Analysis.MovingStaticAnalysisComponent", moving.Input, Path.Combine(folder, "moving-gpc.st7"), static c =>
+            { Set(c, "Run", new GH_Boolean(false)); }, "Output path", moving.Inputs.Paths.Single().Divisions);
         }
         finally { try { Directory.Delete(folder, true); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
         Console.WriteLine("GPC RESULTS NATIVE PASS");
         return 0;
     }
 
-    private static void Component(string typeName, ModelModel input, string output, Action<GH_Component> configure, string pathInput, bool gpcOnly = false)
+    /// <param name="positions">The generated cases the Cases output lists: the positions of the moving path (its divisions), 0 without a path.</param>
+    private static void Component(string typeName, GpcModels.Conversion input, string output, Action<GH_Component> configure, string pathInput, int positions)
     {
-        string name = typeName.Split('.').Last() + (gpcOnly ? " (GPC-only)" : "");
+        string name = typeName.Split('.').Last() + " (GPC-only)";
         string[] generated = null; // C6: the "Cases" output of Moving Static Analysis at the last solution
         var type = assembly.GetType(typeName, true);
-        var goo = (IGH_Goo)assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model", true).GetMethod("FromModel", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { input, null });
-        if (gpcOnly) goo = GpcOnlyReplay.ModelOnly(goo);
+        var goo = (IGH_Goo)assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model", true).GetMethod("FromGpc", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { input });
+        Require(goo.GetType().GetProperty("Value").GetValue(goo) == null, name + ": the input model is given by its GPC input alone");
         GH_Component Make(GH_Archive archive = null)
         {
             var c = (GH_Component)Activator.CreateInstance(type);
@@ -85,15 +82,17 @@ internal static class GpcResultsFileNative
         Require(Analysed(reopened) && warnings.Length == 0, name + ": after reopening the GPC results come back from the file" + (Analysed(reopened) && warnings.Length == 0 ? "" : " [analysed " + Analysed(reopened) + ", warnings: " + warnings + "]"));
         Require(GPC.Model.Models.ModelRevisions.AnalysisFingerprint(Gpc(reopened)) == GPC.Model.Models.ModelRevisions.AnalysisFingerprint(Gpc(model))
             && Gpc(reopened).Datasets.Keys.SequenceEqual(Gpc(model).Datasets.Keys), name + ": the same analysed model (fingerprint, datasets)");
-        // C4: after reopening, the Results components read the GPC model of the file and show the FEM values of the document bit for bit.
-        if (gpcOnly) Require(reopened.GetType().GetProperty("Value").GetValue(reopened) == null && model.GetType().GetProperty("Value").GetValue(model) == null
+        Require(reopened.GetType().GetProperty("Value").GetValue(reopened) == null && model.GetType().GetProperty("Value").GetValue(model) == null
             && reopened.GetType().GetProperty("GpcDrafts").GetValue(reopened) != null && (bool)reopened.GetType().GetProperty("HasAttachedInput").GetValue(reopened), name + ": the output and the reopened output have no FEM value, and carry the input and its drafts");
-        else Require(ResultsComponentsCheck.Verify(reopened, name + " reopened").Values > 0, name + ": the Results components read the reopened GPC results");
-        if (generated != null && !gpcOnly)
-        {
-            var fem = ((ModelModel)reopened.GetType().GetProperty("Value").GetValue(reopened)).GeneratedMovingCases.OrderBy(p => p.Key).Select(p => p.Value).ToArray();
-            Require(fem.Length > 0 && generated.SequenceEqual(fem, StringComparer.Ordinal), name + ": the Cases output (GPC steps of the reopened model) equals the FEM list (" + generated.Length + ")");
-        }
+        // C4 (R6.6 R2b/R4b, on the GPC-only output): after reopening, the Results components read the GPC model of the file, every output equal to
+        // the GPC reader rows bit for bit (before: equal to the FEM values of the document).
+        Require(ResultsComponentsCheck.Verify(reopened, name + " reopened").Values > 0, name + ": the Results components read the reopened GPC results");
+        // C6 (before: the Cases output equal to the FEM list of generated cases): the generated cases of the reopened GPC model, one per position.
+        var steps = GpcResultCatalog.Of(Gpc(reopened)).GeneratedMovingCases().Select(c => c.Name).ToArray();
+        if (generated != null)
+            Require(steps.Length == positions && generated.SequenceEqual(steps, StringComparer.Ordinal), name + ": the Cases output is the list of the generated cases of the reopened model, one per position of the path ("
+                + generated.Length + " / " + positions + ")");
+        else Require(positions == 0 && steps.Length == 0, name + ": no generated cases without a moving path");
         var bytes = File.ReadAllBytes(file); var changed = (byte[])bytes.Clone(); changed[changed.Length - 1] ^= 0x5A; File.WriteAllBytes(file, changed);
         (reopened, warnings) = Solve(Make(archive), false);
         Require(!Analysed(reopened) && warnings.Contains("cambiato") && warnings.Contains("Run"), name + ": a changed file gives a warning and asks for Run" + " [analysed " + Analysed(reopened) + ", warnings: " + warnings + "]");
@@ -121,20 +120,6 @@ internal static class GpcResultsFileNative
             default: throw new ArgumentException(param.GetType().Name);
         }
         param.ExpireSolution(false);
-    }
-
-    private static ModelModel Cantilever()
-    {
-        var loadCase = new LoadCaseModel("P", "P");
-        var material = new MaterialModel("S355") { Name = "S355", Modulus = 210000, PoissonRatio = 0.3 };
-        var section = new SectionModel { SectionType = SectionModel.SectionTypes.Generic, SectionArea = 60000, I11 = 450000000, I22 = 200000000, J = 100000000, ShearA1 = 0, ShearA2 = 0 };
-        var property = new BeamPropertyModel("P") { Name = "P", Material = material, Section = section, PropertyType = BeamPropertyType.Beam };
-        var first = new NodeModel("N1", Point3d.Origin); first.Attributes.Add(new NodeRestraintAttributeModel(true, true, true, true, true, true));
-        var end = new NodeModel("N2", new Point3d(3000, 0, 0)); end.Loads.Add(new NodeForceLoadModel(loadCase, new Vector3d(0, 0, -1000)));
-        var beam = new BeamModel("1", first.Position, end.Position, property);
-        var input = new ModelModel(ModelModel.ModelUnits.Nmm) { Name = "cantilever" };
-        input.LoadCases.Add(loadCase); input.AddElements(new ElementModel[] { first, end, beam });
-        return input;
     }
 }
 #endif

@@ -6,20 +6,18 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using BridGHe.Common.Gpc;
-using BridGHe.Common.Gpc.Builders;
-using BridGHe.Common.Models;
 using GPC.Converter.Straus7;
-using Rhino.Geometry;
 
 /// <summary>
 /// PAR (R6.5 P1, 0.3.0 parity on the GPC path, user decision of 8/11 «Sì, come proponi»): the data 0.3.0 wrote to Straus7 that the GPC path
-/// refused, written now through the GPC path (the FEM model read by the reader and written by the Converter, as Straus R3 Analysis does, without
-/// the solution) and read back from the .st7:
+/// refused, written now through the GPC path (the model written by the Converter, as Straus R3 Analysis does, without the solution) and read back
+/// from the .st7. R6.6 lane R4b: the model is GPC data alone (<see cref="R4bInputs.Parity"/>: the properties of the Beam Property, section and
+/// material builders, Build Model on GPC), no FEM model; the 0.3.0 call sequences take the dimensions and materials of the definition.
 /// <list type="bullet">
 /// <item>A02/A03: T, C (single) and angle sections: the native geometry (bsTSection, bsLipChannel, bsLSection with the dimensions of 0.3.0) and
-/// the section data, compared with the 0.3.0 call sequence replayed on a scratch model (St7SetBeamSectionGeometry, the section data of the
-/// former value, St7SetBeamMaterialData, St7UpdateElementPropertyData, St7CalculateBeamSectionProperties with the shear): equal; the
-/// builder of Beam Property gives the property of the reader (same signature, same native section);</item>
+/// the section data, compared with the 0.3.0 call sequence replayed on a scratch model (St7SetBeamSectionGeometry, the section data written before
+/// the calculation, St7SetBeamMaterialData, St7UpdateElementPropertyData, St7CalculateBeamSectionProperties with the shear): equal; the builder of
+/// Beam Property gives the native section;</item>
 /// <item>A02c: a Brep section with a hole: a BXS (type 11) with the GPC values; the values Straus7 computes from that BXS alone (the 0.3.0
 /// state: St7AssignBXS without section data) are printed and bounded (listed difference: torsion and shear areas from GPC);</item>
 /// <item>A01: a cutoff bar: btCutoff with the cut-off type, keep mass and the two limits of 0.3.0 (St7SetCutoffBarData);</item>
@@ -29,6 +27,8 @@ using Rhino.Geometry;
 /// btFalse, gaps A and B), compared with the 0.3.0 sequence on the scratch model (type, dimensions, mirror option, section data); the beam of a
 /// double angle with the Straus7 reference angle of 0.3.0, 90 + angle + 90 (<c>RotateOf90Deg</c>), and its offset as given.</item>
 /// </list>
+/// <para>Transitional (P2 retires it with the FEM models): the parity model against the conversion of the FEM model of the test before R6.6
+/// (<see cref="R4bInputs.Former.ParityDifference"/>), one printed line, not a condition (the conditions are those of 0.3.0).</para>
 /// </summary>
 internal static class ParityNative
 {
@@ -66,103 +66,27 @@ internal static class ParityNative
     {
         var failures = new List<string>();
         void Check(bool ok, string what) { if (!ok) failures.Add(what); }
-        var steel = new MaterialModel("S355") { Name = "S355", Kind = MaterialModel.MaterialKind.Steel, Modulus = 210000, PoissonRatio = 0.3, Density = 7.85e-9, ThermalExpansion = 1.2e-5 };
-        // A02/A03: the sections of the T, C and Angle components of 0.3.0 (inputs B, T1, D, T2) and the property Beam Property made of them.
-        // LIB (A02b): the double C and double angle of the same components (Double Sections, Gap: the former mirror Left and gap A).
-        var standard = new (string Name, SectionModel.SectionTypes Type, BridgeSectionKind Kind, double B, double T1, double D, double T2, int Native, bool Double, double Gap)[]
-        {
-            ("PAR T", SectionModel.SectionTypes.T, BridgeSectionKind.T, 200, 20, 300, 10, 8, false, 0),
-            ("PAR C", SectionModel.SectionTypes.C, BridgeSectionKind.C, 100, 10, 300, 8, 5, false, 0),
-            ("PAR L", SectionModel.SectionTypes.Angle, BridgeSectionKind.Angle, 150, 10, 100, 12, 9, false, 0),
-            ("PAR 2C", SectionModel.SectionTypes.C, BridgeSectionKind.C, 100, 10, 300, 8, 5, true, 12),
-            ("PAR 2L", SectionModel.SectionTypes.Angle, BridgeSectionKind.Angle, 150, 10, 100, 12, 9, true, 8),
-        };
-        // calculated: the section already holds its values (the former C component computed them before setting the mirror; the Angle component after).
-        BeamPropertyModel Property(string name, SectionModel section, BeamPropertyType type = BeamPropertyType.Beam, MaterialModel material = null, bool calculated = false)
-        {
-            if (!calculated) section.CalculateSection();
-            // Former Beam Property: a copy of the dimensions, computed again, with the values of the input section.
-            var copy = new SectionModel { SectionType = section.SectionType, D = section.D, B = section.B, B1 = section.B1, B2 = section.B2, L = section.L, T = section.T, T1 = section.T1,
-                T2 = section.T2, T3 = section.T3, GenericShapes = section.GenericShapes, Mirror = section.Mirror, MirrorGapA = section.MirrorGapA, MirrorGapB = section.MirrorGapB };
-            copy.CalculateSection();
-            copy.I11 = section.I11; copy.I22 = section.I22; copy.W11 = section.W11; copy.W22 = section.W22; copy.SectionArea = section.SectionArea; copy.J = section.J; copy.Centroid = section.Centroid;
-            return new BeamPropertyModel(name) { Name = name, Material = material ?? steel, Section = copy, PropertyType = type };
-        }
-        var properties = standard.Select(s =>
-        {
-            var model = new SectionModel { SectionType = s.Type, B = s.B, T1 = s.T1, D = s.D, T2 = s.T2 };
-            // The order of the former components: the C computes the single section and then sets the mirror; the Angle sets the mirror and then computes.
-            bool calculated = s.Double && s.Type == SectionModel.SectionTypes.C;
-            if (calculated) model.CalculateSection();
-            if (s.Double) { model.Mirror = SectionModel.MirrorTypes.Left; model.MirrorGapA = s.Gap; }
-            return Property(s.Name, model, calculated: calculated);
-        }).ToList();
-        // A02c: a Brep section with a hole (the shapes of the Brep component).
-        var fill = new GPC.Geometry.Polygon2d(); fill.Add(0, 0); fill.Add(200, 0); fill.Add(200, 400); fill.Add(0, 400);
-        var hole = new GPC.Geometry.Polygon2d(); hole.Add(50, 50); hole.Add(150, 50); hole.Add(150, 350); hole.Add(50, 350);
-        var shape = new GPC.Geometry.Shape2d(fill, new[] { hole });
-        var brep = Property("PAR Brep", new SectionModel { SectionType = SectionModel.SectionTypes.GenericShapes, GenericShapes = new BridGHe.Common.Geometry.Shapes(new[] { shape }) });
-        properties.Add(brep);
-        // A01: a cutoff bar on an I section: ductile, keep mass, the two limits.
-        var cutoff = Property("PAR Cutoff", new SectionModel { SectionType = SectionModel.SectionTypes.I, D = 400, B1 = 200, B2 = 200, T1 = 15, T2 = 15, T3 = 10 }, BeamPropertyType.CutoffBar);
-        cutoff.MaxTension = 1.5e5; cutoff.MaxCompression = 2.5e5; cutoff.CutoffType = CutoffType.Ductile; cutoff.KeepMass = true;
-        properties.Add(cutoff);
-
-        // The builders give the property of the reader (signature, native section, cutoff law).
-        var units = GpcBeamDrafts.DraftUnits;
-        var gpcSteel = GpcMaterials.FromFemm(steel);
+        // A02/A03 and A02b: the sections of the T, C and Angle components of 0.3.0 and their double C and double angle; A02c, A01, A04 (R4bInputs).
+        var standard = R4bInputs.Standards;
+        var properties = R4bInputs.ParityProperties();
+        // The builder of Beam Property gives the native Straus7 section of the standard sections (before: the same signature and native section as
+        // the reader of the former FEM property, compared now in the transitional line below).
         for (int k = 0; k < standard.Length; k++)
+            Check(properties[k].Property.Name == standard[k].Name && properties[k].Data.Native != null, $"A02 {standard[k].Name}: the builder gives the native section");
         {
-            var s = standard[k];
-            var reader = GpcModels.BeamProperty(properties[k], units);
-            var built = GpcPropertyBuilders.Beam(s.Name, 5, GpcSectionBuilders.Standard(s.Kind, s.D, b: s.B, t1: s.T1, t2: s.T2,
-                mirror: s.Double ? 2 : BridGHe.Common.Gpc.Legacy.LegacySectionRecipe.NoMirror, gapA: s.Gap), gpcSteel, "Steel");
-            Check(reader.Data.Signature == built.Data.Signature && reader.Data.Native?.Fingerprint() == built.Data.Native?.Fingerprint() && reader.Data.Native != null,
-                $"A02 {s.Name}: builder and reader differ (signatures {reader.Data.Signature} / {built.Data.Signature})");
-        }
-        {
-            var reader = GpcModels.BeamProperty(cutoff, units);
-            var built = GpcPropertyBuilders.Beam("PAR Cutoff", 3, GpcSectionBuilders.Standard(BridgeSectionKind.I, 400, b1: 200, b2: 200, t1: 15, t2: 15, t3: 10), gpcSteel, "Steel", (1.5e5, 2.5e5, 1, true));
-            var law = ((GPC.Model.ElementProperties.ElasticBeamProperty)reader.Property).CutoffLaw;
+            var cutoff = properties.Single(p => p.Property.Name == "PAR Cutoff");
+            var law = ((GPC.Model.ElementProperties.ElasticBeamProperty)cutoff.Property).CutoffLaw;
             Check(law != null && law.Failure == GPC.Model.ElementProperties.BeamCutoffFailure.Ductile && law.KeepMass && law.TensionLimit == 1.5e5 && law.CompressionLimit == 2.5e5,
-                "A01: the reader gives the cutoff law of the former property");
-            Check(reader.Data.Signature == built.Data.Signature, "A01: builder and reader differ");
+                "A01: the builder gives the cutoff law of the inputs (ductile, keep mass, 150000, 250000)");
         }
-        // A04: a thin shell of a material with a stress-strain table.
-        var table = new[] { (stress: 0.0, strain: 0.0), (stress: 235.0, strain: 235.0 / 210000), (stress: 360.0, strain: 0.15) };
-        var tableSteel = new MaterialModel("S235 table") { Name = "S235 table", Modulus = 210000, PoissonRatio = 0.3, Density = 7.85e-9, StressStrainTable = table };
-        var shell = new PlatePropertyModel("1") { Name = "PAR Shell", Material = tableSteel, PropertyType = PlatePropertyType.ShellThin, MembraneThickness = 20, BendingThickness = 20 };
-        // A04 (LIB): a material of the Table Material component: no E (0), the table; on a beam (Beam type: the table on ptBeamStressVsStrain) and on a shell.
-        var tableOnly = new MaterialModel("PAR Table") { Name = "PAR Table", Modulus = 0, PoissonRatio = 0.3, StressStrainTable = table };
-        var tableShell = new PlatePropertyModel("2") { Name = "PAR Table shell", Material = tableOnly, PropertyType = PlatePropertyType.ShellThin, MembraneThickness = 20, BendingThickness = 20 };
-        properties.Add(Property("PAR Table beam", new SectionModel { SectionType = SectionModel.SectionTypes.SolidRectangle, B = 100, D = 200 }, material: tableOnly));
-
-        // The model: one cantilever per beam property, a restrained shell.
-        var lc = new LoadCaseModel("P", "P");
-        var input = new ModelModel(ModelModel.ModelUnits.Nmm); input.LoadCases.Add(lc);
-        var elements = new List<ElementModel>();
-        for (int k = 0; k < properties.Count; k++)
-        {
-            var a = new NodeModel("A" + k, new Point3d(0, 2000 * k, 0)); a.Attributes.Add(new NodeRestraintAttributeModel(true, true, true, true, true, true));
-            var b = new NodeModel("B" + k, new Point3d(3000, 2000 * k, 0)); b.Loads.Add(new NodeForceLoadModel(lc, new Vector3d(1000, 0, -1000)));
-            var beamModel = new BeamModel((k + 1).ToString(CultureInfo.InvariantCulture), a.Position, b.Position, properties[k]);
-            if (properties[k].Name == "PAR 2L") { beamModel.AngleDeg = 30; beamModel.Offset = new Vector2d(5, 7); } // A02b: the axes of a double angle
-            elements.Add(a); elements.Add(b); elements.Add(beamModel);
-        }
-        var corners = new[] { new Point3d(0, -3000, 0), new Point3d(1000, -3000, 0), new Point3d(1000, -2000, 0), new Point3d(0, -2000, 0) };
-        for (int k = 0; k < 4; k++) { var n = new NodeModel("S" + k, corners[k]); n.Attributes.Add(new NodeRestraintAttributeModel(true, true, true, true, true, true)); elements.Add(n); }
-        elements.Add(new PlateModel("1", corners, shell));
-        var corners2 = new[] { new Point3d(0, -6000, 0), new Point3d(1000, -6000, 0), new Point3d(1000, -5000, 0), new Point3d(0, -5000, 0) };
-        for (int k = 0; k < 4; k++) { var n = new NodeModel("T" + k, corners2[k]); n.Attributes.Add(new NodeRestraintAttributeModel(true, true, true, true, true, true)); elements.Add(n); }
-        elements.Add(new PlateModel("2", corners2, tableShell));
-        input.AddElements(elements.ToArray());
+        var input = R4bInputs.Parity(properties);
+        Console.WriteLine("PAR NATIVE TRANSITIONAL: the parity model against the conversion of the former FEM model: " + R4bInputs.Former.ParityDifference(input));
         string folder = Path.GetFullPath(Path.Combine("artifacts", "native", Guid.NewGuid().ToString("N"))); Directory.CreateDirectory(folder);
         string st7 = Path.Combine(folder, "parity.st7");
-        // The model the GPC path writes (the conversion of Straus R3 Analysis, the Converter writer), without a solution: what Straus7 receives.
-        var conversion = GpcModels.Convert(input, 1e-6);
-        GpcPreflight.Require(conversion.Model);
-        var plan = Straus7ModelWritePlan.Prepare(conversion.Model, null, null, conversion.Report.NativeSections);
-        using (var writer = new Straus7NativeWriter(st7, folder)) { plan.Write(writer, conversion.Model); writer.Save(); }
+        // The model the GPC path writes (the Converter writer, as Straus R3 Analysis), without a solution: what Straus7 receives.
+        GpcPreflight.Require(input.Model);
+        var plan = Straus7ModelWritePlan.Prepare(input.Model, null, null, input.Report.NativeSections);
+        using (var writer = new Straus7NativeWriter(st7, folder)) { plan.Write(writer, input.Model); writer.Save(); }
 
         using (var api = new Straus7NativeApi())
         {
@@ -179,23 +103,23 @@ internal static class ParityNative
                     C(F<Units>("St7SetUnits")(7, new[] { 2, 0, 2, 1, 0, 0 }), "St7SetUnits");
                     for (int k = 0; k < standard.Length; k++)
                     {
-                        var s = standard[k]; var bp = properties[k]; int id = k + 1;
+                        var s = standard[k]; int id = k + 1; var p = byName.TryGetValue(s.Name, out var found) ? found : null;
                         C(F<NewProperty>("St7NewBeamProperty")(7, id, 6, s.Name), "St7NewBeamProperty");
-                        var dims = s.Type == SectionModel.SectionTypes.Angle ? new[] { bp.B, bp.D, 0, bp.T1, bp.T2, 0 } : new[] { bp.B, bp.D, bp.L, bp.T1, bp.T2, bp.T3 };
+                        var dims = new[] { s.B, s.D, 0, s.T1, s.T2, 0 }; // the dimensions of the definition (B, D, L 0, T1, T2, T3 0), as 0.3.0 wrote them
                         C(F<IntDoubles>("St7SetBeamSectionGeometry")(7, id, s.Native, dims), "St7SetBeamSectionGeometry");
-                        var formerData = new[] { bp.SectionArea, bp.I11, bp.I22, bp.J, bp.ShearL1, bp.ShearL2, bp.ShearA1, bp.ShearA2, bp.Centroid.X, bp.Centroid.Y, bp.AngleX1Rad };
+                        // R6.6 R4b: the section data of the GPC file (0.3.0 wrote the former value here; the calculation below overwrites whatever this call wrote).
+                        var formerData = p == null ? new double[11] : p.SectionProperties.Take(11).ToArray();
                         int formerCode = F<IntsDoubles>("St7SetBeamSectionPropertyData")(7, id, new[] { 0 }, formerData);
-                        if (s.Double) Console.WriteLine($"PAR NATIVE A02b {s.Name}: the section data of the former value, written before the mirror: {Rs(formerData)}; St7SetBeamSectionPropertyData returned {formerCode}");
+                        if (s.Double) Console.WriteLine($"PAR NATIVE A02b {s.Name}: the section data written before the mirror (the values of the GPC file): {Rs(formerData)}; St7SetBeamSectionPropertyData returned {formerCode}");
                         // A finding of LIB, not a condition: the values the former Angle component computed on the mirrored shapes may be refused by Straus7
                         // here (the former exporter would stop at this call); the calculation below overwrites whatever this call wrote.
                         if (!s.Double) C(formerCode, "St7SetBeamSectionPropertyData");
-                        if (s.Double) C(F<SetMirror>("St7SetBeamMirrorOption")(7, id, 3, 0, new[] { bp.MirrorGapA, bp.MirrorGapB }), "St7SetBeamMirrorOption"); // mtLeft, btFalse, as 0.3.0
-                        var m = new double[9]; m[0] = steel.Modulus; m[2] = steel.PoissonRatio; m[3] = steel.Density; m[4] = steel.ThermalExpansion;
+                        if (s.Double) C(F<SetMirror>("St7SetBeamMirrorOption")(7, id, 3, 0, new[] { s.Gap, 0.0 }), "St7SetBeamMirrorOption"); // mtLeft, btFalse, as 0.3.0
+                        var m = new double[9]; m[0] = 210000; m[2] = 0.3; m[3] = 7.85e-9; m[4] = 1.2e-5; // the material of the definition (R4bInputs.ParitySteel)
                         C(F<Doubles>("St7SetBeamMaterialData")(7, id, m), "St7SetBeamMaterialData");
                         C(F<ThreeInts>("St7UpdateElementPropertyData")(7, 1, id), "St7UpdateElementPropertyData");
                         C(F<Calculate>("St7CalculateBeamSectionProperties")(7, id, 1), "St7CalculateBeamSectionProperties");
                         var expected = new double[20]; C(F<IntsDoubles>("St7GetBeamSectionPropertyData")(7, id, new int[4], expected), "St7GetBeamSectionPropertyData");
-                        var p = byName.TryGetValue(s.Name, out var found) ? found : null;
                         Check(p != null && p.SectionType == s.Native && p.Geometry.SequenceEqual(dims), $"A02 {s.Name}: native geometry {p?.SectionType} [{Rs(p?.Geometry ?? new double[0])}], 0.3.0 {s.Native} [{Rs(dims)}]");
                         double worst = p == null ? double.NaN : Enumerable.Range(0, 11).Max(j => Math.Abs(p.SectionProperties[j] - expected[j]) / Math.Max(1, Math.Abs(expected[j])));
                         Console.WriteLine($"PAR NATIVE A02 {s.Name}: type {p?.SectionType}, section data {Rs(p?.SectionProperties ?? new double[0])}; 0.3.0 {Rs(expected.Take(11))}; worst relative difference {R(worst)}");
@@ -253,9 +177,9 @@ internal static class ParityNative
                 C(F<TableId>("St7GetPropertyTable")(1, 2007, plateProperty, ref tableId), "St7GetPropertyTable");
                 C(F<TableRows>("St7GetNumTableTypeRows")(1, 4, tableId, ref rows), "St7GetNumTableTypeRows");
                 var data = new double[2 * Math.Max(rows, 1)]; int read = 0; C(F<TableData>("St7GetTableTypeData")(1, 4, tableId, rows, ref read, data), "St7GetTableTypeData");
-                var former = table.SelectMany(t => new[] { t.strain, t.stress }).ToArray();
+                var former = R4bInputs.Table.SelectMany(t => new[] { t.strain, t.stress }).ToArray();
                 Console.WriteLine($"PAR NATIVE A04 shell table: id {tableId}, {read} rows {Rs(data)} (0.3.0 {Rs(former)})");
-                Check(tableId > 0 && read == table.Length && data.SequenceEqual(former), "A04: the stress-strain table of 0.3.0 on the shell");
+                Check(tableId > 0 && read == R4bInputs.Table.Length && data.SequenceEqual(former), "A04: the stress-strain table of 0.3.0 on the shell");
                 // A04 (LIB): the Table Material material on a beam and on a shell: E = 0 and the table, as 0.3.0 wrote them.
                 foreach (var (what, entity, type, number) in new[] { ("beam", Straus7Entity.Beam, 1011, byName["PAR Table beam"].Number), ("shell", Straus7Entity.Plate, 2007, api.ReadElement(Straus7Entity.Plate, 2).Property) })
                 {
@@ -265,13 +189,13 @@ internal static class ParityNative
                     var rows2 = new double[2 * Math.Max(n2, 1)]; int r2 = 0; C(F<TableData>("St7GetTableTypeData")(1, 4, id2, n2, ref r2, rows2), "St7GetTableTypeData");
                     Console.WriteLine($"PAR NATIVE A04 Table Material on a {what}: E {R(tp.Material[0])}, table id {id2}, {r2} rows {Rs(rows2)} (0.3.0: E 0, {Rs(former)})");
                     Check(tp.Material[0] == 0, $"A04 Table Material {what}: E = {R(tp.Material[0])}, 0.3.0 wrote 0");
-                    Check(id2 > 0 && r2 == table.Length && rows2.SequenceEqual(former), $"A04 Table Material {what}: the table of 0.3.0");
+                    Check(id2 > 0 && r2 == R4bInputs.Table.Length && rows2.SequenceEqual(former), $"A04 Table Material {what}: the table of 0.3.0");
                 }
             }
             finally { api.CloseModel(); }
         }
         foreach (var f in failures) Console.WriteLine("  PAR NATIVE FAIL: " + f);
-        Console.WriteLine($"PAR NATIVE: {standard.Length} standard sections, a Brep section, a cutoff bar, a shell table; {failures.Count} failures");
+        Console.WriteLine($"PAR NATIVE: {standard.Length} standard sections on GPC data alone, a Brep section, a cutoff bar, a shell table; {failures.Count} failures");
         return failures.Count;
     }
 }
