@@ -205,6 +205,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             {
                 lock (gpcLock)
                 {
+                    // P30-01 (C1, 11/11): the results saved with the model that could not be read (the readers of this notice show it).
+                    if (_unreadableResultsOf != null && ReferenceEquals(_unreadableResultsOf, StateKey)) return UnreadableResultsMessage;
                     if (_legacy == null || !ReferenceEquals(_legacyOf, StateKey)) return null;
                     // R6.5 P1 lane 3c: without a FEM value the results of the former payload are read from the payload itself.
                     bool results = Value != null ? Value.Elements.Any(e => e.Results != null && e.Results.Count != 0) : Common.Gpc.GpcLegacyPayloads.ModelHadResults(_legacy);
@@ -212,6 +214,16 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 }
             }
         }
+
+        /// <summary>P30-01 (C1, 11/11): the state of a model read with a results chunk that could not be read (dropped, not attached).</summary>
+        private object _unreadableResultsOf;
+
+        /// <summary>P30-01 (C1, 11/11): the warning of a model whose saved results could not be read (they were dropped; Run is needed),
+        /// or null. <see cref="LegacyNotice"/> gives it too, so the analysis components and the readers of the results show it.</summary>
+        public string ResultsNotice { get { lock (gpcLock) return _unreadableResultsOf != null && ReferenceEquals(_unreadableResultsOf, StateKey) ? UnreadableResultsMessage : null; } }
+
+        /// <summary>P30-01 (C1, 11/11): the text of <see cref="ResultsNotice"/>.</summary>
+        public const string UnreadableResultsMessage = "I risultati salvati con il modello non si possono leggere (dati danneggiati) e non sono stati caricati: premere Run per ricalcolare l'analisi.";
 
         /// <summary>F6 (L12): the bridge data of <see cref="Gpc"/> (members, super elements, local section states by beam GUID): those of the
         /// GPC input of <see cref="Value"/>; for an attached analysed (or bridge) model, the same data on its beams by number (the analysed
@@ -337,6 +349,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 if (_drafts != null && ReferenceEquals(_draftsOf, StateKey)) copy.AttachDrafts(_drafts);
                 if (_linked != null && ReferenceEquals(_linkedOf, StateKey)) lock (copy.gpcLock) { copy._linked = _linked; copy._linkedOf = copy.StateKey; }
                 if (_draftGuids != null && ReferenceEquals(_draftGuidsOf, StateKey)) copy.AttachElementGuids(_draftGuids);
+                if (_unreadableResultsOf != null && ReferenceEquals(_unreadableResultsOf, StateKey)) lock (copy.gpcLock) copy._unreadableResultsOf = copy.StateKey; // P30-01
             }
         }
 
@@ -487,15 +500,19 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 // R6.1: the GPC input with its report (BGHGPC1, GpcDraftArchive.Write(Conversion)); the analysed results stay in the sidecar of
                 // the analysis components. Until R6.5 the FEM model too (transitional chunk) with the GUIDs of its elements.
                 DataTypes.GpcGooPersistence.Write(writer, () => Common.Gpc.GpcDraftArchive.Write(GpcInput), Value == null ? null : Common.Helpers.ModelArchive.Write(Value));
-                // R6.5 P1 lane 3c: a model without FEM value writes the GH GUIDs attached to its drafts, and reads them back below.
-                bool draftGuids = Value == null && _draftGuids != null && ReferenceEquals(_draftGuidsOf, StateKey);
-                writer.SetString("ElementGuids", JsonSerializer.Serialize(Value?.Elements.Select(GetGuid).ToArray() ?? (draftGuids ? _draftGuids : Array.Empty<Guid>())));
                 // R6.4 (2), extension (α): the drafts of the elements, in a chunk of their own beside the GPC input (none when the model carries
                 // none). Until R6.5 drafts that cannot be written are left out, as a GPC input (the elements read back keep the conversion of
                 // their FEM values).
+                byte[] draftBytes = null;
                 if (drafts)
-                    try { var carried = GpcDrafts; if (carried != null) writer.SetByteArray(Common.Gpc.GpcModelDrafts.Chunk, Common.Gpc.GpcModelDrafts.Write(carried)); }
+                    try { var carried = GpcDrafts; if (carried != null) draftBytes = Common.Gpc.GpcModelDrafts.Write(carried); }
                 catch (Exception ex) when (Value != null && (ex is ArgumentException || ex is NotSupportedException || ex is InvalidOperationException || ex is System.Runtime.Serialization.SerializationException)) { }
+                // R6.5 P1 lane 3c: a model without FEM value writes the GH GUIDs attached to its drafts, and reads them back below. P30-01 (C1,
+                // 11/11): only with its drafts (GUIDs without drafts read as damage): the analysis components, which leave the drafts out, attach
+                // both again from their live input after opening (AnalysisDrafts).
+                bool draftGuids = Value == null && draftBytes != null && _draftGuids != null && ReferenceEquals(_draftGuidsOf, StateKey);
+                writer.SetString("ElementGuids", JsonSerializer.Serialize(Value?.Elements.Select(GetGuid).ToArray() ?? (draftGuids ? _draftGuids : Array.Empty<Guid>())));
+                if (draftBytes != null) writer.SetByteArray(Common.Gpc.GpcModelDrafts.Chunk, draftBytes);
                 if (results && GpcResults is GPC.Model.Models.Model analysed) writer.SetByteArray(Common.Gpc.GpcResultsFile.Chunk, Common.Gpc.GpcResultsFile.ToBytes(analysed));
                 return true;
             }
@@ -534,19 +551,22 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                     }
                     else if (guids.Length != 0) savedDraftGuids = guids; // R6.5 P1 lane 3c: attached once the drafts are read
                 }
-                // R6.4 (2): the drafts of the elements saved with the model (BGHGPC1 of the GH_Model, extended; absent in former files).
-                // Until R6.5 drafts that cannot be read are left out (the elements keep the conversion of their FEM values).
-                // R6.4 (coordinator, 7/11): an internalised model with its results (0.4.0 form).
+                // R6.4 (coordinator, 7/11): an internalised model with its results (0.4.0 form). P30-01 (C1, 11/11): results that cannot be read
+                // are dropped visibly: the model opens without them and says so (ResultsNotice, shown by the components that read the model).
                 if (reader.ItemExists(Common.Gpc.GpcResultsFile.Chunk) && StateKey != null)
                     try { AttachGpc(Common.Gpc.GpcResultsFile.FromBytes(reader.GetByteArray(Common.Gpc.GpcResultsFile.Chunk))); }
-                    catch (Exception ex) when (ex is System.IO.InvalidDataException || ex is ArgumentException || ex is NotSupportedException || ex is System.Runtime.Serialization.SerializationException) { System.Diagnostics.Debug.WriteLine(ex); }
+                    catch (Exception ex) when (!(ex is OutOfMemoryException)) { System.Diagnostics.Debug.WriteLine(ex); lock (gpcLock) _unreadableResultsOf = StateKey; }
+                // R6.4 (2): the drafts of the elements saved with the model (BGHGPC1 of the GH_Model, extended; absent in former files, allowed).
+                // P30-01 (C1, 11/11): drafts saved but unreadable are a damaged datum: the model does not open as if complete (before, they were
+                // left out and the model opened without them).
                 if (reader.ItemExists(Common.Gpc.GpcModelDrafts.Chunk) && StateKey != null)
                     try { AttachDrafts(Common.Gpc.GpcModelDrafts.Read(reader.GetByteArray(Common.Gpc.GpcModelDrafts.Chunk))); }
-                    catch (Exception ex) when (ex is System.Runtime.Serialization.SerializationException || ex is InvalidDataException || ex is EndOfStreamException || ex is ArgumentException) { }
+                    catch (Exception ex) when (!(ex is OutOfMemoryException)) { System.Diagnostics.Debug.WriteLine(ex); return false; }
                 // R6.5 P1 lane 3c: the GUIDs of a model without FEM value belong to its drafts: another count is a damaged datum (as for the FEM elements).
+                // P30-01 (C1, 11/11): so are GUIDs saved without drafts (before, the check was skipped when the drafts were missing).
                 if (savedDraftGuids != null)
                 {
-                    if (GpcDrafts is Common.Gpc.GpcModelDrafts read && savedDraftGuids.Length != read.Nodes.Count + read.Beams.Count + read.Plates.Count) return false;
+                    if (!(GpcDrafts is Common.Gpc.GpcModelDrafts read) || savedDraftGuids.Length != read.Nodes.Count + read.Beams.Count + read.Plates.Count) return false;
                     AttachElementGuids(savedDraftGuids);
                 }
                 return true;
