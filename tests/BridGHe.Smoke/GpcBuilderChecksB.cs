@@ -54,6 +54,12 @@ internal static class GpcBuilderChecksB
         Run("BeamComponent", one, (0, vertical), (1, truss), (4, new R.Vector3d(25, 0, 0)));
         Run("BeamComponent", one, (0, axisX), (1, gProperty), (3, 0.0), (4, new R.Vector3d(0, 0, 0)));
         var bases = new[] { b0, b1, b2, b3 };
+        // R1 (explicit expected values, from the inputs): a beam on the ends of its line, exactly (N-mm, the units of the drafts), and its BridGHe angle.
+        static BridGHe.Common.Gpc.Legacy.LegacyBeamDraft Draft(IGH_Goo g) => (BridGHe.Common.Gpc.Legacy.LegacyBeamDraft)g.GetType().GetProperty("Gpc").GetValue(g);
+        static bool At(GPC.Geometry.Point3d p, R.Point3d q) => p.X == q.X && p.Y == q.Y && p.Z == q.Z;
+        foreach (var (beam, line, angle) in new[] { (b0, axisX, 0.0), (b1, skew, 17.5), (b2, skew, -40.0), (b3, vertical, 90.0) })
+            h.Expect(At(Draft(beam).Beam.StartPoint, line.PointAtStart) && At(Draft(beam).Beam.EndPoint, line.PointAtEnd) && Draft(beam).AngleDeg == angle,
+                $"Beam on {line.PointAtStart} - {line.PointAtEnd}, angle {angle}: the draft at {Draft(beam).Beam.StartPoint} - {Draft(beam).Beam.EndPoint}, angle {Draft(beam).AngleDeg:R}");
 
         // Attributes on every base beam (axes, offsets and properties differ), then chained.
         foreach (var b in bases)
@@ -73,6 +79,7 @@ internal static class GpcBuilderChecksB
         Run("BeamStringGroupComponent", one, (0, new[] { b0, b1, b2 }), (1, 7));
         // Super element: a second name (two names at list level), the same name twice; on a plate (refused by the reader and the builder).
         var se = Out(Run("SuperElementComponent", one, (0, b1), (1, "SE-A")));
+        h.Expect(Draft(se).Bridge?.SuperElement == "SE-A", "Super Element «SE-A»: the bridge data of the draft name " + (Draft(se).Bridge?.SuperElement ?? "none")); // R1
         Run("SuperElementComponent", one, (0, se), (1, "SE-B"));
         Run("SuperElementComponent", one, (0, se), (1, "SE-A"));
         var plate = h.Goo("GH_Plate", new PlateModel("", new[] { new R.Point3d(0, 0, 0), new R.Point3d(1000, 0, 0), new R.Point3d(1000, 1000, 0) },
@@ -113,6 +120,8 @@ internal static class GpcBuilderChecksB
             foreach (var b in new[] { b1, b3 })
                 Run("BeamDistributedLoadComponent", one, new (int, object)[] { (0, b), (1, live), (2, 1), (3, gcs), (4, dir) }.Concat(Values(1)).ToArray());
         Run("BeamDistributedLoadComponent", none, new (int, object)[] { (0, b1), (1, dead), (2, 0), (3, ocs), (4, 2) }.Concat(Values(0)).ToArray());
+        // R1: on the path of P2 the refusal of the builder (the reader's message) is the error of the component, no output (decision 2 of passo 73).
+        if (GpcBuilderChecks.P2Path && !h.ExpectP2Error("LegacyNonGlobalLoadCoordinateSystemWasIgnored")) h.Failures.Add("B BeamDistributedLoadComponent: on the path of P2, no error for the load in a non-global system");
         // Point loads and moments (a coordinate system given is ignored: the principal axes), at the ends and inside.
         foreach (var b in bases)
             foreach (var a in new[] { 0.0, 0.37, 0.999 })

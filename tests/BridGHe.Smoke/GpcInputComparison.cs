@@ -298,6 +298,11 @@ internal static class GpcInputComparison
             LoadCaseName = caseName, Divisions = 7, Target = 0, Coordinates = new double[] { 0, y, 0, 3000, y, 0, 0, y + 1000, 0 }, ConvertToStaticCases = true,
             Template = new MovingTemplate { Name = "Axle " + caseName, Vehicles = new[] { new MovingVehicle { Name = "1000 N", Loads = new MovingObject[] { new MovingPointForce { Force = new double[] { 0, 0, -1000 } } } } } },
         };
+        // R6.6 lane R1: the comparison of expected and actual GPC data, without the FEM path: the transformers on the GPC examples of R0.
+        var (expectedOutputs, expectedChecks) = ExpectedOnGpc(Path);
+        Console.WriteLine($"GPC MODEL TRANSFORMS (R1, without FEM): {expectedOutputs} transformer outputs and refusals of the GPC examples 01-10 (R0) against their explicit expected GPC data ({expectedChecks} checks: paths, cases, units, element identities and positions, drafts, replaced properties, numbering, messages)");
+        if (Environment.GetEnvironmentVariable("BRIDGHE_R1_TRANSITIONAL") == "0") { Console.WriteLine("GPC MODEL TRANSFORMS PASS (R1): the FEM comparison not run (BRIDGHE_R1_TRANSITIONAL=0)"); return; }
+        // TRANSITIONAL (until P2, P2 decides): the GPC outputs against the conversion of the FEM outputs, bit for bit.
         foreach (var example in NativeExamples.Create())
         {
             var fem = example.Model;
@@ -323,7 +328,106 @@ internal static class GpcInputComparison
         int states = PhaseModelSectionStates(tolerance);
         int sequences = ConstructionSequences(tolerance, Path);
         Console.WriteLine($"GPC MODEL TRANSFORMS A09: {ShadowedProperties(tolerance)} outputs with beam properties of the same name equal to the conversion of their FEM output.");
-        Console.WriteLine($"GPC MODEL TRANSFORMS PASS: {compared} Attach Moving Paths and {phases} Bridge Phase Model outputs (chains included), {components} Bridge Phase Model component outputs on GPC equal to the conversion of their FEM output; {fromGpc} transformer outputs from inputs built in GPC (GpcModels.Conversion.FromGpc) equal to those from the conversion; {states} Bridge Phase Model outputs on beams with local section states; {sequences} Bridge Construction Sequence snapshots renumbered as the conversion of their FEM output.");
+        Console.WriteLine($"GPC MODEL TRANSFORMS PASS: {expectedOutputs} outputs of the GPC examples against their expected GPC data (R1); TRANSITIONAL: {compared} Attach Moving Paths and {phases} Bridge Phase Model outputs (chains included), {components} Bridge Phase Model component outputs on GPC equal to the conversion of their FEM output; {fromGpc} transformer outputs from inputs built in GPC (GpcModels.Conversion.FromGpc) equal to those from the conversion; {states} Bridge Phase Model outputs on beams with local section states; {sequences} Bridge Construction Sequence snapshots renumbered as the conversion of their FEM output.");
+    }
+
+    /// <summary>R6.6 lane R1 (task 3): Attach Moving Paths, Bridge Phase Model and Bridge Construction Sequence on the GPC inputs of the examples 01–10
+    /// built without FEM (<see cref="GpcNativeExamples"/>, R0), against the GPC data expected from their inputs, written here: the paths as given
+    /// (case, template, shape, divisions, the static-case option), the cases of the source and of the paths, the units, the elements of the source
+    /// one to one (GUID, name, position, property), the drafts carried; the replaced property on the named beams only, the others as they were; the
+    /// snapshot renumbered 1..n with the GUIDs of the source, the active elements only; the refusals with their messages. Returns the outputs and
+    /// refusals and the checks.</summary>
+    private static (int Outputs, int Checks) ExpectedOnGpc(Func<string, double, MovingPath> path)
+    {
+        int outputs = 0, checks = 0;
+        void Expect(bool ok, string what) { if (!ok) throw new Exception("GPC MODEL TRANSFORMS (R1) FAIL: " + what); checks++; }
+        string Refusal(Func<GpcModels.Conversion> run) { try { run(); return null; } catch (Exception e) when (e is ArgumentException || e is InvalidOperationException) { return e.Message; } }
+        static bool At(GPC.Geometry.Point3d p, double x, double y, double z) => p.X == x && p.Y == y && p.Z == z;
+        // The elements of the source one to one in the output (a transformer that keeps the elements: Attach Moving Paths, Bridge Phase Model).
+        void SameElements(string label, Model source, Model output)
+        {
+            Expect(output.NodesElements.Count == source.NodesElements.Count && output.BeamElements.Count == source.BeamElements.Count && output.AreaElements.Count == source.AreaElements.Count,
+                label + ": the element counts of the source");
+            foreach (var n in source.NodesElements.Values)
+                Expect(output.NodesElements.TryGetValue(n.Id, out var o) && o.Guid == n.Guid && o.Name == n.Name && o.Position.X == n.Position.X && o.Position.Y == n.Position.Y && o.Position.Z == n.Position.Z,
+                    label + ": node " + n.Id + " as in the source");
+            foreach (var b in source.BeamElements.Values)
+                Expect(output.BeamElements.TryGetValue(b.Id, out var o) && o.Guid == b.Guid && o.Name == b.Name, label + ": beam " + b.Id + " as in the source");
+            foreach (var p in source.AreaElements.Values)
+                Expect(output.AreaElements.TryGetValue(p.Id, out var o) && o.Guid == p.Guid && o.Name == p.Name, label + ": plate " + p.Id + " as in the source");
+        }
+        foreach (var example in GpcNativeExamples.Create())
+        {
+            var source = example.Input; var m = source.Model; string id = example.Id;
+            Expect(source.Drafts != null, id + ": the GPC input of Build Model carries the drafts");
+            string existing = m.LoadCases.Keys.OrderBy(k => k, StringComparer.Ordinal).FirstOrDefault() ?? "Q";
+            // Attach Moving Paths: a new case, an existing case, two paths, no path (removal).
+            foreach (var (variant, paths) in new (string, MovingPath[])[] { ("new case", new[] { path("Traffic GPC", 0) }), ("existing case", new[] { path(existing, 100) }),
+                ("two paths", new[] { path("Lane 1", 0), path("Lane 2", 200) }), ("no path", Array.Empty<MovingPath>()) })
+            {
+                string label = id + " paths " + variant;
+                var output = GpcModelTransforms.ReplacePaths(source, paths, GpcIdentity.Derive(GpcIdentity.NameSpace, "r66-r1-paths:" + label));
+                var o = output.Model; outputs++;
+                Expect(output.Report.Units.Units == source.Report.Units.Units, label + ": the units of the source");
+                Expect((o.MovingLoads?.Paths.Count ?? 0) == paths.Length, label + $": {paths.Length} paths ({o.MovingLoads?.Paths.Count ?? 0})");
+                for (int i = 0; i < paths.Length; i++)
+                {
+                    var p = o.MovingLoads.Paths[i]; var given = paths[i]; double y = given.Coordinates[1];
+                    Expect(o.LoadCases.TryGetValue(given.LoadCaseName, out var lc) && p.CaseGuid == lc.Guid, label + ": path " + i + " on its case " + given.LoadCaseName);
+                    Expect(p.Template.Name == given.Template.Name && p.Template.Vehicles.Length == 1 && p.Divisions == 7 && p.Options?.ConvertToStaticCases == true, label + ": path " + i + " template, divisions, static cases");
+                    Expect(At(p.Start, 0, y, 0) && At(p.End, 3000, y, 0) && At(p.Reference, 0, y + 1000, 0), label + ": path " + i + " start, end and reference (N-mm)");
+                }
+                foreach (var c in m.LoadCases.Keys) Expect(o.LoadCases.ContainsKey(c), label + ": the case " + c + " of the source");
+                SameElements(label, m, o);
+                Expect(output.Drafts != null && output.Drafts.Fits(m.NodesElements.Count, m.BeamElements.Count, m.AreaElements.Count), label + ": the drafts of the source carried");
+            }
+            if (m.BeamElements.Count == 0) continue;
+            // Bridge Phase Model: the first beam on a stiffer property (loads cleared and kept), every beam; the refusals.
+            var stiff = BridGHe.Common.Gpc.Builders.GpcPropertyBuilders.Beam("Stiff", 5, BridGHe.Common.Gpc.Builders.GpcSectionBuilders.Generic(60000, 450000000, 200000000, 100000000, 0, 0, 0, 0, 0, 0, 0),
+                BridGHe.Common.Gpc.Builders.GpcMaterialBuilders.Material(new LegacyMaterialRecipe { Name = "S355", Modulus = 210000 * 1.25, PoissonRatio = 0.3 }));
+            string first = m.BeamElements[1].Name, signature = LegacyModelImport.PropertySignature(stiff.Property), former = LegacyModelImport.PropertySignature(m.BeamElements[1].BeamProperty);
+            foreach (var (variant, names, clear) in new (string, string[], bool)[] { ("first beam, loads cleared", new[] { first }, true), ("first beam, loads kept", new[] { first }, false),
+                ("every beam", m.BeamElements.Values.Select(b => b.Name).ToArray(), false) })
+            {
+                string label = id + " phase " + variant;
+                var output = GpcModelTransforms.PhaseModel(source, "Phase", names, stiff, clear, GpcIdentity.Derive(GpcIdentity.NameSpace, "r66-r1-phase:" + label), stiff);
+                var o = output.Model; outputs++;
+                Expect(output.Report.Units.Units == source.Report.Units.Units, label + ": the units of the source");
+                SameElements(label, m, o);
+                foreach (var b in o.BeamElements.Values)
+                {
+                    bool replaced = names.Contains(b.Name);
+                    string now = LegacyModelImport.PropertySignature(b.BeamProperty);
+                    Expect(replaced ? b.BeamProperty.Name == "Stiff" && now == signature : now == LegacyModelImport.PropertySignature(m.BeamElements[b.Id].BeamProperty),
+                        label + ": beam " + b.Name + (replaced ? " on the replacement «Stiff»" : " on its former property") + $" ({b.BeamProperty.Name})");
+                }
+                Expect(signature != former, label + ": the replacement is another property");
+            }
+            Expect(Refusal(() => GpcModelTransforms.PhaseModel(source, "Phase", new[] { "missing" }, stiff, true, GpcIdentity.Derive(GpcIdentity.NameSpace, "r66-r1-phase-missing:" + id), stiff)) == "Unknown Beam IDs: missing",
+                id + ": phase of an unknown beam refused with «Unknown Beam IDs: missing»");
+            Expect(Refusal(() => GpcModelTransforms.PhaseModel(source, " ", new[] { first }, stiff, true, GpcIdentity.Derive(GpcIdentity.NameSpace, "r66-r1-phase-name:" + id), stiff)) == "Phase model name is required.",
+                id + ": phase without a name refused with «Phase model name is required.»");
+            outputs += 2;
+            // Bridge Construction Sequence: everything, the group «Permanent» (every element of R0's examples but the beam «Added» of 08 and 09), an
+            // unknown group; renumbered 1..n with the GUIDs of the source.
+            foreach (var (variant, groups) in new (string, string[])[] { ("all", null), ("group Permanent", new[] { "Permanent" }) })
+            {
+                string label = id + " construction " + variant;
+                var output = GpcModelTransforms.ConstructionSequence(source, 10, "Phase " + variant, 7, groups, null, new[] { "*" }, null, GpcIdentity.Derive(GpcIdentity.NameSpace, "r66-r1-construction:" + label));
+                var o = output.Model; outputs++;
+                int beams = groups == null ? m.BeamElements.Count : m.BeamElements.Count - (id is "08-stage-activation" or "09-stage-removal" ? 1 : 0);
+                Expect(o.BeamElements.Count == beams && o.AreaElements.Count == m.AreaElements.Count, label + $": {beams} beams, {m.AreaElements.Count} plates active ({o.BeamElements.Count}, {o.AreaElements.Count})");
+                Expect(o.NodesElements.Keys.OrderBy(k => k).SequenceEqual(Enumerable.Range(1, o.NodesElements.Count)) && o.BeamElements.Keys.OrderBy(k => k).SequenceEqual(Enumerable.Range(1, o.BeamElements.Count)),
+                    label + ": renumbered 1..n");
+                Expect(o.AllElements.All(e => m.AllElements.Any(s => s.Guid == e.Guid && s.Name == e.Name)), label + ": every element with the GUID and name of one of the source");
+                Expect(output.Report.Units.Units == source.Report.Units.Units, label + ": the units of the source");
+            }
+            Expect(Refusal(() => GpcModelTransforms.ConstructionSequence(source, 10, "Phase", 7, new[] { "Missing" }, null, new[] { "*" }, null, GpcIdentity.Derive(GpcIdentity.NameSpace, "r66-r1-construction-missing:" + id)))
+                == "Unknown active group/physical member identifier.", id + ": an unknown group refused with «Unknown active group/physical member identifier.»");
+            outputs++;
+        }
+        if (outputs < 90) throw new Exception("GPC MODEL TRANSFORMS (R1) FAIL: only " + outputs + " outputs");
+        return (outputs, checks);
     }
 
     /// <summary>Bridge Construction Sequence (coordinator decision 2, 5/11: renumbered 1..n): the GPC snapshot against the conversion of the
