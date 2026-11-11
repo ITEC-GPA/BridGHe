@@ -147,12 +147,18 @@ namespace BridGHe.Common.Gpc
 
         private static bool IsCombination(Model solved, GpcResultCatalog.Entry e) => e.Step == null && e.Phase == null && solved.Combinations.ContainsKey(e.Case);
 
+        /// <summary>C2 (P26-07, user decision of 11/11: as 0.3.0): a combination analysed since C2 carries the results Straus7 computed for it (the LSA
+        /// combination case, read as StrausResultsReader of 0.3.0 read it: displacements, reactions, beam forces at its own stations, plate forces and
+        /// moments): those are the rows. A model analysed before C2 has none: its rows stay the superposition of the cases (at the stations common to
+        /// its cases for the beams), as before.</summary>
+        private static bool Stored(IEnumerable<GPC.Model.Results.Locations.ResultLocation> locations) => locations.Any(l => l.State?.IsCombined == true);
+
         public static IEnumerable<NodeRow> Node(GpcResultCatalog catalog, Model solved, NodeElement node)
         {
             var u = catalog.Units;
             for (int i = 0; i < catalog.Entries.Count; i++)
             {
-                var e = catalog.Entries[i]; bool combination = IsCombination(solved, e);
+                var e = catalog.Entries[i]; bool combination = IsCombination(solved, e) && !Stored(GpcResults.Locations<GPC.Model.Results.Locations.ResultLocation>(node, e.Case));
                 var d = combination ? GpcResults.Combined(solved, e.Case, c => GpcResults.NodeDisplacement(node, c)) : GpcResults.NodeDisplacement(node, e.Case, e.Step, e.Phase);
                 var r = combination ? GpcResults.Combined(solved, e.Case, c => GpcResults.NodeReaction(node, c)) : GpcResults.NodeReaction(node, e.Case, e.Step, e.Phase);
                 if (d == null && r == null) continue;
@@ -173,7 +179,8 @@ namespace BridGHe.Common.Gpc
             for (int i = 0; i < catalog.Entries.Count; i++)
             {
                 var e = catalog.Entries[i];
-                var rows = IsCombination(solved, e) ? CombinedBeam(solved, beam, e.Case, principal) : GpcResults.BeamForces(beam, e.Case, principal, e.Step, e.Phase);
+                var rows = IsCombination(solved, e) && !Stored(GpcResults.Locations<GPC.Model.Results.Locations.ResultLocation>(beam, e.Case))
+                    ? CombinedBeam(solved, beam, e.Case, principal) : GpcResults.BeamForces(beam, e.Case, principal, e.Step, e.Phase);
                 foreach (var row in rows)
                     yield return new BeamRow
                     {
@@ -189,7 +196,8 @@ namespace BridGHe.Common.Gpc
             for (int i = 0; i < catalog.Entries.Count; i++)
             {
                 var e = catalog.Entries[i];
-                var rows = IsCombination(solved, e) ? CombinedPlate(solved, plate, e.Case) : GpcResults.PlateNodeForces(plate, e.Case, e.Step, e.Phase);
+                var rows = IsCombination(solved, e) && !Stored(GpcResults.Locations<GPC.Model.Results.Locations.ResultLocation>(plate, e.Case))
+                    ? CombinedPlate(solved, plate, e.Case) : GpcResults.PlateNodeForces(plate, e.Case, e.Step, e.Phase);
                 foreach (var row in rows)
                 {
                     var w = row.Values;

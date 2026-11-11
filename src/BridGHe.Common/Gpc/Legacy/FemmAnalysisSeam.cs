@@ -23,7 +23,8 @@ namespace BridGHe.Common.Gpc.Legacy
         {
             var (gpc, report) = Input(model, conversion, outputPath, tolerance, warnings);
             var preflight = GpcPreflight.Require(gpc); warnings.AddRange(preflight.Warnings);
-            var plan = GPC.Converter.Straus7.Straus7ModelWritePlan.Prepare(gpc, null, null, report.NativeSections);
+            // C2 (P26-01/02/03): the section labels, plate material names and plate properties of the 0.3.0 exporter.
+            var plan = GPC.Converter.Straus7.Straus7ModelWritePlan.Prepare(gpc, null, null, report.NativeSections, GpcStrausAnalysis.LegacyWriteOptions(gpc, report));
             InPrivateFolder(outputPath, (output, scratch) =>
             {
                 using (var writer = new GPC.Converter.Straus7.Straus7NativeWriter(output, scratch)) { plan.Write(writer, gpc); writer.Save(); }
@@ -116,11 +117,18 @@ namespace BridGHe.Common.Gpc.Legacy
                 foreach (var path in gpc.MovingLoads.Paths) if (path.Options != null && !movingOnly) path.Options.ConvertToStaticCases = false;
             GpcStrausAnalysis.Outcome outcome;
             const string NonlinearCase = "BridGHe NLA results", UnstagedPhase = "BridGHe NLA";
+            // C2 (user decision of 11/11: Straus7 as 0.3.0): the metadata of the 0.3.0 exporter (P26-01/02/03); the linear run solves only the
+            // requested cases and the cases of the requested combinations, and only the generated cases in a moving-only run (P26-04,
+            // StrausAnalysis.cs:34-58 of 0.3.0), reads the requested combinations from Straus7 (P26-07); every run keeps the solver settings
+            // of the new file (P26-06: 0.3.0 set none).
+            var writeOptions = GpcStrausAnalysis.LegacyWriteOptions(gpc, report);
+            var linear = solver == 0 ? LinearOptions(gpc, selection, movingOnly) : null;
             if (solver == 1) Unstaged(gpc, UnstagedPhase);
             if (solver != 0) gpc.LoadCases.Add(NonlinearCase, new GPC.Model.Stages.StageResultCase(NonlinearCase, "NLA"));
             outcome = InPrivateFolder(outputPath, (output, scratch) => solver == 0
-                ? GpcStrausAnalysis.LinearStatic(gpc, output, scratch, nativeSections: report.NativeSections)
-                : GpcStrausAnalysis.Staged(gpc, NonlinearCase, output, scratch, nativeSections: report.NativeSections));
+                ? GpcStrausAnalysis.LinearStatic(gpc, output, scratch, nativeSections: report.NativeSections, writeOptions: writeOptions, runOptions: linear)
+                : GpcStrausAnalysis.Staged(gpc, NonlinearCase, output, scratch, nativeSections: report.NativeSections, writeOptions: writeOptions,
+                    nonlinear: GPC.Converter.Straus7.Straus7NonlinearRunOptions.OfFile()));
             warnings.AddRange(outcome.Warnings);
             var solved = outcome.Model;
             // C4: the requested results in their order, kept in the analysed model (GpcResultCatalog); the FEM path writes the former result
@@ -150,6 +158,22 @@ namespace BridGHe.Common.Gpc.Legacy
             }
             else foreach (var g in selection) entries.Add(new GpcResultCatalog.Entry { Label = g.Name, Case = g.Name });
             return solved;
+        }
+
+        /// <summary>C2 (P26-04, P26-07, as 0.3.0 StrausAnalysis.cs:30-62): a moving-only run solves the generated cases alone; any other linear run
+        /// solves the requested load cases and the cases with a non-zero factor in the requested combinations, and reads the requested combinations
+        /// from the combination cases Straus7 computes. The solver switches of the new file are kept (P26-06).</summary>
+        private static GPC.Converter.Straus7.Straus7LinearRunOptions LinearOptions(GPC.Model.Models.Model gpc, IReadOnlyList<GpcResultSelection.Entry> selection, bool movingOnly)
+        {
+            if (movingOnly) return new GPC.Converter.Straus7.Straus7LinearRunOptions { LoadCases = Array.Empty<Guid>(), SolveGeneratedMovingCases = true, FileSolverDefaults = true };
+            var cases = new List<Guid>(); var combinations = new List<Guid>();
+            foreach (var entry in selection)
+            {
+                if (gpc.LoadCases.TryGetValue(entry.Name, out var loadCase)) { cases.Add(loadCase.Guid); continue; }
+                var combination = gpc.Combinations[entry.Name]; combinations.Add(combination.Guid);
+                foreach (var pair in combination.GetLoadCaseCoefficientsPair()) if (pair.Value != 0) cases.Add(pair.Key.Guid);
+            }
+            return new GPC.Converter.Straus7.Straus7LinearRunOptions { LoadCases = cases.Distinct().ToArray(), SolveGeneratedMovingCases = false, Combinations = combinations, FileSolverDefaults = true };
         }
 
         /// <summary>R6.4 (1): the selection of the GPC catalogue of the input (<see cref="GpcResultSelection"/>) for the former selection on the FEM
