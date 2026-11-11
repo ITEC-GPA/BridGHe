@@ -242,17 +242,25 @@ internal static class C5ParityChecks
         throw new InvalidOperationException($"C5 native: no beam from {from} to {to} in file {uid}");
     }
 
-    /// <summary>The releases of a beam of the file <paramref name="uid"/> (end 1 and 2, translations and rotations: status and values) and its
-    /// initial axes (rounded to 1e-6, as C4).</summary>
-    private static (string Releases, string Axes, double Reference) BeamData(int uid, int beam)
+    private const int DataNotFound = 10; // ERR7_DataNotFound: no release attribute on that end and kind (0.3.0 wrote none without a flag)
+    private const string NoRelease = "none";
+
+    /// <summary>The releases of a beam of the file <paramref name="uid"/> (end 1 and 2, translations and rotations: status and values, or
+    /// «none» when the file holds no release attribute there), the same with «none» read as the native default (fixed, no value: the
+    /// mechanics of the file), and its initial axes (rounded to 1e-6, as C4).</summary>
+    private static (string Releases, string Mechanics, string Axes, double Reference) BeamData(int uid, int beam)
     {
-        var parts = new List<string>();
+        var parts = new List<string>(); var mechanics = new List<string>();
         foreach (int end in new[] { 1, 2 })
             foreach (var (name, kind) in new[] { ("St7GetBeamTRelease3", "T"), ("St7GetBeamRRelease3", "R") })
-            { var s = new int[3]; var v = new double[3]; C(F<Release>(name)(uid, beam, end, s, v), name); parts.Add($"{kind}{end} {string.Join(" ", s)} [{Rs(v)}]"); }
+            {
+                var s = new int[3]; var v = new double[3]; int code = F<Release>(name)(uid, beam, end, s, v);
+                if (code == DataNotFound) { parts.Add($"{kind}{end} {NoRelease}"); mechanics.Add($"{kind}{end} 1 1 1 [0,0,0]"); continue; }
+                C(code, name); string text = $"{kind}{end} {string.Join(" ", s)} [{Rs(v)}]"; parts.Add(text); mechanics.Add(text);
+            }
         var axes = new double[9]; C(F<IntDoubles>("St7GetBeamAxisSystemInitial")(uid, beam, axes), "St7GetBeamAxisSystemInitial");
         var angle = new double[1]; C(F<IntDoubles>("St7GetBeamReferenceAngle1")(uid, beam, angle), "St7GetBeamReferenceAngle1");
-        return (string.Join("; ", parts), string.Join(" ", axes.Select(a => R(Math.Round(a, 6)))), angle[0]);
+        return (string.Join("; ", parts), string.Join("; ", mechanics), string.Join(" ", axes.Select(a => R(Math.Round(a, 6)))), angle[0]);
     }
 
     /// <summary>0.3.0 replayed on the file 7 for one beam: StrausR3Helper.cs:872-880 (reference angle 90° + angle, +90° for a double angle, else
@@ -285,7 +293,18 @@ internal static class C5ParityChecks
                 var actual = BeamData(1, n1); var expected = BeamData(7, n7);
                 Console.WriteLine($"C5 {label} beam {b.BeamId}: 0.4.0 (native {n1}) reference angle {R(actual.Reference)} axes {actual.Axes}; {actual.Releases}");
                 Console.WriteLine($"C5 {label} beam {b.BeamId}: 0.3.0 (native {n7}) reference angle {R(expected.Reference)} axes {expected.Axes}; {expected.Releases}");
-                Check(actual.Releases == expected.Releases, $"native {label} beam {b.BeamId}: the releases of the .st7 at end 1 and 2, translations and rotations, as 0.3.0 wrote them\n    0.4.0 {actual.Releases}\n    0.3.0 {expected.Releases}");
+                Check(actual.Mechanics == expected.Mechanics, $"native {label} beam {b.BeamId}: the releases of the .st7 at end 1 and 2, translations and rotations, as 0.3.0 wrote them (no attribute = fixed)\n    0.4.0 {actual.Mechanics}\n    0.3.0 {expected.Mechanics}");
+                // 0.3.0 wrote a release attribute only for an end and kind with a flag set; the Converter writes the four (NodesBeams.cs, the loop
+                // of SetBeamRelease), so an end and kind without a flag holds the attribute «fixed, no value» where 0.3.0 held none: the same
+                // mechanics, a file difference of every beam with releases (not of C5), declared and counted.
+                var differences = actual.Releases.Split("; ").Zip(expected.Releases.Split("; ")).Where(p => p.First != p.Second).ToArray();
+                Check(differences.All(p => p.Second.EndsWith(" " + NoRelease, StringComparison.Ordinal) && p.First.EndsWith(" 1 1 1 [0,0,0]", StringComparison.Ordinal)),
+                    $"native {label} beam {b.BeamId}: the only file differences are the all-fixed attributes where 0.3.0 wrote none\n    0.4.0 {actual.Releases}\n    0.3.0 {expected.Releases}");
+                if (differences.Length != 0)
+                {
+                    declaredAttributes += differences.Length;
+                    Console.WriteLine($"C5 {label} beam {b.BeamId}: declared file difference (as for every beam with releases): {string.Join(", ", differences.Select(p => p.First.Substring(0, 2)))} hold «fixed, no value» in 0.4.0, no attribute in 0.3.0");
+                }
                 Check(actual.Axes == expected.Axes, $"native {label} beam {b.BeamId}: the beam axes of the .st7 as 0.3.0 wrote them (the releases act on them)\n    0.4.0 {actual.Axes}\n    0.3.0 {expected.Axes}");
                 if (b.Attributes.OfType<BeamReleasesAttributeModel>().Single().Value.TransN1Partial.Z == 1000)
                     Check(actual.Releases == "T1 0 1 2 [0,0,1000]; R1 2 0 1 [50000000,0,0]; T2 1 2 0 [0,2000,0]; R2 0 1 2 [0,0,30000000]",
@@ -303,9 +322,11 @@ internal static class C5ParityChecks
         return d.Length == nodes && d.All(v => double.IsFinite(v.X) && double.IsFinite(v.Y) && double.IsFinite(v.Z)) && d.Any(v => v.Length > 0);
     }
 
+    private static int declaredAttributes;
+
     internal static int Native()
     {
-        failures.Clear(); checks = 0;
+        failures.Clear(); checks = 0; declaredAttributes = 0;
         // The angle at 20° and the double angle at 30° through Straus R3 Export.
         string folder = Folder(), written = Path.Combine(folder, "rotated.st7"), bare = Path.Combine(folder, "rotated-bare.st7");
         var model = RotatedModel(true);
@@ -324,7 +345,7 @@ internal static class C5ParityChecks
         Compare("phase model", folder, phase, phaseBare, fem.Beams.Where(b => b.BeamId == "P1").ToArray());
         var phaseSolved = StrausAnalysis.Run(fem, gpc, Path.Combine(folder, "phase-run.st7"), 0, new[] { "G" }, Tolerance, false, out _, out _);
         Check(Solved(phaseSolved, 3), "native phase model: the double angle with the releases solves (Straus R3 Analysis of the phase model output): node displacements " + Displacements(phaseSolved));
-        Console.WriteLine("C5 native folder: " + folder);
+        Console.WriteLine($"C5 native: {declaredAttributes} declared all-fixed release attributes where 0.3.0 wrote none; folder: " + folder);
         foreach (var f in failures) Console.WriteLine("  C5 FAIL: " + f.Split('\n')[0]);
         Console.WriteLine($"C5 PARITY NATIVE {(failures.Count == 0 ? "PASS" : "FAIL")}: {checks} checks, {failures.Count} failures");
         return failures.Count == 0 ? 0 : 1;
