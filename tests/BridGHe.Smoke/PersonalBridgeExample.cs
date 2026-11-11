@@ -38,6 +38,11 @@ internal static class PersonalBridgeExample
             string source=mode.StartsWith("replay")||mode.StartsWith("finalize")||mode is "inputs004" or "inspect004"?Path.Combine(Root,"REV"+mode.Substring(mode.Length-3),"flusso-acciaio-misto_REV"+mode.Substring(mode.Length-3)+".ghx"):Original;
             Console.WriteLine("EXAMPLE 99: reading " + Path.GetFileName(source));
             using var doc = GrasshopperBridgeExample.Read(source); doc.FilePath = source;
+#if GPC_PILOT
+            // R6.6 lane R4a (99, not run by the lane): the user's document (read only, never saved by inspect) as P2 reads it, in memory: every
+            // internalised model by its GPC input read by value and its saved GPC results, every other FEM datum by its GPC datum.
+            if (mode == "inspect") R4aFixtures.GpcOnly(doc);
+#endif
             if (mode == "inspect004") return PersonalBridgeExplicitInputs.Inspect(doc);
             if (mode == "inputs004") return PersonalBridgeExplicitInputs.Update(doc, plugin, Root);
             if(mode.StartsWith("replay")||mode.StartsWith("finalize"))return new PersonalBridgeRevision(doc,plugin,Root).Replay(mode.StartsWith("finalize"));
@@ -57,10 +62,10 @@ internal static class PersonalBridgeExample
                 errors = o.RuntimeMessages(GH_RuntimeMessageLevel.Error), warnings = o.RuntimeMessages(GH_RuntimeMessageLevel.Warning),
                 inputs = o is GH_Component c ? c.Params.Input.Select((p, i) => new { i, p.Name, p.Access, p.Optional,
                     sources = p.Sources.Select(s => s.Attributes.GetTopLevel.DocObject.InstanceGuid),
-                    count = p.VolatileDataCount, values = p.VolatileData.AllData(true).Take(5).Select(g => Describe(g?.ScriptVariable())) }).ToArray() : null,
+                    count = p.VolatileDataCount, values = p.VolatileData.AllData(true).Take(5).Select(Describe) }).ToArray() : null,
                 outputs = o is GH_Component comp ? comp.Params.Output.Select((p, i) => new { i, p.Name, count = p.VolatileDataCount,
-                    values = p.VolatileData.AllData(true).Take(3).Select(g => Describe(g?.ScriptVariable())) }).ToArray() : null,
-                value = o is IGH_Param param ? param.VolatileData.AllData(true).Take(6).Select(g => Describe(g?.ScriptVariable())).ToArray() : null
+                    values = p.VolatileData.AllData(true).Take(3).Select(Describe) }).ToArray() : null,
+                value = o is IGH_Param param ? param.VolatileData.AllData(true).Take(6).Select(Describe).ToArray() : null
             }).ToArray();
             File.WriteAllText(Path.Combine(Artifacts, "live-inventory.json"), JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true }));
             foreach (var o in data.Where(o => o.errors.Count > 0 || o.warnings.Count > 0))
@@ -71,12 +76,35 @@ internal static class PersonalBridgeExample
         catch (Exception error) { Console.Error.WriteLine(error); Console.Error.Flush(); return 1; }
     }
 
+    private static object Describe(Grasshopper.Kernel.Types.IGH_Goo goo)
+    {
+#if GPC_PILOT
+        // R6.6 lane R4a: a GH model or a GH beam given by its GPC data (no FEM value): described from its GPC input, analysed model and draft.
+        if (goo != null && goo.GetType() == R2bFixtures.GhModel && goo.GetType().GetProperty("Value").GetValue(goo) == null)
+        {
+            var model = R2bFixtures.Get<BridGHe.Common.Gpc.GpcModels.Conversion>(goo, "GpcInput")?.Model; var analysed = R2bFixtures.Get<GPC.Model.Models.Model>(goo, "GpcResults");
+            var bridge = R2bFixtures.Get<BridGHe.Common.Gpc.GpcBridge>(goo, "GpcBridge");
+            if (model != null) return new { type = "Model", model.Name, nodes = model.NodesElements.Count, beams = model.BeamElements.Count,
+                cases = model.LoadCases.Keys, combos = bridge != null ? bridge.Combinations.Select(c => c.Name) : model.Combinations.Keys,
+                results = analysed == null ? 0 : analysed.BeamElements.Values.Sum(b => b.Results.Count), units = R2bFixtures.Get<BridGHe.Common.Gpc.GpcModels.Conversion>(goo, "GpcInput").Report.Units.Units.ToString() };
+        }
+        if (goo != null && goo.GetType().Name == "GH_Beam" && R2aDesignFixtures.Datum<BridGHe.Common.Gpc.Legacy.LegacyBeamDraft>(goo) is var draft && draft != null && !R2aDesignFixtures.HasFem(goo))
+        {
+            var b = draft.Beam; double dx = b.EndPoint.X - b.StartPoint.X, dy = b.EndPoint.Y - b.StartPoint.Y, dz = b.EndPoint.Z - b.StartPoint.Z;
+            return new { type = "Beam", BeamId = b.Name, Length = Math.Sqrt(dx * dx + dy * dy + dz * dz), results = b.Results.Count };
+        }
+#endif
+        return Describe(goo?.ScriptVariable());
+    }
+
     private static object Describe(object value)
     {
+#if !GPC_PILOT
         if (value is ModelModel model) return new { type = "Model", model.Name, nodes = model.Nodes.Count, beams = model.Beams.Count,
             cases = model.LoadCases.Select(c => c.Name), combos = model.LoadCombinations.Select(c => c.Name),
             results = model.Beams.Sum(b => b.Results.Count), units = model.Units.ToString() };
         if (value is BeamModel beam) return new { type = "Beam", beam.BeamId, beam.Length, results = beam.Results.Count };
+#endif
         var text = value?.ToString(); return text?.Length > 350 ? text.Substring(0, 350) : text;
     }
 }

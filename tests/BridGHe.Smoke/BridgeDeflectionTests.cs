@@ -64,31 +64,30 @@ internal static class BridgeDeflectionTests
     {
         var geometry = SimpleBridgeBuilder.Build(SimpleBridgeTests.Input());
 #if GPC_PILOT
-        // P2T: the test on the analysed GPC model built in GPC (girder stations from the physical members, displacements from the GPC
-        // rows). It stays after the FeMM removal; the FEM part below becomes its parity reference until then.
+        // R6.6 R2b: the test on the analysed GPC model built in GPC alone (girder stations from the physical members, displacements from the
+        // GPC rows), no FEM model. The analytic girder is the oracle (it replaces the former parity with the FEM path and with the converted
+        // FEM model): the parabola plus the settlement chord, and the absolute displacement at every station equal to the stored one.
         var analysed = AnalyticGpc(geometry, out var bridge);
         BridgeDeflectionResult Gpc(double scale) => BridgeDeflectionCamber.Evaluate(analysed, bridge, geometry, 1, "G1", 0, "", Vector3d.ZAxis, 1, true, scale);
         Verify(Gpc, () => BridgeDeflectionCamber.Evaluate(analysed, bridge, geometry, 1, "unknown", 0, "", Vector3d.ZAxis, 1, true, 1), "GPC: ");
-#endif
-        // FEM path (removed with the FeMM models): the same assertions, and the GPC evaluations equal to it bit for bit.
+        var supports = geometry.Supports.Where(s => s.Girder == 1).Select(s => s.Station).ToArray();
+        var result = Gpc(10);
+        Require(result.Stations.Length > supports.Length && result.Stations.Zip(result.Stations.Skip(1)).All(p => p.First < p.Second), "GPC: girder stations in increasing order");
+        for (int i = 0; i < result.Stations.Length; i++)
+        {
+            double s = result.Stations[i];
+            int span = Math.Clamp(Array.FindLastIndex(supports, p => p <= s), 0, supports.Length - 2);
+            double t = (s - supports[span]) / (supports[span + 1] - supports[span]);
+            Require(Math.Abs(result.Absolute[i] - (-5 - .0002 * s - 80 * t * (1 - t))) < 1e-10, $"GPC: absolute displacement at {s} equal to the stored analytic one");
+            Require(Math.Abs(result.Camber[i] + result.Relative[i]) < 1e-12, $"GPC: camber opposite to the relative displacement at {s}");
+        }
+        Console.WriteLine("BRIDGE DEFLECTION PASS: analytical deflection, settlement chord, camber sign, display invariance and missing result rejection (GPC model built in GPC alone).");
+#else
         var model = AnalyticModel(geometry);
         BridgeDeflectionResult Fem(double scale) => BridgeDeflectionCamber.Evaluate(model, geometry, 1, "G1", 0, "", Vector3d.ZAxis, 1, true, scale);
         Verify(Fem, () => BridgeDeflectionCamber.Evaluate(model, geometry, 1, "unknown", 0, "", Vector3d.ZAxis, 1, true, 1), "FEM: ");
-#if GPC_PILOT
-        static bool Same(double[] a, double[] b) => a.Length == b.Length && a.Zip(b).All(p => BitConverter.DoubleToInt64Bits(p.First) == BitConverter.DoubleToInt64Bits(p.Second));
-        static double[] Coordinates(PolylineCurve c) => c.ToPolyline().SelectMany(p => new[] { p.X, p.Y, p.Z }).ToArray();
-        var result = Fem(10);
-        // The GPC model built in GPC and the conversion of the FEM model (GpcSyntheticResults, the route of GH_Model.Gpc today).
-        foreach (var (gpc, label) in new[] { (Gpc(10), "GPC model built in GPC"), (BridgeDeflectionCamber.Evaluate(GpcSyntheticResults.Analysed(model, out var syntheticBridge), syntheticBridge, geometry, 1, "G1", 0, "", Vector3d.ZAxis, 1, true, 10), "converted FEM model") })
-            Require(Same(gpc.Stations, result.Stations) && Same(gpc.Absolute, result.Absolute) && Same(gpc.Relative, result.Relative) && Same(gpc.Camber, result.Camber)
-                && Same(Coordinates(gpc.Deflected), Coordinates(result.Deflected)) && Same(Coordinates(gpc.Cambered), Coordinates(result.Cambered))
-                && gpc.Source == result.Source && gpc.Diagnostics.SequenceEqual(result.Diagnostics), "GPC evaluation (" + label + ") equal to the FEM one bit for bit");
+        Console.WriteLine("BRIDGE DEFLECTION PASS: analytical deflection, settlement chord, camber sign, display invariance and missing result rejection.");
 #endif
-        Console.WriteLine("BRIDGE DEFLECTION PASS: analytical deflection, settlement chord, camber sign, display invariance and missing result rejection"
-#if GPC_PILOT
-            + " (GPC model built in GPC; FEM path and converted FEM model equal bit for bit)"
-#endif
-            + ".");
     }
     private static void Require(bool value, string text) { if (!value) throw new InvalidOperationException("BRIDGE DEFLECTION: " + text); }
 }

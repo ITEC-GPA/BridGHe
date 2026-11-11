@@ -91,6 +91,27 @@ internal static class BridgeGrillageExample
         }
         return Property("Longitudinale fase "+phase,a,ix,iy,j*torsionFactor);
     }
+#if GPC_PILOT
+    /// <summary>R6.6 lane R4a: the GPC twin of <see cref="LongProperty"/> (no FEM model): a Beam on a Generic section of the same area,
+    /// inertias and torsion, on the steel S355 E 210000 ν 0.3 fy 355 fu 510 given in GPC. Phase 0 the steel H (<see cref="GpcH"/>); phases 1
+    /// and 2 the homogenised values of the composite definition built in GPC from the numbers of the example
+    /// (<c>GpcCompositeDefinitions.Grillage</c>, <c>GpcCompositeSections.Homogenised</c>: the values of the former homogenised property), with
+    /// the torsion of the steel plus the slab strip in steel units.</summary>
+    internal static BridGHe.Common.Gpc.Legacy.LegacyBeamProperty LongPropertyGpc(Parameters p,int phase,double torsionFactor=1)
+    {
+        var h=GpcH(p); double a=h.Area,ix=h.Jxx,iy=h.Jyy,j=h.Jt;
+        if(phase>0)
+        {
+            double n=phase==1?Es/Ec*(1+p.PhiLong):Es/Ec;
+            var prop=BridGHe.Common.Gpc.GpcCompositeSections.Homogenised(GpcCompositeDefinitions.Create(GpcCompositeDefinitions.Grillage(p)),n,true);
+            a=prop.Area;ix=prop.I11;iy=prop.I22;
+            double gc=Ec/(phase==1?1+p.PhiLong:1)/(2*(1+NuConcrete)),gs=Es/(2*(1+NuSteel));
+            j+=gc/gs*p.GirderSlabWidth*Math.Pow(p.SlabThickness,3)/6;
+        }
+        return BridGHe.Common.Gpc.Builders.GpcPropertyBuilders.Beam("Longitudinale fase "+phase,5,
+            BridGHe.Common.Gpc.Builders.GpcSectionBuilders.Generic(a,ix,iy,j*torsionFactor,0,0,0,0,0,0,0),R4aFixtures.Steel("S355",Es,355,510),"Steel");
+    }
+#endif
     internal static BeamPropertyModel CrossProperty(Parameters p,int phase,int row,double torsionFactor=1)
     {
         // Steel diaphragms at seven fixed stations, independent of mesh refinement.

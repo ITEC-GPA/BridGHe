@@ -21,8 +21,11 @@ internal static class BridgeConstructionTests
     internal static void Run()
     {
         var geometry = SimpleBridgeBuilder.Build(SimpleBridgeTests.Input());
-        var source = Model(geometry); int beamCount = source.Beams.Count, nodeCount = source.Nodes.Count;
         var phase = new BridgePhaseDefinition { Order = 2, Name = "Getto", Day = 28, State = BridgeSectionState.Composite };
+#if GPC_PILOT
+        Gpc(geometry, phase);
+#else
+        var source = Model(geometry); int beamCount = source.Beams.Count, nodeCount = source.Nodes.Count;
         var snapshot = BridgeConstructionSequence.Create(source, phase, new[] { "Girder\\Group1" }, null, Array.Empty<string>(),
             BridgeAssignmentTests.Property("Composite phase"), null);
         Require(snapshot.Model.Beams.Count == 40 && snapshot.Model.Plates.Count == 0, "Group selects only G1");
@@ -37,9 +40,6 @@ internal static class BridgeConstructionTests
         Require(native.Stage.LoadCombinations.Single().Values.Single().Value == 1, "Native load increment preserved");
         var physical = BridgeConstructionSequence.Create(source, phase, null, new[] { "Girder:2:1" }, new[] { "*" }, null, null);
         Require(physical.Model.Beams.Count == 40 && physical.ActivePhysicalIds.Single() == "Girder:2:1", "Physical selection independent of beam ordering");
-#if GPC_PILOT
-        Gpc(geometry, phase, snapshot.Model, physical.Model);
-#endif
         var sharedGroups = new ModelModel(source);
         foreach (var beam in sharedGroups.Beams) { beam.Groups.Clear(); beam.Groups.Add(new GroupModel("AllSteel")); }
         var partial = BridgeConstructionSequence.Create(sharedGroups, phase, null, new[] { "Girder:2:1" }, new[] { "*" }, null, new[] { increment });
@@ -50,16 +50,17 @@ internal static class BridgeConstructionTests
         Reject(() => BridgeConstructionSequence.Create(source, phase, new[] { "missing" }, null, null, null, null));
         Reject(() => BridgeConstructionSequence.Create(source, phase, null, null, new[] { "missing" }, null, null));
         Console.WriteLine("BRIDGE CONSTRUCTION PASS: active groups/physical members, bearing removal, phase override, node pruning and native-stage eligibility.");
+#endif
     }
 #if GPC_PILOT
-    /// <summary>P2T: Bridge Construction Sequence on GPC (<c>GpcModelTransforms.ConstructionSequence</c>, chain D) on the bridge model built in
-    /// GPC (<see cref="GpcSimpleBridge"/>, public input <c>FromGpc</c>) with a phase property built in GPC: the same checks as the FEM ones on the
-    /// snapshot model (group selection, explicit phase property, inactive nodes pruned and bearings removed, input isolated, physical selection,
-    /// unknown groups and bearings rejected), then the parity with the FEM snapshots by correspondence (BridGHe IDs and positions; the GPC
-    /// output keeps the GUIDs of its source and is renumbered 1..n): the same beams and nodes in the same order, the same positions, no
-    /// restraint, the same physical members. The native stage of the FEM snapshot (Stage, group activation) has no GPC counterpart: the
-    /// GPC snapshot drops stages and their freedom case, so the stage checks stay on the FEM path.</summary>
-    private static void Gpc(SimpleBridgeGeometry geometry, BridgePhaseDefinition phase, ModelModel femSnapshot, ModelModel femPhysical)
+    /// <summary>R6.6 R2b: Bridge Construction Sequence on GPC (<c>GpcModelTransforms.ConstructionSequence</c>) on the bridge model built in
+    /// GPC (<see cref="GpcSimpleBridge"/>, public input <c>FromGpc</c>) with a phase property built in GPC, no FEM model: group selection,
+    /// explicit phase property, inactive nodes pruned and bearings removed, input isolated, physical selection, unknown groups and bearings
+    /// rejected. The expected snapshots are written from the input (they replace the former parity with the FEM snapshots): the beams of the
+    /// selected group or physical member in input order, with their GUIDs, names and end points; the nodes those beams use, at their positions
+    /// and without restraint; the physical members of those beams. The native stage of the FEM snapshot (Stage, group activation, the
+    /// partial and ungrouped cases) has no GPC counterpart: the GPC snapshot drops stages and their freedom case (retired with the FEM path).</summary>
+    private static void Gpc(SimpleBridgeGeometry geometry, BridgePhaseDefinition phase)
     {
         var input = GpcSimpleBridge.Input(geometry);
         int beamCount = input.Model.BeamElements.Count, nodeCount = input.Model.NodesElements.Count;
@@ -81,22 +82,25 @@ internal static class BridgeConstructionTests
         Require(physical.BeamElements.Count == 40 && Members(physical).Single() == "Girder:2:1", "GPC: Physical selection independent of beam ordering");
         Reject(() => Snapshot(new[] { "missing" }, null, null, "missing group"));
         Reject(() => Snapshot(null, null, new[] { "missing" }, "missing bearing"));
-        // Parity (removed with the FeMM models), by correspondence: BridGHe IDs and positions in the order of the outputs.
-        void Same(GPC.Model.Models.Model gpc, ModelModel fem, string label)
+        // The expected snapshots from the input: the selected beams in input order and the nodes they use.
+        var inputBeams = input.Model.BeamElements.Values.OrderBy(b => b.Id).ToArray();
+        void Expected(GPC.Model.Models.Model snap, Func<GPC.Model.Elements.BeamElement, bool> selected, string label)
         {
-            var beams = gpc.BeamElements.Values.OrderBy(b => b.Id).ToArray(); var nodes = gpc.NodesElements.Values.OrderBy(n => n.Id).ToArray();
-            Require(beams.Select(b => b.Name).SequenceEqual(fem.Beams.Select(b => b.BeamId)), $"GPC {label}: the beams of the FEM snapshot, in order");
-            Require(nodes.Select(n => n.Name).SequenceEqual(fem.Nodes.Select(n => n.NodeId)), $"GPC {label}: the nodes of the FEM snapshot, in order");
-            Require(nodes.Zip(fem.Nodes).All(p => p.First.Position.X == p.Second.Position.X && p.First.Position.Y == p.Second.Position.Y && p.First.Position.Z == p.Second.Position.Z),
-                $"GPC {label}: node positions of the FEM snapshot");
-            Require(nodes.Zip(fem.Nodes).All(p => (p.First.Assignments.Restrains.Count != 0) == p.Second.Attributes.OfType<NodeRestraintAttributeModel>().Any()), $"GPC {label}: restraints of the FEM snapshot");
-            Require(Members(gpc).OrderBy(x => x, StringComparer.Ordinal).SequenceEqual(fem.Beams.SelectMany(b => b.Attributes.OfType<BridgeMemberAttributeModel>()).Select(a => a.Value.PhysicalId).Distinct()
-                .OrderBy(x => x, StringComparer.Ordinal)), $"GPC {label}: physical members of the FEM snapshot");
-            Require(beams.Select(b => b.Guid).Distinct().Count() == beams.Length && beams.All(b => input.Model.BeamElements.Values.Any(s => s.Guid == b.Guid && s.Name == b.Name)),
-                $"GPC {label}: the beams keep the GUIDs of their source");
+            var want = inputBeams.Where(selected).ToArray();
+            var beams = snap.BeamElements.Values.OrderBy(b => b.Id).ToArray(); var nodes = snap.NodesElements.Values.OrderBy(n => n.Id).ToArray();
+            static bool Same(GPC.Geometry.Point3d a, GPC.Geometry.Point3d b) => a.X == b.X && a.Y == b.Y && a.Z == b.Z;
+            Require(want.Length == 40 && beams.Length == want.Length && beams.Zip(want).All(p => p.First.Guid == p.Second.Guid && p.First.Name == p.Second.Name
+                && Same(p.First.StartPoint, p.Second.StartPoint) && Same(p.First.EndPoint, p.Second.EndPoint)), $"GPC {label}: the selected beams of the input, in order, with their GUIDs, names and ends");
+            var used = want.SelectMany(b => new[] { b.StartPoint, b.EndPoint }).ToArray();
+            var wantNodes = input.Model.NodesElements.Values.OrderBy(n => n.Id).Where(n => used.Any(p => Same(p, n.Position))).ToArray();
+            Require(nodes.Length == wantNodes.Length && nodes.Zip(wantNodes).All(p => p.First.Name == p.Second.Name && Same(p.First.Position, p.Second.Position)),
+                $"GPC {label}: the nodes of the selected beams, in order, at their positions");
+            Require(Members(snap).OrderBy(x => x, StringComparer.Ordinal).SequenceEqual(want.Select(b => input.Bridge.Member(b.Guid).PhysicalId).Distinct().OrderBy(x => x, StringComparer.Ordinal)),
+                $"GPC {label}: the physical members of the selected beams");
         }
-        Same(snapshot, femSnapshot, "group snapshot"); Same(physical, femPhysical, "physical snapshot");
-        Console.WriteLine("BRIDGE CONSTRUCTION GPC PASS: the snapshots of the bridge model built in GPC equal the FEM ones by correspondence (beams, nodes, positions, restraints, physical members).");
+        Expected(snapshot, b => b.Groups.Values.Any(g => g.Name.StartsWith("Girder\\Group1\\", StringComparison.Ordinal)), "group snapshot");
+        Expected(physical, b => input.Bridge.Member(b.Guid)?.PhysicalId == "Girder:2:1", "physical snapshot");
+        Console.WriteLine("BRIDGE CONSTRUCTION PASS (GPC data alone): active groups/physical members, bearing removal, phase override, node pruning; snapshots equal to the selection of the input (beams, nodes, positions, physical members).");
     }
 #endif
     private static void Require(bool value, string text) { if (!value) throw new InvalidOperationException("BRIDGE CONSTRUCTION: " + text); }

@@ -32,23 +32,23 @@ internal static class BridgeMergeTests
             var c = (GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components.BridgeChecks." + name, true));
             c.CreateAttributes(); doc.AddObject(c, false); return c;
         }
-        IGH_Goo Model(ModelModel model)
-        {
-            var type = assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model", true); var goo = (IGH_Goo)Activator.CreateInstance(type);
-#if GPC_PILOT
-            // R6.4 (6) (P2S, 7/11): the workflow components read the analysed GPC model only: the GPC results of the same samples, on the model with
-            // its beam end nodes (a beam without nodes does not convert).
-            model = ExampleRemake04.WithEndNodes(model, out _);
-            type.GetProperty("Value").SetValue(goo, model); type.GetMethod("AttachGpc").Invoke(goo, new object[] { GpcSyntheticResults.Analysed(model) }); return goo;
-#else
-            type.GetProperty("Value").SetValue(goo, model); return goo;
-#endif
-        }
         void Generic(GH_Component c, int i, IGH_Goo value) => ((Param_GenericObject)c.Params.Input[i]).PersistentData.Append(value);
         void Text(GH_Component c, int i, string value) { var p = (Param_String)c.Params.Input[i]; p.PersistentData.Clear(); p.SetPersistentData(value); }
         void Int(GH_Component c, int i, int value) { var p = (Param_Integer)c.Params.Input[i]; p.PersistentData.Clear(); p.SetPersistentData(value); }
         void Wire(GH_Component from, GH_Component to, int port) => to.Params.Input[port].AddSource(from.Params.Output[0]);
+#if GPC_PILOT
+        // R6.6 R2b: the GH models are given by their GPC input alone with the analysed model attached (an analysis component), built in GPC
+        // with the samples of BridgeWorkflowTests.Source; Build BridGHe Model then takes its GPC-only path (no FEM model anywhere).
+        var steel = R2bFixtures.Model(GpcWorkflowSources.Pair("Steel", 100)); var shrink = R2bFixtures.Model(GpcWorkflowSources.Pair("Shrinkage", 20));
+        IGH_Goo Model(IGH_Goo model) => model;
+#else
         var steel = BridgeWorkflowTests.Source("Steel", 100); var shrink = BridgeWorkflowTests.Source("Shrinkage", 20);
+        IGH_Goo Model(ModelModel model)
+        {
+            var type = assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model", true); var goo = (IGH_Goo)Activator.CreateInstance(type);
+            type.GetProperty("Value").SetValue(goo, model); return goo;
+        }
+#endif
         var g = Add("BridgeActionComponent"); Text(g, 0, "G1"); Generic(g, 1, Model(steel)); Generic(g, 2, new GH_String("G"));
         var r = Add("BridgeShrinkageActionComponent"); Text(r, 0, "RITIRO"); Generic(r, 1, Model(shrink)); Generic(r, 2, new GH_String("G"));
         ((Param_Number)r.Params.Input[3]).SetPersistentData(-200e-6);
@@ -65,22 +65,49 @@ internal static class BridgeMergeTests
             var errors = document.Objects.OfType<GH_ActiveObject>().SelectMany(o => o.RuntimeMessages(GH_RuntimeMessageLevel.Error)).ToArray();
             BridgeWorkflowTests.Require(errors.Length == 0, string.Join("; ", errors));
         }
+#if GPC_PILOT
+        // The output: the GH model given by the GPC input of the bridge model with the GPC bridge model attached (no FEM value).
+        BridGHe.Common.Gpc.GpcBridge Bridge(GH_Component component)
+        {
+            var output = component.Params.Output[0].VolatileData.AllData(true).Single();
+            BridgeWorkflowTests.Require(output.GetType().GetProperty("Value").GetValue(output) == null, "GPC: the Build BridGHe Model output has no FEM value");
+            return R2bFixtures.Get<BridGHe.Common.Gpc.GpcBridge>(output, "GpcBridge") ?? throw new Exception("GPC: no GPC bridge model on the output");
+        }
+        string[] Cases(BridGHe.Common.Gpc.GpcBridge b) => b.Model.LoadCases.Keys.Where(c => c != "Dead").OrderBy(c => c, StringComparer.Ordinal).ToArray();
+        Solve(doc, build);
+        var merged = Bridge(build);
+        BridgeWorkflowTests.Require(Cases(merged).SequenceEqual(new[] { "G1 [FEM]", "RITIRO [FEM]", "RITIRO [strain]" }) && merged.Workflow.Phases[0].Order == 10, "GH workflow incorrectly assembled.");
+#else
         Solve(doc, build);
         var merged = (ModelModel)build.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
         BridgeWorkflowTests.Require(merged.LoadCases.Count == 3 && merged.BridgeWorkflow.Phases[0].Order == 10, "GH workflow incorrectly assembled.");
+#endif
         var list = new GH_ValueList { ListMode = GH_ValueListMode.DropDown }; list.CreateAttributes(); list.ListItems.Clear();
         list.ListItems.Add(new GH_ValueListItem("G", "\"G\"") { Selected = true }); list.ListItems.Add(new GH_ValueListItem("Obsolete strain case", "\"Obsolete\"")); doc.AddObject(list, false);
         g.Params.Input[2].AddSource(list); g.ExpireSolution(false); Solve(doc, build); Solve(doc, build);
         // R6.4 (6): the list holds the GPC cases of the source (with the default "Dead"), keeps the selection and drops the obsolete item.
         BridgeWorkflowTests.Require(list.ListItems.Any(i => i.Name == "G") && list.ListItems.All(i => i.Name != "Obsolete strain case") && list.SelectedItems.Single().Name == "G", "FEM case selector lost or mixed its selection.");
         Int(phase1, 0, 5); phase1.ExpireSolution(false); Solve(doc, build);
+        string path = Path.GetFullPath("artifacts/phase-component-roundtrip.ghx");
+#if GPC_PILOT
+        var renamed = Bridge(build);
+        BridgeWorkflowTests.Require(Cases(renamed).SequenceEqual(Cases(merged)) && renamed.Workflow.Phases[0].Order == 5, "GH renumbering changed combination keys.");
+        GrasshopperBridgeExample.Write(doc, path);
+        using var restored = GrasshopperBridgeExample.Read(path);
+        var restoredBuild = restored.Objects.OfType<GH_Component>().Single(c => c.ComponentGuid == build.ComponentGuid); Solve(restored, restoredBuild);
+        var copy = Bridge(restoredBuild);
+        BridgeWorkflowTests.Require(copy.Combinations.Single().Factors.Count == 3 && copy.Combinations.Single().Factors.Where(f => f.Case.StartsWith("RITIRO", StringComparison.Ordinal)).All(f => f.Factor == .7)
+            && copy.Workflow.Phases[1].Id == renamed.Workflow.Phases[1].Id, "GH save/reopen changed phase identities or coefficients.");
+        Console.WriteLine("PASS GH phases: real components, case selector, numbered assembly and GHX roundtrip (GPC data alone)");
+#else
         var renamed = (ModelModel)build.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
         BridgeWorkflowTests.Require(renamed.LoadCases.Select(c => c.Name).SequenceEqual(merged.LoadCases.Select(c => c.Name)), "GH renumbering changed combination keys.");
-        string path = Path.GetFullPath("artifacts/phase-component-roundtrip.ghx"); GrasshopperBridgeExample.Write(doc, path);
+        GrasshopperBridgeExample.Write(doc, path);
         using var restored = GrasshopperBridgeExample.Read(path);
         var restoredBuild = restored.Objects.OfType<GH_Component>().Single(c => c.ComponentGuid == build.ComponentGuid); Solve(restored, restoredBuild);
         var copy = (ModelModel)restoredBuild.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
         BridgeWorkflowTests.Require(copy.LoadCombinations.Single().Values.Count == 3 && copy.BridgeWorkflow.Phases[1].Id == merged.BridgeWorkflow.Phases[1].Id, "GH save/reopen changed phase identities or coefficients.");
         Console.WriteLine("PASS GH phases: real components, case selector, numbered assembly and GHX roundtrip");
+#endif
     }
 }

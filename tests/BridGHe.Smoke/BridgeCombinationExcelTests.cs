@@ -13,8 +13,13 @@ internal static class BridgeCombinationExcelTests
 {
     internal static void ReadExternal(string path)
     {
+#if GPC_PILOT
+        var (references, phases) = RecipeGpc();
+        var result = BridgeCombinationWorkbook.Read(path, BridgeCombinationCatalog.FromGpc(references.Select(r => R2bFixtures.Input(r.Input)).ToArray(), phases));
+#else
         var (models, phases) = Recipe();
         var result = BridgeCombinationWorkbook.Read(path, new BridgeCombinationCatalog(models, phases));
+#endif
         Assert(result.Table.SelectMany(r => r).SequenceEqual(Demo.SelectMany(r => r)), "native Excel round trip changed the combination table");
         Console.WriteLine("PASS NATIVE EXCEL ROUND TRIP");
     }
@@ -24,16 +29,27 @@ internal static class BridgeCombinationExcelTests
         var longTerm = BridgeWorkflowTests.Source("Composite long term", 30);
         var traffic = BridgeWorkflowTests.Source("Composite short term", 50);
         var shrinkage = BridgeWorkflowTests.Source("Shrinkage secondary", 20);
-        return (new[] { steel, longTerm, traffic, shrinkage }, new[] {
-            new BridgePhaseDefinition { Order = 10, Name = "Getto su acciaio", State = BridgeSectionState.Steel, Day = 0,
-                Actions = new[] { new BridgeActionDefinition { Key = "G1", Source = steel, Case = "G", Behavior = BridgeActionBehavior.Steel } } },
-            new BridgePhaseDefinition { Order = 20, Name = "Permanenti portati", State = BridgeSectionState.Composite, Day = 28,
-                Actions = new[] { new BridgeActionDefinition { Key = "G2", Source = longTerm, Case = "G", Behavior = BridgeActionBehavior.LongTerm } } },
-            new BridgePhaseDefinition { Order = 30, Name = "Esercizio e ritiro", State = BridgeSectionState.Composite, Day = 365,
-                Actions = new[] { new BridgeActionDefinition { Key = "Q", Source = traffic, Case = "G", Behavior = BridgeActionBehavior.ShortTerm },
-                    new BridgeActionDefinition { Key = "RITIRO", Source = shrinkage, Case = "G", Behavior = BridgeActionBehavior.Shrinkage, Strain = -200e-6 } } }
-        });
+        return (new[] { steel, longTerm, traffic, shrinkage }, Phases(steel, longTerm, traffic, shrinkage, null, null, null, null));
     }
+    private static BridgePhaseDefinition[] Phases(ModelModel steel, ModelModel longTerm, ModelModel traffic, ModelModel shrinkage,
+        GPC.Model.Models.Model gSteel, GPC.Model.Models.Model gLongTerm, GPC.Model.Models.Model gTraffic, GPC.Model.Models.Model gShrinkage) => new[] {
+            new BridgePhaseDefinition { Order = 10, Name = "Getto su acciaio", State = BridgeSectionState.Steel, Day = 0,
+                Actions = new[] { new BridgeActionDefinition { Key = "G1", Source = steel, GpcSource = gSteel, Case = "G", Behavior = BridgeActionBehavior.Steel } } },
+            new BridgePhaseDefinition { Order = 20, Name = "Permanenti portati", State = BridgeSectionState.Composite, Day = 28,
+                Actions = new[] { new BridgeActionDefinition { Key = "G2", Source = longTerm, GpcSource = gLongTerm, Case = "G", Behavior = BridgeActionBehavior.LongTerm } } },
+            new BridgePhaseDefinition { Order = 30, Name = "Esercizio e ritiro", State = BridgeSectionState.Composite, Day = 365,
+                Actions = new[] { new BridgeActionDefinition { Key = "Q", Source = traffic, GpcSource = gTraffic, Case = "G", Behavior = BridgeActionBehavior.ShortTerm },
+                    new BridgeActionDefinition { Key = "RITIRO", Source = shrinkage, GpcSource = gShrinkage, Case = "G", Behavior = BridgeActionBehavior.Shrinkage, Strain = -200e-6 } } }
+        };
+#if GPC_PILOT
+    /// <summary>R6.6 R2b: <see cref="Recipe"/> with the four sources built in GPC only (<see cref="GpcWorkflowSources"/>, the same forces): the
+    /// GPC input and the analysed copy of every source, and the phases with the actions on their analysed GPC source (no FEM source).</summary>
+    internal static ((GPC.Model.Models.Model Input, GPC.Model.Models.Model Analysed)[] References, BridgePhaseDefinition[] Phases) RecipeGpc()
+    {
+        var s = new[] { ("Steel", 100d), ("Composite long term", 30d), ("Composite short term", 50d), ("Shrinkage secondary", 20d) }.Select(p => GpcWorkflowSources.Pair(p.Item1, p.Item2)).ToArray();
+        return (s, Phases(null, null, null, null, s[0].Analysed, s[1].Analysed, s[2].Analysed, s[3].Analysed));
+    }
+#endif
     internal static string[][] Demo => new[] { new[] { "Combination", "G1", "G2", "Q", "RITIRO" },
         new[] { "DEMO_01", "1", "1", "1", "0.7" }, new[] { "DEMO_02", "1", "0.8", "0", "1" } };
     private static void Assert(bool condition, string message) => BridgeWorkflowTests.Require(condition, "Excel combinations: " + message);
@@ -55,8 +71,17 @@ internal static class BridgeCombinationExcelTests
     {
         Console.WriteLine("EXCEL TEST: catalog and file protection");
         BridgePreAnalysisActionTests.Run();
+#if GPC_PILOT
+        // R6.6 R2b: the catalogue on the GPC inputs of the references and the analysed GPC sources of the actions (no FEM model).
+        var (references, phases) = RecipeGpc();
+        var inputs = references.Select(r => R2bFixtures.Input(r.Input)).ToArray();
+        var original = R2bFixtures.ResultTokens(references[0].Analysed);
+        BridgeCombinationCatalog Catalog(System.Collections.Generic.IEnumerable<BridgePhaseDefinition> p, bool first = false) => BridgeCombinationCatalog.FromGpc(first ? inputs.Take(1).ToArray() : inputs, p);
+#else
         var (models, phases) = Recipe(); var original = ModelArchive.Write(models[0]);
-        var catalog = new BridgeCombinationCatalog(models.Take(1).ToArray(), phases.Reverse());
+        BridgeCombinationCatalog Catalog(System.Collections.Generic.IEnumerable<BridgePhaseDefinition> p, bool first = false) => new BridgeCombinationCatalog(first ? models.Take(1).ToArray() : models, p);
+#endif
+        var catalog = Catalog(phases.Reverse(), true);
         Assert(catalog.ActionIds.SequenceEqual(new[] { "G1", "G2", "Q", "RITIRO" }), "headers must be Action IDs, not source case G repeated four times");
         var folder = Path.GetFullPath("artifacts/combination-excel-tests/run-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(folder);
         var path = Path.Combine(folder, "template.xlsx");
@@ -84,6 +109,28 @@ internal static class BridgeCombinationExcelTests
         Reset(); var read = BridgeCombinationWorkbook.Read(path, catalog);
         Console.WriteLine("EXCEL TEST: numeric round trip and workflow assembly");
         Assert(read.Table.SelectMany(r => r).SequenceEqual(Demo.SelectMany(r => r)), "numeric round trip");
+#if GPC_PILOT
+        {
+            // The assembly on Build BridGHe Model on GPC: the combinations of the GPC bridge model from the Excel table equal those of the
+            // direct table and the explicit factors of the demo table; the unified shrinkage scales the FEM and strain cases together.
+            var gpcDirect = GpcBridgeMerge.Build(references, phases, Demo, "excel direct");
+            var gpcExcel = GpcBridgeMerge.Build(references, phases, read.Table, "excel table");
+            static System.Collections.Generic.KeyValuePair<GPC.Model.LoadCases.LoadCaseBase, double>[] Factors(BridGHe.Common.Gpc.GpcBridgeBuild b, string name) =>
+                b.Bridge.Model.Combinations[name].GetLoadCaseCoefficientsPair();
+            Assert(gpcExcel.Bridge.Model.Combinations.Keys.SequenceEqual(new[] { "DEMO_01", "DEMO_02" }), "GPC: combinations of the bridge model");
+            foreach (var name in gpcExcel.Bridge.Model.Combinations.Keys)
+            {
+                var expected = Factors(gpcDirect, name);
+                Assert(Factors(gpcExcel, name).All(v => expected.Single(e => e.Key.Name == v.Key.Name).Value == v.Value), "GPC: Excel changed an assembled coefficient");
+            }
+            double Factor(string combination, string caseName) => Factors(gpcExcel, combination).Where(v => v.Key.Name == caseName).Select(v => v.Value).DefaultIfEmpty(0).Single();
+            Assert(Factor("DEMO_01", "G1 [FEM]") == 1 && Factor("DEMO_01", "G2 [FEM]") == 1 && Factor("DEMO_01", "Q [FEM]") == 1 && Factor("DEMO_01", "RITIRO [FEM]") == .7 && Factor("DEMO_01", "RITIRO [strain]") == .7
+                && Factor("DEMO_02", "G1 [FEM]") == 1 && Factor("DEMO_02", "G2 [FEM]") == .8 && Factor("DEMO_02", "Q [FEM]") == 0 && Factor("DEMO_02", "RITIRO [FEM]") == 1 && Factor("DEMO_02", "RITIRO [strain]") == 1,
+                "GPC: the factors of the demo table");
+            Assert(Factors(gpcExcel, "DEMO_01").Where(v => v.Key.Name.StartsWith("RITIRO", StringComparison.Ordinal)).Count(v => v.Value == .7) == 2, "GPC: unified shrinkage must scale FEM and strain together");
+        }
+        Assert(R2bFixtures.ResultTokens(references[0].Analysed).SequenceEqual(original), "source model changed");
+#else
         var direct = BridgeWorkflowBuilder.Build(models, phases, Demo, BridgeWorkflowMethod.Compatible, 1e-6).Model;
         var fromExcel = BridgeWorkflowBuilder.Build(models, phases, read.Table, BridgeWorkflowMethod.Compatible, 1e-6).Model;
         foreach (var combo in fromExcel.LoadCombinations)
@@ -92,43 +139,26 @@ internal static class BridgeCombinationExcelTests
             Assert(combo.Values.All(v => expected.Values.Single(e => e.Key.Name == v.Key.Name).Value == v.Value), "Excel changed an assembled coefficient");
         }
         Assert(fromExcel.LoadCombinations[0].Values.Where(v => v.Key.Name.StartsWith("RITIRO", StringComparison.Ordinal)).Count(v => v.Value == .7) == 2, "unified shrinkage must scale FEM and strain together");
-#if GPC_PILOT
-        {
-            // P2T: the same assembly on Build BridGHe Model on GPC, with the action sources built in GPC (GpcWorkflowSources, the same
-            // forces): the combinations of the GPC bridge model from the Excel table equal those of the direct table, the unified shrinkage
-            // scales the FEM and strain cases together; both merges equal to the FEM ones bit for bit (samples, summary, warnings).
-            var gpcOf = models.ToDictionary(m => m, m => GpcWorkflowSources.Pair(m.Name, m.Beams[0].Results.OfType<BeamForceResultModel>().First().AxialForce));
-            // GPC data only on the GPC merge (direct references, actions on their GPC source); the FEM models only for the parity.
-            var linked = phases.Select(p => p with { Actions = p.Actions.Select(a => a with { GpcSource = gpcOf[a.Source].Analysed }).ToArray() }).ToArray();
-            var references = models.Select(m => gpcOf[m]).ToArray();
-            var gpcDirect = GpcBridgeMerge.Build(references, linked, Demo, "excel direct");
-            var gpcExcel = GpcBridgeMerge.Build(references, linked, read.Table, "excel table");
-            GpcBridgeMerge.RequireSame(gpcDirect, BridgeWorkflowBuilder.Build(models, phases, Demo, BridgeWorkflowMethod.Compatible, 1e-6), "excel direct");
-            GpcBridgeMerge.RequireSame(gpcExcel, BridgeWorkflowBuilder.Build(models, phases, read.Table, BridgeWorkflowMethod.Compatible, 1e-6), "excel table");
-            static System.Collections.Generic.KeyValuePair<GPC.Model.LoadCases.LoadCaseBase, double>[] Factors(BridGHe.Common.Gpc.GpcBridgeBuild b, string name) =>
-                b.Bridge.Model.Combinations[name].GetLoadCaseCoefficientsPair();
-            foreach (var name in gpcExcel.Bridge.Model.Combinations.Keys)
-            {
-                var expected = Factors(gpcDirect, name);
-                Assert(Factors(gpcExcel, name).All(v => expected.Single(e => e.Key.Name == v.Key.Name).Value == v.Value), "GPC: Excel changed an assembled coefficient");
-            }
-            Assert(gpcExcel.Bridge.Model.Combinations.Keys.SequenceEqual(fromExcel.LoadCombinations.Select(c => c.Name)), "GPC: combinations of the bridge model");
-            Assert(Factors(gpcExcel, gpcExcel.Bridge.Model.Combinations.Keys.First()).Where(v => v.Key.Name.StartsWith("RITIRO", StringComparison.Ordinal)).Count(v => v.Value == .7) == 2,
-                "GPC: unified shrinkage must scale FEM and strain together");
-        }
-#endif
         Assert(ModelArchive.Write(models[0]).SequenceEqual(original), "source model changed");
-        var regeneratedGuids = new BridgeCombinationCatalog(models, phases.Select(p => p with { Id = Guid.NewGuid() }));
+#endif
+        var regeneratedGuids = Catalog(phases.Select(p => p with { Id = Guid.NewGuid() }));
         Console.WriteLine("EXCEL TEST: source/action metadata validation");
         BridgeCombinationWorkbook.Read(path, regeneratedGuids);
-        var changed = new BridgeCombinationCatalog(models, phases.Select(p => p.Order == 30 ? p with { Actions = p.Actions.Select(a => a.Key == "RITIRO" ? a with { Strain = -250e-6 } : a).ToArray() } : p));
+        var changed = Catalog(phases.Select(p => p.Order == 30 ? p with { Actions = p.Actions.Select(a => a.Key == "RITIRO" ? a with { Strain = -250e-6 } : a).ToArray() } : p));
         Reject(() => BridgeCombinationWorkbook.Read(path, changed), "Actions reference changed");
         var unknown = phases.Select(p => p.Order == 10 ? p with { Actions = p.Actions.Select(a => a with { Case = "typo" }).ToArray() } : p);
-        Reject(() => new BridgeCombinationCatalog(models, unknown), "not found");
+        Reject(() => Catalog(unknown), "not found");
+#if GPC_PILOT
+        // A defined but unanalysed source: its GPC input alone (no analysed model).
+        var preAnalysis = new[] { phases[0] with { Actions = new[] { phases[0].Actions[0] with { GpcSource = null, GpcInput = inputs[0] } } } };
+        Assert(BridgeCombinationCatalog.FromGpc(inputs.Take(1).ToArray(), preAnalysis).Warnings.Length == 1, "defined but unanalysed cases should allow a template with a warning");
+        var primary = phases[2] with { Actions = new[] { phases[2].Actions[1] with { GpcSource = null, Case = null, PrimaryOnly = true } } };
+#else
         var preAnalysis = ModelArchive.Clone(models[0]); foreach (var e in preAnalysis.Elements) e.Results.Clear();
         Assert(new BridgeCombinationCatalog(new[] { preAnalysis }, new[] { phases[0] with { Actions = new[] { phases[0].Actions[0] with { Source = preAnalysis } } } }).Warnings.Length == 1, "defined but unanalysed cases should allow a template with a warning");
         var primary = phases[2] with { Actions = new[] { phases[2].Actions[1] with { Source = null, Case = null, PrimaryOnly = true } } };
-        Assert(new BridgeCombinationCatalog(models, new[] { primary }).ActionIds.Single() == "RITIRO", "primary-only strain must not require FEM");
+#endif
+        Assert(Catalog(new[] { primary }).ActionIds.Single() == "RITIRO", "primary-only strain must not require FEM");
         XNamespace s = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
         Console.WriteLine("EXCEL TEST: edited workbook validation");
         XElement Cell(XDocument x, string address) => x.Descendants(s + "c").Single(c => (string)c.Attribute("r") == address);
@@ -162,7 +192,7 @@ internal static class BridgeCombinationExcelTests
         finally { CultureInfo.CurrentCulture = culture; }
         Reset();
         var literalPhases = new[] { phases[0] with { Actions = new[] { phases[0].Actions[0] with { Key = "=literal & <action>" } } } };
-        var literal = new BridgeCombinationCatalog(models, literalPhases);
+        var literal = Catalog(literalPhases);
         var literalFile = Path.Combine(folder, "literal.xlsx");
         BridgeCombinationWorkbook.Write(literalFile, literal, overwrite: true, table: new[] { new[] { "Combination", literal.ActionIds[0] }, new[] { "=literal name", "-0.5" } });
         Assert(BridgeCombinationWorkbook.Read(literalFile, literal).Table[1][0] == "=literal name", "names starting with = must be literal, not formulas");

@@ -38,17 +38,29 @@ internal static class BridgeWorkflowExample
         void Integer(GH_Component c,int port,int value){var p=(Param_Integer)c.Params.Input[port];p.PersistentData.Clear();p.SetPersistentData(value);}
         void Text(GH_Component c,int port,string value){var p=(Param_String)c.Params.Input[port];p.PersistentData.Clear();p.SetPersistentData(value);}
         void Boolean(GH_Component c,int port,bool value){var p=(Param_Boolean)c.Params.Input[port];p.PersistentData.Clear();p.SetPersistentData(value);}
+#if !GPC_PILOT
         IGH_Goo Wrap(string type,object value){var t=assembly.GetType("BridGHe.Grasshopper.DataTypes."+type,true);var g=(IGH_Goo)Activator.CreateInstance(t);t.GetProperty("Value").SetValue(g,value);return g;}
+#endif
         Param_GenericObject Objects(string name,IEnumerable<IGH_Goo> goos,float x,float y){var p=Add(new Param_GenericObject{Name=name,NickName=name},x,y);foreach(var goo in goos)p.PersistentData.Append(goo);return p;}
         GH_Panel Panel(string name,string text,float x,float y,int width=340,int height=95){var p=Add(new GH_Panel{NickName=name,UserText=text},x,y);p.Properties.Multiline=false;p.Attributes.Bounds=new RectangleF(x,y,width,height);return p;}
         GH_Panel Value(string name,double value,float x,float y)=>Panel(name,value.ToString("G17",CultureInfo.InvariantCulture),x,y,170,50);
         Panel("REV003 - flusso a fasi", "Ponte a graticcio 30 + 30 m, impalcato 12 m, 3 travi e traversi ogni 5 m. N-mm-MPa.\n1. Sezioni -> modello acciaio -> override n infinito / n0 / n ritiro.\n2. CALCOLA 4 MODELLI STRAUS = true, poi false.\n3. Run Build BridGHe Model, poi Run Super Element Check.\nFasi 10/20/30/40; gli ID G1/G2/Q/RITIRO non dipendono dall'ordine dei modelli.\nRITIRO unisce strain primario e sollecitazioni FEM con un unico coefficiente.\nRieseguire le analisi dopo ogni modifica della geometria, delle proprietà o dei carichi.",20,0,2000,220);
+#if GPC_PILOT
+        // R6.6 lane R4a (generator of example 19 REV003 and native: not run by the lane): the materials, the load cases and every producer on
+        // their GPC data alone (the switches of P2 on for the whole graph); the same numbers as the former FEM materials.
+        using var gpcOnly=R2aDesignFixtures.WithoutFem();
+        IGH_Goo MaterialGoo(BridGHe.Common.Gpc.Legacy.LegacyMaterialRecipe r)=>R4aFixtures.Material(BridGHe.Common.Gpc.Builders.GpcMaterialBuilders.Material(r));
+        var steelData=Objects("S355",new[]{MaterialGoo(new(){Kind="Steel",Name="S355",Modulus=210000,PoissonRatio=.3,UsePoisson=true,MinimumYieldStress=355,MinimumTensileStress=510,ThermalExpansion=1.2e-5})},20,350);
+        var concreteData=Objects("C32/40",new[]{MaterialGoo(new(){Kind="Concrete",Name="C32/40",Modulus=33346.36,SpecificCompressiveStrength=32,PoissonRatio=.2,UsePoisson=true})},20,430);
+        var rebarData=Objects("B450",new[]{MaterialGoo(new(){Kind="Steel",Name="B450",Modulus=210000,PoissonRatio=.3,UsePoisson=true,MinimumYieldStress=450,MinimumTensileStress=540})},20,510);
+#else
         var steel=new MaterialModel("S355"){Name="S355",Modulus=210000,PoissonRatio=.3,MinimumYieldStress=355,MinimumTensileStress=510,ThermalExpansion=1.2e-5};
         var concrete=new MaterialModel("C32/40"){Name="C32/40",Modulus=33346.36,SpecificCompressiveStrength=32,PoissonRatio=.2};
         var rebar=new MaterialModel("B450"){Name="B450",Modulus=210000,MinimumYieldStress=450,MinimumTensileStress=540};
         var steelData=Objects("S355",new[]{Wrap("Fem.GH_Material",steel)},20,350);
         var concreteData=Objects("C32/40",new[]{Wrap("Fem.GH_Material",concrete)},20,430);
         var rebarData=Objects("B450",new[]{Wrap("Fem.GH_Material",rebar)},20,510);
+#endif
         var n0=Value("n0",7,30,650);var nInf=Value("n infinito",18,30,730);var nShrink=Value("n ritiro",12,30,810);var eigenstrain=Value("Delta epsilon cs",-.0002,30,890);
         GH_Component Section(string name,bool central,float y)
         {
@@ -65,7 +77,7 @@ internal static class BridgeWorkflowExample
         var crossH=Component("Sections.BeamSectionIComponent",400,1700);foreach(var (i,v) in new[]{(0,300.0),(1,300.0),(2,800.0),(3,20.0),(4,20.0),(5,12.0)})Number(crossH,i,v);
         // Cross members retain steel stiffness in all phases: no hidden diaphragm activation.
         var crossPropertyComponent=Component("ElementProperties.BeamPropertyComponent",800,1700);
-        Text(crossPropertyComponent,0,"Traversi H800");Integer(crossPropertyComponent,1,(int)BeamPropertyType.Beam);Wire(steelData,crossPropertyComponent,3);Wire(crossH.Params.Output[0],crossPropertyComponent,2);
+        Text(crossPropertyComponent,0,"Traversi H800");Integer(crossPropertyComponent,1,5/*Beam, the type index of the menu*/);Wire(steelData,crossPropertyComponent,3);Wire(crossH.Params.Output[0],crossPropertyComponent,2);
         var crossProperty=crossPropertyComponent.Params.Output[0];
         var baseModel=Component("Models.BuildModelComponent",1650,1600);Integer(baseModel,2,2);Text(baseModel,1,"Ponte base acciaio 30+30 m");
         const int panels=24;const double dx=2500;
@@ -100,7 +112,11 @@ internal static class BridgeWorkflowExample
         {
             float y=500+phase*950;Panel("MODELLO "+(phase+1),cases[phase],2500,y-130,1600,65);
             var build=Component("Models.BuildModelComponent",4200,y);Integer(build,2,2);Text(build,1,cases[phase]);Wire(decompose.Params.Output[0],build,0);Wire(filters[2].Params.Output[0],build,0);builds.Add(build);
+#if GPC_PILOT
+            var lc=Objects(cases[phase],new[]{R2aDesignFixtures.Case(BridGHe.Common.Gpc.Builders.GpcCaseBuilders.Case(cases[phase],false))},2500,y+650);
+#else
             var lc=Objects(cases[phase],new[]{Wrap("Fem.GH_LoadCase",new LoadCaseModel(cases[phase],cases[phase]))},2500,y+650);
+#endif
             for(int family=0;family<2;family++)
             {
                 float row=y+family*350;var section=family==0?central:side;IGH_Param members=filters[family].Params.Output[0];
@@ -147,6 +163,39 @@ internal static class BridgeWorkflowExample
         GH_Document.EnableSolutions=true;document.Enabled=true;document.NewSolution(false,GH_SolutionMode.Silent);
         string[] Errors(GH_Document doc)=>doc.Objects.OfType<GH_ActiveObject>().SelectMany(c=>c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Select(e=>c.Name+": "+e)).ToArray();
         if(Errors(document).Length>0)throw new Exception(string.Join("\n",Errors(document)));
+#if GPC_PILOT
+        // The models are GPC inputs alone (no FEM value); the stable IDs are the beam names (the Element IDs); the inputs are saved as BGHGPC1.
+        BridGHe.Common.Gpc.GpcModels.Conversion Input(GH_Component c)
+        {
+            var goo=c.Params.Output[0].VolatileData.AllData(true).Single();
+            if(goo.GetType().GetProperty("Value").GetValue(goo)!=null)throw new Exception("GPC: "+c.Name+" output has a FEM value");
+            return R2bFixtures.Get<BridGHe.Common.Gpc.GpcModels.Conversion>(goo,"GpcInput");
+        }
+        var checks=new NativeExamples.Recorder();var baseValue=Input(baseModel).Model;
+        checks.Near("Bridge node count",baseValue.NodesElements.Count,75,0,0);checks.Near("Bridge member count",baseValue.BeamElements.Count,98,0,0);
+        foreach(var b in builds)
+        {
+            var input=Input(b);var m=input.Model;checks.Near(m.Name+" nodes",m.NodesElements.Count,75,0,0);checks.Near(m.Name+" beams",m.BeamElements.Count,98,0,0);
+            checks.Near(m.Name+" stable beam IDs",m.BeamElements.Values.Select(x=>x.Name).Intersect(baseValue.BeamElements.Values.Select(x=>x.Name)).Count(),98,0,0);
+            var (data,records)=BridGHe.Common.Gpc.GpcDraftArchive.Write(input);
+            File.WriteAllBytes(Path.Combine(Native,"REV003-"+m.Name+"-input.gpc"),data);File.WriteAllBytes(Path.Combine(Native,"REV003-"+m.Name+"-input.records"),records);
+        }
+        if(native)
+        {
+            toggle.Value=true;toggle.ExpireSolution(false);document.NewSolution(false,GH_SolutionMode.Silent);
+            if(Errors(document).Length>0)throw new Exception(string.Join("\n",Errors(document)));
+            for(int i=0;i<analyses.Count;i++)
+            {
+                // The vertical equilibrium on the reaction rows of the analysed GPC model (the rows of Node Results).
+                var goo=analyses[i].Params.Output[0].VolatileData.AllData(true).Single();
+                var analysed=R2bFixtures.Get<GPC.Model.Models.Model>(goo,"GpcResults")??throw new Exception("GPC: no analysed model: "+cases[i]);
+                var catalog=BridGHe.Common.Gpc.GpcResultCatalog.Of(analysed);
+                double total=analysed.NodesElements.Values.SelectMany(n=>BridGHe.Common.Gpc.GpcResultRows.Node(catalog,analysed,n))
+                    .Where(r=>r.Reaction!=null&&catalog.Entries[r.Entry].Label==cases[i]).Sum(r=>r.Reaction[2]);
+                checks.Near(cases[i]+" equilibrium [N]",total,q[i]*3*60000,1e-6,1e-3);
+                File.WriteAllBytes(Path.Combine(Native,"REV003-"+cases[i]+"-results.bghr"),BridGHe.Common.Gpc.GpcResultsFile.ToBytes(analysed));
+            }
+#else
         ModelModel Model(GH_Component c)=>(ModelModel)c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
         var checks=new NativeExamples.Recorder();var baseValue=Model(baseModel);
         checks.Near("Bridge node count",baseValue.Nodes.Count,75,0,0);checks.Near("Bridge member count",baseValue.Beams.Count,98,0,0);
@@ -166,6 +215,7 @@ internal static class BridgeWorkflowExample
                 checks.Near(cases[i]+" equilibrium [N]",total,q[i]*3*60000,1e-6,1e-3);
                 File.WriteAllBytes(Path.Combine(Native,"REV003-"+cases[i]+"-results.bgmodel"),ModelArchive.Write(m));
             }
+#endif
             foreach(var c in new[]{merge,check}){c.GetType().GetField("_run",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(c,true);c.ExpireSolution(false);}document.NewSolution(false,GH_SolutionMode.Silent);
             if(Errors(document).Length>0)throw new Exception(string.Join("\n",Errors(document)));
             checks.Near("Checked spine stations",check.Params.Output[0].VolatileDataCount>=120?1:0,1,0,0);toggle.Value=false;

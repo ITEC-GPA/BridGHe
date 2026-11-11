@@ -14,6 +14,11 @@ using Grasshopper.Kernel.Parameters;
 /// <summary>Read-only audit of the user's saved bridge workflows. Native analyses, exports and report writes are disabled.</summary>
 internal static class SavedBridgeWorkflowAudit
 {
+#if GPC_PILOT
+    /// <summary>R6.6 lane R4a: the GPC input of a GH model (no FEM value read) and its analysed GPC model (null: not analysed).</summary>
+    private static GPC.Model.Models.Model GpcInput(Grasshopper.Kernel.Types.IGH_Goo goo) => R2bFixtures.Get<BridGHe.Common.Gpc.GpcModels.Conversion>(goo,"GpcInput")?.Model;
+    private static GPC.Model.Models.Model Analysed(Grasshopper.Kernel.Types.IGH_Goo goo) => R2bFixtures.Get<GPC.Model.Models.Model>(goo,"GpcResults");
+#endif
     internal static int Run(bool prepareRevision004 = false)
     {
         BridgeMergeTests.Initialize();
@@ -31,6 +36,11 @@ internal static class SavedBridgeWorkflowAudit
             try
             {
                 using var document=GrasshopperBridgeExample.Read(path);document.FilePath=path;
+#if GPC_PILOT
+                // R6.6 lane R4a (99, not run by the lane): the saved document as P2 reads it, in memory only (never saved: the hash check below):
+                // every internalised model by its GPC input read by value and its saved GPC results, every other FEM datum by its GPC datum.
+                R4aFixtures.GpcOnly(document);
+#endif
                 var components=document.Objects.OfType<GH_Component>().ToArray();
                 foreach(var c in components)
                 {
@@ -59,7 +69,11 @@ internal static class SavedBridgeWorkflowAudit
                     {
                         var input=analysis.Params.Input[0].VolatileData.AllData(true).Single();
                         var fresh=input.Duplicate();
+#if GPC_PILOT
+                        if(Analysed(fresh)!=null||GpcInput(fresh).AllElements.Any(e=>e.Results.Count!=0))throw new Exception("Preparation input unexpectedly contains results.");
+#else
                         if(((ModelModel)fresh.ScriptVariable()).Elements.Any(e=>e.Results.Count!=0))throw new Exception("Preparation input unexpectedly contains FEM results.");
+#endif
                         analysis.GetType().GetField("_model",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(analysis,fresh);
                         analysis.ExpireSolution(false);
                     }
@@ -67,6 +81,20 @@ internal static class SavedBridgeWorkflowAudit
                 }
                 if(path.Contains("REV004"))
                 {
+#if GPC_PILOT
+                    // The GPC input and the analysed GPC model of every analysis: beams with their BridGHe IDs, ends, section area, and the
+                    // stored result rows of the analysed model.
+                    object Snapshot(Grasshopper.Kernel.Types.IGH_Goo goo)
+                    {
+                        var model=goo==null?null:GpcInput(goo);if(model==null)return null;var analysed=Analysed(goo);
+                        return new{model.Name,beams=model.BeamElements.Count,beamData=model.BeamElements.Values.OrderBy(b=>b.Id).Select(b=>new{b.Name,from=b.StartPoint.ToString(),to=b.EndPoint.ToString(),
+                            area=(b.BeamProperty as GPC.Model.ElementProperties.ElasticBeamProperty)?.Section.Area,loads=b.Assignments.Loads.Count}),
+                            results=analysed==null?0:analysed.AllElements.Sum(e=>e.Results.Count)};
+                    }
+                    File.WriteAllText("artifacts/99-rev004-cache-inspection.json",JsonSerializer.Serialize(components.Where(c=>c.GetType().Name=="StrausR3AnalysisComponent").Select(c=>new{
+                        c.NickName,c.InstanceGuid,input=Snapshot(c.Params.Input[0].VolatileData.AllData(true).Single()),
+                        saved=Snapshot(c.Params.Output[0].VolatileData.AllData(true).Single())}),new JsonSerializerOptions{WriteIndented=true}));
+#else
                     object Snapshot(ModelModel model)=>model==null?null:new{model.Name,beams=model.Beams.Count,
                         beamData=model.Beams.Select(b=>new{b.BeamId,from=b.PointFrom.ToString(),to=b.PointTo.ToString(),area=b.BeamProperty.SectionArea,
                             pre=b.Loads.OfType<BeamPreLoadModel>().Select(l=>new{l.LoadCase.Name,l.Value,l.PreLoadType}),
@@ -74,20 +102,39 @@ internal static class SavedBridgeWorkflowAudit
                     File.WriteAllText("artifacts/99-rev004-cache-inspection.json",JsonSerializer.Serialize(components.Where(c=>c.GetType().Name=="StrausR3AnalysisComponent").Select(c=>new{
                         c.NickName,c.InstanceGuid,input=Snapshot(c.Params.Input[0].VolatileData.AllData(true).Single().ScriptVariable() as ModelModel),
                         saved=Snapshot(c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable() as ModelModel)}),new JsonSerializerOptions{WriteIndented=true}));
+#endif
                 }
                 foreach(var excel in components.Where(c=>c.GetType().Name=="BridgeCombinationExcelComponent"))
                 {
+#if GPC_PILOT
+                    // The catalogue of the GPC inputs of the reference models (BridgeCombinationCatalog.FromGpc), as the component on GPC data alone.
+                    var catalog=BridgeCombinationCatalog.FromGpc(excel.Params.Input[0].VolatileData.AllData(true).Select(g=>R2bFixtures.Get<BridGHe.Common.Gpc.GpcModels.Conversion>(g,"GpcInput")).ToArray(),
+                        excel.Params.Input[1].VolatileData.AllData(true).Select(g=>(BridgePhaseDefinition)g.ScriptVariable()));
+#else
                     var catalog=new BridgeCombinationCatalog(excel.Params.Input[0].VolatileData.AllData(true).Select(g=>(ModelModel)g.ScriptVariable()).ToArray(),
                         excel.Params.Input[1].VolatileData.AllData(true).Select(g=>(BridgePhaseDefinition)g.ScriptVariable()));
+#endif
                     File.WriteAllText("artifacts/"+Path.GetFileNameWithoutExtension(path)+"-catalog-"+excel.InstanceGuid+".json",JsonSerializer.Serialize(catalog.ReferenceRows));
                 }
                 RunButtons("BridgeCombinationExcelComponent");
+#if GPC_PILOT
+                // The analyses: the analysed GPC model of each output (no FEM value); none analysed: pending native.
+                var outputs=components.Where(c=>c.GetType().Name=="StrausR3AnalysisComponent").Select(c=>c.Params.Output[0].VolatileData.AllData(true).Single()).ToArray();
+                if(outputs.Any(g=>g.GetType().GetProperty("Value").GetValue(g)!=null))throw new Exception("GPC: an analysis output has a FEM value.");
+                var sources=outputs.Select(g=>(Model:GpcInput(g),Analysed:Analysed(g))).Select(s=>new{s.Model.Name,Beams=s.Model.BeamElements.Count,s.Analysed}).ToArray();
+                if(sources.Length>0 && sources.All(m=>m.Analysed==null))
+#else
                 var sources=components.Where(c=>c.GetType().Name=="StrausR3AnalysisComponent").Select(c=>(ModelModel)c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable()).ToArray();
                 if(sources.Length>0 && sources.All(m=>m.Elements.All(e=>e.Results.Count==0)))
+#endif
                 {
                     pending++;
                     if(prepareRevision004)GrasshopperBridgeExample.Write(document,"artifacts/align99/prepared.ghx");
+#if GPC_PILOT
+                    rows.Add(new{file=path,status="pending-native",excelReferencesValid=true,cachedResults=0,models=sources.Select(m=>new{m.Name,beams=m.Beams})});
+#else
                     rows.Add(new{file=path,status="pending-native",excelReferencesValid=true,cachedResults=0,models=sources.Select(m=>new{m.Name,beams=m.Beams.Count})});
+#endif
                     Console.WriteLine("SAVED BRIDGE AUDIT PENDING NATIVE: "+Path.GetFileName(path)+"; Excel consistent, stale FEM results absent; run all phase analyses before Build/Check.");
                     if(hash!=Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))))throw new Exception("Audit modified the user's GHX: "+path);
                     continue;

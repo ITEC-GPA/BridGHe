@@ -12,6 +12,9 @@ using Grasshopper.Kernel.Types;
 /// Action components attach), and the merged numbers equal bit for bit those of the former merge of the FEM result objects (zero without
 /// sign on both sides). The check rebuilds the merge from the inputs of the component twice, with and without the GPC sources, and compares
 /// every merged sample of every beam (case, station, six components); it requires every FEM action to have its GPC source.
+/// <para><b>TRANSITIONAL (R6.6 lane R2b):</b> the parity with the FEM merge of the inputs of the 50 and 99 components runs only in those natives,
+/// which the lane does not run; P2 retires it. Its constraints, reactions and limit cases are checked on GPC data alone, with explicit expected
+/// values, by the regression <c>r2b-merge-forces</c> (<see cref="R2bMergeForcesChecks"/>). Blob d71cd49 (unchanged f2ef267, bbf84de, c23263a).</para>
 /// </summary>
 internal static class GpcMergeCheck
 {

@@ -6,6 +6,9 @@ using BridGHe.Common.Helpers;
 using BridGHe.Common.Models;
 using BridGHe.Common.MovingLoads;
 using Rhino.Geometry;
+#if GPC_PILOT
+using BridGHe.Common.Gpc;
+#endif
 
 internal static class BridgeUtilityTests
 {
@@ -53,22 +56,36 @@ internal static class BridgeUtilityTests
         return analyse ? test.Analyse() : test.Structure();
     }
 
-    /// <summary>The FEM fixture of the parity: <see cref="Source"/> with Q at step 0 and the same nodes as <see cref="SourceGpc"/>.</summary>
-    private static ModelModel ParitySource()
+    /// <summary>R6.6 R2b: the model audit on the GPC input of <see cref="SourceGpc"/> (no FEM model): no error, the two girders disconnected,
+    /// the bearing node connected; a floating node reported as isolated; a zero-length beam reported, or refused by the GPC element; a zero
+    /// tolerance refused.</summary>
+    private static void AuditGpc()
     {
-        var model = Source(0, "");
-        model.AddElements(new[] { new NodeModel("2", new Point3d(10000, 0, 0)), new NodeModel("3", new Point3d(0, 2000, 0)), new NodeModel("4", new Point3d(10000, 2000, 0)) });
-        return model;
+        var input = R2bFixtures.Input(SourceGpc(analyse: false));
+        var issues = BridgeModelAudit.Inspect(input, 1e-6);
+        Assert(!issues.Any(i => i.Severity == "Error"), "GPC: Audit rejected valid input.");
+        Assert(issues.Any(i => i.Code == "DISCONNECTED"), "GPC: Audit missed disconnected girders.");
+        Assert(!issues.Any(i => i.Code == "ISOLATED_NODE"), "GPC: Audit missed connected support.");
+        var floating = R2bFixtures.Input(SourceGpc((t, _) => t.Node("Floating", 700, 900, 800), analyse: false));
+        Assert(BridgeModelAudit.Inspect(floating, 1e-6).Any(i => i.Code == "ISOLATED_NODE" && i.Element == "Floating"), "GPC: Isolated node not detected.");
+        GpcModels.Conversion zero = null;
+        try { zero = R2bFixtures.Input(SourceGpc((t, _) => t.Beam("Zero", 3000, 0, 0, 3000, 0, 0), analyse: false)); }
+        catch (ArgumentException) { checks++; } // the GPC element refuses a zero length: the condition cannot be built
+        if (zero != null) Assert(BridgeModelAudit.Inspect(zero, 1e-6).Any(i => i.Code == "INVALID_BEAM"), "GPC: Zero length missed.");
+        Reject(() => BridgeModelAudit.Inspect(input, 0), "GPC: zero tolerance");
     }
 
-    /// <summary>P2T: the envelope and stored-result checks on the analysed GPC model built in GPC, with the meaning of the FEM checks of
-    /// <see cref="Run"/> (Q at step 0, the only GPC step); then the GPC path equal bit for bit to the FEM path on the same samples.</summary>
-    private static void Gpc(ModelModel model)
+    /// <summary>R6.6 R2b: the envelope and stored-result checks on the analysed GPC model built in GPC alone, with the meaning of the FEM checks
+    /// (Q at step 0, the only GPC step); then the result consumers against the rows of the Results components and the model audit against
+    /// the structure (<see cref="ConsumersCheck"/>), on the complete and on the incomplete case grid. They replace the former parity with the
+    /// FEM path on the same samples.</summary>
+    private static void Gpc()
     {
-        var gpc = SourceGpc();
+        var gpc = SourceGpc(); var input = R2bFixtures.Input(SourceGpc(analyse: false));
         var env = BridgeResultEnvelope.Evaluate(gpc, 0, null, null, 5, 2);
         Assert(env.Length == 6 && env.All(r => r.Case == "Q" && r.Step == 0 && r.StepType == "" && r.Value < 0), "GPC: Signed absolute beam envelope incorrect.");
         Assert(env[1].Station == 5000 && env.All(r => r.Components.SequenceEqual(new[] { -50d, 13, -17, 19, -23, r.Value })), "GPC: Normalized stations/concomitants lost.");
+        Assert(env.Select(r => r.Value).SequenceEqual(new[] { -200000d, -300000, -400000, -200000, -300000, -400000 }), "GPC: signed absolute values -2·G of BM2 at the three stations of both beams.");
         Assert(BridgeResultEnvelope.Evaluate(gpc, 0, null, null, 5, 1).All(r => r.Case == "G"), "GPC: Maximum envelope incorrect.");
         Assert(BridgeResultEnvelope.Evaluate(gpc, 0, new[] { "B0" }, new[] { "G" }, 0, 0).Length == 3, "GPC: Selection failed.");
         var reaction = BridgeResultEnvelope.Evaluate(gpc, 1, new[] { "A" }, null, 2, 0).Single();
@@ -84,81 +101,49 @@ internal static class BridgeUtilityTests
         // A duplicate or non-finite sample never reaches the envelope: rejected by the result mapper or by the envelope.
         RejectGpc(() => BridgeResultEnvelope.Evaluate(SourceGpc((t, b) => t.Forces(b[0], "G", 0, 100, bm2: 100000)), 0, null, null, 0, 0), "GPC: duplicate sample");
         RejectGpc(() => BridgeResultEnvelope.Evaluate(SourceGpc((t, b) => t.Forces(b[0], "Q", 2500, double.NaN, 13, -17, 19, -23, -250000)), 0, null, null, 5, 2), "GPC: NaN concomitant");
-        // Model audit, stored-result part: the GPC model without findings; a result without case identity is an error.
+        // Model audit, stored-result part: the analysed model adds no finding to its input; a result without case identity is an error.
         string Issues(ModelIssue[] issues) => string.Join("\n", issues.Select(i => i.Severity + "|" + i.Code + "|" + i.Element + "|" + i.Description));
-        Assert(Issues(BridgeModelAudit.Inspect(model, 1e-6, analysed: gpc)) == Issues(BridgeModelAudit.Inspect(model, 1e-6)), "GPC: audit of the stored results differs.");
-        var catalog = BridGHe.Common.Gpc.GpcResultCatalog.Of(gpc);
-        BridGHe.Common.Gpc.GpcResultCatalog.Attach(gpc, catalog.Units.Units, catalog.Entries.Append(new BridGHe.Common.Gpc.GpcResultCatalog.Entry { Label = "", Case = "G" }).ToArray(),
+        Assert(Issues(BridgeModelAudit.Inspect(input, 1e-6, analysed: gpc)) == Issues(BridgeModelAudit.Inspect(input, 1e-6)), "GPC: audit of the stored results differs.");
+        // The result consumers on the rows of the Results components and the structural audit, on the complete and the incomplete grid.
+        long values = ConsumersCheck.Verify(SourceGpc(), "bridge utilities, model built in GPC", new[] { "G", "Q" }, input, 0)
+            + ConsumersCheck.Verify(incomplete, "bridge utilities, incomplete grid", new[] { "G", "Q" }, R2bFixtures.Input(SourceGpc(incomplete: true, analyse: false)), 0);
+        Assert(values > 0, "GPC: the consumers compared no value.");
+        var catalog = GpcResultCatalog.Of(gpc);
+        GpcResultCatalog.Attach(gpc, catalog.Units.Units, catalog.Entries.Append(new GpcResultCatalog.Entry { Label = "", Case = "G" }).ToArray(),
             gpc.BeamElements.Values.ToDictionary(b => b.Id, catalog.BeamAngle));
-        Assert(BridgeModelAudit.Inspect(model, 1e-6, analysed: gpc).Any(i => i.Code == "INVALID_RESULT"), "GPC: result without case identity not reported.");
-        // Parity (removed with the FeMM models): the GPC path on the model built in GPC equals the FEM path on the FEM fixture with the
-        // same samples (Q at step 0), bit for bit: envelopes of every kind, component and mode, result cases and fatigue histories.
-        // The node envelopes of the bearing node (ConsumersCheck selects every node: the beam end nodes give the same error on both paths).
-        var fem = ParitySource(); var analysed = SourceGpc();
-        long values = ConsumersCheck.Verify(fem, analysed, "bridge utilities, model built in GPC");
-        static string Bits(double v) => BitConverter.DoubleToInt64Bits(v == 0 ? 0.0 : v).ToString("X16");
-        static string Row(EnvelopeRow r) => string.Join("|", new[] { r.Element, Bits(r.Station), r.Case, Bits(r.Step), r.StepType, Bits(r.Value), r.Coverage }.Concat(r.Components.Select(Bits)));
-        foreach (var incompleteGrid in new[] { false, true })
-        {
-            var f = ParitySource(); var g = SourceGpc(incomplete: incompleteGrid);
-            if (incompleteGrid) f.Beams[0].Results.RemoveAt(3);
-            for (int kind = 0; kind < 3; kind++)
-                for (int component = 0; component < 6; component++)
-                    for (int mode = 0; mode < 3; mode++)
-                    {
-                        var ids = kind == 0 ? null : new[] { "A" };
-                        Assert(BridgeResultEnvelope.Evaluate(f, kind, ids, null, component, mode).Select(Row).SequenceEqual(BridgeResultEnvelope.Evaluate(g, kind, ids, null, component, mode).Select(Row)),
-                            $"GPC envelope equal to the FEM one bit for bit (kind {kind}, component {component}, mode {mode}, incomplete {incompleteGrid})");
-                        values++;
-                    }
-        }
-        Assert(values > 0, "GPC: parity compared no value.");
+        Assert(BridgeModelAudit.Inspect(input, 1e-6, analysed: gpc).Any(i => i.Code == "INVALID_RESULT"), "GPC: result without case identity not reported.");
     }
 
-    /// <summary>P2T: Bridge Phase Model on GPC (<c>GpcModelTransforms.PhaseModel</c>, chain D) on the input model built in GPC
-    /// (<see cref="SourceGpc"/> without results, through the public input <c>GpcModels.Conversion.FromGpc</c>) with a replacement property built
-    /// in GPC (<c>GpcModels.BeamProperty</c>): the same checks as the FEM ones (selection and property, no stale data, IDs and geometry, input
-    /// isolated, loads retained on request, unknown and empty selections rejected), then the parity with the FEM path: the beams that change
-    /// property, the geometry and the cases equal to those of the conversion of the FEM output (the default «Dead» of the legacy reader apart;
-    /// no section state in this test, so the stricter GPC rule on stale states does not apply).</summary>
-    private static void PhaseGpc(ModelModel model, BeamPropertyModel femProperty, ModelModel femPhase)
+    /// <summary>R6.6 R2b: Bridge Phase Model on GPC (<c>GpcModelTransforms.PhaseModel</c>) on the input model built in GPC (<see cref="SourceGpc"/>
+    /// without results, through <c>GpcModels.Conversion.FromGpc</c>) with a replacement property built in GPC, no FEM model: selection and
+    /// property (B0 takes the replacement, B1 keeps its own), no stale data, IDs and geometry, input isolated, loads retained on request,
+    /// unknown and empty selections rejected (the former parity with the FEM path is replaced by these explicit values).</summary>
+    private static void PhaseGpc()
     {
         var input = SourceGpc(analyse: false);
-        var units = new BridGHe.Common.Gpc.BridgeUnits(BridGHe.Common.Gpc.DefinitionUnits.Nmm);
+        var units = new BridgeUnits(DefinitionUnits.Nmm);
         var angles = input.BeamElements.Values.ToDictionary(b => b.Id, _ => 0d);
-        BridGHe.Common.Gpc.GpcModels.Conversion Input() => BridGHe.Common.Gpc.GpcModels.Conversion.FromGpc(input, units, angles, 1e-6);
+        GpcModels.Conversion Input() => GpcModels.Conversion.FromGpc(input, units, angles, 1e-6);
         var original = (GPC.Model.ElementProperties.ElasticBeamProperty)input.BeamElements.Values.Single(b => b.Name == "B0").BeamProperty;
         var replacement = new GpcTestModel("Phase properties").Property("Long term", area: 2 * original.Section.Area);
-        var data = BridGHe.Common.Gpc.GpcModels.BeamProperty(replacement, GPC.Model.Structure.Assignments.BeamFormulation.StraightTwoNode);
+        var data = GpcModels.BeamProperty(replacement, GPC.Model.Structure.Assignments.BeamFormulation.StraightTwoNode);
         GPC.Model.Models.Model Phase(string name, string[] ids, bool clear) =>
-            BridGHe.Common.Gpc.GpcModelTransforms.PhaseModel(Input(), name, ids, data, clear, BridGHe.Common.Gpc.GpcIdentity.Derive(BridGHe.Common.Gpc.GpcIdentity.NameSpace, "p2t-phase:" + name)).Model;
+            GpcModelTransforms.PhaseModel(Input(), name, ids, data, clear, GpcIdentity.Derive(GpcIdentity.NameSpace, "p2t-phase:" + name)).Model;
         static double Area(GPC.Model.Elements.BeamElement b) => ((GPC.Model.ElementProperties.ElasticBeamProperty)b.BeamProperty).Section.Area;
         var phase = Phase("Long term", new[] { "B0" }, true);
         var beams = phase.BeamElements.Values.OrderBy(b => b.Id).ToArray(); var inputBeams = input.BeamElements.Values.OrderBy(b => b.Id).ToArray();
-        Assert(Area(beams[0]) == replacement.Section.Area && Area(beams[1]) == original.Section.Area && beams[0].BeamProperty.Name == "Long term", "GPC: Phase selection/property failed.");
-        Assert(phase.AllElements.All(e => e.Results.Count == 0) && phase.Datasets.Count == 0 && beams.All(b => b.Assignments.Loads.Count == 0) && phase.LoadCases.Keys.All(c => c == "Dead"), "GPC: Phase retained stale data.");
-        Assert(beams.Select(b => b.Name).SequenceEqual(inputBeams.Select(b => b.Name)) && beams[0].StartPoint.X == inputBeams[0].StartPoint.X && beams[0].StartPoint.Y == inputBeams[0].StartPoint.Y
-            && beams[0].EndPoint.X == inputBeams[0].EndPoint.X, "GPC: Phase changed IDs/geometry.");
+        Assert(Area(beams[0]) == 2 * original.Section.Area && Area(beams[1]) == original.Section.Area && beams[0].BeamProperty.Name == "Long term" && beams[1].BeamProperty.Name == original.Name,
+            "GPC: Phase selection/property failed.");
+        Assert(phase.AllElements.All(e => e.Results.Count == 0) && phase.Datasets.Count == 0 && beams.All(b => b.Assignments.Loads.Count == 0) && phase.LoadCases.Keys.SequenceEqual(new[] { "Dead" }),
+            "GPC: Phase retained stale data.");
+        Assert(beams.Select(b => b.Name).SequenceEqual(new[] { "B0", "B1" }) && beams.Zip(inputBeams).All(p => p.First.StartPoint.X == p.Second.StartPoint.X && p.First.StartPoint.Y == p.Second.StartPoint.Y
+            && p.First.StartPoint.Z == p.Second.StartPoint.Z && p.First.EndPoint.X == p.Second.EndPoint.X && p.First.EndPoint.Y == p.Second.EndPoint.Y && p.First.EndPoint.Z == p.Second.EndPoint.Z),
+            "GPC: Phase changed IDs/geometry.");
         Assert(!ReferenceEquals(phase, input) && ReferenceEquals(inputBeams[0].BeamProperty, original) && Area(inputBeams[0]) == original.Section.Area, "GPC: Phase output aliases its input.");
         var retained = Phase("Q", new[] { "B0" }, false);
-        Assert(retained.LoadCases.ContainsKey("G") && retained.LoadCases.ContainsKey("Q"), "GPC: Retain-loads option lost cases.");
+        Assert(retained.LoadCases.Keys.Where(c => c != "Dead").OrderBy(c => c, StringComparer.Ordinal).SequenceEqual(new[] { "G", "Q" }), "GPC: Retain-loads option lost cases.");
         Reject(() => Phase("P", new[] { "missing" }, true), "GPC: unknown beam");
         Reject(() => Phase("P", Array.Empty<string>(), true), "GPC: empty selection");
-        // Parity (removed with the FeMM models): the same transformation on the FEM path (Bridge Phase Model on the FEM fixture; its beams
-        // have no nodes, which the legacy reader refuses, so the FEM output is compared as it is, not converted).
-        Assert(femPhase.Beams.Select(b => b.BeamId).SequenceEqual(beams.Select(b => b.Name)), "GPC phase: beam IDs equal to the FEM path");
-        for (int k = 0; k < beams.Length; k++)
-        {
-            bool gpcChanged = !ReferenceEquals(beams[k].BeamProperty, inputBeams[k].BeamProperty) && beams[k].BeamProperty.Name != inputBeams[k].BeamProperty.Name;
-            bool femChanged = femPhase.Beams[k].BeamProperty.SectionArea != model.Beams[k].BeamProperty.SectionArea;
-            Assert(gpcChanged == femChanged, $"GPC phase: property change of beam {beams[k].Name} as on the FEM path");
-            var (from, to) = (femPhase.Beams[k].PointFrom, femPhase.Beams[k].PointTo);
-            Assert(beams[k].StartPoint.X == from.X && beams[k].StartPoint.Y == from.Y && beams[k].StartPoint.Z == from.Z
-                && beams[k].EndPoint.X == to.X && beams[k].EndPoint.Y == to.Y && beams[k].EndPoint.Z == to.Z, $"GPC phase: geometry of beam {beams[k].Name} as on the FEM path");
-        }
-        var femRetained = BridgePhaseModel.Create(model, "Q", new[] { "B0" }, femProperty, false);
-        Assert(retained.LoadCases.Keys.Where(c => c != "Dead").SequenceEqual(femRetained.LoadCases.Select(c => c.Name)) && phase.LoadCases.Keys.Where(c => c != "Dead").SequenceEqual(femPhase.LoadCases.Select(c => c.Name)),
-            "GPC phase: cases as on the FEM path");
     }
 
     private static void RejectGpc(Action call, string message)
@@ -168,6 +153,18 @@ internal static class BridgeUtilityTests
         catch (InvalidOperationException e) when (e.Message.StartsWith("GpcTestModel results not imported")) { checks++; return; }
         throw new InvalidOperationException("Expected rejection: " + message);
     }
+
+    /// <summary>R6.6 R2b: the combination table of the workflow tools accepted by Build BridGHe Model on GPC with the action on the GPC source built
+    /// in GPC (<see cref="SourceGpc"/>, direct GPC reference): the combination carries 1 for G1 and 0.7 for the shrinkage action, and the merged
+    /// samples of G1 are the G samples of the source bit for bit (they replace the former parity with the FEM merge).</summary>
+    private static void BuilderGpc(BridgePhaseDefinition[] phases, string[][] table, GPC.Model.Models.Model analysed)
+    {
+        var bridge = GpcBridgeMerge.Build(new[] { (SourceGpc(analyse: false), analysed) }, phases, table, "utilities builder");
+        var factors = bridge.Bridge.Combinations.Single().Factors;
+        Assert(factors.Any(f => Math.Abs(f.Factor - .7) < 1e-15) && factors.Single(f => f.Case == "G1 [FEM]").Factor == 1, "GPC: Generated table not accepted by builder.");
+        for (int k = 0; k < 2; k++)
+            R2bFixtures.RequireSamples(bridge, k, "G1 [FEM]", new[] { 0d, 5000, 10000 }, x => new[] { 100d + k, 0, 0, 0, 0, 100 * 1000 * (1 + x / 10000) }, "GPC utilities builder");
+    }
 #endif
     internal static MovingPath Path() => new()
     {
@@ -176,7 +173,14 @@ internal static class BridgeUtilityTests
     };
     internal static void Run()
     {
-        checks = 0; var model = Source(); var before = ModelArchive.Write(model);
+        checks = 0;
+#if GPC_PILOT
+        // R6.6 R2b: everything on GPC data alone (no FEM model): audit, envelopes, consumers, phase model, workflow tools and builder.
+        AuditGpc(); Gpc(); PhaseGpc();
+        var source = SourceGpc(); var before = R2bFixtures.ResultTokens(source);
+        var action = new BridgeActionDefinition { Key = "G1", GpcSource = source, Case = "G" };
+#else
+        var model = Source(); var before = ModelArchive.Write(model);
         var issues = BridgeModelAudit.Inspect(model, 1e-6);
         Assert(!issues.Any(i => i.Severity == "Error"), "Audit rejected valid input.");
         Assert(issues.Any(i => i.Code == "DISCONNECTED"), "Audit missed disconnected girders.");
@@ -186,11 +190,6 @@ internal static class BridgeUtilityTests
         bad.Beams[0].PointTo = bad.Beams[0].PointFrom;
         Assert(BridgeModelAudit.Inspect(bad, 1e-6).Any(i => i.Code == "INVALID_BEAM"), "Zero length missed.");
         Reject(() => BridgeModelAudit.Inspect(model, 0), "zero tolerance");
-#if GPC_PILOT
-        // P2T: envelopes and the stored-result audit on the analysed GPC model built in GPC (they stay after the FeMM removal), and their
-        // parity with the FEM path. The envelope checks on the FEM fixture below remain until the FeMM removal.
-        Gpc(model);
-#endif
         var property = ModelArchive.Clone(model.Beams[0].BeamProperty); property.Section.SectionArea *= 2;
         var phase = BridgePhaseModel.Create(model, "Long term", new[] { "B0" }, property, true);
         Assert(phase.Beams[0].SectionAreaForTest() == property.SectionArea && phase.Beams[1].BeamProperty.SectionArea == model.Beams[1].BeamProperty.SectionArea, "Phase selection/property failed.");
@@ -201,9 +200,6 @@ internal static class BridgeUtilityTests
         Assert(BridgePhaseModel.Create(model, "Q", new[] { "B0" }, property, false).LoadCases.Count == 2, "Retain-loads option lost cases.");
         Reject(() => BridgePhaseModel.Create(model, "P", new[] { "missing" }, property, true), "unknown beam");
         Reject(() => BridgePhaseModel.Create(model, "P", Array.Empty<string>(), property, true), "empty selection");
-#if GPC_PILOT
-        PhaseGpc(model, property, phase);
-#endif
         var env = BridgeResultEnvelope.Evaluate(model, 0, null, null, 5, 2);
         Assert(env.Length == 6 && env.All(r => r.Case == "Q" && r.Step == 2 && r.StepType == "Moving" && r.Value < 0), "Signed absolute beam envelope incorrect.");
         Assert(env[1].Station == 5000 && env.All(r => r.Components.SequenceEqual(new[] { -50d, 13, -17, 19, -23, r.Value })), "Normalized stations/concomitants lost.");
@@ -222,15 +218,17 @@ internal static class BridgeUtilityTests
         bad = ModelArchive.Clone(model); ((BeamForceResultModel)bad.Beams[0].Results[0]).AxialForce = double.NaN;
         Reject(() => BridgeResultEnvelope.Evaluate(bad, 0, null, null, 5, 2), "NaN concomitant");
         var action = new BridgeActionDefinition { Key = "G1", Source = model, Case = "G" };
+#endif
         var shrink = new BridgeActionDefinition { Key = "CS", PrimaryOnly = true, Strain = -200e-6, Behavior = BridgeActionBehavior.Shrinkage };
         var p1 = new BridgePhaseDefinition { Order = 10, Name = "Steel", State = BridgeSectionState.Steel, Day = 1, Actions = new[] { action } };
         var p2 = new BridgePhaseDefinition { Order = 20, Name = "Shrinkage", State = BridgeSectionState.Composite, Day = 28, Actions = new[] { shrink } };
         var table = BridgeWorkflowTools.CombinationTable(new[] { p2, p1 }, new[] { "CS", "G1" }, new[] { "SLS" }, new[] { new[] { .7, 1d } });
         Assert(table[0].SequenceEqual(new[] { "Combination", "G1", "CS" }) && table[1].SequenceEqual(new[] { "SLS", "1", "0.7" }), "Combination keys reordered incorrectly.");
+#if GPC_PILOT
+        BuilderGpc(new[] { p2, p1 }, table, source);
+#else
         var built = BridgeWorkflowBuilder.Build(new[] { model }, new[] { p2, p1 }, table, BridgeWorkflowMethod.Compatible, 1e-6);
         Assert(built.Model.LoadCombinations.Single().Values.Any(v => Math.Abs(v.Value - .7) < 1e-15), "Generated table not accepted by builder.");
-#if GPC_PILOT
-        BuilderGpc(new[] { p2, p1 }, table, built);
 #endif
         Assert(BridgeWorkflowTools.CombinationTable(new[] { p1, p2 }, new[] { "G1" }, new[] { "SLS" }, new[] { new[] { 1d } })[1][2] == "0", "Omitted action not zero.");
         Reject(() => BridgeWorkflowTools.Ordered(new[] { p1, p2 with { Order = 10 } }), "duplicate phase");
@@ -252,23 +250,14 @@ internal static class BridgeUtilityTests
         Assert(prototype.Template.Vehicles[0].Loads.Length == 1 && lanes[1].Template.Vehicles[0].Loads[0] is MovingPointForce, "Lane templates alias.");
         prototype.Shape = 1; Reject(() => BridgeMovingLanes.Create(prototype, new[] { 0d }, new[] { "C" }), "curved prototype");
         prototype.Shape = 0; Reject(() => BridgeMovingLanes.Create(prototype, new[] { 0d, 0 }, new[] { "C", "D" }), "duplicate lane");
+#if GPC_PILOT
+        Assert(R2bFixtures.ResultTokens(source).SequenceEqual(before), "Utilities mutated source model.");
+        Console.WriteLine($"BRIDGE UTILITIES PASS: {checks} checks on GPC data alone; no Straus solver invoked.");
+#else
         Assert(ModelArchive.Write(model).SequenceEqual(before), "Utilities mutated source model.");
         Console.WriteLine($"BRIDGE UTILITIES PASS: {checks} checks; no Straus solver invoked.");
-    }
-#if GPC_PILOT
-    /// <summary>P2U: the combination table of the workflow tools accepted by Build BridGHe Model on GPC (<c>GpcBridgeBuilder</c>, chain C) with
-    /// the action on the GPC source built in GPC (<see cref="SourceGpc"/>, direct GPC reference, GPC-only validation): the combination of the
-    /// GPC bridge model carries the 0.7 of the shrinkage action. Parity (removed with the FeMM models): the samples, summary and warnings
-    /// of the FEM merge <paramref name="fem"/>.</summary>
-    private static void BuilderGpc(BridgePhaseDefinition[] phases, string[][] table, BridgeWorkflowBuildResult fem)
-    {
-        var input = SourceGpc(analyse: false); var analysed = SourceGpc();
-        var linked = phases.Select(p => p with { Actions = p.Actions.Select(a => a.Source == null ? a : a with { GpcSource = analysed }).ToArray() }).ToArray();
-        var bridge = GpcBridgeMerge.Build(new[] { (input, analysed) }, linked, table, "utilities builder");
-        Assert(bridge.Bridge.Combinations.Single().Factors.Any(f => Math.Abs(f.Factor - .7) < 1e-15), "GPC: Generated table not accepted by builder.");
-        GpcBridgeMerge.RequireSame(bridge, fem, "utilities builder");
-    }
 #endif
+    }
     private static double SectionAreaForTest(this BeamModel beam) => beam.BeamProperty.SectionArea;
     private static void ClearForTest(this MovingObject[] loads) { loads[0] = new MovingHeatSource { SizeX = 1, SizeY = 1, Heat = 10 }; }
 }
