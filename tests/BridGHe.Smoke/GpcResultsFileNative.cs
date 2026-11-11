@@ -86,7 +86,19 @@ internal static class GpcResultsFileNative
             && reopened.GetType().GetProperty("GpcDrafts").GetValue(reopened) != null && (bool)reopened.GetType().GetProperty("HasAttachedInput").GetValue(reopened), name + ": the output and the reopened output have no FEM value, and carry the input and its drafts");
         // C4 (R6.6 R2b/R4b, on the GPC-only output): after reopening, the Results components read the GPC model of the file, every output equal to
         // the GPC reader rows bit for bit (before: equal to the FEM values of the document).
-        Require(ResultsComponentsCheck.Verify(reopened, name + " reopened").Values > 0, name + ": the Results components read the reopened GPC results");
+        // ResultsComponentsCheck gives Decompose Model the GH model of the GPC input of the output: the output keeps the drafts of its elements apart
+        // (GpcDrafts, as the analysis components carry them), so the input is given with them, as the reading of P2 does (R4aFixtures.GpcOnly).
+        object Linked(object m)
+        {
+            var given = (GpcModels.Conversion)m.GetType().GetProperty("GpcInput").GetValue(m);
+            var drafts = (GpcModelDrafts)m.GetType().GetProperty("GpcDrafts").GetValue(m);
+            if (given.Drafts != null || drafts == null) return m;
+            var modelType = assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model", true);
+            var linked = modelType.GetMethod("FromGpc", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { given.WithDrafts(drafts) });
+            modelType.GetMethod("AttachGpc").Invoke(linked, new object[] { Gpc(m) });
+            return linked;
+        }
+        Require(ResultsComponentsCheck.Verify(Linked(reopened), name + " reopened").Values > 0, name + ": the Results components read the reopened GPC results");
         // C6 (before: the Cases output equal to the FEM list of generated cases): the generated cases of the reopened GPC model, one per position.
         var steps = GpcResultCatalog.Of(Gpc(reopened)).GeneratedMovingCases().Select(c => c.Name).ToArray();
         if (generated != null)
