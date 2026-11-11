@@ -20,6 +20,11 @@ internal static class Program
 #endif
         try
         {
+            // Rhino 8.36 uses this Windows implementation. The netcore root DLL
+            // is a throwing stub; loading it changes HostUtils.DeviceId and can
+            // invalidate the Cloud Zoo lease of the interactive Rhino session.
+            System.Runtime.Loader.AssemblyLoadContext.Default.LoadFromAssemblyPath(
+                @"C:\Program Files\Rhino 8\System\netcore\runtimes\win\lib\net7.0\System.Management.dll");
             RhinoInside.Resolver.Initialize(@"C:\Program Files\Rhino 8\System");
             if(args.Contains("--regression") && args.SkipWhile(a=>a!="--regression").Skip(1).FirstOrDefault()=="bridge-report")
                 return RunBridgeReport();
