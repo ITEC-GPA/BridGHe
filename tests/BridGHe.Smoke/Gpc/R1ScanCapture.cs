@@ -124,6 +124,7 @@ internal sealed class R1ScanCapture
 
     private static readonly Regex DigestToken = new Regex("(?<![0-9A-F:])[0-9A-F]{64}(?![0-9A-F])", RegexOptions.Compiled);
     private static readonly Regex BridgeFingerprintLine = new Regex("^bridge ([0-9]+) [0-9A-F]{64}$", RegexOptions.Compiled);
+    private static readonly Regex BeamBridgeLine = new Regex("^bridge (G[0-9]+|[0-9]+) [0-9A-F]{64}\r?$", RegexOptions.Compiled);
 
     /// <summary>The captured text with the declared digests replaced (the code of <c>GpcDraftCapture.WithDeclaredDigests</c>, private there).</summary>
     private (string Text, List<string> Names) WithDeclaredDigests(string captured, string key)
@@ -176,9 +177,34 @@ internal sealed class R1ScanCapture
         if (bridgeNow != null && OnlyBridgeFingerprint(GpcDraftCapture.WithoutGuids(declared), GpcDraftCapture.WithoutGuids(text))
             && GpcDraftCapture.BridgeValues(bridgeNow).SequenceEqual(GpcDraftCapture.BridgeValues(GpcDraftArchive.ReadConversion(e.Data, e.Records).Report.Bridge), StringComparer.Ordinal))
         { detail = GpcDraftCapture.SharedCompositeRule; return Outcome.Declared; }
+        // R1 (the declared rule of the replays, GpcOnlyReplay.Text): the bridge data of a beam draft are keyed by the GUID of the beam, so their
+        // fingerprint (the line «bridge <GUID> <fingerprint>») changes with the identity: a beam draft equal but for that line, with the same bridge
+        // values (member, super element, section state, composite sections: GpcDraftCapture.BridgeValues), is declared.
+        if (datum is LegacyBeamDraft { Bridge: { } bridge } && e.Kind == "beam")
+        {
+            var a = GpcDraftCapture.WithoutGuids(declared).Split('\n'); var b = GpcDraftCapture.WithoutGuids(text).Split('\n');
+            // The bridge line of the draft («bridge <GUID> <fingerprint>») and of its report («bridge <count> <fingerprint>»), GUIDs as ordinals.
+            static bool BridgeLine(string l) => BeamBridgeLine.IsMatch(l);
+            if (a.Length == b.Length && a.Zip(b).All(p => p.First == p.Second || BridgeLine(p.First) && BridgeLine(p.Second)))
+            {
+                var now = new GPC.Checkers.CompositeBridge.BridgeModelData(); now.Set(bridge);
+                var capturedBridge = GpcDraftArchive.ReadBeam(e.Data, e.Records).Bridge;
+                var before = new GPC.Checkers.CompositeBridge.BridgeModelData(); if (capturedBridge != null) before.Set(capturedBridge);
+                if (capturedBridge != null && GpcDraftCapture.BridgeValues(now).SequenceEqual(GpcDraftCapture.BridgeValues(before), StringComparer.Ordinal))
+                { detail = BeamBridgeRule; return Outcome.Declared; }
+                detail = "the bridge values differ: " + string.Join(" ; ", GpcDraftCapture.BridgeValues(before)) + " -> " + string.Join(" ; ", GpcDraftCapture.BridgeValues(now));
+                return Outcome.Different;
+            }
+            var differing = a.Zip(b).Where(p => p.First != p.Second).Take(3).Select(p => "  before " + p.First + "\n  after  " + p.Second);
+            detail = $"{(a.Length == b.Length ? a.Zip(b).Count(p => p.First != p.Second) : -1)} lines differ ({a.Length} / {b.Length} lines):\n" + string.Join("\n", differing);
+            return Outcome.Different;
+        }
         detail = GpcDraftArchiveChecks.FirstDifference(GpcDraftCapture.WithoutGuids(captured), GpcDraftCapture.WithoutGuids(text));
         return Outcome.Different;
     }
+
+    /// <summary>R1: the declared rule of a beam draft whose bridge data, keyed by the GUID of the beam, have another fingerprint and the same values.</summary>
+    internal const string BeamBridgeRule = "R1: beam draft: the bridge data keyed by the GUID of the beam (another fingerprint), the bridge values equal (the rule of the replays)";
 
     /// <summary>True when the capture has an entry at the location.</summary>
     internal bool Has(string key) => entries.ContainsKey(key);
