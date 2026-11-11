@@ -68,14 +68,14 @@ namespace BridGHe.Grasshopper.Components.Preview
             DataTypes.Fem.GH_Node n when n.Value==null && n.Gpc!=null=>new GpcDrafts(new object[]{n.Gpc}),
             DataTypes.Fem.GH_Beam b when b.Value==null && b.Gpc!=null=>new GpcDrafts(new object[]{b.Gpc}),
             DataTypes.Fem.GH_Plate p when p.Value==null && p.Gpc!=null=>new GpcDrafts(new object[]{p.Gpc}),
-            DataTypes.GH_CompositeBeam c when GpcOnlyModels.WithoutFem(c)=>new GpcDrafts(new object[]{c.Gpc.Beam}),
+            DataTypes.GH_CompositeBeam c when GpcOnlyModels.WithoutFem(c)=>new GpcDrafts(new object[]{c.Gpc}), // C3: the datum (its solids and bars)
             _=>null,
         };
         private static IEnumerable<object> DraftItems(object value)=>value is GpcDrafts d?d.Items:Array.Empty<object>();
         public override bool IsPreviewCapable=>true;
         public override BoundingBox ClippingBox
         {
-            get {var box=BoundingBox.Empty;foreach(var value in values){foreach(var e in ModelPreview.Elements(value))box.Union(ModelPreview.Bounds(e));foreach(var d in DraftItems(value))box.Union(DataTypes.GpcDraftGeometry.Bounds(d));foreach(var path in Paths(value)){var c=path.Coordinates;if(c?.Length==9 && c.All(double.IsFinite))for(int i=0;i<9;i+=3)box.Union(new Point3d(c[i],c[i+1],c[i+2]));}}return box;}
+            get {var box=BoundingBox.Empty;foreach(var value in values){foreach(var e in ModelPreview.Elements(value))box.Union(ModelPreview.Bounds(e));foreach(var d in DraftItems(value))box.Union(ModelPreview.DraftBounds(d));foreach(var path in Paths(value)){var c=path.Coordinates;if(c?.Length==9 && c.All(double.IsFinite))for(int i=0;i<9;i+=3)box.Union(new Point3d(c[i],c[i+1],c[i+2]));}}return box;}
         }
         private static IEnumerable<MovingPath> Paths(object value)=>value switch{ModelModel m=>m.MovingPaths,MovingPath p=>new[]{p},_=>Array.Empty<MovingPath>()};
         public override void DrawViewportWires(IGH_PreviewArgs args)

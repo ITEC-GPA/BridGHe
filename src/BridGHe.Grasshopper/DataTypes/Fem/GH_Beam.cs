@@ -191,11 +191,15 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         #region PreviewData methods
 
-        public BoundingBox ClippingBox => Boundingbox;
+        // C3 (11/11): without a FEM value, the box of the draft with its section solids (as the FEM box holds the shapes).
+        public BoundingBox ClippingBox => Value == null ? Display.ModelPreview.DraftBounds(Gpc) : Boundingbox;
 
         public void DrawViewportMeshes(GH_PreviewMeshArgs args)
         {
-            if (Display.ModelPreview.Automatic && Value != null) Display.ModelPreview.Meshes(Value,args.Pipeline,Display.DisplayPreferences.Current);
+            if (!Display.ModelPreview.Automatic) return;
+            // C3 (11/11): a beam given by its draft alone draws its section solids shaded, as the FEM beam.
+            if (Value == null) Display.ModelPreview.DraftMeshes(Gpc,args.Pipeline,Display.DisplayPreferences.Current);
+            else Display.ModelPreview.Meshes(Value,args.Pipeline,Display.DisplayPreferences.Current);
         }
 
         public void DrawViewportWires(GH_PreviewWireArgs args)
