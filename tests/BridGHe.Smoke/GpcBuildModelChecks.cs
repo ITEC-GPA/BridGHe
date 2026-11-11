@@ -68,7 +68,12 @@ internal static class GpcBuildModelChecks
     /// <summary>The kN-m native section of core-native (<c>Program.CheckNativeSectionAnalysis</c>) through Build Model, measured as above.</summary>
     internal static void Single(string label, ModelModel fem) => Run(label, fem);
 
-    internal static void Regression() => Run(null, null);
+    internal static void Regression()
+    {
+        BridgeMergeTests.Initialize();
+        foreach (var line in GpcNativeExamples.RequireSameAsFem()) Console.WriteLine("GPC NATIVE EXAMPLES (transitional) " + line);
+        Run(null, null);
+    }
 
     private static void Run(string singleLabel, ModelModel singleModel)
     {

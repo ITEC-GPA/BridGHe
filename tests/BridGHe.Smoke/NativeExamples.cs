@@ -9,7 +9,11 @@ using BridGHe.Common.MovingLoads;
 using BridGHe.Common.Straus;
 using Rhino.Geometry;
 
-/// <summary>Numerical integration benchmarks, N-mm, linear elastic material, no gravity.</summary>
+/// <summary>Numerical integration benchmarks, N-mm, linear elastic material, no gravity.
+/// <para>R6.6 lane R0: <b>the FEM catalogue (<see cref="Create"/>, <see cref="Example"/> with its FEM model and checks) is transitional</b>: it is
+/// kept for the callers outside R0 until lanes R1–R4 move them to the GPC catalogue (<see cref="GpcNativeExamples"/>, the same examples built
+/// directly as GPC models), and P2 removes it. <c>--examples</c> runs the GPC catalogue on the GPC-only path (GPC_PILOT); <see cref="Recorder"/>
+/// is shared by both.</para></summary>
 internal static class NativeExamples
 {
     internal sealed record Example(string Id,string Title,int Solver,bool Moving,ModelModel Model,string[] Cases,Action<ModelModel,Recorder> Verify);
@@ -71,7 +75,41 @@ internal static class NativeExamples
     {
         string library,item;
         using(var api=new GPC.Converter.Straus7.Straus7NativeApi()){var entry=api.MovingLibraryCatalog().First(p=>p.Value.Length!=0);library=entry.Key;item=entry.Value[0];}
-        const double length=6000;var m=Beam(12,length,true);
+        const double length=6000;
+#if GPC_PILOT
+        {
+            // R6.6 R0: on GPC, without a FEM model: Build Model of the beam of example 04 and Attach Moving Paths with the library item
+            // (GpcModelTransforms.ReplacePaths, the rule of the former exporter); the template expanded by the Converter (N-mm), and Export of
+            // the GPC-only input writes it.
+            var b=GpcNativeExamples.Beam("library",12,length,true);
+            b.Paths.Add(GpcNativeExamples.Path04(length,new MovingTemplate{Name="Library",LibraryName=library,LibraryItem=item}));
+            var input=b.Build("library").Input;
+            var resolved=GPC.Converter.Straus7.Straus7MovingLibrary.Resolve(library,item,Path.GetTempPath());
+            var expanded=input.Model.MovingLoads.Paths.Single().Template;
+            if(expanded.Vehicles.Length==0||expanded.Vehicles.Length!=resolved.Template.Vehicles.Length||expanded.LaneFactors.Length!=resolved.Template.LaneFactors.Length)
+                throw new Exception("FAIL: library moving template not expanded on GPC (Attach Moving Paths): "+library+"/"+item);
+            Console.WriteLine($"PASS: library moving template {library}/{item} expanded by the Converter on GPC (Attach Moving Paths): {expanded.Vehicles.Length} vehicles, {expanded.LaneFactors.Length} lanes");
+            string gpcFolder=Path.GetFullPath(Path.Combine("artifacts","native",Guid.NewGuid().ToString("N")));Directory.CreateDirectory(gpcFolder);
+            BridGHe.Common.Gpc.Legacy.FemmAnalysisSeam.Export(null,input,Path.Combine(gpcFolder,"library.st7"),input.Tolerance,new List<string>());
+            if(!File.Exists(Path.Combine(gpcFolder,"library.st7")))throw new Exception("FAIL: library moving template export of the GPC-only input");
+            Console.WriteLine("PASS: library moving template exported by the Converter writer");
+        }
+        {
+            // Transitional (P2 moves it to a frozen 0.3.0 payload or retires it): the reader of a former model with the library item, the
+            // payload written from a FEM model.
+            var m=Beam(12,length,true);
+            m.MovingPaths.Add(new MovingPath{LoadCaseName="Traffic",Divisions=13,Target=2,Coordinates=new double[]{0,0,0,length,0,0,0,1000,0},ConvertToStaticCases=true,
+                Template=new MovingTemplate{Name="Library",LibraryName=library,LibraryItem=item}});
+            var report=new BridGHe.Common.Gpc.Legacy.LegacyImportReport();
+            var gpc=BridGHe.Common.Gpc.Legacy.LegacyModelImport.Import(BridGHe.Common.Gpc.Legacy.LegacyArchive.Read(ModelArchive.Write(m)),Guid.NewGuid(),1e-6,report);
+            var expected=GPC.Converter.Straus7.Straus7MovingLibrary.Resolve(library,item,Path.GetTempPath());
+            var template=gpc.MovingLoads.Paths.Single().Template;
+            if(template.Vehicles.Length==0||template.Vehicles.Length!=expected.Template.Vehicles.Length||template.LaneFactors.Length!=expected.Template.LaneFactors.Length)
+                throw new Exception("FAIL: library moving template not expanded: "+library+"/"+item);
+            Console.WriteLine($"PASS: library moving template {library}/{item} expanded by the Converter: {template.Vehicles.Length} vehicles, {template.LaneFactors.Length} lanes");
+        }
+#else
+        var m=Beam(12,length,true);
         m.MovingPaths.Add(new MovingPath{LoadCaseName="Traffic",Divisions=13,Target=2,Coordinates=new double[]{0,0,0,length,0,0,0,1000,0},ConvertToStaticCases=true,
             Template=new MovingTemplate{Name="Library",LibraryName=library,LibraryItem=item}});
         var report=new BridGHe.Common.Gpc.Legacy.LegacyImportReport();
@@ -85,6 +123,7 @@ internal static class NativeExamples
         BridGHe.Common.Gpc.Legacy.FemmAnalysisSeam.Export(m,Path.Combine(folder,"library.st7"),1e-6,new List<string>());
         if(!File.Exists(Path.Combine(folder,"library.st7")))throw new Exception("FAIL: library moving template export");
         Console.WriteLine("PASS: library moving template exported by the Converter writer");
+#endif
     }
 
     internal static IEnumerable<Example> Create()
@@ -182,7 +221,19 @@ internal static class NativeExamples
             });
         }
     }
+    /// <summary><c>--examples</c>. R6.6 R0: with GPC_PILOT the GPC catalogue on the GPC-only path (<see cref="GpcNativeExamples.Run"/>: the analytic
+    /// checks on the analysed GPC model through the GPC result readers, the Results components on the GPC-only model); otherwise the FEM catalogue
+    /// on the FEM path (transitional, removed by P2).</summary>
     internal static int Run(string selected)
+    {
+#if GPC_PILOT
+        return GpcNativeExamples.Run(selected);
+#else
+        return RunFem(selected);
+#endif
+    }
+
+    private static int RunFem(string selected)
     {
         string runId=DateTime.Now.ToString("yyyyMMdd-HHmmssfff");
         string root=Path.Combine(ExamplePaths.Validation,"esecuzioni",runId);Directory.CreateDirectory(root);
@@ -199,11 +250,6 @@ internal static class NativeExamples
                 string solverPath=example.Id=="01-cantilever"?Path.GetRelativePath(Environment.CurrentDirectory,Path.Combine(folder,"model.st7")).Replace('\\','/'):Path.Combine(folder,"model.st7");
                 var result=StrausAnalysis.Run(example.Model,solverPath,example.Solver,example.Cases,1e-6,example.Moving,out warnings,out var analysed);
                 File.WriteAllBytes(Path.Combine(folder,"results.bgmodel"),ModelArchive.Write(result));example.Verify(result,record);
-#if GPC_PILOT
-                // C4: Node, Beam and Plate Results read the analysed GPC elements and show the FEM values bit for bit (every solver kind).
-                var outcome=ResultsComponentsCheck.Verify(ResultsComponentsCheck.AnalysedGoo(result,analysed),example.Id);
-                record.Near("Results components: values from GPC equal to FEM bit for bit",outcome.Values>0?1:0,1,0,0);
-#endif
                 record.Near("Input remains without results",example.Model.Elements.Sum(e=>e.Results.Count),0,0,0);
             }catch(Exception ex){error=ex.ToString();Console.WriteLine("ERROR: "+error);}
             bool passed=error==null&&record.Measurements.All(m=>m.Passed);if(!passed)failures++;
