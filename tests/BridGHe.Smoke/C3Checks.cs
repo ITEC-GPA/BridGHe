@@ -22,8 +22,9 @@ using Rhino.Geometry;
 /// <item>Gap 1, regression <c>gpc-c3</c> (<see cref="Materials"/>): a material with explicit G (Use Poisson off), damping only, thermal data only,
 /// a table without α and ρ, a table with α and ρ, a concrete with a table and a concrete with all of them is a valid GPC material (the linear
 /// elastic law without a table, elastoplastic with one), and the beam, truss, cable, plate and slab-grillage properties built on each are made,
-/// with the data of the material (the reader of the FEM value gives the same; the table only on the types of 0.3.0). The native readback
-/// (<c>--c3 --native</c>, <see cref="Native"/>): what Straus7 receives through the GPC-only path, against the calls of 0.3.0 replayed.</item>
+/// with the data of the material (the reader of the FEM value gives the same; the table only on the types of 0.3.0). The write plan of the
+/// Converter for a GPC-only model with every material (<see cref="WritePlan"/>, recorded, not native) and the native readback
+/// (<c>--c3 --native</c>, <see cref="Native"/>): what Straus7 receives through the GPC-only path, against the numbers and calls of 0.3.0.</item>
 /// <item>Gap 2, the same regression (<see cref="Display"/>): the section solids and bar lines a draft given by its GPC data alone draws,
 /// against the FEM drawing of the same element (TRANSITIONAL: the FEM side goes in P2) and against explicit counts and boxes for one case of
 /// each kind (beam, composite beam, plate; the homogenised composite property that draws nothing: the open point of C3). The T, C, angle
@@ -41,6 +42,7 @@ internal static class C3Checks
     {
         failures.Clear(); checks = 0;
         Materials();
+        WritePlan();
         Display(false);
         foreach (var f in failures) Console.WriteLine("  C3 FAIL: " + f);
         Console.WriteLine($"C3 CHECKS: {checks} checks, {failures.Count} failures");
@@ -413,9 +415,10 @@ internal static class C3Checks
     /// with the numbers of the former material): E, G (or Use Poisson: the effective G, listed difference E7), ν, density, α, damping and
     /// thermal data; (b) the preview of the T, C, angle and double sections (native Straus7 sections) against the FEM drawing.
     /// </summary>
-    internal static int Native()
+    /// <summary>The model of the native readback: Build Model on GPC drafts alone (the GPC-only path), a beam (solid rectangle 300 × 500,
+    /// Beam) and a thin shell (200 + 200) on every material of <see cref="Cases"/>, named «C3 beam k» and «C3 shell k».</summary>
+    private static GpcModels.Conversion MaterialsModel()
     {
-        failures.Clear(); checks = 0;
         var cases = Cases();
         var units = new BridgeUnits(DefinitionUnits.Nmm);
         var beams = new List<LegacyBeamDraft>(); var plates = new List<LegacyPlateDraft>();
@@ -431,6 +434,53 @@ internal static class C3Checks
         var conversion = LegacyBuildModel.Build("C3 materials", units, 0.001, new List<(Guid, LegacyNodeDraft)>(), beams.Select(b => (b.Beam.Guid, b)).ToList(),
             plates.Select(p => (p.Plate.Guid, p)).ToList(), new List<LegacyCombinationDraft>(), new List<LegacyStageDraft>(), gpcOnly: true);
         GpcPreflight.Require(conversion.Model);
+        return conversion;
+    }
+
+    /// <summary>The material numbers 0.3.0 wrote for a recipe (StrausR3Helper, N-mm: factors 1): St7SetBeamMaterialData {E, G, ν, ρ, α,
+    /// viscous damping, damping ratio, conductivity, specific heat} with the shear modulus mode, St7SetPlateIsotropicMaterial {E, ν, ρ, α,
+    /// viscous damping, damping ratio, conductivity, specific heat}.</summary>
+    private static (double[] Beam, int Mode, double[] Plate) Former(LegacyMaterialRecipe r) =>
+        (new[] { r.Modulus, r.ShearModulus, r.PoissonRatio, r.Density, r.ThermalExpansion, r.ViscousDamping, r.DampingRatio, r.Conductivity, r.SpecificHeat }, r.UsePoisson ? 0 : 1,
+         new[] { r.Modulus, r.PoissonRatio, r.Density, r.ThermalExpansion, r.ViscousDamping, r.DampingRatio, r.Conductivity, r.SpecificHeat });
+
+    /// <summary>Not native: the write plan of the Converter for <see cref="MaterialsModel"/> (recorded, <see cref="Straus7Recorder"/>): the
+    /// material arrays of every beam and shell property against the numbers of 0.3.0 (<see cref="Former"/>; with Use Poisson the G of the
+    /// beam is E/2(1+ν), listed difference E7), and the table of the beams and shells of a table material.</summary>
+    private static void WritePlan()
+    {
+        var cases = Cases();
+        var calls = Straus7Recorder.Record(MaterialsModel());
+        static double[] Numbers(string call)
+        {
+            // CreateBeamProperty(id, 'name', formulation, [section], [material]) / CreatePlateProperty(id, 'name', formulation, bending, membrane, [material], orthotropic)
+            int open = call.LastIndexOf('['), close = call.LastIndexOf(']');
+            return call.Substring(open + 1, close - open - 1).Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => double.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+        }
+        int laws = calls.Count(c => c.StartsWith("SetMaterialLaw(", StringComparison.Ordinal));
+        // The Converter names a plate property after its plate (a property per plate, in the order of the plates): the k-th shell.
+        var plateCalls = calls.Where(c => c.StartsWith("CreatePlateProperty(", StringComparison.Ordinal)).ToList();
+        for (int k = 0; k < cases.Length; k++)
+        {
+            var r = cases[k].Recipe; var former = Former(r); string label = "write plan «" + cases[k].Tag + "»";
+            string beam = calls.FirstOrDefault(c => c.StartsWith("CreateBeamProperty(", StringComparison.Ordinal) && c.Contains("'C3 beam " + k + "'"));
+            string plate = plateCalls.Count == cases.Length ? plateCalls[k] : null;
+            Check(beam != null && plate != null, label + ": the beam and shell properties are written (" + string.Join(" / ", calls.Where(c => c.StartsWith("Create", StringComparison.Ordinal) && c.Contains("Property(")).Select(c => c.Substring(0, Math.Min(60, c.Length)))) + ")");
+            if (beam == null || plate == null) continue;
+            var b = Numbers(beam); var p = Numbers(plate);
+            double g = r.UsePoisson ? r.Modulus / (2 * (1 + r.PoissonRatio)) : r.ShearModulus;
+            Check(b.Length == 9 && b[0] == former.Beam[0] && b[1] == g && Enumerable.Range(2, 7).All(j => b[j] == former.Beam[j]), label + $": beam material {Rs(b)}, 0.3.0 {Rs(former.Beam)} (G {R(g)})");
+            Check(p.Length == 8 && Enumerable.Range(0, 8).All(j => p[j] == former.Plate[j]), label + $": shell material {Rs(p)}, 0.3.0 {Rs(former.Plate)}");
+        }
+        Check(laws == 2 * cases.Count(c => c.HasTable), $"write plan: {laws} material laws, one on the beam and one on the shell of each table material");
+        Console.WriteLine($"C3 WRITE PLAN: {cases.Length} beam and shell properties with the material numbers of 0.3.0, {laws} tables");
+    }
+
+    internal static int Native()
+    {
+        failures.Clear(); checks = 0;
+        var cases = Cases();
+        var conversion = MaterialsModel();
         string folder = Path.GetFullPath(Path.Combine("artifacts", "native", Guid.NewGuid().ToString("N"))); Directory.CreateDirectory(folder);
         string st7 = Path.Combine(folder, "c3-materials.st7");
         var plan = Straus7ModelWritePlan.Prepare(conversion.Model, null, null, conversion.Report.NativeSections);
@@ -447,7 +497,10 @@ internal static class C3Checks
                     var p = api.ReadProperty(Straus7Entity.Beam, api.ReadElement(Straus7Entity.Beam, b).Property); beamByName[p.Name] = p;
                     int mode = -1; C(F<RefInt>("St7GetBeamShearModulusMode")(1, p.Number, ref mode), "St7GetBeamShearModulusMode"); beamMode[p.Name] = mode;
                 }
-                for (int q = 1; q <= api.Count(Straus7Entity.Plate); q++) { var p = api.ReadProperty(Straus7Entity.Plate, api.ReadElement(Straus7Entity.Plate, q).Property); plateByName[p.Name] = p; }
+                // The Converter names a plate property after its plate (one per plate, in the order of the plates): the k-th shell by its plate.
+                for (int q = 1; q <= api.Count(Straus7Entity.Plate); q++) { var p = api.ReadProperty(Straus7Entity.Plate, api.ReadElement(Straus7Entity.Plate, q).Property); plateByName["C3 shell " + (q - 1)] = p; }
+                Console.WriteLine($"C3 NATIVE .st7: {api.Count(Straus7Entity.Beam)} beams, properties {string.Join(" | ", beamByName.Keys)}; {api.Count(Straus7Entity.Plate)} plates, properties {string.Join(" | ", plateByName.Keys)}");
+                Console.WriteLine($"C3 NATIVE model: beam properties {string.Join(" | ", conversion.Model.BeamProperties.Keys)}");
                 // 0.3.0 replayed (file 7): the material calls of StrausR3Helper for these materials, in N-mm (the factors of the units are 1).
                 string scratch = Path.Combine(folder, "c3-030.st7");
                 C(F<NewFile>("St7NewFile")(7, scratch, folder), "St7NewFile");
@@ -483,7 +536,10 @@ internal static class C3Checks
                         // A Table Material has E 0: Straus7 reads ν and G of such a beam back as it keeps them (open question 3 of C1), so only
                         // E, density, α, damping and thermal data are compared there (printed above in full).
                         bool table = r.Modulus == 0;
-                        Check(mat.Length >= 9 && (table ? new[] { 0, 3, 4, 5, 6, 7, 8 } : new[] { 0, 2, 3, 4, 5, 6, 7, 8 }).All(j => mat[j] == former[j]), label + ": beam material data (but G) as 0.3.0");
+                        // E7 (listed difference): with Use Poisson GPC writes G = E/2(1+ν) in the mode «G given», and Straus7 reads ν back from E
+                        // and G, within one rounding of ν (0.19999999999999996 for 0.2); 0.3.0 wrote the mode «from ν». Every other value exact.
+                        Check(mat.Length >= 9 && new[] { 0, 3, 4, 5, 6, 7, 8 }.All(j => mat[j] == former[j]) && (table || (r.UsePoisson ? Near(mat[2], former[2], 1e-15) : mat[2] == former[2])),
+                            label + ": beam material data (but G) as 0.3.0");
                         if (!table)
                             Check(r.UsePoisson ? mode == 1 && formerMode == 0 && Near(G(mat, mode), G(former, formerMode), 1e-12) : mode == 1 && formerMode == 1 && mat[1] == former[1] && mat[1] == r.ShearModulus,
                                 label + $": G {R(G(mat, mode))} (mode {mode}), 0.3.0 {R(G(former, formerMode))} (mode {formerMode})");
