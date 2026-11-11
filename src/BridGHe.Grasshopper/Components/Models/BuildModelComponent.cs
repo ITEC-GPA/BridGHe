@@ -131,7 +131,7 @@ namespace BridGHe.Grasshopper.Components.Models
                 {
                     var buildCounts = new Common.Gpc.Legacy.LegacyBuildModel.BuildCounts();
                     var input = Common.Gpc.Legacy.LegacyBuildModel.Build(name, new Common.Gpc.BridgeUnits(Common.Gpc.BridgeUnits.Parse(((ModelModel.ModelUnits)units).ToString())), Settings.Instance.Tolerance,
-                        nodeDrafts, beamDrafts, plateDrafts, combinations.Select(c => c.Gpc).ToList(), stages.Select(s => s.Gpc).ToList(), buildCounts);
+                        nodeDrafts, beamDrafts, plateDrafts, combinations.Select(c => c.Gpc).ToList(), stages.Select(s => s.Gpc).ToList(), buildCounts, gpcOnly: model == null);
                     // R6.5 (coordinator, 7/11): the copies of an element with the same ID and the same data are kept once, and named.
                     foreach (var (family, word) in new[] { (1, "beams"), (2, "plates") })
                         if (buildCounts.DroppedCopies[family].Count > 0)
