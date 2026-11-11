@@ -5,6 +5,7 @@ using System.Linq;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Geometry;
 using BridGHe.Common.Gpc;
+using BridGHe.Common.Gpc.Builders;
 using BridGHe.Common.Gpc.Legacy;
 using BridGHe.Common.Helpers;
 using BridGHe.Common.Models;
@@ -18,8 +19,9 @@ using BridgeActionBehavior = BridGHe.Common.Checks.BridgeActionBehavior;
 /// the FEM values, then <see cref="GpcBeamDrafts.FromFemm(BeamModel, Guid?)"/> with the identity of the GPC draft): every part of the beam
 /// (identity, ends, loads, attributes, physical data, axes, offsets, formulation, groups, property with its material and section) by its
 /// fingerprint, the bridge data (member, super element, local section state with its D3 property fingerprint), the angle and the data of
-/// the property (formulation, principal angle, native section). Not native: <c>gpc-state-override</c>; native: every Bridge State Override
-/// of 50 (<see cref="RequireComponents"/>).
+/// the property (formulation, principal angle, native section): native, every Bridge State Override of 50 (<see cref="RequireComponents"/>),
+/// TRANSITIONAL (R6.6 R2a: it reads the FEM outputs of the dual path; P2 decides). Not native, <c>gpc-state-override</c> (<see cref="Regression"/>):
+/// R6.6 R2a, the override on GPC data alone with explicit expected values.
 /// </summary>
 internal static class GpcStateOverrideChecks
 {
@@ -108,91 +110,130 @@ internal static class GpcStateOverrideChecks
         return parts;
     }
 
-    /// <summary>The FEM and GPC overrides of the same inputs: the same girders and other members in the same order, each GPC draft equal to the
-    /// conversion of its FEM output, or the same kind of error on both paths. The number of parts compared (-1: the same error).</summary>
-    private static int Both(string label, IReadOnlyList<BeamModel> fem, IReadOnlyList<LegacyBeamDraft> drafts, string[] ids, CompositeBeamPropertyModel[] properties,
-        BridgeCompositeSectionDefinition[] definitions, IReadOnlyList<BeamMomentState> states, BridgeActionBehavior behavior, int mixed, int zero, bool mass)
-    {
-        BridgeSegmentOverrideResult f = null; GpcStateOverrideResult g = null; Exception fe = null, ge = null;
-        try { f = BridgeStateOverride.Apply(fem, ids, properties, states, behavior, mixed, zero, mass); } catch (ArgumentException ex) { fe = ex; }
-        try { g = GpcStateOverride.Apply(drafts, ids, definitions, states, behavior, mixed, zero, mass); } catch (ArgumentException ex) { ge = ex; }
-        if (fe != null || ge != null)
-        {
-            if (fe == null || ge == null || fe.Message != ge.Message) throw new Exception($"GPC STATE OVERRIDE FAIL ({label}): FEM '{fe?.Message ?? "no error"}' / GPC '{ge?.Message ?? "no error"}'");
-            return -1;
-        }
-        if (f.Girders.Length != g.Girders.Length || f.OtherMembers.Length != g.OtherMembers.Length) throw new Exception($"GPC STATE OVERRIDE FAIL ({label}): counts differ");
-        int parts = 0;
-        for (int i = 0; i < f.Girders.Length; i++) parts += Compare(label, g.Girders[i], f.Girders[i]);
-        for (int i = 0; i < f.OtherMembers.Length; i++) parts += Compare(label, g.OtherMembers[i], f.OtherMembers[i]);
-        return parts;
-    }
-
-    /// <summary>Regression (not native) <c>gpc-state-override</c>: the girders of the simple bridge of the design tests on the steel reference,
-    /// moment states classified from the GPC conversion of the reference with synthetic results (all signs), one composite section per
-    /// segment; both behaviours, the mixed and zero policies, with and without Preserve Mass; the errors of the FEM override (shrinkage, mixed
-    /// sign with policy 0, a missing state, a changed reference, composite sections without concrete) on both paths.</summary>
+    /// <summary>Regression (not native) <c>gpc-state-override</c>, R6.6 R2a: Bridge State Override on GPC data alone (no FEM value). The
+    /// girders of the simple bridge of the design tests given by their GPC drafts (Bridge Segment Sections and Bridge Member Assignment on the
+    /// GPC base property, <see cref="GpcBridgeGeometryBuilders.Assigned"/>), the moment states classified from an analysed GPC reference with
+    /// synthetic results (BM2 at the ends and at mid span, by girder: positive, negative, mixed, zero within the tolerance), one composite
+    /// section per segment built in GPC; both behaviours, the mixed and zero policies, with and without Preserve Mass. The parity with the
+    /// conversion of the FEM outputs is retired with the FEM model; each output is checked against its own expected values: the girders and the
+    /// other members (unchanged) in their numbers, the state classified from the synthetic moments, cracked as the policies say, the property
+    /// the homogenised values of its segment at n∞ or n0 without the concrete when cracked, the section state recorded, the mass per length of
+    /// the steel reference kept (7.85E-9 × 75040, the analytical area of the I) or the density of the definition, geometry, IDs and formulation.
+    /// The errors of the override (shrinkage, mixed sign with policy 0, a missing state, a changed reference, composite sections without
+    /// concrete) with the messages of the former override. Rule of 0.4.0, the self-weight: the mass per length is the density times the area
+    /// of the former formula on the GPC section, bit for bit, and that area is the analytical area of the standard shapes.</summary>
     internal static void Regression()
     {
-        var steel = BridgeSegmentSectionsTests.BaseProperty(); steel.Material.Density = 7.85e-9;
+        var steel = R2aDesignFixtures.BaseProperty("Base", 7.85e-9);
         var geometry = SimpleBridgeBuilder.Build(SimpleBridgeTests.Input());
-        var schedule = BridgeSegmentSections.Create(geometry, steel, null);
-        var all = BridgeMemberAssignment.Assign(geometry, new Dictionary<int, BeamPropertyModel> { [-1] = steel }, schedule.Rules).Beams;
-        var lc = new LoadCaseModel("Dead", "Dead");
-        var girders = all.Where(b => b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value.Family == BridgeMemberFamily.Girder).ToArray();
-        for (int i = 0; i < girders.Length; i++) foreach (double s in new[] { 0d, .5, 1d })
-            girders[i].Results.Add(new BeamForceResultModel(lc, s, 0, "", true) { My = (i % 4) switch { 0 => 1e8, 1 => -1e8, 2 => (s - .5) * 2e8, _ => 500 }, Mx = -1e8 });
-        // The reference as a FEM model with nodes, converted to GPC with its results (the analysed GPC beams of the states).
-        var reference = new ModelModel(ModelModel.ModelUnits.Nmm) { Name = "State override reference" };
-        reference.AddElements(all); reference.AddElements(geometry.Nodes.Select((p, i) => new NodeModel((i + 1).ToString(), p)).ToArray()); reference.LoadCases.Add(lc);
-        var analysed = GpcSyntheticResults.Analysed(reference);
+        var schedule = BridgeSegmentSections.CreateGpc(geometry, steel, null);
+        var plans = BridgeMemberAssignment.Assign(geometry, null, schedule.Rules, new Dictionary<int, LegacyBeamProperty> { [-1] = steel }).Plans;
+        var all = plans.Select(p => GpcBridgeGeometryBuilders.Assigned(p, R2aDesignFixtures.Id("state override:" + p.SolverId))).ToArray();
+        var girders = all.Where(b => b.Bridge?.Member?.Family == GPC.Checkers.CompositeBridge.Layout.BridgeMemberFamily.Girder).ToArray();
+        // The moments of girder i (BM2 at the normalised stations 0, 0.5, 1): positive, negative, mixed, zero within the tolerance of 1000.
+        double Moment(int i, double s) => (i % 4) switch { 0 => 1e8, 1 => -1e8, 2 => (s - .5) * 2e8, _ => 500 };
+        var expected = new[] { BeamMomentSign.Positive, BeamMomentSign.Negative, BeamMomentSign.Mixed, BeamMomentSign.Zero };
+        // The analysed GPC reference: a copy of every beam (ends, angle, property) with its own nodes, the results of the girders.
+        var test = new GpcTestModel("State override reference"); test.Case("Dead");
+        var reference = new Dictionary<string, GPC.Model.Elements.BeamElement>(StringComparer.Ordinal);
+        for (int k = 0; k < all.Length; k++)
+        {
+            var b = all[k].Beam; var property = GPC.Model.Core.ModelValues.CopyValue((GPC.Model.ElementProperties.ElasticBeamProperty)b.BeamProperty);
+            reference[b.Name] = test.Beam(b.Name, test.Node("a" + k, b.StartPoint.X, b.StartPoint.Y, b.StartPoint.Z), test.Node("b" + k, b.EndPoint.X, b.EndPoint.Y, b.EndPoint.Z), all[k].AngleDeg, property);
+        }
+        for (int i = 0; i < girders.Length; i++)
+        {
+            var a = reference[girders[i].Beam.Name];
+            foreach (double s in new[] { 0d, .5, 1d }) test.Forces(a, "Dead", s * a.Length, 0, bm1: -1e8, bm2: Moment(i, s));
+        }
+        var analysed = test.Analyse();
         var catalog = GpcResultCatalog.Of(analysed) ?? throw new Exception("GPC STATE OVERRIDE FAIL: no results catalog");
-        var femBeams = reference.Beams.ToList();
-        var states = BeamMomentClassification.Classify(girders, girders.Select(b => (catalog, analysed, analysed.BeamElements[femBeams.IndexOf(b) + 1])).ToArray(), "Dead");
-        if (states.Any(s => s.Analysed.Beam == null)) throw new Exception("GPC STATE OVERRIDE FAIL: states without their analysed GPC beam");
+        var states = BeamMomentClassification.Classify(girders.Select(g => g.Beam.Name).ToArray(), new BeamModel[girders.Length],
+            girders.Select(g => (catalog, analysed, reference[g.Beam.Name])).ToArray(), "Dead");
+        if (states.Any(s => s.Analysed.Beam == null) || states.Where((s, i) => s.Sign != expected[i % 4] || s.Source != null).Any())
+            throw new Exception("GPC STATE OVERRIDE FAIL: the states are not those of the synthetic moments, with their analysed GPC beams and no FEM source");
         var ids = schedule.Rules.Select(r => $"G{r.Group}-C{r.Segment}").ToArray();
-        var properties = ids.Select(id => { var p = BridgeGrillageExample.Composite(new()); p.Name = "CS " + id; p.SteelSection = ModelArchive.Clone(steel.Section); p.ConsiderRebar = true; p.ConcreteSection = new(250, 3000, 1600, 40); return p; }).ToArray();
-        var definitions = properties.Select(p => GpcCompositeSections.Definition(p, p.Name)).ToArray();
-        var drafts = all.Select(b => GpcBeamDrafts.FromFemm(b)).ToArray();
-        int compared = 0, variants = 0, errors = 0;
+        // One composite section per segment: the grillage section on the I of the base (2500, flanges 600 × 30, web 16), slab 3000 × 250 with
+        // the top row 1600 at cover 40, Consider Rebar (the former fixture: Composite with the base section and SectionConcreteSlabModel(250, 3000, 1600, 40)).
+        GpcCompositeDefinitions.Numbers Numbers(string id) => GpcCompositeDefinitions.Grillage(new BridgeGrillageExample.Parameters()) with
+        {
+            Name = "CS " + id, Height = 2500, Web = 16, TopWidth = 600, TopThickness = 30, BottomWidth = 600, BottomThickness = 30,
+            SlabWidth = 3000, SlabHeight = 250, TopArea = 1600, TopCover = 40, ConsiderRebar = true,
+        };
+        var definitions = ids.Select(id => GpcCompositeDefinitions.Create(Numbers(id))).ToArray();
+        var definitionOf = ids.Select((id, i) => (id, definitions[i])).ToDictionary(p => p.id, p => p.Item2, StringComparer.Ordinal);
+        double baseArea = 600 * 30 + 600 * 30 + 16 * (2500 - 30 - 30), baseMass = 7.85e-9 * baseArea;
+        int checks = 0, variants = 0, errors = 0;
+        var girderNames = girders.Select(g => g.Beam.Name).ToHashSet(StringComparer.Ordinal); var others = all.Where(b => !girderNames.Contains(b.Beam.Name)).ToArray();
+        void Require(bool ok, string label, string what) { if (!ok) throw new Exception($"GPC STATE OVERRIDE FAIL ({label}): {what}"); checks++; }
         foreach (var behavior in new[] { BridgeActionBehavior.LongTerm, BridgeActionBehavior.ShortTerm })
             foreach (int mixed in new[] { 1, 2 })
                 foreach (int zero in new[] { 0, 1 })
                     foreach (bool mass in new[] { true, false })
                     {
-                        int parts = Both($"{behavior} mixed {mixed} zero {zero} mass {mass}", all, drafts, ids, properties, definitions, states, behavior, mixed, zero, mass);
-                        if (parts < 0) throw new Exception($"GPC STATE OVERRIDE FAIL: valid inputs rejected ({behavior} {mixed} {zero} {mass})");
-                        compared += parts; variants++;
+                        string label = $"{behavior} mixed {mixed} zero {zero} mass {mass}";
+                        var result = GpcStateOverride.Apply(all, ids, definitions, states, behavior, mixed, zero, mass);
+                        Require(result.Girders.Length == girders.Length && result.OtherMembers.Length == all.Length - girders.Length, label, "girders and other members retained");
+                        Require(result.OtherMembers.Select((o, i) => o.Beam.Name == others[i].Beam.Name && Fp(o.Beam.BeamProperty) == Fp(others[i].Beam.BeamProperty)
+                            && o.Bridge?.SectionState == null).All(v => v), label, "other members unchanged, in order");
+                        foreach (var g in result.Girders)
+                        {
+                            int i = Array.FindIndex(girders, x => x.Beam.Name == g.Beam.Name); var input = girders[i]; var sign = expected[i % 4];
+                            bool cracked = sign == BeamMomentSign.Negative || sign == BeamMomentSign.Mixed && mixed == 2 || sign == BeamMomentSign.Zero && zero == 1;
+                            var meta = input.Bridge.Member; var definition = definitionOf[$"G{meta.Group}-C{meta.Segment}"];
+                            double n = behavior == BridgeActionBehavior.LongTerm ? definition.NLongTerm : definition.NShortTerm;
+                            var values = GpcCompositeSections.Homogenised(definition, n, !cracked);
+                            var p = (GPC.Model.ElementProperties.ElasticBeamProperty)g.Beam.BeamProperty; var s = g.Property.Section; var state = g.Bridge?.SectionState;
+                            Require(i >= 0 && g.Beam.StartPoint.Equals(input.Beam.StartPoint) && g.Beam.EndPoint.Equals(input.Beam.EndPoint) && g.AngleDeg == input.AngleDeg
+                                && g.Beam.Assignments.Formulation == GPC.Model.Structure.Assignments.BeamFormulation.StraightTwoNode, label, $"beam {g.Beam.Name}: geometry, ID, angle and formulation");
+                            Require(B(p.Section.Area) == B(values.Area) && s.CompositePreview && B(s.Area) == B(values.Area) && B(s.I11) == B(values.I11) && B(s.I22) == B(values.I22) && B(s.J) == B(values.J),
+                                label, $"beam {g.Beam.Name}: the homogenised values of its segment at n = {n} ({(cracked ? "cracked" : "uncracked")})");
+                            Require(state != null && state.Behavior.ToString() == behavior.ToString() && state.ConcreteExcluded == cracked && state.ModularRatio == n && state.ClassificationCase == "Dead"
+                                && g.Records.SectionStates == 1, label, $"beam {g.Beam.Name}: the section state");
+                            Require(mass ? Math.Abs(p.Material.Density * values.Area / baseMass - 1) < 1e-12 : p.Material.Density == definition.AnalysisSteel.Density,
+                                label, $"beam {g.Beam.Name}: " + (mass ? "the mass per length of the steel reference kept" : "the density of the definition kept"));
+                        }
+                        Require(girders.All(b => b.Bridge.SectionState == null) && all.All(b => B(GpcSectionMass.LegacyArea(((GPC.Model.ElementProperties.ElasticBeamProperty)b.Beam.BeamProperty).Section)) == B(baseArea)),
+                            label, "the inputs unchanged, the steel reference on the analytical area of the I");
+                        variants++;
                     }
-        int Error(string label, IReadOnlyList<BeamModel> fem, IReadOnlyList<LegacyBeamDraft> d, CompositeBeamPropertyModel[] p, BridgeCompositeSectionDefinition[] defs,
-            IReadOnlyList<BeamMomentState> s, BridgeActionBehavior behavior, int mixed)
+        void Error(string label, IReadOnlyList<LegacyBeamDraft> drafts, IReadOnlyList<BridgeCompositeSectionDefinition> defs, IReadOnlyList<BeamMomentState> s,
+            BridgeActionBehavior behavior, int mixed, Func<string, bool> message)
         {
-            if (Both(label, fem, d, ids, p, defs, s, behavior, mixed, 0, true) != -1) throw new Exception($"GPC STATE OVERRIDE FAIL ({label}): accepted on both paths");
-            return 1;
+            string text = null;
+            try { GpcStateOverride.Apply(drafts, ids, defs, s, behavior, mixed, 0, true); } catch (ArgumentException x) { text = x.Message; }
+            if (text == null || !message(text)) throw new Exception($"GPC STATE OVERRIDE FAIL ({label}): {(text == null ? "accepted" : "message '" + text + "'")}");
+            errors++;
         }
-        errors += Error("shrinkage", all, drafts, properties, definitions, states, BridgeActionBehavior.Shrinkage, 2);
-        errors += Error("mixed sign, policy 0", all, drafts, properties, definitions, states, BridgeActionBehavior.LongTerm, 0);
-        errors += Error("missing state", all, drafts, properties, definitions, states.Skip(1).ToArray(), BridgeActionBehavior.LongTerm, 2);
-        var changed = all.Select(b => { var c = ModelArchive.Clone(b); if (ReferenceEquals(b, girders[0])) c.BeamProperty.Material.Modulus = 1; return c; }).ToArray();
-        errors += Error("changed reference", changed, changed.Select(b => GpcBeamDrafts.FromFemm(b)).ToArray(), properties, definitions, states, BridgeActionBehavior.LongTerm, 2);
-        var noConcrete = properties.Select(p => { var c = ModelArchive.Clone(p); c.ConsiderConcrete = false; return c; }).ToArray();
-        errors += Error("concrete not considered", all, drafts, noConcrete, noConcrete.Select(p => GpcCompositeSections.Definition(p, p.Name)).ToArray(), states, BridgeActionBehavior.LongTerm, 2);
-        // Rule of 0.4.0, the self-weight bit for bit: the area of every FEM property (the drafts of the reference, the five standard shapes
-        // the reader maps with several dimensions, every beam of the examples 01-10) = the FEM formula on its GPC section.
-        for (int i = 0; i < all.Length; i++) MeasureArea("simple bridge", all[i].BeamProperty, drafts[i].Beam.BeamProperty);
-        var shapes = new List<SectionModel>();
+        Error("shrinkage", all, definitions, states, BridgeActionBehavior.Shrinkage, 2, m => m == "Only mechanical n infinity/n0 states are supported; shrinkage remains a separate uncracked model.");
+        Error("mixed sign, policy 0", all, definitions, states, BridgeActionBehavior.LongTerm, 0, m => m == $"Beam {girders[2].Beam.Name}: Mixed. Obtain FEM results or explicitly choose a mixed-beam policy/refine the common mesh.");
+        Error("missing state", all, definitions, states.Skip(1).ToArray(), BridgeActionBehavior.LongTerm, 2, m => m == "One moment state is required for each girder FEM ID, without additional beams.");
+        var changed = all.Select(b => { if (!ReferenceEquals(b, girders[0])) return b; var c = GpcDrafts.Copy(b); ((GPC.Model.ElementProperties.ElasticBeamProperty)c.Beam.BeamProperty).Material.ElasticModulusTension = 1; return c; }).ToArray();
+        Error("changed reference", changed, definitions, states, BridgeActionBehavior.LongTerm, 2, m => m == $"Beam {girders[0].Beam.Name}: reference geometry or steel stiffness changed. Recalculate model 0.");
+        var noConcrete = ids.Select(id => GpcCompositeDefinitions.Create(Numbers(id) with { ConsiderConcrete = false })).ToArray();
+        Error("concrete not considered", all, noConcrete, states, BridgeActionBehavior.LongTerm, 2, m => m == "Supply full composite definitions with concrete and reinforcement enabled.");
+        // Rule of 0.4.0, the self-weight: the mass per length is the density times the area of the former formula on the GPC section, bit for
+        // bit, and that area is the analytical area of the shape (the I of the simple bridge and the five standard shapes the reader maps with
+        // several dimensions); the GPC section area is measured against it (counted when it differs in some bit).
+        int shapes = 0, sectionDifferences = 0; double maxRelative = 0;
+        void Shape(GPC.Model.ElementProperties.ElasticBeamProperty p, double area, double tolerance, string label)
+        {
+            double l = GpcSectionMass.LegacyArea(p.Section), g = p.Section.Area;
+            if (Math.Abs(l - area) > tolerance * area) throw new Exception($"GPC SECTION MASS FAIL ({label}): former-formula area {l:R} of the GPC section / analytical area {area:R}");
+            if (B(GpcSectionMass.MassPerLength(p)) != B(p.Material.Density * l)) throw new Exception($"GPC SECTION MASS FAIL ({label}): mass per length differs from density x area");
+            shapes++; if (B(l) != B(g)) { sectionDifferences++; maxRelative = Math.Max(maxRelative, Math.Abs(g - l) / Math.Abs(l)); }
+        }
+        foreach (var b in all) Shape((GPC.Model.ElementProperties.ElasticBeamProperty)b.Beam.BeamProperty, baseArea, 0, "simple bridge " + b.Beam.Name);
+        GPC.Model.ElementProperties.ElasticBeamProperty Of(LegacySectionRecipe r) => (GPC.Model.ElementProperties.ElasticBeamProperty)GpcPropertyBuilders.Beam("Shape " + r.Kind, 5, r, R2aDesignFixtures.Steel(7.85e-9), "Steel").Property;
         foreach (var (b1, b2, d, t1, t2, t3) in new[] { (600d, 600d, 2500d, 30d, 30d, 16d), (800d, 600d, 1800d, 40d, 30d, 15d), (450d, 900d, 2200d, 45d, 35d, 17d), (300.5, 250.25, 1234.5, 20.3, 18.7, 11.1) })
-            shapes.Add(new SectionModel { SectionType = SectionModel.SectionTypes.I, B1 = b1, B2 = b2, D = d, T1 = t1, T2 = t2, T3 = t3 });
-        foreach (var (d, b) in new[] { (500d, 300d), (1234.5, 678.9), (0.3, 0.2) }) shapes.Add(new SectionModel { SectionType = SectionModel.SectionTypes.SolidRectangle, D = d, B = b });
-        foreach (var (d, b, t1, t2) in new[] { (500d, 300d, 20d, 15d), (1234.5, 678.9, 12.3, 9.8) }) shapes.Add(new SectionModel { SectionType = SectionModel.SectionTypes.HollowRectangle, D = d, B = b, T1 = t1, T2 = t2 });
-        foreach (double d in new[] { 500d, 1234.5, 0.3 }) shapes.Add(new SectionModel { SectionType = SectionModel.SectionTypes.SolidCircle, D = d });
-        foreach (var (d, t) in new[] { (500d, 20d), (1234.5, 12.3) }) shapes.Add(new SectionModel { SectionType = SectionModel.SectionTypes.HollowCircle, D = d, T = t });
-        foreach (var s in shapes)
-        {
-            s.CalculateSection();
-            var p = ModelArchive.Clone(steel); p.Name = "Shape " + s.SectionType; p.Section = s;
-            MeasureArea("shapes", p, GpcModels.BeamProperty(p, GpcBeamDrafts.DraftUnits).Property);
-        }
+            Shape(Of(GpcSectionBuilders.Standard(BridgeSectionKind.I, d, b1: b1, b2: b2, t1: t1, t2: t2, t3: t3)), b1 * t1 + b2 * t2 + (d - t1 - t2) * t3, 1e-15, "I");
+        foreach (var (d, b) in new[] { (500d, 300d), (1234.5, 678.9), (0.3, 0.2) }) Shape(Of(GpcSectionBuilders.Standard(BridgeSectionKind.SolidRectangle, d, b)), d * b, 1e-15, "solid rectangle");
+        foreach (var (d, b, t1, t2) in new[] { (500d, 300d, 20d, 15d), (1234.5, 678.9, 12.3, 9.8) })
+            Shape(Of(GpcSectionBuilders.Standard(BridgeSectionKind.HollowRectangle, d, b, t1: t1, t2: t2)), d * b - (b - 2 * t2) * (d - 2 * t1), 1e-14, "hollow rectangle");
+        foreach (double d in new[] { 500d, 1234.5, 0.3 }) Shape(Of(GpcSectionBuilders.Standard(BridgeSectionKind.SolidCircle, d)), Math.PI * d * d / 4, 1e-15, "solid circle");
+        foreach (var (d, t) in new[] { (500d, 20d), (1234.5, 12.3) }) Shape(Of(GpcSectionBuilders.Standard(BridgeSectionKind.HollowCircle, d, t: t)), Math.PI * (d * d - (d - 2 * t) * (d - 2 * t)) / 4, 1e-14, "hollow circle");
+        // TRANSITIONAL (R6.6 R2a, P2 decides): the beams of the examples 01-10, FEM area = former formula on the GPC section of the conversion of
+        // the FEM catalog (NativeExamples.Create, kept by R0 for the callers outside R0): their sections have no analytical oracle here.
         foreach (var example in NativeExamples.Create())
         {
             if (example.Model.Units != ModelModel.ModelUnits.Nmm || example.Model.Beams.Count == 0) continue;
@@ -200,7 +241,9 @@ internal static class GpcStateOverrideChecks
             for (int k = 0; k < femBeams2.Length; k++)
                 if (!conversion.Report.ShadowedPropertyBeams.Contains(k + 1)) MeasureArea(example.Id, femBeams2[k].BeamProperty, conversion.Model.BeamElements[k + 1].BeamProperty);
         }
-        Console.WriteLine($"GPC STATE OVERRIDE PASS: {variants} overrides of {girders.Length} girders and {all.Length - girders.Length} other members equal to the conversion of the FEM outputs ({compared} parts); {errors} errors equal on both paths; " + AreaSummary() + ".");
+        Console.WriteLine($"GPC STATE OVERRIDE PASS: {variants} overrides of {girders.Length} girders and {all.Length - girders.Length} other members on GPC data alone ({checks} checks: " +
+            $"states, cracking, homogenised values, section states, masses, geometry); {errors} errors with the messages of the override; {shapes} beam property areas = analytical areas, " +
+            $"mass per length = density x area bit for bit, GPC section area different in {sectionDifferences} (max relative {maxRelative:G3}); TRANSITIONAL examples 01-10: " + AreaSummary() + ".");
     }
 
     /// <summary>Native (50): every Bridge State Override of the solved definition attaches to its outputs the GPC drafts of the override on GPC,

@@ -19,6 +19,9 @@ using Grasshopper.Kernel.Types;
 /// runs, has the same tree and changes results. Until decision (i) = A of the user (7/11) a third component on the bare merged FEM model (the
 /// former BridGHe phases with concrete off) was the parity reference; that path is gone. The components are removed afterwards (the
 /// fingerprint is written before).
+/// <para>TRANSITIONAL (R6.6 R2a, P2 decides): the variant is built on the FEM value of the merged model (its combinations and the FEM
+/// composite beams of the check, <c>ModelArchive.Clone</c>); its GPC rewrite (the model by its GPC input with the variant of the bridge
+/// model, the composite beams by their GPC data with definitions without concrete) needs the native 99, outside lane R2a.</para>
 /// </summary>
 internal static class R3ConcreteExclusionCheck
 {
