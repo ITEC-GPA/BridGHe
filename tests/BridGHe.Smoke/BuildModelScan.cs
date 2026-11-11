@@ -4,20 +4,21 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using BridGHe.Common.Models;
+
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 
 /// <summary>
 /// Chain E (e3, P2K, coordinator decision 2 of 5/11): what Build Model does in the examples with the 0.3.0 rule (<c>ModelHelper.BuildModel</c>
-/// and the legacy reader), measured on the FEM values of its Elements input, for every Build Model run of a definition:
-/// - merges by GH GUID per family (a datum whose GH GUID came earlier), split into the same goo instance, a copy with the same content
-///   (archive bytes) and a datum with another content, with what <c>ElementModel.Merge</c> appends and what its <c>Contains</c> skips
-///   (loads, attributes, groups: the exact 0.3.0 rule, run on copies);
-/// - the node merge by position (RTree of Build Model: distinct GH data within the tolerance), beam ends and plate corners moved onto a
-///   node, ends and corners that create a node, zero-length beams removed;
-/// - the ends moved again by the legacy reader (node lookup in mm: the beam of the conversion against the FEM beam of the output).
+/// and the legacy reader), measured on the GPC data of its Elements input (R6.6 lane R0: the drafts of the GH data, no FEM value read), for every
+/// Build Model run of a definition:
+/// - merges by GH GUID per family (a datum whose GH GUID came earlier), split into the same goo instance, a draft with the same canonical text
+///   and a datum with another content, with what the merge appends and skips (load records, attribute records, groups: the merge of Build
+///   Model on GPC, run on the drafts, never on the inputs);
+/// - the node merge by position (RTree of Build Model on the draft positions, definition units: distinct GH data within the tolerance), beam
+///   ends and plate corners moved onto a node, ends and corners that create a node, zero-length beams removed;
+/// - the ends moved again by the legacy reader (node lookup in mm: the beam of the GPC input against the draft of the output, on its nodes).
 /// <c>--build-model-scan [file ...]</c>: every definition of the L12 scope (01–10, 19, 29–49, 50, 99 with their revisions) or the given ones,
 /// with only the upstream of the Build Model components solved (the others locked; analyses behind a Run button stay unsolved and their
 /// Build Model runs are reported as without data). <see cref="Print"/> is also called by the native runners of 50 and 99 after their solve.
@@ -55,21 +56,24 @@ internal static class BuildModelScan
                 foreach (var o in doc.Objects.OfType<IGH_ActiveObject>()) if (!upstream.Contains(o)) o.Locked = true;
                 // e3 point 6 (--native, with the Straus7 key): the analyses upstream of a Build Model run (the Run button), so that the Build
                 // Model runs behind them (the archived 19 REV003) get their data.
-                // The Output Path of every analysis pressed is redirected (in memory, the definition is never saved) to a folder of the scan:
+                // The Output Path of every analysis upstream is redirected (in memory, the definition is never saved) to a folder of the scan:
                 // the archived definitions name absolute paths in the main checkout of BridGHe (p2l5/p2l8 wrote 52 ignored files there, P2L).
-                if (native)
-                    foreach (var c in doc.Objects.OfType<GH_Component>().Where(c => upstream.Contains(c) && c.GetType().Name == "StrausR3AnalysisComponent").ToArray())
-                    {
-                        var output = (Grasshopper.Kernel.Parameters.Param_String)c.Params.Input.Single(p => p.Name == "Output Path");
-                        string folder = Path.Combine(ScanFiles, string.Concat(label.Select(ch => Path.GetInvalidFileNameChars().Contains(ch) || ch == ' ' ? '-' : ch)));
-                        Directory.CreateDirectory(folder);
-                        string target = Path.Combine(folder, c.InstanceGuid.ToString("N") + ".st7");
-                        foreach (var s in output.Sources.ToArray()) output.RemoveSource(s);
-                        output.PersistentData.Clear(); output.SetPersistentData(target);
-                        if (!Path.GetFullPath(target).StartsWith(ScanFiles, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("BuildModelScanOutputOutsideTheScanFolder: " + target);
-                        c.GetType().GetField("_run", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(c, true);
-                        Console.WriteLine($"BUILD MODEL SCAN {label}: Run of '{c.NickName}' pressed, output {target}");
-                    }
+                // R6.6 R0: in both modes, and without --native every analysis upstream is locked: an analysis with Keep Running set by a toggle
+                // (99 REV001) solved natively in the scan without the key and the lock and wrote 12 ignored files into the main checkout (11/11).
+                foreach (var c in doc.Objects.OfType<GH_Component>().Where(c => upstream.Contains(c) && c.GetType().Name is "StrausR3AnalysisComponent" or "MovingStaticAnalysisComponent").ToArray())
+                {
+                    var output = (Grasshopper.Kernel.Parameters.Param_String)c.Params.Input.Single(p => string.Equals(p.Name, "Output Path", StringComparison.OrdinalIgnoreCase));
+                    string folder = Path.Combine(ScanFiles, string.Concat(label.Select(ch => Path.GetInvalidFileNameChars().Contains(ch) || ch == ' ' ? '-' : ch)));
+                    Directory.CreateDirectory(folder);
+                    string target = Path.Combine(folder, c.InstanceGuid.ToString("N") + ".st7");
+                    foreach (var s in output.Sources.ToArray()) output.RemoveSource(s);
+                    output.PersistentData.Clear(); output.SetPersistentData(target);
+                    if (!Path.GetFullPath(target).StartsWith(ScanFiles, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("BuildModelScanOutputOutsideTheScanFolder: " + target);
+                    if (!native) { c.Locked = true; Console.WriteLine($"BUILD MODEL SCAN {label}: '{c.NickName}' locked (not native), output {target}"); continue; }
+                    if (c.GetType().Name != "StrausR3AnalysisComponent") { Console.WriteLine($"BUILD MODEL SCAN {label}: '{c.NickName}' output {target}"); continue; }
+                    c.GetType().GetField("_run", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(c, true);
+                    Console.WriteLine($"BUILD MODEL SCAN {label}: Run of '{c.NickName}' pressed, output {target}");
+                }
                 BridgeSegmentExcelTests.Solve(doc, true);
                 total.Add(Print(doc, label));
             }
@@ -111,7 +115,6 @@ internal static class BuildModelScan
     }
 
     private static object Get(object o, string property) => o.GetType().GetProperty(property, BindingFlags.Public | BindingFlags.Instance).GetValue(o);
-    private static byte[] Bytes(object value) => BridGHe.Common.Helpers.ModelArchive.Write(value);
 
     /// <summary>The statistics of every Build Model run of a solved definition (one line per run, the details of every merge).</summary>
     internal static Counts Print(GH_Document doc, string label)
@@ -145,21 +148,22 @@ internal static class BuildModelScan
                 {
                     try
                     {
-                        var fem = (ModelModel)Get(output, "Value"); var gpc = ((BridGHe.Common.Gpc.GpcModels.Conversion)Get(output, "GpcInput")).Model;
-                        var u = new BridGHe.Common.Gpc.BridgeUnits(BridGHe.Common.Gpc.BridgeUnits.Parse(fem.Units.ToString()));
-                        bool SameMm(GPC.Geometry.Point3d a, Point3d b) => a.X == u.ToMm(b.X) && a.Y == u.ToMm(b.Y) && a.Z == u.ToMm(b.Z);
-                        var beams = fem.Beams.ToArray();
-                        for (int k = 0; k < beams.Length; k++)
+                        // R6.6 R0: the GPC input of the output against the drafts of its elements (definition units; the beams and plates of the
+                        // output in assembly order, their ends and corners on the nodes Build Model found): no FEM value read.
+                        var attached = (BridGHe.Common.Gpc.GpcModels.Conversion)Get(output, "GpcInput"); var gpc = attached.Model;
+                        var drafts = attached.Drafts ?? (BridGHe.Common.Gpc.GpcModelDrafts)Get(output, "GpcDrafts") ?? throw new InvalidOperationException("no drafts of the output");
+                        var u = attached.Report.Units;
+                        bool SameMm(GPC.Geometry.Point3d a, GPC.Geometry.Point3d b) => a.X == u.ToMm(b.X) && a.Y == u.ToMm(b.Y) && a.Z == u.ToMm(b.Z);
+                        for (int k = 0; k < drafts.Beams.Count; k++)
                         {
-                            var g = gpc.BeamElements[k + 1];
-                            if (!SameMm(g.StartPoint, beams[k].PointFrom)) run.ReaderEndsMoved++;
-                            if (!SameMm(g.EndPoint, beams[k].PointTo)) run.ReaderEndsMoved++;
+                            var g = gpc.BeamElements[k + 1]; var d = drafts.Beams[k].Beam;
+                            if (!SameMm(g.StartPoint, d.StartPoint)) run.ReaderEndsMoved++;
+                            if (!SameMm(g.EndPoint, d.EndPoint)) run.ReaderEndsMoved++;
                         }
-                        var plates = fem.Plates.ToArray();
-                        for (int k = 0; k < plates.Length; k++)
+                        for (int k = 0; k < drafts.Plates.Count; k++)
                         {
-                            var nodes = gpc.AreaElements[k + 1].Nodes;
-                            for (int j = 0; j < plates[k].Points.Count; j++) if (!SameMm(nodes[j].Position, plates[k].Points[j])) run.ReaderCornersMoved++;
+                            var nodes = gpc.AreaElements[k + 1].Nodes; var corners = drafts.Plates[k].Corners;
+                            for (int j = 0; j < corners.Count; j++) if (!SameMm(nodes[j].Position, corners[j])) run.ReaderCornersMoved++;
                         }
                     }
                     catch (Exception e) { run.Details.Add("reader comparison not available: " + e.Message); }
@@ -187,9 +191,37 @@ internal static class BuildModelScan
         return counts;
     }
 
-    private static bool Same(GPC.Geometry.Point3d a, Point3d b) => a.X == b.X && a.Y == b.Y && a.Z == b.Z;
+    /// <summary>R6.6 R0: the attribute records of a draft (attributes and node restraint assignments), for the merge counts.</summary>
+    private static int Attributes(object draft) => draft switch
+    {
+        BridGHe.Common.Gpc.Legacy.LegacyNodeDraft n => n.Node.Attributes.Count + n.Node.Assignments.Restrains.Count,
+        BridGHe.Common.Gpc.Legacy.LegacyBeamDraft b => b.Beam.Attributes.Count,
+        BridGHe.Common.Gpc.Legacy.LegacyPlateDraft p => p.Plate.Attributes.Count,
+        _ => 0,
+    };
 
-    /// <summary>The loops of <c>ModelHelper.BuildModel</c> on the FEM values, with the counters (the values are copied, never changed).</summary>
+    private static BridGHe.Common.Gpc.Legacy.LegacyElementRecords Records(object draft) => draft switch
+    {
+        BridGHe.Common.Gpc.Legacy.LegacyNodeDraft n => n.Records,
+        BridGHe.Common.Gpc.Legacy.LegacyBeamDraft b => b.Records,
+        BridGHe.Common.Gpc.Legacy.LegacyPlateDraft p => p.Records,
+        _ => throw new ArgumentException(draft?.GetType().Name),
+    };
+
+    private static object Merge(object first, object other) => (first, other) switch
+    {
+        (BridGHe.Common.Gpc.Legacy.LegacyNodeDraft a, BridGHe.Common.Gpc.Legacy.LegacyNodeDraft b) => BridGHe.Common.Gpc.Legacy.LegacyBuildModel.Merge(a, b),
+        (BridGHe.Common.Gpc.Legacy.LegacyBeamDraft a, BridGHe.Common.Gpc.Legacy.LegacyBeamDraft b) => BridGHe.Common.Gpc.Legacy.LegacyBuildModel.Merge(a, b),
+        (BridGHe.Common.Gpc.Legacy.LegacyPlateDraft a, BridGHe.Common.Gpc.Legacy.LegacyPlateDraft b) => BridGHe.Common.Gpc.Legacy.LegacyBuildModel.Merge(a, b),
+        _ => throw new ArgumentException(first?.GetType().Name + "/" + other?.GetType().Name),
+    };
+
+    private static Point3d R(GPC.Geometry.Point3d p) => new Point3d(p.X, p.Y, p.Z);
+
+    /// <summary>The loops of the 0.3.0 rule (<c>ModelHelper.BuildModel</c>) on the GPC drafts of the GH data (R6.6 R0: no FEM value read), with the
+    /// counters: the merges by GH GUID (the same goo, a draft with the same canonical text, another content) with what the merge appends (the
+    /// merge of Build Model on GPC on the drafts, never on the inputs: load records, attribute records, groups), the RTree on the draft positions
+    /// (definition units), the beam ends and plate corners.</summary>
     private static void Scan(object[] items, double tol, Counts run, string where)
     {
         string[] families = { "GH_Node", "GH_Beam", "GH_Plate" };
@@ -197,29 +229,25 @@ internal static class BuildModelScan
         {
             var goos = items.Where(g => g.GetType().Name == families[f]).ToArray();
             if (f == 0) run.Nodes = goos.Length; else if (f == 1) run.Beams = goos.Length; else run.Plates = goos.Length;
-            var first = new Dictionary<Guid, (object Goo, ElementModel Copy)>();
+            var first = new Dictionary<Guid, (object Goo, object Merged)>();
             foreach (var goo in goos)
             {
-                var guid = (Guid)Get(goo, "Guid"); var value = (ElementModel)Get(goo, "Value");
-                if (!first.TryGetValue(guid, out var known))
-                {
-                    first.Add(guid, (goo, value is NodeModel n ? new NodeModel(n) : value is BeamModel b ? new BeamModel(b) : (ElementModel)new PlateModel((PlateModel)value)));
-                    continue;
-                }
+                var guid = (Guid)Get(goo, "Guid"); var draft = Get(goo, "Gpc");
+                if (!first.TryGetValue(guid, out var known)) { first.Add(guid, (goo, draft)); continue; }
                 run.Merges[f]++;
-                var knownValue = (ElementModel)Get(known.Goo, "Value");
-                string kind = ReferenceEquals(goo, known.Goo) ? "same goo" : Bytes(value).AsSpan().SequenceEqual(Bytes(knownValue)) ? "same content" : "other content";
+                var knownDraft = Get(known.Goo, "Gpc");
+                string kind = ReferenceEquals(goo, known.Goo) ? "same goo" : GpcDraftCapture.Text(draft) == GpcDraftCapture.Text(knownDraft) ? "same content" : "other content";
                 if (kind == "same goo") run.SameGoo[f]++; else if (kind == "same content") run.SameContent[f]++; else run.OtherContent[f]++;
-                int loads = known.Copy.Loads.Count, attributes = known.Copy.Attributes.Count, groups = known.Copy.Groups.Count;
-                known.Copy.Merge(value);
-                int la = known.Copy.Loads.Count - loads, aa = known.Copy.Attributes.Count - attributes, ga = known.Copy.Groups.Count - groups;
-                run.LoadsAppended += la; run.LoadsSkipped += value.Loads.Count - la; run.AttributesAppended += aa; run.AttributesSkipped += value.Attributes.Count - aa; run.GroupsAppended += ga;
-                run.Details.Add($"merge {families[f]} {guid}: {kind}; appended {la}/{value.Loads.Count} loads ({string.Join(",", value.Loads.Select(l => l.GetType().Name + ":" + l.LoadCase?.Name).Distinct())}), "
-                    + $"{aa}/{value.Attributes.Count} attributes ({string.Join(",", value.Attributes.Select(a => a.GetType().Name).Distinct())}), {ga}/{value.Groups.Count} groups ({where})");
+                var before = known.Merged; var merged = Merge(before, draft); first[guid] = (known.Goo, merged);
+                int la = Records(merged).Loads - Records(before).Loads, aa = Attributes(merged) - Attributes(before), ga = Records(merged).Groups.Count - Records(before).Groups.Count;
+                int loads = Records(draft).Loads, attributes = Attributes(draft);
+                run.LoadsAppended += la; run.LoadsSkipped += loads - la; run.AttributesAppended += aa; run.AttributesSkipped += attributes - aa; run.GroupsAppended += ga;
+                run.Details.Add($"merge {families[f]} {guid}: {kind}; appended {la}/{loads} loads ({string.Join(",", Records(draft).LoadRecords.Select(l => l.Kind + ":" + l.Case).Distinct())}), "
+                    + $"{aa}/{attributes} attributes, {ga}/{Records(draft).Groups.Count} groups ({where})");
             }
         }
-        // The RTree part of ModelHelper.BuildModel on positions (merged data keep the position of the first).
-        var nodes = items.Where(g => g.GetType().Name == "GH_Node").GroupBy(g => (Guid)Get(g, "Guid")).Select(g => ((NodeModel)Get(g.First(), "Value")).Position).ToList();
+        // The RTree part of the 0.3.0 rule on positions (merged data keep the position of the first).
+        var nodes = items.Where(g => g.GetType().Name == "GH_Node").GroupBy(g => (Guid)Get(g, "Guid")).Select(g => R(((BridGHe.Common.Gpc.Legacy.LegacyNodeDraft)Get(g.First(), "Gpc")).Node.Position)).ToList();
         var kept = new List<Point3d>();
         using var tree = new RTree();
         foreach (var pt in nodes)
@@ -237,10 +265,10 @@ internal static class BuildModelScan
         }
         // Beams in the order of Build Model: by integer BridGHe ID (labels or the first free integer, in input order); the counts do not
         // depend on the order except through the nodes created at the ends, so the input order of the first data is used with the labels.
-        var beams = items.Where(g => g.GetType().Name == "GH_Beam").GroupBy(g => (Guid)Get(g, "Guid")).Select(g => (BeamModel)Get(g.First(), "Value")).ToList();
-        var ids = new List<string>(); int next = 1; var ordered = new List<(int Key, int Index, BeamModel Beam)>();
-        var labels = beams.Select(b => b.Attributes.OfType<ElementIdAttributeModel>().FirstOrDefault()?.Value).ToList();
-        var used = items.Where(g => g.GetType().Name == "GH_Beam").Select(g => ((BeamModel)Get(g, "Value")).Attributes.OfType<ElementIdAttributeModel>().FirstOrDefault()?.Value).Where(v => v != null).ToList();
+        var beams = items.Where(g => g.GetType().Name == "GH_Beam").GroupBy(g => (Guid)Get(g, "Guid")).Select(g => (BridGHe.Common.Gpc.Legacy.LegacyBeamDraft)Get(g.First(), "Gpc")).ToList();
+        var ordered = new List<(int Key, int Index, BridGHe.Common.Gpc.Legacy.LegacyBeamDraft Beam)>(); int next = 1;
+        var labels = beams.Select(b => b.Records.FirstLabel).ToList();
+        var used = items.Where(g => g.GetType().Name == "GH_Beam").Select(g => ((BridGHe.Common.Gpc.Legacy.LegacyBeamDraft)Get(g, "Gpc")).Records.FirstLabel).Where(v => v != null).ToList();
         for (int i = 0; i < beams.Count; i++)
         {
             string id = labels[i];
@@ -249,11 +277,11 @@ internal static class BuildModelScan
         }
         foreach (var (_, _, beam) in ordered.OrderBy(o => o.Key).ThenBy(o => o.Index))
         {
-            var a = Anchor(beam.PointFrom, ref run.EndsMoved, ref run.EndNodes); var b = Anchor(beam.PointTo, ref run.EndsMoved, ref run.EndNodes);
+            var a = Anchor(R(beam.Beam.StartPoint), ref run.EndsMoved, ref run.EndNodes); var b = Anchor(R(beam.Beam.EndPoint), ref run.EndsMoved, ref run.EndNodes);
             if (a == b) run.ZeroLength++;
         }
-        foreach (var plate in items.Where(g => g.GetType().Name == "GH_Plate").GroupBy(g => (Guid)Get(g, "Guid")).Select(g => (PlateModel)Get(g.First(), "Value")))
-            foreach (var p in plate.Points) Anchor(p, ref run.CornersMoved, ref run.CornerNodes);
+        foreach (var plate in items.Where(g => g.GetType().Name == "GH_Plate").GroupBy(g => (Guid)Get(g, "Guid")).Select(g => (BridGHe.Common.Gpc.Legacy.LegacyPlateDraft)Get(g.First(), "Gpc")))
+            foreach (var p in plate.Corners) Anchor(R(p), ref run.CornersMoved, ref run.CornerNodes);
     }
 }
 #endif

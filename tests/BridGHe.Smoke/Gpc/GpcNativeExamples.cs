@@ -92,7 +92,7 @@ internal static class GpcNativeExamples
 
         internal int Beam(int from, int to, LegacyBeamProperty property, IReadOnlyList<string> group, string beamId)
         {
-            Beams.Add(GpcBeamBuilders.New(Nodes[from].Node.Position, Nodes[to].Node.Position, property, new[] { group }, 0, 0, 0, Next("beam"), beamId));
+            Beams.Add(GpcBeamBuilders.New(Nodes[from].Node.Position, Nodes[to].Node.Position, property, group == null ? null : new[] { group }, 0, 0, 0, Next("beam"), beamId));
             return Beams.Count - 1;
         }
 
