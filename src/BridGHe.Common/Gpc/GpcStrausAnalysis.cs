@@ -53,6 +53,8 @@ namespace BridGHe.Common.Gpc
         /// C4 (user decision of 11/11: as 0.3.0): the supports, temperature gradients and tapers of a beam with a principal angle (an angle, a
         /// double angle) on the native axes 1 and 2 as 0.3.0 wrote them (StrausR3Helper.cs:956-1020, :1225-1230, BeamSupportExport), and the
         /// nonlinear increments of a model without stages in the order of its combinations (StrausR3Helper.cs:666-709).
+        /// C5 (11/11, the same option, GPC Converter 2.22.0.2): the end releases of such a beam that differ along or about its two transverse
+        /// axes, on the native axes 1, 2, 3 as 0.3.0 wrote them (StrausR3Helper.cs:894-947); refused before.
         /// </summary>
         public static Straus7WriteOptions LegacyWriteOptions(Model gpc, Legacy.LegacyImportReport report)
         {
