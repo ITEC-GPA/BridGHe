@@ -42,10 +42,22 @@ internal static class BridgeDetailsModelExample
             "Summary must generate station labels with only Results connected.");
         var a = source.AllData(true).Select(g => (BridgeStressResult)g.ScriptVariable()).ToArray();
         var b = details.AllData(true).Select(g => (BridgeStressResult)g.ScriptVariable()).ToArray();
+#if GPC_PILOT
+        // R6.6 lane R4a: the bridge model of Build BridGHe Model is the GPC bridge model alone (no FEM value): its one beam (the extract of
+        // beam 36, the documented example), the local stations of its merged samples and the one combination of the DEMO table of the document.
+        var output = Find(d, "BuildBridgeModel").Params.Output[0].VolatileData.AllData(true).Single();
+        BridgeWorkflowTests.Require(output.GetType().GetProperty("Value").GetValue(output) == null, "GPC: the Build BridGHe Model output has a FEM value.");
+        var bridge = R2bFixtures.Get<BridGHe.Common.Gpc.GpcBridge>(output, "GpcBridge") ?? throw new Exception("GPC: no GPC bridge model on the output.");
+        BridgeWorkflowTests.Require(bridge.Model.BeamElements.Count == 1 && bridge.Samples.Length == 1 && bridge.Combinations.Select(c => c.Name).SequenceEqual(new[] { "DEMO" }),
+            "GPC: the bridge model is not the one beam of the extract with the DEMO combination.");
+        var stations = bridge.Samples[0].Select(s => s.Sample.Station).Distinct().OrderBy(x => x).ToArray();
+        var expectedSources = stations.SelectMany(s => bridge.Combinations.Select(combo => new BridgeResultSource("36", s, combo.Name, "G2"))).ToArray();
+#else
         var combinedModel = (ModelModel)Find(d, "BuildBridgeModel").Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
         var beam = combinedModel.Beams.Single();
         var stations = beam.Results.OfType<BeamForceResultModel>().Select(r => r.NormalizedLength ? r.Station * beam.Length : r.Station).Distinct().OrderBy(x => x).ToArray();
         var expectedSources = stations.SelectMany(s => combinedModel.LoadCombinations.Select(combo => new BridgeResultSource(beam.BeamId, s, combo.Name, "G2"))).ToArray();
+#endif
         BridgeWorkflowTests.Require(a.Select(r => r.Source).SequenceEqual(expectedSources), "Super-element result provenance does not match the beam, local stations and combinations.");
         var expectedLabels = b.SelectMany(r => BridgeGpc.Checks(r.Stage).Select(_ => r.Source.Label));
         BridgeWorkflowTests.Require(summary.Params.Output[0].VolatileData.AllData(true).Select(g => (string)g.ScriptVariable()).SequenceEqual(expectedLabels), "Automatic summary labels lost the source identity.");
@@ -72,8 +84,19 @@ internal static class BridgeDetailsModelExample
     }
     internal static void Replay()
     {
-        BridgeMergeTests.Initialize(); using var d = GrasshopperBridgeExample.Read(FileName); Calculate(d);
-        Console.WriteLine($"MODEL DETAIL EXAMPLE PASS: {Validate(d)} station/combination results; original phase actions and tree paths retained; no solver invoked.");
+        BridgeMergeTests.Initialize(); using var d = GrasshopperBridgeExample.Read(FileName);
+#if GPC_PILOT
+        // R6.6 lane R4a: the document (a reference, read only, never saved) as P2 reads it: each internalised model by its GPC input read by value
+        // and its saved GPC results alone, no FEM value.
+        var replaced = R4aFixtures.GpcOnly(d);
+        BridgeWorkflowTests.Require(replaced.Length == 4 && R4aFixtures.Models(d).All(g => g.GetType().GetProperty("Value").GetValue(g) == null), "GPC: the four internalised models are not given by their GPC data alone.");
+#endif
+        Calculate(d);
+        Console.WriteLine($"MODEL DETAIL EXAMPLE PASS: {Validate(d)} station/combination results; original phase actions and tree paths retained; no solver invoked"
+#if GPC_PILOT
+            + " (GPC data alone: four internalised models by their GPC input and results)"
+#endif
+            + ".");
     }
     internal static void Generate()
     {

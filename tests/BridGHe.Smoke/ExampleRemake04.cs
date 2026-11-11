@@ -100,8 +100,15 @@ internal static class ExampleRemake04
         return copy;
     }
 
-    /// <summary>Regression remade-examples: the five files solve in 0.4.0 form without errors; 47/48 build the GPC bridge model and check on D3,
-    /// compared with the former path.</summary>
+    /// <summary>Regression remade-examples: the five files solve in 0.4.0 form without errors; 47/48 build the GPC bridge model and check on D3.
+    /// <para>R6.6 lane R4a: every file is solved as P2 reads it (<see cref="R4aFixtures.GpcOnly"/>: each internalised model by its GPC input read
+    /// by value and its saved GPC results, no FEM value; in memory, never saved): no errors, the result utilities against the explicit values of
+    /// the examples (<see cref="Expected"/>, the values their descriptions and their generators state) and every result consumer against the
+    /// independent evaluation on the rows of the Results components (<see cref="ConsumersCheck.Verify"/>) on each internalised analysed model.
+    /// The former parity of the result utilities with the FEM path on the FEM value (<c>CompareUtilities</c>) is retired.</para>
+    /// <para>TRANSITIONAL (P2 decides, no capture holds the D3 results of 47/48): the file as read (FEM values internalised) is solved too and its
+    /// Super Element Checks are compared with the former path (<see cref="FemPhasesReference"/>); the D3 results of the GPC-only document equal
+    /// those of the file as read bit for bit (the FEM value is not read by the checks).</para></summary>
     internal static void Replay()
     {
         BridgeMergeTests.Initialize();
@@ -112,82 +119,99 @@ internal static class ExampleRemake04
             var gooModels = Params(doc).SelectMany(p => (p.GetType().GetProperty("PersistentData")?.GetValue(p) as IGH_Structure)?.AllData(true) ?? Enumerable.Empty<IGH_Goo>())
                 .Where(g => g.GetType().Name == "GH_Model").ToArray();
             if (gooModels.Length == 0 || gooModels.Any(g => g.GetType().GetProperty("GpcResults").GetValue(g) == null)) throw new Exception(relative + ": an internalised model without its GPC results");
-            BridgeSegmentExcelTests.Solve(doc, true);
-            foreach (var name in new[] { "BuildBridgeModel", "SuperElementCheckComponent" })
-                foreach (var c in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == name)) { c.GetType().GetField("_run", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(c, true); c.ExpireSolution(false); BridgeSegmentExcelTests.Solve(doc, true); }
-            var errors = doc.Objects.OfType<GH_ActiveObject>().SelectMany(o => o.RuntimeMessages(GH_RuntimeMessageLevel.Error).Select(m => o.NickName + ": " + m)).ToArray();
-            if (errors.Length > 0) throw new Exception(relative + ": " + string.Join("; ", errors));
-            var warnings = doc.Objects.OfType<GH_ActiveObject>().SelectMany(o => o.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Where(m => m.Contains("Nessun risultato di un'analisi") || m.Contains("versione precedente")).Select(m => o.NickName + ": " + m)).ToArray();
-            if (warnings.Length > 0) throw new Exception(relative + ": " + string.Join("; ", warnings));
-            foreach (var check in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "SuperElementCheckComponent")) FemPhasesReference.Compare(check, relative);
-            var (compared, steps) = CompareUtilities(doc, relative);
-            Console.WriteLine($"REMADE EXAMPLE PASS {relative}: {gooModels.Length} internalised models with GPC results; no errors; {compared} result-utility outputs equal to the former FEM path"
-                + (steps > 0 ? $" except {steps} step/step-type values (GPC results have step 0 and no step type)" : ""));
+            bool checks = doc.Objects.OfType<GH_Component>().Any(c => c.GetType().Name == "SuperElementCheckComponent");
+            string[] transitional = null;
+            if (checks)
+            {
+                Solve(doc, relative);
+                foreach (var check in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "SuperElementCheckComponent")) FemPhasesReference.Compare(check, relative);
+                transitional = CheckTokens(doc);
+            }
+            // The document as P2 reads it: GPC data alone.
+            using var gpc = GrasshopperBridgeExample.Read(path);
+            var analysed = R4aFixtures.GpcOnly(gpc);
+            if (analysed.Length != gooModels.Length || R4aFixtures.Models(gpc).Any(g => g.GetType().GetProperty("Value").GetValue(g) != null))
+                throw new Exception(relative + ": the internalised models are not given by their GPC data alone");
+            Solve(gpc, relative);
+            long consumers = analysed.Sum(a => ConsumersCheck.Verify(a, relative));
+            int expected = Expected(gpc, relative);
+            string d3 = "";
+            if (checks)
+            {
+                var tokens = CheckTokens(gpc);
+                if (tokens.Length == 0 || !tokens.SequenceEqual(transitional)) throw new Exception(relative + $": the D3 results on GPC data alone differ from the file as read ({tokens.Length}/{transitional.Length})");
+                d3 = $"; TRANSITIONAL {tokens.Length} D3 section results equal to the former path (FemPhasesReference) and to the file as read";
+            }
+            Console.WriteLine($"REMADE EXAMPLE PASS {relative}: {gooModels.Length} internalised models with GPC results, solved on GPC data alone (no FEM value); no errors; "
+                + $"{expected} result-utility outputs equal to the explicit values of the example; {consumers} consumer values equal to the evaluation on the Results rows" + d3);
         }
+    }
+
+    /// <summary>Solves a remade example as the regression does (Build BridGHe Model and Super Element Check pressed): no errors, no warning of
+    /// results missing or of a former version.</summary>
+    private static void Solve(GH_Document doc, string relative)
+    {
+        BridgeSegmentExcelTests.Solve(doc, true);
+        foreach (var name in new[] { "BuildBridgeModel", "SuperElementCheckComponent" })
+            foreach (var c in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == name)) { c.GetType().GetField("_run", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(c, true); c.ExpireSolution(false); BridgeSegmentExcelTests.Solve(doc, true); }
+        var errors = doc.Objects.OfType<GH_ActiveObject>().SelectMany(o => o.RuntimeMessages(GH_RuntimeMessageLevel.Error).Select(m => o.NickName + ": " + m)).ToArray();
+        if (errors.Length > 0) throw new Exception(relative + ": " + string.Join("; ", errors));
+        var warnings = doc.Objects.OfType<GH_ActiveObject>().SelectMany(o => o.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Where(m => m.Contains("Nessun risultato di un'analisi") || m.Contains("versione precedente")).Select(m => o.NickName + ": " + m)).ToArray();
+        if (warnings.Length > 0) throw new Exception(relative + ": " + string.Join("; ", warnings));
+    }
+
+    /// <summary>The D3 section results of every Super Element Check of a document, as exact tokens (tree path, source, stresses of points 5 and 8,
+    /// utilization, every check with its status and ratio), in component order.</summary>
+    private static string[] CheckTokens(GH_Document doc) => doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "SuperElementCheckComponent").SelectMany(c =>
+    {
+        var tree = c.Params.Output[0].VolatileData;
+        return Enumerable.Range(0, tree.PathCount).SelectMany(p => tree.get_Branch(p).Cast<IGH_Goo>().Select(g => (BridGHe.Common.Checks.BridgeStressResult)g.ScriptVariable())
+            .Select(r => tree.get_Path(p) + "|" + r.Source?.Label + "|" + B(r.Point5_SteelSigma) + "|" + B(r.Point8_SteelSigma) + "|" + B(r.Stage.MaxUtilization) + "|"
+                + string.Join(";", BridGHe.Common.Checks.BridgeGpc.Checks(r.Stage).Select(k => k.Name + "=" + k.Status + ":" + B(k.Ratio ?? double.NaN)))));
+    }).ToArray();
+
+    /// <summary>
+    /// The result utilities of a remade example against the explicit values of the example (its description and its generator, independent of
+    /// the code): 24 (BridgeUtilityExamples.Envelopes) the result cases G and Q, every signed beam envelope value negative with the concomitants
+    /// N −50, V2 13, V3 −17, T 19, M2 −23 of the Q sample, the reaction Fz −120 and the displacement Uz −10 of the bearing node A; 42
+    /// (BridgeDesignExamples.Deflection) at s = 15 m the absolute −28 mm, the relative −20 mm and the camber +20 mm, zero relative displacement
+    /// at the supports 0, 30, 70, 100 m; 43 (BridgeDesignExamples.Fatigue) the equivalent range (1216)^(1/3) of the history 0, 10, 2, 8, 0 from
+    /// both components. 47/48 have no result utility. Returns the number of outputs compared.
+    /// </summary>
+    private static int Expected(GH_Document doc, string relative)
+    {
+        int compared = 0;
+        void Require(bool ok, string what) { if (!ok) throw new Exception(relative + ": " + what); compared++; }
+        GH_Component[] Of(string type) => doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == type).ToArray();
+        if (relative.StartsWith("24-", StringComparison.Ordinal))
+        {
+            Require(Out<string>(Of("BridgeResultCasesComponent").Single(), 0).SequenceEqual(new[] { "G", "Q" }), "Result Cases: the cases G and Q");
+            var beam = Of("BridgeBeamEnvelopeComponent").Single(); var values = Out<double>(beam, 2); var components = Out<double>(beam, 6);
+            Require(values.Length > 0 && values.All(v => v < 0) && Out<string>(beam, 3).All(c => c == "Q") && components.Length == 6 * values.Length, "beam envelope: signed values of Q, negative");
+            for (int i = 0; i < values.Length; i++)
+                Require(components.Skip(6 * i).Take(6).SequenceEqual(new[] { -50d, 13, -17, 19, -23, values[i] }), $"beam envelope row {i}: the concomitants of the Q sample");
+            Require(Out<double>(Of("BridgeBearingEnvelopeComponent").Single(), 2).SequenceEqual(new[] { -120d }), "bearing envelope: Fz -120 at A");
+            Require(Out<double>(Of("BridgeDisplacementEnvelopeComponent").Single(), 2).SequenceEqual(new[] { -10d }), "displacement envelope: Uz -10 at A");
+        }
+        else if (relative.StartsWith("42-", StringComparison.Ordinal))
+        {
+            var c = Of("BridgeDeflectionCamberComponent").Single(); var stations = Out<double>(c, 0);
+            int mid = Array.IndexOf(stations, 15000d);
+            Require(mid >= 0 && Math.Abs(Out<double>(c, 1)[mid] + 28) < 1e-9 && Math.Abs(Out<double>(c, 2)[mid] + 20) < 1e-9 && Math.Abs(Out<double>(c, 3)[mid] - 20) < 1e-9,
+                "deflection at s = 15 m: absolute -28, relative -20, camber +20");
+            foreach (double support in new[] { 0d, 30000, 70000, 100000 })
+                Require(Array.IndexOf(stations, support) is int k && k >= 0 && Math.Abs(Out<double>(c, 2)[k]) < 1e-9, "zero relative displacement at the support " + support);
+        }
+        else if (relative.StartsWith("43-", StringComparison.Ordinal))
+        {
+            var cs = Of("BridgeFatigueHistoryComponent");
+            Require(cs.Length == 2 && cs.All(c => Math.Abs(Out<double>(c, 5).Single() - Math.Pow(1216, 1d / 3)) < 1e-12), "fatigue: equivalent range (1216)^(1/3) from both components");
+        }
+        return compared;
     }
 
     private static T[] Out<T>(GH_Component c, int i) => c.Params.Output[i].VolatileData.AllData(true).Select(g => g.ScriptVariable()).OfType<T>().ToArray();
     private static T[] In<T>(GH_Component c, int i) => c.Params.Input[i].VolatileData.AllData(true).Select(g => g.ScriptVariable()).OfType<T>().ToArray();
     private static string B(double v) => BitConverter.DoubleToInt64Bits(v).ToString("X16");
-
-    /// <summary>Until R6.5: the outputs of the result utilities of a remade example (GPC results) against the former FEM path on the FEM value of
-    /// the same internalised model (its stored results; the end nodes added by the remake have none). Every output equal bit for bit, except
-    /// the step and the step type of results the former FEM samples stored with a moving step (counted).</summary>
-    private static (int Compared, int Steps) CompareUtilities(GH_Document doc, string relative)
-    {
-        int compared = 0, steps = 0;
-        void Same(string what, IEnumerable<string> gpc, IEnumerable<string> fem)
-        {
-            var a = gpc.ToArray(); var b = fem.ToArray();
-            if (!a.SequenceEqual(b)) throw new Exception($"{relative} {what}: GPC [{string.Join(", ", a.Take(6))}] former [{string.Join(", ", b.Take(6))}] ({a.Length}/{b.Length})");
-            compared += a.Length;
-        }
-        void Steps(IEnumerable<string> gpc, IEnumerable<string> fem) { var a = gpc.ToArray(); var b = fem.ToArray(); if (a.Length != b.Length) throw new Exception(relative + ": step rows differ"); steps += a.Zip(b).Count(p => p.First != p.Second); }
-        foreach (var c in doc.Objects.OfType<GH_Component>())
-        {
-            var name = c.GetType().Name;
-            if (name is not ("BridgeBeamEnvelopeComponent" or "BridgeBearingEnvelopeComponent" or "BridgeDisplacementEnvelopeComponent" or "BridgeResultCasesComponent" or "BridgeDeflectionCamberComponent" or "BridgeFatigueHistoryComponent")) continue;
-            var fem = In<ModelModel>(c, name == "BridgeFatigueHistoryComponent" ? 1 : 0).SingleOrDefault();
-            if (fem == null) continue;
-            switch (name)
-            {
-                case "BridgeResultCasesComponent":
-                {
-                    var rows = fem.Elements.SelectMany(e => e.Results).Select(r => (Case: r.LoadCase?.Name, Step: r.StepNum, Type: r.StepType, Result: r.GetType().Name))
-                        .GroupBy(r => (r.Case, r.Result)).OrderBy(g => g.Key.Case, StringComparer.Ordinal).ThenBy(g => g.Key.Result, StringComparer.Ordinal).ToArray();
-                    Same("Result Cases cases", Out<string>(c, 0), rows.Select(g => g.Key.Case).Distinct());
-                    Same("Result Cases rows", Out<string>(c, 1).Zip(Out<string>(c, 4), (a, b) => a + " " + b), rows.Select(g => g.Key.Case + " " + g.Key.Result));
-                    Same("Result Cases counts", Out<int>(c, 5).Select(n => n.ToString()), rows.Select(g => g.Count().ToString()));
-                    Steps(Out<double>(c, 2).Select(B).Concat(Out<string>(c, 3)), rows.Select(g => B(g.First().Step)).Concat(rows.Select(g => g.First().Type ?? "")));
-                    break;
-                }
-                case "BridgeDeflectionCamberComponent":
-                {
-                    var r = BridGHe.Common.Diagnostics.BridgeDeflectionCamber.Evaluate(fem, ((BridGHe.Common.Geometry.SimpleBridgeGeometry)In<object>(c, 1).Single()), In<int>(c, 2).Single(),
-                        In<string>(c, 3).Single(), In<double>(c, 4).Single(), In<string>(c, 5).SingleOrDefault() ?? "", In<Vector3d>(c, 6).Single(), In<double>(c, 7).Single(), In<bool>(c, 8).Single(), In<double>(c, 9).Single());
-                    Same("Deflection stations", Out<double>(c, 0).Select(B), r.Stations.Select(B)); Same("Deflection absolute", Out<double>(c, 1).Select(B), r.Absolute.Select(B));
-                    Same("Deflection relative", Out<double>(c, 2).Select(B), r.Relative.Select(B)); Same("Deflection camber", Out<double>(c, 3).Select(B), r.Camber.Select(B));
-                    break;
-                }
-                case "BridgeFatigueHistoryComponent":
-                {
-                    var s = BridGHe.Common.Diagnostics.BridgeFatigueHistory.Extract(fem, In<string>(c, 2).Single(), In<double>(c, 3).Single(), In<string>(c, 4), In<int>(c, 5).Single(), In<double>(c, 6));
-                    Same("Fatigue values", Out<double>(c, 0).Select(B), s.Values.Select(B)); compared += Out<string>(c, 1).Length;
-                    break;
-                }
-                default:
-                {
-                    int kind = name == "BridgeBeamEnvelopeComponent" ? 0 : name == "BridgeBearingEnvelopeComponent" ? 1 : 2;
-                    var rows = BridGHe.Common.Diagnostics.BridgeResultEnvelope.Evaluate(fem, kind, In<string>(c, 1), In<string>(c, 2), In<int>(c, 3).Single(), In<int>(c, 4).Single());
-                    Same("Envelope elements", Out<string>(c, 0), rows.Select(r => r.Element)); Same("Envelope stations", Out<double>(c, 1).Select(B), rows.Select(r => B(r.Station)));
-                    Same("Envelope values", Out<double>(c, 2).Select(B), rows.Select(r => B(r.Value))); Same("Envelope cases", Out<string>(c, 3), rows.Select(r => r.Case));
-                    Same("Envelope components", Out<double>(c, 6).Select(B), rows.SelectMany(r => r.Components.Select(B))); Same("Envelope coverage", Out<string>(c, 8), rows.Select(r => r.Coverage));
-                    Steps(Out<double>(c, 4).Select(B).Concat(Out<string>(c, 5)), rows.Select(r => B(r.Step)).Concat(rows.Select(r => r.StepType ?? "")));
-                    break;
-                }
-            }
-        }
-        return (compared, steps);
-    }
 }
 #endif
