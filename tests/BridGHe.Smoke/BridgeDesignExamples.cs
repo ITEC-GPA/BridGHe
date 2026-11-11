@@ -360,8 +360,10 @@ internal static class BridgeDesignExamples
         using var doc = new GH_Document(); Header(doc, "42 | FRECCE E CONTROFRECCIA", "DATI SINTETICI: parabola con freccia relativa 20 mm e cedimenti u=-5-0.0002s.\nA s=15 m: assoluta -28 mm, relativa -20 mm, controfreccia +20 mm. Display Scale cambia solo le curve.");
         var g = SimpleBridgeBuilder.Build(SimpleBridgeTests.Input()); var c = Add(doc, "BridgeDeflectionCamberComponent", 450, 50);
 #if GPC_PILOT
-        // R6.6 R4a: the analytical displacements stored in a GPC model built in GPC alone (BridgeDeflectionTests.AnalyticGpc).
-        Data(doc, c, 0, "Modello con spostamenti sintetici", Model(BridgeDeflectionTests.AnalyticGpc(g)));
+        // R6.6 R4a: the analytical displacements stored in a GPC model built in GPC alone (BridgeDeflectionTests.AnalyticGpc), with the bridge
+        // data of its members (the girder stations of the physical members) on its GPC input.
+        var analytic = BridgeDeflectionTests.AnalyticGpc(g, out var members);
+        Data(doc, c, 0, "Modello con spostamenti sintetici", R2bFixtures.Model(R2bFixtures.Input(analytic, null, members), analytic));
 #else
         Data(doc, c, 0, "Modello con spostamenti sintetici", Goo("GH_Model", BridgeDeflectionTests.AnalyticModel(g)));
 #endif
