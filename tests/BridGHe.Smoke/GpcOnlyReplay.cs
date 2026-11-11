@@ -1090,7 +1090,9 @@ internal static class GpcOnlyReplay
     /// source), one composite definition per segment from the numbers of the former fixture (<see cref="GpcCompositeDefinitions"/>).</summary>
     private static IEnumerable<(string Type, string Label, Dictionary<int, object> Inputs)> StateOverrideCasesGpc(string caseName)
     {
-        var steel = R2aDesignFixtures.BaseProperty("Base", 7.85e-9);
+        // The twin of BridgeSegmentSectionsTests.BaseProperty with the density as its conversion reads it: the property «Base», the material without a name
+        // (the former new MaterialModel("S355"): id «S355», the default name «Material»), kind Steel. (R2a's BaseProperty names it «S355».)
+        var steel = BridGHe.Common.Gpc.Builders.GpcPropertyBuilders.Beam("Base", 5, R2aDesignFixtures.BaseSection(), R2aDesignFixtures.Material("Steel", "Material", 210000, .3, 7.85e-9), "Steel");
         var geometry = BridGHe.Common.Geometry.SimpleBridgeBuilder.Build(SimpleBridgeTests.Input());
         var schedule = BridGHe.Common.Geometry.BridgeSegmentSections.CreateGpc(geometry, steel, null);
         var plans = BridGHe.Common.Geometry.BridgeMemberAssignment.Assign(geometry, null, schedule.Rules, new Dictionary<int, BridGHe.Common.Gpc.Legacy.LegacyBeamProperty> { [-1] = steel }).Plans;
