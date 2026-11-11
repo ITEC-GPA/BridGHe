@@ -39,7 +39,15 @@ internal static class ResultsComponentsCheck
         var catalog = BridGHe.Common.Gpc.GpcResultCatalog.Of(analysed);
         Require(input != null && catalog != null, "the GPC input and the results catalog of the analysed model");
         // Node, Beam and Plate Results on the GH model given by the GPC input alone, every output equal to the reader rows bit for bit.
-        long values = GpcNativeExamples.ComponentsCheck(input, analysed, label);
+        // Decompose Model refuses a GPC-only model without the drafts of its elements, so the input is given with them: its own; else those the
+        // analysed GH model keeps apart (GpcDrafts: analysis outputs, reopened results, as R4aFixtures.GpcOnly); else, for a FEM-backed model (the
+        // kN-m native section of core-native, until Program.CheckNativeSectionAnalysis moves to GPC), the conversion of its FEM values.
+        var drafts = input?.Drafts ?? (BridGHe.Common.Gpc.GpcModelDrafts)t.GetProperty("GpcDrafts").GetValue(analysedModelGoo)
+            ?? (t.GetProperty("Value").GetValue(analysedModelGoo) is BridGHe.Common.Models.ModelModel fem
+                ? new BridGHe.Common.Gpc.GpcModelDrafts(fem.Nodes.Select(n => BridGHe.Common.Gpc.GpcBeamDrafts.FromFemm(n)),
+                    fem.Beams.Select(b => BridGHe.Common.Gpc.GpcBeamDrafts.FromFemm(b)), fem.Plates.Select(p => BridGHe.Common.Gpc.GpcBeamDrafts.FromFemm(p)))
+                : null);
+        long values = GpcNativeExamples.ComponentsCheck(input == null || input.Drafts != null || drafts == null ? input : input.WithDrafts(drafts), analysed, label);
         // A result datum without the link to an analysed GPC element gives no result and the warning.
         int nodes = analysed.NodesElements.Count, beams = analysed.BeamElements.Count, plates = analysed.AreaElements.Count;
         int k = nodes > 0 ? 0 : beams > 0 ? 1 : 2;
