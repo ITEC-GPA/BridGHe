@@ -545,6 +545,9 @@ internal static class GpcOnlyReplay
         {
             ["uniform, axis 2"] = new Expect { What = Kind.Warning, Message = "Input parameter 'PA' failed to collect data" },
             ["elements (no geometry)"] = new Expect { What = Kind.Nothing },
+            // Bridge Bearings «mixed types, guide angle» (lane 1b): three types for the points of support 2 that are not one per point: the error of
+            // the component, no output (on both paths since lane 1b).
+            ["mixed types, guide angle"] = new Expect { What = Kind.Error, Message = "Provide one bearing type or one per selected point" },
         };
 
         internal static Expect Of(string label)
@@ -605,6 +608,13 @@ internal static class GpcOnlyReplay
         R2aDesignFixtures.Plate(BridGHe.Common.Gpc.Builders.GpcPlateBuilders.Create(corners, Patch(), null, angle, 0, id, R1Id("plate:" + id + ":" + angle)));
     /// <summary>The corners of the plate of the example 03 (its GPC draft).</summary>
     private static (double X, double Y, double Z)[] PatchCorners() => Ex("03-plate-patch").Plates.Single().Corners.Select(p => (p.X, p.Y, p.Z)).ToArray();
+    /// <summary>The GPC twin of <c>BridgeAssignmentTests.Property</c> as its conversion reads it: Beam «P» on a solid rectangle D 1500 × B 300, the material
+    /// without a name (the former <c>new MaterialModel("S")</c>: its id is «S», its name the default «Material»), E 210000, ν 0.3, Use Poisson, kind
+    /// Undefined. (R2a's twin <c>RectangleProperty</c> names the material «S»: another signature.)</summary>
+    private static BridGHe.Common.Gpc.Legacy.LegacyBeamProperty AssignmentProperty(string name = "P") =>
+        BridGHe.Common.Gpc.Builders.GpcPropertyBuilders.Beam(name, 5, BridGHe.Common.Gpc.Builders.GpcSectionBuilders.Standard(BridGHe.Common.Gpc.BridgeSectionKind.SolidRectangle, 1500, 300),
+            R2aDesignFixtures.Material("Undefined", "Material", 210000, .3));
+
     /// <summary>A model given by its GPC input alone (<c>GH_Model.FromGpc</c>).</summary>
     private static IGH_Goo GpcModelGoo(BridGHe.Common.Gpc.GpcModels.Conversion input) => (IGH_Goo)T("Fem.GH_Model").GetMethod("FromGpc", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { input });
 
@@ -719,7 +729,7 @@ internal static class GpcOnlyReplay
         var beam = Twin(() => Make("Fem.GH_Beam", m2.Beams[1]), () => R2aDesignFixtures.Beam(Ex("02-simply-supported").Beams[1]));
         var loaded = Twin(() => Make("Fem.GH_Beam", m2.Beams[0]), () => R2aDesignFixtures.Beam(Ex("02-simply-supported").Beams[0]));
         var geometry = Make("BridgeGeometryGoo", BridGHe.Common.Geometry.SimpleBridgeBuilder.Build(SimpleBridgeTests.Input()));
-        var steel = Twin(() => Make("Fem.GH_BeamProperty", BridgeAssignmentTests.Property()), () => R2aDesignFixtures.Property(R2aDesignFixtures.RectangleProperty()));
+        var steel = Twin(() => Make("Fem.GH_BeamProperty", BridgeAssignmentTests.Property()), () => R2aDesignFixtures.Property(AssignmentProperty()));
         var lines = new object[] { new Rhino.Geometry.Line(0, 0, 0, 0, 0, 400), new Rhino.Geometry.Line(1000, 0, 0, 1000, 0, 400) };
         return new List<(string, string, Dictionary<int, object>)>
         {
