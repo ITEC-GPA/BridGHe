@@ -127,7 +127,19 @@ internal static class ExampleRemake04
                 foreach (var check in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "SuperElementCheckComponent")) FemPhasesReference.Compare(check, relative);
                 transitional = CheckTokens(doc);
             }
-            // The document as P2 reads it: GPC data alone.
+            // The document as P2 reads it: GPC data alone. TRANSITIONAL where it cannot be (gap for P2): the internalised models of 47/48 carry no
+            // drafts of their elements and Super Element Filter refuses them without a FEM value (R4aFixtures.WithoutDrafts).
+            int withoutDrafts = R4aFixtures.WithoutDrafts(doc);
+            bool givesElements = doc.Objects.OfType<GH_Component>().Any(c => c.GetType().Name is "SuperElementFilterComponent" or "DecomposeModelComponent");
+            if (withoutDrafts > 0 && givesElements)
+            {
+                if (!checks) throw new Exception(relative + ": a document without drafts and without Super Element Check");
+                long consumersRead = gooModels.Select(g => (GPC.Model.Models.Model)g.GetType().GetProperty("GpcResults").GetValue(g)).Sum(a => ConsumersCheck.Verify(a, relative));
+                Console.WriteLine($"REMADE EXAMPLE PASS {relative}: {gooModels.Length} internalised models with GPC results; no errors; {consumersRead} consumer values equal to the evaluation on the Results rows; "
+                    + $"TRANSITIONAL {transitional.Length} D3 section results equal to the former path (FemPhasesReference), solved on the file as read: {withoutDrafts} internalised models carry no drafts of their elements, "
+                    + "Super Element Filter refuses them on GPC data alone (gap for P2)");
+                continue;
+            }
             using var gpc = GrasshopperBridgeExample.Read(path);
             var analysed = R4aFixtures.GpcOnly(gpc);
             if (analysed.Length != gooModels.Length || R4aFixtures.Models(gpc).Any(g => g.GetType().GetProperty("Value").GetValue(g) != null))

@@ -45,8 +45,29 @@ internal static class BridgeDesignExamples
     /// <summary>The index of N-mm in the Units menu of Build Model (it follows <see cref="BridGHe.Common.Gpc.DefinitionUnits"/>).</summary>
     private const int Nmm = (int)BridGHe.Common.Gpc.DefinitionUnits.Nmm;
     private static bool Same(GPC.Geometry.Point3d a, GPC.Geometry.Point3d b) => Math.Abs(a.X - b.X) < 1e-6 && Math.Abs(a.Y - b.Y) < 1e-6 && Math.Abs(a.Z - b.Z) < 1e-6;
-    /// <summary>R6.6 lane R4a: the GH model given by its GPC input alone with its analysed model attached (an analysis component).</summary>
-    private static IGH_Goo Model(GPC.Model.Models.Model analysed) => R2bFixtures.Model(R2bFixtures.Input(analysed), analysed);
+    /// <summary>R6.6 lane R4a: the GH model given by its GPC input alone (the structure) with its analysed copy attached (an analysis
+    /// component).</summary>
+    private static IGH_Goo Model(GPC.Model.Models.Model structure, GPC.Model.Models.Model analysed, GPC.Checkers.CompositeBridge.BridgeModelData bridge = null) =>
+        R2bFixtures.Model(R2bFixtures.Input(structure, null, bridge), analysed);
+    /// <summary>The structure of <c>BridgeDeflectionTests.AnalyticGpc</c> (the same builder calls without the stored displacements: the same
+    /// identities and numbering as its analysed copy) and the bridge data of its members.</summary>
+    private static GPC.Model.Models.Model AnalyticStructure(SimpleBridgeGeometry geometry, out GPC.Checkers.CompositeBridge.BridgeModelData bridge)
+    {
+        var test = new GpcTestModel("Bridge design test"); test.Case("G1");
+        var nodes = geometry.Nodes.Select((p, i) => test.Node((i + 1).ToString(), p.X, p.Y, p.Z)).ToArray();
+        foreach (var member in geometry.Members)
+            test.Member(test.Beam(member.Id, nodes[member.NodeFrom - 1], nodes[member.NodeTo - 1]), Enum.Parse<GPC.Checkers.CompositeBridge.Layout.BridgeMemberFamily>(member.Family.ToString()),
+                member.Group, member.Segment, member.Span, member.StationFrom, member.StationTo);
+        bridge = test.Bridge; return test.Structure();
+    }
+    /// <summary>The structure of <c>BridgeFatigueTests.HistoryGpc</c> (the same builder calls without the stored forces).</summary>
+    private static GPC.Model.Models.Model HistoryStructure()
+    {
+        var test = new GpcTestModel("Synthetic transit for testing");
+        test.Beam("1", test.Node("1", 0, 0, 0), test.Node("2", 1000, 0, 0));
+        for (int i = 0; i < 5; i++) test.Case($"Q{i}");
+        return test.Structure();
+    }
     private static bool HasFem(object goo) => goo.GetType().GetProperty("Value").GetValue(goo) != null;
     /// <summary>The GPC datum of every output item (drafts of nodes, beams, plates), checked to carry no FEM value.</summary>
     private static T[] Drafts<T>(GH_Component c, int port) where T : class
@@ -362,8 +383,8 @@ internal static class BridgeDesignExamples
 #if GPC_PILOT
         // R6.6 R4a: the analytical displacements stored in a GPC model built in GPC alone (BridgeDeflectionTests.AnalyticGpc), with the bridge
         // data of its members (the girder stations of the physical members) on its GPC input.
-        var analytic = BridgeDeflectionTests.AnalyticGpc(g, out var members);
-        Data(doc, c, 0, "Modello con spostamenti sintetici", R2bFixtures.Model(R2bFixtures.Input(analytic, null, members), analytic));
+        var analytic = BridgeDeflectionTests.AnalyticGpc(g);
+        Data(doc, c, 0, "Modello con spostamenti sintetici", Model(AnalyticStructure(g, out var members), analytic, members));
 #else
         Data(doc, c, 0, "Modello con spostamenti sintetici", Goo("GH_Model", BridgeDeflectionTests.AnalyticModel(g)));
 #endif
@@ -382,7 +403,7 @@ internal static class BridgeDesignExamples
         var fem = Add(doc, "BridgeFatigueHistoryComponent", 1500, 50);
 #if GPC_PILOT
         // R6.6 R4a: the transit built in GPC alone (BridgeFatigueTests.HistoryGpc: the axial force of each case at both beam ends).
-        Data(doc, fem, 1, "Transito sintetico, non Straus", Model(BridgeFatigueTests.HistoryGpc()));
+        Data(doc, fem, 1, "Transito sintetico, non Straus", Model(HistoryStructure(), BridgeFatigueTests.HistoryGpc()));
 #else
         Data(doc, fem, 1, "Transito sintetico, non Straus", Goo("GH_Model", ExampleRemake04.WithEndNodes(BridgeFatigueTests.HistoryModel(), out _)));
 #endif

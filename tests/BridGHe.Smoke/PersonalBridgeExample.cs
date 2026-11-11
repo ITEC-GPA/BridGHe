@@ -99,10 +99,12 @@ internal static class PersonalBridgeExample
 
     private static object Describe(object value)
     {
+#if !GPC_PILOT
         if (value is ModelModel model) return new { type = "Model", model.Name, nodes = model.Nodes.Count, beams = model.Beams.Count,
             cases = model.LoadCases.Select(c => c.Name), combos = model.LoadCombinations.Select(c => c.Name),
             results = model.Beams.Sum(b => b.Results.Count), units = model.Units.ToString() };
         if (value is BeamModel beam) return new { type = "Beam", beam.BeamId, beam.Length, results = beam.Results.Count };
+#endif
         var text = value?.ToString(); return text?.Length > 350 ? text.Substring(0, 350) : text;
     }
 }

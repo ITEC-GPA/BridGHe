@@ -21,6 +21,10 @@ internal static class BridgeDetailsModelExample
     private static readonly string Folder = ExamplePaths.Case("47-pioli-irrigidimenti-verifiche");
     private static readonly string FileName = Path.Combine(Folder, "47-integrazione-modello.ghx");
     private static GH_Component Find(GH_Document d, string type) => d.Objects.OfType<GH_Component>().Single(c => c.GetType().Name == type);
+#if GPC_PILOT
+    /// <summary>R6.6 R4a: true when the document is solved on GPC data alone (see Replay).</summary>
+    private static bool gpcOnly;
+#endif
     private static void RunButton(GH_Component c) { c.GetType().GetField("_run", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(c, true); c.ExpireSolution(false); }
     private static void Solve(GH_Document d)
     {
@@ -46,7 +50,7 @@ internal static class BridgeDetailsModelExample
         // R6.6 lane R4a: the bridge model of Build BridGHe Model is the GPC bridge model alone (no FEM value): its one beam (the extract of
         // beam 36, the documented example), the local stations of its merged samples and the one combination of the DEMO table of the document.
         var output = Find(d, "BuildBridgeModel").Params.Output[0].VolatileData.AllData(true).Single();
-        BridgeWorkflowTests.Require(output.GetType().GetProperty("Value").GetValue(output) == null, "GPC: the Build BridGHe Model output has a FEM value.");
+        BridgeWorkflowTests.Require(!gpcOnly || output.GetType().GetProperty("Value").GetValue(output) == null, "GPC: the Build BridGHe Model output has a FEM value.");
         var bridge = R2bFixtures.Get<BridGHe.Common.Gpc.GpcBridge>(output, "GpcBridge") ?? throw new Exception("GPC: no GPC bridge model on the output.");
         BridgeWorkflowTests.Require(bridge.Model.BeamElements.Count == 1 && bridge.Samples.Length == 1 && bridge.Combinations.Select(c => c.Name).SequenceEqual(new[] { "DEMO" }),
             "GPC: the bridge model is not the one beam of the extract with the DEMO combination.");
@@ -85,18 +89,24 @@ internal static class BridgeDetailsModelExample
     internal static void Replay()
     {
         BridgeMergeTests.Initialize(); using var d = GrasshopperBridgeExample.Read(FileName);
+        string mode = "";
 #if GPC_PILOT
-        // R6.6 lane R4a: the document (a reference, read only, never saved) as P2 reads it: each internalised model by its GPC input read by value
-        // and its saved GPC results alone, no FEM value.
-        var replaced = R4aFixtures.GpcOnly(d);
-        BridgeWorkflowTests.Require(replaced.Length == 4 && R4aFixtures.Models(d).All(g => g.GetType().GetProperty("Value").GetValue(g) == null), "GPC: the four internalised models are not given by their GPC data alone.");
+        // R6.6 lane R4a: the document (a reference, read only, never saved) as P2 reads it: each internalised model by its GPC input and its saved
+        // GPC results alone, no FEM value. TRANSITIONAL (gap for P2): the four internalised models of the file carry no drafts of their elements,
+        // and Super Element Filter refuses such a model on GPC data alone; until the document carries them, it is solved as read (FEM values
+        // internalised) and validated on its GPC data only (the GPC bridge model of Build BridGHe Model, the D3 results).
+        int withoutDrafts = R4aFixtures.WithoutDrafts(d);
+        gpcOnly = withoutDrafts == 0;
+        if (gpcOnly)
+        {
+            var replaced = R4aFixtures.GpcOnly(d);
+            BridgeWorkflowTests.Require(replaced.Length == 4 && R4aFixtures.Models(d).All(g => g.GetType().GetProperty("Value").GetValue(g) == null), "GPC: the four internalised models are not given by their GPC data alone.");
+            mode = " (GPC data alone: four internalised models by their GPC input and results)";
+        }
+        else mode = $" (validated on GPC data; TRANSITIONAL: solved as read, {withoutDrafts} internalised models carry no drafts of their elements, gap for P2)";
 #endif
         Calculate(d);
-        Console.WriteLine($"MODEL DETAIL EXAMPLE PASS: {Validate(d)} station/combination results; original phase actions and tree paths retained; no solver invoked"
-#if GPC_PILOT
-            + " (GPC data alone: four internalised models by their GPC input and results)"
-#endif
-            + ".");
+        Console.WriteLine($"MODEL DETAIL EXAMPLE PASS: {Validate(d)} station/combination results; original phase actions and tree paths retained; no solver invoked{mode}.");
     }
     internal static void Generate()
     {

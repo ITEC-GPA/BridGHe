@@ -82,6 +82,10 @@ internal static class R4aFixtures
                         branch[i] = twin; changed = true; continue;
                     }
                     var input = R2bFixtures.Get<GpcModels.Conversion>(goo, "GpcInput") ?? throw new InvalidOperationException("R4A: an internalised model without its GPC input (" + param.NickName + ")");
+                    // The drafts of its elements carried apart (the former payload read by value), as the model transformers read them
+                    // (GpcOnlyModels.InputOf): Build BridGHe Model and the filters need them.
+                    var drafts = R2bFixtures.Get<GpcModelDrafts>(goo, "GpcDrafts");
+                    if (input.Drafts == null && drafts != null) input = input.WithDrafts(drafts);
                     var results = R2bFixtures.Get<GPC.Model.Models.Model>(goo, "GpcResults");
                     var created = R2bFixtures.Model(input, results);
                     Require(R2bFixtures.Get<GpcModels.Conversion>(created, "GpcInput") == input && R2bFixtures.Get<GPC.Model.Models.Model>(created, "GpcResults") == results,
@@ -93,6 +97,15 @@ internal static class R4aFixtures
         }
         return analysed.ToArray();
     }
+
+    /// <summary>
+    /// The internalised GH models of a document that carry no drafts of their elements (neither in their GPC input nor apart). The five
+    /// documents remade on 7/11 (<c>--remake-examples-04 write</c>) saved their models as GPC input (BGHGPC1, the conversion of the FEM value,
+    /// which carries no drafts) plus the FEM value, with no drafts chunk: on GPC data alone (P2) the components that give the elements of such a
+    /// model back (Super Element Filter, Decompose Model: <c>GpcModelDraftsAttach.OfGpcOnly</c>) refuse it. Listed as a gap for P2.
+    /// </summary>
+    internal static int WithoutDrafts(Grasshopper.Kernel.GH_Document doc) =>
+        Models(doc).Count(g => R2bFixtures.Get<GpcModels.Conversion>(g, "GpcInput")?.Drafts == null && R2bFixtures.Get<GpcModelDrafts>(g, "GpcDrafts") == null);
 
     /// <summary>The GH models internalised in a document (persistent data of parameters and component inputs).</summary>
     internal static IGH_Goo[] Models(Grasshopper.Kernel.GH_Document doc) =>
