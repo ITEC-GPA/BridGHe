@@ -108,6 +108,7 @@ internal static class RegressionTests
         gpc["gpc-build-model-legacy"] = R3LegacyBuildModel.Regression; // R6.6 lane R3 (11/11): Build Model on the drafts of the 0.3.0 models read by value = the import of the reader (the FEM-input coverage of gpc-build-model)
         gpc["gpc-c3"] = C3Checks.Regression; // C3 (11/11): materials with analysis data and no table; preview of the GPC drafts (gaps 1 and 2 of R2a)
         gpc["r2b-merge-forces"] = R2bMergeForcesChecks.Regression; // R6.6 lane R2b (11/11): merge, reactions and Super Element Check forces on GPC data alone (explicit counterparts of the native GpcMergeCheck and GpcSecForcesCheck)
+        gpc["r4b-inputs"] = R4bInputs.Regression; // R6.6 lane R4b (11/11, transitional): the GPC inputs of the native tests of R4b equal to the conversion of their former FEM models
         gpc["gpc-review-fixes"] = GpcReviewFixesC1.Regression; // C1 (11/11): the product fixes of the ChatGPT reviews (R65-C3-01/02, R25-01, P30-01/02/04, Table Material)
         gpc["gpc-c5"] = C5ParityChecks.Regression; // C5 (11/11): releases of rotated beams as 0.3.0 (write plan recorded)
         gpc["gpc-only-elements"] = GpcOnlyReplay.Elements; // R6.5 P1 lane 1a (7/11): the element components replayed with GPC-only inputs
