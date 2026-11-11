@@ -15,6 +15,8 @@ using Grasshopper.Kernel.Types;
 /// merged samples of the GPC bridge model. The check recomputes the former output from the FEM results of the composite beams (stations,
 /// <see cref="BridgePhaseAssembler"/>, total of the steel, long-term, short-term and shrinkage actions per combination) and requires the
 /// same tree: same paths, same counts, every component bit for bit (zero without sign on both sides).
+/// <para><b>TRANSITIONAL (R6.6 lane R2b):</b> runs only in the 50 and 99 natives (FEM side of the frozen native capture); the stations and the
+/// sign conventions of the «Tension Forces» are checked on explicit GPC samples by <c>r2b-merge-forces</c> (<see cref="R2bMergeForcesChecks"/>).</para>
 /// </summary>
 internal static class GpcSecForcesCheck
 {

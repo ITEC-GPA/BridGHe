@@ -18,6 +18,8 @@ using R = Rhino.Geometry;
 /// and attributes), loads in the stage-less "Dead" case, two loads equal within the other datum, Element IDs, super elements, bridge
 /// members and section states (always appended), releases, supports, taper, string group, output stations, restraints, springs,
 /// coordinate systems, rigid connections, temperatures, plate pressures, prestress, supports and load patch.
+/// <para><b>TRANSITIONAL (R6.6 lane R2b):</b> the oracle is still the draft of the former FEM merge; no capture holds these merges and their
+/// explicit expected values need the 0.3.0 merge rule of every attribute (to be written with P2 or a follow-up lane).</para>
 /// </summary>
 internal static class GpcDraftMergeChecks
 {

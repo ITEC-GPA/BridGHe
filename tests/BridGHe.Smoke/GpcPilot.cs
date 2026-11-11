@@ -20,6 +20,8 @@ using Grasshopper.Kernel.Special;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 
+// TRANSITIONAL (R6.6 lane R2b): the F4 pilot (--gpc-pilot, native, not in the gate) still compares the FEM solve with GpcPilotAdapter; its GPC
+// rewrite (equilibrium, I/J reversal, reopening on explicit GPC models) waits for a native stage (natives on hold on 11/11).
 internal static class GpcPilot
 {
     static void Check(bool ok,string name){if(!ok)throw new Exception(name);Console.WriteLine("PASS "+name);}
