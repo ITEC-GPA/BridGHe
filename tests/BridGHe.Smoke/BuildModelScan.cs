@@ -54,14 +54,23 @@ internal static class BuildModelScan
                 }
                 foreach (var b in builds) Up(b);
                 foreach (var o in doc.Objects.OfType<IGH_ActiveObject>()) if (!upstream.Contains(o)) o.Locked = true;
-                // e3 point 6 (--native, with the Straus7 key): the analyses upstream of a Build Model run (the Run button), so that the Build
-                // Model runs behind them (the archived 19 REV003) get their data.
-                // The Output Path of every analysis upstream is redirected (in memory, the definition is never saved) to a folder of the scan:
-                // the archived definitions name absolute paths in the main checkout of BridGHe (p2l5/p2l8 wrote 52 ignored files there, P2L).
-                // R6.6 R0: in both modes, and without --native every analysis upstream is locked: an analysis with Keep Running set by a toggle
-                // (99 REV001) solved natively in the scan without the key and the lock and wrote 12 ignored files into the main checkout (11/11).
+                // R6.6 R0: without --native no analysis may solve: Keep Running (Straus R3 Analysis) and Run (Moving Static Analysis) are set
+                // to false in memory; the Output Path is kept, so an analysis restores the results saved next to it (a read, as before) and its
+                // Build Model runs keep the data they had. An analysis of 99 REV001 with Keep Running set by a toggle solved natively in the scan,
+                // without the key and the lock, and wrote 12 ignored files into the main checkout (11/11). With --native the Output Path of
+                // every analysis upstream is redirected (Moving Static Analysis too), Straus R3 Analysis pressed as before.
                 foreach (var c in doc.Objects.OfType<GH_Component>().Where(c => upstream.Contains(c) && c.GetType().Name is "StrausR3AnalysisComponent" or "MovingStaticAnalysisComponent").ToArray())
                 {
+                    if (!native)
+                    {
+                        foreach (var p in c.Params.Input.OfType<Grasshopper.Kernel.Parameters.Param_Boolean>().Where(p => p.Name is "Keep Running" or "Run"))
+                        {
+                            foreach (var s in p.Sources.ToArray()) p.RemoveSource(s);
+                            p.PersistentData.Clear(); p.SetPersistentData(false);
+                        }
+                        Console.WriteLine($"BUILD MODEL SCAN {label}: '{c.NickName}' not solved (not native)");
+                        continue;
+                    }
                     var output = (Grasshopper.Kernel.Parameters.Param_String)c.Params.Input.Single(p => string.Equals(p.Name, "Output Path", StringComparison.OrdinalIgnoreCase));
                     string folder = Path.Combine(ScanFiles, string.Concat(label.Select(ch => Path.GetInvalidFileNameChars().Contains(ch) || ch == ' ' ? '-' : ch)));
                     Directory.CreateDirectory(folder);
@@ -69,7 +78,6 @@ internal static class BuildModelScan
                     foreach (var s in output.Sources.ToArray()) output.RemoveSource(s);
                     output.PersistentData.Clear(); output.SetPersistentData(target);
                     if (!Path.GetFullPath(target).StartsWith(ScanFiles, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("BuildModelScanOutputOutsideTheScanFolder: " + target);
-                    if (!native) { c.Locked = true; Console.WriteLine($"BUILD MODEL SCAN {label}: '{c.NickName}' locked (not native), output {target}"); continue; }
                     if (c.GetType().Name != "StrausR3AnalysisComponent") { Console.WriteLine($"BUILD MODEL SCAN {label}: '{c.NickName}' output {target}"); continue; }
                     c.GetType().GetField("_run", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(c, true);
                     Console.WriteLine($"BUILD MODEL SCAN {label}: Run of '{c.NickName}' pressed, output {target}");
