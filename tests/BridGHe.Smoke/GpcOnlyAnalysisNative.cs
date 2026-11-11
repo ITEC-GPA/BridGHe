@@ -157,7 +157,9 @@ internal static class GpcOnlyAnalysisNative
             var direct = BridGHe.Common.Straus.StrausAnalysis.Run(example.Input, Target("library"), example.Solver, example.Cases, example.Moving, out var directWarnings);
             string difference = GpcOnlyReplay.ResultsDifference(Analysed(example.Input, direct), gpc.Model);
             check(difference == null, example.Id + ": the analysed model of the component differs from the analysis of the library: " + difference);
-            check(gpc.Warnings == string.Join(" | ", directWarnings), example.Id + ": warnings of the component '" + gpc.Warnings + "', of the library '" + string.Join(" | ", directWarnings) + "'");
+            // The component reports the warnings of the analysis (Grasshopper keeps one message per text): the distinct texts, in order.
+            string componentWarnings = string.Join(" | ", gpc.Warnings.Split(" | ", StringSplitOptions.RemoveEmptyEntries).Distinct()), libraryWarnings = string.Join(" | ", directWarnings.Distinct());
+            check(componentWarnings == libraryWarnings, example.Id + ": warnings of the component '" + gpc.Warnings + "', of the library '" + libraryWarnings + "'");
             // The Cases output: the generated cases of the analysed model, one per position of the moving path (none without paths).
             var generated = GpcResultCatalog.Of(analysed).GeneratedMovingCases().Select(c => c.Name).ToArray();
             int positions = example.Moving ? example.Inputs.Paths.Sum(p => p.Divisions) : 0;

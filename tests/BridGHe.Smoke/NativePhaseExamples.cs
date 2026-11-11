@@ -40,7 +40,7 @@ internal static class NativePhaseExamples
         BridgeExampleMigration.Initialize();
         var files = selection == null || selection == "all" ? Current : Current.Where(f => f.StartsWith(selection, StringComparison.Ordinal)).ToArray();
         if (files.Length == 0) throw new ArgumentException("No phase example matches " + selection);
-        var rows = new List<string>();
+        var rows = new List<string>(); var gpcOnlyFailures = new List<string>();
         bool inspect = Environment.GetEnvironmentVariable("BRIDGHE_PHASE_INSPECT") is "1" or "2";
         bool gpcOnly = Environment.GetEnvironmentVariable("BRIDGHE_PHASE_GPC_ONLY") == "1";
         foreach (var relative in files)
@@ -57,13 +57,20 @@ internal static class NativePhaseExamples
             }
             var (analyses, checks, reference) = Pass(path, label, label, false, rows);
             // R6.6 R4b (BRIDGHE_PHASE_GPC_ONLY=1): the same definition read as P2 reads it, solved again natively, its checks against the first run.
-            if (gpcOnly) rows.Add(SameChecks(label, reference, Pass(path, label + " GPC-only", label + "-gpc-only", true, rows).Results));
+            if (gpcOnly)
+            {
+                // A failure of the run read as P2 is listed (the first runs of the other definitions still run) and fails the runner at the end.
+                try { rows.Add(SameChecks(label, reference, Pass(path, label + " GPC-only", label + "-gpc-only", true, rows).Results)); }
+                catch (Exception ex) { gpcOnlyFailures.Add(label + ": " + ex.GetBaseException().Message); Console.WriteLine("PHASE EXAMPLE GPC-ONLY FAIL (" + label + "): " + ex); }
+            }
             if (!original.AsSpan().SequenceEqual(File.ReadAllBytes(path))) throw new Exception(label + ": the definition changed on disk");
-            Console.WriteLine($"PHASE EXAMPLE NATIVE PASS ({label}): {analyses} analyses, GPC bridge model, {checks} Super Element Check on D3{(gpcOnly ? "; the definition read as P2 reads it: the same checks" : "")}.");
+            Console.WriteLine($"PHASE EXAMPLE NATIVE PASS ({label}): {analyses} analyses, GPC bridge model, {checks} Super Element Check on D3{(gpcOnly && !gpcOnlyFailures.Any(f => f.StartsWith(label + ":", StringComparison.Ordinal)) ? "; the definition read as P2 reads it: the same checks" : "")}.");
         }
         if (inspect) { foreach (var row in rows) Console.WriteLine("PHASE EXAMPLE INSPECT " + row); Console.WriteLine($"PHASE EXAMPLES INSPECT: {files.Length} definitions, nothing solved."); return 0; }
         foreach (var row in rows) Console.WriteLine("PHASE EXAMPLE DIFFERENCES " + row);
-        Console.WriteLine($"PHASE EXAMPLES NATIVE PASS: {files.Length} definitions.");
+        foreach (var f in gpcOnlyFailures) Console.WriteLine("PHASE EXAMPLE GPC-ONLY FAILED " + f);
+        if (gpcOnlyFailures.Count > 0) { Console.WriteLine($"PHASE EXAMPLES GPC-ONLY FAIL: {gpcOnlyFailures.Count} of {files.Length} definitions read as P2 reads them (the first runs passed)"); return 1; }
+        Console.WriteLine($"PHASE EXAMPLES NATIVE PASS: {files.Length} definitions{(gpcOnly ? ", each also read as P2 reads it" : "")}.");
         return 0;
     }
 
