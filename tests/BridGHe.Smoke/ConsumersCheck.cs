@@ -181,10 +181,14 @@ internal static class ConsumersCheck
         // cases of their moving paths, and the stages reported are exactly those with a term on another case or a non-finite factor.
         var caseNames = model.LoadCases.Values.ToDictionary(c => c.Guid, c => c.Name);
         var pathCases = (model.MovingLoads?.Paths ?? Enumerable.Empty<GPC.Model.Actions.Moving.MovingLoadPath>()).Select(p => caseNames[p.CaseGuid]).ToHashSet(StringComparer.Ordinal);
-        var registered = input.Report.CaseOrigins.Where(p => (p.Value & BridGHe.Common.Gpc.Legacy.LegacyCaseOrigins.Registered) != 0).Select(p => p.Key).ToArray();
-        Require(pathCases.SetEquals(registered), $"registered cases {string.Join(",", registered)}, as Build Model and Attach Moving Paths give them: {string.Join(",", pathCases)}");
+        // Coordinator (12/11): the rule is that of 0.3.0, an increment is valid only on a registered case. A model built by hand may register more
+        // cases than its moving paths (bridge-utilities registers G and Q), so the registered cases must include the cases of the moving paths
+        // (Attach Moving Paths registers them), and the stages reported are those with a term on a case not registered or a non-finite factor.
+        // On the examples, given by Build Model, the registered cases are those of the moving paths, so the stages reported are the same.
+        var registered = input.Report.CaseOrigins.Where(p => (p.Value & BridGHe.Common.Gpc.Legacy.LegacyCaseOrigins.Registered) != 0).Select(p => p.Key).ToHashSet(StringComparer.Ordinal);
+        Require(pathCases.IsSubsetOf(registered), $"registered cases {string.Join(",", registered)} include the cases of the moving paths, as Attach Moving Paths gives them: {string.Join(",", pathCases)}");
         var stageErrors = model.Stages.Values.Where(s => (s.AnalysisState?.Increments ?? Array.Empty<GPC.Model.Stages.StageLoadIncrement>()).Any(i => (i.LoadFactors ?? Array.Empty<GPC.Model.Stages.StageCaseFactor>())
-            .Any(f => !double.IsFinite(f.Factor) || !caseNames.TryGetValue(f.CaseGuid, out var name) || !pathCases.Contains(name)))).Select(s => "INVALID_STAGE_INCREMENT|" + s.Name).OrderBy(x => x, StringComparer.Ordinal).ToArray();
+            .Any(f => !double.IsFinite(f.Factor) || !caseNames.TryGetValue(f.CaseGuid, out var name) || !registered.Contains(name)))).Select(s => "INVALID_STAGE_INCREMENT|" + s.Name).OrderBy(x => x, StringComparer.Ordinal).ToArray();
         var errors = issues.Where(i => i.Severity == "Error").Select(i => i.Code + "|" + i.Element).OrderBy(x => x, StringComparer.Ordinal).ToArray();
         Require(errors.SequenceEqual(stageErrors, StringComparer.Ordinal), $"errors on a valid example other than the stage increments 0.3.0 reports ({string.Join(", ", stageErrors)}):\n" + Text());
         Require(issues.Any(i => i.Code == "DISCONNECTED") == (parts > 1), $"{parts} connected parts:\n" + Text());
