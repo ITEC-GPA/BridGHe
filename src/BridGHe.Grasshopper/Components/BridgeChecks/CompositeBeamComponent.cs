@@ -107,13 +107,15 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         private Guid Identity(Common.Gpc.Legacy.LegacyBeamDraft beam, GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition start, GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition end,
             IReadOnlyList<string> groups) => GpcOnlyElements.Identity(beam.Beam.Guid, ComponentGuid, 0, Digest(start), Digest(end), groups);
 
-        /// <summary>P2F (P7): the content of a composite definition, its GPC input fingerprint (<c>ModelValues.Fingerprint</c>, the same in every
-        /// process for the same content). Before, the SHA-256 of its archive (<c>GpcDraftArchive.Write</c>), whose bytes are not the same from one
-        /// write to the next for the same definition: the composite beam got another GUID at every solve.</summary>
+        /// <summary>P2F (P7): the content of a composite definition, the GPC input fingerprint (<c>ModelValues.Fingerprint</c>, the same in every
+        /// process for the same content) of a copy read back from its archive. Before, the SHA-256 of the archive itself, whose bytes change once
+        /// the definition has been fingerprinted (the fingerprint, taken elsewhere on the same definition, changes what the archive writes, not
+        /// what it fingerprints): the composite beam got another GUID at every solve. The copy leaves the input definition as it is (the
+        /// fingerprint is never taken on it here: shared-properties).</summary>
         private static string Digest(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition definition)
         {
             if (definition == null) return "null";
-            try { return "composite:" + GPC.Model.Core.ModelValues.Fingerprint(new object[] { definition }); }
+            try { return "composite:" + GPC.Model.Core.ModelValues.Fingerprint(new object[] { Common.Gpc.GpcDraftArchive.ReadComposite(Common.Gpc.GpcDraftArchive.Write(definition)) }); }
             catch (Exception ex) when (ex is ArgumentException or NotSupportedException or InvalidOperationException or System.Runtime.Serialization.SerializationException) { return "composite:" + definition.Name; }
         }
 
