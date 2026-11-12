@@ -2187,17 +2187,25 @@ internal static class GpcOnlyReplay
 
     /// <summary>L3e: the analysed GPC models of two outputs compared: fingerprint, name, datasets, catalog and every result row the components read, in exact
     /// text (the serialized files differ in the dataset GUIDs of each import). Null when equal, otherwise the first difference.</summary>
-    internal static string ResultsDifference(object fem, object gpc)
+    internal static string ResultsDifference(object fem, object gpc) => ResultsDifference(fem, gpc, true, out _);
+
+    /// <summary>R1chain (12/11): <see cref="ResultsDifference(object, object)"/>; with <paramref name="identities"/> false, without the analysis fingerprint.
+    /// The fingerprint holds the GUID of the model and of every element (<c>ModelRevisions.AnalysisFingerprint</c>), so an analysis whose input is built
+    /// inside the chain of the rehearsal, downstream of another analysis on the path of P2 (identities derived from the drafts), has another fingerprint by
+    /// construction; its name, dataset keys, catalog and every result row the components read, elements by number, are compared all the same (R4c-moving,
+    /// task 2: <c>R4cChainDiagnosis.RowsDifference</c>). <paramref name="rows"/>: the result rows compared.</summary>
+    internal static string ResultsDifference(object fem, object gpc, bool identities, out long rows)
     {
+        rows = 0;
         var a = Prop(fem, "GpcResults") as GPC.Model.Models.Model; var b = Prop(gpc, "GpcResults") as GPC.Model.Models.Model;
         if (a == null || b == null) return "an output without results catalog: FEM-backed " + (a != null) + ", GPC-only " + (b != null);
-        if (GPC.Model.Models.ModelRevisions.AnalysisFingerprint(a) != GPC.Model.Models.ModelRevisions.AnalysisFingerprint(b)) return "the analysis fingerprint";
+        if (identities && GPC.Model.Models.ModelRevisions.AnalysisFingerprint(a) != GPC.Model.Models.ModelRevisions.AnalysisFingerprint(b)) return "the analysis fingerprint";
         if (a.Name != b.Name) return "the name: '" + a.Name + "' -> '" + b.Name + "'";
         if (!a.Datasets.Keys.SequenceEqual(b.Datasets.Keys)) return "the dataset keys";
         var p = BridGHe.Common.Gpc.GpcResultCatalog.Of(a); var q = BridGHe.Common.Gpc.GpcResultCatalog.Of(b);
         static string E(BridGHe.Common.Gpc.GpcResultCatalog c) => c.Units.Units + " " + string.Join(";", c.Entries.Select(e => e.Label + "|" + e.Case + "|" + e.Step + "|" + e.Phase));
         if (E(p) != E(q)) return "the catalog: " + E(p) + " -> " + E(q);
-        var first = ResultRows(p, a).GetEnumerator(); var second = ResultRows(q, b).GetEnumerator(); long rows = 0;
+        var first = ResultRows(p, a).GetEnumerator(); var second = ResultRows(q, b).GetEnumerator();
         while (true)
         {
             bool one = first.MoveNext(), two = second.MoveNext();
@@ -2287,6 +2295,7 @@ internal static class GpcOnlyReplay
         var types = Lane3aTypes.Concat(Lane3bTypes).Concat(Lane3cTypes).Concat(Lane3dTypes).Concat(Lane3Consumers).Where(Selected).ToHashSet(StringComparer.Ordinal);
         var analysisTypes = new[] { "StrausR3AnalysisComponent", "MovingStaticAnalysisComponent" };
         var byType = new SortedDictionary<string, (int Instances, int Items)>(StringComparer.Ordinal); var failures = new List<string>(); var transitionalDiffs = new List<string>();
+        var exclusions = new List<string>(); // R1chain: the declared exclusions applied (not failures)
         var analyses = doc.Objects.OfType<GH_Component>().Where(c => analysisTypes.Contains(c.GetType().Name) && Selected(c.GetType().Name)).ToList();
         // Downstream of the analyses: every object that reads an output of an analysis, through any number of objects.
         var down = new List<IGH_DocumentObject>(); var seen = new HashSet<IGH_DocumentObject>(analyses);
@@ -2364,11 +2373,29 @@ internal static class GpcOnlyReplay
             if (!press) continue;
             if (gpc.Messages.Any(m => m.StartsWith("Error", StringComparison.Ordinal))) failures.Add(where + ": " + string.Join(" / ", gpc.Messages));
             if (fem.Goos.Count == 0 || gpc.Goos.Count == 0) { failures.Add(where + ": no output"); continue; }
-            string difference = ResultsDifference(fem.Goos[0], gpc.Goos[0]);
-            if (difference != null) failures.Add(where + ": analysed models differ: " + difference);
+            // R1chain (12/11): an analysis whose Model comes from a copy of the chain (on the 50: M02_NINF, M03_N0 and the moving analysis on M03_N0, whose
+            // input Decompose Model of M01 → … → Build Model builds downstream of M01) takes the identities derived on the path of P2, not those of the
+            // conversion of the FEM value of the definition: its analysis fingerprint (GUIDs of the model and of every element) differs by construction
+            // (R4c-moving, task 2: 986 GUIDs of 986; without them 9142 result rows of 9142 equal). It is compared without the fingerprint: name, dataset keys,
+            // catalog and every result row by element number. An analysis whose Model is the definition's own (from outside the chain, by FromGpc of the
+            // same input: the same GUIDs; the 4 of the 99, M01 and M04 of the 50) keeps the comparison with the fingerprint.
+            var model = a.Params.Input.First(p => p.Name == "Model");
+            bool chainInput = model.Sources.Any(s => s.Attributes?.GetTopLevel?.DocObject is { } top && copies.ContainsKey(top));
+            string difference = ResultsDifference(fem.Goos[0], gpc.Goos[0], !chainInput, out long rows);
+            if (difference != null) failures.Add(where + ": analysed models differ" + (chainInput ? " (input built in the chain, compared without the identities)" : "") + ": " + difference);
+            string mode = "with the analysis fingerprint";
+            if (chainInput)
+            {
+                bool sameFingerprint = GPC.Model.Models.ModelRevisions.AnalysisFingerprint((GPC.Model.Models.Model)Prop(fem.Goos[0], "GpcResults"))
+                    == GPC.Model.Models.ModelRevisions.AnalysisFingerprint((GPC.Model.Models.Model)Prop(gpc.Goos[0], "GpcResults"));
+                mode = $"without the identities (input built in the chain; analysis fingerprint {(sameFingerprint ? "equal" : "different")})";
+                // Reported, not failing (it compares with the conversion of the FEM value of the definition, as the TRANSITIONAL texts): the input of the analysis
+                // against the input in the definition modulo GUIDs, under the declared identity rules of the replays (Text, BridgeLinesAsSet): only identities differ.
+                Console.WriteLine($"GPC-ONLY rehearsal {where}: its input against the input of the definition modulo GUIDs (bridge data by value, reported): {InputDifference(a, (GH_Component)copies[a])}");
+            }
             // L3E open item 2: Shape2d in the GPC input of the analysis output (the chain: the real output; the definition: the conversion of its FEM output).
             static bool Shape2d(IGH_Goo g) { try { return Prop(g, "GpcInput") is BridGHe.Common.Gpc.GpcModels.Conversion c && GpcInputComparison.Document(c.Model)?.Contains("Shape2d", StringComparison.Ordinal) == true; } catch (Exception) { return false; } }
-            Console.WriteLine($"GPC-ONLY rehearsal {where}: analysed, {((GPC.Model.Models.Model)Prop(gpc.Goos[0], "Gpc"))?.Datasets.Count} datasets{(difference == null ? ", equal" : ", DIFFERENT")}; Shape2d in the GPC input: chain {Shape2d(gpc.Goos[0])}, definition {Shape2d(fem.Goos[0])}");
+            Console.WriteLine($"GPC-ONLY rehearsal {where}: analysed, {((GPC.Model.Models.Model)Prop(gpc.Goos[0], "Gpc"))?.Datasets.Count} datasets{(difference == null ? ", equal" : ", DIFFERENT")} {mode}, {rows} result rows; Shape2d in the GPC input: chain {Shape2d(gpc.Goos[0])}, definition {Shape2d(fem.Goos[0])}");
         }
         // Every object of the section in the chain against its instance of the definition.
         var outputsOf = new Dictionary<IGH_DocumentObject, Run>();
@@ -2381,8 +2408,17 @@ internal static class GpcOnlyReplay
             if (gpc.FemOutputs != 0) failures.Add($"{where}: {gpc.FemOutputs} outputs with a FEM value");
             if (!press) continue;
             var errors = gpc.Messages.Where(m => m.StartsWith("Error", StringComparison.Ordinal)).ToList();
-            if (errors.Except(fem.Messages).Any()) failures.Add(where + ": errors the definition has not: " + string.Join(" / ", errors));
-            if (fem.Goos.Count > 0 && gpc.Goos.Count == 0) failures.Add(where + $": no output ({fem.Goos.Count} in the definition): " + string.Join(" / ", gpc.Messages));
+            // R1chain (12/11): a declared exclusion (a known product defect left to P2) replaces the checks of errors and outputs of that object only, and only
+            // while every error it gives is the declared one; its TRANSITIONAL differences are still reported below.
+            var exclusion = RehearsalExclusions.FirstOrDefault(x => x.Label == label && x.Type == o.GetType().Name);
+            if (exclusion.Reason != null && errors.Count > 0 && errors.All(e => e.Contains(exclusion.Error, StringComparison.Ordinal)))
+                exclusions.Add(where + ": " + exclusion.Reason);
+            else
+            {
+                if (exclusion.Reason != null) Console.WriteLine($"GPC-ONLY rehearsal {where}: the declared exclusion is not applied (no {exclusion.Error} in its errors: {(errors.Count == 0 ? "none" : string.Join(" / ", errors))}); checked as any other object");
+                if (errors.Except(fem.Messages).Any()) failures.Add(where + ": errors the definition has not: " + string.Join(" / ", errors));
+                if (fem.Goos.Count > 0 && gpc.Goos.Count == 0) failures.Add(where + $": no output ({fem.Goos.Count} in the definition): " + string.Join(" / ", gpc.Messages));
+            }
             // L3E open item 1: the case origin of WIND in the report of Build BridGHe Model.
             if (o.GetType().Name == "BuildBridgeModel")
                 foreach (var (name, run) in new[] { ("chain", gpc), ("definition", fem) })
@@ -2436,12 +2472,49 @@ internal static class GpcOnlyReplay
         }
         chain.Dispose();
         foreach (var p in byType) Console.WriteLine($"GPC-ONLY rehearsal: {p.Key} {p.Value.Instances} instances, {p.Value.Items} output lines");
+        foreach (var e in exclusions) Console.WriteLine("GPC-ONLY rehearsal DECLARED EXCLUSION (known, not a failure): " + e);
         foreach (var f in failures.Take(60)) Console.WriteLine("  " + f);
         if (Environment.GetEnvironmentVariable("BRIDGHE_GPC_ONLY_REPORT") is { Length: > 0 } report) File.WriteAllLines(report, failures);
         modelsLane = false;
         if (failures.Count != 0) throw new Exception($"GPC-ONLY rehearsal {label} FAIL: {failures.Count} differences or failures (first: {failures[0]})");
         Console.WriteLine($"GPC-ONLY rehearsal {label} PASS: the real chain of {analyses.Count} analyses and {byType.Where(p => !analysisTypes.Contains(p.Key)).Sum(p => p.Value.Instances)} objects of the section downstream"
-            + (press ? " on real Straus7 results" : " (dry, no analysis)") + ", by their GPC data alone");
+            + (press ? " on real Straus7 results" : " (dry, no analysis)") + ", by their GPC data alone" + (exclusions.Count == 0 ? "" : $", {exclusions.Count} declared exclusion{(exclusions.Count == 1 ? "" : "s")}"));
+    }
+
+    /// <summary>R1chain (12/11): the declared exclusions of the rehearsal, known product defects left to P2, by rehearsal label and component type: the
+    /// error that identifies the defect and the reason in one line. The 50 only: its Bridge Report throws an OutOfMemoryException also for the definition
+    /// alone, without the chain (R4c-moving, task 2: 13.4 GB private of 63.5 GB available to the GC, so not the memory of the machine).</summary>
+    private static readonly (string Label, string Type, string Error, string Reason)[] RehearsalExclusions =
+    {
+        ("50", "BridgeReportComponent", "System.OutOfMemoryException",
+            "Bridge Report of the 50 REV003: OutOfMemoryException in BridgeReportData.Create (BridgeReportData.cs:173, the report data serialized into one .NET string beyond its maximum length, also for the definition alone): product defect left to P2"),
+    };
+
+    /// <summary>R1chain (12/11): the Model input of an analysis of the definition against that of its copy in the chain, by <see cref="Text"/> (modulo
+    /// GUIDs, the bridge data by their values) and, as the TRANSITIONAL comparison of the chain does (declared rule L3e, identity only), with the
+    /// «BRIDGE BEAM» lines as a set: they come in the order of the GUIDs of the beams (native 50, r1chain-b: 279111 lines of 279695 equal in text
+    /// order, then the block of the 498 beams in another order). The outcome in words, with the first different line (cut).</summary>
+    private static string InputDifference(GH_Component definition, GH_Component chain)
+    {
+        static string Cut(string v) => v.Length > 240 ? v[..240] + "…" : v;
+        static string Lines(string s, string t)
+        {
+            var l = s.Split('\n'); var m = t.Split('\n');
+            int at = Enumerable.Range(0, Math.Min(l.Length, m.Length)).FirstOrDefault(i => l[i] != m[i], -1);
+            return $"{l.Length} -> {m.Length} lines, {l.Zip(m).Count(p => p.First != p.Second)} different" + (at < 0 ? "" : $"; first at line {at + 1}: '{Cut(l[at])}' -> '{Cut(m[at])}'");
+        }
+        try
+        {
+            static IGH_Goo One(GH_Component c) => c.Params.Input.First(p => p.Name == "Model").VolatileData.AllData(true).OfType<IGH_Goo>().SingleOrDefault();
+            IGH_Goo x = One(definition), y = One(chain);
+            if (x == null || y == null) return "not compared: an input missing (definition " + (x != null) + ", chain " + (y != null) + ")";
+            string s = Text(x), t = Text(y);
+            if (s == t) return "equal";
+            string u = BridgeLinesAsSet(s), w = BridgeLinesAsSet(t);
+            if (u == w) return "equal with the BRIDGE BEAM lines as a set (in the order of the GUIDs of the beams: in text order " + Lines(s, t) + ")";
+            return "DIFFERENT, with the BRIDGE BEAM lines as a set: " + Lines(u, w);
+        }
+        catch (Exception ex) { return "not compared: " + ex.GetBaseException().GetType().Name + ": " + Cut(ex.GetBaseException().Message); }
     }
 
     /// <summary>L3a: the in-memory cases of the section: the types no example of the scope reaches with data (Composite Beam Self Tension and
