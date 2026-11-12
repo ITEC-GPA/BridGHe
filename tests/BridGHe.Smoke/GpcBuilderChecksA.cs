@@ -288,10 +288,17 @@ internal static class GpcBuilderChecksARuns
         // decided on the FEM value); the host checks each decision on the FEM value. Element Filter: unchanged (GH GUIDs only), one run.
         var grouped = new NodeModel("G", new Point3d(10, 20, 30)); grouped.Groups.Add(new GroupModel("Pour1", new GroupModel("Deck")));
         var refusedNode = new NodeModel("D", new Point3d(-1, -1, -1)); refusedNode.Loads.Add(new NodeDisplacementLoadModel(new LoadCaseModel("Dead") { Name = "Dead" }, new NodeDisplacementLoadModel.LoadData(new Vector3d(0, 0, -1), Vector3d.Zero)));
-        var nodes = new IGH_Goo[] { idNode, node, h.Goo("GH_Node", grouped, null), h.Goo("GH_Node", refusedNode, null), rigidId, hot };
-        Partition(h, "NodeFilterComponent", 2, 4, (0, nodes), (1, new[] { "N1", "nobody" }), (3, 2), (4, new[] { pour }));
-        Partition(h, "NodeFilterComponent", 5, 1, (0, nodes), (2, new[] { new Point3d(-1, -1, -1), new Point3d(1000, 2000, 3000) }), (3, 2));
-        Partition(h, "NodeFilterComponent", 1, 5, (0, nodes), (1, new[] { "R1-ID" }), (3, 2), (4, new[] { other }));
+        // P2R (T3, 12/11): Node Filter is on GPC data alone since P2K: a node whose GPC datum the reader refuses (a former displacement, only from a
+        // FEM value) makes the component refuse the run (its error, no output), so it leaves the partitions (each one node fewer: by ID and group
+        // 2/3, by position 4/1 (it was the node at -1,-1,-1), by ID and group 1/4) and is checked alone.
+        var nodes = new IGH_Goo[] { idNode, node, h.Goo("GH_Node", grouped, null), rigidId, hot };
+        Partition(h, "NodeFilterComponent", 2, 3, (0, nodes), (1, new[] { "N1", "nobody" }), (3, 2), (4, new[] { pour }));
+        Partition(h, "NodeFilterComponent", 4, 1, (0, nodes), (2, new[] { new Point3d(-1, -1, -1), new Point3d(1000, 2000, 3000) }), (3, 2));
+        Partition(h, "NodeFilterComponent", 1, 4, (0, nodes), (1, new[] { "R1-ID" }), (3, 2), (4, new[] { other }));
+        Run(h, "NodeFilterComponent", new int[0], (0, new[] { h.Goo("GH_Node", refusedNode, null) }), (1, new[] { "D" }), (3, 2));
+        int refusedBefore = h.Failures.Count;
+        h.Failures.RemoveAll(f => f.Contains(" run " + h.Runs, StringComparison.Ordinal) && f.Contains("Prescribed node displacements are not supported", StringComparison.Ordinal));
+        if (h.Failures.Count == refusedBefore) h.Failures.Add("A NodeFilterComponent: a node with a former displacement: no refusal of the component");
         var plates = new IGH_Goo[] { quad, tri, patch, idPlate, full };
         Partition(h, "PlateFilterComponent", 2, 3, (0, plates), (1, new[] { "P1" }), (3, 2), (4, new[] { "LP" }));
         Partition(h, "PlateFilterComponent", 1, 4, (0, plates), (3, 2), (5, new[] { pour }));

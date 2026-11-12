@@ -53,6 +53,31 @@ internal sealed class P2rCapture
 
     internal static string Bits(double v) => BitConverter.DoubleToInt64Bits(v).ToString("X16");
 
+    /// <summary>
+    /// The declared rules of the replay capture (P2R, 12/11; found by the first compare in another process, p2rz1): a captured value is
+    /// <c>lines messages outputs raw</c> (<see cref="GpcOnlyReplay"/>). Not a tolerance: each rule names the field it does not compare, the
+    /// others must be equal.
+    /// <list type="bullet">
+    /// <item><b>messages «*»</b>: the messages of the replay hold the warning of the plug-in build check (<c>PluginBuildCheck</c>, «Bin non
+    /// aggiornato…»: the libraries of the bin against lib/GPC and those loaded first, an environmental text whose list depends on what the
+    /// process loaded before); the messages are not compared, the line count, the outputs and the raw outputs are (7 instances of Creep And
+    /// Shrinkage Concrete in gpc-only-properties).</item>
+    /// <item><b>raw of the in-memory Bridge Phase Model and Bridge Construction Sequence cases</b> (gpc-only-models, 19 keys): their input
+    /// elements are built for the case in each process (GH types given by their drafts without a saved GH GUID), so the identities of the
+    /// outputs change from one process to the next; within a process two copies give the same identities (checked), and the definitions
+    /// (saved GUIDs) are compared in full.</item>
+    /// </list>
+    /// </summary>
+    internal static string Declared(string file, string key, string captured, string now)
+    {
+        var c = captured.Split(' '); var n = now.Split(' ');
+        if (c.Length != 4 || n.Length != 4) return null;
+        if (n[1] == "*" && c[0] == n[0] && c[2] == n[2] && c[3] == n[3]) return "messages with the plug-in build-check warning (environmental), not compared";
+        if (file == "gpc-only-models" && (key.StartsWith("in memory: Bridge Phase Model (", StringComparison.Ordinal) || key.StartsWith("in memory: Bridge Construction Sequence (", StringComparison.Ordinal))
+            && c[0] == n[0] && c[1] == n[1] && c[2] == n[2]) return "identities of an in-memory case with input elements new per process, not compared";
+        return null;
+    }
+
     /// <summary>Records one datum of a file (write) or checks it (compare). A key met again in the same file gets the suffix <c>#n</c> (its
     /// occurrence in the order of the run), so the instances of a component with the same name and nickname in a definition stay apart.</summary>
     internal void Datum(string file, string key, string value)
@@ -85,6 +110,7 @@ internal sealed class P2rCapture
         private readonly Dictionary<string, int> occurrences = new(StringComparer.Ordinal);
         private readonly HashSet<string> seen = new(StringComparer.Ordinal);
         private readonly List<string> differences = new();
+        private readonly SortedDictionary<string, int> declared = new(StringComparer.Ordinal);
         private int recorded, equal;
 
         internal Session(string path, bool write)
@@ -113,8 +139,9 @@ internal sealed class P2rCapture
             if (write) { output.WriteLine(key + "\t" + value); return; }
             seen.Add(key);
             if (!captured.TryGetValue(key, out var before)) differences.Add($"not in the capture: {key} = {value}");
-            else if (before != value) differences.Add($"{key}: captured {before} / now {value}");
-            else equal++;
+            else if (before == value) equal++;
+            else if (Declared(Path.GetFileNameWithoutExtension(path), key, before, value) is string rule) declared[rule] = declared.GetValueOrDefault(rule) + 1;
+            else differences.Add($"{key}: captured {before} / now {value}");
         }
 
         internal List<string> Close(string file)
@@ -126,7 +153,7 @@ internal sealed class P2rCapture
                 return new List<string>();
             }
             var missing = captured.Keys.Where(k => !seen.Contains(k)).ToList();
-            Console.WriteLine($"P2R CAPTURE COMPARE {file}: {seen.Count} of {captured.Count} keys seen, {equal} equal, {differences.Count} different or new, {missing.Count} missing"
+            Console.WriteLine($"P2R CAPTURE COMPARE {file}: {seen.Count} of {captured.Count} keys seen, {equal} equal, " + string.Concat(declared.Select(d => $"{d.Value} declared ({d.Key}), ")) + $"{differences.Count} different or new, {missing.Count} missing"
                 + (differences.Count + missing.Count == 0 ? "" : " FAIL") + " (" + path + ")");
             return differences.Concat(missing.Select(k => "captured, not seen: " + k)).Select(d => "P2R CAPTURE " + file + ": " + d).ToList();
         }

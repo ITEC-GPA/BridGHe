@@ -60,8 +60,10 @@ internal static class GpcOnlyReplay
 
     /// <summary>P2R step 0: the captured value of a GPC-only replay: the number of output lines, then the short SHA-256 of its messages, of its
     /// outputs modulo GUIDs (the texts the FEM-backed copy was compared with) and of its raw outputs (the GPC data with their identities).</summary>
-    private static string CaptureValue(Run r) => r.Outputs.Count + " " + P2rCapture.Sha(string.Join("\n", r.Messages)) + " " + P2rCapture.Sha(string.Join("\n", r.Outputs))
-        + " " + P2rCapture.Sha(string.Join("\n", r.Raw));
+    private static string CaptureValue(Run r) => r.Outputs.Count + " "
+        // P2R: the warning of the plug-in build check is environmental (P2rCapture.Declared): the messages are then not compared («*»).
+        + (r.Messages.Any(m => m.Contains("Bin non aggiornato", StringComparison.Ordinal) || m.Contains("Librerie GPC caricate diverse", StringComparison.Ordinal)) ? "*" : P2rCapture.Sha(string.Join("\n", r.Messages)))
+        + " " + P2rCapture.Sha(string.Join("\n", r.Outputs)) + " " + P2rCapture.Sha(string.Join("\n", r.Raw));
 
     /// <summary>R1: the label of the definition being replayed (the file key of the capture), null for the in-memory cases.</summary>
     private static string definition;

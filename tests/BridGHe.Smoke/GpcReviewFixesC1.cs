@@ -550,15 +550,18 @@ internal static class GpcReviewFixesC1
             Check(goo != null && errors.Length == 0, $"Table Material ({label}): a material, no error ({string.Join(" / ", errors)})");
             if (goo == null) continue;
             var femValue = (MaterialModel)P(goo, "Value"); var gpc = (GPC.Model.Materials.Material)P(goo, "Gpc");
-            Check(femValue.StressStrainTable != null && femValue.StressStrainTable.Select(t => (t.stress, t.strain)).SequenceEqual(table) && femValue.ThermalExpansion == (alpha ?? 0) && femValue.Density == (rho ?? 0),
-                $"Table Material ({label}): the FEM value has the table, α and ρ");
+            // P2R (T3): Table Material gives no FEM value since P2K/P2D (before: the FEM value had the table, α and ρ); the datum is checked below.
+            Check(femValue == null, $"Table Material ({label}): no FEM value");
             // Everything else as before: the datum is the one of the recipe of 0.3.0 with these α and ρ.
             var recipe = BridGHe.Common.Gpc.Builders.GpcMaterialBuilders.Table("C1 table", true, 0.3, 80000, alpha ?? 0, rho ?? 0, table);
             Check(GpcDraftCapture.Text(gpc) == GpcDraftCapture.Text(BridGHe.Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe)), $"Table Material ({label}): the GPC datum is the material of the recipe");
             var data = gpc.AnalysisData;
             Check(data?.StressStrainPairs != null && data.StressStrainPairs.Length == 2 * table.Count, $"Table Material ({label}): the GPC material carries the table");
             // The write plan of the Converter (recorded): the table on the beam and the shell, α and ρ in the material data.
-            var calls = Straus7Recorder.Record(GpcModels.Convert(TableModel(femValue), 1e-6));
+            // P2R (T3): the model of the checks on a placeholder FEM material, its conversion with the GPC material of the output (as the native check).
+            var conversion = GpcModels.Convert(TableModel(new MaterialModel("C1 table placeholder") { Name = "C1 table placeholder", Modulus = 210000, PoissonRatio = 0.3 }), 1e-6);
+            GpcReviewFixesC1Native.SwapMaterial(conversion.Model, gpc);
+            var calls = Straus7Recorder.Record(conversion);
             string Find(string method) => calls.FirstOrDefault(c => c.StartsWith(method + "(", StringComparison.Ordinal));
             string beamProperty = Find("CreateBeamProperty"), plateProperty = Find("CreatePlateProperty");
             Check(beamProperty != null && plateProperty != null && calls.Count(c => c.StartsWith("SetMaterialLaw(", StringComparison.Ordinal)) == 2, $"Table Material ({label}): the beam and shell properties and their two tables are written");

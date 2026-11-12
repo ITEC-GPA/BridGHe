@@ -32,7 +32,7 @@ internal static class GpcReviewFixesC1Native
         return Marshal.GetDelegateForFunctionPointer<T>(address);
     }
     /// <summary>P2R (T3): the GPC material of every beam and plate property of a converted model replaced by <paramref name="material"/>.</summary>
-    private static void SwapMaterial(GPC.Model.Models.Model model, GPC.Model.Materials.Material material)
+    internal static void SwapMaterial(GPC.Model.Models.Model model, GPC.Model.Materials.Material material)
     {
         static void Set(object property)
         {
