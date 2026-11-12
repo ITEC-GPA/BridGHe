@@ -710,7 +710,7 @@ internal static class GpcDraftArchiveChecks
         catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException || x is System.Runtime.Serialization.SerializationException) { byValue = "REFUSED " + x.Message; }
         if (byType != byValue) { count(name + " read differs from by value"); fail(where + ": " + name + " Read differs from the datum by value\n" + FirstDifference(byValue, byType)); return; }
         count(name + " read = by value");
-        string drafts = type == "ModelModel" ? ModelDrafts(t, goo, where, count, fail) : null;
+        string drafts = type == "ModelModel" ? ModelDrafts(t, goo, where, count, fail, bytes) : null;
         if (byType.StartsWith("REFUSED", StringComparison.Ordinal) || byType.StartsWith("NO ", StringComparison.Ordinal)) return;
         // The final writer of the GH type and its reader.
         var written = new GH_IO.Serialization.GH_LooseChunk("Item");
@@ -737,13 +737,16 @@ internal static class GpcDraftArchiveChecks
     /// <summary>R6.4 (2), extension (α): the drafts a model read from a former payload carries (by value, <see cref="GpcModelDrafts"/>) against
     /// the conversion of every element of its FEM value with the same identity (the DRAFT CHECK of Decompose Model), by the canonical texts of
     /// the capture; returns the text of the drafts for the round trip (null: none, or a difference).</summary>
-    private static string ModelDrafts(Type t, object goo, string where, Action<string> count, Action<string> fail)
+    private static string ModelDrafts(Type t, object goo, string where, Action<string> count, Action<string> fail, byte[] bytes)
     {
         GpcModelDrafts drafts;
         try { drafts = t.GetProperty("GpcDrafts").GetValue(goo) as GpcModelDrafts; }
         catch (TargetInvocationException x) { count("GH_Model drafts refused"); fail(where + ": GH_Model drafts refused: " + x.InnerException?.Message); return null; }
-        var fem = (ModelModel)t.GetProperty("Value").GetValue(goo);
+        // P2F (12/11): since P2D the GH_Model read from a former payload has no FEM value (its GPC input alone): the FEM value the drafts are
+        // compared with is read from the payload bytes, as the GH type of 0.4.0 before P2D read it.
+        var fem = (ModelModel)t.GetProperty("Value").GetValue(goo) ?? BridgeModelArchiveRead<ModelModel>(bytes);
         if (drafts == null) { count("GH_Model drafts: none"); return null; }
+        if (fem?.Elements == null) { count("GH_Model drafts without a FEM value"); fail(where + ": GH_Model drafts read from a payload 0.3.0 reads no model from"); return null; }
         if (!drafts.Fits(fem.Nodes.Count, fem.Beams.Count, fem.Plates.Count) || fem.Elements.Count != fem.Nodes.Count + fem.Beams.Count + fem.Plates.Count)
         { count("GH_Model drafts: FEM elements merged by ID (not compared)"); return DraftsText(drafts); }
         bool Same(string kind, int i, object draft, object conversion)

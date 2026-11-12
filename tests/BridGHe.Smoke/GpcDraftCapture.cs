@@ -323,6 +323,44 @@ internal static class GpcDraftCapture
         return true;
     }
 
+    /// <summary>
+    /// P2F (12/11): since P2K the GPC path derives the GUIDs of the drafts of the Build Model inputs (rule of the derived identities declared by
+    /// P2K; the node and plate drafts of the scan are equal but for GUIDs). The bridge line of a beam draft (<c>bridge &lt;beam GUID&gt;
+    /// &lt;fingerprint&gt;</c>) hashes the bridge data keyed by the beam GUID, so its fingerprint changes with the GUID alone. Declared when the
+    /// text, the declared digests applied and the GUIDs replaced by their ordinals, is the captured one but for that line (the same ordinal),
+    /// and the bridge values of the beam (<see cref="BridgeValues"/>: member, super element, section state, composite definitions, read back
+    /// from the captured bytes) are equal.
+    /// </summary>
+    internal const string BeamGuidRule = "P2F: beam draft with the GUIDs derived on the GPC path (P2K), its bridge line keyed by the beam GUID, the bridge values equal";
+
+    private static readonly Regex BeamBridgeLine = new Regex("^bridge G([0-9]+) [0-9A-F]{64}$", RegexOptions.Compiled);
+
+    /// <summary>True when the two texts differ only by the bridge line of the beam (<c>bridge G&lt;n&gt; fingerprint</c>, the same ordinal) and,
+    /// at most, the bridge line of its report (<c>bridge &lt;count&gt; fingerprint</c>, the same count: the same data keyed by the beam GUID).</summary>
+    private static bool OnlyBeamBridgeLine(string before, string now)
+    {
+        var a = before.Split('\n'); var b = now.Split('\n');
+        if (a.Length != b.Length) return false;
+        int beam = 0, report = 0;
+        for (int i = 0; i < a.Length; i++)
+        {
+            if (a[i] == b[i]) continue;
+            var ma = BeamBridgeLine.Match(a[i]); var mb = BeamBridgeLine.Match(b[i]);
+            if (ma.Success && mb.Success && ma.Groups[1].Value == mb.Groups[1].Value) { if (++beam > 1) return false; continue; }
+            var ra = BridgeFingerprintLine.Match(a[i]); var rb = BridgeFingerprintLine.Match(b[i]);
+            if (ra.Success && rb.Success && ra.Groups[1].Value == rb.Groups[1].Value) { if (++report > 1) return false; continue; }
+            return false;
+        }
+        return beam == 1;
+    }
+
+    private static GPC.Checkers.CompositeBridge.BridgeModelData OneBeam(GPC.Checkers.CompositeBridge.BridgeBeamData d)
+    {
+        var one = new GPC.Checkers.CompositeBridge.BridgeModelData();
+        if (d != null) one.Set(d);
+        return one;
+    }
+
     internal static List<string> BridgeValues(GPC.Checkers.CompositeBridge.BridgeModelData data)
     {
         string Def(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition d) => d == null ? "-" : Sha(GpcDraftArchiveChecks.Text(d));
@@ -518,6 +556,12 @@ internal static class GpcDraftCapture
                 && BridgeValues(bridgeNow).SequenceEqual(BridgeValues(e.Kind == "conversion" ? GpcDraftArchive.ReadConversion(e.Data, e.Records).Report.Bridge
                     : GpcDraftArchive.ReadModel(e.Data, e.Records).Item1.Data), StringComparer.Ordinal))
             { Count("declared"); Declare(key, SharedCompositeRule + "; owner identity from the content of the drafts: " + renamed); return; }
+            // P2F (12/11): a beam draft whose GUIDs the GPC path of P2K derives (BeamGuidRule).
+            if (datum is LegacyBeamDraft beamNow && e.Kind == "beam" && OnlyBeamBridgeLine(WithoutGuids(WithDeclaredDigests(captured, key).Text), WithoutGuids(text))
+                && GpcDraftArchive.ReadBeam(e.Data, e.Records) is var beamThen
+                && BridgeValues(OneBeam(beamNow.Bridge)).SequenceEqual(BridgeValues(OneBeam(beamThen.Bridge)), StringComparer.Ordinal)
+                && BridgeValues(beamNow.Report?.Bridge ?? OneBeam(null)).SequenceEqual(BridgeValues(beamThen.Report?.Bridge ?? OneBeam(null)), StringComparer.Ordinal))
+            { Count("declared"); Declare(key, BeamGuidRule); return; }
             Count("different"); if (failures.Count < 30) failures.Add(key + ": differs from the capture (GUIDs replaced by their ordinals)\n" + GpcDraftArchiveChecks.FirstDifference(WithoutGuids(captured), WithoutGuids(text)));
             Moved("different", key, datum, text, GpcDraftArchiveChecks.FirstDifference(WithoutGuids(captured), WithoutGuids(text)));
         }

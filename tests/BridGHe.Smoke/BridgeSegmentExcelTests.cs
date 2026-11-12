@@ -17,8 +17,15 @@ internal static class BridgeSegmentExcelTests
     private static int checks;
     private static void Check(bool condition, string message)
     { if (!condition) throw new Exception("SEGMENT EXCEL: " + message); checks++; }
-    private static void Reject(Action action)
-    { try { action(); } catch (Exception e) when (e is ArgumentException or IOException) { checks++; return; } throw new Exception("Expected invalid workbook to be rejected."); }
+    // P2F (T10 of task 39): a content refusal (ArgumentException) and an access refusal (IOException: the file exists or is held) are told
+    // apart; a locked or missing file no longer counts as the validation of the content.
+    private static void Reject(Action action, bool access = false)
+    {
+        try { action(); }
+        catch (Exception e) when (access ? e is IOException : e is ArgumentException) { checks++; return; }
+        catch (Exception e) when (e is ArgumentException or IOException) { throw new Exception("SEGMENT EXCEL: expected a " + (access ? "file access" : "content") + " refusal, got " + e.GetType().Name + ": " + e.Message); }
+        throw new Exception("Expected invalid workbook to be rejected.");
+    }
     private static void Edit(string file, Action<XDocument> edit)
     {
         using var zip = ZipFile.Open(file, ZipArchiveMode.Update); var part = zip.GetEntry("xl/worksheets/sheet1.xml");
@@ -49,8 +56,8 @@ internal static class BridgeSegmentExcelTests
         var initial = BridgeSegmentWorkbook.Read(template, geometry);
         Check(initial.Table.SequenceEqual(BridgeSegmentSections.Synchronize(geometry, null).Table), "geometry-only template and wildcard round trip");
         var original = File.ReadAllBytes(template);
-        Reject(() => BridgeSegmentWorkbook.Write(template, geometry));
-        using (var held = File.Open(template, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) Reject(() => BridgeSegmentWorkbook.Write(template, geometry, overwrite:true));
+        Reject(() => BridgeSegmentWorkbook.Write(template, geometry), access: true);
+        using (var held = File.Open(template, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) Reject(() => BridgeSegmentWorkbook.Write(template, geometry, overwrite:true), access: true);
         Check(File.ReadAllBytes(template).SequenceEqual(original), "existing and locked files preserved");
 #if GPC_PILOT
         string filled = Path.Combine(folder, "filled.xlsx"); BridgeSegmentWorkbook.Write(filled, geometry, null, template: BridgeSegmentWorkbook.TemplateGpc(geometry, property));

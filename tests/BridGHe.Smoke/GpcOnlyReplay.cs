@@ -2571,7 +2571,11 @@ internal static class GpcOnlyReplay
         IGH_Goo Example(string id, ModelModel value) => Gh(value); // R1: FEM-backed in both builds (see knm above)
         var homogenised = BridgeGrillageExample.Composite(new()).CreateHomogenizedProperty(12, "P_composite");
         var mixed = new ModelModel(ModelModel.ModelUnits.Nmm);
-        mixed.AddElements(new ElementModel[] { new PlateModel("P1", m3.Plates.Single().Points.ToArray(), m3.Plates.Single().PlateProperty), new BeamModel("B1", new Rhino.Geometry.Point3d(1e6, 0, 0), new Rhino.Geometry.Point3d(1e6, 5000, 0), homogenised) });
+        // P2F (12/11): with its nodes (a node at every plate corner and beam end): the GPC path builds no element without its end nodes (before,
+        // the case stopped at «Nessun nodo FEM entro tolleranza»). Its former key of the P2R capture is retired by name (P2rRetired.ReplayKeys).
+        var far = new[] { new Rhino.Geometry.Point3d(1e6, 0, 0), new Rhino.Geometry.Point3d(1e6, 5000, 0) };
+        mixed.AddElements(m3.Plates.Single().Points.Concat(far).Select((p, i) => (ElementModel)new NodeModel("N" + (i + 1), p))
+            .Concat(new ElementModel[] { new PlateModel("P1", m3.Plates.Single().Points.ToArray(), m3.Plates.Single().PlateProperty), new BeamModel("B1", far[0], far[1], homogenised) }).ToArray());
         return new List<(string, string, Dictionary<int, object>)>
         {
             ("BridgeModelAuditComponent", "kN-m with itself as a phase model", new Dictionary<int, object> { [0] = knm, [1] = 1e-6, [3] = new object[] { knm } }),

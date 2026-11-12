@@ -447,6 +447,13 @@ internal static class GpcMaterialKindChecks
     /// tokens of their archives, the other GH types through <see cref="GpcDraftArchiveChecks.DraftOf"/>); the drafts of Build Model, its outputs
     /// and the GPC materials of the GH_Material data are read from the GPC data already. P2 replaces the walk by the GPC data of the GH types
     /// (the R6.0 capture <c>scan</c> keeps the reference, keyed by content).</remarks>
+    /// <summary>P2F (12/11): the GH types whose GPC datum the scan records by content (those of the FEM walk of the other GH types, and
+    /// GH_Material for the check materials: the FEM walk recorded FromFemm of the FEM value of every GH_Material).</summary>
+    private static readonly HashSet<string> GpcOtherTypes = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "GH_LoadCase", "GH_LoadCombination", "GH_StagedConstruction", "GH_BeamProperty", "GH_CompositeBeamProperty", "GH_PlateProperty", "GH_BeamSection", "GH_Material",
+    };
+
     internal static int Scan(string[] args)
     {
         BridgeExampleMigration.Initialize();
@@ -549,6 +556,25 @@ internal static class GpcMaterialKindChecks
                         try { draft = GpcDraftArchiveChecks.DraftOf(value); }
                         catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException) { drafts.Count(value.GetType().Name + " refused by the reader"); Content(value.GetType().Name, new GpcDraftCapture.Refused(value.GetType().Name, x.Message)); continue; }
                         if (draft != null) { var keep = drafts.Capture; drafts.Capture = null; drafts.Check($"{label}:{p.NickName}", draft); drafts.Capture = keep; Content(draft.GetType().Name, draft); }
+                    }
+                // P2F (12/11): since P2K/P2D the GH types carry no FEM value (the two walks above find none): the GPC datum of the same GH types,
+                // each once, through the final writer and reader, recorded by content as the walk above recorded the drafts of the FEM values (the
+                // capture keeps those, keyed by content: the same datum gives the same key); and the GPC materials of the GH_Material data and of
+                // the beam and plate properties walked, recorded as the check materials of the FEM walk (FromFemm of each FEM material) were.
+                var gpcOthers = new HashSet<object>(ReferenceEqualityComparer.Instance);
+                foreach (var p in doc.Objects.SelectMany(o => o is Grasshopper.Kernel.IGH_Component c ? c.Params.Input.Concat(c.Params.Output) : o is Grasshopper.Kernel.IGH_Param q ? new[] { q } : Enumerable.Empty<Grasshopper.Kernel.IGH_Param>()))
+                    foreach (var goo in p.VolatileData.AllData(true))
+                    {
+                        if (goo == null || !GpcOtherTypes.Contains(goo.GetType().Name)) continue;
+                        object datum;
+                        try { datum = goo.GetType().GetProperty("Gpc")?.GetValue(goo); }
+                        catch (TargetInvocationException x) when (x.InnerException is ArgumentException || x.InnerException is NotSupportedException || x.InnerException is InvalidOperationException)
+                        { drafts.Count(goo.GetType().Name + " datum refused"); continue; }
+                        if (datum == null || !gpcOthers.Add(datum)) continue;
+                        if (datum is Material gm) { Content("check-material", gm); continue; }
+                        // The material of a GPC property is its analysis material (GpcMaterials.Analysis), compared within the text of the property
+                        // (its value document); the check materials of the FEM walk reached only through FEM values are retired by name (P2rRetired).
+                        var keep = drafts.Capture; drafts.Capture = null; drafts.Check($"{label}:{p.NickName}", datum); drafts.Capture = keep; Content(datum.GetType().Name, datum);
                     }
                 Console.WriteLine($"MATERIAL SCAN {label}: {tally.samples - before} materials");
             }

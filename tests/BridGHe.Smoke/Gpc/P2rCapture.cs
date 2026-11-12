@@ -75,6 +75,7 @@ internal sealed class P2rCapture
         if (n[1] == "*" && c[0] == n[0] && c[2] == n[2] && c[3] == n[3]) return "messages with the plug-in build-check warning (environmental), not compared";
         if (file == "gpc-only-models" && (key.StartsWith("in memory: Bridge Phase Model (", StringComparison.Ordinal) || key.StartsWith("in memory: Bridge Construction Sequence (", StringComparison.Ordinal))
             && c[0] == n[0] && c[1] == n[1] && c[2] == n[2]) return "identities of an in-memory case with input elements new per process, not compared";
+        if (P2rRetired.ReplayRaw(file, key) is string raw && c[0] == n[0] && c[1] == n[1] && c[2] == n[2]) return raw; // P2F (12/11)
         return null;
     }
 
@@ -138,6 +139,8 @@ internal sealed class P2rCapture
             recorded++;
             if (write) { output.WriteLine(key + "\t" + value); return; }
             seen.Add(key);
+            // P2F (12/11): a key retired by name (P2rRetired.ReplayKeys) is not compared.
+            if (P2rRetired.ReplayKeys.TryGetValue((Path.GetFileNameWithoutExtension(path), key), out var retired)) { declared["retired by name: " + retired] = declared.GetValueOrDefault("retired by name: " + retired) + 1; return; }
             if (!captured.TryGetValue(key, out var before)) differences.Add($"not in the capture: {key} = {value}");
             else if (before == value) equal++;
             else if (Declared(Path.GetFileNameWithoutExtension(path), key, before, value) is string rule) declared[rule] = declared.GetValueOrDefault(rule) + 1;

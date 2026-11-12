@@ -68,7 +68,10 @@ internal static class BuildModelScan
                             foreach (var s in p.Sources.ToArray()) p.RemoveSource(s);
                             p.PersistentData.Clear(); p.SetPersistentData(false);
                         }
-                        Console.WriteLine($"BUILD MODEL SCAN {label}: '{c.NickName}' not solved (not native)");
+                        // P2F (T6, proposal of P2R accepted 12/11): the Output Path goes to TEMP, with a copy of the results saved next to it
+                        // under the same file name: the analysis restores the same results (a read) and the analysed model keeps its name, and
+                        // nothing next to the path of the definition (the main checkout for the archived definitions) is used.
+                        Console.WriteLine($"BUILD MODEL SCAN {label}: '{c.NickName}' not solved (not native){ReadOnlyOutput(c, label)}");
                         continue;
                     }
                     var output = (Grasshopper.Kernel.Parameters.Param_String)c.Params.Input.Single(p => string.Equals(p.Name, "Output Path", StringComparison.OrdinalIgnoreCase));
@@ -89,6 +92,29 @@ internal static class BuildModelScan
         }
         Console.WriteLine($"BUILD MODEL SCAN TOTAL {files.Count} files, {failures} failed: " + total);
         return failures == 0 && total.CountFailures == 0 ? 0 : 1;
+    }
+
+    /// <summary>P2F (T6): the Output Path of an analysis not solved, moved to a folder of its own in TEMP with a copy of its saved results
+    /// (<c>GpcResultsFile.PathFor</c>, the same file name); the path read from the internalised value of the input or of its one source (a panel
+    /// or a text parameter). Returns the note printed with the analysis.</summary>
+    private static string ReadOnlyOutput(GH_Component c, string label)
+    {
+        var output = c.Params.Input.OfType<Grasshopper.Kernel.Parameters.Param_String>().SingleOrDefault(p => string.Equals(p.Name, "Output Path", StringComparison.OrdinalIgnoreCase));
+        if (output == null) return "";
+        static string Text(IGH_Param p) => p is Grasshopper.Kernel.Special.GH_Panel panel ? panel.UserText?.Trim()
+            : p is Grasshopper.Kernel.Parameters.Param_String s && s.PersistentData.DataCount == 1 ? s.PersistentData.AllData(true).Single()?.ToString() : null;
+        string path = output.Sources.Count == 0 ? Text(output) : output.Sources.Count == 1 ? Text(output.Sources[0]) : null;
+        if (string.IsNullOrWhiteSpace(path)) return "; Output Path not resolved, kept";
+        string results = BridGHe.Common.Gpc.GpcResultsFile.PathFor(path);
+        string folder = Path.Combine(ScanFiles, "read", string.Concat(label.Select(ch => Path.GetInvalidFileNameChars().Contains(ch) || ch == ' ' ? '-' : ch)), c.InstanceGuid.ToString("N"));
+        Directory.CreateDirectory(folder);
+        string target = Path.Combine(folder, Path.GetFileName(path));
+        if (!Path.GetFullPath(target).StartsWith(ScanFiles, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("BuildModelScanOutputOutsideTheScanFolder: " + target);
+        bool copied = File.Exists(results);
+        if (copied) File.Copy(results, BridGHe.Common.Gpc.GpcResultsFile.PathFor(target), true);
+        foreach (var s in output.Sources.ToArray()) output.RemoveSource(s);
+        output.PersistentData.Clear(); output.SetPersistentData(target);
+        return $"; Output Path {target}" + (copied ? " with a copy of its saved results" : " (no results saved next to it)");
     }
 
     /// <summary>The definitions of the scope of L12 in the worktree (every .gh and .ghx, archives included, outputs folders excluded).</summary>

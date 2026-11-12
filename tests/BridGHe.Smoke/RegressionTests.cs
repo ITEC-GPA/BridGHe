@@ -631,6 +631,9 @@ internal static class RegressionTests
         dynamic derived = type.GetMethod("FromModel").Invoke(null, new object[] { ModelArchive.Clone(model), goo });
         derived.SynchronizeGuids(goo); derived.SynchronizeGuids(goo);
         Require(derived.GetGuid(derived.Value.Nodes[0]) == first, "GUID restoration is idempotent");
+#if GPC_PILOT
+        P2fChecks.ModelGuids(Plugin(), Require, ModelArchive.Write(model)); // P2F (12/11): P2D reads a model back as its GPC input alone
+#else
         var chunk = new GH_IO.Serialization.GH_LooseChunk("model");
         Require(goo.Write(chunk), "write model and GUID map");
         var loadedChunk = new GH_IO.Serialization.GH_LooseChunk("loaded");
@@ -639,6 +642,7 @@ internal static class RegressionTests
         Require(loaded.Read(loadedChunk) && loaded.GetGuid(loaded.Value.Nodes[0]) == first, "GUIDs survive GH archive round trip");
         var legacy = new GH_IO.Serialization.GH_LooseChunk("legacy"); legacy.SetByteArray("Data", ModelArchive.Write(model));
         Require(loaded.Read(legacy) && loaded.Guids.Count == 2, "legacy archives regenerate complete maps");
+#endif
     }
 
     private static void NativeBeamValidity()

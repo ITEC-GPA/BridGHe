@@ -43,7 +43,7 @@ internal static class BridgeDesignAuditTests
         var rotated = Plane.WorldXY; rotated.Rotate(.2, Vector3d.ZAxis);
         var framed = BridGHe.Common.Gpc.Builders.GpcNodeBuilders.WithFrame(nodes[0], 0, 0, 0, 1, 0, 0, 0, 1, 0, R2aGeneratorFixtures.Id("audit frame"));
         R2aGeneratorFixtures.Reject(() => BridGHe.Common.Gpc.Builders.GpcNodeBuilders.WithFrame(framed, 0, 0, 0, rotated.XAxis.X, rotated.XAxis.Y, rotated.XAxis.Z,
-            rotated.YAxis.X, rotated.YAxis.Y, rotated.YAxis.Z, R2aGeneratorFixtures.Id("audit conflicting frame")), "Conflicting bearing axes");
+            rotated.YAxis.X, rotated.YAxis.Y, rotated.YAxis.Z, R2aGeneratorFixtures.Id("audit conflicting frame")), "Conflicting bearing axes", "GpcNodeBuilderSecondCoordinateSystem");
         var p0 = geometry.Nodes[0];
         var collapsed = BridGHe.Common.Gpc.Builders.GpcBridgeGeometryBuilders.RigidNode(p0, "1", p0, R2aGeneratorFixtures.Id("audit collapsed"));
         R2aGeneratorFixtures.Reject(() => Model(beams, new[] { collapsed }.Concat(nodes.Skip(1))), "Collapsed link");

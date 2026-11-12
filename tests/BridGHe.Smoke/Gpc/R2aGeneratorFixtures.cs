@@ -73,10 +73,17 @@ internal static class R2aGeneratorFixtures
         return (beam, test.Analyse());
     }
 
-    internal static void Reject(Action action, string text)
+    /// <summary>P2F (T09 of task 39): with <paramref name="code"/>, only a rejection whose message carries it counts (another error of the
+    /// block, a section or unit refusal, no longer passes the case); the message of every rejection is printed.</summary>
+    internal static void Reject(Action action, string text, string code = null)
     {
         try { action(); }
-        catch (Exception x) when (x is ArgumentException || x is NotSupportedException) { return; }
+        catch (Exception x) when (x is ArgumentException || x is NotSupportedException)
+        {
+            Console.WriteLine("R2A GENERATORS rejection (" + text + "): " + x.GetType().Name + ": " + x.Message);
+            if (code != null && !x.Message.Contains(code, StringComparison.Ordinal)) throw new InvalidOperationException("R2A GENERATORS: " + text + " rejected for another reason: " + x.Message + " (expected " + code + ")");
+            return;
+        }
         throw new InvalidOperationException("R2A GENERATORS: expected rejection: " + text);
     }
 }

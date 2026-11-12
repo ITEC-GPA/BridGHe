@@ -39,7 +39,7 @@ internal static class BridgeBearingTests
         var stiffness = R2aGeneratorFixtures.Stiffness(elastic.Drafts[0]);
         Require(stiffness[0] == 10 && stiffness[1] == 20 && stiffness[5] == 60, "Local elastic stiffnesses");
         R2aGeneratorFixtures.Reject(() => BridGHe.Common.Gpc.Builders.GpcNodeBuilders.WithFrame(bearings.Drafts[0], 0, 0, 0, 1, 0, 0, 0, 1, 0, R2aGeneratorFixtures.Id("bearing conflicting frame")),
-            "a second, conflicting bearing frame");
+            "a second, conflicting bearing frame", "GpcNodeBuilderSecondCoordinateSystem");
         Reject(() => BridgeBearings.Create(geometry, new[] { 999 }, null, new[] { 2 }, 0, Vector3d.Zero, Vector3d.Zero));
         Reject(() => BridgeBearings.Create(geometry, null, null, new[] { 3 }, 0, Vector3d.Zero, Vector3d.Zero));
         Console.WriteLine("BRIDGE BEARINGS PASS: masks, curved guide frames, elastic stiffnesses, archives and conflicting frames.");

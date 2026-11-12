@@ -280,7 +280,11 @@ internal static class Program
         else Console.WriteLine("SKIPPED: category registration with installed plugins (opt in with --installed-plugins)");
         File.WriteAllText("artifacts/component-runtime.json",System.Text.Json.JsonSerializer.Serialize(items,new System.Text.Json.JsonSerializerOptions {WriteIndented=true}));
         Console.WriteLine($"COMPONENTS {count}, BRIDGE_CHECKS {bridgeChecks}");
+#if GPC_PILOT
+        P2fChecks.GooArchives(assembly,Assert); // P2F (12/11): on the GPC goo; the FEM fixture of CheckGooArchives is no longer written (P2D)
+#else
         CheckGooArchives(assembly);
+#endif
     }
 
     private static void CheckGooArchives(System.Reflection.Assembly assembly)

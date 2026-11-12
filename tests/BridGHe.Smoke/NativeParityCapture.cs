@@ -189,8 +189,9 @@ internal static class NativeParityCapture
             }
             // P2R (U3, 12/11): the keys retired by name (P2rRetired.NativeKeys, the FEM-only «fem-constant» data) are not required; a retired key
             // recorded again would be compared as any other.
-            bool Retired(string k) => !seen.Contains(k) && P2rRetired.NativeKeys.ContainsKey((label, k));
-            int retired = captured.Keys.Count(Retired), listedRetired = P2rRetired.NativeKeys.Keys.Count(k => k.Label == label);
+            // P2F (12/11): and the key c5|recipe of 99 (P2rRetired.NativeKeysP2f).
+            bool Retired(string k) => !seen.Contains(k) && (P2rRetired.NativeKeys.ContainsKey((label, k)) || P2rRetired.NativeKeysP2f.ContainsKey((label, k)));
+            int retired = captured.Keys.Count(Retired), listedRetired = P2rRetired.NativeKeys.Keys.Count(k => k.Label == label) + P2rRetired.NativeKeysP2f.Keys.Count(k => k.Label == label);
             if (retired != listedRetired) { Console.WriteLine($"NATIVE CAPTURE FAIL {label}: {retired} of the {listedRetired} keys retired by name are in the capture and not seen"); different++; }
             int missing = captured.Keys.Count(k => !seen.Contains(k) && !Retired(k));
             int listed = SteelRule.Listed(label), unused = listed - ruled;
