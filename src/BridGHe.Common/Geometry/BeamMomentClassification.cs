@@ -38,6 +38,11 @@ public static class BeamMomentClassification
         return Classify(beams.Select(b => b.BeamId).ToArray(), beams, analysed, loadCase, tolerance, component, sign);
     }
 
+    /// <summary>P2K (P1): the beams by their IDs and analysed GPC beams alone (the path of Beam Moment Dispatch): no FEM beam read.</summary>
+    public static BeamMomentState[] Classify(IReadOnlyList<string> ids, IReadOnlyList<(Gpc.GpcResultCatalog Catalog, GPC.Model.Models.Model Model, GPC.Model.Elements.BeamElement Beam)> analysed,
+        string loadCase, double tolerance = 1000, int component = 1, int sign = 1) =>
+        Classify(ids, ids == null ? null : new BeamModel[ids.Count], analysed, loadCase, tolerance, component, sign);
+
     /// <summary>R6.5 P1 lane 1b: the same with the BridGHe ID of every beam given (<paramref name="ids"/>), for beams given by their GPC
     /// drafts alone: such a beam has no FEM value (null in <paramref name="beams"/>, the state has no <see cref="BeamMomentState.Source"/>) and
     /// is classified from its analysed GPC beam, or is Missing (no FEM results to read). Same rules and messages.</summary>

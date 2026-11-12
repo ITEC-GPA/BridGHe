@@ -1,8 +1,7 @@
+using BridGHe.Common.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.ComponentAttributes;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
@@ -97,8 +96,8 @@ namespace BridGHe.Grasshopper.Components.Attributes
 
             SetTypeImage(type);
 
-            // R6.5 P1 lane 1a: the corners of the plate from its FEM value, or from its GPC draft when it has none (the same points).
-            int corners = plate.Value != null ? plate.Value.Points.Count : plate.Gpc?.Corners.Count ?? 0;
+            // P2K (P1): the corners of the plate from its GPC draft (the points of the former FEM value).
+            int corners = plate.Gpc?.Corners.Count ?? 0;
             if (edges.Count > corners)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The number of the Edges can't be greater of the plate edges number");
@@ -110,59 +109,51 @@ namespace BridGHe.Grasshopper.Components.Attributes
                 return;
             }
 
-            LoadPatchTypeAttributeModel.PatchType lpt = (LoadPatchTypeAttributeModel.PatchType)type;
-
-            if ((lpt == LoadPatchTypeAttributeModel.PatchType.Auto1 ||
-                lpt == LoadPatchTypeAttributeModel.PatchType.Auto2 ||
-                lpt == LoadPatchTypeAttributeModel.PatchType.Auto3) && edges.Count != 1)
+            if ((type == Auto1 || type == Auto2 || type == Auto3) && edges.Count != 1)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The selected load patch type requires one edge");
                 return;
             }
-            if ((lpt == LoadPatchTypeAttributeModel.PatchType.Auto3 ||
-                lpt == LoadPatchTypeAttributeModel.PatchType.AngleSplit) && corners == 3) // PlateModel.PlateType.Tri3
+            if ((type == Auto3 || type == AngleSplit) && corners == 3) // Tri3
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "This type of load patch is not applicable to Tri3 elements");
                 return;
             }
-            if (lpt == LoadPatchTypeAttributeModel.PatchType.AngleSplit && (edges.Count != 2 ||
+            if (type == AngleSplit && (edges.Count != 2 ||
                 Math.Abs(edges[0] - edges[1]) != 1 && Math.Abs(edges[0] - edges[1]) != 3))
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The Angle Split type requires two adjacent edge set");
                 return;
             }
-            if (lpt == LoadPatchTypeAttributeModel.PatchType.Manual && edges.Count == 0)
+            if (type == Manual && edges.Count == 0)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The Manual type requires to specify edge(s) and weight(s)");
                 return;
             }
-            if (lpt == LoadPatchTypeAttributeModel.PatchType.Manual && edges.Count != weights.Count(w => w > 0))
+            if (type == Manual && edges.Count != weights.Count(w => w > 0))
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The number of edges must be equals to the number of weights");
                 return;
             }
 
-            LoadPatchTypeAttributeModel.AttributeData value = new LoadPatchTypeAttributeModel.AttributeData
-            {
-                PatchType = lpt
-            };
+            // P2K (P1): the four edges and weights of the former attribute data (same arrays, same identity parameters).
+            int[] selectedEdges = new int[4];
+            double[] edgeWeights = new double[4];
             for (int i = 0; i < edges.Count; i++)
-                value.SelectedEdges[i] = edges[i];
+                selectedEdges[i] = edges[i];
             for (int i = 0; i < weights.Count; i++)
-                value.Weights[i] = weights[i];
+                edgeWeights[i] = weights[i];
+            // P2K (P1): the type by its former enum name (an integer out of range as its text, as the former ToString).
+            string patchType = Common.Gpc.Builders.GpcBeamBuilders.Code(PatchTypeNames, type);
 
-            Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.WithLoadPatch(plate.Gpc, value.PatchType.ToString(), value.SelectedEdges, value.Weights, id);
-            if (plate.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, value.PatchType.ToString(), value.SelectedEdges, value.Weights)); return; }
-
-            LoadPatchTypeAttributeModel attr = new LoadPatchTypeAttributeModel(value);
-
-            GH_Plate newPlate = new GH_Plate(plate);
-            newPlate.Value.Attributes.Add(attr);
-            // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the draft of the input (type by name, the four edges and weights
-            // the former attribute writes), identity of the conversion of the FEM output.
-            GpcBuilderAttach.Plate(newPlate, () => build(Common.Gpc.GpcBeamDrafts.Identity(newPlate.Value)));
-            DA.SetData(0, newPlate);
+            Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.WithLoadPatch(plate.Gpc, patchType, selectedEdges, edgeWeights, id);
+            // P2K (P1): the GPC path only: the draft built on GPC (identity derived from the input draft).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, patchType, selectedEdges, edgeWeights));
         }
+
+        // P2K (P1): the former LoadPatchTypeAttributeModel.PatchType: names (the GPC builder reads them) and integers.
+        private static readonly string[] PatchTypeNames = { "Auto1", "Auto2", "Auto3", "Auto4", "AngleSplit", "Manual" };
+        private const int Auto1 = 0, Auto2 = 1, Auto3 = 2, AngleSplit = 4, Manual = 5;
 
         public override bool Read(GH_IReader reader)
         {
@@ -183,5 +174,12 @@ namespace BridGHe.Grasshopper.Components.Attributes
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
         public override Guid ComponentGuid => new Guid("1dcb6c8b-8bd7-4e5b-a6a1-76c68a8f729b");
+
+        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
+        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
+        private static class LoadPatchTypeAttributeModel
+        {
+            internal enum PatchType { Auto1, Auto2, Auto3, Auto4, [System.ComponentModel.Description("Angle Split")] AngleSplit, Manual }
+        }
     }
 }

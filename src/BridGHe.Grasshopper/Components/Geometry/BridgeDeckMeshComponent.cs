@@ -38,39 +38,21 @@ public sealed class BridgeDeckMeshComponent : BridgeUtilityComponent
         BridgeGeometryGoo geometry = null; GH_PlateProperty property = null; double length = 2500, width = 1500; bool triangles = true; var pours = new List<double>();
         if (!da.GetData(0, ref geometry) || !da.GetData(1, ref property)) return;
         da.GetData(2, ref length); da.GetData(3, ref width); da.GetDataList(4, pours); da.GetData(5, ref triangles);
-        // R6.2 lane A (dual rule until R6.5): the plates carry their GPC drafts, built on GPC from the GPC property of the input (a refused
-        // property gives no drafts: the plates are converted as before).
-        GPC.Model.ElementProperties.PlateProperty gpcProperty = null; Exception refused = null;
-        try { gpcProperty = property.Gpc; } catch (Exception x) when (GpcBuilderAttach.Refusal(x)) { refused = x; }
-        // R6.5 P1 lane 2a: a property given by its GPC datum alone is checked on it and gives the plates by their drafts alone (rule of passo 75).
-        bool gpcOnlyProperty = GpcOnlyProperties.WithoutFem(property);
-        // L2C: a membrane given by its datum alone is checked with its bending thickness (beside the GPC property), as before.
-        var result = BridgeDeckMesh.Create(geometry.Value, gpcOnlyProperty ? null : property.Value, length, width, pours, triangles, gpcProperty,
-            gpcOnlyProperty ? property.GpcMembraneBending : 0);
+        // P2K (P1): the plates by their GPC drafts alone, from the GPC datum of the plate property (checked on it, with the bending thickness
+        // of a membrane recorded beside it, L2C); a refused property gives an error and no output (no FEM value to fall back on).
+        GPC.Model.ElementProperties.PlateProperty gpcProperty = null;
+        try { gpcProperty = property.Gpc ?? throw new ArgumentException("The plate property has no GPC datum."); }
+        catch (Exception x) when (x is ArgumentException || x is NotSupportedException) { GpcOnlyElements.Generated<object>(this, () => throw x); return; }
+        var result = BridgeDeckMesh.Create(geometry.Value, null, length, width, pours, triangles, gpcProperty, property.GpcMembraneBending);
         da.SetData(0, new BridgeGeometryGoo(result.Geometry)); da.SetData(1, result.Mesh);
-        // R6.5 P1 lane 1b: the plates by their GPC drafts alone, identity by content (corners, GPC property, group, plate ID); a refused
-        // property gives an error and no plates (no FEM value to fall back on).
-        if (GpcOnlyElements.GeneratorsWithoutFem || gpcOnlyProperty)
+        // R6.5 P1 lane 1b: identity by content (corners, GPC property, group, plate ID).
+        da.SetDataList(2, result.Drafts.Select((d, i) =>
         {
-            if (result.Drafts == null) GpcOnlyElements.Generated<object>(this, () => throw refused ?? new ArgumentException("The plate property has no GPC datum."));
-            else da.SetDataList(2, result.Drafts.Select((d, i) =>
-            {
-                var plan = result.Plans[i];
-                var draft = GpcOnlyElements.Generated(this, () => Common.Gpc.GpcDrafts.Reidentify(d, GpcOnlyElements.ContentIdentity(ComponentGuid, 2,
-                    plan.Corners, gpcProperty, plan.Group, plan.PlateId)));
-                return draft == null ? null : GH_Plate.FromGpc(draft);
-            }).Where(p => p != null));
-            da.SetDataList(3, result.Connections);
-            da.SetDataList(4, result.Stations); da.SetDataList(5, result.Diagnostics);
-            return;
-        }
-        da.SetDataList(2, result.Plates.Select((p, i) =>
-        {
-            // GH_Plate(PlateModel) keeps the generated value: the identity of the draft is that of its conversion.
-            var plate = new GH_Plate(p);
-            if (result.Drafts != null) GpcBuilderAttach.Plate(plate, () => result.Drafts[i]);
-            return plate;
-        }));
+            var plan = result.Plans[i];
+            var draft = GpcOnlyElements.Generated(this, () => Common.Gpc.GpcDrafts.Reidentify(d, GpcOnlyElements.ContentIdentity(ComponentGuid, 2,
+                plan.Corners, gpcProperty, plan.Group, plan.PlateId)));
+            return draft == null ? null : GH_Plate.FromGpc(draft);
+        }).Where(p => p != null));
         da.SetDataList(3, result.Connections);
         da.SetDataList(4, result.Stations); da.SetDataList(5, result.Diagnostics);
     }

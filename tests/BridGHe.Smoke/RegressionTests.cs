@@ -111,6 +111,8 @@ internal static class RegressionTests
         gpc["r4b-inputs"] = R4bInputs.Regression; // R6.6 lane R4b (11/11, transitional): the GPC inputs of the native tests of R4b equal to the conversion of their former FEM models
         gpc["r4c-inputs"] = R4cGrafiInputs.Regression; // R6.6 lane R4c-grafi (12/11, transitional): the GPC inputs of the native examples 11-18 equal to the conversion of their former FEM models
         gpc["inr-inertia"] = InrInertia.Regression; // lane INR (12/11, user decision option B): the homogenised composite property on the section axes, I11 about the horizontal axis
+        gpc["p2k-components"] = P2kChecks.Regression; // P2K (12/11): slab datum, composite beam GUID, cable refused before Straus7, generators without FEM, report streams
+        gpc["p2k-natives"] = P2kNative.Regression; // P2K (12/11): 50 and 99 natives without the transitional FEM checks, Bridge Report of the 50; only with BRIDGHE_P2K_NATIVE
         gpc["gpc-review-fixes"] = GpcReviewFixesC1.Regression; // C1 (11/11): the product fixes of the ChatGPT reviews (R65-C3-01/02, R25-01, P30-01/02/04, Table Material)
         gpc["gpc-c5"] = C5ParityChecks.Regression; // C5 (11/11): releases of rotated beams as 0.3.0 (write plan recorded)
         gpc["gpc-only-elements"] = GpcOnlyReplay.Elements; // R6.5 P1 lane 1a (7/11): the element components replayed with GPC-only inputs

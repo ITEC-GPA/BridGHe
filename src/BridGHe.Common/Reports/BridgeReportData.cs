@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -51,6 +52,93 @@ public sealed record BridgeReportData(string Id, DateTimeOffset Created, BridgeR
     public static string Number(double? value) => value.HasValue && double.IsFinite(value.Value) ? value.Value.ToString("G6", CultureInfo.InvariantCulture) : "n.d.";
     public static string Hash(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes));
     public static string Serialize(object value) => JsonSerializer.Serialize(value, JsonOptions);
+
+    /// <summary>P2K (P6): the JSON of <paramref name="value"/> written to <paramref name="stream"/>: the same UTF-8 bytes as
+    /// <c>Encoding.UTF8.GetBytes(Serialize(value))</c>, without the .NET string (the data of a large report, example 50, is longer than the
+    /// longest string: OutOfMemoryException).</summary>
+    public static void Serialize(Stream stream, object value) => JsonSerializer.Serialize(stream, value, JsonOptions);
+
+    /// <summary>P2K (P6): <c>Hash(Encoding.UTF8.GetBytes(Serialize(value)))</c>, computed on the stream of the JSON (no string, no array of
+    /// the whole JSON).</summary>
+    public static string HashOf(object value)
+    {
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        using (var sink = new HashSink(hash)) Serialize(sink, value);
+        return Convert.ToHexString(hash.GetHashAndReset());
+    }
+
+    /// <summary>P2K (P6): a JSON round trip through a buffer of chunks (no string and no single array, so no size limit of one .NET object).</summary>
+    private static T RoundTrip<T>(T value)
+    {
+        using var buffer = new ChunkBuffer();
+        Serialize(buffer, value);
+        buffer.Rewind();
+        return JsonSerializer.Deserialize<T>(buffer, JsonOptions);
+    }
+
+    /// <summary>A write-only stream that feeds a hash.</summary>
+    private sealed class HashSink : Stream
+    {
+        private readonly IncrementalHash hash;
+        internal HashSink(IncrementalHash hash) => this.hash = hash;
+        public override bool CanRead => false;
+        public override bool CanSeek => false;
+        public override bool CanWrite => true;
+        public override long Length => throw new NotSupportedException();
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+        public override void Flush() { }
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => hash.AppendData(buffer, offset, count);
+        public override void Write(ReadOnlySpan<byte> buffer) => hash.AppendData(buffer);
+    }
+
+    /// <summary>A stream written once, then read once from the start (<see cref="Rewind"/>), held in chunks of 16 MiB.</summary>
+    private sealed class ChunkBuffer : Stream
+    {
+        private const int Size = 1 << 24;
+        private readonly List<byte[]> chunks = new();
+        private long length, position;
+        private bool reading;
+        internal void Rewind() { reading = true; position = 0; }
+        public override bool CanRead => reading;
+        public override bool CanSeek => false;
+        public override bool CanWrite => !reading;
+        public override long Length => length;
+        public override long Position { get => position; set => throw new NotSupportedException(); }
+        public override void Flush() { }
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => Write(buffer.AsSpan(offset, count));
+        public override void Write(ReadOnlySpan<byte> buffer)
+        {
+            if (reading) throw new NotSupportedException();
+            while (buffer.Length > 0)
+            {
+                int at = (int)(length % Size);
+                if (at == 0 && length / Size == chunks.Count) chunks.Add(new byte[Size]);
+                int n = Math.Min(Size - at, buffer.Length);
+                buffer.Slice(0, n).CopyTo(chunks[(int)(length / Size)].AsSpan(at));
+                buffer = buffer.Slice(n); length += n;
+            }
+        }
+        public override int Read(byte[] buffer, int offset, int count) => Read(buffer.AsSpan(offset, count));
+        public override int Read(Span<byte> buffer)
+        {
+            if (!reading) throw new NotSupportedException();
+            int total = 0;
+            while (buffer.Length > 0 && position < length)
+            {
+                int at = (int)(position % Size);
+                int n = (int)Math.Min(Math.Min(Size - at, buffer.Length), length - position);
+                chunks[(int)(position / Size)].AsSpan(at, n).CopyTo(buffer);
+                buffer = buffer.Slice(n); position += n; total += n;
+            }
+            return total;
+        }
+        protected override void Dispose(bool disposing) { chunks.Clear(); base.Dispose(disposing); }
+    }
     public static string ResultIds(IEnumerable<string> values)
     {
         var ids = values.Distinct().OrderBy(x => x, StringComparer.Ordinal).ToArray();
@@ -170,7 +258,8 @@ public sealed record BridgeReportData(string Id, DateTimeOffset Created, BridgeR
         var data = new BridgeReportData(Guid.NewGuid().ToString("N"), DateTimeOffset.Now, metadata, "",
             typeof(BridgeReportData).Assembly.GetName().Version.ToString(), typeof(HBridgeSection).Assembly.GetName().Version.ToString(), reportModel,
             sections.Values.ToArray(), samples.ToArray(), warnings.Distinct().ToArray());
-        data = JsonSerializer.Deserialize<BridgeReportData>(Serialize(data), JsonOptions);
-        return data with { DataHash = Hash(Encoding.UTF8.GetBytes(Serialize(new { data.Model, data.Sections, data.Samples }))) };
+        // P2K (P6): the round trip and the hash on streams, the same JSON bytes and values as through one string (OutOfMemoryException on 50).
+        data = RoundTrip(data);
+        return data with { DataHash = HashOf(new { data.Model, data.Sections, data.Samples }) };
     }
 }

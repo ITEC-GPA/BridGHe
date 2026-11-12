@@ -1,9 +1,9 @@
+using BridGHe.Common.Helpers;
 using System;
 using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Rhino.Geometry;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.Helpers;
 using BridGHe.Grasshopper.DataTypes.Fem;
 
@@ -34,6 +34,10 @@ namespace BridGHe.Grasshopper.Components.Loads
             pManager.AddNumberParameter("Value", "V", "The value of the temperature", GH_ParamAccess.item);
         }
 
+        // P2K (P1): the names of the former NodeTemperatureLoadModel.LoadType (Reference = 0, Fixed = 1, Initial = 2): the Type choices and the
+        // kind the GPC builder reads.
+        private static readonly string[] TemperatureTypes = { "Reference", "Fixed", "Initial" };
+
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
@@ -61,18 +65,12 @@ namespace BridGHe.Grasshopper.Components.Loads
             if (!DA.GetData("Value", ref value))
                 return;
 
-            NodeTemperatureLoadModel load = new NodeTemperatureLoadModel(lc.Value, value, (NodeTemperatureLoadModel.LoadType)type);
-            string kind = ((NodeTemperatureLoadModel.LoadType)type).ToString();
+            // P2K (P1): the former type by name (an integer out of range as its text, as the former enum ToString).
+            string kind = Common.Gpc.Builders.GpcBeamBuilders.Code(TemperatureTypes, type);
             Func<Guid, Common.Gpc.Legacy.LegacyNodeDraft> build = id => Common.Gpc.Builders.GpcNodeBuilders.WithTemperature(node.Gpc, lc.Gpc, kind, value, id);
-            // R6.5 P1 lane 1a: a node given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
-            // R6.5 P1 lane 2a: a load case given by its record alone gives the same output, without the FEM value (rule of passo 75).
-            if (node.Value == null || lc.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Node(this, 0, node, build, GpcOnlyElements.Lazy(() => lc.Gpc), kind, value)); return; }
-            GH_Node newNode = new GH_Node(node);
-            newNode.Value.Loads.Add(load);
-            // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the drafts of the inputs (the former type by name), identity of the
-            // conversion of the FEM output.
-            GpcBuilderAttach.Node(newNode, () => build(Common.Gpc.GpcBeamDrafts.Identity(newNode.Value)));
-            DA.SetData("Node", newNode);
+            // P2K (P1): the GPC path only: the draft built on GPC from the drafts of the node and the load case record (identity derived from
+            // the input draft).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Node(this, 0, node, build, GpcOnlyElements.Lazy(() => lc.Gpc), kind, value));
         }
 
         /// <summary>
@@ -84,5 +82,12 @@ namespace BridGHe.Grasshopper.Components.Loads
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
         public override Guid ComponentGuid => new Guid("65b74dea-1358-43a8-9fe4-571ab8ac7f11");
+
+        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
+        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
+        private static class NodeTemperatureLoadModel
+        {
+            internal enum LoadType { Reference, Fixed, Initial }
+        }
     }
 }

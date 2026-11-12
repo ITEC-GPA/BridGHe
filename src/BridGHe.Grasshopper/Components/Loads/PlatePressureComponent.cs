@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.Components.Parameters;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
@@ -97,27 +96,17 @@ namespace BridGHe.Grasshopper.Components.Loads
                 return;
             }
 
-            PlatePressureModel.LoadData load_value = new PlatePressureModel.LoadData()
-            {
-                Face = (PlatePressureModel.LoadFace)face,
-                CoordinateSystem = cs?.Value,
-                P = value,
-                Projected = projected
-            };
-            PlatePressureModel load = new PlatePressureModel(lc.Value, load_value);
-            Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.WithPressure(plate.Gpc, lc.Gpc, cs != null, load_value.Face.ToString(), value.X, value.Y, value.Z, projected, id);
-            // R6.5 P1 lane 1a: a plate given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
-            // R6.5 P1 lane 2a: a load case given by its record alone gives the same output, without the FEM value (rule of passo 75).
-            // R6.5 P1 lane 2b: the same for a coordinate system given by its GPC frame alone (rule of passo 75); whether a system is given is
-            // read from the input (the FEM value of the load copies it).
-            if (plate.Value == null || lc.Value == null || GpcOnlyProperties.WithoutFem(cs)) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, GpcOnlyElements.Lazy(() => lc.Gpc), cs != null, load_value.Face.ToString(), value.X, value.Y, value.Z, projected)); return; }
-            GH_Plate newPlate = new GH_Plate(plate);
-            newPlate.Value.Loads.Add(load);
-            // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the drafts of the inputs (local without a coordinate system, global
-            // on the former face by name with one), identity of the conversion of the FEM output.
-            GpcBuilderAttach.Plate(newPlate, () => build(Common.Gpc.GpcBeamDrafts.Identity(newPlate.Value)));
-            DA.SetData(0, newPlate);
+            // P2K (P1): the face by the name of the former PlatePressureModel.LoadFace (Top = 0, Bottom = 1; an integer out of range as its text,
+            // as the former enum ToString).
+            string faceName = Common.Gpc.Builders.GpcBeamBuilders.Code(LoadFaces, face);
+            Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.WithPressure(plate.Gpc, lc.Gpc, cs != null, faceName, value.X, value.Y, value.Z, projected, id);
+            // P2K (P1): the GPC path only: the draft built on GPC from the drafts of the plate and the load case record (local without a
+            // coordinate system, global on the former face by name with one; whether a system is given is read from the input), identity
+            // derived from the input draft.
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, GpcOnlyElements.Lazy(() => lc.Gpc), cs != null, faceName, value.X, value.Y, value.Z, projected));
         }
+
+        private static readonly string[] LoadFaces = { "Top", "Bottom" };
 
         public override GH_Exposure Exposure => GH_Exposure.tertiary;
 

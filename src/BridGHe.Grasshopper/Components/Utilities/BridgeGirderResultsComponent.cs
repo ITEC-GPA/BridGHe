@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Checks;
-using BridGHe.Common.Geometry;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -35,18 +33,14 @@ public sealed class BridgeGirderResultsComponent : BridgeUtilityComponent
     {
         var beams = new List<GH_CompositeBeam>(); int girder = 1;
         if (!da.GetDataList(0, beams) || !da.GetDataTree(1, out GH_Structure<IGH_Goo> input) || !da.GetData(2, ref girder)) return;
-        // R6.5 P1 lane 3a: a composite beam given by its GPC datum alone is valid; it is read on the GPC bridge model only (below).
-        if (beams.Any(b => b?.Value == null && b?.Gpc == null)) throw new ArgumentException("Valid composite beams are required.");
-        bool gpcOnly = GpcOnlyModels.Any(beams);
+        // R6.5 P1 lane 3a / P2K (P1): a composite beam is valid with its GPC datum; it is read on the GPC bridge model only (below).
+        if (beams.Any(b => b?.Gpc == null)) throw new ArgumentException("Valid composite beams are required.");
         // R6.4 (6): with composite beams linked to the GPC bridge model (Composite Beam from Super Element Filter or Decompose Model of a Build
         // BridGHe Model output) the ID, the member metadata, the ends and the length of every beam come from it (its beams and their bridge
-        // data, N-mm by construction); the FEM values otherwise, until R6.5. Until then the test host compares the two on every run.
-        var gpc = GpcGirders(beams);
-        // R6.5 P1 lane 3a: composite beams given by their GPC data alone and not linked to a GPC bridge model have no member metadata and no
-        // stations to read (those of the FEM path are the FEM attributes and results): an error, no output.
-        if (gpc == null && gpcOnly) throw GpcOnlyModels.Refused(GpcOnlyModels.RequiresBridgeModel);
-        var members = gpc ?? FemGirders(beams);
-        if (gpc != null && !gpcOnly) Common.Gpc.GpcDraftCheck.Attached("Bridge Girder Results beams", Text(gpc), () => Text(FemGirders(beams)));
+        // data, N-mm by construction).
+        // R6.5 P1 lane 3a / P2K (P1): composite beams not linked to a GPC bridge model have no member metadata and no stations to read: an
+        // error, no output.
+        var members = GpcGirders(beams) ?? throw GpcOnlyModels.Refused(GpcOnlyModels.RequiresBridgeModel);
         if (members.Any(m => !m.Girder)) throw new ArgumentException("Supply the longitudinal Composite beam list with physical girder metadata.");
         var selected = Enumerable.Range(0, beams.Count).Where(i => members[i].Group == girder)
             .OrderBy(i => members[i].StationFrom).ToArray();
@@ -57,11 +51,10 @@ public sealed class BridgeGirderResultsComponent : BridgeUtilityComponent
         var remap = selected.Select((old, current) => (old, current)).ToDictionary(p => p.old, p => p.current);
         var origins = new double[selected.Length];
         for (int i = 1; i < origins.Length; i++) origins[i] = origins[i - 1] + members[selected[i - 1]].Length;
-        // F6 (a)/(b), R8: the stations of Super Element Check, from the merged samples of the GPC bridge model when the composite beam is
-        // linked to it (Composite Beam from Super Element Filter or Decompose Model of a Build BridGHe Model output); the FEM results otherwise.
+        // F6 (a)/(b), R8 / P2K (P1): the stations of Super Element Check, from the merged samples of the GPC bridge model the composite beam is
+        // linked to (Composite Beam from Super Element Filter or Decompose Model of a Build BridGHe Model output); no FEM results.
         var stations = beams.Select(b => (Common.Gpc.GpcBridge.Of(b.AnalysedGpcModel)?.SamplesOf(b.BeamId)?.Select(s => Math.Round(s.Sample.Station, 15))
-            ?? (b.Value == null ? throw GpcOnlyModels.Refused(GpcOnlyModels.RequiresBridgeModel)
-            : b.Value.Results.OfType<BeamForceResultModel>().Select(r => Math.Round(r.NormalizedLength ? r.Station * b.Value.Length : r.Station, 15))))
+            ?? throw GpcOnlyModels.Refused(GpcOnlyModels.RequiresBridgeModel))
             .Distinct().OrderBy(s => s).ToArray()).ToArray();
         var output = new GH_Structure<IGH_Goo>(); var positions = new SortedSet<double>();
         for (int i = 0; i < input.PathCount; i++)
@@ -84,14 +77,6 @@ public sealed class BridgeGirderResultsComponent : BridgeUtilityComponent
     /// the member, its ends and its length.</summary>
     private sealed record Member(string Id, bool Girder, int Group, double StationFrom, Rhino.Geometry.Point3d From, Rhino.Geometry.Point3d To, double Length);
 
-    /// <summary>The FEM reading: the member attributes of the composite beam (exactly one, of the girder family), its ends and length.</summary>
-    private static Member[] FemGirders(IReadOnlyList<GH_CompositeBeam> beams) => beams.Select(b =>
-    {
-        var m = b.Value.Attributes.OfType<BridgeMemberAttributeModel>().ToArray();
-        bool girder = m.Length == 1 && m[0].Value.Family == BridgeMemberFamily.Girder;
-        return new Member(b.Value.BeamId, girder, girder ? m[0].Value.Group : 0, girder ? m[0].Value.StationFrom : 0, b.Value.PointFrom, b.Value.PointTo, b.Value.Length);
-    }).ToArray();
-
     /// <summary>R6.4 (6): the GPC reading, when every composite beam is linked to its beam of a GPC bridge model: the ID (the original ID of the
     /// source of the beam), the member metadata of its bridge data (<see cref="Common.Gpc.GpcBridge.Data"/>), its ends and their distance of
     /// Rhino (as the FEM length); null otherwise.</summary>
@@ -109,8 +94,4 @@ public sealed class BridgeGirderResultsComponent : BridgeUtilityComponent
         }
         return result;
     }
-
-    private static string Text(Member[] members) => string.Join("\n", members.Select(m => m.Id + " " + m.Girder + " " + m.Group + " " + B(m.StationFrom) + " " + B(m.From.X) + "," + B(m.From.Y) + "," + B(m.From.Z)
-        + " " + B(m.To.X) + "," + B(m.To.Y) + "," + B(m.To.Z) + " " + B(m.Length)));
-    private static string B(double v) => BitConverter.DoubleToInt64Bits(v).ToString("X16");
 }

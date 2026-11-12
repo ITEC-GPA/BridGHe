@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BridGHe.Common.Models;
 using BridGHe.Common.MovingLoads;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
@@ -169,20 +168,9 @@ namespace BridGHe.Grasshopper.Components.Loads
             {
                 var selected = paths.Select(goo => goo.Value as MovingPath ?? throw new ArgumentException("Atteso Moving Load Path.")).ToArray();
                 // R6.5 P1 lane 3d: GPC-only input gives GPC-only output; a refusal gives an error and no output (no FEM model to convert).
-                if (Helpers.GpcOnlyModels.WithoutFem(input))
-                {
-                    var gpcInput = Helpers.GpcOnlyModels.InputOf(input);
-                    da.SetData(0, Helpers.GpcOnlyModels.SameElements(Common.Gpc.GpcModelTransforms.ReplacePaths(gpcInput, selected, Common.Gpc.GpcIdentity.Derive(InstanceGuid, "model:" + gpcInput.Model.Guid.ToString("D"))), input, gpcInput));
-                    return;
-                }
-                var model = MovingModelBuilder.ReplacePaths(input.Value, selected);
-                var output = GH_Model.FromModel(model, input);
-                // F6 chain D: the GPC input of the output from the GPC input of the source (the analysis copies it instead of converting the
-                // FEM output); if it cannot be built the analysis converts the FEM output as before.
-                try { var source = input.GpcInput; output.AttachInput(Common.Gpc.GpcModelTransforms.ReplacePaths(source, selected, Common.Gpc.GpcIdentity.Derive(InstanceGuid, "model:" + source.Model.Guid.ToString("D")))); }
-                catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is InvalidOperationException || e is System.Runtime.Serialization.SerializationException)
-                { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Modello GPC dei percorsi non costruito (" + e.Message + "): l'analisi converte il modello FEM."); }
-                da.SetData(0, output);
+                // P2K (P1): the GPC path only.
+                var gpcInput = Helpers.GpcOnlyModels.InputOf(input);
+                da.SetData(0, Helpers.GpcOnlyModels.SameElements(Common.Gpc.GpcModelTransforms.ReplacePaths(gpcInput, selected, Common.Gpc.GpcIdentity.Derive(InstanceGuid, "model:" + gpcInput.Model.Guid.ToString("D"))), input, gpcInput));
             }
             catch (Exception ex) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message); }
         }

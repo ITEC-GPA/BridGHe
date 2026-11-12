@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -120,24 +119,9 @@ namespace BridGHe.Grasshopper.Components.Sections
 
             if (shapesList.Count > 0)
             {
-                SectionModel sectionModel = new SectionModel()
-                {
-                    SectionType = SectionModel.SectionTypes.GenericShapes,
-                    GenericShapes = new Common.Geometry.Shapes(shapesList)
-                };
-
-                GH_BeamSection section = new GH_BeamSection(sectionModel);
-
                 // L2C (lane 2c): the recipe with the shapes, as the former section held them.
-                // R6.2 part C (§1bis, regola doppia): the recipe built on GPC from the inputs, attached to the FEM value (transitional until R6.5).
-                // R6.5 P1 lane 2a: with the switch of the property producers the section by its recipe alone (the path of P2; a refused recipe gives
-                // an error and no section).
-                if (Helpers.GpcOnlyElements.PropertiesWithoutFem) Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.Section(this, () => Common.Gpc.Builders.GpcSectionBuilders.Shapes(shapesList)));
-                else
-                {
-                    Helpers.GpcBuilderAttach.Section(section, () => Common.Gpc.Builders.GpcSectionBuilders.Shapes(shapesList));
-                    DA.SetData(0, section);
-                }
+                // P2K (P1): the section by its recipe alone (a refused recipe gives an error and no section).
+                Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.Section(this, () => Common.Gpc.Builders.GpcSectionBuilders.Shapes(shapesList)));
             }
         }
 

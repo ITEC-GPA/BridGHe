@@ -16,8 +16,11 @@ public sealed record BridgeBearingLayout(NodeModel[] Nodes, Plane[] Frames, stri
 
 public static class BridgeBearings
 {
+    /// <param name="gpcOnly">P2K (P1): the nodes by their GPC drafts alone (the path of the component): no FEM node is made (<see cref="BridgeBearingLayout.Nodes"/>
+    /// empty), the drafts take a provisional identity of their label (the component gives them the identity by content). False: the transitional
+    /// FEM nodes beside the drafts (tests; deleted by P2-taglio).</param>
     public static BridgeBearingLayout Create(SimpleBridgeGeometry geometry, IReadOnlyList<int> supportIds, IReadOnlyList<int> girderIds,
-        IReadOnlyList<int> kinds, double guideAngle, Vector3d translationStiffness, Vector3d rotationStiffness, Plane? orientation = null)
+        IReadOnlyList<int> kinds, double guideAngle, Vector3d translationStiffness, Vector3d rotationStiffness, Plane? orientation = null, bool gpcOnly = false)
     {
         BridgeGeometryTools.Validate(geometry);
         supportIds ??= Array.Empty<int>(); girderIds ??= Array.Empty<int>();
@@ -51,18 +54,24 @@ public static class BridgeBearings
             frame.Origin = point.Point; frame.Rotate(guideAngle * Math.PI / 180, frame.ZAxis, frame.Origin);
             var kind = (BridgeBearingKind)kinds[kinds.Count == 1 ? 0 : i];
             string label = $"S{point.Support}/G{point.Girder}/{kind}";
-            var node = new NodeModel(label, point.Point);
-            node.Groups.Add(new GroupModel($"Bearing/S{point.Support}/G{point.Girder}"));
-            node.Attributes.Add(new NodeCoordinateAttributeModel(frame));
-            if (kind == BridgeBearingKind.Elastic)
-                node.Attributes.Add(new NodeStiffnessAttributeModel(translationStiffness.X, translationStiffness.Y, translationStiffness.Z,
-                    rotationStiffness.X, rotationStiffness.Y, rotationStiffness.Z));
-            else
-                node.Attributes.Add(new NodeRestraintAttributeModel(kind == BridgeBearingKind.FixedTranslation,
-                    kind is BridgeBearingKind.FixedTranslation or BridgeBearingKind.GuidedLongitudinal, true, false, false, false));
-            nodes.Add(node); frames.Add(frame); labels.Add(label);
+            NodeModel node = null;
+            if (!gpcOnly)
+            {
+                node = new NodeModel(label, point.Point);
+                node.Groups.Add(new GroupModel($"Bearing/S{point.Support}/G{point.Girder}"));
+                node.Attributes.Add(new NodeCoordinateAttributeModel(frame));
+                if (kind == BridgeBearingKind.Elastic)
+                    node.Attributes.Add(new NodeStiffnessAttributeModel(translationStiffness.X, translationStiffness.Y, translationStiffness.Z,
+                        rotationStiffness.X, rotationStiffness.Y, rotationStiffness.Z));
+                else
+                    node.Attributes.Add(new NodeRestraintAttributeModel(kind == BridgeBearingKind.FixedTranslation,
+                        kind is BridgeBearingKind.FixedTranslation or BridgeBearingKind.GuidedLongitudinal, true, false, false, false));
+                nodes.Add(node);
+            }
+            frames.Add(frame); labels.Add(label);
             // R6.2 lane A: the same node on GPC (the reader of the former node: groups, then the frame, then the restraint or the stiffness).
-            var identity = BridGHe.Common.Gpc.GpcBeamDrafts.Identity(node);
+            var identity = gpcOnly ? BridGHe.Common.Gpc.GpcIdentity.Derive(BridGHe.Common.Gpc.GpcIdentity.NameSpace, "BridgeBearings:" + label)
+                : BridGHe.Common.Gpc.GpcBeamDrafts.Identity(node);
             var draft = BridGHe.Common.Gpc.Builders.GpcNodeBuilders.Create(point.Point.X, point.Point.Y, point.Point.Z, label,
                 new[] { new[] { $"Bearing/S{point.Support}/G{point.Girder}" } }, identity);
             draft = BridGHe.Common.Gpc.Builders.GpcNodeBuilders.WithFrame(draft, frame.Origin.X, frame.Origin.Y, frame.Origin.Z,

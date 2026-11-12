@@ -62,6 +62,36 @@ namespace BridGHe.Grasshopper.Helpers
         internal static bool? BeamOrTrussWithoutFem(GH_BeamProperty p) => !WithoutFem(p) ? null
             : p.Gpc?.Property != null && p.Gpc.Data?.Formulation is GPC.Model.Structure.Assignments.BeamFormulation.StraightTwoNode or GPC.Model.Structure.Assignments.BeamFormulation.Truss;
 
+        /// <summary>P2K (P1): whether a beam property is a valid Beam or Truss property (the check of the deformable connections,
+        /// <c>BridgeConnections.Check</c>), read from its GPC datum (false without a property or a datum).</summary>
+        internal static bool BeamOrTruss(GH_BeamProperty p) => p?.Gpc?.Property != null
+            && p.Gpc.Data?.Formulation is GPC.Model.Structure.Assignments.BeamFormulation.StraightTwoNode or GPC.Model.Structure.Assignments.BeamFormulation.Truss;
+
+        /// <summary>P2K (P1): the units of <c>GPC.Utilities.Units.UnitsConvert</c> of the definition units of a component menu (Material Custom,
+        /// Beam Section Param): the table of the FEM <c>ModelHelper.GetUtilitiesConversionParams</c> (same integers as the former
+        /// <c>ModelUnits</c>), without the FEM type.</summary>
+        internal static void UtilitiesUnits(Common.Gpc.DefinitionUnits units, out GPC.Utilities.Units.UnitsConvert.LengthUnits length,
+            out GPC.Utilities.Units.UnitsConvert.ForceUnits force, out GPC.Utilities.Units.UnitsConvert.MassUnits mass,
+            out GPC.Utilities.Units.UnitsConvert.PressureUnits pressure, out GPC.Utilities.Units.UnitsConvert.TemperatureUnits temperature)
+        {
+            switch (units)
+            {
+                case Common.Gpc.DefinitionUnits.Knm:
+                    length = GPC.Utilities.Units.UnitsConvert.LengthUnits.m; force = GPC.Utilities.Units.UnitsConvert.ForceUnits.kN; mass = GPC.Utilities.Units.UnitsConvert.MassUnits.ton;
+                    pressure = GPC.Utilities.Units.UnitsConvert.PressureUnits.kPa; temperature = GPC.Utilities.Units.UnitsConvert.TemperatureUnits.C; break;
+                case Common.Gpc.DefinitionUnits.Nmm:
+                    length = GPC.Utilities.Units.UnitsConvert.LengthUnits.mm; force = GPC.Utilities.Units.UnitsConvert.ForceUnits.N; mass = GPC.Utilities.Units.UnitsConvert.MassUnits.ton;
+                    pressure = GPC.Utilities.Units.UnitsConvert.PressureUnits.MPa; temperature = GPC.Utilities.Units.UnitsConvert.TemperatureUnits.C; break;
+                case Common.Gpc.DefinitionUnits.SI:
+                    length = GPC.Utilities.Units.UnitsConvert.LengthUnits.m; force = GPC.Utilities.Units.UnitsConvert.ForceUnits.N; mass = GPC.Utilities.Units.UnitsConvert.MassUnits.kg;
+                    pressure = GPC.Utilities.Units.UnitsConvert.PressureUnits.Pa; temperature = GPC.Utilities.Units.UnitsConvert.TemperatureUnits.C; break;
+                case Common.Gpc.DefinitionUnits.IPS:
+                    length = GPC.Utilities.Units.UnitsConvert.LengthUnits.inch; force = GPC.Utilities.Units.UnitsConvert.ForceUnits.lbf; mass = GPC.Utilities.Units.UnitsConvert.MassUnits.lb;
+                    pressure = GPC.Utilities.Units.UnitsConvert.PressureUnits.psi; temperature = GPC.Utilities.Units.UnitsConvert.TemperatureUnits.F; break;
+                default: throw new NotSupportedException();
+            }
+        }
+
         /// <summary>The datum of a builder, or null after an error on the component (a refusal of the reader or of a builder).</summary>
         internal static T Datum<T>(GH_Component component, Func<T> build) where T : class
         {

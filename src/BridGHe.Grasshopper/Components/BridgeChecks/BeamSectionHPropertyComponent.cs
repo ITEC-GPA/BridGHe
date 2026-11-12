@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -59,75 +58,9 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             if (!DA.GetData(0, ref obj))
                 return;
 
-            // R6.5 P1 lane 2b: a section, a property or a beam given by its GPC datum alone gives the values from the recipe of its I section,
-            // as the former section value held them (GpcSectionGeometry.Former, the expressions of CalculateSection), and its dimensions; also
-            // with the switch of the property producers (the path of P2).
-            if (GpcOnlyElements.PropertiesWithoutFem || GpcOnlyProperties.WithoutFem(obj) || obj is GH_Beam { Value: null })
-            {
-                SolveGpcOnly(DA, obj);
-                return;
-            }
-
-            SectionModel section = null;
-            if (obj is GH_BeamProperty bp)
-                section = bp.Value.Section;
-            if (obj is GH_BeamSection bs)
-                section = bs.Value;
-            if (obj is GH_Beam b)
-                section = b.Value.BeamProperty.Section;
-
-            if (section == null)
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input is not a beam or a beam property or a beam section");
-                return;
-            }
-            // The input belongs to the upstream component (and to every copy that shares it): calculate a copy.
-            section = Common.Helpers.ModelArchive.Clone(section);
-
-            string name = string.Empty;
-            double area = 0;
-            double j11 = 0;
-            double j22 = 0;
-            double jxx = 0;
-            double jyy = 0;
-            double j = 0;
-            double xg = 0;
-            double yg = 0;
-            double angle = 0;
-            double h = 0;
-            double tfw = 0;
-            double bfw = 0;
-            double tw = 0;
-            double bft = 0;
-            double tft = 0;
-
-            if (section.SectionType == SectionModel.SectionTypes.I)
-            {
-                section.CalculateSection();
-                name = section.Name;
-                area = section.SectionArea;
-                xg = section.Centroid.X;
-                yg = section.Centroid.Y;
-                jxx = section.Ixx;
-                jyy = section.Iyy;
-                angle = section.AngleX1Rad;
-                j11 = section.I11;
-                j22 = section.I22;
-                j = section.J;
-                h = section.D;
-                tfw = section.B1;
-                bfw = section.B2;
-                tw = section.T3;
-                bft = section.T1;
-                tft = section.T2;
-            }
-            else
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Section is not a I section");
-                return;
-            }
-
-            Set(DA, name, area, xg, yg, jxx, jyy, angle, j11, j22, j, h, tfw, bfw, tw, bft, tft);
+            // R6.5 P1 lane 2b: a section, a property or a beam gives the values from the recipe of its I section, as the former section value
+            // held them (GpcSectionGeometry.Former, the expressions of CalculateSection), and its dimensions. P2K (P1): the only path.
+            SolveGpcOnly(DA, obj);
         }
 
         /// <summary>R6.5 P1 lane 2b: the values of an I section given by its recipe (see <see cref="SolveInstance"/>); the same messages.</summary>

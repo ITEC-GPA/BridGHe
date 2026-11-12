@@ -34,9 +34,9 @@ namespace BridGHe.Grasshopper.Components.Analysis
         {
             GH_Model input = null; string path = null; bool run = false;
             if (!da.GetData(0, ref input) || !da.GetData(1, ref path) || !da.GetData(2, ref run)) return;
-            // R6.5 P1 lane 3e: a model given by its GPC input alone is analysed from it and gives a GPC-only model with the analysed GPC model.
-            bool gpcOnly = Helpers.GpcOnlyModels.WithoutFem(input);
-            if ((gpcOnly ? input.GpcInput.Model.BeamElements.Count : input?.Value?.Beams.Count ?? 0) == 0) { _model = new GH_Model(); _inputHash = null; _drafts.Clear(); return; }
+            // R6.5 P1 lane 3e (P2K: every model): the model is analysed from its GPC input alone and gives a GPC-only model with the analysed GPC
+            // model; no FEM value is read or made.
+            if ((input?.GpcInput?.Model.BeamElements.Count ?? 0) == 0) { _model = new GH_Model(); _inputHash = null; _drafts.Clear(); return; }
             try
             {
                 // R6.4 (1): the fingerprint of the GPC input (a fingerprint of the former FEM archive, saved by an earlier version, asks for a Run).
@@ -44,18 +44,9 @@ namespace BridGHe.Grasshopper.Components.Analysis
                 if (_run || run)
                 {
                     _run = false;
-                    System.Collections.Generic.List<string> warnings; GPC.Model.Models.Model analysed;
-                    if (gpcOnly)
-                    {
-                        var gpc = Helpers.GpcOnlyModels.InputOf(input);
-                        analysed = StrausAnalysis.Run(gpc, path, 0, Array.Empty<string>(), true, out warnings);
-                        _model = Helpers.GpcOnlyModels.SameElements(gpc, input, gpc);
-                    }
-                    else
-                    {
-                        var model = StrausAnalysis.Run(input.Value, input.GpcInput, path, 0, Array.Empty<string>(), Settings.Instance.Tolerance, true, out warnings, out analysed);
-                        _model = GH_Model.FromModel(model, input);
-                    }
+                    var gpc = Helpers.GpcOnlyModels.InputOf(input);
+                    var analysed = StrausAnalysis.Run(gpc, path, 0, Array.Empty<string>(), true, out System.Collections.Generic.List<string> warnings);
+                    _model = Helpers.GpcOnlyModels.SameElements(gpc, input, gpc);
                     foreach (string warning in warnings) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
                     _model.AttachGpc(analysed); _inputHash = hash;
                     // R6.4 (2), extension (α): the output keeps the elements of its input (with results): it carries the drafts of the input.
@@ -71,9 +62,9 @@ namespace BridGHe.Grasshopper.Components.Analysis
                 if (_drafts.Pending) { string changed = _drafts.Restore(input, _model, hash); if (changed != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, changed); }
                 // R6.1 (decision 1 of 6/11): the analysed model of a former file is read without its results.
                 if (_model.LegacyNotice != null && !_model.HasAnalysedGpc) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, _model.LegacyNotice);
-                // C6: the generated cases from the GPC steps of the analysed model when it is there, the FEM result otherwise.
+                // C6 (P2K: GPC only): the generated cases from the GPC steps of the analysed model; none without it.
                 var catalog = _model.HasAnalysedGpc ? Common.Gpc.GpcResultCatalog.Of(_model.Gpc) : null;
-                var generated = catalog != null ? catalog.GeneratedMovingCases().Select(c => c.Name).ToArray() : _model.Value?.GeneratedMovingCases.OrderBy(c => c.Key).Select(c => c.Value).ToArray() ?? Array.Empty<string>();
+                var generated = catalog != null ? catalog.GeneratedMovingCases().Select(c => c.Name).ToArray() : Array.Empty<string>();
                 da.SetData(0, _model); da.SetDataList(1, generated);
                 Message = generated.Length + " positions";
             }

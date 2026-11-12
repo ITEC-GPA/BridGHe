@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Forms;
 using BridGHe.Grasshopper.Helpers;
@@ -17,32 +16,21 @@ namespace BridGHe.Grasshopper.Components.Parameters
 {
     public class LoadCombinationsParam : GH_PersistentParam<GH_LoadCombination>
     {
-        protected List<LoadCaseModel> _loadCases;
-
-        public List<LoadCaseModel> LoadCaseList => _loadCases;
-
-        /// <summary>R65-C2-05: the case records given with the cases (the columns of the form for combinations given by their GPC datum alone).</summary>
+        /// <summary>R65-C2-05: the case records given with the cases (the columns of the form).</summary>
         public IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> CaseRecordList { get; private set; } = Array.Empty<Common.Gpc.Legacy.LegacyCaseData>();
 
         public LoadCombinationsParam()
             : base("Load Combinations", "LCS", "The load combinations definition", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
         {
-            _loadCases = new List<LoadCaseModel>();
         }
 
-        /// <summary>R6.3: the cases of Build Model or Staged Construction, FEM values (until R6.5) and case records: the combinations of the
-        /// parameter follow them (the FEM value in place, the GPC datum built on the case records, <c>GpcCaseBuilders.UpdatedCombination</c>).</summary>
-        public void UpdateLoadCases(IEnumerable<LoadCaseModel> loadCases, IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
+        /// <summary>R6.3: the case records of Build Model or Staged Construction: the combinations of the parameter follow them (the GPC datum
+        /// built on the case records, <c>GpcCaseBuilders.UpdatedCombination</c>). P2K (P1): TRANSITIONAL, the FEM cases parameter kept for the
+        /// call of Build Model (outside the group), always null and ignored.</summary>
+        public void UpdateLoadCases(IEnumerable<Common.Models.LoadCaseModel> loadCases, IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
         {
             // Recreate the LoadCase names list
             CaseRecordList = caseRecords ?? Array.Empty<Common.Gpc.Legacy.LegacyCaseData>();
-            _loadCases.Clear();
-            // R6.5 P1 lane 3c: null: the cases of Build Model on elements given by their GPC data alone have no FEM value (only the case records).
-            foreach (LoadCaseModel loadCase in loadCases ?? Array.Empty<LoadCaseModel>())
-            {
-                if (_loadCases.Count(lc => lc.Name == loadCase.Name) == 0)
-                    _loadCases.Add(loadCase);
-            }
 
             if (VolatileDataCount == 0)
                 return;
@@ -54,44 +42,17 @@ namespace BridGHe.Grasshopper.Components.Parameters
             for (int k = 0; k < combinations.Count; k++)
             {
                 GH_LoadCombination combo = combinations[k];
-                // R6.3: the GPC datum before the change (null when the reader refuses it: the conversion follows the value).
+                // R6.3: the GPC datum before the change (null when the reader refuses it: the combination stays as it is).
                 Common.Gpc.Legacy.LegacyCombinationDraft before;
-                try { before = combo.Gpc; } catch (Exception x) when (GpcBuilderAttach.Refusal(x)) { before = null; }
-                // R6.5 P1 lane 2a: a combination given by its GPC datum alone follows the case records alone (the same rule as the FEM value
-                // below: the factors of the cases no longer present removed, the new cases added with 1), replaced by the updated one.
-                // R65-C2-06 (review of lane 2, 8/11): changed in place, as the FEM value below (the stage that collected the combination sees the
-                // new cases, the persistent data with it), and the solution expired on a removal only, as the FEM path (before: a new item, so the
-                // stage kept the old combination and the persistent data were not updated on additions).
-                if (combo.Value == null)
-                {
-                    if (before == null) continue;
-                    if (before.Factors.Any(f => !caseRecords.Any(c => c.Name == f.Case.Name))) changed = true;
-                    var updated = Common.Gpc.Builders.GpcCaseBuilders.UpdatedCombination(before, caseRecords);
-                    if (updated != null) combo.AttachGpc(updated);
-                    continue;
-                }
-                if (loadCases == null) continue; // R6.5 P1 lane 3c: without the FEM cases a FEM-backed combination stays as it is
-                // Remove the non existing values
-                LoadCaseModel[] to_remove = combo.Value.Values.
-                    Where(v => !loadCases.Contains(v.Key, new Common.Helpers.LoadCaseModelsEqualityComparer())).
-                    Select(c => c.Key).ToArray();
-                foreach (LoadCaseModel lc in to_remove)
-                    combo.Value.Values.Remove(lc);
-                if (to_remove.Length > 0)
-                    changed = true;
-
-                bool added = false;
-                foreach (LoadCaseModel loadCase in loadCases)
-                {
-                    if (!combo.Value.Values.Keys.Contains(loadCase, new Common.Helpers.LoadCaseModelsEqualityComparer()))
-                    { combo.Value.Values.Add(loadCase, 1); added = true; }
-                }
-                // R6.1: the FEM value changed in place: its GPC datum follows it.
-                if (added || to_remove.Length > 0)
-                {
-                    combo.ValueChanged();
-                    if (before != null) GpcBuilderAttach.Combination(combo, () => Common.Gpc.Builders.GpcCaseBuilders.UpdatedCombination(before, caseRecords) ?? before);
-                }
+                try { before = combo.Gpc; } catch (Exception x) when (x is ArgumentException || x is NotSupportedException) { before = null; }
+                // R6.5 P1 lane 2a: the combination follows the case records alone (the factors of the cases no longer present removed, the new
+                // cases added with 1), replaced by the updated one. R65-C2-06 (review of lane 2, 8/11): changed in place (the stage that collected
+                // the combination sees the new cases, the persistent data with it), and the solution expired on a removal only.
+                // P2K (P1): the only path, for every combination.
+                if (before == null) continue;
+                if (before.Factors.Any(f => !caseRecords.Any(c => c.Name == f.Case.Name))) changed = true;
+                var updated = Common.Gpc.Builders.GpcCaseBuilders.UpdatedCombination(before, caseRecords);
+                if (updated != null) combo.AttachGpc(updated);
             }
 
             if (changed)
@@ -221,7 +182,7 @@ namespace BridGHe.Grasshopper.Components.Parameters
                 List<GH_LoadCombination> list = null;
                 if (!Owner.VolatileData.IsEmpty)
                     list = (List<GH_LoadCombination>)Owner.VolatileData.get_Branch(0);
-                LoadCombinationsForm form = new LoadCombinationsForm(Owner.LoadCaseList.ToArray(), list, Owner.CaseRecordList); // R65-C2-05: with the case records
+                LoadCombinationsForm form = new LoadCombinationsForm(list, Owner.CaseRecordList); // R65-C2-05: with the case records (P2K (P1): no FEM cases)
                 GH_WindowsFormUtil.CenterFormOnCursor(form, true);
                 if (form.ShowDialog(Instances.DocumentEditor) == DialogResult.OK)
                 {

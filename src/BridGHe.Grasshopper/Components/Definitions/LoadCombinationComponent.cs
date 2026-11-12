@@ -1,8 +1,6 @@
 using System;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
-using BridGHe.Common.Models;
-using BridGHe.Common.Helpers;
 using System.Collections.Generic;
 using BridGHe.Grasshopper.Helpers;
 using BridGHe.Grasshopper.DataTypes.Fem;
@@ -42,38 +40,10 @@ namespace BridGHe.Grasshopper.Components.Definitions
             if (!DA.GetDataList(2, values))
                 return;
 
-            // R6.5 P1 lane 2a: with the switch, or a case given by its record alone, the combination by its GPC datum alone (rule of passo 75).
-            if (Helpers.GpcOnlyProperties.On(loadCases))
-            {
-                Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.Combination(this, () => Common.Gpc.Builders.GpcCaseBuilders.Combination(name,
-                    System.Linq.Enumerable.ToList(System.Linq.Enumerable.Select(loadCases, lc => lc.Gpc)), values)));
-                return;
-            }
-            GH_LoadCombination loadCombination = new GH_LoadCombination(name);
-            Dictionary<LoadCaseModel, double> loadComboValues = loadCombination.Value.Values;
-
-            for (int i = 0; i < loadCases.Count; i++)
-            {
-                double loadCaseValue = 0;
-                if (i < values.Count)
-                {
-                    // se values è meno lunga di loadcase allora mette 0
-                    loadCaseValue = values[i];
-                }
-
-                if (loadComboValues.ContainsKey(loadCases[i].Value))
-                {
-                    loadComboValues[loadCases[i].Value] += loadCaseValue;
-                }
-                else
-                {
-                    loadComboValues.Add(loadCases[i].Value, loadCaseValue);
-                }
-            }
-
-            // R6.3 (dual rule until R6.5): the combination built on the case records of the inputs.
-            GpcBuilderAttach.Combination(loadCombination, () => Common.Gpc.Builders.GpcCaseBuilders.Combination(name, System.Linq.Enumerable.ToList(System.Linq.Enumerable.Select(loadCases, lc => lc.Gpc)), values));
-            DA.SetData(0, loadCombination);
+            // R6.5 P1 lane 2a: the combination by its GPC datum alone, built on the case records of the inputs (rule of passo 75; missing
+            // factors 0, a case given twice adds its factors). P2K (P1): the only path.
+            Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.Combination(this, () => Common.Gpc.Builders.GpcCaseBuilders.Combination(name,
+                System.Linq.Enumerable.ToList(System.Linq.Enumerable.Select(loadCases, lc => lc.Gpc)), values)));
         }
 
         protected override System.Drawing.Bitmap Icon => Properties.ComponentIcons.For(GetType());

@@ -1,5 +1,4 @@
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -79,15 +78,16 @@ namespace BridGHe.Grasshopper.Components.Tools
 
             List<GH_Node> filtered = new List<GH_Node>();
             List<GH_Node> others = new List<GH_Node>();
-            double tol = Helpers.ModelHelper.GetTolerance();
+            // P2K (P1): the tolerance of the former ModelHelper.GetTolerance (the same setting).
+            double tol = Settings.Instance.Tolerance;
 
-            // R6.2 lane A: the filter decides on the GPC drafts (first Element ID, groups by full name, position in the definition units); the FEM
-            // value is the bridge for a refused draft until R6.5, and under the Smoke host the two decisions must agree.
+            // R6.2 lane A: the filter decides on the GPC drafts (first Element ID, groups by full name, position in the definition units).
+            // P2K (P1): the GPC path only (the former decision of GpcBuilderAttach.Decide without a FEM value: a refused draft is an error).
             var groupNames = groups.Select(g => string.Join("\\", GpcBuilderAttach.GroupChain(g))).ToList();
             for (int i = 0; i < nodes.Count; i++)
             {
                 GH_Node n = nodes[i];
-                bool add = GpcBuilderAttach.Decide(() => Matches(n.Gpc, ids, groupNames, positions, tol), n.Value == null || GpcOnlyProperties.WithoutFem(groups) ? null : () => FemMatches(n, ids, groups, positions, tol), "Node Filter"); // R6.5 P1 lane 1a: a node without FEM value on its draft alone
+                bool add = Matches(n.Gpc, ids, groupNames, positions, tol);
                 if (add)
                     filtered.Add(n);
                 else
@@ -109,48 +109,6 @@ namespace BridGHe.Grasshopper.Components.Tools
             return positions.Any(p => position.DistanceTo(p) < tol);
         }
 
-        /// <summary>The selection on the FEM value (until R6.5).</summary>
-        private static bool FemMatches(GH_Node n, List<string> ids, List<GH_Group> groups, List<Point3d> positions, double tol)
-        {
-            {
-                bool add = false;
-                for (int j = 0; j < ids.Count; j++)
-                {
-                    string id = ids[j];
-                    if (n.Value.HasId(id))
-                    {
-                        add = true;
-                        break;
-                    }
-                }
-                if (!add)
-                {
-                    for (int j = 0; j < groups.Count; j++)
-                    {
-                        GH_Group g = groups[j];
-                        if (n.Value.HasGroup(g.Value))
-                        {
-                            add = true;
-                            break;
-                        }
-                    }
-                    if (!add)
-                    {
-                        for (int k = 0; k < positions.Count; k++)
-                        {
-                            Point3d p = positions[k];
-                            if (n.Value.Position.DistanceTo(p) < tol)
-                            {
-                                add = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                return add;
-            }
-        }
-
         public override GH_Exposure Exposure => GH_Exposure.secondary;
 
         /// <summary>
@@ -162,5 +120,18 @@ namespace BridGHe.Grasshopper.Components.Tools
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
         public override Guid ComponentGuid => new Guid("35d4ffef-5073-4ead-a931-83a0febedb69");
+
+        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
+        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
+        private static class ModelModel
+        {
+            internal enum ModelUnits
+            {
+                [System.ComponentModel.Description("kNm (m, kN, T, kPa, s, kJ, C)")] Knm,
+                [System.ComponentModel.Description("SI (m, N, kg, Pa, s, J, C)")] SI,
+                [System.ComponentModel.Description("Nmm (mm, N, T, MPa, s, mJ, C)")] Nmm,
+                [System.ComponentModel.Description("PSI (in, lbf, lb, psi, s, btu, F)")] IPS
+            }
+        }
     }
 }

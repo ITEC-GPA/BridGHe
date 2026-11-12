@@ -34,31 +34,8 @@ public sealed class BridgeSegmentCompositeComponent : BridgeUtilityComponent
         if (!da.GetDataList(0, beams) || !da.GetDataList(1, ids) || !da.GetDataList(2, props)) return;
         if (beams.Count == 0) { Message = "Awaiting beams"; return; }
         Message = "";
-        // R6.5 P1 lane 2b: a beam given by its draft alone or a composite section given by its GPC definition alone gives the outputs by their
-        // GPC data alone (rule of passo 75); also with the switch of the property producers (the path of P2).
-        if (GpcOnlyElements.PropertiesWithoutFem || beams.Any(b => b?.Value == null) || props.Any(GpcOnlyProperties.WithoutFem)) { SolveGpcOnly(da, beams, ids, props); return; }
-        var mapped = BridgeSegmentComposite.Map(beams.Select(b => b?.Value).ToArray(), ids, props.Select(p => p?.Value).ToArray());
-        // F6 (a)/(b), chain C: the girders keep the link to their beam of the GPC bridge model (Decompose Model of Build BridGHe Model).
-        var links = new Dictionary<Common.Models.BeamModel, GH_Beam>(ReferenceEqualityComparer.Instance);
-        foreach (var b in beams) if (b?.Value != null) links.TryAdd(b.Value, b);
-        // R6.2 (lane B): the girders keep the GPC draft of their input (the same value: a copy with the identity of the output), the composite
-        // properties the datum of theirs.
-        da.SetDataList(0, mapped.Girders.Select(b =>
-        {
-            if (!links.TryGetValue(b, out var source)) return new GH_Beam(b);
-            var girder = new GH_Beam(b) { AnalysedGpc = source.AnalysedGpc, AnalysedGpcModel = source.AnalysedGpcModel };
-            GpcBeamInputs.Attach(girder, id => Common.Gpc.GpcDrafts.Reidentify(Common.Gpc.GpcDrafts.Copy(source.Gpc), id));
-            return girder;
-        }));
-        var composites = new Dictionary<Common.Models.CompositeBeamPropertyModel, GH_CompositeBeamProperty>(ReferenceEqualityComparer.Instance);
-        foreach (var p in props) if (p?.Value != null) composites.TryAdd(p.Value, p);
-        da.SetDataList(1, mapped.Properties.Select(p =>
-        {
-            var output = new GH_CompositeBeamProperty(p);
-            if (composites.TryGetValue(p, out var source)) GpcSegmentSections.TryAttach(output, source);
-            return output;
-        }));
-        da.SetDataList(2, mapped.SegmentIds); da.SetDataList(3, mapped.Girders.Select(b => b.BeamId));
+        // R6.5 P1 lane 2b / P2K (P1): the outputs by their GPC data alone (rule of passo 75).
+        SolveGpcOnly(da, beams, ids, props);
     }
 
     /// <summary>R6.5 P1 lane 2b: the association on the GPC data alone (<see cref="Common.Gpc.GpcStateOverride.Map"/>: the girders of the drafts in

@@ -70,75 +70,13 @@ namespace BridGHe.Grasshopper.Components
             Vector3d given = dir;
             dir.Unitize();
 
-            // R6.5 P1 lane 1a: a beam given by its GPC draft alone: the same decisions on the ends and angles of the draft (DraftAxes), the draft
-            // the reader gives the changed former value (ends swapped, or the BridGHe angle turned), identity derived from the input draft.
-            if (beam.Value == null)
-            {
-                Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Aligned(this, beam.Gpc, ax, dir, id);
-                GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, axis, given));
-                return;
-            }
-
-            GH_Beam newBeam = new GH_Beam(beam);
-
-            if (ax == "3 Blue")
-            {
-                //align the beam direction to axes reversing start node and end node
-                Vector3d beamDir = beam.Value.PointTo - beam.Value.PointFrom;
-                beamDir.Unitize();
-
-                Point3d pointTo = new Point3d(beam.Value.PointTo);
-                Point3d pointFrom = new Point3d(beam.Value.PointFrom);
-
-                if (beamDir * dir < 0)
-                {
-                    //reversing 
-                    newBeam.Value.PointFrom = pointTo;
-                    newBeam.Value.PointTo = pointFrom;
-                }
-            }
-            else
-            {
-                Vector3d beamDir;
-                Vector3d beamStartingAxes;
-                if (ax == "1 Red")
-                    beam.Value.GetLocalAxes(true, out beamStartingAxes, out _, out beamDir, out _);
-                else if (ax == "2 Green")
-                    beam.Value.GetLocalAxes(true, out _, out beamStartingAxes, out beamDir, out _);
-                else if (ax == "Local x")
-                    beam.Value.GetLocalAxes(false, out beamStartingAxes, out _, out beamDir, out _);
-                else if (ax == "Local y")
-                    beam.Value.GetLocalAxes(false, out _, out beamStartingAxes, out beamDir, out _);
-                else
-                    throw new NotSupportedException();
-
-                beamStartingAxes.Unitize();
-                if (Math.Abs(beamDir * dir) > 0.99999)
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Unable to riorient the beam");   //ortogonal, unable to reverse
-                else
-                {
-                    Vector3d orto = Vector3d.CrossProduct(beamDir, dir);
-                    orto.Unitize();
-                    Vector3d newDir = Vector3d.CrossProduct(orto, beamDir);
-                    newDir.Unitize();
-                    if (newDir * dir < 0)
-                        newDir.Reverse();
-
-                    orto = Vector3d.CrossProduct(beamDir, beamStartingAxes);
-                    double x = newDir * beamStartingAxes;
-                    double y = newDir * orto;
-                    double angleIncrementDeg = Math.Atan2(y, x).ToDegrees();
-                    newBeam.Value.AngleDeg += angleIncrementDeg;
-                }
-            }
-
-            DA.SetData(0, newBeam);
+            // R6.5 P1 lane 1a: the decisions on the ends and angles of the draft (DraftAxes), the draft the reader gives the changed former value
+            // (ends swapped, or the BridGHe angle turned), identity derived from the input draft. P2K (P1): the GPC path only.
+            Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Aligned(this, beam.Gpc, ax, dir, id);
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, axis, given));
         }
 
-        /// <summary>
-        /// Provides an Icon for the component.
-        /// </summary>
-        /// <summary>R6.5 P1 lane 1a: the component on a GPC draft, with the decisions and expressions of the FEM path above on the axes of the
+        /// <summary>R6.5 P1 lane 1a: the component on a GPC draft, with the decisions and expressions of the former FEM path on the axes of the
         /// draft (<see cref="DraftAxes"/>): axis 3 against the direction swaps the ends (<see cref="Common.Gpc.Builders.GpcBeamBuilders.Reversed"/>);
         /// the other axes turn the BridGHe angle by the increment (<see cref="Common.Gpc.Builders.GpcBeamBuilders.Override"/>), with the warning of
         /// the component for a direction along the beam; otherwise the draft is unchanged (re-identified).</summary>

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -47,31 +46,15 @@ namespace BridGHe.Grasshopper.Components.Attributes
             if (!DA.GetData(1, ref id))
                 return;
 
-            BeamStringGroupAttributeModel.AttributeData data = new BeamStringGroupAttributeModel.AttributeData
-            {
-                ID = id
-            };
-
-            BeamStringGroupAttributeModel sg = new BeamStringGroupAttributeModel(data);
-
             List<GH_Beam> newBeams = new List<GH_Beam>();
 
             for (int i = 0; i < listBeams.Count; i++)
             {
                 var input = listBeams[i];
                 Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = gid => Common.Gpc.Builders.GpcBeamBuilders.WithStringGroup(input.Gpc, id, gid);
-                // R6.5 P1 lane 1a: a beam given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
-                if (input.Value == null)
-                {
-                    var only = GpcOnlyElements.Beam(this, 0, input, build, id);
-                    if (only != null) newBeams.Add(only);
-                    continue;
-                }
-                GH_Beam newBeam = new GH_Beam(input);
-                newBeam.Value.Attributes.Add(sg);
-                // R6.2 (lane B): the GPC draft built on GPC from the draft of the input (identity of the conversion of the FEM output until R6.5).
-                GpcBeamInputs.Attach(newBeam, build);
-                newBeams.Add(newBeam);
+                // P2K (P1): the GPC path only: the draft built on GPC (identity derived from the input draft); a refused beam gives no item.
+                var only = GpcOnlyElements.Beam(this, 0, input, build, id);
+                if (only != null) newBeams.Add(only);
             }
 
             DA.SetDataList(0, newBeams);

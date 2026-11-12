@@ -120,9 +120,12 @@ public static class BridgeWordReport
         foreach (var name in parts.Keys.Where(n => n.StartsWith("word/media/bridghe-")))
             EnsureType(types, "/" + name, name.EndsWith(".svg") ? "image/svg+xml" : "image/png");
         parts["[Content_Types].xml"] = Xml(types);
-        parts["bridghe/report.json"] = Encoding.UTF8.GetBytes(BridgeReportData.Serialize(new { Schema = 1, TemplateHash = BridgeReportData.Hash(templateBytes),
+        // P2K (P6): the snapshot is written straight into its ZIP entry (the same UTF-8 bytes, without the string of the whole JSON:
+        // OutOfMemoryException on example 50); its place in the order of the parts is kept by an empty slot.
+        var snapshot = new { Schema = 1, TemplateHash = BridgeReportData.Hash(templateBytes),
             Topics = selected.Select(t => t.ToString()), Data = data, ExportWarnings = warnings,
-            Figures = figures.Select(f => new { f.Title, Hash = BridgeReportData.Hash(Encoding.UTF8.GetBytes(f.Svg ?? "")) }) }));
+            Figures = figures.Select(f => new { f.Title, Hash = BridgeReportData.Hash(Encoding.UTF8.GetBytes(f.Svg ?? "")) }) };
+        parts[SnapshotPart] = null;
         var rels = Read(parts, "_rels/.rels");
         rels.Root.Add(new XElement(Rel + "Relationship", new XAttribute("Id", "bg" + Guid.NewGuid().ToString("N")),
             new XAttribute("Type", "urn:bridghe:report:snapshot"), new XAttribute("Target", "bridghe/report.json")));
@@ -132,7 +135,11 @@ public static class BridgeWordReport
         try
         {
             using (var result = ZipFile.Open(temporary, ZipArchiveMode.Create))
-                foreach (var part in parts) { using var stream = result.CreateEntry(part.Key, CompressionLevel.Optimal).Open(); stream.Write(part.Value); }
+                foreach (var part in parts)
+                {
+                    using var stream = result.CreateEntry(part.Key, CompressionLevel.Optimal).Open();
+                    if (part.Value == null && part.Key == SnapshotPart) BridgeReportData.Serialize(stream, snapshot); else stream.Write(part.Value);
+                }
             if (File.Exists(output))
             {
                 if (!overwrite) throw new IOException("Report already exists.");
@@ -179,6 +186,9 @@ public static class BridgeWordReport
         return XDocument.Load(reader, LoadOptions.PreserveWhitespace);
     }
     internal static byte[] Xml(XDocument document) { using var s = new MemoryStream(); document.Save(s, SaveOptions.DisableFormatting); return s.ToArray(); }
+    /// <summary>P2K (P6): the ZIP entry of the JSON snapshot of the report.</summary>
+    private const string SnapshotPart = "bridghe/report.json";
+
     private static string Text(XElement p) => string.Concat(p.Descendants(W + "t").Select(t => t.Value));
     private static void EnsureType(XDocument types, string part, string type)
     {

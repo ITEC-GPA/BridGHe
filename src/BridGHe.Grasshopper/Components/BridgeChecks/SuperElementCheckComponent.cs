@@ -1,6 +1,5 @@
 using BridGHe.Common.Checks;
 using StressAnalysisResult = BridGHe.Common.Checks.BridgeStressResult;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.ComponentAttributes;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
@@ -116,8 +115,6 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 return;
             }
             var superElements = SuperElements(gpcBridge);
-            // Until R6.5 the test host compares the GPC readings with those of the merged FEM model on every solution (GpcDraftCheck).
-            if (model.Value != null) Common.Gpc.GpcDraftCheck.Attached("Super Element Check super elements", string.Join("\n", superElements), () => string.Join("\n", FemSuperElements(model.Value)));
             if (superElements.Length == 0)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "No Super-Element in the model");
@@ -138,7 +135,6 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     var records = gpcBridge.Records;
                     var combinations = gpcBridge.Combinations;
                     var casePhases = Common.Checks.BridgePhaseAssembler.CasePhases(records);
-                    if (model.Value != null) Common.Gpc.GpcDraftCheck.Attached("Super Element Check combinations", CombinationsText(combinations, casePhases), () => FemCombinationsText(model.Value));
                     var workflowStations = new double[beams.Count][];
                     (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage)[][] forcesForOutput = new
                         (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage)[beams.Count][];
@@ -162,10 +158,6 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     // of the bridge model.
                     var lengths = ids.Select(id => Length(gpcBridge.Beam(id))).ToArray();
                     var beamSuperElements = ids.Select(id => gpcBridge.Data.SuperElement(gpcBridge.Beam(id).Guid) ?? "").ToArray();
-                    // R6.5 P1 lane 3a: composite beams given by their GPC data alone have no FEM reading to compare with.
-                    if (beams.All(b => b?.Value != null))
-                        Common.Gpc.GpcDraftCheck.Attached("Super Element Check beams", BeamsText(ids, lengths, beamSuperElements), () => BeamsText(beams.Select(b => b.Value?.BeamId).ToArray(),
-                            beams.Select(b => b.Value?.Length ?? double.NaN).ToArray(), beams.Select(b => FemSuperElement(b.Value)).ToArray()));
 
                     for (int i = 0; i < beams.Count; i++)
                     {
@@ -320,8 +312,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         }
 
         /// <summary>R6.4 (3): the BridGHe ID of a composite beam: the original ID of the GPC beam it is linked to (Composite Beam from Super Element
-        /// Filter or Decompose Model, Bridge Segment Composite), else (a composite beam made without a GPC beam) that of its value, until R6.5.
-        /// R6.5 P1 lane 3a: without a FEM value, that of its GPC datum (<see cref="GH_CompositeBeam.BeamId"/>).</summary>
+        /// Filter or Decompose Model, Bridge Segment Composite), else (a composite beam made without a GPC beam) that of its GPC datum
+        /// (<see cref="GH_CompositeBeam.BeamId"/>).</summary>
         private static string BeamId(GH_CompositeBeam beam) => beam?.AnalysedGpc is GPC.Model.Elements.BeamElement b ? b.Source.OriginalId : beam?.BeamId;
 
         /// <summary>The length of a beam of the GPC bridge model: the distance of Rhino between its ends (N-mm), as the FEM length.</summary>
@@ -331,20 +323,6 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         /// <summary>R6.4 (3): the super elements of the GPC bridge model, those of its beams (bridge data), distinct, in ordinal order.</summary>
         private static string[] SuperElements(Common.Gpc.GpcBridge bridge) => bridge.Model.BeamElements.Values.Select(b => bridge.Data.SuperElement(b.Guid))
             .Where(s => !string.IsNullOrWhiteSpace(s)).Distinct(StringComparer.Ordinal).OrderBy(s => s, StringComparer.Ordinal).ToArray();
-
-        // Until R6.5: the FEM readings the test host compares the GPC ones with (the merged FEM model of Build BridGHe Model, the composite beams).
-        private static string[] FemSuperElements(ModelModel model) => Common.Helpers.ModelHelper.GetSuperElements(model).Select(a => a.Value)
-            .Where(s => !string.IsNullOrWhiteSpace(s)).Distinct(StringComparer.Ordinal).OrderBy(s => s, StringComparer.Ordinal).ToArray();
-        private static string FemSuperElement(CompositeBeamModel beam) => beam == null ? "" : string.Join(", ", beam.Attributes.OfType<SuperElementAttributeModel>()
-            .Select(a => a.Value).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().OrderBy(s => s, StringComparer.Ordinal));
-        private static string BeamsText(string[] ids, double[] lengths, string[] superElements) =>
-            string.Join("\n", ids.Select((id, i) => id + " " + BitConverter.DoubleToInt64Bits(lengths[i]).ToString("X16") + " " + superElements[i]));
-        private static string CombinationsText(IReadOnlyList<(string Name, IReadOnlyList<(string Case, double Factor)> Factors)> combinations, IReadOnlyDictionary<string, BridgeCasePhase> phases) =>
-            string.Join("\n", combinations.Select(c => c.Name + ": " + string.Join("; ", c.Factors.Select(f => f.Case + " " + BitConverter.DoubleToInt64Bits(f.Factor).ToString("X16") + " " +
-                (phases.TryGetValue(f.Case, out var p) ? p.ToString() : "-")))));
-        private static string FemCombinationsText(ModelModel model) =>
-            string.Join("\n", model.LoadCombinations.Select(c => c.Name + ": " + string.Join("; ", c.Values.Select(v => v.Key.Name + " " + BitConverter.DoubleToInt64Bits(v.Value).ToString("X16") + " " +
-                (v.Key.Stages?.Count == 1 ? v.Key.Stages[0].BridgePhase.ToString() : "-")))));
 
         /// <summary>Chain E (c): the composite section of the start (end) of the beam as the definition it carries; a definition that cannot be
         /// built is the error of the section of the super element, as before.</summary>

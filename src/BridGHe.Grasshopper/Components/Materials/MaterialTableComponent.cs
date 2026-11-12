@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
@@ -89,16 +87,8 @@ namespace BridGHe.Grasshopper.Components.Materials
             {
 
                 var recipe = Common.Gpc.Builders.GpcMaterialBuilders.Table(name, usePoisson, ni, g, alpha, rho, stresses.Select((stress, i) => (stress, strains[i])).ToList());
-                // R6.2 part C (§1bis, regola doppia): the GPC material by kind from the recipe of the component, attached to the FEM value made from
-                // the same recipe (transitional until R6.5).
-                // R6.5 P1 lane 2a: with the switch of the property producers the material by its GPC datum alone (the path of P2).
-                if (Helpers.GpcOnlyElements.PropertiesWithoutFem) DA.SetData(0, GH_Material.FromGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe), recipe.Kind));
-                else
-                {
-                    var goo = new GH_Material(Common.Gpc.Builders.GpcMaterialBuilders.Femm(recipe));
-                    goo.AttachGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe), recipe.Kind);
-                    DA.SetData(0, goo);
-                }
+                // P2K (P1): the material by its GPC datum alone, by kind from the recipe of the component.
+                DA.SetData(0, GH_Material.FromGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe), recipe.Kind));
             }
             else
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Stress list length != strain list length");

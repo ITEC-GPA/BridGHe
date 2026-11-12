@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
@@ -59,59 +58,9 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             endSection ??= startSection;
             DA.GetDataList(3, groups);
 
-            // R6.5 P1 lane 3a (coordinator, 8/11): an input given by its GPC datum alone (the beam, a composite property or a group without FEM
-            // value) gives the composite beam by its GPC datum alone (GpcOnlyModels); the FEM path is the same as before.
-            if (GpcOnlyModels.Any(gH_Beam, startSection, endSection, groups))
-            {
-                SolveGpc(DA, gH_Beam, startSection, endSection, groups);
-                return;
-            }
-
-            if (gH_Beam?.Value == null || startSection?.Value == null || endSection?.Value == null)
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "A beam and a valid start section are required.");
-                return;
-            }
-
-            BeamModel bb = gH_Beam.Value;
-            CompositeBeamModel compositeBeamModel = new CompositeBeamModel()
-            {
-                PointFrom = bb.PointFrom,
-                PointTo = bb.PointTo,
-                BeamId = bb.BeamId,
-                StartBeamProperty = startSection.Value,
-                EndBeamProperty = endSection.Value,
-            };
-
-            for (int i = 0; i < bb.Attributes.Count; i++)
-                compositeBeamModel.Attributes.Add(bb.Attributes[i]);
-            for (int i = 0; i < bb.Loads.Count; i++)
-                compositeBeamModel.Loads.Add(bb.Loads[i]);
-            for (int i = 0; i < bb.Groups.Count; i++)
-                compositeBeamModel.Groups.Add(bb.Groups[i]);
-            foreach (GH_Group group in groups)
-                if (group?.Value is not null && !compositeBeamModel.Groups.Contains(group.Value))
-                    compositeBeamModel.Groups.Add(group.Value);
-            for (int i = 0; i < bb.Results.Count; i++)
-                compositeBeamModel.Results.Add(bb.Results[i]);
-
-            // Chain E (c): the beam carries the definitions of its two composite properties (what Super Element Check reads). A property
-            // that is not a valid definition (e.g. a vertical offset) leaves them to the beam, which builds them when a check reads them and
-            // fails there, as the checks did before.
-            GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition s, e;
-            try { s = startSection.Definition; e = endSection.Definition; }
-            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or InvalidOperationException) { s = e = null; }
-            // R6.5 P1 lane 3a: the GPC datum beside the FEM value (the dual rule of R6.2): the draft of the beam, the two definitions, the groups;
-            // none when the draft of the beam is refused. The identity is derived from the input beam (no new GUID per solve).
-            GpcCompositeBeam datum = null;
-            try { if (gH_Beam.Gpc is { } draft) datum = new GpcCompositeBeam(draft, s, e, Groups(draft, groups)); }
-            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or InvalidOperationException) { }
-            var identity = Identity(gH_Beam, s, e, datum?.Groups ?? compositeBeamModel.Groups.Select(g => g.FullName).ToArray());
-            GH_CompositeBeam ms_beam = new GH_CompositeBeam(compositeBeamModel, identity) { AnalysedGpc = gH_Beam.AnalysedGpc, AnalysedGpcModel = gH_Beam.AnalysedGpcModel };
-            ms_beam.StartDefinition = s; ms_beam.EndDefinition = e;
-            if (datum != null) ms_beam.AttachGpc(datum);
-
-            DA.SetData(0, ms_beam);
+            // R6.5 P1 lane 3a (P2K: every input): the composite beam by its GPC datum alone (the draft of the beam, the composite properties,
+            // the groups); no FEM value is read or made.
+            SolveGpc(DA, gH_Beam, startSection, endSection, groups);
         }
 
         /// <summary>R6.5 P1 lane 3a: the composite beam by its GPC datum alone: the draft of the beam, the definitions of the two composite
@@ -136,7 +85,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 return;
             }
             var datum = new GpcCompositeBeam(draft, s, e, Groups(draft, groups));
-            var output = GH_CompositeBeam.FromGpc(datum, Identity(beam, datum.Start, datum.End, datum.Groups));
+            var output = GH_CompositeBeam.FromGpc(datum, Identity(draft, datum.Start, datum.End, datum.Groups));
             output.AnalysedGpc = beam.AnalysedGpc; output.AnalysedGpcModel = beam.AnalysedGpcModel;
             DA.SetData(0, output);
         }
@@ -151,11 +100,12 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             return names;
         }
 
-        /// <summary>R6.5 P1 lane 3a (coordinator decision 6, 8/11): the identity of the composite beam, derived from the GH GUID of its beam and
-        /// the canonical text of its sections (the SHA-256 of their GPC archive) and groups (<see cref="GpcOnlyElements.Identity"/>, the rule
-        /// of lane 1a), the same on both paths: no new GUID per solve.</summary>
-        private Guid Identity(GH_Beam beam, GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition start, GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition end,
-            IReadOnlyList<string> groups) => GpcOnlyElements.Identity(beam.Guid, ComponentGuid, 0, Digest(start), Digest(end), groups);
+        /// <summary>R6.5 P1 lane 3a (coordinator decision 6, 8/11): the identity of the composite beam, derived from its beam and the canonical
+        /// text of its sections (the SHA-256 of their GPC archive) and groups (<see cref="GpcOnlyElements.Identity"/>, the rule of lane 1a): no
+        /// new GUID per solve. P2K (P7): derived from the GUID of the draft of the beam, as <see cref="GpcOnlyElements.Beam"/> does, not from
+        /// the GH GUID of the beam (new at every solve for a beam given by its draft alone, <c>GH_Beam.FromGpc</c> without a GUID).</summary>
+        private Guid Identity(Common.Gpc.Legacy.LegacyBeamDraft beam, GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition start, GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition end,
+            IReadOnlyList<string> groups) => GpcOnlyElements.Identity(beam.Beam.Guid, ComponentGuid, 0, Digest(start), Digest(end), groups);
 
         private static string Digest(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition definition)
         {

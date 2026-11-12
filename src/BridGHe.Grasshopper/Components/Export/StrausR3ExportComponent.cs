@@ -77,7 +77,10 @@ namespace BridGHe.Grasshopper.Components.Export
                 var warnings = new List<string>();
                 try
                 {
-                    Common.Gpc.Legacy.FemmAnalysisSeam.Export(model.Value, model.GpcInput, outputPath, Settings.Instance.Tolerance, warnings);
+                    // P2K (P1): the model is written from its GPC input alone (no FEM value read); P8: a cable is refused before any Straus7 call.
+                    var input = model.GpcInput ?? throw GpcOnlyModels.Refused("the model has no GPC input.");
+                    Common.Straus.StrausAnalysis.RefuseCables(input.Model);
+                    Common.Gpc.Legacy.FemmAnalysisSeam.Export(null, input, outputPath, input.Tolerance, warnings);
                     Message = "Done";
                 }
                 catch (Exception ex)
@@ -90,8 +93,8 @@ namespace BridGHe.Grasshopper.Components.Export
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
 
                 _run = false;
-                // R6.5 P1 lane 3: on a GPC-only input a refusal gives an error and no output.
-                if (Message == "Error" && GpcOnlyModels.WithoutFem(model)) return;
+                // R6.5 P1 lane 3 (P2K: every input is GPC-only): a refusal gives an error and no output.
+                if (Message == "Error") return;
             }
 
             DA.SetData(0, Message);

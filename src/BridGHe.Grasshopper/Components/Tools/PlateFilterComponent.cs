@@ -1,5 +1,4 @@
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -86,15 +85,16 @@ namespace BridGHe.Grasshopper.Components.Tools
 
             List<GH_Plate> filtered = new List<GH_Plate>();
             List<GH_Plate> others = new List<GH_Plate>();
-            double tol = Helpers.ModelHelper.GetTolerance();
+            // P2K (P1): the tolerance of the former ModelHelper.GetTolerance (the same setting).
+            double tol = Settings.Instance.Tolerance;
 
             // R6.2 lane A: the filter decides on the GPC drafts (first Element ID, groups by full name, property name, corners in the definition
-            // units); the FEM value is the bridge for a refused draft until R6.5, and under the Smoke host the two decisions must agree.
+            // units). P2K (P1): the GPC path only (the former decision of GpcBuilderAttach.Decide without a FEM value: a refused draft is an error).
             var groupNames = groups.Select(g => string.Join("\\", GpcBuilderAttach.GroupChain(g))).ToList();
             for (int i = 0; i < plates.Count; i++)
             {
                 GH_Plate p = plates[i];
-                bool add = GpcBuilderAttach.Decide(() => Matches(p.Gpc, ids, groupNames, props, positions, tol), p.Value == null || GpcOnlyProperties.WithoutFem(groups) ? null : () => FemMatches(p, ids, groups, props, positions, tol), "Plate Filter"); // R6.5 P1 lane 1a: a plate without FEM value on its draft alone
+                bool add = Matches(p.Gpc, ids, groupNames, props, positions, tol);
                 if (add)
                     filtered.Add(p);
                 else
@@ -117,65 +117,6 @@ namespace BridGHe.Grasshopper.Components.Tools
             return positions.Any(point => d.Corners.Any(c => new Point3d(c.X, c.Y, c.Z).DistanceTo(point) < tol));
         }
 
-        /// <summary>The selection on the FEM value (until R6.5).</summary>
-        private static bool FemMatches(GH_Plate p, List<string> ids, List<GH_Group> groups, List<string> props, List<Point3d> positions, double tol)
-        {
-            {
-                bool add = false;
-                for (int j = 0; j < ids.Count; j++)
-                {
-                    string id = ids[j];
-                    if (p.Value.HasId(id))
-                    {
-                        add = true;
-                        break;
-                    }
-                }
-                if (!add)
-                {
-                    for (int j = 0; j < groups.Count; j++)
-                    {
-                        GH_Group g = groups[j];
-                        if (p.Value.HasGroup(g.Value))
-                        {
-                            add = true;
-                            break;
-                        }
-                    }
-                    if (!add)
-                    {
-                        for (int j = 0; j < props.Count; j++)
-                        {
-                            string bp = props[j];
-                            if (bp == p.Value.PlateProperty.Name)
-                            {
-                                add = true;
-                                break;
-                            }
-                        }
-                        if (!add)
-                        {
-                            for (int j = 0; j < positions.Count; j++)
-                            {
-                                Point3d point = positions[j];
-                                for (int k = 0; k < p.Value.Points.Count; k++)
-                                {
-                                    Point3d plateP = p.Value.Points[k];
-                                    if (plateP.DistanceTo(point) < tol)
-                                    {
-                                        add = true;
-                                        break;
-                                    }
-                                }
-                                if (add) break;
-                            }
-                        }
-                    }
-                }
-                return add;
-            }
-        }
-
         public override GH_Exposure Exposure => GH_Exposure.secondary;
 
         /// <summary>
@@ -187,5 +128,18 @@ namespace BridGHe.Grasshopper.Components.Tools
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
         public override Guid ComponentGuid => new Guid("65613b73-39f2-4a8f-8212-96c44a775516");
+
+        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
+        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
+        private static class ModelModel
+        {
+            internal enum ModelUnits
+            {
+                [System.ComponentModel.Description("kNm (m, kN, T, kPa, s, kJ, C)")] Knm,
+                [System.ComponentModel.Description("SI (m, N, kg, Pa, s, J, C)")] SI,
+                [System.ComponentModel.Description("Nmm (mm, N, T, MPa, s, mJ, C)")] Nmm,
+                [System.ComponentModel.Description("PSI (in, lbf, lb, psi, s, btu, F)")] IPS
+            }
+        }
     }
 }

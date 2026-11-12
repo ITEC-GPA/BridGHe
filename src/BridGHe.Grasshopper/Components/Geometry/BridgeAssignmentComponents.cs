@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Geometry;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.Components.Utilities;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
@@ -37,31 +36,12 @@ public sealed class BridgeSectionScheduleComponent : BridgeUtilityComponent
         if (!da.GetData(0, ref property) || !da.GetData(1, ref start) || !da.GetData(2, ref end)) return;
         da.GetData(3, ref family); da.GetData(4, ref group); da.GetData(5, ref segment); da.GetData(6, ref sf); da.GetData(7, ref se);
         if (sf.Z != 0 || se.Z != 0) throw new ArgumentException("Section scales use X/Y only; Z must be zero.");
-        // R6.5 P1 lane 2b: a property given by its GPC datum alone gives the rule with the datum alone (rule of passo 75); also with the switch
-        // of the property producers (the path of P2).
-        if (GpcOnlyElements.PropertiesWithoutFem || GpcOnlyProperties.WithoutFem(property))
-        {
-            var datum = property?.IsValid == true ? GpcOnlyProperties.Datum(this, () => property.Gpc) : null;
-            if (property?.IsValid == true && datum == null) return;
-            var gpcRule = new BridgeSectionRule { GpcProperty = datum, Start = start, End = end, Family = family, Group = group,
-                Segment = segment, ScaleFrom = new(sf.X, sf.Y), ScaleTo = new(se.X, se.Y) };
-            gpcRule.Validate(); da.SetData(0, new BridgeDesignGoo(gpcRule));
-            return;
-        }
-        // R6.2 (lane B): the GPC datum of the property goes with it to Bridge Member Assignment.
-        TryAttach(property);
-        var rule = new BridgeSectionRule { Property = property.Value, Start = start, End = end, Family = family, Group = group,
+        // R6.5 P1 lane 2b / P2K (P1): the rule has the GPC datum of the property alone (rule of passo 75).
+        var datum = property?.IsValid == true ? GpcOnlyProperties.Datum(this, () => property.Gpc) : null;
+        if (property?.IsValid == true && datum == null) return;
+        var gpcRule = new BridgeSectionRule { GpcProperty = datum, Start = start, End = end, Family = family, Group = group,
             Segment = segment, ScaleFrom = new(sf.X, sf.Y), ScaleTo = new(se.X, se.Y) };
-        rule.Validate(); da.SetData(0, new BridgeDesignGoo(rule));
-    }
-
-    /// <summary>R6.2 (lane B): the GPC datum of a GH property for the bridge generators (<see cref="BridgeGpcProperties"/>); a datum the reader
-    /// refuses is not attached (the generators convert the FEM property, refused the same way).</summary>
-    internal static void TryAttach(GH_BeamProperty property)
-    {
-        if (property?.Value == null) return;
-        try { BridgeGpcProperties.Attach(property.Value, property.Gpc); }
-        catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException) { }
+        gpcRule.Validate(); da.SetData(0, new BridgeDesignGoo(gpcRule));
     }
 }
 
@@ -93,36 +73,22 @@ public class BridgeMemberAssignmentComponent : BridgeUtilityComponent
         if (properties.Count > 0 && (families.Count != properties.Count || families.Distinct().Count() != families.Count))
             throw new ArgumentException("Provide exactly one distinct family code per default property.");
         if (rules.Any(r => r?.Value is not BridgeSectionRule)) throw new ArgumentException("Schedule accepts Bridge Section Schedule entries.");
-        // R6.5 P1 lane 2a: a default property given by its GPC datum alone is assigned by its datum (rule of passo 75): the beams then are
-        // given by their plans alone.
-        var defaults = properties.Select((p, i) => (families[i], p)).Where(p => !GpcOnlyProperties.WithoutFem(p.p)).ToDictionary(p => p.Item1, p => p.p.Value);
-        var gpcDefaults = properties.Select((p, i) => (families[i], p)).Where(p => GpcOnlyProperties.WithoutFem(p.p)).ToDictionary(p => p.Item1, p => p.p.Gpc);
-        foreach (var p in properties) BridgeSectionScheduleComponent.TryAttach(p);
-        Publish(da, geometry.Value, defaults, rules.Select(r => (BridgeSectionRule)r.Value).ToArray(), gpcDefaults);
+        // R6.5 P1 lane 2a / P2K (P1): every default property is assigned by its GPC datum (rule of passo 75): the beams are given by their plans alone.
+        var gpcDefaults = properties.Select((p, i) => (families[i], p)).ToDictionary(p => p.Item1, p => p.p?.Gpc);
+        Publish(da, geometry.Value, rules.Select(r => (BridgeSectionRule)r.Value).ToArray(), gpcDefaults);
     }
-    protected void Publish(IGH_DataAccess da, SimpleBridgeGeometry geometry, Dictionary<int,BeamPropertyModel> defaults, BridgeSectionRule[] rules,
-        Dictionary<int, Common.Gpc.Legacy.LegacyBeamProperty> gpcDefaults = null)
+    /// <summary>P2K (P1): the assignment on GPC only (no FEM default properties: the <c>defaults</c> of the library are null).</summary>
+    protected void Publish(IGH_DataAccess da, SimpleBridgeGeometry geometry, BridgeSectionRule[] rules, Dictionary<int, Common.Gpc.Legacy.LegacyBeamProperty> gpcDefaults)
     {
-        var result = BridgeMemberAssignment.Assign(geometry, defaults, rules, gpcDefaults);
+        var result = BridgeMemberAssignment.Assign(geometry, null, rules, gpcDefaults);
         if (result.Unassigned.Length > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"{result.Unassigned.Length} members have no property and were not created. Inspect Unassigned.");
         // R6.5 P1 lane 1b: the beams by their GPC drafts alone (identity by content of the plan), the physical IDs from the plans.
-        // R6.5 P1 lane 2a: the same when a property is given by its GPC datum alone (an assignment on GPC only has no FEM beams).
-        if (GpcOnlyElements.GeneratorsWithoutFem || gpcDefaults is { Count: > 0 } || rules.Any(r => r.Property == null && r.GpcProperty != null))
-        {
-            // R65-C2-08 (review of lane 2, 8/11): every draft first; a refused plan gives the error and no outputs (rule of passo 75; before, the
-            // beams without the refused plans beside the IDs of every plan, two lists of other lengths).
-            var beams = GpcOnly(this, 0, result.Plans);
-            if (beams == null) return;
-            da.SetDataList(0, beams);
-            da.SetDataList(1, result.Plans.Select(p => p.PhysicalId));
-            da.SetDataList(2, result.Unassigned); da.SetDataList(3, result.Diagnostics);
-            return;
-        }
-        // R6.2 (lane B): every beam with its GPC draft built on GPC from its plan (identity of the conversion of the FEM output until R6.5).
-        var outputs = result.Beams.Select(b => new GH_Beam(b)).ToArray();
-        for (int i = 0; i < outputs.Length; i++) { var plan = result.Plans[i]; GpcBeamInputs.Attach(outputs[i], id => Common.Gpc.Builders.GpcBridgeGeometryBuilders.Assigned(plan, id)); }
-        da.SetDataList(0, outputs);
-        da.SetDataList(1, result.Beams.Select(b => b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value.PhysicalId));
+        // R65-C2-08 (review of lane 2, 8/11): every draft first; a refused plan gives the error and no outputs (rule of passo 75; before, the
+        // beams without the refused plans beside the IDs of every plan, two lists of other lengths).
+        var beams = GpcOnly(this, 0, result.Plans);
+        if (beams == null) return;
+        da.SetDataList(0, beams);
+        da.SetDataList(1, result.Plans.Select(p => p.PhysicalId));
         da.SetDataList(2, result.Unassigned); da.SetDataList(3, result.Diagnostics);
     }
 

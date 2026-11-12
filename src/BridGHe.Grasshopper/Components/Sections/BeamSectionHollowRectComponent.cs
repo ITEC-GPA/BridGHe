@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -51,26 +50,8 @@ namespace BridGHe.Grasshopper.Components.Sections
             if (!DA.GetData(3, ref t2))
                 return;
 
-            SectionModel sectionModel = new SectionModel()
-            {
-                SectionType = SectionModel.SectionTypes.HollowRectangle,
-                D = d,
-                B = b,
-                T1 = t1,
-                T2 = t2
-            };
-            sectionModel.CalculateSection();
-
-            GH_BeamSection section = new GH_BeamSection(sectionModel);
-            // R6.2 part C (§1bis, regola doppia): the recipe built on GPC from the inputs, attached to the FEM value (transitional until R6.5).
-            // R6.5 P1 lane 2a: with the switch of the property producers the section by its recipe alone (the path of P2; a refused recipe gives
-            // an error and no section).
-            if (Helpers.GpcOnlyElements.PropertiesWithoutFem) Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.Section(this, () => Common.Gpc.Builders.GpcSectionBuilders.Standard(Common.Gpc.BridgeSectionKind.HollowRectangle, d, b, t1: t1, t2: t2)));
-            else
-            {
-                Helpers.GpcBuilderAttach.Section(section, () => Common.Gpc.Builders.GpcSectionBuilders.Standard(Common.Gpc.BridgeSectionKind.HollowRectangle, d, b, t1: t1, t2: t2));
-                DA.SetData(0, section);
-            }
+            // P2K (P1): the section by its recipe alone (a refused recipe gives an error and no section).
+            Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.Section(this, () => Common.Gpc.Builders.GpcSectionBuilders.Standard(Common.Gpc.BridgeSectionKind.HollowRectangle, d, b, t1: t1, t2: t2)));
         }
 
         /// <summary>

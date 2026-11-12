@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BridGHe.Common.Helpers;
 using BridGHe.Grasshopper.Components.Utilities;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
@@ -33,20 +32,10 @@ public sealed class BeamPropertyOverrideComponent : BridgeUtilityComponent
         if (!da.GetDataList(0, beams)) return;
         da.GetDataList(1, originals); da.GetDataList(2, replacements);
         bool[] flags; string[] unused;
-        // R6.5 P1 lane 2b: a beam given by its draft alone or a property given by its GPC datum alone gives the beams by their drafts alone
-        // (rule of passo 75); also with the switch of the property producers (the path of P2).
-        if (GpcOnlyElements.PropertiesWithoutFem || beams.Any(b => b?.Value == null) || GpcOnlyProperties.WithoutFem(originals) || GpcOnlyProperties.WithoutFem(replacements))
-        {
-            var gpc = GpcOnly(beams, originals, replacements);
-            if (gpc.Beams == null) return;
-            da.SetDataList(0, gpc.Beams); flags = gpc.Replaced; unused = gpc.Unused;
-        }
-        else
-        {
-            var result = BeamPropertyReplacement.Apply(beams.Select(b => b?.Value).ToArray(), originals.Select(p => p?.Value).ToArray(), replacements.Select(p => p?.Value).ToArray());
-            da.SetDataList(0, result.Beams.Select((b, i) => new GH_Beam(b, beams[i].Guid)));
-            flags = result.Replaced; unused = result.UnusedOriginalNames;
-        }
+        // R6.5 P1 lane 2b: the beams by their drafts alone (rule of passo 75). P2K (P1): the GPC path only.
+        var gpc = GpcOnly(beams, originals, replacements);
+        if (gpc.Beams == null) return;
+        da.SetDataList(0, gpc.Beams); flags = gpc.Replaced; unused = gpc.Unused;
         da.SetDataList(1, flags);
         int count = flags.Count(v => v);
         var info = new List<string> { $"{count}/{beams.Count} beams matched. Names are exact and case-sensitive. Unmatched properties are retained.",
@@ -59,7 +48,7 @@ public sealed class BeamPropertyOverrideComponent : BridgeUtilityComponent
         da.SetDataList(2, info); Message = $"{count}/{beams.Count} replaced";
     }
 
-    /// <summary>R6.5 P1 lane 2b: <see cref="BeamPropertyReplacement.Apply"/> on the GPC data (the same checks, order and messages): the pairs by
+    /// <summary>R6.5 P1 lane 2b: the former FEM <c>BeamPropertyReplacement.Apply</c> on the GPC data (the same checks, order and messages): the pairs by
     /// the exact names of the GPC properties, two replacements with one name the same only when their GPC data are (the canonical text of the
     /// property: signature, formulation, angle and section recipe; L2C, limit (c) of passo 77: the recipe with the fillet radius, the section
     /// moduli, the shapes and the mirror, and the material kind recorded with the property, so that two properties that differ in any datum
@@ -76,7 +65,7 @@ public sealed class BeamPropertyOverrideComponent : BridgeUtilityComponent
         if (drafts.Any(d => d?.Beam?.BeamProperty == null)) throw new ArgumentException("Supply valid beams with an assigned Beam Property.");
         if (originals.Count != replacements.Count)
             throw new ArgumentException("Original Properties and Replacement Properties must have the same number of items; no list broadcasting.");
-        static string Name(GH_BeamProperty p) => p.Value != null ? p.Value.Name : p.Gpc.Property.Name;
+        static string Name(GH_BeamProperty p) => p.Gpc.Property.Name; // P2K (P1): the name of the GPC property
         var pairs = new Dictionary<string, Common.Gpc.Legacy.LegacyBeamProperty>(StringComparer.Ordinal);
         var definitions = new Dictionary<string, (Common.Gpc.Legacy.LegacyBeamProperty Property, string Data)>(StringComparer.Ordinal);
         for (int i = 0; i < originals.Count; i++)

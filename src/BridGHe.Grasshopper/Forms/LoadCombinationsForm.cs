@@ -3,35 +3,30 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using Grasshopper;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 
 namespace BridGHe.Grasshopper.Forms
 {
     public partial class LoadCombinationsForm : Form
     {
-        protected LoadCaseModel[] _loadCases;
         protected List<GH_LoadCombination> _values;
-        // R65-C2-05: the case records and whether the combinations are made by their GPC datum alone (LoadCombinationRows).
+        // R65-C2-05: the case records (LoadCombinationRows). P2K (P1): the combinations are made by their GPC datum alone.
         private readonly IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> _caseRecords;
-        private readonly bool _gpcOnly;
 
         public List<GH_LoadCombination> Values => _values;
 
         /// <summary>
         /// Public contructor
         /// </summary>
-        /// <param name="loadCases">The load cases names array to use for creating the columns of the DataGrid</param>
         /// <param name="values">The previous values to restore as rows of the DataGrid</param>
-        /// <param name="caseRecords">R65-C2-05: the case records of the parameter (the columns when the combinations are given by their GPC datum alone).</param>
-        public LoadCombinationsForm(LoadCaseModel[] loadCases, List<GH_LoadCombination> values = null, IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords = null)
+        /// <param name="caseRecords">R65-C2-05: the case records of the parameter (the columns of the DataGrid). P2K (P1): the FEM cases
+        /// parameter removed.</param>
+        public LoadCombinationsForm(List<GH_LoadCombination> values = null, IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords = null)
         {
             Owner = Instances.DocumentEditor;
             InitializeComponent();
-            _loadCases = loadCases;
             _caseRecords = caseRecords;
-            _gpcOnly = LoadCombinationRows.GpcOnly(values, loadCases, caseRecords);
-            string[] columns = LoadCombinationRows.Columns(_gpcOnly, loadCases, caseRecords);
+            string[] columns = LoadCombinationRows.CaseColumns(caseRecords);
 
             dataGridView.ColumnCount = columns.Length + 1;
             dataGridView.Columns[0].Name = "Combo Name";
@@ -58,13 +53,12 @@ namespace BridGHe.Grasshopper.Forms
 
         private void OkButton_Click(object sender, EventArgs e)
         {
-            // R65-C2-05: the combinations of the rows (LoadCombinationRows: the same checks and messages; by their GPC datum alone when the
-            // inputs are).
+            // R65-C2-05: the combinations of the rows (LoadCombinationRows: the same checks and messages; by their GPC datum alone).
             var rows = new List<(string, IReadOnlyList<object>)>();
             for (int i = 0; i < dataGridView.RowCount - 1; i++)
                 rows.Add((dataGridView.Rows[i].Cells[0].Value.ToString(), Enumerable.Range(1, dataGridView.ColumnCount - 1).Select(j => dataGridView.Rows[i].Cells[j].Value).ToArray()));
             var columns = Enumerable.Range(1, dataGridView.ColumnCount - 1).Select(j => dataGridView.Columns[j].Name).ToArray();
-            var (values, error) = LoadCombinationRows.Combinations(rows, columns, _loadCases, _caseRecords, _gpcOnly);
+            var (values, error) = LoadCombinationRows.Make(rows, columns, _caseRecords);
             if (error != null)
             {
                 MessageBox.Show(error, "Error", MessageBoxButtons.OK, MessageBoxIcon.Hand);

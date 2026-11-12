@@ -117,14 +117,16 @@ public static class BridgeDeckMesh
             if (cross.Length <= 1e-8) throw new ArgumentException("Degenerate deck face.");
             if (indices.Length == 3) mesh.Faces.AddFace(indices[0], indices[1], indices[2]);
             else mesh.Faces.AddFace(indices[0], indices[1], indices[2], indices[3]);
-            var p = new PlateModel(points, pp, new GroupModel($"Pour{pour}", new GroupModel("Deck"))) { PlateId = $"Deck{plates.Count + 1}" };
+            // P2K (P1): the plate ID by its order; the FEM plate only on the transitional FEM path (property given), none on the GPC path.
+            string plateId = $"Deck{plans.Count + 1}";
+            var p = gpcOnly ? null : new PlateModel(points, pp, new GroupModel($"Pour{pour}", new GroupModel("Deck"))) { PlateId = plateId };
             // R6.2 lane A: the same plate on GPC (the reader of the former plate: corners, property, the group Deck\Pour<n> with its parent, plate ID).
             // R6.5 P1 lane 2a: without a FEM property the draft takes a provisional identity of its plate ID here (the component gives it the
             // identity by content of lane 1b).
             drafts?.Add(BridGHe.Common.Gpc.Builders.GpcPlateBuilders.Create(points.Select(q => (q.X, q.Y, q.Z)).ToArray(), gpcProperty,
-                new[] { new[] { "Deck", $"Pour{pour}" } }, 0, 0, p.PlateId, gpcOnly ? BridGHe.Common.Gpc.GpcIdentity.Derive(BridGHe.Common.Gpc.GpcIdentity.NameSpace, "BridgeDeckMesh:" + p.PlateId) : BridGHe.Common.Gpc.GpcBeamDrafts.Identity(p)));
-            plans.Add((points, new[] { "Deck", $"Pour{pour}" }, p.PlateId));
-            plates.Add(p);
+                new[] { new[] { "Deck", $"Pour{pour}" } }, 0, 0, plateId, gpcOnly ? BridGHe.Common.Gpc.GpcIdentity.Derive(BridGHe.Common.Gpc.GpcIdentity.NameSpace, "BridgeDeckMesh:" + plateId) : BridGHe.Common.Gpc.GpcBeamDrafts.Identity(p)));
+            plans.Add((points, new[] { "Deck", $"Pour{pour}" }, plateId));
+            if (p != null) plates.Add(p);
         }
         for (int row = 0; row < rowStations.Count - 1; row++)
         {
@@ -140,7 +142,7 @@ public static class BridgeDeckMesh
         mesh.Normals.ComputeNormals();
         return new(editor.Geometry, mesh, plates.ToArray(), connectors.ToArray(), rowStations.ToArray(), new[]
         {
-            $"{plates.Count} plates at slab mid-surface, {pourBoundaries.Count + 1} pour groups, {connectors.Count} beam/deck connection lines.",
+            $"{plans.Count} plates at slab mid-surface, {pourBoundaries.Count + 1} pour groups, {connectors.Count} beam/deck connection lines.",
             "Connection lines are geometry only: feed them to Bridge Connections and deliberately choose rigid or deformable mechanics.",
             loadPatch ? "Load-patch deck property: no structural slab stiffness is intended." :
                 "Structural deck plates: assign steel-only beam properties to avoid counting concrete stiffness twice.",
