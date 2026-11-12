@@ -36,6 +36,146 @@ internal static class BridgeSpineExamples
             throw new ArgumentException("Use the same deck/slab and effective width equal to one third of the deck for each girder.");
     }
 
+#if GPC_PILOT
+    // -----------------------------------------------------------------------------------------------------------------------------------------
+    // R6.6 lane R4c-grafi: --bridge-spine without any FEM model. The same four contribution models of the three girders as recipes (R4cModel),
+    // built as GPC data by the product builders, analysed by the GPC-only analysis and read with the GPC result readers. Every check is kept with
+    // its expected value and tolerance: groups and inertias, equilibrium, results at every beam, symmetry of the side girders, mesh convergence,
+    // the section stresses of the spine against the independent integrals, and the refusal of the out-of-domain actions of the curved spine.
+
+    /// <summary>The recipe of the former <c>Create</c>: three girders (the deeper central spine G2 between two side girders G1 and G3) along the
+    /// (curved) axis, bearings as the suite, the tributary nodal load of each girder strip, the shrinkage of each girder in phase 3, the transverse
+    /// members of the central section.</summary>
+    internal static R4cModel CreateGpc(Settings setup,int phase)
+    {
+        Validate(setup);if(phase<0||phase>3)throw new ArgumentOutOfRangeException(nameof(phase));
+        var d=setup.Definition;var stations=Stations(d);int n=d.Panels;
+        var model=new R4cModel(d.Id+":"+d.PanelsPerSpan+":"+phase,d.Title+" / "+Cases[phase]);model.AddCase(Cases[phase]);
+        double ad=new GPC.Model.Sections.SectionH(800,12,300,20,300,20,"Diaframma").Area;
+        for(int j=0;j<3;j++)
+        {
+            var p=j==1?setup.Central:setup.Lateral;
+            double y=(j-1)*p.Width/3;
+            double q=phase==0?GpcH(p).Area*78.5e-6+p.GirderSlabWidth*p.SlabThickness*25e-6
+                +ad*(2*p.Width/3)*(6*d.Spans.Length+1)*78.5e-6/(3*d.Length)
+                :phase==1?p.PermanentPressure*p.GirderSlabWidth:phase==2?p.TrafficPressure*p.GirderSlabWidth:0;
+            for(int i=0;i<=n;i++)
+            {
+                var position=Position(d,stations[i],y);
+                int k=model.AddNode(position,j==0&&i==0,j==0&&(i==0||i==n),i%d.PanelsPerSpan==0,false,false,false);
+                double tributary=0;
+                if(i>0)tributary+=position.DistanceTo(Position(d,stations[i-1],y))/2;
+                if(i<n)tributary+=position.DistanceTo(Position(d,stations[i+1],y))/2;
+                model.Nodes[k].Loads.Add((Cases[phase],new(0,0,-q*tributary)));
+            }
+        }
+        for(int j=0;j<3;j++)
+        {
+            var p=j==1?setup.Central:setup.Lateral;
+            var property=SuitePropertyOf(p,phase==3?1:phase,phase==3?1e-5:0,(j==1?"Spina centrale":"Travi laterali")+" / "+Cases[phase]);
+            var shrinkage=ShrinkageGpc(p);
+            for(int i=0;i<n;i++)
+            {
+                var beam=model.AddBeam(j*(n+1)+i,j*(n+1)+i+1,property,true,(j*n+i+1).ToString(CultureInfo.InvariantCulture),"G"+(j+1));
+                if(phase==3)beam.Shrinkage=(Cases[phase],-shrinkage.Epsilon,0,shrinkage.Gradient/1e-5);
+            }
+        }
+        for(int i=0;i<=n;i++)
+        {
+            double strip=((i>0?stations[i]-stations[i-1]:0)+(i<n?stations[i+1]-stations[i]:0))/2;
+            var property=BridgeSuiteExample.CrossPropertyGpc(setup.Central,strip,i%(d.PanelsPerSpan/6)==0,phase);
+            if(property==null)continue;
+            for(int j=0;j<2;j++)model.AddBeam(j*(n+1)+i,(j+1)*(n+1)+i,property,false,(3*n+2*i+j+1).ToString(CultureInfo.InvariantCulture));
+        }
+        return model;
+    }
+
+    private static List<SectionSample> CheckSections(Settings setup,R4cModel.Results[] results,NativeExamples.Recorder checks)
+    {
+        var d=setup.Definition;var p=setup.Central;var checker=CheckerGpc(p);var samples=new List<SectionSample>();
+        foreach(int index in new[]{d.PanelsPerSpan/2,Math.Min(d.PanelsPerSpan,d.Panels-1)})
+        {
+            int beam=d.Panels+index;
+            var forces=Enumerable.Range(0,4).Select(phase=>results[phase].BeamRows(beam).OrderBy(f=>f.Station).First()).ToArray();
+            var combined=Combined(forces[1],forces[3]);
+            try
+            {
+                checker.GetLinearAnalysisResultByStages(out var stress,out _,p.PhiLong,0,new[]{BridgeForceConvention.FromStraus(R4cModel.Sample(forces[0]),Cases[0],Reference)},
+                    new[]{BridgeForceConvention.FromStraus(combined,Cases[1],Reference)},new[]{BridgeForceConvention.FromStraus(R4cModel.Sample(forces[2]),Cases[2],Reference)},true,new[]{p.ShrinkageLong},new[]{0.0},false);
+                var actual=StressValues(stress[0]);var expected=ExpectedStressGpc(p,forces);
+                checks.Near("Spina: quattro contributi",stress[0].Analysis.Stages.Count,4,0,0);
+                for(int i=0;i<4;i++)checks.Near($"Spina beam {beam+1}: sigma {i} [MPa]",actual[i],expected[i],1e-6,1e-6);
+                samples.Add(new(beam+1,0,actual,true,"Sezione H centrale: tensioni elastiche lorde; interazione completa."));
+            }
+            catch(NotSupportedException ex)
+            {
+                checks.Near("Spina curva: azioni fuori campo segnalate",d.Radius>0?1:0,1,0,0);
+                samples.Add(new(beam+1,0,Array.Empty<double>(),false,ex.Message));
+            }
+        }
+        return samples;
+    }
+
+    internal static int Run(bool grasshopper,string selected)
+    {
+        CultureInfo.CurrentCulture=CultureInfo.InvariantCulture;
+        var definitions=Definitions.Where(d=>selected=="all"||d.Id.StartsWith(selected,StringComparison.Ordinal)).ToArray();
+        if(definitions.Length==0)throw new ArgumentException("Unknown spine example: "+selected);
+        int total=0,failures=0;
+        foreach(var definition in definitions)
+        {
+            string folder=Path.Combine(Root,definition.Id);Directory.CreateDirectory(folder);
+            string parameters=Path.Combine(folder,"parameters.json");
+            var setup=File.Exists(parameters)?JsonSerializer.Deserialize<Settings>(File.ReadAllText(parameters)):Default(definition);
+            Validate(setup);if(setup.Definition.Id!=definition.Id)throw new ArgumentException("Keep example Id unchanged.");
+            File.WriteAllText(parameters,JsonSerializer.Serialize(setup,Json));
+            var d=setup.Definition;var checks=new NativeExamples.Recorder();
+            var inputs=Enumerable.Range(0,4).Select(phase=>CreateGpc(setup,phase)).ToArray();var results=new R4cModel.Results[4];var mesh=new List<object>();
+            checks.Near("Tre gruppi longitudinali",inputs[0].Beams.Where(b=>b.SuperElement!=null).Select(b=>b.SuperElement).Distinct().Count(),3,0,0);
+            checks.Near("Spina con inerzia maggiore delle laterali",GpcH(setup.Central).Jxx>GpcH(setup.Lateral).Jxx?1:0,1,0,0);
+            for(int phase=0;phase<4;phase++)
+            {
+                Console.WriteLine("SOLVE "+d.Id+" "+Cases[phase]);results[phase]=Solve(inputs[phase],d.Id+"/"+Cases[phase]);
+                Equilibrium(inputs[phase],results[phase],Cases[phase],checks);
+                checks.Near(Cases[phase]+" risultati per ogni beam",Enumerable.Range(0,inputs[phase].Beams.Count).Count(b=>results[phase].BeamRows(b).Length==5),inputs[phase].Beams.Count,0,0);
+                if(d.Radius==0)
+                {
+                    double error=Enumerable.Range(0,d.Panels+1).Max(i=>Math.Abs(results[phase].Displacement(i,Cases[phase])[2]-results[phase].Displacement(2*(d.Panels+1)+i,Cases[phase])[2]));
+                    checks.Near(Cases[phase]+" simmetria Uz laterali [mm]",error,0,0,1e-6);
+                }
+                var refined=d with { PanelsPerSpan=2*d.PanelsPerSpan };
+                var refinedResult=Solve(CreateGpc(setup with { Definition=refined },phase),d.Id+"/mesh-"+refined.PanelsPerSpan+"-"+Cases[phase]);
+                double difference=0,scale=0;
+                for(int j=0;j<3;j++)for(int i=0;i<=d.Panels;i++)
+                {
+                    double u=results[phase].Displacement(j*(d.Panels+1)+i,Cases[phase])[2];
+                    double v=refinedResult.Displacement(j*(refined.Panels+1)+2*i,Cases[phase])[2];
+                    difference=Math.Max(difference,Math.Abs(u-v));scale=Math.Max(scale,Math.Abs(v));
+                }
+                checks.Near(Cases[phase]+" convergenza Uz [mm]",difference,0,0,Math.Max(1e-6,.02*scale));
+                mesh.Add(new { Phase=Cases[phase],Base=d.PanelsPerSpan,Refined=refined.PanelsPerSpan,MaxUzDifference=difference,ReferencePeakUz=scale,RelativeError=difference/Math.Max(scale,1e-12) });
+            }
+            var sections=CheckSections(setup,results,checks);WriteResults(folder,d,results);
+            if(grasshopper)GrasshopperBridgeSuite.Run(d,inputs,results,sections,checks,setup.Central,new[]{"G2"});
+            object Result(R4cModel.Results m,int phase)
+            {
+                var rows=Enumerable.Range(0,3*d.Panels).SelectMany(b=>m.BeamRows(b)).ToArray();var nodes=Enumerable.Range(0,m.Recipe.Nodes.Count).ToArray();
+                return new { Case=Cases[phase],MinUz=nodes.Min(k=>m.Displacement(k,Cases[phase])[2]),MaxUz=nodes.Max(k=>m.Displacement(k,Cases[phase])[2]),
+                    MinMy=rows.Min(f=>f.Bending2),MaxMy=rows.Max(f=>f.Bending2),MaxAbsT=rows.Max(f=>Math.Abs(f.Torque)) };
+            }
+            var report=new { Date=DateTimeOffset.Now,Definition=d,Section=setup.Central,LateralSection=setup.Lateral,Girders=3,Ec,
+                Shrinkage=ShrinkageGpc(setup.Central),LateralShrinkage=ShrinkageGpc(setup.Lateral),
+                Method="Three incremental linear stiffness states plus differential shrinkage. Primary section stress plus native secondary resultants, once each.",
+                Scope="Equivalent planar grillage, gross uncracked sections, full interaction; explicit tributary effective width. Central H section only. N-Mx-Vy checks exclude T, M2 and V1 with an explicit assumption; all FEM resultants retained. No complete bridge design verification.",
+                Results=results.Select((m,phase)=>Result(m,phase)),Mesh=mesh,Sections=sections,Checks=checks.Measurements };
+            File.WriteAllText(Path.Combine(folder,"validation.json"),JsonSerializer.Serialize(report,Json));
+            int failed=checks.Measurements.Count(c=>!c.Passed);total+=checks.Measurements.Count;failures+=failed;
+            Console.WriteLine($"{d.Id}: {checks.Measurements.Count-failed} passed, {failed} failed");
+        }
+        Console.WriteLine($"BRIDGE SPINE: {total-failures} passed, {failures} failed (GPC data alone)");return failures==0?0:1;
+    }
+#endif
+    // The former FEM models (kept for the transitional comparison r4c-inputs only: R4cGrafiInputs; P2 removes them with the FEM types).
     internal static ModelModel Create(Settings setup,int phase)
     {
         Validate(setup);if(phase<0||phase>3)throw new ArgumentOutOfRangeException(nameof(phase));
@@ -87,6 +227,7 @@ internal static class BridgeSpineExamples
         return model;
     }
 
+#if !GPC_PILOT
     private static List<SectionSample> CheckSections(Settings setup,ModelModel[] results,NativeExamples.Recorder checks)
     {
         var d=setup.Definition;var p=setup.Central;var checker=Checker(p);var samples=new List<SectionSample>();
@@ -169,4 +310,5 @@ internal static class BridgeSpineExamples
         }
         Console.WriteLine($"BRIDGE SPINE: {total-failures} passed, {failures} failed");return failures==0?0:1;
     }
+#endif
 }
