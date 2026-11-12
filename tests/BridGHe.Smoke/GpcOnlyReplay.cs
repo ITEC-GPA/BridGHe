@@ -2419,7 +2419,9 @@ internal static class GpcOnlyReplay
             }
             using (R2aDesignFixtures.WithoutFem()) { reopened.Enabled = true; reopened.NewSolution(false, GH_SolutionMode.Silent); }
             int same = 0, fem = 0, compared = 0;
-            foreach (var (original, run) in outputsOf)
+            // Not compared after reopening: Preview BridGHe Model takes Display Settings, a display object and not a datum: the relay that holds it in the
+            // chain is not saved, so the reopened preview has none («Connect Display Settings.», native 99, r1-t27); its data are compared in the chain.
+            foreach (var (original, run) in outputsOf.Where(p => p.Key.GetType().Name != "PreviewModelComponent"))
             {
                 var copy = reopened.Objects.OfType<GH_Component>().FirstOrDefault(c => c.InstanceGuid == copies[original].InstanceGuid);
                 if (copy == null) { failures.Add($"{label} ({variant}): {original.Name} not in the chain read back"); continue; }
