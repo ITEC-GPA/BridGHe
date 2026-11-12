@@ -71,24 +71,25 @@ internal static class R4cMoving
     /// linear piece integrated over its stations, on the actual or the projected length), the concentrated beam forces and the node forces.
     /// The loads without a net force (couples, strains, temperatures) have no vertical resultant and are counted apart (<paramref name="other"/>).
     /// </summary>
-    internal static double VerticalLoad(Model model, string name, BridgeUnits units, Dictionary<string, int> other = null)
+    internal static double VerticalLoad(Model model, string name, BridgeUnits units, Dictionary<string, int> other = null, Dictionary<string, double> parts = null)
     {
         if (model.Combinations.TryGetValue(name, out var combination))
-            return combination.GetLoadCaseCoefficientsPair().Sum(p => p.Value * VerticalLoad(model, p.Key.Name, units, other));
+            return combination.GetLoadCaseCoefficientsPair().Sum(p => p.Value * VerticalLoad(model, p.Key.Name, units, other, parts));
         if (!model.LoadCases.ContainsKey(name)) throw new ArgumentException("Unknown native result case: " + name);
         static bool Of(Load l, string c) => l?.LoadCase?.Name == c;
         void Other(object load) { if (other != null) { string k = load.GetType().Name; other[k] = other.GetValueOrDefault(k) + 1; } }
+        void Part(string k, double v) { if (parts != null) parts[name + " " + k] = parts.GetValueOrDefault(name + " " + k) + v; }
         double sum = 0;
         foreach (var g in model.ModelLoads.Values.Where(l => Of(l, name)))
         {
             if (g is not ModelGravityLoad gravity) { Other(g); continue; }
-            sum -= model.BeamElements.Values.Sum(b => MassPerLength(b) * b.Length) * gravity.GravityVector.Z;
+            double w = model.BeamElements.Values.Sum(b => MassPerLength(b) * b.Length) * gravity.GravityVector.Z; sum -= w; Part("self-weight", -w);
         }
         foreach (var b in model.BeamElements.Values)
         {
             foreach (var a in b.Assignments.Loads)
             {
-                if (a.Concentrated is PointLoad c) { if (Of(c, name)) sum -= c.GetGlobalLoadVector().force.Z; continue; }
+                if (a.Concentrated is PointLoad c) { if (Of(c, name)) { double f = c.GetGlobalLoadVector().force.Z; sum -= f; Part("beam concentrated", -f); } continue; }
                 if (a.StartIntensity == null || !Of(a.StartIntensity, name)) continue;
                 double length = b.Length;
                 if (a.LengthConvention == BeamLoadLengthConvention.ProjectedLength)
@@ -97,19 +98,43 @@ internal static class R4cMoving
                     double along = (t.X * n.X + t.Y * n.Y + t.Z * n.Z) / (Math.Sqrt(t.X * t.X + t.Y * t.Y + t.Z * t.Z) * Math.Sqrt(n.X * n.X + n.Y * n.Y + n.Z * n.Z));
                     length *= Math.Sqrt(Math.Max(0, 1 - along * along));
                 }
-                double z0 = a.StartIntensity.GetGlobalLoadVector().force.Z, z1 = (a.EndIntensity ?? a.StartIntensity).GetGlobalLoadVector().force.Z;
-                sum -= (a.End - a.Start) * length * (z0 + z1) / 2;
+                double z0 = a.StartIntensity.GetGlobalForces()[2], z1 = (a.EndIntensity ?? a.StartIntensity).GetGlobalForces()[2]; // per unit length (GetGlobalLoadVector: the total on its line)
+                double q = (a.End - a.Start) * length * (z0 + z1) / 2; sum -= q; Part("beam distributed", -q);
             }
             foreach (var l in b.Loads.Values.Where(l => Of(l, name))) Other(l);
         }
         foreach (var n in model.NodesElements.Values)
             foreach (var l in n.Loads.Values.Where(l => Of(l, name)))
             {
-                if (l is PointLoad f) sum -= f.GetGlobalLoadVector().force.Z; else Other(l);
+                if (l is PointLoad f) { double z = f.GetGlobalLoadVector().force.Z; sum -= z; Part("node", -z); } else Other(l);
             }
         foreach (var p in model.AreaElements.Values) foreach (var l in p.Loads.Values.Where(l => Of(l, name)))
             throw new NotSupportedException("Independent integration of a plate load is not implemented: " + l.GetType().Name);
         return units.FromN(sum);
+    }
+
+    /// <summary>Diagnosis (not native): the integration of the requested results of every analysis input by part, with samples of the loads.</summary>
+    internal static void DryLoads((string Name, GpcModels.Conversion Input, string[] Requested)[] analyses)
+    {
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        foreach (var (name, input, requested) in analyses)
+        {
+            if (input == null) { Console.WriteLine($"R4C DRY {name}: no GPC input (requested {string.Join(", ", requested)})"); continue; }
+            var units = input.Report.Units;
+            Console.WriteLine($"R4C DRY {name}: units {units.Units}, {input.Model.BeamElements.Count} beams, cases {string.Join(", ", input.Model.LoadCases.Keys)}, combinations {string.Join(", ", input.Model.Combinations.Keys)}, requested {string.Join(", ", requested)}");
+            foreach (var g in input.Model.ModelLoads.Values) Console.WriteLine($"  model load {g.GetType().Name} case {g.LoadCase?.Name}" + (g is ModelGravityLoad m ? $" vector {m.GravityVector.X.ToString("R", inv)} {m.GravityVector.Y.ToString("R", inv)} {m.GravityVector.Z.ToString("R", inv)}" : ""));
+            var b0 = input.Model.BeamElements.Values.First();
+            if (b0.BeamProperty is ElasticBeamProperty p0) Console.WriteLine($"  beam 1: length {b0.Length.ToString("R", inv)}, density {p0.Material.Density.ToString("R", inv)}, legacy area {GpcSectionMass.LegacyArea(p0.Section).ToString("R", inv)}, mass per length {GpcSectionMass.MassPerLength(p0).ToString("R", inv)}");
+            foreach (var a in input.Model.BeamElements.Values.SelectMany(b => b.Assignments.Loads.Select(x => (b, x))).Take(3))
+                Console.WriteLine($"  beam {a.b.Id} load: start {a.x.Start.ToString("R", inv)} end {a.x.End.ToString("R", inv)} length {a.b.Length.ToString("R", inv)} convention {a.x.LengthConvention} "
+                    + (a.x.StartIntensity != null ? $"z0 {a.x.StartIntensity.GetGlobalForces()[2].ToString("R", inv)} z1 {(a.x.EndIntensity ?? a.x.StartIntensity).GetGlobalForces()[2].ToString("R", inv)} case {a.x.StartIntensity.LoadCase?.Name}" : "concentrated"));
+            foreach (var r in requested.Where(r => input.Model.LoadCases.ContainsKey(r) || input.Model.Combinations.ContainsKey(r)))
+            {
+                var parts = new Dictionary<string, double>(); var other = new Dictionary<string, int>();
+                double v = VerticalLoad(input.Model, r, units, other, parts);
+                Console.WriteLine($"  {r}: {v.ToString("R", inv)} = " + string.Join(" + ", parts.Select(p => p.Key + " " + p.Value.ToString("R", inv))) + (other.Count == 0 ? "" : "; other " + string.Join(", ", other.Select(o => o.Key + " " + o.Value))));
+            }
+        }
     }
 
     private static double MassPerLength(GPC.Model.Elements.BeamElement b) => b.BeamProperty is ElasticBeamProperty p ? GpcSectionMass.MassPerLength(p)

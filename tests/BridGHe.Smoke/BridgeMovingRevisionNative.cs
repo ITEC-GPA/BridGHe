@@ -181,6 +181,8 @@ internal static class BridgeMovingRevisionNative
         BridgeSegmentExcelTests.Solve(doc,true);
         foreach(var read in doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeSectionReadComponent")){BridgeSegmentExcelTests.Press(read);read.ExpireSolution(false);}
         BridgeSegmentExcelTests.Solve(doc,true);ResultFingerprint.Mark("REV003 inputs solved");
+        // R4c-moving (diagnosis, BRIDGHE_R4CM_DRY=1, not native): no analysis pressed, the independent integration of the requested results printed by part.
+        if(Environment.GetEnvironmentVariable("BRIDGHE_R4CM_DRY")=="1"){R4cMoving.DryLoads(analyses.Select(a=>(a.NickName,R4cMoving.Input(In(a,"Model").VolatileData.AllData(true).SingleOrDefault()),Values<string>(In(a,"Analysis Results")))).ToArray());return 0;}
         var measurements=new List<object>();
         void Near(string label,double actual,double expected,double tolerance)
         {Require(double.IsFinite(actual)&&Math.Abs(actual-expected)<=tolerance,$"{label}: {actual:G17} vs {expected:G17}, tol={tolerance}");measurements.Add(new{Label=label,Actual=actual,Expected=expected,Tolerance=tolerance});}

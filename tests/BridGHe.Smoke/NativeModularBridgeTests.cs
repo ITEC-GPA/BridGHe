@@ -171,11 +171,14 @@ internal static class NativeModularBridgeTests
         if(analyses.Length!=4)throw new Exception("Expected four Straus phase models.");
         for(int i=0;i<analyses.Length;i++){var a=analyses[i];ClearAnalysis(a);SetText(a,"Output Path",Path.Combine(folder,$"{i+1:00}-"+a.NickName.Split(' ')[0]+".st7"));}
         foreach(var report in doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeReportComponent"))report.GetType().GetField("_run",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(report,false);
+        // R4c-moving (diagnosis, BRIDGHE_R4CM_DRY=1, not native): no analysis pressed, the independent integration of the requested results printed by part.
+        bool dry=Environment.GetEnvironmentVariable("BRIDGHE_R4CM_DRY")=="1"; // the analyses are not pressed (Keep Running off, Run not pressed: ClearAnalysis)
         BridgeSegmentExcelTests.Solve(doc,true);
         foreach(var read in doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeSectionReadComponent")){BridgeSegmentExcelTests.Press(read);read.ExpireSolution(false);}
         BridgeSegmentExcelTests.Solve(doc,true);ResultFingerprint.Mark("modular inputs solved");
         var summary=new List<object>();
         static object One(IGH_Param p)=>p.VolatileData.AllData(true).SingleOrDefault();
+        if(dry){R4cMoving.DryLoads(analyses.Select(a=>(a.NickName,R4cMoving.Input(One(Input(a,"Model"))),Values<string>(Input(a,"Analysis Results")))).ToArray());return 0;}
         for(int i=0;i<analyses.Length;i++)
         {
             var a=analyses[i];var inputGoo=One(Input(a,"Model"));var input=R4cMoving.Input(inputGoo);
