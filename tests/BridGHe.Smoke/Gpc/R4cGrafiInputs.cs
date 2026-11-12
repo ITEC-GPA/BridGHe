@@ -74,7 +74,7 @@ internal static class R4cGrafiInputs
         }
         if (failures.Count > 0 || numbers.Count > 0) throw new Exception($"R4C INPUTS TRANSITIONAL FAIL: {failures.Count} of {failures.Count + lines.Count} GPC inputs differ from the conversion of the former FEM models:\n" + string.Join("\n", failures)
             + (numbers.Count > 0 ? "\nsection numbers moved:\n" + string.Join("\n", numbers) : ""));
-        Console.WriteLine($"R4C INPUTS TRANSITIONAL PASS: {lines.Count} GPC inputs of the native examples 11-18 equal to the conversion of the former FEM models (declared form: no registered case records, case stages, beam numbers)");
+        Console.WriteLine($"R4C INPUTS TRANSITIONAL PASS: {lines.Count} GPC inputs of the native examples 11-18 equal to the conversion of the former FEM models (declared form: no registered case records, case stages, BridGHe IDs as Element IDs)");
     }
 
     /// <summary>The declared form of a former FEM model (<see cref="R4bInputs.AsBuilt"/>: as Build Model and Attach Moving Paths give it, the node IDs
@@ -83,10 +83,10 @@ internal static class R4cGrafiInputs
     /// <item>the former cases had one stage, carrying their BridgeChecks phase (<c>LoadCaseModel.Stage.BridgePhase</c>); the case of Load Case on
     /// GPC has none (<see cref="BridGHe.Common.Gpc.Builders.GpcCaseBuilders.Case"/>): the phase of a case is a datum of the bridge recipe
     /// (Bridge Action, Construction Phase), read from it by the checks (as R4b for the bridge phases). The FEM cases are compared without stages;</item>
-    /// <item>a former beam named by its BridGHe ID (<c>BeamId</c>, the transverse members of the steel-only model skip the rows without a
-    /// diaphragm), the beam of Build Model on GPC without an Element ID named by its number (the rule of R3): the FEM beams are compared with
-    /// the names of Build Model. The runners keep the IDs of the recipe for their outputs (forces.csv, geometry.json) and the graphs give them as
-    /// Element IDs, as before.</item>
+    /// <item>a former beam had its BridGHe ID as <c>BeamId</c> (the transverse members of the steel-only models skip the rows without a
+    /// diaphragm); on GPC a beam takes its ID from its Element ID (Build Model names it by the first one; without one, by its number: the rule
+    /// of R3), so the recipes give every beam its ID as Element ID, as the graphs do (Element ID after Super Element and the loads). The FEM
+    /// beams are compared with the same Element ID added (<c>ElementIdAttributeModel(BeamId)</c>, after their attributes).</item>
     /// </list></summary>
     private static ModelModel AsBuilt(ModelModel fem, out string declared)
     {
@@ -95,13 +95,10 @@ internal static class R4cGrafiInputs
             .Where(c => c?.Stages != null && c.Stages.Count > 0).Distinct().ToArray();
         foreach (var c in cases) c.Stages.Clear();
         int beams = 0;
-        for (int i = 0; i < built.Beams.Count; i++)
-        {
-            string number = (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture);
-            if (built.Beams[i].BeamId != number) { built.Beams[i].BeamId = number; beams++; }
-        }
+        foreach (var beam in built.Beams)
+            if (!beam.Attributes.OfType<ElementIdAttributeModel>().Any()) { beam.Attributes.Add(new ElementIdAttributeModel(beam.BeamId)); beams++; }
         declared = (renamed > 0 ? "; declared: " + renamed + " node IDs as Build Model names them" : "") + (cases.Length > 0 ? "; declared: " + cases.Length + " former cases without their stage" : "")
-            + (beams > 0 ? "; declared: " + beams + " beams named by their number (former BridGHe IDs)" : "");
+            + (beams > 0 ? "; declared: " + beams + " BridGHe IDs given as Element IDs" : "");
         return built;
     }
 

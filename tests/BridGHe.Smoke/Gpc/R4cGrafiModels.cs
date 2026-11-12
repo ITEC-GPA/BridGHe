@@ -75,7 +75,8 @@ internal sealed class R4cModel
     }
 
     /// <summary>The GPC input of the recipe: Build Model on GPC of the drafts made in recipe order (identities derived from <see cref="Id"/> and
-    /// the step: a rebuild gives the same GUIDs), N-mm, model tolerance 1E-6, then Attach Moving Paths with the paths.</summary>
+    /// the step: a rebuild gives the same GUIDs), each beam with its BridGHe ID as Element ID (Build Model names it so, as the former BeamId),
+    /// N-mm, model tolerance 1E-6, then Attach Moving Paths with the paths.</summary>
     internal GpcModels.Conversion Build()
     {
         var b = new GpcNativeExamples.Builder("r66-r4cg:" + Id);
@@ -97,6 +98,9 @@ internal sealed class R4cModel
                 b.Beams[k] = GpcBeamBuilders.WithPreLoad(b.Beams[k], b.Case(s.Case), true, s.PreStrain, b.Next("pre-load"));
                 b.Beams[k] = GpcBeamBuilders.WithGradient(b.Beams[k], b.Case(s.Case), s.Axis1, s.Axis2, b.Next("gradient"));
             }
+            // The BridGHe ID of the former beam (BeamId) as its Element ID, as the graphs give it (Beam, Super Element, the loads, Element ID):
+            // Build Model names the beam by it, and every model of a merge keeps the same names whatever the order of its beams.
+            b.Beams[k] = GpcElementBuilders.WithLabel(b.Beams[k], beam.BeamId, b.Next("element-id"));
         }
         foreach (var (name, c, factor) in Stages) b.Stage(name, new[] { main, cross }, b.Combination(name, (c, factor)));
         b.Paths.AddRange(Paths);
