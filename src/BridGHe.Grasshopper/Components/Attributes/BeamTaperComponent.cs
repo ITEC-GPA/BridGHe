@@ -1,3 +1,4 @@
+using BridGHe.Common.Helpers;
 using System;
 using System.Collections.Generic;
 using Grasshopper.Kernel;
@@ -29,23 +30,20 @@ namespace BridGHe.Grasshopper.Components.Attributes
             pManager.AddNumberParameter("NFromY", "NFY", "Section multiplier of dimension y of start point", GH_ParamAccess.item, 1);
             pManager.AddNumberParameter("NToX", "NTX", "Section multiplier of dimension x of end point", GH_ParamAccess.item, 1);
             pManager.AddNumberParameter("NToY", "NTY", "Section multiplier of dimension y of end point", GH_ParamAccess.item, 1);
-            pManager.AddIntegerParameter("AlignmentX", "AX", "Alignment for x", GH_ParamAccess.item, AlignmentCenter);
+            pManager.AddIntegerParameter("AlignmentX", "AX", "Alignment for x", GH_ParamAccess.item, (int)BeamTaperAttributeModel.AlignmentCodes.Center);
             Param_Integer type_param = (Param_Integer)pManager[pManager.ParamCount - 1];
-            foreach (var code in AlignmentCodes)
+            foreach (Enum code in Enum.GetValues(typeof(BeamTaperAttributeModel.AlignmentCodes)))
             {
-                type_param.AddNamedValue(code.Label, code.Value);
+                type_param.AddNamedValue(code.GetDescription(), (int)(BeamTaperAttributeModel.AlignmentCodes)code);
             }
-            pManager.AddIntegerParameter("AlignmentY", "AY", "Alignment for y", GH_ParamAccess.item, AlignmentCenter);
+            pManager.AddIntegerParameter("AlignmentY", "AY", "Alignment for y", GH_ParamAccess.item, (int)BeamTaperAttributeModel.AlignmentCodes.Center);
             type_param = (Param_Integer)pManager[pManager.ParamCount - 1];
-            foreach (var code in AlignmentCodes)
+            foreach (Enum code in Enum.GetValues(typeof(BeamTaperAttributeModel.AlignmentCodes)))
             {
-                type_param.AddNamedValue(code.Label, code.Value);
+                type_param.AddNamedValue(code.GetDescription(), (int)(BeamTaperAttributeModel.AlignmentCodes)code);
             }
         }
 
-        // P2K (P1): the former BeamTaperAttributeModel.AlignmentCodes (named values of the alignment inputs), same labels and integers.
-        private static readonly (string Label, int Value)[] AlignmentCodes = { ("Top", 0), ("Center", 1), ("Bottom", 2) };
-        private const int AlignmentCenter = 1;
 
         /// <summary>
         /// Registers all the output parameters for this component.
@@ -103,5 +101,12 @@ namespace BridGHe.Grasshopper.Components.Attributes
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
         public override Guid ComponentGuid => new Guid("5010971e-bdee-44d6-9edc-9d6beb8ad165");
+
+        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
+        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
+        private static class BeamTaperAttributeModel
+        {
+            internal enum AlignmentCodes { [System.ComponentModel.Description("Top")] Top = 0, [System.ComponentModel.Description("Center")] Center = 1, [System.ComponentModel.Description("Bottom")] Bottom = 2 }
+        }
     }
 }

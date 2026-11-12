@@ -1,3 +1,4 @@
+using BridGHe.Common.Helpers;
 using System;
 using System.Collections.Generic;
 using BridGHe.Grasshopper.DataTypes.Fem;
@@ -25,8 +26,12 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
             pManager.AddTextParameter("Name", "N", "Property name", GH_ParamAccess.item);
             int i = pManager.AddIntegerParameter("Type", "T", "The property type", GH_ParamAccess.item);
             Param_Integer mtParam = pManager[i] as Param_Integer;
-            for (int t = 0; t < TypeLabels.Length; t++)
-                mtParam.AddNamedValue(TypeLabels[t], t);
+            Array values = Enum.GetValues(typeof(PlatePropertyType));
+            foreach (PlatePropertyType val in values)
+            {
+                if (val != PlatePropertyType.Undefined)
+                    mtParam.AddNamedValue(val.GetDescription(), (int)val);
+            }
             i = pManager.AddNumberParameter("Membrane Thickness", "MT", "The membrane thickness value", GH_ParamAccess.item);
             pManager[i].Optional = true;
             i = pManager.AddNumberParameter("Bending Thickness", "BT", "The bending thickness value", GH_ParamAccess.item, 0);
@@ -104,5 +109,13 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
         public override Guid ComponentGuid => new Guid("20915977-5436-4dcb-b091-1250312caa11");
+
+        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
+        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
+        private enum PlatePropertyType
+        {
+            Undefined = -1, [System.ComponentModel.Description("Shell-Thin")] ShellThin, [System.ComponentModel.Description("Shell-Thick")] ShellThick, [System.ComponentModel.Description("Plate-Thin")] PlateThin,
+            [System.ComponentModel.Description("Plate-Thick")] PlateThick, Membrane, [System.ComponentModel.Description("Load Patch")] LoadPatch, [System.ComponentModel.Description("Shear Panel")] ShearPanel
+        }
     }
 }

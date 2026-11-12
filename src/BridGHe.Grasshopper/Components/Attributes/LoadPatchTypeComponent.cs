@@ -1,3 +1,4 @@
+using BridGHe.Common.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,8 +35,9 @@ namespace BridGHe.Grasshopper.Components.Attributes
             pManager.AddGenericParameter("Plate", "P", "The load patch plate where to define the type", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Type", "T", "Load Type", GH_ParamAccess.item);
             Param_Integer type_param = (Param_Integer)pManager[1];
-            for (int val = 0; val < PatchTypeLabels.Length; val++)
-                type_param.AddNamedValue(PatchTypeLabels[val], val);
+            Array values = Enum.GetValues(typeof(LoadPatchTypeAttributeModel.PatchType));
+            foreach (LoadPatchTypeAttributeModel.PatchType val in values)
+                type_param.AddNamedValue(val.GetDescription(), (int)val);
             pManager.AddIntegerParameter("Edges", "E", "The edges index to select", GH_ParamAccess.list);
             pManager[2].Optional = true;
             pManager.AddNumberParameter("Weights", "W", "The edge weights", GH_ParamAccess.list);
@@ -149,9 +151,8 @@ namespace BridGHe.Grasshopper.Components.Attributes
             GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, patchType, selectedEdges, edgeWeights));
         }
 
-        // P2K (P1): the former LoadPatchTypeAttributeModel.PatchType: names (the GPC builder reads them), labels of the Type input, integers.
+        // P2K (P1): the former LoadPatchTypeAttributeModel.PatchType: names (the GPC builder reads them) and integers.
         private static readonly string[] PatchTypeNames = { "Auto1", "Auto2", "Auto3", "Auto4", "AngleSplit", "Manual" };
-        private static readonly string[] PatchTypeLabels = { "Auto1", "Auto2", "Auto3", "Auto4", "Angle Split", "Manual" };
         private const int Auto1 = 0, Auto2 = 1, Auto3 = 2, AngleSplit = 4, Manual = 5;
 
         public override bool Read(GH_IReader reader)
@@ -173,5 +174,12 @@ namespace BridGHe.Grasshopper.Components.Attributes
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
         public override Guid ComponentGuid => new Guid("1dcb6c8b-8bd7-4e5b-a6a1-76c68a8f729b");
+
+        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
+        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
+        private static class LoadPatchTypeAttributeModel
+        {
+            internal enum PatchType { Auto1, Auto2, Auto3, Auto4, [System.ComponentModel.Description("Angle Split")] AngleSplit, Manual }
+        }
     }
 }

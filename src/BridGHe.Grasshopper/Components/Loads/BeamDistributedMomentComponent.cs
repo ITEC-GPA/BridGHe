@@ -4,6 +4,7 @@ using BridGHe.Grasshopper.Helpers;
 using GH_IO.Serialization;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
+using BridGHe.Common.Helpers;
 using System;
 using System.Linq;
 
@@ -35,8 +36,9 @@ namespace BridGHe.Grasshopper.Components.Loads
             pManager.AddGenericParameter("LoadCase", "LC", "The load case", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Type", "T", "Load Type", GH_ParamAccess.item, 0);
             Param_Integer type_param = (Param_Integer)pManager[2];
-            foreach (var val in LoadSchemas)
-                type_param.AddNamedValue(val.Label, val.Value);
+            Array values = Enum.GetValues(typeof(BeamDistributedLoadModel.LoadSchema));
+            foreach (BeamDistributedLoadModel.LoadSchema val in values)
+                type_param.AddNamedValue(val.GetDescription(), (int)val);
 
             pManager.AddIntegerParameter("Direction", "D", "The load direction", GH_ParamAccess.item);
             Param_Integer dir_param = (Param_Integer)pManager[3];
@@ -56,14 +58,6 @@ namespace BridGHe.Grasshopper.Components.Loads
             pManager.AddNumberParameter("a", "a", "The distance ratio (0-1) from the starting node", GH_ParamAccess.item, 0);
             pManager.AddNumberParameter("b", "b", "The distance ratio (0-1) from the ending node", GH_ParamAccess.item, 0);
         }
-
-        // P2K (P1): the former BeamDistributedLoadModel.LoadSchema, labels and integers of the Type input in the former order (Enum.GetValues:
-        // by unsigned value, Undefined last).
-        private static readonly (string Label, int Value)[] LoadSchemas =
-        {
-            ("Uniform", 0), ("Keystone", 1), ("Triangular", 2), ("Triangular at end 1 + Keystone", 3), ("Keystone + Triangular at end 2", 4),
-            ("Triangular at ends + Keystone", 5), ("Undefined", -1),
-        };
 
         private void SetSchemaImage()
         {
@@ -261,5 +255,16 @@ namespace BridGHe.Grasshopper.Components.Loads
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
         public override Guid ComponentGuid => new Guid("fee217c4-8b33-4c74-8f3a-743818d6c78c");
+
+        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
+        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
+        private static class BeamDistributedLoadModel
+        {
+            internal enum LoadSchema
+            {
+                Undefined = -1, Uniform, Keystone, Triangular, [System.ComponentModel.Description("Triangular at end 1 + Keystone")] TriangularEnd1_Keystone,
+                [System.ComponentModel.Description("Keystone + Triangular at end 2")] Keystone_TriangularEnd2, [System.ComponentModel.Description("Triangular at ends + Keystone")] TriangularEnds_Keystone
+            }
+        }
     }
 }

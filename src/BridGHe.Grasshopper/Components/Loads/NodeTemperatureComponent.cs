@@ -1,3 +1,4 @@
+using BridGHe.Common.Helpers;
 using System;
 using System.Collections.Generic;
 using Grasshopper.Kernel;
@@ -27,7 +28,7 @@ namespace BridGHe.Grasshopper.Components.Loads
             pManager.AddGenericParameter("LoadCase", "LC", "The load case", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Type", "T", "The type of temperature", GH_ParamAccess.item);
             Param_Integer param_type = (Param_Integer)pManager[2];
-            string[] types = TemperatureTypes;
+            string[] types = Enum.GetNames(typeof(NodeTemperatureLoadModel.LoadType));
             for (int i = 0; i < types.Length; i++)
                 param_type.AddNamedValue(types[i], i);
             pManager.AddNumberParameter("Value", "V", "The value of the temperature", GH_ParamAccess.item);
@@ -81,5 +82,12 @@ namespace BridGHe.Grasshopper.Components.Loads
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
         public override Guid ComponentGuid => new Guid("65b74dea-1358-43a8-9fe4-571ab8ac7f11");
+
+        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
+        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
+        private static class NodeTemperatureLoadModel
+        {
+            internal enum LoadType { Reference, Fixed, Initial }
+        }
     }
 }

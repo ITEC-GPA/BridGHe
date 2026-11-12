@@ -32,14 +32,14 @@ namespace BridGHe.Grasshopper.Components.Materials
             // Kind param
             pManager.AddIntegerParameter("Kind", "K", "The kind of the material", GH_ParamAccess.item);
             Param_Integer param = (Param_Integer)pManager[1];
-            foreach (var (label, value) in Kinds)
-                param.AddNamedValue(label, value);
+            Array values = Enum.GetValues(typeof(MaterialModel.MaterialKind));
+            foreach (MaterialModel.MaterialKind val in values)
+                param.AddNamedValue(val.GetDescription(), (int)val);
             pManager.AddIntegerParameter("Units", "U", "The measure units", GH_ParamAccess.item);
             // Mesaure units param
             Param_Integer type_param = (Param_Integer)pManager[2];
-            // P2K (P1): the GPC DefinitionUnits (same names, order, descriptions and integers as the FEM ModelModel.ModelUnits).
-            Array values = Enum.GetValues(typeof(Common.Gpc.DefinitionUnits));
-            foreach (Common.Gpc.DefinitionUnits val in values)
+            values = Enum.GetValues(typeof(ModelModel.ModelUnits));
+            foreach (ModelModel.ModelUnits val in values)
                 type_param.AddNamedValue(val.GetDescription(), (int)val);
             // Material data params
             _paramsIdx = new List<int>()
@@ -190,5 +190,22 @@ namespace BridGHe.Grasshopper.Components.Materials
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
         public override Guid ComponentGuid => new Guid("9404d0c7-cca7-4f29-b7f5-baf001386675");
+
+        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
+        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
+        private static class ModelModel
+        {
+            internal enum ModelUnits
+            {
+                [System.ComponentModel.Description("kNm (m, kN, T, kPa, s, kJ, C)")] Knm,
+                [System.ComponentModel.Description("SI (m, N, kg, Pa, s, J, C)")] SI,
+                [System.ComponentModel.Description("Nmm (mm, N, T, MPa, s, mJ, C)")] Nmm,
+                [System.ComponentModel.Description("PSI (in, lbf, lb, psi, s, btu, F)")] IPS
+            }
+        }
+        private static class MaterialModel
+        {
+            internal enum MaterialKind { Undefined = -1, Steel, Concrete, Aluminium, Rebar }
+        }
     }
 }

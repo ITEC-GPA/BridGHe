@@ -54,8 +54,8 @@ namespace BridGHe.Grasshopper.Components.Analysis
             pManager.AddGenericParameter("Model", "M", "The FEM model", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Solver", "ST", "The type of solver to use", GH_ParamAccess.item, 0);
             Param_Integer solverParam = (Param_Integer)pManager[1];
-            for (int i = 0; i < Common.Straus.StrausAnalysis.Solvers.Length; i++)
-                solverParam.AddNamedValue(Common.Straus.StrausAnalysis.Solvers[i], i);
+            for (int i = 0; i < Common.Helpers.StrausR3Helper.Solvers.Length; i++)
+                solverParam.AddNamedValue(Common.Helpers.StrausR3Helper.Solvers[i], i);
             pManager.AddTextParameter("Analysis Results", "AR", "The analysis result cases or combination to returns", GH_ParamAccess.list);
             pManager[2].Optional = true;
             pManager.AddTextParameter("Output Path", "O", "The full path of the file model to create", GH_ParamAccess.item);

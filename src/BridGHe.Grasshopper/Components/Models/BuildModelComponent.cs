@@ -31,10 +31,9 @@ namespace BridGHe.Grasshopper.Components.Models
             pManager.AddTextParameter("Name", "N", "The name of the model", GH_ParamAccess.item, "");
             pManager.AddIntegerParameter("Units", "U", "The measure units", GH_ParamAccess.item, 2);
             Param_Integer type_param = (Param_Integer)pManager[2];
-            // P2K (P1): the GPC DefinitionUnits (same names, order, descriptions and integers as the FEM ModelModel.ModelUnits).
-            Array names = Enum.GetValues(typeof(Common.Gpc.DefinitionUnits));
+            Array names = Enum.GetValues(typeof(ModelModel.ModelUnits));
             int i = 0;
-            foreach (Common.Gpc.DefinitionUnits name in names)
+            foreach (ModelModel.ModelUnits name in names)
                 type_param.AddNamedValue(name.GetDescription(), i++);
             LoadCombinationsParam combs = new LoadCombinationsParam
             {
@@ -164,5 +163,18 @@ namespace BridGHe.Grasshopper.Components.Models
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
         public override Guid ComponentGuid => new Guid("d99dbb1b-13c4-4398-902e-ce66e5076ff4");
+
+        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
+        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
+        private static class ModelModel
+        {
+            internal enum ModelUnits
+            {
+                [System.ComponentModel.Description("kNm (m, kN, T, kPa, s, kJ, C)")] Knm,
+                [System.ComponentModel.Description("SI (m, N, kg, Pa, s, J, C)")] SI,
+                [System.ComponentModel.Description("Nmm (mm, N, T, MPa, s, mJ, C)")] Nmm,
+                [System.ComponentModel.Description("PSI (in, lbf, lb, psi, s, btu, F)")] IPS
+            }
+        }
     }
 }
