@@ -305,13 +305,12 @@ internal static class GpcMaterialKindChecks
                 var gpc = (Material)goo.GetType().GetProperty("Gpc").GetValue(goo);
                 string kind = (string)goo.GetType().GetProperty("GpcKind").GetValue(goo);
                 if ((bool)goo.GetType().GetProperty("HasAttachedGpc").GetValue(goo)) attached++;
-                // Transitional (R3, P2 removes): GPC = the conversion of the FEM value. R6.2 part C: the Aluminium component gives fu = 262 on GPC
-                // (user decision of 6/11): the declared difference, by name.
-                if (type == "MaterialAluminiumComponent") { Require(DeclaredAluminium(gpc, GpcMaterials.FromFemm(m)), label + ": GH_Material.Gpc = FromFemm of its value but fu 165.5 -> 262 (declared)"); aluminiumDeclared++; }
-                else Require(Dump(gpc) == Dump(GpcMaterials.FromFemm(m)), label + ": GH_Material.Gpc = FromFemm of its value");
+                // P2R (T3, 12/11): the transitional comparison of R3 (GPC = FromFemm of the FEM value; the Aluminium fu 165.5 -> 262 declared) is
+                // retired: the material components give no FEM value since P2K/P2D. The oracle is the explicit values of the GPC material below (R3).
+                Require(m == null, label + ": no FEM value from the component (P2K)");
                 var copy = (IGH_Goo)goo.Duplicate();
                 Require(ReferenceEquals(copy.GetType().GetProperty("Gpc").GetValue(copy), gpc), label + ": a copy shares the GPC material");
-                tally.Check(label, m, null); componentSamples++;
+                componentSamples++;
                 // R3: the explicit values of the GPC material.
                 string differs = Expected(type, r, gpc);
                 Require(differs == null, label + ": the GPC material differs from its explicit values: " + differs); explicitValues++;

@@ -144,7 +144,8 @@ internal static class GpcBuilderChecksC
         using var doc = new Grasshopper.Kernel.GH_Document { Enabled = true };
         param.CreateAttributes(); doc.AddObject(param, false); doc.NewSolution(false, Grasshopper.Kernel.GH_SolutionMode.Silent);
         var fem = cases.Select(c => c.GetType().GetProperty("Value").GetValue(c)).ToList();
-        var femList = (System.Collections.IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(fem[0].GetType()));
+        // P2R (T3): the cases have no FEM value since P2K/P2D (null items): the list takes the element type of the transitional signature.
+        var femList = (System.Collections.IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(type.GetMethod("UpdateLoadCases").GetParameters()[0].ParameterType.GetGenericArguments()[0]));
         foreach (var f in fem) femList.Add(f);
         var records = cases.Select(c => (BridGHe.Common.Gpc.Legacy.LegacyCaseData)c.GetType().GetProperty("Gpc").GetValue(c)).ToArray();
         var updated = param.VolatileData.AllData(true).ToList();

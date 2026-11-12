@@ -44,9 +44,10 @@ internal static class SlabReinforcementTests
             var c=Component(doc,"BeamSectionConcreteSlabComponent");
             void Number(int i,double value) {var p=(Param_Number)c.Params.Input[i];p.PersistentData.Clear();p.PersistentData.Append(new GH_Number(value));p.ExpireSolution(false);}
             Number(0,250);Number(1,3000);Solve(doc,c);
-            Require(((SectionConcreteSlabModel)c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable()).TotalRebarArea==0,"Default optional rows should be disabled.");
+            // P2R (T3): the output is the GPC datum of the slab since P2K (P10), BridGHe.Common.Checks.ConcreteSlabSection.
+            Require(((BridGHe.Common.Checks.ConcreteSlabSection)c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable()).TotalRebarArea==0,"Default optional rows should be disabled.");
             Number(2,2000);Number(3,40);Number(4,1500);Number(5,55);Solve(doc,c);
-            Require(((SectionConcreteSlabModel)c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable()).BottomCover==55 && c.Params.Input.Skip(2).All(p=>p.Optional),"GH bottom ports or optional flags invalid.");
+            Require(((BridGHe.Common.Checks.ConcreteSlabSection)c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable()).BottomCover==55 && c.Params.Input.Skip(2).All(p=>p.Optional),"GH bottom ports or optional flags invalid.");
         }
         // Decision (i) = A of the user (7/11): Super Element Check runs only on the GPC bridge model of Build BridGHe Model; without it a clear
         // error and no outputs. The former BridGHe phases on the FEM results of the composite beam (checked here on a merged FEM fixture, and the

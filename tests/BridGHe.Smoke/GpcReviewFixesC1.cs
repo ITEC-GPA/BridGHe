@@ -322,13 +322,14 @@ internal static class GpcReviewFixesC1
         var section = One("BeamSectionIComponent", new Dictionary<int, object> { [0] = 300.0, [1] = 250.0, [2] = 800.0, [3] = 20.0, [4] = 16.0, [5] = 12.0 });
         var slab = One("BeamSectionConcreteSlabComponent", new Dictionary<int, object> { [0] = 250.0, [1] = 2500.0, [2] = 1000.0, [3] = 50.0, [4] = 800.0, [5] = 50.0 });
         var valid = One("BeamPropertyCompositeComponent", new Dictionary<int, object> { [0] = "CB", [1] = slab, [2] = section, [3] = concrete, [4] = steel, [5] = rebar });
-        var value = BridGHe.Common.Helpers.ModelArchive.Clone((CompositeBeamPropertyModel)P(valid, "Value")); value.NInstant = 0; // not a definition: a modular ratio must be positive
+        // P2R (T3): the composite property of the component has no FEM value since P2K/P2D; the refused 0.3.0-like value (a FEM input of this case
+        // until P2-taglio) is the composite property of the grillage fixture with n0 = 0 (not a definition: a modular ratio must be positive).
+        var value = BridgeGrillageExample.Composite(new()); value.NInstant = 0;
         var refused = Make("GH_CompositeBeamProperty", value);
         string refusal = null;
         try { _ = P(refused, "Definition"); } catch (TargetInvocationException ex) { refusal = ex.InnerException?.Message; }
         Check(refusal != null, "R25-01: the composite property with n0 = 0 is not a definition");
         var m2 = NativeExamples.Create().Single(e => e.Id == "02-simply-supported").Model;
-        var femBeam = Make("Fem.GH_Beam", m2.Beams[1]);
         var gpcBeam = GpcOnlyBeam(m2.Beams[1], new Guid("c1000000-0000-4000-8000-0000000000c1"));
         foreach (var (label, start, end, port) in new[] { ("start valid, end refused", valid, refused, "Section End"), ("start refused, end valid", refused, valid, "Section Start") })
         {
@@ -336,10 +337,8 @@ internal static class GpcReviewFixesC1
             Check(r.Outputs[0].Count == 0, $"R25-01 ({label}): no output on the GPC-only path");
             Check(r.Errors.Length == 1 && r.Errors[0].StartsWith(port + ": ", StringComparison.Ordinal) && r.Errors[0].EndsWith(refusal ?? "?", StringComparison.Ordinal),
                 $"R25-01 ({label}): the error names the section and gives the message of the definition ({string.Join(" / ", r.Errors)})");
-            // The FEM path keeps its rule: the composite beam without the definitions (the checks that read it give the error).
-            var f = Solve("CompositeBeamComponent", new Dictionary<int, object> { [0] = femBeam, [1] = start, [2] = end });
-            Check(f.Outputs[0].Count == 1 && f.Errors.Length == 0 && P(f.Outputs[0][0], "Value") != null, $"R25-01 ({label}): the FEM path gives its composite beam as before");
-            Console.WriteLine($"GPC REVIEW FIXES R25-01 ({label}): GPC-only '{string.Join(" / ", r.Errors)}', FEM path {f.Outputs[0].Count} output");
+            // P2R (T3): the FEM path of Composite Beam is gone (P2K, P1): its check (the composite beam without the definitions) is retired.
+            Console.WriteLine($"GPC REVIEW FIXES R25-01 ({label}): GPC-only '{string.Join(" / ", r.Errors)}'");
         }
         var both = Solve("CompositeBeamComponent", new Dictionary<int, object> { [0] = gpcBeam, [1] = valid, [2] = valid });
         Check(both.Outputs[0].Count == 1 && both.Errors.Length == 0 && P(both.Outputs[0][0], "StartDefinition") != null, "R25-01: two valid sections still give the composite beam on the GPC-only path");
@@ -393,8 +392,10 @@ internal static class GpcReviewFixesC1
             foreach (var (damage, change) in new (string, Func<byte[], byte[]>)[] { ("truncated", Truncated), ("corrupted", Corrupted), ("trailing byte", x => x.Concat(new byte[] { 0 }).ToArray()) })
                 Check(!Read(WithItem(chunk, drafts, change)).Read, $"P30-01 ({label}): drafts {damage}: the model does not open");
             var (formerOk, former) = Read(WithItem(chunk, drafts, _ => null));
-            if (label == "with FEM value") Check(formerOk && P(former, "Value") != null, "P30-01: a former file without drafts opens (with its FEM value)");
-            else Check(!formerOk, "P30-01: a model without FEM value whose GUIDs have no drafts is damaged");
+            // P2R (T3): Build Model gives no FEM value since P2K, also on FEM-backed elements, and nothing writes FemmR6 since P2D: without its drafts
+            // either model is damaged (GUIDs without drafts, P30-01). A former development file (its datum, FemmR6 and the GUIDs of its FEM elements,
+            // no drafts) opens with the drafts and GUIDs of its FemmR6: regression p2d (P2D).
+            Check(!formerOk, $"P30-01 ({label}): a model without FEM value whose GUIDs have no drafts is damaged");
         }
         // GUIDs of another count (lane 3c) and no GUIDs at all with drafts (allowed: the GUIDs of the drafts).
         {

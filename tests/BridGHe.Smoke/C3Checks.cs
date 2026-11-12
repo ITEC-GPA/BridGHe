@@ -316,14 +316,16 @@ internal static class C3Checks
             Check(pdiff == null, "TRANSITIONAL plate: the GPC solid differs from the FEM plate: " + pdiff);
             compared++;
 
-            // The homogenised composite property (TRANSITIONAL, open point of C3): the FEM beam draws the steel and the slab and six bar lines from the
-            // preview geometry of its FEM property; its GPC draft holds no outline (the Generic recipe of the homogenised section): nothing drawn.
+            // The homogenised composite property (TRANSITIONAL): the FEM beam draws the steel and the slab and six bar lines from the preview geometry
+            // of its FEM property. P2R (T3, 12/11): the open point of C3 is closed by P2D (P11, user decision U5: the optional CompositeOutline of the
+            // recipe): the GPC draft draws the same, the solids within the C3 criterion and the bar lines bit for bit (as the regression p2d).
             var homogenised = new BeamModel("B1", Point3d.Origin, new Point3d(12000, 0, 0), p0.CreateHomogenizedProperty(12, "Shrink"));
             var hd = GpcBeamDrafts.FromFemm(homogenised);
-            Check(homogenised.Shapes.Length == 2 && ((Line[])Call("ReinforcementLines", homogenised)).Length == 6 && GpcDraftShapes.HasCompositePreview(hd)
-                && GpcDraftShapes.Beam(hd).Length == 0 && ((Line[])Call("DraftReinforcementLines", hd)).Length == 0,
-                "TRANSITIONAL homogenised composite property: FEM 2 solids and 6 bar lines, GPC none (no outline in the GPC data)");
-            Console.WriteLine("C3 DISPLAY homogenised composite property: FEM 2 solids and 6 bar lines, GPC draft 0 (open point: the outline is not in the GPC data)");
+            var femBars = (Line[])Call("ReinforcementLines", homogenised); var gpcBars = (Line[])Call("DraftReinforcementLines", hd);
+            string hdiff = Compare(homogenised.Shapes, (Brep[])Call("DraftShapes", hd));
+            Check(homogenised.Shapes.Length == 2 && femBars.Length == 6 && GpcDraftShapes.HasCompositePreview(hd) && hdiff == null && gpcBars.Length == 6 && femBars.SequenceEqual(gpcBars),
+                "TRANSITIONAL homogenised composite property: FEM 2 solids and 6 bar lines, the GPC draft the same (" + (hdiff ?? "solids equal") + $", {gpcBars.Length} bar lines)");
+            Console.WriteLine("C3 DISPLAY homogenised composite property: FEM 2 solids and 6 bar lines, the GPC draft the same (P11 of P2D)");
 
             Explicit();
         }
@@ -378,11 +380,13 @@ internal static class C3Checks
         Check(ps.Length == 1 && IsBox(ps[0].GetBoundingBox(true), 0, 0, -100, 2000, 1000, 100) && Near(Math.Abs(Volume(ps[0])), 4e8, 1e-9),
             "explicit plate: one solid [0 0 -100]-[2000 1000 100], volume 4e8: " + (ps.Length == 1 ? Box(ps[0].GetBoundingBox(true)) + " " + R(Volume(ps[0])) : ps.Length + " solids"));
 
-        // The homogenised composite property built on GPC (Composite Beam Property, n 12): no solid, no bar line (open point of C3).
+        // The homogenised composite property built on GPC (Composite Beam Property, n 12). P2R (T3, 12/11): since P2D (P11, U5) it draws the steel
+        // and the slab (two solids) and the six bar lines of its outline, as the composite beam above (before: nothing, the open point of C3).
         var shrink = GpcPropertyBuilders.Homogenised(definition, 12, "Shrink", GpcCompositeDefinitions.AnalysisSteel(numbers), "Steel");
         var h = GpcBeamBuilders.New(new GPC.Geometry.Point3d(0, 0, 0), new GPC.Geometry.Point3d(12000, 0, 0), shrink, null, 0, 0, 0, R2aDesignFixtures.Id("c3:homogenised"), "H1");
-        Check(GpcDraftShapes.HasCompositePreview(h) && GpcDraftShapes.Beam(h).Length == 0 && ((Brep[])Call("DraftShapes", h)).Length == 0, "explicit homogenised property: nothing drawn (open point)");
-        Console.WriteLine($"C3 DISPLAY explicit: beam 1 solid {Box(iShapes.FirstOrDefault()?.GetBoundingBox(true) ?? BoundingBox.Empty)}; composite beam {cs.Length} solids, {bars.Length} bar lines; plate {ps.Length} solid; homogenised property 0");
+        Check(GpcDraftShapes.HasCompositePreview(h) && ((Brep[])Call("DraftShapes", h)).Length == 2 && ((Line[])Call("DraftReinforcementLines", h)).Length == 6,
+            "explicit homogenised property: two solids and six bar lines (" + ((Brep[])Call("DraftShapes", h)).Length + " solids, " + ((Line[])Call("DraftReinforcementLines", h)).Length + " bar lines)");
+        Console.WriteLine($"C3 DISPLAY explicit: beam 1 solid {Box(iShapes.FirstOrDefault()?.GetBoundingBox(true) ?? BoundingBox.Empty)}; composite beam {cs.Length} solids, {bars.Length} bar lines; plate {ps.Length} solid; homogenised property 2 solids");
     }
 
     // ---------------------------------------------------------------------------------------------------------------------------------------

@@ -133,7 +133,9 @@ internal static class GpcBuilderChecksB
                 Run("BeamDistributedLoadComponent", one, new (int, object)[] { (0, b), (1, live), (2, 1), (3, gcs), (4, dir) }.Concat(Values(1)).ToArray());
         Run("BeamDistributedLoadComponent", none, new (int, object)[] { (0, b1), (1, dead), (2, 0), (3, ocs), (4, 2) }.Concat(Values(0)).ToArray());
         // R1: on the path of P2 the refusal of the builder (the reader's message) is the error of the component, no output (decision 2 of passo 73).
-        if (GpcBuilderChecks.P2Path && !h.ExpectP2Error("LegacyNonGlobalLoadCoordinateSystemWasIgnored")) h.Failures.Add("B BeamDistributedLoadComponent: on the path of P2, no error for the load in a non-global system");
+        // P2R (T3): since P2K the component itself refuses the load in a non-global system on both paths (the error, no output; changelog of P2K),
+        // the reader no longer meets it: the error expected on both runs.
+        h.ExpectError("LegacyNonGlobalLoadCoordinateSystemWasIgnored");
         // Point loads and moments (a coordinate system given is ignored: the principal axes), at the ends and inside.
         foreach (var b in bases)
             foreach (var a in new[] { 0.0, 0.37, 0.999 })
@@ -261,7 +263,7 @@ internal static class GpcBuilderChecksB
         }
 
         int refused = Refused() - refusedBefore;
-        if (refused != 1) h.Failures.Add("B: expected 1 output refused by the reader and the builder alike (distributed load in a non-global system), got " + refused);
+        if (refused != 0) h.Failures.Add("B: expected no output refused by the reader and the builder alike (P2K: the component refuses the load in a non-global system itself), got " + refused);
         Console.WriteLine("GPC BUILDERS B RUNS " + string.Join(", ", PerComponent.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => p.Key + " " + p.Value)) + $"; refused alike {refused}");
         h.Finish(150);
     }

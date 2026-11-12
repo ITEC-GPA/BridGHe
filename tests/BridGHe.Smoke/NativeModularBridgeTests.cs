@@ -206,20 +206,15 @@ internal static class NativeModularBridgeTests
                 if(!double.IsFinite(actual)||Math.Abs(actual-expected)>tolerance)throw new Exception($"Vertical equilibrium {lc}: {actual:G17} vs {expected:G17} N; tolerance {tolerance}.");
                 equilibrium.Add(new{Case=lc,ReactionZ_N=actual,Expected_N=expected,Tolerance_N=tolerance});
             }
-            // The consumers on the true GPC-only output: the analysis again on its input given by its GPC input alone (a folder of its own, the same
-            // file name), equal to the analysis of the definition; Node, Beam and Plate Results on it.
+            // P2R (T3, coordinator decision of 12/11): the GPC-only copy of the analysis is retired (the analysis of the definition is on GPC data alone
+            // since P2K); Node, Beam and Plate Results on the analysis of the definition.
             string path=Values<string>(Input(a,"Output Path")).Single();
-            string gpcOnly=Path.Combine(folder,"gpc-only");Directory.CreateDirectory(gpcOnly);
-            var (twin,messages)=R4cMoving.GpcOnlyAnalysis(a,Path.Combine(gpcOnly,Path.GetFileName(path)));
-            if(twin==null||R4cMoving.Results(twin)==null)throw new Exception("Analysis on its GPC input alone failed: "+a.NickName+": "+string.Join(" / ",messages));
-            string difference=GpcOnlyReplay.ResultsDifference(goo,twin);
-            if(difference!=null)throw new Exception("Analysis on its GPC input alone differs from the analysis of the definition: "+a.NickName+": "+difference);
-            ResultsComponentsCheck.Verify(twin,"99 "+a.NickName+" (GPC-only output)");
+            ResultsComponentsCheck.Verify(goo,"99 "+a.NickName);
             string log=Path.ChangeExtension(path,".LSL");
             if(File.Exists(log)){string text=File.ReadAllText(log);if(text.Contains("*WARNING[")||text.Contains("*ERROR["))throw new Exception("Straus solver warnings: "+log);}
             summary.Add(new{Phase=i,Beams=beams,Nodes=nodes,Equilibrium=equilibrium});
             File.WriteAllText(Path.Combine(folder,"progress.json"),JsonSerializer.Serialize(summary,new JsonSerializerOptions{WriteIndented=true}));
-            Console.WriteLine("NATIVE MODULAR PASS: "+a.NickName+"; reactions in equilibrium; the analysis on its GPC input alone equal, its Results consumers checked.");
+            Console.WriteLine("NATIVE MODULAR PASS: "+a.NickName+"; reactions in equilibrium; its Results consumers checked.");
         }
         ResultFingerprint.Mark("modular merge start");
         foreach(var excel in doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeCombinationExcelComponent"))
@@ -247,8 +242,9 @@ internal static class NativeModularBridgeTests
         // FEM merged model: GpcMergeCheck.Require, GpcBridgeComparison.RequireComponent, GpcInputComparison.RequireComponents, GpcStateOverrideChecks.MeasureModelAreas.
         C5WorkflowComparison.RequireGpcChecks(mergedGoo,checks,true,"99");
         GpcBridgeComparison.RequireGpcLinks(doc,"99"); BuildModelScan.Print(doc,"99"); BarLayoutMeasurement.Report(doc,"99"); CompositeAnalysisPropertyChecks.Require(doc,"99");
-        foreach(var check in checks){ GpcSecForcesCheck.Require(check,"99"); GpcCompositeSectionChecks.RequireSuperElementCheck(check,"99"); } NativeParityCapture.Close();
+        foreach(var check in checks){ GpcSecForcesCheck.Require(check,"99"); GpcCompositeSectionChecks.RequireSuperElementCheck(check,"99"); }
         ResultFingerprint.Mark("modular checks, details and plots solved");ResultFingerprint.Write("modular-"+Path.GetFileNameWithoutExtension(source),doc);
+        NativeParityCapture.Close(); // P2R: after the result fingerprint, so that a capture difference still leaves the fingerprint of the run
         R3ConcreteExclusionCheck.Run(doc,checks[0],mergedGoo,"99");
         R4cChainDiagnosis.Run(doc,"99");
         GpcOnlyReplay.Rehearsal(doc,"99"); // L3e: only with BRIDGHE_GPC_ONLY_REHEARSAL=1

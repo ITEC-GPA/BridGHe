@@ -114,7 +114,6 @@ internal static class Program
         if(args.Contains("--c2-parity-native")) return C2ParityNative.Run(); // C2: targeted (the same cases run under --core-only --native)
         if(args.Contains("--c4-parity-native")) return C4ParityNative.Run(); // C4: targeted (the same cases run under --core-only --native)
         if(args.Contains("--c5-parity-native")) return C5ParityChecks.Native(); // C5: targeted (the same cases run under --core-only --native)
-        if(args.Contains("--remake-examples-04")) return ExampleRemake04.Run(args.Contains("write"));
         if(args.Contains("--p2d-remake-examples")) return P2dExampleRemake.Run(args.Contains("write")); // P2D: 24, 42, 43, 47, 48 without FemmR6 (U2)
         if(args.Contains("--p2d-save-reopen")) { var r=args.SkipWhile(a=>a!="--p2d-save-reopen").Skip(1).ToArray(); return P2dSaveReopen.Run(r[0],r[1],r.Length>2&&!r[2].StartsWith("--")?r[2]:null); } // P2D: measures of P2 (native)
         if(args.Contains("--phase-examples-native")) return NativePhaseExamples.Run(args.SkipWhile(a=>a!="--phase-examples-native").Skip(1).FirstOrDefault(a=>!a.StartsWith("--")));
@@ -134,9 +133,6 @@ internal static class Program
         if(args.Contains("--bridge-workflow")) return BridgeWorkflowExample.Run(args.Contains("--native"));
         if(args.Contains("--inventory")) { CheckGrasshopper(false,true);return 0; }
         if(args.Contains("--components-only")) { CheckGrasshopper(false);return 0; }
-        if(args.Contains("--simple-bridge-examples")) { SimpleBridgeTests.Run(); SimpleBridgeExamples.Run(true); return BridgeExampleMigration.UpgradeGenerated(0,"29-","30-","31-","32-"); }
-        if(args.Contains("--parametric-bridge-example")) return BridgeExampleMigration.UpgradeGenerated(ParametricBridgeExample.Run(),"49-");
-        if(args.Contains("--parametric-bridge-phases")) return BridgeExampleMigration.UpgradeGenerated(ParametricBridgePhasesExample.Run(args.Contains("--native")),"50-");
         if(args.Contains("--example50-horizontal")) return Example50HorizontalLayout.Run();
         if(args.Contains("--example50-rev001-inputs")) return BridgeRevisionInputsExample.Run();
         if(args.Contains("--example50-rev002")) return BridgeRevisionStateExample.Run();
@@ -144,12 +140,7 @@ internal static class Program
         if(args.Contains("--example50-rev003")) return BridgeMovingRevisionExample.Run(args);
         if(args.Contains("--saved-bridge-audit")) return SavedBridgeWorkflowAudit.Run();
         if(args.Contains("--prepare99-rev004")) return SavedBridgeWorkflowAudit.Run(true);
-        if(args.Contains("--workflow-archived-replay")) return NativeWorkflowStationTests.ReplayArchived();
-        if(args.Contains("--bridge-design-examples")) { BridgeDesignExamples.Run(true); return BridgeExampleMigration.UpgradeGenerated(0,Enumerable.Range(33,13).Select(i=>i+"-").ToArray()); }
-        if(args.Contains("--bridge-details-example")) { BridgeDetailsExample.Run(true); return BridgeExampleMigration.UpgradeGenerated(0,"47-"); }
-        if(args.Contains("--bridge-details-model-example")) { BridgeDetailsModelExample.Generate(); return 0; }
         if(args.Contains("--bridge-details-plot-viewer")) { BridgeDetailsModelExample.GeneratePlotViewer(); return 0; }
-        if(args.Contains("--bridge-report-example")) { BridgeReportExample.Run(true); return 0; }
         if(args.Contains("--bridge-bearings-native")) { BridgeBearingTests.Run(); BridgeBearingTests.Native(); return 0; }
         if(args.Contains("--bridge-connections-native")) { BridgeConnectionTests.Run(); BridgeConnectionTests.Native(); return 0; }
         if(args.Contains("--beam-support")) { NativeBeamSupportTests.Run();return 0; }

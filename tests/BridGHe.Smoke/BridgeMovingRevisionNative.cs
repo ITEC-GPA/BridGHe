@@ -215,14 +215,10 @@ internal static class BridgeMovingRevisionNative
         Console.WriteLine("REV003 NATIVE: moving positions on unchanged n0 properties.");
         Press(moving);BridgeSegmentExcelTests.Solve(doc,true);
         var definitionTraffic=One(Out(moving,"Model"));Require(R4cMoving.Results(definitionTraffic)!=null,"Moving analysis failed: "+Errors(doc));
-        // The true GPC-only output (the consumers of P2): the moving analysis again on its input given by its GPC input alone, in a folder of its own
-        // with the same file name (the analysed model takes its name from it), equal to the analysis of the definition.
-        string gpcOnlyFolder=Path.Combine(folder,"gpc-only");Directory.CreateDirectory(gpcOnlyFolder);
-        var (trafficGoo,trafficMessages)=R4cMoving.GpcOnlyAnalysis(moving,Path.Combine(gpcOnlyFolder,"M03_N0_MOBILE.st7"));
-        var traffic=R4cMoving.Results(trafficGoo);Require(traffic!=null,"Moving analysis on its GPC input alone failed: "+string.Join(" / ",trafficMessages));
-        string difference=GpcOnlyReplay.ResultsDifference(definitionTraffic,trafficGoo);Require(difference==null,"Moving analysis on its GPC input alone differs from the analysis of the definition: "+difference);
-        Console.WriteLine("REV003 NATIVE: moving analysis on its GPC input alone equal to the analysis of the definition (fingerprint, catalog, every result row).");
-        int slabAssignments=BridgeMovingSlabTargets.Run(gpcOnlyFolder);
+        // P2R (T3, coordinator decision of 12/11): the GPC-only copy of the moving analysis (its input given by its GPC input alone, solved again) is
+        // retired: since P2K the analysis of the definition is itself on GPC data alone. Its checks read the analysis of the definition.
+        var traffic=R4cMoving.Results(definitionTraffic);Require(traffic!=null,"Moving analysis without GPC results.");
+        int slabAssignments=BridgeMovingSlabTargets.Run(folder);
         var path=trafficInput.Model.MovingLoads.Paths.Single();
         var start=new Point3d(path.Start.X,path.Start.Y,path.Start.Z);var end=new Point3d(path.End.X,path.End.Y,path.End.Z);
         var axis=end-start;double length=axis.Length;axis.Unitize();var lateral=new Vector3d(path.Reference.X-path.Start.X,path.Reference.Y-path.Start.Y,path.Reference.Z-path.Start.Z);lateral.Unitize();
@@ -249,8 +245,7 @@ internal static class BridgeMovingRevisionNative
             for(int d=0;d<3;d++)
             {Near(cases[i]+" F"+d+" [N]",actualForce[d],force[d],Math.Max(.02,Math.Abs(force.Z)*1e-7));Near(cases[i]+" M"+d+" [Nmm]",actualMoment[d],moment[d],Math.Max(100,Math.Abs(force.Z)*length*1e-7));}
         }
-        // The GPC-only twin is released before the merge (the rehearsal of the 50 holds a second copy of the definition: OutOfMemoryException).
-        traffic=null;trafficGoo=null;nodes=null;nodeRows=null;
+        traffic=null;nodes=null;nodeRows=null;
         // False does not discard results, nor rerun the native solver when the input fingerprint is unchanged.
         string resultFile=Path.Combine(folder,"M03_N0_MOBILE.lsa");var written=File.GetLastWriteTimeUtc(resultFile);
         moving.ExpireSolution(false);BridgeSegmentExcelTests.Solve(doc,true);
@@ -275,7 +270,7 @@ internal static class BridgeMovingRevisionNative
         GpcBridgeComparison.RequireGpcLinks(doc,"50"); BuildModelScan.Print(doc,"50");
         GpcSecForcesCheck.Require(checker,"50"); GpcCompositeSectionChecks.RequireSuperElementCheck(checker,"50");
         GpcSecForcesCheck.RequireGirders(doc,"50");
-        GpcSecForcesCheck.RequireMomentDispatch(doc,"50"); BarLayoutMeasurement.Report(doc,"50"); CompositeAnalysisPropertyChecks.Require(doc,"50"); NativeParityCapture.Close();
+        GpcSecForcesCheck.RequireMomentDispatch(doc,"50"); BarLayoutMeasurement.Report(doc,"50"); CompositeAnalysisPropertyChecks.Require(doc,"50");
         bridge=null;mergedGoo=null;
         var details=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeDetailCheckComponent").ToArray();
         Require(details.Length==3&&details.All(c=>Out(c,"Section result").VolatileDataCount>0),"Missing detail checks: "+Errors(doc));
@@ -283,6 +278,7 @@ internal static class BridgeMovingRevisionNative
         Require(In(Find(doc,"BridgeReportComponent"),"Results").VolatileDataCount==details.Sum(c=>Out(c,"Section result").VolatileDataCount),"Report input coverage.");
         Require(Errors(doc).Length==0,Errors(doc));
         ResultFingerprint.Mark("REV003 checks, details and plots solved");ResultFingerprint.Write("example50-rev003-native",doc);
+        NativeParityCapture.Close(); // P2R: after the result fingerprint, so that a capture difference still leaves the fingerprint of the run
         if(Environment.GetEnvironmentVariable("BRIDGHE_SAVE_TIMING") is { Length: > 0 } timing)
         {
             Directory.CreateDirectory(timing);string saved=Path.Combine(Path.GetFullPath(timing),"example50-rev003-solved.gh");

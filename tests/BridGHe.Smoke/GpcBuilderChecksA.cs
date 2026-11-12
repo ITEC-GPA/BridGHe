@@ -171,10 +171,10 @@ internal static class GpcBuilderChecksARuns
         var tri = One(h, "PlateComponent", (0, Face(a, b, c)), (1, shell), (2, new[] { pour, other }));
         var patch = One(h, "PlateComponent", (0, Face(a, b, c, d)), (1, patchProperty), (2, new[] { deck }), (4, 12.5));
         One(h, "PlateComponent", (0, Face(b, c, d)), (1, shell), (2, new[] { other, pour, deck }), (4, -0.75));
-        var angledQuad = Turned(h, One(h, "PlateComponent", (0, Face(a, b, c, d)), (1, shell), (3, 30.0)));
-        var angledTri = Turned(h, One(h, "PlateComponent", (0, Face(a, b, c)), (1, shell), (2, new[] { pour }), (3, -45.0), (4, 2.5)));
+        var angledQuad = Turned(h, One(h, "PlateComponent", (0, Face(a, b, c, d)), (1, shell), (3, 30.0)), 30.0);
+        var angledTri = Turned(h, One(h, "PlateComponent", (0, Face(a, b, c)), (1, shell), (2, new[] { pour }), (3, -45.0), (4, 2.5)), -45.0);
         // A quadrangle 0.005 mm out of plane (within the planarity of GPC): the layer axes carry the Straus7 normal, not the former one.
-        var warped = Turned(h, One(h, "PlateComponent", (0, Face(new Point3d(5000, 0, 0), new Point3d(6000, 0, 0), new Point3d(6000, 1000, 0.005), new Point3d(5000, 1000, 0))), (1, shell), (3, 30.0)));
+        var warped = Turned(h, One(h, "PlateComponent", (0, Face(new Point3d(5000, 0, 0), new Point3d(6000, 0, 0), new Point3d(6000, 1000, 0.005), new Point3d(5000, 1000, 0))), (1, shell), (3, 30.0)), 30.0);
         // PAR (A07, user decision of 8/11): more than four vertices: the error and no output (0.3.0 warned and made a plate of 6, 8 or 9 nodes).
         Error(h, "PlateComponent", "LegacyPlateWithMoreThanFourNodes", (0, Face(a, b, new Point3d(2500, 700, 100), c, d)), (1, shell));
 
@@ -282,7 +282,7 @@ internal static class GpcBuilderChecksARuns
         var built = GpcBuilderChecks.Output(h.Run("BuildModelComponent", new int[0], (0, new[] { angledQuad, angledTri, quad, turned, reversedAngled, warped })), 0);
         var conversion = built.GetType().GetProperty("GpcInput").GetValue(built);
         PlateAngles(h, "Build Model", (GPC.Model.Models.Model)conversion.GetType().GetProperty("Model").GetValue(conversion),
-            new[] { angledQuad, angledTri, quad, turned, reversedAngled, warped }.Select(x => ((PlateModel)x.GetType().GetProperty("Value").GetValue(x)).AngleDeg).ToArray());
+            new[] { angledQuad, angledTri, quad, turned, reversedAngled, warped }.Select(x => ((LegacyPlateDraft)Gpc(x)).AngleDeg).ToArray()); // P2R (T3): the angles of the drafts (no FEM value since P2K/P2D)
 
         // Node Filter and Plate Filter: by ID, group, position, property name; a node whose draft the reader refuses (a former displacement,
         // decided on the FEM value); the host checks each decision on the FEM value. Element Filter: unchanged (GH GUIDs only), one run.
@@ -331,8 +331,9 @@ internal static class GpcBuilderChecksARuns
     private static IGH_Goo Align(GpcBuilderChecks h, bool reversed, IGH_Goo plate, int axis, Vector3d direction)
     {
         var output = One(h, "AlignPlateAxesComponent", (0, plate), (1, axis), (2, direction));
-        var angle = ((PlateModel)output.GetType().GetProperty("Value").GetValue(output)).AngleDeg;
-        var given = ((PlateModel)plate.GetType().GetProperty("Value").GetValue(plate)).AngleDeg;
+        // P2R (T3): the angles of the drafts (no FEM value since P2K/P2D; before, of the FEM values).
+        var angle = ((LegacyPlateDraft)Gpc(output)).AngleDeg;
+        var given = ((LegacyPlateDraft)Gpc(plate)).AngleDeg;
         if (angle != given) { h.Failures.Add($"A AlignPlateAxesComponent: axis {axis}, direction {direction}: angle {angle:R} where {given:R}"); return output; }
         var before = ((LegacyPlateDraft)Gpc(plate)).Corners; var after = ((LegacyPlateDraft)Gpc(output)).Corners;
         var expected = reversed ? before.Reverse().ToList() : before.ToList();
@@ -340,32 +341,25 @@ internal static class GpcBuilderChecksARuns
         return output;
     }
 
-    /// <summary>P2X: a plate datum with a local axis angle: the draft has the angle of the FEM value (bit for bit) and, for an angle other than 0,
-    /// the layer axes V1, V2, V3 of the turned local axes of the FEM value (<c>PlateModel.GetLocalAxes</c>, the axes 0.3.0 drew and gave Straus7
-    /// by <c>St7SetPlateXAngle1</c>) within 1e-12; no layer axes for the angle 0.</summary>
-    private static IGH_Goo Turned(GpcBuilderChecks h, IGH_Goo plate)
+    /// <summary>P2X: a plate datum with a local axis angle: for an angle other than 0, the layer axes V1, V2, V3 of the draft are the Straus7 frame
+    /// of its corners turned by the angle (the normal within 1e-12, V1 at the angle within 1e-9; what the writer gives Straus7 by
+    /// <c>St7SetPlateXAngle1</c>); no layer axes for the angle 0. <b>P2R (T3, 12/11):</b> on the draft alone: the angle is the explicit one of the
+    /// call (<paramref name="expected"/>, the Angle input of Plate) or the angle of the draft (Align Plate Axes); before, the angle and the turned
+    /// local axes of the FEM value (<c>PlateModel.GetLocalAxes</c>), which the plates no longer carry (P2K/P2D).</summary>
+    private static IGH_Goo Turned(GpcBuilderChecks h, IGH_Goo plate, double? expected = null)
     {
-        var fem = (PlateModel)plate.GetType().GetProperty("Value").GetValue(plate);
         var draft = (LegacyPlateDraft)Gpc(plate);
-        if (!(bool)plate.GetType().GetProperty("HasAttachedGpc").GetValue(plate)) h.Failures.Add($"A turned plate {fem.AngleDeg:R}: no draft attached");
-        if (BitConverter.DoubleToInt64Bits(draft.AngleDeg) != BitConverter.DoubleToInt64Bits(fem.AngleDeg)) h.Failures.Add($"A turned plate: angle {draft.AngleDeg:R} where {fem.AngleDeg:R}");
+        double degrees = expected ?? draft.AngleDeg;
+        if (!(bool)plate.GetType().GetProperty("HasAttachedGpc").GetValue(plate)) h.Failures.Add($"A turned plate {degrees:R}: no draft attached");
+        if (!double.IsFinite(draft.AngleDeg) || BitConverter.DoubleToInt64Bits(draft.AngleDeg) != BitConverter.DoubleToInt64Bits(degrees)) h.Failures.Add($"A turned plate: angle {draft.AngleDeg:R} where {degrees:R}");
         var layer = draft.Plate.Assignments.LayerAxes;
-        if (fem.AngleDeg == 0) { if (layer != null) h.Failures.Add("A turned plate: layer axes for the angle 0"); return plate; }
-        if (layer == null) { h.Failures.Add($"A turned plate {fem.AngleDeg:R}: no layer axes"); return plate; }
-        fem.GetLocalAxes(out var a1, out var a2, out var a3);
-        a1.Unitize(); a2.Unitize(); a3.Unitize();
-        double Far(GPC.Geometry.Vector3d v, Vector3d w) => Math.Max(Math.Abs(v.X - w.X), Math.Max(Math.Abs(v.Y - w.Y), Math.Abs(v.Z - w.Z)));
+        if (degrees == 0) { if (layer != null) h.Failures.Add("A turned plate: layer axes for the angle 0"); return plate; }
+        if (layer == null) { h.Failures.Add($"A turned plate {degrees:R}: no layer axes"); return plate; }
         // The Straus7 frame of the corners: the normal of the layer axes and the angle of V1 from its axis 1 (what the writer checks and gives).
         BridGHe.Common.Gpc.Builders.GpcPlateBuilders.StrausAxes(draft.Corners, out var sx, out var sy, out var sz);
         double normal = Math.Max(Math.Abs(layer.V3.X - sz.X), Math.Max(Math.Abs(layer.V3.Y - sz.Y), Math.Abs(layer.V3.Z - sz.Z)));
         double angle = Math.Atan2(layer.V1.X * sy.X + layer.V1.Y * sy.Y + layer.V1.Z * sy.Z, layer.V1.X * sx.X + layer.V1.Y * sx.Y + layer.V1.Z * sx.Z) * 180 / Math.PI;
-        if (!(normal <= 1e-12) || !(Math.Abs(Math.IEEERemainder(angle - fem.AngleDeg, 360)) <= 1e-9)) h.Failures.Add($"A turned plate {fem.AngleDeg:R}: layer axes at {angle:R}°, normal {normal:R} from the Straus7 one");
-        // A planar plate: the layer axes are the turned local axes of the former plate (the axes 0.3.0 drew), to the last digits.
-        if (Far(sz, a3) <= 1e-12)
-        {
-            double far = Math.Max(Far(layer.V1, a1), Math.Max(Far(layer.V2, a2), Far(layer.V3, a3)));
-            if (!(far <= 1e-12)) h.Failures.Add($"A turned plate {fem.AngleDeg:R}: layer axes {far:R} from the former local axes");
-        }
+        if (!(normal <= 1e-12) || !(Math.Abs(Math.IEEERemainder(angle - degrees, 360)) <= 1e-9)) h.Failures.Add($"A turned plate {degrees:R}: layer axes at {angle:R}°, normal {normal:R} from the Straus7 one");
         TurnedPlates++;
         return plate;
     }
@@ -390,11 +384,16 @@ internal static class GpcBuilderChecksARuns
         }
     }
 
-    /// <summary>The local axes of the FEM value of a plate datum (the expressions of the former component).</summary>
+    /// <summary>The local axes of a plate datum. <b>P2R (T3, 12/11):</b> from its draft (the plates carry no FEM value since P2K/P2D): the layer
+    /// axes of a turned draft, else the Straus7 frame of its corners, the local axes of the former plate for a planar plate (to the last digits,
+    /// the check of <see cref="Turned"/>); before, <c>PlateModel.GetLocalAxes</c> of the FEM value.</summary>
     private static (Vector3d A1, Vector3d A2, Vector3d A3) Axes(IGH_Goo plate)
     {
-        ((PlateModel)plate.GetType().GetProperty("Value").GetValue(plate)).GetLocalAxes(out var a1, out var a2, out var a3);
-        return (a1, a2, a3);
+        var draft = (LegacyPlateDraft)Gpc(plate);
+        static Vector3d V(GPC.Geometry.Vector3d v) => new Vector3d(v.X, v.Y, v.Z);
+        if (draft.Plate.Assignments.LayerAxes is { } layer) return (V(layer.V1), V(layer.V2), V(layer.V3));
+        BridGHe.Common.Gpc.Builders.GpcPlateBuilders.StrausAxes(draft.Corners, out var sx, out var sy, out var sz);
+        return (V(sx), V(sy), V(sz));
     }
 
     /// <summary>A filter run: the outputs are the inputs partitioned (each decision taken on the GPC draft and checked on the FEM value by the host).</summary>

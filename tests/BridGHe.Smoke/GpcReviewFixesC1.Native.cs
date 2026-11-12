@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Reflection;
 using BridGHe.Common.Gpc;
 using BridGHe.Common.Models;
 using GPC.Converter.Straus7;
@@ -30,6 +31,26 @@ internal static class GpcReviewFixesC1Native
         if (address == IntPtr.Zero) throw new InvalidOperationException("C1 native: no St7API function " + name);
         return Marshal.GetDelegateForFunctionPointer<T>(address);
     }
+    /// <summary>P2R (T3): the GPC material of every beam and plate property of a converted model replaced by <paramref name="material"/>.</summary>
+    private static void SwapMaterial(GPC.Model.Models.Model model, GPC.Model.Materials.Material material)
+    {
+        static void Set(object property)
+        {
+            for (var t = property.GetType(); t != null; t = t.BaseType)
+            {
+                var pi = t.GetProperty("Material", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                if (pi?.CanWrite == true) { pi.SetValue(property, swapped); return; }
+                var fi = t.GetField("<Material>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                if (fi != null) { fi.SetValue(property, swapped); return; }
+            }
+            throw new InvalidOperationException("C1 native: no settable material on " + property.GetType().Name);
+        }
+        swapped = material;
+        foreach (var b in model.BeamElements.Values) Set(b.BeamProperty);
+        foreach (var a in model.AreaElements.Values) Set(a.GetType().GetProperty("PlateProperty")?.GetValue(a) ?? a.GetType().GetProperty("AreaProperty")?.GetValue(a)
+            ?? throw new InvalidOperationException("C1 native: no property on the plate " + a.GetType().Name));
+    }
+    private static GPC.Model.Materials.Material swapped;
     private static void C(int code, string what) { if (code != 0) throw new InvalidOperationException($"C1 native: {what} returned {code}"); }
     private static string R(double v) => v.ToString("R", CultureInfo.InvariantCulture);
     private static string Rs(IEnumerable<double> v) => string.Join(" ", v.Select(R));
@@ -40,9 +61,13 @@ internal static class GpcReviewFixesC1Native
         void Check(bool ok, string what) { if (!ok) failures.Add(what); }
         var goo = GpcReviewFixesC1.TableMaterialOutput(GpcReviewFixesC1.Alpha, GpcReviewFixesC1.Rho, out var errors);
         if (goo == null) { Console.WriteLine("  C1 NATIVE FAIL: Table Material with α and ρ gives no material: " + string.Join(" / ", errors)); return 1; }
+        // P2R (T3, 12/11): Table Material gives no FEM value since P2K/P2D: the model of the checks is built on a placeholder FEM material and its
+        // GPC conversion takes the GPC material of the output (GH_Material.Gpc) on its beam and plate properties (SwapMaterial). Before, the FEM
+        // value of the output, converted (the GPC material of the output was its conversion, R3).
         var table = (MaterialModel)goo.GetType().GetProperty("Value").GetValue(goo);
+        var gpcTable = (GPC.Model.Materials.Material)goo.GetType().GetProperty("Gpc").GetValue(goo) ?? throw new InvalidOperationException("C1 native: Table Material without its GPC material");
         // The model of the checks with the table material, and beside it a plain material with the same α and ρ (where Straus7 puts them).
-        var input = GpcReviewFixesC1.TableModel(table);
+        var input = GpcReviewFixesC1.TableModel(table ?? new MaterialModel("C1 table placeholder") { Name = "C1 table placeholder", Modulus = 210000, PoissonRatio = 0.3 });
         var plain = new MaterialModel("C1 plain") { Name = "C1 plain", Modulus = 210000, PoissonRatio = 0.3, Density = GpcReviewFixesC1.Rho, ThermalExpansion = GpcReviewFixesC1.Alpha };
         var reference = GpcReviewFixesC1.TableModel(plain);
         foreach (var e in reference.Elements) { if (e is BeamModel b) b.BeamProperty.Name = "C1 plain beam"; if (e is PlateModel p) p.PlateProperty.Name = "C1 plain shell"; }
@@ -52,6 +77,7 @@ internal static class GpcReviewFixesC1Native
         {
             string st7 = Path.Combine(folder, "c1-" + label + ".st7");
             var conversion = GpcModels.Convert(model, 1e-6);
+            if (label == "table" && table == null) SwapMaterial(conversion.Model, gpcTable);
             GpcPreflight.Require(conversion.Model);
             var plan = Straus7ModelWritePlan.Prepare(conversion.Model, null, null, conversion.Report.NativeSections);
             using (var writer = new Straus7NativeWriter(st7, folder)) { plan.Write(writer, conversion.Model); writer.Save(); }

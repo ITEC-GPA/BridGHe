@@ -78,110 +78,13 @@ internal static class GpcBuildModelChecks
         return $"{x.Length} elements, {differing} numbers differ; maximum relative difference: geometry {maxima[0]:E2}, loads {maxima[1]:E2}, section values {maxima[2]:E2}";
     }
 
-    /// <summary><b>Transitional (P2 retires it).</b> The kN-m native section of core-native (<c>Program.CheckNativeSectionAnalysis</c>) through
-    /// Build Model on its FEM elements, measured against the conversion of the FEM output as above.</summary>
-    internal static void Single(string label, ModelModel fem) => RunFem(label, fem);
-
-    private static void RunFem(string singleLabel, ModelModel singleModel)
-    {
-        var plugin = BridgeMergeTests.Initialize();
-        var settings = plugin.GetType("BridGHe.Grasshopper.Settings");
-        var instance = settings.GetProperty("Instance").GetValue(null);
-        var toleranceProperty = settings.GetProperty("Tolerance");
-        // The tolerance of the plug-in (the model tolerance of the active Rhino document, 0.001 without one), the same for both paths.
-        double pluginTolerance = (double)toleranceProperty.GetValue(instance);
-        int compared = 0, measured = 0; var totals = new List<string>(); var unitMaxima = new double[3];
-        int draftModels = 0, draftNodes = 0, draftBeams = 0, draftPlates = 0, draftsNotFitting = 0;
-        // R6.4 (2), extension (α): the drafts of the elements of the output (LegacyBuildModel) against the conversion of every element of the
-        // FEM output with the same identity (the identity of the conversion, as Decompose Model gives them), by the canonical texts of the
-        // capture, in every unit system: equal, every element. A FEM output whose elements merged by ID (ModelModel.AddElements) has no
-        // element lists the drafts describe: counted (Decompose Model then keeps the conversion of the FEM values).
-        void Drafts(string label, GpcModels.Conversion attached, ModelModel fem)
-        {
-            var d = attached.Drafts ?? throw new Exception($"GPC BUILD MODEL FAIL ({label}): the GPC input carries no drafts of its elements");
-            if (!d.Fits(fem.Nodes.Count, fem.Beams.Count, fem.Plates.Count) || fem.Elements.Count != fem.Nodes.Count + fem.Beams.Count + fem.Plates.Count)
-            {
-                draftsNotFitting++;
-                Console.WriteLine($"GPC BUILD MODEL DRAFTS ({label}): {d.Nodes.Count}/{d.Beams.Count}/{d.Plates.Count} drafts, FEM output {fem.Nodes.Count}/{fem.Beams.Count}/{fem.Plates.Count} of {fem.Elements.Count} elements (merged by ID): not compared");
-                return;
-            }
-            void Same(string kind, int i, object draft, object conversion)
-            {
-                string a = GpcDraftCapture.Text(draft), c = GpcDraftCapture.Text(conversion);
-                if (a != c && Environment.GetEnvironmentVariable("BRIDGHE_DRAFT_DIFF") is string dump && dump.Length != 0)
-                { Directory.CreateDirectory(dump); File.WriteAllText(Path.Combine(dump, "draft.txt"), a); File.WriteAllText(Path.Combine(dump, "conversion.txt"), c); }
-                if (a != c) throw new Exception($"GPC BUILD MODEL FAIL ({label}): the draft of {kind} {i + 1} of the output differs from the conversion of its FEM value\n" + GpcDraftArchiveChecks.FirstDifference(c, a));
-            }
-            for (int i = 0; i < fem.Nodes.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Nodes[i]); Same("node", i, GpcDrafts.Reidentify(d.Nodes[i], id), GpcBeamDrafts.FromFemm(fem.Nodes[i], id)); }
-            for (int i = 0; i < fem.Beams.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Beams[i]); Same("beam", i, GpcDrafts.Reidentify(d.Beams[i], id), GpcBeamDrafts.FromFemm(fem.Beams[i], id)); }
-            for (int i = 0; i < fem.Plates.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Plates[i]); Same("plate", i, GpcDrafts.Reidentify(d.Plates[i], id), GpcBeamDrafts.FromFemm(fem.Plates[i], id)); }
-            draftModels++; draftNodes += fem.Nodes.Count; draftBeams += fem.Beams.Count; draftPlates += fem.Plates.Count;
-        }
-        IGH_Goo Goo(string type, object value, Guid? guid = null)
-        {
-            var goo = (IGH_Goo)Activator.CreateInstance(plugin.GetType("BridGHe.Grasshopper.DataTypes.Fem." + type));
-            goo.GetType().GetProperty("Value").SetValue(goo, value);
-            if (guid.HasValue) goo.GetType().GetField("_guid", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(goo, guid.Value);
-            return goo;
-        }
-        IGH_Goo Element(ElementModel e, Guid? guid = null) => e switch { NodeModel n => Goo("GH_Node", n, guid), BeamModel b => Goo("GH_Beam", b, guid), PlateModel p => Goo("GH_Plate", p, guid), _ => throw new NotSupportedException(e.GetType().Name) };
-        void Build(string label, IEnumerable<IGH_Goo> elements, IEnumerable<LoadCombinationModel> combinations, IEnumerable<StagedConstructionModel> stages, double unused,
-            ModelModel.ModelUnits modelUnits = ModelModel.ModelUnits.Nmm)
-        {
-            double tolerance = pluginTolerance;
-            using var doc = new GH_Document();
-            var component = (GH_Component)Activator.CreateInstance(plugin.GetTypes().Single(t => t.Name == "BuildModelComponent"));
-            component.CreateAttributes(); doc.AddObject(component, false);
-            var input = (Param_GenericObject)component.Params.Input[0];
-            foreach (var e in elements) input.PersistentData.Append(e);
-            var name = (Param_String)component.Params.Input[1]; name.PersistentData.Clear(); name.SetPersistentData(label);
-            var units = (Param_Integer)component.Params.Input[2]; units.PersistentData.Clear(); units.SetPersistentData((int)modelUnits);
-            foreach (var c in combinations) ((dynamic)component.Params.Input[3]).PersistentData.Append((dynamic)Goo("GH_LoadCombination", c));
-            foreach (var s in stages) ((Param_GenericObject)component.Params.Input[4]).PersistentData.Append(Goo("GH_StagedConstruction", s));
-            GH_Document.EnableSolutions = true; doc.Enabled = true; doc.NewSolution(false, GH_SolutionMode.Silent);
-            var messages = component.RuntimeMessages(GH_RuntimeMessageLevel.Error).Concat(component.RuntimeMessages(GH_RuntimeMessageLevel.Remark)).ToArray();
-            var output = component.Params.Output[0].VolatileData.AllData(true).SingleOrDefault();
-            if (output == null)
-            {
-                // The FEM path refused the input: the GPC path gives the same error (the remark is not given then).
-                Console.WriteLine($"GPC BUILD MODEL ({label}): no model, '{string.Join("; ", messages)}'"); compared++; return;
-            }
-            if (!(bool)output.GetType().GetProperty("HasAttachedInput").GetValue(output))
-            {
-                // Build Model on GPC refused it: the conversion of the FEM model must refuse it with the same message.
-                var fem0 = (ModelModel)output.GetType().GetProperty("Value").GetValue(output);
-                string error = null;
-                try { GpcInputComparison.Conversion(fem0, tolerance, Guid.NewGuid()); } catch (Exception ex) when (ex is ArgumentException || ex is NotSupportedException || ex is InvalidOperationException) { error = ex.Message; }
-                if (error == null || !messages.Contains("GPC Build Model: " + error)) throw new Exception($"GPC BUILD MODEL FAIL ({label}): no GPC input; messages '{string.Join("; ", messages)}', conversion '{error ?? "converted"}'");
-                Console.WriteLine($"GPC BUILD MODEL ({label}): the same error, '{error}'"); compared++; return;
-            }
-            var attached = (GpcModels.Conversion)output.GetType().GetProperty("GpcInput").GetValue(output);
-            var fem = (ModelModel)output.GetType().GetProperty("Value").GetValue(output);
-            Drafts(label, attached, fem);
-            if (modelUnits != ModelModel.ModelUnits.Nmm)
-            {
-                // Decision 1 (b): measured, not required bit for bit (the N-mm models are).
-                string measure = Measure(label, attached, fem, tolerance, out var maxima);
-                for (int c = 0; c < 3; c++) unitMaxima[c] = Math.Max(unitMaxima[c], maxima[c]);
-                Console.WriteLine($"GPC BUILD MODEL UNITS PASS ({label}, {modelUnits}): {measure}; {attached.Report.BuildModel}"); measured++; compared++;
-                return;
-            }
-            string result = GpcInputComparison.Require(label, attached, fem, tolerance, buildModel: true);
-            totals.Add(attached.Report.BuildModel.ToString());
-            compared++;
-            if (compared % 20 == 0 || label.StartsWith("synthetic", StringComparison.Ordinal)) Console.WriteLine($"GPC BUILD MODEL PASS ({label}): {result}; {attached.Report.BuildModel}");
-        }
-        {
-            void Model(string label, ModelModel fem, double tolerance)
-            {
-                if (fem.Elements.Any(e => e.Results.Count != 0)) { fem = new ModelModel(fem); foreach (var e in fem.Elements) e.Results.Clear(); }
-                if (fem.MovingPaths.Count != 0) return; // moving paths come after Build Model (Attach Moving Paths)
-                Build(label, fem.Elements.Select(e => Element(e)), fem.LoadCombinations, fem.StagedConstruction, tolerance, fem.Units);
-            }
-                Model(singleLabel, singleModel, 0);
-                Console.WriteLine($"GPC BUILD MODEL UNITS ({singleLabel}): maximum relative difference geometry {unitMaxima[0]:E2}, loads {unitMaxima[1]:E2}, section values {unitMaxima[2]:E2}");
-        }
-    }
+    /// <summary>The kN-m native section of core-native (<c>Program.CheckNativeSectionAnalysis</c>). <b>P2R (T3, 12/11): retired.</b> Until P2 it ran
+    /// Build Model on the FEM elements of the case and measured its output against the conversion of the FEM output; Build Model has no FEM
+    /// output since P2K. Its coverage stays: Build Model on GPC drafts in every unit system against explicit values (<c>gpc-build-model</c>, R0),
+    /// Build Model on the drafts of the 0.3.0 models read by value (<c>gpc-build-model-legacy</c>), and in core-native the native section of this
+    /// case re-resolved in mm with its analytical area b × d (the assertions before this call).</summary>
+    internal static void Single(string label, ModelModel fem) =>
+        Console.WriteLine($"GPC BUILD MODEL ({label}): the comparison with the FEM output retired (P2R): no FEM output since P2K; covered by gpc-build-model, gpc-build-model-legacy and the analytical area above.");
     // -----------------------------------------------------------------------------------------------------------------------------------------
     // R6.6 lane R0: Build Model on GPC data alone.
 

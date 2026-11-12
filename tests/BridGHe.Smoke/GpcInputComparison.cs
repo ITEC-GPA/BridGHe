@@ -301,7 +301,9 @@ internal static class GpcInputComparison
         // R6.6 lane R1: the comparison of expected and actual GPC data, without the FEM path: the transformers on the GPC examples of R0.
         var (expectedOutputs, expectedChecks) = ExpectedOnGpc(Path);
         Console.WriteLine($"GPC MODEL TRANSFORMS (R1, without FEM): {expectedOutputs} transformer outputs and refusals of the GPC examples 01-10 (R0) against their explicit expected GPC data ({expectedChecks} checks: paths, cases, units, element identities and positions, drafts, replaced properties, numbering, messages)");
-        if (Environment.GetEnvironmentVariable("BRIDGHE_R1_TRANSITIONAL") == "0") { Console.WriteLine("GPC MODEL TRANSFORMS PASS (R1): the FEM comparison not run (BRIDGHE_R1_TRANSITIONAL=0)"); return; }
+        // P2R (T1/R5, 12/11): the comparison with the conversion of the FEM outputs is retired (the transformers give no FEM output since P2K/P2D);
+        // the oracle is the explicit expected GPC data above (R1). The FEM loop below stays only for BRIDGHE_P2R_FEM_TRANSFORMS=1 until P2-taglio.
+        if (Environment.GetEnvironmentVariable("BRIDGHE_P2R_FEM_TRANSFORMS") != "1") { Console.WriteLine("GPC MODEL TRANSFORMS PASS (R1): the explicit expected GPC data; the FEM comparison retired (P2R)"); return; }
         // TRANSITIONAL (until P2, P2 decides): the GPC outputs against the conversion of the FEM outputs, bit for bit.
         foreach (var example in NativeExamples.Create())
         {
