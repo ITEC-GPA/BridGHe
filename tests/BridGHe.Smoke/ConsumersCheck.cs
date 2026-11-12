@@ -21,6 +21,9 @@ internal static class ConsumersCheck
 {
     private sealed record Row(string Id, double Station, string Case, double[] Values);
 
+    /// <summary>The refusal of a fatigue history of results not in N-mm (0.3.0 and both paths of 0.4.0).</summary>
+    private const string FatigueUnitsRefusal = "History extraction expects N-mm result units.";
+
     /// <param name="expectedCases">The result names the analysis requested (examples 01–10): the result cases of the records are exactly these,
     /// plus the generated moving cases; null: not checked.</param>
     /// <param name="input">The GPC input of the analysis: the model audit on the analysed model is checked against its structure; null: not checked.</param>
@@ -86,7 +89,17 @@ internal static class ConsumersCheck
         Require(actualCases.SequenceEqual(expectedRecords, StringComparer.Ordinal), $"result cases: {string.Join("; ", actualCases)} / expected {string.Join("; ", expectedRecords)}");
         values += actualCases.Length;
         var moving = catalog.GeneratedMovingCases();
-        if (generatedMovingCases >= 0) Require(moving.Count == generatedMovingCases && moving.Select(c => c.Number).SequenceEqual(Enumerable.Range(1, moving.Count)), $"{moving.Count} generated moving cases, expected {generatedMovingCases}");
+        if (generatedMovingCases >= 0)
+        {
+            // R6.6 R2bN: the generated cases carry their native Straus7 number, as the former GeneratedMovingCases of 0.3.0 (MovingLoadExporter.cs:40-48
+            // of 95ab7c3, the Converter in Straus7MovingNativeApi.ConvertSelectedMovingPaths): the cases added by the conversion of the paths, numbered
+            // after the load cases written before it, i.e. the load cases of the input (example 04: «Traffic» is case 1, its 13 positions are 2–14).
+            Require(input != null, "the GPC input of the analysis, whose load cases precede the generated moving cases");
+            int first = input.Model.LoadCases.Count + 1;
+            Require(moving.Count == generatedMovingCases && moving.Select(c => c.Number).SequenceEqual(Enumerable.Range(first, moving.Count))
+                && moving.All(c => !string.IsNullOrWhiteSpace(c.Name)) && moving.Select(c => c.Name).Distinct(StringComparer.Ordinal).Count() == moving.Count,
+                $"{moving.Count} generated moving cases ({string.Join(", ", moving.Select(c => c.Number + ": " + c.Name))}), expected {generatedMovingCases} with distinct names, numbered from {first} after the {first - 1} load cases of the input");
+        }
         if (expectedCases != null)
         {
             var labels = BridgeResultCases.Records(gpc).Select(r => r.Case).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToArray();
@@ -108,6 +121,9 @@ internal static class ConsumersCheck
                     var stored = cases.Select(c => own.Where(r => r.Case == c && Math.Abs(r.Station - station) <= 1e-9 * Math.Max(1, length)).ToArray()).ToArray();
                     BridgeFatigueSeries series = null; string error = null;
                     try { series = BridgeFatigueHistory.Extract(gpc, beam.Name, station, cases, component); } catch (ArgumentException e) { error = e.Message; }
+                    // R6.6 R2bN: a history is extracted from N-mm results only, as in 0.3.0 (BridgeFatigueHistory.cs:19 of 95ab7c3) and on the FEM path
+                    // (BridgeFatigueHistory.cs:24): a model in other definition units (the kN-m native section of core-native) is refused with that message.
+                    if (catalog.Units.Units != DefinitionUnits.Nmm) { Require(error == FatigueUnitsRefusal, $"{what}: a history of {catalog.Units.Units} results not refused with «{FatigueUnitsRefusal}» ({error ?? "no error"})"); continue; }
                     if (stored.Any(s => s.Length > 1)) { Require(error != null, $"{what}: a two-sided result at the station not refused"); continue; }
                     // A case not stored at the station is resampled from its own samples, which must include both beam ends (no extrapolation).
                     bool End(string c, double at) => own.Any(r => r.Case == c && Math.Abs(r.Station - at) <= 1e-9 * Math.Max(1, length));
@@ -129,8 +145,9 @@ internal static class ConsumersCheck
         return values;
     }
 
-    /// <summary>The model audit on the analysed model against the known structure of its GPC input: no error; DISCONNECTED exactly when the
-    /// elements form more than one connected part (shared end points and plate vertices within the tolerance); ISOLATED_NODE exactly for the
+    /// <summary>The model audit on the analysed model against the known structure of its GPC input: no error but INVALID_STAGE_INCREMENT on the
+    /// stages 0.3.0 reports on a model given by Build Model (see below); DISCONNECTED exactly when the elements form more than one connected
+    /// part (shared end points and plate vertices within the tolerance); ISOLATED_NODE exactly for the
     /// nodes on no element vertex; NO_SUPPORT exactly when no node has a restraint; no INVALID_RESULT (every stored result has its case); and
     /// a result without case identity reported as INVALID_RESULT.</summary>
     internal static string Audit(GpcModels.Conversion input, GPC.Model.Models.Model analysed, string label)
@@ -155,12 +172,26 @@ internal static class ConsumersCheck
         // A restraint record of a node frame (NodeCoordinateAttributeModel, the reader record of a frame) is not a support.
         bool supported = model.NodesElements.Values.Any(n => n.Assignments.Restrains.Any(r => r.SourceRecord != "NodeCoordinateAttributeModel" && r.Restrain.Restrains.Any(d => d.IsRestrained || d.HasStiffness)))
             || model.BeamElements.Values.Any(b => b.Assignments.Physical?.Supports.Count > 0) || model.AreaElements.Values.Any(p => p.Assignments.Physical?.Supports.Count > 0);
-        Require(!issues.Any(i => i.Severity == "Error"), "errors on a valid example:\n" + Text());
+        // R6.6 R2bN: the only errors are the stage increments 0.3.0 reports on a model given by Build Model. In 0.3.0 (BridgeModelAudit.cs:155-160
+        // of 95ab7c3) a stage increment may reference only a case of ModelModel.LoadCases, the registered case records, with a finite factor; Build
+        // Model registers no case (its GH_Model, GH_Model.cs:135-175 of 95ab7c3, never calls AddLoadCases; the hand-built FEM catalogue of the examples
+        // did) and Attach Moving Paths registers the case of its paths. So 0.3.0 reports INVALID_STAGE_INCREMENT on every stage with an increment
+        // term of a model given by Build Model (shown on examples 06-10 by P2B/results/r2bn-probe030-audit.log), and so does the GPC audit (the
+        // Registered origin of the input). The examples are given by Build Model (GpcNativeExamples.RequireSameAsFem): their registered cases are exactly the
+        // cases of their moving paths, and the stages reported are exactly those with a term on another case or a non-finite factor.
+        var caseNames = model.LoadCases.Values.ToDictionary(c => c.Guid, c => c.Name);
+        var pathCases = (model.MovingLoads?.Paths ?? Enumerable.Empty<GPC.Model.Actions.Moving.MovingLoadPath>()).Select(p => caseNames[p.CaseGuid]).ToHashSet(StringComparer.Ordinal);
+        var registered = input.Report.CaseOrigins.Where(p => (p.Value & BridGHe.Common.Gpc.Legacy.LegacyCaseOrigins.Registered) != 0).Select(p => p.Key).ToArray();
+        Require(pathCases.SetEquals(registered), $"registered cases {string.Join(",", registered)}, as Build Model and Attach Moving Paths give them: {string.Join(",", pathCases)}");
+        var stageErrors = model.Stages.Values.Where(s => (s.AnalysisState?.Increments ?? Array.Empty<GPC.Model.Stages.StageLoadIncrement>()).Any(i => (i.LoadFactors ?? Array.Empty<GPC.Model.Stages.StageCaseFactor>())
+            .Any(f => !double.IsFinite(f.Factor) || !caseNames.TryGetValue(f.CaseGuid, out var name) || !pathCases.Contains(name)))).Select(s => "INVALID_STAGE_INCREMENT|" + s.Name).OrderBy(x => x, StringComparer.Ordinal).ToArray();
+        var errors = issues.Where(i => i.Severity == "Error").Select(i => i.Code + "|" + i.Element).OrderBy(x => x, StringComparer.Ordinal).ToArray();
+        Require(errors.SequenceEqual(stageErrors, StringComparer.Ordinal), $"errors on a valid example other than the stage increments 0.3.0 reports ({string.Join(", ", stageErrors)}):\n" + Text());
         Require(issues.Any(i => i.Code == "DISCONNECTED") == (parts > 1), $"{parts} connected parts:\n" + Text());
         Require(issues.Where(i => i.Code == "ISOLATED_NODE").Select(i => i.Element).OrderBy(x => x, StringComparer.Ordinal).SequenceEqual(isolated), $"isolated nodes {string.Join(",", isolated)}:\n" + Text());
         Require(issues.Any(i => i.Code == "NO_SUPPORT") == !supported, $"supported {supported}:\n" + Text());
         Require(!issues.Any(i => i.Code == "INVALID_RESULT"), "a stored result without case identity:\n" + Text());
-        return $"model audit as the structure ({parts} part(s), {isolated.Length} isolated nodes, {(supported ? "supported" : "no support")}; {issues.Length} issues: {string.Join(",", issues.Select(i => i.Code).Distinct())})";
+        return $"model audit as the structure ({parts} part(s), {isolated.Length} isolated nodes, {(supported ? "supported" : "no support")}, {stageErrors.Length} stage increments reported as 0.3.0; {issues.Length} issues: {string.Join(",", issues.Select(i => i.Code).Distinct())})";
     }
 
     private static string Bits(double v) => BitConverter.DoubleToInt64Bits(v == 0 ? 0.0 : v).ToString("X16", CultureInfo.InvariantCulture);
