@@ -469,24 +469,32 @@ internal static class P2dSaveReopen
 
     private static string Errors(GH_Document doc) => string.Join("\n", doc.Objects.OfType<GH_ActiveObject>().SelectMany(o => o.RuntimeMessages(GH_RuntimeMessageLevel.Error).Select(m => o.NickName + ": " + m)).Take(20));
 
+    /// <summary>The stages of the native runners, each pressed and solved in turn: the document; Bridge Section Read; the Straus R3 analyses
+    /// (not when reopened: their saved results), then the moving analyses; Bridge Combination Excel in mode 1; Build BridGHe Model; the Super
+    /// Element Checks. Bridge Report is never pressed.</summary>
     private static void Solve(GH_Document doc, bool reopened)
     {
-        foreach (var c in doc.Objects.OfType<GH_Component>())
-        {
-            string type = c.GetType().Name;
-            if (type == "BridgeReportComponent") { Press(c, false); continue; }
-            if (type == "BridgeSectionReadComponent") { BridgeSegmentExcelTests.Press(c); c.ExpireSolution(false); continue; }
-            if (!Pressed.Contains(type)) continue;
-            // Reopened: the Straus R3 analyses keep their saved results (not pressed); everything else is pressed as on the first run.
-            Press(c, !(reopened && type == "StrausR3AnalysisComponent"));
-        }
+        var all = doc.Objects.OfType<GH_Component>().ToArray();
+        IEnumerable<GH_Component> Of(string type) => all.Where(c => c.GetType().Name == type).OrderBy(c => c.NickName, StringComparer.Ordinal).ThenBy(c => c.InstanceGuid);
+        foreach (var c in Of("BridgeReportComponent")) Press(c, false);
         BridgeSegmentExcelTests.Solve(doc, true);
+        foreach (var c in Of("BridgeSectionReadComponent")) { BridgeSegmentExcelTests.Press(c); c.ExpireSolution(false); }
+        BridgeSegmentExcelTests.Solve(doc, true);
+        if (!reopened) foreach (var c in Of("StrausR3AnalysisComponent")) { Press(c, true); BridgeSegmentExcelTests.Solve(doc, true); }
+        foreach (var c in Of("MovingStaticAnalysisComponent")) { Press(c, true); BridgeSegmentExcelTests.Solve(doc, true); }
+        foreach (var c in Of("BridgeCombinationExcelComponent"))
+            if (Input(c, "Mode")?.VolatileData.AllData(true).OfType<GH_Integer>().FirstOrDefault()?.Value == 1) { Press(c, true); BridgeSegmentExcelTests.Solve(doc, true); }
+        foreach (var c in Of("BuildBridgeModel")) { Press(c, true); BridgeSegmentExcelTests.Solve(doc, true); }
+        foreach (var c in Of("SuperElementCheckComponent")) { Press(c, true); BridgeSegmentExcelTests.Solve(doc, true); }
     }
 
-    internal static int Run(string definition, string label)
+    internal static int Run(string definition, string label, string filePath = null)
     {
-        BridgeMergeTests.Initialize();
-        string source = Path.GetFullPath(Path.Combine(ExamplePaths.Root, definition));
+        // As the native runners: the Grasshopper component libraries the examples use (no «missing objects» dialog), the definition they read
+        // (the migrated candidate of 99, the capture input of 50: a path from the worktree, else from the examples) and its file path.
+        BridgeExampleMigration.Initialize();
+        string source = File.Exists(definition) ? Path.GetFullPath(definition) : Path.GetFullPath(Path.Combine(ExamplePaths.Root, definition));
+        string documentPath = filePath == null ? source : File.Exists(filePath) ? Path.GetFullPath(filePath) : Path.GetFullPath(Path.Combine(ExamplePaths.Root, filePath));
         byte[] original = File.ReadAllBytes(source);
         string folder = Path.Combine(Path.GetTempPath(), "bridghe-p2d-save", label); Directory.CreateDirectory(folder);
         string dump = ResultFingerprint.Folder ?? throw new InvalidOperationException("Set BRIDGHE_RESULT_DUMP to the folder of the fingerprints.");
@@ -494,7 +502,7 @@ internal static class P2dSaveReopen
         var clock = System.Diagnostics.Stopwatch.StartNew();
         using (var doc = GrasshopperBridgeExample.Read(source))
         {
-            doc.FilePath = source; // the relative inputs of the definition (Excel, BXS) resolve as in the native runners; the outputs go to the folder (absolute)
+            doc.FilePath = documentPath; // the relative inputs of the definition (Excel, BXS) resolve as in the native runners; the outputs go to the folder (absolute)
             var analyses = doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name is "StrausR3AnalysisComponent" or "MovingStaticAnalysisComponent").OrderBy(c => c.NickName, StringComparer.Ordinal).ThenBy(c => c.InstanceGuid).ToArray();
             for (int i = 0; i < analyses.Length; i++)
             {
@@ -517,7 +525,7 @@ internal static class P2dSaveReopen
         clock.Restart();
         using (var reopened = GrasshopperBridgeExample.Read(gh))
         {
-            reopened.FilePath = source; Console.WriteLine("P2D REOPEN " + label + ": reopened, solving"); Console.Out.Flush();
+            reopened.FilePath = documentPath; Console.WriteLine("P2D REOPEN " + label + ": reopened, solving"); Console.Out.Flush();
             Solve(reopened, true);
             string errors = Errors(reopened);
             Console.WriteLine($"P2D REOPEN {label}: solved in {clock.Elapsed.TotalSeconds:F0} s; errors: {(errors.Length == 0 ? "none" : errors)}");
