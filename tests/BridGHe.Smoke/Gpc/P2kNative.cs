@@ -34,13 +34,17 @@ internal static class P2kNative
         if (which.Contains("50")) Rev003();
     }
 
+    /// <summary>The GHA is parsed once per process: a second parse shows the modal GUID conflict prompt of Grasshopper (hidden host: a hang).</summary>
+    private static bool initialized;
+    private static void Initialize() { if (!initialized) { BridgeExampleMigration.Initialize(); initialized = true; } }
+
     private static object One(IGH_Param p) => p.VolatileData.AllData(true).SingleOrDefault();
     private static void SetText(GH_Component c, string name, string text) { var p = (Param_String)In(c, name); p.RemoveAllSources(); p.SetPersistentData(text); }
 
     /// <summary>The 50 REV003 (the frozen capture input), the GPC path of <c>BridgeMovingRevisionNative.RunGpc</c> without the transitional checks.</summary>
     private static void Rev003()
     {
-        BridgeExampleMigration.Initialize();
+        Initialize();
         string source = CaptureInput;
         byte[] bytes = File.ReadAllBytes(source);
         string folder = Path.GetFullPath("artifacts/p2k-native-50"); Directory.CreateDirectory(folder);
@@ -151,7 +155,7 @@ internal static class P2kNative
     /// <summary>The 99 REV004 (the migrated candidate), the GPC path of <c>NativeModularBridgeTests.RunGpc</c> without the transitional checks.</summary>
     private static void Modular()
     {
-        BridgeExampleMigration.Initialize();
+        Initialize();
         string relative = "99-Ponte completo GPC/REV004/flusso-acciaio-misto_REV004.ghx";
         string source = Path.Combine(ExamplePaths.Root, relative), candidate = Path.GetFullPath(Path.Combine("artifacts/modular-bridge/candidates", relative));
         if (!File.Exists(candidate)) throw new FileNotFoundException("Prepare the migrated candidate first.", candidate);
