@@ -11,8 +11,8 @@ using Grasshopper.Kernel.Types;
 /// analysed GPC element that Decompose Model links. For an analysed GH model (an analysis component: the GPC input and the analysed model
 /// attached): Decompose Model on the GH model given by its GPC input alone, then each Results component, every output equal bit for bit to
 /// the rows of the GPC readers in the layout of the component (<see cref="GpcNativeExamples.ComponentsCheck"/>); a result datum without the
-/// GPC link gives no result and the warning; the generated moving cases numbered from 1; the result consumers and the model audit on the
-/// analysed model (<see cref="ConsumersCheck"/>). No FEM value is read.
+/// GPC link gives no result and the warning; the generated moving cases with their native numbers (after the load cases of the input); the
+/// result consumers and the model audit on the analysed model (<see cref="ConsumersCheck"/>). No FEM value is read.
 /// </summary>
 internal static class ResultsComponentsCheck
 {
@@ -65,8 +65,11 @@ internal static class ResultsComponentsCheck
                 components[k] + ": a datum without the GPC link gives no result and the warning");
         }
         var moving = catalog.GeneratedMovingCases();
-        Require(moving.Select(c => c.Number).SequenceEqual(Enumerable.Range(1, moving.Count)) && moving.All(c => !string.IsNullOrWhiteSpace(c.Name)) && moving.Select(c => c.Name).Distinct().Count() == moving.Count,
-            "generated moving cases numbered 1..n with distinct names");
+        // R6.6 R2bN: the native Straus7 numbers, as the former GeneratedMovingCases of 0.3.0 (MovingLoadExporter.cs:40-48 of 95ab7c3; the Converter in
+        // Straus7MovingNativeApi.ConvertSelectedMovingPaths): the cases added by the conversion of the paths, after the load cases of the input.
+        int first = input.Model.LoadCases.Count + 1;
+        Require(moving.Select(c => c.Number).SequenceEqual(Enumerable.Range(first, moving.Count)) && moving.All(c => !string.IsNullOrWhiteSpace(c.Name)) && moving.Select(c => c.Name).Distinct().Count() == moving.Count,
+            $"generated moving cases numbered from {first}, after the {first - 1} load cases of the input, with distinct names: {string.Join(", ", moving.Select(c => c.Number + ": " + c.Name))}");
         // The model audit on the analysed model: its stored results add no finding (every result has its case identity), the rest is the audit
         // of the GPC input (the structural audit of the examples is in ConsumersCheck.Audit, with the expected structure).
         string Issues(BridGHe.Common.Diagnostics.ModelIssue[] issues) => string.Join("\n", issues.Select(i => i.Severity + "|" + i.Code + "|" + i.Element + "|" + i.Description));
@@ -75,7 +78,7 @@ internal static class ResultsComponentsCheck
         long consumers = ConsumersCheck.Verify(analysed, label);
         var outcome = new Outcome(nodes, beams, plates, values);
         Console.WriteLine($"RESULTS GPC PASS ({label}): {nodes} nodes, {beams} beams, {plates} plates, {values} output values equal to the GPC reader rows bit for bit; " +
-            $"{moving.Count} generated moving cases numbered 1..n; model audit of the analysed model equal to that of its input; result consumers: {consumers} values.");
+            $"{moving.Count} generated moving cases numbered after the load cases of the input; model audit of the analysed model equal to that of its input; result consumers: {consumers} values.");
         return outcome;
     }
 }
