@@ -29,6 +29,9 @@ internal static class NativeModularBridgeTests
     }
     internal static int Run(string selected=null)
     {
+#if GPC_PILOT
+        return RunGpc(selected);
+#else
         BridgeExampleMigration.Initialize();
         string relative=selected??@"50-ponte-quattro-modelli\50-ponte-quattro-modelli_REV002.ghx";
         string source=Path.Combine(ExamplePaths.Root,relative),candidate=Path.GetFullPath(Path.Combine("artifacts/modular-bridge/candidates",relative));
@@ -139,8 +142,121 @@ internal static class NativeModularBridgeTests
         if(!original.SequenceEqual(File.ReadAllBytes(source))||!migrated.SequenceEqual(File.ReadAllBytes(candidate)))throw new Exception("Native test modified a GHX source.");
         File.WriteAllText(Path.Combine(folder,"validation.json"),JsonSerializer.Serialize(new{Definition=relative,SourceSHA256=Convert.ToHexString(SHA256.HashData(original)),MigratedSHA256=Convert.ToHexString(SHA256.HashData(migrated)),Native=true,Models=summary,Phases=model.BridgeWorkflow.Phases.Length,Combinations=model.LoadCombinations.Count,SectionChecks=rows.Length,DetailBranches=details.Length,Plots=plots.Length,ReportInputs=true,ResultsSavedInGHX=false},new JsonSerializerOptions{WriteIndented=true}));
         Console.WriteLine($"NATIVE MODULAR BRIDGE PASS: 4 models, {model.LoadCombinations.Count} combinations, {rows.Length} section results, {details.Length} details, {plots.Length} plots, report inputs. GHX files unchanged.");return 0;
+#endif
     }
+#if GPC_PILOT
+    /// <summary>
+    /// R6.6 lane R4c-moving: the native replay of the 99 (four Straus phase models, merge, checks) read by the GPC data of the outputs alone (no FEM
+    /// value of a model is read by an assertion of this runner): every analysis on its GPC input (<c>GpcInput</c>, never changed by the analysis, C3)
+    /// with its analysed GPC model, the vertical reactions of every result (the rows of Node Results) against the independent integration of the vertical
+    /// loads of the GPC input (<see cref="R4cMoving.VerticalLoad"/>); the consumers (Node, Beam and Plate Results, <see cref="ResultsComponentsCheck"/>)
+    /// on the true GPC-only output (R6.6 plan: <c>FromGpc(input)</c>): the analysis pressed again on its input given by its GPC input alone
+    /// (<see cref="R4cMoving.GpcOnlyAnalysis"/>, equal to the analysis of the definition: R1's comparison, fingerprint, catalog and every result row); the
+    /// merge on the GPC bridge model of Build BridGHe Model (<c>GpcBridge</c>: four phases in its records, its combination table).
+    /// TRANSITIONAL (other lanes, P2 decides): their parity checks on the FEM path (the sources of the native capture) still take the FEM value of the
+    /// merged model. The FEM captures (BRIDGHE_MIGRATION_CAPTURE writes the GPC data instead; BRIDGHE_MERGED_CAPTURE, retired on 6/11) are not written.
+    /// The former equality of the analysed GPC reactions with the FEM results is retired: the GPC rows are checked against the integration itself.
+    /// </summary>
+    private static int RunGpc(string selected)
+    {
+        BridgeExampleMigration.Initialize();
+        string relative=selected??@"50-ponte-quattro-modelli\50-ponte-quattro-modelli_REV002.ghx";
+        string source=Path.Combine(ExamplePaths.Root,relative),candidate=Path.GetFullPath(Path.Combine("artifacts/modular-bridge/candidates",relative));
+        if(!File.Exists(candidate))throw new FileNotFoundException("Prepare the migrated candidate first.",candidate);
+        string folder=Path.GetFullPath("artifacts/modular-bridge/native-"+Path.GetFileNameWithoutExtension(source));Directory.CreateDirectory(folder);
+        byte[] original=File.ReadAllBytes(source),migrated=File.ReadAllBytes(candidate);
+        using var doc=GrasshopperBridgeExample.Read(candidate);doc.FilePath=source;
+        if(Environment.GetEnvironmentVariable("BRIDGHE_SERIAL")=="1")foreach(var t in doc.Objects.OfType<IGH_TaskCapableComponent>())t.UseTasks=false;
+        var analyses=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="StrausR3AnalysisComponent").OrderBy(c=>c.NickName).ToArray();
+        if(analyses.Length!=4)throw new Exception("Expected four Straus phase models.");
+        for(int i=0;i<analyses.Length;i++){var a=analyses[i];ClearAnalysis(a);SetText(a,"Output Path",Path.Combine(folder,$"{i+1:00}-"+a.NickName.Split(' ')[0]+".st7"));}
+        foreach(var report in doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeReportComponent"))report.GetType().GetField("_run",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(report,false);
+        BridgeSegmentExcelTests.Solve(doc,true);
+        foreach(var read in doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeSectionReadComponent")){BridgeSegmentExcelTests.Press(read);read.ExpireSolution(false);}
+        BridgeSegmentExcelTests.Solve(doc,true);ResultFingerprint.Mark("modular inputs solved");
+        var summary=new List<object>();
+        static object One(IGH_Param p)=>p.VolatileData.AllData(true).SingleOrDefault();
+        for(int i=0;i<analyses.Length;i++)
+        {
+            var a=analyses[i];var inputGoo=One(Input(a,"Model"));var input=R4cMoving.Input(inputGoo);
+            if(input==null||input.Model.BeamElements.Count==0)throw new Exception("Phase model missing before analysis: "+a.NickName+"\n"+Errors(doc));
+            int beams=input.Model.BeamElements.Count,nodes=input.Model.NodesElements.Count;
+            Console.WriteLine("NATIVE MODULAR: "+a.NickName+"; "+beams+" beams, "+nodes+" nodes.");
+            R4cMoving.Capture($"phase-{i+1:00}-input",input:input);
+            // C3: the analysis copies its GPC input and never changes it.
+            string before=GPC.Model.Models.ModelRevisions.AnalysisFingerprint(input.Model);
+            Press(a);BridgeSegmentExcelTests.Solve(doc,true);
+            if(GPC.Model.Models.ModelRevisions.AnalysisFingerprint(input.Model)!=before||input.Model.Datasets.Count!=0)
+                throw new Exception("C3: the analysis changed the conversion of its input: "+a.NickName);
+            var goo=One(Output(a,"Model"));var result=R4cMoving.Results(goo);
+            if(result==null||!result.HasBeamRows())throw new Exception("No native results: "+a.NickName+"\n"+Errors(doc));
+            if(!(bool)goo.GetType().GetProperty("HasAnalysedGpc").GetValue(goo)||result.Model.Datasets.Count==0)throw new Exception("Analysed GPC model missing: "+a.NickName);
+            R4cMoving.Capture($"phase-{i+1:00}-result",analysed:result.Model);
+            var equilibrium=new List<object>();
+            var cases=result.ReactionLabels();
+            if(cases.Length==0)throw new Exception("Native reaction results missing.");
+            foreach(string lc in cases)
+            {
+                double actual=result.ReactionZ(lc);
+                double expected=R4cMoving.VerticalLoad(input.Model,lc,result.Catalog.Units);
+                double tolerance=Math.Max(.01,Math.Abs(expected)*1e-7);
+                if(!double.IsFinite(actual)||Math.Abs(actual-expected)>tolerance)throw new Exception($"Vertical equilibrium {lc}: {actual:G17} vs {expected:G17} N; tolerance {tolerance}.");
+                equilibrium.Add(new{Case=lc,ReactionZ_N=actual,Expected_N=expected,Tolerance_N=tolerance});
+            }
+            // The consumers on the true GPC-only output: the analysis again on its input given by its GPC input alone (a folder of its own, the same
+            // file name), equal to the analysis of the definition; Node, Beam and Plate Results on it.
+            string path=Values<string>(Input(a,"Output Path")).Single();
+            string gpcOnly=Path.Combine(folder,"gpc-only");Directory.CreateDirectory(gpcOnly);
+            var (twin,messages)=R4cMoving.GpcOnlyAnalysis(a,Path.Combine(gpcOnly,Path.GetFileName(path)));
+            if(twin==null||R4cMoving.Results(twin)==null)throw new Exception("Analysis on its GPC input alone failed: "+a.NickName+": "+string.Join(" / ",messages));
+            string difference=GpcOnlyReplay.ResultsDifference(goo,twin);
+            if(difference!=null)throw new Exception("Analysis on its GPC input alone differs from the analysis of the definition: "+a.NickName+": "+difference);
+            ResultsComponentsCheck.Verify(twin,"99 "+a.NickName+" (GPC-only output)");
+            string log=Path.ChangeExtension(path,".LSL");
+            if(File.Exists(log)){string text=File.ReadAllText(log);if(text.Contains("*WARNING[")||text.Contains("*ERROR["))throw new Exception("Straus solver warnings: "+log);}
+            summary.Add(new{Phase=i,Beams=beams,Nodes=nodes,Equilibrium=equilibrium});
+            File.WriteAllText(Path.Combine(folder,"progress.json"),JsonSerializer.Serialize(summary,new JsonSerializerOptions{WriteIndented=true}));
+            Console.WriteLine("NATIVE MODULAR PASS: "+a.NickName+"; reactions in equilibrium; the analysis on its GPC input alone equal, its Results consumers checked.");
+        }
+        ResultFingerprint.Mark("modular merge start");
+        foreach(var excel in doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeCombinationExcelComponent"))
+            if(Values<int>(Input(excel,"Mode")).SingleOrDefault()==1){Press(excel);BridgeSegmentExcelTests.Solve(doc,true);}
+        var merge=doc.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="BuildBridgeModel");Press(merge);BridgeSegmentExcelTests.Solve(doc,true);
+        var mergedGoo=One(Output(merge,"Model"));var bridge=R4cMoving.Bridge(mergedGoo);
+        if(bridge?.Records?.Phases.Length!=4)throw new Exception("Four-phase merge failed. Inputs: "+string.Join(", ",merge.Params.Input.Select(p=>p.Name+"="+p.VolatileDataCount))+"\n"+Errors(doc));
+        int phases=bridge.Records.Phases.Length,combinations=bridge.Combinations.Count;
+        ResultFingerprint.Mark("modular checks start");
+        if(Environment.GetEnvironmentVariable("BRIDGHE_WATCHDOG")=="1")
+            new System.Threading.Thread(()=>{while(true){System.Threading.Thread.Sleep(15000);try{var busy=doc.Objects.OfType<IGH_ActiveObject>().Where(o=>o.Phase==GH_SolutionPhase.Computing).Select(o=>((IGH_DocumentObject)o).GetType().Name+" '"+((IGH_DocumentObject)o).NickName+"'");
+                Console.WriteLine($"WATCHDOG {DateTime.Now:HH:mm:ss}: threads {System.Diagnostics.Process.GetCurrentProcess().Threads.Count}, pool {System.Threading.ThreadPool.ThreadCount}, pending {System.Threading.ThreadPool.PendingWorkItemCount}, lock contentions {System.Threading.Monitor.LockContentionCount}; computing: {string.Join(", ",busy)}");}catch(Exception e){Console.WriteLine("WATCHDOG "+e.Message);}}}){IsBackground=true}.Start();
+        var checks=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="SuperElementCheckComponent").ToArray();
+        foreach(var check in checks){Press(check);BridgeSegmentExcelTests.Solve(doc,true);}
+        var rows=checks.SelectMany(check=>Values<BridgeStressResult>(Output(check,"Tension Check"))).ToArray();
+        if(checks.Length==0||checks.Any(check=>Output(check,"Tension Check").VolatileDataCount==0))throw new Exception("Missing section check results.\n"+Errors(doc));
+        var details=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeDetailCheckComponent").ToArray();
+        if(details.Any(c=>Output(c,"Section result").VolatileDataCount==0))throw new Exception("A detail check branch has no output.\n"+Errors(doc));
+        var plots=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name.EndsWith("PlotComponent")).ToArray();
+        if(plots.Any(c=>Output(c,"SVG").VolatileDataCount==0))throw new Exception("A plot has no SVG.\n"+Errors(doc));
+        var reportComponent=doc.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="BridgeReportComponent");
+        if(Input(reportComponent,"Results").VolatileDataCount!=details.Sum(c=>Output(c,"Section result").VolatileDataCount))throw new Exception("Incomplete report result input.");
+        string errors=Errors(doc);if(errors.Length>0)throw new Exception("Saved graph still has errors:\n"+errors);
+        // TRANSITIONAL (other lanes, P2 decides): their parity checks on the FEM path of the definition, the sources of the native capture.
+        C5WorkflowComparison.RequireGpcChecks(mergedGoo,Values<ModelModel>(Output(merge,"Model")).Single(),checks,true,"99");
+        GpcMergeCheck.Require(merge,"99");
+        GpcBridgeComparison.RequireComponent(merge,"99");
+        GpcBridgeComparison.RequireGpcLinks(doc,"99"); BuildModelScan.Print(doc,"99"); GpcInputComparison.RequireComponents(doc,"99"); BarLayoutMeasurement.Report(doc,"99"); CompositeAnalysisPropertyChecks.Require(doc,"99"); GpcStateOverrideChecks.MeasureModelAreas(doc,"99");
+        foreach(var check in checks){ GpcSecForcesCheck.Require(check,"99"); GpcCompositeSectionChecks.RequireSuperElementCheck(check,"99"); } NativeParityCapture.Close();
+        ResultFingerprint.Mark("modular checks, details and plots solved");ResultFingerprint.Write("modular-"+Path.GetFileNameWithoutExtension(source),doc);
+        R3ConcreteExclusionCheck.Run(doc,checks[0],mergedGoo,"99");
+        R4cChainDiagnosis.Run(doc,"99");
+        GpcOnlyReplay.Rehearsal(doc,"99"); // L3e: only with BRIDGHE_GPC_ONLY_REHEARSAL=1
+        if(!original.SequenceEqual(File.ReadAllBytes(source))||!migrated.SequenceEqual(File.ReadAllBytes(candidate)))throw new Exception("Native test modified a GHX source.");
+        File.WriteAllText(Path.Combine(folder,"validation.json"),JsonSerializer.Serialize(new{Definition=relative,SourceSHA256=Convert.ToHexString(SHA256.HashData(original)),MigratedSHA256=Convert.ToHexString(SHA256.HashData(migrated)),Native=true,Models=summary,Phases=phases,Combinations=combinations,SectionChecks=rows.Length,DetailBranches=details.Length,Plots=plots.Length,ReportInputs=true,ResultsSavedInGHX=false},new JsonSerializerOptions{WriteIndented=true}));
+        Console.WriteLine($"NATIVE MODULAR BRIDGE PASS: 4 models, {combinations} combinations, {rows.Length} section results, {details.Length} details, {plots.Length} plots, report inputs. GHX files unchanged (GPC data alone).");return 0;
+    }
+#endif
     private static string Errors(GH_Document doc)=>string.Join("\n",doc.Objects.OfType<GH_ActiveObject>().SelectMany(c=>c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Select(s=>c.NickName+": "+s)));
+#if !GPC_PILOT
     internal static double VerticalLoad(ModelModel model,string name)
     {
         var combination=model.LoadCombinations.SingleOrDefault(c=>c.Name==name);
@@ -178,4 +294,5 @@ internal static class NativeModularBridgeTests
             if(load is NodeForceLoadModel f)sum-=f.Value.Z;
         return sum;
     }
+#endif
 }
