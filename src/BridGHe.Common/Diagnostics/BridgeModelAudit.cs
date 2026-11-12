@@ -27,7 +27,12 @@ public static class BridgeModelAudit
     private static AuditModel Of(ModelModel model, double tolerance)
     {
         var availableGroups = model.Elements.SelectMany(e => e.Groups).SelectMany(GroupModel.GetBranch).Select(g => g.FullName).ToHashSet(StringComparer.Ordinal);
-        var availableCases = model.LoadCases.Select(c => c.Name).ToHashSet(StringComparer.Ordinal);
+        // 12/11 (user decision): the cases of the analysis are those the export writes (ModelHelper.GetLoadCases): the registered cases, the cases
+        // of the element loads, of the combinations and of the stages. 0.3.0 accepted only the registered cases (ModelModel.LoadCases), which
+        // Build Model never fills, so it reported INVALID_STAGE_INCREMENT on every stage increment of a model given by Build Model.
+        var availableCases = model.LoadCases.Concat(model.Elements.SelectMany(e => e.Loads).Select(l => l.LoadCase))
+            .Concat(model.LoadCombinations.SelectMany(c => c.Values.Keys)).Concat(model.StagedConstruction.SelectMany(s => s.LoadCombinations).SelectMany(c => c.Values.Keys))
+            .Where(c => c != null && !string.IsNullOrWhiteSpace(c.Name)).Select(c => c.Name).ToHashSet(StringComparer.Ordinal);
         return new AuditModel(model.Beams.Select(Beam).ToArray(),
             model.Nodes.Select(n => new AuditNode(n.NodeId, n.Position, () => NodeCoordinateExport.Frame(n),
                 n.Attributes.OfType<NodeStiffnessAttributeModel>().Count(k => new[] { k.Value.Tx, k.Value.Ty, k.Value.Tz, k.Value.Rx, k.Value.Ry, k.Value.Rz }.Any(v => !double.IsFinite(v) || v < 0)))).ToArray(),
@@ -36,7 +41,7 @@ public static class BridgeModelAudit
             () => RigidConnectionExport.Resolve(model, tolerance).Select(l => (model.Nodes[l.From - 1].Position, model.Nodes[l.To - 1].Position)),
             model.Elements.SelectMany(e => e.Attributes).Any(a => a is NodeRestraintAttributeModel or NodeStiffnessAttributeModel or BeamSupportAttributeModel or PlateSupportAttributeModel),
             model.StagedConstruction.Select(s => new AuditStage(s.Name, s.Groups.Any(g => !availableGroups.Contains(g.FullName)),
-                s.LoadCombinations.Any(c => c.Values.Any(v => !availableCases.Contains(v.Key.Name) || !double.IsFinite(v.Value))))).ToArray(),
+                s.LoadCombinations.Any(c => c.Values.Any(v => v.Key == null || !availableCases.Contains(v.Key.Name ?? "") || !double.IsFinite(v.Value))))).ToArray(),
             () => model.Elements.SelectMany(e => e.Results).Count(r => r.LoadCase == null || string.IsNullOrWhiteSpace(r.LoadCase.Name) || !double.IsFinite(r.StepNum)));
     }
 
@@ -65,8 +70,10 @@ public static class BridgeModelAudit
         Point3d P(GPC.Geometry.Point3d p) => new Point3d(u.FromMm(p.X), u.FromMm(p.Y), u.FromMm(p.Z));
         bool Registered(string name) => input.Report.CaseOrigins.TryGetValue(name, out var o) && (o & Gpc.Legacy.LegacyCaseOrigins.Registered) != 0;
         var byGuid = model.LoadCases.Values.ToDictionary(c => c.Guid);
+        // 12/11 (user decision): a stage increment is valid on any case of the model (registered, of element loads, combinations, stages or moving
+        // paths), with a finite factor; 0.3.0 accepted only the registered cases, which Build Model never registers (see the FEM path above).
         var stages = model.Stages.Values.OrderBy(s => s.Id).Select(s => new AuditStage(s.Name, false, (s.AnalysisState?.Increments ?? Array.Empty<GPC.Model.Stages.StageLoadIncrement>())
-            .Any(i => (i.LoadFactors ?? Array.Empty<GPC.Model.Stages.StageCaseFactor>()).Any(f => !double.IsFinite(f.Factor) || !byGuid.TryGetValue(f.CaseGuid, out var c) || !Registered(c.Name))))).ToList();
+            .Any(i => (i.LoadFactors ?? Array.Empty<GPC.Model.Stages.StageCaseFactor>()).Any(f => !double.IsFinite(f.Factor) || !byGuid.ContainsKey(f.CaseGuid))))).ToList();
         // A stage group without elements is not created on GPC data: the reader counts it, without the name of the stage.
         if (input.Report.NotExported.ContainsKey(StageGroupWithoutElements)) stages.Add(new AuditStage("Stage", true, false));
         return new AuditModel(model.BeamElements.Values.OrderBy(b => b.Id).Select(b => Beam(input, b)).ToArray(),

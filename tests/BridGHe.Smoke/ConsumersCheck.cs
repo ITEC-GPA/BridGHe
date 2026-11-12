@@ -145,8 +145,8 @@ internal static class ConsumersCheck
         return values;
     }
 
-    /// <summary>The model audit on the analysed model against the known structure of its GPC input: no error but INVALID_STAGE_INCREMENT on the
-    /// stages 0.3.0 reports on a model given by Build Model (see below); DISCONNECTED exactly when the elements form more than one connected
+    /// <summary>The model audit on the analysed model against the known structure of its GPC input: no error (a stage increment on any case of the model
+    /// is valid since 12/11, see below); DISCONNECTED exactly when the elements form more than one connected
     /// part (shared end points and plate vertices within the tolerance); ISOLATED_NODE exactly for the
     /// nodes on no element vertex; NO_SUPPORT exactly when no node has a restraint; no INVALID_RESULT (every stored result has its case); and
     /// a result without case identity reported as INVALID_RESULT.</summary>
@@ -172,30 +172,25 @@ internal static class ConsumersCheck
         // A restraint record of a node frame (NodeCoordinateAttributeModel, the reader record of a frame) is not a support.
         bool supported = model.NodesElements.Values.Any(n => n.Assignments.Restrains.Any(r => r.SourceRecord != "NodeCoordinateAttributeModel" && r.Restrain.Restrains.Any(d => d.IsRestrained || d.HasStiffness)))
             || model.BeamElements.Values.Any(b => b.Assignments.Physical?.Supports.Count > 0) || model.AreaElements.Values.Any(p => p.Assignments.Physical?.Supports.Count > 0);
-        // R6.6 R2bN: the only errors are the stage increments 0.3.0 reports on a model given by Build Model. In 0.3.0 (BridgeModelAudit.cs:155-160
-        // of 95ab7c3) a stage increment may reference only a case of ModelModel.LoadCases, the registered case records, with a finite factor; Build
-        // Model registers no case (its GH_Model, GH_Model.cs:135-175 of 95ab7c3, never calls AddLoadCases; the hand-built FEM catalogue of the examples
-        // did) and Attach Moving Paths registers the case of its paths. So 0.3.0 reports INVALID_STAGE_INCREMENT on every stage with an increment
-        // term of a model given by Build Model (shown on examples 06-10 by P2B/results/r2bn-probe030-audit.log), and so does the GPC audit (the
-        // Registered origin of the input). The examples are given by Build Model (GpcNativeExamples.RequireSameAsFem): their registered cases are exactly the
-        // cases of their moving paths, and the stages reported are exactly those with a term on another case or a non-finite factor.
+        // 12/11 (user decision, BridgeModelAudit): a stage increment is valid on any case of the model with a finite factor. 0.3.0 accepted only
+        // the registered cases (BridgeModelAudit.cs:155-160 of 95ab7c3), which Build Model never fills, so it reported INVALID_STAGE_INCREMENT on
+        // every stage of a model given by Build Model (examples 06-10: P2B/results/r2bn-probe030-audit.log). Now the only stages reported are those
+        // with a term on a case the model does not have or with a non-finite factor: none on a valid example.
         var caseNames = model.LoadCases.Values.ToDictionary(c => c.Guid, c => c.Name);
         var pathCases = (model.MovingLoads?.Paths ?? Enumerable.Empty<GPC.Model.Actions.Moving.MovingLoadPath>()).Select(p => caseNames[p.CaseGuid]).ToHashSet(StringComparer.Ordinal);
-        // Coordinator (12/11): the rule is that of 0.3.0, an increment is valid only on a registered case. A model built by hand may register more
-        // cases than its moving paths (bridge-utilities registers G and Q), so the registered cases must include the cases of the moving paths
-        // (Attach Moving Paths registers them), and the stages reported are those with a term on a case not registered or a non-finite factor.
-        // On the examples, given by Build Model, the registered cases are those of the moving paths, so the stages reported are the same.
+        // Attach Moving Paths registers the cases of its paths; a model built by hand may register more (bridge-utilities registers G and Q).
         var registered = input.Report.CaseOrigins.Where(p => (p.Value & BridGHe.Common.Gpc.Legacy.LegacyCaseOrigins.Registered) != 0).Select(p => p.Key).ToHashSet(StringComparer.Ordinal);
         Require(pathCases.IsSubsetOf(registered), $"registered cases {string.Join(",", registered)} include the cases of the moving paths, as Attach Moving Paths gives them: {string.Join(",", pathCases)}");
+        var increments = model.Stages.Values.SelectMany(s => (s.AnalysisState?.Increments ?? Array.Empty<GPC.Model.Stages.StageLoadIncrement>()).SelectMany(i => i.LoadFactors ?? Array.Empty<GPC.Model.Stages.StageCaseFactor>())).Count();
         var stageErrors = model.Stages.Values.Where(s => (s.AnalysisState?.Increments ?? Array.Empty<GPC.Model.Stages.StageLoadIncrement>()).Any(i => (i.LoadFactors ?? Array.Empty<GPC.Model.Stages.StageCaseFactor>())
-            .Any(f => !double.IsFinite(f.Factor) || !caseNames.TryGetValue(f.CaseGuid, out var name) || !registered.Contains(name)))).Select(s => "INVALID_STAGE_INCREMENT|" + s.Name).OrderBy(x => x, StringComparer.Ordinal).ToArray();
+            .Any(f => !double.IsFinite(f.Factor) || !caseNames.ContainsKey(f.CaseGuid)))).Select(s => "INVALID_STAGE_INCREMENT|" + s.Name).OrderBy(x => x, StringComparer.Ordinal).ToArray();
         var errors = issues.Where(i => i.Severity == "Error").Select(i => i.Code + "|" + i.Element).OrderBy(x => x, StringComparer.Ordinal).ToArray();
-        Require(errors.SequenceEqual(stageErrors, StringComparer.Ordinal), $"errors on a valid example other than the stage increments 0.3.0 reports ({string.Join(", ", stageErrors)}):\n" + Text());
+        Require(errors.SequenceEqual(stageErrors, StringComparer.Ordinal), $"errors on a valid example ({increments} stage increment terms; invalid stages expected: {string.Join(", ", stageErrors)}):\n" + Text());
         Require(issues.Any(i => i.Code == "DISCONNECTED") == (parts > 1), $"{parts} connected parts:\n" + Text());
         Require(issues.Where(i => i.Code == "ISOLATED_NODE").Select(i => i.Element).OrderBy(x => x, StringComparer.Ordinal).SequenceEqual(isolated), $"isolated nodes {string.Join(",", isolated)}:\n" + Text());
         Require(issues.Any(i => i.Code == "NO_SUPPORT") == !supported, $"supported {supported}:\n" + Text());
         Require(!issues.Any(i => i.Code == "INVALID_RESULT"), "a stored result without case identity:\n" + Text());
-        return $"model audit as the structure ({parts} part(s), {isolated.Length} isolated nodes, {(supported ? "supported" : "no support")}, {stageErrors.Length} stage increments reported as 0.3.0; {issues.Length} issues: {string.Join(",", issues.Select(i => i.Code).Distinct())})";
+        return $"model audit as the structure ({parts} part(s), {isolated.Length} isolated nodes, {(supported ? "supported" : "no support")}, {increments} stage increment terms, {stageErrors.Length} invalid; {issues.Length} issues: {string.Join(",", issues.Select(i => i.Code).Distinct())})";
     }
 
     private static string Bits(double v) => BitConverter.DoubleToInt64Bits(v == 0 ? 0.0 : v).ToString("X16", CultureInfo.InvariantCulture);
