@@ -46,12 +46,25 @@ namespace BridGHe.Grasshopper.DataTypes
             return femm != null && Common.Gpc.GpcGooArchive.IsLegacy(femm) ? Kind.Legacy : Kind.None;
         }
 
+        /// <summary>P2D: the exceptions of a datum the readers refuse (damaged, truncated, of another kind or of a newer format): the
+        /// serialization, XML, compressed-stream and JSON errors and the refusals of the readers. Any other exception is a defect of the
+        /// reader, not a refused datum (<see cref="InternalError"/>).</summary>
+        internal static bool IsRefusal(Exception ex) => ex is System.Runtime.Serialization.SerializationException || ex is System.Xml.XmlException
+            || ex is System.IO.InvalidDataException || ex is System.IO.EndOfStreamException || ex is ArgumentException || ex is NotSupportedException
+            || ex is InvalidOperationException || ex is FormatException || ex is System.Text.Json.JsonException || ex is System.Collections.Generic.KeyNotFoundException
+            || ex is OverflowException;
+
+        /// <summary>P2D: the start of the message of an exception that is not a refusal (<see cref="IsRefusal"/>): a defect, shown as such.</summary>
+        internal const string InternalError = "errore interno di BridGHe nella lettura";
+
         /// <summary>P2D (P4): the message of a datum the reader cannot read, to the file reader (Grasshopper lists it when the file opens), and
-        /// false. A datum of a newer schema gets the message of <see cref="Common.Gpc.GpcDraftArchive.NewerSchemaMessage"/>.</summary>
+        /// false. A datum of a newer schema gets the message of <see cref="Common.Gpc.GpcDraftArchive.NewerSchemaMessage"/>; an exception that is
+        /// not a refusal of the readers is reported as an internal error, with its type.</summary>
         internal static bool Refused(GH_IReader reader, string type, Exception ex)
         {
             System.Diagnostics.Debug.WriteLine(ex);
-            try { reader?.AddMessage(type + ": " + Common.Gpc.GpcDraftArchive.UserMessage(ex), GH_Message_Type.error); } catch (Exception) { }
+            string message = IsRefusal(ex) ? Common.Gpc.GpcDraftArchive.UserMessage(ex) : InternalError + " (" + ex.GetType().Name + ": " + ex.Message + "): il dato non è stato caricato.";
+            try { reader?.AddMessage(type + ": " + message, GH_Message_Type.error); } catch (Exception) { }
             return false;
         }
     }

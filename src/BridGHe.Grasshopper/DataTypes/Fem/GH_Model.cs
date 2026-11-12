@@ -587,13 +587,14 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 // are dropped visibly: the model opens without them and says so (ResultsNotice, shown by the components that read the model).
                 if (reader.ItemExists(Common.Gpc.GpcResultsFile.Chunk) && StateKey != null)
                     try { AttachGpc(Common.Gpc.GpcResultsFile.FromBytes(reader.GetByteArray(Common.Gpc.GpcResultsFile.Chunk))); }
-                    catch (Exception ex) when (!(ex is OutOfMemoryException)) { System.Diagnostics.Debug.WriteLine(ex); lock (gpcLock) _unreadableResultsOf = StateKey; }
+                    catch (Exception ex) when (DataTypes.GpcGooPersistence.IsRefusal(ex) || ex is System.IO.IOException) // P2D: a defect is not a damaged datum
+                    { System.Diagnostics.Debug.WriteLine(ex); lock (gpcLock) _unreadableResultsOf = StateKey; }
                 // R6.4 (2): the drafts of the elements saved with the model (BGHGPC1 of the GH_Model, extended; absent in former files, allowed).
                 // P30-01 (C1, 11/11): drafts saved but unreadable are a damaged datum: the model does not open as if complete (before, they were
                 // left out and the model opened without them).
                 if (reader.ItemExists(Common.Gpc.GpcModelDrafts.Chunk) && StateKey != null)
                     try { AttachDrafts(Common.Gpc.GpcModelDrafts.Read(reader.GetByteArray(Common.Gpc.GpcModelDrafts.Chunk))); }
-                    catch (Exception ex) when (!(ex is OutOfMemoryException)) { System.Diagnostics.Debug.WriteLine(ex); return false; }
+                    catch (Exception ex) when (DataTypes.GpcGooPersistence.IsRefusal(ex)) { return DataTypes.GpcGooPersistence.Refused(reader, TypeName, ex); }
                 // P2D: the FEM chunk of a development file, read by value on first use (the drafts of its elements when no drafts chunk was
                 // saved, with the identities of the owner of the GPC input; the GUIDs saved with its FEM elements in the order of the drafts).
                 if (development != null && StateKey != null)

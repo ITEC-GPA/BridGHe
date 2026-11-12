@@ -273,6 +273,9 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 if (typeof(Q) == typeof(GH_Curve) && GpcDraftGeometry.Outline(Gpc) is { } outline) { target = (Q)(object)new GH_Curve(outline); return true; }
                 if (typeof(Q) == typeof(GH_Mesh) && GpcDraftGeometry.FlatMesh(Gpc) is { } flat) { target = (Q)(object)new GH_Mesh(flat); return true; }
                 if (typeof(Q).IsAssignableFrom(typeof(GH_PlateResults)) && AnalysedGpc != null) { target = (Q)(object)new GH_PlateResults(this); return true; }
+                // P2D (P2K, example 50 REV003): the solid of the plate from its GPC draft (its section along the normal), as the FEM value gave it
+                // (Value.Shape); a plate without a solid gives none.
+                if (GH_Beam.CastShapes(Display.ModelPreview.DraftShapes(Gpc), out target)) return true;
                 target = default;
                 return false;
             }

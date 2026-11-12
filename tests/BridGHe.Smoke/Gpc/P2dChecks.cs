@@ -51,10 +51,10 @@ internal static class P2dChecks
     {
         checks = 0; failures.Clear();
         plugin = BridgeMergeTests.Initialize();
-        int format = Counted(Format), frames = Counted(Frames), preview = Counted(Preview), development = Counted(Development), strain = Counted(SlabStrain);
+        int format = Counted(Format), frames = Counted(Frames), preview = Counted(Preview), development = Counted(Development), strain = Counted(SlabStrain), casts = Counted(Casts), construction = Counted(Construction);
         if (failures.Count > 0) throw new Exception($"P2D FAIL ({failures.Count} of {checks}):\n" + string.Join("\n", failures.Take(30)));
         Console.WriteLine($"P2D PASS: {checks} checks; format BGHGPC1 schema 1 {format} (unknown members kept through read and write, schema 2 and later versions refused with the message), "
-            + $"frame rule {frames}, preview of the homogenised composite property {preview}, FemmR6 by value and no FemmR6 written {development}, slab strain {strain}");
+            + $"frame rule {frames}, preview of the homogenised composite property {preview}, FemmR6 by value and no FemmR6 written {development}, slab strain {strain}, solids of beams and plates by their drafts {casts}, construction sequence of a 0.3.0 model by value {construction}");
     }
 
     private static int Counted(Action a) { int before = checks; try { a(); } catch (Exception x) { failures.Add(a.Method.Name + ": " + x); } return checks - before; }
@@ -319,6 +319,52 @@ internal static class P2dChecks
     }
 
     // ----------------------------------------------------------------------------------------------------------------------------------------
+    // P2K (12/11): the solid of a beam and of a plate given by their drafts (a Brep parameter of example 50 REV003)
+
+    private static void Casts()
+    {
+        var steel = new MaterialModel("S355") { Name = "S355", Kind = MaterialModel.MaterialKind.Steel, Modulus = 210000, PoissonRatio = .3, Density = 7.85e-9 };
+        var section = new SectionModel { Name = "R", SectionType = SectionModel.SectionTypes.SolidRectangle, D = 500, B = 300 }; section.CalculateSection();
+        var fem = new BeamModel(new Point3d(0, 0, 0), new Point3d(6000, 1000, 300), new BeamPropertyModel("P") { Name = "P", Material = steel, PropertyType = BeamPropertyType.Beam, Section = section }) { BeamId = "1", AngleDeg = 15 };
+        var beam = FromGpc(T("Fem.GH_Beam"), GpcBeamDrafts.FromFemm(fem));
+        Check(beam.CastTo(out GH_Brep brep) && brep?.Value != null && Compare(new[] { fem.Shapes[0] }, new[] { brep.Value }, false) == null, "a beam given by its draft casts to its solid, the FEM one");
+        Check(beam.CastTo(out Brep raw) && raw != null, "and to a Brep");
+        Check(beam.CastTo(out List<GH_Brep> list) && list.Count == 1, "and to a list of Breps");
+        var corners = new[] { new Point3d(0, 0, 0), new Point3d(2000, 0, 0), new Point3d(2000, 1000, 300), new Point3d(0, 1000, 300) };
+        var femPlate = new PlateModel("P1", corners, new PlatePropertyModel("1") { Name = "shell", Material = steel, PropertyType = PlatePropertyType.ShellThin, MembraneThickness = 200, BendingThickness = 200 });
+        var plate = FromGpc(T("Fem.GH_Plate"), GpcBeamDrafts.FromFemm(femPlate));
+        bool cast = plate.CastTo(out GH_Brep pb);
+        string plateShape = !cast || pb?.Value == null ? "no cast" : Compare(new[] { femPlate.Shape }, new[] { pb.Value }, false);
+        Check(plateShape == null, "a plate given by its draft casts to its solid, the FEM one: " + plateShape);
+    }
+
+    // ----------------------------------------------------------------------------------------------------------------------------------------
+    // P2K (12/11): Bridge Construction Sequence on a 0.3.0 model read by value, a beam in two groups: no native stage, as on GPC data alone
+
+    private static void Construction()
+    {
+        var model = ExampleRemake04.WithEndNodes(BridgeUtilityTests.Source(), out _);
+        model.Beams[0].Groups.Add(new GroupModel("A")); model.Beams[0].Groups.Add(new GroupModel("B"));
+        foreach (var b in model.Beams.Skip(1)) b.Groups.Add(new GroupModel("B"));
+        var modelType = T("Fem.GH_Model");
+        var read = ReadGoo(modelType, Chunk(c => c.SetByteArray("Data", BridGHe.Common.Helpers.ModelArchive.Write(model))));
+        var input = (GpcModels.Conversion)Prop(read, "GpcInput"); var drafts = (GpcModelDrafts)Prop(read, "GpcDrafts");
+        if (input.Drafts == null && drafts != null) input = input.WithDrafts(drafts);
+        Check(input.Drafts != null && input.Drafts.Beams[0].Records.Groups.Count == 2, "the 0.3.0 model read by value carries the two groups of its first beam");
+        var registered = input.Model.LoadCases.Values.Take(Math.Min(input.Report.RegisteredCases, input.Model.LoadCases.Count)).Select(c => c.Name).FirstOrDefault();
+        Check(registered != null, "the 0.3.0 model registers its cases");
+        if (registered == null) return;
+        var increment = new LegacyCombinationDraft("inc", new List<(LegacyCaseData, double)> { (GpcCaseBuilders.Case(registered, false), 1.0) });
+        string Stage(GpcModels.Conversion source)
+        {
+            var info = GpcModelTransforms.ConstructionSequenceInfo(source, source, 1, "P2D", null, new[] { "*" }, false, new[] { increment });
+            return info.Stage == null ? "none" : "native";
+        }
+        Check(Stage(input) == "none", "read by value: a beam in two groups gives no native stage (as on GPC data alone)");
+        Check(Stage(GpcModels.Convert(model, 0.001)) == "native", "TRANSITIONAL: the conversion of the FEM value without drafts does not see the second group (a native stage), the FEM-input copy of gpc-only-models");
+    }
+
+    // ----------------------------------------------------------------------------------------------------------------------------------------
     // P9: the slab strain
 
     private static void SlabStrain()
@@ -448,7 +494,7 @@ internal static class P2dSaveReopen
         var clock = System.Diagnostics.Stopwatch.StartNew();
         using (var doc = GrasshopperBridgeExample.Read(source))
         {
-            doc.FilePath = Path.Combine(folder, Path.GetFileName(source));
+            doc.FilePath = source; // the relative inputs of the definition (Excel, BXS) resolve as in the native runners; the outputs go to the folder (absolute)
             var analyses = doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name is "StrausR3AnalysisComponent" or "MovingStaticAnalysisComponent").OrderBy(c => c.NickName, StringComparer.Ordinal).ThenBy(c => c.InstanceGuid).ToArray();
             for (int i = 0; i < analyses.Length; i++)
             {
@@ -458,6 +504,7 @@ internal static class P2dSaveReopen
                 if (Input(a, "Keep Running") is Param_Boolean keep) { keep.RemoveAllSources(); keep.PersistentData.Clear(); keep.SetPersistentData(false); }
                 if (Input(a, "Run") is Param_Boolean runInput) { runInput.RemoveAllSources(); runInput.PersistentData.Clear(); runInput.SetPersistentData(false); }
             }
+            Console.WriteLine($"P2D SAVE {label}: {analyses.Length} analyses redirected, solving"); Console.Out.Flush();
             Solve(doc, false);
             string errors = Errors(doc);
             Console.WriteLine($"P2D SAVE {label}: solved in {clock.Elapsed.TotalSeconds:F0} s, {analyses.Length} analyses; errors: {(errors.Length == 0 ? "none" : errors)}");
@@ -470,6 +517,7 @@ internal static class P2dSaveReopen
         clock.Restart();
         using (var reopened = GrasshopperBridgeExample.Read(gh))
         {
+            reopened.FilePath = source; Console.WriteLine("P2D REOPEN " + label + ": reopened, solving"); Console.Out.Flush();
             Solve(reopened, true);
             string errors = Errors(reopened);
             Console.WriteLine($"P2D REOPEN {label}: solved in {clock.Elapsed.TotalSeconds:F0} s; errors: {(errors.Length == 0 ? "none" : errors)}");

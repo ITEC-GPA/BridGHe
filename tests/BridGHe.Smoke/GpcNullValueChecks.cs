@@ -135,7 +135,7 @@ internal static class GpcNullValueChecks
     /// the coordinate systems and bridge rules, then (TRANSITIONAL) the FEM catalogue.</summary>
     internal static void Regression()
     {
-        moved = 0; copied = 0; checks = 0; damagedRefused = 0; damagedSame = 0; lost.Clear();
+        moved = 0; copied = 0; checks = 0; damagedRefused = 0; damagedSame = 0; lost.Clear(); unexpected.Clear();
         plugin = BridgeMergeTests.Initialize();
         var (elements, data, models, extended) = WithoutFem();
         int independent = checks;
@@ -143,6 +143,7 @@ internal static class GpcNullValueChecks
         independent = checks;
         int damaged = damagedRefused + damagedSame;
         Require(lost.Count == 0, "a damaged chunk read as another valid datum: " + string.Join("; ", lost.Take(5)));
+        Require(unexpected.Count == 0, $"a damaged chunk raised an exception that is not a refusal of the readers ({unexpected.Count}): " + string.Join("; ", unexpected.Take(5)));
         Require(elements >= 60 && data >= 40 && models == 10 && extended >= 8 && damaged >= 100, $"too few cases without FEM: {elements} elements, {data} data, {models} models, {extended} extended, {damaged} damaged chunks");
         Console.WriteLine($"GPC NULL VALUES (R1, without FEM): {elements} elements, {data} properties, materials, sections, groups, cases, combinations and stages, {models} models of the GPC examples 01-10 (R0), "
             + $"{extended} extended records and composite properties of the producers (switches of P2 on), {moved} plates translated and morphed against their moved corners, {copied} copy constructors; "
@@ -160,6 +161,21 @@ internal static class GpcNullValueChecks
 
     private static int damagedRefused, damagedSame;
     private static readonly List<string> lost = new List<string>();
+    private static readonly List<string> unexpected = new List<string>();
+
+    /// <summary>Task 39 (T12, P2D): the exception itself (not the reflection wrapper).</summary>
+    private static Exception Unwrapped(Exception x) { while (x is TargetInvocationException t && t.InnerException != null) x = t.InnerException; return x; }
+    private static string Inner(Exception x) { x = Unwrapped(x); return x.GetType().Name + ": " + x.Message; }
+
+    /// <summary>Task 39 (T12, P2D): the refusals of the readers of a damaged datum (the rule of the product, GpcGooPersistence.IsRefusal):
+    /// serialization, XML, compressed-stream and JSON errors, and the refusals of the readers.</summary>
+    private static bool Refusal(Exception x)
+    {
+        x = Unwrapped(x);
+        return x is System.Runtime.Serialization.SerializationException || x is System.Xml.XmlException || x is System.IO.InvalidDataException || x is System.IO.EndOfStreamException
+            || x is ArgumentException || x is NotSupportedException || x is InvalidOperationException || x is FormatException || x is System.Text.Json.JsonException
+            || x is KeyNotFoundException || x is OverflowException;
+    }
 
     /// <summary>R1: the contract of a GH type given by its datum alone, with no FEM-backed twin: the datum, no FEM value, valid, a text, copies with the
     /// datum, written without <c>FemmR6</c> (its GPC chunks) and read back with the same datum but for GUIDs; then its damaged chunks
@@ -210,10 +226,18 @@ internal static class GpcNullValueChecks
                 if (truncate) chunk.SetByteArray(name, bytes.Take(bytes.Length / 2).ToArray());
                 var read = (IGH_Goo)Activator.CreateInstance(type);
                 bool ok;
-                try { ok = broken.ExtractObject(read, "datum"); } catch (Exception) { ok = false; }
                 string label = $"{what}: {name} {(truncate ? "truncated" : "missing")}";
+                // Task 39 (T12, P2D): only the refusals of the readers count as a refused damaged datum; any other exception (a null reference, an
+                // assembly that does not load...) is a defect and fails the run, also when the GH type caught it and reported it as an internal error.
+                try { ok = broken.ExtractObject(read, "datum"); } catch (Exception x) when (Refusal(x)) { ok = false; } catch (Exception x) { unexpected.Add(label + ": " + Inner(x)); ok = false; }
+                if (broken.Messages != null) foreach (var m in broken.Messages) if (m.Message.Contains("errore interno di BridGHe", StringComparison.Ordinal)) unexpected.Add(label + ": " + m.Message);
                 object datum = null; string now = null;
-                if (ok && read.IsValid) { try { datum = read.GetType().GetProperty("Gpc")?.GetValue(read); now = datum == null ? null : GpcDraftCapture.WithoutGuids(textOf(read)); } catch (Exception) { datum = null; } }
+                if (ok && read.IsValid)
+                {
+                    try { datum = read.GetType().GetProperty("Gpc")?.GetValue(read); now = datum == null ? null : GpcDraftCapture.WithoutGuids(textOf(read)); }
+                    catch (Exception x) when (Refusal(x)) { datum = null; }
+                    catch (Exception x) { unexpected.Add(label + ", reading the datum: " + Inner(x)); datum = null; }
+                }
                 if (!ok || !read.IsValid || datum == null) damagedRefused++;
                 else if (now == expected) damagedSame++;
                 else lost.Add(label + ": read as another valid datum");

@@ -7,6 +7,7 @@ using Rhino.DocObjects;
 using Rhino.Geometry;
 using System;
 using System.IO;
+using System.Linq;
 
 using System.Text.Json;
 
@@ -262,13 +263,30 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         #region Casting methods
 
+        /// <summary>P2D: the solids of a draft (copies) as a <see cref="GH_Brep"/> (one solid, as the FEM cast) or a <see cref="Brep"/>, or as a
+        /// list of <see cref="GH_Brep"/> or <see cref="Brep"/> (every solid); false when there is nothing to give.</summary>
+        internal static bool CastShapes<Q>(Brep[] shapes, out Q target)
+        {
+            target = default;
+            var solids = (shapes ?? Array.Empty<Brep>()).Where(s => s != null).ToArray();
+            if (solids.Length == 0) return false;
+            if (solids.Length == 1 && typeof(Q) == typeof(GH_Brep)) { target = (Q)(object)new GH_Brep(solids[0].DuplicateBrep()); return true; }
+            if (solids.Length == 1 && typeof(Q) == typeof(Brep)) { target = (Q)(object)solids[0].DuplicateBrep(); return true; }
+            if (typeof(Q) == typeof(System.Collections.Generic.List<GH_Brep>)) { target = (Q)(object)solids.Select(s => new GH_Brep(s.DuplicateBrep())).ToList(); return true; }
+            if (typeof(Q) == typeof(System.Collections.Generic.List<Brep>)) { target = (Q)(object)solids.Select(s => s.DuplicateBrep()).ToList(); return true; }
+            return false;
+        }
+
         public override bool CastTo<Q>(out Q target)
         {
             if (Value == null)
             {
-                // R6.5 P0: the axis of the draft; shapes and results come with the FEM value until the components give them on GPC.
+                // R6.5 P0: the axis of the draft; results with the analysed element.
                 var axis = GpcDraftGeometry.Axis(Gpc);
                 if (typeof(Q) == typeof(GH_Curve) && axis.IsValid) { target = (Q)(object)new GH_Curve(new LineCurve(axis)); return true; }
+                // P2D (P2K, example 50 REV003): the solid of the beam from its GPC section along the axis (GpcDraftShapes.Beam), as the FEM value
+                // gave it (Value.Shapes: a GH_Brep when the beam has one solid); every solid as a list of Breps.
+                if (CastShapes(Display.ModelPreview.DraftShapes(Gpc), out target)) return true;
                 if (typeof(Q).IsAssignableFrom(typeof(GH_BeamResults)) && AnalysedGpc != null) { target = (Q)(object)new GH_BeamResults(this); return true; }
                 target = default;
                 return false;
