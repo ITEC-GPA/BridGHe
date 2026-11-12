@@ -115,6 +115,11 @@ internal static class InrInertia
                     foreach (var p in c.Params.Input.OfType<Grasshopper.Kernel.Parameters.Param_Boolean>().Where(p => p.Name is "Keep Running" or "Run"))
                     { foreach (var s in p.Sources.ToArray()) p.RemoveSource(s); p.PersistentData.Clear(); p.SetPersistentData(false); }
                 BridgeSegmentExcelTests.Solve(doc, true);
+                // The section workbook read as the native runner of 50 REV003 reads it (Bridge Read Section Excel: Run pressed, mode Read: a read
+                // of the .xlsx beside the definition, nothing written); without it Bridge Segment Sections has no table and gives no section.
+                var reads = components.Where(c => upstream.Contains(c) && c.GetType().Name == "BridgeSectionReadComponent").OfType<GH_Component>().ToArray();
+                foreach (var read in reads) { BridgeSegmentExcelTests.Press(read); read.ExpireSolution(false); }
+                if (reads.Length > 0) { BridgeSegmentExcelTests.Solve(doc, true); Console.WriteLine($"INR SCAN {label}: {reads.Length} Bridge Read Section Excel pressed (read)"); }
                 int before = order.Count;
                 var definitions = new Dictionary<string, BridgeCompositeSectionDefinition>(StringComparer.Ordinal);
                 foreach (var c in composites)
