@@ -46,10 +46,10 @@ internal static class BridgeDesignAuditTests
             rotated.YAxis.X, rotated.YAxis.Y, rotated.YAxis.Z, R2aGeneratorFixtures.Id("audit conflicting frame")), "Conflicting bearing axes", "GpcNodeBuilderSecondCoordinateSystem");
         var p0 = geometry.Nodes[0];
         var collapsed = BridGHe.Common.Gpc.Builders.GpcBridgeGeometryBuilders.RigidNode(p0, "1", p0, R2aGeneratorFixtures.Id("audit collapsed"));
-        R2aGeneratorFixtures.Reject(() => Model(beams, new[] { collapsed }.Concat(nodes.Skip(1))), "Collapsed link");
+        R2aGeneratorFixtures.Reject(() => Model(beams, new[] { collapsed }.Concat(nodes.Skip(1))), "Collapsed link", "Rigid link collapses to the same node");
         int g = Array.FindIndex(plans, p => p.Family == BridgeMemberFamily.Girder);
         R2aGeneratorFixtures.Reject(() => BridGHe.Common.Gpc.Builders.GpcBridgeGeometryBuilders.Assigned(plans[g] with { PhysicalId = null }, R2aGeneratorFixtures.Id("audit no identity")),
-            "Malformed identity (no physical ID)");
+            "Malformed identity (no physical ID)", "InvalidBridgeMemberMetadata");
         var reversed = BridGHe.Common.Gpc.Builders.GpcBridgeGeometryBuilders.Assigned(plans[g] with { StationTo = plans[g].StationFrom - 1 }, R2aGeneratorFixtures.Id("audit reversed"));
         Require(BridgeModelAudit.Inspect(Model(beams.Select((b, i) => i == g ? reversed : b)), 1e-6, geometry).Any(i => i.Code == "INVALID_BRIDGE_IDENTITY"), "Malformed identity is diagnosed without throwing");
         Require(BridgeModelAudit.Inspect(model, 1e-6, null, new BridGHe.Common.Gpc.GpcModels.Conversion[] { null }).Any(i => i.Code == "EMPTY_PHASE_MODEL"), "Missing phase is reported explicitly");
