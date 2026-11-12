@@ -29,13 +29,10 @@ namespace BridGHe.Grasshopper.Helpers
 
         internal static IReadOnlyList<IReadOnlyList<string>> GroupChains(IEnumerable<GH_Group> groups) => groups.Select(GpcBuilderAttach.GroupChain).ToArray(); // R6.2 part C: the GPC datum of the GH group
 
-        /// <summary>The coordinate system of a load: null without one (principal axes), otherwise whether it is the global one. R6.5 P1 lane
-        /// 2b: read from its GPC frame (<see cref="GpcLoadFrames.IsGlobal"/>: origin 0, axes 1 and 2 along X and Y), also for a system given by
-        /// its frame alone; for the global system of the parameter the rule of the reader on the former points (origin 0, first point
-        /// (1, 0, 0), second point (0, 1, 0)).</summary>
-        /// <remarks>R65-C2-01 (review of lane 2): a system with a FEM value keeps the rule of the reader on its points (the frame is normalised,
-        /// so a system with the points (2, 0, 0) and (0, 3, 0) would pass as global); the frame rule only for a system given by its frame alone.</remarks>
-        internal static bool? GlobalSystem(GH_CoordinateSystem cs) => cs == null ? null : cs.Value != null ? GpcLoadFrames.IsGlobal(cs.Value) : GpcLoadFrames.IsGlobal(cs.Gpc);
+        /// <summary>The coordinate system of a load: null without one (principal axes), otherwise whether it is the global one, by the one
+        /// rule of the frame (<see cref="GpcLoadFrames.IsGlobal"/>: origin 0, axes 1 and 2 along X and Y; R65-C2-01, user decision U6 of 12/11:
+        /// the same rule for every system and for the reader of the 0.3.0 files).</summary>
+        internal static bool? GlobalSystem(GH_CoordinateSystem cs) => cs == null ? null : GpcLoadFrames.IsGlobal(cs.Gpc);
 
         internal static GPC.Geometry.Point3d Point(Rhino.Geometry.Point3d p) => new GPC.Geometry.Point3d(p.X, p.Y, p.Z);
         internal static GPC.Geometry.Vector3d Vector(Rhino.Geometry.Point3d p) => new GPC.Geometry.Vector3d(p.X, p.Y, p.Z);
@@ -45,21 +42,14 @@ namespace BridGHe.Grasshopper.Helpers
         /// Attaches to <paramref name="output"/> the beam draft built on GPC with the identity of the conversion of its FEM value (until R6.5).
         /// A builder that refuses its data (the reader refuses them: <see cref="ArgumentException"/>, <see cref="NotSupportedException"/>,
         /// <see cref="InvalidOperationException"/>) attaches nothing: the GH type converts its FEM value, which the reader refuses the same way,
-        /// as before R6.2. When the draft check is on (the tests), a refusal of the builder where the conversion does not refuse fails the
-        /// component.
+        /// as before R6.2. P2D: the comparison with the conversion of the FEM value under a check host (DRAFT CHECK) is removed.
         /// </summary>
         internal static void Attach(GH_Beam output, Func<Guid, LegacyBeamDraft> build)
         {
             if (output?.Value == null) return;
-            Guid identity; LegacyBeamDraft draft;
-            try { identity = GpcBeamDrafts.Identity(output.Value); draft = build(identity); }
-            catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException)
-            {
-                if (GpcDraftCheck.Verify == null) return;
-                try { GpcBeamDrafts.FromFemm(output.Value); }
-                catch (Exception y) when (y is ArgumentException || y is NotSupportedException || y is InvalidOperationException) { Refused++; return; }
-                throw new InvalidOperationException("GpcBuilderRefusedWhatTheReaderReads: " + x.Message, x);
-            }
+            LegacyBeamDraft draft;
+            try { draft = build(GpcBeamDrafts.Identity(output.Value)); }
+            catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException) { Refused++; return; }
             output.AttachGpc(draft);
         }
 
@@ -67,19 +57,13 @@ namespace BridGHe.Grasshopper.Helpers
         internal static void Attach(GH_Node output, Func<Guid, LegacyNodeDraft> build)
         {
             if (output?.Value == null) return;
-            Guid identity; LegacyNodeDraft draft;
-            try { identity = GpcBeamDrafts.Identity(output.Value); draft = build(identity); }
-            catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException)
-            {
-                if (GpcDraftCheck.Verify == null) return;
-                try { GpcBeamDrafts.FromFemm(output.Value); }
-                catch (Exception y) when (y is ArgumentException || y is NotSupportedException || y is InvalidOperationException) { Refused++; return; }
-                throw new InvalidOperationException("GpcBuilderRefusedWhatTheReaderReads: " + x.Message, x);
-            }
+            LegacyNodeDraft draft;
+            try { draft = build(GpcBeamDrafts.Identity(output.Value)); }
+            catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException) { Refused++; return; }
             output.AttachGpc(draft);
         }
 
-        /// <summary>Outputs refused by the builder and by the reader alike (counted when the draft check is on).</summary>
+        /// <summary>Outputs whose draft the builder refused (P2D: every refusal, the draft check is removed).</summary>
         internal static int Refused;
     }
 }

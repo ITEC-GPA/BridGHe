@@ -107,6 +107,7 @@ internal static class RegressionTests
         gpc["gpc-null-values"] = GpcNullValueChecks.Regression; // R6.5 P0 (7/11): the GH types given by their GPC datum alone
         gpc["gpc-build-model-legacy"] = R3LegacyBuildModel.Regression; // R6.6 lane R3 (11/11): Build Model on the drafts of the 0.3.0 models read by value = the import of the reader (the FEM-input coverage of gpc-build-model)
         gpc["gpc-c3"] = C3Checks.Regression; // C3 (11/11): materials with analysis data and no table; preview of the GPC drafts (gaps 1 and 2 of R2a)
+        gpc["p2d"] = P2dChecks.Regression; // P2D (12/11): format BGHGPC1 schema 1 (U1), frame rule (U6), preview of the homogenised composite property (U5), FemmR6 by value, slab strain (U4)
         gpc["r2b-merge-forces"] = R2bMergeForcesChecks.Regression; // R6.6 lane R2b (11/11): merge, reactions and Super Element Check forces on GPC data alone (explicit counterparts of the native GpcMergeCheck and GpcSecForcesCheck)
         gpc["r4b-inputs"] = R4bInputs.Regression; // R6.6 lane R4b (11/11, transitional): the GPC inputs of the native tests of R4b equal to the conversion of their former FEM models
         gpc["r4c-inputs"] = R4cGrafiInputs.Regression; // R6.6 lane R4c-grafi (12/11, transitional): the GPC inputs of the native examples 11-18 equal to the conversion of their former FEM models

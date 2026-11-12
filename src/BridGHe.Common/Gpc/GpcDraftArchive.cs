@@ -42,7 +42,7 @@ namespace BridGHe.Common.Gpc
         private static (byte[] Data, byte[] Records) Write(LegacyNodeDraft draft, Func<NodeElement, byte[]> value)
         {
             if (draft == null) throw new ArgumentNullException(nameof(draft));
-            return (value(draft.Node), Save(DraftRecords.Of("node", draft.Records, draft.Report)));
+            return (value(draft.Node), Save(RecordExtensions.Carry(DraftRecords.Of("node", draft.Records, draft.Report), draft)));
         }
 
         private static (byte[] Data, byte[] Records) Write(LegacyBeamDraft draft, Func<BeamElement, byte[]> value)
@@ -54,7 +54,7 @@ namespace BridGHe.Common.Gpc
             {
                 var one = new GPC.Checkers.CompositeBridge.BridgeModelData(); one.Set(draft.Bridge); r.Bridge = one.Save();
             }
-            return (value(draft.Beam), Save(r));
+            return (value(draft.Beam), Save(RecordExtensions.Carry(r, draft)));
         }
 
         private static (byte[] Data, byte[] Records) Write(LegacyPlateDraft draft, Func<AreaElement, byte[]> value)
@@ -63,15 +63,20 @@ namespace BridGHe.Common.Gpc
             var r = DraftRecords.Of("plate", draft.Records, draft.Report);
             r.Corners = draft.Corners.Select(c => new double[] { c.X, c.Y, c.Z }).ToList();
             r.AngleDeg = draft.AngleDeg; // P2X: the local axis angle of the plate (the member of the beam angle; 0 as before for a plate without one)
-            return (value(draft.Plate), Save(r));
+            return (value(draft.Plate), Save(RecordExtensions.Carry(r, draft)));
         }
 
         public static byte[] Write(Material material) => GpcGooArchive.Value(material ?? throw new ArgumentNullException(nameof(material)));
 
         /// <summary>PAR (A10): a material and the kind it declares; the records only when the kind is not the kind of its GPC type
         /// (<see cref="GpcMaterials.KindOf"/>): every material saved so far is written as before (no records).</summary>
-        public static (byte[] Data, byte[] Records) Write(Material material, string kind) =>
-            (Write(material), kind == null || kind == GpcMaterials.KindOf(material) ? null : Save(new DraftRecords { Kind = "material", MaterialKind = kind }));
+        public static (byte[] Data, byte[] Records) Write(Material material, string kind)
+        {
+            // P4: a material read with records that hold members of a newer writer keeps its records (and them).
+            bool own = kind != null && kind != GpcMaterials.KindOf(material);
+            if (!own && !RecordExtensions.Carries(material)) return (Write(material), null);
+            return (Write(material), Save(RecordExtensions.Carry(new DraftRecords { Kind = "material", MaterialKind = own ? kind : null }, material)));
+        }
 
         public static LegacyNodeDraft ReadNode(byte[] data, byte[] records) => Node(GpcGooArchive.ReadValue<NodeElement>(data), records);
         public static LegacyBeamDraft ReadBeam(byte[] data, byte[] records) => Beam(GpcGooArchive.ReadValue<BeamElement>(data), records);
@@ -85,7 +90,7 @@ namespace BridGHe.Common.Gpc
         private static LegacyNodeDraft Node(NodeElement node, byte[] records)
         {
             var r = Load(records, "node");
-            return new LegacyNodeDraft(node, r.Report(null)) { Records = r.Records() };
+            return RecordExtensions.Remember(new LegacyNodeDraft(node, r.Report(null)) { Records = r.Records() }, r);
         }
 
         private static LegacyBeamDraft Beam(BeamElement beam, byte[] records)
@@ -93,7 +98,7 @@ namespace BridGHe.Common.Gpc
             var r = Load(records, "beam");
             var bridge = r.Bridge == null ? null : GPC.Checkers.CompositeBridge.BridgeModelData.Read(r.Bridge);
             var report = r.Report(bridge);
-            return new LegacyBeamDraft(beam, bridge?.Beam(beam.Guid), r.AngleDeg, r.Property?.Data(), report) { Records = r.Records() };
+            return RecordExtensions.Remember(new LegacyBeamDraft(beam, bridge?.Beam(beam.Guid), r.AngleDeg, r.Property?.Data(), report) { Records = r.Records() }, r);
         }
 
         private static LegacyPlateDraft Plate(AreaElement plate, byte[] records)
@@ -101,7 +106,7 @@ namespace BridGHe.Common.Gpc
             var r = Load(records, "plate");
             var corners = (r.Corners ?? new List<double[]>()).Select(c => c != null && c.Length == 3 ? new GPC.Geometry.Point3d(c[0], c[1], c[2])
                 : throw new SerializationException("BridgheDraftRecordsInvalidCorner")).ToList();
-            return new LegacyPlateDraft(plate, corners, r.Report(null)) { Records = r.Records(), AngleDeg = r.AngleDeg };
+            return RecordExtensions.Remember(new LegacyPlateDraft(plate, corners, r.Report(null)) { Records = r.Records(), AngleDeg = r.AngleDeg }, r);
         }
 
         public static Material ReadMaterial(byte[] data) => GpcGooArchive.ReadValue<Material>(data);
@@ -109,39 +114,45 @@ namespace BridGHe.Common.Gpc
         /// <summary>PAR (A10): a material and the kind written beside it (null: none written, the kind of its GPC type).</summary>
         public static Material ReadMaterial(byte[] data, byte[] records, out string kind)
         {
-            kind = records == null ? null : Load(records, "material").MaterialKind;
-            return ReadMaterial(data);
+            if (records == null) { kind = null; return ReadMaterial(data); }
+            var r = Load(records, "material");
+            kind = r.MaterialKind;
+            return RecordExtensions.Remember(ReadMaterial(data), r);
         }
 
         // The GH types whose datum is a BridGHe record today (no GPC object of their own yet: the assembly builds the GPC case, combination
         // and stage from them, the property builds the section): the records chunk only.
-        public static byte[] Write(LegacyCaseData c) => Save(new DraftRecords { Kind = "case", Case = CaseRecord.Of(c ?? throw new ArgumentNullException(nameof(c))) });
-        public static LegacyCaseData ReadCase(byte[] records) => Load(records, "case").Case?.Data() ?? throw new SerializationException("BridgheDraftRecordsMissingCase");
-        public static byte[] Write(LegacyCombinationDraft c) => Save(new DraftRecords { Kind = "combination", Combination = CombinationRecord.Of(c ?? throw new ArgumentNullException(nameof(c))) });
-        public static LegacyCombinationDraft ReadCombination(byte[] records) => Load(records, "combination").Combination?.Data() ?? throw new SerializationException("BridgheDraftRecordsMissingCombination");
-        public static byte[] Write(LegacyStageDraft s) => Save(new DraftRecords { Kind = "stage", Stage = StageRecord.Of(s ?? throw new ArgumentNullException(nameof(s))) });
-        public static LegacyStageDraft ReadStage(byte[] records) => Load(records, "stage").Stage?.Data() ?? throw new SerializationException("BridgheDraftRecordsMissingStage");
-        public static byte[] Write(LegacySectionRecipe s) => Save(new DraftRecords { Kind = "section", Section = SectionRecord.Of(s ?? throw new ArgumentNullException(nameof(s))) });
-        public static LegacySectionRecipe ReadSection(byte[] records) => Load(records, "section").Section?.Recipe() ?? throw new SerializationException("BridgheDraftRecordsMissingSection");
+        public static byte[] Write(LegacyCaseData c) => Save(RecordExtensions.Carry(new DraftRecords { Kind = "case", Case = CaseRecord.Of(c ?? throw new ArgumentNullException(nameof(c))) }, c));
+        public static LegacyCaseData ReadCase(byte[] records) { var r = Load(records, "case"); return RecordExtensions.Remember(r.Case?.Data() ?? throw new SerializationException("BridgheDraftRecordsMissingCase"), r); }
+        public static byte[] Write(LegacyCombinationDraft c) => Save(RecordExtensions.Carry(new DraftRecords { Kind = "combination", Combination = CombinationRecord.Of(c ?? throw new ArgumentNullException(nameof(c))) }, c));
+        public static LegacyCombinationDraft ReadCombination(byte[] records) { var r = Load(records, "combination"); return RecordExtensions.Remember(r.Combination?.Data() ?? throw new SerializationException("BridgheDraftRecordsMissingCombination"), r); }
+        public static byte[] Write(LegacyStageDraft s) => Save(RecordExtensions.Carry(new DraftRecords { Kind = "stage", Stage = StageRecord.Of(s ?? throw new ArgumentNullException(nameof(s))) }, s));
+        public static LegacyStageDraft ReadStage(byte[] records) { var r = Load(records, "stage"); return RecordExtensions.Remember(r.Stage?.Data() ?? throw new SerializationException("BridgheDraftRecordsMissingStage"), r); }
+        public static byte[] Write(LegacySectionRecipe s) => Save(RecordExtensions.Carry(new DraftRecords { Kind = "section", Section = SectionRecord.Of(s ?? throw new ArgumentNullException(nameof(s))) }, s));
+        public static LegacySectionRecipe ReadSection(byte[] records) { var r = Load(records, "section"); return RecordExtensions.Remember(r.Section?.Recipe() ?? throw new SerializationException("BridgheDraftRecordsMissingSection"), r); }
 
         /// <summary>A beam property: the GPC property and the data of the property (formulation, angle, native section, signature, recipe).</summary>
         public static (byte[] Data, byte[] Records) Write(LegacyBeamProperty p)
         {
             if (p == null) throw new ArgumentNullException(nameof(p));
-            return (GpcGooArchive.Value(p.Property as GPC.Model.ElementProperties.ElasticBeamProperty ?? throw new NotSupportedException("BridgheBeamPropertyType: " + p.Property?.GetType().Name)), Save(new DraftRecords { Kind = "beam-property", Property = PropertyRecord.Of(p.Data) }));
+            return (GpcGooArchive.Value(p.Property as GPC.Model.ElementProperties.ElasticBeamProperty ?? throw new NotSupportedException("BridgheBeamPropertyType: " + p.Property?.GetType().Name)),
+                Save(RecordExtensions.Carry(new DraftRecords { Kind = "beam-property", Property = PropertyRecord.Of(p.Data) }, p)));
         }
 
         /// <summary>P30-02 (C1, 11/11): a record without the data of the property is refused, as the other kinds without their datum (before, a
         /// beam property with null data was given).</summary>
-        public static LegacyBeamProperty ReadBeamProperty(byte[] data, byte[] records) =>
-            new LegacyBeamProperty(GpcGooArchive.ReadValue<GPC.Model.ElementProperties.ElasticBeamProperty>(data),
-                Load(records, "beam-property").Property?.Data() ?? throw new SerializationException("BridgheDraftRecordsMissingBeamProperty"));
+        public static LegacyBeamProperty ReadBeamProperty(byte[] data, byte[] records)
+        {
+            var r = Load(records, "beam-property");
+            return RecordExtensions.Remember(new LegacyBeamProperty(GpcGooArchive.ReadValue<GPC.Model.ElementProperties.ElasticBeamProperty>(data),
+                r.Property?.Data() ?? throw new SerializationException("BridgheDraftRecordsMissingBeamProperty")), r);
+        }
 
         /// <param name="membraneBending">L2C: the bending thickness of a membrane property, beside the GPC property (<see cref="DraftRecords.MembraneBending"/>).</param>
         public static (byte[] Data, byte[] Records) Write(GPC.Model.ElementProperties.PlateProperty p, double membraneBending = 0) => p switch
         {
-            GPC.Model.ElementProperties.ElasticPlateProperty e => (GpcGooArchive.Value(e), Save(new DraftRecords { Kind = "plate-property", PlateType = "elastic", MembraneBending = membraneBending })),
-            GPC.Model.ElementProperties.MembranePlateProperty m => (GpcGooArchive.Value(m), Save(new DraftRecords { Kind = "plate-property", PlateType = "membrane", MembraneBending = membraneBending })),
+            GPC.Model.ElementProperties.ElasticPlateProperty e => (GpcGooArchive.Value(e), Save(RecordExtensions.Carry(new DraftRecords { Kind = "plate-property", PlateType = "elastic", MembraneBending = membraneBending }, p))),
+            GPC.Model.ElementProperties.MembranePlateProperty m => (GpcGooArchive.Value(m), Save(RecordExtensions.Carry(new DraftRecords { Kind = "plate-property", PlateType = "membrane", MembraneBending = membraneBending }, p))),
             _ => throw new NotSupportedException("BridghePlatePropertyType: " + p?.GetType().Name),
         };
         public static GPC.Model.ElementProperties.PlateProperty ReadPlateProperty(byte[] data, byte[] records) => ReadPlateProperty(data, records, out _);
@@ -151,23 +162,24 @@ namespace BridGHe.Common.Gpc
         {
             var r = Load(records, "plate-property");
             membraneBending = r.MembraneBending;
-            return r.PlateType switch
+            GPC.Model.ElementProperties.PlateProperty p = r.PlateType switch
             {
                 "elastic" => GpcGooArchive.ReadValue<GPC.Model.ElementProperties.ElasticPlateProperty>(data),
                 "membrane" => GpcGooArchive.ReadValue<GPC.Model.ElementProperties.MembranePlateProperty>(data),
                 var t => throw new SerializationException("BridgheDraftRecordsUnknownPlateType: " + t),
             };
+            return RecordExtensions.Remember(p, r);
         }
 
         /// <summary>A model (<c>GH_Model</c>): the GPC model with its bridge data (<see cref="GpcGooArchive.BridgeModel"/>) and the definition units.</summary>
         public static (byte[] Data, byte[] Records) Write(GPC.Checkers.CompositeBridge.BridgeModel model, BridgeUnits units) =>
-            (GpcGooArchive.BridgeModel(model ?? throw new ArgumentNullException(nameof(model))), Save(new DraftRecords { Kind = "model", Units = (int)units.Units }));
+            (GpcGooArchive.BridgeModel(model ?? throw new ArgumentNullException(nameof(model))), Save(RecordExtensions.Carry(new DraftRecords { Kind = "model", Units = (int)units.Units }, model)));
 
         public static (GPC.Checkers.CompositeBridge.BridgeModel Model, BridgeUnits Units) ReadModel(byte[] data, byte[] records)
         {
             var r = Load(records, "model");
             if (!Enum.IsDefined(typeof(DefinitionUnits), r.Units)) throw new SerializationException("BridgheDraftRecordsUnknownUnits");
-            return (GpcGooArchive.ReadBridgeModel(data), new BridgeUnits((DefinitionUnits)r.Units));
+            return (RecordExtensions.Remember(GpcGooArchive.ReadBridgeModel(data), r), new BridgeUnits((DefinitionUnits)r.Units));
         }
 
         /// <summary>R6.0/R6.1: a model with its conversion report (<c>GH_Model</c> after the removal of FeMM: what the analysis, the export and
@@ -198,7 +210,7 @@ namespace BridGHe.Common.Gpc
             r.ShadowedPropertyBeams = report.ShadowedPropertyBeams.ToList();
             r.ElementLoadCases = report.ElementLoadCases.Select(c => new ElementCasesRecord { Family = (int)c.Family, Number = c.Number, Cases = c.Cases.ToList() }).ToList();
             r.Natives = natives.Select(n => n.Save()).ToList();
-            return (GpcGooArchive.BridgeModel(conversion.BridgeModel), Save(r));
+            return (GpcGooArchive.BridgeModel(conversion.BridgeModel), Save(RecordExtensions.Carry(r, conversion)));
         }
 
         /// <summary>The conversion of <see cref="Write(GpcModels.Conversion)"/>: the model, its bridge data, the report and the tolerance.</summary>
@@ -217,7 +229,7 @@ namespace BridGHe.Common.Gpc
             report.ShadowedPropertyBeams.UnionWith(r.ShadowedPropertyBeams ?? new List<int>());
             foreach (var c in r.ElementLoadCases ?? new List<ElementCasesRecord>())
                 report.ElementLoadCases.Add(new LegacyElementCases((GPC.Model.Core.Identity.EntityFamily)c.Family, c.Number, (c.Cases ?? new List<string>()).ToArray()));
-            return new GpcModels.Conversion(model.Model, report, r.Tolerance);
+            return RecordExtensions.Remember(new GpcModels.Conversion(model.Model, report, r.Tolerance), r);
         }
 
         /// <summary>A report with the element-level data of a model only (for <see cref="DraftRecords.Of"/>, which refuses model data).</summary>
@@ -247,6 +259,15 @@ namespace BridGHe.Common.Gpc
 
         private static DataContractSerializer Serializer() => new DataContractSerializer(typeof(DraftRecords), new DataContractSerializerSettings { MaxItemsInObjectGraph = 1_000_000 });
 
+        /// <summary>P4 (P2D, user decision U1 of 12/11): the message of data written by a newer BridGHe in a format or schema this version does
+        /// not read (BGHGPC1 records of schema 2 or later, a BGHGPC1 or BGHDRF2 archive of a later version). Shown when the file opens.</summary>
+        public const string NewerSchemaMessage = "Dati salvati da una versione più recente di BridGHe ({0}): questa versione legge il formato BGHGPC1, schema dei record 1. Il dato non è stato caricato: aprire il file con la versione di BridGHe che lo ha salvato, o aggiornare BridGHe.";
+
+        /// <summary>The text the file reader shows for a datum it cannot read: <see cref="NewerSchemaMessage"/> for data of a newer format,
+        /// otherwise the reason.</summary>
+        public static string UserMessage(Exception ex) => ex is GpcNewerFormatException ? ex.Message
+            : "dato BridGHe non leggibile (" + (ex?.Message ?? "?") + "): il dato non è stato caricato.";
+
         internal static byte[] Save(DraftRecords records)
         {
             using var stream = new MemoryStream();
@@ -255,11 +276,29 @@ namespace BridGHe.Common.Gpc
             return stream.ToArray();
         }
 
+        /// <summary>P4: the schema of a records chunk, read from its first member before the records are read (a record of a later schema may
+        /// not follow the contract of schema 1); -1 when the chunk does not start with it.</summary>
+        private static int PeekSchema(byte[] bytes, XmlDictionaryReaderQuotas quotas)
+        {
+            try
+            {
+                using var reader = XmlDictionaryReader.CreateTextReader(bytes, quotas);
+                if (reader.MoveToContent() != XmlNodeType.Element || reader.IsEmptyElement) return -1;
+                reader.Read();
+                if (reader.MoveToContent() != XmlNodeType.Element || reader.LocalName != "Schema") return -1;
+                return int.TryParse(reader.ReadElementContentAsString(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int schema) ? schema : -1;
+            }
+            catch (XmlException) { return -1; }
+        }
+
         internal static DraftRecords Load(byte[] bytes, string kind)
         {
             if (bytes == null || bytes.Length == 0) throw new SerializationException("BridgheDraftRecordsMissing");
             if (bytes.Length > MaximumRecordBytes) throw new SerializationException("BridgheDraftRecordsTooLarge");
             var quotas = new XmlDictionaryReaderQuotas { MaxDepth = 64, MaxStringContentLength = MaximumRecordBytes, MaxArrayLength = MaximumRecordBytes, MaxBytesPerRead = 4096, MaxNameTableCharCount = 16384 };
+            // P4 (U1): schema 1 takes additions only (kept by the records, IExtensibleDataObject); a required member is schema 2, refused clearly.
+            int schema = PeekSchema(bytes, quotas);
+            if (schema > DraftRecords.CurrentSchema) throw new GpcNewerFormatException("schema dei record BGHGPC1 " + schema);
             using var reader = XmlDictionaryReader.CreateTextReader(bytes, quotas);
             var records = (DraftRecords)Serializer().ReadObject(reader);
             // P30-04 (C1, 11/11): the records end the chunk (the writer writes the root element alone): anything after it is damage.
@@ -273,13 +312,83 @@ namespace BridGHe.Common.Gpc
         }
     }
 
+    /// <summary>P4 (P2D, user decision U1 of 12/11): data written by a newer BridGHe in a format or schema this version does not read; its
+    /// message is the one the user sees (<see cref="GpcDraftArchive.NewerSchemaMessage"/>).</summary>
+    public sealed class GpcNewerFormatException : SerializationException
+    {
+        public GpcNewerFormatException(string what) : base(string.Format(System.Globalization.CultureInfo.InvariantCulture, GpcDraftArchive.NewerSchemaMessage, what)) { }
+    }
+
+    /// <summary>
+    /// P4 (P2D, user decision U1 of 12/11): schema 1 of the records takes additions only, and a reader keeps the members it does not know. Every
+    /// record class is an <see cref="IExtensibleDataObject"/>: the serializer keeps the unknown members of a record of a newer writer in its
+    /// extension data. The records read with a datum are remembered for that datum (by reference, while it lives) when they hold any; when the
+    /// same datum is written again the extension data go back on the records written for it, record by record where the structure matches
+    /// (the same member, the same index in a list). A changed datum (a copy a component changes) is another object and writes its own records.
+    /// </summary>
+    internal static class RecordExtensions
+    {
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<object, DraftRecords> read = new();
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, System.Reflection.FieldInfo[]> members = new();
+
+        private static System.Reflection.FieldInfo[] Members(Type type) => members.GetOrAdd(type, t => t.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .Where(f => f.IsDefined(typeof(DataMemberAttribute), false) && (typeof(IExtensibleDataObject).IsAssignableFrom(f.FieldType) || RecordList(f.FieldType))).ToArray());
+
+        private static bool RecordList(Type t) => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(List<>) && typeof(IExtensibleDataObject).IsAssignableFrom(t.GetGenericArguments()[0]);
+
+        /// <summary>The datum read with <paramref name="records"/>, remembered with them when they hold members of a newer writer.</summary>
+        internal static T Remember<T>(T datum, DraftRecords records) where T : class
+        {
+            if (datum != null && records != null && Holds(records)) read.AddOrUpdate(datum, records);
+            return datum;
+        }
+
+        /// <summary>True when <paramref name="datum"/> was read with records that hold members of a newer writer.</summary>
+        internal static bool Carries(object datum) => datum != null && read.TryGetValue(datum, out _);
+
+        /// <summary>The records written for <paramref name="datum"/> with the extension data of the records it was read with.</summary>
+        internal static DraftRecords Carry(DraftRecords fresh, object datum)
+        {
+            if (fresh != null && datum != null && read.TryGetValue(datum, out var original)) Merge(fresh, original);
+            return fresh;
+        }
+
+        private static bool Holds(object record)
+        {
+            if (record is not IExtensibleDataObject e) return false;
+            if (e.ExtensionData != null) return true;
+            foreach (var m in Members(record.GetType()))
+                switch (m.GetValue(record))
+                {
+                    case IExtensibleDataObject child when Holds(child): return true;
+                    case System.Collections.IList list: foreach (var item in list) if (Holds(item)) return true; break;
+                }
+            return false;
+        }
+
+        private static void Merge(object fresh, object original)
+        {
+            if (fresh is not IExtensibleDataObject f || original is not IExtensibleDataObject o || fresh.GetType() != original.GetType()) return;
+            f.ExtensionData ??= o.ExtensionData;
+            foreach (var m in Members(fresh.GetType()))
+            {
+                object a = m.GetValue(fresh), b = m.GetValue(original);
+                if (a is System.Collections.IList la && b is System.Collections.IList lb) { if (la.Count == lb.Count) for (int i = 0; i < la.Count; i++) Merge(la[i], lb[i]); }
+                else Merge(a, b);
+            }
+        }
+    }
+
     /// <summary>The BridGHe records of a draft (<see cref="GpcDraftArchive"/>): schema 1, additions only (a new member takes the next order
-    /// and a default that reads the old data as before; a reader refuses another schema).</summary>
+    /// and a default that reads the old data as before). P4 (P2D, U1): the members a reader does not know are kept
+    /// (<see cref="IExtensibleDataObject"/>, <see cref="RecordExtensions"/>); a member that must be read means schema 2, which a reader of
+    /// schema 1 refuses with <see cref="GpcDraftArchive.NewerSchemaMessage"/>. Frozen at the end of P2D.</summary>
     [DataContract(Name = "DraftRecords", Namespace = Ns)]
-    internal sealed class DraftRecords
+    internal sealed class DraftRecords : IExtensibleDataObject
     {
         internal const string Ns = "urn:bridghe:gpc-draft-records";
         internal const int CurrentSchema = 1;
+        public ExtensionDataObject ExtensionData { get; set; }
         [DataMember(Order = 0)] public int Schema = CurrentSchema;
         [DataMember(Order = 1)] public string Kind;
         // LegacyElementRecords
@@ -385,8 +494,9 @@ namespace BridGHe.Common.Gpc
     }
 
     [DataContract(Name = "Case", Namespace = DraftRecords.Ns)]
-    internal sealed class CaseRecord
+    internal sealed class CaseRecord : IExtensibleDataObject
     {
+        public ExtensionDataObject ExtensionData { get; set; }
         [DataMember(Order = 0)] public string Name;
         [DataMember(Order = 1)] public double Temperature;
         [DataMember(Order = 2)] public bool StructuralMass;
@@ -406,8 +516,9 @@ namespace BridGHe.Common.Gpc
     }
 
     [DataContract(Name = "Combination", Namespace = DraftRecords.Ns)]
-    internal sealed class CombinationRecord
+    internal sealed class CombinationRecord : IExtensibleDataObject
     {
+        public ExtensionDataObject ExtensionData { get; set; }
         [DataMember(Order = 0)] public string Name;
         [DataMember(Order = 1)] public List<CaseRecord> Cases;
         [DataMember(Order = 2)] public List<double> Factors;
@@ -424,8 +535,9 @@ namespace BridGHe.Common.Gpc
     }
 
     [DataContract(Name = "Stage", Namespace = DraftRecords.Ns)]
-    internal sealed class StageRecord
+    internal sealed class StageRecord : IExtensibleDataObject
     {
+        public ExtensionDataObject ExtensionData { get; set; }
         [DataMember(Order = 0)] public string Name;
         [DataMember(Order = 1)] public List<string> Groups;
         [DataMember(Order = 2)] public bool Morph;
@@ -439,30 +551,32 @@ namespace BridGHe.Common.Gpc
     }
 
     [DataContract(Name = "Count", Namespace = DraftRecords.Ns)]
-    internal sealed class CountRecord { [DataMember(Order = 0)] public string Key; [DataMember(Order = 1)] public int Count; }
+    internal sealed class CountRecord : IExtensibleDataObject { public ExtensionDataObject ExtensionData { get; set; } [DataMember(Order = 0)] public string Key; [DataMember(Order = 1)] public int Count; }
 
     [DataContract(Name = "Load", Namespace = DraftRecords.Ns)]
-    internal sealed class LoadRecord { [DataMember(Order = 0)] public string Kind; [DataMember(Order = 1)] public string Case; }
+    internal sealed class LoadRecord : IExtensibleDataObject { public ExtensionDataObject ExtensionData { get; set; } [DataMember(Order = 0)] public string Kind; [DataMember(Order = 1)] public string Case; }
 
     [DataContract(Name = "Native", Namespace = DraftRecords.Ns)]
-    internal sealed class NativeRecord { [DataMember(Order = 0)] public Guid Beam; [DataMember(Order = 1)] public int Index; }
+    internal sealed class NativeRecord : IExtensibleDataObject { public ExtensionDataObject ExtensionData { get; set; } [DataMember(Order = 0)] public Guid Beam; [DataMember(Order = 1)] public int Index; }
 
     [DataContract(Name = "NamedProperty", Namespace = DraftRecords.Ns)]
-    internal sealed class NamedPropertyRecord { [DataMember(Order = 0)] public string Name; [DataMember(Order = 1)] public PropertyRecord Property; }
+    internal sealed class NamedPropertyRecord : IExtensibleDataObject { public ExtensionDataObject ExtensionData { get; set; } [DataMember(Order = 0)] public string Name; [DataMember(Order = 1)] public PropertyRecord Property; }
 
     [DataContract(Name = "ElementCases", Namespace = DraftRecords.Ns)]
-    internal sealed class ElementCasesRecord { [DataMember(Order = 0)] public int Family; [DataMember(Order = 1)] public int Number; [DataMember(Order = 2)] public List<string> Cases; }
+    internal sealed class ElementCasesRecord : IExtensibleDataObject { public ExtensionDataObject ExtensionData { get; set; } [DataMember(Order = 0)] public int Family; [DataMember(Order = 1)] public int Number; [DataMember(Order = 2)] public List<string> Cases; }
 
     [DataContract(Name = "Warning", Namespace = DraftRecords.Ns)]
-    internal sealed class WarningRecord
+    internal sealed class WarningRecord : IExtensibleDataObject
     {
+        public ExtensionDataObject ExtensionData { get; set; }
         [DataMember(Order = 0)] public int Family; [DataMember(Order = 1)] public int Number; [DataMember(Order = 2)] public string Format; [DataMember(Order = 3)] public bool Restraint;
     }
 
     /// <summary>The data of the property of a beam draft (<see cref="LegacyBeamPropertyData"/>) with its section recipe.</summary>
     [DataContract(Name = "Property", Namespace = DraftRecords.Ns)]
-    internal sealed class PropertyRecord
+    internal sealed class PropertyRecord : IExtensibleDataObject
     {
+        public ExtensionDataObject ExtensionData { get; set; }
         [DataMember(Order = 0)] public int Formulation;
         [DataMember(Order = 1)] public double Angle;
         /// <summary>The resolved native Straus7 section in its own format (<see cref="GPC.Converter.Straus7.Straus7SectionDefinition.Save"/>), or null.</summary>
@@ -485,8 +599,9 @@ namespace BridGHe.Common.Gpc
     }
 
     [DataContract(Name = "Section", Namespace = DraftRecords.Ns)]
-    internal sealed class SectionRecord
+    internal sealed class SectionRecord : IExtensibleDataObject
     {
+        public ExtensionDataObject ExtensionData { get; set; }
         [DataMember(Order = 0)] public int Kind;
         [DataMember(Order = 1)] public string Name;
         [DataMember(Order = 2)] public double[] Values; // Angle, D, B, B1, B2, T, T1, T2, T3, Area, I11, I22, J, CentroidX, CentroidY, ShearL1, ShearL2, ShearA1, ShearA2
@@ -507,6 +622,9 @@ namespace BridGHe.Common.Gpc
         [DataMember(Order = 14, EmitDefaultValue = false)] public int? Mirror;
         [DataMember(Order = 15, EmitDefaultValue = false)] public double MirrorGapA;
         [DataMember(Order = 16, EmitDefaultValue = false)] public double MirrorGapB;
+        /// <summary>P11 (P2D, user decision U5 of 12/11): the outline of a homogenised composite section, for the preview only (an addition of
+        /// schema 1, not written when null: a record written before reads it as none).</summary>
+        [DataMember(Order = 17, EmitDefaultValue = false)] public CompositeOutlineRecord CompositeOutline;
 
         internal static SectionRecord Of(LegacySectionRecipe s) => s == null ? null : new SectionRecord
         {
@@ -516,6 +634,7 @@ namespace BridGHe.Common.Gpc
             LibraryName = s.LibraryName, LibraryItem = s.LibraryItem, NativeLengthUnit = s.NativeLengthUnit,
             R = s.R, W11 = s.W11, W22 = s.W22, Shapes = s.Shapes?.Select(ShapeRecord.Of).ToList(),
             Mirror = s.Mirror == LegacySectionRecipe.NoMirror ? null : s.Mirror, MirrorGapA = s.MirrorGapA, MirrorGapB = s.MirrorGapB,
+            CompositeOutline = CompositeOutlineRecord.Of(s.CompositeOutline),
         };
 
         internal LegacySectionRecipe Recipe()
@@ -529,14 +648,44 @@ namespace BridGHe.Common.Gpc
                 CompositePreview = CompositePreview, NativeKey = NativeKey, NativeDimensions = NativeDimensions, BxsPath = BxsPath, LibraryName = LibraryName,
                 LibraryItem = LibraryItem, NativeLengthUnit = NativeLengthUnit,
                 R = R, W11 = W11, W22 = W22, Shapes = Shapes?.Select(s => s.Shape()).ToArray(), Mirror = Mirror ?? LegacySectionRecipe.NoMirror, MirrorGapA = MirrorGapA, MirrorGapB = MirrorGapB,
+                CompositeOutline = CompositeOutline?.Outline(),
             };
         }
     }
 
+    /// <summary>P11 (P2D, user decision U5 of 12/11): the outline of a homogenised composite section (<see cref="LegacyCompositeOutline"/>):
+    /// the steel I, the slab and the two rows of bars, in the units of the recipe.</summary>
+    [DataContract(Name = "CompositeOutline", Namespace = DraftRecords.Ns)]
+    internal sealed class CompositeOutlineRecord : IExtensibleDataObject
+    {
+        public ExtensionDataObject ExtensionData { get; set; }
+        [DataMember(Order = 0)] public double D;
+        [DataMember(Order = 1)] public double B1;
+        [DataMember(Order = 2)] public double T1;
+        [DataMember(Order = 3)] public double B2;
+        [DataMember(Order = 4)] public double T2;
+        [DataMember(Order = 5)] public double T3;
+        [DataMember(Order = 6)] public double Width;
+        [DataMember(Order = 7)] public double Height;
+        [DataMember(Order = 8)] public double TopArea;
+        [DataMember(Order = 9)] public double TopCover;
+        [DataMember(Order = 10)] public double BottomArea;
+        [DataMember(Order = 11)] public double BottomCover;
+
+        internal static CompositeOutlineRecord Of(LegacyCompositeOutline o) => o == null ? null : new CompositeOutlineRecord
+        {
+            D = o.D, B1 = o.B1, T1 = o.T1, B2 = o.B2, T2 = o.T2, T3 = o.T3, Width = o.Width, Height = o.Height,
+            TopArea = o.TopArea, TopCover = o.TopCover, BottomArea = o.BottomArea, BottomCover = o.BottomCover,
+        };
+
+        internal LegacyCompositeOutline Outline() => new LegacyCompositeOutline(D, B1, T1, B2, T2, T3, Width, Height, TopArea, TopCover, BottomArea, BottomCover);
+    }
+
     /// <summary>L2C: one shape of a Brep section (<see cref="LegacySectionShape"/>): the x, y pairs of its fill and of its holes.</summary>
     [DataContract(Name = "Shape", Namespace = DraftRecords.Ns)]
-    internal sealed class ShapeRecord
+    internal sealed class ShapeRecord : IExtensibleDataObject
     {
+        public ExtensionDataObject ExtensionData { get; set; }
         [DataMember(Order = 0)] public double[] Fill;
         [DataMember(Order = 1)] public List<double[]> Holes;
         internal static ShapeRecord Of(LegacySectionShape s) => new ShapeRecord { Fill = s.Fill.ToArray(), Holes = s.Holes.Select(h => h.ToArray()).ToList() };

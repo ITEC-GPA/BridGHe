@@ -48,8 +48,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             get
             {
+                // P2D: a former payload is read by value when the file is read (no FEM value).
                 if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
-                if (_legacy != null && ReferenceEquals(_legacyOf, Value)) { _gpc = Common.Gpc.GpcLegacyPayloads.PlateProperty(_legacy); _gpcOf = Value; HasAttachedGpc = false; return _gpc; }
                 if (Value == null) return null;
                 _gpc = Common.Gpc.GpcModels.PlatePropertyDraft(Value); _gpcOf = Value; HasAttachedGpc = false;
                 return _gpc;
@@ -68,39 +68,29 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             get
             {
                 if (_gpc != null && HasAttachedGpc && ReferenceEquals(_gpcOf, Value)) return _bending;
-                if (_legacy != null && ReferenceEquals(_legacyOf, Value)) return Common.Gpc.GpcLegacyPayloads.PlatePropertyMembraneBending(_legacy);
                 return Value == null ? _bending : Common.Gpc.GpcModels.PlatePropertyMembraneBending(Value);
             }
             set => _bending = value;
         }
 
-        /// <summary>Attaches the GPC datum built on GPC for the current FEM value (it must describe it: the gates compare the two, <see cref="Common.Gpc.GpcDraftCheck"/>).</summary>
+        /// <summary>Attaches the GPC datum built on GPC for the current FEM value.</summary>
         public void AttachGpc(GPC.Model.ElementProperties.PlateProperty datum) => AttachGpc(datum, 0);
 
         /// <summary>L2C: <see cref="AttachGpc(GPC.Model.ElementProperties.PlateProperty)"/> with the bending thickness of a membrane
-        /// (<see cref="GpcMembraneBending"/>), checked with the datum against the conversion of the FEM value.</summary>
+        /// (<see cref="GpcMembraneBending"/>).</summary>
         public void AttachGpc(GPC.Model.ElementProperties.PlateProperty datum, double membraneBending)
         {
             _gpc = datum ?? throw new ArgumentNullException(nameof(datum)); _gpcOf = Value; HasAttachedGpc = true; _bending = membraneBending;
-            if (Value != null)
-            {
-                var value = Value;
-                Common.Gpc.GpcDraftCheck.Attached("GH_PlateProperty", new Common.Gpc.GpcPlatePropertyDatum(datum, membraneBending),
-                    () => new Common.Gpc.GpcPlatePropertyDatum(Common.Gpc.GpcModels.PlatePropertyDraft(value), Common.Gpc.GpcModels.PlatePropertyMembraneBending(value)));
-            }
         }
 
         private double _bending;
         private GPC.Model.ElementProperties.PlateProperty _gpc;
         private PlatePropertyModel _gpcOf;
-        private byte[] _legacy;
-        private PlatePropertyModel _legacyOf;
 
-        /// <summary>R6.1: a copy (<c>Duplicate</c>) keeps the datum attached or read and the former payload, for its copy of the same value.</summary>
+        /// <summary>R6.1: a copy (<c>Duplicate</c>) keeps the datum attached or read, for its copy of the same value.</summary>
         private void CarryGpcTo(GH_PlateProperty copy)
         {
             if (_gpc != null && HasAttachedGpc && ReferenceEquals(_gpcOf, Value)) { copy._gpc = _gpc; copy._gpcOf = copy.Value; copy.HasAttachedGpc = true; copy._bending = _bending; }
-            if (_legacy != null && ReferenceEquals(_legacyOf, Value)) { copy._legacy = _legacy; copy._legacyOf = copy.Value; }
         }
 
         /// <summary>R6.5 P0 (coordinator, 7/11): a plate property given by its GPC datum alone, with no FEM value: <see cref="Gpc"/> is the datum and
@@ -134,7 +124,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override bool Write(GH_IWriter writer)
         {
-            try { GpcGooPersistence.Write(writer, () => Common.Gpc.GpcDraftArchive.Write(Gpc, GpcMembraneBending), Value == null ? null : Common.Helpers.ModelArchive.Write(Value)); return true; }
+            try { GpcGooPersistence.Write(writer, Common.Gpc.GpcDraftArchive.Write(Gpc, GpcMembraneBending)); return true; } // P2D: the datum alone
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
         }
 
@@ -142,20 +132,20 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             try
             {
+                // P2D: the datum with the bending thickness of a membrane, or a former payload / the FEM chunk alone of a development file read
+                // by value with its bending thickness; never a FEM value.
+                GPC.Model.ElementProperties.PlateProperty datum; double bending;
                 switch (GpcGooPersistence.Read(reader, out var data, out var records, out var femm))
                 {
-                    case GpcGooPersistence.Kind.Gpc:
-                        var datum = Common.Gpc.GpcDraftArchive.ReadPlateProperty(data, records, out double bending);
-                        Value = femm == null ? null : Common.Helpers.ModelArchive.Read<PlatePropertyModel>(femm);
-                        _gpc = datum; _gpcOf = Value; HasAttachedGpc = true; _bending = bending; return true;
+                    case GpcGooPersistence.Kind.Gpc: datum = Common.Gpc.GpcDraftArchive.ReadPlateProperty(data, records, out bending); break;
                     case GpcGooPersistence.Kind.Legacy:
-                        Value = Common.Helpers.ModelArchive.Read<PlatePropertyModel>(femm); _legacy = femm; _legacyOf = Value; return true;
-                    case GpcGooPersistence.Kind.FemmOnly:
-                        Value = Common.Helpers.ModelArchive.Read<PlatePropertyModel>(femm); return true;
+                        datum = Common.Gpc.GpcLegacyPayloads.PlateProperty(femm); bending = Common.Gpc.GpcLegacyPayloads.PlatePropertyMembraneBending(femm); break;
                     default: return false;
                 }
+                if (datum == null) return false;
+                Value = null; _gpc = datum; _gpcOf = null; HasAttachedGpc = true; _bending = bending; return true;
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
+            catch (Exception ex) { return GpcGooPersistence.Refused(reader, TypeName, ex); }
         }
 
         public override string ToString()

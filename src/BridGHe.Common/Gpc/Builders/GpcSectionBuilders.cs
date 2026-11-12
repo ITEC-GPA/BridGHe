@@ -36,7 +36,7 @@ namespace BridGHe.Common.Gpc.Builders
         private static LegacySectionRecipe Copy(LegacySectionRecipe r, int? mirror = null, double? gapA = null) => new LegacySectionRecipe
         {
             Kind = r.Kind, Name = r.Name, Angle = r.Angle, D = r.D, B = r.B, B1 = r.B1, B2 = r.B2, T = r.T, T1 = r.T1, T2 = r.T2, T3 = r.T3, Area = r.Area, I11 = r.I11, I22 = r.I22, J = r.J,
-            CentroidX = r.CentroidX, CentroidY = r.CentroidY, ShearL1 = r.ShearL1, ShearL2 = r.ShearL2, ShearA1 = r.ShearA1, ShearA2 = r.ShearA2, CompositePreview = r.CompositePreview,
+            CentroidX = r.CentroidX, CentroidY = r.CentroidY, ShearL1 = r.ShearL1, ShearL2 = r.ShearL2, ShearA1 = r.ShearA1, ShearA2 = r.ShearA2, CompositePreview = r.CompositePreview, CompositeOutline = r.CompositeOutline,
             NativeKey = r.NativeKey, NativeDimensions = r.NativeDimensions, BxsPath = r.BxsPath, LibraryName = r.LibraryName, LibraryItem = r.LibraryItem, NativeLengthUnit = r.NativeLengthUnit,
             R = r.R, W11 = r.W11, W22 = r.W22, Shapes = r.Shapes, Mirror = mirror ?? r.Mirror, MirrorGapA = gapA ?? r.MirrorGapA, MirrorGapB = r.MirrorGapB,
         };
@@ -85,7 +85,7 @@ namespace BridGHe.Common.Gpc.Builders
             {
                 Kind = r.Kind, Name = r.Name, Angle = r.Angle, D = C(r.D, 1), B = C(r.B, 1), B1 = C(r.B1, 1), B2 = C(r.B2, 1), T = C(r.T, 1), T1 = C(r.T1, 1), T2 = C(r.T2, 1), T3 = C(r.T3, 1),
                 Area = C(r.Area, 2), I11 = C(r.I11, 4), I22 = C(r.I22, 4), J = C(r.J, 4), CentroidX = C(r.CentroidX, 1), CentroidY = C(r.CentroidY, 1),
-                ShearL1 = C(r.ShearL1, 1), ShearL2 = C(r.ShearL2, 1), ShearA1 = C(r.ShearA1, 2), ShearA2 = C(r.ShearA2, 2), CompositePreview = r.CompositePreview,
+                ShearL1 = C(r.ShearL1, 1), ShearL2 = C(r.ShearL2, 1), ShearA1 = C(r.ShearA1, 2), ShearA2 = C(r.ShearA2, 2), CompositePreview = r.CompositePreview, CompositeOutline = r.CompositeOutline?.Convert(C),
                 R = r.R, W11 = C(r.W11, 3), W22 = C(r.W22, 3), Shapes = r.Shapes, Mirror = r.Mirror, MirrorGapA = C(r.MirrorGapA, 1), MirrorGapB = C(r.MirrorGapB, 1),
             };
         }

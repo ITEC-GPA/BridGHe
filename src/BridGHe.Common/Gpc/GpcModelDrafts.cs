@@ -130,6 +130,7 @@ namespace BridGHe.Common.Gpc
             }
             int start = Header.Length + 1 + sizeof(int);
             if (!Starts(data, Header) || data.Length < start) throw new SerializationException("NotBridgheModelDrafts");
+            if (data[Header.Length] > Version) throw new GpcNewerFormatException("bozze BGHDRF2 versione " + data[Header.Length]); // P4 (P2D, U1)
             if (data[Header.Length] != Version) throw new SerializationException("UnsupportedBridgheModelDraftsVersion: " + data[Header.Length]);
             int length = BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(Header.Length + 1, sizeof(int)));
             if (length < 3 * sizeof(int) || length > MaximumBytes) throw new SerializationException("BridgheModelDraftsInvalidLength");

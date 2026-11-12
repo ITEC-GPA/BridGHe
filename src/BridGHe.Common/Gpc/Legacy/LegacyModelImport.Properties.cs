@@ -314,6 +314,7 @@ namespace BridGHe.Common.Gpc.Legacy
                 {
                     Kind = kind, Name = name, Angle = angle, Area = s.Double("Area"), I11 = s.Double("I11"), I22 = s.Double("I22"), J = s.Double("J"), CentroidX = c.Double("X"), CentroidY = c.Double("Y"),
                     ShearL1 = s.Double("ShearL1"), ShearL2 = s.Double("ShearL2"), ShearA1 = s.Double("ShearA1"), ShearA2 = s.Double("ShearA2"), CompositePreview = !s["CompositePreview"].IsNull,
+                    CompositeOutline = CompositeOutline(s["CompositePreview"]), // P11 (P2D): the outline of the former preview geometry
                     // L2C: the section moduli of the Generic section (inputs S11/S22), as the former value held them (0 before its release 1).
                     W11 = s.Double("W11", 0), W22 = s.Double("W22", 0), Mirror = mirror, MirrorGapA = gapA, MirrorGapB = gapB,
                 };
@@ -324,6 +325,22 @@ namespace BridGHe.Common.Gpc.Legacy
                 // L2C (limit (a) of passo 77): the fillet radius (0 before its release 3); the shapes of a Brep section; the mirror.
                 R = s.Double("R", 0), Shapes = kind == BridgeSectionKind.GenericShapes ? SectionShapes(s["GenericShapes"]) : null, Mirror = mirror, MirrorGapA = gapA, MirrorGapB = gapB,
             };
+        }
+
+        /// <summary>P11 (P2D, user decision U5 of 12/11): the outline of the preview geometry of a former homogenised property
+        /// (<c>CompositeSectionPreviewGeometry</c>: its steel section and its slab, as stored), or null without one or when it is incomplete
+        /// (the preview then draws nothing, as before).</summary>
+        private static LegacyCompositeOutline CompositeOutline(LegacyValue preview)
+        {
+            if (preview.IsNull) return null;
+            var steel = preview["Steel"]; var slab = preview["Slab"];
+            if (steel.IsNull || slab.IsNull) return null;
+            try
+            {
+                return new LegacyCompositeOutline(steel.Double("D"), steel.Double("B1"), steel.Double("T1"), steel.Double("B2"), steel.Double("T2"), steel.Double("T3"),
+                    slab.Double("_width"), slab.Double("_height"), slab.Double("_topRebarArea"), slab.Double("_topCover"), slab.Double("_bottomRebarArea"), slab.Double("_bottomCover"));
+            }
+            catch (System.Runtime.Serialization.SerializationException) { return null; }
         }
 
         /// <summary>L2C: the former <c>MirrorTypes</c> by name as its value (−1 None, 0 Top, 1 Bottom, 2 Left, 3 Right).</summary>

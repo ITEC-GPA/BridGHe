@@ -57,12 +57,11 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         /// <summary>True when <see cref="Gpc"/> was attached by a GPC builder (not converted from the FEM value).</summary>
         public bool HasAttachedGpc { get; private set; }
 
-        /// <summary>Attaches the chain built on GPC for the current FEM value (it must describe it: the gates compare the two).</summary>
+        /// <summary>Attaches the chain built on GPC for the current FEM value.</summary>
         public void AttachGpc(IReadOnlyList<string> chain)
         {
             if (chain == null) throw new ArgumentNullException(nameof(chain));
             _gpc = chain.ToArray(); _gpcOf = Value; HasAttachedGpc = true;
-            if (Value != null) { var value = Value; Common.Gpc.GpcDraftCheck.Attached("GH_Group", new Common.Gpc.Legacy.LegacyGroupChain(_gpc), () => new Common.Gpc.Legacy.LegacyGroupChain(Chain(value))); }
         }
 
         /// <summary>The chain of the names of a former group from its root (the conversion of the FEM value).</summary>

@@ -152,38 +152,32 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             get
             {
-                // R6.1: the datum attached or read (BGHGPC1), the former payload read by value (BGHA1), otherwise the conversion of the FEM value.
+                // R6.1: the datum attached or read (BGHGPC1, or a former payload read by value: P2D), otherwise the conversion of the FEM value
+                // (the FEM value of a component not yet on GPC: removed with the FEM types).
                 if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
-                if (_legacy != null && ReferenceEquals(_legacyOf, Value)) { _gpc = Common.Gpc.GpcLegacyPayloads.Beam(_legacy); _gpcOf = Value; HasAttachedGpc = false; return _gpc; }
                 if (Value == null) return null;
                 _gpc = Common.Gpc.GpcBeamDrafts.FromFemm(Value); _gpcOf = Value; HasAttachedGpc = false;
                 return _gpc;
             }
         }
 
-        /// <summary>True when <see cref="Gpc"/> is a draft attached by a GPC component (not the conversion of the FEM value).</summary>
+        /// <summary>True when <see cref="Gpc"/> is a draft attached by a GPC component or read from a file (not the conversion of a FEM value).</summary>
         public bool HasAttachedGpc { get; private set; }
 
-        /// <summary>Attaches the GPC draft built on GPC for the current FEM value (it must describe it: the native gates compare the two).</summary>
+        /// <summary>Attaches the GPC draft built on GPC for the current FEM value.</summary>
         public void AttachGpc(Common.Gpc.Legacy.LegacyBeamDraft draft)
         {
             _gpc = draft ?? throw new ArgumentNullException(nameof(draft)); _gpcOf = Value; HasAttachedGpc = true;
-            // R6.1 (frozen API for R6.2): the gates compare the attached draft with the conversion of the FEM value, same identity.
-            if (Value != null) { var value = Value; Common.Gpc.GpcDraftCheck.Attached("GH_Beam", draft, () => Common.Gpc.GpcBeamDrafts.FromFemm(value, draft.Beam.Guid)); }
         }
 
         private Common.Gpc.Legacy.LegacyBeamDraft _gpc;
         private BeamModel _gpcOf;
-        // R6.1: a former payload (BGHA1) read from a file, converted by value on first use while the FEM value read with it is current.
-        private byte[] _legacy;
-        private BeamModel _legacyOf;
 
-        /// <summary>R6.1: a copy of the same content (<c>DuplicateGeometry</c>) keeps the datum attached or read and the former payload;
-        /// a conversion of the FEM value is recomputed. The copy constructor (a copy that a component changes) keeps nothing.</summary>
+        /// <summary>R6.1: a copy of the same content (<c>DuplicateGeometry</c>) keeps the datum attached or read; a conversion of the FEM value
+        /// is recomputed. The copy constructor (a copy that a component changes) keeps nothing.</summary>
         private void CarryGpcTo(GH_Beam copy)
         {
             if (_gpc != null && HasAttachedGpc && ReferenceEquals(_gpcOf, Value)) { copy._gpc = _gpc; copy._gpcOf = copy.Value; copy.HasAttachedGpc = true; }
-            if (_legacy != null && ReferenceEquals(_legacyOf, Value)) { copy._legacy = _legacy; copy._legacyOf = copy.Value; }
         }
 
 
@@ -346,7 +340,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             try
             {
                 writer.SetGuid("Guid", _guid);
-                GpcGooPersistence.Write(writer, () => Common.Gpc.GpcDraftArchive.Write(Gpc), Value == null ? null : Common.Helpers.ModelArchive.Write(Value));
+                GpcGooPersistence.Write(writer, Common.Gpc.GpcDraftArchive.Write(Gpc)); // P2D: the datum alone, never the FEM value
                 return true;
             }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
@@ -357,20 +351,17 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             try
             {
                 _guid = reader.GetGuid("Guid");
-                switch (GpcGooPersistence.Read(reader, out var data, out var records, out var femm))
+                // P2D: the datum (BGHGPC1), or a former payload / the FEM chunk alone of a development file read by value; never a FEM value.
+                var draft = GpcGooPersistence.Read(reader, out var data, out var records, out var femm) switch
                 {
-                    case GpcGooPersistence.Kind.Gpc:
-                        var draft = Common.Gpc.GpcDraftArchive.ReadBeam(data, records);
-                        Value = femm == null ? null : Common.Helpers.ModelArchive.Read<BeamModel>(femm);
-                        _gpc = draft; _gpcOf = Value; HasAttachedGpc = true; return true;
-                    case GpcGooPersistence.Kind.Legacy:
-                        Value = Common.Helpers.ModelArchive.Read<BeamModel>(femm); _legacy = femm; _legacyOf = Value; return true;
-                    case GpcGooPersistence.Kind.FemmOnly:
-                        Value = Common.Helpers.ModelArchive.Read<BeamModel>(femm); return true;
-                    default: return false;
-                }
+                    GpcGooPersistence.Kind.Gpc => Common.Gpc.GpcDraftArchive.ReadBeam(data, records),
+                    GpcGooPersistence.Kind.Legacy => Common.Gpc.GpcLegacyPayloads.Beam(femm),
+                    _ => null,
+                };
+                if (draft == null) return false;
+                Value = null; _gpc = draft; _gpcOf = null; HasAttachedGpc = true; return true;
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
+            catch (Exception ex) { return GpcGooPersistence.Refused(reader, TypeName, ex); }
         }
 
         public override string ToString()

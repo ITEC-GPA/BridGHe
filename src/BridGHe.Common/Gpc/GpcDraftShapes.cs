@@ -17,10 +17,12 @@ namespace BridGHe.Common.Gpc
     /// <item>the solids and the schematic bar lines of a composite beam from its two composite section definitions (<see cref="Composite"/>,
     /// <see cref="CompositeBars"/>: the former <c>CompositeBeamModel.CreateShapes</c> and the bar lines of <c>ModelPreview</c>).</item>
     /// </list>
-    /// A beam draft on a homogenised composite property (a Generic recipe with <see cref="LegacySectionRecipe.CompositePreview"/>) draws no
-    /// solid: the GPC data of the property do not hold the outline of the steel and of the slab (the FEM value held it in its preview
-    /// geometry), so there is nothing to draw it from; nor does a native Straus7 section (library, BXS, BGL, standard key: its contours came
-    /// from the vendor mesh, which the GPC data do not hold). Both are open points of C3. The drafts are in definition units, as the document.
+    /// P11 (P2D, user decision U5 of 12/11): a beam draft on a homogenised composite property (a Generic recipe with
+    /// <see cref="LegacySectionRecipe.CompositePreview"/>) draws the steel and the slab of the outline its recipe holds
+    /// (<see cref="LegacySectionRecipe.CompositeOutline"/>, the former preview geometry of the property) and the schematic bar lines
+    /// (<see cref="Bars"/>), as the FEM beam drew them; nothing when the recipe holds no outline (a recipe written before P2D). A native Straus7
+    /// section (library, BXS, BGL, standard key) draws no solid: its contours came from the vendor mesh, which the GPC data do not hold (user
+    /// decision U5: not drawn). The drafts are in definition units, as the document.
     /// </summary>
     public static class GpcDraftShapes
     {
@@ -89,7 +91,21 @@ namespace BridGHe.Common.Gpc
         {
             principalAngle = 0;
             var r = d.Property?.Section;
-            if (r == null || HasCompositePreview(d)) return null;
+            if (r == null) return null;
+            if (HasCompositePreview(d))
+            {
+                // P11 (P2D): the steel I and the slab of the outline, as the former preview geometry made them (CompositeSectionPreviewGeometry
+                // .Outlines: the I with its centroid at the origin, the slab on its top flange), turned as the Generic section of the property.
+                var o = r.CompositeOutline;
+                if (o == null) return null;
+                principalAngle = r.Angle;
+                double cy = ICentroidY(o.D, o.B1, o.T1, o.B2, o.T2, o.T3), top = o.D - cy;
+                var parts = new List<Brep>();
+                void Part(Brep b) { if (b != null) parts.Add(b); }
+                Part(Planar(Polyline(IOutline(o.D, o.B1, o.T1, o.B2, o.T2, o.T3, cy))));
+                Part(Planar(Polyline(new[] { (-o.Width / 2, top), (o.Width / 2, top), (o.Width / 2, top + o.Height), (-o.Width / 2, top + o.Height), (-o.Width / 2, top) })));
+                return parts;
+            }
             var surfaces = new List<Brep>();
             void Add(Brep b) { if (b != null) surfaces.Add(b); }
             // A native Straus7 section (library, BXS, BGL or a standard key): the FEM section held the contours of the vendor mesh, made by
@@ -245,6 +261,33 @@ namespace BridGHe.Common.Gpc
                 }
             }
             return shapes.ToArray();
+        }
+
+        /// <summary>P11 (P2D, user decision U5 of 12/11): the schematic bar lines of a beam draft on a homogenised composite property with its
+        /// outline: three lines per row given (area &gt; 0) along the beam, at x = (i − 1)·width/3 and at the cover from the top or the bottom
+        /// of the slab, moved by the BridGHe offset and turned as the section (the former <c>ModelPreview.SectionReinforcementLines</c> of a beam
+        /// with a composite preview); none otherwise.</summary>
+        public static Line[] Bars(LegacyBeamDraft d)
+        {
+            var r = d?.Property?.Section; var o = HasCompositePreview(d) ? r.CompositeOutline : null;
+            if (o == null || d.Beam == null) return Array.Empty<Line>();
+            Point3d from = P(d.Beam.StartPoint), to = P(d.Beam.EndPoint);
+            if (!from.IsValid || !to.IsValid || from.DistanceTo(to) <= 0) return Array.Empty<Line>();
+            double cy = ICentroidY(o.D, o.B1, o.T1, o.B2, o.T2, o.T3);
+            var offset = d.Beam.Assignments?.OffsetI ?? new GPC.Geometry.Vector3d(0, 0, 0);
+            var t = Frame(from, to, d.AngleDeg / 180 * Math.PI - r.Angle); var length = to - from;
+            var lines = new List<Line>();
+            foreach (bool top in new[] { true, false })
+                if ((top ? o.TopArea : o.BottomArea) > 0)
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var a = new Point3d((i - 1) * o.Width / 3, o.D - cy + (top ? o.Height - o.TopCover : o.BottomCover), 0);
+                        a += new Vector3d(offset.X, offset.Y, 0);
+                        var z = a;
+                        a.Transform(t); z.Transform(t); z += length;
+                        lines.Add(new Line(a, z));
+                    }
+            return lines.ToArray();
         }
 
         /// <summary>The x of the centroid of the single C or angle of a recipe (from its outer web face), as <see cref="SectionSurfaces"/> uses it.</summary>

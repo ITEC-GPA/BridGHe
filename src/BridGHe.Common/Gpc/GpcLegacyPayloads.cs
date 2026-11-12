@@ -43,6 +43,14 @@ namespace BridGHe.Common.Gpc
 
         public static GPC.Model.Materials.Material Material(byte[] payload) => LegacyModelImport.Material(Root(payload));
 
+        /// <summary>P2D: a former material by value with the kind it declared (the former <c>MaterialKind</c> by name, "Undefined" when none):
+        /// the kind the GH type keeps beside the GPC material (<c>GH_Material.GpcKind</c>), as the FEM value gave it.</summary>
+        public static (GPC.Model.Materials.Material Material, string Kind) MaterialWithKind(byte[] payload)
+        {
+            var recipe = LegacyModelImport.MaterialRecipe(Root(payload));
+            return (LegacyModelImport.Material(recipe), string.IsNullOrEmpty(recipe.Kind) ? "Undefined" : recipe.Kind);
+        }
+
         public static LegacyCaseData Case(byte[] payload) => LegacyModelImport.CaseDraft(Root(payload));
 
         public static LegacyCombinationDraft Combination(byte[] payload) => LegacyModelImport.CombinationDraft(Root(payload));
@@ -71,9 +79,48 @@ namespace BridGHe.Common.Gpc
         /// 0.3.0 reads no model from it (null value or no element list). <paramref name="hadResults"/>: the payload carried results.
         /// <paramref name="owner"/>: another owner of the identities (the proofs give the owner of the former FEM path, to compare the data
         /// apart from the renaming of the GUIDs that the owner of the stored bytes gives).</summary>
-        public static GpcModels.Conversion Model(byte[] payload, double toleranceDefinitionUnits, out bool hadResults, Guid? owner = null)
+        public static GpcModels.Conversion Model(byte[] payload, double toleranceDefinitionUnits, out bool hadResults, Guid? owner = null) =>
+            Model(Root(payload), payload, toleranceDefinitionUnits, out hadResults, owner);
+
+        /// <summary>P2D: <see cref="Model(byte[], double, out bool, Guid?)"/> with the kinds of the former elements in their order
+        /// (<see cref="Kinds"/>), for the GH GUIDs saved with them (<see cref="InDraftOrder"/>).</summary>
+        public static GpcModels.Conversion Model(byte[] payload, double toleranceDefinitionUnits, out bool hadResults, out string elementKinds)
         {
             var root = Root(payload);
+            elementKinds = Kinds(root);
+            return Model(root, payload, toleranceDefinitionUnits, out hadResults, null);
+        }
+
+        /// <summary>P2D: the kinds of the elements of a former model in their order: N node, B beam, P plate, ? any other (a composite beam,
+        /// a null entry); empty without an element list.</summary>
+        private static string Kinds(LegacyValue root) => root.IsNull || !root.Is("ModelModel") || !root.Has("Elements") ? ""
+            : new string(root.Field("Elements").Items.Select(e => e.IsNull ? '?' : e.Is("NodeModel") ? 'N' : e.Is("BeamModel") ? 'B' : e.Is("PlateModel") ? 'P' : '?').ToArray());
+
+        /// <summary>P2D: the GH GUIDs saved with the elements of a former model (in their order, <c>ElementGuids</c>) in the order of the
+        /// drafts of the model (its nodes, then its beams, then its plates, each in the former order); null when they do not match (another
+        /// count, or an element that is not a node, a beam or a plate: the model has no drafts).</summary>
+        public static Guid[] InDraftOrder(Guid[] guids, string kinds)
+        {
+            if (guids == null || kinds == null || guids.Length != kinds.Length || kinds.Contains('?')) return null;
+            return "NBP".SelectMany(k => Enumerable.Range(0, kinds.Length).Where(i => kinds[i] == k).Select(i => guids[i])).ToArray();
+        }
+
+        /// <summary>P2D: the FEM chunk of a development file (<c>FemmR6</c>, the BGHA1 archive of the FEM model a component kept beside the GPC
+        /// input until P2) read by value: the drafts of its elements with the identities of <paramref name="owner"/> (when
+        /// <paramref name="drafts"/>; null when the reader refuses one of its elements, as for a former payload) and the GH GUIDs saved with
+        /// its FEM elements in the order of the drafts (<see cref="InDraftOrder"/>, null when none or not matching).</summary>
+        public static (GpcModelDrafts Drafts, Guid[] Guids) Development(byte[] femm, Guid owner, Guid[] femGuids, bool drafts)
+        {
+            var root = Root(femm);
+            GpcModelDrafts read = null;
+            if (drafts && !root.IsNull && root.Is("ModelModel") && root.Has("Elements"))
+                try { read = GpcModelDrafts.FromLegacy(root, owner); }
+                catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException || x is System.Collections.Generic.KeyNotFoundException) { read = null; }
+            return (read, InDraftOrder(femGuids, Kinds(root)));
+        }
+
+        private static GpcModels.Conversion Model(LegacyValue root, byte[] payload, double toleranceDefinitionUnits, out bool hadResults, Guid? owner)
+        {
             hadResults = false;
             if (root.IsNull || !root.Is("ModelModel") || !root.Has("Elements")) return null;
             hadResults = HadResults(root);

@@ -22,23 +22,25 @@ namespace BridGHe.Common.Gpc
             return new CoordinateSystem(P(cs.Origin), P(cs.Point1), P(cs.Point2), cs.Name ?? "");
         }
 
-        /// <summary>Whether a frame is the global one: origin 0 and axes 1, 2 along X, Y, exactly. For every system the plug-in makes (the
-        /// global system of the parameter) the rule of the reader on the former points (<c>LegacyModelImport.IsGlobal</c>).</summary>
-        /// <remarks>R65-C2-01 (review of lane 2, 8/11): the GPC frame is normalised and orthogonalised by its constructor, so a former system with
-        /// the points (2, 0, 0) and (0, 3, 0) has the global frame. Until P2 a system with a FEM value keeps the rule of the reader on its points
-        /// (<see cref="IsGlobal(CoordinateSystemModel)"/>); this rule is the one of a system given by its frame alone (in P2 the only one, declared
-        /// once, also for the reader of the 0.3.0 files).</remarks>
+        /// <summary>
+        /// The one rule of a global load system (R65-C2-01, user decision U6 of 12/11), declared here and used everywhere: by the load
+        /// components on the frame of their system and by the reader of the 0.3.0 files on the frame of the former points
+        /// (<see cref="IsGlobal(Point3d, Point3d, Point3d)"/>). A frame is global when its origin is 0 and its axes 1 and 2 are X and Y, exactly.
+        /// The frame is normalised and orthogonalised by its constructor, so a former system with the points (2, 0, 0) and (0, 3, 0) is global
+        /// (before P2 the reader and a system with a FEM value took the points themselves: (1, 0, 0) and (0, 1, 0) only).
+        /// </summary>
         public static bool IsGlobal(CoordinateSystem frame) =>
             frame != null && frame.Origin.X == 0 && frame.Origin.Y == 0 && frame.Origin.Z == 0
             && frame.V1.X == 1 && frame.V1.Y == 0 && frame.V1.Z == 0 && frame.V2.X == 0 && frame.V2.Y == 1 && frame.V2.Z == 0;
 
-        /// <summary>R65-C2-01: the rule of the reader on the points of a former system (<c>LegacyModelImport.IsGlobal</c>): origin (0, 0, 0),
-        /// first point (1, 0, 0), second point (0, 1, 0).</summary>
-        public static bool IsGlobal(CoordinateSystemModel cs)
+        /// <summary>The rule of <see cref="IsGlobal(CoordinateSystem)"/> on the points of a former system (origin, a point on axis 1, a point in
+        /// the plane 1-2): the frame they make; points that make no frame (coincident or aligned) are not the global system.</summary>
+        public static bool IsGlobal(Point3d origin, Point3d point1, Point3d point2)
         {
-            if (cs == null) return false;
-            static Vector3d V(Rhino.Geometry.Point3d p) => new Vector3d(p.X, p.Y, p.Z);
-            return V(cs.Origin).Equals(new Vector3d(0, 0, 0)) && V(cs.Point1).Equals(new Vector3d(1, 0, 0)) && V(cs.Point2).Equals(new Vector3d(0, 1, 0));
+            CoordinateSystem frame;
+            try { frame = new CoordinateSystem(origin, point1, point2, ""); }
+            catch (Exception x) when (x is ArgumentException || x is InvalidOperationException || x is ArithmeticException) { return false; }
+            return IsGlobal(frame);
         }
     }
 }

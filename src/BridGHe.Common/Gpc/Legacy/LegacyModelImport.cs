@@ -180,6 +180,34 @@ namespace BridGHe.Common.Gpc.Legacy
         public double MirrorGapA { get; init; }
         public double MirrorGapB { get; init; }
         public const int NoMirror = -1;
+        /// <summary>P11 (P2D, user decision U5 of 12/11): the outline of the homogenised composite section of a recipe with
+        /// <see cref="CompositePreview"/> (the steel I, the slab and the bars), for the preview only, never an analysis input; null when not
+        /// known (a recipe written before P2D: nothing is drawn, as before).</summary>
+        public LegacyCompositeOutline CompositeOutline { get; init; }
+    }
+
+    /// <summary>
+    /// P11 (P2D, user decision U5 of 12/11): the outline of a homogenised composite section, display only: the steel I (height, bottom flange
+    /// width and thickness, top flange width and thickness, web thickness), the slab (width, height) and the two rows of bars (area and cover
+    /// of the top and of the bottom row), in the units of its recipe: the data the former preview geometry of the homogenised property held
+    /// (<c>CompositeSectionPreviewGeometry</c>), drawn with the steel and slab solids and the schematic bar lines of a composite beam.
+    /// </summary>
+    public sealed record LegacyCompositeOutline(double D, double B1, double T1, double B2, double T2, double T3, double Width, double Height,
+        double TopArea, double TopCover, double BottomArea, double BottomCover)
+    {
+        /// <summary>The outline of a composite section definition (N-mm: the steel H, the slab, the rows of bars as given), as the former
+        /// preview geometry of a definition made it.</summary>
+        public static LegacyCompositeOutline Of(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition definition)
+        {
+            if (definition == null) throw new ArgumentNullException(nameof(definition));
+            var section = definition.Section; var h = (GPC.Model.Sections.SectionH)section.SteelSections[0].Section.SectionShape; var rows = definition.RebarRows;
+            return new LegacyCompositeOutline(h.Height, h.LenghtBottomFlange, h.ThicknessBottomFlange, h.LenghtTopFlange, h.ThicknessTopFlange, h.ThicknessWeb,
+                section.Width, section.Height, rows?.TopAreaMm2 ?? 0, rows?.TopCoverMm ?? 0, rows?.BottomAreaMm2 ?? 0, rows?.BottomCoverMm ?? 0);
+        }
+
+        /// <summary>The outline in other length units (lengths to the power 1, areas to the power 2).</summary>
+        public LegacyCompositeOutline Convert(Func<double, int, double> c) => new LegacyCompositeOutline(c(D, 1), c(B1, 1), c(T1, 1), c(B2, 1), c(T2, 1), c(T3, 1),
+            c(Width, 1), c(Height, 1), c(TopArea, 2), c(TopCover, 1), c(BottomArea, 2), c(BottomCover, 1));
     }
 
     /// <summary>F6 chain D: the load cases of the former loads of one element (GPC family and number), in load order.</summary>
@@ -577,7 +605,12 @@ namespace BridGHe.Common.Gpc.Legacy
             var o = Point(plane["m_origin"], u);
             return new CoordinateSystem(o, Vector(plane["m_xaxis"]), Vector(plane["m_yaxis"]));
         }
-        private static bool IsGlobal(LegacyValue cs) =>
-            Vector(cs["Origin"]).Equals(new Vector3d(0, 0, 0)) && Vector(cs["Point1"]).Equals(new Vector3d(1, 0, 0)) && Vector(cs["Point2"]).Equals(new Vector3d(0, 1, 0));
+        /// <summary>R65-C2-01 (P2D, user decision U6 of 12/11): the one rule of a global load system, on the frame of the former points
+        /// (<see cref="GpcLoadFrames.IsGlobal(Point3d, Point3d, Point3d)"/>; before: the points (0, 0, 0), (1, 0, 0), (0, 1, 0) exactly).</summary>
+        private static bool IsGlobal(LegacyValue cs)
+        {
+            static Point3d Raw(LegacyValue p) => new Point3d(p.Double("X"), p.Double("Y"), p.Double("Z"));
+            return GpcLoadFrames.IsGlobal(Raw(cs["Origin"]), Raw(cs["Point1"]), Raw(cs["Point2"]));
+        }
     }
 }

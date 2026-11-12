@@ -89,7 +89,8 @@ internal static class GpcNullValueChecks
         Require(copy.ScriptVariable() == null && Same(datumOf(copy), datum), what + ": a copy keeps the datum, without FEM value");
         if (!persistent) { checks += 5; return gpcOnly; }
         var fem = Written(femBacked, out _); var gpc = Written(gpcOnly, out var archive);
-        Require(fem.ContainsKey("FemmR6") && !gpc.ContainsKey("FemmR6"), what + ": FemmR6 only with the FEM value");
+        // P2D (P2): the FEM value is never written (no FemmR6), the FEM-backed type writes its datum alone, as the GPC-only type.
+        Require(!fem.ContainsKey("FemmR6") && !gpc.ContainsKey("FemmR6"), what + ": FemmR6 never written (P2D)");
         foreach (var name in fem.Keys.Where(k => k != "FemmR6" && !ignored.Contains(k)))
             Require(gpc.TryGetValue(name, out var v) && v == fem[name], what + ": item " + name + " as the FEM-backed type writes it");
         var read = (IGH_Goo)Activator.CreateInstance(type);
@@ -413,13 +414,13 @@ internal static class GpcNullValueChecks
         Require((bool?)globalSystem.Invoke(null, new object[] { FromGpc(system, Prop(global, "Gpc")) }) == true, "the global system by its frame alone: global"); checks++;
         if (Environment.GetEnvironmentVariable("BRIDGHE_R1_TRANSITIONAL") != "0")
         {
-            // R65-C2-01 (TRANSITIONAL, a FEM system): a system with a FEM value keeps the rule of the reader on its points: (2, 0, 0) and (0, 3, 0) is not
-            // the global one (its normalised frame is: the rule of a system given by its frame alone, the only one in P2).
+            // R65-C2-01 (P2D, user decision U6 of 12/11): one rule, the frame rule, for every system: (2, 0, 0) and (0, 3, 0) has the global frame, with
+            // or without a FEM value (before P2D a system with a FEM value took the rule of the reader on its points: not global).
             var stretched = new CoordinateSystemModel("R65-C2-01", "Stretched") { Origin = new Point3d(0, 0, 0), Point1 = new Point3d(2, 0, 0), Point2 = new Point3d(0, 3, 0) };
             var stretchedGoo = (IGH_Goo)Activator.CreateInstance(system, stretched);
-            Require((bool?)globalSystem.Invoke(null, new object[] { stretchedGoo }) == false, "a FEM system with the points (2, 0, 0) and (0, 3, 0): not global (R65-C2-01)");
+            Require((bool?)globalSystem.Invoke(null, new object[] { stretchedGoo }) == true, "a FEM system with the points (2, 0, 0) and (0, 3, 0): global by its frame (R65-C2-01, U6)");
             Require((bool?)globalSystem.Invoke(null, new object[] { global }) == true, "the FEM global system: global (R65-C2-01)");
-            Require((bool?)globalSystem.Invoke(null, new object[] { FromGpc(system, Prop(stretchedGoo, "Gpc")) }) == true, "its frame alone (normalised): global, the rule of P2 (R65-C2-01)");
+            Require((bool?)globalSystem.Invoke(null, new object[] { FromGpc(system, Prop(stretchedGoo, "Gpc")) }) == true, "its frame alone (normalised): global, the one rule (R65-C2-01, U6)");
             checks += 3;
         }
         int rules = 0;

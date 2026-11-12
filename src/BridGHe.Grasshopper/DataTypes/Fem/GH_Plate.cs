@@ -148,38 +148,32 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             get
             {
-                // R6.1: the datum attached or read (BGHGPC1), the former payload read by value (BGHA1), otherwise the conversion of the FEM value.
+                // R6.1: the datum attached or read (BGHGPC1, or a former payload read by value: P2D), otherwise the conversion of the FEM value
+                // (the FEM value of a component not yet on GPC: removed with the FEM types).
                 if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
-                if (_legacy != null && ReferenceEquals(_legacyOf, Value)) { _gpc = Common.Gpc.GpcLegacyPayloads.Plate(_legacy); _gpcOf = Value; HasAttachedGpc = false; return _gpc; }
                 if (Value == null) return null;
                 _gpc = Common.Gpc.GpcBeamDrafts.FromFemm(Value); _gpcOf = Value; HasAttachedGpc = false;
                 return _gpc;
             }
         }
 
-        /// <summary>True when <see cref="Gpc"/> is a draft attached by a GPC component (not the conversion of the FEM value).</summary>
+        /// <summary>True when <see cref="Gpc"/> is a draft attached by a GPC component or read from a file (not the conversion of a FEM value).</summary>
         public bool HasAttachedGpc { get; private set; }
 
-        /// <summary>Attaches the GPC draft built on GPC for the current FEM value (it must describe it: the gates compare the two).</summary>
+        /// <summary>Attaches the GPC draft built on GPC for the current FEM value.</summary>
         public void AttachGpc(Common.Gpc.Legacy.LegacyPlateDraft draft)
         {
             _gpc = draft ?? throw new System.ArgumentNullException(nameof(draft)); _gpcOf = Value; HasAttachedGpc = true;
-            // R6.1 (frozen API for R6.2): the gates compare the attached draft with the conversion of the FEM value, same identity.
-            if (Value != null) { var value = Value; Common.Gpc.GpcDraftCheck.Attached("GH_Plate", draft, () => Common.Gpc.GpcBeamDrafts.FromFemm(value, draft.Plate.Guid)); }
         }
 
         private Common.Gpc.Legacy.LegacyPlateDraft _gpc;
         private PlateModel _gpcOf;
-        // R6.1: a former payload (BGHA1) read from a file, converted by value on first use while the FEM value read with it is current.
-        private byte[] _legacy;
-        private PlateModel _legacyOf;
 
-        /// <summary>R6.1: a copy of the same content (<c>DuplicateGeometry</c>) keeps the datum attached or read and the former payload;
-        /// a conversion of the FEM value is recomputed. The copy constructor (a copy that a component changes) keeps nothing.</summary>
+        /// <summary>R6.1: a copy of the same content (<c>DuplicateGeometry</c>) keeps the datum attached or read; a conversion of the FEM value
+        /// is recomputed. The copy constructor (a copy that a component changes) keeps nothing.</summary>
         private void CarryGpcTo(GH_Plate copy)
         {
             if (_gpc != null && HasAttachedGpc && ReferenceEquals(_gpcOf, Value)) { copy._gpc = _gpc; copy._gpcOf = copy.Value; copy.HasAttachedGpc = true; }
-            if (_legacy != null && ReferenceEquals(_legacyOf, Value)) { copy._legacy = _legacy; copy._legacyOf = copy.Value; }
         }
 
 

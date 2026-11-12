@@ -95,7 +95,7 @@ namespace BridGHe.Common.Gpc
                 var sectionState = new BridgeLocalSectionState((GPC.Checkers.CompositeBridge.BridgeActionBehavior)Enum.Parse(typeof(GPC.Checkers.CompositeBridge.BridgeActionBehavior), behavior.ToString()), cracked, n, string.IsNullOrEmpty(state.Case) ? null : state.Case, BridgeWorkflowDefinition.PropertyFingerprint(beam));
                 var bridge = (draft.Bridge ?? new BridgeBeamData(beam.Guid)).WithSectionState(sectionState);
                 // The data of the new property: formulation, principal angle 0, no native section, the GPC content signature (a FEM property had the digest of its former content).
-                // R6.1 (found by GpcDraftCheck on the native 50): the former component replaces every section state record of the beam with one
+                // R6.1 (found by the former draft check on the native 50): the former component replaces every section state record of the beam with one
                 // (BridgeStateOverride.cs), so the records of the draft count one state, as the reader counts it on the former output.
                 var records = draft.Records.Copy(); records.SectionStates = 1;
                 // R6.3 (bridge 3 removed): the data of the property as the reader reads them from the former replacement (the generic section
@@ -105,7 +105,7 @@ namespace BridGHe.Common.Gpc
                 var recipe = new LegacySectionRecipe
                 {
                     Kind = BridgeSectionKind.Generic, Name = "", Angle = 0, Area = hv.Area, I11 = hv.I11, I22 = hv.I22, J = hv.J,
-                    CentroidX = hv.CentroidX, CentroidY = hv.CentroidY, ShearA1 = hv.ShearArea1, ShearA2 = hv.ShearArea2, CompositePreview = true,
+                    CentroidX = hv.CentroidX, CentroidY = hv.CentroidY, ShearA1 = hv.ShearArea1, ShearA2 = hv.ShearArea2, CompositePreview = true, CompositeOutline = LegacyCompositeOutline.Of(full), // P11 (P2D)
                 };
                 var data = new LegacyBeamPropertyData(BeamFormulation.StraightTwoNode, 0, null, LegacyModelImport.PropertySignature(replacement)) { Section = recipe };
                 records.PropertyCarryList.Clear(); records.PropertyCarryList.AddRange(Builders.GpcBeamBuilders.PropertyCarries(data));

@@ -103,6 +103,7 @@ namespace BridGHe.Common.Gpc
             if (data == null) throw new ArgumentNullException(nameof(data));
             if (IsLegacy(data)) throw new SerializationException("BridgheLegacyPayload");
             if (!IsGpc(data)) throw new SerializationException("NotABridgheGpcArchive");
+            if (data[Header.Length] > Version) throw new GpcNewerFormatException("archivio BGHGPC1 versione " + data[Header.Length]); // P4 (P2D, U1)
             if (data[Header.Length] != Version) throw new SerializationException("UnsupportedBridgheGpcArchiveVersion: " + data[Header.Length]);
             if (data[Header.Length + 1] != (byte)kind) throw new SerializationException("BridgheGpcArchiveKindMismatch");
             using (var input = new MemoryStream(data, Header.Length + 2, data.Length - Header.Length - 2, false))
