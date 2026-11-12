@@ -263,8 +263,55 @@ internal static class InrInertia
                 }
         }
         Require(wide >= 3 && wideCracked >= 3 && narrow >= 6, $"the sections of the check give {wide} wide uncracked, {wideCracked} wide cracked and {narrow} narrow variants");
+        string shrinkage = Shrinkage(Require);
         Console.WriteLine($"INR INERTIA PASS: {wide} wide uncracked and {wideCracked} wide cracked variants (Iyy > Ixx) with I11 = Ixx/n and I22 = Iyy/n bit for bit, {narrow} narrow ones with the former J11H/n, J22H/n bit for bit, " +
-            $"on the FEM property and on its GPC twin (uncracked and cracked); angle 0, shear areas of axis 1 horizontal and area unchanged; {checks} checks.");
+            $"on the FEM property and on its GPC twin (uncracked and cracked); angle 0, shear areas of axis 1 horizontal and area unchanged; {shrinkage}; {checks} checks.");
+    }
+
+    /// <summary>The numbers of the composite property «CB» of the in-memory case «composite property, shrinkage strain» of gpc-only-models
+    /// (GpcOnlyReplay: I section BFW 300, TFW 250, H 800, BFT 20, TFT 16, WT 12; slab 250 × 2500, top bars 1000 mm² at 50, bottom 800 mm² at
+    /// 50; C35/45, S355 (E 210000, α 1.17E-5), B450C (E 200000); n0 6, n∞ 18, n,sh omitted = n∞; concrete and bars considered).</summary>
+    internal static Numbers ShrinkageCase() => new Numbers
+    {
+        Name = "CB", Height = 800, Web = 12, TopWidth = 250, TopThickness = 16, BottomWidth = 300, BottomThickness = 20, SlabWidth = 2500, SlabHeight = 250,
+        TopArea = 1000, TopCover = 50, BottomArea = 800, BottomCover = 50, Concrete = "C35/45", Fck = 35, Steel = "S355", SteelE = 210000, SteelFy = 355, SteelFu = 510,
+        SteelPoisson = 0.3, SteelThermalExpansion = 1.17e-5, SteelDensity = 7.849e-9, Rebar = "B450C", RebarE = 200000, RebarFy = 450, RebarFu = 540,
+        NShortTerm = 6, NLongTerm = 18, NShrinkage = 18, ConsiderConcrete = true, ConsiderRebar = true,
+    };
+
+    /// <summary>Lane INR (user decision 12/11, «togli il rifiuto»): Composite Shrinkage Actions on the wide section CB (X and Y principal, Iyy &gt; Ixx
+    /// at n,sh), refused before, against a hand computation independent of the library: steel units, y up from the steel bottom; steel H (weight 1),
+    /// slab on the top flange (1/n), one bar per row with the area of the row (E bar / E steel) and the concrete it displaces (−1/n), circles of
+    /// the same area (own inertia A²/4π); curvature = ε/n · S_c / I with S_c the first moment of the net concrete about the homogenised centroid.</summary>
+    private static string Shrinkage(Action<bool, string> require)
+    {
+        var x = ShrinkageCase(); var d = GpcCompositeDefinitions.Create(x); double n = x.NShrinkage, strain = -0.0003;
+        var p = GpcCompositeSections.AnalysisProperties(d, n, true, true, true);
+        require(Math.Abs(p.JxyH) <= 1e-10 * (p.JxxH + p.JyyH) && p.JyyH > p.JxxH, "CB: X and Y principal with Iyy > Ixx at n,sh (refused by the 0.3.0 guard)");
+        var a = BridGHe.Common.Checks.CompositeShrinkageActions.Calculate(d, strain);
+        double H = x.Height, hs = x.SlabHeight, W = x.SlabWidth, wb = x.RebarE / x.SteelE, wc = 1 / n;
+        // (area, centroid y, own inertia, weight)
+        var parts = new List<(double A, double Y, double I, double W)>
+        {
+            (x.BottomWidth * x.BottomThickness, x.BottomThickness / 2, x.BottomWidth * Math.Pow(x.BottomThickness, 3) / 12, 1),
+            (x.Web * (H - x.BottomThickness - x.TopThickness), (x.BottomThickness + H - x.TopThickness) / 2, x.Web * Math.Pow(H - x.BottomThickness - x.TopThickness, 3) / 12, 1),
+            (x.TopWidth * x.TopThickness, H - x.TopThickness / 2, x.TopWidth * Math.Pow(x.TopThickness, 3) / 12, 1),
+            (W * hs, H + hs / 2, W * hs * hs * hs / 12, wc),
+        };
+        var bars = new[] { (A: x.TopArea, Y: H + hs - x.TopCover), (A: x.BottomArea, Y: H + x.BottomCover) };
+        foreach (var b in bars) { parts.Add((b.A, b.Y, b.A * b.A / (4 * Math.PI), wb)); parts.Add((b.A, b.Y, b.A * b.A / (4 * Math.PI), -wc)); }
+        double area = parts.Sum(q => q.W * q.A), yc = parts.Sum(q => q.W * q.A * q.Y) / area;
+        double ixx = parts.Sum(q => q.W * (q.I + q.A * (q.Y - yc) * (q.Y - yc)));
+        double ac = W * hs - bars.Sum(b => b.A), sc = W * hs * (H + hs / 2 - yc) - bars.Sum(b => b.A * (b.Y - yc));
+        double curvature = strain / n * sc / ixx, free = ac * strain / (n * area);
+        double Rel(double u, double v) => Math.Abs(u - v) / Math.Abs(v);
+        require(Rel(p.areaH / n, area) <= 1e-9, $"CB: homogenised area {R(p.areaH / n)} / hand {R(area)}");
+        require(Rel(p.JxxH / n, ixx) <= 1e-6, $"CB: Ixx {R(p.JxxH / n)} / hand {R(ixx)}");
+        require(Rel(a.Curvature, curvature) <= 1e-6, $"CB: curvature {R(a.Curvature)} / hand {R(curvature)}");
+        require(Rel(a.FreeStrain, free) <= 1e-6 && a.PreStrain == -a.FreeStrain, $"CB: free strain {R(a.FreeStrain)} / hand {R(free)}");
+        require(Rel(a.ThermalGradient, curvature / x.SteelThermalExpansion) <= 1e-6, $"CB: thermal gradient {R(a.ThermalGradient)} / hand {R(curvature / x.SteelThermalExpansion)}");
+        return FormattableString.Invariant($"shrinkage actions of the wide section CB (in-memory case of gpc-only-models, n,sh 18, strain −0.0003, Ixx/n {G(p.JxxH / n)} < Iyy/n {G(p.JyyH / n)}; refused by 0.3.0): ") +
+            FormattableString.Invariant($"curvature {R(a.Curvature)} 1/mm (hand {R(curvature)}), axis 2 thermal gradient {R(a.ThermalGradient)}, free centroid strain {R(a.FreeStrain)} (hand {R(free)}), pre-strain {R(a.PreStrain)}");
     }
 
     /// <summary>The FEM composite property of the numbers (as <c>GpcCompositeSectionChecks.FemProperty</c>).</summary>

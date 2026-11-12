@@ -598,8 +598,10 @@ internal static class GpcOnlyReplay
             ["mixed types, guide angle"] = new Expect { What = Kind.Error, Message = "Provide one bearing type or one per selected point" },
             // Node Filter and Plate Filter «by group» (lane 2a) are given no input U: the warning of the component and no output, on both paths since lane 2a.
             ["by group"] = new Expect { What = Kind.Warning, Message = "Input parameter U failed to collect data" },
-            // Composite Shrinkage Actions «composite property, shrinkage strain» (lane 3a): the error of the component on both paths (gpc-only-models r1-t24).
-            ["composite property, shrinkage strain"] = new Expect { What = Kind.Error, Message = "Shrinkage actions require the major bending axis to coincide with the slab plane's horizontal axis" },
+            // Composite Shrinkage Actions «composite property, shrinkage strain» (lane 3a): the error of the component on both paths until lane INR
+            // (gpc-only-models r1-t24). Lane INR (user decision 12/11, «togli il rifiuto»): the section CB (I 800 + slab 2500 × 250) has X and Y
+            // principal with Iyy > Ixx at n,sh: its four actions on both paths, no message (curvature checked by hand in --regression inr-inertia).
+            ["composite property, shrinkage strain"] = new Expect { What = Kind.Output, Outputs = new[] { 1, 1, 1, 1 } },
         };
 
         internal static Expect Of(string label)

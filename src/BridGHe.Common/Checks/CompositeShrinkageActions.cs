@@ -17,8 +17,10 @@ namespace BridGHe.Common.Checks
             double n=section.NShrinkage,ea=section.SteelMaterial.Modulus,alpha=section.SteelMaterial.ThermalExpansion;
             if(!double.IsFinite(n)||n<=0||!double.IsFinite(alpha)||alpha==0)throw new ArgumentException("Positive n ritiro and a nonzero steel thermal expansion coefficient are required.");
             var p=section.GetHomogeneizedMechanicalProperties(n,true,section.ConsiderRebar,true);
-            if(Math.Abs(p.JxyH)>1e-10*(p.JxxH+p.JyyH)||Math.Abs(p.J11H-p.JxxH)>1e-8*p.JxxH)
-                throw new NotSupportedException("Shrinkage actions require the major bending axis to coincide with the slab plane's horizontal axis.");
+            // Lane INR (user decision 12/11, option B): the n,sh property writes as I11 the inertia about the axis nearest X (SectionAxisInertias),
+            // so X must be principal and that axis: a wide slab (Iyy > Ixx) is accepted now; before, I11 was the maximum and only Ixx >= Iyy was.
+            if(Math.Abs(p.JxyH)>1e-10*(p.JxxH+p.JyyH)||Math.Abs(Helpers.CompositePropertyAdapter.SectionAxisInertias(p.J11H,p.J22H,p.JxxH,p.JyyH,p.angleX).I11-p.JxxH)>1e-8*p.JxxH)
+                throw new NotSupportedException("Shrinkage actions require the principal axes of the section to coincide with the horizontal and vertical axes of the slab plane.");
             double ac=section.ConcreteSection.Width*section.ConcreteSection.Height,sc=ac*section.ConcreteSection.Height/2;
             if(section.ConsiderRebar)foreach(var bar in section.GetReinforcedConcreteSection().Rebars)
             {ac-=bar.RebarSection.Area;sc-=bar.RebarSection.Area*bar.Position.Y;}
@@ -39,8 +41,10 @@ namespace BridGHe.Common.Checks
             double n=definition.NShrinkage,ea=definition.AnalysisSteel.ElasticModulusTension,alpha=definition.AnalysisSteel.AlfaThermalExpansion;
             if(!double.IsFinite(n)||n<=0||!double.IsFinite(alpha)||alpha==0)throw new ArgumentException("Positive n ritiro and a nonzero steel thermal expansion coefficient are required.");
             var p=Gpc.GpcCompositeSections.AnalysisProperties(definition,n,true,definition.ConsiderRebar,true);
-            if(Math.Abs(p.JxyH)>1e-10*(p.JxxH+p.JyyH)||Math.Abs(p.J11H-p.JxxH)>1e-8*p.JxxH)
-                throw new NotSupportedException("Shrinkage actions require the major bending axis to coincide with the slab plane's horizontal axis.");
+            // Lane INR (user decision 12/11, option B): the n,sh property writes as I11 the inertia about the axis nearest X (SectionAxisInertias),
+            // so X must be principal and that axis: a wide slab (Iyy > Ixx) is accepted now; before, I11 was the maximum and only Ixx >= Iyy was.
+            if(Math.Abs(p.JxyH)>1e-10*(p.JxxH+p.JyyH)||Math.Abs(Helpers.CompositePropertyAdapter.SectionAxisInertias(p.J11H,p.J22H,p.JxxH,p.JyyH,p.angleX).I11-p.JxxH)>1e-8*p.JxxH)
+                throw new NotSupportedException("Shrinkage actions require the principal axes of the section to coincide with the horizontal and vertical axes of the slab plane.");
             double width=definition.Section.Width,height=definition.Section.Height,ac=width*height,sc=ac*height/2;
             if(definition.ConsiderRebar)foreach(var bar in definition.AnalysisSection().Rebars)
             {ac-=bar.RebarSection.Area;sc-=bar.RebarSection.Area*bar.Position.Y;}

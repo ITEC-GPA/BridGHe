@@ -122,6 +122,9 @@ internal static partial class CompositeAnalysisPropertyChecks
     /// principal values (Iyy &gt; Ixx: a wide slab, or the ratios 1 and 15.3 of the checks).</summary>
     internal static int AxisOneHorizontal;
 
+    /// <summary>Lane INR: the shrinkage actions of the former rule computed on a section the 0.3.0 rule refused (X and Y principal, Iyy &gt; Ixx).</summary>
+    internal static int ShrinkageAxisOneHorizontal;
+
     /// <summary>The former Composite Shrinkage Actions of the composite property (<c>CompositeShrinkageActions.Calculate(property, strain)</c>):
     /// n,sh, E and α of the steel parameter, the homogenised values and the bars of the former analysis section.</summary>
     internal static CompositeShrinkageActions FormerShrinkage(Numbers x, double strain)
@@ -131,8 +134,13 @@ internal static partial class CompositeAnalysisPropertyChecks
         double n = x.NShrinkage, ea = x.SteelE, alpha = x.SteelThermalExpansion;
         if (!double.IsFinite(n) || n <= 0 || !double.IsFinite(alpha) || alpha == 0) throw new ArgumentException("Positive n ritiro and a nonzero steel thermal expansion coefficient are required.");
         var p = FormerHomogenised(x, n, true, x.ConsiderRebar, true);
-        if (Math.Abs(p.JxyH) > 1e-10 * (p.JxxH + p.JyyH) || Math.Abs(p.J11H - p.JxxH) > 1e-8 * p.JxxH)
-            throw new NotSupportedException("Shrinkage actions require the major bending axis to coincide with the slab plane's horizontal axis.");
+        // Lane INR (user decision 12/11, «togli il rifiuto»): the n,sh property has I11 about the horizontal axis (InrInertia.HorizontalFirst,
+        // written in the test), so a section with X and Y principal is accepted also when Iyy > Ixx; an asymmetric one is still refused.
+        // The variants accepted now and refused by the 0.3.0 rule are counted in ShrinkageAxisOneHorizontal.
+        var axes = InrInertia.HorizontalFirst(p.J11H, p.J22H, p.JxxH, p.JyyH, p.angleX);
+        if (Math.Abs(p.JxyH) > 1e-10 * (p.JxxH + p.JyyH) || Math.Abs(axes.I11 - p.JxxH) > 1e-8 * p.JxxH)
+            throw new NotSupportedException("Shrinkage actions require the principal axes of the section to coincide with the horizontal and vertical axes of the slab plane.");
+        if (Math.Abs(p.J11H - p.JxxH) > 1e-8 * p.JxxH) ShrinkageAxisOneHorizontal++;
         double ac = x.SlabWidth * x.SlabHeight, sc = ac * x.SlabHeight / 2;
         if (x.ConsiderRebar) foreach (var bar in FormerAnalysisSection(x).Rebars) { ac -= bar.RebarSection.Area; sc -= bar.RebarSection.Area * bar.Position.Y; }
         double force = ea / n * ac * strain, moment = ea / n * (sc - ac * p.centroidH.Y) * strain;
