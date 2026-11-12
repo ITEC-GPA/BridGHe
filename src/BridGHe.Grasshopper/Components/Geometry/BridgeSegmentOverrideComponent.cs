@@ -33,21 +33,10 @@ public sealed class BridgeSegmentOverrideComponent : BridgeUtilityComponent
         var beams = new List<GH_Beam>(); var ids = new List<string>(); var properties = new List<GH_BeamProperty>();
         bool mass=true;
         if (!da.GetDataList(0, beams) || !da.GetDataList(1, ids) || !da.GetDataList(2, properties) || !da.GetData(3,ref mass)) return;
-        // R6.5 P1 lane 1b: a list with a beam given by its draft alone is overridden on GPC (GpcSegmentSections.GpcOnly): the outputs have no
-        // FEM value, the Beam IDs are those of the drafts. R6.5 P1 lane 2a: the same for a replacement property given by its GPC datum alone
-        // (rule of passo 75).
-        if (beams.Any(b => b != null && b.Value == null) || GpcOnlyProperties.WithoutFem(properties))
-        {
-            var (onlyGirders, onlyOthers, beamIds) = GpcSegmentSections.GpcOnly(this, beams, ids, properties, mass);
-            da.SetDataList(0, onlyGirders); da.SetDataList(1, onlyOthers); da.SetDataList(2, beamIds);
-            da.SetData(3, Information);
-            return;
-        }
-        var result = BridgeSegmentOverride.Apply(beams.Select(b => b?.Value).ToArray(), ids, properties.Select(p => p?.Value).ToArray(),mass);
-        // R6.2 (lane B): the girders and the other members with their GPC drafts built on GPC (GpcSegmentSections.Override).
-        var (girders, others) = GpcSegmentSections.Override(result, beams, ids, properties, mass);
-        da.SetDataList(0, girders); da.SetDataList(1, others);
-        da.SetDataList(2, result.Girders.Select(b => b.BeamId));
+        // R6.5 P1 lane 1b / P2K (P1): the list is overridden on GPC (GpcSegmentSections.GpcOnly): the outputs have no FEM value, the Beam IDs
+        // are those of the drafts (rule of passo 75).
+        var (onlyGirders, onlyOthers, beamIds) = GpcSegmentSections.GpcOnly(this, beams, ids, properties, mass);
+        da.SetDataList(0, onlyGirders); da.SetDataList(1, onlyOthers); da.SetDataList(2, beamIds);
         da.SetData(3, Information);
     }
     private const string Information = "One keyed property per concio. Geometry, offsets and loads are preserved; all results are cleared. Homogenized properties must use the intended reference-axis convention. Preserve Mass adjusts only density to retain original mass per length.";

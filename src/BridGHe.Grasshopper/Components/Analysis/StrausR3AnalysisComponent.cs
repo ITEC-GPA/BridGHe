@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using GH_IO.Serialization;
@@ -55,8 +54,8 @@ namespace BridGHe.Grasshopper.Components.Analysis
             pManager.AddGenericParameter("Model", "M", "The FEM model", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Solver", "ST", "The type of solver to use", GH_ParamAccess.item, 0);
             Param_Integer solverParam = (Param_Integer)pManager[1];
-            for (int i = 0; i < Common.Helpers.StrausR3Helper.Solvers.Length; i++)
-                solverParam.AddNamedValue(Common.Helpers.StrausR3Helper.Solvers[i], i);
+            for (int i = 0; i < Common.Straus.StrausAnalysis.Solvers.Length; i++)
+                solverParam.AddNamedValue(Common.Straus.StrausAnalysis.Solvers[i], i);
             pManager.AddTextParameter("Analysis Results", "AR", "The analysis result cases or combination to returns", GH_ParamAccess.list);
             pManager[2].Optional = true;
             pManager.AddTextParameter("Output Path", "O", "The full path of the file model to create", GH_ParamAccess.item);
@@ -116,25 +115,16 @@ namespace BridGHe.Grasshopper.Components.Analysis
 
             var requested = new List<string>();
             DA.GetDataList("Analysis Results", requested);
-            // R6.5 P1 lane 3e: a model given by its GPC input alone is analysed from it and gives a GPC-only model with the analysed GPC model.
-            bool gpcOnly = GpcOnlyModels.WithoutFem(model);
+            // R6.5 P1 lane 3e (P2K: every model): the model is analysed from its GPC input alone and gives a GPC-only model with the analysed GPC
+            // model; no FEM value is read or made.
             if (_run || keepRunning)
             {
                 _run = false;
                 try
                 {
-                    List<string> warnings; GPC.Model.Models.Model analysed;
-                    if (gpcOnly)
-                    {
-                        var input = GpcOnlyModels.InputOf(model);
-                        analysed = Common.Straus.StrausAnalysis.Run(input, outputPath, solver, requested, false, out warnings);
-                        _model = GpcOnlyModels.SameElements(input, model, input);
-                    }
-                    else
-                    {
-                        var result = Common.Straus.StrausAnalysis.Run(model.Value, model.GpcInput, outputPath, solver, requested, Settings.Instance.Tolerance, false, out warnings, out analysed);
-                        _model = GH_Model.FromModel(result, model);
-                    }
+                    var input = GpcOnlyModels.InputOf(model);
+                    var analysed = Common.Straus.StrausAnalysis.Run(input, outputPath, solver, requested, false, out List<string> warnings);
+                    _model = GpcOnlyModels.SameElements(input, model, input);
                     _model.AttachGpc(analysed);
                     // R6.4 (2), extension (α): the output keeps the elements of its input (with results): it carries the drafts of the input.
                     _drafts.Record(model, _model);
@@ -147,7 +137,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
                     _model = new GH_Model(); _saved.Record(null, null); _drafts.Clear();
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message);
                     Message = "Error";
-                    if (gpcOnly) return; // lane 3: a refusal gives an error and no output
+                    return; // lane 3: a refusal gives an error and no output
                 }
             }
             if (_saved.Pending) { string restored = _saved.Restore(_model, outputPath); if (restored != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, restored); }
@@ -199,7 +189,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
                 if (!Params.Input[0].VolatileData.IsEmpty)
                 {
                     GH_Model input_model = (GH_Model)Params.Input[0].VolatileData.get_Branch(0)[0];
-                    ModelHelper.RestoreModelGuids(input_model, ref _model);
+                    GpcOnlyModels.RestoreGuids(input_model, _model);
                     _just_loaded = false;
                 }
             }

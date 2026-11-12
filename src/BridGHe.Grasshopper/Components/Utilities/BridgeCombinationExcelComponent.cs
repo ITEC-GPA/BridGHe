@@ -62,23 +62,11 @@ public sealed class BridgeCombinationExcelComponent : GH_Component
                 path = Path.Combine(Path.GetDirectoryName(documentPath), path);
             }
             path = BridgeCombinationWorkbook.FilePath(path);
-            // R6.4 (3): the catalogue on the GPC data (the GPC inputs of the reference models, the analysed GPC source of every action) when
-            // every action with a case has one; the FEM catalogue otherwise (until R6.5). The test host compares the two on every run.
+            // R6.4 (3), L3b / P2K (P1): the catalogue on the GPC data (the GPC inputs of the reference models, the analysed GPC source of every
+            // action), or its error: there is no FEM catalogue.
             var definitions = phases.Select(p => (BridgePhaseDefinition)p.Value).ToArray();
-            BridgeCombinationCatalog catalog;
-            Common.Gpc.GpcModels.Conversion[] inputs = null;
-            // L3b: on the GPC-only path (a model given by its GPC input alone, or an action without a FEM source) there is no FEM catalogue: the GPC
-            // catalogue or its error.
-            bool gpcOnly = GpcOnlyModels.Any(models) || definitions.SelectMany(d => d.Actions).Any(a => a.Source == null && !string.IsNullOrWhiteSpace(a.Case));
-            try { inputs = models.Select(m => m.GpcInput).ToArray(); }
-            catch (Exception ex) when (!gpcOnly && (ex is ArgumentException || ex is NotSupportedException || ex is InvalidOperationException)) { inputs = null; } // a reference without a GPC input: the FEM catalogue, as before
-            if (gpcOnly) catalog = BridgeCombinationCatalog.FromGpc(inputs, definitions);
-            else if (inputs != null && definitions.SelectMany(d => d.Actions).All(a => a.PrimaryOnly || a.GpcSource != null))
-            {
-                catalog = BridgeCombinationCatalog.FromGpc(inputs, definitions);
-                Common.Gpc.GpcDraftCheck.Attached("Bridge Combination Excel catalogue", catalog.Text(), () => new BridgeCombinationCatalog(models.Select(m => m.Value).ToArray(), definitions).Text());
-            }
-            else catalog = new BridgeCombinationCatalog(models.Select(m => m.Value).ToArray(), definitions);
+            Common.Gpc.GpcModels.Conversion[] inputs = models.Select(m => m.GpcInput).ToArray();
+            var catalog = BridgeCombinationCatalog.FromGpc(inputs, definitions);
             da.SetData(0, path); da.SetDataList(2, catalog.ActionIds);
             var summary = catalog.ReferenceRows.Skip(1).Select(r => $"{r[0]} | phase {r[1]} {r[2]} | {r[5]} / {r[6]} | {r[7]} | strain {r[8]}").ToList();
             var warnings = catalog.Warnings;

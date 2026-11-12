@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -50,14 +49,12 @@ namespace BridGHe.Grasshopper.Components.Attributes
             if (!DA.GetData("Node", ref node))
                 return;
 
-            GH_Node newNode = new GH_Node(node);
-
             List<IGH_Goo> trans = new List<IGH_Goo>();
             List<IGH_Goo> rot = new List<IGH_Goo>();
             DA.GetDataList(1, trans);
             DA.GetDataList(2, rot);
 
-            NodeRestraintAttributeModel.AttributeData attr = new NodeRestraintAttributeModel.AttributeData();
+            RestraintData attr = new RestraintData();
             for (int i = 0; i < trans.Count && i < 3; i++)
             {
                 if (trans[i].CastTo(out bool b))
@@ -196,13 +193,14 @@ namespace BridGHe.Grasshopper.Components.Attributes
             }
 
             Func<Guid, Common.Gpc.Legacy.LegacyNodeDraft> build = id => Common.Gpc.Builders.GpcNodeBuilders.WithRestraint(node.Gpc, attr.Tx, attr.Ty, attr.Tz, attr.Rx, attr.Ry, attr.Rz, id);
-            // R6.5 P1 lane 1a: a node given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
-            if (node.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Node(this, 0, node, build, attr.Tx, attr.Ty, attr.Tz, attr.Rx, attr.Ry, attr.Rz)); return; }
-            newNode.Value.Attributes.Add(new NodeRestraintAttributeModel(attr));
-            // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the draft of the input, identity of the conversion of the FEM output.
-            GpcBuilderAttach.Node(newNode, () => build(Common.Gpc.GpcBeamDrafts.Identity(newNode.Value)));
+            // P2K (P1): the GPC path only: the draft built on GPC (identity derived from the input draft).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Node(this, 0, node, build, attr.Tx, attr.Ty, attr.Tz, attr.Rx, attr.Ry, attr.Rz));
+        }
 
-            DA.SetData("Node", newNode);
+        /// <summary>P2K (P1): the restraints read from the inputs (the flags of the former NodeRestraintAttributeModel.AttributeData).</summary>
+        private sealed class RestraintData
+        {
+            public bool Tx, Ty, Tz, Rx, Ry, Rz;
         }
 
         /// <summary>

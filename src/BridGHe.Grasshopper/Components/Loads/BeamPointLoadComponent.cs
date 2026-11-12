@@ -2,7 +2,6 @@ using System;
 using Grasshopper.Kernel;
 using GH_IO.Serialization;
 using Rhino.Geometry;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.Helpers;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Components.Parameters;
@@ -107,24 +106,10 @@ namespace BridGHe.Grasshopper.Components.Loads
             if (GpcOnlyProperties.NonStructuralMass(lc))
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The connected LoadCase have the Non-structural mass flag set to on");
 
-            BeamPointLoadModel.LoadData load_value = new BeamPointLoadModel.LoadData()
-            {
-                CoordinateSystem = cs?.Value,
-                P = new Vector3d(p1, p2, p3),
-                A = a
-            };
-            BeamPointLoadModel load = new BeamPointLoadModel(lc.Value, load_value, BeamPointLoadModel.LoadType.Force);
             Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithPointLoad(beam.Gpc, lc.Gpc, false, a, new GPC.Geometry.Vector3d(p1, p2, p3), id);
-            // R6.5 P1 lane 1a: a beam given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
-            // R6.5 P1 lane 2a: a load case given by its record alone gives the same output, without the FEM value (rule of passo 75).
-            // R6.5 P1 lane 2b: the same for a coordinate system given by its GPC frame alone (rule of passo 75).
-            if (beam.Value == null || lc.Value == null || GpcOnlyProperties.WithoutFem(cs)) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), false, a, p1, p2, p3)); return; }
-            GH_Beam newBeam = new GH_Beam(beam);
-            newBeam.Value.Loads.Add(load);
-            // R6.2 (lane B): the GPC draft built on GPC from the drafts of the inputs (identity of the conversion of the FEM output until R6.5);
-            // in the principal axes whatever the coordinate system (the former archive did not store it).
-            GpcBeamInputs.Attach(newBeam, build);
-            DA.SetData(0, newBeam);
+            // P2K (P1): the GPC path only: the draft built on GPC from the drafts of the beam and the load case record (identity derived from
+            // the input draft); in the principal axes whatever the coordinate system (the former archive did not store it).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), false, a, p1, p2, p3));
         }
 
         public override bool Read(GH_IReader reader)

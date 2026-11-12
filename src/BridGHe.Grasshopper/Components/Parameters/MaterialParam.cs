@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper;
 using Grasshopper.Kernel;

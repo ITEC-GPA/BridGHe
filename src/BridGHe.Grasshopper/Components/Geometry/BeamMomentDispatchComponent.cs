@@ -33,9 +33,8 @@ public sealed class BeamMomentDispatchComponent : BridgeUtilityComponent
         if(!da.GetDataList(0,beams)||!da.GetData(1,ref lc)||!da.GetData(2,ref tol)||!da.GetData(3,ref component)||!da.GetData(4,ref sign))return;
         // F6 (a)/(b): the beams of an analysed model (Decompose Model) carry their analysed GPC beam: classified from its GPC results.
         var analysed=beams.Select(b=>b?.AnalysedGpc is GPC.Model.Elements.BeamElement e&&Common.Gpc.GpcResultCatalog.Of(b.AnalysedGpcModel) is Common.Gpc.GpcResultCatalog c?(c,b.AnalysedGpcModel,e):((Common.Gpc.GpcResultCatalog,GPC.Model.Models.Model,GPC.Model.Elements.BeamElement))default).ToArray();
-        // R6.5 P1 lane 1b: a beam given by its draft alone has no FEM value: classified by the ID of its draft from its analysed GPC beam (Missing without one).
-        var states=beams.All(b=>b?.Value!=null)?BeamMomentClassification.Classify(beams.Select(b=>b?.Value).ToArray(),analysed,lc,tol,component,sign)
-            :BeamMomentClassification.Classify(beams.Select(b=>b?.Value?.BeamId??b?.Gpc?.Beam?.Name).ToArray(),beams.Select(b=>b?.Value).ToArray(),analysed,lc,tol,component,sign);
+        // R6.5 P1 lane 1b / P2K (P1): every beam is classified by the ID of its draft from its analysed GPC beam (Missing without one).
+        var states=BeamMomentClassification.Classify(beams.Select(b=>b?.Gpc?.Beam?.Name).ToArray(),analysed,lc,tol,component,sign);
         for(int k=0;k<5;k++) da.SetDataList(k,beams.Where((b,i)=>(int)states[i].Sign==k));
         da.SetDataList(5,states);da.SetDataList(6,states.Select(s=>s.ToString()).Prepend("Sampled sign only. Request adequate result stations/extrema; this does not determine code cracking zones or split the mesh."));
         if(states.Any(s=>s.Sign==BeamMomentSign.Missing))AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Some beams have no results for this case. Recalculate the reference model including the selected case.");

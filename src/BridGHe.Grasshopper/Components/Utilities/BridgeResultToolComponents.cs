@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Diagnostics;
-using BridGHe.Common.Models;
 using BridGHe.Common.Checks;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;

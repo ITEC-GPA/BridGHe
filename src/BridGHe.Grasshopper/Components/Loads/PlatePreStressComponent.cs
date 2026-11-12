@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -62,22 +61,10 @@ namespace BridGHe.Grasshopper.Components.Loads
             if (!DA.GetData("Pz", ref pz))
                 return;
 
-            Vector3d value = new Vector3d(px, py, pz);
-
-            PlatePreStressModel.LoadData load_value = new PlatePreStressModel.LoadData()
-            {
-                LocalPressure = value
-            };
-            PlatePreStressModel load = new PlatePreStressModel(lc.Value, load_value);
             Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.WithPrestress(plate.Gpc, lc.Gpc, px, py, pz, id);
-            // R6.5 P1 lane 1a: a plate given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
-            // R6.5 P1 lane 2a: a load case given by its record alone gives the same output, without the FEM value (rule of passo 75).
-            if (plate.Value == null || lc.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, GpcOnlyElements.Lazy(() => lc.Gpc), px, py, pz)); return; }
-            GH_Plate newPlate = new GH_Plate(plate);
-            newPlate.Value.Loads.Add(load);
-            // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the drafts of the inputs, identity of the conversion of the FEM output.
-            GpcBuilderAttach.Plate(newPlate, () => build(Common.Gpc.GpcBeamDrafts.Identity(newPlate.Value)));
-            DA.SetData(0, newPlate);
+            // P2K (P1): the GPC path only: the draft built on GPC from the drafts of the plate and the load case record (identity derived from
+            // the input draft).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, GpcOnlyElements.Lazy(() => lc.Gpc), px, py, pz));
         }
 
         public override GH_Exposure Exposure => GH_Exposure.tertiary;

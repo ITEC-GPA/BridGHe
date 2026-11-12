@@ -51,43 +51,16 @@ public class BuildBridgeModel : GH_Component
             string Cell(IGH_Goo goo) => goo?.ScriptVariable() is IFormattable n ? n.ToString(null, CultureInfo.InvariantCulture) : goo?.ScriptVariable()?.ToString() ?? "";
             var definitions = phases.Select(p => (BridgePhaseDefinition)p.Value).ToArray();
             var table = combinations.Branches.Select(b => b.Select(Cell).ToArray()).ToArray();
-            // L3b: a model given by its GPC input alone, or an action without a FEM source: the bridge model on the GPC data alone; the output is
-            // given by the input of its structure with the bridge attached; a build that fails is the error of the component, with no output.
-            if (GpcOnlyModels.Any(models) || definitions.SelectMany(d => d.Actions).Any(a => a.Source == null && !string.IsNullOrWhiteSpace(a.Case)))
-            {
-                var gpcBuilt = Common.Gpc.GpcBridgeBuilder.Build(models.Select(m => Common.Gpc.GpcBridgeSource.Reference(m.GpcInput, m.GpcActionResults)).ToArray(), definitions, table,
-                    (BridgeWorkflowMethod)method, Settings.Instance.Tolerance, additional, Common.Gpc.GpcIdentity.Derive(InstanceGuid, "bridge-model"), structureInput: true);
-                var only = GH_Model.FromGpc(gpcBuilt.Input); only.AttachBridge(gpcBuilt.Bridge);
-                var onlyDrafts = Common.Gpc.GpcBridgeBuilder.ModelDrafts(models[0].GpcDrafts, gpcBuilt.Bridge.Records);
-                if (onlyDrafts != null) only.AttachDrafts(onlyDrafts);
-                Finish(da, only, gpcBuilt.Summary, gpcBuilt.Warnings, method);
-                return;
-            }
-            var result = BridgeWorkflowBuilder.Build(models.Select(m => m.Value).ToArray(), definitions, table, (BridgeWorkflowMethod)method, Settings.Instance.Tolerance, additional);
-            var output = GH_Model.FromModel(result.Model, models[0]);
-            // F6 chain C: the GPC bridge model (merged actions as a GPC dataset, D3 recipe) for the checks with the GPC workflow executor, built
-            // from the GPC models only: the input model of every reference, the analysed GPC model of every action source. The merged FEM model
-            // above stays the Model output for the components that still read it (until the GH types carry GPC objects).
-            // R6.4 (4): the summary and the diagnostics of the GPC build when it is built (the same rows as the FEM build, compared by the
-            // regression gpc-bridge-model); those of the FEM build when it is not (the FEM path of the checks, until the decision on it).
-            string[] summary = result.Summary, warnings = result.Warnings;
-            try
-            {
-                var references = models.Select(m => Common.Gpc.GpcBridgeSource.Reference(m.GpcInput, m.GpcActionResults)).ToArray();
-                var built = Common.Gpc.GpcBridgeBuilder.Build(references, definitions, table, (BridgeWorkflowMethod)method, Settings.Instance.Tolerance, additional,
-                    Common.Gpc.GpcIdentity.Derive(InstanceGuid, "bridge-model"));
-                output.AttachBridge(built.Bridge); summary = built.Summary; warnings = built.Warnings;
-                // R6.4 (2), extension (α): the drafts of the elements of the merged model (those of the first reference model without their
-                // loads, with the slab strains of the strain actions), for Decompose Model and Super Element Filter.
-                var drafts = Common.Gpc.GpcBridgeBuilder.ModelDrafts(models[0].GpcDrafts, built.Bridge.Records);
-                if (drafts != null) output.AttachDrafts(drafts);
-                // Until R6.5 the test host compares them with those of the FEM build on every run (GpcDraftCheck).
-                Common.Gpc.GpcDraftCheck.Attached("Build BridGHe Model summary", string.Join("\n", summary) + "\n--\n" + string.Join("\n", warnings),
-                    () => string.Join("\n", result.Summary) + "\n--\n" + string.Join("\n", result.Warnings));
-            }
-            catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is InvalidOperationException || e is KeyNotFoundException || e is System.Runtime.Serialization.SerializationException)
-            { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Modello di ponte GPC non costruito (" + e.Message + "): Super Element Check richiede il modello di ponte GPC e non verifica questo modello."); }
-            Finish(da, output, summary, warnings, method);
+            // L3b: the bridge model on the GPC data alone; the output is given by the input of its structure with the bridge attached; a build
+            // that fails is the error of the component, with no output. P2K (P1): the only path.
+            var gpcBuilt = Common.Gpc.GpcBridgeBuilder.Build(models.Select(m => Common.Gpc.GpcBridgeSource.Reference(m.GpcInput, m.GpcActionResults)).ToArray(), definitions, table,
+                (BridgeWorkflowMethod)method, Settings.Instance.Tolerance, additional, Common.Gpc.GpcIdentity.Derive(InstanceGuid, "bridge-model"), structureInput: true);
+            var only = GH_Model.FromGpc(gpcBuilt.Input); only.AttachBridge(gpcBuilt.Bridge);
+            // R6.4 (2), extension (α): the drafts of the elements of the merged model (those of the first reference model without their loads,
+            // with the slab strains of the strain actions), for Decompose Model and Super Element Filter.
+            var onlyDrafts = Common.Gpc.GpcBridgeBuilder.ModelDrafts(models[0].GpcDrafts, gpcBuilt.Bridge.Records);
+            if (onlyDrafts != null) only.AttachDrafts(onlyDrafts);
+            Finish(da, only, gpcBuilt.Summary, gpcBuilt.Warnings, method);
         }
         catch (Exception e) { Message = "Error"; AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message); }
     }

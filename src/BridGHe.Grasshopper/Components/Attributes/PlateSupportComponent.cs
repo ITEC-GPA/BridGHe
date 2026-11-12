@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -54,8 +53,6 @@ namespace BridGHe.Grasshopper.Components.Attributes
             if (!DA.GetData("Plate", ref plate))
                 return;
 
-            GH_Plate newPlate = new GH_Plate(plate);
-
             if (!DA.GetData(1, ref stiffness))
                 return;
             if (!DA.GetData(2, ref compressionOnly))
@@ -63,32 +60,23 @@ namespace BridGHe.Grasshopper.Components.Attributes
             if (!DA.GetData(3, ref face))
                 return;
 
-            PlateSupportAttributeModel.AttributeData attr = new PlateSupportAttributeModel.AttributeData
-            {
-                Stiffness = stiffness,
-                CompressionOnly = compressionOnly
-            };
+            // P2K (P1): the face by the name of the former PlateSupportAttributeModel.SupportedFace (Top = 0, Bottom = 1).
+            string faceName;
             if (face == 0)
             {
-                attr.Face = PlateSupportAttributeModel.SupportedFace.Top;
+                faceName = "Top";
             }
             else if (face == 1)
             {
-                attr.Face = PlateSupportAttributeModel.SupportedFace.Bottom;
+                faceName = "Bottom";
             }
             else
             {
                 throw new NotSupportedException();
             }
-            Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.WithSupport(plate.Gpc, attr.Stiffness, attr.CompressionOnly, attr.Face.ToString(), id);
-            // R6.5 P1 lane 1a: a plate given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
-            if (plate.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, attr.Stiffness, attr.CompressionOnly, attr.Face.ToString())); return; }
-            newPlate.Value.Attributes.Add(new PlateSupportAttributeModel(attr));
-            // R6.2 lane A (dual rule until R6.5): the GPC draft built on GPC from the draft of the input, identity of the conversion of the FEM output
-            // (the former face carried by the name of its type).
-            GpcBuilderAttach.Plate(newPlate, () => build(Common.Gpc.GpcBeamDrafts.Identity(newPlate.Value)));
-
-            DA.SetData("Plate", newPlate);
+            Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.WithSupport(plate.Gpc, stiffness, compressionOnly, faceName, id);
+            // P2K (P1): the GPC path only: the draft built on GPC (identity derived from the input draft; the former face carried by its name).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, stiffness, compressionOnly, faceName));
         }
 
         public override GH_Exposure Exposure => GH_Exposure.tertiary;

@@ -44,8 +44,8 @@ namespace BridGHe.Grasshopper.Components.Parameters
             return true;
         }
 
-        /// <summary>The «Global» menu: the global coordinate system as the persistent data. R6.5 P1 lane 2b: with
-        /// <c>GpcOnlyElements.PropertiesWithoutFem</c> the one given by its GPC frame alone (<see cref="GH_CoordinateSystem.Global"/>).</summary>
+        /// <summary>The «Global» menu: the global coordinate system as the persistent data. R6.5 P1 lane 2b, P2K (P1): the one given by its
+        /// GPC frame alone (<see cref="GH_CoordinateSystem.Global"/>).</summary>
         internal void SetGlobal() => SetPersistentData(GH_CoordinateSystem.Global());
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;

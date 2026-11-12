@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
@@ -60,16 +59,8 @@ namespace BridGHe.Grasshopper.Components.Materials
 
             // User decision of 6/11: fu = 262 MPa on GPC (0.3.0 stored the shear value 165.5 as the tensile ultimate strength).
             var recipe = Common.Gpc.Builders.GpcMaterialBuilders.Aluminium(name, type_idx, alloy);
-            // R6.2 part C (§1bis, regola doppia): the GPC material by kind from the recipe of the component, attached to the FEM value made from
-            // the same recipe (transitional until R6.5).
-            // R6.5 P1 lane 2a: with the switch of the property producers the material by its GPC datum alone (the path of P2).
-            if (Helpers.GpcOnlyElements.PropertiesWithoutFem) DA.SetData(0, GH_Material.FromGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe), recipe.Kind));
-            else
-            {
-                var goo = new GH_Material(Common.Gpc.Builders.GpcMaterialBuilders.Femm(recipe));
-                goo.AttachGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe), recipe.Kind);
-                DA.SetData(0, goo);
-            }
+            // P2K (P1): the material by its GPC datum alone, by kind from the recipe of the component.
+            DA.SetData(0, GH_Material.FromGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe), recipe.Kind));
         }
 
         /// <summary>

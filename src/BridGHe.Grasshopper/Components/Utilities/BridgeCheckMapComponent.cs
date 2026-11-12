@@ -55,8 +55,8 @@ public sealed class BridgeCheckMapComponent : BridgeUtilityComponent
             if (checks.Length == 0) rows.Add(new(ids[i], stations[i], result.Stage.Name, cases[i], "No available checks", null, "Unavailable", ""));
             else rows.AddRange(checks.Select(c => new BridgeMappedCheck(ids[i], stations[i], result.Stage.Name, cases[i], c.Name, c.Ratio, c.Status, c.Note)));
         }
-        // R6.5 P1 lane 3a: a model given by its GPC input alone is mapped on the beams of its input, in model length units.
-        var mapped = GpcOnlyModels.WithoutFem(model) ? BridgeCheckMap.Evaluate(GpcBeams(model.GpcInput), rows) : BridgeCheckMap.Evaluate(model.Value, rows);
+        // R6.5 P1 lane 3a / P2K (P1): the model is mapped on the beams of its GPC input, in model length units.
+        var mapped = BridgeCheckMap.Evaluate(GpcBeams(model.GpcInput), rows);
         preview.AddRange(mapped.Select(m => (m, labels)));
         da.SetDataList(0, mapped.Select(m => m.Axis)); da.SetDataList(1, mapped.Select(m => m.Color));
         da.SetDataList(2, mapped.Select(m => m.BeamId)); da.SetDataList(3, mapped.Select(m => m.Maximum));

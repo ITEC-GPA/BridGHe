@@ -41,23 +41,16 @@ public sealed class BridgeDetailStationsComponent : BridgeUtilityComponent
         if (!da.GetData(0, ref model) || !da.GetDataTree(1, out GH_Structure<IGH_Goo> input) || !da.GetDataList(2, locations)
             || !da.GetData(4, ref up) || !da.GetData(5, ref tolerance)) return;
         da.GetDataList(3, phaseGoos);
-        // R6.4 (6): with the GPC bridge model of Build BridGHe Model (N-mm by construction) the beams are its beams (ID, ends, length); the
-        // FEM model otherwise (the FEM path of the checks, left to the open decision). Until R6.5 the test host compares the beams of the two.
+        // R6.4 (6), R6.5 P1 lane 3a / P2K (P1): the beams of the GPC bridge model of Build BridGHe Model (N-mm by construction: ID, ends, length),
+        // else those of the GPC input of the model (its units are those of its input; a model without one is refused as before).
         var bridge = model?.GpcBridge;
-        // R6.5 P1 lane 3a: a model given by its GPC input alone: the beams of the GPC bridge model, else those of its GPC input (N-mm: the
-        // coordinates of the GPC model are those of the FEM model); its units are those of its input.
-        bool gpcOnly = GpcOnlyModels.WithoutFem(model);
-        if (gpcOnly ? bridge == null && model.GpcInput.Report.Units.Units != Common.Gpc.DefinitionUnits.Nmm
-            : model?.Value == null || bridge == null && model.Value.Units != BridGHe.Common.Models.ModelModel.ModelUnits.Nmm) throw new ArgumentException("Model must use N-mm.");
+        if (bridge == null && model?.GpcInput?.Report.Units.Units != Common.Gpc.DefinitionUnits.Nmm) throw new ArgumentException("Model must use N-mm.");
         if (!double.IsFinite(tolerance) || tolerance <= 0 || locations.Count == 0 || locations.Any(p => !p.IsValid)) throw new ArgumentException("Supply valid detail points and positive tolerance.");
         if (phaseGoos.Any(g => g.Value is not BridgePhaseDefinition)) throw new ArgumentException("Phases requires Bridge Phase objects.");
         var phases = phaseGoos.Select(g => (BridgePhaseDefinition)g.Value).ToArray();
         var results = input.AllData(true).Select(g => g?.ScriptVariable() as BridgeStressResult ?? throw new ArgumentException("Expected section results.")).ToArray();
         if (results.Any(r => r.Source == null || r.Stage.GetHistory() != null)) throw new ArgumentException("Use final cumulative results with FEM provenance.");
-        var beams = bridge != null ? GpcBeams(bridge.Model) : gpcOnly ? GpcBeams(model.GpcInput.Model)
-            : model.Value.Beams.ToDictionary(b => b.BeamId, b => new Beam(b.PointFrom, b.PointTo, b.Length), StringComparer.Ordinal);
-        if (bridge != null && !gpcOnly) Common.Gpc.GpcDraftCheck.Attached("Bridge Detail Stations beams", Text(beams),
-            () => Text(model.Value.Beams.ToDictionary(b => b.BeamId, b => new Beam(b.PointFrom, b.PointTo, b.Length), StringComparer.Ordinal)));
+        var beams = bridge != null ? GpcBeams(bridge.Model) : GpcBeams(model.GpcInput.Model);
         if (results.Any(r => !beams.ContainsKey(r.Source.BeamId))) throw new ArgumentException("Result beam IDs do not belong to this model.");
         var selectedBeams = results.Select(r => r.Source.BeamId).Distinct().Select(id => beams[id]).ToArray();
         var output = new GH_Structure<GH_ObjectWrapper>(); var compression = new GH_Structure<GH_Number>();
@@ -77,8 +70,7 @@ public sealed class BridgeDetailStationsComponent : BridgeUtilityComponent
             if (phases.Length > 0 && !cache.TryGetValue((index, result.Source.Combination), out reaction))
                 cache[(index, result.Source.Combination)] = reaction = model.GpcBridge != null && phases.All(p => p.Actions.All(a => string.IsNullOrWhiteSpace(a.Case) || a.GpcSource != null))
                     ? BridgeSupportReactions.SignedKN(model.GpcBridge, phases, locations[index], result.Source.Combination, up, tolerance) // P2T request 3: the GPC bridge model alone
-                    : gpcOnly ? throw GpcOnlyModels.Refused(GpcOnlyModels.RequiresBridgeReactions) // R6.5 P1 lane 3a: no FEM phase sources to read
-                    : BridgeSupportReactions.SignedKN(model.Value, phases, locations[index], result.Source.Combination, up, tolerance);
+                    : throw GpcOnlyModels.Refused(GpcOnlyModels.RequiresBridgeReactions); // R6.5 P1 lane 3a / P2K (P1): no FEM phase sources to read
             int neighbours = selectedBeams.Count(b => b.PointFrom.DistanceTo(point) <= tolerance || b.PointTo.DistanceTo(point) <= tolerance);
             int end = neighbours == 1 ? station <= tolerance ? 1 : 2 : 0;
             var path = input.Paths[branch]; output.Append(new GH_ObjectWrapper(result), path);
@@ -100,7 +92,4 @@ public sealed class BridgeDetailStationsComponent : BridgeUtilityComponent
         var from = new Point3d(b.StartPoint.X, b.StartPoint.Y, b.StartPoint.Z); var to = new Point3d(b.EndPoint.X, b.EndPoint.Y, b.EndPoint.Z);
         return new Beam(from, to, from.DistanceTo(to));
     }, StringComparer.Ordinal);
-
-    private static string Text(Dictionary<string, Beam> beams) => string.Join("\n", beams.Select(p => p.Key + " " + R(p.Value.PointFrom) + " " + R(p.Value.PointTo) + " " + p.Value.Length.ToString("R", System.Globalization.CultureInfo.InvariantCulture)));
-    private static string R(Point3d p) => string.Join(",", new[] { p.X, p.Y, p.Z }.Select(v => BitConverter.DoubleToInt64Bits(v).ToString("X16")));
 }

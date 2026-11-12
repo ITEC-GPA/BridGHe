@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.ComponentAttributes;
 using BridGHe.Grasshopper.Components.Parameters;
 using BridGHe.Grasshopper.DataTypes.Fem;
@@ -40,9 +38,8 @@ namespace BridGHe.Grasshopper.Components.Loads
             pManager.AddGenericParameter("LoadCase", "LC", "The load case", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Type", "T", "Load Type", GH_ParamAccess.item, 0);
             Param_Integer type_param = (Param_Integer)pManager[2];
-            Array values = Enum.GetValues(typeof(BeamDistributedLoadModel.LoadSchema));
-            foreach (BeamDistributedLoadModel.LoadSchema val in values)
-                type_param.AddNamedValue(val.GetDescription(), (int)val);
+            foreach (var val in LoadSchemas)
+                type_param.AddNamedValue(val.Label, val.Value);
 
             CoordinateSystemParam cs_param = new CoordinateSystemParam
             {
@@ -93,11 +90,26 @@ namespace BridGHe.Grasshopper.Components.Loads
             }
             else
             {
-                string[] options = Enum.GetNames(typeof(BeamDistributedLoadModel.LoadDirection));
+                string[] options = LoadDirectionNames;
                 for (int i = 0; i < options.Length; i++)
                     dir_param.AddNamedValue(options[i].Replace('_', ' '), i);
             }
         }
+
+        // P2K (P1): the former BeamDistributedLoadModel.LoadSchema, labels and integers of the Type input in the former order (Enum.GetValues:
+        // by unsigned value, Undefined last).
+        private static readonly (string Label, int Value)[] LoadSchemas =
+        {
+            ("Uniform", 0), ("Keystone", 1), ("Triangular", 2), ("Triangular at end 1 + Keystone", 3), ("Keystone + Triangular at end 2", 4),
+            ("Triangular at ends + Keystone", 5), ("Undefined", -1),
+        };
+
+        // P2K (P1): the names of the former BeamDistributedLoadModel.LoadDirection in the former order of Enum.GetNames (by unsigned value:
+        // X = 0 ... Gravity_Projected = 7, Undefined last); the Direction choices take the index.
+        private static readonly string[] LoadDirectionNames = { "X", "Y", "Z", "X_Projected", "Y_Projected", "Z_Projected", "Gravity", "Gravity_Projected", "Undefined" };
+
+        // P2K (P1): the former Enum.GetName of a direction (Undefined = -1; null for an integer the enum does not define).
+        private static string LoadDirectionName(int dir) => dir == -1 ? "Undefined" : dir >= 0 && dir < LoadDirectionNames.Length - 1 ? LoadDirectionNames[dir] : null;
 
         private void SetSchemaImage()
         {
@@ -168,7 +180,7 @@ namespace BridGHe.Grasshopper.Components.Loads
 
             Message = string.Format("Coordinate System: {0}\nDirection: {1}", cs == null ? "Local" : cs.Name, cs == null ?
                 string.Format("Local axis {0}", dir + 1) :
-                Enum.GetName(typeof(BeamDistributedLoadModel.LoadDirection), dir).Replace('_', ' '));
+                LoadDirectionName(dir).Replace('_', ' '));
 
             if (GpcOnlyProperties.NonStructuralMass(lc))
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The connected LoadCase have the Non-structural mass flag set to on");
@@ -271,32 +283,12 @@ namespace BridGHe.Grasshopper.Components.Loads
             if (input_errors)
                 return;
 
-            BeamDistributedLoadModel.LoadSchema load_schema = (BeamDistributedLoadModel.LoadSchema)schema;
-            BeamDistributedLoadModel.LoadData load_value = new BeamDistributedLoadModel.LoadData()
-            {
-                LoadSchema = load_schema,
-                CoordinateSystem = cs?.Value,
-                LoadDirection = (BeamDistributedLoadModel.LoadDirection)dir,
-                P1 = p1,
-                PA = pa,
-                PB = pb,
-                P2 = p2,
-                A = a,
-                B = b
-            };
-            BeamDistributedLoadModel load = new BeamDistributedLoadModel(lc.Value, load_value, BeamDistributedLoadModel.LoadType.Force);
             bool? global = GpcBeamInputs.GlobalSystem(cs);
             string direction = Common.Gpc.Builders.GpcBeamBuilders.Code(Common.Gpc.Builders.GpcBeamBuilders.LoadDirections, dir);
             Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithDistributedLoad(beam.Gpc, lc.Gpc, (Common.Gpc.BridgeLoadSchema)schema, false, direction, pa, pb, p1, p2, a, b, global, id);
-            // R6.5 P1 lane 1a: a beam given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
-            // R6.5 P1 lane 2a: a load case given by its record alone gives the same output, without the FEM value (rule of passo 75).
-            // R6.5 P1 lane 2b: the same for a coordinate system given by its GPC frame alone (rule of passo 75).
-            if (beam.Value == null || lc.Value == null || GpcOnlyProperties.WithoutFem(cs)) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), schema, false, direction, pa, pb, p1, p2, a, b, global)); return; }
-            GH_Beam newBeam = new GH_Beam(beam);
-            newBeam.Value.Loads.Add(load);
-            // R6.2 (lane B): the GPC draft built on GPC from the drafts of the inputs (identity of the conversion of the FEM output until R6.5).
-            GpcBeamInputs.Attach(newBeam, build);
-            DA.SetData(0, newBeam);
+            // P2K (P1): the GPC path only: the draft built on GPC from the drafts of the beam, the load case record and the coordinate system
+            // frame (identity derived from the input draft).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), schema, false, direction, pa, pb, p1, p2, a, b, global));
         }
 
         public override bool Read(GH_IReader reader)

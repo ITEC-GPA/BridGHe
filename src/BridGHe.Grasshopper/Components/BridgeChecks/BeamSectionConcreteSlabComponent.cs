@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
 using System;
@@ -59,14 +58,15 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             DA.GetData(4, ref bottomArea);
             DA.GetData(5, ref bottomCover);
 
-            var sectionConcreteSlabModel = new SectionConcreteSlabModel(height, width, topArea, topCover, bottomArea, bottomCover);
-            if (!sectionConcreteSlabModel.IsValid)
+            // P2K (P10): the GPC datum of the slab (its numbers), no FEM value.
+            var slab = new Common.Checks.ConcreteSlabSection(height, width, topArea, topCover, bottomArea, bottomCover);
+            if (!slab.IsValid)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Use finite positive dimensions and nonnegative areas. Active row axes must lie inside the slab; the top row must be above the bottom row.");
                 return;
             }
 
-            DA.SetData(0, sectionConcreteSlabModel);
+            DA.SetData(0, slab);
         }
 
         /// <summary>

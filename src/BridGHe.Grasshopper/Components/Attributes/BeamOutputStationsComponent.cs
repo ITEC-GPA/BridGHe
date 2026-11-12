@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -52,21 +51,8 @@ namespace BridGHe.Grasshopper.Components.Attributes
                 return;
 
             Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithOutputStations(beam.Gpc, stations, id);
-            // R6.5 P1 lane 1a: a beam given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
-            if (beam.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, stations)); return; }
-
-            GH_Beam newBeam = new GH_Beam(beam);
-
-            BeamOutputStationsModel.AttributeData attributeData = new BeamOutputStationsModel.AttributeData()
-            {
-                MinimumNumberOfStations = stations,
-            };
-            BeamOutputStationsModel attr = new BeamOutputStationsModel(attributeData);
-            newBeam.Value.Attributes.Add(attr);
-            // R6.2 (lane B): the GPC draft built on GPC from the draft of the input (identity of the conversion of the FEM output until R6.5).
-            GpcBeamInputs.Attach(newBeam, build);
-
-            DA.SetData("Beam", newBeam);
+            // P2K (P1): the GPC path only: the draft built on GPC (identity derived from the input draft).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, stations));
         }
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;

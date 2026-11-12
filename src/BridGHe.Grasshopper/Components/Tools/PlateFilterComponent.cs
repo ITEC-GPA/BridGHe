@@ -1,5 +1,4 @@
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -36,8 +35,9 @@ namespace BridGHe.Grasshopper.Components.Tools
 
             pManager.AddIntegerParameter("Units", "U", "The measure units", GH_ParamAccess.item);
             Param_Integer type_param = (Param_Integer)pManager[pManager.ParamCount - 1];
-            Array names = Enum.GetValues(typeof(ModelModel.ModelUnits));
-            foreach (ModelModel.ModelUnits name in names)
+            // P2K (P1): the GPC DefinitionUnits (same names, order, descriptions and integers as the FEM ModelModel.ModelUnits).
+            Array names = Enum.GetValues(typeof(Common.Gpc.DefinitionUnits));
+            foreach (Common.Gpc.DefinitionUnits name in names)
                 type_param.AddNamedValue(name.GetDescription(), (int)name);
 
             pManager.AddTextParameter("Properties name", "PNs", "The plate property names to search", GH_ParamAccess.list);
@@ -86,15 +86,16 @@ namespace BridGHe.Grasshopper.Components.Tools
 
             List<GH_Plate> filtered = new List<GH_Plate>();
             List<GH_Plate> others = new List<GH_Plate>();
-            double tol = Helpers.ModelHelper.GetTolerance();
+            // P2K (P1): the tolerance of the former ModelHelper.GetTolerance (the same setting).
+            double tol = Settings.Instance.Tolerance;
 
             // R6.2 lane A: the filter decides on the GPC drafts (first Element ID, groups by full name, property name, corners in the definition
-            // units); the FEM value is the bridge for a refused draft until R6.5, and under the Smoke host the two decisions must agree.
+            // units). P2K (P1): the GPC path only (the former decision of GpcBuilderAttach.Decide without a FEM value: a refused draft is an error).
             var groupNames = groups.Select(g => string.Join("\\", GpcBuilderAttach.GroupChain(g))).ToList();
             for (int i = 0; i < plates.Count; i++)
             {
                 GH_Plate p = plates[i];
-                bool add = GpcBuilderAttach.Decide(() => Matches(p.Gpc, ids, groupNames, props, positions, tol), p.Value == null || GpcOnlyProperties.WithoutFem(groups) ? null : () => FemMatches(p, ids, groups, props, positions, tol), "Plate Filter"); // R6.5 P1 lane 1a: a plate without FEM value on its draft alone
+                bool add = Matches(p.Gpc, ids, groupNames, props, positions, tol);
                 if (add)
                     filtered.Add(p);
                 else
@@ -115,65 +116,6 @@ namespace BridGHe.Grasshopper.Components.Tools
             if (groupNames.Any(name => d.Records.Groups.Contains(name, StringComparer.Ordinal))) return true;
             if (props.Any(name => name == d.Plate.PlateProperty?.Name)) return true;
             return positions.Any(point => d.Corners.Any(c => new Point3d(c.X, c.Y, c.Z).DistanceTo(point) < tol));
-        }
-
-        /// <summary>The selection on the FEM value (until R6.5).</summary>
-        private static bool FemMatches(GH_Plate p, List<string> ids, List<GH_Group> groups, List<string> props, List<Point3d> positions, double tol)
-        {
-            {
-                bool add = false;
-                for (int j = 0; j < ids.Count; j++)
-                {
-                    string id = ids[j];
-                    if (p.Value.HasId(id))
-                    {
-                        add = true;
-                        break;
-                    }
-                }
-                if (!add)
-                {
-                    for (int j = 0; j < groups.Count; j++)
-                    {
-                        GH_Group g = groups[j];
-                        if (p.Value.HasGroup(g.Value))
-                        {
-                            add = true;
-                            break;
-                        }
-                    }
-                    if (!add)
-                    {
-                        for (int j = 0; j < props.Count; j++)
-                        {
-                            string bp = props[j];
-                            if (bp == p.Value.PlateProperty.Name)
-                            {
-                                add = true;
-                                break;
-                            }
-                        }
-                        if (!add)
-                        {
-                            for (int j = 0; j < positions.Count; j++)
-                            {
-                                Point3d point = positions[j];
-                                for (int k = 0; k < p.Value.Points.Count; k++)
-                                {
-                                    Point3d plateP = p.Value.Points[k];
-                                    if (plateP.DistanceTo(point) < tol)
-                                    {
-                                        add = true;
-                                        break;
-                                    }
-                                }
-                                if (add) break;
-                            }
-                        }
-                    }
-                }
-                return add;
-            }
         }
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;

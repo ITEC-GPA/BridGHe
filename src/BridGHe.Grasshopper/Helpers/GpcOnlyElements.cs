@@ -40,17 +40,14 @@ namespace BridGHe.Grasshopper.Helpers
 
         /// <summary>R6.5 P1 lane 1b: the bridge generators that build elements without an input element (Bridge Bearings, Rigid Links,
         /// Connection Beams, Connections, Deck Mesh, Slab Grillage, Member Assignment, FEM Members) give them by their GPC drafts alone (no FEM
-        /// value, <see cref="ContentIdentity"/>): the path that stays in P2. Off (always, outside the lane test <c>gpc-only-generators</c>) they
-        /// give the FEM value with its draft, the dual rule of R6.2, so nothing changes with the inputs of today. Removed in P2 with the FEM
-        /// path (the generators then always take the path it selects).</summary>
-        public static bool GeneratorsWithoutFem { get; set; }
+        /// value, <see cref="ContentIdentity"/>). P2K (P1, 12/11): always true, the FEM path is removed from the components; the setter is kept
+        /// and ignored because the test fixtures set the switch by reflection (<c>R2aDesignFixtures.WithoutFem</c>). Deleted by P2-taglio.</summary>
+        public static bool GeneratorsWithoutFem { get => true; set { } }
 
         /// <summary>R6.5 P1 lane 2 (passo 75): the producers of properties and data (sections, beam and plate properties, materials, cases,
-        /// combinations, stages, groups, the composite and bridge section components) give them by their GPC data alone (no FEM value): the path
-        /// that stays in P2. Off (always, outside the lane test <c>gpc-only-properties</c>) they give the FEM value with its datum, the dual rule
-        /// of R6.2, so nothing changes with the inputs of today. Removed in P2 with the FEM path. (P2Y: declared with the lane test, read by
-        /// nobody yet.)</summary>
-        public static bool PropertiesWithoutFem { get; set; }
+        /// combinations, stages, groups, the composite and bridge section components) give them by their GPC data alone (no FEM value). P2K (P1,
+        /// 12/11): always true, as <see cref="GeneratorsWithoutFem"/>; deleted by P2-taglio.</summary>
+        public static bool PropertiesWithoutFem { get => true; set { } }
 
         /// <summary>The draft of a generator without a FEM value, or null after an error on the component (a refusal of the reader: without a
         /// FEM value there is no conversion to fall back on).</summary>

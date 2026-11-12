@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using Grasshopper.Kernel;
@@ -33,14 +32,14 @@ namespace BridGHe.Grasshopper.Components.Materials
             // Kind param
             pManager.AddIntegerParameter("Kind", "K", "The kind of the material", GH_ParamAccess.item);
             Param_Integer param = (Param_Integer)pManager[1];
-            Array values = Enum.GetValues(typeof(MaterialModel.MaterialKind));
-            foreach (MaterialModel.MaterialKind val in values)
-                param.AddNamedValue(val.GetDescription(), (int)val);
+            foreach (var (label, value) in Kinds)
+                param.AddNamedValue(label, value);
             pManager.AddIntegerParameter("Units", "U", "The measure units", GH_ParamAccess.item);
             // Mesaure units param
             Param_Integer type_param = (Param_Integer)pManager[2];
-            values = Enum.GetValues(typeof(ModelModel.ModelUnits));
-            foreach (ModelModel.ModelUnits val in values)
+            // P2K (P1): the GPC DefinitionUnits (same names, order, descriptions and integers as the FEM ModelModel.ModelUnits).
+            Array values = Enum.GetValues(typeof(Common.Gpc.DefinitionUnits));
+            foreach (Common.Gpc.DefinitionUnits val in values)
                 type_param.AddNamedValue(val.GetDescription(), (int)val);
             // Material data params
             _paramsIdx = new List<int>()
@@ -85,11 +84,11 @@ namespace BridGHe.Grasshopper.Components.Materials
 
             if (!DA.GetData("Units", ref units))
                 return;
-            UpdateInputDescriptions((ModelModel.ModelUnits)units);
+            UpdateInputDescriptions((Common.Gpc.DefinitionUnits)units);
 
             if (!DA.GetData("Kind", ref kind))
                 return;
-            Message = ((MaterialModel.MaterialKind)kind).ToString();
+            Message = KindLabel(kind);
             if (!DA.GetData("Name", ref name))
                 return;
             if (!DA.GetData(_paramsIdx[0], ref modulus))
@@ -110,8 +109,9 @@ namespace BridGHe.Grasshopper.Components.Materials
                 return;
 
             // Convert to Nmm
-            ModelHelper.GetUtilitiesConversionParams(
-                (ModelModel.ModelUnits)units,
+            // P2K (P1): the table of the former FEM ModelHelper, without the FEM type (same factors).
+            Helpers.GpcOnlyProperties.UtilitiesUnits(
+                (Common.Gpc.DefinitionUnits)units,
                 out UnitsConvert.LengthUnits lengthUnits,
                 out UnitsConvert.ForceUnits forceUnits,
                 out UnitsConvert.MassUnits massUnits,
@@ -125,24 +125,28 @@ namespace BridGHe.Grasshopper.Components.Materials
             ftk = UnitsConvert.ConvertToDefaultUnits(ftk, pressureUnits, 1);
 
             var recipe = Common.Gpc.Builders.GpcMaterialBuilders.Custom(kind, name, modulus, ni, alpha, g, use_poisson, rho, fk, ftk);
-            // R6.2 part C (§1bis, regola doppia): the GPC material by kind from the recipe of the component, attached to the FEM value made from
-            // the same recipe (transitional until R6.5).
-            // R6.5 P1 lane 2a: with the switch of the property producers the material by its GPC datum alone (the path of P2).
-            if (Helpers.GpcOnlyElements.PropertiesWithoutFem) DA.SetData(0, GH_Material.FromGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe), recipe.Kind));
-            else
-            {
-                var goo = new GH_Material(Common.Gpc.Builders.GpcMaterialBuilders.Femm(recipe));
-                goo.AttachGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe), recipe.Kind);
-                DA.SetData(0, goo);
-            }
+            // P2K (P1): the material by its GPC datum alone, by kind from the recipe of the component.
+            DA.SetData(0, GH_Material.FromGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe), recipe.Kind));
         }
 
-        private void UpdateInputDescriptions(ModelModel.ModelUnits units)
+        /// <summary>P2K (P1): the kinds of the former FEM <c>MaterialModel.MaterialKind</c> (same labels and integers), in the order of its
+        /// <c>Enum.GetValues</c> (by unsigned value: Undefined = -1 last), for the Kind menu and the message.</summary>
+        private static readonly (string Label, int Value)[] Kinds = { ("Steel", 0), ("Concrete", 1), ("Aluminium", 2), ("Rebar", 3), ("Undefined", -1) };
+
+        /// <summary>P2K (P1): the label of a kind, as the former enum named it (an unknown integer by its digits).</summary>
+        private static string KindLabel(int kind)
+        {
+            foreach (var (label, value) in Kinds)
+                if (value == kind) return label;
+            return kind.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        private void UpdateInputDescriptions(Common.Gpc.DefinitionUnits units)
         {
             switch (units)
             {
                 //do not change the variables here. also default units in utilities are affected
-                case ModelModel.ModelUnits.Knm:
+                case Common.Gpc.DefinitionUnits.Knm:
                     Params.Input[_paramsIdx[0]].NickName = _paramsName[0] + " (kPa)";
                     Params.Input[_paramsIdx[2]].NickName = _paramsName[2] + " (1/C)";
                     Params.Input[_paramsIdx[3]].NickName = _paramsName[3] + " (kPa)";
@@ -150,7 +154,7 @@ namespace BridGHe.Grasshopper.Components.Materials
                     Params.Input[_paramsIdx[6]].NickName = _paramsName[6] + " (kPa)";
                     Params.Input[_paramsIdx[7]].NickName = _paramsName[7] + " (kPa)";
                     break;
-                case ModelModel.ModelUnits.SI:
+                case Common.Gpc.DefinitionUnits.SI:
                     Params.Input[_paramsIdx[0]].NickName = _paramsName[0] + " (Pa)";
                     Params.Input[_paramsIdx[2]].NickName = _paramsName[2] + " (1/C)";
                     Params.Input[_paramsIdx[3]].NickName = _paramsName[3] + " (Pa)";
@@ -158,7 +162,7 @@ namespace BridGHe.Grasshopper.Components.Materials
                     Params.Input[_paramsIdx[6]].NickName = _paramsName[6] + " (Pa)";
                     Params.Input[_paramsIdx[7]].NickName = _paramsName[7] + " (Pa)";
                     break;
-                case ModelModel.ModelUnits.Nmm:
+                case Common.Gpc.DefinitionUnits.Nmm:
                     Params.Input[_paramsIdx[0]].NickName = _paramsName[0] + " (MPa)";
                     Params.Input[_paramsIdx[2]].NickName = _paramsName[2] + " (1/C)";
                     Params.Input[_paramsIdx[3]].NickName = _paramsName[3] + " (MPa)";
@@ -166,7 +170,7 @@ namespace BridGHe.Grasshopper.Components.Materials
                     Params.Input[_paramsIdx[6]].NickName = _paramsName[6] + " (MPa)";
                     Params.Input[_paramsIdx[7]].NickName = _paramsName[7] + " (MPa)";
                     break;
-                case ModelModel.ModelUnits.IPS:
+                case Common.Gpc.DefinitionUnits.IPS:
                     Params.Input[_paramsIdx[0]].NickName = _paramsName[0] + " (psi)";
                     Params.Input[_paramsIdx[2]].NickName = _paramsName[2] + " (1/F)";
                     Params.Input[_paramsIdx[3]].NickName = _paramsName[3] + " (psi)";

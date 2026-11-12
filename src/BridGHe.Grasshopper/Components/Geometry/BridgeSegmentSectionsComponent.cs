@@ -4,7 +4,6 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using BridGHe.Common.Geometry;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.Components.Utilities;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
@@ -97,22 +96,8 @@ public sealed class BridgeSegmentSectionsComponent : BridgeUtilityComponent
             AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The connected Section Table has no data. Read the workbook or supply a valid table before assigning sections. Disconnect the input to use only the base section.");
             return;
         }
-        // R6.5 P1 lane 2b: a base property given by its GPC datum alone gives the rules, properties and sections by their GPC data alone (rule of
-        // passo 75); also with the switch of the property producers (the path of P2).
-        if (GpcOnlyElements.PropertiesWithoutFem || GpcOnlyProperties.WithoutFem(property)) { SolveGpcOnly(da, geometry, property, table); return; }
-        var result = BridgeSegmentSections.Create(BridgeDefinitionGoo.Segments(geometry), property.Value, table);
-        var properties = result.Rules.Select(r => r.Property).ToArray();
-        // R6.2 (lane B): the section and the property of every concio also built on GPC (the dimensions of the table on the material and
-        // formulation of the GPC datum of the base property); the rules carry the property datum to Bridge Member Assignment.
-        var gpc = GpcSegmentSections.Build(result, property);
-        da.SetDataList(0, result.Rules.Select(r => new BridgeDesignGoo(r)));
-        da.SetDataList(1, properties.Select((p, i) => { var goo = new GH_BeamProperty(p); if (gpc != null) goo.AttachGpc(gpc[i].Property); return goo; }));
-        da.SetDataList(2, properties.Select((p, i) => { var goo = new GH_BeamSection(p.Section); if (gpc != null) goo.AttachGpc(gpc[i].Section); return goo; }));
-        da.SetDataList(3, result.Rules.Select(r => $"G{r.Group}-C{r.Segment}"));
-        da.SetDataList(4, result.ResolvedTable);
-        da.SetDataList(5, properties.Select(p => p.D - p.Centroid.Y));
-        double top = property.Value.D - property.Value.Centroid.Y;
-        Inform(da, properties.Length, properties.Any(p => Math.Abs(p.D - p.Centroid.Y - top) > BridgeSegmentSections.StationTolerance));
+        // R6.5 P1 lane 2b / P2K (P1): the rules, properties and sections by their GPC data alone (rule of passo 75).
+        SolveGpcOnly(da, geometry, property, table);
     }
 
     /// <summary>R6.5 P1 lane 2b: the outputs on the GPC datum of the base property alone (<see cref="BridgeSegmentSections.CreateGpc"/>: the

@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
@@ -60,6 +61,25 @@ namespace BridGHe.Grasshopper.Helpers
             if (input.Drafts != null && output.Drafts != null) model.AttachElementGuids(source.ElementGuidsOf(input.Drafts));
             return model;
         }
+
+        /// <summary>P2K (P1, moved from the FEM <c>ModelHelper</c>, which P2-taglio deletes): the partition of the element inputs of a model
+        /// component (Build Model, Merge Model) by kind, in input order; neutral (the GH types only, no FEM value read).</summary>
+        internal static bool ParseElements(IEnumerable<global::Grasshopper.Kernel.Types.IGH_GeometricGoo> elements, out List<GH_Node> nodes, out List<GH_Beam> beams, out List<GH_Plate> plates)
+        {
+            nodes = new List<GH_Node>(); beams = new List<GH_Beam>(); plates = new List<GH_Plate>();
+            if (elements == null) return true;
+            foreach (var element in elements)
+            {
+                if (element is GH_Node node) nodes.Add(node);
+                if (element is GH_Beam beam) beams.Add(beam);
+                if (element is GH_Plate plate) plates.Add(plate);
+            }
+            return true;
+        }
+
+        /// <summary>P2K (P1, moved from the FEM <c>ModelHelper</c>): an analysis component restores the GH GUIDs of its model read from the file
+        /// from its input model after opening.</summary>
+        internal static void RestoreGuids(GH_Model input, GH_Model model) => model?.SynchronizeGuids(input);
 
         /// <summary>The error of a reading that exists only on the FEM data, on the GPC-only path (no output).</summary>
         internal static Exception Refused(string reading) => new ArgumentException(RefusedPrefix + reading);

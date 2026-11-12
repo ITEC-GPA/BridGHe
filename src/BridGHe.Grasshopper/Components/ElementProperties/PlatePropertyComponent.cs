@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -27,12 +25,8 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
             pManager.AddTextParameter("Name", "N", "Property name", GH_ParamAccess.item);
             int i = pManager.AddIntegerParameter("Type", "T", "The property type", GH_ParamAccess.item);
             Param_Integer mtParam = pManager[i] as Param_Integer;
-            Array values = Enum.GetValues(typeof(PlatePropertyType));
-            foreach (PlatePropertyType val in values)
-            {
-                if (val != PlatePropertyType.Undefined)
-                    mtParam.AddNamedValue(val.GetDescription(), (int)val);
-            }
+            for (int t = 0; t < TypeLabels.Length; t++)
+                mtParam.AddNamedValue(TypeLabels[t], t);
             i = pManager.AddNumberParameter("Membrane Thickness", "MT", "The membrane thickness value", GH_ParamAccess.item);
             pManager[i].Optional = true;
             i = pManager.AddNumberParameter("Bending Thickness", "BT", "The bending thickness value", GH_ParamAccess.item, 0);
@@ -85,34 +79,21 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
                     return;
             }
 
-            // R6.5 P1 lane 2a: with the switch, or a material given by its GPC datum alone, the property by its GPC datum alone (rule of passo
-            // 75; a refused property gives an error and no output). The message is the type, as below.
-            if (Helpers.GpcOnlyProperties.On(material))
-            {
-                Message = ((PlatePropertyType)type).GetDescription();
-                // L2C: with the bending thickness of a membrane beside the GPC property (Bridge Deck Mesh checks it, as before).
-                Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.PlateProperty(this, () => Common.Gpc.Builders.GpcPropertyBuilders.Plate(name, type, material?.Gpc, mem_thick, ben_thick),
-                    Common.Gpc.Builders.GpcPropertyBuilders.PlateMembraneBending(type, ben_thick)));
-                return;
-            }
-
-            PlatePropertyModel pp = new PlatePropertyModel
-            {
-                Name = name,
-                Material = material?.Value,
-                PropertyType = (PlatePropertyType)type,
-                MembraneThickness = mem_thick,
-                BendingThickness = ben_thick
-            };
-
-            Message = pp.PropertyType.GetDescription();
-
-            GH_PlateProperty gh_pp = new GH_PlateProperty(pp);
-            // R6.2 part C (§1bis, regola doppia): the plate property built on GPC from the GPC data of the inputs, attached to the FEM value (until R6.5).
-            Helpers.GpcBuilderAttach.PlateProperty(gh_pp, () => Common.Gpc.Builders.GpcPropertyBuilders.Plate(name, type, material?.Gpc, mem_thick, ben_thick),
-                Common.Gpc.Builders.GpcPropertyBuilders.PlateMembraneBending(type, ben_thick));
-            DA.SetData(0, gh_pp);
+            // R6.5 P1 lane 2a: the property by its GPC datum alone (rule of passo 75; a refused property gives an error and no output). The
+            // message is the type. P2K (P1): the only path.
+            Message = TypeLabel(type);
+            // L2C: with the bending thickness of a membrane beside the GPC property (Bridge Deck Mesh checks it, as before).
+            Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.PlateProperty(this, () => Common.Gpc.Builders.GpcPropertyBuilders.Plate(name, type, material?.Gpc, mem_thick, ben_thick),
+                Common.Gpc.Builders.GpcPropertyBuilders.PlateMembraneBending(type, ben_thick)));
         }
+
+        /// <summary>P2K (P1): the labels of the former FEM <c>PlatePropertyType</c> by its value (0 to 6, the Type menu; its Undefined = -1 is
+        /// not in the menu).</summary>
+        private static readonly string[] TypeLabels = { "Shell-Thin", "Shell-Thick", "Plate-Thin", "Plate-Thick", "Membrane", "Load Patch", "Shear Panel" };
+
+        /// <summary>P2K (P1): the message of a type, as the former enum described it (an unknown integer by its digits).</summary>
+        private static string TypeLabel(int type) => type >= 0 && type < TypeLabels.Length ? TypeLabels[type]
+            : type == -1 ? "Undefined" : type.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
         /// <summary>
         /// Provides an Icon for the component.

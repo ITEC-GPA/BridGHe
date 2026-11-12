@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using BridGHe.Common.Geometry;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.Components.Utilities;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
@@ -39,7 +38,6 @@ public sealed class BridgeConnectionsComponent : BridgeUtilityComponent
         int mode = 0; var lines = new List<Line>(); GH_BeamProperty property = null; var beams = new List<GH_Beam>(); var offset = Vector3d.Zero;
         da.GetData(0, ref mode); da.GetDataList(1, lines); da.GetData(2, ref property); da.GetDataList(3, beams); da.GetData(4, ref offset);
         if (mode < 0 || mode > 2 || offset.Z != 0) throw new ArgumentException("Mode must be 0..2 and offset Z must be zero.");
-        ElementModel[] elements;
         if (mode == 2)
         {
             if (lines.Count > 0 || property != null) throw new ArgumentException("Offset mode accepts Beams and Offset only.");
@@ -50,8 +48,9 @@ public sealed class BridgeConnectionsComponent : BridgeUtilityComponent
         {
             if (beams.Count > 0 || offset != Vector3d.Zero || mode == 0 && property != null)
                 throw new ArgumentException("Connection mode accepts lines and, for deformable members only, Property.");
-            elements = BridgeConnections.Create(lines, mode == 0, property?.Value, GpcOnlyProperties.BeamOrTrussWithoutFem(property)); preview.AddRange(lines);
-            da.SetDataList(0, GpcConnections.Elements(this, elements, lines, mode == 0, property));
+            // P2K (P1): the elements by their drafts alone (GpcConnections.Elements checks the lines and the property as BridgeConnections.Create).
+            preview.AddRange(lines);
+            da.SetDataList(0, GpcConnections.Elements(this, lines, mode == 0, property));
         }
         da.SetData(1, mode == 0 ? "Native full spatial rigid links (kinematic constraints), without artificial penalty stiffness." :
             mode == 1 ? "Deformable beam/truss members with the explicitly assigned property." : "Local section offsets assigned; input beams unchanged and copied results cleared.");

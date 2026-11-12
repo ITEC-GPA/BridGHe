@@ -81,9 +81,8 @@ public sealed class BridgeReportComponent : GH_Component
             GH_Model model = null; bool overwrite = false; var topics = new List<int>();
             if (!da.GetDataTree(0, out tree) || !da.GetData(1, ref template) || !da.GetData(2, ref output) || !da.GetData(5, ref title)) return;
             da.GetDataList(3, topics); da.GetData(4, ref model); da.GetData(6, ref project); da.GetData(7, ref author); da.GetData(8, ref revision); da.GetData(10, ref overwrite);
-            // R6.5 P1 lane 3a: a model given by its GPC input alone is a BridGHe model (read on its GPC data below).
-            bool gpcOnly = GpcOnlyModels.WithoutFem(model);
-            if (Params.Input[4].VolatileDataCount > 0 && model?.Value == null && !gpcOnly) throw new ArgumentException("Model must be a BridGHe model.");
+            // R6.5 P1 lane 3a / P2K (P1): a model with its GPC input is a BridGHe model (read on its GPC data below).
+            if (Params.Input[4].VolatileDataCount > 0 && model?.GpcInput == null) throw new ArgumentException("Model must be a BridGHe model.");
             if (topics.Count == 0 && Params.Input[3].SourceCount == 0 && Params.Input[3].VolatileDataCount == 0) topics.AddRange(BridgeReportData.DefaultTopics.Select(t => (int)t));
             if (topics.Any(t => !Enum.IsDefined((BridgeReportTopic)t))) throw new ArgumentException("Topics must be integers 0..6.");
             var entries = new List<BridgeReportEntry>();
@@ -94,16 +93,10 @@ public sealed class BridgeReportComponent : GH_Component
                 entries.Add(new(r, tree.Paths[b] + "[" + i + "]"));
             }
             // R6.4 (6): with the GPC bridge model of Build BridGHe Model the report model comes from it (name, counts, action records, combination
-            // table, beam lengths); the merged FEM model otherwise (the FEM path of the checks, left to the open decision). Until R6.5 the test
-            // host compares the two on every run.
-            // R6.5 P1 lane 3a: without a FEM value the GPC bridge model, else the GPC input of the model (BridgeReportData.Source(Conversion)).
-            var bridge = model?.Value == null && !gpcOnly ? null : model.GpcBridge;
-            var source = bridge != null ? BridgeReportData.Source(bridge) : gpcOnly ? BridgeReportData.Source(model.GpcInput) : BridgeReportData.Source(model?.Value);
-            if (bridge != null && !gpcOnly)
-            {
-                var ids = entries.Where(e => e.Result.Source != null).Select(e => e.Result.Source.BeamId).Distinct(StringComparer.Ordinal).ToArray();
-                Common.Gpc.GpcDraftCheck.Attached("Bridge Report model", BridgeReportData.Text(source, ids), () => BridgeReportData.Text(BridgeReportData.Source(model.Value), ids));
-            }
+            // table, beam lengths).
+            // R6.5 P1 lane 3a / P2K (P1): else the GPC input of the model (BridgeReportData.Source(Conversion)); no model, no source.
+            var bridge = model?.GpcBridge;
+            var source = bridge != null ? BridgeReportData.Source(bridge) : BridgeReportData.Source(model?.GpcInput);
             var data = BridgeReportData.Create(entries, new(title, project, author, revision), source);
             var figures = new List<BridgeReportFigure>();
             if (topics.Contains((int)BridgeReportTopic.Plots) && da.GetDataTree(9, out GH_Structure<GH_String> svgs))

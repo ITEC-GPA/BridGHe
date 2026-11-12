@@ -1,6 +1,4 @@
 using System;
-using BridGHe.Common.Models;
-using BridGHe.Common.Straus;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
@@ -26,25 +24,15 @@ public sealed class BeamSupportComponent:GH_Component
         da.GetData(3,ref compression);da.GetData(4,ref gap);
         try
         {
-            var value=new BeamSupportAttributeModel.AttributeData
-            {
-                SpringType=BeamSupportAttributeModel.SpringType.Simple,
-                SpringTensionOrientation=BeamSupportAttributeModel.SpringTensionOrientation.BeamLocalAxis,
-                SimpleSpringType=compression?BeamSupportAttributeModel.SimpleSpringTypes.CompressionOnly:BeamSupportAttributeModel.SimpleSpringTypes.TensionCompression,
-                LocalAxisDirection=direction switch{0=>BeamSupportAttributeModel.LocalAxisDirection.negative1Axis,1=>BeamSupportAttributeModel.LocalAxisDirection.positive1Axis,
-                    2=>BeamSupportAttributeModel.LocalAxisDirection.negative2Axis,3=>BeamSupportAttributeModel.LocalAxisDirection.positive2Axis,_=>throw new ArgumentException("Direction must be 0, 1, 2 or 3.")},
-                Stiffness=stiffness,Gap=gap
-            };
-            BeamSupportExport.Resolve(value);
-            string axis=direction switch{0=>"negative1Axis",1=>"positive1Axis",2=>"negative2Axis",_=>"positive2Axis"};
+            // P2K (P1): the checks of the former FEM data and BeamSupportExport.Resolve (they ran on every input), same messages and order.
+            string axis=direction switch{0=>"negative1Axis",1=>"positive1Axis",2=>"negative2Axis",3=>"positive2Axis",_=>throw new ArgumentException("Direction must be 0, 1, 2 or 3.")};
+            if(!double.IsFinite(stiffness)||stiffness<=0||!double.IsFinite(gap))
+                throw new ArgumentException("Beam support requires finite positive stiffness [F/L²] and finite gap [L].");
+            if(!compression&&gap!=0)throw new ArgumentException("A gap requires a compression-only spring.");
             string spring=compression?"CompressionOnly":"TensionCompression";
             Func<Guid,Common.Gpc.Legacy.LegacyBeamDraft> build=id=>Common.Gpc.Builders.GpcBeamBuilders.WithSupport(beam.Gpc,stiffness,gap,axis,spring,id);
-            // R6.5 P1 lane 1a: a beam given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
-            if(beam.Value==null){Helpers.GpcOnlyElements.Set(da,0,Helpers.GpcOnlyElements.Beam(this,0,beam,build,stiffness,gap,axis,spring));return;}
-            var output=new GH_Beam(beam);output.Value.Attributes.Add(new BeamSupportAttributeModel(value));
-            // R6.2 (lane B): the GPC draft built on GPC from the draft of the input (identity of the conversion of the FEM output until R6.5).
-            Helpers.GpcBeamInputs.Attach(output,build);
-            da.SetData(0,output);
+            // P2K (P1): the GPC path only: the draft built on GPC (identity derived from the input draft).
+            Helpers.GpcOnlyElements.Set(da,0,Helpers.GpcOnlyElements.Beam(this,0,beam,build,stiffness,gap,axis,spring));
         }
         catch(Exception e){AddRuntimeMessage(GH_RuntimeMessageLevel.Error,e.Message);}
     }

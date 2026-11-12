@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -49,17 +48,11 @@ namespace BridGHe.Grasshopper.Components.Attributes
             if (!DA.GetData(1, ref name))
                 return;
 
-            SuperElementAttributeModel se = new SuperElementAttributeModel(name);
             if (element is GH_Beam beam)
             {
                 Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithSuperElement(beam.Gpc, name, id);
-                // R6.5 P1 lane 1a: a beam given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
-                if (beam.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, name)); return; }
-                GH_Beam new_beam = new GH_Beam(beam);
-                new_beam.Value.Attributes.Add(se);
-                // R6.2 (lane B): the GPC draft built on GPC from the draft of the input (identity of the conversion of the FEM output until R6.5).
-                GpcBeamInputs.Attach(new_beam, build);
-                DA.SetData(0, new_beam);
+                // P2K (P1): the GPC path only: the draft built on GPC (identity derived from the input draft).
+                GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, name));
             }
             else
             {

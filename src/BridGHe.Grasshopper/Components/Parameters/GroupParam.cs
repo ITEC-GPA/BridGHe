@@ -71,34 +71,11 @@ namespace BridGHe.Grasshopper.Components.Parameters
                 string strValue = str.Value;
                 var a = strValue.Split(new string[] { _separator }, StringSplitOptions.RemoveEmptyEntries);
 
-                // R6.5 P1 lane 2a: with the switch of the property producers the group by its chain of names alone (the path of P2), the same
-                // builder as below.
-                if (GpcOnlyElements.PropertiesWithoutFem)
-                {
-                    System.Collections.Generic.IReadOnlyList<string> chain = null;
-                    foreach (string name in a)
-                        if (!string.IsNullOrEmpty(name)) chain = Common.Gpc.Builders.GpcCaseBuilders.Group(name, chain);
-                    return chain == null ? null : GH_Group.FromGpc(chain);
-                }
-
-                GH_Group group = null;
-
-                for (int i = 0; i < a.Length; i++)
-                {
-                    if (!string.IsNullOrEmpty(a[i]))
-                    {
-                        var parent = group;
-                        if (i == 0)
-                            group = new GH_Group(new Common.Models.GroupModel(a[i]));
-                        else
-                            group = new GH_Group(new Common.Models.GroupModel(a[i], group.Value));
-                        // R6.2 part C (dual rule until R6.5): the chain of names built on the GPC datum of the parent.
-                        string name = a[i];
-                        GpcBuilderAttach.Group(group, () => Common.Gpc.Builders.GpcCaseBuilders.Group(name, parent?.Gpc));
-                    }
-                }
-
-                return group;
+                // R6.5 P1 lane 2a: the group by its chain of names alone. P2K (P1): the only path.
+                System.Collections.Generic.IReadOnlyList<string> chain = null;
+                foreach (string name in a)
+                    if (!string.IsNullOrEmpty(name)) chain = Common.Gpc.Builders.GpcCaseBuilders.Group(name, chain);
+                return chain == null ? null : GH_Group.FromGpc(chain);
             }
             return base.PreferredCast(data);
         }

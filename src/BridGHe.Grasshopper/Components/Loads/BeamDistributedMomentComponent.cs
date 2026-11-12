@@ -1,5 +1,3 @@
-using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.ComponentAttributes;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
@@ -37,9 +35,8 @@ namespace BridGHe.Grasshopper.Components.Loads
             pManager.AddGenericParameter("LoadCase", "LC", "The load case", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Type", "T", "Load Type", GH_ParamAccess.item, 0);
             Param_Integer type_param = (Param_Integer)pManager[2];
-            Array values = Enum.GetValues(typeof(BeamDistributedLoadModel.LoadSchema));
-            foreach (BeamDistributedLoadModel.LoadSchema val in values)
-                type_param.AddNamedValue(val.GetDescription(), (int)val);
+            foreach (var val in LoadSchemas)
+                type_param.AddNamedValue(val.Label, val.Value);
 
             pManager.AddIntegerParameter("Direction", "D", "The load direction", GH_ParamAccess.item);
             Param_Integer dir_param = (Param_Integer)pManager[3];
@@ -59,6 +56,14 @@ namespace BridGHe.Grasshopper.Components.Loads
             pManager.AddNumberParameter("a", "a", "The distance ratio (0-1) from the starting node", GH_ParamAccess.item, 0);
             pManager.AddNumberParameter("b", "b", "The distance ratio (0-1) from the ending node", GH_ParamAccess.item, 0);
         }
+
+        // P2K (P1): the former BeamDistributedLoadModel.LoadSchema, labels and integers of the Type input in the former order (Enum.GetValues:
+        // by unsigned value, Undefined last).
+        private static readonly (string Label, int Value)[] LoadSchemas =
+        {
+            ("Uniform", 0), ("Keystone", 1), ("Triangular", 2), ("Triangular at end 1 + Keystone", 3), ("Keystone + Triangular at end 2", 4),
+            ("Triangular at ends + Keystone", 5), ("Undefined", -1),
+        };
 
         private void SetSchemaImage()
         {
@@ -228,29 +233,11 @@ namespace BridGHe.Grasshopper.Components.Loads
             if (input_errors)
                 return;
 
-            BeamDistributedLoadModel.LoadSchema load_schema = (BeamDistributedLoadModel.LoadSchema)schema;
-            BeamDistributedLoadModel.LoadData load_value = new BeamDistributedLoadModel.LoadData()
-            {
-                LoadSchema = load_schema,
-                LoadDirection = (BeamDistributedLoadModel.LoadDirection)dir,
-                P1 = p1,
-                PA = pa,
-                PB = pb,
-                P2 = p2,
-                A = a,
-                B = b
-            };
-            BeamDistributedLoadModel load = new BeamDistributedLoadModel(lc.Value, load_value, BeamDistributedLoadModel.LoadType.Moment);
             string direction = Common.Gpc.Builders.GpcBeamBuilders.Code(Common.Gpc.Builders.GpcBeamBuilders.LoadDirections, dir);
             Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithDistributedLoad(beam.Gpc, lc.Gpc, (Common.Gpc.BridgeLoadSchema)schema, true, direction, pa, pb, p1, p2, a, b, null, id);
-            // R6.5 P1 lane 1a: a beam given by its GPC draft alone gives the draft built on GPC (identity derived from the input draft).
-            // R6.5 P1 lane 2a: a load case given by its record alone gives the same output, without the FEM value (rule of passo 75).
-            if (beam.Value == null || lc.Value == null) { GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), schema, true, direction, pa, pb, p1, p2, a, b, null)); return; }
-            GH_Beam newBeam = new GH_Beam(beam);
-            newBeam.Value.Loads.Add(load);
-            // R6.2 (lane B): the GPC draft built on GPC from the drafts of the inputs (identity of the conversion of the FEM output until R6.5).
-            GpcBeamInputs.Attach(newBeam, build);
-            DA.SetData(0, newBeam);
+            // P2K (P1): the GPC path only: the draft built on GPC from the drafts of the beam and the load case record (identity derived from
+            // the input draft).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), schema, true, direction, pa, pb, p1, p2, a, b, null));
         }
 
         public override bool Read(GH_IReader reader)

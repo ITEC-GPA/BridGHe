@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.Components.Parameters;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
@@ -13,10 +12,12 @@ namespace BridGHe.Grasshopper.Components.Definitions
 {
     public class StagedConstructionComponent : GH_Component
     {
-        protected List<LoadCaseModel> _loadCases;
+        // P2K (P1): TRANSITIONAL, the FEM cases of the saved "LoadCases" item (persistence format kept; read from the files of 0.3.0, empty
+        // when Build Model gives the case records alone), read only for the records after a file is opened.
+        protected List<Common.Models.LoadCaseModel> _loadCases;
         // R6.3: the case records Build Model gives (null after a file is opened: the conversion of the stored FEM cases, until R6.5).
         private IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> _caseRecords;
-        private IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> CaseRecords => _caseRecords ??= _loadCases.Select(Common.Gpc.GpcModels.CaseDraft).ToArray();
+        private IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> CaseRecords => _caseRecords ??= _loadCases.Select(Common.Gpc.GpcModels.CaseDraft).ToArray(); // P2K (P1): TRANSITIONAL, see _loadCases
 
         /// <summary>
         /// Initializes a new instance of the StagedConstructionComponent class.
@@ -24,7 +25,7 @@ namespace BridGHe.Grasshopper.Components.Definitions
         public StagedConstructionComponent()
           : base("Staged Construction ", "SC", "Defines a staged construction", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_DEFINITIONS)
         {
-            _loadCases = new List<LoadCaseModel>();
+            _loadCases = new List<Common.Models.LoadCaseModel>();
         }
 
         /// <summary>
@@ -76,7 +77,7 @@ namespace BridGHe.Grasshopper.Components.Definitions
             // Connect the LoadCombinationsComponent
             IEnumerable<IGH_Param> combinations_params = Params.Input[2].Sources.Where(s => s.GetType() == typeof(LoadCombinationsParam));
             foreach (LoadCombinationsParam param in combinations_params)
-                param.UpdateLoadCases(_caseRecordsOnly ? null : _loadCases, CaseRecords);
+                param.UpdateLoadCases(null, CaseRecords); // P2K (P1): TRANSITIONAL, the FEM cases argument of the parameter, always null
 
             if (combinations.Count == 0)
             {
@@ -84,46 +85,24 @@ namespace BridGHe.Grasshopper.Components.Definitions
                 return;
             }
 
-            // R6.5 P1 lane 2a: with the switch, or a group or combination given by its GPC datum alone, the stage by its GPC datum alone (rule
-            // of passo 75).
-            if (GpcOnlyProperties.On(groups, combinations))
-            {
-                GpcOnlyElements.Set(DA, 0, GpcOnlyProperties.Stage(this, () => Common.Gpc.Builders.GpcCaseBuilders.Stage(name, groups.Select(GpcBuilderAttach.GroupChain).ToArray(),
-                    combinations.Select(c => c.Gpc).ToArray(), morph, rotate)));
-                return;
-            }
-            StagedConstructionModel sc = new StagedConstructionModel
-            {
-                Name = name,
-                Marph = morph,
-                Rotate = rotate
-            };
-            sc.AddGroups(groups.Select(g => g.Value));
-            sc.AddLoadCombinations(combinations.Select(c => c.Value));
-
-            var output = new GH_StagedConstruction(sc);
-            // R6.3 (dual rule until R6.5): the stage built on the GPC data of the groups and of the combinations.
-            GpcBuilderAttach.Stage(output, () => Common.Gpc.Builders.GpcCaseBuilders.Stage(name, groups.Select(GpcBuilderAttach.GroupChain).ToArray(),
-                combinations.Select(c => c.Gpc).ToArray(), morph, rotate));
-            DA.SetData(0, output);
+            // R6.5 P1 lane 2a: the stage by its GPC datum alone, built on the GPC data of the groups and of the combinations (rule of passo 75).
+            // P2K (P1): the only path (GroupChain reads the GPC datum of a group; no FEM value).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyProperties.Stage(this, () => Common.Gpc.Builders.GpcCaseBuilders.Stage(name, groups.Select(GpcBuilderAttach.GroupChain).ToArray(),
+                combinations.Select(c => c.Gpc).ToArray(), morph, rotate)));
         }
 
-        private bool _caseRecordsOnly;
-
-        /// <summary>R6.3: the cases of Build Model, FEM values (until R6.5) and case records.</summary>
-        public void SetLoadCases(IEnumerable<LoadCaseModel> loadCases, IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
+        /// <summary>R6.3: the case records of Build Model. P2K (P1): TRANSITIONAL, the FEM cases parameter kept for the call of Build Model
+        /// (outside the group), always null and ignored: the saved FEM cases become empty, as with Build Model on GPC data alone.</summary>
+        public void SetLoadCases(IEnumerable<Common.Models.LoadCaseModel> loadCases, IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
         {
             _loadCases.Clear();
-            // R6.5 P1 lane 3c: null: Build Model on elements given by their GPC data alone (only the case records).
-            _caseRecordsOnly = loadCases == null;
-            if (loadCases != null) _loadCases.AddRange(loadCases);
             _caseRecords = caseRecords;
         }
 
         public override bool Write(GH_IWriter writer)
         {
             if (!base.Write(writer)) return false;
-            writer.SetByteArray("LoadCases", Common.Helpers.ModelArchive.Write(_loadCases));
+            writer.SetByteArray("LoadCases", Common.Helpers.ModelArchive.Write(_loadCases)); // P2K (P1): TRANSITIONAL, see _loadCases
             return true;
         }
 
@@ -131,7 +110,7 @@ namespace BridGHe.Grasshopper.Components.Definitions
         {
             if (!base.Read(reader)) return false;
             _loadCases.Clear();
-            if (reader.ItemExists("LoadCases")) _loadCases.AddRange(Common.Helpers.ModelArchive.Read<List<LoadCaseModel>>(reader.GetByteArray("LoadCases")));
+            if (reader.ItemExists("LoadCases")) _loadCases.AddRange(Common.Helpers.ModelArchive.Read<List<Common.Models.LoadCaseModel>>(reader.GetByteArray("LoadCases"))); // P2K (P1): TRANSITIONAL, see _loadCases
             _caseRecords = null;
             return true;
         }

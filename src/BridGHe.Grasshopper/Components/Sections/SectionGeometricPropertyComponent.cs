@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -67,83 +66,10 @@ namespace BridGHe.Grasshopper.Components.Sections
             if (!DA.GetData(0, ref gH_BeamProperty))
                 return;
 
-            // R6.5 P1 lane 2a: a section given by its recipe alone gives the values the former section value held, from the recipe (rule of
-            // passo 75); a recipe without them (generic moduli, Brep shapes, native, composite) gives an error and no outputs.
-            if (Helpers.GpcOnlyProperties.WithoutFem(gH_BeamProperty))
-            {
-                var former = Helpers.GpcOnlyProperties.Datum(this, () => Common.Gpc.GpcSectionGeometry.Former(gH_BeamProperty.Gpc));
-                if (former != null) SetFormer(DA, former);
-                return;
-            }
-
-            SectionModel section = gH_BeamProperty.Value;
-
-            string name = string.Empty;
-            double area = 0;
-            double j11 = 0;
-            double j22 = 0;
-            double jxx = 0;
-            double jyy = 0;
-            double w11 = 0;
-            double w22 = 0;
-            double j = 0;
-            double xg = 0;
-            double yg = 0;
-            double angle = 0;
-            double rho1 = 0;
-            double rho2 = 0;
-
-            if (section.SectionType != SectionModel.SectionTypes.Generic || section.SectionType != SectionModel.SectionTypes.Composite)
-            {
-                name = section.Name;
-                area = section.SectionArea;
-                xg = section.Centroid.X;
-                yg = section.Centroid.Y;
-                jxx = section.Ixx;
-                jyy = section.Iyy;
-                angle = section.AngleX1Rad;
-                j11 = section.I11;
-                j22 = section.I22;
-                w11 = section.W11;
-                w22 = section.W22;
-                rho1 = section.Rho11;
-                rho2 = section.Rho22;
-                j = section.J;
-            }
-
-            if (section.SectionType != SectionModel.SectionTypes.Composite)
-            {
-                name = section.Name;
-                area = section.SectionArea;
-                xg = section.Centroid.X;
-                yg = section.Centroid.Y;
-                jxx = section.Ixx;
-                jyy = section.Iyy;
-                angle = section.AngleX1Rad;
-                j11 = section.I11;
-                j22 = section.I22;
-                w11 = section.W11;
-                w22 = section.W22;
-                rho1 = section.Rho11;
-                rho2 = section.Rho22;
-                j = section.J;
-            }
-
-            int item = 0;
-            DA.SetData(item++, name);
-            DA.SetData(item++, area);
-            DA.SetData(item++, xg);
-            DA.SetData(item++, yg);
-            DA.SetData(item++, jxx);
-            DA.SetData(item++, jyy);
-            DA.SetData(item++, angle);
-            DA.SetData(item++, j11);
-            DA.SetData(item++, j22);
-            DA.SetData(item++, w11);
-            DA.SetData(item++, w22);
-            DA.SetData(item++, rho1);
-            DA.SetData(item++, rho2);
-            DA.SetData(item++, j);
+            // R6.5 P1 lane 2a: the values the former section value held, from the recipe (rule of passo 75); a recipe without them (composite)
+            // gives an error and no outputs. P2K (P1): the only path.
+            var former = Helpers.GpcOnlyProperties.Datum(this, () => Common.Gpc.GpcSectionGeometry.Former(gH_BeamProperty.Gpc));
+            if (former != null) SetFormer(DA, former);
         }
 
         /// <summary>

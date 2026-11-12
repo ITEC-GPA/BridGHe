@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using GH_IO.Serialization;
@@ -20,6 +19,13 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
             { 8, "Connection [8]" } };
 
         private bool _disableSolution;
+
+        /// <summary>P2K (P1): the integer of the Cutoff Bar type (the former <c>BeamPropertyType.CutoffBar</c>), which shows the cutoff inputs.</summary>
+        private const int CutoffBarType = 3;
+
+        /// <summary>P2K (P1): the named values of the Cut off type input, the labels and integers of the former FEM enum <c>CutoffType</c>
+        /// (Undefined −1 not listed), read by the GPC builder (0 brittle, otherwise ductile).</summary>
+        private static readonly (string Name, int Value)[] CutoffTypes = { ("Brittle", 0), ("Ductile", 1) };
 
         /// <summary>
         /// Initializes a new instance of the BeamPropertyComponent class.
@@ -56,7 +62,7 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
                                         Message = _propertyTypeOptions[obj.Value];
                                         setMessage = false;
                                     }
-                                    if ((BeamPropertyType)obj.Value == BeamPropertyType.CutoffBar)
+                                    if (obj.Value == CutoffBarType)
                                     {
                                         showAdditionalInputs = true;
                                         break;
@@ -165,14 +171,7 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
 
         private void AddNamedValuesCutOffType(Param_Integer integer)
         {
-            Array arr = Enum.GetValues(typeof(CutoffType));
-            for (int i = 0; i < arr.Length; i++)
-            {
-                if ((CutoffType)arr.GetValue(i) != CutoffType.Undefined)
-                {
-                    integer.AddNamedValue(Enum.GetName(typeof(CutoffType), arr.GetValue(i)), (int)(CutoffType)arr.GetValue(i));
-                }
-            }
+            foreach (var (name, value) in CutoffTypes) integer.AddNamedValue(name, value);
         }
 
         /// <summary>
@@ -210,89 +209,9 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
                     return;
             }
 
-            // R6.5 P1 lane 2a: with the switch, or a section or material given by its GPC datum alone, the property by its GPC datum alone (rule
-            // of passo 75; a refused property gives an error and no output).
-            if (GpcOnlyProperties.On(section, material))
-            {
-                GpcOnlyElements.Set(DA, 0, GpcOnlyProperties.BeamProperty(this, () => Common.Gpc.Builders.GpcPropertyBuilders.Beam(name, type, section.Gpc, material.Gpc, material.GpcKind, (maxTensionCB, maxCompressionCB, cutOffTypeCB, keepMassCB))));
-                return;
-            }
-
-            SectionModel sectionModel = new SectionModel();
-
-            if (section.SectionType != SectionModel.SectionTypes.Generic)
-            {
-                sectionModel.SectionType = section.SectionType;
-                sectionModel.D = section.D;
-                sectionModel.B = section.B;
-                sectionModel.B1 = section.B1;
-                sectionModel.B2 = section.B2;
-                sectionModel.L = section.L;
-                sectionModel.T = section.T;
-                sectionModel.T1 = section.T1;
-                sectionModel.T2 = section.T2;
-                sectionModel.T3 = section.T3;
-                sectionModel.Mirror = section.MirrorType;
-                sectionModel.MirrorGapA = section.MirrorGapA;
-                sectionModel.MirrorGapB = section.MirrorGapB;
-                sectionModel.GenericShapes = section.GenericShapes;
-                sectionModel.CalculateSection();
-                sectionModel.I11 = section.I11;
-                sectionModel.I22 = section.I22;
-                sectionModel.W11 = section.W11;
-                sectionModel.W22 = section.W22;
-                sectionModel.SectionArea = section.SectionArea;
-                sectionModel.J = section.J;
-                sectionModel.Centroid = section.Centroid;
-
-                if (section.IsDBSection)
-                {
-                    sectionModel.ShearL1 = section.SL1;
-                    sectionModel.ShearL2 = section.SL2;
-                    sectionModel.ShearA1 = section.SA1;
-                    sectionModel.ShearA2 = section.SA2;
-                    sectionModel.AngleX1Rad = section.AngleX1;
-                }
-            }
-            else
-            {
-                sectionModel.SectionType = SectionModel.SectionTypes.Generic;
-                sectionModel.SectionArea = section.SectionArea;
-                sectionModel.I11 = section.I11;
-                sectionModel.I22 = section.I22;
-                sectionModel.J = section.J;
-                sectionModel.ShearL1 = section.SL1;
-                sectionModel.ShearL2 = section.SL2;
-                sectionModel.ShearA1 = section.SA1;
-                sectionModel.ShearA2 = section.SA2;
-                sectionModel.W11 = section.W11;
-                sectionModel.W22 = section.W22;
-                sectionModel.Centroid = section.Centroid;
-                sectionModel.AngleX1Rad = section.AngleX1;
-            }
-            ;
-
-            BeamPropertyModel bp = new BeamPropertyModel
-            {
-                Name = name,
-                Material = material.Value,
-                Section = sectionModel,
-                PropertyType = (BeamPropertyType)type,
-            };
-
-            if (bp.PropertyType == BeamPropertyType.CutoffBar)
-            {
-                bp.MaxTension = maxTensionCB;//10.0E8;
-                bp.MaxCompression = maxCompressionCB;// 0;
-                bp.CutoffType = (CutoffType)cutOffTypeCB;// CutoffType.Ductile;
-                bp.KeepMass = keepMassCB;// true;
-            }
-
-            GH_BeamProperty gh_bp = new GH_BeamProperty(bp);
-            // R6.2 part C (§1bis, regola doppia): the property built on GPC from the GPC data of the inputs, attached to the FEM value (until R6.5);
-            // R6.3: signed with the GPC fingerprint of the property.
-            Helpers.GpcBuilderAttach.BeamProperty(gh_bp, () => Common.Gpc.Builders.GpcPropertyBuilders.Beam(name, type, section.Gpc, material.Gpc, material.GpcKind, (maxTensionCB, maxCompressionCB, cutOffTypeCB, keepMassCB)));
-            DA.SetData(0, gh_bp);
+            // R6.5 P1 lane 2a (P2K: every input): the property by its GPC datum alone (rule of passo 75; a refused property gives an error and
+            // no output).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyProperties.BeamProperty(this, () => Common.Gpc.Builders.GpcPropertyBuilders.Beam(name, type, section.Gpc, material.Gpc, material.GpcKind, (maxTensionCB, maxCompressionCB, cutOffTypeCB, keepMassCB))));
         }
 
         /// <summary>
