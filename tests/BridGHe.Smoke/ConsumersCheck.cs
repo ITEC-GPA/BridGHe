@@ -185,6 +185,8 @@ internal static class ConsumersCheck
         var stageErrors = model.Stages.Values.Where(s => (s.AnalysisState?.Increments ?? Array.Empty<GPC.Model.Stages.StageLoadIncrement>()).Any(i => (i.LoadFactors ?? Array.Empty<GPC.Model.Stages.StageCaseFactor>())
             .Any(f => !double.IsFinite(f.Factor) || !caseNames.ContainsKey(f.CaseGuid)))).Select(s => "INVALID_STAGE_INCREMENT|" + s.Name).OrderBy(x => x, StringComparer.Ordinal).ToArray();
         var errors = issues.Where(i => i.Severity == "Error").Select(i => i.Code + "|" + i.Element).OrderBy(x => x, StringComparer.Ordinal).ToArray();
+        // Independent of the product rule (ChatGPT review 37, 12/11): every caller passes a valid example, so no stage may be invalid at all.
+        Require(stageErrors.Length == 0, $"a valid example has no invalid stage increment ({increments} terms): {string.Join(", ", stageErrors)}");
         Require(errors.SequenceEqual(stageErrors, StringComparer.Ordinal), $"errors on a valid example ({increments} stage increment terms; invalid stages expected: {string.Join(", ", stageErrors)}):\n" + Text());
         Require(issues.Any(i => i.Code == "DISCONNECTED") == (parts > 1), $"{parts} connected parts:\n" + Text());
         Require(issues.Where(i => i.Code == "ISOLATED_NODE").Select(i => i.Element).OrderBy(x => x, StringComparer.Ordinal).SequenceEqual(isolated), $"isolated nodes {string.Join(",", isolated)}:\n" + Text());
