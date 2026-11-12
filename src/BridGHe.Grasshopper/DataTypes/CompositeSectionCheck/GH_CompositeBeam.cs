@@ -309,9 +309,9 @@ namespace BridGHe.Grasshopper.DataTypes
 
         public override bool Write(GH_IWriter writer)
         {
-            // R6.1 (§1bis): a composite beam is a reference into an analysed bridge model, not persisted; until R6.5 its FEM value goes in the
-            // transitional chunk only (copies and undo), never in Data. R6.5 P1 lane 3a: without a FEM value only its GUID (not persisted).
-            try { writer.SetGuid("Guid", _guid); if (Value != null) writer.SetByteArray(GpcGooPersistence.Femm, Common.Helpers.ModelArchive.Write(Value)); return true; }
+            // R6.1 (§1bis): a composite beam is a reference into an analysed bridge model, not persisted (Composite Beam makes it again): its
+            // GUID only. P2D: never its FEM value (the transitional chunk FemmR6 is no longer written).
+            try { writer.SetGuid("Guid", _guid); return true; }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
         }
 
@@ -319,10 +319,10 @@ namespace BridGHe.Grasshopper.DataTypes
         {
             try
             {
-                _guid = reader.GetGuid("Guid"); _startDefinition = _endDefinition = null; _gpc = null; _gpcOf = null;
-                // R6.1: a former payload (0.3.0, Data) is a cache of an analysed model: dropped (Common.Gpc.GpcGooArchive.LegacyCacheMessage).
-                if (!reader.ItemExists(GpcGooPersistence.Femm)) { System.Diagnostics.Debug.WriteLine(Common.Gpc.GpcGooArchive.LegacyCacheMessage); return false; }
-                Value = Common.Helpers.ModelArchive.Read<CompositeBeamModel>(reader.GetByteArray(GpcGooPersistence.Femm)); return true;
+                _guid = reader.GetGuid("Guid"); _startDefinition = _endDefinition = null; _gpc = null; _gpcOf = null; Value = null;
+                // R6.1: a former payload (0.3.0, Data) is a cache of an analysed model: dropped (Common.Gpc.GpcGooArchive.LegacyCacheMessage). P2D:
+                // so is the FEM chunk of a development file (a reference into an analysed model, no FEM value is read).
+                System.Diagnostics.Debug.WriteLine(Common.Gpc.GpcGooArchive.LegacyCacheMessage); return false;
             }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
         }

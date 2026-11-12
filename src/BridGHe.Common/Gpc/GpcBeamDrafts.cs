@@ -67,7 +67,7 @@ namespace BridGHe.Common.Gpc
         }
 
         /// <summary>A copy of a draft with another beam and bridge data (the report and the property data of the draft are kept).</summary>
-        /// <remarks>R6.1 (found by GpcDraftCheck on the native 50): the bridge data of the report follow the bridge data given (the report of the
+        /// <remarks>R6.1 (found by the former draft check on the native 50): the bridge data of the report follow the bridge data given (the report of the
         /// conversion of a beam value holds the data of that beam), so the copy describes its beam as the conversion would; the rest of the report
         /// is kept. Nothing reads the bridge data of a draft report (the assembly takes the bridge data of the draft): no number changes.</remarks>
         public static LegacyBeamDraft With(LegacyBeamDraft draft, GPC.Model.Elements.BeamElement beam, GPC.Checkers.CompositeBridge.BridgeBeamData bridge, LegacyBeamPropertyData property = null) =>

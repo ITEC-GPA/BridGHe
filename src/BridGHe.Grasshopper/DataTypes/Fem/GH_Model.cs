@@ -146,17 +146,40 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             if (_input != null && ReferenceEquals(_inputOf, StateKey) && _input.Tolerance == tolerance) return _input;
             if (_converted != null && ReferenceEquals(_convertedOf, StateKey) && _converted.Tolerance == tolerance) return _converted;
             _converted = null; _convertedOf = StateKey; _gpcError = null;
-            // R6.1 (decision 1 of 6/11): a model read from a former payload (internalised, or the cache of an analysis component) is converted
-            // by value, without its results, whether it was analysed or not; the conversion of the FEM value otherwise (until R6.5).
-            _converted = _legacy != null && ReferenceEquals(_legacyOf, StateKey)
-                ? Common.Gpc.GpcLegacyPayloads.Model(_legacy, tolerance, out _) ?? throw new InvalidOperationException("GpcLegacyModelWithoutModel")
-                : Common.Gpc.GpcModels.Convert(Value, tolerance);
+            // The conversion of the FEM value of a component not yet on GPC (removed with the FEM types). P2D: a model read from a file has no
+            // FEM value (a former payload is read by value into its GPC input when the file is read).
+            _converted = Common.Gpc.GpcModels.Convert(Value, tolerance);
             return _converted;
         }
 
-        // R6.1: the former payload (BGHA1) this model was read from, while the FEM value read with it is current.
+        // R6.1 (decision 1 of 6/11), P2D: the state of a model read from a former payload whose model carried results (not read: LegacyNotice).
+        private object _legacyResultsOf;
+        // P2D: never set by the product (a former payload is read by value when the file is read); kept only because a test of P2-prove sets
+        // them by reflection (GpcOnlyReplay, the notice of a former payload): to delete with that test (P2-taglio).
         private byte[] _legacy;
         private object _legacyOf;
+
+        // P2D: the FEM chunk of a development file (FemmR6 beside the datum, written until P2), read by value on first use: the drafts of its
+        // elements (when the file has no drafts chunk) and the GH GUIDs saved in the order of its FEM elements, for the state it was read with.
+        private Lazy<(Common.Gpc.GpcModelDrafts Drafts, Guid[] Guids)> _femm;
+        private object _femmOf;
+
+        /// <summary>P2D: the drafts and GUIDs of the FEM chunk of a development file (<see cref="_femm"/>), once, where none is attached.</summary>
+        private void ResolveFemm()
+        {
+            if (_femm == null || !ReferenceEquals(_femmOf, StateKey)) return;
+            var femm = _femm; _femm = null;
+            try
+            {
+                var (drafts, guids) = femm.Value;
+                if (drafts != null && (_drafts == null || !ReferenceEquals(_draftsOf, StateKey))) { _drafts = drafts; _draftsOf = StateKey; }
+                var carried = _drafts != null && ReferenceEquals(_draftsOf, StateKey) ? _drafts : null;
+                if (guids != null && carried != null && guids.Length == carried.Nodes.Count + carried.Beams.Count + carried.Plates.Count
+                    && (_draftGuids == null || !ReferenceEquals(_draftGuidsOf, StateKey))) { _draftGuids = guids; _draftGuidsOf = StateKey; }
+            }
+            catch (Exception ex) when (ex is NotSupportedException || ex is ArgumentException || ex is InvalidOperationException || ex is System.Runtime.Serialization.SerializationException)
+            { _gpcError = ex.Message; }
+        }
 
         // R6.4 (2), extension (α): the drafts of the elements attached apart from the GPC input (an analysis: those of its input; a file: the
         // drafts chunk), while the FEM value they were attached for is current.
@@ -177,24 +200,20 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 lock (gpcLock)
                 {
                     if (StateKey == null) return null;
+                    // A former payload: the drafts of its input read by value (lazy, null when the reader refuses one of its elements).
                     if (_input != null && ReferenceEquals(_inputOf, StateKey) && (Value == null || _input.Tolerance == Settings.Instance.Tolerance) && _input.Drafts != null) return _input.Drafts;
+                    ResolveFemm(); // P2D: a development file without its drafts chunk: the drafts of its FEM chunk by value
                     if (_drafts != null && ReferenceEquals(_draftsOf, StateKey)) return _drafts;
-                    if (_legacy != null && ReferenceEquals(_legacyOf, StateKey))
-                    {
-                        try { return Conversion().Drafts; }
-                        catch (Exception ex) when (ex is NotSupportedException || ex is ArgumentException || ex is InvalidOperationException || ex is System.Runtime.Serialization.SerializationException)
-                        { _gpcError = ex.Message; return null; }
-                    }
                     return null;
                 }
             }
         }
 
         /// <summary>R6.4 (2): the drafts of the elements of the current <see cref="Value"/> (an analysis: the drafts of its input, whose elements
-        /// its output keeps; a file: the drafts it saved). Copies of this datum keep them.</summary>
+        /// its output keeps; a file: the drafts it saved). Copies of this datum keep them. P2D: they supersede the FEM chunk of a development file.</summary>
         public void AttachDrafts(Common.Gpc.GpcModelDrafts drafts)
         {
-            lock (gpcLock) { _drafts = drafts ?? throw new ArgumentNullException(nameof(drafts)); _draftsOf = StateKey; }
+            lock (gpcLock) { _drafts = drafts ?? throw new ArgumentNullException(nameof(drafts)); _draftsOf = StateKey; _femm = null; }
         }
 
         /// <summary>R6.1 (decision 1 of 6/11): the warning of a model read from a former payload that carried results (they are not read:
@@ -207,10 +226,9 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 {
                     // P30-01 (C1, 11/11): the results saved with the model that could not be read (the readers of this notice show it).
                     if (_unreadableResultsOf != null && ReferenceEquals(_unreadableResultsOf, StateKey)) return UnreadableResultsMessage;
-                    if (_legacy == null || !ReferenceEquals(_legacyOf, StateKey)) return null;
-                    // R6.5 P1 lane 3c: without a FEM value the results of the former payload are read from the payload itself.
-                    bool results = Value != null ? Value.Elements.Any(e => e.Results != null && e.Results.Count != 0) : Common.Gpc.GpcLegacyPayloads.ModelHadResults(_legacy);
-                    return results ? Common.Gpc.GpcLegacyPayloads.ResultsDroppedMessage : null;
+                    // P2D: whether the former payload carried results is read with it (no FEM value).
+                    if (_legacyResultsOf != null && ReferenceEquals(_legacyResultsOf, StateKey)) return Common.Gpc.GpcLegacyPayloads.ResultsDroppedMessage;
+                    return _legacy != null && ReferenceEquals(_legacyOf, StateKey) && Common.Gpc.GpcLegacyPayloads.ModelHadResults(_legacy) ? Common.Gpc.GpcLegacyPayloads.ResultsDroppedMessage : null;
                 }
             }
         }
@@ -333,7 +351,10 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             int count = drafts.Nodes.Count + drafts.Beams.Count + drafts.Plates.Count;
             lock (gpcLock)
+            {
+                ResolveFemm(); // P2D: the GUIDs saved with the FEM chunk of a development file
                 if (_draftGuids != null && ReferenceEquals(_draftGuidsOf, StateKey) && _draftGuids.Length == count) return _draftGuids.ToArray();
+            }
             return drafts.Nodes.Select(d => d.Node.Guid).Concat(drafts.Beams.Select(d => d.Beam.Guid)).Concat(drafts.Plates.Select(d => d.Plate.Guid)).ToArray();
         }
 
@@ -345,8 +366,9 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 if (Value == null && copy.Value == null && _gpcOnly != null) lock (copy.gpcLock) copy._gpcOnly = _gpcOnly;
                 if (_analysed != null && ReferenceEquals(_analysedOf, StateKey)) { if (_bridge != null && ReferenceEquals(_analysed, _bridge.Model)) copy.AttachBridge(_bridge); else copy.AttachGpc(_analysed); }
                 if (_input != null && ReferenceEquals(_inputOf, StateKey)) copy.AttachInput(_input);
-                if (_legacy != null && ReferenceEquals(_legacyOf, StateKey)) lock (copy.gpcLock) { copy._legacy = _legacy; copy._legacyOf = copy.StateKey; }
+                if (_legacyResultsOf != null && ReferenceEquals(_legacyResultsOf, StateKey)) lock (copy.gpcLock) copy._legacyResultsOf = copy.StateKey;
                 if (_drafts != null && ReferenceEquals(_draftsOf, StateKey)) copy.AttachDrafts(_drafts);
+                if (_femm != null && ReferenceEquals(_femmOf, StateKey)) lock (copy.gpcLock) { copy._femm = _femm; copy._femmOf = copy.StateKey; } // P2D
                 if (_linked != null && ReferenceEquals(_linkedOf, StateKey)) lock (copy.gpcLock) { copy._linked = _linked; copy._linkedOf = copy.StateKey; }
                 if (_draftGuids != null && ReferenceEquals(_draftGuidsOf, StateKey)) copy.AttachElementGuids(_draftGuids);
                 if (_unreadableResultsOf != null && ReferenceEquals(_unreadableResultsOf, StateKey)) lock (copy.gpcLock) copy._unreadableResultsOf = copy.StateKey; // P30-01
@@ -498,20 +520,28 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             try
             {
                 // R6.1: the GPC input with its report (BGHGPC1, GpcDraftArchive.Write(Conversion)); the analysed results stay in the sidecar of
-                // the analysis components. Until R6.5 the FEM model too (transitional chunk) with the GUIDs of its elements.
-                DataTypes.GpcGooPersistence.Write(writer, () => Common.Gpc.GpcDraftArchive.Write(GpcInput), Value == null ? null : Common.Helpers.ModelArchive.Write(Value));
+                // the analysis components. P2D: never the FEM model (the transitional chunk FemmR6 is no longer written): read back, the model is
+                // its GPC input alone.
+                DataTypes.GpcGooPersistence.Write(writer, Common.Gpc.GpcDraftArchive.Write(GpcInput));
                 // R6.4 (2), extension (α): the drafts of the elements, in a chunk of their own beside the GPC input (none when the model carries
-                // none). Until R6.5 drafts that cannot be written are left out, as a GPC input (the elements read back keep the conversion of
-                // their FEM values).
-                byte[] draftBytes = null;
+                // none). A FEM value whose drafts cannot be written leaves them out (the conversion of a component not yet on GPC).
+                byte[] draftBytes = null; Common.Gpc.GpcModelDrafts carried = null;
                 if (drafts)
-                    try { var carried = GpcDrafts; if (carried != null) draftBytes = Common.Gpc.GpcModelDrafts.Write(carried); }
+                    try { carried = GpcDrafts; if (carried != null) draftBytes = Common.Gpc.GpcModelDrafts.Write(carried); }
                 catch (Exception ex) when (Value != null && (ex is ArgumentException || ex is NotSupportedException || ex is InvalidOperationException || ex is System.Runtime.Serialization.SerializationException)) { }
-                // R6.5 P1 lane 3c: a model without FEM value writes the GH GUIDs attached to its drafts, and reads them back below. P30-01 (C1,
-                // 11/11): only with its drafts (GUIDs without drafts read as damage): the analysis components, which leave the drafts out, attach
-                // both again from their live input after opening (AnalysisDrafts).
-                bool draftGuids = Value == null && draftBytes != null && _draftGuids != null && ReferenceEquals(_draftGuidsOf, StateKey);
-                writer.SetString("ElementGuids", JsonSerializer.Serialize(Value?.Elements.Select(GetGuid).ToArray() ?? (draftGuids ? _draftGuids : Array.Empty<Guid>())));
+                // R6.5 P1 lane 3c: the GH GUIDs of the elements in the order of the drafts written, read back below. P30-01 (C1, 11/11): only with
+                // the drafts (GUIDs without drafts read as damage): the analysis components, which leave the drafts out, attach both again from
+                // their live input after opening (AnalysisDrafts). P2D: a FEM value writes the GUIDs of its nodes, beams and plates in the order
+                // of the drafts (they are read back by the drafts, no FEM value is read), none when they do not match the drafts.
+                var elementGuids = Array.Empty<Guid>();
+                if (draftBytes != null && Value == null && _draftGuids != null && ReferenceEquals(_draftGuidsOf, StateKey)) elementGuids = _draftGuids;
+                else if (draftBytes != null && Value != null)
+                {
+                    var byDraft = Value.Elements.OfType<NodeModel>().Select(GetGuid).Concat(Value.Elements.OfType<BeamModel>().Select(GetGuid))
+                        .Concat(Value.Elements.OfType<PlateModel>().Select(GetGuid)).ToArray();
+                    if (byDraft.Length == carried.Nodes.Count + carried.Beams.Count + carried.Plates.Count) elementGuids = byDraft;
+                }
+                writer.SetString("ElementGuids", JsonSerializer.Serialize(elementGuids));
                 if (draftBytes != null) writer.SetByteArray(Common.Gpc.GpcModelDrafts.Chunk, draftBytes);
                 if (results && GpcResults is GPC.Model.Models.Model analysed) writer.SetByteArray(Common.Gpc.GpcResultsFile.Chunk, Common.Gpc.GpcResultsFile.ToBytes(analysed));
                 return true;
@@ -523,45 +553,61 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             try
             {
+                // P2D: the model is its GPC input, never a FEM value: the datum (BGHGPC1), or a former payload / the FEM chunk alone of a
+                // development file read by value (the model without its results, at the tolerance of the document when the file is read).
+                Value = null; byte[] development = null; string legacyKinds = null;
                 switch (DataTypes.GpcGooPersistence.Read(reader, out var data, out var records, out var femm))
                 {
                     case DataTypes.GpcGooPersistence.Kind.Gpc:
-                    {
-                        var input = Common.Gpc.GpcDraftArchive.ReadConversion(data, records);
-                        Value = femm == null ? null : Common.Helpers.ModelArchive.Read<ModelModel>(femm);
-                        AttachInput(input); break;
-                    }
-                    case DataTypes.GpcGooPersistence.Kind.Legacy:
-                        Value = Common.Helpers.ModelArchive.Read<ModelModel>(femm);
-                        lock (gpcLock) { _legacy = femm; _legacyOf = StateKey; }
+                        AttachInput(Common.Gpc.GpcDraftArchive.ReadConversion(data, records));
+                        development = femm; // the FEM chunk of a development file beside the datum: the drafts and GUIDs of its elements
                         break;
-                    case DataTypes.GpcGooPersistence.Kind.FemmOnly:
-                        Value = Common.Helpers.ModelArchive.Read<ModelModel>(femm); break;
+                    case DataTypes.GpcGooPersistence.Kind.Legacy:
+                    {
+                        var input = Common.Gpc.GpcLegacyPayloads.Model(femm, Settings.Instance.Tolerance, out bool hadResults, out legacyKinds);
+                        if (input == null) return true; // 0.3.0 reads no model from it (null value or no element list): an empty model, as before
+                        AttachInput(input);
+                        if (hadResults) lock (gpcLock) _legacyResultsOf = StateKey;
+                        break;
+                    }
                     default: return false;
                 }
-                Guid[] savedDraftGuids = null;
+                Guid[] savedDraftGuids = null, femGuids = null;
                 if (reader.ItemExists("ElementGuids"))
                 {
                     var guids = JsonSerializer.Deserialize<Guid[]>(reader.GetString("ElementGuids"));
                     if (guids == null) return false;
-                    if (Value != null)
-                    {
-                        if (guids.Length != Value.Elements.Count) return false;
-                        for (int i = 0; i < guids.Length; i++) _guids[Value.Elements[i]] = guids[i];
-                    }
+                    // P2D: GUIDs saved with a FEM value are in the order of its elements: by the kinds of the former elements in the order of
+                    // the drafts (nodes, beams, plates); not kept when they do not match.
+                    if (legacyKinds != null) { if (Common.Gpc.GpcLegacyPayloads.InDraftOrder(guids, legacyKinds) is { } ordered) AttachElementGuids(ordered); }
+                    else if (development != null) femGuids = guids;
                     else if (guids.Length != 0) savedDraftGuids = guids; // R6.5 P1 lane 3c: attached once the drafts are read
                 }
                 // R6.4 (coordinator, 7/11): an internalised model with its results (0.4.0 form). P30-01 (C1, 11/11): results that cannot be read
                 // are dropped visibly: the model opens without them and says so (ResultsNotice, shown by the components that read the model).
                 if (reader.ItemExists(Common.Gpc.GpcResultsFile.Chunk) && StateKey != null)
                     try { AttachGpc(Common.Gpc.GpcResultsFile.FromBytes(reader.GetByteArray(Common.Gpc.GpcResultsFile.Chunk))); }
-                    catch (Exception ex) when (!(ex is OutOfMemoryException)) { System.Diagnostics.Debug.WriteLine(ex); lock (gpcLock) _unreadableResultsOf = StateKey; }
+                    catch (Exception ex) when (DataTypes.GpcGooPersistence.IsRefusal(ex) || ex is System.IO.IOException) // P2D: a defect is not a damaged datum
+                    { System.Diagnostics.Debug.WriteLine(ex); lock (gpcLock) _unreadableResultsOf = StateKey; }
                 // R6.4 (2): the drafts of the elements saved with the model (BGHGPC1 of the GH_Model, extended; absent in former files, allowed).
                 // P30-01 (C1, 11/11): drafts saved but unreadable are a damaged datum: the model does not open as if complete (before, they were
                 // left out and the model opened without them).
                 if (reader.ItemExists(Common.Gpc.GpcModelDrafts.Chunk) && StateKey != null)
                     try { AttachDrafts(Common.Gpc.GpcModelDrafts.Read(reader.GetByteArray(Common.Gpc.GpcModelDrafts.Chunk))); }
-                    catch (Exception ex) when (!(ex is OutOfMemoryException)) { System.Diagnostics.Debug.WriteLine(ex); return false; }
+                    catch (Exception ex) when (DataTypes.GpcGooPersistence.IsRefusal(ex)) { return DataTypes.GpcGooPersistence.Refused(reader, TypeName, ex); }
+                // P2D: the FEM chunk of a development file, read by value on first use (the drafts of its elements when no drafts chunk was
+                // saved, with the identities of the owner of the GPC input; the GUIDs saved with its FEM elements in the order of the drafts).
+                if (development != null && StateKey != null)
+                {
+                    var input = GpcInput; bool chunk = reader.ItemExists(Common.Gpc.GpcModelDrafts.Chunk);
+                    var owner = input.Report?.Owner is Guid o && o != Guid.Empty ? o : Common.Gpc.GpcLegacyPayloads.ModelOwner(development, input.Tolerance);
+                    var guids = femGuids;
+                    lock (gpcLock)
+                    {
+                        _femm = new Lazy<(Common.Gpc.GpcModelDrafts, Guid[])>(() => Common.Gpc.GpcLegacyPayloads.Development(development, owner, guids, !chunk));
+                        _femmOf = StateKey;
+                    }
+                }
                 // R6.5 P1 lane 3c: the GUIDs of a model without FEM value belong to its drafts: another count is a damaged datum (as for the FEM elements).
                 // P30-01 (C1, 11/11): so are GUIDs saved without drafts (before, the check was skipped when the drafts were missing).
                 if (savedDraftGuids != null)
@@ -571,7 +617,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 }
                 return true;
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
+            catch (Exception ex) { return DataTypes.GpcGooPersistence.Refused(reader, TypeName, ex); }
         }
 
         public bool BakeGeometry(RhinoDoc doc, ObjectAttributes att, out Guid obj_guid)

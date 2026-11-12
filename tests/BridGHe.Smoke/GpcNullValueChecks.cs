@@ -89,7 +89,8 @@ internal static class GpcNullValueChecks
         Require(copy.ScriptVariable() == null && Same(datumOf(copy), datum), what + ": a copy keeps the datum, without FEM value");
         if (!persistent) { checks += 5; return gpcOnly; }
         var fem = Written(femBacked, out _); var gpc = Written(gpcOnly, out var archive);
-        Require(fem.ContainsKey("FemmR6") && !gpc.ContainsKey("FemmR6"), what + ": FemmR6 only with the FEM value");
+        // P2D (P2): the FEM value is never written (no FemmR6), the FEM-backed type writes its datum alone, as the GPC-only type.
+        Require(!fem.ContainsKey("FemmR6") && !gpc.ContainsKey("FemmR6"), what + ": FemmR6 never written (P2D)");
         foreach (var name in fem.Keys.Where(k => k != "FemmR6" && !ignored.Contains(k)))
             Require(gpc.TryGetValue(name, out var v) && v == fem[name], what + ": item " + name + " as the FEM-backed type writes it");
         var read = (IGH_Goo)Activator.CreateInstance(type);
@@ -134,7 +135,7 @@ internal static class GpcNullValueChecks
     /// the coordinate systems and bridge rules, then (TRANSITIONAL) the FEM catalogue.</summary>
     internal static void Regression()
     {
-        moved = 0; copied = 0; checks = 0; damagedRefused = 0; damagedSame = 0; lost.Clear();
+        moved = 0; copied = 0; checks = 0; damagedRefused = 0; damagedSame = 0; lost.Clear(); unexpected.Clear();
         plugin = BridgeMergeTests.Initialize();
         var (elements, data, models, extended) = WithoutFem();
         int independent = checks;
@@ -142,6 +143,7 @@ internal static class GpcNullValueChecks
         independent = checks;
         int damaged = damagedRefused + damagedSame;
         Require(lost.Count == 0, "a damaged chunk read as another valid datum: " + string.Join("; ", lost.Take(5)));
+        Require(unexpected.Count == 0, $"a damaged chunk raised an exception that is not a refusal of the readers ({unexpected.Count}): " + string.Join("; ", unexpected.Take(5)));
         Require(elements >= 60 && data >= 40 && models == 10 && extended >= 8 && damaged >= 100, $"too few cases without FEM: {elements} elements, {data} data, {models} models, {extended} extended, {damaged} damaged chunks");
         Console.WriteLine($"GPC NULL VALUES (R1, without FEM): {elements} elements, {data} properties, materials, sections, groups, cases, combinations and stages, {models} models of the GPC examples 01-10 (R0), "
             + $"{extended} extended records and composite properties of the producers (switches of P2 on), {moved} plates translated and morphed against their moved corners, {copied} copy constructors; "
@@ -159,6 +161,21 @@ internal static class GpcNullValueChecks
 
     private static int damagedRefused, damagedSame;
     private static readonly List<string> lost = new List<string>();
+    private static readonly List<string> unexpected = new List<string>();
+
+    /// <summary>Task 39 (T12, P2D): the exception itself (not the reflection wrapper).</summary>
+    private static Exception Unwrapped(Exception x) { while (x is TargetInvocationException t && t.InnerException != null) x = t.InnerException; return x; }
+    private static string Inner(Exception x) { x = Unwrapped(x); return x.GetType().Name + ": " + x.Message; }
+
+    /// <summary>Task 39 (T12, P2D): the refusals of the readers of a damaged datum (the rule of the product, GpcGooPersistence.IsRefusal):
+    /// serialization, XML, compressed-stream and JSON errors, and the refusals of the readers.</summary>
+    private static bool Refusal(Exception x)
+    {
+        x = Unwrapped(x);
+        return x is System.Runtime.Serialization.SerializationException || x is System.Xml.XmlException || x is System.IO.InvalidDataException || x is System.IO.EndOfStreamException
+            || x is ArgumentException || x is NotSupportedException || x is InvalidOperationException || x is FormatException || x is System.Text.Json.JsonException
+            || x is KeyNotFoundException || x is OverflowException;
+    }
 
     /// <summary>R1: the contract of a GH type given by its datum alone, with no FEM-backed twin: the datum, no FEM value, valid, a text, copies with the
     /// datum, written without <c>FemmR6</c> (its GPC chunks) and read back with the same datum but for GUIDs; then its damaged chunks
@@ -209,10 +226,18 @@ internal static class GpcNullValueChecks
                 if (truncate) chunk.SetByteArray(name, bytes.Take(bytes.Length / 2).ToArray());
                 var read = (IGH_Goo)Activator.CreateInstance(type);
                 bool ok;
-                try { ok = broken.ExtractObject(read, "datum"); } catch (Exception) { ok = false; }
                 string label = $"{what}: {name} {(truncate ? "truncated" : "missing")}";
+                // Task 39 (T12, P2D): only the refusals of the readers count as a refused damaged datum; any other exception (a null reference, an
+                // assembly that does not load...) is a defect and fails the run, also when the GH type caught it and reported it as an internal error.
+                try { ok = broken.ExtractObject(read, "datum"); } catch (Exception x) when (Refusal(x)) { ok = false; } catch (Exception x) { unexpected.Add(label + ": " + Inner(x)); ok = false; }
+                if (broken.Messages != null) foreach (var m in broken.Messages) if (m.Message.Contains("errore interno di BridGHe", StringComparison.Ordinal)) unexpected.Add(label + ": " + m.Message);
                 object datum = null; string now = null;
-                if (ok && read.IsValid) { try { datum = read.GetType().GetProperty("Gpc")?.GetValue(read); now = datum == null ? null : GpcDraftCapture.WithoutGuids(textOf(read)); } catch (Exception) { datum = null; } }
+                if (ok && read.IsValid)
+                {
+                    try { datum = read.GetType().GetProperty("Gpc")?.GetValue(read); now = datum == null ? null : GpcDraftCapture.WithoutGuids(textOf(read)); }
+                    catch (Exception x) when (Refusal(x)) { datum = null; }
+                    catch (Exception x) { unexpected.Add(label + ", reading the datum: " + Inner(x)); datum = null; }
+                }
                 if (!ok || !read.IsValid || datum == null) damagedRefused++;
                 else if (now == expected) damagedSame++;
                 else lost.Add(label + ": read as another valid datum");
@@ -413,13 +438,13 @@ internal static class GpcNullValueChecks
         Require((bool?)globalSystem.Invoke(null, new object[] { FromGpc(system, Prop(global, "Gpc")) }) == true, "the global system by its frame alone: global"); checks++;
         if (Environment.GetEnvironmentVariable("BRIDGHE_R1_TRANSITIONAL") != "0")
         {
-            // R65-C2-01 (TRANSITIONAL, a FEM system): a system with a FEM value keeps the rule of the reader on its points: (2, 0, 0) and (0, 3, 0) is not
-            // the global one (its normalised frame is: the rule of a system given by its frame alone, the only one in P2).
+            // R65-C2-01 (P2D, user decision U6 of 12/11): one rule, the frame rule, for every system: (2, 0, 0) and (0, 3, 0) has the global frame, with
+            // or without a FEM value (before P2D a system with a FEM value took the rule of the reader on its points: not global).
             var stretched = new CoordinateSystemModel("R65-C2-01", "Stretched") { Origin = new Point3d(0, 0, 0), Point1 = new Point3d(2, 0, 0), Point2 = new Point3d(0, 3, 0) };
             var stretchedGoo = (IGH_Goo)Activator.CreateInstance(system, stretched);
-            Require((bool?)globalSystem.Invoke(null, new object[] { stretchedGoo }) == false, "a FEM system with the points (2, 0, 0) and (0, 3, 0): not global (R65-C2-01)");
+            Require((bool?)globalSystem.Invoke(null, new object[] { stretchedGoo }) == true, "a FEM system with the points (2, 0, 0) and (0, 3, 0): global by its frame (R65-C2-01, U6)");
             Require((bool?)globalSystem.Invoke(null, new object[] { global }) == true, "the FEM global system: global (R65-C2-01)");
-            Require((bool?)globalSystem.Invoke(null, new object[] { FromGpc(system, Prop(stretchedGoo, "Gpc")) }) == true, "its frame alone (normalised): global, the rule of P2 (R65-C2-01)");
+            Require((bool?)globalSystem.Invoke(null, new object[] { FromGpc(system, Prop(stretchedGoo, "Gpc")) }) == true, "its frame alone (normalised): global, the one rule (R65-C2-01, U6)");
             checks += 3;
         }
         int rules = 0;

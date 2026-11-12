@@ -6,49 +6,49 @@ using BridGHe.Grasshopper.DataTypes.Fem;
 namespace BridGHe.Grasshopper.Helpers
 {
     /// <summary>
-    /// R6.2 lane A (R62A), the dual rule of §1bis until R6.5: a producer component still builds its FEM value and attaches to it the GPC draft
-    /// built on GPC from the drafts of its inputs (<c>AttachGpc</c>, compared with the conversion of the FEM value by <see cref="GpcDraftCheck"/>).
+    /// R6.2 lane A (R62A), the dual rule of §1bis: a producer component that still builds its FEM value attaches to it the GPC draft built on
+    /// GPC from the drafts of its inputs (<c>AttachGpc</c>).
     /// <list type="bullet">
     /// <item>A value the reader refuses (a builder throws the <see cref="ArgumentException"/> or <see cref="NotSupportedException"/> of the reader,
     /// or the draft of an input is refused) gets no draft: its <c>Gpc</c> stays the conversion, which refuses it, and Build Model gives the error
-    /// as before. Under a check host (<see cref="GpcDraftCheck.Verify"/> set: the Smoke gates) the conversion of the FEM output must refuse it
-    /// too, otherwise the component fails (a builder must never refuse what the reader converts).</item>
+    /// as before.</item>
     /// <item>A decision of a component on its inputs (a filter, an Element ID already given) is taken on the GPC drafts; while the FEM values
-    /// exist the decision on the FEM value is the bridge for an input whose draft is refused, and under a check host the two decisions must
-    /// agree (<see cref="Decide"/>).</item>
+    /// exist the decision on the FEM value is the bridge for an input whose draft is refused (<see cref="Decide"/>).</item>
     /// </list>
+    /// P2D (P3): the comparison with the conversion of the FEM value under a check host (DRAFT CHECK) is removed; the FEM values and this
+    /// bridge go with the FEM types (P2-taglio).
     /// </summary>
     internal static class GpcBuilderAttach
     {
         internal static void Node(GH_Node target, Func<LegacyNodeDraft> build)
         {
-            var draft = Build(build, () => GpcBeamDrafts.FromFemm(target.Value));
+            var draft = Build(build);
             if (draft != null) target.AttachGpc(draft);
         }
 
         internal static void Plate(GH_Plate target, Func<LegacyPlateDraft> build)
         {
-            var draft = Build(build, () => GpcBeamDrafts.FromFemm(target.Value));
+            var draft = Build(build);
             if (draft != null) target.AttachGpc(draft);
         }
 
         internal static void Beam(GH_Beam target, Func<LegacyBeamDraft> build)
         {
-            var draft = Build(build, () => GpcBeamDrafts.FromFemm(target.Value));
+            var draft = Build(build);
             if (draft != null) target.AttachGpc(draft);
         }
 
         /// <summary>R6.2 part C (P2N): the recipe of a section component, with the same refusal rule.</summary>
         internal static void Section(GH_BeamSection target, Func<LegacySectionRecipe> build)
         {
-            var recipe = Build(build, () => GpcModels.SectionDraft(target.Value));
+            var recipe = Build(build);
             if (recipe != null) target.AttachGpc(recipe);
         }
 
         /// <summary>R6.2 part C (P2N): the property of the Beam Property component, with the same refusal rule.</summary>
         internal static void BeamProperty(GH_BeamProperty target, Func<LegacyBeamProperty> build)
         {
-            var property = Build(build, () => GpcModels.BeamProperty(target.Value, GpcBeamDrafts.DraftUnits));
+            var property = Build(build);
             if (property != null) target.AttachGpc(property);
         }
 
@@ -56,14 +56,14 @@ namespace BridGHe.Grasshopper.Helpers
         /// <param name="membraneBending">L2C: the bending thickness of a membrane (<see cref="GH_PlateProperty.GpcMembraneBending"/>).</param>
         internal static void PlateProperty(GH_PlateProperty target, Func<GPC.Model.ElementProperties.PlateProperty> build, double membraneBending = 0)
         {
-            var property = Build(build, () => GpcModels.PlatePropertyDraft(target.Value));
+            var property = Build(build);
             if (property != null) target.AttachGpc(property, membraneBending);
         }
 
         /// <summary>R6.2 part C (P2N): the case record of the Load Case component, with the same refusal rule.</summary>
         internal static void Case(GH_LoadCase target, Func<LegacyCaseData> build)
         {
-            var record = Build(build, () => GpcModels.CaseDraft(target.Value));
+            var record = Build(build);
             if (record != null) target.AttachGpc(record);
         }
 
@@ -72,7 +72,7 @@ namespace BridGHe.Grasshopper.Helpers
         internal static GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition Composite(DataTypes.GH_CompositeBeamProperty target,
             Func<GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition> build)
         {
-            var definition = Build(build, () => GpcCompositeSections.Definition(target.Value, target.Value.Name));
+            var definition = Build(build);
             if (definition != null) target.AttachGpc(definition);
             return definition;
         }
@@ -80,37 +80,29 @@ namespace BridGHe.Grasshopper.Helpers
         /// <summary>R6.3 (P2N): the combination of Load Combination and of the Load Combinations parameter, with the same refusal rule.</summary>
         internal static void Combination(GH_LoadCombination target, Func<LegacyCombinationDraft> build)
         {
-            var combination = Build(build, () => GpcModels.CombinationDraft(target.Value));
+            var combination = Build(build);
             if (combination != null) target.AttachGpc(combination);
         }
 
         /// <summary>R6.3 (P2N): the stage of Staged Construction, with the same refusal rule.</summary>
         internal static void Stage(GH_StagedConstruction target, Func<LegacyStageDraft> build)
         {
-            var stage = Build(build, () => GpcModels.StageDraft(target.Value));
+            var stage = Build(build);
             if (stage != null) target.AttachGpc(stage);
         }
 
         /// <summary>R6.2 part C (P2N): the chain of names of the group of Group and of the Group parameter (from the root).</summary>
         internal static void Group(GH_Group target, Func<System.Collections.Generic.IReadOnlyList<string>> build)
         {
-            var chain = Build(build, () => target.Value == null ? null : GH_Group.Chain(target.Value));
+            var chain = Build(build);
             if (chain != null) target.AttachGpc(chain);
         }
 
-        private static T Build<T>(Func<T> build, Func<object> conversion) where T : class
+        /// <summary>The datum of a builder, null when it refuses its data (the refusals of the reader).</summary>
+        private static T Build<T>(Func<T> build) where T : class
         {
             try { return build(); }
-            catch (Exception refused) when (Refusal(refused))
-            {
-                if (GpcDraftCheck.Verify != null)
-                {
-                    bool converted;
-                    try { conversion(); converted = true; } catch (Exception x) when (Refusal(x)) { converted = false; }
-                    if (converted) throw new InvalidOperationException("GpcBuilderRefusalDifference: the GPC builder refused a value the reader converts (" + refused.Message + ").");
-                }
-                return null;
-            }
+            catch (Exception refused) when (Refusal(refused)) { return null; }
         }
 
         /// <summary>The names of a group from the root to the group (its parents first), as the reader joins them into the full name: the GPC
@@ -122,18 +114,15 @@ namespace BridGHe.Grasshopper.Helpers
         internal static bool Refusal(Exception x) => x is ArgumentException || x is NotSupportedException;
 
         /// <summary>A decision taken on the GPC draft of an input (<paramref name="gpc"/>, null when the draft of the input is refused: then the
-        /// decision on the FEM value, the bridge until R6.5). Under a check host the decision on the FEM value is computed too and must agree.
-        /// R6.5 P1 lane 1a: <paramref name="fem"/> null for an input without a FEM value (given by its GPC draft alone): the decision on the
-        /// draft is the only one (a refusal of the draft is rethrown, there is no FEM value to fall back on).</summary>
+        /// decision on the FEM value, the bridge while FEM values exist). R6.5 P1 lane 1a: <paramref name="fem"/> null for an input without a FEM
+        /// value (given by its GPC draft alone): the decision on the draft is the only one (a refusal of the draft is rethrown, there is no FEM
+        /// value to fall back on). P2D: the comparison of the two decisions under a check host is removed.</summary>
         internal static bool Decide(Func<bool> gpc, Func<bool> fem, string what)
         {
             if (fem == null) return gpc();
             bool? onGpc;
             try { onGpc = gpc(); } catch (Exception x) when (Refusal(x)) { onGpc = null; }
-            if (onGpc == null) return fem();
-            if (GpcDraftCheck.Verify != null && fem() != onGpc.Value)
-                throw new InvalidOperationException("GpcDecisionDifference: " + what + " on the GPC draft differs from the decision on the FEM value.");
-            return onGpc.Value;
+            return onGpc ?? fem();
         }
     }
 }

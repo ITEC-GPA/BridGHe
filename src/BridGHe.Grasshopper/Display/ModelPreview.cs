@@ -114,7 +114,7 @@ namespace BridGHe.Grasshopper.Display
             {
                 return d switch
                 {
-                    Common.Gpc.Legacy.LegacyBeamDraft b=>new DraftGeometry{Shapes=Common.Gpc.GpcDraftShapes.Beam(b)},
+                    Common.Gpc.Legacy.LegacyBeamDraft b=>new DraftGeometry{Shapes=Common.Gpc.GpcDraftShapes.Beam(b),Bars=Common.Gpc.GpcDraftShapes.Bars(b),Composite=Common.Gpc.GpcDraftShapes.HasCompositePreview(b)}, // P11 (P2D): a homogenised composite property with its outline
                     DataTypes.GpcCompositeBeam c=>new DraftGeometry{Shapes=Common.Gpc.GpcDraftShapes.Composite(c.Beam,c.Start,c.End),Bars=Common.Gpc.GpcDraftShapes.CompositeBars(c.Beam,c.Start,c.End),Composite=true},
                     Common.Gpc.Legacy.LegacyPlateDraft p=>new DraftGeometry{Shapes=DataTypes.GpcDraftGeometry.Shape(p) is {} s?new[]{s}:Array.Empty<Brep>()},
                     _=>new DraftGeometry(),

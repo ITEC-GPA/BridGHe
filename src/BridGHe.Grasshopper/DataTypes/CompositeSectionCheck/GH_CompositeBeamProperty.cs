@@ -48,8 +48,8 @@ namespace BridGHe.Grasshopper.DataTypes
         {
             get
             {
+                // P2D: a former payload is read by value when the file is read (no FEM value).
                 if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
-                if (_legacy != null && ReferenceEquals(_legacyOf, Value)) { _gpc = Common.Gpc.GpcLegacyPayloads.Composite(_legacy); _gpcOf = Value; HasAttachedGpc = false; return _gpc; }
                 if (Value == null) return null;
                 _gpc = Common.Gpc.GpcCompositeSections.Definition(Value, Value.Name); _gpcOf = Value; HasAttachedGpc = false;
                 return _gpc;
@@ -59,23 +59,19 @@ namespace BridGHe.Grasshopper.DataTypes
         /// <summary>True when <see cref="Gpc"/> was attached by a GPC builder or read from a file (not converted from the FEM value).</summary>
         public bool HasAttachedGpc { get; private set; }
 
-        /// <summary>Attaches the GPC datum built on GPC for the current FEM value (it must describe it: the gates compare the two, <see cref="Common.Gpc.GpcDraftCheck"/>).</summary>
+        /// <summary>Attaches the GPC datum built on GPC for the current FEM value.</summary>
         public void AttachGpc(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition datum)
         {
             _gpc = datum ?? throw new ArgumentNullException(nameof(datum)); _gpcOf = Value; HasAttachedGpc = true;
-            if (Value != null) { var value = Value; Common.Gpc.GpcDraftCheck.Attached("GH_CompositeBeamProperty", datum, () => Common.Gpc.GpcCompositeSections.Definition(value, value.Name)); }
         }
 
         private GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition _gpc;
         private CompositeBeamPropertyModel _gpcOf;
-        private byte[] _legacy;
-        private CompositeBeamPropertyModel _legacyOf;
 
-        /// <summary>R6.1: a copy (<c>Duplicate</c>) keeps the datum attached or read and the former payload, for its copy of the same value.</summary>
+        /// <summary>R6.1: a copy (<c>Duplicate</c>) keeps the datum attached or read, for its copy of the same value.</summary>
         private void CarryGpcTo(GH_CompositeBeamProperty copy)
         {
             if (_gpc != null && HasAttachedGpc && ReferenceEquals(_gpcOf, Value)) { copy._gpc = _gpc; copy._gpcOf = copy.Value; copy.HasAttachedGpc = true; }
-            if (_legacy != null && ReferenceEquals(_legacyOf, Value)) { copy._legacy = _legacy; copy._legacyOf = copy.Value; }
         }
 
         /// <summary>R6.5 P0 (coordinator, 7/11): a composite property given by its GPC definition alone, with no FEM value: <see cref="Gpc"/>
@@ -102,7 +98,7 @@ namespace BridGHe.Grasshopper.DataTypes
 
         public override bool Write(GH_IWriter writer)
         {
-            try { GpcGooPersistence.Write(writer, () => (Common.Gpc.GpcDraftArchive.Write(Gpc), (byte[])null), Value == null ? null : Common.Helpers.ModelArchive.Write(Value)); return true; }
+            try { GpcGooPersistence.Write(writer, (Common.Gpc.GpcDraftArchive.Write(Gpc), (byte[])null)); return true; } // P2D: the definition alone
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
         }
 
@@ -110,20 +106,17 @@ namespace BridGHe.Grasshopper.DataTypes
         {
             try
             {
-                switch (GpcGooPersistence.Read(reader, out var data, out var records, out var femm))
+                // P2D: the definition, or a former payload / the FEM chunk alone of a development file read by value; never a FEM value.
+                var datum = GpcGooPersistence.Read(reader, out var data, out _, out var femm) switch
                 {
-                    case GpcGooPersistence.Kind.Gpc:
-                        var datum = Common.Gpc.GpcDraftArchive.ReadComposite(data);
-                        Value = femm == null ? null : Common.Helpers.ModelArchive.Read<CompositeBeamPropertyModel>(femm);
-                        _gpc = datum; _gpcOf = Value; HasAttachedGpc = true; return true;
-                    case GpcGooPersistence.Kind.Legacy:
-                        Value = Common.Helpers.ModelArchive.Read<CompositeBeamPropertyModel>(femm); _legacy = femm; _legacyOf = Value; return true;
-                    case GpcGooPersistence.Kind.FemmOnly:
-                        Value = Common.Helpers.ModelArchive.Read<CompositeBeamPropertyModel>(femm); return true;
-                    default: return false;
-                }
+                    GpcGooPersistence.Kind.Gpc => Common.Gpc.GpcDraftArchive.ReadComposite(data),
+                    GpcGooPersistence.Kind.Legacy => Common.Gpc.GpcLegacyPayloads.Composite(femm),
+                    _ => null,
+                };
+                if (datum == null) return false;
+                Value = null; _gpc = datum; _gpcOf = null; HasAttachedGpc = true; return true;
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
+            catch (Exception ex) { return GpcGooPersistence.Refused(reader, TypeName, ex); }
         }
 
         public override string ToString()

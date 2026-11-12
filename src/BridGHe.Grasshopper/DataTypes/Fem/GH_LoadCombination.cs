@@ -76,8 +76,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             get
             {
+                // P2D: a former payload is read by value when the file is read (no FEM value).
                 if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
-                if (_legacy != null && ReferenceEquals(_legacyOf, Value)) { _gpc = Common.Gpc.GpcLegacyPayloads.Combination(_legacy); _gpcOf = Value; HasAttachedGpc = false; return _gpc; }
                 if (Value == null) return null;
                 _gpc = Common.Gpc.GpcModels.CombinationDraft(Value); _gpcOf = Value; HasAttachedGpc = false;
                 return _gpc;
@@ -87,27 +87,23 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         /// <summary>True when <see cref="Gpc"/> was attached by a GPC builder or read from a file (not converted from the FEM value).</summary>
         public bool HasAttachedGpc { get; private set; }
 
-        /// <summary>Attaches the GPC datum built on GPC for the current FEM value (it must describe it: the gates compare the two, <see cref="Common.Gpc.GpcDraftCheck"/>).</summary>
+        /// <summary>Attaches the GPC datum built on GPC for the current FEM value.</summary>
         public void AttachGpc(Common.Gpc.Legacy.LegacyCombinationDraft datum)
         {
             _gpc = datum ?? throw new ArgumentNullException(nameof(datum)); _gpcOf = Value; HasAttachedGpc = true;
-            if (Value != null) { var value = Value; Common.Gpc.GpcDraftCheck.Attached("GH_LoadCombination", datum, () => Common.Gpc.GpcModels.CombinationDraft(value)); }
         }
 
         private Common.Gpc.Legacy.LegacyCombinationDraft _gpc;
         private LoadCombinationModel _gpcOf;
 
         /// <summary>R6.1 (frozen API for R6.2): whoever changes the FEM value of this datum in place (Load Combinations parameter, UpdateLoadCases)
-        /// calls this: the datum attached, read or read by value no longer describes it and is dropped (the conversion follows the value).</summary>
-        public void ValueChanged() { _gpc = null; _gpcOf = null; _legacy = null; _legacyOf = null; HasAttachedGpc = false; }
-        private byte[] _legacy;
-        private LoadCombinationModel _legacyOf;
+        /// calls this: the datum attached no longer describes it and is dropped (the conversion follows the value). Only for a FEM value.</summary>
+        public void ValueChanged() { if (Value == null) return; _gpc = null; _gpcOf = null; HasAttachedGpc = false; }
 
-        /// <summary>R6.1: a copy (<c>Duplicate</c>) keeps the datum attached or read and the former payload, for its copy of the same value.</summary>
+        /// <summary>R6.1: a copy (<c>Duplicate</c>) keeps the datum attached or read, for its copy of the same value.</summary>
         private void CarryGpcTo(GH_LoadCombination copy)
         {
             if (_gpc != null && HasAttachedGpc && ReferenceEquals(_gpcOf, Value)) { copy._gpc = _gpc; copy._gpcOf = copy.Value; copy.HasAttachedGpc = true; }
-            if (_legacy != null && ReferenceEquals(_legacyOf, Value)) { copy._legacy = _legacy; copy._legacyOf = copy.Value; }
         }
 
         /// <summary>R6.5 P0 (coordinator, 7/11): a load combination given by its GPC datum alone, with no FEM value: <see cref="Gpc"/> is the datum and
@@ -140,25 +136,22 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             try
             {
-                switch (GpcGooPersistence.Read(reader, out var data, out var records, out var femm))
+                // P2D: the record, or a former payload / the FEM chunk alone of a development file read by value; never a FEM value.
+                var datum = GpcGooPersistence.Read(reader, out _, out var records, out var femm) switch
                 {
-                    case GpcGooPersistence.Kind.Gpc:
-                        var datum = Common.Gpc.GpcDraftArchive.ReadCombination(records);
-                        Value = femm == null ? null : Common.Helpers.ModelArchive.Read<LoadCombinationModel>(femm);
-                        _gpc = datum; _gpcOf = Value; HasAttachedGpc = true; return true;
-                    case GpcGooPersistence.Kind.Legacy:
-                        Value = Common.Helpers.ModelArchive.Read<LoadCombinationModel>(femm); _legacy = femm; _legacyOf = Value; return true;
-                    case GpcGooPersistence.Kind.FemmOnly:
-                        Value = Common.Helpers.ModelArchive.Read<LoadCombinationModel>(femm); return true;
-                    default: return false;
-                }
+                    GpcGooPersistence.Kind.Gpc => Common.Gpc.GpcDraftArchive.ReadCombination(records),
+                    GpcGooPersistence.Kind.Legacy => Common.Gpc.GpcLegacyPayloads.Combination(femm),
+                    _ => null,
+                };
+                if (datum == null) return false;
+                Value = null; _gpc = datum; _gpcOf = null; HasAttachedGpc = true; return true;
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
+            catch (Exception ex) { return GpcGooPersistence.Refused(reader, TypeName, ex); }
         }
 
         public override bool Write(GH_IWriter writer)
         {
-            try { GpcGooPersistence.Write(writer, () => ((byte[])null, Common.Gpc.GpcDraftArchive.Write(Gpc)), Value == null ? null : Common.Helpers.ModelArchive.Write(Value)); return true; }
+            try { GpcGooPersistence.Write(writer, ((byte[])null, Common.Gpc.GpcDraftArchive.Write(Gpc))); return true; } // P2D: the record alone
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
         }
 

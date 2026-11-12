@@ -99,7 +99,7 @@ namespace BridGHe.Common.Gpc.Builders
             var recipe = new LegacySectionRecipe
             {
                 Kind = BridgeSectionKind.Generic, Name = "", Angle = 0, Area = h.Area, I11 = h.I11, I22 = h.I22, J = h.J, CentroidX = h.CentroidX, CentroidY = h.CentroidY,
-                ShearA1 = h.ShearArea1, ShearA2 = h.ShearArea2, CompositePreview = true,
+                ShearA1 = h.ShearArea1, ShearA2 = h.ShearArea2, CompositePreview = true, CompositeOutline = LegacyCompositeOutline.Of(definition), // P11 (P2D)
             };
             var (property, angle, native) = LegacyModelImport.SectionProperty(recipe, definition.Name + suffix, GpcMaterials.Analysis(steelMaterial), GpcBeamDrafts.DraftUnits,
                 new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport());

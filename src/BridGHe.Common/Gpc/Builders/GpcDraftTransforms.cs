@@ -63,8 +63,14 @@ namespace BridGHe.Common.Gpc.Builders
 
         /// <summary>A beam with a composite slab strain in a case (the merged model of Build BridGHe Model: the strain of a workflow action on
         /// the beams it acts on, a checks input): the reader records the load and its case and carries it (no GPC load).</summary>
+        /// <remarks>P9 (P2D, user decision U4 of 12/11): the strain value is not kept in the draft, only the kind of the load and its case.
+        /// Nothing on the GPC path reads a strain from a beam draft: the merged model of Build BridGHe Model takes its beams without their loads
+        /// (<see cref="WithoutLoads"/>) and records the strain of each workflow action with its value (<c>GpcBridge.ModelDrafts</c>), and the
+        /// checks take the shrinkage from the actions of the workflow (Bridge Shrinkage Action). So the value given to the obsolete Composite
+        /// Beam Strain component has no effect in 0.4.0 (changelog). A missing case is refused (no beam with a strain of no case).</remarks>
         public static LegacyBeamDraft WithSlabStrain(LegacyBeamDraft draft, LegacyCaseData loadCase)
         {
+            if (loadCase == null) throw new ArgumentException("GpcSlabStrainWithoutLoadCase: the composite slab strain needs its load case.");
             var d = GpcDrafts.Copy(draft ?? throw new ArgumentNullException(nameof(draft)));
             d.Records.LoadList.Add((SlabStrainRecord, loadCase.Name)); d.Records.LoadCaseList.Add(loadCase);
             d.Report.Carry(SlabStrainCarry);
