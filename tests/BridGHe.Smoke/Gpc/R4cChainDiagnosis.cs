@@ -172,6 +172,30 @@ internal static class R4cChainDiagnosis
         Console.WriteLine($"R4C REPORT {label}: the Bridge Report of the definition generated in {clock.Elapsed.TotalSeconds:F1} s; file {(File.Exists(file) ? new FileInfo(file).Length + " bytes" : "not written")}; "
             + $"{report.Params.Output.Sum(p => p.VolatileDataCount)} output items; messages: {(messages.Length == 0 ? "none" : string.Join(" / ", messages.Select(m => Cut(m))))}");
         R4cMoving.Memory(label + " after the Bridge Report of the definition");
+        // The same report by the library calls the component makes (it keeps only the message of an exception): where it fails, with the stack.
+        var entries = new List<BridGHe.Common.Reports.BridgeReportEntry>(); var tree = report.Params.Input.Single(p => p.Name == "Results").VolatileData;
+        for (int b = 0; b < tree.PathCount; b++) { int i = 0; foreach (var g in tree.get_Branch(b)) entries.Add(new((BridGHe.Common.Checks.BridgeStressResult)((IGH_Goo)g).ScriptVariable(), tree.get_Path(b) + "[" + i++ + "]")); }
+        var model = report.Params.Input.Single(p => p.Name == "Model").VolatileData.AllData(true).FirstOrDefault();
+        var bridge = R4cMoving.Bridge(model);
+        var topics = report.Params.Input.Single(p => p.Name == "Topics").VolatileData.AllData(true).Select(g => g.ScriptVariable()).OfType<int>().Select(t => (BridGHe.Common.Reports.BridgeReportTopic)t).ToArray();
+        string stage = "BridgeReportData.Create";
+        try
+        {
+            clock.Restart();
+            var data = BridGHe.Common.Reports.BridgeReportData.Create(entries, new BridGHe.Common.Reports.BridgeReportMetadata("R4c", "R4c", "R4c", "R4c"),
+                bridge != null ? BridGHe.Common.Reports.BridgeReportData.Source(bridge) : BridGHe.Common.Reports.BridgeReportData.Source(R4cMoving.Input(model)));
+            Console.WriteLine($"R4C REPORT {label}: {entries.Count} results, model {(bridge != null ? "GPC bridge" : "GPC input")}, topics {(topics.Length == 0 ? "default" : string.Join(",", topics))}: data created in {clock.Elapsed.TotalSeconds:F1} s");
+            R4cMoving.Memory(label + " after BridgeReportData.Create");
+            stage = "BridgeWordReport.Write"; clock.Restart();
+            var written = BridGHe.Common.Reports.BridgeWordReport.Write(template, Path.Combine(folder, "report-direct.docx"), data, topics.Length == 0 ? null : topics, null, true);
+            Console.WriteLine($"R4C REPORT {label}: written in {clock.Elapsed.TotalSeconds:F1} s, {new FileInfo(written.File).Length} bytes, {written.Results} results");
+        }
+        catch (Exception e)
+        {
+            var frames = (e.StackTrace ?? "").Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).Take(14);
+            Console.WriteLine($"R4C REPORT {label}: {stage} throws {e.GetType().Name} after {clock.Elapsed.TotalSeconds:F1} s: {e.Message}\n  " + string.Join("\n  ", frames));
+        }
+        R4cMoving.Memory(label + " after the direct report");
     }
 
     private static string FirstDifference(string a, string b)
