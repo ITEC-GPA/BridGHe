@@ -192,7 +192,7 @@ internal static partial class GpcCompositeSectionChecks
         int parity = 0; string paritySummary = "no FEM parity (the FeMM models are removed)";
         FemParity(ref parity, ref paritySummary);
         Console.WriteLine($"GPC COMPOSITE SECTIONS PASS: {compared} section inputs of the definitions equal bit for bit to the former construction and its adapter (constant and variable sections, with and without bars, 3 option sets); " +
-            $"{analysis} analysis values or variants of {analysed.Length} definitions equal bit for bit to the former ones of their composite properties (self tension: {CompositeAnalysisPropertyChecks.EchoedRebarDifferences} results with the echoed rebar material of ultimate strain 0.1 instead of the property one, stresses equal); " +
+            $"{analysis} analysis values or variants of {analysed.Length} definitions equal bit for bit to the former ones of their composite properties ({CompositeAnalysisPropertyChecks.AxisOneHorizontal} homogenised property variants on the section axes, I11 about the horizontal axis: lane INR, declared; self tension: {CompositeAnalysisPropertyChecks.EchoedRebarDifferences} results with the echoed rebar material of ultimate strain 0.1 instead of the property one, stresses equal); " +
             $"chain E (c): {beamChecks} checks of the definitions of the composite beams (constant rule by value, interpolation from the definitions, steel H name, Linear Tension) equal to the former path; " +
             $"R6.0 capture: {captured} captured definitions rebuilt from their numbers bit for bit, {capturedInputs} inputs of the H bridge engine equal to the former construction, {capturedAnalysis} analysis values equal to the former ones; {paritySummary}.");
     }
