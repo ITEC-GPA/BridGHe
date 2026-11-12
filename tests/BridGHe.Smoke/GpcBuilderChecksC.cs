@@ -55,9 +55,20 @@ internal static class GpcBuilderChecksC
         // Beam and plate properties on the outputs of the material and section components.
         var steel = GpcBuilderChecks.Output(h.Run("MaterialSteelComponent", new[] { 0 }, (0, "S355 test"), (1, 2)), 0);
         var concrete = GpcBuilderChecks.Output(h.Run("MaterialConcreteComponent", new[] { 0 }, (0, "C30/37 test"), (1, 6)), 0);
+        // R1 (explicit expected values, from the dimensions of the runs): the area of the section of each Beam property: hollow rectangle
+        // 200 x 200, 8 mm walls: 200² − 184² = 6144; solid rectangle 400 x 250 = 100000; I with flanges 400 x 30 and 600 x 40, height 1800,
+        // web 18, no fillet: 400·30 + 600·40 + (1800 − 70)·18 = 67140; Generic: the area given, 12000. The material kind of the material input.
+        var areas = new Dictionary<IGH_Goo, double>(ReferenceEqualityComparer.Instance) { [rect] = 6144, [solid] = 100000, [i] = 67140, [generic] = 12000 };
         foreach (var (section, type) in new[] { (rect, 5), (solid, 5), (i, 5), (generic, 5), (rect, 2), (rect, 1), (i, 8), (generic, 2) })
-            One(h, "BeamPropertyComponent", (0, "P " + type), (1, type), (2, section), (3, steel));
-        One(h, "BeamPropertyComponent", (0, ""), (1, 5), (2, rect), (3, concrete));
+        {
+            var property = One(h, "BeamPropertyComponent", (0, "P " + type), (1, type), (2, section), (3, steel));
+            var datum = (BridGHe.Common.Gpc.Legacy.LegacyBeamProperty)property.GetType().GetProperty("Gpc").GetValue(property);
+            if (datum.Property is GPC.Model.ElementProperties.ElasticBeamProperty elastic)
+                h.Expect(Math.Abs(elastic.Section.Area - areas[section]) <= 1e-12 * areas[section], $"Beam Property type {type}: section area {elastic.Section.Area:R}, expected {areas[section]:R}");
+            h.Expect(datum.Data.MaterialKind == "Steel" && datum.Property.Name == "P " + type, $"Beam Property type {type}: name «P {type}» and material kind Steel ({datum.Property.Name}, {datum.Data.MaterialKind})");
+        }
+        var onConcrete = One(h, "BeamPropertyComponent", (0, ""), (1, 5), (2, rect), (3, concrete));
+        h.Expect(((BridGHe.Common.Gpc.Legacy.LegacyBeamProperty)onConcrete.GetType().GetProperty("Gpc").GetValue(onConcrete)).Data.MaterialKind == "Concrete", "Beam Property on C30/37: material kind Concrete");
         // PAR (A02): a property on an angle section is no longer refused: it is the native Straus7 section of 0.3.0, resolved by Straus7, so it
         // is checked under the native host (ParityNative and the native part of gpc-only-properties), not here. LIB (A02b): the same for the
         // double C and double angle sections (the native section with its mirror).
@@ -102,8 +113,16 @@ internal static class GpcBuilderChecksC
         // another case; two «Dead» from two components are the same definition), Staged Construction (groups and combinations), the case
         // update of the Load Combinations parameter (Build Model and Staged Construction: cases removed and added).
         var c1 = One(h, "LoadCombinationComponent", (0, "ULS 1"), (1, new[] { dead, traffic, nsm }), (2, new[] { 1.35, 1.5, 1.35 }));
-        One(h, "LoadCombinationComponent", (0, "ULS 2"), (1, new[] { dead, traffic, traffic }), (2, new[] { 1.0, 0.75, 0.5 }));
-        One(h, "LoadCombinationComponent", (0, "SLS"), (1, new[] { dead, traffic, nsm }), (2, new[] { 1.0 }));
+        var c12 = One(h, "LoadCombinationComponent", (0, "ULS 2"), (1, new[] { dead, traffic, traffic }), (2, new[] { 1.0, 0.75, 0.5 }));
+        var sls = One(h, "LoadCombinationComponent", (0, "SLS"), (1, new[] { dead, traffic, nsm }), (2, new[] { 1.0 }));
+        // R1 (explicit expected values, from the inputs): the factors in order, the same case twice added (0.75 + 0.5), a missing factor 0; the
+        // non-structural mass of the case «Permanent NSM».
+        string Factors(IGH_Goo c) => string.Join(", ", ((BridGHe.Common.Gpc.Legacy.LegacyCombinationDraft)c.GetType().GetProperty("Gpc").GetValue(c)).Factors.Select(f => f.Case.Name + " " + f.Factor.ToString("R", System.Globalization.CultureInfo.InvariantCulture)));
+        h.Expect(Factors(c1) == "Dead 1.35, Traffic 1.5, Permanent NSM 1.35", "ULS 1: " + Factors(c1));
+        h.Expect(Factors(c12) == "Dead 1, Traffic 0.75, Traffic 0.5", "ULS 2 (the same case twice, both terms kept in order; the analysis adds them): " + Factors(c12));
+        h.Expect(Factors(sls) == "Dead 1, Traffic 0, Permanent NSM 0", "SLS (a missing factor 0): " + Factors(sls));
+        h.Expect(((BridGHe.Common.Gpc.Legacy.LegacyCaseData)nsm.GetType().GetProperty("Gpc").GetValue(nsm)).NonStructuralMass && !((BridGHe.Common.Gpc.Legacy.LegacyCaseData)traffic.GetType().GetProperty("Gpc").GetValue(traffic)).NonStructuralMass,
+            "the non-structural mass of «Permanent NSM» only");
         One(h, "LoadCombinationComponent", (0, "Two traffic"), (1, new[] { traffic, traffic2 }), (2, new[] { 1.0, 2.0 }));
         var deadAgain = One(h, "LoadCaseComponent", (0, "Dead"), (1, false));
         var c2 = One(h, "LoadCombinationComponent", (0, "Two dead"), (1, new[] { dead, deadAgain, traffic }), (2, new[] { 1.0, 0.35, 1.5 }));

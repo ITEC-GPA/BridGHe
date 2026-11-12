@@ -46,7 +46,8 @@ internal static class GpcBuilderChecksARuns
         var outputs = Run(h, type, new int[0], inputs);
         var added = h.Failures.Skip(failures).ToList();
         h.Failures.RemoveRange(failures, added.Count);
-        if (added.Count != 1 || !added[0].Contains(message)) h.Failures.Add($"A {type}: expected the error \"{message}\", got: {string.Join(" | ", added)}");
+        // R1: the error on the dual run and on the run on the path of P2.
+        if (added.Count != (GpcBuilderChecks.P2Path ? 2 : 1) || added.Any(a => !a.Contains(message))) h.Failures.Add($"A {type}: expected the error \"{message}\" on both paths, got: {string.Join(" | ", added)}");
         if (outputs.Any(o => o.Count != 0)) h.Failures.Add($"A {type}: an output after the error \"{message}\"");
     }
 
@@ -61,6 +62,8 @@ internal static class GpcBuilderChecksARuns
     private static IGH_Goo Refused(GpcBuilderChecks h, string type, string message, params (int Input, object Value)[] inputs)
     {
         var outputs = Run(h, type, new int[0], inputs);
+        // R1: on the path of P2 (no FEM value to fall back on) the builder's refusal is an error of the component with the message, no output.
+        if (GpcBuilderChecks.P2Path && !h.ExpectP2Error(message)) h.Failures.Add($"A {type}: on the path of P2, no error \"{message}\"");
         var goo = outputs[0].FirstOrDefault();
         if (goo == null) { h.Failures.Add($"A {type}: no output for a refused value"); return null; }
         if ((bool)goo.GetType().GetProperty("HasAttachedGpc").GetValue(goo)) h.Failures.Add($"A {type}: a draft attached to a value the reader refuses");
@@ -103,21 +106,33 @@ internal static class GpcBuilderChecksARuns
         // Node (R62A-2, coordinator 6/11): a new node at a point (no ID, no groups): positive, negative and fractional coordinates, the origin,
         // large values; its output carries the draft into Node Restraints and Node Load.
         var made = One(h, "NodeComponent", (0, p));
-        One(h, "NodeComponent", (0, new Point3d(-12.5, 0.1, 1e-7)));
-        One(h, "NodeComponent", (0, Point3d.Origin));
-        One(h, "NodeComponent", (0, new Point3d(1.5e6, -2.25e6, 987654.321)));
+        var negative = One(h, "NodeComponent", (0, new Point3d(-12.5, 0.1, 1e-7)));
+        var origin = One(h, "NodeComponent", (0, Point3d.Origin));
+        var large = One(h, "NodeComponent", (0, new Point3d(1.5e6, -2.25e6, 987654.321)));
+        // R1 (explicit expected values, from the inputs): a new node at the point given, exactly (N-mm, the units of the drafts).
+        foreach (var (goo, at) in new[] { (made, p), (negative, new Point3d(-12.5, 0.1, 1e-7)), (origin, Point3d.Origin), (large, new Point3d(1.5e6, -2.25e6, 987654.321)) })
+        {
+            var position = ((LegacyNodeDraft)Gpc(goo)).Node.Position;
+            h.Expect(position.X == at.X && position.Y == at.Y && position.Z == at.Z, $"Node at {at}: the draft at ({position.X:R}, {position.Y:R}, {position.Z:R})");
+        }
         One(h, "NodeLoadComponent", (0, One(h, "NodeRestraintsComponent", (0, made), (1, new[] { true, true, true }))), (1, dead), (2, new Vector3d(0, 0, -1)));
 
         // Node Restraints: translations, partial lists, rotations, text values, a second restraint on a restrained node, after loads.
         One(h, "NodeRestraintsComponent", (0, node), (1, new[] { false, true }), (2, new[] { true, false, true }));
         One(h, "NodeRestraintsComponent", (0, node), (1, new[] { "true", "False", "TRUE" }), (2, new[] { "false" }));
-        One(h, "NodeRestraintsComponent", (0, node), (2, new[] { true, true, true }));
+        var rotations = One(h, "NodeRestraintsComponent", (0, node), (2, new[] { true, true, true }));
         var twice = One(h, "NodeRestraintsComponent", (0, restrained), (1, new[] { false, false, true }), (2, new[] { true }));
-        One(h, "NodeRestraintsComponent", (0, two), (1, new[] { true, true, true }), (2, new[] { true, true, true }));
+        var all = One(h, "NodeRestraintsComponent", (0, two), (1, new[] { true, true, true }), (2, new[] { true, true, true }));
+        // R1 (explicit expected values, from the inputs): the restraint flags tx, ty, tz, rx, ry, rz of the full lists.
+        foreach (var (goo, flags, what) in new[] { (restrained, new[] { true, true, true, false, false, false }, "translations"), (rotations, new[] { false, false, false, true, true, true }, "rotations only"),
+            (all, new[] { true, true, true, true, true, true }, "every DOF, after loads") })
+            h.Expect(R2aGeneratorFixtures.Restraint((LegacyNodeDraft)Gpc(goo)).SequenceEqual(flags), $"Node Restraints, {what}: {string.Join(",", R2aGeneratorFixtures.Restraint((LegacyNodeDraft)Gpc(goo)))}");
 
         // Node Stiffness: both vectors, translations only, rotations only (the unset vector: zero springs, free DOFs), on a restrained node,
         // twice; no stiffness: the warning, no output.
         var spring = One(h, "NodeStiffnessComponent", (0, node), (1, new Vector3d(10, 20, 30)), (2, new Vector3d(1e9, 0, 3.5)));
+        h.Expect(R2aGeneratorFixtures.Stiffness((LegacyNodeDraft)Gpc(spring)).SequenceEqual(new[] { 10, 20, 30, 1e9, 0, 3.5 }),
+            "Node Stiffness (10, 20, 30), (1e9, 0, 3.5): " + string.Join(",", R2aGeneratorFixtures.Stiffness((LegacyNodeDraft)Gpc(spring)))); // R1: the springs given
         One(h, "NodeStiffnessComponent", (0, node), (1, new Vector3d(0, 0, 5)));
         One(h, "NodeStiffnessComponent", (0, node), (2, new Vector3d(7, 8.25, 9e-3)));
         One(h, "NodeStiffnessComponent", (0, twice), (1, new Vector3d(1, 2, 3)));

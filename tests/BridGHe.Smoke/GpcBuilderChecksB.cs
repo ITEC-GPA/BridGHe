@@ -19,10 +19,22 @@ internal static class GpcBuilderChecksB
     internal static void Regression()
     {
         using var h = new GpcBuilderChecks("B");
+        // The components whose load is a load assignment of the beam (the gradient and the pre-load are other assignments, not counted here).
+        var beamLoads = new HashSet<string>(StringComparer.Ordinal) { "BeamDistributedLoadComponent", "BeamDistributedMomentComponent", "BeamPointLoadComponent", "BeamPointMomentComponent" };
+        static int Loads(object goo) { try { return goo is IGH_Goo g && g.GetType().GetProperty("Gpc")?.GetValue(g) is BridGHe.Common.Gpc.Legacy.LegacyBeamDraft d ? d.Beam.Assignments.Loads.Count : -1; } catch (Exception) { return -1; } }
         List<IGH_Goo>[] Run(string type, int[] attached, params (int, object)[] inputs)
         {
             PerComponent.TryGetValue(type, out int n); PerComponent[type] = n + 1;
-            return h.Run(type, attached, inputs);
+            var outputs = h.Run(type, attached, inputs);
+            // R1 (explicit, from the inputs): a beam load component gives the beam with one load more than the beam it takes (a point force or moment);
+            // a distributed load or moment adds the pieces of its schema (one or more: the patch between a and b, and the parts before and after it).
+            if (beamLoads.Contains(type) && inputs.FirstOrDefault(i => i.Item1 == 0).Item2 is IGH_Goo beam && Loads(beam) >= 0 && outputs[0].FirstOrDefault() is { } loaded && Loads(loaded) >= 0)
+            {
+                bool distributed = type is "BeamDistributedLoadComponent" or "BeamDistributedMomentComponent";
+                h.Expect(distributed ? Loads(loaded) >= Loads(beam) + 1 && Loads(loaded) <= Loads(beam) + 3 : Loads(loaded) == Loads(beam) + 1,
+                    $"{type}: {Loads(beam)} loads in, {Loads(loaded)} out ({(distributed ? "one to three pieces" : "one")} more expected)");
+            }
+            return outputs;
         }
         IGH_Goo Out(List<IGH_Goo>[] o, int i = 0) => GpcBuilderChecks.Output(o, i);
         var one = new[] { 0 }; var none = new int[0];
@@ -54,6 +66,12 @@ internal static class GpcBuilderChecksB
         Run("BeamComponent", one, (0, vertical), (1, truss), (4, new R.Vector3d(25, 0, 0)));
         Run("BeamComponent", one, (0, axisX), (1, gProperty), (3, 0.0), (4, new R.Vector3d(0, 0, 0)));
         var bases = new[] { b0, b1, b2, b3 };
+        // R1 (explicit expected values, from the inputs): a beam on the ends of its line, exactly (N-mm, the units of the drafts), and its BridGHe angle.
+        static BridGHe.Common.Gpc.Legacy.LegacyBeamDraft Draft(IGH_Goo g) => (BridGHe.Common.Gpc.Legacy.LegacyBeamDraft)g.GetType().GetProperty("Gpc").GetValue(g);
+        static bool At(GPC.Geometry.Point3d p, R.Point3d q) => p.X == q.X && p.Y == q.Y && p.Z == q.Z;
+        foreach (var (beam, line, angle) in new[] { (b0, axisX, 0.0), (b1, skew, 17.5), (b2, skew, -40.0), (b3, vertical, 90.0) })
+            h.Expect(At(Draft(beam).Beam.StartPoint, line.PointAtStart) && At(Draft(beam).Beam.EndPoint, line.PointAtEnd) && Draft(beam).AngleDeg == angle,
+                $"Beam on {line.PointAtStart} - {line.PointAtEnd}, angle {angle}: the draft at {Draft(beam).Beam.StartPoint} - {Draft(beam).Beam.EndPoint}, angle {Draft(beam).AngleDeg:R}");
 
         // Attributes on every base beam (axes, offsets and properties differ), then chained.
         foreach (var b in bases)
@@ -73,6 +91,7 @@ internal static class GpcBuilderChecksB
         Run("BeamStringGroupComponent", one, (0, new[] { b0, b1, b2 }), (1, 7));
         // Super element: a second name (two names at list level), the same name twice; on a plate (refused by the reader and the builder).
         var se = Out(Run("SuperElementComponent", one, (0, b1), (1, "SE-A")));
+        h.Expect(Draft(se).Bridge?.SuperElement == "SE-A", "Super Element «SE-A»: the bridge data of the draft name " + (Draft(se).Bridge?.SuperElement ?? "none")); // R1
         Run("SuperElementComponent", one, (0, se), (1, "SE-B"));
         Run("SuperElementComponent", one, (0, se), (1, "SE-A"));
         var plate = h.Goo("GH_Plate", new PlateModel("", new[] { new R.Point3d(0, 0, 0), new R.Point3d(1000, 0, 0), new R.Point3d(1000, 1000, 0) },
@@ -113,6 +132,8 @@ internal static class GpcBuilderChecksB
             foreach (var b in new[] { b1, b3 })
                 Run("BeamDistributedLoadComponent", one, new (int, object)[] { (0, b), (1, live), (2, 1), (3, gcs), (4, dir) }.Concat(Values(1)).ToArray());
         Run("BeamDistributedLoadComponent", none, new (int, object)[] { (0, b1), (1, dead), (2, 0), (3, ocs), (4, 2) }.Concat(Values(0)).ToArray());
+        // R1: on the path of P2 the refusal of the builder (the reader's message) is the error of the component, no output (decision 2 of passo 73).
+        if (GpcBuilderChecks.P2Path && !h.ExpectP2Error("LegacyNonGlobalLoadCoordinateSystemWasIgnored")) h.Failures.Add("B BeamDistributedLoadComponent: on the path of P2, no error for the load in a non-global system");
         // Point loads and moments (a coordinate system given is ignored: the principal axes), at the ends and inside.
         foreach (var b in bases)
             foreach (var a in new[] { 0.0, 0.37, 0.999 })
