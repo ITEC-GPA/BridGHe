@@ -37,7 +37,9 @@ using Grasshopper.Kernel.Types;
 internal static class GpcOnlyReplay
 {
     /// <summary>R1: the transitional comparison with the copy of the FEM-backed inputs (on unless <c>BRIDGHE_R1_TRANSITIONAL=0</c>).</summary>
-    private static bool Transitional => Environment.GetEnvironmentVariable("BRIDGHE_R1_TRANSITIONAL") != "0";
+    /// <summary>P2R (T3, 12/11): the FEM-backed copy is retired; its oracle is the replay capture of the base of P2 (P2rCapture.Replays). Kept false for the
+    /// native rehearsal only (its reported differences against the definition).</summary>
+    private static bool Transitional => false;
 
     /// <summary>R1: the counts of the oracles of a regression (the PASS line).</summary>
     private sealed class Oracles
@@ -48,9 +50,18 @@ internal static class GpcOnlyReplay
         internal string Summary => $"{Expected} in-memory instances against their declared expectation ({GpcBuilt} with inputs built without FEM), {Mapped} definition instances "
             + $"mapped to the R6.0 capture scan ({Located} items at Build Model inputs, {Contents} data by content, {Converted} Build Model outputs; "
             + string.Join(", ", Outcomes.Select(p => p.Key + " " + p.Value)) + $"; {Unmapped} definition instances with no output in the capture), "
-            + $"{Transitional} instances also against the FEM-backed copy (TRANSITIONAL)";
+            + $"; {Transitional} instances against the output of a definition (native rehearsal)";
     }
     private static Oracles oracles = new Oracles();
+
+    /// <summary>P2R step 0 (U3): the file of the replay capture of the regression running (<c>gpc-only-&lt;lane&gt;</c>), null outside a full
+    /// regression (a subset of types or files, the dry chain, the native rehearsal).</summary>
+    private static string captureLane;
+
+    /// <summary>P2R step 0: the captured value of a GPC-only replay: the number of output lines, then the short SHA-256 of its messages, of its
+    /// outputs modulo GUIDs (the texts the FEM-backed copy was compared with) and of its raw outputs (the GPC data with their identities).</summary>
+    private static string CaptureValue(Run r) => r.Outputs.Count + " " + P2rCapture.Sha(string.Join("\n", r.Messages)) + " " + P2rCapture.Sha(string.Join("\n", r.Outputs))
+        + " " + P2rCapture.Sha(string.Join("\n", r.Raw));
 
     /// <summary>R1: the label of the definition being replayed (the file key of the capture), null for the in-memory cases.</summary>
     private static string definition;
@@ -413,19 +424,17 @@ internal static class GpcOnlyReplay
         if (!gpc.Raw.SequenceEqual(again.Raw))
         {
             var first = gpc.Raw.Zip(again.Raw).FirstOrDefault(p => p.First != p.Second);
-            // R1 (PRODUCT DEFECT reported, not failing; P2 decides): the GH GUID of a GPC-only composite beam (CompositeBeamComponent.Identity, «no new GUID per
-            // solve») differs between two solves of the same inputs; every other line is the same. Not from the archive of the composite definition (the same
-            // bytes written twice, a copy shares the definition: ModelsChecks). Declared only when the GH GUID of the composite beam is the one line that differs.
-            bool onlyGuid = c.GetType().Name == "CompositeBeamComponent" && gpc.Raw.Count == again.Raw.Count
-                && gpc.Raw.Zip(again.Raw).Where(p => p.First != p.Second).All(p => p.First.Split('\n').Zip(p.Second.Split('\n')).Where(l => l.First != l.Second).All(l => l.First.StartsWith("guid ", StringComparison.Ordinal)));
-            if (onlyGuid) { compositeGuidDefects.Add(where); oracles.Count("Composite Beam GUID not deterministic (product defect, reported)"); }
-            else failures.Add($"{where}: two GPC-only copies give other GUIDs (identities not deterministic); first:" + Environment.NewLine + Differences(first.First ?? "<none>", first.Second ?? "<none>"));
+            // P2R (T3): the GH GUID of a GPC-only composite beam comes from its draft since P2K (P7, CompositeBeamComponent.cs:88,100-109): the former
+            // exception of R1 (a non-deterministic composite beam GUID reported, not failing) is gone, every difference fails.
+            failures.Add($"{where}: two GPC-only copies give other GUIDs (identities not deterministic); first:" + Environment.NewLine + Differences(first.First ?? "<none>", first.Second ?? "<none>"));
         }
+        // P2R step 0 (U3): the GPC-only replay against the capture of the base of P2 (written once, P2rCapture.Replays).
+        if (captureLane != null && reference == null) P2rCapture.Replays.Datum(captureLane, where, CaptureValue(gpc));
         // R1: the references without the FEM model.
         if (expect != null) { expect.Check(where, gpc, failures); oracles.Expected++; }
         else if (definition != null) Capture(c, where, gpc, failures);
         // TRANSITIONAL (until P2, P2 decides): the copy with the FEM-backed inputs of today.
-        if (!Transitional && reference == null) return;
+        if (reference == null) return; // P2R (T3): the FEM-backed copy retired, the capture above is the oracle
         try { fem = reference ?? Solve(c, g => g.Duplicate(), kinds); }
         catch (Exception ex) { failures.Add(where + ": the copy with the inputs of today fails: " + ex.GetBaseException().Message + Frame(ex)); return; }
         oracles.Transitional++;
@@ -1056,7 +1065,8 @@ internal static class GpcOnlyReplay
         Check(femRows == gpcRows && femRows.Contains("ULS:G=1.35,Q=1.5"), $"R65-C2-05: rows {femRows} -> {gpcRows}");
         bool gpcOnly = (bool)rowsType.GetMethod("GpcOnly", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { ListOf(Only(combo)), femCases, records });
         bool femOnly = (bool)rowsType.GetMethod("GpcOnly", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { ListOf(combo), femCases, records });
-        Check(gpcOnly && !femOnly, "R65-C2-05: the form makes GPC-only combinations for GPC-only inputs only");
+        // P2R (T3): the combination of Load Combination has no FEM value since P2K/P2D, so both lists are GPC-only; before, the FEM-backed list was not.
+        Check(gpcOnly && femOnly == (Prop(combo, "Value") == null), "R65-C2-05: the form makes GPC-only combinations for GPC-only inputs only");
         var columns = (string[])rowsType.GetMethod("Columns", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { true, femCases, records });
         var cells = new List<(string, IReadOnlyList<object>)> { ("SLS", new object[] { 1.0, 0.6 }) };
         var make = rowsType.GetMethod("Combinations", BindingFlags.NonPublic | BindingFlags.Static);
@@ -1116,7 +1126,9 @@ internal static class GpcOnlyReplay
         {
             using var doc = new GH_Document();
             var c = BridgeSegmentExcelTests.Add(doc, "BridgeMemberAssignmentComponent");
-            var cutoff = Make("Fem.GH_BeamProperty", new BeamPropertyModel("Bar") { Name = "Bar", Material = (MaterialModel)Prop(steel, "Value"), PropertyType = BeamPropertyType.Beam,
+            // P2R (T3): the steel of Material Steel has no FEM value since P2K/P2D: the FEM value the reader refuses (a 0.3.0-like property on an
+            // Omega section, a FEM input of this case until P2-taglio) takes a FEM material of its own, so the refusal is the section's again.
+            var cutoff = Make("Fem.GH_BeamProperty", new BeamPropertyModel("Bar") { Name = "Bar", Material = (MaterialModel)Prop(steel, "Value") ?? new MaterialModel("S355") { Name = "S355", Modulus = 210000, PoissonRatio = 0.3, Density = 7.85e-9 }, PropertyType = BeamPropertyType.Beam,
                 Section = new SectionModel { SectionType = SectionModel.SectionTypes.Omega, B = 100, D = 200, T1 = 8, T2 = 8 } });
             var geometry = Make("BridgeGeometryGoo", BridGHe.Common.Geometry.SimpleBridgeBuilder.Build(SimpleBridgeTests.Input()));
             foreach (var (k, v) in new (int, object[])[] { (0, new object[] { geometry }), (1, new object[] { Only(girder), cutoff }), (2, new object[] { 0, -1 }) })
@@ -1280,7 +1292,9 @@ internal static class GpcOnlyReplay
         {
             var (stateType, _, stateInputs) = StateOverrideCases().First();
             stated = ProduceAll(stateType, stateInputs).First(g => ((BridGHe.Common.Gpc.Legacy.LegacyBeamDraft)Prop(g, "Gpc")).Bridge?.SectionState != null);
-            former = Make("Fem.GH_BeamProperty", ((BeamModel)Prop(stated, "Value")).BeamProperty);
+            // P2R (T3): the property of the stated beam from Get Beam Property on its GPC datum (the GH types have no FEM value since P2K/P2D;
+            // before: the FEM BeamProperty of the same beam).
+            former = Produce("GetBeamPropertyComponent", new Dictionary<int, object> { [0] = stated });
         }
         finally { gpcInputs = keep; }
         var other = Produce("BeamPropertyComponent", new Dictionary<int, object> { [0] = "Other", [1] = 5, [2] = section, [3] = steel });
@@ -1519,7 +1533,7 @@ internal static class GpcOnlyReplay
                 return run;
             }
             Run fem = null, gpc, again;
-            try { gpc = Once(true); again = Once(true); if (Transitional) fem = Once(false); }
+            try { gpc = Once(true); again = Once(true); } // P2R (T3): the FEM-backed parameter retired (oracle: the replay capture)
             catch (Exception ex) { failures.Add(where + ": " + ex.GetBaseException().Message); continue; }
             var (n, items) = byType.TryGetValue(type, out var v) ? v : (0, 0);
             byType[type] = (n + 1, items + gpc.Outputs.Count);
@@ -1528,6 +1542,7 @@ internal static class GpcOnlyReplay
             if (gpc.Messages.Any(m => m.StartsWith("Error: ", StringComparison.Ordinal))) failures.Add(where + ": an error by the GPC data alone: " + string.Join(" / ", gpc.Messages));
             if (gpc.FemOutputs != 0) failures.Add($"{where}: {gpc.FemOutputs} data with a FEM value from GPC-only data");
             if (!gpc.Raw.SequenceEqual(again.Raw)) failures.Add($"{where}: two GPC-only copies give other GUIDs");
+            if (captureLane != null) P2rCapture.Replays.Datum(captureLane, where, CaptureValue(gpc)); // P2R step 0
             oracles.Expected++;
             count++;
             if (fem == null) continue;
@@ -2835,6 +2850,9 @@ internal static class GpcOnlyReplay
         else BridgeExampleMigration.Initialize();
         Init(lane);
         modelsLane = lane == "models";
+        // P2R step 0: the replay capture only for a full regression (no subset of types or files, not the dry chain).
+        captureLane = selected == null && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BRIDGHE_GPC_ONLY_FILES"))
+            && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BRIDGHE_R1_CHAIN_DRY")) ? "gpc-only-" + lane : null;
         // R1 (diagnosis only, not in the gate): BRIDGHE_R1_CHAIN_DRY=<definition relative to example> wires and solves the chain of the rehearsal on that
         // definition without any analysis solved (the analyses locked in the definition and in the chain: no Straus7), to check the chain without natives.
         if (modelsLane && Environment.GetEnvironmentVariable("BRIDGHE_R1_CHAIN_DRY") is { Length: > 0 } dry)
@@ -2913,14 +2931,15 @@ internal static class GpcOnlyReplay
         // R1: the oracles, and the in-memory cases with an input still taken from a FEM value (no GPC twin yet, P2 decides).
         Console.WriteLine($"GPC-ONLY {lane} ORACLES (R1): {oracles.Summary}");
         foreach (var f in femInputs) Console.WriteLine($"GPC-ONLY {lane} TRANSITIONAL input (a datum from a FEM value, no GPC twin yet): {f}");
-        foreach (var f in compositeGuidDefects) Console.WriteLine($"GPC-ONLY {lane} PRODUCT DEFECT (reported, R1): the GH GUID of the GPC-only composite beam changes between two solves of the same inputs (CompositeBeamComponent.Identity): {f}");
+        // P2R step 0: the replay capture closed (compare: every captured replay seen with the same value).
+        if (captureLane != null) { failures.AddRange(P2rCapture.Replays.Close(captureLane)); captureLane = null; }
         foreach (var f in failures.Take(60)) Console.WriteLine("  " + f);
         // P2Y: every failure in a file named by BRIDGHE_GPC_ONLY_REPORT (diagnosis of a lane in progress; the console keeps the first 60).
         if (Environment.GetEnvironmentVariable("BRIDGHE_GPC_ONLY_REPORT") is { Length: > 0 } report) File.WriteAllLines(report, failures);
         if (failures.Count != 0) throw new Exception($"GPC-ONLY {lane} FAIL: {failures.Count} differences or failures (first: {failures[0]})");
         Console.WriteLine($"GPC-ONLY {lane} PASS: {files} definitions and {cases} in-memory cases, {byType.Sum(p => p.Value.Instances)} instances of {byType.Count} components " +
             "replayed with GPC-only inputs: no FEM value, deterministic identities, the R6.0 capture (definitions) and the declared expectations (in memory)"
-            + (Transitional ? "; TRANSITIONAL: the same outputs modulo GUIDs and the same messages as the copy with the FEM-backed inputs" : "; the FEM-backed copy not run (BRIDGHE_R1_TRANSITIONAL=0)"));
+            + "; the replay capture of the base of P2 (P2R, U3: messages, outputs modulo GUIDs, raw outputs), the FEM-backed copy retired");
         return 0;
     }
 

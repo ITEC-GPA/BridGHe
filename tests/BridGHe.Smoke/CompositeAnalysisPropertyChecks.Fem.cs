@@ -99,21 +99,5 @@ internal static partial class CompositeAnalysisPropertyChecks
         }
         return count;
     }
-
-    internal static void Require(GH_Document doc, string label)
-    {
-        int properties = 0, variants = 0, strains = 0;
-        foreach (var (p, definition) in Properties(doc))
-        {
-            // R6.6 native capture: the FEM values by the fingerprint of the definition (the GPC datum of the property after R6.5).
-            string key = "composite|" + definition.Fingerprint() + "|";
-            variants += CompareFem(p, definition, label, (what, fem, gpc) => NativeParityCapture.Datum(label, key + what, NativeParityCapture.Value(fem), NativeParityCapture.Value(gpc))); properties++;
-            if ((p.RebarMaterial?.ReinforcementUltimateStrain ?? 0.1) != 0.1) strains++;
-        }
-        if (properties == 0) throw new Exception($"COMPOSITE ANALYSIS PROPERTY FAIL ({label}): no composite property in the outputs");
-        Console.WriteLine($"COMPOSITE ANALYSIS PROPERTY PASS ({label}): {properties} composite properties, {variants} values or variants of the definition " +
-            $"equal bit for bit to the FEM property (analysis section, steel torsion, homogenised values for every choice, homogenised property uncracked " +
-            $"and cracked, self tension, shrinkage actions, analysis steel, at n0, n∞, n,sh, 1 and 15.3); {strains} with a rebar ultimate strain other than 0.1 (not in the homogenised values or the stresses; {EchoedRebarDifferences} self-tension results echo the rebar of the definition).");
-    }
 }
 #endif

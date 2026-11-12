@@ -494,6 +494,8 @@ internal static class GpcDraftCapture
                 return;
             }
             seen.Add(key);
+            // P2R (U3, 12/11): an entry retired by name (P2rRetired.CaptureSources) is not compared, seen or not.
+            if (P2rRetired.CaptureSources(key) is string retiredBecause) { Count("retired"); declaredReasons[retiredBecause] = declaredReasons.GetValueOrDefault(retiredBecause) + 1; return; }
             if (!reference.TryGetValue(key, out var e))
             {
                 // A content key that a declared digest moved: compared with the captured entry of the former key.
@@ -502,9 +504,6 @@ internal static class GpcDraftCapture
                     seen.Add(former);
                     if (Declared(Inflate(reference[former].Text), text, out string because, former)) { Count("declared"); Declare(former + " -> " + key, because); return; }
                 }
-                // P2S (7/11): an example remade in 0.4.0 form; its transitional FEM chunk (FemmR6, until R6.5) is read as a payload: not captured.
-                if (ExampleRemake04.Files.Any(f => key.Contains(Path.GetFileName(f), StringComparison.OrdinalIgnoreCase)))
-                { Count("declared"); Declare(key, "example remade in 0.4.0 form (P2S, 7/11): its transitional FEM chunk, not in the capture"); return; }
                 Count("new"); if (failures.Count < 30) failures.Add(key + ": not in the capture (" + datum.GetType().Name + ")"); Moved("new", key, datum, text, null); return;
             }
             if (Sha(text) == e.Sha) { Count("equal"); return; }
@@ -531,11 +530,11 @@ internal static class GpcDraftCapture
                 Console.WriteLine($"CAPTURE WRITE {source}: {entries} entries ({string.Join(", ", counts.OrderBy(c => c.Key, StringComparer.Ordinal).Select(c => c.Key + " " + c.Value))}), {bytes / 1048576.0:0.0} MB in {folder}");
                 return;
             }
-            // P2S (7/11, coordinator decision 2 on passo 66): the examples remade in 0.4.0 form (ExampleRemake04) keep no 0.3.0 payload: their
-            // captured entries are retired, declared by name (the capture is not regenerated).
-            static bool Remade(string k) => ExampleRemake04.Files.Any(f => k.Contains(Path.GetFileName(f), StringComparison.OrdinalIgnoreCase));
+            // P2R (U3, 12/11; before, P2S of 7/11 for the five examples of ExampleRemake04): the entries retired by name (P2rRetired.CaptureSources:
+            // the memory sources of the corpus and the 7 examples remade after P2) are not required (the capture is not regenerated).
+            static bool Remade(string k) => P2rRetired.CaptureSources(k) != null;
             int retired = reference.Keys.Count(k => !seen.Contains(k) && Remade(k));
-            if (retired > 0) { declaredReasons["example remade in 0.4.0 form (P2S, 7/11): its 0.3.0 entries retired"] = retired; counts["declared"] = (counts.TryGetValue("declared", out int dc) ? dc : 0) + retired; }
+            if (retired > 0) { declaredReasons["retired by name, not recorded now (P2R, U3 12/11)"] = retired; counts["retired"] = (counts.TryGetValue("retired", out int dc) ? dc : 0) + retired; }
             int missing = reference.Keys.Count(k => !seen.Contains(k) && !Remade(k));
             foreach (var k in reference.Keys.Where(k => !seen.Contains(k) && !Remade(k)).Take(Math.Max(0, 30 - failures.Count))) failures.Add(k + ": captured, not recorded now");
             foreach (var k in reference.Keys.Where(k => !seen.Contains(k) && !Remade(k))) Moved("missing", k, null, null, "captured, not recorded now");

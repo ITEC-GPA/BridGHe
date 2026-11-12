@@ -16,9 +16,9 @@ using GPC.Checkers.CompositeBridge;
 /// (Output Paths redirected to artifacts/phase-examples-native, the file never saved), then Build BridGHe Model and Super Element Check. The
 /// actions of these examples come from Build Model outputs rebuilt from the beams of Super Element Filter on the analyses: Build BridGHe Model
 /// must now build the GPC bridge model from them (<c>GH_Model.LinkedGpcResults</c>) and Super Element Check run on it (D3). The checks are
-/// compared with the former path («fasi BridGHe», <see cref="FemPhasesReference"/>) within the C5 tolerances, no status changed.
-/// <para>R6.6 lane R4b: the comparison with the former path is <b>transitional</b> (P2 retires it with <see cref="FemPhasesReference"/>): no capture
-/// holds the Super Element Check results of these definitions, so it stays until one does; the diagnostics of BRIDGHE_PHASE_DEBUG read GPC data
+/// compared bit for bit with the D3 capture written once on the base of P2 (P2R step 0, user decision U3: <see cref="P2rCapture.D3"/>, one file
+/// per definition; before P2R with the former path «fasi BridGHe» of FemPhasesReference, within the C5 tolerances).
+/// <para>R6.6 lane R4b: the diagnostics of BRIDGHE_PHASE_DEBUG read GPC data
 /// only. <c>BRIDGHE_PHASE_INSPECT=1</c> (non-native) lists the internalised data of each definition with a FEM value and what the reading of P2
 /// (<see cref="R4aFixtures.GpcOnly"/>) makes of them, solving nothing. <c>BRIDGHE_PHASE_GPC_ONLY=1</c> (native) runs each definition a second time
 /// read as P2 reads it (every internalised datum with a FEM value given by its GPC datum alone: the 11–19 definitions internalise beam and
@@ -40,7 +40,7 @@ internal static class NativePhaseExamples
         BridgeExampleMigration.Initialize();
         var files = selection == null || selection == "all" ? Current : Current.Where(f => f.StartsWith(selection, StringComparison.Ordinal)).ToArray();
         if (files.Length == 0) throw new ArgumentException("No phase example matches " + selection);
-        var rows = new List<string>(); var gpcOnlyFailures = new List<string>();
+        var rows = new List<string>(); var gpcOnlyFailures = new List<string>(); var d3Failures = new List<string>();
         bool inspect = Environment.GetEnvironmentVariable("BRIDGHE_PHASE_INSPECT") is "1" or "2";
         bool gpcOnly = Environment.GetEnvironmentVariable("BRIDGHE_PHASE_GPC_ONLY") == "1";
         foreach (var relative in files)
@@ -56,6 +56,8 @@ internal static class NativePhaseExamples
                 continue;
             }
             var (analyses, checks, reference) = Pass(path, label, label, false, rows);
+            // P2R step 0: the D3 capture of the definition closed (compare: every captured result seen, bit for bit); listed, failing at the end.
+            foreach (var d in P2rCapture.D3.Close(label)) { d3Failures.Add(d); Console.WriteLine("PHASE EXAMPLE D3 " + d); }
             // R6.6 R4b (BRIDGHE_PHASE_GPC_ONLY=1): the same definition read as P2 reads it, solved again natively, its checks against the first run.
             if (gpcOnly)
             {
@@ -69,6 +71,7 @@ internal static class NativePhaseExamples
         if (inspect) { foreach (var row in rows) Console.WriteLine("PHASE EXAMPLE INSPECT " + row); Console.WriteLine($"PHASE EXAMPLES INSPECT: {files.Length} definitions, nothing solved."); return 0; }
         foreach (var row in rows) Console.WriteLine("PHASE EXAMPLE DIFFERENCES " + row);
         foreach (var f in gpcOnlyFailures) Console.WriteLine("PHASE EXAMPLE GPC-ONLY FAILED " + f);
+        if (d3Failures.Count > 0) { Console.WriteLine($"PHASE EXAMPLES D3 CAPTURE FAIL: {d3Failures.Count} differences against {P2rCapture.D3.Setting.Folder}"); return 1; }
         if (gpcOnlyFailures.Count > 0) { Console.WriteLine($"PHASE EXAMPLES GPC-ONLY FAIL: {gpcOnlyFailures.Count} of {files.Length} definitions read as P2 reads them (the first runs passed)"); return 1; }
         Console.WriteLine($"PHASE EXAMPLES NATIVE PASS: {files.Length} definitions{(gpcOnly ? ", each also read as P2 reads it" : "")}.");
         return 0;
@@ -147,9 +150,16 @@ internal static class NativePhaseExamples
             foreach (var check in checks)
             {
                 if (gpcOnly) continue;
-                // TRANSITIONAL (P2 retires it with FemPhasesReference): the former path on the same inputs; no capture holds these results.
-                var c = FemPhasesReference.Compare(check, label + " " + check.NickName);
-                rows.Add($"{label} {check.NickName}: {c.Results} results, {c.Identical} identical, max |Δσ| {c.MaxStress:G3} MPa, |Δu| {c.MaxUtilization:G3}, |Δratio| {c.MaxRatio:G3}, {c.Statuses} status changes");
+                // P2R (step 0, user decision U3, 12/11): the D3 results against the capture written once on the base of P2 (P2rCapture.D3), bit for bit:
+                // the former path («fasi BridGHe», FemPhasesReference) needed the FEM merged model, which Build BridGHe Model no longer gives (P2K/P2D).
+                var tree = check.Params.Output[0].VolatileData; int count = 0;
+                for (int p = 0; p < tree.PathCount; p++)
+                {
+                    var branch = tree.get_Branch(p).Cast<Grasshopper.Kernel.Types.IGH_Goo>().Select(g => (BridgeStressResult)g.ScriptVariable()).ToArray();
+                    for (int k = 0; k < branch.Length; k++, count++) P2rCapture.D3.Datum(label, $"{check.NickName} {tree.get_Path(p)}|{k}", D3Value(branch[k]));
+                }
+                P2rCapture.D3.Datum(label, check.NickName + "|branches", tree.PathCount + " " + count);
+                rows.Add($"{label} {check.NickName}: {tree.PathCount} branches, {count} section results recorded against the D3 capture ({P2rCapture.D3.Setting.Mode})");
             }
             var results = new Dictionary<string, BridgeStressResult[]>(StringComparer.Ordinal);
             foreach (var check in checks)
@@ -160,6 +170,12 @@ internal static class NativePhaseExamples
             }
             return (analyses.Length, checks.Length, results);
     }
+
+    /// <summary>P2R step 0: the captured value of one D3 section result: the bits of the stresses of points 5 and 8 and of the utilization of the
+    /// stage, then the short SHA-256 of every check of the stage (name, status, bits of the ratio; NaN for none), in order.</summary>
+    private static string D3Value(BridgeStressResult r) =>
+        $"{P2rCapture.Bits(r.Point5_SteelSigma)},{P2rCapture.Bits(r.Point8_SteelSigma)},{P2rCapture.Bits(r.Stage.MaxUtilization)}|"
+        + P2rCapture.Sha(string.Join(";", BridgeGpc.Checks(r.Stage).Select(c => c.Name + ":" + c.Status + ":" + P2rCapture.Bits(c.Ratio ?? double.NaN))));
 
     /// <summary>R6.6 R4b: the section results of the run on the definition read as P2 reads it against the first run (same branches and counts; the
     /// stresses of points 5 and 8, the utilization and every check with the tolerances of the C5 comparison, no status changed).</summary>

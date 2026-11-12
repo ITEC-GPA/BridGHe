@@ -243,11 +243,10 @@ internal static class NativeModularBridgeTests
         var reportComponent=doc.Objects.OfType<GH_Component>().Single(c=>c.GetType().Name=="BridgeReportComponent");
         if(Input(reportComponent,"Results").VolatileDataCount!=details.Sum(c=>Output(c,"Section result").VolatileDataCount))throw new Exception("Incomplete report result input.");
         string errors=Errors(doc);if(errors.Length>0)throw new Exception("Saved graph still has errors:\n"+errors);
-        // TRANSITIONAL (other lanes, P2 decides): their parity checks on the FEM path of the definition, the sources of the native capture.
-        C5WorkflowComparison.RequireGpcChecks(mergedGoo,Values<ModelModel>(Output(merge,"Model")).Single(),checks,true,"99");
-        GpcMergeCheck.Require(merge,"99");
-        GpcBridgeComparison.RequireComponent(merge,"99");
-        GpcBridgeComparison.RequireGpcLinks(doc,"99"); BuildModelScan.Print(doc,"99"); GpcInputComparison.RequireComponents(doc,"99"); BarLayoutMeasurement.Report(doc,"99"); CompositeAnalysisPropertyChecks.Require(doc,"99"); GpcStateOverrideChecks.MeasureModelAreas(doc,"99");
+        // P2R (T2/R5, 12/11): the sources of the native capture on GPC data alone, against the frozen capture (see the 50 runner); retired with the
+        // FEM merged model: GpcMergeCheck.Require, GpcBridgeComparison.RequireComponent, GpcInputComparison.RequireComponents, GpcStateOverrideChecks.MeasureModelAreas.
+        C5WorkflowComparison.RequireGpcChecks(mergedGoo,checks,true,"99");
+        GpcBridgeComparison.RequireGpcLinks(doc,"99"); BuildModelScan.Print(doc,"99"); BarLayoutMeasurement.Report(doc,"99"); CompositeAnalysisPropertyChecks.Require(doc,"99");
         foreach(var check in checks){ GpcSecForcesCheck.Require(check,"99"); GpcCompositeSectionChecks.RequireSuperElementCheck(check,"99"); } NativeParityCapture.Close();
         ResultFingerprint.Mark("modular checks, details and plots solved");ResultFingerprint.Write("modular-"+Path.GetFileNameWithoutExtension(source),doc);
         R3ConcreteExclusionCheck.Run(doc,checks[0],mergedGoo,"99");

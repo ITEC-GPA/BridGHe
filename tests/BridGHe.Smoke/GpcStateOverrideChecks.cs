@@ -218,9 +218,13 @@ internal static class GpcStateOverrideChecks
         int shapes = 0, sectionDifferences = 0; double maxRelative = 0;
         void Shape(GPC.Model.ElementProperties.ElasticBeamProperty p, double area, double tolerance, string label)
         {
-            double l = GpcSectionMass.LegacyArea(p.Section), g = p.Section.Area;
-            if (Math.Abs(l - area) > tolerance * area) throw new Exception($"GPC SECTION MASS FAIL ({label}): former-formula area {l:R} of the GPC section / analytical area {area:R}");
-            if (B(GpcSectionMass.MassPerLength(p)) != B(p.Material.Density * l)) throw new Exception($"GPC SECTION MASS FAIL ({label}): mass per length differs from density x area");
+            double l = GpcSectionMass.LegacyArea(p.Section), g = p.Section.Area, m = GpcSectionMass.MassPerLength(p), rho = p.Material.Density;
+            // P2R (task 39, T03): every value finite (a NaN area passed the comparison before), and the mass also against the density times the
+            // analytical area given to the method (an error common to the former-formula area and to the mass no longer passes both sides).
+            if (!double.IsFinite(l) || !double.IsFinite(g) || !double.IsFinite(m) || !double.IsFinite(rho) || !(Math.Abs(l - area) <= tolerance * area))
+                throw new Exception($"GPC SECTION MASS FAIL ({label}): former-formula area {l:R} of the GPC section / analytical area {area:R} (section area {g:R}, mass {m:R})");
+            if (B(m) != B(rho * l)) throw new Exception($"GPC SECTION MASS FAIL ({label}): mass per length differs from density x area");
+            if (!(Math.Abs(m - rho * area) <= tolerance * rho * area)) throw new Exception($"GPC SECTION MASS FAIL ({label}): mass per length {m:R} / density x analytical area {rho * area:R}");
             shapes++; if (B(l) != B(g)) { sectionDifferences++; maxRelative = Math.Max(maxRelative, Math.Abs(g - l) / Math.Abs(l)); }
         }
         foreach (var b in all) Shape((GPC.Model.ElementProperties.ElasticBeamProperty)b.Beam.BeamProperty, baseArea, 0, "simple bridge " + b.Beam.Name);

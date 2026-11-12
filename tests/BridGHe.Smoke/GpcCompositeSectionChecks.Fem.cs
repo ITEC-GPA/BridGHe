@@ -19,7 +19,7 @@ using Numbers = GpcCompositeDefinitions.Numbers;
 /// <item>the FEM constant-section rule (material instances) and the former definitions of composite beams from the FEM properties;</item>
 /// <item>the composite property GH type on a FEM property (<c>GH_CompositeBeamProperty.Definition</c>, until the part C of R6.2);</item>
 /// <item>the preview of a composite beam from its definitions = from its FEM properties (the preview class is FEM until R6.5);</item>
-/// <item>native (50, 99): <see cref="RequireSuperElementCheck"/>, on the FEM composite beams of a solved Super Element Check.</item>
+/// <item>(P2R: the native check of 50 and 99, <c>RequireSuperElementCheck</c>, is on GPC data alone in <c>GpcCompositeSectionChecks.Gpc.cs</c>.)</item>
 /// </list>
 /// </summary>
 internal static partial class GpcCompositeSectionChecks
@@ -117,49 +117,5 @@ internal static partial class GpcCompositeSectionChecks
         return stations.Select(s => constant ?? GpcCompositeSections.Definition(start, end, s, beamId)).ToArray();
     }
 
-    /// <summary>
-    /// Chain E (c), native (50, 99): for every composite beam of a solved Super Element Check, the definitions the component builds now (from
-    /// the definitions the beam carries: <c>GH_CompositeBeam.StartDefinition</c>/<c>EndDefinition</c>) against those of the former FEM path
-    /// (from the FEM properties of the beam, steel H named by the beam), at the stations of the check (the merged samples of the GPC bridge
-    /// model), with the options of the component: ratios, choices, rows, section (but the steel H name) and input of the H bridge engine with
-    /// and without bars, bit for bit. The fingerprints of the runs show that the name of the steel H does not reach the verdicts.
-    /// </summary>
-    internal static void RequireSuperElementCheck(Grasshopper.Kernel.GH_Component check, string label)
-    {
-        void Fail(string what) => throw new Exception("GPC COMPOSITE BEAM FAIL (" + label + " " + check.NickName + "): " + what);
-        var goo = check.Params.Input[0].VolatileData.AllData(true).Single();
-        var bridge = (GpcBridge)goo.GetType().GetProperty("GpcBridge").GetValue(goo) ?? throw new Exception("GPC COMPOSITE BEAM FAIL (" + label + "): no GPC bridge model");
-        bool Flag(int input) => check.Params.Input[input].VolatileData.AllData(true).OfType<Grasshopper.Kernel.Types.GH_Boolean>().Single().Value;
-        var options = new[] { new BridgeAnalysisOptions { Standard = BridgeStandard.Eurocode4, LimitState = BridgeLimitState.Rare, WebBuckling = Flag(2), TopFlangeBuckling = Flag(3), BottomFlangeBuckling = Flag(4) } };
-        int beams = 0, stations = 0, constant = 0, constantByValue = 0, shared = 0, compared = 0, nameLines = 0;
-        foreach (var g in check.Params.Input[1].VolatileData.AllData(true))
-        {
-            var fem = (CompositeBeamModel)((Grasshopper.Kernel.Types.IGH_Goo)g).ScriptVariable();
-            var start = (BridgeCompositeSectionDefinition)g.GetType().GetProperty("StartDefinition").GetValue(g);
-            var end = (BridgeCompositeSectionDefinition)g.GetType().GetProperty("EndDefinition").GetValue(g);
-            if (start == null || end == null) Fail($"beam {fem.BeamId} without its definitions");
-            var samples = bridge.SamplesOf(fem.BeamId) ?? throw new Exception($"GPC COMPOSITE BEAM FAIL ({label}): beam {fem.BeamId} not in the GPC bridge model");
-            var at = samples.Select(s => Math.Clamp(s.Sample.Station / fem.Length, 0, 1)).ToHashSet().OrderBy(v => v).ToArray();
-            bool femConstant = GpcCompositeSections.IsConstant(fem.StartBeamProperty, fem.EndBeamProperty), gpcConstant = GpcCompositeSections.IsConstant(start, end);
-            if (femConstant && !gpcConstant) Fail($"beam {fem.BeamId}: constant on the FEM properties, variable on the definitions");
-            if (femConstant) constant++; else if (gpcConstant) constantByValue++;
-            if (ReferenceEquals(start, end)) shared++;
-            var former = FormerBeamDefinitions(fem.StartBeamProperty, fem.EndBeamProperty, at, fem.BeamId);
-            var now = BeamDefinitions(start, end, at);
-            compared += CompareBeam($"{label} {fem.BeamId}", former, now, fem.BeamId, options);
-            // R6.6 native capture: the former definitions of the FEM path, station by station (the rule of the FEM constant section is FEM only).
-            string beamKey = $"definitions|{check.NickName}|{fem.BeamId}";
-            NativeParityCapture.Datum(label, beamKey + "|fem-constant", femConstant.ToString(), null);
-            string stationList = string.Join(",", at.Select(NativeParityCapture.Bits));
-            NativeParityCapture.Datum(label, beamKey + "|stations", stationList, stationList);
-            for (int k = 0; k < at.Length; k++)
-                NativeParityCapture.Datum(label, $"{beamKey}|{k}", Canonical(former[k], fem.BeamId, options), Canonical(now[k], ((SectionH)now[k].Section.SteelSections[0].Section.SectionShape).Name, options));
-            nameLines += SteelNameLines($"{label} {fem.BeamId}", former[0].Section, now[0].Section, fem.BeamId, ((SectionH)now[0].Section.SteelSections[0].Section.SectionShape).Name);
-            beams++; stations += at.Length;
-        }
-        if (beams == 0) Fail("no composite beams");
-        Console.WriteLine($"GPC COMPOSITE BEAM PASS ({label} {check.NickName}): {beams} composite beams, {stations} stations; constant {constant} (FEM rule), {constantByValue} more by value, {shared} with one definition at both ends; " +
-            $"{compared} inputs of the H bridge engine from the definitions of the beams equal bit for bit to the former FEM path (ratios, choices, rows and sections too; {nameLines} section values differ only by the name of the steel H).");
-    }
 }
 #endif

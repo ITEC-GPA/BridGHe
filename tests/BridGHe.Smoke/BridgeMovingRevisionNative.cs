@@ -267,15 +267,15 @@ internal static class BridgeMovingRevisionNative
         int combinations=bridge.Combinations.Count;
         ResultFingerprint.Mark("REV003 checks start");var checker=Find(doc,"SuperElementCheckComponent");Press(checker);BridgeSegmentExcelTests.Solve(doc,true);
         var rows=Values<BridgeStressResult>(Out(checker,"Tension Check"));Require(rows.Length>0,"No section checks: "+Errors(doc));int sectionChecks=rows.Length;rows=null;
-        // TRANSITIONAL (other lanes, P2 decides): their parity checks on the FEM path of the definition, the sources of the native capture.
-        C5WorkflowComparison.RequireGpcChecks(mergedGoo,Values<ModelModel>(Out(merge,"Model")).Single(),new[]{checker},false,"50");
-        GpcMergeCheck.Require(merge,"50");
-        GpcBridgeComparison.RequireComponent(merge,"50");
-        GpcBridgeComparison.RequireGpcLinks(doc,"50");
-        GpcInputComparison.RequireComponents(doc,"50"); BuildModelScan.Print(doc,"50");
+        // P2R (T2/R5, 12/11): the sources of the native capture on GPC data alone, against the frozen capture (its «fem-constant» keys retired by
+        // name, P2rRetired). Retired with the FEM merged model (their coverage: the capture, the result fingerprint, r2b-merge-forces,
+        // gpc-bridge-model, gpc-state-override): GpcMergeCheck.Require, GpcBridgeComparison.RequireComponent, GpcInputComparison.RequireComponents,
+        // GpcStateOverrideChecks.RequireComponents and MeasureModelAreas (FEM-vs-GPC parities).
+        C5WorkflowComparison.RequireGpcChecks(mergedGoo,new[]{checker},false,"50");
+        GpcBridgeComparison.RequireGpcLinks(doc,"50"); BuildModelScan.Print(doc,"50");
         GpcSecForcesCheck.Require(checker,"50"); GpcCompositeSectionChecks.RequireSuperElementCheck(checker,"50");
         GpcSecForcesCheck.RequireGirders(doc,"50");
-        GpcSecForcesCheck.RequireMomentDispatch(doc,"50"); GpcStateOverrideChecks.RequireComponents(doc,"50"); GpcStateOverrideChecks.MeasureModelAreas(doc,"50"); BarLayoutMeasurement.Report(doc,"50"); CompositeAnalysisPropertyChecks.Require(doc,"50"); NativeParityCapture.Close();
+        GpcSecForcesCheck.RequireMomentDispatch(doc,"50"); BarLayoutMeasurement.Report(doc,"50"); CompositeAnalysisPropertyChecks.Require(doc,"50"); NativeParityCapture.Close();
         bridge=null;mergedGoo=null;
         var details=doc.Objects.OfType<GH_Component>().Where(c=>c.GetType().Name=="BridgeDetailCheckComponent").ToArray();
         Require(details.Length==3&&details.All(c=>Out(c,"Section result").VolatileDataCount>0),"Missing detail checks: "+Errors(doc));

@@ -94,7 +94,7 @@ internal static class SharedPropertiesChecks
         var p1 = R2aDesignFixtures.Datum<BridGHe.Common.Gpc.Legacy.LegacyBeamProperty>(Solve(property));
         Set(property.Params.Input[2], genericGoo); var p2 = R2aDesignFixtures.Datum<BridGHe.Common.Gpc.Legacy.LegacyBeamProperty>(Solve(property));
         if (generic.Shapes.Single().Fill.Where((_, i) => i % 2 == 0).Min() != 100) throw new Exception("Beam Property moved the shapes of its input section.");
-        if (Math.Abs(R2aPropertyFixtures.Area(p2) - 192000) > 1e-6) throw new Exception("The GPC section of the property must be the region as given (area 192000), not " + R2aPropertyFixtures.Area(p2) + ".");
+        if (!(Math.Abs(R2aPropertyFixtures.Area(p2) - 192000) <= 1e-6)) throw /* P2R (task 39, T02): NaN fails */ new Exception("The GPC section of the property must be the region as given (area 192000), not " + R2aPropertyFixtures.Area(p2) + ".");
         upstream["property P1"] = p1; upstream["property P2"] = p2; before["property P1"] = Fingerprint(p1); before["property P2"] = Fingerprint(p2);
 
         // A beam from P1, then the downstream components that read or calculate its section.
@@ -116,7 +116,7 @@ internal static class SharedPropertiesChecks
         Menu("OnSetMirror", null); Menu("OnUnitsClick", new ToolStripMenuItem(nameof(ModelModel.ModelUnits.Knm)));
         // The parameter shows one stored section recipe, converted once (mm -> m) and mirrored (Left), a new recipe.
         var shown = sectionParam.VolatileData.AllData(true).Select(R2aDesignFixtures.Datum<BridGHe.Common.Gpc.Legacy.LegacySectionRecipe>).ToArray();
-        if (shown.Length != 1 || shown[0] == null || Math.Abs(shown[0].D - .6) > 1e-12 || Math.Abs(shown[0].T3 - .015) > 1e-12 || shown[0].Mirror != 2 || ReferenceEquals(shown[0], section))
+        if (shown.Length != 1 || shown[0] == null || !(Math.Abs(shown[0].D - .6) <= 1e-12) || !(Math.Abs(shown[0].T3 - .015) <= 1e-12) || /* P2R (task 39, T02): NaN fails */ shown[0].Mirror != 2 || ReferenceEquals(shown[0], section))
             throw new Exception("Section parameter after the Mirror and Units menus: " + string.Join(", ", shown.Select(x => x?.D + " " + x?.Mirror)) + " (expected 0.6 m, mirrored, a new section).");
 
         // A composite beam on the composite property, and edits of a duplicated beam (the builders of Beam Override and Super Element).

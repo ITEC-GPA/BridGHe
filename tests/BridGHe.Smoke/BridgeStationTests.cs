@@ -37,7 +37,8 @@ internal static class BridgeStationTests
 
     internal static void Near(double actual, double expected, string label)
     {
-        if (Math.Abs(actual - expected) > Math.Max(1e-8, Math.Abs(expected) * 1e-12))
+        // P2R (task 39, T01): a NaN or infinite value never passes (before, NaN made the comparison false and the check passed).
+        if (!double.IsFinite(actual) || !double.IsFinite(expected) || !(Math.Abs(actual - expected) <= Math.Max(1e-8, Math.Abs(expected) * 1e-12)))
             throw new Exception($"{label}: {actual:G17} != {expected:G17}");
     }
 

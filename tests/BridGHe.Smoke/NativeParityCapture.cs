@@ -187,13 +187,18 @@ internal static class NativeParityCapture
                 Console.WriteLine($"NATIVE CAPTURE WRITE {label}: {recorded.Count} keys ({equal} GPC values equal to the FEM ones, {femOnly} FEM-only data) in {path}");
                 return 0;
             }
-            int missing = captured.Keys.Count(k => !seen.Contains(k));
+            // P2R (U3, 12/11): the keys retired by name (P2rRetired.NativeKeys, the FEM-only «fem-constant» data) are not required; a retired key
+            // recorded again would be compared as any other.
+            bool Retired(string k) => !seen.Contains(k) && P2rRetired.NativeKeys.ContainsKey((label, k));
+            int retired = captured.Keys.Count(Retired), listedRetired = P2rRetired.NativeKeys.Keys.Count(k => k.Label == label);
+            if (retired != listedRetired) { Console.WriteLine($"NATIVE CAPTURE FAIL {label}: {retired} of the {listedRetired} keys retired by name are in the capture and not seen"); different++; }
+            int missing = captured.Keys.Count(k => !seen.Contains(k) && !Retired(k));
             int listed = SteelRule.Listed(label), unused = listed - ruled;
-            Console.WriteLine($"NATIVE CAPTURE COMPARE {label}: {seen.Count} of {captured.Count} keys seen, {equal} GPC values equal to the captured ones, {femOnly} FEM-only data, {missing} missing"
+            Console.WriteLine($"NATIVE CAPTURE COMPARE {label}: {seen.Count} of {captured.Count} keys seen, {retired} retired by name (P2R, {P2rRetired.Decision}), {equal} GPC values equal to the captured ones, {femOnly} FEM-only data, {missing} missing"
                 + (ruled == 0 ? "" : $", {ruled} by the declared rule «{SteelRule.Name}» ({listed} listed)") + (different == 0 ? "" : $", {different} different")
                 + (missing == 0 && different == 0 ? "" : " FAIL"));
             if (unused != 0) Console.WriteLine($"NATIVE CAPTURE NOTE {label}: {unused} keys of the rule «{SteelRule.Name}» not applied (the captured value came back or the key was not seen)");
-            if (missing != 0) foreach (var k in captured.Keys.Where(k => !seen.Contains(k)).Take(20)) Console.WriteLine("  missing: " + k);
+            if (missing != 0) foreach (var k in captured.Keys.Where(k => !seen.Contains(k) && !Retired(k)).Take(20)) Console.WriteLine("  missing: " + k);
             return missing + different;
         }
     }

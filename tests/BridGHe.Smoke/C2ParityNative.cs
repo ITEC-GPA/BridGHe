@@ -164,7 +164,7 @@ internal static class C2ParityNative
             {
                 var x = some.Nodes[k].Results.OfType<NodeDisplResultModel>().Where(r => r.LoadCase.Name == name).Select(r => r.Displacement).ToArray();
                 var y = all.Nodes[k].Results.OfType<NodeDisplResultModel>().Where(r => r.LoadCase.Name == name).Select(r => r.Displacement).ToArray();
-                same &= x.SequenceEqual(y);
+                same &= x.Length > 0 && x.SequenceEqual(y); // P2R (task 39, T05): every node has its displacements of A and AB (two empty sets passed before)
             }
         }
         Check(same && rows > 0 && !some.Nodes.SelectMany(n => n.Results).Any(r => r.LoadCase.Name == "B" || r.LoadCase.Name == "C"), $"P26-04 requested values unchanged bit for bit ({rows} beam rows of A and AB), no result of the cases not requested");
@@ -174,16 +174,18 @@ internal static class C2ParityNative
         {
             var ra = Rows(all, k, "A"); var rb = Rows(all, k, "B"); var rab = Rows(all, k, "AB");
             var common = ra.Select(r => r.Station).Where(s => rb.Any(r => Math.Abs(r.Station - s) < 1e-9)).ToArray();
-            double scale = rab.SelectMany(V).Max(Math.Abs), worst = 0;
+            double scale = rab.SelectMany(V).Max(Math.Abs), worst = 0; int compared = 0;
             foreach (var s in common)
             {
-                var ab = rab.FirstOrDefault(r => Math.Abs(r.Station - s) < 1e-9); if (ab == null) continue;
+                // P2R (task 39, T04): a common station of A and B must have its row of AB (before: skipped, and no station compared passed).
+                var ab = rab.FirstOrDefault(r => Math.Abs(r.Station - s) < 1e-9); if (ab == null) continue; compared++;
                 var va = V(ra.First(r => Math.Abs(r.Station - s) < 1e-9)); var vb = V(rb.First(r => Math.Abs(r.Station - s) < 1e-9)); var vab = V(ab);
                 for (int c = 0; c < 6; c++) worst = Math.Max(worst, Math.Abs(vab[c] - (1.35 * va[c] + 1.5 * vb[c])) / scale);
             }
             var extra = rab.Where(r => !common.Any(s => Math.Abs(s - r.Station) < 1e-9)).ToArray(); lost += extra.Length;
             Console.WriteLine($"C2 P26-07 beam {k + 1}: A {ra.Count} stations, B {rb.Count}, common {common.Length} (the rows of AB before C2); Straus7 combination AB {rab.Count}: "
                 + string.Join(" ", rab.Select(r => R(r.Station))) + "; not common to A and B: " + string.Join("; ", extra.Select(r => "x " + R(r.Station) + " My " + R(r.My) + " Vy " + R(r.Vy))));
+            Check(common.Length > 0 && compared == common.Length, $"P26-07 beam {k + 1}: every one of the {common.Length} stations common to A and B has its row of AB ({compared} compared)");
             Check(worst < 1e-12, $"P26-07 beam {k + 1}: AB equal to 1.35 A + 1.5 B at the common stations (worst {R(worst)} of the largest value)");
         }
         Check(lost > 0, $"P26-07 the Straus7 combination has {lost} stations (load sides, extrema of the combination) that the superposition at the common stations lost");
