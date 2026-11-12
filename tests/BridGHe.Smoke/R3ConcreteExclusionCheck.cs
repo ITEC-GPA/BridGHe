@@ -68,8 +68,8 @@ internal static class R3ConcreteExclusionCheck
             if (input.Drafts == null && Prop(mergedGoo, "GpcDrafts") is { } drafts) modelType.GetMethod("AttachDrafts").Invoke(goo, new[] { drafts });
             return goo;
         }
-        var beamType = assembly.GetType("BridGHe.Grasshopper.DataTypes.CompositeSectionCheck.GH_CompositeBeam", true);
-        var datumType = assembly.GetType("BridGHe.Grasshopper.DataTypes.CompositeSectionCheck.GpcCompositeBeam", true);
+        var beamType = assembly.GetType("BridGHe.Grasshopper.DataTypes.GH_CompositeBeam", true);
+        var datumType = assembly.GetType("BridGHe.Grasshopper.DataTypes.GpcCompositeBeam", true);
         var fromGpc = beamType.GetMethod("FromGpc", BindingFlags.Public | BindingFlags.Static);
         IGH_Goo Beam(IGH_Goo source, bool concrete)
         {
