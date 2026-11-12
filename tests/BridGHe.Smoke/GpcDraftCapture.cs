@@ -370,6 +370,33 @@ internal static class GpcDraftCapture
         // R6.2 part C: a captured entry keyed by its content (file|kind|SHA of the text) whose text holds a declared digest: the key it takes now.
         private readonly Dictionary<string, string> declaredKeys = new Dictionary<string, string>(StringComparer.Ordinal);
         private int entries, readBack, readBackFailures; private long bytes;
+        // Lane INR (12/11): BRIDGHE_CAPTURE_MOVED=<folder> in compare mode writes every entry that is different or new now, in the format of the
+        // capture (<source>.moved.bgcap, the entry as the writer would write it today), and the list of every different, new and missing key
+        // with the first difference (<source>.moved.tsv), without the limit of 30 of the listing. For a new copy of a capture, never for this one.
+        private BinaryWriter movedPack; private StreamWriter movedIndex;
+        private void Moved(string status, string key, object datum, string text, string difference)
+        {
+            string folder = Environment.GetEnvironmentVariable("BRIDGHE_CAPTURE_MOVED");
+            if (string.IsNullOrWhiteSpace(folder)) return;
+            if (movedIndex == null)
+            {
+                Directory.CreateDirectory(folder);
+                string packPath = Path.Combine(folder, source + ".moved.bgcap");
+                if (File.Exists(packPath) || Path.GetFullPath(folder).TrimEnd('\\', '/').Equals(Path.GetFullPath(this.folder).TrimEnd('\\', '/'), StringComparison.OrdinalIgnoreCase))
+                    throw new IOException("Moved entries already written or written into the capture compared (never overwritten): " + packPath);
+                movedPack = new BinaryWriter(new FileStream(packPath, FileMode.CreateNew), Encoding.UTF8); movedPack.Write(Header);
+                movedIndex = new StreamWriter(Path.Combine(folder, source + ".moved.tsv"), false, new UTF8Encoding(false));
+                movedIndex.WriteLine("status\tkey\tkind\ttext-sha256\tdata-bytes\trecords-bytes\tfirst difference (GUIDs replaced by their ordinals)");
+            }
+            string one(string s) => s == null ? "" : s.Replace("\r", "").Replace('\n', ' ').Replace('\t', ' ');
+            if (datum == null) { movedIndex.WriteLine($"{status}\t{key}\t\t\t\t\t{one(difference)}"); return; }
+            var (kind, data, records) = Archive(datum); var t = Deflate(text);
+            movedPack.Write(key); movedPack.Write(kind); movedPack.Write(Sha(text));
+            movedPack.Write(data?.Length ?? -1); if (data != null) movedPack.Write(data);
+            movedPack.Write(records?.Length ?? -1); if (records != null) movedPack.Write(records);
+            movedPack.Write(t.Length); movedPack.Write(t);
+            movedIndex.WriteLine($"{status}\t{key}\t{kind}\t{Sha(text)}\t{data?.Length ?? -1}\t{records?.Length ?? -1}\t{one(difference)}");
+        }
 
         internal Session(string source, string folder, bool writing)
         {
@@ -478,7 +505,7 @@ internal static class GpcDraftCapture
                 // P2S (7/11): an example remade in 0.4.0 form; its transitional FEM chunk (FemmR6, until R6.5) is read as a payload: not captured.
                 if (ExampleRemake04.Files.Any(f => key.Contains(Path.GetFileName(f), StringComparison.OrdinalIgnoreCase)))
                 { Count("declared"); Declare(key, "example remade in 0.4.0 form (P2S, 7/11): its transitional FEM chunk, not in the capture"); return; }
-                Count("new"); if (failures.Count < 30) failures.Add(key + ": not in the capture (" + datum.GetType().Name + ")"); return;
+                Count("new"); if (failures.Count < 30) failures.Add(key + ": not in the capture (" + datum.GetType().Name + ")"); Moved("new", key, datum, text, null); return;
             }
             if (Sha(text) == e.Sha) { Count("equal"); return; }
             string captured = Inflate(e.Text);
@@ -493,6 +520,7 @@ internal static class GpcDraftCapture
                     : GpcDraftArchive.ReadModel(e.Data, e.Records).Item1.Data), StringComparer.Ordinal))
             { Count("declared"); Declare(key, SharedCompositeRule + "; owner identity from the content of the drafts: " + renamed); return; }
             Count("different"); if (failures.Count < 30) failures.Add(key + ": differs from the capture (GUIDs replaced by their ordinals)\n" + GpcDraftArchiveChecks.FirstDifference(WithoutGuids(captured), WithoutGuids(text)));
+            Moved("different", key, datum, text, GpcDraftArchiveChecks.FirstDifference(WithoutGuids(captured), WithoutGuids(text)));
         }
 
         public void Dispose()
@@ -510,6 +538,8 @@ internal static class GpcDraftCapture
             if (retired > 0) { declaredReasons["example remade in 0.4.0 form (P2S, 7/11): its 0.3.0 entries retired"] = retired; counts["declared"] = (counts.TryGetValue("declared", out int dc) ? dc : 0) + retired; }
             int missing = reference.Keys.Count(k => !seen.Contains(k) && !Remade(k));
             foreach (var k in reference.Keys.Where(k => !seen.Contains(k) && !Remade(k)).Take(Math.Max(0, 30 - failures.Count))) failures.Add(k + ": captured, not recorded now");
+            foreach (var k in reference.Keys.Where(k => !seen.Contains(k) && !Remade(k))) Moved("missing", k, null, null, "captured, not recorded now");
+            movedPack?.Dispose(); movedIndex?.Dispose();
             foreach (var f in failures) Console.WriteLine("  " + f);
             foreach (var k in identityOnly) Console.WriteLine("  GUIDs only: " + k);
             foreach (var d in declared) Console.WriteLine("  declared: " + d);
