@@ -156,6 +156,9 @@ namespace BridGHe.Common.Models
         {
             if (!double.IsFinite(n) || n <= 0) throw new ArgumentOutOfRangeException(nameof(n));
             var p = GetHomogeneizedMechanicalProperties(n, ConsiderConcrete, ConsiderRebar, true);
+            // Lane INR (user decision 12/11, option B): I11 about the horizontal axis (vertical bending), I22 about the vertical one, angle 0;
+            // before, the sorted principal values, which swapped them when the slab makes Iyy > Ixx (see SectionAxisInertias).
+            var (i11, i22) = Helpers.CompositePropertyAdapter.SectionAxisInertias(p.J11H, p.J22H, p.JxxH, p.JyyH, p.angleX);
             return new BeamPropertyModel
             {
                 Name = Name + suffix, Material = SteelMaterial, PropertyType = BeamPropertyType.Beam,
@@ -163,7 +166,7 @@ namespace BridGHe.Common.Models
                 {
                     SectionType = SectionModel.SectionTypes.Generic,
                     CompositePreview = new CompositeSectionPreviewGeometry(this),
-                    SectionArea = p.areaH / n, I11 = p.J11H / n, I22 = p.J22H / n,
+                    SectionArea = p.areaH / n, I11 = i11 / n, I22 = i22 / n,
                     J = GetOnlySteelMechanicalProperties().Jt,
                     // E13 (decisione utente 4/11): the shear areas of the section homogenised in steel units with the same n, De Saint Venant
                     // at nu = 0 (GPCModel SectionShearAreas.ComputeHomogenised); before, 0 (no shear deformation).

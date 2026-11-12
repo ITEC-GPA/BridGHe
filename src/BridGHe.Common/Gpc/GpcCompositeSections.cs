@@ -271,7 +271,8 @@ namespace BridGHe.Common.Gpc
         /// the modular ratio <paramref name="n"/>, with the slab (<paramref name="considerConcrete"/>, Bridge State Override: uncracked) or
         /// without it (cracked), the bars as the definition says (Consider Rebar): the section values of
         /// <c>CompositeBeamPropertyModel.CreateHomogenizedProperty</c> bit for bit (area and inertias of the one-bar analysis section divided by
-        /// n, torsion of the steel alone, shear areas of the steel and the slab, centroid, principal angle 0).
+        /// n, torsion of the steel alone, shear areas of the steel and the slab, centroid, principal angle 0). Lane INR (12/11): the inertias on
+        /// the section axes, I11 about the horizontal axis (<see cref="CompositePropertyAdapter.SectionAxisInertias"/>).
         /// </summary>
         public static HomogenisedAnalysisProperty Homogenised(BridgeCompositeSectionDefinition definition, double n, bool considerConcrete)
         {
@@ -279,11 +280,14 @@ namespace BridGHe.Common.Gpc
             if (!double.IsFinite(n) || n <= 0) throw new ArgumentOutOfRangeException(nameof(n));
             var p = AnalysisProperties(definition, n, considerConcrete, definition.ConsiderRebar, true);
             var shear = HomogenisedShearAreas(definition, n, considerConcrete);
-            return new HomogenisedAnalysisProperty(p.areaH / n, p.J11H / n, p.J22H / n, SteelTorsionConstant(definition), shear.Area1, shear.Area2, p.centroidH.X, p.centroidH.Y);
+            // Lane INR (user decision 12/11, option B), as CreateHomogenizedProperty: I11 about the horizontal axis, I22 about the vertical one.
+            var (i11, i22) = CompositePropertyAdapter.SectionAxisInertias(p.J11H, p.J22H, p.JxxH, p.JyyH, p.angleX);
+            return new HomogenisedAnalysisProperty(p.areaH / n, i11 / n, i22 / n, SteelTorsionConstant(definition), shear.Area1, shear.Area2, p.centroidH.X, p.centroidH.Y);
         }
     }
 
     /// <summary>The section values of a generic homogenised analysis property of a composite girder in steel units (mm², mm⁴, mm), principal
-    /// angle 0: what <c>CompositeBeamPropertyModel.CreateHomogenizedProperty</c> writes in its generic FEM section.</summary>
+    /// angle 0: what <c>CompositeBeamPropertyModel.CreateHomogenizedProperty</c> writes in its generic FEM section. Axis 1 horizontal: I11
+    /// about the horizontal axis (vertical bending), I22 about the vertical one, ShearArea1 for the horizontal shear (lane INR, 12/11).</summary>
     public sealed record HomogenisedAnalysisProperty(double Area, double I11, double I22, double J, double ShearArea1, double ShearArea2, double CentroidX, double CentroidY);
 }

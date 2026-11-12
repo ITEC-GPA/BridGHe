@@ -104,15 +104,26 @@ internal static partial class CompositeAnalysisPropertyChecks
 
     /// <summary>The former generic homogenised property (<c>CreateHomogenizedProperty</c> with Consider Concrete =
     /// <paramref name="considerConcrete"/>): area and inertias of the analysis section divided by n, the torsion of the steel alone, the
-    /// homogenised shear areas of the steel and the slab, the centroid, angle 0.</summary>
+    /// homogenised shear areas of the steel and the slab, the centroid, angle 0. Lane INR (12/11, user decision option B, a declared change of
+    /// 0.4.0): the inertias on the section axes, I11 about the horizontal axis (<see cref="InrInertia.HorizontalFirst"/>, written in the test);
+    /// the variants whose values differ from the 0.3.0 rule (the sorted principal values) are counted in <see cref="AxisOneHorizontal"/>.</summary>
     internal static HomogenisedAnalysisProperty FormerHomogenisedProperty(Numbers x, double n, bool considerConcrete)
     {
         if (!double.IsFinite(n) || n <= 0) throw new ArgumentOutOfRangeException(nameof(n));
         var p = FormerHomogenised(x, n, considerConcrete, x.ConsiderRebar, true);
         double j = FormerSteelTorsion(x);
         var shear = GpcCompositeSections.HomogenisedShearAreas(x.BottomWidth, x.TopWidth, x.Height, x.BottomThickness, x.TopThickness, x.Web, x.SlabWidth, x.SlabHeight, considerConcrete, n, x.Name);
-        return new HomogenisedAnalysisProperty(p.areaH / n, p.J11H / n, p.J22H / n, j, shear.Area1, shear.Area2, p.centroidH.X, p.centroidH.Y);
+        var axes = InrInertia.HorizontalFirst(p.J11H, p.J22H, p.JxxH, p.JyyH, p.angleX);
+        if (axes.Changed) AxisOneHorizontal++;
+        return new HomogenisedAnalysisProperty(p.areaH / n, axes.I11 / n, axes.I22 / n, j, shear.Area1, shear.Area2, p.centroidH.X, p.centroidH.Y);
     }
+
+    /// <summary>Lane INR: the homogenised property variants of the former rule written on the section axes instead of the 0.3.0 sorted
+    /// principal values (Iyy &gt; Ixx: a wide slab, or the ratios 1 and 15.3 of the checks).</summary>
+    internal static int AxisOneHorizontal;
+
+    /// <summary>Lane INR: the shrinkage actions of the former rule computed on a section the 0.3.0 rule refused (X and Y principal, Iyy &gt; Ixx).</summary>
+    internal static int ShrinkageAxisOneHorizontal;
 
     /// <summary>The former Composite Shrinkage Actions of the composite property (<c>CompositeShrinkageActions.Calculate(property, strain)</c>):
     /// n,sh, E and α of the steel parameter, the homogenised values and the bars of the former analysis section.</summary>
@@ -123,8 +134,13 @@ internal static partial class CompositeAnalysisPropertyChecks
         double n = x.NShrinkage, ea = x.SteelE, alpha = x.SteelThermalExpansion;
         if (!double.IsFinite(n) || n <= 0 || !double.IsFinite(alpha) || alpha == 0) throw new ArgumentException("Positive n ritiro and a nonzero steel thermal expansion coefficient are required.");
         var p = FormerHomogenised(x, n, true, x.ConsiderRebar, true);
-        if (Math.Abs(p.JxyH) > 1e-10 * (p.JxxH + p.JyyH) || Math.Abs(p.J11H - p.JxxH) > 1e-8 * p.JxxH)
-            throw new NotSupportedException("Shrinkage actions require the major bending axis to coincide with the slab plane's horizontal axis.");
+        // Lane INR (user decision 12/11, «togli il rifiuto»): the n,sh property has I11 about the horizontal axis (InrInertia.HorizontalFirst,
+        // written in the test), so a section with X and Y principal is accepted also when Iyy > Ixx; an asymmetric one is still refused.
+        // The variants accepted now and refused by the 0.3.0 rule are counted in ShrinkageAxisOneHorizontal.
+        var axes = InrInertia.HorizontalFirst(p.J11H, p.J22H, p.JxxH, p.JyyH, p.angleX);
+        if (Math.Abs(p.JxyH) > 1e-10 * (p.JxxH + p.JyyH) || Math.Abs(axes.I11 - p.JxxH) > 1e-8 * p.JxxH)
+            throw new NotSupportedException("Shrinkage actions require the principal axes of the section to coincide with the horizontal and vertical axes of the slab plane.");
+        if (Math.Abs(p.J11H - p.JxxH) > 1e-8 * p.JxxH) ShrinkageAxisOneHorizontal++;
         double ac = x.SlabWidth * x.SlabHeight, sc = ac * x.SlabHeight / 2;
         if (x.ConsiderRebar) foreach (var bar in FormerAnalysisSection(x).Rebars) { ac -= bar.RebarSection.Area; sc -= bar.RebarSection.Area * bar.Position.Y; }
         double force = ea / n * ac * strain, moment = ea / n * (sc - ac * p.centroidH.Y) * strain;
