@@ -7,5 +7,13 @@
     "BridgeModelAuditComponent",
     "BridgePhaseModelComponent"
   ],
-  "solverInvoked": false
+  "solverInvoked": false,
+  "remade040": {
+    "date": "2026-11-14",
+    "base": "9350aeb",
+    "tool": "--u2-remake-examples write",
+    "how": "model rebuilt with the GPC builders (SourceGpc, end nodes A 2 3 4); the Phase Model property kept as read by value",
+    "check": "--u2-check-examples (headless, no Straus): 16 outputs and messages: the old file gave none (model refused)",
+    "solverInvoked": false
+  }
 }
