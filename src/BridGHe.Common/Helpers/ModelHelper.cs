@@ -86,8 +86,6 @@ namespace BridGHe.Common.Helpers
             loadCases.Sort();
         }
 
-        public static Dictionary<string, int> GetLoadCaseNumbers(IReadOnlyList<LoadCaseModel> cases) =>
-            cases.Select((c, i) => (c.Name, Number: i + 1)).ToDictionary(c => c.Name, c => c.Number, StringComparer.Ordinal);
 
         private static bool SameLoadDefinition(LoadCaseModel a, LoadCaseModel b) =>
             a.Temperature == b.Temperature && a.StructuralMassAcceleration == b.StructuralMassAcceleration &&
@@ -117,14 +115,6 @@ namespace BridGHe.Common.Helpers
             }
         }
 
-        public static void GetSuperElements(ModelModel model, out List<SuperElementAttributeModel> superElements)
-        {
-            superElements = new List<SuperElementAttributeModel>();
-            superElements.AddRange(model.Elements.Where(e => e.HasAttribute(typeof(SuperElementAttributeModel)))
-                .SelectMany(e => e.Attributes.Where(a => a.GetType() == typeof(SuperElementAttributeModel)))
-                .Cast<SuperElementAttributeModel>()
-                .Distinct());
-        }
 
 
         /// <summary>
@@ -218,14 +208,5 @@ namespace BridGHe.Common.Helpers
             nodes = orderedNodeList;
         }
 
-        public static List<SuperElementAttributeModel> GetSuperElements(ModelModel model)
-        {
-            List<SuperElementAttributeModel> superElements = new List<SuperElementAttributeModel>();
-            superElements.AddRange(model.Elements.Where(e => e.HasAttribute(typeof(SuperElementAttributeModel)))
-                .SelectMany(e => e.Attributes.Where(a => a.GetType() == typeof(SuperElementAttributeModel)))
-                .Cast<SuperElementAttributeModel>()
-                .Distinct());
-            return superElements;
-        }
     }
 }

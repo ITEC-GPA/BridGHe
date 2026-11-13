@@ -66,10 +66,6 @@ namespace BridGHe.Grasshopper.Helpers
             }
         }
 
-        public static double GetSquaredTolerance(ModelModel.ModelUnits units)
-        {
-            return GPC.Utilities.Maths.ErrorPropagation.DefaultProductSquareTolerance(Settings.Instance.Tolerance);
-        }
 
         public static double GetTolerance()
         {
@@ -332,15 +328,5 @@ namespace BridGHe.Grasshopper.Helpers
             plates = orderedPlateList;
         }
 
-        /// <summary>
-        /// Use this function in the analysis components to restore the Guids in the loaded_model 
-        /// getting the values from the input_model after loaded. 
-        /// </summary>
-        /// <param name="input_model">The model from the input parameter</param>
-        /// <param name="model">The model where to restore the Guids</param>
-        public static void RestoreModelGuids(GH_Model input_model, ref GH_Model model)
-        {
-            model?.SynchronizeGuids(input_model);
-        }
     }
 }

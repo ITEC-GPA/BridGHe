@@ -12,48 +12,8 @@ namespace BridGHe.Common.Straus
         /// <summary>Solver names of the analysis component, by solver index.</summary>
         public static readonly string[] Solvers = { "Linear Static", "Nonlinear Static", "Staged analysis" };
 
-        public static ModelModel Run(ModelModel input, string outputPath, int solver, IReadOnlyCollection<string> requested, double tolerance, bool movingOnly, out List<string> warnings)
-            => Run(input, null, outputPath, solver, requested, tolerance, movingOnly, out warnings, out _);
 
-        public static ModelModel Run(ModelModel input, string outputPath, int solver, IReadOnlyCollection<string> requested, double tolerance, bool movingOnly,
-            out List<string> warnings, out GPC.Model.Models.Model analysed)
-            => Run(input, null, outputPath, solver, requested, tolerance, movingOnly, out warnings, out analysed);
 
-        /// <param name="conversion">F6 phase (c), C3: the GPC conversion the GH model keeps for <paramref name="input"/> (GH_Model.GpcInput), copied by
-        /// the analysis instead of converting again; null converts the FEM model.</param>
-        /// <param name="analysed">F6 phase (c), C3: the analysed GPC model (results as GPC datasets), for the GH model of the output.</param>
-        public static ModelModel Run(ModelModel input, Gpc.GpcModels.Conversion conversion, string outputPath, int solver, IReadOnlyCollection<string> requested, double tolerance, bool movingOnly,
-            out List<string> warnings, out GPC.Model.Models.Model analysed)
-        {
-            // The native solver accepts only canonical Windows paths when opening
-            // its result file, although St7NewFile also accepts forward slashes.
-            outputPath = Path.GetFullPath(outputPath);
-            CheckRequest(outputPath, solver, movingOnly);
-            // P2K (P8): a cable is refused before any Straus7 call (transitional FEM overload: the beams of the FEM model, or of the conversion).
-            if (conversion != null) RefuseCables(conversion.Model);
-            else if (input?.Elements.OfType<BeamModel>().FirstOrDefault(b => b.BeamProperty?.PropertyType == BeamPropertyType.Cable) is { } cable)
-                throw new NotSupportedException(CableMessage(cable.BeamId, cable.BeamProperty.Name));
-            if (movingOnly && !input.MovingPaths.Any(p => p.ConvertToStaticCases)) throw new ArgumentException(NoStaticCasesMessage);
-            if (movingOnly && input.MovingPaths.Any(p => p.Template.Vehicles.Any(v => v.Loads.Any(l => l is MovingLoads.MovingHeatSource))))
-                throw new NotSupportedException(HeatSourceMessage);
-            var model = ModelArchive.Clone(input);
-            var oldMovingNames = new HashSet<string>(model.GeneratedMovingCases.Values);
-            model.LoadCases.RemoveAll(c => oldMovingNames.Contains(c.Name));
-            foreach (var element in model.Elements) element.Results.Clear();
-            ModelHelper.GetLoadCases(model, out var cases);
-            var selection = movingOnly ? Array.Empty<StrausResultSelection.Entry>() : StrausResultSelection.Select(model, solver, requested);
-            // F6A: the analysis runs through GPC and the GPC Converter (writer, solver, verified result import); the former
-            // Straus7 exporter and result reader are no longer used. The FEM model of the components crosses a transitional seam.
-            warnings = new List<string>();
-            // C3: the generated cases of an earlier moving analysis are removed from the FEM clone above; the conversion of the GH model still
-            // has them as load cases, so such a model is converted from the clone, as before.
-            if (oldMovingNames.Count != 0) conversion = null;
-            var result = Gpc.Legacy.FemmAnalysisSeam.Run(model, conversion, outputPath, solver, selection, tolerance, movingOnly, warnings, out analysed);
-            if (string.IsNullOrEmpty(result.Name)) result.Name = Path.GetFileNameWithoutExtension(outputPath);
-            // F6 (a)/(b): the analysed GPC model carries the same name (the result consumers show it, e.g. in the fatigue sources).
-            if (analysed != null && analysed.Name != result.Name) analysed.Name = result.Name ?? "";
-            return result;
-        }
 
         /// <summary>R6.5 P1 lane 3e: the analysis of a model given by its GPC input alone, with the same requests and refusals as the FEM path: the
         /// paths and result names come from the input, and the analysed GPC model (with the results catalog) is returned; no FEM value is made.</summary>
