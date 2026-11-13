@@ -66,6 +66,25 @@ internal static class P2rRetiredP2cb
             "a FEM plate with an angle written by ModelArchive.Write as the 0.3.0 payload and model; on GPC: the layer axes of the plates with an angle the components give "
             + "(Plate, Align Plate Axes, Build Model: Turned and PlateAngles in gpc-builders-a), the 0.3.0 plate angle against the frozen Plate Results of 0.3.0 (PlateAngleNative, "
             + "Fixtures/plate-angle-030) (2 checks)");
+        add("regression-part|slab-reinforcement: the FEM slab and composite property (rows of GetReinforcedConcreteSection, homogenised values with a zero bottom row)",
+            FemType + " (SectionConcreteSlabModel, CompositeBeamPropertyModel); on GPC: the slab of the component (ConcreteSlabSection: legacy slab by value, copy, invalid rows, "
+            + "slab-reinforcement), the same rows and values on the definitions built in GPC (GpcRows, slab-reinforcement) (2 rows and 1 equality)");
+        add("regression-part|slab-reinforcement: GpcRowsParity (the definitions and analysis values against the FEM properties)", "transitional (R3): " + FemType
+            + "; on GPC: the explicit numbers of the definitions (GpcRows), the R6.0 capture of the definitions (gpc-composite-sections) (6 checks)");
+        add("regression-part|slab-reinforcement: Super Element Check on the FEM carriers (without the GPC bridge model, and the D3 path with the FEM merge parity)", FemType
+            + " (a FEM model, a FEM composite beam, BridgeWorkflowBuilder.Build); on GPC: the same error and the same D3 checks on the GH model and the composite beam given by "
+            + "their GPC data alone (slab-reinforcement), the natives 50 and 99 (1 error check and 2 × 21 checks)");
+        add("regression-part|bridge-moment-state: the FEM classification, Bridge State Override on the FEM girders, the merge with local section states and the checker on the FEM section",
+            "FEM-only APIs that go with the FEM models (BeamMomentClassification.Classify on FEM beams, BridgeStateOverride.Apply, BridgeWorkflowBuilder.Build, BridgePhaseAssembler.CreateIndex "
+            + "of a FEM beam, CompositeBeamPropertyModel.GetReinforcedConcreteSection, BridgeMemberAssignment.Assign with FEM defaults, BridgeSegmentSections.Create of a FEM property); "
+            + "on GPC: the classification of Beam Moment Dispatch on the GPC-only overload (bridge-moment-state), Bridge State Override and the local section states on GPC "
+            + "(gpc-state-override), merge and Super Element Check forces on GPC data (r2b-merge-forces), the natives 50 and 99 with their captures");
+        const string Generator = "a generator of an example in no gate (decision E4 of P2R, coordinator 13/11 06:10): it read the FEM value of the GH outputs (null since P2K) and "
+            + "wrote the example; the examples on disk are not touched";
+        add("generator|--example99", Generator + " (PersonalBridgeExample, PersonalBridgeRevision, PersonalBridgeDeckGrillage, PersonalBridgeTwoGirders, PersonalBridgeExplicitInputs: "
+            + "modes inspect, inspect004, inputs004, rev002, rev003, rev004); the 99 definitions: the native 99 (--modular-bridge-native) and its capture, scan, payloads");
+        add("generator|--example50-rev002", Generator + " (BridgeRevisionStateExample, also --example50-rev002-check); the 50 definitions: the native 50 (--example50-rev003 --native) and "
+            + "its capture, scan, payloads");
         add("regression-part|gpc-review-fixes: R65-C3-02 the global point load of the swap model", "a FEM beam point load in the global system (BeamPointLoadModel.LoadData.CoordinateSystem), "
             + "which Beam Point Load does not give (its loads are in the principal axes): the GPC swap model has the three other loads (no check of its own: fewer recorded calls)");
     }
