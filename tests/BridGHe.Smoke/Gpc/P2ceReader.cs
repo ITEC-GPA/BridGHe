@@ -30,6 +30,8 @@ internal static class P2ceReader
         Inventory(failures, out var corpusCases);
         int lists = Parity(failures, corpusCases);
         int design = DesignParity(failures);
+        int casts = SectionCastParity(failures);
+        Console.WriteLine($"P2CE READER SECTION CASTS: {casts} casts of a text or a curve to a Beam Section on GPC (GpcSectionCasts) = the former FEM cast and its conversion");
         Console.WriteLine($"P2CE READER DESIGN: {design} check: the empty «LoadCases» item = the constant (the parity of «Design» retired by name at 8e5a538)");
         Console.WriteLine($"P2CE READER PARITY: {lists} lists of cases compared ({failures.Count} failures so far)");
         int stage = StageChecks(failures);
@@ -174,6 +176,54 @@ internal static class P2ceReader
         n++;
         var written = BridGHe.Common.Helpers.ModelArchive.Write(new List<BridGHe.Common.Models.LoadCaseModel>());
         if (!written.SequenceEqual(GpcLegacyPayloads.EmptyLoadCasesItem)) failures.Add("the constant empty LoadCases item differs: " + Convert.ToHexString(written));
+        return n;
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------------
+    // (2c) The casts of the Beam Section type (phase 2b): on GPC (GpcSectionCasts) = the former FEM cast (GH_BeamSection.CastFrom on its FEM
+    // section, the recipe by its conversion) while the FEM section exists; retired by name with the FEM types.
+
+    private static int SectionCastParity(List<string> failures)
+    {
+        var plugin = R2aDesignFixtures.Plugin;
+        var gooType = plugin.GetTypes().Single(t => t.Name == "GH_BeamSection");
+        var casts = plugin.GetTypes().Single(t => t.Name == "GpcSectionCasts");
+        var text = casts.GetMethod("Text", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        var curve = casts.GetMethod("Curve", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        string Recipe(object r) => r == null ? "null" : GpcDraftCapture.Text(r);
+        int n = 0;
+        void One(string label, object source, System.Reflection.MethodInfo cast, object input)
+        {
+            n++;
+            var goo = (IGH_Goo)Activator.CreateInstance(gooType);
+            // A cast accepted with no section (another curve): the former FEM section was Undefined (an invalid datum whose conversion is
+            // refused), the GPC one has no recipe (an invalid datum): both «invalid».
+            bool before = goo.CastFrom(source);
+            string old;
+            try { old = before ? Recipe(gooType.GetProperty("Gpc").GetValue(goo)) : "refused"; }
+            catch (Exception) { old = "invalid"; }
+            var args = new object[] { input, null };
+            bool now = (bool)cast.Invoke(null, args);
+            string fresh = now ? (args[1] == null ? "invalid" : Recipe(args[1])) : "refused";
+            if (before != now || old != fresh) failures.Add("section cast " + label + ": FEM " + before + " «" + old.Replace((char)10, ' ') + "» / GPC " + now + " «" + fresh.Replace((char)10, ' ') + "»");
+        }
+        foreach (var t in new[] { "CHS200x10", "chs200x10", "CHS219.1x8", "SHS150x8", "RHS200x100x6", "RHS200x100x6x8", "RHS200x100", "I500x200x220x16x18x10", "I500x200",
+                 "C200x80x8x10", "L100x80x8x10", "R300x500", "r300x500", "T200x150x10x12", "T200X150X10X12", "SC200", "SC 250", "SC20.5", "2xC200x80x8x10x12", "2xL100x80x8x10x12",
+                 "2xR100x50", "IPE300", "HEA200", "", "X", "CHS", "CHSaxb", "L100x80x8", "2xL100x80x8x10" })
+            One("«" + t + "»", new GH_String(t), text, t);
+        var tilted = new Rhino.Geometry.Plane(new Rhino.Geometry.Point3d(10, 20, 30), new Rhino.Geometry.Vector3d(1, 1, 0), new Rhino.Geometry.Vector3d(0, 0, 1));
+        var curves = new (string, Rhino.Geometry.Curve)[]
+        {
+            ("circle r 150", new Rhino.Geometry.ArcCurve(new Rhino.Geometry.Circle(150))),
+            ("arc", new Rhino.Geometry.ArcCurve(new Rhino.Geometry.Arc(new Rhino.Geometry.Circle(100), Math.PI / 2))),
+            ("closed rectangle", new Rhino.Geometry.PolylineCurve(new[] { new Rhino.Geometry.Point3d(0, 0, 0), new Rhino.Geometry.Point3d(300, 0, 0), new Rhino.Geometry.Point3d(300, 500, 0), new Rhino.Geometry.Point3d(0, 500, 0), new Rhino.Geometry.Point3d(0, 0, 0) })),
+            ("closed tilted triangle", new Rhino.Geometry.PolylineCurve(new[] { tilted.PointAt(0, 0), tilted.PointAt(200, 0), tilted.PointAt(50, 120), tilted.PointAt(0, 0) })),
+            ("open polyline", new Rhino.Geometry.PolylineCurve(new[] { new Rhino.Geometry.Point3d(0, 0, 0), new Rhino.Geometry.Point3d(100, 0, 0), new Rhino.Geometry.Point3d(100, 100, 0) })),
+            ("line", new Rhino.Geometry.LineCurve(new Rhino.Geometry.Point3d(0, 0, 0), new Rhino.Geometry.Point3d(100, 0, 0))),
+            ("closed nurbs", new Rhino.Geometry.Circle(80).ToNurbsCurve()),
+        };
+        foreach (var (label, cv) in curves) One(label, new GH_Curve(cv), curve, cv);
+        if (n < 30) failures.Add("section casts: only " + n);
         return n;
     }
 
