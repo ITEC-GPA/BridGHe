@@ -98,11 +98,17 @@ namespace BridGHe.Grasshopper.Components.Definitions
                 combinations.Select(c => c.Gpc).ToArray(), morph, rotate)));
         }
 
-        /// <summary>R6.3: the case records of Build Model (a known catalogue; P2CE phase 2b: the FEM cases parameter, always null, removed).</summary>
+        /// <summary>R6.3: the case records of Build Model (a known catalogue; P2CE phase 2b: the FEM cases parameter, always null, removed).
+        /// P2CG (13/11/2026, CE-01/CE-03): null (no catalogue) changes nothing; a catalogue is also given at once to the standalone Load Combinations
+        /// parameters of the stage, for their form only (the stage has already solved in this solution; the combinations follow the catalogue at the
+        /// next solve of the stage, as before, so no solution is asked for here).</summary>
         public void SetLoadCases(IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
         {
+            if (caseRecords == null) return;
             _caseRecords = caseRecords;
             _caseRecordsError = null;
+            foreach (var param in Params.Input[2].Sources.Where(s => s.GetType() == typeof(LoadCombinationsParam)).Cast<LoadCombinationsParam>())
+                param.GiveCaseCatalog(caseRecords);
         }
 
         /// <summary>P2P-01: the saved «LoadCases» item as 0.4.0 wrote it until now (an empty list of FEM cases: the files of 0.3.0 read it), kept
@@ -147,6 +153,16 @@ namespace BridGHe.Grasshopper.Components.Definitions
                         throw new System.Runtime.Serialization.SerializationException("unsupported version " + (chunk.ItemExists("Version") ? chunk.GetInt32("Version").ToString() : "(none)"));
                     int count = chunk.ItemExists("Count") ? chunk.GetInt32("Count") : throw new System.Runtime.Serialization.SerializationException("no count");
                     if (count < 0) throw new System.Runtime.Serialization.SerializationException("negative count");
+                    // P2CG (13/11/2026, review of ChatGPT task 51, CE-02): the count must be the number of the case records of the chunk, checked
+                    // before the array is made (a count smaller than the records gave a partial catalogue that removed factors; a huge one, an array).
+                    // Other items stay allowed. A gap in the indices with the right number is found below (a case missing).
+                    int present = chunk.Items.Count(item => item.HasIndex && string.Equals(item.Name, "Case", StringComparison.OrdinalIgnoreCase));
+                    if (present != count)
+                    {
+                        if (present > count) throw new System.Runtime.Serialization.SerializationException(present + " case records for a count of " + count);
+                        int gap = 0; while (gap < present && chunk.ItemExists("Case", gap)) gap++; // the first missing index (at most the number present)
+                        throw new System.Runtime.Serialization.SerializationException("case " + (gap + 1) + " of " + count + " missing (truncated)");
+                    }
                     var records = new Common.Gpc.Legacy.LegacyCaseData[count];
                     for (int i = 0; i < count; i++)
                         records[i] = chunk.ItemExists("Case", i) ? Common.Gpc.GpcDraftArchive.ReadCase(chunk.GetByteArray("Case", i))

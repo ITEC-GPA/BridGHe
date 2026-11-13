@@ -16,28 +16,41 @@ namespace BridGHe.Grasshopper.Components.Parameters
 {
     public class LoadCombinationsParam : GH_PersistentParam<GH_LoadCombination>
     {
-        /// <summary>R65-C2-05: the case records given with the cases (the columns of the form).</summary>
-        public IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> CaseRecordList { get; private set; } = Array.Empty<Common.Gpc.Legacy.LegacyCaseData>();
+        /// <summary>R65-C2-05: the case records given with the cases (the columns of the form). P2CG (13/11/2026, CE-01): null until Build Model or
+        /// Staged Construction gives a known catalogue (an unknown one: the form cannot be confirmed); an empty array is a known empty catalogue.</summary>
+        public IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> CaseRecordList { get; private set; }
+
+        /// <summary>P2CG (CE-01): the case catalogue is known (the form may make the combinations on it).</summary>
+        public bool HasCaseCatalog => CaseRecordList != null;
 
         public LoadCombinationsParam()
             : base("Load Combinations", "LCS", "The load combinations definition", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_PARAMETERS)
         {
         }
 
+        /// <summary>P2CG (CE-01, CE-03): the known catalogue of Build Model given by Staged Construction when it receives it, for the form only: the
+        /// combinations are not changed (they follow the catalogue when the stage solves, <see cref="UpdateLoadCases"/>). Null changes nothing.</summary>
+        internal void GiveCaseCatalog(IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
+        {
+            if (caseRecords != null) CaseRecordList = caseRecords.ToArray();
+        }
+
         /// <summary>R6.3: the case records of Build Model or Staged Construction: the combinations of the parameter follow them (the GPC datum
         /// built on the case records, <c>GpcCaseBuilders.UpdatedCombination</c>). P2CE phase 2b: the FEM cases parameter (always null) removed.
-        /// P2P-01 (13/11/2026): null is an unknown catalogue and changes nothing (before any write); an empty array is a known empty one.</summary>
-        public void UpdateLoadCases(IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
+        /// P2P-01 (13/11/2026): null is an unknown catalogue and changes nothing (before any write); an empty array is a known empty one.
+        /// P2CG (13/11/2026, CE-03): true when a combination changed; a removal no longer expires the solution from inside the solution that
+        /// calls it (Build Model, Staged Construction): the parameter is expired after it (<see cref="DeferredExpiry"/>, merged requests).</summary>
+        public bool UpdateLoadCases(IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
         {
-            if (caseRecords == null) return;
+            if (caseRecords == null) return false;
             // Recreate the LoadCase names list
-            CaseRecordList = caseRecords;
+            GiveCaseCatalog(caseRecords);
 
             if (VolatileDataCount == 0)
-                return;
+                return false;
 
             // Update the exiting combinations
-            bool changed = false;
+            bool removed = false, changed = false;
             List<GH_LoadCombination> combinations = (List<GH_LoadCombination>)VolatileData.get_Branch(0);
 
             for (int k = 0; k < combinations.Count; k++)
@@ -51,17 +64,29 @@ namespace BridGHe.Grasshopper.Components.Parameters
                 // the combination sees the new cases, the persistent data with it), and the solution expired on a removal only.
                 // P2K (P1): the only path, for every combination.
                 if (before == null) continue;
-                if (before.Factors.Any(f => !caseRecords.Any(c => c.Name == f.Case.Name))) changed = true;
+                if (before.Factors.Any(f => !caseRecords.Any(c => c.Name == f.Case.Name))) removed = true;
                 var updated = Common.Gpc.Builders.GpcCaseBuilders.UpdatedCombination(before, caseRecords);
-                if (updated != null) combo.AttachGpc(updated);
+                if (updated != null) { combo.AttachGpc(updated); changed = true; }
             }
 
-            if (changed)
+            if (removed)
             {
+                // P2CG (CE-03): the persistent data replaced as SetPersistentData did (the same undo record and change event), without its
+                // ExpireSolution(false): called from inside the solution of Build Model or Staged Construction, it expired this parameter and the
+                // objects after it, the component solving among them, and Grasshopper stops on «object expired during a solution» (its assert, a
+                // modal window: the host of gate p2ce3 hung on it). The parameter is expired after the solution (DeferredExpiry, merged requests;
+                // before, ExpireSolution(true)).
                 PersistentData.Clear();
-                SetPersistentData(combinations);
-                ExpireSolution(true);
+                var kept = combinations.Where(c => c != null).ToList();
+                if (kept.Count > 0)
+                {
+                    RecordPersistentDataEvent("Set Multiple " + GH_Convert.ToPlural(kept[0].TypeName));
+                    PersistentData.AppendRange(kept);
+                    OnObjectChanged(GH_ObjectEventType.PersistentData);
+                }
+                DeferredExpiry.Request(this);
             }
+            return changed;
         }
 
         protected override GH_GetterResult Prompt_Plural(ref List<GH_LoadCombination> values)
@@ -180,6 +205,12 @@ namespace BridGHe.Grasshopper.Components.Parameters
         {
             if (e.Button == MouseButtons.Left)
             {
+                // P2CG (CE-01): with an unknown catalogue the form would make the combinations without their factors: refused, nothing changed.
+                if (LoadCombinationRows.Refusal(Owner.CaseRecordList) is string refusal)
+                {
+                    MessageBox.Show(refusal, "Load Combinations", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return GH_ObjectResponse.Handled;
+                }
                 List<GH_LoadCombination> list = null;
                 if (!Owner.VolatileData.IsEmpty)
                     list = (List<GH_LoadCombination>)Owner.VolatileData.get_Branch(0);

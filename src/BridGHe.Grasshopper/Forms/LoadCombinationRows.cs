@@ -13,6 +13,13 @@ namespace BridGHe.Grasshopper.Forms
     /// </summary>
     internal static class LoadCombinationRows
     {
+        /// <summary>P2CG (13/11/2026, review of ChatGPT task 51, CE-01): the message of the form and of its parameter with an unknown case catalogue.</summary>
+        internal const string UnknownCatalog = "The load cases of the combinations are not known yet: run Build Model to give them, then edit the combinations.";
+
+        /// <summary>P2CG (CE-01): why the combinations cannot be edited on <paramref name="caseRecords"/>, or null. An unknown catalogue (null) is refused:
+        /// the form would make the combinations without the factors of their cases. A known empty catalogue is accepted, as before.</summary>
+        internal static string Refusal(IReadOnlyList<LegacyCaseData> caseRecords) => caseRecords == null ? UnknownCatalog : null;
+
         /// <summary>A row: the name of the combination and its factor by case name.</summary>
         internal sealed record Row(string Name, IReadOnlyDictionary<string, double> Factors);
 
@@ -38,6 +45,8 @@ namespace BridGHe.Grasshopper.Forms
         internal static (List<GH_LoadCombination> Combinations, string Error) Make(IReadOnlyList<(string Name, IReadOnlyList<object> Cells)> rows, IReadOnlyList<string> columns,
             IReadOnlyList<LegacyCaseData> caseRecords)
         {
+            // P2CG (CE-01): no combination is made on an unknown catalogue (the OK of the form keeps the data of the parameter).
+            if (Refusal(caseRecords) is string refusal) return (null, refusal);
             var values = new List<GH_LoadCombination>(); var names = new HashSet<string>(StringComparer.Ordinal);
             foreach (var (name, cells) in rows)
             {
