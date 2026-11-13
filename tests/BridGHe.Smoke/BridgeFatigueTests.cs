@@ -6,20 +6,6 @@ using Rhino.Geometry;
 
 internal static class BridgeFatigueTests
 {
-    internal static ModelModel HistoryModel()
-    {
-        var model = new ModelModel(ModelModel.ModelUnits.Nmm) { Name = "Synthetic transit for testing" };
-        var beam = new BeamModel(Point3d.Origin, new Point3d(1000, 0, 0), BridgeAssignmentTests.Property()) { BeamId = "1" };
-        model.AddElements(new[] { beam });
-        var values = new[] { 0d, 10, 2, 8, 0 };
-        for (int i = 0; i < values.Length; i++)
-        {
-            var c = new LoadCaseModel($"Q{i}", $"Q{i}"); model.LoadCases.Add(c);
-            foreach (double x in new[] { 0d, 1 })
-                beam.Results.Add(new BeamForceResultModel(c, x, 0, "Transit", true) { AxialForce = values[i] });
-        }
-        return model;
-    }
     /// <summary>P2T: <see cref="HistoryModel"/> built directly in GPC: one 1000 mm beam with the axial force of each transit case at both ends.</summary>
     internal static GPC.Model.Models.Model HistoryGpc()
     {

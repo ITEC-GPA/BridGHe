@@ -203,6 +203,5 @@ internal static class BridgeUtilityTests
         Assert(R2bFixtures.ResultTokens(source).SequenceEqual(before), "Utilities mutated source model.");
         Console.WriteLine($"BRIDGE UTILITIES PASS: {checks} checks on GPC data alone; no Straus solver invoked.");
     }
-    private static double SectionAreaForTest(this BeamModel beam) => beam.BeamProperty.SectionArea;
     private static void ClearForTest(this MovingObject[] loads) { loads[0] = new MovingHeatSource { SizeX = 1, SizeY = 1, Heat = 10 }; }
 }

@@ -35,55 +35,6 @@ using R = Rhino.Geometry;
 internal static class GpcBuildModelChecks
 {
 
-    /// <summary>
-    /// Chain E (e3 point 5, coordinator decision 1 (b) of 5/11): the GPC input of Build Model in units other than N-mm against the conversion
-    /// of its FEM output by the legacy reader: the same report and bridge data, the same graph (every element name, attribute and non-numeric
-    /// text equal), and the maximum relative difference of the numbers per class (geometry, loads, section values: by the names of the
-    /// elements above each number). Zero everywhere: bit for bit.
-    /// </summary>
-    internal static string Measure(string label, GpcModels.Conversion attached, ModelModel fem, double tolerance, out double[] maxima)
-    {
-        void Fail(string what) => throw new Exception("GPC BUILD MODEL UNITS FAIL (" + label + "): " + what);
-        var model = attached.Model; var owner = GpcInputComparison.ElementOwner(model);
-        if (owner != model.Guid) Fail("the model GUID of Build Model is not the owner of its element identities");
-        var converted = GpcInputComparison.Conversion(fem, tolerance, owner, out var report);
-        GpcInputComparison.RequireReport(label, attached.Report, report);
-        GpcInputComparison.RequireBridge(label, model, attached.Bridge, converted, report.Bridge, false);
-        var x = System.Xml.Linq.XDocument.Parse(GpcInputComparison.Document(model)).Descendants().ToArray();
-        var y = System.Xml.Linq.XDocument.Parse(GpcInputComparison.Document(converted)).Descendants().ToArray();
-        if (x.Length != y.Length) Fail($"{x.Length} / {y.Length} elements in the documents");
-        string[] classes = { "geometry", "loads", "section values" }; maxima = new double[3]; int differing = 0;
-        static int Class(System.Xml.Linq.XElement e)
-        {
-            string path = string.Join("/", e.AncestorsAndSelf().Select(a => a.Name.LocalName));
-            if (path.Contains("Propert") || path.Contains("Section") || path.Contains("Material")) return 2;
-            if (path.Contains("Load") || path.Contains("Pressure") || path.Contains("Temperature") || path.Contains("Stress") || path.Contains("Gradient") || path.Contains("InitialState")) return 1;
-            return 0;
-        }
-        for (int i = 0; i < x.Length; i++)
-        {
-            string where = string.Join("/", x[i].AncestorsAndSelf().Reverse().Select(a => a.Name.LocalName));
-            if (x[i].Name != y[i].Name) Fail($"element {i}: {where} / {y[i].Name.LocalName}");
-            string Attributes(System.Xml.Linq.XElement e) => string.Join(" ", e.Attributes().Select(a => a.Name + "=" + a.Value));
-            if (Attributes(x[i]) != Attributes(y[i])) Fail($"attributes of {where}: '{Attributes(x[i])}' / '{Attributes(y[i])}'");
-            if (x[i].HasElements || y[i].HasElements || x[i].Value == y[i].Value) continue;
-            const System.Globalization.NumberStyles Float = System.Globalization.NumberStyles.Float;
-            if (!double.TryParse(x[i].Value, Float, System.Globalization.CultureInfo.InvariantCulture, out double p) || !double.TryParse(y[i].Value, Float, System.Globalization.CultureInfo.InvariantCulture, out double q))
-                Fail($"text of {where}: '{x[i].Value}' / '{y[i].Value}'");
-            double relative = Math.Abs(p - q) / Math.Max(Math.Abs(p), Math.Abs(q));
-            int c = Class(x[i]); maxima[c] = Math.Max(maxima[c], relative); differing++;
-            Console.WriteLine($"GPC BUILD MODEL UNITS ({label}): {classes[c]} {where} GPC {x[i].Value} / conversion {y[i].Value} (relative {relative:E2})");
-        }
-        return $"{x.Length} elements, {differing} numbers differ; maximum relative difference: geometry {maxima[0]:E2}, loads {maxima[1]:E2}, section values {maxima[2]:E2}";
-    }
-
-    /// <summary>The kN-m native section of core-native (<c>Program.CheckNativeSectionAnalysis</c>). <b>P2R (T3, 12/11): retired.</b> Until P2 it ran
-    /// Build Model on the FEM elements of the case and measured its output against the conversion of the FEM output; Build Model has no FEM
-    /// output since P2K. Its coverage stays: Build Model on GPC drafts in every unit system against explicit values (<c>gpc-build-model</c>, R0),
-    /// Build Model on the drafts of the 0.3.0 models read by value (<c>gpc-build-model-legacy</c>), and in core-native the native section of this
-    /// case re-resolved in mm with its analytical area b × d (the assertions before this call).</summary>
-    internal static void Single(string label, ModelModel fem) =>
-        Console.WriteLine($"GPC BUILD MODEL ({label}): the comparison with the FEM output retired (P2R): no FEM output since P2K; covered by gpc-build-model, gpc-build-model-legacy and the analytical area above.");
     // -----------------------------------------------------------------------------------------------------------------------------------------
     // R6.6 lane R0: Build Model on GPC data alone.
 

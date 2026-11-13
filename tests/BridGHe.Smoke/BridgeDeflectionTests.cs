@@ -7,19 +7,6 @@ using Rhino.Geometry;
 
 internal static class BridgeDeflectionTests
 {
-    internal static ModelModel AnalyticModel(SimpleBridgeGeometry geometry)
-    {
-        var model = BridgeConstructionTests.Model(geometry);
-        var supports = geometry.Supports.Where(s => s.Girder == 1).Select(s => s.Station).ToArray();
-        foreach (var node in model.Nodes)
-        {
-            double s = node.Position.X;
-            int span = Math.Clamp(Array.FindLastIndex(supports, p => p <= s), 0, supports.Length - 2);
-            double t = (s - supports[span]) / (supports[span + 1] - supports[span]);
-            node.Results.Add(new NodeDisplResultModel(model.LoadCases[0]) { Displacement = new Vector3d(0, 0, -5 - .0002 * s - 80 * t * (1 - t)) });
-        }
-        return model;
-    }
     /// <summary>P2T: the same analytical girder as <see cref="AnalyticModel"/>, built directly in GPC (no FEM model): the nodes of the
     /// geometry, one beam per geometry member with its bridge metadata (physical members, as Bridge Member Assignment and the legacy
     /// conversion give them) and the analytical displacements of case G1 as stored results.</summary>

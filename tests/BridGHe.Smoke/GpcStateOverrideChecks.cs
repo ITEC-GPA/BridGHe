@@ -54,38 +54,6 @@ internal static class GpcStateOverrideChecks
     internal static string AreaSummary() => $"{AreasMeasured} beam property areas: FEM area = FEM formula on the GPC section and mass per length bit for bit in all; GPC section area different in {AreaDifferences}"
         + (AreaDifferencesByKind.Count == 0 ? "" : " (" + string.Join(", ", AreaDifferencesByKind.Select(p => $"{p.Key} {p.Value.Count}, max relative {p.Value.MaxRelative:G3}")) + ")");
 
-    /// <summary>The GPC draft against the conversion of the FEM beam with its identity: the number of parts compared (an exception with the
-    /// first difference otherwise).</summary>
-    internal static int Compare(string label, LegacyBeamDraft gpc, BeamModel fem)
-    {
-        var e = GpcBeamDrafts.FromFemm(fem, gpc.Beam.Guid); var a = gpc.Beam; var b = e.Beam; int parts = 0;
-        void Same(string what, object x, object y)
-        {
-            string fx = Fp(x), fy = Fp(y);
-            if (fx != fy) throw new Exception($"GPC STATE OVERRIDE FAIL ({label}, beam {a.Name}): {what} differs from the conversion of the FEM output");
-            parts++;
-        }
-        void Text(string what, string x, string y) { if (x != y) throw new Exception($"GPC STATE OVERRIDE FAIL ({label}, beam {a.Name}): {what}: GPC '{x}' / FEM '{y}'"); parts++; }
-        Same("identity", new object[] { a.Guid, a.Source, a.Name, a.Id }, new object[] { b.Guid, b.Source, b.Name, b.Id });
-        Same("ends", new object[] { a.StartPoint, a.EndPoint }, new object[] { b.StartPoint, b.EndPoint });
-        Same("loads", new object[] { a.Loads.ToArray(), a.Assignments.Loads.ToArray() }, new object[] { b.Loads.ToArray(), b.Assignments.Loads.ToArray() });
-        Same("attributes", a.Attributes.Values.ToArray(), b.Attributes.Values.ToArray());
-        Same("physical data", new object[] { a.Assignments.Physical }, new object[] { b.Assignments.Physical });
-        Same("axes and offsets", new object[] { a.Assignments.SectionAxes, a.Assignments.OffsetAxes, a.Assignments.OffsetI, a.Assignments.OffsetJ, (int)a.Assignments.Formulation },
-            new object[] { b.Assignments.SectionAxes, b.Assignments.OffsetAxes, b.Assignments.OffsetI, b.Assignments.OffsetJ, (int)b.Assignments.Formulation });
-        Same("groups", a.Groups.Values.Select(g => new object[] { g.Guid, g.Name, g.Parent?.Guid }).ToArray(), b.Groups.Values.Select(g => new object[] { g.Guid, g.Name, g.Parent?.Guid }).ToArray());
-        var pa = (GPC.Model.ElementProperties.ElasticBeamProperty)a.BeamProperty; var pb = (GPC.Model.ElementProperties.ElasticBeamProperty)b.BeamProperty;
-        Text("density", B(pa.Material.Density), B(pb.Material.Density));
-        Same("property", new object[] { pa }, new object[] { pb });
-        string Bridge(BridgeBeamData d) => d == null ? "none" : string.Join("|", d.BeamGuid, d.Member == null ? "-" : Fp(d.Member), d.SuperElement ?? "-",
-            d.SectionState == null ? "-" : $"{d.SectionState.Behavior} {d.SectionState.ConcreteExcluded} {B(d.SectionState.ModularRatio)} {d.SectionState.ClassificationCase ?? "-"} {d.SectionState.PropertyFingerprint}",
-            d.CompositeSection == null ? "-" : "composite");
-        Text("bridge data", Bridge(gpc.Bridge), Bridge(e.Bridge));
-        Text("angle", B(gpc.AngleDeg), B(e.AngleDeg));
-        Text("property data", $"{gpc.Property.Formulation} {B(gpc.Property.Angle)} {gpc.Property.Native == null}", $"{e.Property.Formulation} {B(e.Property.Angle)} {e.Property.Native == null}");
-        return parts;
-    }
-
     /// <summary>Regression (not native) <c>gpc-state-override</c>, R6.6 R2a: Bridge State Override on GPC data alone (no FEM value). The
     /// girders of the simple bridge of the design tests given by their GPC drafts (Bridge Segment Sections and Bridge Member Assignment on the
     /// GPC base property, <see cref="GpcBridgeGeometryBuilders.Assigned"/>), the moment states classified from an analysed GPC reference with

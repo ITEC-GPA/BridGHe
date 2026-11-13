@@ -20,10 +20,10 @@ using GPC.Model.Models;
 /// Usage: <c>--import-dump &lt;output folder&gt;</c>.
 /// <para>R6.6 lane R3 (11/11): every model is read as bytes (<see cref="R3LegacyCorpus"/>), with no FEM class: the captures and the captured
 /// examples from their files, the node, beam and plate data and the refused duplicates from their frozen payloads (the bytes the FEM writer
-/// gave for <see cref="NodeData"/>, <see cref="BeamData"/>, <see cref="PlateData"/>, same ids), the former section-state signatures from the
-/// fixture (<see cref="R3LegacyCorpus.Signatures"/>). Transitional, until P2: the examples 01–10 built in memory (<c>memory-*</c>, the FEM
-/// catalogue written by the FEM writer; no frozen payload holds them: <see cref="MemoryExamples"/>), and the FEM builders of the frozen
-/// data, kept for their other callers.</para>
+/// gave for the former node, beam and plate data, same ids), the former section-state signatures from the fixture
+/// (<see cref="R3LegacyCorpus.Signatures"/>). The FEM builders <see cref="BeamData"/> and <see cref="PlateData"/> are kept for their other
+/// callers only. P2CA (13/11/2026, U3): the examples 01–10 built in memory (<c>memory-*</c>, the FEM catalogue written by the FEM writer, no
+/// frozen payload) are retired by name (<see cref="P2rRetired.Checks"/>); the node builder went with the FEM writer of the fixtures.</para>
 /// </summary>
 internal static class ImportDump
 {
@@ -51,7 +51,9 @@ internal static class ImportDump
         void Item(R3LegacyCorpus.Item item) => Dump(item.Id, item.Bytes, item.Signatures, item.Tolerance);
         foreach (var item in R3LegacyCorpus.Captures()) Item(item);
         foreach (var item in R3LegacyCorpus.Examples()) Item(item);
-        MemoryExamples(Dump);
+        // P2CA (13/11/2026, U3): the examples 01-10 built in memory by the FEM catalogue and written by the FEM writer (memory-*) are retired by
+        // name (P2rRetired.Checks, scope import-dump); the same ten examples as 0.3.0 saved them stay in the corpus (examples-*).
+        Console.WriteLine($"RETIRED BY NAME (P2CA): {P2rRetired.Checks.Count(c => c.Key.StartsWith("import-dump|", StringComparison.Ordinal))} conversions of FEM models written by the FEM writer (P2rRetired.Checks)");
         // e3 (P2J): node data the corpus above lacks (rigid links, a labelled node with a rigid link, two labels, restraints with springs
         // and a coordinate system, two stiffnesses, forces and moments in one case, temperature kinds), in every unit system; a labelled node
         // with a rigid link: the F6 reader refused it (Model.AddCostrain -> AddNode wants case names for node attributes).
@@ -61,15 +63,6 @@ internal static class ImportDump
         foreach (var item in R3LegacyCorpus.Fixtures()) Item(item);
         Console.WriteLine($"IMPORT DUMP: {written} conversions written to {output} ({failed} with the same kind of error text)");
         return 0;
-    }
-
-    /// <summary>Transitional (R3, until P2: the FEM catalogue goes with the FEM classes; the captured examples <c>examples-*</c> are the same
-    /// ten examples as 0.3.0 saved them, which differ from these by the model name and the type annotations of the document): the examples
-    /// 01–10 built in memory by the FEM catalogue, written by the FEM writer.</summary>
-    private static void MemoryExamples(Action<string, byte[], Func<int, string>, double> dump)
-    {
-        foreach (var example in NativeExamples.Create())
-            dump("memory-" + example.Id, BridGHe.Common.Helpers.ModelArchive.Write(example.Model), GpcModels.SectionStateSignatures(example.Model), 1e-6);
     }
 
     /// <summary>A FEM model with the beam data of the e3 corpus (see <see cref="Run"/>), coordinates in the given units; with
@@ -166,41 +159,6 @@ internal static class ImportDump
     }
 
     private static string B(double v) => BitConverter.DoubleToInt64Bits(v).ToString("X16");
-
-    /// <summary>A FEM model with the node data of the e3 corpus (see <see cref="Run"/>), coordinates in the given units.</summary>
-    internal static ModelModel NodeData(ModelModel.ModelUnits units, bool labelledRigidNode = false)
-    {
-        var steel = new MaterialModel("S355") { Name = "S355", Modulus = 210000, PoissonRatio = 0.3, UsePoisson = true, Density = 7.85e-9, ThermalExpansion = 1.2e-5 };
-        var i = new SectionModel { Name = "I", SectionType = SectionModel.SectionTypes.I, D = 0.5, B1 = 0.3, B2 = 0.1, T1 = 0.02, T2 = 0.01, T3 = 0.005 };
-        var property = new BeamPropertyModel("PI") { Name = "PI", Material = steel, Section = i, PropertyType = BeamPropertyType.Beam };
-        var q = new LoadCaseModel("2", "Q"); var t = new LoadCaseModel("3", "T");
-        var p = new[] { new Rhino.Geometry.Point3d(0, 0, 0), new Rhino.Geometry.Point3d(10, 0, 0), new Rhino.Geometry.Point3d(20, 5, 1), new Rhino.Geometry.Point3d(10, 0, 4),
-            new Rhino.Geometry.Point3d(10, 0, -3), new Rhino.Geometry.Point3d(20, 5, -2) };
-        var nodes = p.Select((x, k) => new NodeModel((k + 1).ToString(), x)).ToArray();
-        nodes[0].Attributes.Add(new NodeRestraintAttributeModel(true, true, true, false, false, false));
-        nodes[0].Attributes.Add(new NodeCoordinateAttributeModel(new Rhino.Geometry.Plane(p[0], new Rhino.Geometry.Vector3d(1, 1, 0), new Rhino.Geometry.Vector3d(-1, 1, 0))));
-        nodes[0].Attributes.Add(new NodeStiffnessAttributeModel(10, 20, 0, 0, 30, 0));
-        nodes[0].Attributes.Add(new NodeStiffnessAttributeModel(5, 5, 5, 5, 5, 5));
-        nodes[0].Attributes.Add(new NodeRestraintAttributeModel(false, false, false, true, false, false));
-        nodes[0].Attributes.Add(new ElementIdAttributeModel("N-A"));
-        nodes[0].Attributes.Add(new ElementIdAttributeModel("N-B"));
-        nodes[0].Groups.Add(new GroupModel("Bearings"));
-        nodes[1].Loads.Add(new NodeForceLoadModel(q, new Rhino.Geometry.Vector3d(1, 2, -3)));
-        nodes[1].Loads.Add(new NodeMomentLoadModel(q, new Rhino.Geometry.Vector3d(0, 0, 4)));
-        nodes[1].Loads.Add(new NodeForceLoadModel(q, new Rhino.Geometry.Vector3d(0.1, 0.2, 0.3)));
-        nodes[1].Loads.Add(new NodeForceLoadModel(t, new Rhino.Geometry.Vector3d(5, 0, 0)));
-        nodes[1].Loads.Add(new NodeTemperatureLoadModel(t, 20, NodeTemperatureLoadModel.LoadType.Fixed));
-        nodes[1].Loads.Add(new NodeTemperatureLoadModel(q, 10, NodeTemperatureLoadModel.LoadType.Reference));
-        nodes[1].Attributes.Add(new RigidConnectionAttributeModel(p[4]));
-        if (labelledRigidNode) nodes[2].Attributes.Add(new ElementIdAttributeModel("N-C"));
-        nodes[2].Attributes.Add(new RigidConnectionAttributeModel(p[5]));
-        var deck = new GroupModel("Deck");
-        var beams = new[] { new BeamModel(p[0], p[1], property, deck, 0) { BeamId = "1" }, new BeamModel(p[1], p[2], property, deck, 15) { BeamId = "2" }, new BeamModel(p[2], p[3], property, deck, 0) { BeamId = "3" } };
-        beams[1].Attributes.Add(new ElementIdAttributeModel("B-A")); beams[1].Attributes.Add(new ElementIdAttributeModel("B-B"));
-        var model = new ModelModel(units);
-        model.AddElements(nodes.Cast<ElementModel>().Concat(beams));
-        return model;
-    }
 
     internal static string Report(LegacyImportReport r)
     {

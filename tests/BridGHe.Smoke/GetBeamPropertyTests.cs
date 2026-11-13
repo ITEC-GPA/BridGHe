@@ -9,25 +9,6 @@ using Rhino.Geometry;
 
 internal static class GetBeamPropertyTests
 {
-    internal static IGH_Goo Wrap(object value)
-    {
-        string name = value is BeamModel ? "GH_Beam" : "GH_BeamProperty";
-        var type = BridgeMergeTests.Initialize().GetTypes().Single(t => t.Name == name);
-        var goo = (IGH_Goo)Activator.CreateInstance(type); type.GetProperty("Value").SetValue(goo, value); return goo;
-    }
-    internal static void Input(GH_Component component, int index, params object[] values)
-    {
-        var p = (Param_GenericObject)component.Params.Input[index]; p.PersistentData.Clear();
-        foreach (var value in values) p.PersistentData.Append(Wrap(value), new GH_Path(0));
-        p.ExpireSolution(false);
-    }
-    internal static BeamPropertyModel Property(string name)
-    {
-        var p = BridgeSegmentSectionsTests.BaseProperty(); p.Name = name; p.Id = "ID_" + name;
-        p.Material.Density = 7.85e-9; return p;
-    }
-    internal static BeamModel Beam(string id, BeamPropertyModel property) =>
-        new BeamModel(id, Point3d.Origin, new Point3d(5000,0,0), property) { BeamId = id };
     internal static T[] Output<T>(GH_Component c, int index = 0) =>
         c.Params.Output[index].VolatileData.AllData(true).Select(g => (T)g.ScriptVariable()).ToArray();
     internal static void Run()

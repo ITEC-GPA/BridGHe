@@ -18,14 +18,6 @@ internal static class BridgeCombinationExcelTests
         Assert(result.Table.SelectMany(r => r).SequenceEqual(Demo.SelectMany(r => r)), "native Excel round trip changed the combination table");
         Console.WriteLine("PASS NATIVE EXCEL ROUND TRIP");
     }
-    internal static (ModelModel[] Models, BridgePhaseDefinition[] Phases) Recipe()
-    {
-        var steel = BridgeWorkflowTests.Source("Steel", 100);
-        var longTerm = BridgeWorkflowTests.Source("Composite long term", 30);
-        var traffic = BridgeWorkflowTests.Source("Composite short term", 50);
-        var shrinkage = BridgeWorkflowTests.Source("Shrinkage secondary", 20);
-        return (new[] { steel, longTerm, traffic, shrinkage }, Phases(steel, longTerm, traffic, shrinkage, null, null, null, null));
-    }
     private static BridgePhaseDefinition[] Phases(ModelModel steel, ModelModel longTerm, ModelModel traffic, ModelModel shrinkage,
         GPC.Model.Models.Model gSteel, GPC.Model.Models.Model gLongTerm, GPC.Model.Models.Model gTraffic, GPC.Model.Models.Model gShrinkage) => new[] {
             new BridgePhaseDefinition { Order = 10, Name = "Getto su acciaio", State = BridgeSectionState.Steel, Day = 0,

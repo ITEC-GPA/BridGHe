@@ -9,32 +9,6 @@ using Rhino.Geometry;
 
 internal static class BridgeStationTests
 {
-    internal static ModelModel Source(string name, double[] stations, bool normalized = false)
-    {
-        var model = BridgeWorkflowTests.Source(name, 0);
-        foreach (var beam in model.Beams)
-        {
-            beam.Results.Clear();
-            foreach (double x in stations)
-                beam.Results.Add(new BeamForceResultModel(model.LoadCases[0], normalized ? x / beam.Length : x, 0, "", normalized)
-                {
-                    AxialForce = 100 + 2 * x, Torque = 200 - 3 * x,
-                    Vx = 500 - .1 * x, Mx = 3000 + 500 * x - .05 * x * x,
-                    Vy = -800 + .2 * x, My = -9000 - 800 * x + .1 * x * x
-                });
-        }
-        return model;
-    }
-
-    internal static BridgeWorkflowBuildResult Build(ModelModel a, ModelModel b) =>
-        BridgeWorkflowBuilder.Build(new[] { a, b }, new[]
-        {
-            new BridgePhaseDefinition { Order = 10, Name = "Steel", State = BridgeSectionState.Steel,
-                Actions = new[] { new BridgeActionDefinition { Key = "G1", Source = a, Case = "G", Behavior = BridgeActionBehavior.Steel } } },
-            new BridgePhaseDefinition { Order = 20, Name = "Composite", State = BridgeSectionState.Composite,
-                Actions = new[] { new BridgeActionDefinition { Key = "G2", Source = b, Case = "G", Behavior = BridgeActionBehavior.LongTerm } } }
-        }, new[] { new[] { "", "G1", "G2" }, new[] { "SLS", "1", "1" } }, BridgeWorkflowMethod.Compatible, 1e-6);
-
     internal static void Near(double actual, double expected, string label)
     {
         // P2R (task 39, T01): a NaN or infinite value never passes (before, NaN made the comparison false and the check passed).
@@ -182,38 +156,4 @@ internal static class BridgeStationTests
         Console.WriteLine($"PASS archived example 19 on GPC: all four native station grids, including 879.044933748 mm ({compared} merged samples)");
     }
 
-    private static void ReplayNativeFixture()
-    {
-        // Captured by --workflow-stations-native --capture-station-fixture from example 19,
-        // with reference values requested independently through St7GetBeamResultArrayPos.
-        var fixture = JsonSerializer.Deserialize<NativeWorkflowStationTests.Fixture>(File.ReadAllText(NativeWorkflowStationTests.FixturePath));
-        var models = fixture.Cases.Select(c =>
-        {
-            var m = BridgeWorkflowTests.Source(c.Key, 0);
-            m.Elements.Clear();
-            var beam = new BeamModel(fixture.BeamId, Point3d.Origin, new Point3d(fixture.Length, 0, 0),
-                BridgeGrillageExample.LongProperty(new(), 0)) { BeamId = fixture.BeamId };
-            foreach (var s in c.Original)
-                beam.Results.Add(new BeamForceResultModel(m.LoadCases[0], s.Station, 0, "", false)
-                    { AxialForce = s.N, Vx = s.V1, Vy = s.V2, Torque = s.T, Mx = s.M1, My = s.M2 });
-            m.AddElements(new[] { beam });
-            return ModelArchive.Clone(m);
-        }).ToArray();
-        var result = NativeWorkflowStationTests.Merge(models);
-        foreach (var c in fixture.Cases)
-        foreach (var expected in c.NativeAtUnion)
-        {
-            var f = result.Model.Beams.Single().Results.OfType<BeamForceResultModel>()
-                .Single(f => f.LoadCase.Name == c.Key + " [FEM]" && Math.Abs(f.Station - expected.Station) < 1e-6);
-            var errors = new[] { f.AxialForce - expected.N, f.Vx - expected.V1, f.Vy - expected.V2,
-                f.Torque - expected.T, f.Mx - expected.M1, f.My - expected.M2 };
-            BridgeWorkflowTests.Require(errors.Take(4).All(e => Math.Abs(e) < 1e-5) && errors.Skip(4).All(e => Math.Abs(e) < .01),
-                $"Native regression: {c.Key}, station {expected.Station}");
-            var original = c.Original.SingleOrDefault(s => Math.Abs(s.Station - f.Station) < 1e-6);
-            if (original != null)
-                BridgeWorkflowTests.Require(f.AxialForce == original.N && f.Vx == original.V1 && f.Vy == original.V2 &&
-                    f.Torque == original.T && f.Mx == original.M1 && f.My == original.M2, "Original native sample changed.");
-        }
-        Console.WriteLine("PASS archived example 19: all four native station grids, including 879.044933748 mm");
-    }
 }

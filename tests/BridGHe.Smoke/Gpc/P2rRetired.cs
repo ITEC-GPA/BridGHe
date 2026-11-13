@@ -150,6 +150,7 @@ internal static class P2rRetired
         var d = new Dictionary<string, string>(StringComparer.Ordinal);
         void Add(string key, string reason) => d.Add(key, reason + " (" + CutDecision + ")");
         const string FemType = "a check of the FEM model types (BridGHe.Common.Models), which the GPC path does not use";
+        P2caChecks(Add); // P2CA (13/11/2026): the replay, archive and data side of the tests
         Add("core|section archive roundtrip", FemType + "; the GH archive round trip of a section on its GPC datum: P2fChecks.GooArchives (core)");
         Add("core|standalone moving case included in export", "ModelHelper.GetLoadCases on a FEM model; the cases of the moving paths of a GPC model: --examples (04) and --moving-load-tests --native");
         Add("core|model and moving paths archive roundtrip", FemType + "; the GPC model with its moving paths in BGHGPC1: gpc-draft-archive, p2d");
@@ -191,5 +192,20 @@ internal static class P2rRetired
         Add("regression-part|model-guids: result models duplicate with complete GUID maps", "the GUID map of the FEM value of GH_Model (GetGuid); the GPC part (P2fChecks.ModelGuids) stays");
         Add("regression-part|model-guids: GUID restoration is idempotent", "the GUID map of the FEM value of GH_Model (FromModel, SynchronizeGuids); the GPC part (P2fChecks.ModelGuids) stays");
         return d;
+    }
+
+    /// <summary>P2CA (13/11/2026, rule U3): the checks of the replay, archive and data side of the tests retired by name with the FEM types
+    /// they tested. Scopes as above, and <c>import-dump</c> (the conversions of <c>--import-dump</c>, one per key: the file it no longer writes)
+    /// and <c>regression-part</c> (a part of a regression that stays).</summary>
+    private static void P2caChecks(Action<string, string> add)
+    {
+        add("regression-part|gpc-legacy-import: the frozen payloads equal to the FEM writer now, byte for byte, and the former local axes (58 checks)",
+            "the FEM writer of the fixtures (LegacyPayloadFixtures.Fem.cs, ModelArchive.Write of the FEM models) and its parity with the frozen payloads; the frozen payloads stay "
+            + "the oracle of the 0.3.0 reader (gpc-legacy-import: SHA-256 of every payload, the outcomes of the index, the frozen local axes of units-axes.tsv), "
+            + "--legacy-payload-scan and --import-dump (the fixtures beams-*, nodes-*, plates-*)");
+        foreach (var memory in MemorySources)
+            add("import-dump|" + memory, "the example built in memory by the FEM catalogue (NativeExamples.Create) and written by the FEM writer (ModelArchive.Write); no frozen "
+                + "payload holds it (it is also retired from the R6.0 capture, CaptureSources); the same example as BridGHe 0.3.0 saved it stays in the corpus of --import-dump "
+                + "(examples-*, R3LegacyCorpus.Examples)");
     }
 }

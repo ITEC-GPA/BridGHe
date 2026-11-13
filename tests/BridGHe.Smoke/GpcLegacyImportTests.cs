@@ -18,9 +18,9 @@ using G = GPC.Geometry;
 /// <para>R6.6 (P2U): this file has no FeMM class. The former FEM models of the tests are the frozen payloads of
 /// <c>tests/BridGHe.Smoke/Fixtures/legacy-payloads</c> (<see cref="LegacyPayloadFixtures"/>, written once by the FEM writer: every unit
 /// system, the refusals of the reader), the former local axes of their beams the frozen ones of the same folder; the GH data archive takes its
-/// former payloads from the example definitions saved by BridGHe 0.3.0 (the locations the R6.0 capture <c>payloads</c> lists). While the
-/// FEM models exist, <c>GpcLegacyImportTests.Fem.cs</c> checks the fixtures against the FEM writer (and writes them once, with
-/// <c>BRIDGHE_LEGACY_FIXTURES=write:&lt;folder&gt;</c>).</para></summary>
+/// former payloads from the example definitions saved by BridGHe 0.3.0 (the locations the R6.0 capture <c>payloads</c> lists).</para>
+/// <para>P2CA (13/11/2026, U3): the parity of the fixtures with the FEM writer (<c>GpcLegacyImportTests.Fem.cs</c>, 58 checks) is retired by name
+/// with the FEM writer (<see cref="P2rRetired.Checks"/>); the frozen payloads are the oracle of the 0.3.0 reader, as before.</para></summary>
 internal static partial class GpcLegacyImportTests
 {
     private static int checks;
@@ -29,10 +29,6 @@ internal static partial class GpcLegacyImportTests
     private static bool Near(G.Vector3d a, (double X, double Y, double Z) b, double tolerance = 1e-12) => Near(a.X, b.X, tolerance) && Near(a.Y, b.Y, tolerance) && Near(a.Z, b.Z, tolerance);
     private static bool Near(G.Vector3d a, R.Vector3d b, double tolerance = 1e-12) => Near(a.X, b.X, tolerance) && Near(a.Y, b.Y, tolerance) && Near(a.Z, b.Z, tolerance);
 
-    /// <summary>The checks of the fixtures against the FEM writer while it exists (<c>GpcLegacyImportTests.Fem.cs</c>; it also writes the
-    /// fixtures once); the call disappears with that file.</summary>
-    static partial void FemCases();
-
     /// <summary>The factors of the unit systems (mm and N per definition unit; IPS in Fahrenheit), as the tests state them.</summary>
     private static readonly (string Units, double Length, double Force, bool Fahrenheit)[] UnitSystems =
         { ("Nmm", 1, 1, false), ("Knm", 1000, 1000, false), ("SI", 1000, 1, false), ("IPS", 25.4, 4.4482216152605, true) };
@@ -40,7 +36,6 @@ internal static partial class GpcLegacyImportTests
     internal static void Run()
     {
         checks = 0;
-        FemCases();
         foreach (var u in UnitSystems) Units(u.Units, u.Length, u.Force, u.Fahrenheit);
         Schemas();
         Archives();
