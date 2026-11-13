@@ -97,6 +97,7 @@ internal static class Program
         if(args.Contains("--c4-parity-native")) return C4ParityNative.Run(); // C4: targeted (the same cases run under --core-only --native)
         if(args.Contains("--c5-parity-native")) return C5ParityChecks.Native(); // C5: targeted (the same cases run under --core-only --native)
         if(args.Contains("--p2d-remake-examples")) return P2dExampleRemake.Run(args.Contains("write")); // P2D: 24, 42, 43, 47, 48 without FemmR6 (U2)
+        if(args.Contains("--u2-remake-examples")) return U2ExampleRemake.Run(args); if(args.Contains("--u2-check-examples")) return U2ExampleRemake.Check(args); // U2 (13/11): the 7 examples (9 definitions) remade on GPC data, and their outputs compared
         if(args.Contains("--p2d-save-reopen")) { var r=args.SkipWhile(a=>a!="--p2d-save-reopen").Skip(1).ToArray(); return P2dSaveReopen.Run(r[0],r[1],r.Length>2&&!r[2].StartsWith("--")?r[2]:null); } // P2D: measures of P2 (native)
         if(args.Contains("--phase-examples-native")) return NativePhaseExamples.Run(args.SkipWhile(a=>a!="--phase-examples-native").Skip(1).FirstOrDefault(a=>!a.StartsWith("--")));
         if(args.Contains("--legacy-beam-results")) { var r=args.SkipWhile(a=>a!="--legacy-beam-results").Skip(1).ToArray(); return LegacySectionDump.BeamResults(r[0],r[1],r.Length>2?r[2]:null); }
