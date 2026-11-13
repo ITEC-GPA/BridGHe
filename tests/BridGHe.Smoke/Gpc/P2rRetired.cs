@@ -132,8 +132,23 @@ internal static class P2rRetired
 
     internal static string ReplayRaw(string file, string key) => ReplayRawKeys.Contains((file, key))
         ? "P2F: raw outputs captured with a composite beam GUID new at every solve (P7, fixed by P2F), not compared; lines, messages and outputs compared (" + Decision + ")"
-        : ReplayRawKeysP2ca.Contains((file, key)) ? "P2CA: in-memory case built with its GPC twin, its identities differ from the FEM-backed input of the capture; "
+        : ReplayRawKeysP2ca.Contains((file, key)) || ReplayRawKeysP2cc.Contains((file, key)) ? "P2CA: in-memory case built with its GPC twin, its identities differ from the FEM-backed input of the capture; "
             + "lines, messages and outputs modulo GUIDs compared (" + CutDecision + ")" : null;
+
+    /// <summary>P2CC (13/11/2026, rule U3): the same for the cases of Lane 3c built with their GPC twins (the Element ID label of the former beam fixed):
+    /// lines, messages and outputs modulo GUIDs equal the capture; the raw field alone is retired.</summary>
+    internal static readonly IReadOnlyList<(string File, string Key)> ReplayRawKeysP2cc = new[]
+    {
+        ("gpc-only-models", "in memory: Merge Model (merges, ends and corners moved, new nodes, zero length, coincident corners)"),
+        ("gpc-only-models", "in memory: Merge Model (a small tolerance: new nodes only)"),
+        ("gpc-only-models", "in memory: Merge Model (beams only)"),
+        ("gpc-only-models", "in memory: Composite Beam Strain (a loaded beam, a case and a strain)"),
+        ("gpc-only-models", "in memory: Composite Beam Strain (a second strain, in another case)"),
+        ("gpc-only-models", "in memory: Build Model (the same node twice, created nodes, a combination)"),
+        ("gpc-only-models", "in memory: Build Model (a stage)"),
+        ("gpc-only-properties", "in memory: Beam Override (A08: a beam with a current section state, another property (the state stale))"),
+        ("gpc-only-properties", "in memory: Beam Property Override (A08: a beam with a current section state, another property (the state stale))"),
+    };
 
     /// <summary>P2CA (13/11/2026, coordinator decision 1, rule U3): the keys of the P2R replay capture whose input is now built with its GPC twin (no FEM
     /// value): their identities differ from those of the conversion of the former FEM-backed input, so their raw field alone is retired; the line count,
@@ -164,6 +179,7 @@ internal static class P2rRetired
         P2rRetiredP2cb.AddTo(Add); // P2CB (13/11): the retirements of lane P2CB (Gpc/P2rRetired.P2cb.cs)
         const string FemType = "a check of the FEM model types (BridGHe.Common.Models), which the GPC path does not use";
         P2caChecks(Add); // P2CA (13/11/2026): the replay, archive and data side of the tests
+        P2ccChecks(Add); // P2CC (13/11/2026): the replay side, the last FEM inputs of GpcOnlyReplay
         Add("core|section archive roundtrip", FemType + "; the GH archive round trip of a section on its GPC datum: P2fChecks.GooArchives (core)");
         Add("core|standalone moving case included in export", "ModelHelper.GetLoadCases on a FEM model; the cases of the moving paths of a GPC model: --examples (04) and --moving-load-tests --native");
         Add("core|model and moving paths archive roundtrip", FemType + "; the GPC model with its moving paths in BGHGPC1: gpc-draft-archive, p2d");
@@ -259,5 +275,16 @@ internal static class P2rRetired
         add("regression-part|p2d: development, a FEM-backed GH type writes its datum alone (1 check)", "a GH_Beam made from a FEM BeamModel (a FEM-backed "
             + "GH type of a component not yet on GPC); after the cut no GH type has a FEM value; GPC coverage: no FemmR6 written again by a beam and by a model of a "
             + "development file and by a 0.3.0 model (p2d, on the frozen payloads of Fixtures/p2d-payloads)");
+    }
+
+    /// <summary>P2CC (13/11/2026, rule U3): the checks of the replay side retired by name with the FEM types they used.</summary>
+    private static void P2ccChecks(Action<string, string> add)
+    {
+        add("regression-part|gpc-only-models: Bridge Check Map in kN-m against the FEM reading (1 case)", "BridgeCheckMap.Evaluate on the FEM beams of an "
+            + "in-memory FEM model in kN-m (ImportDump.BeamData) against the GPC beams of its conversion; GPC coverage: bridge-check-map on the beams as the map "
+            + "reads them (BridgeMapBeam, explicit values), the replay of Bridge Check Map in the definitions (gpc-only-models)");
+        add("regression-part|gpc-only-properties: R65-C2-08 Bridge Member Assignment with a property the reader refuses (1 case)", "the refused property was a "
+            + "FEM value (a 0.3.0-like property on an Omega section) and no GPC producer makes a property the reader refuses; GPC coverage: the refusals of the "
+            + "reader on the frozen payloads (gpc-legacy-import, refusal-mirrored-section), Bridge Member Assignment replayed with GPC-only inputs (gpc-only-generators)");
     }
 }
