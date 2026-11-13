@@ -75,8 +75,6 @@ internal static class GpcDraftCapture
         LegacySectionRecipe s => GpcDraftArchiveChecks.Text(s),
         LegacyBeamProperty p => GpcDraftArchiveChecks.Text(p),
         GPC.Model.ElementProperties.PlateProperty p => GpcDraftArchiveChecks.Text(p),
-        // L2C: the datum of a Plate Property parameter in the draft check (never captured): the property and the bending of a membrane.
-        GpcPlatePropertyDatum d => GpcDraftArchiveChecks.Text(d.Property) + (d.MembraneBending != 0 ? "\nmembrane bending " + B(d.MembraneBending) : ""),
         GpcDraftArchiveChecks.ModelDatum m => GpcDraftArchiveChecks.Text(m.Model, m.Units),
         GpcModels.Conversion c => ConversionText(c),
         GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition c => GpcDraftArchiveChecks.Text(c),

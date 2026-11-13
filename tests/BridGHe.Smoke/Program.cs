@@ -37,9 +37,8 @@ internal static class Program
             if(args.Contains("--legacy-sections")) return LegacySectionDump.Run(args.SkipWhile(a=>a!="--legacy-sections").Skip(1).First());
             if(args.Contains("--legacy-capture-compare")) return LegacyNativeExamplesComparison.CompareCapture(args.SkipWhile(a=>a!="--legacy-capture-compare").Skip(1).First());
             if(args.Contains("--legacy-examples-compare")) return LegacyNativeExamplesComparison.Compare(args.SkipWhile(a=>a!="--legacy-examples-compare").Skip(1).First());
-            // R6.1: every GPC datum attached to a GH type is compared with the conversion of its FEM value (GpcDraftCheckHost).
-            GpcDraftCheckHost.Install();
-            return GpcDraftCheckHost.Finish(Run(args));
+            // P2CUT (13/11): the draft check host is retired with the FEM values it compared with (no GH type attaches a datum to a FEM value).
+            return Run(args);
         }
         catch(Exception ex) { Console.Error.WriteLine(ex);return 1; }
         finally { ShutdownDispatcher(); }
@@ -139,18 +138,13 @@ internal static class Program
         if(args.Contains("--gh-examples")) return GrasshopperExamples.Run(args.SkipWhile(a=>a!="--gh-examples").Skip(1).FirstOrDefault()??"all");
         if(args.Contains("--regression"))
             return RegressionTests.Run(args.SkipWhile(a=>a!="--regression").Skip(1).FirstOrDefault()??"all");
-        var model=new ModelModel(ModelModel.ModelUnits.Nmm);
-        model.Name="Roundtrip";
-        var section=new SectionModel { SectionType=SectionModel.SectionTypes.SolidCircle,D=20 };
-        section.CalculateSection();
-        Assert(Math.Abs(section.SectionArea-Math.PI*100)<1e-10,"circle analytical area");
-        Assert(Math.Abs(section.I11-Math.PI*10000/4)<1e-8,"circle analytical inertia");
-        var copy=ModelArchive.Clone(section);
-        Assert(copy.D==20 && copy.SectionArea==section.SectionArea,"section archive roundtrip");
+        // P2CUT (13/11): the solid circle of the Section components on the GPC path (GpcSections.Standard), the same analytic values as the
+        // former FEM section; the FEM archive, export and copy checks are retired by name with their types (P2rRetired.Checks).
+        var section=(GPC.Model.Sections.Section)BridGHe.Common.Gpc.GpcSections.Standard(BridGHe.Common.Gpc.BridgeSectionKind.SolidCircle,"Roundtrip",20,0,0,0,0,0,0,0);
+        Assert(Math.Abs(section.Area-Math.PI*100)<1e-10,"circle analytical area");
+        Assert(Math.Abs(section.Jxx-Math.PI*10000/4)<1e-8,"circle analytical inertia");
         var path=new MovingPath { LoadCaseName="Traffic", Coordinates=new double[]{0,0,0,10,0,0,0,1,0},Template=new MovingTemplate { Vehicles=new[]{new MovingVehicle { Loads=new MovingObject[]{new MovingPointForce { Force=new double[]{0,0,-100} }} }} }};
-        path.Validate();model.MovingPaths.Add(path);
-        ModelHelper.GetLoadCases(model,out var exportCases);
-        Assert(exportCases.Any(c=>c.Name=="Traffic") && exportCases[0].Name=="Dead","standalone moving case included in export");
+        path.Validate();
         var allLoads=Enumerable.Range(0,5).Select(i=>(MovingObject)new MovingDistributedForce { Mobility=i,X1=0,X2=5,Y1=-1,Y2=1,Force=new double[]{0,0,-10} })
             .Concat(Enumerable.Range(0,2).Select(i=>(MovingObject)new MovingPointForce { Mobility=i,Force=new double[]{0,0,-100} }))
             .Append(new MovingHeatSource { SizeX=1,SizeY=1,Heat=100 }).ToArray();
@@ -159,31 +153,11 @@ internal static class Program
         Assert(allCopy.Vehicles[0].Loads.Length==8 && allCopy.LaneFactors[1]==0.8,"all API moving load modes roundtrip");
         var movingCopy=(MovingPath)path.Clone();movingCopy.Template.Vehicles[0].Loads[0]=new MovingHeatSource { SizeX=1,SizeY=1 };
         Assert(path.Template.Vehicles[0].Loads[0] is MovingPointForce,"moving graph deep copy");
-        var modelCopy=ModelArchive.Clone(model);
-        Assert(modelCopy.Name==model.Name && modelCopy.MovingPaths.Count==1,"model and moving paths archive roundtrip");
-        modelCopy.GeneratedMovingCases.Add(3,"Old moving case");modelCopy.LoadCases.Add(new LoadCaseModel("3","Old moving case"));
-        var replaced=MovingModelBuilder.ReplacePaths(modelCopy,new[]{path});
-        Assert(replaced.GeneratedMovingCases.Count==0 && replaced.LoadCases.All(c=>c.Name!="Old moving case") && replaced.LoadCases.Any(c=>c.Name=="Traffic"),"replacing moving paths removes obsolete generated cases");
-        Assert(modelCopy.GeneratedMovingCases.Count==1,"replacing moving paths leaves original model intact");
         CheckBridge();
         CheckPhaseAssembly();
+        Console.WriteLine($"RETIRED BY NAME (P2CUT): {P2rRetired.Checks.Count(c=>c.Key.StartsWith("core|",StringComparison.Ordinal))} core checks of FEM types (P2rRetired.Checks)");
         if(!args.Contains("--pure"))
         {
-        var material=new MaterialModel("S355") { Name="S355",Modulus=210000,MinimumYieldStress=355,MinimumTensileStress=510 };
-        var property=new BeamPropertyModel("P1") { Name="P1",Material=material,Section=new SectionModel { SectionType=SectionModel.SectionTypes.Generic,SectionArea=100,I11=100,I22=100,J=100 },PropertyType=BeamPropertyType.Beam };
-        var node1=new NodeModel("N1",new Point3d(0,0,0));
-        node1.Attributes.Add(new NodeRestraintAttributeModel(true,true,true,true,true,true));
-        var node2=new NodeModel("N2",new Point3d(1000,0,0));
-        var beam=new BeamModel("B1",node1.Position,node2.Position,property);
-        var traffic=new LoadCaseModel("1","Traffic");model.LoadCases.Add(traffic);
-        beam.Results.Add(new BeamForceResultModel(traffic,0,0,"") { AxialForce=1000 });
-        model.AddElements(new ElementModel[]{node1,node2,beam});
-        var graph=ModelArchive.Clone(model);
-        Assert(graph.Nodes.Count==2 && graph.Beams.Count==1 && graph.GetBeam(graph.Beams[0].BeamId)!=null,"FEM graph and indexes roundtrip");
-        Assert(graph.Nodes[0].Attributes.Count==1 && graph.Beams[0].Results.Count==1,"attributes and results roundtrip");
-        Assert(object.ReferenceEquals(graph.LoadCases[0],graph.Beams[0].Results[0].LoadCase),"shared load case identity preserved");
-        var graphCopy=new ModelModel(model);
-        Assert(graphCopy.Beams.Count==1 && graphCopy.Nodes[0].Attributes.Count==1,"FEM copy constructor with cloned attributes");
         CheckGrasshopper(args.Contains("--installed-plugins"));
         if (!args.Contains("--core-only") && RegressionTests.Run("all") != 0) return 1;
         }
@@ -266,28 +240,6 @@ internal static class Program
         P2fChecks.GooArchives(assembly,Assert); // P2F (12/11): on the GPC goo; the FEM fixture of CheckGooArchives is no longer written (P2D)
     }
 
-    private static void CheckGooArchives(System.Reflection.Assembly assembly)
-    {
-        var material=new MaterialModel("S355") { Name="S355",Modulus=210000 };
-        var section=new SectionModel { Name="Native metadata",SectionType=SectionModel.SectionTypes.Generic,SectionArea=100,Ixx=123,Iyy=234,Ixy=12,NativeSection=new StrausSection { Key="TriangleSolid",Dimensions=new double[]{20,30} } };
-        var property=new BeamPropertyModel("P") { Name="P",Section=section,Material=material };
-        var composite=new CompositeBeamPropertyModel("C") { Name="C",SteelSection=section,ConcreteSection=new SectionConcreteSlabModel(200,1000,1000,40),ConcreteMaterial=material,SteelMaterial=material,RebarMaterial=material,NInfinite=18,NInstant=6,ConsiderConcrete=true,ConsiderRebar=true };
-        foreach(var pair in new[]{("BridGHe.Grasshopper.DataTypes.Fem.GH_BeamSection",(object)section),("BridGHe.Grasshopper.DataTypes.Fem.GH_BeamProperty",(object)property),("BridGHe.Grasshopper.DataTypes.GH_CompositeBeamProperty",(object)composite)})
-        {
-            var type=assembly.GetType(pair.Item1,true);
-            var value=Activator.CreateInstance(type,pair.Item2);
-            var chunkType=Type.GetType("GH_IO.Serialization.GH_LooseChunk, GH_IO",true);
-            var chunk=Activator.CreateInstance(chunkType,new object[]{"Test"});
-            Assert((bool)type.GetMethod("Write").Invoke(value,new[]{chunk}),"GH archive write "+type.Name);
-            var copy=Activator.CreateInstance(type);
-            Assert((bool)type.GetMethod("Read").Invoke(copy,new[]{chunk}),"GH archive read "+type.Name);
-            object restored=type.GetProperty("Value").GetValue(copy);
-            if(restored is SectionModel s)Assert(s.Ixy==12 && s.NativeSection.Key=="TriangleSolid","GH native section and moments preserved");
-            if(restored is BeamPropertyModel b)Assert(b.Section.NativeSection.Dimensions[1]==30,"GH nested beam section preserved");
-            if(restored is CompositeBeamPropertyModel c)Assert(c.IsValid && c.NInfinite==18 && c.NInstant==6 && c.ConsiderConcrete && c.ConsiderRebar,"GH composite validity, modular ratios and flags preserved");
-        }
-    }
-
     private static void CheckNative()
     {
         CheckNativeSections();
@@ -301,6 +253,7 @@ internal static class Program
         Assert(C3Checks.Native()==0,"C3 (11/11): materials with explicit G, damping, thermal data or a table written through the GPC-only path as 0.3.0 wrote them; preview of the native sections");
         Assert(C4ParityNative.Run()==0,"C4 (11/11): rotated sections with supports, gradients and taper, moving cases of an ordinary run and solver 1 as BridGHe 0.3.0");
         Assert(C5ParityChecks.Native()==0,"C5 (11/11): releases of rotated beams (angle, double angle, Phase Model) as BridGHe 0.3.0");
+        Assert(RegressionTests.Run("p2k-components")==0,"P8 (P2K): cable refused before any Straus7 call"); // R6 (P2CUT): the probe of P2K in core-native
     }
 
     /// <summary>P2Z (R6.5 P1 lane 2a): the Straus7 section components replayed in memory with the switch of the property producers, Straus7
@@ -341,18 +294,17 @@ internal static class Program
             double Dimension(string n) => n.StartsWith("R")||n.StartsWith("alpha")?0:n=="D"?400:n=="B2"?100:n.StartsWith("B")?200:n=="L"?20:10;
             // A bulb with zero toe radius and slope is degenerate; use a finite bulb.
             var dimensions=shape.Key=="BglBulb" ? new double[]{200,50,10,10,0,5,0,0,30} : shape.Dimensions.Select(Dimension).ToArray();
-            var section=new StrausSection { Key=shape.Key,Dimensions=dimensions }.Calculate();
-            Assert(section.SectionArea>0 && section.I11>0 && section.I22>0,"native section "+shape.Key);
-            Assert(section.NativeSection.PreviewContours.Length>0,"native section boundary "+shape.Key);
-            var previewBeam=new BeamModel(Point3d.Origin,new(1000,0,0),new BeamPropertyModel("Preview"){Section=section,Material=new MaterialModel("S"),PropertyType=BeamPropertyType.Beam});
-            Assert(previewBeam.Shapes.Length>0 && previewBeam.Shapes.All(b=>b.IsSolid),"native solid preview "+shape.Key);
-            double volume=previewBeam.Shapes.Sum(b=> { using var mass=VolumeMassProperties.Compute(b);return mass.Volume; });
-            Console.WriteLine($"PREVIEW {shape.Key}: A={volume/1000:G17}, native={section.SectionArea:G17}, points={section.NativeSection.PreviewContours.Sum(x=>x.Length/2)}");
-            Assert(Math.Abs(volume/1000/section.SectionArea-1)<.03,"native preview area within 3 percent of exact area "+shape.Key);
-            var copy=ModelArchive.Clone(section);
-            Assert(copy.NativeSection.PreviewContours.SelectMany(x=>x).SequenceEqual(section.NativeSection.PreviewContours.SelectMany(x=>x)),"native preview archive "+shape.Key);
-            previews.Add(new { shape.Key,section.SectionArea,section.NativeSection.PreviewContours });
-            if(shape.Key=="BglRectangle") Assert(Math.Abs(section.SectionArea-11600)<1e-6,"BGL rectangular hollow analytical area");
+            // P2CUT (13/11): the section as the GPC path resolves it (GpcNativeSections, the Straus7 Section components and Beam Property): the
+            // reference properties and the display mesh of Straus7; the FEM solid preview and FEM archive checks are retired by name (P2rRetired.Checks).
+            var resolved=BridGHe.Common.Gpc.GpcNativeSections.Resolve(shape.Key,dimensions,null,null,null,1);
+            var data=resolved.Section.ReferenceProperties;
+            Assert(data[0]>0 && data[1]>0 && data[2]>0,"native section "+shape.Key);
+            Assert(resolved.Faces.Length>0 && resolved.Vertices.Length>0,"native section boundary "+shape.Key);
+            double meshArea=resolved.Faces.Sum(f=>Math.Abs(Enumerable.Range(0,f.Length).Sum(k=>{var p=resolved.Vertices[f[k]];var q=resolved.Vertices[f[(k+1)%f.Length]];return p[0]*q[1]-q[0]*p[1];}))/2);
+            Console.WriteLine($"PREVIEW {shape.Key}: A={meshArea:G17}, native={data[0]:G17}, points={resolved.Vertices.Length}");
+            Assert(Math.Abs(meshArea/data[0]-1)<.03,"native preview area within 3 percent of exact area "+shape.Key);
+            previews.Add(new { shape.Key,SectionArea=data[0],resolved.Vertices,resolved.Faces });
+            if(shape.Key=="BglRectangle") Assert(Math.Abs(data[0]-11600)<1e-6,"BGL rectangular hollow analytical area");
         }
         Directory.CreateDirectory("artifacts/native-preview");
         File.WriteAllText("artifacts/native-preview/sections.json",System.Text.Json.JsonSerializer.Serialize(previews));
@@ -361,27 +313,18 @@ internal static class Program
     private static void CheckNativeCantilever()
     {
         // One Euler-Bernoulli beam, units N-mm, no self weight. Native test only after a successful St7Init.
+        // P2CUT (13/11): on GPC (the builders of the components and Build Model on GPC, GpcNativeExamples.Beam: the same material, section and
+        // restraint as the former FEM model), the GPC-only analysis and the GPC result readers.
         const double length=3000, force=1000, modulus=210000, inertia=450000000;
-        var loadCase=new LoadCaseModel("P","P");
-        var material=new MaterialModel("S355") { Name="S355",Modulus=modulus,PoissonRatio=0.3 };
-        var section=new SectionModel { SectionType=SectionModel.SectionTypes.Generic,SectionArea=60000,
-            I11=inertia,I22=200000000,J=100000000,ShearA1=0,ShearA2=0 };
-        var property=new BeamPropertyModel("P") { Name="P",Material=material,Section=section,PropertyType=BeamPropertyType.Beam };
-        var first=new NodeModel("N1",Point3d.Origin);
-        first.Attributes.Add(new NodeRestraintAttributeModel(true,true,true,true,true,true));
-        var end=new NodeModel("N2",new Point3d(length,0,0));
-        end.Loads.Add(new NodeForceLoadModel(loadCase,new Vector3d(0,0,-force)));
-        var beam=new BeamModel("1",first.Position,end.Position,property);
-        var input=new ModelModel(ModelModel.ModelUnits.Nmm);
-        input.LoadCases.Add(loadCase);input.AddElements(new ElementModel[]{first,end,beam});
+        var b=GpcNativeExamples.Beam("p2cut-cantilever");b.Force(b.Nodes.Count-1,"P",0,0,-force);
+        var input=b.Build("Cantilever").Input;
         string folder=Path.Combine("artifacts","native",Guid.NewGuid().ToString("N"));Directory.CreateDirectory(folder);
-        var result=StrausAnalysis.Run(input,Path.GetFullPath(Path.Combine(folder,"cantilever.st7")),0,new[]{"P"},1e-6,false,out _);
-        double actual=result.Nodes.Single(n=>Math.Abs(n.Position.X-length)<1e-6).Results.OfType<NodeDisplResultModel>().Single().Displacement.Z;
+        var result=new GpcNativeExamples.Results(StrausAnalysis.Run(input,Path.GetFullPath(Path.Combine(folder,"cantilever.st7")),0,new[]{"P"},false,out _));
+        double actual=result.Displacement(result.NodeCount-1,"P")[2];
         double expected=-force*Math.Pow(length,3)/(3*modulus*inertia);
         Assert(Math.Abs(actual-expected)<=Math.Abs(expected)*1e-5,"native cantilever tip displacement FL^3/(3EI)");
-        var fixedEnd=result.Beams[0].Results.OfType<BeamForceResultModel>().OrderBy(r=>r.Station).First();
-        Assert(Math.Abs(Math.Abs(fixedEnd.My)-force*length)<=force*length*1e-5,"native plane-2 cantilever moment FL");
-        Assert(input.Beams[0].Results.Count==0,"native analysis does not mutate input results");
+        Assert(Math.Abs(Math.Abs(result.Force(0,"P").Bending2)-force*length)<=force*length*1e-5,"native plane-2 cantilever moment FL");
+        Assert(input.Model.AllElements.Sum(e=>e.Results.Count)+input.Model.Datasets.Count==0,"native analysis does not mutate input results");
         CheckNativeSectionAnalysis();
         NativeExamples.CheckMovingLibrary();
     }
@@ -393,47 +336,52 @@ internal static class Program
     /// of 1000 that cancelled).</summary>
     private static void CheckNativeSectionAnalysis()
     {
+        // P2CUT (13/11, R6): on GPC. The Straus7 section of the Section component in the definition units (kN-m: dimensions in m), the Beam
+        // Property and the element builders of the components, Build Model on GPC in kN-m (drafts in the definition units, normalised by the
+        // assembly), the GPC-only analysis and the GPC result readers (the rows of the Results components, in the definition units).
         const double length=3, force=10, modulus=2.1e8, b=0.2, d=0.4; // modulus in kN/m2, the model units
-        var native=new StrausSection { Key="RectangleSolid",Dimensions=new[]{b,d} }.Calculate();
-        Assert(Math.Abs(native.SectionArea-b*d)<=b*d*1e-12,"native section in model units: area B*D");
-        var loadCase=new LoadCaseModel("P","P");
-        var material=new MaterialModel("S355") { Name="S355",Modulus=modulus/1000,PoissonRatio=0.3 }; // MPa
-        var property=new BeamPropertyModel("NativeRect") { Name="NativeRect",Material=material,Section=native,PropertyType=BeamPropertyType.Beam };
-        var first=new NodeModel("N1",Point3d.Origin);first.Attributes.Add(new NodeRestraintAttributeModel(true,true,true,true,true,true));
-        var end=new NodeModel("N2",new Point3d(length,0,0));end.Loads.Add(new NodeForceLoadModel(loadCase,new Vector3d(force,0,-force)));
-        var beam=new BeamModel("1",first.Position,end.Position,property);
-        var input=new ModelModel(ModelModel.ModelUnits.Knm);input.LoadCases.Add(loadCase);input.AddElements(new ElementModel[]{first,end,beam});
+        var native=BridGHe.Common.Gpc.GpcNativeSections.Resolve("RectangleSolid",new[]{b,d},null,null,null,1).Section.ReferenceProperties; // as given (former Calculate)
+        double area=native[0],i11=native[1],i22=native[2],shearA1=native[6],shearA2=native[7];
+        Assert(Math.Abs(area-b*d)<=b*d*1e-12,"native section in model units: area B*D");
+        Guid Id(string what)=>BridGHe.Common.Gpc.GpcIdentity.Derive(BridGHe.Common.Gpc.GpcIdentity.NameSpace,"p2cut-native-section:"+what);
+        var material=BridGHe.Common.Gpc.Builders.GpcMaterialBuilders.Material(new BridGHe.Common.Gpc.Legacy.LegacyMaterialRecipe { Name="S355",Modulus=modulus/1000,PoissonRatio=0.3 }); // MPa
+        var property=BridGHe.Common.Gpc.Builders.GpcPropertyBuilders.Beam("NativeRect",5,BridGHe.Common.Gpc.Builders.GpcSectionBuilders.Native("RectangleSolid",new[]{b,d},null,null,null,0),material);
+        var loadCase=BridGHe.Common.Gpc.Builders.GpcCaseBuilders.Case("P",false);
+        var first=BridGHe.Common.Gpc.Builders.GpcNodeBuilders.WithRestraint(BridGHe.Common.Gpc.Builders.GpcNodeBuilders.Create(0,0,0,"N1",null,Id("n1")),true,true,true,true,true,true,Id("r1"));
+        var end=BridGHe.Common.Gpc.Builders.GpcNodeBuilders.WithForce(BridGHe.Common.Gpc.Builders.GpcNodeBuilders.Create(length,0,0,"N2",null,Id("n2")),loadCase,force,0,-force,Id("f2"));
+        var beam=BridGHe.Common.Gpc.Builders.GpcBeamBuilders.New(first.Node.Position,end.Node.Position,property,null,0,0,0,Id("b1"),"1");
+        var input=BridGHe.Common.Gpc.Legacy.LegacyBuildModel.Build("native-section",new BridGHe.Common.Gpc.BridgeUnits(BridGHe.Common.Gpc.DefinitionUnits.Knm),1e-6,
+            new System.Collections.Generic.List<(Guid,BridGHe.Common.Gpc.Legacy.LegacyNodeDraft)>{(first.Node.Guid,first),(end.Node.Guid,end)},
+            new System.Collections.Generic.List<(Guid,BridGHe.Common.Gpc.Legacy.LegacyBeamDraft)>{(beam.Beam.Guid,beam)},
+            new System.Collections.Generic.List<(Guid,BridGHe.Common.Gpc.Legacy.LegacyPlateDraft)>(),
+            new System.Collections.Generic.List<BridGHe.Common.Gpc.Legacy.LegacyCombinationDraft>(),new System.Collections.Generic.List<BridGHe.Common.Gpc.Legacy.LegacyStageDraft>());
         string folder=Path.Combine("artifacts","native",Guid.NewGuid().ToString("N"));Directory.CreateDirectory(folder);
         string path=Path.GetFullPath(Path.Combine(folder,"native-section.st7"));
         for(int run=0;run<2;run++)
         {
-            var result=StrausAnalysis.Run(input,path,0,new[]{"P"},1e-6,false,out _,out var analysed);
-            var u=result.Nodes.Single(n=>Math.Abs(n.Position.X-length)<1e-9).Results.OfType<NodeDisplResultModel>().Single().Displacement;
-            // C4: the Results components convert the GPC values to the definition units exactly as the FEM results.
-            ResultsComponentsCheck.Verify(ResultsComponentsCheck.AnalysedGoo(result,analysed),"kN-m native section, run "+(run+1));
-            var fixedEnd=result.Beams[0].Results.OfType<BeamForceResultModel>().OrderBy(r=>r.Station).First();
-            Assert(Math.Abs(Math.Abs(fixedEnd.My)-force*length)<=force*length*1e-5,"kN-m results in model units: fixed-end moment FL [kN m], run "+(run+1));
-            Assert(Math.Abs(result.Beams[0].Results.OfType<BeamForceResultModel>().Max(r=>r.Station)-length)<=1e-9,"kN-m results in model units: stations [m], run "+(run+1));
+            var analysed=StrausAnalysis.Run(input,path,0,new[]{"P"},false,out _);
+            var result=new GpcNativeExamples.Results(analysed);
+            var u=result.Displacement(1,"P");
+            // R6.6 R0 (replaces the C4 check against the FEM results): Node, Beam and Plate Results on the GPC-only model show the reader rows.
+            // and the result consumers on the reader rows (ConsumersCheck, as ResultsComponentsCheck.Verify did on the former run).
+            Assert(GpcNativeExamples.ComponentsCheck(input,analysed,"kN-m native section, run "+(run+1))>0 && ConsumersCheck.Verify(analysed,"kN-m native section, run "+(run+1),new[]{"P"},input,0)>0,
+                "Results components on the GPC-only kN-m model: outputs equal to the GPC reader rows, run "+(run+1));
+            Assert(Math.Abs(Math.Abs(result.Force(0,"P").Bending2)-force*length)<=force*length*1e-5,"kN-m results in model units: fixed-end moment FL [kN m], run "+(run+1));
+            Assert(Math.Abs(result.BeamRows(0,"P").Max(r=>r.Station)-length)<=1e-9,"kN-m results in model units: stations [m], run "+(run+1));
             double axial=force*length/(modulus*b*d);
             // Vertical bending about a principal axis, with the shear deformation of the native shear areas (Timoshenko):
             // FL^3/(3EI) + FL/(G As), with the inertia and shear area pair that the native axes give.
             double shearModulus=modulus/(2*1.3);
-            var candidates=new[]{(native.I11,native.ShearA2),(native.I22,native.ShearA1),(native.I11,native.ShearA1),(native.I22,native.ShearA2)}
+            var candidates=new[]{(i11,shearA2),(i22,shearA1),(i11,shearA1),(i22,shearA2)}
                 .Select(p=>force*Math.Pow(length,3)/(3*modulus*p.Item1)+force*length/(shearModulus*p.Item2)).ToArray();
-            Assert(Math.Abs(u.X-axial)<=axial*1e-5,"native section axial elongation FL/(EA), run "+(run+1));
-            double match=candidates.OrderBy(c=>Math.Abs(-u.Z-c)).First();
-            Assert(Math.Abs(-u.Z-match)<=match*1e-4,$"native section tip deflection FL^3/(3EI)+FL/(G As) {-u.Z:G9} vs {match:G9} (candidates {string.Join(", ",candidates.Select(c=>c.ToString("G9")))}), run "+(run+1));
-            Assert(Math.Abs(native.I11*native.I22-b*d*d*d/12*d*b*b*b/12)<=1e-12*native.I11*native.I22*1e4,"native section inertias B*D^3/12 and D*B^3/12");
+            Assert(Math.Abs(u[0]-axial)<=axial*1e-5,"native section axial elongation FL/(EA), run "+(run+1));
+            double match=candidates.OrderBy(c=>Math.Abs(-u[2]-c)).First();
+            Assert(Math.Abs(-u[2]-match)<=match*1e-4,$"native section tip deflection FL^3/(3EI)+FL/(G As) {-u[2]:G9} vs {match:G9} (candidates {string.Join(", ",candidates.Select(c=>c.ToString("G9")))}), run "+(run+1));
+            Assert(Math.Abs(i11*i22-b*d*d*d/12*d*b*b*b/12)<=1e-12*i11*i22*1e4,"native section inertias B*D^3/12 and D*B^3/12");
         }
         Assert(Directory.GetFiles(folder,"native-section.*").Length>=2,"rerun on the same path replaces the model and result files");
-        var report=new BridGHe.Common.Gpc.Legacy.LegacyImportReport();
-        var gpc=BridGHe.Common.Gpc.Legacy.LegacyModelImport.Import(BridGHe.Common.Gpc.Legacy.LegacyArchive.Read(ModelArchive.Write(input)),Guid.NewGuid(),1e-6,report);
-        var mapped=gpc.BeamElements.Values.Single();
-        Assert(report.NativeSections.TryGetValue(mapped.Guid,out var definition)&&Math.Abs(definition.ReferenceProperties[0]-b*d*1e6)<=b*d*1e6*1e-12,"legacy native section re-resolved in mm from model-unit dimensions");
+        var mapped=input.Model.BeamElements.Values.Single();
         Assert(Math.Abs(((GPC.Model.ElementProperties.ElasticBeamProperty)mapped.BeamProperty).Section.Area-b*d*1e6)<=b*d*1e6*1e-12,"GPC property from the resolved native section");
-        // e3 point 5 (coordinator decision 1 (b)): the kN-m case through Build Model on GPC (drafts in the definition units, normalised by
-        // the assembly) against the conversion of its FEM output, measured.
-        GpcBuildModelChecks.Single("kN-m native section",input);
     }
 
     private static void CheckBridge()
@@ -463,8 +411,9 @@ internal static class Program
         checker.GetLinearAnalysisResultByStages(out var planar,out _,out _,out _,0,0,invalidForce,zero,zero,true);
         Assert(Math.Abs(planar.Point8_SteelSigma)<1e-10 && invalidForce.T==1000 && planar.Assumptions.Contains(BridGHe.Common.Checks.BridgeCheckAdapter.PlanarAssumption),"planar torsion exclusion is declared without mutating FEM forces");
         var exportedAxes = new GPC.Geometry.CoordinateSystem(GPC.Geometry.Point3d.Origin, new GPC.Geometry.Vector3d(-1,0,0), new GPC.Geometry.Vector3d(0,-1,0));
-        var diagram = new BeamForceResultModel(new LoadCaseModel("Bending"),0,0,"") { My=1e6 };
-        var converted = BridGHe.Common.Checks.BridgeForceConvention.FromStraus(diagram,exportedAxes);
+        // P2CUT (13/11): the Straus7 diagram as a merged sample of the GPC path (BM2 = 1e6), the same conversion as the former FEM result.
+        var diagram = new BridGHe.Common.Checks.BeamForceSample(0,0,0,0,0,0,1e6);
+        var converted = BridGHe.Common.Checks.BridgeForceConvention.FromStraus(diagram,"Bending",exportedAxes);
         Assert(converted.ToGlobalCoordinateSystem().M1==1e6 && converted.M1==-1e6,"Straus plane-2 moment rotated into checker destination axes");
         checker.GetLinearAnalysisResultByStages(out var bending,out _,out _,out _,0,0,converted,zero,zero,true);
         Assert(Math.Abs(bending.Point5_SteelSigma+1e6*150/h.Jxx)<1e-8 && Math.Abs(bending.Point8_SteelSigma-1e6*150/h.Jxx)<1e-8,"positive sagging moment compresses top and tensions bottom");
@@ -472,26 +421,16 @@ internal static class Program
 
     private static void CheckPhaseAssembly()
     {
-        LoadCaseModel Case(string name, LoadCaseModel.Stage.BridgePhases phase)
-        {
-            var load=new LoadCaseModel(name,name); load.Stages.Add(new LoadCaseModel.Stage(name) { BridgePhase=phase });return load;
-        }
-        var steel=Case("S",LoadCaseModel.Stage.BridgePhases.OnlySteel);
-        var infinite=Case("I",LoadCaseModel.Stage.BridgePhases.NInfinite);
-        var instant=Case("Q",LoadCaseModel.Stage.BridgePhases.NInstant);
-        var shrink=Case("R",LoadCaseModel.Stage.BridgePhases.StrainInfinite);
-        var combo=new LoadCombinationModel("Combination");
-        combo.Values.Add(steel,1);combo.Values.Add(infinite,2);combo.Values.Add(instant,3);combo.Values.Add(shrink,2);
-        var beam=new ElementModel();
-        beam.Results.Add(new BeamForceResultModel(steel,0,0,""){AxialForce=10});
-        beam.Results.Add(new BeamForceResultModel(infinite,0,0,""){AxialForce=100});
-        beam.Results.Add(new BeamForceResultModel(instant,0,0,""){AxialForce=1000});
-        beam.Loads.Add(new CompositeBeamSlabStrainModel(shrink,new CompositeBeamSlabStrainModel.LoadData{Strain=-0.0001}));
-        beam.Loads.Add(new CompositeBeamSlabStrainModel(shrink,new CompositeBeamSlabStrainModel.LoadData{Strain=-0.0002}));
-        var result=BridGHe.Common.Checks.BridgePhaseAssembler.Assemble(beam,1,0,combo,GPC.Geometry.CoordinateSystem.Global,1e-8);
+        // P2CUT (13/11): the index of the GPC bridge model (merged samples, the phases of the cases from the recipe); the slab strains come
+        // from the recipe on the GPC path (the index has none), so the strain check of the former FEM loads is retired by name (P2rRetired.Checks).
+        static BridGHe.Common.Checks.BeamForceSample Axial(double n) => new BridGHe.Common.Checks.BeamForceSample(0,n,0,0,0,0,0);
+        var index=BridGHe.Common.Checks.BridgePhaseAssembler.CreateIndex("B",new[]{("S",Axial(10)),("I",Axial(100)),("Q",Axial(1000))},1e-8);
+        var phases=new System.Collections.Generic.Dictionary<string,BridGHe.Common.Checks.BridgeCasePhase>{["S"]=BridGHe.Common.Checks.BridgeCasePhase.OnlySteel,
+            ["I"]=BridGHe.Common.Checks.BridgeCasePhase.NInfinite,["Q"]=BridGHe.Common.Checks.BridgeCasePhase.NInstant,["R"]=BridGHe.Common.Checks.BridgeCasePhase.StrainInfinite};
+        var factors=new[]{("S",1.0),("I",2.0),("Q",3.0),("R",2.0)};
+        var result=index.Assemble(0,factors,phases,GPC.Geometry.CoordinateSystem.Global);
         Assert(result.Steel.N==10 && result.Infinite.N==200 && result.Instant.N==3000,"phase assembly keeps instantaneous and long-term actions distinct");
-        Assert(Math.Abs(result.StrainInfinite+0.0006)<1e-12 && result.StrainInstant==0,"shrinkage contributions accumulate in the correct phase");
-        bool rejected=false;try {BridGHe.Common.Checks.BridgePhaseAssembler.Assemble(beam,1,0.5,combo,GPC.Geometry.CoordinateSystem.Global,1e-8);}catch(InvalidOperationException){rejected=true;}
+        bool rejected=false;try {index.Assemble(0.5,factors,phases,GPC.Geometry.CoordinateSystem.Global);}catch(InvalidOperationException){rejected=true;}
         Assert(rejected,"missing station results fail instead of silently adding zero forces");
     }
 }

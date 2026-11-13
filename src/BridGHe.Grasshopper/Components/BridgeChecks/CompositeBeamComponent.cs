@@ -85,7 +85,16 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 return;
             }
             var datum = new GpcCompositeBeam(draft, s, e, Groups(draft, groups));
-            var output = GH_CompositeBeam.FromGpc(datum, Identity(draft, datum.Start, datum.End, datum.Groups));
+            // P2CUT (13/11, coordinator answer 2 to P2K): a definition whose archive is refused has no content identity: an error, no output
+            // (before, the identity fell back on the name of the section).
+            Guid identity;
+            try { identity = Identity(draft, datum.Start, datum.End, datum.Groups); }
+            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or InvalidOperationException or System.Runtime.Serialization.SerializationException)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The composite section cannot be identified by its content: " + ex.Message);
+                return;
+            }
+            var output = GH_CompositeBeam.FromGpc(datum, identity);
             output.AnalysedGpc = beam.AnalysedGpc; output.AnalysedGpcModel = beam.AnalysedGpcModel;
             DA.SetData(0, output);
         }
@@ -111,13 +120,9 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         /// process for the same content) of a copy read back from its archive. Before, the SHA-256 of the archive itself, whose bytes change once
         /// the definition has been fingerprinted (the fingerprint, taken elsewhere on the same definition, changes what the archive writes, not
         /// what it fingerprints): the composite beam got another GUID at every solve. The copy leaves the input definition as it is (the
-        /// fingerprint is never taken on it here: shared-properties).</summary>
-        private static string Digest(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition definition)
-        {
-            if (definition == null) return "null";
-            try { return "composite:" + GPC.Model.Core.ModelValues.Fingerprint(new object[] { Common.Gpc.GpcDraftArchive.ReadComposite(Common.Gpc.GpcDraftArchive.Write(definition)) }); }
-            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or InvalidOperationException or System.Runtime.Serialization.SerializationException) { return "composite:" + definition.Name; }
-        }
+        /// fingerprint is never taken on it here: shared-properties). P2CUT: a refused archive throws (no fallback on the name).</summary>
+        private static string Digest(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition definition) =>
+            definition == null ? "null" : "composite:" + GPC.Model.Core.ModelValues.Fingerprint(new object[] { Common.Gpc.GpcDraftArchive.ReadComposite(Common.Gpc.GpcDraftArchive.Write(definition)) });
 
         /// <summary>
         /// Provides an Icon for the component.

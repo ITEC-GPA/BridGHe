@@ -31,57 +31,6 @@ internal static class ExampleRemake04
     private static IEnumerable<IGH_Param> Params(GH_Document doc) => doc.Objects.OfType<IGH_Param>()
         .Concat(doc.Objects.OfType<GH_Component>().SelectMany(c => c.Params.Input));
 
-    internal static int Run(bool write)
-    {
-        BridgeMergeTests.Initialize();
-        if (write && Path.GetFullPath(ExamplePaths.Root).StartsWith(@"C:\Users\g.pacini\Documents\Repository\BridGHe\", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Never writes into the main checkout.");
-        foreach (var relative in Files)
-        {
-            string path = Path.Combine(ExamplePaths.Root, relative); long before = new FileInfo(path).Length;
-            using var doc = GrasshopperBridgeExample.Read(path);
-            int remade = 0, nodes = 0;
-            foreach (var param in Params(doc))
-            {
-                var data = param.GetType().GetProperty("PersistentData")?.GetValue(param) as IGH_Structure;
-                if (data == null || data.DataCount == 0) continue;
-                for (int p = 0; p < data.PathCount; p++)
-                {
-                    var branch = data.get_Branch(p);
-                    for (int i = 0; i < branch.Count; i++)
-                    {
-                        if (!(branch[i] is IGH_Goo goo) || goo.GetType().Name != "GH_Model") continue;
-                        var fem = (ModelModel)goo.GetType().GetProperty("Value").GetValue(goo);
-                        if (fem == null || !fem.Elements.Any(e => e.Results.Count != 0) || goo.GetType().GetProperty("GpcResults").GetValue(goo) != null) continue;
-                        var model = WithEndNodes(fem, out int added); nodes += added;
-                        var analysed = GpcSyntheticResults.Analysed(model);
-                        var created = (IGH_Goo)Activator.CreateInstance(goo.GetType());
-                        created.GetType().GetProperty("Value").SetValue(created, model);
-                        created.GetType().GetMethod("AttachGpc").Invoke(created, new object[] { analysed });
-                        branch[i] = created; remade++;
-                        Console.WriteLine($"REMAKE {relative} [{param.NickName}]: {model.Nodes.Count} nodes ({added} added at beam ends), {model.Beams.Count} beams, {model.Plates.Count} plates; "
-                            + $"{analysed.Datasets.Count} GPC datasets, {BridGHe.Common.Gpc.GpcResultCatalog.Of(analysed).Entries.Count} catalog entries");
-                    }
-                }
-                if (remade > 0) param.ExpireSolution(false);
-            }
-            // 24: the model now has the beam end nodes (without results): the reaction and displacement envelopes select the support node A, as
-            // their description asks when a model also contains free nodes.
-            foreach (var c in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name is "BridgeBearingEnvelopeComponent" or "BridgeDisplacementEnvelopeComponent"))
-            {
-                var ids = (Grasshopper.Kernel.Parameters.Param_String)c.Params.Input[1];
-                if (ids.SourceCount == 0 && ids.PersistentData.IsEmpty) { ids.SetPersistentData("A"); Console.WriteLine($"REMAKE {relative} [{c.NickName}]: Element IDs = A"); }
-            }
-            if (remade == 0) throw new Exception("REMAKE: no internalised model with results in " + relative);
-            if (write)
-            {
-                GrasshopperBridgeExample.Write(doc, path);
-                Console.WriteLine($"REMAKE WRITTEN {relative}: {remade} models, {nodes} end nodes; {before} -> {new FileInfo(path).Length} bytes");
-            }
-        }
-        return 0;
-    }
-
     /// <summary>The model with a node at every beam end that has none (a beam extract without its nodes does not convert); the same model when
     /// every end has one.</summary>
     internal static ModelModel WithEndNodes(ModelModel fem, out int added)
@@ -97,65 +46,6 @@ internal static class ExampleRemake04
         foreach (var p in missing) { string id; do id = "N" + next++; while (!ids.Add(id)); created.Add(new NodeModel(id, p)); }
         copy.AddElements(created);
         return copy;
-    }
-
-    /// <summary>Regression remade-examples: the five files solve in 0.4.0 form without errors; 47/48 build the GPC bridge model and check on D3.
-    /// <para>R6.6 lane R4a: every file is solved as P2 reads it (<see cref="R4aFixtures.GpcOnly"/>: each internalised model by its GPC input read
-    /// by value and its saved GPC results, no FEM value; in memory, never saved): no errors, the result utilities against the explicit values of
-    /// the examples (<see cref="Expected"/>, the values their descriptions and their generators state) and every result consumer against the
-    /// independent evaluation on the rows of the Results components (<see cref="ConsumersCheck.Verify"/>) on each internalised analysed model.
-    /// The former parity of the result utilities with the FEM path on the FEM value (<c>CompareUtilities</c>) is retired.</para>
-    /// <para>TRANSITIONAL (P2 decides, no capture holds the D3 results of 47/48): the file as read (FEM values internalised) is solved too and its
-    /// Super Element Checks are compared with the former path (<see cref="FemPhasesReference"/>); the D3 results of the GPC-only document equal
-    /// those of the file as read bit for bit (the FEM value is not read by the checks).</para></summary>
-    internal static void Replay()
-    {
-        BridgeMergeTests.Initialize();
-        foreach (var relative in Files)
-        {
-            string path = Path.Combine(ExamplePaths.Root, relative);
-            using var doc = GrasshopperBridgeExample.Read(path);
-            var gooModels = Params(doc).SelectMany(p => (p.GetType().GetProperty("PersistentData")?.GetValue(p) as IGH_Structure)?.AllData(true) ?? Enumerable.Empty<IGH_Goo>())
-                .Where(g => g.GetType().Name == "GH_Model").ToArray();
-            if (gooModels.Length == 0 || gooModels.Any(g => g.GetType().GetProperty("GpcResults").GetValue(g) == null)) throw new Exception(relative + ": an internalised model without its GPC results");
-            bool checks = doc.Objects.OfType<GH_Component>().Any(c => c.GetType().Name == "SuperElementCheckComponent");
-            string[] transitional = null;
-            if (checks)
-            {
-                Solve(doc, relative);
-                foreach (var check in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "SuperElementCheckComponent")) FemPhasesReference.Compare(check, relative);
-                transitional = CheckTokens(doc);
-            }
-            // The document as P2 reads it: GPC data alone. TRANSITIONAL where it cannot be (gap for P2): the internalised models of 47/48 carry no
-            // drafts of their elements and Super Element Filter refuses them without a FEM value (R4aFixtures.WithoutDrafts).
-            int withoutDrafts = R4aFixtures.WithoutDrafts(doc);
-            bool givesElements = doc.Objects.OfType<GH_Component>().Any(c => c.GetType().Name is "SuperElementFilterComponent" or "DecomposeModelComponent");
-            if (withoutDrafts > 0 && givesElements)
-            {
-                if (!checks) throw new Exception(relative + ": a document without drafts and without Super Element Check");
-                long consumersRead = gooModels.Select(g => (GPC.Model.Models.Model)g.GetType().GetProperty("GpcResults").GetValue(g)).Sum(a => ConsumersCheck.Verify(a, relative));
-                Console.WriteLine($"REMADE EXAMPLE PASS {relative}: {gooModels.Length} internalised models with GPC results; no errors; {consumersRead} consumer values equal to the evaluation on the Results rows; "
-                    + $"TRANSITIONAL {transitional.Length} D3 section results equal to the former path (FemPhasesReference), solved on the file as read: {withoutDrafts} internalised models carry no drafts of their elements, "
-                    + "Super Element Filter refuses them on GPC data alone (gap for P2)");
-                continue;
-            }
-            using var gpc = GrasshopperBridgeExample.Read(path);
-            var analysed = R4aFixtures.GpcOnly(gpc);
-            if (analysed.Length != gooModels.Length || R4aFixtures.Models(gpc).Any(g => g.GetType().GetProperty("Value").GetValue(g) != null))
-                throw new Exception(relative + ": the internalised models are not given by their GPC data alone");
-            Solve(gpc, relative);
-            long consumers = analysed.Sum(a => ConsumersCheck.Verify(a, relative));
-            int expected = Expected(gpc, relative);
-            string d3 = "";
-            if (checks)
-            {
-                var tokens = CheckTokens(gpc);
-                if (tokens.Length == 0 || !tokens.SequenceEqual(transitional)) throw new Exception(relative + $": the D3 results on GPC data alone differ from the file as read ({tokens.Length}/{transitional.Length})");
-                d3 = $"; TRANSITIONAL {tokens.Length} D3 section results equal to the former path (FemPhasesReference) and to the file as read";
-            }
-            Console.WriteLine($"REMADE EXAMPLE PASS {relative}: {gooModels.Length} internalised models with GPC results, solved on GPC data alone (no FEM value); no errors; "
-                + $"{expected} result-utility outputs equal to the explicit values of the example; {consumers} consumer values equal to the evaluation on the Results rows" + d3);
-        }
     }
 
     /// <summary>Solves a remade example as the regression does (Build BridGHe Model and Super Element Check pressed): no errors, no warning of

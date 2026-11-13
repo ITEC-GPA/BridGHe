@@ -18,8 +18,8 @@ internal static partial class C5WorkflowComparison
         if (bridge == null) throw new Exception("C5: Build Bridge Model gave no GPC bridge model.");
         bridge.Workflow.Validate(bridge.Model); bridge.Workflow.ValidateSources(bridge.Model, new[] { bridge.Model });
         // P2F (item 5): the key c5|recipe is retired by name (P2rRetired.NativeKeysP2f: the same content as at the base, its fingerprint moved
-        // with the identities alone); the content of the recipe is written with BRIDGHE_P2F_RECIPE.
-        if (recipe) P2fRecipe.Dump(label, "gpc", bridge.Workflow, bridge.Model); // P2F (item 5): the content of the recipe, with BRIDGHE_P2F_RECIPE only
+        // with the identities alone). P2CUT (13/11): the dump of that content (P2fRecipe, BRIDGHE_P2F_RECIPE) is removed, its evidence kept in
+        // P2B/results/p2fn-recipe.
         var phases = checks.SelectMany(c => c.RuntimeMessages(Grasshopper.Kernel.GH_RuntimeMessageLevel.Remark)).Where(m => m.StartsWith("Verifiche con le fasi BridGHe", StringComparison.Ordinal)).ToArray();
         if (phases.Length != 0) throw new Exception("C5: a Super Element Check used BridGHe's phases: " + phases[0]);
         Console.WriteLine($"C5 GPC CHECKS: GPC bridge model {bridge.Model.BeamElements.Count} beams, {bridge.Workflow.Phases.Length} phases, {bridge.Workflow.Phases.Sum(p => p.Actions.Length)} actions; " +

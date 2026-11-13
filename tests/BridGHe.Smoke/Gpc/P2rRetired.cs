@@ -132,4 +132,64 @@ internal static class P2rRetired
 
     internal static string ReplayRaw(string file, string key) => ReplayRawKeys.Contains((file, key))
         ? "P2F: raw outputs captured with a composite beam GUID new at every solve (P7, fixed by P2F), not compared; lines, messages and outputs compared (" + Decision + ")" : null;
+
+    /// <summary>The date of the retirements of P2CUT (rule U3: a check that loses its FEM oracle or tests a FEM type keeps an independent oracle, or is
+    /// retired by name).</summary>
+    internal const string CutDecision = "U3, P2CUT 13/11/2026";
+
+    /// <summary>
+    /// P2CUT (13/11/2026, rule U3): the checks retired by name with the FEM types they tested, key <c>scope|name</c> → reason (with the GPC
+    /// coverage). Scopes: <c>core</c> (the checks of <c>--core-only</c> counted in <c>PASS TOTAL</c>), <c>core-native</c> (the checks added by
+    /// <c>--native</c>), <c>regression</c> (the inline regressions of <c>RegressionTests</c>, one per key, no longer in <c>--regression all</c>).
+    /// Every other check of these runs is unchanged or ported to GPC with the same oracle.
+    /// </summary>
+    internal static readonly IReadOnlyDictionary<string, string> Checks = CutChecks();
+
+    private static Dictionary<string, string> CutChecks()
+    {
+        var d = new Dictionary<string, string>(StringComparer.Ordinal);
+        void Add(string key, string reason) => d.Add(key, reason + " (" + CutDecision + ")");
+        const string FemType = "a check of the FEM model types (BridGHe.Common.Models), which the GPC path does not use";
+        Add("core|section archive roundtrip", FemType + "; the GH archive round trip of a section on its GPC datum: P2fChecks.GooArchives (core)");
+        Add("core|standalone moving case included in export", "ModelHelper.GetLoadCases on a FEM model; the cases of the moving paths of a GPC model: --examples (04) and --moving-load-tests --native");
+        Add("core|model and moving paths archive roundtrip", FemType + "; the GPC model with its moving paths in BGHGPC1: gpc-draft-archive, p2d");
+        Add("core|replacing moving paths removes obsolete generated cases", "MovingModelBuilder.ReplacePaths on a FEM model; on GPC GpcModelTransforms.ReplacePaths: gpc-model-transforms (explicit expected values of R1)");
+        Add("core|replacing moving paths leaves original model intact", "MovingModelBuilder.ReplacePaths on a FEM model; on GPC GpcModelTransforms.ReplacePaths: gpc-model-transforms (explicit expected values of R1)");
+        Add("core|FEM graph and indexes roundtrip", FemType);
+        Add("core|attributes and results roundtrip", FemType);
+        Add("core|shared load case identity preserved", FemType);
+        Add("core|FEM copy constructor with cloned attributes", FemType);
+        Add("core|shrinkage contributions accumulate in the correct phase", "the slab strain loads of a FEM element in the phase index; on GPC the index has no strains (the strains come from the recipe of Build BridGHe Model): r2b-merge-forces and the native 50");
+        foreach (var shape in BridGHe.Common.Straus.StrausSectionCatalog.All)
+        {
+            Add("core-native|native solid preview " + shape.Key, "the solid preview of a FEM beam (BeamModel.Shapes); the preview of the native sections on GPC: C3 (--c3, core-native)");
+            Add("core-native|native preview archive " + shape.Key, "the FEM archive of a FEM section (ModelArchive); the GH archive round trip of a section on its GPC datum: P2fChecks.GooArchives (core)");
+        }
+        Add("core-native|legacy native section re-resolved in mm from model-unit dimensions", "the 0.3.0 reader on a payload written from a FEM model; the 0.3.0 reader with native sections: gpc-legacy-import, gpc-build-model-legacy");
+        Add("core-native|library moving template expanded by the Converter (former model)", "the 0.3.0 reader on a payload written from a FEM model; the GPC half (Attach Moving Paths and Export) stays in CheckMovingLibrary");
+        Add("regression|archive-before-cleanup", FemType + " (a FEM model archive); the 0.3.0 payloads read by value: gpc-legacy-import, --legacy-payload-scan");
+        Add("regression|group-null-identity", FemType + " (GroupModel, BeamStringGroupAttributeModel); the groups of the drafts: gpc-element-drafts, gpc-only-elements");
+        Add("regression|composite-archive", FemType + " (CompositeBeamModel); the composite beam on GPC: gpc-only-models, p2k-components (P7)");
+        Add("regression|composite-preview", FemType + " (CompositeBeamModel.Shapes); the preview of the GPC drafts: gpc-c3, p2d (U5)");
+        Add("regression|nodal-actions", FemType + " (NodalLoadAccumulator on FEM loads); the nodal loads on GPC: gpc-builders-a, --examples (01)");
+        Add("regression|load-case-identity", FemType + " (ModelHelper.GetLoadCases); the cases of Build Model on GPC: gpc-build-model, gpc-build-model-legacy");
+        Add("regression|merge-node-data", FemType + " (ModelHelper.MergeModel); Merge Model on the drafts: gpc-draft-merge");
+        Add("regression|beam-property-validity", FemType + " (BeamPropertyModel.IsValid); the Beam Property on GPC: gpc-builders-b, gpc-only-properties");
+        Add("regression|native-beam-validity", FemType + " (a FEM beam on a native section); the native sections on GPC: gpc-only-properties (native part in core-native), C3 native preview");
+        Add("regression|deep-copies", FemType + " (copy constructors of the FEM types); the GPC copies: gpc-null-values, shared-properties");
+        Add("regression|staged-load-cases", FemType + " (ModelHelper.GetLoadCases of a staged FEM model); the staged cases on GPC: gpc-build-model, --examples (06-10)");
+        Add("regression|staged-selection", FemType + " (StrausResultSelection on a FEM model); the selection on GPC: gpc-result-selection");
+        Add("regression|merge-plate-connectivity", FemType + " (ModelHelper.MergeModel of FEM plates); Merge Model on the drafts: gpc-draft-merge");
+        Add("regression|node-index", FemType + " (StrausNodeIndex of FEM nodes); the export of the GPC model by the Converter: --examples, gpc-only-analysis");
+        Add("regression|archived-attribute-updates", FemType + " (preview of a FEM beam after its archive); the preview of the GPC drafts: gpc-c3");
+        Add("regression|plate-point-updates", FemType + " (PlateModel.Points); the plate drafts: gpc-element-drafts, gpc-only-elements");
+        Add("regression|incomplete-beam-preview", FemType + " (BeamModel.Shapes); the preview of the GPC drafts: gpc-c3");
+        Add("regression|preview-bounds", FemType + " (bounds of FEM beams in the GH types); the GH types on their GPC datum: gpc-null-values");
+        Add("regression|model-preview", FemType + " (the preview of a GH model with a FEM value); the GH model on its GPC input: gh-model-gpc, gpc-null-values");
+        Add("regression|r4b-inputs", "transitional (R4b): the GPC inputs of the natives equal to the conversion of their former FEM models; the natives compare their GPC results with the captures");
+        Add("regression|r4c-inputs", "transitional (R4c): the GPC inputs of the examples 11-18 equal to the conversion of their former FEM models; the natives compare with the captures (phase-native D3, grillage/spine/suite)");
+        Add("regression-part|model-guids: result models duplicate with complete GUID maps", "the GUID map of the FEM value of GH_Model (GetGuid); the GPC part (P2fChecks.ModelGuids) stays");
+        Add("regression-part|model-guids: GUID restoration is idempotent", "the GUID map of the FEM value of GH_Model (FromModel, SynchronizeGuids); the GPC part (P2fChecks.ModelGuids) stays");
+        return d;
+    }
 }

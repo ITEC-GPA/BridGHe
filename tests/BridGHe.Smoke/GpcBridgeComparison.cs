@@ -264,48 +264,6 @@ internal static class GpcBridgeComparison
         Console.WriteLine("GPC BRIDGE (duplicate): a duplicated action and phase keep the GPC source and model of their actions.");
     }
 
-    /// <summary>Native (99, 50): the GPC bridge model attached by Build BridGHe Model, rebuilt from the inputs of the component on GPC and
-    /// compared bit for bit with the former seam on the FEM merge (see the class); the attached one has the same fingerprints.</summary>
-    internal static void RequireComponent(GH_Component merge, string label)
-    {
-        var goos = merge.Params.Input[0].VolatileData.AllData(true).ToArray();
-        var models = goos.Select(g => (ModelModel)g.GetType().GetProperty("Value").GetValue(g)).ToArray();
-        var references = goos.Select(g => GpcBridgeSource.Reference((GpcModels.Conversion)g.GetType().GetProperty("GpcInput").GetValue(g), (Model)g.GetType().GetProperty("GpcResults").GetValue(g))).ToArray();
-        var phases = merge.Params.Input[1].VolatileData.AllData(true).Select(g => (BridgePhaseDefinition)((IGH_Goo)g).ScriptVariable()).ToArray();
-        string Cell(IGH_Goo goo) => goo?.ScriptVariable() is IFormattable n ? n.ToString(null, CultureInfo.InvariantCulture) : goo?.ScriptVariable()?.ToString() ?? "";
-        var data = merge.Params.Input[2].VolatileData;
-        var table = Enumerable.Range(0, data.PathCount).Select(b => data.get_Branch(b).Cast<IGH_Goo>().Select(Cell).ToArray()).ToArray();
-        var method = (BridgeWorkflowMethod)((GH_Integer)merge.Params.Input[3].VolatileData.AllData(true).Single()).Value;
-        bool additional = merge.Params.Input[4].VolatileData.AllData(true).Cast<GH_Boolean>().SingleOrDefault()?.Value ?? false;
-        double tolerance = global::Rhino.RhinoDoc.ActiveDoc?.ModelAbsoluteTolerance ?? 0.001; // Settings.Tolerance of the plug-in
-        // L11: the local section states of every action read from the GPC section-state attributes equal the former FEM reading.
-        int withStates = 0, excludedBeams = 0;
-        foreach (var phase in phases)
-            foreach (var a in phase.Actions)
-            {
-                string femError = null, gpcError = null; (bool Has, string[] Excluded) f = default, g = default;
-                try { f = BridgeWorkflowBuilder.LocalSectionStates(phase, a); } catch (ArgumentException e) { femError = e.Message; }
-                try { g = GpcBridgeBuilder.LocalSectionStates(phase, a); } catch (ArgumentException e) { gpcError = e.Message; }
-                if (femError != gpcError || f.Has != g.Has || !(f.Excluded ?? Array.Empty<string>()).SequenceEqual(g.Excluded ?? Array.Empty<string>(), StringComparer.Ordinal))
-                    throw new Exception($"GPC BRIDGE FAIL ({label}): local section states of {a.Key}: FEM {f.Has}/{f.Excluded?.Length} '{femError}', GPC {g.Has}/{g.Excluded?.Length} '{gpcError}'");
-                if (g.Has) { withStates++; excludedBeams += g.Excluded.Length; }
-            }
-        Console.WriteLine($"GPC BRIDGE ({label}): local section states from the GPC attributes equal to the FEM reading: {withStates} actions with states, {excludedBeams} concrete-excluded beams.");
-        var started = DateTime.UtcNow;
-        var gpc = GpcBridgeBuilder.Build(references, phases, table, method, tolerance, additional, GpcIdentity.Derive(merge.InstanceGuid, "bridge-model"));
-        double seconds = (DateTime.UtcNow - started).TotalSeconds;
-        var fem = BridgeWorkflowBuilder.Build(models, phases, table, method, tolerance, additional);
-        string summary = Require(label, gpc, fem, tolerance);
-        var output = merge.Params.Output[0].VolatileData.AllData(true).Single();
-        var attached = (GpcBridge)output.GetType().GetProperty("GpcBridge").GetValue(output) ?? throw new Exception("GPC BRIDGE FAIL (" + label + "): Build BridGHe Model attached no GPC bridge model");
-        if (attached.Model.AnalysisFingerprint() != gpc.Bridge.Model.AnalysisFingerprint() || attached.Workflow.Fingerprint() != gpc.Bridge.Workflow.Fingerprint()
-            || attached.Model.Datasets.Count != gpc.Bridge.Model.Datasets.Count)
-            throw new Exception("GPC BRIDGE FAIL (" + label + "): the attached GPC bridge model differs from the one rebuilt from the inputs");
-        // R6.4 (2), extension (α): the drafts the merged model carries against the conversion of its FEM elements.
-        string drafts = GpcInputComparison.RequireDrafts(label, (GpcModelDrafts)output.GetType().GetProperty("GpcDrafts").GetValue(output), (ModelModel)output.GetType().GetProperty("Value").GetValue(output));
-        Console.WriteLine($"GPC BRIDGE PASS ({label}): the GPC bridge model built from the GPC models ({seconds:F1} s) equals bit for bit the former seam on the FEM merge with the reference identity: {summary}; the attached one is the same; merged model {drafts}.");
-    }
-
     /// <summary>Regression (not native) <c>gpc-bridge-model</c>: the examples 01–10 (node, beam and plate loads, combinations, moving loads,
     /// stages) as reference models with synthetic beam results of an extra case, a steel action from them and a primary shrinkage, plus the
     /// two-model workflow of <see cref="BridgeWorkflowTests"/> and a strain-only workflow: GPC bridge model = former seam bit for bit, or the

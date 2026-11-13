@@ -54,29 +54,6 @@ internal static class GpcStateOverrideChecks
     internal static string AreaSummary() => $"{AreasMeasured} beam property areas: FEM area = FEM formula on the GPC section and mass per length bit for bit in all; GPC section area different in {AreaDifferences}"
         + (AreaDifferencesByKind.Count == 0 ? "" : " (" + string.Join(", ", AreaDifferencesByKind.Select(p => $"{p.Key} {p.Value.Count}, max relative {p.Value.MaxRelative:G3}")) + ")");
 
-    /// <summary>Every beam of the FEM models of the outputs of the solved <paramref name="doc"/> (GH_Model, its GPC input conversion, beams by
-    /// number; shadowed properties and models with other units skipped), once per FEM property.</summary>
-    internal static void MeasureModelAreas(GH_Document doc, string label)
-    {
-        var seen = new HashSet<BeamPropertyModel>(ReferenceEqualityComparer.Instance); int models = 0;
-        foreach (var component in doc.Objects.OfType<GH_Component>())
-            foreach (var output in component.Params.Output)
-                foreach (var goo in output.VolatileData.AllData(true))
-                {
-                    if (goo == null || goo.GetType().Name != "GH_Model" || goo.GetType().GetProperty("Value").GetValue(goo) is not ModelModel fem || fem.Beams.Count == 0) continue;
-                    GpcModels.Conversion conversion;
-                    try { conversion = (GpcModels.Conversion)goo.GetType().GetProperty("GpcInput").GetValue(goo); } catch (System.Reflection.TargetInvocationException) { continue; }
-                    if (conversion == null || !conversion.Report.Units.IsIdentity) continue;
-                    var beams = fem.Beams.ToArray(); models++;
-                    for (int k = 0; k < beams.Length; k++)
-                    {
-                        if (conversion.Report.ShadowedPropertyBeams.Contains(k + 1) || !seen.Add(beams[k].BeamProperty)) continue;
-                        MeasureArea(label + " " + component.NickName, beams[k].BeamProperty, conversion.Model.BeamElements[k + 1].BeamProperty);
-                    }
-                }
-        Console.WriteLine($"GPC SECTION MASS PASS ({label}): {models} models; " + AreaSummary());
-    }
-
     /// <summary>The GPC draft against the conversion of the FEM beam with its identity: the number of parts compared (an exception with the
     /// first difference otherwise).</summary>
     internal static int Compare(string label, LegacyBeamDraft gpc, BeamModel fem)
@@ -249,28 +226,4 @@ internal static class GpcStateOverrideChecks
             $"mass per length = density x area bit for bit, GPC section area different in {sectionDifferences} (max relative {maxRelative:G3}); TRANSITIONAL examples 01-10: " + AreaSummary() + ".");
     }
 
-    /// <summary>Native (50): every Bridge State Override of the solved definition attaches to its outputs the GPC drafts of the override on GPC,
-    /// each equal to the conversion of its FEM output.</summary>
-    internal static void RequireComponents(GH_Document doc, string label)
-    {
-        int components = 0, beams = 0, parts = 0;
-        foreach (var c in doc.Objects.OfType<GH_Component>().Where(o => o.GetType().Name == "BridgeStateOverrideComponent"))
-        {
-            var goos = c.Params.Output[0].VolatileData.AllData(true).Concat(c.Params.Output[1].VolatileData.AllData(true)).ToArray();
-            if (goos.Length == 0) continue;
-            // The mass per length of the inputs: the FEM area = the FEM formula on the GPC section of their drafts (rule of 0.4.0).
-            foreach (var input in c.Params.Input[0].VolatileData.AllData(true))
-                MeasureArea($"{label} {c.NickName} input", ((BeamModel)((Grasshopper.Kernel.Types.IGH_Goo)input).ScriptVariable()).BeamProperty,
-                    ((LegacyBeamDraft)input.GetType().GetProperty("Gpc").GetValue(input)).Beam.BeamProperty);
-            foreach (var goo in goos)
-            {
-                if (!(bool)goo.GetType().GetProperty("HasAttachedGpc").GetValue(goo)) throw new Exception($"GPC STATE OVERRIDE FAIL ({label} {c.NickName}): an output without its GPC draft");
-                var draft = (LegacyBeamDraft)goo.GetType().GetProperty("Gpc").GetValue(goo);
-                parts += Compare($"{label} {c.NickName}", draft, (BeamModel)((Grasshopper.Kernel.Types.IGH_Goo)goo).ScriptVariable()); beams++;
-            }
-            components++;
-        }
-        if (components == 0) throw new Exception($"GPC STATE OVERRIDE FAIL ({label}): no Bridge State Override with data");
-        Console.WriteLine($"GPC STATE OVERRIDE PASS ({label}): {components} components, {beams} output beams on GPC equal to the conversion of their FEM outputs ({parts} parts); " + AreaSummary() + ".");
-    }
 }
