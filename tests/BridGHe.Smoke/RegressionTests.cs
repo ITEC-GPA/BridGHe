@@ -98,6 +98,7 @@ internal static class RegressionTests
         gpc["gpc-only-properties"] = GpcOnlyReplay.Properties; // R6.5 P1 lane 2a (P2Z, 8/11): properties and data replayed with GPC-only inputs and outputs; L2B (8/11): with lane 2b (composite and bridge properties, State Override, coordinate systems)
         gpc["gpc-only-models"] = GpcOnlyReplay.Models; // R6.5 P1 lane 3a (L3a, 8/11): models, composite beams and workflow objects GPC-only; a gate step of its own (limit 5,400 s), not in regression all
         tests = gpc.Concat(tests).ToDictionary(t => t.Key, t => t.Value);
+        P2cfChecks.RegressionKeys(tests.Keys, selection == "all"); // P2CF (13/11, item 4): the regression keys of P2rRetired.Checks against the regressions
         if (selection != "all" && !tests.ContainsKey(selection))
             throw new ArgumentException(P2rRetired.Checks.TryGetValue("regression|" + selection, out var retired) ? "Regression retired by name (P2CUT): " + selection + ": " + retired : "Unknown regression: " + selection);
         if (selection == "all") Console.WriteLine($"RETIRED BY NAME (P2CUT): {P2rRetired.Checks.Count(c => c.Key.StartsWith("regression|", StringComparison.Ordinal))} regressions of FEM types (P2rRetired.Checks)");

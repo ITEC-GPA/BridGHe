@@ -43,6 +43,7 @@ internal static class C3Checks
         Materials();
         WritePlan();
         Display(false);
+        P2cfChecks.ArchivedAttributeUpdates(Check); // P2CF (13/11, RT-03): the former archived-attribute-updates on a GPC beam draft
         foreach (var f in failures) Console.WriteLine("  C3 FAIL: " + f);
         Console.WriteLine($"C3 CHECKS: {checks} checks, {failures.Count} failures");
         if (failures.Count != 0) throw new Exception($"C3 CHECKS FAIL: {failures.Count} of {checks} checks");
@@ -502,6 +503,7 @@ internal static class C3Checks
             }
             finally { api.CloseModel(); }
         }
+        P2cfChecks.NativeSections(Check); // P2CF (13/11, RT-01): the 21 native recipes against their own formulas
         Display(true);
         foreach (var f in failures) Console.WriteLine("  C3 NATIVE FAIL: " + f);
         Console.WriteLine($"C3 NATIVE: {cases.Length} materials on a beam and a shell read back from Straus7 against 0.3.0, native sections of the preview; {checks} checks, {failures.Count} failures");

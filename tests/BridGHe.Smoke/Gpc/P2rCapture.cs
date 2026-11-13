@@ -112,6 +112,8 @@ internal sealed class P2rCapture
         private readonly List<string> differences = new();
         private readonly SortedDictionary<string, int> declared = new(StringComparer.Ordinal);
         private int recorded, equal;
+        // P2CF (13/11, item 4): the declarations by name of this file used by the run (a raw field not compared, a key retired).
+        private readonly HashSet<string> usedRaw = new(StringComparer.Ordinal), usedRetired = new(StringComparer.Ordinal);
 
         internal Session(string path, bool write)
         {
@@ -139,10 +141,19 @@ internal sealed class P2rCapture
             if (write) { output.WriteLine(key + "\t" + value); return; }
             seen.Add(key);
             // P2F (12/11): a key retired by name (P2rRetired.ReplayKeys) is not compared.
-            if (P2rRetired.ReplayKeys.TryGetValue((Path.GetFileNameWithoutExtension(path), key), out var retired)) { declared["retired by name: " + retired] = declared.GetValueOrDefault("retired by name: " + retired) + 1; return; }
+            if (P2rRetired.ReplayKeys.TryGetValue((Path.GetFileNameWithoutExtension(path), key), out var retired))
+            {
+                // P2CF (item 4): a key retired by name is a key of the capture (checked before the exemption).
+                if (!captured.ContainsKey(key)) { differences.Add($"retired by name but not in the capture: {key}"); return; }
+                usedRetired.Add(key); declared["retired by name: " + retired] = declared.GetValueOrDefault("retired by name: " + retired) + 1; return;
+            }
             if (!captured.TryGetValue(key, out var before)) differences.Add($"not in the capture: {key} = {value}");
             else if (before == value) equal++;
-            else if (Declared(Path.GetFileNameWithoutExtension(path), key, before, value) is string rule) declared[rule] = declared.GetValueOrDefault(rule) + 1;
+            else if (Declared(Path.GetFileNameWithoutExtension(path), key, before, value) is string rule)
+            {
+                if (rule == P2rRetired.ReplayRaw(Path.GetFileNameWithoutExtension(path), key)) usedRaw.Add(key);
+                declared[rule] = declared.GetValueOrDefault(rule) + 1;
+            }
             else differences.Add($"{key}: captured {before} / now {value}");
         }
 
@@ -155,6 +166,10 @@ internal sealed class P2rCapture
                 return new List<string>();
             }
             var missing = captured.Keys.Where(k => !seen.Contains(k)).ToList();
+            // P2CF (13/11, item 4): a declaration by name of this file (a raw field, P2rRetired.ReplayRawKeys*; a retired key, ReplayKeys) the run
+            // did not use is an error: the line would stay in the registry with nothing to declare.
+            foreach (var k in P2rRetired.ReplayRawDeclarations(file).Where(k => !usedRaw.Contains(k))) differences.Add("raw field declared, never used: " + k);
+            foreach (var k in P2rRetired.ReplayKeys.Keys.Where(k => k.File == file && !usedRetired.Contains(k.Key))) differences.Add("retired by name, never used: " + k.Key);
             Console.WriteLine($"P2R CAPTURE COMPARE {file}: {seen.Count} of {captured.Count} keys seen, {equal} equal, " + string.Concat(declared.Select(d => $"{d.Value} declared ({d.Key}), ")) + $"{differences.Count} different or new, {missing.Count} missing"
                 + (differences.Count + missing.Count == 0 ? "" : " FAIL") + " (" + path + ")");
             return differences.Concat(missing.Select(k => "captured, not seen: " + k)).Select(d => "P2R CAPTURE " + file + ": " + d).ToList();

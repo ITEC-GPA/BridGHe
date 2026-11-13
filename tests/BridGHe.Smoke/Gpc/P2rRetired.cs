@@ -13,7 +13,8 @@ using System.Linq;
 /// <c>Fixtures/native-capture-rules/P2R-retired-20261112.tsv</c> (label, key, reason, decision).</item>
 /// <item><see cref="CaptureSources"/>: the R6.0 capture (<see cref="GpcDraftCapture"/>): the 10 sources <c>memory-01</c> … <c>memory-10</c> (the FEM
 /// in-memory models of the examples 01–10, no GPC counterpart in the corpus), and the entries of the 7 examples remade after P2 (23, 46, 24, 42,
-/// 43, 47, 48: their payloads change when the coordinator regenerates them, U2).</item>
+/// 43, 47, 48: their payloads change when the coordinator regenerates them, U2). P2CF (13/11, RT-02): key by key, a closed list
+/// (<see cref="CaptureKeys"/>), checked against the capture before any exemption.</item>
 /// </list>
 /// </summary>
 internal static class P2rRetired
@@ -65,16 +66,64 @@ internal static class P2rRetired
         @"47-pioli-irrigidimenti-verifiche\47-integrazione-modello.ghx", @"48-report-word\48-report-word.ghx",
     };
 
-    /// <summary>The reason an entry of the R6.0 capture is retired, or null when it is compared.</summary>
-    internal static string CaptureSources(string key)
+    /// <summary>The reason an entry of the R6.0 capture is retired, or null when it is compared. P2CF (13/11/2026, finding RT-02 of ChatGPT task
+    /// 44): by its full key alone (<see cref="CaptureKeys"/>, and the 31 keys of P2F for the source <c>scan</c>); before, a prefix (memory-*) and the
+    /// file name of a remade example (Contains) exempted any key under them, a new one too.</summary>
+    internal static string CaptureSources(string source, string key)
     {
-        if (MemorySources.Any(s => key.StartsWith(s + ":", StringComparison.Ordinal)))
-            return "memory source of the corpus: the FEM in-memory model of an example 01-10, no GPC counterpart (" + Decision + ")";
-        if (RemadeExamples.Any(f => key.Contains(Path.GetFileName(f), StringComparison.OrdinalIgnoreCase)))
-            return "example remade after P2 (23, 46, 24, 42, 43, 47, 48; U2): its captured payloads retired (" + Decision + ")";
-        if (ScanKeys.TryGetValue(key, out var why)) return "P2F: " + why + " (" + Decision + ")";
+        if (CaptureKeys.TryGetValue((source, key), out var r)) return r.Reason;
+        if (source == "scan" && ScanKeys.TryGetValue(key, out var why)) return "P2F: " + why + " (" + Decision + ")";
         return null;
     }
+
+    private const string MemoryReason = "memory source of the corpus: the FEM in-memory model of an example 01-10, no GPC counterpart (" + Decision + ")";
+    private const string RemadeReason = "example remade after P2 (23, 46, 24, 42, 43, 47, 48; U2): its captured payloads retired (" + Decision + ")";
+    private const string RemadeNewReason = "example remade after P2 (23, 46, 24, 42, 43, 47, 48; U2): a payload it holds now, not in the capture, named one by one (P2CF 13/11/2026)";
+
+    /// <summary>P2CF (13/11/2026, RT-02): the entries of the R6.0 capture retired by name, one by one with their full key (the key holds the path of
+    /// the definition relative to <c>example</c>), listed once in <c>Fixtures/capture-rules/P2CF-retired-capture-20261113.tsv</c> (source, key,
+    /// status, reason), expanded from the former rules on the capture <c>p2n-capture-inr-20261112</c>: status <c>captured</c>, a key of the capture
+    /// (corpus: the 147 entries of the memory sources memory-01 … memory-10; payloads 25 and scan 9: the 7 examples remade after P2), which must be
+    /// in the capture (<see cref="ValidateCapture"/>, before any exemption); status <c>new</c>, a payload a remade example holds now and the capture
+    /// does not, which must not be in the capture and must be recorded by the run. Any other key of the run is compared: a new one fails.</summary>
+    internal static readonly string CaptureFile = Path.GetFullPath(Path.Combine("tests", "BridGHe.Smoke", "Fixtures", "capture-rules", "P2CF-retired-capture-20261113.tsv"));
+    private static Dictionary<(string Source, string Key), (bool New, string Reason)> captureKeys;
+    private static readonly object captureGate = new object();
+
+    internal static IReadOnlyDictionary<(string Source, string Key), (bool New, string Reason)> CaptureKeys
+    {
+        get { lock (captureGate) return captureKeys ??= ReadCaptureKeys(); }
+    }
+
+    private static Dictionary<(string Source, string Key), (bool New, string Reason)> ReadCaptureKeys()
+    {
+        var d = new Dictionary<(string, string), (bool, string)>();
+        foreach (var line in File.ReadLines(CaptureFile).Skip(1))
+        {
+            var f = line.Split('\t');
+            bool ok = f.Length == 4 && (f[2] == "captured" || f[2] == "new") && (f[3] == "memory" ? f[2] == "captured" && MemorySources.Any(s => f[1].StartsWith(s + ":", StringComparison.Ordinal))
+                : f[3] == "remade" && RemadeExamples.Any(p => f[1].StartsWith(p + ":", StringComparison.Ordinal) || f[1].StartsWith(p + "|", StringComparison.Ordinal)));
+            if (!ok) throw new InvalidDataException("P2CF RETIRED: a capture key not of the declared kind: " + line);
+            d.Add((f[0], f[1]), (f[2] == "new", f[3] == "memory" ? MemoryReason : f[2] == "new" ? RemadeNewReason : RemadeReason));
+        }
+        int Count(string source, bool isNew) => d.Count(p => p.Key.Item1 == source && p.Value.Item1 == isNew);
+        if (Count("corpus", false) != 147 || Count("payloads", false) != 25 || Count("scan", false) != 9 || d.Count != 147 + 25 + 9 + Count("payloads", true))
+            throw new InvalidDataException("P2CF RETIRED: the list must hold 147 corpus, 25 payloads and 9 scan keys of the capture, and new payload keys only");
+        return d;
+    }
+
+    /// <summary>P2CF (RT-02): before any exemption, the retired keys of a source against its capture: every key of status captured is in it, no
+    /// key of status new is, and (scan) the 31 keys of P2F are. Throws when one does not hold.</summary>
+    internal static void ValidateCapture(string source, Func<string, bool> inCapture)
+    {
+        var bad = CaptureKeys.Where(p => p.Key.Source == source && p.Value.New == inCapture(p.Key.Key))
+            .Select(p => (p.Value.New ? "declared new but in the capture: " : "declared captured but not in the capture: ") + p.Key.Key).ToList();
+        if (source == "scan") bad.AddRange(ScanKeys.Keys.Where(k => !inCapture(k)).Select(k => "P2F scan key not in the capture: " + k));
+        if (bad.Count > 0) throw new InvalidDataException("P2CF RETIRED (" + source + "): " + string.Join(" | ", bad.Take(10)));
+    }
+
+    /// <summary>P2CF (RT-02): the keys of status new of a source (each must be recorded by the run).</summary>
+    internal static IEnumerable<string> NewCaptureKeys(string source) => CaptureKeys.Where(p => p.Key.Source == source && p.Value.New).Select(p => p.Key.Key);
 
     /// <summary>P2F (12/11/2026): the 31 entries <c>check-material</c> of the source <c>scan</c> retired by name, listed one by one in
     /// <c>Fixtures/capture-rules/P2F-retired-scan-20261112.tsv</c> (key, reason, decision): the check materials the FEM walk of the scan
@@ -113,6 +162,13 @@ internal static class P2rRetired
     {
         [("gpc-only-models", "in memory: Bridge Model Audit (a homogenised beam beside a plate, far away)")] =
             "P2F: the in-memory model of the case had no nodes and was refused («Nessun nodo FEM entro tolleranza»); it is given its nodes, so the captured refusal is not the case any more (" + Decision + ")",
+        // P2CC (13/11/2026, user decision «Congela», 12:35): the two cases on the kN-m beam data of the former tests; read by value from its frozen
+        // payload (beams-Knm) the third beam's section state is not marked stale as the conversion of the FEM value marked it (the former signature of
+        // the FEM property), so the outputs differ: retired by name, not widened (the user's choice); the cases run on the frozen reading.
+        [("gpc-only-models", "in memory: Bridge Phase Model (kN-m)")] =
+            "P2CC: the kN-m beam data read by value from its frozen payload (beams-Knm): the section state of beam G14 is not stale as the FEM conversion marked it; the outputs differ (" + CutDecision + ")",
+        [("gpc-only-models", "in memory: Bridge Model Audit (kN-m with itself as a phase model)")] =
+            "P2CC: the kN-m beam data read by value from its frozen payload (beams-Knm): the section state of beam G14 is not stale as the FEM conversion marked it; the outputs differ (" + CutDecision + ")",
     };
 
     /// <summary>P2F (12/11/2026, rule U3): the 8 keys of the P2R replay capture whose raw field (the outputs with their identities) was
@@ -130,10 +186,32 @@ internal static class P2rRetired
         ("gpc-only-models", "in memory: Composite beam (start and end sections and a group)"),
     };
 
+    /// <summary>P2CF (13/11/2026, item 4): the keys of a replay file whose raw field is declared (every list), each to be used by the run.</summary>
+    internal static IEnumerable<string> ReplayRawDeclarations(string file) =>
+        ReplayRawKeys.Concat(ReplayRawKeysP2ca).Concat(ReplayRawKeysP2cc).Where(k => k.File == file).Select(k => k.Key);
+
     internal static string ReplayRaw(string file, string key) => ReplayRawKeys.Contains((file, key))
         ? "P2F: raw outputs captured with a composite beam GUID new at every solve (P7, fixed by P2F), not compared; lines, messages and outputs compared (" + Decision + ")"
-        : ReplayRawKeysP2ca.Contains((file, key)) ? "P2CA: in-memory case built with its GPC twin, its identities differ from the FEM-backed input of the capture; "
+        : ReplayRawKeysP2ca.Contains((file, key)) || ReplayRawKeysP2cc.Contains((file, key)) ? "P2CA: in-memory case built with its GPC twin, its identities differ from the FEM-backed input of the capture; "
             + "lines, messages and outputs modulo GUIDs compared (" + CutDecision + ")" : null;
+
+    /// <summary>P2CC (13/11/2026, rule U3): the same for the cases of Lane 3c built with their GPC twins (the Element ID label of the former beam fixed):
+    /// lines, messages and outputs modulo GUIDs equal the capture; the raw field alone is retired.</summary>
+    internal static readonly IReadOnlyList<(string File, string Key)> ReplayRawKeysP2cc = new[]
+    {
+        ("gpc-only-models", "in memory: Merge Model (merges, ends and corners moved, new nodes, zero length, coincident corners)"),
+        ("gpc-only-models", "in memory: Merge Model (a small tolerance: new nodes only)"),
+        ("gpc-only-models", "in memory: Merge Model (beams only)"),
+        ("gpc-only-models", "in memory: Composite Beam Strain (a loaded beam, a case and a strain)"),
+        ("gpc-only-models", "in memory: Composite Beam Strain (a second strain, in another case)"),
+        ("gpc-only-models", "in memory: Build Model (the same node twice, created nodes, a combination)"),
+        ("gpc-only-models", "in memory: Build Model (a stage)"),
+        ("gpc-only-properties", "in memory: Beam Override (A08: a beam with a current section state, another property (the state stale))"),
+        ("gpc-only-properties", "in memory: Beam Property Override (A08: a beam with a current section state, another property (the state stale))"),
+        // P2CC (user decision «Congela»): the audits on the examples 02 and 03 by their frozen payloads (lane3d-payloads) read by value.
+        ("gpc-only-models", "in memory: Bridge Model Audit (tolerance above the beam lengths)"),
+        ("gpc-only-models", "in memory: Bridge Model Audit (phases of other units and geometry)"),
+    };
 
     /// <summary>P2CA (13/11/2026, coordinator decision 1, rule U3): the keys of the P2R replay capture whose input is now built with its GPC twin (no FEM
     /// value): their identities differ from those of the conversion of the former FEM-backed input, so their raw field alone is retired; the line count,
@@ -166,11 +244,12 @@ internal static class P2rRetired
         P2rRetiredP2ce.AddTo(Add); // P2CE (13/11): the retirements of lane P2CE (Gpc/P2rRetired.P2ce.cs)
         const string FemType = "a check of the FEM model types (BridGHe.Common.Models), which the GPC path does not use";
         P2caChecks(Add); // P2CA (13/11/2026): the replay, archive and data side of the tests
+        P2ccChecks(Add); // P2CC (13/11/2026): the replay side, the last FEM inputs of GpcOnlyReplay
         Add("core|section archive roundtrip", FemType + "; the GH archive round trip of a section on its GPC datum: P2fChecks.GooArchives (core)");
         Add("core|standalone moving case included in export", "ModelHelper.GetLoadCases on a FEM model; the cases of the moving paths of a GPC model: --examples (04) and --moving-load-tests --native");
         Add("core|model and moving paths archive roundtrip", FemType + "; the GPC model with its moving paths in BGHGPC1: gpc-draft-archive, p2d");
-        Add("core|replacing moving paths removes obsolete generated cases", "MovingModelBuilder.ReplacePaths on a FEM model; on GPC GpcModelTransforms.ReplacePaths: gpc-model-transforms (explicit expected values of R1)");
-        Add("core|replacing moving paths leaves original model intact", "MovingModelBuilder.ReplacePaths on a FEM model; on GPC GpcModelTransforms.ReplacePaths: gpc-model-transforms (explicit expected values of R1)");
+        Add("core|replacing moving paths removes obsolete generated cases", "MovingModelBuilder.ReplacePaths on a FEM model (the static cases a former moving analysis generated); on GPC those cases are not input cases (the reader leaves them out) and no frozen payload holds one: GpcModelTransforms.ReplacePaths replaces the old path, its case no longer a path case (P2CF RT-03, P2cfChecks.MovingPaths in gpc-model-transforms), and the explicit expected values of R1");
+        Add("core|replacing moving paths leaves original model intact", "MovingModelBuilder.ReplacePaths on a FEM model; on GPC the source of GpcModelTransforms.ReplacePaths has the same canonical text after the call (P2CF RT-03, P2cfChecks.MovingPaths in gpc-model-transforms), and the explicit expected values of R1");
         Add("core|FEM graph and indexes roundtrip", FemType);
         Add("core|attributes and results roundtrip", FemType);
         Add("core|shared load case identity preserved", FemType);
@@ -178,8 +257,8 @@ internal static class P2rRetired
         Add("core|shrinkage contributions accumulate in the correct phase", "the slab strain loads of a FEM element in the phase index; on GPC the index has no strains (the strains come from the recipe of Build BridGHe Model): r2b-merge-forces and the native 50");
         foreach (var shape in BridGHe.Common.Straus.StrausSectionCatalog.All)
         {
-            Add("core-native|native solid preview " + shape.Key, "the solid preview of a FEM beam (BeamModel.Shapes); the preview of the native sections on GPC: C3 (--c3, core-native)");
-            Add("core-native|native preview archive " + shape.Key, "the FEM archive of a FEM section (ModelArchive); the GH archive round trip of a section on its GPC datum: P2fChecks.GooArchives (core)");
+            Add("core-native|native solid preview " + shape.Key, "the solid preview of a FEM beam (BeamModel.Shapes); on GPC a beam on a native section draws no solid (GpcDraftShapes: the open point of C3, coverage reduced); the section of the recipe by its own formula (area, extents of the display mesh, area of the property): P2cfChecks.NativeSections (P2CF RT-01, core-native)");
+            Add("core-native|native preview archive " + shape.Key, "the FEM archive of a FEM section (ModelArchive); the GH archive of the native recipe of this shape with its key and dimensions: P2cfChecks.NativeSections (P2CF RT-01, core-native)");
         }
         Add("core-native|legacy native section re-resolved in mm from model-unit dimensions", "the 0.3.0 reader on a payload written from a FEM model; the 0.3.0 reader with native sections: gpc-legacy-import, gpc-build-model-legacy");
         Add("core-native|library moving template expanded by the Converter (former model)", "the 0.3.0 reader on a payload written from a FEM model; the GPC half (Attach Moving Paths and Export) stays in CheckMovingLibrary");
@@ -197,7 +276,7 @@ internal static class P2rRetired
         Add("regression|staged-selection", FemType + " (StrausResultSelection on a FEM model); the selection on GPC: gpc-result-selection");
         Add("regression|merge-plate-connectivity", FemType + " (ModelHelper.MergeModel of FEM plates); Merge Model on the drafts: gpc-draft-merge");
         Add("regression|node-index", FemType + " (StrausNodeIndex of FEM nodes); the export of the GPC model by the Converter: --examples, gpc-only-analysis");
-        Add("regression|archived-attribute-updates", FemType + " (preview of a FEM beam after its archive); the preview of the GPC drafts: gpc-c3");
+        Add("regression|archived-attribute-updates", FemType + " (preview of a FEM beam after its archive); on GPC a beam draft archived, its preview cached, a taper given after the round trip: P2cfChecks.ArchivedAttributeUpdates (P2CF RT-03, gpc-c3)");
         Add("regression|plate-point-updates", FemType + " (PlateModel.Points); the plate drafts: gpc-element-drafts, gpc-only-elements");
         Add("regression|incomplete-beam-preview", FemType + " (BeamModel.Shapes); the preview of the GPC drafts: gpc-c3");
         Add("regression|preview-bounds", FemType + " (bounds of FEM beams in the GH types); the GH types on their GPC datum: gpc-null-values");
@@ -261,5 +340,16 @@ internal static class P2rRetired
         add("regression-part|p2d: development, a FEM-backed GH type writes its datum alone (1 check)", "a GH_Beam made from a FEM BeamModel (a FEM-backed "
             + "GH type of a component not yet on GPC); after the cut no GH type has a FEM value; GPC coverage: no FemmR6 written again by a beam and by a model of a "
             + "development file and by a 0.3.0 model (p2d, on the frozen payloads of Fixtures/p2d-payloads)");
+    }
+
+    /// <summary>P2CC (13/11/2026, rule U3): the checks of the replay side retired by name with the FEM types they used.</summary>
+    private static void P2ccChecks(Action<string, string> add)
+    {
+        add("regression-part|gpc-only-models: Bridge Check Map in kN-m against the FEM reading (1 case)", "BridgeCheckMap.Evaluate on the FEM beams of an "
+            + "in-memory FEM model in kN-m (ImportDump.BeamData) against the GPC beams of its conversion; GPC coverage: bridge-check-map on the beams as the map "
+            + "reads them (BridgeMapBeam, explicit values), the replay of Bridge Check Map in the definitions (gpc-only-models)");
+        add("regression-part|gpc-only-properties: R65-C2-08 Bridge Member Assignment with a property the reader refuses (1 case)", "the refused property was a "
+            + "FEM value (a 0.3.0-like property on an Omega section) and no GPC producer makes a property the reader refuses; GPC coverage: the refusals of the "
+            + "reader on the frozen payloads (gpc-legacy-import, refusal-mirrored-section), Bridge Member Assignment replayed with GPC-only inputs (gpc-only-generators)");
     }
 }

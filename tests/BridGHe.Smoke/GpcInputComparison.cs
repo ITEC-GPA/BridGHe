@@ -169,6 +169,7 @@ internal static class GpcInputComparison
         };
         // R6.6 lane R1: the comparison of expected and actual GPC data, without the FEM path: the transformers on the GPC examples of R0.
         var (expectedOutputs, expectedChecks) = ExpectedOnGpc(Path);
+        expectedChecks += P2cfChecks.MovingPaths(Path); // P2CF (13/11, RT-03): the source intact, the old path replaced
         Console.WriteLine($"GPC MODEL TRANSFORMS (R1, without FEM): {expectedOutputs} transformer outputs and refusals of the GPC examples 01-10 (R0) against their explicit expected GPC data ({expectedChecks} checks: paths, cases, units, element identities and positions, drafts, replaced properties, numbering, messages)");
         // P2R (T1/R5, 12/11): the comparison with the conversion of the FEM outputs is retired (the transformers give no FEM output since P2K/P2D);
         // the oracle is the explicit expected GPC data above (R1). P2CUT (13/11): the FEM loop (BRIDGHE_P2R_FEM_TRANSFORMS) is removed.
