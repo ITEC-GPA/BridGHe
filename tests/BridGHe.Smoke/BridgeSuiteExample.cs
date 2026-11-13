@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Common.Straus;
 using BridGHe.Common.Checks;
 using GPC.Checkers.Concrete.Attributes;
@@ -40,39 +39,11 @@ internal static class BridgeSuiteExample
         new("15-curvo-2campate","Curvo continuo 25 + 25 m / R 120 m",new[]{25000.0,25000},120000,24)
     };
     internal static Parameters SectionParameters(Definition d)=>new(){Span=d.Length,Panels=12,ShrinkageInstant=0};
-    internal static BeamPropertyModel SuiteProperty(Parameters p,int phase)
-    {
-        var property=LongProperty(p,phase);
-        // Match the current gPC composite thin-wall flange convention exactly;
-        // the steel-only stage retains the full rectangular-plate inertia.
-        if(phase>0)property.Section.I11-=2*p.FlangeWidth*Math.Pow(p.FlangeThickness,3)/12;
-        return property;
-    }
     internal static double[] Stations(Definition d)=>Enumerable.Range(0,d.Panels+1).Select(i=>{
         int span=Math.Min(i/d.PanelsPerSpan,d.Spans.Length-1);
         return d.Spans.Take(span).Sum()+d.Spans[span]*(i-span*d.PanelsPerSpan)/d.PanelsPerSpan;
     }).ToArray();
     internal static Point3d Position(Definition d,double s,double y)=>d.Radius==0?new(s,y,0):new((d.Radius-y)*Math.Sin(s/d.Radius),d.Radius-(d.Radius-y)*Math.Cos(s/d.Radius),0);
-    internal static ShrinkageData Shrinkage(Parameters p)
-    {
-        double a=GpcH(p).Area,ac=p.GirderSlabWidth*p.SlabThickness,ys=-p.SteelHeight/2,yc=p.SlabThickness/2,ec=Ec/(1+p.PhiLong);
-        double ea=Es*a+ec*ac,yg=(Es*a*ys+ec*ac*yc)/ea,ei=Es*SuiteProperty(p,1).Section.I11;
-        double n=ec*ac*p.ShrinkageLong,m=n*(yc-yg);
-        return new(yg,ea,ei,n/ea,m/ei,n,m);
-    }
-    internal static BeamPropertyModel CrossProperty(Parameters p,double strip,bool diaphragm,int phase)
-    {
-        var h=new GPC.Model.Sections.SectionH(800,12,300,20,300,20,"Diaframma");
-        double a=diaphragm?h.Area:0,ix=diaphragm?h.Jxx:0,iy=diaphragm?h.Jyy:0,j=diaphragm?h.Jt:0;
-        if(phase>0)
-        {
-            double ec=Ec/(phase==2?1:1+p.PhiLong),t=p.SlabThickness;
-            a+=ec/Es*strip*t;ix+=ec/Es*strip*t*t*t/12;iy+=ec/Es*t*Math.Pow(strip,3)/12;
-            j+=ec/(2*(1+NuConcrete))/(Es/(2*(1+NuSteel)))*strip*t*t*t/6;
-        }
-        return a==0?null:new("Trasverso "+phase+" "+strip+" "+diaphragm){Name="Traverso equivalente",Material=Steel(),
-            PropertyType=BeamPropertyType.Beam,Section=new(){SectionType=SectionModel.SectionTypes.Generic,SectionArea=a,I11=ix,I22=iy,J=j,ShearA1=0,ShearA2=0}};
-    }
     // -----------------------------------------------------------------------------------------------------------------------------------------
     // R6.6 lane R4c-grafi: --bridge-suite without any FEM model. The same four contribution models (and the shrinkage benchmarks) as recipes
     // (R4cModel), built as GPC data by the product builders, analysed by the GPC-only analysis and read with the GPC result readers. Every check is
@@ -198,49 +169,6 @@ internal static class BridgeSuiteExample
         }
     }
     // The former FEM models (kept for the transitional comparison r4c-inputs only: R4cGrafiInputs; P2 removes them with the FEM types).
-    internal static ModelModel Create(Definition d,int phase)
-    {
-        d.Validate(refined:true);if(phase<0||phase>3)throw new ArgumentOutOfRangeException(nameof(phase));
-        var p=SectionParameters(d);var s=Stations(d);int n=d.Panels;
-        var m=new ModelModel(ModelModel.ModelUnits.Nmm){Name=d.Title+" / "+Cases[phase]};
-        var lc=Case(Cases[phase],phase==3?1:phase);m.LoadCases.Add(lc);
-        var sh=Shrinkage(p);var prop=SuiteProperty(p,phase==3?1:phase);
-        if(phase==3)prop.Material.ThermalExpansion=1e-5; // Equivalent strain device, not a physical temperature action.
-        double ad=new GPC.Model.Sections.SectionH(800,12,300,20,300,20,"D").Area;
-        double q=phase==0?GpcH(p).Area*78.5e-6+p.Width/4*p.SlabThickness*25e-6+ad*(3*p.Width/4)*(6*d.Spans.Length+1)*78.5e-6/(4*d.Length)
-            :phase==1?p.PermanentPressure*p.Width/4:phase==2?p.TrafficPressure*p.Width/4:0;
-        for(int j=0;j<4;j++)for(int i=0;i<=n;i++)
-        {
-            var node=new NodeModel((j*(n+1)+i+1).ToString(),Position(d,s[i],GirderY(p,j)));node.Groups.Add(Main);
-            // One fixed bearing in plan and one Y guide remove exactly three planar rigid motions.
-            // Every girder is supported vertically at every abutment/pier; rotations remain free.
-            node.Attributes.Add(new NodeRestraintAttributeModel(j==0&&i==0,j==0&&(i==0||i==n),i%d.PanelsPerSpan==0,false,false,false));
-            double tributary=0;
-            if(i>0)tributary+=node.Position.DistanceTo(Position(d,s[i-1],GirderY(p,j)))/2;
-            if(i<n)tributary+=node.Position.DistanceTo(Position(d,s[i+1],GirderY(p,j)))/2;
-            node.Loads.Add(new NodeForceLoadModel(lc,new(0,0,-q*tributary)));
-            m.AddElements(new[]{node});
-        }
-        for(int j=0;j<4;j++)for(int i=0;i<n;i++)
-        {
-            var b=new BeamModel(m.Nodes[j*(n+1)+i].Position,m.Nodes[j*(n+1)+i+1].Position,prop,Main){BeamId=(j*n+i+1).ToString()};
-            b.Attributes.Add(new SuperElementAttributeModel("G"+(j+1)));
-            if(phase==3)
-            {
-                // Straus positive pre-strain contracts a free beam (opposite to free eigenstrain).
-                b.Loads.Add(new BeamPreLoadModel(lc,-sh.Epsilon,BeamPreLoadModel.LoadType.Strain));
-                b.Loads.Add(new BeamGradientLoadModel(lc,new(){Axis1=0,Axis2=sh.Gradient/prop.Material.ThermalExpansion}));
-            }
-            m.AddElements(new[]{b});
-        }
-        for(int i=0;i<=n;i++)
-        {
-            double strip=((i>0?s[i]-s[i-1]:0)+(i<n?s[i+1]-s[i]:0))/2;
-            var cross=CrossProperty(p,strip,i%(d.PanelsPerSpan/6)==0,phase);if(cross==null)continue;
-            for(int j=0;j<3;j++)m.AddElements(new[]{new BeamModel(m.Nodes[j*(n+1)+i].Position,m.Nodes[(j+1)*(n+1)+i].Position,cross,Cross){BeamId=(4*n+3*i+j+1).ToString()}});
-        }
-        return m;
-    }
     // Clapeyron's three-moment equation, independent of the 3D frame solver.
     // Uniform nodal tributary loads: the exact load term is reduced by (1-1/n²).
     private static double[] SupportMoments(Definition d,double q,double ei,double gradient)
@@ -289,25 +217,6 @@ internal static class BridgeSuiteExample
     }
     internal static GPC.Geometry.CoordinateSystem Reference=>new(GPC.Geometry.Point3d.Origin,new GPC.Geometry.Vector3d(-1,0,0),new GPC.Geometry.Vector3d(0,-1,0));
     internal static double[] StressValues(BridgeStressResult r)=>new[]{r.Point1_ConcreteSigma,r.Point4_ConcreteSigma,r.Point5_SteelSigma,r.Point8_SteelSigma};
-    internal static double[] ExpectedStress(Parameters p,BeamForceResultModel[] f)
-    {
-        double a=GpcH(p).Area,ys=-p.SteelHeight/2,ac=p.GirderSlabWidth*p.SlabThickness,yc=p.SlabThickness/2;
-        double fullI=(p.FlangeWidth*Math.Pow(p.SteelHeight,3)-(p.FlangeWidth-p.WebThickness)*Math.Pow(p.SteelHeight-2*p.FlangeThickness,3))/12;
-        double mixedI=fullI-2*p.FlangeWidth*Math.Pow(p.FlangeThickness,3)/12,ic=p.GirderSlabWidth*Math.Pow(p.SlabThickness,3)/12;
-        var sh=Shrinkage(p);
-        return new[]{(p.SlabThickness,true),(0.0,true),(0.0,false),(-p.SteelHeight,false)}.Select(point=>{
-            double z=point.Item1;bool concrete=point.Item2;double stress=concrete?0:f[0].AxialForce/a-f[0].My*(z-ys)/fullI;
-            for(int phase=1;phase<4;phase++)
-            {
-                double ec=Ec/(phase==2?1:1+p.PhiLong),n=Es/ec,ah=a+ac/n,zg=(a*ys+ac/n*yc)/ah;
-                double ii=mixedI+a*Math.Pow(ys-zg,2)+(ic+ac*Math.Pow(yc-zg,2))/n;
-                stress+=(f[phase].AxialForce/ah-f[phase].My*(z-zg)/ii)/(concrete?n:1);
-            }
-            // Self-equilibrated primary stress; native resultants supply only secondary effects.
-            stress+=(concrete?Ec/(1+p.PhiLong):Es)*(sh.Epsilon+sh.Gradient*(z-sh.Centroid)-(concrete?p.ShrinkageLong:0));
-            return stress;
-        }).ToArray();
-    }
     /// <summary>The GPC twin of <see cref="Checker"/>: the composite section of the example built in GPC (<see cref="GpcCompositeDefinitions.Grillage"/>).</summary>
     internal static BridgeCheckAdapter CheckerGpc(Parameters p)
     {

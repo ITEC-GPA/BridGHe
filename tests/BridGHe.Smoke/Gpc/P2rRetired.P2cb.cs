@@ -48,6 +48,16 @@ internal static class P2rRetiredP2cb
             + "sections give the composite beam (gpc-review-fixes), the definitions of the composite components (gpc-only-models, p2k-components) (5 checks)");
         add("regression-part|gpc-review-fixes: P30-01 the model with its FEM value (drafts and results saved, damaged, read back)", FemType
             + " (Build Model on FEM-backed elements, GH_Model.FromModel of a FEM model); on GPC: the same checks on the model without FEM value (gpc-review-fixes), the former files: p2d (14 checks)");
+        add("regression|gpc-bridge-model", "the GPC bridge model of Build BridGHe Model (GpcBridgeBuilder) against the former seam on the merged FEM model (BridgeWorkflowBuilder.Build on FEM "
+            + "models with FEM results, GpcBridgeComparison.Legacy), and the GPC links of a duplicated action built on a FEM source: FEM types; on GPC: the bridge model of the examples with "
+            + "their frozen captures and fingerprints (natives 50 and 99, phase-native D3), merge, reactions and Super Element Check forces on GPC data (r2b-merge-forces), the GPC "
+            + "links of the bridge documents (RequireGpcLinks in the natives 50 and 99) (18 workflows and 1 duplicate check)");
+        add("regression-part|gpc-composite-sections: FEM parity (GpcCompositeSectionChecks.Fem.cs)", FemType + " (the definitions of the FEM composite properties of the same numbers, the "
+            + "analysis values of the FEM properties, the former beam definitions, the GH type and the preview on a FEM property: 38 + 720 + 334 checks and the rest of the partial); on GPC: "
+            + "the definitions from the numbers against the former construction, the analysis values, the beam definitions and the R6.0 capture (gpc-composite-sections, unchanged)");
+        add("regression-part|inr-inertia: the FEM homogenised property of the same numbers (I11, I22, angle 0, shear areas, area)", "CompositeBeamPropertyModel.CreateHomogenizedProperty, a FEM "
+            + "type; on GPC: the GPC homogenised property against the same expected values from the analysis properties (inr-inertia: I11, I22, shear areas, area bit for bit) (36 checks: "
+            + "the FEM I11/I22 and angle of 18 variants; the shear area and area checks keep their GPC half)");
         add("regression-part|gpc-review-fixes: R65-C3-02 the global point load of the swap model", "a FEM beam point load in the global system (BeamPointLoadModel.LoadData.CoordinateSystem), "
             + "which Beam Point Load does not give (its loads are in the principal axes): the GPC swap model has the three other loads (no check of its own: fewer recorded calls)");
     }

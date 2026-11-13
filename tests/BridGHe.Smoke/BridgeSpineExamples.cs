@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text.Json;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using Rhino.Geometry;
 using static BridgeGrillageExample;
 using static BridgeSuiteExample;
@@ -174,55 +173,5 @@ internal static class BridgeSpineExamples
         Console.WriteLine($"BRIDGE SPINE: {total-failures} passed, {failures} failed (GPC data alone)");return failures==0?0:1;
     }
     // The former FEM models (kept for the transitional comparison r4c-inputs only: R4cGrafiInputs; P2 removes them with the FEM types).
-    internal static ModelModel Create(Settings setup,int phase)
-    {
-        Validate(setup);if(phase<0||phase>3)throw new ArgumentOutOfRangeException(nameof(phase));
-        var d=setup.Definition;var stations=Stations(d);int n=d.Panels;
-        var model=new ModelModel(ModelModel.ModelUnits.Nmm) { Name=d.Title+" / "+Cases[phase] };
-        var lc=Case(Cases[phase],phase==3?1:phase);model.LoadCases.Add(lc);
-        double ad=new GPC.Model.Sections.SectionH(800,12,300,20,300,20,"Diaframma").Area;
-        for(int j=0;j<3;j++)
-        {
-            var p=j==1?setup.Central:setup.Lateral;
-            double y=(j-1)*p.Width/3;
-            double q=phase==0?GpcH(p).Area*78.5e-6+p.GirderSlabWidth*p.SlabThickness*25e-6
-                +ad*(2*p.Width/3)*(6*d.Spans.Length+1)*78.5e-6/(3*d.Length)
-                :phase==1?p.PermanentPressure*p.GirderSlabWidth:phase==2?p.TrafficPressure*p.GirderSlabWidth:0;
-            for(int i=0;i<=n;i++)
-            {
-                var node=new NodeModel((j*(n+1)+i+1).ToString(),Position(d,stations[i],y));node.Groups.Add(Main);
-                node.Attributes.Add(new NodeRestraintAttributeModel(j==0&&i==0,j==0&&(i==0||i==n),i%d.PanelsPerSpan==0,false,false,false));
-                double tributary=0;
-                if(i>0)tributary+=node.Position.DistanceTo(Position(d,stations[i-1],y))/2;
-                if(i<n)tributary+=node.Position.DistanceTo(Position(d,stations[i+1],y))/2;
-                node.Loads.Add(new NodeForceLoadModel(lc,new(0,0,-q*tributary)));model.AddElements(new[]{node});
-            }
-        }
-        for(int j=0;j<3;j++)
-        {
-            var p=j==1?setup.Central:setup.Lateral;var property=SuiteProperty(p,phase==3?1:phase);
-            property.Name=(j==1?"Spina centrale":"Travi laterali")+" / "+Cases[phase];
-            var shrinkage=Shrinkage(p);if(phase==3)property.Material.ThermalExpansion=1e-5;
-            for(int i=0;i<n;i++)
-            {
-                var beam=new BeamModel(model.Nodes[j*(n+1)+i].Position,model.Nodes[j*(n+1)+i+1].Position,property,Main){BeamId=(j*n+i+1).ToString()};
-                beam.Attributes.Add(new SuperElementAttributeModel("G"+(j+1)));
-                if(phase==3)
-                {
-                    beam.Loads.Add(new BeamPreLoadModel(lc,-shrinkage.Epsilon,BeamPreLoadModel.LoadType.Strain));
-                    beam.Loads.Add(new BeamGradientLoadModel(lc,new(){Axis2=shrinkage.Gradient/property.Material.ThermalExpansion}));
-                }
-                model.AddElements(new[]{beam});
-            }
-        }
-        for(int i=0;i<=n;i++)
-        {
-            double strip=((i>0?stations[i]-stations[i-1]:0)+(i<n?stations[i+1]-stations[i]:0))/2;
-            var property=BridgeSuiteExample.CrossProperty(setup.Central,strip,i%(d.PanelsPerSpan/6)==0,phase);
-            if(property==null)continue;
-            for(int j=0;j<2;j++)model.AddElements(new[]{new BeamModel(model.Nodes[j*(n+1)+i].Position,model.Nodes[(j+1)*(n+1)+i].Position,property,Cross){BeamId=(3*n+2*i+j+1).ToString()}});
-        }
-        return model;
-    }
 
 }
