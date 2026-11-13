@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Gpc.Legacy;
 using GPC.Model.Materials;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Gpc.Builders
 {

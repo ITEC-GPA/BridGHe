@@ -5,7 +5,6 @@ using System.Linq;
 using System.Security.Cryptography;
 using BridGHe.Common.Gpc.Legacy;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Gpc
 {
@@ -126,87 +125,16 @@ namespace BridGHe.Common.Gpc
             return new LegacyBeamProperty(property, new LegacyBeamPropertyData(formulation, angle, native, signature));
         }
 
-        public static Conversion Convert(ModelModel model, double toleranceDefinitionUnits)
-        {
-            var gpc = FromFemm(model, toleranceDefinitionUnits, out var report);
-            return new Conversion(gpc, report, toleranceDefinitionUnits);
-        }
 
-        public static GPC.Model.Models.Model FromFemm(ModelModel model, double toleranceDefinitionUnits, out LegacyImportReport report)
-        {
-            if (model == null) throw new ArgumentNullException(nameof(model));
-            // F6 chain C: the results of an analysed model are never converted, so they are not archived either: the conversion reads a copy
-            // without them. The identity does not depend on the results, and the size limit of the legacy reader concerns the input only (the
-            // analysed phase models of example 50, the references of Build BridGHe Model, exceed 256 MB with their results).
-            if (model.Elements.Any(e => e.Results.Count != 0))
-            {
-                model = new ModelModel(model);
-                foreach (var e in model.Elements) e.Results.Clear();
-            }
-            byte[] archive = ModelArchive.Write(model);
-            var owner = GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-model:" + GpcIdentity.ArchiveDigest(archive) + ":"
-                + toleranceDefinitionUnits.ToString("R", CultureInfo.InvariantCulture));
-            report = new LegacyImportReport();
-            return LegacyModelImport.Import(LegacyArchive.Read(archive), owner, toleranceDefinitionUnits, report, SectionStateSignatures(model));
-        }
 
-        /// <summary>F6 (L11): the former section-state signature of the property of every former beam (by index), for the legacy reader to
-        /// tell a current local section state from a stale one (the former checks compared them).</summary>
-        public static Func<int, string> SectionStateSignatures(ModelModel model)
-        {
-            if (model == null) throw new ArgumentNullException(nameof(model));
-            var beams = model.Beams.ToArray();
-            return k => BridgeSectionAssignment.Signature(beams[k].BeamProperty);
-        }
 
-        /// <summary>F6 chain D: a former beam property (the datum of a Beam Property parameter) as GPC, with the rules of the conversion of a
-        /// whole model; dimensions in the definition <paramref name="units"/> (those of the model it goes into).</summary>
-        public static LegacyBeamProperty BeamProperty(BeamPropertyModel property, BridgeUnits units)
-        {
-            if (property == null) throw new ArgumentNullException(nameof(property));
-            return LegacyModelImport.BeamProperty(LegacyArchive.Read(ModelArchive.Write(property)), units);
-        }
 
-        /// <summary>Chain E (e3): a former load combination (the datum of a Load Combinations parameter) by value, with the definitions of
-        /// its cases, as Build Model on GPC takes it (<see cref="LegacyModelImport.CombinationDraft"/>).</summary>
-        public static LegacyCombinationDraft CombinationDraft(LoadCombinationModel combination)
-        {
-            if (combination == null) throw new ArgumentNullException(nameof(combination));
-            return LegacyModelImport.CombinationDraft(LegacyArchive.Read(ModelArchive.Write(combination)));
-        }
 
-        /// <summary>Chain E (e3): a former staged construction (the datum of the Staged constructions input of Build Model) by value
-        /// (<see cref="LegacyModelImport.StageDraft"/>).</summary>
-        public static LegacyStageDraft StageDraft(StagedConstructionModel stage)
-        {
-            if (stage == null) throw new ArgumentNullException(nameof(stage));
-            return LegacyModelImport.StageDraft(LegacyArchive.Read(ModelArchive.Write(stage)));
-        }
 
-        /// <summary>R6.1: a former load case (the datum of a Load Case parameter) as its case record (<see cref="LegacyModelImport.CaseDraft"/>).</summary>
-        public static LegacyCaseData CaseDraft(LoadCaseModel loadCase) =>
-            LegacyModelImport.CaseDraft(LegacyArchive.Read(ModelArchive.Write(loadCase ?? throw new ArgumentNullException(nameof(loadCase)))));
 
-        /// <summary>R6.1: a former section (the datum of a Beam Section parameter) as its recipe in the definition units (<see cref="LegacyModelImport.SectionDraft"/>).</summary>
-        public static LegacySectionRecipe SectionDraft(SectionModel section) =>
-            LegacyModelImport.SectionDraft(LegacyArchive.Read(ModelArchive.Write(section ?? throw new ArgumentNullException(nameof(section)))));
 
-        /// <summary>R6.1: a former plate property (the datum of a Plate Property parameter) as GPC, definition units (<see cref="LegacyModelImport.PlatePropertyDraft"/>).</summary>
-        public static GPC.Model.ElementProperties.PlateProperty PlatePropertyDraft(PlatePropertyModel property) =>
-            LegacyModelImport.PlatePropertyDraft(LegacyArchive.Read(ModelArchive.Write(property ?? throw new ArgumentNullException(nameof(property)))), GpcBeamDrafts.DraftUnits);
 
-        /// <summary>L2C: the bending thickness of a former membrane plate property, beside its GPC property (<see cref="LegacyModelImport.PlatePropertyMembraneBending"/>).</summary>
-        public static double PlatePropertyMembraneBending(PlatePropertyModel property) =>
-            LegacyModelImport.PlatePropertyMembraneBending(LegacyArchive.Read(ModelArchive.Write(property ?? throw new ArgumentNullException(nameof(property)))), GpcBeamDrafts.DraftUnits);
 
-        /// <summary>F6 chain E: a former material (the datum of a Material parameter) as the GPC material of a beam property, with the rule
-        /// of the conversion of a whole model (<see cref="LegacyModelImport.ElasticMaterial"/>; materials are in N-mm-MPa in every unit
-        /// system of the definition).</summary>
-        public static GPC.Model.Materials.Material Material(MaterialModel material)
-        {
-            if (material == null) throw new ArgumentNullException(nameof(material));
-            return LegacyModelImport.ElasticMaterial(LegacyArchive.Read(ModelArchive.Write(material)));
-        }
     }
 
     /// <summary>F6 chain D: the load cases the elements of a GPC model refer to (the element loads of the former model, as the legacy reader

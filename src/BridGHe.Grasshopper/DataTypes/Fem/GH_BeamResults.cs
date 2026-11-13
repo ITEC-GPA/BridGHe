@@ -4,7 +4,6 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using Grasshopper.Kernel.Types;
 using GH_IO.Serialization;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {

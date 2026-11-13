@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Grasshopper.Kernel.Types;
 using GH_IO.Serialization;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {

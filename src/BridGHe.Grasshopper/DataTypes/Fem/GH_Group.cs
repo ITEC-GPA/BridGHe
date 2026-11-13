@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using GH_IO.Serialization;
 using Grasshopper.Kernel.Types;
 
-using BridGHe.Common.Models;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {
@@ -58,13 +57,6 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             _gpc = chain.ToArray(); _gpcOf = Value; HasAttachedGpc = true;
         }
 
-        /// <summary>The chain of the names of a former group from its root (the conversion of the FEM value).</summary>
-        internal static IReadOnlyList<string> Chain(GroupModel group)
-        {
-            var names = new List<string>();
-            for (var g = group; g != null; g = g.Parent) names.Insert(0, g.Name);
-            return names.ToArray();
-        }
 
         private IReadOnlyList<string> _gpc;
         private object _gpcOf;

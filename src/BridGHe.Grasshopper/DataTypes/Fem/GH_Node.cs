@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using GH_IO.Serialization;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
@@ -214,14 +213,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override bool CastFrom(object source)
         {
-            if (source == null) { return false; }
-
-            if (typeof(NodeModel).IsAssignableFrom(source.GetType()))
-            {
-                Value = (NodeModel)source;
-                return true;
-            }
-
+            // P2CE phase 2b: the cast from a FEM node went with the FEM types (no FEM node reaches a GH parameter since P2K/P2D).
             return false;
         }
 

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Grasshopper.Kernel.Types;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {

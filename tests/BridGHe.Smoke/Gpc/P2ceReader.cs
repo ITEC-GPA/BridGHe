@@ -27,18 +27,16 @@ internal static class P2ceReader
     internal static void Regression()
     {
         var failures = new List<string>();
-        Inventory(failures, out var corpusCases);
-        int lists = Parity(failures, corpusCases);
-        int design = DesignParity(failures);
+        Inventory(failures, out _);
+        // P2CE phase 2b (7): the parities with the CLR reader and the FEM types (the «LoadCases» lists, the constant item, the global frame) are
+        // retired by name with the FEM types (P2rRetiredP2ce); the by-value reader of «LoadCases» stays covered by the 14 checks of P2P-01.
         // P2CE phase 2b (6): the casts of Beam Section are on GPC (GpcSectionCasts); their parity with the former FEM cast (36 casts, recipe and
         // text, equal at 2519e4a) is retired by name with the FEM cast (P2rRetiredP2ce); the casts with explicit expected values stay.
         int casts = SectionCasts(failures);
         Console.WriteLine($"P2CE READER SECTION CASTS: {casts} casts of a text or a curve to a Beam Section with their expected kind, dimensions and text");
-        Console.WriteLine($"P2CE READER DESIGN: {design} check: the empty «LoadCases» item = the constant (the parity of «Design» retired by name at 8e5a538)");
-        Console.WriteLine($"P2CE READER PARITY: {lists} lists of cases compared ({failures.Count} failures so far)");
         int stage = StageChecks(failures);
         if (failures.Count > 0) throw new Exception("P2CE READER FAIL: " + string.Join(" | ", failures.Take(20)));
-        Console.WriteLine($"P2CE READER PASS: inventory above; {lists} lists of cases equal by value and by the CLR reader; {stage} checks of P2P-01 (Staged Construction and Load Combinations).");
+        Console.WriteLine($"P2CE READER PASS: inventory above; {casts} section casts; {stage} checks of P2P-01 (Staged Construction and Load Combinations).");
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------------
@@ -126,33 +124,8 @@ internal static class P2ceReader
     // -----------------------------------------------------------------------------------------------------------------------------------
     // (2) Parity of the «LoadCases» item
 
-    private static string Records(IEnumerable<LegacyCaseData> cases) => string.Join("|", cases.Select(c => Convert.ToHexString(GpcDraftArchive.Write(c))));
 
-    /// <summary>The cases of a «LoadCases» item by value and by the CLR reader (the former path of Staged Construction), equal record by record.</summary>
-    private static bool Same(byte[] item, List<string> failures, string label)
-    {
-        var clr = BridGHe.Common.Helpers.ModelArchive.Read<List<BridGHe.Common.Models.LoadCaseModel>>(item).Select(GpcModels.CaseDraft).ToArray();
-        var value = GpcLegacyPayloads.Cases(item);
-        if (clr.Length != value.Length || Records(clr) != Records(value)) { failures.Add(label + ": the cases by value differ from the CLR reading (" + value.Length + " / " + clr.Length + ")"); return false; }
-        return true;
-    }
 
-    private static int Parity(List<string> failures, List<List<byte[]>> corpusCases)
-    {
-        int lists = 0;
-        // The lists of the cases of every example file, as 0.3.0 wrote the item (ModelArchive.Write of the list of FEM cases), and each case alone.
-        foreach (var cases in corpusCases)
-        {
-            var femCases = cases.Select(b => BridGHe.Common.Helpers.ModelArchive.Read<BridGHe.Common.Models.LoadCaseModel>(b)).ToList();
-            if (Same(BridGHe.Common.Helpers.ModelArchive.Write(femCases), failures, "corpus list of " + femCases.Count + " cases")) lists++;
-            foreach (var c in femCases.Take(3))
-                if (Same(BridGHe.Common.Helpers.ModelArchive.Write(new List<BridGHe.Common.Models.LoadCaseModel> { c }), failures, "corpus case " + c.Name)) lists++;
-        }
-        // The empty item of 0.4.0 (an unknown catalogue for the stage).
-        if (Same(BridGHe.Common.Helpers.ModelArchive.Write(new List<BridGHe.Common.Models.LoadCaseModel>()), failures, "empty list")) lists++;
-        if (corpusCases.Count == 0) failures.Add("parity: no case in the corpus");
-        return lists;
-    }
 
     // -----------------------------------------------------------------------------------------------------------------------------------
     // (2b) Parity of the «Design» item (phase 2b, coordinator decision 1) and of the constant «LoadCases» item (decision 2)
@@ -163,28 +136,6 @@ internal static class P2ceReader
     /// every datum read by value since R6.1).</summary>
     private static string Datum(LegacyBeamProperty p) => p == null ? "null" : GpcDraftCapture.WithoutGuids(GpcDraftCapture.Text(p));
 
-    /// <summary>0.3.0 «Design» items built in memory with the archive of the CLR types and the FEM properties of the corpus (a rule with and
-    /// without taper scales, a family property, and the 0.4.0 forms without FEM property): the record read by value equals the CLR reading on its
-    /// fields, on the text of a rule (the ID of the FEM property) and on the GPC datum (by value = the conversion of the FEM property the product
-    /// made, <c>BridgeGpcProperties.Of</c>); the text of a family property becomes the 0.4.0 text (decision 1 (b): the FEM text of the property
-    /// is not kept). Also the constant of the empty «LoadCases» item = what the archive writes.</summary>
-    private static int DesignParity(List<string> failures)
-    {
-        // P2CE phase 2b (2): the «Design» records have no FEM property any more; their parity with the CLR reading (42 records of 12 FEM properties of
-        // the corpus, fields, text of the rules and GPC datum, and the goo of a 0.3.0 rule, all equal at 8e5a538) is retired by name
-        // (P2rRetiredP2ce); what stays: a 0.4.0 rule read by value with its datum chunks (gpc-only-properties) and the constant below.
-        int n = 0;
-        // P2CE phase 2b (6): the global system of the GH datum on GPC = the conversion of the former FEM global system.
-        n++;
-        string Frame(GPC.Geometry.CoordinateSystem f) => GPC.Model.Core.ModelValues.Fingerprint(new object[] { f }) + "|" + f.Name;
-        if (Frame(GpcLoadFrames.Global()) != Frame(GpcLoadFrames.Of(BridGHe.Common.Models.CoordinateSystemModel.Global)))
-            failures.Add("the global frame differs from the conversion of the former global system");
-        // Decision 2: the constant of the empty «LoadCases» item is what the archive of the CLR types writes today.
-        n++;
-        var written = BridGHe.Common.Helpers.ModelArchive.Write(new List<BridGHe.Common.Models.LoadCaseModel>());
-        if (!written.SequenceEqual(GpcLegacyPayloads.EmptyLoadCasesItem)) failures.Add("the constant empty LoadCases item differs: " + Convert.ToHexString(written));
-        return n;
-    }
 
     // -----------------------------------------------------------------------------------------------------------------------------------
     // (2c) The casts of the Beam Section type (phase 2b): on GPC (GpcSectionCasts) = the former FEM cast (GH_BeamSection.CastFrom on its FEM
@@ -304,6 +255,8 @@ internal static class P2ceReader
         var chunk = (GH_IO.Serialization.GH_IWriter)((GH_IO.Serialization.GH_IReader)stage).FindChunk("LoadCaseRecords");
         chunk.RemoveItem(item); chunk.SetInt32(item, value);
     }
+
+    private static string Records(IEnumerable<LegacyCaseData> cases) => string.Join("|", cases.Select(c => Convert.ToHexString(GpcDraftArchive.Write(c))));
 
     private static int StageChecks(List<string> failures)
     {

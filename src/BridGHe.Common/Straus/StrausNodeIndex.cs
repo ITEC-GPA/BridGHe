@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BridGHe.Common.Models;
 using Rhino.Geometry;
 
 namespace BridGHe.Common.Straus
@@ -13,8 +12,6 @@ namespace BridGHe.Common.Straus
         private readonly double _tolerance;
         private readonly RTree _tree = new RTree();
 
-        public StrausNodeIndex(IReadOnlyList<NodeModel> nodes, double tolerance)
-            : this((nodes ?? throw new ArgumentNullException(nameof(nodes))).Select(n => n.Position).ToArray(), tolerance) { }
 
         /// <summary>F6 (a)/(b): the same lookup on node positions (a GPC model: its nodes in numbering order).</summary>
         public StrausNodeIndex(IReadOnlyList<Point3d> positions, double tolerance)

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using GPC.Checkers.CompositeBridge;
 using GPC.Model.Materials;
 using GPC.Model.Sections;
@@ -38,29 +37,7 @@ namespace BridGHe.Common.Gpc
     {
         public const int BarsPerRow = 3;
 
-        /// <summary>True when Super Element Check treats the girder as of constant section (same dimensions, ratios and material instances).</summary>
-        public static bool IsConstant(CompositeBeamPropertyModel start, CompositeBeamPropertyModel end)
-        {
-            if (start == null || end == null) throw new ArgumentNullException(start == null ? nameof(start) : nameof(end));
-            SectionModel s = start.SteelSection, e = end.SteelSection; var cs = start.ConcreteSection; var ce = end.ConcreteSection;
-            return s.B1 == e.B1 && s.B2 == e.B2 && s.D == e.D && s.T1 == e.T1 && s.T2 == e.T2 && s.T3 == e.T3
-                && cs.Height == ce.Height && cs.Width == ce.Width && cs.TopRebarArea == ce.TopRebarArea && cs.TopCover == ce.TopCover
-                && cs.BottomRebarArea == ce.BottomRebarArea && cs.BottomCover == ce.BottomCover
-                && start.VerticalOffset == end.VerticalOffset && start.NInstant == end.NInstant && start.NInfinite == end.NInfinite && start.NShrinkage == end.NShrinkage
-                && start.ConcreteMaterial == end.ConcreteMaterial && start.SteelMaterial == end.SteelMaterial && start.RebarMaterial == end.RebarMaterial;
-        }
 
-        /// <summary>The definition of a constant section.</summary>
-        public static BridgeCompositeSectionDefinition Definition(CompositeBeamPropertyModel property, string steelName)
-        {
-            if (property == null) throw new ArgumentNullException(nameof(property));
-            var s = property.SteelSection; var c = property.ConcreteSection;
-            return Create(property.Name, steelName, s.D, s.T3, s.B2, s.T2, s.B1, s.T1, c.Width, c.Height, c.TopRebarArea, c.TopCover, c.BottomRebarArea, c.BottomCover,
-                property.VerticalOffset, property.ConcreteMaterial.Name, property.ConcreteMaterial.SpecificCompressiveStrength,
-                property.SteelMaterial.Name, property.SteelMaterial.Modulus, property.SteelMaterial.MinimumYieldStress, property.SteelMaterial.MinimumTensileStress,
-                property.RebarMaterial.Name, property.RebarMaterial.Modulus, property.RebarMaterial.MinimumYieldStress, property.RebarMaterial.MinimumTensileStress,
-                property.NInfinite, property.NInstant, property.NShrinkage, property.ConsiderConcrete, property.ConsiderRebar, GpcModels.Material(property.SteelMaterial));
-        }
 
         /// <summary>BGHGPC1 (ii): the definition of a former composite property by value (a BGHA1 payload of a Composite Beam Property
         /// parameter, read as data), with the rule of <see cref="Definition(CompositeBeamPropertyModel, string)"/> and the name of the property
@@ -80,23 +57,6 @@ namespace BridGHe.Common.Gpc
                 nInfinite, p.Double("NInstant"), nShrinkage, p.Bool("ConsiderConcrete"), p.Bool("ConsiderRebar"), Legacy.LegacyModelImport.ElasticMaterial(steel));
         }
 
-        /// <summary>The definition of a variable section at the normalised station <paramref name="station"/> (0 at the start, 1 at the end):
-        /// every dimension, ratio and material value interpolated linearly, the names, the choices and the material names of the start.</summary>
-        public static BridgeCompositeSectionDefinition Definition(CompositeBeamPropertyModel start, CompositeBeamPropertyModel end, double station, string steelName)
-        {
-            if (start == null || end == null) throw new ArgumentNullException(start == null ? nameof(start) : nameof(end));
-            double L(double a, double b) => Interpolation.GetLinearInterpolation(0, 1, a, b, station);
-            double Lm(double a, double b) => Interpolation.GetLinearInterpolation(0, 1.0, a, b, station);
-            SectionModel s = start.SteelSection, e = end.SteelSection; var cs = start.ConcreteSection; var ce = end.ConcreteSection;
-            MaterialModel concrete = start.ConcreteMaterial, steel = start.SteelMaterial, rebar = start.RebarMaterial;
-            return Create(start.Name, steelName, Lm(s.D, e.D), Lm(s.T3, e.T3), Lm(s.B2, e.B2), Lm(s.T2, e.T2), Lm(s.B1, e.B1), Lm(s.T1, e.T1),
-                L(cs.Width, ce.Width), L(cs.Height, ce.Height), Lm(cs.TopRebarArea, ce.TopRebarArea), L(cs.TopCover, ce.TopCover),
-                L(cs.BottomRebarArea, ce.BottomRebarArea), L(cs.BottomCover, ce.BottomCover), L(start.VerticalOffset, end.VerticalOffset),
-                concrete.Name, Lm(concrete.SpecificCompressiveStrength, end.ConcreteMaterial.SpecificCompressiveStrength),
-                steel.Name, Lm(steel.Modulus, end.SteelMaterial.Modulus), Lm(steel.MinimumYieldStress, end.SteelMaterial.MinimumYieldStress), Lm(steel.MinimumTensileStress, end.SteelMaterial.MinimumTensileStress),
-                rebar.Name, Lm(rebar.Modulus, end.RebarMaterial.Modulus), Lm(rebar.MinimumYieldStress, end.RebarMaterial.MinimumYieldStress), Lm(rebar.MinimumTensileStress, end.RebarMaterial.MinimumTensileStress),
-                L(start.NInfinite, end.NInfinite), L(start.NInstant, end.NInstant), L(start.NShrinkage, end.NShrinkage), start.ConsiderConcrete, start.ConsiderRebar, null);
-        }
 
         /// <summary>
         /// Chain E (c): the constant-section rule of Super Element Check on the definitions a composite beam carries (start and end): the same

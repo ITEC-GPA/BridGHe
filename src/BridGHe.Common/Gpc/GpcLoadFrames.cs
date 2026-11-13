@@ -1,5 +1,4 @@
 using System;
-using BridGHe.Common.Models;
 using GPC.Geometry;
 
 namespace BridGHe.Common.Gpc
@@ -16,15 +15,6 @@ namespace BridGHe.Common.Gpc
         /// global system (CoordinateSystemModel.Global: origin 0, points (1, 0, 0) and (0, 1, 0), name «Global»), a new frame each time.</summary>
         public static CoordinateSystem Global() => new CoordinateSystem(new Point3d(0, 0, 0), new Point3d(1, 0, 0), new Point3d(0, 1, 0), "Global");
 
-        /// <summary>The GPC frame of a former coordinate system: origin, a point on axis 1 and a point in the plane 1-2 (the former
-        /// <c>Origin</c>, <c>Point1</c>, <c>Point2</c>), with its name. The global system (origin 0, (1, 0, 0), (0, 1, 0)) gives the global
-        /// axes exactly.</summary>
-        public static CoordinateSystem Of(CoordinateSystemModel cs)
-        {
-            if (cs == null) throw new ArgumentNullException(nameof(cs));
-            static Point3d P(Rhino.Geometry.Point3d p) => new Point3d(p.X, p.Y, p.Z);
-            return new CoordinateSystem(P(cs.Origin), P(cs.Point1), P(cs.Point2), cs.Name ?? "");
-        }
 
         /// <summary>
         /// The one rule of a global load system (R65-C2-01, user decision U6 of 12/11), declared here and used everywhere: by the load

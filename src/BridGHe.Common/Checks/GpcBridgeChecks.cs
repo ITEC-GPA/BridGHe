@@ -9,7 +9,6 @@ using GPC.Geometry;
 using GPC.Model.Elements;
 using GPC.Model.Results.Locations;
 using GPC.Model.Results.Queries;
-using BridGHe.Common.Models;
 using D3Method = GPC.Checkers.CompositeBridge.BridgeWorkflowMethod;
 
 namespace BridGHe.Common.Checks

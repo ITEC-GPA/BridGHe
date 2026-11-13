@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Gpc;
 using BridGHe.Common.Gpc.Legacy;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 
 namespace BridGHe.Grasshopper.Helpers
@@ -17,15 +16,7 @@ namespace BridGHe.Grasshopper.Helpers
     /// </summary>
     internal static class GpcBeamInputs
     {
-        /// <summary>The names of a group from its root (the full name of the reader is their join with "\").</summary>
-        internal static IReadOnlyList<string> GroupChain(GroupModel group)
-        {
-            var names = new List<string>();
-            for (var g = group; g != null; g = g.Parent) names.Insert(0, g.Name);
-            return names;
-        }
 
-        internal static IReadOnlyList<IReadOnlyList<string>> GroupChains(IEnumerable<GroupModel> groups) => groups.Select(GroupChain).ToArray();
 
         internal static IReadOnlyList<IReadOnlyList<string>> GroupChains(IEnumerable<GH_Group> groups) => groups.Select(GpcBuilderAttach.GroupChain).ToArray(); // R6.2 part C: the GPC datum of the GH group
 

@@ -4,7 +4,6 @@ using System.Linq;
 using BridGHe.Common.Gpc;
 using BridGHe.Common.Gpc.Legacy;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 
 /// <summary>
 /// TESTS ONLY, F6 (a)/(b): a FEM model of the regression tests with stored results as an analysed GPC model, so that a result consumer

@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Rhino;

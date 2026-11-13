@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Helpers;
 using Rhino.Geometry;
-using BridGHe.Common.Models;
 
 internal static class RegressionTests
 {
@@ -290,10 +289,8 @@ internal static class RegressionTests
     private static void ModelGuids()
     {
         // P2CUT (13/11): the GUID map of the FEM value (GetGuid, FromModel, SynchronizeGuids) is retired by name (P2rRetired.Checks); the GPC
-        // part of P2F stays. Transitional: the 0.3.0 payload of two nodes is still written from the FEM type until the FEM types are deleted.
-        var model = new ModelModel(ModelModel.ModelUnits.Nmm);
-        model.AddElements(new[] { new NodeModel("1", Point3d.Origin), new NodeModel("2", new Point3d(1, 0, 0)) });
-        P2fChecks.ModelGuids(Plugin(), Require, ModelArchive.Write(model)); // P2F (12/11): P2D reads a model back as its GPC input alone
+        // part of P2F stays. P2CE phase 2b: the 0.3.0 payload of two nodes was written from the FEM type: that check is retired by name with it.
+        P2fChecks.ModelGuids(Plugin(), Require, null); // P2F (12/11): P2D reads a model back as its GPC input alone
     }
 
 }

@@ -4,7 +4,6 @@ using System.Linq;
 using BridGHe.Common.Geometry;
 using BridGHe.Common.Straus;
 using Rhino.Geometry;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Diagnostics;
 

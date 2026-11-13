@@ -14,7 +14,6 @@ using GPC.Model.Materials;
 using GPC.Model.Sections;
 using GPC.Model.Standards;
 using Rhino.Geometry;
-using BridGHe.Common.Models;
 
 /// <summary>Reproducible teaching example. N, mm, MPa. Not a bridge design certification.</summary>
 internal static class BridgeGrillageExample
@@ -59,17 +58,7 @@ internal static class BridgeGrillageExample
     internal static readonly JsonSerializerOptions Json = new(){WriteIndented=true};
     internal static readonly string Output = ExamplePaths.Calculations("11-ponte-graticcio");
     internal static readonly string Delivery = ExamplePaths.Case("11-ponte-graticcio");
-    internal static MaterialModel Steel() => new("S355"){Name="S355",Modulus=Es,PoissonRatio=NuSteel,MinimumYieldStress=355,MinimumTensileStress=510};
-    internal static SectionModel H(Parameters p) => new(){SectionType=SectionModel.SectionTypes.I,D=p.SteelHeight,B1=p.FlangeWidth,B2=p.FlangeWidth,T1=p.FlangeThickness,T2=p.FlangeThickness,T3=p.WebThickness};
     internal static SectionH GpcH(Parameters p) => new(p.SteelHeight,p.WebThickness,p.FlangeWidth,p.FlangeThickness,p.FlangeWidth,p.FlangeThickness,"H principale");
-    internal static CompositeBeamPropertyModel Composite(Parameters p) => new("Composite")
-    {
-        Name="H + soletta tributaria", SteelSection=H(p), SteelMaterial=Steel(),
-        ConcreteSection=new(p.SlabThickness,p.GirderSlabWidth,0,40),
-        ConcreteMaterial=new("C30"){Name="C30",Modulus=Ec,PoissonRatio=NuConcrete,SpecificCompressiveStrength=30},
-        RebarMaterial=new("B450"){Name="B450",Modulus=Es,MinimumYieldStress=450,MinimumTensileStress=540},
-        NInstant=Es/Ec,NInfinite=Es/Ec*(1+p.PhiLong),ConsiderConcrete=true,ConsiderRebar=false
-    };
     internal static double GirderY(Parameters p,int j) => (j-1.5)*p.Width/4;
     private static SectionH CrossH() => new(800,12,300,20,300,20,"Traverso acciaio");
     internal static double G1(Parameters p) => GpcH(p).Area*78.5e-6 + p.Width/4*p.SlabThickness*25e-6

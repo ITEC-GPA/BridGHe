@@ -8,7 +8,6 @@ using GPC.Model.Materials;
 using GPC.Model.Results;
 using GPC.Model.Sections;
 using GPC.Model.Sections.Concrete;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Checks
 {

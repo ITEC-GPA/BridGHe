@@ -4,7 +4,6 @@ using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Common.MovingLoads;
 using Grasshopper.Kernel;
 using Rhino.Display;

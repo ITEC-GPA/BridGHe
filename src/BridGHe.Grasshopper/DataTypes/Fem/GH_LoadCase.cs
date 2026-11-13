@@ -2,7 +2,6 @@ using System;
 using GH_IO.Serialization;
 using Grasshopper.Kernel.Types;
 
-using BridGHe.Common.Models;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {

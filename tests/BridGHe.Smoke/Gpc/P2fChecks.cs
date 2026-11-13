@@ -112,6 +112,7 @@ internal static class P2fChecks
         var copy = RoundTrip(goo, out bool written);
         require(written, "write model and GUID map (GPC model)");
         require(copy != null && !HasFem(copy) && Of(copy).SequenceEqual(given), "GUIDs survive GH archive round trip (GPC model, in the order of the drafts)");
+        if (legacy == null) return; // P2CE phase 2b: no 0.3.0 payload written from the FEM type any more (the check is retired by name)
         var chunk = new GH_LooseChunk("legacy"); chunk.SetByteArray("Data", legacy);
         var former = (IGH_Goo)Activator.CreateInstance(type);
         bool read = former.Read(chunk);

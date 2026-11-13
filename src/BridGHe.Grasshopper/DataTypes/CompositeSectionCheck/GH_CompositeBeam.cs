@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using GH_IO.Serialization;
 using Grasshopper.Kernel;

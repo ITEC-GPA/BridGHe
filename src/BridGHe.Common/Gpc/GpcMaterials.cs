@@ -48,13 +48,6 @@ namespace BridGHe.Common.Gpc
             if (a.BeamShearModulus == null && a.ViscousDampingDensity == 0 && a.ModalDampingRatio == 0 && a.ThermalConductivity == 0 && a.SpecificHeat == 0) material.AnalysisData = null;
         }
 
-        /// <summary>M1 (coordinator, 6/11): the GPC material by kind of a former material (§1bis): the archive of the FEM value read by
-        /// <see cref="Legacy.LegacyModelImport.Material"/>, the reader of the BGHA1 payloads. One rule for every material of BridGHe.</summary>
-        public static Material FromFemm(Models.MaterialModel material)
-        {
-            if (material == null) throw new ArgumentNullException(nameof(material));
-            return Legacy.LegacyModelImport.Material(Legacy.LegacyArchive.Read(Helpers.ModelArchive.Write(material)));
-        }
 
         /// <summary>L2C (limit (b) of passo 77): the former kind of the material of a Material parameter (the name of the former
         /// <c>MaterialKind</c>) from its GPC material by kind (<see cref="Legacy.LegacyModelImport.Material(Legacy.LegacyMaterialRecipe)"/>): a

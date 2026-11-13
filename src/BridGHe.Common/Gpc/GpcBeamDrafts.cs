@@ -3,7 +3,6 @@ using System.Linq;
 using System.Security.Cryptography;
 using BridGHe.Common.Gpc.Legacy;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Gpc
 {
@@ -20,51 +19,11 @@ namespace BridGHe.Common.Gpc
         /// <summary>Draft units: the numbers of the definition (identity factors).</summary>
         public static readonly BridgeUnits DraftUnits = new BridgeUnits(DefinitionUnits.Nmm);
 
-        public static LegacyBeamDraft FromFemm(BeamModel beam) => FromFemm(beam, null);
 
-        /// <summary>R6.1 (frozen API for R6.2): the identity the conversion of a FEM value gives its draft (<see cref="FromFemm(BeamModel, Guid?)"/>
-        /// without an identity), for the draft a GPC builder attaches to that value while the FEM value is still built beside it (until R6.5:
-        /// then the identity comes from the GPC draft itself, one change listed in the notes).</summary>
-        public static Guid Identity(BeamModel beam) => GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-beam:" + GpcIdentity.ArchiveDigest(Archive(beam)));
-        public static Guid Identity(NodeModel node) => GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-node:" + GpcIdentity.ArchiveDigest(Archive(node)));
-        public static Guid Identity(PlateModel plate) => GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-plate:" + GpcIdentity.ArchiveDigest(Archive(plate)));
 
-        /// <summary>The archive of a FEM value without its results (the conversion never reads them).</summary>
-        private static byte[] Archive<T>(T value) where T : ElementModel
-        {
-            if (value == null) throw new ArgumentNullException(nameof(value));
-            if (value.Results.Count != 0) { value = ModelArchive.Clone(value); value.Results.Clear(); }
-            return ModelArchive.Write(value);
-        }
 
-        public static LegacyBeamDraft FromFemm(BeamModel beam, Guid? identity)
-        {
-            if (beam == null) throw new ArgumentNullException(nameof(beam));
-            byte[] archive = Archive(beam);
-            var guid = identity ?? GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-beam:" + GpcIdentity.ArchiveDigest(archive));
-            string signature = beam.BeamProperty == null ? null : BridgeSectionAssignment.Signature(beam.BeamProperty);
-            return LegacyModelImport.BeamDraft(LegacyArchive.Read(archive), DraftUnits, guid, signature);
-        }
 
-        /// <summary>Chain E (e1): the draft of a FEM node value (the rules of the conversion of a whole model, definition units, rigid links as
-        /// GPC rigid connections); identity from the content of the value, or the one given. Results are never converted.</summary>
-        public static LegacyNodeDraft FromFemm(NodeModel node, Guid? identity = null)
-        {
-            if (node == null) throw new ArgumentNullException(nameof(node));
-            byte[] archive = Archive(node);
-            var guid = identity ?? GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-node:" + GpcIdentity.ArchiveDigest(archive));
-            return LegacyModelImport.NodeDraft(LegacyArchive.Read(archive), DraftUnits, guid);
-        }
 
-        /// <summary>Chain E (e1): the draft of a FEM plate value (the rules of the conversion of a whole model, definition units, no nodes: its
-        /// corners); identity from the content of the value, or the one given. Results are never converted.</summary>
-        public static LegacyPlateDraft FromFemm(PlateModel plate, Guid? identity = null)
-        {
-            if (plate == null) throw new ArgumentNullException(nameof(plate));
-            byte[] archive = Archive(plate);
-            var guid = identity ?? GpcIdentity.Derive(GpcIdentity.NameSpace, "femm-plate:" + GpcIdentity.ArchiveDigest(archive));
-            return LegacyModelImport.PlateDraft(LegacyArchive.Read(archive), DraftUnits, guid);
-        }
 
         /// <summary>A copy of a draft with another beam and bridge data (the report and the property data of the draft are kept).</summary>
         /// <remarks>R6.1 (found by the former draft check on the native 50): the bridge data of the report follow the bridge data given (the report of the

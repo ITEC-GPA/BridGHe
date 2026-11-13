@@ -6,7 +6,6 @@ using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using System;
 using System.Linq;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
@@ -101,7 +100,6 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             var slab = (concreteSection as GH_Goo<object>)?.Value switch
             {
                 Common.Checks.ConcreteSlabSection s => s,
-                SectionConcreteSlabModel m => new Common.Checks.ConcreteSlabSection(m.Height, m.Width, m.TopRebarArea, m.TopCover, m.BottomRebarArea, m.BottomCover),
                 _ => null,
             };
             // R6.5 P1 lane 2b (P2K: every input): the five outputs by their GPC data alone; a refusal gives an error and no outputs.

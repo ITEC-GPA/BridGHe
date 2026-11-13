@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using GH_IO.Serialization;
 using Grasshopper.Kernel.Types;
 using System;

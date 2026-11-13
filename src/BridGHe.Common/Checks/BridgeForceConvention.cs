@@ -1,7 +1,6 @@
 using System;
 using GPC.Geometry;
 using GPC.Model.Results;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Checks
 {
