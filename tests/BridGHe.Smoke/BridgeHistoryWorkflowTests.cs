@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using BridGHe.Common.Checks;
-using BridGHe.Common.Models;
 using GPC.Checkers.CompositeBridge;
 using BridgeActionBehavior = BridGHe.Common.Checks.BridgeActionBehavior;
 using BridgeWorkflowMethod = BridGHe.Common.Checks.BridgeWorkflowMethod;

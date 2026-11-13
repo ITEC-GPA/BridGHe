@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Diagnostics;
-using BridGHe.Common.Models;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;
@@ -31,7 +30,7 @@ internal static class BridgePreAnalysisActionTests
         GH_Document.EnableSolutions=true;doc.Enabled=true;doc.NewSolution(false,GH_SolutionMode.Silent);
         var definitions=actions.Select(c=>c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable()).Cast<BridgeActionDefinition>().ToArray();
         var phases=new[]{new BridgePhaseDefinition{Order=10,Name="Pending",State=BridgeSectionState.Composite,Actions=definitions}};
-        BridgeWorkflowTests.Require(definitions.All(a=>a.Case=="G" && a.Source==null && a.GpcSource==null && a.GpcInput!=null && a.GpcInput.Model.AllElements.All(e=>e.Results.Count==0)),
+        BridgeWorkflowTests.Require(definitions.All(a=>a.Case=="G" && a.GpcSource==null && a.GpcInput!=null && a.GpcInput.Model.AllElements.All(e=>e.Results.Count==0)),
             "GPC: Pre-analysis actions lost their defined case or fabricated results.");
         var catalog=BridgeCombinationCatalog.FromGpc(new[]{input},phases);
         BridgeWorkflowTests.Require(catalog.ActionIds.Length==2 && catalog.Warnings.Length==2,"GPC: Pre-analysis action catalogue must retain both actions with missing-result diagnostics.");

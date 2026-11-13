@@ -120,16 +120,13 @@ internal static class P2kChecks
         var (outputs, errors, _) = Solve("BeamPropertyCompositeComponent", inputs.ToArray());
         composite = outputs[0].FirstOrDefault();
         Check(errors.Length == 0 && outputs.All(o => o.Count == 1 && GpcOnly(o[0])), "P10/P1: Composite Beam Property gives its five outputs by their GPC data alone: " + string.Join(" / ", errors));
-        // The same definition from the former slab value (the in-memory tests of other lanes still give it, transitional).
-        inputs[1] = (1, new GH_ObjectWrapper(new BridGHe.Common.Models.SectionConcreteSlabModel(250, 2500, 1000, 50, 800, 50)));
-        var former = One("BeamPropertyCompositeComponent", inputs.ToArray());
+        // P2CA (13/11/2026, U3): the definition from the former slab value (SectionConcreteSlabModel, transitional) is retired by name with the FEM
+        // types (P2rRetired.Checks); the slab datum above is the input of every path.
         var a = R2aDesignFixtures.Datum<GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition>(composite);
-        var b = R2aDesignFixtures.Datum<GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition>(former);
         // By content (the GPC fingerprint of the definition: the archive holds the GUIDs the materials take at construction, other at every build).
         var again = R2aDesignFixtures.Datum<GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition>(One("BeamPropertyCompositeComponent",
             new (int, object)[] { (0, "CB"), (1, slab), (2, section), (3, concrete), (4, steel), (5, rebar), (6, 6.0), (7, 18.0) }));
         Check(a != null && again != null && a.Fingerprint() == again.Fingerprint(), "P10: the definition of the same inputs, twice: the same fingerprint (control)");
-        Check(a != null && b != null && a.Fingerprint() == b.Fingerprint(), "P10: the definition from the slab datum equals the one from the former slab value (fingerprint)");
         Check(a != null && a.Name == "CB", "P10: the definition keeps the name");
     }
 

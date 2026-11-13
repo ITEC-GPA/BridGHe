@@ -8,7 +8,6 @@ using System.Reflection;
 using BridGHe.Common.Gpc;
 using BridGHe.Common.Gpc.Builders;
 using BridGHe.Common.Gpc.Legacy;
-using BridGHe.Common.Models;
 using GPC.Model.Materials;
 using Grasshopper.Kernel.Types;
 
@@ -103,19 +102,6 @@ internal static class GpcMaterialKindChecks
         internal readonly List<string> failures = new List<string>();
         internal readonly Dictionary<string, int> types = new Dictionary<string, int>(); internal int fallbacks, samples, analysis, steelViews, rebarViews, concreteViews, compositeRoles, crossKind, refusedSteel, refusedConcrete;
         internal void Require(bool condition, string what) { if (!condition && failures.Count < 40) failures.Add(what); }
-
-        /// <summary>Transitional (R3, until P2: the scan of the definitions still walks the FEM values of the GH types): a former material as
-        /// its FEM value; the GPC-equals-FEM parts (the conversion of the value = the reader by value; the analysis material of the FEM reader
-        /// of the beam properties), then the checks of its values read by value (<see cref="Check(string, LegacyMaterialRecipe, string)"/>).</summary>
-        internal void Check(string label, MaterialModel m, string role)
-        {
-            var recipe = LegacyModelImport.MaterialRecipe(LegacyArchive.Read(BridGHe.Common.Helpers.ModelArchive.Write(m)));
-            var typed = GpcMaterials.FromFemm(m);
-            Require(Dump(LegacyModelImport.Material(recipe)) == Dump(typed), $"{label}: reader by value");
-            string a = Dump(GpcMaterials.Analysis(typed)), e = Dump(GpcModels.Material(m));
-            Require(a == e, $"{label}: analysis material of the FEM reader\n  GPC  {a}\n  FEM  {e}");
-            Check(label, recipe, role);
-        }
 
         /// <summary>
         /// R6.6 lane R3: the checks of one former material read by value (<see cref="LegacyModelImport.MaterialRecipe"/>: the fields of the
@@ -300,13 +286,13 @@ internal static class GpcMaterialKindChecks
                 string label = type + "[" + string.Join(",", run.Select(x => x.value()?.ToString() ?? "-")) + "]";
                 var goo = Solve(false);
                 if (goo == null) { Require(false, label + ": no output (" + string.Join("; ", component.RuntimeMessages(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error)) + ")"); continue; }
-                var m = (MaterialModel)goo.GetType().GetProperty("Value").GetValue(goo);
+                object fem = goo.GetType().GetProperty("Value").GetValue(goo); // P2CA: the FEM value, by reflection (no FEM type named)
                 var gpc = (Material)goo.GetType().GetProperty("Gpc").GetValue(goo);
                 string kind = (string)goo.GetType().GetProperty("GpcKind").GetValue(goo);
                 if ((bool)goo.GetType().GetProperty("HasAttachedGpc").GetValue(goo)) attached++;
                 // P2R (T3, 12/11): the transitional comparison of R3 (GPC = FromFemm of the FEM value; the Aluminium fu 165.5 -> 262 declared) is
                 // retired: the material components give no FEM value since P2K/P2D. The oracle is the explicit values of the GPC material below (R3).
-                Require(m == null, label + ": no FEM value from the component (P2K)");
+                Require(fem == null, label + ": no FEM value from the component (P2K)");
                 var copy = (IGH_Goo)goo.Duplicate();
                 Require(ReferenceEquals(copy.GetType().GetProperty("Gpc").GetValue(copy), gpc), label + ": a copy shares the GPC material");
                 componentSamples++;
@@ -486,7 +472,6 @@ internal static class GpcMaterialKindChecks
                     if (!upstream.Contains(o) || o.GetType().Name == "StrausR3AnalysisComponent" || o.GetType().Name == "MovingStaticAnalysisComponent") o.Locked = true;
                 BridgeSegmentExcelTests.Solve(doc, true);
                 int before = tally.samples;
-                var seen = new HashSet<object>(ReferenceEqualityComparer.Instance);
                 var byContent = new HashSet<string>(StringComparer.Ordinal);
                 void Content(string kind, object datum)
                 {
@@ -497,7 +482,9 @@ internal static class GpcMaterialKindChecks
                 foreach (var p in doc.Objects.SelectMany(o => o is Grasshopper.Kernel.IGH_Component c ? c.Params.Input.Concat(c.Params.Output) : o is Grasshopper.Kernel.IGH_Param q ? new[] { q } : Enumerable.Empty<Grasshopper.Kernel.IGH_Param>()))
                 {
                     var persistent = p.GetType().GetProperty("PersistentData")?.GetValue(p) as Grasshopper.Kernel.Data.IGH_Structure;
-                    foreach (var (data, isPersistent) in new[] { (persistent, true), (p.VolatileData, false) })
+                    // P2CA (13/11/2026): the walk of the FEM materials of the values is gone with the FEM types: since P2K/P2D the GH types carry no
+                    // FEM value (the base found 0 materials, 0 internalised, 0 computed); the GPC materials are recorded below by their GPC datum (P2F).
+                    foreach (var data in new[] { persistent, p.VolatileData })
                     {
                         if (data == null) continue;
                         foreach (var goo in data.AllData(true))
@@ -505,13 +492,6 @@ internal static class GpcMaterialKindChecks
                             var value = goo?.GetType().GetProperty("Value")?.GetValue(goo);
                             if (value == null || value.GetType().Namespace?.StartsWith("BridGHe.Common", StringComparison.Ordinal) != true) continue;
                             census?.Add(label, value);
-                            foreach (var (m, role, path) in Materials(value))
-                            {
-                                if (!seen.Add(m)) continue;
-                                if (isPersistent) internalised++; else volatileData++;
-                                tally.Check($"{label}:{p.Attributes?.GetTopLevel?.DocObject?.NickName}/{p.NickName}{(isPersistent ? " (internalised)" : "")}{path}", m, role);
-                                Content("check-material", GpcMaterials.FromFemm(m));
-                            }
                         }
                     }
                 }
@@ -543,19 +523,8 @@ internal static class GpcMaterialKindChecks
                             if (materials.Add(material)) { var keep = drafts.Capture; drafts.Capture = null; drafts.Check($"{label}:{p.NickName}", material); drafts.Capture = keep; }
                             Content("material", material);
                         }
-                // The other GH types of the definition (cases, combinations, stages, beam, plate and composite properties, sections), every datum
-                // as its GH type would carry it, through the final writer and reader.
-                var others = new HashSet<object>(ReferenceEqualityComparer.Instance);
-                foreach (var p in doc.Objects.SelectMany(o => o is Grasshopper.Kernel.IGH_Component c ? c.Params.Input.Concat(c.Params.Output) : o is Grasshopper.Kernel.IGH_Param q ? new[] { q } : Enumerable.Empty<Grasshopper.Kernel.IGH_Param>()))
-                    foreach (var goo in p.VolatileData.AllData(true))
-                    {
-                        var value = goo?.GetType().GetProperty("Value")?.GetValue(goo);
-                        if (!(value is LoadCaseModel || value is LoadCombinationModel || value is StagedConstructionModel || value is BeamPropertyBaseModel || value is PlatePropertyModel || value is SectionModel) || !others.Add(value)) continue;
-                        object draft;
-                        try { draft = GpcDraftArchiveChecks.DraftOf(value); }
-                        catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException) { drafts.Count(value.GetType().Name + " refused by the reader"); Content(value.GetType().Name, new GpcDraftCapture.Refused(value.GetType().Name, x.Message)); continue; }
-                        if (draft != null) { var keep = drafts.Capture; drafts.Capture = null; drafts.Check($"{label}:{p.NickName}", draft); drafts.Capture = keep; Content(draft.GetType().Name, draft); }
-                    }
+                // P2CA (13/11/2026): the walk of the FEM values of the other GH types (DraftOf) is gone with the FEM types: since P2K/P2D they carry
+                // no FEM value (the base found none); their GPC datum is recorded below (P2F).
                 // P2F (12/11): since P2K/P2D the GH types carry no FEM value (the two walks above find none): the GPC datum of the same GH types,
                 // each once, through the final writer and reader, recorded by content as the walk above recorded the drafts of the FEM values (the
                 // capture keeps those, keyed by content: the same datum gives the same key); and the GPC materials of the GH_Material data and of
@@ -589,32 +558,4 @@ internal static class GpcMaterialKindChecks
         return failed == 0 && tally.failures.Count == 0 && drafts.Failures.Count == 0 && !GpcDraftCapture.Failed ? 0 : 1;
     }
 
-    /// <summary>Every former material reachable from a FEM model (beam, plate and composite properties), distinct instances, with the role of
-    /// a composite property (concrete, steel, rebar) or null.</summary>
-    internal static IEnumerable<(MaterialModel material, string role, string path)> Materials(object root)
-    {
-        var seen = new HashSet<object>(ReferenceEqualityComparer.Instance);
-        var found = new List<(MaterialModel, string, string)>();
-        void Visit(object o, string field, string path)
-        {
-            if (o == null || o is string || o.GetType().IsPrimitive || o.GetType().IsEnum || !seen.Add(o)) return;
-            if (o is MaterialModel m)
-            {
-                string role = field == "_concreteMaterial" ? "concrete" : field == "_steelMaterial" ? "steel" : field == "_rebarMaterial" ? "rebar" : null;
-                found.Add((m, role, path)); return;
-            }
-            var t = o.GetType();
-            if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(KeyValuePair<,>))
-            {
-                Visit(t.GetProperty("Key").GetValue(o), field, path + ".Key"); Visit(t.GetProperty("Value").GetValue(o), field, path + ".Value"); return;
-            }
-            if (o is IEnumerable e) { var items = new List<object>(); try { foreach (var item in e) items.Add(item); } catch (Exception) { return; } for (int i = 0; i < items.Count; i++) Visit(items[i], field, path.Length > 200 ? path : path + "[" + i + "]"); return; }
-            if (t.Namespace == null || !t.Namespace.StartsWith("BridGHe.Common", StringComparison.Ordinal)) return;
-            for (var c = t; c != null && c != typeof(object); c = c.BaseType)
-                foreach (var f in c.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
-                    if (!f.FieldType.IsPrimitive && f.FieldType != typeof(string)) Visit(f.GetValue(o), f.Name, path.Length > 200 ? path : path + "." + f.Name);
-        }
-        Visit(root, null, "");
-        return found;
-    }
 }

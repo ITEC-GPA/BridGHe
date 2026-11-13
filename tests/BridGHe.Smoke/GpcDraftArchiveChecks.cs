@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Security.Cryptography;
 using BridGHe.Common.Gpc;
 using BridGHe.Common.Gpc.Legacy;
-using BridGHe.Common.Models;
 using GPC.Model.Materials;
 
 /// <summary>
@@ -18,13 +17,15 @@ using GPC.Model.Materials;
 /// import-dump corpus; the drafts of the Build Model inputs of the examples in <c>--draft-scan</c>;</item>
 /// <item>(ii) <c>--legacy-payload-scan</c>: every BGHA1 payload internalised in the example definitions (raw archive, nothing solved or
 /// written), read by value (<see cref="LegacyModelImport.NodeDraft"/>, <see cref="LegacyModelImport.BeamDraft"/>,
-/// <see cref="LegacyModelImport.PlateDraft"/>, <see cref="LegacyModelImport.Material"/> on <see cref="LegacyArchive.Read(byte[])"/>) against
-/// the drafts of the FEM values (<see cref="GpcBeamDrafts.FromFemm(BeamModel, Guid?)"/>, <see cref="GpcMaterials.FromFemm"/>), with the same
-/// identity; the identity the payload bytes would give (SHA-256 of the stored bytes) counted against the one of the FEM value.</item>
+/// <see cref="LegacyModelImport.PlateDraft"/>, <see cref="LegacyModelImport.Material"/> on <see cref="LegacyArchive.Read(byte[])"/>) and
+/// compared with the R6.0 capture <c>payloads</c> (the datum of the FEM path when it was written); the GH types read, write and read back by
+/// value.</item>
 /// </list>
 /// R6.6 lane R3 (11/11): (i) reads its corpus by value from the bytes (<see cref="ByValue"/>, no FEM class), compared with the R6.0 capture
-/// with the identities of the FEM path taken from the capture; transitional until P2: the examples 01–10 built in memory by the FEM catalogue
-/// (<see cref="Model(Tally, string, ModelModel)"/>, their entries of the capture), and the comparisons of (ii) with the FEM path.
+/// with the identities of the FEM path taken from the capture.
+/// <para>P2CA (13/11/2026, U3): the transitional parts are retired by name with the FEM types (<see cref="P2rRetired.Checks"/>): in (i) the
+/// examples 01–10 built in memory by the FEM catalogue; in (ii) the comparisons with the FEM path of today (the drafts of the FEM values,
+/// their identities, owners and refusals, the FEM value kept by the GH types, the drafts of a model against the conversion of its FEM values).</para>
 /// </summary>
 internal static class GpcDraftArchiveChecks
 {
@@ -204,118 +205,6 @@ internal static class GpcDraftArchiveChecks
         static string Cut(string s) => s.Length > 400 ? s.Substring(0, 400) + "…" : s;
     }
 
-    /// <summary>Transitional (R6.6 lane R3, until P2): the drafts of the GH types of a FEM model (every node, beam, plate value, as <c>GH_Node.Gpc</c> etc., and every material), by the conversions of the FEM values; for the examples in memory of the FEM catalogue only.</summary>
-    internal static void Model(Tally tally, string id, ModelModel fem)
-    {
-        for (int q = 0; q < fem.Elements.Count; q++)
-        {
-            var e = fem.Elements[q];
-            object draft;
-            try { draft = e switch { NodeModel n => GpcBeamDrafts.FromFemm(n), BeamModel b => GpcBeamDrafts.FromFemm(b), PlateModel p => GpcBeamDrafts.FromFemm(p), _ => null }; }
-            catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException) { tally.Refused(id + ":" + e.GetType().Name + " " + q, e.GetType().Name, x); continue; }
-            if (draft != null) { tally.Check(id + ":" + e.GetType().Name + " " + q, draft); Reidentified(tally, id + ":" + e.GetType().Name + " " + q, e, draft); }
-        }
-        foreach (var (m, _, path) in GpcMaterialKindChecks.Materials(fem)) tally.Check(id + ":" + path, GpcMaterials.FromFemm(m));
-        // The other GH types: every load case, combination, stage, beam and plate property, section and composite property of the model, as
-        // their GH types would carry them (the by-value readers on the archive of the value), and the model itself (the GH_Model conversion).
-        foreach (var (v, path) in Values(fem, typeof(LoadCaseModel), typeof(LoadCombinationModel), typeof(StagedConstructionModel), typeof(BeamPropertyModel),
-            typeof(PlatePropertyModel), typeof(SectionModel), typeof(CompositeBeamPropertyModel)))
-        {
-            object draft;
-            try { draft = DraftOf(v); }
-            catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException) { tally.Refused(id + ":" + path, v.GetType().Name, x); continue; }
-            if (draft != null) tally.Check(id + ":" + path, draft);
-        }
-        try { var c = GpcModels.Convert(fem, 1e-3); tally.Check(id + ":model", c); }
-        catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException) { tally.Count("model refused by the reader"); tally.Capture?.Record(id + ":model", new GpcDraftCapture.Refused("model", x.Message)); }
-        // (ii) on the corpus: every element of the archive of the model, read by value inside the model archive, against the draft of the FEM
-        // value (its own archive), with the same identity.
-        var clean = fem.Elements.Any(e => e.Results.Count != 0) ? BridGHe.Common.Helpers.ModelArchive.Clone(fem) : fem;
-        if (!ReferenceEquals(clean, fem)) foreach (var e in clean.Elements) e.Results.Clear();
-        var legacy = LegacyArchive.Read(BridGHe.Common.Helpers.ModelArchive.Write(clean)).Field("Elements").Items;
-        for (int k = 0; k < clean.Elements.Count; k++)
-        {
-            var e = clean.Elements[k]; string label = id + ":" + e.GetType().Name + " " + k + " (by value)";
-            try
-            {
-                string expected, byValue;
-                switch (e)
-                {
-                    case NodeModel n: { var d = GpcBeamDrafts.FromFemm(n); expected = Text(d); byValue = Text(LegacyModelImport.NodeDraft(legacy[k], GpcBeamDrafts.DraftUnits, d.Node.Guid)); break; }
-                    case BeamModel b:
-                    {
-                        var d = GpcBeamDrafts.FromFemm(b); expected = Text(d);
-                        byValue = Text(LegacyModelImport.BeamDraft(legacy[k], GpcBeamDrafts.DraftUnits, d.Beam.Guid, b.BeamProperty == null ? null : BridgeSectionAssignment.Signature(b.BeamProperty))); break;
-                    }
-                    case PlateModel p: { var d = GpcBeamDrafts.FromFemm(p); expected = Text(d); byValue = Text(LegacyModelImport.PlateDraft(legacy[k], GpcBeamDrafts.DraftUnits, d.Plate.Guid)); break; }
-                    default: continue;
-                }
-                if (expected != byValue) { tally.Count("by value different"); if (tally.Failures.Count < 20) tally.Failures.Add(label + "\n" + FirstDifference(expected, byValue)); }
-                else tally.Count("by value " + e.GetType().Name + " equal");
-            }
-            catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException)
-            {
-                // The same error on both paths (a value the reader refuses) counts as equal.
-                tally.Count("by value " + e.GetType().Name + " refused");
-            }
-        }
-    }
-
-    /// <summary>R6.1 (frozen API for R6.2): the primitives of the builders on a draft of the corpus: <see cref="GpcDrafts.Copy(LegacyNodeDraft)"/>
-    /// equal to the draft, <see cref="GpcDrafts.Reidentify(LegacyNodeDraft, Guid)"/> of the copy equal to the conversion of the FEM value
-    /// with that identity, <see cref="GpcBeamDrafts.Identity(NodeModel)"/> equal to the identity of the conversion.</summary>
-    private static void Reidentified(Tally tally, string label, ElementModel e, object draft)
-    {
-        var g = GpcIdentity.Derive(GpcIdentity.NameSpace, "reidentify:" + label);
-        string original, copy, expected, got; Guid identity, own;
-        switch (e)
-        {
-            case NodeModel n: { var d = (LegacyNodeDraft)draft; var c = GpcDrafts.Copy(d); original = Text(d); copy = Text(c); expected = Text(GpcBeamDrafts.FromFemm(n, g)); got = Text(GpcDrafts.Reidentify(c, g)); identity = GpcBeamDrafts.Identity(n); own = d.Node.Guid; break; }
-            case BeamModel b: { var d = (LegacyBeamDraft)draft; var c = GpcDrafts.Copy(d); original = Text(d); copy = Text(c); expected = Text(GpcBeamDrafts.FromFemm(b, g)); got = Text(GpcDrafts.Reidentify(c, g)); identity = GpcBeamDrafts.Identity(b); own = d.Beam.Guid; break; }
-            case PlateModel p: { var d = (LegacyPlateDraft)draft; var c = GpcDrafts.Copy(d); original = Text(d); copy = Text(c); expected = Text(GpcBeamDrafts.FromFemm(p, g)); got = Text(GpcDrafts.Reidentify(c, g)); identity = GpcBeamDrafts.Identity(p); own = d.Plate.Guid; break; }
-            default: return;
-        }
-        if (copy != original) { tally.Count("draft copy different"); if (tally.Failures.Count < 20) tally.Failures.Add(label + ": GpcDrafts.Copy differs\n" + FirstDifference(original, copy)); }
-        else if (got != expected) { tally.Count("draft re-identified different"); if (tally.Failures.Count < 20) tally.Failures.Add(label + ": GpcDrafts.Reidentify differs from the conversion with that identity\n" + FirstDifference(expected, got)); }
-        else if (identity != own) { tally.Count("draft identity different"); if (tally.Failures.Count < 20) tally.Failures.Add(label + ": GpcBeamDrafts.Identity differs from the identity of the conversion"); }
-        else tally.Count("draft copied and re-identified equal");
-    }
-
-    private static LegacyValue Legacy(object value) => LegacyArchive.Read(BridGHe.Common.Helpers.ModelArchive.Write(value));
-
-    /// <summary>The GPC datum (draft or record) the GH type of a former value carries, by the conversions of today.</summary>
-    internal static object DraftOf(object v) => v switch
-    {
-        LoadCaseModel c => LegacyModelImport.CaseDraft(Legacy(c)),
-        LoadCombinationModel c => GpcModels.CombinationDraft(c),
-        StagedConstructionModel s => GpcModels.StageDraft(s),
-        CompositeBeamPropertyModel c => GpcCompositeSections.Definition(c, c.Name),
-        BeamPropertyModel p => GpcModels.BeamProperty(p, GpcBeamDrafts.DraftUnits),
-        PlatePropertyModel p => LegacyModelImport.PlatePropertyDraft(Legacy(p), GpcBeamDrafts.DraftUnits),
-        SectionModel s => LegacyModelImport.SectionDraft(Legacy(s)),
-        _ => null,
-    };
-
-    /// <summary>Every value of the given former types reachable from a FEM value (distinct instances).</summary>
-    internal static List<(object Value, string Path)> Values(object root, params Type[] types)
-    {
-        var seen = new HashSet<object>(ReferenceEqualityComparer.Instance); var found = new List<(object, string)>();
-        void Visit(object o, string path)
-        {
-            if (o == null || o is string || o.GetType().IsPrimitive || o.GetType().IsEnum || !seen.Add(o)) return;
-            var t = o.GetType();
-            if (types.Any(x => x.IsAssignableFrom(t))) found.Add((o, path));
-            if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(KeyValuePair<,>)) { Visit(t.GetProperty("Key").GetValue(o), path); Visit(t.GetProperty("Value").GetValue(o), path); return; }
-            if (o is System.Collections.IEnumerable e) { var items = new List<object>(); try { foreach (var item in e) items.Add(item); } catch (Exception) { return; } for (int i = 0; i < items.Count; i++) Visit(items[i], path.Length > 200 ? path : path + "[" + i + "]"); return; }
-            if (t.Namespace == null || !t.Namespace.StartsWith("BridGHe.Common", StringComparison.Ordinal)) return;
-            for (var c = t; c != null && c != typeof(object); c = c.BaseType)
-                foreach (var f in c.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
-                    if (!f.FieldType.IsPrimitive && f.FieldType != typeof(string)) Visit(f.GetValue(o), path.Length > 200 ? path : path + "." + f.Name);
-        }
-        Visit(root, "");
-        return found;
-    }
-
     /// <summary>
     /// R6.6 lane R3 (11/11): the corpus of the regression read by value from its bytes (<see cref="R3LegacyCorpus"/>: the captures, the captured
     /// examples, the frozen node, beam and plate data), with no FEM class: every element of the archive of the model as the GH types read it
@@ -430,10 +319,9 @@ internal static class GpcDraftArchiveChecks
         var tally = new Tally { Capture = capture }; int models = 0, byValue = 0;
         // R3: the corpus read by value from its bytes (no FEM class).
         foreach (var item in R3LegacyCorpus.Captures().Concat(R3LegacyCorpus.Examples()).Concat(R3LegacyCorpus.Fixtures(duplicates: false))) { ByValue(tally, item, identities); models++; byValue++; }
-        // Transitional (R3, until P2): the examples 01–10 built in memory by the FEM catalogue (no frozen payload holds them; their entries of
-        // the capture are compared through the FEM path; P2 retires them with the catalogue, declared in the capture).
-        foreach (var example in NativeExamples.Create()) { Model(tally, "memory-" + example.Id, example.Model); models++; }
-        Console.WriteLine($"GPC DRAFT ARCHIVE: {byValue} models read by value from their bytes{(identities == null ? "" : $" ({identities.Count} identities of the FEM path from the capture)")}, {models - byValue} through the FEM catalogue (transitional)");
+        // P2CA (13/11/2026, U3): the examples 01–10 built in memory by the FEM catalogue (memory-*, no frozen payload holds them) are retired by
+        // name with the catalogue (P2rRetired.Checks; their entries of the capture are retired sources, P2rRetired.CaptureSources).
+        Console.WriteLine($"GPC DRAFT ARCHIVE: {byValue} models read by value from their bytes{(identities == null ? "" : $" ({identities.Count} identities of the FEM path from the capture)")}; RETIRED BY NAME (P2CA): the 10 models of the FEM catalogue");
         Console.WriteLine("GPC DRAFT ARCHIVE: " + tally.Summary + $"; {tally.Bytes / 1048576.0:0.0} MB written");
         if (tally.Failures.Count > 0) throw new Exception("GPC DRAFT ARCHIVE FAIL:\n" + string.Join("\n", tally.Failures));
         if (models < 100) throw new Exception("GPC DRAFT ARCHIVE FAIL: only " + models + " models");
@@ -464,28 +352,20 @@ internal static class GpcDraftArchiveChecks
         // 0.3.0 and of the branch before R6.1), compared with the datum by value as the GH types read it from R6.1 (GpcLegacyPayloads:
         // identity from the stored bytes, models without results, no former signature).
         var capture = GpcDraftCapture.Open("payloads");
-        void Rec(string where, Func<object> fem, Func<object> byValue)
+        // P2CA (13/11/2026, U3): the identities of the FEM path from the capture (the owner of every captured conversion), as R3 reads them for
+        // the corpus: the conversion of a model by value with the owner the capture was written with.
+        var identities = R3CaptureIdentities.Open("payloads");
+        // The datum by value of a payload (GpcLegacyPayloads, the GH types of 0.4.0), counted and recorded for the comparison with the capture.
+        // The capture is frozen: the FEM path that wrote it is retired with the FEM types (P2rRetired.Checks).
+        void Rec(string type, string where, Func<object> byValue)
         {
-            if (capture == null) return;
+            if (capture != null && capture.Writing) throw new InvalidOperationException("LEGACY PAYLOAD SCAN: the capture payloads is frozen; the FEM path that wrote it is retired (P2CA)");
             object d;
-            try { d = (capture.Writing ? fem() : byValue()) ?? new GpcDraftCapture.Nothing("model", "0.3.0 reads no model"); }
+            try { d = byValue() ?? new GpcDraftCapture.Nothing("model", "0.3.0 reads no model"); }
             catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException || x is System.Runtime.Serialization.SerializationException)
             { d = new GpcDraftCapture.Refused("payload", x.Message); }
-            capture.Record(where, d);
-        }
-        // By value against the FEM path: equal texts, or the same refusal on both (a value the reader refuses: the GH type keeps the message).
-        void Same(string type, string where, Func<string> byValue, Func<string> fem)
-        {
-            string a, b, ea = null, eb = null;
-            try { a = byValue(); } catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException) { a = null; ea = x.Message; }
-            try { b = fem(); } catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException) { b = null; eb = x.Message; }
-            if (a == null || b == null)
-            {
-                if (a == null && b == null && ea == eb) { Count(type + " refused on both paths (same message): " + ea); return; }
-                Count(type + " different"); Fail(where + ": " + type + " by value: " + (ea ?? "ok") + " | FEM: " + (eb ?? "ok")); return;
-            }
-            if (a != b) { Count(type + " different"); Fail(where + ": " + type + " by value differs from the FEM path\n" + FirstDifference(b, a)); }
-            else Count(type + " equal");
+            Count(type + (d is GpcDraftCapture.Refused ? " by value refused" : d is GpcDraftCapture.Nothing ? " by value: no model" : " by value"));
+            capture?.Record(where, d);
         }
         foreach (var file in files)
         {
@@ -505,9 +385,8 @@ internal static class GpcDraftArchiveChecks
                     try { root = LegacyArchive.Read(bytes); }
                     catch (Exception e)
                     {
-                        // A failure, unless the reader of 0.3.0 fails on it with the same message.
-                        string former; try { BridGHe.Common.Helpers.ModelArchive.Read<object>(bytes); former = "read by 0.3.0"; } catch (Exception f) { former = f.Message; }
-                        Count(former == e.Message ? "unreadable payload (0.3.0 the same)" : "unreadable payload"); if (former != e.Message) Fail(where + ": by value: " + e.Message + " | 0.3.0: " + former);
+                        // P2CA: unreadable by value is a failure (the fallback to the 0.3.0 FEM reader is retired; none at the base).
+                        Count("unreadable payload"); Fail(where + ": by value: " + e.Message);
                         continue;
                     }
                     string type = root.ShortType;
@@ -516,105 +395,26 @@ internal static class GpcDraftArchiveChecks
                     perFamily.TryGetValue(type, out int pf); perFamily[type] = pf + 1;
                     try
                     {
+                        // P2CA (13/11/2026, U3): the datum by value of every payload against the R6.0 capture (the datum of the FEM path when it was
+                        // written); the comparisons with the FEM path of today (the drafts of the FEM values, their identities and owners, the FEM
+                        // value with results) are retired by name with the FEM types (P2rRetired.Checks).
                         switch (type)
                         {
-                            case "NodeModel":
-                            {
-                                var fem = BridGHe.Common.Helpers.ModelArchive.Read<NodeModel>(bytes); var expected = GpcBeamDrafts.FromFemm(fem);
-                                var byValue = LegacyModelImport.NodeDraft(root, GpcBeamDrafts.DraftUnits, expected.Node.Guid);
-                                Compare(type, where, Text(expected), Text(byValue), expected.Node.Guid, "femm-node:", bytes, fem.Results.Count);
-                                Rec(where, () => expected, () => GpcLegacyPayloads.Node(bytes)); break;
-                            }
-                            case "BeamModel":
-                            {
-                                var fem = BridGHe.Common.Helpers.ModelArchive.Read<BeamModel>(bytes); var expected = GpcBeamDrafts.FromFemm(fem);
-                                string signature = fem.BeamProperty == null ? null : BridgeSectionAssignment.Signature(fem.BeamProperty);
-                                var byValue = LegacyModelImport.BeamDraft(root, GpcBeamDrafts.DraftUnits, expected.Beam.Guid, signature);
-                                if (fem.Attributes.OfType<BridgeSectionStateAttributeModel>().Any()) Count("BeamModel with a section state (FEM signature)");
-                                Compare(type, where, Text(expected), Text(byValue), expected.Beam.Guid, "femm-beam:", bytes, fem.Results.Count);
-                                Rec(where, () => expected, () => GpcLegacyPayloads.Beam(bytes)); break;
-                            }
-                            case "PlateModel":
-                            {
-                                var fem = BridGHe.Common.Helpers.ModelArchive.Read<PlateModel>(bytes); var expected = GpcBeamDrafts.FromFemm(fem);
-                                var byValue = LegacyModelImport.PlateDraft(root, GpcBeamDrafts.DraftUnits, expected.Plate.Guid);
-                                Compare(type, where, Text(expected), Text(byValue), expected.Plate.Guid, "femm-plate:", bytes, fem.Results.Count);
-                                Rec(where, () => expected, () => GpcLegacyPayloads.Plate(bytes)); break;
-                            }
-                            case "MaterialModel":
-                            {
-                                var fem = BridGHe.Common.Helpers.ModelArchive.Read<MaterialModel>(bytes);
-                                Compare(type, where, Text(GpcMaterials.FromFemm(fem)), Text(LegacyModelImport.Material(root)), Guid.Empty, null, bytes, 0);
-                                Rec(where, () => GpcMaterials.FromFemm(fem), () => GpcLegacyPayloads.Material(bytes)); break;
-                            }
-                            case "LoadCaseModel": Same(type, where, () => Text(LegacyModelImport.CaseDraft(root)), () => Text((LegacyCaseData)DraftOf(BridGHe.Common.Helpers.ModelArchive.Read<LoadCaseModel>(bytes))));
-                                Rec(where, () => DraftOf(BridGHe.Common.Helpers.ModelArchive.Read<LoadCaseModel>(bytes)), () => GpcLegacyPayloads.Case(bytes)); break;
-                            case "LoadCombinationModel": Same(type, where, () => Text(LegacyModelImport.CombinationDraft(root)), () => Text(GpcModels.CombinationDraft(BridGHe.Common.Helpers.ModelArchive.Read<LoadCombinationModel>(bytes))));
-                                Rec(where, () => GpcModels.CombinationDraft(BridGHe.Common.Helpers.ModelArchive.Read<LoadCombinationModel>(bytes)), () => GpcLegacyPayloads.Combination(bytes)); break;
-                            case "StagedConstructionModel": Same(type, where, () => Text(LegacyModelImport.StageDraft(root)), () => Text(GpcModels.StageDraft(BridGHe.Common.Helpers.ModelArchive.Read<StagedConstructionModel>(bytes))));
-                                Rec(where, () => GpcModels.StageDraft(BridGHe.Common.Helpers.ModelArchive.Read<StagedConstructionModel>(bytes)), () => GpcLegacyPayloads.Stage(bytes)); break;
-                            case "BeamPropertyModel": Same(type, where, () => Text(LegacyModelImport.BeamProperty(root, GpcBeamDrafts.DraftUnits)), () => Text(GpcModels.BeamProperty(BridgeModelArchiveRead<BeamPropertyModel>(bytes), GpcBeamDrafts.DraftUnits)));
-                                Rec(where, () => GpcModels.BeamProperty(BridgeModelArchiveRead<BeamPropertyModel>(bytes), GpcBeamDrafts.DraftUnits), () => GpcLegacyPayloads.BeamProperty(bytes)); break;
-                            case "PlatePropertyModel": Same(type, where, () => Text(LegacyModelImport.PlatePropertyDraft(root, GpcBeamDrafts.DraftUnits)), () => Text((GPC.Model.ElementProperties.PlateProperty)DraftOf(BridgeModelArchiveRead<PlatePropertyModel>(bytes))));
-                                Rec(where, () => DraftOf(BridgeModelArchiveRead<PlatePropertyModel>(bytes)), () => GpcLegacyPayloads.PlateProperty(bytes)); break;
-                            case "SectionModel": Same(type, where, () => Text(LegacyModelImport.SectionDraft(root)), () => Text((LegacySectionRecipe)DraftOf(BridgeModelArchiveRead<SectionModel>(bytes))));
-                                Rec(where, () => DraftOf(BridgeModelArchiveRead<SectionModel>(bytes)), () => GpcLegacyPayloads.Section(bytes)); break;
-                            case "CompositeBeamPropertyModel": Same(type, where, () => Text(GpcCompositeSections.Definition(root)),
-                                () => { var fem = BridgeModelArchiveRead<CompositeBeamPropertyModel>(bytes); return Text(GpcCompositeSections.Definition(fem, fem.Name)); });
-                                Rec(where, () => GpcCompositeSections.Definition(BridgeModelArchiveRead<CompositeBeamPropertyModel>(bytes), BridgeModelArchiveRead<CompositeBeamPropertyModel>(bytes).Name), () => GpcLegacyPayloads.Composite(bytes)); break;
+                            case "NodeModel": Rec(type, where, () => GpcLegacyPayloads.Node(bytes)); break;
+                            case "BeamModel": Rec(type, where, () => GpcLegacyPayloads.Beam(bytes)); break;
+                            case "PlateModel": Rec(type, where, () => GpcLegacyPayloads.Plate(bytes)); break;
+                            case "MaterialModel": Rec(type, where, () => GpcLegacyPayloads.Material(bytes)); break;
+                            case "LoadCaseModel": Rec(type, where, () => GpcLegacyPayloads.Case(bytes)); break;
+                            case "LoadCombinationModel": Rec(type, where, () => GpcLegacyPayloads.Combination(bytes)); break;
+                            case "StagedConstructionModel": Rec(type, where, () => GpcLegacyPayloads.Stage(bytes)); break;
+                            case "BeamPropertyModel": Rec(type, where, () => GpcLegacyPayloads.BeamProperty(bytes)); break;
+                            case "PlatePropertyModel": Rec(type, where, () => GpcLegacyPayloads.PlateProperty(bytes)); break;
+                            case "SectionModel": Rec(type, where, () => GpcLegacyPayloads.Section(bytes)); break;
+                            case "CompositeBeamPropertyModel": Rec(type, where, () => GpcLegacyPayloads.Composite(bytes)); break;
                             case "ModelModel":
                             {
-                                var fem = BridgeModelArchiveRead<ModelModel>(bytes);
-                                // R6.1: compared by value with the owner of the FEM path (the data); the owner of the stored bytes only renames the
-                                // GUIDs of the model (every element identity derives from the owner and the number), counted.
-                                Guid? femOwner = null;
-                                if (fem?.Elements != null) try { femOwner = GpcModels.Convert(fem, 1e-3).Report.Owner; } catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException) { }
-                                Rec(where, () => fem?.Elements == null ? null : GpcModels.Convert(fem, 1e-3), () => GpcLegacyPayloads.Model(bytes, 1e-3, out _, femOwner));
-                                if (femOwner != null && GpcLegacyPayloads.ModelOwner(bytes, 1e-3) == femOwner) Count("ModelModel owner of the stored bytes = owner of the FEM path");
-                                else if (femOwner != null)
-                                {
-                                    // The two conversions by value, with the owner of the FEM path and with the owner of the stored bytes: the same text
-                                    // once the GUIDs of the first are renamed to the second (owner, and every element by family and number), line by line
-                                    // as a set (a collection ordered by GUID changes its order, not its data).
-                                    string renamed;
-                                    try
-                                    {
-                                        var a = GpcLegacyPayloads.Model(bytes, 1e-3, out _, femOwner); var c = GpcLegacyPayloads.Model(bytes, 1e-3, out _);
-                                        // Every identity the owner gives (LegacyAssembly, LegacyModelImport, GpcMoving): the model, the elements by family
-                                        // and number, the moving paths by index; the bridge data keyed by beam GUID re-keyed before their fingerprint.
-                                        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { [a.Report.Owner.ToString()] = c.Report.Owner.ToString() };
-                                        var byNumber = c.Model.AllElements.ToDictionary(e => GPC.Model.Models.Model.FamilyOf(e) + ":" + e.Id);
-                                        foreach (var e in a.Model.AllElements) map[e.Guid.ToString()] = byNumber[GPC.Model.Models.Model.FamilyOf(e) + ":" + e.Id].Guid.ToString();
-                                        for (int k = 0; k < 10000; k++) map[GpcIdentity.Derive(a.Report.Owner, "moving-path:" + k).ToString()] = GpcIdentity.Derive(c.Report.Owner, "moving-path:" + k).ToString();
-                                        var rekeyed = new GPC.Checkers.CompositeBridge.BridgeModelData { Workflow = a.Bridge.Workflow };
-                                        foreach (var d in a.Bridge.Beams) rekeyed.Set(new GPC.Checkers.CompositeBridge.BridgeBeamData(Guid.Parse(map[d.BeamGuid.ToString()]), d.Member, d.SuperElement, d.SectionState, d.CompositeSection));
-                                        string Rename(string t) => System.Text.RegularExpressions.Regex.Replace(t, "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}", m => map.TryGetValue(m.Value, out var n) ? n : m.Value);
-                                        string ta = Rename(GpcDraftCapture.ConversionText(a)).Replace("\nbridge " + a.Bridge.Count + " " + a.Bridge.Fingerprint() + "\n", "\nbridge " + rekeyed.Count + " " + rekeyed.Fingerprint() + "\n");
-                                        string tc = GpcDraftCapture.ConversionText(c);
-                                        var la = ta.Split('\n').OrderBy(x => x, StringComparer.Ordinal).ToArray(); var lc = tc.Split('\n').OrderBy(x => x, StringComparer.Ordinal).ToArray();
-                                        renamed = la.SequenceEqual(lc) ? null : FirstDifference(string.Join("\n", la), string.Join("\n", lc));
-                                    }
-                                    catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException || x is KeyNotFoundException) { renamed = "refused: " + x.Message; }
-                                    if (renamed == null) Count("ModelModel owner of the stored bytes differs from the FEM path: GUIDs renamed only");
-                                    else { Count("ModelModel owner of the stored bytes: more than a renaming"); Fail(where + ": the owner of the stored bytes changes more than the GUIDs\n" + renamed); }
-                                }
-                                if (fem?.Elements == null)
-                                {
-                                    // 0.3.0 reads no model (null value or no element list): the GH_Model has no model. By value: the same, or an empty model.
-                                    int elements = -1; try { elements = LegacyModelImport.Import(root, GpcIdentity.Derive(GpcIdentity.NameSpace, "empty"), 1e-3, new LegacyImportReport()).AllElements.Count(); } catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException || x is System.Runtime.Serialization.SerializationException || x is NullReferenceException) { }
-                                    if (elements > 0) { Count(type + " different"); Fail(where + ": 0.3.0 reads no model, by value " + elements + " elements"); }
-                                    else Count(type + " without a model in 0.3.0 (by value: " + (elements < 0 ? "refused" : "empty") + ")");
-                                    break;
-                                }
-                                Same(type, where, () =>
-                                {
-                                    // By value: the payload as stored (results, if any, are not converted), the owner and signatures of the FEM path.
-                                    var expected = GpcModels.FromFemm(fem, 1e-3, out _); var report = new LegacyImportReport();
-                                    var owner = GpcInputComparison.ElementOwner(expected);
-                                    var m = LegacyModelImport.Import(root, owner, 1e-3, report, GpcModels.SectionStateSignatures(fem));
-                                    return (GpcInputComparison.Document(m) ?? "beyond the serializer limit") + "\n" + ImportDump.Report(report);
-                                }, () => { var report = new LegacyImportReport(); var m = GpcModels.FromFemm(fem, 1e-3, out report); return (GpcInputComparison.Document(m) ?? "beyond the serializer limit") + "\n" + ImportDump.Report(report); });
-                                if (fem.Elements.Any(e => e.Results != null && e.Results.Count != 0)) Count("ModelModel with results (cache, not converted)");
+                                Guid owner = identities?.Of(where, Guid.Empty) ?? Guid.Empty;
+                                Rec(type, where, () => GpcLegacyPayloads.Model(bytes, 1e-3, out _, owner == Guid.Empty ? null : owner));
                                 break;
                             }
                             default: Count("other " + type); break;
@@ -624,17 +424,6 @@ internal static class GpcDraftArchiveChecks
                     catch (Exception e) { Count(type + " error"); Fail(where + ": " + type + " " + e.GetType().Name + ": " + e.Message + " @ " + (e.StackTrace ?? "").Split(new[] { (char)10 }, 2)[0].Trim()); }
                 }
                 foreach (var c in chunk.Chunks) Walk(c, path + "/" + c.Name + (c.Index > 0 ? "[" + c.Index + "]" : ""));
-            }
-            void Compare(string type, string where, string expected, string byValue, Guid identity, string prefix, byte[] bytes, int results)
-            {
-                if (expected != byValue) { Count(type + " different"); Fail(where + ": " + type + " by value differs from the FEM draft\n" + FirstDifference(expected, byValue)); }
-                else Count(type + " equal");
-                if (results != 0) Count(type + " with results (dropped)");
-                if (prefix != null)
-                {
-                    var fromBytes = GpcIdentity.Derive(GpcIdentity.NameSpace, prefix + Convert.ToHexString(SHA256.HashData(bytes)));
-                    Count(type + (fromBytes == identity ? " identity of the stored bytes = identity of the FEM value" : " identity of the stored bytes differs"));
-                }
             }
             Walk(archive.GetRootNode, "");
             Console.WriteLine($"LEGACY PAYLOAD SCAN {label}: {n} payloads");
@@ -646,8 +435,6 @@ internal static class GpcDraftArchiveChecks
         capture?.Dispose();
         return failureCount == 0 && unreadable == 0 && !GpcDraftCapture.Failed ? 0 : 1;
     }
-
-    private static T BridgeModelArchiveRead<T>(byte[] bytes) => BridGHe.Common.Helpers.ModelArchive.Read<T>(bytes);
 
     /// <summary>R6.1: the GH type of every former payload type (GH_Plate has no persistence).</summary>
     private static readonly Dictionary<string, string> GhTypes = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -709,7 +496,7 @@ internal static class GpcDraftArchiveChecks
         catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException || x is System.Runtime.Serialization.SerializationException) { byValue = "REFUSED " + x.Message; }
         if (byType != byValue) { count(name + " read differs from by value"); fail(where + ": " + name + " Read differs from the datum by value\n" + FirstDifference(byValue, byType)); return; }
         count(name + " read = by value");
-        string drafts = type == "ModelModel" ? ModelDrafts(t, goo, where, count, fail, bytes) : null;
+        string drafts = type == "ModelModel" ? ModelDrafts(t, goo, where, count, fail) : null;
         if (byType.StartsWith("REFUSED", StringComparison.Ordinal) || byType.StartsWith("NO ", StringComparison.Ordinal)) return;
         // The final writer of the GH type and its reader.
         var written = new GH_IO.Serialization.GH_LooseChunk("Item");
@@ -720,7 +507,6 @@ internal static class GpcDraftArchiveChecks
         if (!(bool)t.GetMethod("Read").Invoke(back, new object[] { written })) { count(name + " not read back"); fail(where + ": " + name + " written, not read back"); return; }
         string again = GhText(back);
         if (again != byType) { count(name + " round trip differs"); fail(where + ": " + name + " BGHGPC1 round trip differs\n" + FirstDifference(byType, again)); return; }
-        if ((t.GetProperty("Value").GetValue(goo) == null) != (t.GetProperty("Value").GetValue(back) == null)) { count(name + " FEM value lost"); fail(where + ": " + name + " transitional FEM value lost"); return; }
         count(name + " BGHGPC1 round trip equal");
         // R6.4 (2): the drafts of the elements saved with the model (chunk BridGHeDrafts) read back equal.
         if (drafts != null)
@@ -733,31 +519,15 @@ internal static class GpcDraftArchiveChecks
 
     internal static string DraftsText(GpcModelDrafts d) => string.Join("\n--\n", d.Nodes.Select(x => GpcDraftCapture.Text(x)).Concat(d.Beams.Select(x => GpcDraftCapture.Text(x))).Concat(d.Plates.Select(x => GpcDraftCapture.Text(x))));
 
-    /// <summary>R6.4 (2), extension (α): the drafts a model read from a former payload carries (by value, <see cref="GpcModelDrafts"/>) against
-    /// the conversion of every element of its FEM value with the same identity (the DRAFT CHECK of Decompose Model), by the canonical texts of
-    /// the capture; returns the text of the drafts for the round trip (null: none, or a difference).</summary>
-    private static string ModelDrafts(Type t, object goo, string where, Action<string> count, Action<string> fail, byte[] bytes)
+    /// <summary>R6.4 (2), extension (α): the drafts a model read from a former payload carries (by value, <see cref="GpcModelDrafts"/>); returns
+    /// their text for the round trip (null: none). P2CA (13/11/2026, U3): their comparison with the conversion of every element of the FEM value
+    /// of the payload (the DRAFT CHECK of Decompose Model) is retired by name with the FEM types (P2rRetired.Checks); the round trip stays.</summary>
+    private static string ModelDrafts(Type t, object goo, string where, Action<string> count, Action<string> fail)
     {
         GpcModelDrafts drafts;
         try { drafts = t.GetProperty("GpcDrafts").GetValue(goo) as GpcModelDrafts; }
         catch (TargetInvocationException x) { count("GH_Model drafts refused"); fail(where + ": GH_Model drafts refused: " + x.InnerException?.Message); return null; }
-        // P2F (12/11): since P2D the GH_Model read from a former payload has no FEM value (its GPC input alone): the FEM value the drafts are
-        // compared with is read from the payload bytes, as the GH type of 0.4.0 before P2D read it.
-        var fem = (ModelModel)t.GetProperty("Value").GetValue(goo) ?? BridgeModelArchiveRead<ModelModel>(bytes);
         if (drafts == null) { count("GH_Model drafts: none"); return null; }
-        if (fem?.Elements == null) { count("GH_Model drafts without a FEM value"); fail(where + ": GH_Model drafts read from a payload 0.3.0 reads no model from"); return null; }
-        if (!drafts.Fits(fem.Nodes.Count, fem.Beams.Count, fem.Plates.Count) || fem.Elements.Count != fem.Nodes.Count + fem.Beams.Count + fem.Plates.Count)
-        { count("GH_Model drafts: FEM elements merged by ID (not compared)"); return DraftsText(drafts); }
-        bool Same(string kind, int i, object draft, object conversion)
-        {
-            string a = GpcDraftCapture.Text(draft), c = GpcDraftCapture.Text(conversion);
-            if (a == c) return true;
-            count("GH_Model drafts differ"); fail(where + ": the draft of " + kind + " " + (i + 1) + " differs from the conversion of its FEM value\n" + FirstDifference(c, a)); return false;
-        }
-        for (int i = 0; i < fem.Nodes.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Nodes[i]); if (!Same("node", i, GpcDrafts.Reidentify(drafts.Nodes[i], id), GpcBeamDrafts.FromFemm(fem.Nodes[i], id))) return null; }
-        for (int i = 0; i < fem.Beams.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Beams[i]); if (!Same("beam", i, GpcDrafts.Reidentify(drafts.Beams[i], id), GpcBeamDrafts.FromFemm(fem.Beams[i], id))) return null; }
-        for (int i = 0; i < fem.Plates.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Plates[i]); if (!Same("plate", i, GpcDrafts.Reidentify(drafts.Plates[i], id), GpcBeamDrafts.FromFemm(fem.Plates[i], id))) return null; }
-        count("GH_Model drafts equal to the conversion of the FEM values");
         return DraftsText(drafts);
     }
 }

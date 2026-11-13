@@ -5,7 +5,6 @@ using System.Linq;
 using BridGHe.Common.Gpc;
 using BridGHe.Common.Gpc.Builders;
 using BridGHe.Common.Gpc.Legacy;
-using BridGHe.Common.Models;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;

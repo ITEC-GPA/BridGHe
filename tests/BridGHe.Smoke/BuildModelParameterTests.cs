@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using BridGHe.Common.Models;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;

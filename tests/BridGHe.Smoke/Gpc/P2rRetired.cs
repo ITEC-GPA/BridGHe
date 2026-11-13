@@ -207,5 +207,33 @@ internal static class P2rRetired
             add("import-dump|" + memory, "the example built in memory by the FEM catalogue (NativeExamples.Create) and written by the FEM writer (ModelArchive.Write); no frozen "
                 + "payload holds it (it is also retired from the R6.0 capture, CaptureSources); the same example as BridGHe 0.3.0 saved it stays in the corpus of --import-dump "
                 + "(examples-*, R3LegacyCorpus.Examples)");
+        add("regression-part|gpc-draft-archive: the examples 01-10 built in memory by the FEM catalogue (10 models)", "the drafts of the FEM values of the "
+            + "FEM catalogue (NativeExamples.Create, GpcBeamDrafts.FromFemm), their re-identification against the conversion of the FEM value, the FEM materials and "
+            + "the by-value reading of their FEM archives; no frozen payload holds them and their entries of the R6.0 capture are retired sources (CaptureSources). "
+            + "GPC coverage: the 103 models of the corpus read by value from their bytes (captures, captured examples 01-10, fixtures), every draft through the "
+            + "final writer and reader and GpcDrafts.Copy/Reidentify on each, compared with the capture corpus");
+        add("legacy-payload-scan|the comparisons with the FEM path of today", "the payloads read by the FEM classes (ModelArchive.Read) and converted by the "
+            + "FEM path (GpcBeamDrafts.FromFemm, GpcMaterials.FromFemm, GpcModels: drafts, materials, cases, combinations, stages, properties, sections, composite "
+            + "definitions, models with their owner and signatures), the identity of the FEM value, the fallback to the 0.3.0 reader for unreadable payloads, "
+            + "the FEM value kept by the GH types and the drafts of a model against the conversion of its FEM values; the oracle that stays is the R6.0 "
+            + "capture payloads (every payload by value compared with the datum of the FEM path when it was written, the owner of the models from the "
+            + "capture) and the GH types (read = by value, BGHGPC1 round trip, drafts round trip)");
+        add("regression-part|gpc-null-values: TRANSITIONAL checks of the FEM catalogue against the FEM-backed types (1290 checks)", "the FEM catalogue of the examples "
+            + "01-10 (NativeExamples.Create), every GPC-only GH type against its FEM-backed one (items, bounding boxes, solids, GUIDs and copy constructors of the FEM "
+            + "types); GPC coverage: the checks without FEM of the same regression on the GPC examples 01-10 (R0), the drafts of the builders and the producers "
+            + "(validity, datum, bounding box and casts, text, copies, persistence without FemmR6, damaged chunks, state of the model)");
+        add("regression-part|gpc-null-values: R65-C2-01 on coordinate systems with a FEM value (3 checks)", "a GH coordinate system made from a FEM CoordinateSystemModel "
+            + "(stretched and global); GPC coverage: the global system by its frame alone (gpc-null-values) and the frame rule of U6 on the points (2, 0, 0) and (0, 3, 0) "
+            + "(p2d, GpcLoadFrames.IsGlobal)");
+        add("regression-part|gpc-state-override: TRANSITIONAL areas of the beams of the FEM catalogue (25 areas)", "the FEM area of the beam properties of the "
+            + "examples 01-10 (NativeExamples.Create) against the former formula on the GPC section of their conversion (GpcModels.Convert); GPC coverage: the "
+            + "analytical areas of the standard shapes and the mass per length = density x area bit for bit in the same regression, the beam properties of the "
+            + "0.3.0 models read by value (gpc-build-model-legacy)");
+        add("regression-part|p2k-components: P10 the definition from the former slab value equals the one from the slab datum (1 check)", "the former slab value "
+            + "(SectionConcreteSlabModel) given to Composite Beam Property; GPC coverage: the slab datum of Concrete Slab Section with its numbers, the definition of "
+            + "the same inputs twice (p2k-components), composite-property-phases on the slab datum");
+        add("regression-part|p2d: frame rule, the conversion of a FEM model with a distributed load on a system (global, stretched, turned; 3 checks)", "the "
+            + "conversion of an in-memory FEM model (GpcModels.Convert) with the load on a CoordinateSystemModel; GPC coverage: the frame rule of U6 on the points "
+            + "(GpcLoadFrames.IsGlobal: global, stretched (2, 0, 0) (0, 3, 0), off-axis, another origin, turned, aligned) and the global frame, p2d");
     }
 }

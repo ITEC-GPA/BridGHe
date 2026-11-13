@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using BridGHe.Common.Diagnostics;
-using BridGHe.Common.Models;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;

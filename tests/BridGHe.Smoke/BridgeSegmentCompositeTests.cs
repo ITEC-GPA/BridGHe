@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using BridGHe.Common.Geometry;
-using BridGHe.Common.Models;
 
 internal static class BridgeSegmentCompositeTests
 {

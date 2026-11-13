@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using GPC.Converter.Straus7;
 using Rhino.Geometry;
 using static BridgeMovingRevisionExample;

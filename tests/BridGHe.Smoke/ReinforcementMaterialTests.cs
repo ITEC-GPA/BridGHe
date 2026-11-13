@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 
@@ -35,7 +34,7 @@ internal static class ReinforcementMaterialTests
         Require(R2aDesignFixtures.GpcOnly(output) && Grade(R2aDesignFixtures.Datum<GPC.Model.Materials.Material>(output[0])), "Component defaults give the B450C grade by its GPC datum alone");
         var name = (Param_String)component.Params.Input[0]; name.PersistentData.Clear(); name.SetPersistentData(" ");
         name.ExpireSolution(false); component.ExpireSolution(false); doc.NewSolution(false, GH_SolutionMode.Silent);
-        Require(!component.Params.Output[0].VolatileData.AllData(true).Any(g => R2aDesignFixtures.Datum(g) is GPC.Model.Materials.Material || g?.ScriptVariable() is MaterialModel) &&
+        Require(!component.Params.Output[0].VolatileData.AllData(true).Any(g => R2aDesignFixtures.Datum(g) is GPC.Model.Materials.Material || g?.ScriptVariable() != null) /* P2CA: the FEM value of the GH type, by its script variable (no FEM type named) */ &&
             component.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count + component.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Count > 0,
             $"Blank name rejected without stale output: output={component.Params.Output[0].VolatileDataCount}; input='{string.Join("|",name.VolatileData.AllData(true))}'; errors={string.Join("|",component.RuntimeMessages(GH_RuntimeMessageLevel.Error))}; warnings={string.Join("|",component.RuntimeMessages(GH_RuntimeMessageLevel.Warning))}");
         Console.WriteLine("B450C PASS: characteristic properties, density, ductility, copy, archive and GH defaults/validation.");

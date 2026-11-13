@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using BridGHe.Common.Diagnostics;
-using BridGHe.Common.Models;
 using Rhino.Geometry;
 
 internal static class BridgeFatigueTests

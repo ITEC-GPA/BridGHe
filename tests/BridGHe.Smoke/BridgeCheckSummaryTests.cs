@@ -2,7 +2,6 @@ using System;
 using System.Globalization;
 using System.Linq;
 using BridGHe.Common.Checks;
-using BridGHe.Common.Models;
 using GPC.Checkers.CompositeBridge;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;

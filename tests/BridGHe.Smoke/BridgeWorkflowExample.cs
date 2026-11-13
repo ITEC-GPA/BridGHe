@@ -8,7 +8,6 @@ using System.Reflection;
 using System.Text.Json;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Common.Straus;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;

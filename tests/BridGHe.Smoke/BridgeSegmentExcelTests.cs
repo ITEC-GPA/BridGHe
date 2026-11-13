@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Xml.Linq;
 using BridGHe.Common.Diagnostics;
 using BridGHe.Common.Geometry;
-using BridGHe.Common.Models;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
@@ -107,7 +106,7 @@ internal static class BridgeSegmentExcelTests
     }
     internal static void Generic(GH_Component c, int index, object value)
     {
-        string type = value is SimpleBridgeGeometry ? "BridgeGeometryGoo" : value is BeamPropertyModel ? "GH_BeamProperty" : throw new ArgumentException("Unsupported fixture input.");
+        string type = value is SimpleBridgeGeometry ? "BridgeGeometryGoo" : throw new ArgumentException("Unsupported fixture input."); // P2CA: the FEM beam property input had no caller left
         var goo = (IGH_Goo)Activator.CreateInstance(BridgeMergeTests.Initialize().GetTypes().Single(t => t.Name == type), value);
         var p = (Param_GenericObject)c.Params.Input[index]; p.PersistentData.Clear(); p.PersistentData.Append(goo);
     }

@@ -7,7 +7,6 @@ using BridGHe.Common.Gpc;
 using BridGHe.Common.Gpc.Builders;
 using BridGHe.Common.Gpc.Legacy;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using GPC.Checkers.CompositeBridge;
 using Grasshopper.Kernel;
 using BridgeActionBehavior = BridGHe.Common.Checks.BridgeActionBehavior;
@@ -26,33 +25,6 @@ internal static class GpcStateOverrideChecks
 {
     private static string Fp(params object[] values) => GPC.Model.Core.ModelValues.Fingerprint(values);
     private static string B(double v) => BitConverter.DoubleToInt64Bits(v).ToString("X16");
-
-    /// <summary>Areas measured (FEM property against its GPC conversion) and those whose GPC section area differs in some bit from the FEM
-    /// area (the FEM area and the mass per length of <see cref="GpcSectionMass"/> must be equal bit for bit), with the largest relative
-    /// difference per kind of GPC section.</summary>
-    internal static int AreasMeasured, AreaDifferences;
-    internal static readonly SortedDictionary<string, (int Count, double MaxRelative)> AreaDifferencesByKind = new(StringComparer.Ordinal);
-
-    /// <summary>Rule of 0.4.0 (coordinator, 5/11): the self-weight stays bit for bit. The area of the FEM property equals
-    /// <see cref="GpcSectionMass.LegacyArea"/> of its GPC section and the mass per length of the two paths is the same, bit for bit; the GPC
-    /// section area is only measured (counted when it differs).</summary>
-    internal static void MeasureArea(string label, BeamPropertyModel fem, GPC.Model.ElementProperties.BeamProperty gpcProperty)
-    {
-        if (fem?.Section == null || gpcProperty is not GPC.Model.ElementProperties.ElasticBeamProperty gpc) return;
-        double f = fem.SectionArea, l = GpcSectionMass.LegacyArea(gpc.Section), g = gpc.Section.Area;
-        if (B(f) != B(l)) throw new Exception($"GPC SECTION MASS FAIL ({label}, {fem.Name}, {gpc.Section.GetType().Name}): FEM area {f:R} / FEM-formula area of the GPC section {l:R}");
-        if (B(fem.Material.Density * f) != B(GpcSectionMass.MassPerLength(gpc))) throw new Exception($"GPC SECTION MASS FAIL ({label}, {fem.Name}): mass per length differs");
-        AreasMeasured++;
-        if (B(f) != B(g))
-        {
-            AreaDifferences++; string kind = gpc.Section.GetType().Name;
-            AreaDifferencesByKind.TryGetValue(kind, out var known);
-            AreaDifferencesByKind[kind] = (known.Count + 1, Math.Max(known.MaxRelative, Math.Abs(g - f) / Math.Abs(f)));
-        }
-    }
-
-    internal static string AreaSummary() => $"{AreasMeasured} beam property areas: FEM area = FEM formula on the GPC section and mass per length bit for bit in all; GPC section area different in {AreaDifferences}"
-        + (AreaDifferencesByKind.Count == 0 ? "" : " (" + string.Join(", ", AreaDifferencesByKind.Select(p => $"{p.Key} {p.Value.Count}, max relative {p.Value.MaxRelative:G3}")) + ")");
 
     /// <summary>Regression (not native) <c>gpc-state-override</c>, R6.6 R2a: Bridge State Override on GPC data alone (no FEM value). The
     /// girders of the simple bridge of the design tests given by their GPC drafts (Bridge Segment Sections and Bridge Member Assignment on the
@@ -92,9 +64,9 @@ internal static class GpcStateOverrideChecks
         }
         var analysed = test.Analyse();
         var catalog = GpcResultCatalog.Of(analysed) ?? throw new Exception("GPC STATE OVERRIDE FAIL: no results catalog");
-        var states = BeamMomentClassification.Classify(girders.Select(g => g.Beam.Name).ToArray(), new BeamModel[girders.Length],
-            girders.Select(g => (catalog, analysed, reference[g.Beam.Name])).ToArray(), "Dead");
-        if (states.Any(s => s.Analysed.Beam == null) || states.Where((s, i) => s.Sign != expected[i % 4] || s.Source != null).Any())
+        // P2CA (13/11/2026): the overload of the ids alone (no FEM beam is passed, so no state has a FEM source).
+        var states = BeamMomentClassification.Classify(girders.Select(g => g.Beam.Name).ToArray(), girders.Select(g => (catalog, analysed, reference[g.Beam.Name])).ToArray(), "Dead");
+        if (states.Any(s => s.Analysed.Beam == null) || states.Where((s, i) => s.Sign != expected[i % 4]).Any())
             throw new Exception("GPC STATE OVERRIDE FAIL: the states are not those of the synthetic moments, with their analysed GPC beams and no FEM source");
         var ids = schedule.Rules.Select(r => $"G{r.Group}-C{r.Segment}").ToArray();
         // One composite section per segment: the grillage section on the I of the base (2500, flanges 600 × 30, web 16), slab 3000 × 250 with
@@ -180,18 +152,11 @@ internal static class GpcStateOverrideChecks
             Shape(Of(GpcSectionBuilders.Standard(BridgeSectionKind.HollowRectangle, d, b, t1: t1, t2: t2)), d * b - (b - 2 * t2) * (d - 2 * t1), 1e-14, "hollow rectangle");
         foreach (double d in new[] { 500d, 1234.5, 0.3 }) Shape(Of(GpcSectionBuilders.Standard(BridgeSectionKind.SolidCircle, d)), Math.PI * d * d / 4, 1e-15, "solid circle");
         foreach (var (d, t) in new[] { (500d, 20d), (1234.5, 12.3) }) Shape(Of(GpcSectionBuilders.Standard(BridgeSectionKind.HollowCircle, d, t: t)), Math.PI * (d * d - (d - 2 * t) * (d - 2 * t)) / 4, 1e-14, "hollow circle");
-        // TRANSITIONAL (R6.6 R2a, P2 decides): the beams of the examples 01-10, FEM area = former formula on the GPC section of the conversion of
-        // the FEM catalog (NativeExamples.Create, kept by R0 for the callers outside R0): their sections have no analytical oracle here.
-        foreach (var example in NativeExamples.Create())
-        {
-            if (example.Model.Units != ModelModel.ModelUnits.Nmm || example.Model.Beams.Count == 0) continue;
-            var conversion = GpcModels.Convert(example.Model, 1e-6); var femBeams2 = example.Model.Beams.ToArray();
-            for (int k = 0; k < femBeams2.Length; k++)
-                if (!conversion.Report.ShadowedPropertyBeams.Contains(k + 1)) MeasureArea(example.Id, femBeams2[k].BeamProperty, conversion.Model.BeamElements[k + 1].BeamProperty);
-        }
+        // P2CA (13/11/2026, U3): the TRANSITIONAL areas of the beams of the FEM catalogue (examples 01-10: FEM area = former formula on the GPC section
+        // of their conversion) are retired by name with the catalogue (P2rRetired.Checks); the analytical areas of the standard shapes above stay.
         Console.WriteLine($"GPC STATE OVERRIDE PASS: {variants} overrides of {girders.Length} girders and {all.Length - girders.Length} other members on GPC data alone ({checks} checks: " +
             $"states, cracking, homogenised values, section states, masses, geometry); {errors} errors with the messages of the override; {shapes} beam property areas = analytical areas, " +
-            $"mass per length = density x area bit for bit, GPC section area different in {sectionDifferences} (max relative {maxRelative:G3}); TRANSITIONAL examples 01-10: " + AreaSummary() + ".");
+            $"mass per length = density x area bit for bit, GPC section area different in {sectionDifferences} (max relative {maxRelative:G3}); RETIRED BY NAME (P2CA): the areas of the FEM catalogue.");
     }
 
 }

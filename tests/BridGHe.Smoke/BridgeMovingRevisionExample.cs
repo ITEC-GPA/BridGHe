@@ -152,7 +152,7 @@ internal static class BridgeMovingRevisionExample
     internal static void Validate(string path)
     {
         using var doc=GrasshopperBridgeExample.Read(path);doc.FilePath=path;BridgeSegmentExcelTests.Solve(doc,true);CheckBeforeSteelAnalysis(doc);
-        var moving=Find(doc,"MovingStaticAnalysisComponent");Require(!Values<bool>(In(moving,"Run")).Any(v=>v),"Auto-run must be false.");Require(Values<BridGHe.Common.Models.ModelModel>(Out(moving,"Model")).Length==0,"Delivered traffic results must be empty.");
+        var moving=Find(doc,"MovingStaticAnalysisComponent");Require(!Values<bool>(In(moving,"Run")).Any(v=>v),"Auto-run must be false.");Require(Values<object>(Out(moving,"Model")).Length==0, /* P2CA: the script variables of the Model output (its FEM values), no FEM type named */"Delivered traffic results must be empty.");
         var p=Values<MovingPath>(Out(Find(doc,"BridgeStraightMovingPathComponent"),"Path")).Single();Require(p.Target==2&&p.ConvertToStaticCases&&p.Divisions==30,"Path settings.");
         Require(p.Template.Vehicles.Single().Loads.Length==4&&p.Template.Vehicles[0].Loads.Cast<MovingPointForce>().All(l=>l.Axis==1&&l.Force.SequenceEqual(new[]{0d,0d,-150000})),"Four downward wheel forces.");
         Require(In(Find(doc,"BridgeConstructionPhaseComponent","M03_N0"),"Actions").Sources.Count==3,"Traffic enters phase 30.");

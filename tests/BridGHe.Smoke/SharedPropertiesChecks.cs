@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Windows.Forms;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
@@ -84,7 +83,7 @@ internal static class SharedPropertiesChecks
         var steelGoo = R2aDesignFixtures.MaterialGoo(steel, "Steel");
         var property = Add("ElementProperties.BeamPropertyComponent");
         ((Param_String)property.Params.Input[0]).PersistentData.Append(new GH_String("P1"));
-        ((Param_Integer)property.Params.Input[1]).PersistentData.Append(new GH_Integer((int)BeamPropertyType.Beam));
+        ((Param_Integer)property.Params.Input[1]).PersistentData.Append(new GH_Integer(5) /* P2CA: the type index Beam of the component (the former BeamPropertyType.Beam) */);
         Set(property.Params.Input[2], sectionGoo); Set(property.Params.Input[3], steelGoo);
         var p1 = R2aDesignFixtures.Datum<BridGHe.Common.Gpc.Legacy.LegacyBeamProperty>(Solve(property));
         Set(property.Params.Input[2], genericGoo); var p2 = R2aDesignFixtures.Datum<BridGHe.Common.Gpc.Legacy.LegacyBeamProperty>(Solve(property));
@@ -108,7 +107,7 @@ internal static class SharedPropertiesChecks
         var persistent = sectionParam.GetType().GetProperty("PersistentData").GetValue(sectionParam);
         persistent.GetType().GetMethod("Append", new[] { sectionGoo.GetType() }).Invoke(persistent, new object[] { sectionGoo });
         void Menu(string name, object sender) => sectionParam.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(sectionParam, new[] { sender, EventArgs.Empty });
-        Menu("OnSetMirror", null); Menu("OnUnitsClick", new ToolStripMenuItem(nameof(ModelModel.ModelUnits.Knm)));
+        Menu("OnSetMirror", null); Menu("OnUnitsClick", new ToolStripMenuItem("Knm") /* P2CA: the menu item of the units, by its text */);
         // The parameter shows one stored section recipe, converted once (mm -> m) and mirrored (Left), a new recipe.
         var shown = sectionParam.VolatileData.AllData(true).Select(R2aDesignFixtures.Datum<BridGHe.Common.Gpc.Legacy.LegacySectionRecipe>).ToArray();
         if (shown.Length != 1 || shown[0] == null || !(Math.Abs(shown[0].D - .6) <= 1e-12) || !(Math.Abs(shown[0].T3 - .015) <= 1e-12) || /* P2R (task 39, T02): NaN fails */ shown[0].Mirror != 2 || ReferenceEquals(shown[0], section))

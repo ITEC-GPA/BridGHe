@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
@@ -27,14 +26,6 @@ internal static class DisplayTests
         Require((bool)optionsType.GetMethod("Matches").Invoke(options,new object[]{"g1"}) && !(bool)optionsType.GetMethod("Matches").Invoke(options,new object[]{"G2"}),"Exact load case filter failed.");
         foreach(var (name,value) in new[]{("SymbolScale",0.0),("LoadScale",double.NaN),("Transparency",1.1)})
         {var bad=Options();Set(bad,name,value);bool failed=false;try{optionsType.GetMethod("Validate").Invoke(bad,null);}catch(TargetInvocationException e)when(e.InnerException is ArgumentException){failed=true;}Require(failed,"Invalid display option accepted: "+name);}
-        {
-            // TRANSITIONAL (R6.6 R2a, P2 decides): the schematic reinforcement rows of a beam on a homogenised composite property are drawn only
-            // from the FEM value (ModelPreview.ReinforcementLines); the preview of a beam given by its GPC draft alone draws its axis and label
-            // (ModelPreview.DraftWires), so this check has no GPC counterpart and goes with the FEM preview in P2 (product gap, listed).
-            var p=BridgeGrillageExample.Composite(new());p.ConcreteSection=new(250,3000,2000,40,1500,55);p.ConsiderRebar=true;
-            var femBeam=new BeamModel("B1",Point3d.Origin,new Point3d(12000,0,0),p.CreateHomogenizedProperty(12,"Shrink"));
-            var lines=(Line[])renderer.GetMethod("ReinforcementLines").Invoke(null,new object[]{femBeam});Require(lines.Length==6 && lines.All(l=>Math.Abs(l.Length-12000)<1e-8),"Two schematic reinforcement rows must survive the generic override.");
-        }
         // R6.6 R2a: the same beam given by its GPC draft alone (B1, 12 m along X, the homogenised property n 12 «Shrink» of the composite section
         // with the slab 250 × 3000 and the two bar rows, 2000 at cover 40 and 1500 at cover 55, Consider Rebar): the preview component, the
         // preferences and the datum unchanged (the SHA-256 of its GPC archive).
@@ -42,6 +33,9 @@ internal static class DisplayTests
         var shrink=BridGHe.Common.Gpc.Builders.GpcPropertyBuilders.Homogenised(GpcCompositeDefinitions.Create(numbers),12,"",GpcCompositeDefinitions.AnalysisSteel(numbers),"Steel");
         var draft=BridGHe.Common.Gpc.Builders.GpcBeamBuilders.New(new GPC.Geometry.Point3d(0,0,0),new GPC.Geometry.Point3d(12000,0,0),shrink,null,0,0,0,R2aDesignFixtures.Id("display:B1"),"B1");
         Require(draft.Property.Section.CompositePreview && draft.Beam.BeamProperty.Name=="Shrink","The GPC beam must carry the homogenised property with its composite preview.");
+        // P2CA (13/11/2026): the schematic reinforcement rows on the GPC draft (ModelPreview.DraftReinforcementLines, P11 of P2D), the same expected
+        // values as the former check on the FEM beam (six bar lines of 12 m, the two rows).
+        var lines=(Line[])renderer.GetMethod("DraftReinforcementLines").Invoke(null,new object[]{draft});Require(lines.Length==6 && lines.All(l=>Math.Abs(l.Length-12000)<1e-8),"Two schematic reinforcement rows must survive the generic override.");
         var beam=R2aDesignFixtures.Beam(draft);
         byte[] Archive(){var a=BridGHe.Common.Gpc.GpcDraftArchive.Write(draft);return a.Data.Concat(a.Records).ToArray();}
         var bytes=Archive();

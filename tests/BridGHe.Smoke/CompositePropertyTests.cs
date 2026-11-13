@@ -71,7 +71,7 @@ internal static class CompositePropertyTests
         var concrete=M(new(){Kind="Undefined",Name="C30",Modulus=BridgeGrillageExample.Ec,PoissonRatio=BridgeGrillageExample.NuConcrete,SpecificCompressiveStrength=30});
         var steel=M(new(){Kind="Undefined",Name="S355",Modulus=BridgeGrillageExample.Es,PoissonRatio=BridgeGrillageExample.NuSteel,MinimumYieldStress=355,MinimumTensileStress=510,ThermalExpansion=1.2e-5});
         var rebar=M(new(){Kind="Undefined",Name="B450",Modulus=BridgeGrillageExample.Es,MinimumYieldStress=450,MinimumTensileStress=540});
-        Generic(1,new GH_ObjectWrapper(new SectionConcreteSlabModel(250,3000,2000,40,1500,55)));Generic(2,R2aDesignFixtures.Goo("GH_BeamSection",steelSection));
+        Generic(1,new GH_ObjectWrapper(new BridGHe.Common.Checks.ConcreteSlabSection(250,3000,2000,40,1500,55))); /* P2CA: the slab by its GPC datum (Concrete Slab Section, P10), the same numbers */ Generic(2,R2aDesignFixtures.Goo("GH_BeamSection",steelSection));
         Generic(3,R2aDesignFixtures.MaterialGoo(concrete,"Undefined"));Generic(4,R2aDesignFixtures.MaterialGoo(steel,"Undefined"));Generic(5,R2aDesignFixtures.MaterialGoo(rebar,"Undefined"));Number(6,7);Number(7,18);
         void Solve(){c.ExpireSolution(false);GH_Document.EnableSolutions=true;doc.Enabled=true;doc.NewSolution(false,GH_SolutionMode.Silent);Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count==0,string.Join(";",c.RuntimeMessages(GH_RuntimeMessageLevel.Error)));}
         BridGHe.Common.Gpc.Legacy.LegacyBeamProperty Output(int i)

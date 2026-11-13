@@ -155,22 +155,9 @@ internal static class P2dChecks
         Check(!GpcLoadFrames.IsGlobal(P(1, 0, 0), P(2, 0, 0), P(1, 1, 0)), "another origin: not global");
         Check(!GpcLoadFrames.IsGlobal(P(0, 0, 0), P(0, 1, 0), P(-1, 0, 0)), "turned axes: not global");
         Check(!GpcLoadFrames.IsGlobal(P(0, 0, 0), P(1, 0, 0), P(2, 0, 0)), "aligned points (no frame): not global");
-        Check(GpcLoadFrames.IsGlobal(GpcLoadFrames.Of(CoordinateSystemModel.Global)), "the global system of the parameter: global");
-        // The 0.3.0 reader: the distributed load of a former beam on a stretched system is global (before P2D it was refused as not global).
-        string Read(CoordinateSystemModel cs)
-        {
-            // A former model with a distributed load on its first beam, converted by the reader (the import reads the system of the load).
-            var model = ExampleRemake04.WithEndNodes(BridgeUtilityTests.Source(), out _);
-            model.Beams[0].Loads.Add(new BeamDistributedLoadModel(new LoadCaseModel("P2D", "P2D"), new() { LoadSchema = BeamDistributedLoadModel.LoadSchema.Uniform, CoordinateSystem = cs,
-                LoadDirection = BeamDistributedLoadModel.LoadDirection.Z, PA = -2, PB = -2 }, BeamDistributedLoadModel.LoadType.Force));
-            try { GpcModels.Convert(model, 0.001); return null; }
-            catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException) { return "refused: " + x.Message; }
-        }
-        Check(Read(CoordinateSystemModel.Global) == null, "the 0.3.0 reader: a load on the global system");
-        string stretched = Read(new CoordinateSystemModel("P2D", "Stretched") { Origin = new Point3d(0, 0, 0), Point1 = new Point3d(2, 0, 0), Point2 = new Point3d(0, 3, 0) });
-        Check(stretched == null, "the 0.3.0 reader: a load on (2, 0, 0), (0, 3, 0) is on the global system (U6): " + stretched);
-        string turned = Read(new CoordinateSystemModel("P2D", "Turned") { Origin = new Point3d(0, 0, 0), Point1 = new Point3d(0, 1, 0), Point2 = new Point3d(-1, 0, 0) });
-        Check(turned != null && turned.StartsWith("refused", StringComparison.Ordinal), "the 0.3.0 reader: a load on a turned system is refused as before: " + turned);
+        Check(GpcLoadFrames.IsGlobal(GPC.Geometry.CoordinateSystem.Global), "the global system of the parameter: global"); // P2CA: its GPC frame (the GH type gives it, gpc-null-values)
+        // P2CA (13/11/2026, U3): the three checks of the conversion of a FEM model with a load on a system (global, stretched, turned) are retired by
+        // name with the FEM types (P2rRetired.Checks); the frame rule they applied is the one checked on the points above.
     }
 
     // ----------------------------------------------------------------------------------------------------------------------------------------

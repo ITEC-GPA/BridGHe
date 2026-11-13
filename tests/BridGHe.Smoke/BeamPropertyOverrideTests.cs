@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Rhino.Geometry;

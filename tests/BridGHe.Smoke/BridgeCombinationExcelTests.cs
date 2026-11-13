@@ -7,7 +7,6 @@ using System.Xml.Linq;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Diagnostics;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 
 internal static class BridgeCombinationExcelTests
 {
@@ -18,22 +17,22 @@ internal static class BridgeCombinationExcelTests
         Assert(result.Table.SelectMany(r => r).SequenceEqual(Demo.SelectMany(r => r)), "native Excel round trip changed the combination table");
         Console.WriteLine("PASS NATIVE EXCEL ROUND TRIP");
     }
-    private static BridgePhaseDefinition[] Phases(ModelModel steel, ModelModel longTerm, ModelModel traffic, ModelModel shrinkage,
-        GPC.Model.Models.Model gSteel, GPC.Model.Models.Model gLongTerm, GPC.Model.Models.Model gTraffic, GPC.Model.Models.Model gShrinkage) => new[] {
+    // P2CA (13/11/2026): the phases on the analysed GPC sources alone (the FEM sources, always null since R2b, are gone with the FEM types).
+    private static BridgePhaseDefinition[] Phases(GPC.Model.Models.Model gSteel, GPC.Model.Models.Model gLongTerm, GPC.Model.Models.Model gTraffic, GPC.Model.Models.Model gShrinkage) => new[] {
             new BridgePhaseDefinition { Order = 10, Name = "Getto su acciaio", State = BridgeSectionState.Steel, Day = 0,
-                Actions = new[] { new BridgeActionDefinition { Key = "G1", Source = steel, GpcSource = gSteel, Case = "G", Behavior = BridgeActionBehavior.Steel } } },
+                Actions = new[] { new BridgeActionDefinition { Key = "G1", GpcSource = gSteel, Case = "G", Behavior = BridgeActionBehavior.Steel } } },
             new BridgePhaseDefinition { Order = 20, Name = "Permanenti portati", State = BridgeSectionState.Composite, Day = 28,
-                Actions = new[] { new BridgeActionDefinition { Key = "G2", Source = longTerm, GpcSource = gLongTerm, Case = "G", Behavior = BridgeActionBehavior.LongTerm } } },
+                Actions = new[] { new BridgeActionDefinition { Key = "G2", GpcSource = gLongTerm, Case = "G", Behavior = BridgeActionBehavior.LongTerm } } },
             new BridgePhaseDefinition { Order = 30, Name = "Esercizio e ritiro", State = BridgeSectionState.Composite, Day = 365,
-                Actions = new[] { new BridgeActionDefinition { Key = "Q", Source = traffic, GpcSource = gTraffic, Case = "G", Behavior = BridgeActionBehavior.ShortTerm },
-                    new BridgeActionDefinition { Key = "RITIRO", Source = shrinkage, GpcSource = gShrinkage, Case = "G", Behavior = BridgeActionBehavior.Shrinkage, Strain = -200e-6 } } }
+                Actions = new[] { new BridgeActionDefinition { Key = "Q", GpcSource = gTraffic, Case = "G", Behavior = BridgeActionBehavior.ShortTerm },
+                    new BridgeActionDefinition { Key = "RITIRO", GpcSource = gShrinkage, Case = "G", Behavior = BridgeActionBehavior.Shrinkage, Strain = -200e-6 } } }
         };
     /// <summary>R6.6 R2b: <see cref="Recipe"/> with the four sources built in GPC only (<see cref="GpcWorkflowSources"/>, the same forces): the
     /// GPC input and the analysed copy of every source, and the phases with the actions on their analysed GPC source (no FEM source).</summary>
     internal static ((GPC.Model.Models.Model Input, GPC.Model.Models.Model Analysed)[] References, BridgePhaseDefinition[] Phases) RecipeGpc()
     {
         var s = new[] { ("Steel", 100d), ("Composite long term", 30d), ("Composite short term", 50d), ("Shrinkage secondary", 20d) }.Select(p => GpcWorkflowSources.Pair(p.Item1, p.Item2)).ToArray();
-        return (s, Phases(null, null, null, null, s[0].Analysed, s[1].Analysed, s[2].Analysed, s[3].Analysed));
+        return (s, Phases(s[0].Analysed, s[1].Analysed, s[2].Analysed, s[3].Analysed));
     }
     internal static string[][] Demo => new[] { new[] { "Combination", "G1", "G2", "Q", "RITIRO" },
         new[] { "DEMO_01", "1", "1", "1", "0.7" }, new[] { "DEMO_02", "1", "0.8", "0", "1" } };

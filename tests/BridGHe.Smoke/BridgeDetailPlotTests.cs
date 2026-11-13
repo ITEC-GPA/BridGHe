@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
 using BridGHe.Common.Checks;
-using BridGHe.Common.Models;
 using GPC.Checkers.CompositeBridge;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
