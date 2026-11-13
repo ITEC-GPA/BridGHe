@@ -38,30 +38,7 @@ namespace BridGHe.Grasshopper.Helpers
         internal static GPC.Geometry.Vector3d Vector(Rhino.Geometry.Point3d p) => new GPC.Geometry.Vector3d(p.X, p.Y, p.Z);
         internal static GPC.Geometry.Vector3d Vector(Rhino.Geometry.Vector3d v) => new GPC.Geometry.Vector3d(v.X, v.Y, v.Z);
 
-        /// <summary>
-        /// Attaches to <paramref name="output"/> the beam draft built on GPC with the identity of the conversion of its FEM value (until R6.5).
-        /// A builder that refuses its data (the reader refuses them: <see cref="ArgumentException"/>, <see cref="NotSupportedException"/>,
-        /// <see cref="InvalidOperationException"/>) attaches nothing: the GH type converts its FEM value, which the reader refuses the same way,
-        /// as before R6.2. P2D: the comparison with the conversion of the FEM value under a check host (DRAFT CHECK) is removed.
-        /// </summary>
-        internal static void Attach(GH_Beam output, Func<Guid, LegacyBeamDraft> build)
-        {
-            if (output?.Value == null) return;
-            LegacyBeamDraft draft;
-            try { draft = build(GpcBeamDrafts.Identity(output.Value)); }
-            catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException) { Refused++; return; }
-            output.AttachGpc(draft);
-        }
 
-        /// <summary>The same for a node draft (the rigid links of Bridge Rigid Links).</summary>
-        internal static void Attach(GH_Node output, Func<Guid, LegacyNodeDraft> build)
-        {
-            if (output?.Value == null) return;
-            LegacyNodeDraft draft;
-            try { draft = build(GpcBeamDrafts.Identity(output.Value)); }
-            catch (Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException) { Refused++; return; }
-            output.AttachGpc(draft);
-        }
 
         /// <summary>Outputs whose draft the builder refused (P2D: every refusal, the draft check is removed).</summary>
         internal static int Refused;

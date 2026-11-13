@@ -11,28 +11,13 @@ namespace BridGHe.Grasshopper.Helpers
     /// </summary>
     internal static class GpcModelDraftsAttach
     {
-        /// <summary>The drafts of <paramref name="model"/> when they describe the element lists of its FEM value; null otherwise.</summary>
-        internal static Common.Gpc.GpcModelDrafts Of(GH_Model model)
-        {
-            var value = model?.Value;
-            if (value == null) return null;
-            var drafts = model.GpcDrafts;
-            return drafts != null && drafts.Fits(value.Nodes.Count, value.Beams.Count, value.Plates.Count)
-                && value.Elements.Count == value.Nodes.Count + value.Beams.Count + value.Plates.Count ? drafts : null;
-        }
 
         /// <summary>R6.5 P1 lane 3c: the drafts of a model given by its GPC input alone: they keep their own identity (no conversion of a FEM value to
         /// follow). A model without them has no elements to give: the error of the component and no output.</summary>
         internal static Common.Gpc.GpcModelDrafts OfGpcOnly(GH_Model model) =>
             model.GpcDrafts ?? throw GpcOnlyModels.Refused("the model carries no drafts of its elements: connect the output of Build Model or of the component that made the model.");
 
-        internal static void Attach(GH_Node node, Common.Gpc.Legacy.LegacyNodeDraft draft) =>
-            node.AttachGpc(Common.Gpc.GpcDrafts.Reidentify(draft, Common.Gpc.GpcBeamDrafts.Identity(node.Value)));
 
-        internal static void Attach(GH_Beam beam, Common.Gpc.Legacy.LegacyBeamDraft draft) =>
-            beam.AttachGpc(Common.Gpc.GpcDrafts.Reidentify(draft, Common.Gpc.GpcBeamDrafts.Identity(beam.Value)));
 
-        internal static void Attach(GH_Plate plate, Common.Gpc.Legacy.LegacyPlateDraft draft) =>
-            plate.AttachGpc(Common.Gpc.GpcDrafts.Reidentify(draft, Common.Gpc.GpcBeamDrafts.Identity(plate.Value)));
     }
 }

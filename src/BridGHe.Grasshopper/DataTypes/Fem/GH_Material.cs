@@ -8,20 +8,16 @@ using System.Text.Json;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {
-    public class GH_Material : GH_Goo<MaterialModel>
+    public class GH_Material : GH_Goo<object>
     {
         public GH_Material()
         {
-            Value = new MaterialModel();
+            Value = null; // P2CE phase 2b: no FEM material (a material is its GPC datum)
         }
 
-        public GH_Material(MaterialModel material)
-        {
-            Value = material;
-        }
 
         // R6.5 P0: without a FEM value the material is its GPC material.
-        public override bool IsValid => Value == null ? Gpc != null : Value.IsValid;
+        public override bool IsValid => Gpc != null;
 
         public override string TypeName => "Material";
 
@@ -54,7 +50,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 var gpc = Gpc;
                 if (gpc == null) return null;
                 if (_kind != null && ReferenceEquals(_kindOf, Value)) return _kind;
-                if (Value != null) return Value.Kind.ToString();
+                
                 return Common.Gpc.GpcMaterials.KindOf(gpc);
             }
         }
@@ -62,7 +58,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public override IGH_Goo Duplicate()
         {
             // The value is shared (materials are immutable by convention, §1bis), and with it its GPC material.
-            return new GH_Material(Value) { _gpc = _gpc, _gpcOf = _gpcOf, HasAttachedGpc = HasAttachedGpc, _kind = _kind, _kindOf = _kindOf };
+            return new GH_Material { _gpc = _gpc, _gpcOf = _gpcOf, HasAttachedGpc = HasAttachedGpc, _kind = _kind, _kindOf = _kindOf };
         }
 
         /// <summary>
@@ -81,9 +77,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 // R6.1: the material attached or read (BGHGPC1, or a former payload read by value: P2D), otherwise the conversion of the FEM
                 // value (the FEM value of a component not yet on GPC: removed with the FEM types).
                 if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
-                if (Value == null) return null;
-                _gpc = Common.Gpc.GpcMaterials.FromFemm(Value); _gpcOf = Value; HasAttachedGpc = false;
-                return _gpc;
+                return null;
             }
         }
 
@@ -98,10 +92,10 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         }
 
         private GPC.Model.Materials.Material _gpc;
-        private MaterialModel _gpcOf;
+        private object _gpcOf;
         // PAR (A10): the declared kind given with the GPC material (null: none) and the FEM value it was given for.
         private string _kind;
-        private MaterialModel _kindOf;
+        private object _kindOf;
 
         public override bool Write(GH_IWriter writer)
         {
@@ -129,10 +123,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override string ToString()
         {
-            if (Value == null)
-                return Gpc == null ? "Null Material" : $"BridGHe Material {Gpc.Name}\nGPC datum (no FEM value)";
-            else
-                return Value.ToString();
+            return Gpc == null ? "Null Material" : $"BridGHe Material {Gpc.Name}\nGPC datum (no FEM value)";
         }
     }
 }

@@ -19,6 +19,10 @@ internal static class P2rRetiredP2ce
             + "(GpcLegacyPayloads.Design) with the archive of the CLR types, measured at 8e5a538 on 42 records built in memory with 12 FEM properties of the corpus "
             + "(fields, text of the rules with the ID of their property, GPC datum without GUIDs) and on the goo of a 0.3.0 rule: all equal; the corpus has no "
             + "«Design» item (inventory of phase 2a); on GPC: the 0.4.0 rules and family properties of gpc-only-properties and gpc-null-values");
+        add("regression-part|p2ce-reader: the casts of Beam Section on GPC equal the former FEM cast",
+            "the FEM cast of GH_BeamSection (a text or a curve on its FEM section, the recipe by the conversion of that section), replaced in phase 2b by the "
+            + "cast on GPC (GpcSectionCasts): the parity measured at 2519e4a on 36 casts (29 texts, valid and refused, 7 curves: the recipe text and the text of "
+            + "the datum) was equal; on GPC: 12 casts of p2ce-reader with their expected kind, dimensions and text (texts, refused texts and curves)");
     }
 
     /// <summary>The reason of a retirement of this lane, as <see cref="P2rRetired.Checks"/> records it.</summary>

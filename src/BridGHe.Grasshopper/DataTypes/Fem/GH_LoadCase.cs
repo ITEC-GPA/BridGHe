@@ -6,10 +6,10 @@ using BridGHe.Common.Models;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {
-    public class GH_LoadCase : GH_Goo<LoadCaseModel>
+    public class GH_LoadCase : GH_Goo<object>
     {
         // R6.5 P0: without a FEM value the case is its record.
-        public override bool IsValid => Value == null ? !string.IsNullOrEmpty(Gpc?.Name) : Value.Name != string.Empty;
+        public override bool IsValid => !string.IsNullOrEmpty(Gpc?.Name);
 
         public override string IsValidWhyNot => "Not propely defined";
 
@@ -21,14 +21,10 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
         }
 
-        public GH_LoadCase(LoadCaseModel lc)
-        {
-            Value = lc;
-        }
 
         public GH_LoadCase(GH_LoadCase lc)
         {
-            Value = lc.Value == null ? null : new LoadCaseModel(lc.Value);
+            Value = null;
             // R6.5 P1 lane 2a (revisione ChatGPT R65-2): the copy keeps the record attached or given alone and the former payload, as
             // Duplicate does (a record with a list of stages as another instance, CarryGpcTo).
             lc.CarryGpcTo(this);
@@ -45,9 +41,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             {
                 // P2D: a former payload is read by value when the file is read (no FEM value).
                 if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
-                if (Value == null) return null;
-                _gpc = Common.Gpc.GpcModels.CaseDraft(Value); _gpcOf = Value; HasAttachedGpc = false;
-                return _gpc;
+                return null;
             }
         }
 
@@ -61,7 +55,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         }
 
         private Common.Gpc.Legacy.LegacyCaseData _gpc;
-        private LoadCaseModel _gpcOf;
+        private object _gpcOf;
 
         /// <summary>R6.1: a copy (<c>Duplicate</c>) keeps the datum attached or read, for its copy of the same value.</summary>
         private void CarryGpcTo(GH_LoadCase copy)
@@ -118,10 +112,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override string ToString()
         {
-            if (Value == null)
-                return Gpc == null ? "Null LoadCase property" : $"BridGHe LoadCase: {Gpc.Name}\nGPC datum (no FEM value)";
-            else
-                return Value.ToString();
+            return Gpc == null ? "Null LoadCase property" : $"BridGHe LoadCase: {Gpc.Name}\nGPC datum (no FEM value)";
         }
     }
 }

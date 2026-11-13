@@ -6,27 +6,17 @@ using System;
 
 namespace BridGHe.Grasshopper.DataTypes
 {
-    public class GH_CompositeBeamProperty : GH_Goo<CompositeBeamPropertyModel>
+    public class GH_CompositeBeamProperty : GH_Goo<object>
     {
         public GH_CompositeBeamProperty() { }
         private readonly Fem.GH_Material _material;
 
-        public GH_CompositeBeamProperty(CompositeBeamPropertyModel beamProperty)
-        {
-            Value = beamProperty;
-            _material = new Fem.GH_Material(Value.Material);
-        }
 
-        public GH_CompositeBeamProperty(CompositeBeamPropertyModel beamProperty, Fem.GH_Material material)
-        {
-            Value = beamProperty;
-            _material = material;
-        }
 
         #region Properties
 
         // R6.5 P0: without a FEM value the composite property is its GPC definition.
-        public override bool IsValid => Value == null ? Gpc != null : Value.IsValid;
+        public override bool IsValid => Gpc != null;
 
         public override string TypeName => "BeamProperty";
 
@@ -50,9 +40,7 @@ namespace BridGHe.Grasshopper.DataTypes
             {
                 // P2D: a former payload is read by value when the file is read (no FEM value).
                 if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
-                if (Value == null) return null;
-                _gpc = Common.Gpc.GpcCompositeSections.Definition(Value, Value.Name); _gpcOf = Value; HasAttachedGpc = false;
-                return _gpc;
+                return null;
             }
         }
 
@@ -66,7 +54,7 @@ namespace BridGHe.Grasshopper.DataTypes
         }
 
         private GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition _gpc;
-        private CompositeBeamPropertyModel _gpcOf;
+        private object _gpcOf;
 
         /// <summary>R6.1: a copy (<c>Duplicate</c>) keeps the datum attached or read, for its copy of the same value.</summary>
         private void CarryGpcTo(GH_CompositeBeamProperty copy)
@@ -93,7 +81,7 @@ namespace BridGHe.Grasshopper.DataTypes
 
         private GH_CompositeBeamProperty DuplicateValue()
         {
-            return Value == null ? new GH_CompositeBeamProperty() : new GH_CompositeBeamProperty(Common.Helpers.ModelArchive.Clone(Value));
+            return new GH_CompositeBeamProperty();
         }
 
         public override bool Write(GH_IWriter writer)
@@ -121,10 +109,7 @@ namespace BridGHe.Grasshopper.DataTypes
 
         public override string ToString()
         {
-            if (Value == null)
-                return Gpc == null ? "Null Beam property" : $"BridGHe composite beam Property {Gpc.Name}\nGPC datum (no FEM value)";
-            else
-                return Value.ToString();
+            return Gpc == null ? "Null Beam property" : $"BridGHe composite beam Property {Gpc.Name}\nGPC datum (no FEM value)";
         }
     }
 }

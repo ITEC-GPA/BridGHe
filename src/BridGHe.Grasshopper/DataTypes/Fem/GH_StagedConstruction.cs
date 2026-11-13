@@ -9,7 +9,7 @@ using System.Text.Json;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {
-    public class GH_StagedConstruction : GH_Goo<StagedConstructionModel>
+    public class GH_StagedConstruction : GH_Goo<object>
     {
         // R6.5 P0: without a FEM value the stage is its record.
         public override bool IsValid => Value != null || Gpc != null;
@@ -22,14 +22,10 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
         }
 
-        public GH_StagedConstruction(StagedConstructionModel stagedConstruction)
-        {
-            Value = stagedConstruction;
-        }
 
         public GH_StagedConstruction(GH_StagedConstruction stagedConstruction)
         {
-            Value = stagedConstruction.Value == null ? null : new StagedConstructionModel(stagedConstruction.Value);
+            Value = null;
             // R6.5 P1 lane 2a (revisione ChatGPT R65-2): the copy keeps the datum attached or given alone and the former payload, as Duplicate does.
             stagedConstruction.CarryGpcTo(this);
         }
@@ -45,9 +41,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             {
                 // P2D: a former payload is read by value when the file is read (no FEM value).
                 if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
-                if (Value == null) return null;
-                _gpc = Common.Gpc.GpcModels.StageDraft(Value); _gpcOf = Value; HasAttachedGpc = false;
-                return _gpc;
+                return null;
             }
         }
 
@@ -61,7 +55,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         }
 
         private Common.Gpc.Legacy.LegacyStageDraft _gpc;
-        private StagedConstructionModel _gpcOf;
+        private object _gpcOf;
 
         /// <summary>R6.1: a copy (<c>Duplicate</c>) keeps the datum attached or read, for its copy of the same value.</summary>
         private void CarryGpcTo(GH_StagedConstruction copy)
@@ -89,7 +83,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         private GH_StagedConstruction DuplicateValue()
         {
             GH_StagedConstruction copy = new GH_StagedConstruction();
-            copy.Value = Value == null ? null : new StagedConstructionModel(Value);
+            copy.Value = null;
             return copy;
         }
 
@@ -118,12 +112,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override string ToString()
         {
-            if (Value == null)
-                return Gpc == null ? "Null Staged Construcion" : $"BridGHe Staged Construction {Gpc.Name}\nGroups: {string.Join(", ", Gpc.Groups)}\nGPC datum (no FEM value)";
-            else if (Value.Groups.Count() == 0)
-                return "Empty Staged Construction";
-            else
-                return Value.ToString();
+            return Gpc == null ? "Null Staged Construcion" : $"BridGHe Staged Construction {Gpc.Name}\nGroups: {string.Join(", ", Gpc.Groups)}\nGPC datum (no FEM value)";
         }
     }
 }

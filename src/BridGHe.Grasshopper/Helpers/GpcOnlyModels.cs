@@ -77,9 +77,6 @@ namespace BridGHe.Grasshopper.Helpers
             return true;
         }
 
-        /// <summary>P2K (P1, moved from the FEM <c>ModelHelper</c>): an analysis component restores the GH GUIDs of its model read from the file
-        /// from its input model after opening.</summary>
-        internal static void RestoreGuids(GH_Model input, GH_Model model) => model?.SynchronizeGuids(input);
 
         /// <summary>The error of a reading that exists only on the FEM data, on the GPC-only path (no output).</summary>
         internal static Exception Refused(string reading) => new ArgumentException(RefusedPrefix + reading);

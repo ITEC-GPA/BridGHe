@@ -188,8 +188,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
             {
                 if (!Params.Input[0].VolatileData.IsEmpty)
                 {
-                    GH_Model input_model = (GH_Model)Params.Input[0].VolatileData.get_Branch(0)[0];
-                    GpcOnlyModels.RestoreGuids(input_model, _model);
+                    // P2CE phase 2b: the GUID map of the FEM elements is gone with the FEM types (a model without FEM value had none to restore).
                     _just_loaded = false;
                 }
             }

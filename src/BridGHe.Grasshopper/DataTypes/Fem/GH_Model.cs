@@ -17,10 +17,8 @@ using System.Text.Json;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {
-    public class GH_Model : GH_Goo<ModelModel>, IGH_BakeAwareData, IGH_PreviewData
+    public class GH_Model : GH_Goo<object>, IGH_BakeAwareData, IGH_PreviewData
     {
-        protected Dictionary<ElementModel, Guid> _guids;
-        private readonly ConditionalWeakTable<ElementModel, IGH_PreviewData> previews = new();
         private readonly ConditionalWeakTable<Common.MovingLoads.MovingPath, MovingGoo> movingPreviews = new();
 
         private readonly ConditionalWeakTable<object, IGH_PreviewData> draftPreviews = new();
@@ -35,23 +33,10 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             foreach (var p in drafts.Plates) yield return (IGH_GeometricGoo)draftPreviews.GetValue(p, d => GH_Plate.FromGpc((Common.Gpc.Legacy.LegacyPlateDraft)d));
         }
 
+        // P2CE (13/11/2026, phase 2b): the elements of the drafts (a model has no FEM value since P2K/P2D: the same elements as before).
         private IEnumerable<IGH_PreviewData> PreviewElements()
         {
-            if (Value == null) { foreach (var e in DraftElements()) yield return (IGH_PreviewData)e; yield break; }
-            foreach (var element in Value.Elements)
-            {
-                if (element is not NodeModel && element is not BeamModel && element is not PlateModel && element is not CompositeBeamModel) continue;
-                yield return previews.GetValue(element, e => e switch
-                {
-                    NodeModel node => new GH_Node(node),
-                    BeamModel beam => new GH_Beam(beam),
-                    PlateModel plate => new GH_Plate(plate),
-                    CompositeBeamModel beam => new GH_CompositeBeam(beam),
-                    _ => throw new NotSupportedException()
-                });
-            }
-            foreach(var path in Value.MovingPaths)
-                if(path!=null)yield return movingPreviews.GetValue(path,p=>new MovingGoo(p));
+            foreach (var e in DraftElements()) yield return (IGH_PreviewData)e;
         }
 
         public BoundingBox ClippingBox
@@ -77,13 +62,6 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 if (preview.ClippingBox.IsValid) preview.DrawViewportMeshes(args);
         }
 
-        public Dictionary<ElementModel, Guid> Guids => _guids;
-
-        public override ModelModel Value
-        {
-            get => base.Value;
-            set { base.Value = value; SynchronizeGuids(); }
-        }
 
         // F6 phase (c), C2: the GPC model of this FEM model, converted once (GpcModels.Convert, the legacy reader) and kept with it, or the
         // analysed GPC model an analysis component attached (results as GPC datasets). It follows Value: a new FEM model gives a new
@@ -129,7 +107,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         /// conversion of Value, checked bit for bit by the tests). Copies of this datum keep it.</summary>
         public void AttachInput(Common.Gpc.GpcModels.Conversion input)
         {
-            lock (gpcLock) { _input = input ?? throw new ArgumentNullException(nameof(input)); if (Value == null) _gpcOnly = input; _inputOf = StateKey; }
+            lock (gpcLock) { _input = input ?? throw new ArgumentNullException(nameof(input)); _gpcOnly = input; _inputOf = StateKey; }
         }
 
         /// <summary>True when <see cref="GpcInput"/> is the input attached by a model transformer, not a conversion of <see cref="Value"/>.</summary>
@@ -141,15 +119,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         private Common.Gpc.GpcModels.Conversion Conversion()
         {
             // R6.5 P0: a model without FEM value is its GPC input (made at its own tolerance; a new tolerance is a new input from its producer).
-            if (Value == null) return _gpcOnly ?? throw new InvalidOperationException("GpcModelWithoutInput");
-            double tolerance = Settings.Instance.Tolerance;
-            if (_input != null && ReferenceEquals(_inputOf, StateKey) && _input.Tolerance == tolerance) return _input;
-            if (_converted != null && ReferenceEquals(_convertedOf, StateKey) && _converted.Tolerance == tolerance) return _converted;
-            _converted = null; _convertedOf = StateKey; _gpcError = null;
-            // The conversion of the FEM value of a component not yet on GPC (removed with the FEM types). P2D: a model read from a file has no
-            // FEM value (a former payload is read by value into its GPC input when the file is read).
-            _converted = Common.Gpc.GpcModels.Convert(Value, tolerance);
-            return _converted;
+            // P2CE phase 2b: no FEM value to convert (removed with the FEM types; a model has no FEM value since P2K/P2D).
+            return _gpcOnly ?? throw new InvalidOperationException("GpcModelWithoutInput");
         }
 
         // R6.1 (decision 1 of 6/11), P2D: the state of a model read from a former payload whose model carried results (not read: LegacyNotice).
@@ -384,54 +355,11 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             return model;
         }
 
-        public static GH_Model FromModel(ModelModel value, GH_Model source = null)
-        {
-            var result = new GH_Model { Value = value };
-            result.SynchronizeGuids(source);
-            return result;
-        }
 
-        private static string Identity(ElementModel element) => element switch
-        {
-            NodeModel node => "N:" + node.NodeId,
-            BeamModel beam => "B:" + beam.BeamId,
-            PlateModel plate => "P:" + plate.PlateId,
-            _ => null
-        };
 
-        public Guid GetGuid(ElementModel element)
-        {
-            if (!_guids.TryGetValue(element, out Guid guid)) _guids[element] = guid = Guid.NewGuid();
-            return guid;
-        }
 
-        public void SynchronizeGuids(GH_Model source = null)
-        {
-            _guids ??= new Dictionary<ElementModel, Guid>();
-            var previous = _guids;
-            var identities = new Dictionary<string, Guid>(StringComparer.Ordinal);
-            if (source?.Value != null)
-                foreach (var element in source.Value.Elements)
-                {
-                    string key = Identity(element);
-                    if (key != null && key.Length > 2) identities.TryAdd(key, source.GetGuid(element));
-                }
-            _guids = new Dictionary<ElementModel, Guid>();
-            if (Value == null) return;
-            for (int i = 0; i < Value.Elements.Count; i++)
-            {
-                var element = Value.Elements[i];
-                string key = Identity(element);
-                Guid guid;
-                if (key != null && identities.TryGetValue(key, out guid)) { }
-                else if (source?.Value != null && key?.Length == 2 && i < source.Value.Elements.Count && Identity(source.Value.Elements[i]) == key)
-                    guid = source.GetGuid(source.Value.Elements[i]);
-                else if (!previous.TryGetValue(element, out guid)) guid = Guid.NewGuid();
-                _guids[element] = guid;
-            }
-        }
 
-        public override bool IsValid => Value != null ? Value.Elements != null && Value.Elements.Count() > 0 : (_gpcOnly?.Model.AllElements.Count() ?? 0) > 0;
+        public override bool IsValid => (_gpcOnly?.Model.AllElements.Count() ?? 0) > 0;
 
         public override string TypeName => "FEM Model";
 
@@ -439,71 +367,17 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public GH_Model()
         {
-            _guids = new Dictionary<ElementModel, Guid>();
         }
 
-        public GH_Model(ModelModel.ModelUnits units, IEnumerable<IGH_GeometricGoo> elements, IEnumerable<GH_LoadCombination> combinations,
-            IEnumerable<GH_StagedConstruction> stages)
-            : this()
-        {
-            ModelHelper.ParseElements(elements, out List<GH_Node> nodes, out List<GH_Beam> beams, out List<GH_Plate> plates);
-            ModelHelper.BuildModel(ref nodes, ref beams, ref plates);
 
-            Value = new ModelModel(units);
-
-            Dictionary<ElementModel, Guid> bufferGuidDict = new Dictionary<ElementModel, Guid>();
-            List<ElementModel> elementsBag = new List<ElementModel>();
-
-            for (int i = 0; i < nodes.Count; i++)
-            {
-                GH_Node node = nodes[i];
-                if (!bufferGuidDict.ContainsKey(node.Value))
-                    bufferGuidDict.Add(node.Value, node.Guid);
-                elementsBag.Add(node.Value);
-            }
-            for (int i = 0; i < beams.Count; i++)
-            {
-                GH_Beam beam = beams[i];
-                if (!bufferGuidDict.ContainsKey(beam.Value))
-                    bufferGuidDict.Add(beam.Value, beam.Guid);
-                elementsBag.Add(beam.Value);
-            }
-            for (int i = 0; i < plates.Count; i++)
-            {
-                GH_Plate plate = plates[i];
-                if (!bufferGuidDict.ContainsKey(plate.Value))
-                    bufferGuidDict.Add(plate.Value, plate.Guid);
-                elementsBag.Add(plate.Value);
-            }
-
-            _guids = new Dictionary<ElementModel, Guid>(bufferGuidDict);
-
-            Value.AddElements(elementsBag);
-
-            Value.AddLoadCombinations(combinations.Select(c => c.Value));
-
-
-            Value.AddStagedConstructions(stages.Select(s => s.Value));
-        }
-
-        public GH_Model(GH_Model model) : this()
-        {
-            Value = model.Value == null ? null : Common.Helpers.ModelArchive.Clone(model.Value);
-            SynchronizeGuids(model);
-            model.ShareGpc(this);
-        }
 
         public override IGH_Goo Duplicate()
         {
-            var copy = FromModel(Value == null ? null : new ModelModel(Value), this);
+            var copy = new GH_Model();
             ShareGpc(copy);
             return copy;
         }
 
-        public void AddGuid(ElementModel elementModel, Guid guid)
-        {
-            _guids[elementModel] = guid;
-        }
 
         public override bool Write(GH_IWriter writer) => Write(writer, true, true);
 
@@ -535,12 +409,6 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 // of the drafts (they are read back by the drafts, no FEM value is read), none when they do not match the drafts.
                 var elementGuids = Array.Empty<Guid>();
                 if (draftBytes != null && Value == null && _draftGuids != null && ReferenceEquals(_draftGuidsOf, StateKey)) elementGuids = _draftGuids;
-                else if (draftBytes != null && Value != null)
-                {
-                    var byDraft = Value.Elements.OfType<NodeModel>().Select(GetGuid).Concat(Value.Elements.OfType<BeamModel>().Select(GetGuid))
-                        .Concat(Value.Elements.OfType<PlateModel>().Select(GetGuid)).ToArray();
-                    if (byDraft.Length == carried.Nodes.Count + carried.Beams.Count + carried.Plates.Count) elementGuids = byDraft;
-                }
                 writer.SetString("ElementGuids", JsonSerializer.Serialize(elementGuids));
                 if (draftBytes != null) writer.SetByteArray(Common.Gpc.GpcModelDrafts.Chunk, draftBytes);
                 if (results && GpcResults is GPC.Model.Models.Model analysed) writer.SetByteArray(Common.Gpc.GpcResultsFile.Chunk, Common.Gpc.GpcResultsFile.ToBytes(analysed));
@@ -623,14 +491,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public bool BakeGeometry(RhinoDoc doc, ObjectAttributes att, out Guid obj_guid)
         {
             obj_guid = Guid.Empty;
-            if (Value == null)
-            {
-                foreach (var e in DraftElements()) ((IGH_BakeAwareData)e).BakeGeometry(doc, att, out obj_guid);
-                return obj_guid != Guid.Empty;
-            }
-            foreach (var node in Value.Nodes) new GH_Node(node).BakeGeometry(doc, att, out obj_guid);
-            foreach (var beam in Value.Beams) new GH_Beam(beam).BakeGeometry(doc, att, out obj_guid);
-            foreach (var plate in Value.Plates) new GH_Plate(plate).BakeGeometry(doc, att, out obj_guid);
+            foreach (var e in DraftElements()) ((IGH_BakeAwareData)e).BakeGeometry(doc, att, out obj_guid);
             return obj_guid != Guid.Empty;
         }
 
@@ -648,12 +509,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override string ToString()
         {
-            if (Value == null)
-                return _gpcOnly == null ? "Null Model" : GpcText(_gpcOnly);
-            else if (Value.Elements.Count() == 0)
-                return "Empty Model";
-            else
-                return Value.ToString();
+            return _gpcOnly == null ? "Null Model" : GpcText(_gpcOnly);
         }
     }
 }

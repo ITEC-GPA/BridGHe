@@ -9,7 +9,7 @@ using BridGHe.Common.Models;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {
-    public class GH_BeamProperty : GH_Goo<BeamPropertyModel>
+    public class GH_BeamProperty : GH_Goo<object>
     {
         private readonly GH_Material _material;
 
@@ -17,22 +17,12 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
         }
 
-        public GH_BeamProperty(BeamPropertyModel beamProperty)
-        {
-            Value = beamProperty;
-            _material = new GH_Material(Value.Material);
-        }
 
-        public GH_BeamProperty(BeamPropertyModel beamProperty, GH_Material material)
-        {
-            Value = beamProperty;
-            _material = material;
-        }
 
         #region Properties
 
         // R6.5 P0: without a FEM value the property is its GPC datum.
-        public override bool IsValid => Value == null ? Gpc?.Property != null : Value.IsValid;
+        public override bool IsValid => Gpc?.Property != null;
 
         public override string TypeName => "BeamProperty";
 
@@ -51,9 +41,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             {
                 // P2D: a former payload is read by value when the file is read (no FEM value).
                 if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
-                if (Value == null) return null;
-                _gpc = Common.Gpc.GpcModels.BeamProperty(Value, Common.Gpc.GpcBeamDrafts.DraftUnits); _gpcOf = Value; HasAttachedGpc = false;
-                return _gpc;
+                return null;
             }
         }
 
@@ -67,7 +55,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         }
 
         private Common.Gpc.Legacy.LegacyBeamProperty _gpc;
-        private BeamPropertyModel _gpcOf;
+        private object _gpcOf;
 
         /// <summary>R6.1: a copy (<c>Duplicate</c>) keeps the datum attached or read, for its copy of the same value.</summary>
         private void CarryGpcTo(GH_BeamProperty copy)
@@ -94,7 +82,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         private GH_BeamProperty DuplicateValue()
         {
-            return Value == null ? new GH_BeamProperty() : new GH_BeamProperty(Common.Helpers.ModelArchive.Clone(Value));
+            return new GH_BeamProperty();
         }
 
         public override bool Write(GH_IWriter writer)
@@ -122,10 +110,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override string ToString()
         {
-            if (Value == null)
-                return Gpc?.Property == null ? "Null Beam property" : $"BridGHe beam Property {Gpc.Property.Name}\nGPC datum (no FEM value)";
-            else
-                return Value.ToString();
+            return Gpc?.Property == null ? "Null Beam property" : $"BridGHe beam Property {Gpc.Property.Name}\nGPC datum (no FEM value)";
         }
     }
 }

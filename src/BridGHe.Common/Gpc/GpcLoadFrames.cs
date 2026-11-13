@@ -12,6 +12,10 @@ namespace BridGHe.Common.Gpc
     /// </summary>
     public static class GpcLoadFrames
     {
+        /// <summary>P2CE (13/11/2026, phase 2b): the global system of the GH datum (its default and the «Global» menu): the frame of the former
+        /// global system (CoordinateSystemModel.Global: origin 0, points (1, 0, 0) and (0, 1, 0), name «Global»), a new frame each time.</summary>
+        public static CoordinateSystem Global() => new CoordinateSystem(new Point3d(0, 0, 0), new Point3d(1, 0, 0), new Point3d(0, 1, 0), "Global");
+
         /// <summary>The GPC frame of a former coordinate system: origin, a point on axis 1 and a point in the plane 1-2 (the former
         /// <c>Origin</c>, <c>Point1</c>, <c>Point2</c>), with its name. The global system (origin 0, (1, 0, 0), (0, 1, 0)) gives the global
         /// axes exactly.</summary>

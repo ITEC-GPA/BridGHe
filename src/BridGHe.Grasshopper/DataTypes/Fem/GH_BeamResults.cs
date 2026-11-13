@@ -8,12 +8,12 @@ using BridGHe.Common.Models;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {
-    public class GH_BeamResults : GH_Goo<List<ResultModel>>
+    public class GH_BeamResults : GH_Goo<object>
     {
         #region Properties
 
         // F6 C4: valid with FEM results or with the analysed GPC element (the Results components read it first).
-        public override bool IsValid => Value != null && Value.Count > 0 || AnalysedGpc != null;
+        public override bool IsValid => AnalysedGpc != null; // P2CE phase 2b: no FEM results (an empty list before)
 
         public override string IsValidWhyNot => "Invalid or empty beam results";
 
@@ -33,7 +33,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             : this()
         {
             // R6.5 P0: an element without FEM value has no FEM results (its analysed GPC element is read).
-            Value = beam.Value == null ? new List<ResultModel>() : new List<ResultModel>(beam.Value.Results);
+            Value = null;
             AnalysedGpc = beam.AnalysedGpc; AnalysedGpcModel = beam.AnalysedGpcModel;
         }
 
@@ -51,14 +51,14 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             return new GH_BeamResults
             {
-                Value = Value == null ? null : Common.Helpers.ModelArchive.Clone(Value),
+                Value = null,
                 AnalysedGpc = AnalysedGpc, AnalysedGpcModel = AnalysedGpcModel,
             };
         }
 
         public override string ToString()
         {
-            return Value == null ? "Null Beam results" : Value.ToString();
+            return "Null Beam results";
         }
 
         #endregion

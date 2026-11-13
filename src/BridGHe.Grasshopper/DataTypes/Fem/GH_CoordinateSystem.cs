@@ -5,10 +5,10 @@ using BridGHe.Common.Models;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {
-    public class GH_CoordinateSystem : GH_Goo<CoordinateSystemModel>
+    public class GH_CoordinateSystem : GH_Goo<object>
     {
         // R6.5 P1 lane 2b: without a FEM value the coordinate system is its GPC frame.
-        public override bool IsValid => Value == null ? Gpc != null && Gpc.Name != string.Empty : Value.Name != string.Empty;
+        public override bool IsValid => Gpc != null && Gpc.Name != string.Empty;
 
         public override string IsValidWhyNot => "Not propely defined";
 
@@ -18,19 +18,15 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public GH_CoordinateSystem()
         {
-            Value = CoordinateSystemModel.Global;
+            // P2CE phase 2b: the global system by its GPC frame (before: the FEM global system and its conversion, the same frame).
+            Value = null; _gpc = Common.Gpc.GpcLoadFrames.Global(); _gpcOf = null;
         }
 
-        public GH_CoordinateSystem(CoordinateSystemModel cs)
-        {
-            Value = cs;
-        }
 
         public GH_CoordinateSystem(GH_CoordinateSystem cs)
         {
             // R6.5 P1 lane 2b: a coordinate system given by its GPC frame alone is copied with it (the frame is immutable by convention).
-            if (cs.Value == null) { Value = null; _gpc = cs.Gpc; _gpcOf = null; return; }
-            Value = new CoordinateSystemModel(cs.Value);
+            Value = null; _gpc = cs.Gpc; _gpcOf = null; return;
         }
 
         /// <summary>
@@ -45,20 +41,18 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             get
             {
                 if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
-                if (Value == null) return null;
-                _gpc = Common.Gpc.GpcLoadFrames.Of(Value); _gpcOf = Value;
-                return _gpc;
+                return null;
             }
         }
 
         private GPC.Geometry.CoordinateSystem _gpc;
-        private CoordinateSystemModel _gpcOf;
+        private object _gpcOf;
 
         /// <summary>R6.5 P1 lane 2b: a coordinate system given by its GPC frame alone, with no FEM value: <see cref="Gpc"/> is the frame and
         /// validity, copies and text read it. (No persistence of its own, as before: a stored coordinate system is read back as the global one.)</summary>
         public static GH_CoordinateSystem FromGpc(GPC.Geometry.CoordinateSystem frame)
         {
-            var goo = new GH_CoordinateSystem(null as CoordinateSystemModel);
+            var goo = new GH_CoordinateSystem();
             goo._gpc = frame ?? throw new ArgumentNullException(nameof(frame)); goo._gpcOf = null;
             return goo;
         }
@@ -66,10 +60,10 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         /// <summary>R6.5 P1 lane 2b: the global coordinate system of the parameter (its «Global» menu): the FEM-backed one of today, or with
         /// <see cref="Helpers.GpcOnlyElements.PropertiesWithoutFem"/> the one given by its GPC frame alone (the path of P2).</summary>
         internal static GH_CoordinateSystem Global() =>
-            Helpers.GpcOnlyElements.PropertiesWithoutFem ? FromGpc(Common.Gpc.GpcLoadFrames.Of(CoordinateSystemModel.Global)) : new GH_CoordinateSystem();
+            Helpers.GpcOnlyElements.PropertiesWithoutFem ? FromGpc(Common.Gpc.GpcLoadFrames.Global()) : new GH_CoordinateSystem();
 
         /// <summary>The name of the coordinate system (the message of the load components).</summary>
-        internal string Name => Value != null ? Value.Name : Gpc?.Name;
+        internal string Name => Gpc?.Name;
 
         public override IGH_Goo Duplicate()
         {
@@ -78,10 +72,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override string ToString()
         {
-            if (Value == null)
-                return Gpc == null ? "Null Coordinate System property" : Gpc.Name;
-            else
-                return Value.Name;
+            return Gpc == null ? "Null Coordinate System property" : Gpc.Name;
         }
     }
 }

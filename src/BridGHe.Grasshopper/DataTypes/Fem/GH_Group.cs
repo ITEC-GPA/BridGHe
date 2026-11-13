@@ -10,10 +10,10 @@ using BridGHe.Common.Models;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {
-    public class GH_Group : GH_Goo<GroupModel>
+    public class GH_Group : GH_Goo<object>
     {
         // R6.5 P0: without a FEM value the group is its chain of names.
-        public override bool IsValid => Value == null ? Gpc != null && Gpc.Count > 0 && Gpc[Gpc.Count - 1].Length != 0 : Value.Name != string.Empty;
+        public override bool IsValid => Gpc != null && Gpc.Count > 0 && Gpc[Gpc.Count - 1].Length != 0;
 
         public override string IsValidWhyNot => "Not propely defined";
 
@@ -25,14 +25,10 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
         }
 
-        public GH_Group(GroupModel group)
-        {
-            Value = group;
-        }
 
         public GH_Group(GH_Group grp)
         {
-            Value = grp.Value == null ? null : new GroupModel(grp.Value);
+            Value = null;
             // R6.5 P1 lane 2a (revisione ChatGPT R65-2): the copy keeps the datum attached or given alone, as Duplicate does.
             if (grp._gpc != null && grp.HasAttachedGpc && ReferenceEquals(grp._gpcOf, grp.Value)) { _gpc = grp._gpc; _gpcOf = Value; HasAttachedGpc = true; }
         }
@@ -48,9 +44,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             get
             {
                 if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
-                if (Value == null) return null;
-                _gpc = Chain(Value); _gpcOf = Value; HasAttachedGpc = false;
-                return _gpc;
+                return null;
             }
         }
 
@@ -73,7 +67,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         }
 
         private IReadOnlyList<string> _gpc;
-        private GroupModel _gpcOf;
+        private object _gpcOf;
 
         /// <summary>R6.5 P0 (coordinator, 7/11): a group given by its GPC datum alone, with no FEM value: <see cref="Gpc"/> is the datum and
         /// validity, copies, persistence and text read it.</summary>
@@ -95,10 +89,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override string ToString()
         {
-            if (Value == null)
-                return Gpc == null ? "Null Group property" : $"BridGHe Group: {string.Join("\\", Gpc)}\nGPC datum (no FEM value)";
-            else
-                return Value.ToString();
+            return Gpc == null ? "Null Group property" : $"BridGHe Group: {string.Join("\\", Gpc)}\nGPC datum (no FEM value)";
         }
     }
 }

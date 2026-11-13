@@ -10,12 +10,11 @@ using System.Text.Json;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {
-    public class GH_LoadCombination : GH_Goo<LoadCombinationModel>
+    public class GH_LoadCombination : GH_Goo<object>
     {
-        public List<LoadCaseModel> LoadCases => Value.Values.Keys.ToList();
 
         // R6.5 P0: without a FEM value the combination is its record.
-        public override bool IsValid => Value == null ? !string.IsNullOrEmpty(Gpc?.Name) && Gpc.Factors.Count > 0 : Value.Name != string.Empty && Value.Values.Count > 0;
+        public override bool IsValid => !string.IsNullOrEmpty(Gpc?.Name) && Gpc.Factors.Count > 0;
 
         public override string IsValidWhyNot => "Not propely defined";
 
@@ -27,10 +26,6 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
         }
 
-        public GH_LoadCombination(string name)
-        {
-            Value = new LoadCombinationModel(name);
-        }
 
         public override bool CastFrom(object source)
         {
@@ -78,9 +73,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             {
                 // P2D: a former payload is read by value when the file is read (no FEM value).
                 if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
-                if (Value == null) return null;
-                _gpc = Common.Gpc.GpcModels.CombinationDraft(Value); _gpcOf = Value; HasAttachedGpc = false;
-                return _gpc;
+                return null;
             }
         }
 
@@ -94,11 +87,12 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         }
 
         private Common.Gpc.Legacy.LegacyCombinationDraft _gpc;
-        private LoadCombinationModel _gpcOf;
+        private object _gpcOf;
 
         /// <summary>R6.1 (frozen API for R6.2): whoever changes the FEM value of this datum in place (Load Combinations parameter, UpdateLoadCases)
         /// calls this: the datum attached no longer describes it and is dropped (the conversion follows the value). Only for a FEM value.</summary>
-        public void ValueChanged() { if (Value == null) return; _gpc = null; _gpcOf = null; HasAttachedGpc = false; }
+        public void ValueChanged() { return;
+}
 
         /// <summary>R6.1: a copy (<c>Duplicate</c>) keeps the datum attached or read, for its copy of the same value.</summary>
         private void CarryGpcTo(GH_LoadCombination copy)
@@ -125,11 +119,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         private GH_LoadCombination DuplicateValue()
         {
-            if (Value == null) return new GH_LoadCombination();
-            GH_LoadCombination value = new GH_LoadCombination(Value.Name);
-            foreach (KeyValuePair<LoadCaseModel, double> item in Value.Values)
-                value.Value.Values.Add(item.Key, item.Value);
-            return value;
+            return new GH_LoadCombination();
         }
 
         public override bool Read(GH_IReader reader)
@@ -157,20 +147,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override string ToString()
         {
-            if (Value == null)
-                return Gpc == null ? "Null Load Combination" : $"{Gpc.Name} = " + string.Join(" + ", Gpc.Factors.Select(f => $"{f.Case.Name}*{f.Factor}")) + "\nGPC datum (no FEM value)";
-            string str = $"{Value.Name} = ";
-
-            bool first = true;
-            foreach (KeyValuePair<LoadCaseModel, double> item in Value.Values)
-            {
-                if (!first)
-                    str += " + ";
-                str += $"{item.Key.Name}*{item.Value}";
-                first = false;
-            }
-
-            return str;
+            return Gpc == null ? "Null Load Combination" : $"{Gpc.Name} = " + string.Join(" + ", Gpc.Factors.Select(f => $"{f.Case.Name}*{f.Factor}")) + "\nGPC datum (no FEM value)";
         }
     }
 }

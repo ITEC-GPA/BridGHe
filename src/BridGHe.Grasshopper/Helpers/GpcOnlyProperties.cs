@@ -55,7 +55,7 @@ namespace BridGHe.Grasshopper.Helpers
 
         /// <summary>The «Non-structural mass» flag of a load case, from its record when it has no FEM value (the warnings of the load
         /// components).</summary>
-        internal static bool NonStructuralMass(GH_LoadCase lc) => lc.Value != null ? lc.Value.NonStructuralMassAcceleration : lc.Gpc.NonStructuralMass;
+        internal static bool NonStructuralMass(GH_LoadCase lc) => lc.Gpc.NonStructuralMass;
 
         /// <summary>For a beam property given by its GPC datum alone: whether it is a valid Beam or Truss property (the check of the deformable
         /// connections, <c>BridgeConnections.Create</c>), read from the datum; null for a property with a FEM value (the check reads it).</summary>

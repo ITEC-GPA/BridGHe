@@ -9,7 +9,7 @@ using System.Collections.Generic;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {
-    public class GH_Plate : GH_GeometricGoo<PlateModel>, IGH_BakeAwareData, IGH_PreviewData
+    public class GH_Plate : GH_GeometricGoo<object>, IGH_BakeAwareData, IGH_PreviewData
     {
         protected Guid _guid;
         protected GH_PlateProperty _plateProperty;
@@ -24,17 +24,13 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public List<GH_Group> Groups => _groups;
 
         // R6.5 P0: without a FEM value the plate is its GPC draft.
-        public override bool IsValid => Value == null ? Gpc?.Plate != null : Value.IsValid;
+        public override bool IsValid => Gpc?.Plate != null;
 
         public override string IsValidWhyNot
         {
             get
             {
-                if (Value == null)
-                    return Gpc?.Plate != null ? string.Empty : "No internal PlateModel instance";
-                if (Value.IsValid)
-                    return string.Empty;
-                return "Invalid PlateModel instance";
+                return Gpc?.Plate != null ? string.Empty : "No internal PlateModel instance";
             }
         }
 
@@ -46,11 +42,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             get
             {
-                if (Value == null)
-                    return GpcDraftGeometry.Bounds(Gpc);
-                if (!Value.IsValid)
-                    return BoundingBox.Empty;
-                return Value.Shape.GetBoundingBox(true);
+                return GpcDraftGeometry.Bounds(Gpc);
             }
         }
 
@@ -64,37 +56,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             _groups = new List<GH_Group>();
         }
 
-        public GH_Plate(Point3d[] points, GH_PlateProperty pp, GH_Group[] groups = null)
-            : this()
-        {
-            Value = new PlateModel(points, pp.Value);
-            if (groups != null)
-            {
-                foreach (GH_Group group in groups)
-                {
-                    Value.Groups.Add(group.Value);
-                    _groups.Add(group);
-                }
-            }
-        }
 
-        public GH_Plate(PlateModel plate, Guid? guid = null)
-            : this()
-        {
-            if (plate == null)
-                plate = new PlateModel();
-            Value = plate;
-            if (guid.HasValue)
-                _guid = guid.Value;
-            /*_plateProperty = new GH_PlateProperty(plate.PlateProperty);
-            if (plate.Groups.Count > 0)
-            {
-                foreach (string group in plate.Groups)
-                {
-                    _groups.Add(new GH_Group(group));
-                }
-            }*/
-        }
 
         /// <summary>
         /// Copy constructor. Use to duplicate the object to add data through the components.
@@ -107,8 +69,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             _plateProperty = plate._plateProperty == null ? null : (GH_PlateProperty)plate._plateProperty.Duplicate();
             _groups = plate._groups.ConvertAll(g => (GH_Group)g.Duplicate());
             // R6.5 P0: a plate without a FEM value is its draft: the copy keeps it (a component that changes the copy attaches its own).
-            if (plate.Value == null) { if (plate.Gpc is { } draft) { _gpc = draft; _gpcOf = null; HasAttachedGpc = true; } }
-            else Value = new PlateModel(plate.Value);
+            if (plate.Gpc is { } draft) { _gpc = draft; _gpcOf = null; HasAttachedGpc = true; }
             AnalysedGpc = plate.AnalysedGpc; AnalysedGpcModel = plate.AnalysedGpcModel;
         }
 
@@ -151,9 +112,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 // R6.1: the datum attached or read (BGHGPC1, or a former payload read by value: P2D), otherwise the conversion of the FEM value
                 // (the FEM value of a component not yet on GPC: removed with the FEM types).
                 if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
-                if (Value == null) return null;
-                _gpc = Common.Gpc.GpcBeamDrafts.FromFemm(Value); _gpcOf = Value; HasAttachedGpc = false;
-                return _gpc;
+                return null;
             }
         }
 
@@ -167,7 +126,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         }
 
         private Common.Gpc.Legacy.LegacyPlateDraft _gpc;
-        private PlateModel _gpcOf;
+        private object _gpcOf;
 
         /// <summary>R6.1: a copy of the same content (<c>DuplicateGeometry</c>) keeps the datum attached or read; a conversion of the FEM value
         /// is recomputed. The copy constructor (a copy that a component changes) keeps nothing.</summary>
@@ -182,20 +141,18 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         #region PreviewData methods
 
         // C3 (11/11): without a FEM value, the box of the draft with its solid.
-        public BoundingBox ClippingBox => Value == null ? Display.ModelPreview.DraftBounds(Gpc) : Boundingbox;
+        public BoundingBox ClippingBox => Display.ModelPreview.DraftBounds(Gpc);
 
         public void DrawViewportMeshes(GH_PreviewMeshArgs args)
         {
             if (!Display.ModelPreview.Automatic) return;
-            if (Value == null) Display.ModelPreview.DraftMeshes(Gpc,args.Pipeline,Display.DisplayPreferences.Current);
-            else Display.ModelPreview.Meshes(Value,args.Pipeline,Display.DisplayPreferences.Current);
+            Display.ModelPreview.DraftMeshes(Gpc,args.Pipeline,Display.DisplayPreferences.Current);
         }
 
         public void DrawViewportWires(GH_PreviewWireArgs args)
         {
             if (!Display.ModelPreview.Automatic) return;
-            if (Value == null) Display.ModelPreview.DraftWires(Gpc,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current);
-            else Display.ModelPreview.Wires(Value,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current);
+            Display.ModelPreview.DraftWires(Gpc,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current);
         }
 
         #endregion
@@ -205,19 +162,10 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public override IGH_GeometricGoo Morph(SpaceMorph xmorph)
         {
             // R6.5 P1 lane 2a (revisione ChatGPT R65-1): a plate given by its draft alone morphs the solid of its draft, as the FEM plate its shape.
-            if (Value == null)
-            {
-                var shape = GpcDraftGeometry.Shape(Gpc);
+            var shape = GpcDraftGeometry.Shape(Gpc);
                 if (shape == null) return null;
                 xmorph.Morph(shape);
                 return new GH_Brep(shape);
-            }
-            if (!Value.IsValid)
-                return null;
-
-            Brep brep = Value.Shape.DuplicateBrep();
-            xmorph.Morph(brep);
-            return new GH_Brep(brep);
         }
 
         public override IGH_GeometricGoo Transform(Transform xform)
@@ -227,19 +175,10 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             //In this example, I'll convert the shell to a brep.
             //Perhaps you will want to check for translations/rotations only, operations that make sense.
             // R6.5 P1 lane 2a (revisione ChatGPT R65-1): a plate given by its draft alone transforms the solid of its draft.
-            if (Value == null)
-            {
-                var shape = GpcDraftGeometry.Shape(Gpc);
+            var shape = GpcDraftGeometry.Shape(Gpc);
                 if (shape == null) return null;
                 shape.Transform(xform);
                 return new GH_Brep(shape);
-            }
-            if (!Value.IsValid)
-                return null;
-
-            Brep brep = Value.Shape.DuplicateBrep();
-            brep.Transform(xform);
-            return new GH_Brep(brep);
         }
 
         #endregion
@@ -248,17 +187,9 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public bool BakeGeometry(RhinoDoc doc, ObjectAttributes att, out Guid obj_guid)
         {
-            if (Value == null)
-            {
-                var flat = GpcDraftGeometry.FlatMesh(Gpc);
+            var flat = GpcDraftGeometry.FlatMesh(Gpc);
                 obj_guid = flat == null ? Guid.Empty : doc.Objects.AddMesh(flat, att);
                 return obj_guid != Guid.Empty;
-            }
-            var mesh = new Mesh();
-            mesh.Vertices.AddVertices(Value.Points);
-            for (int i = 1; i < Value.Points.Count - 1; i++) mesh.Faces.AddFace(0, i, i + 1);
-            obj_guid = doc.Objects.AddMesh(mesh, att);
-            return obj_guid != Guid.Empty;
         }
 
         #endregion
@@ -267,9 +198,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override bool CastTo<Q>(out Q target)
         {
-            if (Value == null)
-            {
-                // R6.5 P0: the outline and the flat mesh of the draft; the shape and results come with the FEM value until P1.
+            // R6.5 P0: the outline and the flat mesh of the draft; the shape and results come with the FEM value until P1.
                 if (typeof(Q) == typeof(GH_Curve) && GpcDraftGeometry.Outline(Gpc) is { } outline) { target = (Q)(object)new GH_Curve(outline); return true; }
                 if (typeof(Q) == typeof(GH_Mesh) && GpcDraftGeometry.FlatMesh(Gpc) is { } flat) { target = (Q)(object)new GH_Mesh(flat); return true; }
                 if (typeof(Q).IsAssignableFrom(typeof(GH_PlateResults)) && AnalysedGpc != null) { target = (Q)(object)new GH_PlateResults(this); return true; }
@@ -278,31 +207,6 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 if (GH_Beam.CastShapes(Display.ModelPreview.DraftShapes(Gpc), out target)) return true;
                 target = default;
                 return false;
-            }
-            if (typeof(Q) == typeof(GH_Curve))
-            {
-                PolylineCurve pline = new PolylineCurve(Value.Points);
-                pline.MakeClosed(0);
-                target = (Q)Convert.ChangeType(new GH_Curve(pline), typeof(Q));
-                return true;
-            }
-            else if (typeof(Q) == typeof(GH_Brep))
-            {
-                target = (Q)Convert.ChangeType(new GH_Brep(Value.Shape), typeof(Q));
-                return true;
-            }
-            else if (typeof(Q).IsAssignableFrom(typeof(GH_PlateResults)))
-            {
-                if (Value != null && Value.IsValid)
-                {
-                    GH_PlateResults results = new GH_PlateResults(this);
-                    target = (Q)Convert.ChangeType(results, typeof(Q));
-                    return true;
-                }
-            }
-
-            target = default;
-            return false;
         }
 
         #endregion
@@ -316,23 +220,14 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override BoundingBox GetBoundingBox(Transform xform)
         {
-            if (Value == null)
-            {
-                var box = Boundingbox;
+            var box = Boundingbox;
                 if (box.IsValid) box.Transform(xform);
                 return box;
-            }
-            if (!Value.IsValid)
-                return BoundingBox.Empty;
-            return Value.Shape.GetBoundingBox(xform);
         }
 
         public override string ToString()
         {
-            if (Value == null)
-                return GpcDraftGeometry.Text(Gpc);
-            else
-                return Value.ToString();
+            return GpcDraftGeometry.Text(Gpc);
         }
     }
 }

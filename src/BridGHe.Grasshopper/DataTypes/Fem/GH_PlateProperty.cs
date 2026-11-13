@@ -9,29 +9,19 @@ using BridGHe.Common.Models;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {
-    public class GH_PlateProperty : GH_Goo<PlatePropertyModel>
+    public class GH_PlateProperty : GH_Goo<object>
     {
         GH_Material _material;
 
         // Grasshopper instantiates persistent generic data before calling Read.
         public GH_PlateProperty() { }
 
-        public GH_PlateProperty(PlatePropertyModel plateProperty)
-        {
-            Value = plateProperty;
-            _material = new GH_Material(Value.Material);
-        }
 
-        public GH_PlateProperty(PlatePropertyModel plateProperty, GH_Material material)
-        {
-            Value = plateProperty;
-            _material = material;
-        }
 
         #region Properties
 
         // R6.5 P0: without a FEM value the property is its GPC property.
-        public override bool IsValid => Value == null ? Gpc != null : Value.IsValid;
+        public override bool IsValid => Gpc != null;
 
         public override string TypeName => "PlateProperty";
 
@@ -50,9 +40,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             {
                 // P2D: a former payload is read by value when the file is read (no FEM value).
                 if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
-                if (Value == null) return null;
-                _gpc = Common.Gpc.GpcModels.PlatePropertyDraft(Value); _gpcOf = Value; HasAttachedGpc = false;
-                return _gpc;
+                return null;
             }
         }
 
@@ -68,7 +56,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             get
             {
                 if (_gpc != null && HasAttachedGpc && ReferenceEquals(_gpcOf, Value)) return _bending;
-                return Value == null ? _bending : Common.Gpc.GpcModels.PlatePropertyMembraneBending(Value);
+                return _bending;
             }
             set => _bending = value;
         }
@@ -85,7 +73,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         private double _bending;
         private GPC.Model.ElementProperties.PlateProperty _gpc;
-        private PlatePropertyModel _gpcOf;
+        private object _gpcOf;
 
         /// <summary>R6.1: a copy (<c>Duplicate</c>) keeps the datum attached or read, for its copy of the same value.</summary>
         private void CarryGpcTo(GH_PlateProperty copy)
@@ -119,7 +107,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         private GH_PlateProperty DuplicateValue()
         {
-            return Value == null ? new GH_PlateProperty() : new GH_PlateProperty(Common.Helpers.ModelArchive.Clone(Value));
+            return new GH_PlateProperty();
         }
 
         public override bool Write(GH_IWriter writer)
@@ -150,10 +138,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override string ToString()
         {
-            if (Value == null)
-                return Gpc == null ? "Null Plate property" : $"BridGHe plate Property {Gpc.Name}\nGPC datum (no FEM value)";
-            else
-                return Value.ToString();
+            return Gpc == null ? "Null Plate property" : $"BridGHe plate Property {Gpc.Name}\nGPC datum (no FEM value)";
         }
     }
 }
