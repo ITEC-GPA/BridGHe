@@ -2465,6 +2465,7 @@ internal static class GpcOnlyReplay
     {
         var examples = NativeExamples.Create().ToDictionary(e => e.Id, e => e.Model);
         var m2 = examples["02-simply-supported"]; var m3 = examples["03-plate-patch"];
+        P2ccFreezer.Current?.Model("p2cc-m3", m3, (IGH_Goo)T("Fem.GH_Model").GetMethod("FromModel", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { m3, null }));
         // R1: the GPC twins of the elements and of the models of the examples (R0); the audit model «mixed» (a FEM homogenised property) stays FEM-backed (listed).
         var beam = Twin(() => Make("Fem.GH_Beam", m2.Beams[1]), () => R2aDesignFixtures.Beam(Ex("02-simply-supported").Beams[1]));
         var node = Twin(() => Make("Fem.GH_Node", m2.Nodes.First()), () => R2aDesignFixtures.Node(Ex("02-simply-supported").Nodes.First()));
@@ -2588,9 +2589,14 @@ internal static class GpcOnlyReplay
 
         // Phase Model: the beams of the example 02 with IDs; kN-m through the dimensions of the reader.
         var named = new ModelModel(m2); for (int k = 0; k < named.Beams.Count; k++) named.Beams[k].BeamId = "B" + (k + 1);
-        var stiff = Property(Variant(named.Beams[0].BeamProperty, "Stiff", 1.25));
+        var stiffValue = Variant(named.Beams[0].BeamProperty, "Stiff", 1.25); var stiff = Property(stiffValue);
+        var fz = P2ccFreezer.Current;
+        fz?.Model("p2cc-named", named, Gh(named)); fz?.Property("p2cc-stiff", stiffValue, stiff);
+        fz?.Note("named beam IDs: " + string.Join(",", named.Beams.Select(x => x.BeamId)));
         var knmValue = ImportDump.BeamData(ModelModel.ModelUnits.Knm, null);
-        var knmStiff = Property(Variant(knmValue.Beams[1].BeamProperty, "Stiff kN-m", 1.25));
+        var knmStiffValue = Variant(knmValue.Beams[1].BeamProperty, "Stiff kN-m", 1.25); var knmStiff = Property(knmStiffValue);
+        fz?.Property("p2cc-stiff-knm", knmStiffValue, knmStiff);
+        fz?.Note("knm (beams-Knm of legacy-payloads, not written again): " + (Text(GpcOnly(Gh(knmValue), new HashSet<string>(ElementGoo.Concat(PropertyGoo).Concat(ModelGoo)))) == Text(GpcModelGoo(BridGHe.Common.Gpc.GpcLegacyPayloads.Model(LegacyPayloadFixtures.Bytes("beams-Knm"), 1e-3, out _))) ? "equal by value" : "NOT equal by value"));
 
         // Construction Sequence: three beams (a group, its child, another) and a plate, a registered case, an increment.
         var a = new GroupModel("A"); var child = new GroupModel("Child", a); var b = new GroupModel("B");
@@ -2608,20 +2614,24 @@ internal static class GpcOnlyReplay
             model.AddElements(elements); model.AddLoadCases(new[] { new LoadCaseModel("Q", "Q") });
             return model;
         }
-        var mixed = Gh(Mixed(new[] { a }, new[] { child }, new[] { b }, new[] { b }));
-        var twoGroups = Gh(Mixed(new[] { a, b }, new[] { child }, new[] { b }, new[] { b }));
-        var ungrouped = Gh(Mixed(new[] { a }, Array.Empty<GroupModel>(), new[] { b }, new[] { b }));
+        var mixedValue = Mixed(new[] { a }, new[] { child }, new[] { b }, new[] { b }); var mixed = Gh(mixedValue);
+        var twoGroupsValue = Mixed(new[] { a, b }, new[] { child }, new[] { b }, new[] { b }); var twoGroups = Gh(twoGroupsValue);
+        var ungroupedValue = Mixed(new[] { a }, Array.Empty<GroupModel>(), new[] { b }, new[] { b }); var ungrouped = Gh(ungroupedValue);
+        fz?.Model("p2cc-mixed", mixedValue, mixed); fz?.Model("p2cc-two-groups", twoGroupsValue, twoGroups); fz?.Model("p2cc-ungrouped", ungroupedValue, ungrouped);
         var q = Make("Fem.GH_LoadCase", new LoadCaseModel("Q", "Q")); var other = Make("Fem.GH_LoadCase", new LoadCaseModel("Other", "Other"));
         var increment = Produce("LoadCombinationComponent", new Dictionary<int, object> { [0] = "Cast", [1] = new object[] { q }, [2] = new object[] { 1.35 } });
         var unknownIncrement = Produce("LoadCombinationComponent", new Dictionary<int, object> { [0] = "Cast", [1] = new object[] { other }, [2] = new object[] { 1.0 } });
         var linked = new ModelModel(m2); linked.Nodes.First().Attributes.Add(new RigidConnectionAttributeModel(linked.Nodes.Last().Position));
         var supported = m2.Nodes.First(n => n.Attributes.Any(x => x is NodeRestraintAttributeModel or NodeStiffnessAttributeModel)).NodeId;
-        var bridge = Gh(BridgeConstructionTests.Model(BridGHe.Common.Geometry.SimpleBridgeBuilder.Build(SimpleBridgeTests.Input())));
-        var composite = Property(BridgeAssignmentTests.Property("Composite phase"));
+        var bridgeValue = BridgeConstructionTests.Model(BridGHe.Common.Geometry.SimpleBridgeBuilder.Build(SimpleBridgeTests.Input())); var bridge = Gh(bridgeValue);
+        var compositeValue = BridgeAssignmentTests.Property("Composite phase"); var composite = Property(compositeValue);
+        fz?.Model("p2cc-m2", m2, Gh(m2)); fz?.Model("p2cc-linked", linked, Gh(linked)); fz?.Model("p2cc-bridge", bridgeValue, bridge); fz?.Property("p2cc-composite", compositeValue, composite);
+        fz?.Note("supported node of m2: " + supported);
 
         // A09: the first beam of a name and two beams with the name and other content; through Build Model (the model carries the drafts).
         var first = Variant(property, "Same", 1.0); var second = Variant(property, "Same", 1.5);
-        IGH_Goo Beam(string id, Rhino.Geometry.Point3d s, Rhino.Geometry.Point3d e, BeamPropertyModel p, GroupModel g) { var v = new BeamModel(id, s, e, p); v.Groups.Add(g); return Make("Fem.GH_Beam", v); }
+        IGH_Goo Beam(string id, Rhino.Geometry.Point3d s, Rhino.Geometry.Point3d e, BeamPropertyModel p, GroupModel g) { var v = new BeamModel(id, s, e, p); v.Groups.Add(g); var goo = Make("Fem.GH_Beam", v); fz?.Beam("p2cc-a09-" + id, v, goo); return goo; }
+        var sameValue = Variant(property, "Same", 1.25); var same = Property(sameValue); fz?.Property("p2cc-same", sameValue, same);
         var shadowed = Produce("BuildModelComponent", new Dictionary<int, object> { [0] = new object[] { Beam("B1", P(0, 0), P(5000, 0), first, a), Beam("B2", P(5000, 0), P(10000, 0), second, b), Beam("B3", P(10000, 0), P(15000, 0), second, b) }, [1] = "Shadowed", [2] = 2 });
 
         return new List<(string, string, Dictionary<int, object>)>
@@ -2651,9 +2661,59 @@ internal static class GpcOnlyReplay
             (sequence, "girders of Bridge Member Assignment: a group, override, no bearings", new Dictionary<int, object> { [0] = bridge, [1] = phase, [2] = new object[] { "Girder\\Group1" }, [5] = false, [6] = composite }),
             (sequence, "girders of Bridge Member Assignment: a physical member", new Dictionary<int, object> { [0] = bridge, [1] = phase, [3] = new object[] { "Girder:2:1" } }),
             (phaseModel, "A09: the first beam of a name replaced: the next registers its own property", new Dictionary<int, object> { [0] = shadowed, [1] = "A09", [2] = new object[] { "B1" }, [3] = stiff, [4] = false }),
-            (phaseModel, "A09: the replacement takes the name", new Dictionary<int, object> { [0] = shadowed, [1] = "A09", [2] = new object[] { "B1" }, [3] = Property(Variant(property, "Same", 1.25)), [4] = false }),
+            (phaseModel, "A09: the replacement takes the name", new Dictionary<int, object> { [0] = shadowed, [1] = "A09", [2] = new object[] { "B1" }, [3] = same, [4] = false }),
             (sequence, "A09: the first beam of a name inactive", new Dictionary<int, object> { [0] = shadowed, [1] = phase, [2] = new object[] { "B" } }),
         };
+    }
+
+    /// <summary>P2CC (13/11/2026, user decision «Congela», 12:35): the one-shot writer of the frozen 0.3.0 payloads of the in-memory FEM models,
+    /// properties and beams of Lane 3d and of the audits on the examples 02 and 03 (<c>BRIDGHE_P2CC_FIXTURES=write:&lt;new folder&gt;</c>), in the form
+    /// of <c>legacy-payloads</c>. A value is written only if its payload read back by value (<see cref="GpcLegacyPayloads"/>, the GH types of 0.4.0)
+    /// gives the text of the GH type of the FEM value (<see cref="Text"/>, GUIDs by their ordinals). It needs the FEM inputs and goes with them.</summary>
+    private sealed class P2ccFreezer
+    {
+        internal static P2ccFreezer Current;
+        private readonly string folder;
+        private readonly List<string> index = new() { "name\tunits\tbytes\tsha256\toutcome" };
+        private readonly HashSet<string> written = new(StringComparer.Ordinal);
+        internal P2ccFreezer(string folder)
+        {
+            this.folder = Path.GetFullPath(folder);
+            if (Directory.Exists(this.folder)) throw new InvalidOperationException("P2CC FIXTURES: the folder exists, a frozen fixture is never rewritten: " + this.folder);
+            Directory.CreateDirectory(this.folder);
+        }
+        private static readonly HashSet<string> AllKinds = new(ElementGoo.Concat(PropertyGoo).Concat(ModelGoo), StringComparer.Ordinal);
+        private void Add(string name, string units, byte[] bytes, IGH_Goo fem, IGH_Goo byValue, string outcome)
+        {
+            if (!written.Add(name)) return;
+            string a = Text(GpcOnly(fem, AllKinds)), b = Text(byValue);
+            if (a != b) { Console.WriteLine("P2CC FIXTURES: NOT WRITTEN " + name + ": the payload read by value gives another text" + Environment.NewLine + Differences(a, b)); return; }
+            File.WriteAllBytes(Path.Combine(folder, name + ".bgha1"), bytes);
+            index.Add($"{name}\t{units}\t{bytes.Length}\t{Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes))}\t{outcome}");
+            Console.WriteLine($"P2CC FIXTURES: {name} {bytes.Length} bytes, equal by value");
+        }
+        internal void Model(string name, ModelModel value, IGH_Goo fem)
+        {
+            var bytes = BridGHe.Common.Helpers.ModelArchive.Write(value);
+            Add(name, value.Units.ToString(), bytes, fem, GpcModelGoo(BridGHe.Common.Gpc.GpcLegacyPayloads.Model(bytes, 1e-3, out _)), LegacyPayloadFixtures.Outcome(name, bytes));
+        }
+        internal void Property(string name, BeamPropertyModel value, IGH_Goo fem)
+        {
+            var bytes = BridGHe.Common.Helpers.ModelArchive.Write(value);
+            Add(name, "-", bytes, fem, R2aDesignFixtures.Property(BridGHe.Common.Gpc.GpcLegacyPayloads.BeamProperty(bytes)), "ELEMENT BeamPropertyModel");
+        }
+        internal void Beam(string name, BeamModel value, IGH_Goo fem)
+        {
+            var bytes = BridGHe.Common.Helpers.ModelArchive.Write(value);
+            Add(name, "-", bytes, fem, R2aDesignFixtures.Beam(BridGHe.Common.Gpc.GpcLegacyPayloads.Beam(bytes)), "ELEMENT BeamModel");
+        }
+        internal void Note(string what) => Console.WriteLine("P2CC FIXTURES NOTE: " + what);
+        internal void Close()
+        {
+            File.WriteAllText(Path.Combine(folder, "index.tsv"), string.Join("\n", index) + "\n", new System.Text.UTF8Encoding(false));
+            File.WriteAllText(Path.Combine(folder, ".gitattributes"), "*.bgha1 binary\n*.tsv -text\n*.md -text\n.gitattributes -text\n", new System.Text.UTF8Encoding(false));
+            Console.WriteLine($"P2CC FIXTURES WRITE: {index.Count - 1} payloads in {folder}");
+        }
     }
 
     /// <summary>The plug-in and the switch of the lane (<c>GpcOnlyElements.GeneratorsWithoutFem</c> or <c>PropertiesWithoutFem</c>).</summary>
@@ -2788,6 +2848,7 @@ internal static class GpcOnlyReplay
         }
         // R1: the R6.0 capture «scan» as the oracle of the definitions (with BRIDGHE_CAPTURE=compare:<folder>, as the gates run).
         oracles = new Oracles(); femInputs.Clear(); compositeGuidDefects.Clear();
+        P2ccFreezer.Current = modelsLane && Environment.GetEnvironmentVariable("BRIDGHE_P2CC_FIXTURES") is { } fz && fz.StartsWith("write:", StringComparison.Ordinal) ? new P2ccFreezer(fz.Substring("write:".Length)) : null;
         scan = R1ScanCapture.Open();
         scanFiles = scan == null ? new HashSet<string>() : scan.Files;
         Console.WriteLine(scan == null ? "GPC-ONLY " + lane + ": no R6.0 capture (BRIDGHE_CAPTURE=compare:<folder> not set): the definitions are not mapped to it"
@@ -2835,6 +2896,7 @@ internal static class GpcOnlyReplay
         if (modelsLane) Console.WriteLine($"GPC-ONLY models: {derived} derived instances (on the results of Super Element Check and the analysed models of the remade examples)");
         int cases = 0;
         if (lane is "elements" or "generators" or "properties" or "models") InMemory(lane, kinds, byType, failures, out cases);
+        P2ccFreezer.Current?.Close(); P2ccFreezer.Current = null;
         if (lane == "models") ModelsChecks(kinds, failures, ref cases); // L3b
         if (lane == "models" && Selected("Lane3e")) Lane3eChecks(failures, ref cases); // L3e
         if (lane == "properties") ParameterCases(kinds, byType, failures, ref cases);
