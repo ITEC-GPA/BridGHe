@@ -38,11 +38,9 @@ internal static class PersonalBridgeExample
             string source=mode.StartsWith("replay")||mode.StartsWith("finalize")||mode is "inputs004" or "inspect004"?Path.Combine(Root,"REV"+mode.Substring(mode.Length-3),"flusso-acciaio-misto_REV"+mode.Substring(mode.Length-3)+".ghx"):Original;
             Console.WriteLine("EXAMPLE 99: reading " + Path.GetFileName(source));
             using var doc = GrasshopperBridgeExample.Read(source); doc.FilePath = source;
-#if GPC_PILOT
             // R6.6 lane R4a (99, not run by the lane): the user's document (read only, never saved by inspect) as P2 reads it, in memory: every
             // internalised model by its GPC input read by value and its saved GPC results, every other FEM datum by its GPC datum.
             if (mode == "inspect") R4aFixtures.GpcOnly(doc);
-#endif
             if (mode == "inspect004") return PersonalBridgeExplicitInputs.Inspect(doc);
             if (mode == "inputs004") return PersonalBridgeExplicitInputs.Update(doc, plugin, Root);
             if(mode.StartsWith("replay")||mode.StartsWith("finalize"))return new PersonalBridgeRevision(doc,plugin,Root).Replay(mode.StartsWith("finalize"));
@@ -78,7 +76,6 @@ internal static class PersonalBridgeExample
 
     private static object Describe(Grasshopper.Kernel.Types.IGH_Goo goo)
     {
-#if GPC_PILOT
         // R6.6 lane R4a: a GH model or a GH beam given by its GPC data (no FEM value): described from its GPC input, analysed model and draft.
         if (goo != null && goo.GetType() == R2bFixtures.GhModel && goo.GetType().GetProperty("Value").GetValue(goo) == null)
         {
@@ -93,18 +90,11 @@ internal static class PersonalBridgeExample
             var b = draft.Beam; double dx = b.EndPoint.X - b.StartPoint.X, dy = b.EndPoint.Y - b.StartPoint.Y, dz = b.EndPoint.Z - b.StartPoint.Z;
             return new { type = "Beam", BeamId = b.Name, Length = Math.Sqrt(dx * dx + dy * dy + dz * dz), results = b.Results.Count };
         }
-#endif
         return Describe(goo?.ScriptVariable());
     }
 
     private static object Describe(object value)
     {
-#if !GPC_PILOT
-        if (value is ModelModel model) return new { type = "Model", model.Name, nodes = model.Nodes.Count, beams = model.Beams.Count,
-            cases = model.LoadCases.Select(c => c.Name), combos = model.LoadCombinations.Select(c => c.Name),
-            results = model.Beams.Sum(b => b.Results.Count), units = model.Units.ToString() };
-        if (value is BeamModel beam) return new { type = "Beam", beam.BeamId, beam.Length, results = beam.Results.Count };
-#endif
         var text = value?.ToString(); return text?.Length > 350 ? text.Substring(0, 350) : text;
     }
 }

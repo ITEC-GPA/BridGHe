@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -134,4 +133,3 @@ internal static class R3ConcreteExclusionCheck
         finally { doc.RemoveObject(d3, false); doc.RemoveObject(reference, false); }
     }
 }
-#endif

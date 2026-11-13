@@ -25,7 +25,6 @@ internal static class BridgeCombinationExcelExample
         Directory.CreateDirectory(folder);
         string path = Path.Combine(folder, id + ".ghx"), excel = Path.Combine(folder, "Combinations.xlsx"), template = Path.Combine(folder, "Template.xlsx");
         var plugin = BridgeMergeTests.Initialize();
-#if GPC_PILOT
         // R6.6 lane R4a: the four sources of the recipe built in GPC only (BridgeCombinationExcelTests.RecipeGpc, the same samples), each given to
         // the graph as the GH model of its GPC input with its analysed model attached (an analysis component, no FEM value); the catalogue is
         // that of the GPC inputs. Build BridGHe Model then takes its GPC-only path.
@@ -33,14 +32,6 @@ internal static class BridgeCombinationExcelExample
         var catalog = BridgeCombinationCatalog.FromGpc(references.Select(r => R2bFixtures.Input(r.Input)).ToArray(), phases);
         var models = references;
         IGH_Goo Model((GPC.Model.Models.Model Input, GPC.Model.Models.Model Analysed) source) => R2bFixtures.Model(source);
-#else
-        var (models, phases) = BridgeCombinationExcelTests.Recipe();
-        var catalog = new BridgeCombinationCatalog(models, phases);
-        IGH_Goo Model(ModelModel m)
-        {
-            var type = plugin.GetTypes().Single(t => t.Name == "GH_Model"); var goo = Activator.CreateInstance(type); type.GetProperty("Value").SetValue(goo, m); return (IGH_Goo)goo;
-        }
-#endif
         using var doc = new GH_Document(); doc.FilePath = path;
         GH_Component Add(string name, float x, float y)
         {
@@ -103,17 +94,12 @@ internal static class BridgeCombinationExcelExample
         void Validate(GH_Document d)
         {
             var b = d.Objects.OfType<GH_Component>().Single(c => c.GetType().Name == "BuildBridgeModel");
-#if GPC_PILOT
             // The output: the GH model of the GPC bridge model (no FEM value); its combinations are those of the demo table, read through Excel.
             var output = b.Params.Output[0].VolatileData.AllData(true).Single();
             BridgeWorkflowTests.Require(output.GetType().GetProperty("Value").GetValue(output) == null, "GPC: the Build BridGHe Model output has a FEM value.");
             var bridge = R2bFixtures.Get<BridGHe.Common.Gpc.GpcBridge>(output, "GpcBridge") ?? throw new Exception("GPC: no GPC bridge model on the output.");
             BridgeWorkflowTests.Require(bridge.Combinations.Count == 2 && bridge.Combinations[0].Name == "DEMO_01" && bridge.Combinations[1].Name == "DEMO_02"
                 && bridge.Combinations[0].Factors.Count(f => f.Case.StartsWith("RITIRO", StringComparison.Ordinal) && f.Factor == .7) == 2, "GH Excel > Build lost combination factors.");
-#else
-            var model = (ModelModel)b.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
-            BridgeWorkflowTests.Require(model.LoadCombinations.Count == 2 && model.LoadCombinations[0].Values.Count(v => v.Key.Name.StartsWith("RITIRO", StringComparison.Ordinal) && v.Value == .7) == 2, "GH Excel > Build lost combination factors.");
-#endif
         }
         Validate(doc);
         GrasshopperBridgeExample.Write(doc, path);

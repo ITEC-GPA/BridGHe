@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Linq;
 using System.Reflection;
@@ -82,4 +81,3 @@ internal static class ResultsComponentsCheck
         return outcome;
     }
 }
-#endif

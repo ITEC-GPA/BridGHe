@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -101,4 +100,3 @@ internal static class LegacyResultsComparison
     private static double[] V(LegacyValue v) => new[] { v.Double("X"), v.Double("Y"), v.Double("Z") };
     private static string Text(double[] v) => string.Join(" ", v.Select(x => x.ToString("G6", CultureInfo.InvariantCulture)));
 }
-#endif

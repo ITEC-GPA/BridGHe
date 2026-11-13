@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -163,4 +162,3 @@ internal static class GpcDraftMergeChecks
         Console.WriteLine($"GPC DRAFT MERGE PASS: {compared} merges of node, beam and plate drafts equal to the drafts of the former merge after the resolution ({errors} with the same error)");
     }
 }
-#endif

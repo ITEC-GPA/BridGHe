@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -161,4 +160,3 @@ internal static class LegacyResultsReader
         return failures == 0 ? 0 : 1;
     }
 }
-#endif

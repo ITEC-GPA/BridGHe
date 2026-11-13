@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -602,4 +601,3 @@ internal static class GpcNullValueChecks
         Console.WriteLine($"GPC NULL VALUES TRANSITIONAL (FEM catalogue, until P2): {elements} elements, {data} data, {models} models of the FEM examples 01-10 against their FEM-backed types, {moved} plates moved as the FEM plates, {copied} copy constructors");
     }
 }
-#endif

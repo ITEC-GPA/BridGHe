@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -189,4 +188,3 @@ internal static class GpcBuilderChecksC
         else h.Attached++;
     }
 }
-#endif

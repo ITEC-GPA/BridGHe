@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -211,4 +210,3 @@ internal static class GpcBuilderChecksA
 }
 
 // R6.2, lane B (beams): GpcBuilderChecksB is in its own file (GpcBuilderChecksB.cs).
-#endif

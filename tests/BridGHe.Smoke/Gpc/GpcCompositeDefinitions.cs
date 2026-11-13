@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Linq;
 using GPC.Checkers.CompositeBridge;
@@ -190,4 +189,3 @@ internal static class GpcCompositeDefinitions
     /// <summary>The bits of a double, for the exact comparisons.</summary>
     internal static long Bits(double v) => BitConverter.DoubleToInt64Bits(v);
 }
-#endif

@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Linq;
 using BridGHe.Common.Geometry;
@@ -33,4 +32,3 @@ internal static class GpcSimpleBridge
         return GpcModels.Conversion.FromGpc(model, new BridgeUnits(DefinitionUnits.Nmm), test.BeamAngles, 1e-6, bridge: test.Bridge);
     }
 }
-#endif

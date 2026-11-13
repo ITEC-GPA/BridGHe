@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.IO;
 using System.Linq;
@@ -43,4 +42,3 @@ internal static class CompositeTextDump
         return 0;
     }
 }
-#endif

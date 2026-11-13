@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -288,4 +287,3 @@ internal static class P2kChecks
         Check(written.Results == 5, "P6: the report has the five results");
     }
 }
-#endif

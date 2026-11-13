@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.IO;
 using System.Diagnostics;
@@ -154,4 +153,3 @@ internal static class GpcPilot
         }
     }
 }
-#endif

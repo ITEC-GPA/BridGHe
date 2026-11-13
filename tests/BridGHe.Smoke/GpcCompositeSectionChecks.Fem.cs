@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Globalization;
 using System.Linq;
@@ -118,4 +117,3 @@ internal static partial class GpcCompositeSectionChecks
     }
 
 }
-#endif

@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -619,4 +618,3 @@ internal static class GpcMaterialKindChecks
         return found;
     }
 }
-#endif

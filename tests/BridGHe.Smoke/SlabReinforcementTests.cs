@@ -30,9 +30,7 @@ internal static class SlabReinforcementTests
         prop.ConcreteSection=legacy;var old=prop.GetHomogeneizedMechanicalProperties(prop.NInfinite);
         prop.ConcreteSection=new(250,3000,2000,40,0,55);var same=prop.GetHomogeneizedMechanicalProperties(prop.NInfinite);
         Require(old.Equals(same),"Zero bottom reinforcement changes existing numerical properties.");
-#if GPC_PILOT
         GpcRows(Require,Near);GpcRowsParity(prop,legacy,slab,Require); // R3: explicit numbers and the slab read by value; the parity with the FEM properties transitional
-#endif
 
         var assembly=Assembly.LoadFrom(BuildPaths.GrasshopperAssembly);
         IGH_Goo Wrap(string name,object value) { var t=assembly.GetType("BridGHe.Grasshopper.DataTypes."+name,true);var g=(IGH_Goo)Activator.CreateInstance(t);t.GetProperty("Value").SetValue(g,value);return g; }
@@ -63,7 +61,6 @@ internal static class SlabReinforcementTests
             Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(m=>m.Contains("Build BridGHe Model"))&&c.Params.Output.All(o=>o.VolatileData.IsEmpty),
                 "Super Element Check without the GPC bridge model of Build BridGHe Model: expected its error and no outputs.");
         }
-#if GPC_PILOT
         // R3: the same on a GH model and a composite beam given by their GPC data alone (no GPC bridge model attached).
         {
             using var doc=new GH_Document();var c=Component(doc,"SuperElementCheckComponent");
@@ -80,20 +77,14 @@ internal static class SlabReinforcementTests
                 "GPC data alone: Super Element Check without the GPC bridge model of Build BridGHe Model: expected its error and no outputs.");
             gpcChecks++;
         }
-#endif
         foreach(bool tapered in new[]{false,true})
         {
             var start=BridgeGrillageExample.Composite(new());start.ConsiderRebar=true;start.ConcreteSection=slab;start.NShrinkage=12;
             var end=ModelArchive.Clone(start);if(tapered){end.ConcreteSection.BottomRebarArea=2500;end.ConcreteSection.BottomCover=65;end.NShrinkage=14;}
-#if GPC_PILOT
             GpcSuperElement(assembly,tapered,start,end,Require,Near);
-#endif
         }
-#if GPC_PILOT
         Console.WriteLine($"SLAB REINFORCEMENT GPC PASS: {gpcChecks} checks on definitions built in GPC (rows of bars, analysis section, invalid rows) and on Super Element Check with D3 on a GPC bridge model; without it, the error of decision (i) = A and no outputs.");
-#endif
     }
-#if GPC_PILOT
     // P2U (F6, chain E (c) and C5): the same checks on the composite section as the GPC contract of the Checker (BridgeCompositeSectionDefinition)
     // built directly in GPC (GpcCompositeDefinitions), and Super Element Check on the GPC path (D3 on the GPC bridge model of Build BridGHe
     // Model, from an action source built in GPC; the composite beam carries definitions built in GPC).
@@ -254,5 +245,4 @@ internal static class SlabReinforcementTests
         beam.GetType().GetProperty("StartDefinition").SetValue(beam,startDefinition);beam.GetType().GetProperty("EndDefinition").SetValue(beam,endDefinition);
         Check(model,beam,"FEM carriers, transitional");
     }
-#endif
 }

@@ -29,19 +29,11 @@ internal static class BridgeDesignExamples
     private static IGH_Goo Goo(string typeName, object value)
     {
         var type = plugin.GetTypes().Single(t => t.Name == typeName);
-#if GPC_PILOT
         // R6.6 lane R4a: the FEM GH data (elements, properties, models) are given by their GPC datum alone (GpcGoo, Model); only the BridGHe
         // data without a FEM model (details, geometry) are made here.
         if (typeName is "GH_Beam" or "GH_Model" or "GH_BeamProperty" or "GH_PlateProperty" or "GH_Material") throw new InvalidOperationException("R6.6 R4a: " + typeName + " is given by its GPC datum.");
         return (IGH_Goo)Activator.CreateInstance(type, new[] { value });
-#else
-        if (typeName == "GH_Beam") return (IGH_Goo)Activator.CreateInstance(type, new object[] { value, null });
-        if (typeName != "GH_Model") return (IGH_Goo)Activator.CreateInstance(type, new[] { value });
-        var goo = (IGH_Goo)Activator.CreateInstance(type); type.GetProperty("Value").SetValue(goo, value);
-        return goo;
-#endif
     }
-#if GPC_PILOT
     /// <summary>The index of N-mm in the Units menu of Build Model (it follows <see cref="BridGHe.Common.Gpc.DefinitionUnits"/>).</summary>
     private const int Nmm = (int)BridGHe.Common.Gpc.DefinitionUnits.Nmm;
     private static bool Same(GPC.Geometry.Point3d a, GPC.Geometry.Point3d b) => Math.Abs(a.X - b.X) < 1e-6 && Math.Abs(a.Y - b.Y) < 1e-6 && Math.Abs(a.Z - b.Z) < 1e-6;
@@ -83,7 +75,6 @@ internal static class BridgeDesignExamples
         Require(!HasFem(goo), c.Name + ": the output model has a FEM value");
         return R2bFixtures.Get<BridGHe.Common.Gpc.GpcModels.Conversion>(goo, "GpcInput")?.Model ?? throw new InvalidOperationException(c.Name + ": no GPC input");
     }
-#endif
     private static GH_Panel Panel(GH_Document doc, string name, string text, float x, float y, int width = 300, int height = 115)
     {
         var p = new GH_Panel { NickName = name, UserText = text }; p.CreateAttributes(); p.Properties.Multiline = false;
@@ -112,9 +103,6 @@ internal static class BridgeDesignExamples
     private static GH_Component Find(GH_Document d, string type) => d.Objects.OfType<GH_Component>().Single(c => c.GetType().Name == type);
     private static object[] Output(GH_Component c, int port) => c.Params.Output[port].VolatileData.AllData(true).Select(g => g.ScriptVariable()).ToArray();
     private static void Require(bool value, string text) { if (!value) throw new InvalidOperationException("BRIDGE DESIGN GH: " + text); }
-#if !GPC_PILOT
-    private const int Nmm = (int)ModelModel.ModelUnits.Nmm;
-#endif
     private static void Info(GH_Document doc, GH_Component source, int port, float x, float y)
     { var p = Panel(doc, source.Params.Output[port].Name, "", x, y, 520, 220); p.AddSource(source.Params.Output[port]); }
     private static void Header(GH_Document doc, string title, string text) =>
@@ -133,21 +121,10 @@ internal static class BridgeDesignExamples
             new[] { 12000d, 24000, 36000, 48000, 60000, 72000, 84000 }.Select(n => new GH_Number(n)), new Grasshopper.Kernel.Data.GH_Path(0));
         Wire(joints, 0, c, 7); c.Hidden = true; return c;
     }
-#if GPC_PILOT
     /// <summary>R6.6 R4a: the GPC twin of the steel property (I 2500, flanges 600 × 30, web 16, S355 E 210000 ν 0.3, kind Steel), given by its
     /// GPC datum alone.</summary>
     private static BridGHe.Common.Gpc.Legacy.LegacyBeamProperty SteelGpc(string id = "Steel H") => R2aDesignFixtures.BaseProperty(id);
     private static IGH_Goo SteelGoo(string id = "Steel H") => R2aDesignFixtures.Property(SteelGpc(id));
-#else
-    private static BeamPropertyModel Steel(string id = "Steel H")
-    {
-        var p = BridgeAssignmentTests.Property(id);
-        p.Material.Kind = MaterialModel.MaterialKind.Steel; p.Material.Name = "S355"; p.Material.MinimumYieldStress = 355;
-        p.Section = new SectionModel { SectionType = SectionModel.SectionTypes.I, B1 = 600, B2 = 600, D = 2500, T1 = 30, T2 = 30, T3 = 16 };
-        return p;
-    }
-    private static IGH_Goo SteelGoo(string id = "Steel H") => Goo("GH_BeamProperty", Steel(id));
-#endif
     private static GH_Component Assignment(GH_Document doc, GH_Component bg, int port, float x = 1100, float y = 50)
     {
         var c = Add(doc, "BridgeMemberAssignmentComponent", x, y); Wire(bg, port, c, 0);
@@ -156,11 +133,7 @@ internal static class BridgeDesignExamples
     private static GH_Component Deck(GH_Document doc, GH_Component bg, int port, float x, float y)
     {
         var c = Add(doc, "BridgeDeckMeshComponent", x, y); Wire(bg, port, c, 0);
-#if GPC_PILOT
         Data(doc, c, 1, "Shell C, t=250 mm, E=34000 MPa", R2aDesignFixtures.PlateProperty(R2aDesignFixtures.DeckProperty()));
-#else
-        Data(doc, c, 1, "Shell C, t=250 mm, E=34000 MPa", Goo("GH_PlateProperty", BridgeMeshTests.DeckProperty()));
-#endif
         Number(c, 2, 5000); Number(c, 3, 3000); Input(doc, c, 4, 30000, 70000); return c;
     }
     private static void Solve(GH_Document d)
@@ -193,16 +166,12 @@ internal static class BridgeDesignExamples
     internal static void Run(bool writeExamples = false)
     {
         plugin = BridgeMergeTests.Initialize(); generate = writeExamples;
-#if GPC_PILOT
         // R6.6 lane R4a: every input given by its GPC datum alone and the generators and property producers on their GPC-only path (the switches
         // of P2, restored after): no FEM value anywhere in the graphs.
         using (R2aDesignFixtures.WithoutFem())
-#endif
         { Advisor(); Schedule(); Assign(); Bearings(); Connections(); Bracing(); DeckExample(); Construction(); Details(); Deflection(); Fatigue(); CheckMap(); Complete(); }
         Console.WriteLine("BRIDGE DESIGN EXAMPLES PASS: 13 GHX definitions solved and reopened; 12 new components, integrated bridge and extended audit; no solver invoked"
-#if GPC_PILOT
             + " (GPC data alone)"
-#endif
             + ".");
     }
     private static void Advisor()
@@ -231,14 +200,9 @@ internal static class BridgeDesignExamples
         var c = Assignment(doc, bg, 14, 1500); Wire(rule, 0, c, 3); Info(doc, c, 3, 1850, 50);
         Save(doc, "34-sezioni-per-progressiva", d =>
         {
-#if GPC_PILOT
             // The beam drafts: the GPC property has no BridGHe Id, its identity is its name (R2a).
             var beams = Drafts<BridGHe.Common.Gpc.Legacy.LegacyBeamDraft>(Find(d, "BridgeMemberAssignmentComponent"), 0);
             Require(beams.Any(b => b.Beam.BeamProperty.Name == "Tapered H") && beams.Any(b => Math.Abs(b.Beam.StartPoint.X - 12345) < 1e-6), "Live rule and taper persist");
-#else
-            var beams = Output(Find(d, "BridgeMemberAssignmentComponent"), 0).Cast<BeamModel>().ToArray();
-            Require(beams.Any(b => b.BeamProperty.Id == "Tapered H") && beams.Any(b => Math.Abs(b.PointFrom.X - 12345) < 1e-6), "Live rule and taper persist");
-#endif
         });
     }
     private static void Assign()
@@ -257,13 +221,9 @@ internal static class BridgeDesignExamples
         {
             var a = Find(d, "BridgeBearingsComponent");
             Require(Output(a, 0).Length == 12 && a.ClippingBox.IsValid, "Bearing count and preview");
-#if GPC_PILOT
             // The node drafts: one coordinate system of the restraints each (the record of the former NodeCoordinateAttributeModel).
             Require(Drafts<BridGHe.Common.Gpc.Legacy.LegacyNodeDraft>(a, 0).All(n => n.Node.Assignments.Restrains.Count(r => r.SourceRecord == "NodeCoordinateAttributeModel") == 1),
                 "Actual local frames survive archive");
-#else
-            Require(Output(a, 0).Cast<NodeModel>().All(n => n.Attributes.OfType<NodeCoordinateAttributeModel>().Count() == 1), "Actual local frames survive archive");
-#endif
         });
     }
     private static void Connections()
@@ -277,14 +237,10 @@ internal static class BridgeDesignExamples
             if (i == 1) Data(doc, c, 2, "Asta elastica — proprietà esplicita", SteelGoo());
             if (i == 2)
             {
-#if GPC_PILOT
                 // The beam to offset given by its GPC draft alone (Beam ID "1", from (0, 0, -1500) to (5000, 0, -1500)).
                 var draft = BridGHe.Common.Gpc.Builders.GpcBeamBuilders.New(new GPC.Geometry.Point3d(lines[0].From.X, lines[0].From.Y, lines[0].From.Z),
                     new GPC.Geometry.Point3d(lines[1].From.X, lines[1].From.Y, lines[1].From.Z), SteelGpc(), null, 0, 0, 0, R4aFixtures.Id("37 beam"), "1");
                 Data(doc, c, 3, "Trave da spostare", R2aDesignFixtures.Beam(draft, R4aFixtures.Id("37 gh beam")));
-#else
-                Data(doc, c, 3, "Trave da spostare", Goo("GH_Beam", new BeamModel(lines[0].From, lines[1].From, Steel()) { BeamId = "1" }));
-#endif
                 ((Param_Vector)c.Params.Input[4]).PersistentData.Clear(); ((Param_Vector)c.Params.Input[4]).SetPersistentData(new Vector3d(0, 100, 0));
             }
             Info(doc, c, 1, 150 + 650 * i, 450);
@@ -313,16 +269,10 @@ internal static class BridgeDesignExamples
         Info(doc, c, 5, 1450, 500);
         Save(doc, "39-soletta-getti", d =>
         {
-#if GPC_PILOT
             // The plate drafts: the groups by full name in their records (R2a).
             var deck = Find(d, "BridgeDeckMeshComponent"); var plates = Drafts<BridGHe.Common.Gpc.Legacy.LegacyPlateDraft>(deck, 2);
             var groups = plates.SelectMany(p => p.Records.Groups).Distinct().ToArray();
             Require(plates.Length > 300 && groups.Length == 3, $"Three live pour groups: plates={plates.Length}, groups={string.Join(",", groups)}");
-#else
-            var deck = Find(d, "BridgeDeckMeshComponent"); var plates = Output(deck, 2).Cast<PlateModel>().ToArray();
-            Require(plates.Length > 300 && plates.SelectMany(p => p.Groups).Select(g => g.FullName).Distinct().Count() == 3,
-                $"Three live pour groups: plates={plates.Length}, groups={string.Join(",", plates.SelectMany(p => p.Groups).Select(g => g.FullName).Distinct())}");
-#endif
             Require(Output(Find(d, "BridgeMemberAssignmentComponent"), 2).Length == 0, "Deck-split geometry assigned");
         });
     }
@@ -344,7 +294,6 @@ internal static class BridgeDesignExamples
         }
         Save(doc, "40-sequenza-costruttiva", d =>
         {
-#if GPC_PILOT
             // R6.6 R4a: the snapshots are GPC inputs alone (no FEM value). The former parity of each snapshot with the conversion of its FEM output
             // (GpcInputComparison.RequireComponents) is retired with the FEM output; the snapshot contents against the selection of the input are
             // explicit in bridge-construction (R2b). Here: three increasing snapshots, the complete one with every beam of Build Model, each
@@ -356,11 +305,6 @@ internal static class BridgeDesignExamples
             Require(snapshots[2].BeamElements.Count == built.BeamElements.Count && snapshots.All(s => s.AllElements.All(e => e.Results.Count == 0))
                 && snapshots.All(s => s.BeamElements.Values.All(b => built.BeamElements.Values.Any(o => Same(o.StartPoint, b.StartPoint) && Same(o.EndPoint, b.EndPoint)))),
                 "Snapshots are selections of the built model");
-#else
-            var snapshots = d.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "BridgeConstructionSequenceComponent")
-                .Select(c => (ModelModel)Output(c, 0).Single()).OrderBy(m => m.Beams.Count).ToArray();
-            Require(snapshots.Length == 3 && snapshots[0].Beams.Count < snapshots[1].Beams.Count && snapshots[1].Beams.Count < snapshots[2].Beams.Count, "Three independent activation snapshots");
-#endif
         });
     }
     private static void Details()
@@ -380,14 +324,10 @@ internal static class BridgeDesignExamples
     {
         using var doc = new GH_Document(); Header(doc, "42 | FRECCE E CONTROFRECCIA", "DATI SINTETICI: parabola con freccia relativa 20 mm e cedimenti u=-5-0.0002s.\nA s=15 m: assoluta -28 mm, relativa -20 mm, controfreccia +20 mm. Display Scale cambia solo le curve.");
         var g = SimpleBridgeBuilder.Build(SimpleBridgeTests.Input()); var c = Add(doc, "BridgeDeflectionCamberComponent", 450, 50);
-#if GPC_PILOT
         // R6.6 R4a: the analytical displacements stored in a GPC model built in GPC alone (BridgeDeflectionTests.AnalyticGpc), with the bridge
         // data of its members (the girder stations of the physical members) on its GPC input.
         var analytic = BridgeDeflectionTests.AnalyticGpc(g);
         Data(doc, c, 0, "Modello con spostamenti sintetici", Model(AnalyticStructure(g, out var members), analytic, members));
-#else
-        Data(doc, c, 0, "Modello con spostamenti sintetici", Goo("GH_Model", BridgeDeflectionTests.AnalyticModel(g)));
-#endif
         Data(doc, c, 1, "Geometria dei campioni", Goo("BridgeGeometryGoo", g)); Input(doc, c, 3, "G1"); Input(doc, c, 9, 100);
         Info(doc, c, 2, 900, 20); Info(doc, c, 3, 900, 300);
         Save(doc, "42-frecce-controfreccia", d =>
@@ -401,12 +341,8 @@ internal static class BridgeDesignExamples
         using var doc = new GH_Document(); Header(doc, "43 | STORIE PER FATICA", "Storia ordinata dimostrativa 0,10,2,8,0: cicli di ampiezza 10 e 6.\nA sinistra valori diretti in MPa; a destra stessa storia da campioni FEM SINTETICI N. Nessuna curva S-N o danno automatico.");
         var direct = Add(doc, "BridgeFatigueHistoryComponent", 450, 50); Input(doc, direct, 0, 0, 10, 2, 8, 0); Info(doc, direct, 5, 850, 50);
         var fem = Add(doc, "BridgeFatigueHistoryComponent", 1500, 50);
-#if GPC_PILOT
         // R6.6 R4a: the transit built in GPC alone (BridgeFatigueTests.HistoryGpc: the axial force of each case at both beam ends).
         Data(doc, fem, 1, "Transito sintetico, non Straus", Model(HistoryStructure(), BridgeFatigueTests.HistoryGpc()));
-#else
-        Data(doc, fem, 1, "Transito sintetico, non Straus", Goo("GH_Model", ExampleRemake04.WithEndNodes(BridgeFatigueTests.HistoryModel(), out _)));
-#endif
         Text(fem, 2, "1"); Number(fem, 3, 500); Int(fem, 5, 0); Input(doc, fem, 4, "Q0", "Q1", "Q2", "Q3", "Q4"); Info(doc, fem, 1, 1900, 50);
         Save(doc, "43-storie-fatica", d =>
         {
@@ -421,14 +357,9 @@ internal static class BridgeDesignExamples
         var build = Add(doc, "BuildModelComponent", 1500, 50); Wire(assigned, 0, build, 0); Int(build, 2, Nmm);
         var section = Add(doc, "BridgeGeometryComponent", 400, 1100); var studs = Add(doc, "BridgeStudsComponent", 400, 1500);
         var check = Add(doc, "BridgeSectionCheckComponent", 1100, 1100); Wire(section, 0, check, 0); Wire(studs, 0, check, 7);
-#if GPC_PILOT
         // R6.6 R4a: the materials given by their GPC datum alone, with the same numbers.
         Data(doc, check, 1, "C30", R4aFixtures.Material(R4aFixtures.Concrete()));
         Data(doc, check, 2, "S355", R4aFixtures.Material(R4aFixtures.S355()));
-#else
-        Data(doc, check, 1, "C30", Goo("GH_Material", new MaterialModel("C30") { Name = "C30", Kind = MaterialModel.MaterialKind.Concrete, SpecificCompressiveStrength = 30 }));
-        Data(doc, check, 2, "S355", Goo("GH_Material", new MaterialModel("S355") { Name = "S355", Kind = MaterialModel.MaterialKind.Steel, Modulus = 210000, MinimumYieldStress = 355, MinimumTensileStress = 510 }));
-#endif
         Data(doc, check, 4, "Incrementi locali dimostrativi",
             Goo("BridgeDetailGoo", new BridgePhase { Name = "Acciaio", Kind = BridgePhaseKind.SteelOnly, MomentKNm = 800, ShearKN = 300 }),
             Goo("BridgeDetailGoo", new BridgePhase { Name = "Misto", MomentKNm = 200, ShearKN = 100, Phi = 2 }));
@@ -474,7 +405,6 @@ internal static class BridgeDesignExamples
         }
         Save(doc, "45-ponte-completo-fasi", d =>
         {
-#if GPC_PILOT
             // R6.6 R4a: the model of Build Model is its GPC input alone; the same assertions on the GPC model. The audit reads the GPC input
             // (BridgeModelAudit.Inspect on the conversion, as the audit component). The former parity of each snapshot with the conversion of
             // its FEM output (GpcInputComparison.RequireComponents) is retired with the FEM output.
@@ -491,18 +421,6 @@ internal static class BridgeDesignExamples
                 .Select(c => Input(c)).OrderBy(m => m.AreaElements.Count).ToArray();
             Require(phases[0].AreaElements.Count == 0 && phases[1].AreaElements.Count > 0 && phases[2].AreaElements.Count == model.AreaElements.Count, "Steel/first pour/full deck snapshots");
             Require(phases.All(m => m.AllElements.All(e => e.Results.Count == 0) && m.Datasets.Count == 0), "Unanalysed snapshots contain no invented results");
-#else
-            var model = (ModelModel)Output(Find(d, "BuildModelComponent"), 0).Single();
-            Require(model.Beams.Count == Output(Find(d, "BridgeMemberAssignmentComponent"), 0).Length &&
-                model.Plates.Count == Output(Find(d, "BridgeDeckMeshComponent"), 2).Length && model.Plates.Count > 0, "Complete beam/shell model without lost members");
-            Require(model.Nodes.Any(n => n.Attributes.OfType<RigidConnectionAttributeModel>().Any()), "Native rigid link definitions assembled");
-            var diagnostics = BridGHe.Common.Diagnostics.BridgeModelAudit.Inspect(model, 1e-5);
-            Require(!diagnostics.Any(i => i.Severity == "Error" || i.Code == "DISCONNECTED"), string.Join("; ", diagnostics.Select(i => i.ToString())));
-            var phases = d.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "BridgeConstructionSequenceComponent")
-                .Select(c => (ModelModel)Output(c, 0).Single()).OrderBy(m => m.Plates.Count).ToArray();
-            Require(phases[0].Plates.Count == 0 && phases[1].Plates.Count > 0 && phases[2].Plates.Count == model.Plates.Count, "Steel/first pour/full deck snapshots");
-            Require(phases.All(m => m.Elements.All(e => e.Results.Count == 0)), "Unanalysed snapshots contain no invented results");
-#endif
         });
     }
 }

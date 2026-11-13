@@ -25,7 +25,6 @@ internal static class WiredLoadSchemaTests
                 g.GetType().GetProperty("Value").SetValue(g,value); return g;
             }
             bool patch=name=="LoadPatchTypeComponent";
-#if GPC_PILOT
             // R6.6 R2a: the plate, the beam and the load case given by their GPC data alone (no FEM value): the component takes the GPC path.
             if(patch)
             {
@@ -44,23 +43,6 @@ internal static class WiredLoadSchemaTests
                 ((Param_Number)c.Params.Input.Single(p=>p.Name=="PA")).SetPersistentData(10d);
                 ((Param_Number)c.Params.Input.Single(p=>p.Name=="PB")).SetPersistentData(20d);
             }
-#else
-            if(patch)
-            {
-                var plate=new PlateModel(new[]{Point3d.Origin,new Point3d(1000,0,0),new Point3d(1000,1000,0),new Point3d(0,1000,0)},new PlatePropertyModel("P"){PropertyType=PlatePropertyType.LoadPatch});
-                ((Param_GenericObject)c.Params.Input[0]).PersistentData.Append(Goo("GH_Plate",plate));
-            }
-            else
-            {
-                var beam=new BeamModel(Point3d.Origin,new Point3d(1000,0,0),new BeamPropertyModel("P")
-                {PropertyType=BeamPropertyType.Beam,Section=new SectionModel{SectionType=SectionModel.SectionTypes.SolidCircle,D=100},Material=new MaterialModel("S"){Modulus=210000}});
-                ((Param_GenericObject)c.Params.Input[0]).PersistentData.Append(Goo("GH_Beam",beam));
-                ((Param_GenericObject)c.Params.Input[1]).PersistentData.Append(Goo("GH_LoadCase",new LoadCaseModel("Q","Q")));
-                ((Param_Integer)c.Params.Input.Single(p=>p.Name=="Direction")).SetPersistentData(1);
-                ((Param_Number)c.Params.Input.Single(p=>p.Name=="PA")).SetPersistentData(10d);
-                ((Param_Number)c.Params.Input.Single(p=>p.Name=="PB")).SetPersistentData(20d);
-            }
-#endif
             var type=(Param_Integer)c.Params.Input.Single(p=>p.Name=="Type"); type.PersistentData.Clear();
             var source=new GH_ValueList(); source.CreateAttributes(); source.ListItems.Clear();
             source.ListItems.Add(new GH_ValueListItem("Schema esterno",patch?"3":"1"){Selected=true}); doc.AddObject(source,false); type.AddSource(source);
@@ -83,7 +65,6 @@ internal static class WiredLoadSchemaTests
                     throw new Exception("Schema input/wire lost on reload: "+name);
                 if(restored.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count>0 || restored.Params.Output[0].VolatileDataCount!=1)
                     throw new Exception(name+": "+string.Join(";",restored.RuntimeMessages(GH_RuntimeMessageLevel.Error)));
-#if GPC_PILOT
                 // The action read on the GPC datum of the output (no FEM value): patch type 3; one linear piece of the distributed action
                 // from PA = 10 at the start to PB = 20 at the end (schema 1, Keystone: PA at a = 0 to PB at 1 - b = 1), force or moment only.
                 var output=restored.Params.Output[0].VolatileData.AllData(true).Single();
@@ -105,18 +86,6 @@ internal static class WiredLoadSchemaTests
                         || Math.Abs((moment?Moment(s):Force(s))-10)>1e-9 || Math.Abs((moment?Moment(e):Force(e))-20)>1e-9 || (moment?Force(s)+Force(e):Moment(s)+Moment(e))!=0)
                         throw new Exception("Changed distributed action.");
                 }
-#else
-                var result=restored.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
-                if(patch)
-                {
-                    if((int)((PlateModel)result).Attributes.OfType<LoadPatchTypeAttributeModel>().Single().Value.PatchType!=3) throw new Exception("Wrong patch schema.");
-                }
-                else
-                {
-                    var load=((BeamModel)result).Loads.OfType<BeamDistributedLoadModel>().Single();
-                    if((int)load.Value.LoadSchema!=1 || load.Value.PA!=10 || load.Value.PB!=20) throw new Exception("Changed distributed action.");
-                }
-#endif
             }
             Check(doc);
             var chunk=new GH_LooseChunk("component"); c.Write(chunk);

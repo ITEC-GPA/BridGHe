@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -134,4 +133,3 @@ internal static class P2rRetired
     internal static string ReplayRaw(string file, string key) => ReplayRawKeys.Contains((file, key))
         ? "P2F: raw outputs captured with a composite beam GUID new at every solve (P7, fixed by P2F), not compared; lines, messages and outputs compared (" + Decision + ")" : null;
 }
-#endif

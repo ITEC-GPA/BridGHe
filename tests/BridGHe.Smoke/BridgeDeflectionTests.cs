@@ -20,7 +20,6 @@ internal static class BridgeDeflectionTests
         }
         return model;
     }
-#if GPC_PILOT
     /// <summary>P2T: the same analytical girder as <see cref="AnalyticModel"/>, built directly in GPC (no FEM model): the nodes of the
     /// geometry, one beam per geometry member with its bridge metadata (physical members, as Bridge Member Assignment and the legacy
     /// conversion give them) and the analytical displacements of case G1 as stored results.</summary>
@@ -43,7 +42,6 @@ internal static class BridgeDeflectionTests
         }
         bridge = test.Bridge; return test.Analyse();
     }
-#endif
     /// <summary>The analytical assertions of the test, on the FEM or the GPC evaluation (the same meaning on both paths).</summary>
     private static void Verify(Func<double, BridgeDeflectionResult> evaluate, Action missing, string path)
     {
@@ -63,7 +61,6 @@ internal static class BridgeDeflectionTests
     internal static void Run()
     {
         var geometry = SimpleBridgeBuilder.Build(SimpleBridgeTests.Input());
-#if GPC_PILOT
         // R6.6 R2b: the test on the analysed GPC model built in GPC alone (girder stations from the physical members, displacements from the
         // GPC rows), no FEM model. The analytic girder is the oracle (it replaces the former parity with the FEM path and with the converted
         // FEM model): the parabola plus the settlement chord, and the absolute displacement at every station equal to the stored one.
@@ -82,12 +79,6 @@ internal static class BridgeDeflectionTests
             Require(Math.Abs(result.Camber[i] + result.Relative[i]) < 1e-12, $"GPC: camber opposite to the relative displacement at {s}");
         }
         Console.WriteLine("BRIDGE DEFLECTION PASS: analytical deflection, settlement chord, camber sign, display invariance and missing result rejection (GPC model built in GPC alone).");
-#else
-        var model = AnalyticModel(geometry);
-        BridgeDeflectionResult Fem(double scale) => BridgeDeflectionCamber.Evaluate(model, geometry, 1, "G1", 0, "", Vector3d.ZAxis, 1, true, scale);
-        Verify(Fem, () => BridgeDeflectionCamber.Evaluate(model, geometry, 1, "unknown", 0, "", Vector3d.ZAxis, 1, true, 1), "FEM: ");
-        Console.WriteLine("BRIDGE DEFLECTION PASS: analytical deflection, settlement chord, camber sign, display invariance and missing result rejection.");
-#endif
     }
     private static void Require(bool value, string text) { if (!value) throw new InvalidOperationException("BRIDGE DEFLECTION: " + text); }
 }

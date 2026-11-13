@@ -35,16 +35,11 @@ internal static class PlotTests
         using(var bitmap=engineering.Png())bitmap.Save("artifacts/plots/engineering.png",System.Drawing.Imaging.ImageFormat.Png);
         File.WriteAllText("artifacts/plots/engineering.svg",engineering.Svg());
         RoundedAxis();
-#if GPC_PILOT
         // R6.6 R2b: the component test on GPC data alone: the stations of the GPC bridge model (the merged samples) of a source built in GPC,
         // the GH model given by the GPC input of the bridge model, the composite beam by its GPC datum (no FEM model); the explicit drawing
         // checks of the component (minimum, envelope, gaps) replace the former parity with the FEM drawing.
         Components(true);
         Console.WriteLine("PLOT: gaps, jumps, Unicode, escaping, culture, single point and unavailable results verified (component on the stations of the GPC bridge model, GPC data alone).");
-#else
-        Components(false);
-        Console.WriteLine("PLOT: gaps, jumps, Unicode, escaping, culture, single point and unavailable results verified.");
-#endif
     }
 
     private static void RoundedAxis()
@@ -86,7 +81,6 @@ internal static class PlotTests
         component.CreateAttributes();doc.AddObject(component,false);
         var modelGoo=(Grasshopper.Kernel.Types.IGH_Goo)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model",true));
         Grasshopper.Kernel.Types.IGH_Goo beamGoo;
-#if GPC_PILOT
         {
             // The GH model given by the GPC input of the bridge model with the bridge attached; the composite beam B0 by its GPC datum.
             modelGoo=R2bFixtures.Model(GpcPlotBridge());
@@ -94,18 +88,6 @@ internal static class PlotTests
                 BridGHe.Common.Gpc.GpcIdentity.Derive(BridGHe.Common.Gpc.GpcIdentity.NameSpace,"r66-r2b-plot-beam"),"B0");
             beamGoo=R2aDesignFixtures.Goo("GH_CompositeBeam",Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.DataTypes.GpcCompositeBeam",true),draft,null,null,Array.Empty<string>()));
         }
-#else
-        {
-            var model=new BridGHe.Common.Models.ModelModel(BridGHe.Common.Models.ModelModel.ModelUnits.Nmm);
-            model.AddLoadCombinations(new[]{new BridGHe.Common.Models.LoadCombinationModel("Positive"),new BridGHe.Common.Models.LoadCombinationModel("Negative")});
-            model.AddElements(new[]{new BridGHe.Common.Models.NodeModel("1",Rhino.Geometry.Point3d.Origin)});
-            var beam=new BridGHe.Common.Models.CompositeBeamModel { PointFrom=Rhino.Geometry.Point3d.Origin, PointTo=new Rhino.Geometry.Point3d(3000,0,0) };
-            modelGoo.GetType().GetProperty("Value").SetValue(modelGoo,model);
-            var load=new BridGHe.Common.Models.LoadCaseModel("1","Q");
-            foreach(int s in new[]{0,1000,3000})beam.Results.Add(new BridGHe.Common.Models.BeamForceResultModel(load,s,0,""));
-            beamGoo=(Grasshopper.Kernel.Types.IGH_Goo)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.DataTypes.GH_CompositeBeam",true),new object[]{beam,null});
-        }
-#endif
         ((Grasshopper.Kernel.Parameters.Param_GenericObject)component.Params.Input[0]).PersistentData.Append(modelGoo);
         ((Grasshopper.Kernel.Parameters.Param_GenericObject)component.Params.Input[1]).PersistentData.Append(beamGoo);
         var data=((Grasshopper.Kernel.Parameters.Param_GenericObject)component.Params.Input[2]).PersistentData;
@@ -138,7 +120,6 @@ internal static class PlotTests
         if(xml.Descendants(ns+"polygon").Count()!=2)throw new Exception("Missing station must split the envelope in the GH plot.");
         return svg;
     }
-#if GPC_PILOT
     /// <summary>R6.6 R2b: Build Bridge Model on GPC data alone for one 3 m beam B0 with samples at 0, 1000 and 3000 mm (N = station) and the
     /// combinations Positive and Negative: the GPC bridge model with its GPC input (direct reference, action on its GPC source; no FEM source).</summary>
     private static BridGHe.Common.Gpc.GpcBridgeBuild GpcPlotBridge()
@@ -159,7 +140,6 @@ internal static class PlotTests
         if(!bridge.Bridge.Combinations.Select(c=>c.Name).SequenceEqual(new[]{"Positive","Negative"}))throw new Exception("GPC: plot bridge combinations");
         return bridge;
     }
-#endif
 
     internal static void Benchmark()
     {

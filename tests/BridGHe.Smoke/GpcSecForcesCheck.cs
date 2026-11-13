@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Globalization;
 using System.Linq;
@@ -103,4 +102,3 @@ internal static class GpcSecForcesCheck
         Console.WriteLine($"GPC GIRDER RESULTS PASS ({label}): {components} components on the GPC bridge samples, {stations} stations recorded against the native capture.");
     }
 }
-#endif

@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -226,4 +225,3 @@ internal static class ExampleRemake04
     private static T[] In<T>(GH_Component c, int i) => c.Params.Input[i].VolatileData.AllData(true).Select(g => g.ScriptVariable()).OfType<T>().ToArray();
     private static string B(double v) => BitConverter.DoubleToInt64Bits(v).ToString("X16");
 }
-#endif

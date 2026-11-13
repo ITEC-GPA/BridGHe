@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -153,4 +152,3 @@ internal sealed class R3CaptureIdentities
     /// reports the key as new).</summary>
     internal Guid Of(string key, Guid otherwise) => guids.TryGetValue(key, out var g) ? g : otherwise;
 }
-#endif

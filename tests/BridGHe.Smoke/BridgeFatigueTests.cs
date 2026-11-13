@@ -20,7 +20,6 @@ internal static class BridgeFatigueTests
         }
         return model;
     }
-#if GPC_PILOT
     /// <summary>P2T: <see cref="HistoryModel"/> built directly in GPC: one 1000 mm beam with the axial force of each transit case at both ends.</summary>
     internal static GPC.Model.Models.Model HistoryGpc()
     {
@@ -34,7 +33,6 @@ internal static class BridgeFatigueTests
         }
         return test.Analyse();
     }
-#endif
     internal static void Run()
     {
         var nested = BridgeFatigueHistory.Count(new[] { 0d, 10, 2, 8, 0 }, 3, 1);
@@ -45,7 +43,6 @@ internal static class BridgeFatigueTests
         Require(BridgeFatigueHistory.Count(new[] { 7d, 7, 7 }, 3, 1).Count == 0, "Constant history");
         var monotonic = BridgeFatigueHistory.Count(new[] { 0d, 1, 2 }, 1, .5);
         Require(monotonic.Count == .5 && monotonic.EquivalentRange == 2, "Open monotonic history is one half cycle");
-#if GPC_PILOT
         // R6.6 R2b: the history of the analysed GPC model built in GPC alone, no FEM model.
         var analysed = HistoryGpc(); var gpcCases = analysed.LoadCases.Keys.ToArray();
         Require(gpcCases.SequenceEqual(new[] { "Q0", "Q1", "Q2", "Q3", "Q4" }), "GPC: cases in transit order");
@@ -71,14 +68,6 @@ internal static class BridgeFatigueTests
                     Require(b.Values.Select(R2bFixtures.Bits).SequenceEqual(expected.Select(R2bFixtures.Bits)) && b.Sources.SequenceEqual(sources),
                         $"GPC history: explicit values and sources (station {station}, component {component}, factors {factors != null}): {string.Join(",", b.Values)} / {string.Join(" ; ", b.Sources)}");
                 }
-#else
-        var model = HistoryModel(); var cases = model.LoadCases.Select(c => c.Name).ToArray();
-        var extracted = BridgeFatigueHistory.Extract(model, "1", 500, cases, 0);
-        Require(extracted.Values.SequenceEqual(new[] { 0d, 10, 2, 8, 0 }) && extracted.Sources[1].Contains("Q1"), "Explicit transit order and physical station interpolation");
-        var stress = BridgeFatigueHistory.Extract(model, "1", 500, cases, 0, new[] { .1, 0, 0, 0, 0, 0 });
-        Require(stress.Values[1] == 1, "Explicit response transform");
-        Reject(() => BridgeFatigueHistory.Extract(model, "1", 500, null, 0));
-#endif
         Reject(() => BridgeFatigueHistory.Count(new[] { 0d, double.NaN }, 3, 1));
         Reject(() => BridgeFatigueHistory.Count(new[] { 0d, 1 }, 0, 1));
         Reject(() => BridgeFatigueHistory.Count(new[] { -double.MaxValue, double.MaxValue }, 3, 1));

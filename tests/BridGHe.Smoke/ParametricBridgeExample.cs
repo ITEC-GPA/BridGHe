@@ -366,7 +366,6 @@ internal sealed class ParametricBridgeExample
     private static object Value(IGH_Param p)=>p.VolatileData.AllData(true).Single().ScriptVariable();
     /// <summary>The index of N-mm in the Units menu of Build Model.</summary>
     private const int Nmm=(int)BridGHe.Common.Gpc.DefinitionUnits.Nmm;
-#if GPC_PILOT
     // R6.6 lane R4a (generator of example 49: not run by the lane): the graph solved on GPC data alone (the switches of P2 on, see Run); the
     // assembled model is the GPC input of Build Model, the steel beams the drafts of Bridge Member Assignment (bridge member and property name).
     private static BridGHe.Common.Gpc.GpcModels.Conversion GpcInput(IGH_Param p)
@@ -431,58 +430,6 @@ internal sealed class ParametricBridgeExample
     }
     private static bool BracingRemoved(GH_Document document)=>Drafts(Out(Find(document,"BridgeMemberAssignmentComponent"),"Beams")).All(b=>
         R2aGeneratorFixtures.Member(b).Family is not (GPC.Checkers.CompositeBridge.Layout.BridgeMemberFamily.LongitudinalBracing or GPC.Checkers.CompositeBridge.Layout.BridgeMemberFamily.BracingPost));
-#else
-    private static object Validate(GH_Document d)
-    {
-        var geo=(SimpleBridgeGeometry)Value(Out(Find(d,"SimpleBridgeConfigurableComponent"),"Grillage Geometry"));
-        var model=(ModelModel)Value(Out(d.Objects.OfType<GH_Component>().Single(c=>c.NickName=="Modello graticcio con soletta"),"Model"));
-        var steel=Find(d,"BridgeMemberAssignmentComponent"); var slab=Find(d,"BridgeSlabGrillageComponent");
-        var missing=Out(steel,"Unassigned").VolatileData.AllData(true).Select(g=>g?.ScriptVariable()?.ToString()).Where(s=>!string.IsNullOrEmpty(s)).ToArray();
-        ParametricBridgeTests.Require(missing.Length==0,"Every steel member has a property: "+string.Join(", ",missing.Take(8)));
-        ParametricBridgeTests.Require(model.Beams.Count==Out(steel,"Beams").VolatileDataCount+Out(slab,"Beams").VolatileDataCount,
-            $"All steel and concrete beams assembled: model={model.Beams.Count}, steel={Out(steel,"Beams").VolatileDataCount}, slab={Out(slab,"Beams").VolatileDataCount}");
-        var issues=BridgeModelAudit.Inspect(model,1e-3);
-        ParametricBridgeTests.Require(!issues.Any(i=>i.Severity=="Error"||i.Code=="DISCONNECTED"),string.Join("; ",issues.Select(i=>i.ToString())));
-        ParametricBridgeTests.Require(model.Nodes.Count(n=>n.Attributes.OfType<NodeRestraintAttributeModel>().Any())==geo.Supports.Count,"All bearings assembled");
-        ParametricBridgeTests.Require(model.Elements.All(e=>e.Results.Count==0),"No invented analysis results");
-        var segmentSections=Find(d,"BridgeSegmentSectionsComponent");
-        var sectionIds=Out(segmentSections,"Segment IDs").VolatileData.AllData(true).Select(g=>g.ScriptVariable().ToString()).ToArray();
-        ParametricBridgeTests.Require(sectionIds.SequenceEqual(geo.Segments.OrderBy(s=>s.Girder).ThenBy(s=>s.Segment).Select(BridgeSegmentSections.Id)),
-            "Exactly one keyed steel section for every concio, independent of FEM mesh");
-        foreach(var beam in Out(steel,"Beams").VolatileData.AllData(true).Select(g=>(BeamModel)g.ScriptVariable()))
-        {
-            var meta=beam.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value;
-            if(meta.Family==BridgeMemberFamily.Girder)
-                ParametricBridgeTests.Require(beam.BeamProperty.Id==$"Concio G{meta.Group}-C{meta.Segment}","Concio properties reach assigned FEM beams");
-        }
-        var controls=d.Objects.OfType<IGH_Param>().Where(p=>p.SourceCount==0).ToArray();
-        ParametricBridgeTests.Require(controls.All(p=>p.Attributes.Pivot.X<700),"All input controls lie on the left");
-        var outputs=d.Objects.OfType<IGH_Param>().Where(p=>p.Attributes.Pivot.X>6000).ToArray();
-        ParametricBridgeTests.Require(outputs.Length>40 && outputs.All(p=>p.SourceCount==1 && p.Name==p.NickName &&
-            d.Objects.OfType<GH_Group>().Any(g=>g.NickName==p.Name && g.ObjectIDs.Contains(p.InstanceGuid))),
-            "Every right-hand output has an explicit name and a visible group caption, also after reopening");
-        var hidden=d.Objects.OfType<GH_Component>().SelectMany(c=>c.Params.Input.Where(p=>p.SourceCount==0 || Persistent(p)?.IsEmpty==false).Select(p=>c.NickName+" / "+p.Name)).ToArray();
-        ParametricBridgeTests.Require(hidden.Length==0,"Every input is explicitly connected with no embedded values: "+string.Join(", ",hidden));
-        return new {beams=model.Beams.Count,nodes=model.Nodes.Count,slabBeams=Out(slab,"Beams").VolatileDataCount,
-            supports=geo.Supports.Count,segmentSections=sectionIds.Length,objects=d.Objects.Count,sliders=controls.OfType<GH_NumberSlider>().Count(),warnings=issues.Select(i=>i.ToString()).ToArray()};
-    }
-    private static void CheckEditedModel(GH_Document d)
-    {
-        var assembled=(ModelModel)Value(Out(d.Objects.OfType<GH_Component>().Single(c=>c.NickName=="Modello graticcio con soletta"),"Model"));
-        int editedCount=0;
-        foreach(var b in assembled.Beams)
-        {
-            var m=b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value;
-            if(m.Family!=BridgeMemberFamily.Girder) continue;
-            bool edited=m.Group==1 && m.Segment==1;
-            ParametricBridgeTests.Require(b.BeamProperty.T1==(edited?50:30),"External panel edit affects exactly G1-C1 in the assembled FEM model");
-            if(edited) editedCount++;
-        }
-        ParametricBridgeTests.Require(editedCount>0,"Edited concio is present in the assembled model");
-    }
-    private static bool BracingRemoved(GH_Document document)=>Out(Find(document,"BridgeMemberAssignmentComponent"),"Beams").VolatileData.AllData(true).Select(g=>(BeamModel)g.ScriptVariable())
-        .All(b=>b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value.Family is not (BridgeMemberFamily.LongitudinalBracing or BridgeMemberFamily.BracingPost));
-#endif
     private static void RefreshSectionTable(GH_Document d)
     {
         // A changed fabrication layout deliberately invalidates the old table. Solve geometry first,
@@ -498,10 +445,8 @@ internal sealed class ParametricBridgeExample
         {
             ParametricBridgeTests.Run();
             BridgeSegmentSectionsTests.Run();
-#if GPC_PILOT
             // R6.6 lane R4a: the generators and property producers on their GPC-only path for the whole example (restored after).
             using var gpcOnly=R2aDesignFixtures.WithoutFem();
-#endif
             var example=new ParametricBridgeExample(); using var document=example.doc; example.Build(); Solve(document);
             RefreshSectionTable(document);
             var baseline=Validate(document); string folder=ExamplePaths.Case(Id); string path=Path.Combine(folder,Id+".ghx");

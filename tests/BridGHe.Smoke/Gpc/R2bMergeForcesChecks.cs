@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Linq;
 using System.Reflection;
@@ -114,4 +113,3 @@ internal static class R2bMergeForcesChecks
         Console.WriteLine($"R2B MERGE FORCES PASS: {checks} checks on GPC data alone (merge constraints, samples, reactions at 4 supports x 2 combinations with the limit cases, Super Element Check forces at 3 stations x 2 combinations in the checker frame).");
     }
 }
-#endif

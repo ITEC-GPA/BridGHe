@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -62,4 +61,3 @@ internal static class GpcBridgeMerge
             throw new Exception($"GPC MERGE FAIL ({label}): summary or warnings differ:\nFEM {string.Join(" / ", fem.Summary.Concat(fem.Warnings))}\nGPC {string.Join(" / ", gpc.Summary.Concat(gpc.Warnings))}");
     }
 }
-#endif

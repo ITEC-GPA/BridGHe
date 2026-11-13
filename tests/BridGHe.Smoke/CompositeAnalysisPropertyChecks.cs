@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Linq;
 using BridGHe.Common.Checks;
@@ -203,4 +202,3 @@ internal static partial class CompositeAnalysisPropertyChecks
         return compared;
     }
 }
-#endif

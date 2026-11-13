@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Globalization;
 using System.Linq;
@@ -76,4 +75,3 @@ internal static class GpcMergeCheck
         Console.WriteLine($"GPC MERGE PASS ({label}): {forceActions.Length} FEM actions merged from their analysed GPC models, {gpc.Samples.Sum(s => s.Count)} merged samples of {gpc.Samples.Length} beams equal to the merge of the FEM results ({values} values); {reactions} support reactions ({supports.Length} supports, {computed} computed, the others the same error) equal.");
     }
 }
-#endif

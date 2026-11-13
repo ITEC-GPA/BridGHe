@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Linq;
 using BridGHe.Common.Gpc;
@@ -50,4 +49,3 @@ internal static partial class GpcCompositeSectionChecks
             "the definitions of the beams at the stations of the check recorded against the native capture.");
     }
 }
-#endif

@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -194,4 +193,3 @@ internal static class GpcResultSelectionChecks
         Console.WriteLine($"GPC RESULT SELECTION PASS: {models} models on GPC data alone, {catalogues} catalogues as the contract ({errors} the ambiguity error), {literal} written catalogues or refusals, {selections} selections, {hashes} input fingerprints stable, super elements as the archive ({superElements} models with super elements)");
     }
 }
-#endif

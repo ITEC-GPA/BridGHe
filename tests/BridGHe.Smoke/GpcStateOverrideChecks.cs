@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -275,4 +274,3 @@ internal static class GpcStateOverrideChecks
         Console.WriteLine($"GPC STATE OVERRIDE PASS ({label}): {components} components, {beams} output beams on GPC equal to the conversion of their FEM outputs ({parts} parts); " + AreaSummary() + ".");
     }
 }
-#endif

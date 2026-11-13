@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,4 +55,3 @@ internal static class GpcWorkflowSources
         (Source(name, force, reaction, change, stations, values, reactionAt, reversed, firstEndZ, analyse: false),
          Source(name, force, reaction, change, stations, values, reactionAt, reversed, firstEndZ));
 }
-#endif

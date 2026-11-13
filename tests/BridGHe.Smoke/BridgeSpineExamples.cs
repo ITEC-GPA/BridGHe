@@ -36,7 +36,6 @@ internal static class BridgeSpineExamples
             throw new ArgumentException("Use the same deck/slab and effective width equal to one third of the deck for each girder.");
     }
 
-#if GPC_PILOT
     // -----------------------------------------------------------------------------------------------------------------------------------------
     // R6.6 lane R4c-grafi: --bridge-spine without any FEM model. The same four contribution models of the three girders as recipes (R4cModel),
     // built as GPC data by the product builders, analysed by the GPC-only analysis and read with the GPC result readers. Every check is kept with
@@ -174,7 +173,6 @@ internal static class BridgeSpineExamples
         }
         Console.WriteLine($"BRIDGE SPINE: {total-failures} passed, {failures} failed (GPC data alone)");return failures==0?0:1;
     }
-#endif
     // The former FEM models (kept for the transitional comparison r4c-inputs only: R4cGrafiInputs; P2 removes them with the FEM types).
     internal static ModelModel Create(Settings setup,int phase)
     {
@@ -227,88 +225,4 @@ internal static class BridgeSpineExamples
         return model;
     }
 
-#if !GPC_PILOT
-    private static List<SectionSample> CheckSections(Settings setup,ModelModel[] results,NativeExamples.Recorder checks)
-    {
-        var d=setup.Definition;var p=setup.Central;var checker=Checker(p);var samples=new List<SectionSample>();
-        foreach(int index in new[]{d.PanelsPerSpan/2,Math.Min(d.PanelsPerSpan,d.Panels-1)})
-        {
-            int beam=d.Panels+index;
-            var forces=Enumerable.Range(0,4).Select(phase=>results[phase].Beams[beam].Results.OfType<BeamForceResultModel>().OrderBy(f=>f.Station).First()).ToArray();
-            var combined=ModelArchive.Clone(forces[1]);var shrinkage=forces[3];
-            combined.AxialForce+=shrinkage.AxialForce;combined.Vx+=shrinkage.Vx;combined.Vy+=shrinkage.Vy;
-            combined.Mx+=shrinkage.Mx;combined.My+=shrinkage.My;combined.Torque+=shrinkage.Torque;
-            try
-            {
-                checker.GetLinearAnalysisResultByStages(out var stress,out _,p.PhiLong,0,new[]{BridgeForceConvention.FromStraus(forces[0],Reference)},
-                    new[]{BridgeForceConvention.FromStraus(combined,Reference)},new[]{BridgeForceConvention.FromStraus(forces[2],Reference)},true,new[]{p.ShrinkageLong},new[]{0.0},false);
-                var actual=StressValues(stress[0]);var expected=ExpectedStress(p,forces);
-                checks.Near("Spina: quattro contributi",stress[0].Analysis.Stages.Count,4,0,0);
-                for(int i=0;i<4;i++)checks.Near($"Spina beam {beam+1}: sigma {i} [MPa]",actual[i],expected[i],1e-6,1e-6);
-                samples.Add(new(beam+1,0,actual,true,"Sezione H centrale: tensioni elastiche lorde; interazione completa."));
-            }
-            catch(NotSupportedException ex)
-            {
-                checks.Near("Spina curva: azioni fuori campo segnalate",d.Radius>0?1:0,1,0,0);
-                samples.Add(new(beam+1,0,Array.Empty<double>(),false,ex.Message));
-            }
-        }
-        return samples;
-    }
-
-    internal static int Run(bool grasshopper,string selected)
-    {
-        CultureInfo.CurrentCulture=CultureInfo.InvariantCulture;
-        var definitions=Definitions.Where(d=>selected=="all"||d.Id.StartsWith(selected,StringComparison.Ordinal)).ToArray();
-        if(definitions.Length==0)throw new ArgumentException("Unknown spine example: "+selected);
-        int total=0,failures=0;
-        foreach(var definition in definitions)
-        {
-            string folder=Path.Combine(Root,definition.Id);Directory.CreateDirectory(folder);
-            string parameters=Path.Combine(folder,"parameters.json");
-            var setup=File.Exists(parameters)?JsonSerializer.Deserialize<Settings>(File.ReadAllText(parameters)):Default(definition);
-            Validate(setup);if(setup.Definition.Id!=definition.Id)throw new ArgumentException("Keep example Id unchanged.");
-            File.WriteAllText(parameters,JsonSerializer.Serialize(setup,Json));
-            var d=setup.Definition;var checks=new NativeExamples.Recorder();
-            var inputs=Enumerable.Range(0,4).Select(phase=>Create(setup,phase)).ToArray();var results=new ModelModel[4];var mesh=new List<object>();
-            checks.Near("Tre gruppi longitudinali",inputs[0].Beams.Where(b=>b.HasAttribute(typeof(SuperElementAttributeModel))).Select(SuperElementAttributeModel.GetSuperElement).Distinct().Count(),3,0,0);
-            checks.Near("Spina con inerzia maggiore delle laterali",GpcH(setup.Central).Jxx>GpcH(setup.Lateral).Jxx?1:0,1,0,0);
-            for(int phase=0;phase<4;phase++)
-            {
-                Console.WriteLine("SOLVE "+d.Id+" "+Cases[phase]);results[phase]=Solve(inputs[phase],d.Id+"/"+Cases[phase]);
-                Equilibrium(inputs[phase],results[phase],Cases[phase],checks);
-                checks.Near(Cases[phase]+" risultati per ogni beam",results[phase].Beams.Count(b=>b.Results.OfType<BeamForceResultModel>().Count()==5),inputs[phase].Beams.Count,0,0);
-                if(d.Radius==0)
-                {
-                    double error=Enumerable.Range(0,d.Panels+1).Max(i=>Math.Abs(Displ(results[phase].Nodes[i],Cases[phase]).Displacement.Z-Displ(results[phase].Nodes[2*(d.Panels+1)+i],Cases[phase]).Displacement.Z));
-                    checks.Near(Cases[phase]+" simmetria Uz laterali [mm]",error,0,0,1e-6);
-                }
-                var refined=d with { PanelsPerSpan=2*d.PanelsPerSpan };
-                var refinedResult=Solve(Create(setup with { Definition=refined },phase),d.Id+"/mesh-"+refined.PanelsPerSpan+"-"+Cases[phase]);
-                double difference=0,scale=0;
-                for(int j=0;j<3;j++)for(int i=0;i<=d.Panels;i++)
-                {
-                    double u=Displ(results[phase].Nodes[j*(d.Panels+1)+i],Cases[phase]).Displacement.Z;
-                    double v=Displ(refinedResult.Nodes[j*(refined.Panels+1)+2*i],Cases[phase]).Displacement.Z;
-                    difference=Math.Max(difference,Math.Abs(u-v));scale=Math.Max(scale,Math.Abs(v));
-                }
-                checks.Near(Cases[phase]+" convergenza Uz [mm]",difference,0,0,Math.Max(1e-6,.02*scale));
-                mesh.Add(new { Phase=Cases[phase],Base=d.PanelsPerSpan,Refined=refined.PanelsPerSpan,MaxUzDifference=difference,ReferencePeakUz=scale,RelativeError=difference/Math.Max(scale,1e-12) });
-            }
-            var sections=CheckSections(setup,results,checks);WriteResults(folder,d,results);
-            if(grasshopper)GrasshopperBridgeSuite.Run(d,inputs,results,sections,checks,setup.Central,new[]{"G2"});
-            var report=new { Date=DateTimeOffset.Now,Definition=d,Section=setup.Central,LateralSection=setup.Lateral,Girders=3,Ec,
-                Shrinkage=Shrinkage(setup.Central),LateralShrinkage=Shrinkage(setup.Lateral),
-                Method="Three incremental linear stiffness states plus differential shrinkage. Primary section stress plus native secondary resultants, once each.",
-                Scope="Equivalent planar grillage, gross uncracked sections, full interaction; explicit tributary effective width. Central H section only. N-Mx-Vy checks exclude T, M2 and V1 with an explicit assumption; all FEM resultants retained. No complete bridge design verification.",
-                Results=results.Select((m,phase)=>new { Case=Cases[phase],MinUz=m.Nodes.Min(n=>Displ(n,Cases[phase]).Displacement.Z),MaxUz=m.Nodes.Max(n=>Displ(n,Cases[phase]).Displacement.Z),
-                    MinMy=m.Beams.Take(3*d.Panels).SelectMany(b=>b.Results.OfType<BeamForceResultModel>()).Min(f=>f.My),MaxMy=m.Beams.Take(3*d.Panels).SelectMany(b=>b.Results.OfType<BeamForceResultModel>()).Max(f=>f.My),
-                    MaxAbsT=m.Beams.Take(3*d.Panels).SelectMany(b=>b.Results.OfType<BeamForceResultModel>()).Max(f=>Math.Abs(f.Torque)) }),Mesh=mesh,Sections=sections,Checks=checks.Measurements };
-            File.WriteAllText(Path.Combine(folder,"validation.json"),JsonSerializer.Serialize(report,Json));
-            int failed=checks.Measurements.Count(c=>!c.Passed);total+=checks.Measurements.Count;failures+=failed;
-            Console.WriteLine($"{d.Id}: {checks.Measurements.Count-failed} passed, {failed} failed");
-        }
-        Console.WriteLine($"BRIDGE SPINE: {total-failures} passed, {failures} failed");return failures==0?0:1;
-    }
-#endif
 }

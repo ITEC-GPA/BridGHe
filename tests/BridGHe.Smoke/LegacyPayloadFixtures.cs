@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -65,4 +64,3 @@ internal static partial class LegacyPayloadFixtures
         { return "REFUSED " + e.GetType().Name + ": " + e.Message.Replace('\t', ' ').Replace('\r', ' ').Replace('\n', ' '); }
     }
 }
-#endif

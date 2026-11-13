@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -73,4 +72,3 @@ internal static class R2aPropertyFixtures
     /// <summary>An empty GH value of the plug-in type (no FEM value, no GPC datum): an invalid input.</summary>
     internal static IGH_Goo Empty(string type) => (IGH_Goo)Activator.CreateInstance(R2aDesignFixtures.Plugin.GetTypes().Single(t => t.Name == type));
 }
-#endif

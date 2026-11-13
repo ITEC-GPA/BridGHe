@@ -43,13 +43,9 @@ internal static class BridgeSegmentExcelTests
     {
         checks = 0;
         var input = SimpleBridgeTests.Input() with { Segments = new BridgeSegments { MaximumLength = 12000 } };
-#if GPC_PILOT
         // R6.6 R2a: the base property given by its GPC datum alone (the path of P2): the template and the sections on GPC (TemplateGpc, CreateGpc),
         // the Bridge Segment Sections component on the GH property made from the datum alone.
         var geometry = SimpleBridgeBuilder.Build(input); var property = R2aDesignFixtures.BaseProperty();
-#else
-        var geometry = SimpleBridgeBuilder.Build(input); var property = BridgeSegmentSectionsTests.BaseProperty();
-#endif
         string folder = Path.GetFullPath("artifacts/segment-excel/tests-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(folder);
         string template = Path.Combine(folder, "sections.xlsx");
         BridgeSegmentWorkbook.Write(template, geometry);
@@ -59,7 +55,6 @@ internal static class BridgeSegmentExcelTests
         Reject(() => BridgeSegmentWorkbook.Write(template, geometry), access: true);
         using (var held = File.Open(template, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) Reject(() => BridgeSegmentWorkbook.Write(template, geometry, overwrite:true), access: true);
         Check(File.ReadAllBytes(template).SequenceEqual(original), "existing and locked files preserved");
-#if GPC_PILOT
         string filled = Path.Combine(folder, "filled.xlsx"); BridgeSegmentWorkbook.Write(filled, geometry, null, template: BridgeSegmentWorkbook.TemplateGpc(geometry, property));
         Edit(filled, x => Value(Cell(x, "G7"), "50"));
         var edited = BridgeSegmentWorkbook.Read(filled, geometry).Table;
@@ -67,15 +62,6 @@ internal static class BridgeSegmentExcelTests
         Check(sections.Rules[0].GpcProperty.Data.Section.T1 == 50 && sections.Rules.Skip(1).All(r => r.GpcProperty.Data.Section.T1 == 30), "edited bottom flange affects only the keyed concio");
         double area = 600 * 50 + 600 * 30 + 16 * (2500 - 50 - 30);
         Check(Math.Abs(R2aDesignFixtures.Area(sections.Rules[0].GpcProperty) - area) < 1e-6, "imported section agrees with independent analytical area");
-#else
-        string filled = Path.Combine(folder, "filled.xlsx"); BridgeSegmentWorkbook.Write(filled, geometry, property);
-        Edit(filled, x => Value(Cell(x, "G7"), "50"));
-        var edited = BridgeSegmentWorkbook.Read(filled, geometry).Table;
-        var sections = BridgeSegmentSections.Create(geometry, property, edited);
-        Check(sections.Rules[0].Property.T1 == 50 && sections.Rules.Skip(1).All(r => r.Property.T1 == 30), "edited bottom flange affects only the keyed concio");
-        double area = 600 * 50 + 600 * 30 + 16 * (2500 - 50 - 30);
-        Check(Math.Abs(sections.Rules[0].Property.SectionArea - area) < 1e-6, "imported section agrees with independent analytical area");
-#endif
         var mesh = SimpleBridgeBuilder.Build(input with { MaximumElementLength = 1000 });
         Check(BridgeSegmentWorkbook.Read(filled, mesh).Table.SequenceEqual(edited), "FEM mesh refinement does not change section assignments");
         var changed = SimpleBridgeBuilder.Build(input with { Segments = new BridgeSegments { MaximumLength = 10000 } });
@@ -129,21 +115,13 @@ internal static class BridgeSegmentExcelTests
     { var p = (Param_String)c.Params.Input[index]; p.PersistentData.Clear(); p.SetPersistentData(value); }
     internal static void Mode(GH_Component c, int value)
     { var p = (Param_Integer)c.Params.Input[2]; p.PersistentData.Clear(); p.SetPersistentData(value); }
-#if GPC_PILOT
     private static void Component(string folder, SimpleBridgeGeometry geometry, BridGHe.Common.Gpc.Legacy.LegacyBeamProperty property, string file, string[] expected)
-#else
-    private static void Component(string folder, SimpleBridgeGeometry geometry, BeamPropertyModel property, string file, string[] expected)
-#endif
     {
         using var doc = new GH_Document(); doc.FilePath = Path.Combine(folder, "workflow.ghx");
         var excel = Add(doc, "BridgeSegmentExcelComponent"); var sections = Add(doc, "BridgeSegmentSectionsComponent");
-#if GPC_PILOT
         // R6.6 R2a: the base property by its GPC datum alone (GH_BeamProperty.FromGpc): Bridge Segment Sections on GPC.
         Generic(excel, 0, geometry); Generic(sections, 0, geometry);
         var p = (Param_GenericObject)sections.Params.Input[1]; p.PersistentData.Clear(); p.PersistentData.Append(R2aDesignFixtures.Property(property));
-#else
-        Generic(excel, 0, geometry); Generic(sections, 0, geometry); Generic(sections, 1, property);
-#endif
         Text(excel, 1, Path.GetFileName(file)); Mode(excel, 1); sections.Params.Input[2].AddSource(excel.Params.Output[4]);
         Solve(doc);
         Check(excel.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable().Equals(geometry.Segments.Count), "count available before reading Excel and before section assignment");

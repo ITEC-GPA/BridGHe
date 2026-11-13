@@ -22,14 +22,9 @@ internal static class SharedPropertiesChecks
 {
     internal static void Run()
     {
-#if GPC_PILOT
         Gpc();
-#else
-        Fem();
-#endif
     }
 
-#if GPC_PILOT
     /// <summary>
     /// R6.6 R2a: the same audit on the GPC data alone (no FEM value): the upstream data are a steel, an I section recipe, a Brep section recipe
     /// of one region away from the origin, a composite section definition, the two beam properties Beam Property makes of them and the beam Beam
@@ -132,98 +127,5 @@ internal static class SharedPropertiesChecks
         Console.WriteLine($"SHARED PROPERTIES PASS: {upstream.Count} upstream data unchanged after Beam Property, Beam, Section H Beam Property (section, property, beam), " +
             "the mirror and units menus of the section parameter, a composite beam and edits of a duplicated beam.");
     }
-#endif
 
-#if !GPC_PILOT
-    private static void Fem()
-    {
-        var assembly = Assembly.LoadFrom(BuildPaths.GrasshopperAssembly);
-        IGH_Goo Goo(string name, object value)
-        {
-            var type = assembly.GetType("BridGHe.Grasshopper.DataTypes." + name, true);
-            var goo = (IGH_Goo)Activator.CreateInstance(type); type.GetProperty("Value").SetValue(goo, value); return goo;
-        }
-        static string Fingerprint(object value) => Convert.ToHexString(SHA256.HashData(ModelArchive.Write(value)));
-
-        // Upstream data: a steel, an I section with tabulated stiffness (as a library section: CalculateSection would overwrite it),
-        // a section of generic shapes away from the origin (CalculateSection moves shapes to the minimum), a composite property.
-        var steel = new MaterialModel("S355") { Modulus = 210000, PoissonRatio = .3, Density = 7.85e-9 };
-        var section = new SectionModel("HEB-like") { SectionType = SectionModel.SectionTypes.I, D = 600, B1 = 300, B2 = 300, T1 = 30, T2 = 30, T3 = 15 };
-        section.CalculateSection(); section.I11 *= 1.01; section.SectionArea *= 1.005;
-        GPC.Geometry.Shape2d Rectangle(double x0, double y0, double x1, double y1) => new(new GPC.Geometry.Polygon2d(new[]
-            { new GPC.Geometry.Point2d(x0, y0), new GPC.Geometry.Point2d(x1, y0), new GPC.Geometry.Point2d(x1, y1), new GPC.Geometry.Point2d(x0, y1) }));
-        var generic = new SectionModel("Shapes") { SectionType = SectionModel.SectionTypes.GenericShapes,
-            GenericShapes = new BridGHe.Common.Geometry.Shapes(new[] { Rectangle(100, 50, 400, 650), Rectangle(400, 50, 700, 90) }) };
-        var composite = BridgeGrillageExample.Composite(new BridgeGrillageExample.Parameters());
-        var upstream = new Dictionary<string, object> { ["material"] = steel, ["I section"] = section, ["generic section"] = generic, ["composite property"] = composite };
-        var before = upstream.ToDictionary(p => p.Key, p => Fingerprint(p.Value));
-
-        using var document = new GH_Document { Enabled = true }; GH_Document.EnableSolutions = true;
-        GH_Component Add(string type)
-        {
-            var component = (GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components." + type, true));
-            component.CreateAttributes(); document.AddObject(component, false); return component;
-        }
-        void Set(IGH_Param param, params IGH_Goo[] values)
-        {
-            switch (param)
-            {
-                case Param_GenericObject generic: generic.PersistentData.Clear(); foreach (var v in values) generic.PersistentData.Append(v); break;
-                default: throw new InvalidOperationException("Unexpected parameter " + param.GetType().Name);
-            }
-            param.ExpireSolution(false);
-        }
-        object Solve(GH_Component component, int output = 0)
-        {
-            component.ExpireSolution(false); document.NewSolution(false, GH_SolutionMode.Silent);
-            var errors = component.RuntimeMessages(GH_RuntimeMessageLevel.Error);
-            if (errors.Count > 0) throw new Exception(component.Name + ": " + string.Join("; ", errors));
-            return component.Params.Output[output].VolatileData.AllData(true).Single().ScriptVariable();
-        }
-
-        // Beam Property on the I section and on the generic shapes (the input goo instances themselves).
-        var sectionGoo = Goo("Fem.GH_BeamSection", section); var genericGoo = Goo("Fem.GH_BeamSection", generic); var steelGoo = Goo("Fem.GH_Material", steel);
-        var property = Add("ElementProperties.BeamPropertyComponent");
-        ((Param_String)property.Params.Input[0]).PersistentData.Append(new GH_String("P1"));
-        ((Param_Integer)property.Params.Input[1]).PersistentData.Append(new GH_Integer((int)BeamPropertyType.Beam));
-        Set(property.Params.Input[2], sectionGoo); Set(property.Params.Input[3], steelGoo);
-        var p1 = (BeamPropertyModel)Solve(property);
-        Set(property.Params.Input[2], genericGoo); var p2 = (BeamPropertyModel)Solve(property);
-        if (generic.GenericShapes.GetBBox().Min.X != 100) throw new Exception("Beam Property moved the shapes of its input section.");
-        if (p2.Section.GenericShapes.GetBBox().Min.X != 0) throw new Exception("The section of the property must keep its shapes moved to the minimum.");
-        upstream["property P1"] = p1; upstream["property P2"] = p2; before["property P1"] = Fingerprint(p1); before["property P2"] = Fingerprint(p2);
-
-        // A beam from P1, then the downstream components that read or calculate its section.
-        var beamComponent = Add("Models.BeamComponent");
-        ((Param_Curve)beamComponent.Params.Input[0]).PersistentData.Append(new GH_Curve(new LineCurve(new Point3d(0, 0, 0), new Point3d(5000, 0, 0))));
-        Set(beamComponent.Params.Input[1], Goo("Fem.GH_BeamProperty", p1));
-        var beam = (BeamModel)Solve(beamComponent); upstream["beam"] = beam; before["beam"] = Fingerprint(beam);
-        var hProperty = Add("BridgeChecks.BeamSectionHPropertyComponent");
-        foreach (var input in new[] { sectionGoo, Goo("Fem.GH_BeamProperty", p1), Goo("Fem.GH_Beam", beam) })
-        { Set(hProperty.Params.Input[0], input); Solve(hProperty, 1); }
-
-        // The menus of the section parameter on a stored section that is the upstream instance.
-        var sectionParam = (IGH_Param)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components.Parameters.BeamSectionParam", true));
-        sectionParam.CreateAttributes(); document.AddObject(sectionParam, false);
-        var persistent = sectionParam.GetType().GetProperty("PersistentData").GetValue(sectionParam);
-        persistent.GetType().GetMethod("Append", new[] { sectionGoo.GetType() }).Invoke(persistent, new object[] { sectionGoo });
-        void Menu(string name, object sender) => sectionParam.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(sectionParam, new[] { sender, EventArgs.Empty });
-        Menu("OnSetMirror", null); Menu("OnUnitsClick", new ToolStripMenuItem(nameof(ModelModel.ModelUnits.Knm)));
-        // The parameter shows one stored section, converted once (mm -> m) and mirrored; the upstream section is checked below.
-        // Before: Units appended the section again and converted the shared instance three times (two items, 6e-7 m).
-        var shown = sectionParam.VolatileData.AllData(true).Select(g => (SectionModel)g.GetType().GetProperty("Value").GetValue(g)).ToArray();
-        if (shown.Length != 1 || Math.Abs(shown[0].D - .6) > 1e-12 || Math.Abs(shown[0].T3 - .015) > 1e-12 || shown[0].Mirror != SectionModel.MirrorTypes.Left || ReferenceEquals(shown[0], section))
-            throw new Exception("Section parameter after the Mirror and Units menus: " + string.Join(", ", shown.Select(x => x.D + " " + x.Mirror)) + " (expected 0.6 m, mirrored, a new section).");
-
-        // A composite beam on the composite property, and edits of duplicated beams.
-        _ = new CompositeBeamModel(Point3d.Origin, new Point3d(8000, 0, 0), composite);
-        var duplicate = (IGH_Goo)Goo("Fem.GH_Beam", beam).Duplicate(); var copy = (BeamModel)duplicate.ScriptVariable();
-        copy.AngleDeg = 30; copy.Offset = new Vector2d(10, 20); copy.Attributes.Add(new SuperElementAttributeModel("Copy"));
-
-        var changed = upstream.Where(p => Fingerprint(p.Value) != before[p.Key]).Select(p => p.Key).ToArray();
-        if (changed.Length != 0) throw new Exception("Downstream components changed upstream data in place: " + string.Join(", ", changed) + ".");
-        Console.WriteLine($"SHARED PROPERTIES PASS: {upstream.Count} upstream data unchanged after Beam Property, Beam, Section H Beam Property (section, property, beam), " +
-            "the mirror and units menus of the section parameter, a composite beam and edits of a duplicated beam.");
-    }
-#endif
 }

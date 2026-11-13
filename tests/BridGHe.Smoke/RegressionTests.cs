@@ -99,7 +99,6 @@ internal static class RegressionTests
             ["gpc-release-set"] = GpcReleaseSetTests.Run,
             ["plugin-build-check"] = PluginBuildCheckTests.Run
         };
-#if GPC_PILOT
         // F6A: conversions to GPC (lane P2B). Inserted before the release-set guards, which require the pinned lib/GPC set.
         var gpc = new Dictionary<string, Action> { ["gpc-legacy-import"] = GpcLegacyImportTests.Run, ["gh-model-gpc"] = GhModelGpcChecks.Run, ["gpc-results-file"] = GhModelGpcChecks.ResultsFile, ["gpc-materials"] = GhModelGpcChecks.Materials, ["gpc-bridge-model"] = GpcBridgeComparison.Regression, ["gpc-model-transforms"] = GpcInputComparison.Regression, ["gpc-composite-sections"] = GpcCompositeSectionChecks.Regression, ["gpc-state-override"] = GpcStateOverrideChecks.Regression, ["gpc-element-drafts"] = GpcElementDraftChecks.Regression, ["gpc-draft-merge"] = GpcDraftMergeChecks.Regression, ["gpc-build-model"] = GpcBuildModelChecks.Regression, ["gpc-material-kinds"] = GpcMaterialKindChecks.Regression, ["gpc-draft-archive"] = GpcDraftArchiveChecks.Regression, ["gpc-builders-a"] = GpcBuilderChecksA.Regression, ["gpc-builders-b"] = GpcBuilderChecksB.Regression, ["gpc-builders-c"] = GpcBuilderChecksC.Regression, ["gpc-result-selection"] = GpcResultSelectionChecks.Regression, ["gpc-analysis-drafts"] = GpcAnalysisDraftsChecks.Regression };
         gpc["gpc-null-values"] = GpcNullValueChecks.Regression; // R6.5 P0 (7/11): the GH types given by their GPC datum alone
@@ -119,7 +118,6 @@ internal static class RegressionTests
         gpc["gpc-only-properties"] = GpcOnlyReplay.Properties; // R6.5 P1 lane 2a (P2Z, 8/11): properties and data replayed with GPC-only inputs and outputs; L2B (8/11): with lane 2b (composite and bridge properties, State Override, coordinate systems)
         gpc["gpc-only-models"] = GpcOnlyReplay.Models; // R6.5 P1 lane 3a (L3a, 8/11): models, composite beams and workflow objects GPC-only; a gate step of its own (limit 5,400 s), not in regression all
         tests = gpc.Concat(tests).ToDictionary(t => t.Key, t => t.Value);
-#endif
         if (selection != "all" && !tests.ContainsKey(selection)) throw new ArgumentException("Unknown regression: " + selection);
         int count = 0, failed = 0;
         foreach (var test in tests.Where(t => selection == "all" || t.Key == selection))
@@ -631,18 +629,7 @@ internal static class RegressionTests
         dynamic derived = type.GetMethod("FromModel").Invoke(null, new object[] { ModelArchive.Clone(model), goo });
         derived.SynchronizeGuids(goo); derived.SynchronizeGuids(goo);
         Require(derived.GetGuid(derived.Value.Nodes[0]) == first, "GUID restoration is idempotent");
-#if GPC_PILOT
         P2fChecks.ModelGuids(Plugin(), Require, ModelArchive.Write(model)); // P2F (12/11): P2D reads a model back as its GPC input alone
-#else
-        var chunk = new GH_IO.Serialization.GH_LooseChunk("model");
-        Require(goo.Write(chunk), "write model and GUID map");
-        var loadedChunk = new GH_IO.Serialization.GH_LooseChunk("loaded");
-        loadedChunk.Deserialize_Binary(chunk.Serialize_Binary());
-        dynamic loaded = Activator.CreateInstance(type);
-        Require(loaded.Read(loadedChunk) && loaded.GetGuid(loaded.Value.Nodes[0]) == first, "GUIDs survive GH archive round trip");
-        var legacy = new GH_IO.Serialization.GH_LooseChunk("legacy"); legacy.SetByteArray("Data", ModelArchive.Write(model));
-        Require(loaded.Read(legacy) && loaded.Guids.Count == 2, "legacy archives regenerate complete maps");
-#endif
     }
 
     private static void NativeBeamValidity()

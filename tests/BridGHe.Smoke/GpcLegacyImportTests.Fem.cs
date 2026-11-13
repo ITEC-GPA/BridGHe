@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 
 /// <summary>FEM path (removed with the FeMM models, R6.5): the frozen payloads of the tests written once by the FEM writer
@@ -15,4 +14,3 @@ internal static partial class GpcLegacyImportTests
         Console.WriteLine($"GPC LEGACY IMPORT FEM PARITY (until R6.5): {parity} checks (the frozen payloads equal to the FEM writer now, byte for byte; the former local axes).");
     }
 }
-#endif

@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -71,4 +70,3 @@ internal static class BarLayoutMeasurement
             $"A {maxA:G3}, I11 {maxI11:G3}, I22 {maxI22:G3} ({whereI22}), centroid {maxCy:G3}; J and shear areas the same functions (0); table {file}");
     }
 }
-#endif

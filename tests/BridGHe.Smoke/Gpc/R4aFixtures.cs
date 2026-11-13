@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Linq;
 using BridGHe.Common.Gpc;
@@ -115,4 +114,3 @@ internal static class R4aFixtures
 
     internal static void Require(bool ok, string message) { if (!ok) throw new Exception("R4A: " + message); }
 }
-#endif

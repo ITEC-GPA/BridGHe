@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -302,4 +301,3 @@ internal static class GpcOnlyAnalysisNative
         check(names == "Stiff,Same,Same" && gpc.SequenceEqual(expected), $"A09: GPC-only {names} E {Rs(gpc)}, 0.3.0 Stiff,Same,Same {Rs(expected)}");
     }
 }
-#endif

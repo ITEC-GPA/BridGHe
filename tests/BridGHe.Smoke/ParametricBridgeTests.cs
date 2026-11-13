@@ -29,7 +29,6 @@ internal static class ParametricBridgeTests
         using var shortCurve=new LineCurve(Point3d.Origin,new Point3d(100,0,0)); Reject(()=>Make(curve:shortCurve));
         var input=SimpleBridgeTests.Input() with { DeckBeamStations=new[]{0d,10000,25000,60000,100000},DeckBeamSpacing=0 };
         var steel=SimpleBridgeBuilder.Build(input); var grillage=BridgeDeckGrillage.Build(input,steel);
-#if GPC_PILOT
         // R6.6 R2a: the strips on a concrete given by its GPC datum alone (the path of P2): the plans of the strips and their drafts as the
         // component builds them; the same assertions on the GPC data of the drafts. C3 (11/11): the real case of R2a, a Custom concrete E 34000
         // with Use Poisson off and G 14000 (R2a turned Use Poisson on to get past the refusal of GpcMaterials.Elastic, fixed by C3).
@@ -50,21 +49,6 @@ internal static class ParametricBridgeTests
         Require(grillage.Geometry.Members.Count>strips.Length && steel.Members.Count+strips.Length==grillage.Geometry.Members.Count,"Input geometry preserved");
         Reject(()=>BridgeSlabGrillage.Create(steel,null,"no slab",analysis,concrete)); Reject(()=>BridgeSlabGrillage.Create(grillage.Geometry,null,"invalid",null,null));
         Reject(()=>BridgeSlabGrillage.Create(grillage.Geometry,null,"invalid",BridGHe.Common.Gpc.GpcMaterials.Analysis(R2aDesignFixtures.Steel()),R2aDesignFixtures.Steel()));
-#else
-        var material=new MaterialModel{Kind=MaterialModel.MaterialKind.Concrete,Name="Test C",Modulus=34000,ShearModulus=14000};
-        var slab=BridgeSlabGrillage.Create(grillage.Geometry,material,"Test slab");
-        Require(slab.Beams.Length==grillage.Strips.Length && slab.Widths.SequenceEqual(grillage.Strips.Select(s=>s.Width)),"Nonuniform tributary lengths exactly match geometry output");
-        Require(slab.Beams.All(b=>!b.Attributes.OfType<ElementIdAttributeModel>().Any()),"Global slab FEM numbering is left to assembly, avoiding steel ID collisions");
-        for(int i=0;i<slab.Beams.Length;i++)
-        {
-            var b=slab.Beams[i]; b.GetLocalAxes(false,out _,out var up,out _,out _);
-            var meta=b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value;
-            Require(Math.Abs(b.BeamProperty.Section.SectionArea-slab.Widths[i]*input.DeckThickness)<1e-6,"Analytical strip area b*h");
-            Require(up*meta.SectionUp>1-1e-10 && b.PointFrom==grillage.Strips[i].Member.Axis.From,"Strip axes and section normal");
-        }
-        Require(grillage.Geometry.Members.Count>slab.Beams.Length && steel.Members.Count+slab.Beams.Length==grillage.Geometry.Members.Count,"Input geometry preserved");
-        Reject(()=>BridgeSlabGrillage.Create(steel,material,"no slab")); Reject(()=>BridgeSlabGrillage.Create(grillage.Geometry,null,"invalid"));
-#endif
         Console.WriteLine("PARAMETRIC BRIDGE CORE PASS: spans, girders, signed arcs, custom alignment, invalid inputs, nonuniform strips and analytical areas.");
     }
 }

@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.IO;
 using System.Linq;
@@ -77,4 +76,3 @@ internal static class LegacyNativeExamplesComparison
         return failures == 0 ? 0 : 1;
     }
 }
-#endif

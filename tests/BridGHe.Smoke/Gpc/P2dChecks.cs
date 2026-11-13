@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -539,4 +538,3 @@ internal static class P2dSaveReopen
         return same ? 0 : 1;
     }
 }
-#endif

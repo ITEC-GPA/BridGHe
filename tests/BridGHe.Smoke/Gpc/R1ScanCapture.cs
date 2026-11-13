@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -262,4 +261,3 @@ internal sealed class R1ScanCapture
     /// <summary>The definitions of the capture (the file part of the keys).</summary>
     internal HashSet<string> Files => new HashSet<string>(entries.Keys.Select(k => k.Split('|')[0]), StringComparer.Ordinal);
 }
-#endif

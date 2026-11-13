@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -243,4 +242,3 @@ internal static class P2kNative
         Console.WriteLine($"P2K MODULAR NATIVE PASS: 4 models, {combinations} combinations, {rows.Length} section results, {details.Length} details, {plots.Length} plots (GPC data alone, no transitional check).");
     }
 }
-#endif

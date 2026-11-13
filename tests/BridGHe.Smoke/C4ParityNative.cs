@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -395,4 +394,3 @@ internal static class C4ParityNative
         Console.WriteLine("C4 point 4 (not checked): a cable on a steel material through Straus R3 Export: " + outcome);
     }
 }
-#endif

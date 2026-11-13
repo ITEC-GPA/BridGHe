@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -260,4 +259,3 @@ internal static class NativePhaseExamples
         return $"{label}: internalised data with a FEM value {(before.Length == 0 ? "none" : string.Join(", ", before))}; {models} internalised models ({withoutDrafts} without drafts); read as P2 reads it: {after}";
     }
 }
-#endif

@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -126,4 +125,3 @@ internal static class R2aDesignFixtures
         public void Dispose() { generators.SetValue(null, oldGenerators); properties.SetValue(null, oldProperties); }
     }
 }
-#endif

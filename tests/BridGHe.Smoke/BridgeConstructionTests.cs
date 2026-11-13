@@ -22,37 +22,8 @@ internal static class BridgeConstructionTests
     {
         var geometry = SimpleBridgeBuilder.Build(SimpleBridgeTests.Input());
         var phase = new BridgePhaseDefinition { Order = 2, Name = "Getto", Day = 28, State = BridgeSectionState.Composite };
-#if GPC_PILOT
         Gpc(geometry, phase);
-#else
-        var source = Model(geometry); int beamCount = source.Beams.Count, nodeCount = source.Nodes.Count;
-        var snapshot = BridgeConstructionSequence.Create(source, phase, new[] { "Girder\\Group1" }, null, Array.Empty<string>(),
-            BridgeAssignmentTests.Property("Composite phase"), null);
-        Require(snapshot.Model.Beams.Count == 40 && snapshot.Model.Plates.Count == 0, "Group selects only G1");
-        Require(snapshot.Model.Beams.All(b => b.BeamProperty.Id == "Composite phase"), "Explicit phase property");
-        Require(snapshot.Model.Nodes.Count == 41 && !snapshot.Model.Nodes.Any(n => n.Attributes.OfType<NodeRestraintAttributeModel>().Any()), "Inactive nodes pruned and bearings removed");
-        Require(snapshot.Stage == null, "Native stage withheld for changed bearings/properties");
-        Require(source.Beams.Count == beamCount && source.Nodes.Count == nodeCount && source.Beams.All(b => b.BeamProperty.Id == "P"), "Input model isolated");
-        var increment = new LoadCombinationModel("G1"); increment.Values.Add(source.LoadCases[0], 1);
-        var native = BridgeConstructionSequence.Create(source, phase, new[] { "Girder\\Group1" }, null, new[] { "*" }, null, new[] { increment });
-        Require(native.Stage != null && native.Stage.Groups.Any(g => g.FullName == "Girder") &&
-            native.Stage.Groups.Any(g => g.FullName == "Girder\\Group1\\Segment1"), "Native activation includes leaf and ancestors");
-        Require(native.Stage.LoadCombinations.Single().Values.Single().Value == 1, "Native load increment preserved");
-        var physical = BridgeConstructionSequence.Create(source, phase, null, new[] { "Girder:2:1" }, new[] { "*" }, null, null);
-        Require(physical.Model.Beams.Count == 40 && physical.ActivePhysicalIds.Single() == "Girder:2:1", "Physical selection independent of beam ordering");
-        var sharedGroups = new ModelModel(source);
-        foreach (var beam in sharedGroups.Beams) { beam.Groups.Clear(); beam.Groups.Add(new GroupModel("AllSteel")); }
-        var partial = BridgeConstructionSequence.Create(sharedGroups, phase, null, new[] { "Girder:2:1" }, new[] { "*" }, null, new[] { increment });
-        Require(partial.Stage == null && partial.Model.Beams.Count == 40, "Partial physical selection cannot activate an entire shared native group");
-        sharedGroups.Beams[0].Groups.Clear();
-        Require(BridgeConstructionSequence.Create(sharedGroups, phase, null, null, new[] { "*" }, null, new[] { increment }).Stage == null,
-            "Ungrouped structural elements cannot be represented by group activation");
-        Reject(() => BridgeConstructionSequence.Create(source, phase, new[] { "missing" }, null, null, null, null));
-        Reject(() => BridgeConstructionSequence.Create(source, phase, null, null, new[] { "missing" }, null, null));
-        Console.WriteLine("BRIDGE CONSTRUCTION PASS: active groups/physical members, bearing removal, phase override, node pruning and native-stage eligibility.");
-#endif
     }
-#if GPC_PILOT
     /// <summary>R6.6 R2b: Bridge Construction Sequence on GPC (<c>GpcModelTransforms.ConstructionSequence</c>) on the bridge model built in
     /// GPC (<see cref="GpcSimpleBridge"/>, public input <c>FromGpc</c>) with a phase property built in GPC, no FEM model: group selection,
     /// explicit phase property, inactive nodes pruned and bearings removed, input isolated, physical selection, unknown groups and bearings
@@ -102,7 +73,6 @@ internal static class BridgeConstructionTests
         Expected(physical, b => input.Bridge.Member(b.Guid)?.PhysicalId == "Girder:2:1", "physical snapshot");
         Console.WriteLine("BRIDGE CONSTRUCTION PASS (GPC data alone): active groups/physical members, bearing removal, phase override, node pruning; snapshots equal to the selection of the input (beams, nodes, positions, physical members).");
     }
-#endif
     private static void Require(bool value, string text) { if (!value) throw new InvalidOperationException("BRIDGE CONSTRUCTION: " + text); }
     private static void Reject(Action action)
     { try { action(); } catch (ArgumentException) { return; } throw new InvalidOperationException("Invalid phase selection accepted"); }

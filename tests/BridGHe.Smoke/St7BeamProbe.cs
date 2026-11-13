@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Globalization;
 using System.IO;
@@ -30,4 +29,3 @@ internal static class St7BeamProbe
         return 0;
     }
 }
-#endif

@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -453,4 +452,3 @@ internal static class GpcBuilderChecksARuns
         Console.WriteLine($"R62A DISPLACEMENT SCAN: {files.Count} files, {payloads} BGHA1 payloads, {nodes} former nodes, {displacements} former node displacements");
     }
 }
-#endif

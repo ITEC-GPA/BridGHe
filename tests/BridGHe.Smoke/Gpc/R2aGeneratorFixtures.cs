@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -87,4 +86,3 @@ internal static class R2aGeneratorFixtures
         throw new InvalidOperationException("R2A GENERATORS: expected rejection: " + text);
     }
 }
-#endif

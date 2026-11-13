@@ -15,7 +15,6 @@ internal static class BridgeMovingSlabTargets
 {
     internal static int Run(string folder)
     {
-#if GPC_PILOT
         // R6.6 lane R4c-moving: the moving results by their GPC data alone: the analysed GPC model the moving analysis keeps next to its output
         // (M03_N0_MOBILE.bghr, BGHR2; the former moving.bgmodel archive of the FEM result is gone), its path, its generated cases (the catalog,
         // by native case number) and its reactions (the rows of Node Results, in the units of the definition).
@@ -25,12 +24,6 @@ internal static class BridgeMovingSlabTargets
         Require(gpcPath.End.Z==level&&gpcPath.Reference.Z==level,"This REV003 target test expects a horizontal path.");
         var generated=catalog.GeneratedMovingCases().ToDictionary(g=>g.Number,g=>g.Name);
         var forces=generated.ToDictionary(k=>k.Key,k=>Vector3d.Zero);
-#else
-        var model=ModelArchive.Read<ModelModel>(File.ReadAllBytes(Path.Combine(folder,"moving.bgmodel")));
-        var xyz=model.MovingPaths.Single().Coordinates;double level=xyz[2];
-        Require(xyz[5]==level&&xyz[8]==level,"This REV003 target test expects a horizontal path.");
-        var forces=model.GeneratedMovingCases.ToDictionary(k=>k.Key,k=>Vector3d.Zero);
-#endif
         var assignments=new List<object>();
         string scratch=Path.Combine(Path.GetTempPath(),"bridghe-slab-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(scratch);
         try
@@ -65,20 +58,12 @@ internal static class BridgeMovingSlabTargets
             api.CloseModel();
         }
         finally{try{Directory.Delete(scratch,true);}catch(IOException){}catch(UnauthorizedAccessException){}}
-#if GPC_PILOT
         var rows=analysed.NodesElements.Values.SelectMany(n=>BridGHe.Common.Gpc.GpcResultRows.Node(catalog,analysed,n)).Where(r=>r.Reaction!=null).ToArray();
         foreach(var lc in forces)
         {
             string name=generated[lc.Key];var reaction=rows.Where(r=>catalog.Entries[r.Entry].Label==name).Aggregate(Vector3d.Zero,(a,r)=>a+new Vector3d(r.Reaction[0],r.Reaction[1],r.Reaction[2]));
             Require(lc.Value.Length>0&&(reaction+lc.Value).Length<.1,"Native load assignments do not balance reactions: "+name);
         }
-#else
-        foreach(var lc in forces)
-        {
-            string name=model.GeneratedMovingCases[lc.Key];var reaction=model.Nodes.SelectMany(n=>n.Results.OfType<NodeReactResultModel>()).Where(r=>r.LoadCase.Name==name).Aggregate(Vector3d.Zero,(a,r)=>a+r.Force);
-            Require(lc.Value.Length>0&&(reaction+lc.Value).Length<.1,"Native load assignments do not balance reactions: "+name);
-        }
-#endif
         File.WriteAllText(Path.Combine(folder,"slab-target-validation.json"),JsonSerializer.Serialize(new{Cases=forces.Count,SlabAxisElevation_mm=level,AllGeneratedForcesOnSlab=true,Assignments=assignments},new JsonSerializerOptions{WriteIndented=true}));
         Console.WriteLine($"REV003 SLAB TARGETS PASS: {forces.Count} cases, {assignments.Count} force attributes on slab axes at Z={level} mm.");return assignments.Count;
     }

@@ -11,7 +11,6 @@ internal static class BridgeBearingTests
 {
     internal static void Run()
     {
-#if GPC_PILOT
         Gpc();
     }
 
@@ -43,30 +42,6 @@ internal static class BridgeBearingTests
         Reject(() => BridgeBearings.Create(geometry, new[] { 999 }, null, new[] { 2 }, 0, Vector3d.Zero, Vector3d.Zero));
         Reject(() => BridgeBearings.Create(geometry, null, null, new[] { 3 }, 0, Vector3d.Zero, Vector3d.Zero));
         Console.WriteLine("BRIDGE BEARINGS PASS: masks, curved guide frames, elastic stiffnesses, archives and conflicting frames.");
-#else
-        var geometry = SimpleBridgeBuilder.Build(SimpleBridgeTests.Input(curved: true));
-        var bearings = BridgeBearings.Create(geometry, new[] { 2 }, null, new[] { 0, 1, 2 }, 23, Vector3d.Zero, Vector3d.Zero);
-        Require(bearings.Nodes.Length == 3, "Selection count");
-        var masks = bearings.Nodes.Select(n => n.Attributes.OfType<NodeRestraintAttributeModel>().Single().Value).ToArray();
-        Require(masks[0].Tx && masks[0].Ty && masks[0].Tz && !masks[0].Rx, "Fixed translations, free rotations");
-        Require(!masks[1].Tx && masks[1].Ty && masks[1].Tz && !masks[1].Ry, "Longitudinal guide");
-        Require(!masks[2].Tx && !masks[2].Ty && masks[2].Tz, "Multidirectional");
-        foreach (var node in bearings.Nodes)
-        {
-            var frame = NodeCoordinateExport.Frame(node).Value;
-            Require(frame.ZAxis * Vector3d.ZAxis > 1 - 1e-12, "Default bearing frames horizontal");
-            Require(NodeCoordinateExport.Frame(ModelArchive.Clone(node)) == frame, "Nodal frame persists in archive");
-        }
-        var elastic = BridgeBearings.Create(geometry, new[] { 1 }, new[] { 1 }, new[] { 3 }, 0, new Vector3d(10, 20, 30), new Vector3d(40, 50, 60));
-        var stiffness = elastic.Nodes[0].Attributes.OfType<NodeStiffnessAttributeModel>().Single().Value;
-        Require(stiffness.Tx == 10 && stiffness.Ty == 20 && stiffness.Rz == 60, "Local elastic stiffnesses");
-        var conflicting = ModelArchive.Clone(bearings.Nodes[0]);
-        conflicting.Attributes.Add(new NodeCoordinateAttributeModel(Plane.WorldXY));
-        Reject(() => NodeCoordinateExport.Frame(conflicting));
-        Reject(() => BridgeBearings.Create(geometry, new[] { 999 }, null, new[] { 2 }, 0, Vector3d.Zero, Vector3d.Zero));
-        Reject(() => BridgeBearings.Create(geometry, null, null, new[] { 3 }, 0, Vector3d.Zero, Vector3d.Zero));
-        Console.WriteLine("BRIDGE BEARINGS PASS: masks, curved guide frames, elastic stiffnesses, archives and conflicting frames.");
-#endif
     }
     /// <summary>F6A: the bearing frame, restraint and springs written by the GPC Converter (export component path) and read back with
     /// the Converter API: UCS orientation, local restraint flags and spring values. No solver run. R6.6 R2a (GPC_PILOT): the model is Build
@@ -74,7 +49,6 @@ internal static class BridgeBearingTests
     internal static void Native()
     {
         var frame = new Plane(new Point3d(100, 200, 300), new Vector3d(1, 2, 0), new Vector3d(-2, 1, 0));
-#if GPC_PILOT
         string Id(string s) => "bearing native " + s;
         var n = BridGHe.Common.Gpc.Builders.GpcNodeBuilders.Create(100, 200, 300, "N", null, R2aGeneratorFixtures.Id(Id("N")));
         n = BridGHe.Common.Gpc.Builders.GpcNodeBuilders.WithFrame(n, frame.Origin.X, frame.Origin.Y, frame.Origin.Z, frame.XAxis.X, frame.XAxis.Y, frame.XAxis.Z,
@@ -91,21 +65,6 @@ internal static class BridgeBearingTests
         string folder = Path.GetFullPath(Path.Combine("artifacts", "bearings-native", Guid.NewGuid().ToString("N"))); Directory.CreateDirectory(folder);
         string file = Path.Combine(folder, "bearing.st7");
         BridGHe.Common.Gpc.Legacy.FemmAnalysisSeam.Export(null, input, file, 1e-6, new System.Collections.Generic.List<string>());
-#else
-        var model = new ModelModel(ModelModel.ModelUnits.Nmm);
-        var node = new NodeModel("N", frame.Origin);
-        node.Attributes.Add(new NodeCoordinateAttributeModel(frame));
-        node.Attributes.Add(new NodeRestraintAttributeModel(false, false, true, false, false, false));
-        // Springs on the free DOFs (on a restrained DOF the restraint governs, as the former exporter).
-        node.Attributes.Add(new NodeStiffnessAttributeModel(10, 20, 0, 0, 0, 0));
-        var end = new NodeModel("M", new Point3d(1100, 200, 300)); end.Attributes.Add(new NodeRestraintAttributeModel(true, true, true, true, true, true));
-        var property = new BeamPropertyModel("P") { Name = "P", PropertyType = BeamPropertyType.Beam, Material = new MaterialModel("S") { Name = "S355", Modulus = 210000, PoissonRatio = .3 },
-            Section = new SectionModel { SectionType = SectionModel.SectionTypes.Generic, SectionArea = 10000, I11 = 1e8, I22 = 1e8, J = 1e7 } };
-        model.AddElements(new ElementModel[] { node, end, new BeamModel("1", node.Position, end.Position, property) });
-        string folder = Path.GetFullPath(Path.Combine("artifacts", "bearings-native", Guid.NewGuid().ToString("N"))); Directory.CreateDirectory(folder);
-        string file = Path.Combine(folder, "bearing.st7");
-        BridGHe.Common.Gpc.Legacy.FemmAnalysisSeam.Export(model, file, 1e-6, new System.Collections.Generic.List<string>());
-#endif
         using var api = new GPC.Converter.Straus7.Straus7NativeApi(); api.OpenModelReadOnly(file, folder);
         var restraint = api.ReadRestraint(1, 1); var ucs = api.ReadUcs(restraint.Ucs).Data;
         var axis = new Vector3d(ucs[3] - ucs[0], ucs[4] - ucs[1], ucs[5] - ucs[2]); axis.Unitize();

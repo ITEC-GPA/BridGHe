@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -132,4 +131,3 @@ internal static class FemPhasesReference
         return result;
     }
 }
-#endif

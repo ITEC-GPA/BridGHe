@@ -15,9 +15,6 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
-#if !GPC_PILOT
-        if(args.Contains("--gpc-pilot")) { Console.Error.WriteLine("F4 requires a build with -p:GpcPilot=true."); return 2; }
-#endif
         try
         {
             // Rhino 8.36 uses this Windows implementation. The netcore root DLL
@@ -30,7 +27,6 @@ internal static class Program
                 return RunBridgeReport();
             // gPC section bench on a capture: no Rhino host, no Straus.
             if(args.Contains("--gpc-bench")) return GpcSectionBench.Run(args);
-#if GPC_PILOT
             // F6A: legacy FEM inputs -> GPC -> Converter .st7, compared with the former exporter (no Rhino host).
             if(args.Contains("--legacy-export")) return LegacyExportComparison.Run(args);
             if(args.Contains("--legacy-results-compare")) return LegacyResultsComparison.Run(args);
@@ -41,14 +37,9 @@ internal static class Program
             if(args.Contains("--legacy-sections")) return LegacySectionDump.Run(args.SkipWhile(a=>a!="--legacy-sections").Skip(1).First());
             if(args.Contains("--legacy-capture-compare")) return LegacyNativeExamplesComparison.CompareCapture(args.SkipWhile(a=>a!="--legacy-capture-compare").Skip(1).First());
             if(args.Contains("--legacy-examples-compare")) return LegacyNativeExamplesComparison.Compare(args.SkipWhile(a=>a!="--legacy-examples-compare").Skip(1).First());
-#endif
-#if GPC_PILOT
             // R6.1: every GPC datum attached to a GH type is compared with the conversion of its FEM value (GpcDraftCheckHost).
             GpcDraftCheckHost.Install();
             return GpcDraftCheckHost.Finish(Run(args));
-#else
-            return Run(args);
-#endif
         }
         catch(Exception ex) { Console.Error.WriteLine(ex);return 1; }
         finally { ShutdownDispatcher(); }
@@ -88,13 +79,8 @@ internal static class Program
         if(args.Contains("--gpc-guard")) return GpcReleaseSetTests.Guard(args.SkipWhile(a=>a!="--gpc-guard").Skip(1).First());
         if(args.Contains("--plugin-check")) return PluginBuildCheckTests.Child(args.SkipWhile(a=>a!="--plugin-check").Skip(1).First());
         if(args.Contains("--plugin-check-load")) return PluginBuildCheckTests.LoadChild(args.SkipWhile(a=>a!="--plugin-check-load").Skip(1).First());
-#if GPC_PILOT
         if(args.Contains("--gpc-pilot")) { try { return GpcPilot.Run(); } catch(Exception error) { Console.Error.WriteLine("F4 BRIDGE FAIL " + error); return 1; } }
-#endif
         GpcDomainCache.Configure();
-#if GPC_PILOT
-#endif
-#if GPC_PILOT
         if(args.Contains("--import-dump")) return ImportDump.Run(args);
         if(args.Contains("--build-model-scan")) return BuildModelScan.Run(args);
         if(args.Contains("--material-scan")) return GpcMaterialKindChecks.Scan(args);
@@ -102,11 +88,9 @@ internal static class Program
         if(args.Contains("--legacy-payload-scan")) return GpcDraftArchiveChecks.PayloadScan(args);
         if(args.Contains("--composite-texts")) return CompositeTextDump.Run(args.SkipWhile(a=>a!="--composite-texts").Skip(1).First()); // P2X: evidence of the steel capture rule
         if(args.Contains("--inr-scan")) return InrInertia.Scan(args); // lane INR (12/11): the homogenised composite properties of the examples on the section axes (measurement, not native)
-#endif
         if(args.Contains("--migration-scale")) return MigrationScale.Run();
         if(args.Contains("--tidy-example")) return ExampleTidy.Run(args.SkipWhile(a=>a!="--tidy-example").Skip(1).FirstOrDefault(),args.Contains("--publish"),args.Contains("--capture"));
         if(args.Contains("--migrate-bridge-examples")) return BridgeExampleMigration.Run(args.SkipWhile(a=>a!="--migrate-bridge-examples").Skip(1).FirstOrDefault(a=>!a.StartsWith("--")),args.Contains("--publish"));
-#if GPC_PILOT
         if(args.Contains("--gpc-results-native")) return GpcResultsFileNative.Run();
         if(args.Contains("--gpc-only-analysis-native")) return GpcOnlyAnalysisNative.Run(); // L3e: targeted (the same cases run under --core-only --native)
         if(args.Contains("--c3")) return C3Checks.Native(); // C3: materials readback, native-section preview
@@ -118,7 +102,6 @@ internal static class Program
         if(args.Contains("--p2d-save-reopen")) { var r=args.SkipWhile(a=>a!="--p2d-save-reopen").Skip(1).ToArray(); return P2dSaveReopen.Run(r[0],r[1],r.Length>2&&!r[2].StartsWith("--")?r[2]:null); } // P2D: measures of P2 (native)
         if(args.Contains("--phase-examples-native")) return NativePhaseExamples.Run(args.SkipWhile(a=>a!="--phase-examples-native").Skip(1).FirstOrDefault(a=>!a.StartsWith("--")));
         if(args.Contains("--legacy-beam-results")) { var r=args.SkipWhile(a=>a!="--legacy-beam-results").Skip(1).ToArray(); return LegacySectionDump.BeamResults(r[0],r[1],r.Length>2?r[2]:null); }
-#endif
         if(args.Contains("--modular-bridge-native")) return NativeModularBridgeTests.Run(args.SkipWhile(a=>a!="--modular-bridge-native").Skip(1).FirstOrDefault());
         if(args.Contains("--modular-layout-capture")) return Example50HorizontalLayout.CaptureModular();
         if(args.Contains("--example99")) return PersonalBridgeExample.Run(args.SkipWhile(a => a != "--example99").Skip(1).FirstOrDefault() ?? "inspect");
@@ -280,11 +263,7 @@ internal static class Program
         else Console.WriteLine("SKIPPED: category registration with installed plugins (opt in with --installed-plugins)");
         File.WriteAllText("artifacts/component-runtime.json",System.Text.Json.JsonSerializer.Serialize(items,new System.Text.Json.JsonSerializerOptions {WriteIndented=true}));
         Console.WriteLine($"COMPONENTS {count}, BRIDGE_CHECKS {bridgeChecks}");
-#if GPC_PILOT
         P2fChecks.GooArchives(assembly,Assert); // P2F (12/11): on the GPC goo; the FEM fixture of CheckGooArchives is no longer written (P2D)
-#else
-        CheckGooArchives(assembly);
-#endif
     }
 
     private static void CheckGooArchives(System.Reflection.Assembly assembly)
@@ -430,13 +409,11 @@ internal static class Program
         {
             var result=StrausAnalysis.Run(input,path,0,new[]{"P"},1e-6,false,out _,out var analysed);
             var u=result.Nodes.Single(n=>Math.Abs(n.Position.X-length)<1e-9).Results.OfType<NodeDisplResultModel>().Single().Displacement;
-#if GPC_PILOT
             // C4: the Results components convert the GPC values to the definition units exactly as the FEM results.
             ResultsComponentsCheck.Verify(ResultsComponentsCheck.AnalysedGoo(result,analysed),"kN-m native section, run "+(run+1));
             var fixedEnd=result.Beams[0].Results.OfType<BeamForceResultModel>().OrderBy(r=>r.Station).First();
             Assert(Math.Abs(Math.Abs(fixedEnd.My)-force*length)<=force*length*1e-5,"kN-m results in model units: fixed-end moment FL [kN m], run "+(run+1));
             Assert(Math.Abs(result.Beams[0].Results.OfType<BeamForceResultModel>().Max(r=>r.Station)-length)<=1e-9,"kN-m results in model units: stations [m], run "+(run+1));
-#endif
             double axial=force*length/(modulus*b*d);
             // Vertical bending about a principal axis, with the shear deformation of the native shear areas (Timoshenko):
             // FL^3/(3EI) + FL/(G As), with the inertia and shear area pair that the native axes give.
@@ -454,11 +431,9 @@ internal static class Program
         var mapped=gpc.BeamElements.Values.Single();
         Assert(report.NativeSections.TryGetValue(mapped.Guid,out var definition)&&Math.Abs(definition.ReferenceProperties[0]-b*d*1e6)<=b*d*1e6*1e-12,"legacy native section re-resolved in mm from model-unit dimensions");
         Assert(Math.Abs(((GPC.Model.ElementProperties.ElasticBeamProperty)mapped.BeamProperty).Section.Area-b*d*1e6)<=b*d*1e6*1e-12,"GPC property from the resolved native section");
-#if GPC_PILOT
         // e3 point 5 (coordinator decision 1 (b)): the kN-m case through Build Model on GPC (drafts in the definition units, normalised by
         // the assembly) against the conversion of its FEM output, measured.
         GpcBuildModelChecks.Single("kN-m native section",input);
-#endif
     }
 
     private static void CheckBridge()

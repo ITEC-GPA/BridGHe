@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -120,4 +119,3 @@ internal static class P2fChecks
         require(read && guids.Length == 2 && guids.Distinct().Count() == 2 && !guids.Contains(Guid.Empty), "legacy archives regenerate complete maps (GPC model read by value)");
     }
 }
-#endif

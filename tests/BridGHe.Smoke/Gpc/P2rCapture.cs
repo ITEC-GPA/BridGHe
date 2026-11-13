@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -162,4 +161,3 @@ internal sealed class P2rCapture
         }
     }
 }
-#endif

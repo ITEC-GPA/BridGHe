@@ -19,13 +19,8 @@ internal static class BuildModelParameterTests
         using var doc=new GH_Document();
         var component=(GH_Component)Activator.CreateInstance(plugin.GetTypes().Single(t=>t.Name=="BuildModelComponent"));
         component.CreateAttributes(); doc.AddObject(component,false);
-#if GPC_PILOT
         var beamType=plugin.GetTypes().Single(t=>t.Name=="GH_Beam");
         var goo=(IGH_Goo)beamType.GetMethod("FromGpc").Invoke(null,new object[]{GpcFixtures.SingleBeam(),null});
-#else
-        var beam=new BeamModel("1",Point3d.Origin,new Point3d(1000,0,0),BridgeAssignmentTests.Property("P"));
-        var goo=(IGH_Goo)Activator.CreateInstance(plugin.GetTypes().Single(t=>t.Name=="GH_Beam"),new object[]{beam,null});
-#endif
         var elements=new Param_GenericObject(); elements.CreateAttributes(); elements.PersistentData.Append(goo); doc.AddObject(elements,false);
         component.Params.Input[0].AddSource(elements);
         var stages=new Param_GenericObject(); stages.CreateAttributes(); doc.AddObject(stages,false); component.Params.Input[4].AddSource(stages);
@@ -37,7 +32,6 @@ internal static class BuildModelParameterTests
             var errors=c.RuntimeMessages(GH_RuntimeMessageLevel.Error);
             if(errors.Count>0) throw new Exception(string.Join("\n",errors));
             var output=c.Params.Output[0].VolatileData.AllData(true).Single();
-#if GPC_PILOT
             if(output.GetType().GetProperty("Value").GetValue(output)!=null) throw new Exception("A beam given by its GPC draft alone must give a GPC-only model.");
             var model=((BridGHe.Common.Gpc.GpcModels.Conversion)output.GetType().GetProperty("GpcInput").GetValue(output)).Model;
             if(model.BeamElements.Count!=1 || model.NodesElements.Count!=2 || c.Params.Input[4].Sources.Single().Attributes.GetTopLevel.DocObject is GH_Component)
@@ -45,11 +39,6 @@ internal static class BuildModelParameterTests
             string now=model.Guid.ToString("D")+"|"+GPC.Model.Models.ModelRevisions.AnalysisFingerprint(model);
             if(identity!=null&&identity!=now) throw new Exception("The reopened definition must give the same GPC model (identity and content).");
             identity=now;
-#else
-            var model=(ModelModel)output.ScriptVariable();
-            if(model.Beams.Count!=1 || model.Nodes.Count!=2 || c.Params.Input[4].Sources.Single().Attributes.GetTopLevel.DocObject is GH_Component)
-                throw new Exception("Standalone optional phase parameter must preserve the assembled model.");
-#endif
         }
         Check(doc);
         string path=Path.GetFullPath("artifacts/build-model-parameters.ghx"); GrasshopperBridgeExample.Write(doc,path);

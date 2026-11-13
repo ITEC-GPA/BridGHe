@@ -26,20 +26,10 @@ internal static class BridgeMomentStateTests
             beams[i].Results.Add(new BeamForceResultModel(lc,s,0,"",true){My=(i%5) switch{0=>1e8,1=>-1e8,2=>(s-.5)*2e8,3=>500,_=>1e8},Mx=-1e8});
         beams[4].Results.Clear();
         var states=BeamMomentClassification.Classify(beams,"Dead");
-#if GPC_PILOT
         // R6.6 R2b: the classification on GPC data alone (girders given by their BridGHe IDs, analysed GPC beams built in GPC), with explicit
         // expected classes and extrema. TRANSITIONAL (listed): Bridge State Override, the merge with local section states and the checker below
         // stay on the FEM path (the transformer of chain B), until their GPC rewrite; they need the FEM girders and states above.
         Gpc(beams.Select(b=>b.BeamId).ToArray(),beams.Select(b=>(b.PointFrom,b.PointTo,b.AngleDeg)).ToArray(),Check,Reject);
-#else
-        Check(states.Take(5).Select(s=>s.Sign).SequenceEqual(new[]{BeamMomentSign.Positive,BeamMomentSign.Negative,BeamMomentSign.Mixed,BeamMomentSign.Zero,BeamMomentSign.Missing}),"five classes, tolerance and BM2 default");
-        Check(BeamMomentClassification.Classify(beams,"Dead",component:0)[0].Sign==BeamMomentSign.Negative,"BM1 selection independent");
-        Check(BeamMomentClassification.Classify(beams,"Dead",sign:-1)[0].Sign==BeamMomentSign.Negative,"orientation sign explicit");
-        Reject(()=>BeamMomentClassification.Classify(beams,"Dead",-1));
-        Reject(()=>BeamMomentClassification.Classify(new[]{beams[0],beams[0]},"Dead"));
-        var bad=ModelArchive.Clone(beams[0]);bad.Results.RemoveAt(0);Reject(()=>BeamMomentClassification.Classify(new[]{bad},"Dead"));
-        bad=ModelArchive.Clone(beams[0]);bad.Results.Add(bad.Results[0]);Reject(()=>BeamMomentClassification.Classify(new[]{bad},"Dead"));
-#endif
         var ids=schedule.Rules.Select(r=>$"G{r.Group}-C{r.Segment}").ToArray();
         var props=ids.Select(id=>{var p=BridgeGrillageExample.Composite(new());p.SteelSection=ModelArchive.Clone(steel.Section);p.ConsiderRebar=true;p.ConcreteSection=new(250,3000,1600,40);return p;}).ToArray();
         BridgeSegmentOverrideResult Apply(IReadOnlyList<BeamMomentState> s,int mix=2)=>BridgeStateOverride.Apply(all,ids,props,s,BridgeActionBehavior.LongTerm,mix);
@@ -106,7 +96,6 @@ internal static class BridgeMomentStateTests
         Reject(()=>BridgeWorkflowBuilder.Build(new[]{model0,edited},new[]{phase0,phase1 with {Actions=new[]{phase1.Actions[0] with {Source=edited}}}},new[]{new[]{"Name","G","Q"},new[]{"SLS","1","1"}},BridgeWorkflowMethod.Compatible,1e-6));
         Console.WriteLine($"MOMENT STATE PASS: {count} assertions; sampled sign, same-concio variants, mass, mesh, archive, per-action checker state and uncracked shrinkage. No native FEM.");
     }
-#if GPC_PILOT
     /// <summary>R6.6 R2b: the sampled-sign classification of Beam Moment Dispatch on GPC data alone: the girders are given by their BridGHe IDs
     /// (no FEM beam: the GPC-only overload, the state has no FEM source), each with its analysed GPC beam built in GPC with the «Dead» samples
     /// of the fixture (BM1 −1e8; BM2 by girder i % 5: +1e8, −1e8, (s − 0.5)·2e8, 500, +1e8; girder 5 without results). Explicit expected
@@ -173,5 +162,4 @@ internal static class BridgeMomentStateTests
         catch (InvalidOperationException e) when (e.Message.StartsWith("GpcTestModel results not imported")) { duplicate = true; }
         check(duplicate, "GPC: duplicate sample rejected");
     }
-#endif
 }

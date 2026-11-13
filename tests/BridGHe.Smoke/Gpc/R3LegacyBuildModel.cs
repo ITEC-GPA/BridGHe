@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -376,4 +375,3 @@ internal static class R3LegacyBuildModel
         if (All(actualOthers) != All(expectedOthers)) Fail($"warnings '{All(actualOthers)}' / '{All(expectedOthers)}'");
     }
 }
-#endif

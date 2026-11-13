@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -44,4 +43,3 @@ internal static class GpcSyntheticResults
         return gpc;
     }
 }
-#endif

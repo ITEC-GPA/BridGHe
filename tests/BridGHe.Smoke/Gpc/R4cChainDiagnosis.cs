@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -240,4 +239,3 @@ internal static class R4cChainDiagnosis
             yield return "P " + s.Id + " " + r.Entry + " " + r.Node + " " + Vs(r.Values);
     }
 }
-#endif

@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -344,4 +343,3 @@ internal sealed class St7Dump
         return key;
     }
 }
-#endif

@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -74,4 +73,3 @@ internal static class LegacyExportComparison
 
     private static string After(string[] args, string name) => args.SkipWhile(a => a != name).Skip(1).FirstOrDefault();
 }
-#endif

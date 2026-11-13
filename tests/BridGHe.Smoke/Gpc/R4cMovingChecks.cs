@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -225,4 +224,3 @@ internal static class R4cMoving
         Memory(where + ", after the collection");
     }
 }
-#endif

@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -2976,4 +2975,3 @@ internal static class GpcOnlyReplay
 
     private static string Short(string s) => s == null ? "null" : s.Length <= 240 ? s : s.Substring(0, 240) + "…";
 }
-#endif

@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -323,4 +322,3 @@ internal static partial class C5WorkflowComparison
         return depth == 0 ? v.ShortType : v.ShortType + "{" + string.Join(", ", v.Fields.Take(8).Select(f => f.Key + "=" + Describe(f.Value, depth - 1))) + "}";
     }
 }
-#endif

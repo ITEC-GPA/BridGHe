@@ -1,4 +1,3 @@
-#if GPC_PILOT
 using System;
 using System.Linq;
 using System.Reflection;
@@ -189,4 +188,3 @@ internal static class GhModelGpcChecks
         Console.WriteLine($"GPC MATERIALS PASS: 16 concrete grades, E = Ecm of GPC and G = E/2(1+nu) bit for bit; change from the former tables at most {worstE:0.000%} (E), {worstG:0.000%} (G).");
     }
 }
-#endif

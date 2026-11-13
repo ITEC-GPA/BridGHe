@@ -27,52 +27,8 @@ internal static class BridgeHistoryWorkflowTests
         double nc = ec * ac * -200e-6, mc = nc * yc, determinant = k11 * k22 - k12 * k12;
         double epsilon0 = (nc * k22 - mc * k12) / determinant, slope = (mc * k11 - nc * k12) / determinant;
         double concreteOracle = ec * (epsilon0 + slope * 250 + 200e-6), steelOracle = ea * (epsilon0 - slope * 1400);
-#if GPC_PILOT
         Gpc(checker, concreteOracle, steelOracle);
-#else
-        var source = BridgeWorkflowTests.Source("Reference", 100000);
-        foreach (var f in source.Beams.SelectMany(b => b.Results).OfType<BeamForceResultModel>()) f.My = 0;
-        BridgeActionDefinition Shrink(string key, double increment) => new() { Key = key, Behavior = BridgeActionBehavior.Shrinkage, Strain = increment, PrimaryOnly = true };
-        BridgePhaseDefinition Phase(int order, BridgeSectionState state, params BridgeActionDefinition[] actions) => new() { Order = order, Name = "Step " + order, State = state, Actions = actions };
-        BridgeStressResult Solve(BridgePhaseDefinition[] phases, params string[] keys)
-        {
-            var table = new[] { new[] { "" }.Concat(keys).ToArray(), new[] { "SLS" }.Concat(keys.Select(k => "1")).ToArray() };
-            var model = BridgeWorkflowBuilder.Build(new[] { source }, phases, table, BridgeWorkflowMethod.LinearHistory, 1e-6).Model;
-            var index = BridgePhaseAssembler.CreateIndex(model.Beams[0], model.Beams[0].Length, 1e-6);
-            return checker.AnalyzeHistory(model.BridgeWorkflow, index, 0, model.LoadCombinations[0], 2, 0, 1, false);
-        }
-        void Near(double actual, double expected, string label) => BridgeWorkflowTests.Require(double.IsFinite(actual) && Math.Abs(actual - expected) <= 1e-8 * Math.Max(1, Math.Abs(expected)), label + $": {actual:G17} != {expected:G17}");
-        var one = Solve(new[] { Phase(10, BridgeSectionState.Steel), Phase(20, BridgeSectionState.Composite, Shrink("R", -200e-6)) }, "R");
-        var two = Solve(new[] { Phase(10, BridgeSectionState.Steel), Phase(20, BridgeSectionState.Composite, Shrink("R1", -120e-6)), Phase(30, BridgeSectionState.Composite, Shrink("R2", -80e-6)) }, "R1", "R2");
-        Near(two.Point1_ConcreteSigma, one.Point1_ConcreteSigma, "Incremental vs one-step shrinkage, concrete");
-        Near(two.Point8_SteelSigma, one.Point8_SteelSigma, "Incremental vs one-step shrinkage, steel");
-        Near(one.Point1_ConcreteSigma, concreteOracle, "History vs analytical rectangular integration, concrete");
-        Near(one.Point8_SteelSigma, steelOracle, "History vs analytical rectangular integration, steel");
-        var load = new BridgeActionDefinition { Key = "G", Source = source, Case = "G", Behavior = BridgeActionBehavior.Steel };
-        var activation = Solve(new[] { Phase(10, BridgeSectionState.Steel, load), Phase(20, BridgeSectionState.Composite) }, "G");
-        Near(activation.Point1_ConcreteSigma, 0, "Concrete starts stress-free after loaded steel");
-        BridgeWorkflowTests.Require(activation.Analysis.Stages.Count == 2 && activation.Stage.GetHistory() != null, "Activation-only phase not retained in history.");
-        var final = activation.Stage.GetHistory().State;
-        Near(final.IntegratedN, 100000, "History sectional force equilibrium");
-        Near(final.ForceResidual, 0, "History force residual");
-        BridgeWorkflowTests.Require(double.IsNaN(activation.Point6_SteelTau), "History exposes unverified shear as a calculated stress.");
-        foreach(var force in source.Beams.SelectMany(b=>b.Results).OfType<BeamForceResultModel>()){force.Torque=8e8;force.Mx=-4e8;force.Vx=3e6;}
-        var planar=Solve(new[] { Phase(10, BridgeSectionState.Steel, load), Phase(20, BridgeSectionState.Composite) },"G");
-        Near(planar.Point8_SteelSigma,activation.Point8_SteelSigma,"LinearHistory retains N-M response while excluding T, weak-axis bending and transverse shear");
-        BridgeWorkflowTests.Require(planar.Assumptions.Contains(BridgeCheckAdapter.PlanarAssumption),"History result lost its planar assumption.");
-        var assembly = BridgeMergeTests.Initialize();
-        using var doc = new Grasshopper.Kernel.GH_Document();
-        var detail = (Grasshopper.Kernel.GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components.BridgeDetails.BridgeDetailCheckComponent", true));
-        detail.CreateAttributes(); doc.AddObject(detail, false);
-        ((Grasshopper.Kernel.Parameters.Param_GenericObject)detail.Params.Input[0]).PersistentData.Append(new Grasshopper.Kernel.Types.GH_ObjectWrapper(activation));
-        Grasshopper.Kernel.GH_Document.EnableSolutions = true; doc.Enabled = true; doc.NewSolution(false, Grasshopper.Kernel.GH_SolutionMode.Silent);
-        BridgeWorkflowTests.Require(detail.RuntimeMessages(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error).Any(s => s.Contains("LinearHistory")) && !detail.Params.Output[0].VolatileData.AllData(true).Any(g => g?.ScriptVariable() is BridgeStressResult),
-            "Detail history guard: " + string.Join("; ", detail.RuntimeMessages(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error)) + " | warnings: "
-                + string.Join("; ", detail.RuntimeMessages(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning)) + " | outputs=" + detail.Params.Output[0].VolatileDataCount);
-        Console.WriteLine("PASS history: split shrinkage, analytical primary stresses, stress-free concrete activation, equilibrium, explicit unsupported shear");
-#endif
     }
-#if GPC_PILOT
     /// <summary>R6.6 R2b: the LinearHistory checks with the GPC workflow executor (D3) of Super Element Check (<see cref="GpcBridgeChecks"/>) on
     /// the GPC bridge model of Build BridGHe Model, from action sources built in GPC only (<see cref="GpcWorkflowSources"/>), no FEM model. The
     /// oracle: split shrinkage equal to one step, the analytical rectangular integration (<paramref name="concreteOracle"/>,
@@ -124,5 +80,4 @@ internal static class BridgeHistoryWorkflowTests
             "GPC: Detail history guard on the D3 history: " + string.Join("; ", detail.RuntimeMessages(Grasshopper.Kernel.GH_RuntimeMessageLevel.Error)));
         Console.WriteLine($"PASS history on D3 (GPC data alone): {solved} GPC bridge models from sources built in GPC; split shrinkage, analytical primary stresses, activation, equilibrium, unverified shear, planar response and detail guard");
     }
-#endif
 }

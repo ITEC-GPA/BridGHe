@@ -113,7 +113,6 @@ internal static class BridgeDetailsExample
         var checker = Add("BridgeSectionCheckComponent", "A — sezione con dettagli", 2570, 600);
         Wire(section, 0, checker, 0);
         // Materials are serialized typed objects, visibly labelled, rather than hidden inside the checker.
-#if GPC_PILOT
         // R6.6 lane R4a: the three materials given by their GPC datum alone (GH_Material.FromGpc, no FEM value), with the same numbers.
         void Material(string label, IGH_Goo material, int port, float y)
         {
@@ -123,17 +122,6 @@ internal static class BridgeDetailsExample
         Material("C30 — fck 30 MPa", R4aFixtures.Material(R4aFixtures.Concrete()), 1, 250);
         Material("S355 — E210000 fy355 fu510 MPa", R4aFixtures.Material(R4aFixtures.S355()), 2, 310);
         Material("B450 — E200000 fy450 fu540 MPa", R4aFixtures.Material(R4aFixtures.B450()), 3, 370);
-#else
-        void Material(string label, BridGHe.Common.Models.MaterialModel material, int port, float y)
-        {
-            var param = new Param_GenericObject { NickName = label }; param.CreateAttributes(); param.Attributes.Pivot = new PointF(2150, y);
-            var type = plugin.GetTypes().Single(t => t.Name == "GH_Material"); param.PersistentData.Append((IGH_Goo)Activator.CreateInstance(type, material));
-            doc.AddObject(param, false); checker.Params.Input[port].AddSource(param);
-        }
-        Material("C30 — fck 30 MPa", new("C30") { Name = "C30", SpecificCompressiveStrength = 30 }, 1, 250);
-        Material("S355 — E210000 fy355 fu510 MPa", new("S355") { Name = "S355", Modulus = 210000, MinimumYieldStress = 355, MinimumTensileStress = 510 }, 2, 310);
-        Material("B450 — E200000 fy450 fu540 MPa", new("B450") { Name = "B450", Modulus = 200000, MinimumYieldStress = 450, MinimumTensileStress = 540 }, 3, 370);
-#endif
         var rebar = Add("BridgeRebarRowComponent", "Due file Ø16/150", 2150, 500); Wire(rebar, 0, checker, 5); Wire(rebar, 0, checker, 6);
         var options = Add("BridgeAnalysisOptionsComponent", "SLU — coefficienti espliciti", 2150, 830);
         Value(options, "LimitState", 0); Value(options, "GammaM0", 1d); Value(options, "GammaM1", 1.1); Value(options, "GammaM2", 1.25);
