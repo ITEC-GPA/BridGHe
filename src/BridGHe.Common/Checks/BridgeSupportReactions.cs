@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BridGHe.Common.Models;
 using Rhino.Geometry;
 
 namespace BridGHe.Common.Checks;
@@ -9,23 +8,6 @@ namespace BridGHe.Common.Checks;
 /// <summary>Linear static reactions combined from the same incremental sources and coefficients as the bridge workflow.</summary>
 public static class BridgeSupportReactions
 {
-    public static double SignedKN(ModelModel model, IEnumerable<BridgePhaseDefinition> definitions,
-        Point3d support, string combination, Vector3d upward, double tolerance)
-    {
-        if (model?.BridgeWorkflow == null || model.Units != ModelModel.ModelUnits.Nmm) throw new ArgumentException("Supply a Build BridGHe Model result in N-mm.");
-        var combos = model.LoadCombinations.Where(c => c.Name == combination).ToArray();
-        return SignedKN(model.BridgeWorkflow, combos.Select(c => c.Values.Select(v => (v.Key.Name, v.Value))).ToArray(), definitions, support, combination, upward, tolerance,
-            (action, record) =>
-            {
-                var source = action.Source ?? throw new ArgumentException("Missing FEM source for " + action.Key);
-                if (source.Units != ModelModel.ModelUnits.Nmm || source.Name != record.SourceName)
-                    throw new ArgumentException("The reaction source does not match the assembled action " + action.Key);
-                // F6 (a)/(b), R8: the reaction rows of the analysed GPC model of the action (the numbers the analysis wrote into the FEM results,
-                // zero without sign as the FEM copies of the GH data), when the Bridge Action component attached it; the FEM results otherwise.
-                return action.GpcSource != null ? GpcReactions(action, support, tolerance)
-                    : FemReactions(action, source.Nodes.Where(n => n.Position.DistanceTo(support) <= tolerance).ToArray());
-            });
-    }
 
     /// <summary>P2T request 3: the signed support reaction [kN] of a combination on the GPC bridge model alone (its records and combinations),
     /// from the reaction rows of the analysed GPC source of every action (same rules and messages as the former reading; the source is the
@@ -77,13 +59,6 @@ public static class BridgeSupportReactions
         return reaction / 1000;
     }
 
-    /// <summary>The linear-static reactions (step 0) of the action case at the one source node at the support.</summary>
-    private static Vector3d[] FemReactions(BridgeActionDefinition action, NodeModel[] nodes)
-    {
-        if (nodes.Length != 1) throw new ArgumentException($"Action {action.Key}: expected one node at the support, found {nodes.Length}.");
-        var samples = nodes[0].Results.OfType<NodeReactResultModel>().Where(r => r.LoadCase?.Name == action.Case).ToArray();
-        return samples.Length == 1 && samples[0].StepNum != 0 ? new[] { Vector3d.Unset } : samples.Select(r => r.Force).ToArray();
-    }
 
     private static Vector3d[] GpcReactions(BridgeActionDefinition action, Point3d support, double tolerance)
     {

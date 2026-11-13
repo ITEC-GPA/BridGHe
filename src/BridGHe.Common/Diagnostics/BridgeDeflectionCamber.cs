@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Geometry;
 using BridGHe.Common.Gpc;
-using BridGHe.Common.Models;
 using BridGHe.Common.Straus;
 using Rhino.Geometry;
 using GpcModel = GPC.Model.Models.Model;
@@ -15,19 +14,6 @@ public sealed record BridgeDeflectionResult(double[] Stations, double[] Absolute
 
 public static class BridgeDeflectionCamber
 {
-    public static BridgeDeflectionResult Evaluate(ModelModel model, SimpleBridgeGeometry geometry, int girder, string loadCase,
-        double step, string stepType, Vector3d direction, double camberFactor, bool relativeCamber, double displayScale)
-    {
-        ArgumentNullException.ThrowIfNull(model); BridgeGeometryTools.Validate(geometry);
-        if (model.Units != ModelModel.ModelUnits.Nmm) throw new ArgumentException("Bridge Geometry and analysed model must use N-mm.");
-        Arguments(loadCase, step, ref direction, camberFactor, displayScale);
-        var memberStations = model.Beams.SelectMany(b => b.Attributes.OfType<BridgeMemberAttributeModel>()).Where(a => a.Value.Family == BridgeMemberFamily.Girder && a.Value.Group == girder)
-            .SelectMany(a => new[] { a.Value.StationFrom, a.Value.StationTo });
-        using var index = new StrausNodeIndex(model.Nodes, 1e-5);
-        Vector3d[] Displacements(int number) => model.Nodes[number - 1].Results.OfType<NodeDisplResultModel>().Where(r => r.LoadCase?.Name == loadCase &&
-            r.StepNum == step && (string.IsNullOrEmpty(stepType) || r.StepType == stepType)).Select(r => r.Displacement).ToArray();
-        return Evaluate(model.Name, geometry, girder, loadCase, step, stepType, direction, camberFactor, relativeCamber, displayScale, memberStations, index, Displacements);
-    }
 
     /// <summary>F6 (a)/(b): the same evaluation on an analysed GPC model (<see cref="GpcResultCatalog"/>): girder stations from the bridge
     /// metadata of its physical members, displacements from the rows the Results components show (catalog label, step 0, no step type,

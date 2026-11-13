@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Gpc;
-using BridGHe.Common.Models;
 using GPC.Model.Models;
 
 namespace BridGHe.Common.Diagnostics;
@@ -17,23 +16,6 @@ public static class BridgeFatigueHistory
     /// <summary>One stored beam force of the history: case identity and the sample (station from the beam start, mm).</summary>
     private readonly record struct Stored(string Case, double Step, string StepType, BeamForceSample Force);
 
-    public static BridgeFatigueSeries Extract(ModelModel model, string beamId, double station, IReadOnlyList<string> orderedCases,
-        int component, IReadOnlyList<double> responseFactors = null)
-    {
-        ArgumentNullException.ThrowIfNull(model);
-        if (model.Units != ModelModel.ModelUnits.Nmm) throw new ArgumentException("History extraction expects N-mm result units.");
-        var matches = model.Beams.Where(b => b.BeamId == beamId).ToArray();
-        if (matches.Length != 1) throw new ArgumentException("Provide exactly one existing beam ID.");
-        var beam = matches[0];
-        Arguments(station, beam.Length, component, responseFactors);
-        var forces = beam.Results.OfType<BeamForceResultModel>().ToArray();
-        if (forces.Any(r => r.LoadCase == null || !double.IsFinite(r.StepNum))) throw new ArgumentException("Invalid stored history identity.");
-        var available = forces.Select(r => new Stored(r.LoadCase.Name, r.StepNum, r.StepType,
-            new BeamForceSample(r.NormalizedLength ? r.Station * beam.Length : r.Station, r.AxialForce, r.Vx, r.Vy, r.Torque, r.Mx, r.My))).ToArray();
-        // Results may belong to combinations: conservatively retain every known force discontinuity.
-        var pointLoads = beam.Loads.OfType<BeamPointLoadModel>().Select(l => l.Value.A * beam.Length).ToArray();
-        return Extract(model.Name, beamId, beam.Length, station, available, pointLoads, orderedCases, component, responseFactors);
-    }
 
     /// <summary>F6 (a)/(b): the history of an analysed GPC model (<see cref="GpcResultCatalog"/>), from the rows the Results components
     /// show (the same numbers, in the same order, as the former result objects the analysis wrote from them: catalog label, step 0, no

@@ -21,29 +21,7 @@ public static class BridgeModelAudit
     private sealed record AuditModel(AuditBeam[] Beams, AuditNode[] Nodes, AuditPlate[] Plates, string[] Cases, Func<IEnumerable<(Point3d From, Point3d To)>> RigidLinks, bool HasSupport, AuditStage[] Stages, Func<int> InvalidResults);
     private sealed record AuditPhase(string Name, object Units, AuditBeam[] Beams);
 
-    private static AuditBeam Beam(BeamModel b) => new(b.BeamId, b.IsValid, b.Length, b.PointFrom, b.PointTo, b.AngleDeg, b.Offset, b.Attributes.OfType<BridgeMemberAttributeModel>().Select(a => a.Value).ToArray(),
-        () => { b.GetLocalAxes(false, out _, out var up, out _, out _); return up; }, b.BeamProperty?.Section?.CompositePreview != null);
 
-    private static AuditModel Of(ModelModel model, double tolerance)
-    {
-        var availableGroups = model.Elements.SelectMany(e => e.Groups).SelectMany(GroupModel.GetBranch).Select(g => g.FullName).ToHashSet(StringComparer.Ordinal);
-        // 12/11 (user decision): the cases of the analysis are those the export writes (ModelHelper.GetLoadCases): the registered cases, the cases
-        // of the element loads, of the combinations and of the stages. 0.3.0 accepted only the registered cases (ModelModel.LoadCases), which
-        // Build Model never fills, so it reported INVALID_STAGE_INCREMENT on every stage increment of a model given by Build Model.
-        var availableCases = model.LoadCases.Concat(model.Elements.SelectMany(e => e.Loads).Select(l => l.LoadCase))
-            .Concat(model.LoadCombinations.SelectMany(c => c.Values.Keys)).Concat(model.StagedConstruction.SelectMany(s => s.LoadCombinations).SelectMany(c => c.Values.Keys))
-            .Where(c => c != null && !string.IsNullOrWhiteSpace(c.Name)).Select(c => c.Name).ToHashSet(StringComparer.Ordinal);
-        return new AuditModel(model.Beams.Select(Beam).ToArray(),
-            model.Nodes.Select(n => new AuditNode(n.NodeId, n.Position, () => NodeCoordinateExport.Frame(n),
-                n.Attributes.OfType<NodeStiffnessAttributeModel>().Count(k => new[] { k.Value.Tx, k.Value.Ty, k.Value.Tz, k.Value.Rx, k.Value.Ry, k.Value.Rz }.Any(v => !double.IsFinite(v) || v < 0)))).ToArray(),
-            model.Plates.Select(p => new AuditPlate(p.PlateId, !(p.Points.Count < 3 || p.Points.Any(x => !x.IsValid) || p.PlateProperty?.IsValid != true), p.Points.ToArray(), p.PlateProperty?.PropertyType == PlatePropertyType.LoadPatch)).ToArray(),
-            model.LoadCases.Select(c => c.Name).ToArray(),
-            () => RigidConnectionExport.Resolve(model, tolerance).Select(l => (model.Nodes[l.From - 1].Position, model.Nodes[l.To - 1].Position)),
-            model.Elements.SelectMany(e => e.Attributes).Any(a => a is NodeRestraintAttributeModel or NodeStiffnessAttributeModel or BeamSupportAttributeModel or PlateSupportAttributeModel),
-            model.StagedConstruction.Select(s => new AuditStage(s.Name, s.Groups.Any(g => !availableGroups.Contains(g.FullName)),
-                s.LoadCombinations.Any(c => c.Values.Any(v => v.Key == null || !availableCases.Contains(v.Key.Name ?? "") || !double.IsFinite(v.Value))))).ToArray(),
-            () => model.Elements.SelectMany(e => e.Results).Count(r => r.LoadCase == null || string.IsNullOrWhiteSpace(r.LoadCase.Name) || !double.IsFinite(r.StepNum)));
-    }
 
     private const string StageGroupWithoutElements = "Stage group without elements (not created natively by the former exporter)";
 
@@ -88,14 +66,6 @@ public static class BridgeModelAudit
             stages.ToArray(), () => 0);
     }
 
-    /// <param name="analysed">F6 C6: the analysed GPC model of <paramref name="model"/> (GH_Model.Gpc with HasAnalysedGpc), or null: when it has
-    /// the results catalog, the stored results are checked on it instead of the FEM result objects.</param>
-    public static ModelIssue[] Inspect(ModelModel model, double tolerance, SimpleBridgeGeometry expectedGeometry = null,
-        IReadOnlyList<ModelModel> phaseModels = null, GPC.Model.Models.Model analysed = null)
-    {
-        ArgumentNullException.ThrowIfNull(model);
-        return Inspect(Of(model, tolerance), tolerance, expectedGeometry, phaseModels?.Select(p => p == null ? null : new AuditPhase(p.Name, p.Units, p.Beams.Select(Beam).ToArray())).ToArray(), analysed, model.Units);
-    }
 
     /// <summary>R6.5 P1 lane 3a part 2: the audit of a model given by its GPC input (and of phases given by theirs): the checks of the FEM audit on the GPC data, in model length units. On GPC data
     /// <c>MULTIPLE_BRIDGE_IDENTITIES</c>, <c>CONFLICTING_BEARING_FRAME</c>, <c>INVALID_RIGID_CONNECTION</c> and a duplicate case name cannot happen (the reader refuses them or keeps one);

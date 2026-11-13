@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Gpc;
-using BridGHe.Common.Models;
 using GPC.Model.Models;
 
 namespace BridGHe.Common.Diagnostics;
@@ -15,34 +14,10 @@ public sealed record EnvelopeRow(string Element, double Station, string Case, do
 /// <summary>Envelopes stored results only. Never combines independent component maxima or interpolates steps.</summary>
 public static class BridgeResultEnvelope
 {
-    public static double[] Values(ResultModel r) => r switch
-    {
-        BeamForceResultModel b => new[] { b.AxialForce, b.Vx, b.Vy, b.Torque, b.Mx, b.My },
-        NodeReactResultModel n => new[] { n.Force.X, n.Force.Y, n.Force.Z, n.Moment.X, n.Moment.Y, n.Moment.Z },
-        NodeDisplResultModel n => new[] { n.Displacement.X, n.Displacement.Y, n.Displacement.Z, n.Rotation.X, n.Rotation.Y, n.Rotation.Z },
-        _ => throw new ArgumentException("Unsupported result type.")
-    };
 
     /// <summary>One stored result as the envelope reads it: element ID, station, case identity, the six components and its source.</summary>
     private readonly record struct Sample(string Id, double X, string Case, double Step, string StepType, double[] V, object Source);
 
-    public static EnvelopeRow[] Evaluate(ModelModel model, int kind, IReadOnlyList<string> ids, IReadOnlyList<string> cases, int component, int mode)
-    {
-        ArgumentNullException.ThrowIfNull(model);
-        Arguments(kind, component, mode);
-        var availableIds = (kind == 0 ? model.Beams.Select(b => b.BeamId) : model.Nodes.Select(n => n.NodeId)).ToArray();
-        var selectedIds = SelectIds(ids, availableIds);
-        IEnumerable<(string Id, double X, ResultModel Result)> input = kind == 0
-            ? model.Beams.Where(b => selectedIds.Contains(b.BeamId)).SelectMany(b => b.Results.OfType<BeamForceResultModel>()
-                .Select(r => (b.BeamId, r.NormalizedLength ? r.Station * b.Length : r.Station, (ResultModel)r)))
-            : model.Nodes.Where(n => selectedIds.Contains(n.NodeId)).SelectMany(n => n.Results
-                .Where(r => kind == 1 ? r is NodeReactResultModel : r is NodeDisplResultModel).Select(r => (n.NodeId, 0d, r)));
-        var source = input.ToArray();
-        if (source.Length == 0) throw new ArgumentException("No stored results of the requested type for the selected elements.");
-        var lengths = kind == 0 ? model.Beams.ToDictionary(b => b.BeamId, b => b.Length, StringComparer.Ordinal) : null;
-        return Envelope(source.Select(r => new Sample(r.Id, r.X, r.Result.LoadCase?.Name, r.Result.StepNum, r.Result.StepType, Values(r.Result), r.Result)).ToArray(),
-            selectedIds, lengths, cases, component, mode);
-    }
 
     /// <summary>F6: the envelope of an analysed GPC model (<see cref="GpcResultCatalog"/>), from the rows the Results components show,
     /// in the definition units: the same rows, in the same order, as the former result objects the analysis wrote from them. Every stored
