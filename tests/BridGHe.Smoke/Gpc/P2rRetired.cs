@@ -131,7 +131,19 @@ internal static class P2rRetired
     };
 
     internal static string ReplayRaw(string file, string key) => ReplayRawKeys.Contains((file, key))
-        ? "P2F: raw outputs captured with a composite beam GUID new at every solve (P7, fixed by P2F), not compared; lines, messages and outputs compared (" + Decision + ")" : null;
+        ? "P2F: raw outputs captured with a composite beam GUID new at every solve (P7, fixed by P2F), not compared; lines, messages and outputs compared (" + Decision + ")"
+        : ReplayRawKeysP2ca.Contains((file, key)) ? "P2CA: in-memory case built with its GPC twin, its identities differ from the FEM-backed input of the capture; "
+            + "lines, messages and outputs modulo GUIDs compared (" + CutDecision + ")" : null;
+
+    /// <summary>P2CA (13/11/2026, coordinator decision 1, rule U3): the keys of the P2R replay capture whose input is now built with its GPC twin (no FEM
+    /// value): their identities differ from those of the conversion of the former FEM-backed input, so their raw field alone is retired; the line count,
+    /// the messages and the outputs modulo GUIDs are compared as before.</summary>
+    internal static readonly IReadOnlyList<(string File, string Key)> ReplayRawKeysP2ca = new[]
+    {
+        ("gpc-only-models", "in memory: Build Model (A05 Knm)"),
+        ("gpc-only-models", "in memory: Build Model (A05 SI)"),
+        ("gpc-only-models", "in memory: Build Model (A05 IPS)"),
+    };
 
     /// <summary>The date of the retirements of P2CUT (rule U3: a check that loses its FEM oracle or tests a FEM type keeps an independent oracle, or is
     /// retired by name).</summary>
@@ -235,5 +247,13 @@ internal static class P2rRetired
         add("regression-part|p2d: frame rule, the conversion of a FEM model with a distributed load on a system (global, stretched, turned; 3 checks)", "the "
             + "conversion of an in-memory FEM model (GpcModels.Convert) with the load on a CoordinateSystemModel; GPC coverage: the frame rule of U6 on the points "
             + "(GpcLoadFrames.IsGlobal: global, stretched (2, 0, 0) (0, 3, 0), off-axis, another origin, turned, aligned) and the global frame, p2d");
+        add("regression-part|p2d: preview, the drawing of the FEM beam and the reader of a FEM beam (5 checks)", "BeamModel.Shapes and ReinforcementLines of a FEM beam "
+            + "on a homogenised property, its draft by GpcBeamDrafts.FromFemm, and the builder compared with them; GPC coverage: the beam built on GPC with explicit counts "
+            + "(2 solids, 6 or 3 bar lines) in both variants, the plug-in preview of the draft, the outline through the records (p2d), the bar rows of display-settings");
+        add("regression-part|p2d: construction, TRANSITIONAL the conversion of the FEM value without drafts (1 check)", "GpcModels.Convert of the FEM model (the "
+            + "FEM-input copy of gpc-only-models); GPC coverage: the 0.3.0 model read by value with its drafts gives no native stage (p2d)");
+        add("regression-part|gpc-only-models: L3e A05 and A06 on the conversion of the FEM value (4 checks)", "GpcModels.Convert of an in-memory FEM model with "
+            + "the plate mass and the heat path; GPC coverage: the same values in N, mm, t on Build Model of the GPC twin and Attach Moving Paths in every unit system "
+            + "(gpc-only-models, Lane3eChecks), and the A05 Build Model cases of the replay");
     }
 }

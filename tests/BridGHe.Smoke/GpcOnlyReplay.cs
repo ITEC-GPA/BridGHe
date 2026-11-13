@@ -714,24 +714,22 @@ internal static class GpcOnlyReplay
     private static List<(string Type, string Label, Dictionary<int, object> Inputs)> Lane1Cases()
     {
         // R1: the FEM catalogue only for the transitional copy; the GPC twins from the GPC examples of R0 (the same elements, in the same order).
-        var examples = gpcInputs ? null : NativeExamples.Create().ToDictionary(e => e.Id, e => e.Model);
-        var m1 = examples?["01-cantilever"]; var m2 = examples?["02-simply-supported"]; var m3 = examples?["03-plate-patch"];
-        var g1 = gpcInputs ? Ex("01-cantilever") : null; var g2 = gpcInputs ? Ex("02-simply-supported") : null;
-        var beam = Twin(() => Make("Fem.GH_Beam", m2.Beams[1]), () => R2aDesignFixtures.Beam(g2.Beams[1]));
-        var beam2 = Twin(() => Make("Fem.GH_Beam", m2.Beams[2]), () => R2aDesignFixtures.Beam(g2.Beams[2]));
-        var loaded = Twin(() => Make("Fem.GH_Beam", m2.Beams[0]), () => R2aDesignFixtures.Beam(g2.Beams[0]));
-        var node = Twin(() => Make("Fem.GH_Node", m1.Nodes.Last()), () => R2aDesignFixtures.Node(g1.Nodes.Last()));
-        var node2 = Twin(() => Make("Fem.GH_Node", m1.Nodes.First()), () => R2aDesignFixtures.Node(g1.Nodes.First()));
-        var quad = m3?.Plates.Single(); var corners = gpcInputs ? PatchCorners() : null;
-        var plate = Twin(() => Make("Fem.GH_Plate", quad), () => R2aDesignFixtures.Plate(Ex("03-plate-patch").Plates.Single()));
-        var tri = Twin(() => Make("Fem.GH_Plate", new PlateModel("2", quad.Points.Take(3).ToArray(), quad.PlateProperty)), () => GpcPlate("2", 0, corners.Take(3).ToArray()));
+        var g1 = Ex("01-cantilever"); var g2 = Ex("02-simply-supported");
+        var beam = R2aDesignFixtures.Beam(g2.Beams[1]);
+        var beam2 = R2aDesignFixtures.Beam(g2.Beams[2]);
+        var loaded = R2aDesignFixtures.Beam(g2.Beams[0]);
+        var node = R2aDesignFixtures.Node(g1.Nodes.Last());
+        var node2 = R2aDesignFixtures.Node(g1.Nodes.First());
+        var corners = PatchCorners();
+        var plate = R2aDesignFixtures.Plate(Ex("03-plate-patch").Plates.Single());
+        var tri = GpcPlate("2", 0, corners.Take(3).ToArray());
         // P2X: the plate of 03 with a local axis angle (the datum of an internalized 0.3.0 plate: its draft is the conversion of the value).
-        var angled = Twin(() => Make("Fem.GH_Plate", new PlateModel("3", quad.Points.ToArray(), quad.PlateProperty) { AngleDeg = 30 }), () => GpcPlate("3", 30, corners));
-        var lc = Twin(() => Make("Fem.GH_LoadCase", new LoadCaseModel("Replay", "Replay")), () => R2aDesignFixtures.Case(BridGHe.Common.Gpc.Builders.GpcCaseBuilders.Case("Replay", false)));
-        var along = Twin(() => m2.Beams[1].PointTo - m2.Beams[1].PointFrom, () => R(g2.Beams[1].Beam.EndPoint) - R(g2.Beams[1].Beam.StartPoint));
-        var tip = Twin(() => m1.Nodes.Last().Position, () => R(g1.Nodes.Last().Node.Position));
-        var corner3 = Twin(() => quad.Points[3], () => new Rhino.Geometry.Point3d(corners[3].X, corners[3].Y, corners[3].Z));
-        var end3 = Twin(() => m2.Beams[2].PointTo, () => R(g2.Beams[2].Beam.EndPoint));
+        var angled = GpcPlate("3", 30, corners);
+        var lc = R2aDesignFixtures.Case(BridGHe.Common.Gpc.Builders.GpcCaseBuilders.Case("Replay", false));
+        var along = R(g2.Beams[1].Beam.EndPoint) - R(g2.Beams[1].Beam.StartPoint);
+        var tip = R(g1.Nodes.Last().Node.Position);
+        var corner3 = new Rhino.Geometry.Point3d(corners[3].X, corners[3].Y, corners[3].Z);
+        var end3 = R(g2.Beams[2].Beam.EndPoint);
         var cases = new List<(string, string, Dictionary<int, object>)>
         {
             ("BeamReleasesComponent", "partial releases", new Dictionary<int, object> { [0] = loaded, [3] = 0.0, [9] = 5.0, [12] = 0.0 }),
@@ -789,11 +787,10 @@ internal static class GpcOnlyReplay
     /// Offsets and Moment Dispatch), on the Simple Bridge of the Smoke (<c>SimpleBridgeTests.Input</c>) and the beams of the example 02.</summary>
     private static List<(string Type, string Label, Dictionary<int, object> Inputs)> Lane1bCases()
     {
-        var m2 = gpcInputs ? null : NativeExamples.Create().Single(e => e.Id == "02-simply-supported").Model; // R1: the FEM catalogue only for the transitional copy
-        var beam = Twin(() => Make("Fem.GH_Beam", m2.Beams[1]), () => R2aDesignFixtures.Beam(Ex("02-simply-supported").Beams[1]));
-        var loaded = Twin(() => Make("Fem.GH_Beam", m2.Beams[0]), () => R2aDesignFixtures.Beam(Ex("02-simply-supported").Beams[0]));
+        var beam = R2aDesignFixtures.Beam(Ex("02-simply-supported").Beams[1]);
+        var loaded = R2aDesignFixtures.Beam(Ex("02-simply-supported").Beams[0]);
         var geometry = Make("BridgeGeometryGoo", BridGHe.Common.Geometry.SimpleBridgeBuilder.Build(SimpleBridgeTests.Input()));
-        var steel = Twin(() => Make("Fem.GH_BeamProperty", BridgeAssignmentTests.Property()), () => R2aDesignFixtures.Property(AssignmentProperty()));
+        var steel = R2aDesignFixtures.Property(AssignmentProperty());
         var lines = new object[] { new Rhino.Geometry.Line(0, 0, 0, 0, 0, 400), new Rhino.Geometry.Line(1000, 0, 0, 1000, 0, 400) };
         return new List<(string, string, Dictionary<int, object>)>
         {
@@ -837,11 +834,9 @@ internal static class GpcOnlyReplay
     /// datum, as in the examples); the replay gives them by their GPC data alone.</summary>
     private static List<(string Type, string Label, Dictionary<int, object> Inputs)> Lane2aCases()
     {
-        var examples = gpcInputs ? null : NativeExamples.Create().ToDictionary(e => e.Id, e => e.Model); // R1: only for the transitional copy
-        var m1 = examples?["01-cantilever"]; var m3 = examples?["03-plate-patch"];
-        var node = Twin(() => Make("Fem.GH_Node", m1.Nodes.Last()), () => R2aDesignFixtures.Node(Ex("01-cantilever").Nodes.Last()));
-        var node2 = Twin(() => Make("Fem.GH_Node", m1.Nodes.First()), () => R2aDesignFixtures.Node(Ex("01-cantilever").Nodes.First()));
-        var plate = Twin(() => Make("Fem.GH_Plate", m3.Plates.Single()), () => R2aDesignFixtures.Plate(Ex("03-plate-patch").Plates.Single()));
+        var node = R2aDesignFixtures.Node(Ex("01-cantilever").Nodes.Last());
+        var node2 = R2aDesignFixtures.Node(Ex("01-cantilever").Nodes.First());
+        var plate = R2aDesignFixtures.Plate(Ex("03-plate-patch").Plates.Single());
         var steel = Produce("MaterialSteelComponent", new Dictionary<int, object> { [0] = "S355", [1] = 2 });
         var concrete = Produce("MaterialConcreteComponent", new Dictionary<int, object> { [0] = "C35/45", [1] = 7 });
         var section = Produce("BeamSectionIComponent", new Dictionary<int, object> { [0] = 300.0, [1] = 250.0, [2] = 800.0, [3] = 20.0, [4] = 16.0, [5] = 12.0 });
@@ -854,11 +849,11 @@ internal static class GpcOnlyReplay
         var property = Produce("BeamPropertyComponent", new Dictionary<int, object> { [0] = "Girder", [1] = 5, [2] = section, [3] = steel });
         var tube = Produce("BeamPropertyComponent", new Dictionary<int, object> { [0] = "Tube", [1] = 5, [2] = circle, [3] = steel });
         var shell = Produce("PlatePropertyComponent", new Dictionary<int, object> { [0] = "Deck", [1] = 0, [2] = 250.0, [3] = 250.0, [4] = concrete });
-        var q = Twin(() => m3.Plates.Single().Points.ToArray(), () => PatchCorners().Select(c => new Rhino.Geometry.Point3d(c.X, c.Y, c.Z)).ToArray());
+        var q = PatchCorners().Select(c => new Rhino.Geometry.Point3d(c.X, c.Y, c.Z)).ToArray();
         var mesh = new Rhino.Geometry.Mesh(); foreach (var p in q) mesh.Vertices.Add(p); mesh.Faces.AddFace(0, 1, 2, 3);
         var brep = Rhino.Geometry.Brep.CreatePlanarBreps(new Rhino.Geometry.Rectangle3d(Rhino.Geometry.Plane.WorldXY, 200, 400).ToNurbsCurve(), 1e-6).Single();
-        var patchProperty = Twin(() => Make("Fem.GH_PlateProperty", m3.Plates.Single().PlateProperty), () => R2aDesignFixtures.PlateProperty(Patch()));
-        var beam02 = Twin(() => Make("Fem.GH_Beam", examples["02-simply-supported"].Beams[1]), () => R2aDesignFixtures.Beam(Ex("02-simply-supported").Beams[1]));
+        var patchProperty = R2aDesignFixtures.PlateProperty(Patch());
+        var beam02 = R2aDesignFixtures.Beam(Ex("02-simply-supported").Beams[1]);
         return new List<(string, string, Dictionary<int, object>)>
         {
             ("GroupComponent", "root group", new Dictionary<int, object> { [0] = "Deck" }),
@@ -899,10 +894,9 @@ internal static class GpcOnlyReplay
     /// not reach). Their lane-2 inputs come from the producer components solved in memory, as in <see cref="Lane2aCases"/>.</summary>
     private static List<(string Type, string Label, Dictionary<int, object> Inputs)> Lane2bCases()
     {
-        var m2 = gpcInputs ? null : NativeExamples.Create().Single(e => e.Id == "02-simply-supported").Model; // R1: only for the transitional copy
-        var beam = Twin(() => Make("Fem.GH_Beam", m2.Beams[1]), () => R2aDesignFixtures.Beam(Ex("02-simply-supported").Beams[1]));
-        var loaded = Twin(() => Make("Fem.GH_Beam", m2.Beams[0]), () => R2aDesignFixtures.Beam(Ex("02-simply-supported").Beams[0]));
-        var original = Twin(() => Make("Fem.GH_BeamProperty", m2.Beams[1].BeamProperty), () => R2aDesignFixtures.Property(GpcNativeExamples.Property()));
+        var beam = R2aDesignFixtures.Beam(Ex("02-simply-supported").Beams[1]);
+        var loaded = R2aDesignFixtures.Beam(Ex("02-simply-supported").Beams[0]);
+        var original = R2aDesignFixtures.Property(GpcNativeExamples.Property());
         var steel = Produce("MaterialSteelComponent", new Dictionary<int, object> { [0] = "S355", [1] = 2 });
         var concrete = Produce("MaterialConcreteComponent", new Dictionary<int, object> { [0] = "C35/45", [1] = 7 });
         var rebar = Produce("MaterialRebarComponent", new Dictionary<int, object> { [0] = "B450C" });
@@ -948,10 +942,8 @@ internal static class GpcOnlyReplay
     /// with a property named as their group (one XML form of the record, passo 76).</summary>
     private static List<(string Type, string Label, Dictionary<int, object> Inputs)> Lane2cCases()
     {
-        var examples = gpcInputs ? null : NativeExamples.Create().ToDictionary(e => e.Id, e => e.Model); // R1: only for the transitional copy
-        var m2 = examples?["02-simply-supported"]; var m3 = examples?["03-plate-patch"];
-        var beam = Twin(() => Make("Fem.GH_Beam", m2.Beams[1]), () => R2aDesignFixtures.Beam(Ex("02-simply-supported").Beams[1]));
-        var original = Twin(() => Make("Fem.GH_BeamProperty", m2.Beams[1].BeamProperty), () => R2aDesignFixtures.Property(GpcNativeExamples.Property()));
+        var beam = R2aDesignFixtures.Beam(Ex("02-simply-supported").Beams[1]);
+        var original = R2aDesignFixtures.Property(GpcNativeExamples.Property());
         var steel = Produce("MaterialSteelComponent", new Dictionary<int, object> { [0] = "S355", [1] = 2 });
         var concrete = Produce("MaterialConcreteComponent", new Dictionary<int, object> { [0] = "C35/45", [1] = 7 });
         var dims = new Dictionary<int, object> { [0] = 300.0, [1] = 250.0, [2] = 800.0, [3] = 20.0, [4] = 16.0, [5] = 12.0 };
@@ -981,7 +973,7 @@ internal static class GpcOnlyReplay
         var deckProperty = Produce("BeamPropertyComponent", new Dictionary<int, object> { [0] = "Deck", [1] = 5, [2] = section, [3] = steel });
         var deck = Produce("GroupComponent", new Dictionary<int, object> { [0] = "Deck" });
         var pour = Produce("GroupComponent", new Dictionary<int, object> { [0] = "Pour1", [1] = deck });
-        var q = Twin(() => m3.Plates.Single().Points.ToArray(), () => PatchCorners().Select(c => new Rhino.Geometry.Point3d(c.X, c.Y, c.Z)).ToArray());
+        var q = PatchCorners().Select(c => new Rhino.Geometry.Point3d(c.X, c.Y, c.Z)).ToArray();
         var mesh = new Rhino.Geometry.Mesh(); foreach (var p in q) mesh.Vertices.Add(p); mesh.Faces.AddFace(0, 1, 2, 3);
         return new List<(string, string, Dictionary<int, object>)>
         {
@@ -2136,13 +2128,6 @@ internal static class GpcOnlyReplay
     internal static void Models() => Regression("models");
 
     /// <summary>L3e (A05): a model of plates with a non-structural mass, and (A06) a moving path with a heat source, in the units of the definition.</summary>
-    private static ModelModel MassHeatModel(ModelModel.ModelUnits units)
-    {
-        var m = ImportDump.PlateData(units); m.Name = "L3e " + units;
-        m.Plates[0].Loads.Add(new PlateNSMassModel(new LoadCaseModel(LoadCaseModel.Dead), new PlateNSMassModel.LoadData { Mass = 0.2, DynFactor = 1.1, Offset = new Rhino.Geometry.Vector3d(0.01, -0.02, 0.03) }));
-        return m;
-    }
-
     private static BridGHe.Common.MovingLoads.MovingPath HeatPath() => new BridGHe.Common.MovingLoads.MovingPath
     {
         LoadCaseName = "Traffic", Divisions = 5, Target = 2, Coordinates = new double[] { 0, 0, 0, 1, 0, 0, 0, 1, 0 },
@@ -2150,43 +2135,45 @@ internal static class GpcOnlyReplay
             { new BridGHe.Common.MovingLoads.MovingPointForce { Force = new double[] { 0, 0, -1 } }, new BridGHe.Common.MovingLoads.MovingHeatSource { X = 0.1, Y = 0.2, SizeX = 0.3, SizeY = 0.4, Heat = 5 } } } } },
     };
 
-    /// <summary>L3e (A05): Build Model of plates with a non-structural mass outside N-mm: the GPC-only path and the conversion of the FEM value give the same model.</summary>
+    /// <summary>P2CA (13/11/2026, coordinator decision 1): the plate of the example 03 given by its GPC draft (R0) with the non-structural mass of
+    /// Plate NS Mass in the stage-less «Dead» case (mass 0.2, dynamic factor 1.1, offset 0.01, -0.02, 0.03), its GPC twin of the former FEM plate.</summary>
+    private static IGH_Goo MassPlate() => Produce("PlateNSMassComponent", new Dictionary<int, object> { [0] = R2aDesignFixtures.Plate(Ex("03-plate-patch").Plates.Single()),
+        [1] = R2aDesignFixtures.Case(BridGHe.Common.Gpc.Builders.GpcCaseBuilders.Case(BridGHe.Common.Gpc.Builders.GpcCaseBuilders.Dead, false)), [2] = 0.2, [3] = 1.1, [4] = new Rhino.Geometry.Vector3d(0.01, -0.02, 0.03) });
+
+    /// <summary>L3e (A05): Build Model of plates with a non-structural mass outside N-mm: the GPC-only path. P2CA: the plate by its GPC twin (<see cref="MassPlate"/>).</summary>
     private static List<(string Type, string Label, Dictionary<int, object> Inputs)> Lane3eCases()
     {
         var cases = new List<(string, string, Dictionary<int, object>)>();
-        foreach (var (units, index) in new[] { (ModelModel.ModelUnits.Knm, 0), (ModelModel.ModelUnits.SI, 1), (ModelModel.ModelUnits.IPS, 3) })
-        {
-            var plate = NativeExamples.Create().Single(e => e.Id == "03-plate-patch").Model.Plates.Single();
-            plate.Loads.Add(new PlateNSMassModel(new LoadCaseModel(LoadCaseModel.Dead), new PlateNSMassModel.LoadData { Mass = 0.2, DynFactor = 1.1, Offset = new Rhino.Geometry.Vector3d(0.01, -0.02, 0.03) }));
-            cases.Add(("BuildModelComponent", "A05 " + units, new Dictionary<int, object> { [0] = new object[] { Make("Fem.GH_Plate", plate) }, [1] = "A05", [2] = index }));
-        }
+        foreach (var (units, index) in new[] { ("Knm", 0), ("SI", 1), ("IPS", 3) })
+            cases.Add(("BuildModelComponent", "A05 " + units, new Dictionary<int, object> { [0] = new object[] { MassPlate() }, [1] = "A05", [2] = index }));
         return cases;
     }
 
-    /// <summary>L3e (A05, A06): the values in N, mm, t of the plate non-structural mass and of the moving heat source, as 0.3.0 wrote them in the units of its files,
-    /// on the conversion of the FEM value and through the drafts (Attach Moving Paths).</summary>
+    /// <summary>L3e (A05, A06): the values in N, mm, t of the plate non-structural mass and of the moving heat source, as 0.3.0 wrote them in the units of its files.
+    /// P2CA (13/11/2026, coordinator decision 1): on GPC alone, Build Model on the plate given by its draft (<see cref="MassPlate"/>) in the units of the
+    /// definition, then Attach Moving Paths (GpcModelTransforms.ReplacePaths); the same check on the conversion of the FEM value is retired by name.</summary>
     private static void Lane3eChecks(List<string> failures, ref int count)
     {
-        foreach (var (units, length, mass, power) in new[] { (ModelModel.ModelUnits.Nmm, 1.0, 1.0, 1000.0), (ModelModel.ModelUnits.Knm, 1000.0, 1e-6, 1000.0), (ModelModel.ModelUnits.SI, 1000.0, 1e-9, 1000.0),
-            (ModelModel.ModelUnits.IPS, 25.4, 4.5359237e-4 / (25.4 * 25.4), 1055.056 * 1000) })
+        bool keep = gpcInputs; gpcInputs = true; // the producers with the switches of P2 on, as the in-memory cases
+        try
         {
-            const double tolerance = 1e-6;
-            var fem = MassHeatModel(units); var path = HeatPath(); fem.MovingPaths.Add(path);
-            var converted = BridGHe.Common.Gpc.GpcModels.Convert(fem, tolerance);
-            var plain = MassHeatModel(units);
-            var attached = BridGHe.Common.Gpc.GpcModelTransforms.ReplacePaths(GpcInputComparison.ConvertWithDrafts(plain, tolerance), new[] { HeatPath() }, BridGHe.Common.Gpc.GpcIdentity.Derive(BridGHe.Common.Gpc.GpcIdentity.NameSpace, "test-l3e:" + units));
-            foreach (var (name, input) in new[] { ("conversion", converted), ("Attach Moving Paths", attached) })
+            foreach (var (units, index, length, mass, power) in new[] { ("Nmm", 2, 1.0, 1.0, 1000.0), ("Knm", 0, 1000.0, 1e-6, 1000.0), ("SI", 1, 1000.0, 1e-9, 1000.0),
+                ("IPS", 3, 25.4, 4.5359237e-4 / (25.4 * 25.4), 1055.056 * 1000) })
             {
-                var m = input.Model.AreaElements[1].Assignments.Physical.NonStructuralMasses.Single();
+                var model = Produce("BuildModelComponent", new Dictionary<int, object> { [0] = new object[] { MassPlate() }, [1] = "L3e " + units, [2] = index });
+                if (Prop(model, "GpcInput") is not BridGHe.Common.Gpc.GpcModels.Conversion built) { failures.Add($"A05 {units}: Build Model gives no GPC input"); continue; }
+                var input = BridGHe.Common.Gpc.GpcModelTransforms.ReplacePaths(built, new[] { HeatPath() }, BridGHe.Common.Gpc.GpcIdentity.Derive(BridGHe.Common.Gpc.GpcIdentity.NameSpace, "test-l3e:" + units));
+                var m = input.Model.AreaElements.Values.Single().Assignments.Physical.NonStructuralMasses.Single();
                 var h = input.Model.MovingLoads.Paths.Single().Template.Vehicles.Single().HeatSources.Single();
                 bool Near(double a, double b) => Math.Abs(a - b) <= 1e-12 * Math.Abs(b);
                 if (!Near(m.MassPerArea, 0.2 * mass) || !Near(m.GlobalOffset.X, 0.01 * length) || !Near(m.GlobalOffset.Y, -0.02 * length) || !Near(m.GlobalOffset.Z, 0.03 * length) || m.DynamicFactor != 1.1)
-                    failures.Add($"A05 {units} ({name}): {m.MassPerArea} {m.DynamicFactor} {m.GlobalOffset}");
+                    failures.Add($"A05 {units} (Attach Moving Paths): {m.MassPerArea} {m.DynamicFactor} {m.GlobalOffset}");
                 if (!Near(h.X, 0.1 * length) || !Near(h.Y, 0.2 * length) || !Near(h.SizeX, 0.3 * length) || !Near(h.SizeY, 0.4 * length) || !Near(h.Power, 5 * power))
-                    failures.Add($"A06 {units} ({name}): {h.X} {h.Y} {h.SizeX} {h.SizeY} {h.Power}");
+                    failures.Add($"A06 {units} (Attach Moving Paths): {h.X} {h.Y} {h.SizeX} {h.SizeY} {h.Power}");
                 count++;
             }
         }
+        finally { gpcInputs = keep; }
     }
 
     private static void Replace(this List<string> list, Func<string, string> map) { for (int i = 0; i < list.Count; i++) list[i] = map(list[i]); }
@@ -2567,7 +2554,7 @@ internal static class GpcOnlyReplay
         // L3b: the diagnostics of the audit, on both paths: a homogenised beam beside a structural plate (POSSIBLE_DOUBLE_CONCRETE, the mark from the recipe), a beam far from
         // the plate (DISCONNECTED, NO_SUPPORT), a tolerance above the lengths (INVALID_BEAM), phases of other units and geometry (PHASE_UNITS, PHASE_GEOMETRY_MISMATCH).
         IGH_Goo Gh(ModelModel value) => (IGH_Goo)T("Fem.GH_Model").GetMethod("FromModel", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { value, null });
-        IGH_Goo Example(string id, ModelModel value) => Gh(value); // R1: FEM-backed in both builds (see knm above)
+        IGH_Goo Example(string id, ModelModel value) => Gh(value); // R1: FEM-backed in both builds (see knm above); P2CA: the GPC inputs of R0 give other audit outputs (2 keys)
         var homogenised = BridgeGrillageExample.Composite(new()).CreateHomogenizedProperty(12, "P_composite");
         var mixed = new ModelModel(ModelModel.ModelUnits.Nmm);
         // P2F (12/11): with its nodes (a node at every plate corner and beam end): the GPC path builds no element without its end nodes (before,
@@ -2597,6 +2584,9 @@ internal static class GpcOnlyReplay
     /// Build Model (the same node given twice, created nodes, a combination and a stage, an unknown case).</summary>
     private static List<(string Type, string Label, Dictionary<int, object> Inputs)> Lane3cCases()
     {
+        // P2CA (13/11/2026, coordinator decision 1): with the GPC twins of R1 the Merge Model, Composite Beam Strain and Build Model cases give other outputs
+        // modulo GUIDs than the replay capture (7 keys, listed in the report), so the FEM-backed inputs stay (TRANSITIONAL); the node with a rigid link
+        // is built on GPC (GpcBridgeGeometryBuilders.RigidNode: its key equal, raw included).
         // R1: the GPC twins (the elements built by the product builders on the property of the examples, R0; the cases by the case builder); the node
         // with a rigid link stays FEM-backed (TRANSITIONAL input, no GPC twin yet).
         var examples = gpcInputs ? null : NativeExamples.Create().ToDictionary(e => e.Id, e => e.Model);
@@ -2623,9 +2613,8 @@ internal static class GpcOnlyReplay
         var angled = Twin(() => Make("Fem.GH_Plate", new PlateModel("P4", new[] { P(0.3, 0), P(5000, 0.2), P(5000, 4000), P(0, 4000) }, plateProperty) { AngleDeg = 30 }),
             () => R2aDesignFixtures.Plate(BridGHe.Common.Gpc.Builders.GpcPlateBuilders.Create(new[] { (0.3, 0.0, 0.0), (5000.0, 0.2, 0.0), (5000.0, 4000.0, 0.0), (0.0, 4000.0, 0.0) }, Patch(), null, 30, 0, "P4", R1Id("3c-plate:P4"))));
         var all = new object[] { loaded, near, other, beam, zero, far, quad, triangle, removed, angled };
-        // The reason of the example 46 (ModelsWithoutGpcInput): a rigid link whose target has no node. R1: FEM-backed in both builds (no GPC twin yet).
-        var linkedNode = new NodeModel(P(1000, 0)); linkedNode.Attributes.Add(new RigidConnectionAttributeModel(P(7777, 0)));
-        var linked = Make("Fem.GH_Node", linkedNode);
+        // The reason of the example 46 (ModelsWithoutGpcInput): a rigid link whose target has no node (P2CA: the node by the builder of the reader's form).
+        var linked = R2aDesignFixtures.Node(BridGHe.Common.Gpc.Builders.GpcBridgeGeometryBuilders.RigidNode(P(1000, 0), "", P(7777, 0), R1Id("3c-linked")));
         var strained = Produce("CompositeBeamSlabStrainComponent", new Dictionary<int, object> { [0] = beam, [1] = lc, [2] = -2e-4 });
         var combination = Produce("LoadCombinationComponent", new Dictionary<int, object> { [0] = "ULS", [1] = new object[] { lc }, [2] = new object[] { 1.35 } });
         var unknown = Produce("LoadCombinationComponent", new Dictionary<int, object> { [0] = "ULS", [1] = new object[] { lc2 }, [2] = new object[] { 1.0 } });
@@ -2769,22 +2758,15 @@ internal static class GpcOnlyReplay
         List<(string Type, string Label, Dictionary<int, object> Inputs)> Cases() => lane == "native" ? Safe("native sections", NativeSectionCases).Concat(Safe("parity native", ParityNativeCases)).ToList()
             : lane == "properties" ? Safe("lane 1", Lane1Cases).Concat(Safe("lane 1b", Lane1bCases)).Where(OfLane2).Concat(Safe("lane 2a", Lane2aCases)).Concat(Safe("lane 2b", Lane2bCases))
                 .Concat(Safe("lane 2c", Lane2cCases)).Concat(Safe("parity", ParityCases)).ToList()
-            : lane == "generators" ? Safe("lane 1b", Lane1bCases) : lane == "models" ? Safe("lane 3a", ModelsCases).Concat(Off(Lane3cCases)).Concat(Off(Lane3dCases)).Concat(Off(Lane3eCases)).ToList()
+            : lane == "generators" ? Safe("lane 1b", Lane1bCases) : lane == "models" ? Safe("lane 3a", ModelsCases).Concat(Off(Lane3cCases)).Concat(Off(Lane3dCases)).Concat(Safe("lane 3e", Lane3eCases)).ToList()
             : Safe("lane 1", Lane1Cases);
-        // R1: every case list built twice: the FEM-backed inputs of today (the transitional copy) and the inputs built without any FEM value.
-        var all = Cases().Where(c => Selected(c.Type)).ToList();
+        // P2CA (13/11/2026, coordinator decision 1): every case list built once, with the inputs built without any FEM value (the double build with
+        // the FEM-backed inputs of today is gone: since P2R the FEM-backed copy was solved only for its type name, the replay solves the GPC copy).
         List<(string Type, string Label, Dictionary<int, object> Inputs)> built;
         gpcInputs = true;
         try { built = Cases().Where(c => Selected(c.Type)).ToList(); }
-        catch (Exception ex)
-        {
-            // A producer of the build without FEM that fails: the failure is listed, the cases run on the FEM-backed inputs (TRANSITIONAL).
-            femInputs.Add("the whole list of " + lane + ": the build without FEM fails (" + ex.GetBaseException().Message + Frame(ex) + ")");
-            built = all;
-        }
         finally { gpcInputs = false; }
-        if (built.Count != all.Count || built.Zip(all).Any(p => p.First.Type != p.Second.Type || p.First.Label != p.Second.Label))
-            throw new Exception("GPC-ONLY REPLAY: the in-memory cases built without FEM are not the cases of today (" + built.Count + " / " + all.Count + ")");
+        var all = built;
         var allKinds = new HashSet<string>(ElementGoo.Concat(PropertyGoo).Concat(ModelGoo), StringComparer.Ordinal);
         GH_Component Solved(GH_Document doc, string type, Dictionary<int, object> inputs)
         {
@@ -2802,9 +2784,8 @@ internal static class GpcOnlyReplay
         for (int k = 0; k < all.Count; k++)
         {
             var (type, label, inputs) = all[k];
-            using var doc = new GH_Document(); using var gpcDoc = new GH_Document();
-            var c = Solved(doc, type, inputs);
-            var g = Solved(gpcDoc, type, built[k].Inputs);
+            using var gpcDoc = new GH_Document();
+            var g = Solved(gpcDoc, type, inputs); var c = g;
             // The inputs of the GPC-only copy: built without FEM, or (listed) a datum still taken from a FEM value (its GPC-only form by GpcOnly).
             var fem = g.Params.Input.SelectMany(p => p.VolatileData.AllData(true)).Where(x => x != null && allKinds.Contains(x.GetType().Name) && HasFem(x)).Select(x => x.GetType().Name).Distinct().ToList();
             if (fem.Count == 0) oracles.GpcBuilt++; else femInputs.Add(c.Name + " (" + label + "): " + string.Join(", ", fem));

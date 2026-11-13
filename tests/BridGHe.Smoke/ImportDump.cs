@@ -21,7 +21,7 @@ using GPC.Model.Models;
 /// <para>R6.6 lane R3 (11/11): every model is read as bytes (<see cref="R3LegacyCorpus"/>), with no FEM class: the captures and the captured
 /// examples from their files, the node, beam and plate data and the refused duplicates from their frozen payloads (the bytes the FEM writer
 /// gave for the former node, beam and plate data, same ids), the former section-state signatures from the fixture
-/// (<see cref="R3LegacyCorpus.Signatures"/>). The FEM builders <see cref="BeamData"/> and <see cref="PlateData"/> are kept for their other
+/// (<see cref="R3LegacyCorpus.Signatures"/>). The FEM builder <see cref="BeamData"/> is kept for its other
 /// callers only. P2CA (13/11/2026, U3): the examples 01–10 built in memory (<c>memory-*</c>, the FEM catalogue written by the FEM writer, no
 /// frozen payload) are retired by name (<see cref="P2rRetired.Checks"/>); the node builder went with the FEM writer of the fixtures.</para>
 /// </summary>
@@ -129,32 +129,6 @@ internal static class ImportDump
         nodes[0].Attributes.Add(new NodeRestraintAttributeModel(true, true, true, true, true, true));
         var model = new ModelModel(units);
         model.AddElements(nodes.Cast<ElementModel>().Concat(beams));
-        return model;
-    }
-
-    /// <summary>A FEM model with the plate data of the e3 corpus (see <see cref="Run"/>), coordinates in the given units.</summary>
-    internal static ModelModel PlateData(ModelModel.ModelUnits units)
-    {
-        var material = new MaterialModel("C") { Name = "C30", Modulus = 33000, PoissonRatio = 0.2, Density = 2.5e-9 };
-        var shell = new PlatePropertyModel("1") { Name = "Shell", Material = material, PropertyType = PlatePropertyType.ShellThin, MembraneThickness = 0.25, BendingThickness = 0.2 };
-        var patch = new PlatePropertyModel("2") { Name = "Patch", PropertyType = PlatePropertyType.LoadPatch };
-        var q = new LoadCaseModel("2", "Q"); var dead = new LoadCaseModel(LoadCaseModel.Dead);
-        var p = new[] { new Rhino.Geometry.Point3d(0, 0, 0), new Rhino.Geometry.Point3d(4, 0, 0), new Rhino.Geometry.Point3d(4, 3, 0), new Rhino.Geometry.Point3d(0, 3, 0), new Rhino.Geometry.Point3d(8, 0, 0), new Rhino.Geometry.Point3d(8, 3, 0) };
-        var slab = new GroupModel("Slab"); var bay = new GroupModel("Bay") { Parent = slab };
-        var plates = new[] { new PlateModel("1", new[] { p[0], p[1], p[2], p[3] }, shell, new[] { slab, bay }), new PlateModel("2", new[] { p[1], p[4], p[5], p[2] }, patch, new[] { bay }), new PlateModel("3", new[] { p[0], p[1], p[3] }, shell, null) };
-        plates[0].Attributes.Add(new ElementIdAttributeModel("P-A")); plates[0].Attributes.Add(new ElementIdAttributeModel("P-B"));
-        plates[0].Attributes.Add(new PlateSupportAttributeModel(new PlateSupportAttributeModel.AttributeData { Stiffness = 2, CompressionOnly = true, Face = PlateSupportAttributeModel.SupportedFace.Top }));
-        plates[0].Attributes.Add(new PlateSupportAttributeModel(new PlateSupportAttributeModel.AttributeData { Stiffness = 4, CompressionOnly = false, Face = PlateSupportAttributeModel.SupportedFace.Bottom }));
-        plates[0].Loads.Add(new PlatePressureModel(q, new() { P = new Rhino.Geometry.Vector3d(0, 0, -5) }));
-        plates[0].Loads.Add(new PlatePressureModel(dead, new() { P = new Rhino.Geometry.Vector3d(1, 0, -2), CoordinateSystem = new CoordinateSystemModel("G"), Face = PlatePressureModel.LoadFace.Top, Projected = true }));
-        plates[1].Attributes.Add(new LoadPatchTypeAttributeModel(new LoadPatchTypeAttributeModel.AttributeData { PatchType = LoadPatchTypeAttributeModel.PatchType.Auto2, SelectedEdges = new[] { 1, 3 }, Weights = new[] { 0.5, 0.5, 0, 0 } }));
-        plates[1].Attributes.Add(new ElementIdAttributeModel("P-C"));
-        plates[1].Loads.Add(new PlatePressureModel(q, new() { P = new Rhino.Geometry.Vector3d(0, 0, -1) }));
-        plates[2].Offset = 0.1;
-        var nodes = p.Select((x, k) => new NodeModel((k + 1).ToString(), x)).ToArray();
-        nodes[0].Attributes.Add(new NodeRestraintAttributeModel(true, true, true, true, true, true));
-        var model = new ModelModel(units);
-        model.AddElements(nodes.Cast<ElementModel>().Concat(plates));
         return model;
     }
 

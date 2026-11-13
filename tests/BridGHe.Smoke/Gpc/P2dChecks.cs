@@ -198,32 +198,25 @@ internal static class P2dChecks
 
     private static void Preview()
     {
+        // P2CA (13/11/2026, coordinator decision 3): the homogenised property built on GPC (the builder of Composite Beam Property from the
+        // definition), with explicit counts: two solids (steel and slab) and the bar lines of its rows (six with the bottom row, three without);
+        // the plug-in preview of the draft draws the same, the outline is kept by the records. The comparisons with the drawing of the FEM beam and
+        // with the reader of a FEM beam are retired by name (P2rRetired.Checks).
         foreach (var (rows, angle, ox) in new[] { ((250.0, 3000.0, 2000.0, 40.0, 1500.0, 55.0), 0.0, 0.0), ((250.0, 2500.0, 2000.0, 40.0, 0.0, 0.0), 30.0, 120.0) })
         {
             string what = $"homogenised property (bottom row {rows.Item5}, angle {angle}, offset {ox})";
-            var p0 = BridgeGrillageExample.Composite(new()); p0.ConcreteSection = new(rows.Item1, rows.Item2, rows.Item3, rows.Item4, rows.Item5, rows.Item6); p0.ConsiderRebar = true;
-            var fem = new BeamModel("B1", new Point3d(0, 0, 0), new Point3d(12000, 3000, 500), p0.CreateHomogenizedProperty(12, "Shrink")) { AngleDeg = angle, Offset = new Vector2d(ox, -40) };
-            var femShapes = fem.Shapes.ToArray(); var femBars = (Line[])Call("ReinforcementLines", fem);
-            Check(femShapes.Length == 2 && femBars.Length == (rows.Item5 > 0 ? 6 : 3), what + ": the FEM beam draws steel, slab and the bars of its rows");
-            // The reader: the draft of the former beam holds the outline of its preview geometry.
-            var draft = GpcBeamDrafts.FromFemm(fem);
-            Check(GpcDraftShapes.HasCompositePreview(draft) && draft.Property.Section.CompositeOutline != null, what + ": the reader keeps the outline");
-            string shapes = Compare(femShapes, GpcDraftShapes.Beam(draft), false), bars = Compare(femBars, GpcDraftShapes.Bars(draft), true);
-            Check(shapes == null, what + ": the GPC solids are the FEM ones: " + shapes);
-            Check(bars == null, what + ": the GPC bar lines are the FEM ones, bit for bit: " + bars);
-            Check(Compare(femShapes, (Brep[])Call("DraftShapes", draft), false) == null && Compare(femBars, (Line[])Call("DraftReinforcementLines", draft), true) == null,
+            var numbers = R2aPropertyFixtures.Grillage("Shrink") with { SlabHeight = rows.Item1, SlabWidth = rows.Item2, TopArea = rows.Item3, TopCover = rows.Item4, BottomArea = rows.Item5, BottomCover = rows.Item6, ConsiderRebar = true };
+            var shrink = GpcPropertyBuilders.Homogenised(GpcCompositeDefinitions.Create(numbers), 12, "Shrink", GpcCompositeDefinitions.AnalysisSteel(numbers), "Steel");
+            var draft = GpcBeamBuilders.New(new GPC.Geometry.Point3d(0, 0, 0), new GPC.Geometry.Point3d(12000, 3000, 500), shrink, null, angle, ox, -40, R2aDesignFixtures.Id("p2d:homogenised:" + angle), "B1");
+            var shapes = GpcDraftShapes.Beam(draft); var bars = GpcDraftShapes.Bars(draft);
+            Check(shapes.Length == 2 && bars.Length == (rows.Item5 > 0 ? 6 : 3), what + $": the GPC beam draws steel, slab and the bars of its rows ({shapes.Length} solids, {bars.Length} bar lines)");
+            Check(GpcDraftShapes.HasCompositePreview(draft) && draft.Property.Section.CompositeOutline != null, what + ": the draft keeps the outline");
+            Check(Compare(shapes, (Brep[])Call("DraftShapes", draft), true) == null && Compare(bars, (Line[])Call("DraftReinforcementLines", draft), true) == null,
                 what + ": the plug-in preview of the draft draws them");
             // Through the records (P11: an optional member of schema 1).
             var (d, r) = GpcDraftArchive.Write(draft);
             var read = GpcDraftArchive.ReadBeam(d, r);
-            Check(read.Property.Section.CompositeOutline == draft.Property.Section.CompositeOutline && Compare(femBars, GpcDraftShapes.Bars(read), true) == null, what + ": the outline is kept by the records");
-            // The GPC builder of Composite Beam Property (the homogenised output from the definition): the same drawing.
-            if (angle != 0) continue;
-            var definition = GpcCompositeSections.Definition(p0, p0.Name);
-            var shrink = GpcPropertyBuilders.Homogenised(definition, 12, "Shrink", GpcFixtures.Steel(), "Steel");
-            var built = GpcBeamBuilders.New(new GPC.Geometry.Point3d(0, 0, 0), new GPC.Geometry.Point3d(12000, 3000, 500), shrink, null, 0, ox, -40, R2aDesignFixtures.Id("p2d:homogenised"), "H1");
-            string builtShapes = Compare(femShapes, GpcDraftShapes.Beam(built), false), builtBars = Compare(femBars, GpcDraftShapes.Bars(built), false);
-            Check(builtShapes == null && builtBars == null, what + ": the property built on GPC draws as the FEM one: " + builtShapes + " " + builtBars);
+            Check(read.Property.Section.CompositeOutline == draft.Property.Section.CompositeOutline && Compare(bars, GpcDraftShapes.Bars(read), true) == null, what + ": the outline is kept by the records");
         }
         // A beam that is not on a homogenised composite property has no bar lines.
         Check(GpcDraftShapes.Bars(GpcFixtures.SingleBeam("p2d plain")).Length == 0, "a plain beam: no bar lines");
@@ -309,19 +302,24 @@ internal static class P2dChecks
 
     private static void Casts()
     {
-        var steel = new MaterialModel("S355") { Name = "S355", Kind = MaterialModel.MaterialKind.Steel, Modulus = 210000, PoissonRatio = .3, Density = 7.85e-9 };
-        var section = new SectionModel { Name = "R", SectionType = SectionModel.SectionTypes.SolidRectangle, D = 500, B = 300 }; section.CalculateSection();
-        var fem = new BeamModel(new Point3d(0, 0, 0), new Point3d(6000, 1000, 300), new BeamPropertyModel("P") { Name = "P", Material = steel, PropertyType = BeamPropertyType.Beam, Section = section }) { BeamId = "1", AngleDeg = 15 };
-        var beam = FromGpc(T("Fem.GH_Beam"), GpcBeamDrafts.FromFemm(fem));
-        Check(beam.CastTo(out GH_Brep brep) && brep?.Value != null && Compare(new[] { fem.Shapes[0] }, new[] { brep.Value }, false) == null, "a beam given by its draft casts to its solid, the FEM one");
+        // P2CA (13/11/2026, coordinator decision 3): the beam and the plate given by their GPC drafts (the builders of the components), the solid
+        // against the analytic volume: A x L for the beam (solid rectangle 500 x 300), the area of the quadrangle x the thickness for the plate.
+        // The comparison with the solids of the FEM elements is retired by name (P2rRetired.Checks).
+        var start = new GPC.Geometry.Point3d(0, 0, 0); var end = new GPC.Geometry.Point3d(6000, 1000, 300);
+        var draft = GpcBeamBuilders.New(start, end, GpcFixtures.RectangleProperty("P"), null, 15, 0, 0, R2aDesignFixtures.Id("p2d:cast beam"), "1");
+        var beam = FromGpc(T("Fem.GH_Beam"), draft);
+        double length = Math.Sqrt(6000.0 * 6000 + 1000.0 * 1000 + 300.0 * 300), beamVolume = 500.0 * 300 * length;
+        double Volume(Brep b) => b == null ? double.NaN : VolumeMassProperties.Compute(b)?.Volume ?? double.NaN;
+        Check(beam.CastTo(out GH_Brep brep) && brep?.Value != null && Near(Volume(brep.Value), beamVolume, 1e-6), $"a beam given by its draft casts to its solid, volume A x L: {Volume(brep?.Value):R} / {beamVolume:R}");
         Check(beam.CastTo(out Brep raw) && raw != null, "and to a Brep");
         Check(beam.CastTo(out List<GH_Brep> list) && list.Count == 1, "and to a list of Breps");
-        var corners = new[] { new Point3d(0, 0, 0), new Point3d(2000, 0, 0), new Point3d(2000, 1000, 300), new Point3d(0, 1000, 300) };
-        var femPlate = new PlateModel("P1", corners, new PlatePropertyModel("1") { Name = "shell", Material = steel, PropertyType = PlatePropertyType.ShellThin, MembraneThickness = 200, BendingThickness = 200 });
-        var plate = FromGpc(T("Fem.GH_Plate"), GpcBeamDrafts.FromFemm(femPlate));
+        var corners = new[] { (0.0, 0.0, 0.0), (2000.0, 0.0, 0.0), (2000.0, 1000.0, 300.0), (0.0, 1000.0, 300.0) };
+        var plateDraft = GpcPlateBuilders.Create(corners, GpcPropertyBuilders.Plate("shell", 0, GpcFixtures.Steel(), 200, 200), null, 0, 0, "P1", R2aDesignFixtures.Id("p2d:cast plate"));
+        var plate = FromGpc(T("Fem.GH_Plate"), plateDraft);
+        double plateVolume = 2000.0 * Math.Sqrt(1000.0 * 1000 + 300.0 * 300) * 200;
         bool cast = plate.CastTo(out GH_Brep pb);
-        string plateShape = !cast || pb?.Value == null ? "no cast" : Compare(new[] { femPlate.Shape }, new[] { pb.Value }, false);
-        Check(plateShape == null, "a plate given by its draft casts to its solid, the FEM one: " + plateShape);
+        // The solid of a plate is oriented inwards (its volume is -A t; the former check compared its vertices only): the magnitude is compared.
+        Check(cast && pb?.Value != null && Near(Math.Abs(Volume(pb.Value)), plateVolume, 1e-6), $"a plate given by its draft casts to its solid, volume area x thickness: {(cast ? Volume(pb?.Value) : double.NaN):R} / {plateVolume:R}");
     }
 
     // ----------------------------------------------------------------------------------------------------------------------------------------
@@ -347,7 +345,7 @@ internal static class P2dChecks
             return info.Stage == null ? "none" : "native";
         }
         Check(Stage(input) == "none", "read by value: a beam in two groups gives no native stage (as on GPC data alone)");
-        Check(Stage(GpcModels.Convert(model, 0.001)) == "native", "TRANSITIONAL: the conversion of the FEM value without drafts does not see the second group (a native stage), the FEM-input copy of gpc-only-models");
+        // P2CA (13/11/2026, coordinator decision 3): the TRANSITIONAL check on the conversion of the FEM value without drafts is retired by name.
     }
 
     // ----------------------------------------------------------------------------------------------------------------------------------------
