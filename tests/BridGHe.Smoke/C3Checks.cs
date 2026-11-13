@@ -153,7 +153,7 @@ internal static class C3Checks
             if (c.Concrete)
             {
                 BridgeSlabGrillageResult slab = null;
-                Check(!Refused(() => slab = BridgeSlabGrillage.Create(grillage.Geometry, null, "C3 slab", GpcMaterials.Analysis(m), m), out var whySlab), label + ", slab grillage: made (" + whySlab + ")");
+                Check(!Refused(() => slab = BridgeSlabGrillage.Create(grillage.Geometry, "C3 slab", GpcMaterials.Analysis(m), m), out var whySlab), label + ", slab grillage: made (" + whySlab + ")");
                 if (slab != null)
                 {
                     var strips = R2aGeneratorFixtures.Drafts(slab.Plans, "c3-slab-" + c.Tag);

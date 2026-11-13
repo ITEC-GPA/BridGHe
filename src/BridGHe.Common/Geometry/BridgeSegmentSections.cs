@@ -91,6 +91,7 @@ public static class BridgeSegmentSections
         return new(lines.ToArray(), changes.ToArray());
     }
 
+    // P2CE phase 2: delete with Models (the FEM base property; its caller: GpcOnlyReplay of lane P2CC; the product uses CreateGpc).
     public static BridgeSegmentSectionResult Create(IBridgeSegments geometry, BeamPropertyModel baseProperty, IEnumerable<string> table)
     {
         var segments = Segments(geometry);

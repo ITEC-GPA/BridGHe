@@ -43,10 +43,21 @@ internal static class BridgeCombinationExcelTests
         catch (Exception e) when (e is ArgumentException or IOException && e.Message.Contains(contains, StringComparison.OrdinalIgnoreCase)) { return; }
         throw new Exception("Expected Excel validation: " + contains);
     }
+    /// <summary>P2CE (13/11/2026): a workbook just written can be held for a moment by another process (the transient IOException of p2cd1 on
+    /// a fresh case-10.xlsx, file in use): the opening for the edit of the test is tried again, up to 20 times in about 5 s, before it fails.
+    /// Only the opening of the fixture is retried, never a check of the product.</summary>
+    private static ZipArchive OpenUpdate(string path)
+    {
+        for (int attempt = 1; ; attempt++)
+        {
+            try { return ZipFile.Open(path, ZipArchiveMode.Update); }
+            catch (IOException) when (attempt < 20 && File.Exists(path)) { System.Threading.Thread.Sleep(250); }
+        }
+    }
     // Mutate OOXML fixtures to exercise real Excel encodings and malformed user edits.
     private static void Edit(string path, string entry, Action<XDocument> edit)
     {
-        using var zip = ZipFile.Open(path, ZipArchiveMode.Update);
+        using var zip = OpenUpdate(path);
         var old = zip.GetEntry(entry); XDocument xml;
         using (var stream = old.Open()) xml = XDocument.Load(stream);
         edit(xml); old.Delete(); using var output = zip.CreateEntry(entry).Open(); xml.Save(output);
@@ -143,7 +154,7 @@ internal static class BridgeCombinationExcelTests
         Reset(); Edit(path, "xl/worksheets/sheet1.xml", x => { Cell(x, "B2").SetAttributeValue("t", "e"); Cell(x, "B2").Element(s + "v").Value = "#REF!"; });
         Reject(() => BridgeCombinationWorkbook.Read(path, catalog), "invalid cell");
         Reset();
-        using (var zip = ZipFile.Open(path, ZipArchiveMode.Update))
+        using (var zip = OpenUpdate(path))
         using (var stream = zip.CreateEntry("xl/sharedStrings.xml").Open())
             new XDocument(new XElement(s + "sst", new XElement(s + "si", new XElement(s + "r", new XElement(s + "t", "DEMO_")), new XElement(s + "r", new XElement(s + "t", "01"))))).Save(stream);
         Edit(path, "xl/worksheets/sheet1.xml", x => { var c = Cell(x, "A2"); c.RemoveNodes(); c.SetAttributeValue("t", "s"); c.Add(new XElement(s + "v", 0)); });

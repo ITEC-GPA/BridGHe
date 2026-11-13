@@ -43,7 +43,7 @@ public sealed class BridgeBearingsComponent : BridgeUtilityComponent
         if (!da.GetData(0, ref g) || g?.Value == null) return;
         da.GetDataList(1, supports); da.GetDataList(2, girders); da.GetDataList(3, kinds); da.GetData(4, ref angle);
         da.GetData(5, ref kt); da.GetData(6, ref kr); bool hasFrame = da.GetData(7, ref frame);
-        var result = BridgeBearings.Create(g.Value, supports, girders, kinds, angle, kt, kr, hasFrame ? frame : null, gpcOnly: true);
+        var result = BridgeBearings.Create(g.Value, supports, girders, kinds, angle, kt, kr, hasFrame ? frame : null);
         preview.AddRange(result.Frames.Zip(result.Labels, (f, l) => (f, l)));
         // R6.5 P1 lane 1b (P2K: always): the nodes by their GPC drafts alone, identity by content (the frame with its origin at the bearing
         // point, the label with support, girder and type, the stiffnesses of an elastic bearing: everything the node is built from).

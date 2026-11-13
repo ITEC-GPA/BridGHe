@@ -17,7 +17,7 @@ internal static class BridgeConnectionTests
     /// <summary>R6.6 R2a: the connections by their GPC drafts (the builders of the component on the path of P2, in the order of
     /// <c>BridgeConnections.Create</c>): the rigid pair resolved by Build Model on GPC (the rigid link of the model), the archive of the drafts, the
     /// connection beam on a property given by its GPC datum, the offset on GPC (Beam Override of the offset), the refusals of the checks of
-    /// <c>BridgeConnections.Create</c> on lines and on the GPC property flag, and the collapsed link refused by Build Model.</summary>
+    /// <c>BridgeConnections.Check</c> on lines and on the GPC property flag, and the collapsed link refused by Build Model.</summary>
     private static (BridGHe.Common.Gpc.Legacy.LegacyNodeDraft A, BridGHe.Common.Gpc.Legacy.LegacyNodeDraft B) Rigid(Line line, int i, string tag) =>
         (BridGHe.Common.Gpc.Builders.GpcBridgeGeometryBuilders.RigidNode(line.From, $"Rigid{i}A", line.To, R2aGeneratorFixtures.Id(tag + " A")),
          BridGHe.Common.Gpc.Builders.GpcBridgeGeometryBuilders.RigidNode(line.To, $"Rigid{i}B", null, R2aGeneratorFixtures.Id(tag + " B")));
@@ -38,9 +38,9 @@ internal static class BridgeConnectionTests
             "Explicit deformable beam");
         var shifted = BridGHe.Common.Gpc.Builders.GpcBeamBuilders.Override(beam, null, null, null, (12, -20), R2aGeneratorFixtures.Id("connection offset"));
         Require(shifted.Beam.Assignments.OffsetI is { X: 12, Y: -20, Z: 0 } && beam.Beam.Assignments.OffsetI == null, "Offsets isolate input and use local x/y");
-        Reject(() => BridgeConnections.Create(new[] { line, new Line(line.To, line.From) }, true));
-        Reject(() => BridgeConnections.Create(new[] { new Line(Point3d.Origin, Point3d.Origin) }, true));
-        Reject(() => BridgeConnections.Create(new[] { line }, false, null, beamOrTrussOnGpc: false));
+        Reject(() => BridgeConnections.Check(new[] { line, new Line(line.To, line.From) }, true, false)); // P2CE: the checks of the component (the FEM Create deleted)
+        Reject(() => BridgeConnections.Check(new[] { new Line(Point3d.Origin, Point3d.Origin) }, true, false));
+        Reject(() => BridgeConnections.Check(new[] { line }, false, false));
         var collapsed = BridGHe.Common.Gpc.Builders.GpcBridgeGeometryBuilders.RigidNode(Point3d.Origin, "A", Point3d.Origin, R2aGeneratorFixtures.Id("collapsed"));
         Reject(() => R2aGeneratorFixtures.Build("collapsed", new[] { collapsed }, null, 1e-6));
         Console.WriteLine("BRIDGE CONNECTIONS PASS: merged connectivity, archives, real deformable members, isolated offsets and duplicate/collapsed rejection.");

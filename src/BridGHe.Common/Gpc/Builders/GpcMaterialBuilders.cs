@@ -101,24 +101,5 @@ namespace BridGHe.Common.Gpc.Builders
             Name = name, PoissonRatio = poisson, ThermalExpansion = alpha, ShearModulus = shearModulus, UsePoisson = usePoisson, Density = density, StressStrainTable = table?.ToArray(),
         };
 
-        /// <summary><b>Transitional, until R6.5</b>: the FEM value of a recipe for the consumers not yet on GPC, every field as the former
-        /// components set it (the shear ultimate strength after the tensile one: the former property writes the tensile field, as in 0.3.0).</summary>
-        public static MaterialModel Femm(LegacyMaterialRecipe r)
-        {
-            if (r == null) throw new ArgumentNullException(nameof(r));
-            var m = new MaterialModel
-            {
-                Kind = (MaterialModel.MaterialKind)Enum.Parse(typeof(MaterialModel.MaterialKind), r.Kind), Name = r.Name, Modulus = r.Modulus, PoissonRatio = r.PoissonRatio,
-                ShearModulus = r.ShearModulus, UsePoisson = r.UsePoisson, Density = r.Density, ViscousDamping = r.ViscousDamping, DampingRatio = r.DampingRatio,
-                ThermalExpansion = r.ThermalExpansion, SpecificHeat = r.SpecificHeat, Conductivity = r.Conductivity,
-                MinimumYieldStress = r.MinimumYieldStress, MinimumTensileStress = r.MinimumTensileStress, ExpectedYieldStress = r.ExpectedYieldStress,
-                ExpectedTensileStress = r.ExpectedTensileStress, SpecificCompressiveStrength = r.SpecificCompressiveStrength, ExpectedCompressiveStrength = r.ExpectedCompressiveStrength,
-                Alloy = r.Alloy, CompressiveYieldStrength = r.CompressiveYieldStrength, TensileYieldStrength = r.TensileYieldStrength,
-                TensileUltimateStrength = r.TensileUltimateStrength, ReinforcementUltimateStrain = r.ReinforcementUltimateStrain, StressStrainTable = r.StressStrainTable,
-            };
-            if (r.AluminiumType != null) m.AlumiumType = (MaterialModel.AlumiumTypes)Enum.Parse(typeof(MaterialModel.AlumiumTypes), r.AluminiumType);
-            if (r.ShearUltimateStrength != 0) m.ShearUltimateStrength = r.ShearUltimateStrength;
-            return m;
-        }
     }
 }

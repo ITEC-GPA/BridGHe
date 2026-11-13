@@ -220,8 +220,8 @@ internal static class P2kChecks
         var geometry = SimpleBridgeBuilder.Build(SimpleBridgeTests.Input());
         var goo = (IGH_Goo)Activator.CreateInstance(R2aDesignFixtures.Plugin.GetTypes().Single(t => t.Name == "BridgeGeometryGoo"), geometry);
         int points = geometry.Supports.Count;
-        var layout = BridgeBearings.Create(geometry, null, null, new[] { 0 }, 0, Vector3d.Zero, Vector3d.Zero, gpcOnly: true);
-        Check(layout.Nodes.Length == 0 && layout.Drafts.Length == points, $"P1: Bridge Bearings on the GPC path makes no FEM node ({layout.Nodes.Length}) and {points} drafts ({layout.Drafts.Length})");
+        var layout = BridgeBearings.Create(geometry, null, null, new[] { 0 }, 0, Vector3d.Zero, Vector3d.Zero);
+        Check(layout.Drafts.Length == points, $"P1: Bridge Bearings on the GPC path makes {points} drafts ({layout.Drafts.Length}; P2CE: the layout has no FEM nodes)");
         var (bearings, bearingErrors, _) = Solve("BridgeBearingsComponent", (0, goo), (3, 0));
         Check(bearingErrors.Length == 0 && bearings[0].Count == points && bearings[0].All(GpcOnly), $"P1: Bridge Bearings gives {points} nodes by their drafts alone: {bearings[0].Count} " + string.Join(" / ", bearingErrors));
         var again = Solve("BridgeBearingsComponent", (0, goo), (3, 0)).Outputs[0];

@@ -54,7 +54,7 @@ internal static class BridgeSegmentExcelTests
         Reject(() => BridgeSegmentWorkbook.Write(template, geometry), access: true);
         using (var held = File.Open(template, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) Reject(() => BridgeSegmentWorkbook.Write(template, geometry, overwrite:true), access: true);
         Check(File.ReadAllBytes(template).SequenceEqual(original), "existing and locked files preserved");
-        string filled = Path.Combine(folder, "filled.xlsx"); BridgeSegmentWorkbook.Write(filled, geometry, null, template: BridgeSegmentWorkbook.TemplateGpc(geometry, property));
+        string filled = Path.Combine(folder, "filled.xlsx"); BridgeSegmentWorkbook.Write(filled, geometry, template: BridgeSegmentWorkbook.TemplateGpc(geometry, property));
         Edit(filled, x => Value(Cell(x, "G7"), "50"));
         var edited = BridgeSegmentWorkbook.Read(filled, geometry).Table;
         var sections = BridgeSegmentSections.CreateGpc(geometry, property, edited);

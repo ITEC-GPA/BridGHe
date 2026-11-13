@@ -8,6 +8,7 @@ using Rhino.Geometry;
 
 internal static class BridgeConstructionTests
 {
+    // P2CE phase 2: delete with Models (the FEM simple bridge; its caller: GpcOnlyReplay of lane P2CC).
     internal static ModelModel Model(SimpleBridgeGeometry geometry)
     {
         var model = new ModelModel(ModelModel.ModelUnits.Nmm) { Name = "Bridge design test" };

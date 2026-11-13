@@ -15,20 +15,17 @@ public sealed record BridgeSlabGrillageResult(BeamModel[] Beams, double[] Widths
 public static class BridgeSlabGrillage
 {
     /// <summary>Transverse strips with actual tributary lengths, also for nonuniform stations.</summary>
-    /// <param name="analysisMaterial">R6.2 (lane B): the GPC analysis material of <paramref name="material"/> (<c>GpcMaterials.Analysis</c> of
+    /// <param name="analysisMaterial">R6.2 (lane B): the GPC analysis material of the concrete (<c>GpcMaterials.Analysis</c> of
     /// the datum of the GH material); given, the strip properties also get their GPC datum built on GPC (<see cref="BridgeGpcProperties"/>).</param>
-    /// <param name="gpcMaterial">R6.5 P1 lane 2a: the GPC material when the material is given by its GPC datum alone (<paramref name="material"/>
-    /// null): checked on the datum (a concrete with finite positive E and G), the strips then have their GPC properties alone and the result
-    /// has no FEM beams, only the plans (rule of passo 75).</param>
-    public static BridgeSlabGrillageResult Create(SimpleBridgeGeometry geometry, MaterialModel material, string name, GPC.Model.Materials.Material analysisMaterial = null,
+    /// <param name="gpcMaterial">R6.5 P1 lane 2a: the GPC material given by its GPC datum alone: checked on the datum (a concrete with finite
+    /// positive E and G), the strips have their GPC properties alone and the result has no FEM beams, only the plans (rule of passo 75). P2CE
+    /// (13/11/2026, phase 1): the FEM material parameter and its FEM strips removed (every caller gave none).</param>
+    public static BridgeSlabGrillageResult Create(SimpleBridgeGeometry geometry, string name, GPC.Model.Materials.Material analysisMaterial = null,
         GPC.Model.Materials.Material gpcMaterial = null)
     {
         BridgeGeometryTools.Validate(geometry);
-        bool gpcOnly = material == null && gpcMaterial != null;
-        if (gpcOnly ? !(gpcMaterial is GPC.Model.Materials.ConcreteMaterialEuropeanCommon && analysisMaterial != null && double.IsFinite(gpcMaterial.ElasticModulusCompression)
-                && gpcMaterial.ElasticModulusCompression > 0 && double.IsFinite(gpcMaterial.GetShearModule()) && gpcMaterial.GetShearModule() > 0)
-            : material?.IsValid != true || material.Kind != MaterialModel.MaterialKind.Concrete ||
-            !double.IsFinite(material.Modulus) || material.Modulus<=0 || !double.IsFinite(material.ShearModulus) || material.ShearModulus<=0)
+        if (!(gpcMaterial is GPC.Model.Materials.ConcreteMaterialEuropeanCommon && analysisMaterial != null && double.IsFinite(gpcMaterial.ElasticModulusCompression)
+                && gpcMaterial.ElasticModulusCompression > 0 && double.IsFinite(gpcMaterial.GetShearModule()) && gpcMaterial.GetShearModule() > 0))
             throw new ArgumentException("A valid concrete material in N-mm is required.");
         var subset=ModelArchive.Clone(geometry);
         subset.Members.RemoveAll(m => m.Family != BridgeMemberFamily.DeckTransverse);
@@ -44,33 +41,13 @@ public static class BridgeSlabGrillage
             double b=i==groups.Length-1?s:(s+groups[i+1].First().StationFrom)/2;
             if(b<=a) throw new ArgumentException("Slab stations must be distinct and increasing.");
             widths.Add(groups[i].Key,b-a);
-            if(gpcOnly)
-            {
-                // R6.5 P1 lane 2a: the strip property by its GPC datum alone (the same builder as the dual rule below).
-                rules.Add(new BridgeSectionRule { Family=8,Group=groups[i].Key,Start=0,End=length,GpcProperty=Gpc.Builders.GpcBridgeGeometryBuilders.StandardProperty($"{name} S{groups[i].Key}",
+            // R6.5 P1 lane 2a: the strip property by its GPC datum alone.
+            rules.Add(new BridgeSectionRule { Family=8,Group=groups[i].Key,Start=0,End=length,GpcProperty=Gpc.Builders.GpcBridgeGeometryBuilders.StandardProperty($"{name} S{groups[i].Key}",
                     Gpc.Builders.GpcBridgeGeometryBuilders.StandardSection(Gpc.BridgeSectionKind.SolidRectangle,"",d:thickness,b:b-a),analysisMaterial,
-                    GPC.Model.Structure.Assignments.BeamFormulation.StraightTwoNode, "Concrete") }); // L2C: the kind of the concrete (both paths require one)
-                continue;
-            }
-            var section=new SectionModel { SectionType=SectionModel.SectionTypes.SolidRectangle,D=thickness,B=b-a };
-            section.CalculateSection();
-            var property=new BeamPropertyModel { Id=$"Slab{groups[i].Key}",Name=$"{name} S{groups[i].Key}",
-                PropertyType=BeamPropertyType.Beam,Section=section,Material=material };
-            rules.Add(new BridgeSectionRule { Family=8,Group=groups[i].Key,Start=0,End=length,Property=property });
-            // R6.2 (lane B): the GPC datum of the strip property, built on GPC (rectangle of the slab thickness and the strip width).
-            if(analysisMaterial!=null)
-                BridgeGpcProperties.Attach(property,Gpc.Builders.GpcBridgeGeometryBuilders.StandardProperty(property.Name,
-                    Gpc.Builders.GpcBridgeGeometryBuilders.StandardSection(Gpc.BridgeSectionKind.SolidRectangle,"",d:thickness,b:b-a),analysisMaterial,
-                    GPC.Model.Structure.Assignments.BeamFormulation.StraightTwoNode, "Concrete")); // L2C: the kind of the concrete
+                    GPC.Model.Structure.Assignments.BeamFormulation.StraightTwoNode, "Concrete") }); // L2C: the kind of the concrete
         }
-        var assignment=BridgeMemberAssignment.Assign(subset,new Dictionary<int,BeamPropertyModel>(),rules);
+        var assignment=BridgeMemberAssignment.Assign(subset,null,rules); // P2CE: no FEM defaults (before: an empty table, the same)
         if(assignment.Unassigned.Length!=0) throw new InvalidOperationException("Unassigned transverse slab members.");
-        if(gpcOnly) return new(Array.Empty<BeamModel>(),assignment.Plans.Select(p=>widths[p.Group]).ToArray()) { Plans=assignment.Plans.Select(p=>p with { Label=false }).ToArray() };
-        // These are an additional beam set, assembled beside independently numbered steel.
-        // Retain geometric identities in metadata, but let Build Model allocate global FEM IDs.
-        foreach(var beam in assignment.Beams)
-            foreach(var id in beam.Attributes.OfType<ElementIdAttributeModel>().ToArray()) beam.Attributes.Remove(id);
-        return new(assignment.Beams,assignment.Beams.Select(b=>widths[b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value.Group]).ToArray())
-        { Plans=assignment.Plans.Select(p=>p with { Label=false }).ToArray() };
+        return new(Array.Empty<BeamModel>(),assignment.Plans.Select(p=>widths[p.Group]).ToArray()) { Plans=assignment.Plans.Select(p=>p with { Label=false }).ToArray() };
     }
 }

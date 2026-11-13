@@ -37,7 +37,7 @@ public sealed class BridgeSlabGrillageComponent : BridgeUtilityComponent
         try{analysis=Common.Gpc.GpcMaterials.Analysis(m.Gpc);}catch(Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException){}
         // R6.5 P1 lane 2a / P2K (P1): the material is checked on its GPC datum; the beams and the strip properties are given by their GPC data
         // alone (rule of passo 75).
-        var result=BridgeSlabGrillage.Create(g.Value,null,name,analysis,m.Gpc);
+        var result=BridgeSlabGrillage.Create(g.Value,name,analysis,m.Gpc);
         var onlyBeams=BridgeMemberAssignmentComponent.GpcOnly(this,0,result.Plans); // R65-C2-08: a refused plan, no outputs
         if(onlyBeams==null) return;
         da.SetDataList(0,onlyBeams);

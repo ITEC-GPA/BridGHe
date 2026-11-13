@@ -6,7 +6,6 @@ using System.IO.Compression;
 using System.Linq;
 using System.Xml.Linq;
 using BridGHe.Common.Geometry;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Diagnostics;
 
@@ -18,9 +17,9 @@ public static class BridgeSegmentWorkbook
     private static readonly XNamespace S = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
     public static readonly string[] Headers = BridgeSegmentSections.Header.TrimStart('#', ' ').Split(';').Select(s => s.Trim()).ToArray();
-    public static string[] Template(IBridgeSegments geometry, BeamPropertyModel property = null) => property == null
-        ? BridgeSegmentSections.Synchronize(geometry, null).Table
-        : BridgeSegmentSections.Create(geometry, property, null).ResolvedTable;
+    /// <summary>The template without a base property (P2CE, 13/11/2026, phase 1: the FEM base property removed; on a GPC base property,
+    /// <see cref="TemplateGpc"/>).</summary>
+    public static string[] Template(IBridgeSegments geometry) => BridgeSegmentSections.Synchronize(geometry, null).Table;
 
     /// <summary>R6.5 P1 lane 2b: the template on a base property given by its GPC datum (<see cref="BridgeSegmentSections.CreateGpc"/>).</summary>
     public static string[] TemplateGpc(IBridgeSegments geometry, Gpc.Legacy.LegacyBeamProperty property) => property == null
@@ -28,12 +27,12 @@ public static class BridgeSegmentWorkbook
         : BridgeSegmentSections.CreateGpc(geometry, property, null).ResolvedTable;
 
     /// <summary>Writes the workbook of the template (or of <paramref name="initialTable"/>); R6.5 P1 lane 2b: <paramref name="template"/>, a
-    /// template already made (<see cref="TemplateGpc"/>), instead of the one of <paramref name="property"/>.</summary>
-    public static void Write(string path, IBridgeSegments geometry, BeamPropertyModel property = null, bool overwrite = false, IEnumerable<string> initialTable = null,
+    /// template already made (<see cref="TemplateGpc"/>), instead of the one without a base property. P2CE (phase 1): no FEM base property.</summary>
+    public static void Write(string path, IBridgeSegments geometry, bool overwrite = false, IEnumerable<string> initialTable = null,
         string[] template = null)
     {
         path = BridgeCombinationWorkbook.FilePath(path);
-        var table = template ?? (initialTable == null ? Template(geometry, property) : BridgeSegmentSections.ValidateTable(geometry, initialTable));
+        var table = template ?? (initialTable == null ? Template(geometry) : BridgeSegmentSections.ValidateTable(geometry, initialTable));
         if (table.Length > 100001) throw new ArgumentException("Maximum 100000 fabrication segments per workbook.");
         if (File.Exists(path) && !overwrite) throw new IOException("File already exists. Use Read, choose another filename, or explicitly enable Overwrite.");
         Directory.CreateDirectory(Path.GetDirectoryName(path));

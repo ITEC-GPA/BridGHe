@@ -140,6 +140,8 @@ public static class BridgeMemberAssignment
     /// <param name="gpcDefaults">R6.5 P1 lane 2a: default properties given by their GPC datum alone (no FEM value), paired with families as
     /// <paramref name="defaults"/>. With one of them, or a rule with a GPC property alone, the assignment is on GPC only (rule of passo 75): no
     /// FEM beams, only the plans (<see cref="BridgeAssignment.Plans"/>), with the same checks, messages and diagnostics.</param>
+    // P2CE phase 2: delete with Models the FEM defaults and BridgeAssignment.Beams (product callers give null; callers with FEM defaults: GpcOnlyReplay
+    // of lane P2CC and its helper BridgeConstructionTests.Model).
     public static BridgeAssignment Assign(SimpleBridgeGeometry geometry, IReadOnlyDictionary<int, BeamPropertyModel> defaults,
         IReadOnlyList<BridgeSectionRule> schedule, IReadOnlyDictionary<int, Gpc.Legacy.LegacyBeamProperty> gpcDefaults = null)
     {

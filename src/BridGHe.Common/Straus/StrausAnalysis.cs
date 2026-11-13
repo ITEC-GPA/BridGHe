@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Straus
 {

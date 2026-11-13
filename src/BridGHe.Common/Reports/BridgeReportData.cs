@@ -151,16 +151,6 @@ public sealed record BridgeReportData(string Id, DateTimeOffset Created, BridgeR
     /// reads it: whether it is N-mm, the length of a beam by its BridGHe ID (null: no such beam), the combination names, and the report model.</summary>
     public sealed record ReportModelSource(bool Nmm, Func<string, double?> BeamLength, IReadOnlyCollection<string> Combinations, BridgeReportModel Model);
 
-    /// <summary>The model of a report from the merged FEM model (until R6.5).</summary>
-    public static ReportModelSource Source(ModelModel model)
-    {
-        if (model == null) return null;
-        var beams = model.Beams.GroupBy(b => b.BeamId, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.ToArray(), StringComparer.Ordinal);
-        return new ReportModelSource(model.Units == ModelModel.ModelUnits.Nmm, id => id != null && beams.TryGetValue(id, out var b) ? b.Length == 1 ? b[0].Length : throw new InvalidOperationException("Sequence contains more than one matching element") : null,
-            model.LoadCombinations.Select(c => c.Name).ToArray(),
-            new BridgeReportModel(model.Name, model.Units.ToString(), model.Nodes.Count, model.Beams.Count, model.Plates.Count, model.BridgeWorkflow,
-                model.LoadCombinations.Select(c => new BridgeReportCombination(c.Name, c.Values.Select(v => new BridgeReportFactor(v.Key.Name, v.Value)).ToArray())).ToArray()));
-    }
 
     /// <summary>F6 R6.4 (6): the model of a report from the GPC bridge model of Build BridGHe Model (N-mm by construction): its name and counts,
     /// the records of its actions and its combination table with the zero coefficients (<see cref="Gpc.GpcBridge.Records"/>,
@@ -197,9 +187,8 @@ public sealed record BridgeReportData(string Id, DateTimeOffset Created, BridgeR
     public static string Text(ReportModelSource source, IEnumerable<string> beamIds) => source == null ? "null" : source.Nmm + "\n" + Serialize(source.Model) + "\n"
         + string.Join("|", source.Combinations) + "\n" + string.Join("|", beamIds.Select(id => id + "=" + (source.BeamLength(id) is double l ? BitConverter.DoubleToInt64Bits(l).ToString("X16") : "-")));
 
-    public static BridgeReportData Create(IEnumerable<BridgeReportEntry> entries, BridgeReportMetadata metadata, ModelModel model = null) => Create(entries, metadata, Source(model));
-
-    public static BridgeReportData Create(IEnumerable<BridgeReportEntry> entries, BridgeReportMetadata metadata, ReportModelSource model)
+    /// <summary>P2CE (13/11/2026, phase 1): the overload on the merged FEM model removed; no source (null) is a report without a model, as before.</summary>
+    public static BridgeReportData Create(IEnumerable<BridgeReportEntry> entries, BridgeReportMetadata metadata, ReportModelSource model = null)
     {
         if (metadata == null || string.IsNullOrWhiteSpace(metadata.Title)) throw new ArgumentException("Supply a report title.");
         var input = entries?.ToArray() ?? throw new ArgumentNullException(nameof(entries));
