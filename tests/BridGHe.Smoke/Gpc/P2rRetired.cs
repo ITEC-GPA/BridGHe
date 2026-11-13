@@ -149,6 +149,7 @@ internal static class P2rRetired
     {
         var d = new Dictionary<string, string>(StringComparer.Ordinal);
         void Add(string key, string reason) => d.Add(key, reason + " (" + CutDecision + ")");
+        P2rRetiredP2cb.AddTo(Add); // P2CB (13/11): the retirements of lane P2CB (Gpc/P2rRetired.P2cb.cs)
         const string FemType = "a check of the FEM model types (BridGHe.Common.Models), which the GPC path does not use";
         Add("core|section archive roundtrip", FemType + "; the GH archive round trip of a section on its GPC datum: P2fChecks.GooArchives (core)");
         Add("core|standalone moving case included in export", "ModelHelper.GetLoadCases on a FEM model; the cases of the moving paths of a GPC model: --examples (04) and --moving-load-tests --native");

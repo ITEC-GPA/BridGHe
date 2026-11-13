@@ -1,19 +1,18 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using BridGHe.Common.Gpc;
-using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
+using BridGHe.Common.Gpc.Builders;
+using BridGHe.Common.Gpc.Legacy;
 using BridGHe.Common.MovingLoads;
 using BridGHe.Common.Straus;
 using GPC.Converter.Straus7;
-using Rhino.Geometry;
 
 /// <summary>
-/// C2 (11/11/2026, user decision Â«come la 0.3.0Â» on P26-01â€¦07): the Straus7 behaviour of BridGHe 0.3.0 through the GPC Converter, natively,
-/// on the FEM path of Straus R3 Analysis and Moving Static Analysis (core-only --native, and --c2-parity-native):
+/// C2 (11/11/2026, user decision «come la 0.3.0» on P26-01…07): the Straus7 behaviour of BridGHe 0.3.0 through the GPC Converter, natively,
+/// on the analysis of Straus R3 Analysis and Moving Static Analysis (core-only --native, and --c2-parity-native):
 /// <list type="bullet">
 /// <item>P26-01/02/03: the section label of the eight standard kinds 0.3.0 labelled (none on a native section), the material name of the plate
 /// properties, one native plate property per Plate Property named as it; no result value moves (bit for bit against the file of the Converter);</item>
@@ -23,14 +22,23 @@ using Rhino.Geometry;
 /// <item>P26-07: the combinations are the LSA combination cases Straus7 computes: the beam rows at the stations of the combination (a concentrated
 /// load off the regular stations in A, a distributed load in B), against the superposition at the stations common to A and B of BridGHe before C2.</item>
 /// </list>
+/// P2CB (13/11/2026, rule U3): the models are the GPC data of the components (the product builders, Build Model on GPC, Attach Moving Paths on
+/// GPC: <see cref="GpcNativeExamples.Builder"/>, <see cref="R4bInputs.Build"/>) with the geometry, properties, loads, cases and combinations of the
+/// former FEM models, analysed on the GPC-only path (<see cref="StrausAnalysis.Run(GpcModels.Conversion, string, int, IReadOnlyCollection{string}, bool, out List{string})"/>)
+/// and read with the GPC result readers (<see cref="GpcNativeExamples.Results"/>, the rows the FEM results copied bit for bit): the same oracles
+/// and the same printed values as on the FEM models.
 /// </summary>
 internal static class C2ParityNative
 {
     private static int failures;
     private static void Check(bool ok, string what) { if (!ok) failures++; Console.WriteLine((ok ? "PASS: " : "FAIL: ") + "C2 " + what); }
     private static string R(double v) => v.ToString("R", CultureInfo.InvariantCulture);
-    private static MaterialModel Steel() => new("S355") { Name = "S355", Modulus = 210000, PoissonRatio = 0.3 };
-    private static NodeModel Fixed(string id, Point3d p) { var n = new NodeModel(id, p); n.Attributes.Add(new NodeRestraintAttributeModel(true, true, true, true, true, true)); return n; }
+    private static GPC.Model.Materials.Material Steel() => GpcNativeExamples.Steel();
+    private static int Fixed(GpcNativeExamples.Builder b, string id, double x, double y) { int n = b.Node(x, y, 0, id, null); b.Restrain(n, true, true, true, true, true, true); return n; }
+    private static LegacyBeamProperty Generic(string name, double area, double i11, double i22, double j) =>
+        GpcPropertyBuilders.Beam(name, 5, GpcSectionBuilders.Generic(area, i11, i22, j, 0, 0, 0, 0, 0, 0, 0), Steel());
+    private static GPC.Model.Materials.Material Concrete(string name, double modulus) => GpcMaterialBuilders.Material(new LegacyMaterialRecipe { Name = name, Modulus = modulus, PoissonRatio = 0.2 });
+    private static (double, double, double)[] Quad(double x0, double y0, double x1, double y1) => new[] { (x0, y0, 0.0), (x1, y0, 0.0), (x1, y1, 0.0), (x0, y1, 0.0) };
     private static string Folder() { string f = Path.GetFullPath(Path.Combine("artifacts", "native", "c2-" + Guid.NewGuid().ToString("N"))); Directory.CreateDirectory(f); return f; }
 
     internal static int Run()
@@ -48,43 +56,46 @@ internal static class C2ParityNative
     /// <summary>P26-01/02/03.</summary>
     private static void Names()
     {
-        var model = new ModelModel(ModelModel.ModelUnits.Nmm); var a = new LoadCaseModel("A", "A"); model.LoadCases.Add(a);
-        var kinds = new (SectionModel.SectionTypes Kind, Action<SectionModel> Set, string Label)[]
+        var b = new GpcNativeExamples.Builder("c2-names");
+        var kinds = new (BridgeSectionKind Kind, LegacySectionRecipe Section, string Label)[]
         {
-            (SectionModel.SectionTypes.SolidCircle, s => s.D = 200, "SolidRound"), (SectionModel.SectionTypes.HollowCircle, s => { s.D = 200; s.T = 10; }, "HollowRound"),
-            (SectionModel.SectionTypes.SolidRectangle, s => { s.B = 200; s.D = 400; }, "SolidRect"), (SectionModel.SectionTypes.HollowRectangle, s => { s.B = 200; s.D = 400; s.T1 = 10; s.T2 = 12; }, "HollowRect"),
-            (SectionModel.SectionTypes.I, s => { s.B1 = 200; s.B2 = 180; s.D = 400; s.T1 = 12; s.T2 = 14; s.T3 = 8; }, "IBeam"), (SectionModel.SectionTypes.T, s => { s.B = 200; s.D = 400; s.T1 = 12; s.T2 = 14; s.T3 = 8; }, "TBeam"),
-            (SectionModel.SectionTypes.C, s => { s.B = 100; s.D = 300; s.T1 = 10; s.T2 = 8; s.T3 = 8; }, "Lipped Channel"), (SectionModel.SectionTypes.Angle, s => { s.B = 150; s.D = 100; s.T1 = 10; s.T2 = 12; }, "Angle"),
+            (BridgeSectionKind.SolidCircle, GpcSectionBuilders.Standard(BridgeSectionKind.SolidCircle, 200), "SolidRound"),
+            (BridgeSectionKind.HollowCircle, GpcSectionBuilders.Standard(BridgeSectionKind.HollowCircle, 200, t: 10), "HollowRound"),
+            (BridgeSectionKind.SolidRectangle, GpcSectionBuilders.Standard(BridgeSectionKind.SolidRectangle, 400, b: 200), "SolidRect"),
+            (BridgeSectionKind.HollowRectangle, GpcSectionBuilders.Standard(BridgeSectionKind.HollowRectangle, 400, b: 200, t1: 10, t2: 12), "HollowRect"),
+            (BridgeSectionKind.I, GpcSectionBuilders.Standard(BridgeSectionKind.I, 400, b1: 200, b2: 180, t1: 12, t2: 14, t3: 8), "IBeam"),
+            (BridgeSectionKind.T, GpcSectionBuilders.Standard(BridgeSectionKind.T, 400, b: 200, t1: 12, t2: 14, t3: 8), "TBeam"),
+            (BridgeSectionKind.C, GpcSectionBuilders.Standard(BridgeSectionKind.C, 300, b: 100, t1: 10, t2: 8, t3: 8), "Lipped Channel"),
+            (BridgeSectionKind.Angle, GpcSectionBuilders.Standard(BridgeSectionKind.Angle, 100, b: 150, t1: 10, t2: 12), "Angle"),
         };
-        var sections = kinds.Select(k => { var s = new SectionModel { SectionType = k.Kind }; k.Set(s); s.CalculateSection(); return (Section: s, k.Label); }).ToList();
+        var sections = kinds.Select(k => (k.Section, k.Label)).ToList();
         // A section of the Native Section component (no label in 0.3.0: StrausSection.Assign sets none).
-        sections.Add((new StrausSection { Key = "RectangleSolid", Dimensions = new[] { 200.0, 400.0 } }.Calculate(), ""));
-        var nodes = new List<NodeModel> { Fixed("N0", Point3d.Origin) };
-        for (int i = 0; i < sections.Count; i++) nodes.Add(new NodeModel("N" + (i + 1), new Point3d(1000 * (i + 1), 0, 0)));
-        nodes.Last().Loads.Add(new NodeForceLoadModel(a, new Vector3d(0, 0, -100)));
-        model.AddElements(nodes.ToArray());
-        for (int i = 0; i < sections.Count; i++)
-            model.AddElements(new ElementModel[] { new BeamModel(nodes[i].Position, nodes[i + 1].Position, new BeamPropertyModel("P" + i) { Name = "Property " + i, Material = Steel(), Section = sections[i].Section, PropertyType = BeamPropertyType.Beam }) { BeamId = "B" + i } });
-        // Plates: three of Â«Soletta 250Â», one of Â«Soletta 300Â», clamped along x = 0.
-        var thin = new PlatePropertyModel("S250") { Name = "Soletta 250", Material = new MaterialModel("C32/40") { Name = "C32/40", Modulus = 33000, PoissonRatio = 0.2 }, PropertyType = PlatePropertyType.ShellThin, MembraneThickness = 250, BendingThickness = 250 };
-        var thick = new PlatePropertyModel("S300") { Name = "Soletta 300", Material = new MaterialModel("C35/45") { Name = "C35/45", Modulus = 34000, PoissonRatio = 0.2 }, PropertyType = PlatePropertyType.ShellThin, MembraneThickness = 300, BendingThickness = 300 };
-        // The FEM nodes of every plate corner (the reader finds them by tolerance), clamped along x = 0, loaded at (4000, 6000).
+        sections.Add((GpcSectionBuilders.Native("RectangleSolid", new[] { 200.0, 400.0 }, null, null, null, 0), ""));
+        var nodes = new List<int> { Fixed(b, "N0", 0, 0) };
+        for (int i = 0; i < sections.Count; i++) nodes.Add(b.Node(1000 * (i + 1), 0, 0, "N" + (i + 1), null));
+        b.Force(nodes.Last(), "A", 0, 0, -100);
+        // Plates: three of «Soletta 250», one of «Soletta 300», clamped along x = 0; the nodes of every plate corner (Build Model finds them by
+        // tolerance), loaded at (4000, 6000).
+        var thin = GpcPropertyBuilders.Plate("Soletta 250", 0, Concrete("C32/40", 33000), 250, 250);
+        var thick = GpcPropertyBuilders.Plate("Soletta 300", 0, Concrete("C35/45", 34000), 300, 300);
         for (int i = 0; i <= 4; i++)
             foreach (double y in new[] { 5000.0, 6000.0 })
             {
-                var corner = i == 0 ? Fixed("Q" + i + "-" + y, new Point3d(0, y, 0)) : new NodeModel("Q" + i + "-" + y, new Point3d(1000 * i, y, 0));
-                if (i == 4 && y == 6000) corner.Loads.Add(new NodeForceLoadModel(a, new Vector3d(0, 0, -1000)));
-                model.AddElements(new ElementModel[] { corner });
+                int corner = i == 0 ? Fixed(b, "Q" + i + "-" + y, 0, y) : b.Node(1000 * i, y, 0, "Q" + i + "-" + y, null);
+                if (i == 4 && y == 6000) b.Force(corner, "A", 0, 0, -1000);
             }
+        for (int i = 0; i < sections.Count; i++)
+            R4bInputs.Beam(b, nodes[i], nodes[i + 1], GpcPropertyBuilders.Beam("Property " + i, 5, sections[i].Section, Steel()), null, "B" + i);
         for (int i = 0; i < 4; i++)
-            model.AddElements(new ElementModel[] { new PlateModel("Plate " + (i + 1), new[] { new Point3d(1000 * i, 5000, 0), new Point3d(1000 * (i + 1), 5000, 0), new Point3d(1000 * (i + 1), 6000, 0), new Point3d(1000 * i, 6000, 0) }, i == 3 ? thick : thin) });
+            b.Plates.Add(GpcPlateBuilders.Create(Quad(1000 * i, 5000, 1000 * (i + 1), 6000), i == 3 ? thick : thin, null, 0, 0, "Plate " + (i + 1), b.Next("plate")));
+        var input = R4bInputs.Build(b, "names");
         string folder = Folder(), path = Path.Combine(folder, "names.st7");
-        StrausAnalysis.Run(model, path, 0, new[] { "A" }, 1e-6, false, out _, out var analysed);
+        StrausAnalysis.Run(input, path, 0, new[] { "A" }, false, out _);
         using (var api = new Straus7NativeApi())
         {
             api.OpenModelReadOnly(path, folder);
             var labels = new Dictionary<string, string>();
-            for (int b = 1; b <= api.Count(Straus7Entity.Beam); b++) { var p = api.ReadProperty(Straus7Entity.Beam, api.ReadElement(Straus7Entity.Beam, b).Property); labels[p.Name] = p.SectionName; }
+            for (int k = 1; k <= api.Count(Straus7Entity.Beam); k++) { var p = api.ReadProperty(Straus7Entity.Beam, api.ReadElement(Straus7Entity.Beam, k).Property); labels[p.Name] = p.SectionName; }
             for (int i = 0; i < sections.Count; i++)
                 Check(labels.TryGetValue("Property " + i, out var label) && label == sections[i].Label, $"P26-01 section label of {(i < kinds.Length ? kinds[i].Kind.ToString() : "native RectangleSolid")}: '{(labels.TryGetValue("Property " + i, out var l) ? l : "?")}', 0.3.0 '{sections[i].Label}'");
             var plates = Enumerable.Range(1, api.Count(Straus7Entity.Plate)).Select(k => api.ReadElement(Straus7Entity.Plate, k)).ToArray();
@@ -92,13 +103,12 @@ internal static class C2ParityNative
             Check(properties.Length == 2 && properties.Select(p => p.Name).OrderBy(n => n).SequenceEqual(new[] { "Soletta 250", "Soletta 300" }),
                 "P26-03 one native property per Plate Property: " + string.Join(", ", properties.Select(p => p.Number + " '" + p.Name + "'")));
             Check(properties.All(p => p.MaterialName == (p.Name == "Soletta 250" ? "C32/40" : "C35/45")), "P26-02 material names of the plate properties: " + string.Join(", ", properties.Select(p => p.Name + " '" + p.MaterialName + "'")));
-            Check(plates.Count(p => properties.Single(q => q.Number == p.Property).Name == "Soletta 250") == 3, "P26-03 three plates on Â«Soletta 250Â»");
+            Check(plates.Count(p => properties.Single(q => q.Number == p.Property).Name == "Soletta 250") == 3, "P26-03 three plates on «Soletta 250»");
         }
-        // No value moves: the same conversion written by the Converter without the options, every result bit for bit.
-        var conversion = GpcModels.Convert(model, 1e-6);
-        var today = GpcStrausAnalysis.LinearStatic(conversion.Model, Path.Combine(folder, "today.st7"), folder, nativeSections: conversion.Report.NativeSections);
-        var legacy = GpcStrausAnalysis.LinearStatic(conversion.Model, Path.Combine(folder, "legacy.st7"), folder, nativeSections: conversion.Report.NativeSections,
-            writeOptions: GpcStrausAnalysis.LegacyWriteOptions(conversion.Model, conversion.Report));
+        // No value moves: the same GPC input written by the Converter without the options, every result bit for bit.
+        var today = GpcStrausAnalysis.LinearStatic(input.Model, Path.Combine(folder, "today.st7"), folder, nativeSections: input.Report.NativeSections);
+        var legacy = GpcStrausAnalysis.LinearStatic(input.Model, Path.Combine(folder, "legacy.st7"), folder, nativeSections: input.Report.NativeSections,
+            writeOptions: GpcStrausAnalysis.LegacyWriteOptions(input.Model, input.Report));
         int compared = 0, differ = 0;
         foreach (var element in today.Model.AllElements)
         {
@@ -120,34 +130,31 @@ internal static class C2ParityNative
 
     /// <summary>Two clamped spans of 1000 mm: A a concentrated force at 0.37 of the first span, B a distributed force on the second, C a nodal
     /// force at the middle support; AB = 1.35 A + 1.5 B, AC = A + C.</summary>
-    private static ModelModel TwoSpans()
+    private static GpcModels.Conversion TwoSpans()
     {
-        var model = new ModelModel(ModelModel.ModelUnits.Nmm);
-        var a = new LoadCaseModel("A", "A"); var b = new LoadCaseModel("B", "B"); var c = new LoadCaseModel("C", "C"); model.LoadCases.Add(a); model.LoadCases.Add(b); model.LoadCases.Add(c);
-        var n = new[] { Fixed("1", Point3d.Origin), new NodeModel("2", new Point3d(1000, 0, 0)), Fixed("3", new Point3d(2000, 0, 0)) };
-        n[1].Loads.Add(new NodeForceLoadModel(c, new Vector3d(0, 0, -500))); model.AddElements(n);
-        var property = new BeamPropertyModel("P") { Name = "Rect", Material = Steel(), PropertyType = BeamPropertyType.Beam,
-            Section = new SectionModel { SectionType = SectionModel.SectionTypes.Generic, SectionArea = 20000, I11 = 66666666.7, I22 = 16666666.7, J = 45800000, ShearA1 = 0, ShearA2 = 0 } };
-        var first = new BeamModel(n[0].Position, n[1].Position, property) { BeamId = "1" }; var second = new BeamModel(n[1].Position, n[2].Position, property) { BeamId = "2" };
-        first.Loads.Add(new BeamPointLoadModel(a, new BeamPointLoadModel.LoadData { P = new Vector3d(0, 0, -1000), A = 0.37 }, BeamPointLoadModel.LoadType.Force));
-        second.Loads.Add(new BeamDistributedLoadModel(b, new() { LoadSchema = BeamDistributedLoadModel.LoadSchema.Uniform, CoordinateSystem = CoordinateSystemModel.Global,
-            LoadDirection = BeamDistributedLoadModel.LoadDirection.Z, PA = -2, PB = -2 }, BeamDistributedLoadModel.LoadType.Force));
-        model.AddElements(new ElementModel[] { first, second });
-        var ab = new LoadCombinationModel("AB"); ab.Values.Add(a, 1.35); ab.Values.Add(b, 1.5);
-        var ac = new LoadCombinationModel("AC"); ac.Values.Add(a, 1); ac.Values.Add(c, 1);
-        model.AddLoadCombinations(new[] { ab, ac });
-        return model;
+        var b = new GpcNativeExamples.Builder("c2-two-spans");
+        var n = new[] { Fixed(b, "1", 0, 0), b.Node(1000, 0, 0, "2", null), Fixed(b, "3", 2000, 0) };
+        b.Force(n[1], "C", 0, 0, -500);
+        var property = Generic("Rect", 20000, 66666666.7, 16666666.7, 45800000);
+        int first = R4bInputs.Beam(b, n[0], n[1], property, null, "1"), second = R4bInputs.Beam(b, n[1], n[2], property, null, "2");
+        b.Beams[first] = GpcBeamBuilders.WithPointLoad(b.Beams[first], b.Case("A"), false, 0.37, new GPC.Geometry.Vector3d(0, 0, -1000), b.Next("point"));
+        b.Beams[second] = GpcBeamBuilders.WithDistributedLoad(b.Beams[second], b.Case("B"), BridgeLoadSchema.Uniform, false, "Z", -2, -2, 0, 0, 0, 0, true, b.Next("distributed"));
+        b.Combinations.Add(b.Combination("AB", ("A", 1.35), ("B", 1.5)));
+        b.Combinations.Add(b.Combination("AC", ("A", 1), ("C", 1)));
+        return R4bInputs.Build(b, "two-spans");
     }
 
-    private static List<BeamForceResultModel> Rows(ModelModel m, int beam, string name) => m.Beams[beam].Results.OfType<BeamForceResultModel>().Where(r => r.LoadCase.Name == name).OrderBy(r => r.Station).ToList();
-    private static double[] V(BeamForceResultModel r) => new[] { r.AxialForce, r.ShearForce.X, r.ShearForce.Y, r.Torque, r.BendingMoment.X, r.BendingMoment.Y };
+    private static string Label(GpcNativeExamples.Results m, int entry) => m.Catalog.Entries[entry].Label;
+    private static List<GpcResultRows.BeamRow> Rows(GpcNativeExamples.Results m, int beam, string name) => m.BeamRows(beam, name).OrderBy(r => r.Station).ToList();
+    private static double[] V(GpcResultRows.BeamRow r) => new[] { r.Axial, r.Shear1, r.Shear2, r.Torque, r.Bending1, r.Bending2 };
 
-    /// <summary>P26-04 and P26-07 on the FEM path of Straus R3 Analysis.</summary>
+    /// <summary>P26-04 and P26-07 on the analysis of Straus R3 Analysis.</summary>
     private static void Cases()
     {
         string folder = Folder(), selected = Path.Combine(folder, "selected.st7"), every = Path.Combine(folder, "every.st7");
-        var some = StrausAnalysis.Run(TwoSpans(), selected, 0, new[] { "A", "AB" }, 1e-6, false, out _);
-        var all = StrausAnalysis.Run(TwoSpans(), every, 0, StrausResultSelection.Catalog(TwoSpans(), 0).Select(e => e.Case.Name).ToArray(), 1e-6, false, out _);
+        var input = TwoSpans();
+        var some = new GpcNativeExamples.Results(StrausAnalysis.Run(input, selected, 0, new[] { "A", "AB" }, false, out _));
+        var all = new GpcNativeExamples.Results(StrausAnalysis.Run(input, every, 0, GpcResultSelection.Catalog(input.Model, 0).Select(e => e.Name).ToArray(), false, out _));
         using (var api = new Straus7NativeApi())
         {
             api.OpenModelReadOnly(selected, folder);
@@ -159,14 +166,15 @@ internal static class C2ParityNative
         foreach (string name in new[] { "A", "AB" })
         {
             for (int k = 0; k < 2; k++) { var x = Rows(some, k, name); var y = Rows(all, k, name); rows += x.Count; same &= x.Count == y.Count && x.Zip(y, (p, q) => p.Station == q.Station && V(p).SequenceEqual(V(q))).All(t => t); }
-            for (int k = 0; k < some.Nodes.Count; k++)
+            for (int k = 0; k < some.NodeCount; k++)
             {
-                var x = some.Nodes[k].Results.OfType<NodeDisplResultModel>().Where(r => r.LoadCase.Name == name).Select(r => r.Displacement).ToArray();
-                var y = all.Nodes[k].Results.OfType<NodeDisplResultModel>().Where(r => r.LoadCase.Name == name).Select(r => r.Displacement).ToArray();
+                var x = some.NodeRows(k).Where(r => r.Displacement != null && Label(some, r.Entry) == name).SelectMany(r => r.Displacement.Take(3)).ToArray();
+                var y = all.NodeRows(k).Where(r => r.Displacement != null && Label(all, r.Entry) == name).SelectMany(r => r.Displacement.Take(3)).ToArray();
                 same &= x.Length > 0 && x.SequenceEqual(y); // P2R (task 39, T05): every node has its displacements of A and AB (two empty sets passed before)
             }
         }
-        Check(same && rows > 0 && !some.Nodes.SelectMany(n => n.Results).Any(r => r.LoadCase.Name == "B" || r.LoadCase.Name == "C"), $"P26-04 requested values unchanged bit for bit ({rows} beam rows of A and AB), no result of the cases not requested");
+        Check(same && rows > 0 && !some.AllNodeRows().Any(r => Label(some, r.Entry) == "B" || Label(some, r.Entry) == "C"),
+            $"P26-04 requested values unchanged bit for bit ({rows} beam rows of A and AB), no result of the cases not requested");
         // P26-07: AB at the stations of the Straus7 combination, against the superposition of A and B at their common stations (BridGHe until C2).
         int lost = 0;
         for (int k = 0; k < 2; k++)
@@ -183,7 +191,7 @@ internal static class C2ParityNative
             }
             var extra = rab.Where(r => !common.Any(s => Math.Abs(s - r.Station) < 1e-9)).ToArray(); lost += extra.Length;
             Console.WriteLine($"C2 P26-07 beam {k + 1}: A {ra.Count} stations, B {rb.Count}, common {common.Length} (the rows of AB before C2); Straus7 combination AB {rab.Count}: "
-                + string.Join(" ", rab.Select(r => R(r.Station))) + "; not common to A and B: " + string.Join("; ", extra.Select(r => "x " + R(r.Station) + " My " + R(r.My) + " Vy " + R(r.Vy))));
+                + string.Join(" ", rab.Select(r => R(r.Station))) + "; not common to A and B: " + string.Join("; ", extra.Select(r => "x " + R(r.Station) + " My " + R(r.Bending2) + " Vy " + R(r.Shear2))));
             Check(common.Length > 0 && compared == common.Length, $"P26-07 beam {k + 1}: every one of the {common.Length} stations common to A and B has its row of AB ({compared} compared)");
             Check(worst < 1e-12, $"P26-07 beam {k + 1}: AB equal to 1.35 A + 1.5 B at the common stations (worst {R(worst)} of the largest value)");
         }
@@ -194,33 +202,33 @@ internal static class C2ParityNative
     /// from Straus7; the plate rows of PS equal the superposition of P and S to roundoff, every node of every plate.</summary>
     private static void Plates()
     {
-        var model = new ModelModel(ModelModel.ModelUnits.Nmm); var p = new LoadCaseModel("P", "P"); var s = new LoadCaseModel("S", "S"); model.LoadCases.Add(p); model.LoadCases.Add(s);
-        var shell = new PlatePropertyModel("Shell") { Name = "Shell 20", Material = Steel(), PropertyType = PlatePropertyType.ShellThin, MembraneThickness = 20, BendingThickness = 20 };
+        var b = new GpcNativeExamples.Builder("c2-plates");
+        var shell = GpcPropertyBuilders.Plate("Shell 20", 0, Steel(), 20, 20);
         for (int i = 0; i <= 3; i++)
             foreach (double y in new[] { 0.0, 1000.0 })
-                model.AddElements(new ElementModel[] { i == 0 ? Fixed("S" + i + "-" + y, new Point3d(0, y, 0)) : new NodeModel("S" + i + "-" + y, new Point3d(1000 * i, y, 0)) });
+                if (i == 0) Fixed(b, "S" + i + "-" + y, 0, y); else b.Node(1000 * i, y, 0, "S" + i + "-" + y, null);
         for (int i = 0; i < 3; i++)
         {
-            var plate = new PlateModel("Q" + (i + 1), new[] { new Point3d(1000 * i, 0, 0), new Point3d(1000 * (i + 1), 0, 0), new Point3d(1000 * (i + 1), 1000, 0), new Point3d(1000 * i, 1000, 0) }, shell);
-            plate.Loads.Add(new PlatePressureModel(p, new() { P = new Vector3d(0, 0, -0.01) }));
-            plate.Loads.Add(new PlatePreStressModel(s, new() { LocalPressure = new Vector3d(5, -2, 0) }));
-            model.AddElements(new ElementModel[] { plate });
+            var plate = GpcPlateBuilders.Create(Quad(1000 * i, 0, 1000 * (i + 1), 1000), shell, null, 0, 0, "Q" + (i + 1), b.Next("plate"));
+            plate = GpcPlateBuilders.WithPressure(plate, b.Case("P"), false, null, 0, 0, -0.01, false, b.Next("pressure"));
+            plate = GpcPlateBuilders.WithPrestress(plate, b.Case("S"), 5, -2, 0, b.Next("prestress"));
+            b.Plates.Add(plate);
         }
-        var ps = new LoadCombinationModel("PS"); ps.Values.Add(p, 1.0); ps.Values.Add(s, 0.5); model.AddLoadCombinations(new[] { ps });
+        b.Combinations.Add(b.Combination("PS", ("P", 1.0), ("S", 0.5)));
+        var input = R4bInputs.Build(b, "plates");
         string folder = Folder();
-        var result = StrausAnalysis.Run(model, Path.Combine(folder, "plates.st7"), 0, new[] { "P", "S", "PS" }, 1e-6, false, out _);
+        var result = new GpcNativeExamples.Results(StrausAnalysis.Run(input, Path.Combine(folder, "plates.st7"), 0, new[] { "P", "S", "PS" }, false, out _));
         double worst = 0, scale = 0; int rows = 0;
-        foreach (var plate in result.Plates)
+        for (int k = 0; k < result.Model.AreaElements.Count; k++)
         {
-            PlateForceResultModel[] Of(string name) => plate.Results.OfType<PlateForceResultModel>().Where(r => r.LoadCase.Name == name).ToArray();
+            GpcResultRows.PlateRow[] Of(string name) => result.PlateRows(k).Where(r => Label(result, r.Entry) == name).ToArray();
             var rp = Of("P"); var rs = Of("S"); var rps = Of("PS");
-            if (rps.Length != rp.Length || rps.Length == 0) { Check(false, "P26-07 plate " + plate.PlateId + ": " + rps.Length + " rows of PS, " + rp.Length + " of P"); continue; }
-            for (int k = 0; k < rps.Length; k++)
+            if (rps.Length != rp.Length || rps.Length == 0) { Check(false, "P26-07 plate Q" + (k + 1) + ": " + rps.Length + " rows of PS, " + rp.Length + " of P"); continue; }
+            for (int j = 0; j < rps.Length; j++)
             {
                 rows++;
-                double[] V(PlateForceResultModel r) => new[] { r.Force.X, r.Force.Y, r.Force.Z, r.Moment.X, r.Moment.Y, r.Moment.Z, r.TransverseShearForce.X, r.TransverseShearForce.Y };
-                var a = V(rp[k]); var b = V(rs[k]); var c = V(rps[k]);
-                for (int j = 0; j < c.Length; j++) { scale = Math.Max(scale, Math.Abs(c[j])); worst = Math.Max(worst, Math.Abs(c[j] - (a[j] + 0.5 * b[j]))); }
+                var pa = rp[j].Values; var pb = rs[j].Values; var pc = rps[j].Values;
+                for (int c = 0; c < pc.Length; c++) { scale = Math.Max(scale, Math.Abs(pc[c])); worst = Math.Max(worst, Math.Abs(pc[c] - (pa[c] + 0.5 * pb[c]))); }
             }
         }
         Check(rows == 12 && worst <= 1e-12 * scale, $"P26-07 plates: {rows} rows of PS (Straus7 combination case) equal to 1.0 P + 0.5 S (worst {R(worst)}, largest value {R(scale)})");
@@ -229,22 +237,22 @@ internal static class C2ParityNative
     /// <summary>P26-04, moving-only: only the generated cases are solved (0.3.0 disabled the ordinary ones).</summary>
     private static void Moving()
     {
-        const double length = 6000; var m = new ModelModel(ModelModel.ModelUnits.Nmm); var dead = new LoadCaseModel("G", "G"); m.LoadCases.Add(dead);
-        var property = new BeamPropertyModel("1") { Name = "Elastic beam", Material = Steel(), PropertyType = BeamPropertyType.Beam,
-            Section = new SectionModel { SectionType = SectionModel.SectionTypes.Generic, SectionArea = 60000, I11 = 450000000, I22 = 200000000, J = 100000000, ShearA1 = 0, ShearA2 = 0 } };
+        const double length = 6000; var b = new GpcNativeExamples.Builder("c2-moving");
+        var property = Generic("Elastic beam", 60000, 450000000, 200000000, 100000000);
         for (int i = 0; i <= 12; i++)
         {
-            var n = new NodeModel((i + 1).ToString(), new Point3d(length * i / 12, 0, 0)); n.Attributes.Add(new NodeRestraintAttributeModel(i == 0, true, i == 0 || i == 12, true, false, true));
-            if (i == 6) n.Loads.Add(new NodeForceLoadModel(dead, new Vector3d(0, 0, -10))); m.AddElements(new[] { n });
+            int n = b.Node(length * i / 12, 0, 0, (i + 1).ToString(CultureInfo.InvariantCulture), null); b.Restrain(n, i == 0, true, i == 0 || i == 12, true, false, true);
+            if (i == 6) b.Force(n, "G", 0, 0, -10);
         }
-        for (int i = 0; i < 12; i++) m.AddElements(new[] { new BeamModel(m.Nodes[i].Position, m.Nodes[i + 1].Position, property) { BeamId = (i + 1).ToString() } });
-        m.MovingPaths.Add(new MovingPath { LoadCaseName = "Traffic", Divisions = 5, Target = 2, Coordinates = new double[] { 0, 0, 0, length, 0, 0, 0, 1000, 0 }, ConvertToStaticCases = true,
+        for (int i = 0; i < 12; i++) R4bInputs.Beam(b, i, i + 1, property, null, (i + 1).ToString(CultureInfo.InvariantCulture));
+        b.Paths.Add(new MovingPath { LoadCaseName = "Traffic", Divisions = 5, Target = 2, Coordinates = new double[] { 0, 0, 0, length, 0, 0, 0, 1000, 0 }, ConvertToStaticCases = true,
             Template = new MovingTemplate { Name = "Single axle", Vehicles = new[] { new MovingVehicle { Name = "1000 N", Loads = new MovingObject[] { new MovingPointForce { Force = new double[] { 0, 0, -1000 } } } } } } });
+        var input = b.Build("moving").Input;
         string folder = Folder(), path = Path.Combine(folder, "moving.st7");
-        var result = StrausAnalysis.Run(m, path, 0, Array.Empty<string>(), 1e-6, true, out _);
+        var result = new GpcNativeExamples.Results(StrausAnalysis.Run(input, path, 0, Array.Empty<string>(), true, out _));
         using var api = new Straus7NativeApi(); api.OpenModelReadOnly(path, folder);
         var states = Enumerable.Range(1, api.LoadCaseCount).Select(i => (Name: api.ReadLoadCase(i), On: api.ReadLinearCaseEnabled(i))).ToArray();
-        var generated = new HashSet<string>(result.GeneratedMovingCases.Values);
+        var generated = new HashSet<string>(result.GeneratedMovingCases.Select(c => c.Name));
         Check(generated.Count == 5 && states.All(s => s.On == generated.Contains(s.Name)), "P26-04 moving-only: only the generated cases solved: " + string.Join(" ", states.Select(s => s.Name + "=" + (s.On ? 1 : 0))));
         var file = api.OpenResults(Path.ChangeExtension(path, "lsa")); Check(file.PrimaryCases == 5, "P26-04 moving-only: 5 result cases");
     }
@@ -254,13 +262,13 @@ internal static class C2ParityNative
     {
         foreach (int solver in new[] { 1, 0 })
         {
-            var m = new ModelModel(ModelModel.ModelUnits.Nmm); var p = new LoadCaseModel("P", "P"); m.LoadCases.Add(p);
-            var n0 = Fixed("1", Point3d.Origin); var n1 = new NodeModel("2", new Point3d(3000, 0, 0)); n1.Loads.Add(new NodeForceLoadModel(p, new Vector3d(0, 0, -1000))); m.AddElements(new[] { n0, n1 });
-            m.AddElements(new[] { new BeamModel(n0.Position, n1.Position, new BeamPropertyModel("1") { Name = "Elastic", Material = Steel(), PropertyType = BeamPropertyType.Beam,
-                Section = new SectionModel { SectionType = SectionModel.SectionTypes.Generic, SectionArea = 60000, I11 = 450000000, I22 = 200000000, J = 100000000, ShearA1 = 0, ShearA2 = 0 } }) { BeamId = "1" } });
-            var full = new LoadCombinationModel("Full"); full.Values.Add(p, 1); m.AddLoadCombinations(new[] { full });
+            var b = new GpcNativeExamples.Builder("c2-solver-" + solver);
+            int n0 = Fixed(b, "1", 0, 0), n1 = b.Node(3000, 0, 0, "2", null); b.Force(n1, "P", 0, 0, -1000);
+            R4bInputs.Beam(b, n0, n1, Generic("Elastic", 60000, 450000000, 200000000, 100000000), null, "1");
+            b.Combinations.Add(b.Combination("Full", ("P", 1)));
+            var input = R4bInputs.Build(b, "solver" + solver);
             string folder = Folder(), path = Path.Combine(folder, "solver" + solver + ".st7");
-            StrausAnalysis.Run(m, path, solver, new[] { solver == 1 ? "Full" : "P" }, 1e-6, false, out _);
+            StrausAnalysis.Run(input, path, solver, new[] { solver == 1 ? "Full" : "P" }, false, out _);
             using var api = new Straus7NativeApi(); api.OpenModelReadOnly(path, folder); var s = api.ReadSolverSettings();
             Check(s.NonlinearGeometry && s.NonlinearMaterial && s.DisplacementTolerance == 1e-4 && s.ResidualTolerance == 1e-3 && s.MaximumIterations == 20,
                 $"P26-06 solver {solver}: the settings of the new file, as 0.3.0: {s}");

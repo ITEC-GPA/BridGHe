@@ -78,7 +78,7 @@ internal static class Program
         if(args.Contains("--gpc-guard")) return GpcReleaseSetTests.Guard(args.SkipWhile(a=>a!="--gpc-guard").Skip(1).First());
         if(args.Contains("--plugin-check")) return PluginBuildCheckTests.Child(args.SkipWhile(a=>a!="--plugin-check").Skip(1).First());
         if(args.Contains("--plugin-check-load")) return PluginBuildCheckTests.LoadChild(args.SkipWhile(a=>a!="--plugin-check-load").Skip(1).First());
-        if(args.Contains("--gpc-pilot")) { try { return GpcPilot.Run(); } catch(Exception error) { Console.Error.WriteLine("F4 BRIDGE FAIL " + error); return 1; } }
+        if(args.Contains("--gpc-pilot")) { Console.WriteLine("RETIRED BY NAME (P2CB): --gpc-pilot: "+P2rRetiredP2cb.Reason("native|gpc-pilot")); return 1; } // P2CB (13/11): the F4 pilot retired with its FEM types
         GpcDomainCache.Configure();
         if(args.Contains("--import-dump")) return ImportDump.Run(args);
         if(args.Contains("--build-model-scan")) return BuildModelScan.Run(args);
