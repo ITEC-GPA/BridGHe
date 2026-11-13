@@ -8,7 +8,6 @@ using System.Reflection;
 using System.Text.Json;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Geometry;
-using BridGHe.Common.Models;
 using GPC.Checkers.CompositeBridge;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;

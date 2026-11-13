@@ -17,6 +17,23 @@ internal static class P2rRetiredP2cb
             + "the GPC parity model read back from Straus7 against the 0.3.0 rules: ParityNative (PAR, core-native)");
         add("native|gpc-pilot", FemType + " (the F4 pilot, --gpc-pilot, in no gate: the FEM solve of Build Model against GpcPilotAdapter, the F4 adapter of a FEM model); "
             + "on GPC: the analysis of the GPC-only input (gpc-only-analysis-native, --examples), the archive of an analysed GPC model and its reopening (gpc-results-native, gpc-draft-archive)");
+        const string PhaseFem = "the FEM output of 0.3.0 Phase Model (BridgePhaseModel.Create on a FEM model), which the GPC path does not use; on GPC: the same releases of P1 on the double angle "
+            + "through the GPC transform (GpcModelTransforms.PhaseModel), recorded against the calls of 0.3.0 (gpc-c5: «phase model (GPC transform)», 4 checks) and read back from Straus7 (C5 native, «phase model»)";
+        add("regression-part|gpc-c5: phase FEM output: P1 on the double angle keeps its releases (0.3.0 Phase Model)", PhaseFem + " (1 check)");
+        add("regression-part|gpc-c5: phase model (conversion of the FEM output)", PhaseFem + " (4 checks: refusal without the option, written with it, the release calls of P1, every other call)");
+        const string C3Reader = "the reader of the FEM value of the same recipe (GpcMaterialBuilders.Femm, GpcMaterials.FromFemm, GpcModels.Material and BeamProperty of a FEM "
+            + "property, the plate property of a FEM archive) against the GPC builders; on GPC: the builders checked against the recipe (analysis data, law, G, damping, thermal "
+            + "data, table on the types of 0.3.0, plates without G, membranes refused, slab grillages: gpc-c3), written to Straus7 against the calls of 0.3.0 (C3 native)";
+        add("regression-part|gpc-c3: the reader of the FEM value gives the same material, and the same analysis material", C3Reader + " (14 checks: 2 per material)");
+        add("regression-part|gpc-c3: the reader of the FEM value makes the beam, truss and cable property, the same as the builder", C3Reader + " (38 checks: 2 per property)");
+        add("regression-part|gpc-c3: the reader of the FEM value makes the plate property, the same as the builder", C3Reader + " (14 checks: 2 per material)");
+        const string C3Drawing = "the FEM drawing as the oracle of the GPC drawing (BeamModel.CreateShapes and Shapes, ModelPreview.Bounds of a FEM element, CompositeBeamModel, "
+            + "PlateModel.Shape, the FEM homogenised property); on GPC: the preview of the drafts the components give (the solids of the draft, its clipping box, the composite "
+            + "datum: gpc-c3 and C3 native) and the explicit counts, boxes and volumes of a beam, a composite beam, a plate and a homogenised property (gpc-c3), p2d (U5)";
+        add("regression-part|gpc-c3: TRANSITIONAL the GPC drawing of each preview kind equals the FEM drawing", C3Drawing + " (11 checks; the box check keeps its GPC half: the box of the draft)");
+        add("regression-part|gpc-c3: a beam with its FEM value clips to the FEM box", C3Drawing + " (1 check)");
+        add("regression-part|gpc-c3: TRANSITIONAL the FEM composite beam, plate and homogenised composite property against their GPC drafts", C3Drawing + " (4 checks: composite solids, composite bar lines, plate solid, homogenised property)");
+        add("core-native|c3 native: TRANSITIONAL the GPC drawing of each native section kind equals the FEM drawing", C3Drawing + " (5 checks; the box check keeps its GPC half)");
     }
 
     /// <summary>The reason of a retirement of this lane, as <see cref="P2rRetired.Checks"/> records it.</summary>

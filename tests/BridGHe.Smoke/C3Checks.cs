@@ -9,7 +9,6 @@ using BridGHe.Common.Geometry;
 using BridGHe.Common.Gpc;
 using BridGHe.Common.Gpc.Builders;
 using BridGHe.Common.Gpc.Legacy;
-using BridGHe.Common.Models;
 using GPC.Converter.Straus7;
 using GPC.Model.ElementProperties;
 using GPC.Model.Materials;
@@ -21,13 +20,14 @@ using Rhino.Geometry;
 /// <item>Gap 1, regression <c>gpc-c3</c> (<see cref="Materials"/>): a material with explicit G (Use Poisson off), damping only, thermal data only,
 /// a table without α and ρ, a table with α and ρ, a concrete with a table and a concrete with all of them is a valid GPC material (the linear
 /// elastic law without a table, elastoplastic with one), and the beam, truss, cable, plate and slab-grillage properties built on each are made,
-/// with the data of the material (the reader of the FEM value gives the same; the table only on the types of 0.3.0). The write plan of the
+/// with the data of the material (the table only on the types of 0.3.0). The write plan of the
 /// Converter for a GPC-only model with every material (<see cref="WritePlan"/>, recorded, not native) and the native readback
 /// (<c>--c3 --native</c>, <see cref="Native"/>): what Straus7 receives through the GPC-only path, against the numbers and calls of 0.3.0.</item>
 /// <item>Gap 2, the same regression (<see cref="Display"/>): the section solids and bar lines a draft given by its GPC data alone draws,
-/// against the FEM drawing of the same element (TRANSITIONAL: the FEM side goes in P2) and against explicit counts and boxes for one case of
-/// each kind (beam, composite beam, plate; the homogenised composite property that draws nothing: the open point of C3). The T, C, angle
-/// and double sections need the native Straus7 sections: they are compared under <c>--c3 --native</c>.</item>
+/// drawn by the preview with the box of the draft, and against explicit counts and boxes for one case of each kind (beam, composite beam,
+/// plate, homogenised composite property). The T, C, angle and double sections need the native Straus7 sections: they are drawn under
+/// <c>--c3 --native</c>. P2CB (13/11, rule U3): the drafts are those the components give; the checks of the reader of the FEM value and
+/// against the FEM drawing are retired by name with the FEM types (<see cref="P2rRetiredP2cb"/>).</item>
 /// </list>
 /// </summary>
 internal static class C3Checks
@@ -109,30 +109,21 @@ internal static class C3Checks
             Check(a.BeamShearModulus == c.G && a.ViscousDampingDensity == c.Viscous && a.ModalDampingRatio == c.Damping && a.ThermalConductivity == c.Conductivity * 1000
                 && a.SpecificHeat == c.SpecificHeat * 1000, label + $": G {a.BeamShearModulus} damping {R(a.ViscousDampingDensity)} {R(a.ModalDampingRatio)} thermal {R(a.ThermalConductivity)} {R(a.SpecificHeat)}");
             Check((a.StressStrainPairs != null) == c.HasTable && (!c.HasTable || a.StressStrainPairs.SequenceEqual(Table.SelectMany(t => new[] { t.strain, t.stress }))), label + ": the table as (strain, stress) pairs");
-            // The FEM value of the same recipe read by the reader (the path with the FEM value present): the same GPC material.
-            var fem = GpcMaterialBuilders.Femm(c.Recipe);
-            Check(GpcDraftCapture.Text(GpcMaterials.FromFemm(fem)) == GpcDraftCapture.Text(m), label + ": the reader of the FEM value gives the same material");
-            Check(AnalysisText(GpcMaterials.Analysis(m)) == AnalysisText(GpcModels.Material(fem)), label + ": the analysis material of the FEM value is the same");
+            // P2CB (13/11, rule U3): the checks of the reader of the FEM value of the same recipe (the same material, analysis material, beam, truss,
+            // cable and plate properties as the builders) are retired by name with the FEM types (P2rRetiredP2cb); the builders keep their checks.
 
-            // Beam (type 5) on a solid rectangle 300 × 500: made, with the analysis data of the material; the FEM value gives the same property.
+            // Beam (type 5) on a solid rectangle 300 × 500: made, with the analysis data of the material.
             var section = GpcSectionBuilders.Standard(BridgeSectionKind.SolidRectangle, 500, 300);
             LegacyBeamProperty Builder(int type) => GpcPropertyBuilders.Beam("C3 " + c.Tag + " " + type, type, section, m, GpcMaterials.KindOf(m));
-            LegacyBeamProperty Reader(int type)
-            {
-                var s = new SectionModel { SectionType = SectionModel.SectionTypes.SolidRectangle, B = 300, D = 500 }; s.CalculateSection();
-                return GpcModels.BeamProperty(new BeamPropertyModel("C3 " + c.Tag + " " + type) { Name = "C3 " + c.Tag + " " + type, Material = fem, Section = s, PropertyType = (BeamPropertyType)type }, units);
-            }
             foreach (int type in new[] { 5, 2, 1 })
             {
                 string what = label + (type == 5 ? ", Beam" : type == 2 ? ", Truss" : ", Cable");
                 // A Table Material has E 0: a cable without the table has no stiffness (refused, ZeroElasticModulus, a rule of its own): not a case of C3.
                 if (type == 1 && c.Recipe.Modulus == 0) continue;
-                LegacyBeamProperty built = null, read = null;
+                LegacyBeamProperty built = null;
                 Check(!Refused(() => built = Builder(type), out var why), what + ": the GPC builder makes the property (" + why + ")");
-                Check(!Refused(() => read = Reader(type), out var whyRead), what + ": the reader of the FEM value makes the property (" + whyRead + ")");
-                if (built == null || read == null) continue;
+                if (built == null) continue;
                 beams++;
-                Check(built.Data.Signature == read.Data.Signature, what + ": builder and reader give the same property");
                 var pm = ((ElasticBeamProperty)built.Property).Material;
                 bool table = type != 1 && c.HasTable; // 0.3.0 wrote the table for beams and trusses only
                 var expected = GpcMaterials.Analysis(m); if (!table) GpcMaterials.WithoutTable(expected);
@@ -143,16 +134,12 @@ internal static class C3Checks
                     Check(pm.AnalysisData == null, what + ": a cable of a table material alone has no analysis data (the material without the table)");
             }
 
-            // Plate (Shell Thin, 200 + 200) and the reader of the FEM plate property: made, G not on a plate (Use Poisson, as 0.3.0 wrote plates).
-            ElasticPlateProperty plate = null; PlateProperty plateRead = null;
+            // Plate (Shell Thin, 200 + 200): made, G not on a plate (Use Poisson, as 0.3.0 wrote plates).
+            ElasticPlateProperty plate = null;
             Check(!Refused(() => plate = (ElasticPlateProperty)GpcPropertyBuilders.Plate("C3 plate " + c.Tag, 0, m, 200, 200), out var whyPlate), label + ", Shell: the GPC builder makes the plate property (" + whyPlate + ")");
-            var femPlate = new PlatePropertyModel("1") { Name = "C3 plate " + c.Tag, Material = fem, PropertyType = PlatePropertyType.ShellThin, MembraneThickness = 200, BendingThickness = 200 };
-            Check(!Refused(() => plateRead = LegacyModelImport.PlatePropertyDraft(LegacyArchive.Read(BridGHe.Common.Helpers.ModelArchive.Write(femPlate)), units), out var whyPlateRead),
-                label + ", Shell: the reader of the FEM value makes the plate property (" + whyPlateRead + ")");
-            if (plate != null && plateRead != null)
+            if (plate != null)
             {
                 plates++;
-                Check(GpcDraftCapture.Text(plate) == GpcDraftCapture.Text(plateRead), label + ", Shell: builder and reader give the same plate property");
                 var pa = plate.Material.AnalysisData;
                 bool any = c.Viscous != 0 || c.Damping != 0 || c.Conductivity != 0 || c.SpecificHeat != 0 || c.HasTable;
                 Check(any ? pa != null && pa.BeamShearModulus == null && pa.ViscousDampingDensity == c.Viscous && pa.ModalDampingRatio == c.Damping && pa.ThermalConductivity == c.Conductivity * 1000
@@ -175,13 +162,14 @@ internal static class C3Checks
                 }
             }
         }
-        Console.WriteLine($"C3 MATERIALS: {Cases().Length} materials valid, {beams} beam, truss and cable properties, {plates} plate properties, {slabs} slab grillages made by the builders and by the reader");
+        Console.WriteLine($"C3 MATERIALS: {Cases().Length} materials valid, {beams} beam, truss and cable properties, {plates} plate properties, {slabs} slab grillages made by the builders");
     }
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Gap 2: the preview of a GPC draft
 
-    private static readonly MaterialModel SteelFem = new MaterialModel("S355") { Name = "S355", Kind = MaterialModel.MaterialKind.Steel, Modulus = 210000, PoissonRatio = .3, Density = 7.85e-9 };
+    /// <summary>The steel of the preview cases (Steel component values: S355, E 210000, ν 0.3, density 7.85E-9).</summary>
+    private static GPC.Model.Materials.Material Steel() => GpcMaterialBuilders.Material(new LegacyMaterialRecipe { Kind = "Steel", Name = "S355", Modulus = 210000, PoissonRatio = .3, Density = 7.85e-9 });
 
     private static Type Preview => R2aDesignFixtures.Plugin.GetType("BridGHe.Grasshopper.Display.ModelPreview", true);
     private static object Call(string method, params object[] args) => Preview.GetMethods(BindingFlags.Public | BindingFlags.Static).First(x => x.Name == method && x.GetParameters().Length == args.Length).Invoke(null, args);
@@ -224,124 +212,85 @@ internal static class C3Checks
         return null;
     }
 
-    private static BeamModel FemBeam(string id, SectionModel s, Point3d a, Point3d b, double angle = 0, double ox = 0, double oy = 0, (double fx, double tx, double fy, double ty)? taper = null, bool calculate = true)
+    /// <summary>A beam of the preview cases as the components give it (P2CB: before, the draft of a FEM value): Beam Property (type Beam) on
+    /// the section and the steel, Beam with the BridGHe ID, angle and offset, and Beam Taper (alignments Center) when given.</summary>
+    private static LegacyBeamDraft Draft(string id, LegacySectionRecipe s, Point3d a, Point3d b, double angle = 0, double ox = 0, double oy = 0, (double fx, double tx, double fy, double ty)? taper = null)
     {
-        if (calculate) s.CalculateSection();
-        var property = new BeamPropertyModel(id) { Name = id, Material = SteelFem, Section = s, PropertyType = BeamPropertyType.Beam };
-        var beam = new BeamModel(id, a, b, property) { AngleDeg = angle, Offset = new Vector2d(ox, oy) };
-        if (taper is { } t) { beam.Attributes.Add(new BeamTaperAttributeModel(new BeamTaperAttributeModel.AttributeData { NFromX = t.fx, NToX = t.tx, NFromY = t.fy, NToY = t.ty })); beam.CreateShapes(); }
+        var property = GpcPropertyBuilders.Beam(id, 5, s, Steel(), "Steel");
+        var beam = GpcBeamBuilders.New(new GPC.Geometry.Point3d(a.X, a.Y, a.Z), new GPC.Geometry.Point3d(b.X, b.Y, b.Z), property, null, angle, ox, oy, R2aDesignFixtures.Id("c3:" + id), id);
+        if (taper is { } t) beam = GpcBeamBuilders.WithTaper(beam, t.fx, t.fy, t.tx, t.ty, "Center", "Center", R2aDesignFixtures.Id("c3:" + id + ":taper"));
         return beam;
     }
 
-    /// <summary>The FEM beams of the comparison (one per section kind and option of the FEM preview); <paramref name="native"/>: the kinds whose
-    /// GPC property is a native Straus7 section (T, C, angle, the double C and angle).</summary>
-    private static IEnumerable<(string Kind, BeamModel Beam)> FemBeams(bool native)
+    /// <summary>The beams of the preview cases (one per section kind and option of the former FEM preview); <paramref name="native"/>: the kinds
+    /// whose GPC property is a native Straus7 section (T, C, angle, the double C and angle).</summary>
+    private static IEnumerable<(string Kind, LegacyBeamDraft Beam)> Beams(bool native)
     {
         var o = Point3d.Origin; var x = new Point3d(6000, 0, 0);
-        SectionModel I(double d, double b1, double b2, double t1, double t2, double t3) => new SectionModel { SectionType = SectionModel.SectionTypes.I, D = d, B1 = b1, B2 = b2, T1 = t1, T2 = t2, T3 = t3 };
+        static LegacySectionRecipe I(double d, double b1, double b2, double t1, double t2, double t3) => GpcSectionBuilders.Standard(BridgeSectionKind.I, d, b1: b1, b2: b2, t1: t1, t2: t2, t3: t3);
         if (!native)
         {
-            yield return ("I", FemBeam("I", I(600, 300, 300, 20, 20, 10), o, x));
-            yield return ("I unequal flanges, angle 30, offset (15, -25)", FemBeam("I2", I(800, 400, 250, 30, 20, 12), o, new Point3d(5000, 3000, 1000), 30, 15, -25));
-            yield return ("I vertical", FemBeam("I3", I(600, 300, 300, 20, 20, 10), o, new Point3d(0, 0, 4000)));
-            yield return ("I taper 1-1.5 / 1-2", FemBeam("I4", I(600, 300, 300, 20, 20, 10), o, x, taper: (1, 1.5, 1, 2)));
-            yield return ("solid rectangle", FemBeam("R1", new SectionModel { SectionType = SectionModel.SectionTypes.SolidRectangle, B = 300, D = 500 }, o, x, 15));
-            yield return ("hollow rectangle", FemBeam("R2", new SectionModel { SectionType = SectionModel.SectionTypes.HollowRectangle, B = 300, D = 500, T1 = 20, T2 = 15 }, o, x));
-            yield return ("solid circle", FemBeam("C1", new SectionModel { SectionType = SectionModel.SectionTypes.SolidCircle, D = 400 }, o, x));
-            yield return ("hollow circle", FemBeam("C2", new SectionModel { SectionType = SectionModel.SectionTypes.HollowCircle, D = 400, T = 20 }, o, x));
-            yield return ("generic (equivalent circle, angle 0.3)", FemBeam("G1", new SectionModel { SectionType = SectionModel.SectionTypes.Generic, SectionArea = 40000, I11 = 4e8, I22 = 2e8, J = 1e8, Centroid = new Point2d(10, 20), AngleX1Rad = 0.3 }, o, x, 20, calculate: false));
+            yield return ("I", Draft("I", I(600, 300, 300, 20, 20, 10), o, x));
+            yield return ("I unequal flanges, angle 30, offset (15, -25)", Draft("I2", I(800, 400, 250, 30, 20, 12), o, new Point3d(5000, 3000, 1000), 30, 15, -25));
+            yield return ("I vertical", Draft("I3", I(600, 300, 300, 20, 20, 10), o, new Point3d(0, 0, 4000)));
+            yield return ("I taper 1-1.5 / 1-2", Draft("I4", I(600, 300, 300, 20, 20, 10), o, x, taper: (1, 1.5, 1, 2)));
+            yield return ("solid rectangle", Draft("R1", GpcSectionBuilders.Standard(BridgeSectionKind.SolidRectangle, 500, b: 300), o, x, 15));
+            yield return ("hollow rectangle", Draft("R2", GpcSectionBuilders.Standard(BridgeSectionKind.HollowRectangle, 500, b: 300, t1: 20, t2: 15), o, x));
+            yield return ("solid circle", Draft("C1", GpcSectionBuilders.Standard(BridgeSectionKind.SolidCircle, 400), o, x));
+            yield return ("hollow circle", Draft("C2", GpcSectionBuilders.Standard(BridgeSectionKind.HollowCircle, 400, t: 20), o, x));
+            yield return ("generic (equivalent circle, angle 0.3)", Draft("G1", GpcSectionBuilders.Generic(40000, 4e8, 2e8, 1e8, 0, 0, 0, 0, 10, 20, 0.3), o, x, 20));
             var fill = new GPC.Geometry.Polygon2d(); foreach (var (px, py) in new[] { (0d, 0d), (400d, 0d), (400d, 40d), (40d, 40d), (40d, 300d), (0d, 300d) }) fill.Add(px, py);
-            yield return ("Brep L shape", FemBeam("S1", new SectionModel { SectionType = SectionModel.SectionTypes.GenericShapes, GenericShapes = new BridGHe.Common.Geometry.Shapes(new[] { new GPC.Geometry.Shape2d(fill, null) }) }, o, x, 10));
+            yield return ("Brep L shape", Draft("S1", GpcSectionBuilders.Shapes(new[] { new GPC.Geometry.Shape2d(fill, null) }), o, x, 10));
             var outer = new GPC.Geometry.Polygon2d(); foreach (var (px, py) in new[] { (100d, 50d), (300d, 50d), (300d, 450d), (100d, 450d) }) outer.Add(px, py);
             var hole = new GPC.Geometry.Polygon2d(); foreach (var (px, py) in new[] { (150d, 100d), (250d, 100d), (250d, 400d), (150d, 400d) }) hole.Add(px, py);
-            yield return ("Brep with a hole", FemBeam("S2", new SectionModel { SectionType = SectionModel.SectionTypes.GenericShapes, GenericShapes = new BridGHe.Common.Geometry.Shapes(new[] { new GPC.Geometry.Shape2d(outer, new[] { hole }) }) }, o, x));
+            yield return ("Brep with a hole", Draft("S2", GpcSectionBuilders.Shapes(new[] { new GPC.Geometry.Shape2d(outer, new[] { hole }) }), o, x));
         }
         else
         {
-            yield return ("T", FemBeam("T1", new SectionModel { SectionType = SectionModel.SectionTypes.T, B = 200, T1 = 20, D = 300, T2 = 10 }, o, x, 25));
-            yield return ("C", FemBeam("U1", new SectionModel { SectionType = SectionModel.SectionTypes.C, B = 100, T1 = 10, D = 300, T2 = 8 }, o, x));
-            yield return ("angle", FemBeam("L1", new SectionModel { SectionType = SectionModel.SectionTypes.Angle, B = 150, T1 = 10, D = 100, T2 = 12 }, o, x, 0, 5, 7));
-            yield return ("double C, gap 12", FemBeam("U2", new SectionModel { SectionType = SectionModel.SectionTypes.C, B = 100, T1 = 10, D = 300, T2 = 8, Mirror = SectionModel.MirrorTypes.Left, MirrorGapA = 12 }, o, x));
-            yield return ("double angle, gap 8, angle 30", FemBeam("L2", new SectionModel { SectionType = SectionModel.SectionTypes.Angle, B = 150, T1 = 10, D = 100, T2 = 12, Mirror = SectionModel.MirrorTypes.Left, MirrorGapA = 8 }, o, x, 30));
+            yield return ("T", Draft("T1", GpcSectionBuilders.Standard(BridgeSectionKind.T, 300, b: 200, t1: 20, t2: 10), o, x, 25));
+            yield return ("C", Draft("U1", GpcSectionBuilders.Standard(BridgeSectionKind.C, 300, b: 100, t1: 10, t2: 8), o, x));
+            yield return ("angle", Draft("L1", GpcSectionBuilders.Standard(BridgeSectionKind.Angle, 100, b: 150, t1: 10, t2: 12), o, x, 0, 5, 7));
+            // Double Sections: the former MirrorTypes.Left (2).
+            yield return ("double C, gap 12", Draft("U2", GpcSectionBuilders.Standard(BridgeSectionKind.C, 300, b: 100, t1: 10, t2: 8, mirror: 2, gapA: 12), o, x));
+            yield return ("double angle, gap 8, angle 30", Draft("L2", GpcSectionBuilders.Standard(BridgeSectionKind.Angle, 100, b: 150, t1: 10, t2: 12, mirror: 2, gapA: 8), o, x, 30));
         }
     }
 
     internal static void Display(bool native)
     {
         int compared = 0;
-        // TRANSITIONAL (P2 removes the FEM side): every kind drawn from its GPC draft (the draft of the FEM value, the datum of the GPC-only path
-        // after P2) equals the FEM drawing of the same element (BeamModel.CreateShapes).
-        foreach (var (kind, fem) in FemBeams(native))
+        // P2CB (13/11, rule U3): every kind drawn from its GPC draft, the draft the components give (before: the draft of a FEM value). The checks
+        // against the FEM drawing of the same element (BeamModel.CreateShapes, the FEM box, the FEM composite beam, plate and homogenised property)
+        // are retired by name with the FEM types (P2rRetiredP2cb); the preview of the draft, its box and the explicit counts and boxes stay.
+        foreach (var (kind, draft) in Beams(native))
         {
-            var draft = GpcBeamDrafts.FromFemm(fem);
             var drawn = GpcDraftShapes.Beam(draft);
-            string diff = Compare(fem.Shapes, drawn);
-            Check(diff == null, "TRANSITIONAL beam «" + kind + "»: the GPC drawing differs from the FEM drawing: " + diff);
             // The plug-in draws the same solids for the draft (the cache of ModelPreview), and a GH beam given by its draft alone clips to them.
             var shown = (Brep[])Call("DraftShapes", draft);
             Check(shown.Length == drawn.Length && Compare(drawn, shown) == null, "beam «" + kind + "»: the preview draws the solids of the draft");
             var goo = R2aDesignFixtures.Beam(draft);
             var clip = (BoundingBox)goo.GetType().GetProperty("ClippingBox").GetValue(goo);
-            Check(SameBox(clip, (BoundingBox)Call("DraftBounds", draft)) && SameBox(clip, ModelPreviewBounds(fem)), "beam «" + kind + "»: the clipping box of the GPC beam is the FEM one: " + Box(clip));
+            Check(SameBox(clip, (BoundingBox)Call("DraftBounds", draft)) && SameBox(clip, Union(drawn)), "beam «" + kind + "»: the clipping box of the GPC beam is the box of its draft: " + Box(clip));
             compared++;
-            Console.WriteLine($"C3 DISPLAY {kind}: {drawn.Length} solids, box {Box(Union(drawn))}{(diff == null ? ", equal to the FEM drawing" : "")}");
+            Console.WriteLine($"C3 DISPLAY {kind}: {drawn.Length} solids, box {Box(Union(drawn))}");
         }
         if (!native)
         {
-            // With the FEM value present nothing changes: the FEM beam draws from its value (Shapes of the FEM preview, its own box).
-            var femOnly = FemBeams(false).First().Beam;
-            var withFem = Make("Fem.GH_Beam", femOnly);
-            Check(SameBox((BoundingBox)withFem.GetType().GetProperty("ClippingBox").GetValue(withFem), ModelPreviewBounds(femOnly)), "a beam with its FEM value clips to the FEM box");
-
-            // Composite beam (TRANSITIONAL): the FEM composite beam and the solids and bars of its two definitions (Composite Beam).
-            var p0 = BridgeGrillageExample.Composite(new()); p0.ConcreteSection = new(250, 3000, 2000, 40, 1500, 55); p0.ConsiderRebar = true;
-            var p1 = BridgeGrillageExample.Composite(new()); p1.ConcreteSection = new(250, 2500, 2000, 40, 0, 0); p1.ConsiderRebar = true;
-            var cb = new CompositeBeamModel(Point3d.Origin, new Point3d(12000, 3000, 500), p0, null, p1);
+            // Composite beam: the solids and bars of its two definitions (Composite Beam: the numbers of the former FEM properties p0 and p1).
+            var g = GpcCompositeDefinitions.Grillage(new());
+            var d0 = GpcCompositeDefinitions.Create(g with { SlabHeight = 250, SlabWidth = 3000, TopArea = 2000, TopCover = 40, BottomArea = 1500, BottomCover = 55, ConsiderRebar = true });
+            var d1 = GpcCompositeDefinitions.Create(g with { SlabHeight = 250, SlabWidth = 2500, TopArea = 2000, TopCover = 40, BottomArea = 0, BottomCover = 0, ConsiderRebar = true });
             var beamDraft = GpcBeamBuilders.New(new GPC.Geometry.Point3d(0, 0, 0), new GPC.Geometry.Point3d(12000, 3000, 500), R2aDesignFixtures.BaseProperty(), null, 0, 0, 0, R2aDesignFixtures.Id("c3:cb"), "CB1");
-            var d0 = GpcCompositeSections.Definition(p0, p0.Name); var d1 = GpcCompositeSections.Definition(p1, p1.Name);
-            string cdiff = Compare(cb.Shapes, GpcDraftShapes.Composite(beamDraft, d0, d1));
-            Check(cdiff == null, "TRANSITIONAL composite beam: the GPC solids differ from the FEM drawing: " + cdiff);
-            string bdiff = Compare((Line[])Call("ReinforcementLines", cb), GpcDraftShapes.CompositeBars(beamDraft, d0, d1));
-            Check(bdiff == null, "TRANSITIONAL composite beam: the GPC bar lines differ from the FEM drawing: " + bdiff);
             var datum = Activator.CreateInstance(R2aDesignFixtures.Plugin.GetType("BridGHe.Grasshopper.DataTypes.GpcCompositeBeam", true), beamDraft, d0, d1, (IReadOnlyList<string>)Array.Empty<string>());
             Check(((Brep[])Call("DraftShapes", datum)).Length == 2 && ((Line[])Call("DraftReinforcementLines", datum)).Length == 6, "composite beam: the preview draws its two solids and six bar lines");
             compared++;
-            Console.WriteLine($"C3 DISPLAY composite beam: {cb.Shapes.Length} solids, {((Line[])Call("ReinforcementLines", cb)).Length} bar lines{(cdiff == null && bdiff == null ? ", equal to the FEM drawing" : "")}");
-
-            // Plate (TRANSITIONAL): the solid of a shell given by its draft alone, as the FEM plate.
-            var corners = new[] { new Point3d(0, 0, 0), new Point3d(2000, 0, 0), new Point3d(2000, 1000, 300), new Point3d(0, 1000, 300) };
-            var femPlate = new PlateModel("P1", corners, new PlatePropertyModel("1") { Name = "C3 shell", Material = SteelFem, PropertyType = PlatePropertyType.ShellThin, MembraneThickness = 200, BendingThickness = 200 });
-            string pdiff = Compare(new[] { femPlate.Shape }, (Brep[])Call("DraftShapes", GpcBeamDrafts.FromFemm(femPlate)));
-            Check(pdiff == null, "TRANSITIONAL plate: the GPC solid differs from the FEM plate: " + pdiff);
-            compared++;
-
-            // The homogenised composite property (TRANSITIONAL): the FEM beam draws the steel and the slab and six bar lines from the preview geometry
-            // of its FEM property. P2R (T3, 12/11): the open point of C3 is closed by P2D (P11, user decision U5: the optional CompositeOutline of the
-            // recipe): the GPC draft draws the same, the solids within the C3 criterion and the bar lines bit for bit (as the regression p2d).
-            var homogenised = new BeamModel("B1", Point3d.Origin, new Point3d(12000, 0, 0), p0.CreateHomogenizedProperty(12, "Shrink"));
-            var hd = GpcBeamDrafts.FromFemm(homogenised);
-            var femBars = (Line[])Call("ReinforcementLines", homogenised); var gpcBars = (Line[])Call("DraftReinforcementLines", hd);
-            string hdiff = Compare(homogenised.Shapes, (Brep[])Call("DraftShapes", hd));
-            Check(homogenised.Shapes.Length == 2 && femBars.Length == 6 && GpcDraftShapes.HasCompositePreview(hd) && hdiff == null && gpcBars.Length == 6 && femBars.SequenceEqual(gpcBars),
-                "TRANSITIONAL homogenised composite property: FEM 2 solids and 6 bar lines, the GPC draft the same (" + (hdiff ?? "solids equal") + $", {gpcBars.Length} bar lines)");
-            Console.WriteLine("C3 DISPLAY homogenised composite property: FEM 2 solids and 6 bar lines, the GPC draft the same (P11 of P2D)");
-
+            Console.WriteLine($"C3 DISPLAY composite beam: {((Brep[])Call("DraftShapes", datum)).Length} solids, {((Line[])Call("DraftReinforcementLines", datum)).Length} bar lines");
             Explicit();
         }
-        Console.WriteLine($"C3 DISPLAY: {compared} kinds compared with the FEM drawing{(native ? " (native sections)" : "")}");
+        Console.WriteLine($"C3 DISPLAY: {compared} kinds drawn from their GPC drafts{(native ? " (native sections)" : "")}");
     }
 
     private static BoundingBox Union(IEnumerable<Brep> shapes) { var box = BoundingBox.Empty; foreach (var s in shapes) box.Union(s.GetBoundingBox(true)); return box; }
-    private static BoundingBox ModelPreviewBounds(ElementModel e) => (BoundingBox)Call("Bounds", e);
-
-    /// <summary>The FEM-backed GH type as the components make it (the constructor from the FEM value, optional parameters at their defaults).</summary>
-    private static object Make(string type, object value)
-    {
-        var t = R2aDesignFixtures.Plugin.GetType("BridGHe.Grasshopper.DataTypes." + type, true);
-        var ctor = t.GetConstructors().Where(c => c.GetParameters().Length >= 1 && c.GetParameters()[0].ParameterType.IsInstanceOfType(value) && c.GetParameters().Skip(1).All(p => p.HasDefaultValue))
-            .OrderBy(c => c.GetParameters().Length).First();
-        return ctor.Invoke(new[] { value }.Concat(ctor.GetParameters().Skip(1).Select(p => p.DefaultValue)).ToArray());
-    }
 
     /// <summary>Explicit counts and boxes, GPC data alone (one case of each kind).</summary>
     private static void Explicit()
@@ -416,7 +365,7 @@ internal static class C3Checks
     /// the solution) with a beam and a thin shell on every material of <see cref="Cases"/>, written by the Converter and read back from the
     /// .st7, against the calls of 0.3.0 replayed on a scratch model (St7SetBeamMaterialData and St7SetBeamShearModulusMode, St7SetPlateIsotropicMaterial
     /// with the numbers of the former material): E, G (or Use Poisson: the effective G, listed difference E7), ν, density, α, damping and
-    /// thermal data; (b) the preview of the T, C, angle and double sections (native Straus7 sections) against the FEM drawing.
+    /// thermal data; (b) the preview of the T, C, angle and double sections (native Straus7 sections) drawn from their GPC drafts.
     /// </summary>
     /// <summary>The model of the native readback: Build Model on GPC drafts alone (the GPC-only path), a beam (solid rectangle 300 × 500,
     /// Beam) and a thin shell (200 + 200) on every material of <see cref="Cases"/>, named «C3 beam k» and «C3 shell k».</summary>
