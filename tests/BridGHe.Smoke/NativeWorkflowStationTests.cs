@@ -24,7 +24,6 @@ internal static class NativeWorkflowStationTests
     internal sealed record CaseSamples(string Key, Sample[] Original, Sample[] NativeAtUnion);
     internal sealed record Fixture(double Length, string BeamId, CaseSamples[] Cases);
     internal const string FixturePath = "tests/BridGHe.Smoke/Fixtures/bridge-stations-19.json";
-    private static Sample SampleOf(BeamForceResultModel f) => new(f.Station, f.AxialForce, f.Vx, f.Vy, f.Torque, f.Mx, f.My);
 
 
     internal static BridgeWorkflowBuildResult Merge(ModelModel[] models)
@@ -45,36 +44,4 @@ internal static class NativeWorkflowStationTests
     }
 
 
-    private static int ReplayGrasshopper(ModelModel[] models)
-    {
-        var assembly = BridgeMergeTests.Initialize();
-        string path = Path.Combine(ExamplePaths.Case("19-flusso-acciaio-misto"), "19-flusso-acciaio-misto_REV003.ghx");
-        using var document = GrasshopperBridgeExample.Read(path);
-        foreach (var toggle in document.Objects.OfType<GH_BooleanToggle>()) toggle.Value = false;
-        var components = document.Objects.OfType<GH_Component>().ToArray();
-        // Resolve input names before seeding cached results; never run or overwrite the native files.
-        GH_Document.EnableSolutions = true; document.Enabled = true; document.NewSolution(false, GH_SolutionMode.Silent);
-        foreach (var component in components.Where(c => c.GetType().Name == "StrausR3AnalysisComponent"))
-        {
-            var input = (ModelModel)component.Params.Input[0].VolatileData.AllData(true).Single().ScriptVariable();
-            var model = models.Single(m => m.Name == input.Name);
-            var gooType = assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model", true);
-            var goo = Activator.CreateInstance(gooType);
-            gooType.GetProperty("Value").SetValue(goo, model);
-            component.GetType().GetField("_model", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(component, goo);
-            component.ExpireSolution(false);
-        }
-        foreach (var component in components.Where(c => c.GetType().Name is "BuildBridgeModel" or "SuperElementCheckComponent"))
-        {
-            component.GetType().GetField("_run", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(component, true);
-            component.ExpireSolution(false);
-        }
-        document.NewSolution(false, GH_SolutionMode.Silent);
-        var errors = document.Objects.OfType<GH_ActiveObject>().SelectMany(c => c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Select(e => c.Name + ": " + e)).ToArray();
-        BridgeWorkflowTests.Require(errors.Length == 0, string.Join("\n", errors));
-        var check = components.Single(c => c.GetType().Name == "SuperElementCheckComponent");
-        BridgeWorkflowTests.Require(check.Params.Output[0].VolatileDataCount >= 120, "No checked spine stations.");
-        Console.WriteLine($"GH EXAMPLE 19 PASS: {check.Params.Output[0].VolatileDataCount} section results; no red components");
-        return check.Params.Output[0].VolatileDataCount;
-    }
 }
