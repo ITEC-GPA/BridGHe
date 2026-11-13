@@ -75,19 +75,6 @@ internal static class BridgeGrillageExample
     internal static double G1(Parameters p) => GpcH(p).Area*78.5e-6 + p.Width/4*p.SlabThickness*25e-6
         + CrossH().Area*(3*p.Width/4)*7*78.5e-6/(4*p.Span);
 
-    internal static BeamPropertyModel LongProperty(Parameters p,int phase,double torsionFactor=1)
-    {
-        var h=GpcH(p); double a=h.Area,ix=h.Jxx,iy=h.Jyy,j=h.Jt;
-        if(phase>0)
-        {
-            var prop=Composite(p).GetHomogeneizedMechanicalProperties(phase==1?Es/Ec*(1+p.PhiLong):Es/Ec,true,false,true);
-            double n=phase==1?Es/Ec*(1+p.PhiLong):Es/Ec;
-            a=prop.areaH/n;ix=prop.JxxH/n;iy=prop.JyyH/n;
-            double gc=Ec/(phase==1?1+p.PhiLong:1)/(2*(1+NuConcrete)),gs=Es/(2*(1+NuSteel));
-            j+=gc/gs*p.GirderSlabWidth*Math.Pow(p.SlabThickness,3)/6;
-        }
-        return Property("Longitudinale fase "+phase,a,ix,iy,j*torsionFactor);
-    }
     /// <summary>R6.6 lane R4a: the GPC twin of <see cref="LongProperty"/> (no FEM model): a Beam on a Generic section of the same area,
     /// inertias and torsion, on the steel S355 E 210000 ν 0.3 fy 355 fu 510 given in GPC. Phase 0 the steel H (<see cref="GpcH"/>); phases 1
     /// and 2 the homogenised values of the composite definition built in GPC from the numbers of the example
@@ -101,8 +88,6 @@ internal static class BridgeGrillageExample
         return BridGHe.Common.Gpc.Builders.GpcPropertyBuilders.Beam("Longitudinale fase "+phase,5,
             BridGHe.Common.Gpc.Builders.GpcSectionBuilders.Generic(x.A,x.I11,x.I22,x.J,0,0,0,0,0,0,0),R4aFixtures.Steel("S355",Es,355,510),"Steel");
     }
-    private static BeamPropertyModel Property(string name,double a,double ix,double iy,double j) => new(name)
-    {Name=name,Material=Steel(),PropertyType=BeamPropertyType.Beam,Section=new(){SectionType=SectionModel.SectionTypes.Generic,SectionArea=a,I11=ix,I22=iy,J=j,ShearA1=0,ShearA2=0}};
 
     // -----------------------------------------------------------------------------------------------------------------------------------------
     // R6.6 lane R4c-grafi: --bridge-grillage without any FEM model. The same models as recipes (R4cModel: the same nodes, restraints, forces,

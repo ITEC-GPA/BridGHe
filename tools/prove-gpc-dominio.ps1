@@ -16,14 +16,12 @@ Runs:
   50-check       --example50-rev003 --check           offline contract of the GHX
   50-regression  --regression bridge-moving-workflow  moving-load combinations (no Rhino solve)
   50-native      --example50-rev003 --native          5 Straus analyses + merge + 32,832 section checks (licence)
-  99-replay      --example99 replay004                reopen saved results (no Straus)
   99-native      --modular-bridge-native <REV004 GHX> 4 Straus analyses + checks on the saved REV004 graph (licence)
-  99-rev004      --example99 rev004                   regenerates REV004 from REV001 (licence); folder restored after
 #>
 param(
     [Parameter(Mandatory = $true)][ValidatePattern('^[A-Za-z0-9._-]+$')][string]$Phase,
-    [ValidateSet('50-check', '50-regression', '50-native', '99-replay', '99-native', '99-rev004')]
-    [string[]]$Runs = @('50-check', '50-regression', '50-native', '99-replay', '99-native'),
+    [ValidateSet('50-check', '50-regression', '50-native', '99-native')]
+    [string[]]$Runs = @('50-check', '50-regression', '50-native', '99-native'),
     [int]$LoadSampleSeconds = 15
 )
 $ErrorActionPreference = 'Stop'
@@ -35,7 +33,6 @@ $phaseRoot = Join-Path $root "artifacts\prove-gpc-dominio\$Phase"
 New-Item -ItemType Directory -Force -Path $phaseRoot | Out-Null
 
 $ex50 = 'example\50-ponte-quattro-modelli'
-$ex99 = 'example\99-Ponte completo GPC\REV004'
 $ghx99 = '99-Ponte completo GPC\REV004\flusso-acciaio-misto_REV004.ghx'
 # Moved: folders the harness creates (moved into the run folder afterwards).
 # Restore: files/folders the harness may rewrite (snapshot before, copy of the result, original restored).
@@ -43,9 +40,7 @@ $definitions = @{
     '50-check'      = @{ Args = @('--example50-rev003', '--check'); Moved = @(); Restore = @() }
     '50-regression' = @{ Args = @('--regression', 'bridge-moving-workflow'); Moved = @(); Restore = @() }
     '50-native'     = @{ Args = @('--example50-rev003', '--native'); Moved = @('artifacts\rev003-native'); Restore = @() }
-    '99-replay'     = @{ Args = @('--example99', 'replay004'); Moved = @(); Restore = @($ex99) }
     '99-native'     = @{ Args = @('--modular-bridge-native', $ghx99.Replace('\', '/')); Moved = @('artifacts\modular-bridge\native-flusso-acciaio-misto_REV004'); Restore = @(); Candidate = $ghx99 }
-    '99-rev004'     = @{ Args = @('--example99', 'rev004'); Moved = @(); Restore = @($ex99) }
 }
 
 function Get-Sha256([string]$Path) {

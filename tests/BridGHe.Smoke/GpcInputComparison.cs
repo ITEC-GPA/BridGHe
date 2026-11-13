@@ -6,7 +6,6 @@ using BridGHe.Common.Checks;
 using BridGHe.Common.Geometry;
 using BridGHe.Common.Gpc;
 using BridGHe.Common.Gpc.Legacy;
-using BridGHe.Common.Models;
 using BridGHe.Common.MovingLoads;
 using GPC.Model.Models;
 using Grasshopper.Kernel;
@@ -23,58 +22,8 @@ internal static class GpcInputComparison
     private static readonly System.Text.RegularExpressions.Regex RandomGuid = new System.Text.RegularExpressions.Regex("[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}", System.Text.RegularExpressions.RegexOptions.Compiled);
     private static readonly System.Text.RegularExpressions.Regex AnyGuid = new System.Text.RegularExpressions.Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", System.Text.RegularExpressions.RegexOptions.Compiled);
 
-    /// <summary>Bridge Construction Sequence: the renumbered snapshot on GPC against the conversion of the FEM output with the identity of the
-    /// snapshot (owner of the element identities and model GUID). The snapshot keeps the GUIDs of the elements of its source and the
-    /// conversion derives them from the new numbers, so the elements correspond by family and number (and must have the same name and
-    /// position): the report with the GUIDs mapped (numbers, BridGHe angles, native sections, property data, shadowed beams, element cases
-    /// and warnings, warnings) and the XML document of the model with the element GUIDs mapped, bit for bit: numbering and every index.
-    /// With <paramref name="source"/>: the element GUIDs are those of the source.</summary>
-    internal static string RequireRenumbered(string label, GpcModels.Conversion attached, ModelModel fem, double tolerance, GpcModels.Conversion source = null)
-    {
-        void Fail(string what) => throw new Exception("GPC INPUT FAIL (" + label + "): " + what);
-        var model = attached.Model; var owner = ElementOwner(model);
-        if (owner == model.Guid) Fail("the transformed model has the model GUID of its source");
-        var expected = GPC.Model.Core.ModelValues.Copy(Conversion(fem, tolerance, owner, out var report), GPC.Model.Core.ModelCopyOptions.None, model.Guid);
-        if (model.NodesElements.Count != expected.NodesElements.Count || model.BeamElements.Count != expected.BeamElements.Count || model.AreaElements.Count != expected.AreaElements.Count)
-            Fail($"element counts {model.NodesElements.Count}/{model.BeamElements.Count}/{model.AreaElements.Count} / {expected.NodesElements.Count}/{expected.BeamElements.Count}/{expected.AreaElements.Count}");
-        var map = new Dictionary<Guid, Guid>();
-        void Correspond(GPC.Model.Elements.Element a, GPC.Model.Elements.Element b, string what)
-        {
-            if (b == null || a.Name != b.Name) Fail($"{what} {a.Id}: '{a.Name}' / '{b?.Name}'");
-            map.Add(a.Guid, b.Guid);
-        }
-        foreach (var n in model.NodesElements.Values) { expected.NodesElements.TryGetValue(n.Id, out var x); Correspond(n, x, "node"); if (n.Position.X != x.Position.X || n.Position.Y != x.Position.Y || n.Position.Z != x.Position.Z) Fail($"node {n.Id} position"); }
-        foreach (var beam in model.BeamElements.Values) { expected.BeamElements.TryGetValue(beam.Id, out var x); Correspond(beam, x, "beam"); }
-        foreach (var p in model.AreaElements.Values) { expected.AreaElements.TryGetValue(p.Id, out var x); Correspond(p, x, "plate"); }
-        if (source != null && model.AllElements.Any(e => !source.Model.AllElements.Any(s => s.Guid == e.Guid))) Fail("an element GUID is not one of the source");
-        RequireReport(label, attached.Report, report, g => map.TryGetValue(g, out var m) ? m : g);
-        // L12: the bridge data, beam by beam in numbering order (the keys are the GUIDs of each model).
-        RequireBridge(label, model, attached.Bridge, expected, report.Bridge, false);
-        // The fingerprints complete the lazy values the graph writes (e.g. the outline of a section whose shear areas the conversion took from
-        // another property with the same dimensions), as Require does before its document.
-        model.AnalysisFingerprint(); expected.AnalysisFingerprint();
-        string a = Document(model, map), b = Document(expected);
-        if (a == null || b == null) Fail("XML document beyond the serializer limit");
-        if (a != b)
-        {
-            string folder = Path.Combine(Path.GetTempPath(), "bridghe-gpc-input-diff"); Directory.CreateDirectory(folder);
-            File.WriteAllText(Path.Combine(folder, FileName(label) + "-gpc.xml"), a); File.WriteAllText(Path.Combine(folder, FileName(label) + "-conversion.xml"), b);
-            var x = a.Split('\n'); var y = b.Split('\n');
-            int line = Enumerable.Range(0, Math.Min(x.Length, y.Length)).FirstOrDefault(i => x[i] != y[i], -1);
-            Fail($"XML document differs, both in {folder}: " + (line < 0 ? $"{x.Length} / {y.Length} lines" : $"line {line + 1}: GPC '{x[line].Trim()}' / conversion '{y[line].Trim()}'"));
-        }
-        return $"{model.NodesElements.Count} nodes, {model.BeamElements.Count} beams, {model.AreaElements.Count} plates, {model.Costrains.Count} rigid links, {model.LoadCases.Count} cases, {model.Groups.Count} groups, {model.PhysicalMembers.Count} members, renumbered XML document equal ({a.Length} characters); " + RequireDrafts(label, attached.Drafts, fem);
-    }
 
-    /// <summary>The conversion of a FEM model with an explicit identity (the results are never converted: archived without them).</summary>
-    internal static Model Conversion(ModelModel fem, double tolerance, Guid owner) => Conversion(fem, tolerance, owner, out _);
 
-    internal static Model Conversion(ModelModel fem, double tolerance, Guid owner, out LegacyImportReport report)
-    {
-        if (fem.Elements.Any(e => e.Results.Count != 0)) { fem = new ModelModel(fem); foreach (var e in fem.Elements) e.Results.Clear(); }
-        report = new LegacyImportReport();
-        return LegacyModelImport.Import(LegacyArchive.Read(BridGHe.Common.Helpers.ModelArchive.Write(fem)), owner, tolerance, report, GpcModels.SectionStateSignatures(fem));
-    }
 
     /// <summary>The report of a transformed input against the report of the conversion of the FEM output: what the analysis and the next
     /// transformers read (units, registered cases, case origins, BridGHe angles, native sections, beam property data, shadowed beams) and the
@@ -203,69 +152,9 @@ internal static class GpcInputComparison
     /// <summary>A label as a file name (P2K: a nickname with "|" made the writing of the difference fail).</summary>
     private static string FileName(string label) => string.Concat(label.Select(c => Path.GetInvalidFileNameChars().Contains(c) || c == ' ' ? '-' : c));
 
-    internal static string Require(string label, GpcModels.Conversion attached, ModelModel fem, double tolerance, bool canonicalStates = false, bool buildModel = false)
-    {
-        void Fail(string what) => throw new Exception("GPC INPUT FAIL (" + label + "): " + what);
-        var model = attached.Model; var owner = ElementOwner(model);
-        if (!buildModel && owner == model.Guid) Fail("the transformed model has the model GUID of its source");
-        if (buildModel && owner != model.Guid) Fail("the model GUID of Build Model is not the owner of its element identities");
-        var converted = Conversion(fem, tolerance, owner, out var report);
-        var expected = buildModel ? converted : GPC.Model.Core.ModelValues.Copy(converted, GPC.Model.Core.ModelCopyOptions.None, model.Guid);
-        RequireReport(label, attached.Report, report);
-        // L12: the bridge data (same beam GUIDs as the conversion with the same owner).
-        RequireBridge(label, model, attached.Bridge, expected, report.Bridge, canonicalStates);
-        var parts = GpcBridgeComparison.PartsDiffer(model, expected);
-        if (model.AnalysisFingerprint() != expected.AnalysisFingerprint())
-        {
-            // The documents of both, for the difference (as for a document that differs).
-            string folder0 = Path.Combine(Path.GetTempPath(), "bridghe-gpc-input-diff"); Directory.CreateDirectory(folder0);
-            File.WriteAllText(Path.Combine(folder0, FileName(label) + "-gpc.xml"), Document(model) ?? ""); File.WriteAllText(Path.Combine(folder0, FileName(label) + "-conversion.xml"), Document(expected) ?? "");
-            Fail("analysis fingerprint differs: " + string.Join("; ", parts.Take(12)) + "; documents in " + folder0);
-        }
-        if (parts.Count != 0) Fail("parts differ: " + string.Join("; ", parts.Take(12)) + (parts.Count > 12 ? $"; ... {parts.Count} in all" : ""));
-        string a = Document(model), b = Document(expected);
-        if (a != null && a != b)
-        {
-            string folder = Path.Combine(Path.GetTempPath(), "bridghe-gpc-input-diff"); Directory.CreateDirectory(folder);
-            File.WriteAllText(Path.Combine(folder, FileName(label) + "-gpc.xml"), a); File.WriteAllText(Path.Combine(folder, FileName(label) + "-conversion.xml"), b ?? "");
-            var x = a.Split('\n'); var y = (b ?? "").Split('\n');
-            int line = Enumerable.Range(0, Math.Min(x.Length, y.Length)).FirstOrDefault(i => x[i] != y[i], -1);
-            Fail($"XML document differs, both in {folder}: " + (line < 0 ? $"{x.Length} / {y.Length} lines" : $"line {line + 1}: GPC '{x[line].Trim()}' / conversion '{y[line].Trim()}'"));
-        }
-        return $"{model.NodesElements.Count} nodes, {model.BeamElements.Count} beams, {model.AreaElements.Count} plates, {model.LoadCases.Count} cases, {model.MovingLoads?.Paths.Count ?? 0} moving paths, parts equal, "
-            + (a == null ? "XML document beyond the serializer limit" : $"XML document equal ({a.Length} characters)") + (buildModel ? "" : "; " + RequireDrafts(label, attached.Drafts, fem));
-    }
 
-    /// <summary>R6.4 (2), extension (α): the drafts of the elements a GPC input carries against the conversion of every element of its FEM
-    /// model with the same identity (the identity of the conversion, as Decompose Model gives them), by the canonical texts of the capture.</summary>
-    /// <summary>R6.4 (2): the conversion of a FEM model with the drafts of its elements (the conversion of every FEM value), the input of the
-    /// transformers here, so that their outputs carry the drafts the comparisons check (<see cref="RequireDrafts"/>).</summary>
-    internal static GpcModels.Conversion ConvertWithDrafts(ModelModel fem, double tolerance) => GpcModels.Convert(fem, tolerance).WithDrafts(FemmDrafts(fem));
 
-    /// <summary>The drafts of the elements of a FEM model: the conversion of every FEM value (identity from its content).</summary>
-    internal static GpcModelDrafts FemmDrafts(ModelModel fem) => new GpcModelDrafts(
-        fem.Nodes.Select(n => GpcBeamDrafts.FromFemm(n)), fem.Beams.Select(b => GpcBeamDrafts.FromFemm(b)), fem.Plates.Select(p => GpcBeamDrafts.FromFemm(p)));
 
-    internal static string RequireDrafts(string label, GpcModelDrafts drafts, ModelModel fem)
-    {
-        if (drafts == null) return "no drafts";
-        if (!drafts.Fits(fem.Nodes.Count, fem.Beams.Count, fem.Plates.Count) || fem.Elements.Count != fem.Nodes.Count + fem.Beams.Count + fem.Plates.Count)
-            return "drafts of a FEM model merged by ID (not compared)";
-        void Same(string kind, int i, object draft, object conversion)
-        {
-            // PAR (A08): a stale section state compared as stale, as in the DRAFT CHECK (the draft of a beam whose property changed after Bridge
-            // State Override carries the GPC fingerprint of its state, the conversion of the FEM value the FEM signature).
-            string a, c;
-            GpcDraftArchiveChecks.CompareStaleAsStale = true;
-            try { a = GpcDraftCapture.Text(draft); c = GpcDraftCapture.Text(conversion); }
-            finally { GpcDraftArchiveChecks.CompareStaleAsStale = false; }
-            if (a != c) throw new Exception($"GPC INPUT FAIL ({label}): the draft of {kind} {i + 1} differs from the conversion of its FEM value\n" + GpcDraftArchiveChecks.FirstDifference(c, a));
-        }
-        for (int i = 0; i < fem.Nodes.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Nodes[i]); Same("node", i, GpcDrafts.Reidentify(drafts.Nodes[i], id), GpcBeamDrafts.FromFemm(fem.Nodes[i], id)); }
-        for (int i = 0; i < fem.Beams.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Beams[i]); Same("beam", i, GpcDrafts.Reidentify(drafts.Beams[i], id), GpcBeamDrafts.FromFemm(fem.Beams[i], id)); }
-        for (int i = 0; i < fem.Plates.Count; i++) { var id = GpcBeamDrafts.Identity(fem.Plates[i]); Same("plate", i, GpcDrafts.Reidentify(drafts.Plates[i], id), GpcBeamDrafts.FromFemm(fem.Plates[i], id)); }
-        return $"drafts of {fem.Nodes.Count} nodes, {fem.Beams.Count} beams, {fem.Plates.Count} plates equal";
-    }
 
     /// <summary>Regression (not native) <c>gpc-model-transforms</c>: Attach Moving Paths on the examples 01–10 (node, beam and plate loads,
     /// combinations, moving loads, stages): a new path on a new case, a path on an existing case, two paths, no path (removal); GPC = the
@@ -452,19 +341,5 @@ internal static class GpcInputComparison
         return $"{actual.Model.NodesElements.Count} nodes, {actual.Model.BeamElements.Count} beams, {actual.Model.LoadCases.Count} cases, XML document equal ({p?.Length ?? 0} characters)";
     }
 
-    /// <summary>A FEM model with every case it refers to registered (element loads, combinations, stage increments, moving paths and the
-    /// default "Dead"), so that its conversion has every case registered, as an input built in GPC (<see cref="GpcModels.Conversion.FromGpc"/>).</summary>
-    private static ModelModel Registered(ModelModel source)
-    {
-        var fem = new ModelModel(source);
-        var names = fem.LoadCases.Select(c => c.Name).ToHashSet(StringComparer.Ordinal);
-        void Register(LoadCaseModel c) { if (c != null && names.Add(c.Name)) fem.LoadCases.Add(c); }
-        foreach (var load in fem.Elements.SelectMany(e => e.Loads)) Register(load.LoadCase);
-        foreach (var combination in fem.LoadCombinations) foreach (var c in combination.Values.Keys) Register(c);
-        foreach (var stage in fem.StagedConstruction) foreach (var combination in stage.LoadCombinations) foreach (var c in combination.Values.Keys) Register(c);
-        foreach (var path in fem.MovingPaths) if (!names.Contains(path.LoadCaseName)) Register(new LoadCaseModel(path.LoadCaseName, path.LoadCaseName));
-        if (!names.Contains("Dead")) Register(new LoadCaseModel(LoadCaseModel.Dead));
-        return fem;
-    }
 
 }

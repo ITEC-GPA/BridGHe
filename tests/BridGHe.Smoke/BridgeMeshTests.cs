@@ -1,16 +1,10 @@
 using System;
 using System.Linq;
 using BridGHe.Common.Geometry;
-using BridGHe.Common.Models;
 using Rhino.Geometry;
 
 internal static class BridgeMeshTests
 {
-    internal static PlatePropertyModel DeckProperty() => new("Slab")
-    {
-        PropertyType = PlatePropertyType.ShellThin, MembraneThickness = 250, BendingThickness = 250,
-        Material = new MaterialModel("C") { Modulus = 34000, PoissonRatio = .2 }
-    };
     internal static void Bracing()
     {
         var source = SimpleBridgeBuilder.Build(SimpleBridgeTests.Input());

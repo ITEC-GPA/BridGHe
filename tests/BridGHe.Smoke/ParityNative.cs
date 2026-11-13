@@ -26,8 +26,8 @@ using GPC.Converter.Straus7;
 /// btFalse, gaps A and B), compared with the 0.3.0 sequence on the scratch model (type, dimensions, mirror option, section data); the beam of a
 /// double angle with the Straus7 reference angle of 0.3.0, 90 + angle + 90 (<c>RotateOf90Deg</c>), and its offset as given.</item>
 /// </list>
-/// <para>Transitional (P2 retires it with the FEM models): the parity model against the conversion of the FEM model of the test before R6.6
-/// (<see cref="R4bInputs.Former.ParityDifference"/>), one printed line, not a condition (the conditions are those of 0.3.0).</para>
+/// <para>P2CD (13/11/2026, rule U3): the transitional line against the conversion of the former FEM model (a printed line, not a condition) is
+/// retired by name with the FEM models (<see cref="P2rRetiredP2cb"/>, P2CB).</para>
 /// </summary>
 internal static class ParityNative
 {
@@ -79,7 +79,6 @@ internal static class ParityNative
                 "A01: the builder gives the cutoff law of the inputs (ductile, keep mass, 150000, 250000)");
         }
         var input = R4bInputs.Parity(properties);
-        Console.WriteLine("PAR NATIVE TRANSITIONAL: the parity model against the conversion of the former FEM model: " + R4bInputs.Former.ParityDifference(input));
         string folder = Path.GetFullPath(Path.Combine("artifacts", "native", Guid.NewGuid().ToString("N"))); Directory.CreateDirectory(folder);
         string st7 = Path.Combine(folder, "parity.st7");
         // The model the GPC path writes (the Converter writer, as Straus R3 Analysis), without a solution: what Straus7 receives.

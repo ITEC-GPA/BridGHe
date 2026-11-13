@@ -168,8 +168,7 @@ internal static class GpcBuildModelChecks
         var settings = plugin.GetType("BridGHe.Grasshopper.Settings");
         // The tolerance of the plug-in (the model tolerance of the active Rhino document, 0.001 without one): Build Model takes it.
         pluginTolerance = (double)settings.GetProperty("Tolerance").GetValue(settings.GetProperty("Instance").GetValue(null));
-        // Transitional (P2 retires it with the FEM catalogue): the GPC catalogue is the conversion of the FEM catalogue, bit for bit.
-        foreach (var line in GpcNativeExamples.RequireSameAsFem()) Console.WriteLine("GPC NATIVE EXAMPLES (transitional) " + line);
+        // P2CD (13/11, rule U3): the transitional comparison of the GPC catalogue with the FEM catalogue is retired by name (P2rRetiredP2cd).
         int runs = 0, structures = 0, drafts = 0;
         void Fail(string label, string what) => throw new Exception("GPC BUILD MODEL FAIL (" + label + "): " + what);
 

@@ -85,7 +85,7 @@ internal static class Program
         if(args.Contains("--material-scan")) return GpcMaterialKindChecks.Scan(args);
         if(args.Contains("--gpc-only")) return GpcOnlyReplay.Regression(args.SkipWhile(a=>a!="--gpc-only").Skip(1).First()); // R6.5 P1 (P2S)
         if(args.Contains("--legacy-payload-scan")) return GpcDraftArchiveChecks.PayloadScan(args);
-        if(args.Contains("--composite-texts")) return CompositeTextDump.Run(args.SkipWhile(a=>a!="--composite-texts").Skip(1).First()); // P2X: evidence of the steel capture rule
+        if(args.Contains("--composite-texts")) { Console.WriteLine("RETIRED BY NAME (P2CD): --composite-texts: "+P2rRetiredP2cd.Reason("tool|--composite-texts")); return 1; } // P2CD (13/11): the P2X evidence of the FEM composite texts retired
         if(args.Contains("--inr-scan")) return InrInertia.Scan(args); // lane INR (12/11): the homogenised composite properties of the examples on the section axes (measurement, not native)
         if(args.Contains("--migration-scale")) return MigrationScale.Run();
         if(args.Contains("--tidy-example")) return ExampleTidy.Run(args.SkipWhile(a=>a!="--tidy-example").Skip(1).FirstOrDefault(),args.Contains("--publish"),args.Contains("--capture"));
@@ -116,7 +116,7 @@ internal static class Program
         if(args.Contains("--inventory")) { CheckGrasshopper(false,true);return 0; }
         if(args.Contains("--components-only")) { CheckGrasshopper(false);return 0; }
         if(args.Contains("--example50-horizontal")) return Example50HorizontalLayout.Run();
-        if(args.Contains("--example50-rev001-inputs")) return BridgeRevisionInputsExample.Run();
+        if(args.Contains("--example50-rev001-inputs")) { Console.WriteLine("RETIRED BY NAME (P2CD): --example50-rev001-inputs: "+P2rRetiredP2cd.Reason("generator|--example50-rev001-inputs")); return 1; } // P2CD (13/11): the authoring tool of 50 REV001 retired (E4)
         if(args.Contains("--example50-rev002")||args.Contains("--example50-rev002-check")) { Console.WriteLine("RETIRED BY NAME (P2CB): --example50-rev002: "+P2rRetiredP2cb.Reason("generator|--example50-rev002")); return 1; } // P2CB (13/11): the generator of 50 REV002 retired (E4)
         if(args.Contains("--example50-rev003")) return BridgeMovingRevisionExample.Run(args);
         if(args.Contains("--saved-bridge-audit")) return SavedBridgeWorkflowAudit.Run();

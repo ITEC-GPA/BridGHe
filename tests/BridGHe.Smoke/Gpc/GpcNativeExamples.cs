@@ -451,46 +451,6 @@ internal static class GpcNativeExamples
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------------------
-    // Transitional: the GPC catalogue against the FEM catalogue (retired by P2 with NativeExamples.Create).
+    // P2CD (13/11): the transitional comparison of the GPC catalogue with the FEM catalogue (RequireSameAsFem) is retired by name (P2rRetiredP2cd).
 
-    /// <summary>
-    /// <b>Transitional (P2 retires it with the FEM catalogue).</b> Each GPC example against the conversion of its FEM model by the legacy reader with the
-    /// same owner of the element identities (<see cref="GpcInputComparison.Require"/>: report, bridge data, analysis fingerprint, parts and the canonical
-    /// XML document of the model, bit for bit, N-mm; the drafts of the elements against the conversion of every FEM value): content, field by field, not
-    /// identity. Declared form of the FEM side: the FEM model as Build Model (and Attach Moving Paths) give it, i.e. without the registered case records
-    /// the hand-built FEM models add (Build Model registers none; Attach Moving Paths registers the case of its paths): checked apart, the conversion of
-    /// the FEM model as built has the same XML document, and its report differs only in the registered count and the «Registered» origin.
-    /// The same solver, moving flag and result names. Returns one line per example.
-    /// </summary>
-    internal static IReadOnlyList<string> RequireSameAsFem()
-    {
-        var fem = NativeExamples.Create().ToArray(); var gpc = Create().ToArray();
-        if (fem.Length != gpc.Length) throw new Exception($"GPC NATIVE EXAMPLES FAIL: {gpc.Length} GPC examples, {fem.Length} FEM");
-        var lines = new List<string>();
-        for (int i = 0; i < fem.Length; i++)
-        {
-            var f = fem[i]; var g = gpc[i]; string label = "native example " + g.Id;
-            void Fail(string what) => throw new Exception("GPC NATIVE EXAMPLES FAIL (" + label + "): " + what);
-            if (f.Id != g.Id || f.Title != g.Title || f.Solver != g.Solver || f.Moving != g.Moving) Fail($"identity of the example: FEM {f.Id} '{f.Title}' {f.Solver} {f.Moving}, GPC {g.Id} '{g.Title}' {g.Solver} {g.Moving}");
-            if (!f.Cases.SequenceEqual(g.Cases, StringComparer.Ordinal)) Fail($"result names: FEM {string.Join(",", f.Cases)}, GPC {string.Join(",", g.Cases)}");
-            var model = BridGHe.Common.Helpers.ModelArchive.Clone(f.Model); model.Name = f.Title;
-            // The FEM model as Build Model and Attach Moving Paths give it: no registered case records; the cases of the moving paths registered.
-            var built = BridGHe.Common.Helpers.ModelArchive.Clone(model); built.LoadCases.Clear();
-            if (built.MovingPaths.Count != 0) { var paths = built.MovingPaths.ToList(); built.MovingPaths.Clear(); built = MovingModelBuilder.ReplacePaths(built, paths); built.Name = f.Title; }
-            string result = g.Inputs.Paths.Count == 0 ? GpcInputComparison.Require(label, g.Input, built, Tolerance, buildModel: true) : GpcInputComparison.Require(label, g.Input, built, Tolerance);
-            string drafts = g.Inputs.Paths.Count == 0 ? "; " + GpcInputComparison.RequireDrafts(label, g.Input.Drafts, built) : "";
-            // The FEM model as built (registered case records): the same model document; the report differs only by the registration.
-            var owner = GpcInputComparison.ElementOwner(g.Input.Model);
-            var asBuilt = GpcInputComparison.Conversion(model, Tolerance, owner, out var asBuiltReport);
-            var asGiven = GpcInputComparison.Conversion(built, Tolerance, owner, out var givenReport);
-            if (GpcInputComparison.Document(asBuilt) != GpcInputComparison.Document(asGiven)) Fail("the registered case records change the model document");
-            string registration = $"registered cases: FEM model as built {asBuiltReport.RegisteredCases}, as Build Model{(built.MovingPaths.Count != 0 ? " and Attach Moving Paths" : "")} give it {givenReport.RegisteredCases}";
-            var origins = asBuiltReport.CaseOrigins.Where(p => !givenReport.CaseOrigins.TryGetValue(p.Key, out var o) || o != p.Value).Select(p => p.Key + ":" + p.Value).ToArray();
-            if (asBuiltReport.CaseOrigins.Count != givenReport.CaseOrigins.Count
-                || asBuiltReport.CaseOrigins.Any(p => (p.Value & ~LegacyCaseOrigins.Registered) != (givenReport.CaseOrigins[p.Key] & ~LegacyCaseOrigins.Registered)))
-                Fail("the case origins differ beyond the registration: " + string.Join(", ", origins));
-            lines.Add($"{g.Id}: {result}{drafts}; {registration}, origins differing only by Registered: {string.Join(", ", origins)}");
-        }
-        return lines;
-    }
 }

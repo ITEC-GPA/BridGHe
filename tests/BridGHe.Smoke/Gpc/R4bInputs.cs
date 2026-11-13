@@ -237,14 +237,7 @@ internal static class R4bInputs
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------------------
-    // Retired (P2CB 13/11/2026, rule U3): the transitional comparison with the former FEM models (Regression, Compare, AsBuilt and the FEM
-    // models of Former) went with the FEM types; --regression r4b-inputs was retired by P2CUT (P2rRetired.Checks).
+    // Retired (P2CB and P2CD 13/11/2026, rule U3): the transitional comparison with the former FEM models (Regression, Compare, AsBuilt, Former)
+    // went with the FEM types; --regression r4b-inputs was retired by P2CUT, the line of ParityNative by P2CB (P2rRetired.Checks).
 
-    /// <summary>The former FEM models of the tests of R4b: retired by name (P2CB, <see cref="P2rRetiredP2cb"/>).</summary>
-    internal static class Former
-    {
-        /// <summary>The transitional line of <see cref="ParityNative"/> (printed, not a condition): the comparison of the parity model with the
-        /// conversion of its former FEM model is retired by name with the FEM types; the line gives the retirement.</summary>
-        internal static string ParityDifference(GpcModels.Conversion gpc) => "retired by name (P2CB): " + P2rRetiredP2cb.Reason("core-native|par native transitional parity difference");
-    }
 }

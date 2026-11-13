@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Geometry;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Common.Straus;
 using Rhino.Geometry;
 

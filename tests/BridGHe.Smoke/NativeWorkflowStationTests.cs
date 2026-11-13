@@ -7,7 +7,6 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Common.Straus;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Special;
@@ -17,7 +16,7 @@ using Grasshopper.Kernel.Special;
 /// (<c>calcoli/REV003-*-results.bgmodel</c>, ignored by git: absent from the worktrees) into the analysis components; no gate runs it. On GPC data
 /// the same archives read by value (<c>LegacyArchive.Read</c>, <c>LegacyModelImport.Import</c>, <c>LegacyResultsReader.Import</c>) would seed the
 /// components with <c>GH_Model.FromGpc</c> and the analysed model (see the report of R4b). The fixture records stay for
-/// <see cref="BridgeStationTests"/> (its GPC replay, R2b); <see cref="Merge"/> (FEM) for its FEM replay.</para></summary>
+/// <see cref="BridgeStationTests"/> (its GPC replay, R2b). P2CD (13/11): the FEM merge of its FEM replay (Merge) is removed with the FEM types.</para></summary>
 internal static class NativeWorkflowStationTests
 {
     internal sealed record Sample(double Station, double N, double V1, double V2, double T, double M1, double M2);
@@ -26,22 +25,6 @@ internal static class NativeWorkflowStationTests
     internal const string FixturePath = "tests/BridGHe.Smoke/Fixtures/bridge-stations-19.json";
 
 
-    internal static BridgeWorkflowBuildResult Merge(ModelModel[] models)
-    {
-        string[] keys = { "G1", "G2", "Q", "RITIRO" };
-        var phases = models.Select((m, i) => new BridgePhaseDefinition
-        {
-            Order = 10 * (i + 1), Name = keys[i], State = i == 0 ? BridgeSectionState.Steel : BridgeSectionState.Composite,
-            Actions = new[] { new BridgeActionDefinition
-            {
-                Key = keys[i], Source = m, Case = m.LoadCases.Single().Name,
-                Behavior = (BridgeActionBehavior)i, Strain = i == 3 ? -200e-6 : null
-            } }
-        }).ToArray();
-        return BridgeWorkflowBuilder.Build(models, phases,
-            new[] { new[] { "", "G1", "G2", "Q", "RITIRO" }, new[] { "SLS", "1", "1", "1", "1" } },
-            BridgeWorkflowMethod.Compatible, 1e-6);
-    }
 
 
 }
