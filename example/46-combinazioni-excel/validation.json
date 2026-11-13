@@ -7,7 +7,16 @@
   "phases": 3,
   "actions": 4,
   "solverInvoked": false,
-  "syntheticFemSamples": true,
+  "syntheticFemSamples": false,
+  "syntheticGpcSamples": true,
   "explicitRunVerified": true,
-  "staleOutputCleared": true
+  "staleOutputCleared": true,
+  "remade040": {
+    "date": "2026-11-14",
+    "base": "9350aeb",
+    "tool": "--u2-remake-examples write",
+    "how": "7 models rebuilt with the GPC builders (RecipeGpc: two beams with end nodes, no rigid link)",
+    "check": "--u2-check-examples (headless, no Straus): 28 outputs and messages: the old file gave the read errors; now two combinations DEMO_01 and DEMO_02",
+    "solverInvoked": false
+  }
 }
