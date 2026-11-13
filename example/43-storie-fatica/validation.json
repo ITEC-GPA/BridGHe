@@ -7,5 +7,13 @@
   "components": [
     "BridgeFatigueHistoryComponent"
   ],
-  "warnings": []
+  "warnings": [],
+  "remade040": {
+    "date": "2026-11-14",
+    "base": "9350aeb",
+    "tool": "--u2-remake-examples write",
+    "how": "read by value and saved as GPC data (no FemmR6)",
+    "check": "--u2-check-examples (headless, no Straus): 18 of 18 outputs and messages equal",
+    "solverInvoked": false
+  }
 }

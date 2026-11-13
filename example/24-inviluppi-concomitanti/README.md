@@ -1,12 +1,14 @@
 # Inviluppi delle azioni e degli spostamenti
 
+**Aggiornamento 14 novembre 2026 (BridGHe 0.4.0).** Questa copia è stata risalvata con i dati GPC della 0.4.0: nel file non ci sono più dati FEM (né il blocco `FemmR6` né modelli FeMM). Componenti, GUID, collegamenti, valori di input, fasi, unità e selezioni sono quelli di prima: cambia solo il modo in cui i dati sono salvati, e quindi la dimensione del file (da 1.013.146 a 241.754 byte). Riaperto e ricalcolato senza Straus, il file dà gli stessi risultati della copia precedente, valore per valore (41 uscite e messaggi dei componenti, tutti uguali). La copia precedente resta nella cronologia del repository (commit `9350aeb`).
+
 Componenti: **Bridge Result Cases; Bridge Beam Envelope; Bridge Bearing Envelope; Bridge Displacement Envelope**.
 
 Aprire [24-inviluppi-concomitanti.ghx](24-inviluppi-concomitanti.ghx) con la Release aggiornata.
 
 ## Dati e scopo
 
-Campioni controllati G e Q in N e mm, con passo Q=2 e StepType=Moving. Sono dati di test, non risultati di una nuova analisi Straus.
+Campioni controllati G e Q in N e mm. Nella 0.3.0 Q era al passo mobile 2 (StepType=Moving); i risultati GPC della 0.4.0 non hanno passi, quindi Q esce con Step 0 e senza Step type. Sono dati di test, non risultati di una nuova analisi Straus.
 
 ## Procedura
 
