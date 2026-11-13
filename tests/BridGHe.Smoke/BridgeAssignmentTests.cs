@@ -4,16 +4,9 @@ using System.Linq;
 using BridGHe.Common.Geometry;
 using BridGHe.Common.Helpers;
 using Rhino.Geometry;
-using BridGHe.Common.Models;
 
 internal static class BridgeAssignmentTests
 {
-    internal static BeamPropertyModel Property(string name = "P") => new(name)
-    {
-        PropertyType = BeamPropertyType.Beam,
-        Section = new SectionModel { SectionType = SectionModel.SectionTypes.SolidRectangle, B = 300, D = 1500 },
-        Material = new MaterialModel("S") { Modulus = 210000, PoissonRatio = .3 }
-    };
     internal static void Run()
     {
         Gpc();

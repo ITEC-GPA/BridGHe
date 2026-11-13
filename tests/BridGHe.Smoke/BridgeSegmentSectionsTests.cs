@@ -3,20 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Geometry;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 
 internal static class BridgeSegmentSectionsTests
 {
     private static void Check(bool condition, string name) { if (!condition) throw new Exception("SEGMENT SECTIONS: " + name); }
     private static void Reject(Action action)
     { try { action(); } catch (ArgumentException) { return; } throw new Exception("Expected section table rejection."); }
-    internal static BeamPropertyModel BaseProperty()
-    {
-        var section = new SectionModel { SectionType = SectionModel.SectionTypes.I, B1 = 600, B2 = 600, D = 2500, T1 = 30, T2 = 30, T3 = 16 };
-        section.CalculateSection();
-        return new BeamPropertyModel("Base") { PropertyType = BeamPropertyType.Beam, Section = section,
-            Material = new MaterialModel("S355") { Kind = MaterialModel.MaterialKind.Steel, Modulus = 210000, PoissonRatio = .3 } };
-    }
     internal static string Edit(string line, int column, string text)
     { var cells = line.Split(';'); cells[column] = text; return string.Join(";", cells); }
     internal static void Run()
