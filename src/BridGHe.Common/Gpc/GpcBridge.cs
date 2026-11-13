@@ -185,7 +185,7 @@ namespace BridGHe.Common.Gpc
             {
                 // L3b: a source given by its GPC input alone that was not analysed takes part in the alignment, as its FEM source does, and has no
                 // results: «no FEM results» for its first beam below, the message of the FEM path.
-                if (!string.IsNullOrWhiteSpace(a.Case) && a.GpcSource == null && a.Source == null && a.GpcInput != null)
+                if (!string.IsNullOrWhiteSpace(a.Case) && a.GpcSource == null && a.GpcInput != null)
                 {
                     if (sources.FindIndex(s => s.Is(a.GpcInput.Model)) < 0) sources.Add(GpcBridgeSource.Reference(a.GpcInput, null));
                     continue;
@@ -219,7 +219,7 @@ namespace BridGHe.Common.Gpc
             {
                 // The name of the source model: that of the GH model of the action (its GPC model: the analysed one, or the conversion of a model
                 // whose beams come from an analysis, R6.4 (5)), as the FEM merge named it.
-                var record = BridgeWorkflowBuilder.Record(phase, action, action.GpcModel?.Name ?? action.GpcSource?.Name ?? action.Source?.Name, LocalSectionStates(phase, action));
+                var record = BridgeWorkflowBuilder.Record(phase, action, action.GpcModel?.Name ?? action.GpcSource?.Name, LocalSectionStates(phase, action));
                 records.Add(action.Key, record);
                 if (record.ForceCase != null)
                 {
@@ -363,7 +363,6 @@ namespace BridGHe.Common.Gpc
         public static (bool HasLocalSectionStates, string[] ConcreteExcludedBeamIds) LocalSectionStates(BridgePhaseDefinition phase, BridgeActionDefinition action)
         {
             var model = action.GpcModel ?? action.GpcSource; // the GPC model of the source: analysed (with its catalog) or its conversion
-            if (action.Source != null && model == null) throw new ArgumentException($"Action {action.Key}: its source has no GPC model; recalculate the analysis.");
             // L12: the states are bridge data of the source by beam GUID (one per beam).
             var data = action.GpcBridgeData;
             var assigned = (model == null || data == null ? Array.Empty<BeamElement>() : Beams(model))

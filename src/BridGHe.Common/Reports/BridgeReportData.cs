@@ -8,8 +8,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using BridGHe.Common.Checks;
-using BridGHe.Common.Models;
 using GPC.Checkers.CompositeBridge;
+using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Reports;
 

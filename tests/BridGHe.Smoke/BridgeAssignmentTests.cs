@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Geometry;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using Rhino.Geometry;
+using BridGHe.Common.Models;
 
 internal static class BridgeAssignmentTests
 {
@@ -31,7 +31,7 @@ internal static class BridgeAssignmentTests
             ScaleFrom = new(1, 1), ScaleTo = new(1, 2) };
         var result = R2aGeneratorFixtures.Assign(geometry, defaults, new[] { rule });
         var beams = R2aGeneratorFixtures.Drafts(result.Plans, "assignment");
-        Require(result.Beams.Length == 0 && result.Unassigned.Length == 0 && beams.Length == geometry.Members.Count + 1, "Rule boundary splits only selected girder");
+        Require(result.Unassigned.Length == 0 && beams.Length == geometry.Members.Count + 1, "Rule boundary splits only selected girder");
         var selected = beams.Where(b => b.Beam.BeamProperty.Name == "P2").ToArray();
         Require(selected.Length > 0 && selected.All(b => R2aGeneratorFixtures.Member(b).Group == 2), "Schedule selects G2");
         foreach (var beam in beams)

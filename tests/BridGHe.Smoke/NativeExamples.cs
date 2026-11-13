@@ -4,10 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Common.MovingLoads;
 using BridGHe.Common.Straus;
 using Rhino.Geometry;
+using BridGHe.Common.Models;
 
 /// <summary>Numerical integration benchmarks, N-mm, linear elastic material, no gravity.
 /// <para>R6.6 lane R0: <b>the FEM catalogue (<see cref="Create"/>, <see cref="Example"/> with its FEM model and checks) is transitional</b>: it is

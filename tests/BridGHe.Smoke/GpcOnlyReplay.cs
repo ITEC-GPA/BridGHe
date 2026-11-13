@@ -1037,7 +1037,6 @@ internal static class GpcOnlyReplay
         var lc = Produce("LoadCaseComponent", new Dictionary<int, object> { [0] = "G", [1] = false });
         var lq = Produce("LoadCaseComponent", new Dictionary<int, object> { [0] = "Q", [1] = false });
         var combo = Produce("LoadCombinationComponent", new Dictionary<int, object> { [0] = "ULS", [1] = new object[] { lc, lq }, [2] = new object[] { 1.35, 1.5 } });
-        var femCases = new[] { lc, lq }.Select(c => (BridGHe.Common.Models.LoadCaseModel)Prop(c, "Value")).ToList(); // the null FEM values of the cases (a product API with a FEM parameter: P2CE)
         var records = new[] { lc, lq }.Select(c => (BridGHe.Common.Gpc.Legacy.LegacyCaseData)Prop(c, "Gpc")).ToList();
         var comboType = combo.GetType(); var listType = typeof(List<>).MakeGenericType(comboType);
         object ListOf(params IGH_Goo[] goo) { var l = (System.Collections.IList)Activator.CreateInstance(listType); foreach (var g in goo) l.Add(g); return l; }
@@ -1046,18 +1045,18 @@ internal static class GpcOnlyReplay
         var of = rowsType.GetMethod("Of", BindingFlags.NonPublic | BindingFlags.Static);
         string femRows = RowsText(of.Invoke(null, new[] { ListOf(combo) })), gpcRows = RowsText(of.Invoke(null, new[] { ListOf(Only(combo)) }));
         Check(femRows == gpcRows && femRows.Contains("ULS:G=1.35,Q=1.5"), $"R65-C2-05: rows {femRows} -> {gpcRows}");
-        bool gpcOnly = (bool)rowsType.GetMethod("GpcOnly", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { ListOf(Only(combo)), femCases, records });
-        bool femOnly = (bool)rowsType.GetMethod("GpcOnly", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { ListOf(combo), femCases, records });
+        bool gpcOnly = (bool)rowsType.GetMethod("GpcOnly", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { ListOf(Only(combo)), records }); // P2CE phase 2b: no FEM cases parameter
+        bool femOnly = (bool)rowsType.GetMethod("GpcOnly", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { ListOf(combo), records });
         // P2R (T3): the combination of Load Combination has no FEM value since P2K/P2D, so both lists are GPC-only; before, the FEM-backed list was not.
         Check(gpcOnly && femOnly == (Prop(combo, "Value") == null), "R65-C2-05: the form makes GPC-only combinations for GPC-only inputs only");
-        var columns = (string[])rowsType.GetMethod("Columns", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { true, femCases, records });
+        var columns = (string[])rowsType.GetMethod("Columns", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { true, records });
         var cells = new List<(string, IReadOnlyList<object>)> { ("SLS", new object[] { 1.0, 0.6 }) };
         var make = rowsType.GetMethod("Combinations", BindingFlags.NonPublic | BindingFlags.Static);
-        object Made(bool only) { var r = make.Invoke(null, new object[] { cells, columns, femCases, records, only }); return r.GetType().GetField("Item1").GetValue(r); }
+        object Made(bool only) { var r = make.Invoke(null, new object[] { cells, columns, records, only }); return r.GetType().GetField("Item1").GetValue(r); }
         var madeGpc = ((System.Collections.IEnumerable)Made(true)).Cast<IGH_Goo>().Single(); var madeFem = ((System.Collections.IEnumerable)Made(false)).Cast<IGH_Goo>().Single();
         Check(Prop(madeGpc, "Value") == null && GpcNullValueChecks.TextOf(Prop(madeGpc, "Gpc")) == GpcNullValueChecks.TextOf(Prop(madeFem, "Gpc")),
             "R65-C2-05: the combination of a row by its GPC datum alone, the datum of the FEM one");
-        var clash = make.Invoke(null, new object[] { new List<(string, IReadOnlyList<object>)> { ("G", new object[] { 1.0, 1.0 }) }, columns, femCases, records, true });
+        var clash = make.Invoke(null, new object[] { new List<(string, IReadOnlyList<object>)> { ("G", new object[] { 1.0, 1.0 }) }, columns, records, true });
         Check(clash.GetType().GetField("Item2").GetValue(clash) is string m && m.Contains("must be different to the load cases names"), "R65-C2-05: a combination named as a case refused, with the message of the form");
         count++;
         // R65-C2-06: a combination of the Load Combinations parameter followed by Staged Construction with an added case only (G -> G, Q).
@@ -1072,7 +1071,7 @@ internal static class GpcOnlyReplay
             foreach (var (k, v) in new (int, object)[] { (0, "Stage 1"), (1, deck), (3, false), (4, true) })
             { var t = new GH_Structure<IGH_Goo>(); t.Append(Goo(v), new GH_Path(0)); SetInput(stage.Params.Input[k], t, g => g); }
             stage.Params.Input[2].AddSource(param);
-            stage.GetType().GetMethod("SetLoadCases").Invoke(stage, new object[] { femCases, records });
+            stage.GetType().GetMethod("SetLoadCases").Invoke(stage, new object[] { records }); // P2CE phase 2b: no FEM cases parameter
             BridgeSegmentExcelTests.Solve(doc, true);
             var output = stage.Params.Output[0].VolatileData.AllData(true).Single();
             var persistent = ((System.Collections.IEnumerable)param.GetType().GetProperty("PersistentData").GetValue(param)).Cast<object>().ToList();
@@ -1132,7 +1131,7 @@ internal static class GpcOnlyReplay
         var steel = BridGHe.Common.Gpc.Builders.GpcPropertyBuilders.Beam("Base", 5, R2aDesignFixtures.BaseSection(), R2aDesignFixtures.Material("Steel", "Material", 210000, .3, 7.85e-9), "Steel");
         var geometry = BridGHe.Common.Geometry.SimpleBridgeBuilder.Build(SimpleBridgeTests.Input());
         var schedule = BridGHe.Common.Geometry.BridgeSegmentSections.CreateGpc(geometry, steel, null);
-        var plans = BridGHe.Common.Geometry.BridgeMemberAssignment.Assign(geometry, null, schedule.Rules, new Dictionary<int, BridGHe.Common.Gpc.Legacy.LegacyBeamProperty> { [-1] = steel }).Plans;
+        var plans = BridGHe.Common.Geometry.BridgeMemberAssignment.Assign(geometry, schedule.Rules, new Dictionary<int, BridGHe.Common.Gpc.Legacy.LegacyBeamProperty> { [-1] = steel }).Plans;
         var all = plans.Select(p => BridGHe.Common.Gpc.Builders.GpcBridgeGeometryBuilders.Assigned(p, R1Id("state override:" + p.SolverId))).ToArray();
         var girders = all.Where(b => b.Bridge?.Member?.Family == GPC.Checkers.CompositeBridge.Layout.BridgeMemberFamily.Girder).ToArray();
         double Moment(int i, double s) => (i % 4) switch { 0 => 1e8, 1 => -1e8, 2 => (s - .5) * 2e8, _ => 500 };
@@ -1411,7 +1410,6 @@ internal static class GpcOnlyReplay
         var filleted = Produce("BeamSectionIComponent", new Dictionary<int, object> { [0] = 300.0, [1] = 250.0, [2] = 800.0, [3] = 20.0, [4] = 16.0, [5] = 12.0, [6] = 15.0 });
         static void Units(IGH_Param p) => p.GetType().GetMethod("OnUnitsClick", BindingFlags.NonPublic | BindingFlags.Instance)
             .Invoke(p, new object[] { new System.Windows.Forms.ToolStripMenuItem("Knm"), EventArgs.Empty });
-        var femCases = cases.Select(c => (BridGHe.Common.Models.LoadCaseModel)Prop(c, "Value")).ToList(); // the null FEM values of the cases (a product API with a FEM parameter: P2CE)
         var records = cases.Select(c => (BridGHe.Common.Gpc.Legacy.LegacyCaseData)Prop(c, "Gpc")).ToList();
         var parameters = new (string Type, string Label, IGH_Goo Stored, string Text, Action<IGH_Param> Act)[]
         {
@@ -1419,7 +1417,7 @@ internal static class GpcOnlyReplay
             ("GroupParam", "names cast from a text", null, "Deck::Pour1", null),
             ("BeamSectionParam", "units menu (Nmm to Knm)", section, null, p => p.GetType().GetMethod("OnUnitsClick", BindingFlags.NonPublic | BindingFlags.Instance)
                 .Invoke(p, new object[] { new System.Windows.Forms.ToolStripMenuItem("Knm"), EventArgs.Empty })),
-            ("LoadCombinationsParam", "cases updated (Traffic removed, Wind added)", combo, null, p => p.GetType().GetMethod("UpdateLoadCases").Invoke(p, new object[] { femCases, records })),
+            ("LoadCombinationsParam", "cases updated (Traffic removed, Wind added)", combo, null, p => p.GetType().GetMethod("UpdateLoadCases").Invoke(p, new object[] { records })),
             // L2B: the coordinate system of the loads, stored (the global one of today) and set by the «Global» menu.
             ("CoordinateSystemParam", "stored global system", (IGH_Goo)Activator.CreateInstance(T("Fem.GH_CoordinateSystem")), null, null),
             ("CoordinateSystemParam", "the Global menu", null, null, p => p.GetType().GetMethod("SetGlobal", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(p, null)),

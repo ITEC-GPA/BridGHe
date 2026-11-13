@@ -3,22 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Geometry;
-using BridGHe.Common.Models;
 using Rhino.Geometry;
 
 internal static class BridgeConstructionTests
 {
-    // P2CE phase 2: delete with Models (the FEM simple bridge; its caller: GpcOnlyReplay of lane P2CC).
-    internal static ModelModel Model(SimpleBridgeGeometry geometry)
-    {
-        var model = new ModelModel(ModelModel.ModelUnits.Nmm) { Name = "Bridge design test" };
-        var assignment = BridgeMemberAssignment.Assign(geometry, new Dictionary<int, BeamPropertyModel> { [-1] = BridgeAssignmentTests.Property() }, null);
-        model.AddElements(assignment.Beams);
-        var nodes = geometry.Nodes.Select((p, i) => new NodeModel((i + 1).ToString(), p)).ToArray();
-        foreach (var node in nodes.Where(n => Math.Abs(n.Position.X) < 1e-8))
-            node.Attributes.Add(new NodeRestraintAttributeModel(true, true, true, false, false, false));
-        model.AddElements(nodes); model.LoadCases.Add(new LoadCaseModel("G1", "G1")); return model;
-    }
     internal static void Run()
     {
         var geometry = SimpleBridgeBuilder.Build(SimpleBridgeTests.Input());

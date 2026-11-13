@@ -43,7 +43,7 @@ internal static class GpcStateOverrideChecks
         var steel = R2aDesignFixtures.BaseProperty("Base", 7.85e-9);
         var geometry = SimpleBridgeBuilder.Build(SimpleBridgeTests.Input());
         var schedule = BridgeSegmentSections.CreateGpc(geometry, steel, null);
-        var plans = BridgeMemberAssignment.Assign(geometry, null, schedule.Rules, new Dictionary<int, LegacyBeamProperty> { [-1] = steel }).Plans;
+        var plans = BridgeMemberAssignment.Assign(geometry, schedule.Rules, new Dictionary<int, LegacyBeamProperty> { [-1] = steel }).Plans;
         var all = plans.Select(p => GpcBridgeGeometryBuilders.Assigned(p, R2aDesignFixtures.Id("state override:" + p.SolverId))).ToArray();
         var girders = all.Where(b => b.Bridge?.Member?.Family == GPC.Checkers.CompositeBridge.Layout.BridgeMemberFamily.Girder).ToArray();
         // The moments of girder i (BM2 at the normalised stations 0, 0.5, 1): positive, negative, mixed, zero within the tolerance of 1000.

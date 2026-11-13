@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text.Json;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Common.MovingLoads;
 using BridGHe.Common.Straus;
 using GPC.Checkers.Concrete.Attributes;
@@ -15,6 +14,7 @@ using GPC.Model.Materials;
 using GPC.Model.Sections;
 using GPC.Model.Standards;
 using Rhino.Geometry;
+using BridGHe.Common.Models;
 
 /// <summary>Reproducible teaching example. N, mm, MPa. Not a bridge design certification.</summary>
 internal static class BridgeGrillageExample

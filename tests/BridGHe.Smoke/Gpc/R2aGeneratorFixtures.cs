@@ -21,7 +21,7 @@ internal static class R2aGeneratorFixtures
     /// <summary>Bridge Member Assignment on GPC data alone: default properties by family (-1: steel families) and rules given by their GPC
     /// property (no FEM defaults): the result has the plans only.</summary>
     internal static BridgeAssignment Assign(SimpleBridgeGeometry geometry, IReadOnlyDictionary<int, LegacyBeamProperty> defaults, IReadOnlyList<BridgeSectionRule> rules = null) =>
-        BridgeMemberAssignment.Assign(geometry, null, rules ?? Array.Empty<BridgeSectionRule>(), defaults);
+        BridgeMemberAssignment.Assign(geometry, rules ?? Array.Empty<BridgeSectionRule>(), defaults);
 
     /// <summary>The beam drafts of plans, in order, as the component builds them (identity from the tag and the position).</summary>
     internal static LegacyBeamDraft[] Drafts(IEnumerable<BridgeMemberPlan> plans, string tag) =>

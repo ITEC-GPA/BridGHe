@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using GH_IO.Serialization;
@@ -7,6 +6,7 @@ using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using System;
 using System.Linq;
+using BridGHe.Common.Models;
 
 namespace BridGHe.Grasshopper.Components.BridgeChecks
 {

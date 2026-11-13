@@ -4,12 +4,12 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using BridGHe.Common.Gpc;
 using BridGHe.Common.Gpc.Legacy;
-using BridGHe.Common.Models;
 using GPC.Checkers.CompositeBridge;
 using GPC.Geometry;
 using GPC.Model.Elements;
 using GPC.Model.Results.Locations;
 using GPC.Model.Results.Queries;
+using BridGHe.Common.Models;
 using D3Method = GPC.Checkers.CompositeBridge.BridgeWorkflowMethod;
 
 namespace BridGHe.Common.Checks
@@ -34,14 +34,6 @@ namespace BridGHe.Common.Checks
         private readonly IReadOnlyDictionary<Guid, double>[] factors;
         private readonly string[] assumptions;
 
-        /// <param name="concreteExcludedBeamIds">F6 (a)/(b), R3: the beams whose composite property has «Consider Concrete» off on the path by
-        /// cases (Compatible without local states): their long-term, short-term and shrinkage increments are checked on the concrete-excluded
-        /// section, as BridGHe's phases did (BridgeCheckAdapter.GetLinearAnalysisResultByStages with concrete off):
-        /// a copy of the recipe with these beams in <see cref="BridgeWorkflowActionDefinition.ConcreteExcludedBeamGuids"/> of those actions.</param>
-        /// <summary>TRANSITIONAL (removed with the FeMM models): the combinations, BridGHe angles and records from the merged FEM model.</summary>
-        public GpcBridgeChecks(GpcBridge bridge, ModelModel merged, IReadOnlyCollection<string> concreteExcludedBeamIds = null)
-            : this(bridge, concreteExcludedBeamIds, merged.LoadCombinations.Select(c => c.Values.Select(p => (p.Key.Name, p.Value)).ToArray()).ToArray(),
-                  merged.Beams.Select(b => b.AngleDeg).ToArray(), merged.BridgeWorkflow.Phases.Any(p => p.Actions.Any(a => a.HasLocalSectionStates))) { }
 
         /// <summary>P2T request 3: the checks on the GPC bridge model alone: the combinations of the bridge model (the table of Build BridGHe Model,
         /// in its order), the BridGHe angles and the records of the actions kept by <see cref="GpcBridge"/>.</summary>

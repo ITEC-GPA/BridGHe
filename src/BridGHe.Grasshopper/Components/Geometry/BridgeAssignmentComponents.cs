@@ -80,7 +80,7 @@ public class BridgeMemberAssignmentComponent : BridgeUtilityComponent
     /// <summary>P2K (P1): the assignment on GPC only (no FEM default properties: the <c>defaults</c> of the library are null).</summary>
     protected void Publish(IGH_DataAccess da, SimpleBridgeGeometry geometry, BridgeSectionRule[] rules, Dictionary<int, Common.Gpc.Legacy.LegacyBeamProperty> gpcDefaults)
     {
-        var result = BridgeMemberAssignment.Assign(geometry, null, rules, gpcDefaults);
+        var result = BridgeMemberAssignment.Assign(geometry, rules, gpcDefaults);
         if (result.Unassigned.Length > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"{result.Unassigned.Length} members have no property and were not created. Inspect Unassigned.");
         // R6.5 P1 lane 1b: the beams by their GPC drafts alone (identity by content of the plan), the physical IDs from the plans.
         // R65-C2-08 (review of lane 2, 8/11): every draft first; a refused plan gives the error and no outputs (rule of passo 75; before, the

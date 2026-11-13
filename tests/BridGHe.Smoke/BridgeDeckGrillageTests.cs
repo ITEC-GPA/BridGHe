@@ -47,7 +47,7 @@ internal static class BridgeDeckGrillageTests
             Require(missing.Unassigned.Length == 24, "Default steel cannot silently become concrete slab");
             defaults[8] = R2aDesignFixtures.RectangleProperty("Concrete strips");
             var assigned = R2aGeneratorFixtures.Assign(result.Geometry, defaults);
-            Require(assigned.Unassigned.Length == 0 && assigned.Plans.Length == count + 24 && assigned.Beams.Length == 0, "Explicit family 8 assignment");
+            Require(assigned.Unassigned.Length == 0 && assigned.Plans.Length == count + 24, "Explicit family 8 assignment");
         }
         var auto = SimpleBridgeTests.Input() with { DeckBeamSpacing = 3000 };
         var autoSteel = SimpleBridgeBuilder.Build(auto); var autoResult = BridgeDeckGrillage.Build(auto, autoSteel);

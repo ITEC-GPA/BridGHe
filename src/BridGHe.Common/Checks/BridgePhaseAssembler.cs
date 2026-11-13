@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using GPC.Geometry;
 using GPC.Model.Results;
+using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Checks
 {

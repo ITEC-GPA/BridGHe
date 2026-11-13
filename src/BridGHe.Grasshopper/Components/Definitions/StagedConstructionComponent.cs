@@ -83,7 +83,7 @@ namespace BridGHe.Grasshopper.Components.Definitions
             {
                 IEnumerable<IGH_Param> combinations_params = Params.Input[2].Sources.Where(s => s.GetType() == typeof(LoadCombinationsParam));
                 foreach (LoadCombinationsParam param in combinations_params)
-                    param.UpdateLoadCases(null, _caseRecords);
+                    param.UpdateLoadCases(_caseRecords);
             }
 
             if (combinations.Count == 0)
@@ -98,9 +98,8 @@ namespace BridGHe.Grasshopper.Components.Definitions
                 combinations.Select(c => c.Gpc).ToArray(), morph, rotate)));
         }
 
-        /// <summary>R6.3: the case records of Build Model (a known catalogue). The FEM cases parameter is ignored (Build Model gives null).</summary>
-        // P2CE phase 2: delete with Models the FEM cases parameter (GpcOnlyReplay of lane P2CC calls the method by reflection with two arguments).
-        public void SetLoadCases(IEnumerable<Common.Models.LoadCaseModel> loadCases, IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
+        /// <summary>R6.3: the case records of Build Model (a known catalogue; P2CE phase 2b: the FEM cases parameter, always null, removed).</summary>
+        public void SetLoadCases(IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
         {
             _caseRecords = caseRecords;
             _caseRecordsError = null;

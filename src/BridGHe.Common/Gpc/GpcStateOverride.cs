@@ -45,7 +45,7 @@ namespace BridGHe.Common.Gpc
             // R6.5 P1 lane 2b (note (1) of passo 73, ChatGPT review R65-3): a state is known by its BridGHe ID (BeamMomentState.BeamId), also for a
             // beam given by its draft alone (Source null), in the check, the ID dictionary and the set equality; a state with a FEM source keeps
             // the check of its source. The stale results are checked on the analysed GPC beam of the state (Reference).
-            if (states == null || states.Any(s => s == null || string.IsNullOrWhiteSpace(StateId(s)) || s.Source != null && !s.Source.IsValid || !Enum.IsDefined(s.Sign) || string.IsNullOrWhiteSpace(s.Case)) ||
+            if (states == null || states.Any(s => s == null || string.IsNullOrWhiteSpace(StateId(s)) || !Enum.IsDefined(s.Sign) || string.IsNullOrWhiteSpace(s.Case)) ||
                 states.Select(s => s.Case).Distinct(StringComparer.Ordinal).Count() != 1 || states.Select(StateId).Distinct(StringComparer.Ordinal).Count() != states.Count ||
                 !girderDrafts.Select(b => b.Beam.Name).ToHashSet(StringComparer.Ordinal).SetEquals(states.Select(StateId)))
                 throw new ArgumentException("One moment state is required for each girder FEM ID, without additional beams.");
@@ -115,7 +115,7 @@ namespace BridGHe.Common.Gpc
         }
 
         /// <summary>R6.5 P1 lane 2b: the BridGHe ID of the beam of a moment state (<see cref="BeamMomentState.BeamId"/>, or that of its FEM source).</summary>
-        public static string StateId(BeamMomentState state) => state.BeamId ?? state.Source?.BeamId;
+        public static string StateId(BeamMomentState state) => state.BeamId;
 
         /// <summary>The girders of the drafts (bridge member of family Girder) in the order of their group and station, the definition of the
         /// segment of each and the segment IDs (<c>BridgeSegmentComposite.Map</c> on the drafts, same messages).</summary>

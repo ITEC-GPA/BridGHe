@@ -25,7 +25,7 @@ public sealed class BridgeFamilyPropertyComponent : BridgeDefinitionComponent
     {GH_BeamProperty p=null;int f=-1;if(!da.GetData(0,ref p))return;da.GetData(1,ref f);
         // R6.5 P1 lane 2b / P2K (P1): the family property has the GPC datum of the property alone (rule of passo 75).
         if(f< -1||f>8||p?.IsValid!=true)throw new ArgumentException("A valid beam property and member family are required.");
-        var datum=GpcOnlyProperties.Datum(this,()=>p.Gpc);if(datum==null)return;da.SetData(0,new BridgeDesignGoo(new BridgeFamilyProperty(f,null){GpcProperty=datum}));}
+        var datum=GpcOnlyProperties.Datum(this,()=>p.Gpc);if(datum==null)return;da.SetData(0,new BridgeDesignGoo(new BridgeFamilyProperty(f){GpcProperty=datum}));}
 }
 
 public sealed class BridgeFemMembersComponent : BridgeMemberAssignmentComponent

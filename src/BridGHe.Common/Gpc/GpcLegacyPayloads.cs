@@ -74,7 +74,7 @@ namespace BridGHe.Common.Gpc
                     GpcProperty = Datum(), LegacyPropertyId = property.IsNull ? root.String("LegacyPropertyId") : property.String("Id"),
                 };
             if (root.Is("BridgeFamilyProperty"))
-                return new Geometry.BridgeFamilyProperty(root.Int("Family"), null) { GpcProperty = Datum() };
+                return new Geometry.BridgeFamilyProperty(root.Int("Family")) { GpcProperty = Datum() };
             throw new System.Runtime.Serialization.SerializationException("LegacyDesignRecordExpected: " + (root.Type ?? "null"));
         }
 

@@ -3,11 +3,11 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Common.MovingLoads;
 using BridGHe.Common.Straus;
 using Rhino.Geometry;
 using Rhino.Runtime.InProcess;
+using BridGHe.Common.Models;
 
 internal static class Program
 {

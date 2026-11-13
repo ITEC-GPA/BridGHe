@@ -20,7 +20,7 @@ internal static class BridgeMomentStateTests
         var steel=R2aDesignFixtures.BaseProperty(density:7.85e-9); // the GPC twin of BridgeSegmentSectionsTests.BaseProperty with its density
         var geometry=SimpleBridgeBuilder.Build(SimpleBridgeTests.Input());
         var schedule=BridgeSegmentSections.CreateGpc(geometry,steel,null);
-        var plans=BridgeMemberAssignment.Assign(geometry,null,schedule.Rules,new Dictionary<int,BridGHe.Common.Gpc.Legacy.LegacyBeamProperty>{[-1]=steel}).Plans
+        var plans=BridgeMemberAssignment.Assign(geometry,schedule.Rules,new Dictionary<int,BridGHe.Common.Gpc.Legacy.LegacyBeamProperty>{[-1]=steel}).Plans
             .Where(p=>p.Family==BridgeMemberFamily.Girder).ToArray();
         var girders=plans.Select(p=>(Plan:p,Draft:BridGHe.Common.Gpc.Builders.GpcBridgeGeometryBuilders.Assigned(p,R2aDesignFixtures.Id("moment-state:"+p.SolverId)))).ToArray();
         Gpc(girders.Select(g=>g.Plan.SolverId).ToArray(),girders.Select(g=>(g.Plan.From,g.Plan.To,g.Draft.AngleDeg)).ToArray(),Check,Reject);
@@ -75,7 +75,7 @@ internal static class BridgeMomentStateTests
                 0 => (BeamMomentSign.Positive, 1e8, 1e8), 1 => (BeamMomentSign.Negative, -1e8, -1e8), 2 => (BeamMomentSign.Mixed, -1e8, 1e8),
                 3 => (BeamMomentSign.Zero, 500d, 500d), _ => (BeamMomentSign.Positive, 1e8, 1e8)
             };
-            check(s.Sign == sign && Near(s.Minimum, min) && Near(s.Maximum, max) && s.Case == "Dead" && s.BeamId == ids[i] && s.Source == null && (i == 4 || s.Analysed.Beam == all[i].Beam),
+            check(s.Sign == sign && Near(s.Minimum, min) && Near(s.Maximum, max) && s.Case == "Dead" && s.BeamId == ids[i] && (i == 4 || s.Analysed.Beam == all[i].Beam),
                 $"GPC: girder {ids[i]}: {s}, expected {sign} {min} .. {max}");
         }
         check(Classify(ids, all, component: 0)[0].Sign == BeamMomentSign.Negative, "GPC: BM1 selection independent");

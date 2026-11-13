@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using BridGHe.Common.Models;
 using Rhino.Geometry;
 
 namespace BridGHe.Common.Diagnostics;
@@ -14,11 +13,6 @@ public sealed record BridgeMapBeam(string BeamId, Line Axis, double Length);
 
 public static class BridgeCheckMap
 {
-    public static BridgeMappedMember[] Evaluate(ModelModel model, IReadOnlyList<BridgeMappedCheck> checks)
-    {
-        ArgumentNullException.ThrowIfNull(model); ArgumentNullException.ThrowIfNull(checks);
-        return Evaluate(model.Beams.Select(b => new BridgeMapBeam(b.BeamId, new Line(b.PointFrom, b.PointTo), b.Length)).ToArray(), checks);
-    }
 
     /// <summary>R6.5 P1 lane 3a: the map on the beams of a model as the map reads them (the FEM beams, or those of a GPC model in model
     /// length units), in model order.</summary>

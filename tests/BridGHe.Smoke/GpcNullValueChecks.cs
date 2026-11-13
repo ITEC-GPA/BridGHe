@@ -441,7 +441,7 @@ internal static class GpcNullValueChecks
             _ => null,
         };
         foreach (var value in new object[] { new BridGHe.Common.Geometry.BridgeSectionRule { Start = 0, End = 1000, GpcProperty = gpcProperty },
-            new BridGHe.Common.Geometry.BridgeFamilyProperty(0, null) { GpcProperty = gpcProperty } })
+            new BridGHe.Common.Geometry.BridgeFamilyProperty(0) { GpcProperty = gpcProperty } })
         {
             var goo = (IGH_Goo)Activator.CreateInstance(designType, value);
             Require(goo.IsValid && RuleText(goo) != null, "bridge rule by its GPC property alone: valid");

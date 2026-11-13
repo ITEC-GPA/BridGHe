@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BridGHe.Common.Models;
 using BridGHe.Common.Geometry;
 using BridGHe.Common.Straus;
 using Rhino.Geometry;
+using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Diagnostics;
 
@@ -14,7 +14,9 @@ public sealed record ModelIssue(string Severity, string Code, string Element, st
 public static class BridgeModelAudit
 {
     // R6.5 P1 lane 3a part 2: what the audit reads of a model, in model length units: the same checks and numbers on the FEM value or on the GPC input.
-    private sealed record AuditBeam(string Id, bool Valid, double Length, Point3d From, Point3d To, double Angle, Vector2d Offset, BridgeMemberMetadata[] Members, Func<Vector3d> Up, bool Composite);
+    private sealed record AuditBeam(string Id, bool Valid, double Length, Point3d From, Point3d To, double Angle, Vector2d Offset, AuditMember[] Members, Func<Vector3d> Up, bool Composite);
+    /// <summary>P2CE phase 2b: the bridge member of a beam as the audit reads it (the fields of the former BridgeMemberMetadata).</summary>
+    private sealed record AuditMember(string PhysicalId, BridgeMemberFamily Family, int Group, int Segment, int Span, double StationFrom, double StationTo, Vector3d SectionUp, string GeometryId = "");
     private sealed record AuditPlate(string Id, bool Valid, Point3d[] Points, bool LoadPatch);
     private sealed record AuditNode(string Id, Point3d Position, Action CheckFrame, int BadStiffness);
     private sealed record AuditStage(string Name, bool UnknownGroup, bool BadIncrement);
@@ -34,7 +36,7 @@ public static class BridgeModelAudit
         Point3d P(GPC.Geometry.Point3d p) => new Point3d(u.FromMm(p.X), u.FromMm(p.Y), u.FromMm(p.Z));
         var o = b.Assignments.OffsetI;
         var m = input.Bridge?.Member(b.Guid);
-        var members = m == null ? Array.Empty<BridgeMemberMetadata>() : new[] { new BridgeMemberMetadata(m.PhysicalId, Enum.Parse<BridgeMemberFamily>(m.Family.ToString()), m.Group, m.Segment, m.Span,
+        var members = m == null ? Array.Empty<AuditMember>() : new[] { new AuditMember(m.PhysicalId, Enum.Parse<BridgeMemberFamily>(m.Family.ToString()), m.Group, m.Segment, m.Span,
             u.FromMm(m.StationFromMm), u.FromMm(m.StationToMm), new Vector3d(m.SectionUp.X, m.SectionUp.Y, m.SectionUp.Z), m.GeometryId) };
         return new AuditBeam(b.Name, b.BeamProperty != null && b.Length > 0, u.FromMm(b.Length), P(b.StartPoint), P(b.EndPoint), input.Report.BeamAngles.TryGetValue(b.Id, out double angle) ? angle : double.NaN,
             o == null ? Vector2d.Zero : new Vector2d(u.FromMm(o.X), u.FromMm(o.Y)), members,

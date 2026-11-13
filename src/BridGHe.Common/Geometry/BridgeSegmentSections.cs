@@ -91,40 +91,6 @@ public static class BridgeSegmentSections
         return new(lines.ToArray(), changes.ToArray());
     }
 
-    // P2CE phase 2: delete with Models (the FEM base property; its caller: GpcOnlyReplay of lane P2CC; the product uses CreateGpc).
-    public static BridgeSegmentSectionResult Create(IBridgeSegments geometry, BeamPropertyModel baseProperty, IEnumerable<string> table)
-    {
-        var segments = Segments(geometry);
-        if (baseProperty?.IsValid != true || baseProperty.SectionType != SectionModel.SectionTypes.I ||
-            baseProperty.Section.Mirror != SectionModel.MirrorTypes.None || baseProperty.Section.NativeSection != null ||
-            baseProperty.PropertyType != BeamPropertyType.Beam || baseProperty.Material?.Kind != MaterialModel.MaterialKind.Steel)
-            throw new ArgumentException("Base Property must be an unmirrored I Section with Steel Material and Beam formulation.");
-        var rows = MatchRows(segments, table, true);
-        var rules = new List<BridgeSectionRule>(); var normalized = new List<string> { Header }; var resolved = new List<string> { Header };
-        var sections = new List<(string, double[])>();
-        double[] defaults = { baseProperty.B1, baseProperty.B2, baseProperty.D, baseProperty.T1, baseProperty.T2, baseProperty.T3, baseProperty.R };
-        foreach (var s in segments)
-        {
-            var row = rows[Id(s)];
-            double[] v = row.Dimensions.Select((value, i) => value ?? defaults[i]).ToArray();
-            if (v.Any(value => !double.IsFinite(value)) || v.Take(6).Any(value => value <= 0) || v[6] < 0 ||
-                v[2] <= v[3] + v[4] || v[5] > Math.Min(v[0], v[1]) ||
-                2 * v[6] > Math.Min(v[2] - v[3] - v[4], Math.Min(v[0], v[1]) - v[5]))
-                throw new ArgumentException($"{Id(s)}: invalid I section. Check positive dimensions, clear web height, web/flange widths and fillet clearance.");
-            var section = new SectionModel { Id = Id(s), Name = "Sezione " + Id(s), SectionType = SectionModel.SectionTypes.I,
-                B1 = v[0], B2 = v[1], D = v[2], T1 = v[3], T2 = v[4], T3 = v[5], R = v[6],
-                IncludeTorsionalStiffness = baseProperty.IncludeTorsionalStiffness };
-            section.CalculateSection(); // The same GPC-backed path as the existing I Section component.
-            if (!double.IsFinite(section.SectionArea) || section.SectionArea <= 0 || !double.IsFinite(section.Ixx) || section.Ixx <= 0 ||
-                !double.IsFinite(section.Iyy) || section.Iyy <= 0) throw new ArgumentException($"{Id(s)}: invalid calculated section properties.");
-            var property = ModelArchive.Clone(baseProperty);
-            property.Id = "Concio " + Id(s); property.Name = property.Id; property.Section = section;
-            var rule = new BridgeSectionRule { Family = 0, Group = s.Girder, Segment = s.Segment, Start = s.Start, End = s.End, Property = property };
-            rule.Validate(); rules.Add(rule); sections.Add((section.Name, v));
-            normalized.Add(Line(s, row.Dimensions)); resolved.Add(Line(s, v.Select(value => (double?)value)));
-        }
-        return new(rules.ToArray(), normalized.ToArray(), resolved.ToArray()) { Sections = sections.ToArray() };
-    }
 
     /// <summary>
     /// R6.5 P1 lane 2b: <see cref="Create"/> on a base property given by its GPC datum (the path of P2): the same checks, rows, tables and

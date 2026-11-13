@@ -18,12 +18,12 @@ public sealed class BridgeDesignGoo : GH_Goo<object>
     // R6.5 P1 lane 2b: a rule whose property is given by its GPC datum alone is immutable (the datum is not serialized): the copy shares it.
     public override IGH_Goo Duplicate() => new BridgeDesignGoo(!IsValid ? null : GpcOnly ? Value : ModelArchive.Clone(Value));
     /// <summary>R6.5 P1 lane 2b: a section rule or a family property whose beam property is given by its GPC datum alone.</summary>
-    internal bool GpcOnly => Value is BridgeSectionRule { Property: null, GpcProperty: not null } or BridgeFamilyProperty { Property: null, GpcProperty: not null };
+    internal bool GpcOnly => Value is BridgeSectionRule { GpcProperty: not null } or BridgeFamilyProperty { GpcProperty: not null };
     /// <summary>The beam property of a rule given by its GPC datum alone (null otherwise).</summary>
     private Common.Gpc.Legacy.LegacyBeamProperty GpcProperty => Value switch
     {
-        BridgeSectionRule { Property: null } r => r.GpcProperty,
-        BridgeFamilyProperty { Property: null } f => f.GpcProperty,
+        BridgeSectionRule r => r.GpcProperty,
+        BridgeFamilyProperty f => f.GpcProperty,
         _ => null,
     };
     // R6.5 P1 lane 2b: a rule whose property is given by its GPC datum alone also writes the datum (the property record of BGHGPC1:
@@ -54,7 +54,7 @@ public sealed class BridgeDesignGoo : GH_Goo<object>
         {
             // P2CE phase 2b: the item by value (no FEM CLR type; a 0.3.0 FEM property becomes its GPC datum, with the ID of a rule).
             object read = Common.Gpc.GpcLegacyPayloads.Design(reader.GetByteArray("Design"));
-            bool gpcOnly = read is BridgeSectionRule { Property: null, GpcProperty: null } or BridgeFamilyProperty { Property: null, GpcProperty: null };
+            bool gpcOnly = read is BridgeSectionRule { GpcProperty: null } or BridgeFamilyProperty { GpcProperty: null };
             bool chunks = reader.ItemExists("DesignGpcData") && reader.ItemExists("DesignGpcRecords");
             if (gpcOnly)
             {

@@ -53,9 +53,9 @@ namespace BridGHe.Grasshopper.Forms
 
         // P2K (P1): TRANSITIONAL, the former signatures read by reflection by the lane test (GpcOnlyReplay, R65-C2-05); the FEM cases are
         // ignored (every combination is made by its GPC datum alone). Deleted by P2-taglio with the FEM model.
-        internal static bool GpcOnly(IReadOnlyList<GH_LoadCombination> values, IReadOnlyList<Common.Models.LoadCaseModel> loadCases, IReadOnlyList<LegacyCaseData> caseRecords) => true;
-        internal static string[] Columns(bool gpcOnly, IReadOnlyList<Common.Models.LoadCaseModel> loadCases, IReadOnlyList<LegacyCaseData> caseRecords) => CaseColumns(caseRecords);
+        internal static bool GpcOnly(IReadOnlyList<GH_LoadCombination> values, IReadOnlyList<LegacyCaseData> caseRecords) => true;
+        internal static string[] Columns(bool gpcOnly, IReadOnlyList<LegacyCaseData> caseRecords) => CaseColumns(caseRecords);
         internal static (List<GH_LoadCombination> Combinations, string Error) Combinations(IReadOnlyList<(string Name, IReadOnlyList<object> Cells)> rows, IReadOnlyList<string> columns,
-            IReadOnlyList<Common.Models.LoadCaseModel> loadCases, IReadOnlyList<LegacyCaseData> caseRecords, bool gpcOnly) => Make(rows, columns, caseRecords);
+            IReadOnlyList<LegacyCaseData> caseRecords, bool gpcOnly) => Make(rows, columns, caseRecords);
     }
 }

@@ -74,7 +74,7 @@ internal static class GpcSecForcesCheck
             for (int i = 0; i < actual.Length; i++)
             {
                 var s = actual[i];
-                NativeParityCapture.Datum(label, $"{key}|{i}", null, $"{s.BeamId ?? s.Source?.BeamId}|{s.Sign}|{s.Case}|{NativeParityCapture.Bits(s.Minimum)}|{NativeParityCapture.Bits(s.Maximum)}");
+                NativeParityCapture.Datum(label, $"{key}|{i}", null, $"{s.BeamId}|{s.Sign}|{s.Case}|{NativeParityCapture.Bits(s.Minimum)}|{NativeParityCapture.Bits(s.Maximum)}");
             }
             components++; states += actual.Length;
         }

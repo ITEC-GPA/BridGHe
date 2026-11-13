@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Gpc.Legacy;
-using BridGHe.Common.Models;
 using GPC.Model.Materials;
+using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Gpc.Builders
 {
@@ -17,6 +17,11 @@ namespace BridGHe.Common.Gpc.Builders
     /// </summary>
     public static class GpcMaterialBuilders
     {
+        // P2CE (13/11/2026, phase 2b): the former FEM enumerations of the recipes (names and integers as MaterialModel.MaterialKind and
+        // MaterialModel.AlumiumTypes, gone with the FEM types).
+        private enum MaterialKind { Undefined = -1, Steel, Concrete, Aluminium, Rebar }
+        private enum AlumiumTypes { Wrought, CastMold, CastSand }
+
         /// <summary>The GPC material by kind of a recipe (N-mm-MPa).</summary>
         public static Material Material(LegacyMaterialRecipe recipe) => LegacyModelImport.Material(recipe ?? throw new ArgumentNullException(nameof(recipe)));
 
@@ -56,7 +61,7 @@ namespace BridGHe.Common.Gpc.Builders
         /// the tensile ultimate strength).</summary>
         public static LegacyMaterialRecipe Aluminium(string name, int type, string alloy) => new LegacyMaterialRecipe
         {
-            Kind = "Aluminium", Name = name, AluminiumType = type >= 0 && type < AluminiumTypes.Length ? AluminiumTypes[type] : ((MaterialModel.AlumiumTypes)type).ToString(), Alloy = alloy,
+            Kind = "Aluminium", Name = name, AluminiumType = type >= 0 && type < AluminiumTypes.Length ? AluminiumTypes[type] : ((AlumiumTypes)type).ToString(), Alloy = alloy,
             Modulus = 69637.05, PoissonRatio = 0.33, ThermalExpansion = 2.358E-05, ShearModulus = 26179.344, UsePoisson = true, Density = 2.714E-09,
             CompressiveYieldStrength = 241.3, TensileYieldStrength = 241.3, TensileUltimateStrength = 262, ShearUltimateStrength = 165.5,
         };
@@ -80,15 +85,15 @@ namespace BridGHe.Common.Gpc.Builders
         /// Another kind: an error (as the former component).</summary>
         public static LegacyMaterialRecipe Custom(int kind, string name, double modulus, double poisson, double alpha, double shearModulus, bool usePoisson, double density, double fk, double ftk)
         {
-            var k = (MaterialModel.MaterialKind)kind;
+            var k = (MaterialKind)kind;
             var r = new LegacyMaterialRecipe { Kind = k.ToString(), Name = name, Modulus = modulus, PoissonRatio = poisson, ThermalExpansion = alpha, ShearModulus = shearModulus, UsePoisson = usePoisson, Density = density };
             switch (k)
             {
                 // The former value of an aluminium always had a manufacturing form (its default: wrought), which the reader declares.
-                case MaterialModel.MaterialKind.Aluminium: r.AluminiumType = MaterialModel.AlumiumTypes.Wrought.ToString(); break;
-                case MaterialModel.MaterialKind.Concrete: r.SpecificCompressiveStrength = fk; break;
-                case MaterialModel.MaterialKind.Steel: r.MinimumYieldStress = fk; r.MinimumTensileStress = ftk; r.ExpectedYieldStress = 1.1 * fk; r.ExpectedTensileStress = 1.1 * ftk; break;
-                case MaterialModel.MaterialKind.Undefined: break;
+                case MaterialKind.Aluminium: r.AluminiumType = AlumiumTypes.Wrought.ToString(); break;
+                case MaterialKind.Concrete: r.SpecificCompressiveStrength = fk; break;
+                case MaterialKind.Steel: r.MinimumYieldStress = fk; r.MinimumTensileStress = ftk; r.ExpectedYieldStress = 1.1 * fk; r.ExpectedTensileStress = 1.1 * ftk; break;
+                case MaterialKind.Undefined: break;
                 default: throw new NotSupportedException();
             }
             return r;

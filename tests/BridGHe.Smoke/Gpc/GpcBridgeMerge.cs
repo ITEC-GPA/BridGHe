@@ -35,9 +35,9 @@ internal static class GpcBridgeMerge
         return GpcBridgeSource.Reference(model.Input, catalog.Units, model.Input.BeamElements.Values.ToDictionary(b => b.Id, catalog.BeamAngle), model.Analysed, bridge);
     }
 
-    /// <summary>The phases with the actions on their GPC source only (the FEM source, if any, removed).</summary>
+    /// <summary>The phases with the actions on their GPC source only (P2CE phase 2b: an action has no FEM source any more; a copy of each phase).</summary>
     internal static BridgePhaseDefinition[] GpcOnly(IEnumerable<BridgePhaseDefinition> phases) =>
-        phases.Select(p => p with { Actions = p.Actions.Select(a => a with { Source = null }).ToArray() }).ToArray();
+        phases.Select(p => p with { Actions = p.Actions.ToArray() }).ToArray();
 
     /// <summary>The merged samples of beam <paramref name="index"/> of the GPC bridge model, in their stored order.</summary>
     internal static IReadOnlyList<(string Case, BeamForceSample Sample)> Samples(GpcBridgeBuild build, int index) => build.Bridge.Samples[index];

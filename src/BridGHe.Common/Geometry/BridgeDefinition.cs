@@ -10,14 +10,14 @@ public interface IBridgeSegments
     IReadOnlyList<BridgeSegmentRange> FabricationSegments { get; }
 }
 
-[Serializable] public sealed record BridgeFamilyProperty(int Family, BridGHe.Common.Models.BeamPropertyModel Property)
+[Serializable] public sealed record BridgeFamilyProperty(int Family)
 {
     /// <summary>R6.5 P1 lane 2b: the property given by its GPC datum alone (<see cref="Property"/> null): Bridge Family Property on a property
     /// given by its GPC datum alone. Bridge FEM Members then gives its beams by their plans alone (<see cref="BridgeAssignment.Plans"/>).</summary>
     [field: NonSerialized] public Gpc.Legacy.LegacyBeamProperty GpcProperty { get; init; }
 
     /// <summary>The text of the record as before the GPC datum (a property given by its datum alone by its name).</summary>
-    public override string ToString() => $"BridgeFamilyProperty {{ Family = {Family}, Property = {(Property != null ? Property.ToString() : GpcProperty?.Property?.Name)} }}";
+    public override string ToString() => $"BridgeFamilyProperty {{ Family = {Family}, Property = {GpcProperty?.Property?.Name} }}";
 }
 
 [Serializable] public sealed record BridgeSupportLayout(double[] Stations, double[] Skew);

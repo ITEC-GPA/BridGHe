@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Checks;
 
 /// <param name="Samples">F6 (a)/(b): the merged beam actions as numbers, per beam of <see cref="Model"/> (its order), in the order they are
 /// stored on the beam: case name and sample (station mm, BridGHe convention). The same numbers as the result objects of the merged model;
 /// the GPC bridge model takes its dataset from them.</param>
-public sealed record BridgeWorkflowBuildResult(ModelModel Model, string[] Summary, string[] Warnings, IReadOnlyList<(string Case, BeamForceSample Sample)>[] Samples = null);
+public sealed record BridgeWorkflowBuildResult(string[] Summary, string[] Warnings, IReadOnlyList<(string Case, BeamForceSample Sample)>[] Samples = null);
 
 /// <summary>Joins incremental FEM results by beam identity, preserving FEM samples and resampling different station grids.
 /// <para>F6 chain C: the validation of the recipe, the action records, the combination table, the summary and the warnings are shared
@@ -65,7 +64,7 @@ public static class BridgeWorkflowBuilder
                 {
                     if (!action.Strain.HasValue || !action.PrimaryOnly) throw new ArgumentException($"{label}: supply the analysed FEM case, or explicitly select Primary Only for shrinkage.");
                 }
-                else if ((gpcSources ? action.Source == null && action.GpcSource == null && action.GpcInput == null : action.Source == null) || action.PrimaryOnly)
+                else if ((gpcSources ? action.GpcSource == null && action.GpcInput == null : true) || action.PrimaryOnly) // P2CE phase 2b: no FEM source (it was always null on GPC data)
                     throw new ArgumentException($"{label}: a FEM case needs its source model and cannot be Primary Only.");
                 if (action.BeamIds == null || action.BeamIds.Any(string.IsNullOrWhiteSpace) || action.BeamIds.Distinct(StringComparer.Ordinal).Count() != action.BeamIds.Length)
                     throw new ArgumentException($"{label}: beam IDs must be non-empty and unique.");
@@ -102,17 +101,10 @@ public static class BridgeWorkflowBuilder
     /// <summary>The per-beam local section states of an action, read from the FEM source beams (Bridge State Override): whether any is
     /// assigned and the beams whose concrete is excluded. F6: until the GPC section-state attribute (lane L11) the GPC bridge model reads
     /// them here as well.</summary>
-    public static (bool HasLocalSectionStates, string[] ConcreteExcludedBeamIds) LocalSectionStates(BridgePhaseDefinition phase, BridgeActionDefinition action)
-    {
-        var assigned = (action.Source?.Beams ?? new List<BeamModel>()).Where(b => action.BeamIds.Length == 0 || action.BeamIds.Contains(b.BeamId, StringComparer.Ordinal))
-            .SelectMany(b => b.Attributes.OfType<BridgeSectionStateAttributeModel>().Select(a => (b.BeamId, a.Value, b.BeamProperty))).ToArray();
-        if (assigned.Select(a => a.BeamId).Distinct(StringComparer.Ordinal).Count() != assigned.Length ||
-            assigned.Any(a => a.Value.Behavior != action.Behavior || phase.State != BridgeSectionState.Composite))
-            throw new ArgumentException($"Action {action.Key}: local FEM section state does not match the mechanical phase. Do not reuse it for shrinkage.");
-        if (assigned.Any(a => a.Value.PropertySignature != BridgeSectionAssignment.Signature(a.BeamProperty)))
-            throw new ArgumentException($"Action {action.Key}: FEM properties changed after the local section-state assignment. Reapply Bridge State Override and recalculate.");
-        return (assigned.Length > 0, assigned.Where(a => a.Value.ConcreteExcluded).Select(a => a.BeamId).ToArray());
-    }
+    public static (bool HasLocalSectionStates, string[] ConcreteExcludedBeamIds) LocalSectionStates(BridgePhaseDefinition phase, BridgeActionDefinition action) =>
+        // P2CE (13/11/2026, phase 2b): the FEM source beams are gone with the FEM types (the source of an action on GPC data was always null:
+        // no local state was read here); the same result.
+        (false, Array.Empty<string>());
 
     /// <summary>The record of an action in the merged recipe: its merged cases "key [FEM]" and "key [strain]".</summary>
     internal static BridgeWorkflowAction Record(BridgePhaseDefinition phase, BridgeActionDefinition action, string sourceName,

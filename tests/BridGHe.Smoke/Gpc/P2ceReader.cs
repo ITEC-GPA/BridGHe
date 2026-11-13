@@ -30,7 +30,7 @@ internal static class P2ceReader
         Inventory(failures, out var corpusCases);
         int lists = Parity(failures, corpusCases);
         int design = DesignParity(failures);
-        Console.WriteLine($"P2CE READER DESIGN: {design} records of «Design» read by value = the CLR reading (fields, text of the rules, GPC datum); the empty «LoadCases» item = the constant");
+        Console.WriteLine($"P2CE READER DESIGN: {design} check: the empty «LoadCases» item = the constant (the parity of «Design» retired by name at 8e5a538)");
         Console.WriteLine($"P2CE READER PARITY: {lists} lists of cases compared ({failures.Count} failures so far)");
         int stage = StageChecks(failures);
         if (failures.Count > 0) throw new Exception("P2CE READER FAIL: " + string.Join(" | ", failures.Take(20)));
@@ -166,62 +166,10 @@ internal static class P2ceReader
     /// is not kept). Also the constant of the empty «LoadCases» item = what the archive writes.</summary>
     private static int DesignParity(List<string> failures)
     {
+        // P2CE phase 2b (2): the «Design» records have no FEM property any more; their parity with the CLR reading (42 records of 12 FEM properties of
+        // the corpus, fields, text of the rules and GPC datum, and the goo of a 0.3.0 rule, all equal at 8e5a538) is retired by name
+        // (P2rRetiredP2ce); what stays: a 0.4.0 rule read by value with its datum chunks (gpc-only-properties) and the constant below.
         int n = 0;
-        var picked = CorpusProperties.GroupBy(b => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(b))).Select(g => g.First())
-            .Where((_, i) => i % 40 == 0).Take(12).ToList();
-        if (picked.Count < 3) failures.Add("design parity: fewer than 3 properties in the corpus (" + picked.Count + ")");
-        foreach (var bytes in picked)
-        {
-            var femProperty = BridGHe.Common.Helpers.ModelArchive.Read<BridGHe.Common.Models.BeamPropertyModel>(bytes);
-            var records = new object[]
-            {
-                new BridGHe.Common.Geometry.BridgeSectionRule { Family = 0, Group = 1, Segment = 2, Start = 1250, End = 37500, Property = femProperty },
-                new BridGHe.Common.Geometry.BridgeSectionRule { Family = 0, Group = 0, Segment = 0, Start = 0, End = 12000.5, Property = femProperty,
-                    ScaleFrom = new Rhino.Geometry.Vector2d(1.1, 0.95), ScaleTo = new Rhino.Geometry.Vector2d(0.8, 1.25) },
-                new BridGHe.Common.Geometry.BridgeFamilyProperty(3, femProperty),
-                new BridGHe.Common.Geometry.BridgeSectionRule { Family = 1, Group = 2, Segment = 0, Start = 0, End = 900 },
-                new BridGHe.Common.Geometry.BridgeFamilyProperty(4, null),
-            };
-            foreach (var record in records)
-            {
-                var item = BridGHe.Common.Helpers.ModelArchive.Write<object>(record);
-                var clr = BridGHe.Common.Helpers.ModelArchive.Read<object>(item);
-                object value;
-                try { value = GpcLegacyPayloads.Design(item); }
-                catch (Exception x) { failures.Add("design " + record.GetType().Name + ": by value refused: " + x.Message); continue; }
-                string label = "design " + record.GetType().Name + " of " + femProperty.Name;
-                n++;
-                switch (clr, value)
-                {
-                    case (BridGHe.Common.Geometry.BridgeSectionRule a, BridGHe.Common.Geometry.BridgeSectionRule v):
-                        if (a.Family != v.Family || a.Group != v.Group || a.Segment != v.Segment || a.Start != v.Start || a.End != v.End || a.ScaleFrom != v.ScaleFrom || a.ScaleTo != v.ScaleTo)
-                            failures.Add(label + ": fields differ " + a.ScaleFrom + "/" + v.ScaleFrom + " " + a.ScaleTo + "/" + v.ScaleTo);
-                        if (a.Property != null && Datum(BridGHe.Common.Geometry.BridgeGpcProperties.Of(a.Property)) is var d1 && Datum(v.GpcProperty) is var d2 && d1 != d2)
-                            failures.Add(label + ": GPC datum differs: " + string.Join(" | ", d1.Split((char)10).Except(d2.Split((char)10)).Take(3)) + " // " + string.Join(" | ", d2.Split((char)10).Except(d1.Split((char)10)).Take(3)));
-                        if (a.Property == null && v.GpcProperty != null) failures.Add(label + ": a datum without FEM property");
-                        if (a.ToString() != v.ToString()) failures.Add(label + ": text «" + a + "» / «" + v + "»");
-                        break;
-                    case (BridGHe.Common.Geometry.BridgeFamilyProperty a, BridGHe.Common.Geometry.BridgeFamilyProperty v):
-                        if (a.Family != v.Family) failures.Add(label + ": family differs");
-                        if (a.Property != null && Datum(BridGHe.Common.Geometry.BridgeGpcProperties.Of(a.Property)) != Datum(v.GpcProperty)) failures.Add(label + ": GPC datum differs");
-                        if (v.ToString() != $"BridgeFamilyProperty {{ Family = {a.Family}, Property = {v.GpcProperty?.Property?.Name} }}") failures.Add(label + ": text of 0.4.0 «" + v + "»");
-                        break;
-                    default: failures.Add(label + ": another record " + clr?.GetType().Name + " / " + value?.GetType().Name); break;
-                }
-            }
-        }
-        // The Bridge Design Definition of a 0.3.0 rule: read by value, valid, the text of the CLR reading.
-        if (picked.Count > 0)
-        {
-            var femProperty = BridGHe.Common.Helpers.ModelArchive.Read<BridGHe.Common.Models.BeamPropertyModel>(picked[0]);
-            var rule = new BridGHe.Common.Geometry.BridgeSectionRule { Family = 0, Group = 1, Segment = 0, Start = 0, End = 5000, Property = femProperty };
-            var archive = new GH_IO.Serialization.GH_Archive(); archive.CreateNewRoot(false);
-            var chunk = archive.GetRootNode.CreateChunk("Goo"); chunk.SetByteArray("Design", BridGHe.Common.Helpers.ModelArchive.Write<object>(rule));
-            var goo = (IGH_Goo)Activator.CreateInstance(R2aDesignFixtures.Plugin.GetTypes().Single(t => t.Name == "BridgeDesignGoo"));
-            n++;
-            if (!goo.Read((GH_IO.Serialization.GH_IReader)chunk) || !goo.IsValid || goo.ToString() != rule.ToString())
-                failures.Add("design goo: a 0.3.0 rule read " + goo.IsValid + " «" + goo + "» / «" + rule + "»");
-        }
         // Decision 2: the constant of the empty «LoadCases» item is what the archive of the CLR types writes today.
         n++;
         var written = BridGHe.Common.Helpers.ModelArchive.Write(new List<BridGHe.Common.Models.LoadCaseModel>());
@@ -341,7 +289,7 @@ internal static class P2ceReader
         Check(stageFactors.SequenceEqual(new[] { Inc }) && errors.Length == 0, "old development file, after the solve, the stage: " + string.Join(" / ", stageFactors) + " " + string.Join(" / ", errors));
 
         // Save and reopen with the G/Q catalogue (also a factor of 0 and a negative finite factor): everything equal, exactly.
-        var known = new Rig(new[] { inc, odd }, group, s => setLoadCases.Invoke(s, new object[] { null, records }));
+        var known = new Rig(new[] { inc, odd }, group, s => setLoadCases.Invoke(s, new object[] { records }));
         var knownFactors = known.Solve(out errors);
         Check(knownFactors.SequenceEqual(new[] { Inc, Odd }) && known.Persistent().SequenceEqual(new[] { Inc, Odd }) && errors.Length == 0,
             "with the catalogue of Build Model: " + string.Join(" / ", knownFactors) + "; " + string.Join(" / ", known.Persistent()));
@@ -363,8 +311,8 @@ internal static class P2ceReader
         // catalogue, then given the empty one, saved, and its records chunk of count 0 read back as a known empty catalogue.
         var empty = new Rig(new[] { inc }, group, null);
         empty.Solve(out _);
-        empty.Param.GetType().GetMethod("UpdateLoadCases").Invoke(empty.Param, new object[] { null, Array.Empty<LegacyCaseData>() });
-        setLoadCases.Invoke(empty.Stage, new object[] { null, Array.Empty<LegacyCaseData>() });
+        empty.Param.GetType().GetMethod("UpdateLoadCases").Invoke(empty.Param, new object[] { Array.Empty<LegacyCaseData>() });
+        setLoadCases.Invoke(empty.Stage, new object[] { Array.Empty<LegacyCaseData>() });
         Check(empty.Persistent().SequenceEqual(new[] { "INC: " }), "an empty catalogue removes the orphan factors: " + string.Join(" / ", empty.Persistent()));
         byte[] savedEmpty = Save(empty.Stage);
         var emptyArchive = new GH_IO.Serialization.GH_Archive(); emptyArchive.Deserialize_Binary(savedEmpty);
@@ -374,7 +322,7 @@ internal static class P2ceReader
         Check(emptyRecords != null && emptyRecords.Count == 0 && read.GetType().GetField("Item2").GetValue(read) == null, "a records chunk of count 0 is read as a known empty catalogue");
         // The unknown catalogue does not call the update at all: the parameter refuses null before any write.
         var unknownAgain = new Rig(new[] { inc }, group, null);
-        unknownAgain.Param.GetType().GetMethod("UpdateLoadCases").Invoke(unknownAgain.Param, new object[] { null, null });
+        unknownAgain.Param.GetType().GetMethod("UpdateLoadCases").Invoke(unknownAgain.Param, new object[] { null });
         Check(unknownAgain.Persistent().SequenceEqual(new[] { Inc }), "a null catalogue changes nothing in the parameter: " + string.Join(" / ", unknownAgain.Persistent()));
 
         // A damaged chunk (another version; truncated): the error, and nothing changes.

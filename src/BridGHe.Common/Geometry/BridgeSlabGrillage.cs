@@ -46,7 +46,7 @@ public static class BridgeSlabGrillage
                     Gpc.Builders.GpcBridgeGeometryBuilders.StandardSection(Gpc.BridgeSectionKind.SolidRectangle,"",d:thickness,b:b-a),analysisMaterial,
                     GPC.Model.Structure.Assignments.BeamFormulation.StraightTwoNode, "Concrete") }); // L2C: the kind of the concrete
         }
-        var assignment=BridgeMemberAssignment.Assign(subset,null,rules); // P2CE: no FEM defaults (before: an empty table, the same)
+        var assignment=BridgeMemberAssignment.Assign(subset,rules);
         if(assignment.Unassigned.Length!=0) throw new InvalidOperationException("Unassigned transverse slab members.");
         return new(assignment.Plans.Select(p=>widths[p.Group]).ToArray()) { Plans=assignment.Plans.Select(p=>p with { Label=false }).ToArray() };
     }

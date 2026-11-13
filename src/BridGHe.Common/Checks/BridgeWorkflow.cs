@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.Serialization;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Checks;
 
@@ -13,7 +12,6 @@ public enum BridgeWorkflowMethod { Compatible, LinearHistory }
 public sealed record BridgeActionDefinition
 {
     [DataMember] public string Key { get; init; }
-    [DataMember] public ModelModel Source { get; init; }
     /// <summary>F6 (a)/(b): the analysed GPC model of <see cref="Source"/> with its results catalog (the analysis attached it to the GH
     /// model), from which Build BridGHe Model merges the action; null for a source analysed before F6 C3 (the FEM results are merged).
     /// Not persisted: the Bridge Action components set it again from their analysed model.</summary>

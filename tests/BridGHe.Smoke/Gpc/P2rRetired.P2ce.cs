@@ -14,6 +14,11 @@ internal static class P2rRetiredP2ce
         add("regression-part|gpc-builders-b: Merge Geometry equals ModelHelper.MergeGeometry",
             "the FEM helper ModelHelper.MergeGeometry, deleted in phase 1: it had the same code as the product function BridgeGeometryMerge.Merge, which Merge Geometry "
             + "uses; on GPC: the run of Merge Geometry (gpc-builders-b) and the explicit vertex, face and winding checks of merge-mesh, now on BridgeGeometryMerge.Merge (1 check)");
+        add("regression-part|p2ce-reader: «Design» by value equals the CLR reading",
+            "the FEM property of the section rules and family properties, deleted in phase 2b (decision 1 of the coordinator): the parity of the reading by value "
+            + "(GpcLegacyPayloads.Design) with the archive of the CLR types, measured at 8e5a538 on 42 records built in memory with 12 FEM properties of the corpus "
+            + "(fields, text of the rules with the ID of their property, GPC datum without GUIDs) and on the goo of a 0.3.0 rule: all equal; the corpus has no "
+            + "«Design» item (inventory of phase 2a); on GPC: the 0.4.0 rules and family properties of gpc-only-properties and gpc-null-values");
     }
 
     /// <summary>The reason of a retirement of this lane, as <see cref="P2rRetired.Checks"/> records it.</summary>
