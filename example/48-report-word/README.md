@@ -1,5 +1,7 @@
 # 48 Report Word da template
 
+**Aggiornamento 14 novembre 2026 (BridGHe 0.4.0).** Questa copia è stata risalvata con i dati GPC della 0.4.0: nel file non ci sono più dati FEM (né il blocco `FemmR6` né modelli FeMM). Componenti, GUID, collegamenti, valori di input, fasi, unità e selezioni sono quelli di prima; il file passa da 1.353.027 a 853.444 byte. Riaperto e ricalcolato senza Straus, dà gli stessi risultati della copia precedente (95 uscite e messaggi dei componenti, tutti uguali). I file Word accanto non sono stati riscritti: un report generato oggi dal file nuovo è uguale a quello generato dal file vecchio (tolti il numero del report e l'ora); rispetto a Report_esempio.docx del 21 ottobre cambierebbe solo per le modifiche del programma da allora, non per questo rifacimento. La copia precedente resta nella cronologia del repository (commit `9350aeb`).
+
 Aggiornamento 26 ottobre 2026: questa definizione usa il [flusso modulare](../../docs/FLUSSO-MODULARE.md). Appoggi, travi, soletta, conci, diaframmi e mesh hanno componenti separati; gli input salvati sono stati conservati. I report precedenti descrivono la geometria di riferimento; il nuovo collaudo è raccolto nella [validazione del refactoring](../../docs/VALIDAZIONE-MODULARE-2026-10-26.md).
 
 Aprire [48-report-word.ghx](48-report-word.ghx). Il file estende il flusso dell'esempio 47 con **Bridge Report**, una checklist dei capitoli e i tre grafici di pioli e irrigiditori.
