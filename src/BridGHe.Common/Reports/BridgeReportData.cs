@@ -163,7 +163,7 @@ public sealed record BridgeReportData(string Id, DateTimeOffset Created, BridgeR
         static double Length(GPC.Model.Elements.BeamElement b) => new Rhino.Geometry.Point3d(b.StartPoint.X, b.StartPoint.Y, b.StartPoint.Z).DistanceTo(new Rhino.Geometry.Point3d(b.EndPoint.X, b.EndPoint.Y, b.EndPoint.Z));
         return new ReportModelSource(true, id => id != null && beams.TryGetValue(id, out var b) ? b.Length == 1 ? Length(b[0]) : throw new InvalidOperationException("Sequence contains more than one matching element") : null,
             bridge.Combinations.Select(c => c.Name).ToArray(),
-            new BridgeReportModel(m.Name, ModelModel.ModelUnits.Nmm.ToString(), m.NodesElements.Count, m.BeamElements.Count, m.AreaElements.Count, bridge.Records,
+            new BridgeReportModel(m.Name, "Nmm" /* P2CE phase 2a: the text of the former ModelModel.ModelUnits.Nmm */, m.NodesElements.Count, m.BeamElements.Count, m.AreaElements.Count, bridge.Records,
                 bridge.Combinations.Select(c => new BridgeReportCombination(c.Name, c.Factors.Select(f => new BridgeReportFactor(f.Case, f.Factor)).ToArray())).ToArray()));
     }
 

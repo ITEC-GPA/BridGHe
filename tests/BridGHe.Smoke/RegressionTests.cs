@@ -92,6 +92,7 @@ internal static class RegressionTests
         gpc["p2k-natives"] = P2kNative.Regression; // P2K (12/11): 50 and 99 natives without the transitional FEM checks, Bridge Report of the 50; only with BRIDGHE_P2K_NATIVE
         gpc["gpc-review-fixes"] = GpcReviewFixesC1.Regression; // C1 (11/11): the product fixes of the ChatGPT reviews (R65-C3-01/02, R25-01, P30-01/02/04, Table Material)
         gpc["gpc-c5"] = C5ParityChecks.Regression; // C5 (11/11): releases of rotated beams as 0.3.0 (write plan recorded)
+        gpc["p2ce-reader"] = P2ceReader.Regression; // P2CE phase 2a (13/11): the 0.3.0 reader without FEM CLR types (inventory, by value = CLR for «LoadCases»; retired in 2b) and P2P-01 (stage case records)
         gpc["gpc-only-elements"] = GpcOnlyReplay.Elements; // R6.5 P1 lane 1a (7/11): the element components replayed with GPC-only inputs
         gpc["gpc-only-generators"] = GpcOnlyReplay.Generators; // R6.5 P1 lane 1b (7/11): the bridge generators replayed with GPC-only inputs and outputs
         gpc["gpc-only-properties"] = GpcOnlyReplay.Properties; // R6.5 P1 lane 2a (P2Z, 8/11): properties and data replayed with GPC-only inputs and outputs; L2B (8/11): with lane 2b (composite and bridge properties, State Override, coordinate systems)

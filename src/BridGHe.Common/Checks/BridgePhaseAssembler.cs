@@ -23,7 +23,6 @@ namespace BridGHe.Common.Checks
         {
             public string BeamId { get; }
             private readonly Dictionary<string, (double Station, BeamForceSample Force)[]> _forces;
-            private readonly Dictionary<string, double> _strains;
             private readonly double _tolerance;
 
 
@@ -36,7 +35,6 @@ namespace BridGHe.Common.Checks
                     .ToDictionary(g => g.Key, g => g.Select(f => (Station: f.Sample.Station, Force: f.Sample)).OrderBy(f => f.Station).ToArray(), StringComparer.Ordinal);
                 if (_forces.Values.SelectMany(f => f).Any(f => !double.IsFinite(f.Station)))
                     throw new ArgumentException("Stazione di risultato non finita.");
-                _strains = new Dictionary<string, double>(StringComparer.Ordinal);
             }
 
             private BeamForceSample ForceAt(string name, double station)
@@ -63,8 +61,9 @@ namespace BridGHe.Common.Checks
                 name == null || coefficient == 0 ? new ResultBeamForces(0, 0, 0, 0, 0, 0, reference) :
                 BridgeCheckAdapter.Scale(BridgeForceConvention.FromStraus(ForceAt(name, station), name, reference), coefficient);
 
-            public double ReadStrain(string name, double coefficient) =>
-                name != null && _strains.TryGetValue(name, out double strain) ? strain * coefficient : 0;
+            /// <summary>P2CE (13/11/2026, phase 2a): always 0, as the index of the GPC samples has always given (the slab strains were read only
+            /// by the FEM index, deleted in phase 1; the GPC workflow executor takes the strains from its recipe).</summary>
+            public double ReadStrain(string name, double coefficient) => 0;
 
 
             /// <summary>R6.4 (5), decision (i) = A: the actions of a combination of the GPC bridge model at a station, from its combination table
@@ -87,7 +86,7 @@ namespace BridGHe.Common.Checks
                     if (name == null || !phases.TryGetValue(name, out var phase)) throw new InvalidOperationException($"Fase non assegnata per il caso {name}.");
                     if (phase == BridgeCasePhase.StrainInfinite || phase == BridgeCasePhase.StrainInstant)
                     {
-                        _strains.TryGetValue(name, out double unscaledStrain);
+                        double unscaledStrain = 0; // P2CE phase 2a: no strain in the index of the GPC samples (as before: an empty table)
                         double strain = unscaledStrain * factor;
                         if (phase == BridgeCasePhase.StrainInfinite) strainInfinite += strain;
                         else strainInstant += strain;

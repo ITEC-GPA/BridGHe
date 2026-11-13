@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Geometry;
 
-public sealed record BridgeSlabGrillageResult(BeamModel[] Beams, double[] Widths)
+/// <summary>P2CE (13/11/2026, phase 2a): without the FEM beams (always none since phase 1: the plans are the strips).</summary>
+public sealed record BridgeSlabGrillageResult(double[] Widths)
 {
     /// <summary>R6.2 (lane B): the plans of the GPC drafts of <see cref="Beams"/> (same order), their Element IDs removed as above.</summary>
     public BridgeMemberPlan[] Plans { get; init; } = Array.Empty<BridgeMemberPlan>();
@@ -48,6 +48,6 @@ public static class BridgeSlabGrillage
         }
         var assignment=BridgeMemberAssignment.Assign(subset,null,rules); // P2CE: no FEM defaults (before: an empty table, the same)
         if(assignment.Unassigned.Length!=0) throw new InvalidOperationException("Unassigned transverse slab members.");
-        return new(Array.Empty<BeamModel>(),assignment.Plans.Select(p=>widths[p.Group]).ToArray()) { Plans=assignment.Plans.Select(p=>p with { Label=false }).ToArray() };
+        return new(assignment.Plans.Select(p=>widths[p.Group]).ToArray()) { Plans=assignment.Plans.Select(p=>p with { Label=false }).ToArray() };
     }
 }

@@ -87,11 +87,19 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             var datum = new GpcCompositeBeam(draft, s, e, Groups(draft, groups));
             // P2CUT (13/11, coordinator answer 2 to P2K): a definition whose archive is refused has no content identity: an error, no output
             // (before, the identity fell back on the name of the section).
-            Guid identity;
-            try { identity = Identity(draft, datum.Start, datum.End, datum.Groups); }
+            // P2P-02 (review of ChatGPT task 45, P2CE phase 2a): the message names the section (start or end) and what to do; the same identity.
+            Guid identity; string which = "start";
+            try
+            {
+                string startDigest = Digest(datum.Start); which = "end";
+                string endDigest = Digest(datum.End);
+                identity = Identity(draft, startDigest, endDigest, datum.Groups);
+            }
             catch (Exception ex) when (ex is ArgumentException or NotSupportedException or InvalidOperationException or System.Runtime.Serialization.SerializationException)
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The composite section cannot be identified by its content: " + ex.Message);
+                var refused = which == "start" ? datum.Start : datum.End;
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, $"The composite section at the {which} of the beam ('{refused?.Name}') cannot be read to identify it by its content: "
+                    + ex.Message + " Recreate the property with Composite Beam Property; no composite beam is made.");
                 return;
             }
             var output = GH_CompositeBeam.FromGpc(datum, identity);
@@ -113,8 +121,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         /// text of its sections (the SHA-256 of their GPC archive) and groups (<see cref="GpcOnlyElements.Identity"/>, the rule of lane 1a): no
         /// new GUID per solve. P2K (P7): derived from the GUID of the draft of the beam, as <see cref="GpcOnlyElements.Beam"/> does, not from
         /// the GH GUID of the beam (new at every solve for a beam given by its draft alone, <c>GH_Beam.FromGpc</c> without a GUID).</summary>
-        private Guid Identity(Common.Gpc.Legacy.LegacyBeamDraft beam, GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition start, GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition end,
-            IReadOnlyList<string> groups) => GpcOnlyElements.Identity(beam.Beam.Guid, ComponentGuid, 0, Digest(start), Digest(end), groups);
+        private Guid Identity(Common.Gpc.Legacy.LegacyBeamDraft beam, string startDigest, string endDigest, IReadOnlyList<string> groups) =>
+            GpcOnlyElements.Identity(beam.Beam.Guid, ComponentGuid, 0, startDigest, endDigest, groups); // P2P-02: the digests of the two sections (Digest), taken one by one
 
         /// <summary>P2F (P7): the content of a composite definition, the GPC input fingerprint (<c>ModelValues.Fingerprint</c>, the same in every
         /// process for the same content) of a copy read back from its archive. Before, the SHA-256 of the archive itself, whose bytes change once

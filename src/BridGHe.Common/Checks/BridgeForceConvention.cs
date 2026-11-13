@@ -11,18 +11,6 @@ namespace BridGHe.Common.Checks
     /// See Strand7 R3 Help: ResultsInterpretationBeamInternalForceConvention.</summary>
     public static class BridgeForceConvention
     {
-        public static ResultBeamForces FromStraus(BeamForceResultModel force, CoordinateSystem reference)
-        {
-            if (force == null) throw new ArgumentNullException(nameof(force));
-            if (reference == null) throw new ArgumentNullException(nameof(reference));
-            // The diagram values use the section's positive axes (1 across, 2 up).
-            // 'reference' is the checker's destination frame, often (-x,-y), not
-            // the frame in which Straus reported the values. Rotate the values as
-            // well as the frame, otherwise ToGlobalCoordinateSystem flips them twice.
-            return new ResultBeamForces(force.AxialForce, force.Vx, force.Vy, force.Torque,
-                force.My, -force.Mx, CoordinateSystem.Global, name: force.LoadCase?.Name ?? "")
-                .ToCoordinateSystem(reference);
-        }
 
         /// <summary>F6 (a)/(b): the same conversion of a merged sample (BridGHe convention: SF1, SF2, BM1, BM2) of the case <paramref name="caseName"/>.</summary>
         public static ResultBeamForces FromStraus(BeamForceSample force, string caseName, CoordinateSystem reference)

@@ -12,12 +12,16 @@ namespace BridGHe.Grasshopper.Components.Definitions
 {
     public class StagedConstructionComponent : GH_Component
     {
-        // P2K (P1): TRANSITIONAL, the FEM cases of the saved "LoadCases" item (persistence format kept; read from the files of 0.3.0, empty
-        // when Build Model gives the case records alone), read only for the records after a file is opened.
-        protected List<Common.Models.LoadCaseModel> _loadCases;
-        // R6.3: the case records Build Model gives (null after a file is opened: the conversion of the stored FEM cases, until R6.5).
+        // R6.3: the case records Build Model gives. P2P-01 (13/11/2026, review of ChatGPT task 45, P2CE phase 2a): null is an unknown catalogue
+        // (a file opened before Build Model gave the cases, with no saved records), which changes nothing in the Load Combinations parameters;
+        // an array, also empty, is a known catalogue (from Build Model, from the «LoadCaseRecords» chunk, from the cases of a 0.3.0 file). Before,
+        // an unknown catalogue was taken as an empty one and the factors of a standalone Load Combinations parameter were cleared.
         private IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> _caseRecords;
-        private IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> CaseRecords => _caseRecords ??= _loadCases.Select(Common.Gpc.GpcModels.CaseDraft).ToArray(); // P2K (P1): TRANSITIONAL, see _loadCases
+        // P2P-01: the reason a saved catalogue could not be read (a damaged «LoadCaseRecords» chunk or «LoadCases» item), reported by the solution;
+        // the catalogue then stays unknown (no fallback to an empty one).
+        private string _caseRecordsError;
+        /// <summary>P2P-01: the chunk of the case records (version 1, a count, one record of <c>GpcDraftArchive</c> per case, in order).</summary>
+        internal const string CaseRecordsChunk = "LoadCaseRecords";
 
         /// <summary>
         /// Initializes a new instance of the StagedConstructionComponent class.
@@ -25,7 +29,6 @@ namespace BridGHe.Grasshopper.Components.Definitions
         public StagedConstructionComponent()
           : base("Staged Construction ", "SC", "Defines a staged construction", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_DEFINITIONS)
         {
-            _loadCases = new List<Common.Models.LoadCaseModel>();
         }
 
         /// <summary>
@@ -74,10 +77,14 @@ namespace BridGHe.Grasshopper.Components.Definitions
             if (!DA.GetData(4, ref rotate))
                 return;
 
-            // Connect the LoadCombinationsComponent
-            IEnumerable<IGH_Param> combinations_params = Params.Input[2].Sources.Where(s => s.GetType() == typeof(LoadCombinationsParam));
-            foreach (LoadCombinationsParam param in combinations_params)
-                param.UpdateLoadCases(null, CaseRecords); // P2K (P1): TRANSITIONAL, the FEM cases argument of the parameter, always null
+            // Connect the LoadCombinationsComponent. P2P-01: only with a known catalogue (an unknown one changes nothing).
+            if (_caseRecordsError != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Error, _caseRecordsError);
+            if (_caseRecords != null)
+            {
+                IEnumerable<IGH_Param> combinations_params = Params.Input[2].Sources.Where(s => s.GetType() == typeof(LoadCombinationsParam));
+                foreach (LoadCombinationsParam param in combinations_params)
+                    param.UpdateLoadCases(_caseRecords);
+            }
 
             if (combinations.Count == 0)
             {
@@ -91,28 +98,69 @@ namespace BridGHe.Grasshopper.Components.Definitions
                 combinations.Select(c => c.Gpc).ToArray(), morph, rotate)));
         }
 
-        /// <summary>R6.3: the case records of Build Model. P2K (P1): TRANSITIONAL, the FEM cases parameter kept for the call of Build Model
-        /// (outside the group), always null and ignored: the saved FEM cases become empty, as with Build Model on GPC data alone.</summary>
-        public void SetLoadCases(IEnumerable<Common.Models.LoadCaseModel> loadCases, IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
+        /// <summary>R6.3: the case records of Build Model (a known catalogue; P2CE phase 2a: the FEM cases parameter, always null, removed).</summary>
+        public void SetLoadCases(IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
         {
-            _loadCases.Clear();
             _caseRecords = caseRecords;
+            _caseRecordsError = null;
         }
+
+        /// <summary>P2P-01: the saved «LoadCases» item as 0.4.0 wrote it until now (an empty list of FEM cases: the files of 0.3.0 read it), kept
+        /// so that the item does not change; the catalogue itself is in <see cref="CaseRecordsChunk"/>. P2CE phase 2b: written without the FEM type.</summary>
+        private static readonly byte[] EmptyLoadCases = Common.Helpers.ModelArchive.Write(new List<Common.Models.LoadCaseModel>());
 
         public override bool Write(GH_IWriter writer)
         {
             if (!base.Write(writer)) return false;
-            writer.SetByteArray("LoadCases", Common.Helpers.ModelArchive.Write(_loadCases)); // P2K (P1): TRANSITIONAL, see _loadCases
+            writer.SetByteArray("LoadCases", EmptyLoadCases);
+            // P2P-01: a known catalogue is saved (an unknown one writes no chunk: it stays unknown at the next opening).
+            if (_caseRecords != null)
+            {
+                var chunk = writer.CreateChunk(CaseRecordsChunk);
+                chunk.SetInt32("Version", 1);
+                chunk.SetInt32("Count", _caseRecords.Count);
+                for (int i = 0; i < _caseRecords.Count; i++) chunk.SetByteArray("Case", i, Common.Gpc.GpcDraftArchive.Write(_caseRecords[i]));
+            }
             return true;
         }
 
         public override bool Read(GH_IReader reader)
         {
             if (!base.Read(reader)) return false;
-            _loadCases.Clear();
-            if (reader.ItemExists("LoadCases")) _loadCases.AddRange(Common.Helpers.ModelArchive.Read<List<Common.Models.LoadCaseModel>>(reader.GetByteArray("LoadCases"))); // P2K (P1): TRANSITIONAL, see _loadCases
-            _caseRecords = null;
+            (_caseRecords, _caseRecordsError) = ReadCaseRecords(reader);
             return true;
+        }
+
+        /// <summary>P2P-01, P2CE phase 2a: the saved catalogue: the «LoadCaseRecords» chunk when present (a count of 0 is a known empty catalogue);
+        /// otherwise the «LoadCases» item of 0.3.0 and of the development files read by value (<c>GpcLegacyPayloads.Cases</c>, no FEM CLR type):
+        /// its cases are a known catalogue, an empty or missing item an unknown one. A chunk of another version, truncated or damaged: an error,
+        /// the catalogue unknown.</summary>
+        internal static (IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> Records, string Error) ReadCaseRecords(GH_IReader reader)
+        {
+            var chunk = reader.FindChunk(CaseRecordsChunk);
+            try
+            {
+                if (chunk != null)
+                {
+                    if (!chunk.ItemExists("Version") || chunk.GetInt32("Version") != 1)
+                        throw new System.Runtime.Serialization.SerializationException("unsupported version " + (chunk.ItemExists("Version") ? chunk.GetInt32("Version").ToString() : "(none)"));
+                    int count = chunk.ItemExists("Count") ? chunk.GetInt32("Count") : throw new System.Runtime.Serialization.SerializationException("no count");
+                    if (count < 0) throw new System.Runtime.Serialization.SerializationException("negative count");
+                    var records = new Common.Gpc.Legacy.LegacyCaseData[count];
+                    for (int i = 0; i < count; i++)
+                        records[i] = chunk.ItemExists("Case", i) ? Common.Gpc.GpcDraftArchive.ReadCase(chunk.GetByteArray("Case", i))
+                            : throw new System.Runtime.Serialization.SerializationException("case " + (i + 1) + " of " + count + " missing (truncated)");
+                    return (records, null);
+                }
+                if (!reader.ItemExists("LoadCases")) return (null, null);
+                var cases = Common.Gpc.GpcLegacyPayloads.Cases(reader.GetByteArray("LoadCases"));
+                return (cases.Length == 0 ? null : cases, null);
+            }
+            catch (Exception x) when (x is System.Runtime.Serialization.SerializationException || x is ArgumentException || x is NotSupportedException || x is InvalidOperationException
+                || x is System.IO.IOException || x is FormatException)
+            {
+                return (null, "The saved load case records of the stage cannot be read (" + x.Message + "): run Build Model to give the cases again.");
+            }
         }
 
         /// <summary>

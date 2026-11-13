@@ -52,6 +52,18 @@ namespace BridGHe.Common.Gpc
         }
 
         public static LegacyCaseData Case(byte[] payload) => LegacyModelImport.CaseDraft(Root(payload));
+        /// <summary>P2CE (13/11/2026, phase 2a): the cases of a saved list of FEM cases (the «LoadCases» item of Staged Construction, written
+        /// by 0.3.0 and by the development files) by value, in order, each as <see cref="Case"/> reads one; no FEM CLR type.</summary>
+        public static LegacyCaseData[] Cases(byte[] payload)
+        {
+            var root = Root(payload);
+            // The list of the former archive: the collection contract ArrayOfLoadCaseModel (its items carry no type of their own: the element
+            // type of the list; a derived item would carry its type).
+            if (root.IsNull || !root.IsCollection || root.Type == null || !(root.Is("ArrayOfLoadCaseModel") || root.Type.Contains("BridGHe.Common.Models.LoadCaseModel,", StringComparison.Ordinal)))
+                throw new System.Runtime.Serialization.SerializationException("LegacyLoadCaseListExpected: " + (root.Type ?? "null"));
+            return root.Items.Select(i => !i.IsNull && i.Type == null ? LegacyCaseData.From(i) : !i.IsNull && i.Is("LoadCaseModel") ? LegacyModelImport.CaseDraft(i)
+                : throw new System.Runtime.Serialization.SerializationException("LegacyLoadCaseExpected: " + (i.IsNull ? "null" : i.Type))).ToArray();
+        }
 
         public static LegacyCombinationDraft Combination(byte[] payload) => LegacyModelImport.CombinationDraft(Root(payload));
 

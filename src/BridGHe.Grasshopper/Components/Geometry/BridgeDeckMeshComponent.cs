@@ -43,7 +43,7 @@ public sealed class BridgeDeckMeshComponent : BridgeUtilityComponent
         GPC.Model.ElementProperties.PlateProperty gpcProperty = null;
         try { gpcProperty = property.Gpc ?? throw new ArgumentException("The plate property has no GPC datum."); }
         catch (Exception x) when (x is ArgumentException || x is NotSupportedException) { GpcOnlyElements.Generated<object>(this, () => throw x); return; }
-        var result = BridgeDeckMesh.Create(geometry.Value, null, length, width, pours, triangles, gpcProperty, property.GpcMembraneBending);
+        var result = BridgeDeckMesh.Create(geometry.Value, length, width, pours, triangles, gpcProperty, property.GpcMembraneBending);
         da.SetData(0, new BridgeGeometryGoo(result.Geometry)); da.SetData(1, result.Mesh);
         // R6.5 P1 lane 1b: identity by content (corners, GPC property, group, plate ID).
         da.SetDataList(2, result.Drafts.Select((d, i) =>

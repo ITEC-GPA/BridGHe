@@ -4,7 +4,6 @@ using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using BridGHe.Common.Checks;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Diagnostics;
 
@@ -20,8 +19,6 @@ public sealed class BridgeCombinationCatalog
     /// stored results.</summary>
     private sealed record Source(string Name, bool Nmm, HashSet<string> Cases, HashSet<string> Results);
 
-    public BridgeCombinationCatalog(IReadOnlyList<ModelModel> models, IEnumerable<BridgePhaseDefinition> definitions)
-        : this(models == null ? null : models.Select(m => m == null ? (bool?)null : m.Units == ModelModel.ModelUnits.Nmm).ToArray(), definitions, a => a.Source, FemSource) { }
 
     /// <summary>
     /// F6 R6.4 (3): the catalogue on the GPC data: the units of the reference models from their GPC inputs, and every action read from its
@@ -34,14 +31,6 @@ public sealed class BridgeCombinationCatalog
         new BridgeCombinationCatalog(references == null ? null : references.Select(r => r == null ? (bool?)null : r.Report.Units.Units == Gpc.DefinitionUnits.Nmm).ToArray(),
             definitions, a => (object)a.GpcSource ?? a.GpcInput, GpcSource); // L3b: a source that was not analysed: its GPC input (GPC-only path)
 
-    private static Source FemSource(object value)
-    {
-        var source = (ModelModel)value;
-        var results = source.Elements.SelectMany(e => e.Results).Select(r => r.LoadCase?.Name).Where(n => n != null).ToHashSet(StringComparer.Ordinal);
-        var cases = source.LoadCases.Select(c => c.Name).Concat(source.LoadCombinations.Select(c => c.Name))
-            .Concat(source.Elements.SelectMany(e => e.Loads).Select(l => l.LoadCase?.Name)).Concat(results).Where(n => n != null).ToHashSet(StringComparer.Ordinal);
-        return new Source(source.Name, source.Units == ModelModel.ModelUnits.Nmm, cases, results);
-    }
 
     private static Source GpcSource(object value)
     {

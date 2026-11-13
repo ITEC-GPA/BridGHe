@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Checks;
 
@@ -23,21 +22,6 @@ public sealed record BridgeForce(string Case, BeamForceSample Force, bool Normal
 /// <summary>Resamples one case on a physical beam grid, using only original FEM samples.</summary>
 internal static class BridgeForceResampling
 {
-    /// <summary>The former result objects through the numeric core (same arithmetic, so both give the same numbers bit for bit).</summary>
-    internal static BeamForceResultModel[] Resample(BeamForceResultModel[] original, double[] stations,
-        double length, string label, double[] pointLoads, out int interpolated)
-    {
-        var samples = original.Select(f => new BeamForceSample(f.Station, f.AxialForce, f.Vx, f.Vy, f.Torque, f.Mx, f.My)).ToArray();
-        var resampled = Resample(samples, stations, length, label, pointLoads, out interpolated, out var sources);
-        var output = new BeamForceResultModel[resampled.Length];
-        for (int i = 0; i < resampled.Length; i++)
-        {
-            var r = resampled[i];
-            output[i] = new BeamForceResultModel(original[sources[i]].LoadCase, r.Station, 0, "", false)
-            { AxialForce = r.Axial, Vx = r.Shear1, Vy = r.Shear2, Torque = r.Torque, Mx = r.Bending1, My = r.Bending2 };
-        }
-        return output;
-    }
 
     /// <param name="sources">For every output sample, the index in <paramref name="original"/> of the sample it copies, or of the left
     /// sample of the interval it interpolates.</param>

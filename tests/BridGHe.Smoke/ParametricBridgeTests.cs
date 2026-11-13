@@ -35,7 +35,7 @@ internal static class ParametricBridgeTests
         var analysis=BridGHe.Common.Gpc.GpcMaterials.Analysis(concrete);
         var slab=BridgeSlabGrillage.Create(grillage.Geometry,"Test slab",analysis,concrete);
         var strips=R2aGeneratorFixtures.Drafts(slab.Plans,"slab");
-        Require(slab.Beams.Length==0 && strips.Length==grillage.Strips.Length && slab.Widths.SequenceEqual(grillage.Strips.Select(s=>s.Width)),"Nonuniform tributary lengths exactly match geometry output");
+        Require(strips.Length==grillage.Strips.Length /* P2CE phase 2a: the result has no FEM beams by type */ && slab.Widths.SequenceEqual(grillage.Strips.Select(s=>s.Width)),"Nonuniform tributary lengths exactly match geometry output");
         Require(strips.All(b=>b.Records.Labels.Count==0 && b.Records.FirstLabel==null),"Global slab FEM numbering is left to assembly, avoiding steel ID collisions");
         for(int i=0;i<strips.Length;i++)
         {
