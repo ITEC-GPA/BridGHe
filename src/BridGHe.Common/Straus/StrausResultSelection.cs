@@ -7,6 +7,7 @@ using BridGHe.Common.Models;
 namespace BridGHe.Common.Straus
 {
     /// <summary>Result names and unfiltered increment numbers shared by the UI and analysis.</summary>
+    // P2CE phase 2: delete with Models (its caller: the FEM catalogue NativeExamples.Create of the tests, kept for lane P2CC).
     public static class StrausResultSelection
     {
         public sealed record Entry(int Increment, CaseModel Case);
