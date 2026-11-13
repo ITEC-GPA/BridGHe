@@ -97,14 +97,14 @@ namespace BridGHe.Grasshopper.Components.Models
                 // Connect the LoadCombinationsComponent (R6.5 P1 lane 3c: the menus follow the case records; no FEM cases, null).
                 IEnumerable<IGH_Param> combinations_params = Params.Input[3].Sources.Where(s => s.GetType() == typeof(LoadCombinationsParam));
                 foreach (LoadCombinationsParam param in combinations_params)
-                    param.UpdateLoadCases(cases); // P2CE phase 2a: no FEM cases argument
+                    param.UpdateLoadCases(null, cases); // the FEM cases argument, always null (P2CE phase 2: removed with Models)
 
 
                 // Set the load cases in the StagedConstructionComponent
                 foreach (IGH_Param param in Params.Input[4].Sources)
                 {
                     if (param.Attributes.GetTopLevel.DocObject is StagedConstructionComponent scc)
-                        scc.SetLoadCases(cases); // P2CE phase 2a: no FEM cases argument
+                        scc.SetLoadCases(null, cases); // the FEM cases argument, always null (P2CE phase 2: removed with Models)
                 }
 
                 DA.GetDataList(4, stages);

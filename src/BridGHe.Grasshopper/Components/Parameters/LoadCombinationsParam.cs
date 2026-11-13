@@ -25,9 +25,10 @@ namespace BridGHe.Grasshopper.Components.Parameters
         }
 
         /// <summary>R6.3: the case records of Build Model or Staged Construction: the combinations of the parameter follow them (the GPC datum
-        /// built on the case records, <c>GpcCaseBuilders.UpdatedCombination</c>). P2CE phase 2a: the FEM cases parameter (always null) removed.
+        /// built on the case records, <c>GpcCaseBuilders.UpdatedCombination</c>). The FEM cases parameter is ignored (always null from the product).
         /// P2P-01 (13/11/2026): null is an unknown catalogue and changes nothing (before any write); an empty array is a known empty one.</summary>
-        public void UpdateLoadCases(IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
+        // P2CE phase 2: delete with Models the FEM cases parameter (GpcOnlyReplay of lane P2CC calls the method by reflection with two arguments).
+        public void UpdateLoadCases(IEnumerable<Common.Models.LoadCaseModel> loadCases, IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
         {
             if (caseRecords == null) return;
             // Recreate the LoadCase names list

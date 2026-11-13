@@ -259,7 +259,7 @@ internal static class P2ceReader
         Check(stageFactors.SequenceEqual(new[] { Inc }) && errors.Length == 0, "old development file, after the solve, the stage: " + string.Join(" / ", stageFactors) + " " + string.Join(" / ", errors));
 
         // Save and reopen with the G/Q catalogue (also a factor of 0 and a negative finite factor): everything equal, exactly.
-        var known = new Rig(new[] { inc, odd }, group, s => setLoadCases.Invoke(s, new object[] { records }));
+        var known = new Rig(new[] { inc, odd }, group, s => setLoadCases.Invoke(s, new object[] { null, records }));
         var knownFactors = known.Solve(out errors);
         Check(knownFactors.SequenceEqual(new[] { Inc, Odd }) && known.Persistent().SequenceEqual(new[] { Inc, Odd }) && errors.Length == 0,
             "with the catalogue of Build Model: " + string.Join(" / ", knownFactors) + "; " + string.Join(" / ", known.Persistent()));
@@ -281,8 +281,8 @@ internal static class P2ceReader
         // catalogue, then given the empty one, saved, and its records chunk of count 0 read back as a known empty catalogue.
         var empty = new Rig(new[] { inc }, group, null);
         empty.Solve(out _);
-        empty.Param.GetType().GetMethod("UpdateLoadCases").Invoke(empty.Param, new object[] { Array.Empty<LegacyCaseData>() });
-        setLoadCases.Invoke(empty.Stage, new object[] { Array.Empty<LegacyCaseData>() });
+        empty.Param.GetType().GetMethod("UpdateLoadCases").Invoke(empty.Param, new object[] { null, Array.Empty<LegacyCaseData>() });
+        setLoadCases.Invoke(empty.Stage, new object[] { null, Array.Empty<LegacyCaseData>() });
         Check(empty.Persistent().SequenceEqual(new[] { "INC: " }), "an empty catalogue removes the orphan factors: " + string.Join(" / ", empty.Persistent()));
         byte[] savedEmpty = Save(empty.Stage);
         var emptyArchive = new GH_IO.Serialization.GH_Archive(); emptyArchive.Deserialize_Binary(savedEmpty);
@@ -292,7 +292,7 @@ internal static class P2ceReader
         Check(emptyRecords != null && emptyRecords.Count == 0 && read.GetType().GetField("Item2").GetValue(read) == null, "a records chunk of count 0 is read as a known empty catalogue");
         // The unknown catalogue does not call the update at all: the parameter refuses null before any write.
         var unknownAgain = new Rig(new[] { inc }, group, null);
-        unknownAgain.Param.GetType().GetMethod("UpdateLoadCases").Invoke(unknownAgain.Param, new object[] { null });
+        unknownAgain.Param.GetType().GetMethod("UpdateLoadCases").Invoke(unknownAgain.Param, new object[] { null, null });
         Check(unknownAgain.Persistent().SequenceEqual(new[] { Inc }), "a null catalogue changes nothing in the parameter: " + string.Join(" / ", unknownAgain.Persistent()));
 
         // A damaged chunk (another version; truncated): the error, and nothing changes.
