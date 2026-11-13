@@ -276,11 +276,13 @@ internal static class P2ceReader
             "reopened, after the solve: " + string.Join(" / ", againFactors) + "; " + string.Join(" / ", again.Persistent()));
 
         // An authoritative empty catalogue (Build Model with no case, or a records chunk of count 0) still removes the orphan factors. The update is
-        // called outside a solution, as Build Model gives it (a removal expires the solution of the parameter, which a document solved by the test
-        // host cannot run again from inside its own solution); the records chunk of count 0 is read back as a known empty catalogue.
-        var empty = new Rig(new[] { inc }, group, s => setLoadCases.Invoke(s, new object[] { Array.Empty<LegacyCaseData>() }));
-        empty.Solve(out _); // the catalogue is unknown to the parameter until the update below: the stage solved with the input combination
+        // called outside a solution: a removal expires the solution of the parameter (ExpireSolution(true)), which a document solved by the test
+        // host must not run again from inside its own solution (it hung the host of gate p2ce3); the stage is solved first with an unknown
+        // catalogue, then given the empty one, saved, and its records chunk of count 0 read back as a known empty catalogue.
+        var empty = new Rig(new[] { inc }, group, null);
+        empty.Solve(out _);
         empty.Param.GetType().GetMethod("UpdateLoadCases").Invoke(empty.Param, new object[] { Array.Empty<LegacyCaseData>() });
+        setLoadCases.Invoke(empty.Stage, new object[] { Array.Empty<LegacyCaseData>() });
         Check(empty.Persistent().SequenceEqual(new[] { "INC: " }), "an empty catalogue removes the orphan factors: " + string.Join(" / ", empty.Persistent()));
         byte[] savedEmpty = Save(empty.Stage);
         var emptyArchive = new GH_IO.Serialization.GH_Archive(); emptyArchive.Deserialize_Binary(savedEmpty);
