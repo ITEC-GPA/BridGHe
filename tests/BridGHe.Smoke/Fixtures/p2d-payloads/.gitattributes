@@ -1,0 +1,6 @@
+*.bgha1 binary
+*.data binary
+*.records binary
+*.tsv -text
+*.md -text
+.gitattributes -text

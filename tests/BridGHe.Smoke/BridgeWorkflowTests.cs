@@ -2,24 +2,10 @@ using System;
 using System.Linq;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using Rhino.Geometry;
 
 internal static class BridgeWorkflowTests
 {
-    internal static ModelModel Source(string name, double force)
-    {
-        var m = new ModelModel(ModelModel.ModelUnits.Nmm) { Name = name };
-        var lc = new LoadCaseModel("G", "G"); m.LoadCases.Add(lc);
-        for (int i = 0; i < 2; i++)
-        {
-            var b = new BeamModel("B" + i, new Point3d(0, i * 2000, 0), new Point3d(10000, i * 2000, 0),
-                BridgeGrillageExample.LongProperty(new(), 0)) { BeamId = "B" + i };
-            foreach (double x in new[] { 0d, .5, 1d }) b.Results.Add(new BeamForceResultModel(lc, x, 0, "", true) { AxialForce = force + i, My = force * 1000 * (1 + x) });
-            m.AddElements(new[] { b });
-        }
-        return m;
-    }
     internal static void Require(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
     internal static void Run()
     {

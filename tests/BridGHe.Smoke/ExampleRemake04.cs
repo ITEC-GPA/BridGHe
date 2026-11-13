@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using BridGHe.Common.Models;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
@@ -30,23 +29,6 @@ internal static class ExampleRemake04
 
     private static IEnumerable<IGH_Param> Params(GH_Document doc) => doc.Objects.OfType<IGH_Param>()
         .Concat(doc.Objects.OfType<GH_Component>().SelectMany(c => c.Params.Input));
-
-    /// <summary>The model with a node at every beam end that has none (a beam extract without its nodes does not convert); the same model when
-    /// every end has one.</summary>
-    internal static ModelModel WithEndNodes(ModelModel fem, out int added)
-    {
-        var copy = BridGHe.Common.Helpers.ModelArchive.Clone(fem);
-        var missing = new List<Point3d>();
-        bool Has(Point3d p) => copy.Nodes.Any(n => n.Position.DistanceTo(p) <= 1e-6) || missing.Any(m => m.DistanceTo(p) <= 1e-6);
-        foreach (var b in copy.Beams) foreach (var end in new[] { b.PointFrom, b.PointTo }) if (!Has(end)) missing.Add(end);
-        added = missing.Count;
-        if (added == 0) return copy;
-        int next = 1; var ids = copy.Nodes.Select(n => n.NodeId).ToHashSet(StringComparer.Ordinal);
-        var created = new List<ElementModel>();
-        foreach (var p in missing) { string id; do id = "N" + next++; while (!ids.Add(id)); created.Add(new NodeModel(id, p)); }
-        copy.AddElements(created);
-        return copy;
-    }
 
     /// <summary>Solves a remade example as the regression does (Build BridGHe Model and Super Element Check pressed): no errors, no warning of
     /// results missing or of a former version.</summary>

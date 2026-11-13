@@ -255,5 +255,8 @@ internal static class P2rRetired
         add("regression-part|gpc-only-models: L3e A05 and A06 on the conversion of the FEM value (4 checks)", "GpcModels.Convert of an in-memory FEM model with "
             + "the plate mass and the heat path; GPC coverage: the same values in N, mm, t on Build Model of the GPC twin and Attach Moving Paths in every unit system "
             + "(gpc-only-models, Lane3eChecks), and the A05 Build Model cases of the replay");
+        add("regression-part|p2d: development, a FEM-backed GH type writes its datum alone (1 check)", "a GH_Beam made from a FEM BeamModel (a FEM-backed "
+            + "GH type of a component not yet on GPC); after the cut no GH type has a FEM value; GPC coverage: no FemmR6 written again by a beam and by a model of a "
+            + "development file and by a 0.3.0 model (p2d, on the frozen payloads of Fixtures/p2d-payloads)");
     }
 }

@@ -1,0 +1,17 @@
+name 5
+groups Slab
+loads AF5B7EFAFC3785DC5E72DD021B33C5BA98494F013ECE32DCA61382275B9D0BA2
+attributes F1F341A178748900D04E2E1EE91E7FCF51CDC8115473DF31C5D8B8BB6A742A48
+attribute ids 1
+attributes max 1
+physical 9F3D8042E11F083C642C2BB868462DE79A548F864A769F4418662E4ECEA66C08
+offset 
+property 09BB991BBBF5CCE6A05A1799593922592E43F85AF3799C6D628BB3A0C0C1F0AF
+record groups Slab
+record labels P1
+record super elements 
+record counts 0 0 0
+record loads PlatePressureModel:Q,PlatePressureModel:Dead,PlatePressureModel:Q
+warnings 
+element warnings 
+carried 

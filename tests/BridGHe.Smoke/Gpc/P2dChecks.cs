@@ -9,7 +9,6 @@ using System.Text.Json;
 using BridGHe.Common.Gpc;
 using BridGHe.Common.Gpc.Builders;
 using BridGHe.Common.Gpc.Legacy;
-using BridGHe.Common.Models;
 using GH_IO.Serialization;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
@@ -50,11 +49,8 @@ internal static class P2dChecks
     {
         checks = 0; failures.Clear();
         plugin = BridgeMergeTests.Initialize();
-        string setting = Environment.GetEnvironmentVariable("BRIDGHE_P2D_FIXTURES");
-        frozen = setting != null && setting.StartsWith("write:", StringComparison.Ordinal) ? new Freezer(setting.Substring("write:".Length)) : null;
         int format = Counted(Format), frames = Counted(Frames), preview = Counted(Preview), development = Counted(Development), strain = Counted(SlabStrain), casts = Counted(Casts), construction = Counted(Construction);
         if (failures.Count > 0) throw new Exception($"P2D FAIL ({failures.Count} of {checks}):\n" + string.Join("\n", failures.Take(30)));
-        frozen?.Close(); frozen = null;
         Console.WriteLine($"P2D PASS: {checks} checks; format BGHGPC1 schema 1 {format} (unknown members kept through read and write, schema 2 and later versions refused with the message), "
             + $"frame rule {frames}, preview of the homogenised composite property {preview}, FemmR6 by value and no FemmR6 written {development}, slab strain {strain}, solids of beams and plates by their drafts {casts}, construction sequence of a 0.3.0 model by value {construction}");
     }
@@ -245,80 +241,35 @@ internal static class P2dChecks
         return ((GH_Chunk)archive.GetRootNode.FindChunk("datum")).Items.Where(i => i.Type == GH_IO.Types.GH_Types.gh_bytearray).ToDictionary(i => i.Name, i => i._bytearray);
     }
 
-    /// <summary>P2CA (13/11/2026, user decision «Sì, congelale», about 07:00): the one-shot writer of the frozen payloads of Development and
-    /// Construction (<c>BRIDGHE_P2D_FIXTURES=write:&lt;new folder&gt;</c>), in the form of <c>legacy-payloads</c>: the BGHA1 payloads the FEM writer
-    /// gives for the elements, the material and the models of the checks, the BGHGPC1 datums of the GPC conversions they used, and <c>index.tsv</c>
-    /// (file, units, bytes, SHA-256, outcome). It needs the FEM inputs and goes with them after the freeze.</summary>
-    private sealed class Freezer
-    {
-        private readonly string folder;
-        private readonly List<string> index = new() { "name\tunits\tbytes\tsha256\toutcome" };
-        internal Freezer(string folder)
-        {
-            this.folder = Path.GetFullPath(folder);
-            if (Directory.Exists(this.folder)) throw new InvalidOperationException("P2D FIXTURES: the folder exists, a frozen fixture is never rewritten: " + this.folder);
-            Directory.CreateDirectory(this.folder);
-        }
-        internal void Add(string file, string units, byte[] bytes, string outcome)
-        {
-            File.WriteAllBytes(Path.Combine(folder, file), bytes);
-            index.Add($"{file}\t{units}\t{bytes.Length}\t{Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes))}\t{outcome}");
-        }
-        internal void Payload(string name, string units, byte[] bytes)
-        {
-            var root = LegacyArchive.Read(bytes);
-            Add(name + ".bgha1", units, bytes, root.Is("ModelModel") ? LegacyPayloadFixtures.Outcome(name, bytes) : "ELEMENT " + root.ShortType);
-        }
-        internal void Datum(string name, string units, (byte[] Data, byte[] Records) d)
-        {
-            Add(name + ".data", units, d.Data, "BGHGPC1 data");
-            Add(name + ".records", units, d.Records, "BGHGPC1 records");
-        }
-        internal void Close()
-        {
-            File.WriteAllText(Path.Combine(folder, "index.tsv"), string.Join("\n", index) + "\n", new UTF8Encoding(false));
-            File.WriteAllText(Path.Combine(folder, ".gitattributes"), "*.bgha1 binary\n*.data binary\n*.records binary\n*.tsv -text\n*.md -text\n.gitattributes -text\n", new UTF8Encoding(false));
-            Console.WriteLine($"P2D FIXTURES WRITE: {index.Count - 1} files in {folder}");
-        }
-    }
-    private static Freezer frozen;
-
     private static void Development()
     {
-        var model = ExampleRemake04.WithEndNodes(BridgeUtilityTests.Source(), out _);
-        var node = model.Nodes[0]; var beam = model.Beams[0];
+        // P2CA (13/11/2026, user decision «Sì, congelale»): the payloads of the former FEM model of the case (ExampleRemake04.WithEndNodes on the source of
+        // the bridge utilities: 4 nodes, 2 beams) and the BGHGPC1 datums of its GPC conversions, frozen once (P2dPayloads, Fixtures/p2d-payloads).
         var nodeType = T("Fem.GH_Node"); var beamType = T("Fem.GH_Beam"); var modelType = T("Fem.GH_Model"); var materialType = T("Fem.GH_Material");
         // An element: the FEM chunk alone (a datum not written by the development version), and beside a datum (ignored).
-        byte[] femmNode = BridGHe.Common.Helpers.ModelArchive.Write(node);
+        byte[] femmNode = P2dPayloads.Bytes("p2d-node.bgha1");
         var alone = ReadGoo(nodeType, Chunk(c => { c.SetGuid("Guid", Guid.NewGuid()); c.SetByteArray("FemmR6", femmNode); }));
         Check(alone != null && alone.ScriptVariable() == null && GpcDraftArchiveChecks.Text((LegacyNodeDraft)Prop(alone, "Gpc")) == GpcDraftArchiveChecks.Text(GpcLegacyPayloads.Node(femmNode)),
             "a node with the FEM chunk alone is read by value, without FEM value");
-        var datum = GpcBeamDrafts.FromFemm(beam); var (bd, br) = GpcDraftArchive.Write(datum);
-        string units = model.Units.ToString();
-        frozen?.Payload("p2d-node", units, femmNode); frozen?.Datum("p2d-beam-0-datum", units, (bd, br)); frozen?.Payload("p2d-beam-1", units, BridGHe.Common.Helpers.ModelArchive.Write(model.Beams[1]));
-        var beside = ReadGoo(beamType, Chunk(c => { c.SetGuid("Guid", Guid.NewGuid()); c.SetByteArray("Data", bd); c.SetByteArray("BridGHeRecords", br); c.SetByteArray("FemmR6", BridGHe.Common.Helpers.ModelArchive.Write(model.Beams[1])); }));
+        var (bd, br) = (P2dPayloads.Bytes("p2d-beam-0-datum.data"), P2dPayloads.Bytes("p2d-beam-0-datum.records")); var datum = GpcDraftArchive.ReadBeam(bd, br);
+        var beside = ReadGoo(beamType, Chunk(c => { c.SetGuid("Guid", Guid.NewGuid()); c.SetByteArray("Data", bd); c.SetByteArray("BridGHeRecords", br); c.SetByteArray("FemmR6", P2dPayloads.Bytes("p2d-beam-1.bgha1")); }));
         Check(beside != null && beside.ScriptVariable() == null && GpcDraftArchiveChecks.Text((LegacyBeamDraft)Prop(beside, "Gpc")) == GpcDraftArchiveChecks.Text(datum),
             "a beam with a datum and a FEM chunk is its datum (the FEM chunk is not read)");
         Check(!Items(beside).ContainsKey("FemmR6"), "written again, no FEM chunk");
-        // A FEM-backed GH type of a component not yet on GPC writes its datum alone.
-        var femBacked = (IGH_Goo)Activator.CreateInstance(beamType, beam, null);
-        Check(femBacked.ScriptVariable() != null && !Items(femBacked).ContainsKey("FemmR6") && Items(femBacked).ContainsKey("Data"), "a FEM-backed beam writes its datum alone (no FemmR6)");
+        // P2CA (13/11/2026): the check of a FEM-backed GH type (made from a FEM beam) is retired by name with the FEM types (P2rRetired.Checks).
         // A material of 0.3.0 with its declared kind.
-        var material = new MaterialModel("S355") { Name = "S355", Kind = MaterialModel.MaterialKind.Steel, Modulus = 210000, PoissonRatio = .3, Density = 7.85e-9 };
-        frozen?.Payload("p2d-material-steel", units, BridGHe.Common.Helpers.ModelArchive.Write(material));
-        var m = ReadGoo(materialType, Chunk(c => c.SetByteArray("Data", BridGHe.Common.Helpers.ModelArchive.Write(material))));
+        var m = ReadGoo(materialType, Chunk(c => c.SetByteArray("Data", P2dPayloads.Bytes("p2d-material-steel.bgha1")))); // S355, kind Steel
         Check(m != null && m.ScriptVariable() == null && (string)Prop(m, "GpcKind") == "Steel", "a 0.3.0 material is read by value with its kind");
         // A model of a development file: its datum, the FEM chunk of its elements and the GUIDs of its FEM elements, no drafts chunk.
-        var conversion = GpcModels.Convert(model, 0.001);
-        var (md, mr) = GpcDraftArchive.Write(conversion);
-        var femGuids = model.Elements.Select(_ => Guid.NewGuid()).ToArray();
-        var femm = BridGHe.Common.Helpers.ModelArchive.Write(model);
-        frozen?.Payload("p2d-model", units, femm); frozen?.Datum("p2d-model-datum", units, (md, mr));
+        var (md, mr) = (P2dPayloads.Bytes("p2d-model-datum.data"), P2dPayloads.Bytes("p2d-model-datum.records"));
+        var femm = P2dPayloads.Bytes("p2d-model.bgha1");
+        var kinds = LegacyArchive.Read(femm).Field("Elements").Items.Select(e => e.ShortType).ToArray(); // the former elements, by value
+        var femGuids = kinds.Select(_ => Guid.NewGuid()).ToArray();
         var dev = ReadGoo(modelType, Chunk(c => { c.SetByteArray("Data", md); c.SetByteArray("BridGHeRecords", mr); c.SetByteArray("FemmR6", femm); c.SetString("ElementGuids", JsonSerializer.Serialize(femGuids)); }));
         Check(dev != null && dev.ScriptVariable() == null && dev.IsValid, "a model of a development file is read without FEM value");
         var drafts = (GpcModelDrafts)Prop(dev, "GpcDrafts");
-        Check(drafts != null && drafts.Nodes.Count == model.Nodes.Count && drafts.Beams.Count == model.Beams.Count && drafts.Plates.Count == model.Plates.Count, "its elements have their drafts, read by value from the FEM chunk");
-        var expectedGuids = model.Elements.Select((e, i) => (e, i)).OrderBy(x => x.e is NodeModel ? 0 : x.e is BeamModel ? 1 : 2).ThenBy(x => x.i).Select(x => femGuids[x.i]).ToArray();
+        Check(drafts != null && drafts.Nodes.Count == kinds.Count(k => k == "NodeModel") && drafts.Beams.Count == kinds.Count(k => k == "BeamModel") && drafts.Plates.Count == kinds.Count(k => k == "PlateModel"), "its elements have their drafts, read by value from the FEM chunk");
+        var expectedGuids = kinds.Select((k, i) => (k, i)).OrderBy(x => x.k == "NodeModel" ? 0 : x.k == "BeamModel" ? 1 : 2).ThenBy(x => x.i).Select(x => femGuids[x.i]).ToArray();
         var guids = (Guid[])modelType.GetMethod("ElementGuidsOf").Invoke(dev, new object[] { drafts });
         Check(guids.SequenceEqual(expectedGuids), "the GH GUIDs of its FEM elements in the order of the drafts");
         var byValue = GpcLegacyPayloads.Model(femm, 0.001, out _).Drafts;
@@ -372,12 +323,10 @@ internal static class P2dChecks
 
     private static void Construction()
     {
-        var model = ExampleRemake04.WithEndNodes(BridgeUtilityTests.Source(), out _);
-        model.Beams[0].Groups.Add(new GroupModel("A")); model.Beams[0].Groups.Add(new GroupModel("B"));
-        foreach (var b in model.Beams.Skip(1)) b.Groups.Add(new GroupModel("B"));
+        // P2CA (13/11/2026, user decision «Sì, congelale»): the former FEM model of the case (its first beam in the groups A and B, the others in B) by its
+        // payload frozen once (P2dPayloads, Fixtures/p2d-payloads).
         var modelType = T("Fem.GH_Model");
-        frozen?.Payload("p2d-construction-model", model.Units.ToString(), BridGHe.Common.Helpers.ModelArchive.Write(model));
-        var read = ReadGoo(modelType, Chunk(c => c.SetByteArray("Data", BridGHe.Common.Helpers.ModelArchive.Write(model))));
+        var read = ReadGoo(modelType, Chunk(c => c.SetByteArray("Data", P2dPayloads.Bytes("p2d-construction-model.bgha1"))));
         var input = (GpcModels.Conversion)Prop(read, "GpcInput"); var drafts = (GpcModelDrafts)Prop(read, "GpcDrafts");
         if (input.Drafts == null && drafts != null) input = input.WithDrafts(drafts);
         Check(input.Drafts != null && input.Drafts.Beams[0].Records.Groups.Count == 2, "the 0.3.0 model read by value carries the two groups of its first beam");

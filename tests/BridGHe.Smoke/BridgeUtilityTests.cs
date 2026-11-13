@@ -3,7 +3,6 @@ using System.Linq;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Diagnostics;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Common.MovingLoads;
 using Rhino.Geometry;
 using BridGHe.Common.Gpc;
@@ -16,21 +15,6 @@ internal static class BridgeUtilityTests
     {
         try { call(); } catch (ArgumentException) { checks++; return; }
         throw new InvalidOperationException("Expected rejection: " + message);
-    }
-    /// <param name="step">Step of the Q results (2 "Moving": a former moving-load step; P2T parity: 0 "", the only step GPC results have).</param>
-    internal static ModelModel Source(int step = 2, string stepType = "Moving")
-    {
-        var model = BridgeWorkflowTests.Source("Controlled result samples N mm", 100);
-        var q = new LoadCaseModel("Q", "Q"); model.LoadCases.Add(q);
-        foreach (var b in model.Beams)
-            foreach (var f in b.Results.OfType<BeamForceResultModel>().ToArray())
-                b.Results.Add(new BeamForceResultModel(q, f.Station * b.Length, step, stepType, false) { AxialForce = -50, Vx = 13, Vy = -17, Torque = 19, Mx = -23, My = -2 * f.My });
-        var node = new NodeModel("A", Point3d.Origin); node.Attributes.Add(new NodeRestraintAttributeModel(true, true, true, false, false, false));
-        node.Results.Add(new NodeReactResultModel(model.LoadCases[0]) { Force = new Vector3d(10, 20, 100), Moment = new Vector3d(1, 2, 3) });
-        node.Results.Add(new NodeReactResultModel(q, step, stepType) { Force = new Vector3d(50, 60, -120), Moment = new Vector3d(4, 5, 6) });
-        node.Results.Add(new NodeDisplResultModel(model.LoadCases[0]) { Displacement = new Vector3d(1, 2, -10), Rotation = new Vector3d(.1, .2, .3) });
-        node.Results.Add(new NodeDisplResultModel(q, step, stepType) { Displacement = new Vector3d(3, 4, 8), Rotation = new Vector3d(.4, .5, .6) });
-        model.AddElements(new[] { node }); return model;
     }
     /// <summary>P2T: <see cref="Source"/> built directly in GPC (no FEM model): beams B0 and B1 and the same samples of cases G and Q; Q is a
     /// plain case (step 0), the only step GPC results have. The GPC result mapper needs the beam nodes: the bearing node A (origin, start of

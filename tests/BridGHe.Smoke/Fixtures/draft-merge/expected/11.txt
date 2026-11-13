@@ -1,0 +1,1 @@
+ERROR LegacyBeamInTwoSuperElements: beam 4 is in the super elements 'SE' and 'SE-2'; a beam belongs to one super element.

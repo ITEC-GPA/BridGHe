@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using BridGHe.Common.Gpc;
 using BridGHe.Common.Gpc.Legacy;
-using BridGHe.Common.Models;
 using GPC.Model.Elements;
-using R = Rhino.Geometry;
 
 /// <summary>
 /// Chain E (e3, P2K): regression <c>gpc-draft-merge</c> (not native). The merge by GH GUID of two element drafts
@@ -17,8 +19,10 @@ using R = Rhino.Geometry;
 /// and attributes), loads in the stage-less "Dead" case, two loads equal within the other datum, Element IDs, super elements, bridge
 /// members and section states (always appended), releases, supports, taper, string group, output stations, restraints, springs,
 /// coordinate systems, rigid connections, temperatures, plate pressures, prestress, supports and load patch.
-/// <para><b>TRANSITIONAL (R6.6 lane R2b):</b> the oracle is still the draft of the former FEM merge; no capture holds these merges and their
-/// explicit expected values need the 0.3.0 merge rule of every attribute (to be written with P2 or a follow-up lane).</para>
+/// <para><b>P2CA (13/11/2026, user decision «Sì, congelale», about 07:00):</b> the oracle is the frozen fixture <c>Fixtures/draft-merge</c>,
+/// written once by the former FEM merge (the input drafts of every comparison in BGHGPC1 and the expected texts, with their SHA-256; generator:
+/// commit d922b94, <c>BRIDGHE_DRAFT_MERGE_FIXTURE=write:&lt;folder&gt; --regression gpc-draft-merge</c>, see its PROVENIENZA.md). The regression
+/// merges the drafts read from the fixture and compares the resolved text with the frozen one; no FEM class.</para>
 /// </summary>
 internal static class GpcDraftMergeChecks
 {
@@ -56,164 +60,52 @@ internal static class GpcDraftMergeChecks
         catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is InvalidOperationException) { return "ERROR " + e.Message; }
     }
 
-    /// <summary>P2CA (13/11/2026, user decision «Sì, congelale», about 07:00): the one-shot writer of the frozen fixture of this regression
-    /// (<c>BRIDGHE_DRAFT_MERGE_FIXTURE=write:&lt;new folder&gt;</c>): for every comparison the two input drafts in BGHGPC1 (data and records, each
-    /// distinct draft once, named by the first 16 hexadecimal digits of the SHA-256 of its bytes) and the expected text of the former merge. Before
-    /// a case is written, the merge of the drafts read back from their bytes must give the text of the merge of the drafts in memory. It needs the
-    /// FEM inputs and goes with them after the freeze.</summary>
-    private sealed class Freezer
+    /// <summary>P2CA (13/11/2026, user decision «Sì, congelale»): the folder of the frozen fixture (from the root of the BridGHe checkout, the
+    /// working folder of the Smoke runs).</summary>
+    internal static string Folder => Path.GetFullPath(Path.Combine("tests", "BridGHe.Smoke", "Fixtures", "draft-merge"));
+
+    private static string Sha(byte[] b) => Convert.ToHexString(SHA256.HashData(b));
+
+    /// <summary>The bytes of a file of the fixture, checked against its size and SHA-256.</summary>
+    private static byte[] Checked(string path, string bytes, string sha)
     {
-        private readonly string folder;
-        private readonly List<string> index = new() { "label\tkind\tfirst\tother\texpected\texpected_sha256\terror" };
-        private readonly List<string> drafts = new() { "id\tkind\tdata_bytes\tdata_sha256\trecords_bytes\trecords_sha256" };
-        private readonly HashSet<string> written = new(StringComparer.Ordinal);
-        internal Freezer(string folder)
-        {
-            this.folder = System.IO.Path.GetFullPath(folder);
-            if (System.IO.Directory.Exists(this.folder)) throw new InvalidOperationException("GPC DRAFT MERGE FIXTURE: the folder exists, a frozen fixture is never rewritten: " + this.folder);
-            System.IO.Directory.CreateDirectory(System.IO.Path.Combine(this.folder, "drafts")); System.IO.Directory.CreateDirectory(System.IO.Path.Combine(this.folder, "expected"));
-        }
-        private static string Sha(byte[] b) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(b ?? Array.Empty<byte>()));
-        private string Draft(string kind, (byte[] Data, byte[] Records) d)
-        {
-            string id = Sha((d.Data ?? Array.Empty<byte>()).Concat(d.Records ?? Array.Empty<byte>()).ToArray()).Substring(0, 16);
-            if (written.Add(id))
-            {
-                System.IO.File.WriteAllBytes(System.IO.Path.Combine(folder, "drafts", id + ".data"), d.Data);
-                if (d.Records != null) System.IO.File.WriteAllBytes(System.IO.Path.Combine(folder, "drafts", id + ".records"), d.Records);
-                drafts.Add($"{id}\t{kind}\t{d.Data.Length}\t{Sha(d.Data)}\t{(d.Records == null ? -1 : d.Records.Length)}\t{(d.Records == null ? "-" : Sha(d.Records))}");
-            }
-            return id;
-        }
-        internal void Add(string label, string kind, (byte[] Data, byte[] Records) first, (byte[] Data, byte[] Records) other, string expected, string fromBytes, string actual)
-        {
-            if (fromBytes != actual) throw new InvalidOperationException("GPC DRAFT MERGE FIXTURE (" + label + "): the drafts read back from their bytes merge to another text");
-            string a = Draft(kind, first), b = Draft(kind, other), name = index.Count.ToString("D2") + ".txt";
-            var text = System.Text.Encoding.UTF8.GetBytes(expected);
-            System.IO.File.WriteAllBytes(System.IO.Path.Combine(folder, "expected", name), text);
-            index.Add($"{label}\t{kind}\t{a}\t{b}\t{name}\t{Sha(text)}\t{expected.StartsWith("ERROR ", StringComparison.Ordinal)}");
-        }
-        internal void Close()
-        {
-            System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "index.tsv"), string.Join("\n", index) + "\n", new System.Text.UTF8Encoding(false));
-            System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "drafts.tsv"), string.Join("\n", drafts) + "\n", new System.Text.UTF8Encoding(false));
-            System.IO.File.WriteAllText(System.IO.Path.Combine(folder, ".gitattributes"), "*.data binary\n*.records binary\n*.txt -text\n*.tsv -text\n*.md -text\n.gitattributes -text\n", new System.Text.UTF8Encoding(false));
-            Console.WriteLine($"GPC DRAFT MERGE FIXTURE WRITE: {index.Count - 1} cases, {written.Count} distinct drafts in {folder}");
-        }
+        var b = File.ReadAllBytes(path);
+        if (b.Length.ToString(CultureInfo.InvariantCulture) != bytes || Sha(b) != sha) throw new Exception("GPC DRAFT MERGE FAIL: " + path + " differs from its size and SHA-256 in the fixture");
+        return b;
     }
 
     internal static void Regression()
     {
         int compared = 0, errors = 0;
-        string setting = Environment.GetEnvironmentVariable("BRIDGHE_DRAFT_MERGE_FIXTURE");
-        var frozen = setting != null && setting.StartsWith("write:", StringComparison.Ordinal) ? new Freezer(setting.Substring("write:".Length)) : null;
-        void Compare(string label, ElementModel first, ElementModel other)
+        // The drafts of the fixture (data and records in BGHGPC1), checked against drafts.tsv.
+        var drafts = new Dictionary<string, (byte[] Data, byte[] Records)>(StringComparer.Ordinal);
+        foreach (var c in File.ReadLines(Path.Combine(Folder, "drafts.tsv")).Skip(1).Where(l => l.Length > 0).Select(l => l.Split('\t')))
+            drafts.Add(c[0], (Checked(Path.Combine(Folder, "drafts", c[0] + ".data"), c[2], c[3]), c[4] == "-1" ? null : Checked(Path.Combine(Folder, "drafts", c[0] + ".records"), c[4], c[5])));
+        foreach (var c in File.ReadLines(Path.Combine(Folder, "index.tsv")).Skip(1).Where(l => l.Length > 0).Select(l => l.Split('\t')))
         {
-            string expected, actual;
-            if (first is NodeModel n)
+            string label = c[0], kind = c[1];
+            var text = File.ReadAllBytes(Path.Combine(Folder, "expected", c[4]));
+            if (Sha(text) != c[5]) throw new Exception("GPC DRAFT MERGE FAIL: the expected text of " + label + " differs from its SHA-256 in the fixture");
+            string expected = Encoding.UTF8.GetString(text);
+            var (x, y) = (drafts[c[2]], drafts[c[3]]);
+            // The merge of the two drafts read back from the fixture, resolved (the GPC merge of Build Model), against the frozen text of the former merge.
+            string actual = kind switch
             {
-                var guid = GpcBeamDrafts.FromFemm(n).Node.Guid; var merged = new NodeModel(n); merged.Merge(other);
-                expected = Resolved(() => { var d = GpcBeamDrafts.FromFemm(merged, guid); return (d.Node, null, null, d.Report); });
-                var x = GpcDraftArchive.Write(GpcBeamDrafts.FromFemm(n)); var y = GpcDraftArchive.Write(GpcBeamDrafts.FromFemm((NodeModel)other));
-                actual = Resolved(() => { var d = LegacyBuildModel.Merge(GpcBeamDrafts.FromFemm(n), GpcBeamDrafts.FromFemm((NodeModel)other)); return (d.Node, d.Records, null, d.Report); });
-                frozen?.Add(label, "node", x, y, expected, Resolved(() => { var d = LegacyBuildModel.Merge(GpcDraftArchive.ReadNode(x.Data, x.Records), GpcDraftArchive.ReadNode(y.Data, y.Records)); return (d.Node, d.Records, null, d.Report); }), actual);
-            }
-            else if (first is BeamModel b)
-            {
-                var guid = GpcBeamDrafts.FromFemm(b).Beam.Guid; var merged = new BeamModel(b); merged.Merge(other);
-                expected = Resolved(() => { var d = GpcBeamDrafts.FromFemm(merged, guid); return (d.Beam, d.Records, d.Bridge, d.Report); });
-                var x = GpcDraftArchive.Write(GpcBeamDrafts.FromFemm(b)); var y = GpcDraftArchive.Write(GpcBeamDrafts.FromFemm((BeamModel)other));
-                actual = Resolved(() => { var d = LegacyBuildModel.Merge(GpcBeamDrafts.FromFemm(b), GpcBeamDrafts.FromFemm((BeamModel)other)); return (d.Beam, d.Records, d.Bridge, d.Report); });
-                frozen?.Add(label, "beam", x, y, expected, Resolved(() => { var d = LegacyBuildModel.Merge(GpcDraftArchive.ReadBeam(x.Data, x.Records), GpcDraftArchive.ReadBeam(y.Data, y.Records)); return (d.Beam, d.Records, d.Bridge, d.Report); }), actual);
-            }
-            else
-            {
-                var p = (PlateModel)first; var guid = GpcBeamDrafts.FromFemm(p).Plate.Guid; var merged = new PlateModel(p); merged.Merge(other);
-                expected = Resolved(() => { var d = GpcBeamDrafts.FromFemm(merged, guid); return (d.Plate, d.Records, null, d.Report); });
-                var x = GpcDraftArchive.Write(GpcBeamDrafts.FromFemm(p)); var y = GpcDraftArchive.Write(GpcBeamDrafts.FromFemm((PlateModel)other));
-                actual = Resolved(() => { var d = LegacyBuildModel.Merge(GpcBeamDrafts.FromFemm(p), GpcBeamDrafts.FromFemm((PlateModel)other)); return (d.Plate, d.Records, null, d.Report); });
-                frozen?.Add(label, "plate", x, y, expected, Resolved(() => { var d = LegacyBuildModel.Merge(GpcDraftArchive.ReadPlate(x.Data, x.Records), GpcDraftArchive.ReadPlate(y.Data, y.Records)); return (d.Plate, d.Records, null, d.Report); }), actual);
-            }
+                "node" => Resolved(() => { var d = LegacyBuildModel.Merge(GpcDraftArchive.ReadNode(x.Data, x.Records), GpcDraftArchive.ReadNode(y.Data, y.Records)); return (d.Node, d.Records, null, d.Report); }),
+                "beam" => Resolved(() => { var d = LegacyBuildModel.Merge(GpcDraftArchive.ReadBeam(x.Data, x.Records), GpcDraftArchive.ReadBeam(y.Data, y.Records)); return (d.Beam, d.Records, d.Bridge, d.Report); }),
+                "plate" => Resolved(() => { var d = LegacyBuildModel.Merge(GpcDraftArchive.ReadPlate(x.Data, x.Records), GpcDraftArchive.ReadPlate(y.Data, y.Records)); return (d.Plate, d.Records, null, d.Report); }),
+                _ => throw new Exception("GPC DRAFT MERGE FAIL: unknown kind " + kind),
+            };
             if (expected != actual)
             {
-                var x = expected.Split('\n'); var y = actual.Split('\n');
-                int line = Enumerable.Range(0, Math.Min(x.Length, y.Length)).FirstOrDefault(i => x[i] != y[i], -1);
-                throw new Exception($"GPC DRAFT MERGE FAIL ({label}): " + (line < 0 ? $"{x.Length} / {y.Length} lines" : $"former '{x[line]}' / GPC '{y[line]}'"));
+                var e = expected.Split('\n'); var a = actual.Split('\n');
+                int line = Enumerable.Range(0, Math.Min(e.Length, a.Length)).FirstOrDefault(i => e[i] != a[i], -1);
+                throw new Exception($"GPC DRAFT MERGE FAIL ({label}): " + (line < 0 ? $"{e.Length} / {a.Length} lines" : $"former '{e[line]}' / GPC '{a[line]}'"));
             }
-            compared++; if (expected.StartsWith("ERROR ")) errors++;
+            if ((c[6] == "True") != expected.StartsWith("ERROR ", StringComparison.Ordinal)) throw new Exception("GPC DRAFT MERGE FAIL: the error flag of " + label + " differs from its text");
+            compared++; if (expected.StartsWith("ERROR ", StringComparison.Ordinal)) errors++;
         }
-        var q = new LoadCaseModel("2", "Q"); var t = new LoadCaseModel("3", "T"); var dead = new LoadCaseModel(LoadCaseModel.Dead);
-        // Nodes.
-        var node = new NodeModel("7", new R.Point3d(1, 2, 3));
-        node.Attributes.Add(new NodeRestraintAttributeModel(true, true, true, false, false, false)); node.Attributes.Add(new ElementIdAttributeModel("N1"));
-        node.Loads.Add(new NodeForceLoadModel(q, new R.Vector3d(0, 0, -10))); node.Loads.Add(new NodeForceLoadModel(dead, new R.Vector3d(1, 0, 0)));
-        node.Groups.Add(new GroupModel("Bearings"));
-        Compare("node with itself", node, node);
-        NodeModel Branch(NodeModel from, Action<NodeModel> change) { var c = new NodeModel(from); change(c); return c; }
-        var nodeA = Branch(node, c => { c.Loads.Add(new NodeMomentLoadModel(q, new R.Vector3d(0, 5, 0))); c.Attributes.Add(new RigidConnectionAttributeModel(new R.Point3d(1, 2, 4))); c.Groups.Add(new GroupModel("A")); });
-        var nodeB = Branch(node, c =>
-        {
-            c.Loads.Add(new NodeForceLoadModel(q, new R.Vector3d(0, 0, -3))); c.Loads.Add(new NodeForceLoadModel(q, new R.Vector3d(0, 0, -3)));
-            c.Loads.Add(new NodeTemperatureLoadModel(t, 15, NodeTemperatureLoadModel.LoadType.Fixed)); c.Attributes.Add(new NodeStiffnessAttributeModel(1, 2, 3, 0, 0, 0));
-            c.Attributes.Add(new NodeCoordinateAttributeModel(new R.Plane(new R.Point3d(1, 2, 3), new R.Vector3d(1, 1, 0), new R.Vector3d(-1, 1, 0))));
-            c.Attributes.Add(new ElementIdAttributeModel("N2")); c.Attributes.Add(new RigidConnectionAttributeModel(new R.Point3d(1, 2, 5))); c.Groups.Add(new GroupModel("B")); c.Groups.Add(new GroupModel("A"));
-        });
-        Compare("node branches", nodeA, nodeB); Compare("node branches reversed", nodeB, nodeA); Compare("node branch with its source", nodeA, node);
-        // Beams.
-        var steel = new MaterialModel("S355") { Name = "S355", Modulus = 210000, PoissonRatio = 0.3, UsePoisson = true, Density = 7.85e-9 };
-        var property = new BeamPropertyModel("PI") { Name = "PI", Material = steel, Section = new SectionModel { Name = "I", SectionType = SectionModel.SectionTypes.I, D = 500, B1 = 300, B2 = 100, T1 = 20, T2 = 10, T3 = 5 }, PropertyType = BeamPropertyType.Beam };
-        var beam = new BeamModel(new R.Point3d(0, 0, 0), new R.Point3d(10000, 0, 0), property, new GroupModel("Deck"), 10) { BeamId = "4" };
-        beam.Attributes.Add(new ElementIdAttributeModel("B1")); beam.Attributes.Add(new SuperElementAttributeModel("SE"));
-        beam.Loads.Add(new BeamDistributedLoadModel(q, new() { LoadSchema = BeamDistributedLoadModel.LoadSchema.Uniform, PA = -2, LoadDirection = BeamDistributedLoadModel.LoadDirection.Y }, BeamDistributedLoadModel.LoadType.Force));
-        beam.Loads.Add(new BeamPointLoadModel(dead, new() { P = new R.Vector3d(0, -5, 0), A = 0.25 }, BeamPointLoadModel.LoadType.Force));
-        Compare("beam with itself", beam, beam);
-        BeamModel BeamBranch(Action<BeamModel> change) { var c = new BeamModel(beam); change(c); return c; }
-        var releases = new BeamReleasesAttributeModel.AttributeData { TransNode1 = new[] { false, false, false }, TransNode2 = new[] { false, false, false }, RotNode1 = new[] { false, false, true }, RotNode2 = new[] { false, false, true },
-            TransN1Partial = R.Vector3d.Zero, TransN2Partial = R.Vector3d.Zero, RotN1Partial = R.Vector3d.Zero, RotN2Partial = R.Vector3d.Zero };
-        var beamA = BeamBranch(c =>
-        {
-            c.Loads.Add(new BeamPreLoadModel(t, -1e-4, BeamPreLoadModel.LoadType.Strain)); c.Attributes.Add(new BeamReleasesAttributeModel(releases));
-            c.Attributes.Add(new BeamOutputStationsModel(new BeamOutputStationsModel.AttributeData { MinimumNumberOfStations = 9 }));
-            c.Attributes.Add(new BeamTaperAttributeModel(new BeamTaperAttributeModel.AttributeData { NFromX = 2, NToX = 1 })); c.Groups.Add(new GroupModel("A"));
-        });
-        var beamB = BeamBranch(c =>
-        {
-            c.Loads.Add(new BeamGradientLoadModel(t, new() { Axis2 = 0.5 })); c.Loads.Add(new BeamDistributedLoadModel(q, new() { LoadSchema = BeamDistributedLoadModel.LoadSchema.Uniform, PA = -1, LoadDirection = BeamDistributedLoadModel.LoadDirection.Z }, BeamDistributedLoadModel.LoadType.Force));
-            c.Attributes.Add(new BeamReleasesAttributeModel(releases)); c.Attributes.Add(new ElementIdAttributeModel("B2"));
-            c.Attributes.Add(new BeamOutputStationsModel(new BeamOutputStationsModel.AttributeData { MinimumNumberOfStations = 13 }));
-            c.Attributes.Add(new BeamTaperAttributeModel(new BeamTaperAttributeModel.AttributeData { NFromX = 2, NToX = 1 }));
-            c.Attributes.Add(new BeamStringGroupAttributeModel(new BeamStringGroupAttributeModel.AttributeData { ID = 3 }));
-            c.Attributes.Add(new BeamSupportAttributeModel(new BeamSupportAttributeModel.AttributeData { SpringType = BeamSupportAttributeModel.SpringType.Simple, Stiffness = 3, SimpleSpringType = BeamSupportAttributeModel.SimpleSpringTypes.TensionCompression,
-                LocalAxisDirection = BeamSupportAttributeModel.LocalAxisDirection.positive2Axis, SpringTensionOrientation = BeamSupportAttributeModel.SpringTensionOrientation.BeamLocalAxis }));
-            c.Groups.Add(new GroupModel("B"));
-        });
-        Compare("beam branches", beamA, beamB); Compare("beam branches reversed", beamB, beamA); Compare("beam branch with its source", beamA, beam);
-        var up = new R.Vector3d(0, 0, 1);
-        var member = BeamBranch(c => c.Attributes.Add(new BridgeMemberAttributeModel(new BridgeMemberMetadata("Girder:1:1", BridGHe.Common.Geometry.BridgeMemberFamily.Girder, 1, 1, 1, 0, 10000, up, "G"))));
-        Compare("beam with a bridge member, with itself", member, member);
-        var state = BeamBranch(c => c.Attributes.Add(new BridgeSectionStateAttributeModel(new BridgeSectionAssignment(BridGHe.Common.Checks.BridgeActionBehavior.LongTerm, false, 18, "Q", BridgeSectionAssignment.Signature(property)))));
-        Compare("beam with a section state, with itself", state, state);
-        Compare("beam in two super elements", beam, BeamBranch(c => { c.Attributes.Clear(); c.Attributes.Add(new SuperElementAttributeModel("SE-2")); }));
-        Compare("beam with two release sets", beamA, BeamBranch(c => c.Attributes.Add(new BeamReleasesAttributeModel(new BeamReleasesAttributeModel.AttributeData { TransNode1 = new[] { true, false, false }, TransNode2 = new[] { false, false, false },
-            RotNode1 = new[] { false, false, false }, RotNode2 = new[] { false, false, false }, TransN1Partial = R.Vector3d.Zero, TransN2Partial = R.Vector3d.Zero, RotN1Partial = R.Vector3d.Zero, RotN2Partial = R.Vector3d.Zero }))));
-        Compare("beam with two tapers", beamA, BeamBranch(c => c.Attributes.Add(new BeamTaperAttributeModel(new BeamTaperAttributeModel.AttributeData { NFromY = 3 }))));
-        Compare("beam with two prestrains in a case", beamA, BeamBranch(c => c.Loads.Add(new BeamPreLoadModel(t, -2e-4, BeamPreLoadModel.LoadType.Strain))));
-        // Plates.
-        var shell = new PlatePropertyModel("1") { Name = "Shell", Material = new MaterialModel("C") { Name = "C30", Modulus = 33000, PoissonRatio = 0.2 }, PropertyType = PlatePropertyType.ShellThin, MembraneThickness = 250, BendingThickness = 250 };
-        var plate = new PlateModel("5", new[] { new R.Point3d(0, 0, 0), new R.Point3d(1000, 0, 0), new R.Point3d(1000, 1000, 0) }, shell, new[] { new GroupModel("Slab") });
-        plate.Loads.Add(new PlatePressureModel(q, new() { P = new R.Vector3d(0, 0, -5) })); plate.Loads.Add(new PlatePressureModel(dead, new() { P = new R.Vector3d(0, 0, -1) }));
-        plate.Attributes.Add(new ElementIdAttributeModel("P1"));
-        Compare("plate with itself", plate, plate);
-        PlateModel PlateBranch(Action<PlateModel> change) { var c = new PlateModel(plate); change(c); return c; }
-        var plateA = PlateBranch(c => { c.Attributes.Add(new PlateSupportAttributeModel(new PlateSupportAttributeModel.AttributeData { Stiffness = 2 })); c.Groups.Add(new GroupModel("A")); });
-        var plateB = PlateBranch(c =>
-        {
-            c.Attributes.Add(new PlateSupportAttributeModel(new PlateSupportAttributeModel.AttributeData { Stiffness = 2 })); c.Attributes.Add(new ElementIdAttributeModel("P2"));
-            c.Attributes.Add(new LoadPatchTypeAttributeModel(new LoadPatchTypeAttributeModel.AttributeData { PatchType = LoadPatchTypeAttributeModel.PatchType.Auto1, SelectedEdges = new[] { 1, 3, 0, 0 }, Weights = new[] { 1.0, 0, 0, 0 } }));
-            c.Loads.Add(new PlatePressureModel(q, new() { P = new R.Vector3d(0, 0, -2) })); c.Loads.Add(new PlatePreStressModel(t, new() { LocalPressure = new R.Vector3d(1, 2, 0) }));
-        });
-        Compare("plate branches", plateA, plateB); Compare("plate branches reversed", plateB, plateA);
-        frozen?.Close();
+        if (compared != 17) throw new Exception("GPC DRAFT MERGE FAIL: " + compared + " cases in the fixture, 17 expected");
         Console.WriteLine($"GPC DRAFT MERGE PASS: {compared} merges of node, beam and plate drafts equal to the drafts of the former merge after the resolution ({errors} with the same error)");
     }
 }

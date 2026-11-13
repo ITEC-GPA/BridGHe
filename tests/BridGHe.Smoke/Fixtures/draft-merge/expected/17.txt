@@ -1,0 +1,17 @@
+name 5
+groups Slab
+loads 10F48C5AB1FC5288228A759D96DC61C5EE6BAC708727FA51C08A2454D12549F2
+attributes F1F341A178748900D04E2E1EE91E7FCF51CDC8115473DF31C5D8B8BB6A742A48
+attribute ids 1
+attributes max 1
+physical 6C1BA1FE8DC257E68CBC6CF7A834200ABD331BD98AAB7745E9810F3DD0E9B207
+offset 
+property 09BB991BBBF5CCE6A05A1799593922592E43F85AF3799C6D628BB3A0C0C1F0AF
+record groups Slab,A
+record labels P1,P2
+record super elements 
+record counts 0 0 0
+record loads PlatePressureModel:Q,PlatePressureModel:Dead,PlatePressureModel:Q,PlatePreStressModel:T,PlatePressureModel:Q
+warnings Straus7 allows assigning only one single group to the plate 1 | Element 5: only the first Element ID is kept
+element warnings Shell:1:Straus7 allows assigning only one single group to the plate {0} | Shell:1:Element 5: only the first Element ID is kept
+carried Plate support face Top (the former exporter wrote the -Z face)=1

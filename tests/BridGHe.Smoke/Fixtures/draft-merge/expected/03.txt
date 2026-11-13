@@ -1,0 +1,12 @@
+name 7
+groups Bearings,B,A
+loads FD936D80DC24200128C9A524A833DE2EEFA07743ADE7EBBA265721BC192D9069
+attributes 5DFA159F47F0A0FA5A62D15262168A9202F1855BF8AE9EC1F9EA328F00588413
+attribute ids 1,3,4
+attributes max 4
+position CE8A8DB1CE051ED2EB6745D2A0AF3525FE5AD1CB6BBD8F3D0901250FBE7DB6AF
+restraints B9CE66C17E3FBBAEF5301B4CC7CA9B799A78C741180FE063E912283F6A0AA35B
+physical 250BEA1BBC06ACA1BA42D89693081FE63F9042483F5F50809146E8ACB032F061
+warnings Node 7: spring on a restrained DOF Tx (the restraint governs) | Node 7: spring on a restrained DOF Ty (the restraint governs) | Node 7: spring on a restrained DOF Tz (the restraint governs) | Element 7: only the first Element ID is kept | Node 7: temperature type Fixed was not exported (reference temperature used, as before)
+element warnings Node:1:Node 7: spring on a restrained DOF Tx (the restraint governs) | Node:1:Node 7: spring on a restrained DOF Ty (the restraint governs) | Node:1:Node 7: spring on a restrained DOF Tz (the restraint governs) | Node:1:Element 7: only the first Element ID is kept | Node:1:Node 7: temperature type Fixed was not exported (reference temperature used, as before)
+carried 
