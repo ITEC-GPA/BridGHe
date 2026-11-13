@@ -205,6 +205,12 @@ internal static class P2ceReader
             var args = new object[] { input, null };
             bool now = (bool)cast.Invoke(null, args);
             string fresh = now ? (args[1] == null ? "invalid" : Recipe(args[1])) : "refused";
+            // The text: the former text of the FEM section of the cast = GpcSectionCasts.FormerText of the recipe.
+            if (before && args[1] != null)
+            {
+                string oldText = goo.ToString(), newText = (string)casts.GetMethod("FormerText", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).Invoke(null, new[] { args[1] });
+                if (oldText != newText) failures.Add("section cast " + label + ": text «" + oldText.Replace((char)10, '|') + "» / «" + newText.Replace((char)10, '|') + "»");
+            }
             if (before != now || old != fresh) failures.Add("section cast " + label + ": FEM " + before + " «" + old.Replace((char)10, ' ') + "» / GPC " + now + " «" + fresh.Replace((char)10, ' ') + "»");
         }
         foreach (var t in new[] { "CHS200x10", "chs200x10", "CHS219.1x8", "SHS150x8", "RHS200x100x6", "RHS200x100x6x8", "RHS200x100", "I500x200x220x16x18x10", "I500x200",

@@ -74,5 +74,32 @@ namespace BridGHe.Grasshopper.Helpers
             }
             return true;
         }
+        // The names of the former mirror types (MirrorTypes: Top, Bottom, Left, Right) by the integer of the recipe.
+        private static readonly string[] MirrorNames = { "Top", "Bottom", "Left", "Right" };
+
+        /// <summary>The former text of the FEM section of a cast (<c>GH_BeamSection.ToString</c> on its FEM section), from the same numbers of its
+        /// recipe: the kind and the dimensions of the former layout, the mirror and its gap.</summary>
+        internal static string FormerText(LegacySectionRecipe g)
+        {
+            string text;
+            bool mirrored = g.Mirror >= 0 && g.Mirror < MirrorNames.Length;
+            if (g.Kind == BridgeSectionKind.GenericShapes)
+                text = string.Format("{0} {1} shapes", "GenericShapes", g.Shapes?.Count ?? 0);
+            else
+                text = g.Kind switch
+                {
+                    BridgeSectionKind.HollowCircle => $"HollowCircle: {g.D}x{g.T}",
+                    BridgeSectionKind.HollowRectangle => $"HollowRectangle: {g.D}x{g.B}x{g.T1}x{g.T2}",
+                    BridgeSectionKind.C => $"CSection: {g.D}x{g.B}x{g.T1}x{g.T2}",
+                    BridgeSectionKind.Angle => mirrored && g.Mirror == MirrorLeft ? $"DoubleAngle: {g.D}x{g.B}x{g.T1}x{g.T2}x{g.MirrorGapA}" : $"Angle: {g.D}x{g.B}x{g.T1}x{g.T2}",
+                    BridgeSectionKind.T => $"TSection: {g.D}x{g.B}x{g.T1}x{g.T2}",
+                    BridgeSectionKind.I => $"ISection: {g.D}x{g.T3}x{g.B1}x{g.T1}x{g.B2}x{g.T2}x{g.R}",
+                    BridgeSectionKind.SolidCircle => $"SolidCircle: {g.D}",
+                    BridgeSectionKind.SolidRectangle => $"SolidRectangle: {g.D}x{g.B}",
+                    _ => $"{g.Kind}: {Math.Max(g.B1, Math.Max(g.B2, g.B))}x{g.D}",
+                };
+            if (mirrored) text += $"\nMirror: {MirrorNames[g.Mirror]}, Gap: {g.MirrorGapA}";
+            return text;
+        }
     }
 }
