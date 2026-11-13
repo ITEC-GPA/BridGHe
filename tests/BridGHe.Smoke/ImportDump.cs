@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text;
 using BridGHe.Common.Gpc;
 using BridGHe.Common.Gpc.Legacy;
-using BridGHe.Common.Models;
 using GPC.Model.Models;
 
 /// <summary>
@@ -21,8 +20,7 @@ using GPC.Model.Models;
 /// <para>R6.6 lane R3 (11/11): every model is read as bytes (<see cref="R3LegacyCorpus"/>), with no FEM class: the captures and the captured
 /// examples from their files, the node, beam and plate data and the refused duplicates from their frozen payloads (the bytes the FEM writer
 /// gave for the former node, beam and plate data, same ids), the former section-state signatures from the fixture
-/// (<see cref="R3LegacyCorpus.Signatures"/>). The FEM builder <see cref="BeamData"/> is kept for its other
-/// callers only. P2CA (13/11/2026, U3): the examples 01–10 built in memory (<c>memory-*</c>, the FEM catalogue written by the FEM writer, no
+/// (<see cref="R3LegacyCorpus.Signatures"/>). P2CC (13/11/2026): the FEM beam builder went too (its callers read the frozen beams-Knm). P2CA (13/11/2026, U3): the examples 01–10 built in memory (<c>memory-*</c>, the FEM catalogue written by the FEM writer, no
 /// frozen payload) are retired by name (<see cref="P2rRetired.Checks"/>); the node builder went with the FEM writer of the fixtures.</para>
 /// </summary>
 internal static class ImportDump
@@ -63,73 +61,6 @@ internal static class ImportDump
         foreach (var item in R3LegacyCorpus.Fixtures()) Item(item);
         Console.WriteLine($"IMPORT DUMP: {written} conversions written to {output} ({failed} with the same kind of error text)");
         return 0;
-    }
-
-    /// <summary>A FEM model with the beam data of the e3 corpus (see <see cref="Run"/>), coordinates in the given units; with
-    /// <paramref name="duplicate"/>: the second beam also has a second record of that kind (a conversion error). Transitional (R3): the
-    /// regressions of lane R3 read its frozen payloads (<c>beams-*</c>, <c>beams-duplicate-*</c>); kept for the other callers until P2.</summary>
-    internal static ModelModel BeamData(ModelModel.ModelUnits units, string duplicate)
-    {
-        var steel = new MaterialModel("S355") { Name = "S355", Modulus = 210000, PoissonRatio = 0.3, UsePoisson = true, Density = 7.85e-9, ThermalExpansion = 1.2e-5 };
-        var i = new SectionModel { Name = "I", SectionType = SectionModel.SectionTypes.I, D = 0.5, B1 = 0.3, B2 = 0.1, T1 = 0.02, T2 = 0.01, T3 = 0.005 };
-        var property = new BeamPropertyModel("PI") { Name = "PI", Material = steel, Section = i, PropertyType = BeamPropertyType.Beam };
-        var q = new LoadCaseModel("2", "Q"); var t = new LoadCaseModel("3", "T"); var dead = new LoadCaseModel(LoadCaseModel.Dead);
-        var p = new[] { new Rhino.Geometry.Point3d(0, 0, 0), new Rhino.Geometry.Point3d(10, 0, 0), new Rhino.Geometry.Point3d(20, 5, 1), new Rhino.Geometry.Point3d(20, 5, 9) };
-        var deck = new GroupModel("Deck"); var span = new GroupModel("Span") { Parent = deck }; var other = new GroupModel("Other");
-        var beams = new[] { new BeamModel(p[0], p[1], property, deck, 0) { BeamId = "1", Offset = new Rhino.Geometry.Vector2d(0.05, -0.02) },
-            new BeamModel(p[1], p[2], property, span, 15) { BeamId = "2" }, new BeamModel(p[2], p[3], property, deck, 30) { BeamId = "3" } };
-        // Beam 1: two groups, two Element IDs before a release set, stations, taper, string group, supports, a super element twice, a bridge member.
-        beams[0].Groups.Add(other);
-        beams[0].Attributes.Add(new ElementIdAttributeModel("B-A")); beams[0].Attributes.Add(new ElementIdAttributeModel("B-B"));
-        var releases = new BeamReleasesAttributeModel.AttributeData { TransNode1 = new[] { false, true, false }, TransNode2 = new[] { false, false, false }, RotNode1 = new[] { false, false, true },
-            RotNode2 = new[] { true, false, false }, TransN1Partial = new Rhino.Geometry.Vector3d(0, 50, 0), TransN2Partial = Rhino.Geometry.Vector3d.Zero, RotN1Partial = Rhino.Geometry.Vector3d.Zero, RotN2Partial = new Rhino.Geometry.Vector3d(7, 0, 0) };
-        beams[0].Attributes.Add(new BeamReleasesAttributeModel(releases));
-        beams[0].Attributes.Add(new BeamOutputStationsModel(new BeamOutputStationsModel.AttributeData { MinimumNumberOfStations = 9 }));
-        beams[0].Attributes.Add(new BeamOutputStationsModel(new BeamOutputStationsModel.AttributeData { MinimumNumberOfStations = 11 }));
-        beams[0].Attributes.Add(new BeamTaperAttributeModel(new BeamTaperAttributeModel.AttributeData { NFromX = 2, NToX = 1.5 }));
-        beams[0].Attributes.Add(new BeamStringGroupAttributeModel(new BeamStringGroupAttributeModel.AttributeData { ID = 7 }));
-        beams[0].Attributes.Add(new BeamStringGroupAttributeModel(new BeamStringGroupAttributeModel.AttributeData { ID = 8 }));
-        var support = new BeamSupportAttributeModel.AttributeData { SpringType = BeamSupportAttributeModel.SpringType.Simple, Stiffness = 3, Gap = 0.001, SimpleSpringType = BeamSupportAttributeModel.SimpleSpringTypes.CompressionOnly,
-            LocalAxisDirection = BeamSupportAttributeModel.LocalAxisDirection.positive2Axis, SpringTensionOrientation = BeamSupportAttributeModel.SpringTensionOrientation.BeamLocalAxis };
-        beams[0].Attributes.Add(new BeamSupportAttributeModel(support));
-        beams[0].Attributes.Add(new BeamSupportAttributeModel(new BeamSupportAttributeModel.AttributeData { SpringType = BeamSupportAttributeModel.SpringType.Simple, Stiffness = 5, Gap = 0, SimpleSpringType = BeamSupportAttributeModel.SimpleSpringTypes.TensionCompression, LocalAxisDirection = BeamSupportAttributeModel.LocalAxisDirection.negative1Axis, SpringTensionOrientation = BeamSupportAttributeModel.SpringTensionOrientation.BeamLocalAxis }));
-        beams[0].Attributes.Add(new SuperElementAttributeModel("SE-1")); beams[0].Attributes.Add(new SuperElementAttributeModel("SE-1"));
-        var up = new Rhino.Geometry.Vector3d(0, 0, 1);
-        beams[0].Attributes.Add(new BridgeMemberAttributeModel(new BridgeMemberMetadata("Girder:1:1", BridGHe.Common.Geometry.BridgeMemberFamily.Girder, 1, 1, 1, 0, 10, up, "G-1")));
-        // Beam 2: two section states (the first current), a label after them, every load kind.
-        beams[1].Attributes.Add(new BridgeSectionStateAttributeModel(new BridgeSectionAssignment(BridGHe.Common.Checks.BridgeActionBehavior.LongTerm, true, 18.5, "Q", BridgeSectionAssignment.Signature(property))));
-        beams[1].Attributes.Add(new BridgeSectionStateAttributeModel(new BridgeSectionAssignment(BridGHe.Common.Checks.BridgeActionBehavior.ShortTerm, false, 6, "", "old")));
-        beams[1].Attributes.Add(new ElementIdAttributeModel("B-C"));
-        beams[1].Attributes.Add(new BridgeMemberAttributeModel(new BridgeMemberMetadata("Girder:1:1", BridGHe.Common.Geometry.BridgeMemberFamily.Girder, 1, 1, 1, 10, 21, up, "G-2")));
-        beams[1].Attributes.Add(new SuperElementAttributeModel("SE-1"));
-        beams[1].Loads.Add(new BeamDistributedLoadModel(q, new() { LoadSchema = BeamDistributedLoadModel.LoadSchema.Uniform, PA = -2, LoadDirection = BeamDistributedLoadModel.LoadDirection.Y }, BeamDistributedLoadModel.LoadType.Force));
-        beams[1].Loads.Add(new BeamDistributedLoadModel(q, new() { LoadSchema = BeamDistributedLoadModel.LoadSchema.Keystone, PA = 1, PB = 3, A = 0.1, B = 0.2, LoadDirection = BeamDistributedLoadModel.LoadDirection.Gravity_Projected,
-            CoordinateSystem = new CoordinateSystemModel("G") }, BeamDistributedLoadModel.LoadType.Force));
-        beams[1].Loads.Add(new BeamDistributedLoadModel(t, new() { LoadSchema = BeamDistributedLoadModel.LoadSchema.Triangular, P1 = 1, PA = 4, P2 = 2, A = 0.3, LoadDirection = BeamDistributedLoadModel.LoadDirection.Z }, BeamDistributedLoadModel.LoadType.Moment));
-        beams[1].Loads.Add(new BeamPreLoadModel(t, -2e-4, BeamPreLoadModel.LoadType.Strain));
-        beams[1].Loads.Add(new BeamPointLoadModel(q, new() { P = new Rhino.Geometry.Vector3d(0, -5, 1), A = 0.4 }, BeamPointLoadModel.LoadType.Force));
-        beams[1].Loads.Add(new BeamPointLoadModel(dead, new() { P = new Rhino.Geometry.Vector3d(2, 0, 0), A = 0.7 }, BeamPointLoadModel.LoadType.Moment));
-        beams[1].Loads.Add(new BeamPreLoadModel(q, 12, BeamPreLoadModel.LoadType.Tension));
-        beams[1].Loads.Add(new BeamGradientLoadModel(t, new() { Axis1 = 0.5, Axis2 = -0.25 }));
-        beams[1].Loads.Add(new CompositeBeamSlabStrainModel(t, new()));
-        beams[1].Loads.Add(new BeamDistributedLoadModel(dead, new() { LoadSchema = BeamDistributedLoadModel.LoadSchema.TriangularEnds_Keystone, P1 = 1, PA = 2, PB = 3, P2 = 4, A = 0.2, B = 0.3,
-            LoadDirection = BeamDistributedLoadModel.LoadDirection.X, CoordinateSystem = new CoordinateSystemModel("G") }, BeamDistributedLoadModel.LoadType.Force));
-        // Beam 3: a stale section state and a super element of its own.
-        beams[2].Attributes.Add(new BridgeSectionStateAttributeModel(new BridgeSectionAssignment(BridGHe.Common.Checks.BridgeActionBehavior.Shrinkage, false, 9, "", "old")));
-        beams[2].Attributes.Add(new SuperElementAttributeModel("SE-2"));
-        switch (duplicate)
-        {
-            case "releases": beams[1].Attributes.Add(new BeamReleasesAttributeModel(releases)); beams[1].Attributes.Add(new BeamReleasesAttributeModel(new BeamReleasesAttributeModel.AttributeData { TransNode1 = new[] { true, false, false }, TransNode2 = new[] { false, false, false }, RotNode1 = new[] { false, false, false }, RotNode2 = new[] { false, true, false }, TransN1Partial = Rhino.Geometry.Vector3d.Zero, TransN2Partial = Rhino.Geometry.Vector3d.Zero, RotN1Partial = Rhino.Geometry.Vector3d.Zero, RotN2Partial = Rhino.Geometry.Vector3d.Zero })); break;
-            case "taper": beams[1].Attributes.Add(new BeamTaperAttributeModel(new BeamTaperAttributeModel.AttributeData { NFromX = 2 })); beams[1].Attributes.Add(new BeamTaperAttributeModel(new BeamTaperAttributeModel.AttributeData { NFromY = 2 })); break;
-            case "super-elements": beams[1].Attributes.Add(new SuperElementAttributeModel("SE-3")); break;
-            case "members": beams[1].Attributes.Add(new BridgeMemberAttributeModel(new BridgeMemberMetadata("Girder:1:2", BridGHe.Common.Geometry.BridgeMemberFamily.Girder, 1, 2, 1, 0, 10, up, "G-3"))); break;
-            case "prestrain": beams[1].Loads.Add(new BeamPreLoadModel(t, 3e-4, BeamPreLoadModel.LoadType.Strain)); break;
-        }
-        var nodes = p.Select((x, k) => new NodeModel((k + 1).ToString(), x)).ToArray();
-        nodes[0].Attributes.Add(new NodeRestraintAttributeModel(true, true, true, true, true, true));
-        var model = new ModelModel(units);
-        model.AddElements(nodes.Cast<ElementModel>().Concat(beams));
-        return model;
     }
 
     private static string B(double v) => BitConverter.DoubleToInt64Bits(v).ToString("X16");

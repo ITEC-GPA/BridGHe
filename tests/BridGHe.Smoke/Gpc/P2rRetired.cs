@@ -113,6 +113,13 @@ internal static class P2rRetired
     {
         [("gpc-only-models", "in memory: Bridge Model Audit (a homogenised beam beside a plate, far away)")] =
             "P2F: the in-memory model of the case had no nodes and was refused («Nessun nodo FEM entro tolleranza»); it is given its nodes, so the captured refusal is not the case any more (" + Decision + ")",
+        // P2CC (13/11/2026, user decision «Congela», 12:35): the two cases on the kN-m beam data of the former tests; read by value from its frozen
+        // payload (beams-Knm) the third beam's section state is not marked stale as the conversion of the FEM value marked it (the former signature of
+        // the FEM property), so the outputs differ: retired by name, not widened (the user's choice); the cases run on the frozen reading.
+        [("gpc-only-models", "in memory: Bridge Phase Model (kN-m)")] =
+            "P2CC: the kN-m beam data read by value from its frozen payload (beams-Knm): the section state of beam G14 is not stale as the FEM conversion marked it; the outputs differ (" + CutDecision + ")",
+        [("gpc-only-models", "in memory: Bridge Model Audit (kN-m with itself as a phase model)")] =
+            "P2CC: the kN-m beam data read by value from its frozen payload (beams-Knm): the section state of beam G14 is not stale as the FEM conversion marked it; the outputs differ (" + CutDecision + ")",
     };
 
     /// <summary>P2F (12/11/2026, rule U3): the 8 keys of the P2R replay capture whose raw field (the outputs with their identities) was
@@ -148,6 +155,9 @@ internal static class P2rRetired
         ("gpc-only-models", "in memory: Build Model (a stage)"),
         ("gpc-only-properties", "in memory: Beam Override (A08: a beam with a current section state, another property (the state stale))"),
         ("gpc-only-properties", "in memory: Beam Property Override (A08: a beam with a current section state, another property (the state stale))"),
+        // P2CC (user decision «Congela»): the audits on the examples 02 and 03 by their frozen payloads (lane3d-payloads) read by value.
+        ("gpc-only-models", "in memory: Bridge Model Audit (tolerance above the beam lengths)"),
+        ("gpc-only-models", "in memory: Bridge Model Audit (phases of other units and geometry)"),
     };
 
     /// <summary>P2CA (13/11/2026, coordinator decision 1, rule U3): the keys of the P2R replay capture whose input is now built with its GPC twin (no FEM
