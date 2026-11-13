@@ -460,6 +460,8 @@ internal static class GpcDraftCapture
                     n = r.ReadInt32(); e.Text = r.ReadBytes(n);
                     reference.Add(key, e);
                 }
+                // P2CF (13/11, RT-02): the keys retired by name against the capture, before any exemption.
+                P2rRetired.ValidateCapture(source, reference.ContainsKey);
                 // R6.3: the digests of the reference mapped to the fingerprints of their GPC properties (declared signature rule).
                 foreach (var p in reference)
                 {
@@ -530,7 +532,8 @@ internal static class GpcDraftCapture
             }
             seen.Add(key);
             // P2R (U3, 12/11): an entry retired by name (P2rRetired.CaptureSources) is not compared, seen or not.
-            if (P2rRetired.CaptureSources(key) is string retiredBecause) { Count("retired"); declaredReasons[retiredBecause] = declaredReasons.GetValueOrDefault(retiredBecause) + 1; return; }
+            // P2CF (13/11, RT-02): by the full key alone; a key not listed is compared (a new one fails).
+            if (P2rRetired.CaptureSources(source, key) is string retiredBecause) { Count("retired"); declaredReasons[retiredBecause] = declaredReasons.GetValueOrDefault(retiredBecause) + 1; return; }
             if (!reference.TryGetValue(key, out var e))
             {
                 // A content key that a declared digest moved: compared with the captured entry of the former key.
@@ -573,8 +576,12 @@ internal static class GpcDraftCapture
             }
             // P2R (U3, 12/11; before, P2S of 7/11 for the five examples of ExampleRemake04): the entries retired by name (P2rRetired.CaptureSources:
             // the memory sources of the corpus and the 7 examples remade after P2) are not required (the capture is not regenerated).
-            static bool Remade(string k) => P2rRetired.CaptureSources(k) != null;
+            bool Remade(string k) => P2rRetired.CaptureSources(source, k) != null;
             int retired = reference.Keys.Count(k => !seen.Contains(k) && Remade(k));
+            // P2CF (13/11, RT-02): a key declared new (a payload of a remade example, not in the capture) that the run does not record is an
+            // unused declaration.
+            var unusedNew = P2rRetired.NewCaptureKeys(source).Where(k => !seen.Contains(k)).ToList();
+            foreach (var k in unusedNew) failures.Add(k + ": declared new by name (P2CF), not recorded now (unused declaration)");
             if (retired > 0) { declaredReasons["retired by name, not recorded now (P2R, U3 12/11)"] = retired; counts["retired"] = (counts.TryGetValue("retired", out int dc) ? dc : 0) + retired; }
             int missing = reference.Keys.Count(k => !seen.Contains(k) && !Remade(k));
             foreach (var k in reference.Keys.Where(k => !seen.Contains(k) && !Remade(k)).Take(Math.Max(0, 30 - failures.Count))) failures.Add(k + ": captured, not recorded now");
@@ -585,7 +592,7 @@ internal static class GpcDraftCapture
             foreach (var d in declared) Console.WriteLine("  declared: " + d);
             foreach (var r in declaredReasons.OrderBy(r => r.Key, StringComparer.Ordinal)) Console.WriteLine($"  DECLARED {source}: {r.Value} x {r.Key}");
             counts.TryGetValue("different", out int different); counts.TryGetValue("new", out int added);
-            bool failed = different != 0 || added != 0 || missing != 0 || readBackFailures != 0;
+            bool failed = different != 0 || added != 0 || missing != 0 || readBackFailures != 0 || unusedNew.Count != 0;
             if (failed) Failed = true;
             Console.WriteLine($"CAPTURE COMPARE {source}: {string.Join(", ", counts.OrderBy(c => c.Key, StringComparer.Ordinal).Select(c => c.Key + " " + c.Value))}, {missing} missing; {readBack} captured entries read back by the final reader ({readBackFailures} failures){(failed ? " FAIL" : "")}");
         }

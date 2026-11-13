@@ -1,0 +1,198 @@
+source	key	status	reason
+corpus	memory-01-cantilever:NodeModel 0	captured	memory
+corpus	memory-01-cantilever:NodeModel 1	captured	memory
+corpus	memory-01-cantilever:BeamModel 2	captured	memory
+corpus	memory-01-cantilever:._elements[2]._beamProperty._material	captured	memory
+corpus	memory-01-cantilever:._elements[1]._loads[0]._loadCase	captured	memory
+corpus	memory-01-cantilever:._elements[2]._beamProperty	captured	memory
+corpus	memory-01-cantilever:._elements[2]._beamProperty._section	captured	memory
+corpus	memory-01-cantilever:._loadCombinations[0]	captured	memory
+corpus	memory-01-cantilever:model	captured	memory
+corpus	memory-02-simply-supported:NodeModel 0	captured	memory
+corpus	memory-02-simply-supported:NodeModel 1	captured	memory
+corpus	memory-02-simply-supported:NodeModel 2	captured	memory
+corpus	memory-02-simply-supported:NodeModel 3	captured	memory
+corpus	memory-02-simply-supported:NodeModel 4	captured	memory
+corpus	memory-02-simply-supported:BeamModel 5	captured	memory
+corpus	memory-02-simply-supported:BeamModel 6	captured	memory
+corpus	memory-02-simply-supported:BeamModel 7	captured	memory
+corpus	memory-02-simply-supported:BeamModel 8	captured	memory
+corpus	memory-02-simply-supported:._elements[5]._beamProperty._material	captured	memory
+corpus	memory-02-simply-supported:._elements[5]._beamProperty	captured	memory
+corpus	memory-02-simply-supported:._elements[5]._beamProperty._section	captured	memory
+corpus	memory-02-simply-supported:._elements[5]._loads[0]._loadCase	captured	memory
+corpus	memory-02-simply-supported:model	captured	memory
+corpus	memory-03-plate-patch:NodeModel 0	captured	memory
+corpus	memory-03-plate-patch:NodeModel 1	captured	memory
+corpus	memory-03-plate-patch:NodeModel 2	captured	memory
+corpus	memory-03-plate-patch:NodeModel 3	captured	memory
+corpus	memory-03-plate-patch:PlateModel 4	captured	memory
+corpus	memory-03-plate-patch:._elements[4]._property._material	captured	memory
+corpus	memory-03-plate-patch:._elements[1]._loads[0]._loadCase	captured	memory
+corpus	memory-03-plate-patch:._elements[4]._property	captured	memory
+corpus	memory-03-plate-patch:model	captured	memory
+corpus	memory-04-moving-load:NodeModel 0	captured	memory
+corpus	memory-04-moving-load:NodeModel 1	captured	memory
+corpus	memory-04-moving-load:NodeModel 2	captured	memory
+corpus	memory-04-moving-load:NodeModel 3	captured	memory
+corpus	memory-04-moving-load:NodeModel 4	captured	memory
+corpus	memory-04-moving-load:NodeModel 5	captured	memory
+corpus	memory-04-moving-load:NodeModel 6	captured	memory
+corpus	memory-04-moving-load:NodeModel 7	captured	memory
+corpus	memory-04-moving-load:NodeModel 8	captured	memory
+corpus	memory-04-moving-load:NodeModel 9	captured	memory
+corpus	memory-04-moving-load:NodeModel 10	captured	memory
+corpus	memory-04-moving-load:NodeModel 11	captured	memory
+corpus	memory-04-moving-load:NodeModel 12	captured	memory
+corpus	memory-04-moving-load:BeamModel 13	captured	memory
+corpus	memory-04-moving-load:BeamModel 14	captured	memory
+corpus	memory-04-moving-load:BeamModel 15	captured	memory
+corpus	memory-04-moving-load:BeamModel 16	captured	memory
+corpus	memory-04-moving-load:BeamModel 17	captured	memory
+corpus	memory-04-moving-load:BeamModel 18	captured	memory
+corpus	memory-04-moving-load:BeamModel 19	captured	memory
+corpus	memory-04-moving-load:BeamModel 20	captured	memory
+corpus	memory-04-moving-load:BeamModel 21	captured	memory
+corpus	memory-04-moving-load:BeamModel 22	captured	memory
+corpus	memory-04-moving-load:BeamModel 23	captured	memory
+corpus	memory-04-moving-load:BeamModel 24	captured	memory
+corpus	memory-04-moving-load:._elements[13]._beamProperty._material	captured	memory
+corpus	memory-04-moving-load:._elements[13]._beamProperty	captured	memory
+corpus	memory-04-moving-load:._elements[13]._beamProperty._section	captured	memory
+corpus	memory-04-moving-load:model	captured	memory
+corpus	memory-05-nonlinear-increments:NodeModel 0	captured	memory
+corpus	memory-05-nonlinear-increments:NodeModel 1	captured	memory
+corpus	memory-05-nonlinear-increments:BeamModel 2	captured	memory
+corpus	memory-05-nonlinear-increments:._elements[2]._beamProperty._material	captured	memory
+corpus	memory-05-nonlinear-increments:._elements[1]._loads[0]._loadCase	captured	memory
+corpus	memory-05-nonlinear-increments:._elements[2]._beamProperty	captured	memory
+corpus	memory-05-nonlinear-increments:._elements[2]._beamProperty._section	captured	memory
+corpus	memory-05-nonlinear-increments:._loadCombinations[0]	captured	memory
+corpus	memory-05-nonlinear-increments:._loadCombinations[1]	captured	memory
+corpus	memory-05-nonlinear-increments:._loadCombinations[2]	captured	memory
+corpus	memory-05-nonlinear-increments:model	captured	memory
+corpus	memory-06-stage-loading:NodeModel 0	captured	memory
+corpus	memory-06-stage-loading:NodeModel 1	captured	memory
+corpus	memory-06-stage-loading:BeamModel 2	captured	memory
+corpus	memory-06-stage-loading:._elements[2]._beamProperty._material	captured	memory
+corpus	memory-06-stage-loading:._elements[1]._loads[0]._loadCase	captured	memory
+corpus	memory-06-stage-loading:._elements[2]._beamProperty	captured	memory
+corpus	memory-06-stage-loading:._elements[2]._beamProperty._section	captured	memory
+corpus	memory-06-stage-loading:._stagedConstruction[0]	captured	memory
+corpus	memory-06-stage-loading:._stagedConstruction[0]._loadCombinations[0]	captured	memory
+corpus	memory-06-stage-loading:._stagedConstruction[1]	captured	memory
+corpus	memory-06-stage-loading:._stagedConstruction[1]._loadCombinations[0]	captured	memory
+corpus	memory-06-stage-loading:model	captured	memory
+corpus	memory-07-stage-unloading:NodeModel 0	captured	memory
+corpus	memory-07-stage-unloading:NodeModel 1	captured	memory
+corpus	memory-07-stage-unloading:BeamModel 2	captured	memory
+corpus	memory-07-stage-unloading:._elements[2]._beamProperty._material	captured	memory
+corpus	memory-07-stage-unloading:._elements[1]._loads[0]._loadCase	captured	memory
+corpus	memory-07-stage-unloading:._elements[2]._beamProperty	captured	memory
+corpus	memory-07-stage-unloading:._elements[2]._beamProperty._section	captured	memory
+corpus	memory-07-stage-unloading:._stagedConstruction[0]	captured	memory
+corpus	memory-07-stage-unloading:._stagedConstruction[0]._loadCombinations[0]	captured	memory
+corpus	memory-07-stage-unloading:._stagedConstruction[1]	captured	memory
+corpus	memory-07-stage-unloading:._stagedConstruction[1]._loadCombinations[0]	captured	memory
+corpus	memory-07-stage-unloading:._stagedConstruction[2]	captured	memory
+corpus	memory-07-stage-unloading:._stagedConstruction[2]._loadCombinations[0]	captured	memory
+corpus	memory-07-stage-unloading:model	captured	memory
+corpus	memory-08-stage-activation:NodeModel 0	captured	memory
+corpus	memory-08-stage-activation:NodeModel 1	captured	memory
+corpus	memory-08-stage-activation:BeamModel 2	captured	memory
+corpus	memory-08-stage-activation:BeamModel 3	captured	memory
+corpus	memory-08-stage-activation:._elements[2]._beamProperty._material	captured	memory
+corpus	memory-08-stage-activation:._elements[3]._beamProperty._material	captured	memory
+corpus	memory-08-stage-activation:._elements[1]._loads[0]._loadCase	captured	memory
+corpus	memory-08-stage-activation:._elements[2]._beamProperty	captured	memory
+corpus	memory-08-stage-activation:._elements[2]._beamProperty._section	captured	memory
+corpus	memory-08-stage-activation:._elements[3]._beamProperty	captured	memory
+corpus	memory-08-stage-activation:._elements[3]._beamProperty._section	captured	memory
+corpus	memory-08-stage-activation:._stagedConstruction[0]	captured	memory
+corpus	memory-08-stage-activation:._stagedConstruction[0]._loadCombinations[0]	captured	memory
+corpus	memory-08-stage-activation:._stagedConstruction[1]	captured	memory
+corpus	memory-08-stage-activation:._stagedConstruction[1]._loadCombinations[0]	captured	memory
+corpus	memory-08-stage-activation:model	captured	memory
+corpus	memory-09-stage-removal:NodeModel 0	captured	memory
+corpus	memory-09-stage-removal:NodeModel 1	captured	memory
+corpus	memory-09-stage-removal:BeamModel 2	captured	memory
+corpus	memory-09-stage-removal:BeamModel 3	captured	memory
+corpus	memory-09-stage-removal:._elements[2]._beamProperty._material	captured	memory
+corpus	memory-09-stage-removal:._elements[3]._beamProperty._material	captured	memory
+corpus	memory-09-stage-removal:._elements[1]._loads[0]._loadCase	captured	memory
+corpus	memory-09-stage-removal:._elements[2]._beamProperty	captured	memory
+corpus	memory-09-stage-removal:._elements[2]._beamProperty._section	captured	memory
+corpus	memory-09-stage-removal:._elements[3]._beamProperty	captured	memory
+corpus	memory-09-stage-removal:._elements[3]._beamProperty._section	captured	memory
+corpus	memory-09-stage-removal:._stagedConstruction[0]	captured	memory
+corpus	memory-09-stage-removal:._stagedConstruction[0]._loadCombinations[0]	captured	memory
+corpus	memory-09-stage-removal:._stagedConstruction[1]	captured	memory
+corpus	memory-09-stage-removal:._stagedConstruction[1]._loadCombinations[0]	captured	memory
+corpus	memory-09-stage-removal:._stagedConstruction[2]	captured	memory
+corpus	memory-09-stage-removal:._stagedConstruction[2]._loadCombinations[0]	captured	memory
+corpus	memory-09-stage-removal:model	captured	memory
+corpus	memory-10-stage-selection:NodeModel 0	captured	memory
+corpus	memory-10-stage-selection:NodeModel 1	captured	memory
+corpus	memory-10-stage-selection:BeamModel 2	captured	memory
+corpus	memory-10-stage-selection:._elements[2]._beamProperty._material	captured	memory
+corpus	memory-10-stage-selection:._elements[1]._loads[0]._loadCase	captured	memory
+corpus	memory-10-stage-selection:._elements[1]._loads[1]._loadCase	captured	memory
+corpus	memory-10-stage-selection:._elements[2]._beamProperty	captured	memory
+corpus	memory-10-stage-selection:._elements[2]._beamProperty._section	captured	memory
+corpus	memory-10-stage-selection:._stagedConstruction[0]	captured	memory
+corpus	memory-10-stage-selection:._stagedConstruction[0]._loadCombinations[0]	captured	memory
+corpus	memory-10-stage-selection:._stagedConstruction[0]._loadCombinations[1]	captured	memory
+corpus	memory-10-stage-selection:._stagedConstruction[1]	captured	memory
+corpus	memory-10-stage-selection:._stagedConstruction[1]._loadCombinations[0]	captured	memory
+corpus	memory-10-stage-selection:._stagedConstruction[1]._loadCombinations[1]	captured	memory
+corpus	memory-10-stage-selection:model	captured	memory
+payloads	23-audit-modello-fase\23-audit-modello-fase.ghx:/Definition/DefinitionObjects/Object[1]/Container/param_input/PersistentData/Branch/Item/Data	captured	remade
+payloads	23-audit-modello-fase\23-audit-modello-fase.ghx:/Definition/DefinitionObjects/Object[2]/Container/param_input[3]/PersistentData/Branch/Item/Data	captured	remade
+payloads	24-inviluppi-concomitanti\24-inviluppi-concomitanti.ghx:/Definition/DefinitionObjects/Object[1]/Container/param_input/PersistentData/Branch/Item/Data	captured	remade
+payloads	24-inviluppi-concomitanti\24-inviluppi-concomitanti.ghx:/Definition/DefinitionObjects/Object[3]/Container/param_input/PersistentData/Branch/Item/Data	captured	remade
+payloads	24-inviluppi-concomitanti\24-inviluppi-concomitanti.ghx:/Definition/DefinitionObjects/Object[5]/Container/param_input/PersistentData/Branch/Item/Data	captured	remade
+payloads	24-inviluppi-concomitanti\24-inviluppi-concomitanti.ghx:/Definition/DefinitionObjects/Object[7]/Container/param_input/PersistentData/Branch/Item/Data	captured	remade
+payloads	42-frecce-controfreccia\42-frecce-controfreccia.ghx:/Definition/DefinitionObjects/Object[2]/Container/PersistentData/Branch/Item/Data	captured	remade
+payloads	43-storie-fatica\43-storie-fatica.ghx:/Definition/DefinitionObjects/Object[5]/Container/PersistentData/Branch/Item/Data	captured	remade
+payloads	46-combinazioni-excel\46-combinazioni-excel.ghx:/Definition/DefinitionObjects/Object[1]/Container/param_input[1]/PersistentData/Branch/Item/Data	captured	remade
+payloads	46-combinazioni-excel\46-combinazioni-excel.ghx:/Definition/DefinitionObjects/Object[2]/Container/param_input[1]/PersistentData/Branch/Item/Data	captured	remade
+payloads	46-combinazioni-excel\46-combinazioni-excel.ghx:/Definition/DefinitionObjects/Object[3]/Container/param_input[1]/PersistentData/Branch/Item/Data	captured	remade
+payloads	46-combinazioni-excel\46-combinazioni-excel.ghx:/Definition/DefinitionObjects/Object[4]/Container/param_input[1]/PersistentData/Branch/Item/Data	captured	remade
+payloads	46-combinazioni-excel\46-combinazioni-excel.ghx:/Definition/DefinitionObjects/Object[8]/Container/param_input/PersistentData/Branch/Item/Data	captured	remade
+payloads	46-combinazioni-excel\46-combinazioni-excel.ghx:/Definition/DefinitionObjects/Object[9]/Container/param_input/PersistentData/Branch/Item/Data	captured	remade
+payloads	46-combinazioni-excel\46-combinazioni-excel.ghx:/Definition/DefinitionObjects/Object[10]/Container/param_input/PersistentData/Branch/Item/Data	captured	remade
+payloads	47-pioli-irrigidimenti-verifiche\47-integrazione-modello.ghx:/Definition/DefinitionObjects/Object[2]/Container/PersistentData/Branch/Item/Data	captured	remade
+payloads	47-pioli-irrigidimenti-verifiche\47-integrazione-modello.ghx:/Definition/DefinitionObjects/Object[5]/Container/PersistentData/Branch/Item/Data	captured	remade
+payloads	47-pioli-irrigidimenti-verifiche\47-integrazione-modello.ghx:/Definition/DefinitionObjects/Object[8]/Container/PersistentData/Branch/Item/Data	captured	remade
+payloads	47-pioli-irrigidimenti-verifiche\47-integrazione-modello.ghx:/Definition/DefinitionObjects/Object[11]/Container/PersistentData/Branch/Item/Data	captured	remade
+payloads	47-pioli-irrigidimenti-verifiche\47-integrazione-modello.ghx:/Definition/DefinitionObjects/Object[17]/Container/PersistentData/Branch/Item/Data	captured	remade
+payloads	48-report-word\48-report-word.ghx:/Definition/DefinitionObjects/Object[2]/Container/PersistentData/Branch/Item/Data	captured	remade
+payloads	48-report-word\48-report-word.ghx:/Definition/DefinitionObjects/Object[5]/Container/PersistentData/Branch/Item/Data	captured	remade
+payloads	48-report-word\48-report-word.ghx:/Definition/DefinitionObjects/Object[8]/Container/PersistentData/Branch/Item/Data	captured	remade
+payloads	48-report-word\48-report-word.ghx:/Definition/DefinitionObjects/Object[11]/Container/PersistentData/Branch/Item/Data	captured	remade
+payloads	48-report-word\48-report-word.ghx:/Definition/DefinitionObjects/Object[17]/Container/PersistentData/Branch/Item/Data	captured	remade
+scan	42-frecce-controfreccia\42-frecce-controfreccia.ghx|check-material|4C1C8663C9457884E1F8383237C9419AA6E9564A3B4EB86CE1DC4ADDA26423C7	captured	remade
+scan	43-storie-fatica\43-storie-fatica.ghx|check-material|4C1C8663C9457884E1F8383237C9419AA6E9564A3B4EB86CE1DC4ADDA26423C7	captured	remade
+scan	46-combinazioni-excel\46-combinazioni-excel.ghx|check-material|F22C02305F6CD02A8A184CBD4610E954B171BDB9445DDB9D368F5D369C37A750	captured	remade
+scan	47-pioli-irrigidimenti-verifiche\47-integrazione-modello.ghx|check-material|0BC8BB8A5C8BC941AA187CB7E3EED68DC04DB06D2FD1FF66E94119EAFB1D935B	captured	remade
+scan	47-pioli-irrigidimenti-verifiche\47-integrazione-modello.ghx|check-material|AF07C0FDEBB9D961D5193314BCA65514089135F9942060E2DBBCD76B87834654	captured	remade
+scan	47-pioli-irrigidimenti-verifiche\47-integrazione-modello.ghx|check-material|270CF4778719A3F2254A8E99B4861A821EEE9A014EFA380EBCEF2894490C0F4B	captured	remade
+scan	48-report-word\48-report-word.ghx|check-material|0BC8BB8A5C8BC941AA187CB7E3EED68DC04DB06D2FD1FF66E94119EAFB1D935B	captured	remade
+scan	48-report-word\48-report-word.ghx|check-material|AF07C0FDEBB9D961D5193314BCA65514089135F9942060E2DBBCD76B87834654	captured	remade
+scan	48-report-word\48-report-word.ghx|check-material|270CF4778719A3F2254A8E99B4861A821EEE9A014EFA380EBCEF2894490C0F4B	captured	remade
+payloads	24-inviluppi-concomitanti\24-inviluppi-concomitanti.ghx:/Definition/DefinitionObjects/Object[1]/Container/param_input/PersistentData/Branch/Item/FemmR6	new	remade
+payloads	24-inviluppi-concomitanti\24-inviluppi-concomitanti.ghx:/Definition/DefinitionObjects/Object[3]/Container/param_input/PersistentData/Branch/Item/FemmR6	new	remade
+payloads	24-inviluppi-concomitanti\24-inviluppi-concomitanti.ghx:/Definition/DefinitionObjects/Object[5]/Container/param_input/PersistentData/Branch/Item/FemmR6	new	remade
+payloads	24-inviluppi-concomitanti\24-inviluppi-concomitanti.ghx:/Definition/DefinitionObjects/Object[7]/Container/param_input/PersistentData/Branch/Item/FemmR6	new	remade
+payloads	42-frecce-controfreccia\42-frecce-controfreccia.ghx:/Definition/DefinitionObjects/Object[2]/Container/PersistentData/Branch/Item/FemmR6	new	remade
+payloads	43-storie-fatica\43-storie-fatica.ghx:/Definition/DefinitionObjects/Object[5]/Container/PersistentData/Branch/Item/FemmR6	new	remade
+payloads	47-pioli-irrigidimenti-verifiche\47-integrazione-modello.ghx:/Definition/DefinitionObjects/Object[2]/Container/PersistentData/Branch/Item/FemmR6	new	remade
+payloads	47-pioli-irrigidimenti-verifiche\47-integrazione-modello.ghx:/Definition/DefinitionObjects/Object[5]/Container/PersistentData/Branch/Item/FemmR6	new	remade
+payloads	47-pioli-irrigidimenti-verifiche\47-integrazione-modello.ghx:/Definition/DefinitionObjects/Object[8]/Container/PersistentData/Branch/Item/FemmR6	new	remade
+payloads	47-pioli-irrigidimenti-verifiche\47-integrazione-modello.ghx:/Definition/DefinitionObjects/Object[11]/Container/PersistentData/Branch/Item/FemmR6	new	remade
+payloads	47-pioli-irrigidimenti-verifiche\47-integrazione-modello.ghx:/Definition/DefinitionObjects/Object[17]/Container/PersistentData/Branch/Item/FemmR6	new	remade
+payloads	48-report-word\48-report-word.ghx:/Definition/DefinitionObjects/Object[2]/Container/PersistentData/Branch/Item/FemmR6	new	remade
+payloads	48-report-word\48-report-word.ghx:/Definition/DefinitionObjects/Object[5]/Container/PersistentData/Branch/Item/FemmR6	new	remade
+payloads	48-report-word\48-report-word.ghx:/Definition/DefinitionObjects/Object[8]/Container/PersistentData/Branch/Item/FemmR6	new	remade
+payloads	48-report-word\48-report-word.ghx:/Definition/DefinitionObjects/Object[11]/Container/PersistentData/Branch/Item/FemmR6	new	remade
+payloads	48-report-word\48-report-word.ghx:/Definition/DefinitionObjects/Object[17]/Container/PersistentData/Branch/Item/FemmR6	new	remade
