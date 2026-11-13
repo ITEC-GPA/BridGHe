@@ -6,7 +6,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using BridGHe.Common.Gpc;
-using BridGHe.Common.Models;
 using GPC.Converter.Straus7;
 
 /// <summary>
@@ -63,20 +62,20 @@ internal static class GpcReviewFixesC1Native
         // P2R (T3, 12/11): Table Material gives no FEM value since P2K/P2D: the model of the checks is built on a placeholder FEM material and its
         // GPC conversion takes the GPC material of the output (GH_Material.Gpc) on its beam and plate properties (SwapMaterial). Before, the FEM
         // value of the output, converted (the GPC material of the output was its conversion, R3).
-        var table = (MaterialModel)goo.GetType().GetProperty("Value").GetValue(goo);
         var gpcTable = (GPC.Model.Materials.Material)goo.GetType().GetProperty("Gpc").GetValue(goo) ?? throw new InvalidOperationException("C1 native: Table Material without its GPC material");
         // The model of the checks with the table material, and beside it a plain material with the same α and ρ (where Straus7 puts them).
-        var input = GpcReviewFixesC1.TableModel(table ?? new MaterialModel("C1 table placeholder") { Name = "C1 table placeholder", Modulus = 210000, PoissonRatio = 0.3 });
-        var plain = new MaterialModel("C1 plain") { Name = "C1 plain", Modulus = 210000, PoissonRatio = 0.3, Density = GpcReviewFixesC1.Rho, ThermalExpansion = GpcReviewFixesC1.Alpha };
-        var reference = GpcReviewFixesC1.TableModel(plain);
-        foreach (var e in reference.Elements) { if (e is BeamModel b) b.BeamProperty.Name = "C1 plain beam"; if (e is PlateModel p) p.PlateProperty.Name = "C1 plain shell"; }
+        // P2CB (13/11): the models are the GPC data of the components (before: FEM models converted).
+        var input = GpcReviewFixesC1.TableModel(GpcReviewFixesC1.Placeholder());
+        var plain = BridGHe.Common.Gpc.Builders.GpcMaterialBuilders.Material(new BridGHe.Common.Gpc.Legacy.LegacyMaterialRecipe
+            { Name = "C1 plain", Modulus = 210000, PoissonRatio = 0.3, Density = GpcReviewFixesC1.Rho, ThermalExpansion = GpcReviewFixesC1.Alpha });
+        var reference = GpcReviewFixesC1.TableModel(plain, "C1 plain beam", "C1 plain shell");
         string folder = Path.GetFullPath(Path.Combine("artifacts", "native", Guid.NewGuid().ToString("N"))); Directory.CreateDirectory(folder);
         var arrays = new Dictionary<string, (double[] Beam, double[] Shell, double[] BeamTable, double[] ShellTable)>();
         foreach (var (label, model) in new[] { ("table", input), ("plain", reference) })
         {
             string st7 = Path.Combine(folder, "c1-" + label + ".st7");
-            var conversion = GpcModels.Convert(model, 1e-6);
-            if (label == "table" && table == null) SwapMaterial(conversion.Model, gpcTable);
+            var conversion = model;
+            if (label == "table") SwapMaterial(conversion.Model, gpcTable);
             GpcPreflight.Require(conversion.Model);
             var plan = Straus7ModelWritePlan.Prepare(conversion.Model, null, null, conversion.Report.NativeSections);
             using (var writer = new Straus7NativeWriter(st7, folder)) { plan.Write(writer, conversion.Model); writer.Save(); }

@@ -78,7 +78,7 @@ internal static class Program
         if(args.Contains("--gpc-guard")) return GpcReleaseSetTests.Guard(args.SkipWhile(a=>a!="--gpc-guard").Skip(1).First());
         if(args.Contains("--plugin-check")) return PluginBuildCheckTests.Child(args.SkipWhile(a=>a!="--plugin-check").Skip(1).First());
         if(args.Contains("--plugin-check-load")) return PluginBuildCheckTests.LoadChild(args.SkipWhile(a=>a!="--plugin-check-load").Skip(1).First());
-        if(args.Contains("--gpc-pilot")) { try { return GpcPilot.Run(); } catch(Exception error) { Console.Error.WriteLine("F4 BRIDGE FAIL " + error); return 1; } }
+        if(args.Contains("--gpc-pilot")) { Console.WriteLine("RETIRED BY NAME (P2CB): --gpc-pilot: "+P2rRetiredP2cb.Reason("native|gpc-pilot")); return 1; } // P2CB (13/11): the F4 pilot retired with its FEM types
         GpcDomainCache.Configure();
         if(args.Contains("--import-dump")) return ImportDump.Run(args);
         if(args.Contains("--build-model-scan")) return BuildModelScan.Run(args);
@@ -103,7 +103,7 @@ internal static class Program
         if(args.Contains("--legacy-beam-results")) { var r=args.SkipWhile(a=>a!="--legacy-beam-results").Skip(1).ToArray(); return LegacySectionDump.BeamResults(r[0],r[1],r.Length>2?r[2]:null); }
         if(args.Contains("--modular-bridge-native")) return NativeModularBridgeTests.Run(args.SkipWhile(a=>a!="--modular-bridge-native").Skip(1).FirstOrDefault());
         if(args.Contains("--modular-layout-capture")) return Example50HorizontalLayout.CaptureModular();
-        if(args.Contains("--example99")) return PersonalBridgeExample.Run(args.SkipWhile(a => a != "--example99").Skip(1).FirstOrDefault() ?? "inspect");
+        if(args.Contains("--example99")) { Console.WriteLine("RETIRED BY NAME (P2CB): --example99: "+P2rRetiredP2cb.Reason("generator|--example99")); return 1; } // P2CB (13/11): the generator of example 99 retired (E4)
         if(args.Contains("--combination-excel-read")) { BridgeCombinationExcelTests.ReadExternal(args.SkipWhile(a => a != "--combination-excel-read").Skip(1).First()); return 0; }
         if(args.Contains("--capture-bridge-baseline")) { BridgeNumericalBaseline.Capture();return 0; }
         if(args.Contains("--benchmark-plots")) { PlotTests.Run();PlotTests.Benchmark();return 0; }
@@ -117,8 +117,7 @@ internal static class Program
         if(args.Contains("--components-only")) { CheckGrasshopper(false);return 0; }
         if(args.Contains("--example50-horizontal")) return Example50HorizontalLayout.Run();
         if(args.Contains("--example50-rev001-inputs")) return BridgeRevisionInputsExample.Run();
-        if(args.Contains("--example50-rev002")) return BridgeRevisionStateExample.Run();
-        if(args.Contains("--example50-rev002-check")) return BridgeRevisionStateExample.Run(true);
+        if(args.Contains("--example50-rev002")||args.Contains("--example50-rev002-check")) { Console.WriteLine("RETIRED BY NAME (P2CB): --example50-rev002: "+P2rRetiredP2cb.Reason("generator|--example50-rev002")); return 1; } // P2CB (13/11): the generator of 50 REV002 retired (E4)
         if(args.Contains("--example50-rev003")) return BridgeMovingRevisionExample.Run(args);
         if(args.Contains("--saved-bridge-audit")) return SavedBridgeWorkflowAudit.Run();
         if(args.Contains("--prepare99-rev004")) return SavedBridgeWorkflowAudit.Run(true);

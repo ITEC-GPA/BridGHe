@@ -17,15 +17,6 @@ internal static class ResultsComponentsCheck
 {
     internal sealed record Outcome(int Nodes, int Beams, int Plates, long Values);
 
-    /// <summary>The GH model an analysis component gives on the FEM path: the FEM results and the analysed GPC model attached (the kN-m native
-    /// section of core-native, until <c>Program.CheckNativeSectionAnalysis</c> moves to GPC).</summary>
-    internal static object AnalysedGoo(BridGHe.Common.Models.ModelModel result, GPC.Model.Models.Model analysed)
-    {
-        var type = Assembly.LoadFrom(BuildPaths.GrasshopperAssembly).GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model", true);
-        var goo = type.GetMethod("FromModel", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { result, null });
-        type.GetMethod("AttachGpc").Invoke(goo, new object[] { analysed ?? throw new ArgumentNullException(nameof(analysed)) });
-        return goo;
-    }
 
     internal static Outcome Verify(object analysedModelGoo, string label)
     {
@@ -39,13 +30,9 @@ internal static class ResultsComponentsCheck
         Require(input != null && catalog != null, "the GPC input and the results catalog of the analysed model");
         // Node, Beam and Plate Results on the GH model given by the GPC input alone, every output equal to the reader rows bit for bit.
         // Decompose Model refuses a GPC-only model without the drafts of its elements, so the input is given with them: its own; else those the
-        // analysed GH model keeps apart (GpcDrafts: analysis outputs, reopened results, as R4aFixtures.GpcOnly); else, for a FEM-backed model (the
-        // kN-m native section of core-native, until Program.CheckNativeSectionAnalysis moves to GPC), the conversion of its FEM values.
-        var drafts = input?.Drafts ?? (BridGHe.Common.Gpc.GpcModelDrafts)t.GetProperty("GpcDrafts").GetValue(analysedModelGoo)
-            ?? (t.GetProperty("Value").GetValue(analysedModelGoo) is BridGHe.Common.Models.ModelModel fem
-                ? new BridGHe.Common.Gpc.GpcModelDrafts(fem.Nodes.Select(n => BridGHe.Common.Gpc.GpcBeamDrafts.FromFemm(n)),
-                    fem.Beams.Select(b => BridGHe.Common.Gpc.GpcBeamDrafts.FromFemm(b)), fem.Plates.Select(p => BridGHe.Common.Gpc.GpcBeamDrafts.FromFemm(p)))
-                : null);
+        // analysed GH model keeps apart (GpcDrafts: analysis outputs, reopened results, as R4aFixtures.GpcOnly). P2CB (13/11): the conversion of
+        // the FEM values of a FEM-backed model (the former kN-m native section of core-native, on GPC since P2CUT) went with the FEM types.
+        var drafts = input?.Drafts ?? (BridGHe.Common.Gpc.GpcModelDrafts)t.GetProperty("GpcDrafts").GetValue(analysedModelGoo);
         long values = GpcNativeExamples.ComponentsCheck(input == null || input.Drafts != null || drafts == null ? input : input.WithDrafts(drafts), analysed, label);
         // A result datum without the link to an analysed GPC element gives no result and the warning.
         int nodes = analysed.NodesElements.Count, beams = analysed.BeamElements.Count, plates = analysed.AreaElements.Count;

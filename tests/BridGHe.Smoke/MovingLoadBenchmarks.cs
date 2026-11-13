@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Common.MovingLoads;
 using BridGHe.Common.Straus;
 
@@ -39,7 +38,8 @@ internal static class MovingLoadBenchmarks
     private static double Displacement(Scenario s,double[] axles,double x)
         => -s.Force*axles.Sum(a=>x<=a ? (Length-a)*x*(Length*Length-(Length-a)*(Length-a)-x*x)
             : a*(Length-x)*(Length*Length-a*a-(Length-x)*(Length-x)))/(6*Length*E*I);
-    // TRANSITIONAL (R6.6 lane R2b): --centrifugal-probe is a native report (no pass/fail) on the FEM example 04; it moves to GPC with a native stage.
+    // P2CB (13/11): --centrifugal-probe on the GPC data of example 04 (GpcNativeExamples: Build Model and Attach Moving Paths on GPC), analysed on the
+    // GPC-only path, the reactions read with the GPC result readers (before: the FEM example 04 on the FEM path).
     /// <summary>
     /// --centrifugal-probe (native, L10 decision 6 of 4/11): what Straus7 R31 does with a nonzero centrifugal offset together with lane
     /// factors and adjacency factors. One point force Fz = -1000 N with centrifugal, K0 = 100 N, K1 = 0 (Fc = K0 + K1 Fz per force), on the
@@ -69,25 +69,25 @@ internal static class MovingLoadBenchmarks
         var report=new List<object>();
         foreach(var c in configurations)
         {
-            var model=ModelArchive.Clone(NativeExamples.Create().Single(e=>e.Id=="04-moving-load").Model);
-            model.Name=c.Id;var path=model.MovingPaths.Single();path.LoadCaseName=c.Id;path.Divisions=6;
+            var b=GpcNativeExamples.Beam("centrifugal-"+c.Id,12,Length,true);
+            var path=GpcNativeExamples.Path04(Length);path.LoadCaseName=c.Id;path.Divisions=6;
             path.Shape=c.Shape;path.Coordinates=c.Shape==0?new[]{0,0,0,Length,0,0,0,1000,0}:new[]{0,0,0,Length,0,0,Length/2,10,0};
             path.Template.LaneFactors=c.Lanes;path.Template.MultiLaneType=c.MultiLane;
             path.Template.Centrifugal=new MovingCentrifugal{K0="100",K1="0",LengthUnit=2,ForceUnit=0};
             path.Template.Vehicles[0].Lanes=c.VehicleLanes;
             path.Template.Vehicles[0].Loads=new MovingObject[]{new MovingPointForce{X=0,Axis=0,Centrifugal=true,Adjacent=c.Adjacent,Force=new[]{0.0,0,-1000}}};
-            path.Validate();
+            path.Validate();b.Paths.Add(path);var model=b.Build(c.Id).Input;
             string folder=Path.Combine(root,c.Id);Directory.CreateDirectory(folder);
             try
             {
-                var result=StrausAnalysis.Run(model,Path.Combine(folder,"model.st7"),0,Array.Empty<string>(),1e-6,true,out var warnings,out var analysed);
+                var analysed=StrausAnalysis.Run(model,Path.Combine(folder,"model.st7"),0,Array.Empty<string>(),true,out var warnings);var result=new GpcNativeExamples.Results(analysed);
                 var law=analysed?.MovingLoads?.Paths?.FirstOrDefault()?.Template?.Centrifugal;
-                var cases=result.GeneratedMovingCases.OrderBy(k=>k.Key).Select(k=>k.Value).ToArray();
+                var cases=result.GeneratedMovingCases.OrderBy(k=>k.Number).Select(k=>k.Name).ToArray();
                 foreach(var name in new[]{cases.First(),cases[cases.Length/2],cases.Last()}.Distinct())
                 {
-                    double Sum(Func<NodeReactResultModel,double> f)=>result.Nodes.SelectMany(n=>n.Results.OfType<NodeReactResultModel>()).Where(r=>r.LoadCase.Name==name).Sum(f);
+                    double Sum(int k)=>result.AllNodeRows().Where(r=>r.Reaction!=null&&result.Catalog.Entries[r.Entry].Label==name).Sum(r=>r.Reaction[k]);
                     var row=new{Configuration=c.Id,c.Lanes,c.VehicleLanes,c.Adjacent,MultiLaneType=c.MultiLane,Case=name,
-                        Rx=Sum(r=>r.Force.X),Ry=Sum(r=>r.Force.Y),Rz=Sum(r=>r.Force.Z),GpcOffsetN=law?.OffsetForce,GpcFactorKind=law?.FactorKind.ToString(),Warnings=warnings};
+                        Rx=Sum(0),Ry=Sum(1),Rz=Sum(2),GpcOffsetN=law?.OffsetForce,GpcFactorKind=law?.FactorKind.ToString(),Warnings=warnings};
                     report.Add(row);
                     Console.WriteLine(FormattableString.Invariant($"CENTRIFUGAL {c.Id} {name}: Rx {row.Rx:G6} Ry {row.Ry:G6} Rz {row.Rz:G6} N; GPC offset {row.GpcOffsetN:G6} N/vehicle ({row.GpcFactorKind})"));
                 }

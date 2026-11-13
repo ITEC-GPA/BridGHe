@@ -5,13 +5,12 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using BridGHe.Common.Gpc;
+using BridGHe.Common.Gpc.Builders;
 using BridGHe.Common.Gpc.Legacy;
-using BridGHe.Common.Models;
 using BridGHe.Common.MovingLoads;
 using BridGHe.Common.Straus;
 using GPC.Converter.Straus7;
 using GPC.Model.Elements;
-using Rhino.Geometry;
 
 /// <summary>
 /// C4 (11/11/2026, user rule: what 0.3.0 accepted, 0.4.0 accepts and writes as 0.3.0 did), natively (<c>--c4-parity-native</c>, also in
@@ -26,6 +25,10 @@ using Rhino.Geometry;
 /// <item>point 3: solver 1 as 0.3.0 (NLA without stages, staged flag 0) on example 05: the values of the new run, of the run before C4 (one
 /// explicit stage, staged flag 1, replayed here) and of 0.3.0 solving its frozen file (P2B/results/examples-1), every value printed.</item>
 /// </list>
+/// P2CB (13/11/2026, rule U3): the models of points 1, 2 and 4 are the GPC data of the components (the product builders, Build Model and Attach
+/// Moving Paths on GPC) with the geometry, sections, supports, gradients, taper, loads and paths of the former FEM models, analysed and exported
+/// on the GPC-only path and read with the GPC result readers; the calls of 0.3.0 are replayed from the inputs of the components
+/// (<see cref="AxisData"/>). Same oracles.
 /// </summary>
 internal static class C4ParityNative
 {
@@ -33,8 +36,12 @@ internal static class C4ParityNative
     private static void Check(bool ok, string what) { if (!ok) failures++; Console.WriteLine((ok ? "PASS: " : "FAIL: ") + "C4 " + what); }
     private static string R(double v) => v.ToString("R", CultureInfo.InvariantCulture);
     private static string Rs(IEnumerable<double> v) => string.Join(" ", v.Select(R));
-    private static MaterialModel Steel() => new("S355") { Name = "S355", Modulus = 210000, PoissonRatio = 0.3, Density = 7.85e-9, ThermalExpansion = 1.2e-5 };
-    private static NodeModel Fixed(string id, Point3d p) { var n = new NodeModel(id, p); n.Attributes.Add(new NodeRestraintAttributeModel(true, true, true, true, true, true)); return n; }
+    private static GPC.Model.Materials.Material Steel() => GpcMaterialBuilders.Material(new LegacyMaterialRecipe { Name = "S355", Modulus = 210000, PoissonRatio = 0.3, Density = 7.85e-9, ThermalExpansion = 1.2e-5 });
+    private static int Fixed(GpcNativeExamples.Builder b, string id, double x, double y, double z = 0) { int n = b.Node(x, y, z, id, null); b.Restrain(n, true, true, true, true, true, true); return n; }
+    private static LegacyBeamProperty Generic(string name, int type, GPC.Model.Materials.Material material, double area, double i11, double i22, double j) =>
+        GpcPropertyBuilders.Beam(name, type, GpcSectionBuilders.Generic(area, i11, i22, j, 0, 0, 0, 0, 0, 0, 0), material);
+    /// <summary>The analysed GPC model through the GPC result readers, and the label of a row.</summary>
+    private static string Label(GpcNativeExamples.Results m, int entry) => m.Catalog.Entries[entry].Label;
     private static string Folder() { string f = Path.GetFullPath(Path.Combine("artifacts", "native", "c4-" + Guid.NewGuid().ToString("N"))); Directory.CreateDirectory(f); return f; }
 
     internal static int Run()
@@ -91,63 +98,64 @@ internal static class C4ParityNative
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Point 1
 
-    private static BeamSupportAttributeModel Support(BeamSupportAttributeModel.LocalAxisDirection direction, BeamSupportAttributeModel.SimpleSpringTypes type, double stiffness, double gap) =>
-        new(new BeamSupportAttributeModel.AttributeData { SpringType = BeamSupportAttributeModel.SpringType.Simple, SpringTensionOrientation = BeamSupportAttributeModel.SpringTensionOrientation.BeamLocalAxis,
-            LocalAxisDirection = direction, SimpleSpringType = type, Stiffness = stiffness, Gap = gap });
+    /// <summary>A Beam Support input: the former local axis direction and simple spring type names, stiffness and gap.</summary>
+    internal sealed record Support(string LocalAxisDirection, string SimpleSpringType, double Stiffness, double Gap);
+    /// <summary>A Beam Taper input: the scales of the two axes at both ends and the former alignment names (Top, Center, Bottom).</summary>
+    internal sealed record Taper(double NFromX, double NToX, double NFromY, double NToY, string AlignmentX, string AlignmentY);
+    /// <summary>A Beam Gradient Load input (in G): the gradients along the axes 1 and 2.</summary>
+    internal sealed record Gradient(double Axis1, double Axis2);
+    /// <summary>A beam with its axis data as its components gave them: ID, BridGHe angle, double section (mirror), supports, taper, gradients.</summary>
+    internal sealed record AxisData(string BeamId, double AngleDeg, bool Mirror, Support[] Supports, Taper[] Tapers, Gradient[] Gradients);
 
     /// <summary>The 0.3.0 rule of a support (BeamSupportExport.Resolve of 95ab7c3): −1 → adMinus1 (0), +1 → adPlus1 (1), −2 → adMinus2 (2),
     /// +2 → adPlus2 (3); compression only for compression-only and tension-only springs; a tension-only spring flips the direction (^1).</summary>
-    private static (int Direction, int Status, double[] Values) Former(BeamSupportAttributeModel.AttributeData a)
+    private static (int Direction, int Status, double[] Values) Former(Support a)
     {
-        int d = a.LocalAxisDirection switch
-        {
-            BeamSupportAttributeModel.LocalAxisDirection.negative1Axis => 0, BeamSupportAttributeModel.LocalAxisDirection.positive1Axis => 1,
-            BeamSupportAttributeModel.LocalAxisDirection.negative2Axis => 2, BeamSupportAttributeModel.LocalAxisDirection.positive2Axis => 3, _ => throw new ArgumentException()
-        };
-        bool compression = a.SimpleSpringType != BeamSupportAttributeModel.SimpleSpringTypes.TensionCompression;
-        if (a.SimpleSpringType == BeamSupportAttributeModel.SimpleSpringTypes.TensionOnly) d ^= 1;
+        int d = a.LocalAxisDirection switch { "negative1Axis" => 0, "positive1Axis" => 1, "negative2Axis" => 2, "positive2Axis" => 3, _ => throw new ArgumentException() };
+        bool compression = a.SimpleSpringType != "TensionCompression";
+        if (a.SimpleSpringType == "TensionOnly") d ^= 1;
         return (d, compression ? 1 : 0, new[] { a.Stiffness, a.Gap });
     }
 
     /// <summary>An angle L 150 × 10 / 100 × 12 at 20° (supports +2 compression only with a gap and −1 tension only, a gradient, a taper of
-    /// axis 1 to 0.8 aligned on top) and a double angle (gap 8) at 30° (a support +1 and a gradient), clamped at the start, loaded at the end.</summary>
-    private static ModelModel RotatedModel(bool data)
+    /// axis 1 to 0.8 aligned on top) and a double angle (gap 8) at 30° (a support +1 and a gradient), clamped at the start, loaded at the end.
+    /// <paramref name="beams"/>: the axis data of the two beams (none without <paramref name="data"/>).</summary>
+    private static GpcModels.Conversion RotatedModel(bool data, out AxisData[] beams)
     {
-        var model = new ModelModel(ModelModel.ModelUnits.Nmm); var g = new LoadCaseModel("G", "G"); model.LoadCases.Add(g);
-        var single = new SectionModel { SectionType = SectionModel.SectionTypes.Angle, B = 150, T1 = 10, D = 100, T2 = 12 }; single.CalculateSection();
-        var pair = new SectionModel { SectionType = SectionModel.SectionTypes.Angle, B = 150, T1 = 10, D = 100, T2 = 12, Mirror = SectionModel.MirrorTypes.Left, MirrorGapA = 8 }; pair.CalculateSection();
-        var nodes = new[] { Fixed("A0", Point3d.Origin), new NodeModel("A1", new Point3d(3000, 0, 0)), Fixed("B0", new Point3d(0, 2000, 0)), new NodeModel("B1", new Point3d(3000, 2000, 0)) };
-        nodes[1].Loads.Add(new NodeForceLoadModel(g, new Vector3d(0, -200, -500))); nodes[3].Loads.Add(new NodeForceLoadModel(g, new Vector3d(0, 300, -400)));
-        model.AddElements(nodes);
-        var l1 = new BeamModel(nodes[0].Position, nodes[1].Position, new BeamPropertyModel("L") { Name = "L 150x100", Material = Steel(), Section = single, PropertyType = BeamPropertyType.Beam }) { BeamId = "L1", AngleDeg = 20 };
-        var l2 = new BeamModel(nodes[2].Position, nodes[3].Position, new BeamPropertyModel("2L") { Name = "2L 150x100", Material = Steel(), Section = pair, PropertyType = BeamPropertyType.Beam }) { BeamId = "L2", AngleDeg = 30 };
-        if (data)
+        var b = new GpcNativeExamples.Builder("c4-rotated-" + data);
+        var single = GpcSectionBuilders.Standard(BridgeSectionKind.Angle, 100, b: 150, t1: 10, t2: 12);
+        var pair = GpcSectionBuilders.Standard(BridgeSectionKind.Angle, 100, b: 150, t1: 10, t2: 12, mirror: 2, gapA: 8); // Double Sections: the former MirrorTypes.Left
+        int a0 = Fixed(b, "A0", 0, 0), a1 = b.Node(3000, 0, 0, "A1", null), b0 = Fixed(b, "B0", 0, 2000), b1 = b.Node(3000, 2000, 0, "B1", null);
+        b.Force(a1, "G", 0, -200, -500); b.Force(b1, "G", 0, 300, -400);
+        // The former BeamId of each beam: its BridGHe ID and Element ID (Build Model names the beam after it).
+        int l1 = R4bInputs.Beam(b, a0, a1, GpcPropertyBuilders.Beam("L 150x100", 5, single, Steel()), null, "L1", "L1", angleDeg: 20);
+        int l2 = R4bInputs.Beam(b, b0, b1, GpcPropertyBuilders.Beam("2L 150x100", 5, pair, Steel()), null, "L2", "L2", angleDeg: 30);
+        var first = new AxisData("L1", 20, false, data ? new[] { new Support("positive2Axis", "CompressionOnly", 3, 0.5), new Support("negative1Axis", "TensionOnly", 2, 0) } : Array.Empty<Support>(),
+            data ? new[] { new Taper(1, 0.8, 1, 1, "Top", "Center") } : Array.Empty<Taper>(), data ? new[] { new Gradient(0.01, -0.02) } : Array.Empty<Gradient>());
+        var second = new AxisData("L2", 30, true, data ? new[] { new Support("positive1Axis", "TensionCompression", 4, 0) } : Array.Empty<Support>(), Array.Empty<Taper>(),
+            data ? new[] { new Gradient(0.005, 0) } : Array.Empty<Gradient>());
+        foreach (var (k, a) in new[] { (l1, first), (l2, second) })
         {
-            l1.Attributes.Add(Support(BeamSupportAttributeModel.LocalAxisDirection.positive2Axis, BeamSupportAttributeModel.SimpleSpringTypes.CompressionOnly, 3, 0.5));
-            l1.Attributes.Add(Support(BeamSupportAttributeModel.LocalAxisDirection.negative1Axis, BeamSupportAttributeModel.SimpleSpringTypes.TensionOnly, 2, 0));
-            l1.Attributes.Add(new BeamTaperAttributeModel(new BeamTaperAttributeModel.AttributeData { NFromX = 1, NToX = 0.8, AlignmentX = BeamTaperAttributeModel.AlignmentCodes.Top }));
-            l1.Loads.Add(new BeamGradientLoadModel(g, new BeamGradientLoadModel.LoadData { Axis1 = 0.01, Axis2 = -0.02 }));
-            l2.Attributes.Add(Support(BeamSupportAttributeModel.LocalAxisDirection.positive1Axis, BeamSupportAttributeModel.SimpleSpringTypes.TensionCompression, 4, 0));
-            l2.Loads.Add(new BeamGradientLoadModel(g, new BeamGradientLoadModel.LoadData { Axis1 = 0.005, Axis2 = 0 }));
+            foreach (var s in a.Supports) b.Beams[k] = GpcBeamBuilders.WithSupport(b.Beams[k], s.Stiffness, s.Gap, s.LocalAxisDirection, s.SimpleSpringType, b.Next("support"));
+            foreach (var t in a.Tapers) b.Beams[k] = GpcBeamBuilders.WithTaper(b.Beams[k], t.NFromX, t.NFromY, t.NToX, t.NToY, t.AlignmentX, t.AlignmentY, b.Next("taper"));
+            foreach (var g in a.Gradients) b.Beams[k] = GpcBeamBuilders.WithGradient(b.Beams[k], b.Case("G"), g.Axis1, g.Axis2, b.Next("gradient"));
         }
-        model.AddElements(new ElementModel[] { l1, l2 });
-        return model;
+        beams = new[] { first, second };
+        return R4bInputs.Build(b, "c4-rotated");
     }
 
     private static void Rotated()
     {
         string folder = Folder(), written = Path.Combine(folder, "rotated.st7"), bare = Path.Combine(folder, "bare.st7"), former = Path.Combine(folder, "former030.st7");
-        var model = RotatedModel(true);
+        var conversion = RotatedModel(true, out var beams);
         // Before C4 the Converter refused it (PrincipalAngleWithTaperGradientOrSupportRequiresExplicitAxisConvention): the same plan without the option.
-        var conversion = GpcModels.Convert(model, 1e-6);
         string refusal = null;
         try { GPC.Converter.Straus7.Straus7ModelWritePlan.Prepare(conversion.Model, null, null, conversion.Report.NativeSections, new Straus7WriteOptions()); } catch (NotSupportedException e) { refusal = e.Message; }
         Check(refusal != null && refusal.Contains("PrincipalAngleWithTaperGradientOrSupportRequiresExplicitAxisConvention"), "point 1 without the option the Converter refuses the angles with axis data (before C4): " + refusal);
         var warnings = new List<string>();
-        FemmAnalysisSeam.Export(model, written, 1e-6, warnings);
-        FemmAnalysisSeam.Export(RotatedModel(false), bare, 1e-6, new List<string>());
+        P2cbGpc.Export(conversion, written, warnings);
+        P2cbGpc.Export(RotatedModel(false, out _), bare);
         File.Copy(bare, former);
-        var beams = new[] { RotatedModel(true).Beams[0], RotatedModel(true).Beams[1] };
         using (var api = new Straus7NativeApi())
         {
             api.OpenModelReadOnly(written, folder);
@@ -161,16 +169,16 @@ internal static class C4ParityNative
                 for (int k = 0; k < 2; k++)
                 {
                     int n = k + 1; var b = beams[k];
-                    double angle = 90 + b.AngleDeg + (b.BeamProperty.Section.Mirror != SectionModel.MirrorTypes.None ? 90 : 0);
+                    double angle = 90 + b.AngleDeg + (b.Mirror ? 90 : 0);
                     C(F<IntDoubles>("St7SetBeamReferenceAngle1")(7, n, new[] { angle }), "St7SetBeamReferenceAngle1");
-                    foreach (var s in b.Attributes.OfType<BeamSupportAttributeModel>()) { var f = Former(s.Value); C(F<FourIntsDoubles>("St7SetBeamSupport2")(7, n, f.Direction, 1, f.Status, f.Values), "St7SetBeamSupport2"); }
-                    foreach (var t in b.Attributes.OfType<BeamTaperAttributeModel>())
+                    foreach (var s in b.Supports) { var f = Former(s); C(F<FourIntsDoubles>("St7SetBeamSupport2")(7, n, f.Direction, 1, f.Status, f.Values), "St7SetBeamSupport2"); }
+                    foreach (var t in b.Tapers)
                     {
-                        int Code(BeamTaperAttributeModel.AlignmentCodes a) => a == BeamTaperAttributeModel.AlignmentCodes.Bottom ? 2 : a == BeamTaperAttributeModel.AlignmentCodes.Center ? 0 : 1;
-                        if (t.Value.NFromX != 1 || t.Value.NToX != 1) C(F<ThreeIntsDoubles>("St7SetBeamTaper2")(7, n, 1, Code(t.Value.AlignmentX), new[] { t.Value.NFromX, t.Value.NToX }), "St7SetBeamTaper2 x");
-                        if (t.Value.NFromY != 1 || t.Value.NToY != 1) C(F<ThreeIntsDoubles>("St7SetBeamTaper2")(7, n, 2, Code(t.Value.AlignmentY), new[] { t.Value.NFromY, t.Value.NToY }), "St7SetBeamTaper2 y");
+                        static int Code(string a) => a == "Bottom" ? 2 : a == "Center" ? 0 : 1;
+                        if (t.NFromX != 1 || t.NToX != 1) C(F<ThreeIntsDoubles>("St7SetBeamTaper2")(7, n, 1, Code(t.AlignmentX), new[] { t.NFromX, t.NToX }), "St7SetBeamTaper2 x");
+                        if (t.NFromY != 1 || t.NToY != 1) C(F<ThreeIntsDoubles>("St7SetBeamTaper2")(7, n, 2, Code(t.AlignmentY), new[] { t.NFromY, t.NToY }), "St7SetBeamTaper2 y");
                     }
-                    foreach (var gl in b.Loads.OfType<BeamGradientLoadModel>()) C(F<TwoIntsDoubles>("St7SetBeamTempGradient2")(7, n, lc, new[] { gl.Value.Axis1, gl.Value.Axis2 }), "St7SetBeamTempGradient2");
+                    foreach (var gl in b.Gradients) C(F<TwoIntsDoubles>("St7SetBeamTempGradient2")(7, n, lc, new[] { gl.Axis1, gl.Axis2 }), "St7SetBeamTempGradient2");
                     string expected = BeamData(7, n, lc);
                     Check(actual[k] == expected, $"point 1 beam {b.BeamId} ({(k == 0 ? "angle at 20°" : "double angle at 30°")}): axes, supports, gradient and taper of the .st7 as 0.3.0 wrote them\n    0.4.0 {actual[k]}\n    0.3.0 {expected}");
                 }
@@ -178,9 +186,9 @@ internal static class C4ParityNative
             finally { F<OneInt>("St7CloseFile")(7); }
         }
         // 0.3.0 analysed such a model: it solves.
-        var result = StrausAnalysis.Run(RotatedModel(true), Path.Combine(folder, "rotated-run.st7"), 0, new[] { "G" }, 1e-6, false, out _);
-        var tip = result.Nodes.Select(n => n.Results.OfType<NodeDisplResultModel>().SingleOrDefault(r => r.LoadCase.Name == "G")).Where(r => r != null).Select(r => r.Displacement).ToArray();
-        Check(tip.Length == 4 && tip.All(d => double.IsFinite(d.X) && double.IsFinite(d.Z)) && tip.Any(d => d.Length > 0), "point 1 the model with the axis data solves (Straus R3 Analysis): node displacements " + string.Join(" | ", tip.Select(d => R(d.X) + "," + R(d.Y) + "," + R(d.Z))));
+        var result = new GpcNativeExamples.Results(StrausAnalysis.Run(RotatedModel(true, out _), Path.Combine(folder, "rotated-run.st7"), 0, new[] { "G" }, false, out _));
+        var tip = Enumerable.Range(0, result.NodeCount).Select(k => result.NodeRows(k).SingleOrDefault(r => r.Displacement != null && Label(result, r.Entry) == "G")).Where(r => r != null).Select(r => r.Displacement).ToArray();
+        Check(tip.Length == 4 && tip.All(d => double.IsFinite(d[0]) && double.IsFinite(d[2])) && tip.Any(d => Math.Sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]) > 0), "point 1 the model with the axis data solves (Straus R3 Analysis): node displacements " + string.Join(" | ", tip.Select(d => R(d[0]) + "," + R(d[1]) + "," + R(d[2]))));
     }
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
@@ -188,26 +196,26 @@ internal static class C4ParityNative
 
     /// <summary>The beam of example 04 (12 elements, 6000 mm) with a node load in G and a moving axle on a path «ConvertToStaticCases»
     /// (<paramref name="convert"/>), and the combination «1.0G».</summary>
-    private static ModelModel MovingModel(bool convert)
+    private static GpcModels.Conversion MovingModel(bool convert)
     {
-        const double length = 6000; var m = new ModelModel(ModelModel.ModelUnits.Nmm); var dead = new LoadCaseModel("G", "G"); m.LoadCases.Add(dead);
-        var property = new BeamPropertyModel("1") { Name = "Elastic beam", Material = Steel(), PropertyType = BeamPropertyType.Beam,
-            Section = new SectionModel { SectionType = SectionModel.SectionTypes.Generic, SectionArea = 60000, I11 = 450000000, I22 = 200000000, J = 100000000, ShearA1 = 0, ShearA2 = 0 } };
+        const double length = 6000; var b = new GpcNativeExamples.Builder("c4-moving-" + convert);
+        var property = Generic("Elastic beam", 5, Steel(), 60000, 450000000, 200000000, 100000000);
         for (int i = 0; i <= 12; i++)
         {
-            var n = new NodeModel((i + 1).ToString(), new Point3d(length * i / 12, 0, 0)); n.Attributes.Add(new NodeRestraintAttributeModel(i == 0, true, i == 0 || i == 12, true, false, true));
-            if (i == 6) n.Loads.Add(new NodeForceLoadModel(dead, new Vector3d(0, 0, -10))); m.AddElements(new[] { n });
+            int n = b.Node(length * i / 12, 0, 0, (i + 1).ToString(CultureInfo.InvariantCulture), null); b.Restrain(n, i == 0, true, i == 0 || i == 12, true, false, true);
+            if (i == 6) b.Force(n, "G", 0, 0, -10);
         }
-        for (int i = 0; i < 12; i++) m.AddElements(new[] { new BeamModel(m.Nodes[i].Position, m.Nodes[i + 1].Position, property) { BeamId = (i + 1).ToString() } });
-        m.MovingPaths.Add(new MovingPath { LoadCaseName = "Traffic", Divisions = 5, Target = 2, Coordinates = new double[] { 0, 0, 0, length, 0, 0, 0, 1000, 0 }, ConvertToStaticCases = convert,
+        for (int i = 0; i < 12; i++) R4bInputs.Beam(b, i, i + 1, property, null, (i + 1).ToString(CultureInfo.InvariantCulture));
+        b.Paths.Add(new MovingPath { LoadCaseName = "Traffic", Divisions = 5, Target = 2, Coordinates = new double[] { 0, 0, 0, length, 0, 0, 0, 1000, 0 }, ConvertToStaticCases = convert,
             Template = new MovingTemplate { Name = "Single axle", Vehicles = new[] { new MovingVehicle { Name = "1000 N", Loads = new MovingObject[] { new MovingPointForce { Force = new double[] { 0, 0, -1000 } } } } } } });
-        var c = new LoadCombinationModel("1.0G"); c.Values.Add(dead, 1.0); m.AddLoadCombinations(new[] { c });
-        return m;
+        b.Combinations.Add(b.Combination("1.0G", ("G", 1.0)));
+        return b.Build("moving-" + convert).Input;
     }
 
-    private static string Rows(ModelModel m, string name) => string.Join(" | ",
-        m.Nodes.Select(n => n.Results.OfType<NodeDisplResultModel>().SingleOrDefault(r => r.LoadCase.Name == name)).Where(r => r != null).Select(r => R(r.Displacement.Z) + "," + R(r.Rotation.Y))
-        .Concat(m.Beams.SelectMany(b => b.Results.OfType<BeamForceResultModel>().Where(r => r.LoadCase.Name == name).OrderBy(r => r.Station)).Select(r => R(r.Station) + ":" + R(r.My) + "," + R(r.Vx) + "," + R(r.Vy))));
+    /// <summary>The values of a result: Uz and Ry of every node with the result, then the rows of every beam by station (station: My, Vx, Vy).</summary>
+    private static string Rows(GpcNativeExamples.Results m, string name) => string.Join(" | ",
+        Enumerable.Range(0, m.NodeCount).Select(k => m.NodeRows(k).SingleOrDefault(r => r.Displacement != null && Label(m, r.Entry) == name)).Where(r => r != null).Select(r => R(r.Displacement[2]) + "," + R(r.Displacement[4]))
+        .Concat(Enumerable.Range(0, m.Model.BeamElements.Count).SelectMany(k => m.BeamRows(k, name).OrderBy(r => r.Station)).Select(r => R(r.Station) + ":" + R(r.Bending2) + "," + R(r.Shear1) + "," + R(r.Shear2))));
 
     private static void MovingOrdinary()
     {
@@ -215,9 +223,9 @@ internal static class C4ParityNative
         {
             string folder = Folder(), path = Path.Combine(folder, "moving-ordinary.st7"), before = Path.Combine(folder, "no-generated.st7");
             string name = solver == 0 ? "G" : "1.0G";
-            var result = StrausAnalysis.Run(MovingModel(true), path, solver, new[] { name }, 1e-6, false, out _);
+            var result = new GpcNativeExamples.Results(StrausAnalysis.Run(MovingModel(true), path, solver, new[] { name }, false, out _));
             // Before C4: the path written without its static cases (the same model with ConvertToStaticCases off).
-            var reference = StrausAnalysis.Run(MovingModel(false), before, solver, new[] { name }, 1e-6, false, out _);
+            var reference = new GpcNativeExamples.Results(StrausAnalysis.Run(MovingModel(false), before, solver, new[] { name }, false, out _));
             using (var api = new Straus7NativeApi())
             {
                 api.OpenModelReadOnly(path, folder);
@@ -364,18 +372,14 @@ internal static class C4ParityNative
     // Point 4
 
     /// <summary>A beam (steel) and a cable from a clamped node to its free end, on the material <paramref name="cable"/>.</summary>
-    private static ModelModel CableModel(MaterialModel cable)
+    private static GpcModels.Conversion CableModel(GPC.Model.Materials.Material cable)
     {
-        var model = new ModelModel(ModelModel.ModelUnits.Nmm); var g = new LoadCaseModel("G", "G"); model.LoadCases.Add(g);
-        var nodes = new[] { Fixed("1", Point3d.Origin), new NodeModel("2", new Point3d(1000, 0, 0)), Fixed("3", new Point3d(1000, 0, 1000)) };
-        nodes[1].Loads.Add(new NodeForceLoadModel(g, new Vector3d(0, 0, -100))); model.AddElements(nodes);
-        SectionModel Generic(double area) => new() { SectionType = SectionModel.SectionTypes.Generic, SectionArea = area, I11 = 1e6, I22 = 1e6, J = 1e5, ShearA1 = 0, ShearA2 = 0 };
-        model.AddElements(new ElementModel[]
-        {
-            new BeamModel(nodes[0].Position, nodes[1].Position, new BeamPropertyModel("B") { Name = "Beam", Material = Steel(), Section = Generic(1000), PropertyType = BeamPropertyType.Beam }) { BeamId = "1" },
-            new BeamModel(nodes[2].Position, nodes[1].Position, new BeamPropertyModel("C") { Name = "Cable", Material = cable, Section = Generic(100), PropertyType = BeamPropertyType.Cable }) { BeamId = "2" },
-        });
-        return model;
+        var b = new GpcNativeExamples.Builder("c4-cable");
+        int n1 = Fixed(b, "1", 0, 0), n2 = b.Node(1000, 0, 0, "2", null), n3 = Fixed(b, "3", 1000, 0, 1000);
+        b.Force(n2, "G", 0, 0, -100);
+        R4bInputs.Beam(b, n1, n2, Generic("Beam", 5, Steel(), 1000, 1e6, 1e6, 1e5), null, "1");
+        R4bInputs.Beam(b, n3, n2, Generic("Cable", 1, cable, 100, 1e6, 1e6, 1e5), null, "2");
+        return R4bInputs.Build(b, "cable");
     }
 
     /// <summary>Point 4: 0.3.0 refused every cable (StrausR3Helper.cs:338-341 calls St7SetBeamShearModulusMode on every beam property and
@@ -384,12 +388,12 @@ internal static class C4ParityNative
     /// what 0.4.0 does (not checked: a finding for the coordinator).</summary>
     private static void Cable()
     {
-        var table = new MaterialModel("TM") { Name = "Table", PoissonRatio = 0.3, UsePoisson = true, StressStrainTable = new[] { (0.0, 0.0), (200.0, 0.001), (250.0, 0.01) } };
         string refusal = null;
-        try { GpcModels.Convert(CableModel(table), 1e-6); } catch (Exception e) { refusal = e.GetType().Name + ": " + e.Message; }
+        try { CableModel(GpcMaterialBuilders.Material(new LegacyMaterialRecipe { Name = "Table", PoissonRatio = 0.3, UsePoisson = true, StressStrainTable = new[] { (0.0, 0.0), (200.0, 0.001), (250.0, 0.01) } })); }
+        catch (Exception e) { refusal = e.GetType().Name + ": " + e.Message; }
         Check(refusal != null && refusal.Contains("ZeroElasticModulus"), "point 4: a cable on a Table Material (E 0) is refused, as 0.3.0 refused every cable: " + (refusal ?? "accepted"));
         string folder = Folder(), outcome;
-        try { FemmAnalysisSeam.Export(CableModel(Steel()), Path.Combine(folder, "cable.st7"), 1e-6, new List<string>()); outcome = "written"; }
+        try { P2cbGpc.Export(CableModel(Steel()), Path.Combine(folder, "cable.st7")); outcome = "written"; }
         catch (Exception e) { outcome = e.GetType().Name + ": " + e.Message; }
         Console.WriteLine("C4 point 4 (not checked): a cable on a steel material through Straus R3 Export: " + outcome);
     }

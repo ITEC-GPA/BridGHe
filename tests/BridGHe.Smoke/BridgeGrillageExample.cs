@@ -55,9 +55,7 @@ internal static class BridgeGrillageExample
     internal const double Es = 210000, NuSteel = .3, NuConcrete = .2;
     internal static readonly ConcreteMaterialEN1992 Concrete = new("C30",30,ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle);
     internal static double Ec => Concrete.ElasticModulusCompression;
-    internal static readonly GroupModel Main = new("Longitudinali"), Cross = new("Traversi");
     internal static readonly string[] PhaseNames = {"G1_GETTO", "G2_PERMANENTI", "Q_UDL"};
-    internal static readonly LoadCaseModel.Stage.BridgePhases[] Phases = {LoadCaseModel.Stage.BridgePhases.OnlySteel,LoadCaseModel.Stage.BridgePhases.NInfinite,LoadCaseModel.Stage.BridgePhases.NInstant};
     internal static readonly JsonSerializerOptions Json = new(){WriteIndented=true};
     internal static readonly string Output = ExamplePaths.Calculations("11-ponte-graticcio");
     internal static readonly string Delivery = ExamplePaths.Case("11-ponte-graticcio");
@@ -72,7 +70,6 @@ internal static class BridgeGrillageExample
         RebarMaterial=new("B450"){Name="B450",Modulus=Es,MinimumYieldStress=450,MinimumTensileStress=540},
         NInstant=Es/Ec,NInfinite=Es/Ec*(1+p.PhiLong),ConsiderConcrete=true,ConsiderRebar=false
     };
-    internal static LoadCaseModel Case(string name,int phase) => new(name,name){Stages=new(){new(name){BridgePhase=Phases[phase]}}};
     internal static double GirderY(Parameters p,int j) => (j-1.5)*p.Width/4;
     private static SectionH CrossH() => new(800,12,300,20,300,20,"Traverso acciaio");
     internal static double G1(Parameters p) => GpcH(p).Area*78.5e-6 + p.Width/4*p.SlabThickness*25e-6
@@ -103,23 +100,6 @@ internal static class BridgeGrillageExample
         var x=LongNumbers(p,phase,torsionFactor);
         return BridGHe.Common.Gpc.Builders.GpcPropertyBuilders.Beam("Longitudinale fase "+phase,5,
             BridGHe.Common.Gpc.Builders.GpcSectionBuilders.Generic(x.A,x.I11,x.I22,x.J,0,0,0,0,0,0,0),R4aFixtures.Steel("S355",Es,355,510),"Steel");
-    }
-    internal static BeamPropertyModel CrossProperty(Parameters p,int phase,int row,double torsionFactor=1)
-    {
-        // Steel diaphragms at seven fixed stations, independent of mesh refinement.
-        bool diaphragm=row%(p.Panels/6)==0;
-        var h=CrossH(); double a=diaphragm?h.Area:0,ix=diaphragm?h.Jxx:0,iy=diaphragm?h.Jyy:0,j=diaphragm?h.Jt:0;
-        if(phase>0)
-        {
-            double strip=p.Span/p.Panels*(row==0||row==p.Panels?.5:1),ec=Ec/(phase==1?1+p.PhiLong:1);
-            a+=ec/Es*strip*p.SlabThickness;
-            ix+=ec/Es*strip*Math.Pow(p.SlabThickness,3)/12;
-            iy+=ec/Es*p.SlabThickness*Math.Pow(strip,3)/12;
-            j+=ec/(2*(1+NuConcrete))/(Es/(2*(1+NuSteel)))*strip*Math.Pow(p.SlabThickness,3)/6;
-        }
-        // Keep identical topology in all phases. Between diaphragms the wet slab
-        // has NO stiffness: omit those members in the steel-only model.
-        return a>0?Property("Trasversale "+phase+" / "+row,a,ix,iy,j*torsionFactor):null;
     }
     private static BeamPropertyModel Property(string name,double a,double ix,double iy,double j) => new(name)
     {Name=name,Material=Steel(),PropertyType=BeamPropertyType.Beam,Section=new(){SectionType=SectionModel.SectionTypes.Generic,SectionArea=a,I11=ix,I22=iy,J=j,ShearA1=0,ShearA2=0}};
@@ -419,58 +399,12 @@ internal static class BridgeGrillageExample
         }
     }
     // The former FEM models (kept for the transitional comparison r4c-inputs only: R4cGrafiInputs; P2 removes them with the FEM types).
-    internal static ModelModel Create(Parameters p,int phase,double torsionFactor=1)
-    {
-        p.Validate(refined:true);var model=new ModelModel(ModelModel.ModelUnits.Nmm){Name="Ponte graticcio / "+PhaseNames[phase]};
-        int n=p.Panels;double dx=p.Span/n;
-        var primary=Case(PhaseNames[phase],phase);model.LoadCases.Add(primary);
-        double q=phase==0?G1(p):(phase==1?p.PermanentPressure:p.TrafficPressure)*p.Width/4;
-        for(int j=0;j<4;j++)for(int i=0;i<=n;i++)
-        {
-            var node=new NodeModel((j*(n+1)+i+1).ToString(),new(dx*i,GirderY(p,j),0));node.Groups.Add(Main);
-            // Plane grillage: only Uz, Rx, Ry are active. All eight bearings restrain Uz.
-            node.Attributes.Add(new NodeRestraintAttributeModel(true,true,i==0||i==n,false,false,true));
-            node.Loads.Add(new NodeForceLoadModel(primary,new(0,0,-q*dx*(i==0||i==n?.5:1))));
-            model.AddElements(new[]{node});
-        }
-        var longitudinal=LongProperty(p,phase,torsionFactor);
-        for(int j=0;j<4;j++)for(int i=0;i<n;i++)
-        {
-            var b=new BeamModel(model.Nodes[j*(n+1)+i].Position,model.Nodes[j*(n+1)+i+1].Position,longitudinal,Main){BeamId=(j*n+i+1).ToString()};
-            b.Attributes.Add(new SuperElementAttributeModel("G"+(j+1)));
-            model.AddElements(new[]{b});
-        }
-        for(int i=0;i<=n;i++)
-        {
-            var prop=CrossProperty(p,phase,i,torsionFactor);if(prop==null)continue;
-            for(int j=0;j<3;j++)model.AddElements(new[]{new BeamModel(model.Nodes[j*(n+1)+i].Position,model.Nodes[(j+1)*(n+1)+i].Position,prop,Cross){BeamId=(4*n+3*i+j+1).ToString()}});
-        }
-        if(phase==2)
-        {
-            foreach(var entry in new[]{("Q_ECC",2), ("Q_MIRROR",0)})
-            {
-                var lc=Case(entry.Item1,2);model.LoadCases.Add(lc);
-                foreach(double x in new[]{p.Span/2-p.AxleSpacing/2,p.Span/2+p.AxleSpacing/2})
-                    for(int j=entry.Item2;j<entry.Item2+2;j++)AddPoint(model,p,lc,x,j,p.VehicleWeight/4);
-            }
-        }
-        return model;
-    }
-    private static void AddPoint(ModelModel m,Parameters p,LoadCaseModel lc,double x,int girder,double weight)
-    {
-        double f=x/p.Span*p.Panels;int i=(int)Math.Floor(f);double t=f-i;
-        // Explicit linear tributary load distribution, preserving force and moment.
-        m.Nodes[girder*(p.Panels+1)+i].Loads.Add(new NodeForceLoadModel(lc,new(0,0,-weight*(1-t))));
-        m.Nodes[girder*(p.Panels+1)+i+1].Loads.Add(new NodeForceLoadModel(lc,new(0,0,-weight*t)));
-    }
     internal static MovingPath Traffic(Parameters p) => new()
     {
         LoadCaseName="VEICOLO_MOBILE",Target=2,Divisions=p.MovingPositions,ConvertToStaticCases=true,
         Coordinates=new[]{0.0,p.Width/4,0,p.Span,p.Width/4,0,0,p.Width/4+1000,0},
         Template=new(){Name="Veicolo dimostrativo 2 assi",Vehicles=new[]{new MovingVehicle{Name="300 kN (non normativo)",Loads=(from x in new[]{-p.AxleSpacing/2,p.AxleSpacing/2} from y in new[]{-p.Width/8,p.Width/8} select (MovingObject)new MovingPointForce{X=x,Y=y,Force=new[]{0.0,0,-p.VehicleWeight/4}}).ToArray()}}}
     };
-    internal static NodeDisplResultModel Displ(NodeModel node,string name)=>node.Results.OfType<NodeDisplResultModel>().Single(r=>r.LoadCase.Name==name);
-    internal static NodeReactResultModel Reaction(NodeModel node,string name)=>node.Results.OfType<NodeReactResultModel>().Single(r=>r.LoadCase.Name==name);
 
     internal static int MovingCaseCount(Parameters p)=>(int)Math.Floor(p.MovingPositions+.5+p.AxleSpacing*p.MovingPositions/p.Span);
 

@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using BridGHe.Common.Gpc;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using GPC.Checkers.CompositeBridge;
 using Grasshopper.Kernel;
 using Numbers = GpcCompositeDefinitions.Numbers;
@@ -137,10 +136,10 @@ internal static class InrInertia
                             if (steelOnly) continue; // the Only Steel property: not homogenised
                             var goo = outputs[port][i];
                             var gpc = goo.GetType().GetProperty("Gpc")?.GetValue(goo) as BridGHe.Common.Gpc.Legacy.LegacyBeamProperty;
-                            var fem = goo.GetType().GetProperty("Value")?.GetValue(goo) as BeamPropertyModel;
+                            // P2CB (13/11): the GPC datum of the output (the FEM value and the note «FEM/GPC differ» of the former outputs went with the FEM types).
                             var section = (gpc?.Property as GPC.Model.ElementProperties.ElasticBeamProperty)?.Section;
-                            double w11 = section?.J11 ?? fem.I11, w22 = section?.J22 ?? fem.I22;
-                            string note = fem != null && section != null && (Bits(fem.I11) != Bits(section.J11) || Bits(fem.I22) != Bits(section.J22)) ? "FEM/GPC differ" : "";
+                            double w11 = section?.J11 ?? double.NaN, w22 = section?.J22 ?? double.NaN;
+                            string note = "";
                             Add(Values(label, source, d, name, n, d.ConsiderConcrete, w11, w22, note));
                         }
                     }
@@ -234,7 +233,6 @@ internal static class InrInertia
         foreach (var x in new[] { Section("INR wide", 1600, 4000), Section("INR narrow", 1600, 1200), Section("INR flat", 300, 1200) })
         {
             var definition = GpcCompositeDefinitions.Create(x);
-            var fem = Fem(x);
             foreach (double n in new[] { x.NShortTerm, x.NLongTerm, x.NShrinkage })
                 foreach (bool concrete in new[] { true, false })
                 {
@@ -242,8 +240,6 @@ internal static class InrInertia
                     var p = GpcCompositeSections.AnalysisProperties(definition, n, concrete, true, true);
                     Require(Math.Abs(p.JxyH) <= 1e-10 * (p.JxxH + p.JyyH), label + ": the sections of the check are symmetric");
                     var gpc = GpcCompositeSections.Homogenised(definition, n, concrete);
-                    var femCopy = ModelArchive.Clone(fem); femCopy.ConsiderConcrete = concrete;
-                    var s = femCopy.CreateHomogenizedProperty(n, "").Section;
                     double expected11, expected22;
                     if (p.JyyH > p.JxxH)
                     {
@@ -253,18 +249,18 @@ internal static class InrInertia
                     }
                     else { expected11 = p.J11H / n; expected22 = p.J22H / n; narrow++; } // as before: the same doubles
                     Require(Bits(gpc.I11) == Bits(expected11) && Bits(gpc.I22) == Bits(expected22), $"{label}: GPC I11 {R(gpc.I11)} I22 {R(gpc.I22)}, expected {R(expected11)} {R(expected22)}");
-                    Require(Bits(s.I11) == Bits(expected11) && Bits(s.I22) == Bits(expected22), $"{label}: FEM I11 {R(s.I11)} I22 {R(s.I22)}, expected {R(expected11)} {R(expected22)}");
-                    Require(s.AngleX1Rad == 0, label + ": angle 0");
+                    // P2CB (13/11, rule U3): the FEM homogenised property of the same numbers (I11, I22, angle 0, shear areas, area) is retired by name
+                    // with the FEM types (P2rRetiredP2cb); its GPC twin keeps the same expected values.
                     // The shear areas stay those of axis 1 horizontal (GPCModel ComputeHomogenised at angle 0), unchanged by the fix.
                     var shear = GpcCompositeSections.HomogenisedShearAreas(definition, n, concrete);
-                    Require(Bits(gpc.ShearArea1) == Bits(shear.Area1) && Bits(gpc.ShearArea2) == Bits(shear.Area2) && Bits(s.ShearA1) == Bits(shear.Area1) && Bits(s.ShearA2) == Bits(shear.Area2), label + ": shear areas");
-                    Require(Bits(gpc.Area) == Bits(p.areaH / n) && Bits(s.SectionArea) == Bits(p.areaH / n), label + ": area");
+                    Require(Bits(gpc.ShearArea1) == Bits(shear.Area1) && Bits(gpc.ShearArea2) == Bits(shear.Area2), label + ": shear areas");
+                    Require(Bits(gpc.Area) == Bits(p.areaH / n), label + ": area");
                 }
         }
         Require(wide >= 3 && wideCracked >= 3 && narrow >= 6, $"the sections of the check give {wide} wide uncracked, {wideCracked} wide cracked and {narrow} narrow variants");
         string shrinkage = Shrinkage(Require);
         Console.WriteLine($"INR INERTIA PASS: {wide} wide uncracked and {wideCracked} wide cracked variants (Iyy > Ixx) with I11 = Ixx/n and I22 = Iyy/n bit for bit, {narrow} narrow ones with the former J11H/n, J22H/n bit for bit, " +
-            $"on the FEM property and on its GPC twin (uncracked and cracked); angle 0, shear areas of axis 1 horizontal and area unchanged; {shrinkage}; {checks} checks.");
+            $"on the GPC homogenised property (uncracked and cracked; the FEM one retired by name, P2CB); shear areas of axis 1 horizontal and area unchanged; {shrinkage}; {checks} checks.");
     }
 
     /// <summary>The numbers of the composite property «CB» of the in-memory case «composite property, shrinkage strain» of gpc-only-models
@@ -311,20 +307,5 @@ internal static class InrInertia
         require(Rel(a.ThermalGradient, curvature / x.SteelThermalExpansion) <= 1e-6, $"CB: thermal gradient {R(a.ThermalGradient)} / hand {R(curvature / x.SteelThermalExpansion)}");
         return FormattableString.Invariant($"shrinkage actions of the wide section CB (in-memory case of gpc-only-models, n,sh 18, strain −0.0003, Ixx/n {G(p.JxxH / n)} < Iyy/n {G(p.JyyH / n)}; refused by 0.3.0): ") +
             FormattableString.Invariant($"curvature {R(a.Curvature)} 1/mm (hand {R(curvature)}), axis 2 thermal gradient {R(a.ThermalGradient)}, free centroid strain {R(a.FreeStrain)} (hand {R(free)}), pre-strain {R(a.PreStrain)}");
-    }
-
-    /// <summary>The FEM composite property of the numbers (as <c>GpcCompositeSectionChecks.FemProperty</c>).</summary>
-    private static CompositeBeamPropertyModel Fem(Numbers x)
-    {
-        var steel = new SectionModel { Name = x.Name + " I", SectionType = SectionModel.SectionTypes.I, D = x.Height, B1 = x.BottomWidth, T1 = x.BottomThickness, B2 = x.TopWidth, T2 = x.TopThickness, T3 = x.Web };
-        return new CompositeBeamPropertyModel(x.Name)
-        {
-            Name = x.Name, SteelSection = steel, ConcreteSection = new SectionConcreteSlabModel(x.SlabHeight, x.SlabWidth, x.TopArea, x.TopCover, x.BottomArea, x.BottomCover),
-            SteelMaterial = new MaterialModel(x.Steel) { Name = x.Steel, Modulus = x.SteelE, MinimumYieldStress = x.SteelFy, MinimumTensileStress = x.SteelFu, PoissonRatio = x.SteelPoisson,
-                ShearModulus = x.SteelShearModulus, UsePoisson = x.SteelUsePoisson, Density = x.SteelDensity, ThermalExpansion = x.SteelThermalExpansion },
-            ConcreteMaterial = new MaterialModel(x.Concrete) { Name = x.Concrete, Modulus = x.ConcreteE, SpecificCompressiveStrength = x.Fck },
-            RebarMaterial = new MaterialModel(x.Rebar) { Name = x.Rebar, Modulus = x.RebarE, MinimumYieldStress = x.RebarFy, MinimumTensileStress = x.RebarFu, ReinforcementUltimateStrain = x.RebarUltimateStrain },
-            NInfinite = x.NLongTerm, NInstant = x.NShortTerm, NShrinkage = x.NShrinkage, VerticalOffset = x.VerticalOffset, ConsiderConcrete = x.ConsiderConcrete, ConsiderRebar = x.ConsiderRebar,
-        };
     }
 }

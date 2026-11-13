@@ -8,8 +8,8 @@ using System.Text;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Geometry;
 using BridGHe.Common.Gpc;
+using BridGHe.Common.Gpc.Builders;
 using BridGHe.Common.Gpc.Legacy;
-using BridGHe.Common.Models;
 using GPC.Converter.Straus7;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
@@ -23,8 +23,8 @@ using Rhino.Geometry;
 /// <item>R65-C3-01: the nodes Build Model creates on the GPC-only path take the identity of the model; two models never share their GUIDs, a
 /// third Build Model of their decompositions keeps four nodes; an exact copy keeps the copy semantics (merged by GH GUID);</item>
 /// <item>R65-C3-02: Bridge Phase Model and Bridge Construction Sequence that swap a beam to or from a double angle rebuild every datum on the
-/// principal axes (offset axes, load eccentricity, local load frames), against the conversion of the FEM output and against Build Model on
-/// the drafts they output (the oracle of P2), with the Straus7 calls of the write plan recorded (no native API);</item>
+/// principal axes (offset axes, load eccentricity, local load frames), against Build Model on the drafts they output (the oracle of P2), with
+/// the Straus7 calls of the write plan recorded (no native API);</item>
 /// <item>R25-01: Composite Beam on the GPC-only path refuses a composite property that is not a definition (error, no output); the FEM path keeps its rule;</item>
 /// <item>P30-01: a saved model whose drafts cannot be read does not open; results that cannot be read are dropped with a notice; GUIDs without
 /// drafts or of another count are damage; a former file without drafts opens;</item>
@@ -93,34 +93,33 @@ internal static class GpcReviewFixesC1
         return r.Outputs[0].FirstOrDefault() ?? throw new Exception("C1: " + type + " gives no output: " + string.Join(" / ", r.Errors));
     }
 
-    /// <summary>The FEM-backed GH type as the components make it: the constructor from the FEM value (optional parameters at their defaults).</summary>
-    private static IGH_Goo Make(string type, object value)
-    {
-        var ctor = T(type).GetConstructors().Where(c => c.GetParameters().Length >= 1 && c.GetParameters()[0].ParameterType.IsInstanceOfType(value)
-            && c.GetParameters().Skip(1).All(p => p.HasDefaultValue)).OrderBy(c => c.GetParameters().Length).First();
-        return (IGH_Goo)ctor.Invoke(new[] { value }.Concat(ctor.GetParameters().Skip(1).Select(p => p.DefaultValue)).ToArray());
-    }
-
     /// <summary>A beam by its draft alone (the GPC-only path), with the GH GUID given.</summary>
-    private static IGH_Goo GpcOnlyBeam(BeamModel fem, Guid gh) =>
-        (IGH_Goo)T("Fem.GH_Beam").GetMethod("FromGpc").Invoke(null, new object[] { (LegacyBeamDraft)P(Make("Fem.GH_Beam", fem), "Gpc"), (Guid?)gh });
+    private static IGH_Goo GpcOnlyBeam(LegacyBeamDraft draft, Guid gh) => (IGH_Goo)T("Fem.GH_Beam").GetMethod("FromGpc").Invoke(null, new object[] { draft, (Guid?)gh });
+
+    /// <summary>P2CB (13/11): a beam of the elastic beam property of the examples between two points of the XY plane, as the components give it
+    /// (before: a FEM beam on the property of example 02).</summary>
+    private static LegacyBeamDraft ElasticBeam(double x0, double y0, double x1, double y1, string tag) =>
+        GpcBeamBuilders.New(new GPC.Geometry.Point3d(x0, y0, 0), new GPC.Geometry.Point3d(x1, y1, 0), GpcNativeExamples.Property(), null, 0, 0, 0, R4bInputs.Id("c1:" + tag), "");
+
+    /// <summary>P2CB (13/11): example 02 of the GPC catalogue (the inputs of Build Model and its GPC input; before: the FEM example 02).</summary>
+    private static GpcNativeExamples.Example Example02() => GpcNativeExamples.Create().Single(e => e.Id == "02-simply-supported");
+
+    /// <summary>The units input of Build Model: N-mm (the former <c>ModelUnits.Nmm</c>).</summary>
+    private const int Nmm = 2;
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // R65-C3-01
 
     private static void CreatedNodes()
     {
-        var m2 = NativeExamples.Create().Single(e => e.Id == "02-simply-supported").Model;
-        var property = m2.Beams[0].BeamProperty;
-        int nmm = (int)ModelModel.ModelUnits.Nmm;
-        IGH_Goo Build(string name, params IGH_Goo[] elements) => One("BuildModelComponent", new Dictionary<int, object> { [0] = elements.Cast<object>().ToArray(), [1] = name, [2] = nmm });
+        IGH_Goo Build(string name, params IGH_Goo[] elements) => One("BuildModelComponent", new Dictionary<int, object> { [0] = elements.Cast<object>().ToArray(), [1] = name, [2] = Nmm });
         List<IGH_Goo> Nodes(IGH_Goo model) => Solve("DecomposeModelComponent", new Dictionary<int, object> { [0] = model }).Outputs[0];
         GpcModelDrafts Drafts(IGH_Goo model) => (GpcModelDrafts)P(model, "GpcDrafts");
         Guid[] Guids(IGH_Goo model) => (Guid[])model.GetType().GetMethod("ElementGuidsOf").Invoke(model, new object[] { Drafts(model) });
         static string Key(GPC.Geometry.Point3d p) => R(p.X) + " " + R(p.Y) + " " + R(p.Z);
 
-        var beamA = GpcOnlyBeam(new BeamModel(new Point3d(0, 0, 0), new Point3d(1000, 0, 0), property), new Guid("c1000000-0000-4000-8000-00000000000a"));
-        var beamB = GpcOnlyBeam(new BeamModel(new Point3d(0, 1000, 0), new Point3d(1000, 1000, 0), property), new Guid("c1000000-0000-4000-8000-00000000000b"));
+        var beamA = GpcOnlyBeam(ElasticBeam(0, 0, 1000, 0, "a"), new Guid("c1000000-0000-4000-8000-00000000000a"));
+        var beamB = GpcOnlyBeam(ElasticBeam(0, 1000, 1000, 1000, "b"), new Guid("c1000000-0000-4000-8000-00000000000b"));
         var a = Build("C1 two models", beamA); var b = Build("C1 two models", beamB);
         Check(P(a, "Value") == null && P(b, "Value") == null, "R65-C3-01: Build Model on GPC-only beams gives models without FEM value");
         var nodesA = Nodes(a); var nodesB = Nodes(b);
@@ -178,43 +177,42 @@ internal static class GpcReviewFixesC1
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // R65-C3-02
 
-    private static readonly MaterialModel Steel = new MaterialModel("S355") { Name = "S355", Kind = MaterialModel.MaterialKind.Steel, Modulus = 210000, PoissonRatio = 0.3, Density = 7.85e-9, ThermalExpansion = 1.2e-5 };
+    /// <summary>The steel of the swaps (Steel: S355, E as given, ν 0.3, density 7.85E-9, α 1.2E-5).</summary>
+    private static GPC.Model.Materials.Material Steel(double modulus = 210000) =>
+        GpcMaterialBuilders.Material(new LegacyMaterialRecipe { Kind = "Steel", Name = "S355", Modulus = modulus, PoissonRatio = 0.3, Density = 7.85e-9, ThermalExpansion = 1.2e-5 });
 
-    private static BeamPropertyModel Ordinary(string name = "PO") { var s = new SectionModel { SectionType = SectionModel.SectionTypes.I, D = 500, B1 = 200, B2 = 200, T1 = 20, T2 = 20, T3 = 10 }; s.CalculateSection(); return new BeamPropertyModel(name) { Name = name, Material = Steel, Section = s, PropertyType = BeamPropertyType.Beam }; }
+    /// <summary>The ordinary I 500 (flanges 200 × 20, web 10) of Beam Property (type Beam).</summary>
+    private static LegacyBeamProperty Ordinary(string name = "PO", double modulus = 210000) =>
+        GpcPropertyBuilders.Beam(name, 5, GpcSectionBuilders.Standard(BridgeSectionKind.I, 500, b1: 200, b2: 200, t1: 20, t2: 20, t3: 10), Steel(modulus), "Steel");
 
-    /// <summary>The double angle of the Angle component (mirror Left, gap A; mirror set before the calculation, as the former component).</summary>
-    private static BeamPropertyModel DoubleAngle(string name = "P2L")
+    /// <summary>The double angle of the Angle component (Double Sections: the former mirror Left, gap A 8).</summary>
+    private static LegacyBeamProperty DoubleAngle(string name = "P2L") =>
+        GpcPropertyBuilders.Beam(name, 5, GpcSectionBuilders.Standard(BridgeSectionKind.Angle, 100, b: 150, t1: 10, t2: 12, mirror: 2, gapA: 8), Steel(), "Steel");
+
+    /// <summary>The loads of a beam in Q: a local distributed load along Y (−2), a global distributed load along Z (−3), a local point load
+    /// (0, −5, 1) at 0.4 and, with <paramref name="support"/>, a distributed support (+2 axis, k 3). P2CB: the global point load of the former
+    /// FEM beam ((1, 0, −4) at 0.6) has no component (Beam Point Load gives its loads in the principal axes): not in the GPC model.</summary>
+    private static LegacyBeamDraft Loads(GpcNativeExamples.Builder b, LegacyBeamDraft beam, bool support)
     {
-        var s = new SectionModel { SectionType = SectionModel.SectionTypes.Angle, B = 150, T1 = 10, D = 100, T2 = 12, Mirror = SectionModel.MirrorTypes.Left, MirrorGapA = 8 }; s.CalculateSection();
-        return new BeamPropertyModel(name) { Name = name, Material = Steel, Section = s, PropertyType = BeamPropertyType.Beam };
-    }
-
-    private static void Loads(BeamModel beam, LoadCaseModel q, bool support)
-    {
-        var global = new CoordinateSystemModel("G");
-        beam.Loads.Add(new BeamDistributedLoadModel(q, new() { LoadSchema = BeamDistributedLoadModel.LoadSchema.Uniform, PA = -2, LoadDirection = BeamDistributedLoadModel.LoadDirection.Y }, BeamDistributedLoadModel.LoadType.Force));
-        beam.Loads.Add(new BeamDistributedLoadModel(q, new() { LoadSchema = BeamDistributedLoadModel.LoadSchema.Uniform, PA = -3, LoadDirection = BeamDistributedLoadModel.LoadDirection.Z, CoordinateSystem = global }, BeamDistributedLoadModel.LoadType.Force));
-        beam.Loads.Add(new BeamPointLoadModel(q, new() { P = new Vector3d(0, -5, 1), A = 0.4 }, BeamPointLoadModel.LoadType.Force));
-        beam.Loads.Add(new BeamPointLoadModel(q, new() { P = new Vector3d(1, 0, -4), A = 0.6, CoordinateSystem = global }, BeamPointLoadModel.LoadType.Force));
-        if (support) beam.Attributes.Add(new BeamSupportAttributeModel(new BeamSupportAttributeModel.AttributeData { SpringType = BeamSupportAttributeModel.SpringType.Simple, Stiffness = 3, Gap = 0,
-            SimpleSpringType = BeamSupportAttributeModel.SimpleSpringTypes.TensionCompression, LocalAxisDirection = BeamSupportAttributeModel.LocalAxisDirection.positive2Axis,
-            SpringTensionOrientation = BeamSupportAttributeModel.SpringTensionOrientation.BeamLocalAxis }));
+        beam = GpcBeamBuilders.WithDistributedLoad(beam, b.Case("Q"), BridgeLoadSchema.Uniform, false, "Y", -2, 0, 0, 0, 0, 0, null, b.Next("local distributed"));
+        beam = GpcBeamBuilders.WithDistributedLoad(beam, b.Case("Q"), BridgeLoadSchema.Uniform, false, "Z", -3, 0, 0, 0, 0, 0, true, b.Next("global distributed"));
+        beam = GpcBeamBuilders.WithPointLoad(beam, b.Case("Q"), false, 0.4, new GPC.Geometry.Vector3d(0, -5, 1), b.Next("local point"));
+        if (support) beam = GpcBeamBuilders.WithSupport(beam, 3, 0, "positive2Axis", "TensionCompression", b.Next("support"));
+        return beam;
     }
 
     /// <summary>Two beams of an ordinary I property: B1 at 30° with the offset (5,7), B2 at 0° without offset, each with a local and a global
-    /// distributed load, a local and a global point load and a distributed support.</summary>
-    private static ModelModel SwapModel(bool support)
+    /// distributed load, a local point load and a distributed support (the GPC data of the components; before: a FEM model).</summary>
+    private static GpcModels.Conversion SwapModel(bool support)
     {
-        var q = new LoadCaseModel("2", "Q");
-        var nodes = new[] { new NodeModel("1", new Point3d(0, 0, 0)), new NodeModel("2", new Point3d(3000, 0, 0)), new NodeModel("3", new Point3d(6000, 0, 0)) };
-        nodes[0].Attributes.Add(new NodeRestraintAttributeModel(true, true, true, true, true, true)); nodes[2].Attributes.Add(new NodeRestraintAttributeModel(true, true, true, false, false, false));
+        var b = new GpcNativeExamples.Builder("c1-swaps-" + support);
+        int n1 = b.Node(0, 0, 0, "1", null), n2 = b.Node(3000, 0, 0, "2", null), n3 = b.Node(6000, 0, 0, "3", null);
+        b.Restrain(n1, true, true, true, true, true, true); b.Restrain(n3, true, true, true, false, false, false);
         var ordinary = Ordinary();
-        var b1 = new BeamModel(nodes[0].Position, nodes[1].Position, ordinary, null, 30) { BeamId = "B1", Offset = new Vector2d(5, 7) };
-        var b2 = new BeamModel(nodes[1].Position, nodes[2].Position, ordinary, null, 0) { BeamId = "B2" };
-        Loads(b1, q, support); Loads(b2, q, support);
-        var model = new ModelModel(ModelModel.ModelUnits.Nmm) { Name = "C1 swaps" };
-        model.AddElements(nodes.Cast<ElementModel>().Concat(new[] { b1, b2 }).ToArray());
-        return model;
+        // The former BeamId: the BridGHe ID and Element ID of each beam (Build Model names the beam after it; the phase models select by it).
+        int b1 = R4bInputs.Beam(b, n1, n2, ordinary, null, "B1", "B1", 30, 5, 7), b2 = R4bInputs.Beam(b, n2, n3, ordinary, null, "B2", "B2");
+        foreach (int k in new[] { b1, b2 }) b.Beams[k] = Loads(b, b.Beams[k], support);
+        return R4bInputs.Build(b, "C1 swaps");
     }
 
     /// <summary>What hangs on the axes of every beam, bit for bit, by number (Build Model names a beam without Element ID by its number): the property, section and offset axes, the offset, every load
@@ -247,50 +245,30 @@ internal static class GpcReviewFixesC1
 
     private static void DoubleAngleSwaps(bool supports)
     {
-        const double tolerance = 1e-6;
-        var fem = SwapModel(supports); var ids = new[] { "B1", "B2" };
-        var units = new BridgeUnits(DefinitionUnits.Nmm);
-        var doubleAngle = DoubleAngle(); var ordinary = Ordinary(); var stiffer = Ordinary("PO stiffer"); stiffer.Material = new MaterialModel(Steel) { Modulus = 1.5 * Steel.Modulus };
+        var source = SwapModel(supports); var ids = new[] { "B1", "B2" };
+        var doubleAngle = DoubleAngle(); var ordinary = Ordinary(); var stiffer = Ordinary("PO stiffer", 1.5 * 210000);
+        static Guid Id(string tag) => GpcIdentity.Derive(GpcIdentity.NameSpace, tag);
         int phases = 0;
         foreach (bool clear in new[] { false, true })
         {
             // ordinary → double angle → ordinary, and ordinary → ordinary (bit for bit as before the fix: the turn does not change).
-            var femTo = BridGHe.Common.Diagnostics.BridgePhaseModel.Create(fem, "To 2L", ids, doubleAngle, clear);
-            var gpcTo = GpcModelTransforms.PhaseModel(GpcInputComparison.ConvertWithDrafts(fem, tolerance), "To 2L", ids, GpcModels.BeamProperty(doubleAngle, units), clear, GpcIdentity.Derive(GpcIdentity.NameSpace, "c1-phase-to:" + clear));
-            var femBack = BridGHe.Common.Diagnostics.BridgePhaseModel.Create(femTo, "Back", ids, ordinary, clear);
-            var gpcBack = GpcModelTransforms.PhaseModel(gpcTo, "Back", ids, GpcModels.BeamProperty(ordinary, gpcTo.Report.Units), clear, GpcIdentity.Derive(GpcIdentity.NameSpace, "c1-phase-back:" + clear));
-            var femSame = BridGHe.Common.Diagnostics.BridgePhaseModel.Create(fem, "Same", ids, stiffer, clear);
-            var gpcSame = GpcModelTransforms.PhaseModel(GpcInputComparison.ConvertWithDrafts(fem, tolerance), "Same", ids, GpcModels.BeamProperty(stiffer, units), clear, GpcIdentity.Derive(GpcIdentity.NameSpace, "c1-phase-same:" + clear));
-            foreach (var (label, gpc, femOutput) in new[] { ("phase to double angle", gpcTo, femTo), ("phase back to ordinary", gpcBack, femBack), ("phase ordinary to ordinary", gpcSame, femSame) })
+            var gpcTo = GpcModelTransforms.PhaseModel(source, "To 2L", ids, doubleAngle, clear, Id("c1-phase-to:" + clear));
+            var gpcBack = GpcModelTransforms.PhaseModel(gpcTo, "Back", ids, ordinary, clear, Id("c1-phase-back:" + clear));
+            var gpcSame = GpcModelTransforms.PhaseModel(source, "Same", ids, stiffer, clear, Id("c1-phase-same:" + clear));
+            foreach (var (label, gpc) in new[] { ("phase to double angle", gpcTo), ("phase back to ordinary", gpcBack), ("phase ordinary to ordinary", gpcSame) })
             {
                 string name = label + (clear ? " clear loads" : " keep loads") + (supports ? ", support" : ", no support");
-                try { Console.WriteLine($"GPC REVIEW FIXES R65-C3-02 ({name}): " + GpcInputComparison.Require("C1 " + name, gpc, femOutput, tolerance)); Check(true, name); }
-                catch (Exception ex) { Check(false, $"R65-C3-02 ({name}): against the conversion of the FEM output: {ex.Message}"); }
+                // P2CB (13/11, rule U3): the check against the conversion of the FEM output of 0.3.0 Phase Model is retired by name (P2rRetiredP2cb).
                 Oracle(name, gpc);
                 phases++;
             }
             Check(!AxesText(gpcTo.Model).Split('\n')[0].Contains(" offset axes - "), "R65-C3-02: the beam with an offset has offset axes after the swap");
         }
 
-        // Bridge Construction Sequence: the girders of the simple bridge (an offset, the loads and a support on the first girder beam) on the
-        // double angle, and the snapshot back on an ordinary property.
-        var bridge = BridgeConstructionTests.Model(SimpleBridgeBuilder.Build(SimpleBridgeTests.Input()));
-        var girder = bridge.Beams.First(b => b.Attributes.OfType<BridgeMemberAttributeModel>().Any());
-        girder.Offset = new Vector2d(5, 7); girder.AngleDeg = 30; Loads(girder, bridge.LoadCases[0], supports);
-        BridgePhaseDefinition Phase(int order, string name) => new BridgePhaseDefinition { Order = order, Name = name, Day = 7 };
-        var source = GpcInputComparison.ConvertWithDrafts(bridge, tolerance);
-        var femSnapshot = BridgeConstructionSequence.Create(bridge, Phase(2, "C1 2L"), null, null, new[] { "*" }, doubleAngle, null).Model;
-        var gpcSnapshot = GpcModelTransforms.ConstructionSequence(source, 2, "C1 2L", 7, null, null, new[] { "*" }, GpcModels.BeamProperty(doubleAngle, units), GpcIdentity.Derive(GpcIdentity.NameSpace, "c1-sequence-to:" + supports));
-        var femBackSnapshot = BridgeConstructionSequence.Create(femSnapshot, Phase(3, "C1 back"), null, null, new[] { "*" }, ordinary, null).Model;
-        var gpcBackSnapshot = GpcModelTransforms.ConstructionSequence(gpcSnapshot, 3, "C1 back", 7, null, null, new[] { "*" }, GpcModels.BeamProperty(ordinary, units), GpcIdentity.Derive(GpcIdentity.NameSpace, "c1-sequence-back:" + supports));
-        foreach (var (label0, gpc, femOutput, from) in new[] { ("sequence to double angle", gpcSnapshot, femSnapshot, source), ("sequence back to ordinary", gpcBackSnapshot, femBackSnapshot, gpcSnapshot) })
-        {
-            string label = label0 + (supports ? ", support" : ", no support");
-            try { Console.WriteLine($"GPC REVIEW FIXES R65-C3-02 ({label}): " + GpcInputComparison.RequireRenumbered("C1 " + label, gpc, femOutput, tolerance, from)); Check(true, label); }
-            catch (Exception ex) { Check(false, $"R65-C3-02 ({label}): against the conversion of the FEM output: {ex.Message}"); }
-            Oracle(label, gpc);
-        }
-        Console.WriteLine($"GPC REVIEW FIXES R65-C3-02: {phases} Bridge Phase Model and 2 Bridge Construction Sequence outputs against the conversion of their FEM output and Build Model on their drafts");
+        // Bridge Construction Sequence (P2CB, 13/11, rule U3): its two outputs were the girders of the FEM simple bridge (an offset, the loads and a
+        // support on the first girder beam) on the double angle and back, against the FEM sequence and Build Model on their drafts; the GPC sequence
+        // needs the members of Bridge Member Assignment, which the GPC simple bridge gives without drafts: retired by name (P2rRetiredP2cb).
+        Console.WriteLine($"GPC REVIEW FIXES R65-C3-02: {phases} Bridge Phase Model outputs against Build Model on their drafts");
     }
 
     /// <summary>The oracle of P2 for a transformed input: Build Model on its drafts gives the same beams on the same axes, and the same
@@ -321,24 +299,10 @@ internal static class GpcReviewFixesC1
         var section = One("BeamSectionIComponent", new Dictionary<int, object> { [0] = 300.0, [1] = 250.0, [2] = 800.0, [3] = 20.0, [4] = 16.0, [5] = 12.0 });
         var slab = One("BeamSectionConcreteSlabComponent", new Dictionary<int, object> { [0] = 250.0, [1] = 2500.0, [2] = 1000.0, [3] = 50.0, [4] = 800.0, [5] = 50.0 });
         var valid = One("BeamPropertyCompositeComponent", new Dictionary<int, object> { [0] = "CB", [1] = slab, [2] = section, [3] = concrete, [4] = steel, [5] = rebar });
-        // P2R (T3): the composite property of the component has no FEM value since P2K/P2D; the refused 0.3.0-like value (a FEM input of this case
-        // until P2-taglio) is the composite property of the grillage fixture with n0 = 0 (not a definition: a modular ratio must be positive).
-        var value = BridgeGrillageExample.Composite(new()); value.NInstant = 0;
-        var refused = Make("GH_CompositeBeamProperty", value);
-        string refusal = null;
-        try { _ = P(refused, "Definition"); } catch (TargetInvocationException ex) { refusal = ex.InnerException?.Message; }
-        Check(refusal != null, "R25-01: the composite property with n0 = 0 is not a definition");
-        var m2 = NativeExamples.Create().Single(e => e.Id == "02-simply-supported").Model;
-        var gpcBeam = GpcOnlyBeam(m2.Beams[1], new Guid("c1000000-0000-4000-8000-0000000000c1"));
-        foreach (var (label, start, end, port) in new[] { ("start valid, end refused", valid, refused, "Section End"), ("start refused, end valid", refused, valid, "Section Start") })
-        {
-            var r = Solve("CompositeBeamComponent", new Dictionary<int, object> { [0] = gpcBeam, [1] = start, [2] = end });
-            Check(r.Outputs[0].Count == 0, $"R25-01 ({label}): no output on the GPC-only path");
-            Check(r.Errors.Length == 1 && r.Errors[0].StartsWith(port + ": ", StringComparison.Ordinal) && r.Errors[0].EndsWith(refusal ?? "?", StringComparison.Ordinal),
-                $"R25-01 ({label}): the error names the section and gives the message of the definition ({string.Join(" / ", r.Errors)})");
-            // P2R (T3): the FEM path of Composite Beam is gone (P2K, P1): its check (the composite beam without the definitions) is retired.
-            Console.WriteLine($"GPC REVIEW FIXES R25-01 ({label}): GPC-only '{string.Join(" / ", r.Errors)}'");
-        }
+        // P2CB (13/11, rule U3): the refused section was a FEM value (the composite property of the grillage fixture with n0 = 0, given to the GH
+        // type of a FEM composite property): the GPC components give no composite property that is not a definition. Its checks (not a definition,
+        // no output and the error of each end) are retired by name with the FEM types (P2rRetiredP2cb); two valid sections stay.
+        var gpcBeam = GpcOnlyBeam(Example02().Inputs.Beams[1], new Guid("c1000000-0000-4000-8000-0000000000c1"));
         var both = Solve("CompositeBeamComponent", new Dictionary<int, object> { [0] = gpcBeam, [1] = valid, [2] = valid });
         Check(both.Outputs[0].Count == 1 && both.Errors.Length == 0 && P(both.Outputs[0][0], "StartDefinition") != null, "R25-01: two valid sections still give the composite beam on the GPC-only path");
     }
@@ -376,13 +340,13 @@ internal static class GpcReviewFixesC1
 
     private static void SavedModelChunks()
     {
-        var m2 = NativeExamples.Create().Single(e => e.Id == "02-simply-supported").Model;
-        int nmm = (int)ModelModel.ModelUnits.Nmm;
+        var example = Example02();
         string drafts = GpcModelDrafts.Chunk, results = GpcResultsFile.Chunk;
         // A model without FEM value (Build Model on GPC-only beams), and one with its FEM value (the drafts of Build Model beside it).
-        var gpcOnly = One("BuildModelComponent", new Dictionary<int, object> { [0] = new object[] { GpcOnlyBeam(m2.Beams[0], Guid.NewGuid()), GpcOnlyBeam(m2.Beams[1], Guid.NewGuid()) }, [1] = "C1 saved", [2] = nmm });
-        var withFem = One("BuildModelComponent", new Dictionary<int, object> { [0] = m2.Elements.Where(x => x is NodeModel || x is BeamModel).Select(x => (object)(x is NodeModel n ? Make("Fem.GH_Node", n) : Make("Fem.GH_Beam", (BeamModel)x))).ToArray(), [1] = "C1 saved", [2] = nmm });
-        foreach (var (label, model) in new[] { ("without FEM value", gpcOnly), ("with FEM value", withFem) })
+        // A model without FEM value (Build Model on GPC-only beams). P2CB (13/11, rule U3): the model with its FEM value (Build Model on FEM-backed
+        // elements) is retired by name with the FEM types (P2rRetiredP2cb).
+        var gpcOnly = One("BuildModelComponent", new Dictionary<int, object> { [0] = new object[] { GpcOnlyBeam(example.Inputs.Beams[0], Guid.NewGuid()), GpcOnlyBeam(example.Inputs.Beams[1], Guid.NewGuid()) }, [1] = "C1 saved", [2] = Nmm });
+        foreach (var (label, model) in new[] { ("without FEM value", gpcOnly) })
         {
             var chunk = Written(model);
             Check(chunk.ItemExists(drafts), $"P30-01 ({label}): the drafts are saved with the model");
@@ -412,8 +376,7 @@ internal static class GpcReviewFixesC1
         var test = new GpcTestModel("C1 results"); var n1 = test.Node("1", 0, 0, 0); var n2 = test.Node("2", 1000, 0, 0); test.Restrain(n1, true, true, true, true, true, true);
         test.Beam("1", n1, n2); test.Case("Dead"); test.Displacement(n2, "Dead", 0, 0, -1);
         var analysed = test.Analyse();
-        foreach (var (label, model) in new[] { ("without FEM value", (IGH_Goo)T("Fem.GH_Model").GetMethod("FromGpc").Invoke(null, new object[] { GpcModels.Convert(m2, 1e-6) })),
-            ("with FEM value", (IGH_Goo)T("Fem.GH_Model").GetMethod("FromModel").Invoke(null, new object[] { m2, null })) })
+        foreach (var (label, model) in new[] { ("without FEM value", (IGH_Goo)T("Fem.GH_Model").GetMethod("FromGpc").Invoke(null, new object[] { example.Input })) })
         {
             model.GetType().GetMethod("AttachGpc").Invoke(model, new object[] { analysed });
             var chunk = Written(model);
@@ -446,8 +409,9 @@ internal static class GpcReviewFixesC1
 
     private static void DraftArchiveRecords()
     {
-        var fem = ImportDump.BeamData(ModelModel.ModelUnits.Nmm, null);
-        var property = GpcModels.BeamProperty(fem.Beams[0].BeamProperty, GpcBeamDrafts.DraftUnits);
+        // P2CB (13/11): the drafts of example 02 of the GPC catalogue (before: the drafts of the FEM beam data of ImportDump).
+        var example = Example02().Inputs;
+        var property = GpcNativeExamples.Property(); // the property of the beams of example 02
         // P30-02: a beam-property record without the data of the property.
         var (data, records) = GpcDraftArchive.Write(property);
         Check(GpcDraftArchive.ReadBeamProperty(data, records).Data != null, "P30-02: a beam property reads back with its data");
@@ -456,7 +420,7 @@ internal static class GpcReviewFixesC1
         var withoutData = Encoding.UTF8.GetBytes(xml.ToString(System.Xml.Linq.SaveOptions.DisableFormatting));
         Check(Refused(() => GpcDraftArchive.ReadBeamProperty(data, withoutData), "BridgheDraftRecordsMissingBeamProperty"), "P30-02: a beam-property record without its data is refused (BridgheDraftRecordsMissingBeamProperty)");
         // P30-04: bytes after the records (whitespace, text, an element, a zero) of every kind of record.
-        var node = GpcBeamDrafts.FromFemm(fem.Nodes[0]); var beam = GpcBeamDrafts.FromFemm(fem.Beams[1]);
+        var node = example.Nodes[0]; var beam = example.Beams[1];
         var (nd, nr) = GpcDraftArchive.Write(node); var (bd, br) = GpcDraftArchive.Write(beam);
         var caseRecords = GpcDraftArchive.Write(beam.Records.LoadCases[0]);
         var kinds = new (string Kind, byte[] Records, Action<byte[]> Read)[]
@@ -471,7 +435,7 @@ internal static class GpcReviewFixesC1
                 Check(Refused(() => read(r.Concat(bytes).ToArray())), $"P30-04 ({kind}): records followed by {tail} are refused");
         }
         // P30-04: the drafts of a model (BGHDRF2 and BGHDRF1) with bytes after the drafts, counts smaller or larger than the drafts written.
-        var model = new GpcModelDrafts(fem.Nodes.Select(n => GpcBeamDrafts.FromFemm(n)), fem.Beams.Select(b => GpcBeamDrafts.FromFemm(b)), Array.Empty<LegacyPlateDraft>());
+        var model = new GpcModelDrafts(example.Nodes, example.Beams, Array.Empty<LegacyPlateDraft>());
         var packed = GpcModelDrafts.Write(model);
         Check(GpcModelDrafts.Read(packed).Beams.Count == model.Beams.Count, "P30-04: the drafts of a model read back");
         byte[] raw = Unpack(packed);
@@ -548,17 +512,18 @@ internal static class GpcReviewFixesC1
             var goo = TableMaterialOutput(alpha, rho, out var errors);
             Check(goo != null && errors.Length == 0, $"Table Material ({label}): a material, no error ({string.Join(" / ", errors)})");
             if (goo == null) continue;
-            var femValue = (MaterialModel)P(goo, "Value"); var gpc = (GPC.Model.Materials.Material)P(goo, "Gpc");
+            var gpc = (GPC.Model.Materials.Material)P(goo, "Gpc");
             // P2R (T3): Table Material gives no FEM value since P2K/P2D (before: the FEM value had the table, α and ρ); the datum is checked below.
-            Check(femValue == null, $"Table Material ({label}): no FEM value");
+            Check(P(goo, "Value") == null, $"Table Material ({label}): no FEM value");
             // Everything else as before: the datum is the one of the recipe of 0.3.0 with these α and ρ.
             var recipe = BridGHe.Common.Gpc.Builders.GpcMaterialBuilders.Table("C1 table", true, 0.3, 80000, alpha ?? 0, rho ?? 0, table);
             Check(GpcDraftCapture.Text(gpc) == GpcDraftCapture.Text(BridGHe.Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe)), $"Table Material ({label}): the GPC datum is the material of the recipe");
             var data = gpc.AnalysisData;
             Check(data?.StressStrainPairs != null && data.StressStrainPairs.Length == 2 * table.Count, $"Table Material ({label}): the GPC material carries the table");
             // The write plan of the Converter (recorded): the table on the beam and the shell, α and ρ in the material data.
-            // P2R (T3): the model of the checks on a placeholder FEM material, its conversion with the GPC material of the output (as the native check).
-            var conversion = GpcModels.Convert(TableModel(new MaterialModel("C1 table placeholder") { Name = "C1 table placeholder", Modulus = 210000, PoissonRatio = 0.3 }), 1e-6);
+            // P2R (T3): the model of the checks on a placeholder material, with the GPC material of the output (as the native check). P2CB: the model
+            // is the GPC data of the components (before: the conversion of a FEM model).
+            var conversion = TableModel(Placeholder());
             GpcReviewFixesC1Native.SwapMaterial(conversion.Model, gpc);
             var calls = Straus7Recorder.Record(conversion);
             string Find(string method) => calls.FirstOrDefault(c => c.StartsWith(method + "(", StringComparison.Ordinal));
@@ -570,21 +535,22 @@ internal static class GpcReviewFixesC1
         }
     }
 
-    /// <summary>A beam (solid rectangle) and a thin shell of a material, restrained (the model of the Table Material checks).</summary>
-    internal static ModelModel TableModel(MaterialModel material)
+    /// <summary>The placeholder material of the Table Material checks (E 210000, ν 0.3; the GPC material of the output takes its place).</summary>
+    internal static GPC.Model.Materials.Material Placeholder() =>
+        GpcMaterialBuilders.Material(new LegacyMaterialRecipe { Name = "C1 table placeholder", Modulus = 210000, PoissonRatio = 0.3 });
+
+    /// <summary>A beam (solid rectangle 100 × 200) and a thin shell (20) of a material, restrained (the model of the Table Material checks), as
+    /// the components give it (P2CB, 13/11: before, a FEM model).</summary>
+    internal static GpcModels.Conversion TableModel(GPC.Model.Materials.Material material, string beamProperty = "C1 table beam", string shellProperty = "C1 table shell")
     {
-        var lc = new LoadCaseModel("P", "P");
-        var model = new ModelModel(ModelModel.ModelUnits.Nmm) { Name = "C1 table" }; model.LoadCases.Add(lc);
-        var section = new SectionModel { SectionType = SectionModel.SectionTypes.SolidRectangle, B = 100, D = 200 }; section.CalculateSection();
-        var beamProperty = new BeamPropertyModel("C1 table beam") { Name = "C1 table beam", Material = material, Section = section, PropertyType = BeamPropertyType.Beam };
-        var a = new NodeModel("A", new Point3d(0, 0, 0)); a.Attributes.Add(new NodeRestraintAttributeModel(true, true, true, true, true, true));
-        var b = new NodeModel("B", new Point3d(3000, 0, 0)); b.Loads.Add(new NodeForceLoadModel(lc, new Vector3d(1000, 0, -1000)));
-        var corners = new[] { new Point3d(0, -3000, 0), new Point3d(1000, -3000, 0), new Point3d(1000, -2000, 0), new Point3d(0, -2000, 0) };
-        var elements = new List<ElementModel> { a, b, new BeamModel("1", a.Position, b.Position, beamProperty) };
-        for (int k = 0; k < 4; k++) { var n = new NodeModel("S" + k, corners[k]); n.Attributes.Add(new NodeRestraintAttributeModel(true, true, true, true, true, true)); elements.Add(n); }
-        elements.Add(new PlateModel("1", corners, new PlatePropertyModel("1") { Name = "C1 table shell", Material = material, PropertyType = PlatePropertyType.ShellThin, MembraneThickness = 20, BendingThickness = 20 }));
-        model.AddElements(elements.ToArray());
-        return model;
+        var b = new GpcNativeExamples.Builder("c1-table-" + beamProperty);
+        int a = b.Node(0, 0, 0, "A", null); b.Restrain(a, true, true, true, true, true, true);
+        int e = b.Node(3000, 0, 0, "B", null); b.Force(e, "P", 1000, 0, -1000);
+        R4bInputs.Beam(b, a, e, GpcPropertyBuilders.Beam(beamProperty, 5, GpcSectionBuilders.Standard(BridgeSectionKind.SolidRectangle, 200, b: 100), material), null, "1", "1");
+        var corners = new[] { (0.0, -3000.0, 0.0), (1000.0, -3000.0, 0.0), (1000.0, -2000.0, 0.0), (0.0, -2000.0, 0.0) };
+        for (int k = 0; k < 4; k++) { int n = b.Node(corners[k].Item1, corners[k].Item2, corners[k].Item3, "S" + k, null); b.Restrain(n, true, true, true, true, true, true); }
+        b.Plates.Add(GpcPlateBuilders.Create(corners, GpcPropertyBuilders.Plate(shellProperty, 0, material, 20, 20), null, 0, 0, "1", b.Next("plate")));
+        return R4bInputs.Build(b, "C1 table");
     }
 
     // ---------------------------------------------------------------------------------------------------------------------------------------

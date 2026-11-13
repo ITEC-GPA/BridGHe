@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using BridGHe.Common.Gpc;
+using BridGHe.Common.Gpc.Builders;
 using BridGHe.Common.Gpc.Legacy;
-using BridGHe.Common.Models;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 
@@ -17,6 +17,11 @@ using Rhino.Geometry;
 /// FEM value (<c>GpcBuilderAttach.Decide</c>). Node Displacement (user decision of 6/11): refused with
 /// <see cref="LegacyModelImport.PrescribedDisplacementNotSupported"/>, no output; the reader refuses a former node with a displacement with the
 /// same message. Counts per component on the PASS line.
+/// <para>P2CB (13/11/2026, rule U3): the inputs that were FEM values (the node of a point, the plate properties, the global coordinate system,
+/// the node with rigid connections, the beams, the plate with an angle, the grouped node) are the GH data given by their GPC datum alone
+/// (<c>GH_*.FromGpc</c>, <see cref="R2aDesignFixtures"/>), with the numbers of the former values. The checks that only a FEM value can feed (a node
+/// with a former displacement: its conversion, its payload, Node Filter on it, a former model with it; the payload and the model of a 0.3.0 plate
+/// with an angle written from FEM values) are retired by name (<see cref="P2rRetiredP2cb"/>).</para>
 /// </summary>
 internal static class GpcBuilderChecksARuns
 {
@@ -92,14 +97,16 @@ internal static class GpcBuilderChecksARuns
         var dead = GpcBuilderChecks.Output(h.Run("LoadCaseComponent", new int[0], (0, "Dead")), 0);
         var live = GpcBuilderChecks.Output(h.Run("LoadCaseComponent", new int[0], (0, "Live"), (1, true)), 0);
         var wind = GpcBuilderChecks.Output(h.Run("LoadCaseComponent", new int[0], (0, "Wind")), 0);
-        var node = h.Goo("GH_Node", p);
+        // P2CB: the node of a point by its GPC datum (before: GH_Node(Point3d), a FEM node).
+        IGH_Goo PointNode(string tag) => R2aDesignFixtures.Node(GpcNodeBuilders.Create(p.X, p.Y, p.Z, "", null, R2aDesignFixtures.Id("builders-a:" + tag)));
+        var node = PointNode("node");
 
         // R6.1 worked example (P2N), kept: Node Load, one force, a second one in the same case and one in another case (the case instance shared
         // by name), and on a restrained node (the restraint before the loads in the reader).
         var one = One(h, "NodeLoadComponent", (0, node), (1, dead), (2, new Vector3d(0, 0, -10000)));
         var two = One(h, "NodeLoadComponent", (0, one), (1, dead), (2, new Vector3d(1.5, 0, 0)));
         Run(h, "NodeLoadComponent", new[] { 0 }, (0, two), (1, live), (2, new Vector3d(0, 3e-7, 1e9)));
-        var restrained = One(h, "NodeRestraintsComponent", (0, h.Goo("GH_Node", p)), (1, new[] { true, true, true }), (2, new[] { false, false, false }));
+        var restrained = One(h, "NodeRestraintsComponent", (0, PointNode("restrained")), (1, new[] { true, true, true }), (2, new[] { false, false, false }));
         Run(h, "NodeLoadComponent", new[] { 0 }, (0, restrained), (1, live), (2, new Vector3d(-1, -2, -3)));
 
         // Node (R62A-2, coordinator 6/11): a new node at a point (no ID, no groups): positive, negative and fractional coordinates, the origin,
@@ -160,8 +167,9 @@ internal static class GpcBuilderChecksARuns
         // Plates (Plate component): quadrangle, triangle, groups with a parent (the first on the plate, all in the records), offset, a load
         // patch property, a local axis angle (P2X: on the layer axes of the draft, Turned); refused as by the reader: more than four corners
         // (the output as before, no draft).
-        var shell = h.Goo("GH_PlateProperty", BridgeMeshTests.DeckProperty());
-        var patchProperty = h.Goo("GH_PlateProperty", new PlatePropertyModel("LP") { Name = "LP", PropertyType = PlatePropertyType.LoadPatch, MembraneThickness = 250, BendingThickness = 250, Material = new MaterialModel("C") { Modulus = 34000, PoissonRatio = .2 } });
+        var shell = R2aDesignFixtures.PlateProperty(R2aDesignFixtures.DeckProperty()); // the GPC twin of BridgeMeshTests.DeckProperty
+        // The load patch property (Plate Property, type Load Patch: no material, the thicknesses as given).
+        var patchProperty = R2aDesignFixtures.PlateProperty(GpcPropertyBuilders.Plate("LP", 5, null, 250, 250));
         var deck = GpcBuilderChecks.Output(h.Run("GroupComponent", new int[0], (0, "Deck")), 0);
         var pour = GpcBuilderChecks.Output(h.Run("GroupComponent", new int[0], (0, "Pour1"), (1, deck)), 0);
         var other = GpcBuilderChecks.Output(h.Run("GroupComponent", new int[0], (0, "Other")), 0);
@@ -194,7 +202,7 @@ internal static class GpcBuilderChecksARuns
 
         // Plate NS Mass, Plate Pre-Stress, Plate Pressure: one, two in a case, another case; pressure local by number, text and vector (the Z
         // value), global with a coordinate system on the top and on the bottom face, projected or not.
-        var cs = h.Goo("GH_CoordinateSystem", new CoordinateSystemModel("1", "Global"));
+        var cs = R2aDesignFixtures.Goo("GH_CoordinateSystem", new GPC.Geometry.CoordinateSystem(new GPC.Geometry.Point3d(0, 0, 0), new GPC.Geometry.Point3d(1, 0, 0), new GPC.Geometry.Point3d(0, 1, 0), "Global"));
         var n1 = One(h, "PlateNSMassComponent", (0, quad), (1, dead), (2, 0.5e-9), (3, 1.2));
         var n2 = One(h, "PlateNSMassComponent", (0, n1), (1, dead), (2, 1e-9), (3, 0.0), (4, new Vector3d(0, 0, -125)));
         One(h, "PlateNSMassComponent", (0, n2), (1, live), (2, 2e-9), (3, 1.0), (4, new Vector3d(5, 0, 0)));
@@ -216,9 +224,10 @@ internal static class GpcBuilderChecksARuns
         // plates and beams; refused as before: a second ID (the message with the first), an empty one.
         var idNode = One(h, "ElementIdComponent", (0, node), (1, "N1"));
         One(h, "ElementIdComponent", (0, hot), (1, "N2"));
-        var rigidModel = new NodeModel("R1", p); rigidModel.Attributes.Add(new RigidConnectionAttributeModel(new Point3d(1000, 2000, 2500)));
-        rigidModel.Attributes.Add(new RigidConnectionAttributeModel(new Point3d(1500, 2000, 3000)));
-        var rigid = h.Goo("GH_Node", rigidModel, null);
+        // A node with two rigid connections, as the reader gives the former node (Bridge Rigid Links gives the first; the second added as it adds it).
+        var rigidDraft = BridGHe.Common.Gpc.Builders.GpcBridgeGeometryBuilders.RigidNode(p, "R1", new Point3d(1000, 2000, 2500), R2aDesignFixtures.Id("builders-a:rigid"));
+        rigidDraft.Node.Attributes.Add(new GPC.Model.Attributes.RigidConnectionAttribute(new GPC.Geometry.Point3d(1500, 2000, 3000)));
+        var rigid = R2aDesignFixtures.Node(rigidDraft);
         var rigidId = One(h, "ElementIdComponent", (0, rigid), (1, "R1-ID"));
         One(h, "NodeRestraintsComponent", (0, rigidId), (1, new[] { true, true, true }));
         Error(h, "ElementIdComponent", "Node N1 has already an ID", (0, idNode), (1, "N1b"));
@@ -228,14 +237,17 @@ internal static class GpcBuilderChecksARuns
         One(h, "ElementIdComponent", (0, tri), (1, "P2"));
         Error(h, "ElementIdComponent", "Plate P1 has already an ID", (0, idPlate), (1, "P3"));
         One(h, "PlatePressureComponent", (0, idPlate), (1, dead), (4, new GH_Number(-0.5)));
-        var property = new BeamPropertyModel("P") { Name = "P", PropertyType = BeamPropertyType.Beam, Material = new MaterialModel("S") { Name = "S355", Modulus = 210000, PoissonRatio = .3 },
-            Section = new SectionModel { SectionType = SectionModel.SectionTypes.Generic, SectionArea = 10000, I11 = 1e8, I22 = 1e8, J = 1e7 } };
-        var beam = h.Goo("GH_Beam", new BeamModel(new Point3d(0, 0, 0), new Point3d(5000, 0, 0), property), null);
+        var property = GpcPropertyBuilders.Beam("P", 5, GpcSectionBuilders.Generic(10000, 1e8, 1e8, 1e7, 0, 0, 0, 0, 0, 0, 0),
+            GpcMaterialBuilders.Material(new LegacyMaterialRecipe { Name = "S355", Modulus = 210000, PoissonRatio = .3 }));
+        static GPC.Geometry.Point3d G(double x, double y, double z) => new GPC.Geometry.Point3d(x, y, z);
+        var beam = R2aDesignFixtures.Beam(GpcBeamBuilders.New(G(0, 0, 0), G(5000, 0, 0), property, null, 0, 0, 0, R2aDesignFixtures.Id("builders-a:beam"), ""));
         var idBeam = One(h, "ElementIdComponent", (0, beam), (1, "B1"));
         Error(h, "ElementIdComponent", "Beam B1 has already an ID", (0, idBeam), (1, "B2"));
-        var releasedModel = new BeamModel(new Point3d(0, 0, 0), new Point3d(0, 4000, 0), property);
-        var release = new BeamReleasesAttributeModel.AttributeData(); release.RotNode2[1] = true; releasedModel.Attributes.Add(new BeamReleasesAttributeModel(release));
-        One(h, "ElementIdComponent", (0, h.Goo("GH_Beam", releasedModel, null)), (1, "B3"));
+        // A beam released about axis 2 at end 2 (Beam Releases).
+        var zero = new GPC.Geometry.Vector3d(0, 0, 0);
+        var released = GpcBeamBuilders.WithReleases(GpcBeamBuilders.New(G(0, 0, 0), G(0, 4000, 0), property, null, 0, 0, 0, R2aDesignFixtures.Id("builders-a:released"), ""),
+            new[] { false, false, false }, zero, new[] { false, false, false }, zero, new[] { false, false, false }, zero, new[] { false, true, false }, zero, R2aDesignFixtures.Id("builders-a:releases"));
+        One(h, "ElementIdComponent", (0, R2aDesignFixtures.Beam(released)), (1, "B3"));
 
         // Align Plate Axes (R62A-2, coordinator 6/11): axis 3 (Blue) against the normal reverses the corners (quadrangle, triangle, the plate with
         // everything and an ID: attributes and loads unchanged), along the normal nothing changes; axes 1 (Red) and 2 (Green) already aligned
@@ -264,18 +276,10 @@ internal static class GpcBuilderChecksARuns
         var (r1, r2, _) = Axes(turned);
         Turned(h, One(h, "AlignPlateAxesComponent", (0, turned), (1, 0), (2, r1 + 0.5 * r2)));
         Turned(h, One(h, "AlignPlateAxesComponent", (0, turned), (1, 1), (2, f1)));
-        var angled = new PlateModel(new[] { e, f, g, k }, BridgeMeshTests.DeckProperty()) { AngleDeg = 30 };
-        var reversedAngled = Turned(h, Align(h, true, h.Goo("GH_Plate", angled, null), 2, new Vector3d(0, 0, -1)));
-        // P2X: an internalized 0.3.0 plate with an angle (its BGHA1 payload read by value) and a whole 0.3.0 model with it: the layer axes of the
-        // turned local axes, on the corners of the value and on the nodes of the model.
-        var byValue = GpcLegacyPayloads.Plate(BridGHe.Common.Helpers.ModelArchive.Write(angled));
-        angled.GetLocalAxes(out var v1, out _, out var v3); v1.Unitize(); v3.Unitize();
-        if (byValue.AngleDeg != 30 || byValue.Plate.Assignments.LayerAxes is not { } payloadAxes || (payloadAxes.V1 - new GPC.Geometry.Vector3d(v1.X, v1.Y, v1.Z)).Length > 1e-12
-            || (payloadAxes.V3 - new GPC.Geometry.Vector3d(v3.X, v3.Y, v3.Z)).Length > 1e-12) h.Failures.Add("A BGHA1 plate payload with an angle: not the turned local axes");
-        var former = new ModelModel(ModelModel.ModelUnits.Nmm);
-        former.AddElements(new ElementModel[] { new NodeModel("1", e), new NodeModel("2", f), new NodeModel("3", g), new NodeModel("4", k), new PlateModel(new[] { e, f, g, k }, BridgeMeshTests.DeckProperty()) { AngleDeg = 30 } });
-        var imported = LegacyModelImport.Import(LegacyArchive.Read(BridGHe.Common.Helpers.ModelArchive.Write(former)), Guid.NewGuid(), 1e-3, new LegacyImportReport());
-        PlateAngles(h, "a whole 0.3.0 model", imported, new[] { 30.0 });
+        var angled = GpcPlateBuilders.Create(new[] { (e.X, e.Y, e.Z), (f.X, f.Y, f.Z), (g.X, g.Y, g.Z), (k.X, k.Y, k.Z) }, R2aDesignFixtures.DeckProperty(), null, 30, 0, "", R2aDesignFixtures.Id("builders-a:angled"));
+        var reversedAngled = Turned(h, Align(h, true, R2aDesignFixtures.Plate(angled), 2, new Vector3d(0, 0, -1)));
+        // P2CB (13/11, rule U3): the internalized 0.3.0 plate with an angle (its BGHA1 payload) and a whole 0.3.0 model with it were written from
+        // FEM values here: retired by name (P2rRetiredP2cb).
         // P2X, Build Model on turned plates (and one without an angle): every plate of the GPC model has the layer axes of its nodes turned by its
         // angle, which the Straus7 writer of the Converter gives Straus7 as the angle of V1 from the initial axis 1 (SetPlateAxes).
         var built = GpcBuilderChecks.Output(h.Run("BuildModelComponent", new int[0], (0, new[] { angledQuad, angledTri, quad, turned, reversedAngled, warped })), 0);
@@ -285,19 +289,15 @@ internal static class GpcBuilderChecksARuns
 
         // Node Filter and Plate Filter: by ID, group, position, property name; a node whose draft the reader refuses (a former displacement,
         // decided on the FEM value); the host checks each decision on the FEM value. Element Filter: unchanged (GH GUIDs only), one run.
-        var grouped = new NodeModel("G", new Point3d(10, 20, 30)); grouped.Groups.Add(new GroupModel("Pour1", new GroupModel("Deck")));
-        var refusedNode = new NodeModel("D", new Point3d(-1, -1, -1)); refusedNode.Loads.Add(new NodeDisplacementLoadModel(new LoadCaseModel("Dead") { Name = "Dead" }, new NodeDisplacementLoadModel.LoadData(new Vector3d(0, 0, -1), Vector3d.Zero)));
+        var grouped = R2aDesignFixtures.Node(GpcNodeBuilders.Create(10, 20, 30, "G", new[] { GpcCaseBuilders.Group("Pour1", GpcCaseBuilders.Group("Deck", null)) }, R2aDesignFixtures.Id("builders-a:grouped")));
         // P2R (T3, 12/11): Node Filter is on GPC data alone since P2K: a node whose GPC datum the reader refuses (a former displacement, only from a
         // FEM value) makes the component refuse the run (its error, no output), so it leaves the partitions (each one node fewer: by ID and group
         // 2/3, by position 4/1 (it was the node at -1,-1,-1), by ID and group 1/4) and is checked alone.
-        var nodes = new IGH_Goo[] { idNode, node, h.Goo("GH_Node", grouped, null), rigidId, hot };
+        var nodes = new IGH_Goo[] { idNode, node, grouped, rigidId, hot };
         Partition(h, "NodeFilterComponent", 2, 3, (0, nodes), (1, new[] { "N1", "nobody" }), (3, 2), (4, new[] { pour }));
         Partition(h, "NodeFilterComponent", 4, 1, (0, nodes), (2, new[] { new Point3d(-1, -1, -1), new Point3d(1000, 2000, 3000) }), (3, 2));
         Partition(h, "NodeFilterComponent", 1, 4, (0, nodes), (1, new[] { "R1-ID" }), (3, 2), (4, new[] { other }));
-        Run(h, "NodeFilterComponent", new int[0], (0, new[] { h.Goo("GH_Node", refusedNode, null) }), (1, new[] { "D" }), (3, 2));
-        int refusedBefore = h.Failures.Count;
-        h.Failures.RemoveAll(f => f.Contains(" run " + h.Runs, StringComparison.Ordinal) && f.Contains("Prescribed node displacements are not supported", StringComparison.Ordinal));
-        if (h.Failures.Count == refusedBefore) h.Failures.Add("A NodeFilterComponent: a node with a former displacement: no refusal of the component");
+        // P2CB (13/11, rule U3): the node with a former displacement exists only as a FEM value: its run of Node Filter is retired by name.
         var plates = new IGH_Goo[] { quad, tri, patch, idPlate, full };
         Partition(h, "PlateFilterComponent", 2, 3, (0, plates), (1, new[] { "P1" }), (3, 2), (4, new[] { "LP" }));
         Partition(h, "PlateFilterComponent", 1, 4, (0, plates), (3, 2), (5, new[] { pour }));
@@ -317,15 +317,9 @@ internal static class GpcBuilderChecksARuns
         Run(h, "BridgeDeckMeshComponent", new[] { 2 }, (0, straight), (1, shell), (2, 7000.0), (3, 3000.0), (4, new[] { 20000.0 }), (5, false));
         Run(h, "BridgeDeckMeshComponent", new[] { 2 }, (0, straight), (1, patchProperty), (2, 9000.0), (3, 4000.0), (5, true));
 
-        // The reader of a former node with a displacement (an internalized 0.3.0 value, a whole former model): the same message as the component.
-        var payload = BridGHe.Common.Helpers.ModelArchive.Write(refusedNode);
-        Expect(h, "BGHA1 node payload", () => GpcLegacyPayloads.Node(payload), LegacyModelImport.PrescribedDisplacementNotSupported);
-        Expect(h, "FEM node conversion", () => GpcBeamDrafts.FromFemm(refusedNode), LegacyModelImport.PrescribedDisplacementNotSupported);
-        var restrainedDisplaced = new NodeModel("E", new Point3d(0, 0, 0)); restrainedDisplaced.Attributes.Add(new NodeRestraintAttributeModel(true, true, true, false, false, false));
-        restrainedDisplaced.Loads.Add(new NodeDisplacementLoadModel(new LoadCaseModel("Settlement") { Name = "Settlement" }, new NodeDisplacementLoadModel.LoadData(new Vector3d(0, 0, -5), Vector3d.Zero)));
-        var model = new ModelModel(ModelModel.ModelUnits.Nmm); model.AddElements(new ElementModel[] { restrainedDisplaced });
-        Expect(h, "BGHA1 model payload", () => LegacyModelImport.Import(LegacyArchive.Read(BridGHe.Common.Helpers.ModelArchive.Write(model)), Guid.NewGuid(), 1e-3, new LegacyImportReport()),
-            LegacyModelImport.PrescribedDisplacementNotSupported);
+        // P2CB (13/11, rule U3): the reader of a former node with a displacement (its BGHA1 payload, its FEM conversion and a former model with it,
+        // all written from FEM values here) is retired by name; the frozen payloads refusal-prescribed-restrained and -free give the same message
+        // in gpc-legacy-import.
         if (Environment.GetEnvironmentVariable("BRIDGHE_R62A_DISPLACEMENT_SCAN") == "1") DisplacementScan(h);
 
         h.Finish(Counts.Values.Sum(v => v.Runs));

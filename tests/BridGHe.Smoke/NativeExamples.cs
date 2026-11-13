@@ -89,7 +89,7 @@ internal static class NativeExamples
                 throw new Exception("FAIL: library moving template not expanded on GPC (Attach Moving Paths): "+library+"/"+item);
             Console.WriteLine($"PASS: library moving template {library}/{item} expanded by the Converter on GPC (Attach Moving Paths): {expanded.Vehicles.Length} vehicles, {expanded.LaneFactors.Length} lanes");
             string gpcFolder=Path.GetFullPath(Path.Combine("artifacts","native",Guid.NewGuid().ToString("N")));Directory.CreateDirectory(gpcFolder);
-            BridGHe.Common.Gpc.Legacy.FemmAnalysisSeam.Export(null,input,Path.Combine(gpcFolder,"library.st7"),input.Tolerance,new List<string>());
+            P2cbGpc.Export(input,Path.Combine(gpcFolder,"library.st7"));
             if(!File.Exists(Path.Combine(gpcFolder,"library.st7")))throw new Exception("FAIL: library moving template export of the GPC-only input");
             Console.WriteLine("PASS: library moving template exported by the Converter writer");
         }
@@ -191,39 +191,12 @@ internal static class NativeExamples
             });
         }
     }
-    /// <summary><c>--examples</c>. R6.6 R0: with GPC_PILOT the GPC catalogue on the GPC-only path (<see cref="GpcNativeExamples.Run"/>: the analytic
-    /// checks on the analysed GPC model through the GPC result readers, the Results components on the GPC-only model); otherwise the FEM catalogue
-    /// on the FEM path (transitional, removed by P2).</summary>
+    /// <summary><c>--examples</c>. R6.6 R0: the GPC catalogue on the GPC-only path (<see cref="GpcNativeExamples.Run"/>: the analytic checks on the
+    /// analysed GPC model through the GPC result readers, the Results components on the GPC-only model). P2CB (13/11): the run of the FEM catalogue
+    /// on the FEM path (RunFem, without callers since T7) is removed; the FEM catalogue (<see cref="Create"/>) stays for the files that still read it.</summary>
     internal static int Run(string selected)
     {
         return GpcNativeExamples.Run(selected);
     }
 
-    private static int RunFem(string selected)
-    {
-        string runId=DateTime.Now.ToString("yyyyMMdd-HHmmssfff");
-        string root=Path.Combine(ExamplePaths.Validation,"esecuzioni",runId);Directory.CreateDirectory(root);
-        var reports=new List<object>();int failures=0,count=0;
-        foreach(var example in Create().Where(x=>selected=="all"||x.Id.StartsWith(selected,StringComparison.Ordinal)))
-        {
-            count++;Console.WriteLine("EXAMPLE "+example.Id);var record=new Recorder();string error=null;List<string> warnings=new();
-            string folder=Path.Combine(ExamplePaths.Calculations(example.Id),"native",runId);Directory.CreateDirectory(folder);example.Model.Name=example.Title;
-            File.WriteAllBytes(Path.Combine(folder,"input.bgmodel"),ModelArchive.Write(example.Model));
-            try{
-                // Exercise relative paths with '/' against the real native solver.
-                // Before canonicalisation St7NewFile succeeded but St7RunSolver
-                // failed with 1029 (cannot write result file).
-                string solverPath=example.Id=="01-cantilever"?Path.GetRelativePath(Environment.CurrentDirectory,Path.Combine(folder,"model.st7")).Replace('\\','/'):Path.Combine(folder,"model.st7");
-                var result=StrausAnalysis.Run(example.Model,solverPath,example.Solver,example.Cases,1e-6,example.Moving,out warnings,out var analysed);
-                File.WriteAllBytes(Path.Combine(folder,"results.bgmodel"),ModelArchive.Write(result));example.Verify(result,record);
-                record.Near("Input remains without results",example.Model.Elements.Sum(e=>e.Results.Count),0,0,0);
-            }catch(Exception ex){error=ex.ToString();Console.WriteLine("ERROR: "+error);}
-            bool passed=error==null&&record.Measurements.All(m=>m.Passed);if(!passed)failures++;
-            var report=new {example.Id,example.Title,example.Solver,Passed=passed,Warnings=warnings,Error=error,record.Measurements};reports.Add(report);
-            File.WriteAllText(Path.Combine(folder,"report.json"),JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true}));
-        }
-        File.WriteAllText(Path.Combine(root,"report.json"),JsonSerializer.Serialize(new{Date=DateTimeOffset.Now,Count=count,Failures=failures,Examples=reports},new JsonSerializerOptions{WriteIndented=true}));
-        if(selected=="all"&&count==10&&failures==0)File.WriteAllText(Path.Combine(ExamplePaths.Validation,"latest-passed.txt"),runId);
-        Console.WriteLine($"EXAMPLES {count}, FAILURES {failures}; report: {root}");return count>0&&failures==0?0:1;
-    }
 }

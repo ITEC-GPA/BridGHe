@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BridGHe.Common.Models;
+using BridGHe.Common.Gpc.Builders;
+using BridGHe.Common.Gpc.Legacy;
 using Grasshopper.Kernel.Types;
 using R = Rhino.Geometry;
 
@@ -10,6 +11,9 @@ using R = Rhino.Geometry;
 /// one run per component and per input variant the component distinguishes; every output datum of a GH type with a GPC datum carries a datum
 /// built on GPC, compared on attach with the conversion of its FEM value (<see cref="GpcDraftCheckHost"/>, a difference fails the run).
 /// Variants the reader refuses (and the builder alike) give an output without a datum (<c>refused</c> below).
+/// <para>P2CB (13/11/2026, rule U3): the inputs that were FEM values (beam properties, groups, a plate, coordinate systems, composite
+/// properties, a concrete) are the GH data given by their GPC datum alone (<c>GH_*.FromGpc</c>, <see cref="R2aDesignFixtures.Goo"/>), with the
+/// numbers of the former FEM values; the runs and their checks are unchanged.</para>
 /// </summary>
 internal static class GpcBuilderChecksB
 {
@@ -44,15 +48,13 @@ internal static class GpcBuilderChecksB
         // Inputs: two load cases, groups (nested and plain), properties (I section, explicit section with a principal angle, a truss).
         var dead = Out(Run("LoadCaseComponent", none, (0, "Dead")));
         var live = Out(Run("LoadCaseComponent", none, (0, "Live"), (1, true)));
-        var steel = new MaterialModel("S355") { Name = "S355", Modulus = 210000, PoissonRatio = 0.3, UsePoisson = true, Density = 7.85e-9 };
-        var iProperty = h.Goo("GH_BeamProperty", new BeamPropertyModel("PI") { Name = "PI", Material = steel, PropertyType = BeamPropertyType.Beam,
-            Section = new SectionModel { Name = "I", SectionType = SectionModel.SectionTypes.I, D = 500, B1 = 300, B2 = 100, T1 = 20, T2 = 10, T3 = 5 } });
-        var generic = new SectionModel { Name = "G", SectionType = SectionModel.SectionTypes.Generic, SectionArea = 12000, I11 = 4.5e8, I22 = 1.2e8, J = 3e6, AngleX1Rad = 0.3,
-            Centroid = new R.Point2d(15, -40), ShearA1 = 5000, ShearA2 = 4000, ShearL1 = 3, ShearL2 = -2 };
-        var gProperty = h.Goo("GH_BeamProperty", new BeamPropertyModel("PG") { Name = "PG", Material = steel, PropertyType = BeamPropertyType.Beam, Section = generic });
-        var truss = h.Goo("GH_BeamProperty", new BeamPropertyModel("PT") { Name = "PT", Material = steel, PropertyType = BeamPropertyType.Truss,
-            Section = new SectionModel { Name = "R", SectionType = SectionModel.SectionTypes.SolidRectangle, D = 100, B = 50 } });
-        var deck = new GroupModel("Deck"); var nested = h.Goo("GH_Group", new GroupModel("Segment2", new GroupModel("Girder1", deck))); var plain = h.Goo("GH_Group", new GroupModel("Other"));
+        var steel = GpcMaterialBuilders.Material(new LegacyMaterialRecipe { Name = "S355", Modulus = 210000, PoissonRatio = 0.3, UsePoisson = true, Density = 7.85e-9 });
+        var iProperty = R2aDesignFixtures.Property(GpcPropertyBuilders.Beam("PI", 5, GpcSectionBuilders.Standard(BridGHe.Common.Gpc.BridgeSectionKind.I, 500, b1: 300, b2: 100, t1: 20, t2: 10, t3: 5), steel));
+        var generic = GpcSectionBuilders.Generic(12000, 4.5e8, 1.2e8, 3e6, 3, -2, 5000, 4000, 15, -40, 0.3);
+        var gProperty = R2aDesignFixtures.Property(GpcPropertyBuilders.Beam("PG", 5, generic, steel));
+        var truss = R2aDesignFixtures.Property(GpcPropertyBuilders.Beam("PT", 2, GpcSectionBuilders.Standard(BridGHe.Common.Gpc.BridgeSectionKind.SolidRectangle, 100, b: 50), steel));
+        var deck = GpcCaseBuilders.Group("Deck", null);
+        var nested = R2aDesignFixtures.Goo("GH_Group", GpcCaseBuilders.Group("Segment2", GpcCaseBuilders.Group("Girder1", deck))); var plain = R2aDesignFixtures.Goo("GH_Group", GpcCaseBuilders.Group("Other", null));
         var axisX = new R.LineCurve(new R.Point3d(0, 0, 0), new R.Point3d(12000, 0, 0));
         var skew = new R.LineCurve(new R.Point3d(100, -250, 30), new R.Point3d(9100.5, 3200.25, 812.75));
         var vertical = new R.LineCurve(new R.Point3d(500, 500, 0), new R.Point3d(500, 500, 4000));
@@ -93,8 +95,8 @@ internal static class GpcBuilderChecksB
         h.Expect(Draft(se).Bridge?.SuperElement == "SE-A", "Super Element «SE-A»: the bridge data of the draft name " + (Draft(se).Bridge?.SuperElement ?? "none")); // R1
         Run("SuperElementComponent", one, (0, se), (1, "SE-B"));
         Run("SuperElementComponent", one, (0, se), (1, "SE-A"));
-        var plate = h.Goo("GH_Plate", new PlateModel("", new[] { new R.Point3d(0, 0, 0), new R.Point3d(1000, 0, 0), new R.Point3d(1000, 1000, 0) },
-            new PlatePropertyModel("PP") { Name = "PP", Material = steel, MembraneThickness = 200, BendingThickness = 200 }), null);
+        var plate = R2aDesignFixtures.Plate(GpcPlateBuilders.Create(new[] { (0.0, 0.0, 0.0), (1000.0, 0.0, 0.0), (1000.0, 1000.0, 0.0) },
+            GpcPropertyBuilders.Plate("PP", 0, steel, 200, 200), null, 0, 0, "", R2aDesignFixtures.Id("builders-b:plate")));
         // Decision of the user (7/11): a super element takes only beams; a plate is an error with no output.
         var refusedPlate = Run("SuperElementComponent", none, (0, plate), (1, "SE-P"));
         h.ExpectError("A Super-Element takes only beams");
@@ -108,8 +110,9 @@ internal static class GpcBuilderChecksB
         chain = Out(Run("BeamOutputStationsComponent", one, (0, chain), (1, 11)));
 
         // Loads: every schema in the principal axes 1, 2, 3 (force and moment); global directions; a global system and a system that is not.
-        var cs = new CoordinateSystemModel("1", "Global"); var gcs = h.Goo("GH_CoordinateSystem", cs);
-        var other = new CoordinateSystemModel("2", "Rotated") { Point1 = new R.Point3d(0, 1, 0), Point2 = new R.Point3d(-1, 0, 0) }; var ocs = h.Goo("GH_CoordinateSystem", other);
+        // The coordinate systems by their GPC frames (origin, a point of axis 1, a point of the plane 1-2, as GpcLoadFrames reads the former values).
+        var gcs = R2aDesignFixtures.Goo("GH_CoordinateSystem", new GPC.Geometry.CoordinateSystem(new GPC.Geometry.Point3d(0, 0, 0), new GPC.Geometry.Point3d(1, 0, 0), new GPC.Geometry.Point3d(0, 1, 0), "Global"));
+        var ocs = R2aDesignFixtures.Goo("GH_CoordinateSystem", new GPC.Geometry.CoordinateSystem(new GPC.Geometry.Point3d(0, 0, 0), new GPC.Geometry.Point3d(0, 1, 0), new GPC.Geometry.Point3d(-1, 0, 0), "Rotated"));
         (int, object)[] Values(int schema) => schema switch
         {
             0 => new (int, object)[] { (6, -12.5), (9, 0.1), (10, 0.2) },
@@ -204,8 +207,7 @@ internal static class GpcBuilderChecksB
         var input = SimpleBridgeTests.Input();
         var steelGeometry = BridGHe.Common.Geometry.SimpleBridgeBuilder.Build(input);
         var geometry = h.Goo("BridgeGeometryGoo", steelGeometry);
-        var baseSteel = BridgeSegmentSectionsTests.BaseProperty();
-        var baseProperty = h.Goo("GH_BeamProperty", baseSteel);
+        var baseProperty = R2aDesignFixtures.Property(R2aDesignFixtures.BaseProperty()); // the GPC twin of BridgeSegmentSectionsTests.BaseProperty
         var schedule = Out(Run("BridgeSectionScheduleComponent", none, (0, gProperty), (1, 0.0), (2, 9000.0), (3, 0), (4, 1), (5, 0)));
         var tapered = Out(Run("BridgeSectionScheduleComponent", none, (0, iProperty), (1, 9000.0), (2, 30000.0), (3, 0), (4, 2), (5, 0), (6, new R.Vector3d(1, 1.2, 0)), (7, new R.Vector3d(1, 1.6, 0))));
         var family = Out(Run("BridgeFamilyPropertyComponent", none, (0, baseProperty), (1, -1)));
@@ -226,16 +228,19 @@ internal static class GpcBuilderChecksB
         foreach (bool mass in new[] { true, false })
             Run("BridgeSegmentOverrideComponent", new[] { 0, 1 }, (0, girders[0].ToArray()), (1, segmentIds), (2, replacements), (3, mass));
         Run("BridgeSegmentOverrideComponent", new[] { 0, 1 }, (0, girders[0].ToArray()), (1, segmentIds), (2, segmentIds.Select(_ => gProperty).ToArray()), (3, true));
-        var composites = segmentIds.Select(id => h.Goo("GH_CompositeBeamProperty", new CompositeBeamPropertyModel(id) { Name = id, SteelSection = baseSteel.Section,
-            ConcreteSection = new SectionConcreteSlabModel(250, 3000, 1500, 40), SteelMaterial = new MaterialModel("S355") { Name = "S355", Modulus = 210000, PoissonRatio = 0.3, MinimumYieldStress = 355, MinimumTensileStress = 510 },
-            ConcreteMaterial = new MaterialModel("C30") { Name = "C30", Modulus = 33000, PoissonRatio = 0.2, SpecificCompressiveStrength = 30 },
-            RebarMaterial = new MaterialModel("B450") { Name = "B450", Modulus = 200000, MinimumYieldStress = 450, MinimumTensileStress = 540 }, NInstant = 6.36, NInfinite = 18.0,
-            ConsiderConcrete = true, ConsiderRebar = false })).ToArray();
+        // The composite properties by their definitions: the steel I of the base property, slab 250 × 3000 with 1500 mm² of top bars at 40 (bottom
+        // none, cover 50), S355, C30, B450, n0 6.36, n∞ 18 (the numbers of the former FEM properties).
+        var composites = segmentIds.Select(id => R2aDesignFixtures.Composite(GpcCompositeDefinitions.Create(new GpcCompositeDefinitions.Numbers
+        {
+            Name = id, Height = 2500, Web = 16, TopWidth = 600, TopThickness = 30, BottomWidth = 600, BottomThickness = 30, SlabWidth = 3000, SlabHeight = 250,
+            TopArea = 1500, TopCover = 40, BottomArea = 0, BottomCover = 50, Concrete = "C30", Fck = 30, ConcreteE = 33000, Steel = "S355", SteelE = 210000, SteelFy = 355, SteelFu = 510,
+            SteelPoisson = 0.3, Rebar = "B450", RebarE = 200000, RebarFy = 450, RebarFu = 540, NShortTerm = 6.36, NLongTerm = 18.0, NShrinkage = 18.0, ConsiderConcrete = true, ConsiderRebar = false,
+        }))).ToArray();
         Run("BridgeSegmentCompositeComponent", new[] { 0, 1 }, (0, girders[0].ToArray()), (1, segmentIds), (2, composites));
         // Bridge Slab Grillage on the combined grillage geometry (transverse strips, unequal stations).
         var grillageInput = input with { DeckBeamStations = new[] { 1234d, 13777, 45001 } };
         var grillage = BridGHe.Common.Geometry.BridgeDeckGrillage.Build(grillageInput, BridGHe.Common.Geometry.SimpleBridgeBuilder.Build(grillageInput));
-        var concrete = h.Goo("GH_Material", new MaterialModel("C35") { Name = "C35/45", Kind = MaterialModel.MaterialKind.Concrete, Modulus = 34077, PoissonRatio = 0.2, ShearModulus = 14198.75, Density = 2.5e-9 });
+        var concrete = R2aDesignFixtures.MaterialGoo(GpcMaterialBuilders.Material(new LegacyMaterialRecipe { Kind = "Concrete", Name = "C35/45", Modulus = 34077, PoissonRatio = 0.2, ShearModulus = 14198.75, Density = 2.5e-9 }), "Concrete");
         Run("BridgeSlabGrillageComponent", new[] { 0, 1 }, (0, h.Goo("BridgeGeometryGoo", grillage.Geometry)), (1, concrete), (2, "Soletta"));
         // Connections: rigid links, deformable beams, offsets (both components and every mode of Bridge Connections).
         var links = grillage.Connections.Take(4).Select(c => (object)c.Axis).ToArray();
