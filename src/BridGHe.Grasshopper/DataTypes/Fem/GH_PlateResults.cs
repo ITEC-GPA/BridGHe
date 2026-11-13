@@ -55,7 +55,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override string ToString()
         {
-            return "Null Plate results";
+            // P2CG (13/11/2026, review of ChatGPT task 63, 2B-01): a valid datum (its analysed GPC element) is described by the GPC data, not as null.
+            return AnalysedGpc == null ? "Null Plate results" : "Plate results of element " + AnalysedGpc.Id;
         }
 
         #endregion

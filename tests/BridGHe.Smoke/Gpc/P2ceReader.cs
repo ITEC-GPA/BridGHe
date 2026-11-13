@@ -35,8 +35,10 @@ internal static class P2ceReader
         int casts = SectionCasts(failures);
         Console.WriteLine($"P2CE READER SECTION CASTS: {casts} casts of a text or a curve to a Beam Section with their expected kind, dimensions and text");
         int stage = StageChecks(failures);
+        int results = P2cgChecks.ResultsTexts(failures); // P2CG (13/11/2026, 2B-01)
+        Console.WriteLine($"P2CG RESULTS TEXT: {results} checks of the Node, Beam and Plate Results data (empty, analysed, copied) on their GPC element");
         if (failures.Count > 0) throw new Exception("P2CE READER FAIL: " + string.Join(" | ", failures.Take(20)));
-        Console.WriteLine($"P2CE READER PASS: inventory above; {casts} section casts; {stage} checks of P2P-01 (Staged Construction and Load Combinations).");
+        Console.WriteLine($"P2CE READER PASS: inventory above; {casts} section casts; {stage} checks of P2P-01 (Staged Construction and Load Combinations); {results} checks of the Results texts.");
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------------
