@@ -107,8 +107,9 @@ namespace BridGHe.Grasshopper.Components.Definitions
         }
 
         /// <summary>P2P-01: the saved «LoadCases» item as 0.4.0 wrote it until now (an empty list of FEM cases: the files of 0.3.0 read it), kept
-        /// so that the item does not change; the catalogue itself is in <see cref="CaseRecordsChunk"/>. P2CE phase 2b: written without the FEM type.</summary>
-        private static readonly byte[] EmptyLoadCases = Common.Helpers.ModelArchive.Write(new List<Common.Models.LoadCaseModel>());
+        /// so that the item does not change; the catalogue itself is in <see cref="CaseRecordsChunk"/>. P2CE phase 2b: the same bytes, a constant
+        /// (<c>GpcLegacyPayloads.EmptyLoadCasesItem</c>, without the FEM type).</summary>
+        private static readonly byte[] EmptyLoadCases = Common.Gpc.GpcLegacyPayloads.EmptyLoadCasesItem;
 
         public override bool Write(GH_IWriter writer)
         {

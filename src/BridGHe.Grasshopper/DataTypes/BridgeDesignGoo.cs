@@ -52,8 +52,9 @@ public sealed class BridgeDesignGoo : GH_Goo<object>
         if (!reader.ItemExists("Design")) return false;
         try
         {
-            object read = ModelArchive.Read<object>(reader.GetByteArray("Design"));
-            bool gpcOnly = read is BridgeSectionRule { Property: null } or BridgeFamilyProperty { Property: null };
+            // P2CE phase 2b: the item by value (no FEM CLR type; a 0.3.0 FEM property becomes its GPC datum, with the ID of a rule).
+            object read = Common.Gpc.GpcLegacyPayloads.Design(reader.GetByteArray("Design"));
+            bool gpcOnly = read is BridgeSectionRule { Property: null, GpcProperty: null } or BridgeFamilyProperty { Property: null, GpcProperty: null };
             bool chunks = reader.ItemExists("DesignGpcData") && reader.ItemExists("DesignGpcRecords");
             if (gpcOnly)
             {

@@ -52,6 +52,37 @@ namespace BridGHe.Common.Gpc
         }
 
         public static LegacyCaseData Case(byte[] payload) => LegacyModelImport.CaseDraft(Root(payload));
+        /// <summary>P2CE (13/11/2026, phase 2b): the «Design» item of Bridge Design Definition (a section rule or a family property, saved by
+        /// the archive of the CLR types) by value: the plain fields of the record and, for the FEM property of a 0.3.0 record, its GPC datum read
+        /// by value (<see cref="BeamProperty"/>) with the ID the text of a rule shows (<c>LegacyPropertyId</c>); a record of 0.4.0 has no FEM
+        /// property (its datum is in the chunks beside the item). The record is the same as the archive of the CLR types read, but for the FEM
+        /// property, replaced by its datum (the product reads the datum of either).</summary>
+        public static object Design(byte[] payload)
+        {
+            var root = Root(payload);
+            var property = root["Property"];
+            // The member of the declared type carries no type of its own (the FEM beam property of the record).
+            if (!property.IsNull && property.Type == null) property.Type = "BridGHe.Common.Models.BeamPropertyModel";
+            LegacyBeamProperty Datum() => property.IsNull ? null : LegacyModelImport.BeamProperty(property, GpcBeamDrafts.DraftUnits);
+            Rhino.Geometry.Vector2d Vector(LegacyValue v, Rhino.Geometry.Vector2d fallback) => v.IsNull ? fallback
+                : new Rhino.Geometry.Vector2d(v.Any("m_x", "X", "x").AsDouble(), v.Any("m_y", "Y", "y").AsDouble());
+            if (root.Is("BridgeSectionRule"))
+                return new Geometry.BridgeSectionRule
+                {
+                    Family = root.Int("Family"), Group = root.Int("Group"), Segment = root.Int("Segment"), Start = root.Double("Start"), End = root.Double("End"),
+                    ScaleFrom = Vector(root["ScaleFrom"], new Rhino.Geometry.Vector2d(1, 1)), ScaleTo = Vector(root["ScaleTo"], new Rhino.Geometry.Vector2d(1, 1)),
+                    GpcProperty = Datum(), LegacyPropertyId = property.IsNull ? root.String("LegacyPropertyId") : property.String("Id"),
+                };
+            if (root.Is("BridgeFamilyProperty"))
+                return new Geometry.BridgeFamilyProperty(root.Int("Family"), null) { GpcProperty = Datum() };
+            throw new System.Runtime.Serialization.SerializationException("LegacyDesignRecordExpected: " + (root.Type ?? "null"));
+        }
+
+        /// <summary>P2CE (13/11/2026, phase 2b, coordinator decision 2): the «LoadCases» item Staged Construction writes (an empty list of FEM cases,
+        /// the bytes the archive of the CLR types wrote; proven equal by p2ce-reader while the FEM types existed), a copy.</summary>
+        public static byte[] EmptyLoadCasesItem => Convert.FromHexString(EmptyLoadCasesHex);
+        private const string EmptyLoadCasesHex = "4247484131401441727261794F664C6F6164436173654D6F64656C3F024964823F0453697A6580083D687474703A2F2F736368656D61732E64617461636F6E74726163742E6F72672F323030342F30372F427269644748652E436F6D6D6F6E2E4D6F64656C7309016929687474703A2F2F7777772E77332E6F72672F323030312F584D4C536368656D612D696E7374616E636509017A33687474703A2F2F736368656D61732E6D6963726F736F66742E636F6D2F323030332F31302F53657269616C697A6174696F6E2F01";
+
         /// <summary>P2CE (13/11/2026, phase 2a): the cases of a saved list of FEM cases (the «LoadCases» item of Staged Construction, written
         /// by 0.3.0 and by the development files) by value, in order, each as <see cref="Case"/> reads one; no FEM CLR type.</summary>
         public static LegacyCaseData[] Cases(byte[] payload)

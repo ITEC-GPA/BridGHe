@@ -19,6 +19,9 @@ public sealed record BridgeSectionRule
     /// <summary>R6.5 P1 lane 2a: the property given by its GPC datum alone (<see cref="Property"/> null): Bridge Slab Grillage on a material
     /// given by its GPC datum alone. Assignments with such a rule give their beams by their plans alone (<see cref="BridgeAssignment.Plans"/>).</summary>
     [field: NonSerialized] public Gpc.Legacy.LegacyBeamProperty GpcProperty { get; init; }
+    /// <summary>P2CE (13/11/2026, phase 2b, coordinator decision 1): the ID of the FEM property of a rule of a 0.3.0 file, read by value with the
+    /// rule (<c>GpcLegacyPayloads.Design</c>), for the text of the rule (<see cref="ToString"/>), which showed it; null otherwise.</summary>
+    public string LegacyPropertyId { get; init; }
     public Vector2d ScaleFrom { get; init; } = new(1, 1);
     public Vector2d ScaleTo { get; init; } = new(1, 1);
     public void Validate()
@@ -43,7 +46,7 @@ public sealed record BridgeSectionRule
         return new Vector2d(ScaleFrom.X + t * (ScaleTo.X - ScaleFrom.X), ScaleFrom.Y + t * (ScaleTo.Y - ScaleFrom.Y));
     }
     // R6.5 P1 lane 2b: a property given by its GPC datum alone by its name.
-    public override string ToString() => $"Section schedule: {Property?.Id ?? GpcProperty?.Property?.Name}, family {Family}, group {Group}, segment {Segment}, {Start:G7}..{End:G7} mm";
+    public override string ToString() => $"Section schedule: {Property?.Id ?? LegacyPropertyId ?? GpcProperty?.Property?.Name}, family {Family}, group {Group}, segment {Segment}, {Start:G7}..{End:G7} mm";
 }
 
 public sealed record BridgeAssignment(BeamModel[] Beams, string[] Unassigned, string[] Diagnostics)
