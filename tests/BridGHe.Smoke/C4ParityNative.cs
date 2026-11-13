@@ -153,8 +153,8 @@ internal static class C4ParityNative
         try { GPC.Converter.Straus7.Straus7ModelWritePlan.Prepare(conversion.Model, null, null, conversion.Report.NativeSections, new Straus7WriteOptions()); } catch (NotSupportedException e) { refusal = e.Message; }
         Check(refusal != null && refusal.Contains("PrincipalAngleWithTaperGradientOrSupportRequiresExplicitAxisConvention"), "point 1 without the option the Converter refuses the angles with axis data (before C4): " + refusal);
         var warnings = new List<string>();
-        P2cbGpc.Export(conversion, written, warnings);
-        P2cbGpc.Export(RotatedModel(false, out _), bare);
+        BridGHe.Common.Gpc.Legacy.GpcAnalysisSeam.Export(conversion, written, warnings);
+        BridGHe.Common.Gpc.Legacy.GpcAnalysisSeam.Export(RotatedModel(false, out _), bare);
         File.Copy(bare, former);
         using (var api = new Straus7NativeApi())
         {
@@ -393,7 +393,7 @@ internal static class C4ParityNative
         catch (Exception e) { refusal = e.GetType().Name + ": " + e.Message; }
         Check(refusal != null && refusal.Contains("ZeroElasticModulus"), "point 4: a cable on a Table Material (E 0) is refused, as 0.3.0 refused every cable: " + (refusal ?? "accepted"));
         string folder = Folder(), outcome;
-        try { P2cbGpc.Export(CableModel(Steel()), Path.Combine(folder, "cable.st7")); outcome = "written"; }
+        try { BridGHe.Common.Gpc.Legacy.GpcAnalysisSeam.Export(CableModel(Steel()), Path.Combine(folder, "cable.st7")); outcome = "written"; }
         catch (Exception e) { outcome = e.GetType().Name + ": " + e.Message; }
         Console.WriteLine("C4 point 4 (not checked): a cable on a steel material through Straus R3 Export: " + outcome);
     }

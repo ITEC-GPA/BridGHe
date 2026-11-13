@@ -186,20 +186,15 @@ internal static class GpcBuilderChecksB
         Run("BeamFilterComponent", none, (0, pool), (2, new[] { new R.Point3d(100, -250, 30) }), (3, new[] { new R.Point3d(12000, 0, 0.05) }));
         Run("BeamFilterComponent", none, (0, pool), (1, new[] { "none" }), (5, new[] { "none" }));
 
-        // Merge Geometry: the FEM-free merge equals ModelHelper.MergeGeometry on points, curves and a mesh.
+        // Merge Geometry on points, curves and a mesh. P2CE (13/11/2026): the comparison with ModelHelper.MergeGeometry (the same code as
+        // BridgeGeometryMerge.Merge, the product function) is retired by name with the FEM helper (P2rRetiredP2ce).
         {
             var points = new List<R.Point3d> { new(0, 0, 0), new(0.05, 0, 0), new(1000, 0, 0) };
             var curves = new List<R.Curve> { new R.LineCurve(new R.Point3d(0.02, 0, 0), new R.Point3d(999.97, 0, 0)), new R.LineCurve(new R.Point3d(1000, 0, 0), new R.Point3d(1000, 500, 0)) };
             var mesh = new R.Mesh(); mesh.Vertices.Add(0, 0, 0); mesh.Vertices.Add(1000.03, 0, 0); mesh.Vertices.Add(1000, 500.02, 0); mesh.Vertices.Add(0.01, 0, 0); mesh.Faces.AddFace(0, 1, 2); mesh.Faces.AddFace(3, 1, 2);
             var meshes = new List<R.Mesh> { mesh };
-            List<R.Point3d> p1 = new(points), p2 = new(points); List<R.Curve> c1 = new(curves), c2 = new(curves); List<R.Mesh> m1 = new(meshes), m2 = new(meshes);
-            BridGHe.Common.Helpers.ModelHelper.MergeGeometry(ref p1, ref c1, ref m1, 0.1);
-            BridGHe.Common.Geometry.BridgeGeometryMerge.Merge(ref p2, ref c2, ref m2, 0.1);
-            string Text(List<R.Point3d> p, List<R.Curve> c, List<R.Mesh> m) => string.Join(";", p.Select(x => x.ToString())) + "|" + string.Join(";", c.Select(x => x.PointAtStart + "/" + x.PointAtEnd))
-                + "|" + string.Join(";", m.Select(x => string.Join(",", Enumerable.Range(0, x.Vertices.Count).Select(i => x.Vertices.Point3dAt(i).ToString())) + "#" + x.Faces.Count));
-            if (Text(p1, c1, m1) != Text(p2, c2, m2)) h.Failures.Add("B: Merge Geometry differs from ModelHelper.MergeGeometry");
             Run("MergeGeometryComponent", none, (0, points.Select(p => (object)p).Concat(curves).Concat(meshes).ToArray()), (1, 0.1));
-            PerComponent["MergeGeometry (FEM-free = ModelHelper)"] = 1;
+            PerComponent["MergeGeometry"] = 1;
         }
 
         // Bridge generators on the simple bridge of the tests (steel I girders, cross members, segments): Section Schedule, Family Property,

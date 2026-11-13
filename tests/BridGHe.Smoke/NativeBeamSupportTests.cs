@@ -37,7 +37,7 @@ internal static class NativeBeamSupportTests
         var four = R4bInputs.BeamSupport(4, false);
         string file = Path.Combine(folder, "four-directions.st7");
         // F6A: export by the GPC Converter writer (export component path, here the GPC input alone) and readback with the Converter API.
-        FemmAnalysisSeam.Export(null, four, file, R4bInputs.Tolerance, new List<string>());
+        GpcAnalysisSeam.Export(four, file, new List<string>());
         string scratch = Path.Combine(Path.GetTempPath(), "bridghe-support-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(scratch);
         try
         {

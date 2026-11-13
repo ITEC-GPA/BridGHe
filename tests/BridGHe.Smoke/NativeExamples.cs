@@ -89,7 +89,7 @@ internal static class NativeExamples
                 throw new Exception("FAIL: library moving template not expanded on GPC (Attach Moving Paths): "+library+"/"+item);
             Console.WriteLine($"PASS: library moving template {library}/{item} expanded by the Converter on GPC (Attach Moving Paths): {expanded.Vehicles.Length} vehicles, {expanded.LaneFactors.Length} lanes");
             string gpcFolder=Path.GetFullPath(Path.Combine("artifacts","native",Guid.NewGuid().ToString("N")));Directory.CreateDirectory(gpcFolder);
-            P2cbGpc.Export(input,Path.Combine(gpcFolder,"library.st7"));
+            BridGHe.Common.Gpc.Legacy.GpcAnalysisSeam.Export(input,Path.Combine(gpcFolder,"library.st7"));
             if(!File.Exists(Path.Combine(gpcFolder,"library.st7")))throw new Exception("FAIL: library moving template export of the GPC-only input");
             Console.WriteLine("PASS: library moving template exported by the Converter writer");
         }

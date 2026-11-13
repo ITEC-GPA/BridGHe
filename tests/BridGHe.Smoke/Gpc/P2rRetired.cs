@@ -163,6 +163,7 @@ internal static class P2rRetired
         void Add(string key, string reason) => d.Add(key, reason + " (" + CutDecision + ")");
         P2rRetiredP2cb.AddTo(Add); // P2CB (13/11): the retirements of lane P2CB (Gpc/P2rRetired.P2cb.cs)
         P2rRetiredP2cd.AddTo(Add); // P2CD (13/11): the retirements of lane P2CD (Gpc/P2rRetired.P2cd.cs)
+        P2rRetiredP2ce.AddTo(Add); // P2CE (13/11): the retirements of lane P2CE (Gpc/P2rRetired.P2ce.cs)
         const string FemType = "a check of the FEM model types (BridGHe.Common.Models), which the GPC path does not use";
         P2caChecks(Add); // P2CA (13/11/2026): the replay, archive and data side of the tests
         Add("core|section archive roundtrip", FemType + "; the GH archive round trip of a section on its GPC datum: P2fChecks.GooArchives (core)");

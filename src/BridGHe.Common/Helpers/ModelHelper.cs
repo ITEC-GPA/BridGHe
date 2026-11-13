@@ -126,56 +126,6 @@ namespace BridGHe.Common.Helpers
                 .Distinct());
         }
 
-        /// <summary>
-        /// Assign the elements id and creates the missing nodes
-        /// </summary>
-        /// <param name="nodes">The nodes list</param>
-        /// <param name="beams">The beams list</param>
-        /// <param name="meshes">The plates list</param>
-        public static void MergeGeometry(ref List<Point3d> inputNodes, ref List<Curve> inputBeams, ref List<Mesh> inputMeshes, double tolerance)
-        {
-            if (!double.IsFinite(tolerance) || tolerance < 0) throw new ArgumentOutOfRangeException(nameof(tolerance));
-            var points = new List<Point3d>();
-            using var tree = new RTree();
-            Point3d Resolve(Point3d point)
-            {
-                int index = -1;
-                double nearest = double.PositiveInfinity;
-                tree.Search(new Sphere(point, tolerance), (sender, e) =>
-                {
-                    double distance = points[e.Id].DistanceToSquared(point);
-                    if (distance < nearest || (distance == nearest && e.Id < index))
-                    { index = e.Id; nearest = distance; }
-                });
-                if (index >= 0) return points[index];
-                tree.Insert(point, points.Count);
-                points.Add(point);
-                return point;
-            }
-            foreach (var point in inputNodes) Resolve(point);
-            var beams = inputBeams.Select(c => c.DuplicateCurve()).ToList();
-            foreach (var beam in beams)
-            {
-                beam.SetStartPoint(Resolve(beam.PointAtStart));
-                beam.SetEndPoint(Resolve(beam.PointAtEnd));
-            }
-            var meshes = inputMeshes.Select(m => m.DuplicateMesh()).ToList();
-            foreach (var mesh in meshes)
-            {
-                mesh.Vertices.UseDoublePrecisionVertices = true;
-                // Remap all vertices before changing topology, preserving every face's winding.
-                for (int i = 0; i < mesh.Vertices.Count; i++)
-                    mesh.Vertices.SetVertex(i, Resolve(mesh.Vertices.Point3dAt(i)));
-                mesh.Vertices.CombineIdentical(true, true);
-                mesh.Faces.CullDegenerateFaces();
-                mesh.Vertices.CullUnused();
-                mesh.Normals.ComputeNormals();
-                mesh.Compact();
-            }
-            inputNodes = points;
-            inputBeams = beams;
-            inputMeshes = meshes;
-        }
 
         /// <summary>
         /// Assign the elements id and creates the missing nodes

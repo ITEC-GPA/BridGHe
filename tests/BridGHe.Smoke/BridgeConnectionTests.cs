@@ -53,7 +53,7 @@ internal static class BridgeConnectionTests
         string file = Path.Combine(folder, "connection.st7");
         var (a, b) = Rigid(new Line(Point3d.Origin, new Point3d(10, 20, 30)), 1, "connection native");
         var input = R2aGeneratorFixtures.Build("connection native", new[] { a, b }, null, 1e-6);
-        BridGHe.Common.Gpc.Legacy.FemmAnalysisSeam.Export(null, input, file, 1e-6, new System.Collections.Generic.List<string>());
+        BridGHe.Common.Gpc.Legacy.GpcAnalysisSeam.Export(input, file, new System.Collections.Generic.List<string>());
         using var api = new GPC.Converter.Straus7.Straus7NativeApi(); api.OpenModelReadOnly(file, folder);
         Require(api.Count(GPC.Converter.Straus7.Straus7Entity.Link) == 1, "One native link");
         var link = api.ReadLink(1);

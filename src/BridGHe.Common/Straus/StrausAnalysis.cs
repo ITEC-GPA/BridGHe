@@ -68,7 +68,7 @@ namespace BridGHe.Common.Straus
             if (movingOnly && paths.Any(p => p.Template.Vehicles.Any(v => v.HeatSources?.Length > 0))) throw new NotSupportedException(HeatSourceMessage);
             var selection = movingOnly ? Array.Empty<Gpc.GpcResultSelection.Entry>() : Gpc.GpcResultSelection.Select(input.Model, solver, requested);
             warnings = new List<string>();
-            var analysed = Gpc.Legacy.FemmAnalysisSeam.Run(input, outputPath, solver, selection, movingOnly, warnings);
+            var analysed = Gpc.Legacy.GpcAnalysisSeam.Run(input, outputPath, solver, selection, movingOnly, warnings);
             if (string.IsNullOrEmpty(analysed.Name)) analysed.Name = Path.GetFileNameWithoutExtension(outputPath);
             return analysed;
         }

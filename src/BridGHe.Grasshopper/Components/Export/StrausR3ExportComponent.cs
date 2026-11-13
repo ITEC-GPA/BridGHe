@@ -80,7 +80,7 @@ namespace BridGHe.Grasshopper.Components.Export
                     // P2K (P1): the model is written from its GPC input alone (no FEM value read); P8: a cable is refused before any Straus7 call.
                     var input = model.GpcInput ?? throw GpcOnlyModels.Refused("the model has no GPC input.");
                     Common.Straus.StrausAnalysis.RefuseCables(input.Model);
-                    Common.Gpc.Legacy.FemmAnalysisSeam.Export(null, input, outputPath, input.Tolerance, warnings);
+                    Common.Gpc.Legacy.GpcAnalysisSeam.Export(input, outputPath, warnings);
                     Message = "Done";
                 }
                 catch (Exception ex)

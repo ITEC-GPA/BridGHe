@@ -281,7 +281,7 @@ internal static class GpcOnlyAnalysisNative
         var output = GpcModelTransforms.PhaseModel(input, "A09", new[] { "B1" }, replacement, false, GpcIdentity.Derive(GpcIdentity.NameSpace, "test-a09-native"), replacement);
         var warnings = new List<string>();
         string gpcFile = Path.Combine(folder, "a09-gpc.st7");
-        P2cbGpc.Export(output, gpcFile, warnings);
+        BridGHe.Common.Gpc.Legacy.GpcAnalysisSeam.Export(output, gpcFile, warnings);
         double[] gpc; string names;
         using (var api = new Straus7NativeApi())
         {

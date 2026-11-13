@@ -223,7 +223,7 @@ internal static class RegressionTests
         mesh.Faces.AddFace(0, 1, 2); mesh.Faces.AddFace(1, 3, 2);
         var nodes = new List<Point3d> { new Point3d(0.0001, 0, 0) };
         var beams = new List<Curve>(); var meshes = new List<Mesh> { mesh };
-        ModelHelper.MergeGeometry(ref nodes, ref beams, ref meshes, 0.001);
+        BridGHe.Common.Geometry.BridgeGeometryMerge.Merge(ref nodes, ref beams, ref meshes, 0.001); // P2CE: the product merge (the former ModelHelper.MergeGeometry, the same code)
         Require(meshes[0].Faces.Count == 2 && meshes[0].Vertices.Count == 4 && meshes[0].IsValid, "all adjacent faces survive vertex snapping");
         Require(meshes[0].Vertices.Point3dAt(0).DistanceTo(nodes[0]) < 1e-12, "existing canonical point is used");
         Require(mesh.Vertices.Point3dAt(0) == Point3d.Origin, "source mesh unchanged");
@@ -232,7 +232,7 @@ internal static class RegressionTests
         collapsed.Vertices.Add(0, 0, 0); collapsed.Vertices.Add(0.0001, 0, 0); collapsed.Vertices.Add(0, 10, 0);
         collapsed.Faces.AddFace(0, 1, 2);
         nodes = new List<Point3d>(); meshes = new List<Mesh> { collapsed };
-        ModelHelper.MergeGeometry(ref nodes, ref beams, ref meshes, 0.001);
+        BridGHe.Common.Geometry.BridgeGeometryMerge.Merge(ref nodes, ref beams, ref meshes, 0.001); // P2CE: the product merge (the former ModelHelper.MergeGeometry, the same code)
         Require(meshes[0].Faces.Count == 0, "only genuinely collapsed faces are removed");
     }
 

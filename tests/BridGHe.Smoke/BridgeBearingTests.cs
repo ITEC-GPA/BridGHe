@@ -63,7 +63,7 @@ internal static class BridgeBearingTests
         var input = R2aGeneratorFixtures.Build("bearing native", new[] { n, m }, new[] { beam }, 1e-6);
         string folder = Path.GetFullPath(Path.Combine("artifacts", "bearings-native", Guid.NewGuid().ToString("N"))); Directory.CreateDirectory(folder);
         string file = Path.Combine(folder, "bearing.st7");
-        BridGHe.Common.Gpc.Legacy.FemmAnalysisSeam.Export(null, input, file, 1e-6, new System.Collections.Generic.List<string>());
+        BridGHe.Common.Gpc.Legacy.GpcAnalysisSeam.Export(input, file, new System.Collections.Generic.List<string>());
         using var api = new GPC.Converter.Straus7.Straus7NativeApi(); api.OpenModelReadOnly(file, folder);
         var restraint = api.ReadRestraint(1, 1); var ucs = api.ReadUcs(restraint.Ucs).Data;
         var axis = new Vector3d(ucs[3] - ucs[0], ucs[4] - ucs[1], ucs[5] - ucs[2]); axis.Unitize();

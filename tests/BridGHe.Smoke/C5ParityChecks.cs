@@ -342,8 +342,8 @@ internal static class C5ParityChecks
         // The angle at 20° and the double angle at 30° through Straus R3 Export.
         string folder = Folder(), written = Path.Combine(folder, "rotated.st7"), bare = Path.Combine(folder, "rotated-bare.st7");
         var model = RotatedModel(true, out var released);
-        P2cbGpc.Export(model, written);
-        P2cbGpc.Export(RotatedModel(false, out _), bare);
+        BridGHe.Common.Gpc.Legacy.GpcAnalysisSeam.Export(model, written);
+        BridGHe.Common.Gpc.Legacy.GpcAnalysisSeam.Export(RotatedModel(false, out _), bare);
         Compare("rotated", folder, written, bare, released);
         // 0.3.0 analysed such a model: it solves (Straus R3 Analysis, linear).
         var solved = StrausAnalysis.Run(model, Path.Combine(folder, "rotated-run.st7"), 0, new[] { "G" }, false, out _);
@@ -353,8 +353,8 @@ internal static class C5ParityChecks
         // written without the releases (before P2CB: on the FEM output of 0.3.0 Phase Model).
         string phase = Path.Combine(folder, "phase.st7"), phaseBare = Path.Combine(folder, "phase-bare.st7");
         var gpc = PhaseGpc(true);
-        P2cbGpc.Export(gpc, phase);
-        P2cbGpc.Export(PhaseGpc(false), phaseBare);
+        BridGHe.Common.Gpc.Legacy.GpcAnalysisSeam.Export(gpc, phase);
+        BridGHe.Common.Gpc.Legacy.GpcAnalysisSeam.Export(PhaseGpc(false), phaseBare);
         Compare("phase model", folder, phase, phaseBare, new[] { PhaseP1() });
         var phaseSolved = StrausAnalysis.Run(gpc, Path.Combine(folder, "phase-run.st7"), 0, new[] { "G" }, false, out _);
         Check(Solved(phaseSolved, 3), "native phase model: the double angle with the releases solves (Straus R3 Analysis of the phase model output): node displacements " + Displacements(phaseSolved));

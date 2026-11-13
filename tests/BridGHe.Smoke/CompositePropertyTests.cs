@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Reflection;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
@@ -193,16 +192,18 @@ internal static class CompositePropertyTests
         return definition;
     }
 
-    /// <summary>The outlines of a composite section from its definition (the preview of a composite beam on its definitions): steel and slab,
-    /// the slab on the top flange, also for an asymmetric H (bottom flange 900, top flange 400).</summary>
+    /// <summary>The preview of a composite beam on its definitions (GpcDraftShapes.Composite, the solids the plug-in draws; P2CE: before, the
+    /// outlines of the FEM preview geometry of the definition): steel and slab, the slab on the top flange, also for an asymmetric H (bottom
+    /// flange 900, top flange 400).</summary>
     private static void GpcPreview(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition definition,Action<bool,string> require,Action<double,double> near)
     {
         var asymmetric=GpcCompositeDefinitions.Create(TestNumbers("Composite asymmetric",7,18,12) with{BottomWidth=900,TopWidth=400});
         foreach(var gpc in new[]{definition,asymmetric})
         {
-            var outlines=new CompositeSectionPreviewGeometry(gpc).Outlines().ToArray();
-            require(outlines.Length==2 && outlines.All(o=>o.IsClosed),"GPC: the composite preview must contain steel and slab.");
-            near(outlines[0].GetBoundingBox(true).Max.Y,outlines[1].GetBoundingBox(true).Min.Y);
+            var beam=BridGHe.Common.Gpc.Builders.GpcBeamBuilders.New(new GPC.Geometry.Point3d(0,0,0),new GPC.Geometry.Point3d(12000,0,0),R2aDesignFixtures.BaseProperty(),null,0,0,0,R2aDesignFixtures.Id("p2ce:composite-preview:"+gpc.Name),"CB");
+            var solids=BridGHe.Common.Gpc.GpcDraftShapes.Composite(beam,gpc,gpc);
+            require(solids.Length==2 && solids.All(o=>o.IsSolid),"GPC: the composite preview must contain steel and slab.");
+            near(solids[0].GetBoundingBox(true).Max.Z,solids[1].GetBoundingBox(true).Min.Z);
         }
         gpcChecks+=4;
     }
