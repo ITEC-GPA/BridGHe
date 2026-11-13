@@ -56,9 +56,57 @@ internal static class GpcDraftMergeChecks
         catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is InvalidOperationException) { return "ERROR " + e.Message; }
     }
 
+    /// <summary>P2CA (13/11/2026, user decision «Sì, congelale», about 07:00): the one-shot writer of the frozen fixture of this regression
+    /// (<c>BRIDGHE_DRAFT_MERGE_FIXTURE=write:&lt;new folder&gt;</c>): for every comparison the two input drafts in BGHGPC1 (data and records, each
+    /// distinct draft once, named by the first 16 hexadecimal digits of the SHA-256 of its bytes) and the expected text of the former merge. Before
+    /// a case is written, the merge of the drafts read back from their bytes must give the text of the merge of the drafts in memory. It needs the
+    /// FEM inputs and goes with them after the freeze.</summary>
+    private sealed class Freezer
+    {
+        private readonly string folder;
+        private readonly List<string> index = new() { "label\tkind\tfirst\tother\texpected\texpected_sha256\terror" };
+        private readonly List<string> drafts = new() { "id\tkind\tdata_bytes\tdata_sha256\trecords_bytes\trecords_sha256" };
+        private readonly HashSet<string> written = new(StringComparer.Ordinal);
+        internal Freezer(string folder)
+        {
+            this.folder = System.IO.Path.GetFullPath(folder);
+            if (System.IO.Directory.Exists(this.folder)) throw new InvalidOperationException("GPC DRAFT MERGE FIXTURE: the folder exists, a frozen fixture is never rewritten: " + this.folder);
+            System.IO.Directory.CreateDirectory(System.IO.Path.Combine(this.folder, "drafts")); System.IO.Directory.CreateDirectory(System.IO.Path.Combine(this.folder, "expected"));
+        }
+        private static string Sha(byte[] b) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(b ?? Array.Empty<byte>()));
+        private string Draft(string kind, (byte[] Data, byte[] Records) d)
+        {
+            string id = Sha((d.Data ?? Array.Empty<byte>()).Concat(d.Records ?? Array.Empty<byte>()).ToArray()).Substring(0, 16);
+            if (written.Add(id))
+            {
+                System.IO.File.WriteAllBytes(System.IO.Path.Combine(folder, "drafts", id + ".data"), d.Data);
+                if (d.Records != null) System.IO.File.WriteAllBytes(System.IO.Path.Combine(folder, "drafts", id + ".records"), d.Records);
+                drafts.Add($"{id}\t{kind}\t{d.Data.Length}\t{Sha(d.Data)}\t{(d.Records == null ? -1 : d.Records.Length)}\t{(d.Records == null ? "-" : Sha(d.Records))}");
+            }
+            return id;
+        }
+        internal void Add(string label, string kind, (byte[] Data, byte[] Records) first, (byte[] Data, byte[] Records) other, string expected, string fromBytes, string actual)
+        {
+            if (fromBytes != actual) throw new InvalidOperationException("GPC DRAFT MERGE FIXTURE (" + label + "): the drafts read back from their bytes merge to another text");
+            string a = Draft(kind, first), b = Draft(kind, other), name = index.Count.ToString("D2") + ".txt";
+            var text = System.Text.Encoding.UTF8.GetBytes(expected);
+            System.IO.File.WriteAllBytes(System.IO.Path.Combine(folder, "expected", name), text);
+            index.Add($"{label}\t{kind}\t{a}\t{b}\t{name}\t{Sha(text)}\t{expected.StartsWith("ERROR ", StringComparison.Ordinal)}");
+        }
+        internal void Close()
+        {
+            System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "index.tsv"), string.Join("\n", index) + "\n", new System.Text.UTF8Encoding(false));
+            System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "drafts.tsv"), string.Join("\n", drafts) + "\n", new System.Text.UTF8Encoding(false));
+            System.IO.File.WriteAllText(System.IO.Path.Combine(folder, ".gitattributes"), "*.data binary\n*.records binary\n*.txt -text\n*.tsv -text\n*.md -text\n.gitattributes -text\n", new System.Text.UTF8Encoding(false));
+            Console.WriteLine($"GPC DRAFT MERGE FIXTURE WRITE: {index.Count - 1} cases, {written.Count} distinct drafts in {folder}");
+        }
+    }
+
     internal static void Regression()
     {
         int compared = 0, errors = 0;
+        string setting = Environment.GetEnvironmentVariable("BRIDGHE_DRAFT_MERGE_FIXTURE");
+        var frozen = setting != null && setting.StartsWith("write:", StringComparison.Ordinal) ? new Freezer(setting.Substring("write:".Length)) : null;
         void Compare(string label, ElementModel first, ElementModel other)
         {
             string expected, actual;
@@ -66,19 +114,25 @@ internal static class GpcDraftMergeChecks
             {
                 var guid = GpcBeamDrafts.FromFemm(n).Node.Guid; var merged = new NodeModel(n); merged.Merge(other);
                 expected = Resolved(() => { var d = GpcBeamDrafts.FromFemm(merged, guid); return (d.Node, null, null, d.Report); });
+                var x = GpcDraftArchive.Write(GpcBeamDrafts.FromFemm(n)); var y = GpcDraftArchive.Write(GpcBeamDrafts.FromFemm((NodeModel)other));
                 actual = Resolved(() => { var d = LegacyBuildModel.Merge(GpcBeamDrafts.FromFemm(n), GpcBeamDrafts.FromFemm((NodeModel)other)); return (d.Node, d.Records, null, d.Report); });
+                frozen?.Add(label, "node", x, y, expected, Resolved(() => { var d = LegacyBuildModel.Merge(GpcDraftArchive.ReadNode(x.Data, x.Records), GpcDraftArchive.ReadNode(y.Data, y.Records)); return (d.Node, d.Records, null, d.Report); }), actual);
             }
             else if (first is BeamModel b)
             {
                 var guid = GpcBeamDrafts.FromFemm(b).Beam.Guid; var merged = new BeamModel(b); merged.Merge(other);
                 expected = Resolved(() => { var d = GpcBeamDrafts.FromFemm(merged, guid); return (d.Beam, d.Records, d.Bridge, d.Report); });
+                var x = GpcDraftArchive.Write(GpcBeamDrafts.FromFemm(b)); var y = GpcDraftArchive.Write(GpcBeamDrafts.FromFemm((BeamModel)other));
                 actual = Resolved(() => { var d = LegacyBuildModel.Merge(GpcBeamDrafts.FromFemm(b), GpcBeamDrafts.FromFemm((BeamModel)other)); return (d.Beam, d.Records, d.Bridge, d.Report); });
+                frozen?.Add(label, "beam", x, y, expected, Resolved(() => { var d = LegacyBuildModel.Merge(GpcDraftArchive.ReadBeam(x.Data, x.Records), GpcDraftArchive.ReadBeam(y.Data, y.Records)); return (d.Beam, d.Records, d.Bridge, d.Report); }), actual);
             }
             else
             {
                 var p = (PlateModel)first; var guid = GpcBeamDrafts.FromFemm(p).Plate.Guid; var merged = new PlateModel(p); merged.Merge(other);
                 expected = Resolved(() => { var d = GpcBeamDrafts.FromFemm(merged, guid); return (d.Plate, d.Records, null, d.Report); });
+                var x = GpcDraftArchive.Write(GpcBeamDrafts.FromFemm(p)); var y = GpcDraftArchive.Write(GpcBeamDrafts.FromFemm((PlateModel)other));
                 actual = Resolved(() => { var d = LegacyBuildModel.Merge(GpcBeamDrafts.FromFemm(p), GpcBeamDrafts.FromFemm((PlateModel)other)); return (d.Plate, d.Records, null, d.Report); });
+                frozen?.Add(label, "plate", x, y, expected, Resolved(() => { var d = LegacyBuildModel.Merge(GpcDraftArchive.ReadPlate(x.Data, x.Records), GpcDraftArchive.ReadPlate(y.Data, y.Records)); return (d.Plate, d.Records, null, d.Report); }), actual);
             }
             if (expected != actual)
             {
@@ -159,6 +213,7 @@ internal static class GpcDraftMergeChecks
             c.Loads.Add(new PlatePressureModel(q, new() { P = new R.Vector3d(0, 0, -2) })); c.Loads.Add(new PlatePreStressModel(t, new() { LocalPressure = new R.Vector3d(1, 2, 0) }));
         });
         Compare("plate branches", plateA, plateB); Compare("plate branches reversed", plateB, plateA);
+        frozen?.Close();
         Console.WriteLine($"GPC DRAFT MERGE PASS: {compared} merges of node, beam and plate drafts equal to the drafts of the former merge after the resolution ({errors} with the same error)");
     }
 }
