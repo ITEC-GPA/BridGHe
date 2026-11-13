@@ -34,6 +34,22 @@ internal static class P2rRetiredP2cb
         add("regression-part|gpc-c3: a beam with its FEM value clips to the FEM box", C3Drawing + " (1 check)");
         add("regression-part|gpc-c3: TRANSITIONAL the FEM composite beam, plate and homogenised composite property against their GPC drafts", C3Drawing + " (4 checks: composite solids, composite bar lines, plate solid, homogenised property)");
         add("core-native|c3 native: TRANSITIONAL the GPC drawing of each native section kind equals the FEM drawing", C3Drawing + " (5 checks; the box check keeps its GPC half)");
+        const string C1Swap = "the conversion of the FEM output of 0.3.0 as the oracle of the GPC transform; on GPC: the oracle of P2 on every output (Build Model on its drafts: "
+            + "the same axes and the same Straus7 calls, 2 checks per output) and the offset axes after the swap (gpc-review-fixes)";
+        add("regression-part|gpc-review-fixes: R65-C3-02 Bridge Phase Model against the conversion of the FEM output", "BridgePhaseModel.Create on a FEM model: " + C1Swap + " (12 checks)");
+        add("regression-part|gpc-review-fixes: R65-C3-02 Bridge Construction Sequence of the FEM simple bridge (against the FEM sequence and Build Model on its drafts)",
+            "BridgeConstructionSequence.Create on the girders of the FEM simple bridge (BridgeConstructionTests.Model, an offset, the loads and a support on the first girder beam): "
+            + "the GPC sequence needs the members of Bridge Member Assignment, and the GPC simple bridge (GpcSimpleBridge) has them without drafts; on GPC: the construction "
+            + "sequence of the simple bridge (BridgeConstructionTests on GPC: selection, explicit property, pruned nodes, removed bearings, isolated input) and the same swap of an "
+            + "ordinary property to the double angle with the offset, loads and support through Bridge Phase Model, against Build Model on its drafts (gpc-review-fixes, R65-C3-02) "
+            + "(12 checks: 4 against the FEM output, 8 of the oracle of P2)");
+        add("regression-part|gpc-review-fixes: R25-01 a composite property with n0 = 0 is not a definition, and Composite Beam refuses it at each end", FemType
+            + " (the refused section was a FEM composite property given to its GH type; the GPC components give no composite property that is not a definition); on GPC: two valid "
+            + "sections give the composite beam (gpc-review-fixes), the definitions of the composite components (gpc-only-models, p2k-components) (5 checks)");
+        add("regression-part|gpc-review-fixes: P30-01 the model with its FEM value (drafts and results saved, damaged, read back)", FemType
+            + " (Build Model on FEM-backed elements, GH_Model.FromModel of a FEM model); on GPC: the same checks on the model without FEM value (gpc-review-fixes), the former files: p2d (14 checks)");
+        add("regression-part|gpc-review-fixes: R65-C3-02 the global point load of the swap model", "a FEM beam point load in the global system (BeamPointLoadModel.LoadData.CoordinateSystem), "
+            + "which Beam Point Load does not give (its loads are in the principal axes): the GPC swap model has the three other loads (no check of its own: fewer recorded calls)");
     }
 
     /// <summary>The reason of a retirement of this lane, as <see cref="P2rRetired.Checks"/> records it.</summary>
