@@ -311,6 +311,29 @@ internal static class U2ExampleRemake
           foreach (var m in c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Concat(c.RuntimeMessages(GH_RuntimeMessageLevel.Warning))) Console.WriteLine($"U2 DOCUMENTS {label} {c.NickName} {c.InstanceGuid}: {m}"); }
     }
 
+    /// <summary>The internalised BridGHe data of a document by their text (<see cref="GpcOnlyReplay.Text"/>: a model by its GPC input and state,
+    /// any other datum by its GPC datum), keyed by owner, parameter and place.</summary>
+    private static SortedDictionary<string, string> DataTexts(GH_Document doc)
+    {
+        var d = new SortedDictionary<string, string>(StringComparer.Ordinal);
+        foreach (var p in Params(doc))
+        {
+            var tree = Persistent(p); if (tree == null) continue;
+            var owner = p.Attributes?.GetTopLevel?.DocObject ?? p;
+            for (int b = 0; b < tree.PathCount; b++)
+            {
+                var branch = tree.get_Branch(b);
+                for (int i = 0; i < branch.Count; i++)
+                    if (branch[i] is IGH_Goo g && Bridghe(g))
+                    {
+                        string t; try { t = GpcOnlyReplay.Text(g); } catch (Exception e) { t = g.GetType().Name + " text error " + e.GetType().Name + ": " + e.Message; }
+                        d[$"{owner.InstanceGuid} {owner.NickName} / {p.Name} {tree.get_Path(b)}[{i}] {g.GetType().Name}"] = t;
+                    }
+            }
+        }
+        return d;
+    }
+
     internal static int Check(string[] args)
     {
         BridgeExampleMigration.Initialize(); // the Grasshopper component libraries of the examples (no «missing objects» dialog)
@@ -320,13 +343,14 @@ internal static class U2ExampleRemake
         var sb = new StringBuilder(); int differentFiles = 0;
         foreach (var relative in Files)
         {
-            var results = new List<SortedDictionary<string, string[]>>();
+            var results = new List<SortedDictionary<string, string[]>>(); var data = new List<SortedDictionary<string, string>>();
             foreach (var rootPath in new[] { oldRoot, newRoot })
             {
                 string path = Path.Combine(rootPath, relative);
                 if (!File.Exists(path)) path = Path.Combine(examples, relative); // 47-anteprima-grafici is not rewritten
                 using var doc = GrasshopperBridgeExample.Read(path);
                 doc.FilePath = Path.Combine(examples, relative); // relative inputs (Excel, templates) resolve in the worktree examples, read only
+                data.Add(DataTexts(doc));
                 Solve(doc);
                 results.Add(Outputs(doc));
                 if (report != null) Documents(doc, Path.GetFileNameWithoutExtension(relative) + (rootPath == oldRoot ? "-old" : "-new"), Path.GetDirectoryName(report));
@@ -349,6 +373,14 @@ internal static class U2ExampleRemake
             if (changed.Count > 0) differentFiles++;
             string line = $"U2 CHECK {relative}: {a.Count} outputs and message lists before, {b.Count} after; {equal} equal, {guidsOnly} equal but for GUIDs, {changed.Count} different";
             Console.WriteLine(line); sb.AppendLine(line); foreach (var c in changed) { Console.WriteLine(c); sb.AppendLine(c); }
+            // The internalised data themselves: the same text, the same but for GUIDs, or different (23 and 46: rebuilt, the former refused).
+            foreach (var k in data[0].Keys.Union(data[1].Keys).OrderBy(k => k, StringComparer.Ordinal))
+            {
+                data[0].TryGetValue(k, out var x); data[1].TryGetValue(k, out var y);
+                string state = x == null ? "absent before (refused on reading)" : y == null ? "absent after" : x == y ? "the same text" : GpcDraftCapture.WithoutGuids(x) == GpcDraftCapture.WithoutGuids(y) ? "the same text but for GUIDs" : "DIFFERENT text";
+                string d = $"  DATUM {k}: {state}" + (x != null && y != null && x != y && GpcDraftCapture.WithoutGuids(x) != GpcDraftCapture.WithoutGuids(y) ? "; first difference: " + GpcDraftArchiveChecks.FirstDifference(GpcDraftCapture.WithoutGuids(x), GpcDraftCapture.WithoutGuids(y)).Replace("\n", " ⏎ ") : "");
+                Console.WriteLine(d.Length > 600 ? d.Substring(0, 600) : d); sb.AppendLine(d);
+            }
         }
         if (report != null) File.WriteAllText(report, sb.ToString());
         Console.WriteLine($"U2 CHECK DONE: {Files.Length} definitions, {differentFiles} with differences (listed above)");
