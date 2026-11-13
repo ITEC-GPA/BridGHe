@@ -58,6 +58,14 @@ internal static class P2rRetiredP2cb
         add("regression-part|inr-inertia: the FEM homogenised property of the same numbers (I11, I22, angle 0, shear areas, area)", "CompositeBeamPropertyModel.CreateHomogenizedProperty, a FEM "
             + "type; on GPC: the GPC homogenised property against the same expected values from the analysis properties (inr-inertia: I11, I22, shear areas, area bit for bit) (36 checks: "
             + "the FEM I11/I22 and angle of 18 variants; the shear area and area checks keep their GPC half)");
+        add("regression-part|gpc-builders-a: a node with a former displacement (FEM node conversion, its BGHA1 payload, a former model with it, Node Filter on it)",
+            "a FEM node with a NodeDisplacementLoadModel (GpcBeamDrafts.FromFemm, ModelArchive.Write of the node and of a model), which no GPC component gives (Node Displacement "
+            + "is refused); on GPC: Node Displacement refused with the same message (gpc-builders-a), the frozen 0.3.0 payloads refusal-prescribed-restrained and -free refused "
+            + "with the same message (gpc-legacy-import) (3 expected refusals and 1 run of Node Filter)");
+        add("regression-part|gpc-builders-a: P2X the BGHA1 payload of a 0.3.0 plate with an angle and a whole 0.3.0 model with it (written from FEM values)",
+            "a FEM plate with an angle written by ModelArchive.Write as the 0.3.0 payload and model; on GPC: the layer axes of the plates with an angle the components give "
+            + "(Plate, Align Plate Axes, Build Model: Turned and PlateAngles in gpc-builders-a), the 0.3.0 plate angle against the frozen Plate Results of 0.3.0 (PlateAngleNative, "
+            + "Fixtures/plate-angle-030) (2 checks)");
         add("regression-part|gpc-review-fixes: R65-C3-02 the global point load of the swap model", "a FEM beam point load in the global system (BeamPointLoadModel.LoadData.CoordinateSystem), "
             + "which Beam Point Load does not give (its loads are in the principal axes): the GPC swap model has the three other loads (no check of its own: fewer recorded calls)");
     }
