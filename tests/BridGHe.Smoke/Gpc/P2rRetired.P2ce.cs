@@ -18,12 +18,14 @@ internal static class P2rRetiredP2ce
             "the FEM property of the section rules and family properties, deleted in phase 2b (decision 1 of the coordinator): the parity of the reading by value "
             + "(GpcLegacyPayloads.Design) with the archive of the CLR types, measured at 8e5a538 on 42 records built in memory with 12 FEM properties of the corpus "
             + "(fields, text of the rules with the ID of their property, GPC datum without GUIDs) and on the goo of a 0.3.0 rule: all equal; the corpus has no "
-            + "«Design» item (inventory of phase 2a); on GPC: the 0.4.0 rules and family properties of gpc-only-properties and gpc-null-values");
+            + "«Design» item (inventory of phase 2a); on GPC: the 0.4.0 rules and family properties of gpc-only-properties and gpc-null-values. The reading of the "
+            + "ID of a 0.3.0 rule (LegacyPropertyId from its FEM property) has no frozen oracle of its own (ChatGPT task 63, 2B-02): the user decided on 13/11/2026 at "
+            + "22:20 that no fixture is needed (no 0.3.0 user file has a «Design» item)");
         add("regression-part|p2ce-reader: «LoadCases» by value equals the CLR reading",
             "the archive of the CLR types of the FEM cases, deleted in phase 2b: the reading by value of the «LoadCases» item of Staged Construction "
             + "(GpcLegacyPayloads.Cases) equalled the CLR reading converted as before on 41 lists (the cases of the 61 example files as 0.3.0 wrote the item, "
-            + "single cases, the empty list), measured in phase 2a (gates p2ce3/p2ce4) and 2b; the lists are not frozen (decision 2); on GPC: the 14 checks of "
-            + "P2P-01 (the old development file with LoadCases = [], the records chunk, the damaged chunk)");
+            + "single cases, the empty list), measured in phase 2a (gates p2ce3/p2ce4) and 2b; the lists are not frozen (decision 2); on GPC: the checks of "
+            + "P2P-01 (the old development file with LoadCases = [], the records chunk, the damaged chunk; P2CG: the count, the form, the document saved and reopened)");
         add("regression-part|p2ce-reader: the constant empty «LoadCases» item equals the archive",
             "the archive of the CLR types (ModelArchive.Write of an empty list of FEM cases), deleted in phase 2b: the constant GpcLegacyPayloads.EmptyLoadCasesItem "
             + "was proven equal to it at 8e5a538 and in every run of p2ce-reader until 0bc9ed3; on GPC: the old development file of P2P-01 (the item read back empty)");

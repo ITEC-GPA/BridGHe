@@ -59,9 +59,12 @@ internal sealed class P2rCapture
     /// <list type="bullet">
     /// <item><b>messages «*»</b>: the messages of the replay hold the warning of the plug-in build check (<c>PluginBuildCheck</c>, «Bin non
     /// aggiornato…»: the libraries of the bin against lib/GPC and those loaded first, an environmental text whose list depends on what the
-    /// process loaded before); the messages are not compared, the line count, the outputs and the raw outputs are (7 instances of Creep And
-    /// Shrinkage Concrete in gpc-only-properties).</item>
-    /// <item><b>raw of the in-memory Bridge Phase Model and Bridge Construction Sequence cases</b> (gpc-only-models, 19 keys): their input
+    /// process loaded before); the line count, the outputs and the raw outputs are compared. P2CG (13/11/2026, RF-01): «*» is followed by the
+    /// digest of the other messages, compared with the capture; the capture itself holds the warning of its bin in the digest of 13 keys (7
+    /// instances of Creep And Shrinkage Concrete in gpc-only-properties, 6 in gpc-only-models): 9 with the warning alone
+    /// (<see cref="WarningAloneAtCapture"/>: no other message now), 4 with other messages, declared by name (<see cref="WarningWithOthersAtCapture"/>).</item>
+    /// <item><b>raw of the in-memory Bridge Phase Model and Bridge Construction Sequence cases</b> (gpc-only-models; P2CG, RF-03: the closed list of
+    /// 18 keys <see cref="PhaseIdentityKeys"/>, before every captured key of the two prefixes): their input
     /// elements are built for the case in each process (GH types given by their drafts without a saved GH GUID), so the identities of the
     /// outputs change from one process to the next; within a process two copies give the same identities (checked), and the definitions
     /// (saved GUIDs) are compared in full.</item>
@@ -71,12 +74,74 @@ internal sealed class P2rCapture
     {
         var c = captured.Split(' '); var n = now.Split(' ');
         if (c.Length != 4 || n.Length != 4) return null;
-        if (n[1] == "*" && c[0] == n[0] && c[2] == n[2] && c[3] == n[3]) return "messages with the plug-in build-check warning (environmental), not compared";
-        if (file == "gpc-only-models" && (key.StartsWith("in memory: Bridge Phase Model (", StringComparison.Ordinal) || key.StartsWith("in memory: Bridge Construction Sequence (", StringComparison.Ordinal))
-            && c[0] == n[0] && c[1] == n[1] && c[2] == n[2]) return "identities of an in-memory case with input elements new per process, not compared";
+        // P2CG (13/11/2026, review of ChatGPT tasks 53 CF-02 and 64 RF-01): «*» marks a run with the environmental warning, followed by the digest
+        // of its other messages, which are compared (before: «*» alone, no message compared, for any key).
+        if (n[1].StartsWith("*", StringComparison.Ordinal) && c[0] == n[0] && c[2] == n[2] && c[3] == n[3])
+        {
+            string others = n[1].Substring(1);
+            if (others == c[1]) return "messages with the plug-in build-check warning (environmental): the other messages compared, equal";
+            if (c[1] == WarningAloneAtCapture && others == Sha(string.Join("\n", Array.Empty<string>())))
+                return "messages: the capture holds the build-check warning alone (" + WarningAloneAtCapture + "), the run no other message";
+            if (WarningWithOthersAtCapture.TryGetValue((file, key), out var why)) return "messages not comparable with the capture, declared by name: " + why;
+            return null;
+        }
+        // P2CG (13/11/2026, review of ChatGPT task 64, RF-03): the closed list of 18 keys (before: every captured key of the two prefixes).
+        if (file == "gpc-only-models" && PhaseIdentityKeys.Contains(key) && c[0] == n[0] && c[1] == n[1] && c[2] == n[2])
+            return "identities of an in-memory case with input elements new per process, not compared";
         if (P2rRetired.ReplayRaw(file, key) is string raw && c[0] == n[0] && c[1] == n[1] && c[2] == n[2]) return raw; // P2F (12/11)
         return null;
     }
+
+    /// <summary>P2CG (RF-01): the environmental warning of the plug-in build check (<c>PluginBuildCheck</c>, <c>GpcReleaseGuard</c>: «Bin non
+    /// aggiornato…», «Librerie GPC caricate diverse…»: the libraries and the folder of the bin of this process), a whole runtime message of its own,
+    /// as the replay records it (<c>level: text</c>).</summary>
+    internal static bool Environmental(string message)
+    {
+        const string Level = "Warning: ";
+        return message != null && message.StartsWith(Level, StringComparison.Ordinal)
+            && (string.CompareOrdinal(message, Level.Length, "Bin non aggiornato", 0, 18) == 0 || string.CompareOrdinal(message, Level.Length, "Librerie GPC caricate diverse", 0, 29) == 0);
+    }
+
+    /// <summary>P2CG (RF-01): the captured digest of the messages of 9 instances of two components in 9 definitions (Creep And Shrinkage Concrete in
+    /// 50, 50 REV001–REV003, 99 REV002–REV004, gpc-only-properties; Bridge Section Check in 44 and 47, gpc-only-models): one text for all, the build-check
+    /// warning of the capture's bin alone. With it, the other messages of the run must be none.</summary>
+    internal const string WarningAloneAtCapture = "F9A9899E4115C2C7";
+
+    /// <summary>P2CG (RF-01): the 4 keys whose captured messages hold the build-check warning of the capture's bin (its folder and libraries) with
+    /// other messages, in one digest: their other messages cannot be compared with the capture (that needs a new capture of these keys, with the
+    /// user's OK); the line count, the outputs and the raw outputs are. Checked against the capture at the close.</summary>
+    internal static readonly Dictionary<(string File, string Key), string> WarningWithOthersAtCapture = new()
+    {
+        [("gpc-only-models", @"47-pioli-irrigidimenti-verifiche\47-integrazione-modello.ghx: Super Element Check [2 Run — verifica superelemento]")] = "Super Element Check of 47 (captured 7B4125D0D9054D2E)",
+        [("gpc-only-models", @"48-report-word\48-report-word.ghx: Super Element Check [2 Run — verifica superelemento]")] = "Super Element Check of 48 (captured 7B4125D0D9054D2E)",
+        [("gpc-only-models", "in memory: Composite Section Self Tension (composite property, n 15, slab strain)")] = "Composite Section Self Tension in memory (captured 9AB54AE7AAF3CA9C)",
+        [("gpc-only-models", "in memory: Composite Section Linear Tension Analysis (a composite beam and three phases)")] = "Composite Section Linear Tension Analysis in memory (captured 6DB5EFBA1B0BF95B)",
+    };
+
+    /// <summary>P2CG (13/11/2026, review of ChatGPT task 64, RF-03): the in-memory Bridge Phase Model and Bridge Construction Sequence cases of
+    /// gpc-only-models whose raw outputs are not compared (their input elements are new in each process), a closed list: the 18 keys of task 64
+    /// (lines 573–599 of the capture), not the 8 error cases nor the kN-m case retired by name. Checked against the capture at the close.</summary>
+    internal static readonly HashSet<string> PhaseIdentityKeys = new(StringComparer.Ordinal)
+    {
+        "in memory: Bridge Phase Model (a beam on a replacement, loads cleared)",
+        "in memory: Bridge Phase Model (every beam, loads kept)",
+        "in memory: Bridge Construction Sequence (everything, no increments)",
+        "in memory: Bridge Construction Sequence (everything with an increment: native stage)",
+        "in memory: Bridge Construction Sequence (a parent group with an increment: native stage)",
+        "in memory: Bridge Construction Sequence (a group of a beam and a plate)",
+        "in memory: Bridge Construction Sequence (a child group: part of a parent)",
+        "in memory: Bridge Construction Sequence (a beam in two groups: no native stage)",
+        "in memory: Bridge Construction Sequence (a beam without a group: no native stage)",
+        "in memory: Bridge Construction Sequence (bearings kept: every one)",
+        "in memory: Bridge Construction Sequence (bearings: one)",
+        "in memory: Bridge Construction Sequence (bearings: disabled)",
+        "in memory: Bridge Construction Sequence (a rigid link: no native stage)",
+        "in memory: Bridge Construction Sequence (girders of Bridge Member Assignment: a group, override, no bearings)",
+        "in memory: Bridge Construction Sequence (girders of Bridge Member Assignment: a physical member)",
+        "in memory: Bridge Phase Model (A09: the first beam of a name replaced: the next registers its own property)",
+        "in memory: Bridge Phase Model (A09: the replacement takes the name)",
+        "in memory: Bridge Construction Sequence (A09: the first beam of a name inactive)",
+    };
 
     /// <summary>Records one datum of a file (write) or checks it (compare). A key met again in the same file gets the suffix <c>#n</c> (its
     /// occurrence in the order of the run), so the instances of a component with the same name and nickname in a definition stay apart.</summary>
@@ -170,6 +235,12 @@ internal sealed class P2rCapture
             // did not use is an error: the line would stay in the registry with nothing to declare.
             foreach (var k in P2rRetired.ReplayRawDeclarations(file).Where(k => !usedRaw.Contains(k))) differences.Add("raw field declared, never used: " + k);
             foreach (var k in P2rRetired.ReplayKeys.Keys.Where(k => k.File == file && !usedRetired.Contains(k.Key))) differences.Add("retired by name, never used: " + k.Key);
+            // P2CG (RF-03, RF-01): the closed lists name keys of the capture, never a key retired by name.
+            if (file == "gpc-only-models")
+                foreach (var k in PhaseIdentityKeys)
+                    if (!captured.ContainsKey(k) || P2rRetired.ReplayKeys.ContainsKey((file, k))) differences.Add("raw identities declared, not a key of the capture (or retired): " + k);
+            foreach (var k in WarningWithOthersAtCapture.Keys.Where(k => k.File == file))
+                if (!captured.ContainsKey(k.Key) || P2rRetired.ReplayKeys.ContainsKey(k)) differences.Add("messages declared not comparable, not a key of the capture (or retired): " + k.Key);
             Console.WriteLine($"P2R CAPTURE COMPARE {file}: {seen.Count} of {captured.Count} keys seen, {equal} equal, " + string.Concat(declared.Select(d => $"{d.Value} declared ({d.Key}), ")) + $"{differences.Count} different or new, {missing.Count} missing"
                 + (differences.Count + missing.Count == 0 ? "" : " FAIL") + " (" + path + ")");
             return differences.Concat(missing.Select(k => "captured, not seen: " + k)).Select(d => "P2R CAPTURE " + file + ": " + d).ToList();
