@@ -36,10 +36,10 @@ Nelle proprietà composte omogeneizzate I11 si riferisce all'asse orizzontale e 
 
 ## Compilare e installare
 
-Per installare usare il pacchetto completo del rilascio, con `.gha`, DLL e manifest. La compilazione è un'attività di sviluppo; richiede SDK .NET 8 o successivo e Python 3. Per il candidato corrente:
+Per installare usare il pacchetto completo del rilascio, con `.gha`, DLL e manifest. La compilazione è un'attività di sviluppo; richiede SDK .NET 8 o successivo e Python 3. Con il set ufficiale in `lib/GPC` basta la compilazione ordinaria, senza opzioni:
 
 ```powershell
-dotnet build BridGHe.sln -c Release -p:GpcAllowCandidate=true
+dotnet build BridGHe.sln -c Release
 ```
 
 Le opzioni `-Native` ed `-Examples` di `tools/build.ps1` (sezione «Riprodurre le verifiche») richiedono Straus7 e la licenza API; `-Examples` può anche sovrascrivere gli esempi. Non eseguirle come procedura di installazione.
@@ -48,7 +48,7 @@ BridGHe **0.4.0** usa le undici DLL GPC fissate in **`lib/GPC`** (GPCUtilities, 
 
 Al caricamento in Grasshopper il plugin controlla le librerie GPC con cui calcola. Se gira dal `bin/Release` di un checkout, confronta le DLL accanto al plugin con `lib/GPC`: un `bin` non ricompilato dopo un aggiornamento del set viene segnalato. Confronta inoltre le DLL GPC caricate in Rhino con `gpc-release-set.json`: un altro plugin, per esempio ReBear, può aver caricato prima un set diverso. Le differenze compaiono nella riga di comando di Rhino e come avviso su Super Element Check, Bridge Detail Check, Bridge Section Check e sugli altri componenti che calcolano con GPC; un set non verificabile è segnalato solo nella riga di comando. Il controllo è provato dalla regressione `gpc-release-set` del progetto Smoke.
 
-Il set in `lib/GPC` è per ora un **candidato** (`candidate=true`) del 14 novembre 2026, prodotto da `Checker/build/Release-Set.ps1 -Candidate` sui commit Model `fefb47bd` (GPCModel **5.51.0.0**, GPC.Converter **2.22.0.2**) e Checker `9e513417` (Concrete **0.37.0.1**, Steel **2.134.0.0**, CompositeBridge **1.31.0.1**). Finché è candidato la compilazione richiede `dotnet build BridGHe.sln -c Release -p:GpcAllowCandidate=true`; al rilascio 0.4.0 lo sostituisce il set ufficiale con le versioni finali, e la compilazione ordinaria torna senza opzioni. `-p:GpcPilot=true` resta un'opzione di sviluppo: compila contro i progetti Model e Checker fratelli. Il set ufficiale precedente è quello del [2 novembre](docs/GPC-RILASCIO-2026-11-02.md); i set ancora precedenti sono descritti nei resoconti del [1° novembre (sera)](docs/GPC-RILASCIO-2026-11-01-sera.md), del [1° novembre (mattina)](docs/GPC-RILASCIO-2026-11-01.md), del [30 ottobre](docs/GPC-RILASCIO-2026-10-30.md) e del [27 ottobre](docs/GPC-RILASCIO-2026-10-27.md).
+Il set in `lib/GPC` è il **rilascio ufficiale** (`candidate=false`) del 14 novembre 2026, `gpc-release-20261114-aw` (AW), prodotto da `Checker/build/Release-Set.ps1` senza `-Candidate` sui commit di origin/master Model `c2abf222` (GPCModel **5.51.0.1**, GPCModelData **0.3.0.31**, GPC.Model.Persistence **3.15.0.3**, GPC.Archive **1.2.0.4**, GPC.Converter **2.22.0.3**) e Checker `9c71ca65` (Concrete **0.37.0.2**, Steel **2.134.0.1**, CompositeBridge **1.31.0.2**), con Utilities `e57b440b` (GPCUtilities **3.0.0.0**) e Geometry `6734eee1` (GPCGeometry **2.3.0.0**, DelaunayMesh **2.0.0.14**). La compilazione ordinaria non richiede opzioni. Un set candidato in `lib/GPC` viene rifiutato; per collaudarlo in modo esplicito usare `-p:GpcAllowCandidate=true`. `-p:GpcPilot=true` resta un'opzione di sviluppo: compila contro i progetti Model e Checker fratelli. Il set ufficiale precedente è quello del [2 novembre](docs/GPC-RILASCIO-2026-11-02.md); i set ancora precedenti sono descritti nei resoconti del [1° novembre (sera)](docs/GPC-RILASCIO-2026-11-01-sera.md), del [1° novembre (mattina)](docs/GPC-RILASCIO-2026-11-01.md), del [30 ottobre](docs/GPC-RILASCIO-2026-10-30.md) e del [27 ottobre](docs/GPC-RILASCIO-2026-10-27.md).
 
 Output da installare: **`bin/Release/BridGHe.Grasshopper.gha`**, insieme alle DLL nella stessa cartella. L'evento MSBuild `BridGHePostBuild` in `Directory.Build.targets` parte **dopo ogni build riuscita**, sia da Visual Studio sia da `dotnet build`: per il plugin Release copia l'intero output in `bin/Release`, rimuove i file non più prodotti ed elimina le vecchie cartelle di compilazione sparse, comprese le precedenti sottocartelle di `bin`. Funziona anche con build incrementali e compilando direttamente il `.csproj`.
 
@@ -72,7 +72,7 @@ Chiudere Rhino, estrarre il pacchetto sotto la cartella Libraries di Grasshopper
 dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --beam-support
 ```
 
-Gli script rigenerano e sovrascrivono gli esempi: salvare separatamente le modifiche manuali. Finché il set in `lib/GPC` è candidato, `tools/build.ps1` compila senza `-p:GpcAllowCandidate=true` e si ferma al controllo del set: impostare prima `$env:GpcAllowCandidate = 'true'` nella stessa sessione di PowerShell. I test Grasshopper usano un server componenti isolato per non caricare i plugin estranei installati nel profilo utente.
+Gli script rigenerano e sovrascrivono gli esempi: salvare separatamente le modifiche manuali. Con il set ufficiale `tools/build.ps1` non richiede impostazioni. Solo per collaudare un set candidato in `lib/GPC` impostare prima `$env:GpcAllowCandidate = 'true'` nella stessa sessione di PowerShell; altrimenti la compilazione si ferma al controllo del set. I test Grasshopper usano un server componenti isolato per non caricare i plugin estranei installati nel profilo utente.
 
 ## Documentazione
 

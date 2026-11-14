@@ -1,6 +1,6 @@
 # BridGHe 0.4.0
 
-Stato: testo F8 da pubblicare dopo il gate del pacchetto definitivo. Il candidato 14 novembre non è un rilascio ufficiale delle librerie.
+Stato: testo F8 da pubblicare dopo il gate del pacchetto definitivo. Le librerie GPC sono quelle del set ufficiale del 14 novembre 2026 (AW): GPCModel 5.51.0.1, GPCModelData 0.3.0.31, GPC.Model.Persistence 3.15.0.3, GPC.Archive 1.2.0.4, GPC.Converter 2.22.0.3, GPCChecker.Concrete 0.37.0.2, GPCChecker.Steel 2.134.0.1, GPCChecker.CompositeBridge 1.31.0.2, GPCUtilities 3.0.0.0, GPCGeometry 2.3.0.0 e DelaunayMesh 2.0.0.14.
 
 ## Cosa c'è di nuovo
 
