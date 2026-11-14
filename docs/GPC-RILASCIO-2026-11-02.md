@@ -1,5 +1,7 @@
 # Rilascio ufficiale GPC — 2 novembre 2026
 
+> Resoconto storico della revisione indicata nel titolo. Versioni, comandi, conteggi e risultati si riferiscono a quella fotografia. Per installazione, formati e limiti della 0.4.0 vedere [Uso](USO.md), [Migrazione](MIGRAZIONE.md) e il manifest del pacchetto. Gli attesi e le misure qui riportati non vengono rigenerati dall’aggiornamento della documentazione.
+
 Dal 2 novembre BridGHe e ReBear usano il set ufficiale `gpc-release-20261102-742f45f3`. Le verifiche di sezione danno gli stessi risultati bit per bit del set della [sera del 1° novembre](GPC-RILASCIO-2026-11-01-sera.md). Il set è prodotto con `Checker/build/Release-Set.ps1`, senza `-Candidate`, da checkout puliti dei commit pubblicati, con le versioni controllate rispetto al set precedente della catena (`gpc-release-20261102-89d30fd7`). Il [manifest distribuito](../lib/GPC/release-set.json) contiene `candidate=false` e `onOriginMaster=true` per tutti i repository; le 14 suite delle librerie sono superate.
 
 | Repository | Commit |

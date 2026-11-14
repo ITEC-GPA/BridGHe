@@ -30,6 +30,12 @@ Il lettore controlla intestazioni esatte e univoche, nomi delle combinazioni, co
 
 Si possono preparare i template anche prima dell'analisi se il caso è definito nel modello: viene emesso un avviso per i risultati mancanti. Per le formule numeriche il lettore usa il valore salvato da Excel e lo segnala: **ricalcolare e salvare prima di Read**; il plugin non esegue le formule. Le formule senza risultato salvato e gli errori Excel vengono rifiutati. Nomi e intestazioni devono essere testi letterali.
 
+### Combinazioni delle fasi native e riapertura
+
+`Staged Construction` conserva il catalogo necessario a `Load Combinations`: un catalogo ancora sconosciuto non è un catalogo autorevole vuoto. I coefficienti restano salvati anche prima del ricalcolo di Build Model. Dopo salva, chiudi e riapri controllare, per esempio, 1,35 G + 0,7 Q.
+
+Le combinazioni per Action ID di **Build BridGHe Model** restano distinte dai casi Straus7. La 0.4.0 sincronizza il catalogo di Load Combinations anche attraverso un parametro autonomo e conserva ogni ramo del suo albero; il dialogo resta chiuso sugli alberi con più rami. Se uno stesso parametro alimenta cataloghi differenti, conserva le combinazioni e segnala i componenti e i casi in conflitto; il dialogo resta chiuso finché i cataloghi non coincidono.
+
 Il componente non assegna coefficienti normativi. Anche nomi come `SLU_01` sono etichette: non selezionano lo stato limite del checker; attualmente Super Element Check usa `Rare`. Il generatore automatico di combinazioni è un'attività successiva.
 
 L'[esempio 46](../example/46-combinazioni-excel/README.md) contiene template vuoto, workbook dimostrativo compilato e collegamento Excel → Build con ritiro FEM + strain.
@@ -46,7 +52,7 @@ Nel secondo esempio il coefficiente 0.7 si applica sia a `RITIRO [FEM]` sia a `R
 
 La contrazione ha segno negativo e unità adimensionale: −200 µε = −0.0002. Le azioni sono **incrementali**: −120 µε seguite da −80 µε danno −200 µε, non −320 µε. `Primary Only` deve essere esplicitamente attivo per omettere il modello FEM: questa scelta omette gli effetti secondari, non li calcola automaticamente. La deformazione primaria e i carichi equivalenti per Straus devono derivare dallo stesso input.
 
-`Composite Beam Strain` è **obsoleto**, ma resta disponibile con lo stesso GUID, gli stessi ingressi/uscite e lo stesso calcolo per le definizioni esistenti. Mostra la dicitura `Obsolete` e un avviso con il percorso consigliato: **Bridge Shrinkage Action → Bridge Phase → Build BridGHe Model**. Il Build elimina i carichi diretti dei modelli sorgente e ricostruisce gli incrementi dalle azioni: uno strain aggiunto con il vecchio componente a monte del Build non viene importato automaticamente. `Composite Shrinkage Actions` resta invece attuale: produce i carichi equivalenti per l'analisi Straus; il caso FEM calcolato e lo stesso incremento di deformazione confluiscono in `Bridge Shrinkage Action`.
+`Composite Beam Strain` è obsoleto e resta riconoscibile nei documenti con GUID e porte precedenti, ma nella 0.4.0 non conserva né usa il valore dell'ingresso **Strain** nelle verifiche. Non è quindi una seconda via per applicare il ritiro. Usare **Bridge Shrinkage Action → Bridge Phase → Build BridGHe Model**. `Composite Shrinkage Actions` produce invece le azioni equivalenti per l'analisi Straus7: il caso calcolato e lo stesso incremento di deformazione entrano nella Bridge Shrinkage Action, il cui unico coefficiente moltiplica contributo primario e secondario.
 
 `Models` fornisce geometria e riferimenti; ogni azione porta la propria sorgente analizzata. L'ordine della lista dei modelli non identifica più i casi. Sono richiesti N-mm-MPa, Beam IDs univoci, geometria e orientamento coerenti. Le stazioni interne possono differire: il merge conserva la loro unione e interpola ciascun caso dai suoi campioni originali (N/V/T lineari, momenti quadratici basati sul taglio e vincolati ai due momenti FEM). Sono necessari i campioni agli estremi; non si estrapola. Duplicati, step ambigui, risultati non finiti e casi non trovati producono errori espliciti. I carichi concentrati richiedono la gestione dei due lati del salto. Metodo, limiti e test sono descritti in [Allineamento delle stazioni FEM](INTERPOLAZIONE-STAZIONI.md).
 

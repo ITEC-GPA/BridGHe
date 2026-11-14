@@ -17,6 +17,14 @@ I nuovi esempi **23–28** mostrano i 12 strumenti operativi; la [guida Word](do
 
 I modelli sono esempi riproducibili, con ipotesi, unità, confronti analitici e tolleranze dichiarati. Il percorso automatico dei superelementi H adotta la verifica N–Mx–Vy, escludendo torsione, M2 e V1 con ipotesi esplicita; il componente nativo gPC gestisce anche geometrie a cassone e anima inclinata. Non equivale a una verifica completa di ogni ponte. Il [collaudo del 26 ottobre](docs/VALIDAZIONE-MODULARE-2026-10-26.md) distingue prove numeriche, analisi Straus e verifica dei file GHX.
 
+## Passaggio alla 0.4.0
+
+Conservare gli originali 0.3.0: la vecchia versione non legge i nuovi dati internalizzati. Gli ingressi storici supportati vengono letti per valore; risultati/cache precedenti non recuperabili richiedono ricostruzione e un nuovo Run. Per trasferire i risultati conservare il relativo `.bghr` e aggiornare Output Path; il file `.st7` serve per riaprire il modello nel solutore, non per rileggere il sidecar. I dati di schema 2 sono rifiutati, non convertiti cambiando il numero nel file.
+
+Le cutoff bar e il doppio angolare sono ora esportabili; le funi Cable vengono fermate prima di Straus7. Restano non supportati spostamenti imposti, piastre con più di quattro vertici e Brep con regioni separate. Composite Beam Strain resta nei documenti ma il valore del suo ingresso `Strain` non è più usato: per il ritiro impiegare Bridge Shrinkage Action.
+
+Nelle proprietà composte omogeneizzate I11 si riferisce all'asse orizzontale e I22 a quello verticale, con angolo zero. La correzione delle solette larghe e i nuovi valori di torsione/taglio richiedono di ricalcolare i progetti interessati. [Uso e limiti](docs/USO.md) · [Fasi e azioni](docs/FASI-E-AZIONI.md).
+
 ## Funzioni
 
 - Nodi, travi, plate, materiali, proprietà, vincoli, carichi, combinazioni e costruzione per fasi; esportazione e analisi Straus7 R3.
@@ -24,15 +32,17 @@ I modelli sono esempi riproducibili, con ipotesi, unità, confronti analitici e 
 - Carichi mobili: forze, distribuzioni, sorgenti termiche, veicoli, corsie, centrifuga, template, percorsi e analisi dei casi statici generati.
 - Geometrie gPC H, H inclinata e cassone; fasi, armatura, opzioni di verifica, pioli, irrigiditori, armatura trasversale, fatica e dettagli del cassone.
 - Estrazione di tensioni, taglio, flusso di connessione, domanda/resistenza dei pioli ed esiti gPC. Grafici SVG e PNG senza interpolare i campioni.
-- Preview del modello assemblato e delle sezioni native; icone SVG/PNG originali per tutti i componenti.
+- Anteprima del modello, delle sezioni supportate e delle armature schematiche; icone SVG/PNG dei componenti. Le sezioni native senza contorno GPC restano rappresentate dall’asse: la preview non è la proprietà meccanica esportata.
 
 ## Compilare e installare
 
-Dalla root, con SDK .NET 8 o successivo e Python 3:
+Per installare usare il pacchetto completo del rilascio, con `.gha`, DLL e manifest. La compilazione è un'attività di sviluppo; richiede SDK .NET 8 o successivo e Python 3. Per il candidato corrente:
 
 ```powershell
-.\tools\build.ps1 -Native -Package
+dotnet build BridGHe.sln -c Release -p:GpcAllowCandidate=true
 ```
+
+Le opzioni `-Native` ed `-Examples` di `tools/build.ps1` (sezione «Riprodurre le verifiche») richiedono Straus7 e la licenza API; `-Examples` può anche sovrascrivere gli esempi. Non eseguirle come procedura di installazione.
 
 BridGHe **0.4.0** usa le undici DLL GPC fissate in **`lib/GPC`** (GPCUtilities, GPCGeometry, DelaunayMesh, GPCModel, GPCModelData, GPC.Converter, GPC.Model.Persistence, GPC.Archive, GPCChecker.Concrete, GPCChecker.Steel e GPCChecker.CompositeBridge), con manifest, versioni e SHA-256. Non occorre compilare i repository fratelli per compilare il plugin. [GpcReferences.props](build/GpcReferences.props) verifica l'integrità del set prima di risolvere i riferimenti; il manifest viene distribuito come `bin/Release/gpc-release-set.json`. Le DLL comuni a BridGHe e ReBear provengono dallo stesso set.
 
@@ -62,7 +72,7 @@ Chiudere Rhino, estrarre il pacchetto sotto la cartella Libraries di Grasshopper
 dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --beam-support
 ```
 
-Gli script rigenerano e sovrascrivono gli esempi: salvare separatamente le modifiche manuali. I test Grasshopper usano un server componenti isolato per non caricare i plugin estranei installati nel profilo utente.
+Gli script rigenerano e sovrascrivono gli esempi: salvare separatamente le modifiche manuali. Finché il set in `lib/GPC` è candidato, `tools/build.ps1` compila senza `-p:GpcAllowCandidate=true` e si ferma al controllo del set: impostare prima `$env:GpcAllowCandidate = 'true'` nella stessa sessione di PowerShell. I test Grasshopper usano un server componenti isolato per non caricare i plugin estranei installati nel profilo utente.
 
 ## Documentazione
 
@@ -97,4 +107,4 @@ Le proprietà omogeneizzate conservano acciaio e soletta nella preview delle bea
 
 Gli [esempi 33–45](example/README.md#progettazione-del-modello-3345) coprono consigliatore delle campate con zone vietate, sezioni per progressiva, assegnazione, appoggi, connessioni, controventi, soletta, fasi, dettagli, frecce, storie per fatica e mappa delle verifiche. L'[esempio 45](example/45-ponte-completo-fasi/README.md) assembla un ponte curvo a tre travi, con campate 30+40+30 m, conci, shell e tre snapshot costruttivi. Non contiene carichi o risultati FEM inventati.
 
-I tredici grafi sono risolti, salvati e riaperti dai test. La Release passa 218 controlli, 54 gruppi di regressione e due gruppi grafici; tutti i 238 valori della baseline numerica restano identici. Le prove native di UCS, vincoli, molle e link rigidi sono superate. Passano anche i cinque benchmark mobili (5.377 confronti su 80 posizioni) e i 30 confronti dei cinque contributi di fase; esiti in `docs/VERIFICHE.md`.
+Le verifiche eseguite sono documentate nei resoconti con data, commit, ambiente e casi confrontati. I conteggi storici non rappresentano il gate della 0.4.0: per il pacchetto installato usare la sua ricevuta di rilascio. La riapertura di un grafo, la soluzione Straus7 e la verifica resistente sono controlli distinti; nessuno sostituisce automaticamente gli altri.

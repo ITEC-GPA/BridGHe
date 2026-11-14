@@ -1,5 +1,7 @@
 # Verifiche della Release
 
+> Questo documento conserva esiti storici con le rispettive date. I numeri di controlli, le anteprime native e le tolleranze qui citati non sono il certificato della Release 0.4.0. Per il nuovo pacchetto usare la ricevuta del gate sul suo commit, distinguendo controlli automatici, prove native e F7 interattivo. I ritiri P2 sono nominati nel registro delle prove; non si aggiornano gli attesi per far passare una differenza senza spiegazione e approvazione. Le proprietà GPC e le geometrie di preview sono controlli diversi.
+
 ## Alternative mobili e limite delle fasi GPC — 26 ottobre 2026
 
 Il replay nativo del 50 REV003 ha evidenziato che le azioni a coefficiente zero con stato locale venivano trasformate ciascuna in una fase GPC. Con 31 posizioni alternative si superava il limite di 20 fasi, anche se ogni combinazione applicava una sola posizione.

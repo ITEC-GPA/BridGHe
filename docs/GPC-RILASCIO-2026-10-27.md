@@ -1,5 +1,7 @@
 # Rilascio ufficiale GPC — 27 ottobre 2026
 
+> Resoconto storico della revisione indicata nel titolo. Versioni, comandi, conteggi e risultati si riferiscono a quella fotografia. Per installazione, formati e limiti della 0.4.0 vedere [Uso](USO.md), [Migrazione](MIGRAZIONE.md) e il manifest del pacchetto. Gli attesi e le misure qui riportati non vengono rigenerati dall’aggiornamento della documentazione.
+
 Il push autorizzato di **Checker/master** è completato: GitHub conferma `4a1b0090fe4de64de54e28cb9d380c441e79660f`. Model resta a `2acc60ef`, Utilities a `e57b440b` e Geometry a `6734eee1`; tutti i commit del set sono pubblicati su `origin/master`.
 
 Il set è stato prodotto nuovamente con `Checker/build/Release-Set.ps1`, senza `-Candidate`, da checkout puliti e usando il precedente manifest ufficiale come riferimento per il controllo delle versioni. Il [manifest distribuito](../lib/GPC/release-set.json) contiene **`candidate=false`** e `onOriginMaster=true` per tutti i repository.

@@ -1,5 +1,7 @@
 # Collaudo di un set GPC sugli esempi 50 e 99
 
+> Stato della procedura: i conteggi, le limitazioni e gli esiti più sotto descrivono le revisioni indicate dai rapporti storici. Per la 0.4.0 usare il set completo del pacchetto e i log del gate sul commit esatto. Un vecchio PASS o un vecchio fallimento di cache non certificano il candidato attuale. Preparare copie con percorsi autorizzati; non modificare riferimenti, baseline o catture senza approvazione. In particolare 50-check dipende dalla risorsa Excel salvata nella copia usata: verificare percorso e cache prima di interpretare il confronto numerico.
+
 Procedura per confrontare due set di librerie GPC (per esempio il set ufficiale e un candidato) sugli esempi più significativi: **50 REV003** (cinque analisi Straus, 31 posizioni mobili, 32.832 risultati di sezione) e **99 REV004** (quattro analisi, due travi, dettagli e grafici). Il confronto riguarda esiti, tempi e, riga per riga, tutti i risultati di sezione GPC.
 
 ## Esecuzione

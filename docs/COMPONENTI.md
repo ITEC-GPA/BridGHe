@@ -1,5 +1,7 @@
 # Inventario dei componenti 0.4.0
 
+L'inventario comprende anche i componenti storici nascosti. La presenza di una porta non significa che ogni suo dato precedente sia ancora usato: Composite Beam Strain conserva GUID e porte ma non usa il valore dell'ingresso `Strain`. Bridge FEM Members conserva il proprio nome. Per i nuovi modelli seguire [Uso](USO.md); non sostituire nomi o GUID negli archivi per eliminare la parola FEM.
+
 220 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
 
 ## BridGHe / 01-Parameters

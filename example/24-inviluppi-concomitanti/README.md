@@ -20,6 +20,8 @@ M3 in valore assoluto governa nel caso Q: la sestupla contiene N=-50 N, V2=13 N,
 
 ## Riproduzione
 
-Dalla root: `dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --utility-examples`. Il comando rigenera i sei esempi 23–28: conservare prima eventuali modifiche manuali. Il test calcola il grafo e ripete i controlli dopo salvataggio e riapertura. Nessuna licenza Straus richiesta.
+Dal 14 novembre 2026 non usare `--utility-examples` per riprodurre i file distribuiti: quel comando riscrive gli esempi 23–28 e per il 23 ricostruisce un modello diverso (vedere il suo README).
+
+Per il solo esempio 24 usare una copia degli esempi a `9350aeb` come origine: `dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --u2-remake-examples only=24 from=<cartella>`. Senza `write` il risultato resta nella cartella temporanea dello strumento; non aggiungere `write` senza aver confrontato le chiavi e ottenuto l'approvazione prevista per le catture. Per l'uso ordinario aprire il file distribuito su una copia e controllare gli inviluppi concomitanti: non occorre rigenerarlo.
 
 [Rapporto della prova](validation.json) · [Indice degli esempi](../README.md).

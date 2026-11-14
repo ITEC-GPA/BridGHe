@@ -1,5 +1,7 @@
 # Integrazione dei repository e del set GPC — 26 ottobre 2026
 
+> Resoconto storico della revisione indicata nel titolo. Versioni, comandi, conteggi e risultati si riferiscono a quella fotografia. Per installazione, formati e limiti della 0.4.0 vedere [Uso](USO.md), [Migrazione](MIGRAZIONE.md) e il manifest del pacchetto. Gli attesi e le misure qui riportati non vengono rigenerati dall’aggiornamento della documentazione.
+
 ## Revisioni integrate
 
 Model/master è `2acc60ef`: i suoi rami risultano già inclusi, senza modifiche necessarie. Checker/master è `4a1b0090`, con merge `f25f6c69`: include i rami delle verifiche di collegamenti, il fix dell'equilibrio per piccoli carichi del ponte e `lib-1142/checker` / `lib-1142/pali`. Nessun ramo conserva commit esclusi da master. I worktree esistenti non sono stati eliminati.

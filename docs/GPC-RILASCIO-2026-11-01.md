@@ -1,5 +1,7 @@
 # Rilascio ufficiale GPC — 1° novembre 2026
 
+> Resoconto storico della revisione indicata nel titolo. Versioni, comandi, conteggi e risultati si riferiscono a quella fotografia. Per installazione, formati e limiti della 0.4.0 vedere [Uso](USO.md), [Migrazione](MIGRAZIONE.md) e il manifest del pacchetto. Gli attesi e le misure qui riportati non vengono rigenerati dall’aggiornamento della documentazione.
+
 Dal 1° novembre BridGHe e ReBear usano il set ufficiale che aggiunge a CompositeBridge il ricalcolo dei dettagli dalle situazioni di un'analisi precedente. Il set è prodotto con `Checker/build/Release-Set.ps1`, senza `-Candidate`, da checkout puliti dei commit pubblicati; le versioni sono controllate rispetto al set precedente. Il manifest distribuito con questo set conteneva `candidate=false` e `onOriginMaster=true` per tutti i repository. La sera dello stesso giorno è stato sostituito dal [set con meno allocazioni](GPC-RILASCIO-2026-11-01-sera.md).
 
 | Repository | Commit |

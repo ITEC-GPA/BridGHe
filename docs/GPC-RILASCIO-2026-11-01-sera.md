@@ -1,5 +1,7 @@
 # Rilascio ufficiale GPC — 1° novembre 2026 (sera)
 
+> Resoconto storico della revisione indicata nel titolo. Versioni, comandi, conteggi e risultati si riferiscono a quella fotografia. Per installazione, formati e limiti della 0.4.0 vedere [Uso](USO.md), [Migrazione](MIGRAZIONE.md) e il manifest del pacchetto. Gli attesi e le misure qui riportati non vengono rigenerati dall’aggiornamento della documentazione.
+
 Dalla sera del 1° novembre al [2 novembre](GPC-RILASCIO-2026-11-02.md) BridGHe e ReBear hanno usato un set ufficiale in cui le verifiche di sezione allocano circa il 60% di memoria in meno, con gli stessi risultati bit per bit. Il set è prodotto con `Checker/build/Release-Set.ps1`, senza `-Candidate`, da checkout puliti dei commit pubblicati; le versioni sono controllate rispetto al [set della mattina](GPC-RILASCIO-2026-11-01.md). Il manifest distribuito con questo set conteneva `candidate=false` e `onOriginMaster=true` per tutti i repository.
 
 | Repository | Commit |

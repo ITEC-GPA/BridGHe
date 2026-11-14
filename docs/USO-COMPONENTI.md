@@ -1,6 +1,6 @@
 # Uso dei componenti BridGHe
 
-Audit di **183 componenti** nei **52 GHX correnti** elencati in `example/catalog.json`, comprese le definizioni aggiuntive. Copie archiviate e file personali non catalogati sono esclusi. Assenza dagli esempi non significa componente inutile o non utilizzato nei file dell'utente.
+Questa tabella conserva l'audit storico di 183 componenti nei 52 GHX allora catalogati. Non è il conteggio della palette 0.4.0 e le colonne sui riferimenti alle prove non sono una misura della copertura attuale. L'inventario dei contratti è in [COMPONENTI.md](COMPONENTI.md) e `migration/current-components.json`; non ritirare un componente perché non compare in questi esempi. Copie archiviate e file personali erano esclusi dall'audit.
 
 I riferimenti per nome nei sorgenti dei test indicano un uso esplicito; non sono una misura di copertura. Il caricamento e le icone di tutti i componenti sono controllati separatamente dagli smoke test.
 

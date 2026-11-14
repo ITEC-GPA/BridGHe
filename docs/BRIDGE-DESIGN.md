@@ -92,6 +92,8 @@ Day è metadato, non un modello automatico di maturazione. Il ritiro conserva il
 
 ## Controlli riproducibili
 
+Le istruzioni di generazione sotto riguardano la manutenzione degli esempi e possono sovrascrivere file. Per usare la 0.4.0 aprire gli esempi distribuiti su una copia. Le definizioni 42 e 43 usano risultati sintetici dichiarati; non sono nuove analisi del ponte. La riapertura di un grafo e l'assenza di errori di audit non dimostrano la stabilità o la verifica strutturale completa.
+
 ```powershell
 # Genera i 13 GHX, risolve e riapre ciascun documento
 dotnet run --project tests/BridGHe.Smoke -c Release -- --bridge-design-examples
