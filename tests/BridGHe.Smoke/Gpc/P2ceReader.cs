@@ -39,8 +39,10 @@ internal static class P2ceReader
         Console.WriteLine($"P2CG RESULTS TEXT: {results} checks of the Node, Beam and Plate Results data (empty, analysed, copied) on their GPC element");
         int branches = P2chChecks.Branches(failures); // P2CH (14/11/2026, 83-02)
         Console.WriteLine($"P2CH BRANCHES: {branches} checks of a Load Combinations parameter with several branches (a removal, an addition, Undo, the form)");
+        int catalogues = P2chChecks.Catalogues(failures); // P2CH (14/11/2026, 83-01)
+        Console.WriteLine($"P2CH CATALOGUES: {catalogues} checks of one Load Combinations parameter wired to two stages (different catalogues: the conflict, nothing changed, no endless solving; the same catalogue: as before)");
         if (failures.Count > 0) throw new Exception("P2CE READER FAIL: " + string.Join(" | ", failures.Take(20)));
-        Console.WriteLine($"P2CE READER PASS: inventory above; {casts} section casts; {stage} checks of P2P-01 (Staged Construction and Load Combinations); {results} checks of the Results texts; {branches} checks of several branches (P2CH).");
+        Console.WriteLine($"P2CE READER PASS: inventory above; {casts} section casts; {stage} checks of P2P-01 (Staged Construction and Load Combinations); {results} checks of the Results texts; {branches} checks of several branches and {catalogues} of shared catalogues (P2CH).");
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------------

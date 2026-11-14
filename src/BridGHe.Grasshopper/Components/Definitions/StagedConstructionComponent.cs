@@ -20,6 +20,8 @@ namespace BridGHe.Grasshopper.Components.Definitions
         // P2P-01: the reason a saved catalogue could not be read (a damaged «LoadCaseRecords» chunk or «LoadCases» item), reported by the solution;
         // the catalogue then stays unknown (no fallback to an empty one).
         private string _caseRecordsError;
+        /// <summary>P2CH (14/11/2026, 83-01): the catalogue of this stage (null: unknown), read by the Load Combinations parameters that feed it.</summary>
+        internal IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> CaseRecords => _caseRecords;
         /// <summary>P2P-01: the chunk of the case records (version 1, a count, one record of <c>GpcDraftArchive</c> per case, in order).</summary>
         internal const string CaseRecordsChunk = "LoadCaseRecords";
 
@@ -83,7 +85,11 @@ namespace BridGHe.Grasshopper.Components.Definitions
             {
                 IEnumerable<IGH_Param> combinations_params = Params.Input[2].Sources.Where(s => s.GetType() == typeof(LoadCombinationsParam));
                 foreach (LoadCombinationsParam param in combinations_params)
+                {
                     param.UpdateLoadCases(_caseRecords);
+                    // P2CH (14/11/2026, 83-01): a parameter that feeds components with other catalogues changes nothing, and says so here too.
+                    if (param.CatalogueConflict is string conflict) AddRuntimeMessage(GH_RuntimeMessageLevel.Error, conflict);
+                }
             }
 
             if (combinations.Count == 0)

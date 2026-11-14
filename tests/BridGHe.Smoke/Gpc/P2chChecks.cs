@@ -78,4 +78,102 @@ internal static class P2chChecks
         Check(Refused(2) is string m && m.Contains("more than one branch") && Refused(1) == null && Refused(0) == null, "the form refuses several branches only: «" + Refused(2) + "»");
         return n;
     }
+
+    /// <summary>P2CH (83-01, design of task 102): one standalone Load Combinations wired to two Staged Construction. Different catalogues (G, Q
+    /// against G, R; or the same name G with another definition): the conflict, on the parameter and on both stages; no factor changed, no new
+    /// solution asked for, in two rounds and in both orders of the stages; the form refused; when one stage is unwired, the conflict goes.
+    /// The same catalogue on both (G, W): the combination follows it as before, one deferred expiry, and the next solve asks for nothing.</summary>
+    internal static int Catalogues(List<string> failures)
+    {
+        int n = 0;
+        void Check(bool ok, string what) { n++; if (!ok) { Console.WriteLine("P2CH CATALOGUES check " + n + " FAILED: " + what); failures.Add("P2CH 83-01: " + what); } }
+        var plugin = R2aDesignFixtures.Plugin;
+        var flags = System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic;
+        var deferred = plugin.GetType("BridGHe.Grasshopper.Helpers.DeferredExpiry", true);
+        int Schedules() => (int)deferred.GetProperty("Schedules", flags).GetValue(null);
+        int Waiting(GH_Document d) => (int)deferred.GetMethod("Waiting", flags).Invoke(null, new object[] { d });
+        LegacyCaseData Case(IGH_Goo c) => R2aDesignFixtures.Datum<LegacyCaseData>(c);
+        IGH_Goo LoadCase(string name) => P2ceReader.One("LoadCaseComponent", (0, name), (1, false));
+        var g = LoadCase("G"); var q = LoadCase("Q"); var r = LoadCase("R"); var w = LoadCase("W");
+        var inc = P2ceReader.One("LoadCombinationComponent", (0, "INC"), (1, new object[] { g, q }), (2, new object[] { 1.35, 0.7 }));
+        var group = P2ceReader.One("GroupComponent", (0, "Deck"));
+        var paramType = plugin.GetTypes().Single(t => t.Name == "LoadCombinationsParam");
+        var setLoadCases = plugin.GetTypes().Single(t => t.Name == "StagedConstructionComponent").GetMethod("SetLoadCases");
+        const string Inc = "INC: G 1.35, Q 0.7";
+
+        // The parameter (INC = 1.35 G + 0.7 Q) and two stages S1 and S2 that take it, with the catalogues a and b (b's stage first when asked).
+        (GH_Document Doc, IGH_Param Param, GH_Component A, GH_Component B) Two(LegacyCaseData[] a, LegacyCaseData[] b, bool bFirst)
+        {
+            var doc = new GH_Document();
+            var p = (IGH_Param)Activator.CreateInstance(paramType); p.CreateAttributes(); doc.AddObject(p, false);
+            var data = p.GetType().GetProperty("PersistentData").GetValue(p);
+            data.GetType().GetMethods().First(m => m.Name == "Append" && m.GetParameters().Length == 1).Invoke(data, new object[] { inc.Duplicate() });
+            GH_Component Stage(string name)
+            {
+                var s = BridgeSegmentExcelTests.Add(doc, "StagedConstructionComponent");
+                P2ceReader.Set(s.Params.Input[0], name); P2ceReader.Set(s.Params.Input[1], group); P2ceReader.Set(s.Params.Input[3], false); P2ceReader.Set(s.Params.Input[4], false);
+                s.Params.Input[2].RemoveAllSources(); s.Params.Input[2].AddSource(p);
+                return s;
+            }
+            GH_Component sb = bFirst ? Stage("S2") : null, sa = Stage("S1"); sb ??= Stage("S2");
+            setLoadCases.Invoke(sa, new object[] { a }); setLoadCases.Invoke(sb, new object[] { b });
+            return (doc, p, sa, sb);
+        }
+        string Persistent(IGH_Param p) => string.Join(" / ", ((IGH_Structure)p.GetType().GetProperty("PersistentData").GetValue(p)).AllData(true)
+            .Select(x => P2ceReader.Factors(R2aDesignFixtures.Datum<LegacyCombinationDraft>(x))));
+        string Output(GH_Component s) => string.Join(" / ", R2aDesignFixtures.Datum<LegacyStageDraft>(s.Params.Output[0].VolatileData.AllData(true).FirstOrDefault())?.Increments
+            .Select(P2ceReader.Factors) ?? new[] { "no stage" });
+        bool Conflicted(GH_Component s) => s.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(e => e.Contains("incompatible load-case catalogues"));
+        string Conflict(IGH_Param p) => (string)paramType.GetMethod("CurrentConflict", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(p, null);
+        void Solve(GH_Document d, params GH_Component[] expire) { foreach (var c in expire) c.ExpireSolution(false); BridgeSegmentExcelTests.Solve(d, true); }
+
+        LegacyCaseData[] gq = { Case(g), Case(q) }, gr = { Case(g), Case(r) }, gw = { Case(g), Case(w) };
+        foreach (bool bFirst in new[] { false, true })
+        {
+            string order = bFirst ? " (S2 solved first)" : " (S1 solved first)";
+            var (doc, param, a, b) = Two(gq, gr, bFirst);
+            int starts = 0; doc.SolutionStart += (s, e) => starts++;
+            int s0 = Schedules();
+            string conflict = Conflict(param);
+            Check(conflict != null && conflict.Contains("Cases: Q, R.") && conflict.Contains("No combinations were changed"), "G, Q against G, R: the conflict before the solve, the form refused" + order + ": " + conflict);
+            for (int round = 1; round <= 2; round++)
+            {
+                if (round == 1) Solve(doc); else Solve(doc, a, b);
+                Check(Persistent(param) == Inc && Output(a) == Inc && Output(b) == Inc && Conflicted(a) && Conflicted(b)
+                    && param.RuntimeMessages(GH_RuntimeMessageLevel.Error).Contains(Conflict(param)) && Waiting(doc) == 0 && Schedules() == s0 && doc.ScheduleDelay < 0 && starts == round,
+                    $"G, Q against G, R, round {round}{order}: no factor changed, the error on the parameter and on both stages, no new solution asked for: "
+                    + Persistent(param) + "; " + Output(a) + "; " + Output(b) + $"; waiting {Waiting(doc)}, schedules {Schedules() - s0}, solutions {starts}");
+            }
+            if (!bFirst)
+            {
+                // S2 unwired: the conflict goes with the next solve of S1 (and the form opens), the factors as they were.
+                b.Params.Input[2].RemoveAllSources();
+                Solve(doc, a);
+                Check(Conflict(param) == null && !param.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any() && !Conflicted(a) && Persistent(param) == Inc && Output(a) == Inc && doc.ScheduleDelay < 0,
+                    "S2 unwired: the conflict gone, 1.35/0.7 kept: " + Persistent(param) + "; " + string.Join(" / ", a.RuntimeMessages(GH_RuntimeMessageLevel.Error)));
+            }
+            doc.Dispose();
+        }
+
+        // The same name with another definition is a conflict too.
+        var gOther = Case(g) with { GravityValue = Case(g).GravityValue + 1 };
+        var (doc2, param2, _, _) = Two(gq, new[] { gOther, Case(q) }, false);
+        Solve(doc2);
+        Check(Conflict(param2) is string named && named.Contains("Cases: G.") && Persistent(param2) == Inc, "G with another gravity: the conflict names G: " + Conflict(param2));
+        doc2.Dispose();
+
+        // The same catalogue G, W on both stages: as before, Q removed and W added once, one deferred expiry, then nothing more.
+        var (doc3, param3, a3, b3) = Two(gw, gw, false);
+        int s3 = Schedules();
+        Solve(doc3);
+        Check(Conflict(param3) == null && Persistent(param3) == "INC: G 1.35, W 1" && Output(a3) == "INC: G 1.35, W 1" && Output(b3) == "INC: G 1.35, W 1"
+            && Waiting(doc3) == 1 && Schedules() == s3 + 1, "the same catalogue on both stages: the combination follows it, one request: " + Persistent(param3) + "; " + Output(a3) + "; " + Output(b3));
+        Solve(doc3);
+        Check(Waiting(doc3) == 0 && Schedules() == s3 + 1 && Output(a3) == "INC: G 1.35, W 1" && Output(b3) == "INC: G 1.35, W 1" && !Conflicted(a3) && !Conflicted(b3),
+            "the same catalogue: the deferred expiry solved, nothing asked again");
+        Solve(doc3);
+        Check(Waiting(doc3) == 0 && Schedules() == s3 + 1 && doc3.ScheduleDelay < 0, "the same catalogue: converged (a third solve asks for nothing)");
+        doc3.Dispose();
+        return n;
+    }
 }

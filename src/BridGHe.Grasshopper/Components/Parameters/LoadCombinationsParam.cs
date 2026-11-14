@@ -33,7 +33,73 @@ namespace BridGHe.Grasshopper.Components.Parameters
         /// combinations are not changed (they follow the catalogue when the stage solves, <see cref="UpdateLoadCases"/>). Null changes nothing.</summary>
         internal void GiveCaseCatalog(IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
         {
-            if (caseRecords != null) CaseRecordList = caseRecords.ToArray();
+            // P2CH (83-01): not while the components this parameter feeds have different catalogues (the form is refused then).
+            if (caseRecords != null && !Disagrees()) CaseRecordList = caseRecords.ToArray();
+        }
+
+        /// <summary>P2CH (14/11/2026, review of ChatGPT task 83, 83-01, design of task 102): the error while this parameter feeds components with
+        /// different case catalogues, or null. Then no combination is changed and the form is refused; before, each stage removed the cases the
+        /// other one had added (factors other than 1 lost) and every removal asked for a new solution, without end.</summary>
+        public string CatalogueConflict { get; private set; }
+
+        /// <summary>P2CH (83-01): the conflict as the components this parameter feeds have it now (the form asks it before opening).</summary>
+        internal string CurrentConflict() { Disagrees(); return CatalogueConflict; }
+
+        /// <summary>P2CH (83-01): the known catalogues of the components this parameter feeds. A Build Model that takes it directly gives its own;
+        /// a Staged Construction gives the catalogue of the Build Models it feeds (the source of its own catalogue, newer than the one it keeps),
+        /// or its own when no Build Model it feeds has given one yet. Unknown catalogues are not compared (as before).</summary>
+        private List<(string Who, IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> Cases)> Declared()
+        {
+            var declared = new List<(string, IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData>)>();
+            static string Label(GH_Component c) => c.Name.Trim() + (string.IsNullOrEmpty(c.Message) ? "" : " «" + c.Message + "»");
+            foreach (var recipient in Recipients)
+            {
+                var owner = recipient.Attributes?.GetTopLevel?.DocObject;
+                if (owner is Models.BuildModelComponent build && build.Params.Input.Count > 3 && ReferenceEquals(build.Params.Input[3], recipient))
+                {
+                    if (build.CaseCatalog != null) declared.Add((Label(build), build.CaseCatalog));
+                }
+                else if (owner is Definitions.StagedConstructionComponent stage && stage.Params.Input.Count > 2 && ReferenceEquals(stage.Params.Input[2], recipient))
+                {
+                    bool fromBuild = false;
+                    foreach (var next in stage.Params.Output[0].Recipients)
+                        if (next.Attributes?.GetTopLevel?.DocObject is Models.BuildModelComponent b && b.Params.Input.Count > 4 && ReferenceEquals(b.Params.Input[4], next) && b.CaseCatalog != null)
+                        {
+                            fromBuild = true;
+                            declared.Add((Label(b), b.CaseCatalog));
+                        }
+                    if (!fromBuild && stage.CaseRecords != null) declared.Add((Label(stage), stage.CaseRecords));
+                }
+            }
+            return declared;
+        }
+
+        /// <summary>P2CH (83-01): the conflict of the catalogues this parameter feeds, or null. Two catalogues agree when they hold the same cases
+        /// (a case: its name and its definition, <c>LegacyCaseData</c> by value), in any order. The error is on the parameter; it goes when the
+        /// catalogues agree again.</summary>
+        private bool Disagrees()
+        {
+            var declared = Declared();
+            var names = new SortedSet<string>(StringComparer.Ordinal);
+            if (declared.Count > 1)
+            {
+                var first = new HashSet<Common.Gpc.Legacy.LegacyCaseData>(declared[0].Cases);
+                foreach (var (_, cases) in declared.Skip(1))
+                {
+                    var other = new HashSet<Common.Gpc.Legacy.LegacyCaseData>(cases);
+                    if (!first.SetEquals(other)) foreach (var c in first.Except(other).Concat(other.Except(first))) names.Add(c.Name);
+                }
+            }
+            string conflict = names.Count == 0 ? null
+                : "Load Combinations is connected to components with incompatible load-case catalogues. No combinations were changed. Use a separate Load Combinations "
+                + "parameter for each catalogue, or make the catalogues identical. Conflicting components: " + string.Join(", ", declared.Select(d => d.Who).Distinct())
+                + ". Cases: " + string.Join(", ", names) + ".";
+            bool shown = conflict != null && RuntimeMessages(GH_RuntimeMessageLevel.Error).Contains(conflict);
+            if (CatalogueConflict != null && conflict != CatalogueConflict) ClearRuntimeMessages(); // the former conflict, solved or with other cases
+            if (conflict != null && !shown) AddRuntimeMessage(GH_RuntimeMessageLevel.Error, conflict); // also after a solution of the parameter cleared it
+            if (conflict != CatalogueConflict || (conflict != null && !shown)) OnDisplayExpired(false);
+            CatalogueConflict = conflict;
+            return conflict != null;
         }
 
         /// <summary>R6.3: the case records of Build Model or Staged Construction: the combinations of the parameter follow them (the GPC datum
@@ -44,8 +110,10 @@ namespace BridGHe.Grasshopper.Components.Parameters
         public bool UpdateLoadCases(IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> caseRecords)
         {
             if (caseRecords == null) return false;
+            // P2CH (83-01): components with other catalogues: nothing changes (no removal, so no new solution asked for).
+            if (Disagrees()) return false;
             // Recreate the LoadCase names list
-            GiveCaseCatalog(caseRecords);
+            CaseRecordList = caseRecords.ToArray();
 
             if (VolatileDataCount == 0)
                 return false;
@@ -230,6 +298,12 @@ namespace BridGHe.Grasshopper.Components.Parameters
                 if (LoadCombinationRows.Refusal(Owner.CaseRecordList) is string refusal)
                 {
                     MessageBox.Show(refusal, "Load Combinations", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return GH_ObjectResponse.Handled;
+                }
+                // P2CH (83-01): not while the components this parameter feeds have different catalogues.
+                if (Owner.CurrentConflict() is string conflict)
+                {
+                    MessageBox.Show(conflict, "Load Combinations", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return GH_ObjectResponse.Handled;
                 }
                 // P2CH (83-02): the form edits one list; with combinations in several branches, OK would keep the first branch only: refused.
