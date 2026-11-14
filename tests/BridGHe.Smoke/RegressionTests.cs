@@ -97,6 +97,7 @@ internal static class RegressionTests
         gpc["gpc-only-generators"] = GpcOnlyReplay.Generators; // R6.5 P1 lane 1b (7/11): the bridge generators replayed with GPC-only inputs and outputs
         gpc["gpc-only-properties"] = GpcOnlyReplay.Properties; // R6.5 P1 lane 2a (P2Z, 8/11): properties and data replayed with GPC-only inputs and outputs; L2B (8/11): with lane 2b (composite and bridge properties, State Override, coordinate systems)
         gpc["gpc-only-models"] = GpcOnlyReplay.Models; // R6.5 P1 lane 3a (L3a, 8/11): models, composite beams and workflow objects GPC-only; a gate step of its own (limit 5,400 s), not in regression all
+        gpc["export-preparation"] = ExportPreparationChecks.Regression; // Task 118: analytical managed export boundary.
         tests = gpc.Concat(tests).ToDictionary(t => t.Key, t => t.Value);
         P2cfChecks.RegressionKeys(tests.Keys, selection == "all"); // P2CF (13/11, item 4): the regression keys of P2rRetired.Checks against the regressions
         if (selection != "all" && !tests.ContainsKey(selection))
