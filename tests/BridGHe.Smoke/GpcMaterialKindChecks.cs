@@ -232,7 +232,19 @@ internal static class GpcMaterialKindChecks
                 int kind = new[] { -1, 0, 1, 2 }[run / 8];
                 bool typeOk = kind switch { 0 => m is SteelMaterialEN1992 s && s.SteelType == SteelMaterial.SteelTypes.Structural, 1 => m is ConcreteMaterialEN1992, 2 => m is AluminiumMaterialEN1999, _ => m.GetType() == typeof(Material) };
                 if (!typeOk) return $"kind {kind}: {m.GetType().Name}";
-                return Is(m.Ni, .29) ? null : "ν " + m.Ni;
+                if (!Is(m.Ni, .29)) return "ν " + m.Ni;
+                // P2CI (UN-01, user decision of 14/11): the inputs E 205000, α 1.15e-5, ρ 7.8e-9 in the definition units of the run (Knm, SI,
+                // Nmm, IPS), against analytic values written here, not derived from the component: E in MPa (kPa/1000, Pa/1e6, psi =
+                // 4.4482216152605 N / 645.16 mm²), ρ in t/mm³ (t/m³·1e-9, kg/m³·1e-12, lb/in³ = 4.5359237e-4 t / 16387.064 mm³) and α in 1/°C:
+                // unchanged bit for bit in the °C units, 1.8 times the value per °F in IPS (1.15e-5 /°F = 2.07e-5 /°C: 18 °F = 10 °C give the
+                // same free strain 2.07e-4). Before the fix the IPS α stayed 1.15e-5.
+                int units = (run % 8) / 2;
+                double[] e = { 205, .205, 205000, 1413.425245099514 }, rho = { 7.8e-18, 7.8e-21, 7.8e-9, 2.1590325673958436e-16 };
+                static bool Near(double a, double b) => Math.Abs(a - b) <= 1e-12 * Math.Abs(b);
+                if (!Near(m.ElasticModulusCompression, e[units]) || !Near(m.Density, rho[units]))
+                    return $"units {units}: E {m.ElasticModulusCompression:R} ρ {m.Density:R}, expected {e[units]:R} {rho[units]:R}";
+                bool alphaOk = units == 3 ? Math.Abs(m.AlfaThermalExpansion - 2.07e-5) <= 1e-14 * 2.07e-5 : Is(m.AlfaThermalExpansion, 1.15e-5);
+                return alphaOk ? null : $"units {units}: α {m.AlfaThermalExpansion:R}, expected {(units == 3 ? 2.07e-5 : 1.15e-5):R} 1/°C";
             }
             case "MaterialTableComponent":
                 if (m.GetType() != typeof(Material)) return "not a generic material: " + m.GetType().Name;

@@ -123,6 +123,9 @@ namespace BridGHe.Grasshopper.Components.Materials
             rho = UnitsConvert.ConvertToDefaultUnits(rho, massUnits, 1, lengthUnits, -3);
             fk = UnitsConvert.ConvertToDefaultUnits(fk, pressureUnits, 1);
             ftk = UnitsConvert.ConvertToDefaultUnits(ftk, pressureUnits, 1);
+            // P2CI (UN-01, user decision of 14/11): the thermal expansion of PSI is per °F (the label «1/F»), the GPC material per °C:
+            // α[1/°C] = 1.8 α[1/°F]. Before (0.3.0 too) it was passed unconverted. kNm, SI and Nmm (1/°C) unchanged.
+            alpha = new Common.Gpc.BridgeUnits((Common.Gpc.DefinitionUnits)units).ToPerCelsius(alpha);
 
             var recipe = Common.Gpc.Builders.GpcMaterialBuilders.Custom(kind, name, modulus, ni, alpha, g, use_poisson, rho, fk, ftk);
             // P2K (P1): the material by its GPC datum alone, by kind from the recipe of the component.

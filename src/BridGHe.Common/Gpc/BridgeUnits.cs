@@ -70,6 +70,10 @@ namespace BridGHe.Common.Gpc
         public double ToCelsiusDelta(double value) => Fahrenheit ? value * 5 / 9 : value;
         /// <summary>Temperature gradient (difference per length).</summary>
         public double ToCelsiusPerMm(double value) => IsIdentity ? value : ToCelsiusDelta(value) / Length;
+        /// <summary>P2CI (UN-01, user decision of 14/11): a coefficient per temperature difference (thermal expansion α, 1/°F in PSI) in 1/°C:
+        /// one °C is 1.8 °F, so α[1/°C] = 1.8 α[1/°F]; no offset (α is per difference, not per absolute temperature). The units in °C return
+        /// the value unchanged, bit for bit.</summary>
+        public double ToPerCelsius(double value) => Fahrenheit ? value * 1.8 : value;
 
         // Back to the definition units (results shown by the components). Identity units return the value unchanged, bit for bit.
         public double FromMm(double length) => IsIdentity ? length : length / Length;
