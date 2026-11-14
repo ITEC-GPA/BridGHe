@@ -18,13 +18,13 @@ namespace BridGHe.Grasshopper.Components.Parameters
 
         protected override GH_GetterResult Prompt_Singular(ref DataTypes.Fem.GH_Material value)
         {
-            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Selezione dal catalogo/documento precedente non disponibile. Collegare i componenti di costruzione BridGHe.");
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Selection from a catalogue or a previous document is not available. Connect the BridGHe components that build this datum.");
             return GH_GetterResult.cancel;
         }
 
         protected override GH_GetterResult Prompt_Plural(ref List<DataTypes.Fem.GH_Material> values)
         {
-            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Selezione dal catalogo/documento precedente non disponibile. Collegare i componenti di costruzione BridGHe.");
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Selection from a catalogue or a previous document is not available. Connect the BridGHe components that build this datum.");
             return GH_GetterResult.cancel;
         }
 

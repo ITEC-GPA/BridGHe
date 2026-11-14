@@ -39,7 +39,9 @@ internal static class ExampleRemake04
             foreach (var c in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == name)) { c.GetType().GetField("_run", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(c, true); c.ExpireSolution(false); BridgeSegmentExcelTests.Solve(doc, true); }
         var errors = doc.Objects.OfType<GH_ActiveObject>().SelectMany(o => o.RuntimeMessages(GH_RuntimeMessageLevel.Error).Select(m => o.NickName + ": " + m)).ToArray();
         if (errors.Length > 0) throw new Exception(relative + ": " + string.Join("; ", errors));
-        var warnings = doc.Objects.OfType<GH_ActiveObject>().SelectMany(o => o.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Where(m => m.Contains("Nessun risultato di un'analisi") || m.Contains("versione precedente")).Select(m => o.NickName + ": " + m)).ToArray();
+        // P2CI (MU-03, 14/11): the warning of missing results is in English (GpcResultCatalog.NoAnalysedResultsMessage); the notices of a former
+        // version keep «versione precedente».
+        var warnings = doc.Objects.OfType<GH_ActiveObject>().SelectMany(o => o.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Where(m => m.Contains("No results of a BridGHe analysis") || m.Contains("versione precedente")).Select(m => o.NickName + ": " + m)).ToArray();
         if (warnings.Length > 0) throw new Exception(relative + ": " + string.Join("; ", warnings));
     }
 

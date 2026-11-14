@@ -27,7 +27,9 @@ public sealed class BridgeLayoutGoo : GH_Goo<object>
         Value = null; string kind = null, json = null;
         if (!reader.TryGetString("Kind", ref kind) || !reader.TryGetString("Layout", ref json)) return false;
         Type type = kind == nameof(BridgeSegments) ? typeof(BridgeSegments) : kind == nameof(BridgeDiaphragms) ? typeof(BridgeDiaphragms) : null;
-        if (type == null) return false;
-        try { Value = JsonSerializer.Deserialize(json, type); return IsValid; } catch (JsonException) { return false; }
+        // P2CI (MU-01, ChatGPT task 74): an unknown kind and damaged JSON are said to the file reader (before: false alone); the same result.
+        if (type == null) return GpcGooPersistence.NotRead(reader, GpcGooPersistence.Unreadable("bridge layout", "unknown kind '" + kind + "'"));
+        try { Value = JsonSerializer.Deserialize(json, type); return IsValid; }
+        catch (JsonException x) { return GpcGooPersistence.NotRead(reader, GpcGooPersistence.Unreadable(kind == nameof(BridgeSegments) ? "Bridge Segments" : "Bridge Diaphragms", x.Message)); }
     }
 }

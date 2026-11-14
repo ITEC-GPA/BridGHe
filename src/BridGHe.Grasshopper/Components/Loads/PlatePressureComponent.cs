@@ -83,7 +83,16 @@ namespace BridGHe.Grasshopper.Components.Loads
             }
             else if (obj.GetType() == typeof(GH_String))
             {
-                double val = Convert.ToDouble(((GH_String)obj).Value);
+                // P2CI (MU-02, ChatGPT task 74): the text read as before (Convert.ToDouble: the current number format, an empty text 0); a text
+                // that is not a number now says so instead of the generic exception of the solution (the same outcome: an error, no output).
+                string text = ((GH_String)obj).Value;
+                double val;
+                try { val = Convert.ToDouble(text); }
+                catch (Exception x) when (x is FormatException || x is OverflowException)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Value '" + text + "' is not a valid number in the current number format.");
+                    return;
+                }
                 value = new Vector3d(0, 0, val);
             }
             else if (obj.GetType() == typeof(GH_Vector))
@@ -92,7 +101,7 @@ namespace BridGHe.Grasshopper.Components.Loads
             }
             else
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid Value");
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Value must be a number, numeric text or a vector. Connect one of these types.");
                 return;
             }
 

@@ -74,7 +74,7 @@ namespace BridGHe.Grasshopper.Components.Models
                         for (int i = 0; i < beams.Count; i++) { beams[i].AnalysedGpc = gpc.BeamElements[i + 1]; beams[i].AnalysedGpcModel = gpc; }
                         for (int i = 0; i < plates.Count; i++) { plates[i].AnalysedGpc = gpc.AreaElements[i + 1]; plates[i].AnalysedGpcModel = gpc; }
                     }
-                    else AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, "Modello GPC analizzato con un numero di elementi diverso dal modello FEM: risultati GPC non collegati.");
+                    else AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, "The analysed model has a different number of elements from the current model. Its results were not attached; run the analysis again.");
                 }
             }
             catch (Exception e)

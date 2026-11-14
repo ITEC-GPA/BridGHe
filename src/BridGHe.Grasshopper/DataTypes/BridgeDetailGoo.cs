@@ -28,8 +28,9 @@ namespace BridGHe.Grasshopper.DataTypes
         {
             Value=null;string kind=null,json=null;if(!reader.TryGetString("Kind",ref kind)||!reader.TryGetString("Data",ref json))return false;
             Types.TryGetValue(kind,out Type type);
-            if(type==null)return false;
-            try{Value=JsonSerializer.Deserialize(json,type,Json);return IsValid;}catch(JsonException){return false;}
+            // P2CI (MU-01, ChatGPT task 74): an unknown kind and damaged JSON are said to the file reader (before: false alone); the same result.
+            if(type==null)return GpcGooPersistence.NotRead(reader,GpcGooPersistence.Unreadable(TypeName,"unknown kind '"+kind+"'"));
+            try{Value=JsonSerializer.Deserialize(json,type,Json);return IsValid;}catch(JsonException x){return GpcGooPersistence.NotRead(reader,GpcGooPersistence.Unreadable(TypeName+" ("+kind+")",x.Message));}
         }
     }
 }

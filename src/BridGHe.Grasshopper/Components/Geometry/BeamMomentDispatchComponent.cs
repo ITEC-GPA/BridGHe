@@ -38,6 +38,6 @@ public sealed class BeamMomentDispatchComponent : BridgeUtilityComponent
         for(int k=0;k<5;k++) da.SetDataList(k,beams.Where((b,i)=>(int)states[i].Sign==k));
         da.SetDataList(5,states);da.SetDataList(6,states.Select(s=>s.ToString()).Prepend("Sampled sign only. Request adequate result stations/extrema; this does not determine code cracking zones or split the mesh."));
         if(states.Any(s=>s.Sign==BeamMomentSign.Missing))AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Some beams have no results for this case. Recalculate the reference model including the selected case.");
-        if(states.Any(s=>s.Sign==BeamMomentSign.Mixed))AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Mixed-sign FEM beams: refine the common mesh or explicitly choose an approximation in Bridge State Override.");
+        if(states.Any(s=>s.Sign==BeamMomentSign.Mixed))AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Beams with moments of both signs: refine the common mesh or explicitly choose an approximation in Bridge State Override.");
     }
 }

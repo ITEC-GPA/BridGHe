@@ -211,7 +211,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public string ResultsNotice { get { lock (gpcLock) return _unreadableResultsOf != null && ReferenceEquals(_unreadableResultsOf, StateKey) ? UnreadableResultsMessage : null; } }
 
         /// <summary>P30-01 (C1, 11/11): the text of <see cref="ResultsNotice"/>.</summary>
-        public const string UnreadableResultsMessage = "I risultati salvati con il modello non si possono leggere (dati danneggiati) e non sono stati caricati: premere Run per ricalcolare l'analisi.";
+        public const string UnreadableResultsMessage = "The results saved with the model cannot be read (damaged data) and were not loaded: press Run to run the analysis again.";
 
         /// <summary>F6 (L12): the bridge data of <see cref="Gpc"/> (members, super elements, local section states by beam GUID): those of the
         /// GPC input of <see cref="Value"/>; for an attached analysed (or bridge) model, the same data on its beams by number (the analysed
@@ -413,7 +413,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
                 if (results && GpcResults is GPC.Model.Models.Model analysed) writer.SetByteArray(Common.Gpc.GpcResultsFile.Chunk, Common.Gpc.GpcResultsFile.ToBytes(analysed));
                 return true;
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
+            catch (Exception ex) { return DataTypes.GpcGooPersistence.NotWritten(writer, "BridGHe Model", ex, () => GpcInput != null); } // P2CI (MU-01): said to the writer
         }
 
         public override bool Read(GH_IReader reader)

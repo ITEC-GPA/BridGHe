@@ -71,7 +71,7 @@ public sealed class BridgeActionComponent : GH_Component
         string key = null; GH_Model model = null; object lc = null; int behavior = 0; var ids = new List<string>();
         if (!da.GetData(0, ref key) || !da.GetData(1, ref model)) return;
         if (!WorkflowInputs.HasBeams(model))
-        { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Awaiting a source FEM model."); return; }
+        { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Awaiting a source model."); return; }
         if(!WorkflowInputs.HasBeamResults(model))
             AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,model.ResultsNotice ?? "Action defined without analysis results. Analyse the source model with Straus R3 Analysis before Build BridGHe Model."); // P30-01 (C1): saved results unreadable
         WorkflowInputs.Catalogue(this, 2, model);
@@ -110,7 +110,7 @@ public sealed class BridgeShrinkageActionComponent : GH_Component
         if (!da.GetData(0, ref key) || !da.GetData(3, ref strain) || !da.GetData(5, ref primary) || !da.GetData(6, ref response)) return;
         da.GetData(1, ref model); WorkflowInputs.Catalogue(this, 2, model); da.GetData(2, ref lc); da.GetDataList(4, ids);
         if (!primary && model != null && !WorkflowInputs.HasBeams(model))
-        { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Awaiting the secondary shrinkage FEM model."); return; }
+        { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Awaiting the model of the secondary shrinkage action."); return; }
         if(!primary && WorkflowInputs.HasModel(model) && !WorkflowInputs.HasBeamResults(model))
             AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,model.ResultsNotice ?? "Shrinkage action defined without secondary analysis results. Analyse the source model with Straus R3 Analysis before Build BridGHe Model."); // P30-01 (C1): saved results unreadable
         try

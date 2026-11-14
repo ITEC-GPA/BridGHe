@@ -35,7 +35,7 @@ namespace BridGHe.Grasshopper.Helpers
             }
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException || ex is ArgumentException || ex is NotSupportedException)
             {
-                return "Risultati GPC non scritti accanto al modello (" + ex.Message + "): dopo la riapertura servirà Run.";
+                return "The GPC results were not written beside the model (" + ex.Message + "): after the file is reopened, press Run.";
             }
         }
 
@@ -57,7 +57,7 @@ namespace BridGHe.Grasshopper.Helpers
                 {
                     if (GpcResultsFile.IsPreviousVersion(path)) { error = GpcResultsFile.PreviousVersionMessage; continue; }
                     var analysed = GpcResultsFile.Read(path, _hash);
-                    if (model?.Value == null && !GpcOnlyModels.WithoutFem(model)) return "Risultati GPC senza modello FEM nel documento: rilanciare Run.";
+                    if (model?.Value == null && !GpcOnlyModels.WithoutFem(model)) return "GPC results without their model in the document: press Run again.";
                     model.AttachGpc(analysed); _path = path;
                     return null;
                 }

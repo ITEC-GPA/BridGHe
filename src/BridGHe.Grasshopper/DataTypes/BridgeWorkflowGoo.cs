@@ -37,7 +37,12 @@ public sealed class BridgeWorkflowGoo : GH_Goo<object>
     public override bool Read(GH_IReader reader)
     {
         Value = null;
-        if (reader.ItemExists("Workflow")) System.Diagnostics.Debug.WriteLine(Common.Gpc.GpcGooArchive.LegacyCacheMessage);
+        if (reader.ItemExists("Workflow"))
+        {
+            System.Diagnostics.Debug.WriteLine(Common.Gpc.GpcGooArchive.LegacyCacheMessage);
+            // P2CI (MU-01, ChatGPT task 74): said to the file reader too (before: Debug only); the same result (false, nothing read).
+            return GpcGooPersistence.NotRead(reader, "The saved bridge action or phase holds data of an earlier BridGHe version, which are no longer read: the Bridge Action and Bridge Phase components make it again.", GH_Message_Type.warning);
+        }
         return false;
     }
 }

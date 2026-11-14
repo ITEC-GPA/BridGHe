@@ -64,8 +64,40 @@ namespace BridGHe.Grasshopper.DataTypes
         {
             System.Diagnostics.Debug.WriteLine(ex);
             string message = IsRefusal(ex) ? Common.Gpc.GpcDraftArchive.UserMessage(ex) : InternalError + " (" + ex.GetType().Name + ": " + ex.Message + "): il dato non è stato caricato.";
-            try { reader?.AddMessage(type + ": " + message, GH_Message_Type.error); } catch (Exception) { }
+            Notify(reader, type + ": " + message, GH_Message_Type.error);
             return false;
+        }
+
+        /// <summary>P2CI (MU-01, ChatGPT task 74): a saved datum the reader of a GH type does not read (an unknown kind, damaged JSON, a former
+        /// cache): the message to the file reader (Grasshopper lists it when the file opens), and false. The value is left as the reader left it
+        /// (no other change of behaviour than the message).</summary>
+        internal static bool NotRead(GH_IReader reader, string message, GH_Message_Type level = GH_Message_Type.error)
+        {
+            Notify(reader, message, level);
+            return false;
+        }
+
+        /// <summary>P2CI (MU-01): the text of a saved datum that could not be read, with the reason.</summary>
+        internal static string Unreadable(string type, string detail) =>
+            "The saved " + type + " could not be read: " + detail + ". Rebuild this datum from its input components and save a new copy.";
+
+        /// <summary>P2CI (MU-01): a datum the writer of a GH type could not write: the message to the file writer (the datum is not in the
+        /// file; nothing says it was saved), and false. A GH type without a datum (an empty value) writes nothing and says nothing, as before.</summary>
+        internal static bool NotWritten(GH_IWriter writer, string type, Exception ex, Func<bool> hasDatum)
+        {
+            System.Diagnostics.Debug.WriteLine(ex);
+            bool datum;
+            try { datum = hasDatum(); } catch (Exception) { datum = false; }
+            if (datum) Notify(writer, "The " + type + " could not be saved (" + ex.GetType().Name + ": " + ex.Message + "): it is not in the file. Correct its input and save again.", GH_Message_Type.error);
+            return false;
+        }
+
+        /// <summary>P2CI (MU-01): a message to the reader or writer; a failure of the notification itself is logged (diagnostics), never thrown
+        /// into the read or the write.</summary>
+        private static void Notify(GH_IChunk chunk, string message, GH_Message_Type level)
+        {
+            try { chunk?.AddMessage(message, level); }
+            catch (Exception x) { System.Diagnostics.Debug.WriteLine(x); }
         }
     }
 }

@@ -86,7 +86,7 @@ namespace BridGHe.Grasshopper.DataTypes
         public override bool Write(GH_IWriter writer)
         {
             try { GpcGooPersistence.Write(writer, (Common.Gpc.GpcDraftArchive.Write(Gpc), (byte[])null)); return true; } // P2D: the definition alone
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
+            catch (Exception ex) { return GpcGooPersistence.NotWritten(writer, TypeName, ex, () => Gpc != null); } // P2CI (MU-01): said to the writer
         }
 
         public override bool Read(GH_IReader reader)

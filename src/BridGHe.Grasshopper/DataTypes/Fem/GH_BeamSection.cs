@@ -124,7 +124,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public override bool Write(GH_IWriter writer)
         {
             try { GpcGooPersistence.Write(writer, ((byte[])null, Common.Gpc.GpcDraftArchive.Write(Gpc))); return true; } // P2D: the recipe alone
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
+            catch (Exception ex) { return GpcGooPersistence.NotWritten(writer, TypeName, ex, () => Gpc != null); } // P2CI (MU-01): said to the writer
         }
 
         public override string ToString()

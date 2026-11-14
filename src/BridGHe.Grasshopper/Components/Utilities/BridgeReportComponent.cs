@@ -113,7 +113,7 @@ public sealed class BridgeReportComponent : GH_Component
             da.SetData(0, result.File); da.SetData(3, result.Id); da.SetDataList(2, result.Warnings);
             da.SetDataList(1, new[] { $"{result.Results} risultati; {result.Checks} voci; {result.Missing} esiti attivi senza WR.",
                 "Capitoli: Riepilogo, " + string.Join(", ", topics.Distinct().OrderBy(t => t).Select(t => BridgeReportData.TopicNames[t])), "Archivio incorporato: bridghe/report.json" });
-            if (result.Warnings.Length > 0 || result.Missing > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Report generato con segnalazioni: consultare Warnings e il riepilogo nel documento.");
+            if (result.Warnings.Length > 0 || result.Missing > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Report generated with warnings: see Warnings and the summary in the document.");
             Message = "DOCX";
         }
         catch (Exception e) { Message = "Error"; AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message); }

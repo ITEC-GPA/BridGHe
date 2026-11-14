@@ -291,8 +291,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
 
                     DA.SetDataTree(0, resultsDataTree);
                     if (records.Method == BridgeWorkflowMethod.LinearHistory)
-                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "gPC LinearHistory: storico di sezione N–Mx; taglio, pioli e irrigidimenti non verificati. Strain geometrico riferito all'origine dello storico; nessuna integrazione temporale della viscosità.");
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Tau b non ha un equivalente verificato nell'API gPC attuale: output NaN.");
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "gPC LinearHistory: section history in N–Mx only; shear, studs and stiffeners are not checked. The geometric strain refers to the origin of the history; creep is not integrated in time.");
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Tau b has no verified counterpart in the current gPC API: the output is NaN.");
                     DA.SetDataTree(1, tauBDataTree);
                     DA.SetDataTree(2, forcesTree);
 

@@ -162,7 +162,7 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
                 var updated=solution.Updated;var selected=updated.Stage;var checks=solution.Checks;
                 da.SetData(0,updated);da.SetDataList(1,checks.Select(c=>c.Name));da.SetDataList(2,checks.Select(c=>c.Demand));da.SetDataList(3,checks.Select(c=>c.Resistance));
                 da.SetDataList(4,checks.Select(c=>c.Unit));da.SetDataList(5,checks.Select(c=>c.Ratio??double.NaN));da.SetDataList(6,checks.Select(c=>c.Status+": "+c.Note));da.SetDataList(7,selected.Warnings.Concat(updated.Assumptions).Distinct());
-                if(solution.ServiceLimitState)AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Stato limite del risultato sorgente SLE: gPC lascia senza esito le verifiche che richiedono azioni SLU. Nessun fattore di carico è applicato implicitamente.");
+                if(solution.ServiceLimitState)AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"The source result is at the serviceability limit state (SLS): gPC leaves the checks that need ultimate limit state (ULS) actions without an outcome. No load factor is applied implicitly.");
             }
             catch(Exception e){AddRuntimeMessage(GH_RuntimeMessageLevel.Error,e.Message);}
         }

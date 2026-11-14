@@ -145,7 +145,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     DA.SetData(index++, resultOnlySteelBuckling);
                     DA.SetData(index++, resultInfiniteBuckling);
                     DA.SetData(index++, resultBuckling);
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "TauB non ha un equivalente verificato nell'API gPC attuale: output NaN.");
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "TauB has no verified counterpart in the current gPC API: the output is NaN.");
                     DA.SetData(index++, TauB);
                 }
             }

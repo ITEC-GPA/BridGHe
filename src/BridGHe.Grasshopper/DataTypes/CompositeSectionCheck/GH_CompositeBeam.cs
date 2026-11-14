@@ -218,7 +218,7 @@ namespace BridGHe.Grasshopper.DataTypes
             // R6.1 (§1bis): a composite beam is a reference into an analysed bridge model, not persisted (Composite Beam makes it again): its
             // GUID only. P2D: never its FEM value (the transitional chunk FemmR6 is no longer written).
             try { writer.SetGuid("Guid", _guid); return true; }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
+            catch (Exception ex) { return GpcGooPersistence.NotWritten(writer, "Composite Beam", ex, () => Gpc != null); } // P2CI (MU-01): said to the writer
         }
 
         public override bool Read(GH_IReader reader)
@@ -228,9 +228,23 @@ namespace BridGHe.Grasshopper.DataTypes
                 _guid = reader.GetGuid("Guid"); _startDefinition = _endDefinition = null; _gpc = null; _gpcOf = null; Value = null;
                 // R6.1: a former payload (0.3.0, Data) is a cache of an analysed model: dropped (Common.Gpc.GpcGooArchive.LegacyCacheMessage). P2D:
                 // so is the FEM chunk of a development file (a reference into an analysed model, no FEM value is read).
-                System.Diagnostics.Debug.WriteLine(Common.Gpc.GpcGooArchive.LegacyCacheMessage); return false;
+                System.Diagnostics.Debug.WriteLine(Common.Gpc.GpcGooArchive.LegacyCacheMessage);
+                // P2CI (MU-01, ChatGPT task 74): said to the file reader too (before: Debug only); the same result (false, nothing read).
+                return NotKept(reader, null);
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return NotKept(reader, ex); }
+        }
+
+        /// <summary>P2CI (MU-01): the message of a saved composite beam to the file reader, and false: a former cache (0.3.0 <c>Data</c>, or the
+        /// FEM chunk of a development file) is dropped, a reference of this version is made again by Composite Beam, a chunk that cannot be read
+        /// says why.</summary>
+        private static bool NotKept(GH_IReader reader, Exception ex)
+        {
+            bool former;
+            try { former = reader.ItemExists(GpcGooPersistence.Data) || reader.ItemExists(GpcGooPersistence.Femm); } catch (Exception) { former = false; }
+            if (former) return GpcGooPersistence.NotRead(reader, "The saved Composite Beam holds results of an earlier BridGHe version, which are no longer read: run the analysis again.", GH_Message_Type.warning);
+            if (ex != null) return GpcGooPersistence.NotRead(reader, GpcGooPersistence.Unreadable("Composite Beam", ex.GetType().Name + ": " + ex.Message));
+            return GpcGooPersistence.NotRead(reader, "A Composite Beam refers to an analysed model and is not kept in the file: Composite Beam makes it again when the definition solves.", GH_Message_Type.info);
         }
 
         public override string ToString()

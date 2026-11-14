@@ -37,7 +37,7 @@ public sealed class BridgeStateOverrideComponent : BridgeUtilityComponent
     {
         var beams=new List<GH_Beam>();var ids=new List<string>();var props=new List<GH_CompositeBeamProperty>();var states=new List<BeamMomentState>();int response=1,mixed=0,zero=0;bool mass=true;
         if(!da.GetDataList(0,beams)||!da.GetDataList(1,ids)||!da.GetDataList(2,props)||!da.GetDataList(3,states)||!da.GetData(4,ref response)||!da.GetData(5,ref mixed)||!da.GetData(6,ref zero)||!da.GetData(7,ref mass))return;
-        if(states.Count==0 || states.Any(s=>s.Sign==BeamMomentSign.Missing)){AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Waiting for reference FEM results on every girder.");return;}
+        if(states.Count==0 || states.Any(s=>s.Sign==BeamMomentSign.Missing)){AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Waiting for the reference analysis results on every girder.");return;}
         // R6.5 P1 lane 2b / P2K (P1): the outputs by their GPC drafts alone (rule of passo 75).
         SolveGpcOnly(da,beams,ids,props,states,response,mixed,zero,mass);
     }
