@@ -111,8 +111,11 @@ try {
             # Ship definitions and documentation; native runs and historical packages
             # stay beside their examples locally, but must not bloat the plugin package.
             $exampleRoot = Join-Path $projectRoot 'example'
+            $examplePrefix = [IO.Path]::GetFullPath($exampleRoot).TrimEnd('\') + '\'
             foreach ($file in Get-ChildItem -LiteralPath $exampleRoot -File -Recurse) {
-                $relative = [IO.Path]::GetRelativePath($exampleRoot, $file.FullName)
+                # The path below example\, also in Windows PowerShell 5.1 (.NET Framework has no [IO.Path]::GetRelativePath).
+                if (-not $file.FullName.StartsWith($examplePrefix, [StringComparison]::OrdinalIgnoreCase)) { throw "File outside example: $($file.FullName)" }
+                $relative = $file.FullName.Substring($examplePrefix.Length)
                 if ($relative -match '(^|[\\/])(calcoli|archivio-pacchetti|esecuzioni|backup-prima-fasi)([\\/]|$)' -or $file.Name.StartsWith('~$')) { continue }
                 $target = Join-Path (Join-Path $packageRoot 'example') $relative
                 New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
