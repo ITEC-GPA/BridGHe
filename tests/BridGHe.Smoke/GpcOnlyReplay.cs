@@ -1698,7 +1698,21 @@ internal static class GpcOnlyReplay
                     string dir = Path.Combine(Path.GetTempPath(), "bridghe-gpc-only-models"); Directory.CreateDirectory(dir);
                     Set("File", new GH_String(Path.Combine(dir, "combinations.xlsx"))); Set("Overwrite", new GH_Boolean(true));
                 }
-                else if (file != null && !Path.IsPathRooted(file) && !string.IsNullOrEmpty(source)) Set("File", new GH_String(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(source), file))));
+                else if (file != null && !Path.IsPathRooted(file) && !string.IsNullOrEmpty(source))
+                {
+                    // P2CG (14/11/2026): Read reads a copy of the workbook of the example in TEMP, in a folder named as the example folder (Create writes
+                    // in TEMP too), so the File output does not hold the folder of the worktree that runs the replay (the capture of 46 held that of
+                    // the worktree that recorded it). A missing workbook is resolved as before.
+                    string workbook = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(source), file));
+                    if (File.Exists(workbook))
+                    {
+                        string dir = Path.Combine(Path.GetTempPath(), "bridghe-gpc-only-models", Path.GetFileName(Path.GetDirectoryName(source))); Directory.CreateDirectory(dir);
+                        string copied = Path.Combine(dir, Path.GetFileName(workbook));
+                        File.Copy(workbook, copied, true);
+                        Set("File", new GH_String(copied));
+                    }
+                    else Set("File", new GH_String(workbook));
+                }
                 break;
             }
             case "BridgeReportComponent":
