@@ -349,7 +349,7 @@ internal static class U2ExampleRemake
         BridgeExampleMigration.Initialize();
         var plugin = BridgeMergeTests.Initialize();
         string root = Path.GetFullPath(args.SkipWhile(a => a != "--u2-check-drafts").Skip(1).First());
-        int refused = 0;
+        int refused = 0, failed = 0;
         foreach (var relative in Files.Where(f => f.StartsWith("23-", StringComparison.Ordinal) || f.StartsWith("46-", StringComparison.Ordinal)))
         {
             using var doc = GrasshopperBridgeExample.Read(Path.Combine(root, relative));
@@ -366,12 +366,18 @@ internal static class U2ExampleRemake
                         var errors = c.RuntimeMessages(GH_RuntimeMessageLevel.Error).ToArray();
                         if (errors.Any(e => e.Contains("carries no drafts"))) refused++; // the drafts missing; another error (an unknown super element) is the answer of the component
                         string outputs = string.Join(", ", c.Params.Output.Select(o => o.Name + " " + o.VolatileData.DataCount));
+                        // P2CH (14/11/2026, review of ChatGPT task 83, 83-03): every other error fails too, but the answer of the filter to the probe name
+                        // SE1 (none in these models); the models of 23 and 46 are the ones U2BuiltModels makes: 4 nodes, 2 beams, no plate.
+                        bool expected = type == "DecomposeModelComponent" ? errors.Length == 0 && outputs == "Nodes 4, Beams 2, Plates 0"
+                            : errors.All(e => e == "The super element SE1 does not exists.") && outputs == "Beams 0";
+                        if (!expected) failed++;
                         Console.WriteLine($"U2 DRAFTS {relative} {(p.Attributes?.GetTopLevel?.DocObject ?? p).NickName} / {p.Name}: {type} {(errors.Length == 0 ? "OK" : "ERROR " + string.Join("; ", errors))}; {outputs}"
                             + string.Concat(c.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Select(w => "; warning: " + w)));
                     }
         }
-        Console.WriteLine($"U2 DRAFTS DONE: {refused} refused");
-        return refused == 0 ? 0 : 1;
+        // P2CH (83-03): the exit code says it (before, only a model without drafts failed).
+        Console.WriteLine($"U2 DRAFTS {(refused + failed == 0 ? "PASS" : "FAIL")}: {refused} refused, {failed} other errors or counts other than 4 nodes, 2 beams, 0 plates (Decompose Model) and 0 beams (Super Element Filter)");
+        return refused + failed == 0 ? 0 : 1;
     }
 
     internal static int Check(string[] args)
@@ -380,14 +386,19 @@ internal static class U2ExampleRemake
         var r = args.SkipWhile(a => a != "--u2-check-examples").Skip(1).ToArray();
         string oldRoot = Path.GetFullPath(r[0]), newRoot = Path.GetFullPath(r[1]), report = r.Length > 2 && !r[2].StartsWith("--") ? Path.GetFullPath(r[2]) : null;
         string examples = Path.GetFullPath(ExamplePaths.Root);
-        var sb = new StringBuilder(); int differentFiles = 0;
+        var sb = new StringBuilder(); int differentFiles = 0, missing = 0, differentData = 0;
         foreach (var relative in Files)
         {
             var results = new List<SortedDictionary<string, string[]>>(); var data = new List<SortedDictionary<string, string>>();
             foreach (var rootPath in new[] { oldRoot, newRoot })
             {
                 string path = Path.Combine(rootPath, relative);
-                if (!File.Exists(path)) path = Path.Combine(examples, relative); // 47-anteprima-grafici is not rewritten
+                // 47-anteprima-grafici is not rewritten. P2CH (83-03): another missing file fails (before, the file of the worktree was read instead).
+                if (!File.Exists(path))
+                {
+                    if (!relative.EndsWith("47-anteprima-grafici.ghx", StringComparison.Ordinal)) { missing++; Console.WriteLine("  MISSING " + path); sb.AppendLine("  MISSING " + path); }
+                    path = Path.Combine(examples, relative);
+                }
                 using var doc = GrasshopperBridgeExample.Read(path);
                 doc.FilePath = Path.Combine(examples, relative); // relative inputs (Excel, templates) resolve in the worktree examples, read only
                 data.Add(DataTexts(doc));
@@ -418,12 +429,17 @@ internal static class U2ExampleRemake
             {
                 data[0].TryGetValue(k, out var x); data[1].TryGetValue(k, out var y);
                 string state = x == null ? "absent before (refused on reading)" : y == null ? "absent after" : x == y ? "the same text" : GpcDraftCapture.WithoutGuids(x) == GpcDraftCapture.WithoutGuids(y) ? "the same text but for GUIDs" : "DIFFERENT text";
+                if (x == null || y == null || GpcDraftCapture.WithoutGuids(x) != GpcDraftCapture.WithoutGuids(y)) differentData++;
                 string d = $"  DATUM {k}: {state}" + (x != null && y != null && x != y && GpcDraftCapture.WithoutGuids(x) != GpcDraftCapture.WithoutGuids(y) ? "; first difference: " + GpcDraftArchiveChecks.FirstDifference(GpcDraftCapture.WithoutGuids(x), GpcDraftCapture.WithoutGuids(y)).Replace("\n", " ⏎ ") : "");
                 Console.WriteLine(d.Length > 600 ? d.Substring(0, 600) : d); sb.AppendLine(d);
             }
         }
         if (report != null) File.WriteAllText(report, sb.ToString());
-        Console.WriteLine($"U2 CHECK DONE: {Files.Length} definitions, {differentFiles} with differences (listed above)");
-        return 0;
+        // P2CH (14/11/2026, review of ChatGPT task 83, 83-03): the exit code says what is printed (before, always 0): a difference in the outputs or
+        // messages, an internalised datum absent on one side or different but for GUIDs, a missing file. The differences of the 7 remade examples are
+        // expected (the list approved by the user): read them in the log; the code no longer lets a run with differences pass unread.
+        bool clean = differentFiles == 0 && differentData == 0 && missing == 0;
+        Console.WriteLine($"U2 CHECK {(clean ? "PASS" : "FAIL")}: {Files.Length} definitions, {differentFiles} with differences in the outputs (listed above), {differentData} internalised data absent or different but for GUIDs, {missing} files missing");
+        return clean ? 0 : 1;
     }
 }
