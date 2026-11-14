@@ -96,10 +96,12 @@ try {
         $archive = Join-Path $archiveRoot "$packageName.zip"
         New-Item -ItemType Directory -Path $packageRoot -Force | Out-Null
         try {
-            # The eleven GPC DLLs of lib/GPC (tools/verify_gpc_set.ps1), described by gpc-release-set.json.
+            # The eleven GPC DLLs of lib/GPC (tools/verify_gpc_set.ps1), described by gpc-release-set.json, and System.Text.Json 10.0.13
+            # with its two .NET 8 dependencies (build/GpcReferences.props), as ReBear ships them.
             $assemblies = @('BridGHe.Grasshopper.gha','BridGHe.Common.dll','GPCUtilities.dll','GPCGeometry.dll','DelaunayMesh.dll',
                 'GPCModel.dll','GPCModelData.dll','GPC.Converter.dll','GPC.Model.Persistence.dll','GPC.Archive.dll',
-                'GPCChecker.Concrete.dll','GPCChecker.Steel.dll','GPCChecker.CompositeBridge.dll','MathNet.Numerics.dll','Svg.dll','ExCSS.dll')
+                'GPCChecker.Concrete.dll','GPCChecker.Steel.dll','GPCChecker.CompositeBridge.dll','MathNet.Numerics.dll','Svg.dll','ExCSS.dll',
+                'System.Text.Json.dll','System.Text.Encodings.Web.dll','System.IO.Pipelines.dll')
             foreach ($name in $assemblies) { Copy-Item -LiteralPath (Join-Path $compiled $name) -Destination $packageRoot }
             Copy-Item -LiteralPath (Join-Path $compiled 'gpc-release-set.json') -Destination $packageRoot
             Get-ChildItem -LiteralPath $compiled -Filter 'BridGHe.Grasshopper.*.json' | Copy-Item -Destination $packageRoot

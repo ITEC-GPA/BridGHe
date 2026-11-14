@@ -28,6 +28,10 @@
     <Reference Include="GPCChecker.Steel" Condition="'$(GpcPilot)' == 'true'"><HintPath>$(GpcCheckerDir)GPCChecker.Steel.dll</HintPath><Private>true</Private></Reference>
     <Reference Include="GPCChecker.CompositeBridge" Condition="'$(GpcPilot)' == 'true'"><HintPath>$(GpcCheckerDir)GPCChecker.CompositeBridge.dll</HintPath><Private>true</Private></Reference>
     <None Include="$(BridGHeRoot)lib\GPC\release-set.json" Link="gpc-release-set.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- System.Text.Json 10.0.13 and its .NET 8 dependencies (System.Text.Encodings.Web, System.IO.Pipelines) ship with the plug-in, as in
+         ReBear and BridGHe 0.3.0 (user decision of 14/11/2026). Rhino 8 loads the framework's System.Text.Json 8 at start-up, before any
+         plug-in, and answers the plug-ins' requests for 10 with it: in Rhino the plug-in runs on 8; the test hosts, which carry 10, run on 10. -->
+    <PackageReference Include="System.Text.Json" Version="10.0.13" />
   </ItemGroup>
   <Target Name="CheckGpcLibraries" BeforeTargets="ResolveAssemblyReferences">
     <PropertyGroup>
