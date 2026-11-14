@@ -14,6 +14,10 @@ namespace BridGHe.Grasshopper.Components.Models
 {
     public class BuildModelComponent : GH_Component
     {
+        /// <summary>P2CH (14/11/2026, 83-01): the case catalogue of the last solution that gave one to the Load Combinations parameters and the
+        /// stages (null before), read by the parameters to compare the catalogues of the components they feed.</summary>
+        internal IReadOnlyList<Common.Gpc.Legacy.LegacyCaseData> CaseCatalog { get; private set; }
+
         /// <summary>
         /// Initializes a new instance of the BuildModelComponent class.
         /// </summary>
@@ -95,9 +99,15 @@ namespace BridGHe.Grasshopper.Components.Models
                 }
 
                 // Connect the LoadCombinationsComponent (R6.5 P1 lane 3c: the menus follow the case records; no FEM cases, null).
+                // P2CH (14/11/2026, 83-01): the catalogue of this Build Model, read by the Load Combinations parameters to compare the catalogues
+                // of the components they feed (set with the update of the parameters and of the stages, never apart from it).
+                CaseCatalog = cases;
                 IEnumerable<IGH_Param> combinations_params = Params.Input[3].Sources.Where(s => s.GetType() == typeof(LoadCombinationsParam));
                 foreach (LoadCombinationsParam param in combinations_params)
+                {
                     param.UpdateLoadCases(cases);
+                    if (param.CatalogueConflict is string conflict) AddRuntimeMessage(GH_RuntimeMessageLevel.Error, conflict);
+                }
 
 
                 // Set the load cases in the StagedConstructionComponent

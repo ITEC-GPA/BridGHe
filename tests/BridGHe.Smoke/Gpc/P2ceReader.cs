@@ -37,8 +37,12 @@ internal static class P2ceReader
         int stage = StageChecks(failures);
         int results = P2cgChecks.ResultsTexts(failures); // P2CG (13/11/2026, 2B-01)
         Console.WriteLine($"P2CG RESULTS TEXT: {results} checks of the Node, Beam and Plate Results data (empty, analysed, copied) on their GPC element");
+        int branches = P2chChecks.Branches(failures); // P2CH (14/11/2026, 83-02)
+        Console.WriteLine($"P2CH BRANCHES: {branches} checks of a Load Combinations parameter with several branches (a removal, an addition, Undo, the form)");
+        int catalogues = P2chChecks.Catalogues(failures); // P2CH (14/11/2026, 83-01)
+        Console.WriteLine($"P2CH CATALOGUES: {catalogues} checks of one Load Combinations parameter wired to two stages (different catalogues: the conflict, nothing changed, no endless solving; the same catalogue: as before)");
         if (failures.Count > 0) throw new Exception("P2CE READER FAIL: " + string.Join(" | ", failures.Take(20)));
-        Console.WriteLine($"P2CE READER PASS: inventory above; {casts} section casts; {stage} checks of P2P-01 (Staged Construction and Load Combinations); {results} checks of the Results texts.");
+        Console.WriteLine($"P2CE READER PASS: inventory above; {casts} section casts; {stage} checks of P2P-01 (Staged Construction and Load Combinations); {results} checks of the Results texts; {branches} checks of several branches and {catalogues} of shared catalogues (P2CH).");
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------------
@@ -179,7 +183,7 @@ internal static class P2ceReader
     // -----------------------------------------------------------------------------------------------------------------------------------
     // (3) P2P-01
 
-    private static IGH_Goo One(string type, params (int Input, object Value)[] inputs)
+    internal static IGH_Goo One(string type, params (int Input, object Value)[] inputs)
     {
         var doc = new GH_Document();
         var c = BridgeSegmentExcelTests.Add(doc, type);
@@ -188,7 +192,7 @@ internal static class P2ceReader
         return c.Params.Output[0].VolatileData.AllData(true).FirstOrDefault()?.Duplicate() ?? throw new Exception("P2CE: " + type + " gives no output");
     }
 
-    private static void Set(IGH_Param p, object value)
+    internal static void Set(IGH_Param p, object value)
     {
         p.RemoveAllSources();
         var data = p.GetType().GetProperty("PersistentData").GetValue(p);
@@ -199,11 +203,11 @@ internal static class P2ceReader
         p.ExpireSolution(false);
     }
 
-    private static string Factors(LegacyCombinationDraft c) => c == null ? "null" : c.Name + ": " + string.Join(", ", c.Factors.Select(f => f.Case.Name + " " + f.Factor.ToString("R")));
+    internal static string Factors(LegacyCombinationDraft c) => c == null ? "null" : c.Name + ": " + string.Join(", ", c.Factors.Select(f => f.Case.Name + " " + f.Factor.ToString("R")));
 
     /// <summary>A document with a standalone Load Combinations parameter (its persistent combinations) wired to the LCB port of a stage; the stage
     /// read from <paramref name="saved"/> (a chunk written by a stage) or given the catalogue <paramref name="catalogue"/> (Build Model).</summary>
-    private sealed class Rig
+    internal sealed class Rig
     {
         public GH_Document Doc = new GH_Document();
         public IGH_Param Param;
@@ -363,7 +367,7 @@ internal static class P2ceReader
         return checks;
     }
 
-    private static bool HasCatalog(IGH_Param param) => (bool)param.GetType().GetProperty("HasCaseCatalog").GetValue(param);
+    internal static bool HasCatalog(IGH_Param param) => (bool)param.GetType().GetProperty("HasCaseCatalog").GetValue(param);
 
     /// <summary>P2CG (13/11/2026, review of ChatGPT task 51: CE-01, CE-03, CE-04; Codex task 82 read as a proposal).
     /// <para>CE-01: the form of a standalone Load Combinations parameter with an unknown catalogue is refused and changes nothing (its row writer,

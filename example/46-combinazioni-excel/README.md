@@ -37,8 +37,8 @@ I percorsi relativi sono risolti nella cartella del GH salvato. Aprire il GH non
 ```powershell
 dotnet run --project tests/BridGHe.Smoke -c Release -- --regression bridge-combination-excel
 dotnet run --project tests/BridGHe.Smoke -c Release -- --regression bridge-combination-excel-component
-# Rigenera questo esempio e i due workbook, sostituendo eventuali modifiche manuali:
-dotnet run --project tests/BridGHe.Smoke -c Release -- --combination-excel-example
 ```
+
+Dal 14 novembre 2026 i sette modelli di questo file sono fatti da **Build Model** con lo strumento del rifacimento 0.4.0, non dai generatori degli esempi. Il comando `--combination-excel-example` rigenera l'esempio e i due workbook con il suo generatore: farebbe modelli diversi da quelli salvati qui, quindi non va usato per rifare questo file. Per rifare i modelli con Build Model, dalla root: `dotnet run --project tests/BridGHe.Smoke -c Release -- --u2-remake-examples only=46 from=<cartella>`, dove `<cartella>` contiene gli esempi del commit `9350aeb` (la copia salvata nella 0.3.0). Senza `write` il file nuovo va nella cartella temporanea `bridghe-u2-remake`; con `write` sostituisce quello del repository. I due workbook non vengono riscritti. Poi `--u2-check-drafts example` controlla che ogni modello abbia 4 nodi, 2 travi e le bozze degli elementi.
 
 Il report [validation.json](validation.json) registra creazione, lettura, Build, riapertura GHX, percorsi relativi, Run esplicito e rimozione delle uscite obsolete. Nessuna nuova analisi Straus viene eseguita.

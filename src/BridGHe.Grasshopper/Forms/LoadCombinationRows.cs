@@ -20,6 +20,13 @@ namespace BridGHe.Grasshopper.Forms
         /// the form would make the combinations without the factors of their cases. A known empty catalogue is accepted, as before.</summary>
         internal static string Refusal(IReadOnlyList<LegacyCaseData> caseRecords) => caseRecords == null ? UnknownCatalog : null;
 
+        /// <summary>P2CH (14/11/2026, review of ChatGPT task 83, 83-02): the message of the form when the combinations are in several branches.</summary>
+        internal const string SeveralBranches = "These combinations are in more than one branch, and the form edits one list only: flatten them into one list to edit them here.";
+
+        /// <summary>P2CH (83-02): why the form cannot edit data of <paramref name="branches"/> branches, or null. The form shows and writes one list:
+        /// before, its OK replaced a tree of several branches by the edited first branch, and the others were lost.</summary>
+        internal static string TreeRefusal(int branches) => branches > 1 ? SeveralBranches : null;
+
         /// <summary>A row: the name of the combination and its factor by case name.</summary>
         internal sealed record Row(string Name, IReadOnlyDictionary<string, double> Factors);
 

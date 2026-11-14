@@ -20,6 +20,8 @@ Due beam, stessi ID e geometria; zero risultati nella copia. Il warning di disco
 
 ## Riproduzione
 
-Dalla root: `dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --utility-examples`. Il comando rigenera i sei esempi 23–28: conservare prima eventuali modifiche manuali. Il test calcola il grafo e ripete i controlli dopo salvataggio e riapertura. Nessuna licenza Straus richiesta.
+Dal 14 novembre 2026 il modello di questo file è fatto da **Build Model** con lo strumento del rifacimento 0.4.0, non dai generatori degli esempi. Il comando `--utility-examples` rigenera i sei esempi 23–28 con i suoi generatori: per il 23 farebbe un modello diverso da quello salvato qui, quindi non va usato per rifare questo file.
+
+Per rifare il modello con Build Model, dalla root: `dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --u2-remake-examples only=23 from=<cartella>`, dove `<cartella>` contiene gli esempi del commit `9350aeb` (la copia salvata nella 0.3.0). Senza `write` il file nuovo va nella cartella temporanea `bridghe-u2-remake`; con `write` sostituisce quello del repository. Poi `--u2-check-drafts example` controlla che ogni modello abbia 4 nodi, 2 travi e le bozze degli elementi. Nessuna licenza Straus richiesta.
 
 [Rapporto della prova](validation.json) · [Indice degli esempi](../README.md).
