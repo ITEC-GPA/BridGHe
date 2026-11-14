@@ -1,4 +1,4 @@
-# Inventario dei componenti 0.2.0
+# Inventario dei componenti 0.4.0
 
 220 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
 
