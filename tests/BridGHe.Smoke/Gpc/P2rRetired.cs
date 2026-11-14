@@ -64,6 +64,8 @@ internal static class P2rRetired
         @"23-audit-modello-fase\23-audit-modello-fase.ghx", @"46-combinazioni-excel\46-combinazioni-excel.ghx",
         @"24-inviluppi-concomitanti\24-inviluppi-concomitanti.ghx", @"42-frecce-controfreccia\42-frecce-controfreccia.ghx", @"43-storie-fatica\43-storie-fatica.ghx",
         @"47-pioli-irrigidimenti-verifiche\47-integrazione-modello.ghx", @"48-report-word\48-report-word.ghx",
+        // U2 (14/11/2026, after the user's OK): the second definition of 47, whose three 0.3.0 materials are saved as GPC data now.
+        @"47-pioli-irrigidimenti-verifiche\47-pioli-irrigidimenti-verifiche.ghx",
     };
 
     /// <summary>The reason an entry of the R6.0 capture is retired, or null when it is compared. P2CF (13/11/2026, finding RT-02 of ChatGPT task
@@ -83,7 +85,7 @@ internal static class P2rRetired
     /// <summary>P2CF (13/11/2026, RT-02): the entries of the R6.0 capture retired by name, one by one with their full key (the key holds the path of
     /// the definition relative to <c>example</c>), listed once in <c>Fixtures/capture-rules/P2CF-retired-capture-20261113.tsv</c> (source, key,
     /// status, reason), expanded from the former rules on the capture <c>p2n-capture-inr-20261112</c>: status <c>captured</c>, a key of the capture
-    /// (corpus: the 147 entries of the memory sources memory-01 … memory-10; payloads 25 and scan 9: the 7 examples remade after P2), which must be
+    /// (corpus: the 147 entries of the memory sources memory-01 … memory-10; payloads 28 and scan 9: the 7 examples remade after P2, with the three materials of 47-pioli-irrigidimenti-verifiche since U2 of 14/11), which must be
     /// in the capture (<see cref="ValidateCapture"/>, before any exemption); status <c>new</c>, a payload a remade example holds now and the capture
     /// does not, which must not be in the capture and must be recorded by the run. Any other key of the run is compared: a new one fails.</summary>
     internal static readonly string CaptureFile = Path.GetFullPath(Path.Combine("tests", "BridGHe.Smoke", "Fixtures", "capture-rules", "P2CF-retired-capture-20261113.tsv"));
@@ -107,8 +109,8 @@ internal static class P2rRetired
             d.Add((f[0], f[1]), (f[2] == "new", f[3] == "memory" ? MemoryReason : f[2] == "new" ? RemadeNewReason : RemadeReason));
         }
         int Count(string source, bool isNew) => d.Count(p => p.Key.Item1 == source && p.Value.Item1 == isNew);
-        if (Count("corpus", false) != 147 || Count("payloads", false) != 25 || Count("scan", false) != 9 || d.Count != 147 + 25 + 9 + Count("payloads", true))
-            throw new InvalidDataException("P2CF RETIRED: the list must hold 147 corpus, 25 payloads and 9 scan keys of the capture, and new payload keys only");
+        if (Count("corpus", false) != 147 || Count("payloads", false) != 28 || Count("scan", false) != 9 || d.Count != 147 + 28 + 9 + Count("payloads", true))
+            throw new InvalidDataException("P2CF RETIRED: the list must hold 147 corpus, 28 payloads and 9 scan keys of the capture, and new payload keys only");
         return d;
     }
 
