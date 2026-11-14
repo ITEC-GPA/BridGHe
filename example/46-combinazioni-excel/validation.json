@@ -15,7 +15,7 @@
     "date": "2026-11-14",
     "base": "9350aeb",
     "tool": "--u2-remake-examples write",
-    "how": "7 models rebuilt with the GPC builders (RecipeGpc: two beams with end nodes, no rigid link)",
+    "how": "7 models made by Build Model (LegacyBuildModel, GPC-only) on the 0.3.0 inputs: beams B0 B1 on Longitudinale fase 0, end nodes added, no rigid link; drafts of their elements; analysed copies with the samples of G",
     "check": "--u2-check-examples (headless, no Straus): 28 outputs and messages: the old file gave the read errors; now two combinations DEMO_01 and DEMO_02",
     "solverInvoked": false
   }

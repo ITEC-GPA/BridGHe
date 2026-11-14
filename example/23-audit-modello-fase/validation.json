@@ -12,8 +12,8 @@
     "date": "2026-11-14",
     "base": "9350aeb",
     "tool": "--u2-remake-examples write",
-    "how": "model rebuilt with the GPC builders (SourceGpc, end nodes A 2 3 4); the Phase Model property kept as read by value",
-    "check": "--u2-check-examples (headless, no Straus): 16 outputs and messages: the old file gave none (model refused)",
+    "how": "model made by Build Model (LegacyBuildModel, GPC-only) on the 0.3.0 inputs: node A pinned, beams B0 B1 on Longitudinale fase 0, end nodes 1 2 3 added; drafts of its elements; analysed copy with the samples of G and Q; the Phase Model property kept as read by value",
+    "check": "--u2-check-examples (headless, no Straus): 16 outputs and messages: the old file gave none (model refused); Audit: DISCONNECTED",
     "solverInvoked": false
   }
 }

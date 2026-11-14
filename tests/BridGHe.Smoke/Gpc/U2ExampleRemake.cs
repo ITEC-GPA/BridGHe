@@ -107,8 +107,10 @@ internal static class U2ExampleRemake
         var done = new List<string>();
         var audits = Of(doc, "BridgeModelAuditComponent").Where(c => c.Params.Input[0].SourceCount == 0).ToArray();
         if (audits.Length != 1) throw new InvalidOperationException("U2 23: expected one audit with an internalised model, found " + audits.Length);
-        var model = R2bFixtures.Model(R2bFixtures.Input(BridgeUtilityTests.SourceGpc(analyse: false)), BridgeUtilityTests.SourceGpc());
-        SetPersistent(audits[0].Params.Input[0], model); done.Add($"{audits[0].InstanceGuid} {audits[0].NickName} / {audits[0].Params.Input[0].Name}: GH_Model of SourceGpc (2 beams, nodes A 2 3 4, cases G Q) with its analysed model");
+        // U2 (b), coordinator 14/11: the model of Build Model (with the drafts of its elements) on the 0.3.0 inputs, and its analysed copy.
+        var (input, analysed) = U2BuiltModels.Audit23();
+        var model = R2bFixtures.Model(input, analysed);
+        SetPersistent(audits[0].Params.Input[0], model); done.Add($"{audits[0].InstanceGuid} {audits[0].NickName} / {audits[0].Params.Input[0].Name}: GH_Model of Build Model (node A pinned, beams B0 B1, the end nodes added; drafts {input.Drafts != null}) with its analysed copy (cases G Q)");
         // The Phase Model property of 0.3.0 is read by value (a GH_BeamProperty on its GPC datum): kept as saved, written in BGHGPC1. Only a
         // property that cannot be read would take the GPC twin of the generator (LongPropertyGpc of phase 1).
         var phase = Of(doc, "BridgePhaseModelComponent").Single();
@@ -127,8 +129,10 @@ internal static class U2ExampleRemake
     private static List<string> Remake46(GH_Document doc)
     {
         var done = new List<string>();
-        var (references, phases) = BridgeCombinationExcelTests.RecipeGpc();
-        var catalog = BridgeCombinationCatalog.FromGpc(references.Select(r => R2bFixtures.Input(r.Input)).ToArray(), phases);
+        // U2 (b), coordinator 14/11: the four sources made by Build Model (with the drafts of their elements), no rigid link; the Action IDs of
+        // the catalogue of the generator (G1, G2, Q, RITIRO, in the order of the sources).
+        var references = U2BuiltModels.Recipe46();
+        var catalog = BridgeCombinationCatalog.FromGpc(references.Select(r => r.Input).ToArray(), BridgeCombinationExcelTests.RecipeGpc().Phases);
         var actions = Of(doc, "BridgeActionComponent").Concat(Of(doc, "BridgeShrinkageActionComponent")).ToArray();
         if (actions.Length != 4) throw new InvalidOperationException("U2 46: expected 4 actions, found " + actions.Length);
         foreach (var a in actions)
@@ -136,12 +140,12 @@ internal static class U2ExampleRemake
             string id = Texts(a.Params.Input[0]).Single();
             int i = Array.IndexOf(catalog.ActionIds.ToArray(), id);
             if (i < 0) throw new InvalidOperationException("U2 46: an action of unknown ID " + id);
-            SetPersistent(a.Params.Input[1], R2bFixtures.Model(references[i])); done.Add($"{a.InstanceGuid} {a.NickName} ({id}) / {a.Params.Input[1].Name}: GH_Model of RecipeGpc source {i}");
+            SetPersistent(a.Params.Input[1], R2bFixtures.Model(references[i].Input, references[i].Analysed)); done.Add($"{a.InstanceGuid} {a.NickName} ({id}) / {a.Params.Input[1].Name}: GH_Model of Build Model, source {i} (drafts {references[i].Input.Drafts != null})");
         }
         foreach (var c in Of(doc, "BridgeCombinationExcelComponent").Concat(Of(doc, "BuildBridgeModel")))
         {
             if (c.Params.Input[0].SourceCount != 0) throw new InvalidOperationException("U2 46: a wired model input on " + c.NickName);
-            SetPersistent(c.Params.Input[0], R2bFixtures.Model(references[0])); done.Add($"{c.InstanceGuid} {c.NickName} / {c.Params.Input[0].Name}: GH_Model of RecipeGpc source 0");
+            SetPersistent(c.Params.Input[0], R2bFixtures.Model(references[0].Input, references[0].Analysed)); done.Add($"{c.InstanceGuid} {c.NickName} / {c.Params.Input[0].Name}: GH_Model of Build Model, source 0");
         }
         if (done.Count != 7) throw new InvalidOperationException("U2 46: 7 internalised models expected, " + done.Count + " set");
         return done;
@@ -183,14 +187,17 @@ internal static class U2ExampleRemake
     {
         BridgeExampleMigration.Initialize(); // the Grasshopper component libraries of the examples (no «missing objects» dialog)
         bool write = args.Contains("write"), dump = args.Contains("dump");
+        // U2 (b): only=23,46 remakes these definitions alone; from=<folder> reads them from another root (the files of the base 9350aeb).
+        var only = args.FirstOrDefault(a => a.StartsWith("only=", StringComparison.Ordinal))?.Substring(5).Split(',');
+        string from = args.FirstOrDefault(a => a.StartsWith("from=", StringComparison.Ordinal))?.Substring(5);
         string root = Path.GetFullPath(ExamplePaths.Root);
         if (write && root.StartsWith(@"C:\Users\g.pacini\Documents\Repository\BridGHe\", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Never writes into the main checkout.");
         string output = write ? root : Path.Combine(Path.GetTempPath(), "bridghe-u2-remake");
         string dumps = Path.Combine(Path.GetTempPath(), "bridghe-u2-dump"); if (dump) Directory.CreateDirectory(dumps);
         int failures = 0;
-        foreach (var relative in Files)
+        foreach (var relative in Files.Where(f => only == null || only.Contains(f.Substring(0, 2))))
         {
-            string path = Path.Combine(root, relative), target = Path.Combine(output, relative);
+            string path = Path.Combine(from == null ? root : Path.GetFullPath(from), relative), target = Path.Combine(output, relative);
             string id = relative.Substring(0, 2), name = Path.GetFileNameWithoutExtension(relative);
             long before = new FileInfo(path).Length; byte[] original = File.ReadAllBytes(path);
             if (dump) DumpLegacy(path, dumps);
@@ -332,6 +339,39 @@ internal static class U2ExampleRemake
             }
         }
         return d;
+    }
+
+    /// <summary>U2 (b): <c>--u2-check-drafts &lt;root&gt;</c>: every internalised GH model of 23 and 46 under the root given alone to Decompose Model
+    /// and to Super Element Filter (default inputs) in a document of its own: their errors and output counts. A model with the drafts of its
+    /// elements gives them back; one without is refused («the model carries no drafts of its elements»).</summary>
+    internal static int Drafts(string[] args)
+    {
+        BridgeExampleMigration.Initialize();
+        var plugin = BridgeMergeTests.Initialize();
+        string root = Path.GetFullPath(args.SkipWhile(a => a != "--u2-check-drafts").Skip(1).First());
+        int refused = 0;
+        foreach (var relative in Files.Where(f => f.StartsWith("23-", StringComparison.Ordinal) || f.StartsWith("46-", StringComparison.Ordinal)))
+        {
+            using var doc = GrasshopperBridgeExample.Read(Path.Combine(root, relative));
+            foreach (var p in Params(doc))
+                foreach (var goo in Persistent(p)?.AllData(true).OfType<IGH_Goo>().Where(g => g.GetType().Name == "GH_Model") ?? Enumerable.Empty<IGH_Goo>())
+                    foreach (var type in new[] { "DecomposeModelComponent", "SuperElementFilterComponent" })
+                    {
+                        using var d = new GH_Document();
+                        var c = (GH_Component)Activator.CreateInstance(plugin.GetTypes().Single(t => t.Name == type)); c.CreateAttributes(); d.AddObject(c, false);
+                        SetPersistent(c.Params.Input[0], goo.Duplicate());
+                        // Super Element Filter: a super element name (the beams of these models have none: the filter gives none, without error).
+                        if (type == "SuperElementFilterComponent") SetPersistent(c.Params.Input.First(x => x.Name.StartsWith("Super", StringComparison.OrdinalIgnoreCase) || x.NickName == "SE"), new GH_String("SE1"));
+                        GH_Document.EnableSolutions = true; d.Enabled = true; d.NewSolution(false, GH_SolutionMode.Silent);
+                        var errors = c.RuntimeMessages(GH_RuntimeMessageLevel.Error).ToArray();
+                        if (errors.Any(e => e.Contains("carries no drafts"))) refused++; // the drafts missing; another error (an unknown super element) is the answer of the component
+                        string outputs = string.Join(", ", c.Params.Output.Select(o => o.Name + " " + o.VolatileData.DataCount));
+                        Console.WriteLine($"U2 DRAFTS {relative} {(p.Attributes?.GetTopLevel?.DocObject ?? p).NickName} / {p.Name}: {type} {(errors.Length == 0 ? "OK" : "ERROR " + string.Join("; ", errors))}; {outputs}"
+                            + string.Concat(c.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Select(w => "; warning: " + w)));
+                    }
+        }
+        Console.WriteLine($"U2 DRAFTS DONE: {refused} refused");
+        return refused == 0 ? 0 : 1;
     }
 
     internal static int Check(string[] args)
