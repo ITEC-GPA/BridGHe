@@ -1959,5 +1959,13 @@
         "Connessione: soletta piena, pioli verticali standard. I controlli di armatura assumono barre effettivamente ancorate e superfici a\u2013a/b\u2013b. Sollevamento imposto, torsione e splitting attraverso lo spessore richiedono un modello dedicato."
       ]
     }
-  ]
+  ],
+  "remade040": {
+    "date": "2026-11-14",
+    "base": "9350aeb",
+    "tool": "--u2-remake-examples write",
+    "how": "47-integrazione-modello and 47-pioli-irrigidimenti-verifiche read by value and saved as GPC data (no FemmR6, no 0.3.0 material); 47-anteprima-grafici not rewritten",
+    "check": "--u2-check-examples (headless, no Straus): 90 and 132 outputs and messages equal (but the environmental build-check warning)",
+    "solverInvoked": false
+  }
 }
