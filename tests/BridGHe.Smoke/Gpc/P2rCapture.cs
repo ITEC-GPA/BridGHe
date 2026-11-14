@@ -62,8 +62,9 @@ internal sealed class P2rCapture
     /// process loaded before); the line count, the outputs and the raw outputs are compared. P2CG (13/11/2026, RF-01): «*» is followed by the
     /// digest of the other messages, compared with the capture; the capture itself holds the warning of its bin in the digest of 13 keys (7
     /// instances of Creep And Shrinkage Concrete in gpc-only-properties, 6 in gpc-only-models): 9 with the warning alone
-    /// (<see cref="WarningAloneAtCapture"/>: no other message now), 4 with other messages, declared by name (<see cref="WarningWithOthersAtCapture"/>).
-    /// F8B (14/11/2026): the same two declarations hold for a run without the warning (the plain build from lib/GPC).</item>
+    /// (<see cref="WarningAloneAtCapture"/>: no other message now), 4 with other messages. F8B (14/11/2026): the rule holds for a run without the
+    /// warning (the plain build from lib/GPC). P2CI (14/11/2026, user decision 2a): the 4 keys with other messages are no longer declared by name:
+    /// their lines are captured again without the warning (patch for the user's OK), so their messages are compared as every other key's.</item>
     /// <item><b>raw of the in-memory Bridge Phase Model and Bridge Construction Sequence cases</b> (gpc-only-models; P2CG, RF-03: the closed list of
     /// 18 keys <see cref="PhaseIdentityKeys"/>, before every captured key of the two prefixes): their input
     /// elements are built for the case in each process (GH types given by their drafts without a saved GH GUID), so the identities of the
@@ -83,17 +84,16 @@ internal sealed class P2rCapture
             if (others == c[1]) return "messages with the plug-in build-check warning (environmental): the other messages compared, equal";
             if (c[1] == WarningAloneAtCapture && others == Sha(string.Join("\n", Array.Empty<string>())))
                 return "messages: the capture holds the build-check warning alone (" + WarningAloneAtCapture + "), the run no other message";
-            if (WarningWithOthersAtCapture.TryGetValue((file, key), out var why)) return "messages not comparable with the capture, declared by name: " + why;
             return null;
         }
         // F8B (14/11/2026): the plain build (a bin built from lib/GPC, the set its manifest describes) shows no build-check warning, while the
-        // capture holds the warning of its bin in the 13 keys above: the same two declarations from a run without «*», whose messages are then
-        // all compared (no environmental message to leave out). With the warning alone at capture, the run must have no message at all.
+        // capture holds the warning of its bin in the 9 keys of the warning alone: the same declaration from a run without «*», whose messages
+        // are then all compared (no environmental message to leave out). With the warning alone at capture, the run must have no message at all.
+        // P2CI (14/11/2026): the declaration by name of the 4 keys with other messages is removed (their lines captured again without it).
         if (!n[1].StartsWith("*", StringComparison.Ordinal) && c[0] == n[0] && c[2] == n[2] && c[3] == n[3])
         {
             if (c[1] == WarningAloneAtCapture && n[1] == Sha(string.Join("\n", Array.Empty<string>())))
                 return "messages: the capture holds the build-check warning alone (" + WarningAloneAtCapture + "), the run no other message";
-            if (WarningWithOthersAtCapture.TryGetValue((file, key), out var why)) return "messages not comparable with the capture, declared by name: " + why;
         }
         // P2CG (13/11/2026, review of ChatGPT task 64, RF-03): the closed list of 18 keys (before: every captured key of the two prefixes).
         if (file == "gpc-only-models" && PhaseIdentityKeys.Contains(key) && c[0] == n[0] && c[1] == n[1] && c[2] == n[2])
@@ -117,16 +117,10 @@ internal sealed class P2rCapture
     /// warning of the capture's bin alone. With it, the other messages of the run must be none.</summary>
     internal const string WarningAloneAtCapture = "F9A9899E4115C2C7";
 
-    /// <summary>P2CG (RF-01): the 4 keys whose captured messages hold the build-check warning of the capture's bin (its folder and libraries) with
-    /// other messages, in one digest: their other messages cannot be compared with the capture (that needs a new capture of these keys, with the
-    /// user's OK); the line count, the outputs and the raw outputs are. Checked against the capture at the close.</summary>
-    internal static readonly Dictionary<(string File, string Key), string> WarningWithOthersAtCapture = new()
-    {
-        [("gpc-only-models", @"47-pioli-irrigidimenti-verifiche\47-integrazione-modello.ghx: Super Element Check [2 Run — verifica superelemento]")] = "Super Element Check of 47 (captured 7B4125D0D9054D2E)",
-        [("gpc-only-models", @"48-report-word\48-report-word.ghx: Super Element Check [2 Run — verifica superelemento]")] = "Super Element Check of 48 (captured 7B4125D0D9054D2E)",
-        [("gpc-only-models", "in memory: Composite Section Self Tension (composite property, n 15, slab strain)")] = "Composite Section Self Tension in memory (captured 9AB54AE7AAF3CA9C)",
-        [("gpc-only-models", "in memory: Composite Section Linear Tension Analysis (a composite beam and three phases)")] = "Composite Section Linear Tension Analysis in memory (captured 6DB5EFBA1B0BF95B)",
-    };
+    // P2CI (14/11/2026, user decision 2a): the 4 keys of P2CG (RF-01) whose captured messages held the build-check warning of the capture's bin
+    // with other messages (Super Element Check of 47 and 48, Composite Section Self Tension and Linear Tension Analysis in memory) were declared by
+    // name here (WarningWithOthersAtCapture). The declaration is removed: their lines are captured again without the warning, a patch of the
+    // frozen capture for the user's OK (INT\rapporti\P2CI-catture-20261114.diff).
 
     /// <summary>P2CG (13/11/2026, review of ChatGPT task 64, RF-03): the in-memory Bridge Phase Model and Bridge Construction Sequence cases of
     /// gpc-only-models whose raw outputs are not compared (their input elements are new in each process), a closed list: the 18 keys of task 64
@@ -249,8 +243,6 @@ internal sealed class P2rCapture
             if (file == "gpc-only-models")
                 foreach (var k in PhaseIdentityKeys)
                     if (!captured.ContainsKey(k) || P2rRetired.ReplayKeys.ContainsKey((file, k))) differences.Add("raw identities declared, not a key of the capture (or retired): " + k);
-            foreach (var k in WarningWithOthersAtCapture.Keys.Where(k => k.File == file))
-                if (!captured.ContainsKey(k.Key) || P2rRetired.ReplayKeys.ContainsKey(k)) differences.Add("messages declared not comparable, not a key of the capture (or retired): " + k.Key);
             Console.WriteLine($"P2R CAPTURE COMPARE {file}: {seen.Count} of {captured.Count} keys seen, {equal} equal, " + string.Concat(declared.Select(d => $"{d.Value} declared ({d.Key}), ")) + $"{differences.Count} different or new, {missing.Count} missing"
                 + (differences.Count + missing.Count == 0 ? "" : " FAIL") + " (" + path + ")");
             return differences.Concat(missing.Select(k => "captured, not seen: " + k)).Select(d => "P2R CAPTURE " + file + ": " + d).ToList();
