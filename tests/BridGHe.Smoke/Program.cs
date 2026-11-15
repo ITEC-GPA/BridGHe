@@ -81,6 +81,8 @@ internal static class Program
         GpcDomainCache.Configure();
         if(args.Contains("--sections-190-before")) return UniqueSectionChecks.Run(true);
         if(args.Contains("--sections-190")) return UniqueSectionChecks.Run(false);
+        if(args.Contains("--sections-190-open")) return OpenSectionChecks190.Run();
+        if(args.Contains("--sections-190-native")) return OpenSectionChecks190.Native();
         if(args.Contains("--f7-readers")) return F7Checks.Readers(args);
         if(args.Contains("--f7-local")) return F7Checks.Local();
         if(args.Contains("--f7-native")) return F7Checks.Native(args); // Coordinator only, under the Straus7 lock.

@@ -221,17 +221,18 @@ namespace BridGHe.Common.Gpc
                     if (signature == null || signature != entry.Data.Signature) { warnings.Add(string.Format(LegacyImportReport.ExistingPropertyWarning, key)); shadowed.Add(beam.Id); }
                 }
                 if (ReferenceEquals(beam.BeamProperty, entry.Property)) continue;
+                nativeSections.TryGetValue(beam.Guid, out var formerNative);
+                double formerTurn = LegacyModelImport.AxesRotationDeg(formerNative, beam.BeamProperty);
                 beam.BeamProperty = entry.Property;
                 beam.Assignments.Formulation = entry.Data.Formulation;
-                double turn = LegacyModelImport.AxesRotationDeg(entry.Data.Native);
+                double turn = LegacyModelImport.AxesRotationDeg(entry.Data.Native, entry.Property);
                 var axes = GpcBeamAxes.Section(beam.StartPoint, beam.EndPoint, source.BeamAngles[beam.Id] + turn, entry.Data.Angle);
                 beam.Assignments.SectionAxes = axes;
                 if (beam.Assignments.Physical != null)
                     foreach (var support in beam.Assignments.Physical.Supports)
                         support.Axes = new GPC.Geometry.CoordinateSystem(new GPC.Geometry.Point3d(0, 0, 0), axes.V1, axes.V2);
                 // R65-C3-02 (C1, 11/11): the principal axes turn with the registered property when it adds or takes the turn of a double angle.
-                nativeSections.TryGetValue(beam.Guid, out var formerNative);
-                if (turn != LegacyModelImport.AxesRotationDeg(formerNative)) Reorient(beam, GpcBeamAxes.Principal(beam.StartPoint, beam.EndPoint, source.BeamAngles[beam.Id] + turn));
+                if (turn != formerTurn) Reorient(beam, GpcBeamAxes.Principal(beam.StartPoint, beam.EndPoint, source.BeamAngles[beam.Id] + turn));
                 nativeSections.Remove(beam.Guid);
                 if (entry.Data.Native != null) nativeSections.Add(beam.Guid, entry.Data.Native);
             }

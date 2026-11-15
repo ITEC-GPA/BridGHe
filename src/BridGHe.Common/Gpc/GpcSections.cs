@@ -1,6 +1,8 @@
 using System;
 using GPC.Geometry;
 using GPC.Model.Sections;
+using GPC.Model.ElementProperties;
+using BridGHe.Common.Gpc.Legacy;
 
 namespace BridGHe.Common.Gpc
 {
@@ -26,9 +28,36 @@ namespace BridGHe.Common.Gpc
                 case BridgeSectionKind.HollowRectangle: return new SectionRHS(d, b, t1, t1, t2, t2, name ?? "");
                 // Straus7 bsISection {B1 bottom, B2 top, D, T1 bottom, T2 top, T3 web}.
                 case BridgeSectionKind.I: return new SectionH(d, t3, b2, t2, b1, t1, name ?? "");
+                case BridgeSectionKind.T: return new SectionT(d, b, t2, t1, name ?? "");
+                case BridgeSectionKind.C: return new SectionC(d, t2, b, t1, b, t1, name ?? "");
+                case BridgeSectionKind.Angle: return new SectionL(b, t1, d, t2, name ?? "");
                 default: throw new NotSupportedException("BridgeSectionKindNotMappedYet: " + kind);
             }
         }
+
+        // 190: the new components use Model properties; legacy native definitions keep their separate reader path.
+        internal static bool IsOpen(BridgeSectionKind kind) => kind == BridgeSectionKind.T || kind == BridgeSectionKind.C || kind == BridgeSectionKind.Angle;
+        internal static bool IsOpen(ISectionShape section) => section is SectionT || section is SectionC || section is SectionL
+            || section is SectionBuiltUp pair && pair.Parts.Count == 2 && (pair.Parts[0].Section is SectionC || pair.Parts[0].Section is SectionL);
+
+        internal static ISectionShape Open(LegacySectionRecipe r, BridgeUnits units)
+        {
+            if (!IsOpen(r.Kind) || r.NativeKey != null) throw new ArgumentException("GpcOpenSectionExpected");
+            double d=units.ToMm(r.D), b=units.ToMm(r.B), tf=units.ToMm(r.T1), tw=units.ToMm(r.T2);
+            if (!(d>0 && b>0 && tf>0 && tw>0 && tw<b && tf*(r.Kind==BridgeSectionKind.C?2:1)<d)
+                || double.IsInfinity(d+b+tf+tw)) throw new ArgumentException("GpcOpenSectionInvalidDimensions");
+            var single=(Section)Standard(r.Kind,r.Name,d,b,0,0,0,tf,tw,0);
+            if (r.Mirror==LegacySectionRecipe.NoMirror) return single;
+            if (r.Kind==BridgeSectionKind.T) throw new NotSupportedException("GpcOpenSectionMirrorRequiresCOrAngle");
+            // The UI exposes gap A and the former exporter always used mtLeft. Gap B belongs to diagonal/four-part layouts.
+            if (!(r.MirrorGapA>=0) || double.IsInfinity(r.MirrorGapA) || r.MirrorGapB!=0)
+                throw new NotSupportedException("GpcOpenSectionRequiresNonnegativeGapAAndZeroGapB: use a native section for this layout.");
+            return new SectionBuiltUp(new[]{new SectionBuiltUp.Part(single,0,0),new SectionBuiltUp.Part(single,-units.ToMm(r.MirrorGapA),0,mirrorX:true)},r.Name??"");
+        }
+
+        internal static bool IsDoubleAngle(BeamProperty property) => property is ElasticBeamProperty e && e.Section is SectionBuiltUp pair
+            && pair.Parts.Count==2 && pair.Parts[0].Section is SectionL && pair.Parts[1].Section is SectionL
+            && pair.Parts[0].MirrorX!=pair.Parts[1].MirrorX && !pair.Parts[0].MirrorY && !pair.Parts[1].MirrorY;
 
         /// <summary>Explicit properties without outline (former Generic and Composite types). The shear-centre offsets are
         /// principal-axis offsets from the centroid, as the former exporter wrote them (ipSL1/ipSL2).</summary>

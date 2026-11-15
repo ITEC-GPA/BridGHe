@@ -219,6 +219,14 @@ namespace BridGHe.Common.Gpc
             if (r == null) throw new ArgumentNullException(nameof(r));
             if (r.NativeKey != null) return FormerNative(r);
             string name = string.IsNullOrEmpty(r.Name) ? null : r.Name;
+            // 190: T/C/Angle now expose Model properties, including J and both parts of a double C.
+            // Other families and saved native definitions retain their former display path.
+            if (GpcSections.IsOpen(r.Kind))
+            {
+                var section = GpcSections.Open(r, new BridgeUnits(DefinitionUnits.Nmm));
+                return new FormerValues(name, section.Area, section.Centroid.X, section.Centroid.Y, section.Jxx, section.Jyy, section.AngleX1,
+                    section.J11, section.J22, section.Wel1, section.Wel2, section.R11, section.R22, section.Jt);
+            }
             double d = r.D, t = r.T;
             switch (r.Kind)
             {

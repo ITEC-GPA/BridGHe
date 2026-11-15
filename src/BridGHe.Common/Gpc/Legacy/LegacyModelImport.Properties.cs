@@ -285,7 +285,8 @@ namespace BridGHe.Common.Gpc.Legacy
         /// of a double angle: the axes of the beam (section, principal, offsets, loads, supports) are turned by it. The angle of the beam
         /// (<see cref="LegacyImportReport.BeamAngles"/>) stays the one given: the former results reader turned the beam forces of such a beam
         /// back to it, as <see cref="GpcBeamAxes.Principal"/> of that angle projects them.</summary>
-        internal static double AxesRotationDeg(GPC.Converter.Straus7.Straus7SectionDefinition native) => native != null && native.Shape == 9 && native.MirrorType != 0 ? 90 : 0;
+        internal static double AxesRotationDeg(GPC.Converter.Straus7.Straus7SectionDefinition native, BeamProperty property = null) =>
+            native != null ? (native.Shape == 9 && native.MirrorType != 0 ? 90 : 0) : GpcSections.IsDoubleAngle(property) ? 90 : 0;
 
         /// <summary>Chain E (e3 point 5): the section of a former SectionModel in the definition units (the numbers as written, nothing derived).</summary>
         private static LegacySectionRecipe SectionRecipe(LegacyValue s)
@@ -384,7 +385,7 @@ namespace BridGHe.Common.Gpc.Legacy
         /// with it (<see cref="LegacyAssembly.NormaliseBeamProperty"/>): the same numbers in, the same operations, the same section.
         /// </summary>
         internal static (BeamProperty Property, double Angle, GPC.Converter.Straus7.Straus7SectionDefinition Native) SectionProperty(LegacySectionRecipe r, string propertyName, Material material,
-            BridgeUnits units, Dictionary<string, (double, double)> shearAreas, LegacyImportReport report, bool checkLengthUnit = true)
+            BridgeUnits units, Dictionary<string, (double, double)> shearAreas, LegacyImportReport report, bool checkLengthUnit = true, bool gpcOpenSections = false)
         {
             if (r.NativeKey != null)
             {
@@ -408,6 +409,13 @@ namespace BridGHe.Common.Gpc.Legacy
                     units.ToMm(r.CentroidX), units.ToMm(r.CentroidY), units.ToMm(r.ShearL1), units.ToMm(r.ShearL2), angle);
                 shear1 = units.ToMm2(r.ShearA1); shear2 = units.ToMm2(r.ShearA2);
                 if (r.CompositePreview) report.Carry("Composite preview geometry (preview and checks input, not exported)");
+            }
+            else if (GpcSections.IsOpen(kind) && gpcOpenSections)
+            {
+                section = GpcSections.Open(r, units);
+                // Model computes all properties. The native geometry is selected by the Converter, never resolved here.
+                var areas = GPC.Model.Sections.SectionShearAreas.Compute(section);
+                shear1 = areas.Area1; shear2 = areas.Area2; angle = section.AngleX1;
             }
             else if (IsStandardNative(kind))
             {
