@@ -6,8 +6,8 @@ namespace BridGHe.Common.Gpc
     /// <summary>
     /// R6.5 P1 lane 2b (coordinator, 8/11): the coordinate system of the load components (Beam Distributed Load, Beam Point Load, Beam Point
     /// Moment, Plate Pressure) on GPC: the GPC form of the load frame, a <see cref="CoordinateSystem"/> (the frame the GPC loads take), named as
-    /// the former system. The loads use only whether a system is given (none: the principal or local axes) and, for a distributed load,
-    /// whether it is the global one (any other is refused, as the former exporter ignored it: <c>LegacyNonGlobalLoadCoordinateSystemWasIgnored</c>).
+    /// the former system. Beam load components distinguish the element's Local selection from an absolute frame: an absolute frame must
+    /// be Global by <see cref="IsGlobal(CoordinateSystem)"/>; other frames are refused. Legacy archive readers retain their declared interpretation.
     /// </summary>
     public static class GpcLoadFrames
     {

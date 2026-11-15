@@ -104,7 +104,15 @@ namespace BridGHe.Grasshopper.Components.Loads
             if (GpcOnlyProperties.NonStructuralMass(lc))
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The connected LoadCase have the Non-structural mass flag set to on");
 
-            bool global = cs != null;
+            // FromGpc can supply any absolute frame, not just the parameter menu's Local/Global choices.
+            // Use the distributed-load rule: null is Local, true is Global, false is an unsupported absolute frame.
+            bool? frame = GpcBeamInputs.GlobalSystem(cs);
+            if (frame == false)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The connected coordinate system is neither Local nor Global. Arbitrary load frames are not supported.");
+                return;
+            }
+            bool global = frame == true;
             Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithPointLoad(beam.Gpc, lc.Gpc, true, a, new GPC.Geometry.Vector3d(p1, p2, p3), id, global);
             // P2K (P1): the GPC path only: the draft built on GPC from the drafts of the beam and the load case record (identity derived from
             // the input draft). Task 179: honour Global for newly solved components; the legacy reader retains its historical interpretation.
