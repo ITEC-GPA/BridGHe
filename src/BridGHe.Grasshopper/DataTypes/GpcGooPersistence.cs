@@ -57,7 +57,7 @@ namespace BridGHe.Grasshopper.DataTypes
         /// <summary>P2D: the start of the message of an exception that is not a refusal (<see cref="IsRefusal"/>): a defect, shown as such.</summary>
         internal const string InternalError = "errore interno di BridGHe nella lettura";
 
-        /// <summary>P2D (P4): the message of a datum the reader cannot read, to the file reader (Grasshopper lists it when the file opens), and
+        /// <summary>P2D (P4): the message of a datum the reader cannot read, to the archive log and its owning parameter, and
         /// false. A datum of a newer schema gets the message of <see cref="Common.Gpc.GpcDraftArchive.NewerSchemaMessage"/>; an exception that is
         /// not a refusal of the readers is reported as an internal error, with its type.</summary>
         internal static bool Refused(GH_IReader reader, string type, Exception ex)
@@ -65,15 +65,17 @@ namespace BridGHe.Grasshopper.DataTypes
             System.Diagnostics.Debug.WriteLine(ex);
             string message = IsRefusal(ex) ? Common.Gpc.GpcDraftArchive.UserMessage(ex) : InternalError + " (" + ex.GetType().Name + ": " + ex.Message + "): il dato non è stato caricato.";
             Notify(reader, type + ": " + message, GH_Message_Type.error);
+            Helpers.ReadRefusalWarnings.Record(reader, type + ": " + message);
             return false;
         }
 
         /// <summary>P2CI (MU-01, ChatGPT task 74): a saved datum the reader of a GH type does not read (an unknown kind, damaged JSON, a former
-        /// cache): the message to the file reader (Grasshopper lists it when the file opens), and false. The value is left as the reader left it
+        /// cache): the message to the archive log and its owning parameter, and false. The value is left as the reader left it
         /// (no other change of behaviour than the message).</summary>
         internal static bool NotRead(GH_IReader reader, string message, GH_Message_Type level = GH_Message_Type.error)
         {
             Notify(reader, message, level);
+            Helpers.ReadRefusalWarnings.Record(reader, message);
             return false;
         }
 

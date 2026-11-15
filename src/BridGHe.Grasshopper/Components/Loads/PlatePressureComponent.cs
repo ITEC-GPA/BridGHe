@@ -66,6 +66,7 @@ namespace BridGHe.Grasshopper.Components.Loads
             if (!DA.GetData("LoadCase", ref lc))
                 return;
             bool has_cs = DA.GetData("Coordinate System", ref cs);
+            if (cs?.IsLocal == true) { cs = null; has_cs = false; }
             if (!DA.GetData("Face", ref face))
                 return;
             object obj = null;

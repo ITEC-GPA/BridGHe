@@ -145,9 +145,9 @@ namespace BridGHe.Common.Gpc.Builders
             Change(beam, identity, w => w.Load("BeamDistributedLoadModel", loadCase, (c, source) => w.Beam.Assignments.Loads.AddRange(LegacyModelImport.Distributed(schema, moment, direction,
                 Z(pa), Z(pb), Z(p1), Z(p2), Z(a), Z(b), globalSystem.HasValue ? () => globalSystem.Value : (Func<bool>)null, w.Beam, w.Principal, w.Offset, c, w.Units, source))));
 
-        /// <summary>Beam Point Load / Moment: the components at the normalised station <paramref name="a"/>, in the principal axes.</summary>
-        public static LegacyBeamDraft WithPointLoad(LegacyBeamDraft beam, LegacyCaseData loadCase, bool moment, double a, Vector3d value, Guid identity) =>
-            Change(beam, identity, w => w.Load("BeamPointLoadModel", loadCase, (c, source) => w.Beam.Assignments.Loads.Add(LegacyModelImport.PointLoad(moment, Z(a), Z(value), w.Beam, w.Principal, w.Offset, c, w.Units, source))));
+        /// <summary>Beam Point Load / Moment at station <paramref name="a"/>: principal axes by default, global axes when explicitly selected.</summary>
+        public static LegacyBeamDraft WithPointLoad(LegacyBeamDraft beam, LegacyCaseData loadCase, bool moment, double a, Vector3d value, Guid identity, bool globalSystem = false) =>
+            Change(beam, identity, w => w.Load("BeamPointLoadModel", loadCase, (c, source) => w.Beam.Assignments.Loads.Add(LegacyModelImport.PointLoad(moment, Z(a), Z(value), w.Beam, globalSystem ? null : w.Principal, w.Offset, c, w.Units, source))));
 
         /// <summary>Beam Pre Load: an initial tension (force) or strain.</summary>
         public static LegacyBeamDraft WithPreLoad(LegacyBeamDraft beam, LegacyCaseData loadCase, bool strain, double value, Guid identity) =>

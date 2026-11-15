@@ -79,6 +79,9 @@ internal static class Program
         using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},WindowStyle.Hidden);
         if(args.Contains("--gpc-pilot")) { Console.WriteLine("RETIRED BY NAME (P2CB): --gpc-pilot: "+P2rRetiredP2cb.Reason("native|gpc-pilot")); return 1; } // P2CB (13/11): the F4 pilot retired with its FEM types
         GpcDomainCache.Configure();
+        if(args.Contains("--f7-readers")) return F7Checks.Readers(args);
+        if(args.Contains("--f7-local")) return F7Checks.Local();
+        if(args.Contains("--f7-native")) return F7Checks.Native(args); // Coordinator only, under the Straus7 lock.
         if(args.Contains("--import-dump")) return ImportDump.Run(args);
         if(args.Contains("--build-model-scan")) return BuildModelScan.Run(args);
         if(args.Contains("--material-scan")) return GpcMaterialKindChecks.Scan(args);

@@ -84,7 +84,7 @@ namespace BridGHe.Grasshopper.Components.Loads
             CoordinateSystemParam cs_param = (CoordinateSystemParam)Params.Input[3];
             Param_Integer dir_param = (Param_Integer)Params.Input[4];
             dir_param.ClearNamedValues();
-            if (cs_param.PersistentData.Branches.Count == 0)
+            if (cs_param.LocalSelection)
             {
                 dir_param.AddNamedValue("1", 0);
                 dir_param.AddNamedValue("2", 1);
@@ -159,6 +159,8 @@ namespace BridGHe.Grasshopper.Components.Loads
             if (!DA.GetData("Type", ref schema))
                 return;
             bool has_cs = DA.GetData("Coordinate System", ref cs);
+            if (cs?.IsLocal == true) { cs = null; has_cs = false; }
+            SetDirectionContextMenuChoices();
             bool has_dir = DA.GetData("Direction", ref dir);
 
             double p1 = 0, pa = 0, pb = 0, p2 = 0;

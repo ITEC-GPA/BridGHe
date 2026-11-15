@@ -1,5 +1,6 @@
 using System;
 using Grasshopper.Kernel.Types;
+using GH_IO.Serialization;
 
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
@@ -7,7 +8,11 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
     public class GH_CoordinateSystem : GH_Goo<object>
     {
         // R6.5 P1 lane 2b: without a FEM value the coordinate system is its GPC frame.
-        public override bool IsValid => Gpc != null && Gpc.Name != string.Empty;
+        public override bool IsValid => IsLocal || Gpc != null && Gpc.Name != string.Empty;
+
+        /// <summary>An explicit valid selection of the receiving element's local axes, not an absolute frame.</summary>
+        public bool IsLocal { get; private set; }
+        internal static GH_CoordinateSystem Local() => new GH_CoordinateSystem { IsLocal = true, _gpc = null };
 
         public override string IsValidWhyNot => "Not propely defined";
 
@@ -25,7 +30,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public GH_CoordinateSystem(GH_CoordinateSystem cs)
         {
             // R6.5 P1 lane 2b: a coordinate system given by its GPC frame alone is copied with it (the frame is immutable by convention).
-            Value = null; _gpc = cs.Gpc; _gpcOf = null; return;
+            Value = null; _gpc = cs.Gpc; _gpcOf = null; IsLocal = cs.IsLocal; return;
         }
 
         /// <summary>
@@ -62,7 +67,22 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             Helpers.GpcOnlyElements.PropertiesWithoutFem ? FromGpc(Common.Gpc.GpcLoadFrames.Global()) : new GH_CoordinateSystem();
 
         /// <summary>The name of the coordinate system (the message of the load components).</summary>
-        internal string Name => Gpc?.Name;
+        internal string Name => IsLocal ? "Local" : Gpc?.Name;
+
+        // Former coordinate-system chunks were empty and reopened as Global. Retain that behaviour;
+        // only the new, explicit Local choice needs a marker. No frame is invented for Local.
+        public override bool Write(GH_IWriter writer)
+        {
+            if (IsLocal) writer.SetBoolean("Local", true);
+            return true;
+        }
+
+        public override bool Read(GH_IReader reader)
+        {
+            IsLocal = reader.ItemExists("Local") && reader.GetBoolean("Local");
+            Value = null; _gpcOf = null; _gpc = IsLocal ? null : Common.Gpc.GpcLoadFrames.Global();
+            return true;
+        }
 
         public override IGH_Goo Duplicate()
         {
@@ -71,7 +91,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override string ToString()
         {
-            return Gpc == null ? "Null Coordinate System property" : Gpc.Name;
+            return Name ?? "Null Coordinate System property";
         }
     }
 }

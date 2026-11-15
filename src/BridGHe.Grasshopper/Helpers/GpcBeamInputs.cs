@@ -23,7 +23,7 @@ namespace BridGHe.Grasshopper.Helpers
         /// <summary>The coordinate system of a load: null without one (principal axes), otherwise whether it is the global one, by the one
         /// rule of the frame (<see cref="GpcLoadFrames.IsGlobal"/>: origin 0, axes 1 and 2 along X and Y; R65-C2-01, user decision U6 of 12/11:
         /// the same rule for every system and for the reader of the 0.3.0 files).</summary>
-        internal static bool? GlobalSystem(GH_CoordinateSystem cs) => cs == null ? null : GpcLoadFrames.IsGlobal(cs.Gpc);
+        internal static bool? GlobalSystem(GH_CoordinateSystem cs) => cs == null || cs.IsLocal ? null : GpcLoadFrames.IsGlobal(cs.Gpc);
 
         internal static GPC.Geometry.Point3d Point(Rhino.Geometry.Point3d p) => new GPC.Geometry.Point3d(p.X, p.Y, p.Z);
         internal static GPC.Geometry.Vector3d Vector(Rhino.Geometry.Point3d p) => new GPC.Geometry.Vector3d(p.X, p.Y, p.Z);

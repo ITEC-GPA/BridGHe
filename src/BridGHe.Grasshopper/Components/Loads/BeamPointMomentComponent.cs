@@ -52,7 +52,7 @@ namespace BridGHe.Grasshopper.Components.Loads
         private void SetInputsName()
         {
             CoordinateSystemParam cs_param = (CoordinateSystemParam)Params.Input[2];
-            if (cs_param.PersistentData.Branches.Count == 0)
+            if (cs_param.LocalSelection)
             {
                 Params.Input[3].NickName = "M1";
                 Params.Input[4].NickName = "M2";
@@ -90,6 +90,7 @@ namespace BridGHe.Grasshopper.Components.Loads
             if (!DA.GetData("LoadCase", ref lc))
                 return;
             bool has_cs = DA.GetData("Coordinate System", ref cs);
+            if (cs?.IsLocal == true) { cs = null; has_cs = false; }
 
             double p1 = 0, p2 = 0, p3 = 0;
             double a = 0;
@@ -103,10 +104,11 @@ namespace BridGHe.Grasshopper.Components.Loads
             if (GpcOnlyProperties.NonStructuralMass(lc))
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The connected LoadCase have the Non-structural mass flag set to on");
 
-            Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithPointLoad(beam.Gpc, lc.Gpc, true, a, new GPC.Geometry.Vector3d(p1, p2, p3), id);
+            bool global = cs != null;
+            Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithPointLoad(beam.Gpc, lc.Gpc, true, a, new GPC.Geometry.Vector3d(p1, p2, p3), id, global);
             // P2K (P1): the GPC path only: the draft built on GPC from the drafts of the beam and the load case record (identity derived from
-            // the input draft); in the principal axes whatever the coordinate system (the former archive did not store it).
-            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), true, a, p1, p2, p3));
+            // the input draft). Task 179: honour Global for newly solved components; the legacy reader retains its historical interpretation.
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), true, a, p1, p2, p3, global));
         }
 
         public override bool Read(GH_IReader reader)
