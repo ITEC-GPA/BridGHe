@@ -25,6 +25,7 @@ namespace BridGHe.Grasshopper
             Helpers.GpcReleaseGuard.Start();
             // The GPC libraries are checked against the release set by GpcReleaseGuard.
             Gpc.PluginChecks.PluginBuildCheck.Start(typeof(BridGHeInfo).Assembly, "BridGHe", sharedLibraries: false);
+            Gpc.PluginChecks.MathNetRuntimeInfo.Start();
             return GH_LoadingInstruction.Proceed;
         }
     }
