@@ -83,7 +83,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         /// <summary>True when <see cref="Gpc"/> is a material attached by a GPC builder (not the conversion of the FEM value).</summary>
         public bool HasAttachedGpc { get; private set; }
 
-        /// <summary>Attaches the GPC material built on GPC for the current FEM value (it must describe it: regression <c>gpc-material-kinds</c>).</summary>
+        /// <summary>Attaches the GPC material to this wrapper (it must describe it: regression <c>gpc-material-kinds</c>).</summary>
         public void AttachGpc(GPC.Model.Materials.Material material, string kind = null)
         {
             _gpc = material ?? throw new ArgumentNullException(nameof(material)); _gpcOf = Value; HasAttachedGpc = true;

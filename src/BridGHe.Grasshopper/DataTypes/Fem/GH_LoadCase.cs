@@ -32,7 +32,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         /// <summary>
         /// R6.1 (frozen API for R6.2, §1bis): the GPC datum of this GH_LoadCase, the record of the load case (name, temperature, masses, inertia, gravity, stages; the assembly builds the GPC case): the one a GPC builder attached
         /// (<see cref="AttachGpc"/>), the one read from a file (BGHGPC1), the former payload read by value
-        /// (<see cref="Common.Gpc.GpcLegacyPayloads"/>), otherwise the conversion of the FEM value, once per value. Immutable by convention.
+        /// (<see cref="Common.Gpc.GpcLegacyPayloads"/>), with no runtime conversion from a removed model type. Immutable by convention.
         /// </summary>
         public Common.Gpc.Legacy.LegacyCaseData Gpc
         {
@@ -44,10 +44,10 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             }
         }
 
-        /// <summary>True when <see cref="Gpc"/> was attached by a GPC builder or read from a file (not converted from the FEM value).</summary>
+        /// <summary>True when <see cref="Gpc"/> was attached by a GPC builder or read from a file (including legacy payloads read by value).</summary>
         public bool HasAttachedGpc { get; private set; }
 
-        /// <summary>Attaches the GPC datum built on GPC for the current FEM value.</summary>
+        /// <summary>Attaches the GPC datum to this wrapper.</summary>
         public void AttachGpc(Common.Gpc.Legacy.LegacyCaseData datum)
         {
             _gpc = datum ?? throw new ArgumentNullException(nameof(datum)); _gpcOf = Value; HasAttachedGpc = true;

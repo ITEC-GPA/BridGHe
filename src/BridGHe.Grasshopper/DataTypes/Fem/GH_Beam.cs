@@ -96,28 +96,19 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public GPC.Model.Elements.Element AnalysedGpc { get; set; }
         public GPC.Model.Models.Model AnalysedGpcModel { get; set; }
 
-        /// <summary>
-        /// Chain E (d): the GPC draft of this beam (L12 §5.4: the <see cref="GPC.Model.Elements.BeamElement"/> and its
-        /// <see cref="GPC.Checkers.CompositeBridge.BridgeBeamData"/>, definition units, no nodes): the one a GPC component attached to this FEM
-        /// value (<see cref="AttachGpc"/>, e.g. Bridge State Override on GPC), otherwise the per-value conversion of the FEM value
-        /// (<see cref="Common.Gpc.GpcBeamDrafts.FromFemm(BeamModel)"/>), once per value. A new FEM value (a modified copy) drops the attached
-        /// draft. Immutable by convention: whoever changes it makes a copy (<see cref="GPC.Model.Core.ModelValues.CopyValue{T}(T)"/>).
-        /// </summary>
         public Common.Gpc.Legacy.LegacyBeamDraft Gpc
         {
             get
             {
-                // R6.1: the datum attached or read (BGHGPC1, or a former payload read by value: P2D), otherwise the conversion of the FEM value
-                // (the FEM value of a component not yet on GPC: removed with the FEM types).
                 if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
                 return null;
             }
         }
 
-        /// <summary>True when <see cref="Gpc"/> is a draft attached by a GPC component or read from a file (not the conversion of a FEM value).</summary>
+        /// <summary>True when <see cref="Gpc"/> is a draft attached by a GPC component or read from a file (including legacy payloads read by value).</summary>
         public bool HasAttachedGpc { get; private set; }
 
-        /// <summary>Attaches the GPC draft built on GPC for the current FEM value.</summary>
+        /// <summary>Attaches the GPC draft to this wrapper.</summary>
         public void AttachGpc(Common.Gpc.Legacy.LegacyBeamDraft draft)
         {
             _gpc = draft ?? throw new ArgumentNullException(nameof(draft)); _gpcOf = Value; HasAttachedGpc = true;
@@ -160,35 +151,13 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override IGH_GeometricGoo Morph(SpaceMorph xmorph)
         {
-            /*
-            if (Value == null)
-                return null;
-            if (!Value.IsValid)
-                return null;
 
-            Brep brep = Value.Shape.DuplicateBrep();
-            xmorph.Morph(brep);
-            return new GH_Brep(brep);
-            */
             throw new NotImplementedException();
         }
 
         public override IGH_GeometricGoo Transform(Transform xform)
         {
-            /*
-            // It's debatable whether you should maintain a BoatShell through transformations. 
-            // It might not be easy/make sense to apply scaling/rotations, shears etc.
-            // In this example, I'll convert the shell to a brep.
-            // Perhaps you will want to check for translations/rotations only, operations that make sense.
-            if (Value == null)
-                return null;
-            if (!Value.IsValid)
-                return null;
 
-            Brep brep = Value.Shape.DuplicateBrep();
-            brep.Transform(xform);
-            return new GH_Brep(brep);
-            */
             throw new NotImplementedException();
 
         }

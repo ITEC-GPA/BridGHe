@@ -2138,32 +2138,7 @@ internal static class GpcOnlyReplay
             yield return "P " + s.Id + " " + r.Entry + " " + r.Node + " " + Vs(r.Values) + " " + Vs(new[] { r.ForceMax, r.ForceMin, r.ForceAngle, r.ForceVonMises, r.MomentMax, r.MomentMin, r.MomentAngle });
     }
 
-    /// <summary>L3e: Node, Beam and Plate Results replayed on the elements of an analysed FEM-backed model (real results): GPC-only inputs, the same outputs.</summary>
-    internal static void ResultsNative(IGH_Goo analysed, string label, Action<bool, string> check, ref int replayed)
-    {
-        Init("models"); modelsLane = true;
-        var kinds = new HashSet<string>(ElementGoo.Concat(PropertyGoo).Concat(ModelGoo), StringComparer.Ordinal);
-        var byType = new SortedDictionary<string, (int Instances, int Items)>(StringComparer.Ordinal); var failures = new List<string>();
-        using (var doc = new GH_Document())
-        {
-            var decompose = BridgeSegmentExcelTests.Add(doc, "DecomposeModelComponent");
-            var input = new GH_Structure<IGH_Goo>(); input.Append(analysed, new GH_Path(0));
-            SetInput(decompose.Params.Input[0], input, g => g);
-            BridgeSegmentExcelTests.Solve(doc, true);
-            string[] components = { "NodeResultsComponent", "BeamResultsComponent", "PlateResultsComponent" };
-            for (int k = 0; k < components.Length; k++)
-                foreach (var element in decompose.Params.Output[k].VolatileData.AllData(true).Take(3).ToArray())
-                {
-                    var c = BridgeSegmentExcelTests.Add(doc, components[k]);
-                    var tree = new GH_Structure<IGH_Goo>(); tree.Append(element, new GH_Path(0));
-                    SetInput(c.Params.Input[0], tree, g => g);
-                    BridgeSegmentExcelTests.Solve(doc, true);
-                    Replay(c, label + ": " + c.Name, kinds, byType, failures, expect: Expect.Of("results of an analysed element")); replayed++;
-                }
-        }
-        foreach (var f in failures) check(false, f);
-        modelsLane = false;
-    }
+
 
     /// <summary>L3e: the rehearsal of P2 with real results on a definition analysed by Straus7 (native 99 or 50, with BRIDGHE_GPC_ONLY_REHEARSAL=1; never in
     /// the gate). <b>R6.6 lane R1 (task 2): the real chain.</b> The analyses of the definition and every object downstream of them (Decompose Model, Super

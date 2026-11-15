@@ -160,8 +160,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         /// R6.4 (2), extension (α) of §1bis (coordinator, 7/11): the drafts of the elements of this model, in the order of the elements of
         /// <see cref="Value"/> (<see cref="Common.Gpc.GpcModelDrafts"/>): those of the GPC input a producer attached (Build Model, Attach Moving
         /// Paths), those attached apart (<see cref="AttachDrafts"/>: an analysis, a file), those of a former payload read by value; null when
-        /// none is carried (the conversion of the FEM value: its elements keep the conversion of their FEM values until R6.5). Never converts
-        /// the FEM value.
+        /// none is carried. There is no fallback to a removed FEM value.
         /// </summary>
         public Common.Gpc.GpcModelDrafts GpcDrafts
         {

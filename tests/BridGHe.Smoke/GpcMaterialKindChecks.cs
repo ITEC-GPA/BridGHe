@@ -72,28 +72,6 @@ internal static class GpcMaterialKindChecks
         static string Text(object v) => v switch { null => "null", double d => B(d), IEnumerable e when !(e is string) => "[" + string.Join(",", e.Cast<object>().Select(Text)) + "]", _ => v.ToString() };
     }
 
-    /// <summary>R6.2 part C, the declared difference of the Aluminium component (user decision of 6/11): the GPC material of the
-    /// component has fu = 262 MPa where the conversion of its FEM value (0.3.0) has 165.5, every other value equal, the declared shear
-    /// ultimate strength 165.5 on both. True when the two materials differ by that only (every value of <see cref="Dump"/>).</summary>
-    internal static bool DeclaredAluminium(Material gpc, Material fem)
-    {
-        if (!(gpc is AluminiumMaterial) || !(fem is AluminiumMaterial)) return false;
-        string old = B(165.5), fixedFu = B(262), oldC = B(-165.5), fixedC = B(-262);
-        string a = Dump(gpc), f = Dump(fem);
-        if (!a.Contains("|aluminium ") || !f.Contains(old)) return false;
-        // The declared shear ultimate strength (7th declared value) is 165.5 on both: masked before 165.5 becomes 262 in the conversion.
-        static string MaskShear(string d)
-        {
-            int i = d.IndexOf("|declared=", StringComparison.Ordinal); if (i < 0) return d;
-            int end = d.IndexOf('|', i + 1); if (end < 0) end = d.Length;
-            var parts = d.Substring(i + 10, end - i - 10).Split(' ');
-            if (parts.Length > 6) parts[6] = "SHEAR"; else return d;
-            return d.Substring(0, i + 10) + string.Join(" ", parts) + d.Substring(end);
-        }
-        // fu and the compressive ultimate stress (−fu) of the GPC aluminium, in the values and in the tables.
-        return MaskShear(a) == MaskShear(f).Replace(old, fixedFu).Replace(oldC, fixedC);
-    }
-
     private static string Without(string dump, string part) => string.Join("|", dump.Split('|').Where(p => !p.StartsWith(part + "=", StringComparison.Ordinal)));
 
     /// <summary>The checks of one material and their counts (shared by the regression and by <c>--material-scan</c>).</summary>

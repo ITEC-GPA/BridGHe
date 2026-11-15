@@ -35,8 +35,8 @@ namespace BridGHe.Grasshopper.Components.Attributes
             pManager.AddGenericParameter("Plate", "P", "The load patch plate where to define the type", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Type", "T", "Load Type", GH_ParamAccess.item);
             Param_Integer type_param = (Param_Integer)pManager[1];
-            Array values = Enum.GetValues(typeof(LoadPatchTypeAttributeModel.PatchType));
-            foreach (LoadPatchTypeAttributeModel.PatchType val in values)
+            Array values = Enum.GetValues(typeof(PatchChoices.PatchType));
+            foreach (PatchChoices.PatchType val in values)
                 type_param.AddNamedValue(val.GetDescription(), (int)val);
             pManager.AddIntegerParameter("Edges", "E", "The edges index to select", GH_ParamAccess.list);
             pManager[2].Optional = true;
@@ -175,9 +175,8 @@ namespace BridGHe.Grasshopper.Components.Attributes
         /// </summary>
         public override Guid ComponentGuid => new Guid("1dcb6c8b-8bd7-4e5b-a6a1-76c68a8f729b");
 
-        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
-        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
-        private static class LoadPatchTypeAttributeModel
+        // Private menu choices preserve the published values, order and descriptions.
+        private static class PatchChoices
         {
             internal enum PatchType { Auto1, Auto2, Auto3, Auto4, [System.ComponentModel.Description("Angle Split")] AngleSplit, Manual }
         }

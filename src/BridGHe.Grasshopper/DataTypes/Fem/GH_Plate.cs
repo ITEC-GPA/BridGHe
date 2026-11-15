@@ -98,27 +98,19 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public GPC.Model.Elements.Element AnalysedGpc { get; set; }
         public GPC.Model.Models.Model AnalysedGpcModel { get; set; }
 
-        /// <summary>
-        /// Chain E (e1): the GPC draft of this plate (definition units, see <see cref="Common.Gpc.Legacy.LegacyPlateDraft"/>): the one a GPC component
-        /// attached to this FEM value (<see cref="AttachGpc"/>), otherwise the per-value conversion of the FEM value
-        /// (<see cref="Common.Gpc.GpcBeamDrafts.FromFemm(PlateModel, System.Guid?)"/>), once per value. A new FEM value (a modified copy) drops the
-        /// attached draft. Immutable by convention: whoever changes it makes a copy (<see cref="GPC.Model.Core.ModelValues.CopyValue{T}(T)"/>).
-        /// </summary>
         public Common.Gpc.Legacy.LegacyPlateDraft Gpc
         {
             get
             {
-                // R6.1: the datum attached or read (BGHGPC1, or a former payload read by value: P2D), otherwise the conversion of the FEM value
-                // (the FEM value of a component not yet on GPC: removed with the FEM types).
                 if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
                 return null;
             }
         }
 
-        /// <summary>True when <see cref="Gpc"/> is a draft attached by a GPC component or read from a file (not the conversion of a FEM value).</summary>
+        /// <summary>True when <see cref="Gpc"/> is a draft attached by a GPC component or read from a file (including legacy payloads read by value).</summary>
         public bool HasAttachedGpc { get; private set; }
 
-        /// <summary>Attaches the GPC draft built on GPC for the current FEM value.</summary>
+        /// <summary>Attaches the GPC draft to this wrapper.</summary>
         public void AttachGpc(Common.Gpc.Legacy.LegacyPlateDraft draft)
         {
             _gpc = draft ?? throw new System.ArgumentNullException(nameof(draft)); _gpcOf = Value; HasAttachedGpc = true;
@@ -197,7 +189,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override bool CastTo<Q>(out Q target)
         {
-            // R6.5 P0: the outline and the flat mesh of the draft; the shape and results come with the FEM value until P1.
+            // R6.5 P0: the outline and the flat mesh of the draft; shape and results are read from GPC data.
                 if (typeof(Q) == typeof(GH_Curve) && GpcDraftGeometry.Outline(Gpc) is { } outline) { target = (Q)(object)new GH_Curve(outline); return true; }
                 if (typeof(Q) == typeof(GH_Mesh) && GpcDraftGeometry.FlatMesh(Gpc) is { } flat) { target = (Q)(object)new GH_Mesh(flat); return true; }
                 if (typeof(Q).IsAssignableFrom(typeof(GH_PlateResults)) && AnalysedGpc != null) { target = (Q)(object)new GH_PlateResults(this); return true; }

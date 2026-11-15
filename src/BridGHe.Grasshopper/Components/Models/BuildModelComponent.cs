@@ -35,9 +35,9 @@ namespace BridGHe.Grasshopper.Components.Models
             pManager.AddTextParameter("Name", "N", "The name of the model", GH_ParamAccess.item, "");
             pManager.AddIntegerParameter("Units", "U", "The measure units", GH_ParamAccess.item, 2);
             Param_Integer type_param = (Param_Integer)pManager[2];
-            Array names = Enum.GetValues(typeof(ModelModel.ModelUnits));
+            Array names = Enum.GetValues(typeof(UnitChoices.ModelUnits));
             int i = 0;
-            foreach (ModelModel.ModelUnits name in names)
+            foreach (UnitChoices.ModelUnits name in names)
                 type_param.AddNamedValue(name.GetDescription(), i++);
             LoadCombinationsParam combs = new LoadCombinationsParam
             {
@@ -174,9 +174,8 @@ namespace BridGHe.Grasshopper.Components.Models
         /// </summary>
         public override Guid ComponentGuid => new Guid("d99dbb1b-13c4-4398-902e-ce66e5076ff4");
 
-        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
-        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
-        private static class ModelModel
+        // Private menu choices preserve the published values, order and descriptions.
+        private static class UnitChoices
         {
             internal enum ModelUnits
             {

@@ -58,7 +58,7 @@ namespace BridGHe.Grasshopper.DataTypes
             }
         }
 
-        /// <summary>R6.5 P1 lane 3a: the BridGHe ID of the beam: that of the FEM value, or of the GPC datum without one.</summary>
+        /// <summary>R6.5 P1 lane 3a: the BridGHe ID of the beam from its GPC datum.</summary>
         public string BeamId => Gpc?.BeamId;
 
         #endregion
@@ -100,14 +100,9 @@ namespace BridGHe.Grasshopper.DataTypes
             return beam;
         }
 
-        /// <summary>
-        /// R6.5 P1 lane 3a: the GPC datum of this composite beam: the one Composite Beam attached to the current FEM value (the dual rule of R6.2:
-        /// the draft of its input beam, its two definitions, its groups) or the one it was made of (<see cref="FromGpc"/>); null for a composite
-        /// beam made from its FEM value alone (a value read from a document, a composite beam of a FEM model).
-        /// </summary>
         public GpcCompositeBeam Gpc => _gpc != null && ReferenceEquals(_gpcOf, Value) ? _gpc : null;
 
-        /// <summary>Composite Beam: the GPC datum built for the current FEM value.</summary>
+        /// <summary>Composite Beam: the GPC datum attached to this wrapper.</summary>
         public void AttachGpc(GpcCompositeBeam datum)
         {
             _gpc = datum ?? throw new ArgumentNullException(nameof(datum)); _gpcOf = Value;
@@ -169,7 +164,6 @@ namespace BridGHe.Grasshopper.DataTypes
             Display.ModelPreview.DraftWires(Gpc,args.Pipeline,args.Viewport,args.Color,Display.DisplayPreferences.Current);
         }
 
-        /// <summary>Chain E (c): the definitions the preview draws (none when they cannot be built: the preview then reads the FEM value).</summary>
         public Display.ModelPreview.CompositeSections PreviewSections
         {
             get
@@ -185,7 +179,7 @@ namespace BridGHe.Grasshopper.DataTypes
 
         public override bool CastTo<Q>(out Q target)
         {
-            // R6.5 P1 lane 3a: the axis of the draft of the beam; the shapes come with the FEM value.
+            // R6.5 P1 lane 3a: the axis of the draft of the beam; the shapes are read from the attached definitions.
                 var axis = GpcDraftGeometry.Axis(Gpc?.Beam);
                 if (typeof(Q) == typeof(GH_Curve) && axis.IsValid) { target = (Q)(object)new GH_Curve(new LineCurve(axis)); return true; }
                 target = default;

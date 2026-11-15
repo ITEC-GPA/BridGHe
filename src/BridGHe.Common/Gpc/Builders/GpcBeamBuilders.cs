@@ -19,7 +19,7 @@ namespace BridGHe.Common.Gpc.Builders
     /// <c>StringGroup</c>, <c>Distributed</c>, <c>PointLoad</c>, <c>PreLoad</c>, <c>Gradient</c>, <c>BridgeMembers</c>), same collections, same
     /// order, same records. A builder never changes its input (it works on a <see cref="GpcDrafts.Copy(LegacyBeamDraft)"/>) and ends with the
     /// identity given (<see cref="GpcDrafts.Reidentify(LegacyBeamDraft, Guid)"/>; until R6.5 the identity of the conversion of the FEM output,
-    /// <see cref="GpcBeamDrafts.Identity(Models.BeamModel)"/>). Units: those of the draft (the definition units). The property of a new beam is the
+    /// the pre-migration implementation). Units: those of the draft (the definition units). The property of a new beam is the
     /// datum of the input property (<c>GH_BeamProperty.Gpc</c>): its data, signature included (passo 53: until R6.5 the signature of the
     /// conversion of the FEM property).
     /// </summary>

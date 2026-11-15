@@ -182,7 +182,7 @@ public sealed record BridgeReportData(string Id, DateTimeOffset Created, BridgeR
             new BridgeReportModel(m.Name, units.ToString(), m.NodesElements.Count, m.BeamElements.Count, m.AreaElements.Count, null, combinations));
     }
 
-    /// <summary>R6.4: the canonical text of the model of a report (for the comparison of the GPC and the FEM sources until R6.5).</summary>
+    /// <summary>The canonical text of the model of a report.</summary>
     public static string Text(ReportModelSource source, IEnumerable<string> beamIds) => source == null ? "null" : source.Nmm + "\n" + Serialize(source.Model) + "\n"
         + string.Join("|", source.Combinations) + "\n" + string.Join("|", beamIds.Select(id => id + "=" + (source.BeamLength(id) is double l ? BitConverter.DoubleToInt64Bits(l).ToString("X16") : "-")));
 
