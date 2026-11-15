@@ -83,6 +83,7 @@ internal static class ExportPreparationChecks
         beam.NodeJ.Assignments.GroundSprings.Add(new SpringMatrix(matrix, frame));
         var model = Assemble(beam); var log = Record(model); var springs = Calls(log, "SetNodeSpring");
         Require(springs.Length == 2, "one translational and one rotational spring family");
+        Require(springs.Count(c => (bool)c.Args[3]) == 1, "exactly one rotational and one translational spring call");
         foreach (var call in springs)
         {
             Require((int)call.Args[0] == model.BeamElements.Values.Single().NodeJ.Id && (int)call.Args[1] == 1, "spring node/freedom case");
@@ -127,6 +128,7 @@ internal static class ExportPreparationChecks
             Eccentricity = new Vector3d(0, 3, 0), EccentricityCoordinateSystem = CoordinateSystem.Global });
         var log = Record(Assemble(beam)); var calls = Calls(log, "SetBeamDistributedLoad");
         Require(calls.Length == 2, "distributed force Z and principal moment 3 only");
+        Require(calls.Count(c => (bool)c.Args[4]) == 1, "exactly one distributed force and one distributed moment call");
         foreach (var call in calls)
         {
             Require((int)call.Args[3] == 3, "distributed axis");
@@ -138,6 +140,7 @@ internal static class ExportPreparationChecks
             Concentrated = new PointLoad(0, 0, -2, 5, 0, 0, beam.StartPoint + new Vector3d(250, 0, 0), c),
             Eccentricity = new Vector3d(0, 3, 0), EccentricityCoordinateSystem = CoordinateSystem.Global });
         calls = Calls(Record(Assemble(beam)), "SetBeamPointLoad"); Require(calls.Length == 2, "beam point force and moment");
+        Require(calls.Count(c => (bool)c.Args[3]) == 1, "exactly one point force and one point moment call");
         foreach (var call in calls) Values((double[])call.Args[4], (bool)call.Args[3] ? new[] { -1d, 0, 0, .25 } : new[] { 0d, 0, -2, .25 }, "point arguments");
         foreach (var kind in new[] { BeamInitialStateKind.AxialForce, BeamInitialStateKind.AxialStrain })
         {

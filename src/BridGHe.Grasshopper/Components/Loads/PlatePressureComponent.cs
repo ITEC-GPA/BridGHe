@@ -83,7 +83,7 @@ namespace BridGHe.Grasshopper.Components.Loads
             }
             else if (obj.GetType() == typeof(GH_String))
             {
-                // P2CI (MU-02, ChatGPT task 74): the text read as before (Convert.ToDouble: the current number format, an empty text 0); a text
+                // P2CI (MU-02, ChatGPT task 74): the text read as before (Convert.ToDouble: the current number format; null is 0, an empty string is invalid); a text
                 // that is not a number now says so instead of the generic exception of the solution (the same outcome: an error, no output).
                 string text = ((GH_String)obj).Value;
                 double val;
