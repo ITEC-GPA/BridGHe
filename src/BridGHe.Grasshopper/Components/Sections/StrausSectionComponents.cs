@@ -1,26 +1,38 @@
 using System;
+using Grasshopper.Kernel;
 namespace BridGHe.Grasshopper.Components.Sections
 {
+    // Task 190: retain the original classes, GUIDs, ports and solver for saved definitions.
+    // Only these five complete standard domains have an existing GPC component and native Converter mapping.
+    // BGL variants (radii/slopes), the other shapes, Library and BXS remain available.
+    [Obsolete("Use Solid Circle. Retained for existing definitions.")]
     public sealed class StrausCircularSolidSectionComponent : StrausSectionComponent
     {
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
         protected override string ShapeKey => "CircularSolid";
         public StrausCircularSolidSectionComponent() : base("Straus Circular Solid Section", "S7CircularSolid") { }
         public override Guid ComponentGuid => new Guid("91092dc4-a478-5bae-b104-6d9b79acfa48");
     }
+    [Obsolete("Use Hollow Circle. Retained for existing definitions.")]
     public sealed class StrausCircularHollowSectionComponent : StrausSectionComponent
     {
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
         protected override string ShapeKey => "CircularHollow";
         public StrausCircularHollowSectionComponent() : base("Straus Circular Hollow Section", "S7CircularHollow") { }
         public override Guid ComponentGuid => new Guid("52dfbc6c-40ee-5ecc-8de7-a0252a1aa3ca");
     }
+    [Obsolete("Use Solid Rect. Retained for existing definitions.")]
     public sealed class StrausRectangleSolidSectionComponent : StrausSectionComponent
     {
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
         protected override string ShapeKey => "RectangleSolid";
         public StrausRectangleSolidSectionComponent() : base("Straus Rectangle Solid Section", "S7RectangleSolid") { }
         public override Guid ComponentGuid => new Guid("0d17a80e-109b-5a2b-a68c-f0cbacf6f453");
     }
+    [Obsolete("Use Hollow Rect. Retained for existing definitions.")]
     public sealed class StrausRectangleHollowSectionComponent : StrausSectionComponent
     {
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
         protected override string ShapeKey => "RectangleHollow";
         public StrausRectangleHollowSectionComponent() : base("Straus Rectangle Hollow Section", "S7RectangleHollow") { }
         public override Guid ComponentGuid => new Guid("5fba2a07-4ad4-54ca-9fe2-8a8350e7e912");
@@ -37,8 +49,10 @@ namespace BridGHe.Grasshopper.Components.Sections
         public StrausTopHatSectionComponent() : base("Straus Top Hat Section", "S7TopHat") { }
         public override Guid ComponentGuid => new Guid("6c788ba2-2787-5147-a865-e74c3d4ed5cc");
     }
+    [Obsolete("Use I Section. Retained for existing definitions.")]
     public sealed class StrausISectionComponent : StrausSectionComponent
     {
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
         protected override string ShapeKey => "I";
         public StrausISectionComponent() : base("Straus I Section", "S7I") { }
         public override Guid ComponentGuid => new Guid("6ce96dfc-2dda-53ea-9740-b0e2535cd7ad");
