@@ -39,8 +39,8 @@ namespace BridGHe.Grasshopper.Components.Loads
             pManager.AddGenericParameter("LoadCase", "LC", "The load case", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Type", "T", "Load Type", GH_ParamAccess.item, 0);
             Param_Integer type_param = (Param_Integer)pManager[2];
-            Array values = Enum.GetValues(typeof(DistributedLoadChoices.LoadSchema));
-            foreach (DistributedLoadChoices.LoadSchema val in values)
+            Array values = Enum.GetValues(typeof(BeamDistributedLoadModel.LoadSchema));
+            foreach (BeamDistributedLoadModel.LoadSchema val in values)
                 type_param.AddNamedValue(val.GetDescription(), (int)val);
 
             CoordinateSystemParam cs_param = new CoordinateSystemParam
@@ -310,7 +310,7 @@ namespace BridGHe.Grasshopper.Components.Loads
         public override Guid ComponentGuid => new Guid("517beddc-0100-4a8f-ab0c-90e17fe2791f");
 
         // Private menu choices preserve the published values, order and descriptions.
-        private static class DistributedLoadChoices
+        private static class BeamDistributedLoadModel
         {
             internal enum LoadSchema
             {

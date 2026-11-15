@@ -28,7 +28,7 @@ namespace BridGHe.Grasshopper.Components.Loads
             pManager.AddGenericParameter("LoadCase", "LC", "The load case", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Type", "T", "The type of temperature", GH_ParamAccess.item);
             Param_Integer param_type = (Param_Integer)pManager[2];
-            string[] types = Enum.GetNames(typeof(TemperatureChoices.LoadType));
+            string[] types = Enum.GetNames(typeof(NodeTemperatureLoadModel.LoadType));
             for (int i = 0; i < types.Length; i++)
                 param_type.AddNamedValue(types[i], i);
             pManager.AddNumberParameter("Value", "V", "The value of the temperature", GH_ParamAccess.item);
@@ -84,7 +84,7 @@ namespace BridGHe.Grasshopper.Components.Loads
         public override Guid ComponentGuid => new Guid("65b74dea-1358-43a8-9fe4-571ab8ac7f11");
 
         // Private menu choices preserve the published values, order and descriptions.
-        private static class TemperatureChoices
+        private static class NodeTemperatureLoadModel
         {
             internal enum LoadType { Reference, Fixed, Initial }
         }

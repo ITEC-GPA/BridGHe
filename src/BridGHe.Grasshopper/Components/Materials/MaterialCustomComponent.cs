@@ -32,14 +32,14 @@ namespace BridGHe.Grasshopper.Components.Materials
             // Kind param
             pManager.AddIntegerParameter("Kind", "K", "The kind of the material", GH_ParamAccess.item);
             Param_Integer param = (Param_Integer)pManager[1];
-            Array values = Enum.GetValues(typeof(MaterialChoices.MaterialKind));
-            foreach (MaterialChoices.MaterialKind val in values)
+            Array values = Enum.GetValues(typeof(MaterialModel.MaterialKind));
+            foreach (MaterialModel.MaterialKind val in values)
                 param.AddNamedValue(val.GetDescription(), (int)val);
             pManager.AddIntegerParameter("Units", "U", "The measure units", GH_ParamAccess.item);
             // Mesaure units param
             Param_Integer type_param = (Param_Integer)pManager[2];
-            values = Enum.GetValues(typeof(UnitChoices.ModelUnits));
-            foreach (UnitChoices.ModelUnits val in values)
+            values = Enum.GetValues(typeof(ModelModel.ModelUnits));
+            foreach (ModelModel.ModelUnits val in values)
                 type_param.AddNamedValue(val.GetDescription(), (int)val);
             // Material data params
             _paramsIdx = new List<int>()
@@ -195,7 +195,7 @@ namespace BridGHe.Grasshopper.Components.Materials
         public override Guid ComponentGuid => new Guid("9404d0c7-cca7-4f29-b7f5-baf001386675");
 
         // Private menu choices preserve the published values, order and descriptions.
-        private static class UnitChoices
+        private static class ModelModel
         {
             internal enum ModelUnits
             {
@@ -205,7 +205,7 @@ namespace BridGHe.Grasshopper.Components.Materials
                 [System.ComponentModel.Description("PSI (in, lbf, lb, psi, s, btu, F)")] IPS
             }
         }
-        private static class MaterialChoices
+        private static class MaterialModel
         {
             internal enum MaterialKind { Undefined = -1, Steel, Concrete, Aluminium, Rebar }
         }

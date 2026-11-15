@@ -35,8 +35,8 @@ namespace BridGHe.Grasshopper.Components.Tools
 
             pManager.AddIntegerParameter("Units", "U", "The measure units", GH_ParamAccess.item);
             Param_Integer type_param = (Param_Integer)pManager[pManager.ParamCount - 1];
-            Array names = Enum.GetValues(typeof(UnitChoices.ModelUnits));
-            foreach (UnitChoices.ModelUnits name in names)
+            Array names = Enum.GetValues(typeof(ModelModel.ModelUnits));
+            foreach (ModelModel.ModelUnits name in names)
                 type_param.AddNamedValue(name.GetDescription(), (int)name);
 
             pManager.AddGenericParameter("Groups", "G", "The node groups to search", GH_ParamAccess.list);
@@ -122,7 +122,7 @@ namespace BridGHe.Grasshopper.Components.Tools
         public override Guid ComponentGuid => new Guid("35d4ffef-5073-4ead-a931-83a0febedb69");
 
         // Private menu choices preserve the published values, order and descriptions.
-        private static class UnitChoices
+        private static class ModelModel
         {
             internal enum ModelUnits
             {

@@ -34,8 +34,8 @@ namespace BridGHe.Grasshopper.Components
             pManager[pManager.ParamCount - 1].Optional = true;
             pManager.AddIntegerParameter("Units", "U", "The measure units", GH_ParamAccess.item, 2);
             Param_Integer type_param = (Param_Integer)pManager[pManager.ParamCount - 1];
-            Array names = Enum.GetValues(typeof(UnitChoices.ModelUnits));
-            foreach (UnitChoices.ModelUnits name in names)
+            Array names = Enum.GetValues(typeof(ModelModel.ModelUnits));
+            foreach (ModelModel.ModelUnits name in names)
                 type_param.AddNamedValue(name.GetDescription(), (int)name);
             pManager.AddTextParameter("Properties name", "PNs", "The beam property names to search", GH_ParamAccess.list);
             pManager[pManager.ParamCount - 1].Optional = true;
@@ -106,7 +106,7 @@ namespace BridGHe.Grasshopper.Components
         public override Guid ComponentGuid => new Guid("7bdf1a95-62ad-45a7-8768-e1fd7fdc69a8");
 
         // Private menu choices preserve the published values, order and descriptions.
-        private static class UnitChoices
+        private static class ModelModel
         {
             internal enum ModelUnits
             {
