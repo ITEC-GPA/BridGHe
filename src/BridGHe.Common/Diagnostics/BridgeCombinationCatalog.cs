@@ -25,7 +25,7 @@ public sealed class BridgeCombinationCatalog
     /// analysed GPC source (<see cref="BridgeActionDefinition.GpcSource"/>): its name, the units of its results catalogue, the names of its
     /// load cases, combinations and stored results (the catalogue labels). The same rows, warnings and messages as the FEM catalogue (the
     /// GPC source knows every case of the FEM source: the reader registers the cases of the element loads, combinations, stages and moving
-    /// paths), compared by the test host until R6.5.
+    /// paths).
     /// </summary>
     public static BridgeCombinationCatalog FromGpc(IReadOnlyList<Gpc.GpcModels.Conversion> references, IEnumerable<BridgePhaseDefinition> definitions) =>
         new BridgeCombinationCatalog(references == null ? null : references.Select(r => r == null ? (bool?)null : r.Report.Units.Units == Gpc.DefinitionUnits.Nmm).ToArray(),

@@ -35,8 +35,8 @@ namespace BridGHe.Grasshopper.Components.Tools
 
             pManager.AddIntegerParameter("Units", "U", "The measure units", GH_ParamAccess.item);
             Param_Integer type_param = (Param_Integer)pManager[pManager.ParamCount - 1];
-            Array names = Enum.GetValues(typeof(ModelModel.ModelUnits));
-            foreach (ModelModel.ModelUnits name in names)
+            Array names = Enum.GetValues(typeof(UnitChoices.ModelUnits));
+            foreach (UnitChoices.ModelUnits name in names)
                 type_param.AddNamedValue(name.GetDescription(), (int)name);
 
             pManager.AddTextParameter("Properties name", "PNs", "The plate property names to search", GH_ParamAccess.list);
@@ -129,9 +129,8 @@ namespace BridGHe.Grasshopper.Components.Tools
         /// </summary>
         public override Guid ComponentGuid => new Guid("65613b73-39f2-4a8f-8212-96c44a775516");
 
-        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
-        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
-        private static class ModelModel
+        // Private menu choices preserve the published values, order and descriptions.
+        private static class UnitChoices
         {
             internal enum ModelUnits
             {

@@ -21,9 +21,6 @@ namespace BridGHe.Grasshopper.DataTypes
 
         public override string TypeDescription => "Define a beam property";
 
-        /// <summary>F6 (L11): the GPC contract of this composite property (<see cref="GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition"/>,
-        /// the section of the checks with the rules of Super Element Check, <see cref="Common.Gpc.GpcCompositeSections"/>): the datum this type
-        /// carries once the FEM value goes (chain E); meanwhile built from the FEM value, once per value.</summary>
         public GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition Definition => Gpc;
 
         #endregion
@@ -31,7 +28,7 @@ namespace BridGHe.Grasshopper.DataTypes
         /// <summary>
         /// R6.1 (frozen API for R6.2, §1bis): the GPC datum of this GH_CompositeBeamProperty, the composite section definition of the Checker: the one a GPC builder attached
         /// (<see cref="AttachGpc"/>), the one read from a file (BGHGPC1), the former payload read by value
-        /// (<see cref="Common.Gpc.GpcLegacyPayloads"/>), otherwise the conversion of the FEM value, once per value. Immutable by convention.
+        /// (<see cref="Common.Gpc.GpcLegacyPayloads"/>), with no runtime conversion from a removed model type. Immutable by convention.
         /// </summary>
         public GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition Gpc
         {
@@ -43,10 +40,10 @@ namespace BridGHe.Grasshopper.DataTypes
             }
         }
 
-        /// <summary>True when <see cref="Gpc"/> was attached by a GPC builder or read from a file (not converted from the FEM value).</summary>
+        /// <summary>True when <see cref="Gpc"/> was attached by a GPC builder or read from a file (including legacy payloads read by value).</summary>
         public bool HasAttachedGpc { get; private set; }
 
-        /// <summary>Attaches the GPC datum built on GPC for the current FEM value.</summary>
+        /// <summary>Attaches the GPC datum to this wrapper.</summary>
         public void AttachGpc(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition datum)
         {
             _gpc = datum ?? throw new ArgumentNullException(nameof(datum)); _gpcOf = Value; HasAttachedGpc = true;

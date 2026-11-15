@@ -47,10 +47,10 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             }
         }
 
-        /// <summary>True when <see cref="Gpc"/> was attached by a GPC builder (not converted from the FEM value).</summary>
+        /// <summary>True when <see cref="Gpc"/> was attached by a GPC builder (including legacy payloads read by value).</summary>
         public bool HasAttachedGpc { get; private set; }
 
-        /// <summary>Attaches the chain built on GPC for the current FEM value.</summary>
+        /// <summary>Attaches the chain to this wrapper.</summary>
         public void AttachGpc(IReadOnlyList<string> chain)
         {
             if (chain == null) throw new ArgumentNullException(nameof(chain));

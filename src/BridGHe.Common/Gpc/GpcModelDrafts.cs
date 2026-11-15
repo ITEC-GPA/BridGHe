@@ -12,25 +12,10 @@ using BridGHe.Common.Gpc.Legacy;
 namespace BridGHe.Common.Gpc
 {
     /// <summary>
-    /// R6.4 (2), extension (α) of the contract of §1bis (approved by the coordinator on 7/11): the drafts of the elements of a model (the datum
-    /// of a <c>GH_Model</c>), in the order of the elements of the model (nodes, beams, plates): for every element the draft the conversion of
-    /// its FEM value would give (§1bis, <see cref="GpcBeamDrafts.FromFemm(Models.BeamModel, Guid?)"/> and the others), so that the components
-    /// that give the elements of a model back (Decompose Model, Super Element Filter) carry their GPC data without the FEM values. The GPC model
-    /// of a conversion is resolved (restraints and springs in one, labels beyond the first dropped, node loads summed, beams re-anchored and
-    /// renumbered): the draft of an element cannot be derived from it exactly, so the model carries them.
-    /// <list type="bullet">
-    /// <item>Producers: Build Model (<see cref="LegacyBuildModel.Build"/>: the drafts after the IDs, the merges by GH GUID and by position, the
-    /// nodes created at the beam ends and plate corners, the re-anchoring), the reader of a former model by value (<see cref="GpcLegacyPayloads.Model"/>),
-    /// Attach Moving Paths (unchanged), the analysis components (those of their input), the persistence of the model (<see cref="Chunk"/>).
-    /// A model without drafts (null): a conversion of its FEM value, or a producer not on (α) yet; its elements keep the conversion of their
-    /// FEM values until R6.5.</item>
-    /// <item>Identity: that of the producer (the drafts of Build Model keep the identity of their first input datum, a node it creates that of
-    /// the created node); until R6.5 Decompose Model and Super Element Filter give every draft the identity of the conversion of its FEM value
-    /// (<see cref="GpcDrafts.Reidentify(LegacyNodeDraft, Guid)"/>), as every producer of §1bis, and the DRAFT CHECK compares them with that
-    /// conversion on every run.</item>
-    /// <item>Units: the definition units (<see cref="GpcBeamDrafts.DraftUnits"/>), as every draft.</item>
-    /// </list>
-    /// Immutable by convention: whoever changes a draft copies it.
+    /// Element drafts carried beside a resolved GPC model. Resolution can merge restraints, labels, loads and nodes, so the original
+    /// drafts cannot be reconstructed exactly from the resolved model alone. Build Model, the supported legacy reader, analysis
+    /// inputs and persistence provide them. Consumers require matching element counts and stable element identities; absence is
+    /// reported explicitly and never falls back to removed FEM objects.
     /// </summary>
     public sealed class GpcModelDrafts
     {

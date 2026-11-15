@@ -52,16 +52,6 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             };
         }
 
-        /*public bool CastFrom(object source)
-        {
-            return false; ;
-        }
-
-        public bool CastTo<T>(out T target)
-        {
-            target = default(T);
-            return false;
-        }*/
 
         public override string ToString()
         {

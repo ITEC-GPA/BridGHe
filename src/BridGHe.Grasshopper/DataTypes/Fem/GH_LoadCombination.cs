@@ -28,30 +28,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override bool CastFrom(object source)
         {
-            // TODO: Commentata perchè per commutare i nomi dei load case on oggetti LoadCaseModel bisogna reperirli dal 
-            //  componte FemExport o FemAnalysis
-            /*if (source.GetType() == typeof(GH_String))
-            {
-                string[] toc = source.ToString().Split(new[] { '=' }, StringSplitOptions.RemoveEmptyEntries).
-                    Select(s => s.Trim()).ToArray();
-                if (toc.Length != 2)
-                    throw new FormatException("Invalid format. Must be like \"ComboName=LC1*LI1+LC2*LI2+...\"");
-                Value = new LoadCombinationModel(toc[0]);
-                string[] itms = toc[1].Split(new[] { '+' }, StringSplitOptions.RemoveEmptyEntries);
-                if (itms.Length <= 0)
-                    throw new FormatException("Invalid format. Must be like \"ComboName=LC1*LI1+LC2*LI2+...\"");
-                foreach (string itm in itms)
-                {
-                    string[] parts = itm.Trim().Split(new[] { '*' }, StringSplitOptions.RemoveEmptyEntries);
-                    if (parts.Length != 2)
-                        throw new FormatException("Invalid format. Must be like \"ComboName=LC1*LI1+LC2*LI2+...\"");
-                    _loadCases.Add(parts[0].Trim());
-                    if (!double.TryParse(parts[1].Trim(), out double f))
-                        throw new InvalidCastException("Invalid load increment format");
-                    _increments.Add(f);
-                }
-                return true;
-            }*/
+
             return false;
         }
 
@@ -64,7 +41,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         /// <summary>
         /// R6.1 (frozen API for R6.2, §1bis): the GPC datum of this GH_LoadCombination, the combination by value (name, case records and factors in order): the one a GPC builder attached
         /// (<see cref="AttachGpc"/>), the one read from a file (BGHGPC1), the former payload read by value
-        /// (<see cref="Common.Gpc.GpcLegacyPayloads"/>), otherwise the conversion of the FEM value, once per value. Immutable by convention.
+        /// (<see cref="Common.Gpc.GpcLegacyPayloads"/>), with no runtime conversion from a removed model type. Immutable by convention.
         /// </summary>
         public Common.Gpc.Legacy.LegacyCombinationDraft Gpc
         {
@@ -76,10 +53,10 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             }
         }
 
-        /// <summary>True when <see cref="Gpc"/> was attached by a GPC builder or read from a file (not converted from the FEM value).</summary>
+        /// <summary>True when <see cref="Gpc"/> was attached by a GPC builder or read from a file (including legacy payloads read by value).</summary>
         public bool HasAttachedGpc { get; private set; }
 
-        /// <summary>Attaches the GPC datum built on GPC for the current FEM value.</summary>
+        /// <summary>Attaches the GPC datum to this wrapper.</summary>
         public void AttachGpc(Common.Gpc.Legacy.LegacyCombinationDraft datum)
         {
             _gpc = datum ?? throw new ArgumentNullException(nameof(datum)); _gpcOf = Value; HasAttachedGpc = true;
@@ -88,8 +65,6 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         private Common.Gpc.Legacy.LegacyCombinationDraft _gpc;
         private object _gpcOf;
 
-        /// <summary>R6.1 (frozen API for R6.2): whoever changes the FEM value of this datum in place (Load Combinations parameter, UpdateLoadCases)
-        /// calls this: the datum attached no longer describes it and is dropped (the conversion follows the value). Only for a FEM value.</summary>
         public void ValueChanged() { return;
 }
 

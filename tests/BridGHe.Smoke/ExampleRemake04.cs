@@ -45,15 +45,7 @@ internal static class ExampleRemake04
         if (warnings.Length > 0) throw new Exception(relative + ": " + string.Join("; ", warnings));
     }
 
-    /// <summary>The D3 section results of every Super Element Check of a document, as exact tokens (tree path, source, stresses of points 5 and 8,
-    /// utilization, every check with its status and ratio), in component order.</summary>
-    private static string[] CheckTokens(GH_Document doc) => doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "SuperElementCheckComponent").SelectMany(c =>
-    {
-        var tree = c.Params.Output[0].VolatileData;
-        return Enumerable.Range(0, tree.PathCount).SelectMany(p => tree.get_Branch(p).Cast<IGH_Goo>().Select(g => (BridGHe.Common.Checks.BridgeStressResult)g.ScriptVariable())
-            .Select(r => tree.get_Path(p) + "|" + r.Source?.Label + "|" + B(r.Point5_SteelSigma) + "|" + B(r.Point8_SteelSigma) + "|" + B(r.Stage.MaxUtilization) + "|"
-                + string.Join(";", BridGHe.Common.Checks.BridgeGpc.Checks(r.Stage).Select(k => k.Name + "=" + k.Status + ":" + B(k.Ratio ?? double.NaN)))));
-    }).ToArray();
+
 
     /// <summary>
     /// The result utilities of a remade example against the explicit values of the example (its description and its generator, independent of

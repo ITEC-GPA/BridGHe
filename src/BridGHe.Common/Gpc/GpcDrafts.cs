@@ -9,13 +9,8 @@ using GPC.Model.Persistence;
 namespace BridGHe.Common.Gpc
 {
     /// <summary>
-    /// R6.1 (frozen API for R6.2, §1bis): the primitives the GPC builders of the producer components start from. A builder never changes
-    /// the draft of its input (immutable by convention): it takes a <see cref="Copy(LegacyNodeDraft)"/>, changes the element, its records
-    /// and its report as the reader would read the changed former value (<see cref="LegacyModelImport.NodeDraft"/> and the others: same
-    /// collections, same order, same records), then gives it the identity of its output with <see cref="Reidentify(LegacyNodeDraft, Guid)"/>
-    /// (until R6.5 the identity of the conversion of the FEM output, <see cref="GpcBeamDrafts.Identity(Models.NodeModel)"/>).
-    /// Regression <c>gpc-draft-archive</c>: on every node, beam and plate of the corpus, the copy re-identified equals the conversion with that
-    /// identity bit for bit.
+    /// Immutable-by-convention primitives for GPC builders. Copy the input draft before changing its elements, records or report,
+    /// then assign the stable output identity. Legacy inputs are read by value; no removed FEM CLR type is instantiated.
     /// </summary>
     public static class GpcDrafts
     {

@@ -19,14 +19,7 @@ using Grasshopper.Kernel.Types;
 internal static class BridgeExampleMigration
 {
     private static readonly HashSet<string> OldSimple=new(){"SimpleBridgeSolidComponent","SimpleBridgeTrussComponent","SimpleBridgeConfigurableComponent"};
-    // Older builders also serve as regression fixtures. Upgrade their saved files only
-    // after all assertions on the legacy in-memory graph have completed.
-    internal static int UpgradeGenerated(int result, params string[] prefixes)
-    {
-        if(result!=0)return result;
-        foreach(string prefix in prefixes){int migrated=Run(prefix,true);if(migrated!=0)return migrated;}
-        return 0;
-    }
+
     internal static void Initialize()
     {
         GH_Document.EnableSolutions=false;BridgeMergeTests.Initialize();
@@ -47,7 +40,7 @@ internal static class BridgeExampleMigration
     }
     private static void Replace(IGH_Param from,IGH_Param to)
     {foreach(var r in from.Recipients.ToArray())Wire(r,r.Sources.Select(s=>ReferenceEquals(s,from)?to:s).ToArray());}
-    private static bool Supplied(IGH_Param p)=>p.SourceCount>0 || p is Param_Curve c&&c.PersistentDataCount>0 || p is Param_Number n&&n.PersistentDataCount>0;
+
     private static object Scalar(IGH_Param p)
     {
         if(p.SourceCount==0)

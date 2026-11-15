@@ -7,12 +7,6 @@ using Rhino.Geometry;
 
 namespace BridGHe.Grasshopper.DataTypes
 {
-    /// <summary>
-    /// R6.5 P0 (coordinator, 7/11): what a GH element type reads from its GPC draft when it has no FEM value (<c>Value</c> null): the
-    /// geometry (the drafts are in definition units, as the Rhino document), the bounding box, the label and the text of <c>ToString</c>
-    /// (the layout of the FEM text, with the data the draft has). While the components still build the FEM value beside the draft
-    /// (until P1), the types read the FEM value as before.
-    /// </summary>
     internal static class GpcDraftGeometry
     {
         internal static Point3d Point(GPC.Geometry.Point3d p) => new Point3d(p.X, p.Y, p.Z);

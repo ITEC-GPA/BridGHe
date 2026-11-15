@@ -16,7 +16,7 @@ namespace BridGHe.Common.Gpc.Builders
     /// <para>R6.2 lane A (R62A): the pieces of a node are those of the reader (<c>LegacyModelImport.NewNode</c>, <c>RestraintAssignment</c>,
     /// <c>StiffnessAssignment</c>, <c>FrameAssignment</c>, <c>MomentLoad</c>, <c>Temperature</c>), the same expressions on the same numbers.
     /// A builder refuses (an <see cref="ArgumentException"/> or a <see cref="NotSupportedException"/>, the message of the reader) what the reader
-    /// refuses; the components then attach nothing and the FEM value stays as before (Build Model gives the error, as with the conversion).
+    /// refuses; the caller reports the failure without attaching a draft.
     /// Signatures reported to lane B (stable): <see cref="Create"/>, <see cref="WithFrame"/>, <see cref="WithRestraint"/>, <see cref="WithStiffness"/>,
     /// <see cref="WithLabel"/>, <see cref="WithForce"/>, <see cref="WithMoment"/>, <see cref="WithTemperature"/>.</para>
     /// </summary>

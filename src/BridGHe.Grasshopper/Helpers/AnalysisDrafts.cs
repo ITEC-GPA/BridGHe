@@ -11,7 +11,7 @@ namespace BridGHe.Grasshopper.Helpers
     /// (<see cref="GH_Model.Write(GH_IWriter, bool)"/>): it keeps only the fingerprint of the input they belong to
     /// (<see cref="GpcResultSelection.InputHash"/>, item "DraftsInputHash"). At the first solution after opening the drafts of the live input
     /// are attached to the output again when its fingerprint is the same, as a Run would attach them. With another input the output carries
-    /// no drafts (its elements keep the conversion of their FEM values until R6.5) and the component warns: Run. A document saved before
+    /// no drafts and the component warns that Run is required. A document saved before
     /// (0.3.0, or the integration branch with the drafts in the model) has no fingerprint: nothing is attached, the model keeps what it read.
     /// </summary>
     internal sealed class AnalysisDrafts

@@ -171,7 +171,7 @@ namespace BridGHe.Common.Gpc
             var report = new LegacyImportReport();
             var model = LegacyModelImport.Import(root, identities, toleranceDefinitionUnits, report);
             // R6.4 (2), extension (α): the drafts of its elements, each read by value as the element payloads are, on first use; a payload whose
-            // elements the reader of one value refuses gives none (its elements keep the conversion of their FEM values until R6.5).
+            // elements the reader of one value refuses gives none; downstream consumers must report the missing drafts.
             var drafts = new Lazy<GpcModelDrafts>(() =>
             {
                 try { return GpcModelDrafts.FromLegacy(root, identities); }

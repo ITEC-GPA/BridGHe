@@ -31,7 +31,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         /// <summary>
         /// R6.1 (frozen API for R6.2, §1bis): the GPC datum of this GH_PlateProperty, the GPC plate property (elastic or membrane, definition units): the one a GPC builder attached
         /// (<see cref="AttachGpc"/>), the one read from a file (BGHGPC1), the former payload read by value
-        /// (<see cref="Common.Gpc.GpcLegacyPayloads"/>), otherwise the conversion of the FEM value, once per value. Immutable by convention.
+        /// (<see cref="Common.Gpc.GpcLegacyPayloads"/>), with no runtime conversion from a removed model type. Immutable by convention.
         /// </summary>
         public GPC.Model.ElementProperties.PlateProperty Gpc
         {
@@ -43,7 +43,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             }
         }
 
-        /// <summary>True when <see cref="Gpc"/> was attached by a GPC builder or read from a file (not converted from the FEM value).</summary>
+        /// <summary>True when <see cref="Gpc"/> was attached by a GPC builder or read from a file (including legacy payloads read by value).</summary>
         public bool HasAttachedGpc { get; private set; }
 
         /// <summary>L2C (lane 2c): the bending thickness of a membrane property (N-mm, as the thicknesses of <see cref="Gpc"/>), a BridGHe
@@ -60,7 +60,7 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             set => _bending = value;
         }
 
-        /// <summary>Attaches the GPC datum built on GPC for the current FEM value.</summary>
+        /// <summary>Attaches the GPC datum to this wrapper.</summary>
         public void AttachGpc(GPC.Model.ElementProperties.PlateProperty datum) => AttachGpc(datum, 0);
 
         /// <summary>L2C: <see cref="AttachGpc(GPC.Model.ElementProperties.PlateProperty)"/> with the bending thickness of a membrane
