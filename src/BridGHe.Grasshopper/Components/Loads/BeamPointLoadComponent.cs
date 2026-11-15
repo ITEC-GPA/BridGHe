@@ -111,7 +111,9 @@ namespace BridGHe.Grasshopper.Components.Loads
             Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithPointLoad(beam.Gpc, lc.Gpc, false, a, new GPC.Geometry.Vector3d(p1, p2, p3), id, global);
             // P2K (P1): the GPC path only: the draft built on GPC from the drafts of the beam and the load case record (identity derived from
             // the input draft). Task 179: honour Global for newly solved components; the legacy reader retains its historical interpretation.
-            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), false, a, p1, p2, p3, global));
+            var key = global ? new object[] { GpcOnlyElements.Lazy(() => lc.Gpc), false, a, p1, p2, p3, true }
+                : new object[] { GpcOnlyElements.Lazy(() => lc.Gpc), false, a, p1, p2, p3 }; // Keep the identity of unchanged local loads.
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, key));
         }
 
         public override bool Read(GH_IReader reader)
