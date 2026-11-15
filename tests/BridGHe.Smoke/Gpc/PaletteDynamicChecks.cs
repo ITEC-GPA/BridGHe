@@ -110,6 +110,15 @@ internal static class PaletteDynamicChecks
         SetBeamType(beam, 5); Ports(beam, 4, "Type5");
         SetBeamType(beam, 3); Ports(beam, 8, "Type3 again"); CutoffChoices(beam, "Type3 again");
 
+        // A real list containing both types is a different canvas input: any Cutoff Bar needs its ports.
+        var mixedType = (Param_Integer)beam.Params.Input[1];
+        mixedType.SetPersistentData(new GH_Integer(5));
+        mixedType.ExpireSolution(false); beam.ExpireSolution(false);
+        Equal("mixed Type values", "3,5", string.Join(",", mixedType.PersistentData.AllData(true).OfType<GH_Integer>().Select(v => v.Value)));
+        Ports(beam, 8, "mixed Type3 and Type5");
+        Ports(RoundTrip(beam), 8, "mixed Type archive");
+        SetBeamType(beam, 5); Ports(beam, 4, "mixed list replaced with Type5");
+
         // BeamPointLoadComponent.cs:33-42,50-64,115-119 and BeamPointMomentComponent.cs:33-44,52-66,112-116.
         foreach (var (type, prefix) in new[] { ("BeamPointLoadComponent", "P"), ("BeamPointMomentComponent", "M") })
         {
@@ -184,9 +193,13 @@ internal static class PaletteDynamicChecks
     }
     private static void SetBeamType(GH_Component component, int type)
     {
-        // As the canvas does after a new value: the parameter expires too, otherwise CollectData keeps its previous volatile value.
+        // Task 176: the single-item overload adds a value. Replace the old selection explicitly,
+        // as editing a single canvas value does; retaining [3,5] correctly keeps the cutoff ports.
         var parameter = (Param_Integer)component.Params.Input[1];
+        parameter.PersistentData.Clear();
         parameter.SetPersistentData(new GH_Integer(type));
+        if (parameter.PersistentData.DataCount != 1 || parameter.PersistentData.AllData(true).OfType<GH_Integer>().Single().Value != type)
+            throw new Exception("PAL-DYNAMIC: SetBeamType did not replace the single Type value.");
         parameter.ExpireSolution(false);
         component.ExpireSolution(false);
     }
