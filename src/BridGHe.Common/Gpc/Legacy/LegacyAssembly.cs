@@ -363,7 +363,7 @@ namespace BridGHe.Common.Gpc.Legacy
             if (r == null) throw new NotSupportedException("GpcBuildModelPropertyWithoutSectionDefinition: the beam property '" + draft.Name + "' was built on GPC, without a section in the definition units; Build Model takes it only in N-mm.");
             if (!(draft is ElasticBeamProperty elastic)) throw new NotSupportedException("GpcBuildModelPropertyKind: " + draft.GetType().Name);
             var (property, angle, native) = LegacyModelImport.SectionProperty(r, draft.Name, GPC.Model.Core.ModelValues.CopyValue(elastic.Material), Units,
-                new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport());
+                new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport(), gpcOpenSections: data.Native == null && GpcSections.IsOpen(elastic.Section));
             // PAR (A01): the cutoff law of a draft holds its limits in the definition force unit (the former exporter wrote them in the model
             // unit): in N here, as the reader converts them.
             var law = elastic.CutoffLaw;
@@ -427,7 +427,7 @@ namespace BridGHe.Common.Gpc.Legacy
             beam.ConnectNodes(ni, nj);
             Report.BeamAngles[k + 1] = draft.AngleDeg;
             var start = beam.StartPoint; var end = beam.EndPoint;
-            double axesAngle = draft.AngleDeg + LegacyModelImport.AxesRotationDeg(p.Native); // LIB (A02b): the turn of the axes of a double angle
+            double axesAngle = draft.AngleDeg + LegacyModelImport.AxesRotationDeg(p.Native, p.Property); // 190: same legacy turn for a GPC double angle
             var section = GpcBeamAxes.Section(start, end, axesAngle, p.Angle);
             var principal = GpcBeamAxes.Principal(start, end, axesAngle);
             beam.Assignments.Formulation = p.Formulation;

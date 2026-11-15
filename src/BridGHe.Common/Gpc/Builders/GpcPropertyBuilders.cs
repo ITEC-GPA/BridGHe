@@ -42,7 +42,7 @@ namespace BridGHe.Common.Gpc.Builders
             if (typeName != "Beam" && typeName != "Truss") GpcMaterials.WithoutTable(analysis);
             var recipe = PropertySection(section);
             var units = GpcBeamDrafts.DraftUnits;
-            var (property, angle, native) = LegacyModelImport.SectionProperty(recipe, name ?? "Property", analysis, units, new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport());
+            var (property, angle, native) = LegacyModelImport.SectionProperty(recipe, name ?? "Property", analysis, units, new Dictionary<string, (double, double)>(StringComparer.Ordinal), new LegacyImportReport(), gpcOpenSections: true);
             // PAR (A01, as in 0.3.0): the cutoff data of the inputs (the former component set them on the value; the former CutoffType of the
             // input index: 0 Brittle, any other Ductile, as the former exporter tested it).
             if (formulation == BeamFormulation.CutoffBar)

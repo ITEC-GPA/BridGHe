@@ -74,7 +74,7 @@ namespace BridGHe.Common.Gpc.Builders
             var (beam, _, _) = LegacyModelImport.NewBeam(identity, identity, 0, beamId ?? "", new Point3d(units.ToMm(from.X), units.ToMm(from.Y), units.ToMm(from.Z)),
                 new Point3d(units.ToMm(to.X), units.ToMm(to.Y), units.ToMm(to.Z)), GPC.Model.Core.ModelValues.CopyValue(property.Property), property.Data.Formulation, property.Data.Angle,
                 angleDeg, units.ToMm(offsetX), units.ToMm(offsetY), null, chains.Length > 0 ? () => GroupOf(chains[0]) : null, chains.Select(FullName), report, records,
-                LegacyModelImport.AxesRotationDeg(property.Data.Native));
+                LegacyModelImport.AxesRotationDeg(property.Data.Native, property.Property));
             return new Work(new LegacyBeamDraft(beam, null, angleDeg, property.Data, report) { Records = records });
         }
 
@@ -232,7 +232,7 @@ namespace BridGHe.Common.Gpc.Builders
             var data = property?.Data ?? c.Property;
             if (property != null) { records.PropertyCarryList.Clear(); records.PropertyCarryList.AddRange(PropertyCarries(property.Data)); }
             var (placed, principal, globalOffset) = LegacyModelImport.NewBeam(old.Guid, c.Report.Owner, old.Id - 1, newName ?? old.Name ?? "", newStart ?? old.StartPoint, newEnd ?? old.EndPoint, gpcProperty, formulation,
-                data.Angle, angle, ox, oy, null, firstGroup, names, c.Report, records, LegacyModelImport.AxesRotationDeg(data.Native));
+                data.Angle, angle, ox, oy, null, firstGroup, names, c.Report, records, LegacyModelImport.AxesRotationDeg(data.Native, gpcProperty));
             foreach (var a in old.Attributes.Values) placed.Attributes.Add(a);
             var physical = old.Assignments.Physical;
             if (physical != null)
@@ -313,7 +313,7 @@ namespace BridGHe.Common.Gpc.Builders
             internal LegacyImportReport Report => Draft.Report;
             internal LegacyElementRecords Records => Draft.Records;
             internal BridgeUnits Units => Draft.Report.Units;
-            internal CoordinateSystem Principal => GpcBeamAxes.Principal(Beam.StartPoint, Beam.EndPoint, Draft.AngleDeg + LegacyModelImport.AxesRotationDeg(Draft.Property?.Native));
+            internal CoordinateSystem Principal => GpcBeamAxes.Principal(Beam.StartPoint, Beam.EndPoint, Draft.AngleDeg + LegacyModelImport.AxesRotationDeg(Draft.Property?.Native, Beam.BeamProperty));
             /// <summary>The global eccentricity of the loads: the offset in the principal axes (zero without one), as the reader computes it,
             /// once per beam: every load of the beam shares that instance (the graph of the reader), so a beam with loads gives theirs.</summary>
             internal Vector3d Offset

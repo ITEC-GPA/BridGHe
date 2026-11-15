@@ -1,4 +1,8 @@
 <Project>
+  <!-- A candidate can be tested from an explicit CX bundle without replacing the pinned release in lib/GPC. -->
+  <PropertyGroup>
+    <GpcSetDirectory Condition="'$(GpcSetDirectory)' == ''">$(BridGHeRoot)lib\GPC</GpcSetDirectory>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(GpcPilot)' == 'true'"><DefineConstants>$(DefineConstants);GPC_PILOT</DefineConstants></PropertyGroup>
   <!-- Plain build (the product): the eleven GPC DLLs of the set in lib/GPC, the closure of the references of BridGHe.Common and
        BridGHe.Grasshopper (GPCModelData through GPC.Converter, GPC.Archive through GPC.Model.Persistence, Concrete and Steel through
@@ -13,21 +17,21 @@
     <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\Model\GPC Converter\GPC Converter.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="GPCUtilities"><HintPath>$(BridGHeRoot)lib\GPC\GPCUtilities.dll</HintPath><Private>true</Private></Reference>
-    <Reference Include="GPCGeometry"><HintPath>$(BridGHeRoot)lib\GPC\GPCGeometry.dll</HintPath><Private>true</Private></Reference>
-    <Reference Include="DelaunayMesh"><HintPath>$(BridGHeRoot)lib\GPC\DelaunayMesh.dll</HintPath><Private>true</Private></Reference>
-    <Reference Include="GPCModel" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPCModel.dll</HintPath><Private>true</Private></Reference>
-    <Reference Include="GPCModelData" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPCModelData.dll</HintPath><Private>true</Private></Reference>
-    <Reference Include="GPC.Converter" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPC.Converter.dll</HintPath><Private>true</Private></Reference>
-    <Reference Include="GPC.Model.Persistence" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPC.Model.Persistence.dll</HintPath><Private>true</Private></Reference>
-    <Reference Include="GPC.Archive" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPC.Archive.dll</HintPath><Private>true</Private></Reference>
-    <Reference Include="GPCChecker.Concrete" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPCChecker.Concrete.dll</HintPath><Private>true</Private></Reference>
-    <Reference Include="GPCChecker.Steel" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPCChecker.Steel.dll</HintPath><Private>true</Private></Reference>
-    <Reference Include="GPCChecker.CompositeBridge" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPCChecker.CompositeBridge.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCUtilities"><HintPath>$(GpcSetDirectory)\GPCUtilities.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCGeometry"><HintPath>$(GpcSetDirectory)\GPCGeometry.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="DelaunayMesh"><HintPath>$(GpcSetDirectory)\DelaunayMesh.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCModel" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(GpcSetDirectory)\GPCModel.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCModelData" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(GpcSetDirectory)\GPCModelData.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPC.Converter" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(GpcSetDirectory)\GPC.Converter.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPC.Model.Persistence" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(GpcSetDirectory)\GPC.Model.Persistence.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPC.Archive" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(GpcSetDirectory)\GPC.Archive.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCChecker.Concrete" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(GpcSetDirectory)\GPCChecker.Concrete.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCChecker.Steel" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(GpcSetDirectory)\GPCChecker.Steel.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCChecker.CompositeBridge" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(GpcSetDirectory)\GPCChecker.CompositeBridge.dll</HintPath><Private>true</Private></Reference>
     <Reference Include="GPCChecker.Concrete" Condition="'$(GpcPilot)' == 'true'"><HintPath>$(GpcCheckerDir)GPCChecker.Concrete.dll</HintPath><Private>true</Private></Reference>
     <Reference Include="GPCChecker.Steel" Condition="'$(GpcPilot)' == 'true'"><HintPath>$(GpcCheckerDir)GPCChecker.Steel.dll</HintPath><Private>true</Private></Reference>
     <Reference Include="GPCChecker.CompositeBridge" Condition="'$(GpcPilot)' == 'true'"><HintPath>$(GpcCheckerDir)GPCChecker.CompositeBridge.dll</HintPath><Private>true</Private></Reference>
-    <None Include="$(BridGHeRoot)lib\GPC\release-set.json" Link="gpc-release-set.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(GpcSetDirectory)\release-set.json" Link="gpc-release-set.json" CopyToOutputDirectory="PreserveNewest" />
     <!-- System.Text.Json 10.0.13 and its .NET 8 dependencies (System.Text.Encodings.Web, System.IO.Pipelines) ship with the plug-in, as in
          ReBear and BridGHe 0.3.0 (user decision of 14/11/2026). Rhino 8 loads the framework's System.Text.Json 8 at start-up, before any
          plug-in, and answers the plug-ins' requests for 10 with it: in Rhino the plug-in runs on 8; the test hosts, which carry 10, run on 10. -->
@@ -54,6 +58,6 @@
     </GetFileHash>
     <Error Condition="'$(_GpcMathNetActual)' != '$(GpcMathNetSha256)'" Text="MathNet.Numerics diverso dal file comune ai plug-in gPC (net48, SHA-256 $(GpcMathNetSha256)): $(GpcMathNetFile) ha SHA-256 $(_GpcMathNetActual)." />
     <Error Condition="!Exists('%(Reference.HintPath)') and '%(Reference.HintPath)' != ''" Text="Libreria mancante: %(Reference.HintPath). Ripristinare il set GPC fissato in lib/GPC." />
-    <Exec Command="powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(BridGHeRoot)tools\verify_gpc_set.ps1&quot; $(GpcValidationArguments)" />
+    <Exec Command="powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(BridGHeRoot)tools\verify_gpc_set.ps1&quot; -Directory &quot;$(GpcSetDirectory)&quot; $(GpcValidationArguments)" />
   </Target>
 </Project>

@@ -18,5 +18,8 @@ foreach ($name in $names) {
     if ($digest -ne $entries[0].sha256) { throw "Hash GPC diverso dal set: $name" }
     if ([Reflection.AssemblyName]::GetAssemblyName($file).Version.ToString() -ne $entries[0].assemblyVersion) { throw "Versione GPC diversa dal manifest: $name" }
 }
+# T/C/Angle are now pure Model sections: the older Converter silently falls back to BXS.
+$converterVersion = [version]($manifest.files | Where-Object file -eq 'GPC.Converter.dll').assemblyVersion
+if ($converterVersion -lt [version]'2.23.0.0') { throw 'T/C/Angle GPC richiedono GPC.Converter >= 2.23.0.0 in un set coerente; AW non contiene il mapping nativo. Per il 190 usare il set CX e GpcAllowCandidate=true.' }
 if ($manifest.candidate) { Write-Warning "GPC: set CANDIDATO, $($names.Count) DLL verificate. Non e un rilascio ufficiale delle librerie." }
 else { Write-Host "GPC: $($names.Count) DLL verificate contro il manifest del set rilasciato." }
