@@ -85,7 +85,14 @@ namespace BridGHe.Grasshopper.Helpers
 
         private static void Bind(GH_Document document, State state)
         {
-            var parameters = Parameters(document).ToDictionary(p => p.InstanceGuid);
+            if (PendingReads.Count == 0) return;
+            var parameters = new Dictionary<Guid, IGH_Param>();
+            foreach (var parameter in Parameters(document))
+            {
+                // A damaged document can repeat an InstanceGuid. Keep the first owner instead of throwing in SolutionStart.
+                Guid id = parameter.InstanceGuid;
+                if (!parameters.ContainsKey(id)) parameters.Add(id, parameter);
+            }
             foreach (var pending in PendingReads.ToArray())
             {
                 if (pending.DocumentId != Guid.Empty && pending.DocumentId != document.DocumentID) continue;
@@ -115,6 +122,7 @@ namespace BridGHe.Grasshopper.Helpers
 
         private static void Show(GH_Document document, State state)
         {
+            if (state.Messages.Count == 0) return;
             var parameters = new HashSet<IGH_Param>(Parameters(document));
             foreach (var pair in state.Messages.ToArray())
             {
