@@ -98,11 +98,11 @@ internal static class PaletteDynamicChecks
             Ports(restored, 8, "Type3 archive"); CutoffChoices(restored, "Type3 archive");
             if (restored.Params.Input.Count == 8)
             {
-                Equal("archive Type", 3, ((Param_Integer)restored.Params.Input[1]).PersistentData.AllData(true).Single().Value);
-                Equal("archive Max tension", 7.25, ((Param_Number)restored.Params.Input[4]).PersistentData.AllData(true).Single().Value);
-                Equal("archive Max compression", -3.5, ((Param_Number)restored.Params.Input[5]).PersistentData.AllData(true).Single().Value);
-                Equal("archive Cut off type", 1, ((Param_Integer)restored.Params.Input[6]).PersistentData.AllData(true).Single().Value);
-                Equal("archive Keep mass", true, ((Param_Boolean)restored.Params.Input[7]).PersistentData.AllData(true).Single().Value);
+                Equal("archive Type", 3, ((Param_Integer)restored.Params.Input[1]).PersistentData.AllData(true).OfType<GH_Integer>().Single().Value);
+                Equal("archive Max tension", 7.25, ((Param_Number)restored.Params.Input[4]).PersistentData.AllData(true).OfType<GH_Number>().Single().Value);
+                Equal("archive Max compression", -3.5, ((Param_Number)restored.Params.Input[5]).PersistentData.AllData(true).OfType<GH_Number>().Single().Value);
+                Equal("archive Cut off type", 1, ((Param_Integer)restored.Params.Input[6]).PersistentData.AllData(true).OfType<GH_Integer>().Single().Value);
+                Equal("archive Keep mass", true, ((Param_Boolean)restored.Params.Input[7]).PersistentData.AllData(true).OfType<GH_Boolean>().Single().Value);
                 SetBeamType(restored, 5); Ports(restored, 4, "restored Type5");
                 Ports(RoundTrip(restored), 4, "Type5 archive");
             }
@@ -184,7 +184,10 @@ internal static class PaletteDynamicChecks
     }
     private static void SetBeamType(GH_Component component, int type)
     {
-        ((Param_Integer)component.Params.Input[1]).SetPersistentData(new GH_Integer(type));
+        // As the canvas does after a new value: the parameter expires too, otherwise CollectData keeps its previous volatile value.
+        var parameter = (Param_Integer)component.Params.Input[1];
+        parameter.SetPersistentData(new GH_Integer(type));
+        parameter.ExpireSolution(false);
         component.ExpireSolution(false);
     }
     private static GH_Component RoundTrip(GH_Component source)
