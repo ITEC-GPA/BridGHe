@@ -79,7 +79,65 @@ internal static class F7Checks
         finally { Grasshopper.Instances.DocumentServer.RemoveDocument(doc); }
         ReaderPaths();
         GenericArchive();
+        RefusalIndexChecks();
         return Finish("readers");
+    }
+
+    // Task 189: count real parameter visits, without a production counter or test-only callback.
+    private sealed class ScanParameter : Param_GenericObject, IGH_InstanceDescription
+    {
+        internal int GuidReads, HashReads;
+        Guid IGH_InstanceDescription.InstanceGuid { get { GuidReads++; return base.InstanceGuid; } }
+        public override int GetHashCode() { HashReads++; return base.GetHashCode(); }
+    }
+
+    private static void RefusalIndexChecks()
+    {
+        const BindingFlags statics = BindingFlags.NonPublic | BindingFlags.Static;
+        const BindingFlags fields = BindingFlags.NonPublic | BindingFlags.Instance;
+        var type = plugin.GetType("BridGHe.Grasshopper.Helpers.ReadRefusalWarnings", true);
+        var pending = (System.Collections.IList)type.GetField("PendingReads", statics).GetValue(null);
+        var stateType = type.GetNestedType("State", BindingFlags.NonPublic);
+        var bind = type.GetMethod("Bind", statics); var show = type.GetMethod("Show", statics);
+        Check(pending.Count == 0, "189: reader cases left no pending read before the empty-queue measurement");
+        if (pending.Count != 0) return;
+        using (var document = new GH_Document())
+        {
+            var parameters = Enumerable.Range(0, 100).Select(_ => new ScanParameter()).ToArray();
+            foreach (var parameter in parameters) Add(document, parameter);
+            var state = Activator.CreateInstance(stateType, true);
+            foreach (var parameter in parameters) parameter.GuidReads = parameter.HashReads = 0;
+            for (int i = 0; i < 10; i++) bind.Invoke(null, new[] { (object)document, state });
+            int reads = parameters.Sum(p => p.GuidReads);
+            Check(reads == 0, $"189: empty PendingReads, 10 Bind calls on 100 parameters: {reads} InstanceGuid reads (expected 0)");
+            foreach (var parameter in parameters) parameter.HashReads = 0;
+            for (int i = 0; i < 10; i++) show.Invoke(null, new[] { (object)document, state });
+            int hashes = parameters.Sum(p => p.HashReads);
+            Check(hashes == 0, $"189: empty state.Messages, 10 Show calls on 100 parameters: {hashes} hash visits (expected 0)");
+        }
+        using (var document = new GH_Document())
+        {
+            var first = new ScanParameter(); var second = new ScanParameter(); Add(document, first); Add(document, second);
+            second.NewInstanceGuid(first.InstanceGuid); // Make a genuinely damaged document after AddObject's normal ID checks.
+            Check(first.InstanceGuid == second.InstanceGuid, "189: duplicate parameter InstanceGuid actually present");
+            var pendingType = type.GetNestedType("Pending", BindingFlags.NonPublic);
+            var record = Activator.CreateInstance(pendingType, true); var state = Activator.CreateInstance(stateType, true);
+            pendingType.GetField("DocumentId", fields).SetValue(record, document.DocumentID);
+            const string message = "Task 189 duplicate parameter refusal";
+            ((System.Collections.IDictionary)pendingType.GetField("Messages", fields).GetValue(record)).Add(first.InstanceGuid, new HashSet<string> { message });
+            pending.Add(record);
+            try
+            {
+                bool bound = true;
+                try { bind.Invoke(null, new[] { (object)document, state }); }
+                catch (TargetInvocationException error) { bound = false; Console.WriteLine("189 Bind exception: " + error.InnerException); }
+                Check(bound, "189: duplicate InstanceGuid does not throw from Bind/SolutionStart");
+                if (bound) show.Invoke(null, new[] { (object)document, state });
+                Check(bound && Warnings(first).Contains(message) && !Warnings(second).Contains(message), "189: first parameter owns the refusal when InstanceGuid is duplicated");
+                Check(bound && pending.Count == 0, "189: the duplicate-ID refusal is consumed once");
+            }
+            finally { pending.Remove(record); }
+        }
     }
 
     private static GH_Chunk Container(GH_Chunk root, Guid id)
@@ -206,9 +264,62 @@ internal static class F7Checks
         cs.RemoveAllSources(); cs.ExpireSolution(false); Solve(doc);
         Check(cs.VolatileData.AllData(true).All(g => g != null && g.IsValid && g.ToString() == "Local") && Warnings(cs).Length == 0, "floating parameter: disconnect restores saved Local");
         BeamLoads();
+        ConnectedBeamFrames();
         PlateLoads();
         F09();
         return Finish("local");
+    }
+
+    private static void ConnectedBeamFrames()
+    {
+        GPC.Geometry.Point3d P(double x, double y, double z = 0) => new(x, y, z);
+        var frames = new (string Name, GPC.Geometry.CoordinateSystem Frame, bool Global)[]
+        {
+            ("Global", GpcLoadFrames.Global(), true),
+            ("stretched Global", new(P(0, 0), P(2, 0), P(0, 3), "Stretched"), true),
+            ("off-axis plane Global", new(P(0, 0), P(5, 0), P(4, 2), "Plane"), true),
+            ("translated", new(P(1, 0), P(2, 0), P(1, 1), "Translated"), false),
+            ("rotated", new(P(0, 0), P(0, 1), P(-1, 0), "Rotated"), false)
+        };
+        var beam = GpcBeamBuilders.New(P(100, 200, 300), P(3100, 4200, 300),
+            GpcFixtures.RectangleProperty(), null, 0, 0, 0, Guid.NewGuid(), "189 inclined");
+        var loadCase = GpcCaseBuilders.Case("189 Q", false);
+        foreach (var frame in frames)
+        foreach (string type in new[] { "BeamDistributedLoadComponent", "BeamPointLoadComponent", "BeamPointMomentComponent" })
+        for (int axis = 0; axis < 3; axis++)
+        {
+            using var document = new GH_Document();
+            var component = (GH_Component)Activator.CreateInstance(plugin.GetType("BridGHe.Grasshopper.Components.Loads." + type, true)); Add(document, component);
+            ((Param_GenericObject)component.Params.Input[0]).SetPersistentData(Goo("GH_Beam", beam));
+            ((Param_GenericObject)component.Params.Input[1]).SetPersistentData(Goo("GH_LoadCase", loadCase));
+            var input = component.Params.Input.Single(p => p.Name == "Coordinate System"); Menu(input, "Local");
+            var source = new Param_GenericObject(); Add(document, source); source.SetPersistentData(Goo("GH_CoordinateSystem", frame.Frame)); input.AddSource(source);
+            bool moment = type == "BeamPointMomentComponent", distributed = type == "BeamDistributedLoadComponent";
+            if (distributed) { ((Param_Integer)component.Params.Input[4]).SetPersistentData(axis); Number(component, "PA", 10); }
+            else { Number(component, (moment ? "M" : "P") + (axis + 1), 10); Number(component, "a", .4); }
+            Solve(document);
+            string at = $"189 {type}, connected {frame.Name}, axis {axis + 1}";
+            var output = component.Params.Output[0].VolatileData.AllData(true).FirstOrDefault(g => g != null && g.IsValid);
+            bool diagnostic = component.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count > 0 || Warnings(component).Length > 0;
+            if (!frame.Global)
+            {
+                Check(output == null, at + ": unsupported absolute frame produces no load");
+                Check(diagnostic, at + ": explicit refusal, same rule as distributed loads");
+                continue;
+            }
+            Check(output != null && !diagnostic && Warnings(input).Length == 0, at + ": normalized Global accepted without a diagnostic");
+            if (output == null) continue;
+            var draft = (LegacyBeamDraft)output.GetType().GetProperty("Gpc").GetValue(output);
+            double[] Vector(LegacyBeamDraft value)
+            {
+                var load = value.Beam.Assignments.Loads.Single();
+                return distributed ? load.StartIntensity.GetGlobalForces() : ((PointLoad)load.Concentrated).GetGlobalForces();
+            }
+            bool Expected(double[] vector) => Enumerable.Range(0, 3).All(i => Math.Abs(vector[(moment ? 3 : 0) + i] - (i == axis ? 10 : 0)) < 1e-10);
+            Check(Expected(Vector(draft)), at + ": exact global vector in N / N mm (N/mm for distributed load)");
+            var (data, records) = GpcDraftArchive.Write(draft);
+            Check(Expected(Vector(GpcDraftArchive.ReadBeam(data, records))), at + ": GPC archive retains the vector");
+        }
     }
 
     private static void PlateLoads()
