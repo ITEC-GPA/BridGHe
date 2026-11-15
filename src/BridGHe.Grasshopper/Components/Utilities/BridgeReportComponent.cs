@@ -109,12 +109,15 @@ public sealed class BridgeReportComponent : GH_Component
                     string caption = xml.Root.Element(ns + "title")?.Value ?? xml.Descendants(ns + "text").FirstOrDefault()?.Value ?? "Grafico " + (figures.Count + 1);
                     figures.Add(new(caption, memory.ToArray(), preview.Image.Width, preview.Image.Height, svg));
                 }
+            // Task 195: above BridgeWordReport.DefaultAttachmentResults results the report is an index (File) with attachments in a folder beside it.
             var result = BridgeWordReport.Write(Resolve(template), Resolve(output), data, topics.Select(t => (BridgeReportTopic)t), figures, overwrite);
             da.SetData(0, result.File); da.SetData(3, result.Id); da.SetDataList(2, result.Warnings);
             da.SetDataList(1, new[] { $"{result.Results} risultati; {result.Checks} voci; {result.Missing} esiti attivi senza WR.",
-                "Capitoli: Riepilogo, " + string.Join(", ", topics.Distinct().OrderBy(t => t).Select(t => BridgeReportData.TopicNames[t])), "Archivio incorporato: bridghe/report.json" });
+                "Capitoli: Riepilogo, " + string.Join(", ", topics.Distinct().OrderBy(t => t).Select(t => BridgeReportData.TopicNames[t])),
+                result.Attachments == null ? "Archivio incorporato: bridghe/report.json"
+                    : $"Indice con {result.Attachments.Length} allegati (al più {BridgeWordReport.DefaultAttachmentResults} risultati ciascuno, per combinazione) nella cartella {Path.GetFileName(result.Folder)}; archivio numerico {Path.GetFileName(result.Archive)}" });
             if (result.Warnings.Length > 0 || result.Missing > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Report generated with warnings: see Warnings and the summary in the document.");
-            Message = "DOCX";
+            Message = result.Attachments == null ? "DOCX" : "DOCX + " + result.Attachments.Length;
         }
         catch (Exception e) { Message = "Error"; AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message); }
     }

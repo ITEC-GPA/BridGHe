@@ -86,7 +86,8 @@ internal static class BridgeReportTests
         BridgeWordReport.Write(dotx,minimal,data,Array.Empty<BridgeReportTopic>(),overwrite:true);
         Require(Part(minimal,"[Content_Types].xml").Contains("wordprocessingml.document.main+xml")&&!Part(minimal,"[Content_Types].xml").Contains("wordprocessingml.template.main+xml"),"DOTX not converted to DOCX content type.");
         Require(!Directory.EnumerateFiles(folder,".bridghe-report-*").Any(),"Failed writes leaked temporary files.");
-        Console.WriteLine($"REPORT PASS: {checks} assertions; native values, missing WR, ties, template styles/headers, chapter selection, split markers, archives and safe file handling.");
+        Divided(folder, result);
+        Console.WriteLine($"REPORT PASS: {checks} assertions; native values, missing WR, ties, template styles/headers, chapter selection, split markers, archives, index with attachments and safe file handling.");
 
         void MustFail(Action action,string label) {try {action();}catch(Exception e) when(e is IOException or ArgumentException or UnauthorizedAccessException){checks++;return;}throw new Exception("REPORT expected failure: "+label);}
         string Modified(string name,Action<XDocument> edit)
@@ -95,5 +96,128 @@ internal static class BridgeReportTests
             using var zip=ZipFile.Open(path,ZipArchiveMode.Update);var entry=zip.GetEntry("word/document.xml");XDocument xml;
             using(var s=entry.Open())xml=XDocument.Load(s);edit(xml);entry.Delete();using(var s=zip.CreateEntry("word/document.xml").Open())xml.Save(s);return path;
         }
+    }
+
+    private static readonly XNamespace R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+    private static XElement[] Body(string path) => XDocument.Parse(Part(path, "word/document.xml")).Root.Element(W + "body").Elements().ToArray();
+    private static string Style(XElement e) => (string)e.Element(W + "pPr")?.Element(W + "pStyle")?.Attribute(W + "val");
+    private static string Txt(XElement e) => string.Concat(e.Descendants(W + "t").Select(t => t.Value));
+    /// <summary>The body by chapter (Heading 1 text → its elements).</summary>
+    private static System.Collections.Generic.Dictionary<string, XElement[]> Chapters(string path)
+    {
+        var result = new System.Collections.Generic.Dictionary<string, XElement[]>(); string key = ""; var list = new System.Collections.Generic.List<XElement>();
+        foreach (var e in Body(path)) { if (Style(e) == "Heading1") { result[key] = list.ToArray(); key = Txt(e); list = new(); } else list.Add(e); }
+        result[key] = list.ToArray(); return result;
+    }
+    private static string[][] Rows(XElement table) => table.Elements(W + "tr").Skip(1).Select(tr => tr.Elements(W + "tc").Select(Txt).ToArray()).ToArray();
+    /// <summary>The cards or entries of a chapter: Heading 2 text → the texts of its paragraphs and table cells.</summary>
+    private static System.Collections.Generic.Dictionary<string, string> Cards(XElement[] chapter)
+    {
+        var result = new System.Collections.Generic.Dictionary<string, string>(); string key = null; var text = new StringBuilder();
+        void Flush() { if (key != null) result.Add(key, text.ToString().Replace("archivio numerico del report", "archivio incorporato")); text.Clear(); }
+        foreach (var e in chapter)
+        {
+            if (Style(e) == "Heading2") { Flush(); key = Txt(e); continue; }
+            if (key == null || e.Name == W + "sectPr") continue; // the section properties of the template close the last chapter
+            text.Append(e.Name == W + "tbl" ? string.Join("|", e.Descendants(W + "tc").Select(Txt)) : Txt(e)).Append('\n');
+        }
+        Flush(); return result;
+    }
+    private static string Sha(string path) => BridgeReportData.Hash(File.ReadAllBytes(path));
+
+    /// <summary>Task 195: the index with attachments against the single document of the same data: the same rows, cards, entries, governing
+    /// checks and archive, distributed by combination (equal parts above the limit, small combinations together); links and bookmarks; the
+    /// automatic switch at the limit; overwrite, a locked attachment, files of other origin and a later single document.</summary>
+    private static void Divided(string root, BridgeStressResult result)
+    {
+        string folder = Path.Combine(root, "divided"); Directory.CreateDirectory(folder);
+        var names = new[] { "C1", "C2", "C3", "C4", "C5" };
+        var entries = new System.Collections.Generic.List<BridgeReportEntry>();
+        for (int station = 0; station < 5; station++)
+            for (int k = 0; k < 3; k++) entries.Add(new(result.WithSource(new("B" + (station + 1), 100 * station, names[k], "G1")), "{0}[" + entries.Count + "]"));
+        entries.Add(new(result.WithSource(new("B1", 50, "C4", "G1")), "{1}[0]")); entries.Add(new(result.WithSource(new("B2", 50, "C5", "G1")), "{1}[1]"));
+        entries.Add(new(result.WithSource(null), "{2}[0]"));
+        var model = new BridgeReportModel("Modello di prova", "Nmm", 12, 6, 0, null, names.Select(n => new BridgeReportCombination(n, new[] { new BridgeReportFactor("G " + n, 1.35) })).ToArray());
+        var data = BridgeReportData.Create(entries, new("Ponte di prova", "Progetto", "Tecnico", "02"), new BridgeReportData.ReportModelSource(true, id => 1000, names, model));
+        var topics = Enum.GetValues<BridgeReportTopic>();
+        string single = Path.Combine(folder, "single.docx"), index = Path.Combine(folder, "Relazione ponte.docx"), attachments = Path.Combine(folder, "Relazione ponte_allegati");
+        BridgeWordReport.Write(Template, single, data, topics, overwrite: true, layout: BridgeReportLayout.Single);
+        var exported = BridgeWordReport.Write(Template, index, data, topics, attachmentResults: 4);
+        // 18 results, limit 4: C1, C2 and C3 (5 each) in two parts of 3 and 2; C4, C5 and the result without provenance together.
+        Require(exported.File == index && exported.Folder == attachments && exported.Attachments.Length == 7 && exported.Archive == Path.Combine(attachments, "Relazione ponte_archivio.zip"), "Divided report layout.");
+        Require(exported.Attachments.Select(Path.GetFileName).SequenceEqual(Enumerable.Range(1, 7).Select(i => $"Relazione ponte_A{i:00}.docx")) && exported.Attachments.All(File.Exists) && File.Exists(exported.Archive),
+            "Attachment files and archive.");
+        Require(!Directory.EnumerateFileSystemEntries(folder, ".bridghe-report-*").Any(), "Staging folders left beside the report.");
+        // The archive is the snapshot of the single document, byte for byte; the manifest describes every file and result.
+        using (var zip = ZipFile.OpenRead(exported.Archive)) using (var s = zip.GetEntry("bridghe/report.json").Open()) using (var m = new MemoryStream())
+        { s.CopyTo(m); Require(m.ToArray().SequenceEqual(Encoding.UTF8.GetBytes(Part(single, "bridghe/report.json"))), "Archive differs from the snapshot of the single document."); }
+        using (var manifest = JsonDocument.Parse(Part(index, "bridghe/manifest.json")))
+        {
+            var r = manifest.RootElement;
+            Require(r.GetProperty("DataHash").GetString() == data.DataHash && r.GetProperty("Archive").GetProperty("Sha256").GetString() == Sha(exported.Archive), "Manifest archive identity.");
+            var listed = r.GetProperty("Attachments").EnumerateArray().ToArray();
+            Require(listed.Length == 7 && listed.Select((a, i) => a.GetProperty("Sha256").GetString() == Sha(exported.Attachments[i]) && a.GetProperty("File").GetString() == Path.GetFileName(exported.Attachments[i])).All(x => x), "Manifest attachment hashes.");
+            Require(listed.Select(a => a.GetProperty("Results").GetInt32()).SequenceEqual(new[] { 3, 2, 3, 2, 3, 2, 3 }), "Equal parts above the limit, small combinations together.");
+            Require(r.GetProperty("Results").EnumerateObject().Count() == data.Samples.Length, "Manifest result map.");
+        }
+        using (var zip = ZipFile.OpenRead(index)) Require(!Part(index, "[Content_Types].xml").Contains("/bridghe/report.json") && zip.GetEntry("bridghe/report.json") == null, "The index must not embed the whole archive.");
+        // Content: the single document distributed, nothing lost or repeated.
+        var one = Chapters(single); var idx = Chapters(index);
+        var parts = exported.Attachments.Select(Chapters).ToArray();
+        string[] modelRows(System.Collections.Generic.Dictionary<string, XElement[]> c) => c.TryGetValue("Modello di riferimento", out var e) ? Rows(e.First(x => x.Name == W + "tbl")).Select(x => string.Join("|", x)).ToArray() : Array.Empty<string>();
+        var distributed = parts.SelectMany(modelRows).ToArray();
+        Require(distributed.Length == data.Samples.Length && distributed.OrderBy(x => x, StringComparer.Ordinal).SequenceEqual(modelRows(one).OrderBy(x => x, StringComparer.Ordinal)), "Model rows lost or repeated in the attachments.");
+        Require(!idx["Modello di riferimento"].Any(e => e.Name == W + "tbl"), "The index must not repeat the model table.");
+        Require(parts.Select((c, i) => modelRows(c).All(row => row.Contains(exported.Attachments[i].EndsWith("A07.docx") ? "" : names[i / 2]))).All(x => x), "A row in the attachment of another combination.");
+        var cards = Cards(one["Schede dei casi governanti"]); var split = parts.SelectMany(c => Cards(c["Schede dei casi governanti"])).ToArray();
+        Require(cards.Count > 0 && split.Length == cards.Count && split.All(c => cards.TryGetValue(c.Key, out var v) && v == c.Value), "Cards differ from the single document.");
+        var entriesOne = Cards(one["Tabulato completo delle verifiche"]); var entriesSplit = parts.SelectMany(c => Cards(c["Tabulato completo delle verifiche"])).ToArray();
+        Require(entriesSplit.Length == data.Samples.Length && entriesSplit.All(c => entriesOne.TryGetValue(c.Key, out var v) && v == c.Value), "Appendix entries differ from the single document.");
+        foreach (string chapter in new[] { "Sezioni materiali e dettagli", "Fasi azioni e combinazioni", "Grafici delle verifiche" })
+            Require(idx[chapter].Select(Txt).SequenceEqual(one[chapter].Select(Txt)) && parts.All(c => !c.ContainsKey(chapter)), "Global chapter not kept in the index alone: " + chapter);
+        var governing = Rows(one["Verifiche governanti per voce"].First(e => e.Name == W + "tbl")); var indexed = Rows(idx["Verifiche governanti per voce"].First(e => e.Name == W + "tbl"));
+        Require(governing.Length == indexed.Length && governing.Zip(indexed, (a, b) => a.SequenceEqual(b.Take(4)) && b[4].Length > 0).All(x => x), "Governing checks of the index differ from the single document.");
+        var summaryOne = one["Riepilogo e copertura delle verifiche"].Select(Txt).ToArray(); var summaryIndex = idx["Riepilogo e copertura delle verifiche"];
+        Require(summaryIndex.Take(summaryOne.Length).Select(Txt).Zip(summaryOne, (a, b) => a == b || a.StartsWith("Impronta dati SHA256 " + data.DataHash) && b.StartsWith("Impronta dati SHA256 " + data.DataHash)
+                || a.StartsWith("Segnalazioni aggiuntive nell'archivio numerico") && b.StartsWith("Segnalazioni aggiuntive nell'archivio numerico") && a[^4..] == b[^4..]).All(x => x)
+            && Txt(summaryIndex[summaryOne.Length]) == "Allegati" && Rows(summaryIndex.Skip(summaryOne.Length).First(e => e.Name == W + "tbl")).Length == 7, "Summary of the index differs from the single document or lists no attachments.");
+        // Links: every hyperlink of the index and of the attachments reaches an existing file and, with a fragment, a bookmark in it.
+        foreach (var file in exported.Attachments.Prepend(index))
+        {
+            var rels = XDocument.Parse(Part(file, "word/_rels/document.xml.rels")).Root.Elements().Where(e => (string)e.Attribute("TargetMode") == "External").ToDictionary(e => (string)e.Attribute("Id"), e => (string)e.Attribute("Target"));
+            var used = XDocument.Parse(Part(file, "word/document.xml")).Descendants(W + "hyperlink").Select(h => (string)h.Attribute(R + "id")).ToArray();
+            Require(used.Length > 0 && used.All(rels.ContainsKey), "Hyperlink without relationship: " + Path.GetFileName(file));
+            foreach (var target in used.Select(u => rels[u]).Distinct())
+            {
+                var pieces = target.Split('#'); string path = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(file), Uri.UnescapeDataString(pieces[0])));
+                Require(File.Exists(path), "Broken link " + target + " in " + Path.GetFileName(file));
+                if (pieces.Length > 1) Require(XDocument.Parse(Part(path, "word/document.xml")).Descendants(W + "bookmarkStart").Any(b => (string)b.Attribute(W + "name") == pieces[1]), "Missing bookmark " + target);
+            }
+            var bookmarks = XDocument.Parse(Part(file, "word/document.xml")).Descendants(W + "bookmarkStart").Select(b => (string)b.Attribute(W + "name")).ToArray();
+            Require(bookmarks.Distinct().Count() == bookmarks.Length, "Duplicate bookmarks in " + Path.GetFileName(file));
+            Require(Part(file, "word/styles.xml") == Part(Template, "word/styles.xml") && !Txt(XDocument.Parse(Part(file, "word/document.xml")).Root).Contains("{{BG."), "Template styles or markers in " + Path.GetFileName(file));
+        }
+        Require(exported.Attachments.All(a => XDocument.Parse(Part(a, "word/_rels/document.xml.rels")).Root.Elements().Any(e => (string)e.Attribute("Target") == "../" + Uri.EscapeDataString("Relazione ponte.docx"))), "Attachment without its link to the index.");
+        // The automatic switch: up to the limit one document, above it the index.
+        string automatic = Path.Combine(folder, "auto.docx");
+        Require(BridgeWordReport.Write(Template, automatic, data, topics, attachmentResults: data.Samples.Length).Attachments == null && !Directory.Exists(Path.Combine(folder, "auto_allegati")), "At the limit the report must stay one document.");
+        Require(BridgeWordReport.Write(Template, automatic, data, topics, overwrite: true, attachmentResults: data.Samples.Length - 1).Attachments?.Length == 2, "Above the limit the report must be divided.");
+        // Overwrite: refused without it; a locked attachment keeps the previous delivery; fewer parts replace the previous ones, other files kept.
+        string State() => Sha(index) + string.Concat(Directory.EnumerateFiles(attachments).OrderBy(f => f, StringComparer.Ordinal).Select(f => Path.GetFileName(f) + Sha(f)));
+        string before = State();
+        MustFail(() => BridgeWordReport.Write(Template, index, data, topics, attachmentResults: 4), "divided overwrite protection");
+        using (new FileStream(exported.Attachments[2], FileMode.Open, FileAccess.Read, FileShare.None))
+            MustFail(() => BridgeWordReport.Write(Template, index, data, topics, overwrite: true, attachmentResults: 4), "locked attachment");
+        Require(State() == before, "The previous delivery changed after a refused generation.");
+        File.WriteAllText(Path.Combine(attachments, "nota.txt"), "nota dell'utente");
+        var again = BridgeWordReport.Write(Template, index, data, topics, overwrite: true, attachmentResults: 6);
+        Require(again.Attachments.Length == 4 && Directory.EnumerateFiles(attachments).Count() == 5 && !File.Exists(Path.Combine(attachments, "Relazione ponte_A05.docx")), "Stale attachments of the previous generation.");
+        var kept = Directory.EnumerateDirectories(folder, "Relazione ponte_allegati_precedente-*").ToArray();
+        Require(kept.Length == 1 && File.Exists(Path.Combine(kept[0], "nota.txt")) && again.Warnings.Any(w => w.Contains("non scritti da BridGHe")), "A file of the user in the folder must be kept and said.");
+        var later = BridgeWordReport.Write(Template, index, data, topics, overwrite: true, layout: BridgeReportLayout.Single);
+        Require(later.Attachments == null && Directory.Exists(attachments) && later.Warnings.Any(w => w.Contains("generazione precedente")), "A later single document must leave and report the folder.");
+        Require(!Directory.EnumerateFileSystemEntries(folder, ".bridghe-report-*").Any(), "Temporary files or folders leaked.");
+
+        void MustFail(Action action, string label) { try { action(); } catch (Exception e) when (e is IOException or ArgumentException or UnauthorizedAccessException) { checks++; return; } throw new Exception("REPORT expected failure: " + label); }
     }
 }

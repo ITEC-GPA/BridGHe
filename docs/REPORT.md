@@ -4,7 +4,7 @@
 
 ## Collegamenti essenziali
 
-1. Collegare il **Results** completo di Section Check, Super Element Check o Bridge Detail Check. Il componente riceve l'intero albero, conserva i percorsi e produce un solo documento.
+1. Collegare il **Results** completo di Section Check, Super Element Check o Bridge Detail Check. Il componente riceve l'intero albero e conserva i percorsi. Fino a 1000 risultati produce un solo documento; oltre, un indice con allegati (vedi [Report grandi: indice e allegati](#report-grandi-indice-e-allegati)).
 2. Impostare **Template** con un `.docx` o `.dotx` predisposto con i segnaposto descritti sotto.
 3. Impostare **File** con il DOCX di destinazione, diverso dal template.
 4. Collegare una **Value List a Topics**: si trasforma automaticamente in una checklist con gli argomenti disponibili.
@@ -29,9 +29,31 @@ Senza collegamenti a Topics sono selezionati 0–5. La checklist conserva le sce
 
 La selezione dei capitoli riguarda l'impaginazione, non filtra le verifiche usate per il riepilogo. Per limitare l'ambito del report selezionare consapevolmente i risultati a monte.
 
+### Report grandi: indice e allegati
+
+Dalla 0.4.1, con più di **1000 risultati** il report è diviso (scelta dell'utente del 15/11/2026, variante «indice e allegati» del compito 186). Fino a 1000 risultati resta il documento unico di prima, con l'archivio numerico incorporato. La divisione è automatica: il componente non ha ingressi nuovi e i file GH salvati si riaprono uguali.
+
+Accanto al file indicato in **File**, per esempio `Report_50_REV003.docx`, il componente scrive:
+
+| File | Contenuto |
+|---|---|
+| `Report_50_REV003.docx` | **Indice**: riepilogo e copertura, sezioni, fasi e combinazioni, verifiche governanti per voce, grafici; l'elenco degli allegati con i collegamenti; il manifest `bridghe/manifest.json` (file, SHA-256, allegato di ogni risultato). |
+| `Report_50_REV003_allegati\Report_50_REV003_A01.docx` … `A36.docx` | **Allegati**, uno per combinazione: le righe della tabella del modello, le schede dei casi governanti e, se scelto, il tabulato completo dei propri risultati. |
+| `Report_50_REV003_allegati\Report_50_REV003_archivio.zip` | L'**archivio numerico** `bridghe/report.json`, lo stesso che il documento unico incorpora. |
+
+Ogni allegato contiene al più 1000 risultati. Una combinazione con più risultati è divisa in parti uguali consecutive (`parte 1 di 2`, …); combinazioni piccole consecutive condividono un allegato fino al limite. I risultati senza provenienza FEM vanno in fondo. I casi governanti, le parità e i massimi sono scelti **una sola volta su tutti i risultati**, prima della divisione: nessun allegato è un calcolo autonomo e un massimo letto in un allegato non è il massimo del ponte. Contenuto e numeri sono quelli del documento unico, distribuiti fra indice e allegati.
+
+Nella tabella delle verifiche governanti dell'indice la colonna **Allegato** apre l'allegato del risultato alla sua scheda (segnalibro con l'ID del risultato, per esempio `R00001`). L'elenco degli allegati nel riepilogo apre ciascun file; ogni allegato ha in testa il collegamento all'indice. I collegamenti sono relativi: **tenere insieme l'indice e la cartella degli allegati**. Un file spostato da solo perde i collegamenti; l'archivio numerico resta nella cartella.
+
+Con **Overwrite** il componente sostituisce indice, allegati e archivio della generazione precedente, anche se ora gli allegati sono meno. File di altra origine trovati nella cartella non vengono cancellati: sono spostati in `…_allegati_precedente-<data>` e segnalati in Warnings. Se un file è aperto in Word, Generate si ferma prima di scrivere e la consegna precedente resta intatta. Un documento unico generato più tardi con lo stesso nome lascia la vecchia cartella degli allegati e lo segnala.
+
+La generazione scrive prima tutto in una cartella temporanea accanto alla destinazione e pubblica con rinomine.
+
 ### Modelli grandi
 
-La 0.4.0 evita la precedente duplicazione dei dati del modello per ogni risultato. Il report del ponte 50 resta impegnativo: nella misura F7 riportata dal coordinatore Build richiede 12 s, verifiche 47 s e **la sola generazione Word 927 s**; il totale delle tre fasi è 986 s, circa 16 min 26 s, prima delle operazioni manuali. Sono misure locali, non tempi massimi garantiti. Premere Generate una volta e attendere; non avviare più generazioni dello stesso documento. Il report storico allegato all'esempio 48 non è una nuova analisi della propria struttura.
+La 0.4.0 evita la precedente duplicazione dei dati del modello per ogni risultato. Il report del ponte 50 restava impegnativo: nella misura F7 riportata dal coordinatore Build richiede 12 s, verifiche 47 s e **la sola generazione Word 927 s**; il totale delle tre fasi è 986 s, circa 16 min 26 s, prima delle operazioni manuali.
+
+Con indice e allegati (0.4.1), sullo stesso esempio 50 REV003 (34.128 risultati, risultati salvati, misura senza interfaccia del 15/11/2026 sullo stesso PC, plug-in 0.4.0 e nuovo a confronto): il documento unico richiede **794 s** e pesa 154 MB (858 MB di XML); indice e allegati richiedono **52 s**. L'indice pesa 3,5 MB (28 MB di XML), ciascuno dei 36 allegati 0,41–0,54 MB (circa 24 MB di XML), l'archivio numerico 135 MB. La memoria del processo cresce durante il report di 10,4 GB con il documento unico e di 2,3 GB con indice e allegati. Sono misure locali, non tempi massimi garantiti. Premere Generate una volta e attendere; non avviare più generazioni dello stesso documento. Il report storico allegato all'esempio 48 non è una nuova analisi della propria struttura.
 
 ## Preparazione di un template Word
 
@@ -74,7 +96,7 @@ Il Model opzionale deve essere il modello BridGHe associato alle verifiche. Forn
 
 ## Tracciabilità e limiti della prima versione
 
-Ogni DOCX include **bridghe/report.json**, accessibile aprendo il documento come archivio ZIP. Contiene identificativo e data, impronta SHA256 del template e dei dati, argomenti scelti, versioni delle librerie, configurazioni, azioni, WR, provenienza, note e segnalazioni. I numeri sono conservati senza l'arrotondamento di presentazione; i valori non finiti sono stringhe JSON esplicite. L'archivio descrive il report e non è un modello da ricalcolare automaticamente.
+Ogni documento unico include **bridghe/report.json**, accessibile aprendo il documento come archivio ZIP; nel report diviso lo stesso file è in `…_archivio.zip` nella cartella degli allegati. Contiene identificativo e data, impronta SHA256 del template e dei dati, argomenti scelti, versioni delle librerie, configurazioni, azioni, WR, provenienza, note e segnalazioni. I numeri sono conservati senza l'arrotondamento di presentazione; i valori non finiti sono stringhe JSON esplicite. L'archivio descrive il report e non è un modello da ricalcolare automaticamente.
 
 Il generatore non ricostruisce lo schema globale del ponte né tutte le formule della libreria. Inserire schema, vincoli e spiegazioni progettuali nel template; le schede riportano i valori nativi disponibili e le note GPC. Non certifica completezza normativa o verifiche non implementate. Il ritiro resta quello già presente nei risultati: nessuna aggiunta implicita.
 

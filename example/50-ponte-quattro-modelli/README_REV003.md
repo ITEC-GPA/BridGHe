@@ -64,7 +64,7 @@ Senza `--publish` lo strumento scrive solo il candidato e le immagini delle fasi
 2. Eseguire **M01**: `Dead` costruisce la mappa delle rigidezze. Prima di questo passo i selettori M02/M03 possono segnalare i casi delle travi mancanti, perché le travi composte attendono la mappa. Non eseguire i modelli parziali.
 3. Eseguire **M02, M03, M04**, poi **Moving Static Analysis** nel blocco M03. Controllare percorso, passo, casi generati e associazioni.
 4. **Run** su `Build BridGHe Model`, quindi su `Super Element Check`.
-5. Consultare grafici, pioli e irrigiditori. Generare il report con **Generate**, destinazione `Report_50_REV003.docx`.
+5. Consultare grafici, pioli e irrigiditori. Generare il report con **Generate**, destinazione `Report_50_REV003.docx`. Con i 34.128 risultati del caso completo il report è diviso: `Report_50_REV003.docx` è l'indice; i 36 allegati, uno per combinazione, e l'archivio numerico sono nella cartella `Report_50_REV003_allegati` accanto ([Report grandi](../../docs/REPORT.md#report-grandi-indice-e-allegati)).
 
 I file Straus sono in `calcoli/REV003`. Il GHX distribuito non contiene risultati FEM e non lancia analisi all'apertura. `Moving Static Analysis` conserva i risultati con Run=False finché modello, veicolo e percorso sono invariati; una modifica li invalida e richiede una nuova esecuzione. Dopo il ricalcolo ripetere Build e verificatore.
 

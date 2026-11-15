@@ -20,10 +20,17 @@ internal sealed class BridgeReportContent
     private readonly Dictionary<string, byte[]> parts;
     private int pictureId;
     private static string N(double? value) => BridgeReportData.Number(value);
+    // Task 195: null for the single document; with split and no part the index, with a part that attachment.
+    private readonly BridgeReportSplit split;
+    private readonly BridgeReportPart part;
+    private readonly HashSet<string> members;
+    private readonly Dictionary<string, string> links = new(StringComparer.Ordinal), linkIds = new(StringComparer.Ordinal);
+    private int bookmarkId = 100000;
 
     internal BridgeReportContent(BridgeReportData data, BridgeReportTopic[] selected, IReadOnlyList<BridgeReportFigure> figures,
-        IReadOnlyList<string> warnings, int width, Dictionary<string, byte[]> parts)
+        IReadOnlyList<string> warnings, int width, Dictionary<string, byte[]> parts, BridgeReportSplit split = null, BridgeReportPart part = null)
     { this.data = data; this.selected = selected; this.figures = figures; this.warnings = warnings; this.width = width; this.parts = parts;
+        this.split = split; this.part = part; members = part?.Samples.Select(s => s.Id).ToHashSet(StringComparer.Ordinal);
         XNamespace wp = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing";
         pictureId = BridgeWordReport.Read(parts, "word/document.xml").Descendants(wp + "docPr").Select(e => (int?)e.Attribute("id") ?? 0).DefaultIfEmpty().Max(); }
 
@@ -31,13 +38,62 @@ internal sealed class BridgeReportContent
     internal IEnumerable<XElement> Chapter(string name)
     {
         if (name != "Summary" && !selected.Any(t => t.ToString() == name)) return Array.Empty<XElement>();
+        if (part != null) return name switch { "Summary" => AttachmentSummary(), "Model" => AttachmentModel(), "Critical" => AttachmentCritical(),
+            "Appendix" => AttachmentAppendix(), "Sections" or "Phases" or "Checks" or "Plots" => Array.Empty<XElement>(), _ => throw new ArgumentException("Unknown chapter.") };
         return name switch { "Summary" => Summary(), "Model" => Model(), "Sections" => Sections(), "Phases" => Phases(),
             "Checks" => Checks(), "Critical" => Critical(), "Plots" => Plots(), "Appendix" => Appendix(), _ => throw new ArgumentException("Unknown chapter.") };
+    }
+
+    /// <summary>Task 195: the hyperlinks written by this content (relationship ID → relative target), registered by the writer in the
+    /// relationships of the document.</summary>
+    internal IReadOnlyDictionary<string, string> Links => links;
+    private string LinkId(string target)
+    {
+        if (linkIds.TryGetValue(target, out var id)) return id;
+        id = "bgl" + (links.Count + 1).ToString(CultureInfo.InvariantCulture); links.Add(id, target); linkIds.Add(target, id); return id;
+    }
+    private static XElement LinkRun(string text) => new(W + "r", new XElement(W + "rPr", new XElement(W + "color", new XAttribute(W + "val", "0563C1")),
+        new XElement(W + "u", new XAttribute(W + "val", "single"))), new XElement(W + "t", new XAttribute(XNamespace.Xml + "space", "preserve"), text ?? ""));
+    /// <summary>A hyperlink to another file of the report (relative target, an optional bookmark of that file as fragment).</summary>
+    private XElement Link(string text, string target, string bookmark = null) =>
+        new(W + "hyperlink", new XAttribute(R + "id", LinkId(bookmark == null ? target : target + "#" + bookmark)), new XAttribute(W + "history", "1"), LinkRun(text));
+    /// <summary>The bookmark of a result in its attachment: the card when it has one, else its entry of the full appendix, else its row of the
+    /// model table (null: no chapter of the attachment shows the result by itself).</summary>
+    private string Anchor(string sampleId) =>
+        selected.Contains(BridgeReportTopic.Critical) && split.HasCard(sampleId) ? sampleId
+        : selected.Contains(BridgeReportTopic.Appendix) ? sampleId
+        : selected.Contains(BridgeReportTopic.Model) && data.Model != null ? sampleId : null;
+    private XElement Bookmark(XElement paragraph, string name)
+    {
+        int id = bookmarkId++;
+        var start = new XElement(W + "bookmarkStart", new XAttribute(W + "id", id), new XAttribute(W + "name", name));
+        if (paragraph.Element(W + "pPr") is { } pPr) pPr.AddAfterSelf(start); else paragraph.AddFirst(start);
+        paragraph.Add(new XElement(W + "bookmarkEnd", new XAttribute(W + "id", id)));
+        return paragraph;
+    }
+    /// <summary>The host chapter of the bookmark of a result in this attachment (see <see cref="Anchor"/>).</summary>
+    private bool Hosts(string chapter, string sampleId) => Anchor(sampleId) != null && chapter == (
+        selected.Contains(BridgeReportTopic.Critical) && split.HasCard(sampleId) ? "Critical" : selected.Contains(BridgeReportTopic.Appendix) ? "Appendix" : "Model");
+    /// <summary>The cell of the attachments of results in the governing table of the index: each attachment linked to the first of the results
+    /// in it, or the codes as text when there are many.</summary>
+    private IEnumerable<XElement> AttachmentLinks(IEnumerable<string> sampleIds)
+    {
+        var byPart = sampleIds.Distinct().GroupBy(id => split.PartOf(id).Number).OrderBy(g => g.Key).ToArray();
+        if (byPart.Length > 8) { yield return new XElement(W + "r", new XElement(W + "t", new XAttribute(XNamespace.Xml + "space", "preserve"), split.Codes(byPart.Select(g => g.First())))); yield break; }
+        for (int i = 0; i < byPart.Length; i++)
+        {
+            if (i > 0) yield return new XElement(W + "r", new XElement(W + "t", new XAttribute(XNamespace.Xml + "space", "preserve"), ", "));
+            var p = split.Parts[byPart[i].Key - 1]; string first = byPart[i].OrderBy(x => x, StringComparer.Ordinal).First();
+            yield return Link(p.Code, split.LinkFromIndex(p), Anchor(first));
+        }
     }
     private static XElement P(string text, string style = "Normal") => new(W + "p", new XElement(W + "pPr", new XElement(W + "pStyle", new XAttribute(W + "val", style))),
         new XElement(W + "r", new XElement(W + "t", new XAttribute(XNamespace.Xml + "space", "preserve"), text ?? "")));
     private static XElement H(string text, bool second = false) => P(text, second ? "Heading2" : "Heading1");
-    private XElement Table(string[] headers, IEnumerable<string[]> rows, params double[] weights)
+    private XElement Table(string[] headers, IEnumerable<string[]> rows, params double[] weights) => Table(headers, rows, null, weights);
+    /// <summary>Task 195: <paramref name="decorate"/> (data row index, column, paragraph of the cell) adds links and bookmarks to the cells of the
+    /// index and of the attachments; null for the single document, whose tables are unchanged.</summary>
+    private XElement Table(string[] headers, IEnumerable<string[]> rows, Action<int, int, XElement> decorate, params double[] weights)
     {
         if (weights.Length != headers.Length) weights = Enumerable.Repeat(1.0, headers.Length).ToArray();
         var widths = weights.Select(v => (int)(width * v / weights.Sum())).ToArray(); widths[^1] += width - widths.Sum();
@@ -64,6 +120,7 @@ internal sealed class BridgeReportContent
                     p.Element(W + "pPr").Add(new XElement(W + "keepNext"));
                     p.Element(W + "r").AddFirst(new XElement(W + "rPr", new XElement(W + "b")));
                 }
+                else decorate?.Invoke(index - 1, c, p);
                 tr.Add(new XElement(W + "tc", new XElement(W + "tcPr", new XElement(W + "tcW", new XAttribute(W + "w", widths[c]), new XAttribute(W + "type", "dxa")),
                     new XElement(W + "vAlign", new XAttribute(W + "val", "center")), new XElement(W + "shd", new XAttribute(W + "fill", index == 0 ? "E3EDF4" : "FFFFFF"))), p));
             }
@@ -96,15 +153,29 @@ internal sealed class BridgeReportContent
             g.Key, N(g.Where(r=>r.Check.HasRatio).Select(r=>r.Check.Ratio).DefaultIfEmpty(null).Max()),
             g.Count(r=>r.Check.Active&&!r.Check.HasRatio).ToString(), g.Count(r=>r.Check.HasRatio&&r.Check.Ratio>1).ToString() }), 2.3, 1.2, .9, .9);
         yield return P("Report " + data.Id + " — " + data.Created.ToString("yyyy-MM-dd HH:mm zzz") + ". BridGHe " + data.BridGHeVersion + "; GPC " + data.GpcVersion + ".");
-        yield return P("Impronta dati SHA256 " + data.DataHash + ". Archivio numerico incluso nel DOCX: bridghe/report.json.");
+        yield return P("Impronta dati SHA256 " + data.DataHash + (split == null ? ". Archivio numerico incluso nel DOCX: bridghe/report.json."
+            : ". Archivio numerico nel file " + split.Folder + "/" + split.Archive + " (bridghe/report.json), accanto agli allegati."));
         yield return P("Il report documenta i risultati disponibili e le opzioni di calcolo dichiarate; non esegue nuove analisi né completa verifiche mancanti. " +
             "I riferimenti nelle note sono quelli della libreria e non costituiscono un controllo indipendente di applicabilità normativa.");
         if (warnings.Count > 0)
         {
             yield return H("Segnalazioni", true);
             foreach (var warning in warnings.Take(25)) yield return P(warning);
-            if (warnings.Count > 25) yield return P($"Segnalazioni aggiuntive nell'archivio numerico incorporato: {warnings.Count - 25}.");
+            if (warnings.Count > 25) yield return P(split == null ? $"Segnalazioni aggiuntive nell'archivio numerico incorporato: {warnings.Count - 25}."
+                : $"Segnalazioni aggiuntive nell'archivio numerico {split.Archive}: {warnings.Count - 25}.");
         }
+        if (split == null) yield break;
+        // Task 195: the index lists its attachments, each linked to its file.
+        yield return H("Allegati", true);
+        yield return P($"Il report è diviso in questo indice e in {split.Parts.Count} allegati, raggruppati per combinazione, nella cartella {split.Folder}. " +
+            "L'indice contiene riepilogo, sezioni, fasi, verifiche governanti e grafici, calcolati su tutti i risultati; gli allegati contengono le righe del modello, " +
+            "le schede dei casi governanti e il tabulato dei propri risultati. Nessun allegato ricalcola massimi o casi governanti.");
+        yield return P("Tenere insieme questo file, la cartella degli allegati e l'archivio numerico: un file spostato da solo perde i collegamenti. " +
+            "Gli allegati elencati sotto e i codici della tabella delle verifiche governanti aprono il file corrispondente.");
+        var cards = split.Cards.GroupBy(c => split.PartOf(c.Sample.Id).Number).ToDictionary(g => g.Key, g => g.Count());
+        yield return Table(new[] { "Allegato", "Combinazione", "Risultati", "Schede" }, split.Parts.Select(p => new[] {
+            p.Code, p.Description, p.Samples.Length + " (" + p.Samples[0].Id + " … " + p.Samples[^1].Id + ")", (cards.TryGetValue(p.Number, out int n) ? n : 0).ToString(CultureInfo.InvariantCulture) }),
+            (row, column, paragraph) => { if (column == 0) paragraph.Element(W + "r").ReplaceWith(Link(split.Parts[row].Code, split.LinkFromIndex(split.Parts[row]))); }, .8, 2.9, 1.5, .7);
     }
     private IEnumerable<XElement> Model()
     {
@@ -113,8 +184,36 @@ internal sealed class BridgeReportContent
         var m = data.Model;
         yield return P($"{m.Name}. Unità FEM {m.Units}; nodi {m.Nodes}, aste {m.Beams}, piastre {m.Plates}.");
         yield return P("La prima versione del report non ricostruisce vincoli, asse del ponte o schema grafico globale. Inserire queste descrizioni e figure nel template quando necessarie.");
+        if (split != null)
+        {
+            yield return P($"La tabella dei {data.Samples.Length} risultati, una riga per risultato con posizione, combinazione, configurazione, fase e stato limite, " +
+                "è divisa negli allegati: ciascun allegato riporta le righe dei propri risultati (tabella Allegati del riepilogo).");
+            yield break;
+        }
         yield return Table(new[] { "Risultato", "Posizione e combinazione", "Config.", "Fase e stato limite" },
             data.Samples.Select(s => new[] { s.Id, Location(s), s.SectionId, s.Phase + " / " + s.LimitState }), .8, 2.8, .8, 1.5);
+    }
+    /// <summary>Task 195: the header of an attachment, in place of the summary: what it holds, the report it belongs to, the way back.</summary>
+    private IEnumerable<XElement> AttachmentSummary()
+    {
+        yield return H("Allegato " + part.Code + " — " + part.Description);
+        yield return P($"Allegato {part.Code} di {split.Parts.Count} del report {data.Id} ({data.Created:yyyy-MM-dd HH:mm zzz}). " +
+            $"Contiene {part.Samples.Length} risultati ({part.Description}), da {part.Samples[0].Id} a {part.Samples[^1].Id} nell'ordine del report.");
+        yield return P("Impronta dati SHA256 " + data.DataHash + ". Archivio numerico nel file " + split.Archive + " (bridghe/report.json), nella stessa cartella.");
+        yield return P("L'allegato non è un calcolo autonomo: riepilogo, copertura, massimi WR e scelta dei casi governanti sono calcolati su tutti i risultati e riportati nell'indice. " +
+            "Qui sono riportati i dati dei soli risultati elencati; un massimo letto in questo allegato non è il massimo del ponte.");
+        var back = P(""); back.Element(W + "r").ReplaceWith(new XElement(W + "r", new XElement(W + "t", new XAttribute(XNamespace.Xml + "space", "preserve"), "Indice del report: ")),
+            Link(split.IndexFile, split.LinkToIndex));
+        yield return back;
+    }
+    private IEnumerable<XElement> AttachmentModel()
+    {
+        if (data.Model == null) yield break;
+        yield return H("Modello di riferimento");
+        yield return P($"Risultati dell'allegato {part.Code}: {part.Description}. Modello {data.Model.Name}; descrizione del modello nell'indice.");
+        yield return Table(new[] { "Risultato", "Posizione e combinazione", "Config.", "Fase e stato limite" },
+            part.Samples.Select(s => new[] { s.Id, Location(s), s.SectionId, s.Phase + " / " + s.LimitState }),
+            (row, column, paragraph) => { if (column == 0 && Hosts("Model", part.Samples[row].Id)) Bookmark(paragraph, part.Samples[row].Id); }, .8, 2.8, .8, 1.5);
     }
     private IEnumerable<XElement> Sections()
     {
@@ -175,33 +274,62 @@ internal sealed class BridgeReportContent
     {
         yield return H("Verifiche governanti per voce");
         yield return P("Massimi WR disponibili distinti per configurazione, fase, stato limite e voce. Le parità sono mantenute. Le voci senza esiti numerici compaiono separatamente.");
-        yield return Table(new[] { "Voce", "Risultati", "WR", "Fase e stato limite" }, data.Governing(true)
-            .GroupBy(r => (r.Sample.SectionId, r.Check.Name, r.Check.Unit, r.Check.Ratio, r.Sample.Phase, r.Sample.LimitState)).Select(g => new[] {
+        var governing = data.Governing(true)
+            .GroupBy(r => (r.Sample.SectionId, r.Check.Name, r.Check.Unit, r.Check.Ratio, r.Sample.Phase, r.Sample.LimitState)).ToArray();
+        if (split == null)
+            yield return Table(new[] { "Voce", "Risultati", "WR", "Fase e stato limite" }, governing.Select(g => new[] {
                 g.Key.SectionId + " / " + g.Key.Name,BridgeReportData.ResultIds(g.Select(r => r.Sample.Id)),N(g.Key.Ratio),g.Key.Phase + " / " + g.Key.LimitState }), 2.6, 1.3, .9, 1.2);
+        // Task 195: the index adds the attachments of the results of each row, linked to their cards (or rows) in the attachment.
+        else yield return Table(new[] { "Voce", "Risultati", "WR", "Fase e stato limite", "Allegato" }, governing.Select(g => new[] {
+                g.Key.SectionId + " / " + g.Key.Name,BridgeReportData.ResultIds(g.Select(r => r.Sample.Id)),N(g.Key.Ratio),g.Key.Phase + " / " + g.Key.LimitState, "" }),
+            (row, column, paragraph) => { if (column == 4) paragraph.Element(W + "r").ReplaceWith(AttachmentLinks(governing[row].Select(r => r.Sample.Id)).ToArray()); }, 2.6, 1.3, .9, 1.2, .8);
         var missing = data.Rows.Where(r => r.Check.Active && !r.Check.HasRatio).ToArray();
         if (missing.Length > 0)
         {
             yield return H("Esiti non disponibili", true);
-            yield return Table(new[] { "Risultati", "Voce", "Motivo GPC" }, missing.GroupBy(r => (r.Sample.SectionId, r.Sample.Phase, r.Sample.LimitState, r.Check.Name, r.Check.NativeStatus, r.Check.Note))
-                .Select(g => new[] { BridgeReportData.ResultIds(g.Select(r=>r.Sample.Id)), g.Key.Name, g.Key.NativeStatus + ". " + g.Key.Note }), 1.3, 2.1, 2.5);
+            if (split == null)
+                yield return Table(new[] { "Risultati", "Voce", "Motivo GPC" }, missing.GroupBy(r => (r.Sample.SectionId, r.Sample.Phase, r.Sample.LimitState, r.Check.Name, r.Check.NativeStatus, r.Check.Note))
+                    .Select(g => new[] { BridgeReportData.ResultIds(g.Select(r=>r.Sample.Id)), g.Key.Name, g.Key.NativeStatus + ". " + g.Key.Note }), 1.3, 2.1, 2.5);
+            else yield return Table(new[] { "Risultati", "Voce", "Motivo GPC", "Allegati" }, missing.GroupBy(r => (r.Sample.SectionId, r.Sample.Phase, r.Sample.LimitState, r.Check.Name, r.Check.NativeStatus, r.Check.Note))
+                    .Select(g => new[] { BridgeReportData.ResultIds(g.Select(r=>r.Sample.Id)), g.Key.Name, g.Key.NativeStatus + ". " + g.Key.Note, split.Codes(g.Select(r => r.Sample.Id)) }), 1.3, 2.1, 2.5, .8);
         }
     }
     private IEnumerable<XElement> Critical()
     {
         yield return H("Schede dei casi governanti");
         yield return P("Una scheda per ciascun risultato che governa almeno una famiglia, distinguendo configurazione, fase e stato limite. Domande e resistenze sono concomitanti; non si combinano massimi di casi diversi.");
-        foreach (var group in data.Governing(false).GroupBy(r => r.Sample.Id))
+        if (split != null)
         {
-            var s = group.First().Sample;
-            yield return H(s.Id + " " + s.SectionId + " " + s.LimitState, true);
-            yield return P(Location(s) + ". Fase " + s.Phase + ". Metodo " + s.Method + ".");
-            yield return P("Campo di applicazione dichiarato dal calcolo: " + s.Scope);
-            yield return P("Iterazioni " + s.Iterations + "; residuo nativo " + N(s.Residual) + ". Nessun ricalcolo nel report.");
-            yield return Table(new[] { "Verifica", "Domanda", "Limite", "Unità", "WR" }, group.Select(r => new[] { r.Check.Name, N(r.Check.Demand), N(r.Check.Resistance), r.Check.Unit, N(r.Check.Ratio) }), 3, .9, .9, .7, .7);
-            foreach (var row in group.Where(r => !string.IsNullOrWhiteSpace(r.Check.Note))) yield return P(row.Check.Name + ": " + row.Check.Note);
-            yield return Table(new[] { "Contributo", "N kN", "Mx kNm", "V kN", "n", "Strain" }, s.Contributions.Select(c => new[] { c.Name, N(c.N), N(c.Mx), N(c.V), N(c.HomogenizationN), N(c.ShrinkageStrain) }), 2, 1.2, 1.1, 1.1, .5, .8);
-            yield return P("Le azioni della tabella sono i contributi effettivi del risultato. Riferimenti di applicazione, opzioni e input locali completi sono nell'archivio incorporato. Le formule non esposte dalla libreria non sono ricostruite dal report.");
+            yield return P($"Le {split.Cards.Count} schede, selezionate su tutti i risultati, sono negli allegati: ciascuna nell'allegato del proprio risultato. " +
+                "I codici della colonna Allegato delle verifiche governanti aprono la scheda.");
+            yield break;
         }
+        foreach (var group in data.Governing(false).GroupBy(r => r.Sample.Id))
+            foreach (var e in Card(group.First().Sample, group, false)) yield return e;
+    }
+    /// <summary>The card of a governing result (its concomitant checks and actions); in an attachment with the bookmark of the result.</summary>
+    private IEnumerable<XElement> Card(BridgeReportSample s, IEnumerable<BridgeReportRow> group, bool attachment)
+    {
+        var heading = H(s.Id + " " + s.SectionId + " " + s.LimitState, true);
+        yield return attachment && Hosts("Critical", s.Id) ? Bookmark(heading, s.Id) : heading;
+        yield return P(Location(s) + ". Fase " + s.Phase + ". Metodo " + s.Method + ".");
+        yield return P("Campo di applicazione dichiarato dal calcolo: " + s.Scope);
+        yield return P("Iterazioni " + s.Iterations + "; residuo nativo " + N(s.Residual) + ". Nessun ricalcolo nel report.");
+        yield return Table(new[] { "Verifica", "Domanda", "Limite", "Unità", "WR" }, group.Select(r => new[] { r.Check.Name, N(r.Check.Demand), N(r.Check.Resistance), r.Check.Unit, N(r.Check.Ratio) }), 3, .9, .9, .7, .7);
+        foreach (var row in group.Where(r => !string.IsNullOrWhiteSpace(r.Check.Note))) yield return P(row.Check.Name + ": " + row.Check.Note);
+        yield return Table(new[] { "Contributo", "N kN", "Mx kNm", "V kN", "n", "Strain" }, s.Contributions.Select(c => new[] { c.Name, N(c.N), N(c.Mx), N(c.V), N(c.HomogenizationN), N(c.ShrinkageStrain) }), 2, 1.2, 1.1, 1.1, .5, .8);
+        yield return P("Le azioni della tabella sono i contributi effettivi del risultato. Riferimenti di applicazione, opzioni e input locali completi sono nell'archivio "
+            + (attachment ? "numerico del report" : "incorporato") + ". Le formule non esposte dalla libreria non sono ricostruite dal report.");
+    }
+    private IEnumerable<XElement> AttachmentCritical()
+    {
+        yield return H("Schede dei casi governanti");
+        yield return P("Una scheda per ciascun risultato che governa almeno una famiglia, distinguendo configurazione, fase e stato limite. Domande e resistenze sono concomitanti; non si combinano massimi di casi diversi.");
+        var cards = split.Cards.Where(c => members.Contains(c.Sample.Id)).ToArray();
+        if (cards.Length == 0) { yield return P($"Nessun risultato dell'allegato {part.Code} governa una famiglia: nessuna scheda."); yield break; }
+        yield return P($"Schede dei risultati dell'allegato {part.Code}, selezionate su tutti i risultati del report e nell'ordine dell'indice: {cards.Length} schede.");
+        foreach (var (sample, rows) in cards)
+            foreach (var e in Card(sample, rows, true)) yield return e;
     }
     private IEnumerable<XElement> Plots()
     {
@@ -213,11 +341,20 @@ internal sealed class BridgeReportContent
     private IEnumerable<XElement> Appendix()
     {
         yield return H("Tabulato completo delle verifiche");
-        foreach (var s in data.Samples)
-        {
-            yield return H(s.Id + " " + s.Phase + " " + s.LimitState, true); yield return P(Location(s) + ". Configurazione " + s.SectionId + ".");
-            yield return Table(new[] { "Voce", "Domanda", "Limite", "Unità", "WR", "Esito" }, s.Checks.Select(c => new[] { c.Name, N(c.Demand), N(c.Resistance), c.Unit, N(c.Ratio), c.Status }), 2.8, .8, .8, .7, .7, 1.2);
-        }
+        if (split != null) { yield return P($"Il tabulato di tutte le voci dei {data.Samples.Length} risultati è diviso negli allegati: ciascun allegato riporta le voci dei propri risultati."); yield break; }
+        foreach (var s in data.Samples) foreach (var e in Entry(s, false)) yield return e;
+    }
+    private IEnumerable<XElement> Entry(BridgeReportSample s, bool attachment)
+    {
+        var heading = H(s.Id + " " + s.Phase + " " + s.LimitState, true);
+        yield return attachment && Hosts("Appendix", s.Id) ? Bookmark(heading, s.Id) : heading; yield return P(Location(s) + ". Configurazione " + s.SectionId + ".");
+        yield return Table(new[] { "Voce", "Domanda", "Limite", "Unità", "WR", "Esito" }, s.Checks.Select(c => new[] { c.Name, N(c.Demand), N(c.Resistance), c.Unit, N(c.Ratio), c.Status }), 2.8, .8, .8, .7, .7, 1.2);
+    }
+    private IEnumerable<XElement> AttachmentAppendix()
+    {
+        yield return H("Tabulato completo delle verifiche");
+        yield return P($"Tutte le voci dei risultati dell'allegato {part.Code}.");
+        foreach (var s in part.Samples) foreach (var e in Entry(s, true)) yield return e;
     }
     private XElement Picture(BridgeReportFigure f)
     {
