@@ -79,6 +79,7 @@ internal static class Program
         using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},WindowStyle.Hidden);
         if(args.Contains("--gpc-pilot")) { Console.WriteLine("RETIRED BY NAME (P2CB): --gpc-pilot: "+P2rRetiredP2cb.Reason("native|gpc-pilot")); return 1; } // P2CB (13/11): the F4 pilot retired with its FEM types
         GpcDomainCache.Configure();
+        if(args.Contains("--sections-198-oracle")) return OpenSectionChecks190.Oracle198();
         if(args.Contains("--sections-190-before")) return UniqueSectionChecks.Run(true);
         if(args.Contains("--sections-190")) return UniqueSectionChecks.Run(false);
         if(args.Contains("--sections-190-open")) return OpenSectionChecks190.Run();

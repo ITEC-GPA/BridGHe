@@ -1,0 +1,16 @@
+[
+  {
+    "Path": "tests/BridGHe.Smoke/Fixtures/open-sections-198/F07a-doppio-angolare.ghx",
+    "Sha256": "87fb4cfd87de4c7ca98650ff4f9b0f941f325c67ce24c09ff0f65afb25262aa3",
+    "Units": "Nmm",
+    "Role": "component-case",
+    "Source": "C:\\Users\\g.pacini\\Documents\\Repository\\gpc-f6-claude\\F7-20261114\\file\\F07\\F07a-doppio-angolare.ghx"
+  },
+  {
+    "Path": "tests/BridGHe.Smoke/Fixtures/open-sections-198/F07b-ruotata-appoggio-rilasci.ghx",
+    "Sha256": "9cfa4a56ad4a637ab32a882ff33eb39c2a11a93aa99b7e4fe6a5d6f9e7c7cf57",
+    "Units": "Nmm",
+    "Role": "component-case",
+    "Source": "C:\\Users\\g.pacini\\Documents\\Repository\\gpc-f6-claude\\F7-20261114\\file\\F07\\F07b-ruotata-appoggio-rilasci.ghx"
+  }
+]

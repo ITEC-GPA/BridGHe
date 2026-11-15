@@ -12,7 +12,7 @@ using GPC.Model.Sections;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 
-internal static class OpenSectionChecks190
+internal static partial class OpenSectionChecks190
 {
     private static int checks,failed;
     private static Assembly plugin;
@@ -102,46 +102,13 @@ internal static class OpenSectionChecks190
             try{GpcPropertyBuilders.Beam("invalid",5,GpcSectionBuilders.Standard(BridgeSectionKind.C,200,75,t1:invalid.Item1,t2:invalid.Item2,mirror:2,gapA:invalid.Item3),GpcFixtures.Steel());Check(false,"invalid dimensions/gap refused");}
             catch(ArgumentException){Check(true,"invalid dimensions/gap refused");}catch(NotSupportedException){Check(true,"invalid dimensions/gap refused");}
         }
+        Managed198();
+        string root=System.IO.Path.GetFullPath(System.IO.Path.Combine("artifacts","198","managed-"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff")));
+        System.IO.Directory.CreateDirectory(root);Historical198(false,root);
         return Finish();
     }
-    // Coordinator only, under the native lock. Never called by Run or any default regression.
-    internal static int Native()
-    {
-        if(Environment.GetEnvironmentVariable("BRIDGHE_SECTIONS190_NATIVE")!="1")
-        {Console.WriteLine("Set BRIDGHE_SECTIONS190_NATIVE=1 under the coordinator native lock.");return 2;}
-        checks=failed=0;plugin=BridgeMergeTests.Initialize();
-        var rows=new List<object>();
-        foreach(var item in new[]{("T",false,0d),("C",false,0d),("C",true,0d),("C",true,10d),("Angle",false,0d),("Angle",true,0d),("Angle",true,10d)})
-        {
-            string type=item.Item1;bool mirror=item.Item2;double gap=item.Item3;
-            double b=type=="T"?140:type=="C"?75:100,tf=12,d=type=="T"?300:type=="C"?200:150,tw=type=="T"?8:10;
-            var recipe=Solve(type,b,tf,d,tw,mirror,gap);
-            var property=GpcPropertyBuilders.Beam("native190",5,recipe,GpcFixtures.Steel());
-            var draft=GpcBeamBuilders.New(new Point3d(0,0,0),new Point3d(3000,0,0),property,null,0,0,0,Guid.NewGuid(),"native190");
-            var model=LegacyBuildModel.Build("native190",new BridgeUnits(DefinitionUnits.Nmm),.001,new List<(Guid,LegacyNodeDraft)>(),new List<(Guid,LegacyBeamDraft)>{(draft.Beam.Guid,draft)},new List<(Guid,LegacyPlateDraft)>(),new List<LegacyCombinationDraft>(),new List<LegacyStageDraft>());
-            var call=Record(model).Calls.Single(v=>v.Name==(mirror?"SetNativeSection":"SetBeamSectionGeometry"));
-            var gpc=(double[])call.Args[mirror?2:3];
-            var native=GpcNativeSections.Resolve(type=="C"?"LipChannel":type,type=="Angle"?new[]{b,d,tf,tw}:new[]{b,d,0,tf,tw,0},null,null,null,1,mirror?3:0,new[]{gap,0d}).Section.ReferenceProperties;
-            double da=gpc[10]-native[10],c=Math.Cos(da),sn=Math.Sin(da);
-            var aligned=(double[])native.Clone();
-            aligned[1]=native[1]*c*c+native[2]*sn*sn;aligned[2]=native[1]*sn*sn+native[2]*c*c;
-            aligned[4]=c*native[4]+sn*native[5];aligned[5]=-sn*native[4]+c*native[5];
-            aligned[6]=native[6]*c*c+native[7]*sn*sn;aligned[7]=native[6]*sn*sn+native[7]*c*c;
-            var metrics=new List<object>();
-            string[] names={"A","I11","I22","J","SL1","SL2","SA1","SA2","Xbar","Ybar"};
-            for(int i=0;i<10;i++)
-            {
-                double tolerance=i==4||i==5?.01*Math.Max(b,d):(i==3||i==6||i==7?.05:1e-8)*Math.Max(1,Math.Abs(aligned[i]));
-                bool pass=Math.Abs(gpc[i]-aligned[i])<=tolerance;
-                Check(pass,$"native {type} mirror={mirror} gap={gap}: {names[i]}, GPC={gpc[i]:R}, Straus={aligned[i]:R}, tolerance={tolerance:R}");
-                metrics.Add(new {name=names[i],gpc=gpc[i],straus=aligned[i],delta=gpc[i]-aligned[i],absoluteTolerance=tolerance,pass});
-            }
-            rows.Add(new {type,mirror,gap,compatibleTwist=false,gpc,native,metrics});
-        }
-        string output=System.IO.Path.Combine("artifacts","190","native-open-comparison.json");System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(output));
-        System.IO.File.WriteAllText(output,System.Text.Json.JsonSerializer.Serialize(rows,new System.Text.Json.JsonSerializerOptions{WriteIndented=true}));
-        return Finish();
-    }
+    // Coordinator only: real file write, close and readback, then independent physical comparisons.
+    internal static int Native()=>Native198();
 
     private static int Finish(){Console.WriteLine($"OPEN SECTIONS 190: {checks-failed}/{checks} PASS, {failed} FAIL");return failed==0?0:1;}
     private static void Analytical(string type,double b,double tf,double d,double tw,bool mirror,double gap,ISectionShape s,string label)
