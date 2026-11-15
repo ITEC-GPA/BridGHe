@@ -12,7 +12,7 @@ using Grasshopper.Kernel.Types;
 /// <summary>
 /// P2CI (14/11/2026, user decision 3; ChatGPT tasks 56 and 78): the palette contract of BridGHe 0.4.0, compared exactly with a frozen table:
 /// the 228 component and stand-alone parameter GUIDs (type, name, nickname, description, category, subcategory, exposure, obsolete) and their
-/// 1,876 ports (direction, index, name, nickname, description, parameter type, access, optional and the explicit defaults), as Grasshopper
+/// 1,880 ports (direction, index, name, nickname, description, parameter type, access, optional and the explicit defaults), as Grasshopper
 /// makes them when the plug-in registers them (a new instance, before any solution: the Units menu of Custom Material renames its ports
 /// at solve time, outside this table).
 /// <para>The table is <c>Fixtures/palette/components.json</c> and <c>ports.json</c>, written from the static extraction of task 56 (59e9def),
