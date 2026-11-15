@@ -1,5 +1,7 @@
 # Verifica degli esempi rispetto ai componenti attuali
 
+> Resoconto storico della revisione indicata nel titolo. Versioni, comandi, conteggi e risultati si riferiscono a quella fotografia. Per installazione, formati e limiti della 0.4.0 vedere [Uso](USO.md), [Migrazione](MIGRAZIONE.md) e il manifest del pacchetto. Gli attesi e le misure qui riportati non vengono rigenerati dall’aggiornamento della documentazione.
+
 Controlli eseguiti il 21 ottobre 2026 su Rhino 8, Release .NET 8 e Straus7 R3. Il perimetro iniziale comprende le definizioni distribuite nel catalogo prima delle nuove revisioni dell'esempio personale 99.
 
 ## Incongruenze corrette

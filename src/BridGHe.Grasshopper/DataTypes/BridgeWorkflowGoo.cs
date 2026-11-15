@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Helpers;
 using GH_IO.Serialization;
@@ -14,16 +15,34 @@ public sealed class BridgeWorkflowGoo : GH_Goo<object>
     public override string TypeName => Value is BridgePhaseDefinition ? "BridGHe Phase" : "BridGHe Action";
     public override string TypeDescription => "Numbered construction phase or incremental action, N-mm-MPa; eigenstrain is dimensionless.";
     public override string ToString() => Value?.ToString() ?? "Empty BridGHe workflow object";
-    public override IGH_Goo Duplicate() => new BridgeWorkflowGoo(IsValid ? ModelArchive.Clone(Value) : null);
-    public override bool Write(GH_IWriter writer)
+    /// <summary>A copy by archive round trip, with the GPC links of the actions carried over (they are not data contracts: the analysed GPC model
+    /// of the source and its GPC model, shared by reference as the other GPC links of the GH types; finding 1 of P2T, 5/11: a copied or
+    /// internalised action lost them and the consumers fell back to the FEM results silently).</summary>
+    public override IGH_Goo Duplicate() => new BridgeWorkflowGoo(IsValid ? WithGpcLinks(ModelArchive.Clone(Value), Value) : null);
+
+    /// <summary>The GPC links of <paramref name="source"/> (an action, or the actions of a phase in their order) on its copy <paramref name="copy"/>.</summary>
+    internal static object WithGpcLinks(object copy, object source)
     {
-        if (!IsValid) return false;
-        writer.SetByteArray("Workflow", ModelArchive.Write(Value)); return true;
+        static BridgeActionDefinition Link(BridgeActionDefinition c, BridgeActionDefinition s) => c with { GpcSource = s.GpcSource, GpcModel = s.GpcModel, GpcBridgeData = s.GpcBridgeData, GpcInput = s.GpcInput };
+        return (copy, source) switch
+        {
+            (BridgeActionDefinition c, BridgeActionDefinition s) => Link(c, s),
+            (BridgePhaseDefinition c, BridgePhaseDefinition s) when c.Actions.Length == s.Actions.Length => c with { Actions = c.Actions.Select((a, i) => Link(a, s.Actions[i])).ToArray() },
+            _ => throw new InvalidOperationException("BridgeWorkflowCopyShapeChanged"),
+        };
     }
+    // R6.1 (§1bis): the workflow objects are references to analysed models (a cache), not persisted; a former payload ("Workflow", BGHA1
+    // with the FEM source model) is dropped (Common.Gpc.GpcGooArchive.LegacyCacheMessage): the Bridge Action and Phase components rebuild them.
+    public override bool Write(GH_IWriter writer) => true;
     public override bool Read(GH_IReader reader)
     {
         Value = null;
-        if (!reader.ItemExists("Workflow")) return false;
-        Value = ModelArchive.Read<object>(reader.GetByteArray("Workflow")); return IsValid;
+        if (reader.ItemExists("Workflow"))
+        {
+            System.Diagnostics.Debug.WriteLine(Common.Gpc.GpcGooArchive.LegacyCacheMessage);
+            // P2CI (MU-01, ChatGPT task 74): said to the file reader too (before: Debug only); the same result (false, nothing read).
+            return GpcGooPersistence.NotRead(reader, "The saved bridge action or phase holds data of an earlier BridGHe version, which are no longer read: the Bridge Action and Bridge Phase components make it again.", GH_Message_Type.warning);
+        }
+        return false;
     }
 }

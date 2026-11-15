@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Geometry;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using Rhino.Geometry;
 
 internal static class BridgeDeckGrillageTests
@@ -42,12 +41,13 @@ internal static class BridgeDeckGrillageTests
             Require(result.Geometry.Members.Select(m => m.Id).Distinct().Count() == count + 24, "Unique member IDs");
             var clone = ModelArchive.Clone(result.Geometry);
             Require(clone.Members.SequenceEqual(result.Geometry.Members), "Combined geometry archive roundtrip");
-            var defaults = new Dictionary<int, BeamPropertyModel> { [-1] = BridgeAssignmentTests.Property() };
-            var missing = BridgeMemberAssignment.Assign(result.Geometry, defaults, Array.Empty<BridgeSectionRule>());
+            // R6.6 R2a: the assignment on GPC data alone (default properties by their GPC datum: the plans of the beams).
+            var defaults = new Dictionary<int, BridGHe.Common.Gpc.Legacy.LegacyBeamProperty> { [-1] = R2aDesignFixtures.RectangleProperty() };
+            var missing = R2aGeneratorFixtures.Assign(result.Geometry, defaults);
             Require(missing.Unassigned.Length == 24, "Default steel cannot silently become concrete slab");
-            defaults[8] = BridgeAssignmentTests.Property("Concrete strips");
-            var assigned = BridgeMemberAssignment.Assign(result.Geometry, defaults, Array.Empty<BridgeSectionRule>());
-            Require(assigned.Unassigned.Length == 0 && assigned.Beams.Length == count + 24, "Explicit family 8 assignment");
+            defaults[8] = R2aDesignFixtures.RectangleProperty("Concrete strips");
+            var assigned = R2aGeneratorFixtures.Assign(result.Geometry, defaults);
+            Require(assigned.Unassigned.Length == 0 && assigned.Plans.Length == count + 24, "Explicit family 8 assignment");
         }
         var auto = SimpleBridgeTests.Input() with { DeckBeamSpacing = 3000 };
         var autoSteel = SimpleBridgeBuilder.Build(auto); var autoResult = BridgeDeckGrillage.Build(auto, autoSteel);

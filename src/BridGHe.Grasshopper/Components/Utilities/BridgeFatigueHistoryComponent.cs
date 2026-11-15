@@ -43,8 +43,10 @@ public sealed class BridgeFatigueHistoryComponent : BridgeUtilityComponent
         da.GetDataList(4, cases); da.GetData(5, ref component); da.GetDataList(6, factors); da.GetData(7, ref units); da.GetData(8, ref exponent); da.GetData(9, ref n);
         if (model != null && values.Count > 0) throw new ArgumentException("Choose direct Values or Model extraction, not both.");
         if (string.IsNullOrWhiteSpace(units)) throw new ArgumentException("Provide response units.");
-        var series = model != null ? BridgeFatigueHistory.Extract(model.Value, id, station, cases, component, factors) :
-            new BridgeFatigueSeries(values.ToArray(), Enumerable.Range(0, values.Count).Select(i => $"Direct sample {i}").ToArray());
+        // F6 (a)/(b), R6.4 (6): the analysed GPC model with its results catalog only (no FEM results), or the direct values.
+        var series = model != null
+            ? BridgeFatigueHistory.Extract(model.GpcResults ?? throw new ArgumentException(model.LegacyNotice ?? Common.Gpc.GpcResultCatalog.NoAnalysedModelMessage), id, station, cases, component, factors)
+            : new BridgeFatigueSeries(values.ToArray(), Enumerable.Range(0, values.Count).Select(i => $"Direct sample {i}").ToArray());
         if (model != null && factors.Count == 0) units = component <= 2 ? "N" : "N mm";
         var spectrum = BridgeFatigueHistory.Count(series.Values, exponent, n);
         da.SetDataList(0, series.Values); da.SetDataList(1, series.Sources); da.SetDataList(2, spectrum.Cycles.Select(c => c.Range));

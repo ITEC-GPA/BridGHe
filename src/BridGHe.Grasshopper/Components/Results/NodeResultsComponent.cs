@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -59,23 +58,17 @@ namespace BridGHe.Grasshopper.Components.Results
             List<double> stepsF = new List<double>();
             List<Vector3d> forces = new List<Vector3d>();
             List<Vector3d> moments = new List<Vector3d>();
-            foreach (ResultModel result in node.Value)
-            {
-                if (result is NodeDisplResultModel displ)
+            // F6 C4/R7: the rows of the analysed GPC element Decompose Model linked (the results catalog of a BridGHe analysis); no FEM results.
+            static double Z(double v) => Common.Gpc.GpcResultRows.Shown(v);
+            var catalog = node.AnalysedGpc is GPC.Model.Elements.NodeElement ? Common.Gpc.GpcResultCatalog.Of(node.AnalysedGpcModel) : null;
+            if (catalog != null)
+                foreach (var row in Common.Gpc.GpcResultRows.Node(catalog, node.AnalysedGpcModel, (GPC.Model.Elements.NodeElement)node.AnalysedGpc))
                 {
-                    lcD.Add(result.LoadCase.Name);
-                    stepsD.Add(result.StepNum);
-                    displacements.Add(displ.Displacement);
-                    rotations.Add(displ.Rotation);
+                    string name = catalog.Entries[row.Entry].Label; var d = row.Displacement; var r = row.Reaction;
+                    if (d != null) { lcD.Add(name); stepsD.Add(0); displacements.Add(new Vector3d(Z(d[0]), Z(d[1]), Z(d[2]))); rotations.Add(new Vector3d(Z(d[3]), Z(d[4]), Z(d[5]))); }
+                    if (r != null) { lcF.Add(name); stepsF.Add(0); forces.Add(new Vector3d(Z(r[0]), Z(r[1]), Z(r[2]))); moments.Add(new Vector3d(Z(r[3]), Z(r[4]), Z(r[5]))); }
                 }
-                else if (result is NodeReactResultModel react)
-                {
-                    lcF.Add(result.LoadCase.Name);
-                    stepsF.Add(result.StepNum);
-                    forces.Add(react.Force);
-                    moments.Add(react.Moment);
-                }
-            }
+            else AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, Common.Gpc.GpcResultCatalog.NoAnalysedResultsMessage);
 
             DA.SetDataList(0, lcD);
             DA.SetDataList(1, stepsD);

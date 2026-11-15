@@ -87,8 +87,10 @@ public class BridgeSegmentExcelComponent : BridgeUtilityComponent
             if (execute && path == null) throw new ArgumentException("Save the GH definition or supply an absolute .xlsx path before Run.");
             if (mode == 0)
             {
-                var table = BridgeSegmentWorkbook.Template(plan, property?.Value);
-                if (execute) BridgeSegmentWorkbook.Write(path, plan, property?.Value, overwrite);
+                // R6.5 P1 lane 2b / P2K (P1): the template on the GPC datum of the base property (rule of passo 75); without one, the plain template.
+                var gpcBase = property?.Gpc;
+                var table = BridgeSegmentWorkbook.TemplateGpc(plan, gpcBase);
+                if (execute) BridgeSegmentWorkbook.Write(path, plan, overwrite: overwrite, template: table);
                 da.SetDataList(4, table);
                 info.Add(execute ? "Created. Edit the yellow cells, save Excel, then press Run on Bridge Read Section Excel. ID and station columns must remain paired." : "Run creates the file. Section Table currently contains the proposed template, not the contents of an Excel file.");
                 Message = segments.Length + (execute ? " | created" : " | template");

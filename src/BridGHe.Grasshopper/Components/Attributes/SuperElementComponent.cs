@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -49,24 +48,21 @@ namespace BridGHe.Grasshopper.Components.Attributes
             if (!DA.GetData(1, ref name))
                 return;
 
-            SuperElementAttributeModel se = new SuperElementAttributeModel(name);
             if (element is GH_Beam beam)
             {
-                GH_Beam new_beam = new GH_Beam(beam);
-                new_beam.Value.Attributes.Add(se);
-                DA.SetData(0, new_beam);
-            }
-            else if (element is GH_Plate plate)
-            {
-                GH_Plate new_plate = new GH_Plate(plate);
-                new_plate.Value.Attributes.Add(se);
-                DA.SetData(0, new_plate);
+                Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithSuperElement(beam.Gpc, name, id);
+                // P2K (P1): the GPC path only: the draft built on GPC (identity derived from the input draft).
+                GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, name));
             }
             else
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Unsupported element type");
+                // Decision of the user (7/11): a super element takes only beams; any other element (a plate, a node) is an error, with no output.
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, OnlyBeams);
             }
         }
+
+        /// <summary>The error for an element that is not a beam (decision of the user, 7/11: a super element takes only beams).</summary>
+        public const string OnlyBeams = Common.Gpc.Legacy.LegacyModelImport.SuperElementOnlyBeams;
 
         public override GH_Exposure Exposure => GH_Exposure.quarternary;
 

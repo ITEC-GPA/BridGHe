@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -58,16 +57,21 @@ namespace BridGHe.Grasshopper.Components.Results
             List<Vector2d> bendingMoments = new List<Vector2d>();
             List<double> axialForces = new List<double>();
             List<double> torques = new List<double>();
-            foreach (BeamForceResultModel result in beam.Value.Where(r => r is BeamForceResultModel).Cast<BeamForceResultModel>())
-            {
-                lc.Add(result.LoadCase.Name);
-                steps.Add(result.StepNum);
-                stations.Add(result.Station);
-                shearForces.Add(result.ShearForce);
-                bendingMoments.Add(result.BendingMoment);
-                axialForces.Add(result.AxialForce);
-                torques.Add(result.Torque);
-            }
+            // F6 C4/R7: the rows of the analysed GPC element Decompose Model linked (the results catalog of a BridGHe analysis); no FEM results.
+            static double Z(double v) => Common.Gpc.GpcResultRows.Shown(v);
+            var catalog = beam.AnalysedGpc is GPC.Model.Elements.BeamElement ? Common.Gpc.GpcResultCatalog.Of(beam.AnalysedGpcModel) : null;
+            if (catalog != null)
+                foreach (var row in Common.Gpc.GpcResultRows.Beam(catalog, beam.AnalysedGpcModel, (GPC.Model.Elements.BeamElement)beam.AnalysedGpc))
+                {
+                    lc.Add(catalog.Entries[row.Entry].Label);
+                    steps.Add(0);
+                    stations.Add(Z(row.Station));
+                    shearForces.Add(new Vector2d(Z(row.Shear1), Z(row.Shear2)));
+                    bendingMoments.Add(new Vector2d(Z(row.Bending1), Z(row.Bending2)));
+                    axialForces.Add(Z(row.Axial));
+                    torques.Add(Z(row.Torque));
+                }
+            else AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, Common.Gpc.GpcResultCatalog.NoAnalysedResultsMessage);
 
             DA.SetDataList(0, lc);
             DA.SetDataList(1, stations);

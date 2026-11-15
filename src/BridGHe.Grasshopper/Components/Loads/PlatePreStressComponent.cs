@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -62,16 +61,10 @@ namespace BridGHe.Grasshopper.Components.Loads
             if (!DA.GetData("Pz", ref pz))
                 return;
 
-            Vector3d value = new Vector3d(px, py, pz);
-
-            PlatePreStressModel.LoadData load_value = new PlatePreStressModel.LoadData()
-            {
-                LocalPressure = value
-            };
-            PlatePreStressModel load = new PlatePreStressModel(lc.Value, load_value);
-            GH_Plate newPlate = new GH_Plate(plate);
-            newPlate.Value.Loads.Add(load);
-            DA.SetData(0, newPlate);
+            Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.WithPrestress(plate.Gpc, lc.Gpc, px, py, pz, id);
+            // P2K (P1): the GPC path only: the draft built on GPC from the drafts of the plate and the load case record (identity derived from
+            // the input draft).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, GpcOnlyElements.Lazy(() => lc.Gpc), px, py, pz));
         }
 
         public override GH_Exposure Exposure => GH_Exposure.tertiary;

@@ -55,11 +55,25 @@ public sealed class BridgeCheckMapComponent : BridgeUtilityComponent
             if (checks.Length == 0) rows.Add(new(ids[i], stations[i], result.Stage.Name, cases[i], "No available checks", null, "Unavailable", ""));
             else rows.AddRange(checks.Select(c => new BridgeMappedCheck(ids[i], stations[i], result.Stage.Name, cases[i], c.Name, c.Ratio, c.Status, c.Note)));
         }
-        var mapped = BridgeCheckMap.Evaluate(model.Value, rows); preview.AddRange(mapped.Select(m => (m, labels)));
+        // R6.5 P1 lane 3a / P2K (P1): the model is mapped on the beams of its GPC input, in model length units.
+        var mapped = BridgeCheckMap.Evaluate(GpcBeams(model.GpcInput), rows);
+        preview.AddRange(mapped.Select(m => (m, labels)));
         da.SetDataList(0, mapped.Select(m => m.Axis)); da.SetDataList(1, mapped.Select(m => m.Color));
         da.SetDataList(2, mapped.Select(m => m.BeamId)); da.SetDataList(3, mapped.Select(m => m.Maximum));
         da.SetDataList(4, mapped.Select(m => m.Unavailable)); da.SetDataList(5, mapped.Select(m => m.Governing));
         da.SetData(6, "Colours summarize supplied local checks only. Unmapped beams are grey; unsampled stations, other limit states and global stability are outside this map.");
+    }
+    /// <summary>R6.5 P1 lane 3a: the beams of a GPC input as the map reads them: BridGHe ID (the original ID of the source of the beam), axis and
+    /// length in model length units (the GPC model is N-mm: its coordinates back in the units of the input), in the order of their numbers.</summary>
+    private static BridgeMapBeam[] GpcBeams(Common.Gpc.GpcModels.Conversion input)
+    {
+        var units = input.Report.Units;
+        Point3d P(GPC.Geometry.Point3d p) => new Point3d(units.FromMm(p.X), units.FromMm(p.Y), units.FromMm(p.Z));
+        return input.Model.BeamElements.Values.OrderBy(b => b.Id).Select(b =>
+        {
+            Point3d from = P(b.StartPoint), to = P(b.EndPoint);
+            return new BridgeMapBeam(b.Source?.OriginalId ?? b.Name, new Line(from, to), (to - from).Length);
+        }).ToArray();
     }
     public override BoundingBox ClippingBox => preview.Count == 0 ? BoundingBox.Empty : new BoundingBox(preview.SelectMany(p => new[] { p.Member.Axis.From, p.Member.Axis.To }));
     public override void DrawViewportWires(IGH_PreviewArgs args)

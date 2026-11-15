@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -67,27 +66,11 @@ namespace BridGHe.Grasshopper.Components
                 return;
             }
 
-            GH_Beam new_beam = new GH_Beam(beam);
-            //new_beam.Value.Loads.Add(load);
-            if (has_property && bp.IsValid)
-            {
-                new_beam.Value.BeamProperty = bp.Value;
-            }
-            if (has_groups)
-            {
-                new_beam.Value.Groups.Clear();
-                foreach (GroupModel group in groups.Select(g => g.Value))
-                    new_beam.Value.Groups.Add(group);
-            }
-            if (has_angle)
-            {
-                new_beam.Value.AngleDeg = a;
-            }
-            if (has_offset)
-            {
-                new_beam.Value.Offset = new Vector2d(offset.X, offset.Y);
-            }
-            DA.SetData(0, new_beam);
+            Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.Override(beam.Gpc, has_property && bp.IsValid ? bp.Gpc : null,
+                has_groups ? GpcBeamInputs.GroupChains(groups) : null, has_angle ? a : (double?)null, has_offset ? (offset.X, offset.Y) : ((double, double)?)null, id);
+            // P2K (P1): the GPC path only: the draft built on GPC from the drafts of the beam, the property and the groups (identity derived
+            // from the input draft).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => has_property && bp.IsValid ? bp.Gpc : null), GpcOnlyElements.Lazy(() => has_groups ? GpcBeamInputs.GroupChains(groups) : null), has_angle, has_angle ? a : 0, has_offset, has_offset ? offset.X : 0, has_offset ? offset.Y : 0));
         }
 
         /// <summary>

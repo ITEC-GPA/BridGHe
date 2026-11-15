@@ -87,8 +87,6 @@ Il report riproducibile è [validation-stations.json](../example/19-flusso-accia
 ```powershell
 dotnet build tests/BridGHe.Smoke -c Release
 dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --regression bridge-stations
-# Richiede API/licenza e i file .st7/.LSA dell'esempio 19:
-dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --workflow-stations-native
 ```
 
-`BridgeWorkflowBuilder.Build` mantiene la propria firma; cambia la gestione delle griglie diverse. La sola nuova dichiarazione API è `St7GetBeamResultArrayPos`, usata per la validazione indipendente. Il merge rimane utilizzabile offline e non apre Straus.
+La rilettura nativa indipendente (`--workflow-stations-native`, binding St7API di BridGHe) è stata rimossa in F6 (4 novembre 2026) con il binding; il fixture `bridge-stations-19.json` resta il riferimento di `--regression bridge-stations`. `BridgeWorkflowBuilder.Build` mantiene la propria firma; cambia la gestione delle griglie diverse. La sola nuova dichiarazione API è `St7GetBeamResultArrayPos`, usata per la validazione indipendente. Il merge rimane utilizzabile offline e non apre Straus.

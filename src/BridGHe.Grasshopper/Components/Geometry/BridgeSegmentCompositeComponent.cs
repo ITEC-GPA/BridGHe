@@ -34,8 +34,24 @@ public sealed class BridgeSegmentCompositeComponent : BridgeUtilityComponent
         if (!da.GetDataList(0, beams) || !da.GetDataList(1, ids) || !da.GetDataList(2, props)) return;
         if (beams.Count == 0) { Message = "Awaiting beams"; return; }
         Message = "";
-        var mapped = BridgeSegmentComposite.Map(beams.Select(b => b?.Value).ToArray(), ids, props.Select(p => p?.Value).ToArray());
-        da.SetDataList(0, mapped.Girders.Select(b => new GH_Beam(b))); da.SetDataList(1, mapped.Properties.Select(p => new GH_CompositeBeamProperty(p)));
-        da.SetDataList(2, mapped.SegmentIds); da.SetDataList(3, mapped.Girders.Select(b => b.BeamId));
+        // R6.5 P1 lane 2b / P2K (P1): the outputs by their GPC data alone (rule of passo 75).
+        SolveGpcOnly(da, beams, ids, props);
+    }
+
+    /// <summary>R6.5 P1 lane 2b: the association on the GPC data alone (<see cref="Common.Gpc.GpcStateOverride.Map"/>: the girders of the drafts in
+    /// the order of their group and station, the same messages): every girder the copy of its input with a copy of its draft (the identity
+    /// derived from the input draft; the analysed element kept, as the FEM path keeps it), every composite section its GPC definition.</summary>
+    private void SolveGpcOnly(IGH_DataAccess da, List<GH_Beam> beams, List<string> ids, List<GH_CompositeBeamProperty> props)
+    {
+        if (beams.Any(b => b == null)) throw new ArgumentException("Supply bridge FEM beams with Bridge Member metadata.");
+        var drafts = beams.Select(b => b.Gpc ?? throw new ArgumentException(GpcOnlyElements.NoDraft)).ToArray();
+        var (girders, definitions, segments) = Common.Gpc.GpcStateOverride.Map(drafts, ids, props.Select(p => p?.IsValid == true ? p.Definition : null).ToArray());
+        var input = new Dictionary<Common.Gpc.Legacy.LegacyBeamDraft, GH_Beam>(ReferenceEqualityComparer.Instance);
+        for (int i = 0; i < drafts.Length; i++) input.TryAdd(drafts[i], beams[i]);
+        var outputs = girders.Select(d => GpcOnlyElements.Beam(this, 0, input[d], id => Common.Gpc.GpcDrafts.Reidentify(Common.Gpc.GpcDrafts.Copy(d), id))).ToArray();
+        if (outputs.Any(o => o == null)) return;
+        da.SetDataList(0, outputs);
+        da.SetDataList(1, definitions.Select(GH_CompositeBeamProperty.FromGpc));
+        da.SetDataList(2, segments); da.SetDataList(3, girders.Select(d => d.Beam.Name));
     }
 }

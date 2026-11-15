@@ -2,22 +2,26 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using BridGHe.Common.Models;
 using Rhino.Geometry;
 
 namespace BridGHe.Common.Diagnostics;
 
 public sealed record BridgeMappedCheck(string BeamId, double Station, string Phase, string Case, string Check, double? Ratio, string Status, string Note);
 public sealed record BridgeMappedMember(string BeamId, Line Axis, double Maximum, int Unavailable, Color Color, string Label, string Governing);
+/// <summary>R6.5 P1 lane 3a: a beam as the map reads it: its BridGHe ID, its axis and its length in model length units.</summary>
+public sealed record BridgeMapBeam(string BeamId, Line Axis, double Length);
 
 public static class BridgeCheckMap
 {
-    public static BridgeMappedMember[] Evaluate(ModelModel model, IReadOnlyList<BridgeMappedCheck> checks)
+
+    /// <summary>R6.5 P1 lane 3a: the map on the beams of a model as the map reads them (the FEM beams, or those of a GPC model in model
+    /// length units), in model order.</summary>
+    public static BridgeMappedMember[] Evaluate(IReadOnlyList<BridgeMapBeam> modelBeams, IReadOnlyList<BridgeMappedCheck> checks)
     {
-        ArgumentNullException.ThrowIfNull(model); ArgumentNullException.ThrowIfNull(checks);
-        if (model.Beams.Select(b => b.BeamId).Distinct().Count() != model.Beams.Count)
+        ArgumentNullException.ThrowIfNull(modelBeams); ArgumentNullException.ThrowIfNull(checks);
+        if (modelBeams.Select(b => b.BeamId).Distinct().Count() != modelBeams.Count)
             throw new ArgumentException("Check map requires unique beam IDs.");
-        var beams = model.Beams.ToDictionary(b => b.BeamId, StringComparer.Ordinal);
+        var beams = modelBeams.ToDictionary(b => b.BeamId, StringComparer.Ordinal);
         foreach (var c in checks)
         {
             if (c == null || !beams.TryGetValue(c.BeamId, out var beam) || !double.IsFinite(c.Station) ||
@@ -26,7 +30,7 @@ public static class BridgeCheckMap
                 throw new ArgumentException("Invalid check mapping: verify beam ID, station, check label and nonnegative ratio.");
         }
         var grouped = checks.ToLookup(c => c.BeamId, StringComparer.Ordinal);
-        return model.Beams.Select(b =>
+        return modelBeams.Select(b =>
         {
             var rows = grouped[b.BeamId].ToArray();
             int unavailable = rows.Count(c => c.Ratio == null || double.IsNaN(c.Ratio.Value));
@@ -39,7 +43,7 @@ public static class BridgeCheckMap
                 .Select(c => $"{c.Check}; {c.Phase}; {c.Case}; x={c.Station:G8}").Distinct());
             string label = rows.Length == 0 ? $"{b.BeamId}: no supplied checks" :
                 $"{b.BeamId}: max={max:G4}; {unavailable} unavailable / {rows.Length} supplied checks";
-            return new BridgeMappedMember(b.BeamId, new(b.PointFrom, b.PointTo), max, unavailable, color, label, governing);
+            return new BridgeMappedMember(b.BeamId, b.Axis, max, unavailable, color, label, governing);
         }).ToArray();
     }
 }

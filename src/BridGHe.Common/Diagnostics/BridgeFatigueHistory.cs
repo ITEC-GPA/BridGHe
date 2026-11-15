@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Checks;
-using BridGHe.Common.Models;
+using BridGHe.Common.Gpc;
+using GPC.Model.Models;
 
 namespace BridGHe.Common.Diagnostics;
 
@@ -12,51 +13,68 @@ public sealed record BridgeFatigueSpectrum(BridgeFatigueCycle[] Cycles, double M
 
 public static class BridgeFatigueHistory
 {
-    public static BridgeFatigueSeries Extract(ModelModel model, string beamId, double station, IReadOnlyList<string> orderedCases,
+    /// <summary>One stored beam force of the history: case identity and the sample (station from the beam start, mm).</summary>
+    private readonly record struct Stored(string Case, double Step, string StepType, BeamForceSample Force);
+
+
+    /// <summary>F6 (a)/(b): the history of an analysed GPC model (<see cref="GpcResultCatalog"/>), from the rows the Results components
+    /// show (the same numbers, in the same order, as the former result objects the analysis wrote from them: catalog label, step 0, no
+    /// step type); the concentrated loads of the beam from its GPC load assignments.</summary>
+    public static BridgeFatigueSeries Extract(Model analysed, string beamId, double station, IReadOnlyList<string> orderedCases,
         int component, IReadOnlyList<double> responseFactors = null)
     {
-        ArgumentNullException.ThrowIfNull(model);
-        if (model.Units != ModelModel.ModelUnits.Nmm) throw new ArgumentException("History extraction expects N-mm result units.");
-        var matches = model.Beams.Where(b => b.BeamId == beamId).ToArray();
+        ArgumentNullException.ThrowIfNull(analysed);
+        var catalog = GpcResultCatalog.Of(analysed) ?? throw new ArgumentException("The model has no stored results of a BridGHe analysis.");
+        if (catalog.Units.Units != DefinitionUnits.Nmm) throw new ArgumentException("History extraction expects N-mm result units.");
+        var matches = analysed.BeamElements.Values.Where(b => b.Name == beamId).ToArray();
         if (matches.Length != 1) throw new ArgumentException("Provide exactly one existing beam ID.");
-        var beam = matches[0];
-        if (!double.IsFinite(station) || station < 0 || station > beam.Length || component < 0 || component > 5)
+        var beam = matches[0]; double length = beam.Length;
+        Arguments(station, length, component, responseFactors);
+        var available = GpcResultRows.Beam(catalog, analysed, beam).Select(r => new Stored(catalog.Entries[r.Entry].Label, 0, "", BeamForceSample.Of(r))).ToArray();
+        var pointLoads = beam.Assignments.Loads.Where(l => l?.Concentrated != null).Select(l => l.Start * length).ToArray();
+        return Extract(analysed.Name, beamId, length, station, available, pointLoads, orderedCases, component, responseFactors);
+    }
+
+    private static void Arguments(double station, double length, int component, IReadOnlyList<double> responseFactors)
+    {
+        if (!double.IsFinite(station) || station < 0 || station > length || component < 0 || component > 5)
             throw new ArgumentException("Station must lie on the beam in mm; component 0=N,1=Vx,2=Vy,3=T,4=Mx,5=My.");
         if (responseFactors != null && responseFactors.Count > 0 && (responseFactors.Count != 6 || responseFactors.Any(v => !double.IsFinite(v))))
             throw new ArgumentException("Provide six finite linear response factors for N,Vx,Vy,T,Mx,My, or none.");
-        var available = beam.Results.OfType<BeamForceResultModel>().ToArray();
-        if (available.Any(r => r.LoadCase == null || !double.IsFinite(r.StepNum))) throw new ArgumentException("Invalid stored history identity.");
+    }
+
+    private static BridgeFatigueSeries Extract(string modelName, string beamId, double length, double station, Stored[] available, double[] pointLoads,
+        IReadOnlyList<string> orderedCases, int component, IReadOnlyList<double> responseFactors)
+    {
         if (orderedCases == null || orderedCases.Count == 0)
         {
-            orderedCases = available.Select(r => r.LoadCase.Name).Distinct().ToArray();
+            orderedCases = available.Select(r => r.Case).Distinct().ToArray();
             if (orderedCases.Count != 1) throw new ArgumentException("Supply the explicit transit order of cases; case names are never sorted to infer a history.");
         }
-        if (orderedCases.Any(c => !available.Any(r => r.LoadCase.Name == c))) throw new ArgumentException("Unknown history case.");
+        if (orderedCases.Any(c => !available.Any(r => r.Case == c))) throw new ArgumentException("Unknown history case.");
         var values = new List<double>(); var sources = new List<string>();
         foreach (string c in orderedCases)
         {
-            var selected = available.Where(r => r.LoadCase.Name == c).ToArray();
+            var selected = available.Where(r => r.Case == c).ToArray();
             if (selected.Select(r => r.StepType ?? "").Distinct().Count() > 1)
                 throw new ArgumentException($"Case {c} contains multiple step types; select a homogeneous transit history.");
-            foreach (var step in selected.GroupBy(r => r.StepNum).OrderBy(g => g.Key))
+            foreach (var step in selected.GroupBy(r => r.Step).OrderBy(g => g.Key))
             {
-                var originals = step.Select(r => new BeamForceResultModel(r.LoadCase, r.NormalizedLength ? r.Station * beam.Length : r.Station, r.StepNum, r.StepType)
-                { AxialForce = r.AxialForce, ShearForce = r.ShearForce, Torque = r.Torque, BendingMoment = r.BendingMoment }).ToArray();
-                if (originals.Any(r => !double.IsFinite(r.Station) || r.Station < 0 || r.Station > beam.Length ||
-                    BridgeResultEnvelope.Values(r).Any(v => !double.IsFinite(v)))) throw new ArgumentException("Non-finite/out-of-bounds FEM history sample.");
-                var exact = originals.Where(r => Math.Abs(r.Station - station) <= BridgeMergeValidation.StationTolerance(beam.Length)).ToArray();
+                var originals = step.Select(r => r.Force).ToArray();
+                if (originals.Any(r => !double.IsFinite(r.Station) || r.Station < 0 || r.Station > length ||
+                    r.Values.Any(v => !double.IsFinite(v)))) throw new ArgumentException("Non-finite/out-of-bounds FEM history sample.");
+                var exact = originals.Where(r => Math.Abs(r.Station - station) <= BridgeMergeValidation.StationTolerance(length)).ToArray();
                 if (exact.Length > 1) throw new ArgumentException("Duplicate/one-sided result at requested history station; choose an explicit side by splitting the beam.");
-                // Results may belong to combinations: conservatively retain every known force discontinuity.
-                var pointLoads = beam.Loads.OfType<BeamPointLoadModel>().Select(l => l.Value.A * beam.Length).ToArray();
-                var sample = exact.Length == 1 ? exact[0] : BridgeForceResampling.Resample(originals, new[] { station }, beam.Length,
-                    $"Fatigue {beamId}/{c}/{step.Key}", pointLoads, out _)[0];
-                var force = BridgeResultEnvelope.Values(sample);
+                var sample = exact.Length == 1 ? exact[0] : BridgeForceResampling.Resample(originals, new[] { station }, length,
+                    $"Fatigue {beamId}/{c}/{step.Key}", pointLoads, out _, out _)[0];
+                var force = sample.Values;
                 values.Add(responseFactors?.Count == 6 ? force.Zip(responseFactors, (a, b) => a * b).Sum() : force[component]);
-                sources.Add($"{model.Name}/{beamId}/{station:G17}/{c}/{step.Key:G17}/{step.First().StepType}");
+                sources.Add($"{modelName}/{beamId}/{station:G17}/{c}/{step.Key:G17}/{step.First().StepType}");
             }
         }
         return new(values.ToArray(), sources.ToArray());
     }
+
 
     /// <summary>Three-point rainflow counting of an open history; residual excursions remain half cycles.</summary>
     public static BridgeFatigueSpectrum Count(IReadOnlyList<double> values, double slope, double referenceCycles)

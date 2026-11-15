@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Xml.Linq;
 using BridGHe.Common.Diagnostics;
 using BridGHe.Common.Geometry;
-using BridGHe.Common.Models;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
@@ -17,8 +16,15 @@ internal static class BridgeSegmentExcelTests
     private static int checks;
     private static void Check(bool condition, string message)
     { if (!condition) throw new Exception("SEGMENT EXCEL: " + message); checks++; }
-    private static void Reject(Action action)
-    { try { action(); } catch (Exception e) when (e is ArgumentException or IOException) { checks++; return; } throw new Exception("Expected invalid workbook to be rejected."); }
+    // P2F (T10 of task 39): a content refusal (ArgumentException) and an access refusal (IOException: the file exists or is held) are told
+    // apart; a locked or missing file no longer counts as the validation of the content.
+    private static void Reject(Action action, bool access = false)
+    {
+        try { action(); }
+        catch (Exception e) when (access ? e is IOException : e is ArgumentException) { checks++; return; }
+        catch (Exception e) when (e is ArgumentException or IOException) { throw new Exception("SEGMENT EXCEL: expected a " + (access ? "file access" : "content") + " refusal, got " + e.GetType().Name + ": " + e.Message); }
+        throw new Exception("Expected invalid workbook to be rejected.");
+    }
     private static void Edit(string file, Action<XDocument> edit)
     {
         using var zip = ZipFile.Open(file, ZipArchiveMode.Update); var part = zip.GetEntry("xl/worksheets/sheet1.xml");
@@ -36,23 +42,25 @@ internal static class BridgeSegmentExcelTests
     {
         checks = 0;
         var input = SimpleBridgeTests.Input() with { Segments = new BridgeSegments { MaximumLength = 12000 } };
-        var geometry = SimpleBridgeBuilder.Build(input); var property = BridgeSegmentSectionsTests.BaseProperty();
+        // R6.6 R2a: the base property given by its GPC datum alone (the path of P2): the template and the sections on GPC (TemplateGpc, CreateGpc),
+        // the Bridge Segment Sections component on the GH property made from the datum alone.
+        var geometry = SimpleBridgeBuilder.Build(input); var property = R2aDesignFixtures.BaseProperty();
         string folder = Path.GetFullPath("artifacts/segment-excel/tests-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(folder);
         string template = Path.Combine(folder, "sections.xlsx");
         BridgeSegmentWorkbook.Write(template, geometry);
         var initial = BridgeSegmentWorkbook.Read(template, geometry);
         Check(initial.Table.SequenceEqual(BridgeSegmentSections.Synchronize(geometry, null).Table), "geometry-only template and wildcard round trip");
         var original = File.ReadAllBytes(template);
-        Reject(() => BridgeSegmentWorkbook.Write(template, geometry));
-        using (var held = File.Open(template, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) Reject(() => BridgeSegmentWorkbook.Write(template, geometry, overwrite:true));
+        Reject(() => BridgeSegmentWorkbook.Write(template, geometry), access: true);
+        using (var held = File.Open(template, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) Reject(() => BridgeSegmentWorkbook.Write(template, geometry, overwrite:true), access: true);
         Check(File.ReadAllBytes(template).SequenceEqual(original), "existing and locked files preserved");
-        string filled = Path.Combine(folder, "filled.xlsx"); BridgeSegmentWorkbook.Write(filled, geometry, property);
+        string filled = Path.Combine(folder, "filled.xlsx"); BridgeSegmentWorkbook.Write(filled, geometry, template: BridgeSegmentWorkbook.TemplateGpc(geometry, property));
         Edit(filled, x => Value(Cell(x, "G7"), "50"));
         var edited = BridgeSegmentWorkbook.Read(filled, geometry).Table;
-        var sections = BridgeSegmentSections.Create(geometry, property, edited);
-        Check(sections.Rules[0].Property.T1 == 50 && sections.Rules.Skip(1).All(r => r.Property.T1 == 30), "edited bottom flange affects only the keyed concio");
+        var sections = BridgeSegmentSections.CreateGpc(geometry, property, edited);
+        Check(sections.Rules[0].GpcProperty.Data.Section.T1 == 50 && sections.Rules.Skip(1).All(r => r.GpcProperty.Data.Section.T1 == 30), "edited bottom flange affects only the keyed concio");
         double area = 600 * 50 + 600 * 30 + 16 * (2500 - 50 - 30);
-        Check(Math.Abs(sections.Rules[0].Property.SectionArea - area) < 1e-6, "imported section agrees with independent analytical area");
+        Check(Math.Abs(R2aDesignFixtures.Area(sections.Rules[0].GpcProperty) - area) < 1e-6, "imported section agrees with independent analytical area");
         var mesh = SimpleBridgeBuilder.Build(input with { MaximumElementLength = 1000 });
         Check(BridgeSegmentWorkbook.Read(filled, mesh).Table.SequenceEqual(edited), "FEM mesh refinement does not change section assignments");
         var changed = SimpleBridgeBuilder.Build(input with { Segments = new BridgeSegments { MaximumLength = 10000 } });
@@ -98,7 +106,7 @@ internal static class BridgeSegmentExcelTests
     }
     internal static void Generic(GH_Component c, int index, object value)
     {
-        string type = value is SimpleBridgeGeometry ? "BridgeGeometryGoo" : value is BeamPropertyModel ? "GH_BeamProperty" : throw new ArgumentException("Unsupported fixture input.");
+        string type = value is SimpleBridgeGeometry ? "BridgeGeometryGoo" : throw new ArgumentException("Unsupported fixture input."); // P2CA: the FEM beam property input had no caller left
         var goo = (IGH_Goo)Activator.CreateInstance(BridgeMergeTests.Initialize().GetTypes().Single(t => t.Name == type), value);
         var p = (Param_GenericObject)c.Params.Input[index]; p.PersistentData.Clear(); p.PersistentData.Append(goo);
     }
@@ -106,11 +114,13 @@ internal static class BridgeSegmentExcelTests
     { var p = (Param_String)c.Params.Input[index]; p.PersistentData.Clear(); p.SetPersistentData(value); }
     internal static void Mode(GH_Component c, int value)
     { var p = (Param_Integer)c.Params.Input[2]; p.PersistentData.Clear(); p.SetPersistentData(value); }
-    private static void Component(string folder, SimpleBridgeGeometry geometry, BeamPropertyModel property, string file, string[] expected)
+    private static void Component(string folder, SimpleBridgeGeometry geometry, BridGHe.Common.Gpc.Legacy.LegacyBeamProperty property, string file, string[] expected)
     {
         using var doc = new GH_Document(); doc.FilePath = Path.Combine(folder, "workflow.ghx");
         var excel = Add(doc, "BridgeSegmentExcelComponent"); var sections = Add(doc, "BridgeSegmentSectionsComponent");
-        Generic(excel, 0, geometry); Generic(sections, 0, geometry); Generic(sections, 1, property);
+        // R6.6 R2a: the base property by its GPC datum alone (GH_BeamProperty.FromGpc): Bridge Segment Sections on GPC.
+        Generic(excel, 0, geometry); Generic(sections, 0, geometry);
+        var p = (Param_GenericObject)sections.Params.Input[1]; p.PersistentData.Clear(); p.PersistentData.Append(R2aDesignFixtures.Property(property));
         Text(excel, 1, Path.GetFileName(file)); Mode(excel, 1); sections.Params.Input[2].AddSource(excel.Params.Output[4]);
         Solve(doc);
         Check(excel.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable().Equals(geometry.Segments.Count), "count available before reading Excel and before section assignment");

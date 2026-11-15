@@ -2,11 +2,11 @@
 
 ## Flusso del modello
 
-1. Costruire materiali, sezioni e proprietà con i componenti esistenti. Collegare le proprietà a nodi, beam e plate; assegnare vincoli, carichi, gruppi e superelementi.
-2. Assemblare il modello con `Build Model`, dichiarando le unità. Per il flusso BridgeChecks utilizzare **N–mm–MPa**; il controllo dei superelementi rifiuta modelli con unità differenti.
-3. Esportare con `Straus7 R3 Export`, oppure eseguire `Straus7 R3 Analysis` scegliendo i casi richiesti. I risultati sono restituiti negli elementi di una copia del modello.
-4. Per le fasi composte, analizzare i modelli con le proprietà di fase appropriate, combinarli mediante `Build BridGHe Model` e associare ogni caso a una sola fase: solo acciaio, lungo termine, istantanea, deformazione differita o istantanea.
-5. Collegare i superelementi al verificatore BridgeChecks e i risultati ai componenti di estrazione/stampa.
+1. Creare nodi, travi e piastre, assegnando proprietà, vincoli e carichi. Un superelemento contiene solo travi; una trave non appartiene a superelementi di nomi diversi.
+2. Assemblare con **Build Model** e dichiarare le unità. ID e dati uguali vengono conservati una volta; ID uguali con dati diversi sono rifiutati. Per il flusso delle verifiche del ponte usare N–mm–MPa.
+3. Collegare il modello a **Straus R3 Analysis**, scegliere i casi necessari e premere Run; oppure usare il componente di export. I componenti Results leggono i risultati GPC dell'analisi, non inventano risultati mancanti.
+4. Per il ponte a fasi associare i risultati degli incrementi a **Bridge Action / Bridge Shrinkage Action**, raggrupparli con **Bridge Phase**, poi eseguire **Build BridGHe Model** con la matrice delle combinazioni per Action ID.
+5. Collegare l'uscita Model di **Build BridGHe Model** a **Super Element Check**, insieme alle travi composte selezionate dallo stesso modello; premere Run, quindi aggiornare dettagli, grafici e relazione.
 
 Il verificatore adottato assume le azioni al **baricentro lordo della sezione della rispettiva fase**. Il motore gPC effettua il trasporto al baricentro efficace se necessario. Un modello con azioni riferite ad altri punti richiede un adattamento esplicito prima della verifica.
 
@@ -42,33 +42,13 @@ I casi presenti solo nelle combinazioni di fase vengono inclusi nel catalogo di 
 
 Gli errori di esportazione impediscono l'avvio dell'analisi. Configurazioni attualmente non rappresentabili, come più casi di cedimenti imposti, rilasci multipli o supporti non gestiti, non vengono accettate come una soluzione parziale.
 
-## Dove restano i risultati delle analisi
+## Risultati esterni nella 0.4.0
 
-Da BridGHe 0.3.0 `Straus R3 Analysis` e `Moving Static Analysis` non salvano più il modello analizzato dentro il documento
-Grasshopper.
-- **Dove vanno.** Alla fine dell'analisi il modello con i risultati viene scritto accanto al file `.st7`, con lo stesso nome ed
-  estensione `.bghr` (per esempio `calcoli/REV003/M03_N0.bghr`). Il documento tiene solo il percorso e l'impronta SHA-256 del file.
-- **Perché.** Prima un'analisi grande entrava tutta nel `.gh`. L'esempio 50 REV003 era passato da 4,9 a 887 MB, e ogni salvataggio
-  automatico di Grasshopper lo riscriveva per intero, con secondi di attesa a ogni modifica.
-- **Alla riapertura.** Il componente legge il file alla prima soluzione, senza rifare l'analisi. Se il file manca o è cambiato dopo il
-  salvataggio, il componente non usa risultati vecchi: lo segnala con un avviso e chiede «Run». `Moving Static Analysis` confronta
-  anche l'impronta del modello in ingresso, come prima.
-- **Documenti salvati prima.** Si aprono con i risultati che contengono. Al primo salvataggio i risultati passano nel file `.bghr`, e il
-  documento torna leggero.
-- **Copiare un progetto.** Il file `.bghr` va copiato con la sua cartella di calcolo. Il componente lo cerca accanto al percorso
-  `.st7` del suo ingresso e, se non lo trova, dove è stato scritto.
-- **Cosa resta nel documento.** Un componente senza risultati, appena creato o azzerato con «Reset», si salva nel documento come
-  prima. Se il file non si può scrivere, per esempio per mancanza di spazio, i risultati restano nel documento e il componente lo
-  segnala con un avviso.
+`Straus R3 Analysis` e `Moving Static Analysis` salvano i risultati GPC in un file `.bghr`; il documento conserva il percorso e l’impronta SHA-256. Alla riapertura, la lettura controlla file, impronta e modello. Non usare risultati rifiutati: ripristinare il file coerente oppure eseguire una nuova analisi.
 
-Un documento salvato prima si può anche convertire senza aprirlo in Rhino:
-`dotnet run --project tests/BridGHe.Smoke -c Release -- --results-outside <documento.ghx> <convertito.ghx> [rapporto.json]`.
-Lo strumento scrive i file `.bghr` accanto ai `.st7` dei pannelli collegati ai componenti di analisi. Poi rilegge il documento
-convertito e controlla due cose: i risultati sono identici byte per byte e nient'altro nell'archivio è cambiato. Il documento di
-partenza non viene modificato.
+Copiare anche il `.bghr` quando si trasferisce il progetto e aggiornare `Output Path`. Un riferimento temporaneamente non leggibile resta nel documento e viene ritentato; non è un comando Reset. I risultati incorporati FEM e i file BGHR1 della 0.3.0 richiedono una nuova analisi GPC: il convertitore storico `--results-outside` della 0.3.0 non è una migrazione dei risultati alla 0.4.0.
 
-Le cartelle `calcoli` degli esempi non sono versionate. Un esempio salvato con questa versione ha bisogno della sua cartella di
-calcolo, oppure di una nuova analisi, per mostrare i risultati.
+Il pacchetto controlla gli SHA-256 dei `.bghr` referenziati dai GHX e include soltanto questi risultati, senza file nativi Straus7. Un riferimento mancante o alterato interrompe la preparazione del pacchetto.
 
 ## Sezioni native Straus
 
@@ -98,7 +78,7 @@ Le sei geometrie BGL parametriche sono rettangolare cava, I, channel, T, angle e
 
 Per BXS/BSL/BGL da libreria specificare `Length unit`: 0 m, 1 cm, 2 mm, 3 ft, 4 in. La stessa unità deve essere usata nel modello; una differenza genera errore. Conservare i file BXS e le librerie per le successive riesportazioni.
 
-Restano `Generic Section` per proprietà assegnate numericamente e le sezioni da geometria della base, esportate mediante BXS. Le sezioni native nuove conservano geometria e proprietà nel modello, con contorni e anteprima solida estrusa discretizzata; i moduli resistenti elastici non letti dalla chiamata nativa sono `NaN`.
+`Generic Section` conserva proprietà assegnate numericamente. Le sezioni da geometria accettate usano le proprietà GPC; una sezione Brep deve avere una sola regione chiusa, anche con fori. Torsione e aree efficaci a taglio possono differire dalla precedente valutazione BXS di Straus7: ricalcolare dopo il passaggio. La visualizzazione è distinta dalle proprietà meccaniche; se una ricetta nativa non ha un contorno GPC disponibile, non viene inventata una sezione solida.
 
 ## Carichi mobili
 
@@ -125,11 +105,19 @@ Target supportati nel modello nuovo: Any, Beam e Plate. Entity Set e Brick sono 
 
 ## Convenzioni delle azioni
 
-`Build BridGHe Model` riceve le fasi da **Bridge Phase**, che raggruppa gli incrementi definiti con **Bridge Action** e **Bridge Shrinkage Action**. Quest'ultimo associa deformazione primaria e, quando previsti, modello/caso FEM degli effetti secondari; per omettere esplicitamente questi ultimi serve `Primary Only`. Le combinazioni hanno una colonna per Action ID, senza prefissi legati all'ordine dei modelli. `Composite Beam Strain` è mantenuto come componente obsoleto per le definizioni esistenti: i suoi carichi diretti a monte del Build vengono eliminati e ricostruiti dalle azioni. Vedere [fasi e azioni incrementali](FASI-E-AZIONI.md).
+`Build BridGHe Model` riceve le **Bridge Phase**, che raggruppano gli incrementi di **Bridge Action** e **Bridge Shrinkage Action**. L'azione di ritiro associa deformazione primaria e risultati secondari; `Primary Only` omette questi ultimi solo per scelta esplicita. Le combinazioni hanno una colonna per Action ID. `Composite Beam Strain` resta obsoleto per riconoscere i documenti, ma il valore dell'ingresso `Strain` non è conservato né usato: non può sostituire il flusso di ritiro. Vedere [Fasi e azioni](FASI-E-AZIONI.md).
 
-In `BeamForceResultModel`, i nomi storici `Mx/My` conservano rispettivamente i valori Straus `BM1/BM2`, cioè i momenti **nei piani** 1/2. Nel riferimento positivo della sezione si usa `(M1, M2) = (BM2, -BM1)`; successivamente si ruotano anche i valori nel riferimento di destinazione del checker, spesso `(-x,-y)`. Assegnare quel riferimento ai valori senza trasformarli invertiva impropriamente i segni: corretto e verificato nativamente il 17 ottobre 2026. Il momento positivo nel piano verticale comprime il lembo superiore. Gli assi misurati per una trave da X=0 a X=L con Angle=0 sono 1=+Y, 2=+Z, 3=+X. Vedere [convenzioni ufficiali Strand7 R3](https://www.strand7.com/strand7r3help/Content/Topics/ResultsInterpretation/ResultsInterpretationBeamInternalForceConvention.htm) e [assi locali/principali](https://www.strand7.com/strand7r3help/Content/Topics/Elements/ElementsBeamsPrincipalAxes.htm). Rigenerare le verifiche BridgeChecks ottenute con la precedente conversione.
+Nella convenzione storica di BridGHe, i nomi `Mx/My` indicano rispettivamente i valori Straus `BM1/BM2`, cioè i momenti **nei piani** 1/2. Nel riferimento positivo della sezione si usa `(M1, M2) = (BM2, -BM1)`; successivamente si ruotano anche i valori nel riferimento di destinazione del checker, spesso `(-x,-y)`. Assegnare quel riferimento ai valori senza trasformarli invertiva impropriamente i segni: corretto e verificato nativamente il 17 ottobre 2026. Il momento positivo nel piano verticale comprime il lembo superiore. Gli assi misurati per una trave da X=0 a X=L con Angle=0 sono 1=+Y, 2=+Z, 3=+X. Vedere [convenzioni ufficiali Strand7 R3](https://www.strand7.com/strand7r3help/Content/Topics/ResultsInterpretation/ResultsInterpretationBeamInternalForceConvention.htm) e [assi locali/principali](https://www.strand7.com/strand7r3help/Content/Topics/Elements/ElementsBeamsPrincipalAxes.htm). Ricalcolare le verifiche ottenute con la precedente conversione, conservando gli originali.
 
 Le prove del convertitore sono eseguite; la verifica completa dei segni dopo esportazione, analisi e rilettura richiede la licenza nativa. Non modificare nuovamente segni o ordine delle componenti nei componenti downstream per compensare la conversione.
+
+### Inviluppi e risultati mancanti
+
+Gli inviluppi conservano nello stesso campione caso, stazione e componenti concomitanti. **Step vale 0** nel percorso corrente: distinguere posizione/campione mobile dal nome del caso, senza interpretare Step come coordinata del veicolo. Una verifica assente o un valore NaN non è un esito positivo né un valore zero. Dopo cambi di geometria, rigidezza, vincoli o carichi, ricalcolare il modello prima di usare risultati e stati locali precedenti.
+
+### Inerzie della proprietà composta
+
+La proprietà omogeneizzata esportata usa I11 rispetto all'asse orizzontale, I22 rispetto all'asse verticale e angolo zero. Il riordino delle principali corregge alcune solette larghe. Non confondere questi valori con l'elenco delle principali di un componente geometrico; per sezioni asimmetriche gli assi principali possono non coincidere con quelli del piano della soletta e non tutte le operazioni di ritiro sono ammesse.
 
 ## Riepilogo con etichette automatiche
 
@@ -197,6 +185,6 @@ Metodi interessati: nuovi `BeamMomentClassification.Classify`, `BridgeStateOverr
 
 La sezione finale di `Composite beam` è opzionale e assume quella iniziale. Il materiale delle armature è opzionale quando non vi sono armature attive. I nuovi record gPC hanno input con default e opzionalità esplicita. I componenti preesistenti con valori persistenti usano tali default; gli input fisicamente necessari restano obbligatori. L'inventario runtime delle porte è in `migration/current-components.json`.
 
-La preview del modello comprende nodi, beam, plate e definizioni dei percorsi mobili. Le 21 famiglie parametriche Straus hanno contorni e solidi estrusi discretizzati; la precisione geometrica della preview non sostituisce le proprietà meccaniche native. Materiali, combinazioni, risultati numerici e opzioni non richiedono una geometria autonoma. I percorsi rettilinei mostrano l'asse; quelli curvi/quadratici mostrano i tre punti di definizione: controllare la traiettoria completa in Straus. Le nuove opzioni/sezioni gPC del verificatore sono dati; la geometria del ponte viene mostrata dagli elementi FEM.
+La preview comprende nodi, assi delle travi, piastre e percorsi mobili; le sezioni con geometria GPC disponibile possono mostrare il solido. Le ricette native prive di contorno non mostrano il vecchio solido ottenuto da Straus7. Le armature della composta sono schematiche e non costituiscono una distinta ferri. Nessuna di queste opzioni cambia la rigidezza o le azioni del modello. Per i percorsi curvi/quadratici controllare i punti di definizione; la preview non prova la correttezza del tracciato esportato.
 
 `Beam Support`: K nelle unità F/L² del modello, direzioni -1/+1/-2/+2 principali, gap in L. Il comportamento compression-only richiede NLA. Riferimenti e convenzioni: `docs/beam-support-fix.json`.

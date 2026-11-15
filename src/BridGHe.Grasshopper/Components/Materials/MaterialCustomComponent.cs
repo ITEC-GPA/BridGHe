@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using Grasshopper.Kernel;
@@ -85,11 +84,11 @@ namespace BridGHe.Grasshopper.Components.Materials
 
             if (!DA.GetData("Units", ref units))
                 return;
-            UpdateInputDescriptions((ModelModel.ModelUnits)units);
+            UpdateInputDescriptions((Common.Gpc.DefinitionUnits)units);
 
             if (!DA.GetData("Kind", ref kind))
                 return;
-            Message = ((MaterialModel.MaterialKind)kind).ToString();
+            Message = KindLabel(kind);
             if (!DA.GetData("Name", ref name))
                 return;
             if (!DA.GetData(_paramsIdx[0], ref modulus))
@@ -110,8 +109,9 @@ namespace BridGHe.Grasshopper.Components.Materials
                 return;
 
             // Convert to Nmm
-            ModelHelper.GetUtilitiesConversionParams(
-                (ModelModel.ModelUnits)units,
+            // P2K (P1): the table of the former FEM ModelHelper, without the FEM type (same factors).
+            Helpers.GpcOnlyProperties.UtilitiesUnits(
+                (Common.Gpc.DefinitionUnits)units,
                 out UnitsConvert.LengthUnits lengthUnits,
                 out UnitsConvert.ForceUnits forceUnits,
                 out UnitsConvert.MassUnits massUnits,
@@ -123,51 +123,33 @@ namespace BridGHe.Grasshopper.Components.Materials
             rho = UnitsConvert.ConvertToDefaultUnits(rho, massUnits, 1, lengthUnits, -3);
             fk = UnitsConvert.ConvertToDefaultUnits(fk, pressureUnits, 1);
             ftk = UnitsConvert.ConvertToDefaultUnits(ftk, pressureUnits, 1);
+            // P2CI (UN-01, user decision of 14/11): the thermal expansion of PSI is per °F (the label «1/F»), the GPC material per °C:
+            // α[1/°C] = 1.8 α[1/°F]. Before (0.3.0 too) it was passed unconverted. kNm, SI and Nmm (1/°C) unchanged.
+            alpha = new Common.Gpc.BridgeUnits((Common.Gpc.DefinitionUnits)units).ToPerCelsius(alpha);
 
-            MaterialModel material = new MaterialModel
-            {
-                Kind = (MaterialModel.MaterialKind)kind,
-                Name = name,
-                Modulus = modulus,
-                PoissonRatio = ni,
-                ThermalExpansion = alpha,
-                ShearModulus = g,
-                UsePoisson = use_poisson,
-                Density = rho
-            };
-
-            switch (material.Kind)
-            {
-                case MaterialModel.MaterialKind.Aluminium:
-                    //material.MinimumYieldStress = mys;
-                    //material.MinimumTensileStress = mts;
-                    //material.ExpectedYieldStress = eys;
-                    //material.ExpectedTensileStress = ets;
-                    break;
-                case MaterialModel.MaterialKind.Concrete:
-                    material.SpecificCompressiveStrength = fk;
-                    break;
-                case MaterialModel.MaterialKind.Steel:
-                    material.MinimumYieldStress = fk;
-                    material.MinimumTensileStress = ftk;
-                    material.ExpectedYieldStress = 1.1 * fk;
-                    material.ExpectedTensileStress = 1.1 * ftk;
-                    break;
-                case MaterialModel.MaterialKind.Undefined:
-                    break;
-                default:
-                    throw new NotSupportedException();
-            }
-
-            DA.SetData(0, new GH_Material(material));
+            var recipe = Common.Gpc.Builders.GpcMaterialBuilders.Custom(kind, name, modulus, ni, alpha, g, use_poisson, rho, fk, ftk);
+            // P2K (P1): the material by its GPC datum alone, by kind from the recipe of the component.
+            DA.SetData(0, GH_Material.FromGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe), recipe.Kind));
         }
 
-        private void UpdateInputDescriptions(ModelModel.ModelUnits units)
+        /// <summary>P2K (P1): the kinds of the former FEM <c>MaterialModel.MaterialKind</c> (same labels and integers), in the order of its
+        /// <c>Enum.GetValues</c> (by unsigned value: Undefined = -1 last), for the Kind menu and the message.</summary>
+        private static readonly (string Label, int Value)[] Kinds = { ("Steel", 0), ("Concrete", 1), ("Aluminium", 2), ("Rebar", 3), ("Undefined", -1) };
+
+        /// <summary>P2K (P1): the label of a kind, as the former enum named it (an unknown integer by its digits).</summary>
+        private static string KindLabel(int kind)
+        {
+            foreach (var (label, value) in Kinds)
+                if (value == kind) return label;
+            return kind.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        private void UpdateInputDescriptions(Common.Gpc.DefinitionUnits units)
         {
             switch (units)
             {
                 //do not change the variables here. also default units in utilities are affected
-                case ModelModel.ModelUnits.Knm:
+                case Common.Gpc.DefinitionUnits.Knm:
                     Params.Input[_paramsIdx[0]].NickName = _paramsName[0] + " (kPa)";
                     Params.Input[_paramsIdx[2]].NickName = _paramsName[2] + " (1/C)";
                     Params.Input[_paramsIdx[3]].NickName = _paramsName[3] + " (kPa)";
@@ -175,7 +157,7 @@ namespace BridGHe.Grasshopper.Components.Materials
                     Params.Input[_paramsIdx[6]].NickName = _paramsName[6] + " (kPa)";
                     Params.Input[_paramsIdx[7]].NickName = _paramsName[7] + " (kPa)";
                     break;
-                case ModelModel.ModelUnits.SI:
+                case Common.Gpc.DefinitionUnits.SI:
                     Params.Input[_paramsIdx[0]].NickName = _paramsName[0] + " (Pa)";
                     Params.Input[_paramsIdx[2]].NickName = _paramsName[2] + " (1/C)";
                     Params.Input[_paramsIdx[3]].NickName = _paramsName[3] + " (Pa)";
@@ -183,7 +165,7 @@ namespace BridGHe.Grasshopper.Components.Materials
                     Params.Input[_paramsIdx[6]].NickName = _paramsName[6] + " (Pa)";
                     Params.Input[_paramsIdx[7]].NickName = _paramsName[7] + " (Pa)";
                     break;
-                case ModelModel.ModelUnits.Nmm:
+                case Common.Gpc.DefinitionUnits.Nmm:
                     Params.Input[_paramsIdx[0]].NickName = _paramsName[0] + " (MPa)";
                     Params.Input[_paramsIdx[2]].NickName = _paramsName[2] + " (1/C)";
                     Params.Input[_paramsIdx[3]].NickName = _paramsName[3] + " (MPa)";
@@ -191,7 +173,7 @@ namespace BridGHe.Grasshopper.Components.Materials
                     Params.Input[_paramsIdx[6]].NickName = _paramsName[6] + " (MPa)";
                     Params.Input[_paramsIdx[7]].NickName = _paramsName[7] + " (MPa)";
                     break;
-                case ModelModel.ModelUnits.IPS:
+                case Common.Gpc.DefinitionUnits.IPS:
                     Params.Input[_paramsIdx[0]].NickName = _paramsName[0] + " (psi)";
                     Params.Input[_paramsIdx[2]].NickName = _paramsName[2] + " (1/F)";
                     Params.Input[_paramsIdx[3]].NickName = _paramsName[3] + " (psi)";
@@ -211,5 +193,22 @@ namespace BridGHe.Grasshopper.Components.Materials
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
         public override Guid ComponentGuid => new Guid("9404d0c7-cca7-4f29-b7f5-baf001386675");
+
+        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
+        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
+        private static class ModelModel
+        {
+            internal enum ModelUnits
+            {
+                [System.ComponentModel.Description("kNm (m, kN, T, kPa, s, kJ, C)")] Knm,
+                [System.ComponentModel.Description("SI (m, N, kg, Pa, s, J, C)")] SI,
+                [System.ComponentModel.Description("Nmm (mm, N, T, MPa, s, mJ, C)")] Nmm,
+                [System.ComponentModel.Description("PSI (in, lbf, lb, psi, s, btu, F)")] IPS
+            }
+        }
+        private static class MaterialModel
+        {
+            internal enum MaterialKind { Undefined = -1, Steel, Concrete, Aluminium, Rebar }
+        }
     }
 }

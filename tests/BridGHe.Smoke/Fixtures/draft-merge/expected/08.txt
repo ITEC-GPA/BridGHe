@@ -1,0 +1,21 @@
+name 4
+groups Deck
+loads E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855
+attributes E8A6296224F3CFBD958851B00186F386A7D9171452A166869ECA60EFAD1751C0
+attribute ids 1,2
+attributes max 2
+ends C3B2244FFE645857FFC49B18C66596E934122796304525350C11A2951C6FA82E
+beam loads 268B002DAB1E66D599AC4342E7970A45AF5A20207F91F863950762BB090C8113
+beam load records BeamLoad/1/1~BeamLoad/1/1/segment 1,BeamLoad/1/2~BeamLoad/1/2,BeamLoad/1/4~BeamLoad/1/4/segment 1
+physical FE1F5B2C9A18986951E0D16A536E4D2280E040FC5792553FEF1FAE6921B44401
+axes 70ACF42021F12D3E037679D4A43AFF170F4B637315A6D2BA0CAC1B1A7AC6F425
+property 9C9E66C52D7EFC8EE686FDB60F9193B9ED08DD46A3C2008B7157DC10B7A33F4F
+record groups Deck,A
+record labels B1
+record super elements SE
+record counts 0 0 1
+record loads BeamDistributedLoadModel:Q,BeamPointLoadModel:Dead,BeamPreLoadModel:T,BeamDistributedLoadModel:Q
+bridge - SE -
+warnings Straus7 allows assigning only one single group to the beam 1
+element warnings Beam:1:Straus7 allows assigning only one single group to the beam {0}
+carried 

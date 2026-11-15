@@ -45,7 +45,16 @@ public sealed class BridgeBearingsComponent : BridgeUtilityComponent
         da.GetData(5, ref kt); da.GetData(6, ref kr); bool hasFrame = da.GetData(7, ref frame);
         var result = BridgeBearings.Create(g.Value, supports, girders, kinds, angle, kt, kr, hasFrame ? frame : null);
         preview.AddRange(result.Frames.Zip(result.Labels, (f, l) => (f, l)));
-        da.SetDataList(0, result.Nodes.Select(n => new GH_Node(n))); da.SetDataList(1, result.Frames); da.SetDataList(2, result.Labels);
+        // R6.5 P1 lane 1b (P2K: always): the nodes by their GPC drafts alone, identity by content (the frame with its origin at the bearing
+        // point, the label with support, girder and type, the stiffnesses of an elastic bearing: everything the node is built from).
+        da.SetDataList(0, result.Drafts.Select((d, i) =>
+        {
+            bool elastic = kinds[kinds.Count == 1 ? 0 : i] == (int)BridgeBearingKind.Elastic;
+            var draft = GpcOnlyElements.Generated(this, () => Common.Gpc.GpcDrafts.Reidentify(d, GpcOnlyElements.ContentIdentity(ComponentGuid, 0,
+                result.Frames[i], result.Labels[i], elastic ? kt : (object)null, elastic ? kr : (object)null)));
+            return draft == null ? null : GH_Node.FromGpc(draft);
+        }).Where(n => n != null));
+        da.SetDataList(1, result.Frames); da.SetDataList(2, result.Labels);
     }
     public override BoundingBox ClippingBox
     { get { var b = BoundingBox.Empty; foreach (var p in preview) { b.Union(p.Frame.Origin + new Vector3d(500, 500, 500)); b.Union(p.Frame.Origin - new Vector3d(500, 500, 500)); } return b; } }

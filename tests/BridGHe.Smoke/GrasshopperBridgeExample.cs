@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using GH_IO.Serialization;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
@@ -17,18 +16,40 @@ using Rhino.Geometry;
 /// <summary>Builds a real editable component graph, then reopens and executes it.</summary>
 internal static class GrasshopperBridgeExample
 {
+    // R6.6 lane R4c-grafi: the graph of example 11 without any FEM model. The graph is drawn from the recipes of BridgeGrillageExample
+    // (R4cModel) as before: points, Node, Node Restraints, Node Load, curves, Beam, Super Element, Element ID, Build Model, Straus R3 Analysis,
+    // Decompose Model, Node and Beam Results, Attach Moving Paths, Moving Static Analysis, Super Element Filter, Build BridGHe Model, Composite
+    // Beam, Super Element Check. Its data are given by their GPC datum alone (load cases, beam properties, the composite section: FromGpc) and
+    // every producer runs on the GPC path of P2 (the switches GeneratorsWithoutFem and PropertiesWithoutFem on for the whole run). The models of
+    // the graph are GPC inputs alone; the checks read the analysed GPC models with the GPC result readers.
+
+    /// <summary><c>--grillage-gh-replay</c>: the graph of example 11 solved on the archives of the last <c>--bridge-grillage</c> (input.gpc +
+    /// input.records and results.bghr of the three phase models in <c>calcoli</c>) given to the analyses as their cached GPC-only output; the
+    /// native solver is not invoked.</summary>
     internal static int Replay()
     {
         var root=BridgeGrillageExample.Delivery;
         var p=System.Text.Json.JsonSerializer.Deserialize<BridgeGrillageExample.Parameters>(File.ReadAllText(Path.Combine(root,"parameters.json")));
-        ModelModel[] Read(string file)=>new[]{"01-G1_GETTO","02-G2_PERMANENTI","03-Q_UDL"}.Select(n=>ModelArchive.Read<ModelModel>(File.ReadAllBytes(Path.Combine(BridgeGrillageExample.Output,n,file)))).ToArray();
+        var inputs=Enumerable.Range(0,3).Select(i=>BridgeGrillageExample.CreateGpc(p,i)).ToArray();
+        var archived=new[]{"01-G1_GETTO","02-G2_PERMANENTI","03-Q_UDL"}.Select(n=>R4cModel.Read(Path.Combine(BridgeGrillageExample.Output,n))).ToArray();
+        var expected=archived.Select((a,i)=>new R4cModel.Results(a.Analysed,inputs[i])).ToArray();
         using var report=System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(root,"validation.json")));
         var section=System.Text.Json.JsonSerializer.Deserialize<BridgeGrillageExample.SectionReport>(report.RootElement.GetProperty("Stresses").GetRawText());
-        var checks=new NativeExamples.Recorder();Run(p,Read("input.bgmodel"),Read("results.bgmodel"),section,checks,true);
-        Console.WriteLine("PHASE EXAMPLE 11: "+checks.Measurements.Count+" measurements; native solver not invoked.");
+        // The archive holds the input without the drafts of its elements (BGHGPC1): the graph takes the input of the recipe (the same identities),
+        // checked to be the archived model (analysis fingerprint).
+        for(int i=0;i<3;i++)
+            if(GPC.Model.Models.ModelRevisions.AnalysisFingerprint(archived[i].Input.Model)!=GPC.Model.Models.ModelRevisions.AnalysisFingerprint(inputs[i].Build().Model))
+                throw new Exception("GPC: the archived input of phase "+i+" is not the input of the recipe");
+        var checks=new NativeExamples.Recorder();Run(p,inputs,expected,section,checks,true);
+        Console.WriteLine("PHASE EXAMPLE 11: "+checks.Measurements.Count+" measurements; native solver not invoked (GPC data alone).");
         return checks.Measurements.All(c=>c.Passed)?0:1;
     }
-    internal static void Run(BridgeGrillageExample.Parameters p,ModelModel[] inputs,ModelModel[] expected,BridgeGrillageExample.SectionReport sectionReference,NativeExamples.Recorder checks,bool cached=false)
+    /// <summary>The graph of example 11 on the recipes <paramref name="inputs"/>, written, reopened and solved; checked against the analysed GPC
+    /// models <paramref name="expected"/> (the direct analyses of the recipes) and the section stresses of <paramref name="sectionReference"/>.
+    /// Cached: the analyses are not run; each takes as output the GH model of its archived input alone (<paramref name="cachedInputs"/>, or the
+    /// input of the recipe) with its analysed GPC model attached.</summary>
+    internal static void Run(BridgeGrillageExample.Parameters p,R4cModel[] inputs,R4cModel.Results[] expected,BridgeGrillageExample.SectionReport sectionReference,NativeExamples.Recorder checks,bool cached=false,
+        BridGHe.Common.Gpc.GpcModels.Conversion[] cachedInputs=null)
     {
         var delivery=cached?Path.GetFullPath("artifacts/example-replay/11-ponte-graticcio"):BridgeGrillageExample.Delivery;
         Directory.CreateDirectory(delivery);
@@ -38,18 +59,15 @@ internal static class GrasshopperBridgeExample
         var server=new GH_ComponentServer();field.SetValue(null,server);
         var parse=typeof(GH_ComponentServer).GetMethod("ParseGHA",BindingFlags.NonPublic|BindingFlags.Public|BindingFlags.Instance,null,new[]{typeof(Assembly),typeof(string)},null);
         foreach(var a in new[]{typeof(GH_Document).Assembly,assembly})parse.Invoke(server,new object[]{a,a.Location});
+        using var gpcOnly=R2aDesignFixtures.WithoutFem();
+        var modelType=assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model",true);
         using var doc=new GH_Document();
         T Add<T>(T obj,float x,float y) where T:IGH_DocumentObject {obj.CreateAttributes();obj.Attributes.Pivot=new PointF(x,y);doc.AddObject(obj,false);return obj;}
         GH_Component Component(string type,float x,float y)=>Add((GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components."+type,true)),x,y);
         void Wire(IGH_Param from,GH_Component to,int input)=>to.Params.Input[input].AddSource(from);
         GH_Panel Panel(string name,string text,float x,float y,int w=230,int h=70)
         {var o=Add(new GH_Panel{NickName=name,UserText=text},x,y);o.Properties.Multiline=false;o.Attributes.Bounds=new RectangleF(x,y,w,h);return o;}
-        IGH_Goo Goo(string type,object value)
-        {
-            var t=assembly.GetType("BridGHe.Grasshopper.DataTypes."+type,true);
-            if(type!="Fem.GH_Model")return (IGH_Goo)Activator.CreateInstance(t,new[]{value});
-            var goo=(IGH_Goo)Activator.CreateInstance(t);t.GetProperty("Value").SetValue(goo,value);return goo;
-        }
+        IGH_Goo Case(string name)=>R2aDesignFixtures.Case(BridGHe.Common.Gpc.Builders.GpcCaseBuilders.Case(name,false));
         Param_GenericObject Objects(string name,IEnumerable<IGH_Goo> values,float x,float y)
         {var obj=Add(new Param_GenericObject{NickName=name,Name=name},x,y);foreach(var v in values)obj.PersistentData.Append(v);return obj;}
         void Integer(GH_Component c,int i,int value){var q=(Param_Integer)c.Params.Input[i];q.PersistentData.Clear();q.SetPersistentData(value);}
@@ -63,7 +81,7 @@ internal static class GrasshopperBridgeExample
             Panel("FASE "+(phase+1),input.Name+"\nNodi "+input.Nodes.Count+" | Beam "+input.Beams.Count,y: y,x:20,w:750,h:65);
             var build=Component("Models.BuildModelComponent",1700,y+360);Text(build,1,input.Name);Integer(build,2,2);builds.Add(build);
             int nodeGroup=0;
-            foreach(var nodeSet in input.Nodes.GroupBy(n=>n.Attributes.OfType<NodeRestraintAttributeModel>().Single().Value.Tz))
+            foreach(var nodeSet in input.Nodes.GroupBy(n=>n.Restraint[2]))
             {
                 var nodes=nodeSet.ToArray();float row=y+140+nodeGroup*340;
                 var points=Add(new Param_Point{NickName=nodeSet.Key?"Appoggi [mm]":"Nodi interni [mm]"},30,row);
@@ -73,36 +91,36 @@ internal static class GrasshopperBridgeExample
                 Wire(Objects("Tx Ty Tz",new[]{new GH_Boolean(true),new GH_Boolean(true),new GH_Boolean(nodeSet.Key)},240,row+70),restraint,1);
                 Wire(Objects("Rx Ry Rz",new[]{new GH_Boolean(false),new GH_Boolean(false),new GH_Boolean(true)},240,row+120),restraint,2);
                 IGH_Param last=restraint.Params.Output[0];int lcIndex=0;
-                foreach(var lc in input.LoadCases)
+                foreach(var lc in input.Cases)
                 {
                     float x=660+lcIndex*280;
                     var load=Component("Loads.NodeLoadComponent",x,row);Wire(last,load,0);
-                    Wire(Objects(lc.Name,new[]{Goo("Fem.GH_LoadCase",lc)},x-80,row+70),load,1);
-                    var forces=Add(new Param_Vector{NickName="Forze "+lc.Name+" [N]"},x-80,row+120);
-                    foreach(var n in nodes)forces.PersistentData.Append(new GH_Vector(new Vector3d(0,0,n.Loads.OfType<NodeForceLoadModel>().Where(l=>l.LoadCase.Name==lc.Name).Sum(l=>l.Value.Z))));
+                    Wire(Objects(lc,new[]{Case(lc)},x-80,row+70),load,1);
+                    var forces=Add(new Param_Vector{NickName="Forze "+lc+" [N]"},x-80,row+120);
+                    foreach(var n in nodes)forces.PersistentData.Append(new GH_Vector(new Vector3d(0,0,n.Loads.Where(l=>l.Case==lc).Sum(l=>l.Force.Z))));
                     Wire(forces,load,2);last=load.Params.Output[0];lcIndex++;
                 }
                 Wire(last,build,0);nodeGroup++;
             }
             int beamGroup=0;
-            foreach(var beams in input.Beams.GroupBy(b=>b.HasAttribute(typeof(SuperElementAttributeModel))))
+            foreach(var beams in input.Beams.GroupBy(b=>b.SuperElement!=null))
             {
                 var members=beams.ToArray();float row=y+780+beamGroup*130;
                 var curves=Add(new Param_Curve{NickName=beams.Key?"Assi longitudinali [mm]":"Assi trasversali [mm]"},30,row);
-                foreach(var b in members)curves.PersistentData.Append(new GH_Curve(new LineCurve(b.PointFrom,b.PointTo)));
+                foreach(var b in members)curves.PersistentData.Append(new GH_Curve(new LineCurve(input.Nodes[b.From].Position,input.Nodes[b.To].Position)));
                 var bc=Component("Models.BeamComponent",460,row);Wire(curves,bc,0);
-                Wire(Objects("Proprieta A I11 I22 J (N-mm)",members.Select(b=>Goo("Fem.GH_BeamProperty",b.BeamProperty)),220,row+60),bc,1);
+                Wire(Objects("Proprieta A I11 I22 J (N-mm)",members.Select(b=>R2aDesignFixtures.Property(b.Property)),220,row+60),bc,1);
                 IGH_Param last=bc.Params.Output[0];
                 if(beams.Key)
                 {
                     var se=Component("Attributes.SuperElementComponent",730,row);Wire(last,se,0);
-                    Wire(Panel("Super elementi",string.Join("\n",members.Select(SuperElementAttributeModel.GetSuperElement)),480,row+50,170,65),se,1);last=se.Params.Output[0];
+                    Wire(Panel("Super elementi",string.Join("\n",members.Select(b=>b.SuperElement)),480,row+50,170,65),se,1);last=se.Params.Output[0];
                 }
                 var ids=Component("Attributes.ElementIdComponent",1020,row);Wire(last,ids,0);Wire(Panel("ID Straus",string.Join("\n",members.Select(b=>b.BeamId)),780,row+55,170,65),ids,1);
                 Wire(ids.Params.Output[0],build,0);beamGroup++;
             }
             var analysis=Component("Analysis.StrausR3AnalysisComponent",2080,y+360);Wire(build.Params.Output[0],analysis,0);Integer(analysis,1,0);
-            Wire(Panel("Casi da leggere",string.Join("\n",input.LoadCases.Select(c=>c.Name)),1770,y+530,260,90),analysis,2);
+            Wire(Panel("Casi da leggere",string.Join("\n",input.Cases),1770,y+530,260,90),analysis,2);
             Wire(Panel("File Straus",Path.Combine(BridgeGrillageExample.Output,"gh-phase-"+phase+".st7"),1770,y+650,400,60),analysis,3);
             Boolean(analysis,4,false);analyses.Add(analysis);
             var decompose=Component("Models.DecomposeModelComponent",2330,y+360);Wire(analysis.Params.Output[0],decompose,0);
@@ -113,7 +131,8 @@ internal static class GrasshopperBridgeExample
             var torque=Panel("TORSIONE [N mm] - conservata","",2770,y+650,320,150);torque.AddSource(br.Params.Output[6]);
         }
         // Use the same instantaneous component-built model for actual Straus moving paths.
-        var path=Objects("Percorso veicolo 2 assi",new[]{Goo("MovingGoo",BridgeGrillageExample.Traffic(p))},1700,3500);
+        var movingType=assembly.GetType("BridGHe.Grasshopper.DataTypes.MovingGoo",true);
+        var path=Objects("Percorso veicolo 2 assi",new[]{(IGH_Goo)Activator.CreateInstance(movingType,new object[]{BridgeGrillageExample.Traffic(p)})},1700,3500);
         var attach=Component("Loads.AttachMovingPathsComponent",2020,3500);Wire(builds[2].Params.Output[0],attach,0);Wire(path,attach,1);
         var moving=Component("Analysis.MovingStaticAnalysisComponent",2350,3500);Wire(attach.Params.Output[0],moving,0);
         Wire(Panel("File mobile",Path.Combine(BridgeGrillageExample.Output,"gh-moving.st7"),1800,3640,450,60),moving,1);Boolean(moving,2,false);
@@ -132,7 +151,7 @@ internal static class GrasshopperBridgeExample
             var onlyLong=Component("Models.BuildModelComponent",3600,y);Integer(onlyLong,2,2);Text(onlyLong,1,"Risultati longitudinali fase "+phase);
             onlyLong.Params.Input[0].DataMapping=GH_DataMapping.Flatten;Wire(last,onlyLong,0);Wire(onlyLong.Params.Output[0],merge,0);
             var action=Component("BridgeChecks.BridgeActionComponent",3850,y);Text(action,0,new[]{"G1","G2","Q"}[phase]);Wire(onlyLong.Params.Output[0],action,1);Integer(action,3,phase);
-            Wire(Objects("Caso sorgente",new[]{Goo("Fem.GH_LoadCase",new LoadCaseModel(BridgeGrillageExample.PhaseNames[phase],BridgeGrillageExample.PhaseNames[phase]))},3650,y+120),action,2);
+            Wire(Objects("Caso sorgente",new[]{Case(BridgeGrillageExample.PhaseNames[phase])},3650,y+120),action,2);
             var stage=Component("BridgeChecks.BridgeConstructionPhaseComponent",4100,y);Integer(stage,0,10*(phase+1));Text(stage,1,BridgeGrillageExample.PhaseNames[phase]);Integer(stage,2,phase==0?0:1);Wire(action.Params.Output[0],stage,3);Wire(stage.Params.Output[0],merge,1);
             if(phase>0)
             {
@@ -146,7 +165,7 @@ internal static class GrasshopperBridgeExample
         var select=Component("BridgeChecks.SuperElementFilterComponent",4580,650);Wire(merge.Params.Output[0],select,0);
         Wire(Panel("Travi verificate","G1\nG2\nG3\nG4",4350,1050,150,95),select,1);
         var composite=Component("BridgeChecks.CompositeBeamComponent",4870,650);Wire(select.Params.Output[0],composite,0);
-        var section=Objects("Sezione mista H1600 + soletta 250",new[]{Goo("GH_CompositeBeamProperty",BridgeGrillageExample.Composite(p))},4620,1050);
+        var section=Objects("Sezione mista H1600 + soletta 250",new[]{R2aDesignFixtures.Composite(GpcCompositeDefinitions.Create(GpcCompositeDefinitions.Grillage(p)))},4620,1050);
         Wire(section,composite,1);Wire(section,composite,2);
         var check=Component("BridgeChecks.SuperElementCheckComponent",5200,650);Wire(merge.Params.Output[0],check,0);Wire(composite.Params.Output[0],check,1);check.Params.Input[1].DataMapping=GH_DataMapping.Flatten;
         for(int i=2;i<=4;i++)Boolean(check,i,false);
@@ -160,7 +179,7 @@ internal static class GrasshopperBridgeExample
         for(int phase=0;phase<3;phase++)
         {
             var c=restoredAnalyses[phase];Boolean(c,4,!cached);
-            if(cached)c.GetType().GetField("_model",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(c,Goo("Fem.GH_Model",expected[phase]));
+            if(cached)c.GetType().GetField("_model",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(c,R2bFixtures.Model(cachedInputs?[phase]??inputs[phase].Build(),expected[phase].Model));
             ((GH_Panel)c.Params.Input[3].Sources.Single()).UserText=Path.Combine(BridgeGrillageExample.Output,"gh-phase-"+phase+".st7");
         }
         var restoredMoving=restored.Objects.OfType<GH_Component>().Single(c=>c.GetType()==moving.GetType());Boolean(restoredMoving,2,!cached);
@@ -171,12 +190,16 @@ internal static class GrasshopperBridgeExample
         for(int phase=0;phase<3;phase++)
         {
             var goo=restoredAnalyses[phase].Params.Output[0].VolatileData.AllData(true).Single();
-            var result=(ModelModel)goo.GetType().GetProperty("Value").GetValue(goo);
-            checks.Near("GH fase "+phase+" beam count",result.Beams.Count,inputs[phase].Beams.Count,0,0);
-            foreach(var node in expected[phase].Nodes)
+            if(modelType.GetProperty("Value").GetValue(goo)!=null)throw new Exception("GPC: the analysis output of phase "+phase+" has a FEM value");
+            var result=R2bFixtures.Get<GPC.Model.Models.Model>(goo,"GpcResults")??throw new Exception("GPC: no analysed GPC model in phase "+phase);
+            var catalog=BridGHe.Common.Gpc.GpcResultCatalog.Of(result);
+            checks.Near("GH fase "+phase+" beam count",result.BeamElements.Count,inputs[phase].Beams.Count,0,0);
+            for(int k=0;k<inputs[phase].Nodes.Count;k++)
             {
-                var actual=result.Nodes.Single(n=>n.Position.DistanceTo(node.Position)<1e-6);
-                checks.Near("GH fase "+phase+" Uz node "+node.NodeId,BridgeGrillageExample.Displ(actual,BridgeGrillageExample.PhaseNames[phase]).Displacement.Z,BridgeGrillageExample.Displ(node,BridgeGrillageExample.PhaseNames[phase]).Displacement.Z,1e-7,1e-6);
+                var position=inputs[phase].Nodes[k].Position;
+                var actual=result.NodesElements.Values.Single(n=>new Point3d(n.Position.X,n.Position.Y,n.Position.Z).DistanceTo(position)<1e-6);
+                var uz=BridGHe.Common.Gpc.GpcResultRows.Node(catalog,result,actual).Single(r=>r.Displacement!=null&&catalog.Entries[r.Entry].Label==BridgeGrillageExample.PhaseNames[phase]).Displacement[2];
+                checks.Near("GH fase "+phase+" Uz node "+(k+1),uz,expected[phase].Displacement(k,BridgeGrillageExample.PhaseNames[phase])[2],1e-7,1e-6);
             }
         }
         if(!cached)checks.Near("GH casi mobili",restoredMoving.Params.Output[1].VolatileDataCount,BridgeGrillageExample.MovingCaseCount(p),0,0);
@@ -198,7 +221,7 @@ internal static class GrasshopperBridgeExample
         checks.Near("GH estrazione tensioni acciaio",tensions.Params.Output[12].VolatileDataCount,outputs.Length,0,0);
         File.WriteAllText(Path.Combine(delivery,"grasshopper-stresses.json"),System.Text.Json.JsonSerializer.Serialize(outputs.Select(r=>new{r.Point1_ConcreteSigma,r.Point4_ConcreteSigma,r.Point5_SteelSigma,r.Point8_SteelSigma}),BridgeGrillageExample.Json));
         foreach(var a in restoredAnalyses)Boolean(a,4,false);Boolean(restoredMoving,2,false);
-        foreach(var analysis in restoredAnalyses)analysis.GetType().GetField("_model",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(analysis,Goo("Fem.GH_Model",null));
+        foreach(var analysis in restoredAnalyses)analysis.GetType().GetField("_model",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(analysis,Activator.CreateInstance(modelType));
         Write(restored,Path.Combine(delivery,"11-ponte-graticcio.ghx"));
         File.WriteAllText(Path.Combine(delivery,"phase-workflow-validation.json"),System.Text.Json.JsonSerializer.Serialize(new{Mode=cached?"cached-native-results":"native-recalculation",Checks=checks.Measurements},BridgeGrillageExample.Json));
     }

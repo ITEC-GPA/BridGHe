@@ -3,7 +3,10 @@ $ErrorActionPreference = 'Stop'
 $gpcDirectory = [IO.Path]::GetFullPath($Directory)
 $manifest = Get-Content -LiteralPath (Join-Path $gpcDirectory 'release-set.json') -Raw | ConvertFrom-Json
 if ($manifest.candidate -ne $false -and -not ($AllowCandidate -and $manifest.candidate -eq $true)) { throw 'BridGHe richiede un set GPC rilasciato; usare GpcAllowCandidate=true soltanto per collaudare un candidato esplicito.' }
-$names = @('GPCUtilities.dll','GPCGeometry.dll','DelaunayMesh.dll','GPCModel.dll','GPCModelData.dll','GPCChecker.Concrete.dll','GPCChecker.Steel.dll','GPCChecker.CompositeBridge.dll')
+# The closure of the references of BridGHe.Common and BridGHe.Grasshopper (build/GpcReferences.props): every DLL the plug-in ships.
+$names = @('GPCUtilities.dll','GPCGeometry.dll','DelaunayMesh.dll','GPCModel.dll','GPCModelData.dll','GPC.Converter.dll','GPC.Model.Persistence.dll','GPC.Archive.dll','GPCChecker.Concrete.dll','GPCChecker.Steel.dll','GPCChecker.CompositeBridge.dll')
+$extra = @(Get-ChildItem -LiteralPath $gpcDirectory -Filter '*.dll' -File | Where-Object { $names -notcontains $_.Name } | ForEach-Object Name)
+if ($extra.Count) { throw "DLL non previste in lib/GPC: $($extra -join ', ')" }
 foreach ($name in $names) {
     $entries = @($manifest.files | Where-Object file -eq $name)
     if ($entries.Count -ne 1) { throw "Manifest GPC incompleto o ambiguo: $name" }

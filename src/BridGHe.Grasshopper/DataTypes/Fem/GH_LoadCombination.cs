@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using GH_IO.Serialization;
 using Grasshopper.Kernel.Types;
 using System;
@@ -10,11 +9,11 @@ using System.Text.Json;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {
-    public class GH_LoadCombination : GH_Goo<LoadCombinationModel>
+    public class GH_LoadCombination : GH_Goo<object>
     {
-        public List<LoadCaseModel> LoadCases => Value.Values.Keys.ToList();
 
-        public override bool IsValid => Value.Name != string.Empty && Value.Values.Count > 0;
+        // R6.5 P0: without a FEM value the combination is its record.
+        public override bool IsValid => !string.IsNullOrEmpty(Gpc?.Name) && Gpc.Factors.Count > 0;
 
         public override string IsValidWhyNot => "Not propely defined";
 
@@ -26,10 +25,6 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
         }
 
-        public GH_LoadCombination(string name)
-        {
-            Value = new LoadCombinationModel(name);
-        }
 
         public override bool CastFrom(object source)
         {
@@ -66,40 +61,92 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
             return false;
         }
 
+        /// <summary>
+        /// R6.1 (frozen API for R6.2, §1bis): the GPC datum of this GH_LoadCombination, the combination by value (name, case records and factors in order): the one a GPC builder attached
+        /// (<see cref="AttachGpc"/>), the one read from a file (BGHGPC1), the former payload read by value
+        /// (<see cref="Common.Gpc.GpcLegacyPayloads"/>), otherwise the conversion of the FEM value, once per value. Immutable by convention.
+        /// </summary>
+        public Common.Gpc.Legacy.LegacyCombinationDraft Gpc
+        {
+            get
+            {
+                // P2D: a former payload is read by value when the file is read (no FEM value).
+                if (_gpc != null && ReferenceEquals(_gpcOf, Value)) return _gpc;
+                return null;
+            }
+        }
+
+        /// <summary>True when <see cref="Gpc"/> was attached by a GPC builder or read from a file (not converted from the FEM value).</summary>
+        public bool HasAttachedGpc { get; private set; }
+
+        /// <summary>Attaches the GPC datum built on GPC for the current FEM value.</summary>
+        public void AttachGpc(Common.Gpc.Legacy.LegacyCombinationDraft datum)
+        {
+            _gpc = datum ?? throw new ArgumentNullException(nameof(datum)); _gpcOf = Value; HasAttachedGpc = true;
+        }
+
+        private Common.Gpc.Legacy.LegacyCombinationDraft _gpc;
+        private object _gpcOf;
+
+        /// <summary>R6.1 (frozen API for R6.2): whoever changes the FEM value of this datum in place (Load Combinations parameter, UpdateLoadCases)
+        /// calls this: the datum attached no longer describes it and is dropped (the conversion follows the value). Only for a FEM value.</summary>
+        public void ValueChanged() { return;
+}
+
+        /// <summary>R6.1: a copy (<c>Duplicate</c>) keeps the datum attached or read, for its copy of the same value.</summary>
+        private void CarryGpcTo(GH_LoadCombination copy)
+        {
+            if (_gpc != null && HasAttachedGpc && ReferenceEquals(_gpcOf, Value)) { copy._gpc = _gpc; copy._gpcOf = copy.Value; copy.HasAttachedGpc = true; }
+        }
+
+        /// <summary>R6.5 P0 (coordinator, 7/11): a load combination given by its GPC datum alone, with no FEM value: <see cref="Gpc"/> is the datum and
+        /// validity, copies, persistence and text read it.</summary>
+        public static GH_LoadCombination FromGpc(Common.Gpc.Legacy.LegacyCombinationDraft datum)
+        {
+            var goo = new GH_LoadCombination();
+            goo.Value = null;
+            goo._gpc = datum ?? throw new System.ArgumentNullException(nameof(datum)); goo._gpcOf = null; goo.HasAttachedGpc = true;
+            return goo;
+        }
+
         public override IGH_Goo Duplicate()
         {
-            GH_LoadCombination value = new GH_LoadCombination(Value.Name);
-            foreach (KeyValuePair<LoadCaseModel, double> item in Value.Values)
-                value.Value.Values.Add(item.Key, item.Value);
-            return value;
+            var copy = DuplicateValue();
+            CarryGpcTo(copy);
+            return copy;
+        }
+
+        private GH_LoadCombination DuplicateValue()
+        {
+            return new GH_LoadCombination();
         }
 
         public override bool Read(GH_IReader reader)
         {
-            try { Value = Common.Helpers.ModelArchive.Read<LoadCombinationModel>(reader.GetByteArray("Data")); return true; }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
+            try
+            {
+                // P2D: the record, or a former payload / the FEM chunk alone of a development file read by value; never a FEM value.
+                var datum = GpcGooPersistence.Read(reader, out _, out var records, out var femm) switch
+                {
+                    GpcGooPersistence.Kind.Gpc => Common.Gpc.GpcDraftArchive.ReadCombination(records),
+                    GpcGooPersistence.Kind.Legacy => Common.Gpc.GpcLegacyPayloads.Combination(femm),
+                    _ => null,
+                };
+                if (datum == null) return false;
+                Value = null; _gpc = datum; _gpcOf = null; HasAttachedGpc = true; return true;
+            }
+            catch (Exception ex) { return GpcGooPersistence.Refused(reader, TypeName, ex); }
         }
 
         public override bool Write(GH_IWriter writer)
         {
-            try { writer.SetByteArray("Data", Common.Helpers.ModelArchive.Write(Value)); return true; }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); return false; }
+            try { GpcGooPersistence.Write(writer, ((byte[])null, Common.Gpc.GpcDraftArchive.Write(Gpc))); return true; } // P2D: the record alone
+            catch (Exception ex) { return GpcGooPersistence.NotWritten(writer, TypeName, ex, () => Gpc != null); } // P2CI (MU-01): said to the writer
         }
 
         public override string ToString()
         {
-            string str = $"{Value.Name} = ";
-
-            bool first = true;
-            foreach (KeyValuePair<LoadCaseModel, double> item in Value.Values)
-            {
-                if (!first)
-                    str += " + ";
-                str += $"{item.Key.Name}*{item.Value}";
-                first = false;
-            }
-
-            return str;
+            return Gpc == null ? "Null Load Combination" : $"{Gpc.Name} = " + string.Join(" + ", Gpc.Factors.Select(f => $"{f.Case.Name}*{f.Factor}")) + "\nGPC datum (no FEM value)";
         }
     }
 }

@@ -63,6 +63,12 @@ Dopo le analisi: azioni → fasi numerate → **Build BridGHe Model** → Super 
 
 La verifica di sezione delle travi principali adotta l'ipotesi **N–Mx–Vy**: torsione, M2 e V1 sono esclusi. Le prove software non costituiscono la verifica completa di un ponte: restano da valutare secondo il progetto stabilità globale e locale, fatica, soletta, connessioni, appoggi, azioni e combinazioni applicabili.
 
+### Modelli e file nella 0.4.0
+
+Le uscite degli elementi entrano in **Build Model** con le loro bozze GPC; la sola geometria non è un modello analizzato. Dopo le analisi degli incrementi eseguire **Build BridGHe Model**, poi **Super Element Check** sullo stesso modello. Per decomporre o filtrare un modello servono le bozze degli elementi: usare gli esempi U2 aggiornati, senza sostituirli con l'uscita dei vecchi generatori.
+
+Le indicazioni di riproduzione e i confronti di ottobre sotto sono storici. Gli esempi 23 e 46 hanno una preparazione aggiuntiva U2; i generatori precedenti da soli non riproducono il contratto nuovo. Conservare insieme definizione, workbook, template e risultati esterni.
+
 ## Migrazione e riproducibilità
 
 I precedenti componenti monolitici sono nascosti dalla barra e sostituiti nei GHX distribuiti. Alcune classi restano registrate come adattatori per la migrazione e per confrontare i risultati con i vecchi dati; non sono il flusso da usare per nuovi modelli.

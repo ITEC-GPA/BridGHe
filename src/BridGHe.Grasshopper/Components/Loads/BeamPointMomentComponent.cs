@@ -1,5 +1,4 @@
 using System;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.Components.Parameters;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
@@ -99,21 +98,15 @@ namespace BridGHe.Grasshopper.Components.Loads
             bool p3_has_value = DA.GetData("M3", ref p3);
             bool a_has_value = DA.GetData("a", ref a);
 
-            Message = string.Format("Coordinate System: {0}", cs == null ? "Local" : cs.Value.Name);
+            Message = string.Format("Coordinate System: {0}", cs == null ? "Local" : cs.Name);
 
-            if (lc.Value.NonStructuralMassAcceleration)
+            if (GpcOnlyProperties.NonStructuralMass(lc))
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The connected LoadCase have the Non-structural mass flag set to on");
 
-            BeamPointLoadModel.LoadData load_value = new BeamPointLoadModel.LoadData()
-            {
-                CoordinateSystem = cs?.Value,
-                P = new Vector3d(p1, p2, p3),
-                A = a
-            };
-            BeamPointLoadModel load = new BeamPointLoadModel(lc.Value, load_value, BeamPointLoadModel.LoadType.Moment);
-            GH_Beam newBeam = new GH_Beam(beam);
-            newBeam.Value.Loads.Add(load);
-            DA.SetData(0, newBeam);
+            Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithPointLoad(beam.Gpc, lc.Gpc, true, a, new GPC.Geometry.Vector3d(p1, p2, p3), id);
+            // P2K (P1): the GPC path only: the draft built on GPC from the drafts of the beam and the load case record (identity derived from
+            // the input draft); in the principal axes whatever the coordinate system (the former archive did not store it).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), true, a, p1, p2, p3));
         }
 
         public override bool Read(GH_IReader reader)

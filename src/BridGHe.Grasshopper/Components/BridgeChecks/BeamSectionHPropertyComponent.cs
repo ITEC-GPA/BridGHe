@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -59,63 +58,39 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             if (!DA.GetData(0, ref obj))
                 return;
 
-            SectionModel section = null;
-            if (obj is GH_BeamProperty bp)
-                section = bp.Value.Section;
-            if (obj is GH_BeamSection bs)
-                section = bs.Value;
-            if (obj is GH_Beam b)
-                section = b.Value.BeamProperty.Section;
+            // R6.5 P1 lane 2b: a section, a property or a beam gives the values from the recipe of its I section, as the former section value
+            // held them (GpcSectionGeometry.Former, the expressions of CalculateSection), and its dimensions. P2K (P1): the only path.
+            SolveGpcOnly(DA, obj);
+        }
 
-            if (section == null)
+        /// <summary>R6.5 P1 lane 2b: the values of an I section given by its recipe (see <see cref="SolveInstance"/>); the same messages.</summary>
+        private void SolveGpcOnly(IGH_DataAccess DA, object obj)
+        {
+            var recipe = obj switch
+            {
+                GH_BeamProperty bp => bp.Gpc?.Data?.Section,
+                GH_BeamSection bs => bs.Gpc,
+                GH_Beam b => b.Gpc?.Property?.Section,
+                _ => null,
+            };
+            if (recipe == null)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input is not a beam or a beam property or a beam section");
                 return;
             }
-
-            string name = string.Empty;
-            double area = 0;
-            double j11 = 0;
-            double j22 = 0;
-            double jxx = 0;
-            double jyy = 0;
-            double j = 0;
-            double xg = 0;
-            double yg = 0;
-            double angle = 0;
-            double h = 0;
-            double tfw = 0;
-            double bfw = 0;
-            double tw = 0;
-            double bft = 0;
-            double tft = 0;
-
-            if (section.SectionType == SectionModel.SectionTypes.I)
-            {
-                section.CalculateSection();
-                name = section.Name;
-                area = section.SectionArea;
-                xg = section.Centroid.X;
-                yg = section.Centroid.Y;
-                jxx = section.Ixx;
-                jyy = section.Iyy;
-                angle = section.AngleX1Rad;
-                j11 = section.I11;
-                j22 = section.I22;
-                j = section.J;
-                h = section.D;
-                tfw = section.B1;
-                bfw = section.B2;
-                tw = section.T3;
-                bft = section.T1;
-                tft = section.T2;
-            }
-            else
+            if (recipe.Kind != Common.Gpc.BridgeSectionKind.I)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Section is not a I section");
                 return;
             }
+            var v = GpcOnlyProperties.Datum(this, () => Common.Gpc.GpcSectionGeometry.Former(recipe));
+            if (v == null) return;
+            Set(DA, v.Name, v.Area, v.XG, v.YG, v.Ixx, v.Iyy, v.AngleX1Rad, v.I11, v.I22, v.J, recipe.D, recipe.B1, recipe.B2, recipe.T3, recipe.T1, recipe.T2);
+        }
 
+        private static void Set(IGH_DataAccess DA, string name, double area, double xg, double yg, double jxx, double jyy, double angle, double j11, double j22, double j,
+            double h, double tfw, double bfw, double tw, double bft, double tft)
+        {
             int item = 0;
             DA.SetData(item++, name);
             DA.SetData(item++, area);

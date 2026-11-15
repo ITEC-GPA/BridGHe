@@ -1,5 +1,4 @@
 using System;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -53,16 +52,10 @@ namespace BridGHe.Grasshopper.Components.Loads
             if (!DA.GetData("Axis 2", ref a2))
                 return;
 
-            BeamGradientLoadModel.LoadData load_value = new BeamGradientLoadModel.LoadData
-            {
-                Axis1 = a1,
-                Axis2 = a2
-            };
-
-            BeamGradientLoadModel load = new BeamGradientLoadModel(lc.Value, load_value);
-            GH_Beam newBeam = new GH_Beam(beam);
-            newBeam.Value.Loads.Add(load);
-            DA.SetData(0, newBeam);
+            Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithGradient(beam.Gpc, lc.Gpc, a1, a2, id);
+            // P2K (P1): the GPC path only: the draft built on GPC from the drafts of the beam and the load case record (identity derived from
+            // the input draft).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), a1, a2));
         }
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;

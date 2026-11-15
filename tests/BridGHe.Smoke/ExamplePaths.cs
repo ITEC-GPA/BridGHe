@@ -5,7 +5,19 @@ using System.Text.RegularExpressions;
 /// <summary>One numbered folder per example, including its generated calculations.</summary>
 internal static class ExamplePaths
 {
-    internal static readonly string Root = Path.GetFullPath("example");
+    /// <summary>P2R (T5): the <c>example</c> folder of the checkout the test host was built in (the folder of <c>BridGHe.sln</c> above the host,
+    /// or <c>BRIDGHE_EXAMPLE_ROOT</c> when set), not of the working directory: a host started from another folder (the main checkout, a
+    /// lane) never opens, redirects or writes the examples of that folder. Without a <c>BridGHe.sln</c> above the host: the working directory, as before.</summary>
+    internal static readonly string Root = ResolveRoot();
+
+    private static string ResolveRoot()
+    {
+        string explicitRoot = Environment.GetEnvironmentVariable("BRIDGHE_EXAMPLE_ROOT");
+        if (!string.IsNullOrWhiteSpace(explicitRoot)) return Path.GetFullPath(explicitRoot);
+        for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
+            if (File.Exists(Path.Combine(dir.FullName, "BridGHe.sln"))) return Path.Combine(dir.FullName, "example");
+        return Path.GetFullPath("example");
+    }
     internal static readonly string Documentation = Path.Combine(Root, "00-documentazione");
     internal static readonly string Validation = Path.Combine(Documentation, "validazioni");
     internal static readonly string Packages = Path.Combine(Documentation, "archivio-pacchetti");

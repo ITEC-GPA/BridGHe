@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using GH_IO.Serialization;
@@ -6,7 +5,6 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;
 using Rhino.Geometry;
-using St7API;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,10 +18,11 @@ namespace BridGHe.Grasshopper.Components.Analysis
     {
         protected bool _run;
         private GH_Model _model;
+        // F6 C4: the analysed GPC model next to the .st7 (BGHR2), restored at the first solution after opening.
+        private readonly Helpers.SavedGpcResults _saved = new Helpers.SavedGpcResults();
+        // R6.4 (2), option 1 of P2Q: the drafts of the analysed model are those of the input, attached again after opening (not saved).
+        private readonly Helpers.AnalysisDrafts _drafts = new Helpers.AnalysisDrafts();
         private bool _just_loaded;
-        // 4/11/2026: the results stay next to the .st7, the document keeps only their file (SavedAnalysisResults).
-        private readonly SavedAnalysisResults _saved = new SavedAnalysisResults();
-        private string _outputPath;
 
         /// <summary>
         /// Initializes a new instance of the StrausAnalysisComponent class.
@@ -83,15 +82,11 @@ namespace BridGHe.Grasshopper.Components.Analysis
             int solver = 0;
             string outputPath = "";
             bool keepRunning = false;
-            // The output path is kept even without a model (upstream not built yet): saving moves the results next to it.
-            bool hasOutputPath = DA.GetData("Output Path", ref outputPath);
-            if (hasOutputPath && !string.IsNullOrWhiteSpace(outputPath))
-                _outputPath = outputPath;
             if (!DA.GetData("Model", ref model))
                 return;
             if (!DA.GetData("Solver", ref solver))
                 return;
-            if (!hasOutputPath)
+            if (!DA.GetData("Output Path", ref outputPath))
                 return;
             DA.GetData("Keep Running", ref keepRunning);
 
@@ -102,7 +97,8 @@ namespace BridGHe.Grasshopper.Components.Analysis
             }
 
             List<string> names;
-            try { names = Common.Straus.StrausResultSelection.Catalog(model.Value, solver).Select(e => e.Case.Name).ToList(); }
+            // R6.4 (1): the result names from the GPC input of the model (an input that cannot be converted gives its error here).
+            try { names = Common.Gpc.GpcResultSelection.Catalog(model.GpcInput?.Model, solver).Select(e => e.Name).ToList(); }
             catch (Exception ex) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message); return; }
 
             // Connect the ValueList component on the analysis results input item
@@ -119,41 +115,35 @@ namespace BridGHe.Grasshopper.Components.Analysis
 
             var requested = new List<string>();
             DA.GetDataList("Analysis Results", requested);
+            // R6.5 P1 lane 3e (P2K: every model): the model is analysed from its GPC input alone and gives a GPC-only model with the analysed GPC
+            // model; no FEM value is read or made.
             if (_run || keepRunning)
             {
                 _run = false;
                 try
                 {
-                    var result = Common.Straus.StrausAnalysis.Run(model.Value, outputPath, solver, requested, Settings.Instance.Tolerance, false, out var warnings);
-                    _model = GH_Model.FromModel(result, model);
-                    string saving = _saved.Record(_model, outputPath);
-                    if (saving != null) warnings.Add(saving);
+                    var input = GpcOnlyModels.InputOf(model);
+                    var analysed = Common.Straus.StrausAnalysis.Run(input, outputPath, solver, requested, false, out List<string> warnings);
+                    _model = GpcOnlyModels.SameElements(input, model, input);
+                    _model.AttachGpc(analysed);
+                    // R6.4 (2), extension (α): the output keeps the elements of its input (with results): it carries the drafts of the input.
+                    _drafts.Record(model, _model);
                     foreach (string warning in warnings) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
+                    string saved = _saved.Record(_model, outputPath); if (saved != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, saved);
                     Message = "Done";
                 }
                 catch (Exception ex)
                 {
-                    _model = new GH_Model();
+                    _model = new GH_Model(); _saved.Record(null, null); _drafts.Clear();
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message);
                     Message = "Error";
+                    return; // lane 3: a refusal gives an error and no output
                 }
             }
-            else if (_saved.Pending(_model))
-            {
-                // First solution after opening: the results of the last analysis, from their file.
-                var loaded = _saved.Load(outputPath, out string error);
-                if (loaded == null)
-                {
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, error + " Ripristinare il file e ricalcolare, oppure premere Run per rifare l'analisi.");
-                    Message = "Run required";
-                }
-                else
-                {
-                    _model = loaded;
-                    ModelHelper.RestoreModelGuids(model, ref _model);
-                    _just_loaded = false;
-                }
-            }
+            if (_saved.Pending) { string restored = _saved.Restore(_model, outputPath); if (restored != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, restored); }
+            if (_drafts.Pending) { string changed = _drafts.Restore(model, _model); if (changed != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, changed); }
+            // R6.1 (decision 1 of 6/11): the analysed model of a former file is read without its results.
+            if (_model.LegacyNotice != null && !_model.HasAnalysedGpc) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, _model.LegacyNotice);
             DA.SetData(0, _model);
         }
 
@@ -161,7 +151,7 @@ namespace BridGHe.Grasshopper.Components.Analysis
         {
             base.AppendAdditionalComponentMenuItems(menu);
             Menu_AppendSeparator(menu);
-            Menu_AppendItem(menu, "Reset", (s, e) => _model = new GH_Model());
+            Menu_AppendItem(menu, "Reset", (s, e) => { _model = new GH_Model(); _saved.Record(null, null); _drafts.Clear(); });
         }
 
         public override bool Write(GH_IWriter writer)
@@ -170,7 +160,9 @@ namespace BridGHe.Grasshopper.Components.Analysis
             if (!success)
                 return false;
 
-            _saved.Write(writer, _model, _outputPath, w => _model.Write(w));
+            _model.Write(writer, false);
+            _saved.Write(writer);
+            _drafts.Write(writer);
 
             return true;
         }
@@ -181,10 +173,9 @@ namespace BridGHe.Grasshopper.Components.Analysis
             if (!success)
                 return false;
 
-            // Results in a file are read at the first solution; a document saved before holds them.
-            var placeholder = _saved.Read(reader);
-            if (placeholder != null) _model = placeholder;
-            else _model.Read(reader);
+            _model.Read(reader);
+            _saved.Read(reader);
+            _drafts.Read(reader);
             _just_loaded = true;
 
             return true;
@@ -193,13 +184,11 @@ namespace BridGHe.Grasshopper.Components.Analysis
         protected override void BeforeSolveInstance()
         {
             base.BeforeSolveInstance();
-            // Results still in their file get their GUIDs when SolveInstance reads them.
-            if (_just_loaded && !_saved.Pending(_model))
+            if (_just_loaded)
             {
                 if (!Params.Input[0].VolatileData.IsEmpty)
                 {
-                    GH_Model input_model = (GH_Model)Params.Input[0].VolatileData.get_Branch(0)[0];
-                    ModelHelper.RestoreModelGuids(input_model, ref _model);
+                    // P2CE phase 2b: the GUID map of the FEM elements is gone with the FEM types (a model without FEM value had none to restore).
                     _just_loaded = false;
                 }
             }

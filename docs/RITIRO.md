@@ -2,6 +2,8 @@
 
 `Creep And Shrinkage Concrete` restituisce ora un valore utilizzabile al posto di `NaN`. L'uscita `εcs` è l'incremento negativo di contrazione tra `Reference age` e `t`. Lo stesso filo va a `Composite Shrinkage Actions` e a `Bridge Shrinkage Action`. Un'unica colonna della combinazione deve moltiplicare effetti FEM e autotensioni.
 
+Nella 0.4.0 `Composite Beam Strain` non conserva né usa il valore dell'ingresso `Strain`: non aggiungerlo per duplicare il ritiro del flusso sopra. `Composite Shrinkage Actions` accetta anche una soletta larga quando gli assi principali coincidono con orizzontale e verticale; resta il rifiuto delle sezioni con assi principali obliqui. Usare lo stesso incremento e lo stesso rapporto di omogeneizzazione per effetti equivalenti e azione di ritiro.
+
 Il modello è quello della **EN 1992-1-1:2004**, 3.1.4 e allegato B, per calcestruzzo ordinario e umidità costante. La fonte tecnica verificata è [JRC Handbook 3, allegato proprietà dei materiali, pp. 18–19 e 30](https://eurocodes.jrc.ec.europa.eu/sites/default/files/2021-12/handbook3.pdf). Questa implementazione non seleziona automaticamente una normativa o un allegato nazionale per il progetto.
 
 Input: resistenza cilindrica positiva in MPa, area in mm², perimetro effettivamente esposto in mm, RH in percentuale ed età in giorni. `Drying start` è la fine della cura. `Reference age` è l'età da cui il ritiro viene trasmesso alla struttura mista. `t=0` conserva la convenzione esistente di tempo infinito. Ulteriori uscite espongono ritiro totale, componente da essiccamento, componente autogena e `h0=2 Ac/u`.

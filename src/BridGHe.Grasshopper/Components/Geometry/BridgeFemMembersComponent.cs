@@ -4,6 +4,7 @@ using System.Linq;
 using BridGHe.Common.Geometry;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
+using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 
@@ -21,7 +22,10 @@ public sealed class BridgeFamilyPropertyComponent : BridgeDefinitionComponent
     }
     protected override void RegisterOutputParams(GH_OutputParamManager p)=>p.AddGenericParameter("Family Property","P","Connect a list of these definitions to Bridge FEM Members.",GH_ParamAccess.item);
     protected override void Solve(IGH_DataAccess da)
-    {GH_BeamProperty p=null;int f=-1;if(!da.GetData(0,ref p))return;da.GetData(1,ref f);if(f< -1||f>8||p?.Value?.IsValid!=true)throw new ArgumentException("A valid beam property and member family are required.");da.SetData(0,new BridgeDesignGoo(new BridgeFamilyProperty(f,p.Value)));}
+    {GH_BeamProperty p=null;int f=-1;if(!da.GetData(0,ref p))return;da.GetData(1,ref f);
+        // R6.5 P1 lane 2b / P2K (P1): the family property has the GPC datum of the property alone (rule of passo 75).
+        if(f< -1||f>8||p?.IsValid!=true)throw new ArgumentException("A valid beam property and member family are required.");
+        var datum=GpcOnlyProperties.Datum(this,()=>p.Gpc);if(datum==null)return;da.SetData(0,new BridgeDesignGoo(new BridgeFamilyProperty(f){GpcProperty=datum}));}
 }
 
 public sealed class BridgeFemMembersComponent : BridgeMemberAssignmentComponent
@@ -35,6 +39,7 @@ public sealed class BridgeFemMembersComponent : BridgeMemberAssignmentComponent
         BridgeGeometryGoo g=null;if(!da.GetData(0,ref g))return;var properties=new List<BridgeDesignGoo>();var rules=new List<BridgeDesignGoo>();da.GetDataList(1,properties);da.GetDataList(2,rules);
         if(properties.Any(p=>p.Value is not BridgeFamilyProperty)||rules.Any(r=>r.Value is not BridgeSectionRule))throw new ArgumentException("Connect Family Property objects and Section Rules to their corresponding inputs.");
         var values=properties.Select(p=>(BridgeFamilyProperty)p.Value).ToArray();if(values.Select(v=>v.Family).Distinct().Count()!=values.Length)throw new ArgumentException("Each family can have only one default property.");
-        Publish(da,g.Value,values.ToDictionary(v=>v.Family,v=>v.Property),rules.Select(r=>(BridgeSectionRule)r.Value).ToArray());
+        // R6.5 P1 lane 2b / P2K (P1): every family property is assigned by its GPC datum (the beams by their plans alone).
+        Publish(da,g.Value,rules.Select(r=>(BridgeSectionRule)r.Value).ToArray(),values.ToDictionary(v=>v.Family,v=>v.GpcProperty));
     }
 }

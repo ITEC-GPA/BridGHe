@@ -1,6 +1,5 @@
 using System;
 using System.Windows.Forms;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
@@ -56,65 +55,9 @@ namespace BridGHe.Grasshopper.Components.Materials
 
             Message = _grades[grade];
 
-            MaterialModel material = new MaterialModel
-            {
-                Kind = MaterialModel.MaterialKind.Steel,
-                Name = name
-            };
-            // Note: Values are in N, m, C. Remember to convert them in the export if the model units are different
-            switch (grade)
-            {
-                case 0: // S235
-                    material.Modulus = 2.1E+5;//N/mm2=MPa
-                    material.PoissonRatio = 0.3;
-                    material.ThermalExpansion = 1.170E-05;
-                    material.ShearModulus = 8.077E+4;//N/mm2=MPa
-                    material.UsePoisson = true;
-                    material.Density = 7.849E-9; // t/mm3
-                    material.MinimumYieldStress = 235;//N/mm2=MPa
-                    material.MinimumTensileStress = 360;//N/mm2=MPa
-                    material.ExpectedYieldStress = 282;//N/mm2=MPa
-                    material.ExpectedTensileStress = 396;//N/mm2=MPa
-                    break;
-                case 1: // S275
-                    material.Modulus = 2.1E+5;//N/mm2=MPa
-                    material.PoissonRatio = 0.3;
-                    material.ThermalExpansion = 1.170E-05;
-                    material.ShearModulus = 8.077E+4;//N/mm2=MPa
-                    material.UsePoisson = true;
-                    material.Density = 7.849E-9; // t/mm3
-                    material.MinimumYieldStress = 275;//N/mm2=MPa
-                    material.MinimumTensileStress = 430;//N/mm2=MPa
-                    material.ExpectedYieldStress = 316.3;//N/mm2=MPa
-                    material.ExpectedTensileStress = 473;//N/mm2=MPa
-                    break;
-                case 2: // S355
-                    material.Modulus = 2.1E+5;//N/mm2=MPa
-                    material.PoissonRatio = 0.3;
-                    material.ThermalExpansion = 1.170E-05;
-                    material.ShearModulus = 8.077E+4;//N/mm2=MPa
-                    material.UsePoisson = true;
-                    material.Density = 7.849E-9; // t/mm3
-                    material.MinimumYieldStress = 355;//N/mm2=MPa
-                    material.MinimumTensileStress = 510;//N/mm2=MPa
-                    material.ExpectedYieldStress = 390.5;//N/mm2=MPa
-                    material.ExpectedTensileStress = 561;//N/mm2=MPa
-                    break;
-                case 3: // S450
-                    material.Modulus = 2.1E+5;//N/mm2=MPa
-                    material.PoissonRatio = 0.3;
-                    material.ThermalExpansion = 1.170E-05;
-                    material.ShearModulus = 8.077E+4;//N/mm2=MPa
-                    material.UsePoisson = true;
-                    material.Density = 7.849E-9; // t/mm3
-                    material.MinimumYieldStress = 440;//N/mm2=MPa
-                    material.MinimumTensileStress = 550;//N/mm2=MPa
-                    material.ExpectedYieldStress = 484;//N/mm2=MPa
-                    material.ExpectedTensileStress = 605;//N/mm2=MPa
-                    break;
-            }
-
-            DA.SetData(0, new GH_Material(material));
+            var recipe = Common.Gpc.Builders.GpcMaterialBuilders.Steel(name, grade);
+            // P2K (P1): the material by its GPC datum alone, by kind from the recipe of the component.
+            DA.SetData(0, GH_Material.FromGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe), recipe.Kind));
         }
 
         /// <summary>

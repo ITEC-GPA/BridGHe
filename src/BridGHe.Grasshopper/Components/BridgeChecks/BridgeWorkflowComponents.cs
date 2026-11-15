@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Checks;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
@@ -15,17 +14,38 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks;
 internal static class WorkflowInputs
 {
     internal static string Case(object value) => value switch {
-        GH_LoadCase c => c.Value?.Name, CaseModel c => c.Name,
+        GH_LoadCase c => c.Gpc?.Name, // L3b: a case by its record. P2K (P1): the only path (no FEM case)
         GH_String s => s.Value, string s => s,
         GH_ObjectWrapper w => Case(w.Value), _ => throw new ArgumentException("Connect a load case or its exact name.") };
-    internal static void Catalogue(GH_Component component, int port, ModelModel model)
+    /// <summary>F6 (a)/(b), R8: true when the model has stored beam results (the analysed GPC model, else the former FEM results).</summary>
+    /// R6.4 (6): the analysed GPC model only (its own, or the one the beams of a Build Model output come from: <see cref="GH_Model.GpcActionResults"/>).
+    internal static bool HasBeamResults(GH_Model model) => model?.GpcActionResults is GPC.Model.Models.Model analysed
+        && analysed.BeamElements.Count > 0 && Common.Gpc.GpcResultCatalog.Of(analysed).Entries.Count > 0;
+    /// <summary>L3b: a model that can be read: given by its GPC input (P2K (P1): the only path).</summary>
+    internal static bool HasModel(GH_Model model) => GpcInput(model) != null;
+    /// <summary>L3b: a model with beams in its GPC input (P2K (P1): the only path).</summary>
+    internal static bool HasBeams(GH_Model model) => GpcInput(model) is { } input && input.Model.BeamElements.Count != 0;
+    /// <summary>L3b: the GPC input of the model of an action, or null when it cannot be made (as <see cref="GH_Model.Gpc"/>).</summary>
+    internal static Common.Gpc.GpcModels.Conversion GpcInput(GH_Model model)
     {
-        if (model == null) return;
-        var names = model.Beams.SelectMany(b => b.Results).OfType<BeamForceResultModel>().Select(f => f.LoadCase.Name)
-            .Concat(model.LoadCases.Select(c=>c.Name)).Concat(model.LoadCombinations.Select(c=>c.Name))
-            .Concat(model.Elements.SelectMany(e=>e.Loads).Select(l=>l.LoadCase?.Name))
+        try { return model?.GpcInput; }
+        catch (Exception ex) when (ex is ArgumentException || ex is NotSupportedException || ex is InvalidOperationException) { return null; }
+    }
+    internal static void Catalogue(GH_Component component, int port, GH_Model goo)
+    {
+        var lists = component.Params.Input[port].Sources.OfType<GH_ValueList>().ToArray();
+        if (!HasModel(goo) || lists.Length == 0) return;
+        // F6 (a)/(b), R8, R6.4 (6): the result cases of the analysed GPC model the actions are read from (its catalog labels), the cases and the
+        // combinations of the GPC input of the model; no FEM data.
+        var analysed = goo.GpcActionResults;
+        GPC.Model.Models.Model input = null;
+        try { input = goo.GpcInput?.Model; }
+        catch (Exception ex) when (ex is ArgumentException || ex is NotSupportedException || ex is InvalidOperationException) { input = null; }
+        var stored = analysed != null ? Common.Gpc.GpcResultCatalog.Of(analysed).Entries.Select(e => e.Label) : Enumerable.Empty<string>();
+        var names = stored.Concat(input?.LoadCases.Keys ?? Enumerable.Empty<string>()).Concat(input?.Combinations.Keys ?? Enumerable.Empty<string>())
             .Where(n=>!string.IsNullOrWhiteSpace(n)).Distinct().OrderBy(n => n).ToList();
-        foreach (var list in component.Params.Input[port].Sources.OfType<GH_ValueList>())
+        if (names.Count == 0) return; // a model without GPC data: the lists keep what they have
+        foreach (var list in lists)
         {
             list.ListMode = GH_ValueListMode.DropDown; ComponentsHelper.SetValueList(list, names);
         }
@@ -50,17 +70,18 @@ public sealed class BridgeActionComponent : GH_Component
     {
         string key = null; GH_Model model = null; object lc = null; int behavior = 0; var ids = new List<string>();
         if (!da.GetData(0, ref key) || !da.GetData(1, ref model)) return;
-        if (model?.Value == null || model.Value.Beams.Count==0)
-        { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Awaiting a source FEM model."); return; }
-        if(!model.Value.Beams.Any(b=>b.Results.OfType<BeamForceResultModel>().Any()))
-            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Action defined without FEM results. Analyse the source model before Build BridGHe Model.");
-        WorkflowInputs.Catalogue(this, 2, model?.Value);
+        if (!WorkflowInputs.HasBeams(model))
+        { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Awaiting a source model."); return; }
+        if(!WorkflowInputs.HasBeamResults(model))
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,model.ResultsNotice ?? "Action defined without analysis results. Analyse the source model with Straus R3 Analysis before Build BridGHe Model."); // P30-01 (C1): saved results unreadable
+        WorkflowInputs.Catalogue(this, 2, model);
         if (!da.GetData(2, ref lc) || !da.GetData(3, ref behavior)) return;
         da.GetDataList(4, ids);
         try
         {
-            if (string.IsNullOrWhiteSpace(key) || model?.Value == null || behavior < 0 || behavior > 2) throw new ArgumentException("Supply an action ID, an analysed model and a behavior from 0 to 2.");
-            da.SetData(0, new BridgeWorkflowGoo(new BridgeActionDefinition { Key = key, Source = model.Value, Case = WorkflowInputs.Case(lc), Behavior = (BridgeActionBehavior)behavior, BeamIds = ids.ToArray() }));
+            if (string.IsNullOrWhiteSpace(key) || !WorkflowInputs.HasModel(model) || behavior < 0 || behavior > 2) throw new ArgumentException("Supply an action ID, an analysed model and a behavior from 0 to 2.");
+            // P2K (P1): no FEM source (Source stays null: the GPC path of Build BridGHe Model).
+            da.SetData(0, new BridgeWorkflowGoo(new BridgeActionDefinition { Key = key, GpcSource = model.GpcActionResults, GpcModel = model.Gpc, GpcBridgeData = model.GpcBridgeData, GpcInput = WorkflowInputs.GpcInput(model), Case = WorkflowInputs.Case(lc), Behavior = (BridgeActionBehavior)behavior, BeamIds = ids.ToArray() }));
             Message = key;
         }
         catch (ArgumentException e) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message); }
@@ -87,19 +108,20 @@ public sealed class BridgeShrinkageActionComponent : GH_Component
     {
         string key = null; GH_Model model = null; object lc = null; double strain = 0; bool primary = false; int response = 0; var ids = new List<string>();
         if (!da.GetData(0, ref key) || !da.GetData(3, ref strain) || !da.GetData(5, ref primary) || !da.GetData(6, ref response)) return;
-        da.GetData(1, ref model); WorkflowInputs.Catalogue(this, 2, model?.Value); da.GetData(2, ref lc); da.GetDataList(4, ids);
-        if (!primary && model != null && (model.Value == null || model.Value.Beams.Count==0))
-        { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Awaiting the secondary shrinkage FEM model."); return; }
-        if(!primary && model?.Value!=null && !model.Value.Beams.Any(b=>b.Results.OfType<BeamForceResultModel>().Any()))
-            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Shrinkage action defined without secondary FEM results. Run Straus before Build BridGHe Model.");
+        da.GetData(1, ref model); WorkflowInputs.Catalogue(this, 2, model); da.GetData(2, ref lc); da.GetDataList(4, ids);
+        if (!primary && model != null && !WorkflowInputs.HasBeams(model))
+        { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Awaiting the model of the secondary shrinkage action."); return; }
+        if(!primary && WorkflowInputs.HasModel(model) && !WorkflowInputs.HasBeamResults(model))
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,model.ResultsNotice ?? "Shrinkage action defined without secondary analysis results. Analyse the source model with Straus R3 Analysis before Build BridGHe Model."); // P30-01 (C1): saved results unreadable
         try
         {
             if (string.IsNullOrWhiteSpace(key) || !double.IsFinite(strain) || strain > 0) throw new ArgumentException("Supply a stable ID and a finite, non-positive concrete shrinkage increment.");
             if (response is < 0 or > 1) throw new ArgumentException("Response must be 0 (n shrinkage) or 1 (n0).");
-            if (!primary && (model?.Value == null || lc == null)) throw new ArgumentException("Connect secondary FEM results, or explicitly enable Primary Only.");
+            if (!primary && (!WorkflowInputs.HasModel(model) || lc == null)) throw new ArgumentException("Connect secondary FEM results, or explicitly enable Primary Only.");
             if (primary && lc != null) throw new ArgumentException("Primary Only cannot contain a FEM case.");
             if (primary) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Only section autostresses: global restraint effects are excluded.");
-            da.SetData(0, new BridgeWorkflowGoo(new BridgeActionDefinition { Key = key, Source = model?.Value, Case = lc == null ? null : WorkflowInputs.Case(lc),
+            // P2K (P1): no FEM source (Source stays null: the GPC path of Build BridGHe Model).
+            da.SetData(0, new BridgeWorkflowGoo(new BridgeActionDefinition { Key = key, GpcSource = model?.GpcActionResults, GpcModel = model?.Gpc, GpcBridgeData = model?.GpcBridgeData, GpcInput = WorkflowInputs.GpcInput(model), Case = lc == null ? null : WorkflowInputs.Case(lc),
                 Behavior = response == 0 ? BridgeActionBehavior.Shrinkage : BridgeActionBehavior.ShortTerm, Strain = strain, BeamIds = ids.ToArray(), PrimaryOnly = primary }));
             Message = key;
         }

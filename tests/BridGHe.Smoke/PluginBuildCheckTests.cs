@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Gpc.PluginChecks;
@@ -149,17 +150,14 @@ internal static class PluginBuildCheckTests
     /// <summary>--plugin-check: loads the plugin in the folder as Grasshopper does and solves a document with one of its components.</summary>
     internal static int Child(string folder)
     {
-        SmokeTrace.Write("PLUGIN CHILD ENTER");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
         var plugin = System.Reflection.Assembly.LoadFrom(Path.Combine(folder, "BridGHe.Grasshopper.gha"));
         // The two checks as BridGHeAssemblyPriority starts them; its category registration would make the component
         // server load every plug-in of the user's Grasshopper folders, which never returns without a user interface.
         plugin.GetType("BridGHe.Grasshopper.Helpers.GpcReleaseGuard", true).GetMethod("Start").Invoke(null, null);
-        SmokeTrace.Write("PLUGIN CHILD GPC GUARD STARTED");
         var check = plugin.GetType("Gpc.PluginChecks.PluginBuildCheck", true);
         check.GetMethod("Start").Invoke(null, new object[] { plugin, "BridGHe", false });
-        SmokeTrace.Write("PLUGIN CHILD BUILD CHECK STARTED");
         string warning = (string)check.GetProperty("Warning").GetValue(null);
         Console.WriteLine("PLUGIN CHECK WARNING: " + (warning ?? "none"));
         var document = new GH_Document();
@@ -168,7 +166,6 @@ internal static class PluginBuildCheckTests
         studs.CreateAttributes(); document.AddObject(studs, false);
         GH_Document.EnableSolutions = true; document.Enabled = true;
         document.NewSolution(false, GH_SolutionMode.Silent);
-        SmokeTrace.Write("PLUGIN CHILD SOLVED");
         Console.WriteLine("PLUGIN CHECK COMPONENT WARNINGS " + studs.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Count(m => warning != null && m == warning));
         return 0;
     }
@@ -198,7 +195,5 @@ internal static class PluginBuildCheckTests
     private static void Require(bool condition, string message)
     {
         if (!condition) throw new InvalidOperationException("PLUGIN BUILD CHECK: " + message);
-        Console.WriteLine("PASS PLUGIN BUILD CHECK: " + message);
-        Console.Out.Flush();
     }
 }

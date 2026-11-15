@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -54,8 +53,6 @@ namespace BridGHe.Grasshopper.Components.Attributes
             if (!DA.GetData("Plate", ref plate))
                 return;
 
-            GH_Plate newPlate = new GH_Plate(plate);
-
             if (!DA.GetData(1, ref stiffness))
                 return;
             if (!DA.GetData(2, ref compressionOnly))
@@ -63,26 +60,23 @@ namespace BridGHe.Grasshopper.Components.Attributes
             if (!DA.GetData(3, ref face))
                 return;
 
-            PlateSupportAttributeModel.AttributeData attr = new PlateSupportAttributeModel.AttributeData
-            {
-                Stiffness = stiffness,
-                CompressionOnly = compressionOnly
-            };
+            // P2K (P1): the face by the name of the former PlateSupportAttributeModel.SupportedFace (Top = 0, Bottom = 1).
+            string faceName;
             if (face == 0)
             {
-                attr.Face = PlateSupportAttributeModel.SupportedFace.Top;
+                faceName = "Top";
             }
             else if (face == 1)
             {
-                attr.Face = PlateSupportAttributeModel.SupportedFace.Bottom;
+                faceName = "Bottom";
             }
             else
             {
                 throw new NotSupportedException();
             }
-            newPlate.Value.Attributes.Add(new PlateSupportAttributeModel(attr));
-
-            DA.SetData("Plate", newPlate);
+            Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.WithSupport(plate.Gpc, stiffness, compressionOnly, faceName, id);
+            // P2K (P1): the GPC path only: the draft built on GPC (identity derived from the input draft; the former face carried by its name).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, stiffness, compressionOnly, faceName));
         }
 
         public override GH_Exposure Exposure => GH_Exposure.tertiary;

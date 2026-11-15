@@ -1,5 +1,7 @@
 # Stabilizzazione BridGHe — 10 novembre 2026
 
+> Documento storico della 0.3.0, conservato dal merge di F8. Le versioni, i conteggi e i comandi sotto descrivono le corse del 10 novembre, non il gate della 0.4.0. Per il set corrente e i risultati GPC vedere RELEASE-0.4.0.md e USO.md.
+
 ## Perimetro e riferimento
 
 Interventi sul checkout `master`, base `95ab7c3`, inizialmente pulito. Nessuna integrazione F6 e nessuna modifica ai repository Model e Checker. La prima fase ha mantenuto il set del 2 novembre (Model `15587299`, Checker `742f45f3`). Su successiva richiesta esplicita dell'utente è stato adottato il set ufficiale ReBear dell'8 novembre, poi mantenuto fisso: vedere la sezione finale per il collaudo corrente. I formati degli archivi e i contratti dei componenti restano invariati.

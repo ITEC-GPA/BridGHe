@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Security.Cryptography;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Common.Straus;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using GH_IO.Serialization;
@@ -13,19 +12,12 @@ namespace BridGHe.Grasshopper.Components.Analysis
     public sealed class MovingStaticAnalysisComponent : GH_Component
     {
         private bool _run;
+        // R6.4 (2), option 1 of P2Q: the drafts of the analysed model are those of the input, attached again after opening (not saved).
+        private readonly Helpers.AnalysisDrafts _drafts = new Helpers.AnalysisDrafts();
         private GH_Model _model = new GH_Model();
         private string _inputHash;
-        // 4/11/2026: the results stay next to the .st7, the document keeps only their file (SavedAnalysisResults).
-        private readonly Helpers.SavedAnalysisResults _saved = new Helpers.SavedAnalysisResults();
-        private string _outputPath;
-        // The archive of a large input takes seconds: it is hashed once per input object, not at every solution.
-        private ModelModel _hashedInput;
-        private string _hashedValue;
-        private string InputHash(ModelModel input)
-        {
-            if (!ReferenceEquals(input, _hashedInput)) { _hashedValue = Convert.ToHexString(SHA256.HashData(ModelArchive.Write(input))); _hashedInput = input; }
-            return _hashedValue;
-        }
+        // F6 C4: the analysed GPC model next to the .st7 (BGHR2), restored at the first solution after opening.
+        private readonly Helpers.SavedGpcResults _saved = new Helpers.SavedGpcResults();
         protected override System.Drawing.Bitmap Icon => Properties.ComponentIcons.For(GetType());
         public MovingStaticAnalysisComponent() : base("Moving Static Analysis", "MLAnalysis", "Genera i casi statici dei percorsi mobili, esegue LSA e associa tutti i risultati agli elementi. Richiede API e modulo Moving Load R3.", Helpers.CategoryNameConstants.CATEGORY_MODEL, Helpers.CategoryNameConstants.SUBCATEGORY_LOADS) { }
         protected override void RegisterInputParams(GH_InputParamManager p)
@@ -41,62 +33,54 @@ namespace BridGHe.Grasshopper.Components.Analysis
         protected override void SolveInstance(IGH_DataAccess da)
         {
             GH_Model input = null; string path = null; bool run = false;
-            // The output path is kept even without a model (upstream not built yet): saving moves the results next to it.
-            bool hasPath = da.GetData(1, ref path);
-            if (hasPath && !string.IsNullOrWhiteSpace(path)) _outputPath = path;
-            if (!da.GetData(0, ref input) || !hasPath || !da.GetData(2, ref run)) return;
-            if (input?.Value == null || input.Value.Beams.Count == 0) { _model = new GH_Model(); _inputHash = null; return; }
+            if (!da.GetData(0, ref input) || !da.GetData(1, ref path) || !da.GetData(2, ref run)) return;
+            // R6.5 P1 lane 3e (P2K: every model): the model is analysed from its GPC input alone and gives a GPC-only model with the analysed GPC
+            // model; no FEM value is read or made.
+            if ((input?.GpcInput?.Model.BeamElements.Count ?? 0) == 0) { _model = new GH_Model(); _inputHash = null; _drafts.Clear(); return; }
             try
             {
-                string hash = InputHash(input.Value);
+                // R6.4 (1): the fingerprint of the GPC input (a fingerprint of the former FEM archive, saved by an earlier version, asks for a Run).
+                string hash = Common.Gpc.GpcResultSelection.InputHash(input.GpcInput);
                 if (_run || run)
                 {
                     _run = false;
-                    var model = StrausAnalysis.Run(input.Value, path, 0, Array.Empty<string>(), Settings.Instance.Tolerance, true, out var warnings);
-                    _model = GH_Model.FromModel(model, input); _inputHash = hash;
-                    string saving = _saved.Record(_model, path);
-                    if (saving != null) warnings.Add(saving);
+                    var gpc = Helpers.GpcOnlyModels.InputOf(input);
+                    var analysed = StrausAnalysis.Run(gpc, path, 0, Array.Empty<string>(), true, out System.Collections.Generic.List<string> warnings);
+                    _model = Helpers.GpcOnlyModels.SameElements(gpc, input, gpc);
                     foreach (string warning in warnings) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
+                    _model.AttachGpc(analysed); _inputHash = hash;
+                    // R6.4 (2), extension (α): the output keeps the elements of its input (with results): it carries the drafts of the input.
+                    _drafts.Record(input, _model, hash);
+                    string saved = _saved.Record(_model, path); if (saved != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, saved);
                 }
                 if (_inputHash != hash)
                 {
-                    _model = new GH_Model(); _inputHash = null;
+                    _model = new GH_Model(); _inputHash = null; _drafts.Clear();
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Run required: no results for the current model, vehicle and path."); Message = "Run required"; return;
                 }
-                if (_saved.Pending(_model))
-                {
-                    // First solution after opening, with the same input: the results of the last analysis, from their file.
-                    var loaded = _saved.Load(path, out string error);
-                    if (loaded == null)
-                    {
-                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, error + " Restore the file and recompute, or Run again."); Message = "Run required"; return;
-                    }
-                    _model = loaded;
-                }
-                da.SetData(0, _model); da.SetDataList(1, _model.Value.GeneratedMovingCases.OrderBy(c => c.Key).Select(c => c.Value));
-                Message = _model.Value.GeneratedMovingCases.Count + " positions";
+                if (_saved.Pending) { string restored = _saved.Restore(_model, path); if (restored != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, restored); }
+                if (_drafts.Pending) { string changed = _drafts.Restore(input, _model, hash); if (changed != null) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, changed); }
+                // R6.1 (decision 1 of 6/11): the analysed model of a former file is read without its results.
+                if (_model.LegacyNotice != null && !_model.HasAnalysedGpc) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, _model.LegacyNotice);
+                // C6 (P2K: GPC only): the generated cases from the GPC steps of the analysed model; none without it.
+                var catalog = _model.HasAnalysedGpc ? Common.Gpc.GpcResultCatalog.Of(_model.Gpc) : null;
+                var generated = catalog != null ? catalog.GeneratedMovingCases().Select(c => c.Name).ToArray() : Array.Empty<string>();
+                da.SetData(0, _model); da.SetDataList(1, generated);
+                Message = generated.Length + " positions";
             }
-            catch (Exception ex) { _run = false; _model = new GH_Model(); _inputHash = null; Message = "Error"; AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message); }
+            catch (Exception ex) { _run = false; _model = new GH_Model(); _inputHash = null; _drafts.Clear(); Message = "Error"; AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message); }
         }
         public override bool Write(GH_IWriter writer)
         {
             bool ok = base.Write(writer);
-            if (ok && _inputHash != null)
-            {
-                writer.SetString("InputHash", _inputHash);
-                _saved.Write(writer, _model, _outputPath, w => _model.Write(w.CreateChunk("MovingResults")));
-            }
+            if (ok && _inputHash != null) { writer.SetString("InputHash", _inputHash); var chunk = writer.CreateChunk("MovingResults"); _model.Write(chunk, false); _saved.Write(chunk); _drafts.Write(chunk); }
             return ok;
         }
         public override bool Read(GH_IReader reader)
         {
-            bool ok = base.Read(reader); _run = false; _model = new GH_Model(); _inputHash = null;
-            if (!ok) return ok;
-            // Results in a file are read at the first solution; a document saved before holds them in MovingResults.
-            var placeholder = _saved.Read(reader);
-            if (!reader.ItemExists("InputHash")) return ok;
-            if (placeholder != null) { _model = placeholder; _inputHash = reader.GetString("InputHash"); }
-            else if (reader.ChunkExists("MovingResults") && _model.Read(reader.FindChunk("MovingResults"))) _inputHash = reader.GetString("InputHash");
+            bool ok = base.Read(reader); _run = false; _model = new GH_Model(); _inputHash = null; _drafts.Clear();
+            if (ok && reader.ItemExists("InputHash") && reader.ChunkExists("MovingResults"))
+            { var chunk = reader.FindChunk("MovingResults"); if (_model.Read(chunk)) { _inputHash = reader.GetString("InputHash"); _saved.Read(chunk); _drafts.Read(chunk); } }
             return ok;
         }
         public override Guid ComponentGuid => new Guid("b6edaa43-c87c-40b4-8ce7-03260a524fd4");

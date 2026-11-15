@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -56,14 +55,10 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
                 "Obsolete component retained for existing definitions. For the phase workflow use Bridge Shrinkage Action -> Bridge Phase -> Build BridGHe Model.");
 
-            CompositeBeamSlabStrainModel.LoadData load_value = new CompositeBeamSlabStrainModel.LoadData()
-            {
-                Strain = strain,
-            };
-            CompositeBeamSlabStrainModel load = new CompositeBeamSlabStrainModel(lc.Value, load_value);
-            GH_Beam newBeam = new GH_Beam(beam);
-            newBeam.Value.Loads.Add(load);
-            DA.SetData(0, newBeam);
+            // R6.5 P1 lane 3c: the output by its draft alone (the record of the load and of its case, carried, as the reader reads the FEM load;
+            // identity derived from the input draft). A refusal is an error and no output. P2K (P1): the only path, for every input.
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, id => Common.Gpc.GpcDrafts.Reidentify(Common.Gpc.Builders.GpcDraftTransforms.WithSlabStrain(beam.Gpc, lc.Gpc), id),
+                GpcOnlyElements.Lazy(() => lc.Gpc), strain));
         }
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;

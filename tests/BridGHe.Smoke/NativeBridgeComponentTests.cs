@@ -2,12 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Checks;
-using BridGHe.Common.Models;
 using GPC.Checkers.CompositeBridge;
+using GPC.Model.Materials;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
 
+/// <summary>--regression native-bridge-components (gPC native section checks, not Straus7). R6.6 lane R4b: the materials of Bridge Section Check
+/// given by their GPC data alone (<see cref="R4aFixtures.Concrete"/>, <see cref="R4aFixtures.S355"/>, <see cref="R4aFixtures.B450"/>: no FEM value); the
+/// direct library results computed on the material set written from the numbers of the definition (C30 fck 30 parabola-rectangle; S355 E 210000
+/// fy 355 fu 510 εu 0.1 structural; B450 E 200000 fy 450 fu 540 εu 0.1 reinforcement; the rule of the former <c>BridgeGpc.Materials</c> on the FEM
+/// materials of the test).</summary>
 internal static class NativeBridgeComponentTests
 {
     internal static void Run()
@@ -15,8 +20,6 @@ internal static class NativeBridgeComponentTests
         var assembly=System.Reflection.Assembly.LoadFrom(BuildPaths.GrasshopperAssembly);
         var detailType=assembly.GetType("BridGHe.Grasshopper.DataTypes.BridgeDetailGoo",true);
         IGH_Goo Detail(object value)=>(IGH_Goo)Activator.CreateInstance(detailType,new[]{value});
-        var materialType=assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Material",true);
-        IGH_Goo Material(MaterialModel value)=>(IGH_Goo)Activator.CreateInstance(materialType,new object[]{value});
         using var doc=new GH_Document();
         var definitions=assembly.GetTypes().Where(t=>!t.IsAbstract&&t.BaseType?.IsGenericType==true&&t.BaseType.GetGenericTypeDefinition().Name=="DetailDefinition`1")
             .Select(t=>(GH_Component)Activator.CreateInstance(t)).ToArray();
@@ -33,15 +36,17 @@ internal static class NativeBridgeComponentTests
             if(!archive.ExtractObject(copy,"data")||!detailType.GetProperty("Value").GetValue(copy).Equals(value))throw new Exception("gPC definition archive changed: "+value.GetType().Name);
             foreach(var input in component.Params.Input)if(!input.Optional)throw new Exception("Definition with defaults must allow omitted input: "+input.Name);
         }
-        var concrete=new MaterialModel("C30"){Name="C30",SpecificCompressiveStrength=30};
-        var steel=new MaterialModel("S355"){Name="S355",Modulus=210000,MinimumYieldStress=355,MinimumTensileStress=510};
-        var rebar=new MaterialModel("B450"){Name="B450",Modulus=200000,MinimumYieldStress=450,MinimumTensileStress=540};
+        // The materials given by their GPC data alone (before: GH_Material of the FEM materials C30, S355, B450).
+        var concrete=R4aFixtures.Material(R4aFixtures.Concrete("C30",30));var steel=R4aFixtures.Material(R4aFixtures.S355());var rebar=R4aFixtures.Material(R4aFixtures.B450());
+        var materials=new BridgeMaterialSet(new ConcreteMaterialEN1992("C30",30,ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle),
+            new SteelMaterialEN1992("S355",210000,355,510,.1,SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic,SteelMaterial.SteelTypes.Structural),
+            new SteelMaterialEN1992("B450",200000,450,540,.1,SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic,SteelMaterial.SteelTypes.Rebar));
         var phases=new[]{new BridgePhase{Name="Ignored",Active=false,ShearKN=999999},new BridgePhase{Name="Steel",Kind=BridgePhaseKind.SteelOnly,MomentKNm=800,ShearKN=300},
             new BridgePhase{Name="Long",MomentKNm=200,ShearKN=100,Phi=2},new BridgePhase{Name="Instant",MomentKNm=400,ShearKN=-50},new BridgePhase{Name="Shrinkage",Kind=BridgePhaseKind.Shrinkage,ShrinkageMicrostrain=-200,Phi=2}};
         var checker=(GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components.BridgeDetails.BridgeSectionCheckComponent",true));
         checker.CreateAttributes();doc.AddObject(checker,false);
         void Set(int port,params IGH_Goo[] values){var p=(Param_GenericObject)checker.Params.Input[port];p.PersistentData.Clear();foreach(var v in values)p.PersistentData.Append(v);p.ExpireSolution(false);}
-        Set(1,Material(concrete));Set(2,Material(steel));Set(3,Material(rebar));Set(4,phases.Select(p=>Detail(p)).ToArray());
+        Set(1,concrete);Set(2,steel);Set(3,rebar);Set(4,phases.Select(p=>Detail(p)).ToArray());
         var row=(BridgeRebarRow)definitionsByType[typeof(BridgeRebarRow)];Set(5,Detail(row));Set(6,Detail(row));
         var options=(BridgeAnalysisOptions)definitionsByType[typeof(BridgeAnalysisOptions)];options=options with{LimitState=BridgeLimitState.Ultimate,Class4=false};Set(8,Detail(options));
         var studs=(BridgeStudOptions)definitionsByType[typeof(BridgeStudOptions)];
@@ -55,7 +60,7 @@ internal static class NativeBridgeComponentTests
             Set(4,currentPhases.Select(p=>Detail(p)).ToArray());Set(7,current.Select(Detail).ToArray());checker.ExpireSolution(false);doc.NewSolution(false,GH_SolutionMode.Silent);
             var errors=checker.RuntimeMessages(GH_RuntimeMessageLevel.Error);if(errors.Count>0)throw new Exception(kind+": "+string.Join("; ",errors));
             var outputs=checker.Params.Output[0].VolatileData.AllData(true).Select(g=>(BridgeStressResult)g.ScriptVariable()).ToArray();
-            var expected=HBridgeSection.Calculate(BridgeGpc.WithDetails(new HBridgeInput{Geometry=geometry,Materials=BridgeGpc.Materials(concrete,steel,rebar),TopRebars=row,BottomRebars=row,Options=options,Phases=currentPhases.Where(p=>p.Active).ToArray()},current));
+            var expected=HBridgeSection.Calculate(BridgeGpc.WithDetails(new HBridgeInput{Geometry=geometry,Materials=materials,TopRebars=row,BottomRebars=row,Options=options,Phases=currentPhases.Where(p=>p.Active).ToArray()},current));
             if(outputs.Length!=4)throw new Exception("Expected three mechanical phases and shrinkage; inactive phases excluded.");
             for(int i=0;i<outputs.Length;i++)
             {
@@ -70,8 +75,7 @@ internal static class NativeBridgeComponentTests
                 doc.RemoveObject(extractor,false);
             }
             if(!BridgeGpc.Checks(outputs.Last().Stage).Any(c=>c.Name.Contains("Pioli")))throw new Exception("Missing native stud checks.");
-            Console.WriteLine("GPC COMPONENT: "+kind+", three phases + shrinkage, direct library results exactly equal.");
+            Console.WriteLine("GPC COMPONENT: "+kind+", three phases + shrinkage, direct library results exactly equal (materials given by their GPC data alone).");
         }
     }
 }
-

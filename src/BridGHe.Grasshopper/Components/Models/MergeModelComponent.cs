@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -6,6 +5,7 @@ using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BridGHe.Grasshopper.Components.Models
 {
@@ -53,45 +53,14 @@ namespace BridGHe.Grasshopper.Components.Models
                     return;
                 DA.GetData(1, ref tolerance);
 
-                List<NodeModel> modelnodes = new List<NodeModel>();
-                List<BeamModel> modelbeams = new List<BeamModel>();
-                List<PlateModel> modelplates = new List<PlateModel>();
-
-                for (int i = 0; i < elements.Count; i++)
-                {
-                    if (elements[i] != null)
-                    {
-                        switch (elements[i])
-                        {
-                            case GH_Node fnode:
-                                modelnodes.Add(new NodeModel(fnode.Value));
-                                break;
-                            case GH_Beam fbeam:
-                                modelbeams.Add(new BeamModel(fbeam.Value));
-                                break;
-                            case GH_Plate fplate:
-                                modelplates.Add(new PlateModel(fplate.Value));
-                                break;
-                        }
-                    }
-                }
-
-                Common.Helpers.ModelHelper.MergeModel(ref modelnodes, ref modelbeams, ref modelplates, tolerance);
-
-                List<GH_Node> gH_Nodes = new List<GH_Node>();
-                List<GH_Beam> gH_Beams = new List<GH_Beam>();
-                List<GH_Plate> gH_Plates = new List<GH_Plate>();
-
-                for (int i = 0; i < modelnodes.Count; i++)
-                    gH_Nodes.Add(new GH_Node(modelnodes[i]));
-                for (int i = 0; i < modelbeams.Count; i++)
-                    gH_Beams.Add(new GH_Beam(modelbeams[i]));
-                for (int i = 0; i < modelplates.Count; i++)
-                    gH_Plates.Add(new GH_Plate(modelplates[i]));
-
-                DA.SetDataList(0, gH_Nodes);
-                DA.SetDataList(1, gH_Beams);
-                DA.SetDataList(2, gH_Plates);
+                // R6.5 P1 lane 3c: the merge on the drafts of the inputs, the outputs by their drafts alone, identities by content; a refusal is
+                // the error of the component. P2K (P1): the only path, for every input.
+                GpcOnlyModels.ParseElements(elements.Where(e => e != null), out List<GH_Node> gpcNodes, out List<GH_Beam> gpcBeams, out List<GH_Plate> gpcPlates);
+                var merged = Common.Gpc.Builders.GpcDraftMerge.Merge(gpcNodes.Select(n => n.Gpc).ToArray(), gpcBeams.Select(b => b.Gpc).ToArray(), gpcPlates.Select(p => p.Gpc).ToArray(), tolerance,
+                    (output, parameters) => GpcOnlyElements.ContentIdentity(ComponentGuid, output, parameters));
+                DA.SetDataList(0, merged.Nodes.Select(d => GH_Node.FromGpc(d)));
+                DA.SetDataList(1, merged.Beams.Select(d => GH_Beam.FromGpc(d)));
+                DA.SetDataList(2, merged.Plates.Select(d => GH_Plate.FromGpc(d)));
             }
             catch (Exception e)
             {

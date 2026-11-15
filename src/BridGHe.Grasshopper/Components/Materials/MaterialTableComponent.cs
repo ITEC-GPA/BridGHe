@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
+using System.Linq;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
@@ -73,11 +72,13 @@ namespace BridGHe.Grasshopper.Components.Materials
             if (!DA.GetData(3, ref g))
                 return;
 
-            if (!DA.GetData(4, ref alpha))
-                if (!DA.GetData(5, ref rho))
+            // C1 (user decision of 11/11): α and ρ are optional and the table is always read. 0.3.0 nested the three reads, so the stresses were
+            // read only when α and ρ were both missing: with either of them the table was empty and the component gave the length error.
+            DA.GetData(4, ref alpha);
+            DA.GetData(5, ref rho);
 
-                    if (!DA.GetDataList("Stresses", stresses))
-                        return;
+            if (!DA.GetDataList("Stresses", stresses))
+                return;
 
             if (!DA.GetDataList("Strains", strains))
                 return;
@@ -85,26 +86,9 @@ namespace BridGHe.Grasshopper.Components.Materials
             if (stresses.Count == strains.Count)
             {
 
-                MaterialModel material = new MaterialModel
-                {
-                    Name = name,
-                    PoissonRatio = ni,
-                    ThermalExpansion = alpha,
-                    ShearModulus = g,
-                    UsePoisson = usePoisson,
-                    Density = rho
-                };
-
-                List<(double stress, double strain)> stressStrainTable = new List<(double stress, double strain)>();
-
-                for (int i = 0; i < stresses.Count; i++)
-                {
-                    stressStrainTable.Add((stresses[i], strains[i]));
-                }
-
-                material.StressStrainTable = stressStrainTable.ToArray();
-
-                DA.SetData(0, new GH_Material(material));
+                var recipe = Common.Gpc.Builders.GpcMaterialBuilders.Table(name, usePoisson, ni, g, alpha, rho, stresses.Select((stress, i) => (stress, strains[i])).ToList());
+                // P2K (P1): the material by its GPC datum alone, by kind from the recipe of the component.
+                DA.SetData(0, GH_Material.FromGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe), recipe.Kind));
             }
             else
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Stress list length != strain list length");

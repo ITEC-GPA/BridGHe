@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -53,32 +51,17 @@ namespace BridGHe.Grasshopper.Components.Definitions
                 return;
 
 
-            LoadCaseModel lc;
-            if (name == LoadCaseModel.Dead.Name)
+            // P2K (P1): the check of the former Dead case kept, with its message (the GPC name of the former LoadCaseModel.Dead).
+            if (name == Common.Gpc.Builders.GpcCaseBuilders.Dead && nsm)
             {
-                if (nsm)
-                {
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid nsm");
-                    return;
-                }
-                lc = new LoadCaseModel(LoadCaseModel.Dead);
-            }
-            else
-            {
-                lc = new LoadCaseModel("", name);
-                if (nsm)
-                {
-                    lc.GlobalInertiaLoad = LoadCaseModel.GlobalInertiaLoads.Gravity;
-                    lc.GravityDirection = LoadCaseModel.GravityDirections.Z;
-                    lc.GravityValue = -ModelModel.GRAVITY_mmSuS2;
-                    lc.StructuralMassAcceleration = false;
-                    lc.NonStructuralMassAcceleration = true;
-                }
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid nsm");
+                return;
             }
 
             Message = name;
 
-            DA.SetData(0, new GH_LoadCase(lc));
+            // P2K (P1): the case by its record alone, built on GPC from the inputs.
+            GpcOnlyElements.Set(DA, 0, GpcOnlyProperties.Case(this, () => Common.Gpc.Builders.GpcCaseBuilders.Case(name, nsm)));
         }
 
         protected override System.Drawing.Bitmap Icon => Properties.ComponentIcons.For(GetType());

@@ -1,5 +1,4 @@
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -7,6 +6,7 @@ using Grasshopper.Kernel.Parameters;
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BridGHe.Grasshopper.Components
 {
@@ -82,79 +82,15 @@ namespace BridGHe.Grasshopper.Components
                 return;
             }
 
-            List<GH_Beam> filtered = new List<GH_Beam>();
-            List<GH_Beam> others = new List<GH_Beam>();
-            double tol = Helpers.ModelHelper.GetTolerance();
+            // P2K (P1): the tolerance of the former ModelHelper.GetTolerance (the same setting).
+            double tol = Settings.Instance.Tolerance;
 
-            for (int i = 0; i < beams.Count; i++)
-            {
-                GH_Beam b = beams[i];
-                bool add = false;
-                for (int i1 = 0; i1 < ids.Count; i1++)
-                {
-                    string id = ids[i1];
-                    if (b.Value.HasId(id))
-                    {
-                        add = true;
-                        break;
-                    }
-                }
-                if (!add)
-                {
-                    for (int j = 0; j < groups.Count; j++)
-                    {
-                        GH_Group g = groups[j];
-                        if (b.Value.HasGroup(g.Value))
-                        {
-                            add = true;
-                            break;
-                        }
-                    }
-                    if (!add)
-                    {
-                        for (int k = 0; k < props.Count; k++)
-                        {
-                            string bp = props[k];
-                            if (bp == b.Value.BeamProperty.Name)
-                            {
-                                add = true;
-                                break;
-                            }
-                        }
-                        if (!add)
-                        {
-                            for (int k = 0; k < iniPositions.Count; k++)
-                            {
-                                Point3d p = iniPositions[k];
-                                if (b.Value.PointFrom.DistanceTo(p) < tol)
-                                {
-                                    add = true;
-                                    break;
-                                }
-                            }
-                            if (!add)
-                            {
-                                for (int j = 0; j < endPositions.Count; j++)
-                                {
-                                    Point3d p = endPositions[j];
-                                    if (b.Value.PointTo.DistanceTo(p) < tol)
-                                    {
-                                        add = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                if (add)
-                    filtered.Add(b);
-                else
-                    others.Add(b);
-            }
-
-            DA.SetDataList(0, filtered);
-            DA.SetDataList(1, others);
+            // R6.5 P1 lane 1a: the partition of the GPC drafts (GpcBeamFilter); a refused draft gives an error and no output (no FEM partition
+            // to fall back on). P2K (P1): the GPC path only. R65-C2-04: the input objects pass through unchanged.
+            var only = GpcBeamFilter.Select(beams, ids, iniPositions, endPositions, props, groups, tol);
+            if (only == null) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The GPC datum of a beam is refused: the beams cannot be filtered."); return; }
+            DA.SetDataList(0, beams.Where((b, i) => only[i]).ToList());
+            DA.SetDataList(1, beams.Where((b, i) => !only[i]).ToList());
         }
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;
@@ -168,5 +104,18 @@ namespace BridGHe.Grasshopper.Components
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
         public override Guid ComponentGuid => new Guid("7bdf1a95-62ad-45a7-8768-e1fd7fdc69a8");
+
+        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
+        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
+        private static class ModelModel
+        {
+            internal enum ModelUnits
+            {
+                [System.ComponentModel.Description("kNm (m, kN, T, kPa, s, kJ, C)")] Knm,
+                [System.ComponentModel.Description("SI (m, N, kg, Pa, s, J, C)")] SI,
+                [System.ComponentModel.Description("Nmm (mm, N, T, MPa, s, mJ, C)")] Nmm,
+                [System.ComponentModel.Description("PSI (in, lbf, lb, psi, s, btu, F)")] IPS
+            }
+        }
     }
 }

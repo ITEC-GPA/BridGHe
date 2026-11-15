@@ -1,5 +1,4 @@
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -7,6 +6,7 @@ using Grasshopper.Kernel.Parameters;
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BridGHe.Grasshopper.Components.Tools
 {
@@ -78,45 +78,16 @@ namespace BridGHe.Grasshopper.Components.Tools
 
             List<GH_Node> filtered = new List<GH_Node>();
             List<GH_Node> others = new List<GH_Node>();
-            double tol = Helpers.ModelHelper.GetTolerance();
+            // P2K (P1): the tolerance of the former ModelHelper.GetTolerance (the same setting).
+            double tol = Settings.Instance.Tolerance;
 
+            // R6.2 lane A: the filter decides on the GPC drafts (first Element ID, groups by full name, position in the definition units).
+            // P2K (P1): the GPC path only (the former decision of GpcBuilderAttach.Decide without a FEM value: a refused draft is an error).
+            var groupNames = groups.Select(g => string.Join("\\", GpcBuilderAttach.GroupChain(g))).ToList();
             for (int i = 0; i < nodes.Count; i++)
             {
                 GH_Node n = nodes[i];
-                bool add = false;
-                for (int j = 0; j < ids.Count; j++)
-                {
-                    string id = ids[j];
-                    if (n.Value.HasId(id))
-                    {
-                        add = true;
-                        break;
-                    }
-                }
-                if (!add)
-                {
-                    for (int j = 0; j < groups.Count; j++)
-                    {
-                        GH_Group g = groups[j];
-                        if (n.Value.HasGroup(g.Value))
-                        {
-                            add = true;
-                            break;
-                        }
-                    }
-                    if (!add)
-                    {
-                        for (int k = 0; k < positions.Count; k++)
-                        {
-                            Point3d p = positions[k];
-                            if (n.Value.Position.DistanceTo(p) < tol)
-                            {
-                                add = true;
-                                break;
-                            }
-                        }
-                    }
-                }
+                bool add = Matches(n.Gpc, ids, groupNames, positions, tol);
                 if (add)
                     filtered.Add(n);
                 else
@@ -125,6 +96,17 @@ namespace BridGHe.Grasshopper.Components.Tools
 
             DA.SetDataList(0, filtered);
             DA.SetDataList(1, others);
+        }
+
+        /// <summary>R6.2 lane A: the selection on the GPC draft of a node: its first Element ID is one of the IDs, or one of its groups has one of
+        /// the full names, or its position is within the tolerance of one of the positions (the distance of Rhino, as before).</summary>
+        private static bool Matches(Common.Gpc.Legacy.LegacyNodeDraft d, List<string> ids, List<string> groupNames, List<Point3d> positions, double tol)
+        {
+            string label = d.Records.FirstLabel;
+            if (label != null && ids.Any(id => label.Equals(id))) return true;
+            if (groupNames.Any(name => d.Node.Groups.Values.Any(g => g.Name == name))) return true;
+            var position = new Point3d(d.Node.Position.X, d.Node.Position.Y, d.Node.Position.Z);
+            return positions.Any(p => position.DistanceTo(p) < tol);
         }
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;
@@ -138,5 +120,18 @@ namespace BridGHe.Grasshopper.Components.Tools
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
         public override Guid ComponentGuid => new Guid("35d4ffef-5073-4ead-a931-83a0febedb69");
+
+        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
+        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
+        private static class ModelModel
+        {
+            internal enum ModelUnits
+            {
+                [System.ComponentModel.Description("kNm (m, kN, T, kPa, s, kJ, C)")] Knm,
+                [System.ComponentModel.Description("SI (m, N, kg, Pa, s, J, C)")] SI,
+                [System.ComponentModel.Description("Nmm (mm, N, T, MPa, s, mJ, C)")] Nmm,
+                [System.ComponentModel.Description("PSI (in, lbf, lb, psi, s, btu, F)")] IPS
+            }
+        }
     }
 }

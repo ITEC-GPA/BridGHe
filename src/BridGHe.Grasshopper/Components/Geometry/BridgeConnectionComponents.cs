@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using BridGHe.Common.Geometry;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.Components.Utilities;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
@@ -27,8 +26,8 @@ public abstract class BridgeConnectionComponent : BridgeUtilityComponent
     protected override void Solve(IGH_DataAccess da)
     {
         var current=new List<Line>(); GH_BeamProperty p=null;if(!da.GetDataList(0,current)||!rigid&&!da.GetData(1,ref p))return;
-        var elements=BridgeConnections.Create(current,rigid,p?.Value);lines.AddRange(current);
-        da.SetDataList(0,elements.Select(e=>e is NodeModel n?(IGH_Goo)new GH_Node(n):new GH_Beam((BeamModel)e)));
+        var elements=GpcConnections.Elements(this,current,rigid,p);lines.AddRange(current); // P2K (P1): by their drafts alone
+        da.SetDataList(0,elements);
         da.SetData(1,rigid?"Native spatial kinematic rigid links.":"Deformable connection beams with explicit property.");
     }
     public override BoundingBox ClippingBox=>new BoundingBox(lines.SelectMany(l=>new[]{l.From,l.To}));
@@ -47,5 +46,5 @@ public sealed class BridgeBeamOffsetsComponent : BridgeUtilityComponent
     protected override void RegisterOutputParams(GH_OutputParamManager p)
     {p.AddGenericParameter("Beams","B","Modified beams with cleared results.",GH_ParamAccess.list);p.AddTextParameter("Information","I","Offset convention.",GH_ParamAccess.item);}
     protected override void Solve(IGH_DataAccess da)
-    {var beams=new List<GH_Beam>();var o=Vector3d.Zero;if(!da.GetDataList(0,beams))return;da.GetData(1,ref o);if(o.Z!=0)throw new ArgumentException("Local offset Z must be zero.");da.SetDataList(0,BridgeConnections.Offset(beams.Select(b=>b.Value).ToArray(),new(o.X,o.Y)).Select(b=>new GH_Beam(b)));da.SetData(1,"Local section offsets assigned; source beams unchanged, results cleared.");}
+    {var beams=new List<GH_Beam>();var o=Vector3d.Zero;if(!da.GetDataList(0,beams))return;da.GetData(1,ref o);if(o.Z!=0)throw new ArgumentException("Local offset Z must be zero.");da.SetDataList(0,GpcConnections.Offsets(this,beams,o)); /* R6.5 P1 lane 1b: a beam given by its draft alone gets the offset on GPC */da.SetData(1,"Local section offsets assigned; source beams unchanged, results cleared.");}
 }

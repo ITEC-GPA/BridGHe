@@ -1,5 +1,4 @@
 using System;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -46,6 +45,16 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
             pManager.AddNumberParameter("J", "J", "Torsional moment of area", GH_ParamAccess.item);
         }
 
+        /// <summary>R6.5 P1 lane 2a: the outputs from the values of the former section value (<c>GpcSectionGeometry.Former</c>), in the order of
+        /// the outputs.</summary>
+        private static void SetFormer(IGH_DataAccess DA, Common.Gpc.GpcSectionGeometry.FormerValues v)
+        {
+            int item = 0;
+            DA.SetData(item++, v.Name); DA.SetData(item++, v.Area); DA.SetData(item++, v.XG); DA.SetData(item++, v.YG); DA.SetData(item++, v.Ixx);
+            DA.SetData(item++, v.Iyy); DA.SetData(item++, v.AngleX1Rad); DA.SetData(item++, v.I11); DA.SetData(item++, v.I22); DA.SetData(item++, v.W11);
+            DA.SetData(item++, v.W22); DA.SetData(item++, v.Rho11); DA.SetData(item++, v.Rho22); DA.SetData(item++, v.J);
+        }
+
         /// <summary>
         /// This is the method that actually does the work.
         /// </summary>
@@ -57,65 +66,16 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
             if (!DA.GetData(0, ref gH_BeamProperty))
                 return;
 
-            BeamPropertyModel beamPropertyModel = gH_BeamProperty.Value;
-
-            string name = string.Empty;
-            double area = 0;
-            double j11 = 0;
-            double j22 = 0;
-            double jxx = 0;
-            double jyy = 0;
-            double w11 = 0;
-            double w22 = 0;
-            double j = 0;
-            double xg = 0;
-            double yg = 0;
-            double angle = 0;
-            double rho1 = 0;
-            double rho2 = 0;
-
-            //double ShearL1 = 0;
-            //double ShearL2 = 0;
-            //double ShearA1 = 0;
-            //double ShearA2 = 0;
-
-            if (beamPropertyModel.SectionType != SectionModel.SectionTypes.Generic)
+            // R6.5 P1 lane 2a: the values the former section value of the property held, from the recipe of its section (rule of passo 75): a
+            // generic section gives the empty name and zeros, as the former property; a recipe without the values (composite) or a property
+            // without a recipe gives an error and no outputs. P2K (P1): the only path.
+            var former = Helpers.GpcOnlyProperties.Datum(this, () =>
             {
-                name = beamPropertyModel.Name;
-                area = beamPropertyModel.SectionArea;
-                xg = beamPropertyModel.Centroid.X;
-                yg = beamPropertyModel.Centroid.Y;
-                jxx = beamPropertyModel.Ixx;
-                jyy = beamPropertyModel.Iyy;
-                angle = beamPropertyModel.AngleX1Rad;
-                j11 = beamPropertyModel.I11;
-                j22 = beamPropertyModel.I22;
-                w11 = beamPropertyModel.W11;
-                w22 = beamPropertyModel.W22;
-                rho1 = beamPropertyModel.Rho11;
-                rho2 = beamPropertyModel.Rho22;
-                j = beamPropertyModel.J;
-                // ShearL1 = beamPropertyModel.ShearL1;
-                // ShearL2 = beamPropertyModel.ShearL2;
-                // ShearA1 = beamPropertyModel.ShearA1;
-                // ShearA2 = beamPropertyModel.ShearA1;
-            }
-
-            int item = 0;
-            DA.SetData(item++, name);
-            DA.SetData(item++, area);
-            DA.SetData(item++, xg);
-            DA.SetData(item++, yg);
-            DA.SetData(item++, jxx);
-            DA.SetData(item++, jyy);
-            DA.SetData(item++, angle);
-            DA.SetData(item++, j11);
-            DA.SetData(item++, j22);
-            DA.SetData(item++, w11);
-            DA.SetData(item++, w22);
-            DA.SetData(item++, rho1);
-            DA.SetData(item++, rho2);
-            DA.SetData(item++, j);
+                var recipe = gH_BeamProperty.Gpc?.Data?.Section ?? throw new NotSupportedException("GpcPropertyWithoutSectionRecipe: the property has no section recipe.");
+                return recipe.Kind == Common.Gpc.BridgeSectionKind.Generic ? new Common.Gpc.GpcSectionGeometry.FormerValues(string.Empty, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+                    : Common.Gpc.GpcSectionGeometry.Former(recipe) with { Name = gH_BeamProperty.Gpc.Property.Name };
+            });
+            if (former != null) SetFormer(DA, former);
         }
 
         /// <summary>

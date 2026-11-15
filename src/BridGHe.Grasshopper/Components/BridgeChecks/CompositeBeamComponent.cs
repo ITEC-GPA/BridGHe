@@ -1,10 +1,10 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
@@ -58,38 +58,79 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             endSection ??= startSection;
             DA.GetDataList(3, groups);
 
-            if (gH_Beam?.Value == null || startSection?.Value == null || endSection?.Value == null)
+            // R6.5 P1 lane 3a (P2K: every input): the composite beam by its GPC datum alone (the draft of the beam, the composite properties,
+            // the groups); no FEM value is read or made.
+            SolveGpc(DA, gH_Beam, startSection, endSection, groups);
+        }
+
+        /// <summary>R6.5 P1 lane 3a: the composite beam by its GPC datum alone: the draft of the beam, the definitions of the two composite
+        /// properties, the groups. No beam draft or no start definition datum: the error of the FEM path, no output. R25-01 (C1, 11/11): a
+        /// property that is not a valid definition gives its error and no output (before, both definitions null and a datum called valid).</summary>
+        private void SolveGpc(IGH_DataAccess DA, GH_Beam beam, GH_CompositeBeamProperty start, GH_CompositeBeamProperty end, List<GH_Group> groups)
+        {
+            Common.Gpc.Legacy.LegacyBeamDraft draft = null;
+            try { draft = beam?.Gpc; } catch (Exception ex) when (ex is ArgumentException or NotSupportedException or InvalidOperationException) { }
+            if (draft == null || start == null || end == null || start.Value == null && start.Gpc == null || end.Value == null && end.Gpc == null)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "A beam and a valid start section are required.");
                 return;
             }
-
-            BeamModel bb = gH_Beam.Value;
-            CompositeBeamModel compositeBeamModel = new CompositeBeamModel()
+            // R25-01 (C1, 11/11): a composite property that is not a valid definition is refused here, with the message of the definition, and
+            // nothing is given (without a FEM value there is no composite beam the checks could refuse later; the FEM path keeps its rule above).
+            GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition s = null, e = null;
+            try { s = start.Definition; e = end.Definition; }
+            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or InvalidOperationException)
             {
-                PointFrom = bb.PointFrom,
-                PointTo = bb.PointTo,
-                BeamId = bb.BeamId,
-                StartBeamProperty = startSection.Value,
-                EndBeamProperty = endSection.Value,
-            };
-
-            for (int i = 0; i < bb.Attributes.Count; i++)
-                compositeBeamModel.Attributes.Add(bb.Attributes[i]);
-            for (int i = 0; i < bb.Loads.Count; i++)
-                compositeBeamModel.Loads.Add(bb.Loads[i]);
-            for (int i = 0; i < bb.Groups.Count; i++)
-                compositeBeamModel.Groups.Add(bb.Groups[i]);
-            foreach (GH_Group group in groups)
-                if (group?.Value is not null && !compositeBeamModel.Groups.Contains(group.Value))
-                    compositeBeamModel.Groups.Add(group.Value);
-            for (int i = 0; i < bb.Results.Count; i++)
-                compositeBeamModel.Results.Add(bb.Results[i]);
-
-            GH_CompositeBeam ms_beam = new GH_CompositeBeam(compositeBeamModel);
-
-            DA.SetData(0, ms_beam);
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, (s == null ? "Section Start" : "Section End") + ": the composite section is refused: " + ex.Message);
+                return;
+            }
+            var datum = new GpcCompositeBeam(draft, s, e, Groups(draft, groups));
+            // P2CUT (13/11, coordinator answer 2 to P2K): a definition whose archive is refused has no content identity: an error, no output
+            // (before, the identity fell back on the name of the section).
+            // P2P-02 (review of ChatGPT task 45, P2CE phase 2a): the message names the section (start or end) and what to do; the same identity.
+            Guid identity; string which = "start";
+            try
+            {
+                string startDigest = Digest(datum.Start); which = "end";
+                string endDigest = Digest(datum.End);
+                identity = Identity(draft, startDigest, endDigest, datum.Groups);
+            }
+            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or InvalidOperationException or System.Runtime.Serialization.SerializationException)
+            {
+                var refused = which == "start" ? datum.Start : datum.End;
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, $"The composite section at the {which} of the beam ('{refused?.Name}') cannot be read to identify it by its content: "
+                    + ex.Message + " Recreate the property with Composite Beam Property; no composite beam is made.");
+                return;
+            }
+            var output = GH_CompositeBeam.FromGpc(datum, identity);
+            output.AnalysedGpc = beam.AnalysedGpc; output.AnalysedGpcModel = beam.AnalysedGpcModel;
+            DA.SetData(0, output);
         }
+
+        /// <summary>The full names of the groups of the composite beam: those of the beam (its draft), then those of the Groups input it has not,
+        /// in order (the rule of the FEM path on the group models).</summary>
+        private static IReadOnlyList<string> Groups(Common.Gpc.Legacy.LegacyBeamDraft draft, List<GH_Group> groups)
+        {
+            var names = new List<string>(draft.Records?.Groups ?? (IReadOnlyList<string>)Array.Empty<string>());
+            foreach (var g in groups)
+                if (g?.Gpc is { Count: > 0 } chain && Common.Gpc.Builders.GpcBeamBuilders.FullName(chain) is var full && !names.Contains(full)) names.Add(full);
+            return names;
+        }
+
+        /// <summary>R6.5 P1 lane 3a (coordinator decision 6, 8/11): the identity of the composite beam, derived from its beam and the canonical
+        /// text of its sections (the SHA-256 of their GPC archive) and groups (<see cref="GpcOnlyElements.Identity"/>, the rule of lane 1a): no
+        /// new GUID per solve. P2K (P7): derived from the GUID of the draft of the beam, as <see cref="GpcOnlyElements.Beam"/> does, not from
+        /// the GH GUID of the beam (new at every solve for a beam given by its draft alone, <c>GH_Beam.FromGpc</c> without a GUID).</summary>
+        private Guid Identity(Common.Gpc.Legacy.LegacyBeamDraft beam, string startDigest, string endDigest, IReadOnlyList<string> groups) =>
+            GpcOnlyElements.Identity(beam.Beam.Guid, ComponentGuid, 0, startDigest, endDigest, groups); // P2P-02: the digests of the two sections (Digest), taken one by one
+
+        /// <summary>P2F (P7): the content of a composite definition, the GPC input fingerprint (<c>ModelValues.Fingerprint</c>, the same in every
+        /// process for the same content) of a copy read back from its archive. Before, the SHA-256 of the archive itself, whose bytes change once
+        /// the definition has been fingerprinted (the fingerprint, taken elsewhere on the same definition, changes what the archive writes, not
+        /// what it fingerprints): the composite beam got another GUID at every solve. The copy leaves the input definition as it is (the
+        /// fingerprint is never taken on it here: shared-properties). P2CUT: a refused archive throws (no fallback on the name).</summary>
+        private static string Digest(GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition definition) =>
+            definition == null ? "null" : "composite:" + GPC.Model.Core.ModelValues.Fingerprint(new object[] { Common.Gpc.GpcDraftArchive.ReadComposite(Common.Gpc.GpcDraftArchive.Write(definition)) });
 
         /// <summary>
         /// Provides an Icon for the component.

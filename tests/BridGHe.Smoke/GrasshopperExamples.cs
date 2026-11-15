@@ -3,7 +3,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using BridGHe.Common.Models;
 using GH_IO.Serialization;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
@@ -26,7 +25,10 @@ internal static class GrasshopperExamples
         foreach(var a in new[]{typeof(GH_Document).Assembly,assembly})
         {Console.WriteLine("GH REGISTER "+a.GetName().Name);parse.Invoke(server,new object[]{a,a.Location});}
         var modelType=assembly.GetType("BridGHe.Grasshopper.DataTypes.Fem.GH_Model",true);
-        foreach(var e in NativeExamples.Create().Where(x=>selected=="all"||x.Id.StartsWith(selected,StringComparison.Ordinal)))
+        // R6.6 lane R4a (native, not run by the lane): the examples 01-10 built in GPC (GpcNativeExamples, R0), each given to the analysis as
+        // the GH model of its GPC input alone (GH_Model.FromGpc, no FEM value); the results read on the analysed GPC model of the analysis
+        // component with the analytical expectations of the example (GpcNativeExamples.Verify on the rows of the GPC readers).
+        foreach(var e in GpcNativeExamples.Create().Where(x=>selected=="all"||x.Id.StartsWith(selected,StringComparison.Ordinal)))
         {
             Directory.CreateDirectory(ExamplePaths.Case(e.Id));
             Console.WriteLine("GH BUILD "+e.Id);
@@ -35,7 +37,8 @@ internal static class GrasshopperExamples
             var note=new GH_Panel{UserText=e.Title+"\nUnita N-mm. Materiale elastico E=210000 MPa, nu=0.3.\nModello incorporato: menu del parametro per gestire i dati.\nImpostare il percorso .st7 prima di eseguire. Vedere example/README.md."};
             Add(note,20,10);note.Attributes.Bounds=new RectangleF(20,10,700,110);
             var input=new Param_GenericObject{Name="Modello di ingresso",NickName="Modello"};
-            input.PersistentData.Append((IGH_Goo)modelType.GetMethod("FromModel").Invoke(null,new object[]{e.Model,null}));Add(input,100,200);
+            input.PersistentData.Append(R2bFixtures.Model(e.Input));Add(input,100,200);
+            bool plate=e.Inputs.Plates.Count>0;
             string component=e.Moving?"MovingStaticAnalysisComponent":"StrausR3AnalysisComponent";
             var analysis=(GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components.Analysis."+component,true));Add(analysis,550,220);analysis.Params.Input[0].AddSource(input);
             var path=new GH_Panel{UserText=Path.Combine(ExamplePaths.Calculations(e.Id),"grasshopper","model.st7")};Add(path,20,390);path.Attributes.Bounds=new RectangleF(20,390,450,60);
@@ -48,7 +51,6 @@ internal static class GrasshopperExamples
             var parts=(GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components.Models.DecomposeModelComponent",true));Add(parts,800,220);parts.Params.Input[0].AddSource(analysis.Params.Output[0]);
             var nodeResults=(GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components.Results.NodeResultsComponent",true));Add(nodeResults,1000,170);nodeResults.Params.Input[0].AddSource(parts.Params.Output[0]);
             var displacements=new GH_Panel{NickName="Spostamenti XYZ [mm]"};Add(displacements,1200,100);displacements.Attributes.Bounds=new RectangleF(1200,100,400,170);displacements.AddSource(nodeResults.Params.Output[2]);
-            bool plate=e.Model.Plates.Count>0;
             var forceResults=(GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components.Results."+(plate?"PlateResultsComponent":"BeamResultsComponent"),true));Add(forceResults,1000,400);forceResults.Params.Input[0].AddSource(parts.Params.Output[plate?2:1]);
             var forces=new GH_Panel{NickName=plate?"Nxx, Nyy, Nxy [N/mm]":"Momenti BM1, BM2 [N mm]"};Add(forces,1200,340);forces.Attributes.Bounds=new RectangleF(1200,340,400,220);forces.AddSource(forceResults.Params.Output[plate?3:4]);
             var archive=new GH_Archive();Console.WriteLine("GH SERIALIZE "+e.Id);
@@ -67,12 +69,13 @@ internal static class GrasshopperExamples
             var errors=restored.Objects.OfType<GH_ActiveObject>().SelectMany(c=>c.RuntimeMessages(GH_RuntimeMessageLevel.Error)).ToArray();
             if(errors.Length>0)throw new Exception(string.Join(Environment.NewLine,errors));
             var resultGoo=restoredAnalysis.Params.Output[0].VolatileData.AllData(true).Single();
-            var result=(ModelModel)modelType.GetProperty("Value").GetValue(resultGoo);
+            if(modelType.GetProperty("Value").GetValue(resultGoo)!=null)throw new Exception("GPC: the analysis output has a FEM value: "+e.Id);
+            var analysed=(GPC.Model.Models.Model)modelType.GetProperty("GpcResults").GetValue(resultGoo)??throw new Exception("GPC: no analysed GPC model: "+e.Id);
             var restoredNodes=restored.Objects.OfType<GH_Component>().Single(c=>c.GetType()==nodeResults.GetType());
             if(restoredNodes.Params.Output[2].VolatileDataCount==0)throw new Exception("Node result component has no displacement output.");
             var restoredForces=restored.Objects.OfType<GH_Component>().Single(c=>c.GetType()==forceResults.GetType());
             if(restoredForces.Params.Output[plate?3:4].VolatileDataCount==0)throw new Exception("Element result component has no force output.");
-            var recorder=new NativeExamples.Recorder();e.Verify(result,recorder);
+            var recorder=new NativeExamples.Recorder();e.Verify(new GpcNativeExamples.Results(analysed),recorder);
             if(recorder.Measurements.Any(m=>!m.Passed))throw new Exception("GH numerical comparison failed: "+e.Id);
             File.WriteAllText(Path.Combine(output,"report.json"),System.Text.Json.JsonSerializer.Serialize(recorder.Measurements,new System.Text.Json.JsonSerializerOptions{WriteIndented=true}));
             Console.WriteLine("GH VERIFIED "+e.Id);

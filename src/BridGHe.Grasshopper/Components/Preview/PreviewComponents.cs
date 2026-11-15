@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
-using BridGHe.Common.Models;
 using BridGHe.Common.MovingLoads;
 using BridGHe.Grasshopper.Display;
 using BridGHe.Grasshopper.Helpers;
@@ -53,22 +52,37 @@ namespace BridGHe.Grasshopper.Components.Preview
             object settings=null;da.GetData(1,ref settings);if(settings is IGH_Goo g)settings=g.ScriptVariable();
             if(settings!=null && settings is not DisplayOptions){AddRuntimeMessage(GH_RuntimeMessageLevel.Error,"Connect Display Settings.");return;}
             local=(DisplayOptions)settings;
-            foreach(var goo in goos){var value=goo?.ScriptVariable();if(value is ModelModel or ElementModel or MovingPath)values.Add(value);else AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Unsupported preview value: "+goo?.TypeName);}
+            // P2K (P1): moving paths by value; models and elements by their GPC drafts (no FEM value is drawn).
+            foreach(var goo in goos){var value=goo?.ScriptVariable();if(value is MovingPath)values.Add(value);else if(Drafts(goo) is {} drafts)values.Add(drafts);else AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"Unsupported preview value: "+goo?.TypeName);}
             da.SetData(0,$"{values.Count} objects; physical section outlines and schematic reinforcement rows.");
         }
+        /// <summary>R6.5 P1 lane 3a: the drafts of a model or an element by its GPC data: one preview object, drawn as the GH types draw their
+        /// drafts (<see cref="ModelPreview.DraftWires"/>, <see cref="ModelPreview.DraftMeshes"/>) with the local settings; the moving paths of
+        /// a model given by its GPC input are not drawn. P2K (P1): the only path.</summary>
+        private sealed record GpcDrafts(object[] Items);
+        private static GpcDrafts Drafts(IGH_Goo goo)=>goo switch
+        {
+            DataTypes.Fem.GH_Model m when m.GpcInput!=null=>new GpcDrafts(m.GpcDrafts is {} d?d.Nodes.Cast<object>().Concat(d.Beams).Concat(d.Plates).ToArray():Array.Empty<object>()),
+            DataTypes.Fem.GH_Node n when n.Gpc!=null=>new GpcDrafts(new object[]{n.Gpc}),
+            DataTypes.Fem.GH_Beam b when b.Gpc!=null=>new GpcDrafts(new object[]{b.Gpc}),
+            DataTypes.Fem.GH_Plate p when p.Gpc!=null=>new GpcDrafts(new object[]{p.Gpc}),
+            DataTypes.GH_CompositeBeam c when c.Gpc!=null=>new GpcDrafts(new object[]{c.Gpc}), // C3: the datum (its solids and bars)
+            _=>null,
+        };
+        private static IEnumerable<object> DraftItems(object value)=>value is GpcDrafts d?d.Items:Array.Empty<object>();
         public override bool IsPreviewCapable=>true;
         public override BoundingBox ClippingBox
         {
-            get {var box=BoundingBox.Empty;foreach(var value in values){foreach(var e in ModelPreview.Elements(value))box.Union(ModelPreview.Bounds(e));foreach(var path in Paths(value)){var c=path.Coordinates;if(c?.Length==9 && c.All(double.IsFinite))for(int i=0;i<9;i+=3)box.Union(new Point3d(c[i],c[i+1],c[i+2]));}}return box;}
+            get {var box=BoundingBox.Empty;foreach(var value in values){foreach(var d in DraftItems(value))box.Union(ModelPreview.DraftBounds(d));foreach(var path in Paths(value)){var c=path.Coordinates;if(c?.Length==9 && c.All(double.IsFinite))for(int i=0;i<9;i+=3)box.Union(new Point3d(c[i],c[i+1],c[i+2]));}}return box;}
         }
-        private static IEnumerable<MovingPath> Paths(object value)=>value switch{ModelModel m=>m.MovingPaths,MovingPath p=>new[]{p},_=>Array.Empty<MovingPath>()};
+        private static IEnumerable<MovingPath> Paths(object value)=>value switch{MovingPath p=>new[]{p},_=>Array.Empty<MovingPath>()};
         public override void DrawViewportWires(IGH_PreviewArgs args)
         {
             if(Hidden || Locked)return;var options=local??DisplayPreferences.Current;
-            foreach(var value in values){foreach(var e in ModelPreview.Elements(value))ModelPreview.Wires(e,args.Display,args.Viewport,args.WireColour,options);foreach(var path in Paths(value))ModelPreview.Moving(path,args.Display,args.WireColour,options);}
+            foreach(var value in values){foreach(var path in Paths(value))ModelPreview.Moving(path,args.Display,args.WireColour,options);foreach(var d in DraftItems(value))ModelPreview.DraftWires(d,args.Display,args.Viewport,args.WireColour,options);}
         }
         public override void DrawViewportMeshes(IGH_PreviewArgs args)
-        {if(Hidden || Locked)return;foreach(var value in values)foreach(var e in ModelPreview.Elements(value))ModelPreview.Meshes(e,args.Display,local??DisplayPreferences.Current);}
+        {if(Hidden || Locked)return;foreach(var value in values){foreach(var d in DraftItems(value))ModelPreview.DraftMeshes(d,args.Display,local??DisplayPreferences.Current);}}
         protected override System.Drawing.Bitmap Icon=>Properties.ComponentIcons.For(GetType());
         public override Guid ComponentGuid=>new Guid("404d47db-4efd-412c-aec9-9889a7e9e72d");
     }

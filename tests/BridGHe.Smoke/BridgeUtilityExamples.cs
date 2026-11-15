@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Text.Json;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Diagnostics;
-using BridGHe.Common.Models;
 using GPC.Checkers.CompositeBridge;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
@@ -28,9 +27,15 @@ internal static class BridgeUtilityExamples
     private static IGH_Goo Goo(string name, object value)
     {
         var type = plugin.GetTypes().Single(t => t.Name == name);
-        if (name != "GH_Model") return (IGH_Goo)Activator.CreateInstance(type, new[] { value });
-        var goo = (IGH_Goo)Activator.CreateInstance(type); type.GetProperty("Value").SetValue(goo, value); return goo;
+        if (name == "GH_Model") throw new InvalidOperationException("R6.6 R4a: the GH models are given by their GPC input (Model), never by a FEM value.");
+        return (IGH_Goo)Activator.CreateInstance(type, new[] { value });
     }
+    /// <summary>R6.6 lane R4a: the GH model given by its GPC input alone (no FEM value), with the analysed GPC model of the same structure
+    /// attached when the samples are stored results (an analysis component). The structures are built in GPC (BridgeUtilityTests.SourceGpc,
+    /// GpcWorkflowSources) with the samples of the former FEM fixtures.</summary>
+    private static IGH_Goo Model(GPC.Model.Models.Model input, GPC.Model.Models.Model analysed = null) => R2bFixtures.Model(R2bFixtures.Input(input), analysed);
+    private static GPC.Model.Models.Model GpcInputOf(object goo) => R2bFixtures.Get<BridGHe.Common.Gpc.GpcModels.Conversion>(goo, "GpcInput")?.Model;
+    private static bool HasFem(object goo) => goo.GetType().GetProperty("Value").GetValue(goo) != null;
     private static void Generic(GH_Component c, int port, params IGH_Goo[] values)
     { var p = (Param_GenericObject)c.Params.Input[port]; p.PersistentData.Clear(); foreach (var v in values) p.PersistentData.Append(v); }
     private static void Text(GH_Component c, int port, params string[] values) { var p = (Param_String)c.Params.Input[port]; p.PersistentData.Clear(); p.SetPersistentData(values); }
@@ -81,22 +86,28 @@ internal static class BridgeUtilityExamples
     private static void AuditPhase()
     {
         using var doc = new GH_Document(); Header(doc, "23 | AUDIT E COPIA DI FASE\nDati dimostrativi: due travi parallele, volutamente disconnesse. Il warning DISCONNECTED è atteso.\nPhase Model modifica solo B0 e invalida i risultati; non esegue Straus. Consultare README.md.");
-        var model = BridgeUtilityTests.Source(); var audit = Add(doc, "BridgeModelAuditComponent", 100, 60); Generic(audit, 0, Goo("GH_Model", model));
+        // R6.6 R4a: the two disconnected girders built in GPC with their stored samples (SourceGpc), the replacement property its GPC twin.
+        var audit = Add(doc, "BridgeModelAuditComponent", 100, 60); Generic(audit, 0, Model(BridgeUtilityTests.SourceGpc(analyse: false), BridgeUtilityTests.SourceGpc()));
         var phase = Add(doc, "BridgePhaseModelComponent", 480, 60); Wire(audit, 5, phase, 0); Text(phase, 1, "Risposta omogeneizzata da analizzare"); Text(phase, 2, "B0");
-        Generic(phase, 3, Goo("GH_BeamProperty", BridgeGrillageExample.LongProperty(new(), 1)));
+        Generic(phase, 3, R2aDesignFixtures.Property(BridgeGrillageExample.LongPropertyGpc(new(), 1)));
         Panel(doc, audit, 4, 150, 370); var audit2 = Add(doc, "BridgeModelAuditComponent", 850, 60); Wire(phase, 0, audit2, 0); Panel(doc, audit2, 4, 850, 370);
         Save(doc, "23-audit-modello-fase", d =>
         {
-            var m = (ModelModel)Output(Find(d, "BridgePhaseModelComponent"), 0).Single();
-            BridgeUtilityTests.Assert(m.Elements.All(e => e.Results.Count == 0) && m.Beams.Count == 2, "Phase GH output retained old results.");
+            // The Phase Model output: the GPC input alone (no FEM value), the two beams, no analysed model and no stored result.
+            var goo = Find(d, "BridgePhaseModelComponent").Params.Output[0].VolatileData.AllData(true).Single();
+            var m = GpcInputOf(goo);
+            BridgeUtilityTests.Assert(!HasFem(goo) && m != null && R2bFixtures.Get<GPC.Model.Models.Model>(goo, "GpcResults") == null && !R2bFixtures.Get<bool>(goo, "HasAnalysedGpc")
+                && m.AllElements.All(e => e.Results.Count == 0) && m.BeamElements.Count == 2, "Phase GH output retained old results.");
         });
     }
     private static void Envelopes()
     {
-        using var doc = new GH_Document(); Header(doc, "24 | INVILUPPI CONCOMITANTI\nCampioni numerici controllati, non una soluzione FEM: G e Q con passo mobile 2. Unità N mm.\nM3 minimo Q conserva N=-50, V2=13, V3=-17, T=19, M2=-23 dello stesso campione. Reazione Fz=-120; spostamento Uz=-10.");
-        var model = Goo("GH_Model", BridgeUtilityTests.Source());
+        using var doc = new GH_Document(); Header(doc, "24 | INVILUPPI CONCOMITANTI\nCampioni numerici controllati, non una soluzione FEM: G e Q (Q era al passo mobile 2; i risultati GPC della 0.4.0 non hanno passi: Step 0). Unità N mm.\nM3 minimo Q conserva N=-50, V2=13, V3=-17, T=19, M2=-23 dello stesso campione. Reazione Fz=-120; spostamento Uz=-10.");
+        // R6.4 (6) (P2S): the GPC results of the same samples need the beam end nodes; the node envelopes then select the support node A.
+        // R6.6 R4a: the same samples built in GPC (SourceGpc: Q at step 0, the only GPC step; the bearing node A and the free end nodes).
+        var model = Model(BridgeUtilityTests.SourceGpc(analyse: false), BridgeUtilityTests.SourceGpc());
         string[] types = { "BridgeResultCasesComponent", "BridgeBeamEnvelopeComponent", "BridgeBearingEnvelopeComponent", "BridgeDisplacementEnvelopeComponent" };
-        for (int i = 0; i < types.Length; i++) { var c = Add(doc, types[i], 80 + i * 340, 80); Generic(c, 0, model); Panel(doc, c, i == 0 ? 0 : 2, 50 + i * 340, 460); }
+        for (int i = 0; i < types.Length; i++) { var c = Add(doc, types[i], 80 + i * 340, 80); Generic(c, 0, model); if (i >= 2) Text(c, 1, "A"); Panel(doc, c, i == 0 ? 0 : 2, 50 + i * 340, 460); }
         Save(doc, "24-inviluppi-concomitanti", d =>
         {
             BridgeUtilityTests.Assert(Output(Find(d, types[1]), 2).Cast<double>().All(v => v < 0), "GH beam signed envelope failed.");
@@ -107,8 +118,9 @@ internal static class BridgeUtilityExamples
     private static void Phases()
     {
         using var doc = new GH_Document(); Header(doc, "25 | FASI E COMBINAZIONI PER ACTION ID\nDue fasi dimostrative: G1 acciaio e CS ritiro primario. I dati FEM G sono campioni controllati.\nAction Combinations riceve colonne CS,G1 e produce il formato Build. SLS: 0.7,1. Primary Only esclude effetti di vincolo del ritiro.");
-        var model = BridgeWorkflowTests.Source("Steel samples", 100);
-        var a = Add(doc, "BridgeActionComponent", 80, 60); Text(a, 0, "G1"); Generic(a, 1, Goo("GH_Model", model)); Generic(a, 2, new GH_String("G"));
+        // R6.6 R4a: the source built in GPC with the samples of BridgeWorkflowTests.Source (GpcWorkflowSources.Pair), its analysed copy attached.
+        var source = R2bFixtures.Model(GpcWorkflowSources.Pair("Steel samples", 100));
+        var a = Add(doc, "BridgeActionComponent", 80, 60); Text(a, 0, "G1"); Generic(a, 1, source); Generic(a, 2, new GH_String("G"));
         var r = Add(doc, "BridgeShrinkageActionComponent", 80, 390); Text(r, 0, "CS"); Numbers(r, 3, -200e-6);
         ((Param_Boolean)r.Params.Input[5]).PersistentData.Clear(); ((Param_Boolean)r.Params.Input[5]).SetPersistentData(true);
         var p1 = Add(doc, "BridgeConstructionPhaseComponent", 400, 60); ((Param_Integer)p1.Params.Input[0]).SetPersistentData(10); Text(p1, 1, "Acciaio");
@@ -117,12 +129,15 @@ internal static class BridgeUtilityExamples
         var order = Add(doc, "BridgePhaseTableComponent", 750, 60); Wire(p2, 0, order, 0); Wire(p1, 0, order, 0);
         var combo = Add(doc, "BridgeActionCombinationsComponent", 1090, 60); Wire(order, 0, combo, 0); Text(combo, 1, "CS", "G1"); Text(combo, 2, "SLS");
         var factors = (Param_Number)combo.Params.Input[3]; factors.PersistentData.AppendRange(new[] { new GH_Number(.7), new GH_Number(1) }, new GH_Path(0));
-        var build = Add(doc, "BuildBridgeModel", 1420, 60); Generic(build, 0, Goo("GH_Model", model)); Wire(order, 0, build, 1); Wire(combo, 0, build, 2);
+        var build = Add(doc, "BuildBridgeModel", 1420, 60); Generic(build, 0, source); Wire(order, 0, build, 1); Wire(combo, 0, build, 2);
         Panel(doc, combo, 0, 1050, 440); Panel(doc, build, 1, 1420, 440);
         Save(doc, "25-fasi-combinazioni", d =>
         {
-            var m = (ModelModel)Output(Find(d, "BuildBridgeModel"), 0).Single();
-            BridgeUtilityTests.Assert(m.BridgeWorkflow.Phases.Select(p => p.Order).SequenceEqual(new[] { 10, 20 }) && m.LoadCombinations.Count == 1, "GH combination workflow failed.");
+            // The output: the GH model of the GPC bridge model (no FEM value), with the phases of the table and the one combination SLS.
+            var goo = Find(d, "BuildBridgeModel").Params.Output[0].VolatileData.AllData(true).Single();
+            var bridge = R2bFixtures.Get<BridGHe.Common.Gpc.GpcBridge>(goo, "GpcBridge");
+            BridgeUtilityTests.Assert(!HasFem(goo) && bridge != null && bridge.Workflow.Phases.Select(p => p.Order).SequenceEqual(new[] { 10, 20 }) && bridge.Combinations.Count == 1
+                && bridge.Combinations[0].Name == "SLS", "GH combination workflow failed.");
         });
     }
     private static void Checks()
@@ -130,8 +145,9 @@ internal static class BridgeUtilityExamples
         using var doc = new GH_Document(); Header(doc, "26 | RIEPILOGO DELLE VERIFICHE GPC\nSezione H mista di esempio; quattro incrementi assegnati in kN/kNm, senza analisi FEM globale.\nIl riepilogo conserva stato e note GPC. Un rapporto assente è NaN, non zero. Il massimo non è una verifica complessiva del ponte.");
         var geometry = Add(doc, "BridgeGeometryComponent", 50, 0); var studs = Add(doc, "BridgeStudsComponent", 50, 500);
         var checker = Add(doc, "BridgeSectionCheckComponent", 510, 100); Wire(geometry, 0, checker, 0); Wire(studs, 0, checker, 7);
-        Generic(checker, 1, Goo("GH_Material", new MaterialModel("C30") { Name = "C30", SpecificCompressiveStrength = 30 }));
-        Generic(checker, 2, Goo("GH_Material", new MaterialModel("S355") { Name = "S355", Modulus = 210000, MinimumYieldStress = 355, MinimumTensileStress = 510 }));
+        // R6.6 R4a: the materials given by their GPC datum alone, with the same numbers.
+        Generic(checker, 1, R4aFixtures.Material(R4aFixtures.Concrete()));
+        Generic(checker, 2, R4aFixtures.Material(R4aFixtures.S355()));
         var phases = new[] { new BridgePhase { Name = "Steel", Kind = BridgePhaseKind.SteelOnly, MomentKNm = 800, ShearKN = 300 },
             new BridgePhase { Name = "Long", MomentKNm = 200, ShearKN = 100, Phi = 2 }, new BridgePhase { Name = "Instant", MomentKNm = 400, ShearKN = -50 },
             new BridgePhase { Name = "Shrinkage", Kind = BridgePhaseKind.Shrinkage, ShrinkageMicrostrain = -200, Phi = 2 } };

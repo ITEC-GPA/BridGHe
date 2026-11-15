@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -51,16 +50,9 @@ namespace BridGHe.Grasshopper.Components.Attributes
             if (!DA.GetData(1, ref stations))
                 return;
 
-            GH_Beam newBeam = new GH_Beam(beam);
-
-            BeamOutputStationsModel.AttributeData attributeData = new BeamOutputStationsModel.AttributeData()
-            {
-                MinimumNumberOfStations = stations,
-            };
-            BeamOutputStationsModel attr = new BeamOutputStationsModel(attributeData);
-            newBeam.Value.Attributes.Add(attr);
-
-            DA.SetData("Beam", newBeam);
+            Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithOutputStations(beam.Gpc, stations, id);
+            // P2K (P1): the GPC path only: the draft built on GPC (identity derived from the input draft).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, stations));
         }
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;

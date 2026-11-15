@@ -1,11 +1,11 @@
 using System;
 using System.Globalization;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Common.MovingLoads;
 using BridGHe.Common.Straus;
 
@@ -38,7 +38,75 @@ internal static class MovingLoadBenchmarks
     private static double Displacement(Scenario s,double[] axles,double x)
         => -s.Force*axles.Sum(a=>x<=a ? (Length-a)*x*(Length*Length-(Length-a)*(Length-a)-x*x)
             : a*(Length-x)*(Length*Length-a*a-(Length-x)*(Length-x)))/(6*Length*E*I);
+    // P2CB (13/11): --centrifugal-probe on the GPC data of example 04 (GpcNativeExamples: Build Model and Attach Moving Paths on GPC), analysed on the
+    // GPC-only path, the reactions read with the GPC result readers (before: the FEM example 04 on the FEM path).
+    /// <summary>
+    /// --centrifugal-probe (native, L10 decision 6 of 4/11): what Straus7 R31 does with a nonzero centrifugal offset together with lane
+    /// factors and adjacency factors. One point force Fz = -1000 N with centrifugal, K0 = 100 N, K1 = 0 (Fc = K0 + K1 Fz per force), on the
+    /// simply supported benchmark beam; per configuration the sums of the support reactions (X, Y, Z) of the first, middle and last
+    /// generated positions, and the GPC offset per vehicle written by the Converter. The force is in path axes (Axis 0): R31 applies no
+    /// centrifugal force to a point force in global axes (the Converter refuses it). A report, not a pass/fail check.
+    /// </summary>
+    internal static int CentrifugalProbe(string only = null)
+    {
+        string root=Path.Combine(ExamplePaths.Calculations("21-benchmark-carichi-mobili"),"centrifugal-"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfff"));
+        Directory.CreateDirectory(root);
+        // Straight path: (0,0,0) -> (Length,0,0), plane point (0,1000,0). Circular path (Shape 1, constant radius): the same chord with
+        // the third point (Length/2, 10, 0), a sagitta of 10 mm (radius about 450 m if the point is on the arc).
+        var configurations=new (string Id,double[] Lanes,int[] VehicleLanes,bool Adjacent,int MultiLane,int Shape)[]
+        {
+            ("1-lane-1.0",new[]{1.0},new[]{1},false,0,0),
+            ("1-lane-0.8",new[]{0.8},new[]{1},false,0,0),
+            ("2-lanes-lane1",new[]{1.0,0.5},new[]{1},false,0,0),
+            ("2-lanes-lane2",new[]{1.0,0.5},new[]{2},false,0,0),
+            ("2-lanes-lane1-adjacent",new[]{1.0,0.5},new[]{1},true,0,0),
+            ("2-lanes-lane2-adjacent",new[]{1.0,0.5},new[]{2},true,0,0),
+            ("2-lanes-lane2-adjacent-rule1",new[]{1.0,0.5},new[]{2},true,1,0),
+            ("arc-1-lane-1.0",new[]{1.0},new[]{1},false,0,1),
+            ("arc-2-lanes-lane2-0.5",new[]{1.0,0.5},new[]{2},false,0,1),
+        };
+        if(only!=null)configurations=configurations.Where(c=>c.Id.StartsWith(only,StringComparison.Ordinal)).ToArray();
+        var report=new List<object>();
+        foreach(var c in configurations)
+        {
+            var b=GpcNativeExamples.Beam("centrifugal-"+c.Id,12,Length,true);
+            var path=GpcNativeExamples.Path04(Length);path.LoadCaseName=c.Id;path.Divisions=6;
+            path.Shape=c.Shape;path.Coordinates=c.Shape==0?new[]{0,0,0,Length,0,0,0,1000,0}:new[]{0,0,0,Length,0,0,Length/2,10,0};
+            path.Template.LaneFactors=c.Lanes;path.Template.MultiLaneType=c.MultiLane;
+            path.Template.Centrifugal=new MovingCentrifugal{K0="100",K1="0",LengthUnit=2,ForceUnit=0};
+            path.Template.Vehicles[0].Lanes=c.VehicleLanes;
+            path.Template.Vehicles[0].Loads=new MovingObject[]{new MovingPointForce{X=0,Axis=0,Centrifugal=true,Adjacent=c.Adjacent,Force=new[]{0.0,0,-1000}}};
+            path.Validate();b.Paths.Add(path);var model=b.Build(c.Id).Input;
+            string folder=Path.Combine(root,c.Id);Directory.CreateDirectory(folder);
+            try
+            {
+                var analysed=StrausAnalysis.Run(model,Path.Combine(folder,"model.st7"),0,Array.Empty<string>(),true,out var warnings);var result=new GpcNativeExamples.Results(analysed);
+                var law=analysed?.MovingLoads?.Paths?.FirstOrDefault()?.Template?.Centrifugal;
+                var cases=result.GeneratedMovingCases.OrderBy(k=>k.Number).Select(k=>k.Name).ToArray();
+                foreach(var name in new[]{cases.First(),cases[cases.Length/2],cases.Last()}.Distinct())
+                {
+                    double Sum(int k)=>result.AllNodeRows().Where(r=>r.Reaction!=null&&result.Catalog.Entries[r.Entry].Label==name).Sum(r=>r.Reaction[k]);
+                    var row=new{Configuration=c.Id,c.Lanes,c.VehicleLanes,c.Adjacent,MultiLaneType=c.MultiLane,Case=name,
+                        Rx=Sum(0),Ry=Sum(1),Rz=Sum(2),GpcOffsetN=law?.OffsetForce,GpcFactorKind=law?.FactorKind.ToString(),Warnings=warnings};
+                    report.Add(row);
+                    Console.WriteLine(FormattableString.Invariant($"CENTRIFUGAL {c.Id} {name}: Rx {row.Rx:G6} Ry {row.Ry:G6} Rz {row.Rz:G6} N; GPC offset {row.GpcOffsetN:G6} N/vehicle ({row.GpcFactorKind})"));
+                }
+            }
+            catch(Exception ex){report.Add(new{Configuration=c.Id,Error=ex.Message});Console.WriteLine("CENTRIFUGAL "+c.Id+": "+ex.GetType().Name+": "+ex.Message);}
+        }
+        File.WriteAllText(Path.Combine(root,"report.json"),JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true}));
+        Console.WriteLine("CENTRIFUGAL PROBE DONE "+Path.Combine(root,"report.json"));return 0;
+    }
+
     internal static int Run(bool native,string selection="all")
+        => RunGpc(native,selection);
+
+    /// <summary>R6.6 R2b: the moving-load benchmarks on GPC data alone: the GPC input of example 04 (<see cref="GpcNativeExamples"/>: the simply
+    /// supported beam of 6000 mm in 12 beams) with the path of each scenario (Attach Moving Paths on GPC, <c>GpcModelTransforms.ReplacePaths</c>);
+    /// the BGHGPC1 archive of the input keeps the divisions and the axles; with <paramref name="native"/> the GPC-only analysis
+    /// (<c>StrausAnalysis.Run(Conversion, …)</c>) and the same analytic references on the rows of the GPC readers: generated positions, equilibrium,
+    /// right reaction, midspan displacement and |M(x)| at every returned station. No FEM model.</summary>
+    private static int RunGpc(bool native,string selection)
     {
         string root=Path.Combine(ExamplePaths.Calculations("21-benchmark-carichi-mobili"),DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfff"));
         Directory.CreateDirectory(root);
@@ -48,22 +116,23 @@ internal static class MovingLoadBenchmarks
         string status="running";string error=null;
         try
         {
+            var example=GpcNativeExamples.Create().Single(e=>e.Id=="04-moving-load");
             foreach(var scenario in selected)
             {
                 string folder=Path.Combine(root,scenario.Id);Directory.CreateDirectory(folder);
-                var model=ModelArchive.Clone(NativeExamples.Create().Single(e=>e.Id=="04-moving-load").Model);
-                model.Name=scenario.Id;var path=model.MovingPaths.Single();path.LoadCaseName=scenario.Id;
-                path.Divisions=scenario.Divisions;
+                var path=GpcNativeExamples.Path04(Length);
+                path.LoadCaseName=scenario.Id;path.Divisions=scenario.Divisions;
                 double start=scenario.Reverse?Length:0,end=scenario.Reverse?0:Length;
                 path.Coordinates=new[]{start,0,0,end,0,0,start,1000,0};
-                // Gravity remains global -Z when the path reverses: its local normal reverses too.
-                // Straus R3 lpAxisGlobal = 1 (installed API include, point-force axis convention).
+                // Gravity remains global -Z when the path reverses: its local normal reverses too (Straus R3 lpAxisGlobal = 1).
                 path.Template.Vehicles[0].Loads=scenario.Offsets.Select(a=>(MovingObject)new MovingPointForce{X=a,Axis=1,Force=new[]{0.0,0,-scenario.Force}}).ToArray();
                 path.Validate();
-                File.WriteAllBytes(Path.Combine(folder,"input.bgmodel"),ModelArchive.Write(model));
-                var roundtrip=ModelArchive.Read<ModelModel>(File.ReadAllBytes(Path.Combine(folder,"input.bgmodel")));
-                checks.Near(scenario.Id+" archive divisions",roundtrip.MovingPaths.Single().Divisions,scenario.Divisions,0,0);
-                checks.Near(scenario.Id+" archive axles",roundtrip.MovingPaths.Single().Template.Vehicles[0].Loads.Length,scenario.Offsets.Length,0,0);
+                var input=BridGHe.Common.Gpc.GpcModelTransforms.ReplacePaths(example.Input,new[]{path},BridGHe.Common.Gpc.GpcIdentity.Derive(BridGHe.Common.Gpc.GpcIdentity.NameSpace,"r66-r2b-moving:"+scenario.Id));
+                var (data,records)=BridGHe.Common.Gpc.GpcDraftArchive.Write(input);
+                File.WriteAllBytes(Path.Combine(folder,"input.gpc"),data);File.WriteAllBytes(Path.Combine(folder,"input.records"),records);
+                var roundtrip=BridGHe.Common.Gpc.GpcDraftArchive.ReadConversion(File.ReadAllBytes(Path.Combine(folder,"input.gpc")),File.ReadAllBytes(Path.Combine(folder,"input.records")));
+                checks.Near(scenario.Id+" archive divisions",roundtrip.Model.MovingLoads.Paths.Single().Divisions,scenario.Divisions,0,0);
+                checks.Near(scenario.Id+" archive axles",roundtrip.Model.MovingLoads.Paths.Single().Template.Vehicles[0].PointForces.Count(),scenario.Offsets.Length,0,0);
                 var csv=new StringBuilder("step,axles_mm,Rleft_N,Rright_N,Mmax_Nmm,Uz_mid_mm\n");
                 for(int step=0;step<Steps(scenario);step++)
                 {
@@ -72,25 +141,28 @@ internal static class MovingLoadBenchmarks
                 }
                 File.WriteAllText(Path.Combine(folder,"analytical.csv"),csv.ToString());
                 if(!native)continue;
-                var result=StrausAnalysis.Run(model,Path.Combine(folder,"model.st7"),0,Array.Empty<string>(),1e-6,true,out var warnings);
-                File.WriteAllBytes(Path.Combine(folder,"results.bgmodel"),ModelArchive.Write(result));
+                var analysed=StrausAnalysis.Run(input,Path.Combine(folder,"model.st7"),0,Array.Empty<string>(),true,out var warnings);
+                BridGHe.Common.Gpc.GpcResultsFile.Write(Path.Combine(folder,"results.bghr"),analysed);
                 File.WriteAllText(Path.Combine(folder,"warnings.json"),JsonSerializer.Serialize(warnings));
-                var cases=result.GeneratedMovingCases.OrderBy(c=>c.Key).Select(c=>c.Value).ToArray();
+                var results=new GpcNativeExamples.Results(analysed);
+                var cases=results.GeneratedMovingCases.OrderBy(c=>c.Number).Select(c=>c.Name).ToArray();
                 checks.Near(scenario.Id+" generated positions",cases.Length,Steps(scenario),0,0);
                 if(cases.Length!=Steps(scenario))throw new InvalidOperationException("Wrong generated case count.");
+                var catalog=results.Catalog;
+                var nodes=analysed.NodesElements.Values.OrderBy(n=>n.Id).ToArray();
+                double[] Row(GPC.Model.Elements.NodeElement n,string name,bool reaction){var r=BridGHe.Common.Gpc.GpcResultRows.Node(catalog,analysed,n).Single(x=>catalog.Entries[x.Entry].Label==name&&(reaction?x.Reaction:x.Displacement)!=null);return reaction?r.Reaction:r.Displacement;}
                 for(int step=0;step<cases.Length;step++)
                 {
                     string name=cases[step],label=scenario.Id+" / "+name;var axles=Axles(scenario,step);
-                    double left=BridgeGrillageExample.Reaction(result.Nodes.First(),name).Force.Z;
-                    double right=BridgeGrillageExample.Reaction(result.Nodes.Last(),name).Force.Z;
+                    double left=Row(nodes.First(),name,true)[2],right=Row(nodes.Last(),name,true)[2];
                     checks.Near(label+" equilibrium [N]",left+right,scenario.Force*axles.Length,1e-6,1e-5);
                     checks.Near(label+" right reaction [N]",right,scenario.Force*axles.Sum()/Length,1e-6,1e-5);
-                    checks.Near(label+" midspan Uz [mm]",BridgeGrillageExample.Displ(result.Nodes[6],name).Displacement.Z,Displacement(scenario,axles,Length/2),1e-5,1e-8);
-                    var forces=result.Beams.SelectMany(b=>b.Results.OfType<BeamForceResultModel>().Where(f=>f.LoadCase.Name==name).Select(f=>(Beam:b,Force:f))).ToArray();
+                    checks.Near(label+" midspan Uz [mm]",Row(nodes[6],name,false)[2],Displacement(scenario,axles,Length/2),1e-5,1e-8);
+                    var forces=analysed.BeamElements.Values.SelectMany(b=>BridGHe.Common.Gpc.GpcResultRows.Beam(catalog,analysed,b).Where(f=>catalog.Entries[f.Entry].Label==name).Select(f=>(Beam:b,Force:f))).ToArray();
                     if(forces.Length==0)throw new InvalidOperationException("Missing moving beam results.");
                     // Compare at every returned station: the API need not sample the exact axle position.
                     foreach(var item in forces)
-                        checks.Near(label+" M(x) [Nmm]",Math.Abs(item.Force.My),Math.Abs(Moment(scenario,axles,item.Beam.PointFrom.X+item.Force.Station)),1e-5,1e-3);
+                        checks.Near(label+" M(x) [Nmm]",Math.Abs(item.Force.Bending2),Math.Abs(Moment(scenario,axles,item.Beam.StartPoint.X+item.Force.Station)),1e-5,1e-3);
                 }
             }
             var invalid=new MovingPointForce{Mobility=2};bool rejected=false;try{invalid.Validate();}catch(ArgumentException){rejected=true;}
@@ -104,6 +176,6 @@ internal static class MovingLoadBenchmarks
             File.WriteAllText(Path.Combine(root,"report.json"),JsonSerializer.Serialize(new{Status=status,NativeExecuted=native,Error=error,Scenarios=selected,Measurements=checks.Measurements},new JsonSerializerOptions{WriteIndented=true}));
             Console.WriteLine("MOVING REPORT "+Path.Combine(root,"report.json"));
         }
-        Console.WriteLine(native?"MOVING NATIVE PASS":"MOVING PREPARED: native solver not invoked");return 0;
+        Console.WriteLine(native?"MOVING NATIVE PASS (GPC data alone)":"MOVING PREPARED: native solver not invoked (GPC data alone)");return 0;
     }
 }

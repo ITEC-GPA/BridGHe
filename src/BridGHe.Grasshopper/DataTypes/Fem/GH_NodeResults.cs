@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
 using Grasshopper.Kernel.Types;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Grasshopper.DataTypes.Fem
 {
-    public class GH_NodeResults : GH_Goo<List<ResultModel>>
+    public class GH_NodeResults : GH_Goo<object>
     {
         #region Properties
 
-        public override bool IsValid => Value != null && Value.Count > 0;
+        // F6 C4: valid with FEM results or with the analysed GPC element (the Results components read it first).
+        public override bool IsValid => AnalysedGpc != null; // P2CE phase 2b: no FEM results (an empty list before)
 
         public override string IsValidWhyNot => "Invalid or empty node results";
 
@@ -28,8 +28,16 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         public GH_NodeResults(GH_Node node)
             : this()
         {
-            Value = new List<ResultModel>(node.Value.Results);
+            // R6.5 P0: an element without FEM value has no FEM results (its analysed GPC element is read).
+            Value = null;
+            AnalysedGpc = node.AnalysedGpc; AnalysedGpcModel = node.AnalysedGpcModel;
         }
+
+        /// <summary>F6 C4: the analysed GPC element of this element and its analysed model, set by Decompose Model when its model was
+        /// analysed (Straus R3 / Moving Static Analysis); null otherwise. Immutable by convention, so copies share it.</summary>
+        public GPC.Model.Elements.Element AnalysedGpc { get; set; }
+        public GPC.Model.Models.Model AnalysedGpcModel { get; set; }
+
 
         #endregion
 
@@ -39,7 +47,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
         {
             return new GH_NodeResults
             {
-                Value = Common.Helpers.ModelArchive.Clone(Value)
+                Value = null,
+                AnalysedGpc = AnalysedGpc, AnalysedGpcModel = AnalysedGpcModel,
             };
         }
 
@@ -56,7 +65,8 @@ namespace BridGHe.Grasshopper.DataTypes.Fem
 
         public override string ToString()
         {
-            return Value.ToString();
+            // P2CG (13/11/2026, review of ChatGPT task 63, 2B-01): a valid datum (its analysed GPC element) is described by the GPC data, not as null.
+            return AnalysedGpc == null ? "Null Node results" : "Node results of element " + AnalysedGpc.Id;
         }
 
         #endregion

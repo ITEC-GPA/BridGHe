@@ -33,9 +33,11 @@ public sealed class BridgeSegmentOverrideComponent : BridgeUtilityComponent
         var beams = new List<GH_Beam>(); var ids = new List<string>(); var properties = new List<GH_BeamProperty>();
         bool mass=true;
         if (!da.GetDataList(0, beams) || !da.GetDataList(1, ids) || !da.GetDataList(2, properties) || !da.GetData(3,ref mass)) return;
-        var result = BridgeSegmentOverride.Apply(beams.Select(b => b?.Value).ToArray(), ids, properties.Select(p => p?.Value).ToArray(),mass);
-        da.SetDataList(0, result.Girders.Select(b => new GH_Beam(b))); da.SetDataList(1, result.OtherMembers.Select(b => new GH_Beam(b)));
-        da.SetDataList(2, result.Girders.Select(b => b.BeamId));
-        da.SetData(3, "One keyed property per concio. Geometry, offsets and loads are preserved; all results are cleared. Homogenized properties must use the intended reference-axis convention. Preserve Mass adjusts only density to retain original mass per length.");
+        // R6.5 P1 lane 1b / P2K (P1): the list is overridden on GPC (GpcSegmentSections.GpcOnly): the outputs have no FEM value, the Beam IDs
+        // are those of the drafts (rule of passo 75).
+        var (onlyGirders, onlyOthers, beamIds) = GpcSegmentSections.GpcOnly(this, beams, ids, properties, mass);
+        da.SetDataList(0, onlyGirders); da.SetDataList(1, onlyOthers); da.SetDataList(2, beamIds);
+        da.SetData(3, Information);
     }
+    private const string Information = "One keyed property per concio. Geometry, offsets and loads are preserved; all results are cleared. Homogenized properties must use the intended reference-axis convention. Preserve Mass adjusts only density to retain original mass per length.";
 }

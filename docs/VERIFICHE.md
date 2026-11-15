@@ -1,6 +1,8 @@
 # Verifiche della Release
 
-## Stato corrente — 10 novembre 2026
+> Questo documento conserva esiti storici con le rispettive date. I numeri di controlli, le anteprime native e le tolleranze qui citati non sono il certificato della Release 0.4.0. Per il nuovo pacchetto usare la ricevuta del gate sul suo commit, distinguendo controlli automatici, prove native e F7 interattivo. I ritiri P2 sono nominati nel registro delle prove; non si aggiornano gli attesi per far passare una differenza senza spiegazione e approvazione. Le proprietà GPC e le geometrie di preview sono controlli diversi.
+
+## Collaudo storico della 0.3.0 — 10 novembre 2026
 
 Consultare il [resoconto di stabilizzazione](STABILIZZAZIONE-2026-11-10.md) per ambiente, correzioni, controlli rieseguiti e limiti ancora aperti. Le sezioni seguenti conservano le evidenze delle rispettive date: i loro conteggi e gli esiti nativi non vanno attribuiti automaticamente alla build corrente.
 

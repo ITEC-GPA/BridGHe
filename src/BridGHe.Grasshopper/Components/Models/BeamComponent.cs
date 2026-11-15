@@ -59,13 +59,18 @@ namespace BridGHe.Grasshopper.Components.Models
             DA.GetData("Angle", ref angle);
             bool has_offset = DA.GetData("Offset", ref offset);
 
-            GH_Beam beam = new GH_Beam(line.PointAtStart, line.PointAtEnd, bp, groups.ToArray());
-            if (angle != 0)
-                beam.Value.AngleDeg = angle;
-            if (has_offset)
-                beam.Value.Offset = new Vector2d(offset.X, offset.Y);
-
-            DA.SetData("Beam", beam);
+            // R6.5 P1 lane 2a: a property or a group given by its GPC datum alone gives the beam by its draft alone (rule of passo 75: no FEM
+            // value from a null value), with the identity by content of the generators (decision 1 of passo 73: the one rule shared with P2;
+            // the parameters of the builder: end points, property, groups, angle, offset). A refused property gives an error and no beam.
+            // P2K (P1): the only path, for every input.
+            var draft = GpcOnlyElements.Generated(this, () =>
+            {
+                var chains = GpcBeamInputs.GroupChains(groups);
+                double dx = has_offset ? offset.X : 0, dy = has_offset ? offset.Y : 0;
+                return Common.Gpc.Builders.GpcBeamBuilders.New(GpcBeamInputs.Point(line.PointAtStart), GpcBeamInputs.Point(line.PointAtEnd), bp.Gpc, chains, angle != 0 ? angle : 0, dx, dy,
+                    GpcOnlyElements.ContentIdentity(ComponentGuid, 0, line.PointAtStart, line.PointAtEnd, bp.Gpc, chains, angle != 0 ? angle : 0, dx, dy));
+            });
+            if (draft != null) DA.SetData("Beam", GH_Beam.FromGpc(draft));
         }
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;

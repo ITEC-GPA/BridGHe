@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -56,42 +55,38 @@ namespace BridGHe.Grasshopper.Components.Attributes
                 return;
             }
 
-            ElementIdAttributeModel se = new ElementIdAttributeModel(id);
+            // R6.2 lane A: "already has an ID" on the GPC draft (the first Element ID of its records: null when the value has none, "" for an empty
+            // one, as the former attribute value in the message). P2K (P1): the GPC path only: the output takes the draft built on GPC (identity
+            // derived from the input draft).
             if (element is GH_Beam beam)
             {
-                ElementIdAttributeModel other = GetOtherId(beam.Value);
-                if (other != null)
+                if (OtherId(() => beam.Gpc.Records.FirstLabel, out string other))
                 {
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Beam " + other.Value + " has already an ID");
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Beam " + other + " has already an ID");
                     return;
                 }
-                GH_Beam new_beam = new GH_Beam(beam);
-                new_beam.Value.Attributes.Add(se);
-                DA.SetData(0, new_beam);
+                Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = gid => Common.Gpc.Builders.GpcElementBuilders.WithLabel(beam.Gpc, id, gid);
+                GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, id));
             }
             else if (element is GH_Plate plate)
             {
-                ElementIdAttributeModel other = GetOtherId(plate.Value);
-                if (other != null)
+                if (OtherId(() => plate.Gpc.Records.FirstLabel, out string other))
                 {
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Plate " + other.Value + " has already an ID");
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Plate " + other + " has already an ID");
                     return;
                 }
-                GH_Plate new_plate = new GH_Plate(plate);
-                new_plate.Value.Attributes.Add(se);
-                DA.SetData(0, new_plate);
+                Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = gid => Common.Gpc.Builders.GpcPlateBuilders.WithLabel(plate.Gpc, id, gid);
+                GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, id));
             }
             else if (element is GH_Node node)
             {
-                ElementIdAttributeModel other = GetOtherId(node.Value);
-                if (other != null)
+                if (OtherId(() => node.Gpc.Records.FirstLabel, out string other))
                 {
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Node " + other.Value + " has already an ID");
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Node " + other + " has already an ID");
                     return;
                 }
-                GH_Node new_node = new GH_Node(node);
-                new_node.Value.Attributes.Add(se);
-                DA.SetData(0, new_node);
+                Func<Guid, Common.Gpc.Legacy.LegacyNodeDraft> build = gid => Common.Gpc.Builders.GpcNodeBuilders.WithLabel(node.Gpc, id, gid);
+                GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Node(this, 0, node, build, id));
             }
             else
             {
@@ -99,9 +94,12 @@ namespace BridGHe.Grasshopper.Components.Attributes
             }
         }
 
-        private ElementIdAttributeModel GetOtherId(ElementModel el)
+        /// <summary>R6.2 lane A: whether the element has an Element ID already, and its value for the message, on the GPC draft. P2K (P1): the
+        /// draft alone (the former decision of <c>GpcBuilderAttach.Decide</c> without a FEM value).</summary>
+        private static bool OtherId(Func<string> firstLabel, out string other)
         {
-            return (ElementIdAttributeModel)el.Attributes.FirstOrDefault(a => a is ElementIdAttributeModel);
+            other = firstLabel();
+            return other != null;
         }
 
         public override GH_Exposure Exposure => GH_Exposure.quarternary;

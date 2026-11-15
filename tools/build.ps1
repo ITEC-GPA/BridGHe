@@ -96,9 +96,12 @@ try {
         $archive = Join-Path $archiveRoot "$packageName.zip"
         New-Item -ItemType Directory -Path $packageRoot -Force | Out-Null
         try {
+            # The eleven GPC DLLs of lib/GPC (tools/verify_gpc_set.ps1), described by gpc-release-set.json, and System.Text.Json 10.0.13
+            # with its two .NET 8 dependencies (build/GpcReferences.props), as ReBear ships them.
             $assemblies = @('BridGHe.Grasshopper.gha','BridGHe.Common.dll','GPCUtilities.dll','GPCGeometry.dll','DelaunayMesh.dll',
-                'GPCModel.dll','GPCModelData.dll','GPCChecker.Concrete.dll','GPCChecker.Steel.dll','GPCChecker.CompositeBridge.dll',
-                'MathNet.Numerics.dll','Svg.dll','ExCSS.dll','System.Text.Json.dll','System.Text.Encodings.Web.dll','System.IO.Pipelines.dll')
+                'GPCModel.dll','GPCModelData.dll','GPC.Converter.dll','GPC.Model.Persistence.dll','GPC.Archive.dll',
+                'GPCChecker.Concrete.dll','GPCChecker.Steel.dll','GPCChecker.CompositeBridge.dll','MathNet.Numerics.dll','Svg.dll','ExCSS.dll',
+                'System.Text.Json.dll','System.Text.Encodings.Web.dll','System.IO.Pipelines.dll')
             foreach ($name in $assemblies) { Copy-Item -LiteralPath (Join-Path $compiled $name) -Destination $packageRoot }
             Copy-Item -LiteralPath (Join-Path $compiled 'gpc-release-set.json') -Destination $packageRoot
             Get-ChildItem -LiteralPath $compiled -Filter 'BridGHe.Grasshopper.*.json' | Copy-Item -Destination $packageRoot
@@ -108,8 +111,11 @@ try {
             # Ship definitions and documentation. Copy only their referenced .bghr
             # results below; native solver outputs and historical packages stay local.
             $exampleRoot = Join-Path $projectRoot 'example'
+            $examplePrefix = [IO.Path]::GetFullPath($exampleRoot).TrimEnd('\') + '\'
             foreach ($file in Get-ChildItem -LiteralPath $exampleRoot -File -Recurse) {
-                $relative = [IO.Path]::GetRelativePath($exampleRoot, $file.FullName)
+                # The path below example\, also in Windows PowerShell 5.1 (.NET Framework has no [IO.Path]::GetRelativePath).
+                if (-not $file.FullName.StartsWith($examplePrefix, [StringComparison]::OrdinalIgnoreCase)) { throw "File outside example: $($file.FullName)" }
+                $relative = $file.FullName.Substring($examplePrefix.Length)
                 if ($relative -match '(^|[\\/])(calcoli|archivio-pacchetti|esecuzioni|backup-prima-fasi|Straus File)([\\/]|$)' -or
                     $file.Extension -in @('.st7','.LSA','.LSL','.NLA','.NLL','.bghr') -or $file.Name.StartsWith('~$')) { continue }
                 $target = Join-Path (Join-Path $packageRoot 'example') $relative

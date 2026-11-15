@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -61,25 +60,24 @@ namespace BridGHe.Grasshopper.Components.Attributes
                 return;
             }
 
-            GH_Node newNode = new GH_Node(node);
-
-            NodeStiffnessAttributeModel.AttributeData attr = new NodeStiffnessAttributeModel.AttributeData();
+            // P2K (P1): the stiffnesses as the former NodeStiffnessAttributeModel.AttributeData held them (0 when not given).
+            double tx = 0, ty = 0, tz = 0, rx = 0, ry = 0, rz = 0;
             if (trans != Vector3d.Unset)
             {
-                attr.Tx = trans.X;
-                attr.Ty = trans.Y;
-                attr.Tz = trans.Z;
+                tx = trans.X;
+                ty = trans.Y;
+                tz = trans.Z;
             }
             if (rot != Vector3d.Unset)
             {
-                attr.Rx = rot.X;
-                attr.Ry = rot.Y;
-                attr.Rz = rot.Z;
+                rx = rot.X;
+                ry = rot.Y;
+                rz = rot.Z;
             }
 
-            newNode.Value.Attributes.Add(new NodeStiffnessAttributeModel(attr));
-
-            DA.SetData("Node", newNode);
+            Func<Guid, Common.Gpc.Legacy.LegacyNodeDraft> build = id => Common.Gpc.Builders.GpcNodeBuilders.WithStiffness(node.Gpc, tx, ty, tz, rx, ry, rz, id);
+            // P2K (P1): the GPC path only: the draft built on GPC (identity derived from the input draft).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Node(this, 0, node, build, tx, ty, tz, rx, ry, rz));
         }
 
         /// <summary>

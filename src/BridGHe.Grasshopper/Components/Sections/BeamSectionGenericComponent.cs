@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -76,25 +75,9 @@ namespace BridGHe.Grasshopper.Components.Sections
             if (!DA.GetData(12, ref ang))
                 return;
 
-            SectionModel sectionModel = new SectionModel()
-            {
-                SectionType = SectionModel.SectionTypes.Generic,
-                SectionArea = area,
-                I11 = i11,
-                I22 = i22,
-                J = j,
-                ShearL1 = sl1,
-                ShearL2 = sl2,
-                ShearA1 = sa1,
-                ShearA2 = sa2,
-                W11 = w11,
-                W22 = w22,
-                Centroid = new Point2d(x, y),
-                AngleX1Rad = ang
-            };
-
-            GH_BeamSection section = new GH_BeamSection(sectionModel);
-            DA.SetData(0, section);
+            // L2C (lane 2c): the recipe with the section moduli S11/S22, as the former section held them.
+            // P2K (P1): the section by its recipe alone (a refused recipe gives an error and no section).
+            Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.Section(this, () => Common.Gpc.Builders.GpcSectionBuilders.Generic(area, i11, i22, j, sl1, sl2, sa1, sa2, x, y, ang, w11, w22)));
         }
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;

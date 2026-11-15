@@ -19,5 +19,5 @@ public sealed class BridgeAnalysisCasesComponent : BridgeUtilityComponent
     protected override void RegisterOutputParams(GH_OutputParamManager p)
     {p.AddTextParameter("Analysis Results","R","Connect to Analysis Results on Straus R3 Analysis. May be combined with additional user-selected results.",GH_ParamAccess.list);p.AddTextParameter("Information","I","Validated required case names.",GH_ParamAccess.item);}
     protected override void Solve(IGH_DataAccess da)
-    {GH_Model m=null;var cases=new List<object>();int solver=0;if(!da.GetData(0,ref m)||!da.GetDataList(1,cases))return;da.GetData(2,ref solver);var names=cases.Select(WorkflowInputs.Case).Distinct(StringComparer.Ordinal).ToArray();var selected=StrausResultSelection.Select(m.Value,solver,names);da.SetDataList(0,selected.Select(s=>s.Case.Name));da.SetData(1,$"{selected.Count} required results validated before analysis.");}
+    {GH_Model m=null;var cases=new List<object>();int solver=0;if(!da.GetData(0,ref m)||!da.GetDataList(1,cases))return;da.GetData(2,ref solver);var names=cases.Select(WorkflowInputs.Case).Distinct(StringComparer.Ordinal).ToArray();var selected=Common.Gpc.GpcResultSelection.Select(m.GpcInput?.Model,solver,names);da.SetDataList(0,selected.Select(s=>s.Name));da.SetData(1,$"{selected.Count} required results validated before analysis.");}
 }

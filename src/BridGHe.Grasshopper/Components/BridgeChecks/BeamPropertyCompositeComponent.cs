@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using GH_IO.Serialization;
@@ -93,56 +92,49 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
 
             if (!double.IsFinite(n0) || n0 <= 0 || !double.IsFinite(ninf) || ninf <= 0 || !double.IsFinite(nShrinkage) || nShrinkage <= 0)
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Modular ratios must be finite and positive."); return; }
+            // F6 (0.4.0): the composite section is a GPC definition with a name (no example or archived revision has an empty one, scan of 5/11).
+            if (string.IsNullOrWhiteSpace(name))
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Name required: connect a name for the composite section (it identifies the section in the checks and in the reports)."); return; }
 
-            var slab = (concreteSection as GH_Goo<object>)?.Value as SectionConcreteSlabModel;
-            if (slab == null || !slab.IsValid || steelSection?.Value == null || steelMaterial?.Value == null || concreteMaterial?.Value == null)
-            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid slab, steel section or materials."); return; }
-            if (slab.TotalRebarArea > 0 && rebarMaterial?.Value == null)
-            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Reinforcement material is required when reinforcement area is positive."); return; }
-
-            CompositeBeamPropertyModel compositeBeamPropertyModel = new CompositeBeamPropertyModel()
+            // P2K (P10): the slab by its GPC datum (Concrete Slab Section); TRANSITIONAL (P2-taglio): the former slab value of the in-memory tests.
+            var slab = (concreteSection as GH_Goo<object>)?.Value switch
             {
-                Name = name,
-                ConcreteSection = slab,
-                SteelSection = steelSection.Value,
-                SteelMaterial = steelMaterial.Value,
-                ConcreteMaterial = concreteMaterial.Value,
-                RebarMaterial = rebarMaterial?.Value ?? steelMaterial.Value,
-                VerticalOffset = 0,
-                NInstant = n0,
-                NInfinite = ninf,
-                NShrinkage = nShrinkage,
-                ConsiderConcrete = considerConcrete,
-                ConsiderRebar = considerRebars,
+                Common.Checks.ConcreteSlabSection s => s,
+                _ => null,
             };
-            GH_CompositeBeamProperty section = new GH_CompositeBeamProperty(compositeBeamPropertyModel);
-
-            SectionModel steelSectionModel = new SectionModel()
-            {
-                SectionType = SectionModel.SectionTypes.I,
-                D = steelSection.Value.D,
-                B1 = steelSection.Value.B1,
-                B2 = steelSection.Value.B2,
-                T1 = steelSection.Value.T1,
-                T2 = steelSection.Value.T2,
-                T3 = steelSection.Value.T3,
-            };
-            steelSectionModel.CalculateSection();
-            BeamPropertyModel onlySteelBeamPropModel = new BeamPropertyModel()
-            {
-                Material = steelMaterial.Value,
-                Section = steelSectionModel,
-                PropertyType = BeamPropertyType.Beam,
-                Name = name + "OnlySteel",
-            };
-            GH_BeamProperty steelSectionProp = new GH_BeamProperty(onlySteelBeamPropModel);
-
-            DA.SetData(0, section);
-            DA.SetData(1, steelSectionProp);
-            DA.SetData(2, !considerConcrete && !considerRebars ? steelSectionProp : new GH_BeamProperty(compositeBeamPropertyModel.CreateHomogenizedProperty(n0, "_N0_istant")));
-            DA.SetData(3, !considerConcrete && !considerRebars ? steelSectionProp : new GH_BeamProperty(compositeBeamPropertyModel.CreateHomogenizedProperty(ninf, "_N_infinite")));
-            DA.SetData(4, !considerConcrete && !considerRebars ? steelSectionProp : new GH_BeamProperty(compositeBeamPropertyModel.CreateHomogenizedProperty(nShrinkage, "_N_shrinkage")));
+            // R6.5 P1 lane 2b (P2K: every input): the five outputs by their GPC data alone; a refusal gives an error and no outputs.
+            SolveGpcOnly(DA, name, slab, steelSection, concreteMaterial, steelMaterial, rebarMaterial, n0, ninf, nShrinkage, considerConcrete, considerRebars);
         }
+
+        /// <summary>R6.5 P1 lane 2b: the outputs on the GPC data of the inputs alone, the same checks and messages; a builder that refuses gives an
+        /// error and no outputs (no FEM value to fall back on).</summary>
+        private void SolveGpcOnly(IGH_DataAccess DA, string name, Common.Checks.ConcreteSlabSection slab, GH_BeamSection steelSection, DataTypes.Fem.GH_Material concreteMaterial,
+            DataTypes.Fem.GH_Material steelMaterial, DataTypes.Fem.GH_Material rebarMaterial, double n0, double ninf, double nShrinkage, bool considerConcrete, bool considerRebars)
+        {
+            // An input is missing when it has neither a FEM value nor a GPC datum (the datum of a FEM-backed input is read inside the builders,
+            // where a refusal of its conversion is an error on the component).
+            if (slab == null || !slab.IsValid || steelSection == null || steelSection.Value == null && steelSection.Gpc == null || Missing(steelMaterial) || Missing(concreteMaterial))
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid slab, steel section or materials."); return; }
+            if (slab.TotalRebarArea > 0 && Missing(rebarMaterial))
+            { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Reinforcement material is required when reinforcement area is positive."); return; }
+            var definition = Helpers.GpcOnlyProperties.Datum(this, () => Common.Gpc.Builders.GpcPropertyBuilders.Composite(name, steelSection.Gpc, slab.Width, slab.Height,
+                slab.TopRebarArea, slab.TopCover, slab.BottomRebarArea, slab.BottomCover, concreteMaterial.Gpc, steelMaterial.Gpc, rebarMaterial?.Gpc, n0, ninf, nShrinkage,
+                considerConcrete, considerRebars));
+            if (definition == null) return;
+            var steel = Helpers.GpcOnlyProperties.BeamProperty(this, () => Common.Gpc.Builders.GpcPropertyBuilders.OnlySteel(name, steelSection.Gpc, steelMaterial.Gpc, steelMaterial.GpcKind));
+            if (steel == null) return;
+            GH_BeamProperty Homogenised(double n, string suffix) => !considerConcrete && !considerRebars ? steel
+                : Helpers.GpcOnlyProperties.BeamProperty(this, () => Common.Gpc.Builders.GpcPropertyBuilders.Homogenised(definition, n, suffix, steelMaterial.Gpc, steelMaterial.GpcKind));
+            var outputs = new[] { Homogenised(n0, "_N0_istant"), Homogenised(ninf, "_N_infinite"), Homogenised(nShrinkage, "_N_shrinkage") };
+            if (outputs.Any(o => o == null)) return;
+            DA.SetData(0, GH_CompositeBeamProperty.FromGpc(definition));
+            DA.SetData(1, steel);
+            DA.SetData(2, outputs[0]);
+            DA.SetData(3, outputs[1]);
+            DA.SetData(4, outputs[2]);
+        }
+
+        private static bool Missing(DataTypes.Fem.GH_Material m) => m == null || m.Value == null && m.Gpc == null;
 
         public override bool Read(GH_IReader reader)
         {

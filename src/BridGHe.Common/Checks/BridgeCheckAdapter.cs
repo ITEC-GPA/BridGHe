@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using GPC.Checkers.CompositeBridge;
 using GPC.Checkers.CompositeBridge.History;
-using BridGHe.Common.Models;
 using GPC.Geometry;
 using GPC.Model.Materials;
 using GPC.Model.Results;
@@ -84,6 +83,9 @@ namespace BridGHe.Common.Checks
                 }
             };
         }
+
+        /// <summary>F6 C5: the section input of this adapter without phases (the GPC workflow executor builds them from the GPC results).</summary>
+        public HBridgeInput SectionInput(bool rebars) => Input(true, rebars, true);
 
         private BridgePhase Phase(ResultBeamForces forces, BridgePhaseKind kind, double phi, string name)
         {
@@ -194,34 +196,8 @@ namespace BridGHe.Common.Checks
             return Result(HBridgeSection.Calculate(data), 0);
         }
 
-        /// <summary>Sequential section history. Effective moduli affect new increments; this is not an age-dependent creep integrator.</summary>
-        public BridgeStressResult AnalyzeHistory(BridgeWorkflow workflow, BridgePhaseAssembler.ResultIndex index, double station,
-            LoadCombinationModel combination, double phiInfinite, double phiInstant, double phiShrinkage, bool rebars)
-        {
-            if (workflow?.Method != BridgeWorkflowMethod.LinearHistory) throw new ArgumentException("A LinearHistory workflow is required.");
-            return AnalyzeWorkflow(workflow,index,station,combination,phiInfinite,phiInstant,phiShrinkage,rebars);
-        }
 
-        /// <summary>Per-action local states keep the FEM gross centroid and checker phase consistent.
-        /// Compatible uses cumulative contributions, including the explicitly uncracked shrinkage model.</summary>
-        public BridgeStressResult AnalyzeWorkflow(BridgeWorkflow workflow, BridgePhaseAssembler.ResultIndex index, double station,
-            LoadCombinationModel combination, double phiInfinite, double phiInstant, double phiShrinkage, bool rebars)
-        {
-            var data = WorkflowInput(workflow, index, station, combination, phiInfinite, phiInstant, phiShrinkage, rebars);
-            return WorkflowResult(workflow, workflow.Method == BridgeWorkflowMethod.LinearHistory
-                ? HBridgeHistoryResults.Calculate(data, new HBridgeHistoryOptions { MaterialMode = HistoryMaterialMode.Linear }) : HBridgeSection.Calculate(data));
-        }
 
-        /// <summary>The workflow of every combination of the station, as <see cref="AnalyzeWorkflow(BridgeWorkflow, BridgePhaseAssembler.ResultIndex, double, LoadCombinationModel, double, double, double, bool)"/>
-        /// of each one in order; the cumulative analyses run in one gPC batch, which calculates their shared phases once</summary>
-        public BridgeStressResult[] AnalyzeWorkflow(BridgeWorkflow workflow, BridgePhaseAssembler.ResultIndex index, double station,
-            IReadOnlyList<LoadCombinationModel> combinations, double phiInfinite, double phiInstant, double phiShrinkage, bool rebars)
-        {
-            if (workflow?.Method == BridgeWorkflowMethod.LinearHistory)
-                return combinations.Select(combination => AnalyzeWorkflow(workflow, index, station, combination, phiInfinite, phiInstant, phiShrinkage, rebars)).ToArray();
-            return Calculate(combinations.Select(combination => (Func<HBridgeInput>)(() => WorkflowInput(workflow, index, station, combination, phiInfinite,
-                phiInstant, phiShrinkage, rebars))).ToArray()).Select(analysis => WorkflowResult(workflow, analysis)).ToArray();
-        }
 
         private BridgeStressResult WorkflowResult(BridgeWorkflow workflow, HBridgeAnalysisResult analysis)
         {
@@ -230,49 +206,6 @@ namespace BridGHe.Common.Checks
                 ? new BridgeStressResult(analysis, analysis.Stages.Count - 1, null, result.Assumptions.Append(LocalStateAssumption)) : result;
         }
 
-        private HBridgeInput WorkflowInput(BridgeWorkflow workflow, BridgePhaseAssembler.ResultIndex index, double station,
-            LoadCombinationModel combination, double phiInfinite, double phiInstant, double phiShrinkage, bool rebars)
-        {
-            if (workflow == null) throw new ArgumentNullException(nameof(workflow));
-            var factors = combination.Values.ToDictionary(p => p.Key.Name, p => p.Value, StringComparer.Ordinal);
-            double Coefficient(string name) => name != null && factors.TryGetValue(name, out var factor) ? factor : 0;
-            var phases = new List<BridgePhase>();
-            foreach (var stage in workflow.Phases.OrderBy(p => p.Order))
-            {
-                var kind = stage.State switch {
-                    BridgeSectionState.Steel => BridgePhaseKind.SteelOnly,
-                    BridgeSectionState.Composite => BridgePhaseKind.Composite,
-                    _ => BridgePhaseKind.ConcreteExcluded };
-                int before = phases.Count;
-                (BridgePhaseKind Kind, double Phi)? unloadedState = null;
-                foreach (var action in stage.Actions)
-                {
-                    var actionKind = action.ConcreteExcludedBeamIds?.Contains(index.BeamId, StringComparer.Ordinal) == true ? BridgePhaseKind.ConcreteExcluded : kind;
-                    double factor = Coefficient(action.ForceCase), strainFactor = Coefficient(action.StrainCase);
-                    if (action.ForceCase != null && action.StrainCase != null && factor != strainFactor)
-                        throw new ArgumentException($"Action {action.Key}: FEM and shrinkage coefficients differ.");
-                    double phi = action.Behavior switch { BridgeActionBehavior.LongTerm => phiInfinite,
-                        BridgeActionBehavior.Shrinkage => phiShrinkage, BridgeActionBehavior.ShortTerm => phiInstant, _ => 0 };
-                    string name = $"{stage.Order} · {stage.Name} / {action.Key}";
-                    // Alternative positions with coefficient zero must not consume a GPC
-                    // calculation stage each. Keep one unloaded local activation per run
-                    // of identical states; preserve changes of stiffness and active increments.
-                    var state = (actionKind, phi);
-                    if (action.ForceCase != null && (factor != 0 || action.HasLocalSectionStates && unloadedState != state))
-                        phases.Add(Phase(index.ReadForce(action.ForceCase, station, reference, factor), actionKind, phi, name + " / FEM"));
-                    if (action.ForceCase != null)
-                        unloadedState = factor == 0 && action.HasLocalSectionStates ? state : null;
-                    double strain = index.ReadStrain(action.StrainCase, strainFactor);
-                    if (strain != 0) phases.Add(new BridgePhase { Name = name + " / strain", Kind = BridgePhaseKind.Shrinkage,
-                        Phi = phi, ShrinkageMicrostrain = strain * 1e6 });
-                    if (strain != 0) unloadedState = null;
-                }
-                // Activation is a construction event even when every action coefficient is zero.
-                if (phases.Count == before) phases.Add(new BridgePhase { Name = $"{stage.Order} · {stage.Name}", Kind = kind,
-                    Phi = kind == BridgePhaseKind.SteelOnly ? 0 : phiInstant });
-            }
-            return Input(true, rebars, true) with { Phases = phases.ToArray() };
-        }
 
         public static ResultBeamForces Scale(ResultBeamForces f, double factor) => new ResultBeamForces(
             f.N * factor, f.V1 * factor, f.V2 * factor, f.T * factor, f.M1 * factor, f.M2 * factor, f.CoordinateSystem, f.Id, f.Name);

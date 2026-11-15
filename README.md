@@ -17,6 +17,14 @@ I nuovi esempi **23–28** mostrano i 12 strumenti operativi; la [guida Word](do
 
 I modelli sono esempi riproducibili, con ipotesi, unità, confronti analitici e tolleranze dichiarati. Il percorso automatico dei superelementi H adotta la verifica N–Mx–Vy, escludendo torsione, M2 e V1 con ipotesi esplicita; il componente nativo gPC gestisce anche geometrie a cassone e anima inclinata. Non equivale a una verifica completa di ogni ponte. Il [collaudo del 26 ottobre](docs/VALIDAZIONE-MODULARE-2026-10-26.md) distingue prove numeriche, analisi Straus e verifica dei file GHX.
 
+## Passaggio alla 0.4.0
+
+Conservare gli originali 0.3.0: la vecchia versione non legge i nuovi dati internalizzati. Gli ingressi storici supportati vengono letti per valore; risultati/cache precedenti non recuperabili richiedono ricostruzione e un nuovo Run. Per trasferire i risultati conservare il relativo `.bghr` e aggiornare Output Path; il file `.st7` serve per riaprire il modello nel solutore, non per rileggere il sidecar. I dati di schema 2 sono rifiutati, non convertiti cambiando il numero nel file.
+
+Le cutoff bar e il doppio angolare sono ora esportabili; le funi Cable vengono fermate prima di Straus7. Restano non supportati spostamenti imposti, piastre con più di quattro vertici e Brep con regioni separate. Composite Beam Strain resta nei documenti ma il valore del suo ingresso `Strain` non è più usato: per il ritiro impiegare Bridge Shrinkage Action.
+
+Nelle proprietà composte omogeneizzate I11 si riferisce all'asse orizzontale e I22 a quello verticale, con angolo zero. La correzione delle solette larghe e i nuovi valori di torsione/taglio richiedono di ricalcolare i progetti interessati. [Uso e limiti](docs/USO.md) · [Fasi e azioni](docs/FASI-E-AZIONI.md).
+
 ## Funzioni
 
 - Nodi, travi, plate, materiali, proprietà, vincoli, carichi, combinazioni e costruzione per fasi; esportazione e analisi Straus7 R3.
@@ -24,21 +32,23 @@ I modelli sono esempi riproducibili, con ipotesi, unità, confronti analitici e 
 - Carichi mobili: forze, distribuzioni, sorgenti termiche, veicoli, corsie, centrifuga, template, percorsi e analisi dei casi statici generati.
 - Geometrie gPC H, H inclinata e cassone; fasi, armatura, opzioni di verifica, pioli, irrigiditori, armatura trasversale, fatica e dettagli del cassone.
 - Estrazione di tensioni, taglio, flusso di connessione, domanda/resistenza dei pioli ed esiti gPC. Grafici SVG e PNG senza interpolare i campioni.
-- Preview del modello assemblato e delle sezioni native; icone SVG/PNG originali per tutti i componenti.
+- Anteprima del modello, delle sezioni supportate e delle armature schematiche; icone SVG/PNG dei componenti. Le sezioni native senza contorno GPC restano rappresentate dall’asse: la preview non è la proprietà meccanica esportata.
 
 ## Compilare e installare
 
-Dalla root, con SDK .NET 8 o successivo e Python 3:
+Per installare usare il pacchetto completo del rilascio, con `.gha`, DLL e manifest. La compilazione è un'attività di sviluppo; richiede SDK .NET 8 o successivo e Python 3. Con il set ufficiale in `lib/GPC` basta la compilazione ordinaria, senza opzioni:
 
 ```powershell
-.\tools\build.ps1 -Native -Package
+dotnet build BridGHe.sln -c Release
 ```
 
-BridGHe **0.3.0** usa le DLL GPC fissate in **`lib/GPC`**, con manifest, versioni e SHA-256. Non occorre compilare i repository fratelli per compilare il plugin. [GpcReferences.props](build/GpcReferences.props) verifica l'integrità del set prima di risolvere i riferimenti; il manifest viene distribuito come `bin/Release/gpc-release-set.json`. Le DLL comuni a BridGHe e ReBear provengono dallo stesso set.
+Le opzioni `-Native` ed `-Examples` di `tools/build.ps1` (sezione «Riprodurre le verifiche») richiedono Straus7 e la licenza API; `-Examples` può anche sovrascrivere gli esempi. Non eseguirle come procedura di installazione.
+
+BridGHe **0.4.0** usa le undici DLL GPC fissate in **`lib/GPC`** (GPCUtilities, GPCGeometry, DelaunayMesh, GPCModel, GPCModelData, GPC.Converter, GPC.Model.Persistence, GPC.Archive, GPCChecker.Concrete, GPCChecker.Steel e GPCChecker.CompositeBridge), con manifest, versioni e SHA-256. Non occorre compilare i repository fratelli per compilare il plugin. [GpcReferences.props](build/GpcReferences.props) verifica l'integrità del set prima di risolvere i riferimenti; il manifest viene distribuito come `bin/Release/gpc-release-set.json`. Le DLL comuni a BridGHe e ReBear provengono dallo stesso set.
 
 Al caricamento in Grasshopper il plugin controlla le librerie GPC con cui calcola. Se gira dal `bin/Release` di un checkout, confronta le DLL accanto al plugin con `lib/GPC`: un `bin` non ricompilato dopo un aggiornamento del set viene segnalato. Confronta inoltre le DLL GPC caricate in Rhino con `gpc-release-set.json`: un altro plugin, per esempio ReBear, può aver caricato prima un set diverso. Le differenze compaiono nella riga di comando di Rhino e come avviso su Super Element Check, Bridge Detail Check, Bridge Section Check e sugli altri componenti che calcolano con GPC; un set non verificabile è segnalato solo nella riga di comando. Il controllo è provato dalla regressione `gpc-release-set` del progetto Smoke.
 
-Il **set ufficiale dell'8 novembre 2026**, con `candidate=false`, comprende Model **5.50.0.2**, ModelData **0.3.0.30**, Concrete **0.37.0.1**, Steel **2.134.0.0** e CompositeBridge **1.31.0.1**, dai commit Model `ff318f87` e Checker `9e513417`. È stato adottato il 10 novembre per allineare le DLL comuni a ReBear; Utilities, Geometry e DelaunayMesh mantengono i binari precedenti. La build aggiunge System.Text.Json **10.0.13** e le relative dipendenze .NET 8. Non occorrono opzioni per candidati. Provenienza e collaudo corrente sono nel [resoconto di stabilizzazione](docs/STABILIZZAZIONE-2026-11-10.md); il [rilascio del 2 novembre](docs/GPC-RILASCIO-2026-11-02.md) documenta il set precedente e i suoi confronti prestazionali.
+Il set in `lib/GPC` è il **rilascio ufficiale** (`candidate=false`) del 14 novembre 2026, `gpc-release-20261114-aw` (AW), prodotto da `Checker/build/Release-Set.ps1` senza `-Candidate` sui commit di origin/master Model `c2abf222` (GPCModel **5.51.0.1**, GPCModelData **0.3.0.31**, GPC.Model.Persistence **3.15.0.3**, GPC.Archive **1.2.0.4**, GPC.Converter **2.22.0.3**) e Checker `9c71ca65` (Concrete **0.37.0.2**, Steel **2.134.0.1**, CompositeBridge **1.31.0.2**), con Utilities `e57b440b` (GPCUtilities **3.0.0.0**) e Geometry `6734eee1` (GPCGeometry **2.3.0.0**, DelaunayMesh **2.0.0.14**). La compilazione ordinaria non richiede opzioni. Un set candidato in `lib/GPC` viene rifiutato; per collaudarlo in modo esplicito usare `-p:GpcAllowCandidate=true`. `-p:GpcPilot=true` resta un'opzione di sviluppo: compila contro i progetti Model e Checker fratelli. Il set ufficiale precedente è quello del [2 novembre](docs/GPC-RILASCIO-2026-11-02.md); i set ancora precedenti sono descritti nei resoconti del [1° novembre (sera)](docs/GPC-RILASCIO-2026-11-01-sera.md), del [1° novembre (mattina)](docs/GPC-RILASCIO-2026-11-01.md), del [30 ottobre](docs/GPC-RILASCIO-2026-10-30.md) e del [27 ottobre](docs/GPC-RILASCIO-2026-10-27.md).
 
 Output da installare: **`bin/Release/BridGHe.Grasshopper.gha`**, insieme alle DLL nella stessa cartella. L'evento MSBuild `BridGHePostBuild` in `Directory.Build.targets` parte **dopo ogni build riuscita**, sia da Visual Studio sia da `dotnet build`: per il plugin Release copia l'intero output in `bin/Release`, rimuove i file non più prodotti ed elimina le vecchie cartelle di compilazione sparse, comprese le precedenti sottocartelle di `bin`. Funziona anche con build incrementali e compilando direttamente il `.csproj`.
 
@@ -57,26 +67,12 @@ Chiudere Rhino, estrarre il pacchetto sotto la cartella Libraries di Grasshopper
 
 ## Riprodurre le verifiche
 
-Il [resoconto di stabilizzazione del 10 novembre 2026](docs/STABILIZZAZIONE-2026-11-10.md) distingue i controlli rieseguiti dagli esiti storici e descrive il recupero dei risultati esterni. I conteggi nei paragrafi storici non certificano automaticamente il checkout corrente.
-
-Gli esempi GHX con risultati esterni richiedono anche i file `.bghr`: il pacchetto include quelli referenziati, dopo verifica SHA-256, e rifiuta riferimenti mancanti o alterati. I file nativi Straus restano esclusi. Dopo il trasferimento su un altro computer, aggiornare gli input `Output Path` dei componenti di analisi al percorso `.st7` nella nuova cartella `calcoli`, accanto al `.bghr` corrispondente, quindi ricalcolare Grasshopper con `Run` disattivato. Il percorso `.st7` serve a individuare il `.bghr`; non occorre il file `.st7` per rileggere i risultati archiviati. Il resto del grafo può comunque richiedere Straus, ad esempio per calcolare sezioni native.
-
-Se un `.bghr` manca o non coincide con l'hash salvato, il componente non restituisce quei risultati e conserva il riferimento anche nei successivi salvataggi. Ripristinare il file corretto, oppure aggiornare `Output Path`, e ricalcolare; `Run` esegue invece una nuova analisi. Un nuovo modello o un reset esplicito possono invalidare i risultati precedenti.
-
 ```powershell
 .\tools\build.ps1 -Native -Examples -BridgeGrillage -BridgeSuite -BridgeSpine -Package
 dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --beam-support
 ```
 
-Gli script rigenerano e sovrascrivono gli esempi: salvare separatamente le modifiche manuali. I test Grasshopper usano un server componenti isolato per non caricare i plugin estranei installati nel profilo utente.
-
-Per le correzioni di salvataggio e packaging, dopo la compilazione dei test:
-
-```powershell
-dotnet build tests/BridGHe.Smoke -c Release
-.\tools\test_regressions.ps1 -Groups analysis-results-file
-py -m unittest discover -s tools -p test_package_results.py
-```
+Gli script rigenerano e sovrascrivono gli esempi: salvare separatamente le modifiche manuali. Con il set ufficiale `tools/build.ps1` non richiede impostazioni. Solo per collaudare un set candidato in `lib/GPC` impostare prima `$env:GpcAllowCandidate = 'true'` nella stessa sessione di PowerShell; altrimenti la compilazione si ferma al controllo del set. I test Grasshopper usano un server componenti isolato per non caricare i plugin estranei installati nel profilo utente.
 
 ## Documentazione
 
@@ -111,4 +107,8 @@ Le proprietà omogeneizzate conservano acciaio e soletta nella preview delle bea
 
 Gli [esempi 33–45](example/README.md#progettazione-del-modello-3345) coprono consigliatore delle campate con zone vietate, sezioni per progressiva, assegnazione, appoggi, connessioni, controventi, soletta, fasi, dettagli, frecce, storie per fatica e mappa delle verifiche. L'[esempio 45](example/45-ponte-completo-fasi/README.md) assembla un ponte curvo a tre travi, con campate 30+40+30 m, conci, shell e tre snapshot costruttivi. Non contiene carichi o risultati FEM inventati.
 
-I tredici grafi sono risolti, salvati e riaperti dai test. La Release passa 218 controlli, 54 gruppi di regressione e due gruppi grafici; tutti i 238 valori della baseline numerica restano identici. Le prove native di UCS, vincoli, molle e link rigidi sono superate. Passano anche i cinque benchmark mobili (5.377 confronti su 80 posizioni) e i 30 confronti dei cinque contributi di fase; esiti in `docs/VERIFICHE.md`.
+Le verifiche eseguite sono documentate nei resoconti con data, commit, ambiente e casi confrontati. I conteggi storici non rappresentano il gate della 0.4.0: per il pacchetto installato usare la sua ricevuta di rilascio. La riapertura di un grafo, la soluzione Straus7 e la verifica resistente sono controlli distinti; nessuno sostituisce automaticamente gli altri.
+
+## Pacchetto e risultati esterni nella 0.4.0
+
+Il pacchetto conserva soltanto i file `.bghr` referenziati dai GHX, dopo il controllo SHA-256, ed esclude gli output nativi Straus7. Un riferimento mancante o alterato interrompe il confezionamento. Vedere [Risultati esterni](docs/USO.md#risultati-esterni-nella-040). I risultati BGHR1 della 0.3.0 richiedono una nuova analisi GPC.

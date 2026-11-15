@@ -67,18 +67,21 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             DA.GetData(3, ref considerRebars);
             DA.GetData(4, ref considerSteel);
 
-            Common.Models.CompositeBeamPropertyModel compositeBeamPropertyModel = gH_CompositeBeamProperty.Value;
+            // F6 chain E step 2: from the Checker definition the composite property carries (one-bar analysis section, steel torsion of the H),
+            // the values of CompositeBeamPropertyModel bit for bit (CompositeAnalysisPropertyChecks).
+            var definition = gH_CompositeBeamProperty?.Definition;
+            if (definition == null)
+                return;
+            double steelTorsion = Common.Gpc.GpcCompositeSections.SteelTorsionConstant(definition);
+            var propN0 = Common.Gpc.GpcCompositeSections.AnalysisProperties(definition, n, considerConcrete, considerRebars, considerSteel);
 
-            var propOS = compositeBeamPropertyModel.GetOnlySteelMechanicalProperties();
-            var propN0 = compositeBeamPropertyModel.GetHomogeneizedMechanicalProperties(n, considerConcrete, considerRebars, considerSteel);
-
-            string name = compositeBeamPropertyModel.Name;
+            string name = definition.Name;
             double area = propN0.areaH;
             double j11 = propN0.J11H;
             double j22 = propN0.J22H;
             double jxx = propN0.JxxH;
             double jyy = propN0.JyyH;
-            double j = propOS.Jt;
+            double j = steelTorsion;
             double xg = propN0.centroidH.X;
             double yg = propN0.centroidH.Y;
             double angle = propN0.angleX;

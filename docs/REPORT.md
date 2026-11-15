@@ -29,6 +29,10 @@ Senza collegamenti a Topics sono selezionati 0–5. La checklist conserva le sce
 
 La selezione dei capitoli riguarda l'impaginazione, non filtra le verifiche usate per il riepilogo. Per limitare l'ambito del report selezionare consapevolmente i risultati a monte.
 
+### Modelli grandi
+
+La 0.4.0 evita la precedente duplicazione dei dati del modello per ogni risultato. Il report del ponte 50 resta impegnativo: nella misura F7 riportata dal coordinatore Build richiede 12 s, verifiche 47 s e **la sola generazione Word 927 s**; il totale delle tre fasi è 986 s, circa 16 min 26 s, prima delle operazioni manuali. Sono misure locali, non tempi massimi garantiti. Premere Generate una volta e attendere; non avviare più generazioni dello stesso documento. Il report storico allegato all'esempio 48 non è una nuova analisi della propria struttura.
+
 ## Preparazione di un template Word
 
 Partire da [Template_BridGHe.docx](../example/48-report-word/Template_BridGHe.docx), oppure usare il proprio documento con logo e intestazioni.
@@ -66,7 +70,7 @@ Il report comprende i punti tensionali e le verifiche locali presenti nel risult
 
 Il riepilogo riporta massimi disponibili e conteggi delle lacune separatamente. I casi governanti sono distinti per configurazione, fase, stato limite e famiglia/voce; conserva tutte le parità. Domanda, limite, azioni e strain appartengono allo stesso risultato. Configurazioni con dettagli o opzioni diversi non vengono accorpate.
 
-Il modello opzionale fornisce sequenza costruttiva, casi e coefficienti. Viene controllata l'appartenenza degli ID trave, delle stazioni locali e delle combinazioni, ma i risultati attuali non contengono un'impronta del FEM sorgente che certifichi la revisione del modello. I grafici SVG non contengono una provenienza numerica verificabile: collegare quelli prodotti dallo stesso flusso.
+Il Model opzionale deve essere il modello BridGHe associato alle verifiche. Fornisce fasi, casi e coefficienti; il componente controlla ID trave, stazioni locali e combinazioni. Questo non certifica da solo che ogni risultato provenga dall'ultima revisione degli ingressi. Gli SVG non portano una provenienza numerica verificabile: collegare quelli dello stesso flusso aggiornato, senza mescolare grafici di altre analisi.
 
 ## Tracciabilità e limiti della prima versione
 

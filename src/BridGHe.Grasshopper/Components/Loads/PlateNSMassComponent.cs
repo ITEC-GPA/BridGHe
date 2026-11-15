@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -61,16 +60,10 @@ namespace BridGHe.Grasshopper.Components.Loads
             if (!DA.GetData("Offset", ref offset))
                 return;
 
-            PlateNSMassModel.LoadData load_value = new PlateNSMassModel.LoadData()
-            {
-                Mass = mass,
-                DynFactor = dynFactor,
-                Offset = offset
-            };
-            PlateNSMassModel load = new PlateNSMassModel(lc.Value, load_value);
-            GH_Plate newPlate = new GH_Plate(plate);
-            newPlate.Value.Loads.Add(load);
-            DA.SetData(0, newPlate);
+            Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.WithNonStructuralMass(plate.Gpc, lc.Gpc, mass, dynFactor, offset.X, offset.Y, offset.Z, id);
+            // P2K (P1): the GPC path only: the draft built on GPC from the drafts of the plate and the load case record (identity derived from
+            // the input draft).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, GpcOnlyElements.Lazy(() => lc.Gpc), mass, dynFactor, offset.X, offset.Y, offset.Z));
         }
 
         public override GH_Exposure Exposure => GH_Exposure.tertiary;

@@ -53,7 +53,7 @@ public sealed class BridgeCombinationExcelComponent : GH_Component
         try
         {
             if (mode is not (0 or 1)) throw new ArgumentException("Mode must be 0 (Create) or 1 (Read).");
-            if (models.Any(m => m?.Value == null) || phases.Any(p => p?.Value is not BridgePhaseDefinition))
+            if (models.Any(m => !BridgeChecks.WorkflowInputs.HasModel(m)) || phases.Any(p => p?.Value is not BridgePhaseDefinition))
                 throw new ArgumentException("Connect Models and Bridge Phase objects to the corresponding inputs.");
             if (!Path.IsPathRooted(path))
             {
@@ -62,7 +62,11 @@ public sealed class BridgeCombinationExcelComponent : GH_Component
                 path = Path.Combine(Path.GetDirectoryName(documentPath), path);
             }
             path = BridgeCombinationWorkbook.FilePath(path);
-            var catalog = new BridgeCombinationCatalog(models.Select(m => m.Value).ToArray(), phases.Select(p => (BridgePhaseDefinition)p.Value));
+            // R6.4 (3), L3b / P2K (P1): the catalogue on the GPC data (the GPC inputs of the reference models, the analysed GPC source of every
+            // action), or its error: there is no FEM catalogue.
+            var definitions = phases.Select(p => (BridgePhaseDefinition)p.Value).ToArray();
+            Common.Gpc.GpcModels.Conversion[] inputs = models.Select(m => m.GpcInput).ToArray();
+            var catalog = BridgeCombinationCatalog.FromGpc(inputs, definitions);
             da.SetData(0, path); da.SetDataList(2, catalog.ActionIds);
             var summary = catalog.ReferenceRows.Skip(1).Select(r => $"{r[0]} | phase {r[1]} {r[2]} | {r[5]} / {r[6]} | {r[7]} | strain {r[8]}").ToList();
             var warnings = catalog.Warnings;

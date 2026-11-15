@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
@@ -58,26 +57,10 @@ namespace BridGHe.Grasshopper.Components.Materials
             if (!DA.GetData("Alloy", ref alloy))
                 return;
 
-            MaterialModel material = new MaterialModel
-            {
-                Kind = MaterialModel.MaterialKind.Aluminium,
-                Name = name,
-                AlumiumType = (MaterialModel.AlumiumTypes)type_idx,
-                Alloy = alloy,
-                // Note: Values are in N, m, C. Remember to convert them in the export if the model units are different
-                Modulus = 69637.05,//N/mm2=MPa
-                PoissonRatio = 0.33,
-                ThermalExpansion = 2.358E-05,
-                ShearModulus = 26179.344,//N/mm2=MPa
-                UsePoisson = true,
-                Density = 2.714E-09, // t/mm3
-                CompressiveYieldStrength = 241.3,//N/mm2=MPa
-                TensileYieldStrength = 241.3,//N/mm2=MPa
-                TensileUltimateStrength = 262,//N/mm2=MPa
-                ShearUltimateStrength = 165.5//N/mm2=MPa
-            };
-
-            DA.SetData(0, new GH_Material(material));
+            // User decision of 6/11: fu = 262 MPa on GPC (0.3.0 stored the shear value 165.5 as the tensile ultimate strength).
+            var recipe = Common.Gpc.Builders.GpcMaterialBuilders.Aluminium(name, type_idx, alloy);
+            // P2K (P1): the material by its GPC datum alone, by kind from the recipe of the component.
+            DA.SetData(0, GH_Material.FromGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe), recipe.Kind));
         }
 
         /// <summary>

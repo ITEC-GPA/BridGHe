@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using GPC.Checkers.CompositeBridge;
 using GPC.Model.Materials;
 
@@ -9,13 +8,14 @@ namespace BridGHe.Common.Checks;
 /// <summary>Conversions at the BridGHe/gPC boundary. No engineering formula is duplicated here.</summary>
 public static class BridgeGpc
 {
-    public static BridgeMaterialSet Materials(MaterialModel concrete,MaterialModel steel,MaterialModel rebar)
+
+    /// <summary>R6.5 P1 lane 3a: the same set from the GPC materials (materials given by their GPC data alone): the rule of the former builders
+    /// (<see cref="Gpc.GpcMaterials.Concrete"/>, <see cref="Gpc.GpcMaterials.StructuralSteel"/>, <see cref="Gpc.GpcMaterials.Reinforcement"/>);
+    /// without a rebar material the structural steel stands for it, as on the FEM path.</summary>
+    public static BridgeMaterialSet Materials(Material concrete,Material steel,Material rebar)
     {
         if(concrete==null||steel==null)throw new ArgumentException("Concrete and structural steel materials are required.");
-        SteelMaterialEN1992 Steel(MaterialModel m,bool reinforcing)=>new(m.Name,m.Modulus,m.MinimumYieldStress,m.MinimumTensileStress,reinforcing ? m.ReinforcementUltimateStrain ?? .1 : .1,
-            SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic,reinforcing?SteelMaterial.SteelTypes.Rebar:SteelMaterial.SteelTypes.Structural);
-        return new BridgeMaterialSet(new ConcreteMaterialEN1992(concrete.Name,concrete.SpecificCompressiveStrength,
-            ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle),Steel(steel,false),Steel(rebar??steel,rebar!=null));
+        return new BridgeMaterialSet(Gpc.GpcMaterials.Concrete(concrete),Gpc.GpcMaterials.StructuralSteel(steel),rebar==null?Gpc.GpcMaterials.StructuralSteel(steel):Gpc.GpcMaterials.Reinforcement(rebar));
     }
 
     public static HBridgeInput WithDetails(HBridgeInput input,IEnumerable<object> definitions)

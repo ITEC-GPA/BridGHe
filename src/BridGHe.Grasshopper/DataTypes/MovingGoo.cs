@@ -36,7 +36,8 @@ namespace BridGHe.Grasshopper.DataTypes
             string json = null;
             if (!reader.TryGetString("Data", ref json)) return false;
             try { Value = JsonSerializer.Deserialize<MovingObject>(json); return IsValid; }
-            catch (JsonException) { Value = null; return false; }
+            // P2CI (MU-01, ChatGPT task 74): damaged JSON is said to the file reader (before: false alone); the same result.
+            catch (JsonException x) { Value = null; return GpcGooPersistence.NotRead(reader, GpcGooPersistence.Unreadable(TypeName, x.Message)); }
         }
     }
 }

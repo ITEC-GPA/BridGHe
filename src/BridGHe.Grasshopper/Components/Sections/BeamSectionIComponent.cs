@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -60,21 +59,9 @@ namespace BridGHe.Grasshopper.Components.Sections
             if (!DA.GetData(6, ref r))
                 return;
 
-            SectionModel sectionModel = new SectionModel()
-            {
-                SectionType = SectionModel.SectionTypes.I,
-                D = d,
-                B1 = b1,
-                B2 = b2,
-                T1 = t1,
-                T2 = t2,
-                T3 = t3,
-                R = r,
-            };
-            sectionModel.CalculateSection();
-
-            GH_BeamSection section = new GH_BeamSection(sectionModel);
-            DA.SetData(0, section);
+            // L2C (limit (a) of passo 77): the recipe with the fillet radius R, as the former section held it.
+            // P2K (P1): the section by its recipe alone (a refused recipe gives an error and no section).
+            Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.Section(this, () => Common.Gpc.Builders.GpcSectionBuilders.Standard(Common.Gpc.BridgeSectionKind.I, d, b1: b1, b2: b2, t1: t1, t2: t2, t3: t3, r: r)));
         }
 
         /// <summary>

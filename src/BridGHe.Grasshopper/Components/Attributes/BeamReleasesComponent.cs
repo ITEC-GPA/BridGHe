@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -81,23 +80,15 @@ namespace BridGHe.Grasshopper.Components.Attributes
                 { "moment2N2", DA.GetData(12, ref moment2N2) }
             };
 
-            GH_Beam new_beam = new GH_Beam(beam);
-
-            BeamReleasesAttributeModel.AttributeData data = new BeamReleasesAttributeModel.AttributeData()
-            {
-                TransNode1 = new[] { has_values["shear1N1"], has_values["shear2N1"], has_values["axialN1"] },
-                TransN1Partial = new Vector3d(shear1N1, shear2N1, axialN1),
-                TransNode2 = new[] { has_values["shear1N2"], has_values["shear2N2"], has_values["axialN2"] },
-                TransN2Partial = new Vector3d(shear1N2, shear2N2, axialN2),
-                RotNode1 = new[] { has_values["moment1N1"], has_values["moment2N1"], has_values["torsionN1"] },
-                RotN1Partial = new Vector3d(moment1N1, moment2N1, torsionN1),
-                RotNode2 = new[] { has_values["moment1N2"], has_values["moment2N2"], has_values["torsionN2"] },
-                RotN2Partial = new Vector3d(moment1N2, moment2N2, torsionN2)
-            };
-            BeamReleasesAttributeModel attr = new BeamReleasesAttributeModel(data);
-            new_beam.Value.Attributes.Add(attr);
-
-            DA.SetData("Beam", new_beam);
+            // The data of the GPC builder.
+            bool[] transI = { has_values["shear1N1"], has_values["shear2N1"], has_values["axialN1"] }, rotI = { has_values["moment1N1"], has_values["moment2N1"], has_values["torsionN1"] };
+            bool[] transJ = { has_values["shear1N2"], has_values["shear2N2"], has_values["axialN2"] }, rotJ = { has_values["moment1N2"], has_values["moment2N2"], has_values["torsionN2"] };
+            var transIPartial = new GPC.Geometry.Vector3d(shear1N1, shear2N1, axialN1); var rotIPartial = new GPC.Geometry.Vector3d(moment1N1, moment2N1, torsionN1);
+            var transJPartial = new GPC.Geometry.Vector3d(shear1N2, shear2N2, axialN2); var rotJPartial = new GPC.Geometry.Vector3d(moment1N2, moment2N2, torsionN2);
+            Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithReleases(beam.Gpc, transI, transIPartial, rotI, rotIPartial,
+                transJ, transJPartial, rotJ, rotJPartial, id);
+            // P2K (P1): the GPC path only: the draft built on GPC (identity derived from the input draft).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, transI, transIPartial, rotI, rotIPartial, transJ, transJPartial, rotJ, rotJPartial));
         }
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;

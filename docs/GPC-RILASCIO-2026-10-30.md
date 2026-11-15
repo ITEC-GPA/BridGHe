@@ -1,5 +1,7 @@
 # Rilasci ufficiali GPC — 30 ottobre 2026
 
+> Resoconto storico della revisione indicata nel titolo. Versioni, comandi, conteggi e risultati si riferiscono a quella fotografia. Per installazione, formati e limiti della 0.4.0 vedere [Uso](USO.md), [Migrazione](MIGRAZIONE.md) e il manifest del pacchetto. Gli attesi e le misure qui riportati non vengono rigenerati dall’aggiornamento della documentazione.
+
 Il 30 ottobre BridGHe e ReBear ricevono due set ufficiali: quello del mattino, dopo il lavoro sull'acciaio, e quello del pomeriggio, che aggiunge i batch per stazione. Dal 1° novembre il set corrente è quello del [rilascio del 1° novembre](GPC-RILASCIO-2026-11-01.md).
 
 ## Primo set: lavoro sull'acciaio

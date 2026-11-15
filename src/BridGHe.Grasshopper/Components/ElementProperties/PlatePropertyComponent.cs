@@ -1,7 +1,6 @@
+using BridGHe.Common.Helpers;
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -85,20 +84,21 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
                     return;
             }
 
-            PlatePropertyModel pp = new PlatePropertyModel
-            {
-                Name = name,
-                Material = material?.Value,
-                PropertyType = (PlatePropertyType)type,
-                MembraneThickness = mem_thick,
-                BendingThickness = ben_thick
-            };
-
-            Message = pp.PropertyType.GetDescription();
-
-            GH_PlateProperty gh_pp = new GH_PlateProperty(pp);
-            DA.SetData(0, gh_pp);
+            // R6.5 P1 lane 2a: the property by its GPC datum alone (rule of passo 75; a refused property gives an error and no output). The
+            // message is the type. P2K (P1): the only path.
+            Message = TypeLabel(type);
+            // L2C: with the bending thickness of a membrane beside the GPC property (Bridge Deck Mesh checks it, as before).
+            Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.PlateProperty(this, () => Common.Gpc.Builders.GpcPropertyBuilders.Plate(name, type, material?.Gpc, mem_thick, ben_thick),
+                Common.Gpc.Builders.GpcPropertyBuilders.PlateMembraneBending(type, ben_thick)));
         }
+
+        /// <summary>P2K (P1): the labels of the former FEM <c>PlatePropertyType</c> by its value (0 to 6, the Type menu; its Undefined = -1 is
+        /// not in the menu).</summary>
+        private static readonly string[] TypeLabels = { "Shell-Thin", "Shell-Thick", "Plate-Thin", "Plate-Thick", "Membrane", "Load Patch", "Shear Panel" };
+
+        /// <summary>P2K (P1): the message of a type, as the former enum described it (an unknown integer by its digits).</summary>
+        private static string TypeLabel(int type) => type >= 0 && type < TypeLabels.Length ? TypeLabels[type]
+            : type == -1 ? "Undefined" : type.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
         /// <summary>
         /// Provides an Icon for the component.
@@ -109,5 +109,13 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
         public override Guid ComponentGuid => new Guid("20915977-5436-4dcb-b091-1250312caa11");
+
+        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
+        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
+        private enum PlatePropertyType
+        {
+            Undefined = -1, [System.ComponentModel.Description("Shell-Thin")] ShellThin, [System.ComponentModel.Description("Shell-Thick")] ShellThick, [System.ComponentModel.Description("Plate-Thin")] PlateThin,
+            [System.ComponentModel.Description("Plate-Thick")] PlateThick, Membrane, [System.ComponentModel.Description("Load Patch")] LoadPatch, [System.ComponentModel.Description("Shear Panel")] ShearPanel
+        }
     }
 }

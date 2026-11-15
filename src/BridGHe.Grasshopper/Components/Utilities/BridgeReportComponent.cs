@@ -81,7 +81,8 @@ public sealed class BridgeReportComponent : GH_Component
             GH_Model model = null; bool overwrite = false; var topics = new List<int>();
             if (!da.GetDataTree(0, out tree) || !da.GetData(1, ref template) || !da.GetData(2, ref output) || !da.GetData(5, ref title)) return;
             da.GetDataList(3, topics); da.GetData(4, ref model); da.GetData(6, ref project); da.GetData(7, ref author); da.GetData(8, ref revision); da.GetData(10, ref overwrite);
-            if (Params.Input[4].VolatileDataCount > 0 && model?.Value == null) throw new ArgumentException("Model must be a BridGHe model.");
+            // R6.5 P1 lane 3a / P2K (P1): a model with its GPC input is a BridGHe model (read on its GPC data below).
+            if (Params.Input[4].VolatileDataCount > 0 && model?.GpcInput == null) throw new ArgumentException("Model must be a BridGHe model.");
             if (topics.Count == 0 && Params.Input[3].SourceCount == 0 && Params.Input[3].VolatileDataCount == 0) topics.AddRange(BridgeReportData.DefaultTopics.Select(t => (int)t));
             if (topics.Any(t => !Enum.IsDefined((BridgeReportTopic)t))) throw new ArgumentException("Topics must be integers 0..6.");
             var entries = new List<BridgeReportEntry>();
@@ -91,7 +92,12 @@ public sealed class BridgeReportComponent : GH_Component
                 if (value is not BridgeStressResult r) throw new ArgumentException("Results must contain BridgeStressResult objects.");
                 entries.Add(new(r, tree.Paths[b] + "[" + i + "]"));
             }
-            var data = BridgeReportData.Create(entries, new(title, project, author, revision), model?.Value);
+            // R6.4 (6): with the GPC bridge model of Build BridGHe Model the report model comes from it (name, counts, action records, combination
+            // table, beam lengths).
+            // R6.5 P1 lane 3a / P2K (P1): else the GPC input of the model (BridgeReportData.Source(Conversion)); no model, no source.
+            var bridge = model?.GpcBridge;
+            var source = bridge != null ? BridgeReportData.Source(bridge) : BridgeReportData.Source(model?.GpcInput);
+            var data = BridgeReportData.Create(entries, new(title, project, author, revision), source);
             var figures = new List<BridgeReportFigure>();
             if (topics.Contains((int)BridgeReportTopic.Plots) && da.GetDataTree(9, out GH_Structure<GH_String> svgs))
                 foreach (var item in svgs.AllData(true))
@@ -107,7 +113,7 @@ public sealed class BridgeReportComponent : GH_Component
             da.SetData(0, result.File); da.SetData(3, result.Id); da.SetDataList(2, result.Warnings);
             da.SetDataList(1, new[] { $"{result.Results} risultati; {result.Checks} voci; {result.Missing} esiti attivi senza WR.",
                 "Capitoli: Riepilogo, " + string.Join(", ", topics.Distinct().OrderBy(t => t).Select(t => BridgeReportData.TopicNames[t])), "Archivio incorporato: bridghe/report.json" });
-            if (result.Warnings.Length > 0 || result.Missing > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Report generato con segnalazioni: consultare Warnings e il riepilogo nel documento.");
+            if (result.Warnings.Length > 0 || result.Missing > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Report generated with warnings: see Warnings and the summary in the document.");
             Message = "DOCX";
         }
         catch (Exception e) { Message = "Error"; AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message); }

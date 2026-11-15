@@ -1,20 +1,58 @@
 <Project>
+  <PropertyGroup Condition="'$(GpcPilot)' == 'true'"><DefineConstants>$(DefineConstants);GPC_PILOT</DefineConstants></PropertyGroup>
+  <!-- Plain build (the product): the eleven GPC DLLs of the set in lib/GPC, the closure of the references of BridGHe.Common and
+       BridGHe.Grasshopper (GPCModelData through GPC.Converter, GPC.Archive through GPC.Model.Persistence, Concrete and Steel through
+       CompositeBridge), checked against lib/GPC/release-set.json before the references are resolved (tools/verify_gpc_set.ps1).
+       GpcPilot (development only): the plug-in builds against the sibling Model projects (GPCModel, Persistence, Archive, Converter)
+       and against the Checker libraries built in the sibling Checker checkout from the same GPCModel. -->
+  <PropertyGroup Condition="'$(GpcPilot)' == 'true'">
+    <GpcCheckerDir>$(MSBuildThisFileDirectory)..\..\Checker\GPCChecker.CompositeBridge\bin\Release\netstandard2.0\</GpcCheckerDir>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(GpcPilot)' == 'true'">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\Model\GPC.Model.Persistence\GPC.Model.Persistence.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\Model\GPC Converter\GPC Converter.csproj" />
+  </ItemGroup>
   <ItemGroup>
     <Reference Include="GPCUtilities"><HintPath>$(BridGHeRoot)lib\GPC\GPCUtilities.dll</HintPath><Private>true</Private></Reference>
     <Reference Include="GPCGeometry"><HintPath>$(BridGHeRoot)lib\GPC\GPCGeometry.dll</HintPath><Private>true</Private></Reference>
     <Reference Include="DelaunayMesh"><HintPath>$(BridGHeRoot)lib\GPC\DelaunayMesh.dll</HintPath><Private>true</Private></Reference>
-    <Reference Include="GPCModel"><HintPath>$(BridGHeRoot)lib\GPC\GPCModel.dll</HintPath><Private>true</Private></Reference>
-    <Reference Include="GPCModelData"><HintPath>$(BridGHeRoot)lib\GPC\GPCModelData.dll</HintPath><Private>true</Private></Reference>
-    <Reference Include="GPCChecker.Concrete"><HintPath>$(BridGHeRoot)lib\GPC\GPCChecker.Concrete.dll</HintPath><Private>true</Private></Reference>
-    <Reference Include="GPCChecker.Steel"><HintPath>$(BridGHeRoot)lib\GPC\GPCChecker.Steel.dll</HintPath><Private>true</Private></Reference>
-    <Reference Include="GPCChecker.CompositeBridge"><HintPath>$(BridGHeRoot)lib\GPC\GPCChecker.CompositeBridge.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCModel" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPCModel.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCModelData" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPCModelData.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPC.Converter" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPC.Converter.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPC.Model.Persistence" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPC.Model.Persistence.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPC.Archive" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPC.Archive.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCChecker.Concrete" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPCChecker.Concrete.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCChecker.Steel" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPCChecker.Steel.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCChecker.CompositeBridge" Condition="'$(GpcPilot)' != 'true'"><HintPath>$(BridGHeRoot)lib\GPC\GPCChecker.CompositeBridge.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCChecker.Concrete" Condition="'$(GpcPilot)' == 'true'"><HintPath>$(GpcCheckerDir)GPCChecker.Concrete.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCChecker.Steel" Condition="'$(GpcPilot)' == 'true'"><HintPath>$(GpcCheckerDir)GPCChecker.Steel.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GPCChecker.CompositeBridge" Condition="'$(GpcPilot)' == 'true'"><HintPath>$(GpcCheckerDir)GPCChecker.CompositeBridge.dll</HintPath><Private>true</Private></Reference>
     <None Include="$(BridGHeRoot)lib\GPC\release-set.json" Link="gpc-release-set.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- System.Text.Json 10.0.13 and its .NET 8 dependencies (System.Text.Encodings.Web, System.IO.Pipelines) ship with the plug-in, as in
+         ReBear and BridGHe 0.3.0 (user decision of 14/11/2026). Rhino 8 loads the framework's System.Text.Json 8 at start-up, before any
+         plug-in, and answers the plug-ins' requests for 10 with it: in Rhino the plug-in runs on 8; the test hosts, which carry 10, run on 10. -->
     <PackageReference Include="System.Text.Json" Version="10.0.13" />
+    <!-- MathNet.Numerics 5.0.0: the net48 build of the package (lib/net48), the one file every gPC plug-in ships (user decision of 14/11/2026):
+         Arachne runs on Rhino for .NET Framework too, and in one Rhino the first copy loaded serves every plug-in. NuGet would pick lib/net6.0
+         for net8.0. The package is only restored here (ExcludeAssets="all"); the reference names its net48 file, checked by SHA-256 below.
+         The GPC libraries use MathNet only for Matrix/Vector of double, whose code is the same in the net48 and net6.0 builds apart from the
+         text of the exceptions (P2CK). -->
+    <PackageReference Include="MathNet.Numerics" Version="5.0.0" GeneratePathProperty="true" ExcludeAssets="all" />
+    <Reference Include="MathNet.Numerics"><HintPath>$(PkgMathNet_Numerics)\lib\net48\MathNet.Numerics.dll</HintPath><Private>true</Private></Reference>
   </ItemGroup>
   <Target Name="CheckGpcLibraries" BeforeTargets="ResolveAssemblyReferences">
     <PropertyGroup>
       <GpcValidationArguments Condition="'$(GpcAllowCandidate)' == 'true'">-AllowCandidate</GpcValidationArguments>
     </PropertyGroup>
+    <PropertyGroup>
+      <GpcMathNetFile>$(PkgMathNet_Numerics)\lib\net48\MathNet.Numerics.dll</GpcMathNetFile>
+      <GpcMathNetSha256>4C9803A4B0673B93A99A2237E35543BE2F6741FBD54B0FF045CF92E877BE09D4</GpcMathNetSha256>
+    </PropertyGroup>
+    <Error Condition="'$(PkgMathNet_Numerics)' == '' or !Exists('$(GpcMathNetFile)')" Text="MathNet.Numerics 5.0.0 (lib/net48) mancante: $(GpcMathNetFile). Eseguire il restore NuGet." />
+    <GetFileHash Files="$(GpcMathNetFile)" Algorithm="SHA256">
+      <Output TaskParameter="Hash" PropertyName="_GpcMathNetActual" />
+    </GetFileHash>
+    <Error Condition="'$(_GpcMathNetActual)' != '$(GpcMathNetSha256)'" Text="MathNet.Numerics diverso dal file comune ai plug-in gPC (net48, SHA-256 $(GpcMathNetSha256)): $(GpcMathNetFile) ha SHA-256 $(_GpcMathNetActual)." />
     <Error Condition="!Exists('%(Reference.HintPath)') and '%(Reference.HintPath)' != ''" Text="Libreria mancante: %(Reference.HintPath). Ripristinare il set GPC fissato in lib/GPC." />
     <Exec Command="powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(BridGHeRoot)tools\verify_gpc_set.ps1&quot; $(GpcValidationArguments)" />
   </Target>

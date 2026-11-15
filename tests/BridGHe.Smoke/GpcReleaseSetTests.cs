@@ -76,24 +76,19 @@ internal static class GpcReleaseSetTests
     /// <summary>--gpc-guard: starts the guard of the plugin in the folder, as Grasshopper does, and prints what a component shows.</summary>
     internal static int Guard(string folder)
     {
-        SmokeTrace.Write("GPC GUARD ENTER");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\Grasshopper.dll");
         System.Reflection.Assembly.LoadFrom(@"C:\Program Files\Rhino 8\Plug-ins\Grasshopper\GH_IO.dll");
         var plugin = System.Reflection.Assembly.LoadFrom(Path.Combine(folder, "BridGHe.Grasshopper.gha"));
         var guard = plugin.GetType("BridGHe.Grasshopper.Helpers.GpcReleaseGuard", true);
-        SmokeTrace.Write("GPC GUARD START");
         guard.GetMethod("Start").Invoke(null, null);
-        SmokeTrace.Write("GPC GUARD STARTED");
         // CompositeBridge loaded first by a worker while Rhino's thread waits for it, as in Super Element Check (Parallel.For on the
         // solution thread): the guard reports it from the worker without waiting for Rhino's thread.
         Console.WriteLine("GPC GUARD LATE LOAD " + LoadOnWorker("GPCChecker.CompositeBridge", "GPC GUARD"));
-        SmokeTrace.Write("GPC WORKER LOADED");
         Console.WriteLine("GPC GUARD WARNING: " + (guard.GetProperty("Warning").GetValue(null) ?? "none"));
         var component = (Grasshopper.Kernel.GH_Component)Activator.CreateInstance(plugin.GetType("BridGHe.Grasshopper.Components.BridgeChecks.SuperElementCheckComponent", true));
         var warn = guard.GetMethod("Warn");
         warn.Invoke(null, new object[] { component }); warn.Invoke(null, new object[] { component });
         Console.WriteLine("GPC GUARD COMPONENT WARNINGS " + component.RuntimeMessages(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning).Count);
-        SmokeTrace.Write("GPC GUARD COMPLETE");
         return 0;
     }
 
@@ -131,7 +126,5 @@ internal static class GpcReleaseSetTests
     private static void Require(bool condition, string message)
     {
         if (!condition) throw new InvalidOperationException("GPC RELEASE SET: " + message);
-        Console.WriteLine("PASS GPC RELEASE SET: " + message);
-        Console.Out.Flush();
     }
 }

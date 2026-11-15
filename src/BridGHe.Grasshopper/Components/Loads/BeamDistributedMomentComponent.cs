@@ -1,11 +1,10 @@
-using BridGHe.Common.Helpers;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.ComponentAttributes;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using GH_IO.Serialization;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
+using BridGHe.Common.Helpers;
 using System;
 using System.Linq;
 
@@ -127,7 +126,7 @@ namespace BridGHe.Grasshopper.Components.Loads
 
             Message = string.Format("Direction: Local axis {0}", dir + 1);
 
-            if (lc.Value.NonStructuralMassAcceleration)
+            if (GpcOnlyProperties.NonStructuralMass(lc))
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The connected LoadCase have the Non-structural mass flag set to on");
 
             bool input_errors = false;
@@ -228,22 +227,11 @@ namespace BridGHe.Grasshopper.Components.Loads
             if (input_errors)
                 return;
 
-            BeamDistributedLoadModel.LoadSchema load_schema = (BeamDistributedLoadModel.LoadSchema)schema;
-            BeamDistributedLoadModel.LoadData load_value = new BeamDistributedLoadModel.LoadData()
-            {
-                LoadSchema = load_schema,
-                LoadDirection = (BeamDistributedLoadModel.LoadDirection)dir,
-                P1 = p1,
-                PA = pa,
-                PB = pb,
-                P2 = p2,
-                A = a,
-                B = b
-            };
-            BeamDistributedLoadModel load = new BeamDistributedLoadModel(lc.Value, load_value, BeamDistributedLoadModel.LoadType.Moment);
-            GH_Beam newBeam = new GH_Beam(beam);
-            newBeam.Value.Loads.Add(load);
-            DA.SetData(0, newBeam);
+            string direction = Common.Gpc.Builders.GpcBeamBuilders.Code(Common.Gpc.Builders.GpcBeamBuilders.LoadDirections, dir);
+            Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithDistributedLoad(beam.Gpc, lc.Gpc, (Common.Gpc.BridgeLoadSchema)schema, true, direction, pa, pb, p1, p2, a, b, null, id);
+            // P2K (P1): the GPC path only: the draft built on GPC from the drafts of the beam and the load case record (identity derived from
+            // the input draft).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), schema, true, direction, pa, pb, p1, p2, a, b, null));
         }
 
         public override bool Read(GH_IReader reader)
@@ -267,5 +255,16 @@ namespace BridGHe.Grasshopper.Components.Loads
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
         public override Guid ComponentGuid => new Guid("fee217c4-8b33-4c74-8f3a-743818d6c78c");
+
+        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
+        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
+        private static class BeamDistributedLoadModel
+        {
+            internal enum LoadSchema
+            {
+                Undefined = -1, Uniform, Keystone, Triangular, [System.ComponentModel.Description("Triangular at end 1 + Keystone")] TriangularEnd1_Keystone,
+                [System.ComponentModel.Description("Keystone + Triangular at end 2")] Keystone_TriangularEnd2, [System.ComponentModel.Description("Triangular at ends + Keystone")] TriangularEnds_Keystone
+            }
+        }
     }
 }

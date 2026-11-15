@@ -1,5 +1,4 @@
 using System;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.Components.Utilities;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
@@ -22,7 +21,9 @@ public sealed class MaterialRebarComponent : BridgeUtilityComponent
     protected override void Solve(IGH_DataAccess da)
     {
         string name = "B450C"; if (!da.GetData(0, ref name)) return;
-        da.SetData(0, new GH_Material(ReinforcementMaterials.B450C(name)));
+        // P2K (P1): the GPC rebar from the recipe, by its GPC datum alone.
+        var recipe = Common.Gpc.Builders.GpcMaterialBuilders.Rebar(name);
+        da.SetData(0, GH_Material.FromGpc(Common.Gpc.Builders.GpcMaterialBuilders.Material(recipe), recipe.Kind));
         da.SetDataList(1, new[] { "B450C | E=200000 MPa | fyk=450 MPa | ftk=540 MPa | epsilon_uk=0.075",
             "nu=0.30 | density=7.85e-9 t/mm3 | alpha=1.2e-5 /K",
             "GPC elastic-perfectly-plastic reinforcement law. Characteristic strengths: safety factors belong to checks, not the FEM material.",

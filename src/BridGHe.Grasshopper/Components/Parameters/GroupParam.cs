@@ -71,20 +71,11 @@ namespace BridGHe.Grasshopper.Components.Parameters
                 string strValue = str.Value;
                 var a = strValue.Split(new string[] { _separator }, StringSplitOptions.RemoveEmptyEntries);
 
-                GH_Group group = null;
-
-                for (int i = 0; i < a.Length; i++)
-                {
-                    if (!string.IsNullOrEmpty(a[i]))
-                    {
-                        if (i == 0)
-                            group = new GH_Group(new Common.Models.GroupModel(a[i]));
-                        else
-                            group = new GH_Group(new Common.Models.GroupModel(a[i], group.Value));
-                    }
-                }
-
-                return group;
+                // R6.5 P1 lane 2a: the group by its chain of names alone. P2K (P1): the only path.
+                System.Collections.Generic.IReadOnlyList<string> chain = null;
+                foreach (string name in a)
+                    if (!string.IsNullOrEmpty(name)) chain = Common.Gpc.Builders.GpcCaseBuilders.Group(name, chain);
+                return chain == null ? null : GH_Group.FromGpc(chain);
             }
             return base.PreferredCast(data);
         }

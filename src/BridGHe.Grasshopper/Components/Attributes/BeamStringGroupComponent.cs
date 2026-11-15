@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -47,20 +46,15 @@ namespace BridGHe.Grasshopper.Components.Attributes
             if (!DA.GetData(1, ref id))
                 return;
 
-            BeamStringGroupAttributeModel.AttributeData data = new BeamStringGroupAttributeModel.AttributeData
-            {
-                ID = id
-            };
-
-            BeamStringGroupAttributeModel sg = new BeamStringGroupAttributeModel(data);
-
             List<GH_Beam> newBeams = new List<GH_Beam>();
 
             for (int i = 0; i < listBeams.Count; i++)
             {
-                GH_Beam newBeam = new GH_Beam(listBeams[i]);
-                newBeam.Value.Attributes.Add(sg);
-                newBeams.Add(newBeam);
+                var input = listBeams[i];
+                Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = gid => Common.Gpc.Builders.GpcBeamBuilders.WithStringGroup(input.Gpc, id, gid);
+                // P2K (P1): the GPC path only: the draft built on GPC (identity derived from the input draft); a refused beam gives no item.
+                var only = GpcOnlyElements.Beam(this, 0, input, build, id);
+                if (only != null) newBeams.Add(only);
             }
 
             DA.SetDataList(0, newBeams);

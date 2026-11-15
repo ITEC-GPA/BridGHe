@@ -44,7 +44,9 @@ namespace BridGHe.Grasshopper.Components.Models
             if (!DA.GetData("Point", ref point))
                 return;
 
-            DA.SetData("Node", new GH_Node(point));
+            // R6.5 P1 lane 3c: the node by its draft alone, identity by content (decision 1 of passo 73). P2K (P1): the only path.
+            var alone = GpcOnlyElements.Generated(this, () => Common.Gpc.Builders.GpcNodeBuilders.Create(point.X, point.Y, point.Z, "", null, GpcOnlyElements.ContentIdentity(ComponentGuid, 0, point)));
+            if (alone != null) DA.SetData("Node", GH_Node.FromGpc(alone));
         }
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BridGHe.Common.Models;
 using BridGHe.Common.MovingLoads;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
@@ -167,9 +166,11 @@ namespace BridGHe.Grasshopper.Components.Loads
             GH_Model input = null; var paths = new List<MovingGoo>(); if (!da.GetData(0, ref input) || !da.GetDataList(1, paths)) return;
             try
             {
-                var model = MovingModelBuilder.ReplacePaths(input.Value,
-                    paths.Select(goo => goo.Value as MovingPath ?? throw new ArgumentException("Atteso Moving Load Path.")));
-                da.SetData(0, GH_Model.FromModel(model, input));
+                var selected = paths.Select(goo => goo.Value as MovingPath ?? throw new ArgumentException("Atteso Moving Load Path.")).ToArray();
+                // R6.5 P1 lane 3d: GPC-only input gives GPC-only output; a refusal gives an error and no output (no FEM model to convert).
+                // P2K (P1): the GPC path only.
+                var gpcInput = Helpers.GpcOnlyModels.InputOf(input);
+                da.SetData(0, Helpers.GpcOnlyModels.SameElements(Common.Gpc.GpcModelTransforms.ReplacePaths(gpcInput, selected, Common.Gpc.GpcIdentity.Derive(InstanceGuid, "model:" + gpcInput.Model.Guid.ToString("D"))), input, gpcInput));
             }
             catch (Exception ex) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message); }
         }

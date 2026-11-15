@@ -1,8 +1,10 @@
 # 47 · Pioli e irrigidimenti: dal dettaglio al modello calcolato
 
+**Aggiornamento 14 novembre 2026 (BridGHe 0.4.0).** I due file con dati BridGHe sono stati risalvati con i dati GPC della 0.4.0, senza dati FEM: 47-integrazione-modello.ghx (i quattro modelli con i risultati archiviati dell'esempio 19 e la proprietà composta; da 1.308.283 a 808.716 byte) e 47-pioli-irrigidimenti-verifiche.ghx (i tre materiali C30, S355 e B450, prima nel formato della 0.3.0; da 1.125.949 a 1.097.010 byte). Componenti, GUID, collegamenti, valori di input, fasi, unità e selezioni sono quelli di prima. Riaperti e ricalcolati senza Straus, danno gli stessi risultati della copia precedente (90 e 132 uscite e messaggi dei componenti); l'unica riga diversa è l'avviso d'ambiente «Bin non aggiornato», che elenca le librerie già caricate. 47-anteprima-grafici.ghx non contiene dati BridGHe e non è stato toccato: i suoi grafici restano validi, perché i risultati del file integrato non cambiano. La copia precedente resta nella cronologia del repository (commit `9350aeb`).
+
 Aggiornamento 26 ottobre 2026: questa definizione usa il [flusso modulare](../../docs/FLUSSO-MODULARE.md). Appoggi, travi, soletta, conci, diaframmi e mesh hanno componenti separati; gli input salvati sono stati conservati. I report precedenti descrivono la geometria di riferimento; il nuovo collaudo è raccolto nella [validazione del refactoring](../../docs/VALIDAZIONE-MODULARE-2026-10-26.md).
 
-Due definizioni per imparare a impostare i dettagli e poi inserirli nel flusso del ponte:
+Due definizioni per imparare a impostare i dettagli e poi inserirli nel flusso del ponte, più una terza che mostra i grafici salvati ([47-anteprima-grafici.ghx](47-anteprima-grafici.ghx), sezione 7):
 
 - [47-pioli-irrigidimenti-verifiche.ghx](47-pioli-irrigidimenti-verifiche.ghx): geometria, azioni locali esplicite e quattro confronti numerici.
 - [47-integrazione-modello.ghx](47-integrazione-modello.ghx): `Models + Phases → Build → Super Element Check → Bridge Detail Check`, con risultati Straus archiviati dell'esempio 19.

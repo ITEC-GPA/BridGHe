@@ -1,5 +1,4 @@
 using System;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -51,10 +50,10 @@ namespace BridGHe.Grasshopper.Components.Loads
             if (!DA.GetData("Force", ref force))
                 return;
 
-            NodeForceLoadModel load = new NodeForceLoadModel(lc.Value, new Vector3d(force.X, force.Y, force.Z));
-            GH_Node newNode = new GH_Node(node);
-            newNode.Value.Loads.Add(load);
-            DA.SetData("Node", newNode);
+            Func<Guid, Common.Gpc.Legacy.LegacyNodeDraft> build = id => Common.Gpc.Builders.GpcNodeBuilders.WithForce(node.Gpc, lc.Gpc, force.X, force.Y, force.Z, id);
+            // P2K (P1): the GPC path only: the draft built on GPC from the drafts of the node and the load case record (identity derived from
+            // the input draft).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Node(this, 0, node, build, GpcOnlyElements.Lazy(() => lc.Gpc), force.X, force.Y, force.Z));
         }
 
         /// <summary>

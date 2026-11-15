@@ -1,5 +1,4 @@
 using System;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -48,8 +47,8 @@ namespace BridGHe.Grasshopper.Components.Definitions
 
             Message = name;
 
-            GroupModel group = new GroupModel(name, haveParent ? parent.Value : null);
-            DA.SetData(0, new GH_Group(group));
+            // P2K (P1): the group by its chain of names alone, built on the GPC datum of the parent (rule of passo 75).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyProperties.Group(this, () => Common.Gpc.Builders.GpcCaseBuilders.Group(name, haveParent ? parent.Gpc : null)));
         }
 
         /// <summary>

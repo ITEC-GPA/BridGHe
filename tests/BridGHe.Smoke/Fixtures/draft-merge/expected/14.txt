@@ -1,0 +1,1 @@
+ERROR Beam 1 has multiple prestrain in loadcase T

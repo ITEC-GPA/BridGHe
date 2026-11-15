@@ -65,60 +65,16 @@ namespace BridGHe.Grasshopper.Components
                 return;
 
             string ax = _axes[axis];
+            Vector3d given = dir;
             dir.Unitize();
 
-            GH_Plate newPlate = new GH_Plate(plate);
-
-            plate.Value.GetLocalAxes(out Vector3d axes1, out Vector3d axes2, out Vector3d axes3);
-            if (ax == "3 Blue")
-            {
-                //align the plate normal to axes reversing node order
-                if (axes3 * dir < 0)
-                {
-                    //reversing
-                    List<Point3d> ps = new List<Point3d>();
-                    foreach (var ppp in newPlate.Value.Points)
-                        ps.Add(new Point3d(ppp.X, ppp.Y, ppp.Z));
-
-                    ps.Reverse();
-                    newPlate.Value.Points = new System.Collections.ObjectModel.ObservableCollection<Point3d>();
-
-                    foreach (Point3d p in ps)
-                        newPlate.Value.Points.Add(p);
-                }
-            }
-            else
-            {
-                Vector3d plateStartingAxes;
-                if (ax == "1 Red")
-                    plateStartingAxes = axes1;
-                else if (ax == "2 Green")
-                    plateStartingAxes = axes2;
-                else
-                    return;
-
-                plateStartingAxes.Unitize();
-                if (Math.Abs(axes3 * dir) > 0.99999)
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Unable to riorient the plate");
-                else
-                {
-                    Vector3d orto = Vector3d.CrossProduct(axes3, dir);
-                    orto.Unitize();
-                    Vector3d newDir = Vector3d.CrossProduct(orto, axes3);
-                    newDir.Unitize();
-
-                    if (newDir * dir < 0)
-                        newDir.Reverse();
-
-                    orto = Vector3d.CrossProduct(axes3, plateStartingAxes);
-                    double x = newDir * plateStartingAxes;
-                    double y = newDir * orto;
-                    double angleIncrementDeg = Math.Atan2(y, x).ToDegrees();
-                    newPlate.Value.AngleDeg += angleIncrementDeg;
-                }
-            }
-
-            DA.SetData(0, newPlate);
+            Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.AlignAxes(plate.Gpc, axis, given.X, given.Y, given.Z, id);
+            // R6.5 P1 lane 1a: the decisions on the corners and the angle of the draft (the warning of a direction along the normal included),
+            // identity derived from the input draft; P2X: the turned local axis angle is mapped on the layer axes of the draft, as the reader
+            // maps it. P2K (P1): the GPC path only.
+            if (ax != "3 Blue" && plate.Gpc != null && Common.Gpc.Builders.GpcPlateBuilders.AlignAxesAlongNormal(plate.Gpc, given.X, given.Y, given.Z))
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Unable to riorient the plate");
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, axis, given));
         }
 
         /// <summary>

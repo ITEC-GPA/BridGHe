@@ -1,4 +1,3 @@
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -77,7 +76,8 @@ namespace BridGHe.Grasshopper.Components.Models
                     }
                 }
 
-                Common.Helpers.ModelHelper.MergeGeometry(ref nodes, ref beams, ref plates, tolerance);
+                // R6.2 (lane B): the merge without the former FEM helpers (ModelHelper goes with FeMM), the same operations.
+                Common.Geometry.BridgeGeometryMerge.Merge(ref nodes, ref beams, ref plates, tolerance);
 
                 DA.SetDataList(0, nodes);
                 DA.SetDataList(1, beams);

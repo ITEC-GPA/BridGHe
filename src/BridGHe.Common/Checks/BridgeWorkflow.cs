@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.Serialization;
-using BridGHe.Common.Models;
 
 namespace BridGHe.Common.Checks;
 
@@ -13,7 +12,20 @@ public enum BridgeWorkflowMethod { Compatible, LinearHistory }
 public sealed record BridgeActionDefinition
 {
     [DataMember] public string Key { get; init; }
-    [DataMember] public ModelModel Source { get; init; }
+    /// <summary>F6 (a)/(b): the analysed GPC model of <see cref="Source"/> with its results catalog (the analysis attached it to the GH
+    /// model), from which Build BridGHe Model merges the action; null for a source analysed before F6 C3 (the FEM results are merged).
+    /// Not persisted: the Bridge Action components set it again from their analysed model.</summary>
+    [IgnoreDataMember] public GPC.Model.Models.Model GpcSource { get; init; }
+    /// <summary>F6 (L11): the GPC model of <see cref="Source"/> (the analysed one when it was analysed, else its conversion), the beams of
+    /// the local section states Build BridGHe Model reads. Not persisted, as <see cref="GpcSource"/>.</summary>
+    [IgnoreDataMember] public GPC.Model.Models.Model GpcModel { get; init; }
+    /// <summary>F6 (L12): the bridge data of the GPC model of <see cref="Source"/> (by beam GUID: the analysed model keeps the GUIDs of its
+    /// conversion), with the local section states (Bridge State Override). Not persisted, as <see cref="GpcSource"/>.</summary>
+    [IgnoreDataMember] public GPC.Checkers.CompositeBridge.BridgeModelData GpcBridgeData { get; init; }
+    /// <summary>L3b: the GPC input of the model of the action (units, angles and cases of its source, before and without an analysis): what the
+    /// GPC-only path reads of a source that was not analysed (no <see cref="GpcSource"/>), where the FEM path reads <see cref="Source"/>. Not
+    /// persisted, as <see cref="GpcSource"/>.</summary>
+    [IgnoreDataMember] public Gpc.GpcModels.Conversion GpcInput { get; init; }
     [DataMember] public string Case { get; init; }
     [DataMember] public BridgeActionBehavior Behavior { get; init; }
     /// <summary>Concrete eigenstrain increment [dimensionless], contraction negative. Null means absent, zero is an explicit value.</summary>

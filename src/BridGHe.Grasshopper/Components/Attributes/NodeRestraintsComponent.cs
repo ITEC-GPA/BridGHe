@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -50,14 +49,12 @@ namespace BridGHe.Grasshopper.Components.Attributes
             if (!DA.GetData("Node", ref node))
                 return;
 
-            GH_Node newNode = new GH_Node(node);
-
             List<IGH_Goo> trans = new List<IGH_Goo>();
             List<IGH_Goo> rot = new List<IGH_Goo>();
             DA.GetDataList(1, trans);
             DA.GetDataList(2, rot);
 
-            NodeRestraintAttributeModel.AttributeData attr = new NodeRestraintAttributeModel.AttributeData();
+            RestraintData attr = new RestraintData();
             for (int i = 0; i < trans.Count && i < 3; i++)
             {
                 if (trans[i].CastTo(out bool b))
@@ -195,9 +192,15 @@ namespace BridGHe.Grasshopper.Components.Attributes
                 }
             }
 
-            newNode.Value.Attributes.Add(new NodeRestraintAttributeModel(attr));
+            Func<Guid, Common.Gpc.Legacy.LegacyNodeDraft> build = id => Common.Gpc.Builders.GpcNodeBuilders.WithRestraint(node.Gpc, attr.Tx, attr.Ty, attr.Tz, attr.Rx, attr.Ry, attr.Rz, id);
+            // P2K (P1): the GPC path only: the draft built on GPC (identity derived from the input draft).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Node(this, 0, node, build, attr.Tx, attr.Ty, attr.Tz, attr.Rx, attr.Ry, attr.Rz));
+        }
 
-            DA.SetData("Node", newNode);
+        /// <summary>P2K (P1): the restraints read from the inputs (the flags of the former NodeRestraintAttributeModel.AttributeData).</summary>
+        private sealed class RestraintData
+        {
+            public bool Tx, Ty, Tz, Rx, Ry, Rz;
         }
 
         /// <summary>

@@ -61,8 +61,14 @@ namespace BridGHe.Grasshopper.Components.Models
 
             if (face.Vertices.Count < 3)
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Mesh with less than 3 vertices");
+            // PAR (A07, user decision of 8/11, «Sì, come proponi»): a plate takes one face of 3 or 4 vertices, on both paths (FEM and GPC): an error
+            // and no output (0.3.0 warned and made a plate of the first naked edge, of 6, 8 or 9 nodes: no longer, the Converter writes plates of
+            // 3 or 4 nodes).
             if (face.Vertices.Count > 4)
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Warning: Mesh have more than 4 vertices");
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, Common.Gpc.Builders.GpcPlateBuilders.MoreThanFourNodes);
+                return;
+            }
 
             Polyline edges = face.GetNakedEdges().FirstOrDefault();
 
@@ -70,15 +76,17 @@ namespace BridGHe.Grasshopper.Components.Models
             for (int i = 0; i < edges.Count - 1; i++)
                 vertexes[i] = edges[i];
 
-            GH_Plate plate = new GH_Plate(vertexes, pp, groups.ToArray());
-
-            if (angle != 0)
-                plate.Value.AngleDeg = angle;
-
-            if (offset != 0)
-                plate.Value.Offset = offset;
-
-            DA.SetData("Plate", plate);
+            // R6.5 P1 lane 2a: a property or a group given by its GPC datum alone gives the plate by its draft alone (rule of passo 75: no FEM
+            // value from a null value), with the identity by content of the generators (decision 1 of passo 73: the one rule shared with P2;
+            // the parameters of the builder: corners, property, groups, angle, offset). A refused plate or property gives an error and no plate.
+            // P2K (P1): the only path, for every input (GroupChain reads the GPC datum of a group; no FEM value).
+            var draft = GpcOnlyElements.Generated(this, () =>
+            {
+                var chains = groups.Select(g => GpcBuilderAttach.GroupChain(g)).ToArray();
+                return Common.Gpc.Builders.GpcPlateBuilders.Create(vertexes.Select(v => (v.X, v.Y, v.Z)).ToArray(), pp.Gpc, chains, angle, offset, "",
+                    GpcOnlyElements.ContentIdentity(ComponentGuid, 0, vertexes, pp.Gpc, chains, angle, offset));
+            });
+            if (draft != null) DA.SetData("Plate", GH_Plate.FromGpc(draft));
         }
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;

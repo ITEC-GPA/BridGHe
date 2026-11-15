@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using GPC.Geometry;
 using GPC.Model.Results;
 
@@ -12,40 +11,35 @@ namespace BridGHe.Common.Checks
 
     public static class BridgePhaseAssembler
     {
-        public static BridgePhaseActions Assemble(ElementModel beam, double length, double station,
-            LoadCombinationModel combination, CoordinateSystem reference, double tolerance) =>
-            CreateIndex(beam, length, tolerance).Assemble(station, combination, reference);
 
-        public static ResultIndex CreateIndex(ElementModel beam, double length, double tolerance) => new ResultIndex(beam, length, tolerance);
+
+        /// <summary>F6 (a)/(b), R4: the index of a beam of the GPC bridge model, from its merged samples (case name, station mm, BridGHe
+        /// convention: the numbers of the former result objects). No slab strain: the GPC workflow executor takes the strains from its recipe.</summary>
+        public static ResultIndex CreateIndex(string beamId, IEnumerable<(string Case, BeamForceSample Sample)> samples, double tolerance) => new ResultIndex(beamId, samples, tolerance);
 
         /// <summary>Build once after results are attached, then reuse for every station and combination.</summary>
         public sealed class ResultIndex
         {
             public string BeamId { get; }
-            private readonly Dictionary<string, (double Station, BeamForceResultModel Force)[]> _forces;
-            private readonly Dictionary<string, double> _strains;
+            private readonly Dictionary<string, (double Station, BeamForceSample Force)[]> _forces;
             private readonly double _tolerance;
 
-            internal ResultIndex(ElementModel beam, double length, double tolerance)
+
+            internal ResultIndex(string beamId, IEnumerable<(string Case, BeamForceSample Sample)> samples, double tolerance)
             {
-                if (beam == null) throw new ArgumentNullException(nameof(beam));
-                BeamId = beam switch { BeamModel b => b.BeamId, CompositeBeamModel b => b.BeamId, _ => null };
-                if (!double.IsFinite(length) || length <= 0) throw new ArgumentOutOfRangeException(nameof(length));
+                if (samples == null) throw new ArgumentNullException(nameof(samples));
                 if (!double.IsFinite(tolerance) || tolerance < 0) throw new ArgumentOutOfRangeException(nameof(tolerance));
-                _tolerance = tolerance;
-                _forces = beam.Results.OfType<BeamForceResultModel>().GroupBy(f => f.LoadCase.Name, StringComparer.Ordinal)
-                    .ToDictionary(g => g.Key, g => g.Select(f => (Station: f.NormalizedLength ? f.Station * length : f.Station, Force: f))
-                        .OrderBy(f => f.Station).ToArray(), StringComparer.Ordinal);
+                BeamId = beamId; _tolerance = tolerance;
+                _forces = samples.GroupBy(f => f.Case, StringComparer.Ordinal)
+                    .ToDictionary(g => g.Key, g => g.Select(f => (Station: f.Sample.Station, Force: f.Sample)).OrderBy(f => f.Station).ToArray(), StringComparer.Ordinal);
                 if (_forces.Values.SelectMany(f => f).Any(f => !double.IsFinite(f.Station)))
                     throw new ArgumentException("Stazione di risultato non finita.");
-                _strains = beam.Loads.OfType<CompositeBeamSlabStrainModel>().GroupBy(l => l.LoadCase.Name, StringComparer.Ordinal)
-                    .ToDictionary(g => g.Key, g => g.Sum(l => l.Value.Strain), StringComparer.Ordinal);
             }
 
-            private BeamForceResultModel ForceAt(string name, double station)
+            private BeamForceSample ForceAt(string name, double station)
             {
                 int count = 0;
-                BeamForceResultModel result = null;
+                BeamForceSample result = default;
                 if (_forces.TryGetValue(name, out var values))
                 {
                     int low = 0, high = values.Length;
@@ -64,45 +58,75 @@ namespace BridGHe.Common.Checks
 
             public ResultBeamForces ReadForce(string name, double station, CoordinateSystem reference, double coefficient) =>
                 name == null || coefficient == 0 ? new ResultBeamForces(0, 0, 0, 0, 0, 0, reference) :
-                BridgeCheckAdapter.Scale(BridgeForceConvention.FromStraus(ForceAt(name, station), reference), coefficient);
+                BridgeCheckAdapter.Scale(BridgeForceConvention.FromStraus(ForceAt(name, station), name, reference), coefficient);
 
-            public double ReadStrain(string name, double coefficient) =>
-                name != null && _strains.TryGetValue(name, out double strain) ? strain * coefficient : 0;
+            /// <summary>P2CE (13/11/2026, phase 2a): always 0, as the index of the GPC samples has always given (the slab strains were read only
+            /// by the FEM index, deleted in phase 1; the GPC workflow executor takes the strains from its recipe).</summary>
+            public double ReadStrain(string name, double coefficient) => 0;
 
-            public BridgePhaseActions Assemble(double station, LoadCombinationModel combination, CoordinateSystem reference)
+
+            /// <summary>R6.4 (5), decision (i) = A: the actions of a combination of the GPC bridge model at a station, from its combination table
+            /// (<see cref="Gpc.GpcBridge.Combinations"/>: case names and coefficients in order, zeros included) and the phase of every merged
+            /// case from the records of the recipe (<see cref="Gpc.GpcBridge.Records"/>: "key [FEM]" in the behaviour of its action, "key
+            /// [strain]" a strain increment), with the same sums in the same order as the former FEM <c>Assemble(station, combination, reference)</c> (deleted in P2CE phase 1)
+            /// on the merged FEM model (whose cases had these phases as their one stage).</summary>
+            public BridgePhaseActions Assemble(double station, IEnumerable<(string Case, double Factor)> factors, IReadOnlyDictionary<string, BridgeCasePhase> phases, CoordinateSystem reference)
             {
                 if (!double.IsFinite(station)) throw new ArgumentOutOfRangeException(nameof(station));
+                if (factors == null) throw new ArgumentNullException(nameof(factors));
+                if (phases == null) throw new ArgumentNullException(nameof(phases));
                 ResultBeamForces Zero() => new ResultBeamForces(0, 0, 0, 0, 0, 0, reference);
                 var steel = Zero(); var infinite = Zero(); var instant = Zero();
                 ResultBeamForces shrinkage = null;
                 double strainInfinite = 0, strainInstant = 0;
-                foreach (var entry in combination.Values)
+                foreach (var (name, factor) in factors)
                 {
-                    if (entry.Value == 0) continue;
-                    var loadCase = entry.Key;
-                    if (loadCase.Stages == null || loadCase.Stages.Count != 1)
-                        throw new InvalidOperationException($"Il caso {loadCase.Name} deve appartenere a una sola fase BridgeChecks.");
-                    var phase = loadCase.Stages[0].BridgePhase;
-                    if (phase == LoadCaseModel.Stage.BridgePhases.StrainInfinite || phase == LoadCaseModel.Stage.BridgePhases.StrainInstant)
+                    if (factor == 0) continue;
+                    if (name == null || !phases.TryGetValue(name, out var phase)) throw new InvalidOperationException($"Fase non assegnata per il caso {name}.");
+                    if (phase == BridgeCasePhase.StrainInfinite || phase == BridgeCasePhase.StrainInstant)
                     {
-                        _strains.TryGetValue(loadCase.Name, out double unscaledStrain);
-                        double strain = unscaledStrain * entry.Value;
-                        if (phase == LoadCaseModel.Stage.BridgePhases.StrainInfinite) strainInfinite += strain;
+                        double unscaledStrain = 0; // P2CE phase 2a: no strain in the index of the GPC samples (as before: an empty table)
+                        double strain = unscaledStrain * factor;
+                        if (phase == BridgeCasePhase.StrainInfinite) strainInfinite += strain;
                         else strainInstant += strain;
                         continue;
                     }
-                    var force = BridgeCheckAdapter.Scale(BridgeForceConvention.FromStraus(ForceAt(loadCase.Name, station), reference), entry.Value);
+                    var force = BridgeCheckAdapter.Scale(BridgeForceConvention.FromStraus(ForceAt(name, station), name, reference), factor);
                     switch (phase)
                     {
-                        case LoadCaseModel.Stage.BridgePhases.OnlySteel: steel += force; break;
-                        case LoadCaseModel.Stage.BridgePhases.NInfinite: infinite += force; break;
-                        case LoadCaseModel.Stage.BridgePhases.NInstant: instant += force; break;
-                        case LoadCaseModel.Stage.BridgePhases.NShrinkage: shrinkage = (shrinkage ?? Zero()) + force; break;
-                        default: throw new InvalidOperationException($"Fase non assegnata per il caso {loadCase.Name}.");
+                        case BridgeCasePhase.OnlySteel: steel += force; break;
+                        case BridgeCasePhase.NInfinite: infinite += force; break;
+                        case BridgeCasePhase.NInstant: instant += force; break;
+                        case BridgeCasePhase.NShrinkage: shrinkage = (shrinkage ?? Zero()) + force; break;
+                        default: throw new InvalidOperationException($"Fase non assegnata per il caso {name}.");
                     }
                 }
                 return new BridgePhaseActions(steel, infinite, instant, strainInfinite, strainInstant, shrinkage);
             }
         }
+
+        /// <summary>R6.4 (5): the phase of every merged case of a bridge recipe, as <see cref="BridgeWorkflowBuilder"/> gave the cases of the
+        /// merged FEM model: the force case of an action in its behaviour (steel, long term, short term, shrinkage), its strain case a strain
+        /// increment (short term: instantaneous, otherwise long term).</summary>
+        public static IReadOnlyDictionary<string, BridgeCasePhase> CasePhases(BridgeWorkflow records)
+        {
+            if (records == null) throw new ArgumentNullException(nameof(records));
+            var phases = new Dictionary<string, BridgeCasePhase>(StringComparer.Ordinal);
+            foreach (var a in records.Phases.SelectMany(p => p.Actions))
+            {
+                if (a.ForceCase != null) phases[a.ForceCase] = a.Behavior switch
+                {
+                    BridgeActionBehavior.Steel => BridgeCasePhase.OnlySteel,
+                    BridgeActionBehavior.LongTerm => BridgeCasePhase.NInfinite,
+                    BridgeActionBehavior.ShortTerm => BridgeCasePhase.NInstant,
+                    _ => BridgeCasePhase.NShrinkage,
+                };
+                if (a.StrainCase != null) phases[a.StrainCase] = a.Behavior == BridgeActionBehavior.ShortTerm ? BridgeCasePhase.StrainInstant : BridgeCasePhase.StrainInfinite;
+            }
+            return phases;
+        }
     }
+
+    /// <summary>R6.4 (5): the phase of a merged case of the bridge recipe (the former BridgePhases of its FEM case).</summary>
+    public enum BridgeCasePhase { OnlySteel, NInfinite, NInstant, NShrinkage, StrainInfinite, StrainInstant }
 }

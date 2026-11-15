@@ -1,10 +1,9 @@
+using BridGHe.Common.Helpers;
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Rhino.Geometry;
-using BridGHe.Common.Helpers;
 using System.ComponentModel;
 using BridGHe.Grasshopper.Helpers;
 using BridGHe.Grasshopper.DataTypes.Fem;
@@ -45,6 +44,7 @@ namespace BridGHe.Grasshopper.Components.Attributes
             }
         }
 
+
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
@@ -77,28 +77,17 @@ namespace BridGHe.Grasshopper.Components.Attributes
             if (!DA.GetData(6, ref alignmentY))
                 return;
 
-            //Taper cannot be applied to beams with mirrors, like st7
-            if (beam.Value.BeamProperty.Mirror != SectionModel.MirrorTypes.None)
+            string alignX = Common.Gpc.Builders.GpcBeamBuilders.Code(Common.Gpc.Builders.GpcBeamBuilders.TaperAlignments, alignmentX);
+            string alignY = Common.Gpc.Builders.GpcBeamBuilders.Code(Common.Gpc.Builders.GpcBeamBuilders.TaperAlignments, alignmentY);
+            Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithTaper(beam.Gpc, nFromX, nFromY, nToX, nToY, alignX, alignY, id);
+            // P2K (P1): the GPC path only: the draft built on GPC (identity derived from the input draft).
+            // LIB (A02b): a draft can hold a double C or double angle: taper cannot be applied to mirrored beams (as Straus7), on its native section.
+            if (beam.Gpc?.Property?.Native != null && beam.Gpc.Property.Native.MirrorType != 0)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Unable to apply the taper attribute to mirrored beams");
                 return;
             }
-
-            GH_Beam new_beam = new GH_Beam(beam);
-
-            BeamTaperAttributeModel.AttributeData data = new BeamTaperAttributeModel.AttributeData()
-            {
-                NFromX = nFromX,
-                NToX = nToX,
-                NFromY = nFromY,
-                NToY = nToY,
-                AlignmentX = (BeamTaperAttributeModel.AlignmentCodes)alignmentX,
-                AlignmentY = (BeamTaperAttributeModel.AlignmentCodes)alignmentY
-            };
-            BeamTaperAttributeModel attr = new BeamTaperAttributeModel(data);
-            new_beam.Value.Attributes.Add(attr);
-
-            DA.SetData("Beam", new_beam);
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, nFromX, nFromY, nToX, nToY, alignX, alignY));
         }
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;
@@ -112,5 +101,12 @@ namespace BridGHe.Grasshopper.Components.Attributes
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
         public override Guid ComponentGuid => new Guid("5010971e-bdee-44d6-9edc-9d6beb8ad165");
+
+        // P2K (P1): the FEM enums the registration of the ports names, shadowed by private types of the same name, members, integers and
+        // descriptions (Common/Models): the ports and menus are those of before, token for token (contract audit), with no FEM type.
+        private static class BeamTaperAttributeModel
+        {
+            internal enum AlignmentCodes { [System.ComponentModel.Description("Top")] Top = 0, [System.ComponentModel.Description("Center")] Center = 1, [System.ComponentModel.Description("Bottom")] Bottom = 2 }
+        }
     }
 }

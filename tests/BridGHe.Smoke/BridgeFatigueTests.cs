@@ -1,24 +1,22 @@
 using System;
 using System.Linq;
 using BridGHe.Common.Diagnostics;
-using BridGHe.Common.Models;
 using Rhino.Geometry;
 
 internal static class BridgeFatigueTests
 {
-    internal static ModelModel HistoryModel()
+    /// <summary>P2T: <see cref="HistoryModel"/> built directly in GPC: one 1000 mm beam with the axial force of each transit case at both ends.</summary>
+    internal static GPC.Model.Models.Model HistoryGpc()
     {
-        var model = new ModelModel(ModelModel.ModelUnits.Nmm) { Name = "Synthetic transit for testing" };
-        var beam = new BeamModel(Point3d.Origin, new Point3d(1000, 0, 0), BridgeAssignmentTests.Property()) { BeamId = "1" };
-        model.AddElements(new[] { beam });
+        var test = new GpcTestModel("Synthetic transit for testing");
+        var beam = test.Beam("1", test.Node("1", 0, 0, 0), test.Node("2", 1000, 0, 0));
         var values = new[] { 0d, 10, 2, 8, 0 };
         for (int i = 0; i < values.Length; i++)
         {
-            var c = new LoadCaseModel($"Q{i}", $"Q{i}"); model.LoadCases.Add(c);
-            foreach (double x in new[] { 0d, 1 })
-                beam.Results.Add(new BeamForceResultModel(c, x, 0, "Transit", true) { AxialForce = values[i] });
+            test.Case($"Q{i}");
+            foreach (double x in new[] { 0d, 1000 }) test.Forces(beam, $"Q{i}", x, values[i]);
         }
-        return model;
+        return test.Analyse();
     }
     internal static void Run()
     {
@@ -30,12 +28,31 @@ internal static class BridgeFatigueTests
         Require(BridgeFatigueHistory.Count(new[] { 7d, 7, 7 }, 3, 1).Count == 0, "Constant history");
         var monotonic = BridgeFatigueHistory.Count(new[] { 0d, 1, 2 }, 1, .5);
         Require(monotonic.Count == .5 && monotonic.EquivalentRange == 2, "Open monotonic history is one half cycle");
-        var model = HistoryModel(); var cases = model.LoadCases.Select(c => c.Name).ToArray();
-        var extracted = BridgeFatigueHistory.Extract(model, "1", 500, cases, 0);
-        Require(extracted.Values.SequenceEqual(new[] { 0d, 10, 2, 8, 0 }) && extracted.Sources[1].Contains("Q1"), "Explicit transit order and physical station interpolation");
-        var stress = BridgeFatigueHistory.Extract(model, "1", 500, cases, 0, new[] { .1, 0, 0, 0, 0, 0 });
-        Require(stress.Values[1] == 1, "Explicit response transform");
-        Reject(() => BridgeFatigueHistory.Extract(model, "1", 500, null, 0));
+        // R6.6 R2b: the history of the analysed GPC model built in GPC alone, no FEM model.
+        var analysed = HistoryGpc(); var gpcCases = analysed.LoadCases.Keys.ToArray();
+        Require(gpcCases.SequenceEqual(new[] { "Q0", "Q1", "Q2", "Q3", "Q4" }), "GPC: cases in transit order");
+        var gpcHistory = BridgeFatigueHistory.Extract(analysed, "1", 500, gpcCases, 0);
+        Require(gpcHistory.Values.SequenceEqual(new[] { 0d, 10, 2, 8, 0 }) && gpcHistory.Sources[1].Contains("Q1"), "GPC: Explicit transit order and physical station interpolation");
+        var gpcStress = BridgeFatigueHistory.Extract(analysed, "1", 500, gpcCases, 0, new[] { .1, 0, 0, 0, 0, 0 });
+        Require(gpcStress.Values[1] == 1, "GPC: Explicit response transform");
+        Reject(() => BridgeFatigueHistory.Extract(analysed, "1", 500, null, 0));
+        Reject(() => BridgeFatigueHistory.Extract(analysed, "1", 500, new[] { "missing" }, 0));
+        Reject(() => BridgeFatigueHistory.Extract(analysed, "2", 500, gpcCases, 0));
+        Reject(() => BridgeFatigueHistory.Extract(analysed, "1", 1500, gpcCases, 0));
+        // Explicit expected histories (they replace the former parity with the FEM history): the axial force of the transit is constant along
+        // the beam, the other components are zero; with the response factors the response is 0.1 N. At both ends, mid length (resampled) and an
+        // off-grid station, for every component; the source names the model, the beam, the station, the case and the step (0, no step type).
+        var transit = new[] { 0d, 10, 2, 8, 0 };
+        foreach (double station in new[] { 0d, 250, 500, 1000 })
+            foreach (var factors in new[] { null, new[] { .1, .2, .3, .4, .5, .6 } })
+                for (int component = 0; component < 6; component++)
+                {
+                    var b = BridgeFatigueHistory.Extract(analysed, "1", station, gpcCases, component, factors);
+                    var expected = transit.Select(v => factors != null ? v * .1 : component == 0 ? v : 0).ToArray();
+                    var sources = gpcCases.Select(c => FormattableString.Invariant($"Synthetic transit for testing/1/{station:G17}/{c}/0/")).ToArray();
+                    Require(b.Values.Select(R2bFixtures.Bits).SequenceEqual(expected.Select(R2bFixtures.Bits)) && b.Sources.SequenceEqual(sources),
+                        $"GPC history: explicit values and sources (station {station}, component {component}, factors {factors != null}): {string.Join(",", b.Values)} / {string.Join(" ; ", b.Sources)}");
+                }
         Reject(() => BridgeFatigueHistory.Count(new[] { 0d, double.NaN }, 3, 1));
         Reject(() => BridgeFatigueHistory.Count(new[] { 0d, 1 }, 0, 1));
         Reject(() => BridgeFatigueHistory.Count(new[] { -double.MaxValue, double.MaxValue }, 3, 1));

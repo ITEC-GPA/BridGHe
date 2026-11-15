@@ -49,9 +49,10 @@ public sealed class BridgeSectionCheckComponent:GH_Component
                 TopRebars=Definition(top,new BridgeRebarRow()),BottomRebars=Definition(bottom,new BridgeRebarRow()),
                 Options=Definition(options,new BridgeAnalysisOptions{Standard=BridgeStandard.Eurocode4,LimitState=BridgeLimitState.Rare}),
                 Phases=phases.Select(p=>Definition<BridgePhase>(p,null)??throw new ArgumentException("Phase required.")).Where(p=>p.Active).ToArray(),
-                Materials=BridgeGpc.Materials(concrete.Value,steel.Value,rebar?.Value)
+                // R6.5 P1 lane 3a: the set from the GPC materials (BridgeGpc.Materials(Material…)). P2K (P1): the only path.
+                Materials=BridgeGpc.Materials(concrete?.Gpc,steel?.Gpc,rebar?.Gpc)
             };
-            if((input.TopRebars.Enabled||input.BottomRebars.Enabled)&&rebar?.Value==null)throw new ArgumentException("Reinforcement material required for enabled reinforcement rows.");
+            if((input.TopRebars.Enabled||input.BottomRebars.Enabled)&&rebar?.Gpc==null)throw new ArgumentException("Reinforcement material required for enabled reinforcement rows.");
             input=BridgeGpc.WithDetails(input,details.Select(d=>d.Value));
             var result=HBridgeSection.Calculate(input);
             da.SetDataList(0,Enumerable.Range(0,result.Stages.Count).Select(i=>new BridgeStressResult(result,i)));

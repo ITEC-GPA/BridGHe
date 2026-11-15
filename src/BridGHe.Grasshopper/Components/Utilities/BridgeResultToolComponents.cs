@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Diagnostics;
-using BridGHe.Common.Models;
 using BridGHe.Common.Checks;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
@@ -30,11 +29,15 @@ public sealed class BridgeResultCasesComponent : BridgeUtilityComponent
     protected override void Solve(IGH_DataAccess da)
     {
         GH_Model model = null; if (!da.GetData(0, ref model)) return;
-        var all = model.Value.Elements.SelectMany(e => e.Results).ToArray();
-        if (all.Any(r => r.LoadCase == null || string.IsNullOrWhiteSpace(r.LoadCase.Name) || !double.IsFinite(r.StepNum))) throw new ArgumentException("A result has invalid case/step identity.");
-        var rows = all.GroupBy(r => (Case: r.LoadCase.Name, Step: r.StepNum, Type: r.StepType, Result: r.GetType().Name)).OrderBy(g => g.Key.Case, StringComparer.Ordinal).ThenBy(g => g.Key.Step).ThenBy(g => g.Key.Type, StringComparer.Ordinal).ThenBy(g => g.Key.Result, StringComparer.Ordinal).ToArray();
+        // F6 (a)/(b), R6.4 (6): the analysed GPC model with its results catalog only (no FEM results); a model without one: the notice, no rows.
+        var analysed = model?.GpcResults;
+        if (analysed == null) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, model?.LegacyNotice ?? Common.Gpc.GpcResultCatalog.NoAnalysedModelMessage); return; }
+        var all = BridgeResultCases.Records(analysed);
+        if (all.Any(r => string.IsNullOrWhiteSpace(r.Case) || !double.IsFinite(r.Step))) throw new ArgumentException("A result has invalid case/step identity.");
+        var rows = all.GroupBy(r => r).OrderBy(g => g.Key.Case, StringComparer.Ordinal).ThenBy(g => g.Key.Step).ThenBy(g => g.Key.Type, StringComparer.Ordinal).ThenBy(g => g.Key.Result, StringComparer.Ordinal).ToArray();
         da.SetDataList(0, rows.Select(g => g.Key.Case).Distinct()); da.SetDataList(1, rows.Select(g => g.Key.Case)); da.SetDataList(2, rows.Select(g => g.Key.Step));
-        da.SetDataList(3, rows.Select(g => g.Key.Type)); da.SetDataList(4, rows.Select(g => g.Key.Result)); da.SetDataList(5, rows.Select(g => g.Count())); da.SetData(6, model.Value.Units.ToString());
+        da.SetDataList(3, rows.Select(g => g.Key.Type)); da.SetDataList(4, rows.Select(g => g.Key.Result)); da.SetDataList(5, rows.Select(g => g.Count()));
+        da.SetData(6, Common.Gpc.GpcResultCatalog.Of(analysed).Units.Units.ToString());
         if (all.Length == 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The model has no stored results.");
     }
 }

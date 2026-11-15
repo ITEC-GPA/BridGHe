@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -59,24 +58,9 @@ namespace BridGHe.Grasshopper.Components.Sections
             DA.GetData(4, ref mirrored);
             DA.GetData(5, ref gap);
 
-            SectionModel sectionModel = new SectionModel()
-            {
-                SectionType = SectionModel.SectionTypes.Angle,
-                D = d,
-                B = b,
-                T1 = t1,
-                T2 = t2
-            };
-
-            GH_BeamSection section = new GH_BeamSection(sectionModel);
-            if (mirrored)
-            {
-                section.MirrorType = SectionModel.MirrorTypes.Left;
-                section.MirrorGapA = gap;
-            }
-
-            sectionModel.CalculateSection();
-            DA.SetData(0, section);
+            // L2C (lane 2c, as in 0.3.0): Double Sections gives the mirrored section (Left, with its gap) as a recipe.
+            // P2K (P1): the section by its recipe alone (a refused recipe gives an error and no section).
+            Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.Section(this, () => Common.Gpc.Builders.GpcSectionBuilders.Standard(Common.Gpc.BridgeSectionKind.Angle, d, b, t1: t1, t2: t2, mirror: mirrored ? 2 : Common.Gpc.Legacy.LegacySectionRecipe.NoMirror, gapA: mirrored ? gap : 0)));
         }
 
         /// <summary>

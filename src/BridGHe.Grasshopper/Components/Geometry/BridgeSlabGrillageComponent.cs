@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using BridGHe.Common.Geometry;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.Components.Utilities;
 using BridGHe.Grasshopper.DataTypes;
 using BridGHe.Grasshopper.DataTypes.Fem;
@@ -33,11 +32,19 @@ public sealed class BridgeSlabGrillageComponent : BridgeUtilityComponent
     {
         BridgeGeometryGoo g=null; GH_Material m=null; string name="Soletta trasversale";
         if(!da.GetData(0,ref g)||!da.GetData(1,ref m)) return; da.GetData(2,ref name);
-        var result=BridgeSlabGrillage.Create(g.Value,m.Value,name);
-        da.SetDataList(0,result.Beams.Select(b=>new GH_Beam(b)));
-        da.SetDataList(1,result.Beams.Select(b=>new GH_BeamProperty(b.BeamProperty)));
+        // R6.2 (lane B): the strip properties and beams also built on GPC (the analysis material of the GPC datum of the material).
+        GPC.Model.Materials.Material analysis=null;
+        try{analysis=Common.Gpc.GpcMaterials.Analysis(m.Gpc);}catch(Exception x) when (x is ArgumentException || x is NotSupportedException || x is InvalidOperationException){}
+        // R6.5 P1 lane 2a / P2K (P1): the material is checked on its GPC datum; the beams and the strip properties are given by their GPC data
+        // alone (rule of passo 75).
+        var result=BridgeSlabGrillage.Create(g.Value,name,analysis,m.Gpc);
+        var onlyBeams=BridgeMemberAssignmentComponent.GpcOnly(this,0,result.Plans); // R65-C2-08: a refused plan, no outputs
+        if(onlyBeams==null) return;
+        da.SetDataList(0,onlyBeams);
+        da.SetDataList(1,result.Plans.Select(p=>GpcOnlyProperties.BeamProperty(this,p.Property)).Where(p=>p!=null));
         da.SetDataList(2,result.Widths);
-        da.SetDataList(3,result.Beams.Select(b=>b.Attributes.OfType<BridgeMemberAttributeModel>().Single().Value.GeometryId));
-        da.SetData(4,"Transverse rectangular strips only; section y follows slab normal. Widths are measured along alignment. Curved/skew grillage stiffness requires calibration. Add eccentric links separately; longitudinal composite action belongs to girder section/phase properties.");
+        da.SetDataList(3,result.Plans.Select(p=>p.GeometryId));
+        da.SetData(4,Information);
     }
+    private const string Information="Transverse rectangular strips only; section y follows slab normal. Widths are measured along alignment. Curved/skew grillage stiffness requires calibration. Add eccentric links separately; longitudinal composite action belongs to girder section/phase properties.";
 }

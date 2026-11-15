@@ -8,7 +8,9 @@ internal static class BridgeCheckMapTests
 {
     internal static void Run()
     {
-        var model = BridgeConstructionTests.Model(SimpleBridgeBuilder.Build(SimpleBridgeTests.Input()));
+        // P2CA (13/11/2026): the map on beams as the map reads them (BridgeMapBeam: the BridGHe ID, the axis and the length, the form the component
+        // gives on GPC), three beams of 10 m; the expected values are the same explicit ones (the FEM model of the simple bridge is not needed).
+        var model = new[] { "1", "2", "3" }.Select((id, i) => new BridgeMapBeam(id, new Rhino.Geometry.Line(10000 * i, 0, 0, 10000 * (i + 1), 0, 0), 10000)).ToArray();
         var rows = new[]
         {
             new BridgeMappedCheck("1", 0, "P1", "C1", "Shear", .8, "Entro limite", ""),

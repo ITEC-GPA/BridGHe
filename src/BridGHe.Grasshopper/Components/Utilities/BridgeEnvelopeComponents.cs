@@ -41,11 +41,13 @@ public abstract class BridgeEnvelopeComponent : BridgeUtilityComponent
         GH_Model model = null; var ids = new List<string>(); var cases = new List<string>(); int component = Kind == 0 ? 5 : 2, mode = 2;
         if (!da.GetData(0, ref model) || !da.GetData(3, ref component) || !da.GetData(4, ref mode)) return;
         da.GetDataList(1, ids); da.GetDataList(2, cases);
-        var rows = BridgeResultEnvelope.Evaluate(model.Value, Kind, ids, cases, component, mode);
+        // F6 (a)/(b), R6.4 (6): the analysed GPC model with its results catalog only (no FEM results).
+        var analysed = model?.GpcResults ?? throw new ArgumentException(model?.LegacyNotice ?? Common.Gpc.GpcResultCatalog.NoAnalysedModelMessage);
+        var rows = BridgeResultEnvelope.Evaluate(analysed, Kind, ids, cases, component, mode);
         da.SetDataList(0, rows.Select(r => r.Element)); da.SetDataList(1, rows.Select(r => r.Station)); da.SetDataList(2, rows.Select(r => r.Value));
         da.SetDataList(3, rows.Select(r => r.Case)); da.SetDataList(4, rows.Select(r => r.Step)); da.SetDataList(5, rows.Select(r => r.StepType));
         var tree = new GH_Structure<GH_Number>(); for (int i = 0; i < rows.Length; i++) tree.AppendRange(rows[i].Components.Select(v => new GH_Number(v)), new GH_Path(i));
-        da.SetDataTree(6, tree); da.SetDataList(7, rows.Select(r => new GH_ObjectWrapper(r.Source))); da.SetDataList(8, rows.Select(r => r.Coverage)); da.SetData(9, model.Value.Units.ToString());
+        da.SetDataTree(6, tree); da.SetDataList(7, rows.Select(r => new GH_ObjectWrapper(r.Source))); da.SetDataList(8, rows.Select(r => r.Coverage)); da.SetData(9, Common.Gpc.GpcResultCatalog.Of(analysed).Units.Units.ToString());
         if (rows.Any(r => r.Coverage != "Complete cases")) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Some stations have incomplete case coverage: inspect Coverage.");
     }
 }

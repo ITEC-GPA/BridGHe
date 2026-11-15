@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.Components.Parameters;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
@@ -84,7 +83,16 @@ namespace BridGHe.Grasshopper.Components.Loads
             }
             else if (obj.GetType() == typeof(GH_String))
             {
-                double val = Convert.ToDouble(((GH_String)obj).Value);
+                // P2CI (MU-02, ChatGPT task 74): the text read as before (Convert.ToDouble: the current number format; null is 0, an empty string is invalid); a text
+                // that is not a number now says so instead of the generic exception of the solution (the same outcome: an error, no output).
+                string text = ((GH_String)obj).Value;
+                double val;
+                try { val = Convert.ToDouble(text); }
+                catch (Exception x) when (x is FormatException || x is OverflowException)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Value '" + text + "' is not a valid number in the current number format.");
+                    return;
+                }
                 value = new Vector3d(0, 0, val);
             }
             else if (obj.GetType() == typeof(GH_Vector))
@@ -93,22 +101,21 @@ namespace BridGHe.Grasshopper.Components.Loads
             }
             else
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid Value");
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Value must be a number, numeric text or a vector. Connect one of these types.");
                 return;
             }
 
-            PlatePressureModel.LoadData load_value = new PlatePressureModel.LoadData()
-            {
-                Face = (PlatePressureModel.LoadFace)face,
-                CoordinateSystem = cs?.Value,
-                P = value,
-                Projected = projected
-            };
-            PlatePressureModel load = new PlatePressureModel(lc.Value, load_value);
-            GH_Plate newPlate = new GH_Plate(plate);
-            newPlate.Value.Loads.Add(load);
-            DA.SetData(0, newPlate);
+            // P2K (P1): the face by the name of the former PlatePressureModel.LoadFace (Top = 0, Bottom = 1; an integer out of range as its text,
+            // as the former enum ToString).
+            string faceName = Common.Gpc.Builders.GpcBeamBuilders.Code(LoadFaces, face);
+            Func<Guid, Common.Gpc.Legacy.LegacyPlateDraft> build = id => Common.Gpc.Builders.GpcPlateBuilders.WithPressure(plate.Gpc, lc.Gpc, cs != null, faceName, value.X, value.Y, value.Z, projected, id);
+            // P2K (P1): the GPC path only: the draft built on GPC from the drafts of the plate and the load case record (local without a
+            // coordinate system, global on the former face by name with one; whether a system is given is read from the input), identity
+            // derived from the input draft.
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Plate(this, 0, plate, build, GpcOnlyElements.Lazy(() => lc.Gpc), cs != null, faceName, value.X, value.Y, value.Z, projected));
         }
+
+        private static readonly string[] LoadFaces = { "Top", "Bottom" };
 
         public override GH_Exposure Exposure => GH_Exposure.tertiary;
 

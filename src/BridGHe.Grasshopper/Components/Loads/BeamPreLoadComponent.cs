@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BridGHe.Common.Models;
 using BridGHe.Grasshopper.DataTypes.Fem;
 using BridGHe.Grasshopper.Helpers;
 using Grasshopper.Kernel;
@@ -62,13 +61,13 @@ namespace BridGHe.Grasshopper.Components.Loads
 
             Message = type == 0 ? "Tension" : "Strain";
 
-            if (lc.Value.NonStructuralMassAcceleration)
+            if (GpcOnlyProperties.NonStructuralMass(lc))
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The connected LoadCase have the Non-structural mass flag set to on");
 
-            BeamPreLoadModel load = new BeamPreLoadModel(lc.Value, value, type == 0 ? BeamPreLoadModel.LoadType.Tension : BeamPreLoadModel.LoadType.Strain);
-            GH_Beam newBeam = new GH_Beam(beam);
-            newBeam.Value.Loads.Add(load);
-            DA.SetData(0, newBeam);
+            Func<Guid, Common.Gpc.Legacy.LegacyBeamDraft> build = id => Common.Gpc.Builders.GpcBeamBuilders.WithPreLoad(beam.Gpc, lc.Gpc, type != 0, value, id);
+            // P2K (P1): the GPC path only: the draft built on GPC from the drafts of the beam and the load case record (identity derived from
+            // the input draft).
+            GpcOnlyElements.Set(DA, 0, GpcOnlyElements.Beam(this, 0, beam, build, GpcOnlyElements.Lazy(() => lc.Gpc), type != 0, value));
         }
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;

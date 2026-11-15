@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using BridGHe.Common.Models;
 using GH_IO.Serialization;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
@@ -25,17 +24,20 @@ internal static class WiredLoadSchemaTests
                 g.GetType().GetProperty("Value").SetValue(g,value); return g;
             }
             bool patch=name=="LoadPatchTypeComponent";
+            // R6.6 R2a: the plate, the beam and the load case given by their GPC data alone (no FEM value): the component takes the GPC path.
             if(patch)
             {
-                var plate=new PlateModel(new[]{Point3d.Origin,new Point3d(1000,0,0),new Point3d(1000,1000,0),new Point3d(0,1000,0)},new PlatePropertyModel("P"){PropertyType=PlatePropertyType.LoadPatch});
-                ((Param_GenericObject)c.Params.Input[0]).PersistentData.Append(Goo("GH_Plate",plate));
+                var patchProperty=BridGHe.Common.Gpc.Builders.GpcPropertyBuilders.Plate("P",5,null,0,0);
+                var plate=BridGHe.Common.Gpc.Builders.GpcPlateBuilders.Create(new[]{(0.0,0.0,0.0),(1000.0,0.0,0.0),(1000.0,1000.0,0.0),(0.0,1000.0,0.0)},patchProperty,null,0,0,"",R2aDesignFixtures.Id("wired:plate"));
+                ((Param_GenericObject)c.Params.Input[0]).PersistentData.Append(R2aDesignFixtures.Plate(plate));
             }
             else
             {
-                var beam=new BeamModel(Point3d.Origin,new Point3d(1000,0,0),new BeamPropertyModel("P")
-                {PropertyType=BeamPropertyType.Beam,Section=new SectionModel{SectionType=SectionModel.SectionTypes.SolidCircle,D=100},Material=new MaterialModel("S"){Modulus=210000}});
-                ((Param_GenericObject)c.Params.Input[0]).PersistentData.Append(Goo("GH_Beam",beam));
-                ((Param_GenericObject)c.Params.Input[1]).PersistentData.Append(Goo("GH_LoadCase",new LoadCaseModel("Q","Q")));
+                var property=BridGHe.Common.Gpc.Builders.GpcPropertyBuilders.Beam("P",5,BridGHe.Common.Gpc.Builders.GpcSectionBuilders.Standard(BridGHe.Common.Gpc.BridgeSectionKind.SolidCircle,100),
+                    R2aDesignFixtures.Material("Undefined","S",210000,.3));
+                var beam=BridGHe.Common.Gpc.Builders.GpcBeamBuilders.New(new GPC.Geometry.Point3d(0,0,0),new GPC.Geometry.Point3d(1000,0,0),property,null,0,0,0,R2aDesignFixtures.Id("wired:beam"));
+                ((Param_GenericObject)c.Params.Input[0]).PersistentData.Append(R2aDesignFixtures.Beam(beam));
+                ((Param_GenericObject)c.Params.Input[1]).PersistentData.Append(R2aDesignFixtures.Case(BridGHe.Common.Gpc.Builders.GpcCaseBuilders.Case("Q",false)));
                 ((Param_Integer)c.Params.Input.Single(p=>p.Name=="Direction")).SetPersistentData(1);
                 ((Param_Number)c.Params.Input.Single(p=>p.Name=="PA")).SetPersistentData(10d);
                 ((Param_Number)c.Params.Input.Single(p=>p.Name=="PB")).SetPersistentData(20d);
@@ -62,15 +64,26 @@ internal static class WiredLoadSchemaTests
                     throw new Exception("Schema input/wire lost on reload: "+name);
                 if(restored.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count>0 || restored.Params.Output[0].VolatileDataCount!=1)
                     throw new Exception(name+": "+string.Join(";",restored.RuntimeMessages(GH_RuntimeMessageLevel.Error)));
-                var result=restored.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
+                // The action read on the GPC datum of the output (no FEM value): patch type 3; one linear piece of the distributed action
+                // from PA = 10 at the start to PB = 20 at the end (schema 1, Keystone: PA at a = 0 to PB at 1 - b = 1), force or moment only.
+                var output=restored.Params.Output[0].VolatileData.AllData(true).Single();
+                if(R2aDesignFixtures.HasFem(output)) throw new Exception(name+": the output must have no FEM value.");
                 if(patch)
                 {
-                    if((int)((PlateModel)result).Attributes.OfType<LoadPatchTypeAttributeModel>().Single().Value.PatchType!=3) throw new Exception("Wrong patch schema.");
+                    var draft=R2aDesignFixtures.Datum<BridGHe.Common.Gpc.Legacy.LegacyPlateDraft>(output);
+                    if((int)((GPC.Model.Structure.Assignments.ShellPhysicalData)draft.Plate.Assignments.Physical).LoadPatch.Kind!=3) throw new Exception("Wrong patch schema.");
                 }
                 else
                 {
-                    var load=((BeamModel)result).Loads.OfType<BeamDistributedLoadModel>().Single();
-                    if((int)load.Value.LoadSchema!=1 || load.Value.PA!=10 || load.Value.PB!=20) throw new Exception("Changed distributed action.");
+                    var draft=R2aDesignFixtures.Datum<BridGHe.Common.Gpc.Legacy.LegacyBeamDraft>(output);
+                    bool moment=name=="BeamDistributedMomentComponent";
+                    double Force(GPC.Model.Loads.LineLoad l)=>Math.Sqrt(l.F1*l.F1+l.F2*l.F2+l.F3*l.F3);
+                    double Moment(GPC.Model.Loads.LineLoad l)=>Math.Sqrt(l.M1*l.M1+l.M2*l.M2+l.M3*l.M3);
+                    var piece=draft.Beam.Assignments.Loads.OfType<GPC.Model.Loads.Assignments.BeamLoadAssignment>().Single();
+                    var (s,e)=(piece.StartIntensity,piece.EndIntensity);
+                    if(draft.Records.Loads!=1 || draft.Records.LoadCases.Single().Name!="Q" || piece.Start!=0 || piece.End!=1
+                        || Math.Abs((moment?Moment(s):Force(s))-10)>1e-9 || Math.Abs((moment?Moment(e):Force(e))-20)>1e-9 || (moment?Force(s)+Force(e):Moment(s)+Moment(e))!=0)
+                        throw new Exception("Changed distributed action.");
                 }
             }
             Check(doc);

@@ -1,5 +1,7 @@
 # Collaudo del flusso modulare — 26 ottobre 2026
 
+> Resoconto storico della revisione indicata nel titolo. Versioni, comandi, conteggi e risultati si riferiscono a quella fotografia. Per installazione, formati e limiti della 0.4.0 vedere [Uso](USO.md), [Migrazione](MIGRAZIONE.md) e il manifest del pacchetto. Gli attesi e le misure qui riportati non vengono rigenerati dall’aggiornamento della documentazione.
+
 Esecuzioni su Rhino 8, .NET 8, Windows x64, Straus7 R3 con licenza disponibile. Dati, tolleranze aggregate, hash dei file e gruppi di regressione sono nel [rapporto JSON](validation-modular-2026-10-26.json).
 
 ## Risultati verificati

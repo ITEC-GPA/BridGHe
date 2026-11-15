@@ -38,9 +38,22 @@ public sealed class BridgeDeckMeshComponent : BridgeUtilityComponent
         BridgeGeometryGoo geometry = null; GH_PlateProperty property = null; double length = 2500, width = 1500; bool triangles = true; var pours = new List<double>();
         if (!da.GetData(0, ref geometry) || !da.GetData(1, ref property)) return;
         da.GetData(2, ref length); da.GetData(3, ref width); da.GetDataList(4, pours); da.GetData(5, ref triangles);
-        var result = BridgeDeckMesh.Create(geometry.Value, property.Value, length, width, pours, triangles);
+        // P2K (P1): the plates by their GPC drafts alone, from the GPC datum of the plate property (checked on it, with the bending thickness
+        // of a membrane recorded beside it, L2C); a refused property gives an error and no output (no FEM value to fall back on).
+        GPC.Model.ElementProperties.PlateProperty gpcProperty = null;
+        try { gpcProperty = property.Gpc ?? throw new ArgumentException("The plate property has no GPC datum."); }
+        catch (Exception x) when (x is ArgumentException || x is NotSupportedException) { GpcOnlyElements.Generated<object>(this, () => throw x); return; }
+        var result = BridgeDeckMesh.Create(geometry.Value, length, width, pours, triangles, gpcProperty, property.GpcMembraneBending);
         da.SetData(0, new BridgeGeometryGoo(result.Geometry)); da.SetData(1, result.Mesh);
-        da.SetDataList(2, result.Plates.Select(p => new GH_Plate(p))); da.SetDataList(3, result.Connections);
+        // R6.5 P1 lane 1b: identity by content (corners, GPC property, group, plate ID).
+        da.SetDataList(2, result.Drafts.Select((d, i) =>
+        {
+            var plan = result.Plans[i];
+            var draft = GpcOnlyElements.Generated(this, () => Common.Gpc.GpcDrafts.Reidentify(d, GpcOnlyElements.ContentIdentity(ComponentGuid, 2,
+                plan.Corners, gpcProperty, plan.Group, plan.PlateId)));
+            return draft == null ? null : GH_Plate.FromGpc(draft);
+        }).Where(p => p != null));
+        da.SetDataList(3, result.Connections);
         da.SetDataList(4, result.Stations); da.SetDataList(5, result.Diagnostics);
     }
 }

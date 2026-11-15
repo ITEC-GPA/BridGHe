@@ -1,5 +1,7 @@
 # Revisione degli esempi del 25 ottobre 2026
 
+> Resoconto storico della revisione indicata nel titolo. Versioni, comandi, conteggi e risultati si riferiscono a quella fotografia. Per installazione, formati e limiti della 0.4.0 vedere [Uso](USO.md), [Migrazione](MIGRAZIONE.md) e il manifest del pacchetto. Gli attesi e le misure qui riportati non vengono rigenerati dall’aggiornamento della documentazione.
+
 La Release applica al percorso FEM → verificatore H l’ipotesi **N–Mx–Vy** concordata: torsione T, flessione sull’asse debole M2 e taglio trasversale V1 sono trascurati nelle verifiche di sezione e dei dettagli. Le sei componenti rimangono nei modelli, nell’uscita Tension Forces e nei grafici delle sollecitazioni. Gli effetti esclusi e le loro interazioni non sono verificati.
 
 L’ipotesi è visibile sui componenti, conservata in `BridgeStressResult.Assumptions`, propagata da Bridge Detail Check ed esportata nel riepilogo obbligatorio del report e nel suo archivio numerico. Il percorso LinearHistory conserva le proprie limitazioni: risposta N–Mx, senza verifiche di taglio, pioli e irrigiditori. Il componente nativo gPC per sezioni/cassoni non perde le capacità torsionali che già esponeva: la proiezione riguarda l’adattatore dei risultati FEM al checker H.
