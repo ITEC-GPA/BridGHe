@@ -63,7 +63,11 @@ internal static class GpcOnlyReplay
         // warning is left out of the digest, marked «*» before it, and the other messages are compared (P2rCapture.Declared); before, any such
         // warning made the whole field «*», not compared.
         + (r.Messages.Any(P2rCapture.Environmental) ? "*" : "") + P2rCapture.Sha(string.Join("\n", r.Messages.Where(m => !P2rCapture.Environmental(m))))
-        + " " + P2rCapture.Sha(string.Join("\n", r.Outputs)) + " " + P2rCapture.Sha(string.Join("\n", r.Raw));
+        + " " + P2rCapture.Sha(string.Join("\n", r.Outputs.Select(CaptureOutput))) + " " + P2rCapture.Sha(string.Join("\n", r.Raw.Select(CaptureOutput)));
+
+    // Only this lane redirects its Excel/report File outputs to the owned temporary directory. Keep messages, filenames,
+    // output values and all other paths unchanged; the historical capture remains byte-for-byte unchanged.
+    private static string CaptureOutput(string line) => modelsLane ? ReplayTemporaryPaths.Normalize(line, Path.GetTempPath()) : line;
 
     /// <summary>R1: the label of the definition being replayed (the file key of the capture), null for the in-memory cases.</summary>
     private static string definition;
