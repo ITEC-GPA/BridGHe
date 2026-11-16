@@ -12,7 +12,7 @@ internal static partial class OpenSectionChecks190
 {
     private static void Managed198()
     {
-        OracleChecks198();ReadbackNegative198();
+        OracleChecks198();ReadbackNegative198();HistoricalCoverageChecks206();
         foreach(var item in Cases198())foreach(var units in new[]{DefinitionUnits.Nmm,DefinitionUnits.Knm})
         foreach(double rotation in new[]{0d,37d})foreach(int direction in new[]{0,1,2})
         {

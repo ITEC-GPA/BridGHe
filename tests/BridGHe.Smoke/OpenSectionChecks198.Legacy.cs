@@ -17,6 +17,51 @@ using GPC.Model.ElementProperties;
 internal static partial class OpenSectionChecks190
 {
     private sealed record HistoricalInput198(string Path,string Sha256,string Units,string Role);
+    private static bool HistoricalCoverage198(bool native,HistoricalInput198[] inputs,HashSet<string> coverage,bool hasNativeKey)
+    {
+        // User decision: there are no saved BridGHe user files. F07 inputs remain checked below.
+        if(!inputs.Any(i=>i.Role=="internalized"))
+        {
+            Console.WriteLine("R4 NOT APPLICABLE: nessun file BridGHe salvato dagli utenti; ricalcolati solo gli ingressi F07.");
+            return false;
+        }
+        if(native)
+        {
+            foreach(string family in new[]{"T1","C1","C2","Angle1","Angle2"})foreach(string unit in new[]{"Nmm","Knm"})
+                Check(coverage.Contains(family+"/"+unit),"R4 internalized historical coverage REQUIRED "+family+"/"+unit);
+            Check(hasNativeKey,"R4 internalized historical NativeKey coverage REQUIRED");
+        }
+        else Console.WriteLine("R4 full internalized Native/NativeKey coverage is required in --sections-190-native; F07 input recompute alone does not qualify it.");
+        return true;
+    }
+    private static void HistoricalCoverageChecks206()
+    {
+        // Metadata only: no invented historical payload, no file opening and no native API.
+        var f07=new HistoricalInput198("","","Nmm","component-case");
+        var old=new HistoricalInput198("","","Nmm","internalized");
+        var full=new HashSet<string>(new[]{"T1","C1","C2","Angle1","Angle2"}.SelectMany(f=>new[]{"Nmm","Knm"}.Select(u=>f+"/"+u)));
+        (int Total,int Failed,bool Applicable,string Output) Probe(HistoricalInput198[] inputs,HashSet<string> coverage,bool nativeKey)
+        {
+            int previousChecks=checks,previousFailed=failed;var output=Console.Out;using var text=new StringWriter();
+            try
+            {
+                checks=failed=0;Console.SetOut(text);
+                bool applicable=HistoricalCoverage198(true,inputs,coverage,nativeKey);
+                return (checks,failed,applicable,text.ToString());
+            }
+            finally {checks=previousChecks;failed=previousFailed;Console.SetOut(output);}
+        }
+        var component=Probe(new[]{f07,f07},new HashSet<string>(),false);
+        Check(component.Total==0&&component.Failed==0&&!component.Applicable&&component.Output.Contains("R4 NOT APPLICABLE"),"206 R4 F07-only manifest is not applicable, without historical coverage failures");
+        var missing=Probe(new[]{old},new HashSet<string>(),false);
+        Check(missing.Total==11&&missing.Failed==11&&missing.Applicable,"206 R4 internalized manifest still requires ten family/unit cases and NativeKey");
+        var complete=Probe(new[]{old},full,true);
+        Check(complete.Total==11&&complete.Failed==0&&complete.Applicable,"206 R4 complete internalized coverage passes all eleven checks");
+        var missingKey=Probe(new[]{old},full,false);
+        Check(missingKey.Total==11&&missingKey.Failed==1&&missingKey.Output.Contains("FAIL: R4 internalized historical NativeKey"),"206 R4 missing NativeKey remains a failure");
+        var mixed=Probe(new[]{f07,old},new HashSet<string>(),false);
+        Check(mixed.Total==11&&mixed.Failed==11&&mixed.Applicable,"206 R4 F07 entries do not exempt a manifest containing internalized data");
+    }
     private static IEnumerable<object> Persistent198(GH_Document doc)
     {
         foreach(var p in doc.Objects.OfType<IGH_Param>().Concat(doc.Objects.OfType<GH_Component>().SelectMany(c=>c.Params.Input)))
@@ -153,13 +198,7 @@ internal static partial class OpenSectionChecks190
             Check(Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))).Equals(input.Sha256,StringComparison.OrdinalIgnoreCase),"R4 historical source remains byte-identical");
         }
         catch(Exception ex){Check(false,"R4 historical input "+input.Path+": "+ex);rows.Add(new{input.Path,error=ex.ToString()});}
-        if(native)
-        {
-            foreach(string family in new[]{"T1","C1","C2","Angle1","Angle2"})foreach(string unit in new[]{"Nmm","Knm"})
-                Check(coverage.Contains(family+"/"+unit),"R4 internalized historical coverage REQUIRED "+family+"/"+unit);
-            Check(hasNativeKey,"R4 internalized historical NativeKey coverage REQUIRED");
-        }
-        File.WriteAllText(System.IO.Path.Combine(root,"legacy-migration.json"),JsonSerializer.Serialize(new{native,coverage,hasNativeKey,rows},new JsonSerializerOptions{WriteIndented=true}));
-        if(!native)Console.WriteLine("R4 full internalized Native/NativeKey coverage is required in --sections-190-native; F07 input recompute alone does not qualify it.");
+        bool internalizedApplicable=HistoricalCoverage198(native,inputs,coverage,hasNativeKey);
+        File.WriteAllText(System.IO.Path.Combine(root,"legacy-migration.json"),JsonSerializer.Serialize(new{native,internalizedApplicable,coverage,hasNativeKey,rows},new JsonSerializerOptions{WriteIndented=true}));
     }
 }
