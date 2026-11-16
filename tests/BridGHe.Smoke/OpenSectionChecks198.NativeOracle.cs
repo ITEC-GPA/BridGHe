@@ -14,7 +14,8 @@ internal static partial class OpenSectionChecks190
     // the readback tolerances: preserving GPC values and agreement with Straus' calculation are distinct.
     private static void NativeOracle198(string root)
     {
-        var rows=new List<object>();
+        var rows=new List<object>();int declared=0;
+        Console.WriteLine("R3 OPTION A CANDIDATE: classified measured differences; pending user approval.");
         foreach(var item in Cases198())
         try
         {
@@ -22,18 +23,24 @@ internal static partial class OpenSectionChecks190
             var p=(ElasticBeamProperty)model.Model.BeamElements.Values.Single().BeamProperty;
             var gpc=Expected198(p,item);
             var native=GpcNativeSections.Resolve(item.Type=="C"?"LipChannel":item.Type,item.Type=="Angle"?new[]{item.B,item.H,item.Tf,item.Tw}:new[]{item.B,item.H,0,item.Tf,item.Tw,0},null,null,null,1,item.Mirror?3:0,new[]{item.Gap,0d}).Section.ReferenceProperties;
-            double da=gpc[10]-native[10],c=Math.Cos(da),s=Math.Sin(da);
-            var aligned=(double[])native.Clone();
-            aligned[1]=native[1]*c*c+native[2]*s*s;aligned[2]=native[1]*s*s+native[2]*c*c;
-            aligned[4]=c*native[4]+s*native[5];aligned[5]=-s*native[4]+c*native[5];
+            double da=gpc[10]-native[10];var aligned=Align209(gpc,native);
             var metrics=new List<object>();
             for(int i=0;i<10;i++)
             {
                 if(i==6||i==7)continue; // Areas themselves are never averaged under a general rotation.
-                double tolerance=i==4||i==5?.01*Math.Max(item.B,item.H):(i==3?.05:1e-8)*Math.Max(1,Math.Abs(aligned[i]));
-                bool pass=double.IsFinite(aligned[i])&&Math.Abs(gpc[i]-aligned[i])<=tolerance;
-                Check(pass,$"R3 physical comparison {item.Label}/{PropertyNames198[i]} GPC={gpc[i]:R} Straus={aligned[i]:R} tolerance={tolerance:R}");
-                metrics.Add(new{name=PropertyNames198[i],expected=gpc[i],actual=aligned[i],tolerance,pass});
+                var comparison=Evaluate209(item,i,gpc[i],aligned[i]);
+                if(comparison.Reference!=null)declared++;
+                Check(comparison.Pass,$"R3 physical comparison {item.Label}/{PropertyNames198[i]} GPC={gpc[i]:R} Straus={aligned[i]:R} originalTolerance={comparison.Tolerance:R} classification={comparison.Classification}");
+                metrics.Add(new{name=PropertyNames198[i],expected=gpc[i],actual=aligned[i],tolerance=comparison.Tolerance,pass=comparison.Pass,
+                    originalPass=comparison.OriginalPass,classification=comparison.Classification,declared=comparison.Reference!=null,
+                    recordedGpc=comparison.Reference?.Gpc,recordedStraus=comparison.Reference?.Straus,
+                    delta=gpc[i]-aligned[i],ratio=aligned[i]==0?(double?)null:gpc[i]/aligned[i]});
+            }
+            double? singleStrausJ=null;double[] analyticalPairCentre=null;
+            if(item.Mirror)
+            {
+                singleStrausJ=GpcNativeSections.Resolve(item.Type=="C"?"LipChannel":item.Type,item.Type=="Angle"?new[]{item.B,item.H,item.Tf,item.Tw}:new[]{item.B,item.H,0,item.Tf,item.Tw,0},null,null,null,1,0,new[]{0d,0d}).Section.ReferenceProperties[3];
+                PairChecks209(item,gpc,singleStrausJ.Value);analyticalPairCentre=PairCentre209(item);
             }
             var cn=ShearCompliance198(native[6],native[7],da);var cg=ShearCompliance198(gpc[6],gpc[7],0);
             double shearScale=Math.Max(Math.Max(Math.Abs(cg.C11),Math.Abs(cg.C22)),Math.Max(Math.Abs(cn.C11),Math.Abs(cn.C22)));
@@ -43,9 +50,15 @@ internal static partial class OpenSectionChecks190
                 Check(pass,$"R3 full shear compliance {item.Label}/{entry.Item1} GPC={entry.Item2:R} Straus={entry.Item3:R} tolerance={tolerance:R}");
                 metrics.Add(new{name=entry.Item1,expected=entry.Item2,actual=entry.Item3,tolerance,pass});
             }
-            rows.Add(new{item.Type,item.Mirror,item.Gap,compatibleTwist=false,gpc,native,relativeAngle=da,complianceGpc=new[]{cg.C11,cg.C22,cg.C12},complianceNativeInGpcAxes=new[]{cn.C11,cn.C22,cn.C12},metrics});
+            rows.Add(new{item.Type,item.B,item.H,item.Tf,item.Tw,item.Mirror,item.Gap,compatibleTwist=false,gpc,native,relativeAngle=da,
+                singleStrausJ,twiceSingleStrausJ=2*singleStrausJ,analyticalPairCentre,
+                complianceGpc=new[]{cg.C11,cg.C22,cg.C12},complianceNativeInGpcAxes=new[]{cn.C11,cn.C22,cn.C12},metrics});
         }
         catch(Exception ex){Check(false,"R3 native calculation "+item.Label+": "+ex);rows.Add(new{item.Label,error=ex.ToString()});}
+        Check(declared==23,"R3 option A contains exactly the 23 explicitly measured differences");
         File.WriteAllText(Path.Combine(root,"physical-comparison.json"),JsonSerializer.Serialize(rows,new JsonSerializerOptions{WriteIndented=true}));
+        File.WriteAllText(Path.Combine(root,"r3-option-a-summary.json"),JsonSerializer.Serialize(new{candidate="option A, pending user approval",declared,
+            reference="coordinator sections 2026-11-16 03:29:26, AX, bbdc3836",measurementGuard="exact finite doubles; signed zero equivalent",
+            physicalTolerances="unchanged",pairedTorsion="also compared with twice the separately calculated single-section J",mirroredShearCentre="analytical GPC value; observed Straus convention recorded"},new JsonSerializerOptions{WriteIndented=true}));
     }
 }

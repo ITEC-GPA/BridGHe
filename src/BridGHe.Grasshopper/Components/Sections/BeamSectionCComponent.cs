@@ -60,7 +60,9 @@ namespace BridGHe.Grasshopper.Components.Sections
 
             // L2C (lane 2c, as in 0.3.0): Double Sections gives the mirrored section (Left, with its gap) as a recipe.
             // P2K (P1): the section by its recipe alone (a refused recipe gives an error and no section).
-            Helpers.GpcOnlyElements.Set(DA, 0, Helpers.GpcOnlyProperties.Section(this, () => Common.Gpc.Builders.GpcSectionBuilders.Standard(Common.Gpc.BridgeSectionKind.C, d, b, t1: t1, t2: t2, mirror: mirrored ? 2 : Common.Gpc.Legacy.LegacySectionRecipe.NoMirror, gapA: mirrored ? gap : 0)));
+            var section = Helpers.GpcOnlyProperties.Section(this, () => Common.Gpc.Builders.GpcSectionBuilders.Standard(Common.Gpc.BridgeSectionKind.C, d, b, t1: t1, t2: t2, mirror: mirrored ? 2 : Common.Gpc.Legacy.LegacySectionRecipe.NoMirror, gapA: mirrored ? gap : 0));
+            if (section != null) Helpers.OpenSectionWarnings.Add(this, b, d, t1, t2);
+            Helpers.GpcOnlyElements.Set(DA, 0, section);
         }
 
         /// <summary>
