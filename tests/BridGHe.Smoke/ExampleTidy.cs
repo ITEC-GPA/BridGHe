@@ -40,7 +40,7 @@ internal static class ExampleTidy
     /// Stages of a four-model bridge whose components are not named M01–M04: a component wired, upstream or downstream,
     /// to a single Straus analysis belongs to that model. The models are named and ordered by their output file.
     /// </summary>
-    private static Example50HorizontalLayout.Stage[] ArrangeModels(GH_Document doc)
+    internal static Example50HorizontalLayout.Stage[] ArrangeModels(GH_Document doc)
     {
         var analyses = doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "StrausR3AnalysisComponent").ToArray();
         if (analyses.Length != 4) throw new InvalidOperationException("Four Straus analyses expected, found " + analyses.Length + ".");
@@ -90,7 +90,7 @@ internal static class ExampleTidy
     private static void Layout(IEnumerable<IGH_DocumentObject> objects) { foreach (var o in objects) { o.Attributes.ExpireLayout(); o.Attributes.PerformLayout(); } }
 
     /// <summary>Objects that reach no end point through the wires: unused inputs and branches whose results go nowhere.</summary>
-    private static IGH_DocumentObject[] Unreachable(GH_Document doc)
+    internal static IGH_DocumentObject[] Unreachable(GH_Document doc)
     {
         var objects = doc.Objects.Where(o => o is IGH_Component || o is IGH_Param).ToArray();
         var wires = Wires(objects);
@@ -138,7 +138,7 @@ internal static class ExampleTidy
     /// Wires that still run from right to left (objects stacked in the same column): the input moves left when it has no
     /// sources, otherwise the reader moves right, only where the moved object overlaps nothing.
     /// </summary>
-    private static void Straighten(GH_Document doc)
+    internal static void Straighten(GH_Document doc)
     {
         var objects = Functional(doc);
         bool Free(IGH_DocumentObject moved, RectangleF box) => objects.All(o => o == moved || !RectangleF.Inflate(box, 20, 20).IntersectsWith(o.Attributes.Bounds));
