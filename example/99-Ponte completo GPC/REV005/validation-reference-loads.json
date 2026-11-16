@@ -1,0 +1,194 @@
+{
+  "Mode": "offline: reference-script phase loads, no Straus analysis",
+  "Generator": "--example-reference-loads 99",
+  "Source": "REV004/flusso-acciaio-misto_REV004.ghx",
+  "SourceSHA256": "9699B699C118066E615CB88F3959544DB3129D8E83856611FACE638A9EE212F5",
+  "Definition": "flusso-acciaio-misto_REV005.ghx",
+  "DefinitionSHA256": "65B179A253B2A1AC19269DE5C4C8A37EA1911FC76DBB98D4B48D98B6B6B834EE",
+  "WorkbookSHA256": "6C55E8EC66B0B3094338E75DF2D89CF5588974E902B1D184053428CA858F81DB",
+  "Removed": [
+    "Beam Distributed Load | Beam Distributed Load",
+    "Beam Distributed Load | Beam Distributed Load",
+    "Beam Distributed Load | Beam Distributed Load",
+    "Beam Distributed Load | Beam Distributed Load",
+    "Beam Distributed Load | Beam Distributed Load",
+    "Boolean Toggle | Gravità su masse non strutturali",
+    "Boolean Toggle | Gravità su masse non strutturali",
+    "Boolean Toggle | Gravità su masse non strutturali",
+    "Boolean Toggle | Riavvolgi indici fuori intervallo",
+    "List Item | List Item",
+    "List Length | List Length",
+    "Load Case | Load Case",
+    "Load Case | Load Case",
+    "Load Case | Load Case",
+    "Merge | Merge",
+    "Number Slider | Distanza finale relativa b/L",
+    "Number Slider | Distanza finale relativa b/L",
+    "Number Slider | Distanza finale relativa b/L",
+    "Number Slider | Distanza finale relativa b/L",
+    "Number Slider | Distanza finale relativa b/L",
+    "Number Slider | Distanza iniziale relativa a/L",
+    "Number Slider | Distanza iniziale relativa a/L",
+    "Number Slider | Distanza iniziale relativa a/L",
+    "Number Slider | Distanza iniziale relativa a/L",
+    "Number Slider | Distanza iniziale relativa a/L",
+    "Number Slider | Indice elemento selezionato",
+    "Number Slider | PA",
+    "Number Slider | PA",
+    "Number Slider | PA",
+    "Number Slider | PA",
+    "Number Slider | PA",
+    "Number Slider | PA",
+    "Value List | Direzione carico",
+    "Value List | Direzione carico",
+    "Value List | Direzione carico",
+    "Value List | Direzione carico",
+    "Value List | Direzione carico",
+    "Value List | Schema distribuzione carico",
+    "Value List | Schema distribuzione carico",
+    "Value List | Schema distribuzione carico",
+    "Value List | Schema distribuzione carico",
+    "Value List | Schema distribuzione carico"
+  ],
+  "Checks": [
+    {
+      "Check": "riapertura: nessuna analisi automatica",
+      "Pass": true
+    },
+    {
+      "Check": "file Straus in REV005\\calcoli",
+      "Pass": true
+    },
+    {
+      "Check": "collegamenti da destra a sinistra",
+      "Count": 0,
+      "Pass": true
+    },
+    {
+      "Check": "errori offline (senza analisi Straus)",
+      "Errors": [
+        "Bridge Phase Table | PROVA UTENTE | Bridge Phase Table: Expected Bridge Phase objects.",
+        "Bridge Combination Excel | PROVA UTENTE | Bridge Combination Excel: Connect Models and Bridge Phase objects to the corresponding inputs.",
+        "Bridge Combination Excel | Bridge Combination Excel: Connect Models and Bridge Phase objects to the corresponding inputs."
+      ],
+      "Pass": true
+    },
+    {
+      "Check": "Excel REV005 (letto come file): nove azioni e sei combinazioni nel foglio Combinations, azioni nel foglio Actions",
+      "Pass": true
+    },
+    {
+      "Check": "G2: fasce per stazione = 3, da destra a sinistra (Y crescente, nodo iniziale a destra)",
+      "Pass": true
+    },
+    {
+      "Check": "Q: fasce per stazione = 3, da destra a sinistra (Y crescente, nodo iniziale a destra)",
+      "Pass": true
+    },
+    {
+      "Check": "una larghezza tributaria per fascia (13 stazioni × 3)",
+      "Pass": true
+    },
+    {
+      "Check": "lunghezza caricata della frenatura = lunghezza del ponte dalle larghezze tributarie [mm]",
+      "Actual": 24000,
+      "Expected": 24000,
+      "Pass": true
+    },
+    {
+      "Check": "G1 getto Fz totale [N] = −γ t B L",
+      "Actual": -900000,
+      "Expected": -900000,
+      "Pass": true
+    },
+    {
+      "Check": "G2_PAV Fz [N]",
+      "Actual": -324000,
+      "Expected": -324000,
+      "Pass": true
+    },
+    {
+      "Check": "G2_CORD Fz [N]",
+      "Actual": -168000,
+      "Expected": -168000,
+      "Pass": true
+    },
+    {
+      "Check": "G2_GR Fz [N]",
+      "Actual": -72000,
+      "Expected": -72000,
+      "Pass": true
+    },
+    {
+      "Check": "G2_PAR Fz [N]",
+      "Actual": -48000,
+      "Expected": -48000,
+      "Pass": true
+    },
+    {
+      "Check": "G2_FIN Fz [N]",
+      "Actual": -72000,
+      "Expected": -72000,
+      "Pass": true
+    },
+    {
+      "Check": "Q_TRAFFICO distribuiti Fz [N] = −(q1k 3 m + qrk (B − 2c − 3 m)) L",
+      "Actual": -684000.0000000001,
+      "Expected": -684000.0000000001,
+      "Pass": true
+    },
+    {
+      "Check": "Q3_FRENATURA Fx [N] = Q1k,frenatura × (lunghezza delle travi / L)",
+      "Actual": 424800,
+      "Expected": 424800,
+      "Pass": true
+    },
+    {
+      "Check": "Q4_CENTRIFUGA Fy [N] = n q L",
+      "Actual": 480,
+      "Expected": 480,
+      "Pass": true
+    },
+    {
+      "Check": "WIND_1 Fy [N] = −p H L",
+      "Actual": -244800.00000000003,
+      "Expected": -244800.00000000003,
+      "Pass": true
+    },
+    {
+      "Check": "WIND_1 Fx [N] = 0,25 p H L",
+      "Actual": 61200.00000000001,
+      "Expected": 61200.00000000001,
+      "Pass": true
+    },
+    {
+      "Check": "WIND_1 Fz [N] = −0,25 p H L",
+      "Actual": -61200.00000000001,
+      "Expected": -61200.00000000001,
+      "Pass": true
+    },
+    {
+      "Check": "Q7_TEMPERATURA su fasce, travi e traversi",
+      "Pass": true
+    },
+    {
+      "Check": "tandem schema 1 corsia 1: 4 ruote da 150 kN, forze globali −Z",
+      "Pass": true
+    },
+    {
+      "Check": "asse della corsia 1 a sinistra del tracciato [mm]",
+      "Actual": 300,
+      "Expected": 300,
+      "Pass": true
+    },
+    {
+      "Check": "fasi: 10 con G1_ACCIAIO e G1, 40 con Q, WIND, FRENATURA, CENTRIFUGA, TEMPERATURA, 45 con il tandem",
+      "Pass": true
+    },
+    {
+      "Check": "combinazione FEM G2_PERMANENTI: cinque casi G2, coefficienti 1",
+      "Pass": true
+    }
+  ],
+  "NativeSolverInvoked": false
+}

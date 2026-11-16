@@ -2,6 +2,10 @@
 
 Aggiornamento 26 ottobre 2026: questa definizione usa il [flusso modulare](../../docs/FLUSSO-MODULARE.md). Appoggi, travi, soletta, conci, diaframmi e mesh hanno componenti separati; gli input salvati sono stati conservati. I report precedenti descrivono la geometria di riferimento; il nuovo collaudo è raccolto nella [validazione del refactoring](../../docs/VALIDAZIONE-MODULARE-2026-10-26.md).
 
+## REV005 — carichi delle fasi come lo script di riferimento aziendale
+
+Aprire [REV005](REV005/flusso-acciaio-misto_REV005.ghx). Deriva dalla REV004, che resta invariata: stessa geometria, stesse sezioni e stessi quattro modelli. Cambiano i carichi: in G1 il peso proprio dell'acciaio (× 1,15) e il getto della soletta per trave; in G2 pavimentazione, cordoli, guard-rail, parapetti e finiture sulle fasce di soletta; in Q i distribuiti dello schema 1 sulle fasce, vento, frenatura, centrifuga e temperatura, più il tandem mobile della corsia 1 (fase 45). Nuovo Excel delle combinazioni `Combinazioni_REV005.xlsx`. Dettagli e differenze rispetto allo script nella [guida REV005](REV005/README_REV005.md).
+
 ## Stato corrente della REV004 al 25 ottobre 2026
 
 Ritiro allineato a **εcs = −0,0003171439341670765** (circa −317 µε), calcolato dagli input attuali. Il generatore FEM e l’azione primaria usano la stessa uscita; `Actions!I4` nell’Excel è aggiornato e tutti i coefficienti delle combinazioni sono conservati.
