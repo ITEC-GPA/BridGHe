@@ -340,10 +340,21 @@ internal static class ExampleReferenceLoads99
     /// <summary>The combination workbook of REV005: the same rows as REV004, the new actions with the coefficients of their group.</summary>
     private static void WriteWorkbook(GH_Document doc)
     {
+        // Offline the analyses have no output: in memory only, the readers of every analysis read its built (not analysed) model, whose
+        // GPC input gives the same source model and cases to the catalogue; the wires are restored before the definition is saved.
+        var restore = new List<Action>();
+        foreach (var a in doc.Objects.OfType<GH_Component>().Where(c => c.Name == "Straus R3 Analysis").ToArray())
+        {
+            var analysed = Out(a, "Model"); var built = In(a, "Model").Sources.Single();
+            foreach (var r in analysed.Recipients.ToArray()) { Replace(r, analysed, built); var reader = r; restore.Add(() => Replace(reader, built, analysed)); }
+        }
+        BridgeSegmentExcelTests.Solve(doc, true);
         var excel = Id(doc, ExcelCreate);
         var inputs = In(excel, "Models").VolatileData.AllData(true).Select(g => (BridGHe.Common.Gpc.GpcModels.Conversion)g.GetType().GetProperty("GpcInput").GetValue(g)).ToArray();
         var phases = In(excel, "Phases").VolatileData.AllData(true).Select(g => (BridGHe.Common.Checks.BridgePhaseDefinition)g.GetType().GetProperty("Value").GetValue(g)).ToArray();
+        Console.WriteLine($"REFERENCE LOADS: workbook catalogue from {inputs.Length} built models and {phases.Length} phases");
         var catalog = BridGHe.Common.Diagnostics.BridgeCombinationCatalog.FromGpc(inputs, phases);
+        foreach (var undo in restore) undo();
         Require(catalog.ActionIds.SequenceEqual(ExcelIds), "workbook actions: " + string.Join(", ", catalog.ActionIds));
         string F(double v) => v.ToString("0.###", CultureInfo.InvariantCulture);
         string[] Row(string name, double g1, double g2, double ritiro, double q, double wind, double traffic, double temperature) =>
