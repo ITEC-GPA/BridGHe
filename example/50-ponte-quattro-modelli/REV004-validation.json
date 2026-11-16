@@ -1,0 +1,237 @@
+{
+  "Mode": "offline: reference-script phase loads, no Straus analysis",
+  "Generator": "--example-reference-loads 50",
+  "Source": "50-ponte-quattro-modelli_REV003.ghx",
+  "SourceSHA256": "2CB6E5C64CFA927A0DD8D6E2C862780058F82F62BE5F3DC35A95D62DA0A68456",
+  "Definition": "50-ponte-quattro-modelli_REV004.ghx",
+  "DefinitionSHA256": "9B584B70D043249C7C8332877E33642175684B362FF419DDB855B5A2F4F88515",
+  "Removed": [
+    "Beam Distributed Load | M02_NINF | carico soletta",
+    "Beam Distributed Load | M02_NINF | carico travi",
+    "Beam Distributed Load | M03_N0 | carico soletta",
+    "Beam Distributed Load | M03_N0 | carico travi",
+    "Bridge Action | M02_NINF_SOLETTA | azione",
+    "Bridge Action | M02_NINF_TRAVI | azione",
+    "Bridge Action | M03_N0_SOLETTA | azione",
+    "Bridge Action | M03_N0_TRAVI | azione",
+    "Consenti sovrascrittura Excel — normalmente False | Consenti sovrascrittura Excel — normalmente False",
+    "Load Case | M02_NINF | caso SOLETTA",
+    "Load Case | M02_NINF | caso TRAVI",
+    "Load Case | M03_N0 | caso SOLETTA",
+    "Load Case | M03_N0 | caso TRAVI",
+    "M02_NINF | M02_NINF | caso SOLETTA | M02_NINF | M02_NINF | caso SOLETTA",
+    "M02_NINF | M02_NINF | caso TRAVI | M02_NINF | M02_NINF | caso TRAVI",
+    "M02_NINF | carico soletta | P1 (opzionale vuoto) | M02_NINF | carico soletta | P1 (opzionale vuoto)",
+    "M02_NINF | carico soletta | P2 (opzionale vuoto) | M02_NINF | carico soletta | P2 (opzionale vuoto)",
+    "M02_NINF | carico soletta | PB (opzionale vuoto) | M02_NINF | carico soletta | PB (opzionale vuoto)",
+    "M02_NINF | carico soletta | a | M02_NINF | carico soletta | a",
+    "M02_NINF | carico soletta | b | M02_NINF | carico soletta | b",
+    "M02_NINF | carico travi | P1 (opzionale vuoto) | M02_NINF | carico travi | P1 (opzionale vuoto)",
+    "M02_NINF | carico travi | P2 (opzionale vuoto) | M02_NINF | carico travi | P2 (opzionale vuoto)",
+    "M02_NINF | carico travi | PB (opzionale vuoto) | M02_NINF | carico travi | PB (opzionale vuoto)",
+    "M02_NINF | carico travi | a | M02_NINF | carico travi | a",
+    "M02_NINF | carico travi | b | M02_NINF | carico travi | b",
+    "M02_NINF | carico verticale travi principali [N/mm = kN/m] | M02_NINF | carico verticale travi principali [N/mm = kN/m]",
+    "M02_NINF | gravità masse non strutturali SOLETTA | M02_NINF | gravità masse non strutturali SOLETTA",
+    "M02_NINF | gravità masse non strutturali TRAVI | M02_NINF | gravità masse non strutturali TRAVI",
+    "M02_NINF | nome caso SOLETTA | M02_NINF | nome caso SOLETTA",
+    "M02_NINF | nome caso TRAVI | M02_NINF | nome caso TRAVI",
+    "M02_NINF | pressione verticale soletta [kN/m²] | M02_NINF | pressione verticale soletta [kN/m²]",
+    "M02_NINF_SOLETTA | azione | Beam IDs (opzionale vuoto) | M02_NINF_SOLETTA | azione | Beam IDs (opzionale vuoto)",
+    "M02_NINF_SOLETTA | comportamento | M02_NINF_SOLETTA | comportamento",
+    "M02_NINF_SOLETTA | identificativo azione | M02_NINF_SOLETTA | identificativo azione",
+    "M02_NINF_TRAVI | azione | Beam IDs (opzionale vuoto) | M02_NINF_TRAVI | azione | Beam IDs (opzionale vuoto)",
+    "M02_NINF_TRAVI | comportamento | M02_NINF_TRAVI | comportamento",
+    "M02_NINF_TRAVI | identificativo azione | M02_NINF_TRAVI | identificativo azione",
+    "M03_N0 | M03_N0 | caso SOLETTA | M03_N0 | M03_N0 | caso SOLETTA",
+    "M03_N0 | M03_N0 | caso TRAVI | M03_N0 | M03_N0 | caso TRAVI",
+    "M03_N0 | carico soletta | P1 (opzionale vuoto) | M03_N0 | carico soletta | P1 (opzionale vuoto)",
+    "M03_N0 | carico soletta | P2 (opzionale vuoto) | M03_N0 | carico soletta | P2 (opzionale vuoto)",
+    "M03_N0 | carico soletta | PB (opzionale vuoto) | M03_N0 | carico soletta | PB (opzionale vuoto)",
+    "M03_N0 | carico soletta | a | M03_N0 | carico soletta | a",
+    "M03_N0 | carico soletta | b | M03_N0 | carico soletta | b",
+    "M03_N0 | carico travi | P1 (opzionale vuoto) | M03_N0 | carico travi | P1 (opzionale vuoto)",
+    "M03_N0 | carico travi | P2 (opzionale vuoto) | M03_N0 | carico travi | P2 (opzionale vuoto)",
+    "M03_N0 | carico travi | PB (opzionale vuoto) | M03_N0 | carico travi | PB (opzionale vuoto)",
+    "M03_N0 | carico travi | a | M03_N0 | carico travi | a",
+    "M03_N0 | carico travi | b | M03_N0 | carico travi | b",
+    "M03_N0 | carico verticale travi principali [N/mm = kN/m] | M03_N0 | carico verticale travi principali [N/mm = kN/m]",
+    "M03_N0 | gravità masse non strutturali SOLETTA | M03_N0 | gravità masse non strutturali SOLETTA",
+    "M03_N0 | gravità masse non strutturali TRAVI | M03_N0 | gravità masse non strutturali TRAVI",
+    "M03_N0 | nome caso SOLETTA | M03_N0 | nome caso SOLETTA",
+    "M03_N0 | nome caso TRAVI | M03_N0 | nome caso TRAVI",
+    "M03_N0 | pressione verticale soletta [kN/m²] | M03_N0 | pressione verticale soletta [kN/m²]",
+    "M03_N0_SOLETTA | azione | Beam IDs (opzionale vuoto) | M03_N0_SOLETTA | azione | Beam IDs (opzionale vuoto)",
+    "M03_N0_SOLETTA | comportamento | M03_N0_SOLETTA | comportamento",
+    "M03_N0_SOLETTA | identificativo azione | M03_N0_SOLETTA | identificativo azione",
+    "M03_N0_TRAVI | azione | Beam IDs (opzionale vuoto) | M03_N0_TRAVI | azione | Beam IDs (opzionale vuoto)",
+    "M03_N0_TRAVI | comportamento | M03_N0_TRAVI | comportamento",
+    "M03_N0_TRAVI | identificativo azione | M03_N0_TRAVI | identificativo azione",
+    "Multiplication | M02_NINF | pressione in N/mm²",
+    "Multiplication | M02_NINF | q = pressione × fascia tributaria",
+    "Multiplication | M03_N0 | pressione in N/mm²",
+    "Multiplication | M03_N0 | q = pressione × fascia tributaria",
+    "TRAFFICO | Eccentricità corsia a sinistra del tracciato [mm] | TRAFFICO | Eccentricità corsia a sinistra del tracciato [mm]"
+  ],
+  "Checks": [
+    {
+      "Check": "riapertura: nessuna analisi automatica",
+      "Pass": true
+    },
+    {
+      "Check": "file Straus in calcoli/REV004",
+      "Pass": true
+    },
+    {
+      "Check": "collegamenti da destra a sinistra",
+      "Count": 0,
+      "Pass": true
+    },
+    {
+      "Check": "errori offline attesi (travi M02/M03 in attesa della mappa Dead di M01)",
+      "Errors": [
+        "M03_N0 | casi richiesti dalle azioni: Risultati assenti per il solutore selezionato: M03_N0_Q3_FR, M03_N0_Q4_CENTR, M03_N0_Q5_VENTO"
+      ],
+      "Pass": true
+    },
+    {
+      "Check": "risultanti delle travi M03 lette sulle travi di M01, collegate in memoria",
+      "Pass": true
+    },
+    {
+      "Check": "fasce in ordine stazione → segmento (244 fasce, 4 per stazione)",
+      "Pass": true
+    },
+    {
+      "Check": "albero delle fasce: un ramo per stazione",
+      "Pass": true
+    },
+    {
+      "Check": "somma delle larghezze tributarie = lunghezza del tracciato [mm]",
+      "Actual": 60000,
+      "Expected": 60000,
+      "Pass": true
+    },
+    {
+      "Check": "M01 getto soletta Fz [N] = −γ t B L",
+      "Actual": -4500000,
+      "Expected": -4500000,
+      "Pass": true
+    },
+    {
+      "Check": "M02 G2_PAV Fz [N] = −γ h (B − 2c) L",
+      "Actual": -1935000,
+      "Expected": -1935000,
+      "Pass": true
+    },
+    {
+      "Check": "M02 G2_CORD Fz [N] = −γ h 2c L",
+      "Actual": -420000,
+      "Expected": -420000,
+      "Pass": true
+    },
+    {
+      "Check": "M02 G2_GR Fz [N] = −2 q L",
+      "Actual": -180000,
+      "Expected": -180000,
+      "Pass": true
+    },
+    {
+      "Check": "M02 G2_PAR Fz [N] = −2 q L",
+      "Actual": -120000,
+      "Expected": -120000,
+      "Pass": true
+    },
+    {
+      "Check": "M02 G2_FIN Fz [N] = −2 q L",
+      "Actual": -180000,
+      "Expected": -180000,
+      "Pass": true
+    },
+    {
+      "Check": "M02 G2: nessuna forza orizzontale",
+      "Actual": 0,
+      "Expected": 0,
+      "Pass": true
+    },
+    {
+      "Check": "M03 Q1_UDL Fz [N] = −(q1k 3 m + qrk (B − 2c − 3 m)) L",
+      "Actual": -2459999.070000003,
+      "Expected": -2460000,
+      "Pass": true
+    },
+    {
+      "Check": "M03 Q3_FR Fx [N] = Q1k,frenatura (180–900 kN)",
+      "Actual": 522000,
+      "Expected": 522000,
+      "Pass": true
+    },
+    {
+      "Check": "M03 Q4_CENTR Fy [N] = n q L",
+      "Actual": 1800,
+      "Expected": 1800,
+      "Pass": true
+    },
+    {
+      "Check": "M03 Q5_VENTO Fy [N] = −p H L",
+      "Actual": -695999.9999999993,
+      "Expected": -696000,
+      "Pass": true
+    },
+    {
+      "Check": "M03 Q5_VENTO Fx [N] = 0,25 p H L",
+      "Actual": 173999.99999999983,
+      "Expected": 174000,
+      "Pass": true
+    },
+    {
+      "Check": "M03 Q5_VENTO Fz [N] = −0,25 p H L",
+      "Actual": -173999.99999999983,
+      "Expected": -174000,
+      "Pass": true
+    },
+    {
+      "Check": "M03 Q7_TEMP: deformazione impressa su 244 fasce, 180 travi e tutte le altre aste d'acciaio",
+      "Pass": true
+    },
+    {
+      "Check": "tandem schema 1: 4 ruote da 150 kN e 4 da 100 kN, forze globali −Z",
+      "Pass": true
+    },
+    {
+      "Check": "corsia 2 a 3000 mm verso destra della corsia 1",
+      "Pass": true
+    },
+    {
+      "Check": "asse della corsia 1 a sinistra del tracciato [mm]",
+      "Actual": 2800,
+      "Expected": 2800,
+      "Pass": true
+    },
+    {
+      "Check": "percorso mobile: 30 divisioni, casi statici",
+      "Pass": true
+    },
+    {
+      "Check": "azioni statiche delle fasi = colonne della tabella",
+      "Pass": true
+    },
+    {
+      "Check": "intestazione delle combinazioni",
+      "Pass": true
+    },
+    {
+      "Check": "M01_ACCIAIO | fase di test: 3 ingressi di azioni",
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | fase di test: 5 ingressi di azioni",
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | fase di test: 6 ingressi di azioni",
+      "Pass": true
+    }
+  ],
+  "NativeSolverInvoked": false
+}

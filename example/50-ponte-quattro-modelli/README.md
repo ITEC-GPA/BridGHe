@@ -2,6 +2,10 @@
 
 Aggiornamento 26 ottobre 2026: questa definizione usa il [flusso modulare](../../docs/FLUSSO-MODULARE.md). Appoggi, travi, soletta, conci, diaframmi e mesh hanno componenti separati; gli input salvati sono stati conservati. I report precedenti descrivono la geometria di riferimento; il nuovo collaudo è raccolto nella [validazione del refactoring](../../docs/VALIDAZIONE-MODULARE-2026-10-26.md).
 
+## REV004 — carichi delle fasi come lo script di riferimento aziendale
+
+Aprire **[50-ponte-quattro-modelli_REV004.ghx](50-ponte-quattro-modelli_REV004.ghx)**. Geometria, sezioni e modelli sono quelli del REV003, che è conservato. Cambiano i carichi delle fasi: peso proprio dell'acciaio (× 1,15) e getto della soletta nella fase 10, carichi permanenti portati G2 nella fase 20 n∞, schema 1 di traffico (distribuiti e tandem di due corsie), frenatura, centrifuga, vento e temperatura nella fase 30 n0. Valori, regole e differenze rispetto allo script sono nella **[guida REV004](README_REV004.md)**.
+
 ## REV003 — carichi mobili sul modello n0
 
 Aprire **[50-ponte-quattro-modelli_REV003.ghx](50-ponte-quattro-modelli_REV003.ghx)**. Aggiunge un ramo mobile sullo stesso modello n0, le azioni delle posizioni nella fase 30 e combinazioni alternative collegate al verificatore e al report. Il REV002 è conservato. Input, procedura e ipotesi sono nella **[guida REV003](README_REV003.md)**.
