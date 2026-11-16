@@ -126,6 +126,10 @@ internal static class ExampleReferenceLoads
         var merge = doc.Objects.OfType<GH_Component>().Single(c => c.Name == "Build BridGHe Model");
         BridgeMovingRevisionExample.Press(merge); BridgeSegmentExcelTests.Solve(doc, true);
         var bridge = R4cMoving.Bridge(One(Out(merge, "Model")));
+        var mergeMessages = new[] { GH_RuntimeMessageLevel.Error, GH_RuntimeMessageLevel.Warning, GH_RuntimeMessageLevel.Remark }
+            .SelectMany(l => merge.RuntimeMessages(l).Select(m => l + ": " + m)).ToArray();
+        foreach (var m in mergeMessages) Console.WriteLine("REFERENCE LOADS NATIVE merge " + m);
+        Console.WriteLine($"REFERENCE LOADS NATIVE merge outputs: {Out(merge, "Model").VolatileDataCount}");
         Require(bridge != null, "merge failed:\n" + string.Join("\n", ErrorLines(doc)));
         report.Add(new { Check = "assemblaggio", Phases = bridge.Records.Phases.Length, Combinations = bridge.Combinations.Count, Pass = true });
         int sections = 0;

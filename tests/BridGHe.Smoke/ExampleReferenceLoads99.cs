@@ -328,7 +328,10 @@ internal static class ExampleReferenceLoads99
         Wire(In(phase, "Number"), cv.Slider("TRAFFICO | Numero ordine fase", 45, 0, 100)); Wire(In(phase, "Name"), cv.Text("TRAFFICO | Nome fase", "Q_MOV tandem schema 1"));
         Wire(In(phase, "Section State"), cv.Text("TRAFFICO | Stato sezione: 1 = misto", "1")); Wire(In(phase, "Actions"), Out(action, "Action")); In(phase, "Actions").DataMapping = GH_DataMapping.Flatten;
         In(merge, "Models").AddSource(Out(moving, "Model")); In(merge, "Models").DataMapping = GH_DataMapping.Flatten;
-        In(merge, "Phases").AddSource(Out(phase, "Phase"));
+        // Every reader of the phases of the bridge reads phase 45 too (merge, support stiffeners, phase table); the workbook keeps phases 10–40.
+        foreach (var reader in doc.Objects.OfType<GH_Component>().Where(c => c.Name != "Bridge Combination Excel" && c != phase
+            && c.Params.Input.Any(p => p.Name == "Phases" && p.Sources.Contains(Out(Id(doc, QPhase), "Phase")))).ToArray())
+        { In(reader, "Phases").AddSource(Out(phase, "Phase")); Console.WriteLine("REFERENCE LOADS: phase 45 also to " + reader.Name + " | " + reader.NickName); }
         Wire(In(merge, "Combinations"), Out(combinations, "Table"));
         var note = (GH_Panel)cv.Text("IPOTESI TRAFFICO REV005",
             "Tandem dello schema 1 come lo script di riferimento: corsia 1 assi 2 × 300 kN (4 ruote da 150 kN), interasse 1200 mm, carreggiata 2000 mm, forze globali −Z.\n"
