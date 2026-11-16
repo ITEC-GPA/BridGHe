@@ -15,6 +15,8 @@ using GPC.Model.ElementProperties;
 internal static partial class OpenSectionChecks190
 {
     private static readonly string[] PropertyNames198={"A","I11","I22","J","SL1","SL2","SA1","SA2","Xbar","Ybar","angle"};
+    // Build Model also adds Dead; use the writer's numbering for the loaded case.
+    private static int PointLoadCase198(Straus7ModelWritePlan plan,GpcModels.Conversion model)=>plan.LoadCaseIds[model.Model.LoadCases["Q198"].Guid];
     private static bool Close198(double expected,double actual,int index)=>double.IsFinite(actual)&&Math.Abs(expected-actual)<=
         (index==10?1e-7:1e-8*Math.Max(1,Math.Abs(expected)));
     private static bool ReadbackMatches198(OpenCase198 item,double[] expected,int shape,double[] dimensions,int mirror,double[] gaps,bool twist,double[] actual)
@@ -77,12 +79,13 @@ internal static partial class OpenSectionChecks190
                         Vector198(reference.V3,new Vector3d(axes[6],axes[7],axes[8]),"R2 native signed axis3 "+label,1e-6);
                     }
                     var offset=api.ReadBeamOffset(1);Check(Close198(3,offset[0],0)&&Close198(7,offset[1],0),"R2 native signed offsets "+label);
-                    var load=api.ReadBeamPointLoad(1,1,1,false,true);
+                    int loadCase=PointLoadCase198(plan,model);
+                    var load=api.ReadBeamPointLoad(1,loadCase,1,false,true);
                     double forceScale=units==DefinitionUnits.Nmm?1:1000;
                     var expectedForce=(reference.V1*2+reference.V2*3+reference.V3*5)*forceScale;
                     Vector198(expectedForce,new Vector3d(load[0],load[1],load[2]),"R2 native global force from local components "+label,1e-3);
                     Check(Math.Abs(load[3]-.37)<1e-6,"R2 native point load station "+label);
-                    rows.Add(new{label,path,fileSha256=fileHash,expected,actual,shape=section.Shape,dimensions=section.Dimensions,mirror=section.MirrorType,gaps=section.MirrorGaps,compatibleTwist=section.CompatibleTwist,axes,offset,globalPointLoad=load});
+                    rows.Add(new{label,path,fileSha256=fileHash,expected,actual,shape=section.Shape,dimensions=section.Dimensions,mirror=section.MirrorType,gaps=section.MirrorGaps,compatibleTwist=section.CompatibleTwist,axes,offset,loadCase,globalPointLoad=load});
                 }
                 finally{api.CloseModel();}
             }
