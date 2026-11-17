@@ -214,12 +214,35 @@ internal static class BridgeReportTests
         // D1 (0.4.2): the write of the index interrupted and its restore failed too (a file system filter, the network): the recovery copy named
         // by the error exists beside the report with the bytes of the previous index, and the attachments of the previous delivery are back.
         byte[] previousIndex = File.ReadAllBytes(index);
-        string recoveryMessage = Faulted(new[] { "overwrite-write", "overwrite-restore" }, () => BridgeWordReport.Write(Template, index, data, topics, overwrite: true, attachmentResults: 4));
+        string recoveryMessage = Faulted(step => step is "overwrite-write" or "overwrite-restore", () => BridgeWordReport.Write(Template, index, data, topics, overwrite: true, attachmentResults: 4)).Message;
         string recovery = recoveryMessage == null ? null : Regex.Match(recoveryMessage, @"Recover the original report from: (.+?\.recovery)").Groups[1].Value;
         Require(!string.IsNullOrEmpty(recovery) && Path.GetDirectoryName(recovery) == folder && File.Exists(recovery) && File.ReadAllBytes(recovery).SequenceEqual(previousIndex),
             "D1: the recovery copy named by the error must exist beside the report, with the previous index.");
         File.Copy(recovery, index, true); File.Delete(recovery);
         Require(State() == before, "D1: the previous delivery whole again from the recovery copy.");
+        // D2 (0.4.2): a rename of a folder refused twice (an antivirus, the indexer) is tried again and the generation completes.
+        int moves = 0;
+        var retried = Faulted(step => step == "move-folder" && ++moves <= 2, () => BridgeWordReport.Write(Template, index, data, topics, overwrite: true, attachmentResults: 4));
+        Require(retried.Result?.Attachments.Length == 7 && retried.Result.Attachments.All(File.Exists) && moves >= 4 && !retried.Result.Warnings.Any(w => w.Contains("temporanea"))
+            && !Directory.EnumerateFileSystemEntries(folder, ".bridghe-report-*").Any(), "D2: refused renames retried, the report complete, nothing left beside it.");
+        before = State();
+        // D2: a rename always refused: the error says so, the previous delivery is unchanged and the staging folder is removed.
+        string refused = Faulted(step => step == "move-folder", () => BridgeWordReport.Write(Template, index, data, topics, overwrite: true, attachmentResults: 4)).Message;
+        Require(refused != null && refused.Contains("in use") && refused.Contains("injected failure at move-folder") && State() == before
+            && !Directory.EnumerateFileSystemEntries(folder, ".bridghe-report-*").Any(), "D2: a rename always refused fails with its own error and keeps the previous delivery.");
+        // D2: the staging folder cannot be removed either: the error is still the one of the rename, and it names the folder left.
+        string both = Faulted(step => step is "move-folder" or "remove-staging", () => BridgeWordReport.Write(Template, index, data, topics, overwrite: true, attachmentResults: 4)).Message;
+        var stale = Directory.EnumerateDirectories(folder, ".bridghe-report-*.tmp").ToArray();
+        Require(both != null && both.Contains("injected failure at move-folder") && stale.Length == 1 && both.Contains(stale[0]) && both.Contains("could not be deleted") && State() == before,
+            "D2: a failed removal of the staging folder must not replace the error of the generation, and must name the folder.");
+        Directory.Delete(stale[0], true);
+        // D2: the report published, the staging folder held: a warning with its name, not an error.
+        var held = Faulted(step => step == "remove-staging", () => BridgeWordReport.Write(Template, index, data, topics, overwrite: true, attachmentResults: 4));
+        stale = Directory.EnumerateDirectories(folder, ".bridghe-report-*.tmp").ToArray();
+        Require(held.Result?.Attachments.Length == 7 && stale.Length == 1 && held.Result.Warnings.Any(w => w.Contains("La cartella temporanea " + Path.GetFileName(stale[0]))),
+            "D2: a staging folder left after a published report is a warning with its name.");
+        Directory.Delete(stale[0], true);
+        before = State();
         File.WriteAllText(Path.Combine(attachments, "nota.txt"), "nota dell'utente");
         var again = BridgeWordReport.Write(Template, index, data, topics, overwrite: true, attachmentResults: 6);
         Require(again.Attachments.Length == 4 && Directory.EnumerateFiles(attachments).Count() == 5 && !File.Exists(Path.Combine(attachments, "Relazione ponte_A05.docx")), "Stale attachments of the previous generation.");
@@ -232,14 +255,14 @@ internal static class BridgeReportTests
         void MustFail(Action action, string label) { try { action(); } catch (Exception e) when (e is IOException or ArgumentException or UnauthorizedAccessException) { checks++; return; } throw new Exception("REPORT expected failure: " + label); }
     }
 
-    /// <summary>0.4.2: runs <paramref name="action"/> with an IOException injected at every named step of the publication
-    /// (<c>BridgeWordReport.FaultInjection</c>, internal, by reflection) and returns the message of the IOException it ends with (null when none).</summary>
-    private static string Faulted(string[] steps, Action action)
+    /// <summary>0.4.2: runs <paramref name="write"/> with an IOException injected at each step of the publication where <paramref name="fail"/>
+    /// is true (<c>BridgeWordReport.FaultInjection</c>, internal, by reflection): the export, or the message of the IOException it ends with.</summary>
+    private static (BridgeReportExport Result, string Message) Faulted(Func<string, bool> fail, Func<BridgeReportExport> write)
     {
         var field = typeof(BridgeWordReport).GetField("FaultInjection", BindingFlags.NonPublic | BindingFlags.Static) ?? throw new Exception("REPORT: no fault injection point.");
-        field.SetValue(null, (Action<string>)(step => { if (steps.Contains(step)) throw new IOException("injected failure at " + step); }));
-        try { action(); return null; }
-        catch (IOException e) { checks++; return e.Message; }
+        field.SetValue(null, (Action<string>)(step => { if (fail(step)) throw new IOException("injected failure at " + step); }));
+        try { return (write(), null); }
+        catch (IOException e) { return (null, e.Message); }
         finally { field.SetValue(null, null); }
     }
 }

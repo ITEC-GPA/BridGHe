@@ -286,10 +286,44 @@ public static class BridgeWordReport
             // folder that is removed below, so that the path given by a failed restore still exists.
             PublishDivided(stagedFolder, stagedIndex, output, folder, plan, overwrite, warnings, staging + ".recovery");
         }
-        catch (IOException e) { throw new IOException("Cannot publish the report. Close the index and the attachments in Word and check the path. " + e.Message, e); }
-        finally { if (Directory.Exists(staging)) Directory.Delete(staging, true); }
+        catch (Exception e)
+        {
+            // D2: the removal of the staging folder never replaces the error of the generation; when it fails, the error names the folder left.
+            var left = RemoveStaging(staging);
+            string leftText = left == null ? "" : " The temporary folder " + staging + " could not be deleted (" + left.Message + "): delete it by hand.";
+            if (e is IOException) throw new IOException("Cannot publish the report. Close the index and the attachments in Word and check the path. " + e.Message + leftText, e);
+            throw;
+        }
+        var leftover = RemoveStaging(staging);
+        if (leftover != null) warnings.Add("La cartella temporanea " + Path.GetFileName(staging) + " accanto al report non è stata cancellata (" + leftover.Message + "): il report è completo; cancellarla a mano.");
         return new(output, data.Id, data.Samples.Length, data.Rows.Count(), data.Rows.Count(r => r.Check.Active && !r.Check.HasRatio), warnings.ToArray(),
             folder, plan.Parts.Select(p => Path.Combine(folder, p.File)).ToArray(), Path.Combine(folder, plan.Archive));
+    }
+
+    /// <summary>D2 (0.4.2): the renames and removals of the folders of a divided report are tried <see cref="FolderAttempts"/> times, waiting
+    /// <see cref="FolderRetryMilliseconds"/> between the attempts: just after 36 attachments and an archive of 135 MB are written, an antivirus,
+    /// the indexer or a synchronised folder may still hold one of the files.</summary>
+    internal const int FolderAttempts = 5;
+    internal const int FolderRetryMilliseconds = 300;
+
+    private static void MoveFolder(string from, string to)
+    {
+        for (int attempt = 1; ; attempt++)
+            try { Fault("move-folder"); Directory.Move(from, to); return; }
+            catch (Exception e) when ((e is IOException || e is UnauthorizedAccessException) && attempt < FolderAttempts && Directory.Exists(from) && !Directory.Exists(to) && !File.Exists(to))
+            { System.Threading.Thread.Sleep(FolderRetryMilliseconds); }
+    }
+
+    /// <summary>Removes the staging folder (with retries); the error when it stays, never thrown.</summary>
+    private static Exception RemoveStaging(string staging)
+    {
+        for (int attempt = 1; ; attempt++)
+            try { Fault("remove-staging"); if (Directory.Exists(staging)) Directory.Delete(staging, true); return null; }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+            {
+                if (attempt >= FolderAttempts) return e;
+                System.Threading.Thread.Sleep(FolderRetryMilliseconds);
+            }
     }
 
     private static string FileHash(string path) { using var s = File.OpenRead(path); return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(s)); }
@@ -312,11 +346,11 @@ public static class BridgeWordReport
         if (Directory.Exists(folder))
         {
             previous = Path.Combine(Path.GetDirectoryName(output), ".bridghe-report-" + Guid.NewGuid().ToString("N") + ".old");
-            try { Directory.Move(folder, previous); }
+            try { MoveFolder(folder, previous); }
             catch (Exception e) when (e is IOException || e is UnauthorizedAccessException) { throw new IOException("The folder of the attachments is in use: " + e.Message, e); }
         }
-        try { Directory.Move(stagedFolder, folder); }
-        catch { if (previous != null) Directory.Move(previous, folder); throw; }
+        try { MoveFolder(stagedFolder, folder); }
+        catch { if (previous != null) MoveFolder(previous, folder); throw; }
         try
         {
             if (File.Exists(output)) PublishOverwrite(stagedIndex, output, recovery);
@@ -324,22 +358,31 @@ public static class BridgeWordReport
         }
         catch
         {
-            Directory.Move(folder, stagedFolder);
-            if (previous != null) Directory.Move(previous, folder);
+            MoveFolder(folder, stagedFolder);
+            if (previous != null) MoveFolder(previous, folder);
             throw;
         }
         if (previous == null) return;
         // The previous generation: its attachments and archive are replaced; anything else stays, in a folder beside, and is said.
-        var ours = new Regex("^" + Regex.Escape(plan.Stem) + @"_(A\d+\.docx|archivio\.zip)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-        foreach (var file in Directory.EnumerateFiles(previous).Where(f => ours.IsMatch(Path.GetFileName(f))).ToArray()) File.Delete(file);
-        if (!Directory.EnumerateFileSystemEntries(previous).Any()) { Directory.Delete(previous); return; }
-        string kept = folder + "_precedente-" + DateTime.Now.ToString("yyyyMMdd-HHmmss");
-        Directory.Move(previous, kept);
-        warnings.Add("Nella cartella degli allegati c'erano file non scritti da BridGHe: spostati in " + Path.GetFileName(kept) + ".");
+        // D2: the report is published at this point; a file of the previous generation still held makes a warning, not an error.
+        try
+        {
+            var ours = new Regex("^" + Regex.Escape(plan.Stem) + @"_(A\d+\.docx|archivio\.zip)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            foreach (var file in Directory.EnumerateFiles(previous).Where(f => ours.IsMatch(Path.GetFileName(f))).ToArray()) File.Delete(file);
+            if (!Directory.EnumerateFileSystemEntries(previous).Any()) { Directory.Delete(previous); return; }
+            string kept = folder + "_precedente-" + DateTime.Now.ToString("yyyyMMdd-HHmmss");
+            MoveFolder(previous, kept);
+            warnings.Add("Nella cartella degli allegati c'erano file non scritti da BridGHe: spostati in " + Path.GetFileName(kept) + ".");
+        }
+        catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+        {
+            warnings.Add("La generazione precedente degli allegati è rimasta nella cartella " + Path.GetFileName(previous) + " accanto al report (" + e.Message + "): il report nuovo è completo; controllarla e cancellarla a mano.");
+        }
     }
 
     /// <summary>Tests only (BridGHe.Smoke, by reflection): called at the named steps of the publication of a report («overwrite-write»,
-    /// «overwrite-restore»), to inject the failures of a file system filter or of the network. Null in the product.</summary>
+    /// «overwrite-restore», «move-folder», «remove-staging»), to inject the failures of a file system filter, of an antivirus or of the
+    /// network. Null in the product.</summary>
     internal static Action<string> FaultInjection = null;
     private static void Fault(string step) => FaultInjection?.Invoke(step);
 
