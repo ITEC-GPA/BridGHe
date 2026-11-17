@@ -1,0 +1,199 @@
+{
+  "Native": true,
+  "Definition": "flusso-acciaio-misto_REV005.ghx",
+  "DefinitionSHA256": "B2B3FE994CC13BA6F0F453CF2368B047C06C9618B64466E8F2E26811A650FF56",
+  "Checks": [
+    {
+      "Check": "Straus R3 Analysis | Dead | Rz",
+      "Actual": 402534.84133716015,
+      "Expected": 402534.84133715916,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | Dead | Rx",
+      "Actual": 3.34477023813709E-28,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | Dead | Ry",
+      "Actual": -8.077935669463161E-28,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | G1_GETTO | Rz",
+      "Actual": 900000.0000000006,
+      "Expected": 900000,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | G1_GETTO | Rx",
+      "Actual": -1.262177448353619E-28,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | G1_GETTO | Ry",
+      "Actual": -4.4428646182047385E-27,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | G2_PERMANENTI | Rz",
+      "Actual": 684000.0000000001,
+      "Expected": 684000,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | G2_PERMANENTI | Rx",
+      "Actual": 8.647507652939055E-16,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | G2_PERMANENTI | Ry",
+      "Actual": -2.2097879082139116E-12,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | Q_TRAFFICO | Rz",
+      "Actual": 684000.0000000005,
+      "Expected": 684000.0000000001,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | Q_TRAFFICO | Rx",
+      "Actual": 2.411613720849248E-12,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | Q_TRAFFICO | Ry",
+      "Actual": -2.8990143619012088E-12,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | Q3_FRENATURA | Rz",
+      "Actual": -6.545996383833241E-13,
+      "Expected": 0,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | Q3_FRENATURA | Rx",
+      "Actual": -424799.9999999998,
+      "Expected": -424800,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | Q3_FRENATURA | Ry",
+      "Actual": 1.9383605831535533E-11,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | Q4_CENTRIFUGA | Rz",
+      "Actual": -2.498001805406602E-16,
+      "Expected": 0,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | Q4_CENTRIFUGA | Rx",
+      "Actual": 1.6217064058082558E-15,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | Q4_CENTRIFUGA | Ry",
+      "Actual": -479.9999999999999,
+      "Expected": -480,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | Q7_TEMPERATURA | Rz",
+      "Actual": 4.329773518832254E-25,
+      "Expected": 0,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | Q7_TEMPERATURA | Rx",
+      "Actual": 7.031035206700735E-23,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | Q7_TEMPERATURA | Ry",
+      "Actual": -6.617444900424222E-24,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | WIND_1 | Rz",
+      "Actual": 61199.999999999956,
+      "Expected": 61200.00000000001,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | WIND_1 | Rx",
+      "Actual": -61200.000000000015,
+      "Expected": -61200.00000000001,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | WIND_1 | Ry",
+      "Actual": 244800.00000000015,
+      "Expected": 244800.00000000003,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | RITIRO_FEM | Rz",
+      "Actual": -1.8306972322169758E-10,
+      "Expected": 0,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | RITIRO_FEM | Rx",
+      "Actual": 1.5923226791645783E-23,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "Straus R3 Analysis | RITIRO_FEM | Ry",
+      "Actual": 1.809457589959748E-25,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "posizioni mobili",
+      "Count": 25,
+      "Pass": true
+    },
+    {
+      "Check": "reazione verticale massima delle posizioni = peso del veicolo [N]",
+      "Actual": 600000.0000000006,
+      "Expected": 600000,
+      "Pass": true
+    },
+    {
+      "Check": "nessuna posizione oltre il peso del veicolo",
+      "Pass": true
+    },
+    {
+      "Check": "assemblaggio",
+      "Phases": 5,
+      "Combinations": 31,
+      "Pass": true
+    },
+    {
+      "Check": "verifiche di sezione: 6758 righe",
+      "Pass": true
+    },
+    {
+      "Check": "errori dopo il calcolo",
+      "Errors": [],
+      "Pass": true
+    }
+  ]
+}

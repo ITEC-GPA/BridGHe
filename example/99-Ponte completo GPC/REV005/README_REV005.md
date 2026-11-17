@@ -53,3 +53,11 @@ dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --example-refe
 ```
 
 Riapre il GHX senza Straus e controlla valori, ordine delle fasce, risultanti dei carichi per caso, Excel, tandem, fasi e disposizione. Resoconto in [validation-reference-loads.json](validation-reference-loads.json).
+
+Prova con Straus7, su una copia del GHX, dell'Excel e del template (chiave presente, Rhino chiuso):
+
+```powershell
+dotnet run --project tests/BridGHe.Smoke -c Release --no-build -- --example-reference-loads native 99 --input <copia>\flusso-acciaio-misto_REV005.ghx
+```
+
+Calcola i quattro modelli e l'analisi mobile. Per ogni caso controlla che le reazioni Rx, Ry, Rz siano uguali ai carichi applicati, e che nessuna posizione mobile superi il peso del tandem (600 kN). Poi assembla il ponte (5 fasi, 31 combinazioni) e lancia le verifiche di sezione (6.758 righe, nessun errore). Il resoconto è in [native-validation.json](native-validation.json).
