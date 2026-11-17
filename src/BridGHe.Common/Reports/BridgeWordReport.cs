@@ -339,13 +339,20 @@ public static class BridgeWordReport
 
     private static string FileHash(string path) { using var s = File.OpenRead(path); return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(s)); }
 
-    /// <summary>Before the generation: the index and the files of the folder of a previous generation can be replaced (not open in Word).</summary>
+    /// <summary>Before the generation: the index and the files of the folder of a previous generation can be replaced (not open in Word).
+    /// D4 (0.4.2): a read-only file (copied from an archive or a CD, or marked by Explorer on its folder) or one without the permission to
+    /// write is said as such, not as a file open in Word.</summary>
     private static void Writable(string output, string folder)
     {
         var files = (Directory.Exists(folder) ? Directory.EnumerateFiles(folder) : Enumerable.Empty<string>()).Prepend(output).Where(File.Exists);
         foreach (var file in files)
+        {
+            if ((File.GetAttributes(file) & FileAttributes.ReadOnly) != 0)
+                throw new IOException(Path.GetFileName(file) + " is read-only: clear the Read-only attribute (Properties of the file or of its folder) before Generate.");
             try { using var _ = new FileStream(file, FileMode.Open, FileAccess.ReadWrite, FileShare.None); }
-            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException) { throw new IOException("Close " + Path.GetFileName(file) + " in Word before Generate: " + e.Message, e); }
+            catch (UnauthorizedAccessException e) { throw new IOException(Path.GetFileName(file) + " cannot be written (read-only or no permission to write): " + e.Message, e); }
+            catch (IOException e) { throw new IOException("Close " + Path.GetFileName(file) + " in Word before Generate: " + e.Message, e); }
+        }
     }
 
     /// <summary>The staged attachments become the folder, then the staged index the report; on a failure the previous files are put back.</summary>

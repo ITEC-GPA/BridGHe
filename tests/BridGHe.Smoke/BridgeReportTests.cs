@@ -251,6 +251,17 @@ internal static class BridgeReportTests
             "D2: a staging folder left after a published report is a warning with its name.");
         Directory.Delete(stale[0], true);
         before = State();
+        // D4 (0.4.2): a read-only attachment (or index) is said as read-only, not as a file open in Word; the previous delivery is kept.
+        foreach (string readOnly in new[] { exported.Attachments[1], index })
+        {
+            File.SetAttributes(readOnly, File.GetAttributes(readOnly) | FileAttributes.ReadOnly);
+            string said = null;
+            try { BridgeWordReport.Write(Template, index, data, topics, overwrite: true, attachmentResults: 4); }
+            catch (IOException e) { said = e.Message; }
+            finally { File.SetAttributes(readOnly, File.GetAttributes(readOnly) & ~FileAttributes.ReadOnly); }
+            Require(said != null && said.StartsWith(Path.GetFileName(readOnly) + " is read-only") && !said.Contains("in Word") && State() == before,
+                "D4: a read-only " + Path.GetFileName(readOnly) + " must be said as read-only and keep the previous delivery.");
+        }
         File.WriteAllText(Path.Combine(attachments, "nota.txt"), "nota dell'utente");
         var again = BridgeWordReport.Write(Template, index, data, topics, overwrite: true, attachmentResults: 6);
         Require(again.Attachments.Length == 4 && Directory.EnumerateFiles(attachments).Count() == 5 && !File.Exists(Path.Combine(attachments, "Relazione ponte_A05.docx")), "Stale attachments of the previous generation.");
