@@ -101,6 +101,14 @@ internal static class RegressionTests
         gpc["gpc-only-properties"] = GpcOnlyReplay.Properties; // R6.5 P1 lane 2a (P2Z, 8/11): properties and data replayed with GPC-only inputs and outputs; L2B (8/11): with lane 2b (composite and bridge properties, State Override, coordinate systems)
         gpc["gpc-only-models"] = GpcOnlyReplay.Models; // R6.5 P1 lane 3a (L3a, 8/11): models, composite beams and workflow objects GPC-only; a gate step of its own (limit 5,400 s), not in regression all
         gpc["export-preparation"] = ExportPreparationChecks.Regression; // Task 118: analytical managed export boundary.
+        // D6 of the final review of 0.4.1 (0.4.2): the non-native section groups of tasks 190, 198 and 209 (about 45 s together) in regression
+        // all; until 0.4.1 they ran only by their own flags, which stay (--sections-190, --sections-190-open, --sections-198-oracle,
+        // --sections-209-replay, --sections-209-warnings). The native --sections-190-native stays a gate step of its own, under the Straus7 lock.
+        gpc["sections-190"] = () => Exit(UniqueSectionChecks.Run(false), "sections-190");
+        gpc["sections-190-open"] = () => Exit(OpenSectionChecks190.Run(), "sections-190-open");
+        gpc["sections-198-oracle"] = () => Exit(OpenSectionChecks190.Oracle198(), "sections-198-oracle");
+        gpc["sections-209-replay"] = () => Exit(OpenSectionChecks190.Replay209(), "sections-209-replay");
+        gpc["sections-209-warnings"] = () => Exit(OpenSectionChecks190.Warnings209(), "sections-209-warnings");
         tests = gpc.Concat(tests).ToDictionary(t => t.Key, t => t.Value);
         P2cfChecks.RegressionKeys(tests.Keys, selection == "all"); // P2CF (13/11, item 4): the regression keys of P2rRetired.Checks against the regressions
         if (selection != "all" && !tests.ContainsKey(selection))
@@ -133,6 +141,9 @@ internal static class RegressionTests
     {
         if (!condition) throw new InvalidOperationException("REGRESSION FAILED: " + message);
     }
+
+    /// <summary>D6 (0.4.2): a check run by its own flag returns an exit code; in a regression, a code other than 0 is a failure.</summary>
+    private static void Exit(int code, string name) => Require(code == 0, name + " returned exit code " + code);
 
     private static void BridgeDetailArchives()
     {

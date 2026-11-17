@@ -67,6 +67,10 @@ internal static class UniqueSectionChecks
         foreach(string extension in new[]{".ghx",".gh"})
         {
             string path=Path.Combine(folder,"old-five-sections"+extension);
+            // D6 (0.4.2): in regression all a checkout that has not made its own base documents (--sections-190-before, on the base of task 190)
+            // reads those of task 190, kept as fixtures (Fixtures/sections-190/PROVENIENZA.md).
+            string fixture=Path.GetFullPath(Path.Combine("tests","BridGHe.Smoke","Fixtures","sections-190","old-five-sections"+extension));
+            if(!saveBase && !File.Exists(path) && File.Exists(fixture)) path=fixture;
             if(saveBase && !File.Exists(path))
             {
                 using var doc=new GH_Document(); doc.Enabled=false;
