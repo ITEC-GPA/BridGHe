@@ -1820,7 +1820,7 @@
       {
         "name": "Results",
         "nickname": "R",
-        "description": "BridgeStressResult tree from Section, Super Element or Detail Check. One document for the entire tree; original paths and native provenance are retained.",
+        "description": "BridgeStressResult tree from Section, Super Element or Detail Check. One report for the entire tree: a single document up to 1000 results, above them an index with attachments by combination; original paths and native provenance are retained.",
         "access": "tree",
         "optional": false,
         "type": "Generic Data"
@@ -1900,7 +1900,7 @@
       {
         "name": "Overwrite",
         "nickname": "O",
-        "description": "Explicitly replace the destination DOCX. Default false; close it in Word first.",
+        "description": "Explicitly replace the destination DOCX and, for a divided report, the attachments and archive of its previous generation (other files are moved aside). Default false; close them in Word first.",
         "access": "item",
         "optional": false,
         "type": "Boolean"
@@ -1934,7 +1934,7 @@
       {
         "name": "Report ID",
         "nickname": "ID",
-        "description": "Export identity included in the DOCX and embedded numerical archive.",
+        "description": "Export identity included in the DOCX (the index and every attachment of a divided report) and in the numerical archive: embedded up to 1000 results, the _archivio.zip of the attachments folder above.",
         "access": "item",
         "optional": false,
         "type": "Text"

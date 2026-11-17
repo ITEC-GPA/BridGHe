@@ -37,7 +37,7 @@ internal static class PaletteContractChecks
     /// <summary>The SHA-256 of the two frozen files (UTF-8, line ends normalised to LF): an edit of the table without the procedure above fails.
     /// P2CI (14/11/2026): the proposal shown to the user (INT\rapporti\P2CI-palette-proposta-20261114).</summary>
     private const string ComponentsSha = "29B615F73989770A8419CBA84D7D4B1EA5ED852EF6E5A6456CEB22240A8230F3",
-        PortsSha = "AFC08B66A7CABA2F7817DEC7380C0256CE2A3D783726B3B7944957D5CED48BDB";
+        PortsSha = "84729098F920965E7E742D745E992A32068D0E0C5FFD46396DAFE5DB01FFE444";
 
     internal static string Folder => Path.Combine(Path.GetDirectoryName(ExamplePaths.Root), "tests", "BridGHe.Smoke", "Fixtures", "palette");
 
