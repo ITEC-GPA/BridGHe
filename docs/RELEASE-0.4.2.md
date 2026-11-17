@@ -10,6 +10,7 @@ Riguarda i report con più di 1000 risultati.
 - **Nuovi tentativi.** Le rinomine delle cartelle si ritentano fino a 5 volte, a 0,3 s di distanza, quando un antivirus, l'indicizzatore o una cartella sincronizzata tengono ancora aperto un file. Se la cartella temporanea non si riesce a cancellare, il messaggio d'errore resta quello vero e ne indica il nome; a report completato diventa un avviso.
 - **Percorsi lunghi.** Il nome del report compare due volte nel percorso degli allegati (`nome_allegati\nome_A01.docx`). Oltre 218 caratteri Bridge Report dà un avviso con il file e la lunghezza: Word ed Excel possono non aprire i file né seguire i collegamenti dell'indice. I nomi dei file restano quelli della 0.4.1.
 - **File in sola lettura.** Un indice o un allegato in sola lettura (copiato da un archivio o da un CD, o con l'attributo messo da Esplora risorse) viene segnalato come tale, invece di chiedere di chiudere Word.
+- **Descrizioni delle porte.** Results, Overwrite e Report ID di Bridge Report descrivono anche il report diviso. *In attesa dell'approvazione: le descrizioni nuove cambiano i contratti congelati delle porte.*
 
 ## Sezioni aperte
 

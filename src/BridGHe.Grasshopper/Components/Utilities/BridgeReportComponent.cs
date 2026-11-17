@@ -31,7 +31,7 @@ public sealed class BridgeReportComponent : GH_Component
     }
     protected override void RegisterInputParams(GH_InputParamManager p)
     {
-        p.AddGenericParameter("Results", "R", "BridgeStressResult tree from Section, Super Element or Detail Check. One document for the entire tree; original paths and native provenance are retained.", GH_ParamAccess.tree);
+        p.AddGenericParameter("Results", "R", "BridgeStressResult tree from Section, Super Element or Detail Check. One report for the entire tree: a single document up to 1000 results, above them an index with attachments by combination; original paths and native provenance are retained.", GH_ParamAccess.tree);
         p.AddTextParameter("Template", "T", "Word .docx/.dotx with {{BG.Report}}, or {{BG.Summary}} and individual chapter markers on separate body paragraphs. Relative to the saved GH definition.", GH_ParamAccess.item);
         p.AddTextParameter("File", "F", "Destination .docx. Relative to the saved GH definition. The template cannot be overwritten.", GH_ParamAccess.item);
         p.AddIntegerParameter("Topics", "Ch", "0 Model; 1 Sections; 2 Phases; 3 Checks; 4 Critical; 5 Plots; 6 full Appendix. Connect a Value List to populate a checklist. Disconnected uses 0..5; an attached empty checklist keeps only Summary.", GH_ParamAccess.list); p[3].Optional = true;
@@ -41,14 +41,14 @@ public sealed class BridgeReportComponent : GH_Component
         p.AddTextParameter("Author", "By", "Author printed in the template; no signature is generated.", GH_ParamAccess.item, "");
         p.AddTextParameter("Revision", "Rev", "Document revision.", GH_ParamAccess.item, "01");
         p.AddTextParameter("SVG", "SVG", "Optional SVGs from Bridge Plot components, in document order. Verify their correspondence to Results; SVG does not carry authenticated result provenance.", GH_ParamAccess.tree); p[9].Optional = true;
-        p.AddBooleanParameter("Overwrite", "O", "Explicitly replace the destination DOCX. Default false; close it in Word first.", GH_ParamAccess.item, false);
+        p.AddBooleanParameter("Overwrite", "O", "Explicitly replace the destination DOCX and, for a divided report, the attachments and archive of its previous generation (other files are moved aside). Default false; close them in Word first.", GH_ParamAccess.item, false);
     }
     protected override void RegisterOutputParams(GH_OutputParamManager p)
     {
         p.AddTextParameter("File", "F", "Written DOCX; populated only after a successful Generate.", GH_ParamAccess.item);
         p.AddTextParameter("Summary", "S", "Export counts and selected chapters.", GH_ParamAccess.list);
         p.AddTextParameter("Warnings", "W", "Missing provenance and coverage limitations, also written in the report.", GH_ParamAccess.list);
-        p.AddTextParameter("Report ID", "ID", "Export identity included in the DOCX and embedded numerical archive.", GH_ParamAccess.item);
+        p.AddTextParameter("Report ID", "ID", "Export identity included in the DOCX (the index and every attachment of a divided report) and in the numerical archive: embedded up to 1000 results, the _archivio.zip of the attachments folder above.", GH_ParamAccess.item);
     }
     public override void AddedToDocument(GH_Document document) { base.AddedToDocument(document); ConfigureTopics(); }
     private void ConfigureTopics()
