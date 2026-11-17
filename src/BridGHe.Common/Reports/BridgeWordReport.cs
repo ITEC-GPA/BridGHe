@@ -30,6 +30,12 @@ public static class BridgeWordReport
     /// as an index and attachments of at most this many results each (the threshold of task 186, 948 results per combination in example 50).</summary>
     public const int DefaultAttachmentResults = 1000;
 
+    /// <summary>D3 of the final review of 0.4.1 (0.4.2): a divided report warns when the full path of one of its files (index, attachment,
+    /// archive) is longer than this, the path limit of Excel and below that of Word. The name of the report appears twice in the path of an
+    /// attachment («name_allegati\name_A01.docx»): the generation succeeds (.NET writes long paths), but Word may not open the file or follow
+    /// the links of the index. The names are kept (the layout approved for task 195); the warning says to shorten the name or the folder.</summary>
+    public const int LongPathWarning = 218;
+
     public static BridgeReportExport Write(string template, string output, BridgeReportData data,
         IEnumerable<BridgeReportTopic> topics = null, IReadOnlyList<BridgeReportFigure> figures = null, bool overwrite = false,
         BridgeReportLayout layout = BridgeReportLayout.Automatic, int attachmentResults = DefaultAttachmentResults)
@@ -296,6 +302,11 @@ public static class BridgeWordReport
         }
         var leftover = RemoveStaging(staging);
         if (leftover != null) warnings.Add("La cartella temporanea " + Path.GetFileName(staging) + " accanto al report non è stata cancellata (" + leftover.Message + "): il report è completo; cancellarla a mano.");
+        // D3: said to the component only (Warnings), not written in the documents, which do not depend on the folder they are saved in.
+        string longest = plan.Parts.Select(p => Path.Combine(folder, p.File)).Append(Path.Combine(folder, plan.Archive)).Append(output).OrderByDescending(p => p.Length).First();
+        if (longest.Length > LongPathWarning)
+            warnings.Add("Percorso lungo: " + Path.GetFileName(longest) + " ha un percorso di " + longest.Length + " caratteri (oltre " + LongPathWarning
+                + "). Word ed Excel possono non aprire i file oltre i loro limiti di percorso, e i collegamenti dell'indice non funzionano: accorciare il nome del report o il percorso della cartella.");
         return new(output, data.Id, data.Samples.Length, data.Rows.Count(), data.Rows.Count(r => r.Check.Active && !r.Check.HasRatio), warnings.ToArray(),
             folder, plan.Parts.Select(p => Path.Combine(folder, p.File)).ToArray(), Path.Combine(folder, plan.Archive));
     }

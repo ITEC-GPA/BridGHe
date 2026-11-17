@@ -204,6 +204,14 @@ internal static class BridgeReportTests
         string automatic = Path.Combine(folder, "auto.docx");
         Require(BridgeWordReport.Write(Template, automatic, data, topics, attachmentResults: data.Samples.Length).Attachments == null && !Directory.Exists(Path.Combine(folder, "auto_allegati")), "At the limit the report must stay one document.");
         Require(BridgeWordReport.Write(Template, automatic, data, topics, overwrite: true, attachmentResults: data.Samples.Length - 1).Attachments?.Length == 2, "Above the limit the report must be divided.");
+        // D3 (0.4.2): an attachment path beyond 218 characters (the name twice in it) gives a warning naming the file and its length; the
+        // short names of this test give none, and the long report is the same report (same files, results and archive).
+        string longStem = new string('L', Math.Max(1, (230 - folder.Length - 19) / 2)), longIndex = Path.Combine(folder, longStem + ".docx");
+        var longReport = BridgeWordReport.Write(Template, longIndex, data, topics, attachmentResults: 4);
+        string longestPath = longReport.Attachments.Append(longReport.Archive).Append(longReport.File).OrderByDescending(a => a.Length).First();
+        Require(longReport.Attachments.Min(a => a.Length) > BridgeWordReport.LongPathWarning && longReport.Attachments.Length == 7 && longReport.Attachments.All(File.Exists)
+            && longReport.Warnings.Count(w => w.StartsWith("Percorso lungo: " + Path.GetFileName(longestPath) + " ha un percorso di " + longestPath.Length + " caratteri")) == 1
+            && !exported.Warnings.Any(w => w.StartsWith("Percorso lungo")), "D3: a long attachment path must be said, a short one not.");
         // Overwrite: refused without it; a locked attachment keeps the previous delivery; fewer parts replace the previous ones, other files kept.
         string State() => Sha(index) + string.Concat(Directory.EnumerateFiles(attachments).OrderBy(f => f, StringComparer.Ordinal).Select(f => Path.GetFileName(f) + Sha(f)));
         string before = State();
