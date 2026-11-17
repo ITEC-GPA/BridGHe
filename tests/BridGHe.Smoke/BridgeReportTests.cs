@@ -2,8 +2,10 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using BridGHe.Common.Checks;
 using BridGHe.Common.Reports;
@@ -209,6 +211,15 @@ internal static class BridgeReportTests
         using (new FileStream(exported.Attachments[2], FileMode.Open, FileAccess.Read, FileShare.None))
             MustFail(() => BridgeWordReport.Write(Template, index, data, topics, overwrite: true, attachmentResults: 4), "locked attachment");
         Require(State() == before, "The previous delivery changed after a refused generation.");
+        // D1 (0.4.2): the write of the index interrupted and its restore failed too (a file system filter, the network): the recovery copy named
+        // by the error exists beside the report with the bytes of the previous index, and the attachments of the previous delivery are back.
+        byte[] previousIndex = File.ReadAllBytes(index);
+        string recoveryMessage = Faulted(new[] { "overwrite-write", "overwrite-restore" }, () => BridgeWordReport.Write(Template, index, data, topics, overwrite: true, attachmentResults: 4));
+        string recovery = recoveryMessage == null ? null : Regex.Match(recoveryMessage, @"Recover the original report from: (.+?\.recovery)").Groups[1].Value;
+        Require(!string.IsNullOrEmpty(recovery) && Path.GetDirectoryName(recovery) == folder && File.Exists(recovery) && File.ReadAllBytes(recovery).SequenceEqual(previousIndex),
+            "D1: the recovery copy named by the error must exist beside the report, with the previous index.");
+        File.Copy(recovery, index, true); File.Delete(recovery);
+        Require(State() == before, "D1: the previous delivery whole again from the recovery copy.");
         File.WriteAllText(Path.Combine(attachments, "nota.txt"), "nota dell'utente");
         var again = BridgeWordReport.Write(Template, index, data, topics, overwrite: true, attachmentResults: 6);
         Require(again.Attachments.Length == 4 && Directory.EnumerateFiles(attachments).Count() == 5 && !File.Exists(Path.Combine(attachments, "Relazione ponte_A05.docx")), "Stale attachments of the previous generation.");
@@ -219,5 +230,16 @@ internal static class BridgeReportTests
         Require(!Directory.EnumerateFileSystemEntries(folder, ".bridghe-report-*").Any(), "Temporary files or folders leaked.");
 
         void MustFail(Action action, string label) { try { action(); } catch (Exception e) when (e is IOException or ArgumentException or UnauthorizedAccessException) { checks++; return; } throw new Exception("REPORT expected failure: " + label); }
+    }
+
+    /// <summary>0.4.2: runs <paramref name="action"/> with an IOException injected at every named step of the publication
+    /// (<c>BridgeWordReport.FaultInjection</c>, internal, by reflection) and returns the message of the IOException it ends with (null when none).</summary>
+    private static string Faulted(string[] steps, Action action)
+    {
+        var field = typeof(BridgeWordReport).GetField("FaultInjection", BindingFlags.NonPublic | BindingFlags.Static) ?? throw new Exception("REPORT: no fault injection point.");
+        field.SetValue(null, (Action<string>)(step => { if (steps.Contains(step)) throw new IOException("injected failure at " + step); }));
+        try { action(); return null; }
+        catch (IOException e) { checks++; return e.Message; }
+        finally { field.SetValue(null, null); }
     }
 }

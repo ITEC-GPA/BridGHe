@@ -67,7 +67,7 @@ public static class BridgeWordReport
             if (File.Exists(output))
             {
                 if (!overwrite) throw new IOException("Report already exists.");
-                PublishOverwrite(temporary, output);
+                PublishOverwrite(temporary, output, temporary + ".recovery");
             }
             else File.Move(temporary, output);
         }
@@ -282,7 +282,9 @@ public static class BridgeWordReport
                 AttachmentResults = plan.Parts.Max(p => p.Samples.Length), Attachments = attachments,
                 Results = plan.Parts.SelectMany(p => p.Samples.Select(s => (s.Id, p.Code))).ToDictionary(x => x.Id, x => x.Code) };
             Save(index, stagedIndex, ManifestPart, stream => BridgeReportData.Serialize(stream, manifest));
-            PublishDivided(stagedFolder, stagedIndex, output, folder, plan, overwrite, warnings);
+            // 0.4.2 (D1 of the final review of 0.4.1): the recovery copy of a replaced index stays beside the report, outside the staging
+            // folder that is removed below, so that the path given by a failed restore still exists.
+            PublishDivided(stagedFolder, stagedIndex, output, folder, plan, overwrite, warnings, staging + ".recovery");
         }
         catch (IOException e) { throw new IOException("Cannot publish the report. Close the index and the attachments in Word and check the path. " + e.Message, e); }
         finally { if (Directory.Exists(staging)) Directory.Delete(staging, true); }
@@ -302,7 +304,8 @@ public static class BridgeWordReport
     }
 
     /// <summary>The staged attachments become the folder, then the staged index the report; on a failure the previous files are put back.</summary>
-    private static void PublishDivided(string stagedFolder, string stagedIndex, string output, string folder, BridgeReportSplit plan, bool overwrite, List<string> warnings)
+    private static void PublishDivided(string stagedFolder, string stagedIndex, string output, string folder, BridgeReportSplit plan, bool overwrite, List<string> warnings,
+        string recovery)
     {
         if (File.Exists(output) && !overwrite) throw new IOException("Report already exists.");
         string previous = null;
@@ -316,7 +319,7 @@ public static class BridgeWordReport
         catch { if (previous != null) Directory.Move(previous, folder); throw; }
         try
         {
-            if (File.Exists(output)) PublishOverwrite(stagedIndex, output);
+            if (File.Exists(output)) PublishOverwrite(stagedIndex, output, recovery);
             else File.Move(stagedIndex, output);
         }
         catch
@@ -335,12 +338,18 @@ public static class BridgeWordReport
         warnings.Add("Nella cartella degli allegati c'erano file non scritti da BridGHe: spostati in " + Path.GetFileName(kept) + ".");
     }
 
-    private static void PublishOverwrite(string temporary, string output)
+    /// <summary>Tests only (BridGHe.Smoke, by reflection): called at the named steps of the publication of a report («overwrite-write»,
+    /// «overwrite-restore»), to inject the failures of a file system filter or of the network. Null in the product.</summary>
+    internal static Action<string> FaultInjection = null;
+    private static void Fault(string step) => FaultInjection?.Invoke(step);
+
+    /// <summary>Replaces <paramref name="output"/> with <paramref name="temporary"/> in place. <paramref name="recovery"/>, the copy of the
+    /// original kept until the write or the restore succeeds, must be beside the report: never in a folder removed after a failure (D1).</summary>
+    private static void PublishOverwrite(string temporary, string output, string recovery)
     {
         // Match the workbook exporter: an exclusive handle protects open Office documents and a
         // recovery copy protects an existing delivery if a filesystem filter interrupts the write.
         using var target = new FileStream(output, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
-        string recovery = temporary + ".recovery";
         using (var backup = File.Create(recovery)) { target.CopyTo(backup); backup.Flush(true); }
         bool restoredOrWritten = false;
         try
@@ -348,10 +357,11 @@ public static class BridgeWordReport
             try
             {
                 using var source = File.OpenRead(temporary); target.Position = 0;
-                source.CopyTo(target); target.SetLength(source.Length); target.Flush(true); restoredOrWritten = true;
+                source.CopyTo(target); Fault("overwrite-write"); target.SetLength(source.Length); target.Flush(true); restoredOrWritten = true;
             }
             catch
             {
+                Fault("overwrite-restore");
                 using var backup = File.OpenRead(recovery); target.Position = 0;
                 backup.CopyTo(target); target.SetLength(backup.Length); target.Flush(true); restoredOrWritten = true;
                 throw;
