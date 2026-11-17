@@ -25,12 +25,24 @@ using static BridgeMovingRevisionExample;
 /// </summary>
 internal static class P2kNative
 {
+    /// <summary>0.4.2 (D13): the current definitions of the catalogue, 50 REV004 and 99 REV005, run by <c>50</c> and <c>99</c>; the definitions of
+    /// 0.4.1 (50 REV003, the frozen capture input, and the migrated candidate of 99 REV004) stay by name, <c>50-rev003</c> and
+    /// <c>99-rev004</c>, for the comparison with their frozen rows.</summary>
+    internal const string Example50 = "50-ponte-quattro-modelli/50-ponte-quattro-modelli_REV004.ghx", Example99 = "99-Ponte completo GPC/REV005/flusso-acciaio-misto_REV005.ghx",
+        Example99Rev004 = "99-Ponte completo GPC/REV004/flusso-acciaio-misto_REV004.ghx";
+    private static readonly string[] Modes = { "50", "99", "50-rev003", "99-rev004" };
+
     internal static void Regression()
     {
         string which = Environment.GetEnvironmentVariable("BRIDGHE_P2K_NATIVE");
-        if (string.IsNullOrEmpty(which)) { Console.WriteLine("P2K NATIVES: not run (native: BRIDGHE_P2K_NATIVE=50,99 under the Straus7 lock)."); return; }
-        if (which.Contains("99")) Modular();
-        if (which.Contains("50")) Rev003();
+        if (string.IsNullOrEmpty(which)) { Console.WriteLine("P2K NATIVES: not run (native: BRIDGHE_P2K_NATIVE=50,99 under the Straus7 lock; 50-rev003,99-rev004 for the definitions of 0.4.1)."); return; }
+        var modes = which.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToHashSet(StringComparer.Ordinal);
+        var unknown = modes.Where(m => !Modes.Contains(m)).ToArray();
+        if (unknown.Length > 0) throw new ArgumentException("BRIDGHE_P2K_NATIVE: unknown " + string.Join(", ", unknown) + " (" + string.Join(", ", Modes) + ")");
+        if (modes.Contains("99")) Modular(Example99, false, 5);
+        if (modes.Contains("99-rev004")) Modular(Example99Rev004, true, 4);
+        if (modes.Contains("50")) Fifty(Path.Combine(ExamplePaths.Root, Example50), "REV004", "artifacts/p2k-native-50-rev004");
+        if (modes.Contains("50-rev003")) Fifty(CaptureInput, "REV003", "artifacts/p2k-native-50");
     }
 
     /// <summary>The GHA is parsed once per process: a second parse shows the modal GUID conflict prompt of Grasshopper (hidden host: a hang).</summary>
@@ -48,30 +60,33 @@ internal static class P2kNative
     }
 
     private static object One(IGH_Param p) => p.VolatileData.AllData(true).SingleOrDefault();
-    private static void SetText(GH_Component c, string name, string text) { var p = (Param_String)In(c, name); p.RemoveAllSources(); p.SetPersistentData(text); }
+    /// <summary>0.4.2: the persistent data are cleared first, as the other runners do (BuildModelScan, the reference-loads runner): a value
+    /// saved in the definition (99 REV005) must not stay beside the new one.</summary>
+    private static void SetText(GH_Component c, string name, string text) { var p = (Param_String)In(c, name); p.RemoveAllSources(); p.PersistentData.Clear(); p.SetPersistentData(text); }
 
-    /// <summary>The 50 REV003 (the frozen capture input), the GPC path of <c>BridgeMovingRevisionNative.RunGpc</c> without the transitional checks.</summary>
-    private static void Rev003()
+    /// <summary>The 50 REV003 (the frozen capture input) or, from 0.4.2, the 50 REV004 of the catalogue (the shipped definition, read only:
+    /// every Straus output redirected into <paramref name="output"/>), the GPC path of <c>BridgeMovingRevisionNative.RunGpc</c> without the
+    /// transitional checks. The labels of REV003 are those of 0.4.1, so its fingerprint compares with the frozen rows.</summary>
+    private static void Fifty(string source, string revision, string output)
     {
         Initialize();
-        string source = CaptureInput;
         byte[] bytes = File.ReadAllBytes(source);
-        string folder = Path.GetFullPath("artifacts/p2k-native-50"); Directory.CreateDirectory(folder);
+        string folder = Path.GetFullPath(output); Directory.CreateDirectory(folder);
         using var doc = GrasshopperBridgeExample.Read(source); doc.FilePath = source;
         var analyses = doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "StrausR3AnalysisComponent").OrderBy(c => c.NickName).ToArray();
-        void OutputPath(GH_Component c, string port, string file) { var p = (Param_String)In(c, port); p.RemoveAllSources(); p.SetPersistentData(Path.Combine(folder, file)); }
+        void OutputPath(GH_Component c, string port, string file) { var p = (Param_String)In(c, port); p.RemoveAllSources(); p.PersistentData.Clear(); p.SetPersistentData(Path.Combine(folder, file)); }
         foreach (var c in analyses) { Clear(c); OutputPath(c, "Output Path", c.NickName.Split(' ')[0] + ".st7"); }
         var moving = Find(doc, "MovingStaticAnalysisComponent"); Clear(moving); OutputPath(moving, "Output path", "M03_N0_MOBILE.st7");
         BridgeSegmentExcelTests.Solve(doc, true);
         foreach (var read in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "BridgeSectionReadComponent")) { BridgeSegmentExcelTests.Press(read); read.ExpireSolution(false); }
-        BridgeSegmentExcelTests.Solve(doc, true); ResultFingerprint.Mark("REV003 inputs solved");
+        BridgeSegmentExcelTests.Solve(doc, true); ResultFingerprint.Mark(revision + " inputs solved");
         var measurements = new List<object>();
         void Near(string label, double actual, double expected, double tolerance)
         { Require(double.IsFinite(actual) && Math.Abs(actual - expected) <= tolerance, $"{label}: {actual:G17} vs {expected:G17}, tol={tolerance}"); measurements.Add(new { Label = label, Actual = actual, Expected = expected, Tolerance = tolerance }); }
         foreach (var c in analyses)
         {
             string name = c.NickName.Split(' ')[0];
-            var input = R4cMoving.Input(One(In(c, "Model"))); Require(input != null, "No GPC input: " + c.NickName + "\n" + Errors(doc)); Console.WriteLine("P2K REV003 NATIVE: " + c.NickName);
+            var input = R4cMoving.Input(One(In(c, "Model"))); Require(input != null, "No GPC input: " + c.NickName + "\n" + Errors(doc)); Console.WriteLine("P2K " + revision + " NATIVE: " + c.NickName);
             Press(c); BridgeSegmentExcelTests.Solve(doc, true);
             var result = R4cMoving.Results(One(Out(c, "Model"))); Require(result != null && result.HasBeamRows(), Errors(doc));
             foreach (string label in result.ReactionLabels())
@@ -97,7 +112,7 @@ internal static class P2kNative
         var (trafficGoo, trafficMessages) = R4cMoving.GpcOnlyAnalysis(moving, Path.Combine(gpcOnlyFolder, "M03_N0_MOBILE.st7"));
         var traffic = R4cMoving.Results(trafficGoo); Require(traffic != null, "Moving analysis on its GPC input alone failed: " + string.Join(" / ", trafficMessages));
         string difference = GpcOnlyReplay.ResultsDifference(definitionTraffic, trafficGoo); Require(difference == null, "Moving analysis on its GPC input alone differs from the analysis of the definition: " + difference);
-        Console.WriteLine("P2K REV003 NATIVE: moving analysis on its GPC input alone equal to the analysis of the definition.");
+        Console.WriteLine("P2K " + revision + " NATIVE: moving analysis on its GPC input alone equal to the analysis of the definition.");
         int slabAssignments = BridgeMovingSlabTargets.Run(gpcOnlyFolder);
         var path = trafficInput.Model.MovingLoads.Paths.Single();
         var start = new Point3d(path.Start.X, path.Start.Y, path.Start.Z); var end = new Point3d(path.End.X, path.End.Y, path.End.Z);
@@ -130,7 +145,7 @@ internal static class P2kNative
         moving.ExpireSolution(false); BridgeSegmentExcelTests.Solve(doc, true);
         Require(R4cMoving.Results(One(Out(moving, "Model")))?.Catalog.GeneratedMovingCases().Count == cases.Length && File.GetLastWriteTimeUtc(resultFile) == written, "Moving result cache lost or solver reran while Run=False.");
         var combo = Find(doc, "BridgeMovingCombinationsComponent"); var ids = Values<string>(Out(combo, "Action IDs"));
-        ResultFingerprint.Mark("REV003 merge start"); var merge = Find(doc, "BuildBridgeModel"); Press(merge); BridgeSegmentExcelTests.Solve(doc, true);
+        ResultFingerprint.Mark(revision + " merge start"); var merge = Find(doc, "BuildBridgeModel"); Press(merge); BridgeSegmentExcelTests.Solve(doc, true);
         var mergedGoo = One(Out(merge, "Model")); var bridge = R4cMoving.Bridge(mergedGoo); Require(bridge?.Records?.Phases.Length == 4, "Four-phase merge failed: " + Errors(doc));
         Require(!R2aDesignFixtures.HasFem(mergedGoo), "P2K: the merged model has no FEM value.");
         var actions = bridge.Records.Phases.Single(p => p.Order == 30).Actions.Where(a => ids.Contains(a.Key)).ToArray();
@@ -140,7 +155,7 @@ internal static class P2kNative
         { int count = c.Factors.Count(v => ids.Any(id => v.Case == id + " [FEM]") && v.Factor != 0); Require(count <= 1, "Different traffic positions were summed."); active += count; }
         Require(active == cases.Length, "Each moving position must enter exactly one cumulative combination.");
         int combinations = bridge.Combinations.Count;
-        ResultFingerprint.Mark("REV003 checks start"); var checker = Find(doc, "SuperElementCheckComponent"); Press(checker); BridgeSegmentExcelTests.Solve(doc, true);
+        ResultFingerprint.Mark(revision + " checks start"); var checker = Find(doc, "SuperElementCheckComponent"); Press(checker); BridgeSegmentExcelTests.Solve(doc, true);
         var rows = Values<BridgeStressResult>(Out(checker, "Tension Check")); Require(rows.Length > 0, "No section checks: " + Errors(doc)); int sectionChecks = rows.Length; rows = null;
         // P2K: the TRANSITIONAL parity checks of the other lanes (FEM value of the merged model) are not called (BridgeMovingRevisionNative.cs:270-278).
         bridge = null; mergedGoo = null;
@@ -149,24 +164,26 @@ internal static class P2kNative
         var plots = doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name.EndsWith("PlotComponent")).ToArray(); Require(plots.Length == 6 && plots.All(c => Out(c, "SVG").VolatileDataCount > 0), "Missing SVG plots.");
         Require(In(Find(doc, "BridgeReportComponent"), "Results").VolatileDataCount == details.Sum(c => Out(c, "Section result").VolatileDataCount), "Report input coverage.");
         Require(Unexpected(doc).Length == 0, Unexpected(doc));
-        ResultFingerprint.Mark("REV003 checks, details and plots solved"); ResultFingerprint.Write("example50-rev003-native", doc);
+        ResultFingerprint.Mark(revision + " checks, details and plots solved"); ResultFingerprint.Write("example50-" + revision.ToLowerInvariant() + "-native", doc);
         // P6: the Bridge Report of the definition by the library calls of the component (R4c-moving: OutOfMemoryException before P2K).
         Environment.SetEnvironmentVariable("BRIDGHE_R4CM_REPORT", "1");
         R4cChainDiagnosis.Report(doc, "50");
-        var pathComponent = Find(doc, "BridgeStraightMovingPathComponent"); var divisions = (Param_Integer)In(pathComponent, "Divisions"); divisions.RemoveAllSources(); divisions.SetPersistentData(path.Divisions + 1); pathComponent.ExpireSolution(false); BridgeSegmentExcelTests.Solve(doc, true);
+        var pathComponent = Find(doc, "BridgeStraightMovingPathComponent"); var divisions = (Param_Integer)In(pathComponent, "Divisions"); divisions.RemoveAllSources(); divisions.PersistentData.Clear(); divisions.SetPersistentData(path.Divisions + 1); pathComponent.ExpireSolution(false); BridgeSegmentExcelTests.Solve(doc, true);
         Require(!Out(moving, "Model").VolatileData.AllData(true).Any(g => R4cMoving.Results(g) != null) && Values<string>(Out(moving, "Cases")).Length == 0, "Stale moving results survived changed input.");
         Require(bytes.SequenceEqual(File.ReadAllBytes(source)), "Native replay modified the delivered GHX.");
         var report = new { Native = true, Definition = Path.GetFileName(source), DefinitionSHA256 = Convert.ToHexString(SHA256.HashData(bytes)), Analyses = 5, PhaseCount = 4, Beams = n0.Model.BeamElements.Count, Nodes = n0.Model.NodesElements.Count, MovingPositions = cases.Length, SlabForceAssignments = slabAssignments, Combinations = combinations, SectionChecks = sectionChecks, DetailBranches = details.Length, Plots = plots.Length, ReportInputs = true, CachedRunFalse = true, ChangedPathInvalidatesResults = true, ResultsSavedInGHX = false, Measurements = measurements };
         File.WriteAllText(Path.Combine(folder, "validation.json"), JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
-        Console.WriteLine($"P2K REV003 NATIVE PASS: 5 analyses, {cases.Length} moving positions, {combinations} combinations, {sectionChecks} section checks, 3 details, 6 plots, {measurements.Count} measurements (GPC data alone, no transitional check).");
+        Console.WriteLine($"P2K {revision} NATIVE PASS: 5 analyses, {cases.Length} moving positions, {combinations} combinations, {sectionChecks} section checks, 3 details, 6 plots, {measurements.Count} measurements (GPC data alone, no transitional check).");
     }
 
-    /// <summary>The 99 REV004 (the migrated candidate), the GPC path of <c>NativeModularBridgeTests.RunGpc</c> without the transitional checks.</summary>
-    private static void Modular()
+    /// <summary>The 99 REV004 (the migrated candidate) or, from 0.4.2, the 99 REV005 of the catalogue (the shipped definition, read as it is:
+    /// written by 0.4.1, nothing to migrate), the GPC path of <c>NativeModularBridgeTests.RunGpc</c> without the transitional checks. The
+    /// moving analysis of REV005 (phase 45, the tandem of lane 1) runs after the four phase models, its output redirected as theirs.</summary>
+    private static void Modular(string relative, bool migratedCandidate, int expectedPhases)
     {
         Initialize();
-        string relative = "99-Ponte completo GPC/REV004/flusso-acciaio-misto_REV004.ghx";
-        string source = Path.Combine(ExamplePaths.Root, relative), candidate = Path.GetFullPath(Path.Combine("artifacts/modular-bridge/candidates", relative));
+        string source = Path.Combine(ExamplePaths.Root, relative);
+        string candidate = migratedCandidate ? Path.GetFullPath(Path.Combine("artifacts/modular-bridge/candidates", relative)) : source;
         if (!File.Exists(candidate)) throw new FileNotFoundException("Prepare the migrated candidate first.", candidate);
         string folder = Path.GetFullPath("artifacts/modular-bridge/p2k-native-" + Path.GetFileNameWithoutExtension(source)); Directory.CreateDirectory(folder);
         byte[] original = File.ReadAllBytes(source), migrated = File.ReadAllBytes(candidate);
@@ -175,13 +192,18 @@ internal static class P2kNative
         if (analyses.Length != 4) throw new Exception("Expected four Straus phase models.");
         for (int i = 0; i < analyses.Length; i++)
         {
-            var a = analyses[i]; Clear(a); var k = (Param_Boolean)In(a, "Keep Running"); k.RemoveAllSources(); k.SetPersistentData(false);
+            var a = analyses[i]; Clear(a); var k = (Param_Boolean)In(a, "Keep Running"); k.RemoveAllSources(); k.PersistentData.Clear(); k.SetPersistentData(false);
             SetText(a, "Output Path", Path.Combine(folder, $"{i + 1:00}-" + a.NickName.Split(' ')[0] + ".st7"));
         }
+        var moving = doc.Objects.OfType<GH_Component>().SingleOrDefault(c => c.GetType().Name == "MovingStaticAnalysisComponent");
+        if (moving != null) { Clear(moving); SetText(moving, "Output path", Path.Combine(folder, $"{analyses.Length + 1:00}-MOBILE.st7")); }
         foreach (var report in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "BridgeReportComponent")) report.GetType().GetField("_run", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(report, false);
         BridgeSegmentExcelTests.Solve(doc, true);
         foreach (var read in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "BridgeSectionReadComponent")) { BridgeSegmentExcelTests.Press(read); read.ExpireSolution(false); }
-        BridgeSegmentExcelTests.Solve(doc, true); ResultFingerprint.Mark("modular inputs solved");
+        BridgeSegmentExcelTests.Solve(doc, true); ResultFingerprint.Mark("modular inputs solved"); // 0.4.2: one item on every item input of the analyses (else one solution per item)
+        foreach (var a in analyses.Append(moving).Where(c => c != null))
+            foreach (var p in a.Params.Input.Where(q => q.Access == GH_ParamAccess.item && q.VolatileDataCount > 1))
+                throw new Exception($"{a.NickName}: input {p.Name} holds {p.VolatileDataCount} items, the analysis would run once per item.");
         var summary = new List<object>();
         for (int i = 0; i < analyses.Length; i++)
         {
@@ -214,12 +236,35 @@ internal static class P2kNative
             summary.Add(new { Phase = i, Beams = beams, Nodes = nodes, Equilibrium = equilibrium });
             File.WriteAllText(Path.Combine(folder, "progress.json"), JsonSerializer.Serialize(summary, new JsonSerializerOptions { WriteIndented = true }));
         }
+        object movingSummary = null;
+        if (moving != null)
+        {
+            // 0.4.2 (99 REV005): the positions of the tandem against the weight of the vehicle, and the analysis on its GPC input alone equal to it.
+            var trafficInput = R4cMoving.Input(One(In(moving, "Model"))); if (trafficInput == null) throw new Exception("No GPC input of the moving analysis.\n" + Errors(doc));
+            Press(moving); BridgeSegmentExcelTests.Solve(doc, true);
+            var definitionTraffic = One(Out(moving, "Model")); var traffic = R4cMoving.Results(definitionTraffic);
+            if (traffic == null) throw new Exception("Moving analysis failed:\n" + Errors(doc));
+            string gpcOnly = Path.Combine(folder, "gpc-only"); Directory.CreateDirectory(gpcOnly);
+            var (twin, messages) = R4cMoving.GpcOnlyAnalysis(moving, Path.Combine(gpcOnly, $"{analyses.Length + 1:00}-MOBILE.st7"));
+            if (twin == null || R4cMoving.Results(twin) == null) throw new Exception("Moving analysis on its GPC input alone failed: " + string.Join(" / ", messages));
+            string difference = GpcOnlyReplay.ResultsDifference(definitionTraffic, twin);
+            if (difference != null) throw new Exception("Moving analysis on its GPC input alone differs from the analysis of the definition: " + difference);
+            var path = trafficInput.Model.MovingLoads.Paths.Single();
+            double vehicle = -path.Template.Vehicles.Single().PointForces.Sum(w => w.Force.Z), weight = traffic.Catalog.Units.FromN(vehicle);
+            var cases = traffic.Catalog.GeneratedMovingCases().Select(g => g.Name).ToArray();
+            var totals = cases.Select(traffic.ReactionZ).ToArray();
+            if (cases.Length == 0) throw new Exception("The moving analysis has no positions.");
+            if (Math.Abs(totals.Max() - weight) > Math.Abs(weight) * 1e-6 || totals.Any(z => !double.IsFinite(z) || z > weight * (1 + 1e-6) || z < -1e-6))
+                throw new Exception($"Moving positions: largest vertical reaction {totals.Max():G17}, vehicle {weight:G17}.");
+            movingSummary = new { Positions = cases.Length, VehicleWeight = weight, LargestReactionZ = totals.Max(), SmallestReactionZ = totals.Min() };
+            Console.WriteLine($"P2K MODULAR NATIVE: moving analysis, {cases.Length} positions, largest vertical reaction {totals.Max():G6} = vehicle {weight:G6}; on its GPC input alone equal to the analysis of the definition.");
+        }
         ResultFingerprint.Mark("modular merge start");
         foreach (var excel in doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "BridgeCombinationExcelComponent"))
             if (Values<int>(In(excel, "Mode")).SingleOrDefault() == 1) { Press(excel); BridgeSegmentExcelTests.Solve(doc, true); }
         var merge = doc.Objects.OfType<GH_Component>().Single(c => c.GetType().Name == "BuildBridgeModel"); Press(merge); BridgeSegmentExcelTests.Solve(doc, true);
         var mergedGoo = One(Out(merge, "Model")); var bridge = R4cMoving.Bridge(mergedGoo);
-        if (bridge?.Records?.Phases.Length != 4) throw new Exception("Four-phase merge failed.\n" + Errors(doc));
+        if (bridge?.Records?.Phases.Length != expectedPhases) throw new Exception(expectedPhases + "-phase merge failed.\n" + Errors(doc));
         if (R2aDesignFixtures.HasFem(mergedGoo)) throw new Exception("P2K: the merged model has a FEM value.");
         int phases = bridge.Records.Phases.Length, combinations = bridge.Combinations.Count;
         ResultFingerprint.Mark("modular checks start");
@@ -238,7 +283,7 @@ internal static class P2kNative
         ResultFingerprint.Mark("modular checks, details and plots solved"); ResultFingerprint.Write("modular-" + Path.GetFileNameWithoutExtension(source), doc);
         R3ConcreteExclusionCheck.Run(doc, checks[0], mergedGoo, "99");
         if (!original.SequenceEqual(File.ReadAllBytes(source)) || !migrated.SequenceEqual(File.ReadAllBytes(candidate))) throw new Exception("Native test modified a GHX source.");
-        File.WriteAllText(Path.Combine(folder, "validation.json"), JsonSerializer.Serialize(new { Definition = relative, Native = true, Models = summary, Phases = phases, Combinations = combinations, SectionChecks = rows.Length, Details = details.Length, Plots = plots.Length }, new JsonSerializerOptions { WriteIndented = true }));
-        Console.WriteLine($"P2K MODULAR NATIVE PASS: 4 models, {combinations} combinations, {rows.Length} section results, {details.Length} details, {plots.Length} plots (GPC data alone, no transitional check).");
+        File.WriteAllText(Path.Combine(folder, "validation.json"), JsonSerializer.Serialize(new { Definition = relative, DefinitionSHA256 = Convert.ToHexString(SHA256.HashData(original)), Native = true, Models = summary, Moving = movingSummary, Phases = phases, Combinations = combinations, SectionChecks = rows.Length, Details = details.Length, Plots = plots.Length }, new JsonSerializerOptions { WriteIndented = true }));
+        Console.WriteLine($"P2K MODULAR NATIVE PASS: 4 models{(moving != null ? " and the moving analysis" : "")}, {phases} phases, {combinations} combinations, {rows.Length} section results, {details.Length} details, {plots.Length} plots (GPC data alone, no transitional check).");
     }
 }

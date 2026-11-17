@@ -4,7 +4,7 @@ Aggiornamento 26 ottobre 2026: questa definizione usa il [flusso modulare](../..
 
 ## REV005 — carichi delle fasi come lo script di riferimento aziendale
 
-Aprire [REV005](REV005/flusso-acciaio-misto_REV005.ghx). Deriva dalla REV004, che resta invariata: stessa geometria, stesse sezioni e stessi quattro modelli. Cambiano i carichi: in G1 il peso proprio dell'acciaio (× 1,15) e il getto della soletta per trave; in G2 pavimentazione, cordoli, guard-rail, parapetti e finiture sulle fasce di soletta; in Q i distribuiti dello schema 1 sulle fasce, vento, frenatura, centrifuga e temperatura, più il tandem mobile della corsia 1 (fase 45). Nuovo Excel delle combinazioni `Combinazioni_REV005.xlsx`. Dettagli e differenze rispetto allo script nella [guida REV005](REV005/README_REV005.md).
+Aprire [REV005](REV005/flusso-acciaio-misto_REV005.ghx). Deriva dalla REV004, che resta invariata: stessa geometria, stesse sezioni e stessi quattro modelli. Cambiano i carichi: in G1 il peso proprio dell'acciaio (× 1,15) e il getto della soletta per trave; in G2 pavimentazione, cordoli, guard-rail, parapetti e finiture sulle fasce di soletta; in Q i distribuiti dello schema 1 sulle fasce, vento, frenatura, centrifuga e temperatura, più il tandem mobile della corsia 1 (fase 45). Nuovo Excel delle combinazioni `Combinazioni_REV005.xlsx`. Dettagli e differenze rispetto allo script nella [guida REV005](REV005/README_REV005.md). Dalla 0.4.2 la REV005 è la definizione corrente dell'esempio (catalogo e prove native); REV004 e REV002 restano come definizioni aggiuntive.
 
 ## Stato corrente della REV004 al 25 ottobre 2026
 

@@ -4,7 +4,7 @@ Aggiornamento 26 ottobre 2026: questa definizione usa il [flusso modulare](../..
 
 ## REV004 — carichi delle fasi come lo script di riferimento aziendale
 
-Aprire **[50-ponte-quattro-modelli_REV004.ghx](50-ponte-quattro-modelli_REV004.ghx)**. Geometria, sezioni e modelli sono quelli del REV003, che è conservato. Cambiano i carichi delle fasi: peso proprio dell'acciaio (× 1,15) e getto della soletta nella fase 10, carichi permanenti portati G2 nella fase 20 n∞, schema 1 di traffico (distribuiti e tandem di due corsie), frenatura, centrifuga, vento e temperatura nella fase 30 n0. Valori, regole e differenze rispetto allo script sono nella **[guida REV004](README_REV004.md)**.
+Aprire **[50-ponte-quattro-modelli_REV004.ghx](50-ponte-quattro-modelli_REV004.ghx)**. Geometria, sezioni e modelli sono quelli del REV003, che è conservato. Cambiano i carichi delle fasi: peso proprio dell'acciaio (× 1,15) e getto della soletta nella fase 10, carichi permanenti portati G2 nella fase 20 n∞, schema 1 di traffico (distribuiti e tandem di due corsie), frenatura, centrifuga, vento e temperatura nella fase 30 n0. Valori, regole e differenze rispetto allo script sono nella **[guida REV004](README_REV004.md)**. Dalla 0.4.2 il REV004 è la definizione corrente dell'esempio (catalogo e prove native); REV003, REV002, REV001 e la prima versione restano come definizioni aggiuntive.
 
 ## REV003 — carichi mobili sul modello n0
 

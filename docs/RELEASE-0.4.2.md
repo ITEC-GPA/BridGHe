@@ -15,8 +15,13 @@ Riguarda i report con più di 1000 risultati.
 
 L'avviso sui profili tozzi («Thick open section: thin-wall torsion and shear centre may be inaccurate.») compare anche quando una sezione T, C o Angle, singola o doppia, nasce da un testo, per esempio `L40x30x14x12` in un Panel collegato a Beam Property o a Section Geometric Property. La regola è quella della 0.4.1: max(tf/B, tw/H) > 0,30, con B e H di una singola parte. I valori delle sezioni non cambiano.
 
+## Esempi 50 e 99
+
+Le definizioni correnti sono ora **50 REV004** e **99 REV005**, con i carichi delle fasi ripresi dallo script di riferimento del ponte misto: peso proprio dell'acciaio con il fattore 1,15 delle connessioni, getto sul solo acciaio, permanenti portati (pavimentazione, cordoli, guard-rail, parapetti e finiture), distribuiti e tandem dello schema 1, frenatura, centrifuga (0,01 kN/m per trave), vento e temperatura uniforme. Il ritiro resta nel suo modello. Nel 99 c'è una fase nuova con il tandem mobile. Le revisioni precedenti restano come definizioni aggiuntive. I limiti rispetto allo script (distribuiti statici, una sola disposizione delle corsie, niente gradiente termico, sisma, fatica e folla) sono scritti nei README delle due revisioni.
+
 ## Prove
 
-Le prove delle sezioni aperte senza Straus7 (sezioni uniche, sezioni aperte, oracolo, replay e avvisi) fanno ora parte della regressione completa.
+- Le prove delle sezioni aperte senza Straus7 (sezioni uniche, sezioni aperte, oracolo, replay e avvisi) fanno ora parte della regressione completa.
+- Le prove native degli esempi 50 e 99 calcolano le revisioni nuove. I loro riferimenti (righe di verifica e impronte) sono nuovi e si registrano solo dopo l'approvazione delle differenze.
 
 Conservare gli originali prima di ricalcolare e salvare. Il formato degli archivi non cambia rispetto alla 0.4.1. Distribuire soltanto pacchetti completi, con il manifest `gpc-release-set.json` del set AX; usare ReBear e Arachne dello stesso rilascio.

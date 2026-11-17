@@ -92,7 +92,7 @@ internal static class RegressionTests
         gpc["r2b-merge-forces"] = R2bMergeForcesChecks.Regression; // R6.6 lane R2b (11/11): merge, reactions and Super Element Check forces on GPC data alone (explicit counterparts of the native GpcMergeCheck and GpcSecForcesCheck)
         gpc["inr-inertia"] = InrInertia.Regression; // lane INR (12/11, user decision option B): the homogenised composite property on the section axes, I11 about the horizontal axis
         gpc["p2k-components"] = P2kChecks.Regression; // P2K (12/11): slab datum, composite beam GUID, cable refused before Straus7, generators without FEM, report streams
-        gpc["p2k-natives"] = P2kNative.Regression; // P2K (12/11): 50 and 99 natives without the transitional FEM checks, Bridge Report of the 50; only with BRIDGHE_P2K_NATIVE
+        gpc["p2k-natives"] = P2kNative.Regression; // P2K (12/11): 50 and 99 natives without the transitional FEM checks, Bridge Report of the 50; only with BRIDGHE_P2K_NATIVE (0.4.2: 50 REV004 and 99 REV005; 50-rev003 and 99-rev004 by name)
         gpc["gpc-review-fixes"] = GpcReviewFixesC1.Regression; // C1 (11/11): the product fixes of the ChatGPT reviews (R65-C3-01/02, R25-01, P30-01/02/04, Table Material)
         gpc["gpc-c5"] = C5ParityChecks.Regression; // C5 (11/11): releases of rotated beams as 0.3.0 (write plan recorded)
         gpc["p2ce-reader"] = P2ceReader.Regression; // P2CE phase 2a (13/11): the 0.3.0 reader without FEM CLR types (inventory, by value = CLR for «LoadCases»; retired in 2b) and P2P-01 (stage case records)
