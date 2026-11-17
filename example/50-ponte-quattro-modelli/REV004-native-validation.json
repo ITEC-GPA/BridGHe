@@ -1,7 +1,7 @@
 {
   "Native": true,
   "Definition": "50-ponte-quattro-modelli_REV004.ghx",
-  "DefinitionSHA256": "D52A2C355BD012374527BA85255CB6ADA7F454FB391D0D855D9A372ACF5BCDF4",
+  "DefinitionSHA256": "C5E74823B77A252AD0C822600B5CCD223DD73E94889844B8EA8F44847F5DA24D",
   "Checks": [
     {
       "Check": "M01_ACCIAIO | analisi lineare | Dead | Rz",

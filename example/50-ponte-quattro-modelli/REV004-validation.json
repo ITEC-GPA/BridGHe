@@ -4,7 +4,16 @@
   "Source": "50-ponte-quattro-modelli_REV003.ghx",
   "SourceSHA256": "2CB6E5C64CFA927A0DD8D6E2C862780058F82F62BE5F3DC35A95D62DA0A68456",
   "Definition": "50-ponte-quattro-modelli_REV004.ghx",
-  "DefinitionSHA256": "D52A2C355BD012374527BA85255CB6ADA7F454FB391D0D855D9A372ACF5BCDF4",
+  "GeneratedDefinitionSHA256": "D52A2C355BD012374527BA85255CB6ADA7F454FB391D0D855D9A372ACF5BCDF4",
+  "DefinitionSHA256": "C5E74823B77A252AD0C822600B5CCD223DD73E94889844B8EA8F44847F5DA24D",
+  "Corrections": [
+    {
+      "Date": "2026-11-17",
+      "Change": "Bridge Read Section Excel: saved cache path (ExcelPath) set to Repository\\BridGHe\\example\\50-ponte-quattro-modelli\\Sezioni_conci_REV004.xlsx, like REV003; the generator had saved the path of its working clone. One string, no other change.",
+      "OfflineCheck": "--example-reference-loads 50 --check: PASS",
+      "Native": "REV004-native-validation.json rerun on the corrected file: 60 checks PASS, same values (max difference 0), 33444 section rows"
+    }
+  ],
   "Removed": [
     "Beam Distributed Load | M02_NINF | carico soletta",
     "Beam Distributed Load | M02_NINF | carico travi",

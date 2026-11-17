@@ -59443,7 +59443,7 @@ CARICHI REV004: fasi come lo script di riferimento aziendale. Fase 10 acciaio: p
                 <chunk name="Container">
                   <items count="7">
                     <item name="Description" type_name="gh_string" type_code="10">Fabrication section workbook, in mm. File access only on Run; counts are available before mesh generation.</item>
-                    <item name="ExcelPath" type_name="gh_string" type_code="10">C:\Users\g.pacini\Documents\Repository\gpc-f6-claude\CX\BridGHe-esempi-carichi\example\50-ponte-quattro-modelli\Sezioni_conci_REV004.xlsx</item>
+                    <item name="ExcelPath" type_name="gh_string" type_code="10">C:\Users\g.pacini\Documents\Repository\BridGHe\example\50-ponte-quattro-modelli\Sezioni_conci_REV004.xlsx</item>
                     <item name="ExcelWarnings" type_name="gh_string" type_code="10"></item>
                     <item name="InstanceGuid" type_name="gh_guid" type_code="9">14b78d6a-e484-418a-8103-b80ee2fa3e45</item>
                     <item name="Name" type_name="gh_string" type_code="10">Bridge Read Section Excel</item>
