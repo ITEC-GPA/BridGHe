@@ -161,7 +161,6 @@ internal static class ExampleReferenceLoads50
         var rightC = Float(doc, "Sbalzo laterale destro soletta [mm]"); var leftC = Float(doc, "Sbalzo laterale sinistro soletta [mm]");
         var rR = cv.Div(m + " | cordolo / sbalzo destro", curb, rightC); var rL = cv.Div(m + " | cordolo / sbalzo sinistro", curb, leftC);
         var cR = cv.Sub(m + " | 1 − cordolo / sbalzo destro", s.One, rR); var cL = cv.Sub(m + " | 1 − cordolo / sbalzo sinistro", s.One, rL);
-        var edgeL = cv.Text(m + " | bordo sinistro sulla fascia: a = 0,999999 (il componente non accetta a = 1)", "0.999999");
         var toPressure = cv.Text(m + " | conversione kN/m³ × mm → N/mm², verso −Z", "-0.000001");
         var down = cv.Text(m + " | conversione kN/m → N/mm, verso −Z", "-1");
         var pPav = cv.Mul(m + " | G2 pavimentazione — pressione [N/mm²]", cv.Mul(m + " | G2 pavimentazione — γ × h",
@@ -182,11 +181,21 @@ internal static class ExampleReferenceLoads50
         var d2 = Distributed(cv, m + " | G2_CORD cordoli — sbalzi", Out(d1, "Beam"), cord.Case, s.Schema, s.Global, s.DirZ,
             cv.Mul(m + " | G2_CORD q per fascia [N/mm]", s.EdgeWidths, pCord),
             new[] { cv.Merge(m + " | G2_CORD a/L per fascia [destra → sinistra]", s.Zero, s.Zeros, cL) }, new[] { cv.Merge(m + " | G2_CORD b/L per fascia", cR, s.Zeros, s.Zero) });
-        var p1 = Point(cv, m + " | G2_GR guard-rail — bordo interno dei cordoli", Out(d2, "Beam"), gr.Case, s.Global, s.Zero,
-            cv.Mul(m + " | G2_GR forza per fascia [N]", s.EdgeWidths, qGr), new[] { cv.Merge(m + " | G2_GR a/L per fascia [destra → sinistra]", rR, s.Zeros, cL) });
-        var edgeA = cv.Merge(m + " | G2 bordi a/L per fascia [destra → sinistra]", s.Zero, s.Zeros, edgeL);
-        var p2 = Point(cv, m + " | G2_PAR parapetti — bordi", Out(p1, "Beam"), par.Case, s.Global, s.Zero, cv.Mul(m + " | G2_PAR forza per fascia [N]", s.EdgeWidths, qPar), new[] { edgeA });
-        var p3 = Point(cv, m + " | G2_FIN finiture — bordi", Out(p2, "Beam"), fin.Case, s.Global, s.Zero, cv.Mul(m + " | G2_FIN forza per fascia [N]", s.EdgeWidths, qFin), new[] { edgeA });
+        // The line loads act on a narrow band of each cantilever strip: Build BridGHe Model refuses a concentrated force inside a strip
+        // (it interpolates across the load), so the force F = q × width is spread uniformly over the band.
+        var band = cv.Slider(m + " | G2 carichi lineari — larghezza della fascia di applicazione [mm]", 100, 10, 500);
+        var half = cv.Mul(m + " | G2 metà della fascia di applicazione [mm]", band, cv.Text(m + " | costante 0,5", "0.5"));
+        var inner = cv.Sub(m + " | G2 cordolo − metà fascia [mm]", curb, half); var outer = cv.Sum(m + " | G2 cordolo + metà fascia [mm]", curb, half);
+        var grA = cv.Merge(m + " | G2_GR a/L per fascia [destra → sinistra]", cv.Div(m + " | G2_GR destro a/L", inner, rightC), s.Zeros,
+            cv.Sub(m + " | G2_GR sinistro a/L", s.One, cv.Div(m + " | G2_GR (cordolo + metà fascia) / sbalzo sinistro", outer, leftC)));
+        var grB = cv.Merge(m + " | G2_GR b/L per fascia", cv.Sub(m + " | G2_GR destro b/L", s.One, cv.Div(m + " | G2_GR (cordolo + metà fascia) / sbalzo destro", outer, rightC)),
+            s.Zeros, cv.Div(m + " | G2_GR sinistro b/L", inner, leftC));
+        var edgeA = cv.Merge(m + " | G2 bordi a/L per fascia [destra → sinistra]", s.Zero, s.Zeros, cv.Sub(m + " | G2 bordo sinistro a/L", s.One, cv.Div(m + " | G2 fascia / sbalzo sinistro", band, leftC)));
+        var edgeB = cv.Merge(m + " | G2 bordi b/L per fascia", cv.Sub(m + " | G2 bordo destro b/L", s.One, cv.Div(m + " | G2 fascia / sbalzo destro", band, rightC)), s.Zeros, s.Zero);
+        IGH_Param Spread(string label, IGH_Param q) => cv.Div(m + $" | {label} q sulla fascia di applicazione [N/mm]", cv.Mul(m + $" | {label} forza per fascia [N]", s.EdgeWidths, q), band);
+        var p1 = Distributed(cv, m + " | G2_GR guard-rail — bordo interno dei cordoli", Out(d2, "Beam"), gr.Case, s.Schema, s.Global, s.DirZ, Spread("G2_GR", qGr), new[] { grA }, new[] { grB });
+        var p2 = Distributed(cv, m + " | G2_PAR parapetti — bordi", Out(p1, "Beam"), par.Case, s.Schema, s.Global, s.DirZ, Spread("G2_PAR", qPar), new[] { edgeA }, new[] { edgeB });
+        var p3 = Distributed(cv, m + " | G2_FIN finiture — bordi", Out(p2, "Beam"), fin.Case, s.Schema, s.Global, s.DirZ, Spread("G2_FIN", qFin), new[] { edgeA }, new[] { edgeB });
         Replace(elements, Out(oldSlab, "Beam"), Out(p3, "Beam")); Replace(elements, Out(oldGirder, "Beam"), girders);
         Redirect(doc, Out(oldSlab, "Beam"), Out(p3, "Beam")); Redirect(doc, Out(oldGirder, "Beam"), girders);
         elements.DataMapping = GH_DataMapping.Flatten;
@@ -197,7 +206,8 @@ internal static class ExampleReferenceLoads50
         var note = (GH_Panel)cv.Text("NOTA FASE 20 — script di riferimento aziendale",
             "Lunga durata (n∞): carichi permanenti portati G2 come lo script di riferimento, sulle fasce di soletta (pressione × larghezza tributaria).\n"
             + "G2_PAV 25 kN/m³ × 150 mm fra i cordoli; G2_CORD 25 kN/m³ × 200 mm su 700 mm per lato; G2_GR 1,5 kN/m per lato al bordo interno dei cordoli;\n"
-            + "G2_PAR 1,0 kN/m e G2_FIN 1,5 kN/m per bordo. Le frazioni a/L, b/L sugli sbalzi derivano da cordolo e sbalzi; le fasce interne sono 0.");
+            + "G2_PAR 1,0 kN/m e G2_FIN 1,5 kN/m per bordo. Le frazioni a/L, b/L sugli sbalzi derivano da cordolo e sbalzi; le fasce interne sono 0.\n"
+            + "I carichi lineari stanno su una fascia di 100 mm (centrata sul bordo interno del cordolo, o adiacente al bordo): l'assemblaggio non accetta forze concentrate dentro le aste.");
         note.Properties.Multiline = true;
         foreach (var n in new[] { m + " | carico soletta", m + " | carico travi", m + " | caso SOLETTA", m + " | caso TRAVI", m + "_SOLETTA | azione", m + "_TRAVI | azione",
             m + " | q = pressione × fascia tributaria", m + " | pressione in N/mm²" }) replaced.Add(n);

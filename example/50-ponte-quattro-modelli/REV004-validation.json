@@ -4,7 +4,7 @@
   "Source": "50-ponte-quattro-modelli_REV003.ghx",
   "SourceSHA256": "2CB6E5C64CFA927A0DD8D6E2C862780058F82F62BE5F3DC35A95D62DA0A68456",
   "Definition": "50-ponte-quattro-modelli_REV004.ghx",
-  "DefinitionSHA256": "9B584B70D043249C7C8332877E33642175684B362FF419DDB855B5A2F4F88515",
+  "DefinitionSHA256": "D52A2C355BD012374527BA85255CB6ADA7F454FB391D0D855D9A372ACF5BCDF4",
   "Removed": [
     "Beam Distributed Load | M02_NINF | carico soletta",
     "Beam Distributed Load | M02_NINF | carico travi",
@@ -132,19 +132,19 @@
     },
     {
       "Check": "M02 G2_GR Fz [N] = −2 q L",
-      "Actual": -180000,
+      "Actual": -179999.99999999997,
       "Expected": -180000,
       "Pass": true
     },
     {
       "Check": "M02 G2_PAR Fz [N] = −2 q L",
-      "Actual": -120000,
+      "Actual": -119999.99999999999,
       "Expected": -120000,
       "Pass": true
     },
     {
       "Check": "M02 G2_FIN Fz [N] = −2 q L",
-      "Actual": -180000,
+      "Actual": -179999.99999999997,
       "Expected": -180000,
       "Pass": true
     },

@@ -1,0 +1,361 @@
+{
+  "Native": true,
+  "Definition": "50-ponte-quattro-modelli_REV004.ghx",
+  "DefinitionSHA256": "D52A2C355BD012374527BA85255CB6ADA7F454FB391D0D855D9A372ACF5BCDF4",
+  "Checks": [
+    {
+      "Check": "M01_ACCIAIO | analisi lineare | Dead | Rz",
+      "Actual": 1320134.8700638732,
+      "Expected": 1320134.8700638788,
+      "Pass": true
+    },
+    {
+      "Check": "M01_ACCIAIO | analisi lineare | Dead | Rx",
+      "Actual": -4.5829253403166836E-14,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M01_ACCIAIO | analisi lineare | Dead | Ry",
+      "Actual": 9.078293672359905E-13,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M01_ACCIAIO | analisi lineare | M01_ACCIAIO_SOLETTA | Rz",
+      "Actual": 4499999.999999985,
+      "Expected": 4500000,
+      "Pass": true
+    },
+    {
+      "Check": "M01_ACCIAIO | analisi lineare | M01_ACCIAIO_SOLETTA | Rx",
+      "Actual": -1.3589129821329198E-13,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M01_ACCIAIO | analisi lineare | M01_ACCIAIO_SOLETTA | Ry",
+      "Actual": 1.3855583347321954E-13,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M01_ACCIAIO | analisi lineare | M01_ACCIAIO_TRAVI | Rz",
+      "Actual": 0,
+      "Expected": 0,
+      "Pass": true
+    },
+    {
+      "Check": "M01_ACCIAIO | analisi lineare | M01_ACCIAIO_TRAVI | Rx",
+      "Actual": 0,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M01_ACCIAIO | analisi lineare | M01_ACCIAIO_TRAVI | Ry",
+      "Actual": 0,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M01_ACCIAIO | analisi lineare | M01-Solo Acciaio | Rz",
+      "Actual": 6150168.587579833,
+      "Expected": 6150168.587579848,
+      "Pass": true
+    },
+    {
+      "Check": "M01_ACCIAIO | analisi lineare | M01-Solo Acciaio | Rx",
+      "Actual": -1.931778649679226E-13,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M01_ACCIAIO | analisi lineare | M01-Solo Acciaio | Ry",
+      "Actual": 1.2801149029684211E-12,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | analisi lineare | Dead | Rz",
+      "Actual": 1320134.8700638735,
+      "Expected": 1320134.8700638788,
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | analisi lineare | Dead | Rx",
+      "Actual": -3.4727023156708475E-14,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | analisi lineare | Dead | Ry",
+      "Actual": 4.345079851475475E-12,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | analisi lineare | M02_NINF_G2_CORD | Rz",
+      "Actual": 419999.99999999936,
+      "Expected": 420000,
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | analisi lineare | M02_NINF_G2_CORD | Rx",
+      "Actual": 1.3784529073749046E-12,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | analisi lineare | M02_NINF_G2_CORD | Ry",
+      "Actual": 6.0538241086760536E-12,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | analisi lineare | M02_NINF_G2_FIN | Rz",
+      "Actual": 179999.9999999997,
+      "Expected": 179999.99999999997,
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | analisi lineare | M02_NINF_G2_FIN | Rx",
+      "Actual": -4.996003608745253E-16,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | analisi lineare | M02_NINF_G2_FIN | Ry",
+      "Actual": -2.9274360713316128E-12,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | analisi lineare | M02_NINF_G2_GR | Rz",
+      "Actual": 179999.9999999996,
+      "Expected": 179999.99999999997,
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | analisi lineare | M02_NINF_G2_GR | Rx",
+      "Actual": -4.75175454540601E-14,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | analisi lineare | M02_NINF_G2_GR | Ry",
+      "Actual": 4.760636329592671E-13,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | analisi lineare | M02_NINF_G2_PAR | Rz",
+      "Actual": 119999.99999999984,
+      "Expected": 119999.99999999999,
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | analisi lineare | M02_NINF_G2_PAR | Rx",
+      "Actual": 2.733924198216996E-15,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | analisi lineare | M02_NINF_G2_PAR | Ry",
+      "Actual": -3.240074875066057E-12,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | analisi lineare | M02_NINF_G2_PAV | Rz",
+      "Actual": 1934999.9999999956,
+      "Expected": 1935000,
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | analisi lineare | M02_NINF_G2_PAV | Rx",
+      "Actual": -1.689315354268811E-12,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M02_NINF | analisi lineare | M02_NINF_G2_PAV | Ry",
+      "Actual": 6.23856521997368E-12,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | analisi lineare | Dead | Rz",
+      "Actual": 1320134.8700638749,
+      "Expected": 1320134.8700638788,
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | analisi lineare | Dead | Rx",
+      "Actual": -3.519177412923225E-13,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | analisi lineare | Dead | Ry",
+      "Actual": 3.725131314524788E-12,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | analisi lineare | M03_N0_Q1_UDL | Rz",
+      "Actual": 2459999.069999997,
+      "Expected": 2459999.070000003,
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | analisi lineare | M03_N0_Q1_UDL | Rx",
+      "Actual": 4.320099833420789E-12,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | analisi lineare | M03_N0_Q1_UDL | Ry",
+      "Actual": 2.2737367544323206E-12,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | analisi lineare | M03_N0_Q3_FR | Rz",
+      "Actual": -2.7129409829740325E-12,
+      "Expected": 0,
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | analisi lineare | M03_N0_Q3_FR | Rx",
+      "Actual": -521999.99999999965,
+      "Expected": -522000,
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | analisi lineare | M03_N0_Q3_FR | Ry",
+      "Actual": 1.98667748918524E-11,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | analisi lineare | M03_N0_Q4_CENTR | Rz",
+      "Actual": -1.0547118733938987E-14,
+      "Expected": 0,
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | analisi lineare | M03_N0_Q4_CENTR | Rx",
+      "Actual": -1.465494392505126E-14,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | analisi lineare | M03_N0_Q4_CENTR | Ry",
+      "Actual": -1800.0000000000005,
+      "Expected": -1800,
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | analisi lineare | M03_N0_Q5_VENTO | Rz",
+      "Actual": 173999.99999999994,
+      "Expected": 173999.99999999983,
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | analisi lineare | M03_N0_Q5_VENTO | Rx",
+      "Actual": -174000.0000000007,
+      "Expected": -173999.99999999983,
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | analisi lineare | M03_N0_Q5_VENTO | Ry",
+      "Actual": 695999.9999999999,
+      "Expected": 695999.9999999993,
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | analisi lineare | M03_N0_Q7_TEMP | Rz",
+      "Actual": 1.5364233643318932E-24,
+      "Expected": 0,
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | analisi lineare | M03_N0_Q7_TEMP | Rx",
+      "Actual": 7.014491594449675E-22,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M03_N0 | analisi lineare | M03_N0_Q7_TEMP | Ry",
+      "Actual": 1.7205356741102976E-22,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M04_NSH | analisi lineare | Dead | Rz",
+      "Actual": 1320134.8700638749,
+      "Expected": 1320134.8700638788,
+      "Pass": true
+    },
+    {
+      "Check": "M04_NSH | analisi lineare | Dead | Rx",
+      "Actual": 3.899178567850532E-14,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M04_NSH | analisi lineare | Dead | Ry",
+      "Actual": 2.506550522696216E-12,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M04_NSH | analisi lineare | M04_NSH_RITIRO | Rz",
+      "Actual": -9.367795428261161E-11,
+      "Expected": 0,
+      "Pass": true
+    },
+    {
+      "Check": "M04_NSH | analisi lineare | M04_NSH_RITIRO | Rx",
+      "Actual": 2.030020596063132E-11,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "M04_NSH | analisi lineare | M04_NSH_RITIRO | Ry",
+      "Actual": -2.7057467377744615E-11,
+      "Expected": -0,
+      "Pass": true
+    },
+    {
+      "Check": "posizioni mobili",
+      "Count": 31,
+      "Pass": true
+    },
+    {
+      "Check": "reazione verticale massima delle posizioni = peso del veicolo [N]",
+      "Actual": 1000000.0000000015,
+      "Expected": 1000000,
+      "Pass": true
+    },
+    {
+      "Check": "nessuna posizione oltre il peso del veicolo",
+      "Pass": true
+    },
+    {
+      "Check": "assemblaggio",
+      "Phases": 4,
+      "Combinations": 36,
+      "Pass": true
+    },
+    {
+      "Check": "verifiche di sezione: 33444 righe",
+      "Pass": true
+    },
+    {
+      "Check": "errori dopo il calcolo",
+      "Errors": [],
+      "Pass": true
+    }
+  ]
+}
