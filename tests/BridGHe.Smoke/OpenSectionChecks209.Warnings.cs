@@ -5,6 +5,7 @@ using BridGHe.Common.Gpc.Legacy;
 using GPC.Model.ElementProperties;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
+using Grasshopper.Kernel.Types;
 
 internal static partial class OpenSectionChecks190
 {
@@ -48,6 +49,43 @@ internal static partial class OpenSectionChecks190
                 component.ExpireSolution(false);doc.NewSolution(false,GH_SolutionMode.Silent);
                 Check(component.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Count==0,label+" warning clears after changing to thin inputs");
             }
+        }
+        // D5 (0.4.2): the same warning when the section is a text (a Panel) received by Beam Property or Section Geometric Property; a thin
+        // text, an I and a thick section made by a component (warned there) give none here.
+        IGH_Goo built=null;
+        {
+            using var doc=new GH_Document();
+            var t=(GH_Component)Activator.CreateInstance(plugin.GetType("BridGHe.Grasshopper.Components.Sections.BeamSectionTComponent",true));
+            t.CreateAttributes();doc.AddObject(t,false);
+            double[] values={48,18,40,16};
+            for(int i=0;i<4;i++){var parameter=(Param_Number)t.Params.Input[i];parameter.PersistentData.Clear();parameter.SetPersistentData(values[i]);}
+            GH_Document.EnableSolutions=true;doc.Enabled=true;doc.NewSolution(false,GH_SolutionMode.Silent);
+            Check(t.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Contains(message),"D5 the thick T of the component warns in the component");
+            built=t.Params.Output[0].VolatileData.AllData(true).Single().Duplicate();
+        }
+        var texts=new (object Section,string Label,bool Thick)[]{(new GH_String("T40x48x18x16"),"T40x48x18x16",true),(new GH_String("C30x40x14x12"),"C30x40x14x12",true),
+            (new GH_String("L40x30x14x12"),"L40x30x14x12",true),(new GH_String("2xC30x40x14x12x120"),"2xC30x40x14x12x120",true),(new GH_String("2xL30x40x14x12x120"),"2xL30x40x14x12x120",true),
+            (new GH_String("T200x100x10x10"),"T200x100x10x10",false),(new GH_String("C200x100x10x10"),"C200x100x10x10",false),(new GH_String("L100x100x10x10"),"L100x100x10x10",false),
+            (new GH_String("2xL100x80x8x10x12"),"2xL100x80x8x10x12",false),(new GH_String("I400x200x200x16x16x10"),"I400x200x200x16x16x10",false),(built,"thick T of the component",false)};
+        foreach(var (section,text,thick) in texts)
+        foreach(string type in new[]{"ElementProperties.BeamPropertyComponent","Sections.SectionGeometricPropertyComponent"})
+        {
+            using var doc=new GH_Document();
+            var component=(GH_Component)Activator.CreateInstance(plugin.GetType("BridGHe.Grasshopper.Components."+type,true));
+            component.CreateAttributes();doc.AddObject(component,false);
+            int input=0;
+            if(type.StartsWith("Element"))
+            {
+                var name=(Param_String)component.Params.Input[0];name.PersistentData.Clear();name.SetPersistentData("P");
+                var kind=(Param_Integer)component.Params.Input[1];kind.PersistentData.Clear();kind.SetPersistentData(5);
+                // Every input is required: without a material Grasshopper never solves the component.
+                var material=(Param_GenericObject)component.Params.Input[3];material.PersistentData.Clear();material.SetPersistentData(R4aFixtures.Material(R4aFixtures.S355()));
+                input=2;
+            }
+            var parameter=(Param_GenericObject)component.Params.Input[input];parameter.PersistentData.Clear();parameter.SetPersistentData(section);
+            GH_Document.EnableSolutions=true;doc.Enabled=true;doc.NewSolution(false,GH_SolutionMode.Silent);
+            bool warned=component.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Contains(message);
+            Check(warned==thick,$"D5 {component.Name} with the section {text}: expected warning={thick}, warned={warned}");
         }
         foreach(var row in Measurements209)
         {

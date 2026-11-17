@@ -1,4 +1,5 @@
 using System;
+using BridGHe.Common.Gpc;
 using Grasshopper.Kernel;
 
 namespace BridGHe.Grasshopper.Helpers
@@ -17,6 +18,18 @@ namespace BridGHe.Grasshopper.Helpers
             // Multiplication keeps the comparison independent of definition units and of mirror/gap.
             if (tf > ThicknessRatioLimit * b || tw > ThicknessRatioLimit * h)
                 component.AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, ThickMessage);
+        }
+
+        /// <summary>D5 of the final review of 0.4.1 (0.4.2): the same warning for a T, C or Angle section (single or double) made by a cast,
+        /// that is a text such as <c>L40x30x14x12</c> in a Panel (<see cref="GpcSectionCasts.Text"/>), in the component that receives it.
+        /// The values of the recipe are those the three section components warn on: B the width (flange) of one part, D the height,
+        /// T1 the flange and T2 the web thickness. A section given by a component or read from a file is not warned again here.</summary>
+        internal static void AddForCast(GH_Component component, DataTypes.Fem.GH_BeamSection section)
+        {
+            var recipe = section?.Gpc;
+            if (recipe == null || section.HasAttachedGpc) return;
+            if (recipe.Kind == BridgeSectionKind.T || recipe.Kind == BridgeSectionKind.C || recipe.Kind == BridgeSectionKind.Angle)
+                Add(component, recipe.B, recipe.D, recipe.T1, recipe.T2);
         }
     }
 }

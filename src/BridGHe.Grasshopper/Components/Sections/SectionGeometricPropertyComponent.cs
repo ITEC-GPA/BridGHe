@@ -65,6 +65,8 @@ namespace BridGHe.Grasshopper.Components.Sections
 
             if (!DA.GetData(0, ref gH_BeamProperty))
                 return;
+            // D5 (0.4.2): its J and shear centre are those of the thin-wall formula: a thick T, C or Angle given as a text warns here too.
+            Helpers.OpenSectionWarnings.AddForCast(this, gH_BeamProperty);
 
             // R6.5 P1 lane 2a: the values the former section value held, from the recipe (rule of passo 75); a recipe without them (composite)
             // gives an error and no outputs. P2K (P1): the only path.

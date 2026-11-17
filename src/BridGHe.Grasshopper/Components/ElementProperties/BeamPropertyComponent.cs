@@ -195,6 +195,8 @@ namespace BridGHe.Grasshopper.Components.ElementProperties
                 return;
             if (!DA.GetData("Section", ref section))
                 return;
+            // D5 (0.4.2): a thick T, C or Angle given as a text warns here as in the three section components.
+            OpenSectionWarnings.AddForCast(this, section);
             if (!DA.GetData("Material", ref material))
                 return;
             if (Params.Input.Count > 4)
