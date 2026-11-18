@@ -91,8 +91,8 @@
     "Description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "Category": "BridGHe",
     "SubCategory": "03-Sections",
-    "Exposure": "primary",
-    "Obsolete": false,
+    "Exposure": "hidden",
+    "Obsolete": true,
     "Source": "src/BridGHe.Grasshopper/Components/Sections/StrausSectionComponents.cs:19 @59e9def"
   },
   {
@@ -783,8 +783,8 @@
     "Description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "Category": "BridGHe",
     "SubCategory": "03-Sections",
-    "Exposure": "primary",
-    "Obsolete": false,
+    "Exposure": "hidden",
+    "Obsolete": true,
     "Source": "src/BridGHe.Grasshopper/Components/Sections/StrausSectionComponents.cs:13 @59e9def"
   },
   {
@@ -963,8 +963,8 @@
     "Description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "Category": "BridGHe",
     "SubCategory": "03-Sections",
-    "Exposure": "primary",
-    "Obsolete": false,
+    "Exposure": "hidden",
+    "Obsolete": true,
     "Source": "src/BridGHe.Grasshopper/Components/Sections/StrausSectionComponents.cs:25 @59e9def"
   },
   {
@@ -1062,8 +1062,8 @@
     "Description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "Category": "BridGHe",
     "SubCategory": "03-Sections",
-    "Exposure": "primary",
-    "Obsolete": false,
+    "Exposure": "hidden",
+    "Obsolete": true,
     "Source": "src/BridGHe.Grasshopper/Components/Sections/StrausSectionComponents.cs:43 @59e9def"
   },
   {
@@ -1513,8 +1513,8 @@
     "Description": "Sezione nativa Straus R3. Dimensioni nelle unità di lunghezza del modello; angoli in gradi. Richiede licenza API R3.",
     "Category": "BridGHe",
     "SubCategory": "03-Sections",
-    "Exposure": "primary",
-    "Obsolete": false,
+    "Exposure": "hidden",
+    "Obsolete": true,
     "Source": "src/BridGHe.Grasshopper/Components/Sections/StrausSectionComponents.cs:7 @59e9def"
   },
   {
