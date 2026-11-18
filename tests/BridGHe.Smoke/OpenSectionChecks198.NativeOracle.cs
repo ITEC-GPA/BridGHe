@@ -36,11 +36,15 @@ internal static partial class OpenSectionChecks190
                     recordedGpc=comparison.Reference?.Gpc,recordedStraus=comparison.Reference?.Straus,
                     delta=gpc[i]-aligned[i],ratio=aligned[i]==0?(double?)null:gpc[i]/aligned[i]});
             }
-            double? singleStrausJ=null;double[] analyticalPairCentre=null;
+            double? singleStrausJ=null;double[] singleStraus=null,singleGpc=null,partPairCentre=null;
             if(item.Mirror)
             {
-                singleStrausJ=GpcNativeSections.Resolve(item.Type=="C"?"LipChannel":item.Type,item.Type=="Angle"?new[]{item.B,item.H,item.Tf,item.Tw}:new[]{item.B,item.H,0,item.Tf,item.Tw,0},null,null,null,1,0,new[]{0d,0d}).Section.ReferenceProperties[3];
-                PairChecks209(item,gpc,singleStrausJ.Value);analyticalPairCentre=PairCentre209(item);
+                // D2: the single part, calculated by Straus7 (the same resolver, no mirror) and by GPC (the same component, no mirror).
+                singleStraus=GpcNativeSections.Resolve(item.Type=="C"?"LipChannel":item.Type,item.Type=="Angle"?new[]{item.B,item.H,item.Tf,item.Tw}:new[]{item.B,item.H,0,item.Tf,item.Tw,0},null,null,null,1,0,new[]{0d,0d}).Section.ReferenceProperties;
+                var part=item with {Mirror=false,Gap=0};
+                singleGpc=Expected198((ElasticBeamProperty)Model198(part,DefinitionUnits.Nmm,0,0,false).Model.BeamElements.Values.Single().BeamProperty,part);
+                singleStrausJ=singleStraus[3];
+                PairChecks209(item,gpc,singleGpc,singleStraus);partPairCentre=PartCentre209(singleStraus,gpc[10]);
             }
             var cn=ShearCompliance198(native[6],native[7],da);var cg=ShearCompliance198(gpc[6],gpc[7],0);
             double shearScale=Math.Max(Math.Max(Math.Abs(cg.C11),Math.Abs(cg.C22)),Math.Max(Math.Abs(cn.C11),Math.Abs(cn.C22)));
@@ -51,14 +55,16 @@ internal static partial class OpenSectionChecks190
                 metrics.Add(new{name=entry.Item1,expected=entry.Item2,actual=entry.Item3,tolerance,pass});
             }
             rows.Add(new{item.Type,item.B,item.H,item.Tf,item.Tw,item.Mirror,item.Gap,compatibleTwist=false,gpc,native,relativeAngle=da,
-                singleStrausJ,twiceSingleStrausJ=2*singleStrausJ,analyticalPairCentre,
+                singleStrausJ,twiceSingleStrausJ=2*singleStrausJ,singleStraus,singleGpc,partPairCentre,
                 complianceGpc=new[]{cg.C11,cg.C22,cg.C12},complianceNativeInGpcAxes=new[]{cn.C11,cn.C22,cn.C12},metrics});
         }
         catch(Exception ex){Check(false,"R3 native calculation "+item.Label+": "+ex);rows.Add(new{item.Label,error=ex.ToString()});}
         Check(declared==Declared209Count,$"R3 option B contains exactly the {Declared209Count} declared differences of the pairs");
         File.WriteAllText(Path.Combine(root,"physical-comparison.json"),JsonSerializer.Serialize(rows,new JsonSerializerOptions{WriteIndented=true}));
-        File.WriteAllText(Path.Combine(root,"r3-option-a-summary.json"),JsonSerializer.Serialize(new{candidate="option A, pending user approval",declared,
-            reference="coordinator sections 2026-11-16 03:29:26, AX, bbdc3836",measurementGuard="exact finite doubles; signed zero equivalent",
-            physicalTolerances="unchanged",pairedTorsion="also compared with twice the separately calculated single-section J",mirroredShearCentre="analytical GPC value; observed Straus convention recorded"},new JsonSerializerOptions{WriteIndented=true}));
+        File.WriteAllText(Path.Combine(root,"r3-option-b-summary.json"),JsonSerializer.Serialize(new{option="B (decisions D2 and D7 of 17/11/2026)",declared,
+            reference="Measurements209 and Declarations209 (OpenSectionChecks209.Reference.cs)",measurementGuard="exact finite doubles; signed zero equivalent",
+            physicalTolerances="unchanged; no declaration for a single section",pairedTorsion="D2: against twice the J of the single part calculated by Straus7, 5 %",
+            pairShearCentre="D2: against the shear centre of the Straus7 single part, in the axes of the pair, 1 % of the largest dimension",
+            strausPairConvention="J and centre of the Straus7 pair recorded as the 15 declared differences"},new JsonSerializerOptions{WriteIndented=true}));
     }
 }

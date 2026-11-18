@@ -27,26 +27,47 @@ internal static partial class OpenSectionChecks190
         bool unchanged=double.IsFinite(gpc)&&double.IsFinite(straus)&&gpc.Equals(reference.Gpc)&&straus.Equals(reference.Straus);
         return new(unchanged,original,tolerance,reference.Category,reference);
     }
-    private static double[] PairCentre209(OpenCase198 item)
+    // D2 (17/11/2026): the two parts of a pair are joined only at points, so J of the pair is twice J of the part and its shear centre is on
+    // the axis of symmetry at the height of the shear centre of the part (2C: the centroid). Straus7 gives the pair 5-6 % less J and its
+    // centre in the centroid: those stay declared differences. The physical check of a pair is against the single part: J against twice
+    // the J of the single section calculated by Straus7, the centre against the shear centre of that Straus7 part moved into the
+    // principal axes of the pair, with the thresholds of 198 (5 %, 1 % of the largest dimension). No thin-wall tf/2 - Ybar any more.
+    // part: the eleven values of a single section (A, I11, I22, J, SL1, SL2, SA1, SA2, Xbar, Ybar, angle), GPC or Straus7, in its own
+    // principal axes; the pair is mirrored about the vertical axis, so only the vertical offset of the centre is carried over.
+    private static double[] PartCentre209(double[] part,double pairAngle)
     {
-        var r=RectangleReference198(item);
-        double dy=item.Type=="Angle"?item.Tf/2-r.Y:0;
-        return new[]{Math.Sin(r.Angle)*dy,Math.Cos(r.Angle)*dy};
+        double a=part[10],dy=Math.Sin(a)*part[4]+Math.Cos(a)*part[5];
+        return new[]{Math.Sin(pairAngle)*dy,Math.Cos(pairAngle)*dy};
     }
-    private static void PairChecks209(OpenCase198 item,double[] gpc,double singleStrausJ)
+    private static bool PairCentreMatches209(OpenCase198 item,double[] gpc,double[] strausPart)
     {
-        double sum=2*singleStrausJ;
-        Check(PairTorsionMatches209(item,gpc[3],singleStrausJ),
-            $"R3 paired torsion versus two independent Straus singles {item.Label}: GPC={gpc[3]:R}, 2*single={sum:R}");
-        var centre=PairCentre209(item);
-        Near(centre[0],gpc[4],"R3 analytical mirrored shear-centre SL1 "+item.Label);
-        Near(centre[1],gpc[5],"R3 analytical mirrored shear-centre SL2 "+item.Label);
+        var centre=PartCentre209(strausPart,gpc[10]);double tolerance=Tolerance209(item,4,0);
+        return double.IsFinite(gpc[4])&&double.IsFinite(gpc[5])&&double.IsFinite(centre[0])&&double.IsFinite(centre[1])
+            &&Math.Abs(gpc[4]-centre[0])<=tolerance&&Math.Abs(gpc[5]-centre[1])<=tolerance;
+    }
+    private static void PairChecks209(OpenCase198 item,double[] gpc,double[] gpcPart,double[] strausPart)
+    {
+        double sum=2*strausPart[3];
+        Check(PairTorsionMatches209(item,gpc[3],strausPart[3]),
+            $"R3 D2 paired torsion versus two independent Straus singles {item.Label}: GPC={gpc[3]:R}, 2*single={sum:R}");
+        var centre=PartCentre209(strausPart,gpc[10]);
+        Check(PairCentreMatches209(item,gpc,strausPart),
+            $"R3 D2 pair shear centre versus the Straus single part {item.Label}: GPC=({gpc[4]:R},{gpc[5]:R}), part=({centre[0]:R},{centre[1]:R}), tolerance={Tolerance209(item,4,0):R}");
+        // The GPC pair itself follows D2: J the sum of its two parts, centre at the height of the centre of the part.
+        Near(2*gpcPart[3],gpc[3],"D2 GPC pair J twice the J of its part "+item.Label);
+        var own=PartCentre209(gpcPart,gpc[10]);
+        Near(own[0],gpc[4],"D2 GPC pair shear-centre SL1 at the centre of its part "+item.Label);
+        Near(own[1],gpc[5],"D2 GPC pair shear-centre SL2 at the centre of its part "+item.Label);
     }
     private static bool PairTorsionMatches209(OpenCase198 item,double gpcJ,double singleStrausJ)
     {
         double measured=Measurements209.Single(v=>v.Case==(item with {Mirror=false,Gap=0})).Straus[3];
+        return singleStrausJ.Equals(measured)&&PairTorsionWithin209(gpcJ,singleStrausJ);
+    }
+    private static bool PairTorsionWithin209(double gpcJ,double singleStrausJ)
+    {
         double sum=2*singleStrausJ;
-        return double.IsFinite(gpcJ)&&singleStrausJ.Equals(measured)&&Math.Abs(gpcJ-sum)<=.05*Math.Max(1,Math.Abs(sum));
+        return double.IsFinite(gpcJ)&&double.IsFinite(sum)&&Math.Abs(gpcJ-sum)<=.05*Math.Max(1,Math.Abs(sum));
     }
     internal static int Replay209()
     {
@@ -64,8 +85,16 @@ internal static partial class OpenSectionChecks190
             if(row.Case.Mirror)
             {
                 var single=Measurements209.Single(v=>v.Case==(row.Case with {Mirror=false,Gap=0}));
-                PairChecks209(row.Case,row.Gpc,single.Straus[3]);
+                PairChecks209(row.Case,row.Gpc,single.Gpc,single.Straus);
                 Check(!PairTorsionMatches209(row.Case,row.Gpc[3],Math.BitIncrement(single.Straus[3])),"209 changed single-section Straus torsion fails "+row.Case.Label);
+                // D2: a part centre moved vertically by twice the tolerance fails; so does twice J of the pair against the Straus pair rule.
+                double shift=2*Tolerance209(row.Case,4,0),a=single.Straus[10];
+                var moved=(double[])single.Straus.Clone();moved[4]+=Math.Sin(a)*shift;moved[5]+=Math.Cos(a)*shift;
+                Check(!PairCentreMatches209(row.Case,row.Gpc,moved),"209 D2 pair centre fails with the part centre moved by twice the tolerance "+row.Case.Label);
+                double twice=2*single.Straus[3];
+                Check(PairTorsionWithin209(twice*1.049,single.Straus[3])&&PairTorsionWithin209(twice*.951,single.Straus[3])
+                    &&!PairTorsionWithin209(twice*1.051,single.Straus[3])&&!PairTorsionWithin209(twice*.949,single.Straus[3]),
+                    "209 D2 pair torsion keeps the five-percent limit against twice the part "+row.Case.Label);
             }
         }
         Check(outside==Declared209Count&&declared==Declared209Count,$"209 option B: exactly {Declared209Count} measured differences declared, all of the pairs; original thresholds retained");
