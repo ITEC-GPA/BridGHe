@@ -8,7 +8,7 @@ I cinque componenti Straus duplicati di Solid Circle, Hollow Circle, Solid Rect,
 
 T, C e Angle dei builder GPC calcolano le proprietà con Model. GPC.Converter 2.23.0.1 esporta i domini standard nelle forme native Straus7 8, 5 e 9, mantenendo autorevoli le proprietà GPC. Sono conservate le convenzioni di mirror/gap e la rotazione legacy del doppio Angle. I valori geometrici mostrati comprendono ora la torsione GPC e le due parti del doppio C.
 
-**J e centro di taglio di T, C e Angle (opzione A, scelta il 16/11/2026).** J e centro di taglio restano quelli GPC a parete sottile; non sono equivalenti in generale al calcolatore Straus7 usato nella 0.4.0.
+**J e centro di taglio di T, C e Angle (opzione A, scelta il 16/11/2026).** J e centro di taglio restano quelli GPC a parete sottile; non sono equivalenti in generale al calcolatore Straus7 usato nella 0.4.0. *Dalla 0.4.2 J e centro di taglio sono numerici e l'avviso sui profili tozzi non c'è più: vedi [RELEASE-0.4.2.md](RELEASE-0.4.2.md#sezioni-aperte-j-e-centro-di-taglio-numerici-opzione-b).*
 - Doppie C: J GPC/Straus vale 1,072–1,076; doppie L: 1,081–1,084. Rispetto al doppio della J singola Straus i rapporti sono 1,018 e 1,023.
 - Doppie L: il centro GPC è a 40,116 mm dal baricentro, mentre Straus restituisce zero. È la convenzione osservata per le coppie speculari; il vettore GPC è verificato analiticamente.
 - Profili tozzi T-48x40, C-40x30 e L-40x30: J maggiore del 5,8–16,5 %, rapporti dei centri di taglio fino a 1,96.
