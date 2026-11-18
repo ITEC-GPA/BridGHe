@@ -47,11 +47,18 @@ internal static class F7Checks
         param.AppendMenuItems(menu);
         menu.Items.OfType<ToolStripMenuItem>().Single(x => x.Text == text).PerformClick();
     }
+    /// <summary>The input <paramref name="name"/> of the F7 checks: <c>artifacts\179\input</c> of the checkout when it has the file, else the
+    /// versioned copy of the F7 files of 14/11 (<c>Fixtures/f7-179</c>, 0.4.2: a new checkout has no <c>artifacts\179</c>).</summary>
+    private static string Input179(string name)
+    {
+        string local = Path.Combine("artifacts", "179", "input", name);
+        return File.Exists(local) ? local : Path.Combine("tests", "BridGHe.Smoke", "Fixtures", "f7-179", name);
+    }
     internal static int Readers(string[] args)
     {
         Start();
         string file = args.SkipWhile(a => a != "--f7-readers").Skip(1).FirstOrDefault()
-            ?? Path.Combine("artifacts", "179", "input", "F05b-schema2-sviluppo.ghx");
+            ?? Input179("F05b-schema2-sviluppo.ghx");
         var archive = new GH_Archive();
         using var doc = new GH_Document();
         Rhino.RhinoApp.CommandWindowCaptureEnabled = true;
@@ -353,7 +360,8 @@ internal static class F7Checks
     {
         foreach (string name in new[] { "F09a-strain-obsoleto-cs-stirato.ghx", "F09b-legacy-0.3.0.ghx" })
         {
-            string path = Path.Combine("artifacts", "179", "input", name);
+            string path = Input179(name);
+            Check(File.Exists(path), name + ": input present (artifacts\\179\\input or Fixtures/f7-179)");
             if (!File.Exists(path)) continue;
             using var doc = new GH_Document(); var archive = new GH_Archive();
             Check(archive.ReadFromFile(Path.GetFullPath(path)) && archive.ExtractObject(doc, "Definition"), name + ": opened"); Solve(doc);
