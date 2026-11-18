@@ -51,6 +51,10 @@ La tabella `COMBINAZIONI TEST` ha una colonna per azione. Le cinque righe restan
 
 I file Straus vanno in `calcoli/REV004`. Il GHX distribuito non contiene risultati FEM e non lancia analisi all'apertura.
 
+## Esito delle verifiche locali
+
+Con i carichi dello script il rapporto massimo delle verifiche locali è **3,03**, sulle saldature alle flange degli irrigiditori d'appoggio (G3, trave 151), e **98** verifiche «Appoggio · contatto piatti/flangia» risultano non verificate. Nel REV003 erano 1,50 e nessuna. È un esito dell'esempio, non un difetto del calcolo: gli irrigiditori d'appoggio sono quelli del REV003 e non sono stati ridimensionati per i carichi nuovi.
+
 ## Prove
 
 ```powershell
