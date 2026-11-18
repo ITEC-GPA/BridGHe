@@ -15,7 +15,7 @@ internal static partial class OpenSectionChecks190
     private static void NativeOracle198(string root)
     {
         var rows=new List<object>();int declared=0;
-        Console.WriteLine("R3 OPTION A CANDIDATE: classified measured differences; pending user approval.");
+        Console.WriteLine("R3 OPTION B: singles with the original thresholds, without declarations; the 15 differences of the pairs against the Straus7 pair declared.");
         foreach(var item in Cases198())
         try
         {
@@ -55,7 +55,7 @@ internal static partial class OpenSectionChecks190
                 complianceGpc=new[]{cg.C11,cg.C22,cg.C12},complianceNativeInGpcAxes=new[]{cn.C11,cn.C22,cn.C12},metrics});
         }
         catch(Exception ex){Check(false,"R3 native calculation "+item.Label+": "+ex);rows.Add(new{item.Label,error=ex.ToString()});}
-        Check(declared==23,"R3 option A contains exactly the 23 explicitly measured differences");
+        Check(declared==Declared209Count,$"R3 option B contains exactly the {Declared209Count} declared differences of the pairs");
         File.WriteAllText(Path.Combine(root,"physical-comparison.json"),JsonSerializer.Serialize(rows,new JsonSerializerOptions{WriteIndented=true}));
         File.WriteAllText(Path.Combine(root,"r3-option-a-summary.json"),JsonSerializer.Serialize(new{candidate="option A, pending user approval",declared,
             reference="coordinator sections 2026-11-16 03:29:26, AX, bbdc3836",measurementGuard="exact finite doubles; signed zero equivalent",

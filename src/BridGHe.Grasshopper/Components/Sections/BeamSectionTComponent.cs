@@ -52,7 +52,6 @@ namespace BridGHe.Grasshopper.Components.Sections
 
             // P2K (P1): the section by its recipe alone (a refused recipe gives an error and no section).
             var section = Helpers.GpcOnlyProperties.Section(this, () => Common.Gpc.Builders.GpcSectionBuilders.Standard(Common.Gpc.BridgeSectionKind.T, d, b, t1: t1, t2: t2));
-            if (section != null) Helpers.OpenSectionWarnings.Add(this, b, d, t1, t2);
             Helpers.GpcOnlyElements.Set(DA, 0, section);
         }
 
