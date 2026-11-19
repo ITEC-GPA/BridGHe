@@ -198,19 +198,22 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
         private static Solution Calculate(Request request)
         {
             try{return Finish(request,HBridgeSection.Recalculate(request.Result.Analysis,request.Input));}
-            catch(Exception e){return new Solution{Error=e.Message};}
+            catch(Exception e){return new Solution{Error=Where(request)+e.Message};}
         }
+        /// <summary>Study item 14 (Brecciarola, 19/11/2026): the beam, station and combination of a section, before the message of its error</summary>
+        private static string Where(Request request)=>request?.Result?.Source is { } s
+            ?"trave "+s.BeamId+", x = "+s.StationMm.ToString("0.#",System.Globalization.CultureInfo.InvariantCulture)+" mm, "+s.Combination+": ":"";
         /// <summary>The sections of a station in one gPC batch (it runs in a task): each gets the outputs or the error of its own calculation</summary>
         private static Solution[] Calculate(Request[] requests)
         {
             IReadOnlyList<HBridgeBatchResult> analyses;
             try{analyses=HBridgeSection.Recalculate(requests.Select(r=>r.Result.Analysis).ToArray(),requests.Select(r=>r.Input).ToArray());}
-            catch(Exception e){return requests.Select(_=>new Solution{Error=e.Message}).ToArray();}
+            catch(Exception e){return requests.Select(r=>new Solution{Error=Where(r)+e.Message}).ToArray();}
             return requests.Select((request,k)=>
             {
-                if(analyses[k].Error!=null)return new Solution{Error=analyses[k].Error.Message};
+                if(analyses[k].Error!=null)return new Solution{Error=Where(request)+analyses[k].Error.Message};
                 try{return Finish(request,analyses[k].Analysis);}
-                catch(Exception e){return new Solution{Error=e.Message};}
+                catch(Exception e){return new Solution{Error=Where(request)+e.Message};}
             }).ToArray();
         }
         private static Solution Finish(Request request,HBridgeAnalysisResult analysis)
@@ -233,7 +236,7 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
                 if(cancel.IsCancellationRequested){foreach(var b in batch)b.Completion.TrySetCanceled();return;}
                 Solution[] solutions;
                 try{solutions=Calculate(batch.Select(b=>b.Request).ToArray());}
-                catch(Exception e){solutions=batch.Select(_=>new Solution{Error=e.Message}).ToArray();}
+                catch(Exception e){solutions=batch.Select(b=>new Solution{Error=Where(b.Request)+e.Message}).ToArray();}
                 for(int k=0;k<batch.Length;k++)batch[k].Completion.TrySetResult(solutions[k]);
             });
         }

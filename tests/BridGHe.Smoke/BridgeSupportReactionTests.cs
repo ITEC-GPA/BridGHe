@@ -75,6 +75,12 @@ internal static class BridgeSupportReactionTests
         ((Param_GenericObject)c.Params.Input[3]).PersistentData.Clear(); locations.PersistentData.Clear(); locations.PersistentData.Append(new GH_Point(new Point3d(5000, 0, 0))); Solve();
         Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count == 0, "Selection-only errors: " + string.Join(";", c.RuntimeMessages(GH_RuntimeMessageLevel.Error)));
         Require(c.Params.Output[1].VolatileDataCount == 0 && c.Params.Output[2].VolatileDataCount == 0, "Selection-only mode invented a reaction");
+        // Study item 19 (Brecciarola, 19/11/2026): the empty items a check leaves for the sections it could not calculate are skipped and
+        // counted, never a null reference (before: "Object reference not set to an instance of an object").
+        input.PersistentData.Append(null, new GH_Path(0, 5000)); input.PersistentData.Append(null, new GH_Path(0, 0)); Solve();
+        Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count == 0 && c.Params.Output[0].VolatileDataCount == 1
+            && c.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Any(m => m.StartsWith("2 elementi vuoti ignorati")),
+            "Empty items: " + string.Join(";", c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Concat(c.RuntimeMessages(GH_RuntimeMessageLevel.Warning))));
         locations.PersistentData.Clear(); locations.PersistentData.Append(new GH_Point(new Point3d(4500, 0, 0))); Solve();
         Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count == 1, "Missing station silently interpolated");
         Console.WriteLine($"BRIDGE DETAIL STATIONS PASS (GPC data alone): {checks} checks; reaction coefficients, shrinkage, uplift, missing data and original tree paths.");

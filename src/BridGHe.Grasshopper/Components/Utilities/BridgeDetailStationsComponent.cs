@@ -48,7 +48,12 @@ public sealed class BridgeDetailStationsComponent : BridgeUtilityComponent
         if (!double.IsFinite(tolerance) || tolerance <= 0 || locations.Count == 0 || locations.Any(p => !p.IsValid)) throw new ArgumentException("Supply valid detail points and positive tolerance.");
         if (phaseGoos.Any(g => g.Value is not BridgePhaseDefinition)) throw new ArgumentException("Phases requires Bridge Phase objects.");
         var phases = phaseGoos.Select(g => (BridgePhaseDefinition)g.Value).ToArray();
-        var results = input.AllData(true).Select(g => g?.ScriptVariable() as BridgeStressResult ?? throw new ArgumentException("Expected section results.")).ToArray();
+        // Study item 19 (Brecciarola, 19/11/2026): the empty items a check leaves for the sections it could not calculate are skipped here and in
+        // the loop below (before, the loop stopped on them with a null reference); a warning counts them.
+        var values = input.AllData(false).Select(g => g?.ScriptVariable()).ToArray();
+        var results = values.Where(v => v != null).Select(v => v as BridgeStressResult ?? throw new ArgumentException("Expected section results.")).ToArray();
+        int empty = values.Length - results.Length;
+        if (results.Length == 0 && empty > 0) throw new ArgumentException(EmptyItems.AllEmpty);
         if (results.Any(r => r.Source == null || r.Stage.GetHistory() != null)) throw new ArgumentException("Use final cumulative results with FEM provenance.");
         var beams = bridge != null ? GpcBeams(bridge.Model) : GpcBeams(model.GpcInput.Model);
         if (results.Any(r => !beams.ContainsKey(r.Source.BeamId))) throw new ArgumentException("Result beam IDs do not belong to this model.");
@@ -59,7 +64,8 @@ public sealed class BridgeDetailStationsComponent : BridgeUtilityComponent
         for (int branch = 0; branch < input.PathCount; branch++)
         foreach (var goo in input.Branches[branch])
         {
-            var result = (BridgeStressResult)goo.ScriptVariable(); var beam = beams[result.Source.BeamId];
+            if (goo?.ScriptVariable() is not BridgeStressResult result) continue; // an empty item, counted above
+            var beam = beams[result.Source.BeamId];
             double station = result.Source.StationMm;
             if (!double.IsFinite(station) || station < -tolerance || station > beam.Length + tolerance) throw new ArgumentException("Invalid local result station.");
             var point = beam.PointFrom + (beam.PointTo - beam.PointFrom) * (station / beam.Length);
@@ -78,9 +84,11 @@ public sealed class BridgeDetailStationsComponent : BridgeUtilityComponent
             { compression.Append(new GH_Number(Math.Max(0, reaction)), path); signed.Append(new GH_Number(reaction), path); }
             endTypes.Append(new GH_Integer(end), path); points.Append(new GH_Point(point), path); uplift |= reaction < -1e-9;
         }
-        if (matched.Any(m => !m)) throw new ArgumentException("Some locations have no existing result station. Add the points to the FEM mesh/output stations and rerun the analyses.");
+        if (matched.Any(m => !m)) throw new ArgumentException("Some locations have no existing result station. Add the points to the FEM mesh/output stations and rerun the analyses."
+            + (empty > 0 ? " " + EmptyItems.Skipped(empty) + " Una stazione con soli elementi vuoti non viene trovata." : ""));
         da.SetDataTree(0, output); da.SetDataTree(1, compression); da.SetDataTree(2, signed); da.SetDataTree(3, endTypes); da.SetDataTree(4, points);
         if (uplift) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Uplift exists: compression is zero there; bearing anchorage requires a separate check. See Signed reaction.");
+        if (empty > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, EmptyItems.Skipped(empty));
     }
     /// <summary>A beam as the component reads it: its ends and its length (mm).</summary>
     private sealed record Beam(Point3d PointFrom, Point3d PointTo, double Length);

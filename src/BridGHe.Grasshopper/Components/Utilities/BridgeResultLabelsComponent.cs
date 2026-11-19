@@ -73,14 +73,19 @@ public sealed class BridgeResultLabelsComponent : BridgeUtilityComponent
         da.GetData(1, ref format);
         if (Params.Input[1].VolatileDataCount > 1) throw new ArgumentException("Choose a single Format for all results.");
         if (format < 0 || format >= FormatNames.Length) throw new ArgumentException("Format must be 0 Completa, 1 Trave e stazione, 2 Combinazione or 3 Fase.");
-        if (values.Any(v => v?.Value is not BridgeStressResult)) throw new ArgumentException("Results must contain BridgeStressResult objects from a bridge checker.");
+        // Study item 19 (Brecciarola, 19/11/2026): an empty item (a section the check could not calculate) gets an empty label, so that the labels
+        // stay aligned with the results; Bridge Check Summary skips both.
+        if (values.Any(v => v?.Value != null && v.Value is not BridgeStressResult)) throw new ArgumentException("Results must contain BridgeStressResult objects from a bridge checker.");
+        int empty = values.Count(v => v?.Value == null);
+        if (values.Count > 0 && empty == values.Count) throw new ArgumentException(EmptyItems.AllEmpty);
         // SetDataList can graft an iteration index when Format uses item access.
         // Explicit branches keep this output aligned with the original Results tree.
         var path = da.ParameterTargetPath(0);
         var labels = new GH_Structure<GH_String>();
-        labels.AppendRange(values.Select((v, i) => new GH_String(BridgeResultLabels.Format((BridgeStressResult)v.Value,
-            (BridgeResultLabelFormat)format, $"{path}[{i}]"))), path);
+        labels.AppendRange(values.Select((v, i) => new GH_String(v?.Value is BridgeStressResult result ? BridgeResultLabels.Format(result,
+            (BridgeResultLabelFormat)format, $"{path}[{i}]") : "")), path);
         da.SetDataTree(0, labels);
         Message = FormatNames[format];
+        if (empty > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, EmptyItems.Skipped(empty));
     }
 }

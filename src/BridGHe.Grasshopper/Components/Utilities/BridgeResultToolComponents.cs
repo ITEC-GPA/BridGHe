@@ -108,14 +108,20 @@ public sealed class BridgeCheckSummaryComponent : BridgeUtilityComponent
     {
         var results = new List<GH_ObjectWrapper>(); var labels = new List<string>();
         if (!da.GetDataList(0, results)) return;
-        if (results.Count == 0 || results.Any(r => r?.Value is not BridgeStressResult)) throw new ArgumentException("Supply BridgeStressResult objects from a bridge checker.");
+        // Study item 19 (Brecciarola, 19/11/2026): the empty items a check leaves for the sections it could not calculate are skipped, with their
+        // labels (Bridge Result Labels gives them an empty label, so the two lists stay aligned); a warning counts them.
+        var kept = Enumerable.Range(0, results.Count).Where(i => results[i]?.Value != null).ToArray();
+        int empty = results.Count - kept.Length;
+        if (results.Count > 0 && kept.Length == 0) throw new ArgumentException(EmptyItems.AllEmpty);
+        if (kept.Length == 0 || kept.Any(i => results[i].Value is not BridgeStressResult)) throw new ArgumentException("Supply BridgeStressResult objects from a bridge checker.");
         da.GetDataList(1, labels);
         if (labels.Count == 0)
-            labels.AddRange(results.Select((r, i) => BridgeResultLabels.Format((BridgeStressResult)r.Value,
-                BridgeResultLabelFormat.Complete, $"{da.ParameterTargetPath(0)}[{i}]")));
-        else if (results.Count != labels.Count || labels.Any(string.IsNullOrWhiteSpace))
+            labels.AddRange(results.Select((r, i) => r?.Value is BridgeStressResult result ? BridgeResultLabels.Format(result,
+                BridgeResultLabelFormat.Complete, $"{da.ParameterTargetPath(0)}[{i}]") : null));
+        else if (results.Count != labels.Count || kept.Any(i => string.IsNullOrWhiteSpace(labels[i])))
             throw new ArgumentException("Leave Labels empty for automatic labels, or supply one non-empty custom label per result in the same branch.");
-        var rows = results.SelectMany((r, i) => { var result = (BridgeStressResult)r.Value; return BridgeGpc.Checks(result.Stage).Select(c => (Label: labels[i], Phase: result.Stage.Name, Check: c)); }).ToArray();
+        if (empty > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, EmptyItems.Skipped(empty));
+        var rows = kept.SelectMany(i => { var result = (BridgeStressResult)results[i].Value; return BridgeGpc.Checks(result.Stage).Select(c => (Label: labels[i], Phase: result.Stage.Name, Check: c)); }).ToArray();
         double Ratio(int i) => rows[i].Check.Ratio ?? double.NaN;
         // Explicit output branches avoid implicit grafting when optional Labels is empty.
         // The Results input determines paths for both automatic and custom labels.

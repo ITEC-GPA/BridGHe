@@ -85,13 +85,16 @@ public sealed class BridgeReportComponent : GH_Component
             if (Params.Input[4].VolatileDataCount > 0 && model?.GpcInput == null) throw new ArgumentException("Model must be a BridGHe model.");
             if (topics.Count == 0 && Params.Input[3].SourceCount == 0 && Params.Input[3].VolatileDataCount == 0) topics.AddRange(BridgeReportData.DefaultTopics.Select(t => (int)t));
             if (topics.Any(t => !Enum.IsDefined((BridgeReportTopic)t))) throw new ArgumentException("Topics must be integers 0..6.");
-            var entries = new List<BridgeReportEntry>();
+            var entries = new List<BridgeReportEntry>(); int empty = 0;
             for (int b = 0; b < tree.PathCount; b++) for (int i = 0; i < tree.Branches[b].Count; i++)
             {
                 var goo = tree.Branches[b][i]; var value = goo is GH_ObjectWrapper w ? w.Value : goo?.ScriptVariable();
+                if (value == null) { empty++; continue; } // study item 19: a section the check could not calculate
                 if (value is not BridgeStressResult r) throw new ArgumentException("Results must contain BridgeStressResult objects.");
                 entries.Add(new(r, tree.Paths[b] + "[" + i + "]"));
             }
+            if (entries.Count == 0 && empty > 0) throw new ArgumentException(EmptyItems.AllEmpty);
+            if (empty > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, EmptyItems.Skipped(empty) + " Il report non li contiene.");
             // R6.4 (6): with the GPC bridge model of Build BridGHe Model the report model comes from it (name, counts, action records, combination
             // table, beam lengths).
             // R6.5 P1 lane 3a / P2K (P1): else the GPC input of the model (BridgeReportData.Source(Conversion)); no model, no source.

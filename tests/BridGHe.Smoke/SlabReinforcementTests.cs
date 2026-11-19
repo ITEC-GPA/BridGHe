@@ -164,6 +164,29 @@ internal static class SlabReinforcementTests
                 near(row.AxisDistance,55+(tapered?5*i:0));near(Math.PI*row.Diameter*row.Diameter/4*input3.Geometry.SlabWidth/row.Pitch,1500+(tapered?500*i:0));
             }
             gpcChecks+=3+3*6;
+            // Study item 16 (Brecciarola, 19/11/2026): the optional inputs Options and ULS Combinations at the end of the component.
+            void Run(){c.GetType().GetField("_run",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(c,true);c.ExpireSolution(false);doc.NewSolution(false,GH_SolutionMode.Silent);}
+            BridgeStressResult[] Results()=>c.Params.Output[0].VolatileData.AllData(true).Select(g=>(BridgeStressResult)g.ScriptVariable()).ToArray();
+            string Errors()=>string.Join("; ",c.RuntimeMessages(GH_RuntimeMessageLevel.Error));
+            double[] Numbers(BridgeStressResult r)=>new[]{r.Point1_ConcreteSigma,r.Point2_RebarSigma,r.Point4_ConcreteSigma,r.Point5_SteelSigma,r.Point6_SteelSigma,r.Point7_SteelSigma,r.Point8_SteelSigma,r.Point6_SteelTau,r.Point7_SteelTau};
+            require(c.Params.Input.Count==7&&c.Params.Input[5].Optional&&c.Params.Input[6].Optional&&c.Params.Output.Count==3,"GPC ("+carriers+"): Options and ULS Combinations must be optional inputs 5 and 6, outputs unchanged.");
+            require(results.All(r=>r.Analysis.Input.Options.LimitState==GPC.Checkers.CompositeBridge.BridgeLimitState.Rare)&&c.Message=="N–Mx–Vy","GPC ("+carriers+"): without the new inputs the check must stay at the rare SLS.");
+            // Options equal to the defaults of the component: the same numbers, bit for bit, and a remark that the toggles are not used.
+            var goo=assembly.GetType("BridGHe.Grasshopper.DataTypes.BridgeDetailGoo",true);
+            Set(5,(IGH_Goo)Activator.CreateInstance(goo,(object)new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions{Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4,LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare}));Run();
+            require(Errors()=="","GPC ("+carriers+"): Options: "+Errors());
+            var same=Results();require(same.Length==3&&Enumerable.Range(0,3).All(i=>Numbers(same[i]).SequenceEqual(Numbers(results[i]))),"GPC ("+carriers+"): default Options changed the numbers.");
+            require(c.RuntimeMessages(GH_RuntimeMessageLevel.Remark).Any(m=>m.StartsWith("Options collegate")),"GPC ("+carriers+"): missing remark on the toggles replaced by Options.");
+            ((Param_GenericObject)c.Params.Input[5]).PersistentData.Clear();
+            // ULS Combinations by prefix: every combination at the ULS, the message says so; an unknown name is an error before any calculation.
+            var uls=(Param_String)c.Params.Input[6];uls.PersistentData.Clear();uls.SetPersistentData("Te*");uls.ExpireSolution(false);Run();
+            require(Errors()==""&&Results().Length==3&&Results().All(r=>r.Analysis.Input.Options.LimitState==GPC.Checkers.CompositeBridge.BridgeLimitState.Ultimate)&&c.Message=="N–Mx–Vy · SLU 1/1",
+                "GPC ("+carriers+"): ULS Combinations by prefix not applied: "+Errors()+" / "+c.Message);
+            uls.PersistentData.Clear();uls.SetPersistentData("Test");uls.ExpireSolution(false);Run();
+            require(Errors()==""&&Results().All(r=>r.Analysis.Input.Options.LimitState==GPC.Checkers.CompositeBridge.BridgeLimitState.Ultimate),"GPC ("+carriers+"): ULS Combinations by name not applied.");
+            uls.PersistentData.Clear();uls.SetPersistentData("Nope");uls.ExpireSolution(false);Run();
+            require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(m=>m.StartsWith("Combinazioni SLU sconosciute: Nope"))&&c.Params.Output[0].VolatileData.IsEmpty,"GPC ("+carriers+"): an unknown ULS combination must be an error, without outputs.");
+            gpcChecks+=8;
         }
         // R3: the GH model and the composite beam given by their GPC data alone.
         var conversion=BridGHe.Common.Gpc.GpcModels.Conversion.FromGpc(input,new BridGHe.Common.Gpc.BridgeUnits(BridGHe.Common.Gpc.DefinitionUnits.Nmm),new System.Collections.Generic.Dictionary<int,double>{[1]=0},1e-3,bridge:data);

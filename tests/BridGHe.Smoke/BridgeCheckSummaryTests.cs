@@ -14,6 +14,18 @@ internal static class BridgeCheckSummaryTests
     {
         var plugin = BridgeMergeTests.Initialize();
         GH_Component Create(string name) => (GH_Component)Activator.CreateInstance(plugin.GetTypes().Single(t => t.Name == name));
+        // Study items 14 and 16 (Brecciarola, 19/11/2026): the combinations at the ULS by name or prefix, and the ordered list of the failures.
+        var names = new[] { "F1", "SLU_A", "SLU_B + Q1" };
+        Require(BridgeCheckSelection.Match(names, new[] { "SLU_*" }).SequenceEqual(new[] { false, true, true })
+            && BridgeCheckSelection.Match(names, new[] { "F1", " ", null }).SequenceEqual(new[] { true, false, false })
+            && BridgeCheckSelection.Match(names, new[] { "*" }).All(x => x) && !BridgeCheckSelection.Match(names, null).Any(x => x), "ULS combinations by name or prefix.");
+        bool unknown = false;
+        try { BridgeCheckSelection.Match(names, new[] { "SLU", "SLU_*" }); } catch (ArgumentException e) { unknown = e.Message.StartsWith("Combinazioni SLU sconosciute: SLU."); }
+        Require(unknown, "An unknown ULS combination must be an error that names it.");
+        var failures = BridgeCheckSelection.Message(new[] { new BridgeCheckSelection.Failure(1, "B2", 0, 1, "SLU_A", "x"),
+            new BridgeCheckSelection.Failure(0, "B1", 500, 2, "SLU_B", "y"), new BridgeCheckSelection.Failure(0, "B1", 500, 1, "SLU_A", "z") }, 30, 2);
+        Require(failures.StartsWith("3 verifiche non calcolate su 30 (2 stazioni)") && failures.Contains("\ntrave B1, x = 500 mm, SLU_A: z\ntrave B1, x = 500 mm, SLU_B: y\n… e altre 1.")
+            && BridgeCheckSelection.Message(Array.Empty<BridgeCheckSelection.Failure>(), 30) == null, "Failure list: count, order or limit.");
         var plain = SampleResult();
         var source = new BridgeResultSource("36", 1250.25, "C1", "G2");
         var a = plain.WithSource(source);
@@ -78,6 +90,22 @@ internal static class BridgeCheckSummaryTests
         Require(detail.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count == 0, "Detail checker rejected the traced result.");
         var detailed = (BridgeStressResult)detail.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
         Require(detailed.Source == a.Source && detailed.Analysis.Input.Phases.SequenceEqual(a.Analysis.Input.Phases), "Detail checking lost provenance or changed actions.");
+
+        // Study item 19 (Brecciarola, 19/11/2026): the empty items a check leaves for the sections it could not calculate are skipped with their
+        // labels and counted in a warning; the labeler gives them an empty label, so its list stays aligned with the results.
+        labels.PersistentData.Clear(); input.PersistentData.Clear();
+        input.PersistentData.Append(new GH_ObjectWrapper(a), first); input.PersistentData.Append(null, first); input.PersistentData.Append(new GH_ObjectWrapper(c), first);
+        Solve(); VerifyLabels(a, c);
+        Require(summary.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Any(m => m.StartsWith("1 elemento vuoto ignorato")), "Empty items are not counted in a warning.");
+        var aligned = Create("BridgeResultLabelsComponent"); aligned.CreateAttributes(); doc.AddObject(aligned, false);
+        ((Param_GenericObject)aligned.Params.Input[0]).PersistentData.MergeStructure(input.PersistentData);
+        labels.AddSource(aligned.Params.Output[0]); Solve(); VerifyLabels(a, c);
+        Require(aligned.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count == 0 && aligned.Params.Output[0].VolatileData.AllData(false).Count() == 3
+            && aligned.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Any(m => m.StartsWith("1 elemento vuoto ignorato")), "The labeler lost the place of the empty item.");
+        labels.RemoveAllSources(); doc.RemoveObject(aligned, false);
+        input.PersistentData.Clear(); input.PersistentData.Append(null, first);
+        input.ExpireSolution(false); labels.ExpireSolution(false); doc.NewSolution(false, GH_SolutionMode.Silent);
+        Require(summary.RuntimeMessages(GH_RuntimeMessageLevel.Error).Any(m => m.StartsWith("Tutti i risultati sono vuoti")), "All-empty results must be an error that says so.");
 
         // Simulate an old definition, whose archive explicitly says Labels is required.
         input.PersistentData.Clear(); labels.Optional = false; summary.PrincipalParameterIndex = -1;

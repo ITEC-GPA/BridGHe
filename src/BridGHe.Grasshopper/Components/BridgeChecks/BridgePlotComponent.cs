@@ -95,6 +95,15 @@ public abstract class BridgePlotComponent : GH_Component
                 :beams.Select(b=>GpcLength(b)).ToArray();
             var origins=new double[beams.Count];for(int i=1;i<beams.Count;i++)origins[i]=origins[i-1]+lengths[i-1];
             var rows=new List<(int Beam,int Station,double X,Reading[] Readings)>();
+            // Study item 19 (Brecciarola, 19/11/2026): an empty item (a section the check could not calculate) is a missing value of its
+            // combination, as NaN, instead of an error; a warning counts them.
+            int empty=0;
+            Reading Read(IGH_Goo g,GH_Path at,string combination)
+            {
+                var value=g is GH_ObjectWrapper w?w.Value:g?.ScriptVariable();
+                if(value==null){empty++;return new Reading(double.NaN);}
+                return ReadValue(value,quantity,at,combination);
+            }
             for(int i=0;i<tree.PathCount;i++)
             {
                 var path=tree.Paths[i].Indices;
@@ -103,8 +112,9 @@ public abstract class BridgePlotComponent : GH_Component
                 var branch=tree.Branches[i];if(branch.Count!=names.Length)throw new ArgumentException("Combination count mismatch at "+tree.Paths[i]);
                 double x=(origins[path[0]]+stations[path[0]][path[1]])/1000.0;
                 if(!AcceptStation(x))continue;
-                rows.Add((path[0],path[1],x,branch.Select((g,c)=>ReadValue(g is GH_ObjectWrapper w?w.Value:g?.ScriptVariable(),quantity,tree.Paths[i],names[c])).ToArray()));
+                rows.Add((path[0],path[1],x,branch.Select((g,c)=>Read(g,tree.Paths[i],names[c])).ToArray()));
             }
+            if(empty>0)AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,Helpers.EmptyItems.Skipped(empty));
             rows=rows.OrderBy(r=>r.Beam).ThenBy(r=>r.Station).ToList();
             CompleteRead(da,rows.Select(r=>r.X));
             var include=new HashSet<string>(selected.Count==0?names:selected,StringComparer.Ordinal);

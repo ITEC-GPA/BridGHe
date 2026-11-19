@@ -44,11 +44,16 @@ public sealed class BridgeCheckMapComponent : BridgeUtilityComponent
         if (!da.GetData(0, ref model) || !da.GetDataList(1, results) || !da.GetDataList(2, ids) ||
             !da.GetDataList(3, stations) || !da.GetDataList(4, cases)) return;
         da.GetData(5, ref labels);
+        // Study item 19 (Brecciarola, 19/11/2026): an empty result (a section the check could not calculate) is skipped with its ID, station and
+        // case; a warning counts them.
+        var kept = Enumerable.Range(0, results.Count).Where(i => results[i]?.Value != null).ToArray();
+        if (results.Count > 0 && kept.Length == 0) throw new ArgumentException(EmptyItems.AllEmpty);
         if (results.Count != ids.Count || ids.Count != stations.Count || ids.Count != cases.Count ||
-            results.Any(r => r?.Value is not BridgeStressResult) || cases.Any(string.IsNullOrWhiteSpace))
+            kept.Any(i => results[i].Value is not BridgeStressResult) || kept.Any(i => string.IsNullOrWhiteSpace(cases[i])))
             throw new ArgumentException("Provide one beam ID, station and case label for each BridgeStressResult.");
+        if (kept.Length < results.Count) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, EmptyItems.Skipped(results.Count - kept.Length));
         var rows = new List<BridgeMappedCheck>();
-        for (int i = 0; i < results.Count; i++)
+        foreach (int i in kept)
         {
             var result = (BridgeStressResult)results[i].Value;
             var checks = BridgeGpc.Checks(result.Stage).ToArray();

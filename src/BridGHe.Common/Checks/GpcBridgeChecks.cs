@@ -103,10 +103,29 @@ namespace BridGHe.Common.Checks
             }
         }
 
-        /// <summary>The checks of one section for every combination of the merged model, in their order.</summary>
+        /// <summary>The number of combinations of the merged model (the table of Build BridGHe Model).</summary>
+        public int CombinationCount => factors.Length;
+
+        /// <summary>The checks of one section for every combination of the merged model, in their order. The first error, in the order of the
+        /// combinations, is thrown.</summary>
         /// <param name="stationMm">The BridGHe station (distance from the start of the beam); the evaluation uses the dataset station nearest to it.</param>
         public BridgeStressResult[] Calculate(string beamId, double stationMm, HBridgeInput section, double longTermPhi, double shortTermPhi, double shrinkagePhi)
         {
+            var each = CalculateEach(beamId, stationMm, section, longTermPhi, shortTermPhi, shrinkagePhi, Enumerable.Range(0, factors.Length).ToArray());
+            var failed = each.FirstOrDefault(e => e.Error != null).Error;
+            if (failed != null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failed).Throw();
+            return each.Select(e => e.Result).ToArray();
+        }
+
+        /// <summary>Study item 14 (Brecciarola, 19/11/2026): the checks of one section for the given combinations (indices of the merged model,
+        /// in this order), each with its result or the error of its own calculation, so that one combination that does not converge leaves
+        /// the others. The combinations are still one gPC batch (shared phases calculated once, numbers of separate analyses), so the
+        /// results are those of <see cref="Calculate"/>. An error of the section itself (no results, station not in the dataset) is thrown.</summary>
+        public (BridgeStressResult Result, Exception Error)[] CalculateEach(string beamId, double stationMm, HBridgeInput section, double longTermPhi, double shortTermPhi,
+            double shrinkagePhi, IReadOnlyList<int> combinations)
+        {
+            if (combinations == null) throw new ArgumentNullException(nameof(combinations));
+            if (combinations.Any(c => c < 0 || c >= factors.Length)) throw new ArgumentOutOfRangeException(nameof(combinations), "GpcBridgeCombinationIndexOutOfRange");
             var (beam, principal, stations, fingerprint) = beams[beamId];
             if (stations.Length == 0) throw new InvalidOperationException("GpcBridgeBeamWithoutResults: " + beamId);
             double length = beam.Length, station = stations.OrderBy(s => Math.Abs(s * length - stationMm)).First();
@@ -122,22 +141,32 @@ namespace BridGHe.Common.Checks
                 LoadReference = BridgeLoadReference.GrossCentroid, Factors = factors[c], Results = selections,
                 LongTermPhi = longTermPhi, ShortTermPhi = shortTermPhi, ShrinkagePhi = shrinkagePhi,
             };
-            var results = new BridgeStressResult[factors.Length];
+            var results = new (BridgeStressResult Result, Exception Error)[combinations.Count];
             if (plan.Method == D3Method.LinearHistory)
             {
-                for (int c = 0; c < factors.Length; c++) { var a = plan.Calculate(Evaluation(c)); results[c] = new BridgeStressResult(a, a.Stages.Count - 1, null, assumptions); }
+                for (int k = 0; k < combinations.Count; k++)
+                {
+                    try { var a = plan.Calculate(Evaluation(combinations[k])); results[k] = (new BridgeStressResult(a, a.Stages.Count - 1, null, assumptions), null); }
+                    catch (Exception e) { results[k] = (null, e); }
+                }
                 return results;
             }
             // Compatible: the combinations of the section in one gPC batch (shared phases calculated once, numbers of separate analyses), as BridGHe.
-            var built = new List<HBridgeInput>(factors.Length); var warnings = new List<IReadOnlyList<string>>(factors.Length);
-            for (int c = 0; c < factors.Length; c++) { built.Add(plan.BuildInput(Evaluation(c), out var w)); warnings.Add(w); }
-            var calculated = HBridgeSection.Calculate(built);
-            for (int c = 0; c < factors.Length; c++)
+            var built = new List<HBridgeInput>(combinations.Count); var warnings = new List<IReadOnlyList<string>>(combinations.Count); var slots = new List<int>(combinations.Count);
+            for (int k = 0; k < combinations.Count; k++)
             {
-                if (calculated[c].Error != null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(calculated[c].Error).Throw();
-                var analysis = calculated[c].Analysis;
-                foreach (var stage in analysis.Stages) stage.Warnings.AddRange(warnings[c]);
-                results[c] = new BridgeStressResult(analysis, analysis.Stages.Count - 1, null, assumptions);
+                try { built.Add(plan.BuildInput(Evaluation(combinations[k]), out var w)); warnings.Add(w); slots.Add(k); }
+                catch (Exception e) { results[k] = (null, e); }
+            }
+            if (built.Count == 0) return results;
+            var calculated = HBridgeSection.Calculate(built);
+            for (int b = 0; b < built.Count; b++)
+            {
+                int k = slots[b];
+                if (calculated[b].Error != null) { results[k] = (null, calculated[b].Error); continue; }
+                var analysis = calculated[b].Analysis;
+                foreach (var stage in analysis.Stages) stage.Warnings.AddRange(warnings[b]);
+                results[k] = (new BridgeStressResult(analysis, analysis.Stages.Count - 1, null, assumptions), null);
             }
             return results;
         }

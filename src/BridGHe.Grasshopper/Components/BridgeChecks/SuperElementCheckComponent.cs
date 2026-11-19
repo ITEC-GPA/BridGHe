@@ -60,7 +60,11 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             pManager.AddBooleanParameter("Web Local Instability", "WLI", "If true, web is subjected to loacel instability", GH_ParamAccess.item, true);
             pManager.AddBooleanParameter("Top Flange Local Instability", "TFLI", "If true, top flange is subjected to loacel instability", GH_ParamAccess.item, true);
             pManager.AddBooleanParameter("Bottom Flange Local Instability", "BLI", "If true, bottom flange is subjected to loacel instability", GH_ParamAccess.item, true);
-
+            // Study item 16 (Brecciarola, 19/11/2026): optional, at the end, so that existing definitions keep their wires and their results.
+            pManager.AddGenericParameter("Options", "O", "Optional Bridge Analysis Options. When connected they replace the defaults of this component (Eurocode 4, rare SLS, Class 4, default partial factors) and its three local instability toggles.", GH_ParamAccess.item);
+            pManager[5].Optional = true;
+            pManager.AddTextParameter("ULS Combinations", "ULS", "Optional combinations checked at the ultimate limit state: exact names, or a prefix ending with * (e.g. SLU_*). The other combinations keep the limit state of the options (rare SLS by default).", GH_ParamAccess.list);
+            pManager[6].Optional = true;
         }
 
         /// <summary>
@@ -102,6 +106,21 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 return;
             if (!DA.GetData(n++, ref bottomFlangeInstab))
                 return;
+            BridgeDetailGoo optionsGoo = null;
+            GPC.Checkers.CompositeBridge.BridgeAnalysisOptions suppliedOptions = null;
+            if (DA.GetData(n++, ref optionsGoo) && optionsGoo != null)
+            {
+                suppliedOptions = optionsGoo.Value as GPC.Checkers.CompositeBridge.BridgeAnalysisOptions;
+                if (suppliedOptions == null)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Options richiede Bridge Analysis Options.");
+                    Message = "Error";
+                    _run = false;
+                    return;
+                }
+            }
+            var ulsEntries = new List<string>();
+            DA.GetDataList(n++, ulsEntries);
 
             // R6.4 (5), decision (i) = A of the user (7/11): the checks run only on the GPC bridge model of Build BridGHe Model, with its recipe, by
             // the GPC workflow executor (D3); without it a clear error and no outputs (BridGHe's own phases on the FEM results of the composite beams
@@ -127,6 +146,18 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                 Message = "Error";
                 return;
             }
+            // Study item 16: the combinations checked at the ultimate limit state, validated before Run so that a wrong name shows at once.
+            bool[] uls;
+            try { uls = BridgeCheckSelection.Match(gpcBridge.Combinations.Select(c => c.Name).ToArray(), ulsEntries); }
+            catch (ArgumentException e)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message);
+                Message = "Error";
+                _run = false;
+                return;
+            }
+            if (suppliedOptions != null)
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, "Options collegate: valgono le loro scelte (norma, stato limite, Class4, coefficienti e instabilità locale); WLI, TFLI e BLI non sono usati.");
 
             if (_run)
             {
@@ -140,7 +171,15 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                         (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage)[beams.Count][];
 
                     var definitions = new GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition[beams.Count][];
-                    var analysisOptions = new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard = GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState = GPC.Checkers.CompositeBridge.BridgeLimitState.Rare, WebBuckling = webFlangeInstab, TopFlangeBuckling = topFlangeInstab, BottomFlangeBuckling = bottomFlangeInstab };
+                    var analysisOptions = suppliedOptions ?? new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard = GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState = GPC.Checkers.CompositeBridge.BridgeLimitState.Rare, WebBuckling = webFlangeInstab, TopFlangeBuckling = topFlangeInstab, BottomFlangeBuckling = bottomFlangeInstab };
+                    // Study item 16: one gPC batch per limit state at every station (the combinations of the options, then those at the ULS); without
+                    // ULS combinations a single batch of all combinations, as before.
+                    var ulsOptions = analysisOptions with { LimitState = GPC.Checkers.CompositeBridge.BridgeLimitState.Ultimate };
+                    var groups = new List<(GPC.Checkers.CompositeBridge.BridgeAnalysisOptions Options, int[] Combinations)>();
+                    var otherCombinations = Enumerable.Range(0, combinations.Count).Where(c => !uls[c]).ToArray();
+                    var ulsCombinations = Enumerable.Range(0, combinations.Count).Where(c => uls[c]).ToArray();
+                    if (otherCombinations.Length > 0) groups.Add((analysisOptions, otherCombinations));
+                    if (ulsCombinations.Length > 0) groups.Add((ulsOptions, ulsCombinations));
                     (double psiInfinite, double psiInstant, double psiShrinkage)[][] psis = new (double psiInfinite, double psiInstant, double psiShrinkage)[beams.Count][];
 
                     // F6 C5: the sections are checked by the GPC workflow executor (D3, one prepared plan per recipe) on the GPC results. F6 (a)/(b), R3:
@@ -251,12 +290,32 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     // One task per station (before, per beam): its combinations are one gPC batch, which calculates their shared phases once.
                     // Every station writes only its own slots, so the outputs keep their order.
                     var stationTasks = Enumerable.Range(0, beams.Count).SelectMany(i => Enumerable.Range(0, forcesForOutput[i].Length).Select(j => (Beam: i, Station: j))).ToArray();
+                    // Study item 14 (Brecciarola, 19/11/2026): an error of one combination (e.g. an effective section that does not converge where
+                    // M ≈ 0) no longer stops the component. Every station is calculated, the failed combinations leave an empty item in their place
+                    // (the tree keeps the order of the combinations) and the error lists all of them, in order.
+                    var failures = new System.Collections.Concurrent.ConcurrentBag<BridgeCheckSelection.Failure>();
                     Parallel.For(0, stationTasks.Length, n =>
                     {
                         int i = stationTasks[n].Beam, j = stationTasks[n].Station;
                         var startSection = Start(beams[i]); // the choices (Consider Concrete / Rebar) of the start, as before
-                        stressAnalysisResults[i][j] = d3.Calculate(ids[i], workflowStations[i][j], definitions[i][j].SectionInput(startSection.ConsiderRebar, analysisOptions),
-                            psis[i][j].psiInfinite, psis[i][j].psiInstant, psis[i][j].psiShrinkage);
+                        var station = new StressAnalysisResult[combinations.Count];
+                        foreach (var group in groups)
+                        {
+                            (StressAnalysisResult Result, Exception Error)[] each;
+                            try
+                            {
+                                each = d3.CalculateEach(ids[i], workflowStations[i][j], definitions[i][j].SectionInput(startSection.ConsiderRebar, group.Options),
+                                    psis[i][j].psiInfinite, psis[i][j].psiInstant, psis[i][j].psiShrinkage, group.Combinations);
+                            }
+                            catch (Exception e) { each = group.Combinations.Select(_ => ((StressAnalysisResult)null, e)).ToArray(); }
+                            for (int k = 0; k < group.Combinations.Length; k++)
+                            {
+                                int c = group.Combinations[k];
+                                if (each[k].Error != null) failures.Add(new BridgeCheckSelection.Failure(i, ids[i], workflowStations[i][j], c, combinations[c].Name, Text(each[k].Error)));
+                                else station[c] = each[k].Result;
+                            }
+                        }
+                        stressAnalysisResults[i][j] = station;
                         // "Tau b" has no verified equivalent in the GPC API: NaN for every combination, as on the D3 path before.
                         tauBResults[i][j] = Enumerable.Repeat(double.NaN, combinations.Count).ToArray();
                     });
@@ -265,7 +324,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     for (int i = 0; i < stressAnalysisResults.Length; i++)
                     {
                         for (int j = 0; j < stressAnalysisResults[i].Length; j++)
-                            resultsDataTree.AddRange(stressAnalysisResults[i][j].Select((result, k) => result.WithSource(
+                            resultsDataTree.AddRange(stressAnalysisResults[i][j].Select((result, k) => result?.WithSource(
                                 new BridgeResultSource(ids[i], workflowStations[i][j], combinations[k].Name, beamSuperElements[i]))), new GH_Path(i, j));
                     }
 
@@ -297,6 +356,14 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     DA.SetDataTree(2, forcesTree);
 
                     Message = "N–Mx–Vy";
+                    if (ulsCombinations.Length > 0 && analysisOptions.LimitState != GPC.Checkers.CompositeBridge.BridgeLimitState.Ultimate)
+                        Message += $" · SLU {ulsCombinations.Length}/{combinations.Count}";
+                    if (!failures.IsEmpty)
+                    {
+                        int total = stationTasks.Length * combinations.Count;
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Error, BridgeCheckSelection.Message(failures, total));
+                        Message += $" · {failures.Count} non calcolate";
+                    }
                     _run = false;
                 }
                 catch (Exception e)
@@ -315,6 +382,9 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         /// Filter or Decompose Model, Bridge Segment Composite), else (a composite beam made without a GPC beam) that of its GPC datum
         /// (<see cref="GH_CompositeBeam.BeamId"/>).</summary>
         private static string BeamId(GH_CompositeBeam beam) => beam?.AnalysedGpc is GPC.Model.Elements.BeamElement b ? b.Source.OriginalId : beam?.BeamId;
+
+        /// <summary>The message of a failed calculation, without the wrapper of a single aggregated error.</summary>
+        private static string Text(Exception e) => e is AggregateException a && a.InnerExceptions.Count == 1 ? Text(a.InnerExceptions[0]) : e.Message;
 
         /// <summary>The length of a beam of the GPC bridge model: the distance of Rhino between its ends (N-mm), as the FEM length.</summary>
         private static double Length(GPC.Model.Elements.BeamElement beam) =>
