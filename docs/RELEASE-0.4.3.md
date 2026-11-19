@@ -47,4 +47,10 @@ Nei dettagli:
   - la selezione delle combinazioni SLU e l'elenco ordinato dei fallimenti;
   - Options uguali ai default, con gli stessi numeri bit per bit;
   - le combinazioni SLU per nome e per prefisso, e il nome sconosciuto.
-- La tabella della palette ha due righe in più, le porte 5 e 6 di Super Element Check; nessun'altra riga cambia. Le due righe sono approvate dall'utente con le correzioni, il 19/11/2026.
+- La tabella della palette ha due righe in più, le porte 5 e 6 di Super Element Check; nessun'altra riga cambia. Le due righe sono approvate dall'utente con le correzioni, il 19/11/2026. Nella baseline dei contratti (`migration/port-contract-baseline.json`) cambia solo l'impronta delle porte di Super Element Check.
+- Batteria del 19/11/2026 sul set BA (`INT\rapporti\bridghe-043-correzioni-20261119`), tutto verde:
+  - compilazione, layout, set GPC, regressione completa (105, catture registrate senza differenze), palette, proprietà, generatori, elementi e modelli GPC-only, report;
+  - nativi 50 REV004 e 99 REV005 con le stesse impronte dei riferimenti della 0.4.2.
+- **Viadotto Brecciarola, REV002:**
+  - con la 0.4.2 il file normale non dava nessuna verifica; ora dà 65.051 righe, con 16 combinazioni non convergenti elencate, le stesse dopo la riapertura;
+  - nel file diagnostico le 63.776 righe della 0.4.2 sono identiche, più 1.291 righe delle verifiche degli irrigiditori, che prima si fermavano sugli elementi vuoti.
