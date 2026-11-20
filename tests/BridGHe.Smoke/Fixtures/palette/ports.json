@@ -7287,6 +7287,124 @@
     "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionHPropertyComponent.cs:47 @59e9def"
   },
   {
+    "Guid": "3f7c2a91-5d84-4e6b-9a1f-0c2e8b7d4a63",
+    "Direction": "in",
+    "Index": 0,
+    "Name": "Web Local Instability",
+    "NickName": "WLI",
+    "Description": "If true, the web is subjected to local instability. Not used when Bridge Analysis Options are connected.",
+    "Type": "Param_Boolean",
+    "Access": "item",
+    "Optional": false,
+    "Defaults": [
+      {
+        "Type": "bool",
+        "Value": true
+      }
+    ],
+    "DefaultSource": "true",
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckOptionsComponent.cs:22 @e31af53"
+  },
+  {
+    "Guid": "3f7c2a91-5d84-4e6b-9a1f-0c2e8b7d4a63",
+    "Direction": "in",
+    "Index": 1,
+    "Name": "Top Flange Local Instability",
+    "NickName": "TFLI",
+    "Description": "If true, the top flange is subjected to local instability. Not used when Bridge Analysis Options are connected.",
+    "Type": "Param_Boolean",
+    "Access": "item",
+    "Optional": false,
+    "Defaults": [
+      {
+        "Type": "bool",
+        "Value": true
+      }
+    ],
+    "DefaultSource": "true",
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckOptionsComponent.cs:23 @e31af53"
+  },
+  {
+    "Guid": "3f7c2a91-5d84-4e6b-9a1f-0c2e8b7d4a63",
+    "Direction": "in",
+    "Index": 2,
+    "Name": "Bottom Flange Local Instability",
+    "NickName": "BLI",
+    "Description": "If true, the bottom flange is subjected to local instability. Not used when Bridge Analysis Options are connected.",
+    "Type": "Param_Boolean",
+    "Access": "item",
+    "Optional": false,
+    "Defaults": [
+      {
+        "Type": "bool",
+        "Value": true
+      }
+    ],
+    "DefaultSource": "true",
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckOptionsComponent.cs:24 @e31af53"
+  },
+  {
+    "Guid": "3f7c2a91-5d84-4e6b-9a1f-0c2e8b7d4a63",
+    "Direction": "in",
+    "Index": 3,
+    "Name": "Analysis Options",
+    "NickName": "AO",
+    "Description": "Optional Bridge Analysis Options. When connected they replace the defaults (Eurocode 4, rare SLS, Class 4, default partial factors) and the three local instability toggles.",
+    "Type": "Param_GenericObject",
+    "Access": "item",
+    "Optional": true,
+    "Defaults": [],
+    "DefaultSource": "",
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckOptionsComponent.cs:25 @e31af53"
+  },
+  {
+    "Guid": "3f7c2a91-5d84-4e6b-9a1f-0c2e8b7d4a63",
+    "Direction": "in",
+    "Index": 4,
+    "Name": "ULS Combinations",
+    "NickName": "ULS",
+    "Description": "Optional combinations checked at the ultimate limit state: exact names, or a prefix ending with * (e.g. SLU_*). The other combinations keep the limit state of the options (rare SLS by default).",
+    "Type": "Param_String",
+    "Access": "list",
+    "Optional": true,
+    "Defaults": [],
+    "DefaultSource": "",
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckOptionsComponent.cs:27 @e31af53"
+  },
+  {
+    "Guid": "3f7c2a91-5d84-4e6b-9a1f-0c2e8b7d4a63",
+    "Direction": "in",
+    "Index": 5,
+    "Name": "Stations per Element",
+    "NickName": "St",
+    "Description": "Analysis stations per element among the FEM output stations, evenly spread: 2 = the two nodes (default; with 1 m elements one check per metre on both sides of every node), 3 = nodes and middle, 0 = all.",
+    "Type": "Param_Integer",
+    "Access": "item",
+    "Optional": false,
+    "Defaults": [
+      {
+        "Type": "int",
+        "Value": 2
+      }
+    ],
+    "DefaultSource": "2",
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckOptionsComponent.cs:29 @e31af53"
+  },
+  {
+    "Guid": "3f7c2a91-5d84-4e6b-9a1f-0c2e8b7d4a63",
+    "Direction": "out",
+    "Index": 0,
+    "Name": "Options",
+    "NickName": "O",
+    "Description": "Super Element Check Options, to the Options input of Super Element Check.",
+    "Type": "Param_GenericObject",
+    "Access": "item",
+    "Optional": false,
+    "Defaults": [],
+    "DefaultSource": "",
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckOptionsComponent.cs:34 @e31af53"
+  },
+  {
     "Guid": "3fdba0df-48ec-41d3-8b9e-3f2e3663fd32",
     "Direction": "in",
     "Index": 0,
@@ -16595,86 +16713,15 @@
     "Guid": "94839122-32f0-4f3e-a30f-979a53c3eca8",
     "Direction": "in",
     "Index": 2,
-    "Name": "Web Local Instability",
-    "NickName": "WLI",
-    "Description": "If true, web is subjected to loacel instability",
-    "Type": "Param_Boolean",
-    "Access": "item",
-    "Optional": false,
-    "Defaults": [
-      {
-        "Type": "bool",
-        "Value": true
-      }
-    ],
-    "DefaultSource": "true",
-    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckComponent.cs:60 @59e9def"
-  },
-  {
-    "Guid": "94839122-32f0-4f3e-a30f-979a53c3eca8",
-    "Direction": "in",
-    "Index": 3,
-    "Name": "Top Flange Local Instability",
-    "NickName": "TFLI",
-    "Description": "If true, top flange is subjected to loacel instability",
-    "Type": "Param_Boolean",
-    "Access": "item",
-    "Optional": false,
-    "Defaults": [
-      {
-        "Type": "bool",
-        "Value": true
-      }
-    ],
-    "DefaultSource": "true",
-    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckComponent.cs:61 @59e9def"
-  },
-  {
-    "Guid": "94839122-32f0-4f3e-a30f-979a53c3eca8",
-    "Direction": "in",
-    "Index": 4,
-    "Name": "Bottom Flange Local Instability",
-    "NickName": "BLI",
-    "Description": "If true, bottom flange is subjected to loacel instability",
-    "Type": "Param_Boolean",
-    "Access": "item",
-    "Optional": false,
-    "Defaults": [
-      {
-        "Type": "bool",
-        "Value": true
-      }
-    ],
-    "DefaultSource": "true",
-    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckComponent.cs:62 @59e9def"
-  },
-  {
-    "Guid": "94839122-32f0-4f3e-a30f-979a53c3eca8",
-    "Direction": "in",
-    "Index": 5,
     "Name": "Options",
     "NickName": "O",
-    "Description": "Optional Bridge Analysis Options. When connected they replace the defaults of this component (Eurocode 4, rare SLS, Class 4, default partial factors) and its three local instability toggles.",
+    "Description": "Optional Super Element Check Options (local instabilities, Bridge Analysis Options, ULS Combinations, analysis stations per element); Bridge Analysis Options alone are accepted too. Without options: the three local instabilities on, Eurocode 4 rare SLS, no ULS combination, the 2 nodes of every element.",
     "Type": "Param_GenericObject",
     "Access": "item",
     "Optional": true,
     "Defaults": [],
     "DefaultSource": "",
-    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckComponent.cs:64 (studio Brecciarola punto 16, OK utente 19/11/2026)"
-  },
-  {
-    "Guid": "94839122-32f0-4f3e-a30f-979a53c3eca8",
-    "Direction": "in",
-    "Index": 6,
-    "Name": "ULS Combinations",
-    "NickName": "ULS",
-    "Description": "Optional combinations checked at the ultimate limit state: exact names, or a prefix ending with * (e.g. SLU_*). The other combinations keep the limit state of the options (rare SLS by default).",
-    "Type": "Param_String",
-    "Access": "list",
-    "Optional": true,
-    "Defaults": [],
-    "DefaultSource": "",
-    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckComponent.cs:66 (studio Brecciarola punto 16, OK utente 19/11/2026)"
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckComponent.cs:62 @e31af53"
   },
   {
     "Guid": "94839122-32f0-4f3e-a30f-979a53c3eca8",
@@ -22243,6 +22290,170 @@
     "Defaults": [],
     "DefaultSource": "",
     "Source": "src/BridGHe.Grasshopper/Components/Sections/SectionGeometricPropertyComponent.cs:45 @59e9def"
+  },
+  {
+    "Guid": "b6e1d0c4-7a3f-4c25-9e58-2d41f6a0c917",
+    "Direction": "in",
+    "Index": 0,
+    "Name": "Model",
+    "NickName": "M",
+    "Description": "Assembled Build BridGHe Model, N-mm: its girders (super elements) and their sections.",
+    "Type": "Param_GenericObject",
+    "Access": "item",
+    "Optional": false,
+    "Defaults": [],
+    "DefaultSource": "",
+    "Source": "src/BridGHe.Grasshopper/Components/Utilities/BridgeNotableStationsComponent.cs:27 @e31af53"
+  },
+  {
+    "Guid": "b6e1d0c4-7a3f-4c25-9e58-2d41f6a0c917",
+    "Direction": "in",
+    "Index": 1,
+    "Name": "Supports",
+    "NickName": "S",
+    "Description": "Support points on the girder axes (e.g. Bridge Grillage Mesh > Support Points), mm. Points away from a girder are ignored.",
+    "Type": "Param_Point",
+    "Access": "list",
+    "Optional": true,
+    "Defaults": [],
+    "DefaultSource": "",
+    "Source": "src/BridGHe.Grasshopper/Components/Utilities/BridgeNotableStationsComponent.cs:28 @e31af53"
+  },
+  {
+    "Guid": "b6e1d0c4-7a3f-4c25-9e58-2d41f6a0c917",
+    "Direction": "in",
+    "Index": 2,
+    "Name": "Results",
+    "NickName": "R",
+    "Description": "Optional Super Element Check results (Tension Check): sagging maximum of each span and guard on shear and stud flow.",
+    "Type": "Param_GenericObject",
+    "Access": "tree",
+    "Optional": true,
+    "Defaults": [],
+    "DefaultSource": "",
+    "Source": "src/BridGHe.Grasshopper/Components/Utilities/BridgeNotableStationsComponent.cs:30 @e31af53"
+  },
+  {
+    "Guid": "b6e1d0c4-7a3f-4c25-9e58-2d41f6a0c917",
+    "Direction": "in",
+    "Index": 3,
+    "Name": "Middles",
+    "NickName": "SM",
+    "Description": "Add the middle of every section-constant segment.",
+    "Type": "Param_Boolean",
+    "Access": "item",
+    "Optional": false,
+    "Defaults": [
+      {
+        "Type": "bool",
+        "Value": true
+      }
+    ],
+    "DefaultSource": "true",
+    "Source": "src/BridGHe.Grasshopper/Components/Utilities/BridgeNotableStationsComponent.cs:32 @e31af53"
+  },
+  {
+    "Guid": "b6e1d0c4-7a3f-4c25-9e58-2d41f6a0c917",
+    "Direction": "in",
+    "Index": 4,
+    "Name": "Tolerance",
+    "NickName": "Tol",
+    "Description": "Point matching tolerance [mm].",
+    "Type": "Param_Number",
+    "Access": "item",
+    "Optional": false,
+    "Defaults": [
+      {
+        "Type": "number",
+        "Value": 1.0
+      }
+    ],
+    "DefaultSource": "1.0",
+    "Source": "src/BridGHe.Grasshopper/Components/Utilities/BridgeNotableStationsComponent.cs:33 @e31af53"
+  },
+  {
+    "Guid": "b6e1d0c4-7a3f-4c25-9e58-2d41f6a0c917",
+    "Direction": "in",
+    "Index": 5,
+    "Name": "Additional",
+    "NickName": "A",
+    "Description": "Optional points to keep as they are (e.g. the stiffener points of other Bridge Detail Stations that read the same Detail Check), mm; a point within Tolerance of a notable point is not repeated.",
+    "Type": "Param_Point",
+    "Access": "list",
+    "Optional": true,
+    "Defaults": [],
+    "DefaultSource": "",
+    "Source": "src/BridGHe.Grasshopper/Components/Utilities/BridgeNotableStationsComponent.cs:34 @e31af53"
+  },
+  {
+    "Guid": "b6e1d0c4-7a3f-4c25-9e58-2d41f6a0c917",
+    "Direction": "out",
+    "Index": 0,
+    "Name": "Points",
+    "NickName": "P",
+    "Description": "Notable points of all the girders, girder by girder along each girder; to Bridge Detail Stations > Locations.",
+    "Type": "Param_Point",
+    "Access": "list",
+    "Optional": false,
+    "Defaults": [],
+    "DefaultSource": "",
+    "Source": "src/BridGHe.Grasshopper/Components/Utilities/BridgeNotableStationsComponent.cs:42 @e31af53"
+  },
+  {
+    "Guid": "b6e1d0c4-7a3f-4c25-9e58-2d41f6a0c917",
+    "Direction": "out",
+    "Index": 1,
+    "Name": "Kinds",
+    "NickName": "K",
+    "Description": "Why each point is there (segment end, segment middle, support, span sagging maximum), one per point.",
+    "Type": "Param_String",
+    "Access": "list",
+    "Optional": false,
+    "Defaults": [],
+    "DefaultSource": "",
+    "Source": "src/BridGHe.Grasshopper/Components/Utilities/BridgeNotableStationsComponent.cs:43 @e31af53"
+  },
+  {
+    "Guid": "b6e1d0c4-7a3f-4c25-9e58-2d41f6a0c917",
+    "Direction": "out",
+    "Index": 2,
+    "Name": "Chain mm",
+    "NickName": "C",
+    "Description": "Distance of each point from the first node of its girder [mm], one per point.",
+    "Type": "Param_Number",
+    "Access": "list",
+    "Optional": false,
+    "Defaults": [],
+    "DefaultSource": "",
+    "Source": "src/BridGHe.Grasshopper/Components/Utilities/BridgeNotableStationsComponent.cs:44 @e31af53"
+  },
+  {
+    "Guid": "b6e1d0c4-7a3f-4c25-9e58-2d41f6a0c917",
+    "Direction": "out",
+    "Index": 3,
+    "Name": "Girders",
+    "NickName": "G",
+    "Description": "Girder (super element) of each point.",
+    "Type": "Param_String",
+    "Access": "list",
+    "Optional": false,
+    "Defaults": [],
+    "DefaultSource": "",
+    "Source": "src/BridGHe.Grasshopper/Components/Utilities/BridgeNotableStationsComponent.cs:45 @e31af53"
+  },
+  {
+    "Guid": "b6e1d0c4-7a3f-4c25-9e58-2d41f6a0c917",
+    "Direction": "out",
+    "Index": 4,
+    "Name": "Guard",
+    "NickName": "W",
+    "Description": "Segments where the shear or the stud flow of the Super Element Check is higher away from the notable points.",
+    "Type": "Param_String",
+    "Access": "list",
+    "Optional": false,
+    "Defaults": [],
+    "DefaultSource": "",
+    "Source": "src/BridGHe.Grasshopper/Components/Utilities/BridgeNotableStationsComponent.cs:46 @e31af53"
   },
   {
     "Guid": "b6edaa43-c87c-40b4-8ce7-03260a524fd4",

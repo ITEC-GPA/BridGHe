@@ -264,7 +264,7 @@
 | Bridge Force Plot | component | BridGHe Model; Super-Element Beam; Results; Quantity; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running | SVG; File; Minimum; Maximum |
 | Bridge Girder Results | component | Beams; Results; Girder | Beams; Results; Stations; Available Girders |
 | Bridge Intermediate Stiffener Plot | component | BridGHe Model; Super-Element Beam; Results; Check; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running; Display; Stations | SVG; File; Minimum; Maximum; Governing checks; Unavailable checks |
-| Bridge Notable Stations | component | Model; Supports; Results; Middles; Tolerance | Points; Kinds; Chain mm; Girders; Guard |
+| Bridge Notable Stations | component | Model; Supports; Results; Middles; Tolerance; Additional | Points; Kinds; Chain mm; Girders; Guard |
 | Bridge Report | component | Results; Template; File; Topics; Model; Title; Project; Author; Revision; SVG; Overwrite | File; Summary; Warnings; Report ID |
 | Bridge Result Cases | component | Model | Cases; Case by step; Step; Step type; Result type; Count; Units |
 | Bridge Result Comparison | component | Reference keys; Reference values; Candidate keys; Candidate values; Absolute tolerance; Relative tolerance | All within tolerance; Key; Difference; Relative difference; Within tolerance |

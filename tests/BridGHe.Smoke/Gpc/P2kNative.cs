@@ -25,10 +25,10 @@ using static BridgeMovingRevisionExample;
 /// </summary>
 internal static class P2kNative
 {
-    /// <summary>0.4.2 (D13): the current definitions of the catalogue, 50 REV004 and 99 REV005, run by <c>50</c> and <c>99</c>; the definitions of
+    /// <summary>0.6.0: the current definitions of the catalogue, 50 REV005 and 99 REV006 (0.4.2, D13: 50 REV004 and 99 REV005), run by <c>50</c> and <c>99</c>; the definitions of
     /// 0.4.1 (50 REV003, the frozen capture input, and the migrated candidate of 99 REV004) stay by name, <c>50-rev003</c> and
     /// <c>99-rev004</c>, for the comparison with their frozen rows.</summary>
-    internal const string Example50 = "50-ponte-quattro-modelli/50-ponte-quattro-modelli_REV004.ghx", Example99 = "99-Ponte completo GPC/REV005/flusso-acciaio-misto_REV005.ghx",
+    internal const string Example50 = "50-ponte-quattro-modelli/50-ponte-quattro-modelli_REV005.ghx", Example99 = "99-Ponte completo GPC/REV006/flusso-acciaio-misto_REV006.ghx",
         Example99Rev004 = "99-Ponte completo GPC/REV004/flusso-acciaio-misto_REV004.ghx";
     private static readonly string[] Modes = { "50", "99", "50-rev003", "99-rev004" };
 
@@ -41,7 +41,7 @@ internal static class P2kNative
         if (unknown.Length > 0) throw new ArgumentException("BRIDGHE_P2K_NATIVE: unknown " + string.Join(", ", unknown) + " (" + string.Join(", ", Modes) + ")");
         if (modes.Contains("99")) Modular(Example99, false, 5);
         if (modes.Contains("99-rev004")) Modular(Example99Rev004, true, 4);
-        if (modes.Contains("50")) Fifty(Path.Combine(ExamplePaths.Root, Example50), "REV004", "artifacts/p2k-native-50-rev004");
+        if (modes.Contains("50")) Fifty(Path.Combine(ExamplePaths.Root, Example50), "REV005", "artifacts/p2k-native-50-rev005");
         if (modes.Contains("50-rev003")) Fifty(CaptureInput, "REV003", "artifacts/p2k-native-50");
     }
 

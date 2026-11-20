@@ -603,6 +603,18 @@
     "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionHPropertyComponent.cs:13 @59e9def"
   },
   {
+    "Guid": "3f7c2a91-5d84-4e6b-9a1f-0c2e8b7d4a63",
+    "Type": "BridGHe.Grasshopper.Components.BridgeChecks.SuperElementCheckOptionsComponent",
+    "Name": "Super Element Check Options",
+    "NickName": "SECOpt",
+    "Description": "Options of Super Element Check: local instabilities, Bridge Analysis Options, ULS combinations and analysis stations per element.",
+    "Category": "BridGHe",
+    "SubCategory": "10-Checks",
+    "Exposure": "tertiary",
+    "Obsolete": false,
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckOptionsComponent.cs:17 @e31af53"
+  },
+  {
     "Guid": "3fdba0df-48ec-41d3-8b9e-3f2e3663fd32",
     "Type": "BridGHe.Grasshopper.Components.Utilities.BridgeStraightMovingPathComponent",
     "Name": "Bridge Straight Moving Path",
@@ -2179,6 +2191,18 @@
     "Exposure": "tertiary",
     "Obsolete": false,
     "Source": "src/BridGHe.Grasshopper/Components/Sections/SectionGeometricPropertyComponent.cs:13 @59e9def"
+  },
+  {
+    "Guid": "b6e1d0c4-7a3f-4c25-9e58-2d41f6a0c917",
+    "Type": "BridGHe.Grasshopper.Components.Utilities.BridgeNotableStationsComponent",
+    "Name": "Bridge Notable Stations",
+    "NickName": "NotableStations",
+    "Description": "Notable sections of the girders for the Detail Check: both ends and the middle of every section-constant segment, the supports and the sagging maximum of each span, on the girder nodes. Connect Points to Bridge Detail Stations > Locations.",
+    "Category": "BridGHe",
+    "SubCategory": "13-Results",
+    "Exposure": "primary",
+    "Obsolete": false,
+    "Source": "src/BridGHe.Grasshopper/Components/Utilities/BridgeNotableStationsComponent.cs:20 @e31af53"
   },
   {
     "Guid": "b6edaa43-c87c-40b4-8ce7-03260a524fd4",

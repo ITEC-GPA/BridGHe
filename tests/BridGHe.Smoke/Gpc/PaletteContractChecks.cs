@@ -34,15 +34,19 @@ internal static class PaletteContractChecks
     /// source). 0.4.3 (19/11/2026): 1,882, with the optional inputs 5 Options and 6 ULS Combinations of Super Element Check (Brecciarola study,
     /// item 16, approved by the user with «Sì, correzioni S»). 0.5.0 (20/11/2026): 229 GUIDs and 1,890 ports, with Concrete Slab Section given
     /// by pitch and diameters (new GUID, 7 inputs and 1 output) and the former one with row areas hidden and obsolete (Brecciarola study, item 20,
-    /// the user's request «per la soletta gli input devono essere base, altezza, passo e diametro armature sopra e sotto»).</summary>
-    private const int Components = 229, Ports = 1890;
+    /// the user's request «per la soletta gli input devono essere base, altezza, passo e diametro armature sopra e sotto»). 0.6.0 (20/11/2026):
+    /// 231 GUIDs and 1,904 ports: Super Element Check with 3 inputs (its optional inputs moved to the new Super Element Check Options, 6 inputs
+    /// and 1 output) and the new Bridge Notable Stations (6 inputs, 5 outputs); the 13 rows approved by the user with «Sì, approvo».</summary>
+    private const int Components = 231, Ports = 1904;
 
     /// <summary>The SHA-256 of the two frozen files (UTF-8, line ends normalised to LF): an edit of the table without the procedure above fails.
     /// P2CI (14/11/2026): the proposal shown to the user (INT\rapporti\P2CI-palette-proposta-20261114). 0.4.3 (19/11/2026): ports.json with the
     /// two rows of Super Element Check above, no other row changed. 0.5.0 (20/11/2026): the row of the new Concrete Slab Section and its 8 ports
-    /// added; the row of the former one with its new name, description, exposure (hidden) and obsolete flag; no other row changed.</summary>
-    private const string ComponentsSha = "4D608ED954C70DF3D9B3CA8CA1E491D5ED5BF05342F9F5C2A68B3982D08A43A1",
-        PortsSha = "1E0E7A07913B08CCD4C463B72828D87992DCAD750AADCF2C4AAC5D64861F2D50";
+    /// added; the row of the former one with its new name, description, exposure (hidden) and obsolete flag; no other row changed. 0.6.0
+    /// (20/11/2026): the ports 2-6 of Super Element Check replaced by Options, the rows of Super Element Check Options and Bridge Notable
+    /// Stations with their ports; no other row changed.</summary>
+    private const string ComponentsSha = "0AA645024A6E9820C7796EBC560915A82C29CFD734952FFCC8F5DA97CE678258",
+        PortsSha = "21DA4C4F47203EAFE89043C2CA400EC3B26FCF9C6A433A1599AC48F5F51FCAA2";
 
     internal static string Folder => Path.Combine(Path.GetDirectoryName(ExamplePaths.Root), "tests", "BridGHe.Smoke", "Fixtures", "palette");
 

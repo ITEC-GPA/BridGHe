@@ -1,0 +1,13 @@
+{
+  "Generator": "--example-stations",
+  "Source": "50-ponte-quattro-modelli_REV004.ghx",
+  "SourceSHA256": "286418ED879B26DA691226CB1770AF03FEC5F0A8D153FF477D3B14BDC98AD9B5",
+  "Definition": "50-ponte-quattro-modelli_REV005.ghx",
+  "DefinitionSHA256": "AE6E9F6167723C426A1C2ED84D2F029DE27DB65C91D9B9C5A0F573D7D68E3D65",
+  "Changes": [
+    "Verifiche di tutte le travi — Run dopo Build: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)",
+    "FEMMembers: Beam Output Stations su 5 ingressi",
+    "Sezioni e pioli — tutte le travi: Detail Check sulle sezioni notevoli (2 selettori di irrigiditori, 2 gruppi di punti aggiunti; 2 grafici di tensioni e taglio dal Super Element Check)"
+  ],
+  "NativeSolverInvoked": false
+}

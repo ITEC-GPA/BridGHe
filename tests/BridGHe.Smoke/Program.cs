@@ -129,6 +129,7 @@ internal static class Program
         if(args.Contains("--example50-rev001-inputs")) { Console.WriteLine("RETIRED BY NAME (P2CD): --example50-rev001-inputs: "+P2rRetiredP2cd.Reason("generator|--example50-rev001-inputs")); return 1; } // P2CD (13/11): the authoring tool of 50 REV001 retired (E4)
         if(args.Contains("--example50-rev002")||args.Contains("--example50-rev002-check")) { Console.WriteLine("RETIRED BY NAME (P2CB): --example50-rev002: "+P2rRetiredP2cb.Reason("generator|--example50-rev002")); return 1; } // P2CB (13/11): the generator of 50 REV002 retired (E4)
         if(args.Contains("--example50-rev003")) return BridgeMovingRevisionExample.Run(args);
+        if(args.Contains("--example-stations")) return ExampleStations060.Run(args); // 0.6.0: 50 REV005 and the migration of template-50 definitions (analysis stations, notable sections)
         if(args.Contains("--example-reference-loads")) return ExampleReferenceLoads.Run(args); // 50 REV004 / 99 REV005: phase loads of the company reference script
         if(args.Contains("--saved-bridge-audit")) return SavedBridgeWorkflowAudit.Run();
         if(args.Contains("--prepare99-rev004")) return SavedBridgeWorkflowAudit.Run(true);

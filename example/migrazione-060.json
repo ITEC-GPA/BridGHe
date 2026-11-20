@@ -1,0 +1,194 @@
+[
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "11-ponte-graticcio.ghx",
+    "SourceSHA256": "3EF811ABB94920B76669E8FAF48269BDC693D9596E1587BB390710FD43F05A5F",
+    "Definition": "11-ponte-graticcio.ghx",
+    "DefinitionSHA256": "855E072FFA14BB22E4966EA3937377B816CB17D56FE1829008B124123F5623A0",
+    "Changes": [
+      "SEC: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  },
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "12-continuo-2campate.ghx",
+    "SourceSHA256": "9AB0460460CA64E4603D87F90E17AE62BE26BA1F9A84463A732956F691B107E7",
+    "Definition": "12-continuo-2campate.ghx",
+    "DefinitionSHA256": "F60ADE7F3890EEBAB4F7A0905A0AF8FCB32333188E0A6448E04324B245313C82",
+    "Changes": [
+      "SEC: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  },
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "13-continuo-3campate.ghx",
+    "SourceSHA256": "604CF3FC314EE45885FFEE2E20CA4D4F7F9AAF2B629E8742CDB9DEFA091DE63C",
+    "Definition": "13-continuo-3campate.ghx",
+    "DefinitionSHA256": "D4D84D8F16C93C6BCB6DB26585C238C985B897DB49E47AC33D995375464010F8",
+    "Changes": [
+      "SEC: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  },
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "14-curvo-1campata.ghx",
+    "SourceSHA256": "111E1416607EC2686032DAAE4E2673A954FE3800E95CF13AF6FAB5865C9E6DA5",
+    "Definition": "14-curvo-1campata.ghx",
+    "DefinitionSHA256": "1B0F07BFCFBAC78BF4ACBB58C47EC86CA5815C08BCD767EEA412B9CA51579362",
+    "Changes": [
+      "SEC: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  },
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "15-curvo-2campate.ghx",
+    "SourceSHA256": "41EE36ACDCC53376EA45ED7D1DB57602C18B9DC9544C962AFD811B9EF3B1CB0F",
+    "Definition": "15-curvo-2campate.ghx",
+    "DefinitionSHA256": "5E3FFCE8958F47A16179A63A90F1DC287CAFB6E844EEE14DF5EB5F329E5CA4F2",
+    "Changes": [
+      "SEC: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  },
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "16-spina-1campata.ghx",
+    "SourceSHA256": "D1E1F73C0B7D993410B593DBBBA6AFEE009D8A03094A8362BE27395E140FE975",
+    "Definition": "16-spina-1campata.ghx",
+    "DefinitionSHA256": "58681D8018D9FB45A22244AD25D82C417D6307F2EB9208AC576275217061C975",
+    "Changes": [
+      "SEC: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  },
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "17-spina-3campate.ghx",
+    "SourceSHA256": "AE88D023C6211AD5953C409EE8F82E1DAF9CB19A4C5FC7F382ECA69C496119BE",
+    "Definition": "17-spina-3campate.ghx",
+    "DefinitionSHA256": "67123B18CADDEA8DAD78B618B5645BB89362C7FD0ACBC6594D68C0D19B192B4B",
+    "Changes": [
+      "SEC: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  },
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "18-spina-curva-2campate.ghx",
+    "SourceSHA256": "BB5867AE3538A46FAA0DB2538E7DA5438EA40152037297C2B42F303263FFF387",
+    "Definition": "18-spina-curva-2campate.ghx",
+    "DefinitionSHA256": "84E555E2C7FC180A60EA9753D11CDA6AF1560BAAE91E9F77BB9BF925706350FF",
+    "Changes": [
+      "SEC: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  },
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "19-flusso-acciaio-misto_REV003.ghx",
+    "SourceSHA256": "2F5620AED2A5BEBB93E74D2758E1DA552C047549F46858743053D8FE8485982F",
+    "Definition": "19-flusso-acciaio-misto_REV003.ghx",
+    "DefinitionSHA256": "A89CDDA538CBA7B7DEDEDCD30256FC0B428FDD671D362EDC77CC5CFC23FED9D1",
+    "Changes": [
+      "SEC: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  },
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "47-integrazione-modello.ghx",
+    "SourceSHA256": "113D27944F4CCFD09BA09BA18D0D060E435FED6921B6ACC4A6F5341F2BC124C0",
+    "Definition": "47-integrazione-modello.ghx",
+    "DefinitionSHA256": "3D03873F54B6EBA3F3FFEC0938CA540715FBB156DB836CA00E42694B7055F7DD",
+    "Changes": [
+      "2 Run — verifica superelemento: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  },
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "48-report-word.ghx",
+    "SourceSHA256": "0746365468E4FB0C9964C8C44626733D2D25173C354AA5E7CC4B00268A9017D3",
+    "Definition": "48-report-word.ghx",
+    "DefinitionSHA256": "BE130F465E2B780162B0442ADC000F8E1BE6BB182295F385980C67599DD5CC4E",
+    "Changes": [
+      "2 Run — verifica superelemento: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  },
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "50-ponte-quattro-modelli_REV004.ghx",
+    "SourceSHA256": "286418ED879B26DA691226CB1770AF03FEC5F0A8D153FF477D3B14BDC98AD9B5",
+    "Definition": "50-ponte-quattro-modelli_REV004.ghx",
+    "DefinitionSHA256": "F4DB7095C1711F1B6BCA5FC91D6B878A555B422C1419C05FA9EDBC1CC77C7EB1",
+    "Changes": [
+      "Verifiche di tutte le travi — Run dopo Build: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  },
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "50-ponte-quattro-modelli_REV003.ghx",
+    "SourceSHA256": "2CB6E5C64CFA927A0DD8D6E2C862780058F82F62BE5F3DC35A95D62DA0A68456",
+    "Definition": "50-ponte-quattro-modelli_REV003.ghx",
+    "DefinitionSHA256": "80658AC2117D207F4B6B55CEC7444D98048CB70BFFB881C6E9121102029E074A",
+    "Changes": [
+      "Verifiche di tutte le travi — Run dopo Build: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  },
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "50-ponte-quattro-modelli_REV002.ghx",
+    "SourceSHA256": "4735BF34E7DC10BC9AC6A0A512E87B6639EC55B88556586790E77D9F73C4AFAA",
+    "Definition": "50-ponte-quattro-modelli_REV002.ghx",
+    "DefinitionSHA256": "F61408BDB7F91639BABE319BBC1F8AF2E588BD1D2E8D336DF075277000BDFC30",
+    "Changes": [
+      "Verifiche di tutte le travi — Run dopo Build: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  },
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "50-ponte-quattro-modelli_REV001.ghx",
+    "SourceSHA256": "5A28CFE632180DB3954F790EABBDB0F1367367725D7CDFCEC572985AE46FB8FA",
+    "Definition": "50-ponte-quattro-modelli_REV001.ghx",
+    "DefinitionSHA256": "722D30C46AC4AA8C8201407DF1C7BB89F5430668AA1221521B9404EE1A8BFFAA",
+    "Changes": [
+      "Verifiche di tutte le travi — Run dopo Build: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  },
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "50-ponte-quattro-modelli.ghx",
+    "SourceSHA256": "D8A32079EC28192BBF9093E88FAB30CD2B681BFE34CA23D3769C400743E49CEB",
+    "Definition": "50-ponte-quattro-modelli.ghx",
+    "DefinitionSHA256": "01CAC7B778E62823A6C6D75ADDDC448912347C9815FD14601C11C1463D9BB71D",
+    "Changes": [
+      "Verifiche di tutte le travi — Run dopo Build: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  },
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "flusso-acciaio-misto_REV005.ghx",
+    "SourceSHA256": "9513E2F7F33D7E8EA6DE62124A2F30DCCC39542B0CC522357C064927F699A118",
+    "Definition": "flusso-acciaio-misto_REV005.ghx",
+    "DefinitionSHA256": "48930A4A31BCFEF817422D3A183864D28DE3B1CF79D8D5317B2A2CA045036F2D",
+    "Changes": [
+      "Super Element Check: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)",
+      "Verifiche G2: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  },
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "flusso-acciaio-misto_REV004.ghx",
+    "SourceSHA256": "9699B699C118066E615CB88F3959544DB3129D8E83856611FACE638A9EE212F5",
+    "Definition": "flusso-acciaio-misto_REV004.ghx",
+    "DefinitionSHA256": "41D4A60E708841AEF96853509AEE4AE097205958D61DC84995B9786B578C65AD",
+    "Changes": [
+      "Super Element Check: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)",
+      "Verifiche G2: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  },
+  {
+    "Generator": "--example-stations (wiring)",
+    "Source": "flusso-acciaio-misto_REV002.ghx",
+    "SourceSHA256": "D18C28102E4B89F9A438A42936476B0A1DD0D3F71457E9A3482F02CC055440CE",
+    "Definition": "flusso-acciaio-misto_REV002.ghx",
+    "DefinitionSHA256": "62F0337BCC4B8A38FF1F802109D183D0AF58A87EA18EE30DBD4358000B09EED7",
+    "Changes": [
+      "Super Element Check: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)"
+    ]
+  }
+]

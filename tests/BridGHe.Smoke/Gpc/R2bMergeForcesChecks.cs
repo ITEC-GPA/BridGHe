@@ -88,6 +88,8 @@ internal static class R2bMergeForcesChecks
         var c = (GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components.BridgeChecks.SuperElementCheckComponent", true)); c.CreateAttributes(); doc.AddObject(c, false);
         void Set(int port, IGH_Goo value) { var p = (Param_GenericObject)c.Params.Input[port]; p.PersistentData.Clear(); p.PersistentData.Append(value); p.ExpireSolution(false); }
         Set(0, model); Set(1, beam);
+        // 0.6.0: all the merged stations (the default checks the 2 nodes of the element).
+        Set(2, (IGH_Goo)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.DataTypes.BridgeDetailGoo", true), (object)new BridGHe.Common.Checks.SuperElementCheckSettings { StationsPerElement = 0 }));
         c.GetType().GetField("_run", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(c, true); c.ExpireSolution(false);
         GH_Document.EnableSolutions = true; doc.Enabled = true; doc.NewSolution(false, GH_SolutionMode.Silent);
         Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count == 0, "Super Element Check: " + string.Join("; ", c.RuntimeMessages(GH_RuntimeMessageLevel.Error)));

@@ -1,0 +1,18 @@
+{
+  "Generator": "--example-stations",
+  "Source": "flusso-acciaio-misto_REV005.ghx",
+  "SourceSHA256": "9513E2F7F33D7E8EA6DE62124A2F30DCCC39542B0CC522357C064927F699A118",
+  "Definition": "flusso-acciaio-misto_REV006.ghx",
+  "DefinitionSHA256": "643A1DC70FCA405DB616F6726553AE85A6F68DC23782F3F2E579F6D2DF758A85",
+  "Changes": [
+    "Super Element Check: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)",
+    "Verifiche G2: Super Element Check Options (sorgenti di WLI, TFLI, BLI, Options, ULS ricollegate)",
+    "FEMMembers: Beam Output Stations su 1 ingressi",
+    "FEMMembers: Beam Output Stations su 1 ingressi",
+    "FEMMembers: Beam Output Stations su 1 ingressi",
+    "FEMMembers: Beam Output Stations su 1 ingressi",
+    "Pioli sulle azioni di fase: Detail Check sulle sezioni notevoli (2 selettori di irrigiditori, 2 gruppi di punti aggiunti; 0 grafici di tensioni e taglio dal Super Element Check)",
+    "Pioli G2: Detail Check sulle sezioni notevoli (2 selettori di irrigiditori, 2 gruppi di punti aggiunti; 0 grafici di tensioni e taglio dal Super Element Check)"
+  ],
+  "NativeSolverInvoked": false
+}

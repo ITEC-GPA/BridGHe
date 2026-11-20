@@ -1794,6 +1794,14 @@
         "access": "item",
         "optional": false,
         "type": "Number"
+      },
+      {
+        "name": "Additional",
+        "nickname": "A",
+        "description": "Optional points to keep as they are (e.g. the stiffener points of other Bridge Detail Stations that read the same Detail Check), mm; a point within Tolerance of a notable point is not repeated.",
+        "access": "list",
+        "optional": true,
+        "type": "Point"
       }
     ],
     "outputs": [

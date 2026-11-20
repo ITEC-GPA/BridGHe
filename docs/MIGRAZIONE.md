@@ -1,5 +1,12 @@
 # Refactoring BridGHe
 
+## Stazioni di verifica — 0.6.0, 20 novembre 2026
+
+- **Super Element Check** ha tre ingressi: BridGHe Model, Super-Element Beam e Options. WLI, TFLI, BLI, Bridge Analysis Options e ULS Combinations sono passati al componente nuovo **Super Element Check Options**, che aggiunge le stazioni di analisi per asta. Senza opzioni il check verifica i 2 nodi di ogni asta; con 0 stazioni i risultati sono quelli della 0.5.0.
+- Una definizione salvata prima della 0.6.0 dà un errore sull'ingresso Options. Le definizioni del catalogo sono già migrate. Per le altre: `dotnet BridGHe.Smoke.dll --example-stations migrate-wiring <in.ghx> <out.ghx>` (solo collegamenti, risultati invariati) oppure `--example-stations migrate` (2 nodi, Beam Output Stations, Detail sulle sezioni notevoli).
+- **Bridge Notable Stations** dà le sezioni notevoli per Bridge Detail Stations. **Beam Output Stations** sceglie le stazioni di Straus7.
+- Note complete: [RELEASE-0.6.0.md](RELEASE-0.6.0.md).
+
 ## Stato della 0.4.0 — 14 novembre 2026
 
 Il codice di produzione usa i dati GPC. I vecchi tipi `BridGHe.Common.Models`, FromFemm, il seam FEM e gli interruttori transitori sono stati rimossi. I nomi di componenti/porte conservati, compreso Bridge FEM Members, non implicano la presenza di quei tipi CLR. Gli script che li referenziavano devono usare i contratti GPC correnti.

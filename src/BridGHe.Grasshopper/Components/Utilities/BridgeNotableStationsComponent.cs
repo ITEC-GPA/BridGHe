@@ -31,6 +31,10 @@ public sealed class BridgeNotableStationsComponent : BridgeUtilityComponent
         p[2].Optional = true;
         p.AddBooleanParameter("Middles", "SM", "Add the middle of every section-constant segment.", GH_ParamAccess.item, true);
         p.AddNumberParameter("Tolerance", "Tol", "Point matching tolerance [mm].", GH_ParamAccess.item, 1.0);
+        p.AddPointParameter("Additional", "A", "Optional points to keep as they are (e.g. the stiffener points of other Bridge Detail Stations that read the same Detail Check), mm; a point within Tolerance of a notable point is not repeated.", GH_ParamAccess.list);
+        p[5].Optional = true;
+        // Support and joint points usually come one branch per girder: flattened, the component runs once and gives one list.
+        p[1].DataMapping = GH_DataMapping.Flatten; p[5].DataMapping = GH_DataMapping.Flatten;
     }
 
     protected override void RegisterOutputParams(GH_OutputParamManager p)
@@ -77,6 +81,13 @@ public sealed class BridgeNotableStationsComponent : BridgeUtilityComponent
             foreach (var note in result.Notes) AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, girders[g].Key + ": " + note);
             foreach (var w in result.Guard)
                 guard.Add($"{girders[g].Key}, tratto {w.Segment + 1}: {w.Quantity} massimo {w.SegmentMax:0.###} a {w.SegmentMaxChainMm / 1000:0.###} m, nei punti notevoli {w.NotableMax:0.###}");
+        }
+        // Additional points (the stiffener points of the other selectors): kept as they are, once, unless a notable point is already there.
+        var additional = new List<Point3d>(); da.GetDataList(5, additional);
+        foreach (var a in additional.Where(a => a.IsValid))
+        {
+            if (points.Any(q => q.DistanceTo(a) <= tolerance)) continue;
+            points.Add(a); kinds.Add("punto aggiunto"); chainOut.Add(double.NaN); names.Add(""); total++;
         }
         if (guard.Count > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"{guard.Count} tratti con taglio o flusso dei pioli più alti fuori dai punti notevoli: vedi Guard.");
         Message = $"{total} punti";
