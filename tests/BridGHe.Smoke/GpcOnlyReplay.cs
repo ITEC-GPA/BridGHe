@@ -129,7 +129,8 @@ internal static class GpcOnlyReplay
         // Components/Tools (properties)
         "BeamPropertyOverrideComponent", "GetBeamPropertyComponent",
         // Components/BridgeChecks (property components)
-        "BeamPropertyCompositeComponent", "BeamSectionConcreteSlabComponent", "BeamSectionHPropertyComponent", "CompositeSectionGeometricPropertyComponent",
+        "BeamPropertyCompositeComponent", "BeamSectionConcreteSlabComponent", "BeamSectionConcreteSlabBarsComponent", "BeamSectionHPropertyComponent",
+        "CompositeSectionGeometricPropertyComponent",
         "CreepAndShrinkageConcreteComponent",
         // Components/Geometry (sections, workbooks, composite sections, state overrides)
         "BridgeSegmentSectionsComponent", "BridgeSegmentExcelComponent", "BridgeSectionTemplateComponent", "BridgeSectionReadComponent",
@@ -158,7 +159,8 @@ internal static class GpcOnlyReplay
     internal static readonly string[] Lane2bTypes =
     {
         "BeamPropertyOverrideComponent", "GetBeamPropertyComponent",
-        "BeamPropertyCompositeComponent", "BeamSectionConcreteSlabComponent", "BeamSectionHPropertyComponent", "CompositeSectionGeometricPropertyComponent",
+        "BeamPropertyCompositeComponent", "BeamSectionConcreteSlabComponent", "BeamSectionConcreteSlabBarsComponent", "BeamSectionHPropertyComponent",
+        "CompositeSectionGeometricPropertyComponent",
         "CreepAndShrinkageConcreteComponent",
         "BridgeSegmentSectionsComponent", "BridgeSegmentExcelComponent", "BridgeSectionTemplateComponent", "BridgeSectionReadComponent",
         "BridgeSegmentCompositeComponent", "BridgeStateOverrideComponent",
