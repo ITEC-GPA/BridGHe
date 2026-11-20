@@ -1746,6 +1746,100 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeNotableStationsComponent",
+    "guid": "b6e1d0c4-7a3f-4c25-9e58-2d41f6a0c917",
+    "kind": "component",
+    "name": "Bridge Notable Stations",
+    "nickname": "NotableStations",
+    "category": "BridGHe",
+    "subcategory": "13-Results",
+    "description": "Notable sections of the girders for the Detail Check: both ends and the middle of every section-constant segment, the supports and the sagging maximum of each span, on the girder nodes. Connect Points to Bridge Detail Stations > Locations.",
+    "inputs": [
+      {
+        "name": "Model",
+        "nickname": "M",
+        "description": "Assembled Build BridGHe Model, N-mm: its girders (super elements) and their sections.",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Supports",
+        "nickname": "S",
+        "description": "Support points on the girder axes (e.g. Bridge Grillage Mesh > Support Points), mm. Points away from a girder are ignored.",
+        "access": "list",
+        "optional": true,
+        "type": "Point"
+      },
+      {
+        "name": "Results",
+        "nickname": "R",
+        "description": "Optional Super Element Check results (Tension Check): sagging maximum of each span and guard on shear and stud flow.",
+        "access": "tree",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Middles",
+        "nickname": "SM",
+        "description": "Add the middle of every section-constant segment.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Tolerance",
+        "nickname": "Tol",
+        "description": "Point matching tolerance [mm].",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Points",
+        "nickname": "P",
+        "description": "Notable points of all the girders, girder by girder along each girder; to Bridge Detail Stations > Locations.",
+        "access": "list",
+        "optional": false,
+        "type": "Point"
+      },
+      {
+        "name": "Kinds",
+        "nickname": "K",
+        "description": "Why each point is there (segment end, segment middle, support, span sagging maximum), one per point.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Chain mm",
+        "nickname": "C",
+        "description": "Distance of each point from the first node of its girder [mm], one per point.",
+        "access": "list",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Girders",
+        "nickname": "G",
+        "description": "Girder (super element) of each point.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      },
+      {
+        "name": "Guard",
+        "nickname": "W",
+        "description": "Segments where the shear or the stud flow of the Super Element Check is higher away from the notable points.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Utilities.BridgePhaseModelComponent",
     "guid": "6ed9466e-9e5a-4059-a570-ae1461537a36",
     "kind": "component",
@@ -17415,44 +17509,12 @@
         "type": "Generic Data"
       },
       {
-        "name": "Web Local Instability",
-        "nickname": "WLI",
-        "description": "If true, web is subjected to loacel instability",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      },
-      {
-        "name": "Top Flange Local Instability",
-        "nickname": "TFLI",
-        "description": "If true, top flange is subjected to loacel instability",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      },
-      {
-        "name": "Bottom Flange Local Instability",
-        "nickname": "BLI",
-        "description": "If true, bottom flange is subjected to loacel instability",
-        "access": "item",
-        "optional": false,
-        "type": "Boolean"
-      },
-      {
         "name": "Options",
         "nickname": "O",
-        "description": "Optional Bridge Analysis Options. When connected they replace the defaults of this component (Eurocode 4, rare SLS, Class 4, default partial factors) and its three local instability toggles.",
+        "description": "Optional Super Element Check Options (local instabilities, Bridge Analysis Options, ULS Combinations, analysis stations per element); Bridge Analysis Options alone are accepted too. Without options: the three local instabilities on, Eurocode 4 rare SLS, no ULS combination, the 2 nodes of every element.",
         "access": "item",
         "optional": true,
         "type": "Generic Data"
-      },
-      {
-        "name": "ULS Combinations",
-        "nickname": "ULS",
-        "description": "Optional combinations checked at the ultimate limit state: exact names, or a prefix ending with * (e.g. SLU_*). The other combinations keep the limit state of the options (rare SLS by default).",
-        "access": "list",
-        "optional": true,
-        "type": "Text"
       }
     ],
     "outputs": [
@@ -17477,6 +17539,76 @@
         "nickname": "C",
         "description": "The forces",
         "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.SuperElementCheckOptionsComponent",
+    "guid": "3f7c2a91-5d84-4e6b-9a1f-0c2e8b7d4a63",
+    "kind": "component",
+    "name": "Super Element Check Options",
+    "nickname": "SECOpt",
+    "category": "BridGHe",
+    "subcategory": "10-Checks",
+    "description": "Options of Super Element Check: local instabilities, Bridge Analysis Options, ULS combinations and analysis stations per element.",
+    "inputs": [
+      {
+        "name": "Web Local Instability",
+        "nickname": "WLI",
+        "description": "If true, the web is subjected to local instability. Not used when Bridge Analysis Options are connected.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Top Flange Local Instability",
+        "nickname": "TFLI",
+        "description": "If true, the top flange is subjected to local instability. Not used when Bridge Analysis Options are connected.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Bottom Flange Local Instability",
+        "nickname": "BLI",
+        "description": "If true, the bottom flange is subjected to local instability. Not used when Bridge Analysis Options are connected.",
+        "access": "item",
+        "optional": false,
+        "type": "Boolean"
+      },
+      {
+        "name": "Analysis Options",
+        "nickname": "AO",
+        "description": "Optional Bridge Analysis Options. When connected they replace the defaults (Eurocode 4, rare SLS, Class 4, default partial factors) and the three local instability toggles.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "ULS Combinations",
+        "nickname": "ULS",
+        "description": "Optional combinations checked at the ultimate limit state: exact names, or a prefix ending with * (e.g. SLU_*). The other combinations keep the limit state of the options (rare SLS by default).",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
+      },
+      {
+        "name": "Stations per Element",
+        "nickname": "St",
+        "description": "Analysis stations per element among the FEM output stations, evenly spread: 2 = the two nodes (default; with 1 m elements one check per metre on both sides of every node), 3 = nodes and middle, 0 = all.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Options",
+        "nickname": "O",
+        "description": "Super Element Check Options, to the Options input of Super Element Check.",
+        "access": "item",
         "optional": false,
         "type": "Generic Data"
       }

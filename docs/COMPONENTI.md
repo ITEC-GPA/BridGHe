@@ -1,8 +1,6 @@
 # Inventario dei componenti 0.5.0
 
-L'inventario comprende anche i componenti storici nascosti. La presenza di una porta non significa che ogni suo dato precedente sia ancora usato: Composite Beam Strain conserva GUID e porte ma non usa il valore dell'ingresso `Strain`. Bridge FEM Members conserva il proprio nome. Per i nuovi modelli seguire [Uso](USO.md); non sostituire nomi o GUID negli archivi per eliminare la parola FEM.
-
-221 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
+223 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
 
 ## BridGHe / 01-Parameters
 
@@ -234,7 +232,8 @@ L'inventario comprende anche i componenti storici nascosti. La presenza di una p
 | Bridge Section Check | component | Geometry; Concrete; Steel; Rebar material; Phases; Top rebars; Bottom rebars; Details; Options | Results; Phases; Warnings; Native analysis |
 | Composite Section Linear Tension Analysis | component | Beams; Loads Only steel Phase; Loads Infinte Time Phase; Loads Instant Time Phase; Homogenization coefficient Infinite; Homogenization coefficient Istant; Top Flange Subject To Local Instability; Web Subject To Local Instability; Bottom Flange Subject To Local Instability; Consider concrete | Only Steel Buckling; Infinite Buckling; Total Buckling; TauB |
 | Composite Section Self Tension | component | Composite Beam Property; Homogenization coefficient; Strain | Result |
-| Super Element Check | component | BridGHe Model; Super-Element Beam; Web Local Instability; Top Flange Local Instability; Bottom Flange Local Instability; Options; ULS Combinations | Tension Check; Tau b; Tension Forces |
+| Super Element Check | component | BridGHe Model; Super-Element Beam; Options | Tension Check; Tau b; Tension Forces |
+| Super Element Check Options | component | Web Local Instability; Top Flange Local Instability; Bottom Flange Local Instability; Analysis Options; ULS Combinations; Stations per Element | Options |
 
 ## BridGHe / 11-Export
 
@@ -265,6 +264,7 @@ L'inventario comprende anche i componenti storici nascosti. La presenza di una p
 | Bridge Force Plot | component | BridGHe Model; Super-Element Beam; Results; Quantity; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running | SVG; File; Minimum; Maximum |
 | Bridge Girder Results | component | Beams; Results; Girder | Beams; Results; Stations; Available Girders |
 | Bridge Intermediate Stiffener Plot | component | BridGHe Model; Super-Element Beam; Results; Check; Combinations; Show Min/Max Combo; File Path; Graphic Title; Keep Running; Display; Stations | SVG; File; Minimum; Maximum; Governing checks; Unavailable checks |
+| Bridge Notable Stations | component | Model; Supports; Results; Middles; Tolerance | Points; Kinds; Chain mm; Girders; Guard |
 | Bridge Report | component | Results; Template; File; Topics; Model; Title; Project; Author; Revision; SVG; Overwrite | File; Summary; Warnings; Report ID |
 | Bridge Result Cases | component | Model | Cases; Case by step; Step; Step type; Result type; Count; Units |
 | Bridge Result Comparison | component | Reference keys; Reference values; Candidate keys; Candidate values; Absolute tolerance; Relative tolerance | All within tolerance; Key; Difference; Relative difference; Within tolerance |

@@ -362,6 +362,7 @@ BridgeStudPlotComponent|studs|measure|result
 BridgeIntermediateStiffenerPlotComponent|stiffener|measure|result
 BridgeSupportStiffenerPlotComponent|stiffener|force|result
 BridgeDetailStationsComponent|bridge-bearing|data|result
+BridgeNotableStationsComponent|bridge-bearing|filter|result
 BridgeStudsComponent|studs||check
 BridgeIntermediateStiffenerComponent|stiffener||check
 BridgeSupportStiffenerComponent|stiffener|force|check
@@ -383,6 +384,7 @@ CreepAndShrinkageConcreteComponent|slab|clock|check
 BridgeForcePlotComponent|printer|force|result
 BridgeResultPlotComponent|printer|stress|result
 SuperElementCheckComponent|bridge|check|check
+SuperElementCheckOptionsComponent|bridge|edit|check
 SuperElementFilterComponent|bridge|filter|check
 BeamComponent|beam||model
 BuildModelComponent|model|add|model

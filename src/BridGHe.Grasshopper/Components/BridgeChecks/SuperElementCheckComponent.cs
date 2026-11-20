@@ -57,14 +57,10 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         {
             pManager.AddGenericParameter("BridGHe Model", "FM", "The BridGHe model", GH_ParamAccess.item);
             pManager.AddGenericParameter("Super-Element Beam", "SE", "The Super-Element Beam", GH_ParamAccess.list);
-            pManager.AddBooleanParameter("Web Local Instability", "WLI", "If true, web is subjected to loacel instability", GH_ParamAccess.item, true);
-            pManager.AddBooleanParameter("Top Flange Local Instability", "TFLI", "If true, top flange is subjected to loacel instability", GH_ParamAccess.item, true);
-            pManager.AddBooleanParameter("Bottom Flange Local Instability", "BLI", "If true, bottom flange is subjected to loacel instability", GH_ParamAccess.item, true);
-            // Study item 16 (Brecciarola, 19/11/2026): optional, at the end, so that existing definitions keep their wires and their results.
-            pManager.AddGenericParameter("Options", "O", "Optional Bridge Analysis Options. When connected they replace the defaults of this component (Eurocode 4, rare SLS, Class 4, default partial factors) and its three local instability toggles.", GH_ParamAccess.item);
-            pManager[5].Optional = true;
-            pManager.AddTextParameter("ULS Combinations", "ULS", "Optional combinations checked at the ultimate limit state: exact names, or a prefix ending with * (e.g. SLU_*). The other combinations keep the limit state of the options (rare SLS by default).", GH_ParamAccess.list);
-            pManager[6].Optional = true;
+            // User decision of 20/11/2026: the optional inputs of the check (the three local instability toggles, Bridge Analysis Options, ULS
+            // Combinations) are in Super Element Check Options, with the number of analysis stations per element.
+            pManager.AddGenericParameter("Options", "O", "Optional Super Element Check Options (local instabilities, Bridge Analysis Options, ULS Combinations, analysis stations per element); Bridge Analysis Options alone are accepted too. Without options: the three local instabilities on, Eurocode 4 rare SLS, no ULS combination, the 2 nodes of every element.", GH_ParamAccess.item);
+            pManager[2].Optional = true;
         }
 
         /// <summary>
@@ -78,6 +74,9 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         }
 
         /// <summary>R6.4 (5), decision (i) = A of the user (7/11): the error without the GPC bridge model of Build BridGHe Model.</summary>
+        /// <summary>0.6.0: what the Options input accepts, and where the former optional inputs went.</summary>
+        public const string LegacyOptions = "Options richiede Super Element Check Options (oppure Bridge Analysis Options). Dalla 0.6.0 gli ingressi WLI, TFLI, BLI, Options e ULS Combinations sono in Super Element Check Options: in una definizione precedente collegarli lì.";
+
         public const string RequiresBridgeModel = "Super Element Check richiede il modello di ponte GPC di Build BridGHe Model (con la sua ricetta): collegare l'ingresso BridGHe Model all'uscita Model di Build BridGHe Model e premere Run.";
 
         /// <summary>
@@ -91,36 +90,41 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             GpcReleaseGuard.Warn(this);
             GH_Model model = new GH_Model();
             List<GH_CompositeBeam> beams = new List<GH_CompositeBeam>();
-            bool topFlangeInstab = false;
-            bool webFlangeInstab = false;
-            bool bottomFlangeInstab = false;
 
             int n = 0;
             if (!DA.GetData(n++, ref model))
                 return;
             if (!DA.GetDataList(n++, beams))
                 return;
-            if (!DA.GetData(n++, ref webFlangeInstab))
-                return;
-            if (!DA.GetData(n++, ref topFlangeInstab))
-                return;
-            if (!DA.GetData(n++, ref bottomFlangeInstab))
-                return;
-            BridgeDetailGoo optionsGoo = null;
-            GPC.Checkers.CompositeBridge.BridgeAnalysisOptions suppliedOptions = null;
-            if (DA.GetData(n++, ref optionsGoo) && optionsGoo != null)
+            // Read as any goo, not as BridgeDetailGoo: a definition saved before 0.6.0 brings the old toggle WLI to this input, and a failed cast
+            // must not fall back to the defaults in silence.
+            global::Grasshopper.Kernel.Types.IGH_Goo optionsInput = null;
+            var settings = Common.Checks.SuperElementCheckSettings.Default;
+            if (DA.GetData(n++, ref optionsInput) && optionsInput != null)
             {
-                suppliedOptions = optionsGoo.Value as GPC.Checkers.CompositeBridge.BridgeAnalysisOptions;
-                if (suppliedOptions == null)
+                settings = (optionsInput as BridgeDetailGoo)?.Value switch
                 {
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Options richiede Bridge Analysis Options.");
+                    Common.Checks.SuperElementCheckSettings s => s,
+                    GPC.Checkers.CompositeBridge.BridgeAnalysisOptions o => settings with { AnalysisOptions = o },
+                    _ => null
+                };
+                if (settings == null)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, LegacyOptions);
                     Message = "Error";
                     _run = false;
                     return;
                 }
             }
-            var ulsEntries = new List<string>();
-            DA.GetDataList(n++, ulsEntries);
+            if (settings.StationsPerElement < 0 || settings.StationsPerElement == 1)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Stazioni di analisi per elemento: 0 (tutte) oppure almeno 2.");
+                Message = "Error";
+                _run = false;
+                return;
+            }
+            var suppliedOptions = settings.AnalysisOptions;
+            var ulsEntries = (settings.UlsCombinations ?? Array.Empty<string>()).ToList();
 
             // R6.4 (5), decision (i) = A of the user (7/11): the checks run only on the GPC bridge model of Build BridGHe Model, with its recipe, by
             // the GPC workflow executor (D3); without it a clear error and no outputs (BridGHe's own phases on the FEM results of the composite beams
@@ -171,7 +175,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                         (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage)[beams.Count][];
 
                     var definitions = new GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition[beams.Count][];
-                    var analysisOptions = suppliedOptions ?? new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions { Standard = GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4, LimitState = GPC.Checkers.CompositeBridge.BridgeLimitState.Rare, WebBuckling = webFlangeInstab, TopFlangeBuckling = topFlangeInstab, BottomFlangeBuckling = bottomFlangeInstab };
+                    var analysisOptions = settings.Options();
                     // Study item 16: one gPC batch per limit state at every station (the combinations of the options, then those at the ULS); without
                     // ULS combinations a single batch of all combinations, as before.
                     var ulsOptions = analysisOptions with { LimitState = GPC.Checkers.CompositeBridge.BridgeLimitState.Ultimate };
@@ -197,12 +201,20 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     // of the bridge model.
                     var lengths = ids.Select(id => Length(gpcBridge.Beam(id))).ToArray();
                     var beamSuperElements = ids.Select(id => gpcBridge.Data.SuperElement(gpcBridge.Beam(id).Guid) ?? "").ToArray();
+                    // User decision of 20/11/2026: the analysis stations of every element, a subset of the FEM output stations (by default the
+                    // 2 nodes); the same subset for the sections and for the actions below. 0 keeps all of them, as before.
+                    var kept = new HashSet<double>[beams.Count];
+                    for (int i = 0; i < beams.Count; i++)
+                    {
+                        var available = gpcBridge.SamplesOf(ids[i]).Select(s => Math.Round(s.Sample.Station, 15)).Distinct().OrderBy(s => s).ToArray();
+                        kept[i] = Common.Checks.BridgeCheckStations.Select(available, lengths[i], settings.StationsPerElement).ToHashSet();
+                    }
 
                     for (int i = 0; i < beams.Count; i++)
                     {
                         GH_CompositeBeam beam = beams[i];
 
-                        var samples = gpcBridge.SamplesOf(ids[i]);
+                        var samples = gpcBridge.SamplesOf(ids[i]).Where(s => kept[i].Contains(Math.Round(s.Sample.Station, 15))).ToArray();
                         var normStationsSet = samples.Select(s => Math.Clamp(s.Sample.Station / lengths[i], 0, 1)).ToHashSet();
 
                         List<double> stations = normStationsSet.OrderBy(value => value).ToList();
@@ -246,7 +258,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                             HashSet<double> stationBuffer = new HashSet<double>();
                             var samples = gpcBridge.SamplesOf(ids[i]);
                             foreach (var sample in samples) stationBuffer.Add(Math.Round(sample.Sample.Station, 15));
-                            List<double> station = stationBuffer.OrderBy(b => b).ToList();
+                            List<double> station = stationBuffer.Where(kept[i].Contains).OrderBy(b => b).ToList();
 
                             forcesForOutput[i] = new (ResultBeamForces[] OnlySteel, ResultBeamForces[] NInfinite, ResultBeamForces[] Ninstant, ResultBeamForces[] NShrinkage)[station.Count];
 

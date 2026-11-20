@@ -10,7 +10,7 @@ namespace BridGHe.Grasshopper.DataTypes
     /// <summary>Closed set of immutable gPC detail records; safe GH archive roundtrip.</summary>
     public sealed class BridgeDetailGoo : GH_Goo<object>
     {
-        private static readonly System.Collections.Generic.Dictionary<string,Type> Types = new[] { typeof(BridgeStudOptions),typeof(BridgeIntermediateStiffener),typeof(BridgeSupportStiffener),typeof(HSectionDimensions),typeof(BridgeRebarRow),typeof(BridgePhase),typeof(BridgeAnalysisOptions),typeof(BridgeTransverseReinforcement),typeof(BridgeFatigueOptions),typeof(BridgeBoxOptions) }.ToDictionary(t=>t.Name,StringComparer.Ordinal);
+        private static readonly System.Collections.Generic.Dictionary<string,Type> Types = new[] { typeof(BridgeStudOptions),typeof(BridgeIntermediateStiffener),typeof(BridgeSupportStiffener),typeof(HSectionDimensions),typeof(BridgeRebarRow),typeof(BridgePhase),typeof(BridgeAnalysisOptions),typeof(BridgeTransverseReinforcement),typeof(BridgeFatigueOptions),typeof(BridgeBoxOptions),typeof(Common.Checks.SuperElementCheckSettings) }.ToDictionary(t=>t.Name,StringComparer.Ordinal);
         private static readonly JsonSerializerOptions Json = new() { NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals };
         public BridgeDetailGoo() { }
         public BridgeDetailGoo(object value) { Value=value; }

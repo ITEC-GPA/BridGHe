@@ -130,7 +130,7 @@ internal static class BridgeWorkflowExample
         Panel("FASE / ORIGINE","",6000,400,850,380).AddSource(merge.Params.Output[1]);
         var select=Component("BridgeChecks.SuperElementFilterComponent",6000,1100);Wire(merge.Params.Output[0],select,0);Text(select,1,"G2");
         var composite=Component("BridgeChecks.CompositeBeamComponent",6350,1100);Wire(select.Params.Output[0],composite,0);Wire(central.Params.Output[0],composite,1);
-        var check=Component("BridgeChecks.SuperElementCheckComponent",6700,1100);Wire(merge.Params.Output[0],check,0);Wire(composite.Params.Output[0],check,1);for(int i=2;i<=4;i++)Boolean(check,i,false);
+        var check=Component("BridgeChecks.SuperElementCheckComponent",6700,1100);Wire(merge.Params.Output[0],check,0);Wire(composite.Params.Output[0],check,1);var checkOptions=Component("BridgeChecks.SuperElementCheckOptionsComponent",6500,1270);for(int i=0;i<=2;i++)Boolean(checkOptions,i,false);Integer(checkOptions,5,0);Wire(checkOptions.Params.Output[0],check,2); // 0.6.0: the toggles in Super Element Check Options, all the FEM stations as before
         foreach(var (type,y) in new[]{("BridgeForcePlotComponent",1100f),("BridgeResultPlotComponent",2300f)})
         {
             var plot=Component("BridgeChecks."+type,7100,y);Wire(merge.Params.Output[0],plot,0);Wire(composite.Params.Output[0],plot,1);Wire(check.Params.Output[type=="BridgeForcePlotComponent"?2:0],plot,2);Boolean(plot,plot.Params.Input.Count-1,true);
