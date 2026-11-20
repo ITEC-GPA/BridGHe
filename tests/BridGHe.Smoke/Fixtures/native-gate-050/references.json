@@ -1,0 +1,166 @@
+{
+  "schema": 1,
+  "kind": "BridGHe native gate references, registered with the OK of the user (20/11/2026, «Sì, procedi»)",
+  "head": "46da3bcd9346380447c1a1dd3f680e7388dfb8e6",
+  "set": "gpc-release-20261118-ba (77DAE25D...)",
+  "examples": {
+    "50": {
+      "label": "example50-rev004-native",
+      "definition": "50-ponte-quattro-modelli_REV004.ghx",
+      "definitionSha256": "286418ED879B26DA691226CB1770AF03FEC5F0A8D153FF477D3B14BDC98AD9B5",
+      "sourceHead": "46da3bcd9346380447c1a1dd3f680e7388dfb8e6",
+      "pluginSha256": "3820FBDA438248AF8C57577E63A3D92D5AD49DC465371B61858D7D75737DA519",
+      "manifestSha256": "77DAE25DE42279E99F67E566BC282F9EDB9F71E9339FD5FDD82FC511EA538E28",
+      "rows": 68184,
+      "rowsSha256": "8E5A71DB75CBD7214E760A8017E993BCBA8A75995C1C89F200A338AB9E832DFC",
+      "serializationErrors": 0,
+      "rowsTsvSha256": "7F8088706A2302EA11BDD61AF776EE1BCF621DF96704A3B88AA289A9BE425223",
+      "components": [
+        {
+          "type": "BridgeDetailCheckComponent",
+          "nickName": "Sezioni e pioli — tutte le travi",
+          "items": 33444,
+          "sha256": "B8A55D8407F662FCE46FE537ABEE49E092A81A16943D4660F0080584E4E5D463"
+        },
+        {
+          "type": "BridgeDetailCheckComponent",
+          "nickName": "Verifica irrigiditori agli appoggi",
+          "items": 432,
+          "sha256": "D32CAC362362042356ECFC498A5131C4A6684BD38B3E88FCA5B56F66D5D3C4F8"
+        },
+        {
+          "type": "BridgeDetailCheckComponent",
+          "nickName": "Verifica irrigiditori ai giunti",
+          "items": 864,
+          "sha256": "D2A0FD8558D1C80C96FFC482C4A1465A92C9B33DE4B54821F5248CE858079D4F"
+        },
+        {
+          "type": "SuperElementCheckComponent",
+          "nickName": "Verifiche di tutte le travi — Run dopo Build",
+          "items": 33444,
+          "sha256": "335135BD2ACD0A7D9D7E2350E10132693F370DD95D37420127844EBEDB9E6F3B"
+        }
+      ],
+      "maxStageUtilization": "0.5832367928453308",
+      "maxCheckRatio": "3.033811629015563",
+      "stressPointsOverOne": 0,
+      "localChecksOverOne": 321,
+      "p2k": {
+        "Native": true,
+        "Analyses": 5,
+        "PhaseCount": 4,
+        "Beams": 498,
+        "Nodes": 488,
+        "MovingPositions": 31,
+        "SlabForceAssignments": 240,
+        "Combinations": 36,
+        "SectionChecks": 33444,
+        "DetailBranches": 3,
+        "Plots": 6,
+        "ReportInputs": true,
+        "CachedRunFalse": true,
+        "ChangedPathInvalidatesResults": true,
+        "ResultsSavedInGHX": false
+      },
+      "word": {
+        "pass": true,
+        "attachments": 36,
+        "results": 34740
+      }
+    },
+    "99": {
+      "label": "modular-flusso-acciaio-misto_REV005",
+      "definition": "99-Ponte completo GPC/REV005/flusso-acciaio-misto_REV005.ghx",
+      "definitionSha256": "9513E2F7F33D7E8EA6DE62124A2F30DCCC39542B0CC522357C064927F699A118",
+      "sourceHead": "46da3bcd9346380447c1a1dd3f680e7388dfb8e6",
+      "pluginSha256": "3820FBDA438248AF8C57577E63A3D92D5AD49DC465371B61858D7D75737DA519",
+      "manifestSha256": "77DAE25DE42279E99F67E566BC282F9EDB9F71E9339FD5FDD82FC511EA538E28",
+      "rows": 15004,
+      "rowsSha256": "867E340DFD8D062E865B61A8139E8E5B90B82BCBE714A29B0E6974903269F2CC",
+      "serializationErrors": 0,
+      "rowsTsvSha256": "069ED5FF4BF4A7362012D8BCC76143AF608E11E461FC618F8B3BE040CA286E03",
+      "components": [
+        {
+          "type": "BridgeDetailCheckComponent",
+          "nickName": "Pioli G2",
+          "items": 3441,
+          "sha256": "65F6F1495E8200D7B6360620C866F8D94106663D8000149F0188D423BA836858"
+        },
+        {
+          "type": "BridgeDetailCheckComponent",
+          "nickName": "Pioli sulle azioni di fase",
+          "items": 3317,
+          "sha256": "DF5FBF1A645506D647EE517236BB05C5C0E9296FDD43C34E1CE8042911ABDDD6"
+        },
+        {
+          "type": "BridgeDetailCheckComponent",
+          "nickName": "Verifica agli appoggi",
+          "items": 124,
+          "sha256": "4FFB7224A79A7C88E5A8E95A93FD90128919E0FCE25E6FE1EBC2B06D4D6B539C"
+        },
+        {
+          "type": "BridgeDetailCheckComponent",
+          "nickName": "Verifica intermedi",
+          "items": 620,
+          "sha256": "2492B9F3497BD8CCA28DFCF180E13C14FAF399E63C0D49F8C4AD4631F7964502"
+        },
+        {
+          "type": "BridgeDetailCheckComponent",
+          "nickName": "Verifiche appoggi G2",
+          "items": 124,
+          "sha256": "8192AEC8078CFB0D817874288FE87728244C7C40D4A836A8FB2AA98AD8065272"
+        },
+        {
+          "type": "BridgeDetailCheckComponent",
+          "nickName": "Verifiche intermedi G2",
+          "items": 620,
+          "sha256": "674DB725D23C705E15457D2BEFBA347C7E7265CCEB42041188BA30EF18B17C94"
+        },
+        {
+          "type": "SuperElementCheckComponent",
+          "nickName": "Super Element Check",
+          "items": 3317,
+          "sha256": "23B6B07071B1C3E8C723CDE6D3BF8626BCA79E46001772BB59BE51C62039FFEC"
+        },
+        {
+          "type": "SuperElementCheckComponent",
+          "nickName": "Verifiche G2",
+          "items": 3441,
+          "sha256": "3153A3DB8506CDE3C089E13DCDEF47C06ADDF127ED5EF6CE0A11CA933212E3E4"
+        }
+      ],
+      "maxStageUtilization": "0.17139561760189406",
+      "maxCheckRatio": "0.9975999141916355",
+      "stressPointsOverOne": 0,
+      "localChecksOverOne": 0,
+      "p2k": {
+        "Native": true,
+        "Phases": 5,
+        "Combinations": 31,
+        "SectionChecks": 6758,
+        "Details": 6,
+        "Plots": 10,
+        "Moving": {
+          "Positions": 25,
+          "VehicleWeight": 600000,
+          "LargestReactionZ": 600000.0000000006,
+          "SmallestReactionZ": 300000.00000000006
+        }
+      }
+    }
+  },
+  "replacesReferencesOf042": {
+    "50": {
+      "label": "example50-rev004-native",
+      "rows": 68184,
+      "rowsSha256": "C94CEC82F0CBEACB7BE11191FD6B580C8660952B08B1F861B57AF2AB3795E1BD",
+      "folder": "P2B\\results\\t042-native-50"
+    },
+    "99": {
+      "label": "modular-flusso-acciaio-misto_REV005",
+      "rows": 15004,
+      "rowsSha256": "9DE143576C252CF9B0EDF1E3EF6735FD775A3191DAF68F639DFC6532B2091011",
+      "folder": "P2B\\results\\t042-native-99"
+    }
+  }
+}
