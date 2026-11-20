@@ -64,6 +64,8 @@ Il numero di stazioni di uscita di Straus7 si sceglie con il componente esistent
   - i Detail Check alimentati dal Super Element Check sulle sezioni notevoli, con i punti degli irrigiditori; gli irrigiditori leggono da lì;
   - nel 50 i grafici di tensioni e taglio leggono dal Super Element Check.
 - **Tutte le altre definizioni del catalogo con un Super Element Check** (11–19, 47, 48, 50 REV001–REV004 e base, 99 REV002, REV004, REV005) sono migrate solo nei collegamenti: Super Element Check Options con le sorgenti di prima e **tutte le stazioni**. I loro risultati restano quelli della 0.5.0. Le modifiche sono in `example/migrazione-060.json`.
+  - I file restano quelli della 0.5.0 byte per byte: è sostituito solo il Super Element Check, e in fondo sono aggiunti le opzioni e il cursore delle stazioni.
+  - Così i dati salvati nei formati precedenti, che le prove di lettura usano, restano com'erano.
 - Comandi del runner per le definizioni dell'utente fatte dal template 50 (le sorgenti dei vecchi ingressi sono lette dall'archivio):
   - `--example-stations migrate-wiring <in.ghx> <out.ghx>`: solo i collegamenti, risultati invariati;
   - `--example-stations migrate <in.ghx> <out.ghx>`: la regola completa (2 nodi, Beam Output Stations, sezioni notevoli).
