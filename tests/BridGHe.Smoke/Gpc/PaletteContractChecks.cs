@@ -32,14 +32,17 @@ internal static class PaletteContractChecks
     /// <summary>The counts of the table: 228 GUIDs (220 components, 8 stand-alone parameters) and 1,880 ports (task 78 gave 1,876; P2CI: 4 truss
     /// ports of Bridge Solid Diaphragms removed and the 4 switches of Moving Point Force and of Moving Distributed Force added, all read on the
     /// source). 0.4.3 (19/11/2026): 1,882, with the optional inputs 5 Options and 6 ULS Combinations of Super Element Check (Brecciarola study,
-    /// item 16, approved by the user with «Sì, correzioni S»).</summary>
-    private const int Components = 228, Ports = 1882;
+    /// item 16, approved by the user with «Sì, correzioni S»). 0.5.0 (20/11/2026): 229 GUIDs and 1,890 ports, with Concrete Slab Section given
+    /// by pitch and diameters (new GUID, 7 inputs and 1 output) and the former one with row areas hidden and obsolete (Brecciarola study, item 20,
+    /// the user's request «per la soletta gli input devono essere base, altezza, passo e diametro armature sopra e sotto»).</summary>
+    private const int Components = 229, Ports = 1890;
 
     /// <summary>The SHA-256 of the two frozen files (UTF-8, line ends normalised to LF): an edit of the table without the procedure above fails.
     /// P2CI (14/11/2026): the proposal shown to the user (INT\rapporti\P2CI-palette-proposta-20261114). 0.4.3 (19/11/2026): ports.json with the
-    /// two rows of Super Element Check above, no other row changed.</summary>
-    private const string ComponentsSha = "87705B81B31160733B175FC80BA63F5D7AE5D08089478393D7CEF0884A26D236",
-        PortsSha = "012382241FE07EDD648FF12474C67A14512A8886EF60E2F89185D6610997D0CA";
+    /// two rows of Super Element Check above, no other row changed. 0.5.0 (20/11/2026): the row of the new Concrete Slab Section and its 8 ports
+    /// added; the row of the former one with its new name, description, exposure (hidden) and obsolete flag; no other row changed.</summary>
+    private const string ComponentsSha = "4D608ED954C70DF3D9B3CA8CA1E491D5ED5BF05342F9F5C2A68B3982D08A43A1",
+        PortsSha = "1E0E7A07913B08CCD4C463B72828D87992DCAD750AADCF2C4AAC5D64861F2D50";
 
     internal static string Folder => Path.Combine(Path.GetDirectoryName(ExamplePaths.Root), "tests", "BridGHe.Smoke", "Fixtures", "palette");
 

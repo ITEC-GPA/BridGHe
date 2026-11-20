@@ -119,7 +119,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
             { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Reinforcement material is required when reinforcement area is positive."); return; }
             var definition = Helpers.GpcOnlyProperties.Datum(this, () => Common.Gpc.Builders.GpcPropertyBuilders.Composite(name, steelSection.Gpc, slab.Width, slab.Height,
                 slab.TopRebarArea, slab.TopCover, slab.BottomRebarArea, slab.BottomCover, concreteMaterial.Gpc, steelMaterial.Gpc, rebarMaterial?.Gpc, n0, ninf, nShrinkage,
-                considerConcrete, considerRebars));
+                considerConcrete, considerRebars, slab.BarsPerRow));
             if (definition == null) return;
             var steel = Helpers.GpcOnlyProperties.BeamProperty(this, () => Common.Gpc.Builders.GpcPropertyBuilders.OnlySteel(name, steelSection.Gpc, steelMaterial.Gpc, steelMaterial.GpcKind));
             if (steel == null) return;

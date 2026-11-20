@@ -94,6 +94,16 @@ internal static class CompositePropertyTests
         Require(R2aPropertyFixtures.Material(actual).ElasticModulusTension==BridgeGrillageExample.Es && actual.Data.Native==null && actual.Data.Section.Kind==BridGHe.Common.Gpc.BridgeSectionKind.Generic
             && actual.Data.Formulation==GPC.Model.Structure.Assignments.BeamFormulation.StraightTwoNode && actual.Property!=null,"Shrinkage property must be a valid generic steel-referenced Straus property.");
         Near(DefinitionOf(c).NShrinkage,12);
+        // 0.5.0 (Brecciarola study item 20): a slab given by pitch and diameters gives its bars per row (W/P) to the section of the checks, the
+        // rows keep the areas over the slab width; a slab given by its areas keeps three bars per row.
+        {
+            var bars=BridGHe.Common.Checks.ConcreteSlabSection.FromBars(250,3000,150,16,40,12,55);
+            Generic(1,new GH_ObjectWrapper(bars));Solve();var d=DefinitionOf(c);
+            Require(d.RebarRows.BarsPerRow==20&&d.Section.Rebars.Count()==40&&d.RebarRows.TopAreaMm2==bars.TopRebarArea&&d.RebarRows.BottomAreaMm2==bars.BottomRebarArea,
+                "Composite Beam Property: the slab by bars must give 20 bars per row and its row areas ("+d.RebarRows.BarsPerRow+", "+d.Section.Rebars.Count()+" bars).");
+            Generic(1,new GH_ObjectWrapper(new BridGHe.Common.Checks.ConcreteSlabSection(250,3000,2000,40,1500,55)));Solve();
+            Require(DefinitionOf(c).RebarRows.BarsPerRow==3,"Composite Beam Property: a slab by areas must keep three bars per row.");
+        }
         // Saved definitions can retain the original end position or the reordered local layout.
         foreach(int port in new[]{10,8})
         {

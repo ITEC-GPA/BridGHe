@@ -109,6 +109,8 @@ def glyph(name, a):
         return rect(3,4,18,4,a,0.7) + path('M6 10H18M12 10V19M6 19H18',INK,2.8)
     if name == 'slab':
         return rect(3,6,18,11,'white',1,a,1.8) + ''.join(circle(x,9,1.2,a) for x in [6,10,14,18]) + path('M5 15H19',a,1)
+    if name == 'slabbars':  # 0.5.0: the slab given by pitch and diameters, two rows of bars
+        return rect(3,6,18,11,'white',1,a,1.8) + ''.join(circle(x,y,1.2,a) for y in (9,14) for x in [6,10,14,18])
     if name == 'reinforcement':
         return path('M4 8L18 4M6 19L20 15', a, 3) + path('M7 5L9 9M12 3.5L14 7.5M8 16L10 20M13 14.5L15 18.5M18 13L20 17', INK, 1.3)
     if name in ('steel','aluminium','concrete','material'):
@@ -365,6 +367,7 @@ BridgeIntermediateStiffenerComponent|stiffener||check
 BridgeSupportStiffenerComponent|stiffener|force|check
 BridgeDetailCheckComponent|studs|check|check
 BeamSectionConcreteSlabComponent|slab||section
+BeamSectionConcreteSlabBarsComponent|slabbars||section
 BeamSectionHPropertyComponent|section:I|data|section
 BuildBridgeModel|model|check|check
 BridgeActionComponent|case|link|check

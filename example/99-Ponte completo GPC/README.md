@@ -1,5 +1,7 @@
 # Esempio 99 dal file personale alle verifiche
 
+**Aggiornamento 20 novembre 2026 (BridGHe 0.5.0).** Nella REV005 la soletta è il nuovo Concrete Slab Section con passo e diametri: Ø16/100 sopra e sotto. Prima le aree venivano da due cluster con diametro e passo in cm; ora diametri e passo (in mm, comune alle due file) entrano direttamente nel componente, e i due cluster con il secondo slider del passo sono stati tolti. Le aree sono le stesse (5026,5 mm² per fila su 2500 mm).
+
 Aggiornamento 26 ottobre 2026: questa definizione usa il [flusso modulare](../../docs/FLUSSO-MODULARE.md). Appoggi, travi, soletta, conci, diaframmi e mesh hanno componenti separati; gli input salvati sono stati conservati. I report precedenti descrivono la geometria di riferimento; il nuovo collaudo è raccolto nella [validazione del refactoring](../../docs/VALIDAZIONE-MODULARE-2026-10-26.md).
 
 ## REV005 — carichi delle fasi come lo script di riferimento aziendale

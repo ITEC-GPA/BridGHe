@@ -61,6 +61,7 @@ internal static class SlabReinforcementTests
             gpcChecks++;
         }
         foreach(bool tapered in new[]{false,true})GpcSuperElement(assembly,tapered,Require,Near);
+        GpcBars(assembly,Require,Near); // 0.5.0: the slab given by pitch and diameters (Brecciarola study item 20)
         Console.WriteLine($"SLAB REINFORCEMENT GPC PASS: {gpcChecks} checks on definitions built in GPC (rows of bars, analysis section, invalid rows) and on Super Element Check with D3 on a GPC bridge model; without it, the error of decision (i) = A and no outputs.");
     }
     // P2U (F6, chain E (c) and C5): the same checks on the composite section as the GPC contract of the Checker (BridgeCompositeSectionDefinition)
@@ -111,6 +112,77 @@ internal static class SlabReinforcementTests
         var a=BridGHe.Common.Gpc.GpcCompositeSections.AnalysisProperties(without,without.NLongTerm,true,true,true);var b=BridGHe.Common.Gpc.GpcCompositeSections.AnalysisProperties(zero,zero.NLongTerm,true,true,true);
         require(a.Equals(b),"GPC: Zero bottom reinforcement changes existing numerical properties.");
         gpcChecks+=10;
+    }
+
+    /// <summary>
+    /// 0.5.0 (Brecciarola study item 20, 20/11/2026): the slab given by its bars, one pitch for the two rows and a diameter per row.
+    /// <list type="bullet">
+    /// <item>the datum: row areas (W/P)·π·d²/4, W/P bars per row (rounded half up), the rules of validity; a slab given by its areas keeps
+    /// three bars per row;</item>
+    /// <item>the component Concrete Slab Section with pitch and diameters (the former one, with row areas, hidden and obsolete);</item>
+    /// <item>the section of the checks with the bars of the datum: the row of Ø16/100 on 4500 mm with the axis at 30 mm from the bottom face
+    /// (G2 C3 of Brecciarola REV004) is accepted, with three equivalent bars (Ø62) it was refused; the stresses equal those of three bars of
+    /// the same rows within 1e-3 MPa (the bars differ only by their own inertia).</item>
+    /// </list>
+    /// </summary>
+    private static void GpcBars(Assembly assembly,Action<bool,string> require,Action<double,double> near)
+    {
+        void Close(double a,double b,double tolerance,string what)=>require(Math.Abs(a-b)<=tolerance,what+": "+a+" != "+b);
+        var c3=ConcreteSlabSection.FromBars(300,4050,100,16,80,16,30);
+        Close(c3.TopRebarArea,4050/100.0*Math.PI*64,1e-9,"Ø16/100 on 4050: top area");Close(c3.BottomRebarArea,c3.TopRebarArea,0,"Ø16/100 on 4050: bottom area");
+        require(c3.IsValid&&c3.ByBars&&c3.BarsPerRow==41&&c3.Pitch==100&&c3.TopDiameter==16&&c3.BottomDiameter==16,"Ø16/100 on 4050: datum "+c3);
+        Close(c3.TopRebarArea,8143.0,0.1,"Ø16/100 on 4050: the area of the relazione");
+        var c1=ConcreteSlabSection.FromBars(300,4050,200,16,80,16,30);require(c1.IsValid&&c1.BarsPerRow==20,"Ø16/200 on 4050: 20 bars per row");Close(c1.TopRebarArea,4071.5,0.1,"Ø16/200 on 4050");
+        var g2=ConcreteSlabSection.FromBars(300,4500,100,16,80,16,30);require(g2.IsValid&&g2.BarsPerRow==45,"Ø16/100 on 4500: 45 bars per row");
+        var none=ConcreteSlabSection.FromBars(250,3000,200,0,50,0,50);require(none.IsValid&&none.TotalRebarArea==0&&none.BarsPerRow==15,"No bars: valid, no area");
+        var mixed=ConcreteSlabSection.FromBars(250,3000,150,20,45,12,50);require(mixed.IsValid&&mixed.BarsPerRow==20,"Different diameters, one pitch");
+        Close(mixed.BottomRebarArea,20*Math.PI*36,1e-9,"Ø12/150 on 3000");
+        foreach(var (bad,why) in new[]{(ConcreteSlabSection.FromBars(300,4050,10,16,80,16,30),"pitch below the diameter"),(ConcreteSlabSection.FromBars(300,4050,100,16,80,16,5),"bottom bar outside the slab"),
+            (ConcreteSlabSection.FromBars(300,4050,100,16,295,0,30),"top bar outside the slab"),(ConcreteSlabSection.FromBars(100,4050,100,16,50,16,45),"rows not apart"),
+            (ConcreteSlabSection.FromBars(300,4050,8,6,80,6,30),"more than 500 bars per row"),(ConcreteSlabSection.FromBars(300,4050,double.NaN,16,80,16,30),"pitch not finite"),
+            (ConcreteSlabSection.FromBars(300,4050,100,-16,80,16,30),"negative diameter"),(c3 with{Width=4500},"areas not those of the bars")})
+            require(!bad.IsValid,"Invalid slab by bars accepted: "+why);
+        var areas=new ConcreteSlabSection(250,3000,2000,40,1500,55);require(!areas.ByBars&&areas.BarsPerRow==3&&areas.IsValid,"A slab given by its areas keeps three bars per row.");
+
+        // The components: the new one with pitch and diameters, the former one hidden and obsolete with its inputs.
+        using(var doc=new GH_Document())
+        {
+            GH_Component Add(string name){var x=(GH_Component)Activator.CreateInstance(assembly.GetType("BridGHe.Grasshopper.Components.BridgeChecks."+name,true));x.CreateAttributes();doc.AddObject(x,false);return x;}
+            var c=Add("BeamSectionConcreteSlabBarsComponent");var old=Add("BeamSectionConcreteSlabComponent");
+            require(c.Name=="Concrete Slab Section"&&c.Exposure!=GH_Exposure.hidden&&!c.Obsolete&&c.ComponentGuid==new Guid("fa9989a5-f4d0-4041-a51d-f6c6fe5892f3"),"New slab component: name, exposure or ID.");
+            require(old.Obsolete&&old.Exposure==GH_Exposure.hidden&&old.ComponentGuid==new Guid("1a539226-24ae-4d3f-8075-4f54cd1b9f68")&&old.Params.Input.Count==6,"Former slab component: obsolete, hidden, same ID and inputs.");
+            require(string.Join(",",c.Params.Input.Select(p=>p.Name))=="Height,Width,Pitch,Top diameter,Top axis distance,Bottom diameter,Bottom axis distance"
+                &&c.Params.Input.Skip(2).All(p=>p.Optional)&&!c.Params.Input[0].Optional&&!c.Params.Input[1].Optional&&c.Params.Output.Count==1,"New slab component: inputs.");
+            void Number(int i,double value){var p=(Param_Number)c.Params.Input[i];p.PersistentData.Clear();p.PersistentData.Append(new GH_Number(value));p.ExpireSolution(false);}
+            ConcreteSlabSection Out()=>(ConcreteSlabSection)c.Params.Output[0].VolatileData.AllData(true).Single().ScriptVariable();
+            void Solve(){GH_Document.EnableSolutions=true;doc.Enabled=true;doc.NewSolution(false,GH_SolutionMode.Silent);}
+            Number(0,300);Number(1,4050);Solve();
+            require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count==0&&Out().TotalRebarArea==0&&Out().Pitch==200,"New slab component: no bars by default.");
+            Number(2,100);Number(3,16);Number(4,80);Number(5,16);Number(6,30);Solve();
+            require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count==0&&Out()==c3,"New slab component: the datum of Ø16/100 on 4050 with axes 80/30.");
+            Number(2,10);Solve();
+            require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count==1&&!c.Params.Output[0].VolatileData.AllData(true).Any(),"New slab component: a pitch below the diameter must be an error without output ("+string.Join("; ",c.RuntimeMessages(GH_RuntimeMessageLevel.Error))+").");
+        }
+
+        // The section of the checks with the bars of the datum.
+        var options=new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions{Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4,LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Ultimate};
+        var phases=new[]{new GPC.Checkers.CompositeBridge.BridgePhase{Name="Acciaio",Kind=GPC.Checkers.CompositeBridge.BridgePhaseKind.SteelOnly,MomentKNm=5000,ShearKN=300},
+            new GPC.Checkers.CompositeBridge.BridgePhase{Name="Mista",MomentKNm=4000,ShearKN=200,HomogenizationSource=GPC.Checkers.CompositeBridge.BridgeHomogenizationSource.ModularRatio}};
+        GPC.Checkers.CompositeBridge.HBridgeAnalysisResult Calculate(ConcreteSlabSection s,int bars)
+        {
+            var d=GpcCompositeDefinitions.Create(Slab(s.Height,s.Width,s.TopRebarArea,s.TopCover,s.BottomRebarArea,s.BottomCover) with{BarsPerRow=bars});
+            require(d.RebarRows.BarsPerRow==bars&&d.Section.Rebars.Count()==2*bars,"Section of the checks: "+bars+" bars per row expected, "+d.Section.Rebars.Count()+" bars.");
+            return GPC.Checkers.CompositeBridge.HBridgeSection.Calculate(d.SectionInput(true,options) with{Phases=new[]{phases[0],phases[1] with{N=d.NShortTerm}}});
+        }
+        var real=Calculate(g2,g2.BarsPerRow);
+        var bar=real.Input.BottomRebars;Close(bar.Diameter,16,1e-9,"G2 C3: bar diameter of the section of the checks");Close(bar.Pitch,100,1e-9,"G2 C3: pitch of the section of the checks");
+        bool refused=false;try{Calculate(g2,3);}catch(ArgumentException e){refused=e.Message.Contains("Armatura bottom");}
+        require(refused,"G2 C3 with three equivalent bars: the row at 30 mm must be refused as before 0.5.0 (bars of Ø62).");
+        var at50=g2 with{BottomCover=50};var three=Calculate(at50,3);var many=Calculate(at50,45);
+        var a=three.Stages.Last().Points;var b=many.Stages.Last().Points;
+        require(a.Count==b.Count&&a.Count>0,"Same stress points with three and 45 bars per row.");
+        for(int i=0;i<a.Count;i++){require(a[i].Name==b[i].Name,"Point names differ: "+a[i].Name+" / "+b[i].Name);Close(b[i].Stress,a[i].Stress,1e-3,"Stress at "+a[i].Name+", 45 bars against 3");}
+        gpcChecks+=24+a.Count;
     }
 
     /// <summary>

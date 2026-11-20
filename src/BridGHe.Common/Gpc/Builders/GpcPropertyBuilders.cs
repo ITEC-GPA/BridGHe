@@ -62,17 +62,18 @@ namespace BridGHe.Common.Gpc.Builders
         /// fy, fu of the steel and of the bars; the bars of the steel when the component has no reinforcement material); the analysis steel of
         /// the steel material (<see cref="GpcMaterials.Analysis"/>). A material of another kind in a role is refused (listed difference 5 of
         /// the pre-removal point: the former property read zeros). The numbers of the slab and the ratios as given: the conversion reads the
-        /// fields of the former property, not an archive (no −0 → +0).
+        /// fields of the former property, not an archive (no −0 → +0). <paramref name="barsPerRow"/>: the bars per row of the section of the
+        /// checks (Concrete Slab Section: three for a slab given by its areas, W/P for a slab given by its bars, 0.5.0).
         /// </summary>
         public static GPC.Checkers.CompositeBridge.BridgeCompositeSectionDefinition Composite(string name, LegacySectionRecipe steel, double slabWidth, double slabHeight,
             double topArea, double topCover, double bottomArea, double bottomCover, Material concrete, Material steelMaterial, Material rebar,
-            double n0, double nInfinite, double nShrinkage, bool considerConcrete, bool considerRebar)
+            double n0, double nInfinite, double nShrinkage, bool considerConcrete, bool considerRebar, int barsPerRow = GpcCompositeSections.BarsPerRow)
         {
             if (steel == null) throw new ArgumentNullException(nameof(steel));
             var c = GpcMaterials.ConcreteValues(concrete); var s = GpcMaterials.SteelValues(steelMaterial); var r = GpcMaterials.SteelValues(rebar ?? steelMaterial);
             return GpcCompositeSections.Create(name, name, steel.D, steel.T3, steel.B2, steel.T2, steel.B1, steel.T1, slabWidth, slabHeight, topArea, topCover,
                 bottomArea, bottomCover, 0, c.Name, c.Fck, s.Name, s.E, s.Fy, s.Fu, r.Name, r.E, r.Fy, r.Fu, nInfinite, n0, nShrinkage,
-                considerConcrete, considerRebar, GpcMaterials.Analysis(steelMaterial));
+                considerConcrete, considerRebar, GpcMaterials.Analysis(steelMaterial), barsPerRow);
         }
 
         /// <summary>R6.2 part C: the «Only Steel Property» of Composite Beam Property: a beam property named <c>name + "OnlySteel"</c> on the I

@@ -22,7 +22,9 @@ namespace BridGHe.Common.Gpc
     /// the BridGHe ID of the beam);</item>
     /// <item>materials EN 1992: concrete from fck (parabola-rectangle), structural steel and rebar from E, fy, fu with an ultimate strain of 0.1
     /// (elastic-perfectly plastic);</item>
-    /// <item><see cref="BarsPerRow"/> bars per row, each of a third of the area of the row, at the pitch of a third of the slab width;</item>
+    /// <item><see cref="BarsPerRow"/> bars per row, each of a third of the area of the row, at the pitch of a third of the slab width; since
+    /// 0.5.0 a slab given by its bars (Concrete Slab Section with pitch and diameters) gives its own count, W/P rounded, with bars of about the
+    /// real diameter (the area of a row divided by the count);</item>
     /// <item>the modular ratios n∞, n0 and n,sh (n∞ when the property has none) and the Consider Concrete / Consider Rebar choices of the
     /// property (of the start property for a variable section).</item>
     /// </list>
@@ -35,7 +37,7 @@ namespace BridGHe.Common.Gpc
     /// </summary>
     public static class GpcCompositeSections
     {
-        public const int BarsPerRow = 3;
+        public const int BarsPerRow = Checks.ConcreteSlabSection.AreaBarsPerRow;
 
 
 
@@ -109,7 +111,8 @@ namespace BridGHe.Common.Gpc
                 concrete.Name, L(-concrete.Fck, -concreteEnd.Fck),
                 steel.Name, L(steel.ElasticModulusTension, steelEnd.ElasticModulusTension), L(steel.Fyk, steelEnd.Fyk), L(steel.Fu, steelEnd.Fu),
                 rebarName, L(rebarE, rebarEEnd), L(rebarFy, rebarFyEnd), L(rebarFu, rebarFuEnd),
-                L(start.NLongTerm, end.NLongTerm), L(start.NShortTerm, end.NShortTerm), L(start.NShrinkage, end.NShrinkage), start.ConsiderConcrete, start.ConsiderRebar, null);
+                L(start.NLongTerm, end.NLongTerm), L(start.NShortTerm, end.NShortTerm), L(start.NShrinkage, end.NShrinkage), start.ConsiderConcrete, start.ConsiderRebar, null,
+                Math.Max(rs.BarsPerRow, re.BarsPerRow));
         }
 
         /// <summary>Chain E (c): <see cref="Definition(BridgeCompositeSectionDefinition, BridgeCompositeSectionDefinition, double, string)"/> with
@@ -133,24 +136,27 @@ namespace BridGHe.Common.Gpc
         private static bool SameSteel(SteelMaterial a, SteelMaterial b) => ReferenceEquals(a, b)
             || a != null && b != null && a.Name == b.Name && a.ElasticModulusTension == b.ElasticModulusTension && a.Fyk == b.Fyk && a.Fu == b.Fu;
 
-        /// <summary>R6.2 part C: also the builder of the Composite Beam Property component (<see cref="Builders.GpcPropertyBuilders.Composite"/>).</summary>
+        /// <summary>R6.2 part C: also the builder of the Composite Beam Property component (<see cref="Builders.GpcPropertyBuilders.Composite"/>).
+        /// <paramref name="barsPerRow"/>: the bars of each row of the section of the checks, each of the area of the row divided by the count, at
+        /// the pitch slab width / count (<see cref="BarsPerRow"/> for a slab given by its areas, W/P for a slab given by its bars).</summary>
         internal static BridgeCompositeSectionDefinition Create(string name, string steelName, double h, double webThickness, double topWidth, double topThickness,
             double bottomWidth, double bottomThickness, double slabWidth, double slabHeight, double topArea, double topCover, double bottomArea, double bottomCover,
             double verticalOffset, string concreteName, double fck, string steelMaterialName, double steelE, double steelFy, double steelFu,
             string rebarName, double rebarE, double rebarFy, double rebarFu, double nLongTerm, double nShortTerm, double nShrinkage, bool considerConcrete, bool considerRebar,
-            GPC.Model.Materials.Material analysisSteel)
+            GPC.Model.Materials.Material analysisSteel, int barsPerRow = BarsPerRow)
         {
+            if (barsPerRow < 1 || barsPerRow > Checks.ConcreteSlabSection.MaximumBarsPerRow) throw new ArgumentOutOfRangeException(nameof(barsPerRow), barsPerRow, "BridgeCompositeBarsPerRow");
             var sectionH = new SectionH(h, webThickness, topWidth, topThickness, bottomWidth, bottomThickness, steelName);
             var concrete = new ConcreteMaterialEN1992(concreteName, fck, ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle);
             var steel = new SteelMaterialEN1992(steelMaterialName, steelE, steelFy, steelFu, 0.1, SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic, SteelMaterial.SteelTypes.Structural);
             var rebar = new SteelMaterialEN1992(rebarName, rebarE, rebarFy, rebarFu, 0.1, SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic, SteelMaterial.SteelTypes.Rebar);
-            double topDiameter = Math.Sqrt(topArea / BarsPerRow * 4 / Math.PI), bottomDiameter = Math.Sqrt(bottomArea / BarsPerRow * 4 / Math.PI);
+            double topDiameter = Math.Sqrt(topArea / barsPerRow * 4 / Math.PI), bottomDiameter = Math.Sqrt(bottomArea / barsPerRow * 4 / Math.PI);
             var top = topDiameter != 0 ? new RebarSectionCircular("", topDiameter, rebar) : null;
             var bottom = bottomDiameter != 0 ? new RebarSectionCircular("", bottomDiameter, rebar) : null;
-            var section = Checks.CompositeSectionFactory.Create(slabWidth, slabHeight, concrete, top, slabWidth / BarsPerRow, topCover, bottom, slabWidth / BarsPerRow,
+            var section = Checks.CompositeSectionFactory.Create(slabWidth, slabHeight, concrete, top, slabWidth / barsPerRow, topCover, bottom, slabWidth / barsPerRow,
                 sectionH, steel, bottomCover, verticalOffset, name);
             // Chain E step 1 (coordinator, 5/11, option ii): the rows as given, for the one-bar section of the analysis properties.
-            var rows = new BridgeCompositeRebarRows(topArea, topCover, bottomArea, bottomCover, BarsPerRow);
+            var rows = new BridgeCompositeRebarRows(topArea, topCover, bottomArea, bottomCover, barsPerRow);
             // Chain E step 2 (coordinator, 5/11, option b): the steel of the analysis properties (constant sections; an interpolated section is
             // a section of the checks only).
             return analysisSteel == null ? new BridgeCompositeSectionDefinition(name, section, rows, nLongTerm, nShortTerm, nShrinkage, verticalOffset, considerConcrete, considerRebar)

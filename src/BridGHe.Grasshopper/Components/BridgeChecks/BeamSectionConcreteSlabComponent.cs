@@ -4,13 +4,18 @@ using System;
 
 namespace BridGHe.Grasshopper.Components.BridgeChecks
 {
+    /// <summary>
+    /// Concrete Slab Section with row areas: since 0.5.0 replaced by <see cref="BeamSectionConcreteSlabBarsComponent"/> (pitch and diameters,
+    /// Brecciarola study item 20). Kept, hidden and obsolete, with its ID and its inputs, so that the files that use it open and give the same
+    /// numbers as before.
+    /// </summary>
     public class BeamSectionConcreteSlabComponent : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the BeamSectionConcreteSlabComponent class.
         /// </summary>
         public BeamSectionConcreteSlabComponent()
-          : base("Concrete Slab Section", "Slab", "Concrete slab with independent top and bottom reinforcement rows. Dimensions mm, total row areas mm²; covers are measured to bar axes.", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_SECTIONS)
+          : base("Concrete Slab Section (row areas)", "Slab", "OBSOLETE since BridGHe 0.5.0: use Concrete Slab Section with pitch and bar diameters. Concrete slab with independent top and bottom reinforcement rows. Dimensions mm, total row areas mm²; covers are measured to bar axes.", CategoryNameConstants.CATEGORY_MODEL, CategoryNameConstants.SUBCATEGORY_SECTIONS)
         {
         }
 
@@ -73,6 +78,11 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         /// Provides an Icon for the component.
         /// </summary>
         protected override System.Drawing.Bitmap Icon => Properties.ComponentIcons.For(GetType());
+
+        /// <summary>0.5.0: hidden in the palette, marked obsolete on the canvas (replaced by Concrete Slab Section with pitch and diameters).</summary>
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
+
+        public override bool Obsolete => true;
 
         /// <summary>
         /// Gets the unique ID for this component. Do not change this ID after release.

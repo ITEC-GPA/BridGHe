@@ -80,6 +80,13 @@ I costi rimanenti dipendono da analisi native, clonazione/serializzazione di mod
 
 Le nuove definizioni gPC usano direttamente i record della libreria. Gli adattatori del flusso FEM, il renderer e le preview restano interni a BridGHe per una futura migrazione in libreria.
 
+## Soletta con passo e diametri — 0.5.0, 20 novembre 2026
+
+- Concrete Slab Section ha un ID nuovo (`fa9989a5-f4d0-4041-a51d-f6c6fe5892f3`). Ingressi: Height, Width, Pitch (comune alle due file), Top diameter, Top axis distance, Bottom diameter, Bottom axis distance.
+- L'area di una fila è (W/P)·π·d²/4. La sezione delle verifiche ha W/P barre per fila invece di 3 barre equivalenti.
+- Il componente con le aree (`1a539226-24ae-4d3f-8075-4f54cd1b9f68`) resta con ID e ingressi invariati, nascosto e segnato come superato: le definizioni che lo usano danno gli stessi numeri.
+- Gli esempi 19, 49, 50 e 99 nella revisione corrente usano il componente nuovo, con passo e diametri che tengono le aree di prima.
+
 ## Riordino e flusso delle fasi — 19 ottobre 2026
 
 Un'unica tab BridGHe. Sezioni Straus in 03-Sections, Beam Support in 07-Attributes, carichi mobili e relativa analisi in 09-Loads. Eliminati Section Geometry, Remesh e la proprietà composta obsoleta duplicata. Gli altri componenti di verifica senza impiego negli esempi sono elencati in USO-COMPONENTI.md: non vengono automaticamente considerati inutili.

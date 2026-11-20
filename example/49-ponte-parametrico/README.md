@@ -1,5 +1,7 @@
 # 49 · Ponte parametrico: dagli input al modello FEM
 
+**Aggiornamento 20 novembre 2026 (BridGHe 0.5.0).** La soletta è il nuovo Concrete Slab Section con passo e diametri: Ø16 sopra e sotto a passo 201,0619 mm, che danno le stesse aree di prima (3500 mm² per fila su 3500 mm). Gli slider delle aree sono diventati quelli dei diametri; il passo ha uno slider nuovo.
+
 Aggiornamento 26 ottobre 2026: questa definizione usa il [flusso modulare](../../docs/FLUSSO-MODULARE.md). Appoggi, travi, soletta, conci, diaframmi e mesh hanno componenti separati; gli input salvati sono stati conservati. I report precedenti descrivono la geometria di riferimento; il nuovo collaudo è raccolto nella [validazione del refactoring](../../docs/VALIDAZIONE-MODULARE-2026-10-26.md).
 
 Aprire **[49-ponte-parametrico.ghx](49-ponte-parametrico.ghx)** con Rhino 8 e la Release aggiornata di BridGHe. Non occorre la licenza Straus per generare il modello.

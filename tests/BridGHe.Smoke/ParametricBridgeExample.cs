@@ -294,13 +294,15 @@ internal sealed class ParametricBridgeExample
 
         Group("07 | Soletta e armature per il successivo verificatore");
         var rebar=Add("MaterialRebarComponent","Materiale armature B450C",1800,11000);
-        var slabCheck=Add("BeamSectionConcreteSlabComponent","Sezione soletta per il misto",2800,11000);
+        // 0.5.0 (Brecciarola study item 20): the slab by pitch and diameters; Ø16 at the pitch that keeps the former row areas (3500 mm² on 3500 mm).
+        var slabCheck=Add("BeamSectionConcreteSlabBarsComponent","Sezione soletta per il misto",2800,11000);
         Set(slabCheck,"Height",controls["thickness"]);
         Scalar(slabCheck,"Width","Larghezza efficace soletta per singola trave [mm]",3500,500,10000);
-        Scalar(slabCheck,"Rebar area","Area totale armatura superiore sulla larghezza efficace [mm²]",3500,0,15000);
-        Scalar(slabCheck,"Top concrete cover","Distanza asse armatura superiore dall'estradosso [mm]",50,10,150);
-        Scalar(slabCheck,"Bottom rebar area","Area totale armatura inferiore sulla larghezza efficace [mm²]",3500,0,15000);
-        Scalar(slabCheck,"Bottom concrete cover","Distanza asse armatura inferiore dall'intradosso [mm]",50,10,150);
+        Scalar(slabCheck,"Pitch","Passo armature sopra e sotto [mm] (area come prima della 0.5.0)",201.0619,50,400);
+        Scalar(slabCheck,"Top diameter","Diametro armatura superiore [mm]",16,8,32);
+        Scalar(slabCheck,"Top axis distance","Distanza asse armatura superiore dall'estradosso [mm]",50,10,150);
+        Scalar(slabCheck,"Bottom diameter","Diametro armatura inferiore [mm]",16,8,32);
+        Scalar(slabCheck,"Bottom axis distance","Distanza asse armatura inferiore dall'intradosso [mm]",50,10,150);
 
         Group("08 | Visualizzazione");
         var display=Add("DisplaySettingsComponent","Opzioni preview",4200,11500);

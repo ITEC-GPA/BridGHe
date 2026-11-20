@@ -1777,10 +1777,19 @@
       "badge": "data"
     },
     {
+      "key": "BeamSectionConcreteSlabBarsComponent",
+      "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionConcreteSlabBarsComponent",
+      "guid": "fa9989a5-f4d0-4041-a51d-f6c6fe5892f3",
+      "name": "Concrete Slab Section",
+      "family": "section",
+      "glyph": "slabbars",
+      "badge": ""
+    },
+    {
       "key": "BeamSectionConcreteSlabComponent",
       "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionConcreteSlabComponent",
       "guid": "1a539226-24ae-4d3f-8075-4f54cd1b9f68",
-      "name": "Concrete Slab Section",
+      "name": "Concrete Slab Section (row areas)",
       "family": "section",
       "glyph": "slab",
       "badge": ""

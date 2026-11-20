@@ -28572,6 +28572,143 @@
     "Source": "src/BridGHe.Grasshopper/Components/Export/StrausR3ExportComponent.cs:51 @59e9def"
   },
   {
+    "Guid": "fa9989a5-f4d0-4041-a51d-f6c6fe5892f3",
+    "Direction": "in",
+    "Index": 0,
+    "Name": "Height",
+    "NickName": "H",
+    "Description": "The slab height [mm]",
+    "Type": "Param_Number",
+    "Access": "item",
+    "Optional": false,
+    "Defaults": [],
+    "DefaultSource": "",
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionConcreteSlabBarsComponent.cs:24 (studio Brecciarola punto 20, richiesta utente 20/11/2026)"
+  },
+  {
+    "Guid": "fa9989a5-f4d0-4041-a51d-f6c6fe5892f3",
+    "Direction": "in",
+    "Index": 1,
+    "Name": "Width",
+    "NickName": "W",
+    "Description": "The slab width [mm] (effective width of the girder)",
+    "Type": "Param_Number",
+    "Access": "item",
+    "Optional": false,
+    "Defaults": [],
+    "DefaultSource": "",
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionConcreteSlabBarsComponent.cs:25 (studio Brecciarola punto 20, richiesta utente 20/11/2026)"
+  },
+  {
+    "Guid": "fa9989a5-f4d0-4041-a51d-f6c6fe5892f3",
+    "Direction": "in",
+    "Index": 2,
+    "Name": "Pitch",
+    "NickName": "P",
+    "Description": "Pitch of the bars, the same for the top and the bottom row [mm]",
+    "Type": "Param_Number",
+    "Access": "item",
+    "Optional": true,
+    "Defaults": [
+      {
+        "Type": "number",
+        "Value": 200.0
+      }
+    ],
+    "DefaultSource": "200",
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionConcreteSlabBarsComponent.cs:26 (studio Brecciarola punto 20, richiesta utente 20/11/2026)"
+  },
+  {
+    "Guid": "fa9989a5-f4d0-4041-a51d-f6c6fe5892f3",
+    "Direction": "in",
+    "Index": 3,
+    "Name": "Top diameter",
+    "NickName": "TD",
+    "Description": "Diameter of the TOP bars [mm]. Zero disables the top row.",
+    "Type": "Param_Number",
+    "Access": "item",
+    "Optional": true,
+    "Defaults": [
+      {
+        "Type": "number",
+        "Value": 0.0
+      }
+    ],
+    "DefaultSource": "0",
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionConcreteSlabBarsComponent.cs:27 (studio Brecciarola punto 20, richiesta utente 20/11/2026)"
+  },
+  {
+    "Guid": "fa9989a5-f4d0-4041-a51d-f6c6fe5892f3",
+    "Direction": "in",
+    "Index": 4,
+    "Name": "Top axis distance",
+    "NickName": "TA",
+    "Description": "Distance from the top face to the axes of the TOP bars [mm], not clear cover",
+    "Type": "Param_Number",
+    "Access": "item",
+    "Optional": true,
+    "Defaults": [
+      {
+        "Type": "number",
+        "Value": 50.0
+      }
+    ],
+    "DefaultSource": "50",
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionConcreteSlabBarsComponent.cs:28 (studio Brecciarola punto 20, richiesta utente 20/11/2026)"
+  },
+  {
+    "Guid": "fa9989a5-f4d0-4041-a51d-f6c6fe5892f3",
+    "Direction": "in",
+    "Index": 5,
+    "Name": "Bottom diameter",
+    "NickName": "BD",
+    "Description": "Diameter of the BOTTOM bars [mm]. Zero disables the bottom row.",
+    "Type": "Param_Number",
+    "Access": "item",
+    "Optional": true,
+    "Defaults": [
+      {
+        "Type": "number",
+        "Value": 0.0
+      }
+    ],
+    "DefaultSource": "0",
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionConcreteSlabBarsComponent.cs:29 (studio Brecciarola punto 20, richiesta utente 20/11/2026)"
+  },
+  {
+    "Guid": "fa9989a5-f4d0-4041-a51d-f6c6fe5892f3",
+    "Direction": "in",
+    "Index": 6,
+    "Name": "Bottom axis distance",
+    "NickName": "BA",
+    "Description": "Distance from the bottom face to the axes of the BOTTOM bars [mm], not clear cover",
+    "Type": "Param_Number",
+    "Access": "item",
+    "Optional": true,
+    "Defaults": [
+      {
+        "Type": "number",
+        "Value": 50.0
+      }
+    ],
+    "DefaultSource": "50",
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionConcreteSlabBarsComponent.cs:30 (studio Brecciarola punto 20, richiesta utente 20/11/2026)"
+  },
+  {
+    "Guid": "fa9989a5-f4d0-4041-a51d-f6c6fe5892f3",
+    "Direction": "out",
+    "Index": 0,
+    "Name": "Concrete Slab",
+    "NickName": "S",
+    "Description": "The slab section",
+    "Type": "Param_GenericObject",
+    "Access": "item",
+    "Optional": false,
+    "Defaults": [],
+    "DefaultSource": "",
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionConcreteSlabBarsComponent.cs:36 (studio Brecciarola punto 20, richiesta utente 20/11/2026)"
+  },
+  {
     "Guid": "fcbadad8-e4a9-447a-bc4c-c4cd6fce479a",
     "Direction": "in",
     "Index": 0,

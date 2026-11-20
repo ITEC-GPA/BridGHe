@@ -242,14 +242,14 @@
   {
     "Guid": "1a539226-24ae-4d3f-8075-4f54cd1b9f68",
     "Type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionConcreteSlabComponent",
-    "Name": "Concrete Slab Section",
+    "Name": "Concrete Slab Section (row areas)",
     "NickName": "Slab",
-    "Description": "Concrete slab with independent top and bottom reinforcement rows. Dimensions mm, total row areas mm²; covers are measured to bar axes.",
+    "Description": "OBSOLETE since BridGHe 0.5.0: use Concrete Slab Section with pitch and bar diameters. Concrete slab with independent top and bottom reinforcement rows. Dimensions mm, total row areas mm²; covers are measured to bar axes.",
     "Category": "BridGHe",
     "SubCategory": "03-Sections",
-    "Exposure": "primary",
-    "Obsolete": false,
-    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionConcreteSlabComponent.cs:12 @59e9def"
+    "Exposure": "hidden",
+    "Obsolete": true,
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionConcreteSlabComponent.cs:18 (studio Brecciarola punto 20, richiesta utente 20/11/2026)"
   },
   {
     "Guid": "1c7b96b8-3bfb-4df0-a672-cae395330a79",
@@ -2710,6 +2710,18 @@
     "Exposure": "primary",
     "Obsolete": false,
     "Source": "src/BridGHe.Grasshopper/Components/Export/StrausR3ExportComponent.cs:18 @59e9def"
+  },
+  {
+    "Guid": "fa9989a5-f4d0-4041-a51d-f6c6fe5892f3",
+    "Type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionConcreteSlabBarsComponent",
+    "Name": "Concrete Slab Section",
+    "NickName": "Slab",
+    "Description": "Concrete slab with top and bottom bars at one common pitch. Dimensions mm; bar diameters per row (0 disables the row); distances measured to the bar axes. Row area = W/P·π·d²/4.",
+    "Category": "BridGHe",
+    "SubCategory": "03-Sections",
+    "Exposure": "primary",
+    "Obsolete": false,
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionConcreteSlabBarsComponent.cs:16 (studio Brecciarola punto 20, richiesta utente 20/11/2026)"
   },
   {
     "Guid": "fcbadad8-e4a9-447a-bc4c-c4cd6fce479a",

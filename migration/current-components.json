@@ -15317,14 +15317,92 @@
     ]
   },
   {
-    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionConcreteSlabComponent",
-    "guid": "1a539226-24ae-4d3f-8075-4f54cd1b9f68",
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionConcreteSlabBarsComponent",
+    "guid": "fa9989a5-f4d0-4041-a51d-f6c6fe5892f3",
     "kind": "component",
     "name": "Concrete Slab Section",
     "nickname": "Slab",
     "category": "BridGHe",
     "subcategory": "03-Sections",
-    "description": "Concrete slab with independent top and bottom reinforcement rows. Dimensions mm, total row areas mm²; covers are measured to bar axes.",
+    "description": "Concrete slab with top and bottom bars at one common pitch. Dimensions mm; bar diameters per row (0 disables the row); distances measured to the bar axes. Row area = W/P·π·d²/4.",
+    "inputs": [
+      {
+        "name": "Height",
+        "nickname": "H",
+        "description": "The slab height [mm]",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Width",
+        "nickname": "W",
+        "description": "The slab width [mm] (effective width of the girder)",
+        "access": "item",
+        "optional": false,
+        "type": "Number"
+      },
+      {
+        "name": "Pitch",
+        "nickname": "P",
+        "description": "Pitch of the bars, the same for the top and the bottom row [mm]",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Top diameter",
+        "nickname": "TD",
+        "description": "Diameter of the TOP bars [mm]. Zero disables the top row.",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Top axis distance",
+        "nickname": "TA",
+        "description": "Distance from the top face to the axes of the TOP bars [mm], not clear cover",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Bottom diameter",
+        "nickname": "BD",
+        "description": "Diameter of the BOTTOM bars [mm]. Zero disables the bottom row.",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      },
+      {
+        "name": "Bottom axis distance",
+        "nickname": "BA",
+        "description": "Distance from the bottom face to the axes of the BOTTOM bars [mm], not clear cover",
+        "access": "item",
+        "optional": true,
+        "type": "Number"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Concrete Slab",
+        "nickname": "S",
+        "description": "The slab section",
+        "access": "item",
+        "optional": false,
+        "type": "Generic Data"
+      }
+    ]
+  },
+  {
+    "type": "BridGHe.Grasshopper.Components.BridgeChecks.BeamSectionConcreteSlabComponent",
+    "guid": "1a539226-24ae-4d3f-8075-4f54cd1b9f68",
+    "kind": "component",
+    "name": "Concrete Slab Section (row areas)",
+    "nickname": "Slab",
+    "category": "BridGHe",
+    "subcategory": "03-Sections",
+    "description": "OBSOLETE since BridGHe 0.5.0: use Concrete Slab Section with pitch and bar diameters. Concrete slab with independent top and bottom reinforcement rows. Dimensions mm, total row areas mm²; covers are measured to bar axes.",
     "inputs": [
       {
         "name": "Height",
@@ -17359,6 +17437,22 @@
         "access": "item",
         "optional": false,
         "type": "Boolean"
+      },
+      {
+        "name": "Options",
+        "nickname": "O",
+        "description": "Optional Bridge Analysis Options. When connected they replace the defaults of this component (Eurocode 4, rare SLS, Class 4, default partial factors) and its three local instability toggles.",
+        "access": "item",
+        "optional": true,
+        "type": "Generic Data"
+      },
+      {
+        "name": "ULS Combinations",
+        "nickname": "ULS",
+        "description": "Optional combinations checked at the ultimate limit state: exact names, or a prefix ending with * (e.g. SLU_*). The other combinations keep the limit state of the options (rare SLS by default).",
+        "access": "list",
+        "optional": true,
+        "type": "Text"
       }
     ],
     "outputs": [

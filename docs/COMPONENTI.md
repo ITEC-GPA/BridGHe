@@ -1,8 +1,8 @@
-# Inventario dei componenti 0.4.0
+# Inventario dei componenti 0.5.0
 
 L'inventario comprende anche i componenti storici nascosti. La presenza di una porta non significa che ogni suo dato precedente sia ancora usato: Composite Beam Strain conserva GUID e porte ma non usa il valore dell'ingresso `Strain`. Bridge FEM Members conserva il proprio nome. Per i nuovi modelli seguire [Uso](USO.md); non sostituire nomi o GUID negli archivi per eliminare la parola FEM.
 
-220 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
+221 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
 
 ## BridGHe / 01-Parameters
 
@@ -39,7 +39,8 @@ L'inventario comprende anche i componenti storici nascosti. La presenza di una p
 | Bridge Segment Excel | component | Fabrication Plan; File; Mode; Base Property; Overwrite | Count; Segment IDs; Girder IDs; Counts per Girder; Section Table; File; Information |
 | Bridge Segment Sections | component | Fabrication Plan; Base Property; Section Table | Schedule; Properties; Sections; Segment IDs; Resolved Table; Top Offsets; Information |
 | C Section | component | Width; Flange thickness; Height; Web thickness; Double Section; Gap | Section |
-| Concrete Slab Section | component | Height; Width; Rebar area; Top concrete cover; Bottom rebar area; Bottom concrete cover | Concrete Slab |
+| Concrete Slab Section | component | Height; Width; Pitch; Top diameter; Top axis distance; Bottom diameter; Bottom axis distance | Concrete Slab |
+| Concrete Slab Section (row areas) | component | Height; Width; Rebar area; Top concrete cover; Bottom rebar area; Bottom concrete cover | Concrete Slab |
 | Generic Section | component | Area; Second moment 1; Second moment 2; Torsion constant; Shear L1; Shear L2; Shear A1; Shear A2; Bending modulus 1; Bending modulus 2; Offset 1; Offset 2; Angle | Section |
 | Hollow Circle | component | Diameter; Thickness | Section |
 | Hollow Rect | component | Height; Base; Horizontal Thickness; Vertical Thickness | Section |
@@ -233,7 +234,7 @@ L'inventario comprende anche i componenti storici nascosti. La presenza di una p
 | Bridge Section Check | component | Geometry; Concrete; Steel; Rebar material; Phases; Top rebars; Bottom rebars; Details; Options | Results; Phases; Warnings; Native analysis |
 | Composite Section Linear Tension Analysis | component | Beams; Loads Only steel Phase; Loads Infinte Time Phase; Loads Instant Time Phase; Homogenization coefficient Infinite; Homogenization coefficient Istant; Top Flange Subject To Local Instability; Web Subject To Local Instability; Bottom Flange Subject To Local Instability; Consider concrete | Only Steel Buckling; Infinite Buckling; Total Buckling; TauB |
 | Composite Section Self Tension | component | Composite Beam Property; Homogenization coefficient; Strain | Result |
-| Super Element Check | component | BridGHe Model; Super-Element Beam; Web Local Instability; Top Flange Local Instability; Bottom Flange Local Instability | Tension Check; Tau b; Tension Forces |
+| Super Element Check | component | BridGHe Model; Super-Element Beam; Web Local Instability; Top Flange Local Instability; Bottom Flange Local Instability; Options; ULS Combinations | Tension Check; Tau b; Tension Forces |
 
 ## BridGHe / 11-Export
 

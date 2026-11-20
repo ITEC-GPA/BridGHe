@@ -1,5 +1,7 @@
 # 50 · Ponte parametrico: quattro modelli, fasi, ritiro e verifiche
 
+**Aggiornamento 20 novembre 2026 (BridGHe 0.5.0).** Nella REV004 la soletta è il nuovo Concrete Slab Section con passo e diametri: Ø16 sopra e sotto a passo 172,3388 mm, che danno le stesse aree di prima (3500 mm² per fila su 3000 mm). Gli slider delle aree sono diventati quelli dei diametri; il passo ha uno slider nuovo. Le revisioni precedenti usano ancora il componente con le aree, ora nascosto e superato.
+
 Aggiornamento 26 ottobre 2026: questa definizione usa il [flusso modulare](../../docs/FLUSSO-MODULARE.md). Appoggi, travi, soletta, conci, diaframmi e mesh hanno componenti separati; gli input salvati sono stati conservati. I report precedenti descrivono la geometria di riferimento; il nuovo collaudo è raccolto nella [validazione del refactoring](../../docs/VALIDAZIONE-MODULARE-2026-10-26.md).
 
 ## REV004 — carichi delle fasi come lo script di riferimento aziendale

@@ -1,5 +1,7 @@
 # Esempio 19 — ponte a graticcio e workflow a fasi
 
+**Aggiornamento 20 novembre 2026 (BridGHe 0.5.0).** Nella REV003 le due solette sono il nuovo Concrete Slab Section con passo e diametri: passo 201,0619 mm, Ø16 sopra e Ø13,0639 sotto, che danno le stesse aree di prima (3000 e 2000 mm² su 3000 mm). La sezione delle verifiche ha 15 barre per fila invece di 3 barre equivalenti.
+
 Aprire **[19-flusso-acciaio-misto_REV003.ghx](19-flusso-acciaio-misto_REV003.ghx)** in Rhino 8 / Grasshopper. Il file corrente è soltanto REV003. REV001, REV002 e i fogli Excel dell'utente sono raccolti nelle rispettive cartelle `archivio/REV001` e `archivio/REV002`; la copia senza suffisso è conservata in `archivio/alias-REV003`. I vecchi collegamenti al merge delle revisioni 001 e 002 non rappresentano la nuova interfaccia.
 
 **Collaudo nativo completato il 20 ottobre 2026:** quattro nuove analisi Straus, 20 controlli superati, merge e verifica della spina senza componenti rossi. Il replay indipendente produce 378 risultati di sezione e confronta 12.192 valori con il ricampionamento Straus: scarto massimo 6.37×10⁻¹² N sulle forze e 9.54×10⁻⁷ N·mm sui momenti. I nuovi file sono in `calcoli/REV003-*`; gli esiti sono in `validation-REV003.json` e `validation-stations.json`.

@@ -96,7 +96,7 @@ internal static class Example50HorizontalLayout
             "BridgeSegmentsComponent" or "BridgeDiaphragmsComponent" or "BridgeLongitudinalBracingComponent" => (0, 2),
             "MaterialSteelComponent" or "MaterialConcreteComponent" or "MaterialRebarComponent" => (1, 0),
             "MaterialCustomComponent" => (1, 1),
-            "BeamSectionIComponent" or "BeamSectionHollowRectComponent" or "BeamSectionConcreteSlabComponent" => (1, 2),
+            "BeamSectionIComponent" or "BeamSectionHollowRectComponent" or "BeamSectionConcreteSlabComponent" or "BeamSectionConcreteSlabBarsComponent" => (1, 2),
             "BeamPropertyComponent" => (1, 3),
             "BridgeSegmentSectionsComponent" => (1, 4),
             "BeamPropertyCompositeComponent" => (1, 5),

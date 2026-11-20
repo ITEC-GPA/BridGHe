@@ -53,8 +53,9 @@ internal static class BridgeWorkflowExample
         {
             var h=Component("Sections.BeamSectionIComponent",400,y);
             foreach(var (i,v) in new[]{(0,central?800.0:600),(1,central?600.0:500),(2,central?2000.0:1600),(3,40.0),(4,30.0),(5,central?15.0:16)})Number(h,i,v);
-            var slab=Component("BridgeChecks.BeamSectionConcreteSlabComponent",400,y+230);
-            foreach(var (i,v) in new[]{(0,250.0),(1,3000.0),(2,3000.0),(3,45.0),(4,2000.0),(5,50.0)})Number(slab,i,v);
+            // 0.5.0 (Brecciarola study item 20): the slab by pitch and diameters, with the former row areas (3000 and 2000 mm² on 3000 mm).
+            var slab=Component("BridgeChecks.BeamSectionConcreteSlabBarsComponent",400,y+230);
+            foreach(var (i,v) in new[]{(0,250.0),(1,3000.0),(2,201.0619),(3,16.0),(4,45.0),(5,13.0639),(6,50.0)})Number(slab,i,v);
             var c=Component("BridgeChecks.BeamPropertyCompositeComponent",850,y);Text(c,0,name);Wire(slab.Params.Output[0],c,1);Wire(h.Params.Output[0],c,2);Wire(concreteData,c,3);Wire(steelData,c,4);Wire(rebarData,c,5);
             Wire(n0,c,6);Wire(nInf,c,7);Wire(nShrink,c,c.Params.Input.FindIndex(p=>p.Name=="n ritiro"));
             return c;
