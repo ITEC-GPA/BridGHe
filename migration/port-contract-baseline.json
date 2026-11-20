@@ -97,6 +97,12 @@
         "f87c7066-e509-4646-9ef5-79691675cbf4"
       ]
     },
+    "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionConcreteSlabBarsComponent.cs": {
+      "ports": "cb94b7c92eacf4c46300aa8967ffb90e7d54e9d76e295842a913a3c58a55c77f",
+      "guids": [
+        "fa9989a5-f4d0-4041-a51d-f6c6fe5892f3"
+      ]
+    },
     "src/BridGHe.Grasshopper/Components/BridgeChecks/BeamSectionConcreteSlabComponent.cs": {
       "ports": "a85c24519c78c4fff477bdefbfcd3f168886959cae7861e1fad216341864ee16",
       "guids": [
