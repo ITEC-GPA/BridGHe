@@ -33,7 +33,9 @@ using Numbers = GpcCompositeDefinitions.Numbers;
 internal static partial class GpcCompositeSectionChecks
 {
     /// <summary>TESTS ONLY: the section of the former Super Element Check from the numbers of its composite properties (constant section:
-    /// <paramref name="end"/> null), the construction of the component before L11 kept as the reference.</summary>
+    /// <paramref name="end"/> null), the construction of the component before L11 kept as the reference. 0.5.0: the bars of a row are the
+    /// <see cref="Numbers.BarsPerRow"/> of the numbers (three before, and for a slab given by its row areas; the larger count of the two ends
+    /// for a variable section, as <see cref="GpcCompositeDefinitions.Interpolated"/>).</summary>
     internal static (ReinforcedConcreteSection Section, double[] Ratios) Former(Numbers start, Numbers end, double station, string beamId)
     {
         double L(double a, double b) => Interpolation.GetLinearInterpolation(0, 1, a, b, station);
@@ -45,7 +47,7 @@ internal static partial class GpcCompositeSectionChecks
             var concrete = new ConcreteMaterialEN1992(s.Concrete, s.Fck, ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle);
             var steel = new SteelMaterialEN1992(s.Steel, s.SteelE, s.SteelFy, s.SteelFu, 0.1, SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic, SteelMaterial.SteelTypes.Structural);
             var rebar = new SteelMaterialEN1992(s.Rebar, s.RebarE, s.RebarFy, s.RebarFu, 0.1, SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic, SteelMaterial.SteelTypes.Rebar);
-            int numberRebars = 3; double rebarAreaTop = s.TopArea / numberRebars; double rebarDiameterTop = Math.Sqrt(rebarAreaTop * 4 / Math.PI);
+            int numberRebars = s.BarsPerRow; double rebarAreaTop = s.TopArea / numberRebars; double rebarDiameterTop = Math.Sqrt(rebarAreaTop * 4 / Math.PI);
             var top = rebarDiameterTop != 0 ? new RebarSectionCircular("", rebarDiameterTop, rebar) : null;
             double rebarDiameterBottom = Math.Sqrt(s.BottomArea / numberRebars * 4 / Math.PI);
             var bottom = rebarDiameterBottom != 0 ? new RebarSectionCircular("", rebarDiameterBottom, rebar) : null;
@@ -60,7 +62,7 @@ internal static partial class GpcCompositeSectionChecks
             var concrete = new ConcreteMaterialEN1992(s.Concrete, L1(s.Fck, e.Fck), ConcreteMaterial.CompressionStressStrainDiagrams.ParabolaRectangle);
             var steel = new SteelMaterialEN1992(s.Steel, L1(s.SteelE, e.SteelE), L1(s.SteelFy, e.SteelFy), L1(s.SteelFu, e.SteelFu), 0.1, SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic, SteelMaterial.SteelTypes.Structural);
             var rebar = new SteelMaterialEN1992(s.Rebar, L1(s.RebarE, e.RebarE), L1(s.RebarFy, e.RebarFy), L1(s.RebarFu, e.RebarFu), 0.1, SteelMaterial.StressStrainCurveType.ElasticPerfectPlastic, SteelMaterial.SteelTypes.Rebar);
-            double rebarsArea = L1(s.TopArea, e.TopArea); int numberRebars = 3; double rebarDiameter = Math.Sqrt(rebarsArea / numberRebars * 4 / Math.PI);
+            double rebarsArea = L1(s.TopArea, e.TopArea); int numberRebars = Math.Max(s.BarsPerRow, e.BarsPerRow); double rebarDiameter = Math.Sqrt(rebarsArea / numberRebars * 4 / Math.PI);
             var top = rebarDiameter != 0 ? new RebarSectionCircular("", rebarDiameter, rebar) : null;
             double bottomArea = L(s.BottomArea, e.BottomArea), bottomCover = L(s.BottomCover, e.BottomCover);
             double rebarDiameterBottom = Math.Sqrt(bottomArea / numberRebars * 4 / Math.PI);
