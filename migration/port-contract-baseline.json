@@ -202,9 +202,15 @@
       ]
     },
     "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckComponent.cs": {
-      "ports": "729b2caa875d3f8b1d5e8e550e5311cfd360f17bad5cc1f6e573b267b8e30f4a",
+      "ports": "6a8c342a824aadab144ad782a27ba9ea707c8253048768e77d86ceafbb9d3550",
       "guids": [
         "94839122-32f0-4f3e-a30f-979a53c3eca8"
+      ]
+    },
+    "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckOptionsComponent.cs": {
+      "ports": "065027d1565dbe346cc157c63b2125314f42b3013472d93c3261800dac2b43e6",
+      "guids": [
+        "3f7c2a91-5d84-4e6b-9a1f-0c2e8b7d4a63"
       ]
     },
     "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementFilterComponent.cs": {
@@ -959,6 +965,12 @@
       "guids": [
         "3fdba0df-48ec-41d3-8b9e-3f2e3663fd32",
         "9a43a3f7-3d36-4ba1-b7d1-1bfb973d4015"
+      ]
+    },
+    "src/BridGHe.Grasshopper/Components/Utilities/BridgeNotableStationsComponent.cs": {
+      "ports": "f85898d8f2303b1121072398cb868c24098ead05043fa03282d2c995853b2ce2",
+      "guids": [
+        "b6e1d0c4-7a3f-4c25-9e58-2d41f6a0c917"
       ]
     },
     "src/BridGHe.Grasshopper/Components/Utilities/BridgePhaseModelComponent.cs": {
