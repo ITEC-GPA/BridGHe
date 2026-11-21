@@ -36,13 +36,32 @@ public static class BridgeSupportReactions
         var phases = definitions?.ToArray() ?? throw new ArgumentNullException(nameof(definitions));
         var actions = phases.SelectMany(p => p.Actions).ToDictionary(a => a.Key, StringComparer.Ordinal);
         var records = workflow.Phases.SelectMany(p => p.Actions).ToArray();
-        if (!actions.Keys.ToHashSet(StringComparer.Ordinal).SetEquals(records.Select(r => r.Key)))
+        // 0.7.0: the envelope actions of Bridge Moving Envelope («prefix@rule») are not in the phases: their reaction comes from their positions
+        var real = records.Where(r => !MovingLoads.BridgeMovingEnvelope.IsEnvelope(r.Key)).ToArray();
+        if (!actions.Keys.ToHashSet(StringComparer.Ordinal).SetEquals(real.Select(r => r.Key)))
             throw new ArgumentException("Phases do not match the assembled bridge actions.");
         if (combos.Length != 1) throw new ArgumentException("Expected one combination named " + combination);
         var factors = combos[0].ToDictionary(v => v.Case, v => v.Factor, StringComparer.Ordinal);
         double reaction = 0;
         foreach (var record in records)
         {
+            if (MovingLoads.BridgeMovingEnvelope.TryParse(record.Key, out var prefix, out _))
+            {
+                // the largest compression among the positions of the envelope (the factor of a moving load is never negative)
+                if (!factors.TryGetValue(record.ForceCase, out double envelopeFactor) || envelopeFactor == 0) continue;
+                if (!double.IsFinite(envelopeFactor) || envelopeFactor < 0) throw new ArgumentException("Envelope action with a negative or non-finite coefficient: " + record.Key);
+                double largest = double.NegativeInfinity;
+                foreach (var position in real.Where(r => MovingLoads.BridgeMovingEnvelope.IsPosition(r.Key, prefix)))
+                {
+                    var positionForces = reactions(actions[position.Key], position);
+                    if (positionForces.Length != 1 || !positionForces[0].IsValid)
+                        throw new ArgumentException($"Action {position.Key}: expected one finite linear-static reaction for case {position.SourceCase}. Missing/multiple steps are not zero reactions.");
+                    largest = Math.Max(largest, positionForces[0] * upward);
+                }
+                if (double.IsNegativeInfinity(largest)) throw new ArgumentException("Envelope action without positions: " + record.Key);
+                reaction += envelopeFactor * largest;
+                continue;
+            }
             var action = actions[record.Key];
             if (record.SourceCase != action.Case || record.Behavior != action.Behavior || record.Strain != action.Strain)
                 throw new ArgumentException("Changed phase definition: rebuild the bridge model before reading reactions.");

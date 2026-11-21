@@ -77,3 +77,35 @@ public sealed class BridgeMovingCombinationsComponent : BridgeUtilityComponent
         da.SetDataList(3, result.ActionIds.Zip(result.Cases, (id, c) => id + " = " + c));
     }
 }
+
+/// <summary>0.7.0 (user decisions of 21/11/2026): how the positions of Bridge Moving Combinations enter the checks. Between Bridge Moving
+/// Combinations (Table) and Build BridGHe Model (Combinations): 0 Positions, the table unchanged; 1 Envelope, the 8 corners N±, V±, M± of the
+/// positions at every station (always on the safe side); 2 Concomitant, the position of the maximum and minimum of N, V and M with its
+/// forces (6 cases). Build BridGHe Model makes the envelope actions «prefix@rule» from the positions «prefix_NNNN».</summary>
+public sealed class BridgeMovingEnvelopeComponent : BridgeUtilityComponent
+{
+    public BridgeMovingEnvelopeComponent() : base("Bridge Moving Envelope", "MovingEnv", "How the moving positions enter the checks: 0 Positions (one combination per position, the most precise), 1 Envelope (8 corners N±, V±, M± at every station, on the safe side, for sizing), 2 Concomitant (maximum and minimum of N, V, M with their concomitant forces, 6 cases).", CategoryNameConstants.SUBCATEGORY_LOADS) { }
+    public override Guid ComponentGuid => new Guid("7483e8ce-1361-4830-9379-e04f213f82b8");
+    protected override void RegisterInputParams(GH_InputParamManager p)
+    {
+        p.AddGenericParameter("Table", "T", "Combination tree of Bridge Moving Combinations: header and coefficient rows.", GH_ParamAccess.tree);
+        p.AddIntegerParameter("Mode", "M", "0 Positions (default): the table unchanged. 1 Envelope: 8 corners N±, V±, M± of the positions at every station, on the safe side. 2 Concomitant: maximum and minimum of N, V and M with their concomitant forces.", GH_ParamAccess.item, 0);
+        p.AddTextParameter("Action prefix", "P", "Prefix of the position Action IDs of Bridge Moving Combinations (prefix_0001, ...).", GH_ParamAccess.item, "Q_MOV");
+    }
+    protected override void RegisterOutputParams(GH_OutputParamManager p)
+    {
+        p.AddGenericParameter("Table", "T", "Combination tree for Build BridGHe Model > Combinations.", GH_ParamAccess.tree);
+        p.AddTextParameter("Summary", "S", "Positions, groups and combinations of the chosen mode.", GH_ParamAccess.list);
+    }
+    protected override void Solve(IGH_DataAccess da)
+    {
+        int mode = 0; string prefix = null;
+        if (!da.GetDataTree(0, out GH_Structure<IGH_Goo> table) || !da.GetData(1, ref mode) || !da.GetData(2, ref prefix)) return;
+        string Cell(IGH_Goo g) => g?.ScriptVariable() is IFormattable n ? n.ToString(null, CultureInfo.InvariantCulture) : g?.ScriptVariable()?.ToString() ?? "";
+        var result = BridgeMovingEnvelope.Table(table.Branches.Select(b => b.Select(Cell).ToArray()).ToArray(), (BridgeMovingMode)mode, prefix);
+        var tree = new GH_Structure<GH_String>();
+        for (int i = 0; i < result.Rows.Length; i++) tree.AppendRange(result.Rows[i].Select(s => new GH_String(s)), new GH_Path(i));
+        da.SetDataTree(0, tree); da.SetDataList(1, result.Summary);
+        Message = (BridgeMovingMode)mode switch { BridgeMovingMode.Envelope => "Inviluppo", BridgeMovingMode.Concomitant => "Concomitanti", _ => "Posizioni" };
+    }
+}

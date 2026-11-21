@@ -25,10 +25,10 @@ using static BridgeMovingRevisionExample;
 /// </summary>
 internal static class P2kNative
 {
-    /// <summary>0.6.0: the current definitions of the catalogue, 50 REV005 and 99 REV006 (0.4.2, D13: 50 REV004 and 99 REV005), run by <c>50</c> and <c>99</c>; the definitions of
+    /// <summary>0.7.0: the current definitions of the catalogue, 50 REV006 and 99 REV007 (0.6.0: 50 REV005 and 99 REV006 (0.4.2, D13: 50 REV004 and 99 REV005), run by <c>50</c> and <c>99</c>; the definitions of
     /// 0.4.1 (50 REV003, the frozen capture input, and the migrated candidate of 99 REV004) stay by name, <c>50-rev003</c> and
     /// <c>99-rev004</c>, for the comparison with their frozen rows.</summary>
-    internal const string Example50 = "50-ponte-quattro-modelli/50-ponte-quattro-modelli_REV005.ghx", Example99 = "99-Ponte completo GPC/REV006/flusso-acciaio-misto_REV006.ghx",
+    internal const string Example50 = "50-ponte-quattro-modelli/50-ponte-quattro-modelli_REV006.ghx", Example99 = "99-Ponte completo GPC/REV007/flusso-acciaio-misto_REV007.ghx",
         Example99Rev004 = "99-Ponte completo GPC/REV004/flusso-acciaio-misto_REV004.ghx";
     private static readonly string[] Modes = { "50", "99", "50-rev003", "99-rev004" };
 
@@ -41,8 +41,21 @@ internal static class P2kNative
         if (unknown.Length > 0) throw new ArgumentException("BRIDGHE_P2K_NATIVE: unknown " + string.Join(", ", unknown) + " (" + string.Join(", ", Modes) + ")");
         if (modes.Contains("99")) Modular(Example99, false, 5);
         if (modes.Contains("99-rev004")) Modular(Example99Rev004, true, 4);
-        if (modes.Contains("50")) Fifty(Path.Combine(ExamplePaths.Root, Example50), "REV005", "artifacts/p2k-native-50-rev005");
+        if (modes.Contains("50")) Fifty(Path.Combine(ExamplePaths.Root, Example50), "REV006" + ModeSuffix, "artifacts/p2k-native-50-rev006" + ModeSuffix.ToLowerInvariant());
         if (modes.Contains("50-rev003")) Fifty(CaptureInput, "REV003", "artifacts/p2k-native-50");
+    }
+
+    /// <summary>0.7.0: the moving mode of the natives (BRIDGHE_MOVING_MODE: 0 Positions, the default; 1 Envelope; 2 Concomitant), selected on
+    /// the Value List of Bridge Moving Envelope; the fingerprint label and the output folder get «-inviluppo» or «-concomitanti».</summary>
+    internal static int MovingMode => int.TryParse(Environment.GetEnvironmentVariable("BRIDGHE_MOVING_MODE"), out int m) ? m : 0;
+    private static string ModeSuffix => MovingMode switch { 1 => "-inviluppo", 2 => "-concomitanti", _ => "" };
+    private static void SetMovingMode(GH_Document doc)
+    {
+        var envelope = doc.Objects.OfType<GH_Component>().SingleOrDefault(c => c.GetType().Name == "BridgeMovingEnvelopeComponent");
+        if (envelope == null) { if (MovingMode != 0) throw new Exception("BRIDGHE_MOVING_MODE needs a Bridge Moving Envelope in the definition."); return; }
+        var list = In(envelope, "Mode").Sources.OfType<Grasshopper.Kernel.Special.GH_ValueList>().Single();
+        list.SelectItem(MovingMode); list.ExpireSolution(false);
+        Console.WriteLine("P2K MOVING MODE: " + list.FirstSelectedItem.Name);
     }
 
     /// <summary>The GHA is parsed once per process: a second parse shows the modal GUID conflict prompt of Grasshopper (hidden host: a hang).</summary>
@@ -72,7 +85,7 @@ internal static class P2kNative
         Initialize();
         byte[] bytes = File.ReadAllBytes(source);
         string folder = Path.GetFullPath(output); Directory.CreateDirectory(folder);
-        using var doc = GrasshopperBridgeExample.Read(source); doc.FilePath = source;
+        using var doc = GrasshopperBridgeExample.Read(source); doc.FilePath = source; SetMovingMode(doc);
         var analyses = doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "StrausR3AnalysisComponent").OrderBy(c => c.NickName).ToArray();
         void OutputPath(GH_Component c, string port, string file) { var p = (Param_String)In(c, port); p.RemoveAllSources(); p.PersistentData.Clear(); p.SetPersistentData(Path.Combine(folder, file)); }
         foreach (var c in analyses) { Clear(c); OutputPath(c, "Output Path", c.NickName.Split(' ')[0] + ".st7"); }
@@ -153,7 +166,8 @@ internal static class P2kNative
         int active = 0;
         foreach (var c in bridge.Combinations)
         { int count = c.Factors.Count(v => ids.Any(id => v.Case == id + " [FEM]") && v.Factor != 0); Require(count <= 1, "Different traffic positions were summed."); active += count; }
-        Require(active == cases.Length, "Each moving position must enter exactly one cumulative combination.");
+        Require(MovingMode == 0 ? active == cases.Length : active == 0 && bridge.Records.Phases.Single(p => p.Order == 30).Actions.Count(a => BridGHe.Common.MovingLoads.BridgeMovingEnvelope.IsEnvelope(a.Key)) == (MovingMode == 1 ? 8 : 6),
+            MovingMode == 0 ? "Each moving position must enter exactly one cumulative combination." : "The envelope actions must replace the positions in the combinations.");
         int combinations = bridge.Combinations.Count;
         ResultFingerprint.Mark(revision + " checks start"); var checker = Find(doc, "SuperElementCheckComponent"); Press(checker); BridgeSegmentExcelTests.Solve(doc, true);
         var rows = Values<BridgeStressResult>(Out(checker, "Tension Check")); Require(rows.Length > 0, "No section checks: " + Errors(doc)); int sectionChecks = rows.Length; rows = null;
@@ -187,7 +201,7 @@ internal static class P2kNative
         if (!File.Exists(candidate)) throw new FileNotFoundException("Prepare the migrated candidate first.", candidate);
         string folder = Path.GetFullPath("artifacts/modular-bridge/p2k-native-" + Path.GetFileNameWithoutExtension(source)); Directory.CreateDirectory(folder);
         byte[] original = File.ReadAllBytes(source), migrated = File.ReadAllBytes(candidate);
-        using var doc = GrasshopperBridgeExample.Read(candidate); doc.FilePath = source;
+        using var doc = GrasshopperBridgeExample.Read(candidate); doc.FilePath = source; SetMovingMode(doc);
         var analyses = doc.Objects.OfType<GH_Component>().Where(c => c.GetType().Name == "StrausR3AnalysisComponent").OrderBy(c => c.NickName).ToArray();
         if (analyses.Length != 4) throw new Exception("Expected four Straus phase models.");
         for (int i = 0; i < analyses.Length; i++)
@@ -280,7 +294,7 @@ internal static class P2kNative
         if (In(reportComponent, "Results").VolatileDataCount != details.Sum(c => Out(c, "Section result").VolatileDataCount)) throw new Exception("Incomplete report result input.");
         string errors = Errors(doc); if (errors.Length > 0) throw new Exception("Saved graph still has errors:\n" + errors);
         // P2K: the TRANSITIONAL parity checks of the other lanes (FEM value of the merged model) are not called (NativeModularBridgeTests.cs:246-251).
-        ResultFingerprint.Mark("modular checks, details and plots solved"); ResultFingerprint.Write("modular-" + Path.GetFileNameWithoutExtension(source), doc);
+        ResultFingerprint.Mark("modular checks, details and plots solved"); ResultFingerprint.Write("modular-" + Path.GetFileNameWithoutExtension(source) + ModeSuffix, doc);
         R3ConcreteExclusionCheck.Run(doc, checks[0], mergedGoo, "99");
         if (!original.SequenceEqual(File.ReadAllBytes(source)) || !migrated.SequenceEqual(File.ReadAllBytes(candidate))) throw new Exception("Native test modified a GHX source.");
         File.WriteAllText(Path.Combine(folder, "validation.json"), JsonSerializer.Serialize(new { Definition = relative, DefinitionSHA256 = Convert.ToHexString(SHA256.HashData(original)), Native = true, Models = summary, Moving = movingSummary, Phases = phases, Combinations = combinations, SectionChecks = rows.Length, Details = details.Length, Plots = plots.Length }, new JsonSerializerOptions { WriteIndented = true }));

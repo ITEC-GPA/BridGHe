@@ -241,6 +241,9 @@ namespace BridGHe.Common.Gpc
                 }
                 if (action.PrimaryOnly) warnings.Add(BridgeWorkflowBuilder.PrimaryOnlyWarning(action));
             }
+            // 0.7.0 (user decisions of 21/11/2026): the envelope columns «prefix@rule» of Bridge Moving Envelope are actions of their own, in
+            // the phase of the positions «prefix_NNNN», with the samples of the envelope of those positions (MovingEnvelopes below).
+            var envelopes = MovingEnvelopes(combinations, records, raw, concentratedLoads, beams, reference.Units);
             // Different analyses can add different internal extrema. Retain their union and
             // resample each action from its own original grid, never from another action.
             int interpolatedSamples = 0;
@@ -271,8 +274,22 @@ namespace BridGHe.Common.Gpc
             }
             if (interpolatedSamples > 0) warnings.Add(BridgeWorkflowBuilder.InterpolationWarning(interpolatedSamples));
             var workflow = BridgeWorkflowBuilder.Workflow(phases, method, records);
+            if (envelopes.Count > 0)
+            {
+                // the envelope actions after the last position of their group, in its phase
+                workflow = workflow with { Phases = workflow.Phases.Select(p => p with { Actions = p.Actions.SelectMany(a =>
+                    new[] { a }.Concat(envelopes.Where(e => e.Last == a.Key).Select(e => e.Record))).ToArray() }).ToArray() };
+            }
             var table = BridgeWorkflowBuilder.Combinations(records, combinations);
             var summary = BridgeWorkflowBuilder.Finish(phases, method, records, table, workflow, warnings);
+            if (envelopes.Count > 0)
+            {
+                // the positions replaced by their envelope are not «not active»: one line for the group instead of one per position
+                var replaced = envelopes.SelectMany(e => e.Members).ToHashSet(StringComparer.Ordinal);
+                warnings.RemoveAll(w => replaced.Any(k => w == $"Action {k} is not active in any combination."));
+                foreach (var g in envelopes.GroupBy(e => e.Prefix))
+                    warnings.Add($"Bridge Moving Envelope: le {g.First().Members.Length} posizioni {g.Key} sono sostituite da {g.Count()} azioni d'inviluppo ({string.Join(", ", g.Select(e => e.Record.Key))}).");
+            }
 
             var model = Structure(reference.Model, records, table, modelIdentity);
             // R6.4 (6): the bridge data of the beams of the bridge model (the element identities of the reference), from the reference.
@@ -408,6 +425,58 @@ namespace BridGHe.Common.Gpc
                 }
             }
             return aligned;
+        }
+
+        /// <summary>0.7.0: the envelope actions of the header of the combination table («prefix@rule», Bridge Moving Envelope). For every such
+        /// column: the positions «prefix_NNNN» (actions with forces, one behaviour, the same beams), a record copied from the first of them
+        /// (key and force case of the column, no strain), and for every beam the samples of the rule on the union of the stations of the
+        /// positions (each position resampled there with its own concentrated loads, as the merge below does). Added to the records and to
+        /// the raw samples; the envelope has no concentrated load of its own.</summary>
+        private static List<(string Prefix, BridgeWorkflowAction Record, string[] Members, string Last)> MovingEnvelopes(IReadOnlyList<string[]> combinations,
+            Dictionary<string, BridgeWorkflowAction> records, List<(string Case, BeamForceSample Sample)>[] raw, Dictionary<(string Action, string Beam), double[]> concentratedLoads,
+            BeamElement[] beams, BridgeUnits units)
+        {
+            var output = new List<(string, BridgeWorkflowAction, string[], string)>();
+            if (combinations == null || combinations.Count == 0 || combinations[0] == null) return output;
+            var columns = combinations[0].Skip(1).Where(MovingLoads.BridgeMovingEnvelope.IsEnvelope).ToArray();
+            foreach (var prefixGroup in columns.GroupBy(c => { MovingLoads.BridgeMovingEnvelope.TryParse(c, out var p, out _); return p; }))
+            {
+                string prefix = prefixGroup.Key;
+                var members = records.Values.Where(r => MovingLoads.BridgeMovingEnvelope.IsPosition(r.Key, prefix)).ToArray();
+                if (members.Length == 0) throw new ArgumentException($"Bridge Moving Envelope: nessuna azione «{prefix}_NNNN» nelle fasi per le colonne {string.Join(", ", prefixGroup)}.");
+                var first = members[0];
+                if (members.Any(m => m.ForceCase == null || m.StrainCase != null || m.Behavior != first.Behavior || !m.BeamIds.SequenceEqual(first.BeamIds, StringComparer.Ordinal)))
+                    throw new ArgumentException($"Bridge Moving Envelope: le posizioni {prefix} devono essere azioni di forza, senza deformazioni imposte, con lo stesso comportamento e le stesse travi.");
+                // the positions of every beam resampled once on the union of their stations
+                var resampled = new BeamForceSample[beams.Length][][];
+                for (int i = 0; i < beams.Length; i++)
+                {
+                    string id = beams[i].Name;
+                    if (first.BeamIds.Length != 0 && !first.BeamIds.Contains(id, StringComparer.Ordinal)) continue;
+                    double length = units.FromMm(beams[i].Length);
+                    var byCase = raw[i].ToLookup(f => f.Case, f => f.Sample, StringComparer.Ordinal);
+                    var own = members.Select(m => byCase[m.ForceCase].ToArray()).ToArray();
+                    var stations = BridgeMergeValidation.CanonicalStations(own.SelectMany(o => o.Select(x => x.Station)), length);
+                    resampled[i] = members.Select((m, k) => BridgeForceResampling.Resample(own[k], stations, length, $"Inviluppo {prefix}, azione {m.Key}, trave {id}",
+                        concentratedLoads[(m.Key, id)], out _, out _)).ToArray();
+                }
+                foreach (string column in prefixGroup)
+                {
+                    MovingLoads.BridgeMovingEnvelope.TryParse(column, out _, out var rule);
+                    if (records.ContainsKey(column)) throw new ArgumentException("Bridge Moving Envelope: azione già presente " + column);
+                    var record = first with { Key = column, SourceCase = MovingLoads.BridgeMovingEnvelope.Describe(rule, prefix, members.Length), ForceCase = column + " [FEM]",
+                        StrainCase = null, Strain = null };
+                    records.Add(column, record);
+                    for (int i = 0; i < beams.Length; i++)
+                    {
+                        if (resampled[i] == null) continue;
+                        foreach (var sample in MovingLoads.BridgeMovingEnvelope.Samples(resampled[i], rule)) raw[i].Add((record.ForceCase, sample));
+                        concentratedLoads[(column, beams[i].Name)] = Array.Empty<double>();
+                    }
+                    output.Add((prefix, record, members.Select(m => m.Key).ToArray(), members[^1].Key));
+                }
+            }
+            return output;
         }
 
         /// <summary>The beam of the analysed model of an action for an aligned beam: the same beam when the alignment used that model, else the

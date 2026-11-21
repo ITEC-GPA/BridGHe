@@ -108,6 +108,7 @@ internal static class Example50HorizontalLayout
             "BridgeModelAuditComponent" or "DisplaySettingsComponent" or "PreviewModelComponent" => (7, 3),
             // The moving-load combinations become the traffic actions of phase 30 (n0).
             "BridgeMovingCombinationsComponent" => (5, 0),
+            "BridgeMovingEnvelopeComponent" => (5, 1),
             "DecomposeModelComponent" => c.NickName.StartsWith("M0 calcolato") ? (3,5) : c.NickName.StartsWith("Estrai") ? (8, 0) : (7, 3),
             "BridgeSegmentCompositeComponent" => c.NickName.StartsWith("Solo longitudinali") ? (3,6) : (8, 1),
             "CompositeBeamComponent" or "BridgeAnalysisOptionsComponent" or "BridgeStudsComponent" => (8, 2),

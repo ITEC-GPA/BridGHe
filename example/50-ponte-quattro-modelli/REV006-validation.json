@@ -1,0 +1,11 @@
+{
+  "Generator": "--example-envelope",
+  "Source": "50-ponte-quattro-modelli_REV005.ghx",
+  "SourceSHA256": "DBBF3DD3483051725AD3B1E74A977DB2D8EEA1388A19D6EFF284E35D17CEC90B",
+  "Definition": "50-ponte-quattro-modelli_REV006.ghx",
+  "DefinitionSHA256": "858B11DD1DD94467740783AF876DFBC777EC342EA446BF229C97DD3303219095",
+  "Changes": [
+    "Bridge Moving Envelope fra «Tabella combinazioni mobili — una posizione alla volta» e 1 Build BridGHe Model; modo da Value List: Posizioni"
+  ],
+  "NativeSolverInvoked": false
+}

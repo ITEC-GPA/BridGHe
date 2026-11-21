@@ -129,6 +129,8 @@ internal static class Program
         if(args.Contains("--example50-rev001-inputs")) { Console.WriteLine("RETIRED BY NAME (P2CD): --example50-rev001-inputs: "+P2rRetiredP2cd.Reason("generator|--example50-rev001-inputs")); return 1; } // P2CD (13/11): the authoring tool of 50 REV001 retired (E4)
         if(args.Contains("--example50-rev002")||args.Contains("--example50-rev002-check")) { Console.WriteLine("RETIRED BY NAME (P2CB): --example50-rev002: "+P2rRetiredP2cb.Reason("generator|--example50-rev002")); return 1; } // P2CB (13/11): the generator of 50 REV002 retired (E4)
         if(args.Contains("--example50-rev003")) return BridgeMovingRevisionExample.Run(args);
+        if(args.Contains("--example-envelope")) return ExampleEnvelope070.Run(args); // 0.7.0: 50 REV006 and 99 REV007 with Bridge Moving Envelope
+        if(args.Contains("--gh-appended-input")) return GhAppendedInputProbe.Run(); // 0.7.0 probe: reading a definition saved without an input added at the end
         if(args.Contains("--example-stations")) return ExampleStations060.Run(args); // 0.6.0: 50 REV005 and the migration of template-50 definitions (analysis stations, notable sections)
         if(args.Contains("--example-reference-loads")) return ExampleReferenceLoads.Run(args); // 50 REV004 / 99 REV005: phase loads of the company reference script
         if(args.Contains("--saved-bridge-audit")) return SavedBridgeWorkflowAudit.Run();
