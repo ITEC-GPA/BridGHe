@@ -202,7 +202,7 @@
       ]
     },
     "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckComponent.cs": {
-      "ports": "6a8c342a824aadab144ad782a27ba9ea707c8253048768e77d86ceafbb9d3550",
+      "ports": "eccf4e33933d6d23e418d5a68b176cd16b5f0b83efe4579d30fb7a116da37cde",
       "guids": [
         "94839122-32f0-4f3e-a30f-979a53c3eca8"
       ]
@@ -961,10 +961,11 @@
       ]
     },
     "src/BridGHe.Grasshopper/Components/Utilities/BridgeMovingWorkflowComponents.cs": {
-      "ports": "4a007745f830a4d45d125b96b0be56fb291b074d00fd79c153318f74af4a7116",
+      "ports": "6c584159de8fad4185413476a8f0ec36471bf5f289d6d638555ff9a19213f68e",
       "guids": [
         "3fdba0df-48ec-41d3-8b9e-3f2e3663fd32",
-        "9a43a3f7-3d36-4ba1-b7d1-1bfb973d4015"
+        "9a43a3f7-3d36-4ba1-b7d1-1bfb973d4015",
+        "7483e8ce-1361-4830-9379-e04f213f82b8"
       ]
     },
     "src/BridGHe.Grasshopper/Components/Utilities/BridgeNotableStationsComponent.cs": {
