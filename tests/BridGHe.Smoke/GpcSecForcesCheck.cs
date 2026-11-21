@@ -32,7 +32,7 @@ internal static class GpcSecForcesCheck
         var goo = check.Params.Input[0].VolatileData.AllData(true).Single();
         var bridge = (BridGHe.Common.Gpc.GpcBridge)goo.GetType().GetProperty("GpcBridge").GetValue(goo) ?? throw new Exception("GPC SEC FORCES FAIL (" + label + "): no GPC bridge model");
         var beams = check.Params.Input[1].VolatileData.AllData(true).Select(g => (object)g).ToArray();
-        var output = check.Params.Output[2].VolatileData;
+        var output = check.Params.Output.First(o => o.Name == "Tension Forces").VolatileData; // 0.7.0: the second output (Tau b removed)
         var combinations = bridge.Combinations;
         long values = 0; int branches = 0;
         for (int i = 0; i < beams.Length; i++)

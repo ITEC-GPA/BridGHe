@@ -69,7 +69,8 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddGenericParameter("Tension Check", "C", "The results", GH_ParamAccess.tree);
-            pManager.AddGenericParameter("Tau b", "T", "The results", GH_ParamAccess.tree);
+            // 0.7.0 (user decision of 21/11/2026): «Tau b» removed. It was NaN everywhere since the gPC path (no verified counterpart): the
+            // shear stresses of the web are in the Tension Check results (points 6 and 7), the interface shear and the studs in Detail Check.
             pManager.AddGenericParameter("Tension Forces", "C", "The forces", GH_ParamAccess.tree);
         }
 
@@ -304,12 +305,10 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     }
 
                     StressAnalysisResult[][][] stressAnalysisResults = new StressAnalysisResult[beams.Count][][];
-                    double[][][] tauBResults = new double[beams.Count][][];
 
                     for (int i = 0; i < beams.Count; i++)
                     {
                         stressAnalysisResults[i] = new StressAnalysisResult[forcesForOutput[i].Length][];
-                        tauBResults[i] = new double[forcesForOutput[i].Length][];
                     }
                     // One task per station (before, per beam): its combinations are one gPC batch, which calculates their shared phases once.
                     // Every station writes only its own slots, so the outputs keep their order.
@@ -340,8 +339,6 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                             }
                         }
                         stressAnalysisResults[i][j] = station;
-                        // "Tau b" has no verified equivalent in the GPC API: NaN for every combination, as on the D3 path before.
-                        tauBResults[i][j] = Enumerable.Repeat(double.NaN, combinations.Count).ToArray();
                     });
 
                     DataTree<StressAnalysisResult> resultsDataTree = new DataTree<StressAnalysisResult>();
@@ -351,11 +348,6 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                             resultsDataTree.AddRange(stressAnalysisResults[i][j].Select((result, k) => result?.WithSource(
                                 new BridgeResultSource(ids[i], workflowStations[i][j], combinations[k].Name, beamSuperElements[i]))), At(i, j));
                     }
-
-                    DataTree<double> tauBDataTree = new DataTree<double>();
-                    for (int i = 0; i < tauBResults.Length; i++)
-                        for (int j = 0; j < tauBResults[i].Length; j++)
-                            tauBDataTree.AddRange(tauBResults[i][j], At(i, j));
 
                     DataTree<ResultBeamForces> forcesTree = new DataTree<ResultBeamForces>();
                     for (int i = 0; i < forcesForOutput.Length; i++)
@@ -375,9 +367,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     DA.SetDataTree(0, resultsDataTree);
                     if (records.Method == BridgeWorkflowMethod.LinearHistory)
                         AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "gPC LinearHistory: section history in N–Mx only; shear, studs and stiffeners are not checked. The geometric strain refers to the origin of the history; creep is not integrated in time.");
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Tau b has no verified counterpart in the current gPC API: the output is NaN.");
-                    DA.SetDataTree(1, tauBDataTree);
-                    DA.SetDataTree(2, forcesTree);
+                    DA.SetDataTree(1, forcesTree);
 
                     Message = "N–Mx–Vy";
                     if (ulsCombinations.Length > 0 && analysisOptions.LimitState != GPC.Checkers.CompositeBridge.BridgeLimitState.Ultimate)
@@ -434,6 +424,17 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
         }
 
         public override GH_Exposure Exposure => GH_Exposure.tertiary;
+
+        /// <summary>0.7.0: a definition saved before 0.7.0 has three outputs (Tension Check, Tau b, Tension Forces). Grasshopper reads the outputs
+        /// by position, so the second output would take the identity of «Tau b» and the wires of «Tension Forces» would be lost: the second output
+        /// is read again from the third chunk, with its GUID, name and wires.</summary>
+        public override bool Read(GH_IO.Serialization.GH_IReader reader)
+        {
+            bool ok = base.Read(reader);
+            var former = reader.FindChunk("param_output", 2);
+            if (former != null && Params.Output.Count == 2) ok &= Params.Output[1].Read(former);
+            return ok;
+        }
 
         /// <summary>
         /// Provides an Icon for the component.

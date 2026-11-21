@@ -150,6 +150,10 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
             }
             StartPending();
             Helpers.GpcReleaseGuard.Warn(this);
+            // 0.7.0 (user, 21/11/2026: «aiutiamo l'utente a scegliere solo i punti giusti e necessari»): a Detail Check fed directly by the Super
+            // Element Check checks every station of the girders; the details need the notable sections only.
+            if(da.Iteration==0&&Params.Input[0].Sources.Any(s=>s.Attributes?.GetTopLevel?.DocObject is BridgeChecks.SuperElementCheckComponent))
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Remark,FedBySuperElementCheck);
             if(!GetSolveResults(da,out var solution))
             {
                 try{var request=Read(da);solution=request==null?null:Calculate(request);}
@@ -160,12 +164,18 @@ namespace BridGHe.Grasshopper.Components.BridgeDetails
             try
             {
                 var updated=solution.Updated;var selected=updated.Stage;var checks=solution.Checks;
-                da.SetData(0,updated);da.SetDataList(1,checks.Select(c=>c.Name));da.SetDataList(2,checks.Select(c=>c.Demand));da.SetDataList(3,checks.Select(c=>c.Resistance));
-                da.SetDataList(4,checks.Select(c=>c.Unit));da.SetDataList(5,checks.Select(c=>c.Ratio??double.NaN));da.SetDataList(6,checks.Select(c=>c.Status+": "+c.Note));da.SetDataList(7,selected.Warnings.Concat(updated.Assumptions).Distinct());
+                da.SetData(0,updated);
+                // 0.7.0 (study of the computation times, user decision of 21/11/2026): the seven lists of the checks (about 150 items per section,
+                // 16 million on the Pescara of 0.5.0) are filled only when something reads them; the section result carries the same checks.
+                bool Used(int k)=>Params.Output[k].Recipients.Count>0;
+                if(Used(1))da.SetDataList(1,checks.Select(c=>c.Name));if(Used(2))da.SetDataList(2,checks.Select(c=>c.Demand));if(Used(3))da.SetDataList(3,checks.Select(c=>c.Resistance));
+                if(Used(4))da.SetDataList(4,checks.Select(c=>c.Unit));if(Used(5))da.SetDataList(5,checks.Select(c=>c.Ratio??double.NaN));if(Used(6))da.SetDataList(6,checks.Select(c=>c.Status+": "+c.Note));if(Used(7))da.SetDataList(7,selected.Warnings.Concat(updated.Assumptions).Distinct());
                 if(solution.ServiceLimitState)AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,"The source result is at the serviceability limit state (SLS): gPC leaves the checks that need ultimate limit state (ULS) actions without an outcome. No load factor is applied implicitly.");
             }
             catch(Exception e){AddRuntimeMessage(GH_RuntimeMessageLevel.Error,e.Message);}
         }
+        /// <summary>The remark of a Detail Check fed directly by Super Element Check (every station).</summary>
+        internal const string FedBySuperElementCheck="Detail Check su tutte le stazioni del Super Element Check: pioli, irrigiditori e taglio dell'anima servono solo nelle sezioni notevoli. Per un calcolo più rapido: Bridge Notable Stations → Bridge Detail Stations → Section result.";
         /// <summary>The inputs of the current section (null: no section result); exceptions are the input errors</summary>
         private Request Read(IGH_DataAccess da)
         {

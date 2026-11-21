@@ -93,7 +93,7 @@ internal static class R2bMergeForcesChecks
         c.GetType().GetField("_run", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(c, true); c.ExpireSolution(false);
         GH_Document.EnableSolutions = true; doc.Enabled = true; doc.NewSolution(false, GH_SolutionMode.Silent);
         Require(c.RuntimeMessages(GH_RuntimeMessageLevel.Error).Count == 0, "Super Element Check: " + string.Join("; ", c.RuntimeMessages(GH_RuntimeMessageLevel.Error)));
-        var output = c.Params.Output[2].VolatileData;
+        var output = c.Params.Output.First(o => o.Name == "Tension Forces").VolatileData; // 0.7.0: the second output (Tau b removed)
         Require(output.PathCount == grid.Length, $"{output.PathCount} branches, {grid.Length} merged stations");
         double[][] factors = { new[] { 1d, 1 }, new[] { 1.35, 1.5 } };
         for (int j = 0; j < grid.Length; j++)

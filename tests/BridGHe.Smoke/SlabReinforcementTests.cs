@@ -245,15 +245,38 @@ internal static class SlabReinforcementTests
             string Errors()=>string.Join("; ",c.RuntimeMessages(GH_RuntimeMessageLevel.Error));
             double[] Numbers(BridgeStressResult r)=>new[]{r.Point1_ConcreteSigma,r.Point2_RebarSigma,r.Point4_ConcreteSigma,r.Point5_SteelSigma,r.Point6_SteelSigma,r.Point7_SteelSigma,r.Point8_SteelSigma,r.Point6_SteelTau,r.Point7_SteelTau};
             bool Same(BridgeStressResult[] a,params BridgeStressResult[] b)=>a.Length==b.Length&&Enumerable.Range(0,a.Length).All(i=>Numbers(a[i]).SequenceEqual(Numbers(b[i]))&&a[i].Source.StationMm==b[i].Source.StationMm);
-            require(c.Params.Input.Count==3&&c.Params.Input[2].Optional&&c.Params.Output.Count==3,"GPC ("+carriers+"): Super Element Check must have Model, Super-Element Beam and the optional Options; outputs unchanged.");
+            require(c.Params.Input.Count==3&&c.Params.Input[2].Optional&&c.Params.Output.Count==2,"GPC ("+carriers+"): Super Element Check must have Model, Super-Element Beam and the optional Options; outputs Tension Check and Tension Forces (0.7.0).");
             require(results.All(r=>r.Analysis.Input.Options.LimitState==GPC.Checkers.CompositeBridge.BridgeLimitState.Rare)&&c.Message=="N–Mx–Vy","GPC ("+carriers+"): without ULS combinations the check must stay at the rare SLS.");
             // Without options: the 2 nodes of the element, the same numbers as the two ends of the run on all stations, bit for bit.
             ((Param_GenericObject)c.Params.Input[2]).PersistentData.Clear();c.Params.Input[2].ExpireSolution(false);Run();
             require(Errors()==""&&Same(Results(),results[0],results[2]),"GPC ("+carriers+"): the default (2 nodes) must give the two end stations of the full run: "+Errors()+" / "+Results().Length);
             // The paths keep the index of the station among all the stations of the beam, as the plots and Bridge Girder Results read it.
             var paths=c.Params.Output.Select(o=>string.Join(" ",o.VolatileData.Paths.Select(p=>p.ToString()))).ToArray();
-            require(paths.All(p=>p=="{0;0} {0;2}"),"GPC ("+carriers+"): the 2 nodes must keep their station indices {0;0} {0;2} on the three outputs: "+string.Join(" / ",paths));
+            require(paths.All(p=>p=="{0;0} {0;2}"),"GPC ("+carriers+"): the 2 nodes must keep their station indices {0;0} {0;2} on the outputs: "+string.Join(" / ",paths));
             gpcChecks++;
+            // 0.7.0: «Tau b» removed (two outputs); an archive of 0.6.x, with Tau b between Tension Check and Tension Forces, gives the second output
+            // the GUID and the name of its Tension Forces, so that the wires downstream are kept.
+            require(c.Params.Output.Count==2&&c.Params.Output[1].Name=="Tension Forces","GPC ("+carriers+"): Super Element Check must have Tension Check and Tension Forces only.");
+            {
+                var archive=new GH_IO.Serialization.GH_Archive();require(archive.AppendObject(c,"SE"),"GPC ("+carriers+"): archive of Super Element Check.");
+                string xml=archive.Serialize_Xml();var forces=c.Params.Output[1].InstanceGuid;var tauB=Guid.NewGuid();
+                int at=xml.IndexOf("<chunk name=\"param_output\" index=\"1\">",StringComparison.Ordinal);require(at>0,"GPC: no second output chunk.");
+                // the chunk of the second output ends with the closing tag of its own indentation
+                int lineStart=xml.LastIndexOf('\n',at)+1;string indent=xml.Substring(lineStart,at-lineStart);
+                int close=xml.IndexOf("\n"+indent+"</chunk>",at,StringComparison.Ordinal)+indent.Length+9;
+                string chunk=xml.Substring(at,close-at);
+                string tau=chunk.Replace(forces.ToString(),tauB.ToString()).Replace(">Tension Forces<",">Tau b<");
+                xml=xml.Substring(0,at)+tau+"\n"+indent+chunk.Replace("index=\"1\"","index=\"2\"")+xml.Substring(close);
+                // the chunk count of the parent of the parameter chunks: the last «chunks count» before the first input chunk
+                const string countTag="<chunks count=\"";
+                int count=xml.LastIndexOf(countTag,xml.IndexOf("<chunk name=\"param_input\" index=\"0\">",StringComparison.Ordinal),StringComparison.Ordinal)+countTag.Length;
+                int quote=xml.IndexOf('"',count);int n=int.Parse(xml.Substring(count,quote-count));xml=xml.Substring(0,count)+(n+1)+xml.Substring(quote);
+                var former=new GH_IO.Serialization.GH_Archive();require(former.Deserialize_Xml(xml),"GPC: the 0.6.x archive is not readable.");
+                var restored=(GH_Component)Activator.CreateInstance(c.GetType());restored.CreateAttributes();require(former.ExtractObject(restored,"SE"),"GPC: Super Element Check of 0.6.x not extracted.");
+                require(restored.Params.Output.Count==2&&restored.Params.Output[1].Name=="Tension Forces"&&restored.Params.Output[1].InstanceGuid==forces&&restored.Params.Output[0].InstanceGuid==c.Params.Output[0].InstanceGuid,
+                    "GPC ("+carriers+"): a Super Element Check of 0.6.x must keep Tension Forces as its second output: "+string.Join(", ",restored.Params.Output.Select(o=>o.Name+" "+o.InstanceGuid)));
+                gpcChecks+=2;
+            }
             // Bridge Analysis Options alone, equal to the defaults: the same numbers and a remark that the toggles are not used.
             Set(2,(IGH_Goo)Activator.CreateInstance(goo,(object)new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions{Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4,LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare}));Run();
             require(Errors()==""&&Same(Results(),results[0],results[2]),"GPC ("+carriers+"): default Bridge Analysis Options changed the numbers: "+Errors());

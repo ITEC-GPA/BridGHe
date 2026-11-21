@@ -94014,7 +94014,7 @@ Total TOP row area over the slab width [mm²]. Zero disables this row.</item>
                     <item name="Name" type_name="gh_string" type_code="10">Super Element Check</item>
                     <item name="NickName" type_name="gh_string" type_code="10">Verifiche di tutte le travi — Run dopo Build</item>
                   </items>
-                  <chunks count="7">
+                  <chunks count="6">
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
@@ -94140,33 +94140,6 @@ Total TOP row area over the slab width [mm²]. Zero disables this row.</item>
                       </chunks>
                     </chunk>
                     <chunk name="param_output" index="1">
-                      <items count="7">
-                        <item name="Access" type_name="gh_int32" type_code="3">2</item>
-                        <item name="Description" type_name="gh_string" type_code="10">The results</item>
-                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">449b4987-8c16-47c7-b7f1-548f8c3e086f</item>
-                        <item name="Name" type_name="gh_string" type_code="10">Tau b</item>
-                        <item name="NickName" type_name="gh_string" type_code="10">T</item>
-                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
-                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
-                      </items>
-                      <chunks count="1">
-                        <chunk name="Attributes">
-                          <items count="2">
-                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                              <X>91388</X>
-                              <Y>2505</Y>
-                              <W>17</W>
-                              <H>20</H>
-                            </item>
-                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
-                              <X>91396.5</X>
-                              <Y>2515</Y>
-                            </item>
-                          </items>
-                        </chunk>
-                      </chunks>
-                    </chunk>
-                    <chunk name="param_output" index="2">
                       <items count="7">
                         <item name="Access" type_name="gh_int32" type_code="3">2</item>
                         <item name="Description" type_name="gh_string" type_code="10">The forces</item>
