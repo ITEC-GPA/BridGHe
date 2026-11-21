@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Checks;
 
@@ -48,6 +49,11 @@ internal static class BridgeNotableStationsTests
         // Without middles and without results: only the ends and the supports, a note, no guard.
         var bare = BridgeNotableStations.Points(chain, supports, Array.Empty<BridgeNotableStations.Sample>(), false, 1);
         Require(bare.Points.Count == 4 && bare.Guard.Count == 0 && bare.Notes.Count == 1, "without middles and results: 4 points and a note");
+        // 0.6.0 (99 REV006): with results, only the girders they cover; without results, all of them.
+        var two = new (string Girder, IReadOnlyList<string> BeamIds)[] { ("G1", new[] { "1", "2" }), ("G2", new[] { "3", "4" }) };
+        Require(BridgeNotableStations.Covered(two, new[] { "4" }).SequenceEqual(new[] { "G2" }), "results of G2 alone: the points of G2 only");
+        Require(BridgeNotableStations.Covered(two, Array.Empty<string>()).SequenceEqual(new[] { "G1", "G2" }), "no results: every girder");
+        Require(BridgeNotableStations.Covered(two, new[] { "9" }).Count == 0, "results of no girder: none");
         // A branched girder is refused.
         Require(Throws(() => BridgeNotableStations.Order(new[] { E("a", 0, 1000, "X"), E("b", 1000, 2000, "X"), E("c", 1000, 1500, "X") }, 1)), "a branched girder is refused");
         Console.WriteLine($"BRIDGE NOTABLE STATIONS PASS: {checks} checks (analysis stations per element, chain, segment ends and middles, supports, span maxima, guard).");

@@ -38,6 +38,16 @@ namespace BridGHe.Common.Checks
         public const string KindSupport = "appoggio";
         public const string KindSpanMax = "massimo positivo di campata";
 
+        /// <summary>The girders whose points are given (0.6.0, 99 REV006: a Detail Check fed by the Super Element Check of one girder): with
+        /// results, the girders with at least one element in them, since Bridge Detail Stations finds no station on the others; without
+        /// results, all the girders. In the order given.</summary>
+        public static IReadOnlyList<string> Covered(IReadOnlyList<(string Girder, IReadOnlyList<string> BeamIds)> girders, IReadOnlyCollection<string> resultBeams)
+        {
+            if (resultBeams == null || resultBeams.Count == 0) return girders.Select(g => g.Girder).ToArray();
+            var set = resultBeams as ISet<string> ?? new HashSet<string>(resultBeams, StringComparer.Ordinal);
+            return girders.Where(g => g.BeamIds.Any(set.Contains)).Select(g => g.Girder).ToArray();
+        }
+
         /// <summary>The ordered chain of a girder: nodes and, for every element, its first node and whether it runs against the chain.</summary>
         public sealed class Chain
         {

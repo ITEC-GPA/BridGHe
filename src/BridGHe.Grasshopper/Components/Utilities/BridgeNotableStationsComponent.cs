@@ -60,6 +60,12 @@ public sealed class BridgeNotableStationsComponent : BridgeUtilityComponent
         var girders = bridge.Model.BeamElements.Values.Select(b => (Beam: b, Girder: bridge.Data.SuperElement(b.Guid)))
             .Where(t => !string.IsNullOrWhiteSpace(t.Girder)).GroupBy(t => t.Girder, StringComparer.Ordinal).OrderBy(g => g.Key, StringComparer.Ordinal).ToArray();
         if (girders.Length == 0) throw new ArgumentException("Il modello non ha travi principali (superelementi).");
+        // With results (e.g. the Super Element Check of G2 alone), only the girders they cover: the others have no station to select.
+        var covered = BridgeNotableStations.Covered(girders.Select(g => (g.Key, (IReadOnlyList<string>)g.Select(t => t.Beam.Source.OriginalId).ToArray())).ToArray(), samples.Keys.ToArray());
+        if (covered.Count == 0) throw new ArgumentException("I risultati non sono di nessuna trave principale del modello.");
+        if (covered.Count < girders.Length)
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, "Travi senza risultati, quindi senza punti: " + string.Join(", ", girders.Select(g => g.Key).Except(covered, StringComparer.Ordinal)) + ".");
+        girders = girders.Where(g => covered.Contains(g.Key)).ToArray();
         var supportPoints = supports.Where(s => s.IsValid).Select(s => new BridgeNotableStations.P3(s.X, s.Y, s.Z)).ToArray();
         var points = new List<Point3d>(); var kinds = new List<string>(); var chainOut = new List<double>();
         var names = new List<string>(); var guard = new List<string>(); int total = 0;
