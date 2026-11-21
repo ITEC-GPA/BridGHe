@@ -1,10 +1,10 @@
-# 99 REV007 — il mobile nelle verifiche (BridGHe 0.7.0)
+# 99 REV007 — il mobile nelle verifiche (BridGHe 0.7.0, Concomitanti dalla 0.7.1)
 
-Aprire **[flusso-acciaio-misto_REV007.ghx](flusso-acciaio-misto_REV007.ghx)** con la Release 0.7.0. Il file deriva dal REV006, che resta, con il comando `--example-envelope 99`. Modelli, carichi, combinazioni e stazioni sono quelli del REV006.
+Aprire **[flusso-acciaio-misto_REV007.ghx](flusso-acciaio-misto_REV007.ghx)** con la Release 0.7.1. Il file deriva dal REV006, che resta, con il comando `--example-envelope 99`. Modelli, carichi, combinazioni e stazioni sono quelli del REV006.
 
 ## Cosa cambia
 
-**Bridge Moving Envelope** fra la tabella delle combinazioni mobili del tandem e Build BridGHe Model, con la Value List «Mobile nelle verifiche» impostata su **Posizioni**: i risultati del REV006. Le altre scelte servono al dimensionamento:
+**Bridge Moving Envelope** fra la tabella delle combinazioni mobili del tandem e Build BridGHe Model, con la Value List «Mobile nelle verifiche» impostata su **Concomitanti** dalla 0.7.1 (nella 0.7.0 era su Posizioni). Con **Posizioni** i risultati sono quelli del REV006, per la verifica finale. Le altre scelte servono al dimensionamento:
 - **Inviluppo**: gli 8 angoli N±, V±, M± in ogni stazione, sempre a favore di sicurezza;
 - **Concomitanti**: massimo e minimo di N, V, M con le sollecitazioni della stessa posizione.
 

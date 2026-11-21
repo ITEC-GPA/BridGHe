@@ -3,9 +3,10 @@
   "Source": "flusso-acciaio-misto_REV006.ghx",
   "SourceSHA256": "4C0626EEBF3D17BA1B01A3CA429C3C8B2C86375D2E5F8B09E775C93546A1DB61",
   "Definition": "flusso-acciaio-misto_REV007.ghx",
-  "DefinitionSHA256": "EF49492FCC479F2C546F201835F6E9C2A5F51E2F0CA199E2212C10F5CD53F92C",
+  "DefinitionSHA256": "658FF170444B627176BD617196B01A6E196616E1DA0CF708059C4F062E2A1D21",
   "Changes": [
-    "Bridge Moving Envelope fra «Tabella combinazioni mobili — una posizione alla volta» e 1 Build BridGHe Model; modo da Value List: Posizioni"
+    "Bridge Moving Envelope fra «Tabella combinazioni mobili — una posizione alla volta» e 1 Build BridGHe Model; modo da Value List: Posizioni",
+    "0.7.1: Value List su Concomitanti, modificata nell'XML (splice071.py: Selected di Posizioni e di Concomitanti); SHA-256 della 0.7.0 EF49492FCC479F2C546F201835F6E9C2A5F51E2F0CA199E2212C10F5CD53F92C"
   ],
   "NativeSolverInvoked": false
 }

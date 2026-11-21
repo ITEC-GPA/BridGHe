@@ -53461,7 +53461,7 @@ Dopo ogni modifica a geometria, sezioni, carichi o politiche: ripetere le analis
 TRAFFICO: Run Moving Static Analysis dopo M01; n0 conserva la mappa da Dead. Posizioni ALTERNATIVE nella fase 30. Poi Run Build e verifiche.
 CARICHI REV006: fasi come lo script di riferimento aziendale. Fase 10 acciaio: peso proprio (Dead × 1,15) e getto della soletta. Fase 20 n∞: G2 pavimentazione, cordoli, guard-rail, parapetti, finiture. Fase 30 n0: schema 1 (corsie 1 e 2), frenatura, centrifuga, vento, temperatura.
 STAZIONI REV006 (0.6.0): Super Element Check su tutta la trave ai 2 nodi di ogni asta (Super Element Check Options); Detail Check solo nelle sezioni notevoli (estremi e metà dei tratti, appoggi, massimi di campata: Bridge Notable Stations); stazioni Straus7 per asta da Beam Output Stations (5 come prima).
-MOBILE REV006 (0.7.0): Bridge Moving Envelope fra la tabella del mobile e Build BridGHe Model. Posizioni (scelta di partenza): una combinazione per posizione, la verifica più precisa. Inviluppo: in ogni stazione gli 8 angoli di N, V, M fra le posizioni, sempre a favore di sicurezza, per il dimensionamento. Concomitanti: il massimo e il minimo di N, V e M con le sollecitazioni della stessa posizione (6 casi).</item>
+MOBILE REV006 (0.7.0): Bridge Moving Envelope fra la tabella del mobile e Build BridGHe Model. Concomitanti (impostata dalla 0.7.1): il massimo e il minimo di N, V e M con le sollecitazioni della stessa posizione (6 casi), per il dimensionamento. Inviluppo: in ogni stazione gli 8 angoli di N, V, M fra le posizioni, sempre a favore di sicurezza. Posizioni: una combinazione per posizione, la verifica più precisa (i risultati della revisione precedente).</item>
                   </items>
                   <chunks count="2">
                     <chunk name="Attributes">
@@ -95845,7 +95845,7 @@ Total TOP row area over the slab width [mm²]. Zero disables this row.</item>
                       <items count="3">
                         <item name="Expression" type_name="gh_string" type_code="10">0</item>
                         <item name="Name" type_name="gh_string" type_code="10">Posizioni</item>
-                        <item name="Selected" type_name="gh_bool" type_code="1">true</item>
+                        <item name="Selected" type_name="gh_bool" type_code="1">false</item>
                       </items>
                     </chunk>
                     <chunk name="ListItem" index="1">
@@ -95859,7 +95859,7 @@ Total TOP row area over the slab width [mm²]. Zero disables this row.</item>
                       <items count="3">
                         <item name="Expression" type_name="gh_string" type_code="10">2</item>
                         <item name="Name" type_name="gh_string" type_code="10">Concomitanti</item>
-                        <item name="Selected" type_name="gh_bool" type_code="1">false</item>
+                        <item name="Selected" type_name="gh_bool" type_code="1">true</item>
                       </items>
                     </chunk>
                     <chunk name="Attributes">

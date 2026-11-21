@@ -1,6 +1,6 @@
 # 50 · Ponte parametrico: quattro modelli, fasi, ritiro e verifiche
 
-**Aggiornamento 21 novembre 2026 (BridGHe 0.7.0).** La definizione corrente è la [REV006](50-ponte-quattro-modelli_REV006.ghx): la REV005 ([guida](README_REV005.md), stazioni di verifica e sezioni notevoli della 0.6.0) con Bridge Moving Envelope, che sceglie come entra il mobile nelle verifiche: Posizioni (impostata), Inviluppo o Concomitanti ([guida REV006](README_REV006.md)).
+**Aggiornamento 21 novembre 2026 (BridGHe 0.7.0).** La definizione corrente è la [REV006](50-ponte-quattro-modelli_REV006.ghx): la REV005 ([guida](README_REV005.md), stazioni di verifica e sezioni notevoli della 0.6.0) con Bridge Moving Envelope, che sceglie come entra il mobile nelle verifiche: Posizioni, Inviluppo o Concomitanti, impostata dalla 0.7.1 ([guida REV006](README_REV006.md)).
 
 **Aggiornamento 20 novembre 2026 (BridGHe 0.5.0).** Nella REV004 la soletta è il nuovo Concrete Slab Section con passo e diametri: Ø16 sopra e sotto a passo 172,3388 mm, che danno le stesse aree di prima (3500 mm² per fila su 3000 mm). Gli slider delle aree sono diventati quelli dei diametri; il passo ha uno slider nuovo. Le revisioni precedenti usano ancora il componente con le aree, ora nascosto e superato.
 

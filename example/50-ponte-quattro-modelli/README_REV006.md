@@ -1,6 +1,6 @@
-# 50 REV006 — il mobile nelle verifiche (BridGHe 0.7.0)
+# 50 REV006 — il mobile nelle verifiche (BridGHe 0.7.0, Concomitanti dalla 0.7.1)
 
-Aprire **[50-ponte-quattro-modelli_REV006.ghx](50-ponte-quattro-modelli_REV006.ghx)** con la Release 0.7.0. Il file deriva dal REV005, che resta, con il comando `--example-envelope 50`. Geometria, sezioni, carichi, fasi, combinazioni e stazioni sono quelli del REV005.
+Aprire **[50-ponte-quattro-modelli_REV006.ghx](50-ponte-quattro-modelli_REV006.ghx)** con la Release 0.7.1. Il file deriva dal REV005, che resta, con il comando `--example-envelope 50`. Geometria, sezioni, carichi, fasi, combinazioni e stazioni sono quelli del REV005.
 
 ## Cosa cambia
 
@@ -8,9 +8,11 @@ Aprire **[50-ponte-quattro-modelli_REV006.ghx](50-ponte-quattro-modelli_REV006.g
 
 | Scelta | Combinazioni del mobile | Uso |
 |---|---|---|
-| **Posizioni** (impostata) | una per posizione (31): i risultati del REV005 | verifica |
+| Posizioni | una per posizione (31): i risultati del REV005 | verifica |
 | Inviluppo | 8 angoli N±, V±, M± in ogni stazione, sempre a favore di sicurezza | dimensionamento |
-| Concomitanti | massimo e minimo di N, V, M con le sollecitazioni della stessa posizione (6) | dimensionamento |
+| **Concomitanti** (impostata dalla 0.7.1) | massimo e minimo di N, V, M con le sollecitazioni della stessa posizione (6) | dimensionamento |
+
+Nella 0.7.0 la scelta di partenza era Posizioni; dalla 0.7.1 è Concomitanti, il calcolo più leggero. Per la verifica finale scegliere Posizioni.
 
 Per cambiare scelta: Value List, poi Run su Build BridGHe Model e sui check.
 

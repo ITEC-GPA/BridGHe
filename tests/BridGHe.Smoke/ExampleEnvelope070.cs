@@ -55,7 +55,34 @@ internal static class ExampleEnvelope070
             Console.WriteLine("ENVELOPE 0.7.0: " + args[i + 3] + " — " + JsonSerializer.Serialize(report, Options));
             return 0;
         }
-        Console.Error.WriteLine("usage: --example-envelope 50 | 99 | add <in.ghx> <out.ghx>");
+        if (mode == "revision" && args.Length > i + 6)
+        {
+            // 0.7.1 (user 21/11/2026: «aggiorna anche i file del pescara e del brecciarola»): a new revision of a project definition with Bridge
+            // Moving Envelope, the Value List on the given mode, the Straus output paths and the report name moved from the old revision tag to the new one
+            // (only panels holding a .st7 or .docx name), and a note panel next to the Value List. The source is only read; the target is never overwritten.
+            string source = Path.GetFullPath(args[i + 2]), target = Path.GetFullPath(args[i + 3]); string oldTag = args[i + 5], newTag = args[i + 6];
+            Require(int.TryParse(args[i + 4], out int selected) && selected is >= 0 and <= 2, "mode 0 Posizioni, 1 Inviluppo or 2 Concomitanti");
+            Require(!File.Exists(target), "the target already exists (a revision is never overwritten): " + target);
+            Require(oldTag.Length > 0 && newTag.Length > 0 && oldTag != newTag, "two different revision tags");
+            var moved = new List<string>();
+            void Edit(GH_Document doc)
+            {
+                foreach (var p in doc.Objects.OfType<GH_Panel>().Where(p => p.UserText != null && !p.UserText.Contains('\n')
+                    && (p.UserText.EndsWith(".st7", StringComparison.OrdinalIgnoreCase) || p.UserText.EndsWith(".docx", StringComparison.OrdinalIgnoreCase)) && p.UserText.Contains(oldTag)))
+                { moved.Add(p.UserText + " -> " + p.UserText.Replace(oldTag, newTag)); p.UserText = p.UserText.Replace(oldTag, newTag); }
+                Require(moved.Count > 0, $"no output path or report name holds {oldTag}");
+            }
+            string name = new[] { "Posizioni", "Inviluppo", "Concomitanti" }[selected];
+            string note = $"MOBILE {newTag} (BridGHe 0.7.1): {newTag} = {oldTag} con Bridge Moving Envelope fra la tabella del mobile e Build BridGHe Model; Value List su {name}.\n"
+                + "Concomitanti: in ogni stazione le posizioni del massimo e del minimo di N, V e M, ciascuna con tutte le sue sollecitazioni (6 combinazioni per combinazione base). Per il dimensionamento; non garantito a favore di sicurezza per l'interazione N–M.\n"
+                + "Inviluppo: in ogni stazione gli 8 angoli N±, V±, M± fra le posizioni, sempre a favore di sicurezza.\n"
+                + $"Posizioni: una combinazione per posizione, la verifica più precisa (i risultati di {oldTag}).\n"
+                + "Per cambiare scelta: Value List, poi Run su Build BridGHe Model e sui check.";
+            var report = Add(source, target, null, null, fifty: false, selected, Edit, note);
+            Console.WriteLine("ENVELOPE 0.7.1: " + target + " — " + JsonSerializer.Serialize(new { Report = report, Moved = moved }, Options));
+            return 0;
+        }
+        Console.Error.WriteLine("usage: --example-envelope 50 | 99 | add <in.ghx> <out.ghx> [mode] | revision <in.ghx> <out.ghx> <mode> <old tag> <new tag>");
         return 2;
     }
 
@@ -71,11 +98,13 @@ internal static class ExampleEnvelope070
         list.Attributes.Pivot = at; doc.AddObject(list, false); return list;
     }
 
-    internal static object Add(string source, string target, string oldRevision, string newRevision, bool fifty, int selected = 0)
+    internal static object Add(string source, string target, string oldRevision, string newRevision, bool fifty, int selected = 0,
+        Action<GH_Document> edit = null, string note = null)
     {
         byte[] original = File.ReadAllBytes(source);
         using var doc = GrasshopperBridgeExample.Read(source); doc.FilePath = target;
         var cv = new Canvas(doc);
+        edit?.Invoke(doc);
         if (oldRevision != null)
         {
             foreach (var p in doc.Objects.OfType<GH_Panel>()) p.UserText = p.UserText.Replace("Sezioni_conci_" + oldRevision + ".xlsx", "Sezioni_conci_" + newRevision + ".xlsx").Replace("Report_50_" + oldRevision, "Report_50_" + newRevision)
@@ -106,6 +135,14 @@ internal static class ExampleEnvelope070
         Wire(In(envelope, "Mode"), list);
         foreach (var build in builds) Replace(In(build, "Combinations"), table, Out(envelope, "Table"));
         var log = new List<string> { $"Bridge Moving Envelope fra «{mc.NickName}» e {builds.Length} Build BridGHe Model; modo da Value List: {list.FirstSelectedItem.Name}" };
+        if (note != null)
+        {
+            var panel = new GH_Panel(); panel.CreateAttributes();
+            panel.Name = panel.NickName = "Mobile nelle verifiche — nota"; panel.UserText = note;
+            panel.Attributes.Pivot = new PointF(list.Attributes.Pivot.X, list.Attributes.Pivot.Y + 50);
+            panel.Attributes.Bounds = new RectangleF(panel.Attributes.Pivot, new SizeF(560, 150));
+            doc.AddObject(panel, false); log.Add("pannello di nota accanto alla Value List");
+        }
         cv.ExposeDefaults();
         var restore = Neutralize(doc, "envelope-070");
         BridgeSegmentExcelTests.Solve(doc, true);
