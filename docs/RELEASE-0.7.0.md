@@ -79,4 +79,6 @@ Prove dell'API sul Pescara (`INT\rapporti\bridghe-070-20261121\STRAUS7.md`):
   - le concomitanti che sono il campione di una posizione.
 - `slab-reinforcement`: Super Element Check con due uscite, e lettura di un archivio della 0.6.x con «Tau b».
 - `bridge-detail-stations`: le reazioni tenute per azione danno gli stessi valori e si leggono una volta.
-- Nativi 50 REV006 e 99 REV007 nei tre modi. Con Posizioni le righe sono identiche alla 0.6.1; con Inviluppo e Concomitanti l'utilizzo massimo delle tensioni è lo stesso, nella stessa sezione.
+- Nativi 50 REV006 e 99 REV007 nei tre modi (`tests/BridGHe.Smoke/Fixtures/native-gate-070`):
+  - con Posizioni le righe sono identiche alla 0.6.1;
+  - con Inviluppo e Concomitanti l'utilizzo massimo delle tensioni è nella stessa sezione, uguale o appena più alto (50 con Inviluppo: 0,583244 contro 0,583237).
