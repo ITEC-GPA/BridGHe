@@ -11,21 +11,32 @@ public static class BridgeSupportReactions
 
     /// <summary>P2T request 3: the signed support reaction [kN] of a combination on the GPC bridge model alone (its records and combinations),
     /// from the reaction rows of the analysed GPC source of every action (same rules and messages as the former reading; the source is the
-    /// analysed GPC model of the action, its name the one the record keeps).</summary>
+    /// analysed GPC model of the action, its name the one the record keeps).
+    /// 0.7.0: <paramref name="reactionsByAction"/>, when given, keeps the reaction of every action read at this support, so the combinations of one
+    /// solve read each action once (an envelope action reads all its positions in every combination). Use one dictionary per support point, bridge,
+    /// phases and tolerance, and only within one solve.</summary>
     public static double SignedKN(Gpc.GpcBridge bridge, IEnumerable<BridgePhaseDefinition> definitions,
-        Point3d support, string combination, Vector3d upward, double tolerance)
+        Point3d support, string combination, Vector3d upward, double tolerance, IDictionary<string, Vector3d[]> reactionsByAction = null)
     {
         if (bridge?.Records == null) throw new ArgumentException("Supply a Build BridGHe Model result in N-mm.");
         var combos = bridge.Combinations.Where(c => c.Name == combination).ToArray();
-        return SignedKN(bridge.Records, combos.Select(c => c.Factors.AsEnumerable()).ToArray(), definitions, support, combination, upward, tolerance,
-            (action, record) =>
+        Func<BridgeActionDefinition, BridgeWorkflowAction, Vector3d[]> reactions = Read;
+        if (reactionsByAction != null)
+            reactions = (action, record) =>
             {
-                var source = action.GpcSource ?? throw new ArgumentException("Missing GPC source for " + action.Key);
-                var catalog = Gpc.GpcResultCatalog.Of(source);
-                if (catalog == null || catalog.Units.Units != Gpc.DefinitionUnits.Nmm || source.Name != record.SourceName)
-                    throw new ArgumentException("The reaction source does not match the assembled action " + action.Key);
-                return GpcReactions(action, support, tolerance);
-            });
+                if (!reactionsByAction.TryGetValue(action.Key, out var read)) reactionsByAction[action.Key] = read = Read(action, record);
+                return read;
+            };
+        return SignedKN(bridge.Records, combos.Select(c => c.Factors.AsEnumerable()).ToArray(), definitions, support, combination, upward, tolerance, reactions);
+
+        Vector3d[] Read(BridgeActionDefinition action, BridgeWorkflowAction record)
+        {
+            var source = action.GpcSource ?? throw new ArgumentException("Missing GPC source for " + action.Key);
+            var catalog = Gpc.GpcResultCatalog.Of(source);
+            if (catalog == null || catalog.Units.Units != Gpc.DefinitionUnits.Nmm || source.Name != record.SourceName)
+                throw new ArgumentException("The reaction source does not match the assembled action " + action.Key);
+            return GpcReactions(action, support, tolerance);
+        }
     }
 
     private static double SignedKN(BridgeWorkflow workflow, IEnumerable<(string Case, double Factor)>[] combos, IEnumerable<BridgePhaseDefinition> definitions,

@@ -133,7 +133,7 @@ internal static class BridgeWorkflowExample
         var check=Component("BridgeChecks.SuperElementCheckComponent",6700,1100);Wire(merge.Params.Output[0],check,0);Wire(composite.Params.Output[0],check,1);var checkOptions=Component("BridgeChecks.SuperElementCheckOptionsComponent",6500,1270);for(int i=0;i<=2;i++)Boolean(checkOptions,i,false);Integer(checkOptions,5,0);Wire(checkOptions.Params.Output[0],check,2); // 0.6.0: the toggles in Super Element Check Options, all the FEM stations as before
         foreach(var (type,y) in new[]{("BridgeForcePlotComponent",1100f),("BridgeResultPlotComponent",2300f)})
         {
-            var plot=Component("BridgeChecks."+type,7100,y);Wire(merge.Params.Output[0],plot,0);Wire(composite.Params.Output[0],plot,1);Wire(check.Params.Output[type=="BridgeForcePlotComponent"?2:0],plot,2);Boolean(plot,plot.Params.Input.Count-1,true);
+            var plot=Component("BridgeChecks."+type,7100,y);Wire(merge.Params.Output[0],plot,0);Wire(composite.Params.Output[0],plot,1);Wire(type=="BridgeForcePlotComponent"?check.Params.Output.First(o=>o.Name=="Tension Forces"):check.Params.Output[0],plot,2);Boolean(plot,plot.Params.Input.Count-1,true);
             var viewer=Component("Preview.BridgePlotPreviewComponent",7550,y);Wire(plot.Params.Output[0],viewer,0);
         }
         var display=Component("Preview.DisplaySettingsComponent",6000,3300);var preview=Component("Preview.PreviewModelComponent",6500,3300);Wire(baseModel.Params.Output[0],preview,0);Wire(display.Params.Output[0],preview,1);preview.Hidden=false;

@@ -61,6 +61,8 @@ public sealed class BridgeDetailStationsComponent : BridgeUtilityComponent
         var output = new GH_Structure<GH_ObjectWrapper>(); var compression = new GH_Structure<GH_Number>();
         var signed = new GH_Structure<GH_Number>(); var endTypes = new GH_Structure<GH_Integer>(); var points = new GH_Structure<GH_Point>();
         var matched = new bool[locations.Count]; var cache = new Dictionary<(int Point, string Combination), double>(); bool uplift = false;
+        // 0.7.0: the reaction of every action at every point, read once in this solve (an envelope action reads all its positions in every combination)
+        var reactionsByAction = Enumerable.Range(0, locations.Count).Select(_ => new Dictionary<string, Vector3d[]>(StringComparer.Ordinal)).ToArray();
         for (int branch = 0; branch < input.PathCount; branch++)
         foreach (var goo in input.Branches[branch])
         {
@@ -75,7 +77,7 @@ public sealed class BridgeDetailStationsComponent : BridgeUtilityComponent
             int index = matches[0]; matched[index] = true; double reaction = double.NaN;
             if (phases.Length > 0 && !cache.TryGetValue((index, result.Source.Combination), out reaction))
                 cache[(index, result.Source.Combination)] = reaction = model.GpcBridge != null && phases.All(p => p.Actions.All(a => string.IsNullOrWhiteSpace(a.Case) || a.GpcSource != null))
-                    ? BridgeSupportReactions.SignedKN(model.GpcBridge, phases, locations[index], result.Source.Combination, up, tolerance) // P2T request 3: the GPC bridge model alone
+                    ? BridgeSupportReactions.SignedKN(model.GpcBridge, phases, locations[index], result.Source.Combination, up, tolerance, reactionsByAction[index]) // P2T request 3: the GPC bridge model alone
                     : throw GpcOnlyModels.Refused(GpcOnlyModels.RequiresBridgeReactions); // R6.5 P1 lane 3a / P2K (P1): no FEM phase sources to read
             int neighbours = selectedBeams.Count(b => b.PointFrom.DistanceTo(point) <= tolerance || b.PointTo.DistanceTo(point) <= tolerance);
             int end = neighbours == 1 ? station <= tolerance ? 1 : 2 : 0;

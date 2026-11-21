@@ -1797,12 +1797,13 @@ internal static class GpcOnlyReplay
                 added++;
             }
             // The stress, force and shear plots on the results of the check (its forces output for the force plot).
-            foreach (var (type, from) in new[] { ("BridgeResultPlotComponent", 0), ("BridgeForcePlotComponent", 2), ("BridgeShearPlotComponent", 0) })
+            // 0.7.0: Tension Forces is the second output (Tau b removed), found by name
+            foreach (var (type, from) in new[] { ("BridgeResultPlotComponent", "Tension Check"), ("BridgeForcePlotComponent", "Tension Forces"), ("BridgeShearPlotComponent", "Tension Check") })
             {
                 var plot = BridgeSegmentExcelTests.Add(doc, type);
                 foreach (var s in models) plot.Params.Input[0].AddSource(s);
                 foreach (var s in beams) plot.Params.Input[1].AddSource(s);
-                plot.Params.Input[2].AddSource(check.Params.Output[from]);
+                plot.Params.Input[2].AddSource(check.Params.Output.First(o => o.Name == from));
                 added++;
             }
             // L3b (the cases 3a left uncovered): on the reference model of Build BridGHe Model, without the bridge: Bridge Detail Stations (the beams of

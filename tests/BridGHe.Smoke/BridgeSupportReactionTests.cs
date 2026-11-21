@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using BridGHe.Common.Checks;
 using Grasshopper.Kernel;
@@ -40,6 +41,11 @@ internal static class BridgeSupportReactionTests
         Require(Math.Abs(Read() - 1.1) < 1e-12, "Combination applied twice, incorrect sign or N/kN conversion");
         Require(Math.Abs(Read(up: -Vector3d.ZAxis) + 1.1) < 1e-12, "Uplift must retain its sign");
         Require(Math.Abs(Read("G") - 1) < 1e-12 && Math.Abs(Read("G", -Vector3d.ZAxis) + 1) < 1e-12, "Combination G: 1 x 1000 N");
+        // 0.7.0: the reactions kept per action for one support give the same values and are read once
+        var kept = new Dictionary<string, Vector3d[]>(StringComparer.Ordinal);
+        double KeptRead(string combo) => BridgeSupportReactions.SignedKN(bridge, phases, Point3d.Origin, combo, Vector3d.ZAxis, 1e-6, kept);
+        Require(KeptRead("ALL") == Read() && kept.Count == 2 && KeptRead("G") == Read("G") && KeptRead("ALL") == Read() && kept.Count == 2,
+            "kept reactions: same values, one reading per action");
         // The GPC source of R without the reaction at the support (node 1), then with a second reaction sample there.
         var withoutReaction = Phases(b with { GpcSource = GpcWorkflowSources.Source("Shrinkage", 20, -200, reactionAt: n => n != 1) });
         Require(Read("G", definitions: withoutReaction) == 1, "Inactive missing case must not be read");
