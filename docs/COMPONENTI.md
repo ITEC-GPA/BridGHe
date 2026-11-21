@@ -1,6 +1,6 @@
-# Inventario dei componenti 0.5.0
+# Inventario dei componenti 0.6.1
 
-223 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
+224 componenti e 8 parametri istanziati nel runtime Rhino 8. GUID completi in `migration/current-components.json`. Nomi, descrizioni e opzionalità sono estratti dai componenti compilati.
 
 ## BridGHe / 01-Parameters
 
@@ -203,6 +203,7 @@
 | Beam Point Moment | component | Beam; LoadCase; Coordinate System; M1; M2; M3; a | Beam |
 | Beam PreLoad | component | Beam; LoadCase; Type; Value | Beam |
 | Bridge Moving Combinations | component | Base table; Moving cases; Base combination; Traffic factor; Isolated positions; Action prefix | Table; Action IDs; Cases; Mapping |
+| Bridge Moving Envelope | component | Table; Mode; Action prefix | Table; Summary |
 | Bridge Moving Lanes | component | Prototype; Offsets; Cases | Paths |
 | Bridge Straight Moving Path | component | Grillage Geometry; Template; Case; Lane offset; Divisions | Path; Axis; Step |
 | Composite Beam Strain | component | Beam; LoadCase; Strain | Beam |
@@ -232,7 +233,7 @@
 | Bridge Section Check | component | Geometry; Concrete; Steel; Rebar material; Phases; Top rebars; Bottom rebars; Details; Options | Results; Phases; Warnings; Native analysis |
 | Composite Section Linear Tension Analysis | component | Beams; Loads Only steel Phase; Loads Infinte Time Phase; Loads Instant Time Phase; Homogenization coefficient Infinite; Homogenization coefficient Istant; Top Flange Subject To Local Instability; Web Subject To Local Instability; Bottom Flange Subject To Local Instability; Consider concrete | Only Steel Buckling; Infinite Buckling; Total Buckling; TauB |
 | Composite Section Self Tension | component | Composite Beam Property; Homogenization coefficient; Strain | Result |
-| Super Element Check | component | BridGHe Model; Super-Element Beam; Options | Tension Check; Tau b; Tension Forces |
+| Super Element Check | component | BridGHe Model; Super-Element Beam; Options | Tension Check; Tension Forces |
 | Super Element Check Options | component | Web Local Instability; Top Flange Local Instability; Bottom Flange Local Instability; Analysis Options; ULS Combinations; Stations per Element | Options |
 
 ## BridGHe / 11-Export

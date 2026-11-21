@@ -50,7 +50,8 @@ internal static class ExampleEnvelope070
         }
         if (mode == "add" && args.Length > i + 3)
         {
-            var report = Add(Path.GetFullPath(args[i + 2]), Path.GetFullPath(args[i + 3]), null, null, fifty: false);
+            int selected = args.Length > i + 4 && int.TryParse(args[i + 4], out int s) ? s : 0; // optional: the mode selected in the Value List (measurements)
+            var report = Add(Path.GetFullPath(args[i + 2]), Path.GetFullPath(args[i + 3]), null, null, fifty: false, selected);
             Console.WriteLine("ENVELOPE 0.7.0: " + args[i + 3] + " — " + JsonSerializer.Serialize(report, Options));
             return 0;
         }
@@ -61,16 +62,16 @@ internal static class ExampleEnvelope070
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
     /// <summary>The Value List of the mode: Posizioni 0 (selected), Inviluppo 1, Concomitanti 2.</summary>
-    internal static GH_ValueList ModeList(GH_Document doc, PointF at)
+    internal static GH_ValueList ModeList(GH_Document doc, PointF at, int selected = 0)
     {
         var list = new GH_ValueList { ListMode = GH_ValueListMode.DropDown }; list.CreateAttributes();
         list.Name = list.NickName = "Mobile nelle verifiche — Posizioni (verifica) / Inviluppo, Concomitanti (dimensionamento)";
         list.ListItems.Clear();
-        foreach (var (name, index) in new[] { ("Posizioni", 0), ("Inviluppo", 1), ("Concomitanti", 2) }) list.ListItems.Add(new GH_ValueListItem(name, index.ToString()) { Selected = index == 0 });
+        foreach (var (name, index) in new[] { ("Posizioni", 0), ("Inviluppo", 1), ("Concomitanti", 2) }) list.ListItems.Add(new GH_ValueListItem(name, index.ToString()) { Selected = index == selected });
         list.Attributes.Pivot = at; doc.AddObject(list, false); return list;
     }
 
-    internal static object Add(string source, string target, string oldRevision, string newRevision, bool fifty)
+    internal static object Add(string source, string target, string oldRevision, string newRevision, bool fifty, int selected = 0)
     {
         byte[] original = File.ReadAllBytes(source);
         using var doc = GrasshopperBridgeExample.Read(source); doc.FilePath = target;
@@ -101,10 +102,10 @@ internal static class ExampleEnvelope070
         Wire(In(envelope, "Table"), table);
         var prefix = In(mc, "Action prefix").Sources.ToArray();
         if (prefix.Length > 0) Wire(In(envelope, "Action prefix"), prefix);
-        var list = ModeList(doc, new PointF(envelope.Attributes.Pivot.X - 280, envelope.Attributes.Pivot.Y + 60));
+        var list = ModeList(doc, new PointF(envelope.Attributes.Pivot.X - 280, envelope.Attributes.Pivot.Y + 60), selected);
         Wire(In(envelope, "Mode"), list);
         foreach (var build in builds) Replace(In(build, "Combinations"), table, Out(envelope, "Table"));
-        var log = new List<string> { $"Bridge Moving Envelope fra «{mc.NickName}» e {builds.Length} Build BridGHe Model; modo da Value List: Posizioni" };
+        var log = new List<string> { $"Bridge Moving Envelope fra «{mc.NickName}» e {builds.Length} Build BridGHe Model; modo da Value List: {list.FirstSelectedItem.Name}" };
         cv.ExposeDefaults();
         var restore = Neutralize(doc, "envelope-070");
         BridgeSegmentExcelTests.Solve(doc, true);

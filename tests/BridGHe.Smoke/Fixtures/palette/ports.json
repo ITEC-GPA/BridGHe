@@ -12381,6 +12381,86 @@
     "Source": "src/BridGHe.Grasshopper/Components/Sections/BeamSectionAngleComponent.cs:38 @59e9def"
   },
   {
+    "Guid": "7483e8ce-1361-4830-9379-e04f213f82b8",
+    "Direction": "in",
+    "Index": 0,
+    "Name": "Table",
+    "NickName": "T",
+    "Description": "Combination tree of Bridge Moving Combinations: header and coefficient rows.",
+    "Type": "Param_GenericObject",
+    "Access": "tree",
+    "Optional": false,
+    "Defaults": [],
+    "DefaultSource": "",
+    "Source": "src/BridGHe.Grasshopper/Components/Utilities/BridgeMovingWorkflowComponents.cs:91 @8f2fe5b"
+  },
+  {
+    "Guid": "7483e8ce-1361-4830-9379-e04f213f82b8",
+    "Direction": "in",
+    "Index": 1,
+    "Name": "Mode",
+    "NickName": "M",
+    "Description": "0 Positions (default): the table unchanged. 1 Envelope: 8 corners N±, V±, M± of the positions at every station, on the safe side. 2 Concomitant: maximum and minimum of N, V and M with their concomitant forces.",
+    "Type": "Param_Integer",
+    "Access": "item",
+    "Optional": false,
+    "Defaults": [
+      {
+        "Type": "int",
+        "Value": 0
+      }
+    ],
+    "DefaultSource": "0",
+    "Source": "src/BridGHe.Grasshopper/Components/Utilities/BridgeMovingWorkflowComponents.cs:92 @8f2fe5b"
+  },
+  {
+    "Guid": "7483e8ce-1361-4830-9379-e04f213f82b8",
+    "Direction": "in",
+    "Index": 2,
+    "Name": "Action prefix",
+    "NickName": "P",
+    "Description": "Prefix of the position Action IDs of Bridge Moving Combinations (prefix_0001, ...).",
+    "Type": "Param_String",
+    "Access": "item",
+    "Optional": false,
+    "Defaults": [
+      {
+        "Type": "string",
+        "Value": "Q_MOV"
+      }
+    ],
+    "DefaultSource": "Q_MOV",
+    "Source": "src/BridGHe.Grasshopper/Components/Utilities/BridgeMovingWorkflowComponents.cs:93 @8f2fe5b"
+  },
+  {
+    "Guid": "7483e8ce-1361-4830-9379-e04f213f82b8",
+    "Direction": "out",
+    "Index": 0,
+    "Name": "Table",
+    "NickName": "T",
+    "Description": "Combination tree for Build BridGHe Model > Combinations.",
+    "Type": "Param_GenericObject",
+    "Access": "tree",
+    "Optional": false,
+    "Defaults": [],
+    "DefaultSource": "",
+    "Source": "src/BridGHe.Grasshopper/Components/Utilities/BridgeMovingWorkflowComponents.cs:97 @8f2fe5b"
+  },
+  {
+    "Guid": "7483e8ce-1361-4830-9379-e04f213f82b8",
+    "Direction": "out",
+    "Index": 1,
+    "Name": "Summary",
+    "NickName": "S",
+    "Description": "Positions, groups and combinations of the chosen mode.",
+    "Type": "Param_String",
+    "Access": "list",
+    "Optional": false,
+    "Defaults": [],
+    "DefaultSource": "",
+    "Source": "src/BridGHe.Grasshopper/Components/Utilities/BridgeMovingWorkflowComponents.cs:98 @8f2fe5b"
+  },
+  {
     "Guid": "7489fa91-6962-46b7-95b7-cfdeddc411f2",
     "Direction": "in",
     "Index": 0,
@@ -16741,20 +16821,6 @@
     "Guid": "94839122-32f0-4f3e-a30f-979a53c3eca8",
     "Direction": "out",
     "Index": 1,
-    "Name": "Tau b",
-    "NickName": "T",
-    "Description": "The results",
-    "Type": "Param_GenericObject",
-    "Access": "tree",
-    "Optional": false,
-    "Defaults": [],
-    "DefaultSource": "",
-    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckComponent.cs:72 @59e9def"
-  },
-  {
-    "Guid": "94839122-32f0-4f3e-a30f-979a53c3eca8",
-    "Direction": "out",
-    "Index": 2,
     "Name": "Tension Forces",
     "NickName": "C",
     "Description": "The forces",
@@ -16763,7 +16829,7 @@
     "Optional": false,
     "Defaults": [],
     "DefaultSource": "",
-    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckComponent.cs:73 @59e9def"
+    "Source": "src/BridGHe.Grasshopper/Components/BridgeChecks/SuperElementCheckComponent.cs:74 @8f2fe5b"
   },
   {
     "Guid": "95046592-063b-4499-8191-1c8cf7ec21a1",

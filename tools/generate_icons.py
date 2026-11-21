@@ -288,6 +288,7 @@ BridgeResultLabelsComponent|case|edit|result
 BridgeMovingLanesComponent|route|add|moving
 BridgeStraightMovingPathComponent|route|measure|moving
 BridgeMovingCombinationsComponent|template|add|moving
+BridgeMovingEnvelopeComponent|template|filter|moving
 AlignBeamAxesComponent|beam|axes|model
 AlignPlateAxesComponent|plate|axes|model
 BeamFilterComponent|beam|filter|tool

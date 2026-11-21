@@ -1746,6 +1746,60 @@
     ]
   },
   {
+    "type": "BridGHe.Grasshopper.Components.Utilities.BridgeMovingEnvelopeComponent",
+    "guid": "7483e8ce-1361-4830-9379-e04f213f82b8",
+    "kind": "component",
+    "name": "Bridge Moving Envelope",
+    "nickname": "MovingEnv",
+    "category": "BridGHe",
+    "subcategory": "09-Loads",
+    "description": "How the moving positions enter the checks: 0 Positions (one combination per position, the most precise), 1 Envelope (8 corners N±, V±, M± at every station, on the safe side, for sizing), 2 Concomitant (maximum and minimum of N, V, M with their concomitant forces, 6 cases).",
+    "inputs": [
+      {
+        "name": "Table",
+        "nickname": "T",
+        "description": "Combination tree of Bridge Moving Combinations: header and coefficient rows.",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Mode",
+        "nickname": "M",
+        "description": "0 Positions (default): the table unchanged. 1 Envelope: 8 corners N±, V±, M± of the positions at every station, on the safe side. 2 Concomitant: maximum and minimum of N, V and M with their concomitant forces.",
+        "access": "item",
+        "optional": false,
+        "type": "Integer"
+      },
+      {
+        "name": "Action prefix",
+        "nickname": "P",
+        "description": "Prefix of the position Action IDs of Bridge Moving Combinations (prefix_0001, ...).",
+        "access": "item",
+        "optional": false,
+        "type": "Text"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Table",
+        "nickname": "T",
+        "description": "Combination tree for Build BridGHe Model > Combinations.",
+        "access": "tree",
+        "optional": false,
+        "type": "Generic Data"
+      },
+      {
+        "name": "Summary",
+        "nickname": "S",
+        "description": "Positions, groups and combinations of the chosen mode.",
+        "access": "list",
+        "optional": false,
+        "type": "Text"
+      }
+    ]
+  },
+  {
     "type": "BridGHe.Grasshopper.Components.Utilities.BridgeNotableStationsComponent",
     "guid": "b6e1d0c4-7a3f-4c25-9e58-2d41f6a0c917",
     "kind": "component",
@@ -17529,14 +17583,6 @@
       {
         "name": "Tension Check",
         "nickname": "C",
-        "description": "The results",
-        "access": "tree",
-        "optional": false,
-        "type": "Generic Data"
-      },
-      {
-        "name": "Tau b",
-        "nickname": "T",
         "description": "The results",
         "access": "tree",
         "optional": false,

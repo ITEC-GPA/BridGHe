@@ -1,5 +1,13 @@
 # Refactoring BridGHe
 
+## Mobile nelle verifiche e uscite più leggere — 0.7.0, 21 novembre 2026
+
+- **Super Element Check** non ha più l'uscita «Tau b» (era NaN dappertutto): «Tension Forces» è la seconda uscita. Una definizione salvata prima la legge dalla terza uscita salvata, con i suoi collegamenti; le definizioni del catalogo sono già aggiornate.
+- **Bridge Detail Check**: le sette liste delle verifiche (nomi, domande, resistenze, unità, rapporti, esiti, avvisi) si riempiono solo se sono collegate. La Section result porta le stesse verifiche.
+- **Bridge Moving Envelope**, nuovo: fra Bridge Moving Combinations e Build BridGHe Model sceglie come entra il mobile nelle verifiche: Posizioni (la tabella com'è), Inviluppo (8 angoli N±, V±, M± in ogni stazione), Concomitanti (6 casi). Per una definizione esistente: `dotnet BridGHe.Smoke.dll --example-envelope add <in.ghx> <out.ghx>`.
+- Un ingresso aggiunto a un componente esistente farebbe aprire le definizioni precedenti con l'errore «Input parameter chunk is missing. Archive is corrupt.»: per questo l'opzione è un componente nuovo.
+- Note complete: [RELEASE-0.7.0.md](RELEASE-0.7.0.md).
+
 ## Stazioni di verifica — 0.6.0, 20 novembre 2026
 
 - **Super Element Check** ha tre ingressi: BridGHe Model, Super-Element Beam e Options. WLI, TFLI, BLI, Bridge Analysis Options e ULS Combinations sono passati al componente nuovo **Super Element Check Options**, che aggiunge le stazioni di analisi per asta. Senza opzioni il check verifica i 2 nodi di ogni asta; con 0 stazioni i risultati sono quelli della 0.5.0.

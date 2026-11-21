@@ -36,17 +36,20 @@ internal static class PaletteContractChecks
     /// by pitch and diameters (new GUID, 7 inputs and 1 output) and the former one with row areas hidden and obsolete (Brecciarola study, item 20,
     /// the user's request «per la soletta gli input devono essere base, altezza, passo e diametro armature sopra e sotto»). 0.6.0 (20/11/2026):
     /// 231 GUIDs and 1,904 ports: Super Element Check with 3 inputs (its optional inputs moved to the new Super Element Check Options, 6 inputs
-    /// and 1 output) and the new Bridge Notable Stations (6 inputs, 5 outputs); the 13 rows approved by the user with «Sì, approvo».</summary>
-    private const int Components = 231, Ports = 1904;
+    /// and 1 output) and the new Bridge Notable Stations (6 inputs, 5 outputs); the 13 rows approved by the user with «Sì, approvo». 0.7.0
+    /// (21/11/2026): 232 GUIDs and 1,908 ports: Super Element Check without «Tau b» (user: «5 va bene. toglie.»), Tension Forces its second
+    /// output; the new Bridge Moving Envelope (3 inputs, 2 outputs; user: «posizioni / inviluppo / combo concomitanti»).</summary>
+    private const int Components = 232, Ports = 1908;
 
     /// <summary>The SHA-256 of the two frozen files (UTF-8, line ends normalised to LF): an edit of the table without the procedure above fails.
     /// P2CI (14/11/2026): the proposal shown to the user (INT\rapporti\P2CI-palette-proposta-20261114). 0.4.3 (19/11/2026): ports.json with the
     /// two rows of Super Element Check above, no other row changed. 0.5.0 (20/11/2026): the row of the new Concrete Slab Section and its 8 ports
     /// added; the row of the former one with its new name, description, exposure (hidden) and obsolete flag; no other row changed. 0.6.0
     /// (20/11/2026): the ports 2-6 of Super Element Check replaced by Options, the rows of Super Element Check Options and Bridge Notable
-    /// Stations with their ports; no other row changed.</summary>
-    private const string ComponentsSha = "0AA645024A6E9820C7796EBC560915A82C29CFD734952FFCC8F5DA97CE678258",
-        PortsSha = "21DA4C4F47203EAFE89043C2CA400EC3B26FCF9C6A433A1599AC48F5F51FCAA2";
+    /// Stations with their ports; no other row changed. 0.7.0 (21/11/2026): the output Tau b of Super Element Check removed and Tension Forces
+    /// at index 1, the row of Bridge Moving Envelope and its 5 ports; no other row changed.</summary>
+    private const string ComponentsSha = "1C6ED0E73D17F25AEE6914F9CED7ECBBF4477EB87E5FE38168D8C65AB18AB92F",
+        PortsSha = "13334747240D258353652DA8073986D7775B9CDF6F67171287AD2B682C699884";
 
     internal static string Folder => Path.Combine(Path.GetDirectoryName(ExamplePaths.Root), "tests", "BridGHe.Smoke", "Fixtures", "palette");
 

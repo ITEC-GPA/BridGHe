@@ -1151,6 +1151,18 @@
     "Source": "src/BridGHe.Grasshopper/Components/Sections/BeamSectionAngleComponent.cs:15 @59e9def"
   },
   {
+    "Guid": "7483e8ce-1361-4830-9379-e04f213f82b8",
+    "Type": "BridGHe.Grasshopper.Components.Utilities.BridgeMovingEnvelopeComponent",
+    "Name": "Bridge Moving Envelope",
+    "NickName": "MovingEnv",
+    "Description": "How the moving positions enter the checks: 0 Positions (one combination per position, the most precise), 1 Envelope (8 corners N±, V±, M± at every station, on the safe side, for sizing), 2 Concomitant (maximum and minimum of N, V, M with their concomitant forces, 6 cases).",
+    "Category": "BridGHe",
+    "SubCategory": "09-Loads",
+    "Exposure": "primary",
+    "Obsolete": false,
+    "Source": "src/BridGHe.Grasshopper/Components/Utilities/BridgeMovingWorkflowComponents.cs:87 @8f2fe5b"
+  },
+  {
     "Guid": "7489fa91-6962-46b7-95b7-cfdeddc411f2",
     "Type": "BridGHe.Grasshopper.Components.Attributes.PlateSupportComponent",
     "Name": "Plate Support",

@@ -211,6 +211,15 @@
       "badge": "add"
     },
     {
+      "key": "BridgeMovingEnvelopeComponent",
+      "type": "BridGHe.Grasshopper.Components.Utilities.BridgeMovingEnvelopeComponent",
+      "guid": "7483e8ce-1361-4830-9379-e04f213f82b8",
+      "name": "Bridge Moving Envelope",
+      "family": "moving",
+      "glyph": "template",
+      "badge": "filter"
+    },
+    {
       "key": "BridgeNotableStationsComponent",
       "type": "BridGHe.Grasshopper.Components.Utilities.BridgeNotableStationsComponent",
       "guid": "b6e1d0c4-7a3f-4c25-9e58-2d41f6a0c917",
