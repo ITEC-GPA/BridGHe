@@ -44,3 +44,16 @@ Il file si legge anche se è ancora aperto in Excel (FileShare.ReadWrite); un fi
 
 - **50 REV006**: l'ingresso Auto Read (False) di Bridge Read Section Excel è aggiunto nell'XML (`splice072.py`); il resto del file è byte per byte quello della 0.7.1.
 - Gli altri esempi non hanno Bridge Read Section Excel e non cambiano.
+
+## Tavolozza
+
+- Nuova riga: Auto Read (Bridge Read Section Excel, ingresso 2). Descrizioni nuove: Labels (Bridge Grillage Mesh), Family (Bridge Section Schedule, Bridge Family Property). Nessun GUID cambia; 232 componenti e parametri, 1.909 porte.
+- Baseline delle interfacce (`migration/port-contract-baseline.json`) aggiornata per i quattro file con le porte cambiate.
+
+## Prove
+
+- Nativi di 50 REV006 e 99 REV007 nei tre modi, sul commit `715a5fe`: righe e componenti identici alla 0.7.1 in tutti e sei i casi; cambia solo l'impronta del 50 (`10B5433C…`). Riferimenti in `tests/BridGHe.Smoke/Fixtures/native-gate-070/references-072.json`, righe complete in `P2B\results\t072-native`.
+- Gate completo confrontato con le catture della 0.7.0: le 107 regressioni passano; replay delle quattro corsie, scansione e payload uguali (nessuna voce diversa o nuova).
+- Prove nuove dentro le regressioni esistenti (il numero resta 107): unità e lunghezza del tracciato, etichette della preview (bridge-alignment-inputs), file cambiato e Auto Read (bridge-segment-excel), famiglie per nome (bridge-assignment).
+- Controllo di allineamento delle 49 definizioni del catalogo: tutte hanno le porte della 0.7.2.
+- Immagine delle etichette dell'esempio 49, disegnata fuori schermo dai dati della preview: `BridGHe.Smoke --labels-capture <definizione.ghx> <immagine.png>`.

@@ -48,3 +48,9 @@ Dalla 0.7.1 la Value List «Mobile nelle verifiche» del 50 REV006 e del 99 REV0
 - Il nativo imposta il modo in memoria, quindi le corse dei tre modi restano quelle della tabella.
 - Nativi sul commit `cff166b`: righe identiche alla 0.7.0 in tutti e sei i casi. Cambia solo l'impronta della definizione: 50 `E82E3E7A…`, 99 `658FF170…`.
 - I valori sono in `references-071.json`; le righe complete in `P2B\results\t071-native`.
+
+## 0.7.2: ingresso Auto Read nel 50
+
+Dalla 0.7.2 Bridge Read Section Excel del 50 REV006 ha l'ingresso Auto Read (False), aggiunto nell'XML (`splice072.py`); il 99 REV007 non cambia.
+- Nativi sul commit `715a5fe`, nei tre modi: righe e componenti identici alla 0.7.1 in tutti e sei i casi. Cambia solo l'impronta del 50: `10B5433C…` (era `E82E3E7A…`).
+- I valori sono in `references-072.json`; le righe complete in `P2B\results\t072-native`.

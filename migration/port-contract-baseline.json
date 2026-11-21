@@ -321,7 +321,7 @@
       ]
     },
     "src/BridGHe.Grasshopper/Components/Geometry/BridgeAssignmentComponents.cs": {
-      "ports": "5778773c36f46568024319df75d4e2222540c095e0158d5f2b4047eef02eb7d1",
+      "ports": "c63087a2f61e078b00a009ee03e823cc484210a3e1b2f5c374dfc632d1e47a37",
       "guids": [
         "2cd3635e-8a72-4f8c-bb2f-bf4b76ff136c",
         "92ef4133-2716-4a81-9b70-ff01db7fd15d"
@@ -360,7 +360,7 @@
       ]
     },
     "src/BridGHe.Grasshopper/Components/Geometry/BridgeDefinitionComponents.cs": {
-      "ports": "c3347317fbb0cf7783bb6a717043d2de99a8e08be70429d1b6344d9aece89fc3",
+      "ports": "1ded145ccbf3421d3c53d62c301b0236f75d8493190899ffecc5f32fa92fe1e9",
       "guids": [
         "a8e240c5-5c1c-4df3-bdc3-077a8de5f001",
         "a8e240c5-5c1c-4df3-bdc3-077a8de5f002",
@@ -382,7 +382,7 @@
       ]
     },
     "src/BridGHe.Grasshopper/Components/Geometry/BridgeFemMembersComponent.cs": {
-      "ports": "7bcbf68e8435ffc0f2dd113c6cbd6cb82390049f43419f85573ae3692ede5c9b",
+      "ports": "33e91293c05bbc397c5a012772d34b0eaf5d32e6f9038e9c58bc8d0e75a173fd",
       "guids": [
         "a8e240c5-5c1c-4df3-bdc3-077a8de5f027",
         "a8e240c5-5c1c-4df3-bdc3-077a8de5f028"
@@ -433,7 +433,7 @@
       ]
     },
     "src/BridGHe.Grasshopper/Components/Geometry/BridgeSegmentExcelComponent.cs": {
-      "ports": "55b3fbffc2dae2c661a22abd8afd1203b7186172a0d123b4698620e6bc3dea0c",
+      "ports": "74c233618729e97658bb28cf31bb56dd3cd64f53b9f29a6e1f264e04ca8ffa30",
       "guids": [
         "f9286827-2ca1-4268-a6dc-79c8ba6d1c9f"
       ]

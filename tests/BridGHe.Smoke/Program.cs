@@ -79,6 +79,8 @@ internal static class Program
         using var rhino=args.Contains("--pure")?null:new RhinoCore(new[]{"/nosplash"},WindowStyle.Hidden);
         if(args.Contains("--gpc-pilot")) { Console.WriteLine("RETIRED BY NAME (P2CB): --gpc-pilot: "+P2rRetiredP2cb.Reason("native|gpc-pilot")); return 1; } // P2CB (13/11): the F4 pilot retired with its FEM types
         GpcDomainCache.Configure();
+        // 0.7.2 (proposal 2): an offscreen image of the labels of Bridge Grillage Mesh (Labels = True) of a definition.
+        if(args.Contains("--labels-capture")) { var a=args.SkipWhile(x=>x!="--labels-capture").Skip(1).ToArray(); return LabelsCapture072.Run(a[0],a[1]); }
         if(args.Contains("--sections-209-replay")) return OpenSectionChecks190.Replay209();
         if(args.Contains("--sections-209-warnings")) return OpenSectionChecks190.Warnings209();
         if(args.Contains("--sections-198-oracle")) return OpenSectionChecks190.Oracle198();
