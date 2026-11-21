@@ -25,7 +25,7 @@ using Numbers = GpcCompositeDefinitions.Numbers;
 /// <para>R6.6 (P2U): without FEM models. The composite properties of the checks are their numbers (<see cref="Numbers"/>); the definitions
 /// are built from them with the rules of the production construction (<see cref="GpcCompositeDefinitions"/>), which the R6.0 capture ties
 /// to the production code: every captured definition (the payloads of the example definitions read by value and the outputs of Composite
-/// Beam Property, 45 since the capture of 0.4.2) is rebuilt from its numbers bit for bit, and the former construction and the adapter give its input of the H bridge
+/// Beam Property, 45 since the capture of 0.4.2, 46 since that of 0.6.0) is rebuilt from its numbers bit for bit, and the former construction and the adapter give its input of the H bridge
 /// engine. While the FEM properties exist, <c>GpcCompositeSectionChecks.Fem.cs</c> keeps the former comparisons with them (the parity, the
 /// FEM constant-section rule, the composite property GH type, the preview) and the native check of Super Element Check; that file goes
 /// with the FeMM models.</para>
@@ -274,7 +274,8 @@ internal static partial class GpcCompositeSectionChecks
                 definitions++;
             }
         // 0.4.2: the registered R6.0 capture p2n-capture-042-20261118 adds the composite section of the examples 50 REV004 and 99 REV005.
-        if (definitions != 45) throw new Exception($"GPC COMPOSITE SECTION FAIL: {definitions} captured definitions instead of 45 (10 payloads, 35 scan)");
+        // 0.6.0: p2n-capture-060-20261121 adds the one of 99 REV006 (that of 50 REV005 has the key of REV004).
+        if (definitions != 46) throw new Exception($"GPC COMPOSITE SECTION FAIL: {definitions} captured definitions instead of 46 (10 payloads, 36 scan)");
         return (definitions, inputs, analysis);
     }
 
