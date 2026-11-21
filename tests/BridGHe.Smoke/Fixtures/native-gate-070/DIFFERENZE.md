@@ -41,3 +41,10 @@ Il rapporto locale massimo cresce un poco con Inviluppo e Concomitanti. Per le r
 | Verifiche oltre 1 | 0 | 0 | 0 | 0 |
 
 Nel 99 il massimo è in una combinazione senza mobile: i tre modi danno gli stessi massimi.
+
+## 0.7.1: Value List su Concomitanti
+
+Dalla 0.7.1 la Value List «Mobile nelle verifiche» del 50 REV006 e del 99 REV007 è su Concomitanti (modifica nell'XML, `splice071.py`).
+- Il nativo imposta il modo in memoria, quindi le corse dei tre modi restano quelle della tabella.
+- Nativi sul commit `cff166b`: righe identiche alla 0.7.0 in tutti e sei i casi. Cambia solo l'impronta della definizione: 50 `E82E3E7A…`, 99 `658FF170…`.
+- I valori sono in `references-071.json`; le righe complete in `P2B\results\t071-native`.
