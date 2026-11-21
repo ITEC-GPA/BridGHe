@@ -14,14 +14,18 @@ namespace BridGHe.Grasshopper.Components.Geometry;
 public sealed class BridgeSectionScheduleComponent : BridgeUtilityComponent
 {
     public BridgeSectionScheduleComponent() : base("Bridge Section Schedule", "SectionSchedule",
-        "Assign a property to a family/group/segment over an arc-length interval. Optional dimensional taper; overlapping rules are rejected.", CategoryNameConstants.SUBCATEGORY_MODEL) { }
+        "Assign a property to a family/group/segment over an arc-length interval. Optional dimensional taper; overlapping rules are rejected.", CategoryNameConstants.SUBCATEGORY_MODEL)
+    { Params.ParameterSourcesChanged += (_, _) => FamilyChoices.Configure(this, 3, false); }
     public override Guid ComponentGuid => new Guid("2cd3635e-8a72-4f8c-bb2f-bf4b76ff136c");
+    // 0.7.2 (proposal 8): the families by name, as Bridge Family Property; a Value List connected to Family is filled with the names.
+    public override void AddedToDocument(GH_Document document) { base.AddedToDocument(document); FamilyChoices.Configure(this, 3, false); }
     protected override void RegisterInputParams(GH_InputParamManager p)
     {
         p.AddGenericParameter("Property", "P", "Beam property in N-mm.", GH_ParamAccess.item);
         p.AddNumberParameter("Start", "S", "Start station, mm, inclusive.", GH_ParamAccess.item);
         p.AddNumberParameter("End", "E", "End station, mm, exclusive except bridge end.", GH_ParamAccess.item);
-        p.AddIntegerParameter("Family", "F", "0 girder, 1 solid diaphragm, 2 top chord, 3 bottom chord, 4 post, 5 diagonal, 6 longitudinal bracing, 7 bracing post, 8 transverse slab.", GH_ParamAccess.item, 0);
+        p.AddIntegerParameter("Family", "F", "0 girder, 1 solid diaphragm, 2 top chord, 3 bottom chord, 4 post, 5 diagonal, 6 longitudinal bracing, 7 bracing post, 8 transverse slab. Right click to choose by name; a connected Value List is filled with the names.", GH_ParamAccess.item, 0);
+        FamilyChoices.AddNamedValues((global::Grasshopper.Kernel.Parameters.Param_Integer)p[3], false);
         p.AddIntegerParameter("Group", "G", "0 all; otherwise girder number or diaphragm line.", GH_ParamAccess.item, 0);
         p.AddIntegerParameter("Segment", "C", "0 all; otherwise fabrication segment or diaphragm bay.", GH_ParamAccess.item, 0);
         p.AddVectorParameter("Start Scale", "SF", "Section local x/y scale factors (X,Y); Z must be zero. Dimensional Straus taper, centred.", GH_ParamAccess.item, new Vector3d(1, 1, 0));

@@ -18,7 +18,7 @@ public abstract class SimpleBridgeComponent : BridgeUtilityComponent
 {
     public override GH_Exposure Exposure => GetType() == typeof(BridgeGrillageMeshComponent) ? GH_Exposure.primary : GH_Exposure.hidden;
     private readonly bool truss;
-    private readonly List<(SimpleBridgeGeometry Geometry, bool Labels)> preview = new();
+    private readonly List<(SimpleBridgeGeometry Geometry, bool Labels, PreviewLabels Extra)> preview = new();
     private readonly List<Line> deckPreview = new(), linkPreview = new();
     private static readonly Color[] Colors = { Color.Teal, Color.DarkOrange, Color.SteelBlue, Color.MediumPurple, Color.SlateGray, Color.IndianRed };
     private static readonly DisplayMaterial Concrete = new(Color.LightSlateGray, .78);
@@ -111,7 +111,7 @@ public abstract class SimpleBridgeComponent : BridgeUtilityComponent
     {
         var result = SimpleBridgeBuilder.Build(input);
         var grillage = BridgeDeckGrillage.Build(input, result);
-        preview.Add((result, labels));
+        preview.Add((result, labels, labels ? PreviewLabels.Of(input, result) : null));
         deckPreview.AddRange(grillage.Strips.Select(s => s.Member.Axis)); linkPreview.AddRange(grillage.Connections.Select(c => c.Axis));
         var members = new GH_Structure<GH_Curve>(); var ids = new GH_Structure<GH_String>();
         var girders = new GH_Structure<GH_Curve>(); var cross = new GH_Structure<GH_Curve>();
@@ -150,7 +150,16 @@ public abstract class SimpleBridgeComponent : BridgeUtilityComponent
 
     public override BoundingBox ClippingBox
     {
-        get { var box = BoundingBox.Empty; foreach (var item in preview) { box.Union(item.Geometry.Deck.GetBoundingBox(false)); foreach (var p in item.Geometry.Nodes) box.Union(p); } return box; }
+        get
+        {
+            var box = BoundingBox.Empty;
+            foreach (var item in preview)
+            {
+                box.Union(item.Geometry.Deck.GetBoundingBox(false)); foreach (var p in item.Geometry.Nodes) box.Union(p);
+                if (item.Extra != null) { foreach (var d in item.Extra.Dots) box.Union(d.Point); if (item.Extra.Arrow.IsValid) box.Union(item.Extra.Arrow.BoundingBox); }
+            }
+            return box;
+        }
     }
     public override void DrawViewportWires(IGH_PreviewArgs args)
     {
@@ -165,7 +174,75 @@ public abstract class SimpleBridgeComponent : BridgeUtilityComponent
             {
                 foreach (var s in item.Geometry.Supports) args.Display.DrawDot(s.Point, $"S{s.Support}/G{s.Girder}", Color.DarkRed, Color.White);
                 foreach (var j in item.Geometry.Joints) args.Display.DrawDot(j.Point, $"G{j.Girder}/J{j.Joint}", Color.DarkSlateGray, Color.White);
+                // 0.7.2 (proposal 2): girders, concio IDs, direction and progressives of the alignment, left and right of the deck.
+                if (item.Extra != null)
+                {
+                    if (item.Extra.Arrow.IsValid) args.Display.DrawArrow(item.Extra.Arrow, Color.Black);
+                    foreach (var d in item.Extra.Dots) args.Display.DrawDot(d.Point, d.Text, d.Back, Color.White);
+                }
             }
+        }
+    }
+
+    /// <summary>0.7.2 (proposal 2 of 21/11/2026), preview only: with Labels = True, G1…Gn before the start and after the end of every girder (in
+    /// the colour of its first and last concio), the ID of every concio at its middle (G2-C3, as Bridge Read Section Excel), the direction of the
+    /// alignment at its start («Start 0.000 m»), the progressive of every support outside the left edge («S2 · 35.000 m») and Left/Right outside
+    /// the deck edges in the first span. Texts in English (user 21/11); progressives in m with three decimals; the inputs stay in mm.</summary>
+    internal sealed class PreviewLabels
+    {
+        internal List<(Point3d Point, string Text, Color Back)> Dots { get; } = new();
+        internal Line Arrow { get; private set; } = Line.Unset;
+        internal static string Metres(double mm) => (mm / 1000).ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + " m";
+
+        internal static PreviewLabels Of(SimpleBridgeInput input, SimpleBridgeGeometry g)
+        {
+            var labels = new PreviewLabels();
+            var alignment = input.Alignment; if (alignment == null || !alignment.IsValid) return labels;
+            double length = alignment.GetLength();
+            double offset = Math.Clamp(.02 * length, 500, 2000), gap = Math.Clamp(.01 * length, 500, 1500), arrow = Math.Clamp(.05 * length, 2000, 10000);
+            Color Tint(int segment) => Colors[(Math.Max(1, segment) - 1) % 3];
+            foreach (var girder in g.Members.Where(m => m.Family == BridgeMemberFamily.Girder).GroupBy(m => m.Group).OrderBy(x => x.Key))
+            {
+                var first = girder.OrderBy(m => m.StationFrom).First(); var last = girder.OrderByDescending(m => m.StationTo).First();
+                Vector3d t0 = first.Axis.Direction, t1 = last.Axis.Direction; t0.Unitize(); t1.Unitize();
+                labels.Dots.Add((first.Axis.From - t0 * offset, "G" + girder.Key, Tint(first.Segment)));
+                labels.Dots.Add((last.Axis.To + t1 * offset, "G" + girder.Key, Tint(last.Segment)));
+            }
+            foreach (var segment in g.Segments)
+            {
+                double mid = (segment.Start + segment.End) / 2;
+                var member = g.Members.Where(m => m.Family == BridgeMemberFamily.Girder && m.Group == segment.Girder && m.Segment == segment.Segment)
+                    .OrderBy(m => mid < m.StationFrom ? m.StationFrom - mid : mid > m.StationTo ? mid - m.StationTo : 0).FirstOrDefault();
+                if (member == null) continue;
+                double span = member.StationTo - member.StationFrom, t = span > 0 ? Math.Clamp((mid - member.StationFrom) / span, 0, 1) : .5;
+                labels.Dots.Add((member.Axis.PointAt(t), BridgeSegmentSections.Id(segment), Tint(segment.Segment)));
+            }
+            Point3d At(double station) => alignment.LengthParameter(Math.Clamp(station, 0, length), out double p) ? alignment.PointAt(p) : alignment.PointAtStart;
+            Vector3d Left(double station)
+            {
+                if (g.Frames.Count == 0 || g.Frames.Count != g.Stations.Count) return Vector3d.Unset;
+                int best = 0; for (int i = 1; i < g.Stations.Count; i++) if (Math.Abs(g.Stations[i] - station) < Math.Abs(g.Stations[best] - station)) best = i;
+                return g.Frames[best].XAxis;
+            }
+            Point3d Edge(Polyline edge, Point3d p) => edge != null && edge.Count > 1 ? edge.ClosestPoint(p) : p;
+            var start = alignment.PointAtStart; var tangent = alignment.TangentAtStart;
+            labels.Arrow = new Line(start, start + tangent * arrow);
+            labels.Dots.Add((start, "Start " + Metres(0), Color.Black));
+            var supports = input.Supports ?? Array.Empty<double>();
+            for (int i = 0; i < supports.Length; i++)
+            {
+                var left = Left(supports[i]); if (!left.IsValid) continue;
+                labels.Dots.Add((Edge(g.LeftEdge, At(supports[i])) + left * gap, $"S{i + 1} · {Metres(supports[i])}", Color.DarkRed));
+            }
+            double side = supports.Length >= 2 ? (supports[0] + supports[1]) / 2 : length / 2;
+            var sideLeft = Left(side);
+            if (sideLeft.IsValid)
+            {
+                var p = At(side);
+                labels.Dots.Add((Edge(g.LeftEdge, p) + sideLeft * gap, "Left", Color.DimGray));
+                labels.Dots.Add((Edge(g.RightEdge, p) - sideLeft * gap, "Right", Color.DimGray));
+            }
+            return labels;
         }
     }
     public override void DrawViewportMeshes(IGH_PreviewArgs args)

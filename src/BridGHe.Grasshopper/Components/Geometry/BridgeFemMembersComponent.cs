@@ -12,13 +12,15 @@ namespace BridGHe.Grasshopper.Components.Geometry;
 
 public sealed class BridgeFamilyPropertyComponent : BridgeDefinitionComponent
 {
-    public BridgeFamilyPropertyComponent():base("Bridge Family Property","FamilyProperty","Associate one explicitly named geometric family with a beam property. Sections assigned per concio take precedence."){}
+    public BridgeFamilyPropertyComponent():base("Bridge Family Property","FamilyProperty","Associate one explicitly named geometric family with a beam property. Sections assigned per concio take precedence."){Params.ParameterSourcesChanged+=(_,_)=>FamilyChoices.Configure(this,1,true);}
+    // 0.7.2 (proposal 8): a Value List connected to Family is filled with the family names (FamilyChoices).
+    public override void AddedToDocument(GH_Document document){base.AddedToDocument(document);FamilyChoices.Configure(this,1,true);}
     public override Guid ComponentGuid=>new Guid("a8e240c5-5c1c-4df3-bdc3-077a8de5f027");
     protected override void RegisterInputParams(GH_InputParamManager p)
     {
         p.AddGenericParameter("Property","P","Beam or truss property.",GH_ParamAccess.item);
-        p.AddIntegerParameter("Family","F","Select the member family from named values. All steel excludes the slab.",GH_ParamAccess.item,-1);
-        var family=(Param_Integer)p[1];family.AddNamedValue("All steel families",-1);foreach(BridgeMemberFamily f in Enum.GetValues<BridgeMemberFamily>())family.AddNamedValue(f.ToString(),(int)f);
+        p.AddIntegerParameter("Family","F","Select the member family from named values (right click); a connected Value List is filled with the names. All steel excludes the slab.",GH_ParamAccess.item,-1);
+        FamilyChoices.AddNamedValues((Param_Integer)p[1],true);
     }
     protected override void RegisterOutputParams(GH_OutputParamManager p)=>p.AddGenericParameter("Family Property","P","Connect a list of these definitions to Bridge FEM Members.",GH_ParamAccess.item);
     protected override void Solve(IGH_DataAccess da)

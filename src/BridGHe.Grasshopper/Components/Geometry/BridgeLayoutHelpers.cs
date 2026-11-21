@@ -30,7 +30,7 @@ public sealed class BridgeAlignmentCurveComponent : BridgeDefinitionComponent
     {p.AddNumberParameter("Length","L","Total arc length, mm.",GH_ParamAccess.item);p.AddNumberParameter("Radius","R","0 straight; positive left, negative right curve, mm. Arc below 180 degrees.",GH_ParamAccess.item,0);p.AddPointParameter("Origin","O","Alignment start, mm.",GH_ParamAccess.item,Point3d.Origin);p.AddNumberParameter("Heading","H","Initial heading from global X about global Z, degrees.",GH_ParamAccess.item,0);p.AddCurveParameter("Custom Alignment","C","Optional existing curve, replacing the generated curve. Its length must agree with Length. Alternatively connect your curve directly to the layouts.",GH_ParamAccess.item);p[4].Optional=true;}
     protected override void RegisterOutputParams(GH_OutputParamManager p)=>p.AddCurveParameter("Alignment","A","Deck top reference curve.",GH_ParamAccess.item);
     protected override void Solve(IGH_DataAccess da)
-    {double l=0,r=0,h=0;var o=Point3d.Origin;Curve custom=null;if(!da.GetData(0,ref l))return;da.GetData(1,ref r);da.GetData(2,ref o);da.GetData(3,ref h);da.GetData(4,ref custom);da.SetData(0,BridgeParametricLayout.Create(1,l,Array.Empty<double>(),2,3500,Array.Empty<double>(),1500,1500,0,0,r,o,h,custom).Alignment);}
+    {double l=0,r=0,h=0;var o=Point3d.Origin;Curve custom=null;if(!da.GetData(0,ref l))return;da.GetData(1,ref r);da.GetData(2,ref o);da.GetData(3,ref h);da.GetData(4,ref custom);var alignment=BridgeParametricLayout.Create(1,l,Array.Empty<double>(),2,3500,Array.Empty<double>(),1500,1500,0,0,r,o,h,custom).Alignment;Helpers.AlignmentUnits.Report(this,alignment);da.SetData(0,alignment);}
 }
 
 public sealed class BridgeDeckWidthsComponent : BridgeDefinitionComponent

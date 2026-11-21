@@ -5338,7 +5338,7 @@
     "Index": 3,
     "Name": "Family",
     "NickName": "F",
-    "Description": "0 girder, 1 solid diaphragm, 2 top chord, 3 bottom chord, 4 post, 5 diagonal, 6 longitudinal bracing, 7 bracing post, 8 transverse slab.",
+    "Description": "0 girder, 1 solid diaphragm, 2 top chord, 3 bottom chord, 4 post, 5 diagonal, 6 longitudinal bracing, 7 bracing post, 8 transverse slab. Right click to choose by name; a connected Value List is filled with the names.",
     "Type": "Param_Integer",
     "Access": "item",
     "Optional": false,
@@ -19347,7 +19347,7 @@
     "Index": 2,
     "Name": "Labels",
     "NickName": "ID",
-    "Description": "Show fabrication-joint and support labels in preview.",
+    "Description": "Show in preview: girders G1..Gn, concio IDs (G1-C1), supports with their progressive, fabrication joints, the alignment direction and the Left and Right deck edges.",
     "Type": "Param_Boolean",
     "Access": "item",
     "Optional": false,
@@ -19850,6 +19850,25 @@
     ],
     "DefaultSource": "Sezioni_conci.xlsx",
     "Source": "src/BridGHe.Grasshopper/Components/Geometry/BridgeSegmentExcelComponent.cs:38 @59e9def"
+  },
+  {
+    "Guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f013",
+    "Direction": "in",
+    "Index": 2,
+    "Name": "Auto Read",
+    "NickName": "AR",
+    "Description": "True: read the workbook again by itself when it is saved (Grasshopper file watcher) or found changed. Default false: read only on Run; a workbook saved after the last reading gives a warning.",
+    "Type": "Param_Boolean",
+    "Access": "item",
+    "Optional": true,
+    "Defaults": [
+      {
+        "Type": "bool",
+        "Value": false
+      }
+    ],
+    "DefaultSource": "false",
+    "Source": "src/BridGHe.Grasshopper/Components/Geometry/BridgeSegmentExcelComponent.cs:47 @0.7.2"
   },
   {
     "Guid": "a8e240c5-5c1c-4df3-bdc3-077a8de5f013",
@@ -20953,7 +20972,7 @@
     "Index": 1,
     "Name": "Family",
     "NickName": "F",
-    "Description": "Select the member family from named values. All steel excludes the slab.",
+    "Description": "Select the member family from named values (right click); a connected Value List is filled with the names. All steel excludes the slab.",
     "Type": "Param_Integer",
     "Access": "item",
     "Optional": false,

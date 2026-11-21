@@ -10,6 +10,7 @@ internal static class BridgeAssignmentTests
     internal static void Run()
     {
         Gpc();
+        Usability072Tests.Families(); // 0.7.2: the member families by name
     }
 
     /// <summary>R6.6 R2a: Bridge Member Assignment on GPC data alone (the path of P2): the default property and the rule given by their GPC

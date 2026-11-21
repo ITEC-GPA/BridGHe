@@ -97,7 +97,10 @@ public static class BridgeCombinationWorkbook
 
     internal static Dictionary<string, Dictionary<(int Row, int Column), Cell>> ReadSheets(string path, params string[] names)
     {
-        using var zip = ZipFile.OpenRead(FilePath(path));
+        // 0.7.2 (proposal 4): read with FileShare.ReadWrite, so a workbook still open in Excel (which keeps it open for writing) can be read
+        // after it is saved; a file held with FileShare.None is still refused (IOException).
+        using var stream = new FileStream(FilePath(path), FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        using var zip = new ZipArchive(stream, ZipArchiveMode.Read);
         if (zip.Entries.Count > 2048 || zip.Entries.Sum(e => e.Length) > 128 * 1024 * 1024 || zip.Entries.Any(e => e.Length > MaxPartSize))
             throw new InvalidDataException("Workbook exceeds the supported size limits.");
         if (zip.Entries.Select(e => e.FullName).Distinct(StringComparer.Ordinal).Count() != zip.Entries.Count)

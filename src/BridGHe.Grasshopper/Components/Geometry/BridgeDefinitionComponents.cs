@@ -218,7 +218,7 @@ public sealed class BridgeGrillageMeshComponent : SimpleBridgeComponent
     public BridgeGrillageMeshComponent():base(false,"Bridge Grillage Mesh","GrillageMesh"){}
     public override Guid ComponentGuid=>new Guid("a8e240c5-5c1c-4df3-bdc3-077a8de5f011");
     protected override void RegisterInputParams(GH_InputParamManager p)
-    {p.AddGenericParameter("Bridge Definition","B","From Bridge Geometry Assembly.",GH_ParamAccess.item);p.AddGenericParameter("Mesh Settings","M","From Bridge Mesh Settings.",GH_ParamAccess.item);p.AddBooleanParameter("Labels","ID","Show fabrication-joint and support labels in preview.",GH_ParamAccess.item,false);}
+    {p.AddGenericParameter("Bridge Definition","B","From Bridge Geometry Assembly.",GH_ParamAccess.item);p.AddGenericParameter("Mesh Settings","M","From Bridge Mesh Settings.",GH_ParamAccess.item);p.AddBooleanParameter("Labels","ID","Show in preview: girders G1..Gn, concio IDs (G1-C1), supports with their progressive, fabrication joints, the alignment direction and the Left and Right deck edges.",GH_ParamAccess.item,false);}
     protected override void Solve(IGH_DataAccess da)
     {
         BridgeDefinitionGoo b=null,m=null;bool labels=false;if(!da.GetData(0,ref b)||!da.GetData(1,ref m))return;da.GetData(2,ref labels);

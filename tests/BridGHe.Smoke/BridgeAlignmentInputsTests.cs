@@ -56,5 +56,6 @@ internal static class BridgeAlignmentInputsTests
         var jointPath=preparation.Params.Output[7].VolatileData.Paths.Single();
         Check(jointPath.Length==1 && jointPath[0]==0,"joint output is explicitly branch {0}, irrespective of input paths: "+jointPath);
         Console.WriteLine($"ALIGNMENT INPUTS PASS: {checks} checks; straight, curved and 3D curves, station normalization, overhangs, curve direction and exact downstream span compatibility.");
+        Usability072Tests.Units(); // 0.7.2: unit warnings of the alignment and the labels of the preview
     }
 }

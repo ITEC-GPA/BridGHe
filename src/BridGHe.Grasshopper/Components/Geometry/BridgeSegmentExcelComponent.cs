@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using BridGHe.Common.Diagnostics;
 using BridGHe.Common.Geometry;
 using BridGHe.Grasshopper.Components.Utilities;
@@ -19,6 +21,11 @@ public class BridgeSegmentExcelComponent : BridgeUtilityComponent
     private bool run;
     private string cachePath;
     private string[] cache, warnings = Array.Empty<string>();
+    // 0.7.2 (proposal 4): the time and SHA-256 of the workbook last read and the time of the reading, saved with the table; the watcher of Auto Read.
+    private DateTime? fileTimeUtc, readAtUtc;
+    private string fileSha;
+    private GH_FileWatcher watcher;
+    private string watchedPath;
     public BridgeSegmentExcelComponent() : base("Bridge Segment Excel", "SegmentExcel",
         "Count fabrication segments before assigning sections. Create an Excel template from geometry, then read its dimensions into Bridge Segment Sections. File access only on Run.",
         CategoryNameConstants.SUBCATEGORY_SECTIONS) { }
@@ -37,6 +44,7 @@ public class BridgeSegmentExcelComponent : BridgeUtilityComponent
         p.AddGenericParameter("Fabrication Plan", "C", "From Bridge Fabrication Segments. Existing Bridge Geometry is also accepted. No FEM mesh is required.", GH_ParamAccess.item);
         p.AddTextParameter("File", "F", "Excel .xlsx path. Relative to the saved GH definition. Used only on Run; not required for counts.", GH_ParamAccess.item, "Sezioni_conci.xlsx");
         if (FixedMode == null) p.AddIntegerParameter("Mode", "M", "0 Create template; 1 Read completed workbook. Press Run to access the file.", GH_ParamAccess.item, 0);
+        if (FixedMode == 1) { p.AddBooleanParameter("Auto Read", "AR", "True: read the workbook again by itself when it is saved (Grasshopper file watcher) or found changed. Default false: read only on Run; a workbook saved after the last reading gives a warning.", GH_ParamAccess.item, false); p[2].Optional = true; }
         if (FixedMode != 1)
         {
             p.AddGenericParameter("Base Property", "P", "Optional steel I property to prefill dimensions. Without it, '*' inherits the base section later.", GH_ParamAccess.item); p[FixedMode == null ? 3 : 2].Optional = true;
@@ -57,7 +65,7 @@ public class BridgeSegmentExcelComponent : BridgeUtilityComponent
     {
         bool execute = run; run = false;
         IGH_Goo geometry = null; GH_BeamProperty property = null;
-        string file = "Sezioni_conci.xlsx"; int mode = FixedMode ?? 0; bool overwrite = false;
+        string file = "Sezioni_conci.xlsx"; int mode = FixedMode ?? 0; bool overwrite = false, auto = false;
         if (!da.GetData(0, ref geometry)) return;
         if (Params.Input[0].VolatileDataCount != 1) throw new ArgumentException("Connect exactly one Bridge Geometry.");
         var plan = BridgeDefinitionGoo.Segments(geometry);
@@ -67,6 +75,7 @@ public class BridgeSegmentExcelComponent : BridgeUtilityComponent
         da.SetDataList(2, groups.Select(g => g.Key)); da.SetDataList(3, groups.Select(g => g.Count()));
         da.GetData(1, ref file);
         if (FixedMode == null) da.GetData(2, ref mode);
+        if (FixedMode == 1) da.GetData(2, ref auto);
         if (FixedMode != 1)
         {
             int pi = FixedMode == null ? 3 : 2; da.GetData(pi, ref property); da.GetData(pi + 1, ref overwrite);
@@ -97,11 +106,29 @@ public class BridgeSegmentExcelComponent : BridgeUtilityComponent
             }
             else
             {
+                Watch(auto ? path : null);
+                bool samePath = cache != null && string.Equals(path, cachePath, StringComparison.OrdinalIgnoreCase);
+                DateTime? saved = path != null && File.Exists(path) ? File.GetLastWriteTimeUtc(path) : null;
+                bool automatic = false;
                 if (execute)
                 {
-                    cache = null; cachePath = null; warnings = Array.Empty<string>();
+                    cache = null; cachePath = null; warnings = Array.Empty<string>(); fileTimeUtc = readAtUtc = null; fileSha = null;
                     var result = BridgeSegmentWorkbook.Read(path, plan);
-                    cache = result.Table; warnings = result.Warnings; cachePath = path;
+                    cache = result.Table; warnings = result.Warnings; cachePath = path; Record(path, saved);
+                }
+                else if (auto && saved != null && (!samePath || fileTimeUtc != saved))
+                {
+                    // Auto Read: the workbook never read for this path, or saved after the last reading (a file of an earlier version, without
+                    // its time, is read again once). A failed reading keeps the table read before, with a warning; Run still clears it.
+                    try
+                    {
+                        var result = BridgeSegmentWorkbook.Read(path, plan);
+                        cache = result.Table; warnings = result.Warnings; cachePath = path; Record(path, saved); automatic = true;
+                    }
+                    catch (Exception e) when (e is ArgumentException or InvalidOperationException or IOException or UnauthorizedAccessException)
+                    {
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"Auto Read: {Path.GetFileName(path)} not read again ({e.Message})" + (samePath ? $" The table read at {Time(readAtUtc)} is kept." : ""));
+                    }
                 }
                 if (cache == null || !string.Equals(path, cachePath, StringComparison.OrdinalIgnoreCase))
                 {
@@ -113,9 +140,18 @@ public class BridgeSegmentExcelComponent : BridgeUtilityComponent
                     // Validate every time: a changed mesh is allowed; changed fabrication IDs/ranges are rejected.
                     var table = BridgeSegmentSections.ValidateTable(plan, cache);
                     da.SetDataList(4, table); info.AddRange(warnings);
-                    info.Add(execute ? "Workbook read. Section Table is ready for Bridge Segment Sections." : "Using the last imported table. To apply Excel edits, recalculate/save Excel and press Run again.");
-                    Message = segments.Length + " | " + (execute ? "read" : "cached");
+                    info.Add(execute ? "Workbook read. Section Table is ready for Bridge Segment Sections." : automatic ? "Auto Read: workbook read again after it was saved. Section Table is ready for Bridge Segment Sections." : "Using the last imported table. To apply Excel edits, recalculate/save Excel and press Run again.");
+                    Message = segments.Length + " | " + (execute ? "read" : automatic ? "auto read" : "cached");
                     foreach (string warning in warnings) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, warning);
+                    // 0.7.2 (proposal 4): only the time of the file is compared, the file is not read. A table of an earlier version has no time.
+                    if (fileTimeUtc != null && saved != null && saved != fileTimeUtc)
+                    {
+                        string name = Path.GetFileName(path);
+                        string changed = saved > fileTimeUtc ? $"{name} saved at {Time(saved)}, after the last read at {Time(readAtUtc ?? fileTimeUtc)}: press Run."
+                            : $"{name} saved at {Time(saved)}, different from the file read at {Time(readAtUtc ?? fileTimeUtc)}: press Run.";
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, changed); info.Add(changed);
+                        Message = segments.Length + " | file changed";
+                    }
                 }
             }
         }
@@ -129,17 +165,63 @@ public class BridgeSegmentExcelComponent : BridgeUtilityComponent
         {
             writer.SetString("ExcelPath", cachePath); writer.SetString("SectionTable", string.Join("\n", cache));
             writer.SetString("ExcelWarnings", string.Join("\n", warnings));
+            if (fileTimeUtc != null) writer.SetString("ExcelFileTimeUtc", fileTimeUtc.Value.Ticks.ToString(CultureInfo.InvariantCulture));
+            if (readAtUtc != null) writer.SetString("ExcelReadUtc", readAtUtc.Value.Ticks.ToString(CultureInfo.InvariantCulture));
+            if (fileSha != null) writer.SetString("ExcelSha256", fileSha);
         }
         return base.Write(writer);
     }
     public override bool Read(GH_IReader reader)
     {
-        cache = null; cachePath = null; warnings = Array.Empty<string>();
+        cache = null; cachePath = null; warnings = Array.Empty<string>(); fileTimeUtc = readAtUtc = null; fileSha = null;
         if (reader.ItemExists("ExcelPath") && reader.ItemExists("SectionTable"))
         {
             cachePath = reader.GetString("ExcelPath"); cache = reader.GetString("SectionTable").Split('\n');
             if (reader.ItemExists("ExcelWarnings")) warnings = reader.GetString("ExcelWarnings").Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            fileTimeUtc = Ticks(reader, "ExcelFileTimeUtc"); readAtUtc = Ticks(reader, "ExcelReadUtc");
+            if (reader.ItemExists("ExcelSha256")) fileSha = reader.GetString("ExcelSha256");
         }
         return base.Read(reader);
+    }
+    private static DateTime? Ticks(GH_IReader reader, string name) =>
+        reader.ItemExists(name) && long.TryParse(reader.GetString(name), NumberStyles.Integer, CultureInfo.InvariantCulture, out long ticks) ? new DateTime(ticks, DateTimeKind.Utc) : null;
+    /// <summary>0.7.2 (proposal 4): the time of the file read and of the reading, and its SHA-256 (kept in the GH file with the table).</summary>
+    private void Record(string path, DateTime? saved)
+    {
+        fileTimeUtc = saved ?? (File.Exists(path) ? File.GetLastWriteTimeUtc(path) : null); readAtUtc = DateTime.UtcNow;
+        try
+        {
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            fileSha = Convert.ToHexString(SHA256.HashData(stream));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { fileSha = null; }
+    }
+    /// <summary>Local time of a UTC instant: hh:mm today, dd/MM hh:mm on another day.</summary>
+    private static string Time(DateTime? utc)
+    {
+        if (utc == null) return "?";
+        var local = utc.Value.ToLocalTime();
+        return local.ToString(local.Date == DateTime.Now.Date ? "HH:mm" : "dd/MM HH:mm", CultureInfo.InvariantCulture);
+    }
+    /// <summary>Auto Read: a Grasshopper file watcher on the workbook; a change expires the solution, which reads the file again.</summary>
+    private void Watch(string path)
+    {
+        if (path == null) { StopWatching(); return; }
+        if (watcher != null && !watcher.IsDisposed && string.Equals(watchedPath, path, StringComparison.OrdinalIgnoreCase)) return;
+        StopWatching();
+        string folder = Path.GetDirectoryName(path);
+        if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder)) return;
+        try { watcher = GH_FileWatcher.CreateFileWatcher(path, GH_FileWatcherEvents.All, FileSaved); watchedPath = path; }
+        catch (Exception e) when (e is ArgumentException or IOException or UnauthorizedAccessException or InvalidOperationException) { watcher = null; watchedPath = null; }
+    }
+    private void StopWatching() { watcher?.Dispose(); watcher = null; watchedPath = null; }
+    /// <summary>The callback of the watcher (Grasshopper calls it on its UI thread): a new solution, which reads the workbook if its time changed.</summary>
+    internal void FileSaved(string file) { if (OnPingDocument() != null) ExpireSolution(true); }
+    internal bool Watching => watcher != null && !watcher.IsDisposed;
+    public override void RemovedFromDocument(GH_Document document) { StopWatching(); base.RemovedFromDocument(document); }
+    public override void DocumentContextChanged(GH_Document document, GH_DocumentContext context)
+    {
+        base.DocumentContextChanged(document, context);
+        if (context is GH_DocumentContext.Close or GH_DocumentContext.Unloaded) StopWatching();
     }
 }

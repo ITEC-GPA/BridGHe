@@ -84,7 +84,34 @@ internal static class BridgeSegmentExcelTests
         Check(calculated.Table.SequenceEqual(edited) && calculated.Warnings.Length == 1, "saved formula results accepted with recalculation warning");
         Reject(() => BridgeSegmentWorkbook.Read(Fixture(x => { var c = Cell(x, "G7"); c.RemoveNodes(); c.Add(new XElement(S + "f", "25*2")); }), geometry));
         Component(folder, geometry, property, filled, edited);
+        AutoRead(folder, geometry, filled, edited);
         Console.WriteLine($"SEGMENT EXCEL PASS: {checks} checks; count, workbook edits, analytical area, sorting, mesh independence, stale geometry, invalid inputs, formula caches, file protection and GH round trip.");
+    }
+    /// <summary>0.7.2 (proposal 4): Auto Read on Bridge Read Section Excel: the workbook read without Run, read again when the watcher calls back
+    /// after a save, a failed reading that keeps the table read before (with a warning), the watcher stopped when Auto Read is off.</summary>
+    private static void AutoRead(string folder, SimpleBridgeGeometry geometry, string file, string[] expected)
+    {
+        string auto = Path.Combine(folder, "auto.xlsx"); File.Copy(file, auto);
+        using var doc = new GH_Document(); doc.FilePath = Path.Combine(folder, "auto.ghx");
+        var reader = Add(doc, "BridgeSectionReadComponent");
+        Generic(reader, 0, geometry); Text(reader, 1, "auto.xlsx");
+        var flag = (Param_Boolean)reader.Params.Input[2]; flag.PersistentData.Clear(); flag.SetPersistentData(true);
+        string[] Table() => reader.Params.Output[4].VolatileData.AllData(true).Select(g => g.ScriptVariable().ToString()).ToArray();
+        bool Watching() => (bool)reader.GetType().GetProperty("Watching", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(reader);
+        void Saved() => reader.GetType().GetMethod("FileSaved", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(reader, new object[] { auto });
+        Solve(doc);
+        Check(Table().SequenceEqual(expected) && Watching(), "Auto Read reads the workbook without Run and watches the file");
+        Edit(auto, x => Value(Cell(x, "G7"), "60")); File.SetLastWriteTimeUtc(auto, DateTime.UtcNow.AddMinutes(5));
+        var want = BridgeSegmentWorkbook.Read(auto, geometry).Table;
+        Saved(); Solve(doc);
+        Check(!want.SequenceEqual(expected) && Table().SequenceEqual(want) && !reader.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Any(), "the watcher callback after a save reads the workbook again");
+        Edit(auto, x => Value(Cell(x, "G7"), "", true)); File.SetLastWriteTimeUtc(auto, DateTime.UtcNow.AddMinutes(10));
+        Saved(); Solve(doc);
+        var w = reader.RuntimeMessages(GH_RuntimeMessageLevel.Warning);
+        Check(Table().SequenceEqual(want) && w.Any(m => m.StartsWith("Auto Read: auto.xlsx not read again")) && w.Any(m => m.Contains(" saved at ")),
+            "a failed automatic reading keeps the table read before, with two warnings: " + string.Join(" / ", w));
+        flag.PersistentData.Clear(); flag.SetPersistentData(false); reader.ExpireSolution(false); Solve(doc);
+        Check(!Watching(), "Auto Read off stops the watcher");
     }
     internal static void Press(GH_Component component)
     {
@@ -128,12 +155,20 @@ internal static class BridgeSegmentExcelTests
         Press(excel); excel.ExpireSolution(false); Solve(doc);
         Check(excel.Params.Output[4].VolatileData.AllData(true).Select(g => g.ScriptVariable().ToString()).SequenceEqual(expected), "real GH component reads complete table");
         Check(sections.Params.Output[1].VolatileDataCount == geometry.Segments.Count, "all imported sections reach downstream component");
+        // 0.7.2 (proposal 4): a workbook saved after the reading gives a warning (only its time is compared); the table stays the one read.
+        File.SetLastWriteTimeUtc(file, File.GetLastWriteTimeUtc(file).AddMinutes(3)); excel.ExpireSolution(false); Solve(doc);
+        var changed = excel.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Where(m => m.Contains(" saved at ") && m.Contains(", after the last read at ") && m.EndsWith(": press Run.")).ToArray();
+        Check(changed.Length == 1 && changed[0].StartsWith(Path.GetFileName(file) + " saved at ") && excel.Params.Output[4].VolatileDataCount == expected.Length,
+            "a workbook saved after the reading warns and keeps the table read: " + string.Join(" / ", excel.RuntimeMessages(GH_RuntimeMessageLevel.Warning)));
+        Press(excel); excel.ExpireSolution(false); Solve(doc);
+        Check(!excel.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Any(m => m.Contains(" saved at ")), "Run reads the workbook again and the warning goes");
         GrasshopperBridgeExample.Write(doc, doc.FilePath);
         using var restored = GrasshopperBridgeExample.Read(doc.FilePath); restored.FilePath = doc.FilePath;
         // Cached imported values must survive reopening without touching Excel.
         using(var held = File.Open(file, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) Solve(restored);
         var copy = restored.Objects.OfType<GH_Component>().Single(c => c.GetType().Name == "BridgeSegmentExcelComponent");
         Check(copy.Params.Output[4].VolatileDataCount == expected.Length, "saved imported table survives reopening without file access");
+        Check(!copy.RuntimeMessages(GH_RuntimeMessageLevel.Warning).Any(m => m.Contains(" saved at ")), "0.7.2: the time of the workbook read is kept in the GH file");
         Text(copy, 1, "missing.xlsx"); Press(copy); copy.ExpireSolution(false); Solve(restored, true);
         Check(copy.Params.Output[4].VolatileDataCount == 0 && restored.Objects.OfType<GH_Component>().Single(c => c.GetType().Name == "BridgeSegmentSectionsComponent").Params.Output[1].VolatileDataCount == 0,
             "failed read clears old table and stops downstream base fallback");

@@ -59238,7 +59238,7 @@ G3-C3; 24000; 36000; 600; 600; 2500; 30; 30; 16; 0
 G3-C4; 36000; 48000; 600; 600; 2500; 30; 30; 16; 0
 G3-C5; 48000; 60000; 600; 600; 2500; 30; 30; 16; 0</item>
                   </items>
-                  <chunks count="10">
+                  <chunks count="11">
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
@@ -59271,11 +59271,11 @@ G3-C5; 48000; 60000; 600; 600; 2500; 30; 30; 16; 0</item>
                               <X>13214</X>
                               <Y>5258</Y>
                               <W>14</W>
-                              <H>70</H>
+                              <H>46.6667</H>
                             </item>
                             <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
                               <X>13222.5</X>
-                              <Y>5293</Y>
+                              <Y>5281.3333</Y>
                             </item>
                           </items>
                         </chunk>
@@ -59296,13 +59296,13 @@ G3-C5; 48000; 60000; 600; 600; 2500; 30; 30; 16; 0</item>
                           <items count="2">
                             <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
                               <X>13214</X>
-                              <Y>5328</Y>
+                              <Y>5304.6667</Y>
                               <W>14</W>
-                              <H>70</H>
+                              <H>46.6667</H>
                             </item>
                             <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
                               <X>13222.5</X>
-                              <Y>5363</Y>
+                              <Y>5328</Y>
                             </item>
                           </items>
                         </chunk>
@@ -59321,6 +59321,52 @@ G3-C5; 48000; 60000; 600; 600; 2500; 30; 30; 16; 0</item>
                                   <items count="2">
                                     <item name="null_string" type_name="gh_bool" type_code="1">false</item>
                                     <item name="string" type_name="gh_string" type_code="10">Sezioni_conci.xlsx</item>
+                                  </items>
+                                </chunk>
+                              </chunks>
+                            </chunk>
+                          </chunks>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_input" index="2">
+                      <items count="6">
+                        <item name="Description" type_name="gh_string" type_code="10">True: read the workbook again by itself when it is saved (Grasshopper file watcher) or found changed. Default false: read only on Run; a workbook saved after the last reading gives a warning.</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">54586bfc-8613-5e9e-ae59-8b589e89eebb</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Auto Read</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">AR</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">true</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="2">
+                        <chunk name="Attributes">
+                          <items count="2">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>13214</X>
+                              <Y>5351.3333</Y>
+                              <W>14</W>
+                              <H>46.6667</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>13222.5</X>
+                              <Y>5374.6667</Y>
+                            </item>
+                          </items>
+                        </chunk>
+                        <chunk name="PersistentData">
+                          <items count="1">
+                            <item name="Count" type_name="gh_int32" type_code="3">1</item>
+                          </items>
+                          <chunks count="1">
+                            <chunk name="Branch" index="0">
+                              <items count="2">
+                                <item name="Count" type_name="gh_int32" type_code="3">1</item>
+                                <item name="Path" type_name="gh_string" type_code="10">{0}</item>
+                              </items>
+                              <chunks count="1">
+                                <chunk name="Item" index="0">
+                                  <items count="1">
+                                    <item name="boolean" type_name="gh_bool" type_code="1">false</item>
                                   </items>
                                 </chunk>
                               </chunks>

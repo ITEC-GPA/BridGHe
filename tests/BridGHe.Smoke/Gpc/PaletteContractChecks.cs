@@ -38,8 +38,9 @@ internal static class PaletteContractChecks
     /// 231 GUIDs and 1,904 ports: Super Element Check with 3 inputs (its optional inputs moved to the new Super Element Check Options, 6 inputs
     /// and 1 output) and the new Bridge Notable Stations (6 inputs, 5 outputs); the 13 rows approved by the user with «Sì, approvo». 0.7.0
     /// (21/11/2026): 232 GUIDs and 1,908 ports: Super Element Check without «Tau b» (user: «5 va bene. toglie.»), Tension Forces its second
-    /// output; the new Bridge Moving Envelope (3 inputs, 2 outputs; user: «posizioni / inviluppo / combo concomitanti»).</summary>
-    private const int Components = 232, Ports = 1908;
+    /// output; the new Bridge Moving Envelope (3 inputs, 2 outputs; user: «posizioni / inviluppo / combo concomitanti»). 0.7.2 (21/11/2026):
+    /// 1,909 ports: the new input Auto Read of Bridge Read Section Excel (proposals approved by the user «per tutti i punti»).</summary>
+    private const int Components = 232, Ports = 1909;
 
     /// <summary>The SHA-256 of the two frozen files (UTF-8, line ends normalised to LF): an edit of the table without the procedure above fails.
     /// P2CI (14/11/2026): the proposal shown to the user (INT\rapporti\P2CI-palette-proposta-20261114). 0.4.3 (19/11/2026): ports.json with the
@@ -47,9 +48,11 @@ internal static class PaletteContractChecks
     /// added; the row of the former one with its new name, description, exposure (hidden) and obsolete flag; no other row changed. 0.6.0
     /// (20/11/2026): the ports 2-6 of Super Element Check replaced by Options, the rows of Super Element Check Options and Bridge Notable
     /// Stations with their ports; no other row changed. 0.7.0 (21/11/2026): the output Tau b of Super Element Check removed and Tension Forces
-    /// at index 1, the row of Bridge Moving Envelope and its 5 ports; no other row changed.</summary>
+    /// at index 1, the row of Bridge Moving Envelope and its 5 ports; no other row changed. 0.7.2 (21/11/2026, proposals 2, 4 and 8, texts in
+    /// English): the row of Auto Read (Bridge Read Section Excel, input 2) added; the descriptions of Labels (Bridge Grillage Mesh) and of Family
+    /// (Bridge Section Schedule, Bridge Family Property) changed; no other row changed.</summary>
     private const string ComponentsSha = "1C6ED0E73D17F25AEE6914F9CED7ECBBF4477EB87E5FE38168D8C65AB18AB92F",
-        PortsSha = "13334747240D258353652DA8073986D7775B9CDF6F67171287AD2B682C699884";
+        PortsSha = "1F0EEEE443FE8A4EFB6484CF78066E1479DBF8B4B06CFB2A0B9867E80E799ABD";
 
     internal static string Folder => Path.Combine(Path.GetDirectoryName(ExamplePaths.Root), "tests", "BridGHe.Smoke", "Fixtures", "palette");
 
