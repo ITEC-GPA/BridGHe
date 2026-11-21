@@ -171,7 +171,13 @@ namespace BridGHe.Common.Gpc
             }
         }
 
-        public static IEnumerable<BeamRow> Beam(GpcResultCatalog catalog, Model solved, BeamElement beam)
+        public static IEnumerable<BeamRow> Beam(GpcResultCatalog catalog, Model solved, BeamElement beam) => Beam(catalog, solved, beam, null);
+
+        /// <summary>The rows of the entries whose label is <paramref name="label"/> (all entries when null), in the order of the catalog. The
+        /// other entries are skipped before their forces are read or combined: the rows of the label are those of the overload without it, which
+        /// filtered them afterwards (0.6.0 study of the computation times: Build Bridge Model read every entry of the moving model for each of
+        /// its actions, quadratic in the positions).</summary>
+        public static IEnumerable<BeamRow> Beam(GpcResultCatalog catalog, Model solved, BeamElement beam, string label)
         {
             var u = catalog.Units;
             var principal = GpcBeamAxes.Principal(beam.StartPoint, beam.EndPoint, catalog.BeamAngle(beam));
@@ -179,6 +185,7 @@ namespace BridGHe.Common.Gpc
             for (int i = 0; i < catalog.Entries.Count; i++)
             {
                 var e = catalog.Entries[i];
+                if (label != null && e.Label != label) continue;
                 var rows = IsCombination(solved, e) && !Stored(GpcResults.Locations<GPC.Model.Results.Locations.ResultLocation>(beam, e.Case))
                     ? CombinedBeam(solved, beam, e.Case, principal) : GpcResults.BeamForces(beam, e.Case, principal, e.Step, e.Phase);
                 foreach (var row in rows)

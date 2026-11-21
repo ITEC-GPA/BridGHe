@@ -227,13 +227,14 @@ namespace BridGHe.Common.Gpc
                         BridgeWorkflowBuilder.RequireForces(phase, action, beams.First(b => action.BeamIds.Length == 0 || action.BeamIds.Contains(b.Name, StringComparer.Ordinal)).Name, Array.Empty<BeamForceSample>());
                     int sourceIndex = sources.FindIndex(s => s.Is(action.GpcSource));
                     var gpc = action.GpcSource; var catalog = GpcResultCatalog.Of(gpc) ?? throw new ArgumentException("GpcActionSourceWithoutResults: " + gpc.Name);
+                    var contributing = Contributing(gpc, action.Case); // the same for every beam of the action
                     for (int i = 0; i < beams.Length; i++)
                     {
                         string id = beams[i].Name;
                         if (action.BeamIds.Length != 0 && !action.BeamIds.Contains(id, StringComparer.Ordinal)) continue;
                         var input = SourceBeam(gpc, aligned[sourceIndex][i], reference.Units, tolerance);
                         var results = Forces(catalog, gpc, input, action.Case);
-                        concentratedLoads[(action.Key, id)] = ConcentratedLoads(catalog, gpc, input, action.Case);
+                        concentratedLoads[(action.Key, id)] = ConcentratedLoads(catalog, input, contributing);
                         BridgeWorkflowBuilder.RequireForces(phase, action, id, results);
                         foreach (var force in results) raw[i].Add((record.ForceCase, force));
                     }
@@ -251,11 +252,12 @@ namespace BridGHe.Common.Gpc
                 var stations = BridgeMergeValidation.CanonicalStations(forces.Select(f => f.Sample.Station), length);
                 if (stations.Length == 0) stations = new[] { 0d, length };
                 var merged = new List<(string Case, BeamForceSample Sample)>();
+                var byCase = forces.ToLookup(f => f.Case, f => f.Sample, StringComparer.Ordinal); // the samples of each force case, in their order
                 foreach (var record in records.Values.Where(r => r.ForceCase != null))
                 {
                     if (record.BeamIds.Length == 0 || record.BeamIds.Contains(id, StringComparer.Ordinal))
                     {
-                        var own = forces.Where(f => f.Case == record.ForceCase).Select(f => f.Sample).ToArray();
+                        var own = byCase[record.ForceCase].ToArray();
                         var resampled = BridgeForceResampling.Resample(own, stations, length, $"Action {record.Key}, beam {id}", concentratedLoads[(record.Key, id)], out int added, out _);
                         foreach (var sample in resampled) merged.Add((record.ForceCase, sample));
                         interpolatedSamples += added;
@@ -426,18 +428,19 @@ namespace BridGHe.Common.Gpc
 
         /// <summary>The stored forces of a case (catalog label) of a beam, station in the definition length, zero without sign (the numbers of
         /// the Results components).</summary>
-        private static BeamForceSample[] Forces(GpcResultCatalog catalog, Model gpc, BeamElement beam, string label) => GpcResultRows.Beam(catalog, gpc, beam)
-            .Where(r => catalog.Entries[r.Entry].Label == label)
+        private static BeamForceSample[] Forces(GpcResultCatalog catalog, Model gpc, BeamElement beam, string label) => GpcResultRows.Beam(catalog, gpc, beam, label)
             .Select(r => new BeamForceSample(r.Station, GpcResultRows.Shown(r.Axial), GpcResultRows.Shown(r.Shear1), GpcResultRows.Shown(r.Shear2),
                 GpcResultRows.Shown(r.Torque), GpcResultRows.Shown(r.Bending1), GpcResultRows.Shown(r.Bending2))).ToArray();
 
+        /// <summary>The cases contributing to a case: those with a non-zero coefficient of the combination of that name, or the case itself.</summary>
+        private static HashSet<string> Contributing(Model gpc, string label) => gpc.Combinations.TryGetValue(label, out var combination)
+            ? combination.GetLoadCaseCoefficientsPair().Where(p => p.Value != 0).Select(p => p.Key.Name).ToHashSet(StringComparer.Ordinal)
+            : new[] { label }.ToHashSet(StringComparer.Ordinal);
+
         /// <summary>The positions (definition length from the start) of the non-zero concentrated loads of the cases contributing to a case: those
         /// with a non-zero coefficient of the combination of that name, or the case itself.</summary>
-        private static double[] ConcentratedLoads(GpcResultCatalog catalog, Model gpc, BeamElement beam, string label)
+        private static double[] ConcentratedLoads(GpcResultCatalog catalog, BeamElement beam, HashSet<string> contributing)
         {
-            var contributing = gpc.Combinations.TryGetValue(label, out var combination)
-                ? combination.GetLoadCaseCoefficientsPair().Where(p => p.Value != 0).Select(p => p.Key.Name).ToHashSet(StringComparer.Ordinal)
-                : new[] { label }.ToHashSet(StringComparer.Ordinal);
             double length = catalog.Units.FromMm(beam.Length);
             return beam.Assignments.Loads.Where(l => l?.Concentrated?.LoadCase != null && contributing.Contains(l.Concentrated.LoadCase.Name))
                 .Where(l => { var p = l.Concentrated; return p.F1 != 0 || p.F2 != 0 || p.F3 != 0 || p.M1 != 0 || p.M2 != 0 || p.M3 != 0; })

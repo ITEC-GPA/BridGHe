@@ -55,7 +55,7 @@ public static class BeamMomentClassification
         string loadCase, double tolerance, int component, int sign)
     {
         // The rows of the case (the former written-back objects all had step 0 and no step type: one step).
-        var rows = Gpc.GpcResultRows.Beam(gpc.Catalog, gpc.Model, gpc.Beam).Where(r => gpc.Catalog.Entries[r.Entry].Label == loadCase).ToArray();
+        var rows = Gpc.GpcResultRows.Beam(gpc.Catalog, gpc.Model, gpc.Beam, loadCase).ToArray();
         if (rows.Length == 0) return new BeamMomentState(BeamMomentSign.Missing, double.NaN, double.NaN, loadCase) { Analysed = gpc, BeamId = id };
         double length = gpc.Catalog.Units.FromMm(gpc.Beam.Length);
         var stations = rows.Select(r => r.Station).OrderBy(s => s).ToArray();
