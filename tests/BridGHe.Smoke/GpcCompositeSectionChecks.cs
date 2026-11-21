@@ -275,7 +275,8 @@ internal static partial class GpcCompositeSectionChecks
             }
         // 0.4.2: the registered R6.0 capture p2n-capture-042-20261118 adds the composite section of the examples 50 REV004 and 99 REV005.
         // 0.6.0: p2n-capture-060-20261121 adds the one of 99 REV006 (that of 50 REV005 has the key of REV004).
-        if (definitions != 46) throw new Exception($"GPC COMPOSITE SECTION FAIL: {definitions} captured definitions instead of 46 (10 payloads, 36 scan)");
+        // 0.7.0: p2n-capture-070-20261121 adds the one of 99 REV007 (the section of REV005/REV006; that of 50 REV006 has the key of REV004).
+        if (definitions != 47) throw new Exception($"GPC COMPOSITE SECTION FAIL: {definitions} captured definitions instead of 47 (10 payloads, 37 scan)");
         return (definitions, inputs, analysis);
     }
 
