@@ -37,6 +37,7 @@ Con aste da 1 m la verifica ai 2 nodi è una verifica ogni metro, sui due lati d
 
 - Gli ingressi sono ora tre: BridGHe Model, Super-Element Beam e Options. Options accetta Super Element Check Options, oppure le sole Bridge Analysis Options.
 - **Senza opzioni il check verifica i 2 nodi di ogni asta.** Con «Stations per Element» = 0 i risultati sono quelli della 0.5.0, bit per bit.
+- I percorsi delle uscite {asta; stazione} tengono l'indice della stazione fra tutte le stazioni dell'asta, come li leggono i grafici e Bridge Girder Results: con 5 stazioni Straus e 2 di verifica i percorsi sono {i;0} e {i;4}.
 - Una definizione salvata prima della 0.6.0 porta il vecchio WLI all'ingresso Options: dà un errore che dice di ricollegare gli ingressi a Super Element Check Options, invece di usare in silenzio i valori predefiniti.
 
 ## Bridge Notable Stations (componente nuovo)
@@ -47,6 +48,8 @@ Dà i punti in cui fare il Detail Check, da collegare a Bridge Detail Stations >
 - il massimo momento positivo di ogni campata, dalla tensione della fibra inferiore nei risultati del Super Element Check.
 
 Tutti i punti sono sui nodi delle travi, perché Bridge Detail Stations non interpola.
+
+Con i risultati collegati, i punti sono quelli delle sole travi che i risultati coprono: un Detail Check alimentato dal Super Element Check di G2 riceve i punti di G2.
 
 L'ingresso **Additional** tiene i punti degli altri selettori che leggono lo stesso Detail Check, per esempio gli irrigidenti. Un punto che coincide con una sezione notevole non viene ripetuto.
 
@@ -72,6 +75,11 @@ Il numero di stazioni di uscita di Straus7 si sceglie con il componente esistent
   - Su una definizione già migrata il comando non ripete i passi già fatti.
 
 ## Prove
+
+- Nativi con Straus7 (`Fixtures/native-gate-060`), confrontati con la 0.5.0:
+  - 50 REV005: 16.776 righe invece di 68.184, in 2 minuti invece di 20;
+  - 99 REV006: 5.952 righe invece di 15.004;
+  - in tutti e due: utilizzo massimo, rapporto massimo delle verifiche locali e verifiche oltre 1 uguali, nello stesso punto.
 
 - `slab-reinforcement`:
   - il predefinito a 2 nodi dà le due stazioni di estremità della verifica su tutte le stazioni, bit per bit;
