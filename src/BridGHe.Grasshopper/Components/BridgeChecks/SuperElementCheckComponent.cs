@@ -204,10 +204,22 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     // User decision of 20/11/2026: the analysis stations of every element, a subset of the FEM output stations (by default the
                     // 2 nodes); the same subset for the sections and for the actions below. 0 keeps all of them, as before.
                     var kept = new HashSet<double>[beams.Count];
+                    // The output paths {beam; station} keep the index of the station among all the stations of the beam (those of the merged
+                    // samples, as the plots and Bridge Girder Results read them), also when only some are checked: {i; 0} and {i; 4} with 5 FEM
+                    // stations and 2 per element. Before the fix the kept stations were numbered 0, 1 and a plot put the end of a beam at its
+                    // second station.
+                    var allStations = new double[beams.Count][];
                     for (int i = 0; i < beams.Count; i++)
                     {
                         var available = gpcBridge.SamplesOf(ids[i]).Select(s => Math.Round(s.Sample.Station, 15)).Distinct().OrderBy(s => s).ToArray();
+                        allStations[i] = available;
                         kept[i] = Common.Checks.BridgeCheckStations.Select(available, lengths[i], settings.StationsPerElement).ToHashSet();
+                    }
+                    GH_Path At(int i, int j)
+                    {
+                        int index = Array.BinarySearch(allStations[i], workflowStations[i][j]);
+                        if (index < 0) throw new InvalidOperationException($"Station {workflowStations[i][j]} of beam {ids[i]} not among its result stations.");
+                        return new GH_Path(i, index);
                     }
 
                     for (int i = 0; i < beams.Count; i++)
@@ -337,13 +349,13 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                     {
                         for (int j = 0; j < stressAnalysisResults[i].Length; j++)
                             resultsDataTree.AddRange(stressAnalysisResults[i][j].Select((result, k) => result?.WithSource(
-                                new BridgeResultSource(ids[i], workflowStations[i][j], combinations[k].Name, beamSuperElements[i]))), new GH_Path(i, j));
+                                new BridgeResultSource(ids[i], workflowStations[i][j], combinations[k].Name, beamSuperElements[i]))), At(i, j));
                     }
 
                     DataTree<double> tauBDataTree = new DataTree<double>();
                     for (int i = 0; i < tauBResults.Length; i++)
                         for (int j = 0; j < tauBResults[i].Length; j++)
-                            tauBDataTree.AddRange(tauBResults[i][j], new GH_Path(i, j));
+                            tauBDataTree.AddRange(tauBResults[i][j], At(i, j));
 
                     DataTree<ResultBeamForces> forcesTree = new DataTree<ResultBeamForces>();
                     for (int i = 0; i < forcesForOutput.Length; i++)
@@ -357,7 +369,7 @@ namespace BridGHe.Grasshopper.Components.BridgeChecks
                                 list.Add(total);
                             }
 
-                            forcesTree.AddRange(list, new GH_Path(i, j));
+                            forcesTree.AddRange(list, At(i, j));
                         }
 
                     DA.SetDataTree(0, resultsDataTree);

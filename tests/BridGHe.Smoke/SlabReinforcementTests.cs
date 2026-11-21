@@ -250,6 +250,10 @@ internal static class SlabReinforcementTests
             // Without options: the 2 nodes of the element, the same numbers as the two ends of the run on all stations, bit for bit.
             ((Param_GenericObject)c.Params.Input[2]).PersistentData.Clear();c.Params.Input[2].ExpireSolution(false);Run();
             require(Errors()==""&&Same(Results(),results[0],results[2]),"GPC ("+carriers+"): the default (2 nodes) must give the two end stations of the full run: "+Errors()+" / "+Results().Length);
+            // The paths keep the index of the station among all the stations of the beam, as the plots and Bridge Girder Results read it.
+            var paths=c.Params.Output.Select(o=>string.Join(" ",o.VolatileData.Paths.Select(p=>p.ToString()))).ToArray();
+            require(paths.All(p=>p=="{0;0} {0;2}"),"GPC ("+carriers+"): the 2 nodes must keep their station indices {0;0} {0;2} on the three outputs: "+string.Join(" / ",paths));
+            gpcChecks++;
             // Bridge Analysis Options alone, equal to the defaults: the same numbers and a remark that the toggles are not used.
             Set(2,(IGH_Goo)Activator.CreateInstance(goo,(object)new GPC.Checkers.CompositeBridge.BridgeAnalysisOptions{Standard=GPC.Checkers.CompositeBridge.BridgeStandard.Eurocode4,LimitState=GPC.Checkers.CompositeBridge.BridgeLimitState.Rare}));Run();
             require(Errors()==""&&Same(Results(),results[0],results[2]),"GPC ("+carriers+"): default Bridge Analysis Options changed the numbers: "+Errors());
