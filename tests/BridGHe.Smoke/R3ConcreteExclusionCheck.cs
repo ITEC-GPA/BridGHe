@@ -93,11 +93,10 @@ internal static class R3ConcreteExclusionCheck
             var c = (GH_Component)Activator.CreateInstance(check.GetType()); c.CreateAttributes(); doc.AddObject(c, false);
             ((Param_GenericObject)c.Params.Input[0]).PersistentData.Append((IGH_Goo)modelGoo);
             foreach (var b in beams) ((Param_GenericObject)c.Params.Input[1]).PersistentData.Append(b);
-            for (int k = 2; k < 5; k++)
-            {
-                var value = check.Params.Input[k].VolatileData.AllData(true).OfType<GH_Boolean>().Single().Value;
-                var p = (Param_Boolean)c.Params.Input[k]; p.PersistentData.Clear(); p.PersistentData.Append(new GH_Boolean(value));
-            }
+            // 0.6.0: the instabilities and the stations are in the Options of the check (Super Element Check Options): the same options.
+            var options = check.Params.Input[2].VolatileData.AllData(true).OfType<IGH_Goo>().ToArray();
+            if (options.Length > 1) Fail("more than one Options item on the check");
+            var op = (Param_GenericObject)c.Params.Input[2]; op.PersistentData.Clear(); foreach (var o in options) op.PersistentData.Append(o);
             c.GetType().GetField("_run", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(c, true); c.ExpireSolution(false);
             return c;
         }
